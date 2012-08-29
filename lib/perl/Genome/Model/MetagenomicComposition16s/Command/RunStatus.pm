@@ -9,7 +9,7 @@ use Data::Dumper 'Dumper';
 require Carp;
 
 class Genome::Model::MetagenomicComposition16s::Command::RunStatus {
-    is => 'Genome::Report::GeneratorCommand',
+    is => 'Command::V2',
     has => [
         run_name => {
             is_many => 0,
@@ -46,7 +46,6 @@ sub execute {
 
     my $default_processing_profile_id = Genome::Model::MetagenomicComposition16s->default_processing_profile_id;
     my @subjects_to_skip = map { qr/$_/ } (qw/ ^nctrl$ ^n\-cntrl$ /);
-    my @headers = (qw/ sample-name instrument-data-id model-id build-id status process-success oriented-fastas /);
     my @rows;
     for my $instrument_data ( @instrument_data ) {
         next if $instrument_data->ignored;
@@ -58,10 +57,13 @@ sub execute {
         push @row, $sample->name;
         push @row, $instrument_data->id;
         my ($model) = sort { $b->id <=> $a->id } grep { $_->subject_id eq $instrument_data->sample_id } grep { $_->processing_profile_id eq $default_processing_profile_id } map { $_->model } Genome::Model::Input->get(name => 'instrument_data', value_id => $instrument_data->id,);
-        next if not $model;
+        if ( not $model ) {
+            push @row, '', '', '', ''. '', '';
+            next;
+        }
         my $build = $model->current_build;
         if ( not $build ) {
-            push @row, $model->id, 'NA', ( $model->build_requested ? 'Requested' : 'None' );
+            push @row, $model->id, 'NA', ( $model->build_requested ? 'Requested' : 'None' ), '', '';
             next;
         }
         push @row, map { $build->$_ } (qw/ model_id id status /);
@@ -75,15 +77,9 @@ sub execute {
         push @row, $files_string;
     }
 
-    my $report = $self->_generate_report_and_execute_functions(
-        name => 'Run Status',
-        description => 'Run Status for '.$self->run_name.' '.$self->region_number,
-        row_name => 'instrument-data',
-        headers => \@headers,
-        rows => \@rows,
-    ) or return;
+    print join( "\n", map { join(",", @$_) } [qw/ sample-name instrument-data-id model-id build-id status process-success oriented-fastas /], @rows)."\n"; 
 
-    return $report;
+    return 1;
 }
 
 1;
