@@ -15,7 +15,7 @@ class Genome::Model::Tools::Fastq::Sol2phred {
             doc => 'The output fastq file for phred quality sequences',
         },
     ],
-    doc => 'convert an illumina/solexa fastq into a sanger/phred fastq'
+    doc => 'convert an "Illumina" (not old Sanger) fastq into a sanger/phred fastq (RENAME ME!)'
 };
 
 sub create {
