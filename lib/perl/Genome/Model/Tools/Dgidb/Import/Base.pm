@@ -130,7 +130,7 @@ sub _create_gene_category_report {
     my %params = (
         gene_id => $gene_name_report->id,
         category_name => $category_name,
-        category_value => lc $category_value,
+        category_value => $category_value,
         description => $description,
     );
     my $gene_category_report = Genome::DruggableGene::GeneCategoryReport->get(%params);
