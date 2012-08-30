@@ -29,6 +29,7 @@ my $cmd = $pkg->create(
 ok($cmd, 'Created command');
 ok($cmd->execute, 'Executed command');
 
+print "$expected\n";
 my $diff = Genome::Sys->diff_file_vs_file($output_file, $expected);
 ok(!$diff, 'output matched expected result') or diag("diff results:\n" . $diff);
 

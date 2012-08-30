@@ -79,7 +79,7 @@ sub _generate_vcf {
         merge_samples => 1,
         clear_filters => 1,
         use_bgzip => 1,
-        joinx_bin_path => "/usr/bin/joinx1.6",
+        use_version => "1.6",
     );
     unless($merge_cmd->execute){
         die $self->error_message("Could not complete merge operation.");

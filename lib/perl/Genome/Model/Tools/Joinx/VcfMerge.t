@@ -123,10 +123,11 @@ $cmd = $cmd_class->create(
 $expected = sprintf("JOINX vcf-merge FLAGS %s -o " . __FILE__ . ".d/foo 2> ERROR",
         join(' ', @non_empty_input_files));
 is($output, $expected, 'Command is generated correctly 4');
+
+
 # INTEGRATION TEST
 my $temp_dir = Genome::Sys->create_temp_directory();
 my $output_vcf = join('/', $temp_dir, 'output.vcf');
-diag $output_vcf;
 $cmd = $cmd_class->create(
     input_files => \@non_empty_input_files,
     output_file => $output_vcf,
@@ -136,6 +137,7 @@ ok(!-e $output_vcf, 'Output file does not exist yet');
 $output = $cmd->execute();
 ok($output, 'Executed successfully');
 ok(-e $output_vcf, 'Output file exists');
+
 
 # BGZIP INTEGRATION TEST
 my @gzip_files;

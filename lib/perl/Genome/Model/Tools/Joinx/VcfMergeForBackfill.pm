@@ -27,28 +27,24 @@ class Genome::Model::Tools::Joinx::VcfMergeForBackfill {
             doc => 'zcats the input files into stdin, and bgzips the output',
             default => 0,
         },
-        joinx_bin_path => {
-            is => 'Text',
-            doc => 'path to the joinx binary to use. This tool is being released before joinx vcf-merge will be released. This will go away when it is.',
-        },
     ],
 };
 
 sub help_brief {
-    "Sorts one or more bed files."
+    "Merge one or more vcf files and format output in bed-compatible way."
 }
 
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-  gmt joinx vcf-merge a.vcf b.vcf ... --output-file merged.vcf
+  gmt joinx vcf-merge-for-backfill a.vcf b.vcf ... --output-file merged.vcf.bed
 EOS
 }
 
 sub execute {
     my $self = shift;
     if(defined($self->use_bgzip) && not defined($self->output_file)){
-       die $self->error_message("If use_bgzip is set, output_file must also be set, otherwise binary nonsense will spew forth."); 
+       die $self->error_message("If use_bgzip is set, output_file must also be set, otherwise binary nonsense will spew forth.");
     }
     my $output = "-";
     $output = $self->output_file if (defined $self->output_file);
@@ -65,7 +61,7 @@ sub execute {
         }
         return 1;
     }
-    
+
     if($self->use_bgzip){
         my @new_inputs;
         for my $input (@inputs){
@@ -74,19 +70,16 @@ sub execute {
         @inputs = @new_inputs;
     }
 
-    unless($self->joinx_bin_path){
-        $self->joinx_bin_path("joinx");
-    }
-
     #compose the command, using awk to compose bed compatible records
-    my $cmd = $self->joinx_bin_path . " vcf-merge " . join(" ", @inputs);
+    my $joinx_bin_path = $self->joinx_path();
+    my $cmd = $joinx_bin_path . " vcf-merge " . join(" ", @inputs);
     if(defined($self->output_file) && not defined($self->use_bgzip)){
         $cmd .= " -o $output" if defined($self->output_file);
     } elsif ( defined($self->use_bgzip) && defined($self->output_file) ){
         $cmd .= " | grep -v ^# | cut -f1-5 | awk \'BEGIN { OFS=\\\"\\t\\\"; }  { print \\\$1,\\\$2,\\\$2,\\\$5; }\' | bgzip -c > $output";
         $cmd = "bash -c \"$cmd\"";
     }
-        
+
     my %params = (
         cmd => $cmd,
         allow_zero_size_output_files=>1,

@@ -46,10 +46,6 @@ class Genome::Model::Tools::Joinx::VcfMerge {
             doc => 'zcats the input files into stdin, and bgzips the output',
             default => 0,
         },
-        joinx_bin_path => {
-            is => 'Text',
-            doc => 'path to the joinx binary to use. This tool is being released before joinx vcf-merge will be released. This will go away when it is.',
-        },
         error_log => {
             is => 'Text',
             doc => 'where to redirect stderr from joinx, if desired',
@@ -84,7 +80,7 @@ sub execute {
     }
 
     my $flags = $self->_resolve_flags();
-    my $joinx_bin_path = $self->_resolve_joinx_path();
+    my $joinx_bin_path = $self->joinx_path();
     my ($cmd, $params) = $self->_generate_joinx_command($joinx_bin_path,
             $flags, \@inputs, $output);
     my %params = %{$params};
@@ -114,15 +110,6 @@ sub _resolve_inputs {
     my @inputs = @non_empty_inputs;
 
     return @inputs;
-}
-
-sub _resolve_joinx_path {
-    my ($self) = @_;
-
-    unless($self->joinx_bin_path){
-        $self->joinx_bin_path($self->joinx_path);
-    }
-    return $self->joinx_bin_path;
 }
 
 sub _resolve_output {
