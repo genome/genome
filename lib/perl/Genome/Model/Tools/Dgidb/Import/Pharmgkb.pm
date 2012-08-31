@@ -197,18 +197,26 @@ sub _import_gene {
 
 sub input_to_tsv {
     my $self = shift;
-    my $infile = $self->infile;
+    my $relationships_file = $self->relationships_file;
+    my $drugs_file = $self->drugs_file;
+    my $genes_file = $self->genes_file;
 
     #Create interactions output file
     my $interactions_outfile = $self->interactions_outfile;
     my $interactions_fh = IO::File->new($interactions_outfile, 'w');
-    my $interactions_header = join("\t", 'interaction_id', 'gene_target','drug_name', 'interaction_type', 'drug_class','drug_type','drug_generic_name','drug_trade_name','drug_synonym','entrez_id','drug_cas_number','drug_drugbank_id');
+    my $interactions_header = join("\t", 'Entity1_id','Entity1_type','Entity2_id','Entity2_type','Evidence','Association','PK','PD','PMIDs','PharmGKB_Drug_Accession_Id','Drug_Name','Generic_Names','Trade_Names','Brand_Mixtures','Drug_Type','Drug_Cross_References','SMILES','External_Vocabulary','PharmGKB_Gene_Accession_Id','Entrez_Id','Ensembl_Id','Gene_Name','Symbol','Alternate_Names','Alternate_Symbols','Is_VIP','Has_Variant_Annotation','Gene_Cross_References');
     $interactions_fh->print($interactions_header, "\n");
 
     #Get the data in order
-    my $infile_path = $infile;
+    my $relationships = $self->_parse_relationships_file($relationships_file);
+    my $drugs = $self->_parse_drugs_file($drugs_file);
+    my $genes = $self->_parse_genes_file($genes_file);
 
-    my ($targets, $drugs) = $self->_parse_targets_file($infile_path);
+
+
+
+
+
 
     #Write data to the file
     for my $target_id (keys %{$targets}){
