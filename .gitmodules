@@ -128,8 +128,8 @@
 	path = vendor/statgen
 	url = git@github.com:genome-vendor/statgen.git
 [submodule "vendor/tophat-fusion"]
-    path = vendor/tophat-fusion
-    url = git@github.com:genome-vendor/tophat-fusion.git
+	path = vendor/tophat-fusion
+	url = git@github.com:genome-vendor/tophat-fusion.git
 [submodule "vendor/MGLtools"]
 	path = vendor/MGLtools
 	url = git@github.com:genome-vendor/MGLtools.git
