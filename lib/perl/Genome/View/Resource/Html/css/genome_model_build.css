@@ -1,0 +1,33 @@
+
+
+div .attrib-box {
+    float: left;
+}
+
+dl {
+    margin: 0 0 0 0;
+}
+
+dt {
+    float: left;
+    clear: both;
+    width: 5.5em;
+    font-weight: bold;
+    text-align: right
+}
+
+dt:after {
+    content: ":";
+}
+
+dd {
+       float: left;
+       width: 18em;
+      margin: 0 0 0.5em 0.5em;
+}
+
+
+a.notes-link {
+    float: right;
+}
+

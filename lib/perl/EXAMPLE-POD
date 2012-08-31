@@ -1,0 +1,50 @@
+=head1 NAME
+
+Genome - pipelines, tools, and data managment for genomics
+
+=head1 SYNOPSIS
+
+ use Genome;
+
+ # modules in the Genome namespace will now dynamically load
+
+ @i = Genome::InstrumentData::Illumina->get(...);
+ $m = Genome::Model::SomaticVariation->create(...);
+
+=head1 DESCRIPTION
+
+This is the base namespace module for the Genome software tree.
+
+That tree has several primary components:
+
+ Genome::Model:         a data modeling pipeline management system for genomics 
+
+ Genome::Model::Tools   a tree of >1000 tools and tool wrappers for genomics
+
+ Genome::*              a variety of sample tracking classes with an RDBMS back-end
+
+Only the tools system is currently released.  
+
+See B<gmt> for a complete inventory of all tool packages, and for command-line access to
+those tools.
+
+=head1 AUTHORS
+
+This software is developed by the analysis and engineering teams at 
+The Genome Center at Washington Univiersity in St. Louis, with funding from 
+the National Human Genome Research Institute.
+
+=head1 LICENSE
+
+This software is copyright Washington University in St. Louis, 2007-2010.  
+
+It is released under the Lesser GNU Public License (LGPL) version 3.  See the 
+associated LICENSE file in this distribution.
+
+=head1 BUGS
+
+For defects with any software in the genome namespace,
+contact genome-dev ~at~ genome.wustl.edu.
+
+=cut
+

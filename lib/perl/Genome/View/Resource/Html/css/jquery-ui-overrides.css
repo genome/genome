@@ -1,0 +1,118 @@
+/* get anchor buttons to match blueprint baseline grid (18px) */
+a.ui-button-text-only .ui-button-text {
+    padding: 0.2em 0.5em;
+    font-size: .7em;
+    line-height: 0 !important;
+}
+
+td.buttons .ui-button {
+    margin-right: 0 !important;
+    line-height: 0 !important;
+}
+
+td.buttons a.ui-button-text-only .ui-button-text {
+    padding: 0 !important;
+    font-size: .7em;
+    line-height: 0 !important;
+
+}
+
+td.buttons .ui-button-text {
+    line-height: 0 !important;
+}
+
+td.buttons a.ui-button-text-only {
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 0 !important;
+}
+
+.ui-state-active,
+.ui-widget-content .ui-state-active,
+.ui-widget-header .ui-state-active {
+    border: 1px solid #aaaaaa;
+    background: #e5e5e3 url(images/ui-bg_glass_65_ffffff_1x400.png) 50% 50% repeat-x;
+    font-weight: bold;
+    color: #212121;
+}
+
+/* ui-widget */
+.ui-widget {
+    font-family: inherit !important;
+    font-size: inherit !important;
+}
+
+.ui-widget-content {
+    background-image: none !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.ui-widget-header {
+    background-image: none !important;
+    background-color: #c1c1b7 !important;
+    border: none !important;
+}
+
+/* tabs */
+
+.ui-tabs span.spinner img {
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+    margin-top: 4px;
+    margin-right: 5px;
+    float: left;
+}
+
+.ui-tabs-panel {
+    border-bottom: 1px solid #acaca3 !important;
+    border-left: 1px solid #acaca3 !important;
+    border-right: 1px solid #acaca3 !important;
+    min-height: 200px;
+}
+
+.ui-tabs {
+    margin-bottom: 1em;
+    padding: 0;
+}
+
+.ui-tabs-nav {
+    position: relative;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 35px !important;
+    border-bottom: 1px solid #acaca3 !important;
+}
+
+.ui-tabs-nav li {
+    margin: 10px 3px 0 3px !important;
+}
+
+.ui-tabs-nav li.tab_header {
+    margin: 0 !important;
+}
+
+.ui-tabs-nav li.tab_header h3 {
+    padding-left: 22px;
+    margin: 8px 10px 5px 10px;
+}
+
+.ui-tabs-nav li a {
+    height: 23px !important;
+    line-height: 23px !important;
+    padding: 0 5px !important;
+    margin: 0 !important;
+}
+
+/* dialog */
+.ui-dialog {
+    -moz-box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    -webkit-box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    border: 1px solid #7d7e71 !important;
+}
+
+.ui-dialog-titlebar {
+    border-bottom: 1px solid #acaca3 !important;
+}

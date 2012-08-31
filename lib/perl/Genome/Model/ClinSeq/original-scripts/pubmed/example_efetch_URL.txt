@@ -1,0 +1,1 @@
+wget "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=BRAF+AND+BRCA2" -O temp.xml

@@ -1,0 +1,34 @@
+$files = {
+           '_</gscuser/adukes/svn/test_modules/Finishing/Assembly/AGP/Exporter.pm' => [
+                                                                                        {
+                                                                                          'expr' => undef,
+                                                                                          'value' => '1',
+                                                                                          'text' => '    my $self = shift;
+',
+                                                                                          'fname' => '/gscuser/adukes/svn/test_modules/Finishing/Assembly/AGP/Exporter.pm',
+                                                                                          'type' => 'user',
+                                                                                          'line' => '125'
+                                                                                        },
+                                                                                        {
+                                                                                          'expr' => undef,
+                                                                                          'value' => '1',
+                                                                                          'text' => '    my $self = shift;
+',
+                                                                                          'fname' => '/gscuser/adukes/svn/test_modules/Finishing/Assembly/AGP/Exporter.pm',
+                                                                                          'type' => 'user',
+                                                                                          'line' => 141
+                                                                                        },
+                                                                                        {
+                                                                                          'expr' => undef,
+                                                                                          'value' => '1',
+                                                                                          'text' => '    my ($self, @gaps) = @_;
+',
+                                                                                          'fname' => '/gscuser/adukes/svn/test_modules/Finishing/Assembly/AGP/Exporter.pm',
+                                                                                          'type' => 'user',
+                                                                                          'line' => 192
+                                                                                        }
+                                                                                      ]
+         };
+$expr_list = [];
+$eval_saved_text = undef;
+$main_win_geometry = '800x600+455+235';

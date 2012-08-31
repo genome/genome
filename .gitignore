@@ -1,0 +1,6 @@
+*.kpf
+*.komodoproject
+Meta.sqlite3-bak
+Meta.sqlite3
+tags
+.DS_Store

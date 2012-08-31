@@ -1,0 +1,152 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="PacBio Control" executor="Workflow::Executor::SerialDeferred" logDir="/gscmnt/gc2123/production/lsf_shared_dir/workflow_logs/control">
+  <link fromOperation="input connector" fromProperty="input_fofns" toOperation="Align and Mask Control" toProperty="input_fofn" />
+  <link fromOperation="input connector" fromProperty="control_reference_directory" toOperation="Align and Mask Control" toProperty="control_reference_directory" />
+  <link fromOperation="input connector" fromProperty="algorithm" toOperation="Align and Mask Control" toProperty="algorithm" />
+  <link fromOperation="input connector" fromProperty="algorithm_params" toOperation="Align and Mask Control" toProperty="algorithm_params" />
+  <link fromOperation="input connector" fromProperty="data_directory" toOperation="Align and Mask Control" toProperty="data_directory" />
+  <link fromOperation="input connector" fromProperty="lookup_region_table" toOperation="Align and Mask Control" toProperty="lookup_region_table" />
+  <link fromOperation="input connector" fromProperty="nproc" toOperation="Align and Mask Control" toProperty="nproc" />
+  <link fromOperation="input connector" fromProperty="min_accuracy" toOperation="Align and Mask Control" toProperty="min_accuracy" />
+  <link fromOperation="input connector" fromProperty="min_length" toOperation="Align and Mask Control" toProperty="min_length" />
+  <link fromOperation="input connector" fromProperty="min_z" toOperation="Align and Mask Control" toProperty="min_z" />
+  <link fromOperation="input connector" fromProperty="noise_data" toOperation="Align and Mask Control" toProperty="noise_data" />
+  <link fromOperation="input connector" fromProperty="xml" toOperation="Align and Mask Control" toProperty="xml" />
+  <link fromOperation="input connector" fromProperty="hdf5_mode" toOperation="Align and Mask Control" toProperty="hdf5_mode" />
+  <link fromOperation="input connector" fromProperty="split_subreads" toOperation="Align and Mask Control" toProperty="split_subreads" />
+  <link fromOperation="input connector" fromProperty="filter_adapter_only" toOperation="Align and Mask Control" toProperty="filter_adapter_only" />
+  <link fromOperation="input connector" fromProperty="load_pulses_metrics" toOperation="Align and Mask Control" toProperty="load_pulses_metrics" />
+
+  <link fromOperation="input connector" fromProperty="movie_summary" toOperation="MergeMovieSummaries" toProperty="output_csv_file" />
+  <link fromOperation="input connector" fromProperty="data_directory" toOperation="MergeMaskedTables" toProperty="base_output_directory" />
+  <link fromOperation="input connector" fromProperty="control_fofn" toOperation="MergeMaskedTables" toProperty="output_masked_fofn" />
+  <link fromOperation="input connector" fromProperty="cmp_hdf5_file" toOperation="MergeControlCmpH5" toProperty="output_cmp_hdf5_file" />
+  
+  <link fromOperation="Align and Mask Control" fromProperty="output_csv_file" toOperation="MergeMovieSummaries" toProperty="input_csv_files" />
+  <link fromOperation="Align and Mask Control" fromProperty="cmp_hdf5_file" toOperation="MergeControlCmpH5" toProperty="input_cmp_hdf5_files" />
+  <link fromOperation="Align and Mask Control" fromProperty="masked_table" toOperation="MergeMaskedTables" toProperty="input_masked_fofns" />
+    
+  <link fromOperation="MergeControlCmpH5" fromProperty="output_cmp_hdf5_file" toOperation="output connector" toProperty="cmp_hdf5_file" />
+  <link fromOperation="MergeMaskedTables" fromProperty="output_masked_fofn" toOperation="output connector" toProperty="control_fofn" />
+  <link fromOperation="MergeMovieSummaries" fromProperty="output_csv_file" toOperation="output connector" toProperty="movie_summary" />
+
+  <link fromOperation="MergeControlCmpH5" fromProperty="result" toOperation="output connector" toProperty="result" />
+  <link fromOperation="MergeMaskedTables" fromProperty="result" toOperation="output connector" toProperty="result" />
+  <link fromOperation="MergeMovieSummaries" fromProperty="result" toOperation="output connector" toProperty="result" />
+  <link fromOperation="Align and Mask Control" fromProperty="result" toOperation="output connector" toProperty="result" />
+  
+  <operation name="Align and Mask Control" parallelBy="input_fofn">
+    <link fromOperation="input connector" fromProperty="input_fofn" toOperation="CompareSequences" toProperty="query" />
+    <link fromOperation="input connector" fromProperty="control_reference_directory" toOperation="CompareSequences" toProperty="target" />
+    <link fromOperation="input connector" fromProperty="algorithm" toOperation="CompareSequences" toProperty="algorithm" />
+    <link fromOperation="input connector" fromProperty="algorithm_params" toOperation="CompareSequences" toProperty="algorithm_params" />
+    <link fromOperation="input connector" fromProperty="data_directory" toOperation="CompareSequences" toProperty="base_output_directory" />
+    <link fromOperation="input connector" fromProperty="lookup_region_table" toOperation="CompareSequences" toProperty="lookup_region_table" />
+    <link fromOperation="input connector" fromProperty="nproc" toOperation="CompareSequences" toProperty="nproc" />
+    <link fromOperation="input connector" fromProperty="min_accuracy" toOperation="CompareSequences" toProperty="min_accuracy" />
+    <link fromOperation="input connector" fromProperty="min_length" toOperation="CompareSequences" toProperty="min_length" />
+    <link fromOperation="input connector" fromProperty="min_z" toOperation="CompareSequences" toProperty="min_z" />
+    <link fromOperation="input connector" fromProperty="noise_data" toOperation="CompareSequences" toProperty="noise_data" />
+    <link fromOperation="input connector" fromProperty="xml" toOperation="CompareSequences" toProperty="xml" />
+    <link fromOperation="input connector" fromProperty="hdf5_mode" toOperation="CompareSequences" toProperty="hdf5_mode" />
+    <link fromOperation="input connector" fromProperty="split_subreads" toOperation="CompareSequences" toProperty="split_subreads" />
+    <link fromOperation="input connector" fromProperty="filter_adapter_only" toOperation="CompareSequences" toProperty="filter_adapter_only" />
+        
+    <link fromOperation="input connector" fromProperty="input_fofn" toOperation="LoadPulses" toProperty="input_fofn" />
+    <link fromOperation="input connector" fromProperty="load_pulses_metrics" toOperation="LoadPulses" toProperty="metrics" />
+    
+    <link fromOperation="input connector" fromProperty="data_directory" toOperation="SummarizeCompareByMovie" toProperty="base_output_directory" />
+    <link fromOperation="input connector" fromProperty="input_fofn" toOperation="SummarizeCompareByMovie" toProperty="fofn" />
+
+    <link fromOperation="input connector" fromProperty="data_directory" toOperation="MaskAlignedReads" toProperty="base_output_directory" />
+    
+    <link fromOperation="CompareSequences" fromProperty="hdf5_file" toOperation="LoadPulses" toProperty="cmp_hdf5_file" />
+    <link fromOperation="LoadPulses" fromProperty="cmp_hdf5_file" toOperation="SummarizeCompareByMovie" toProperty="cmp_hdf5_file" />
+    <link fromOperation="LoadPulses" fromProperty="cmp_hdf5_file" toOperation="MaskAlignedReads" toProperty="cmp_hdf5_file" />
+    <link fromOperation="CompareSequences" fromProperty="region_table" toOperation="MaskAlignedReads" toProperty="region_table" />
+    
+    <link fromOperation="LoadPulses" fromProperty="cmp_hdf5_file" toOperation="output connector" toProperty="cmp_hdf5_file" />
+    <link fromOperation="SummarizeCompareByMovie" fromProperty="output_csv_file" toOperation="output connector" toProperty="output_csv_file" />
+    <link fromOperation="MaskAlignedReads" fromProperty="masked_table" toOperation="output connector" toProperty="masked_table" />
+    
+    <link fromOperation="LoadPulses" fromProperty="result" toOperation="output connector" toProperty="result" />
+    <link fromOperation="SummarizeCompareByMovie" fromProperty="result" toOperation="output connector" toProperty="result" />
+    
+    <operation name="CompareSequences">
+      <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::CompareSequences" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
+    <operation name="LoadPulses">
+      <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::LoadPulses" typeClass="Workflow::OperationType::Command" />
+    </operation>
+    
+    <operation name="SummarizeCompareByMovie">
+      <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::SummarizeCompareByMovie" typeClass="Workflow::OperationType::Command" />
+    </operation>
+    
+    <operation name="MaskAlignedReads">
+      <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::MaskAlignedReads" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
+    <operationtype typeClass="Workflow::OperationType::Model">
+      <inputproperty>input_fofn</inputproperty>
+      <inputproperty>control_reference_directory</inputproperty>
+      <inputproperty>algorithm</inputproperty>
+      <inputproperty>algorithm_params</inputproperty>
+      <inputproperty>data_directory</inputproperty>
+      <inputproperty>lookup_region_table</inputproperty>
+      <inputproperty>nproc</inputproperty>
+      <inputproperty>min_accuracy</inputproperty>
+      <inputproperty>min_length</inputproperty>
+      <inputproperty>min_z</inputproperty>
+      <inputproperty>noise_data</inputproperty>
+      <inputproperty>xml</inputproperty>
+      <inputproperty>hdf5_mode</inputproperty>
+      <inputproperty>split_subreads</inputproperty>
+      <inputproperty>filter_adapter_only</inputproperty>
+      <inputproperty>load_pulses_metrics</inputproperty>
+      <outputproperty>cmp_hdf5_file</outputproperty>
+      <outputproperty>output_csv_file</outputproperty>
+      <outputproperty>masked_table</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+
+  <operation name="MergeControlCmpH5">
+      <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::CmpH5Merge" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  
+  <operation name="MergeMovieSummaries">
+      <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::CsvMerge" typeClass="Workflow::OperationType::Command" />
+  </operation>
+ 
+  <operation name="MergeMaskedTables">
+      <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::MergeMaskedTables" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>input_fofns</inputproperty>
+    <inputproperty>control_reference_directory</inputproperty>
+    <inputproperty>algorithm</inputproperty>
+    <inputproperty>algorithm_params</inputproperty>
+    <inputproperty>data_directory</inputproperty>
+    <inputproperty>lookup_region_table</inputproperty>
+    <inputproperty>nproc</inputproperty>
+    <inputproperty>min_accuracy</inputproperty>
+    <inputproperty>min_length</inputproperty>
+    <inputproperty>min_z</inputproperty>
+    <inputproperty>noise_data</inputproperty>
+    <inputproperty>xml</inputproperty>
+    <inputproperty>hdf5_mode</inputproperty>
+    <inputproperty>split_subreads</inputproperty>
+    <inputproperty>filter_adapter_only</inputproperty>
+    <inputproperty>load_pulses_metrics</inputproperty>
+    <inputproperty>control_fofn</inputproperty>
+    <inputproperty>movie_summary</inputproperty>
+    <inputproperty>cmp_hdf5_file</inputproperty>
+    <outputproperty>cmp_hdf5_file</outputproperty>
+    <outputproperty>movie_summary</outputproperty>
+    <outputproperty>control_fofn</outputproperty>
+    <outputproperty>result</outputproperty>
+  </operationtype>
+</workflow>

@@ -1,0 +1,38 @@
+<configuration>
+  <schema name="source_schema">Source::Schema</schema>
+  <schema name="dbix_schema">DBIx::Schema</schema>
+  <schema name="gsc_schema">GSC::Schema</schema>
+  <schema name="consed_schema">Consed::Schema</schema>
+  <schema name="ace_schema">Ace::Schema</schema>
+  <schema name="consed_schema">Consed::Schema</schema>
+  <default name="file_system_path">/gscmnt/843/finishing/assembly/WholeGenomeImprovement</default>
+  <default name="db">source</default>
+  <dbi name="dw_assembly">dbi:Oracle:dwdev</dbi>
+  <dbi name="dwrac_asm">dbi:Oracle:dwrac</dbi>
+  <dbi name="cmap_sorting">dbi:mysql:cmap_sorting:mysql1</dbi>
+  <dbi name="sqlite">dbi:SQLite:dbname=</dbi>
+  <db name="source" schema="${source_schema}"/>
+  <db name="dw_assembly" schema="${dbix_schema}" dbi="${dw_assembly}" user="assembly_user" pw="a_user">
+    <connect_attr AutoCommit="1" LongReadLen="10000000" RaiseError="1"/>
+    <connect_mod>
+        <on_connect_do>ALTER SESSION SET NLS_DATE_FORMAT = 'YYY-MM-DD HH24:MI:SS'</on_connect_do>
+    </connect_mod>
+  </db>
+  <db name="dwrac_asm" schema="${dbix_schema}" dbi="${dwrac_asm}" user="assembly_user" pw="a_user">
+    <connect_attr AutoCommit="1" LongReadLen="10000000" RaiseError="1"/>
+    <connect_mod>
+        <on_connect_do>ALTER SESSION SET NLS_DATE_FORMAT = 'YYY-MM-DD HH24:MI:SS'</on_connect_do>
+    </connect_mod>
+  </db>
+  <db name="cmap_admin" schema="${dbix_schema}" dbi="${cmap_sorting}" user="sorting_admin" pw="s_admin">
+    <connect_attr AutoCommit="1" LongReadLen="10000000" RaiseError="1"/>
+  </db>
+  <db name="cmap_user" schema="${dbix_schema}" dbi="${cmap_sorting}" user="sorting" pw="s_user"/>
+  <db name="sqlite" schema="${dbix_schema}" dbi="${sqlite}"/>
+  <db name="gsc" schema="${gsc_schema}"/>
+  <db name="ace" schema="${ace_schema}" dbi=""/>
+  <db name="phd_dir" schema="Phd::Directory" dbi=""/>
+  <db name="phd_ball" schema="Phd::Ball" dbi=""/>
+  <db name="phd_fnqdb" schema="Phd::FastaAndQualDB" dbi=""/>
+  <db name="consed" schema="${consed_schema}" dbi=""/>
+</configuration>

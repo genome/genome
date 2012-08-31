@@ -1,0 +1,50 @@
+$files = {
+           '_</gscuser/adukes/svn/test_modules/Finishing/Assembly/AGP/Importer.pm' => [
+                                                                                        {
+                                                                                          'expr' => undef,
+                                                                                          'value' => '1',
+                                                                                          'text' => '            my @gaps;
+',
+                                                                                          'fname' => '/gscuser/adukes/svn/test_modules/Finishing/Assembly/AGP/Importer.pm',
+                                                                                          'type' => 'user',
+                                                                                          'line' => '130'
+                                                                                        },
+                                                                                        {
+                                                                                          'expr' => undef,
+                                                                                          'value' => '1',
+                                                                                          'text' => '    $contig->set_chromosome($chromosome, $self->ordered);
+',
+                                                                                          'fname' => '/gscuser/adukes/svn/test_modules/Finishing/Assembly/AGP/Importer.pm',
+                                                                                          'type' => 'user',
+                                                                                          'line' => 244
+                                                                                        },
+                                                                                        {
+                                                                                          'expr' => undef,
+                                                                                          'value' => '1',
+                                                                                          'text' => '    my ($self, $agp) = @_;
+',
+                                                                                          'fname' => '/gscuser/adukes/svn/test_modules/Finishing/Assembly/AGP/Importer.pm',
+                                                                                          'type' => 'user',
+                                                                                          'line' => 207
+                                                                                        }
+                                                                                      ],
+           '_</gsc/lib/perl5/site_perl/5.8.7/DBIx/Class/Schema.pm' => [
+                                                                        {
+                                                                          'expr' => undef,
+                                                                          'value' => '1',
+                                                                          'text' => '      $coderef->(@args);
+',
+                                                                          'fname' => '/gsc/lib/perl5/site_perl/5.8.7/DBIx/Class/Schema.pm',
+                                                                          'type' => 'user',
+                                                                          'line' => 617
+                                                                        }
+                                                                      ]
+         };
+$expr_list = [
+               {
+                 'expr' => '$method',
+                 'depth' => -1
+               }
+             ];
+$eval_saved_text = undef;
+$main_win_geometry = '905x718+0+0';

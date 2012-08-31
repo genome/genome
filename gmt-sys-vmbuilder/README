@@ -1,0 +1,76 @@
+To use this to build a new VM, follow these steps:
+
+1. $ sudo ./vm_builder.sh
+2. Configure Shared Folders (see shared folders below)
+3. Configure Networking (see LSF section below)
+4. $ sudo ./mount.sh $UID
+    - The $UID arg is to allow your user to read the shared folders
+      after they are mounted. If you intend to use LSF, ensure your
+      UID is set via the instructions listed in the networking
+      section.
+5. $ ./user_script
+6. $ source ~/.bashrc
+
+Run these as root:
+$ sudo ./vm_builder.sh
+
+Configure Shared Folders
+Configure Networking
+$ sudo ./mount.sh
+
+Run these as your user:
+$ ./user_script.sh
+
+Set up your environment
+$ source ~/.bashrc
+
+Shared Folders
+---
+Assuming you are using a Virtualbox VM at The Genome Institute,
+you will need to add the following names and paths as shared folders:
+
+name    path
+---     ---
+gscmnt  /gscmnt
+lsf     /usr/local/lsf
+var     /gsc/var
+
+Before running the setup scripts above, you will need to ensure
+the guest modules are installed on your test vm.
+
+LSF / Networking
+---
+In order to use LSF at The Genome Institute,
+the VM must have an IP accessible elsewhere on the network
+and be added to the LSF cluster.
+
+The mount.sh script will mount the /usr/local/lsf folder
+and user_script.sh will configure the environment variables.
+
+You will also need your VM to use a bridged network adapter,
+and your VM must be appropriately configured with a static IP.
+
+For example, my /etc/network/interfaces has a section like this:
+
+auto eth#
+iface eth# inet static
+address 10.0.3.48
+netmask 255.255.255.0
+network 10.0.3.0
+broadcast 10.0.3.255
+gateway 10.0.3.253
+
+If you are sure /usr/local/lsf is mounted and the various
+lsf commands like bsub and bhosts are in your PATH, but you
+receive permission errors, you likely need systems to add
+your VM to the lsf cluster.
+
+In order to dispatch to LSF, you must have the same username
+and user number as on your workstation. In order to set the
+user number, on your workstation run:
+
+$ echo $UID
+
+To see your user number. Then, on the VM, run:
+
+$ sudo usermod -u (number from before) $USER

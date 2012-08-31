@@ -1,0 +1,98 @@
+table.commands {
+    margin-left: 10px;
+}
+
+table.commands td.command {
+    font-weight: bold;
+    padding-right: 10px;
+    padding-top: 5px;
+}
+
+table.commands td.help {
+    font-style: oblique;
+    color: #333;
+}
+
+table.form {
+    margin-left: 10px;
+}
+
+h2.page_title {
+	padding-left: 10px;
+}
+
+h2.page_title a {
+	text-decoration: underline;
+}
+
+p.help {
+	padding-left: 10px;
+	font-style: oblique;
+}
+
+div.stdout_title {
+	float: left;
+	width: 49%;
+}
+
+div.stderr_title {
+	float: right;
+	width: 49%;
+}
+
+img.spinner {
+	margin-right: 8px;
+}
+
+div#stdout_block,
+div#stderr_block {
+    float: left;
+    width: 100%;
+	min-height: 200px;
+	background-color: #F6F6F6;
+	margin-bottom: 10px;
+}
+
+#stdout {
+	font-family:monospace;
+	font-size: 85%;
+	float: left;
+	padding: 5px;
+    white-space: pre-wrap; /* css-3 */
+    white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+    white-space: -pre-wrap; /* Opera 4-6 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* Internet Explorer 5.5+ */
+}
+
+div#results {
+	float: left;
+	width: 98%;
+	padding: 0 1%;
+	background: #EFEFEF;
+	margin-bottom: 20px;
+}
+
+div#stderr {
+	font-family:monospace;
+	padding: 5px;
+	font-size: 85%;
+	float: left;
+    font-weight:bold;
+    color: #a30013;
+    white-space: pre-wrap; /* css-3 */
+    white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+    white-space: -pre-wrap; /* Opera 4-6 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* Internet Explorer 5.5+ */
+}
+
+div#status {
+    font-weight:bold;
+    color: #4d852d;
+}
+
+div#ticker {
+    font-weight:bold;
+    color:blue;
+}

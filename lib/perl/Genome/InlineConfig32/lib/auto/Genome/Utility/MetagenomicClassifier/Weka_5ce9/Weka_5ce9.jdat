@@ -1,0 +1,13 @@
+V2
+class WekaClassifier java.lang.Object
+constructor ()
+method static WekaClassifier classify([Ljava.lang.Object;)
+method instance java.lang.Object wait(long)
+method instance java.lang.Object wait(long, int)
+method instance java.lang.Object wait()
+method instance java.lang.Object hashCode()
+method instance java.lang.Object getClass()
+method instance java.lang.Object equals(java.lang.Object)
+method instance java.lang.Object toString()
+method instance java.lang.Object notify()
+method instance java.lang.Object notifyAll()

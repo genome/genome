@@ -1,0 +1,57 @@
+DROP SCHEMA IF EXISTS disk CASCADE;
+CREATE SCHEMA disk AUTHORIZATION genome;
+
+SELECT set_config('search_path', current_setting('search_path') || ', disk', false);
+ALTER USER genome SET search_path FROM current;
+
+CREATE TABLE disk.allocation (
+    id                           varchar(32) NOT NULL,
+    allocation_path              varchar(4000) NOT NULL,
+    disk_group_name              varchar(40) NOT NULL,
+    group_subdirectory           varchar(255) NOT NULL,
+    mount_path                   varchar(255) NOT NULL,
+    kilobytes_requested          bigint NOT NULL,
+    kilobytes_used               bigint,
+    owner_class_name             varchar(255),
+    owner_id                     varchar(255),
+    creation_time                timestamp(6),
+    reallocation_time            timestamp(6),
+    original_kilobytes_requested bigint,
+    PRIMARY KEY (id)
+);
+CREATE INDEX allocation_absolute_path_index ON disk.allocation(mount_path, group_subdirectory, allocation_path);
+CREATE INDEX allocation_allocation_path_index ON disk.allocation(allocation_path);
+CREATE INDEX allocation_creation_reallocation_time_index ON disk.allocation(creation_time, reallocation_time);
+CREATE INDEX allocation_owner_class_id_index ON disk.allocation(owner_class_name, owner_id);
+
+CREATE TABLE disk.volume (
+    id             varchar(32) NOT NULL,
+    hostname       varchar(255) NOT NULL,
+    physical_path  varchar(255) NOT NULL,
+    mount_path     varchar(255) NOT NULL,
+    total_kb       bigint NOT NULL,
+    unallocated_kb bigint NOT NULL,
+    disk_status    varchar(15) NOT NULL,
+    can_allocate   boolean DEFAULT true NOT NULL,
+    doubles_space  boolean DEFAULT false NOT NULL, 
+    PRIMARY KEY (id)
+);
+CREATE INDEX volume_mount_path_index ON disk.volume(mount_path);
+
+CREATE TABLE disk.group (
+    id           varchar(32) NOT NULL,
+    name         varchar(40) NOT NULL,
+    permissions  integer NOT NULL,
+    sticky       boolean NOT NULL,
+    subdirectory varchar(255) NOT NULL,
+    unix_uid     integer NOT NULL,
+    unix_gid     integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX group_name_index ON disk.group(name);
+
+CREATE TABLE disk.volume_group_bridge (
+    volume_id varchar(32) NOT NULL,
+    group_id  varchar(32) NOT NULL,
+    PRIMARY KEY (volume_id, group_id)
+);

@@ -1,0 +1,271 @@
+<div class="book" lang="en">
+<div class="titlepage">
+<div>
+<div><h1 class="title">
+<a name="id1954240"></a>XSLT Standard Library</h1></div>
+<div><h2 class="subtitle">Version 1.2.1</h2></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Steve</span> <span class="surname">Ball</span>
+</h3></div></div>
+<div><p class="copyright">Copyright © 2004, 2002 Steve Ball</p></div>
+</div>
+<div></div>
+<hr>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="preface"><a href="#id1954277"></a></span></dt>
+<dt><span class="chapter"><a href="#id1954375">1. Using The Library</a></span></dt>
+<dt><span class="chapter"><a href="#id1954525">2. Obtaining The Library</a></span></dt>
+<dt><span class="chapter"><a href="#id1954566">3. Getting Involved</a></span></dt>
+<dt><span class="chapter"><a href="#id1954663">4. XML Namespaces</a></span></dt>
+<dt><span class="chapter"><a href="#id1954712">5. Engineering Standards</a></span></dt>
+<dt><span class="chapter"><a href="#id1954854">6. Related Work</a></span></dt>
+<dt><span class="chapter"><a href="#id1954874">7. Reference Documentation</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="#id1954885">String Processing</a></span></dt>
+<dt><span class="section"><a href="#id1954905">Nodes</a></span></dt>
+<dt><span class="section"><a href="#id1954924">Date/Time Processing</a></span></dt>
+<dt><span class="section"><a href="#id1954944">Mathematics</a></span></dt>
+<dt><span class="section"><a href="#id1954964">URI (Uniform Resource Identifier) Processing</a></span></dt>
+<dt><span class="section"><a href="#id1954984">Comparing Nodesets</a></span></dt>
+<dt><span class="section"><a href="#id1955004">Generating XML Markup</a></span></dt>
+<dt><span class="section"><a href="#id1955024">Presentation Media Support</a></span></dt>
+<dt><span class="section"><a href="#id1955046">Example</a></span></dt>
+</dl></dd>
+</dl>
+</div>
+<div class="preface" lang="en">
+<div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<p>The <a href="http://www.w3.org/Style/XSL" target="_top">XSLT</a> Standard Library, <span class="acronym">xsltsl</span>, provides the XSLT developer with a set of XSLT templates for commonly used functions.  These are implemented purely in XSLT, that is they do not use any extensions.</p>
+<p><span class="acronym">xsltsl</span> is a <a href="http://sourceforge.net/projects/xsltsl/" target="_top">SourceForge project</a>.</p>
+<p><a href="http://sourceforge.net/" target="_top"><span class="inlinemediaobject"><img src="sflogo.gif" width="88" alt="SourceForge Logo"></span></a></p>
+<p>Goals of the <span class="acronym">xsltsl</span> project include:</p>
+<div class="itemizedlist"><ul type="disc">
+<li><p>Provision of a high-quality library of XSLT templates, suitable for inclusion by vendors in XSLT processor software products.</p></li>
+<li><p>Demonstration of best practice in XSLT stylesheet development and documentation.</p></li>
+<li><p>Provide examples of various techniques used to develop XSLT stylesheets (ie. a working FAQ).</p></li>
+</ul></div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title">
+<a name="id1954375"></a>Chapter 1. Using The Library</h2></div></div>
+<div></div>
+</div>
+<p>There are two ways of using the library:</p>
+<div class="itemizedlist"><ul type="disc">
+<li>
+<p>Use a local copy of the library.</p>
+<div class="orderedlist"><ol type="1">
+<li><p>Download the distribution (see below).</p></li>
+<li><p>Unpack the distribution, using either gunzip/tar or unzip.</p></li>
+<li>
+<p>In your stylesheet import or include either the main stylesheet, <tt class="filename">stdlib.xsl</tt>, or the stylesheet module you wish to use, such as <tt class="filename">string.xsl</tt>.  This example assumes that the distribution has been extracted into the same directory as your own stylesheet:</p>
+<div class="informalexample"><pre class="programlisting">
+&lt;xsl:import href="stdlib.xsl"/&gt;
+</pre></div>
+</li>
+</ol></div>
+</li>
+<li>
+<p>Import or include either the main stylesheet, or the stylesheet module you wish to use, directly from the library website; http://xsltsl.sourceforge.net/modules/.  The <tt class="filename">modules</tt> directory always contains the latest stable release.  For example:</p>
+<div class="informalexample"><pre class="programlisting">
+&lt;xsl:import href="http://xsltsl.sourceforge.net/modules/stdlib.xsl"/&gt;
+</pre></div>
+<p>Older versions of the library are available in subdirectories.  For example, to access version 1.1 of the library use:</p>
+<div class="informalexample"><pre class="programlisting">
+&lt;xsl:import href="http://xsltsl.sourceforge.net/modules/1.1/stdlib.xsl"/&gt;
+</pre></div>
+</li>
+</ul></div>
+<p>Next, add XML Namespace declarations for the modules you wish to use.  For example, to use templates from the string module, your stylesheet should have the following declaration:</p>
+<div class="informalexample"><pre class="programlisting">
+&lt;xsl:stylesheet version="1.0"
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:str="http://xsltsl.org/string"&gt;
+
+&lt;xsl:import href="http://xsltsl.sourceforge.net/modules/stdlib.xsl"/&gt;
+</pre></div>
+<p>Finally, use a template with the <tt class="sgmltag-element">call-template</tt> element.  Most templates require parameters, which are passed using the <tt class="sgmltag-element">with-param</tt> element.  For example:</p>
+<div class="informalexample"><pre class="programlisting">
+&lt;xsl:template match="foo"&gt;
+  &lt;xsl:call-template name="str:subst"&gt;
+    &lt;xsl:with-param name="text" select="."/&gt;
+    &lt;xsl:with-param name="replace"&gt;a word&lt;/xsl:with-param&gt;
+    &lt;xsl:with-param name="with"&gt;another word&lt;/xsl:with-param&gt;
+  &lt;/xsl:call-template&gt;
+&lt;/xsl:template&gt;
+</pre></div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title">
+<a name="id1954525"></a>Chapter 2. Obtaining The Library</h2></div></div>
+<div></div>
+</div>
+<p>The XSLT Standard Library is available for download as either:</p>
+<div class="itemizedlist"><ul type="disc">
+<li><p>Gzip'd tarball: <a href="http://prdownloads.sourceforge.net/xsltsl/xsltsl-1.2.1.tar.gz" target="_top">http://prdownloads.sourceforge.net/xsltsl/xsltsl-1.2.1.tar.gz</a></p></li>
+<li><p>Zip file: <a href="http://prdownloads.sourceforge.net/xsltsl/xsltsl-1.2.1.zip" target="_top">http://prdownloads.sourceforge.net/xsltsl/xsltsl-1.2.1.zip</a></p></li>
+</ul></div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title">
+<a name="id1954566"></a>Chapter 3. Getting Involved</h2></div></div>
+<div></div>
+</div>
+<p>Contributions to the project are most welcome, and may be in the form of stylesheet modules, patches, bug reports or sample code.  Any contributed code must use the LGPL license to be accepted into the library.</p>
+<p>See the SourceForge Project Page <a href="http://sourceforge.net/projects/xsltsl/" target="_top">http://sourceforge.net/projects/xsltsl/</a> for information on the development of the project.  Bug reports may be submitted here.</p>
+<p>See the project Web Page <a href="http://xsltsl.sourceforge.net/" target="_top">http://xsltsl.sourceforge.net/</a> for documentation.</p>
+<p>There are three mailing lists for the project:</p>
+<div class="variablelist"><dl>
+<dt><span class="term"><tt class="email">&lt;<a href="mailto:xsltsl-users@lists.sourceforge.net">xsltsl-users@lists.sourceforge.net</a>&gt;</tt></span></dt>
+<dd><p>Discussion of the use of <span class="acronym">xsltsl</span>.</p></dd>
+<dt><span class="term"><tt class="email">&lt;<a href="mailto:xsltsl-devel@lists.sourceforge.net">xsltsl-devel@lists.sourceforge.net</a>&gt;</tt></span></dt>
+<dd><p>Discussion of the development of <span class="acronym">xsltsl</span>.</p></dd>
+<dt><span class="term"><tt class="email">&lt;<a href="mailto:xsltsl-announce@lists.sourceforge.net">xsltsl-announce@lists.sourceforge.net</a>&gt;</tt></span></dt>
+<dd><p>Project announcements.</p></dd>
+</dl></div>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title">
+<a name="id1954663"></a>Chapter 4. XML Namespaces</h2></div></div>
+<div></div>
+</div>
+<p>Apart from the XSLT XML Namespace (http://www.w3.org/1999/XSL/Transform), <span class="acronym">xsltsl</span> employs a number of XML Namespaces to allow inclusion of the library in developer stylesheets.  In addition, documentation is defined in a separate namespace.</p>
+<p>Each module is allocated a namespace URI by appending the module name to the URI for the project, http://xsltsl.org/.  For example, the string module has the namespace URI http://xsltsl.org/string.</p>
+<p>All documentation is written using an <a href="docbook-extensions.html" target="_top">extension</a> of <a href="http://www.docbook.org/" target="_top">DocBook</a> designed for <a href="docbook-extensions.html" target="_top">embedding DocBook into XSLT stylesheets</a>.  The namespace URI for DocBook embedded in stylesheets is http://xsltsl.org/xsl/documentation/1.0</p>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title">
+<a name="id1954712"></a>Chapter 5. Engineering Standards</h2></div></div>
+<div></div>
+</div>
+<p>In order to maintain a high engineering standard, all modules and contributions to the <span class="acronym">xsltsl</span> project must adhere to the following coding and documentation standards.  Submissions which do not meet (or exceed) this standard will not be accepted.</p>
+<div class="itemizedlist"><ul type="disc">
+<li><p>All stylesheets must be indented, with each level indented by two spaces.  NB. a simple stylesheet could be used to enforce/fix this.</p></li>
+<li><p>Templates are named using a qualified name (QName).  The namespace URI for the template's containing stylesheet is assigned as above.</p></li>
+<li>
+<p>Parameters for templates should use sensible names.  Where possible (or if in doubt), follow these conventions:</p>
+<div class="itemizedlist"><ul type="circle">
+<li><p>A parameter containing a single node is named <span class="parametername"><tt>node</tt></span>.  Where more than one parameter contains a single node, the suffix <span class="parametername"><tt>Node</tt></span> is appended to the parameter name, eg. <span class="parametername"><tt>referenceNode</tt></span></p></li>
+<li><p>A parameter which potentially contains multiple nodes is named <span class="parametername"><tt>nodes</tt></span>.  Where more than one parameter potentially contains multiple nodes, the suffix <span class="parametername"><tt>Nodes</tt></span> is appended to the parameter name, eg. <span class="parametername"><tt>copyNodes</tt></span></p></li>
+<li><p>A parameter which contains a string value is named <span class="parametername"><tt>text</tt></span>.</p></li>
+</ul></div>
+</li>
+<li><p>All templates in each stylesheet must be documented.  A template is documented as a <a href="http://www.docbook.org/" target="_top">DocBook</a> RefEntry.</p></li>
+<li><p>Every stylesheet must include a test suite.  The test system is in the <tt class="filename">test</tt> subdirectory.  See <a href="test/test.html" target="_top">test/test.html</a> for further details.</p></li>
+</ul></div>
+<p>An <a href="example.xsl" target="_top">example stylesheet</a> has been provided, which acts as a template for new stylesheet modules.</p>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title">
+<a name="id1954854"></a>Chapter 6. Related Work</h2></div></div>
+<div></div>
+</div>
+<p>The <a href="http://www.exslt.org/" target="_top">EXSLT</a> project is creating a library to standardise extension functions.  The XSLT Standard Library is complementary to the EXSLT project.</p>
+</div>
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title">
+<a name="id1954874"></a>Chapter 7. Reference Documentation</h2></div></div>
+<div></div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#id1954885">String Processing</a></span></dt>
+<dt><span class="section"><a href="#id1954905">Nodes</a></span></dt>
+<dt><span class="section"><a href="#id1954924">Date/Time Processing</a></span></dt>
+<dt><span class="section"><a href="#id1954944">Mathematics</a></span></dt>
+<dt><span class="section"><a href="#id1954964">URI (Uniform Resource Identifier) Processing</a></span></dt>
+<dt><span class="section"><a href="#id1954984">Comparing Nodesets</a></span></dt>
+<dt><span class="section"><a href="#id1955004">Generating XML Markup</a></span></dt>
+<dt><span class="section"><a href="#id1955024">Presentation Media Support</a></span></dt>
+<dt><span class="section"><a href="#id1955046">Example</a></span></dt>
+</dl>
+</div>
+<p>Reference documentation is available for each module.</p>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954885"></a>String Processing</h2></div></div>
+<div></div>
+</div>
+<div class="itemizedlist"><ul type="disc"><li><p><a href="string.html" target="_top">string.xsl</a></p></li></ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954905"></a>Nodes</h2></div></div>
+<div></div>
+</div>
+<div class="itemizedlist"><ul type="disc"><li><p><a href="node.html" target="_top">node.xsl</a></p></li></ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954924"></a>Date/Time Processing</h2></div></div>
+<div></div>
+</div>
+<div class="itemizedlist"><ul type="disc"><li><p><a href="date-time.html" target="_top">date-time.xsl</a></p></li></ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954944"></a>Mathematics</h2></div></div>
+<div></div>
+</div>
+<div class="itemizedlist"><ul type="disc"><li><p><a href="math.html" target="_top">math.xsl</a></p></li></ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954964"></a>URI (Uniform Resource Identifier) Processing</h2></div></div>
+<div></div>
+</div>
+<div class="itemizedlist"><ul type="disc"><li><p><a href="uri.html" target="_top">uri.xsl</a></p></li></ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954984"></a>Comparing Nodesets</h2></div></div>
+<div></div>
+</div>
+<div class="itemizedlist"><ul type="disc"><li><p><a href="cmp.html" target="_top">cmp.xsl</a></p></li></ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1955004"></a>Generating XML Markup</h2></div></div>
+<div></div>
+</div>
+<div class="itemizedlist"><ul type="disc"><li><p><a href="markup.html" target="_top">markup.xsl</a></p></li></ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1955024"></a>Presentation Media Support</h2></div></div>
+<div></div>
+</div>
+<div class="itemizedlist"><ul type="disc"><li><p>Scalable Vector Graphics: <a href="svg.html" target="_top">svg.xsl</a></p></li></ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1955046"></a>Example</h2></div></div>
+<div></div>
+</div>
+<div class="itemizedlist"><ul type="disc"><li><p><a href="example.html" target="_top">example.xsl</a></p></li></ul></div>
+</div>
+</div>
+</div>

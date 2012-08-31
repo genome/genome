@@ -1,0 +1,76 @@
+<div class="reference" lang="en">
+<a name="id1975402"></a><div class="titlepage">
+<div>
+<div><h1 class="title">
+<a name="id1975402"></a>Example Stylesheet</h1></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Steve</span> <span class="surname">Ball</span>
+</h3></div></div>
+<div><p class="releaseinfo">
+        $Id: example.html,v 1.9 2004/10/10 06:18:57 balls Exp $
+      </p></div>
+<div><p class="copyright">Copyright © 2001 Steve Ball</p></div>
+</div>
+<div></div>
+<hr>
+</div>
+<div class="partintro" lang="en">
+<div>
+<div></div>
+<div></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1955266"></a>Introduction</h2></div></div>
+<div></div>
+</div>
+<p>This module provides a template for adding stylesheet modules to the XSLT Standard Library.</p>
+<p>To add a new module to the library, follow these easy steps:</p>
+<div class="orderedlist"><ol type="1">
+<li><p>Copy this file and replace its contents with the new module templates and documentation.</p></li>
+<li><p>Copy the corresponding test file in the <tt class="filename">test</tt> directory.  Replace its contents with tests for the new module.</p></li>
+<li><p>Add an include element in the <tt class="filename">stdlib.xsl</tt> stylesheet.</p></li>
+<li><p>Add an entry in the <tt class="filename">test/test.xml</tt> file.</p></li>
+<li><p>Add entries in the <tt class="filename">test/test.xsl</tt> stylesheet.</p></li>
+<li><p>Add an entry in the <tt class="filename">doc/build.xml</tt> file.</p></li>
+</ol></div>
+<p>The <tt class="filename">example.xsl</tt> stylesheet provides a more extensive example.</p>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl><dt>
+<a href="#template.eg:example">eg:example</a> - Template Example</dt></dl>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<a name="template.eg:example"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>eg:example — Template Example</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="eg:example"&gt;&lt;xsl:param name="text"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1975331"></a>
+      <p>Provides a template for writing templates.  Replace this paragraph with a description of your template</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1975310"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The example string</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955391"></a>Returns</b>
+      <p>Returns nothing.</p>
+    </div>
+</div>
+</div>

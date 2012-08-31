@@ -1,0 +1,20 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+          "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="en">
+  <head>
+    <title>[% page_title %]</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <style type="text/css" media="screen">
+      [% style %]
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="background">
+        <h1 class="report_title">[% page_title %]</h1>
+        [% report_content %]
+      </div>&nbsp;
+    </div>
+  </body>
+</html>

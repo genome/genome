@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+  <ModulePrefs title="Protovis Gadget" width="300" height="150">
+    <Require feature="dynamic-height"/>
+  </ModulePrefs>
+  <UserPref name="code" default_value=""/>
+  <Content type="html">
+<![CDATA[
+<script type="text/javascript" src="http://protovis-js.googlecode.com/svn/trunk/protovis-r3.0.js"></script>
+<script type="text/javascript">
+var viewport = gadgets.window.getViewportDimensions();
+pv.Panel.prototype.defaults
+    .width(function() { return this.parent ? null : viewport.width; })
+    .height(function() { return this.parent ? null : viewport.height; });
+window.eval(pv.parse(gadgets.util.unescapeString(new gadgets.Prefs().getString("code"))));
+</script>
+]]>
+  </Content>
+</Module>

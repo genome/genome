@@ -1,0 +1,18 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="human contamination screening" executor="Workflow::Executor::SerialDeferred" logDir="/gscmnt/sata409/research/mmitreva/edemello/workflow_logs">
+    <link fromOperation="input connector"           fromProperty="fasta_file"   toOperation="dust"                      toProperty="fasta_file" />
+    <link fromOperation="input connector"           fromProperty="dusted_file"  toOperation="dust"                      toProperty="dusted_file" />
+
+    <link fromOperation="dust"                      fromProperty="result"       toOperation="output connector"          toProperty="result" />
+
+    <operation name="dust">
+        <operationtype commandClass="Genome::Model::Tools::Fasta::Dust" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
+    <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>fasta_file</inputproperty>
+        <inputproperty>dusted_file</inputproperty>
+        <outputproperty>result</outputproperty>
+    </operationtype>
+</workflow>
+

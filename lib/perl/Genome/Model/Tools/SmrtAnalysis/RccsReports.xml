@@ -1,0 +1,21 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="PacBio RCCS Reports" executor="Workflow::Executor::SerialDeferred" logDir="/gscmnt/gc2123/production/lsf_shared_dir/workflow_logs/rccs_reports">
+  
+  <link fromOperation="input connector" fromProperty="results_directory" toOperation="MakeRccsReport" toProperty="output_dir" />
+  <link fromOperation="input connector" fromProperty="rccs_per_base_info_file" toOperation="MakeRccsReport" toProperty="rccs_per_base_info_file" />
+  
+<link fromOperation="MakeRccsReport" fromProperty="report_xml_file" toOperation="output connector" toProperty="rccs_report_xml_file" />
+  <link fromOperation="MakeRccsReport" fromProperty="result" toOperation="output connector" toProperty="result" />
+ 
+  <operation name="MakeRccsReport">
+    <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::MakeRccsReport" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>results_directory</inputproperty>
+    <inputproperty>rccs_per_base_info_file</inputproperty>
+    <outputproperty>rccs_report_xml_file</outputproperty>
+    <outputproperty>result</outputproperty>
+  </operationtype>
+</workflow>

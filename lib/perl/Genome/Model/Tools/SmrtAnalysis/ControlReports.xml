@@ -1,0 +1,23 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="PacBio Control Reports" executor="Workflow::Executor::SerialDeferred" logDir="/gscmnt/gc2123/production/lsf_shared_dir/workflow_logs/control_reports">
+  
+  <link fromOperation="input connector" fromProperty="filtered_summary_file" toOperation="MakeControlReport" toProperty="filtered_summary_csv_file" />
+  <link fromOperation="input connector" fromProperty="results_directory" toOperation="MakeControlReport" toProperty="output_dir" />
+  <link fromOperation="input connector" fromProperty="cmp_hdf5_file" toOperation="MakeControlReport" toProperty="cmp_hdf5_file" />
+  
+<link fromOperation="MakeControlReport" fromProperty="report_xml_file" toOperation="output connector" toProperty="control_xml_file" />
+  <link fromOperation="MakeControlReport" fromProperty="result" toOperation="output connector" toProperty="result" />
+ 
+  <operation name="MakeControlReport">
+    <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::MakeControlReport" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>results_directory</inputproperty>
+    <inputproperty>filtered_summary_file</inputproperty>
+    <inputproperty>cmp_hdf5_file</inputproperty>
+    <outputproperty>control_xml_file</outputproperty>
+    <outputproperty>result</outputproperty>
+  </operationtype>
+</workflow>

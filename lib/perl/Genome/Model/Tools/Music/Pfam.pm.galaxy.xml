@@ -1,0 +1,61 @@
+<tool id="gmt_music_pfam" name="gmt_music_pfam" version="0.3.0">
+  <description>
+    Add Pfam annotation to a MAF file
+  </description>
+  <command>
+    gmt music pfam --maf-file=$maf_file  --output-file=$output_file  --reference-build=$reference_build 
+  </command>
+  <inputs>
+    <param name="maf_file" format="text" type="data" help="" />
+    <param name="reference_build" format="text" type="select" help="">
+      <option value='Build36'>Build36</option>
+      <option value='Build37'>Build37</option>
+    </param>
+
+  </inputs>
+  <outputs>
+    <data name="output_file" format="text" label="" help="" />
+  </outputs>
+  <help>
+
+
+    **USAGE**
+
+    gmt music pfam --maf-file=? --output-file=? --reference-build=?
+
+
+    **SYNOPSIS**
+
+    ... music pfam \
+    --maf-file myMAF.tsv \
+    --output-file myMAF.tsv.pfam
+
+
+    **REQUIRED ARGUMENTS**
+
+    maf-file
+    List of mutations using TCGA MAF specification v2.3 
+    output-file
+    Output MAF file with an extra column that reports Pfam annotation domains 
+    reference-build
+    Options are 'Build36' or 'Build37'. This parameter ensures appropriate annotation of domains
+    valid values:
+    Build36
+    Build37 
+    Default value 'Build37' if not specified
+
+
+    **DESCRIPTION**
+
+    This command adds Pfam Domains to a column at the end of a MAF file.
+
+    This tool takes a MAF file, determines the location of each variant therein, and then uses a
+    fast-lookup to retrieve all of the Pfam annotation domains that the variant crosses. A column
+    is appended to the end of the input MAF file called "Pfam_Annotation_Domains" where the results
+    are listed. "NA" is listed if no Pfam domains are found.
+
+
+
+
+  </help>
+</tool>

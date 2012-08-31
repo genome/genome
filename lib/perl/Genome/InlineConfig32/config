@@ -1,0 +1,44 @@
+version : 0.44
+languages : %
+    C : C
+    C++ : CPP
+    CPP : CPP
+    CXX : CPP
+    Cplusplus : CPP
+    Foo : Foo
+    JAVA : Java
+    Java : Java
+    PDLPP : Pdlpp
+    Pdlpp : Pdlpp
+    RUBY : Ruby
+    Ruby : Ruby
+    c++ : CPP
+    cplusplus : CPP
+    cpp : CPP
+    cxx : CPP
+    foo : Foo
+    java : Java
+    pdlpp : Pdlpp
+    rb : Ruby
+    ruby : Ruby
+types : %
+    C : compiled
+    CPP : compiled
+    Foo : interpreted
+    Java : interpreted
+    Pdlpp : compiled
+    Ruby : interpreted
+modules : %
+    C : Inline::C
+    CPP : Inline::CPP
+    Foo : Inline::Foo
+    Java : Inline::Java
+    Pdlpp : Inline::Pdlpp
+    Ruby : Inline::Ruby
+suffixes : %
+    C : so
+    CPP : so
+    Foo : foo
+    Java : jdat
+    Pdlpp : so
+    Ruby : rbdat

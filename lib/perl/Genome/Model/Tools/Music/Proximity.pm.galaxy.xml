@@ -1,0 +1,80 @@
+<tool id="gmt_music_proximity" name="gmt_music_proximity" version="0.3.0">
+  <description>
+    Perform a proximity analysis on a list of mutations.
+  </description>
+  <command>
+    gmt music proximity --maf-file=$maf_file  --max-proximity=$max_proximity  --output-dir=$output_dir  --output-file=$output_file $skip_non_coding $skip_silent 
+  </command>
+  <inputs>
+    <param name="maf_file" format="text" type="data" help="" />
+    <param name="max_proximity" format="text" type="integer" help="" value="7" />
+    <param name="skip_non_coding" format="text" type="boolean" help="" checked="False" truevalue="--skip-non-coding" falsevalue="--noskip-non-coding"/>
+    <param name="skip_silent" format="text" type="boolean" help="" checked="False" truevalue="--skip-silent" falsevalue="--noskip-silent"/>
+  </inputs>
+  <outputs>
+    <data name="output_file" format="text" label="" help="" />
+    <data name="output_dir" format="text" help="" />
+  </outputs>
+  <help>
+
+
+    **USAGE**
+
+    gmt music proximity --maf-file=? --output-dir=? [--max-proximity=?] [--skip-non-coding]
+    [--skip-silent]
+
+
+    **SYNOPSIS**
+
+    ... music proximity \
+    --maf-file input_dir/myMAF.tsv \
+    --output-dir output_dir/ \
+    --max-proximity 15
+
+
+    **REQUIRED ARGUMENTS**
+
+    maf-file
+    List of mutations using TCGA MAF specifications v2.3 
+    output-dir
+    Directory where output files will be written 
+
+
+    **OPTIONAL ARGUMENTS**
+
+    max-proximity
+    Maximum allowed AA distance between 2 mutations 
+    Default value '7' if not specified
+    skip-non-coding
+    Skip non-coding mutations from the provided MAF file 
+    Default value 'true' if not specified
+    noskip-non-coding
+    Make skip-non-coding 'false' 
+    skip-silent
+    Skip silent mutations from the provided MAF file 
+    Default value 'true' if not specified
+    noskip-silent
+    Make skip-silent 'false' 
+
+
+    **DESCRIPTION**
+
+    This module first calculates the amino acid position of each mutation in the MAF file within
+    its respective transcript. Then, for each mutation, two values are calculated: 1) the number of
+    other mutations on the same transcript within the proximity limit set by the max-proximity
+    input parameter, and 2) the distance to the closest other mutation in this nearby set. Only
+    mutations which have another mutation within close proximity are reported in the output-file.
+
+    In addition to the standard version 2.3 MAF headers, there needs to be 3 columns appended. These
+    column headers in the MAF must have these names in the header in order for the tool to find them:
+      transcript_name - the transcript name, such as NM_000028
+    amino_acid_change - the amino acid change, such as p.R290H
+           c_position - the nucleotide position changed, such as c.869
+
+    The output is generated with the folowing column headers: Mutations_Within_Proximity,
+    Nearest_Mutation, Gene, Transcript, Affected_Amino_Acid(s), Chr, Start, Stop, Ref_Allele,
+    Var_Allele, Sample
+
+
+  </help>
+</tool>

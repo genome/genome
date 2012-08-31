@@ -1,0 +1,36 @@
+And modules which are under this tree, _and_ which are subclasses of "Command" (Command::V1 or Command::V2), will appear as user tools in "gmt".
+
+Guidelines on writing tools:
+1. Don't use GSC::* modules under Genome/ unless they are under "gmt lims".
+    bad: https://docs.google.com/spreadsheet/ccc?key=0AvGq7Ze4Z5hIdEFDMy01S090d1Q5NEt4QTdnVk5qS0E&hl=en_US#gid=0
+2. Use Genome::Sys methods for file I/O, and to shell out to run jobs where possible.  Where not possible, do error checking yourself.
+3. If you don't use Genome::Sys, use IO::File, and use regular scalars for handles:
+    good: my $fh = IO::File->new("myfile");
+    bad: open(FH, "myfile);
+4. The top-level namespace should be a "brand", or a file format, not a category or adjective:
+    good: bwa, newbler, rdp, vcf, fastq
+    bad: assembly, metagenomic-classifer, "analysis" (what is _not_ analysis?) 
+5. The top-level namespaces under gmt should be all sub-trees.
+    good: most things
+    bad: synch, cat ("gmt cat" ...really?), and a few other regular commands.
+6. Tools should take in files and put out files, if they work with DB entities they should go under that class and not in the tool tree
+    bad: list-reference-sequences
+    good: genome model reference-sequence list
+7. Commands which represent just a node in a pipeline should go under the pipeline:
+    good: Genome::Model::SomaticVariation::Command::TierVariants is the wrapper for fast-tier in that pipeline
+    bad: Genome::Model::Tools::Germline::TierVariants is a similar tool in the wrong location
+8. Components which mange system related resources should go under "genome sys" 
+    bad: update-tab-completion
+9. Tools should NOT be named for the components used internally to build them:
+    bad: the "R" sub-tree, named for the language R
+10. Use Command::V2 as your base class for new commands, and Command::Tree when you have a sub-tree of commands.
+11. Do not "inherit" from your the command up-stream.  Genome::Model::Tools::Foo::Bar is-a Genome::Model::Tools::Foo is bad.  Inherit from ::Foo::Base.
+12. Do not put database commits into a command (die to roll back, return true/false to commit with 0/1 exit code.)
+
+Note on non-command classes:
+Lots of tools have OO classes associated with them which are not Command classes.  That's fine.  Just put them in the tree under the Command which owns them.
+
+Note on base classes:
+If several commands need to inherit from a common base class, that's great, just set it as "is_abstract" so it doesn't appear directly in the command list.
+
+

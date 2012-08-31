@@ -1,0 +1,226 @@
+<tool id="gmt_music_play" name="gmt_music_play" version="0.3.0">
+    <description>
+        Run the full suite of MuSiC tools sequentially.
+    </description>
+    <command>
+        gmt music play --aa-range=$aa_range  --bam-list=$bam_list  --bmr=$bmr  --bmr-groups=$bmr_groups  --bmr-modifier-file=$bmr_modifier_file  --categorical-clinical-data-file=$categorical_clinical_data_file  --clinical-correlation-matrix-file=$clinical_correlation_matrix_file  --cosmic-dir=$cosmic_dir  --genes-to-ignore=$genes_to_ignore  --genetic-data-type=$genetic_data_type  --glm-clinical-data-file=$glm_clinical_data_file  --glm-model-file=$glm_model_file  --maf-file=$maf_file  --max-fdr=$max_fdr  --max-proximity=$max_proximity $merge_concurrent_muts  --min-mapq=$min_mapq  --min-mut-genes-per-path=$min_mut_genes_per_path  --mutation-matrix-file=$mutation_matrix_file  --normal-min-depth=$normal_min_depth  --nuc-range=$nuc_range  --numeric-clinical-data-file=$numeric_clinical_data_file  --numerical-data-test-method=$numerical_data_test_method  --omimaa-dir=$omimaa_dir  --output-dir=$output_dir  --pathway-file=$pathway_file  --permutations=$permutations  --processors=$processors  --reference-build=$reference_build  --reference-sequence=$reference_sequence  --roi-file=$roi_file $separate_truncations $show_known_hits $show_skipped $skip_low_mr_genes $skip_non_coding $skip_silent  --tumor-min-depth=$tumor_min_depth $use_maf_in_glm $verbose $wu_annotation_headers 
+    </command>
+    <inputs>
+        <param name="aa_range" format="text" type="data" help="" />
+<param name="bam_list" format="text" type="data" help="" />
+<param name="bmr" format="text" type="data" help="" />
+<param name="bmr_groups" format="text" type="data" help="" />
+<param name="bmr_modifier_file" format="text" type="data" help="" />
+<param name="categorical_clinical_data_file" format="text" type="data" help="" />
+<param name="clinical_correlation_matrix_file" format="text" type="data" help="" />
+<param name="cosmic_dir" format="text" type="data" help="" />
+<param name="genes_to_ignore" format="text" type="data" help="" />
+<param name="genetic_data_type" format="text" type="data" help="" />
+<param name="glm_clinical_data_file" format="text" type="data" help="" />
+<param name="glm_model_file" format="text" type="data" help="" />
+<param name="maf_file" format="text" type="data" help="" />
+<param name="max_fdr" format="text" type="data" help="" />
+<param name="max_proximity" format="text" type="data" help="" />
+<param name="merge_concurrent_muts" format="text" type="data" help="" checked="False" truevalue="--merge-concurrent-muts" falsevalue="--nomerge-concurrent-muts"/>
+<param name="min_mapq" format="text" type="data" help="" />
+<param name="min_mut_genes_per_path" format="text" type="data" help="" />
+<param name="mutation_matrix_file" format="text" type="data" help="" />
+<param name="normal_min_depth" format="text" type="data" help="" />
+<param name="nuc_range" format="text" type="data" help="" />
+<param name="numeric_clinical_data_file" format="text" type="data" help="" />
+<param name="numerical_data_test_method" format="text" type="data" help="" />
+<param name="omimaa_dir" format="text" type="data" help="" />
+<param name="pathway_file" format="text" type="data" help="" />
+<param name="permutations" format="text" type="data" help="" />
+<param name="processors" format="text" type="data" help="" />
+<param name="reference_build" format="text" type="data" help="" />
+<param name="reference_sequence" format="text" type="data" help="" />
+<param name="roi_file" format="text" type="data" help="" />
+<param name="separate_truncations" format="text" type="data" help="" checked="False" truevalue="--separate-truncations" falsevalue="--noseparate-truncations"/>
+<param name="show_known_hits" format="text" type="data" help="" checked="False" truevalue="--show-known-hits" falsevalue="--noshow-known-hits"/>
+<param name="show_skipped" format="text" type="data" help="" checked="False" truevalue="--show-skipped" falsevalue="--noshow-skipped"/>
+<param name="skip_low_mr_genes" format="text" type="data" help="" checked="False" truevalue="--skip-low-mr-genes" falsevalue="--noskip-low-mr-genes"/>
+<param name="skip_non_coding" format="text" type="data" help="" checked="False" truevalue="--skip-non-coding" falsevalue="--noskip-non-coding"/>
+<param name="skip_silent" format="text" type="data" help="" checked="False" truevalue="--skip-silent" falsevalue="--noskip-silent"/>
+<param name="tumor_min_depth" format="text" type="data" help="" />
+<param name="use_maf_in_glm" format="text" type="data" help="" checked="False" truevalue="--use-maf-in-glm" falsevalue="--nouse-maf-in-glm"/>
+<param name="verbose" format="text" type="data" help="" checked="False" truevalue="--verbose" falsevalue="--noverbose"/>
+<param name="wu_annotation_headers" format="text" type="data" help="" checked="False" truevalue="--wu-annotation-headers" falsevalue="--nowu-annotation-headers"/>
+
+    </inputs>
+    <outputs>
+        <data name="output_dir" format="text" label="" help="" />
+
+    </outputs>
+    <help>
+        
+
+**USAGE**
+
+ gmt music play --bam-list=? --roi-file=? --reference-sequence=? --output-dir=? --maf-file=?
+    --pathway-file=? [--numeric-clinical-data-file=?] [--categorical-clinical-data-file=?]
+    [--mutation-matrix-file=?] [--permutations=?] [--normal-min-depth=?] [--tumor-min-depth=?]
+    [--min-mapq=?] [--show-skipped] [--genes-to-ignore=?] [--bmr=?] [--max-proximity=?]
+    [--bmr-modifier-file=?] [--numerical-data-test-method=?] [--skip-low-mr-genes] [--max-fdr=?]
+    [--genetic-data-type=?] [--wu-annotation-headers] [--bmr-groups=?] [--separate-truncations]
+    [--merge-concurrent-muts] [--skip-non-coding] [--skip-silent] [--min-mut-genes-per-path=?]
+    [--glm-model-file=?] [--processors=?] [--aa-range=?] [--nuc-range=?] [--reference-build=?]
+    [--show-known-hits] [--glm-clinical-data-file=?] [--use-maf-in-glm] [--omimaa-dir=?]
+    [--cosmic-dir=?] [--verbose] [--clinical-correlation-matrix-file=?]
+
+
+**SYNOPSIS**
+
+This tool takes as parameters all the information required to run the individual tools. An example usage is:
+
+ ... music play \
+        --bam-list input/bams_to_analyze.txt \
+        --numeric-clinical-data-file input/numeric_clinical_data.csv \
+        --maf-file input/myMAF.tsv \
+        --output-dir play_output_dir \
+        --pathway-file input/pathway_db \
+        --reference-sequence input/refseq/all_sequences.fa \
+        --roi-file input/all_coding_regions.bed \
+        --genetic-data-type gene
+
+
+**REQUIRED ARGUMENTS**
+
+  bam-list
+    Tab delimited list of BAM files [sample_name normal_bam tumor_bam] 
+  roi-file
+    Tab delimited list of ROIs [chr start stop gene_name] 
+  reference-sequence
+    Path to reference sequence in FASTA format 
+  output-dir
+    Directory where output files and subdirectories will be written 
+  maf-file
+    List of mutations using TCGA MAF specifications v2.3 
+  pathway-file
+    Tab-delimited file of pathway information 
+
+
+**OPTIONAL ARGUMENTS**
+
+  numeric-clinical-data-file
+    Table of samples (y) vs. numeric clinical data category (x) 
+  categorical-clinical-data-file
+    Table of samples (y) vs. categorical clinical data category (x) 
+  mutation-matrix-file
+    Optionally store the sample-vs-gene matrix used during calculations. 
+  permutations
+    Number of permutations used to determine P-values 
+  normal-min-depth
+    The minimum read depth to consider a Normal BAM base as covered 
+  tumor-min-depth
+    The minimum read depth to consider a Tumor BAM base as covered 
+  min-mapq
+    The minimum mapping quality of reads to consider towards read depth counts 
+  show-skipped
+    Report each skipped mutation, not just how many 
+    Default value 'false' (--noshow-skipped) if not specified
+  noshow-skipped
+    Make show-skipped 'false' 
+  genes-to-ignore
+    Comma-delimited list of genes to ignore for background mutation rates 
+  bmr
+    Background mutation rate in the targeted regions 
+  max-proximity
+    Maximum AA distance between 2 mutations 
+  bmr-modifier-file
+    Tab delimited list of values per gene that modify BMR before testing [gene_name bmr_modifier] 
+  numerical-data-test-method
+    Either 'cor' for Pearson Correlation or 'wilcox' for the Wilcoxon Rank-Sum Test for numerical
+    clinical data. 
+    Default value 'cor' if not specified
+  skip-low-mr-genes
+    Skip testing genes with MRs lower than the background MR 
+    Default value 'true' if not specified
+  noskip-low-mr-genes
+    Make skip-low-mr-genes 'false' 
+  max-fdr
+    The maximum allowed false discovery rate for a gene to be considered an SMG 
+    Default value '0.2' if not specified
+  genetic-data-type
+    Data in matrix file must be either "gene" or "variant" type data 
+  wu-annotation-headers
+    Use this to default to wustl annotation format headers 
+  nowu-annotation-headers
+    Make wu-annotation-headers 'false' 
+  bmr-groups
+    Number of clusters of samples with comparable BMRs 
+    Default value '1' if not specified
+  separate-truncations
+    Group truncational mutations as a separate category 
+    Default value 'false' (--noseparate-truncations) if not specified
+  noseparate-truncations
+    Make separate-truncations 'false' 
+  merge-concurrent-muts
+    Multiple mutations of a gene in the same sample are treated as 1 
+    Default value 'false' (--nomerge-concurrent-muts) if not specified
+  nomerge-concurrent-muts
+    Make merge-concurrent-muts 'false' 
+  skip-non-coding
+    Skip non-coding mutations from the provided MAF file 
+    Default value 'true' if not specified
+  noskip-non-coding
+    Make skip-non-coding 'false' 
+  skip-silent
+    Skip silent mutations from the provided MAF file 
+    Default value 'true' if not specified
+  noskip-silent
+    Make skip-silent 'false' 
+  min-mut-genes-per-path
+    Pathways with fewer mutated genes than this will be ignored 
+    Default value '1' if not specified
+  glm-model-file
+    File outlining the type of model, response variable, covariants, etc. for the GLM analysis.
+    (See DESCRIPTION). 
+  processors
+    Number of processors to use in SMG (requires 'foreach' and 'doMC' R packages) 
+    Default value '1' if not specified
+  aa-range
+    Set how close a 'near' match is when searching for amino acid near hits 
+    Default value '2' if not specified
+  nuc-range
+    Set how close a 'near' match is when searching for nucleotide position near hits 
+    Default value '5' if not specified
+  reference-build
+    Put either "Build36" or "Build37" 
+    Default value 'Build37' if not specified
+  show-known-hits
+    When a finding is novel, show known AA in that gene 
+    Default value 'true' if not specified
+  noshow-known-hits
+    Make show-known-hits 'false' 
+  glm-clinical-data-file
+    Clinical traits, mutational profiles, other mixed clinical data (See DESCRIPTION). 
+  use-maf-in-glm
+    Set this flag to use the variant matrix created from the MAF file as variant input to GLM
+    analysis. 
+    Default value 'false' (--nouse-maf-in-glm) if not specified
+  nouse-maf-in-glm
+    Make use-maf-in-glm 'false' 
+  omimaa-dir
+    omim amino acid mutation database folder 
+  cosmic-dir
+    cosmic amino acid mutation database folder 
+  verbose
+    turn on to display larger working output 
+    Default value 'true' if not specified
+  noverbose
+    Make verbose 'false' 
+  clinical-correlation-matrix-file
+    Optionally store the sample-vs-gene matrix used internally during calculations. 
+
+
+**DESCRIPTION**
+
+    This command can be used to run all of the MuSiC analysis tools on a set of data. Please see
+    the individual tools for further description of the parameters.
+
+
+
+
+    </help>
+</tool>

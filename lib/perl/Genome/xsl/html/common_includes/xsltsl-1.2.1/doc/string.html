@@ -1,0 +1,719 @@
+<div class="reference" lang="en">
+<a name="id1955181"></a><div class="titlepage">
+<div>
+<div><h1 class="title">
+<a name="id1955181"></a>String Processing</h1></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Steve</span> <span class="surname">Ball</span>
+</h3></div></div>
+<div><p class="releaseinfo">
+	$Id: string.html,v 1.11 2004/10/10 06:18:57 balls Exp $
+      </p></div>
+<div><p class="copyright">Copyright © 2002, 2001 Steve Ball</p></div>
+</div>
+<div></div>
+<hr>
+</div>
+<div class="partintro" lang="en">
+<div>
+<div></div>
+<div></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1956458"></a>Introduction</h2></div></div>
+<div></div>
+</div>
+<p>This module provides templates for manipulating strings.</p>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt>
+<a href="#template.str:to-upper">str:to-upper</a> - Make string uppercase</dt>
+<dt>
+<a href="#template.str:to-lower">str:to-lower</a> - Make string lowercase</dt>
+<dt>
+<a href="#template.str:capitalise">str:capitalise</a> - Capitalise string</dt>
+<dt>
+<a href="#template.str:to-camelcase">str:to-camelcase</a> - Convert a string to one camelcase word</dt>
+<dt>
+<a href="#template.str:substring-before-first">str:substring-before-first</a> - String extraction</dt>
+<dt>
+<a href="#template.str:substring-after-last">str:substring-after-last</a> - String extraction</dt>
+<dt>
+<a href="#template.str:substring-before-last">str:substring-before-last</a> - String extraction</dt>
+<dt>
+<a href="#template.str:subst">str:subst</a> - String substitution</dt>
+<dt>
+<a href="#template.str:count-substring">str:count-substring</a> - Count Substrings</dt>
+<dt>
+<a href="#template.str:substring-after-at">str:substring-after-at</a> - String extraction</dt>
+<dt>
+<a href="#template.str:substring-before-at">str:substring-before-at</a> - String extraction</dt>
+<dt>
+<a href="#template.str:insert-at">str:insert-at</a> - String insertion</dt>
+<dt>
+<a href="#template.str:backward">str:backward</a> - String reversal</dt>
+<dt>
+<a href="#template.str:justify">str:justify</a> - Format a string</dt>
+<dt>
+<a href="#template.str:character-first">str:character-first</a> - Find first occurring character in a string</dt>
+<dt>
+<a href="#template.str:string-match">str:string-match</a> - Match A String To A Pattern</dt>
+<dt>
+<a href="#template.str:generate-string">str:generate-string</a> - Create A Repeating Sequence of Characters</dt>
+</dl>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<a name="template.str:to-upper"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:to-upper — Make string uppercase</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:to-upper"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="modified-text"&gt;
+      &lt;xsl:call-template name="str:subst"&gt;
+        &lt;xsl:with-param name="text"&gt;
+          &lt;xsl:value-of select="$text"/&gt;
+        &lt;/xsl:with-param&gt;
+        &lt;xsl:with-param name="replace"&gt;
+          &lt;xsl:text&gt;ß&lt;/xsl:text&gt;
+        &lt;/xsl:with-param&gt;
+        &lt;xsl:with-param name="with"&gt;
+          &lt;xsl:text&gt;S&lt;/xsl:text&gt;
+          &lt;xsl:text&gt;S&lt;/xsl:text&gt;
+        &lt;/xsl:with-param&gt;
+      &lt;/xsl:call-template&gt;
+    &lt;/xsl:param&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956536"></a>
+      <p>Converts all lowercase letters to uppercase.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956542"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string to be converted</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956562"></a>Returns</b>
+      <p>Returns string with all uppercase letters.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:to-lower"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:to-lower — Make string lowercase</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:to-lower"&gt;&lt;xsl:param name="text"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956586"></a>
+      <p>Converts all uppercase letters to lowercase.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956593"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string to be converted</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956612"></a>Returns</b>
+      <p>Returns string with all lowercase letters.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:capitalise"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:capitalise — Capitalise string</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:capitalise"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="all" select="true()"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956637"></a>
+      <p>Converts first character of string to an uppercase letter.  All remaining characters are converted to lowercase.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956645"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string to be capitalised</p></dd>
+<dt><span class="term">all</span></dt>
+<dd>
+<p>Boolean controlling whether all words in the string are capitalised.</p>
+<p>Default is true.</p>
+</dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956682"></a>Returns</b>
+      <p>Returns string with first character uppcase and all remaining characters lowercase.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:to-camelcase"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:to-camelcase — Convert a string to one camelcase word</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:to-camelcase"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="upper" select="true()"/&gt;&lt;xsl:param name="string-with-only-spaces"&gt;
+      &lt;xsl:value-of select="translate($text,concat($xsltsl-str-ws,'/'),'     ')"/&gt;
+    &lt;/xsl:param&gt;&lt;xsl:param name="before-space-removal"&gt;
+      &lt;xsl:variable name="firstword"&gt;
+        &lt;xsl:call-template name="str:substring-before-first"&gt;
+          &lt;xsl:with-param name="text" select="$string-with-only-spaces"/&gt;
+          &lt;xsl:with-param name="chars" select="$xsltsl-str-ws"/&gt;
+        &lt;/xsl:call-template&gt;
+      &lt;/xsl:variable&gt;
+      &lt;xsl:choose&gt;
+        &lt;xsl:when test="$upper"&gt;
+          &lt;xsl:call-template name="str:to-upper"&gt;
+            &lt;xsl:with-param name="text" select="substring($firstword, 1, 1)"/&gt;
+          &lt;/xsl:call-template&gt;
+          &lt;xsl:call-template name="str:to-lower"&gt;
+            &lt;xsl:with-param name="text" select="substring($firstword, 2)"/&gt;
+          &lt;/xsl:call-template&gt;
+        &lt;/xsl:when&gt;
+        &lt;xsl:otherwise&gt;
+          &lt;xsl:call-template name="str:to-lower"&gt;
+            &lt;xsl:with-param name="text" select="$firstword"/&gt;
+          &lt;/xsl:call-template&gt;
+        &lt;/xsl:otherwise&gt;
+      &lt;/xsl:choose&gt;
+
+      &lt;xsl:call-template name="str:capitalise"&gt;
+        &lt;xsl:with-param name="text"&gt;
+          &lt;xsl:value-of select="substring($string-with-only-spaces, string-length($firstword) + 2)"/&gt;
+        &lt;/xsl:with-param&gt;
+        &lt;xsl:with-param name="all" select="true()"/&gt;            
+      &lt;/xsl:call-template&gt;
+    &lt;/xsl:param&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956704"></a>
+      <p>Converts a string to one lowerCamelCase or UpperCamelCase
+      word, depending on the setting of the "upper"
+      parameter. UpperCamelCase is also called MixedCase while
+      lowerCamelCase is also called just camelCase. The template
+      removes any spaces, tabs and slashes, but doesn't deal with
+      other punctuation. It's purpose is to convert strings like
+      "hollow timber flush door" to a term suitable as identifier or
+      XML tag like "HollowTimberFlushDoor".
+      </p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956720"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string to be capitalised</p></dd>
+<dt><span class="term">upper</span></dt>
+<dd>
+<p>Boolean controlling whether the string becomes an
+            UpperCamelCase word or a lowerCamelCase word.</p>
+<p>Default is true.</p>
+</dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956758"></a>Returns</b>
+      <p>Returns string with first character uppcase and all remaining characters lowercase.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:substring-before-first"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:substring-before-first — String extraction</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:substring-before-first"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="chars"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956781"></a>
+      <p>Extracts the portion of string 'text' which occurs before any of the characters in string 'chars'.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956789"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string from which to extract a substring.</p></dd>
+<dt><span class="term">chars</span></dt>
+<dd><p>The string containing characters to find.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956823"></a>Returns</b>
+      <p>Returns string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:substring-after-last"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:substring-after-last — String extraction</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:substring-after-last"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="chars"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956780"></a>
+      <p>Extracts the portion of string 'text' which occurs after the last of the character in string 'chars'.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956856"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string from which to extract a substring.</p></dd>
+<dt><span class="term">chars</span></dt>
+<dd><p>The string containing characters to find.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956889"></a>Returns</b>
+      <p>Returns string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:substring-before-last"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:substring-before-last — String extraction</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:substring-before-last"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="chars"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956844"></a>
+      <p>Extracts the portion of string 'text' which occurs before the first character of the last occurance of string 'chars'.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956922"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string from which to extract a substring.</p></dd>
+<dt><span class="term">chars</span></dt>
+<dd><p>The string containing characters to find.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956956"></a>Returns</b>
+      <p>Returns string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:subst"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:subst — String substitution</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:subst"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="replace"/&gt;&lt;xsl:param name="with"/&gt;&lt;xsl:param name="disable-output-escaping"&gt;no&lt;/xsl:param&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956976"></a>
+      <p>Substitute 'replace' for 'with' in string 'text'.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956992"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string upon which to perform substitution.</p></dd>
+<dt><span class="term">replace</span></dt>
+<dd><p>The string to substitute.</p></dd>
+<dt><span class="term">with</span></dt>
+<dd><p>The string to be substituted.</p></dd>
+<dt><span class="term">disable-output-escaping</span></dt>
+<dd><p>A value of <tt class="literal">yes</tt> indicates that the result should have output escaping disabled.  Any other value allows normal escaping of text values.  The default is to enable output escaping.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1957055"></a>Returns</b>
+      <p>Returns string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:count-substring"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:count-substring — Count Substrings</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:count-substring"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="chars"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1957081"></a>
+      <p>Counts the number of times a substring occurs in a string.  This can also counts the number of times a character occurs in a string, since a character is simply a string of length 1.</p>
+    </div>
+<div class="example">
+<a name="id1957090"></a><p class="title"><b>Example 1. Counting Lines</b></p>
+<pre class="programlisting">
+&lt;xsl:call-template name="str:count-substring"&gt;
+  &lt;xsl:with-param name="text" select="$mytext"/&gt;
+  &lt;xsl:with-param name="chars" select="'&amp;#x0a;'"/&gt;
+&lt;/xsl:call-template&gt;
+</pre>
+</div>
+<div class="refparameter">
+<b><a name="id1957104"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The source string.</p></dd>
+<dt><span class="term">chars</span></dt>
+<dd><p>The substring to count.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1957137"></a>Returns</b>
+      <p>Returns a non-negative integer value.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:substring-after-at"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:substring-after-at — String extraction</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:substring-after-at"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="chars"/&gt;&lt;xsl:param name="position"/&gt;&lt;xsl:param name="all" select="false()"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1957099"></a>
+      <p>Extracts the portion of a 'char' delimited 'text' string "array" at a given 'position'.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1957167"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string from which to extract a substring.</p></dd>
+<dt><span class="term">chars</span></dt>
+<dd><p>delimiters</p></dd>
+<dt><span class="term">position</span></dt>
+<dd><p>position of the elements</p></dd>
+<dt><span class="term">all</span></dt>
+<dd><p>If true all of the remaining string is returned, otherwise only the element at the given position is returned.  Default: false().</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1957229"></a>Returns</b>
+      <p>Returns string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:substring-before-at"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:substring-before-at — String extraction</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:substring-before-at"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="chars"/&gt;&lt;xsl:param name="position"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1957256"></a>
+      <p>Extracts the portion of a 'char' delimited 'text' string "array" at a given 'position' </p>
+    </div>
+<div class="refparameter">
+<b><a name="id1957261"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string from which to extract a substring.</p></dd>
+<dt><span class="term">chars</span></dt>
+<dd><p>delimiters</p></dd>
+<dt><span class="term">position</span></dt>
+<dd><p>position of the elements</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1957308"></a>Returns</b>
+      <p>Returns string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:insert-at"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:insert-at — String insertion</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:insert-at"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="position"/&gt;&lt;xsl:param name="chars"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1957333"></a>
+      <p>Insert 'chars' into "text' at any given "position'</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1957340"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string upon which to perform insertion</p></dd>
+<dt><span class="term">position</span></dt>
+<dd><p>the position where insertion will be performed</p></dd>
+<dt><span class="term">with</span></dt>
+<dd><p>The string to be inserted</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1975860"></a>Returns</b>
+      <p>Returns string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:backward"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:backward — String reversal</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:backward"&gt;&lt;xsl:param name="text"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1975882"></a>
+      <p>Reverse the content of a given string</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1975889"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string to be reversed</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1975909"></a>Returns</b>
+      <p>Returns string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:justify"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:justify — Format a string</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:justify"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="max" select=""80""/&gt;&lt;xsl:param name="indent" select=""0""/&gt;&lt;xsl:param name="justify" select=""left""/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1957329"></a>
+      <p>Inserts newlines and spaces into a string to format it as a block of text.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1975938"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>String to be formatted.</p></dd>
+<dt><span class="term">max</span></dt>
+<dd><p>Maximum line length.</p></dd>
+<dt><span class="term">indent</span></dt>
+<dd><p>Number of spaces to insert at the beginning of each line.</p></dd>
+<dt><span class="term">justify</span></dt>
+<dd><p>Justify left, right or both.  Not currently implemented (fixed at "left").</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976000"></a>Returns</b>
+      <p>Formatted block of text.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:character-first"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:character-first — Find first occurring character in a string</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:character-first"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="chars"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976026"></a>
+      <p>Finds which of the given characters occurs first in a string.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976033"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The source string.</p></dd>
+<dt><span class="term">chars</span></dt>
+<dd><p>The characters to search for.</p></dd>
+</dl></div>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:string-match"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:string-match — Match A String To A Pattern</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:string-match"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="pattern"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976021"></a>
+      <p>Performs globbing-style pattern matching on a string.</p>
+    </div>
+<div class="example">
+<a name="id1976091"></a><p class="title"><b>Example 2. Match Pattern</b></p>
+<pre class="programlisting">
+&lt;xsl:call-template name="str:string-match"&gt;
+  &lt;xsl:with-param name="text" select="$mytext"/&gt;
+  &lt;xsl:with-param name="pattern" select="'abc*def?g'"/&gt;
+&lt;/xsl:call-template&gt;
+</pre>
+</div>
+<div class="refparameter">
+<b><a name="id1976105"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The source string.</p></dd>
+<dt><span class="term">pattern</span></dt>
+<dd>
+<p>The pattern to match against.  Certain characters have special meaning:</p>
+<div class="variablelist"><dl>
+<dt><span class="term">*</span></dt>
+<dd><p>Matches zero or more characters.</p></dd>
+<dt><span class="term">?</span></dt>
+<dd><p>Matches a single character.</p></dd>
+<dt><span class="term">\</span></dt>
+<dd><p>Character escape.  The next character is taken as a literal character.</p></dd>
+</dl></div>
+</dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976182"></a>Returns</b>
+      <p>Returns "1" if the string matches the pattern, "0" otherwise.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.str:generate-string"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>str:generate-string — Create A Repeating Sequence of Characters</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="str:generate-string"&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="count"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976209"></a>
+      <p>Repeats a string a given number of times.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976216"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The string to repeat.</p></dd>
+<dt><span class="term">count</span></dt>
+<dd><p>The number of times to repeat the string.</p></dd>
+</dl></div>
+    </div>
+</div>
+</div>

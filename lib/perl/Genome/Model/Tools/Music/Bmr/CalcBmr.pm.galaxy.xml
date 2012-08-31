@@ -1,0 +1,166 @@
+<tool id="gmt_music_bmr_calc-bmr" name="gmt_music_bmr_calc-bmr">
+    <description>
+        Calculates mutation rates given per-gene coverage (from "music bmr calc-covg"), and a mutation list
+    </description>
+    <command>
+        gmt music bmr calc-bmr --bam-list=$bam_list  --bmr-groups=$bmr_groups  --bmr-output=$bmr_output  --gene-mr-file=$gene_mr_file  --genes-to-ignore=$genes_to_ignore  --maf-file=$maf_file $merge_concurrent_muts  --output-dir=$output_dir  --reference-sequence=$reference_sequence  --roi-file=$roi_file $separate_truncations $show_skipped $skip_non_coding $skip_silent 
+    </command>
+    <inputs>
+        <param name="bam_list" format="text" type="data" help="" />
+<param name="bmr_groups" format="text" type="data" help="" />
+<param name="genes_to_ignore" format="text" type="data" help="" />
+<param name="maf_file" format="text" type="data" help="" />
+<param name="merge_concurrent_muts" format="text" type="data" help="" checked="False" truevalue="--merge-concurrent-muts" falsevalue="--nomerge-concurrent-muts"/>
+<param name="output_dir" format="text" type="data" help="" />
+<param name="reference_sequence" format="text" type="data" help="" />
+<param name="roi_file" format="text" type="data" help="" />
+<param name="separate_truncations" format="text" type="data" help="" checked="False" truevalue="--separate-truncations" falsevalue="--noseparate-truncations"/>
+<param name="show_skipped" format="text" type="data" help="" checked="False" truevalue="--show-skipped" falsevalue="--noshow-skipped"/>
+<param name="skip_non_coding" format="text" type="data" help="" checked="False" truevalue="--skip-non-coding" falsevalue="--noskip-non-coding"/>
+<param name="skip_silent" format="text" type="data" help="" checked="False" truevalue="--skip-silent" falsevalue="--noskip-silent"/>
+
+    </inputs>
+    <outputs>
+        <data name="bmr_output" format="text" label="" help="" />
+<data name="gene_mr_file" format="text" label="" help="" />
+
+    </outputs>
+    <help>
+        
+
+**USAGE**
+
+ gmt music bmr calc-bmr --roi-file=? --reference-sequence=? --bam-list=? --output-dir=?
+    --maf-file=? [--skip-non-coding] [--skip-silent] [--bmr-groups=?] [--show-skipped]
+    [--separate-truncations] [--merge-concurrent-muts] [--genes-to-ignore=?]
+
+
+**SYNOPSIS**
+
+ ... music bmr calc-bmr \
+    --bam-list input_dir/bam_list \
+    --maf-file input_dir/myMAF.tsv \
+    --output-dir output_dir/ \
+    --reference-sequence input_dir/all_sequences.fa \
+    --roi-file input_dir/all_coding_exons.tsv
+
+ ... music bmr calc-bmr \
+    --bam-list input_dir/bam_list \
+    --maf-file input_dir/myMAF.tsv \
+    --output-dir output_dir/ \
+    --reference-sequence input_dir/all_sequences.fa \
+    --roi-file input_dir/all_coding_exons.tsv \
+    --genes-to-ignore GENE1,GENE2
+
+
+**REQUIRED ARGUMENTS**
+
+  roi-file
+    Tab delimited list of ROIs [chr start stop gene_name] (See DESCRIPTION) 
+  reference-sequence
+    Path to reference sequence in FASTA format 
+  bam-list
+    Tab delimited list of BAM files [sample_name normal_bam tumor_bam] (See DESCRIPTION) 
+  output-dir
+    Directory where output files will be written (Use the same one used with calc-covg) 
+  maf-file
+    List of mutations using TCGA MAF specification v2.3 
+
+
+**OPTIONAL ARGUMENTS**
+
+  skip-non-coding
+    Skip non-coding mutations from the provided MAF file 
+    Default value 'true' if not specified
+  noskip-non-coding
+    Make skip-non-coding 'false' 
+  skip-silent
+    Skip silent mutations from the provided MAF file 
+    Default value 'true' if not specified
+  noskip-silent
+    Make skip-silent 'false' 
+  bmr-groups
+    Number of clusters of samples with comparable BMRs (See DESCRIPTION) 
+    Default value '1' if not specified
+  show-skipped
+    Report each skipped mutation, not just how many 
+    Default value 'false' (--noshow-skipped) if not specified
+  noshow-skipped
+    Make show-skipped 'false' 
+  separate-truncations
+    Group truncational mutations as a separate category 
+    Default value 'false' (--noseparate-truncations) if not specified
+  noseparate-truncations
+    Make separate-truncations 'false' 
+  merge-concurrent-muts
+    Multiple mutations of a gene in the same sample are treated as 1 
+    Default value 'false' (--nomerge-concurrent-muts) if not specified
+  nomerge-concurrent-muts
+    Make merge-concurrent-muts 'false' 
+  genes-to-ignore
+    Comma-delimited list of genes to ignore for background mutation rates 
+
+
+**DESCRIPTION**
+
+    Given a mutation list (MAF), and per-gene coverage data calculated using "music bmr
+    calc-covg"), this script calculates overall Background Mutation Rate (BMR) and BMRs in the
+    categories of AT/CG/CpG Transitions, AT/CG/CpG Transversions, and Indels. An optional category
+    for truncational mutations can also be specified. The script generates a file with per-gene
+    mutation rates that can be used with the tool that tests for significantly mutated genes (music
+    smg).
+
+
+
+**ARGUMENTS**
+
+
+    --roi-file
+
+      The regions of interest (ROIs) of each gene are typically regions targeted for sequencing or
+      are merged exon loci (from multiple transcripts) of genes with 2-bp flanks (splice
+      junctions). ROIs from the same chromosome must be listed adjacent to each other in this file.
+      This allows the underlying C-based code to run much more efficiently and avoid re-counting
+      bases seen in overlapping ROIs (for overall covered base counts). For per-gene base counts,
+      an overlapping base will be counted each time it appears in an ROI of the same gene. To avoid
+      this, be sure to merge together overlapping ROIs of the same gene. BEDtools' mergeBed can
+      help if used per gene.
+
+    --reference-sequence
+
+      The reference sequence in FASTA format. If a reference sequence index is not found next to
+      this file (a .fai file), it will be created.
+
+    --bam-list
+
+      Provide a file containing sample names and normal/tumor BAM locations for each. Use the tab-
+      delimited format [sample_name normal_bam tumor_bam] per line. Additional columns like
+      clinical data are allowed, but ignored. The sample_name must be the same as the tumor sample
+      names used in the MAF file (16th column, with the header Tumor_Sample_Barcode).
+
+    --bmr-groups
+
+      Ideally, we want to test the mutation rate (MR) of a gene in a sample against the background
+      mutation rate (BMR) across that sample. But if the BMRs of some samples are comparable, we
+      can instead test the MR of a gene across a group of samples with comparable BMR, against the
+      overall BMR of that group. This argument specifies how many such groups you want to cluster
+      samples into. By default, it is assumed that all samples have comparable BMRs (bmr-groups =
+      1).
+
+    --output-dir
+
+      This should be the same output directory used when running "music bmr calc-covg". The
+      following outputs of this script will also be created/written: overall_bmrs: File containing
+      categorized overall background mutation rates. gene_mrs: File containing categorized per-gene
+      mutation rates.
+
+    --genes-to-ignore
+
+      A comma-delimited list of genes to ignore for overall BMR calculations. List genes that are
+      known factors in this disease and whose mutations should not be classified as background.
+
+
+
+
+    </help>
+</tool>

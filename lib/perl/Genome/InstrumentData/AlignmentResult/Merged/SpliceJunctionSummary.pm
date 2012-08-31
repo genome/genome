@@ -1,0 +1,208 @@
+package Genome::InstrumentData::AlignmentResult::Merged::SpliceJunctionSummary;
+
+use strict;
+use warnings;
+
+use Genome;
+use Sys::Hostname;
+use File::Path;
+
+class Genome::InstrumentData::AlignmentResult::Merged::SpliceJunctionSummary {
+    is => ['Genome::SoftwareResult::Stageable'],
+    has_input => [
+        alignment_result_id => {
+            is => 'Number',
+            doc => 'ID of the result for the alignment data upon which to run coverage stats',
+        },
+    ],
+    has_param => [
+        bedtools_version => {
+            is => 'Text',
+            doc => 'The version of Picard to use.',
+        },
+    ],
+    has_metric => [
+        _log_directory => {
+            is => 'Text',
+            doc => 'Path where workflow logs were written',
+        },
+        #many other metrics exist--see sub _generate_metrics
+    ],
+    has => [
+        alignment_result => {
+            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            id_by => 'alignment_result_id',
+            doc => 'the alignment data upon which to run coverage stats',
+        },
+    ],
+    has_transient_optional => [
+        log_directory => {
+            is => 'Text',
+            doc => 'Path to write logs from running the workflow',
+        },
+    ],
+};
+
+sub resolve_allocation_subdirectory {
+    my $self = shift;
+
+    my $hostname = hostname;
+    my $user = $ENV{'USER'};
+    my $base_dir = sprintf("splice_junction_summary-%s-%s-%s-%s", $hostname, $user, $$, $self->id);
+
+    # TODO: the first subdir is actually specified by the disk management system.
+    my $directory = join('/', 'build_merged_alignments','splice_junction_summary',$base_dir);
+    return $directory;
+}
+
+sub resolve_allocation_disk_group_name {
+    return 'info_genome_models';
+}
+
+sub _staging_disk_usage {
+    #need the allocation created in advance for this process
+    return 5_000_000; #TODO better estimate
+}
+
+sub _working_dir_prefix {
+    return 'splice-junction-summary';
+}
+
+sub _gather_params_for_get_or_create {
+    my $class = shift;
+
+    my $bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
+
+    my %params = $bx->params_list;
+    my %is_input;
+    my %is_param;
+    my $class_object = $class->__meta__;
+    for my $key ($class->property_names) {
+        my $meta = $class_object->property_meta_for_name($key);
+        if ($meta->{is_input} && exists $params{$key}) {
+            $is_input{$key} = $params{$key};
+        } elsif ($meta->{is_param} && exists $params{$key}) {
+            $is_param{$key} = $params{$key};
+        }
+    }
+
+    my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %is_input);
+    my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %is_param);
+
+    my %software_result_params = (
+        params_id=>$params_bx->id,
+        inputs_id=>$inputs_bx->id,
+        subclass_name=>$class
+    );
+
+    return {
+        software_result_params => \%software_result_params,
+        subclass => $class,
+        inputs=>\%is_input,
+        params=>\%is_param,
+    };
+}
+
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+    return unless ($self);
+
+    $self->_prepare_staging_directory;
+
+    # Reference inputs
+    my $reference_build = $self->alignment_result->reference_build;
+    my $reference_fasta_file = $reference_build->full_consensus_path('fa');
+    die $self->error_message("Reference FASTA File ($reference_fasta_file) is missing") unless -s $reference_fasta_file;
+    
+    # Annotation inputs
+    my $annotation_build = $self->alignment_result->annotation_build;
+    my $annotation_gtf_file = $annotation_build->annotation_file('gtf',$reference_build->id);
+    my $annotation_file_basename = $annotation_build->name;
+    $annotation_file_basename =~ s/\//-/g;
+
+    # Alignment inputs
+    my @alignments = $self->alignment_result->collect_individual_alignments;
+    $self->status_message('Merging '. scalar(@alignments) .' per lane junctions BED12 files...');
+
+    my @alignment_junctions_bed12_files;
+    for my $alignment (@alignments) {
+        my $alignment_junctions_bed12_file = $alignment->output_dir .'/junctions.bed';
+        my $id = $alignment->id;
+        symlink($alignment_junctions_bed12_file,$self->temp_staging_directory .'/AlignmentResult_'. $id .'_junctions.bed');
+        push @alignment_junctions_bed12_files, $alignment_junctions_bed12_file;
+    }
+    
+    # TODO: We could bypass the merge when only one file is in array
+    my $merged_junctions_bed12_file = $self->temp_staging_directory  .'/junctions.bed';
+    unless (Genome::Model::Tools::Bed::MergeBed12Junctions->execute(
+        input_files => \@alignment_junctions_bed12_files,
+        output_file => $merged_junctions_bed12_file,
+        bedtools_version => $self->bedtools_version,
+    )) {
+        die();
+    }
+    
+    my $log_dir = $self->log_directory;
+    unless($log_dir) {
+        $log_dir = '' . $self->temp_staging_directory;
+    }
+    $self->_log_directory($log_dir);
+
+    my %params = (
+        output_directory => $self->temp_staging_directory,
+        annotation_name => $annotation_file_basename,
+        annotation_gtf_file => $annotation_gtf_file,
+        reference_fasta_file => $reference_fasta_file,
+        observed_junctions_bed12_file => $merged_junctions_bed12_file,
+        bedtools_version => $self->bedtools_version,
+    );
+
+    my $cmd = Genome::Model::Tools::Transcriptome::SpliceJunctionSummary->create(%params);
+    unless($cmd->execute) {
+        die('Failed to run SpliceJunctionSummary tool with params: '. Data::Dumper::Dumper(%params));
+    }
+    
+    $self->_prepare_output_directory;
+    $self->_promote_data;
+    $self->_reallocate_disk_allocation;
+
+    $self->_generate_metrics();
+
+    return $self;
+}
+
+sub _generate_metrics {
+    my $self = shift;
+    $self->status_message('Currently no metrics are saved for: '. __PACKAGE__);
+    #my $metrics = shift;
+    
+    #for my $type_label (keys %{$metrics}) {
+        # Currently, do not store insert size, quality by cycle, or mean quality histograms
+    #    if ($type_label =~ /Histogram/) { next; }
+        # Currently, do not store the GcBiasMetrics, 100 Windows of normalized coverage
+     #   if ($type_label eq 'GcBiasMetrics') { next; }
+        
+      #  my $type_metrics = $metrics->{$type_label};
+        # The FlagstatMetrics hashref are one-level
+       # if ($type_label eq 'FlagstatMetrics') {
+        #    for my $metric_label (keys %{$type_metrics}) {
+         #       my $metric_key = sprintf('bam_qc-%s-%s',$type_label,$metric_label);
+          #      $self->add_metric(metric_name => $metric_key, metric_value => $type_metrics->{$metric_label});
+           # }
+        #} else {
+            # All other hashrefs are considered to habe two-levels, the first level of the hashref being the key on which lines of metrics are differentiated
+         #   for my $key (keys %{$type_metrics}) {
+          #      for my $metric_label (keys %{$type_metrics->{$key}}) {
+          #          my $metric_key = sprintf('bam_qc-%s-%s-%s',$type_label,$key,$metric_label);
+          #          $self->add_metric(metric_name => $metric_key, metric_value => $type_metrics->{$key}->{$metric_label});
+           #     }
+           # }
+        #}
+   # }
+
+    return 1;
+}
+
+
+1;

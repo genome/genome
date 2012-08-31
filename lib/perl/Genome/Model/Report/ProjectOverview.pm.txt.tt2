@@ -1,0 +1,30 @@
+============================================================
+Project Overview of Project: [% project.name %]
+============================================================
+
+This report based on information from Build [% build.id %], created [% time_now %].
+
+HTML version of this report: 
+https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/Project_Overview/report.html
+[% count=1; %]
+
+[% FOREACH project IN project_list %]
+Project Details
+------------------------------------------------------------
+     project: [% p_sample.setup_project_id %] ([% p_sample.name %])
+               description: [% project.description %]
+          internal Contact: [% project.internal_contact_name %]
+          external Contact: [% project.iexternal_contact_name %]
+[% project_samples = project.samples %][% FOREACH p_sample IN project_samples; %]
+     sample: 
+     -------------------------------------------------------[% IF p_sample.models.size > 0 %][% FOREACH s_model IN p_sample.models; %]
+                       model: [% s_model.id %] ([% s_model.name %])
+          processing profile: [% s_model.processing_profile_name %]
+        last succeeded build: [% IF s_model.last_succeeded_build %][% s_model.last_succeeded_build.date_completed %][% ELSE %]none[% END %]
+[% END %][% END %]
+[% END %]
+     -------------------------------------------------------
+[% END %]
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+                  The Genome Center at Washington University
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

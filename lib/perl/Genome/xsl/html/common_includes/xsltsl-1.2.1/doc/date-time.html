@@ -1,0 +1,726 @@
+<div class="reference" lang="en">
+<a name="id1954811"></a><div class="titlepage">
+<div>
+<div><h1 class="title">
+<a name="id1954811"></a>Date/Time Processing</h1></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Jason</span> <span class="surname">Diamond</span>
+</h3></div></div>
+<div><p class="releaseinfo">
+        $Id: date-time.html,v 1.10 2004/10/10 06:18:57 balls Exp $
+      </p></div>
+<div><p class="copyright">Copyright © 2004 Steve Ball</p></div>
+<div><p class="copyright">Copyright © 2001 Jason Diamond</p></div>
+</div>
+<div></div>
+<hr>
+</div>
+<div class="partintro" lang="en">
+<div>
+<div></div>
+<div></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954909"></a>Introduction</h2></div></div>
+<div></div>
+</div>
+<p>This module provides templates for formatting and parsing date/time strings.</p>
+<p>See <a href="http://www.tondering.dk/claus/calendar.html" target="_top">http://www.tondering.dk/claus/calendar.html</a> for more information on calendars and the calculations this library performs.</p>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt>
+<a href="#template.dt:format-date-time">dt:format-date-time</a> - Returns a string with a formatted date/time.</dt>
+<dt>
+<a href="#template.dt:calculate-day-of-the-week">dt:calculate-day-of-the-week</a> - Calculates the day of the week.</dt>
+<dt>
+<a href="#template.dt:calculate-last-day-of-month">dt:calculate-last-day-of-month</a> - Calculates the number of days for a specified month.</dt>
+<dt>
+<a href="#template.dt:get-day-of-the-week-name">dt:get-day-of-the-week-name</a> - Gets the day of the week's full name.</dt>
+<dt>
+<a href="#template.dt:get-day-of-the-week-abbreviation">dt:get-day-of-the-week-abbreviation</a> - Gets the day of the week's abbreviation.</dt>
+<dt>
+<a href="#template.dt:get-month-name">dt:get-month-name</a> - Gets the month's full name.</dt>
+<dt>
+<a href="#template.dt:get-month-abbreviation">dt:get-month-abbreviation</a> - Gets the month's abbreviation.</dt>
+<dt>
+<a href="#template.dt:calculate-julian-day">dt:calculate-julian-day</a> - Calculates the Julian Day for a specified date.</dt>
+<dt>
+<a href="#template.dt:format-julian-day">dt:format-julian-day</a> - Returns a string with a formatted date for a specified Julian Day.</dt>
+<dt>
+<a href="#template.dt:calculate-week-number">dt:calculate-week-number</a> - Calculates the week number for a specified date.</dt>
+<dt>
+<a href="#template.dt:get-month-number">dt:get-month-number</a> - Take a month by name and return a number which can be used as input to the templates. </dt>
+<dt>
+<a href="#template.dt:get-xsd-datetime-year">dt:get-xsd-datetime-year</a> - Return year component of XSD DateTime value.</dt>
+<dt>
+<a href="#template.dt:get-xsd-datetime-month">dt:get-xsd-datetime-month</a> - Return month component of XSD DateTime value.</dt>
+<dt>
+<a href="#template.dt:get-xsd-datetime-day">dt:get-xsd-datetime-day</a> - Return day component of XSD DateTime value.</dt>
+<dt>
+<a href="#template.dt:get-xsd-datetime-hour">dt:get-xsd-datetime-hour</a> - Return hour component of XSD DateTime value.</dt>
+<dt>
+<a href="#template.dt:get-xsd-datetime-minute">dt:get-xsd-datetime-minute</a> - Return minute component of XSD DateTime value.</dt>
+<dt>
+<a href="#template.dt:get-xsd-datetime-second">dt:get-xsd-datetime-second</a> - Return second component of XSD DateTime value.</dt>
+<dt>
+<a href="#template.dt:get-xsd-datetime-timezone">dt:get-xsd-datetime-timezone</a> - Return timezone component of XSD DateTime value.</dt>
+</dl>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<a name="template.dt:format-date-time"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:format-date-time — Returns a string with a formatted date/time.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:format-date-time"&gt;&lt;xsl:param name="xsd-date-time"/&gt;&lt;xsl:param name="year"/&gt;&lt;xsl:param name="month"/&gt;&lt;xsl:param name="day"/&gt;&lt;xsl:param name="hour"/&gt;&lt;xsl:param name="minute"/&gt;&lt;xsl:param name="second"/&gt;&lt;xsl:param name="time-zone"/&gt;&lt;xsl:param name="format" select="'%Y-%m-%dT%H:%M:%S%z'"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1954931"></a>
+      <p>The formatted date/time is determined by the format parameter. The default format is %Y-%m-%dT%H:%M:%S%z, the W3C format.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1954530"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">xsd-date-time</span></dt>
+<dd>
+<p>The date-time value in XML Schemas (WXS) format.</p>
+<p>If this value is specified, it takes priority over other parameters.</p>
+</dd>
+<dt><span class="term">year</span></dt>
+<dd><p>Year</p></dd>
+<dt><span class="term">month</span></dt>
+<dd><p>Month (1 - 12; January = 1)</p></dd>
+<dt><span class="term">day</span></dt>
+<dd><p>Day of month (1 - 31)</p></dd>
+<dt><span class="term">hour</span></dt>
+<dd><p>Hours since midnight (0 - 23)</p></dd>
+<dt><span class="term">minute</span></dt>
+<dd><p>Minutes after hour (0 - 59)</p></dd>
+<dt><span class="term">second</span></dt>
+<dd><p>Seconds after minute (0 - 59)</p></dd>
+<dt><span class="term">time-zone</span></dt>
+<dd><p>Time zone string (e.g., 'Z' or '-08:00')</p></dd>
+<dt><span class="term">format</span></dt>
+<dd>
+<p>The format specification.</p>
+<div class="variablelist"><dl>
+<dt><span class="term">%a</span></dt>
+<dd><p>Abbreviated weekday name</p></dd>
+<dt><span class="term">%A</span></dt>
+<dd><p>Full weekday name</p></dd>
+<dt><span class="term">%b</span></dt>
+<dd><p>Abbreviated month name</p></dd>
+<dt><span class="term">%B</span></dt>
+<dd><p>Full month name</p></dd>
+<dt><span class="term">%c</span></dt>
+<dd><p>Date and time representation appropriate for locale</p></dd>
+<dt><span class="term">%d</span></dt>
+<dd><p>Day of month as decimal number (01 - 31)</p></dd>
+<dt><span class="term">%e</span></dt>
+<dd><p>Day of month as decimal number (1 - 31)</p></dd>
+<dt><span class="term">%H</span></dt>
+<dd><p>Hour in 24-hour format (00 - 23)</p></dd>
+<dt><span class="term">%I</span></dt>
+<dd><p>Hour in 12-hour format (01 - 12)</p></dd>
+<dt><span class="term">%i</span></dt>
+<dd><p>Hour in 12-hour format (1 - 12)</p></dd>
+<dt><span class="term">%j</span></dt>
+<dd><p>Day of year as decimal number (001 - 366)</p></dd>
+<dt><span class="term">%m</span></dt>
+<dd><p>Month as decimal number (01 - 12)</p></dd>
+<dt><span class="term">%n</span></dt>
+<dd><p>Month as decimal number (1 - 12)</p></dd>
+<dt><span class="term">%M</span></dt>
+<dd><p>Minute as decimal number (00 - 59)</p></dd>
+<dt><span class="term">%P</span></dt>
+<dd><p>Current locale's A.M./P.M. indicator for 12-hour clock, uppercase</p></dd>
+<dt><span class="term">%Q</span></dt>
+<dd><p>Current locale's A.M./P.M. indicator for 12-hour clock, uppercase with periods</p></dd>
+<dt><span class="term">%p</span></dt>
+<dd><p>Current locale's A.M./P.M. indicator for 12-hour clock, lowercase</p></dd>
+<dt><span class="term">%q</span></dt>
+<dd><p>Current locale's A.M./P.M. indicator for 12-hour clock, lowercase with periods</p></dd>
+<dt><span class="term">%S</span></dt>
+<dd><p>Second as decimal number (00 - 59)</p></dd>
+<dt><span class="term">%U</span></dt>
+<dd><p>Week of year as decimal number, with Sunday as first day of week (00 - 53)</p></dd>
+<dt><span class="term">%w</span></dt>
+<dd><p>Weekday as decimal number (0 - 6; Sunday is 0)</p></dd>
+<dt><span class="term">%W</span></dt>
+<dd><p>Week of year as decimal number, with Monday as first day of week (00 - 53)</p></dd>
+<dt><span class="term">%x</span></dt>
+<dd><p>Date representation for current locale </p></dd>
+<dt><span class="term">%X</span></dt>
+<dd><p>Time representation for current locale</p></dd>
+<dt><span class="term">%y</span></dt>
+<dd><p>Year without century, as decimal number (00 - 99)</p></dd>
+<dt><span class="term">%Y</span></dt>
+<dd><p>Year with century, as decimal number</p></dd>
+<dt><span class="term">%z</span></dt>
+<dd><p>Time-zone name or abbreviation; no characters if time zone is unknown</p></dd>
+<dt><span class="term">%%</span></dt>
+<dd><p>Percent sign</p></dd>
+</dl></div>
+</dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955445"></a>Returns</b>
+      <p>Returns a formatted date/time string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:calculate-day-of-the-week"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:calculate-day-of-the-week — Calculates the day of the week.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:calculate-day-of-the-week"&gt;&lt;xsl:param name="year"/&gt;&lt;xsl:param name="month"/&gt;&lt;xsl:param name="day"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1955470"></a>
+      <p>Given any Gregorian date, this calculates the day of the week.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1955477"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">year</span></dt>
+<dd><p>Year</p></dd>
+<dt><span class="term">month</span></dt>
+<dd><p>Month (1 - 12; January = 1)</p></dd>
+<dt><span class="term">day</span></dt>
+<dd><p>Day of month (1 - 31)</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955523"></a>Returns</b>
+      <p>Returns the day of the week (0 - 6; Sunday = 0).</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:calculate-last-day-of-month"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:calculate-last-day-of-month — Calculates the number of days for a specified month.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:calculate-last-day-of-month"&gt;&lt;xsl:param name="year"/&gt;&lt;xsl:param name="month"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1955549"></a>
+      <p>Given any Gregorian month, this calculates the last day of the month.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1955556"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">year</span></dt>
+<dd><p>Year</p></dd>
+<dt><span class="term">month</span></dt>
+<dd><p>Month (1 - 12; January = 1)</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955589"></a>Returns</b>
+      <p>Returns the number of days in given month as a decimal number.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-day-of-the-week-name"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-day-of-the-week-name — Gets the day of the week's full name.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-day-of-the-week-name"&gt;&lt;xsl:param name="day-of-the-week"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1955615"></a>
+      <p>Converts a numeric day of the week value into a string representing the day's full name.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1955622"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">day-of-the-week</span></dt>
+<dd><p>Day of the week (0 - 6; Sunday = 0)</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955642"></a>Returns</b>
+      <p>Returns a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-day-of-the-week-abbreviation"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-day-of-the-week-abbreviation — Gets the day of the week's abbreviation.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-day-of-the-week-abbreviation"&gt;&lt;xsl:param name="day-of-the-week"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1955666"></a>
+      <p>Converts a numeric day of the week value into a string representing the day's abbreviation.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1955674"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">day-of-the-week</span></dt>
+<dd><p>Day of the week (0 - 6; Sunday = 0)</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955694"></a>Returns</b>
+      <p>Returns a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-month-name"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-month-name — Gets the month's full name.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-month-name"&gt;&lt;xsl:param name="month"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1955717"></a>
+      <p>Converts a numeric month value into a string representing the month's full name.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1955725"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">month</span></dt>
+<dd><p>Month (1 - 12; Januaray = 1)</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955745"></a>Returns</b>
+      <p>Returns a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-month-abbreviation"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-month-abbreviation — Gets the month's abbreviation.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-month-abbreviation"&gt;&lt;xsl:param name="month"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1955767"></a>
+      <p>Converts a numeric month value into a string representing the month's abbreviation.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1955775"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">month</span></dt>
+<dd><p>Month (1 - 12; Januaray = 1)</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955795"></a>Returns</b>
+      <p>Returns a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:calculate-julian-day"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:calculate-julian-day — Calculates the Julian Day for a specified date.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:calculate-julian-day"&gt;&lt;xsl:param name="year"/&gt;&lt;xsl:param name="month"/&gt;&lt;xsl:param name="day"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1955820"></a>
+      <p>Given any Gregorian date, this calculates the Julian Day.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1955827"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">year</span></dt>
+<dd><p>Year</p></dd>
+<dt><span class="term">month</span></dt>
+<dd><p>Month (1 - 12; January = 1)</p></dd>
+<dt><span class="term">day</span></dt>
+<dd><p>Day of month (1 - 31)</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955873"></a>Returns</b>
+      <p>Returns the Julian Day as a decimal number.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:format-julian-day"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:format-julian-day — Returns a string with a formatted date for a specified Julian Day.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:format-julian-day"&gt;&lt;xsl:param name="julian-day"/&gt;&lt;xsl:param name="format" select="'%Y-%m-%d'"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1955899"></a>
+      <p>Given any Julian Day, this returns a string according to the format specification.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1955907"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">julian-day</span></dt>
+<dd><p>A Julian Day</p></dd>
+<dt><span class="term">format</span></dt>
+<dd><p>The format specification. See dt:format-date-time for more details.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955941"></a>Returns</b>
+      <p>A string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:calculate-week-number"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:calculate-week-number — Calculates the week number for a specified date.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:calculate-week-number"&gt;&lt;xsl:param name="year"/&gt;&lt;xsl:param name="month"/&gt;&lt;xsl:param name="day"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1955966"></a>
+      <p>Assumes Monday is the first day of the week.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1955973"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">year</span></dt>
+<dd><p>Year</p></dd>
+<dt><span class="term">month</span></dt>
+<dd><p>Month (1 - 12; January = 1)</p></dd>
+<dt><span class="term">day</span></dt>
+<dd><p>Day of month (1 - 31)</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956019"></a>Returns</b>
+      <p>Returns the week number as a decimal number.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-month-number"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-month-number — Take a month by name and return a number which can be used as input to the templates. </p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-month-number"&gt;&lt;xsl:param name="month"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956044"></a>
+      <p>Input</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956051"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">month</span></dt>
+<dd><p>Month as described either by full name or abbreviation.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956071"></a>Returns</b>
+      <p>Return a month as a decimal number. (Jan = 1)</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-xsd-datetime-year"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-xsd-datetime-year — Return year component of XSD DateTime value.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-xsd-datetime-year"&gt;&lt;xsl:param name="xsd-date-time"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956096"></a>
+      <p>Extract component of XML Schemas DateTime value.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956103"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">xsd-date-time</span></dt>
+<dd><p>A value in XSD DateTime format.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956123"></a>Returns</b>
+      <p>Returns year component.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-xsd-datetime-month"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-xsd-datetime-month — Return month component of XSD DateTime value.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-xsd-datetime-month"&gt;&lt;xsl:param name="xsd-date-time"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956148"></a>
+      <p>Extract component of XML Schemas DateTime value.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956155"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">xsd-date-time</span></dt>
+<dd><p>A value in XSD DateTime format.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956175"></a>Returns</b>
+      <p>Returns month component.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-xsd-datetime-day"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-xsd-datetime-day — Return day component of XSD DateTime value.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-xsd-datetime-day"&gt;&lt;xsl:param name="xsd-date-time"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956199"></a>
+      <p>Extract component of XML Schemas DateTime value.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956206"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">xsd-date-time</span></dt>
+<dd><p>A value in XSD DateTime format.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956226"></a>Returns</b>
+      <p>Returns day component.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-xsd-datetime-hour"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-xsd-datetime-hour — Return hour component of XSD DateTime value.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-xsd-datetime-hour"&gt;&lt;xsl:param name="xsd-date-time"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956253"></a>
+      <p>Extract component of XML Schemas DateTime value.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956260"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">xsd-date-time</span></dt>
+<dd><p>A value in XSD DateTime format.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956280"></a>Returns</b>
+      <p>Returns hour component.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-xsd-datetime-minute"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-xsd-datetime-minute — Return minute component of XSD DateTime value.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-xsd-datetime-minute"&gt;&lt;xsl:param name="xsd-date-time"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956247"></a>
+      <p>Extract component of XML Schemas DateTime value.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956312"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">xsd-date-time</span></dt>
+<dd><p>A value in XSD DateTime format.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956331"></a>Returns</b>
+      <p>Returns minute component.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-xsd-datetime-second"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-xsd-datetime-second — Return second component of XSD DateTime value.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-xsd-datetime-second"&gt;&lt;xsl:param name="xsd-date-time"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956301"></a>
+      <p>Extract component of XML Schemas DateTime value.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956363"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">xsd-date-time</span></dt>
+<dd><p>A value in XSD DateTime format.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956383"></a>Returns</b>
+      <p>Returns second component.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.dt:get-xsd-datetime-timezone"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>dt:get-xsd-datetime-timezone — Return timezone component of XSD DateTime value.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="dt:get-xsd-datetime-timezone"&gt;&lt;xsl:param name="xsd-date-time"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956352"></a>
+      <p>Extract component of XML Schemas DateTime value.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956416"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">xsd-date-time</span></dt>
+<dd><p>A value in XSD DateTime format.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956436"></a>Returns</b>
+      <p>Returns timezone component.</p>
+    </div>
+</div>
+</div>

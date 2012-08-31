@@ -1,0 +1,4 @@
+In the shipit branch, this has the actual Genome::Sys::User related modules.
+
+The "skel" directory is the configuration for new user home directories.
+

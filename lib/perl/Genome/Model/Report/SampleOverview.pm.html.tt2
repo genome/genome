@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+          "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+  <head>
+    <title>Overview of Sample: [% sample.name %]</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <style type="text/css" media="screen">
+      [% style %]
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="background">
+        <h1 class="report_title">Sample Overview</h1>
+        <h2 class="section_title">Sample: [% sample.id %] ([% sample.name %])</h2>
+        <p>This report based on information from Build [% build.id %], created [% time_now %].</p>
+        <dl class="vert_list">
+          <dt>Species:</dt>
+          <dd>[% IF sample.species_name %][% sample.species_name %][% ELSE %]Not available[% END %]</dd>
+          <dt>Organ:</dt>
+          <dd>[% IF sample.organ_name %][% sample.organ_name %][% ELSE %]Not available[% END %]</dd>
+          <dt>Tissue:</dt>
+          <dd>[% IF sample.tissue_name %][% sample.tissue_name %][% ELSE %]Not available[% END %]</dd>
+          <dt>Project:</dt>
+      [% FOREACH project IN project_list %]
+          <dd>[% project.name %] <a href="#" class="details">details</a></dd>
+      [% END %]
+      [% IF sample_libraries %]
+          <dt>Libraries:</dt>
+          [% FOREACH sample_library IN sample_libraries %]
+          <dd>[% sample_library.name %]</dd>
+          [% END %]
+      [% END %]
+        </dl>
+
+        <h3 class="section_title">Models</h3>
+      [% IF sample_models %]
+        <dl class="vert_list">
+          [% FOREACH sample_model IN sample_models %]
+          <dt>[% sample_model.id %][% IF sample_model.id == model.id %]<a href="https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/ModelOverview/report.html" class="details">details</a>[% END %]</dt>
+          <dd><strong>Name:</strong> [% sample_model.name %]</dd>
+          <dd><strong>Processing Profile:</strong> [% sample_model.processing_profile_name %]</dd>
+          <dd><strong>Last Succeeded Build:</strong> [% IF sample_model.last_succeeded_build.date_completed %][% sample_model.last_succeeded_build.date_completed %][% ELSE %]No successful build[% END %]</dd>
+          [% END %]
+        </dl>
+      [% END %]
+
+      </div><!-- end background -->
+    </div><!-- end container -->
+  </body>
+</html>

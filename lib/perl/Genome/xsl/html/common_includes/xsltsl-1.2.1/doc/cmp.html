@@ -1,0 +1,76 @@
+<div class="reference" lang="en">
+<a name="id1976914"></a><div class="titlepage">
+<div>
+<div><h1 class="title">
+<a name="id1976914"></a>XML Compare</h1></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Mark</span> <span class="surname">Hummel</span>
+</h3></div></div>
+<div><p class="releaseinfo">
+        $Id: cmp.html,v 1.1 2004/10/10 06:18:57 balls Exp $
+      </p></div>
+<div><p class="copyright">Copyright © 2003 Mark Hummel</p></div>
+</div>
+<div></div>
+<hr>
+</div>
+<div class="partintro" lang="en">
+<div>
+<div></div>
+<div></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1977507"></a>Introduction</h2></div></div>
+<div></div>
+</div>
+<p>This module provides a template for comparing two xml documents. </p>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl><dt>
+<a href="#template.cmp:diff">cmp:diff</a> - Compare</dt></dl>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<a name="template.cmp:diff"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>cmp:diff — Compare</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="cmp:diff"&gt;&lt;xsl:param name="ns1"/&gt;&lt;xsl:param name="ns2"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1977547"></a>
+      <p>Compare two xml documents and display differences. Two xml documents are defined to be the same if: They have the matching elements and attributes, and that the data in the elements also match. The comparison is order sensitive. </p>
+
+      <p>The element names from the documents at the current depth are compared, followed by their values, then any attribute names and values are compared. The process is applied then to the subtrees of the documents.</p>
+
+      <p>Notes: If there are leaf nodes in one nodeset which don't exist in the other, the value of those 'extra' elements won't appear as a difference.
+      </p>
+    </div>
+<div class="refparameter">
+<b><a name="id1977570"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt>
+<span class="term">ns1, </span><span class="term">ns2, </span>
+</dt>
+<dd><p>The two nodesets which are to be compared. </p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1977593"></a>Returns</b>
+      <p>Returns the difference between the documents. </p>
+
+      <p>The format of the output is an xml document. A node is added to the result tree for every difference. The node contains the type of difference (e.g element name difference, attribute value difference, etc), the value in the first nodeset and the value in the second nodeset, and the parent node. The indentation level is the depth at which the difference was found relative to the first document. </p>
+
+    </div>
+</div>
+</div>

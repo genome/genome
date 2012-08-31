@@ -1,0 +1,77 @@
+<div class="chapter" lang="en">
+<div class="titlepage">
+<div>
+<div><h2 class="title">
+<a name="id1977625"></a>Chapter 1. XSLT Standard Library Test Suite</h2></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Steve</span> <span class="surname">Ball</span>
+</h3></div></div>
+<div><p class="copyright">Copyright © 2001 Steve Ball</p></div>
+</div>
+<div></div>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#id1977731">About The Test Suite</a></span></dt>
+<dt><span class="section"><a href="#id1955044">Preparing The Tests</a></span></dt>
+<dt><span class="section"><a href="#id1977855">Running The Tests</a></span></dt>
+<dt><span class="section"><a href="#id1977889">Debugging mode</a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1977731"></a>About The Test Suite</h2></div></div>
+<div></div>
+</div>
+<p>This stylesheet tests the stylesheet modules contained in the XSLT Standard Library</p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1955044"></a>Preparing The Tests</h2></div></div>
+<div></div>
+</div>
+<p>The tests are performed using the stylesheet
+          <tt class="filename">test.xsl</tt>.  Normally this stylesheet is supplied
+          with the XSLTSL distribution, so you shouldn't need to do
+          anything.</p>
+<p>However, if you have added a new stylesheet module to
+          the library then the <tt class="filename">test.xsl</tt> stylesheet must be
+          regenerated.  This is done using the <tt class="filename">gentest.xsl</tt>
+          stylesheet.  To do this, process the <tt class="filename">test.xml</tt>
+          file with the stylesheet <tt class="filename">gentest.xsl</tt>
+          using your favourite XSLT processor.</p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1977855"></a>Running The Tests</h2></div></div>
+<div></div>
+</div>
+<p>Process the <tt class="filename">test.xml</tt> file with
+          the stylesheet <tt class="filename">test.xsl</tt> using your
+          favourite XSLT processor.  The result is an XML document.
+          You can process this with
+          the <tt class="filename">results.xsl</tt> stylesheet to get formatted html
+          output. A modern browser combined with the
+          <tt class="filename">results.css</tt> file gives you green lines for the
+          tests that passed and ugly red ones for the ones that didn't. When the
+          tests fail they also print a text message to the console for
+          quick verification of the correctness.</p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1977889"></a>Debugging mode</h2></div></div>
+<div></div>
+</div>
+<p>When a test seems to be stuck in a loop or if you want
+          to verify the tests in some other way, start the
+          <tt class="filename">test.xsl</tt> stylesheet with the parameter
+          <b class="userinput"><tt>debug='true'</tt></b> to get more info printed
+          to the console.
+        </p>
+</div>
+</div>

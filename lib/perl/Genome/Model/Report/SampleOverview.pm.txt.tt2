@@ -1,0 +1,34 @@
+============================================================
+Sample Overview of [% sample.name %]
+============================================================
+
+This report based on information from Build [% build.id %], created [% time_now %].
+
+HTML version of this report: 
+https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/Sample_Overview/report.html
+[% count=1; %]
+
+Sample Details
+------------------------------------------------------------
+                      sample: [% sample.id %] ([% sample.name %])
+                     species: [% IF sample.species_name %][% sample.species_name %][% ELSE %]Not available[% END %]
+                       organ: [% IF sample.organ_name %][% sample.organ_name %][% ELSE %]Not available[% END %]
+                      tissue: [% IF sample.tissue_name %][% sample.tissue_name %][% ELSE %]Not available[% END %]
+                     project: [% FOREACH project IN project_list %][% IF count>1 %]
+                              [% project.name %][% ELSE %][% project.name %][% END; %][% count=count+1; %][% END; %]
+
+     [% IF sample_libraries %]Libraries
+     -------------------------------------------------------[% FOREACH sample_library IN sample_libraries %]
+          [% sample_library.name %]
+[% END %][% END %]
+
+     [% IF sample_models %]Models
+     -------------------------------------------------------[% FOREACH sample_model IN sample_models %]
+                       Model: [% sample_model.id %] ([% sample_model.name %])
+          Processing Profile: [% sample_model.processing_profile_name %]
+        Last Succeeded Build: [% IF sample_model.last_succeeded_build.date_completed %][% sample_model.last_succeeded_build.date_completed %][% ELSE %]No successful build[% END %]
+[% END %][% END %]
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+                  The Genome Center at Washington University
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

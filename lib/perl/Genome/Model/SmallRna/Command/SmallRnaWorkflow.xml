@@ -1,0 +1,119 @@
+<?xml version='1.0' standalone='yes'?>
+
+<workflow name="SmallRna Workflow" logDir="/gscmnt/sata142/techd/jhundal/miRNA_logs/" >
+<link fromOperation="input connector" fromProperty="input_bam_file"    toOperation="FilterBamFlagstat" toProperty="bam_file" />
+<link fromOperation="input connector" fromProperty="filtered_bam_file"    toOperation="FilterBamFlagstat" toProperty="filtered_bam_file" />
+<link fromOperation="input connector" fromProperty="read_size_bin"    toOperation="FilterBamFlagstat" toProperty="read_size_bin" />
+
+<link fromOperation="input connector" fromProperty="zenith_depth"    toOperation="ClusterCoverage" toProperty="zenith_depth" />
+<link fromOperation="input connector" fromProperty="minimum_depth"    toOperation="ClusterCoverage" toProperty="minimum_depth" />
+<link fromOperation="input connector" fromProperty="stats_file"    toOperation="ClusterCoverage" toProperty="stats_file" />
+<link fromOperation="input connector" fromProperty="bed_file"    toOperation="ClusterCoverage" toProperty="bed_file" />
+
+<link fromOperation="input connector" fromProperty="stats_file" 	toOperation="StatsGenerator" toProperty="coverage_stats_file" />
+<link fromOperation="input connector" fromProperty="output_stats_file"  toOperation="StatsGenerator" toProperty="output_stats_file" />
+
+<link fromOperation="input connector" fromProperty="output_clusters_file"  toOperation="StatsGenerator" toProperty="output_clusters_file" />
+<link fromOperation="input connector" fromProperty="flagstat_17_70_file"  toOperation="StatsGenerator" toProperty="flagstat_17_70_file" />
+<link fromOperation="input connector" fromProperty="output_subclusters_file"  toOperation="StatsGenerator" toProperty="output_subclusters_file" />
+<link fromOperation="input connector" fromProperty="output_subcluster_intersect_file"  toOperation="StatsGenerator" toProperty="output_subcluster_intersect_file" />
+<link fromOperation="input connector" fromProperty="subcluster_min_mapzero" toOperation="StatsGenerator" toProperty="subcluster_min_mapzero" />
+
+<link fromOperation="input connector" fromProperty="annotation_bed_file"  toOperation="AnnotateCluster" toProperty="annotation_bed_file" />  
+<link fromOperation="input connector" fromProperty="output_clusters_file"  toOperation="AnnotateCluster" toProperty="cluster_bed_file" />
+<link fromOperation="input connector" fromProperty="annotation_name"  	 	toOperation="AnnotateCluster" toProperty="annotation_name" />
+<link fromOperation="input connector" fromProperty="output_tsv_file"  	 	toOperation="AnnotateCluster" toProperty="output_tsv_file" />
+
+<link fromOperation="input connector" fromProperty="output_stats_file"  toOperation="Spreadsheet" toProperty="input_stats_file" />
+<link fromOperation="input connector" fromProperty="output_tsv_file"  toOperation="Spreadsheet" toProperty="input_intersect_file" />
+<link fromOperation="input connector" fromProperty="output_spreadsheet"  toOperation="Spreadsheet" toProperty="output_spreadsheet" />
+<link fromOperation="input connector" fromProperty="input_cluster_number"  toOperation="Spreadsheet" toProperty="input_cluster_number" />
+  
+  ######
+  <link fromOperation="FilterBamFlagstat" fromProperty="filtered_bam_file" toOperation="ClusterCoverage" toProperty="bam_file" />
+   <link fromOperation="FilterBamFlagstat" fromProperty="filtered_bam_file" 	toOperation="StatsGenerator" toProperty="bam_file" />
+  
+  <link fromOperation="ClusterCoverage" fromProperty="stats_file" 	toOperation="StatsGenerator" toProperty="coverage_stats_file" />
+  
+  <link fromOperation="StatsGenerator" fromProperty="output_clusters_file"  toOperation="output connector" toProperty="output_clusters_file" />
+  <link fromOperation="StatsGenerator" fromProperty="output_clusters_file"  toOperation="AnnotateCluster" toProperty="cluster_bed_file" />
+  <link fromOperation="StatsGenerator" fromProperty="output_subcluster_intersect_file"  toOperation="output connector" toProperty="output_subcluster_intersect_file" />
+<link fromOperation="StatsGenerator" fromProperty="output_subclusters_file"  toOperation="output connector" toProperty="output_subclusters_file" />
+ <link fromOperation="StatsGenerator" fromProperty="output_stats_file"  toOperation="output connector" toProperty="output_stats_file" />
+   <link fromOperation="StatsGenerator" fromProperty="bam_file"    toOperation="output connector" toProperty="filtered_bam_file" />
+ 
+ <link fromOperation="AnnotateCluster" 	 fromProperty="output_tsv_file"  toOperation="output connector" toProperty="output_tsv_file" />
+
+
+
+ <link fromOperation="FilterBamFlagstat" 	 fromProperty="result" 			 toOperation="output connector" toProperty="result" />
+  <link fromOperation="ClusterCoverage" 	 fromProperty="result" 			 toOperation="output connector" toProperty="result" />
+ 
+  <link fromOperation="StatsGenerator" 	 fromProperty="result" 			 toOperation="output connector" toProperty="result" />
+  <link fromOperation="AnnotateCluster" 	 fromProperty="result" 			 toOperation="output connector" toProperty="result" />
+   <link fromOperation="Spreadsheet" 	 fromProperty="result" 			 toOperation="output connector" toProperty="result" />
+
+ <link fromOperation="StatsGenerator" 	 fromProperty="output_stats_file" toOperation="Spreadsheet"  toProperty="input_stats_file" />
+ <link fromOperation="AnnotateCluster" 	 fromProperty="output_tsv_file"  toOperation="Spreadsheet" toProperty="input_intersect_file" />
+ <link fromOperation="Spreadsheet" 	 fromProperty="output_spreadsheet" toOperation="output connector" toProperty="output_spreadsheet" />
+ <link fromOperation="Spreadsheet" 	 fromProperty="result" 			 toOperation="output connector" toProperty="result" />
+ 
+ 
+   	<operation name="FilterBamFlagstat">
+	<operationtype commandClass="Genome::Model::SmallRna::Command::FilterBamFlagstat" typeClass="Workflow::OperationType::Command" />
+    </operation>
+ 
+ 
+  	<operation name="ClusterCoverage">
+	<operationtype commandClass="Genome::Model::SmallRna::Command::ClusterCoverage" typeClass="Workflow::OperationType::Command" />
+    </operation>
+    
+
+    <operation name="StatsGenerator">
+    <operationtype commandClass="Genome::Model::SmallRna::Command::StatsGenerator"   typeClass="Workflow::OperationType::Command" />
+    </operation>
+   
+   
+    <operation name="AnnotateCluster">
+	<operationtype commandClass="Genome::Model::SmallRna::Command::AnnotateCluster" typeClass="Workflow::OperationType::Command" />
+    </operation>
+    
+    
+    <operation name="Spreadsheet">
+	<operationtype commandClass="Genome::Model::SmallRna::Command::Spreadsheet" typeClass="Workflow::OperationType::Command" />
+    </operation>
+    
+    <operationtype typeClass="Workflow::OperationType::Model">
+    
+    <inputproperty>input_bam_file</inputproperty>
+    <inputproperty>filtered_bam_file</inputproperty>
+ 	<inputproperty>read_size_bin</inputproperty>
+	 <inputproperty>zenith_depth</inputproperty>
+<inputproperty>minimum_depth</inputproperty>
+     <inputproperty>bed_file</inputproperty>
+<inputproperty>flagstat_17_70_file</inputproperty>
+     <inputproperty>output_stats_file</inputproperty>
+     <inputproperty>output_clusters_file</inputproperty>
+     <inputproperty>output_subclusters_file</inputproperty>
+     <inputproperty>output_subcluster_intersect_file</inputproperty>
+      <inputproperty>subcluster_min_mapzero</inputproperty>
+    <inputproperty>annotation_bed_file</inputproperty>
+    <inputproperty>output_tsv_file</inputproperty>
+	<inputproperty>annotation_name</inputproperty>
+	<inputproperty>output_spreadsheet</inputproperty>
+	<inputproperty>input_cluster_number</inputproperty>
+	<inputproperty>stats_file</inputproperty>
+	
+	
+     <outputproperty>filtered_bam_file</outputproperty>
+    <outputproperty>output_clusters_file</outputproperty>
+    <outputproperty>output_stats_file</outputproperty>
+  	 <outputproperty>output_subcluster_intersect_file</outputproperty>
+    <outputproperty>output_tsv_file</outputproperty>
+    <outputproperty>output_subclusters_file</outputproperty>
+    <outputproperty>output_spreadsheet</outputproperty>
+	<outputproperty>result</outputproperty>
+  </operationtype>
+  
+</workflow>
+  

@@ -1,0 +1,40 @@
+table.info_table_group td {
+    padding-right: 10px;
+}
+
+div.content_padding {
+    padding: 0 10px 20px 10px;
+}
+
+h3.group_header {
+    border-bottom: 2px solid #CCC;
+}
+div.circos_graph {
+    float: left;
+    width: 920px;
+}
+
+form.status_selector {
+    margin: 0;
+    padding: 0;
+    float: right;
+    font-size: 85%;
+    font-weight: normal;
+}
+
+form.status_selector table {
+    margin: 0;
+    padding: 0;
+}
+
+form.status_selector table td.lbl {
+    padding-right: 10px;
+    padding-left: 5px;
+}
+
+
+form.status_selector table td.table_lbl {
+    font-weight: bold;
+    padding-right: 8px;
+    padding-left: 3px;
+}

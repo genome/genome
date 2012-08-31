@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+
+<tests>
+  <module name="string"/>
+  <module name="date-time"/>
+  <module name="node">
+    <testdata>
+      <element>
+        <text>Character data</text>
+      </element>
+      <element>
+        <text>Character data</text>
+      </element>
+      <element>
+        <text>Character data</text>
+      </element>
+    </testdata>
+  </module>
+  <module name="uri"/>
+  <module name="compare"/>
+  <module name="markup">
+    <testdata>
+      <sample>this is a test</sample>
+    </testdata>
+  </module>
+  <module name='math'/>
+  <module name='svg'/>
+
+  <!-- Add a new module by copying and uncommenting this element -->
+  <!-- <module name="example"/> -->
+  <!-- Then regenerate the test.xsl stylesheet using the 
+       gentest.xsl stylesheet with this file as input -->
+
+</tests>

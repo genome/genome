@@ -1,0 +1,10 @@
+BEGIN TRANSACTION;
+CREATE TABLE search_index_queue (
+    id varchar NOT NULL,
+    timestamp timestamp NOT NULL,
+    subject_id varchar NOT NULL,
+    subject_class varchar NOT NULL,
+    action varchar NOT NULL,
+    PRIMARY KEY (id)
+);
+COMMIT;

@@ -1,0 +1,30 @@
+============================================================
+Build Overview of Model [% model.name %]
+============================================================
+
+HTML version of this report: 
+https://gscweb.gsc.wustl.edu[% build.data_directory %]reports/Build_Overview/report.html
+[% count=1; %]
+
+Build Details
+------------------------------------------------------------
+                    build id: [% build.id %]
+              scheduled date: [% build.date_scheduled %][% IF build.date_completed %]
+             completion date: [% build.date_completed %][% END %]
+                      status: [% build.build_status %]
+
+Model Details
+------------------------------------------------------------
+                genome model: [% model.id %] "[% model.name %]"
+                     project: [% FOREACH project IN project_list %][% IF count>1 %]
+                              [% project.name %][% ELSE %][% project.name %][% END; %][% count=count+1; %][% END; %]
+                      sample: [% sample.name %]
+          processing profile: [% pprofile.name %], [% pprofile.type_name %]
+             instrument data: [% model.instrument_data.size %] read sets
+
+------------------------------------------------------------
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+                  The Genome Center at Washington University
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

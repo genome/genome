@@ -1,0 +1,270 @@
+<div class="reference" lang="en">
+<a name="id1975755"></a><div class="titlepage">
+<div>
+<div><h1 class="title">
+<a name="id1975755"></a>URI (Uniform Resource Identifier) Processing</h1></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Jason</span> <span class="surname">Diamond</span>
+</h3></div></div>
+<div><p class="releaseinfo">
+        $Id: uri.html,v 1.5 2004/10/10 06:18:57 balls Exp $
+      </p></div>
+<div><p class="copyright">Copyright © 2001 Jason Diamond</p></div>
+</div>
+<div></div>
+<hr>
+</div>
+<div class="partintro" lang="en">
+<div>
+<div></div>
+<div></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1975300"></a>Introduction</h2></div></div>
+<div></div>
+</div>
+<p>This module provides templates for processing URIs (Uniform Resource Identifers).</p>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt>
+<a href="#template.uri:is-absolute-uri">uri:is-absolute-uri</a> - Determines if a URI is absolute or relative.</dt>
+<dt>
+<a href="#template.uri:get-uri-scheme">uri:get-uri-scheme</a> - Gets the scheme part of a URI.</dt>
+<dt>
+<a href="#template.uri:get-uri-authority">uri:get-uri-authority</a> - Gets the authority part of a URI.</dt>
+<dt>
+<a href="#template.uri:get-uri-path">uri:get-uri-path</a> - Gets the path part of a URI.</dt>
+<dt>
+<a href="#template.uri:get-uri-query">uri:get-uri-query</a> - Gets the query part of a URI.</dt>
+<dt>
+<a href="#template.uri:get-uri-fragment">uri:get-uri-fragment</a> - Gets the fragment part of a URI.</dt>
+<dt>
+<a href="#template.uri:resolve-uri">uri:resolve-uri</a> - Resolves a URI reference against a base URI.</dt>
+</dl>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<a name="template.uri:is-absolute-uri"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>uri:is-absolute-uri — Determines if a URI is absolute or relative.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="uri:is-absolute-uri"&gt;&lt;xsl:param name="uri"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956725"></a>
+      <p>Absolute URIs start with a scheme (like "http:" or "mailto:").</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1957281"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">uri</span></dt>
+<dd><p>An absolute or relative URI.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956942"></a>Returns</b>
+      <p>Returns 'true' if the URI is absolute or '' if it's not.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.uri:get-uri-scheme"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>uri:get-uri-scheme — Gets the scheme part of a URI.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="uri:get-uri-scheme"&gt;&lt;xsl:param name="uri"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1975822"></a>
+      <p>The ':' is not part of the scheme.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1957292"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">uri</span></dt>
+<dd><p>An absolute or relative URI.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956806"></a>Returns</b>
+      <p>Returns the scheme (without the ':') or '' if the URI is relative.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.uri:get-uri-authority"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>uri:get-uri-authority — Gets the authority part of a URI.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="uri:get-uri-authority"&gt;&lt;xsl:param name="uri"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956756"></a>
+      <p>The authority usually specifies the host machine for a resource. It always follows '//' in a typical URI.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1957053"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">uri</span></dt>
+<dd><p>An absolute or relative URI.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976162"></a>Returns</b>
+      <p>Returns the authority (without the '//') or '' if the URI has no authority.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.uri:get-uri-path"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>uri:get-uri-path — Gets the path part of a URI.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="uri:get-uri-path"&gt;&lt;xsl:param name="uri"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976062"></a>
+      <p>The path usually comes after the '/' in a URI.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1975857"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">uri</span></dt>
+<dd><p>An absolute or relative URI.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976179"></a>Returns</b>
+      <p>Returns the path (with any leading '/') or '' if the URI has no path.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.uri:get-uri-query"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>uri:get-uri-query — Gets the query part of a URI.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="uri:get-uri-query"&gt;&lt;xsl:param name="uri"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976270"></a>
+      <p>The query comes after the '?' in a URI.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976277"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">uri</span></dt>
+<dd><p>An absolute or relative URI.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976296"></a>Returns</b>
+      <p>Returns the query (without the '?') or '' if the URI has no query.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.uri:get-uri-fragment"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>uri:get-uri-fragment — Gets the fragment part of a URI.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="uri:get-uri-fragment"&gt;&lt;xsl:param name="uri"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976321"></a>
+      <p>The fragment comes after the '#' in a URI.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976328"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">uri</span></dt>
+<dd><p>An absolute or relative URI.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976348"></a>Returns</b>
+      <p>Returns the fragment (without the '#') or '' if the URI has no fragment.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.uri:resolve-uri"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>uri:resolve-uri — Resolves a URI reference against a base URI.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="uri:resolve-uri"&gt;&lt;xsl:param name="reference"/&gt;&lt;xsl:param name="base"/&gt;&lt;xsl:param name="document" select="$base"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976372"></a>
+      <p>This template follows the guidelines specified by <a href="ftp://ftp.isi.edu/in-notes/rfc2396.txt" target="_top">RFC 2396</a>.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976385"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">reference</span></dt>
+<dd><p>A (potentially relative) URI reference.</p></dd>
+<dt><span class="term">base</span></dt>
+<dd><p>The base URI.</p></dd>
+<dt><span class="term">document</span></dt>
+<dd><p>The URI of the current document. This defaults to the value of the base URI if not specified.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976433"></a>Returns</b>
+      <p>The "combined" URI.</p>
+    </div>
+</div>
+</div>

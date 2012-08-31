@@ -1,0 +1,37 @@
+<configuration>
+    <defaults name="directory">/home1/watson/seqmgr/vector</defaults>
+    <defaults name="vector_file">${directory}/vector.seq</defaults>
+    <defaults name="linker_file">${directory}/linker.seq</defaults>
+    <defaults name="params">-minmatch 12 -minscore 20 -penalty -2</defaults>
+    <projects pattern="^UTI89_">
+        <screen file="${directory}/arachne.uti89.seq" params="-minmatch 14 -minscore 30 -penalty -2"/>
+        <screen file="${directory}/screenPlas_noTn.seq" params="-minmatch 14 -minscore 30 -penalty -2"/>
+    </projects>
+    <projects pattern="^Y_,^c\d+\.Contig\d+$">
+        <screen file="${directory}/linker_new.seq" params="-minmatch 19 -penalty -10 -minscore 19"/>
+        <screen file="${directory}/linker_new2.seq" params="-minmatch 13 -penalty -10 -minscore 13"/>
+    </projects>
+    <projects pattern="^H_\w+-\d+">
+        <screen file="${vector_file}" params="-minmatch 9 -penalty -9 -minscore 9"/>
+    </projects>
+    <projects pattern="^[BF]_?|^(B_)?STM|CEU_">
+        <screen file="${directory}/bac_vec" params="-minmatch 14 -minscore 30 -penalty -2"/>
+    </projects>
+    <projects pattern="^HCG217B_">
+        <screen file="${directory}/fungal_HCG217B_vec_linker.seq" params="-minmatch 14 -minscore 30 -penalty -2"/>
+    </projects>
+    <projects pattern="^C_AD,^Z_AG,^MAIZE_BAC-Z_AG">
+        <screen file="${directory}/pTARBAC1.3.seq" params="${params}"/>
+    </projects>
+    <projects pattern="^Z_AH">
+        <screen file="${vector_file}" params="${params}"/>
+        <screen file="${directory}/pbelobac11.seq" params="${params}"/>
+    </projects>
+    <projects pattern="^M_BB">
+        <screen file="${directory}/pTARBAC1.seq" params="${params}"/>
+        <screen file="${directory}/vector.no_pbace36.seq" params="${params}"/>
+    </projects>
+    <projects pattern=".+">
+        <screen file="${vector_file}" params="${params}"/>
+    </projects>
+</configuration>

@@ -1,0 +1,16 @@
+#!/usr/bin/env genome-perl
+
+use strict;
+use warnings;
+
+my $found_error = 0;
+my @stdin;
+while (my $stdin = <>) {
+    push @stdin, $stdin;
+    $found_error = 1 if ($stdin =~ /ERROR:/);
+}
+$found_error = 1 if ($stdin[-1] !~ /^COMMITTED$/);
+
+if ($found_error) {
+    print @stdin;
+}

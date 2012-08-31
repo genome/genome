@@ -1,0 +1,13 @@
+2002-01-07	Steve Ball	<Steve.Ball@zveno.com>
+	* Modified allxsl2jref.xsl to change 
+	includestylesheets parameter to have 0 default.
+
+2002-01-04	Steve Ball	<Steve.Ball@zveno.com>
+	* Added markup.html
+
+2001-04-09	Steve Ball	<Steve.Ball@zveno.com
+	* Added node.html, docbook-extensions.html
+
+2001-04-04	Steve Ball	<Steve.Ball@zveno.com>
+	* Added date-time.html
+	

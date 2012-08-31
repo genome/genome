@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<reference>
+    <referenceinfo xmlns="">
+      <releaseinfo role="meta">
+        $Id: cmp.xml,v 1.1 2004/10/10 06:18:57 balls Exp $
+      </releaseinfo>
+      <author>
+        <surname>Hummel</surname>
+        <firstname>Mark</firstname>
+      </author>
+      <copyright>
+        <year>2003</year>
+        <holder>Mark Hummel</holder>
+      </copyright>
+    </referenceinfo>
+
+    <title xmlns="">XML Compare</title>
+
+    <partintro xmlns="">
+      <section>
+        <title>Introduction</title>
+
+        <para>This module provides a template for comparing two xml documents. </para>
+
+      </section>
+    </partintro>
+
+  <refentry id="template.cmp:diff"><refnamediv><refname>cmp:diff</refname><refpurpose xmlns="">Compare</refpurpose></refnamediv><refsynopsisdiv><synopsis>&lt;xsl:template name="cmp:diff"&gt;&lt;xsl:param name="ns1"/&gt;&lt;xsl:param name="ns2"/&gt;  ...&lt;/xsl:template&gt;</synopsis></refsynopsisdiv><refdescription xmlns="">
+      <para>Compare two xml documents and display differences. Two xml documents are defined to be the same if: They have the matching elements and attributes, and that the data in the elements also match. The comparison is order sensitive. </para>
+
+      <para>The element names from the documents at the current depth are compared, followed by their values, then any attribute names and values are compared. The process is applied then to the subtrees of the documents.</para>
+
+      <para>Notes: If there are leaf nodes in one nodeset which don't exist in the other, the value of those 'extra' elements won't appear as a difference.
+      </para>
+    </refdescription><refparameter xmlns="">
+      <variablelist>
+        <varlistentry>
+          <term>ns1</term>
+          <term>ns2</term>
+          <listitem>
+            <para>The two nodesets which are to be compared. </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refparameter><refreturn xmlns="">
+      <para>Returns the difference between the documents. </para>
+
+      <para>The format of the output is an xml document. A node is added to the result tree for every difference. The node contains the type of difference (e.g element name difference, attribute value difference, etc), the value in the first nodeset and the value in the second nodeset, and the parent node. The indentation level is the depth at which the difference was found relative to the first document. </para>
+
+    </refreturn></refentry></reference>

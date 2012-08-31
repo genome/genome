@@ -1,0 +1,136 @@
+<tool id="gmt_music_play_galaxy" name="MuSiC Play" version="0.3.0">
+    <description>
+        Run the full suite of MuSiC tools sequentially.
+    </description>
+	  <command>gmt music galaxy 
+--bam-list=$bam_list
+--output-bundle=$output_bundle 
+--aa-range=$aa_range 
+#if $bmr: 
+--bmr=$bmr 
+#end if 
+--bmr-groups=$bmr_groups 
+#if $bmr_modifier_file: 
+--bmr-modifier-file=$bmr_modifier_file 
+#end if 
+#if $categorical_clinical_data_file: 
+--categorical-clinical-data-file=$categorical_clinical_data_file 
+#end if 
+#if $genes_to_ignore: 
+--genes-to-ignore=$genes_to_ignore 
+#end if 
+#if $genetic_data_type: 
+--genetic-data-type=$genetic_data_type 
+#end if 
+#if $glm_clinical_data_file: 
+--glm-clinical-data-file=$glm-clinical_data_file 
+#end if 
+#if $glm_model_file: 
+--glm-model-file=$glm_model_file 
+#end if 
+--maf-file=$maf_file 
+--max-fdr=$max_fdr 
+#if $max_proximity: 
+--max-proximity=$max_proximity 
+#end if 
+$merge_concurrent_muts 
+#if $min_mapq: 
+--min-mapq=$min_mapq 
+#end if 
+--min-mut-genes-per-path=$min_mut_genes_per_path 
+#if $normal_min_depth: 
+--normal-min-depth=$normal_min_depth 
+#end if 
+#if $tumor_min_depth: 
+--tumor-min-depth=$tumor_min_depth 
+#end if 
+--nuc-range=$nuc_range 
+#if $numeric_clinical_data_file: 
+--numeric-clinical-data-file=$numeric_clinical_data_file 
+#end if 
+--numerical-data-test-method=$numerical_data_test_method 
+--pathway-file=$pathway_file 
+#if $permutations: 
+--permutations=$permutations 
+#end if 
+--processors=$processors 
+--reference-build=$reference_build 
+--reference-sequence=$reference_sequence.fields.path
+--roi-file=$roi_file 
+$separate_truncations 
+$show_known_hits 
+$show_skipped 
+$skip_non_coding 
+$skip_silent 
+$use_maf_in_glm 
+$verbose 
+$wu_annotation_headers</command>
+	<configfiles>
+	  <configfile name="bam_list">#for $i in $sample_name_repeat
+${i.sample_name}	${i.normal_bam.file_name}	${i.tumor_bam.file_name}
+#end for</configfile>
+  </configfiles>
+    <inputs>
+<repeat name="sample_name_repeat" title="Sample Name/Input BAM" min="1">
+      <param name="sample_name" type="text" label="Sample Name" help=""/>
+      <param name="normal_bam" type="data" label="Normal BAM" help="" format="bam" />
+      <param name="tumor_bam" type="data" label="Tumor BAM" help="" format="bam" />
+    </repeat>
+<param name="roi_file" format="text" type="data" help="Tab delimited list of ROIs [chr start stop gene_name]" label="ROI File"/>
+<param name="reference_build" type="select" help="Choose either 'Build 36' or 'Build 37'">
+	<option value="Build37" selected="true">Build 37</option>
+	<option value="Build36">Build 36</option>
+</param>
+<param name="reference_sequence" type="select" label="Reference Sequence">
+  <options from_data_table="all_fasta"></options>
+</param>
+<param name="maf_file" format="text" type="data" help="List of mutations using TCGA MAF specifications v2.3" label="MAF File" />
+<param name="pathway_file" format="text" type="data" help="Tab-delimited text file of pathway information" label="Pathway File"/>
+<param name="aa_range" type="integer" value="2" help="Set how close a 'near' match is when searching for amino acid near hits" label="Amino Acid Range" />
+<param name="bmr" format="float" type="data" optional="true" label="Background Mutation Rate" help="Background mutation rate in the targeted regions" />
+<param name="bmr_groups" type="integer" value="1" help="Number of clusters of samples with comparable BMRs" label="BMR Groups" />
+<param name="bmr_modifier_file" format="text" type="data" help="Tab delimited list of values per gene that modify BMR before testing [gene_name bmr_modifier]" optional="true" label="BMR Modifer File" />
+<param name="categorical_clinical_data_file" format="text" type="data" help="Table of samples (y) vs. categorical clinical data category (x)" optional="true" label="Categorical Clinical Data File" />
+<param name="genes_to_ignore" format="text" type="data" help="Comma-delimited list of genes to ignore for background mutation rates" optional="true" label="Genes to Ignore"/>
+<param name="genetic_data_type" type="select" help="Either Gene or Variant" label="Genetic Data Type">
+	<option value="gene" selected="true">Gene</option>
+	<option value="variant">Variant</option>
+</param>
+<param name="glm_clinical_data_file" format="text" type="data" help="Clinical traits, mutational profiles, other mixed clinical data (See DESCRIPTION)." optional="true" label="GLM Clinical Data File"/>
+<param name="glm_model_file" format="text" type="data" help="File outlining the type of model, response variable, covariants, etc. for the GLM analysis. (See DESCRIPTION).+" optional="true" label="GLM Model File"/>
+<param name="max_fdr" type="float" help="The maximum allowed false discovery rate for a gene to be considered an SMG" value="0.20" label="Max FDR"  />
+<param name="max_proximity" type="integer" help="Maximum AA distance between 2 mutations" optional="true" label="Max Proximity"/>
+<param name="merge_concurrent_muts" type="boolean" help="Multiple mutations of a gene in the same sample are treated as 1" checked="False" truevalue="--merge-concurrent-muts" falsevalue="--nomerge-concurrent-muts" label="Merge Concurrent Mutations"/>
+<param name="min_mapq" type="integer" help="The minimum mapping quality of reads to consider towards read depth counts" optional="true" label="Minimum Mapping Quality"/>
+<param name="min_mut_genes_per_path" type="integer" label="Minimum Mutated Genes Per Pathway" help="Pathways with fewer mutated genes than this will be ignored" optional="true" value="1"/>
+<param name="normal_min_depth" type="integer" help="The minimum read depth to consider a Normal BAM base as covered" optional="true" label="Normal: Minimum Read Depth" />
+<param name="tumor_min_depth" type="integer" help="The minimum read depth to consider a Tumor BAM base as covered" optional="true" label="Tumor: Minimum Read Depth" />
+<param name="nuc_range" type="integer" value="5" help="Set how close a 'near' match is when searching for nucleotide position near hits" label="Nucleotide Range" />
+<param name="numeric_clinical_data_file" format="text" type="data" help="Table of samples (y) vs. numeric clinical data category (x)" optional="true" label="Numeric Clinical Data File" />
+<param name="numerical_data_test_method" type="select" help="Please select a method" label="Numerical Clinical Data Test Method">
+	<option value="cor" selected="true">Pearson Correlation</option>
+	<option value="wilcox">Wilcoxon Rank-Sum Test</option>
+</param>
+<param name="permutations" type="integer" optional="true" help="Number of permutations used to determine P-values" label="Permutations" />
+<param name="processors" type="integer" value="1" help="Number of processors to use in SMG (requires 'foreach' and 'doMC' R packages)" label="# Processors" />
+<param name="separate_truncations" type="boolean" help="Group truncational mutations as a separate category" checked="False" truevalue="--separate-truncations" falsevalue="--noseparate-truncations" label="Separate Truncations"/>
+<param name="show_known_hits" type="boolean" help="When a finding is novel, show known AA in that gene" checked="True" truevalue="--show-known-hits" falsevalue="--noshow-known-hits" label="Show Known Hits"/>
+<param name="show_skipped" type="boolean" help="Report each skipped mutation, not just how many" checked="False" truevalue="--show-skipped" falsevalue="--noshow-skipped" label="Show Skipped Mutations" />
+<param name="skip_non_coding" type="boolean" help="Skip non-coding mutations from the provided MAF file" checked="True" truevalue="--skip-non-coding" falsevalue="--noskip-non-coding" label="Skip Non-Coding Mutations"/>
+<param name="skip_silent" type="boolean" help="Skip silent mutations from the provided MAF file" checked="False" truevalue="--skip-silent" falsevalue="--noskip-silent" label="Skip Silent Mutations"/>
+<param name="use_maf_in_glm" type="boolean" help="Use the variant matrix created from the MAF file as variant input to GLM analysis." checked="False" truevalue="--use-maf-in-glm" falsevalue="--nouse-maf-in-glm" label="Use MAF in GLM analysis"/>
+<param name="verbose" type="boolean" help="Verbose mode" checked="False" truevalue="--verbose" falsevalue="--noverbose" label="Verbose Mode"/>
+<param name="wu_annotation_headers" type="boolean" help="Use this to default to wustl annotation format headers" checked="False" truevalue="--wu-annotation-headers" falsevalue="--nowu-annotation-headers" label="WU Annotation Headers"/>
+
+    </inputs>
+    <outputs>
+      <data format="tar" name="output_bundle" label="MuSiC output bundle" hidden="false" />
+    </outputs>
+    <help>
+        
+
+    This command can be used to run all of the MuSiC analysis tools on a set of data. Please see
+    the individual tools for further description of the parameters.
+
+    </help>
+</tool>

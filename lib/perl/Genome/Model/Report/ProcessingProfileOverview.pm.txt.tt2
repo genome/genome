@@ -1,0 +1,22 @@
+============================================================
+Processing Profile Overview of Model [% model.name %]
+============================================================
+
+This report based on information from Build [% build.id %], created [% time_now %].
+
+HTML version of this report: 
+https://gscweb.gsc.wustl.edu[% build.data_directory %]/reports/Processing_Profile_Overview/report.html
+[% count=1; %]
+
+Processing Profile Details
+------------------------------------------------------------
+          processing profile: [% pprofile.id %] ([% pprofile.name %])
+                        type: [% pprofile.type_name %]
+
+     Parameters
+     -------------------------------------------------------[% FOREACH item IN pprofile.params_for_class.sort %]
+          [% USE String(item) %][% String.replace('_', ' ')  %]:  [% pprofile.$item %][% END; %]
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+                  The Genome Center at Washington University
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -1,0 +1,30 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="PacBio Filter Reports" executor="Workflow::Executor::SerialDeferred" logDir="/gscmnt/gc2123/production/lsf_shared_dir/workflow_logs/filter_reports">
+  <link fromOperation="input connector" fromProperty="filtered_summary_file" toOperation="MakeFilterStatsReport" toProperty="filter_csv_file" />
+  <link fromOperation="input connector" fromProperty="results_directory" toOperation="MakeFilterStatsReport" toProperty="output_dir" />
+  <link fromOperation="input connector" fromProperty="results_directory" toOperation="MakeAdapterReport" toProperty="output_dir" />
+  <link fromOperation="input connector" fromProperty="input_fofn" toOperation="MakeAdapterReport" toProperty="hdf5_fofn" />
+
+  <link fromOperation="MakeFilterStatsReport" fromProperty="report_xml_file" toOperation="output connector" toProperty="filter_report_xml_file" />  
+  <link fromOperation="MakeAdapterReport" fromProperty="report_xml_file" toOperation="output connector" toProperty="adapter_report_xml_file" />
+  
+  <link fromOperation="MakeFilterStatsReport" fromProperty="result" toOperation="output connector" toProperty="result" />
+  <link fromOperation="MakeAdapterReport" fromProperty="result" toOperation="output connector" toProperty="result" />
+ 
+  <operation name="MakeFilterStatsReport">
+    <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::MakeFilterStatsReport" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="MakeAdapterReport">
+    <operationtype commandClass="Genome::Model::Tools::SmrtAnalysis::MakeAdapterReport" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>input_fofn</inputproperty>
+    <inputproperty>results_directory</inputproperty>
+    <inputproperty>filtered_summary_file</inputproperty>
+    <outputproperty>filter_report_xml_file</outputproperty>
+    <outputproperty>adapter_report_xml_file</outputproperty>
+    <outputproperty>result</outputproperty>
+  </operationtype>
+</workflow>

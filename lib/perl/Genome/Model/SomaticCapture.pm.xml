@@ -1,0 +1,541 @@
+<?xml version='1.0' standalone='yes'?>
+
+<workflow name="Somatic Capture Pipeline">
+
+<!-- SOMATIC SNIPER -->
+  <operation name="Somatic Sniper">
+    <operationtype commandClass="Genome::Model::Tools::DetectVariants::Somatic::Sniper" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Somatic Sniper" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="normal_bam_file" toOperation="Somatic Sniper" toProperty="control_aligned_reads_input" />
+  <link fromOperation="input connector" fromProperty="tumor_bam_file" toOperation="Somatic Sniper" toProperty="aligned_reads_input" />
+  <link fromOperation="input connector" fromProperty="reference_fasta" toOperation="Somatic Sniper" toProperty="reference_sequence_input" />
+  <link fromOperation="input connector" fromProperty="sniper_working_directory" toOperation="Somatic Sniper" toProperty="output_directory" />
+
+
+<!-- INDEL PE RUNNER -->
+
+  <link fromOperation="input connector" fromProperty="tumor_bam_file" toOperation="Indelpe Runner Tumor" toProperty="bam_file" />
+  <link fromOperation="input connector" fromProperty="reference_fasta" toOperation="Indelpe Runner Tumor" toProperty="ref_seq_file" />
+  <link fromOperation="input connector" fromProperty="tumor_indelpe_data_directory" toOperation="Indelpe Runner Tumor" toProperty="output_dir" />
+  <link fromOperation="input connector" fromProperty="tumor_snp_file" toOperation="Indelpe Runner Tumor" toProperty="filtered_snp_file" />
+
+  <link fromOperation="input connector" fromProperty="normal_bam_file" toOperation="Indelpe Runner Normal" toProperty="bam_file" />
+  <link fromOperation="input connector" fromProperty="reference_fasta" toOperation="Indelpe Runner Normal" toProperty="ref_seq_file" />
+  <link fromOperation="input connector" fromProperty="normal_indelpe_data_directory" toOperation="Indelpe Runner Normal" toProperty="output_dir" />
+  <link fromOperation="input connector" fromProperty="normal_snp_file" toOperation="Indelpe Runner Normal" toProperty="filtered_snp_file" />
+
+
+<!-- FILTER SOMATIC SNIPER SNPS -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Snp Filter" toProperty="skip_if_output_present" />
+  <link fromOperation="Indelpe Runner Tumor" fromProperty="filtered_snp_file" toOperation="Snp Filter" toProperty="tumor_snp_file" />
+  <link fromOperation="input connector" fromProperty="sniper_snp_output_filter" toOperation="Snp Filter" toProperty="output_file" />
+  <link fromOperation="Somatic Sniper" fromProperty="snv_output" toOperation="Snp Filter" toProperty="sniper_snp_file" />
+
+<!-- FORMAT FILTERED SNIPER SNPS -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Sniper Adaptor Snp" toProperty="skip_if_output_present" />
+  <link fromOperation="Snp Filter" fromProperty="output_file" toOperation="Sniper Adaptor Snp" toProperty="somatic_file" />
+  <link fromOperation="input connector" fromProperty="sniper_snp_output_adaptor" toOperation="Sniper Adaptor Snp" toProperty="output_file" />
+
+<!-- FORMAT SNIPER INDELS -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Sniper Adaptor Indel" toProperty="skip_if_output_present" />
+  <link fromOperation="Somatic Sniper" fromProperty="indel_output" toOperation="Sniper Adaptor Indel" toProperty="somatic_file" />
+  <link fromOperation="input connector" fromProperty="adaptor_output_indel" toOperation="Sniper Adaptor Indel" toProperty="output_file" />
+
+<!-- FILTER SNIPER INDELS -->
+
+  <link fromOperation="Sniper Adaptor Indel" fromProperty="output_file" toOperation="Filter Sniper Indel" toProperty="variants_file" />
+  <link fromOperation="input connector" fromProperty="filter_indel_output" toOperation="Filter Sniper Indel" toProperty="output_file" />
+
+<!-- ISOLATE HIGH CONFIDENCE SNIPER SNPS -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="High Confidence Snp" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="min_mapping_quality" toOperation="High Confidence Snp" toProperty="min_mapping_quality" />
+  <link fromOperation="input connector" fromProperty="min_somatic_quality" toOperation="High Confidence Snp" toProperty="min_somatic_quality" />
+  <link fromOperation="input connector" fromProperty="prepend_chr" toOperation="High Confidence Snp" toProperty="prepend_chr" />  
+  <link fromOperation="input connector" fromProperty="tumor_bam_file" toOperation="High Confidence Snp" toProperty="tumor_bam_file" />
+  <link fromOperation="Sniper Adaptor Snp" fromProperty="output_file" toOperation="High Confidence Snp" toProperty="sniper_file" />
+  <link fromOperation="input connector" fromProperty="sniper_snp_output_filter_hc" toOperation="High Confidence Snp" toProperty="output_file" />
+
+<!-- RUN LOH FILTER ON SOMATIC SNIPER FILES --> 
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Filter Loh" toProperty="skip_if_output_present" />
+  <link fromOperation="Indelpe Runner Normal" fromProperty="filtered_snp_file" toOperation="Filter Loh" toProperty="normal_snp_file" />
+  <link fromOperation="High Confidence Snp" fromProperty="output_file" toOperation="Filter Loh" toProperty="tumor_snp_file" />
+  <link fromOperation="input connector" fromProperty="sniper_snp_output_filter_hc_somatic" toOperation="Filter Loh" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="sniper_snp_output_filter_hc_loh" toOperation="Filter Loh" toProperty="loh_output_file" />
+
+
+<!-- VARSCAN2 SOMATIC -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Varscan Somatic" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="normal_bam_file" toOperation="Varscan Somatic" toProperty="normal_bam" />
+  <link fromOperation="input connector" fromProperty="tumor_bam_file" toOperation="Varscan Somatic" toProperty="tumor_bam" />
+  <link fromOperation="input connector" fromProperty="reference_fasta" toOperation="Varscan Somatic" toProperty="reference" />
+  <link fromOperation="input connector" fromProperty="varscan_snp_output" toOperation="Varscan Somatic" toProperty="output_snp" />
+  <link fromOperation="input connector" fromProperty="varscan_indel_output" toOperation="Varscan Somatic" toProperty="output_indel" />
+
+
+<!-- FORMAT VARSCAN SNPS/INDELS -->
+
+  <link fromOperation="Varscan Somatic" fromProperty="output_snp" toOperation="Format Varscan Snvs" toProperty="variants_file" />
+  <link fromOperation="input connector" fromProperty="varscan_adaptor_snp" toOperation="Format Varscan Snvs" toProperty="output_file" />
+
+  <link fromOperation="Varscan Somatic" fromProperty="output_indel" toOperation="Format Varscan Indels" toProperty="variants_file" />
+  <link fromOperation="input connector" fromProperty="varscan_adaptor_indel" toOperation="Format Varscan Indels" toProperty="output_file" />
+  
+
+<!-- PROCESS FORMATTED VARSCAN SNPS/INDELS -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Varscan ProcessSomatic SNP" toProperty="skip_if_output_present" />
+  <link fromOperation="Format Varscan Snvs" fromProperty="output_file" toOperation="Varscan ProcessSomatic SNP" toProperty="status_file" />
+  <!--  <link fromOperation="input connector" fromProperty="varscan_snp_somatic" toOperation="Varscan ProcessSomatic SNP" toProperty="output_somatic" /> -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Varscan ProcessSomatic Indel" toProperty="skip_if_output_present" />
+  <link fromOperation="Format Varscan Indels" fromProperty="output_file" toOperation="Varscan ProcessSomatic Indel" toProperty="status_file" />
+  <!-- <link fromOperation="input connector" fromProperty="varscan_indel_somatic" toOperation="Varscan ProcessSomatic Indel" toProperty="output_somatic" />  -->
+
+
+<!-- RUN GATK SOMATIC INDEL -->
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Gatk Somatic Indel" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="normal_bam_file" toOperation="Gatk Somatic Indel" toProperty="normal_bam" />
+  <link fromOperation="input connector" fromProperty="tumor_bam_file" toOperation="Gatk Somatic Indel" toProperty="tumor_bam" />
+  <link fromOperation="input connector" fromProperty="gatk_output" toOperation="Gatk Somatic Indel" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="gatk_output_formatted" toOperation="Gatk Somatic Indel" toProperty="formatted_file" />
+  <link fromOperation="input connector" fromProperty="gatk_output_somatic" toOperation="Gatk Somatic Indel" toProperty="somatic_file" />
+  <link fromOperation="input connector" fromProperty="reference_fasta" toOperation="Gatk Somatic Indel" toProperty="reference" />
+
+
+<!-- MERGE FILTERED SNIPER SNPS AND VARSCAN SNPS -->
+
+  <link fromOperation="Varscan ProcessSomatic SNP" fromProperty="output_somatic_hc" toOperation="Merge SNPs" toProperty="varscan_file" />
+  <link fromOperation="Filter Loh" fromProperty="output_file" toOperation="Merge SNPs" toProperty="glf_file" />
+  <link fromOperation="input connector" fromProperty="merged_snp_output" toOperation="Merge SNPs" toProperty="output_file" />
+
+
+<!-- RUN STRAND FILTER ON MERGED SNPS -->
+
+  <link fromOperation="Merge SNPs" fromProperty="output_file" toOperation="Strand Filter" toProperty="variant_file" />
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Strand Filter" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="merged_snp_output_filter" toOperation="Strand Filter" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="merged_snp_output_filter_fail" toOperation="Strand Filter" toProperty="filtered_file" />
+  <link fromOperation="input connector" fromProperty="tumor_bam_file" toOperation="Strand Filter" toProperty="bam_file" />
+  <link fromOperation="input connector" fromProperty="reference_fasta" toOperation="Strand Filter" toProperty="reference" />
+
+<!-- DO NOT RUN CEU/YRI FILTER ON MERGED SOMATIC CALLS --> 
+  
+<!-- RUN DBSNP FILTER ON MERGED SOMATIC CALLS --> 
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Lookup Variants" toProperty="skip_if_output_present" />
+  <link fromOperation="Strand Filter" fromProperty="output_file" toOperation="Lookup Variants" toProperty="variant_file" />
+  <link fromOperation="input connector" fromProperty="lookup_variants_report_mode" toOperation="Lookup Variants" toProperty="report_mode" />
+  <link fromOperation="input connector" fromProperty="lookup_variants_filter_out_submitters" toOperation="Lookup Variants" toProperty="filter_out_submitters" />
+  <link fromOperation="input connector" fromProperty="merged_snp_output_novel" toOperation="Lookup Variants" toProperty="output_file" />
+
+  
+<!-- RUN TRANSCRIPT ANNOTATION FOR SNPS --> 
+  
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Annotate Transcript Variants Snp" toProperty="skip_if_output_present" />
+  <link fromOperation="Lookup Variants" fromProperty="output_file" toOperation="Annotate Transcript Variants Snp" toProperty="variant_file" />
+  <link fromOperation="input connector" fromProperty="annotate_output_snp" toOperation="Annotate Transcript Variants Snp" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="annotate_no_headers" toOperation="Annotate Transcript Variants Snp" toProperty="no_headers" />
+  <link fromOperation="input connector" fromProperty="transcript_annotation_filter" toOperation="Annotate Transcript Variants Snp" toProperty="annotation_filter" />
+  <link fromOperation="input connector" fromProperty="annotation_reference_transcripts" toOperation="Annotate Transcript Variants Snp" toProperty="reference_transcripts" />
+  <link fromOperation="input connector" fromProperty="transcript_variant_annotator_version" toOperation="Annotate Transcript Variants Snp" toProperty="use_version" />
+
+
+<!-- RUN UCSC ANNOTATION FOR SNPS --> 
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Annotate UCSC" toProperty="skip_if_output_present" />
+  <link fromOperation="Merge SNPs" fromProperty="output_file" toOperation="Annotate UCSC" toProperty="input_file" />
+  <link fromOperation="input connector" fromProperty="ucsc_output" toOperation="Annotate UCSC" toProperty="output_file" /> 
+  <link fromOperation="input connector" fromProperty="ucsc_unannotated_output" toOperation="Annotate UCSC" toProperty="unannotated_file" /> 
+  <link fromOperation="input connector" fromProperty="only_tier_1" toOperation="Annotate UCSC" toProperty="skip" /> 
+
+<!-- DIVIDE VARIANTS BY TIER -->
+    
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Tier Variants Snp" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="tier_1_snp_file" toOperation="Tier Variants Snp" toProperty="tier1_file" />
+  <link fromOperation="input connector" fromProperty="tier_2_snp_file" toOperation="Tier Variants Snp" toProperty="tier2_file" />
+  <link fromOperation="input connector" fromProperty="tier_3_snp_file" toOperation="Tier Variants Snp" toProperty="tier3_file" />
+  <link fromOperation="input connector" fromProperty="tier_4_snp_file" toOperation="Tier Variants Snp" toProperty="tier4_file" />
+  <link fromOperation="input connector" fromProperty="only_tier_1" toOperation="Tier Variants Snp" toProperty="only_tier_1" />
+  <link fromOperation="Lookup Variants" fromProperty="output_file" toOperation="Tier Variants Snp" toProperty="variant_file" />
+  <link fromOperation="Annotate UCSC" fromProperty="output_file" toOperation="Tier Variants Snp" toProperty="ucsc_file" />
+  <link fromOperation="Annotate Transcript Variants Snp" fromProperty="output_file" toOperation="Tier Variants Snp" toProperty="transcript_annotation_file" />
+
+<!-- MERGE ADAPTED INDELS FROM SNIPER AND VARSCAN -->
+
+  <link fromOperation="Varscan ProcessSomatic Indel" fromProperty="output_somatic" toOperation="Merge Indels" toProperty="varscan_file" />
+  <link fromOperation="Filter Sniper Indel" fromProperty="output_file" toOperation="Merge Indels" toProperty="glf_file" />
+  <link fromOperation="input connector" fromProperty="merged_indel_output" toOperation="Merge Indels" toProperty="output_file" />
+  <link fromOperation="Gatk Somatic Indel" fromProperty="somatic_file" toOperation="Merge Indels" toProperty="gatk_file" />
+
+<!-- RUN FP FILTER ON MERGED INDELS -->
+
+  <link fromOperation="Merge Indels" fromProperty="output_file" toOperation="Strand Filter Indel" toProperty="variant_file" />
+  <link fromOperation="input connector" fromProperty="tumor_bam_file" toOperation="Strand Filter Indel" toProperty="bam_file" />
+  <link fromOperation="input connector" fromProperty="merged_indel_output_filter" toOperation="Strand Filter Indel" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="merged_indel_output_filter_rem" toOperation="Strand Filter Indel" toProperty="filtered_file" />
+  <link fromOperation="input connector" fromProperty="reference_fasta" toOperation="Strand Filter Indel" toProperty="reference" />
+
+<!-- RUN TRANSCRIPT ANNOTATION FOR INDELS -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Annotate Transcript Variants Indel" toProperty="skip_if_output_present" />
+  <link fromOperation="Strand Filter Indel" fromProperty="output_file" toOperation="Annotate Transcript Variants Indel" toProperty="variant_file" />
+  <link fromOperation="input connector" fromProperty="annotate_output_indel" toOperation="Annotate Transcript Variants Indel" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="annotate_no_headers" toOperation="Annotate Transcript Variants Indel" toProperty="no_headers" />
+  <link fromOperation="input connector" fromProperty="transcript_annotation_filter" toOperation="Annotate Transcript Variants Indel" toProperty="annotation_filter" />
+  <link fromOperation="input connector" fromProperty="annotation_reference_transcripts" toOperation="Annotate Transcript Variants Indel" toProperty="reference_transcripts" />
+  <link fromOperation="input connector" fromProperty="transcript_variant_annotator_version" toOperation="Annotate Transcript Variants Indel" toProperty="use_version" />
+
+<!-- DIVIDE INDELS BY TIER -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Tier Variants Indel" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="only_tier_1_indel" toOperation="Tier Variants Indel" toProperty="only_tier_1" />
+  <link fromOperation="Merge Indels" fromProperty="output_file" toOperation="Tier Variants Indel" toProperty="variant_file" />
+  <link fromOperation="Annotate Transcript Variants Indel" fromProperty="output_file" toOperation="Tier Variants Indel" toProperty="transcript_annotation_file" />
+  <link fromOperation="input connector" fromProperty="tier_1_indel_file" toOperation="Tier Variants Indel" toProperty="tier1_file" />
+
+<!-- GROUP TIERED SNP CALLS INTO HIGH AND HIGHEST CONF -->
+
+<link fromOperation="Tier Variants Snp" fromProperty="tier1_file" toOperation="Confidence Groups Snp Tier 1" toProperty="variant_file" />
+<link fromOperation="Filter Loh" fromProperty="output_file" toOperation="Confidence Groups Snp Tier 1" toProperty="glf_file" />
+<link fromOperation="Varscan ProcessSomatic SNP" fromProperty="output_somatic" toOperation="Confidence Groups Snp Tier 1" toProperty="varscan_file" />
+<link fromOperation="input connector" fromProperty="tier_1_snp_file_high" toOperation="Confidence Groups Snp Tier 1" toProperty="output_high" />
+<link fromOperation="input connector" fromProperty="tier_1_snp_file_highest" toOperation="Confidence Groups Snp Tier 1" toProperty="output_highest" />
+
+<!-- GROUP TIERED INDEL CALLS INTO HIGH AND HIGHEST CONF -->
+<link fromOperation="Tier Variants Indel" fromProperty="tier1_file" toOperation="Confidence Groups Indel Tier 1" toProperty="variant_file" />
+<link fromOperation="Filter Sniper Indel" fromProperty="output_file"  toOperation="Confidence Groups Indel Tier 1" toProperty="glf_file" />
+<link fromOperation="Varscan ProcessSomatic Indel" fromProperty="output_somatic" toOperation="Confidence Groups Indel Tier 1" toProperty="varscan_file" />
+<link fromOperation="input connector" fromProperty="tier_1_indel_file_high" toOperation="Confidence Groups Indel Tier 1" toProperty="output_high" />
+<link fromOperation="input connector" fromProperty="tier_1_indel_file_highest" toOperation="Confidence Groups Indel Tier 1" toProperty="output_highest" />
+
+<!-- PROVIDE OUTPUT CONNECTION FOR ENDPOINT FILES -->
+
+  <!--link fromOperation="Tier Variants Indel" fromProperty="tier1_file" toOperation="output connector" toProperty="tier_1_indel" /-->
+  <link fromOperation="Confidence Groups Snp Tier 1" fromProperty="output_high" toOperation="output connector" toProperty="tier_1_snp_high" />
+  <link fromOperation="Confidence Groups Snp Tier 1" fromProperty="output_highest" toOperation="output connector" toProperty="tier_1_snp_highest" />
+  <link fromOperation="Confidence Groups Indel Tier 1" fromProperty="output_high" toOperation="output connector" toProperty="tier_1_indel_high" />
+  <link fromOperation="Confidence Groups Indel Tier 1" fromProperty="output_highest" toOperation="output connector" toProperty="tier_1_indel_highest" />
+  <link fromOperation="Tier Variants Snp" fromProperty="tier2_file" toOperation="output connector" toProperty="tier_2_snp" />
+  <link fromOperation="Tier Variants Snp" fromProperty="tier3_file" toOperation="output connector" toProperty="tier_3_snp" />
+  <link fromOperation="Tier Variants Snp" fromProperty="tier4_file" toOperation="output connector" toProperty="tier_4_snp" />
+
+
+<!-- UPLOAD VARIANTS -->
+
+  <link fromOperation="Tier Variants Snp" fromProperty="tier1_file" toOperation="Upload Variants Snp Tier 1" toProperty="variant_file" />
+  <link fromOperation="Annotate Transcript Variants Snp" fromProperty="output_file" toOperation="Upload Variants Snp Tier 1" toProperty="annotation_file" />
+  <link fromOperation="input connector" fromProperty="upload_variants_snp_1_output" toOperation="Upload Variants Snp Tier 1" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="Upload Variants Snp Tier 1" toProperty="build_id" />
+
+  <link fromOperation="Tier Variants Snp" fromProperty="tier2_file" toOperation="Upload Variants Snp Tier 2" toProperty="variant_file" />
+  <link fromOperation="Annotate Transcript Variants Snp" fromProperty="output_file" toOperation="Upload Variants Snp Tier 2" toProperty="annotation_file" />
+  <link fromOperation="input connector" fromProperty="upload_variants_snp_2_output" toOperation="Upload Variants Snp Tier 2" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="Upload Variants Snp Tier 2" toProperty="build_id" />
+  <link fromOperation="input connector" fromProperty="only_tier_1" toOperation="Upload Variants Snp Tier 2" toProperty="_skip" />
+
+  <link fromOperation="Tier Variants Indel" fromProperty="tier1_file" toOperation="Upload Variants Indel" toProperty="variant_file" />
+  <link fromOperation="Annotate Transcript Variants Indel" fromProperty="output_file" toOperation="Upload Variants Indel" toProperty="annotation_file" />
+  <link fromOperation="input connector" fromProperty="upload_variants_indel_output" toOperation="Upload Variants Indel" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="Upload Variants Indel" toProperty="build_id" />
+
+
+<!-- RUN BREAKDANCER AND COPYNUMBER -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Breakdancer" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="normal_bam_file" toOperation="Breakdancer" toProperty="control_aligned_reads_input" />
+  <link fromOperation="input connector" fromProperty="tumor_bam_file" toOperation="Breakdancer" toProperty="aligned_reads_input" />
+  <link fromOperation="input connector" fromProperty="breakdancer_working_directory" toOperation="Breakdancer" toProperty="output_directory" />
+  <link fromOperation="input connector" fromProperty="reference_fasta" toOperation="Breakdancer" toProperty="reference_sequence_input" />
+  <link fromOperation="input connector" fromProperty="skip_sv" toOperation="Breakdancer" toProperty="skip" />
+                
+
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Copy Number Alteration" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="normal_bam_file" toOperation="Copy Number Alteration" toProperty="normal_bam_file" />
+  <link fromOperation="input connector" fromProperty="tumor_bam_file" toOperation="Copy Number Alteration" toProperty="tumor_bam_file" />
+  <link fromOperation="input connector" fromProperty="copy_number_output" toOperation="Copy Number Alteration" toProperty="output_file" />
+
+
+<!-- PLOT CIRCOS -->
+
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Plot Circos" toProperty="skip_if_output_present" />
+  <link fromOperation="input connector" fromProperty="circos_graph" toOperation="Plot Circos" toProperty="output_file" />
+  <link fromOperation="Copy Number Alteration" fromProperty="output_file" toOperation="Plot Circos" toProperty="cna_file" />
+  <link fromOperation="Breakdancer" fromProperty="sv_output" toOperation="Plot Circos" toProperty="sv_file" />
+  <link fromOperation="Upload Variants Snp Tier 1" fromProperty="output_file" toOperation="Plot Circos" toProperty="tier1_hclabel_file" />
+
+
+
+<!-- WAIT FOR DATABASE UPLOAD -->
+  
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="Wait for Database Upload" toProperty="build_id" />
+  <link fromOperation="Upload Variants Indel" fromProperty="result" toOperation="Wait for Database Upload" toProperty="upload indel result" />
+  <link fromOperation="Upload Variants Snp Tier 2" fromProperty="result" toOperation="Wait for Database Upload" toProperty="upload snp tier 2 result" />
+  <link fromOperation="Plot Circos" fromProperty="result" toOperation="Wait for Database Upload" toProperty="plot circos result" />
+
+
+<!-- GENERATE REPORT -->
+ 
+  <link fromOperation="Wait for Database Upload" fromProperty="build_id" toOperation="Generate Reports" toProperty="build_id" />
+  <link fromOperation="input connector" fromProperty="variant_report_output" toOperation="Generate Reports" toProperty="variant_report_output" />
+  <link fromOperation="input connector" fromProperty="file_summary_report_output" toOperation="Generate Reports" toProperty="file_summary_report_output" />
+  <link fromOperation="input connector" fromProperty="skip_if_output_present" toOperation="Generate Reports" toProperty="skip_if_output_present" />
+
+<!-- OUTPUT CONNECTORS -->
+  <link fromOperation="Plot Circos" fromProperty="output_file" toOperation="output connector" toProperty="circos_big_graph" />
+  <link fromOperation="Generate Reports" fromProperty="variant_report_output" toOperation="output connector" toProperty="final_variant_report_output" />
+  
+
+
+  <operation name="Varscan Somatic">
+    <operationtype commandClass="Genome::Model::Tools::Varscan::Somatic" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Varscan ProcessSomatic SNP">
+    <operationtype commandClass="Genome::Model::Tools::Varscan::ProcessSomatic" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Varscan ProcessSomatic Indel">
+    <operationtype commandClass="Genome::Model::Tools::Varscan::ProcessSomatic" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Format Varscan Indels">
+    <operationtype commandClass="Genome::Model::Tools::Capture::FormatIndels" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Format Varscan Snvs">
+    <operationtype commandClass="Genome::Model::Tools::Capture::FormatSnvs" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Gatk Somatic Indel">
+    <operationtype commandClass="Genome::Model::Tools::Gatk::SomaticIndel" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Merge SNPs">
+    <operationtype commandClass="Genome::Model::Tools::Capture::MergeVariantCalls" typeClass="Workflow::OperationType::Command" />
+  </operation>  
+
+  <operation name="Merge Indels">
+    <operationtype commandClass="Genome::Model::Tools::Capture::MergeAdaptedIndels" typeClass="Workflow::OperationType::Command" />
+  </operation>  
+
+  <operation name="Indelpe Runner Tumor">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::IndelpeRunner" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Indelpe Runner Normal">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::IndelpeRunner" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Snp Filter">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::SnpFilter" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Sniper Adaptor Snp">
+    <operationtype commandClass="Genome::Model::Tools::Annotate::Adaptor::Sniper" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Sniper Adaptor Indel">
+    <operationtype commandClass="Genome::Model::Tools::Annotate::Adaptor::Sniper" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Filter Sniper Indel">
+    <operationtype commandClass="Genome::Model::Tools::Capture::FilterGlfIndels" typeClass="Workflow::OperationType::Command" />
+  </operation>  
+
+  <operation name="Strand Filter Indel">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::FilterFalseIndels" typeClass="Workflow::OperationType::Command" />
+  </operation>  
+
+  <operation name="Strand Filter">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::FilterFalsePositives" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  
+  <operation name="Lookup Variants">
+      <operationtype commandClass="Genome::Model::Tools::Annotate::LookupVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>   
+  <operation name="Filter Loh">
+      <operationtype commandClass="Genome::Model::Tools::Somatic::FilterLoh" typeClass="Workflow::OperationType::Command" />
+  </operation>   
+  <operation name="Annotate UCSC">
+      <operationtype commandClass="Genome::Model::Tools::Somatic::UcscAnnotator" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Annotate Transcript Variants Snp">
+    <operationtype commandClass="Genome::Model::Tools::Annotate::TranscriptVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Tier Variants Snp">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::TierVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="High Confidence Snp">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::HighConfidence" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Confidence Groups Snp Tier 1">
+    <operationtype commandClass="Genome::Model::Tools::Capture::ConfidenceGroups" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Annotate Transcript Variants Indel">
+    <operationtype commandClass="Genome::Model::Tools::Annotate::TranscriptVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Tier Variants Indel">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::TierVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Confidence Groups Indel Tier 1">
+    <operationtype commandClass="Genome::Model::Tools::Capture::ConfidenceGroups" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Breakdancer">
+    <operationtype commandClass="Genome::Model::Tools::DetectVariants::Somatic::Breakdancer" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Copy Number Alteration">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::BamToCna" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Plot Circos">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::PlotCircos" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Upload Variants Snp Tier 1">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::UploadVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Upload Variants Snp Tier 2">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::UploadVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Upload Variants Indel">
+    <operationtype commandClass="Genome::Model::Tools::Somatic::UploadVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Wait for Database Upload">
+      <operationtype typeClass="Workflow::OperationType::Block">
+        <property>build_id</property>
+        <property>upload snp tier 2 result</property>
+        <property>upload indel result</property>
+        <property>plot circos result</property>
+    </operationtype>
+  </operation>
+
+  <operation name="Generate Reports">
+    <operationtype commandClass="Genome::Model::SomaticCapture::Command::RunReports" typeClass="Workflow::OperationType::Command" />
+  </operation>  
+
+
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>normal_bam_file</inputproperty>
+    <inputproperty>tumor_bam_file</inputproperty>
+    <inputproperty>build_id</inputproperty>
+    <inputproperty isOptional="Y">skip_if_output_present</inputproperty>
+    <inputproperty isOptional="Y">tumor_snp_file</inputproperty>
+    <inputproperty isOptional="Y">normal_snp_file</inputproperty>
+    <inputproperty isOptional="Y">reference_fasta</inputproperty>
+
+    <inputproperty isOptional="Y">only_tier_1</inputproperty>
+    <inputproperty isOptional="Y">only_tier_1_indel</inputproperty>
+    <inputproperty isOptional="Y">skip_sv</inputproperty>
+
+    <inputproperty isOptional="Y">data_directory</inputproperty>
+    <inputproperty isOptional="Y">sniper_working_directory</inputproperty>
+
+    <inputproperty isOptional="Y">normal_indelpe_data_directory</inputproperty>
+    <inputproperty isOptional="Y">tumor_indelpe_data_directory</inputproperty>
+
+    <inputproperty isOptional="Y">sniper_snp_output_filter</inputproperty>
+
+    <inputproperty isOptional="Y">breakdancer_working_directory</inputproperty>
+    
+    <inputproperty isOptional="Y">copy_number_output</inputproperty>
+    <inputproperty isOptional="Y">circos_graph</inputproperty>
+    <inputproperty isOptional="Y">variant_report_output</inputproperty>
+    <inputproperty isOptional="Y">file_summary_report_output</inputproperty>
+
+    <inputproperty isOptional="Y">varscan_snp_output</inputproperty>
+    <inputproperty isOptional="Y">varscan_snp_germline</inputproperty>
+    <inputproperty isOptional="Y">varscan_snp_loh</inputproperty>
+    <inputproperty isOptional="Y">varscan_snp_somatic</inputproperty>
+    <inputproperty isOptional="Y">varscan_indel_output</inputproperty>
+    <inputproperty isOptional="Y">varscan_indel_germline</inputproperty>
+    <inputproperty isOptional="Y">varscan_indel_loh</inputproperty>
+    <inputproperty isOptional="Y">varscan_indel_somatic</inputproperty>
+    <inputproperty isOptional="Y">varscan_adaptor_snp</inputproperty>
+    <inputproperty isOptional="Y">varscan_adaptor_indel</inputproperty>
+
+    <inputproperty isOptional="Y">gatk_output</inputproperty>
+    <inputproperty isOptional="Y">gatk_output_formatted</inputproperty>
+    <inputproperty isOptional="Y">gatk_output_somatic</inputproperty>
+
+    <inputproperty isOptional="Y">merged_snp_output</inputproperty>
+    <inputproperty isOptional="Y">merged_snp_output_novel</inputproperty>
+    <inputproperty isOptional="Y">merged_snp_output_filter</inputproperty>
+    <inputproperty isOptional="Y">merged_snp_output_filter_fail</inputproperty>
+    <inputproperty isOptional="Y">merged_indel_output</inputproperty>
+    <inputproperty isOptional="Y">merged_indel_output_filter</inputproperty>
+    <inputproperty isOptional="Y">merged_indel_output_filter_rem</inputproperty>
+            
+    <inputproperty isOptional="Y">sniper_snp_output_adaptor</inputproperty>
+    <inputproperty isOptional="Y">adaptor_output_indel</inputproperty>
+    <inputproperty isOptional="Y">filter_indel_output</inputproperty>
+
+    <inputproperty isOptional="Y">lookup_variants_report_mode</inputproperty>
+    <inputproperty isOptional="Y">lookup_variants_filter_out_submitters</inputproperty>
+
+    <inputproperty isOptional="Y">sniper_snp_output_filter_hc</inputproperty>
+    <inputproperty isOptional="Y">sniper_snp_output_filter_hc_somatic</inputproperty>
+    <inputproperty isOptional="Y">sniper_snp_output_filter_hc_loh</inputproperty>
+
+    <inputproperty isOptional="Y">annotate_output_indel</inputproperty>
+    <inputproperty isOptional="Y">annotate_output_snp</inputproperty>
+    <inputproperty isOptional="Y">annotate_no_headers</inputproperty>
+    <inputproperty isOptional="Y">transcript_annotation_filter</inputproperty>
+    <inputproperty isOptional="Y">transcript_variant_annotator_version</inputproperty>
+    <inputproperty isOptional="Y">annotation_reference_transcripts</inputproperty>
+    
+    <inputproperty isOptional="Y">ucsc_output</inputproperty>
+    <inputproperty isOptional="Y">ucsc_unannotated_output</inputproperty>
+
+    <inputproperty isOptional="Y">tier_1_indel_file</inputproperty>
+    <inputproperty isOptional="Y">tier_1_snp_file</inputproperty>
+    <inputproperty isOptional="Y">tier_2_snp_file</inputproperty>
+    <inputproperty isOptional="Y">tier_3_snp_file</inputproperty>
+    <inputproperty isOptional="Y">tier_4_snp_file</inputproperty>
+
+    <inputproperty isOptional="Y">tier_1_snp_file_high</inputproperty>
+    <inputproperty isOptional="Y">tier_1_snp_file_highest</inputproperty>
+
+    <inputproperty isOptional="Y">tier_1_indel_file_high</inputproperty>
+    <inputproperty isOptional="Y">tier_1_indel_file_highest</inputproperty>
+
+    <inputproperty isOptional="Y">min_mapping_quality</inputproperty>
+    <inputproperty isOptional="Y">min_somatic_quality</inputproperty>
+    
+    <inputproperty isOptional="Y">prepend_chr</inputproperty>
+
+    <inputproperty isOptional="Y">upload_variants_snp_1_output</inputproperty>
+    <inputproperty isOptional="Y">upload_variants_snp_2_output</inputproperty>
+    <inputproperty isOptional="Y">upload_variants_indel_output</inputproperty>
+<!--
+    <inputproperty isOptional="Y">tier_1_snp_high_confidence</inputproperty>
+    <inputproperty isOptional="Y">tier_2_snp_high_confidence_file</inputproperty>
+    <inputproperty isOptional="Y">tier_3_snp_high_confidence_file</inputproperty>
+    <inputproperty isOptional="Y">tier_4_snp_high_confidence_file</inputproperty>
+-->
+    <outputproperty>circos_big_graph</outputproperty>
+    <outputproperty>final_variant_report_output</outputproperty>
+
+    <outputproperty>tier_1_indel_high</outputproperty>
+    <outputproperty>tier_1_indel_highest</outputproperty>    
+    <outputproperty>tier_1_snp_high</outputproperty>
+    <outputproperty>tier_1_snp_highest</outputproperty>
+    <outputproperty>tier_2_snp</outputproperty>
+    <outputproperty>tier_3_snp</outputproperty>
+    <outputproperty>tier_4_snp</outputproperty>
+
+
+  </operationtype>
+
+</workflow>

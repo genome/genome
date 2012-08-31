@@ -1,0 +1,12 @@
+
+package Bio::DNA::Slice;
+use base 'Bio::Dynamic';
+
+use strict;
+use warnings;
+
+create App::Object::Class    
+    class_name => "Bio::DNA::Slice",
+    properties    => ['name'],
+    id_properties => ['name'];
+

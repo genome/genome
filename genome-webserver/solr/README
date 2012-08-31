@@ -1,0 +1,21 @@
+
+
+conf/    - solr configuration and schema
+scripts/ - scripts for loading the index
+
+
+startup/shutdown:
+solr: /etc/init.d/tomcat5.5
+
+schema:
+solr: /etc/solr/conf/schema.xml
+
+admin tools:
+http://solr/
+http://solr-dev/solr/
+
+dev server:
+solr-dev
+
+
+(Note that tomcat.policy actually goes in /etc/solr/ itself rather than the conf/ sub-directory.)

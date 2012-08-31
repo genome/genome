@@ -1,0 +1,37 @@
+grant codeBase "file:/usr/share/solr/-" {
+  permission java.lang.RuntimePermission "modifyThread";
+  permission java.lang.RuntimePermission "accessClassInPackage.org.apache.tomcat.util.http";
+  permission java.util.PropertyPermission "sun.arch.data.model", "read";
+  permission java.util.PropertyPermission "java.io.tmpdir", "read";
+  permission java.util.PropertyPermission "user.dir", "read";
+  permission java.util.PropertyPermission "solr.*", "read";
+  permission java.util.PropertyPermission "org.apache.lucene.lockDir", "read,write";
+  permission java.util.PropertyPermission "org.apache.lucene.store.FSDirectoryLockFactoryClass", "read";
+  permission java.io.FilePermission "/usr/share/java", "read";
+  permission java.io.FilePermission "/usr/share/java/-", "read";
+  permission java.io.FilePermission "/usr/share/maven-repo/-", "read";
+  permission java.io.FilePermission "/var/log/tomcat6/-", "read,write";
+  permission java.io.FilePermission "/var/lib/tomcat6/webapps/solr/-", "read";
+  permission java.io.FilePermission "/var/lib/tomcat6/temp/-", "read,write";
+  permission java.io.FilePermission "/etc/solr/-", "read";
+  permission java.io.FilePermission "/usr/share/solr/-", "read";
+  permission java.io.FilePermission "/usr/share/solr", "read";
+  permission java.io.FilePermission "/var/lib/solr", "read,write,delete";
+  permission java.io.FilePermission "/var/lib/solr/-", "read,write,delete";
+  permission javax.management.MBeanServerPermission "findMBeanServer";
+  permission javax.management.MBeanPermission "org.apache.solr.core.*", "*";
+  permission javax.management.MBeanTrustPermission "register";
+
+  // dataimporthandler
+  permission java.io.FilePermission "/usr/share/solr/conf/dataimport.properties", "read,write,delete";
+  // really ugly, but we would need to patch solr to get around this:
+  permission java.io.FilePermission "/etc/solr/conf/dataimport.properties", "read,write,delete";
+  // needed to access mysql via dataimporthandler
+  permission java.net.SocketPermission "127.0.0.1:3306", "connect,resolve" ;
+
+  /* needed by admin/get-properties.jsp 
+  permission java.util.PropertyPermission "*", "read,write"; */
+
+  /* for admin/threaddump.jsp
+  permission java.lang.management.ManagementPermission "monitor"; */
+};

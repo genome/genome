@@ -1,0 +1,34 @@
+README --
+
+$Id: README,v 1.1 2002/01/04 23:43:17 balls Exp $
+
+This directory contains support stylesheets for generating the
+documentation set for the XSLT Standard Library.  The document
+'build.xml' describes the source stylesheets and documents.
+
+Prerequisites
+=============
+
+The DocBook stylesheets must be installed in ../../docbook/dbx.
+Ie. ../../docbook/dbx/html/docbook.xsl must exist.
+
+Processing
+==========
+
+Generating the documentation set is a two-step process:
+
+1. Extract the DocBook from the stylesheets using the stylesheet
+   allxsl2jref.xsl with build.xml as the source document.
+   Saxon is recommended for this task, as Gnome libxslt (1.0.9)
+   has a problem with the xsl2jref.xsl stylesheet.
+
+   For example:
+
+   java -jar .../saxon.jar allxsl2jref.xsl build.xml
+
+2. Convert DocBook to HTML using the makehtml.xsl stylesheet
+   with build.xml as the source document.
+
+   For example:
+
+   xsltproc makehtml.xsl build.xml

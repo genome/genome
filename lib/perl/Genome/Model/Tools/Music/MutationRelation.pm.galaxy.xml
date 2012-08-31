@@ -1,0 +1,79 @@
+<tool id="gmt_music_mutation-relation" name="gmt_music_mutation-relation" version="0.3.0">
+    <description>
+        Identify relationships of mutation concurrency or mutual exclusivity in genes across cases.
+    </description>
+    <command>
+        gmt music mutation-relation --bam-list=$bam_list --gene-list=$gene_list --id=$id --is-executed=$is_executed --maf-file=$maf_file --output-file=$output_file --permutations=$permutations --result=$result
+    </command>
+    <inputs>
+        <param name="bam_list" format="text" type="data" help="" />
+<param name="gene_list" format="text" type="data" help="" />
+<param name="maf_file" format="text" type="data" help="" />
+<param name="output_file" format="text" type="data" help="" />
+<param name="permutations" format="text" type="data" help="" />
+
+    </inputs>
+    <outputs>
+        <data name="result" format="text" label="" help="" />
+
+    </outputs>
+    <help>
+        
+
+**USAGE**
+
+ gmt music mutation-relation --bam-list=? --maf-file=? --output-file=? [--gene-list=?]
+    [--permutations=?]
+
+
+**SYNOPSIS**
+
+... music mutation-relation --maf-file /path/myMAF.tsv --permutations 1000 --output-file /path/mutation_relation.csv
+
+
+**REQUIRED ARGUMENTS**
+
+  bam-list   Text
+    Tab delimited list of BAM files [sample_name, normal_bam, tumor_bam] (See Description) 
+  maf-file   Text
+    List of mutations in MAF format 
+  output-file   Text
+    Results of mutation-relation tool 
+
+
+**OPTIONAL ARGUMENTS**
+
+  gene-list   Text
+    List of genes to test, typically SMGs. If unspecified, all genes in MAF are tested. 
+  permutations   Number
+    Number of permutations used to determine P-values 
+    Default value '100' if not specified
+
+
+**DESCRIPTION**
+
+    This module parses a list of mutations in MAF format and attempts to determine relationships
+    among mutated genes. It employs a correlation test to see whether or not any two genes are
+    mutated concurrently (positive correlation) or mutually exclusively (negative correlation).
+    Because of the possibility of largely varying numbers of mutations present in different genes,
+    P-values are calculated using restricted permutations that take into account the distribution
+    of mutation counts among the samples. In the output file, 'pand' is the P-value for concurrent
+    mutation events, and 'pexc' is the P-value for mutually exclusive mutation events.
+
+
+
+**ARGUMENTS**
+
+
+    --bam-list
+
+      Provide a file containing sample names and normal/tumor BAM locations for each. Use the tab-
+      delimited format [sample_name normal_bam tumor_bam] per line. This tool only needs
+      sample_name, so all other columns can be skipped. The sample_name must be the same as the
+      tumor sample names used in the MAF file (16th column, with the header Tumor_Sample_Barcode).
+
+
+
+
+    </help>
+</tool>

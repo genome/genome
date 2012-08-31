@@ -1,0 +1,37 @@
+tr.error_name td {
+	cursor: pointer !important;
+}
+
+table.event_list {
+	margin-top: 0;
+}
+
+tr.event_list td,
+tr.event_list th {
+	font-size: 93%;
+}
+
+tr.event_list th {
+	border-top: none;
+}
+
+td.event_list {
+	padding: 0 0 0 32px !important;
+}
+
+td.arrow {
+	width: 20px;
+}
+
+div.arrow {
+	width: 16px;
+	height: 16px;
+}
+
+td.arrow div.arrow {
+	background: url("../images/icons/arrow_closed.png") no-repeat;
+}
+
+td.open div.arrow {
+	background: url("../images/icons/arrow_open.png") no-repeat;
+}

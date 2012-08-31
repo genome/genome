@@ -1,0 +1,20 @@
+grant codeBase "file:/usr/share/solr/-" {
+  permission java.lang.RuntimePermission "modifyThread";
+  permission java.lang.RuntimePermission "accessClassInPackage.org.apache.tomcat.util.http";
+  permission java.util.PropertyPermission "java.io.tmpdir", "read";
+  permission java.util.PropertyPermission "user.dir", "read";
+  permission java.util.PropertyPermission "solr.*", "read";
+  permission java.util.PropertyPermission "org.apache.lucene.lockDir", "read,write";
+  permission java.util.PropertyPermission "org.apache.lucene.store.FSDirectoryLockFactoryClass", "read";
+  permission java.io.FilePermission "/usr/share/java/-", "read";
+  permission java.io.FilePermission "/var/log/tomcat5.5/-", "read,write";
+  permission java.io.FilePermission "/var/lib/tomcat5.5/logs", "read,write";
+  permission java.io.FilePermission "/var/lib/tomcat5.5/logs/-", "read,write";
+  permission java.io.FilePermission "/var/lib/tomcat5.5/webapps/solr/-", "read";
+  permission java.io.FilePermission "/var/lib/tomcat5.5/temp/-", "read,write";
+  permission java.io.FilePermission "/etc/solr/-", "read";
+  permission java.io.FilePermission "/usr/share/solr/-", "read";
+  permission java.io.FilePermission "/usr/share/solr", "read";
+  permission java.io.FilePermission "/var/lib/solr", "read,write,delete";
+  permission java.io.FilePermission "/var/lib/solr/-", "read,write,delete";
+};

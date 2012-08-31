@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Spinner - Examples</title>
+	<link media="screen" type="text/css" href="/wordpress/wp-content/themes/shades-of-gray/style.css" rel="stylesheet">
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+	<script type="text/javascript" src="jquery.spinner.js"></script>
+	<script type="text/javascript">
+	$(function() {
+		// example 1
+		$('#example1').click(function() {
+			var $this = $(this);
+			$this.spinner();
+			setTimeout(function() {
+				$this.spinner('remove');
+			}, 5000);
+			return false;
+		});
+
+		// example 2
+		$('#example2').click(function() {
+			var $this = $(this);
+			var opts = { position: 'center', hide: true };
+			$this.spinner(opts);
+			setTimeout(function() {
+				$this.spinner('remove');
+			}, 5000);
+			return false;
+		});
+		
+		// example 3
+		$('#example3').click(function() {
+			var $this = $('.example3');
+			var opts = { position: 'left' };
+			$this.spinner(opts);
+			setTimeout(function() {
+				$this.spinner('remove');
+			}, 2000);
+			return false;
+		});
+
+		// example 4
+		$('#example4').click(function() {
+			var $this = $(this);
+			var opts = {
+				img: 'spinner-large.gif',
+				height: 48,
+				width: 48,
+				onStart: function() { alert('onStart callback alert'); },
+				onFinish: function() { alert('onFinish callback alert, 2 seconds are up.'); }
+			};
+			$this.spinner(opts);
+			setTimeout(function() {
+				$this.spinner('remove');
+			}, 2000);
+			return false;
+		});
+		
+	});
+	</script>
+</head>
+<body>
+	<div class="demoform">
+		<p>
+			<strong>Example 1</strong><br />
+			The spinner is displayed to the right of the clicked element for 5 seconds. <br />
+			<a href="#" id="example1">click here</a>
+		</p>
+
+		<p>
+			<strong>Example 2</strong><br />
+			The spinner is displayed centered over the clicked element for 5 seconds and the element is hidden using visibility to maintain layout positioning. <a href="#" id="example2">Click here</a> for an example. <br />
+		</p>
+		
+		<p>
+			<strong>Example 3</strong><br />
+			The spinner is displayed to the left of multiple items that have a matching class for 2 seconds.<br />
+			<a href="#" id="example3">click here</a><br /><br />
+			<button class="example3" type="button" style="margin-left: 50px">Button With Long Name</button><br />
+			<button class="example3" type="button" style="margin-left: 50px">Short Name</button>
+		</p>
+			<strong>Example 4</strong><br />
+			A large, non-default preloader is used which means we need to override the options for img, height, and width. The spinner is displayed to the right of the url and an <em>onFinish</em> callback option is used to give you an alert after it closes in 2 seconds.<br />
+			<a href="#" id="example4">click here</a>
+		<p>
+		
+		</p>
+	</div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="Annotate Genome" executor="Workflow::Executor::SerialDeferred" >
+  <link fromOperation="input connector" fromProperty="chromosomes" toOperation="Annotate Chromosome" toProperty="chromosome" />
+  <link fromOperation="input connector" fromProperty="anno_db" toOperation="Annotate Chromosome" toProperty="anno_db" />
+  <link fromOperation="input connector" fromProperty="version" toOperation="Annotate Chromosome" toProperty="version" />
+  <link fromOperation="input connector" fromProperty="output_format" toOperation="Annotate Chromosome" toProperty="output_format" />
+  <link fromOperation="input connector" fromProperty="output_directory" toOperation="Annotate Chromosome" toProperty="output_directory" />
+
+  <link fromOperation="input connector" fromProperty="output_file" toOperation="Merge Annotation" toProperty="output_file" />
+  <link fromOperation="Annotate Chromosome" fromProperty="anno_file" toOperation="Merge Annotation" toProperty="input_files" />
+  
+  <link fromOperation="Merge Annotation" fromProperty="output_file" toOperation="Sort Annotation" toProperty="input_file" />
+
+  <link fromOperation="Sort Annotation" fromProperty="output_file" toOperation="output connector" toProperty="output_file" />
+  <link fromOperation="Sort Annotation" fromProperty="result" toOperation="output connector" toProperty="result" />
+  
+  <operation name="Annotate Chromosome" parallelBy="chromosome">
+    <link fromOperation="input connector" fromProperty="chromosome" toOperation="Dump Annotation" toProperty="chromosome" />
+    <link fromOperation="input connector" fromProperty="anno_db" toOperation="Dump Annotation" toProperty="anno_db" />
+    <link fromOperation="input connector" fromProperty="version" toOperation="Dump Annotation" toProperty="version" />
+    <link fromOperation="input connector" fromProperty="output_format" toOperation="Dump Annotation" toProperty="output_format" />
+    <link fromOperation="input connector" fromProperty="output_directory" toOperation="Dump Annotation" toProperty="output_directory" />
+
+    <link fromOperation="Dump Annotation" fromProperty="anno_file" toOperation="output connector" toProperty="anno_file" />
+    <link fromOperation="Dump Annotation" fromProperty="result" toOperation="output connector" toProperty="result" />
+
+    <operation name="Dump Annotation">
+      <operationtype commandClass="Genome::Model::Tools::Annotate::Chromosome" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
+    <operationtype typeClass="Workflow::OperationType::Model">
+      <inputproperty>chromosome</inputproperty>
+      <inputproperty>anno_db</inputproperty>
+      <inputproperty>version</inputproperty>
+      <inputproperty>output_format</inputproperty>
+      <inputproperty>output_directory</inputproperty>
+      <outputproperty>anno_file</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+
+  <operation name="Merge Annotation">
+      <operationtype commandClass="Genome::Model::Tools::Gtf::Cat" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  
+  <operation name="Sort Annotation">
+      <operationtype commandClass="Genome::Model::Tools::BedTools::Sort" typeClass="Workflow::OperationType::Command" />
+  </operation>
+ 
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>chromosomes</inputproperty>
+    <inputproperty>anno_db</inputproperty>
+    <inputproperty>version</inputproperty>
+    <inputproperty>output_format</inputproperty>
+    <inputproperty>output_directory</inputproperty>
+    <inputproperty>output_file</inputproperty>
+    <outputproperty>output_file</outputproperty>
+    <outputproperty>result</outputproperty>
+  </operationtype>
+</workflow>

@@ -1,0 +1,51 @@
+.page {
+    width: 1280px;
+}
+.container {
+    width: 1260px;
+}
+#objects {
+    width: 1270px;
+}
+.span_8_box {
+    width:406px;
+}
+.span_8_box_masonry {
+    width:406px;
+}
+.span_12_box {
+    width:625px;
+}
+.span_12_box_masonry {
+    width:625px;
+}
+.span_24_box {
+    width:1260px;
+}
+.span_24_box_masonry {
+    width:1260px;
+}
+
+.span-8 {
+    width:406px;
+}
+.span-12 {
+    width:625px;
+}
+.span-24 {
+    width:1260px;
+}
+
+div.control_bar {
+    width: 1280px;
+}
+div.control_bar_menu {
+    width: 1272px;
+}
+
+.footer {
+    width: 1278px;
+}
+div.control_bar.view {
+    background-image: url("http://linus202.gsc.wustl.edu:8090/res/img/components/control_bar/control_bar_view_bg_1280.png");
+}

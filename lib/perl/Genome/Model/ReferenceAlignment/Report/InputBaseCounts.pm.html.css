@@ -1,0 +1,94 @@
+      body {
+    background: #EFEFEF;
+    font-family: Helvetica,Arial,sans-serif;
+    padding: 0;
+    margin: 0;
+    color: #292920;
+}
+
+div.container {
+    width: 990px;
+    margin: 0 auto;
+    background-color: #5f604c;
+}
+
+div.background {
+    float: left;
+    background: #FFF;
+    width: 990px;
+    border-bottom: 5px solid #8dc643;
+}
+
+h1.report_title {
+    font-size: 125%;
+    font-weight: bold;
+    line-height: 45px;
+    color: #FFF;
+    margin: 0;
+    padding: 0 15px;
+    background-color: #5f604c;
+    border-bottom: 5px solid #8dc643;
+}
+h2.section_title {
+    font-size: 120%;
+    font-weight: bold;
+    margin: 0;
+    padding: 15px 15px 0 15px;
+    border-bottom: 2px solid #8dc643;
+}
+
+table.flowcells {
+    margin-bottom: 2em;
+    margin-left: 10px;
+    border-collapse: collapse;
+}
+
+table.flowcells th,
+table.flowcells td {
+    padding: 3px 5px;
+}
+ table.flowcells th {
+    font-size: 80%;
+    text-align: right;
+    font-style: italic;
+    background: #DDD;
+    border-bottom: 1px solid #CCC;
+    border-top: 1px solid #CCC;
+    color: #5f604c;
+}
+
+table.flowcells td {
+    text-align: right;
+    font-size: 90%;
+}
+
+table.flowcells td.summary {
+    font-weight: bold;
+    font-style: normal;
+    font-size: 1.1em;
+    text-align: left;
+    padding: 20px 5px 3px 5px;
+    vertical-align: bottom;
+}
+
+table.flowcells td.match_class {
+    font-weight: bold;
+    text-align: left;
+    font-size: 90%;
+    background: #eee;
+    line-height: 21px;
+}
+
+table.flowcells td.flowcell {
+    padding-left: 20px;
+    text-align: left;
+    height: 22px;
+    text-align: right;
+}
+div.section_content {
+    width: 600px;
+    padding-left: 200px;
+    margin: 0;
+    float: left;
+}
+

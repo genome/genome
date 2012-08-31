@@ -1,0 +1,2 @@
+# TODO: have this run all of the scripts in the directory
+source $HOME/.gmt-bashrc.d/ps1-git-ci.sh

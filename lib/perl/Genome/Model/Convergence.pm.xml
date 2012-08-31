@@ -1,0 +1,20 @@
+<?xml version='1.0' standalone='yes'?>
+
+<workflow name="Harmonic Convergence Pipeline" logDir="/gsc/var/log/genome/harmonic_convergence_pipeline">
+
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="Generate Report" toProperty="build_id" />
+
+  <link fromOperation="Generate Report" fromProperty="_summary_report" toOperation="output connector" toProperty="_summary_report" />
+
+  <operation name="Generate Report">
+    <operationtype commandClass="Genome::Model::Tools::Convergence::SummaryReport" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>build_id</inputproperty>
+    <inputproperty isOptional="Y">skip_if_output_present</inputproperty>
+
+    <outputproperty>_summary_report</outputproperty>
+  </operationtype>
+
+</workflow>

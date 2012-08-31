@@ -1,0 +1,144 @@
+<div class="reference" lang="en">
+<a name="id1955221"></a><div class="titlepage">
+<div>
+<div><h1 class="title">
+<a name="id1955221"></a>Node Templates</h1></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Steve</span> <span class="surname">Ball</span>
+</h3></div></div>
+<div><p class="releaseinfo">
+	$Id: node.html,v 1.9 2004/10/10 06:18:57 balls Exp $
+      </p></div>
+<div><p class="copyright">Copyright © 2001 Steve Ball</p></div>
+</div>
+<div></div>
+<hr>
+</div>
+<div class="partintro" lang="en">
+<div>
+<div></div>
+<div></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954299"></a>Introduction</h2></div></div>
+<div></div>
+</div>
+<p>This stylesheet module provides functions for reporting on or manipulating nodes and nodesets.</p>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt>
+<a href="#template.node:xpath">node:xpath</a> - Returns an XPath location path</dt>
+<dt>
+<a href="#template.node:type">node:type</a> - Return node type</dt>
+<dt>
+<a href="#template.node:copy">node:copy</a> - Copy Nodes</dt>
+</dl>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<a name="template.node:xpath"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>node:xpath — Returns an XPath location path</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="node:xpath"&gt;&lt;xsl:param name="node" select="."/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1975451"></a>
+      <p>This template returns an XPath location path that uniquely identifies the given node within the document.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1975036"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">node</span></dt>
+<dd><p>The node to create an XPath for.  If this parameter is given as a nodeset, then the first node in the nodeset is used.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1955870"></a>Returns</b>
+      <p>Returns an XPath location path as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.node:type"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>node:type — Return node type</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="node:type"&gt;&lt;xsl:param name="node" select="."/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1975100"></a>
+      <p>Returns the type of a node as a string.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1975341"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">node</span></dt>
+<dd><p>The node to get the type for.  If this parameter is given as a nodeset, then the first node in the nodeset is used.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1975134"></a>Returns</b>
+      <p>Returns node type as a string.  Values returned are:</p>
+      <div class="variablelist"><dl>
+<dt><span class="term">Element</span></dt>
+<dd><p><tt class="literal">element</tt></p></dd>
+<dt><span class="term">Text Node</span></dt>
+<dd><p><tt class="literal">text</tt></p></dd>
+<dt><span class="term">Comment</span></dt>
+<dd><p><tt class="literal">comment</tt></p></dd>
+<dt><span class="term">Processing Instruction</span></dt>
+<dd><p><tt class="literal">processing instruction</tt></p></dd>
+</dl></div>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.node:copy"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>node:copy — Copy Nodes</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="node:copy"&gt;&lt;xsl:param name="nodes" select="."/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1956479"></a>
+      <p>Makes a copy of the given nodes, including attributes and descendants.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1956487"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">nodes</span></dt>
+<dd><p>The nodes to copy.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1956506"></a>Returns</b>
+      <p>Returns the copied nodes as a result tree fragment.</p>
+    </div>
+</div>
+</div>

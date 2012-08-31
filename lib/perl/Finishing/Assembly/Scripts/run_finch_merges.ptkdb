@@ -1,0 +1,25 @@
+$files = {
+           '_</gscuser/adukes/svn/test_modules/Finishing/Assembly/Scripts/run_finch_merges.pl' => [
+                                                                                                    {
+                                                                                                      'expr' => undef,
+                                                                                                      'value' => '1',
+                                                                                                      'text' => 'if ($left_merge_contig){
+',
+                                                                                                      'fname' => '/gscuser/adukes/svn/test_modules/Finishing/Assembly/Scripts/run_finch_merges.pl',
+                                                                                                      'type' => 'user',
+                                                                                                      'line' => '315'
+                                                                                                    },
+                                                                                                    {
+                                                                                                      'expr' => undef,
+                                                                                                      'value' => '1',
+                                                                                                      'text' => 'my ($left_merge_contig, $right_merge_contig);
+',
+                                                                                                      'fname' => '/gscuser/adukes/svn/test_modules/Finishing/Assembly/Scripts/run_finch_merges.pl',
+                                                                                                      'type' => 'user',
+                                                                                                      'line' => '297'
+                                                                                                    }
+                                                                                                  ]
+         };
+$expr_list = [];
+$eval_saved_text = undef;
+$main_win_geometry = '1280x972+0+0';

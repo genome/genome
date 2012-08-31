@@ -1,0 +1,503 @@
+<div class="article" lang="en">
+<div class="titlepage">
+<div>
+<div><h2 class="title">
+<a name="id1955066"></a>DocBook Extensions For XSLT Stylesheet Documentation</h2></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Steve</span> <span class="surname">Ball</span>
+</h3></div></div>
+<div><p class="releaseinfo">
+      $Id: docbook-extensions.html,v 1.9 2004/10/10 06:18:57 balls Exp $
+    </p></div>
+<div><p class="copyright">Copyright © 2001 Steve Ball</p></div>
+</div>
+<div></div>
+<hr>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt><span class="section"><a href="#id1954661">Introduction</a></span></dt>
+<dt><span class="section"><a href="#id1954825">Documenting XSLT Stylesheets</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="#id1954647">XML Namespace</a></span></dt>
+<dt><span class="section"><a href="#id1954872">Toplevel Documentation Element</a></span></dt>
+<dt><span class="section"><a href="#id1955282">Documenting Templates</a></span></dt>
+</dl></dd>
+<dt><span class="section"><a href="#reference">Reference</a></span></dt>
+</dl>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954661"></a>Introduction</h2></div></div>
+<div></div>
+</div>
+<p><a href="index.html" target="_top">XSLTSL</a> requires that all stylesheets and templates are documented using <a href="http://www.docbook.org/" target="_top">DocBook</a>, a widely-used electronic documentation standard.  <a href="http://nwalsh.com/" target="_top">Norm Walsh</a> introduced some extensions to DocBook to facilitate documenting XSLT stylesheets, and the stylesheets for DocBook itself are documented using this extension.</p>
+<p>Further elements have been added to the extension vocabulary for the purpose of documenting XSLTSL stylesheets.  The entire extension vocabulary is documented here.</p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1954825"></a>Documenting XSLT Stylesheets</h2></div></div>
+<div></div>
+</div>
+<p>This section explains how an XSLT stylesheet is documented, with examples.</p>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h3 class="title">
+<a name="id1954647"></a>XML Namespace</h3></div></div>
+<div></div>
+</div>
+<p>The XSLT stylesheet must declare an XML Namespace with the namespace URI http://xsltsl.org/xsl/documentation/1.0.  The prefix used should then be excluded from the result.  For example:</p>
+<div class="informalexample"><pre class="programlisting">
+&lt;xsl:stylesheet
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:doc="http://xsltsl.org/xsl/documentation/1.0"
+  exclude-result-prefixes="doc"
+  version="1.0"&gt;
+
+&lt;/xsl:stylesheet&gt;
+</pre></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h3 class="title">
+<a name="id1954872"></a>Toplevel Documentation Element</h3></div></div>
+<div></div>
+</div>
+<p>Major documentation components of the library are contained within the <tt class="sgmltag-element">book</tt> (for the top level) or <tt class="sgmltag-element">chapter</tt> (for lower-level components) elements.  Individual stylesheets are contained within the <tt class="sgmltag-element">reference</tt>.</p>
+<p>These elements must be qualified within the stylesheet, but for convenience, the default XML Namespace is redefined so that descendant elements need not be qualified.  Within the <tt class="sgmltag-element">book</tt> and <tt class="sgmltag-element">reference</tt> elements all standard DocBook elements are permitted.</p>
+<p>An example of library documentation:</p>
+<div class="informalexample"><pre class="programlisting">
+&lt;xsl:stylesheet
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:doc="http://xsltsl.org/xsl/documentation/1.0"
+  exclude-result-prefixes="doc"
+  version="1.0"&gt;
+
+  &lt;doc:book xmlns=""&gt;
+    &lt;bookinfo&gt;
+      &lt;title&gt;Stylesheet Module For XSLT Standard Library&lt;/title&gt;
+      &lt;!-- &amp;#36;Id&amp;#36; --&gt;
+
+      &lt;author&gt;
+	&lt;surname&gt;Ball&lt;/surname&gt;
+	&lt;firstname&gt;Steve&lt;/firstname&gt;
+      &lt;/author&gt;
+      &lt;copyright&gt;
+	&lt;year&gt;2001&lt;/year&gt;
+	&lt;holder&gt;Steve Ball&lt;/holder&gt;
+      &lt;/copyright&gt;
+    &lt;/bookinfo&gt;
+
+    &lt;preface&gt;
+      &lt;para&gt;&lt;ulink url="http://www.w3.org/Style/XSL"&gt;XSLT&lt;/ulink&gt; is an &lt;ulink url="http://www.w3.org/Markup/XML/"&gt;XML&lt;/ulink&gt;-based language for transforming XML documents.&lt;/para&gt;
+    &lt;/preface&gt;
+
+    &lt;chapter&gt;
+      &lt;title&gt;Reference&lt;/title&gt;
+
+      &lt;para&gt;Stylesheets are documented as DocBook &lt;sgmltag&gt;reference&lt;/sgmltag&gt; elements.&lt;/para&gt;
+    &lt;/chapter&gt;
+  &lt;/doc:book&gt;
+
+&lt;/xsl:stylesheet&gt;
+</pre></div>
+<p>An example of stylesheet documentation:</p>
+<div class="informalexample"><pre class="programlisting">
+&lt;xsl:stylesheet
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:doc="http://xsltsl.org/xsl/documentation/1.0"
+  exclude-result-prefixes="doc"
+  version="1.0"&gt;
+
+  &lt;doc:reference xmlns=""&gt;
+    &lt;referenceinfo&gt;
+      &lt;releaseinfo role="meta"&gt;
+	&amp;#36;Id&amp;#36;
+      &lt;/releaseinfo&gt;
+      &lt;author&gt;
+	&lt;surname&gt;Ball&lt;/surname&gt;
+	&lt;firstname&gt;Steve&lt;/firstname&gt;
+      &lt;/author&gt;
+      &lt;copyright&gt;
+	&lt;year&gt;2001&lt;/year&gt;
+	&lt;holder&gt;Steve Ball&lt;/holder&gt;
+      &lt;/copyright&gt;
+    &lt;/referenceinfo&gt;
+
+    &lt;title&gt;String Processing&lt;/title&gt;
+
+    &lt;partintro&gt;
+      &lt;section&gt;
+	&lt;title&gt;Introduction&lt;/title&gt;
+
+	&lt;para&gt;This module provides templates for manipulating strings.&lt;/para&gt;
+
+      &lt;/section&gt;
+    &lt;/partintro&gt;
+
+  &lt;/doc:reference&gt;
+
+</pre></div>
+<p>The keyword <tt class="literal">$Id: docbook-extensions.html,v 1.9 2004/10/10 06:18:57 balls Exp $</tt> is used by CVS to insert version and author information.</p>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h3 class="title">
+<a name="id1955282"></a>Documenting Templates</h3></div></div>
+<div></div>
+</div>
+<p>Within each stylesheet, each individual template is documented using a separate toplevel element, <tt class="sgmltag-element">template</tt>.  As for toplevel documentation elements, redeclaring the null XML Namespace allows DocBook elements to be used without qualification.  A number of extension elements are used to document XSLT templates.  An example of template documentation:</p>
+<div class="informalexample"><pre class="programlisting">
+  &lt;doc:template name="str:to-upper" xmlns=""&gt;
+    &lt;refpurpose&gt;Make string uppercase&lt;/refpurpose&gt;
+
+    &lt;refdescription&gt;
+      &lt;para&gt;Converts all lowercase letters to uppercase.&lt;/para&gt;
+    &lt;/refdescription&gt;
+
+    &lt;refparameter&gt;
+      &lt;variablelist&gt;
+	&lt;varlistentry&gt;
+	  &lt;term&gt;text&lt;/term&gt;
+	  &lt;listitem&gt;
+	    &lt;para&gt;The string to be converted&lt;/para&gt;
+	  &lt;/listitem&gt;
+	&lt;/varlistentry&gt;
+      &lt;/variablelist&gt;
+    &lt;/refparameter&gt;
+
+    &lt;refreturn&gt;
+      &lt;para&gt;Returns string with all uppercase letters.&lt;/para&gt;
+    &lt;/refreturn&gt;
+  &lt;/doc:template&gt;
+
+  &lt;xsl:template name="str:to-upper"&gt;
+    &lt;xsl:param name="text"/&gt;
+
+    &lt;xsl:value-of select="translate($text, $str:lower, $str:upper)"/&gt;
+  &lt;/xsl:template&gt;
+
+</pre></div>
+</div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="reference"></a>Reference</h2></div></div>
+<div></div>
+</div>
+<p>Reference documentation for all extension elements.</p>
+<hr>
+<div class="refentry" lang="en">
+<a name="xslt.elem.refdescription"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>Refdescription — A description of the topic of a reference entry</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="informaltable"><table border="1">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr><td colspan="3" align="left"><span class="bold"><b>Element Content Model</b></span></td></tr>
+<tr><td colspan="3" align="left"><pre class="synopsis">refdescription ::=
+(para|...)</pre></td></tr>
+<tr>
+<td><span class="bold"><b>Attributes</b></span></td>
+<td colspan="2">Common attributes</td>
+</tr>
+<tr>
+<td><span class="bold"><b>Parameter Entities</b></span></td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+<tr>
+<td>None</td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1974849"></a><h2>Description</h2>
+<p>A description of a reference entry.</p>
+<div class="refsect2" lang="en">
+<a name="id1974859"></a><h3>Processing Expectations</h3>
+<p>Formatted as a block.</p>
+</div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1974870"></a><h2>See Also</h2>
+<p><span class="simplelist"><tt class="sgmltag-element">refdescriptor</tt></span></p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1974887"></a><h2>Examples</h2>
+<div class="informalexample"><pre class="programlisting">
+    &lt;refdescription&gt;
+      &lt;para&gt;Converts all lowercase letters to uppercase.&lt;/para&gt;
+    &lt;/refdescription&gt;
+</pre></div>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="xslt.elem.refparameter"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>Refparameter — A description of a template parameter.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="informaltable"><table border="1">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr><td colspan="3" align="left"><span class="bold"><b>Element Content Model</b></span></td></tr>
+<tr><td colspan="3" align="left"><pre class="synopsis">refparameter ::=
+(variablelist)</pre></td></tr>
+<tr>
+<td><span class="bold"><b>Attributes</b></span></td>
+<td colspan="2">Common attributes</td>
+</tr>
+<tr>
+<td><span class="bold"><b>Parameter Entities</b></span></td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+<tr>
+<td>None</td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975069"></a><h2>Description</h2>
+<p>A list of the parameters accepted by a stylesheet template.  Each <tt class="sgmltag-element">varlistentry</tt> in the list names the parameter in its <tt class="sgmltag-element">term</tt> child element, and a description of the parameter in its <tt class="sgmltag-element">listitem</tt> child element.</p>
+<div class="refsect2" lang="en">
+<a name="id1975092"></a><h3>Processing Expectations</h3>
+<p>Formatted as a block.</p>
+</div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975104"></a><h2>See Also</h2>
+<p><span class="simplelist"><tt class="sgmltag-element">refreturn</tt></span></p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975121"></a><h2>Examples</h2>
+<div class="informalexample"><pre class="programlisting">
+    &lt;refparameter&gt;
+      &lt;variablelist&gt;
+	&lt;varlistentry&gt;
+	  &lt;term&gt;text&lt;/term&gt;
+	  &lt;listitem&gt;
+	    &lt;para&gt;The string to be converted&lt;/para&gt;
+	  &lt;/listitem&gt;
+	&lt;/varlistentry&gt;
+      &lt;/variablelist&gt;
+    &lt;/refparameter&gt;
+</pre></div>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="xslt.elem.parametername"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>Parametername — A parameter name.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="informaltable"><table border="1">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr><td colspan="3" align="left"><span class="bold"><b>Mixed Content Model</b></span></td></tr>
+<tr><td colspan="3" align="left"><pre class="synopsis">Parametername ::=
+(#PCDATA)</pre></td></tr>
+<tr>
+<td><span class="bold"><b>Attributes</b></span></td>
+<td colspan="2">Common attributes</td>
+</tr>
+<tr>
+<td><span class="bold"><b>Parameter Entities</b></span></td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+<tr>
+<td>None</td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975305"></a><h2>Description</h2>
+<p>A parameter name occurring in running text.</p>
+<div class="refsect2" lang="en">
+<a name="id1975315"></a><h3>Processing Expectations</h3>
+<p>Formatted inline.</p>
+</div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975327"></a><h2>See Also</h2>
+<p><span class="simplelist"><tt class="sgmltag-element">refparameter</tt></span></p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975344"></a><h2>Examples</h2>
+<div class="informalexample"><pre class="programlisting">
+&lt;para&gt;A parameter which contains a string value is named &lt;parametername&gt;text&lt;/parametername&gt;.&lt;/para&gt;
+</pre></div>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="xslt.elem.refreturn"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>Refreturn — The return result of a template.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="informaltable"><table border="1">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr><td colspan="3" align="left"><span class="bold"><b>Element Content Model</b></span></td></tr>
+<tr><td colspan="3" align="left"><pre class="synopsis">refparameter ::=
+(para+)</pre></td></tr>
+<tr>
+<td><span class="bold"><b>Attributes</b></span></td>
+<td colspan="2">Common attributes</td>
+</tr>
+<tr>
+<td><span class="bold"><b>Parameter Entities</b></span></td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+<tr>
+<td>None</td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975527"></a><h2>Description</h2>
+<p>Describes the return result of the stylesheet template.</p>
+<div class="refsect2" lang="en">
+<a name="id1975537"></a><h3>Processing Expectations</h3>
+<p>Formatted as a block.</p>
+</div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975549"></a><h2>See Also</h2>
+<p><span class="simplelist"><tt class="sgmltag-element">refparameter</tt>, <tt class="sgmltag-element">refreturn</tt>, </span></p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975571"></a><h2>Examples</h2>
+<div class="informalexample"><pre class="programlisting">
+    &lt;refreturn&gt;
+      &lt;para&gt;Returns string with all uppercase letters.&lt;/para&gt;
+    &lt;/refreturn&gt;
+</pre></div>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="xslt.elem.refexception"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>Refexception, Refthrows — An exception generated by the template.</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<div class="informaltable"><table border="1">
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<tbody>
+<tr><td colspan="3" align="left"><span class="bold"><b>Element Content Model</b></span></td></tr>
+<tr><td colspan="3" align="left"><pre class="synopsis">refparameter ::=
+(para+)</pre></td></tr>
+<tr>
+<td><span class="bold"><b>Attributes</b></span></td>
+<td colspan="2">Common attributes</td>
+</tr>
+<tr>
+<td><span class="bold"><b>Parameter Entities</b></span></td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+<tr>
+<td>None</td>
+<td class="auto-generated"> </td>
+<td class="auto-generated"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975757"></a><h2>Description</h2>
+<p>Describes any exceptions generated by the stylesheet template.</p>
+<div class="refsect2" lang="en">
+<a name="id1975767"></a><h3>Processing Expectations</h3>
+<p>Formatted as a block.</p>
+</div>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975778"></a><h2>See Also</h2>
+<p><span class="simplelist"><tt class="sgmltag-element">refreturn</tt></span></p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id1975796"></a><h2>Examples</h2>
+<div class="informalexample"><pre class="programlisting">
+    &lt;refexception&gt;
+      &lt;para&gt;An error exception is generated if the nodeset is empty.&lt;/para&gt;
+    &lt;/refexception&gt;
+</pre></div>
+</div>
+</div>
+</div>
+</div>

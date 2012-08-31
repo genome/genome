@@ -1,0 +1,470 @@
+<div class="reference" lang="en">
+<a name="id1976160"></a><div class="titlepage">
+<div>
+<div><h1 class="title">
+<a name="id1976160"></a>XML Markup Templates</h1></div>
+<div><div class="author"><h3 class="author">
+<span class="firstname">Steve</span> <span class="surname">Ball</span>
+</h3></div></div>
+<div><p class="releaseinfo">
+	$Id: markup.html,v 1.4 2004/10/10 06:18:57 balls Exp $
+      </p></div>
+<div><p class="copyright">Copyright © 2003, 2001 Steve Ball</p></div>
+</div>
+<div></div>
+<hr>
+</div>
+<div class="partintro" lang="en">
+<div>
+<div></div>
+<div></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage">
+<div><div><h2 class="title" style="clear: both">
+<a name="id1976174"></a>Introduction</h2></div></div>
+<div></div>
+</div>
+<p>This stylesheet module provides functions for generating literal XML markup.</p>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl>
+<dt>
+<a href="#template.markup:xml-declaration">markup:xml-declaration</a> - Create an XML Declaration</dt>
+<dt>
+<a href="#template.markup:doctype-declaration">markup:doctype-declaration</a> - Create a Document Type Declaration</dt>
+<dt>
+<a href="#template.markup:element-declaration">markup:element-declaration</a> - Create an Element Declaration</dt>
+<dt>
+<a href="#template.markup:attlist-declaration">markup:attlist-declaration</a> - Create an Attribute List Declaration</dt>
+<dt>
+<a href="#template.markup:attribute-definition">markup:attribute-definition</a> - Create an Attribute Definition</dt>
+<dt>
+<a href="#template.markup:entity-declaration">markup:entity-declaration</a> - Create an Entity Declaration</dt>
+<dt>
+<a href="#template.markup:quote-value">markup:quote-value</a> - Quote an Attribute Value</dt>
+<dt>
+<a href="#template.markup:external-identifier">markup:external-identifier</a> - Create an External Identifier</dt>
+<dt>
+<a href="#template.markup:entity-reference">markup:entity-reference</a> - Create an Entity Reference</dt>
+<dt>
+<a href="#template.markup:notation-declaration">markup:notation-declaration</a> - Create a Notation Declaration</dt>
+<dt>
+<a href="#template.markup:cdata-section">markup:cdata-section</a> - Create a CDATA Section</dt>
+<dt>
+<a href="#template.markup:as-xml">markup:as-xml</a> - Format Nodeset As XML Markup</dt>
+</dl>
+</div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<a name="template.markup:xml-declaration"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:xml-declaration — Create an XML Declaration</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:xml-declaration"&gt;&lt;xsl:param name="version" select="'1.0'"/&gt;&lt;xsl:param name="standalone"/&gt;&lt;xsl:param name="encoding"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976461"></a>
+      <p>This template returns an XML Declaration.  Although the XSLT standard provides control over the generation of the XML Declaration, this template may be useful in circumstances where the values must be computed at runtime.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976470"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">version</span></dt>
+<dd><p>Version number.</p></dd>
+<dt><span class="term">standalone</span></dt>
+<dd><p>Standalone indication.  Must be value "yes" or "no".</p></dd>
+<dt><span class="term">encoding</span></dt>
+<dd><p>Character encoding.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976518"></a>Returns</b>
+      <p>Returns an XML Declaration as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:doctype-declaration"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:doctype-declaration — Create a Document Type Declaration</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:doctype-declaration"&gt;&lt;xsl:param name="docel"/&gt;&lt;xsl:param name="publicid"/&gt;&lt;xsl:param name="systemid"/&gt;&lt;xsl:param name="internaldtd"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976543"></a>
+      <p>This template returns a Document Type Declaration.  Although the XSLT standard provides control over the generation of a Document Type Declaration, this template may be useful in circumstances where the values for the identifiers or the internal subset must be computed at runtime.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976554"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">docel</span></dt>
+<dd><p>The name of the document element.</p></dd>
+<dt><span class="term">publicid</span></dt>
+<dd><p>The public identifier for the external DTD subset.</p></dd>
+<dt><span class="term">systemid</span></dt>
+<dd><p>The system identifier for the external DTD subset.</p></dd>
+<dt><span class="term">internaldtd</span></dt>
+<dd><p>The internal DTD subset.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976616"></a>Returns</b>
+      <p>Returns a Document Type Declaration as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:element-declaration"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:element-declaration — Create an Element Declaration</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:element-declaration"&gt;&lt;xsl:param name="type"/&gt;&lt;xsl:param name="content-spec" select="'ANY'"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976642"></a>
+      <p>This template returns an element declaration..</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976649"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">type</span></dt>
+<dd><p>The element type.</p></dd>
+<dt><span class="term">content-spec</span></dt>
+<dd><p>The content specification.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976682"></a>Returns</b>
+      <p>Returns an element declaration as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:attlist-declaration"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:attlist-declaration — Create an Attribute List Declaration</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:attlist-declaration"&gt;&lt;xsl:param name="type"/&gt;&lt;xsl:param name="attr-defns"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976708"></a>
+      <p>This template returns an attribute list declaration.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976715"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">type</span></dt>
+<dd><p>The element type.</p></dd>
+<dt><span class="term">attr-defns</span></dt>
+<dd><p>Attribute definitions.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976749"></a>Returns</b>
+      <p>Returns an attribute list declaration as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:attribute-definition"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:attribute-definition — Create an Attribute Definition</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:attribute-definition"&gt;&lt;xsl:param name="name"/&gt;&lt;xsl:param name="type"/&gt;&lt;xsl:param name="default"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976773"></a>
+      <p>This template returns an attribute definition.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976780"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">name</span></dt>
+<dd><p>The attribute name.</p></dd>
+<dt><span class="term">type</span></dt>
+<dd><p>The attribute type.</p></dd>
+<dt><span class="term">default</span></dt>
+<dd><p>The attribute default.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976827"></a>Returns</b>
+      <p>Returns an attribute definition as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:entity-declaration"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:entity-declaration — Create an Entity Declaration</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:entity-declaration"&gt;&lt;xsl:param name="name"/&gt;&lt;xsl:param name="parameter" select="false()"/&gt;&lt;xsl:param name="text"/&gt;&lt;xsl:param name="nodes"/&gt;&lt;xsl:param name="publicid"/&gt;&lt;xsl:param name="systemid"/&gt;&lt;xsl:param name="notation"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976853"></a>
+      <p>This template returns an entity declaration.</p>
+      <p>If the 'text' parameter is given a value, then an internal entity is created.  If either the 'publicid' or 'systemid' parameters are given a value then an external entity is created.  It is an error for the 'text' parameter to have value as well as the 'publicid', 'systemid' or 'notation' parameters.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1976868"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">name</span></dt>
+<dd><p>The entity name.</p></dd>
+<dt><span class="term">parameter</span></dt>
+<dd><p>Boolean value to determine whether a parameter entity is created.  Default is 'false()'.</p></dd>
+<dt><span class="term">text</span></dt>
+<dd><p>The replacement text.  Must be a string.</p></dd>
+<dt><span class="term">nodes</span></dt>
+<dd><p>The replacement text as a nodeset.  The nodeset is formatted as XML using the as-xml template.  If both text and nodes are specified then nodes takes precedence.</p></dd>
+<dt><span class="term">publicid</span></dt>
+<dd><p>The public identifier for an external entity.</p></dd>
+<dt><span class="term">systemid</span></dt>
+<dd><p>The system identifier for an external entity.</p></dd>
+<dt><span class="term">notation</span></dt>
+<dd><p>The notation for an external entity.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1976974"></a>Returns</b>
+      <p>Returns an entity declaration as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:quote-value"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:quote-value — Quote an Attribute Value</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:quote-value"&gt;&lt;xsl:param name="value"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1976998"></a>
+      <p>This template returns a quoted value.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1977005"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">value</span></dt>
+<dd><p>The value to quote.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1977025"></a>Returns</b>
+      <p>Returns a quote value as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:external-identifier"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:external-identifier — Create an External Identifier</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:external-identifier"&gt;&lt;xsl:param name="publicid"/&gt;&lt;xsl:param name="systemid"/&gt;&lt;xsl:param name="leading-space" select="false()"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1977050"></a>
+      <p>This template returns an external identifier.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1977057"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">publicid</span></dt>
+<dd><p>The public identifier.</p></dd>
+<dt><span class="term">systemid</span></dt>
+<dd><p>The system identifier.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1977090"></a>Returns</b>
+      <p>Returns an external identifier as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:entity-reference"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:entity-reference — Create an Entity Reference</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:entity-reference"&gt;&lt;xsl:param name="name"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1977113"></a>
+      <p>This template returns an entity reference.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1977120"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">name</span></dt>
+<dd><p>The name of the entity.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1977140"></a>Returns</b>
+      <p>Returns an entity reference as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:notation-declaration"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:notation-declaration — Create a Notation Declaration</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:notation-declaration"&gt;&lt;xsl:param name="name"/&gt;&lt;xsl:param name="publicid"/&gt;&lt;xsl:param name="systemid"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1977165"></a>
+      <p>This template returns a notation declaration.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1977172"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">name</span></dt>
+<dd><p>The notation name.</p></dd>
+<dt><span class="term">publicid</span></dt>
+<dd><p>The public identifier for the notation.</p></dd>
+<dt><span class="term">systemid</span></dt>
+<dd><p>The system identifier for the notation.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1977220"></a>Returns</b>
+      <p>Returns a notation declaration as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:cdata-section"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:cdata-section — Create a CDATA Section</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:cdata-section"&gt;&lt;xsl:param name="text"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1977244"></a>
+      <p>This template returns a CDATA Section.  The XSLT specification provides a mechanism for instructing the XSL processor to output character data in a CDATA section for certain elements, but this template may be useful in those circumstances where not all instances of an element are to have their content placed in a CDATA section.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1977256"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">text</span></dt>
+<dd><p>The content of the CDATA section.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1977276"></a>Returns</b>
+      <p>Returns a CDATA section as a string.</p>
+    </div>
+</div>
+<hr>
+<div class="refentry" lang="en">
+<div class="refentry.separator"><hr></div>
+<a name="template.markup:as-xml"></a><div class="titlepage">
+<div></div>
+<div></div>
+</div>
+<div class="refnamediv">
+<h2>Name</h2>
+<p>markup:as-xml — Format Nodeset As XML Markup</p>
+</div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">&lt;xsl:template name="markup:as-xml"&gt;&lt;xsl:param name="nodes"/&gt;  ...&lt;/xsl:template&gt;</pre>
+</div>
+<div class="refdescription">
+<a name="id1977299"></a>
+      <p>This template returns XML markup.  Each node in the given nodeset is converted to its equivalent XML markup.</p>
+
+      <p>BUG: This version may not adequately handle XML Namespaces.</p>
+    </div>
+<div class="refparameter">
+<b><a name="id1977311"></a>Parameters</b>
+      <div class="variablelist"><dl>
+<dt><span class="term">nodes</span></dt>
+<dd><p>Nodeset to format as XML.</p></dd>
+</dl></div>
+    </div>
+<div class="refreturn">
+<b><a name="id1977331"></a>Returns</b>
+      <p>Returns XML markup.</p>
+    </div>
+</div>
+</div>

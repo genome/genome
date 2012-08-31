@@ -1,0 +1,37 @@
+DROP SCHEMA IF EXISTS instrument CASCADE;
+CREATE SCHEMA instrument AUTHORIZATION genome;
+
+SELECT set_config('search_path', current_setting('search_path') || ', instrument', false);
+ALTER USER genome SET search_path FROM current;
+
+CREATE TABLE instrument.fragment_library (
+    library_id varchar(16) NOT NULL,
+    full_name varchar(64) NOT NULL,
+    sample_id varchar(16) NOT NULL REFERENCES subject.subject(subject_id),
+    library_insert_size varchar(64),
+    PRIMARY KEY (library_id)
+);
+CREATE INDEX fragment_library_sample_id_index ON instrument.fragment_library(sample_id);
+CREATE INDEX fragment_library_library_id_index ON instrument.fragment_library(library_id);
+
+CREATE TABLE instrument.data (
+    id                  varchar(64) NOT NULL,
+    subclass_name       varchar(64) NOT NULL,
+    sequencing_platform varchar(64) NOT NULL,
+    library_id          varchar(16) NOT NULL REFERENCES instrument.fragment_library(library_id),
+    source_name         varchar(64),
+    subset_name         varchar(64),
+    run_name            varchar(64),
+    PRIMARY KEY (id)
+);
+CREATE INDEX instrument_data_library_id_index ON instrument.data(library_id);
+
+CREATE TABLE instrument.data_attribute (
+    instrument_data_id varchar(64) NOT NULL REFERENCES instrument.data(id),
+    attribute_label    varchar(64) NOT NULL,
+    attribute_value    varchar(512) NOT NULL,
+    nomenclature       varchar(64) NOT NULL,
+    PRIMARY KEY (instrument_data_id, attribute_label, attribute_value, nomenclature)
+);
+CREATE INDEX instrument_data_id_index ON instrument.data_attribute(instrument_data_id);
+CREATE INDEX instrument_data_attribute_label_index ON instrument.data_attribute(attribute_label);

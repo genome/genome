@@ -1,0 +1,113 @@
+<tool id="gmt_music_smg" name="gmt_music_smg" version="0.3.0">
+  <description>
+    Identify significantly mutated genes.
+  </description>
+  <command>
+    gmt music smg
+    #if $bmr_modifier_file
+      --bmr-modifier-file=$bmr_modifier_file
+    #end if
+    --gene-mr-file=$gene_mr_file
+    --max-fdr=$max_fdr
+    --output-file=$output_file
+    --processors=$processors
+    $skip_low_mr_genes
+  </command>
+  <inputs>
+    <param name="bmr_modifier_file" format="text" type="data" help="" optional="true"/>
+    <param name="gene_mr_file" format="text" type="data" help="" />
+    <param name="max_fdr" format="text" type="float" value="0.20" help="" />
+    <param name="processors" format="text" type="integer" value="1" help="" />
+    <param name="skip_low_mr_genes" format="text" help="" checked="False" truevalue="--skip-low-mr-genes" falsevalue="--noskip-low-mr-genes"/>
+
+  </inputs>
+  <outputs>
+    <data name="output_file" format="text" label="" help="" />
+
+  </outputs>
+  <help>
+
+
+    **USAGE**
+
+    gmt music smg --gene-mr-file=? --output-file=? [--max-fdr=?] [--skip-low-mr-genes]
+    [--bmr-modifier-file=?] [--processors=?]
+
+
+    **SYNOPSIS**
+
+    ... music smg \
+    --gene-mr-file output_dir/gene_mrs \
+    --output-file output_dir/smgs
+
+    (A "gene-mr-file" can be generated using the tool "music bmr calc-bmr".)
+
+
+    **REQUIRED ARGUMENTS**
+
+    gene-mr-file
+    File with per-gene mutation rates (Created using "music bmr calc-bmr") 
+    output-file
+    Output file that will list significantly mutated genes and their p-values 
+
+
+    **OPTIONAL ARGUMENTS**
+
+    max-fdr
+    The maximum allowed false discovery rate for a gene to be considered an SMG 
+    Default value '0.2' if not specified
+    skip-low-mr-genes
+    Skip testing genes with MRs lower than the background MR 
+    Default value 'true' if not specified
+    noskip-low-mr-genes
+    Make skip-low-mr-genes 'false' 
+    bmr-modifier-file
+    Tab delimited multipliers per gene that modify BMR before testing [gene_name bmr_modifier] 
+    processors
+    Number of processors to use (requires 'foreach' and 'doMC' R packages) 
+    Default value '1' if not specified
+
+
+    **DESCRIPTION**
+
+    This script runs R-based statistical tools to identify Significantly Mutated Genes (SMGs), when
+    given per-gene mutation rates categorized by mutation type, and the overall background mutation
+    rates (BMRs) for each of those categories (gene_mr_file, created using "music bmr calc-bmr").
+
+    P-values and false discovery rates (FDRs) for each gene in gene_mr_file is calculated using
+    three tests: Fisher's Combined P-value test (FCPT), Likelihood Ratio test (LRT), and the
+    Convolution test (CT). For a gene, if its FDR for at least 2 of these tests is <= max_fdr, it
+    will be output as an SMG. Another output file with prefix "_detailed" will have p-values and
+    FDRs for all genes.
+
+
+
+    **ARGUMENTS**
+
+
+    --bmr-modifier-file
+
+    The user can provide a BMR modifier for each gene in the ROI file, which is a multiplier for
+    the categorized background mutation rates, before testing them against the gene's categorized
+    mutation rates. Such a file can be used to correct for regional or systematic bias in
+    mutation rates across the genome that may be correlated to CpG deamination or DNA repair
+    processes like transcription-coupled repair or mismatch repair. Mutation rates have also been
+    associated with DNA replication timing, where higher mutation rates are seen in late
+    replicating regions. Note that the same per-gene multiplier is used on each mutation category
+    of BMR. Any genes from the ROI file that are not in the BMR modifier file will be tested
+    against unmodified overall BMRs per mutation category. BMR modifiers of <=0 are not
+    permitted, because that's just silly.
+
+    --skip-low-mr-genes
+
+    Genes with consistently lower MRs than the BMRs across mutation categories, may show up in
+    the results as an SMG (by CT or LRT). If such genes are not of interest, they may be assigned
+    a p-value of 1. This should also speed things up. Genes with higher Indel or Truncation rates
+    than the background will not be skipped even if the gene's overall MR is lower than the BMR.
+    If bmr-modifiers are applied, this step uses the modified BMRs instead.
+
+
+
+
+  </help>
+</tool>
