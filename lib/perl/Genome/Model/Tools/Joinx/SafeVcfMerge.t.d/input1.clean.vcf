@@ -1,0 +1,22 @@
+##fileformat=VCFv4.1
+##source=Samtools
+##reference=ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz
+##phasing=none
+##FILTER=<ID=PASS,Description="Passed all filters">
+##FILTER=<ID=SnpFilter,Description="Filter description">
+##FILTER=<ID=FalsePositive,Description="Filter description">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Total Read Depth">
+##FORMAT=<ID=BQ,Number=A,Type=Integer,Description="Average Base Quality corresponding to alternate alleles 1/2/3... after software and quality filtering">
+##FORMAT=<ID=MQ,Number=1,Type=Integer,Description="Average Mapping Quality">
+##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depth corresponding to alternate alleles 1/2/3... after software and quality filtering">
+##FORMAT=<ID=FA,Number=1,Type=Float,Description="Fraction of reads supporting ALT">
+##FORMAT=<ID=VAQ,Number=1,Type=Integer,Description="Variant Quality">
+##FORMAT=<ID=FT,Number=1,Type=String,Description="Filter Status">
+##source=Varscan
+##FORMAT=<ID=FET,Number=1,Type=String,Description="P-value from Fisher's Exact Test">
+##fileDate=20120505
+##FILTER=<ID=ForcedGenotype,Description="Forced genotyping for an uncalled variant">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	H_MN-04-1009-0469-001-1129532
+1	10001	.	A	.	.	.	.	GT:GQ:DP:BQ:MQ:AD	0/0:33:4:25:13:3
