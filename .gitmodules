@@ -53,8 +53,8 @@
 	path = bassovac
 	url = ssh://git/srv/git/bassovac.git
 [submodule "graphite"]
-	path = graphite
-	url = https://github.com/genome/graphite.git
+    path = graphite
+    url = https://github.com/genome/graphite.git
 [submodule "fqgrep"]
 	path = fqgrep
 	url = https://github.com/genome/fqgrep.git
@@ -128,8 +128,8 @@
 	path = vendor/statgen
 	url = git@github.com:genome-vendor/statgen.git
 [submodule "vendor/tophat-fusion"]
-	path = vendor/tophat-fusion
-	url = git@github.com:genome-vendor/tophat-fusion.git
+    path = vendor/tophat-fusion
+    url = git@github.com:genome-vendor/tophat-fusion.git
 [submodule "vendor/MGLtools"]
 	path = vendor/MGLtools
 	url = git@github.com:genome-vendor/MGLtools.git
