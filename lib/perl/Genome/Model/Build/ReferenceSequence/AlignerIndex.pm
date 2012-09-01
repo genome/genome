@@ -178,6 +178,11 @@ sub create {
     return $self;
 }
 
+# TODO: 
+# get() calls this method, and has a side-effect of creating dependent aligner indexes
+# 1. if you have side effects (avoid in general where possible), don't put them in a method called check_*
+# 2. don't override get(), make another method with the combined effect of getting data and doing work
+# -ssmith
 sub check_dependencies {
     my $self = shift;
 
@@ -192,17 +197,30 @@ sub check_dependencies {
         for my $b ($self->reference_build->append_to) { # (append_to is_many)
             $params{reference_build} = $b;
             $self->status_message("Creating AlignmentIndex for build dependency " . $b->name);
-            # TODO: 
-            # get() calls this method, and has a side-effect of creating dependent aligner indexes
-            # 1. don't override get(), make another method with this effect
-            # 2. if you do, don't have side effects
-            # 3. if you have side effects, don't put them in a method called check_*
-            # -ssmith
             my @results = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
             if (@results > 1) {
-                print STDERR Data::Dumper::Dumper(\@results, \%params);
+                my @got;
+                my @match;
+                for my $result (@results) {
+                    my %got = (id => $result->id);
+                    my $match = 1;
+                    for my $key (keys %params) {
+                        $got{$key} = $result->$key;
+                        if ($result->$key ne $params{$key}) {
+                            $match = 0;
+                            print STDERR "id $got{id} has $got{$key} instead of $params{$key}\n";
+                        }
+                    }
+                    push @got, \%got;
+                    push @match, \%got if $match;
+                }
+                print STDERR Data::Dumper::Dumper("GOT", \@got, "MATCH", \@match, "PARAMS WERE", \%params);
                 $DB::single = 1;
-                if (@results > 1) {
+                if (@match == 1) {
+                    print STDERR "one match, rescuing this and proceeding...\n";
+                    @results = grep { $_->id eq $match[0]->{id} } @results;
+                }
+                else {
                     Carp::confess("Multiple values for dependent aligner index!");
                 }
             }
