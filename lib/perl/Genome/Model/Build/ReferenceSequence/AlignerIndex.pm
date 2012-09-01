@@ -192,7 +192,21 @@ sub check_dependencies {
         for my $b ($self->reference_build->append_to) { # (append_to is_many)
             $params{reference_build} = $b;
             $self->status_message("Creating AlignmentIndex for build dependency " . $b->name);
-            my $result = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
+            # TODO: 
+            # get() calls this method, and has a side-effect of creating dependent aligner indexes
+            # 1. don't override get(), make another method with this effect
+            # 2. if you do, don't have side effects
+            # 3. if you have side effects, don't put them in a method called check_*
+            # -ssmith
+            my @results = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
+            if (@results > 1) {
+                print STDERR Data::Dumper::Dumper(\@results, \%params);
+                $DB::single = 1;
+                if (@results > 1) {
+                    Carp::confess("Multiple values for dependent aligner index!");
+                }
+            }
+            my $result = $results[0];
             unless($result) {
                 $self->error_message("Failed to create AlignmentIndex for dependency " . $b->name);
                 return;
