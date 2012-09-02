@@ -7,6 +7,7 @@ use warnings;
 use Genome;
 use Data::Dumper;
 use Term::ANSIColor qw(:constants);
+use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::SummarizeSvs {
     is => 'Command::V2',
@@ -73,6 +74,17 @@ sub execute {
     $outdir .= "/";
   }
 
+  #Get Entrez and Ensembl data for gene name mappings
+  #TODO: Create official versions of these data on allocated disk
+  #Directory of gene lists for various purposes
+  my $clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
+  my $gene_symbol_lists_dir = $clinseq_annotations_dir . "GeneSymbolLists/";
+  my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  my $symbol_list_names = &importSymbolListNames('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-verbose'=>0);
+  my $master_list = $symbol_list_names->{master_list};
+  my @symbol_list_names = sort {$master_list->{$a}->{order} <=> $master_list->{$b}->{order}} keys %{$master_list};
+  my $gene_symbol_lists = &importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+
   my $somatic_build_count = scalar(@builds);
   for my $somatic_build (@builds) {
 
@@ -98,12 +110,10 @@ sub execute {
     chomp($sv_annot_file);
 
     #Produce a simplified list of SVs gene fusion pairs (e.g. BCR-ABL1) - where type is fusion, and ORF affecting
+    my %data;
     if (-e $sv_annot_file){
-
-      #grep -w CTX /gscmnt/gc8002/info/model_data/2882504846/build119390903/variants/sv/union-union-sv_breakdancer_1.2__5-sv_breakdancer_1.2__6-sv_squaredancer_0.1__4/squaredancer.svs.merge.file.annot | grep Fusion | grep AffectCoding
       open (SV_ANNO, "$sv_annot_file") || die "\n\nCould not open SV annotation file: $sv_annot_file\n\n";
-      open (FUSION_OUT, ">$fusion_candidate_outfile") || die "\n\nCould not open fusion outfile\n\n";
-      print FUSION_OUT "gene_pair\tgene1\tgene2\tcoord1\tcoord2\n";
+      my $l = 0;
       while(<SV_ANNO>){
         chomp($_);
         my @line = split("\t", $_);
@@ -119,16 +129,57 @@ sub execute {
             $gene1 = $1;
             $gene2 = $2;
           }
+          $l++;
           my @coords = split(",", $coord_string);
-          print FUSION_OUT "$gene_pair\t$gene1\t$gene2\t$coords[0]\t$coords[1]\n";
+          my $mapped_gene_name1 = &fixGeneName('-gene'=>$gene1, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+          my $mapped_gene_name2 = &fixGeneName('-gene'=>$gene2, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+          my $record = "$gene_pair\t$gene1\t$gene2\t$coords[0]\t$coords[1]\t$mapped_gene_name1\t$mapped_gene_name2";
+          $data{$l}{record} = $record;
+          $data{$l}{gene1} = $gene1;
+          $data{$l}{gene2} = $gene2;
+          $data{$l}{mapped_gene1} = $mapped_gene_name1;
+          $data{$l}{mapped_gene2} = $mapped_gene_name2;
         }
       }
-      close(FUSION_OUT);
     }else{
       $self->status_message("Could not find: SV annotation file: $sv_annot_search");
     }
 
     #Annotate the genes of this file to help identify genes of interest (e.g. kinases, etc.)...
+    foreach my $l (keys %data){
+      my $gene1_name = $data{$l}{gene1};
+      my $gene2_name = $data{$l}{gene2};
+
+      foreach my $gene_symbol_type (keys %{$gene_symbol_lists}){
+        my $gene_symbols = $gene_symbol_lists->{$gene_symbol_type}->{symbols};
+        $data{$l}{$gene_symbol_type} = 0;
+        if ($gene_symbols->{$gene1_name}){
+          $data{$l}{$gene_symbol_type}++;
+        }
+        if ($gene_symbols->{$gene2_name}){
+          $data{$l}{$gene_symbol_type}++;
+        }
+      }
+    }
+
+
+    #Print out a new file contain the extra columns
+    open (FUSION_OUT, ">$fusion_candidate_outfile") || die "\n\nCould not open fusion outfile\n\n";
+    my @gene_symbol_list_names = sort {$gene_symbol_lists->{$a}->{order} <=> $gene_symbol_lists->{$b}->{order}} keys %{$gene_symbol_lists};
+    my $gene_symbol_list_name_string = join("\t", @gene_symbol_list_names);
+    my $header_line = "gene_pair\tgene1\tgene2\tcoord1\tcoord2\tmapped_gene_name1\tmapped_gene_name2";
+    print FUSION_OUT "$header_line\t$gene_symbol_list_name_string\n";
+    foreach my $l (sort {$a <=> $b} keys %data){
+      my @tmp;
+      foreach my $gene_symbol_list_name (@gene_symbol_list_names){
+        push (@tmp, $data{$l}{$gene_symbol_list_name});
+      }
+      my $new_cols_string = join("\t", @tmp);
+      print FUSION_OUT "$data{$l}{record}\t$new_cols_string\n";
+    }
+    close(FUSION_OUT);
+
+
 
     #Use the coordinates of each fusion to produce pairoscope plots showing the support for each rearrangement
 
