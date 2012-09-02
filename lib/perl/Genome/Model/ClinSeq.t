@@ -61,25 +61,23 @@ ok($tumor_genome_sample, "found the tumor genome sample");
 my $normal_genome_sample = $patient->samples(common_name => "normal", sample_type => "genomic dna");
 ok($normal_genome_sample, "found the normal genome sample");
 
-
+#Tumor RNA-seq model: 'AML103/ALL1 - RNA-seq - Ensembl 58_37c - TopHat 1.3.1 - Cufflinks 1.1.0 - Mask rRNA_MT - refcov - build37'
 my $tumor_rnaseq_model = Genome::Model::RnaSeq->get(
-    name    => 'AML103/ALL1 - RNA-seq - Ensembl 58_37c - TopHat 1.3.1 - Cufflinks 1.1.0 - Mask rRNA_MT - refcov - build37',
-
+    id => '2880794613',
 );
 ok($tumor_rnaseq_model, "got the RNASeq model");
 
+#WGS somatic model: 'ALL1/AML103 - tumor/normal - wgs somatic variation - build37/hg19 - nov 2011 PP'
 my $wgs_model = Genome::Model::SomaticVariation->get(
-    name    => 'ALL1/AML103 - tumor/normal - wgs somatic variation - build37/hg19 - nov 2011 PP',
-
+    id => '2882504846',
 );
 ok($wgs_model, "got the WGS Somatic Variation model");
 
+#Exome somatic model: 'ALL1/AML103 - exome somatic variation - build37/hg19 - nov 2011 PP'
 my $exome_model = Genome::Model::SomaticVariation->get(
-    name    => 'ALL1/AML103 - exome somatic variation - build37/hg19 - nov 2011 PP',
+    id => '2882505032',
 );
 ok($exome_model, "got the exome Somatic Variation model");
-
-#
 
 my $p = Genome::ProcessingProfile::ClinSeq->create(
     id   => -10001,
@@ -142,8 +140,10 @@ is($retval, 1, 'execution of the build returned true');
 is($@, '', 'no exceptions thrown during build process') or diag $@;
 
 #Perform a diff between the stored results and the newly generated directory of results
+my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2012-07-26';
+#print "\n\n$expected_data_directory\n\n";
+
 unless ($dry_run) {
-    my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2012-07-26';
 
     #Exclude some files from the diff that tend to change when regenerated for the same build
     my @diff = `diff -r --brief -x '*.R' -x '*.pdf' -x 'SummarizeBuilds.log.tsv' -x 'DumpIgvXml.log.txt' $expected_data_directory $temp_dir`;
