@@ -3,6 +3,7 @@ package Genome::Model::Tools::Dgidb::Import::Pharmgkb;
 use strict;
 use warnings;
 use Genome;
+use Text::ParseWords;
 
 binmode(STDOUT, ":utf8");
 
@@ -89,7 +90,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import pharmgkb --version=2012-07-12 --relationship-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/relationships/relationships.tsv --drugs-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/drugs/drugs.tsv --genes-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/genes/genes.tsv 
+gmt dgidb import pharmgkb --version=2012-07-12 --relationships-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/relationships/relationships.tsv --drugs-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/drugs/drugs.tsv --genes-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/genes/genes.tsv 
 HELP
 }
 
@@ -109,92 +110,6 @@ sub execute {
     return 1;
 }
 
-sub import_tsv {
-    my $self = shift;
-    my $interactions_outfile = $self->interactions_outfile;
-    $self->preload_objects;
-    my @interactions = $self->import_interactions($interactions_outfile);
-    return 1;
-}
-
-sub import_interactions {
-    my $self = shift;
-    my $interactions_outfile = shift;
-    my $version = $self->version;
-    my @interactions;
-    my @headers = qw(interaction_id gene_target drug_name interaction_type drug_class drug_type drug_generic_name drug_trade_name drug_synonym entrez_id drug_cas_number drug_drugbank_id);
-    my $parser = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $interactions_outfile,
-        headers => \@headers,
-        separator => "\t",
-        is_regex => 1,
-    );
-
-    my $citation = $self->_create_citation('Targeted Agents in Lung Cancer (Santa Monica Supplement, 2011)', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
-
-    $parser->next; #eat the headers
-    while(my $interaction = $parser->next){
-        my $drug_name = $self->_import_drug($interaction, $citation);
-        my $gene_name = $self->_import_gene($interaction, $citation);
-        my $drug_gene_interaction = $self->_create_interaction_report($citation, $drug_name, $gene_name, '');
-        push @interactions, $drug_gene_interaction;
-        unless($interaction->{interaction_type} eq 'NA'){
-          my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'interaction_type', $interaction->{interaction_type});
-        }
-    }
-    return @interactions;
-}
-
-sub _import_drug {
-    my $self = shift;
-    my $interaction = shift;
-    my $citation = shift;
-    my $drug_name = $self->_create_drug_name_report($interaction->{drug_name}, $citation, 'Targeted Agents in Lung Cancer (Santa Monica Supplement, 2011)', '');
-    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'SantaMonicaLung_primary_drug_name', '');
-    my @drug_synonyms = split(",", $interaction->{drug_synonym});
-    for my $drug_synonym (@drug_synonyms){
-      next if $drug_synonym eq 'NA';
-      my $synonym_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'SantaMonicaLung_drug_synonym', '');
-    }
-
-    unless($interaction->{drug_generic_name} eq 'NA'){
-        my $drug_generic_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_generic_name}, 'SantaMonicaLung_drug_generic_name', '');
-
-    }
-
-    my @drug_tradenames = split(",", $interaction->{drug_trade_name});
-    for my $drug_tradename (@drug_tradenames){
-      next if $drug_tradename eq 'NA';
-      my $tradename_association = $self->_create_drug_alternate_name_report($drug_name, $drug_tradename, 'SantaMonicaLung_drug_trade_name', '');
-    }
-
-    unless($interaction->{drug_cas_number} eq 'NA'){
-        my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'cas_number', '');
-    }
-
-    unless($interaction->{drug_drugbank_id} eq 'NA'){
-        my $drug_name_drugbank_id = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_drugbank_id}, 'drug_drugbank_id', '');
-    }
-
-    unless($interaction->{drug_class} eq 'NA'){
-        my $drug_class = $self->_create_drug_category_report($drug_name, 'SantaMonicaLung_drug_class', $interaction->{drug_class}, '');
-    }
-
-    unless($interaction->{drug_type} eq 'NA'){
-        my $drug_type = $self->_create_drug_category_report($drug_name, 'SantaMonicaLung_drug_type', $interaction->{drug_type}, '');
-    }
-    return $drug_name;
-}
-
-sub _import_gene {
-    my $self = shift;
-    my $interaction = shift;
-    my $citation = shift;
-    my $gene_name = $self->_create_gene_name_report($interaction->{entrez_id}, $citation, 'SantaMonicaLung_partner_id', '');
-    my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{gene_target}, 'SantaMonicaLung_gene_symbol', '');
-    return $gene_name;
-}
-
 sub input_to_tsv {
     my $self = shift;
     my $relationships_file = $self->relationships_file;
@@ -204,7 +119,7 @@ sub input_to_tsv {
     #Create interactions output file
     my $interactions_outfile = $self->interactions_outfile;
     my $interactions_fh = IO::File->new($interactions_outfile, 'w');
-    my $interactions_header = join("\t", 'Entity1_id','Entity1_type','Entity2_id','Entity2_type','Evidence','Association','PK','PD','PMIDs','PharmGKB_Drug_Accession_Id','Drug_Name','Generic_Names','Trade_Names','Brand_Mixtures','Drug_Type','Drug_Cross_References','SMILES','External_Vocabulary','PharmGKB_Gene_Accession_Id','Entrez_Id','Ensembl_Id','Gene_Name','Symbol','Alternate_Names','Alternate_Symbols','Is_VIP','Has_Variant_Annotation','Gene_Cross_References');
+    my $interactions_header = join("\t", 'Interaction_id', 'Entity1_id','Entity1_type','Entity2_id','Entity2_type','Evidence','Association','PK','PD','PMIDs','Drug_Name','Generic_Names','Trade_Names','Brand_Mixtures','Drug_Type','Drug_Cross_References','SMILES','External_Vocabulary','Entrez_Id','Ensembl_Id','Gene_Name','Symbol','Alternate_Names','Alternate_Symbols','Is_VIP','Has_Variant_Annotation','Gene_Cross_References');
     $interactions_fh->print($interactions_header, "\n");
 
     #Get the data in order
@@ -212,72 +127,231 @@ sub input_to_tsv {
     my $drugs = $self->_parse_drugs_file($drugs_file);
     my $genes = $self->_parse_genes_file($genes_file);
 
-
-
-
-
-
-
     #Write data to the file
-    for my $target_id (keys %{$targets}){
-        #Target Interaction Id
-        my $interaction_id =  $targets->{$target_id}{'interaction_id'};
+    for my $relationship_id (keys %{$relationships}){
+        #Interaction Id - Created by joining Entity1_id and Entity2_id
+        my $interaction_id =  $relationships->{$relationship_id}{'relationship_id'};
         $interaction_id = 'NA' unless $interaction_id;
 
-        #Target Gene Name
-        my $gene_target =  $targets->{$target_id}{'gene_target'};
-        $gene_target = 'NA' unless $gene_target;
+        #Entity1 id (Drug)
+        my $Entity1_id =  $relationships->{$relationship_id}{'Entity1_id'};
+        $Entity1_id = 'NA' unless $Entity1_id;
 
-        #Target Gene Entrez Id
-        my $entrez_id =  $targets->{$target_id}{'entrez_id'};
-        $entrez_id = 'NA' unless $entrez_id;
+        #Entity1 type (Drug)
+        my $Entity1_type =  $relationships->{$relationship_id}{'Entity1_type'};
+        $Entity1_type = 'NA' unless $Entity1_type;
 
-        #Interaction Type 
-        my $interaction_type = $targets->{$target_id}{'interaction_type'};
-        $interaction_type = 'NA' unless $interaction_type;
+        #Entity2 id (Gene)
+        my $Entity2_id =  $relationships->{$relationship_id}{'Entity2_id'};
+        $Entity2_id = 'NA' unless $Entity2_id;
 
-        #Drug name
-        my $drug_name = $targets->{$target_id}{'drug_name'};
-        $drug_name = 'NA' unless $drug_name;
+        #Entity2 type (Gene)
+        my $Entity2_type =  $relationships->{$relationship_id}{'Entity2_type'};
+        $Entity2_type = 'NA' unless $Entity2_type;
 
-        #Drug class
-        my $drug_class = $drugs->{$drug_name}{'drug_class'};
-        $drug_class = 'NA' unless $drug_class;
+        #Interaction Evidence
+        my $Evidence =  $relationships->{$relationship_id}{'Evidence'};
+        $Evidence = 'NA' unless $Evidence;
 
-        #Drug type
-        my $drug_type = $drugs->{$drug_name}{'drug_type'};
-        $drug_type = 'NA' unless $drug_type;
+        #Association
+        my $Association =  $relationships->{$relationship_id}{'Association'};
+        $Association = 'NA' unless $Association;
 
-        #drug_generic_name
-        my $drug_generic_name = $drugs->{$drug_name}{'drug_generic_name'};
-        $drug_generic_name = 'NA' unless $drug_generic_name;
+        #PK
+        my $PK =  $relationships->{$relationship_id}{'PK'};
+        $PK = 'NA' unless $PK;
 
-        #drug_trade_name
-        my $drug_trade_name = $drugs->{$drug_name}{'drug_trade_name'};
-        $drug_trade_name = 'NA' unless $drug_trade_name;
+        #PD
+        my $PD =  $relationships->{$relationship_id}{'PD'};
+        $PD = 'NA' unless $PD;
 
-        #drug_synonym
-        my $drug_synonyms = $drugs->{$drug_name}{'drug_synonym'};
-        $drug_synonyms = 'NA' unless $drug_synonyms;
+        #PMIDs
+        my $PMIDs =  $relationships->{$relationship_id}{'PMIDs'};
+        $PMIDs = 'NA' unless $PMIDs;
 
-        #drug_drugbank_id
-        my $drug_drugbank_id = $drugs->{$drug_name}{'drug_drugbank_id'};
-        $drug_drugbank_id = 'NA' unless $drug_drugbank_id;
+        #Drug Name
+        my $Drug_Name =  $drugs->{$Entity1_id}{'Drug_Name'};
+        $Drug_Name = 'NA' unless $Drug_Name;
 
-        #CAS Number
-        my $drug_cas_number = $drugs->{$drug_name}{'drug_cas_number'};
-        $drug_cas_number = 'NA' unless $drug_cas_number;
+        #Generic Names
+        my $Generic_Names =  $drugs->{$Entity1_id}{'Generic_Names'};
+        $Generic_Names = 'NA' unless $Generic_Names;
 
-        $interactions_fh->print(join("\t", $interaction_id, $gene_target, $drug_name, $interaction_type, $drug_class, $drug_type, $drug_generic_name, $drug_trade_name, $drug_synonyms, $entrez_id, $drug_cas_number, $drug_drugbank_id), "\n");
-        
+        #Trade Names
+        my $Trade_Names =  $drugs->{$Entity1_id}{'Trade_Names'};
+        $Trade_Names = 'NA' unless $Trade_Names;
+
+        #Brand Mixtures
+        my $Brand_Mixtures =  $drugs->{$Entity1_id}{'Brand_Mixtures'};
+        $Brand_Mixtures = 'NA' unless $Brand_Mixtures;
+
+        #Drug Type
+        my $Drug_Type =  $drugs->{$Entity1_id}{'Drug_Type'};
+        $Drug_Type = 'NA' unless $Drug_Type;
+
+        #Drug Cross References
+        my $Drug_Cross_References =  $drugs->{$Entity1_id}{'Drug_Cross_References'};
+        $Drug_Cross_References = 'NA' unless $Drug_Cross_References;
+
+        #SMILES
+        my $SMILES =  $drugs->{$Entity1_id}{'SMILES'};
+        $SMILES = 'NA' unless $SMILES;
+
+        #External_Vocabulary
+        my $External_Vocabulary =  $drugs->{$Entity1_id}{'External_Vocabulary'};
+        $External_Vocabulary = 'NA' unless $External_Vocabulary;
+
+        #Entrez Id
+        my $Entrez_Id =  $genes->{$Entity2_id}{'Entrez_Id'};
+        $Entrez_Id = 'NA' unless $Entrez_Id;
+
+        #Ensembl Id
+        my $Ensembl_Id =  $genes->{$Entity2_id}{'Ensembl_Id'};
+        $Ensembl_Id = 'NA' unless $Ensembl_Id;
+
+        #Gene Name
+        my $Gene_Name =  $genes->{$Entity2_id}{'Gene_Name'};
+        $Gene_Name = 'NA' unless $Gene_Name;
+
+        #Symbol
+        my $Symbol =  $genes->{$Entity2_id}{'Symbol'};
+        $Symbol = 'NA' unless $Symbol;
+
+        #Alternate Names
+        my $Alternate_Names =  $genes->{$Entity2_id}{'Alternate_Names'};
+        $Alternate_Names = 'NA' unless $Alternate_Names;
+
+        #Alternate Symbols
+        my $Alternate_Symbols =  $genes->{$Entity2_id}{'Alternate_Symbols'};
+        $Alternate_Symbols = 'NA' unless $Alternate_Symbols;
+
+        #Is_VIP
+        my $Is_VIP =  $genes->{$Entity2_id}{'Is_VIP'};
+        $Is_VIP = 'NA' unless $Is_VIP;
+
+        #Has Variant Annotation
+        my $Has_Variant_Annotation =  $genes->{$Entity2_id}{'Has_Variant_Annotation'};
+        $Has_Variant_Annotation = 'NA' unless $Has_Variant_Annotation;
+
+        #Gene Cross References
+        my $Gene_Cross_References =  $genes->{$Entity2_id}{'Gene_Cross_References'};
+        $Gene_Cross_References = 'NA' unless $Gene_Cross_References;
+
+        $interactions_fh->print(join("\t", $interaction_id, $Entity1_id, $Entity1_type, $Entity2_id, $Entity2_type, $Evidence, $Association, $PK, $PD, $PMIDs, $Drug_Name, $Generic_Names, $Trade_Names, $Brand_Mixtures, $Drug_Type, $Drug_Cross_References, $SMILES, $External_Vocabulary, $Entrez_Id, $Ensembl_Id, $Gene_Name, $Symbol, $Alternate_Names, $Alternate_Symbols, $Is_VIP, $Has_Variant_Annotation, $Gene_Cross_References), "\n");
     }
     $interactions_fh->close;
     return 1;
 }
 
+sub _parse_relationships_file {
+    my $self = shift;
+    my $relationships_path = shift;
+    my $relationships = {};
+    my $fh = IO::File->new($relationships_path, 'r');
+
+    while(my $line = <$fh>){
+        next unless $line;
+        chomp $line;
+        $line =~ s/\r//g;
+        if($line =~ m/\w+\s+Drug\s+\w+\s+Gene\s+/){ #Note: File contains both Drug-Gene and Gene-Drug pairs but these were determined to be duplicates
+            my ($Entity1_id,$Entity1_type,$Entity2_id,$Entity2_type,$Evidence,$Association,$PK,$PD,$PMIDs) = split("\t", $line);
+            if ($Association eq 'associated'){ #Require that the evidence for relationship between the entities is positive (not negative or ambiguous)
+                my $relationship_id=join("_",$Entity1_id,$Entity2_id); #Assumes combination of Entity 1 and 2 for unique relationship - checked manually
+                $relationships->{$relationship_id}{'relationship_id'} = $relationship_id;
+                $relationships->{$relationship_id}{'Entity1_id'} = $Entity1_id;
+                $relationships->{$relationship_id}{'Entity1_type'} = $Entity1_type;
+                $relationships->{$relationship_id}{'Entity2_id'} = $Entity2_id;
+                $relationships->{$relationship_id}{'Entity2_type'} = $Entity2_type;
+                $relationships->{$relationship_id}{'Evidence'} = $Evidence;
+                $relationships->{$relationship_id}{'Association'} = $Association;
+                $relationships->{$relationship_id}{'PK'} = $PK;
+                $relationships->{$relationship_id}{'PD'} = $PD;
+                $relationships->{$relationship_id}{'PMIDs'} = $PMIDs;
+            }else{
+                #skip this line
+                next;
+            }
+        }else{
+            #skip this line
+            next;
+        }
+    }
+    $fh->close;
+    return ($relationships);
+}
+
+sub _parse_drugs_file {
+    my $self = shift;
+    my $drugs_path = shift;
+    my $drugs = {};
+    my $fh = IO::File->new($drugs_path, 'r');
+
+    while(my $line = <$fh>){
+        next unless $line;
+        chomp $line;
+        $line =~ s/\r//g;
+        if($line =~ m/^PA\d+/){
+            my ($PharmGKB_Drug_Accession_Id,$Drug_Name,$Generic_Names,$Trade_Names,$Brand_Mixtures,$Drug_Type,$Drug_Cross_References,$SMILES,$External_Vocabulary) = split("\t", $line);
+            $drugs->{$PharmGKB_Drug_Accession_Id}{'PharmGKB_Drug_Accession_Id'} = $PharmGKB_Drug_Accession_Id;
+            $drugs->{$PharmGKB_Drug_Accession_Id}{'Drug_Name'} = $Drug_Name;
+            $drugs->{$PharmGKB_Drug_Accession_Id}{'Generic_Names'} = $Generic_Names;
+            $drugs->{$PharmGKB_Drug_Accession_Id}{'Trade_Names'} = $Trade_Names;
+            $drugs->{$PharmGKB_Drug_Accession_Id}{'Brand_Mixtures'} = $Brand_Mixtures;
+            $drugs->{$PharmGKB_Drug_Accession_Id}{'Drug_Type'} = $Drug_Type;
+            $drugs->{$PharmGKB_Drug_Accession_Id}{'Drug_Cross_References'} = $Drug_Cross_References;
+            $drugs->{$PharmGKB_Drug_Accession_Id}{'SMILES'} = $SMILES;
+            $drugs->{$PharmGKB_Drug_Accession_Id}{'External_Vocabulary'} = $External_Vocabulary;
+        }else{
+            #skip this line
+            next;
+        }
+    }
+    $fh->close;
+    return ($drugs);
+}
+
+sub _parse_genes_file {
+    my $self = shift;
+    my $genes_path = shift;
+    my $genes = {};
+    my $fh = IO::File->new($genes_path, 'r');
+
+    while(my $line = <$fh>){
+        next unless $line;
+        chomp $line;
+        $line =~ s/\r//g;
+        if($line =~ m/^PA\d+/){
+            my ($PharmGKB_Gene_Accession_Id,$Entrez_Id,$Ensembl_Id,$Gene_Name,$Symbol,$Alternate_Names,$Alternate_Symbols,$Is_VIP,$Has_Variant_Annotation,$Gene_Cross_References) = split("\t", $line);
+            $genes->{$PharmGKB_Gene_Accession_Id}{'PharmGKB_Gene_Accession_Id'} = $PharmGKB_Gene_Accession_Id;
+            $genes->{$PharmGKB_Gene_Accession_Id}{'Entrez_Id'} = $Entrez_Id;
+            $genes->{$PharmGKB_Gene_Accession_Id}{'Ensembl_Id'} = $Ensembl_Id;
+            $genes->{$PharmGKB_Gene_Accession_Id}{'Gene_Name'} = $Gene_Name;
+            $genes->{$PharmGKB_Gene_Accession_Id}{'Symbol'} = $Symbol;
+            $genes->{$PharmGKB_Gene_Accession_Id}{'Alternate_Names'} = $Alternate_Names;
+            $genes->{$PharmGKB_Gene_Accession_Id}{'Alternate_Symbols'} = $Alternate_Symbols;
+            $genes->{$PharmGKB_Gene_Accession_Id}{'Is_VIP'} = $Is_VIP;
+            $genes->{$PharmGKB_Gene_Accession_Id}{'Has_Variant_Annotation'} = $Has_Variant_Annotation;
+            $genes->{$PharmGKB_Gene_Accession_Id}{'Gene_Cross_References'} = $Gene_Cross_References;
+        }else{
+            #skip this line
+            next;
+        }
+    }
+    $fh->close;
+    return ($genes);
+}
+
+sub import_tsv {
+    my $self = shift;
+    my $interactions_outfile = $self->interactions_outfile;
+    $self->preload_objects;
+    my @interactions = $self->import_interactions($interactions_outfile);
+    return 1;
+}
+
 sub preload_objects {
     my $self = shift;
-    my $source_db_name = 'Targeted Agents in Lung Cancer (Santa Monica Supplement, 2011)';
+    my $source_db_name = 'PharmGKB';
     my $source_db_version = $self->version;
 
     #Let's preload anything for this database name and version so that we can avoid death by 1000 queries
@@ -296,45 +370,108 @@ sub preload_objects {
     for my $interaction (@interactions){
         $interaction->interaction_attributes;
     }
-
     return 1;
 }
 
-sub _parse_targets_file {
+sub import_interactions {
     my $self = shift;
-    my $targets_path = shift;
-    my $targets = {};
-    my $drugs = {};
-    my $fh = IO::File->new($targets_path, 'r');
+    my $interactions_outfile = shift;
+    my $version = $self->version;
+    my @interactions;
+    my @headers = qw(Interaction_id Entity1_id Entity1_type Entity2_id Entity2_type Evidence Association PK PD PMIDs Drug_Name Generic_Names Trade_Names Brand_Mixtures Drug_Type Drug_Cross_References SMILES External_Vocabulary Entrez_Id Ensembl_Id Gene_Name Symbol Alternate_Names Alternate_Symbols Is_VIP Has_Variant_Annotation Gene_Cross_References);
+    my $parser = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $interactions_outfile,
+        headers => \@headers,
+        separator => "\t",
+        is_regex => 1,
+    );
 
-    while(my $line = <$fh>){
-        next unless $line;
-        chomp $line;
-        $line =~ s/\r//g;
-        if($line =~ m/^SML\w+/){
-            my ($interaction_id, $gene_target, $drug_name, $interaction_type, $drug_class, $drug_type, $drug_generic_name, $drug_trade_name, $drug_synonym, $entrez_id, $drug_cas_number, $drug_drugbank_id) = split("\t", $line);
-        $targets->{$interaction_id}{'interaction_id'} = $interaction_id;
-        $targets->{$interaction_id}{'gene_target'} = $gene_target;
-        $targets->{$interaction_id}{'drug_name'} = $drug_name;
-        $targets->{$interaction_id}{'interaction_type'} = $interaction_type;
-        $targets->{$interaction_id}{'entrez_id'} = $entrez_id;
+    my $citation = $self->_create_citation('PharmGKB', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
 
-        #Note: This assumes that if a drug appears more than once, all drug annotations will be the same
-        $drugs->{$drug_name}{'drug_class'} = $drug_class;
-        $drugs->{$drug_name}{'drug_type'} = $drug_type;
-        $drugs->{$drug_name}{'drug_generic_name'} = $drug_generic_name;
-        $drugs->{$drug_name}{'drug_trade_name'} = $drug_trade_name;
-        $drugs->{$drug_name}{'drug_synonym'} = $drug_synonym;
-        $drugs->{$drug_name}{'drug_cas_number'} = $drug_cas_number;
-        $drugs->{$drug_name}{'drug_drugbank_id'} = $drug_drugbank_id;
-        }else{
-            #skip this line
-            next;
-        }
+    $parser->next; #eat the headers
+    while(my $interaction = $parser->next){
+        my $drug_name = $self->_import_drug($interaction, $citation);
+        my $gene_name = $self->_import_gene($interaction, $citation);
+        my $drug_gene_interaction = $self->_create_interaction_report($citation, $drug_name, $gene_name, '');
+        push @interactions, $drug_gene_interaction;
+#        unless($interaction->{interaction_type} eq 'NA'){ #No interaction type provided in PharmGKB relationships file
+#          my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'interaction_type', $interaction->{interaction_type});
+#        }
     }
-    $fh->close;
-    return ($targets, $drugs);
+    return @interactions;
+}
+
+sub _import_drug {
+    my $self = shift;
+    my $interaction = shift;
+    my $citation = shift;
+    my $drug_accession = $self->_create_drug_name_report($interaction->{Entity1_id}, $citation, 'PharmGKB', '');
+    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Entity1_id}, 'PharmGKB_drug_accession', '');
+    my $drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Drug_Name}, 'PharmGKB_drug_name', '');
+    my @drug_generic_names = split(",", $interaction->{Generic_Names});
+    for my $drug_generic_name (@drug_generic_names){
+      next if $drug_generic_name eq 'NA';
+      my $synonym_association = $self->_create_drug_alternate_name_report($drug_accession, $drug_generic_name, 'PharmGKB_drug_generic_name', '');
+    }
+    my @drug_tradenames = split(",", $interaction->{Trade_Names});
+    for my $drug_tradename (@drug_tradenames){
+      next if $drug_tradename eq 'NA';
+      my $tradename_association = $self->_create_drug_alternate_name_report($drug_accession, $drug_tradename, 'PharmGKB_drug_trade_name', '');
+    }
+    my @drug_cross_references = split(",", $interaction->{Drug_Cross_References});
+    for my $drug_cross_reference (@drug_cross_references){
+      next if $drug_cross_reference eq 'NA';
+      my @data_pair = split(":", $drug_cross_reference);
+      my $cross_ref_type=join("_", "PharmGKB", $data_pair[0]);
+      my $cross_ref_value=$data_pair[1];
+      my $cross_reference_association = $self->_create_drug_alternate_name_report($drug_accession, $cross_ref_value, $cross_ref_type, '');
+    }
+    unless($interaction->{SMILES} eq 'NA'){
+        my $SMILES_association = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{SMILES}, 'PharmGKB_SMILES', '');
+    }
+    unless($interaction->{External_Vocabulary} eq 'NA'){
+        my $External_Vocabulary_association = $self->_create_drug_category_report($drug_accession, 'PharmGKB_External_Vocabulary', $interaction->{External_Vocabulary}, '');
+    }
+    unless($interaction->{Drug_Type} eq 'NA'){
+        my $drug_type_association = $self->_create_drug_category_report($drug_accession, 'PharmGKB_drug_type', $interaction->{Drug_Type}, '');
+    }
+    return $drug_accession;
+}
+
+sub _import_gene {
+    my $self = shift;
+    my $interaction = shift;
+    my $citation = shift;
+    my $gene_accession = $self->_create_gene_name_report($interaction->{Entity2_id}, $citation, 'PharmGKB_gene_accession', '');
+    my $Entrez_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entrez_Id}, 'entrez_id', '');
+    my $Ensembl_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Ensembl_Id}, 'PharmGKB_Ensembl_Id', '');
+    my $Gene_Name_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Gene_Name}, 'PharmGKB_Gene_Name', '');
+    my $Gene_Symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Symbol}, 'PharmGKB_Symbol', '');
+    my @Alternate_Names = quotewords(',', 0, $interaction->{Alternate_Names});
+    for my $Alternate_Name (@Alternate_Names){
+        next if $Alternate_Name eq 'NA';
+        my $alt_name_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Name, 'PharmGKB_Alternate_Name','');
+    }
+    my @Alternate_Symbols = quotewords(',', 0, $interaction->{Alternate_Symbols});
+        for my $Alternate_Symbol (@Alternate_Symbols){      
+        next if $Alternate_Symbol eq 'NA';
+        my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'PharmGKB_Alternate_Symbol','');
+    }
+    my @gene_cross_references = split(",", $interaction->{Gene_Cross_References});
+    for my $gene_cross_reference (@gene_cross_references){
+        next if $gene_cross_reference eq 'NA';
+        my @data_pair = split(":", $gene_cross_reference);
+        my $cross_ref_type=join("_", "PharmGKB", $data_pair[0]);
+        my $cross_ref_value=$data_pair[1];
+        my $cross_reference_association = $self->_create_gene_alternate_name_report($gene_accession, $cross_ref_value, $cross_ref_type, '');
+    }
+    unless($interaction->{Is_VIP} eq 'NA'){
+    my $is_vip_association = $self->_create_gene_category_report($gene_accession, 'PharmGKB_Is_VIP', $interaction->{Is_VIP},'');
+    }
+    unless($interaction->{Has_Variant_Annotation} eq 'NA'){
+    my $has_var_annot_association = $self->_create_gene_category_report($gene_accession, 'PharmGKB_Has_Variant_Annotation', $interaction->{Has_Variant_Annotation},'');
+    return $gene_accession;
+    }
 }
 
 1;
-
