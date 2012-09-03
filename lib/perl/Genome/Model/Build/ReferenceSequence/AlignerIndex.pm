@@ -99,27 +99,21 @@ sub _supports_multiple_reference {
 
 sub get {
     my $class = shift;
+    $DB::single = 1;
+    # this no longer calls check_dependencies()
+    # instead that is called from get_or_create() only, with the name generate_dependencies_as_needed()
+    $class->SUPER::get(@_);
+}
 
-    my @objects;
-    if (@_ % 2 == 0) {
-        my %p = @_;
-        unless ($p{test_name}) {
-            $p{test_name} = ($ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef);
-        }
-        if (exists $p{aligner_name} && $class->aligner_requires_param_masking($p{aligner_name})) {
-            $p{aligner_params} = undef;
-        }
-        @objects = $class->SUPER::get(%p);
-    } else {
-        @objects = $class->SUPER::get(@_);
-    }
-
-    return unless @objects;
-
+sub get_or_create {
+    my $class = shift;
+   
+    $DB::single = 1;
+    my @objects = $class->SUPER::get_or_create(@_);
+    
     for my $obj (@objects) {
         next unless ref($obj); # sometimes UR gives us back the package name when deleting?
-
-        unless ($obj->check_dependencies()) {
+        unless ($obj->generate_dependencies_as_needed()) {
             $obj->error_message("Failed to get AlignmentIndex objects for dependencies of " . $obj->__display_name__);
             return;
         }
@@ -129,7 +123,8 @@ sub get {
         return @objects if wantarray;
         my @ids = map { $_->id } @objects;
         die "Multiple matches for $class but get or create was called in scalar context! Found ids: @ids";
-    } else {
+    } 
+    else {
         return $objects[0];
     }
 }
@@ -170,7 +165,7 @@ sub create {
         return;
     }
 
-    unless ($self->check_dependencies()) {
+    unless ($self->generate_dependencies_as_needed()) {
         $self->error_message("Failed to create AlignmentIndex objects for dependencies");
         return;
     }
@@ -183,58 +178,31 @@ sub create {
 # 1. if you have side effects (avoid in general where possible), don't put them in a method called check_*
 # 2. don't override get(), make another method with the combined effect of getting data and doing work
 # -ssmith
-sub check_dependencies {
+sub generate_dependencies_as_needed {
     my $self = shift;
 
-    my %params = (
-        aligner_name => $self->aligner_name,
-        aligner_params => $self->aligner_params,
-        aligner_version => $self->aligner_version,
-    );
+    $DB::single = 1;
 
     # if the reference is a compound reference
     if ($self->reference_build->append_to) {
+        my %params = (
+            aligner_name => $self->aligner_name,
+            aligner_params => $self->aligner_params,
+            aligner_version => $self->aligner_version,
+        );
+
         for my $b ($self->reference_build->append_to) { # (append_to is_many)
             $params{reference_build} = $b;
             $self->status_message("Creating AlignmentIndex for build dependency " . $b->name);
-            my @results = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
-            if (@results > 1) {
-                my @got;
-                my @match;
-                for my $result (@results) {
-                    my %got = (id => $result->id);
-                    my $match = 1;
-                    for my $key (keys %params) {
-                        $got{$key} = $result->$key;
-                        if ($result->$key ne $params{$key}) {
-                            $match = 0;
-                            print STDERR "id $got{id} has $got{$key} instead of $params{$key}\n";
-                        }
-                    }
-                    push @got, \%got;
-                    push @match, \%got if $match;
-                }
-                print STDERR Data::Dumper::Dumper("GOT", \@got, "MATCH", \@match, "PARAMS WERE", \%params);
-                $DB::single = 1;
-                if (@match == 1) {
-                    print STDERR "one match, rescuing this and proceeding...\n";
-                    @results = grep { $_->id eq $match[0]->{id} } @results;
-                }
-                else {
-                    Carp::confess("Multiple values for dependent aligner index!");
-                }
-            }
-            my $result = $results[0];
+            $DB::single = 1;
+            my $result = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
             unless($result) {
-                $self->error_message("Failed to create AlignmentIndex for dependency " . $b->name);
-                return;
-            }
-            unless ($result->check_dependencies()) {
-                $self->error_message("Failed while checking dependencies of " . $b->name);
-                return;
+                die $self->error_message("Failed to create AlignmentIndex for dependency " . $b->name);
+                
             }
         }
     }
+
     return 1;
 }
 
@@ -287,8 +255,27 @@ sub _prepare_reference_index {
     return $self;
 }
 
-# TODO push this up
 sub _gather_params_for_get_or_create {
+    my $class = shift;
+    my $p = $class->SUPER::_gather_params_for_get_or_create(@_);
+
+    unless ($p->{inputs}{test_name}) {
+        $p->{test_name}{test_name} = ($ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef);
+    }
+    if (exists $p->{params}{aligner_name} && $class->aligner_requires_param_masking($p->{params}{aligner_name})) {
+        $p->{params}{aligner_params} = undef;
+    }
+
+    my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{inputs} });
+    my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{params} });
+    $p->{software_result_params}{params_id} = $params_bx->id;
+    $p->{software_result_params}{inputs_id} = $inputs_bx->id;
+
+    return $p;
+}
+
+# TODO push this up
+sub X_gather_params_for_get_or_create {
     my $class = shift;
     my $bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
 
