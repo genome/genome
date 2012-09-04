@@ -134,7 +134,7 @@ sub execute {                               # replace with real execution logic.
         $inFh = Genome::Sys->open_file_for_reading( $temp_path );
     }
     else {
-        if(Genome::Sys->_file_type($vcf_file) eq 'gzip') {
+        if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
             $inFh = Genome::Sys->open_gzip_file_for_reading($vcf_file);
         }
         else {
@@ -289,7 +289,7 @@ sub load_positions {
 
 sub grab_header {
     my ($self, $vcf_file) = @_;
-    if(Genome::Sys->_file_type($vcf_file) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
         return `zcat $vcf_file | grep '^#'`;
     }
     else {

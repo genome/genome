@@ -121,7 +121,7 @@ sub execute {                               # replace with real execution logic.
 	## Get the input file ##
 
 	my $input;
-    if(Genome::Sys->_file_type($vcf_file) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
         $input = Genome::Sys->open_gzip_file_for_reading($vcf_file);
     }
     else {

@@ -57,7 +57,7 @@ sub execute {
     my $sites_file = Genome::Sys->create_temp_file_path();
     my $cat_cmd = "cat";
     my $vcf_fh;
-    if(Genome::Sys->_file_type($vcf) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf) eq 'gzip') {
         $vcf_fh = Genome::Sys->open_gzip_file_for_reading($vcf);
         $cat_cmd = "zcat";
     }
@@ -115,7 +115,7 @@ sub output_passing_vcf {
     my $pvalues = Genome::Sys->open_file_for_reading($r_output);
     my $output_file = IO::File->new($output_filename, ">");
     my $cat_cmd = "cat";
-    if(Genome::Sys->_file_type($denovo_vcf) eq 'gzip') {
+    if(Genome::Sys->file_type($denovo_vcf) eq 'gzip') {
         $cat_cmd = "zcat";
     }
 

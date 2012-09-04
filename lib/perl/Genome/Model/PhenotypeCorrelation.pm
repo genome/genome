@@ -804,7 +804,7 @@ sub glm_max_cols_per_file {
 sub _samples_from_vcf {
     my ($self) = @_;
     my $fh;
-    if(Genome::Sys->_file_type($self->multisample_vcf) eq 'gzip') {
+    if(Genome::Sys->file_type($self->multisample_vcf) eq 'gzip') {
         $fh = Genome::Sys->open_gzip_file_for_reading($self->multisample_vcf);
     }
     else {

@@ -140,7 +140,7 @@ sub find_recessive_homozygotes {
 sub get_vcf_header {
     my ($self, $vcf_file) = @_;
     my $header;
-    if(Genome::Sys->_file_type($vcf_file) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
     $header = `zcat $vcf_file | grep "^#"`;
     }
     else {
@@ -184,7 +184,7 @@ sub parse_ped {
 sub open_vcf_file { 
     my ($self, $vcf) = @_;
     my $fh;
-    if(Genome::Sys->_file_type($vcf) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf) eq 'gzip') {
         $fh=Genome::Sys->open_gzip_file_for_reading($vcf);
     }
     else {

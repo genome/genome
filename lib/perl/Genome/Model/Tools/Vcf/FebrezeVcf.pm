@@ -68,7 +68,7 @@ sub execute {                               # replace with real execution logic.
     my $inFh_vcf;
     my $output_file1;
     my $output_file2;
-    if(Genome::Sys->_file_type($vcf_file) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
         $inFh_vcf = Genome::Sys->open_gzip_file_for_reading($vcf_file);
         if ($self->gtonly_output_file) {
             $output_file1 = Genome::Sys->open_gzip_file_for_writing($gtonly_output_file) || die "can't open file\n";

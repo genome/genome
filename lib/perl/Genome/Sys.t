@@ -119,7 +119,7 @@ sub test_file_operations {
     $gzip_fh->print("Testing");
     $gzip_fh->close;
 
-    my $gzip_type = Genome::Sys->_file_type($gzip_path);
+    my $gzip_type = Genome::Sys->file_type($gzip_path);
     is($gzip_type, "gzip", "The file type is gzip");
 
     my $symlink_path = Genome::Sys->create_temp_file_path;
@@ -130,9 +130,9 @@ sub test_file_operations {
     ok($second_symlink_path, "Got second level symlink path");
     ok(Genome::Sys->create_symlink($symlink_path, $second_symlink_path), "Created second level symlink");
 
-    my $first_symlink_type = Genome::Sys->_file_type($symlink_path);
+    my $first_symlink_type = Genome::Sys->file_type($symlink_path);
     is($first_symlink_type, "gzip", "The symlink type is gzip");
 
-    my $second_symlink_type = Genome::Sys->_file_type($second_symlink_path);
+    my $second_symlink_type = Genome::Sys->file_type($second_symlink_path);
     is($second_symlink_type, "gzip", "The second level symlink type is gzip");
 }

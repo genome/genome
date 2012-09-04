@@ -68,7 +68,7 @@ sub execute {
         $output_fh->fdopen(fileno(STDOUT),">");
     }
     my $vcf_fh; 
-    if(Genome::Sys->_file_type($self->vcf_file) eq 'gzip') {
+    if(Genome::Sys->file_type($self->vcf_file) eq 'gzip') {
         $vcf_fh = Genome::Sys->open_gzip_file_for_reading($self->vcf_file);
     }
     else {

@@ -365,7 +365,7 @@ sub fix_vcf_header {
     my ($self, $standard_vcf) = @_;
     my $fh;
     my ($ofh, $temp_output_filename) = Genome::Sys->create_temp_file();
-    if(Genome::Sys->_file_type($standard_vcf) eq 'gzip') {
+    if(Genome::Sys->file_type($standard_vcf) eq 'gzip') {
         $fh = Genome::Sys->open_gzip_file_for_reading($standard_vcf);
     }
     else {

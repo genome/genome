@@ -60,7 +60,7 @@ sub execute {                               # replace with real execution logic.
 	my @samples;
 	my %sample_hash;
     my $inFh;
-    if(Genome::Sys->_file_type($vcf_input) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf_input) eq 'gzip') {
         $inFh = Genome::Sys->open_gzip_file_for_reading($vcf_input);
     }
     else {

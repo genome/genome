@@ -106,7 +106,7 @@ sub execute {
     my ($anno_header, $anno_fetcher) = $self->create_vep_anno_fetcher($anno_fh);
 
     my $ifh;
-    if(Genome::Sys->_file_type($vcf_file) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
         $ifh = Genome::Sys->open_gzip_file_for_reading($vcf_file);
     }
     else {
@@ -239,7 +239,7 @@ sub execute {
 
 sub grab_header {
     my ($self, $vcf_file) = @_;
-    if(Genome::Sys->_file_type($vcf_file) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
         return `zcat $vcf_file | grep '^#'`;
     }
     else {

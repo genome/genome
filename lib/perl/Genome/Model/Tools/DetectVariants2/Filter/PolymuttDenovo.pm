@@ -44,7 +44,7 @@ sub _filter_variants {
     my $sites_file = Genome::Sys->create_temp_file_path();
     my $cat_cmd = "cat";
     my $vcf_fh;
-    if(Genome::Sys->_file_type($vcf) eq 'gzip') {
+    if(Genome::Sys->file_type($vcf) eq 'gzip') {
         $vcf_fh = Genome::Sys->open_gzip_file_for_reading($vcf);
         $cat_cmd = "zcat";
     }
