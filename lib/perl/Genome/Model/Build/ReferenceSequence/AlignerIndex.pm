@@ -107,10 +107,10 @@ sub get {
 
 sub get_or_create {
     my $class = shift;
-   
+
     $DB::single = 1;
     my @objects = $class->SUPER::get_or_create(@_);
-    
+
     for my $obj (@objects) {
         next unless ref($obj); # sometimes UR gives us back the package name when deleting?
         unless ($obj->generate_dependencies_as_needed()) {
@@ -123,7 +123,7 @@ sub get_or_create {
         return @objects if wantarray;
         my @ids = map { $_->id } @objects;
         die "Multiple matches for $class but get or create was called in scalar context! Found ids: @ids";
-    } 
+    }
     else {
         return $objects[0];
     }
@@ -173,7 +173,7 @@ sub create {
     return $self;
 }
 
-# TODO: 
+# TODO:
 # get() calls this method, and has a side-effect of creating dependent aligner indexes
 # 1. if you have side effects (avoid in general where possible), don't put them in a method called check_*
 # 2. don't override get(), make another method with the combined effect of getting data and doing work
@@ -198,7 +198,7 @@ sub generate_dependencies_as_needed {
             my $result = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
             unless($result) {
                 die $self->error_message("Failed to create AlignmentIndex for dependency " . $b->name);
-                
+
             }
         }
     }
@@ -225,9 +225,9 @@ sub _prepare_reference_index {
     unless (symlink($reference_fasta_file, sprintf("%s/all_sequences.fa", $self->temp_staging_directory))) {
         $self->error_message("Couldn't symlink reference fasta into the staging directory");
     }
-    
+
     my $reference_remap_file = sprintf("%s.remap", $reference_fasta_file);
-    
+
     if (-e $reference_remap_file) {
         $self->status_message("Detected $reference_remap_file.remap. Symlinking that as well.");
         unless (symlink($reference_remap_file, sprintf("%s/all_sequences.fa.remap", $self->temp_staging_directory))) {
