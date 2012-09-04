@@ -429,8 +429,14 @@ sub _import_drug {
     unless($interaction->{SMILES} eq 'NA'){
         my $SMILES_association = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{SMILES}, 'PharmGKB_SMILES', '');
     }
-    unless($interaction->{External_Vocabulary} eq 'NA'){
-        my $External_Vocabulary_association = $self->_create_drug_category_report($drug_accession, 'PharmGKB_External_Vocabulary', $interaction->{External_Vocabulary}, '');
+
+    my @external_vocabs = split(",", $interaction->{External_Vocabulary});
+    for my $external_vocab (@external_vocabs){
+      next if $external_vocab eq 'NA';
+      my @data_pair = split(":", $external_vocab);
+      my $external_vocab_type=join("_", "PharmGKB", $data_pair[0]);
+      my $external_vocab_value=$data_pair[1];
+      my $external_vocab_association = $self->_create_drug_category_report($drug_accession, $external_vocab_type, $external_vocab_value,'');
     }
     unless($interaction->{Drug_Type} eq 'NA'){
         my $drug_type_association = $self->_create_drug_category_report($drug_accession, 'PharmGKB_drug_type', $interaction->{Drug_Type}, '');
