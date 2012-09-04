@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Info::IUB;
+use Genome::Utility::Vcf "open_vcf_file";
 use Sort::Naturally;
 
 class Genome::Model::Tools::Vcf::Backfill{
@@ -53,19 +54,8 @@ sub execute {
         $pileup_fh = Genome::Sys->open_file_for_reading($self->pileup_file);
         $output_fh = Genome::Sys->open_file_for_writing($self->output_file);
     }
-    my $vcf_fh;
-    if($self->vcf_file =~ /.gz$/){
-        $vcf_fh = Genome::Sys->open_gzip_file_for_reading($self->vcf_file);
-    } else {
-        $vcf_fh = Genome::Sys->open_file_for_reading($self->vcf_file);
-    }
-    my $merged_fh;
-    if($self->merged_positions_file =~ /.gz$/){
-        $merged_fh = Genome::Sys->open_gzip_file_for_reading($self->merged_positions_file);
-    } else {
-        $merged_fh = Genome::Sys->open_file_for_reading($self->merged_positions_file);
-    }
-
+    my $vcf_fh = open_vcf_file($self->vcf_file);
+    my $merged_fh = open_vcf_file($self->merged_positions_file);
 
     # Copy the header from the input vcf to the output vcf
     my $header_copied = 0;

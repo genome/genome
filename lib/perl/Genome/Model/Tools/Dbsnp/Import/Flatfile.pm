@@ -135,7 +135,7 @@ sub execute {
         return 1;
     }
 
-    if ($self->flatfile =~ /gz$/) {
+    if (Genome::Sys->file_is_gzipped($flatfile_path)) {
         $flatfile_fh = Genome::Sys->open_gzip_file_for_reading($flatfile_path);
     }
     else {

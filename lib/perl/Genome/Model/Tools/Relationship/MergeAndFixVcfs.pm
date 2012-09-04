@@ -5,6 +5,7 @@ use warnings;
 use Data::Dumper;
 use Genome;           
 use Genome::Info::IUB;
+use Genome::Utility::Vcf "open_vcf_file";
 use POSIX;
 our $DEFAULT_VERSION = '0.02';
 use Cwd;
@@ -363,15 +364,9 @@ sub fix_denovo_vcf_line {
 
 sub fix_vcf_header {
     my ($self, $standard_vcf) = @_;
-    my $fh;
     my ($ofh, $temp_output_filename) = Genome::Sys->create_temp_file();
-    if(Genome::Sys->file_type($standard_vcf) eq 'gzip') {
-        $fh = Genome::Sys->open_gzip_file_for_reading($standard_vcf);
-    }
-    else {
-        $fh = Genome::Sys->open_file_for_reading($standard_vcf);
-    }
 
+    my $fh = open_vcf_file($standard_vcf);
     while(my $line = $fh->getline) {
         if($line =~ m/^#/) {
             if($line =~m/ID=PS/) {

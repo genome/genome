@@ -3,6 +3,7 @@ package Genome::Model::PhenotypeCorrelation;
 use strict;
 use warnings;
 use Genome;
+use Genome::Utility::Vcf "open_vcf_file";
 use Math::Complex;
 use File::chdir;
 use File::Basename qw( fileparse );
@@ -803,13 +804,8 @@ sub glm_max_cols_per_file {
 
 sub _samples_from_vcf {
     my ($self) = @_;
-    my $fh;
-    if(Genome::Sys->file_type($self->multisample_vcf) eq 'gzip') {
-        $fh = Genome::Sys->open_gzip_file_for_reading($self->multisample_vcf);
-    }
-    else {
-        $fh = Genome::Sys->open_file_for_reading($self->multisample_vcf);
-    }
+    my $fh = open_vcf_file($self->multisample_vcf);
+
     my @samples;
     while(my $line = $fh->getline) {
         if($line =~ /^#CHROM/) {

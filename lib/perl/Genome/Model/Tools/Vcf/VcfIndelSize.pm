@@ -3,6 +3,7 @@ package Genome::Model::Tools::Vcf::VcfIndelSize;
 use strict;
 use warnings;
 use Genome;
+use Genome::Utility::Vcf "open_vcf_file";
 use File::stat;
 use IO::File;
 use File::Basename;
@@ -84,13 +85,7 @@ sub execute {                               # replace with real execution logic.
     my %indel_size_hash;
 #subsample_vcf_size
     foreach my $vcffile (@vcffiles) {
-        my $inFh;
-        if ($vcffile =~ m/gz/) {
-            $inFh = Genome::Sys->open_gzip_file_for_reading( $vcffile ) || die "can't open file\n";
-        }
-        else {
-            $inFh = Genome::Sys->open_file_for_reading( $vcffile ) || die "can't open file\n";
-        }
+        my $inFh = open_vcf_file($vcffile);
         my @samplenames;
         while(my $line = $inFh->getline ) {
             chomp($line);

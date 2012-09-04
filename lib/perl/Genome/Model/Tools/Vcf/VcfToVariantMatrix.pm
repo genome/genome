@@ -3,6 +3,7 @@ package Genome::Model::Tools::Vcf::VcfToVariantMatrix;
 use strict;
 use warnings;
 use Genome;
+use Genome::Utility::Vcf qw(open_vcf_file get_vcf_header);
 use IO::File;
 use Getopt::Long;
 use FileHandle;
@@ -126,7 +127,7 @@ sub execute {                               # replace with real execution logic.
 
         print "Loading Position Restriction File\n";
 
-        my $header = $self->grab_header($vcf_file);
+        my $header = get_vcf_header($vcf_file);
         $tfh->print("$header");
         my $intersect_bed_vcf = `intersectBed -a $vcf_file -b $roi_bed`;
         $tfh->print("$intersect_bed_vcf");
@@ -134,12 +135,7 @@ sub execute {                               # replace with real execution logic.
         $inFh = Genome::Sys->open_file_for_reading( $temp_path );
     }
     else {
-        if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
-            $inFh = Genome::Sys->open_gzip_file_for_reading($vcf_file);
-        }
-        else {
-            $inFh = Genome::Sys->open_file_for_reading($vcf_file);
-        }
+        $inFh = open_vcf_file($vcf_file);
     }
     print "Loading Genotype Positions from Vcf\n";
 
@@ -217,7 +213,7 @@ sub execute {                               # replace with real execution logic.
         my $gq_location; #genotype quality - this is only filled in washu vcf for samtools variants, not varscan and not homo ref - this is currrently unused down below
         my $ft_location; #filter
         my $count = 0;
-        foreach my $format_info (@format_fields) { 
+        foreach my $format_info (@format_fields) {
             if ($format_info eq 'GT') {
                 $gt_location = $count;
             }
@@ -232,7 +228,7 @@ sub execute {                               # replace with real execution logic.
             }
             $count++;
         }
-      
+
         #this file doesn't work if there are unknown genotype locations
         unless ($gt_location || $gt_location == 0) {
             die "Format field doesn't have a GT entry, failed to get genotype for $line\n";
@@ -242,10 +238,10 @@ sub execute {                               # replace with real execution logic.
         }
         my $line;
         if($self->matrix_genotype_version=~ m/numerical/i) {
-            $line = $self->format_numeric_output($chr, $pos, $ref, $alt, $gt_location, $ft_location, \@sample_list);    
+            $line = $self->format_numeric_output($chr, $pos, $ref, $alt, $gt_location, $ft_location, \@sample_list);
         }
         elsif($self->matrix_genotype_version=~ m/bases/i) {
-           $line = $self->format_basic_output($chr, $pos, $ref, $alt, $gt_location, $ft_location, \@sample_list);   
+           $line = $self->format_basic_output($chr, $pos, $ref, $alt, $gt_location, $ft_location, \@sample_list);
         }
         else {
             die "Please specify a proper matrix_genotype_version of either \"Bases\" or \"Numerical\"";
@@ -287,22 +283,12 @@ sub load_positions {
     }
 }
 
-sub grab_header {
-    my ($self, $vcf_file) = @_;
-    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
-        return `zcat $vcf_file | grep '^#'`;
-    }
-    else {
-        return `grep '^#' $vcf_file`;
-    }       
-}
-
-sub find_most_frequent_alleles { 
+sub find_most_frequent_alleles {
     my ($self, $chr, $pos, $ref, $alt, $gt_location, $ft_location, $sample_ref) = @_;
 
     my %alleles_hash;
     my @allele_options;
-    foreach my $sample_info (@$sample_ref) {                    
+    foreach my $sample_info (@$sample_ref) {
         my (@sample_fields) = split(/:/, $sample_info);
         my $genotype = $sample_fields[$gt_location];
         my $allele1 = my $allele2 = ".";
@@ -334,7 +320,7 @@ sub find_most_frequent_alleles {
     if ($allele_options[0] == 0) {
         $variant_name = "$chr"."_"."$pos"."_"."$ref"."_"."$alt";
     }
-    elsif (defined $allele_options[1]) { 
+    elsif (defined $allele_options[1]) {
         my ($alt_ref, $alt_alt) = split(/,/, $alt);
         print "1:$alt_ref,2:$alt_alt,3:$alt,4:$allele_options[0],$allele_options[1]\n";
         $variant_name = "$chr"."_"."$pos"."_"."$alt_ref"."_"."$alt_alt";
@@ -380,7 +366,7 @@ sub format_numeric_output {
         elsif ($allele1 == $allele2) { #homo
             my $allele_array_counter = 0;
             foreach my $allele_option (@allele_options) {
-                if ($allele1 == $allele_option) { 
+                if ($allele1 == $allele_option) {
                     if ($allele_array_counter == 0) {#homo first variant
                         $allele_count = 0;
                     }
@@ -398,7 +384,7 @@ sub format_numeric_output {
         else { #heterozygous
             my $allele_array_counter = 0;
             foreach my $allele_option (@allele_options) {
-                if ($allele1 == $allele_option) { 
+                if ($allele1 == $allele_option) {
                     if ($allele_array_counter == 0) {#hetero first variant
                         $allele_count = 1;
                     }
@@ -422,7 +408,7 @@ sub format_basic_output {
     my ($self, $chr, $pos, $ref, $alt, $gt_location, $ft_location, $sample_ref) = @_;
     my @alt_bases = split(/,/, $alt);
     my @allele_option_bases = ($ref, @alt_bases);
-    my $variant_name = "$chr"."_"."$pos"."_"."$ref"."_"."$alt"; 
+    my $variant_name = "$chr"."_"."$pos"."_"."$ref"."_"."$alt";
     my @return_line = ($variant_name);
     for my $sample_info (@$sample_ref) {
         my (@sample_fields) = split(/:/, $sample_info);
@@ -448,7 +434,7 @@ sub format_basic_output {
             $allele_type = 'NA';
         }
         else { #switch numerical genotypes to the ACTG genotypes
-            my $a1 = $allele_option_bases[$allele1]; 
+            my $a1 = $allele_option_bases[$allele1];
             my $a2 = $allele_option_bases[$allele2];
             $allele_type = join("",sort($a1,$a2)); #I desire perfection. Also the glm would treat A/G and G/A as two different genotypes.
         }

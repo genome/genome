@@ -3,8 +3,9 @@ package Genome::Model::Tools::Relationship::HeterozygousDominant;
 use strict;
 use warnings;
 use Data::Dumper;
-use Genome;           
+use Genome;
 use Genome::Info::IUB;
+use Genome::Utility::Vcf qw(open_vcf_file get_vcf_header);
 use POSIX;
 our $VERSION = '0.01';
 use Cwd;
@@ -62,7 +63,7 @@ sub execute {
 #    unless($self->vep_annotation_file && (-s $self->vep_annotation_file)) { ###if we weren't given an annotation file, generate it
 #        $self->vep_annotation_file($self->generate_annotation_file($self->input_vcf));
 #    }
-    my $recessive_vcf = $self->find_dominant_heterozygotes($self->input_vcf, $ped_hash);   
+    my $recessive_vcf = $self->find_dominant_heterozygotes($self->input_vcf, $ped_hash);
     my $out_file = $self->vcf_output;
     `cp $recessive_vcf $out_file`;
     return 1;
@@ -90,7 +91,7 @@ sub is_heterozygous {
     return 0 if ($sample =~m/^\./);
     my (@fields) = split ":", $sample;####assuming GT COMES FIRST.  come back and actually parse format later.
     my ($all1, $all2) = split "[/|]", $fields[0];
-    
+
     if(($all1 != 0) && ($all2 eq 0)) {
         return $all1;
     }
@@ -118,10 +119,10 @@ sub find_dominant_heterozygotes {
     my @unaffecteds = $self->find_indices($ped_hash,'unaffected');
     $DB::single=1;
     my ($output_fh, $output_name) = Genome::Sys->create_temp_file;
-    my @header = $self->get_vcf_header($input_vcf);
+    my @header = get_vcf_header($input_vcf);
     $output_fh->print(@header);
 
-    my $fh = $self->open_vcf_file($input_vcf);
+    my $fh = open_vcf_file($input_vcf);
     while(my $line = $fh->getline) {
         next if $line=~m/^#/;
         chomp($line);
@@ -149,27 +150,10 @@ sub find_dominant_heterozygotes {
 }
 
 
-
-
-
-sub get_vcf_header {
-    my ($self, $vcf_file) = @_;
-    my $header;
-    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
-        $header = `zcat $vcf_file | grep "^#"`;
-    }
-    else {
-        $header = `cat $vcf_file | grep "^#"`;
-    }  
-    chomp($header);
-    return $header;
-}
-
-
 sub parse_ped {
     my ($self, $ped_file, $input_vcf) = @_;
     my %ped_hash;
-    my @header_lines = $self->get_vcf_header($input_vcf);
+    my @header_lines = get_vcf_header($input_vcf);
     my $header_line = $header_lines[-1];
     my ($chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples) = split "\t", $header_line;
     for (my $i=0; $i < scalar(@samples); $i++) {
@@ -179,8 +163,8 @@ sub parse_ped {
     while(my $line = $ped->getline) {
         chomp($line);
         my ($family_id, $person_id, $father_id, $mother_id, $sex, $glf_index, $affectation_status) = split "\t", $line;
-        unless(exists($ped_hash{$person_id})) { 
-            $self->status_message("$person_id found in ped but not vcf. Person will not be analyzed"); 
+        unless(exists($ped_hash{$person_id})) {
+            $self->status_message("$person_id found in ped but not vcf. Person will not be analyzed");
             next;
         }
         if($affectation_status eq 'A') {
@@ -194,23 +178,4 @@ sub parse_ped {
     return \%ped_hash;
 }
 
-
-
-sub open_vcf_file { 
-    my ($self, $vcf) = @_;
-    my $fh;
-    if(Genome::Sys->file_type($vcf) eq 'gzip') {
-        $fh=Genome::Sys->open_gzip_file_for_reading($vcf);
-    }
-    else {
-        $fh=Genome::sys->open_file_for_reading($vcf);
-    }
-    return $fh;
-}
-
-
-
-
-
-
-
+1;

@@ -682,6 +682,19 @@ sub file_type {
     return $answer[0];
 }
 
+sub file_is_gzipped {
+    my ($self, $filename) = @_;
+
+    my $file_type = $self->file_type($filename);
+
+    #NOTE: debian bug #522441 - `file` can report gzip files as any of these....
+    if ($file_type eq "gzip" or $file_type eq "Sun" or $file_type eq "Minix") {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 # Follows a symlink chain to reach the final file, accounting for relative symlinks along the way
 sub follow_symlink {
     my $self = shift;

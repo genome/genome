@@ -3,6 +3,7 @@ package Genome::Model::Tools::Vcf::VcfToBurdenMatrix;
 use strict;
 use warnings;
 use Genome;
+use Genome::Utility::Vcf "open_vcf_file";
 use IO::File;
 use FileHandle;
 use File::Copy "mv";
@@ -105,15 +106,8 @@ sub execute {
     my $anno_fh = Genome::Sys->open_file_for_reading($vep_file); #this throws on fail so no check
     my ($anno_header, $anno_fetcher) = $self->create_vep_anno_fetcher($anno_fh);
 
-    my $ifh;
-    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
-        $ifh = Genome::Sys->open_gzip_file_for_reading($vcf_file);
-    }
-    else {
-        $ifh = Genome::Sys->open_file_for_reading($vcf_file);
-    }
-
-    my $ofh = IO::File->new($output_file, "w");
+    my $ifh = open_vcf_file($vcf_file);
+    my $ofh = Genome::Sys->open_file_for_writing($output_file);
     unless($ofh) {
         die $self->error_message("Unable to open $output_file for writing.");
     }
@@ -236,16 +230,6 @@ sub execute {
 }
 
 1;
-
-sub grab_header {
-    my ($self, $vcf_file) = @_;
-    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
-        return `zcat $vcf_file | grep '^#'`;
-    }
-    else {
-        return `grep '^#' $vcf_file`;
-    }       
-}
 
 sub find_most_frequent_alleles { 
     my ($self, $chr, $pos, $ref, $alt, $gt_location, $ft_location, $sample_ref) = @_;

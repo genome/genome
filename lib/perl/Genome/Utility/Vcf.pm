@@ -8,6 +8,7 @@ use Genome;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(open_vcf_file
+                    get_vcf_header
                     diff_vcf_file_vs_file
                     diff_vcf_text_vs_text
                     );
@@ -17,14 +18,29 @@ sub open_vcf_file {
     my ($filename) = @_;
 
     my $fh;
-    my $file_type = Genome::Sys->file_type($filename);
-    #NOTE: debian bug #522441 - `file` can report gzip files as any of these....
-    if ($file_type eq "gzip" or $file_type eq "Sun" or $file_type eq "Minix") {
+    if(Genome::Sys->file_is_gzipped($filename)) {
         $fh = Genome::Sys->open_gzip_file_for_reading($filename);
     } else {
         $fh = Genome::Sys->open_file_for_reading($filename);
     }
     return $fh;
+}
+
+# returns only the header of the vcf file in one big string.
+sub get_vcf_header {
+    my ($filename) = @_;
+
+    my $fh = open_vcf_file($filename);
+    my $header = "";
+    while(my $line = $fh->getline()) {
+        if($line =~ m/^#/) {
+            $header .= $line;
+        } else {
+            chomp($header);
+            return $header
+        }
+    }
+    Carp::croak("Vcf file ($filename) has no body... only header.");
 }
 
 # diffs vcf files ignoring the fileDate header entry.

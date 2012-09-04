@@ -56,13 +56,9 @@ sub execute {
 
     my $sites_file = Genome::Sys->create_temp_file_path();
     my $cat_cmd = "cat";
-    my $vcf_fh;
-    if(Genome::Sys->file_type($vcf) eq 'gzip') {
-        $vcf_fh = Genome::Sys->open_gzip_file_for_reading($vcf);
+    my $vcf_fh = open_vcf_file($vcf);
+    if(Genome::Sys->file_is_gzipped($vcf)) {
         $cat_cmd = "zcat";
-    }
-    else {
-        $vcf_fh = Genome::Sys->open_file_for_reading($vcf);
     }
 
     my $sites_cmd = qq/ $cat_cmd $vcf | cut -f1,2 | grep -v "^#" | awk '{OFS="\t"}{print \$1, \$2, \$2}' > $sites_file/;
@@ -115,7 +111,7 @@ sub output_passing_vcf {
     my $pvalues = Genome::Sys->open_file_for_reading($r_output);
     my $output_file = IO::File->new($output_filename, ">");
     my $cat_cmd = "cat";
-    if(Genome::Sys->file_type($denovo_vcf) eq 'gzip') {
+    if(Genome::Sys->file_is_gzipped($denovo_vcf)) {
         $cat_cmd = "zcat";
     }
 

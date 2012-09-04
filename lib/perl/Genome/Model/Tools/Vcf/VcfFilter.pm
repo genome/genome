@@ -15,6 +15,7 @@ package Genome::Model::Tools::Vcf::VcfFilter;
 use strict;
 use warnings;
 use Genome;
+use Genome::Utility::Vcf "open_vcf_file";
 
 class Genome::Model::Tools::Vcf::VcfFilter {
     is => 'Command',
@@ -117,7 +118,6 @@ sub execute {
     my $filter_description    = $self->filter_description;
     my $remove_filtered_lines = $self->remove_filtered_lines;
 
-    my $bgzip_in  = ($vcf_file =~ m/gz$/) ? 1 : 0;
     my $bgzip_out = ($output_file =~ m/gz$/) ? 1 : 0;
 
     # first, read the filter file and store the locations
@@ -153,7 +153,7 @@ sub execute {
     my $outfile = ($bgzip_out) ? Genome::Sys->open_gzip_file_for_writing($output_file) : Genome::Sys->open_file_for_writing($output_file);
 
     #read the vcf
-    my $inFh = ($bgzip_in) ? Genome::Sys->open_gzip_file_for_reading($vcf_file) : Genome::Sys->open_file_for_reading($vcf_file);
+    my $inFh = open_vcf_file($vcf_file);
 
     my $found_pass_line    = 0;
     my $found_format_lines = 0;

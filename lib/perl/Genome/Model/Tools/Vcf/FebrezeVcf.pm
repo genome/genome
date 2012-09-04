@@ -65,18 +65,16 @@ sub execute {                               # replace with real execution logic.
         $gtonly_output_file = $self->gtonly_output_file;
     }
 
-    my $inFh_vcf;
+    my $inFh_vcf = open_vcf_file($vcf_file);
     my $output_file1;
     my $output_file2;
-    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
-        $inFh_vcf = Genome::Sys->open_gzip_file_for_reading($vcf_file);
+    if(Genome::Sys->file_is_gzipped($vcf_file)) {
         if ($self->gtonly_output_file) {
             $output_file1 = Genome::Sys->open_gzip_file_for_writing($gtonly_output_file) || die "can't open file\n";
         }
         $output_file2 = Genome::Sys->open_gzip_file_for_writing($full_output_file) || die "can't open file\n";
     }
     else {
-        $inFh_vcf = Genome::Sys->open_file_for_reading($vcf_file);
         if ($self->gtonly_output_file) {
             $output_file1 = Genome::Sys->open_file_for_writing($gtonly_output_file) || die "can't open file\n";
         }

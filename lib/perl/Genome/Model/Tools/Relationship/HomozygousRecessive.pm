@@ -5,6 +5,7 @@ use warnings;
 use Data::Dumper;
 use Genome;           
 use Genome::Info::IUB;
+use Genome::Utility::Vcf qw(get_vcf_header open_vcf_file);
 use POSIX;
 our $VERSION = '0.01';
 use Cwd;
@@ -106,10 +107,10 @@ sub find_recessive_homozygotes {
     my @unaffecteds = $self->find_indices($ped_hash,'unaffected');
     $DB::single=1;
     my ($output_fh, $output_name) = Genome::Sys->create_temp_file;
-    my @header = $self->get_vcf_header($input_vcf);
+    my @header = get_vcf_header($input_vcf);
     $output_fh->print(@header);
 
-    my $fh = $self->open_vcf_file($input_vcf);
+    my $fh = open_vcf_file($input_vcf);
     while(my $line = $fh->getline) {
         next if $line=~m/^#/;
         chomp($line);
@@ -134,27 +135,10 @@ sub find_recessive_homozygotes {
 }
 
 
-    
-
-
-sub get_vcf_header {
-    my ($self, $vcf_file) = @_;
-    my $header;
-    if(Genome::Sys->file_type($vcf_file) eq 'gzip') {
-    $header = `zcat $vcf_file | grep "^#"`;
-    }
-    else {
-    $header = `cat $vcf_file | grep "^#"`;
-    }  
-    chomp($header);
-    return $header;
-}
-
-
 sub parse_ped {
     my ($self, $ped_file, $input_vcf) = @_;
     my %ped_hash;
-    my @header_lines = $self->get_vcf_header($input_vcf);
+    my @header_lines = get_vcf_header($input_vcf);
     my $header_line = $header_lines[-1];
     my ($chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples) = split "\t", $header_line;
     for (my $i=0; $i < scalar(@samples); $i++) {
@@ -179,23 +163,4 @@ sub parse_ped {
     return \%ped_hash;
 }
 
-
-    
-sub open_vcf_file { 
-    my ($self, $vcf) = @_;
-    my $fh;
-    if(Genome::Sys->file_type($vcf) eq 'gzip') {
-        $fh=Genome::Sys->open_gzip_file_for_reading($vcf);
-    }
-    else {
-        $fh=Genome::sys->open_file_for_reading($vcf);
-    }
-    return $fh;
-}
-
-
-
-
-
-
-
+1;

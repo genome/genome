@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use IO::File;
 use Genome;
+use Genome::Utility::Vcf "open_vcf_file";
 
 class Genome::Model::Tools::Annotate::Adaptor::Vcf {
     is => 'Genome::Model::Tools::Annotate',
@@ -41,8 +42,8 @@ gmt annotate adaptor vcf --vcf-file=hooboy --output-file=jazzercise
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
     Converts gzipped or plaintext SNV-only vcf into CHR POS POS REF VAR. For multiple ALT alleles, one line per ALT will be output
 EOS
 }
@@ -67,13 +68,8 @@ sub execute {
         $output_fh = IO::Handle->new();
         $output_fh->fdopen(fileno(STDOUT),">");
     }
-    my $vcf_fh; 
-    if(Genome::Sys->file_type($self->vcf_file) eq 'gzip') {
-        $vcf_fh = Genome::Sys->open_gzip_file_for_reading($self->vcf_file);
-    }
-    else {
-        $vcf_fh = Genome::Sys->open_file_for_reading($self->vcf_file);
-    }
+    my $vcf_fh = open_vcf_file($self->vcf_file);
+
     my $line = $vcf_fh->getline;
     while($line =~m/^#/) {
         $line = $vcf_fh->getline;
