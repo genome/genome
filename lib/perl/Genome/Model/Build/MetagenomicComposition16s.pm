@@ -727,17 +727,16 @@ sub classify_amplicons {
 #< QC Email >#
 sub perform_post_success_actions {
     my $self = shift;
-
     $self->status_message('Post success actions');
-    $self->status_message('Check if model is for QC: '.$self->model_name);
 
+    $self->status_message('Check if model is for QC: '.$self->model_name);
     if ( not $self->model->is_for_qc ) {
         $self->status_message('Model is not for QC. Not sending confirmation email');
         return 1;
     }
-
     $self->status_message('This model is QC');
 
+    # Make sure there is only one run and region represented
     my @instrument_data = $self->instrument_data;
     my %run_region_names = map { $_->run_name.' '.$_->region_number => 1 } @instrument_data;
     my @run_region_names = grep { defined } keys %run_region_names;
@@ -750,6 +749,7 @@ sub perform_post_success_actions {
         return;
     }
 
+    # Get the 454 instrument data for the run and region number
     my @instrument_data_for_run_region = Genome::InstrumentData::454->get(
         run_name => $instrument_data[0]->run_name,
         region_number => $instrument_data[0]->region_number,
@@ -759,8 +759,15 @@ sub perform_post_success_actions {
         return;
     }
 
-    if ( @instrument_data != @instrument_data_for_run_region ) {
-        $self->status_message('Not sending email for MC16s QC model. Have '.@instrument_data.' instrument data, but expect '.@instrument_data_for_run_region);
+    # Filter out pooled and negative control samples
+    my $expected_cnt = 0;
+    for my $instrument_data_for_run_region ( @instrument_data_for_run_region ) {
+        next if $instrument_data_for_run_region->sample->name =~ /^pool/i;
+        next if $instrument_data_for_run_region->sample->name =~ /^n\-cn?trl$/i;
+        $expected_cnt++;
+    }
+    if ( @instrument_data != $expected_cnt ) {
+        $self->status_message('Not sending email for MC16s QC model. Have '.@instrument_data." instrument data, but expected $expected_cnt\.");
         return 1;
     }
 
