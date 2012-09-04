@@ -1706,7 +1706,7 @@ sub aligner_params_required_for_index {
 sub get_reference_sequence_index {
     my $self = shift;
     my $build = shift || $self->reference_build;
-    my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(aligner_name=>$self->aligner_name, aligner_version=>$self->aligner_version, aligner_params=>$self->aligner_params, reference_build=>$build);
+    my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(aligner_name=>$self->aligner_name, aligner_version=>$self->aligner_version, aligner_params=>$self->aligner_params, reference_build=>$build);
 
     if (!$index) {
         die $self->error_message(sprintf("No reference index prepared for %s with params %s and reference build %s", $self->aligner_name, $self->aligner_params, $self->reference_build->id));

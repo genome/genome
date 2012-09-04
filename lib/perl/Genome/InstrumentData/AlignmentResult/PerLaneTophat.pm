@@ -164,7 +164,7 @@ sub prepare_annotation_index {
     my $class = shift;
     my $annotation_index = shift;
     
-    my $refindex = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(
+    my $refindex = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(
         aligner_name => $annotation_index->aligner_name,
         aligner_version => $annotation_index->aligner_version,
         aligner_params => $annotation_index->aligner_params,

@@ -37,7 +37,7 @@ my %params = (
 
 my %dep_params = %params;
 $dep_params{reference_build} = $dependency;
-my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(%dep_params);
+my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%dep_params);
 ok(!$index, "index does not yet exist for dependency");
 
 $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(%params);
@@ -45,10 +45,10 @@ ok($index, "created index");
 my $path = readlink($index->full_consensus_path("fa"));
 like($path, qr/appended_sequences.fa/, "multi reference uses appended_sequences.fa");
 
-$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(%params);
+$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%params);
 ok($index, "got index");
 
-$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(%dep_params);
+$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%dep_params);
 ok($index, "got index of dependency");
 
 # now test single reference version of bwa
