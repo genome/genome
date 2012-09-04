@@ -21,10 +21,11 @@ class Genome::Model::Tools::RefCov::RnaSeq {
             is_optional => 1,
             default_value => 'transcript',
         },
-        alignment_count => {
-            default_value => 1,
-            is_optional => 1,
-        },
+        # This was becoming too expensive to run on large BAM files - jrw 09/04/2012
+        #alignment_count => {
+        #    default_value => 1,
+        #    is_optional => 1,
+        #},
         print_min_max => {
             default_value => 1,
             is_optional => 1,
