@@ -326,6 +326,15 @@ sub execute {
     &runSingleGenomeCnvPlot('-patient_dir'=>$patient_dir, '-data_paths'=>$data_paths, '-reference_build_ncbi_n'=>$reference_build_ncbi_n, '-verbose'=>$verbose);
   }
 
+  #Generate a summary of SV results from the WGS SV results
+  if ($wgs){
+    my $build = $builds->{wgs};
+    my $sv_summary_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'sv', '-silent'=>1);
+    $step++; print MAGENTA, "\n\nStep $step. Summarizing SV results from WGS somatic variation", RESET;
+    my $summarize_svs_cmd = Genome::Model::ClinSeq::Command::SummarizeSvs->create(builds=>[$build], outdir=>$sv_summary_dir);
+    my $r = $summarize_svs_cmd->execute();
+  }
+
   #print Dumper $out_paths;
   print "\n\nPROCESSING COMPLETE\n\n";
 

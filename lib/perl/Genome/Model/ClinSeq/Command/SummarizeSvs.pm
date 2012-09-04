@@ -30,15 +30,15 @@ class Genome::Model::ClinSeq::Command::SummarizeSvs {
 sub help_synopsis {
     return <<EOS
 
-genome model clin-seq summarize-builds --outdir=/tmp/  119390903
+genome model clin-seq summarize-svs --outdir=/tmp/  119390903
 
-genome model clin-seq summarize-builds --outdir=/tmp/  id=119390903
+genome model clin-seq summarize-svs --outdir=/tmp/  id=119390903
 
-genome model clin-seq summarize-builds --outdir=/tmp/  model.id=2882504846
+genome model clin-seq summarize-svs --outdir=/tmp/  model.id=2882504846
 
-genome model clin-seq summarize-builds --outdir=/tmp/  "model.name='ALL1/AML103 - tumor/normal - wgs somatic variation - build37/hg19 - nov 2011 PP'"
+genome model clin-seq summarize-svs --outdir=/tmp/  "model.name='ALL1/AML103 - tumor/normal - wgs somatic variation - build37/hg19 - nov 2011 PP'"
 
-genome model clin-seq summarize-builds --outdir=/tmp/  'id in [119390903,119517041]'
+genome model clin-seq summarize-svs --outdir=/tmp/  'id in [119390903,119517041]'
 
 EOS
 }
@@ -104,7 +104,7 @@ sub execute {
     #squaredancer.svs.merge.file.annot
 
     #Make a copy of the annotated somatic SVs file and place in the outdir
-    my $fusion_candidate_outfile = $outdir . "CandidateSvCodingFusions.tsv";
+    my $fusion_candidate_outfile = $build_outdir . "CandidateSvCodingFusions.tsv";
     my $sv_annot_search = $build_dir . "/variants/sv/*/svs.hq.merge.annot.somatic";
     my $sv_annot_file = `ls $sv_annot_search` || "NULL";
     chomp($sv_annot_file);
@@ -112,6 +112,11 @@ sub execute {
     #Produce a simplified list of SVs gene fusion pairs (e.g. BCR-ABL1) - where type is fusion, and ORF affecting
     my %data;
     if (-e $sv_annot_file){
+
+      #Copy the SV annot file to the clinseq working dir
+      my $cp_cmd = "cp $sv_annot_file $build_outdir";
+      Genome::Sys->shellcmd(cmd => $cp_cmd);
+
       open (SV_ANNO, "$sv_annot_file") || die "\n\nCould not open SV annotation file: $sv_annot_file\n\n";
       my $l = 0;
       while(<SV_ANNO>){
@@ -180,15 +185,16 @@ sub execute {
     close(FUSION_OUT);
 
 
+    #TODO: Create a Stats.tsv file summarizing basic statistics of the sv annotations file
 
-    #Use the coordinates of each fusion to produce pairoscope plots showing the support for each rearrangement
+    #TODO: Use the coordinates of each fusion to produce pairoscope plots showing the support for each rearrangement
 
-    #Identify the deletion regions.  Create a display for each deletion showing coverage across that region in tumor and normal
+    #TODO: Identify the deletion regions.  Create a display for each deletion showing coverage across that region in tumor and normal
 
-    #How reliable are our SVs.  Is there a way to identify a 'high confidence' set? 
+    #TODO: How reliable are our SVs.  Is there a way to identify a 'high confidence' set? 
 
-    #Apply additional annotation strategies to the somatic SVs identified. 
-    #What are the genes/transcripts affected by the breakpoints of deletions, inversions, translocations?
+    #TODO: Apply additional annotation strategies to the somatic SVs identified. 
+    #- What are the genes/transcripts affected by the breakpoints of deletions, inversions, translocations?
 
 
 
