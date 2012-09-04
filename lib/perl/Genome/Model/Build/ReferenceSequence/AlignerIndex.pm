@@ -259,8 +259,8 @@ sub _gather_params_for_get_or_create {
     my $class = shift;
     my $p = $class->SUPER::_gather_params_for_get_or_create(@_);
 
-    unless ($p->{inputs}{test_name}) {
-        $p->{test_name}{test_name} = ($ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef);
+    unless ($p->{params}{test_name}) {
+        $p->{params}{test_name} = ($ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef);
     }
     if (exists $p->{params}{aligner_name} && $class->aligner_requires_param_masking($p->{params}{aligner_name})) {
         $p->{params}{aligner_params} = undef;
