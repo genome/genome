@@ -17,7 +17,7 @@ BEGIN {
 
 my $aligner_name = "bwa";
 my $aligner_version = "0.5.9-pem0.1";
-my $aligner_params = "-q 5 -t 4";
+my $aligner_params = undef;
 
 my $reference_model = Genome::Model::ImportedReferenceSequence->get(name => 'TEST-human');
 ok($reference_model, "got reference model");
