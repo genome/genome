@@ -64,24 +64,37 @@ my @existing_models = values %{$cmd->_existing_models_assigned_to};
 my %existing_models = _model_hash(@existing_models);
 #print Dumper(\%new_models,\%existing_models);
 my $model_name_for_entire_run = "R_2011_07_27_14_54_40_FLX08080419_Administrator_113684816_r1.prod-mc16s-qc";
+my @default_processing_profile_ids = Genome::Model::MetagenomicComposition16s->default_processing_profile_ids;
 is_deeply(
     \%new_models,
     {
         "AQID-testsample1.prod-mc16s.rdp2-2" => {
             subject => $samples[0]->name,
-            processing_profile_id => Genome::Model::MetagenomicComposition16s->default_processing_profile_id,
+            processing_profile_id => $default_processing_profile_ids[0],
             inst => [ $instrument_data[0]->id ],
             auto_assign_inst_data => 1,
         },
         "AQID-testsample2.prod-mc16s.rdp2-2" => {
             subject => $samples[1]->name,
-            processing_profile_id => Genome::Model::MetagenomicComposition16s->default_processing_profile_id,
+            processing_profile_id => $default_processing_profile_ids[0],
+            inst => [ $instrument_data[1]->id ],
+            auto_assign_inst_data => 1,
+        },
+        "AQID-testsample1.prod-mc16s.rdp2-5" => {
+            subject => $samples[0]->name,
+            processing_profile_id => $default_processing_profile_ids[1],
+            inst => [ $instrument_data[0]->id ],
+            auto_assign_inst_data => 1,
+        },
+        "AQID-testsample2.prod-mc16s.rdp2-5" => {
+            subject => $samples[1]->name,
+            processing_profile_id => $default_processing_profile_ids[1],
             inst => [ $instrument_data[1]->id ],
             auto_assign_inst_data => 1,
         },
         $model_name_for_entire_run => {
             subject => "Human Metagenome",
-            processing_profile_id => Genome::Model::MetagenomicComposition16s->default_processing_profile_id,
+            processing_profile_id => $default_processing_profile_ids[0],
             inst => [ map { $_->id } @instrument_data ],
             auto_assign_inst_data => 0,
         },
@@ -114,7 +127,14 @@ is_deeply(
     {
         "AQID-testsample3.prod-mc16s.rdp2-2" => {
             subject => $samples[2]->name,
+            processing_profile_id => $default_processing_profile_ids[0],
             processing_profile_id => Genome::Model::MetagenomicComposition16s->default_processing_profile_id,
+            inst => [ $instrument_data[2]->id ],
+            auto_assign_inst_data => 1,
+        },
+        "AQID-testsample3.prod-mc16s.rdp2-5" => {
+            subject => $samples[2]->name,
+            processing_profile_id => $default_processing_profile_ids[1],
             inst => [ $instrument_data[2]->id ],
             auto_assign_inst_data => 1,
         },
@@ -197,32 +217,28 @@ sub _qidfgm {
     $pse->set_false('completed');
     $pse->mock(pse_status => sub{ $pse->set_true('completed'); });
     my %params = (
-        instrument_data_type => '454',
-        instrument_data_id => $instrument_data->id,
-        subject_class_name => 'Genome::Sample',
-        subject_id => $sample->id,
-        processing_profile_id => 2571784,
+        instrument_data_type => [qw/ 454 /],
+        instrument_data_id => [ $instrument_data->id ],
+        subject_class_name => [qw/ Genome::Sample /],
+        subject_id => [ $sample->id ],
     );
     $pse->mock(
         add_param => sub{
             my ($pse, $key, $value) = @_;
-            my $param = Test::MockObject->new();
-            push @pse_params, $param;
-            $param->set_always(pse_id => $pse->id);
-            $param->set_always(param_name => $key);
-            $param->set_always(param_value => $params{$key});
-            return $param;
+            push @{$params{$key}}, $value;
+            return $value;
         }
     );
     for my $key ( keys %params ) {
-        $pse->add_param($key, $params{$key});
+        $pse->add_param($key, $params{$key}->[0]);
     }
     $pse->mock(
         added_param => sub{
             my ($pse, $key) = @_;
-            return $params{$key};
+            return @{$params{$key}} if $params{$key};
         }
     );
+
     push @pses, $pse;
     return 1;
 }

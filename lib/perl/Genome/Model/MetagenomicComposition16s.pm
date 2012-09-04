@@ -18,14 +18,18 @@ class Genome::Model::MetagenomicComposition16s {
 };
 
 #< Default Processing Profile >#
-# RT66900 was 2278045
-# Moved from AQID
-sub default_processing_profile_id {
-    return 2571784;
+sub default_processing_profile_ids {
+    # RT66900 from 2278045 to 2571784 
+    # RT85266 add 2752939
+    return ( 
+        '2571784',# RDP 2.2 set 6
+        '2752939',# RDP 2.5 set 9
+    );
 }
 
-sub default_processing_profile {
-    return Genome::ProcessingProfile::MetagenomicComposition16s->get( __PACKAGE__->default_processing_profile_id );
+sub default_processing_profile_id {
+    my @default_processing_profile_ids = default_processing_profile_ids();
+    return $default_processing_profile_ids[0];
 }
 #<>#
 

@@ -1362,7 +1362,7 @@ sub add_processing_profiles_to_pse {
                 push @processing_profile_ids_to_add, $self->_default_rna_seq_processing_profile_id($instrument_data);
             }
             elsif ( $self->_is_mc16s($instrument_data) ) {
-                push @processing_profile_ids_to_add, Genome::Model::MetagenomicComposition16s->default_processing_profile_id;
+                push @processing_profile_ids_to_add, Genome::Model::MetagenomicComposition16s->default_processing_profile_ids;
             }
             else {
                 #die $self->error_message('Unknown 454 inst data encountered. It is not rna or mc16s! '.$instrument_data->id);
