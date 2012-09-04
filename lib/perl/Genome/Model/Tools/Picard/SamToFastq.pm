@@ -89,7 +89,7 @@ sub execute {
     my $cp = join ":", ($picard_jar_path, $sam_jar_path, $tool_jar_path);
 
     my $jvm_options = $self->additional_jvm_options || '';
-    my $java_vm_cmd = 'java -Xmx'. $self->maximum_memory .'g -XX:MaxPermSize=' . $self->maximum_permgen_memory . 'm ' . $jvm_options . ' -cp '. $cp . ' edu.wustl.genome.samtools.GCSamToFastq ';
+    my $java_vm_cmd = $cp . ' edu.wustl.genome.samtools.GCSamToFastq ';
 
 
     my $args = '';
