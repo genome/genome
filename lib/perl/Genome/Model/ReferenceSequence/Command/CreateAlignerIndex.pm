@@ -66,7 +66,7 @@ sub execute {
 sub shortcut {
     my $self = shift;
 
-    return $self->_process('get');
+    return $self->_process('get_with_lock');
 }
 
 sub _process {
@@ -102,14 +102,14 @@ sub _process {
                 push @errors, $self->error_message;
             }
         }
-    } elsif ($mode eq 'get') {
-        $reference_sequence_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(%params_for_reference);
+    } elsif ($mode eq 'get_with_lock') {
+        $reference_sequence_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%params_for_reference);
         unless ($reference_sequence_index) {
             return undef;
         }
 
         if($self->annotation_build_id) {
-            $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get(%params_for_reference, annotation_build => $self->annotation_build);
+            $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_with_lock(%params_for_reference, annotation_build => $self->annotation_build);
             unless($annotation_index) {
                 return undef;
             }
