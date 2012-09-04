@@ -440,7 +440,7 @@ sub _strip_key {
 
 sub _color_heading {
     my ($self, $text) = @_;
-    return $self->_color_dim('=== ') . $self->_color($text, 'black', 'bold') . 
+    return $self->_color_dim('=== ') . $self->_color($text, 'bold') . 
         $self->_color_dim(' ===');
 }
 
