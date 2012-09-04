@@ -379,3 +379,38 @@ plot_mutation_spectrum_seq_context <- function(input_file,plot_title=" ",output_
 
   
 }
+
+plot_mutation_spectrum_bystrand <- function(inputFile,plot_title=NULL,outputFile=NULL,num_row=2,file_width=6,file_height=6 ) {
+
+  library("ggplot2");
+
+  data.in=read.table(inputFile,header=F,sep="\t");
+  colnames(data.in) <- c("category","strand","count","label")
+  data.in$category = factor(data.in$category,levels=c('A->C','C->A','A->G','C->G','A->T','C->T'));
+
+  #plot_title="";
+
+  p <- ggplot(data.in,aes(x=category,y=count,fill=strand));
+  p <- p + geom_bar(position='dodge',stat="identity");
+  p <- p + geom_bar(position='dodge',stat="identity", colour='black',legend=FALSE);
+  if(length(levels(data.in$label)) > 1) { #turn on facet for multiple samples
+    p <- p + facet_wrap( ~ label,nrow=num_row,scales='free')
+  }
+  p <- p + scale_fill_manual(name="Strand",value=c('transcribe'=colors()[448],'untranscribe'=colors()[554]),breaks=c('transcribe','untranscribe'),labels=c("Transcribed","Untranscribed"));
+  p <- p + scale_x_discrete('');
+  p <- p + scale_y_continuous("Number of Mutations");
+  p <- p + opts(title=plot_title,plot.title = theme_text(size=14, lineheight=.8, face="bold"),axis.title.y=theme_text(angle=90,face='bold',size=14),axis.text.y=theme_text(colour='black',size=12),axis.text.x=theme_text(colour='black',size=12,angle=90),panel.grid.major=theme_blank(),panel.grid.minor=theme_blank(),panel.background=theme_rect(fill=colors()[141]),strip.text.x=theme_text(face="bold",size=13),strip.background=theme_rect(fill=colors()[15]));
+  
+  if(!is.null(outputFile)) {
+    pdf(file=outputFile,width=file_width,height=file_height);
+    print(p);
+    dev.off();
+  }
+  else {
+    #return(list(a=p,b=p2));
+    return(p);
+  }
+
+
+
+}
