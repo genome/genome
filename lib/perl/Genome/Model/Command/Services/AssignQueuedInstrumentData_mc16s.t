@@ -67,13 +67,13 @@ my $model_name_for_entire_run = "R_2011_07_27_14_54_40_FLX08080419_Administrator
 is_deeply(
     \%new_models,
     {
-        "AQID-testsample1.prod-metagenomic_composition_16s" => {
+        "AQID-testsample1.prod-mc16s" => {
             subject => $samples[0]->name,
             processing_profile_id => Genome::Model::MetagenomicComposition16s->default_processing_profile_id,
             inst => [ $instrument_data[0]->id ],
             auto_assign_inst_data => 1,
         },
-        "AQID-testsample2.prod-metagenomic_composition_16s" => {
+        "AQID-testsample2.prod-mc16s" => {
             subject => $samples[1]->name,
             processing_profile_id => Genome::Model::MetagenomicComposition16s->default_processing_profile_id,
             inst => [ $instrument_data[1]->id ],
@@ -112,7 +112,7 @@ ok($cmd->execute, 'execute');
 is_deeply(
     \%new_models,
     {
-        "AQID-testsample3.prod-metagenomic_composition_16s" => {
+        "AQID-testsample3.prod-mc16s" => {
             subject => $samples[2]->name,
             processing_profile_id => Genome::Model::MetagenomicComposition16s->default_processing_profile_id,
             inst => [ $instrument_data[2]->id ],

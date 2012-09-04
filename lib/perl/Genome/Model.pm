@@ -673,7 +673,7 @@ sub default_model_name {
         'genotype microarray' => 'microarray',
         'reference alignment' => 'refalign',
         'de novo assembly' => 'denovo',
-        'metagenoic composition 16s' => 'mc16s',
+        'metagenomic composition 16s' => 'mc16s',
     );
     $name_template .= ( exists $short_names{$type_name} )
     ? $short_names{$type_name}
