@@ -100,7 +100,6 @@ sub _supports_multiple_reference {
 sub get_or_create {
     my $class = shift;
 
-    $DB::single = 1;
     my @objects = $class->SUPER::get_or_create(@_);
 
     for my $obj (@objects) {
@@ -163,8 +162,6 @@ sub create {
 sub generate_dependencies_as_needed {
     my $self = shift;
 
-    $DB::single = 1;
-
     # if the reference is a compound reference
     if ($self->reference_build->append_to) {
         my %params = (
@@ -176,7 +173,6 @@ sub generate_dependencies_as_needed {
         for my $b ($self->reference_build->append_to) { # (append_to is_many)
             $params{reference_build} = $b;
             $self->status_message("Creating AlignmentIndex for build dependency " . $b->name);
-            $DB::single = 1;
             my $result = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
             unless($result) {
                 die $self->error_message("Failed to create AlignmentIndex for dependency " . $b->name);
