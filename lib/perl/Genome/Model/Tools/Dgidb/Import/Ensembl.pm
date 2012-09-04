@@ -32,6 +32,7 @@ class Genome::Model::Tools::Dgidb::Import::Ensembl {
             default => "Ensembl 2011. Flicek P, Amode MR, ..., Vogel J, Searle SM. Nucleic Acids Res. 2011 Jan;39(Database issue)800-6. Epub 2010 Nov 2. PMID: 21045057.",
         },
     ],
+    doc => 'Import genes from Ensembl transcript GTF file',
 };
 
 

@@ -52,7 +52,7 @@ class Genome::Model::Tools::Dgidb::Import::TherapeuticTargetDatabase {
             doc => 'this parameter is ingored by the TTD importer--the version is taken from the input files',
         },
     ],
-    doc => '',
+    doc => 'Parse TTD download, crossmatching and synonyms files and import interactions',
 };
 
 sub execute {

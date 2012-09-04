@@ -14,8 +14,12 @@ class Genome::Model::Tools::Dgidb::RemovePubchemAndDrugGroups {
             doc => 'Version identifier for the infile (ex 3)',
         },
     ],
-    doc => '',
+    doc => 'Remove existing drug/pubchem groups'
 };
+
+sub help_brief {
+      'Remove existing drug/pubchem groups'
+}
 
 sub execute {
     my $self = shift;
