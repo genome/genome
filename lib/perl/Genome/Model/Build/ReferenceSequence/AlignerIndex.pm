@@ -134,8 +134,6 @@ sub create {
     my %p = @_;
 
     my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($p{aligner_name});
-    $class->status_message("Aligner class name is $aligner_class");
-
     $class->status_message(sprintf("Resolved aligner class %s, making sure it's real and can be loaded.", $aligner_class));
     unless ($aligner_class->class) {
         $class->error_message(sprintf("Failed to load aligner class (%s).", $aligner_class));
