@@ -97,14 +97,6 @@ sub _supports_multiple_reference {
     return $aligner_class->supports_multiple_reference($self->aligner_version);
 }
 
-sub get {
-    my $class = shift;
-    $DB::single = 1;
-    # this no longer calls check_dependencies()
-    # instead that is called from get_or_create() only, with the name generate_dependencies_as_needed()
-    $class->SUPER::get(@_);
-}
-
 sub get_or_create {
     my $class = shift;
 
