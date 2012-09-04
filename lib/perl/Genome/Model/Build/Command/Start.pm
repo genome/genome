@@ -32,6 +32,11 @@ class Genome::Model::Build::Command::Start {
             default_value => 0,
             doc => 'Force a new build even if existing builds are running.',
         },
+        skip_succeeded => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Prevent launching a new build if the model has a status of "Succeeded".',
+        },
         builds => {
             is => 'Genome::Model::Build',
             is_many => 1,
@@ -102,6 +107,11 @@ sub execute {
             $self->append_error($model->__display_name__, "Model already has running or scheduled builds. Use the '--force' option to override this and start a new build.");
             next;
         }
+        if ($self->skip_succeeded and $model->status eq 'Succeeded') {
+            $self->status_message('Skipping succeeded model ' . $model->__display_name__);
+            next;
+        }
+
         $self->create_and_start_build($model);
     }
 
