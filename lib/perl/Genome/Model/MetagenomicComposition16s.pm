@@ -33,7 +33,7 @@ sub build_subclass_name {
     return 'metagenomic-16s-composition';
 }
 
-sub _additional_parts_for_default_model_name {
+sub _additional_parts_for_default_name {
     my $self = shift;
 
     my @parts;
@@ -41,6 +41,8 @@ sub _additional_parts_for_default_model_name {
     if ( $subject->isa('Genome::Sample') and defined $subject->tissue_desc ) {
         push @parts, $subject->tissue_desc;
     }
+
+    push @parts, $self->processing_profile->classifier;
 
     return @parts;
 }
