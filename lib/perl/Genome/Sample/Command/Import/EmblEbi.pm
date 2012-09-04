@@ -14,7 +14,7 @@ class Genome::Sample::Command::Import::EmblEbi {
         },
         gender => {
             is => 'Text',
-            valid_values => [qw/ male female /],
+            valid_values => [qw/ male female unknown /],
             doc => 'The gender of the patient.',
         },
         age => {
