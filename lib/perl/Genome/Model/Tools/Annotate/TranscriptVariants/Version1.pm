@@ -971,7 +971,7 @@ sub _ucsc_conservation_score {
         version => $substruct->transcript_version,
     );
     unless ($lookup_cmd->execute) {
-        die $lookup_cmd->error_message;
+        warn $lookup_cmd->error_message;
     }
 
     my $ref = $lookup_cmd->conservation_scores_results;
