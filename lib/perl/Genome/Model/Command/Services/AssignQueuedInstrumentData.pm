@@ -1579,7 +1579,6 @@ sub _is_mc16s {
         my $pipeline_string = $work_order->pipeline;
         next if not $pipeline_string;
         for my $pipeline ( split(',', $pipeline_string) ) {
-            print "$pipeline\n";
             if ( exists($known_454_16s_pipelines{$pipeline}) ) {
                 return 1;
             }
