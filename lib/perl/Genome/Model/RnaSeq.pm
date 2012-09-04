@@ -166,13 +166,27 @@ sub _resolve_workflow_for_build {
     }
 
     my ($version_number) = $self->read_aligner_version =~ /^([\d+])/;
-    
+
+    my $run_splice_junction_summary;
+
+    if ($self->bedtools_version && $self->annotation_build) {
+        my $annotation_build = $self->annotation_build;
+        my ($ensembl_version) = split(/_/,$annotation_build->version);
+        unless ($ensembl_version) {
+            die('Failed to parse Ensembl version from annotation build: '. $annotation_build->id);
+        }
+        if ($ensembl_version >= 67) {
+            $run_splice_junction_summary = 1;
+        } else {
+            $self->status_message('Skipping SpliceJunctionSummary for annotation build: '. $self->annotation_build);
+        }
+    }
     my $output_properties = ['coverage_result','expression_result','metrics_result'];
     push(@$output_properties, 'fusion_result') if $self->fusion_detection_strategy;
     if ($version_number >= 2) {
         push(@$output_properties, 'bam_qc_result');
         push(@$output_properties, 'alignment_stats_result');
-        if ($self->bedtools_version) {
+        if ($run_splice_junction_summary) {
             push(@$output_properties, 'splice_junction_result');
         }
     }
@@ -263,7 +277,7 @@ sub _resolve_workflow_for_build {
             right_operation => $output_connector,
             right_property => 'bam_qc_result'
         );
-        if ($self->bedtools_version) {
+        if ($run_splice_junction_summary) {
             my $splice_junction_operation = $workflow->add_operation(
                 name => 'RnaSeq Splice Junction Summary',
                 operation_type => Workflow::OperationType::Command->create(
