@@ -153,12 +153,19 @@ sub execute {
         # Warn user about cases where there could be fewer covered bps than mutations detected
         ( $mut_cnt <= $covd_bps ) or warn "More $type seen in $gene than there are bps with sufficient coverage!\n";
 
-        if( $type eq "Overall" or $type eq "Indels" or $type eq "Truncations" ) {
-            $gene_muts{$gene}{$type} = $mut_cnt;
+        if( $type eq "Overall" ) {
+            $gene_muts{$gene}{Overall} = $mut_cnt;
             $gene_bps{$gene} = $covd_bps;
-            $mut_classes_hash{$type} = 1 unless( $type eq "Overall" );
         }
-        elsif( $type =~ m/(Transitions|Transversions)$/ ) {
+        elsif( $type =~ m/^Truncations/ ) {
+            $gene_muts{$gene}{Truncations} += $mut_cnt;
+            $mut_classes_hash{Truncations} = 1;
+        }
+        elsif( $type =~ m/^Indels/ ) {
+            $gene_muts{$gene}{Indels} += $mut_cnt;
+            $mut_classes_hash{Indels} = 1;
+        }
+        elsif( $type =~ m/^(AT_|CG_|CpG_)(Transitions|Transversions)/ ) {
             $gene_muts{$gene}{SNVs} += $mut_cnt;
             $mut_classes_hash{SNVs} = 1;
         }

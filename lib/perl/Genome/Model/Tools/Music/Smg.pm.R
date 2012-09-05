@@ -59,11 +59,11 @@ mut_class_test <- function( x, xmax = 100, hmax = 25, bin = 0.001 ) {
     gene_mr = 0; indel_mr = 0; indel_bmr = 0; trunc_mr = 0; trunc_bmr = 0;
     if( skip_low_mr_genes == 1 ) {
         if( tot_bps > 0 ) { gene_mr = tot_muts / tot_bps; }
-        if( x[( x$Class == "Indels" ),]$n > 0 ) { indel_mr = x[( x$Class == "Indels" ),]$x / x[( x$Class == "Indels" ),]$n; }
-        indel_bmr = x[( x$Class == "Indels" ),]$e;
-        if( nrow( x[( x$Class == "Truncations" ),] ) > 0 ) {
-            if( x[( x$Class == "Truncations" ),]$n > 0 ) { trunc_mr = x[( x$Class == "Truncations" ),]$x / x[( x$Class == "Truncations" ),]$n; }
-            trunc_bmr = x[( x$Class == "Truncations" ),]$e;
+        if( x[( grep( "Indels", x$Class )),]$n > 0 ) { indel_mr = x[( grep( "Indels", x$Class )),]$x / x[( grep( "Indels", x$Class )),]$n; }
+        indel_bmr = x[( grep( "Indels", x$Class )),]$e;
+        if( nrow( x[( grep( "Truncations", x$Class )),] ) > 0 ) {
+            if( x[( grep( "Truncations", x$Class )),]$n > 0 ) { trunc_mr = x[( grep( "Truncations", x$Class )),]$x / x[( grep( "Truncations", x$Class )),]$n; }
+            trunc_bmr = x[( grep( "Truncations", x$Class )),]$e;
         }
     }
 
