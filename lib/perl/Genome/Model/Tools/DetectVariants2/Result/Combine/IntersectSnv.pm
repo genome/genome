@@ -85,23 +85,7 @@ sub _generate_vcf {
         return;
     }
     my $output_file = $self->temp_staging_directory."/snvs.vcf.gz";
-    my $vcf_files;
-    my $vcf_a_source = $self->get_vcf_source($input_a_vcf);
-    my $vcf_b_source = $self->get_vcf_source($input_b_vcf);
-    my $source_ids;
 
-    # FIXME In the future, probably just take the order in the processing profile
-    # FIXME but for now... this was done in germline. But maybe in somatic we want to prioritize sniper over samtools? 
-    if($vcf_a_source =~ m/samtools/i){
-        #if A has samtools, then the ordering is fine, change nothing
-    } elsif ( $vcf_b_source =~ m/samtools/i) {
-        #if B has samtools, swap the ordering
-        ($input_a_vcf,$input_b_vcf) = ($input_b_vcf,$input_a_vcf);
-        ($vcf_a_source,$vcf_b_source) = ($vcf_b_source,$vcf_a_source);
-    } else {
-        #if we cannot locate samtools, die
-        die $self->error_message("Could not positively identify samtools input!");
-    }
     my $merge_cmd = Genome::Model::Tools::Joinx::VcfMerge->create(
         input_files => [ ($input_a_vcf,$input_b_vcf)],
         output_file => $output_file,
@@ -117,29 +101,6 @@ sub _generate_vcf {
     }
 
     return 1;
-}
-
-sub get_vcf_source {
-    my $self = shift;
-    my $vcf = shift;
-
-    unless(-s $vcf){
-        die $self->error_message("Cannot determine the source of a file that doesn't exist...");
-    }
-
-    my $fh = Genome::Sys->open_gzip_file_for_reading($vcf);
-    my $source;
-    while(my $line = $fh->getline){
-        chomp $line;
-        if( ($line =~ m/\#\#/) && ($line =~ m/source/)) {
-            (undef,$source) = split /\=/, $line;
-            last;
-        }
-        unless( ($line =~ m/\#\#/) ){
-            die $self->error_message("Could not find source tag in the header.");
-        }
-    }
-    return $source;
 }
 
 sub _validate_output {
