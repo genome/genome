@@ -234,7 +234,6 @@ sub execute {
     &identifyCnvGenes('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-reference_build_name'=>$reference_build_ucsc, '-common_name'=>$common_name, '-patient_dir'=>$patient_dir, '-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@cnv_symbol_lists, '-verbose'=>$verbose);
   }
 
-
   #Run RNA-seq analysis on the RNA-seq data (if available)
   my $rnaseq_dir;
   if ($tumor_rnaseq || $normal_rnaseq){
@@ -295,7 +294,6 @@ sub execute {
 
 
   #Generate a clonality plot for this patient (if WGS data is available)
-  #TODO: clean this up by moving to a sub-routine - run on both WGS and Exome data if available
   if ($wgs){
     $step++; print MAGENTA, "\n\nStep $step. Creating clonality plot for $common_name", RESET;
     my $clonality_dir = $patient_dir . "clonality/";
@@ -334,6 +332,16 @@ sub execute {
     my $summarize_svs_cmd = Genome::Model::ClinSeq::Command::SummarizeSvs->create(builds=>[$build], outdir=>$sv_summary_dir);
     my $r = $summarize_svs_cmd->execute();
   }
+
+  #Generate a summary of CNV results 
+  if ($wgs){
+    my $build = $builds->{wgs};
+    my $cnv_summary_dir = $patient_dir . "cnv/";
+    $step++; print MAGENTA, "\n\nStep $step. Summarizing CNV results from WGS somatic variation", RESET;
+    my $summarize_cnvs_cmd = Genome::Model::ClinSeq::Command::SummarizeCnvs->create(builds=>[$build], outdir=>$cnv_summary_dir);
+    my $r = $summarize_cnvs_cmd->execute();
+  }
+
 
   #print Dumper $out_paths;
   print "\n\nPROCESSING COMPLETE\n\n";
@@ -781,6 +789,7 @@ sub identifyCnvGenes{
 
   #Create main CNV dir: 'cnv'
   my $cnv_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'cnv', '-silent'=>1);
+  my $cnview_dir = &createNewDir('-path'=>$cnv_dir, '-new_dir_name'=>'cnview', '-silent'=>1);
   my $cnview_script = "$script_dir"."cnv/CNView.pl";
 
   #Create a copy of the cnvs.hq file for later convenience
@@ -792,9 +801,9 @@ sub identifyCnvGenes{
     my $gene_targets_file = "$gene_symbol_lists_dir"."$symbol_list_name".".txt";
 
     #Only run CNView if the directory is not already present
-    my $new_dir = "$cnv_dir"."CNView_"."$symbol_list_name"."/";
+    my $new_dir = "$cnview_dir"."CNView_"."$symbol_list_name"."/";
     unless (-e $new_dir && -d $new_dir){
-      my $cnview_cmd = "$cnview_script  --reference_build=$reference_build_name  --cnv_file=$cnv_data_file  --working_dir=$cnv_dir  --sample_name=$common_name  --gene_targets_file=$gene_targets_file  --name='$symbol_list_name'  --force=1";
+      my $cnview_cmd = "$cnview_script  --reference_build=$reference_build_name  --cnv_file=$cnv_data_file  --working_dir=$cnview_dir  --sample_name=$common_name  --gene_targets_file=$gene_targets_file  --name='$symbol_list_name'  --force=1";
       Genome::Sys->shellcmd(cmd => $cnview_cmd);
     }
 
@@ -802,16 +811,16 @@ sub identifyCnvGenes{
     if ($symbol_list_name =~ /Ensembl/){
       #Copy these files to the top CNV dir
       my $cnv_path1 = "$new_dir"."CNView_"."$symbol_list_name".".tsv";
-      my $cnv_path2 = "$cnv_dir"."cnv."."$symbol_list_name".".tsv";
+      my $cnv_path2 = "$cnview_dir"."cnv."."$symbol_list_name".".tsv";
       Genome::Sys->shellcmd(cmd => "cp $cnv_path1 $cnv_path2");
       my $cnv_amp_path1 = "$new_dir"."CNView_"."$symbol_list_name".".amp.tsv";
-      my $cnv_amp_path2 = "$cnv_dir"."cnv."."$symbol_list_name".".amp.tsv";
+      my $cnv_amp_path2 = "$cnview_dir"."cnv."."$symbol_list_name".".amp.tsv";
       Genome::Sys->shellcmd(cmd => "cp $cnv_amp_path1 $cnv_amp_path2");
       my $cnv_del_path1 = "$new_dir"."CNView_"."$symbol_list_name".".del.tsv";
-      my $cnv_del_path2 = "$cnv_dir"."cnv."."$symbol_list_name".".del.tsv";
+      my $cnv_del_path2 = "$cnview_dir"."cnv."."$symbol_list_name".".del.tsv";
       Genome::Sys->shellcmd(cmd => "cp $cnv_del_path1 $cnv_del_path2");
       my $cnv_ampdel_path1 = "$new_dir"."CNView_"."$symbol_list_name".".ampdel.tsv";
-      my $cnv_ampdel_path2 = "$cnv_dir"."cnv."."$symbol_list_name".".ampdel.tsv";
+      my $cnv_ampdel_path2 = "$cnview_dir"."cnv."."$symbol_list_name".".ampdel.tsv";
       Genome::Sys->shellcmd(cmd => "cp $cnv_ampdel_path1 $cnv_ampdel_path2");
       $out_paths->{'wgs'}->{'cnv'}->{'path'} = $cnv_path2;
       $out_paths->{'wgs'}->{'cnv_amp'}->{'path'} = $cnv_amp_path2;
