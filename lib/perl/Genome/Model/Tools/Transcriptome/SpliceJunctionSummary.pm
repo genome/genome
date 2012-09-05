@@ -1141,3 +1141,23 @@ sub generate_summary_and_plots {
     }
     return 1;
 }
+
+
+sub parse_summary_file_into_metrics_hash_ref {
+    my $class = shift;
+    my $file = shift;
+
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $file,
+        separator => "\t",
+    );
+    unless ($reader) {
+        die('Failed to read file: '. $file);
+    }
+    my %data;
+    while (my $data = $reader->next) {
+        if ($data->{Question} eq 'NA') { next; }
+        $data{$data->{Question}} = $data->{Answer};
+    }
+    return \%data;
+}
