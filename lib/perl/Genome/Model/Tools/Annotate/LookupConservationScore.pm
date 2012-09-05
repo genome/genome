@@ -61,23 +61,31 @@ sub __errors__() {
 }
 
 sub execute {
+    my $self = shift;
 
-    my $self = shift; 
+    my $results = $self->evaluate_request(
+        chromosome => $self->chromosome,
+        coordinates => $self->coordinates,
+        species => $self->species,
+        version => $self->version,
+        reference_transcripts => $self->reference_transcripts
+    );
 
-    my $results = 
-        eval { lookup_conservation_score(
-                   chromosome => $self->chromosome,
-                   coordinates => $self->coordinates,
-                   species => $self->species,
-                   version => $self->version,
-                   reference_transcripts => $self->reference_transcripts)
-        };
+    $self->conservation_scores_results($results) if $results;
+    return ($results? 1 : 0);
+}
+
+
+sub evaluate_request {
+    my $self = shift;
+    my @args = @_;
+
+    my $results = eval { lookup_conservation_score(@args) };
     if ($@) {
         $self->error_message($@);
         return 0;
     } else {
-        $self->conservation_scores_results($results);
-        return 1;
+       return $results;
     }
 }
 

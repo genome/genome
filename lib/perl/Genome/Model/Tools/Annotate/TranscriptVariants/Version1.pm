@@ -964,17 +964,16 @@ sub _ucsc_conservation_score {
 
     my $range = [ $variant->{start}..$variant->{stop} ] ;
 
-    my $lookup_cmd = Genome::Model::Tools::Annotate::LookupConservationScore->create(
+    my $results = Genome::Model::Tools::Annotate::LookupConservationScore->evaluate_request(
         chromosome => $variant->{chromosome_name},
         coordinates => $range,
         species => $substruct->transcript_species,
         version => $substruct->transcript_version,
     );
-    unless ($lookup_cmd->execute) {
-        warn $lookup_cmd->error_message;
-    }
 
-    my $ref = $lookup_cmd->conservation_scores_results;
+    warn Genome::Model::Tools::Annotate::LookupConservationScore->error_message unless $results;
+
+    my $ref = $results;
     return '-' unless $ref;
 
     my @ret;
