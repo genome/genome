@@ -168,7 +168,18 @@ sub _writer { return $_[0]->_output; }
 sub _init {
     my $self = shift;
 
-    # TODO check that the input and output are not the same
+    my $input = $self->_init_input;
+    return if not $input;
+
+    my $output = $self->_init_ouptut;
+    return if not $output;
+
+    return 1;
+}
+
+sub _init_input {
+    my $self = shift;
+
     my @input = $self->input;
     @input = (qw/ stdinref /) if not @input;
     my %reader_params = (
@@ -181,7 +192,11 @@ sub _init {
     }
     my $reader = Genome::Model::Tools::Sx::Reader->create(%reader_params);
     return if not $reader;
-    $self->_input($reader);
+    return $self->_input($reader);
+}
+
+sub _init_ouptut {
+    my $self = shift;
 
     my @output = $self->output;
     @output = (qw/ stdoutref /) if not @output;
@@ -195,11 +210,18 @@ sub _init {
     }
     my $writer = Genome::Model::Tools::Sx::Writer->create(%writer_params);
     return if not $writer;
-    $self->_output($writer);
+    return $self->_output($writer);
+}
 
-    $self->_add_result_observer;  #confesses on error
+sub create {
+    my $class = shift;
 
-    return 1;
+    my $self = $class->SUPER::create(@_);
+    return if not $self;
+
+    $self->_add_result_observer;
+
+    return $self;
 }
 
 sub execute {
