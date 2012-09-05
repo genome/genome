@@ -51,14 +51,14 @@ ok(-d $instrument_data->full_path, 'full path');
 # pp
 my $pp = Genome::ProcessingProfile->create(
     type_name => 'metagenomic composition 16s',
-    name => 'MC16s Sanger TEST',
+    name => 'MC16s TEST',
     sequencing_platform => 'sanger',
     amplicon_processor => 'filter by-min-length --length 1150',
     sequencing_center => 'gsc',
     assembler => 'phred_phrap',
     assembler_params => '-vector_bound 0 -trim_qual 0',
     classifier => 'rdp2-1',
-    classifier_params => '-training_set broad',
+    classifier_params => '-training-set broad -format hmp_fix_ranks -version 2x1',
 );
 ok($pp, 'create sanger pp') or die;
 

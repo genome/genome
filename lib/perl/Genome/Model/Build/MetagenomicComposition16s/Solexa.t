@@ -53,7 +53,15 @@ my $instrument_data = Genome::InstrumentData::Solexa->create(
 ok($instrument_data, 'create inst data');
 
 # pp
-my $pp = Genome::ProcessingProfile->get(2591278); # exists and cannot recreate w/ same params
+my $pp = Genome::ProcessingProfile->__define__(
+    type_name => 'metagenomic composition 16s',
+    name => 'MC16s TEST',
+    sequencing_platform => 'solexa',
+    amplicon_processor => 'filter by-min-length --length 50',
+    sequencing_center => 'gsc',
+    classifier => 'rdp2-2',
+    classifier_params => '-training-set 6 -format hmp_fix_ranks -version 2x2',
+);
 ok($pp, 'got solexa pp') or die;
 
 # model
