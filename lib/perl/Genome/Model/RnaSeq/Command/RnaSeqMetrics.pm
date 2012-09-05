@@ -56,7 +56,7 @@ sub execute {
     my $annotation_build;
     my $reference_build;
     my %model_metrics;
-    my @metric_headers = qw/LABEL TOTAL_READS TOTAL_READS_MAPPED TOTAL_READS_UNMAPPED PCT_READS_MAPPED/;
+    my @metric_headers = qw/LABEL TOTAL_READS TOTAL_READS_MAPPED UNIQUELY_MAPPED_READS MULTI_MAPPED_READS TOTAL_READS_UNMAPPED PCT_READS_MAPPED/;
     my @model_metric_keys;
     for my $model (@models) {
         if ( defined($model_metrics{$model->name}) ) {
@@ -154,6 +154,8 @@ sub execute {
             LABEL => $name,
             TOTAL_READS => $total_reads,
             TOTAL_READS_MAPPED => $total_reads_mapped,
+            UNIQUELY_MAPPED_READS => $tophat_metrics->{'UNIQUE_ALIGNMENTS'},
+            MULTI_MAPPED_READS => $tophat_metrics->{'MULTIPLE_HIT_READS'},
             TOTAL_READS_UNMAPPED => ($total_reads - $total_reads_mapped),
             PCT_READS_MAPPED => $pct_reads_mapped,
         );
