@@ -650,26 +650,8 @@ sub classify_amplicons {
         return;
     }
 
-    my $classifier_params = $self->processing_profile->classifier_params;
-    # TEMP UTNIL THIS GOES STABLE, THEN FIX PARAMS
-    $classifier_params =~ s/_/\-/g;
-    if ( $classifier_params !~ /version/ ) {
-        if ( $self->classifier eq 'rdp2-1' ) {
-            $classifier_params .= ' --version 2x1';
-        }
-        elsif ( $self->classifier eq 'rdp2-2' ) {
-            $classifier_params .= ' --version 2x2';
-        }
-        else {
-            $self->error_message("Invalid classifier (".$self->classifier.") for ".$self->description);
-            return;
-        }
-    }
-    if ( $classifier_params !~ /format/ ) {
-        $classifier_params .= ' --format hmp_fix_ranks';
-    }
-
     $self->status_message('Classifier: '.$self->classifier);
+    my $classifier_params = $self->processing_profile->classifier_params;
     $self->status_message('Classifier params: '.$classifier_params);
 
     my %metrics;
