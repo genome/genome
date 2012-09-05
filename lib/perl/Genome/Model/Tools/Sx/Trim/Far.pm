@@ -25,6 +25,7 @@ class Genome::Model::Tools::Sx::Trim::Far {
             valid_values => [ __PACKAGE__->cmd_versions ],
             doc => 'Verion of FAR to use.',
         },
+        _tmp_far_inputs => { is => 'Array', is_optional => 1, },
     ],
 };
 
@@ -123,37 +124,13 @@ sub execute {
     my $resolve_adapters = $self->_resolve_adapters;
     return if not $resolve_adapters;
 
-    my $init = $self->_init;
-    return if not $init;
+    my @inputs = $self->_resolve_inputs;
+    return if not @inputs;
 
-    $self->status_message('Write input...');
-    $self->status_message('Tmpdir: '.$self->_tmpdir);
-    my $reader = $self->_input;
-    my $seqs = $reader->read;
-    my $cnt = @$seqs; 
-    $self->status_message('Input count: '.$cnt);
-    my @inputs = ( $self->_tmpdir.'/input_1.fastq' );
-    my @inputs_config = ( $inputs[0].':type=sanger' );
-    if ( $cnt == 2 ) { # assume paired
-        $inputs_config[0] .= ':name=fwd';
-        push @inputs, $self->_tmpdir.'/input_2.fastq';
-        push @inputs_config, $inputs[1].':type=sanger:name=rev';
-        $self->status_message('Writing input as paired');
-    }
-    $self->status_message('Intput: '.join(' ', @inputs));
-    my $intput_writer = Genome::Model::Tools::Sx::Writer->create(
-        config => \@inputs_config,
-    );
-    if ( not $intput_writer ) {
-        $self->error_message('Failed to open input reader!');
-        return;
-    }
-    do {
-        $intput_writer->write($seqs);
-    } while $seqs = $reader->read;
-    $self->status_message('Write input...OK');
+    my $output = $self->_init_ouptut;
+    return if not $output;
 
-    $self->status_message('Run far...');
+    $self->status_message('Run FAR...');
     my $cmd = $self->build_command;
     $cmd .= ' --source '.$inputs[0];
     $cmd .= ' --source2 '.$inputs[1] if $inputs[1];
@@ -161,7 +138,7 @@ sub execute {
     $cmd .= ' --target '.$self->_tmpdir.'/output.fastq',
     my $rv = $self->_run_command($cmd);
     return if not $rv;
-    $self->status_message('Run far...OK');
+    $self->status_message('Run FAR...OK');
 
     my @fastq_files = glob $self->_tmpdir.'/output*.fastq';
     my @outputs = grep { $_ !~ /single/ } @fastq_files;
@@ -175,16 +152,16 @@ sub execute {
         config => [ map { $_.':type=sanger' } @outputs ],
     );
     if ( not $output_reader ) {
-        $self->error_message('Failed to open reader for far output!');
+        $self->error_message('Failed to open reader for FAR output!');
         return;
     }
 
-    $self->status_message('Read far output...');
-    my $writer = $self->_output;
+    $self->status_message('Processing FAR output...');
     while ( my $seqs = $output_reader->read ) {
-        $writer->write($seqs);
+        $output->write($seqs);
     }
-    $self->status_message('Read far output...OK');
+
+    $self->_rm_tmpdir;
 
     return 1;
 }
@@ -222,6 +199,55 @@ sub _resolve_adapters {
     }
 
     return 1;
+}
+
+sub _resolve_inputs {
+    my $self = shift;
+
+    $self->status_message('Checking if fastqs need to be written...');
+    # We need 1 or 2 sanger fastq files. If our input is in that format, use directly. Otherwise fastqs will need to be written.
+    my @input_configs = $self->input;
+    my @far_inputs;
+    for my $input_config ( @input_configs ) {
+        my ($input_reader_class, $input_reader_params) =  Genome::Model::Tools::Sx::Reader->parse_reader_config($input_config);
+        next if $input_reader_class ne 'Genome::Model::Tools::Sx::FastqReader'; # FAR takes other types too
+        push @far_inputs, $input_reader_params->{file};
+    }
+
+    if ( @far_inputs and @far_inputs <= 2 and @far_inputs == @input_configs ) {
+        $self->status_message("Using original fastqs:\n".join("\n", @far_inputs));
+        return @far_inputs;
+    }
+
+    $self->status_message('Must write FAR input fastqs...');
+    my $input = $self->_init_input;
+    return if not $input;
+
+    my $seqs = $input->read;
+    my $cnt = @$seqs; 
+    $self->status_message('Input count: '.$cnt);
+    @far_inputs = ( $self->_tmpdir.'/input_1.fastq' );
+    my @inputs_config = ( $far_inputs[0].':type=sanger' );
+    if ( $cnt == 2 ) { # assume paired
+        $inputs_config[0] .= ':name=fwd';
+        push @far_inputs, $self->_tmpdir.'/input_2.fastq';
+        push @inputs_config, $far_inputs[1].':type=sanger:name=rev';
+        $self->status_message('Writing input as paired');
+    }
+    $self->status_message('Input: '.join(' ', @far_inputs));
+    my $input_writer = Genome::Model::Tools::Sx::Writer->create(
+        config => \@inputs_config,
+    );
+    if ( not $input_writer ) {
+        $self->error_message('Failed to open input writer!');
+        return;
+    }
+    do {
+        $input_writer->write($seqs);
+    } while $seqs = $input->read;
+    $self->status_message('Write input...OK');
+
+    return @far_inputs;
 }
 
 1;

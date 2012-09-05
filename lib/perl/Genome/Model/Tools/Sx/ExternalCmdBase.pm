@@ -27,6 +27,12 @@ sub _tmpdir {
     return $self->{_tmpdir};
 }
 
+sub _rm_tmpdir {
+    my $self = shift;
+    return 1 if not $self->{_tmpdir};
+    return File::Path::rmtree( $self->{_tmpdir} );
+}
+
 sub executable_path {
     my $self = shift;
 

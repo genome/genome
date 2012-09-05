@@ -260,9 +260,7 @@ sub _add_result_observer { # to write metrics file
             for my $io (qw/ input output /) {
                 my $method = '_'.$io;
                 my $obj = $self->$method;
-                if ( not $obj ) {
-                    Carp::confess("No $io found!");
-                }
+                return if not $obj;
 
                 my $metrics_method = $io.'_metrics';
                 my $metrics_file = $self->$metrics_method;

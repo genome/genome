@@ -38,7 +38,7 @@ my $cmd = Genome::Model::Tools::Sx::Trim::Far->create(
 );
 ok($cmd, "create far 2.0 to remove single adapter");
 ok($cmd->execute, "execute");
-is_deeply($cmd->_cmds, ['/gsc/pkg/bio/flexibleadapter/flexibleadapter-2.0/build/far --adapters '.$cmd->_tmpdir.'/adapters.fasta --adaptive-overlap no --cut-off 2 --max-uncalled 100 --min-overlap 16 --min-readlength 18 --nr-threads 4 --trim-end any --write-lengthdist no --source '.$cmd->_tmpdir.'/input_1.fastq --source2 '.$cmd->_tmpdir.'/input_2.fastq --format fastq-sanger --target '.$cmd->_tmpdir.'/output.fastq'], 'far command');
+is_deeply($cmd->_cmds, ['/gsc/pkg/bio/flexibleadapter/flexibleadapter-2.0/build/far --adapters '.$cmd->_tmpdir.'/adapters.fasta --adaptive-overlap no --cut-off 2 --max-uncalled 100 --min-overlap 16 --min-readlength 18 --nr-threads 4 --trim-end any --write-lengthdist no --source '.$datadir.'/input_1.fastq --source2 '.$datadir.'/input_2.fastq --format fastq-sanger --target '.$cmd->_tmpdir.'/output.fastq'], 'far command');
 
 my @output = glob("$temp_dir/*fastq");
 is(@output, 2, "got 2 fastq files");
@@ -47,10 +47,10 @@ for my $cnt (1..2) {
     is(Genome::Sys->md5sum($output[$cnt-1]), $expected_output_md5[$cnt-1], "single adapter removed fastq $cnt matches");
 }
 
-# Adapter w/ reverse complment removal single end w/ v2.0
+# Adapter w/ reverse complment removal single end w/ v2.0 w/ fasta so far input will need to be written
 $temp_dir = Genome::Sys->create_temp_directory;
 my $cmd2 = Genome::Model::Tools::Sx::Trim::Far->create(
-    input => [ $input1, ],
+    input => [ $datadir.'/input_1.fasta:qual_file='.$datadir.'/input_1.qual' ],
     output => [ "$temp_dir/output_1.fastq", ],
     adapter => 'gtttcccagtcacgata',
     remove_revcomp => 1, 
@@ -86,7 +86,7 @@ my $cmd3 = Genome::Model::Tools::Sx::Trim::Far->create(
 );
 ok($cmd3, "create far w/ v2.17 to remove rev comp");
 ok($cmd3->execute, "execute");
-is_deeply($cmd3->_cmds, ['/usr/bin/far2.17.0 --adapters '.$cmd3->_tmpdir.'/adapters.fasta --adaptive-overlap no --cut-off 2 --max-uncalled 100 --min-overlap 16 --min-readlength 18 --nr-threads 4 --trim-end any --write-lengthdist no --source '.$cmd3->_tmpdir.'/input_1.fastq --source2 '.$cmd3->_tmpdir.'/input_2.fastq --format fastq-sanger --target '.$cmd3->_tmpdir.'/output.fastq'], 'far command');
+is_deeply($cmd3->_cmds, ['/usr/bin/far2.17.0 --adapters '.$cmd3->_tmpdir.'/adapters.fasta --adaptive-overlap no --cut-off 2 --max-uncalled 100 --min-overlap 16 --min-readlength 18 --nr-threads 4 --trim-end any --write-lengthdist no --source '.$datadir.'/input_1.fastq --source2 '.$datadir.'/input_2.fastq --format fastq-sanger --target '.$cmd3->_tmpdir.'/output.fastq'], 'far command');
 @output = glob("$temp_dir/*fastq");
 is(@output, 1, "got 1 fastq file");
 is(Genome::Sys->md5sum($output[0]), 'd2fe25c6ab7bb486907fc225b42459eb', "single adapter removed fastq matches");

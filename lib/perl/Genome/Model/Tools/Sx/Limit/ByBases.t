@@ -38,7 +38,7 @@ is(File::Compare::compare($example_fastq, $out_fastq), 0, "fastq limited as expe
 
 # Ok - random
 my $out_random_fastq = $tmp_dir.'/out.random.fastq';
-my $limiter = Genome::Model::Tools::Sx::Limit::ByBases->create(
+$limiter = Genome::Model::Tools::Sx::Limit::ByBases->create(
     input  => [ $in_fastq ],
     output => [ $out_random_fastq ],
     output_metrics => $tmp_dir.'/out.metrics',
