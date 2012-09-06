@@ -89,7 +89,7 @@ sub execute {
     }
 
     my $sep = ( $self->separator =~ /^tab$/i ? "\t" : $self->separator );
-    print join( "\n", map { join(",", @$_) } [qw/ sample-name instrument-data-id model-id build-id status process-success oriented-fastas /], @rows)."\n"; 
+    print join( "\n", map { join($sep, @$_) } [qw/ sample-name instrument-data-id model-id build-id status process-success oriented-fastas /], @rows)."\n"; 
 
     return 1;
 }
