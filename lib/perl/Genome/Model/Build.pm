@@ -1093,8 +1093,6 @@ sub _launch {
 
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
-    local $ENV{GENOME_BUILD_ID} = $self->id;
-
     # right now it is "inline" or the name of an LSF queue.
     # ultimately, it will be the specification for parallelization
     # including whether the server is inline, forked, or bsubbed, and the
