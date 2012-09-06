@@ -640,11 +640,9 @@ sub all_allocations {
         }
     }
 
-    my @users = Genome::SoftwareResult::User->get(
-        user_id => $self->id,
-        user_class_name => $self->subclass_name,
-    );
-    my @user_allocations = map { $_->software_result->disk_allocations } @users;
+    my @results = $self->all_results;
+
+    my @user_allocations = map { $_->disk_allocations } @results;
     push @allocations, @user_allocations if @user_allocations;
 
     my @events = $self->events;
