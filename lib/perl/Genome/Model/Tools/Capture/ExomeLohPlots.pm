@@ -171,11 +171,11 @@ sub execute {                               # replace with real execution logic.
 
 			if(!(-e $combined_outfile))
 			{
-				my $current_len = `cat $combined_outfile | wc -l`; chomp($current_len);
-				print "Combining and sorting...\n";
-				system("cat $germline_outfile $loh_outfile >$combined_outfile");
-				system("gmt capture sort-by-chr-pos --input $combined_outfile --output $combined_outfile");
-				my $new_len = `cat $combined_outfile | wc -l`; chomp($new_len);
+                            #my $current_len = `cat $combined_outfile | wc -l`; chomp($current_len);
+                            print "Combining and sorting...\n";
+                            system("cat $germline_outfile $loh_outfile >$combined_outfile");
+                            system("gmt capture sort-by-chr-pos --input $combined_outfile --output $combined_outfile");
+                            #my $new_len = `cat $combined_outfile | wc -l`; chomp($new_len);
 			}
 
 
@@ -184,7 +184,7 @@ sub execute {                               # replace with real execution logic.
 			{
 				print "Running false-positive filter...\n";
 				my $cmd = "gmt somatic filter-false-positives --variant-file $combined_outfile --output-file $combined_outfile.fpfilter --bam-file $normal_bam --reference " . $self->reference;
-				system("bsub -q long -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 $cmd");				
+				system("bsub -q long -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_dir/fperr.log $cmd");
 			}
 			else
 			{
