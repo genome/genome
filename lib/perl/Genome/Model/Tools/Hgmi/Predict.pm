@@ -150,7 +150,7 @@ sub gather_details
       }
     }
 
-    if (defined($self->dev)) { $BAP::DB::DBI::db_env = 'dev'; }
+    if (($self->dev)) { $BAP::DB::DBI::db_env = 'dev'; }
     my $organism_obj = BAP::DB::Organism->retrieve('organism_name'=> $organism_name);
 
     if (defined($organism_obj)) { 
@@ -371,7 +371,7 @@ sub gather_details
                   'job_stderr' => $bpg_job_stderr
                   );
 
-    if(defined($self->dev)) { $params{dev} = 1; }
+    if(($self->dev)) { $params{dev} = 1; }
     print Dumper(\%params),"\n";
 
     return %params;

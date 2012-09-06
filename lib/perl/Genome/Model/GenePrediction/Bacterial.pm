@@ -31,7 +31,16 @@ class Genome::Model::GenePrediction::Bacterial {
             is => 'Boolean',
             doc => 'If set, skip aceDB parsing in bap project finish',
             is_optional => 1,
-
+        },
+        keggscan_version => {
+            is => 'Number',
+            doc => 'Version of KEGGScan to use',
+            is_optional => 1,
+        },
+        interpro_version => {
+            is => 'Text',
+            doc => 'Version of iprscan and data to use',
+            is_optional => 1,
         },
     ],
     has_optional => [
@@ -52,6 +61,15 @@ class Genome::Model::GenePrediction::Bacterial {
             to => 'value_id',
             where => [ name => 'run_type' ],
             doc => 'A three letter identifier appended to locus id, (DFT, FNL, etc)',
+        },
+        locus_suffix => {
+            is => 'Text',
+            via => 'inputs',
+            to => 'value_id',
+            where => [ name => 'locus_suffix', value_class_name => 'UR::Value::Text' ],
+            doc => 'appended to the locus_id (and included in the locus tag). (Used for testing.)',
+            is_mutable => 1,
+            is_many => 0,
         },
         assembly_version => {
             is => 'String', # TODO Can this be removed or derived from the assembly in some way?
@@ -140,11 +158,15 @@ sub _execute_build {
 
     $self->status_message("Configuration file created at $config_file_path, creating hap command object");
 
+    Genome::Sys->create_symlink('/gscmnt/278/analysis/HGMI/Acedb', $build->data_directory . '/Acedb'); #FIXME Replace this hardcoded path
+
     my $hap_object = Genome::Model::Tools::Hgmi::Hap->create(
         config => $config_file_path,
         dev => $model->dev,
         skip_core_check => $self->skip_core_gene_check,
-        skip_protein_annotation => 1, # TODO Eventually, this build process will include PAP and BER
+        skip_protein_annotation => (not ($self->keggscan_version || $self->interpro_version)), # TODO Include protein annotation if we have a pp. params suggesting we want it
+        keggscan_version => $self->keggscan_version,
+        interpro_version => $self->interpro_version,
     );
     unless ($hap_object) {
         $self->error_message("Could not create hap command object!");

@@ -80,7 +80,7 @@ class PAP::Command::KEGGScan {
         },
         version => {
                 is => 'String',
-                valid_values => ['50', '52', '56'],
+                valid_values => ['50', '52', '56','61'],
                 default => '56',
                 is_input => 1,
                 is_optional => 1,

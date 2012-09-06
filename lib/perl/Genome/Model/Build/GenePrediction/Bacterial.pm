@@ -10,18 +10,41 @@ use File::Basename;
 
 class Genome::Model::Build::GenePrediction::Bacterial {
     is => 'Genome::Model::Build::GenePrediction',
+    has_optional => [
+        locus_suffix => {
+            is => 'Text',
+            via => 'inputs',
+            to => 'value_id',
+            where => [ name => 'locus_suffix' ],
+        },
+        run_type => {
+            is => 'Text',
+            via => 'inputs',
+            to => 'value_id',
+            where => [ name => 'run_type' ],
+        },
+    ],
 };
 
 sub locus_tag {
     my $self = shift;
     my $model = $self->model;
-    return $model->locus_id . $model->run_type;
+    return $self->locus_id . $self->run_type;
+}
+
+sub locus_id {
+    my $self = shift;
+    my $model = $self->model;
+
+    my $locus_id = $model->locus_id;
+    $locus_id .= $self->locus_suffix if $self->locus_suffix;
+    return $locus_id;
 }
 
 sub assembly_name {
     my $self = shift;
     my $model = $self->model;
-    return ucfirst($model->organism_name) . '_' . $self->locus_tag . '.velv.amgap';
+    return ucfirst($model->organism_name) . '_' . $self->locus_tag . '.newb.amgap';
 }
 
 sub org_dirname {
@@ -79,7 +102,7 @@ sub create_config_file {
         assembly_version => $model->assembly_version,
         cell_type        => uc($model->domain),
         gram_stain       => $model->gram_stain,
-        locus_id         => $model->locus_id,
+        locus_id         => $self->locus_id,
         locus_tag        => $self->locus_tag,
         minimum_length   => $model->minimum_sequence_length,
         ncbi_taxonomy_id => $model->ncbi_taxonomy_id,
@@ -93,6 +116,8 @@ sub create_config_file {
         seq_file_dir     => $self->sequence_file_directory,
         seq_file_name    => $self->sequence_file_name,
         skip_acedb_parse => $model->skip_acedb_parse,
+        workflowxml      => __FILE__.'.noblastp.outer.xml',
+        ber_base_directory => '/gscmnt/sata835/info/annotation/BER/autoannotate_v2.5' #FIXME This should be a parameter!
     );
 
     my $rv = YAML::DumpFile($config_file_path, \%params);

@@ -1,0 +1,26 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="inner protein annotation pipeline" parallelBy="fasta file" executor="Workflow::Executor::SerialDeferred">
+  <link fromOperation="input connector" fromProperty="psortb archive dir"   toOperation="psortb"           toProperty="psortb_archive_dir" />
+  <link fromOperation="input connector" fromProperty="fasta file"           toOperation="psortb"           toProperty="fasta_file" />
+  <link fromOperation="input connector" fromProperty="gram stain"           toOperation="psortb"           toProperty="gram_stain" />
+  <link fromOperation="psortb"          fromProperty="bio_seq_feature"      toOperation="cat seq feature"  toProperty="psortb feature" />
+  <link fromOperation="cat seq feature" fromProperty="all features"         toOperation="output connector" toProperty="bio seq features" />
+  <link fromOperation="cat seq feature" fromProperty="result"               toOperation="output connector" toProperty="result" />
+  <operation name="psortb">
+    <operationtype commandClass="PAP::Command::PsortB" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="cat seq feature">
+    <operationtype typeClass="Workflow::OperationType::Converge">
+      <inputproperty>psortb feature</inputproperty>
+      <outputproperty>all features</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>psortb archive dir</inputproperty>
+    <inputproperty>fasta file</inputproperty>
+    <inputproperty>gram stain</inputproperty>
+    <outputproperty>bio seq features</outputproperty>
+    <outputproperty>result</outputproperty>
+  </operationtype>
+</workflow>

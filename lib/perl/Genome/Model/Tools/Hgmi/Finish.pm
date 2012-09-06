@@ -150,7 +150,7 @@ sub gather_details
     my $path             = $self->path;
 
     my ($ncbi_taxonomy_id, $gram_stain, $locus, $organism_id, );
-    if (defined($self->dev)) { $BAP::DB::DBI::db_env = 'dev'; }
+    if (($self->dev)) { $BAP::DB::DBI::db_env = 'dev'; }
     my $organism_obj = BAP::DB::Organism->retrieve('organism_name'=> $organism_name);
 
     unless (defined($organism_obj)) 

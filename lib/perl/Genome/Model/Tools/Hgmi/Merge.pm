@@ -130,7 +130,7 @@ sub gather_details
 
     my ($ncbi_taxonomy_id, $gram_stain, $locus, $organism_id, );
 
-    if (defined($self->dev)) { $BAP::DB::DBI::db_env = 'dev'; }
+    if (($self->dev)) { $BAP::DB::DBI::db_env = 'dev'; }
     my $organism_obj = BAP::DB::Organism->retrieve('organism_name'=> $organism_name);
 
     if (defined($organism_obj)) { 
@@ -246,7 +246,7 @@ sub gather_details
                    'nr_db' => $self->nr_db,
                    );
 
-    if(defined($self->dev)) { $params{dev} = 1; }
+    if(($self->dev)) { $params{dev} = 1; }
     
     print Dumper(\%params),"\n";
     return %params;

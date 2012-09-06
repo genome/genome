@@ -79,7 +79,7 @@ class Genome::Model::Tools::Hgmi::Hap (
             doc => 'Version of KEGGScan to use',
         },
         interpro_version => {
-            is => 'Number',
+            is => 'Text',
             doc => 'Version of iprscan and data to use',
         },
     ]
