@@ -17,5 +17,5 @@ ok($conversion, 'Executed a NameConversion object');
 ok(-e $output, 'Output file exists');
 
 my $diff = `diff $output $expected_output`;
-ok($diff eq '', "output as expected");
+ok($diff eq '', "output as expected") or diag $diff;
 
