@@ -1093,6 +1093,8 @@ sub _launch {
 
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
+    local $ENV{GENOME_BUILD_ID} = $self->id;
+
     # right now it is "inline" or the name of an LSF queue.
     # ultimately, it will be the specification for parallelization
     # including whether the server is inline, forked, or bsubbed, and the
@@ -2386,7 +2388,9 @@ sub heartbeat {
         my $error_stat = stat($error_file);
         my $elapsed_mtime_error_file = time - $error_stat->mtime;
         if (($elapsed_mtime_output_file/3600 > 48) && ($elapsed_mtime_error_file/3600 > 48)) {
-            return $verbose ? "Error and/or output file have not been modified in 48+ hours:\nOutput File: $output_file\nError File: $error_file" : 0;
+            my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/3600);
+            my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/3600);
+            return $verbose ? "Output and/or error file have not been modified in 48+ hours     ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file" : 0;
         }
 
         my @pids = $self->pids_from_bjobs_output($bjobs_output);
