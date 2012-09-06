@@ -659,6 +659,25 @@ sub all_allocations {
     return @allocations;
 }
 
+sub all_results {
+    my $self = shift;
+
+    my @users = $self->result_users;
+    my %seen;
+    my @results;
+    while(@users) {
+        my $u = shift @users;
+        my $result = $u->software_result;
+        next if $seen{$result->id}; #already processed
+
+        push @results, $result;
+        push @users, Genome::SoftwareResult::User->get(user_class_name => $result->class, user_id => $result->id);
+        $seen{$result->id}++;
+    }
+
+    return @results;
+}
+
 sub log_directory {
     my $self = shift;
     return unless $self->data_directory;
