@@ -25,8 +25,6 @@ class Genome::ProcessingProfile {
                            doc => 'Human readable name' },
         type_name     => { is => 'VARCHAR2', len => 255, is_optional => 1, 
                            doc => 'The type of processing profile' },
-        supersedes    => { via => 'params', to => 'value_id', is_mutable => 1, where => [ name => 'supersedes' ], is_optional => 1, 
-                           doc => 'The processing profile replaces the one named here.' },
         subclass_name => {
             is => 'VARCHAR2',
             len => 255,
@@ -210,7 +208,6 @@ sub _profiles_matching_subclass_and_params {
     # Ignore these params.
     delete $params{type_name};
     delete $params{name};
-    delete $params{supersedes};
 
     my @matches = $subclass->get(%params);
     return @matches;

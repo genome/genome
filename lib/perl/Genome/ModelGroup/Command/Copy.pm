@@ -173,7 +173,6 @@ sub execute {
 
             my @prev = map { $_->name => $_->value } $last_profile->params();
             my %prev = @prev;
-            delete $prev{supercedes};
             delete $prev{reference_sequence_name};
 
             my $bx = UR::BoolExpr->resolve_for_string($from_profile->class,join(",",@param_changes));

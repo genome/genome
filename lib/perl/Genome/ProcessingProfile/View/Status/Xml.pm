@@ -14,7 +14,6 @@ class Genome::ProcessingProfile::View::Status::Xml {
                 'id',
                 'name',
                 'type_name',
-                'supersedes',
                 {
                     name => 'params',
                     perspective => 'default',

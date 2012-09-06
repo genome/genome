@@ -39,15 +39,6 @@
                     </td>
                   </tr>
 
-                  <xsl:if test="normalize-space(aspect[@name='supersedes']/value)">
-                    <tr>
-                      <td class="name">Supercedes:
-                      </td>
-                      <td class="value"><xsl:value-of select="aspect[@name='supersedes']/value"/>
-                      </td>
-                    </tr>
-                  </xsl:if>
-
                   <xsl:if test="count(aspect[@name='params']) > 0 ">
                     <xsl:for-each select="aspect[@name='params']/object">
                       <tr>

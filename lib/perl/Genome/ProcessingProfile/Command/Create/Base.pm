@@ -20,11 +20,6 @@ class Genome::ProcessingProfile::Command::Create::Base {
             doc => "Another profile which is used to specify default values for this new one. To qualify a the based on profile must have params, and at least one must be different. Use --param-name='UNDEF' to indicate that a param that is defined for the based on profile should not be for the new profile.",
             is_optional => 1,
         },
-        supersedes => {
-            is => 'Text',
-            doc => 'The processing profile name that this replaces',
-            is_optional => 1,
-        },
         describe => {
             is => 'Boolean',
             doc => 'Display the output of `genome processing-profile describe` for the processing profile that is created',
@@ -125,9 +120,6 @@ sub execute {
         name => $self->name,
         $self->_get_target_class_params,
     );
-    if ($self->supersedes) {
-        $target_params{'supersedes'} = $self->supersedes;
-    }
 
     my $processing_profile = $profile_class->create(%target_params);
 
