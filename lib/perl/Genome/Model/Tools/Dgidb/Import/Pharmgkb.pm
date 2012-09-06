@@ -406,7 +406,7 @@ sub _import_drug {
     my $interaction = shift;
     my $citation = shift;
     my $drug_accession = $self->_create_drug_name_report($interaction->{Entity1_id}, $citation, 'PharmGKB', '');
-    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Entity1_id}, 'PharmGKB_drug_accession', '');
+    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Entity1_id}, 'PharmGKB_primary_drug_name', '');
     my $drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Drug_Name}, 'PharmGKB_drug_name', '');
     my @drug_generic_names = split(",", $interaction->{Generic_Names});
     for my $drug_generic_name (@drug_generic_names){
