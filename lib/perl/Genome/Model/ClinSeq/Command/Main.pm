@@ -103,8 +103,8 @@ EOS
 
 sub execute {
   my $self = shift;
-  my $build_id = $self->build_id; #Build ID of the current clinseq run...
-  my $build = Genome::Model::Build->get($build_id);
+  my $clinseq_build_id = $self->build_id; #Build ID of the current clinseq run...
+  my $clinseq_build = Genome::Model::Build->get($clinseq_build_id);
   my $wgs_som_var_data_set = $self->wgs_som_var_data_set;
   my $exome_som_var_data_set = $self->exome_som_var_data_set;
   my $tumor_rna_seq_data_set = $self->tumor_rna_seq_data_set;
@@ -133,7 +133,7 @@ sub execute {
 
   #Determine Ensembl version used in the analysis by examining input builds of the clinseq model - watch out for conflicting versions!
   $step++; print MAGENTA, "\n\nStep $step. Determining Ensembl version used in the analysis by examining input builds of the clinseq model", RESET;
-  my $ensembl_version = $self->getEnsemblVersion('-clinseq_build_id'=>$build_id);
+  my $ensembl_version = $self->getEnsemblVersion('-clinseq_build_id'=>$clinseq_build_id);
   print BLUE, "\n\tEnsembl version = $ensembl_version", RESET;
 
   #Get Entrez and Ensembl data for gene name mappings
@@ -181,13 +181,13 @@ sub execute {
   #Create a summarize-builds command calling the code directly.  Since summarize-builds prints out using $self->status_message() statements we will need to capture those and dump to a file
   $step++; print MAGENTA, "\n\nStep $step. Creating a summary of input builds using summarize-builds", RESET;
   my $summarize_builds_cmd;
-  if ($build_id > 0){
+  if ($clinseq_build_id > 0){
     #Watch out for -ve build IDs which will occur when the ClinSeq.t test is run.  In that case, do not run the LIMS reports
-    #$summarize_builds_cmd = "/usr/bin/perl `which genome` model clin-seq summarize-builds  --builds=$build_id  --outdir=$input_summary_dir >$log_file 2>&1";
-    $summarize_builds_cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$build], outdir=>$input_summary_dir);
+    #$summarize_builds_cmd = "/usr/bin/perl `which genome` model clin-seq summarize-builds  --builds=$clinseq_build_id  --outdir=$input_summary_dir >$log_file 2>&1";
+    $summarize_builds_cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$clinseq_build], outdir=>$input_summary_dir);
   }else{
-    #$summarize_builds_cmd = "/usr/bin/perl `which genome` model clin-seq summarize-builds  --builds=$build_id  --outdir=$input_summary_dir --skip-lims-reports=1 >$log_file 2>&1";
-    $summarize_builds_cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$build], outdir=>$input_summary_dir, skip_lims_reports=>1);
+    #$summarize_builds_cmd = "/usr/bin/perl `which genome` model clin-seq summarize-builds  --builds=$clinseq_build_id  --outdir=$input_summary_dir --skip-lims-reports=1 >$log_file 2>&1";
+    $summarize_builds_cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$clinseq_build], outdir=>$input_summary_dir, skip_lims_reports=>1);
   }
   $summarize_builds_cmd->queue_status_messages(1);
   my $r = $summarize_builds_cmd->execute();
@@ -199,7 +199,7 @@ sub execute {
   #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
   $step++; print MAGENTA, "\n\nStep $step. Create IGV XML session files for varying levels of detail using the input builds", RESET;
   my $igv_session_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'igv', '-silent'=>1);
-  my $igv_xml_cmd = Genome::Model::ClinSeq::Command::DumpIgvXml->create(builds=>[$build], outdir=>$igv_session_dir);
+  my $igv_xml_cmd = Genome::Model::ClinSeq::Command::DumpIgvXml->create(builds=>[$clinseq_build], outdir=>$igv_session_dir);
   $igv_xml_cmd->queue_status_messages(1);
   $r = $igv_xml_cmd->execute();
   @output = $igv_xml_cmd->status_messages();
@@ -326,19 +326,18 @@ sub execute {
 
   #Generate a summary of SV results from the WGS SV results
   if ($wgs){
-    my $build = $builds->{wgs};
+    my $wgs_somatic_build = $builds->{wgs};
     my $sv_summary_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'sv', '-silent'=>1);
     $step++; print MAGENTA, "\n\nStep $step. Summarizing SV results from WGS somatic variation", RESET;
-    my $summarize_svs_cmd = Genome::Model::ClinSeq::Command::SummarizeSvs->create(builds=>[$build], outdir=>$sv_summary_dir);
+    my $summarize_svs_cmd = Genome::Model::ClinSeq::Command::SummarizeSvs->create(builds=>[$wgs_somatic_build], outdir=>$sv_summary_dir);
     my $r = $summarize_svs_cmd->execute();
   }
 
   #Generate a summary of CNV results 
   if ($wgs){
-    my $build = $builds->{wgs};
     my $cnv_summary_dir = $patient_dir . "cnv/";
     $step++; print MAGENTA, "\n\nStep $step. Summarizing CNV results from WGS somatic variation", RESET;
-    my $summarize_cnvs_cmd = Genome::Model::ClinSeq::Command::SummarizeCnvs->create(builds=>[$build], outdir=>$cnv_summary_dir);
+    my $summarize_cnvs_cmd = Genome::Model::ClinSeq::Command::SummarizeCnvs->create(builds=>[$clinseq_build], outdir=>$cnv_summary_dir);
     my $r = $summarize_cnvs_cmd->execute();
   }
 
