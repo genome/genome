@@ -2379,18 +2379,6 @@ sub heartbeat {
             die "Missing state ($wf_instance_exec_status/$lsf_status) condition, only running/run should reach this point";
         }
 
-        my $output_file = $self->output_file_from_bjobs_output($bjobs_output);
-        my $output_stat = stat($output_file);
-        my $elapsed_mtime_output_file = time - $output_stat->mtime;
-        my $error_file = $self->error_file_from_bjobs_output($bjobs_output);
-        my $error_stat = stat($error_file);
-        my $elapsed_mtime_error_file = time - $error_stat->mtime;
-        if (($elapsed_mtime_output_file/3600 > 48) && ($elapsed_mtime_error_file/3600 > 48)) {
-            my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/3600);
-            my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/3600);
-            return $verbose ? "Output and/or error file have not been modified in 48+ hours     ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file" : 0;
-        }
-
         my @pids = $self->pids_from_bjobs_output($bjobs_output);
         my $execution_host = $self->execution_host_from_bjobs_output($bjobs_output);
         unless ($execution_host) {
@@ -2409,6 +2397,18 @@ sub heartbeat {
             unless($stat =~ /^(R|S)/) {
                 return $verbose ? 'Expected PID to be in a R or S stat.' : 0;
             }
+        }
+
+        my $output_file = $self->output_file_from_bjobs_output($bjobs_output);
+        my $output_stat = stat($output_file);
+        my $elapsed_mtime_output_file = time - $output_stat->mtime;
+        my $error_file = $self->error_file_from_bjobs_output($bjobs_output);
+        my $error_stat = stat($error_file);
+        my $elapsed_mtime_error_file = time - $error_stat->mtime;
+        if (($elapsed_mtime_output_file/3600 > 48) && ($elapsed_mtime_error_file/3600 > 48)) {
+            my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/3600);
+            my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/3600);
+            return $verbose ? "Process is running BUT output and/or error file have not been modified in 48+ hours     ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file" : 0;
         }
     }
 
