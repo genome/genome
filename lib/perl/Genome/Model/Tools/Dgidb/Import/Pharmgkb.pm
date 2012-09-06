@@ -90,7 +90,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import pharmgkb --version=2012-07-12 --relationships-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/relationships/relationships.tsv --drugs-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/drugs/drugs.tsv --genes-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/genes/genes.tsv 
+gmt dgidb import pharmgkb --version=\"2012-07-12\" --relationships-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/relationships/relationships.tsv --drugs-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/drugs/drugs.tsv --genes-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/genes/genes.tsv 
 HELP
 }
 

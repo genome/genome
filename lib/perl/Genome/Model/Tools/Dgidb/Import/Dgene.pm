@@ -37,13 +37,13 @@ class Genome::Model::Tools::Dgidb::Import::Dgene {
             doc => 'VERSION.  Version (date) of release of database from dGene group',
         },
         citation_base_url => {
-            default => 'TODO', #TODO: fill me in later
+            default => 'TBD', #TODO: fill me in later
         },
         citation_site_url => {
-            default => 'TODO', #TODO: fill me in later
+            default => 'TBD', #TODO: fill me in later
         },
         citation_text => {
-            default => "TODO", #TODO: fill me in later
+            default => "The Druggable Gene List, dGENE, provides a Rapid Filter for Cancer Genome Sequencing Data. Kumar R, Chang L, Ellis MJ, Bose R. Manuscript in preparation.",
         },
     },
     doc => 'Parse a csv file from dGene (Ron Bose)',
