@@ -199,7 +199,7 @@ sub execute {
 
 
     #segment the data
-    print R_COMMANDS "d <- segment(CNA.object, verbose=0, min.width=" . $min_width . ") " . "\n";
+    print R_COMMANDS "d <- segment(CNA.object, verbose=0, min.width=" . $min_width . ", undo.splits=\"sdundo\", undo.SD=3,) " . "\n";
 
     
     if(defined($output_file)){
