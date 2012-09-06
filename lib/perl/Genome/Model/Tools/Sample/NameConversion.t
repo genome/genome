@@ -16,6 +16,11 @@ ok($conversion, 'Executed a NameConversion object');
 
 ok(-e $output, 'Output file exists');
 
-my $diff = `diff $output $expected_output`;
+my $cmd = "diff $output $expected_output";
+my $diff = qx($cmd);
+unless ($? == 0) {
+    print($cmd, "\n");
+    die "diff: $!";
+}
 ok($diff eq '', "output as expected") or diag $diff;
 
