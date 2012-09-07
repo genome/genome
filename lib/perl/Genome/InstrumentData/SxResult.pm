@@ -59,7 +59,6 @@ sub create {
 
 
     $self->_prepare_staging_directory;
-    $self->_prepare_output_directory;
 
     $self->status_message('Process instrument data '.$instrument_data->__display_name__ );
 
@@ -98,6 +97,7 @@ sub create {
 
     $self->status_message('Process instrument data...OK');
 
+    $self->_prepare_output_directory;
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
 
