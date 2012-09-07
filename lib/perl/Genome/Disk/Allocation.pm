@@ -779,7 +779,7 @@ sub _unarchive {
     my ($volume_lock, $archive_path, $target_path);
     eval {
         unless ($self->is_archived) {
-            confess "Can't unarchive an allocation that isn't archived!";
+            confess "Can't unarchive an allocation that isn't archived: " . $self->absolute_path;
         }
 
         # Get candidate volumes and pick/lock one
@@ -1306,6 +1306,23 @@ sub remove_test_paths {
             print STDERR "Cleaning up allocation path $path\n";
         }
     }
+}
+
+sub get_allocation_for_path {
+    my ($class, $path) = @_;
+
+    my @parts = split(/\//, $path);
+    @parts = @parts[4..$#parts]; # Remove mount path and group subdirectory
+
+    my $allocation;
+    # Try finding allocation by allocation path, removing subdirectories from the end after each attempt
+    while (@parts) {
+        $allocation = Genome::Disk::Allocation->get(allocation_path => join('/', @parts));
+        last if $allocation;
+        @parts = @parts[0..($#parts - 1)];
+    }
+
+    return $allocation;
 }
 
 1;
