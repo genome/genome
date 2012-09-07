@@ -61,6 +61,13 @@ sub execute {
         #};
         $stats{total}++;
         my $status = $data->{status};
+        unless ($status) {
+            # Must be Cufflinks2 output
+            $status = $data->{FPKM_status};
+            unless ($status) {
+                die('Failed to parse status in file: '. $self->fpkm_tracking_file);
+            }
+        }
         $stats{$status}++;
         if ($status eq 'OK') {
             my $coverage = $data->{coverage};
@@ -94,13 +101,15 @@ sub execute {
     $stats{mean_fpkm} = $fpkm_stats->mean;
     $stats{stdev_fpkm} = $fpkm_stats->standard_deviation;
 
-    my @headers = $self->headers;
-    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $self->output_summary_tsv,
-        separator => "\t",
-        headers => \@headers,
-    );
-    $writer->write_one(\%stats);
+    if ($self->output_summary_tsv) {
+        my @headers = $self->headers;
+        my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+            output => $self->output_summary_tsv,
+            separator => "\t",
+            headers => \@headers,
+        );
+        $writer->write_one(\%stats);
+    }
     $self->_stats_hash_ref(\%stats);
     return 1;
 };
