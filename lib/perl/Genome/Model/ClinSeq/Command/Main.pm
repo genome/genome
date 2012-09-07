@@ -141,7 +141,6 @@ sub execute {
 
   #Define reference builds - TODO: should determine this automatically from input builds
   my $reference_build_ucsc = "hg19";
-  my $reference_build_ncbi_n = "37";
 
   #Reference annotations - Extra annotation files not currently part of the APIPE system...
   #TODO: Create official versions of these data on allocated disk
@@ -317,13 +316,6 @@ sub execute {
     }
   }
 
-
-  #Generate single genome (i.e. single BAM) global copy number segment plots for each BAM.  These help to identify sample swaps
-  if ($wgs){
-    $step++; print MAGENTA, "\n\nStep $step. Creating single BAM CNV plots for each BAM", RESET;
-    &runSingleGenomeCnvPlot('-patient_dir'=>$patient_dir, '-data_paths'=>$data_paths, '-reference_build_ncbi_n'=>$reference_build_ncbi_n, '-verbose'=>$verbose);
-  }
-
   #Generate a summary of SV results from the WGS SV results
   if ($wgs){
     my $wgs_somatic_build = $builds->{wgs};
@@ -333,7 +325,7 @@ sub execute {
     my $r = $summarize_svs_cmd->execute();
   }
 
-  #Generate a summary of CNV results 
+  #Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
   if ($wgs){
     my $cnv_summary_dir = $patient_dir . "cnv/";
     $step++; print MAGENTA, "\n\nStep $step. Summarizing CNV results from WGS somatic variation", RESET;
@@ -1174,53 +1166,5 @@ sub runSnvBamReadCounts{
   return();
 }
 
-
-###################################################################################################################################
-#Get BAM red counts for SNV positions from WGS, Exome and RNAseq BAMS                                                             #
-###################################################################################################################################
-sub runSingleGenomeCnvPlot{
-  my %args = @_;
-  my $patient_dir = $args{'-patient_dir'};
-  my $data_paths = $args{'-data_paths'};
-  my $reference_build_ncbi_n = $args{'-reference_build_ncbi_n'};
-  my $verbose = $args{'-verbose'};
-
-  my $single_bam_cnv_dir = "$patient_dir"."cnv/single_bam_cnv/";
-  mkdir ($single_bam_cnv_dir);
-  my $output_pdf_name = "CNV_SingleBAMs_TumorAndNormal.pdf";
-  my $output_pdf_path = $single_bam_cnv_dir . $output_pdf_name;
-
-  #First test to see if a single BAM CNV plot.pdf is already created (done by more recent versions of the somatic variation pipeline)
-  my $test_path = "$data_paths->{'wgs'}->{root}"."variants/cnv/plot-cnv*/cnv_graph.pdf";
-  my $pdf_path = `ls $test_path  2>/dev/null`;
-  chomp($pdf_path);
-  if (-e $pdf_path){  
-    if ($verbose){print YELLOW, "\n\nSingle BAM CNV pdf already exists in somatic variation results - copying it to clinseq build dir", RESET;}
-    if (-e $output_pdf_path){
-      if ($verbose){print YELLOW, "\n\tAlready there...", RESET;}
-    }else{
-      my $cp_cmd = "cp $pdf_path $output_pdf_path";
-      if ($verbose){print YELLOW, "\n\t$cp_cmd", RESET;}
-      Genome::Sys->shellcmd(cmd => $cp_cmd);
-    }
-  }else{
-    #The .pdf file was not found.  Presumably this is an older somatic variation build that did not include this step. Generate it now
-    my $cn_stdout = "$single_bam_cnv_dir"."CNV_SingleBAMs_TumorAndNormal.stdout";
-    my $cn_stderr = "$single_bam_cnv_dir"."CNV_SingleBAMs_TumorAndNormal.stderr";
-    my $single_bam_cnv_plot_cmd = "gmt copy-number plot-segments-from-bams-workflow  --normal-bam=$data_paths->{wgs}->{normal_bam}  --tumor-bam=$data_paths->{wgs}->{tumor_bam}  --output-directory=$single_bam_cnv_dir  --genome-build=$reference_build_ncbi_n  --output-pdf=$output_pdf_name";
-    if (-e $output_pdf_path){
-      if ($verbose){print YELLOW, "\n\nSingle BAM CNV pdf already exists - skipping", RESET;}
-    }else{
-      if ($verbose){
-        print YELLOW, "\n\n$single_bam_cnv_plot_cmd", RESET;
-      }else{
-        $single_bam_cnv_plot_cmd .= " 1>$cn_stdout 2>$cn_stderr";
-      }
-      Genome::Sys->shellcmd(cmd => $single_bam_cnv_plot_cmd);
-    }
-  }
-
-  return();
-}
 
 1;
