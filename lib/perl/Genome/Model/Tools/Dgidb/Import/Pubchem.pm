@@ -49,7 +49,7 @@ class Genome::Model::Tools::Dgidb::Import::Pubchem {
             default => 'http://pubchem.ncbi.nlm.nih.gov/',
         },
         citation_text => {
-            default => "PubChem's BioAssay Database. Wang Y, Xiao J, ..., Gindulyte A, Bryant SH. Nucleic Acids Res. 2012 Jan;40(Database issue):D400-12. Epub 2011 Dec 2. PMID: 22140110;",
+            default => "PubChem's BioAssay Database. Wang Y, Xiao J, ..., Gindulyte A, Bryant SH. Nucleic Acids Res. 2012 Jan;40(Database issue):D400-12. Epub 2011 Dec 2. PMID: 22140110",
         },
     ],
     doc => 'Import synonyms from pubchem into a postgres db',

@@ -463,14 +463,14 @@ sub _import_gene {
         next if $Alternate_Symbol eq 'NA';
         my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'PharmGKB_Alternate_Symbol','');
     }
-    my @gene_cross_references = split(",", $interaction->{Gene_Cross_References});
-    for my $gene_cross_reference (@gene_cross_references){
-        next if $gene_cross_reference eq 'NA';
-        my @data_pair = split(":", $gene_cross_reference);
-        my $cross_ref_type=join("_", "PharmGKB", $data_pair[0]);
-        my $cross_ref_value=$data_pair[1];
-        my $cross_reference_association = $self->_create_gene_alternate_name_report($gene_accession, $cross_ref_value, $cross_ref_type, '');
-    }
+#   my @gene_cross_references = split(",", $interaction->{Gene_Cross_References});
+#    for my $gene_cross_reference (@gene_cross_references){
+#        next if $gene_cross_reference eq 'NA';
+#        my @data_pair = split(":", $gene_cross_reference);
+#        my $cross_ref_type=join("_", "PharmGKB", $data_pair[0]);
+#        my $cross_ref_value=$data_pair[1];
+#        my $cross_reference_association = $self->_create_gene_alternate_name_report($gene_accession, $cross_ref_value, $cross_ref_type, '');
+#    }
     unless($interaction->{Is_VIP} eq 'NA'){
     my $is_vip_association = $self->_create_gene_category_report($gene_accession, 'PharmGKB_Is_VIP', $interaction->{Is_VIP},'');
     }
