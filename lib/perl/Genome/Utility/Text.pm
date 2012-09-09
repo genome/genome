@@ -196,7 +196,7 @@ sub side_by_side {
                 if($stack) {
                     return join("\n\n", @strings);
                 }
-                $tucking = "\n" . '  'x($new_length/$max_width) . '`-';
+                $tucking = "\n" . '  'x($new_length/$max_width) . '`-> ';
             }
 
             my $next_final_length = $width + width($combined_line) +
@@ -291,6 +291,8 @@ sub tree_to_condensed_string {
 
 sub tree_to_string {
     my ($tree, $foundation, $prefix, $condensed) = @_;
+    $foundation = $foundation || '';
+    $prefix = $prefix || '';
 
     my $result = '';
     given(ref($tree)) {

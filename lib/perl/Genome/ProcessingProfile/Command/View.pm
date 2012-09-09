@@ -4,15 +4,16 @@ use strict;
 use warnings;
 use feature 'switch';
 
-BEGIN {
-    $ENV{UR_DBI_NO_COMMIT} = 1;
-};
+#BEGIN {
+#    $ENV{UR_DBI_NO_COMMIT} = 1;
+#};
 
 use Genome;
 use Term::ReadKey 'GetTerminalSize';
 use List::MoreUtils "uniq";
 
 class Genome::ProcessingProfile::Command::View {
+    doc => "Display basic information about a processing-profile.",
     is => 'Command::V2',
     has => [
         processing_profile => {
@@ -148,19 +149,29 @@ sub _get_strategies {
         given($self->show_strategies_as) {
             when('raw') {
                 $formatted_strategy_str = sprintf("%s: %s\n", $name,
-                        $self->color($strategy_str, 'bold'));
+                        $self->_color($strategy_str, 'bold'));
             }
             when('raw-tree') {
                 my $tree = _get_strategy_tree($strategy_str);
-                $formatted_strategy_str =
-                        Genome::Utility::Text::tree_to_string($tree);
+                if($tree) {
+                    $formatted_strategy_str =
+                            Genome::Utility::Text::tree_to_string($tree);
+                } elsif($strategy_str) {
+                    $formatted_strategy_str = 
+                        $self->_color("Error parsing strategy!", 'red');
+                }
                 $formatted_strategy_str = "$name\n" . $formatted_strategy_str;
             }
             when('condensed-tree') {
                 my $tree = _get_strategy_tree($strategy_str);
-                $formatted_strategy_str =
-                        Genome::Utility::Text::tree_to_condensed_string(
-                        _format_tree($tree));
+                if($tree) {
+                    $formatted_strategy_str =
+                            Genome::Utility::Text::tree_to_condensed_string(
+                            _format_tree($tree));
+                } elsif($strategy_str) {
+                    $formatted_strategy_str = 
+                        $self->_color("Error parsing strategy!", 'red');
+                }
                 $formatted_strategy_str = "$name\n" . $formatted_strategy_str;
             }
         }
@@ -175,7 +186,7 @@ sub _get_strategies {
             max_width => $width,
             stack => 1,
     );
-    $result .= "\n";
+    $result .= "\n" if $result;
     return $result;
 }
 
@@ -212,7 +223,7 @@ sub _get_models {
                 }
             }
         }
-        push(@model_names,   $self->_color($model->name, 'bold'));
+        push(@model_names,   $self->_color($model->name, $color));
         push(@model_ids,     $model->id);
         if(defined($model->subject)){
             push(@subject_ids,   $model->subject->id);
@@ -225,12 +236,10 @@ sub _get_models {
         $models_shown += 1;
     }
 
-    my $model_name_column = join("\n", "Model Name",
-            map {$self->_color($_, 'bold green')} @model_names);
+    my $model_name_column = join("\n", "Model Name", @model_names);
     my $model_id_column = join("\n", "Model ID", @model_ids);
     my $subject_id_column = join("\n", "Sample ID", @subject_ids);
-    my $subject_name_column = join("\n", "Sample Name",
-            map {$self->_color($_ . '', 'bold')} @subject_names);
+    my $subject_name_column = join("\n", "Sample Name", @subject_names);
 
     my $models = Genome::Utility::Text::side_by_side(
             [$model_id_column, $model_name_column],
