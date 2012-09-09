@@ -144,7 +144,7 @@ sub _display_build {
 %s
 %s %s
 %s %s
-%s %ss
+%s %s
 %s       %s 
 
 %s
