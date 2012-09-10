@@ -32,12 +32,6 @@ class Genome::Model::MetagenomicComposition16s::Command::RunStatus {
             doc => 'Separator character to use when printing, saving and email attachments. For tab separator, use "tab".',
         },
     ],
-    has_transient => [
-        processing_profile => {
-            is => 'Genome::ProcessingProfile::MetagenomicComposition16s',
-            id_by => 'processing_profile_id',
-        },
-    ]
 };
 
 sub help_brief { 
