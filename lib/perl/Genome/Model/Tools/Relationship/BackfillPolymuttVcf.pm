@@ -22,7 +22,7 @@ class Genome::Model::Tools::Relationship::BackfillPolymuttVcf {
        },
     ],
     has_optional_input => [
-       roi_file => {
+       segregating_sites_file => {
            is => "Text",
            doc => "Optional roi file (just chrom pos) to use instead of generating one from segregating sites in the model group",
        },
@@ -34,6 +34,19 @@ class Genome::Model::Tools::Relationship::BackfillPolymuttVcf {
            is => "Text",
            default => '1.6',
        },
+       # Roi limiting params
+       roi_file => {
+            is => 'Text',
+            doc => 'Set this along with roi_name to limit the original polymutt vcfs (from the model group) to roi target regions',
+        },
+        roi_name => {
+            is => 'Text',
+            doc => 'Set this along with roi_file to limit the original polymutt vcfs (from the model group) to roi target regions',
+        },
+        wingspan => {
+            is => 'Text',
+            doc => 'Set this to add a wingspan to region limiting',
+        },
     ],
     has_transient_optional => [
         _builds => {
@@ -61,23 +74,40 @@ sub help_detail {
 sub execute {
     my $self=shift;
 
+    $self->validate_inputs;
+
     $self->status_message("Resolving valid builds for the given model group");
     $self->resolve_valid_builds;
 
     $self->status_message("Preparing directories");
     $self->prepare_directories;
 
-    $self->status_message("Resolving the roi file to be used");
-    my $roi_file = $self->resolve_roi_file;
+    $self->status_message("Resolving the segregating sites file to be used");
+    my $segregating_sites_file = $self->resolve_segregating_sites_file;
 
-    $self->status_message("Running Polymutt with the roi file");
-    $self->run_polymutt_on_roi($roi_file);
+    $self->status_message("Running Polymutt with the segregating sites file");
+    $self->run_polymutt_on_segregating_sites($segregating_sites_file);
+
+    $self->status_message("Performing region limiting if requested");
+    $self->region_limit_model_group;
 
     $self->status_message("Backfilling all original vcfs with force-genotype data");
     $self->combine_individual_vcfs;
 
     $self->status_message("Combining all backfilled vcfs into one final vcf");
     $self->create_final_vcf;
+
+    return 1;
+}
+
+sub validate_inputs {
+    my $self = shift;
+
+    if ($self->roi_file || $self->roi_name || $self->wingspan) {
+        unless ($self->roi_file && $self->roi_name&& $self->wingspan) {
+            die $self->error_message("roi_file, roi_name and wingspan must all be defined together if one of them is provided");
+        }
+    }
 
     return 1;
 }
@@ -128,19 +158,19 @@ sub prepare_directories {
     return 1;
 }
 
-sub resolve_roi_file {
+sub resolve_segregating_sites_file {
     my $self = shift;
 
-    my $roi_file = $self->roi_file;
-    unless($roi_file) {
-        $self->status_message("No roi file supplied, attempting to make a roi file of all possible sites from Model group outputs...");
-        $roi_file = $self->assemble_list_of_segregating_sites();
+    my $segregating_sites_file = $self->segregating_sites_file;
+    unless($segregating_sites_file) {
+        $self->status_message("No segregating sites file supplied, attempting to make a segregating sites file of all possible sites from Model group outputs...");
+        $segregating_sites_file = $self->assemble_list_of_segregating_sites();
     }
-    unless (-s $roi_file) {
-        die $self->error_message("roi file $roi_file does not exist or is empty");
+    unless (-s $segregating_sites_file) {
+        die $self->error_message("segregating sites file $segregating_sites_file does not exist or is empty");
     }
 
-    return $roi_file;
+    return $segregating_sites_file;
 }
 
 # Gather a list of all variant sites from all builds
@@ -150,7 +180,7 @@ sub assemble_list_of_segregating_sites {
 
     my $output_dir = $self->output_dir;
     my @builds = $self->_builds;
-    my $roi_filename  = $output_dir . "/segregating_sites.bed";
+    my $segregating_sites_filename  = $output_dir . "/segregating_sites.bed";
 
     my %positions;
     #open every final original snvs.vcf.gz and accumulate all unique positions that will need to be polled across the model group. (CHR POS)
@@ -168,16 +198,16 @@ sub assemble_list_of_segregating_sites {
         $fh->close();
     }
 
-    #print roi file
-    my $roi_output_fh = Genome::Sys->open_file_for_writing($roi_filename);
+    #print segregating sites file
+    my $sites_output_fh = Genome::Sys->open_file_for_writing($segregating_sites_filename);
     for my $chr (sort keys %positions) {
         for my $pos (sort keys %{$positions{$chr}}) {
             my $start = $pos -1;
-            $roi_output_fh->print("$chr\t$pos\n");
+            $sites_output_fh->print("$chr\t$pos\n");
         }
     }
-    $roi_output_fh->close();
-    return $roi_filename;
+    $sites_output_fh->close();
+    return $segregating_sites_filename;
 }
 
 #FIXME Pretty hacky... be less hacky
@@ -188,6 +218,26 @@ sub polymutt_dir_for_build {
         die $self->error_message("Polymutt dir $dir does not exist or is not a directory");
     }
     return $dir;
+}
+
+# Return the variant vcf (from the model group) for this build.
+# This will be the original vcf if region limiting was not requested. If it was requested, return the post-region-limiting file
+sub variant_vcf_for_build {
+    my ($self, $build, $verify_existance) = @_;
+    if ($self->roi_file) {
+        return $self->region_limited_variant_vcf_for_build($build, $verify_existance);
+    } else {
+        return $self->original_vcf_for_build($build);
+    }
+}
+
+sub region_limited_variant_vcf_for_build {
+    my ($self, $build, $verify_existance) = @_;
+    my $vcf = $self->subdir_for_build($build) . "/snvs.region_limited.vcf.gz"; 
+    if ($verify_existance && !(-s $vcf)) {
+        die $self->error_message("Region limited variant vcf $vcf does not exist or has no size");
+    }
+    return $vcf;
 }
 
 sub original_vcf_for_build {
@@ -281,15 +331,15 @@ sub backfilled_vcf_for_build {
     return $vcf;
 }
 
-# Run polymutt (just in standard mode, no denovo) with the roi file to force genotype
-sub run_polymutt_on_roi {
-    my ($self, $roi_file) = @_;
+# Run polymutt (just in standard mode, no denovo) with the segregating sites file to force genotype
+sub run_polymutt_on_segregating_sites {
+    my ($self, $segregating_sites_file) = @_;
 
     # Params for every operation
     my %params = (
         version => $self->polymutt_version,
         denovo => 0,
-        roi_file => $roi_file,
+        roi_file => $segregating_sites_file,
         bgzip => 1,
         chr2process => $self->chr2process,
     );
@@ -297,7 +347,7 @@ sub run_polymutt_on_roi {
     my @global_input_properties = keys %params;
 
     my $workflow_model = Workflow::Model->create(
-        name => 'Polymutt for ROI',
+        name => 'Polymutt for segregating sites',
         input_properties => [
             @global_input_properties,
         ],
@@ -416,7 +466,7 @@ sub combine_individual_vcfs {
     my @builds = $self->_builds;
     for my $build (@builds) {
         my $force_genotype_vcf = $self->force_genotype_vcf_for_build($build, 1);
-        my $original_vcf = $self->original_vcf_for_build($build);
+        my $original_vcf = $self->variant_vcf_for_build($build);
         my $output_file = $self->backfilled_vcf_for_build($build);
         my $family_id = $self->family_id_for_build($build);
 
@@ -515,6 +565,124 @@ sub create_final_vcf {
     }
 
     return 1;
+}
+
+# FIXME just copypasted, fix this up
+# Region limit the output files
+sub region_limit_model_group {
+    my $self = shift;
+
+    unless ($self->roi_file) {
+        $self->warning_message("No roi_file set, skipping region limiting. Is this intentional? With no roi set, this may take a LONG time.");
+        return 1;
+    }
+
+    my @builds = $self->_builds;
+
+    my @answers;
+    my %in_out;
+
+    my %inputs;
+    $inputs{joinx_version} = $self->joinx_version;
+
+    $inputs{region_bed_file} = $self->roi_file;
+    $inputs{roi_name} = $self->roi_name;
+    $inputs{wingspan} = $self->wingspan;
+
+    my @inputs;
+    my $count=1;
+
+    #set up individualized input params and input values
+    for my $build (@builds){
+        my $sample = $build->model->subject->name;
+        my $vcf = $self->original_vcf_for_build($build);
+        my $output = $self->region_limited_variant_vcf_for_build($build);
+        $in_out{$vcf} = $output;
+        push @inputs, ("input_vcf_".$count,"output_vcf_".$count);
+        $inputs{"input_vcf_".$count} = $vcf;
+        $inputs{"output_vcf_".$count} = $output;
+        push @answers, $output;
+        $count++;
+    }
+
+    my $workflow = Workflow::Model->create(
+        name => 'Multi-Vcf Merge',
+        input_properties => [
+            "region_bed_file",
+            "roi_name",
+            "wingspan",
+            "joinx_version",
+            @inputs,
+        ],
+        output_properties => [
+            'output',
+        ],
+    );
+
+    $workflow->log_dir($self->output_dir);
+
+    #add individual region-limiting operations
+    for my $num (1..($count-1)){
+        my $region_limit_operation = $workflow->add_operation(
+            name => "region limiting ".$num,
+            operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Vcf::RegionLimit"),
+        );
+
+        #link common properties
+        for my $prop ("region_bed_file","wingspan","roi_name"){
+            $workflow->add_link(
+                left_operation => $workflow->get_input_connector,
+                left_property => $prop,
+                right_operation => $region_limit_operation,
+                right_property => $prop,
+            );
+        }
+
+        #link individual inputs and outputs
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => "input_vcf_".$num,
+            right_operation => $region_limit_operation,
+            right_property => "vcf_file",
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => "output_vcf_".$num,
+            right_operation => $region_limit_operation,
+            right_property => "output_file",
+        );
+
+        #link to output
+        $workflow->add_link(
+            left_operation => $region_limit_operation,
+            left_property => "output_file",
+            right_operation => $workflow->get_output_connector,
+            right_property => "output",
+        );
+    }
+
+    #validate workflow
+    my @errors = $workflow->validate;
+    if (@errors) {
+        $self->error_message(@errors);
+        die "Errors validating region-limiting workflow\n";
+    }
+
+    $self->status_message("Now launching the region-limiting workflow.");
+    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
+
+    unless($result){
+        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
+        die $self->error_message("Workflow did not return correctly.");
+    }
+
+    #check output files to make sure they exist
+    if(my @error = grep{ not(-e $_)} @answers){
+        die $self->error_message("The following region limit output files could not be found: ".join("\n",@error));
+    }
+
+    #return a list of the output files
+    return @answers;
 }
 
 # FIXME copied... call this in Genome::Model::Tools::Relationship::MergeAndFixVcfs or move to a base class
