@@ -392,7 +392,13 @@ sub _format_filter {
 sub _format_params {
     my ($param_str) = @_;
 
-    my %params = Genome::Utility::Text::param_string_to_hash($param_str);
+    my %params;
+    if($param_str =~ m/^-/) {
+        %params = Genome::Utility::Text::param_string_to_hash($param_str);
+    } else {
+        %params = _parse_strelka_args($param_str);
+    }
+
     my @result;
     for my $key (sort(keys %params)) {
         my $value = Term::ANSIColor::colored($params{$key}, 'bold');
@@ -400,5 +406,20 @@ sub _format_params {
     }
     return \@result;
 }
+
+sub _parse_strelka_args {
+    my ($string) = @_;
+
+    my @kv_pairs = split(";", $string);
+    my %result;
+    for my $kv_pair (@kv_pairs) {
+        my ($key, $value) = split("=", $kv_pair);
+        chomp($key);
+        chomp($value);
+        $result{$key} = $value || "undef";
+    }
+    return %result;
+}
+
 
 1;
