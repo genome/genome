@@ -2,7 +2,6 @@ package Genome::Utility::Text;
 
 use strict;
 use warnings;
-use feature 'switch';
 
 use Genome;
 
@@ -251,25 +250,40 @@ sub justify {
     }
 
     my $format;
-    given($kind) {
-        when('left') {
-            $format = "%s" . $spacer .
-                    substr($fill_string, -1 * $num_spaces_needed);
-        }
-        when('right') {
-            $format = substr($fill_string, 0, $num_spaces_needed ) .
-                    $spacer . "%s";
-        }
-        when('center') {
-            my $left_spaces = floor($num_spaces_needed/2);
-            my $right_spaces = $num_spaces_needed - $left_spaces;
-            $format = substr($fill_string, 0, $left_spaces) .  "%s" .
-                      substr($fill_string, -1 * $right_spaces)
-        }
-        default {
-            Carp::croak("kind argument must be one of 'left',".
-                        " 'right', or 'center', not '$kind'");
-        }
+    #given($kind) { # THIS BREAKS IN 5.8 AND LIMS USES 5.8...
+    #    when('left') {
+    #        $format = "%s" . $spacer .
+    #                substr($fill_string, -1 * $num_spaces_needed);
+    #    }
+    #    when('right') {
+    #        $format = substr($fill_string, 0, $num_spaces_needed ) .
+    #                $spacer . "%s";
+    #    }
+    #    when('center') {
+    #        my $left_spaces = floor($num_spaces_needed/2);
+    #        my $right_spaces = $num_spaces_needed - $left_spaces;
+    #        $format = substr($fill_string, 0, $left_spaces) .  "%s" .
+    #                  substr($fill_string, -1 * $right_spaces)
+    #    }
+    #    default {
+    #        Carp::croak("kind argument must be one of 'left',".
+    #                    " 'right', or 'center', not '$kind'");
+    #    }
+    #}
+    if($kind eq 'left') {
+        $format = "%s" . $spacer .
+                substr($fill_string, -1 * $num_spaces_needed);
+    } elsif($kind eq 'right') {
+        $format = substr($fill_string, 0, $num_spaces_needed ) .
+                $spacer . "%s";
+    } elsif($kind eq 'center') {
+        my $left_spaces = floor($num_spaces_needed/2);
+        my $right_spaces = $num_spaces_needed - $left_spaces;
+        $format = substr($fill_string, 0, $left_spaces) .  "%s" .
+                  substr($fill_string, -1 * $right_spaces)
+    } else {
+        Carp::croak("kind argument must be one of 'left',".
+                    " 'right', or 'center', not '$kind'");
     }
     return sprintf($format, $string);
 }
@@ -295,63 +309,118 @@ sub tree_to_string {
     $prefix = $prefix || '';
 
     my $result = '';
-    given(ref($tree)) {
-        when('HASH') {
-            my @keys = sort(keys %{$tree});
-            my $count = 0;
-            my $next_foundation = $foundation;
-            unless($condensed) {
-                $result .= tree_to_string('#', $foundation, $prefix, $condensed);
-                $next_foundation = _next_foundation($foundation, $prefix);
-            }
-            for my $key (@keys) {
-                my $next_prefix;
-                if($count == $#keys) {
-                    $next_prefix = '`-';
-                } else {
-                    $next_prefix = '|-';
-                }
-                if($condensed) {
-                    $next_prefix = '  ';
-                }
-                $result .= tree_to_string($key, $next_foundation,
-                        $next_prefix, $condensed);
+    #given(ref($tree)) {
+    #    when('HASH') {
+    #        my @keys = sort(keys %{$tree});
+    #        my $count = 0;
+    #        my $next_foundation = $foundation;
+    #        unless($condensed) {
+    #            $result .= tree_to_string('#', $foundation, $prefix, $condensed);
+    #            $next_foundation = _next_foundation($foundation, $prefix);
+    #        }
+    #        for my $key (@keys) {
+    #            my $next_prefix;
+    #            if($count == $#keys) {
+    #                $next_prefix = '`-';
+    #            } else {
+    #                $next_prefix = '|-';
+    #            }
+    #            if($condensed) {
+    #                $next_prefix = '  ';
+    #            }
+    #            $result .= tree_to_string($key, $next_foundation,
+    #                    $next_prefix, $condensed);
 
-                my $child_foundation = _next_foundation($next_foundation,
-                        $next_prefix);
-                # can only have a single 'value' for each key.
-                $result .= tree_to_string($tree->{$key}, $child_foundation,
-                        '`-', $condensed);
-                $count += 1;
-            }
-        }
-        when('ARRAY') {
-            my @items = @{$tree};
-            my $count = 0;
-            my $next_foundation = $foundation;
-            unless($condensed) {
-                $result .= tree_to_string('\\', $foundation, $prefix, $condensed);
-                $next_foundation = _next_foundation($foundation, $prefix);
-            }
-            for my $item (@items) {
-                my $next_prefix;
-                if($count == $#items) {
-                    $next_prefix = '`-';
-                } else {
-                    $next_prefix = '|-';
-                }
-                if($condensed) {
-                    $next_prefix = ' -';
-                }
+    #            my $child_foundation = _next_foundation($next_foundation,
+    #                    $next_prefix);
+    #            # can only have a single 'value' for each key.
+    #            $result .= tree_to_string($tree->{$key}, $child_foundation,
+    #                    '`-', $condensed);
+    #            $count += 1;
+    #        }
+    #    }
+    #    when('ARRAY') {
+    #        my @items = @{$tree};
+    #        my $count = 0;
+    #        my $next_foundation = $foundation;
+    #        unless($condensed) {
+    #            $result .= tree_to_string('\\', $foundation, $prefix, $condensed);
+    #            $next_foundation = _next_foundation($foundation, $prefix);
+    #        }
+    #        for my $item (@items) {
+    #            my $next_prefix;
+    #            if($count == $#items) {
+    #                $next_prefix = '`-';
+    #            } else {
+    #                $next_prefix = '|-';
+    #            }
+    #            if($condensed) {
+    #                $next_prefix = ' -';
+    #            }
 
-                $result .= tree_to_string($item, $next_foundation,
-                        $next_prefix, $condensed);
-                $count += 1;
+    #            $result .= tree_to_string($item, $next_foundation,
+    #                    $next_prefix, $condensed);
+    #            $count += 1;
+    #        }
+    #    }
+    #    default {
+    #        $result .= sprintf("%s%s%s\n", $foundation, $prefix, $tree);
+    #    }
+    #}
+    my $ref = ref($tree);
+    if($ref eq 'HASH') {
+        my @keys = sort(keys %{$tree});
+        my $count = 0;
+        my $next_foundation = $foundation;
+        unless($condensed) {
+            $result .= tree_to_string('#', $foundation, $prefix, $condensed);
+            $next_foundation = _next_foundation($foundation, $prefix);
+        }
+        for my $key (@keys) {
+            my $next_prefix;
+            if($count == $#keys) {
+                $next_prefix = '`-';
+            } else {
+                $next_prefix = '|-';
             }
+            if($condensed) {
+                $next_prefix = '  ';
+            }
+            $result .= tree_to_string($key, $next_foundation,
+                    $next_prefix, $condensed);
+
+            my $child_foundation = _next_foundation($next_foundation,
+                    $next_prefix);
+            # can only have a single 'value' for each key.
+            $result .= tree_to_string($tree->{$key}, $child_foundation,
+                    '`-', $condensed);
+            $count += 1;
         }
-        default {
-            $result .= sprintf("%s%s%s\n", $foundation, $prefix, $tree);
+    } elsif($ref eq 'ARRAY') {
+        my @items = @{$tree};
+        my $count = 0;
+        my $next_foundation = $foundation;
+        unless($condensed) {
+            $result .= tree_to_string('\\', $foundation, $prefix, $condensed);
+            $next_foundation = _next_foundation($foundation, $prefix);
         }
+        for my $item (@items) {
+            my $next_prefix;
+            if($count == $#items) {
+                $next_prefix = '`-';
+            } else {
+                $next_prefix = '|-';
+            }
+            if($condensed) {
+                $next_prefix = ' -';
+            }
+
+            $result .= tree_to_string($item, $next_foundation,
+                    $next_prefix, $condensed);
+            $count += 1;
+        }
+    } else {
+        $result .= sprintf("%s%s%s\n", $foundation, $prefix, $tree);
     }
     return $result;
 }
