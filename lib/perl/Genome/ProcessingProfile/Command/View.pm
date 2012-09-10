@@ -39,7 +39,13 @@ class Genome::ProcessingProfile::Command::View {
             default => 'condensed-tree',
             valid_values => ['raw', 'raw-tree', 'condensed-tree'],
             doc => 'How the strategy parameters (if there are any) will be displayed',
-        }
+        },
+        latest_build_status => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 0,
+            doc => 'Display latest build status for each model.'
+        },
     ],
 };
 
@@ -157,7 +163,7 @@ sub _get_strategies {
                     $formatted_strategy_str =
                             Genome::Utility::Text::tree_to_string($tree);
                 } elsif($strategy_str) {
-                    $formatted_strategy_str = 
+                    $formatted_strategy_str =
                         $self->_color("Error parsing strategy!", 'red');
                 }
                 $formatted_strategy_str = "$name\n" . $formatted_strategy_str;
@@ -169,7 +175,7 @@ sub _get_strategies {
                             Genome::Utility::Text::tree_to_condensed_string(
                             _format_tree($tree));
                 } elsif($strategy_str) {
-                    $formatted_strategy_str = 
+                    $formatted_strategy_str =
                         $self->_color("Error parsing strategy!", 'red');
                 }
                 $formatted_strategy_str = "$name\n" . $formatted_strategy_str;
@@ -201,6 +207,8 @@ sub _get_models {
     my $models_shown = 0;
     my @model_names;
     my @model_ids;
+    my @latest_build_ids;
+    my @latest_build_statuses;
     my @subject_ids;
     my @subject_names;
     for my $model (@models) {
@@ -209,8 +217,8 @@ sub _get_models {
             last;
         }
 
-        my $color = 'bold';
-        if($self->color) {
+        if($self->latest_build_status) {
+            my $color = 'bold';
             my $latest_build = $model->latest_build;
             if(defined($latest_build)) {
                 my $status = $latest_build->status;
@@ -221,9 +229,15 @@ sub _get_models {
                         $color = 'red bold';
                     }
                 }
+                push(@latest_build_statuses, $self->_color($status, $color));
+                push(@latest_build_ids, $latest_build->id);
+            } else {
+                push(@latest_build_statuses, $self->_color("N/A", 'cyan'));
+                push(@latest_build_ids, $self->_color("N/A", 'cyan'));
             }
+
         }
-        push(@model_names,   $self->_color($model->name, $color));
+        push(@model_names,   $self->_color($model->name, 'bold'));
         push(@model_ids,     $model->id);
         if(defined($model->subject)){
             push(@subject_ids,   $model->subject->id);
@@ -236,29 +250,47 @@ sub _get_models {
         $models_shown += 1;
     }
 
-    my $model_name_column = join("\n", "Model Name", @model_names);
+    my $model_name_column = join("\n",
+            $self->_color("Model Name", 'bold'), @model_names);
     my $model_id_column = join("\n", "Model ID", @model_ids);
-    my $subject_id_column = join("\n", "Sample ID", @subject_ids);
-    my $subject_name_column = join("\n", "Sample Name", @subject_names);
-
     my $models = Genome::Utility::Text::side_by_side(
             [$model_id_column, $model_name_column],
             separator => ' ',
             justification => 'left',
             max_width => $width,
     );
+    my @all_columns = ($models);
+
+    my $subject_id_column = join("\n", "Sample ID", @subject_ids);
+    my $subject_name_column = join("\n",
+            $self->_color("Sample Name", 'bold'), @subject_names);
     my $subjects = Genome::Utility::Text::side_by_side(
             [$subject_id_column, $subject_name_column],
             separator => ' ',
             justification => 'left',
             max_width => $width,
     );
+    push(@all_columns, $subjects);
+
+    if($self->latest_build_status) {
+        my $latest_build_id_column = join("\n", "Latest Build ID",
+                @latest_build_ids);
+        my $latest_build_status_column = join("\n",
+                $self->_color("Status", 'bold'),
+                @latest_build_statuses);
+        my $builds = Genome::Utility::Text::side_by_side(
+                [$latest_build_id_column, $latest_build_status_column],
+                separator => ' ',
+                justification => 'left',
+                max_width => $width,
+        );
+        push(@all_columns, $builds);
+    }
 
     $result .= sprintf("\n=== %s [%s of %s shown] ===\n",
-        $self->_color('Models', 'bold'), $models_shown, $num_models);
-
+            $self->_color('Models', 'bold'), $models_shown, $num_models);
     $result .= Genome::Utility::Text::side_by_side(
-            [$models, $subjects],
+            \@all_columns,
             separator => ' ',
             justification => 'left',
             max_width => $width,
