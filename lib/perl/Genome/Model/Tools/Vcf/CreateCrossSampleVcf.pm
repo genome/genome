@@ -173,7 +173,7 @@ sub _handle_indels {
     $self->status_message("Building Indel VCF...");
     my $ea = each_array(@builds, @indel_files);
     while( my ($build, $indel_file) = $ea->() ) {
-        my $sample = $build->model->subject->name;
+        my $sample = $build->model->subject->id;
         push @samples, $sample;
         $num_samples++;
 
@@ -312,7 +312,7 @@ sub _handle_snvs {
         unless ($build->reference_sequence_build == $reference_sequence_build) {
             die $self->error_message("Multiple reference sequence builds found for this model group between build " . $builds[0]->id . " and build " . $build->id);
         }
-        my $sample = $build->model->subject->name;
+        my $sample = $build->model->subject->id;
         my $dir = $self->output_directory . "/".$sample;
         Genome::Sys->create_directory($dir);
 
@@ -496,7 +496,7 @@ sub _region_limit_inputs {
 
     #set up individualized input params and input values
     for my $b (@builds){
-        my $sample = $b->model->subject->name;
+        my $sample = $b->model->subject->id;
         my $vcf = $b->$accessor;
         my $output = $output_directory."/".$self->variant_type.".".$sample.".region_limited.vcf.gz";
         $in_out{$vcf} = $output;
@@ -596,7 +596,7 @@ sub _generate_workflow {
     my @inputs;
 
     for my $build (@builds){
-        my $sample = $build->model->subject->name;
+        my $sample = $build->model->subject->id;
         push @inputs, ($sample."_bam_file",
             $sample."_mpileup_output_file",
             $sample."_vcf_file",
@@ -842,7 +842,7 @@ sub _add_mpileup_and_backfill {
 
     #for each model, add an mpileup and backfill command
     for my $build (@builds) {
-        my $sample = $build->model->subject->name;
+        my $sample = $build->model->subject->id;
 
         #add mpileup operation
         my $mpileup = $workflow->add_operation(
