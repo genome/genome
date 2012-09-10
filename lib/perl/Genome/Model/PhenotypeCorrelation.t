@@ -19,7 +19,7 @@ if ($archos !~ /64/) {
     plan  tests => 16;
 }
 
-my $test_data_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation/2011-12-30.3/";
+my $test_data_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation/2012-09-10/";
 
 my $tmp_dir = File::Temp::tempdir('Genome-Model-Build-PhenotypeCorrelation-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
 
@@ -140,9 +140,8 @@ for my $p ($p1) {
 
     note("diffs = ".scalar(@diff));
 
-    ok( (scalar(@diff) == 8 ), "there are eight differences, accounted for by an empty subdirectory with a negative ID number which differs per run, and a different build directory path")
+    is(scalar(@diff), 4, "there are known differences, accounted for by an empty subdirectory with a negative ID number which differs per run, and a different build directory path in the workflow.xml")
         or diag(@diff);
-
 }
 
 __END__
