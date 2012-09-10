@@ -76,23 +76,18 @@ sub _run_aligner {
         die($self->error_message("Unable to create a merged bam with both aligned and unaligned reads."));
     }
 
-    #TODO tophat 2.0.1 and later will add readgroup tags automatically
-
-    my $sam_file = $scratch_directory . "/all_sequences.sam";
-
-    my $samtools_view_cmd = Genome::Model::Tools::Sam::BamToSam->create(
-        sam_file => $sam_file,
-        bam_file => "$scratch_directory/all_reads.bam",
-        include_headers => 0,
-        use_version => $self->samtools_version,
+    my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+    my $sam_cmd = "$sam_path view $scratch_directory/all_reads.bam |";
+    my $add_rg_cmd = Genome::Model::Tools::Sam::AddReadGroupTag->create(
+      input_filehandle => IO::File->new($sam_cmd),
+      output_filehandle => $self->_sam_output_fh,
+      read_group_tag => $self->read_and_platform_group_tag_id,
+      pass_sam_headers => 0,
     );
 
-    unless($samtools_view_cmd->execute()){
-        die($self->error_message("Unable to convert bam to sam."));
-    }
-
-    unless (-s $sam_file) {
-        die "The sam output file $sam_file is zero length; something went wrong.";
+    unless($add_rg_cmd->execute){
+      $self->error_message("Adding read group to sam file failed!");
+      die $self->error_message;
     }
 
     #promote other misc tophat result files - converted sam will be handled downstream
@@ -105,7 +100,6 @@ sub _run_aligner {
 
 sub _check_read_count {
     my ($self) = @_;
-    $DB::single = 1;
     my $fq_rd_ct = $self->_fastq_read_count;
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
@@ -145,12 +139,12 @@ sub fillmd_for_sam {
 # otherwise 1.  If you are streaming output straight to BAM then you need to take care of adding RG
 # tags with either the wrapper or the aligner itself, and this needs to be 0.
 sub requires_read_group_addition {
-    return 1;
+    return 0;
 }
 
 # if you are streaming to bam, set this to 1.  Beware of read groups.
 sub supports_streaming_to_bam {
-    return 0;
+    return 1;
 }
 
 # If your aligner accepts BAM files as inputs, return 1.  You'll get a set of BAM files as input, with
