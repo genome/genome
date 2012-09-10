@@ -395,4 +395,8 @@ sub resolve_assemble_lsf_resource {
     return;
 }
 
+sub resolve_assemble_lsf_queue {
+    return;
+}
+
 1;

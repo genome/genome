@@ -599,9 +599,10 @@ sub _add_assembler {
     my ($self, $workflow, $build, $lsf_queue, $lsf_project) = @_;
 
     my $lsf_resource = $build->resolve_assemble_lsf_resource();
+    my $assemble_lsf_queue = $build->resolve_assemble_lsf_queue || $lsf_queue;
 
     return _add_operation($workflow, 'Assemble', {
-            lsf_queue => $lsf_queue,
+            lsf_queue => $assemble_lsf_queue,
             lsf_project => $lsf_project,
             lsf_resource => $lsf_resource});
 }

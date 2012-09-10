@@ -237,6 +237,13 @@ sub resolve_assemble_lsf_resource {
     return sprintf($template, $mem, $mem, $mem);
 }
 
+sub resolve_assemble_lsf_queue {
+    my $self = shift;
+    my $queue = 'assembly';
+    $queue = 'alignment-pd' if $self->run_by eq 'apipe-tester';
+    return $queue;
+}
+
 sub calculate_estimated_kb_usage {
     my $self = shift;
 
