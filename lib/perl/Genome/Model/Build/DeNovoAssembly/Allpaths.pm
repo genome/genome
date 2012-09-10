@@ -240,7 +240,7 @@ sub resolve_assemble_lsf_resource {
 sub resolve_assemble_lsf_queue {
     my $self = shift;
     my $queue = 'assembly';
-    $queue = 'alignment-pd' if $self->run_by eq 'apipe-tester';
+    $queue = 'alignment-pd' if $ENV{UR_DBI_NO_COMMIT};
     return $queue;
 }
 

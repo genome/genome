@@ -534,8 +534,8 @@ sub _resolve_workflow_for_normal_assembly {
     my $input_connector = $workflow->get_input_connector();
     my $output_connector = $workflow->get_output_connector();
 
-    my $assemble_op = $self->_add_assembler($workflow, $build,
-        $lsf_queue, $lsf_project);
+    my $assemble_op = $self->_add_assembler($workflow, $build, $lsf_queue,
+        $lsf_project);
 
     my $id_op;
     if ($self->process_instrument_data_can_parallelize) {
@@ -596,10 +596,10 @@ sub _resolve_workflow_for_normal_assembly {
 }
 
 sub _add_assembler {
-    my ($self, $workflow, $build, $lsf_queue, $lsf_project) = @_;
+    my ($self, $workflow, $build, $default_lsf_queue, $lsf_project) = @_;
 
     my $lsf_resource = $build->resolve_assemble_lsf_resource();
-    my $assemble_lsf_queue = $build->resolve_assemble_lsf_queue || $lsf_queue;
+    my $assemble_lsf_queue = $build->resolve_assemble_lsf_queue || $default_lsf_queue;
 
     return _add_operation($workflow, 'Assemble', {
             lsf_queue => $assemble_lsf_queue,
