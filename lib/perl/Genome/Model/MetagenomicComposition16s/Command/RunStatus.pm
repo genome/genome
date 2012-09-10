@@ -32,6 +32,12 @@ class Genome::Model::MetagenomicComposition16s::Command::RunStatus {
             doc => 'Separator character to use when printing, saving and email attachments. For tab separator, use "tab".',
         },
     ],
+    has_transient => [
+        processing_profile => {
+            is => 'Genome::ProcessingProfile::MetagenomicComposition16s',
+            id_by => 'processing_profile_id',
+        },
+    ]
 };
 
 sub help_brief { 
@@ -44,7 +50,11 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
-    
+
+    unless($self->processing_profile){
+      $self->processing_profile(Genome::ProcessingProfile->get(2571784));
+    }
+
     my @instrument_data = Genome::InstrumentData::454->get(
         run_name => $self->run_name,
         region_number => $self->region_number,
@@ -54,8 +64,8 @@ sub execute {
         $self->error_message('Cannot find 454 instrument_data for run name ('.$self->run_name.') and region ('.$self->region_number.')');
         return;
     }
-
     my $processing_profile_id = $self->processing_profile->id;
+
     my @subjects_to_skip = map { qr/$_/ } (qw/ ^nctrl$ ^n\-cntrl$ /);
     my @rows;
     for my $instrument_data ( @instrument_data ) {
@@ -67,7 +77,7 @@ sub execute {
         push @rows, \@row;
         push @row, $sample->name;
         push @row, $instrument_data->id;
-        my ($model) = sort { $b->id <=> $a->id } grep { $_->subject_id eq $instrument_data->sample_id } grep { $_->processing_profile_id eq $processing_profile_id } map { $_->model } Genome::Model::Input->get(name => 'instrument_data', value_id => $instrument_data->id,);
+        my ($model) = sort { $b->id <=> $a->id } grep { $_->subject_id eq $instrument_data->sample_id } grep {$_->processing_profile_id eq $processing_profile_id } map { $_->model } Genome::Model::Input->get(name => 'instrument_data', value_id => $instrument_data->id,);
         if ( not $model ) {
             push @row, '', '', '', ''. '', '';
             next;
