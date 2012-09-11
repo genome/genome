@@ -14,7 +14,7 @@ BEGIN {
 }
 
 my $tmpdir = tempdir(
-    't-DumpClinicallData-XXXXX',
+    't-ClinicalData-XXXXX',
     DIR => '/gsc/var/cache/testsuite/running_testsuites',
     CLEANUP => 1
 );

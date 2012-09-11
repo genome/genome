@@ -116,9 +116,16 @@ sub from_file {
     shift @attr_names; # drop the leading Sample_name in header
 
     my @sample_data;
+    my $line_num = 1;
     while (my $line = $fh->getline) {
         chomp $line;
+        ++$line_num;
         my @fields = map { $_ eq $missing_string ? undef : $_ } split("\t", $line);
+        if (scalar @fields - 1 != scalar @attr_names) { # - 1 for Sample_name
+            die "At line $line_num: # of columns does not match header:\n"
+                . "HEADER: " . join(",", @attr_names) . "\n"
+                . "  LINE: " . join(",", @fields) . "\n";
+        }
         push(@sample_data, \@fields);
     }
 
