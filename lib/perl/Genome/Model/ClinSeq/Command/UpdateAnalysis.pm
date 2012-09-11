@@ -32,53 +32,88 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         sample_type_filter => {
               is => 'Text',
               default => 'pcr product',
-              doc => 'When displaying samples, filter out those with certain sample types. e.g. "pcr product,protein"',
+              doc => 'When displaying samples, filter out those with certain sample types. [comma separate list]',
+        },
+        _ref_align_pp_id => {
+              is => 'Number',
+              default => '2635769',
         },
         ref_align_pp => {
               is => 'Genome::ProcessingProfile',
-              default => Genome::ProcessingProfile->get('2635769'),
-              doc => 'Desired reference-alignment processing profile.  Default is 2635769',
+              id_by => '_ref_align_pp_id',
+              doc => 'Desired reference-alignment processing profile',
+        },
+        _wgs_somatic_variation_pp_id => {
+              is => 'Number',
+              default => '2756469',
         },
         wgs_somatic_variation_pp => {
               is => 'Genome::ProcessingProfile',
-              default => Genome::ProcessingProfile->get('2756469'),
-              doc => 'Desired WGS somatic-variation processing profile.  Default is 2756469',
+              id_by => '_wgs_somatic_variation_pp_id',
+              doc => 'Desired WGS somatic-variation processing profile',
+        },
+        _exome_somatic_variation_pp_id => {
+              is => 'Number',
+              default => '2756470',
         },
         exome_somatic_variation_pp => {
               is => 'Genome::ProcessingProfile',
-              default => Genome::ProcessingProfile->get('2756470'),
-              doc => 'Desired Exome somatic-variation processing profile.  Default is 2756470',
+              id_by => '_exome_somatic_variation_pp_id',
+              doc => 'Desired Exome somatic-variation processing profile',
+        },
+        _rnaseq_pp_id => {
+              is => 'Number',
+              default => '2754795',
         },
         rnaseq_pp => {
               is => 'Genome::ProcessingProfile',
-              default => Genome::ProcessingProfile->get('2754795'),
-              doc => 'Desired rna-seq processing profile.  Default is 2754795'
+              id_by => '_rnaseq_pp_id',
+              doc => 'Desired rna-seq processing profile',
+        },
+        _clinseq_pp_id => {
+              is => 'Number',
+              default => '2649924',
         },
         clinseq_pp => {
               is => 'Genome::ProcessingProfile',
-              default => Genome::ProcessingProfile->get('2649924'),
-              doc => 'Desired clin-seq processing profile.  Default is 2649924',
+              id_by => '_clinseq_pp_id',
+              doc => 'Desired clin-seq processing profile',
+        },
+        _reference_sequence_build_id => {
+              is => 'Number',
+              default => '106942997',
         },
         reference_sequence_build => {
               is => 'Genome::Model::Build',
-              default => Genome::Model::Build->get('106942997'),
-              doc => 'Desired reference sequence build.  Default is 106942997',
+              id_by => '_reference_sequence_build_id',
+              doc => 'Desired reference sequence build',
+        },
+        _annotation_build_id => {
+              is => 'Number',
+              default => '124434505',
         },
         annotation_build => {
-              #'annotation_build' in somatic-variation and rna-seq, 'annotation_reference_build' in reference-alignment
               is => 'Genome::Model::Build',
-              default => Genome::Model::Build->get('124434505'),
-              doc => 'Desired reference annotation build.  Default is 124434505',
+              id_by => '_annotation_build_id',
+              doc => 'Desired reference annotation build',
+        },
+        _dbsnp_build_id => {
+              is => 'Number',
+              default => '106375969',
         },
         dbsnp_build => {
               is => 'Genome::Model::Build',
-              default => Genome::Model::Build->get('106375969'),
-              doc => 'Desired dbSNP build.  Default is 106375969',
+              id_by => '_dbsnp_build_id',
+              doc => 'Desired dbSNP build',
+        },
+        _previously_discovered_variations_id => {
+              is => 'Number',
+              default => '110108854',
         },
         previously_discovered_variations => {
               is => 'Genome::Model::Build',
-              default => Genome::Model::Build->get('110108854'),
-              doc => 'Desired previously discovered variants build.  Default is 110108854',
+              id_by => '_previously_discovered_variations_id',
+              doc => 'Desired previously discovered variants build',
         },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
