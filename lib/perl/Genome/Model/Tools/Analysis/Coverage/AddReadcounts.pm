@@ -28,9 +28,8 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
 
         genome_build => {
             is => 'String',
-            is_optional => 1,
+            is_optional => 0,
 	    doc => 'takes either a string describing the genome build (one of 36, 37, mm9, mus37, mus37wOSK) or a path to the genome fasta file',
-            default => '36',
         },
 
         min_quality_score => {
