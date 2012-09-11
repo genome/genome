@@ -59,7 +59,7 @@ class Genome::Model::PhenotypeCorrelation {
             is => "Text",
             is_many => 0,
             is_optional => 0,
-            valid_values => [qw( quantitative case-control mendelian )],
+            valid_values => [qw( quantitative case-control mendelian none)],
             doc => "Type of trait under analysis",
         },
         cohort_type => {
@@ -342,6 +342,10 @@ sub _execute_build {
     #mendelian is broken so let's abort if that's our PP
     if($self->trait_type eq 'mendelian') {
         $self->error_message("Mendelian specific analysis is currently under construction. Model will succeed but not move forwards.");
+        return 1;
+    }
+    if($self->trait_type eq 'none') {
+        $self->error_message("No statistical analysis requested.");
         return 1;
     }
 
