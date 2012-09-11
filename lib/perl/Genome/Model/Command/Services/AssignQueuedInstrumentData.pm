@@ -122,9 +122,11 @@ sub execute {
         my ($instrument_data_type) = $pse->added_param('instrument_data_type');
         my ($instrument_data_id)   = $pse->added_param('instrument_data_id');
 
-        $self->add_processing_profiles_to_pse($pse);
-
         my @processing_profile_ids = $pse->added_param('processing_profile_id');
+        if ( not @processing_profile_ids ) {
+            $self->add_processing_profiles_to_pse($pse);
+            @processing_profile_ids = $pse->added_param('processing_profile_id');
+        }
         my $subject = $instrument_data->sample;
 
         if($instrument_data->ignored() ) {
@@ -1338,8 +1340,6 @@ sub add_processing_profiles_to_pse {
 
     my $instrument_data = $pse->{_instrument_data};
     my ($instrument_data_type) = $pse->added_param('instrument_data_type');
-
-    return 1 if $pse->added_param('processing_profile_id'); #FIXME: THIS SHOULD ONLY BE USED DURING THE TRANSITION PERIOD WHILE OLD AQID IS IN USE
 
     eval {
         my @processing_profile_ids_to_add;
