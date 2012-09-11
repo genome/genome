@@ -122,10 +122,10 @@ sub execute {
         my ($instrument_data_type) = $pse->added_param('instrument_data_type');
         my ($instrument_data_id)   = $pse->added_param('instrument_data_id');
 
-        my @processing_profile_ids = $pse->added_param('processing_profile_id');
+        my @processing_profile_ids = grep { defined } $pse->added_param('processing_profile_id');
         if ( not @processing_profile_ids ) {
             $self->add_processing_profiles_to_pse($pse);
-            @processing_profile_ids = $pse->added_param('processing_profile_id');
+            @processing_profile_ids = grep { defined } $pse->added_param('processing_profile_id');
         }
         my $subject = $instrument_data->sample;
 
@@ -138,29 +138,7 @@ sub execute {
         my @process_errors;
 
         if (@processing_profile_ids) {
-            if ( $instrument_data_type =~ /454/i ) {
-                my $msg;
-                if ( $subject->name =~ /^n\-cn?trl$/i ) {
-                    # Do not process 454 negative control (n-ctrl, n-cntrl)
-                    $msg = 'Skipping n-ctrl PSE! '.$pse->id;
-                }
-                elsif ( $self->_is_mc16s($instrument_data) ) {
-                    $self->_find_or_create_mc16s_454_qc_model($instrument_data); # always add this inst data to the QC model.
-                    if ( $instrument_data->read_count == 0 ) {
-                        # Do not process inst data w/o reads
-                        $msg = 'Skipping 454 instrument data with 0 reads! '.$pse->id;
-                    }
-                }
-                if ( $msg ) {
-                    $self->status_message($msg);
-                    $instrument_data->ignored(1);
-                    push @completable_pses, $pse;
-                    next PSE;
-                }
-            }
-
-            PP:
-            foreach my $processing_profile_id (@processing_profile_ids) {
+            PP: foreach my $processing_profile_id (@processing_profile_ids) {
                 my $processing_profile = Genome::ProcessingProfile->get( $processing_profile_id );
 
                 unless ($processing_profile) {
@@ -1358,14 +1336,20 @@ sub add_processing_profiles_to_pse {
         }
 
         if ($instrument_data_type =~ /454/) {
-            if($self->_is_rna($instrument_data)){
+            if ( $instrument_data->sample->name =~ /^n\-cn?trl$/i ) { # Do not process 454 negative control (n-ctrl, n-cntrl)
+                $instrument_data->ignored(1);
+            }
+            elsif($self->_is_rna($instrument_data)){ # RNA
                 push @processing_profile_ids_to_add, $self->_default_rna_seq_processing_profile_id($instrument_data);
             }
-            elsif ( $self->_is_mc16s($instrument_data) ) {
-                push @processing_profile_ids_to_add, Genome::Model::MetagenomicComposition16s->default_processing_profile_ids;
-            }
-            else {
-                #die $self->error_message('Unknown 454 inst data encountered. It is not rna or mc16s! '.$instrument_data->id);
+            elsif ( $self->_is_mc16s($instrument_data) ) { # MC16s
+                $self->_find_or_create_mc16s_454_qc_model($instrument_data); # always add this inst data to the QC model.
+                if ( $instrument_data->read_count > 0 ) { # skip inst data w/ 0 reads
+                    push @processing_profile_ids_to_add, Genome::Model::MetagenomicComposition16s->default_processing_profile_ids;
+                }
+                else {
+                    $instrument_data->ignored(1);
+                }
             }
         }
         elsif ($instrument_data_type =~ /sanger/i) {
