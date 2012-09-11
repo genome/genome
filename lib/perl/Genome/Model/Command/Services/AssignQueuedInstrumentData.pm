@@ -137,9 +137,9 @@ sub execute {
 
         my @process_errors;
 
-        if (@processing_profile_ids) {
-            PP: foreach my $processing_profile_id (@processing_profile_ids) {
-                my $processing_profile = Genome::ProcessingProfile->get( $processing_profile_id );
+        if ( @processing_profile_ids ) {
+            PP: foreach my $processing_profile_id ( @processing_profile_ids ) {
+                my $processing_profile = Genome::ProcessingProfile->get($processing_profile_id);
 
                 unless ($processing_profile) {
                     $self->error_message(
@@ -473,7 +473,7 @@ sub find_or_create_somatic_variation_models{
 
 sub root_build37_ref_seq {
     my $self = shift;
-    my $root_build37_ref_seq = Genome::Model::Build::ImportedReferenceSequence->get(name => 'GRCh37-lite-build37') || die;
+    my $root_build37_ref_seq = Genome::Model::Build::ImportedReferenceSequence->get(106942997) || die;# GRCh37-lite-build37 => 106942997
     return $root_build37_ref_seq;
 }
 
@@ -1321,7 +1321,7 @@ sub add_processing_profiles_to_pse {
 
     eval {
         my @processing_profile_ids_to_add;
-        my %reference_sequence_names_for_processing_profile_ids;
+        my %reference_sequence_ids_for_processing_profile_ids;
 
         my $sample = $instrument_data->sample;
         unless (defined($sample)) {
@@ -1389,9 +1389,9 @@ sub add_processing_profiles_to_pse {
             # build w/ 36 and 37
             # push the pp id 2X, add import ref seq build for both
             push @processing_profile_ids_to_add, $pp->id, $pp->id;
-            for my $name (qw/ NCBI-human-build36 GRCh37-lite-build37/) {
-                my $imported_reference_sequence = Genome::Model::Build::ImportedReferenceSequence->get_by_name($name);
-                Carp::confess("No imported reference sequence build for $name") if not $imported_reference_sequence;
+            for my $id (qw/ 101947881 106942997 /) {# NCBI-human-build36 => 101947881, GRCh37-lite-build37 => 106942997
+                my $imported_reference_sequence = Genome::Model::Build::ImportedReferenceSequence->get($id);
+                Carp::confess("No imported reference sequence build for $id") if not $imported_reference_sequence;
                 $pse->add_reference_sequence_build_param_for_processing_profile($pp, $imported_reference_sequence);
             }
         }
@@ -1405,13 +1405,13 @@ sub add_processing_profiles_to_pse {
                     my $common_name = $individual ? $individual->common_name : '';
 
                     push @processing_profile_ids_to_add, $pp_id;
-                    $reference_sequence_names_for_processing_profile_ids{$pp_id} = 'GRCh37-lite-build37';
+                    $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 106942997;# GRCh37-lite-build37 => 106942997
                 }
                 elsif ($self->_is_rna($instrument_data)){
                     if($instrument_data->is_paired_end){
                         my $pp_id = $self->_default_rna_seq_processing_profile_id($instrument_data);
                         push @processing_profile_ids_to_add, $pp_id;
-                        $reference_sequence_names_for_processing_profile_ids{$pp_id} = 'GRCh37-lite-build37';
+                    $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 106942997;# GRCh37-lite-build37 => 106942997
                     }
                 }
                 else {
@@ -1419,18 +1419,18 @@ sub add_processing_profiles_to_pse {
                     push @processing_profile_ids_to_add, $pp_id;
 
                     # NOTE: this is the _fixed_ build 37 with a correct external URI
-                    $reference_sequence_names_for_processing_profile_ids{$pp_id} = 'GRCh37-lite-build37';
+                    $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 106942997;# GRCh37-lite-build37 => 106942997
                 }
             }
             elsif ($taxon->species_latin_name =~ /mus musculus/i){
                 my $pp_id = $self->_default_ref_align_processing_profile_id;
                 push @processing_profile_ids_to_add, $pp_id;
-                $reference_sequence_names_for_processing_profile_ids{$pp_id} = 'UCSC-mouse-buildmm9'
+                $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 107494762;# UCSC-mouse-buildmm9 => 107494762
             }
             elsif ($taxon->species_latin_name =~ /zea mays/i) {
                 my $pp_id = $self->_default_ref_align_processing_profile_id;
                 push @processing_profile_ids_to_add, $pp_id;
-                $reference_sequence_names_for_processing_profile_ids{$pp_id} = 'MGSC-maize-buildB73';
+                $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 123196088;# MGSC-maize-buildB73 => 123196088
             }
             elsif ($taxon->domain =~ /bacteria/i) {
                 my $pp_id = $self->_default_de_novo_assembly_bacterial_processing_profile_id;
@@ -1441,7 +1441,7 @@ sub add_processing_profiles_to_pse {
             }
         }
 
-        $self->_verify_parameter_lists(\@processing_profile_ids_to_add, \%reference_sequence_names_for_processing_profile_ids);
+        $self->_verify_parameter_lists(\@processing_profile_ids_to_add, \%reference_sequence_ids_for_processing_profile_ids);
 
         #if for some reason we're reprocessing this PSE, it may have old values already stored
         my @existing_params = GSC::PSEParam->get(pse_id => $pse->id);
@@ -1456,11 +1456,10 @@ sub add_processing_profiles_to_pse {
             $pse->add_param("processing_profile_id", $pp_id);
         }
 
-        for my $pp_id (keys %reference_sequence_names_for_processing_profile_ids) {
-            my $imported_reference_sequence_name = $reference_sequence_names_for_processing_profile_ids{$pp_id};
-
+        for my $pp_id (keys %reference_sequence_ids_for_processing_profile_ids) {
+            my $imported_reference_sequence_id = $reference_sequence_ids_for_processing_profile_ids{$pp_id};
             my $pp = Genome::ProcessingProfile->get($pp_id);
-            my $imported_reference_sequence = Genome::Model::Build::ImportedReferenceSequence->get_by_name($imported_reference_sequence_name);
+            my $imported_reference_sequence = Genome::Model::Build::ImportedReferenceSequence->get($imported_reference_sequence_id);
             $pse->add_reference_sequence_build_param_for_processing_profile($pp, $imported_reference_sequence);
         }
     };
@@ -1473,7 +1472,7 @@ sub add_processing_profiles_to_pse {
 sub _verify_parameter_lists {
     my $self = shift;
     my $processing_profile_ids_to_add = shift;
-    my $reference_sequence_names_for_processing_profile_ids = shift;
+    my $reference_sequence_ids_for_processing_profile_ids = shift;
 
     #Just go through the lists and check that the IDs point to real objects
     for my $pp_id (@$processing_profile_ids_to_add) {
@@ -1486,7 +1485,7 @@ sub _verify_parameter_lists {
         }
     }
 
-    for my $pp_id (keys %$reference_sequence_names_for_processing_profile_ids) {
+    for my $pp_id (keys %$reference_sequence_ids_for_processing_profile_ids) {
         my $pp = Genome::ProcessingProfile->get($pp_id);
         unless($pp) {
             unless (defined($pp)) {
@@ -1495,10 +1494,10 @@ sub _verify_parameter_lists {
             }
         }
 
-        my $imported_reference_sequence_name = $reference_sequence_names_for_processing_profile_ids->{$pp_id};
-        my $imported_reference_sequence = Genome::Model::Build::ImportedReferenceSequence->get_by_name($imported_reference_sequence_name);
+        my $imported_reference_sequence_id = $reference_sequence_ids_for_processing_profile_ids->{$pp_id};
+        my $imported_reference_sequence = Genome::Model::Build::ImportedReferenceSequence->get($imported_reference_sequence_id);
         unless(defined($imported_reference_sequence)) {
-            $self->error_message('failed to get reference sequence build for ' . $imported_reference_sequence_name . '.');
+            $self->error_message('failed to get reference sequence build for ' . $imported_reference_sequence_id . '.');
             die $self->error_message;
         }
     }
