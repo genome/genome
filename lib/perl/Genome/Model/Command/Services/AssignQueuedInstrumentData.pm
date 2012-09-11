@@ -308,7 +308,7 @@ sub execute {
                 "Leaving queue instrument data PSE inprogress, due to errors. \n"
                     . join("\n",@process_errors)
             );
-            $self->_update_instrument_data_tgi_lims_status_to($pse->{_instrument_data}, 'failed');
+            $self->_update_instrument_data_tgi_lims_status_to_failed($pse->{_instrument_data});
         }
         else {
             # Set the pse as completed since this is the end of the line
@@ -353,19 +353,26 @@ sub _update_instrument_data_tgi_lims_status_to {
         attribute_value => $status,
     );
 
-    if($status eq 'failed') {
-        my $current = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count');
-        my $previous_count = 0;
-        if($current) {
-            $previous_count = $current->attribute_value;
-            $current->delete;
-        }
+    return 1;
+}
 
-        $instrument_data->add_attribute(
-            attribute_label => 'tgi_lims_fail_count',
-            attribute_value => ($previous_count+1),
-        );
+sub _update_instrument_data_tgi_lims_status_to_failed {
+    my ($self, $instrument_data) = @_;
+
+    my $set_status = $self->_update_instrument_data_tgi_lims_status_to($instrument_data, 'failed');
+    return if not $set_status;
+
+    my $current = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count');
+    my $previous_count = 0;
+    if($current) {
+        $previous_count = $current->attribute_value;
+        $current->delete;
     }
+
+    $instrument_data->add_attribute(
+        attribute_label => 'tgi_lims_fail_count',
+        attribute_value => ($previous_count+1),
+    );
 
     return 1;
 }
@@ -634,7 +641,7 @@ sub load_pses {
         if ( $self->_check_instrument_data($instrument_data) ){
             push @checked_pses, $qidfgm;
         } else {
-            $self->_update_instrument_data_tgi_lims_status_to($qidfgm->{_instrument_data}, 'failed');
+            $self->_update_instrument_data_tgi_lims_status_to_failed($qidfgm->{_instrument_data});
         }
     }
     $self->status_message('Of those, '.scalar(@checked_pses). ' PSEs passed check pse.');
