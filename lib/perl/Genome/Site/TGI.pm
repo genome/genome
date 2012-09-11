@@ -93,13 +93,13 @@ my @lims_whitelist = (
         ['Genome/Model/Command/Services/AssignQueuedInstrumentData.t', 103],
     ],
     'GSC::PSEParam' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 317],
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 1447],
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 329],
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 1453],
         ['Genome/Model/Tools/Lims/ApipeBridge/InstrumentDataStatus.pm', 109],
     ],
     'GSC::PSE' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 558],
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 564],
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 570],
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 576],
         ['Genome/Model/Command/Services/AssignQueuedInstrumentData_validation.t', 101],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 89],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 118],

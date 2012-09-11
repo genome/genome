@@ -29,7 +29,7 @@ no warnings;
     }
     return values %attrs;
 };
-sub GSC::PSE::get { return grep { not $_->completed } @pses; }
+sub GSC::PSE::get { return grep { not $_->can('completed') } @pses; }
 use warnings;
 
 my $source = Genome::Individual->__define__(
@@ -57,6 +57,12 @@ is_deeply(
     \%new_models,
     {
         "AQID-testsample1.human.prod-microarray.wugc.infinium.NCBI-human-build36" => {
+            subject => $samples[0]->name,
+            processing_profile_id => 2575175,
+            inst => [ $instrument_data[0]->id ],
+            auto_assign_inst_data => 0,
+        },
+        "AQID-testsample1.human.prod-microarray.wugc.infinium.GRCh37-lite-build37" => {
             subject => $samples[0]->name,
             processing_profile_id => 2575175,
             inst => [ $instrument_data[0]->id ],
@@ -99,6 +105,7 @@ sub _qidfgm {
     my $instrument_data = Genome::InstrumentData::Imported->__define__(
         library_id => $library->id,
         sequencing_platform => 'infinium',
+        import_format => 'genotype file',
         import_source_name => 'wugc',
     );
     ok($instrument_data, 'created instrument data '.$qidfgm_cnt);

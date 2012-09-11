@@ -122,10 +122,41 @@ sub execute {
         my ($instrument_data_type) = $pse->added_param('instrument_data_type');
         my ($instrument_data_id)   = $pse->added_param('instrument_data_id');
 
-        my @processing_profile_ids = grep { defined } $pse->added_param('processing_profile_id');
-        if ( not @processing_profile_ids ) {
-            $self->add_processing_profiles_to_pse($pse);
-            @processing_profile_ids = grep { defined } $pse->added_param('processing_profile_id');
+        my @processing;
+        if ( my @processing_profile_ids = grep { defined } $pse->added_param('processing_profile_id') ) {
+            # FIXME: this can be removed after a short period of catch up
+            for my $processing_profile_id ( @processing_profile_ids ) {
+                my $processing_profile = Genome::ProcessingProfile->get($processing_profile_id);
+                unless ($processing_profile) {
+                    $self->error_message(
+                        'Failed to get processing profile'
+                        . " '$processing_profile_id' for inprogress pse "
+                        . $pse->pse_id );
+                    next PSE;
+                }
+                my @reference_sequence_build_ids = $pse->reference_sequence_build_param_for_processing_profile($processing_profile);
+                if ( @reference_sequence_build_ids ) {
+                    my @reference_sequence_builds = Genome::Model::Build::ImportedReferenceSequence->get(@reference_sequence_build_ids);
+                    if ( not @reference_sequence_builds or @reference_sequence_builds != @reference_sequence_build_ids ) {
+                        $self->error_message('Failed to get all reference sequence builds for ids! '.join(' ', @reference_sequence_build_ids));
+                        next PSE;
+                    }
+                    for my $reference_sequence_build ( @reference_sequence_builds ) {
+                        push @processing, {
+                            processing_profile => $processing_profile,
+                            reference_sequence_build => $reference_sequence_build,
+                        };
+                    }
+                }
+                else {
+                    push @processing, {
+                        processing_profile => $processing_profile,
+                    };
+                }
+            }
+        }
+        else {
+            @processing = $self->_resolve_processing_for_instrument_data($instrument_data);
         }
         my $subject = $instrument_data->sample;
 
@@ -137,38 +168,21 @@ sub execute {
 
         my @process_errors;
 
-        if ( @processing_profile_ids ) {
-            PP: foreach my $processing_profile_id ( @processing_profile_ids ) {
-                my $processing_profile = Genome::ProcessingProfile->get($processing_profile_id);
+        if ( @processing ) {
+            PP: foreach my $processing ( @processing ) {
+                my $processing_profile = $processing->{processing_profile};
+                my $reference_sequence_build = $processing->{reference_sequence_build};
 
-                unless ($processing_profile) {
-                    $self->error_message(
-                        'Failed to get processing profile'
-                        . " '$processing_profile_id' for inprogress pse "
-                        . $pse->pse_id );
+                # These pps require reference seq build
+                my @processing_profiles_that_require_reference_sequence_build = (qw/
+                    Genome::ProcessingProfile::ReferenceAlignment
+                    Genome::ProcessingProfile::GenotypeMicroarray
+                    Genome::ProcessingProfile::RnaSeq
+                    /);
+                if ( not $reference_sequence_build and grep { $processing_profile->isa($_) } @processing_profiles_that_require_reference_sequence_build ) {
+                    $self->error_message('Failed to set reference sequence build during processing instrument data! '.$instrument_data->id);
                     push @process_errors, $self->error_message;
                     next PP;
-                }
-
-                my @reference_sequence_builds = ( undef ); # this allows to use a loop to assign
-                # These pps require imported reference seq build
-                if( $processing_profile->isa('Genome::ProcessingProfile::ReferenceAlignment')
-                        or $processing_profile->isa('Genome::ProcessingProfile::GenotypeMicroarray')
-                        or $processing_profile->isa('Genome::ProcessingProfile::RnaSeq')) {
-                    my @reference_sequence_build_ids = $pse->reference_sequence_build_param_for_processing_profile($processing_profile);
-                    if ( not @reference_sequence_build_ids ) {
-                        $self->error_message('No imported reference sequence build id found on pse ('.$pse->id.') to create '.$processing_profile->type_name.' model');
-                        push @process_errors, $self->error_message;
-                        next PP;
-                    }
-
-                    @reference_sequence_builds = Genome::Model::Build::ImportedReferenceSequence->get(\@reference_sequence_build_ids);
-                    if ( not @reference_sequence_builds or @reference_sequence_builds ne @reference_sequence_build_ids ) {
-                        $self->error_message("Failed to get imported reference sequence builds for ids: @reference_sequence_build_ids");
-                        push @process_errors, $self->error_message;
-                        next PP;
-                    }
-
                 }
 
                 my @models = Genome::Model->get(
@@ -177,42 +191,40 @@ sub execute {
                     auto_assign_inst_data => 1,
                 );
 
-                for my $reference_sequence_build ( @reference_sequence_builds ) {
-                    my @assigned = $self->assign_instrument_data_to_models($instrument_data, $reference_sequence_build, @models);
+            my @assigned = $self->assign_instrument_data_to_models($instrument_data, $reference_sequence_build, @models);
 
-                    #returns an explicit undef on error
-                    if(scalar(@assigned) eq 1 and not defined $assigned[0]) {
+            #returns an explicit undef on error
+            if(scalar(@assigned) eq 1 and not defined $assigned[0]) {
+                push @process_errors, $self->error_message;
+                next PP;
+            }
+
+            if(scalar(@assigned > 0)) {
+                for my $m (@assigned) {
+                        $pse->add_param('genome_model_id', $m->id) unless (grep { $_ eq $m->id } $pse->added_param('genome_model_id'));
+                    }
+                    #find or create default qc models if applicable
+                    $self->create_default_qc_models(@assigned);
+                    #find or create somatic models if applicable
+                    $self->find_or_create_somatic_variation_models(@assigned);
+
+                } else {
+                    # no model found for this PP, make one (or more) and assign all applicable data
+                    $DB::single = $DB::stopper;
+                    my @new_models = $self->create_default_models_and_assign_all_applicable_instrument_data($instrument_data, $subject, $processing_profile, $reference_sequence_build, $pse);
+                    unless(@new_models) {
                         push @process_errors, $self->error_message;
                         next PP;
                     }
-
-                    if(scalar(@assigned > 0)) {
-                        for my $m (@assigned) {
-                            $pse->add_param('genome_model_id', $m->id) unless (grep { $_ eq $m->id } $pse->added_param('genome_model_id'));
-                        }
-                        #find or create default qc models if applicable
-                        $self->create_default_qc_models(@assigned);
-                        #find or create somatic models if applicable
-                        $self->find_or_create_somatic_variation_models(@assigned);
-
-                    } else {
-                        # no model found for this PP, make one (or more) and assign all applicable data
-                        $DB::single = $DB::stopper;
-                        my @new_models = $self->create_default_models_and_assign_all_applicable_instrument_data($instrument_data, $subject, $processing_profile, $reference_sequence_build, $pse);
-                        unless(@new_models) {
-                            push @process_errors, $self->error_message;
-                            next PP;
-                        }
-                        #find or create somatic models if applicable
-                        $self->find_or_create_somatic_variation_models(@new_models);
-                    }
+                    #find or create somatic models if applicable
+                    $self->find_or_create_somatic_variation_models(@new_models);
                 }
             } # looping through processing profiles for this instdata, finding or creating the default model
         } elsif ( $instrument_data_type =~ /solexa/i
-                  and $instrument_data->target_region_set_name
-                  and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)
-                  and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)->content_type eq 'validation'
-                ) {
+                and $instrument_data->target_region_set_name
+                and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)
+                and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)->content_type eq 'validation'
+        ) {
             my @validation = Genome::Model::SomaticValidation->get(
                 target_region_set_name => $instrument_data->target_region_set_name,
             );
@@ -469,7 +481,6 @@ sub find_or_create_somatic_variation_models{
 
     }
 }
-
 
 sub root_build37_ref_seq {
     my $self = shift;
@@ -1313,15 +1324,14 @@ sub request_builds {
     return 1;
 }
 
-sub add_processing_profiles_to_pse {
-    my ($self, $pse) = @_;
+sub _resolve_processing_for_instrument_data {
+    my ($self, $instrument_data) = @_;
 
-    my $instrument_data = $pse->{_instrument_data};
-    my ($instrument_data_type) = $pse->added_param('instrument_data_type');
-
+    my $instrument_data_type = $instrument_data->sequencing_platform;
+    my $sequencing_platform = $instrument_data->sequencing_platform;
+    my $import_format = eval{ $instrument_data->import_format; };
+    my @processing;
     eval {
-        my @processing_profile_ids_to_add;
-        my %reference_sequence_ids_for_processing_profile_ids;
 
         my $sample = $instrument_data->sample;
         unless (defined($sample)) {
@@ -1340,12 +1350,14 @@ sub add_processing_profiles_to_pse {
                 $instrument_data->ignored(1);
             }
             elsif($self->_is_rna($instrument_data)){ # RNA
-                push @processing_profile_ids_to_add, $self->_default_rna_seq_processing_profile_id($instrument_data);
+                push @processing, { processing_profile_id => $self->_default_rna_seq_processing_profile_id($instrument_data), };
             }
             elsif ( $self->_is_mc16s($instrument_data) ) { # MC16s
                 $self->_find_or_create_mc16s_454_qc_model($instrument_data); # always add this inst data to the QC model.
                 if ( $instrument_data->read_count > 0 ) { # skip inst data w/ 0 reads
-                    push @processing_profile_ids_to_add, Genome::Model::MetagenomicComposition16s->default_processing_profile_ids;
+                    for my $processing_profile_id ( Genome::Model::MetagenomicComposition16s->default_processing_profile_ids ) {
+                        push @processing, { processing_profile_id => $processing_profile_id, };
+                    };
                 }
                 else {
                     $instrument_data->ignored(1);
@@ -1353,46 +1365,24 @@ sub add_processing_profiles_to_pse {
             }
         }
         elsif ($instrument_data_type =~ /sanger/i) {
-            # this is only meant to work with 16s sanger instrument data at present
-            push @processing_profile_ids_to_add, 2591277; # MC16s-WashU-Sanger-RDP2.2-ts6 was amplicon assembly 2067049
+            push @processing, { processing_profile_id => 2591277, };
         }
-        elsif ($instrument_data_type eq 'genotyper results' ) {
+        elsif ( $import_format and $import_format eq 'genotype file' ) {
             # Genotype Microarry PP as of 2011jan25
-            # ID        NAME              INPUT_FORMAT   INSTRUMENT_TYPE
-            # --        ----              ------------   ---------------
-            # 2166945   illumina/wugc     wugc           illumina
-            # 2166946   affymetrix/wugc   wugc           affymetrix
-            # 2186707   unknown/wugc      wugc           unknown
-            # 2575175   infinium/wugc     wugc           infinium
-            my $sequencing_platform = $instrument_data->sequencing_platform;
-            my $pp = Genome::ProcessingProfile::GenotypeMicroarray->get(
-                instrument_type => $sequencing_platform,
-                input_format => 'wugc',
+            # Processing is not dependent on seq platform, but we use to care
+            my %genotype_platforms_and_processing_ids = (
+                illumina => 2166945,
+                affymetrix => 2166946,
+                infinium => 2575175,
+                unknown => 2186707,
             );
-            if ( not $pp ) {
-                my $msg = "Unknown platform ($sequencing_platform) for genotyper result (".$instrument_data->id.")";
-
-                my $sender = Mail::Sender->new({
-                        smtp    => 'gscsmtp.wustl.edu',
-                        from    => 'Apipe <apipe-builder@genome.wustl.edu>'
-                    });
-                $sender->MailMsg( {
-
-                        to      => 'Analysis Pipeline <apipebulk@genome.wustl.edu>, Apipe Builder <apipe-builder@genome.wustl.edu>',
-                        cc      => 'Scott Smith <ssmith@genome.wustl.edu>, Jim Eldred <jeldred@genome.wustl.edu>, Eddie Belter <ebelter@genome.wustl.edu>, Thomas Mooney <tmooney@genome.wustl.edu>',
-                        subject => "QIDFGM PSE ERROR: $msg",
-                        msg     => "Could not find a genotype microarray processing profile for genotyper results instrument data (".$instrument_data->id.") sequencing platform ($sequencing_platform) in QIDFGM PSE (see AQID)".$self->id
-                    });
-
-                die $self->error_message($msg);
-            }
-            # build w/ 36 and 37
-            # push the pp id 2X, add import ref seq build for both
-            push @processing_profile_ids_to_add, $pp->id, $pp->id;
-            for my $id (qw/ 101947881 106942997 /) {# NCBI-human-build36 => 101947881, GRCh37-lite-build37 => 106942997
-                my $imported_reference_sequence = Genome::Model::Build::ImportedReferenceSequence->get($id);
-                Carp::confess("No imported reference sequence build for $id") if not $imported_reference_sequence;
-                $pse->add_reference_sequence_build_param_for_processing_profile($pp, $imported_reference_sequence);
+            my $processing_profile_id = $genotype_platforms_and_processing_ids{$sequencing_platform};
+            die $self->error_message('No genotype processing profile for platform! '.$sequencing_platform) if not $processing_profile_id;
+            for my $reference_sequence_build_id (qw/ 101947881 106942997 /) {# NCBI-human-build36 => 101947881, GRCh37-lite-build37 => 106942997
+                push @processing, {
+                    processing_profile_id => $processing_profile_id,
+                    reference_sequence_build_id => $reference_sequence_build_id,
+                };
             }
         }
         elsif ($instrument_data_type =~ /solexa/i) {
@@ -1400,109 +1390,73 @@ sub add_processing_profiles_to_pse {
                 #Do not create ref-align models--will try to assign to existing SomaticValidation models.
             } elsif ($taxon->species_latin_name =~ /homo sapiens/i) {
                 if ($self->_is_pcgp($instrument_data)) {
-                    my $individual = $sample->patient;
-                    my $pp_id = '2644306';
-                    my $common_name = $individual ? $individual->common_name : '';
-
-                    push @processing_profile_ids_to_add, $pp_id;
-                    $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 106942997;# GRCh37-lite-build37 => 106942997
+                    push @processing, {
+                        processing_profile_id => 2644306,
+                        reference_sequence_build_id => 106942997,# GRCh37-lite-build37 => 106942997
+                    };
                 }
                 elsif ($self->_is_rna($instrument_data)){
                     if($instrument_data->is_paired_end){
-                        my $pp_id = $self->_default_rna_seq_processing_profile_id($instrument_data);
-                        push @processing_profile_ids_to_add, $pp_id;
-                    $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 106942997;# GRCh37-lite-build37 => 106942997
+                        push @processing, {
+                            processing_profile_id => $self->_default_rna_seq_processing_profile_id($instrument_data),
+                            reference_sequence_build_id => 106942997,# GRCh37-lite-build37 => 106942997
+                        };
                     }
                 }
                 else {
-                    my $pp_id = $self->_default_ref_align_processing_profile_id;
-                    push @processing_profile_ids_to_add, $pp_id;
-
-                    # NOTE: this is the _fixed_ build 37 with a correct external URI
-                    $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 106942997;# GRCh37-lite-build37 => 106942997
+                    push @processing, { 
+                        processing_profile_id => $self->_default_ref_align_processing_profile_id,
+                        reference_sequence_build_id => 106942997,# GRCh37-lite-build37 => 106942997
+                    };
                 }
             }
             elsif ($taxon->species_latin_name =~ /mus musculus/i){
-                my $pp_id = $self->_default_ref_align_processing_profile_id;
-                push @processing_profile_ids_to_add, $pp_id;
-                $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 107494762;# UCSC-mouse-buildmm9 => 107494762
+                push @processing, {
+                    processing_profile_id => $self->_default_ref_align_processing_profile_id,
+                    reference_sequence_build_id => 107494762,# UCSC-mouse-buildmm9 => 107494762
+                };
             }
             elsif ($taxon->species_latin_name =~ /zea mays/i) {
-                my $pp_id = $self->_default_ref_align_processing_profile_id;
-                push @processing_profile_ids_to_add, $pp_id;
-                $reference_sequence_ids_for_processing_profile_ids{$pp_id} = 123196088;# MGSC-maize-buildB73 => 123196088
+                push @processing, {
+                    processing_profile_id => $self->_default_ref_align_processing_profile_id,
+                    reference_sequence_build_id => 12319608,# MGSC-maize-buildB73 => 123196088
+                };
             }
             elsif ($taxon->domain =~ /bacteria/i) {
-                my $pp_id = $self->_default_de_novo_assembly_bacterial_processing_profile_id;
-                push @processing_profile_ids_to_add, $pp_id;
+                push @processing, { processing_profile_id => $self->_default_de_novo_assembly_bacterial_processing_profile_id, };
             }
             elsif ( my @default_pp_ids = $self->_get_default_processing_profile_ids_for_instrument_data($instrument_data) ) {
-                push @processing_profile_ids_to_add, @default_pp_ids;
+                for my $processing_profile_id ( @default_pp_ids ) {
+                    push @processing, { processing_profile_id => $processing_profile_id, };
+                }
             }
         }
 
-        $self->_verify_parameter_lists(\@processing_profile_ids_to_add, \%reference_sequence_ids_for_processing_profile_ids);
+        for my $processing ( @processing ) {
+            my $processing_profile_id = delete $processing->{processing_profile_id};
+            my $processing_profile = Genome::ProcessingProfile->get($processing_profile_id);
+            if ( not $processing_profile ) { 
+                die $self->error_message('Failed to get processing profile for id! '.$processing_profile_id);
+            }
+            $processing->{processing_profile} = $processing_profile;
 
-        #if for some reason we're reprocessing this PSE, it may have old values already stored
-        my @existing_params = GSC::PSEParam->get(pse_id => $pse->id);
-        map { $_->delete } grep { $_->param_name eq 'sample_name' or $_->param_name =~ /^subject_/ } @existing_params;
-
-        #all verification is complete--now go through and set the parameters
-        $pse->add_param('sample_name',  $sample->name);
-        $pse->add_param('subject_class_name', $sample->class);
-        $pse->add_param('subject_id', $sample->id);
-
-        PP: for my $pp_id (@processing_profile_ids_to_add) {
-            $pse->add_param("processing_profile_id", $pp_id);
+            my $reference_sequence_build_id = delete $processing->{reference_sequence_build_id};
+            if ( $reference_sequence_build_id ) {
+                my $reference_sequence_build = Genome::Model::Build::ImportedReferenceSequence->get($reference_sequence_build_id);
+                if ( not $reference_sequence_build ) { 
+                    die $self->error_message('Failed to get reference sequence build for id! '.$reference_sequence_build_id);
+                }
+                $processing->{reference_sequence_build} = $reference_sequence_build;
+            }
         }
 
-        for my $pp_id (keys %reference_sequence_ids_for_processing_profile_ids) {
-            my $imported_reference_sequence_id = $reference_sequence_ids_for_processing_profile_ids{$pp_id};
-            my $pp = Genome::ProcessingProfile->get($pp_id);
-            my $imported_reference_sequence = Genome::Model::Build::ImportedReferenceSequence->get($imported_reference_sequence_id);
-            $pse->add_reference_sequence_build_param_for_processing_profile($pp, $imported_reference_sequence);
-        }
     };
     if($@){
         #something went horribly wrong.  do something about it.
-        $self->warning_message("PSE " . $pse->pse_id . " failed: $@");
+        # FIXME: actually DO something
+        $self->warning_message('Failed to get processing for instrument data id ('.$instrument_data->id.'): '.$@);
     }
-}
-
-sub _verify_parameter_lists {
-    my $self = shift;
-    my $processing_profile_ids_to_add = shift;
-    my $reference_sequence_ids_for_processing_profile_ids = shift;
-
-    #Just go through the lists and check that the IDs point to real objects
-    for my $pp_id (@$processing_profile_ids_to_add) {
-        my $pp = Genome::ProcessingProfile->get($pp_id);
-        unless($pp) {
-            unless (defined($pp)) {
-                $self->error_message("failed to get a Genome::ProcessingProfile using id '$pp_id'");
-                die $self->error_message;
-            }
-        }
-    }
-
-    for my $pp_id (keys %$reference_sequence_ids_for_processing_profile_ids) {
-        my $pp = Genome::ProcessingProfile->get($pp_id);
-        unless($pp) {
-            unless (defined($pp)) {
-                $self->error_message("failed to get a Genome::ProcessingProfile using id '$pp_id'");
-                die $self->error_message;
-            }
-        }
-
-        my $imported_reference_sequence_id = $reference_sequence_ids_for_processing_profile_ids->{$pp_id};
-        my $imported_reference_sequence = Genome::Model::Build::ImportedReferenceSequence->get($imported_reference_sequence_id);
-        unless(defined($imported_reference_sequence)) {
-            $self->error_message('failed to get reference sequence build for ' . $imported_reference_sequence_id . '.');
-            die $self->error_message;
-        }
-    }
-
-    return 1;
+    return @processing;
 }
 
 sub _is_pcgp {
