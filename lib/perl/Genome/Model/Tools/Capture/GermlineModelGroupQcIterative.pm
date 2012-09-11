@@ -92,17 +92,19 @@ sub execute {                               # replace with real execution logic.
     my $build_number;
     my $db_snp_build;
 
-    my $ref_name = $models[0]->reference_sequence_build->name;
-    if($ref_name eq 'NCBI-human-build36') {
+    my $ref = $models[0]->reference_sequence_build;
+    my $build36 = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
+    my $build37 = Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
+    if($ref->is_compatible_with($build36)) {
         $reference = 'reference';
         $build_number = 36;
         $db_snp_build = 130;
-    } elsif($ref_name eq 'GRCh37-lite-build37') {
+    } elsif($ref->is_compatible_with($build37)) {
         $reference = 'GRCh37';
         $build_number = 37;
         $db_snp_build = 132;
     } else {
-        die "$ref_name isn't NCBI-human-build36 or GRCh37-lite-build37\n";
+        die $ref->name." isn't compatible with NCBI-human-build36 or GRCh37-lite-build37\n";
     }
 
     my %snp_limit_hash;
