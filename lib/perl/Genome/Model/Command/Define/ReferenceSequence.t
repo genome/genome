@@ -111,10 +111,7 @@ for my $file (@files_to_test) {
 
 #Second test--a tiny FASTA with 3 chromosomes
 #updated from 2.02 to 2.03 to create manifest.tsv
-#my $second_test_dir = $test_data_dir . '2.04/';
-# /gsc/var/cache is read-only, so I can't add 2.05 where it belongs
-# Yes, I know this is wrong; this is a temporary fix to let tests pass.
-my $second_test_dir = '/gscuser/iferguso/THERE_ARE_NO_TESTS_IN_THIS_FOLDER/2.05/';
+my $second_test_dir = $test_data_dir . '2.05/';
 my $second_fasta = $second_test_dir . 'all_sequences.fa';
 
 ok(Genome::Sys->check_for_path_existence($second_fasta), 'Second test FASTA exists');
