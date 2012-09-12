@@ -103,7 +103,10 @@ class Genome::Model::Build::ImportedAnnotation {
             is => 'Path',
             calculate_from => ['data_directory'],
             calculate => q{return "$data_directory/annotation_data/ucsc_conservation";},
-        }
+        },
+        gap_feature_list => {
+            is => 'Genome::FeatureList',
+        },
     ],
 };
 
