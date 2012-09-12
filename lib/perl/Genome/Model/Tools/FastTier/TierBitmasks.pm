@@ -43,7 +43,6 @@ sub create {
     my $self = $class->SUPER::create(@_);
 
     $self->_prepare_staging_directory;
-    $self->_prepare_output_directory;
 
     $self->status_message('Create TierBitmasks');
 
@@ -287,6 +286,7 @@ sub create {
     printf "Tier4 encompasses %u bases. %f%% of the genome\n", $self->bases_covered($tier4), $self->bases_covered($tier4)/$masked_genome_size * 100;
     $self->write_genome_bitmask($self->temp_staging_directory."/tier4.bitmask", $tier4);
 
+    $self->_prepare_output_directory;
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
 
