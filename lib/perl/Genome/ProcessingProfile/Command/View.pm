@@ -33,6 +33,12 @@ class Genome::ProcessingProfile::Command::View {
             default_value => 1,
             doc => 'Display report in color.'
         },
+        models => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 0,
+            doc => 'Display which models are using this processing-profile.',
+        },
         max_num_models_shown => {
             is => 'Int',
             is_optional => 1,
@@ -208,6 +214,7 @@ sub _write_strategies {
 sub _write_models {
     my ($self, $width, $handle) = @_;
 
+    return unless $self->models and $self->max_num_models_shown != 0;
     my @models = $self->processing_profile->models;
     my $num_models = scalar(@models);
 
