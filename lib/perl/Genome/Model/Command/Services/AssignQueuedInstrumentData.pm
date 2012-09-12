@@ -88,19 +88,16 @@ sub execute {
         )
     }
 
-    my @pses = $self->load_pses;
-    $self->status_message('Processing '.scalar(@pses).' PSEs');
-    return 1 unless scalar @pses;
+    my @instrument_data = $self->_load_instrument_data;
+    return 1 unless @instrument_data;
 
-    my @completable_pses;
-
+    my @processed_instrument_data;
     PSE:
-    foreach my $pse (@pses) {
+    foreach my $instrument_data ( @instrument_data ) {
+        my $pse = $instrument_data->{_qidfgm};
         $self->status_message('Starting PSE ' . $pse->id);
 
-        my $instrument_data = $pse->{_instrument_data};
         my ($instrument_data_type) = $pse->added_param('instrument_data_type');
-        my ($instrument_data_id)   = $pse->added_param('instrument_data_id');
 
         my @processing;
         if ( my @processing_profile_ids = grep { defined } $pse->added_param('processing_profile_id') ) {
@@ -142,7 +139,7 @@ sub execute {
 
         if($instrument_data->ignored() ) {
             $self->status_message('Skipping ignored data ' . $instrument_data->id . ' on PSE '.$pse->id);
-            push @completable_pses, $pse;
+            push @processed_instrument_data, $instrument_data;
             next PSE;
         }
 
@@ -288,12 +285,12 @@ sub execute {
                 "Leaving queue instrument data PSE inprogress, due to errors. \n"
                     . join("\n",@process_errors)
             );
-            $self->_update_instrument_data_tgi_lims_status_to_failed($pse->{_instrument_data});
+            $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);
         }
         else {
             # Set the pse as completed since this is the end of the line
             # for the pses
-            push @completable_pses, $pse;
+            push @processed_instrument_data, $instrument_data;
         }
 
     } # end of PSE loop
@@ -302,15 +299,14 @@ sub execute {
     $self->request_builds;
 
     $self->status_message("Completing PSEs...");
-    for my $pse (@completable_pses) {
-        # Set PSE status to completed
+    for my $instrument_data (@processed_instrument_data) {
+        my $pse = $instrument_data->{_qidfgm};
         $pse->pse_status("completed");
-        # Rm pse param(s) for failed aqid
         my @failed_aqid_pse_params = GSC::PSEParam->get(pse_id => $pse->id, param_name => 'failed_aqid');
         for my $failed_aqid_pse_param ( @failed_aqid_pse_params ) {
             $failed_aqid_pse_param->delete;
         }
-        $self->_update_instrument_data_tgi_lims_status_to_processed($pse->{_instrument_data});
+        $self->_update_instrument_data_tgi_lims_status_to_processed($instrument_data);
     }
 
     return 1;
@@ -526,7 +522,7 @@ sub is_tcga_reference_alignment {
     return grep { $_ && $_ =~ /^TCGA/i } @nomenclature;
 }
 
-sub load_pses {
+sub _load_instrument_data {
     my $self = shift;
 
     $self->status_message('Get instrument data...');
@@ -566,9 +562,9 @@ sub load_pses {
     my $sorter = ( $self->newest_first )
     ? sub{ $a->{_priority} <=> $b->{_priority} or $a->id <=> $b->id } # oldest first, then failed
     : sub{ $a->{_priority} <=> $b->{_priority} or $b->id <=> $a->id }; # newest first, then failed
-    my @qidfgms_to_process;
+    my @instrument_data_to_process;
     INST_DATA: for my $instrument_data ( sort { $sorter->() } values %instrument_data ) {
-        last INST_DATA if defined $self->max_pses and @qidfgms_to_process >= $self->max_pses;
+        last INST_DATA if defined $self->max_pses and @instrument_data_to_process >= $self->max_pses;
         my $qidfgm = delete $qidfgms{ $instrument_data->id };
         if ( not $qidfgm ) {
             $self->warning_message("Failed to find QIDGFM PSE for instrument data! ".$instrument_data->id);
@@ -578,15 +574,15 @@ sub load_pses {
             $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);
             next INST_DATA;
         }
-        $qidfgm->{_instrument_data} = $instrument_data;
-        push @qidfgms_to_process, $qidfgm;
+        $instrument_data->{_qidfgm} = $qidfgm;
+        push @instrument_data_to_process, $instrument_data;
     }
-    $self->status_message('Processing '.@qidfgms_to_process.' instrument data');
+    $self->status_message('Processing '.@instrument_data_to_process.' instrument data');
 
     # Preload or whatever
-    $self->preload_data( map { $_->{_instrument_data} } @qidfgms_to_process );
+    $self->preload_data(@instrument_data_to_process);
 
-    return @qidfgms_to_process;
+    return @instrument_data_to_process;
 }
 
 #for efficiency--load these together instead of separate queries for each one
