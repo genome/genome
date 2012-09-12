@@ -11,6 +11,12 @@ use feature 'switch';
 use Genome;
 use Term::ReadKey 'GetTerminalSize';
 use List::MoreUtils "uniq";
+use IO::Handle;
+use Genome::Utility::Text qw(strip_color
+                             param_string_to_hash
+                             tree_to_string
+                             tree_to_condensed_string
+                             side_by_side);
 
 class Genome::ProcessingProfile::Command::View {
     doc => "Display basic information about a processing-profile.",
@@ -70,41 +76,45 @@ sub execute {
     my ($self) = @_;
 
     my ($screen_width) = GetTerminalSize();
-    print $self->_get_basic_info($screen_width);
-    print $self->_get_parameters($screen_width);
-    print $self->_get_strategies($screen_width);
-    print $self->_get_models($screen_width);
+    my $handle = new IO::Handle;
+    STDOUT->autoflush(1);
+    $handle->fdopen(fileno(STDOUT), 'w');
 
+    $self->write_report($screen_width, $handle);
     1;
 }
 
 sub get_report {
     my ($self, $width) = @_;
 
-    my $report = $self->_get_basic_info($width);
-    $report .= $self->_get_parameters($width);
-    $report .= $self->_get_strategies($width);
-    $report .= $self->_get_models($width);
+    my $handle = new IO::String;
+    $self->write_report($width, $handle);
+    my $report = ${$handle->string_ref};
+    $handle->close();
 
     return $report;
 }
 
-sub _get_basic_info {
-    my ($self, $width) = @_;
-    my $pp = $self->processing_profile;
+sub write_report {
+    my ($self, $width, $handle) = @_;
 
-    my $result = '';
-    $result .= sprintf("\nName: %s\n", $self->_color($pp->name, 'bold'));
-    $result .= sprintf("ID: %s   ", $self->_color($pp->id, 'bold'));
-    $result .= sprintf("Type Name: %s\n", $self->_color($pp->type_name, 'bold'));
-
-    return $result;
+    $self->_write_basic_info($width, $handle);
+    $self->_write_parameters($width, $handle);
+    $self->_write_strategies($width, $handle);
+    $self->_write_models($width, $handle);
 }
 
-sub _get_parameters {
-    my ($self, $width) = @_;
+sub _write_basic_info {
+    my ($self, $width, $handle) = @_;
+    my $pp = $self->processing_profile;
 
-    my $result = '';
+    printf $handle "\nName: %s\n", $self->_color($pp->name, 'bold');
+    printf $handle "ID: %s   ", $self->_color($pp->id, 'bold');
+    printf $handle "Type Name: %s\n", $self->_color($pp->type_name, 'bold');
+}
+
+sub _write_parameters {
+    my ($self, $width, $handle) = @_;
 
     my @params = $self->processing_profile->params;
     @params = grep(not ($_->name =~ m/_strategy$/), @params);
@@ -125,28 +135,29 @@ sub _get_parameters {
     }
 
     my $value_id_column = join("\n",
-            map {$self->_color_first_line($_->value_id, 'bold')} @params);
+            map {$self->_color($_->value_id, 'bold')} @params);
     push(@columns, $value_id_column);
     push(@justifications, "left");
     push(@fills, " ");
 
-    $result .= Genome::Utility::Text::side_by_side(\@columns,
+    printf $handle "%s\n", side_by_side(\@columns,
             separator => ' ',
             justification => \@justifications,
             fill => \@fills,
             max_width => $width,
     );
-    $result .= "\n";
-    return $result;
 }
 
-sub _get_strategies {
-    my ($self, $width) = @_;
+sub _write_strategies {
+    my ($self, $width, $handle) = @_;
 
-    my $result = "\n";
-    my @fss;
     my @params = $self->processing_profile->params;
     @params = grep($_->name =~ m/_strategy$/, @params);
+
+    return unless scalar(@params);
+
+    print $handle "\n";
+    my @fss;
     for my $param (@params) {
         my $name = $param->name;
         my $strategy_str = $param->value_id;
@@ -161,7 +172,7 @@ sub _get_strategies {
                 my $tree = _get_strategy_tree($strategy_str);
                 if($tree) {
                     $formatted_strategy_str =
-                            Genome::Utility::Text::tree_to_string($tree);
+                            tree_to_string($tree);
                 } elsif($strategy_str) {
                     $formatted_strategy_str =
                         $self->_color("Error parsing strategy!", 'red');
@@ -172,7 +183,7 @@ sub _get_strategies {
                 my $tree = _get_strategy_tree($strategy_str);
                 if($tree) {
                     $formatted_strategy_str =
-                            Genome::Utility::Text::tree_to_condensed_string(
+                            tree_to_condensed_string(
                             _format_tree($tree));
                 } elsif($strategy_str) {
                     $formatted_strategy_str =
@@ -181,25 +192,21 @@ sub _get_strategies {
                 $formatted_strategy_str = "$name\n" . $formatted_strategy_str;
             }
         }
-        $formatted_strategy_str = Genome::Utility::Text::strip_color(
+        $formatted_strategy_str = strip_color(
             $formatted_strategy_str) unless $self->color;
         push(@fss, $formatted_strategy_str);
     }
 
-    $result .= Genome::Utility::Text::side_by_side(\@fss,
+    printf $handle "%s\n", side_by_side(\@fss,
             separator => ' | ',
             justification => 'left',
             max_width => $width,
             stack => 1,
     );
-    $result .= "\n" if $result;
-    return $result;
 }
 
-sub _get_models {
-    my ($self, $width) = @_;
-
-    my $result = '';
+sub _write_models {
+    my ($self, $width, $handle) = @_;
 
     my @models = $self->processing_profile->models;
     my $num_models = scalar(@models);
@@ -253,7 +260,7 @@ sub _get_models {
     my $model_name_column = join("\n",
             $self->_color("Model Name", 'bold'), @model_names);
     my $model_id_column = join("\n", "Model ID", @model_ids);
-    my $models = Genome::Utility::Text::side_by_side(
+    my $models = side_by_side(
             [$model_id_column, $model_name_column],
             separator => ' ',
             justification => 'left',
@@ -261,10 +268,10 @@ sub _get_models {
     );
     my @all_columns = ($models);
 
-    my $subject_id_column = join("\n", "Sample ID", @subject_ids);
+    my $subject_id_column = join("\n", "Subject ID", @subject_ids);
     my $subject_name_column = join("\n",
-            $self->_color("Sample Name", 'bold'), @subject_names);
-    my $subjects = Genome::Utility::Text::side_by_side(
+            $self->_color("Subject Name", 'bold'), @subject_names);
+    my $subjects = side_by_side(
             [$subject_id_column, $subject_name_column],
             separator => ' ',
             justification => 'left',
@@ -278,7 +285,7 @@ sub _get_models {
         my $latest_build_status_column = join("\n",
                 $self->_color("Status", 'bold'),
                 @latest_build_statuses);
-        my $builds = Genome::Utility::Text::side_by_side(
+        my $builds = side_by_side(
                 [$latest_build_id_column, $latest_build_status_column],
                 separator => ' ',
                 justification => 'left',
@@ -287,24 +294,21 @@ sub _get_models {
         push(@all_columns, $builds);
     }
 
-    $result .= sprintf("\n=== %s [%s of %s shown] ===\n",
-            $self->_color('Models', 'bold'), $models_shown, $num_models);
-    $result .= Genome::Utility::Text::side_by_side(
+    printf $handle "\n=== %s [%s of %s shown] ===\n",
+            $self->_color('Models', 'bold'), $models_shown, $num_models;
+    printf $handle "%s\n", side_by_side(
             \@all_columns,
             separator => ' ',
             justification => 'left',
             max_width => $width,
     );
-    $result .= "\n";
 
     if($models_shown >= $self->max_num_models_shown and
        $self->max_num_models_shown != -1) {
-        $result .= sprintf("... %s of %s models shown" .
+        printf $handle "... %s of %s models shown" .
                 " (see max-num-models-shown option)\n",
-                $models_shown, $num_models);
+                $models_shown, $num_models;
     }
-
-    return $result;
 }
 
 sub _color {
@@ -316,14 +320,6 @@ sub _color {
     } else {
         return $string;
     }
-}
-
-sub _color_first_line {
-    my $self = shift;
-    my $string = shift;
-
-    my @lines = split("\n", $string);
-    return join("\n", $self->_color($lines[0], 'bold'), @lines[1..$#lines]);
 }
 
 sub _get_strategy_tree {
@@ -394,7 +390,7 @@ sub _format_params {
 
     my %params;
     if($param_str =~ m/^-/) {
-        %params = Genome::Utility::Text::param_string_to_hash($param_str);
+        %params = param_string_to_hash($param_str);
     } else {
         %params = _parse_strelka_args($param_str);
     }
