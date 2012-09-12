@@ -194,11 +194,11 @@ sub _execute_build{
         #Make ROI FeatureList
         $build->get_or_create_roi_bed;
 
-        my $gap_feature_list =
+        my $gap_list_command =
             Genome::Model::ImportedAnnotation::Command::FetchUcscGapList->execute(
                 annotation_build => $build,
             );
-        $build->gap_feature_list = $gap_feature_list;
+        $build->gap_feature_list($gap_list_command->gap_feature_list);
     }
 
     return 1;

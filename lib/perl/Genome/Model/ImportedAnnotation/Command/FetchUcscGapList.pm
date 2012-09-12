@@ -33,8 +33,8 @@ sub execute {
     );
     my $file_md5 = Genome::Sys->md5sum($gap_filename);
 
-    my $gap_feature_list = Genome::FeatureList->create(
-        name => $self->_resolve_feature_list_name(),
+    $self->gap_feature_list(Genome::FeatureList->create(
+        name => $self->_resolve_feature_list_name($reference_name),
         format => 'true-BED',
 
         file_content_hash => $file_md5,
@@ -43,7 +43,7 @@ sub execute {
 
         description => 'Downloaded from UCSC database',
         source => 'UCSC',
-    );
+    ));
 
     return $self->gap_feature_list;
 }
