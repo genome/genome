@@ -79,7 +79,7 @@ sub execute {
     $self->_clin_fh(Genome::Sys->open_file_for_writing($self->output_file));
 
 
-    $self->_md5sum($clinical_data->write_file($self->_clin_fh, missing_string => $self->missing_string));
+    $self->_md5sum($clinical_data->to_filehandle($self->_clin_fh, missing_string => $self->missing_string));
     $self->_clin_fh->close();
     $self->status_message("m5sum of clinical data: " . $self->_md5sum . "\n");
 

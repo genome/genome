@@ -91,8 +91,7 @@ sub execute {
     if (defined $self->clinical_data_file) {
         die "Please specify either --clinical-data-file OR --samples and --nomenclature"
             unless !defined $self->samples and !defined $self->nomenclature;
-        my $fh = Genome::Sys->open_file_for_reading($self->clinical_data_file);
-        $self->_clinical_data(Genome::Model::PhenotypeCorrelation::ClinicalData->from_file($fh));
+        $self->_clinical_data(Genome::Model::PhenotypeCorrelation::ClinicalData->from_file($self->clinical_data_file));
     } else {
         die "Please specify either --clinical-data-file OR --samples and --nomenclature"
             unless defined $self->samples and defined $self->nomenclature;
@@ -115,7 +114,8 @@ sub execute {
         for my $attr (@categorical_attrs) {
             my ($table, @quant_covars) = $self->_make_table_data($attr);
             if (@quant_covars) {
-                $categorical_with_quant_covars{$attr->{attr_name}} = [] unless defined $categorical_with_quant_covars{$attr->{attr_name}};
+                $categorical_with_quant_covars{$attr->{attr_name}} = []
+                    unless defined $categorical_with_quant_covars{$attr->{attr_name}};
                 push(@{$categorical_with_quant_covars{$attr->{attr_name}}}, @quant_covars);
             }
             if (scalar(%$table)) {

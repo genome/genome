@@ -202,14 +202,13 @@ sub _make_categorical_data_file {
     my ($self, $output_file) = @_;
     my $glm_model_file = $self->glm_model_file;
     my $clin_file = $self->clinical_data_file;
-    my $glm_fh = Genome::Sys->open_file_for_reading($glm_model_file);
-    my $glm_config = Genome::Model::PhenotypeCorrelation::GlmConfig->from_filehandle($glm_fh);
+    my $glm_config = Genome::Model::PhenotypeCorrelation::GlmConfig->from_file($glm_model_file);
 
     my @categorical_attrs = map {$_->{attr_name}} $glm_config->categorical_attributes;
 
     my $out_fh = Genome::Sys->open_file_for_overwriting($output_file);
-    my $clinical_data = Genome::Model::PhenotypeCorrelation::ClinicalData->from_file(Genome::Sys->open_file_for_reading($clin_file));
-    $clinical_data->write_file($out_fh, attribute_names => \@categorical_attrs);
+    my $clinical_data = Genome::Model::PhenotypeCorrelation::ClinicalData->from_file($clin_file);
+    $clinical_data->to_filehandle($out_fh, attribute_names => \@categorical_attrs);
 }
 
 sub _merge_results {

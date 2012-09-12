@@ -21,7 +21,7 @@ BEGIN {
 my $pkg = 'Genome::Model::PhenotypeCorrelation::Command::ParallelClinicalCorrelation';
 use_ok($pkg);
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation-testdata";
+my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation-testdata/CaseControl";
 
 
 my $tmpdir = tempdir(
