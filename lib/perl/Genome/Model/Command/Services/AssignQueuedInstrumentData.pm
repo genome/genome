@@ -57,10 +57,6 @@ class Genome::Model::Command::Services::AssignQueuedInstrumentData {
     ],
 };
 
-sub _default_ref_align_processing_profile_id {
-    return Genome::ProcessingProfile::ReferenceAlignment->default_profile_id;
-}
-
 sub _default_de_novo_assembly_bacterial_processing_profile_id {
     return 2732557;
 }
@@ -1412,20 +1408,20 @@ sub _resolve_processing_for_instrument_data {
                 }
                 else {
                     push @processing, { 
-                        processing_profile_id => $self->_default_ref_align_processing_profile_id,
+                        processing_profile_id => Genome::ProcessingProfile::ReferenceAlignment->default_profile_id,
                         reference_sequence_build_id => 106942997,# GRCh37-lite-build37 => 106942997
                     };
                 }
             }
             elsif ($taxon->species_latin_name =~ /mus musculus/i){
                 push @processing, {
-                    processing_profile_id => $self->_default_ref_align_processing_profile_id,
+                    processing_profile_id => Genome::ProcessingProfile::ReferenceAlignment->default_profile_id,
                     reference_sequence_build_id => 107494762,# UCSC-mouse-buildmm9 => 107494762
                 };
             }
             elsif ($taxon->species_latin_name =~ /zea mays/i) {
                 push @processing, {
-                    processing_profile_id => $self->_default_ref_align_processing_profile_id,
+                    processing_profile_id => Genome::ProcessingProfile::ReferenceAlignment->default_profile_id,
                     reference_sequence_build_id => 12319608,# MGSC-maize-buildB73 => 123196088
                 };
             }
