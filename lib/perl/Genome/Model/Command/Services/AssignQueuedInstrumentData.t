@@ -923,7 +923,7 @@ $pse_8->add_param('processing_profile_id', $processing_profile->id);
 $pse_8->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
 
 
-my $command_5 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create(pse_id => '-7775309');
+my $command_5 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_5, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 ok($command_5->execute(), 'assign-queued-instrument-data executed successfully.');
 my $new_models_5 = $command_5->_newly_created_models;
