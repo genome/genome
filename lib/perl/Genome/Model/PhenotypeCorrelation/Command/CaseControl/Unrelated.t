@@ -17,14 +17,10 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 }
 
-#if(not $ENV{UR_RUN_LONG_TESTS}) {
-    #plan skip_all => 'This test takes a long time to run. Use `ur test run --long` or set the UR_RUN_LONG_TESTS env var to enable.';
-#}
-
 my $pkg = 'Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated';
 use_ok($pkg);
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation-testdata";
+my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation-testdata/CaseControl";
 
 my $tmpdir = tempdir(
     't-ParallelClinicalCorrelation-XXXXX',
