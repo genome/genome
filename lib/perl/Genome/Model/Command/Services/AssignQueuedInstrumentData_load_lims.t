@@ -19,7 +19,6 @@ use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die('C
 #Just try to run through, which will load any LIMS modules as necessary.
 my $command = Genome::Model::Command::Services::AssignQueuedInstrumentData->create(
     max_pses => 0,
-    max_pses_to_check => 0,
 );
 isa_ok($command, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 $command->dump_status_messages(1);

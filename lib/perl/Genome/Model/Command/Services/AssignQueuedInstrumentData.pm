@@ -18,13 +18,6 @@ class Genome::Model::Command::Services::AssignQueuedInstrumentData {
             default     => 200,
             doc         => 'Max # of PSEs to process in one invocation',
         },
-        max_pses_to_check => {
-            is          => 'Number',
-            is_optional => 1,
-            len         => 5,
-            default     => 1000,
-            doc         => 'Max # of PSEs to check for processability',
-        },
         newest_first => {
             is          => 'Boolean',
             is_optional => 1,
@@ -598,15 +591,6 @@ sub load_pses {
         push @instrument_data, sort { $fail_count_sorter->() or $a->id cmp $b->id } values %failed_instrument_data;
     }
 
-    # Don't try to check more than we might be able to hold information for in memory.
-    if( @instrument_data > $self->max_pses_to_check ) {
-        @instrument_data = splice(@instrument_data, 0, $self->max_pses_to_check);
-        $self->status_message('Limiting checking to ' . $self->max_pses_to_check);
-    }
-
-    # Preload or whatever
-    $self->preload_data(\%new_instrument_data); #The checking uses this data, so need to load it first
-
     # Check the instrument data
     my @checked_pses;
     for my $instrument_data ( @instrument_data ) {
@@ -632,14 +616,17 @@ sub load_pses {
         $self->status_message('Limiting processing to ' . $max_pses);
     }
 
+    # Preload or whatever
+    $self->preload_data( map { $_->{_instrument_data} } @checked_pses);
+
     return @checked_pses;
 }
 
 #for efficiency--load these together instead of separate queries for each one
 sub preload_data {
-    my ($self, $instrument_data) = @_;
+    my ($self, @instrument_data) = @_;
 
-    my @samples = map { $_->sample } values %$instrument_data;
+    my @samples = map { $_->sample } @instrument_data;
     $self->status_message("Pre-loading models for " . scalar(@samples) . " samples");
     my @models = Genome::Model->get(subject_id => [ map { $_->id } @samples ]);
     $self->status_message("  got " . scalar(@models) . " models");
