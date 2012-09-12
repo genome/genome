@@ -57,10 +57,6 @@ class Genome::Model::Command::Services::AssignQueuedInstrumentData {
     ],
 };
 
-sub _default_de_novo_assembly_bacterial_processing_profile_id {
-    return 2732557;
-}
-
 sub _default_rna_seq_processing_profile_id {
     my $self = shift;
     my $instrument_data = shift;
@@ -1426,7 +1422,7 @@ sub _resolve_processing_for_instrument_data {
                 };
             }
             elsif ($taxon->domain =~ /bacteria/i) {
-                push @processing, { processing_profile_id => $self->_default_de_novo_assembly_bacterial_processing_profile_id, };
+                push @processing, { processing_profile_id => 2732557, };
             }
             elsif ( my @default_pp_ids = $self->_get_default_processing_profile_ids_for_instrument_data($instrument_data) ) {
                 for my $processing_profile_id ( @default_pp_ids ) {
