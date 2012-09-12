@@ -59,7 +59,7 @@ for my $i (1..10) {
 }
 
 
-my $md5sum = $obj->write_file(new IO::File($output_file, "w"), missing_string => '.');
+my $md5sum = $obj->to_file($output_file, missing_string => '.');
 is($md5sum, $expected_md5sum, "md5sum is as expected");
 
 my $diff = Genome::Sys->diff_file_vs_file($output_file, $expected_file);
@@ -68,7 +68,7 @@ ok(!$diff, 'output matched expected result')
 
 $obj = undef;
 # now load the file, and save it again to make sure we get the same result
-my $obj2 = $pkg->from_file(new IO::File($output_file, "r"), missing_string => ".");
+my $obj2 = $pkg->from_file($output_file, missing_string => ".");
 is($obj2->sample_count, 10, "correct number of samples");
 is_deeply([$obj2->attributes], \@expected_attrs, "correct attribute names")
     or diag("Expected:\n". Dumper(\@expected_attrs) . "Actual:\n" . Dumper([$obj->attributes]));
@@ -76,7 +76,7 @@ is_deeply($obj2->attribute_types, \%expected_attr_types, "correct attribute type
     or diag("Expected:\n". Dumper(\%expected_attr_types) . "Actual:\n" . Dumper($obj->attribute_types));
 
 my $output_file2 = "$output_file.again";
-my $md5sum2 = $obj2->write_file(new IO::File($output_file2, "w"), missing_string => '.');
+my $md5sum2 = $obj2->to_file($output_file2, missing_string => '.');
 is($md5sum2, $expected_md5sum, "md5sum is as expected");
 
 $diff = Genome::Sys->diff_file_vs_file($output_file2, $expected_file);

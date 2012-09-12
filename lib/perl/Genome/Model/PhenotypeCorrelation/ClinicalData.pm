@@ -78,7 +78,6 @@ sub from_database {
     @sample_indices{map {$_->name} @samples} = 0..$#samples;
     $self->_sample_indices(\%sample_indices);
 
-    $DB::single=1;
     my %phenotypes;
     my %attributes;
     foreach my $sample (@samples) {
@@ -87,8 +86,7 @@ sub from_database {
 
         foreach my $attr (@attrs) {
             my $label = $attr->attribute_label;
-            $attributes{$label} = {};
-
+            $attributes{$label} = {} unless defined $attributes{$label};
             $phenotypes{$label} = [(undef) x scalar @samples] unless defined $phenotypes{$label};
             $phenotypes{$label}->[$sample_idx] = $attr->attribute_value;
         }
@@ -106,9 +104,14 @@ sub from_database {
 }
 
 sub from_file {
+    my ($class, $path, %params) = @_;
+    return $class->from_filehandle(Genome::Sys->open_file_for_reading($path), %params);
+}
+
+sub from_filehandle {
     my ($class, $fh, %params) = @_;
-    my $self = $class->create;
     my $missing_string = $params{missing_string} || "NA";
+    my $self = $class->create;
 
     my $header_line = $fh->getline or confess "Failed to read clinical data header";
     chomp $header_line;
@@ -120,10 +123,18 @@ sub from_file {
     while (my $line = $fh->getline) {
         chomp $line;
         ++$line_num;
-        my @fields = map { $_ eq $missing_string ? undef : $_ } split("\t", $line);
+
+        my @fields = map {
+                my $val = $_;
+                # replace NA or '' with undef
+                scalar(grep {$val eq $_} ('', $missing_string)) > 0
+                    ? undef
+                    : $_
+            } split("\t", $line);
+
         if (scalar @fields - 1 != scalar @attr_names) { # - 1 for Sample_name
-            die "At line $line_num: # of columns does not match header:\n"
-                . "HEADER: " . join(",", @attr_names) . "\n"
+            confess "At line $line_num: # of columns does not match header:\n"
+                . "HEADER: " . join(",", ("Sample_name", @attr_names)) . "\n"
                 . "  LINE: " . join(",", @fields) . "\n";
         }
         push(@sample_data, \@fields);
@@ -151,7 +162,12 @@ sub from_file {
     return $self;
 }
 
-sub write_file {
+sub to_file {
+    my ($self, $path, %params) = @_;
+    return $self->to_filehandle(Genome::Sys->open_file_for_writing($path), %params);
+}
+
+sub to_filehandle {
     my ($self, $fh, %params) = @_;
     my $missing_string = $params{missing_string} || "NA";
     my @attr_names;
@@ -182,6 +198,46 @@ sub write_file {
     }
 
     return $md5->hexdigest;
+}
+
+sub coerce_to_binary {
+    my ($self, $attribute, $one_value, %params) = @_;
+    confess "Attempted to coerce attribute '$attribute' to binary with undef one value"
+        unless defined $one_value;
+
+    my @ignore_values = $params{ignore_values} || ();
+
+    my $values = $self->_phenotypes->{$attribute};
+    confess "Unknown attribute '$attribute'" unless defined $values;
+
+    my %uniq = map {$_ => 0} grep {defined $_} @$values;
+    if (@ignore_values) {
+        delete $uniq{$_} for @ignore_values;
+    }
+
+    my $n_uniq = scalar keys(%uniq);
+    if ($n_uniq != 2) {
+        confess "Unable to coerce attribute '$attribute' to binary, it has $n_uniq distinct values:\n\t"
+            . join("\n\t", keys(%uniq));
+    }
+
+    # already binary
+    return if defined $uniq{0} and defined $uniq{1};
+
+    if (!defined $uniq{$one_value}) {
+        confess "Unable to coerce attribute '$attribute' to binary using value '$one_value' as 1. The values present are:\n\t"
+            . join("\n\t", keys(%uniq));
+    }
+
+    $uniq{$one_value} = 1;
+
+    $self->_phenotypes->{$attribute} = [ map {
+        (defined $_ && defined $uniq{$_})
+            ? $uniq{$_}
+            : $_
+        } @$values ];
+
+    return;
 }
 
 sub _is_categorical {

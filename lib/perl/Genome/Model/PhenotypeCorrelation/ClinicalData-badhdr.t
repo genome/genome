@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use Data::Dumper;
+use IO::String;
 use File::Temp qw/tempdir/;
 use Test::More;
 use above 'Genome';
@@ -22,27 +23,78 @@ my $tmpdir = tempdir(
     CLEANUP => 1
 );
 
-my $output_file = "$tmpdir/clin.tsv";
-my $ofh = new IO::File($output_file, "w");
-$ofh->write("Sample_Name\tPhenotype\n");
-$ofh->write("S1\t0\t1\n"); # extra column
-$ofh->close();
+# S1 has more columns than the header
+my $extra_data_col = new IO::String(<<EOS
+Sample_Name\tT
+S1\t0\t1
+EOS
+);
 
 eval {
-    $pkg->from_file(new IO::File($output_file, "r"));
+    $pkg->from_filehandle($extra_data_col);
 };
-ok($@, "Extra data column throws an error");
+ok($@, "Extra data column causes an error");
+#print "The error message was:\n$@\n";
 
-$ofh = new IO::File($output_file, "w");
-$ofh->write("Sample_Name\tPhenotype1\tPhenotype2\n");
-$ofh->write("S1\t0\n"); # missing column
-$ofh->close();
+# The header has has more columns than S1
+my $extra_header_col = new IO::String(<<EOS
+Sample_Name\tT1\tT2
+S1\t0
+EOS
+);
 
 eval {
-    $pkg->from_file(new IO::File($output_file, "r"));
+    $pkg->from_filehandle($extra_header_col);
 };
-ok($@, "Missing data column throws an error");
+ok($@, "Missing data column causes an error");
+#print "The error message was:\n$@\n";
 
+# S2 has a blank entry for T1
+my $blanks = new IO::String(<<EOS
+Sample_Name\tT1\tT2
+S1\t0\t1
+S2\t\t1
+S3\tNA\tNA
+S4\t4\tNA
+EOS
+);
+
+my $cd = $pkg->from_filehandle($blanks, missing_string => "NA");
+ok($cd, "Loaded data from file with blanks");
+is_deeply($cd->attribute_values("T1"), [0, undef, undef, 4], "attribute T1 values ok");
+is_deeply($cd->attribute_values("T2"), [1, 1, undef, undef], "attribute T2 values ok");
+
+# T1 \in {High, Low}    <- can be coerced to binary
+# T2 \in R              <- cannot
+# T3 \in {X,Y,Z}        <- cannot
+my $binary = new IO::String(<<EOS
+Sample_Name\tT1\tT2\tT3
+A\tHigh\t0.344\tX
+B\tLow\t-1.256\tX
+C\tLow\t-0.347\tY
+D\tHigh\t1.434\tY
+E\tNA\t0.0162\tZ
+EOS
+);
+
+$cd = $pkg->from_filehandle($binary);
+ok($cd, "Created clinical data object");
+eval {
+    $cd->coerce_to_binary("T1", undef);
+};
+ok($@, "Attempting to coerce to binary with undef attribute value causes an error");
+
+
+eval {
+    $cd->coerce_to_binary("T1", "bad");
+};
+ok($@, "Attempting to coerce to binary with nonexistant attribute value causes an error");
+
+$cd->coerce_to_binary("T1", "High");
+is_deeply($cd->attribute_values("T1"), [1,0,0,1,undef], "Coercion to binary worked");
+$cd->coerce_to_binary("T1", "High");
+is_deeply($cd->attribute_values("T1"), [1,0,0,1,undef], "Coercion to binary again didn't fail");
+#print "The error message was:\n$@\n";
 
 
 done_testing();
