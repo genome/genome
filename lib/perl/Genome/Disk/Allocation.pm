@@ -715,7 +715,7 @@ sub _archive {
         unless ($volume_lock) {
             confess "Could not get lock for volume " . $self->volume->mount_path;
         }
-        my $volume = Genome::Disk::Volume->$mode(mount_path => $self->volume->mount_path);
+        my $volume = Genome::Disk::Volume->$mode(mount_path => $self->volume->mount_path, disk_status => 'active');
         unless ($volume) {
             confess "Found no volume with mount path " . $self->volume->mount_path;
         }
