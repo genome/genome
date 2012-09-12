@@ -67,7 +67,6 @@ sub create
     }
 
     $self->_prepare_staging_directory;
-    $self->_prepare_output_directory;
 
     $self->status_message('Create AnnotationStructures');
 
@@ -557,6 +556,7 @@ sub create
     }
     $self->status_message("Create AnnotationStructures done");
 
+    $self->_prepare_output_directory;
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
 
