@@ -92,31 +92,29 @@ sub execute {
     return 1 unless @instrument_data;
 
     my @processed_instrument_data;
-    PSE:
-    foreach my $instrument_data ( @instrument_data ) {
-        my $pse = $instrument_data->{_qidfgm};
-        $self->status_message('Starting PSE ' . $pse->id);
+    INST_DATA: foreach my $instrument_data ( @instrument_data ) {
+        $self->status_message('Starting instrument data '.$instrument_data->id);
 
-        my ($instrument_data_type) = $pse->added_param('instrument_data_type');
+        my $sequencing_platform = $instrument_data->sequencing_platform;
 
         my @processing;
-        if ( my @processing_profile_ids = grep { defined } $pse->added_param('processing_profile_id') ) {
+        if ( my @processing_profile_ids = grep { defined } $instrument_data->{_qidfgm}->added_param('processing_profile_id') ) {
             # FIXME: this can be removed after a short period of catch up
             for my $processing_profile_id ( @processing_profile_ids ) {
                 my $processing_profile = Genome::ProcessingProfile->get($processing_profile_id);
                 unless ($processing_profile) {
                     $self->error_message(
-                        'Failed to get processing profile'
-                        . " '$processing_profile_id' for inprogress pse "
-                        . $pse->pse_id );
-                    next PSE;
+                        "Failed to get processing profile $processing_profile_id' for on QIGFGM PSE! "
+                        .$instrument_data->{_qidfgm}->pse_id 
+                    );
+                    next INST_DATA;
                 }
-                my @reference_sequence_build_ids = $pse->reference_sequence_build_param_for_processing_profile($processing_profile);
+                my @reference_sequence_build_ids = $instrument_data->{_qidfgm}->reference_sequence_build_param_for_processing_profile($processing_profile);
                 if ( @reference_sequence_build_ids ) {
                     my @reference_sequence_builds = Genome::Model::Build::ImportedReferenceSequence->get(@reference_sequence_build_ids);
                     if ( not @reference_sequence_builds or @reference_sequence_builds != @reference_sequence_build_ids ) {
                         $self->error_message('Failed to get all reference sequence builds for ids! '.join(' ', @reference_sequence_build_ids));
-                        next PSE;
+                        next INST_DATA;
                     }
                     for my $reference_sequence_build ( @reference_sequence_builds ) {
                         push @processing, {
@@ -138,9 +136,9 @@ sub execute {
         my $subject = $instrument_data->sample;
 
         if($instrument_data->ignored() ) {
-            $self->status_message('Skipping ignored data ' . $instrument_data->id . ' on PSE '.$pse->id);
+            $self->status_message('Skipping ignored instrument data! '.$instrument_data->id);
             push @processed_instrument_data, $instrument_data;
-            next PSE;
+            next INST_DATA;
         }
 
         my @process_errors;
@@ -177,95 +175,80 @@ sub execute {
             }
 
             if(scalar(@assigned > 0)) {
-                for my $m (@assigned) {
-                        $pse->add_param('genome_model_id', $m->id) unless (grep { $_ eq $m->id } $pse->added_param('genome_model_id'));
-                    }
-                    #find or create default qc models if applicable
-                    $self->create_default_qc_models(@assigned);
-                    #find or create somatic models if applicable
-                    $self->find_or_create_somatic_variation_models(@assigned);
+                #find or create default qc models if applicable
+                $self->create_default_qc_models(@assigned);
+                #find or create somatic models if applicable
+                $self->find_or_create_somatic_variation_models(@assigned);
 
-                } else {
-                    # no model found for this PP, make one (or more) and assign all applicable data
-                    $DB::single = $DB::stopper;
-                    my @new_models = $self->create_default_models_and_assign_all_applicable_instrument_data($instrument_data, $subject, $processing_profile, $reference_sequence_build, $pse);
-                    unless(@new_models) {
-                        push @process_errors, $self->error_message;
-                        next PP;
-                    }
-                    #find or create somatic models if applicable
-                    $self->find_or_create_somatic_variation_models(@new_models);
-                }
-            } # looping through processing profiles for this instdata, finding or creating the default model
-        } elsif ( $instrument_data_type =~ /solexa/i
-                and $instrument_data->target_region_set_name
-                and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)
-                and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)->content_type eq 'validation'
-        ) {
-            my @validation = Genome::Model::SomaticValidation->get(
-                target_region_set_name => $instrument_data->target_region_set_name,
-            );
-
-            @validation = grep((($_->tumor_sample and $_->tumor_sample eq $instrument_data->sample) or ($_->normal_sample and $_->normal_sample eq $instrument_data->sample)), @validation);
-            if(@validation) {
-                my $fl = Genome::FeatureList->get(name => $instrument_data->target_region_set_name);
-                my $ok = 0;
-
-                #try all possible matching references
-                for($fl->reference, map($_->destination_reference_build, Genome::Model::Build::ReferenceSequence::Converter->get(source_reference_build_id => $fl->reference->id)) ) {
-                    $ok = $self->assign_instrument_data_to_models($instrument_data, $_, @validation) || $ok;
-                }
-
-                unless($ok) {
-                    push @process_errors,
-                        $self->error_message('Did not assign validation instrument data to any models.');
-                }
-            } elsif($instrument_data->index_sequence eq 'unknown' && $instrument_data->sample->name =~ /Pooled_Library/) {
-                $self->status_message('Skipping pooled library validation data.');
-                $pse->add_param('no_model_generation_attempted',1);
             } else {
-                push @process_errors,
-                    $self->error_message('No validation models found to assign data (target ' . $instrument_data->target_region_set_name . ' on instrument data ' . $instrument_data->id . '.)');
-            }
-        } else {
-            #record that the above code was skipped so we could reattempt it if more information gained later
-            $pse->add_param('no_model_generation_attempted',1);
-            $self->status_message('No model generation attempted for PSE ' . $pse->id);
-        } # done with PSEs which specify @processing_profile_ids
-
-        # Handle this instdata for other models besides the default
-        {
-            my $sequencing_platform = $instrument_data_type;
-
-            # Mismatch between the valid values for a sequencing platform via
-            # a processing profile and what is stored as the
-            # instrument_data_type PSE param
-            if ($sequencing_platform eq 'sanger') {
-                $sequencing_platform = '3730';
-            }
-
-            my @found_models;
-            my @check = qw/sample taxon/;
-
-            for my $check (@check) {
-                my $subject = $instrument_data->$check;
-                # Should we just hoise this check out of the loop and skip to next PSE?
-                if (defined($subject)) {
-                    my @some_models= Genome::Model->get(
-                        subject_id         => $subject->id,
-                        auto_assign_inst_data => 1,
-                    );
-
-                    my $new_models = $self->_newly_created_models;
-                    @some_models = grep { not $new_models->{$_->id} } @some_models;
-                    push @found_models,@some_models;
+                # no model found for this PP, make one (or more) and assign all applicable data
+                $DB::single = $DB::stopper;
+                my @new_models = $self->create_default_models_and_assign_all_applicable_instrument_data($instrument_data, $subject, $processing_profile, $reference_sequence_build);
+                unless(@new_models) {
+                    push @process_errors, $self->error_message;
+                    next PP;
                 }
+                #find or create somatic models if applicable
+                $self->find_or_create_somatic_variation_models(@new_models);
+            }
+        } # looping through processing profiles for this instdata, finding or creating the default model
+    } elsif ( $sequencing_platform eq 'solexa'
+            and $instrument_data->target_region_set_name
+            and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)
+            and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)->content_type eq 'validation'
+    ) {
+        my @validation = Genome::Model::SomaticValidation->get(
+            target_region_set_name => $instrument_data->target_region_set_name,
+        );
+
+        @validation = grep((($_->tumor_sample and $_->tumor_sample eq $instrument_data->sample) or ($_->normal_sample and $_->normal_sample eq $instrument_data->sample)), @validation);
+        if(@validation) {
+            my $fl = Genome::FeatureList->get(name => $instrument_data->target_region_set_name);
+            my $ok = 0;
+
+            #try all possible matching references
+            for($fl->reference, map($_->destination_reference_build, Genome::Model::Build::ReferenceSequence::Converter->get(source_reference_build_id => $fl->reference->id)) ) {
+                $ok = $self->assign_instrument_data_to_models($instrument_data, $_, @validation) || $ok;
             }
 
-            @found_models =
-                grep {
-                    $_->processing_profile->can('sequencing_platform')
-                } @found_models;
+            unless($ok) {
+                push @process_errors,
+                $self->error_message('Did not assign validation instrument data to any models.');
+            }
+        } elsif($instrument_data->index_sequence eq 'unknown' && $instrument_data->sample->name =~ /Pooled_Library/) {
+            $self->status_message('Skipping pooled library validation data! '.$instrument_data->id);
+        } else {
+            push @process_errors,
+            $self->error_message('No validation models found to assign data (target ' . $instrument_data->target_region_set_name . ' on instrument data ' . $instrument_data->id . '.)');
+        }
+    } else {
+        $self->status_message('No model generation attempted for instrument data! '.$instrument_data->id);
+    } # done with PSEs which specify @processing
+
+    # Handle this instdata for other models besides the default
+    {
+        my @found_models;
+        my @check = qw/sample taxon/;
+
+        for my $check (@check) {
+            my $subject = $instrument_data->$check;
+            # Should we just hoise this check out of the loop and skip to next PSE?
+            if (defined($subject)) {
+                my @some_models= Genome::Model->get(
+                    subject_id         => $subject->id,
+                    auto_assign_inst_data => 1,
+                );
+
+                my $new_models = $self->_newly_created_models;
+                @some_models = grep { not $new_models->{$_->id} } @some_models;
+                push @found_models,@some_models;
+            }
+        }
+
+        @found_models =
+        grep {
+            $_->processing_profile->can('sequencing_platform')
+        } @found_models;
 
             @found_models =
                 grep {
@@ -298,7 +281,7 @@ sub execute {
     #schedule new builds for the models we found and stored in the output hashes
     $self->request_builds;
 
-    $self->status_message("Completing PSEs...");
+    $self->status_message("Updating instrument data and QIDFGM PSEs...");
     for my $instrument_data (@processed_instrument_data) {
         my $pse = $instrument_data->{_qidfgm};
         $pse->pse_status("completed");
@@ -721,7 +704,6 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
     my $subject = shift;
     my $processing_profile = shift;
     my $reference_sequence_build = shift;
-    my $pse = shift;
 
     my @new_models;
     my @ref_align_models;
@@ -873,8 +855,6 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
 
         my $new_models = $self->_newly_created_models;
         $new_models->{$m->id} = $m;
-
-        $pse->add_param('genome_model_id', $m->id);
     }
 
     # Now that they've had their instrument data assigned get_or_create_lane_qc_models

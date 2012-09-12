@@ -12,7 +12,7 @@ BEGIN {
 use above 'Genome';
 
 require Genome::InstrumentData::Solexa;
-use Test::More tests => 32;
+use Test::More tests => 31;
 use Test::MockObject;
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData');
@@ -195,7 +195,6 @@ $command_1a->dump_status_messages(1);
 ok($command_1a->execute(), 'assign-queued-instrument-data executed successfully.');
 
 is($pse_1a->pse_status, 'completed', 'pooled instrument data removed from queue');
-ok(@{[$pse_1a->added_param('no_model_generation_attempted')]}, 'flag about skipping work added to pse');
 
 my $fl2 = Genome::FeatureList->__define__(
     id => 'ABCDEFGH',

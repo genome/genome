@@ -90,14 +90,14 @@ use Genome::Site::TGI::Observers;
 # A white-list of GSC modules which can be used on the /usr/bin/perl interpreter
 my @lims_whitelist = (
     'GSC::PSE::QueueInstrumentDataForGenomeModeling' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.t', 108],
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.t', 106],
     ],
     'GSC::PSEParam' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 305],
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 288],
         ['Genome/Model/Tools/Lims/ApipeBridge/InstrumentDataStatus.pm', 109],
     ],
     'GSC::PSE' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 544],
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 527],
         ['Genome/Model/Command/Services/AssignQueuedInstrumentData_validation.t', 106],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 89],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 118],
