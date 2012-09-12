@@ -23,7 +23,7 @@ class Genome::ProcessingProfile::ReferenceAlignment {
     has_param => [
         sequencing_platform => {
             doc => 'The sequencing platform from whence the model data was generated',
-            valid_values => ['454', 'solexa', '3730'],
+            valid_values => ['454', 'solexa', 'sanger'],
         },
         dna_type => {
             doc => 'the type of dna used in the reads for this model',
