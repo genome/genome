@@ -3,14 +3,25 @@ package Genome::Utility::Text;
 use strict;
 use warnings;
 
-use Genome;
-
 use Data::Dumper 'Dumper';
 use POSIX "floor";
 require Carp;
 
-class Genome::Utility::Text {
-};
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(camel_case_to_string
+                    capitalize_words
+                    hash_to_string
+                    justify
+                    param_string_to_hash
+                    sanitize_string_for_filesystem
+                    side_by_side
+                    string_to_camel_case
+                    strip_color
+                    tree_to_condensed_string
+                    tree_to_string
+                    width
+                    );
 
 #< Camel Case >#
 sub string_to_camel_case {
@@ -169,7 +180,7 @@ sub side_by_side {
         push(@line_arrays, \@lines);
 
         my $fill = $fills[$i];
-        $width += width($fill)*2 if $fill ne ' ';
+        $width += width($fill)*2 + 1 if $fill ne ' ';
 
         push(@widths, $width);
     }
@@ -234,42 +245,27 @@ sub width {
 }
 
 sub justify {
-    my ($string, $kind, $field_width, $fill) = @_;
+    my ($string, $kind, $field_width, $fill, $spacer) = @_;
     $fill = $fill || " ";
+    $spacer = " " unless defined($spacer);
 
     my $num_spaces_needed = $field_width - width($string);
     my $fill_string = "$fill"x$num_spaces_needed;
 
-    my $spacer = '';
     if($num_spaces_needed > 0) {
-        $spacer = ' ';
-        $num_spaces_needed -= 1;
-        return "$string " if $num_spaces_needed == 0;
+        if(width($spacer) > $num_spaces_needed) {
+            $spacer = substr($spacer, 0, $num_spaces_needed);
+        }
+        $num_spaces_needed -= width($spacer);
+        my $result = $string . $spacer;
+        if($num_spaces_needed == 0) {
+            return $result;
+        }
     } else {
         return $string;
     }
 
     my $format;
-    #given($kind) { # THIS BREAKS IN 5.8 AND LIMS USES 5.8...
-    #    when('left') {
-    #        $format = "%s" . $spacer .
-    #                substr($fill_string, -1 * $num_spaces_needed);
-    #    }
-    #    when('right') {
-    #        $format = substr($fill_string, 0, $num_spaces_needed ) .
-    #                $spacer . "%s";
-    #    }
-    #    when('center') {
-    #        my $left_spaces = floor($num_spaces_needed/2);
-    #        my $right_spaces = $num_spaces_needed - $left_spaces;
-    #        $format = substr($fill_string, 0, $left_spaces) .  "%s" .
-    #                  substr($fill_string, -1 * $right_spaces)
-    #    }
-    #    default {
-    #        Carp::croak("kind argument must be one of 'left',".
-    #                    " 'right', or 'center', not '$kind'");
-    #    }
-    #}
     if($kind eq 'left') {
         $format = "%s" . $spacer .
                 substr($fill_string, -1 * $num_spaces_needed);
