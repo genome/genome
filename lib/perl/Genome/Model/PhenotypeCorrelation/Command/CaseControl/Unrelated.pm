@@ -42,6 +42,14 @@ class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
             doc => "Maximum minor allele frequency cutoff to include in burden tests",
             default_value => 0.01,
         },
+        identify_cases_by => {
+            is => 'Text',
+            doc => 'the expression which matches "case" samples, typically by their attributes'
+        },
+        identify_controls_by => {
+            is => 'Text',
+            doc => 'the expression which matches "control" samples, typically by their attributes'
+        },
     ],
 };
 
@@ -131,7 +139,7 @@ sub _create_workflow {
                 }
             },
         },
-    
+
         # Create glm QQ plot
         qqp_glm => {
             name => "GLM QQ plot generation",
@@ -317,11 +325,48 @@ sub _create_workflow {
     }
     $workflow->log_dir("$output_directory/logs");
 
-    return $workflow, %inputs; 
+    return $workflow, %inputs;
+}
+
+# Binary traits may need to be coerced into 0/1 encoding
+sub update_clinical_data {
+    my $self = shift;
+    my $cdata_file = $self->clinical_data_file;
+    $self->status_message("Checking clinical data file $cdata_file...");
+    my $cdata_md5_file = "$cdata_file.md5";
+    my $cdata = Genome::Model::PhenotypeCorrelation::ClinicalData->from_file($cdata_file);
+    my $glm_file = $self->glm_model_file;
+    my $glm_model = Genome::Model::PhenotypeCorrelation::GlmConfig->from_file($glm_file);
+    my @binary_attrs = $glm_model->categorical_attributes;
+    my $n_binary_attrs = scalar(@binary_attrs);
+    if (@binary_attrs != 1) {
+        my $names = join(", ", map {$_->{attr_name}} @binary_attrs);
+        confess "Found $n_binary_attrs binary attributes ($names) in glm config $glm_file, expected 1";
+    }
+    my $attr_name = $binary_attrs[0]->{attr_name};
+    my %updates = $cdata->coerce_to_binary($attr_name,
+        one => $self->identify_cases_by,
+        zero => $self->identify_controls_by
+        );
+    if (%updates) {
+        $self->status_message("The encoding of attribute $attr_name has changed:\n\t"
+            . join("\n\t", map { $_ . " => " . $updates{$_} } keys %updates )
+            );
+        my $orig_cdata_file = "$cdata_file.orig";
+        my $orig_cdata_md5_file = "$cdata_md5_file.orig";
+        rename($cdata_file, $orig_cdata_file);
+        rename($cdata_md5_file, $orig_cdata_md5_file) if -e $cdata_md5_file;
+        my $md5 = $cdata->to_file($cdata_file);
+        my $md5_fh = Genome::Sys->open_file_for_writing($cdata_md5_file);
+        $md5_fh->write("$md5\n");
+        $md5_fh->close();
+    }
 }
 
 sub execute {
     my $self = shift;
+    $self->update_clinical_data();
+
     my ($workflow, %inputs) = $self->_create_workflow();
     my $workflow_xml_file = $self->output_directory . "/workflow.xml";
 

@@ -20,7 +20,7 @@ my $tmpdir = tempdir(
 );
 
 my $output_file = "$tmpdir/clin.tsv";
-my $expected_file = __FILE__ . ".expected";
+my $expected_file = __FILE__ . ".clean.expected";
 my $expected_md5sum = '124f9d890b69762e4a7402810b60566f';
 
 my $pkg = 'Genome::Model::PhenotypeCorrelation::ClinicalData';

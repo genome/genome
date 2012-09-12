@@ -201,10 +201,9 @@ sub to_filehandle {
 }
 
 sub coerce_to_binary {
-    my ($self, $attribute, $one_value, %params) = @_;
-    confess "Attempted to coerce attribute '$attribute' to binary with undef one value"
-        unless defined $one_value;
-
+    my ($self, $attribute, %params) = @_;
+    my $one_value = $params{one};
+    my $zero_value = $params{zero};
     my @ignore_values = $params{ignore_values} || ();
 
     my $values = $self->_phenotypes->{$attribute};
@@ -224,12 +223,16 @@ sub coerce_to_binary {
     # already binary
     return if defined $uniq{0} and defined $uniq{1};
 
-    if (!defined $uniq{$one_value}) {
-        confess "Unable to coerce attribute '$attribute' to binary using value '$one_value' as 1. The values present are:\n\t"
-            . join("\n\t", keys(%uniq));
+    confess "Attempted to coerce attribute '$attribute' to binary with undef values"
+        unless (defined $one_value and defined $zero_value);
+
+    if (!defined $uniq{$one_value} || !defined $uniq{$zero_value}) {
+        confess "Unable to coerce attribute '$attribute' to binary using values $zero_value, $one_value as 0/1.\n"
+            ."The actual values present are:\n\t" . join("\n\t", keys(%uniq));
     }
 
     $uniq{$one_value} = 1;
+    $uniq{$zero_value} = 0;
 
     $self->_phenotypes->{$attribute} = [ map {
         (defined $_ && defined $uniq{$_})
@@ -237,7 +240,7 @@ sub coerce_to_binary {
             : $_
         } @$values ];
 
-    return;
+    return %uniq;
 }
 
 sub _is_categorical {

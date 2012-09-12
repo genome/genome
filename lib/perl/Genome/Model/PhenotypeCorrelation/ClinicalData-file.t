@@ -79,22 +79,30 @@ EOS
 
 $cd = $pkg->from_filehandle($binary);
 ok($cd, "Created clinical data object");
-eval {
-    $cd->coerce_to_binary("T1", undef);
-};
+eval { $cd->coerce_to_binary("T1", one => "high", zero => undef); };
+ok($@, "Attempting to coerce to binary with undef attribute value causes an error");
+eval { $cd->coerce_to_binary("T1", one => undef, zero => "low"); };
+ok($@, "Attempting to coerce to binary with undef attribute value causes an error");
+eval { $cd->coerce_to_binary("T1", one => undef, zero => undef); };
 ok($@, "Attempting to coerce to binary with undef attribute value causes an error");
 
 
 eval {
-    $cd->coerce_to_binary("T1", "bad");
+    $cd->coerce_to_binary("T1", one => "bad", zero => "low");
 };
 ok($@, "Attempting to coerce to binary with nonexistant attribute value causes an error");
 
-$cd->coerce_to_binary("T1", "High");
+my %updates = $cd->coerce_to_binary("T1", one => "High", zero => "Low");
+ok(%updates, "Updated clinical data");
+is_deeply(\%updates, { High => 1, Low => 0 }, "Updates are as expected");
 is_deeply($cd->attribute_values("T1"), [1,0,0,1,undef], "Coercion to binary worked");
-$cd->coerce_to_binary("T1", "High");
+%updates = $cd->coerce_to_binary("T1", one => "High", zero => "Low");
 is_deeply($cd->attribute_values("T1"), [1,0,0,1,undef], "Coercion to binary again didn't fail");
-#print "The error message was:\n$@\n";
+ok(!%updates, "No updates reported");
+%updates = $cd->coerce_to_binary("T1", one => undef, zero => undef);
+ok(!%updates, "Coercion from binary to binary with undef case/control labels is ok");
+is_deeply($cd->attribute_values("T1"), [1,0,0,1,undef], "Coercion to binary again didn't fail");
+
 
 
 done_testing();
