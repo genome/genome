@@ -3,11 +3,6 @@ package Genome::Model::Command::Services::AssignQueuedInstrumentData;
 use strict;
 use warnings;
 
-#use Genome;
-
-require Carp;
-use Data::Dumper;
-
 class Genome::Model::Command::Services::AssignQueuedInstrumentData {
     is  => 'Command::V2',
     has => [
@@ -16,29 +11,43 @@ class Genome::Model::Command::Services::AssignQueuedInstrumentData {
             is_optional => 1,
             len         => 5,
             default     => 200,
-            doc         => 'Max # of PSEs to process in one invocation',
+            doc         => 'Max # of instrument data to process in one invocation.',
+        },
+        max_instrument_data_to_process => {
+            is          => 'Number',
+            is_optional => 1,
+            default     => 200,
+            doc         => 'Max # of instrument data to process in one invocation.',
+        },
+        _max_instrument_data_to_process => {
+            calculate_from => [qw/ max_pses max_instrument_data_to_process /],
+            calculate => q| 
+                return ( $max_pses < $max_instrument_data_to_process )
+                ? $max_pses
+                : $max_instrument_data_to_process;
+            |,
         },
         newest_first => {
             is          => 'Boolean',
             is_optional => 1,
             default     => 0,
-            doc         => 'Process newest PSEs first',
+            doc         => 'Process newest instrument data first.',
         },
         _existing_models_with_existing_assignments => {
             is => 'HASH',
-            doc => 'Existing models that already had the instrument data for a PSE assigned',
+            doc => 'Existing models that already had the instrument data assigned.',
             default_value => {},
             is_output => 1,
         },
         _existing_models_assigned_to => {
             is => 'HASH',
-            doc => 'Existing models with the instrument data for a PSE newly assigned',
+            doc => 'Existing models with newly assigned instrument data.',
             default_value => {},
             is_output => 1,
         },
         _newly_created_models => {
             is => 'HASH',
-            doc => 'New models created for the instrument data for a PSE',
+            doc => 'New models created for the instrument data.',
             default_value => {},
             is_output => 1,
         },
@@ -55,7 +64,7 @@ sub _default_rna_seq_processing_profile_id {
 }
 
 sub help_brief {
-'Find all QueueInstrumentDataForGenomeModeling PSEs, create appropriate models, assign instrument data, and finally request a build on the model';
+    return 'Assign queued instrument data to models';
 }
 
 sub help_synopsis {
@@ -88,11 +97,10 @@ sub execute {
         )
     }
 
-    my @instrument_data = $self->_load_instrument_data;
-    return 1 unless @instrument_data;
+    my @instrument_data_to_process = $self->_load_instrument_data;
+    return 1 unless @instrument_data_to_process;
 
-    my @processed_instrument_data;
-    INST_DATA: foreach my $instrument_data ( @instrument_data ) {
+    INST_DATA: foreach my $instrument_data ( @instrument_data_to_process ) {
         $self->status_message('Starting instrument data '.$instrument_data->id);
 
         my $sequencing_platform = $instrument_data->sequencing_platform;
@@ -135,14 +143,12 @@ sub execute {
         }
         my $subject = $instrument_data->sample;
 
-        if($instrument_data->ignored() ) {
+        if ( $instrument_data->ignored ) {
             $self->status_message('Skipping ignored instrument data! '.$instrument_data->id);
-            push @processed_instrument_data, $instrument_data;
             next INST_DATA;
         }
 
         my @process_errors;
-
         if ( @processing ) {
             PP: foreach my $processing ( @processing ) {
                 my $processing_profile = $processing->{processing_profile};
@@ -223,7 +229,7 @@ sub execute {
         }
     } else {
         $self->status_message('No model generation attempted for instrument data! '.$instrument_data->id);
-    } # done with PSEs which specify @processing
+    } # done with inst data which specify @processing
 
     # Handle this instdata for other models besides the default
     {
@@ -232,7 +238,6 @@ sub execute {
 
         for my $check (@check) {
             my $subject = $instrument_data->$check;
-            # Should we just hoise this check out of the loop and skip to next PSE?
             if (defined($subject)) {
                 my @some_models= Genome::Model->get(
                     subject_id         => $subject->id,
@@ -262,34 +267,22 @@ sub execute {
             }
         } # end of adding instdata to non-autogen models
 
-
-        if (@process_errors > 0) {
-            $self->error_message(
-                "Leaving queue instrument data PSE inprogress, due to errors. \n"
-                    . join("\n",@process_errors)
-            );
-            $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);
-        }
-        else {
-            # Set the pse as completed since this is the end of the line
-            # for the pses
-            push @processed_instrument_data, $instrument_data;
-        }
-
-    } # end of PSE loop
+        $instrument_data->{_processed_ok} = ( @process_errors > 0 ) ? 0 : 1;
+    } # end of INST_DATA loop
 
     #schedule new builds for the models we found and stored in the output hashes
     $self->request_builds;
 
     $self->status_message("Updating instrument data and QIDFGM PSEs...");
-    for my $instrument_data (@processed_instrument_data) {
-        my $pse = $instrument_data->{_qidfgm};
-        $pse->pse_status("completed");
-        my @failed_aqid_pse_params = GSC::PSEParam->get(pse_id => $pse->id, param_name => 'failed_aqid');
-        for my $failed_aqid_pse_param ( @failed_aqid_pse_params ) {
-            $failed_aqid_pse_param->delete;
+    for my $instrument_data ( @instrument_data_to_process ) {
+        if ( $instrument_data->{_processed_ok} or $instrument_data->ignored ) {
+            my $pse = $instrument_data->{_qidfgm};
+            $pse->pse_status("completed");
+            $self->_update_instrument_data_tgi_lims_status_to_processed($instrument_data);
         }
-        $self->_update_instrument_data_tgi_lims_status_to_processed($instrument_data);
+        else {
+            $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);
+        }
     }
 
     return 1;
@@ -311,6 +304,7 @@ sub _update_instrument_data_tgi_lims_status_to {
         attribute_label => 'tgi_lims_status',
         attribute_value => $status,
     );
+    $self->status_message("Set TGI LIMS status to $status for instrument data! ".$instrument_data->id);
 
     return 1;
 }
@@ -546,8 +540,9 @@ sub _load_instrument_data {
     ? sub{ $a->{_priority} <=> $b->{_priority} or $a->id <=> $b->id } # oldest first, then failed
     : sub{ $a->{_priority} <=> $b->{_priority} or $b->id <=> $a->id }; # newest first, then failed
     my @instrument_data_to_process;
+    my $max_instrument_data_to_process = $self->_max_instrument_data_to_process;
     INST_DATA: for my $instrument_data ( sort { $sorter->() } values %instrument_data ) {
-        last INST_DATA if defined $self->max_pses and @instrument_data_to_process >= $self->max_pses;
+        last INST_DATA if @instrument_data_to_process >= $max_instrument_data_to_process;
         my $qidfgm = delete $qidfgms{ $instrument_data->id };
         if ( not $qidfgm ) {
             $self->warning_message("Failed to find QIDGFM PSE for instrument data! ".$instrument_data->id);
@@ -741,7 +736,7 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
 
     my $regular_model = Genome::Model->create(%model_params);
     unless ( $regular_model ) {
-        $self->error_message('Failed to create model with params: '.Dumper(\%model_params));
+        $self->error_message('Failed to create model with params: '.Data::Dumper::Dumper(\%model_params));
         return;
     }
     push @new_models, $regular_model;
@@ -753,7 +748,7 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
         capture_target => $capture_target,
     );
     if ( not $name ) {
-        $self->error_message('Failed to get model name for params: '.Dumper(\%model_params));
+        $self->error_message('Failed to get model name for params: '.Data::Dumper::Dumper(\%model_params));
         for my $model ( @new_models ) { $model->delete; }
         return;
     }
