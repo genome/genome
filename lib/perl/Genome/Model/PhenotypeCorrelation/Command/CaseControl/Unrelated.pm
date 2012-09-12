@@ -44,11 +44,13 @@ class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
         },
         identify_cases_by => {
             is => 'Text',
-            doc => 'the expression which matches "case" samples, typically by their attributes'
+            doc => 'the expression which matches "case" samples, typically by their attributes',
+            is_optional => 1,
         },
         identify_controls_by => {
             is => 'Text',
-            doc => 'the expression which matches "control" samples, typically by their attributes'
+            doc => 'the expression which matches "control" samples, typically by their attributes',
+            is_optional => 1,
         },
     ],
 };
