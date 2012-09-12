@@ -97,10 +97,13 @@ sub execute {
     );
     my $work_dir = $work_dir_obj->dirname;
 
-    my $log_dir = $work_dir . "/logs";
-    unless(-d $log_dir) {
-        unless(mkpath($log_dir)) {
-            die $self->error_message("Unable to create log directories for correlations");
+    my $log_dir = Workflow::Model->parent_workflow_log_dir;
+    unless($log_dir) {
+        $log_dir = $work_dir . "/logs";
+        unless(-d $log_dir) {
+            unless(mkpath($log_dir)) {
+                die $self->error_message("Unable to create log directories for correlations");
+            }
         }
     }
 
