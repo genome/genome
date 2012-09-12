@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More;
 use File::Temp 'tempdir';
 use File::Basename;
+use File::Find;
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
@@ -34,17 +35,17 @@ ok($allocation, 'created test allocation on non-archive disk');
 is($allocation->mount_path, $volumes[0]->mount_path, 'allocation on expected volume');
 
 # Make a few testing files in the allocation directory
-my @files = qw/ a.out b.out c.out /;
+my @files = qw( a.out b.out c.out .hidden.out test/d.out test/.hidden.out);
 my @dirs = qw/ test /;
-for my $file (@files) {
-    my $path = $allocation->absolute_path . "/$file";
-    system("touch $path");
-    ok(-e $path, "created test file $path");
-}
 for my $dir (@dirs) {
     my $path = $allocation->absolute_path . "/$dir";
     system("mkdir $path");
     ok(-d $path, "created test dir $path");
+}
+for my $file (@files) {
+    my $path = $allocation->absolute_path . "/$file";
+    system("touch $path");
+    ok(-e $path, "created test file $path");
 }
 
 # Before archiving, set the owner_class_name to a class that doesn't exist to make
@@ -58,7 +59,9 @@ is($allocation->mount_path, $volumes[1]->mount_path, 'allocation moved to archiv
 my $tar_path = $allocation->tar_path;
 my $output = `tar -tf $tar_path`;
 my @tar_files = map { chomp $_; s/\/$//; basename($_) } split("\n", $output);
-ok((scalar @tar_files) == ((scalar @files) + (scalar @dirs)), 'found expected number of files/dirs in tarball');
+my $total_tar_files = scalar @tar_files;
+my $total_expected_files = (scalar @files) + (scalar @dirs);
+is($total_tar_files, $total_expected_files, 'found expected number of files/dirs in tarball');
 for my $file (@files, @dirs) {
     ok((grep { $file =~ /$_/ } @tar_files), "found $file in tarball");
 }
@@ -68,7 +71,13 @@ $rv = $allocation->unarchive();
 ok($rv, 'unarchive successfully executed');
 is($allocation->mount_path, $volumes[0]->mount_path, 'allocation moved back to expected active volume');
 
-my @allocation_files = glob($allocation->absolute_path . '/*');
+my @allocation_files;
+sub wanted {
+    return if $File::Find::name eq $allocation->absolute_path;
+    push @allocation_files, $File::Find::name;
+}
+find(\&wanted, $allocation->absolute_path);
+
 is((scalar @allocation_files), ((scalar @files) + (scalar @dirs)), 'expected number of files in allocation directory');
 for my $file (@allocation_files) {
     my $filename = basename($file);

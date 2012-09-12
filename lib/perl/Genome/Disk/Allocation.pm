@@ -690,7 +690,7 @@ sub _archive {
 
         my $mkdir_cmd = "mkdir -p $archive_allocation_path";
         my $cd_cmd = "cd $current_allocation_path";
-        my $tar_cmd = "tar --create --file $tar_path *";
+        my $tar_cmd = "/bin/ls -A | tar --create --file $tar_path -T -";
         my $cmd = join(' && ', $mkdir_cmd, $cd_cmd, $tar_cmd);
 
         $tarball_created = 1;
