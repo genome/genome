@@ -24,8 +24,13 @@ no warnings;
     my ($class, %params) = @_;
     my %attrs = map { $_->id => $_ } map { $_->attributes } @instrument_data;
     for my $param_key ( keys %params ) {
-        my @unmatched_attrs = grep { $_->$param_key ne $params{$param_key} } values %attrs;
-        for my $unmatched_attr ( @unmatched_attrs ) { delete $attrs{ $unmatched_attr->id } }
+        my @param_values = ( ref $params{$param_key} ? @{$params{$param_key}} : $params{$param_key} );
+        my @unmatched_attrs;
+        for my $attr ( values %attrs ) {
+            next if grep { $attr->$param_key eq $_ } @param_values;
+            push @unmatched_attrs, $attr->id;
+        }
+        for ( @unmatched_attrs ) { delete $attrs{$_} }
     }
     return values %attrs;
 };
@@ -85,7 +90,7 @@ is_deeply(
     {
         "AQID-testsample1.bacteria.prod-denovo.wugc" => {
             subject => $samples[0]->name,
-            processing_profile_id => Genome::Model::Command::Services::AssignQueuedInstrumentData->_default_de_novo_assembly_bacterial_processing_profile_id,
+            processing_profile_id => 2732557,
             inst => [ $instrument_data[0]->id ],
             auto_assign_inst_data => 1,
             projects => [ sort map { $_->id } @projects ],
@@ -93,7 +98,7 @@ is_deeply(
         },
         "AQID-testsample2.unknown.prod-denovo.wugc" => {
             subject => $samples[1]->name,
-            processing_profile_id => Genome::Model::Command::Services::AssignQueuedInstrumentData->_default_de_novo_assembly_bacterial_processing_profile_id,
+            processing_profile_id => 2732557,
             inst => [ $instrument_data[1]->id ],
             auto_assign_inst_data => 1,
             projects => [ sort map { $_->id } @projects ],

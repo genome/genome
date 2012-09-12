@@ -310,7 +310,7 @@ sub execute {
         for my $failed_aqid_pse_param ( @failed_aqid_pse_params ) {
             $failed_aqid_pse_param->delete;
         }
-        $self->_update_instrument_data_tgi_lims_status_to($pse->{_instrument_data}, 'processed');
+        $self->_update_instrument_data_tgi_lims_status_to_processed($pse->{_instrument_data});
     }
 
     return 1;
@@ -332,6 +332,17 @@ sub _update_instrument_data_tgi_lims_status_to {
         attribute_label => 'tgi_lims_status',
         attribute_value => $status,
     );
+
+    return 1;
+}
+
+sub _update_instrument_data_tgi_lims_status_to_processed {
+    my ($self, $instrument_data) = @_;
+
+    my $set_status = $self->_update_instrument_data_tgi_lims_status_to($instrument_data, 'processed');
+    return if not $set_status;
+
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_count');
 
     return 1;
 }
@@ -518,108 +529,64 @@ sub is_tcga_reference_alignment {
 sub load_pses {
     my $self = shift;
 
-    # Get 'new' instrument data
-    $self->status_message('Getting NEW instrument data...');
-    my @new_instrument_data_attrs = Genome::InstrumentDataAttribute->get(
+    $self->status_message('Get instrument data...');
+    my @status_attrs = Genome::InstrumentDataAttribute->get(
         attribute_label => 'tgi_lims_status',
-        attribute_value => 'new',
+        attribute_value => [qw/ new failed /],
     );
-    my %new_instrument_data = map { $_->id => $_ } Genome::InstrumentData->get(
-       id => [map($_->instrument_data_id, @new_instrument_data_attrs)],
-       -hint => 'sample',
-    );
-    $self->status_message('Found '.scalar(keys %new_instrument_data).' NEW instrument data');
+    my %instrument_data;
+    for my $status_attr ( @status_attrs ) {
+        my $instrument_data = Genome::InstrumentData->get($status_attr->instrument_data_id);
+        my $fail_cnt = eval{ $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value; };
+        $instrument_data->{_priority} = ( $fail_cnt ? $fail_cnt : 0 ); # if it does not have a fail count, treat as new
+        $instrument_data{ $instrument_data->id } = $instrument_data;
+    }
+    $self->status_message('Found '.scalar(grep { $_->{_priority} == 0 } values %instrument_data)." new instrument data\n");
+    $self->status_message('Found '.scalar(grep { $_->{_priority} > 0 } values %instrument_data)." previously attempted instrument data\n");
 
-    # Get 'failed' instrument data
-    $self->status_message('Getting FAILED instrument data...');
-    my @failed_instrument_data_attrs = Genome::InstrumentDataAttribute->get(
-        attribute_label => 'tgi_lims_status',
-        attribute_value => 'failed',
-    );
-    my %failed_instrument_data = map { $_->id => $_ } Genome::InstrumentData->get(
-       id => [map($_->instrument_data_id, @failed_instrument_data_attrs)],
-       -hint => 'sample',
-    );
-    $self->status_message('Found '.scalar(keys %failed_instrument_data).' FAILED instrument data');
-    return if not %new_instrument_data and not %failed_instrument_data; # ok
-
-    # Get the inprogress QIDFGMs mapped to instrument data
-    $self->status_message('Getting inprogress QIDFGM PSEs...');
+    $self->status_message('Get inprogress QIDFGM PSEs...');
     my @qidfgms = GSC::PSE->get(
         ps_id => 3733,
         pse_status => 'inprogress',
     );
     if ( not @qidfgms ) {
-        Carp::confess( $self->error_message('No inprogess QIDFGMS found, but have new/failed instrument data to process!') );
+        Carp::confess( $self->error_message('No inprogess QIDFGM PSEs found!') );
     }
-    $self->status_message('Found '.scalar(@qidfgms).' QIDFGM PSEs');
-
-    # Map QIDFGMs to instrument data
+    my %qidfgms;
     for my $qidfgm ( @qidfgms ) {
         my ($instrument_data_id) = $qidfgm->added_param('instrument_data_id');
-        if ( not $instrument_data_id ) {
-            $self->warning_message('No instrument data id for QIDFGM! '.$qidfgm->id);
-            next;
-        }
-        if ( exists $new_instrument_data{$instrument_data_id} ) {
-            $new_instrument_data{$instrument_data_id}->{_qidfgm} = $qidfgm;
-        }
-        elsif ( exists $failed_instrument_data{$instrument_data_id} ) {
-            $failed_instrument_data{$instrument_data_id}->{_qidfgm} = $qidfgm;
-        }
-        else {
-            $self->warning_message("Expected to find 'new' or 'failed' instrument data ($instrument_data_id) for inprogress QIDFGM PSE ".$qidfgm->id." but did not. It could have the incorrect status or be double processed.");
-        }
+        $qidfgms{$instrument_data_id} = $qidfgm;
     }
-
-    my $fail_count_sorter = sub {
-        my $a_count_attr = $a->attribute(attribute_label => 'tgi_lims_fail_count');
-        my $b_count_attr = $b->attribute(attribute_label => 'tgi_lims_fail_count');
-        my $a_count = $a_count_attr? $a_count_attr->attribute_value : 0;
-        my $b_count = $b_count_attr? $b_count_attr->attribute_value : 0;
-        $a_count <=> $b_count;
-    };
-
-    # Sort the instrument data, newest first if requested
-    my @instrument_data;
-    if ($self->newest_first) {
-        @instrument_data = sort { $b->id cmp $a->id } values %new_instrument_data;
-        push @instrument_data, sort { $fail_count_sorter->() or $b->id cmp $a->id } values %failed_instrument_data;
+    if ( not %qidfgms ) {
+        Carp::confess( $self->error_message('No inprogess QIDFGMS PSEs found with instrument data ids!') );
     }
-    else {
-        @instrument_data = sort { $a->id cmp $b->id } values %new_instrument_data;
-        push @instrument_data, sort { $fail_count_sorter->() or $a->id cmp $b->id } values %failed_instrument_data;
-    }
+    $self->status_message('Found '.scalar(keys %qidfgms).' QIDFGM PSEs');
 
-    # Check the instrument data
-    my @checked_pses;
-    for my $instrument_data ( @instrument_data ) {
-        my $qidfgm = delete $instrument_data->{_qidfgm};
+    $self->status_message('Filter instrument data we can process...');
+    my $sorter = ( $self->newest_first )
+    ? sub{ $a->{_priority} <=> $b->{_priority} or $a->id <=> $b->id } # oldest first, then failed
+    : sub{ $a->{_priority} <=> $b->{_priority} or $b->id <=> $a->id }; # newest first, then failed
+    my @qidfgms_to_process;
+    INST_DATA: for my $instrument_data ( sort { $sorter->() } values %instrument_data ) {
+        last INST_DATA if defined $self->max_pses and @qidfgms_to_process >= $self->max_pses;
+        my $qidfgm = delete $qidfgms{ $instrument_data->id };
         if ( not $qidfgm ) {
-            $self->warning_message('No QIDFGM for new/failed instrument data! '.$instrument_data->id);
-            next;
+            $self->warning_message("Failed to find QIDGFM PSE for instrument data! ".$instrument_data->id);
+            next INST_DATA;
+        }
+        elsif ( not $self->_check_instrument_data($instrument_data) ){
+            $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);
+            next INST_DATA;
         }
         $qidfgm->{_instrument_data} = $instrument_data;
-        if ( $self->_check_instrument_data($instrument_data) ){
-            push @checked_pses, $qidfgm;
-        } else {
-            $self->_update_instrument_data_tgi_lims_status_to_failed($qidfgm->{_instrument_data});
-        }
+        push @qidfgms_to_process, $qidfgm;
     }
-    $self->status_message('Of those, '.scalar(@checked_pses). ' PSEs passed check pse.');
-
-    # Don't bite off more than we can process in a couple hours
-    my $max_pses = $self->max_pses;
-
-    if (@checked_pses > $max_pses) {
-        @checked_pses = splice(@checked_pses, 0, $max_pses);
-        $self->status_message('Limiting processing to ' . $max_pses);
-    }
+    $self->status_message('Processing '.@qidfgms_to_process.' instrument data');
 
     # Preload or whatever
-    $self->preload_data( map { $_->{_instrument_data} } @checked_pses);
+    $self->preload_data( map { $_->{_instrument_data} } @qidfgms_to_process );
 
-    return @checked_pses;
+    return @qidfgms_to_process;
 }
 
 #for efficiency--load these together instead of separate queries for each one

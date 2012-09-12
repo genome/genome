@@ -25,8 +25,13 @@ no warnings;
     my ($class, %params) = @_;
     my %attrs = map { $_->id => $_ } map { $_->attributes } @instrument_data;
     for my $param_key ( keys %params ) {
-        my @unmatched_attrs = grep { $_->$param_key ne $params{$param_key} } values %attrs;
-        for my $unmatched_attr ( @unmatched_attrs ) { delete $attrs{ $unmatched_attr->id } }
+        my @param_values = ( ref $params{$param_key} ? @{$params{$param_key}} : $params{$param_key} );
+        my @unmatched_attrs;
+        for my $attr ( values %attrs ) {
+            next if grep { $attr->$param_key eq $_ } @param_values;
+            push @unmatched_attrs, $attr->id;
+        }
+        for ( @unmatched_attrs ) { delete $attrs{$_} }
     }
     return values %attrs;
 };
