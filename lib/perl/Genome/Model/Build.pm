@@ -2300,12 +2300,9 @@ sub _preprocess_subclass_description {
                 is_many => 1, #$prop_desc->{is_many},
             };
 
-            # We hopefully don't need _id accessors
-            # If we do duplicate the code below for value_id
-
             %$prop_desc = (%$prop_desc,
                 via => $assoc,
-                to => 'value',
+                to => Genome::Model->_resolve_to_for_prop_desc($prop_desc),
             );
         }
 

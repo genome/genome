@@ -765,12 +765,25 @@ sub _preprocess_subclass_description {
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
 
+            my @where_class;
+            if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
+                my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
+                    $prop_desc->{'data_type'},
+                    $class
+                );
+
+                if($prop_class->isa('UR::Value') and !$prop_class->isa('Genome::File::Base')) {
+                    push @where_class,
+                        value_class_name => $prop_class;
+                }
+           }
+
             $desc->{has}{$assoc} = {
                 property_name => $assoc,
                 implied_by => $prop_name,
                 is => 'Genome::Model::Input',
                 reverse_as => 'model',
-                where => [ name => $prop_name ],
+                where => [ name => $prop_name, @where_class ],
                 is_mutable => $prop_desc->{is_mutable},
                 is_optional => $prop_desc->{is_optional},
                 is_many => 1, #$prop_desc->{is_many},
