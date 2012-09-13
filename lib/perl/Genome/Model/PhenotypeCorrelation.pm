@@ -3,6 +3,7 @@ package Genome::Model::PhenotypeCorrelation;
 use strict;
 use warnings;
 use Genome;
+use List::Util qw(reduce);
 use Genome::Utility::Vcf "open_vcf_file";
 use Math::Complex;
 use File::chdir;
@@ -148,6 +149,15 @@ class Genome::Model::PhenotypeCorrelation {
             doc => 'Output directory for results',
         },
 
+    ],
+    has_transient_optional => [
+        _clinical_data_object => {
+            is => "Genome::Model::PhenotypeCorrelation::ClinicalData",
+        },
+        _sample_names => {
+            is => "ARRAY",
+            doc => "Sample names found in VCF and population group"
+        }
     ],
 };
 
@@ -325,6 +335,9 @@ sub _execute_build {
     }
     #notify which VCF
     $self->status_message("Input VCF: " . $self->multisample_vcf);
+
+    my $samples = $self->sample_intersection;
+    confess "The intersection of samples in the vcf file, population group, and clinical data is empty!" unless @$samples;
 
     #Do annotation based on available inputs
     my $annotated_vcf = $self->_annotate_multisample_vcf($self->output_directory);
@@ -736,35 +749,67 @@ sub _map_properties_to_delegate_inputs {
     return %delegate_input_hash;
 }
 
+sub clinical_data_object {
+    my $self = shift;
+
+    return $self->_clinical_data_object if $self->_clinical_data_object;
+
+    if ($self->clinical_data_file_path) {
+        $self->status_message("Loading clinical data from file " . $self->clinical_data_file_path->path);
+
+        $self->_clinical_data_object(Genome::Model::PhenotypeCorrelation::ClinicalData->from_file(
+            $self->clinical_data_file_path->path
+            ));
+    } else {
+        $self->status_message("Loading clinical data from database using nomenclature " . $self->nomenclature->name);
+        $self->_clinical_data_object(Genome::Model::PhenotypeCorrelation::ClinicalData->from_database(
+            $self->nomenclature,
+            $self->subject->samples
+            ));
+    }
+
+    return $self->_clinical_data_object;
+}
+
 sub clinical_data_file {
     my ($self) = @_;
+    my $cd = $self->clinical_data_object();
     $self->status_message("preparing clinical data files\n");
+
     my $clinical_data = $self->output_directory . "/Clinical_Data.txt";
     my $clinical_data_md5 = $self->output_directory . "/Clinical_Data.txt.md5";
-    if($self->clinical_data_file_path) {
-        $self->status_message("Copying build input: " . $self->clinical_data_file_path->path . " to $clinical_data");
-        # TODO: CaseControl/Unrelated has to read this again to make adjustments to the data. If anything else
-        # ever needs to do something similar, we should let the delegate class modify this data while it is in
-        # memory.
-        # NOTE: we parse and rewrite the file to detect any errors in the input file.
-        my $cd = Genome::Model::PhenotypeCorrelation::ClinicalData->from_file($self->clinical_data_file_path->path);
-        my $digest = $cd->to_file($clinical_data);
-        $self->status_message("m5sum of input clinical data: " . $digest . "\n");
-        my $fh = Genome::Sys->open_file_for_writing($clinical_data_md5);
-        $fh->write("$digest\n");
-        $fh->close;
-    }
-    else {
-        #dump from the db
-        $self->status_message("Attempting to dump clinical data from the database");
-        my $result = Genome::Model::PhenotypeCorrelation::Command::DumpClinicalData->execute( nomenclature => $self->nomenclature, samples => $self->subject->samples, output_file => $clinical_data, md5_file => $clinical_data_md5);
-        unless($result) {
-            $self->error_message("Unable to dump clinical data from database");
-            die;
-        }
-    }
-    #if we made it here the clinical data should be ok.
+
+    $self->status_message("Writing clinical data to $clinical_data");
+    my $digest = $cd->to_file($clinical_data);
+    $self->status_message("m5sum of input clinical data: " . $digest . "\n");
+    my $fh = Genome::Sys->open_file_for_writing($clinical_data_md5);
+    $fh->write("$digest\n");
+    $fh->close;
     return $clinical_data;
+}
+
+sub sample_intersection {
+    my $self = shift;
+    if (!$self->_sample_names) {
+        my %pop_group_samples = map {$_->name => 1} $self->subject->samples;
+        my @vcf_samples = $self->_samples_from_vcf;
+        my @clinical_samples = $self->clinical_data_object->sample_names;
+        $self->status_message("Population group contains " . scalar keys(%pop_group_samples) . " samples");
+        $self->status_message("Multisample vcf contains " . scalar @vcf_samples . " samples");
+        $self->status_message("Clinical data file contains " . scalar @clinical_samples . " samples");
+
+        # compute the intersection of samples in population group, vcf, and clinical data file
+        my $samples_hash = reduce {
+            our ($a, $b);
+            return { map {$_ => 1} grep {exists $a->{$_}} @$b }
+            } \%pop_group_samples, \@vcf_samples, \@clinical_samples;
+
+        my @samples = sort keys %$samples_hash;
+        $self->status_message("The sample intersection contains " . scalar @samples . " samples");
+
+        $self->_sample_names(\@samples);
+    }
+    return $self->_sample_names;
 }
 
 sub sample_list_file {
@@ -774,26 +819,8 @@ sub sample_list_file {
     $self->status_message("Attempting to generate sample list file: $sample_file");
     my $sample_fh = Genome::Sys->open_file_for_writing($sample_file);
 
-    #limit to just samples in the VCF and the population group
-    my %pop_group_samples = map { $_->name => 1 } $self->subject->samples;
-    my @vcf_samples = $self->_samples_from_vcf;
-
-    $self->status_message("Population group contains " . scalar keys(%pop_group_samples) . " samples\n");
-    $self->status_message("Multisample vcf contains " . scalar @vcf_samples . " samples\n");
-
-    my @samples;
-    for my $vcf_sample (@vcf_samples) {
-        if(exists($pop_group_samples{$vcf_sample})) {
-            push @samples, $vcf_sample;
-        } else {
-            $self->error_message("Sample $vcf_sample from VCF does not exist in population group!");
-        }
-    }
-
-    confess "No samples in the vcf file matched those in the population group, abort!" unless @samples;
-    $self->status_message("Found " . scalar(@samples) . " samples");
-
-    print $sample_fh join("\n",@samples),"\n";
+    my $sample_names = $self->sample_intersection;
+    print $sample_fh join("\n",@$sample_names),"\n";
     close($sample_fh);
     return $sample_file;
 }
@@ -835,8 +862,6 @@ sub _samples_from_vcf {
     close($fh);
     return @samples;
 }
-
-
 
 sub _get_builds {
     my $self = shift;
