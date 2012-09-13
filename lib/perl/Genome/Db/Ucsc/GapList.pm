@@ -27,6 +27,7 @@ our @_HEADINGS = (
 
 our %_DB_TABLES_NAMES = (
     'GRCh37-lite-build37' => ['hg19', ['gap']],
+    'g1k-human-build37' => ['hg19', ['gap']],
     'NCBI-human-build36' => ['hg18', [
         'chr1_gap',
         'chr2_gap',
@@ -124,14 +125,14 @@ sub _fetch_data_from_ucsc {
 sub _resolve_database_and_table_names {
     my $self = shift;
 
-    my ($database_name, $table_name) = @{
+    my ($database_name, $table_names) = @{
         $_DB_TABLES_NAMES{$self->reference_name}};
-    unless ($database_name && $table_name) {
+    unless ($database_name && $table_names) {
         Exception::Class->throw('DatabaseResolutionFailure',
             reference_name => $self->reference_name);
     }
 
-    return ($database_name, $table_name);
+    return ($database_name, $table_names);
 }
 
 sub _resolve_query {

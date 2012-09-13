@@ -34,7 +34,7 @@ sub execute {
     my $file_md5 = Genome::Sys->md5sum($gap_filename);
 
     $self->gap_feature_list(Genome::FeatureList->create(
-        name => $self->_resolve_feature_list_name($reference_name),
+        name => $self->_resolve_feature_list_name(),
         format => 'true-BED',
 
         file_content_hash => $file_md5,
@@ -71,8 +71,8 @@ sub _resolve_reference {
 }
 
 sub _resolve_feature_list_name {
-    my ($self, $reference_name) = @_;
-    return $reference_name . " - gap list";
+    my $self = shift;
+    return $self->annotation_build->name . " - gap list";
 }
 
 1;
