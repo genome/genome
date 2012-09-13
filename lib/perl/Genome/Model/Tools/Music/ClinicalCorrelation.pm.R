@@ -16,7 +16,7 @@ if (method == "glm") {
     y.file = as.character(commandArgs()[6]);
     x.file = as.character(commandArgs()[7]);
     out.file = as.character(commandArgs()[8]);
-    x.names="*";
+    x.names=NULL;
 
     ### to run it on command line, type
     # R --no-save < glm.R model.file y.file x.file * out.csv
@@ -66,14 +66,14 @@ if (method == "glm") {
     ### data input #####
     read.table(model.file,colClasses="character",na.strings = c("","NA"),sep="\t",header=T)->md
     read.table(y.file,na.strings = c("","NA"),sep="\t",header=T)->y
-    if (x.names!="*") x.names=strsplit(x.names,split="[|]")[[1]]
+    #if (x.names!="*") x.names=strsplit(x.names,split="[|]")[[1]]
 
     if (x.file!="*")
     {
         read.table(x.file,na.strings = c("","NA"),sep="\t",header=T)->x
         xid=colnames(x)[1]
         xs=colnames(x)[-1]
-        if (x.names!="*") {x=x[,c(xid,x.names)];xs=colnames(x)[-1]}
+        #if (x.names!="*") {x=x[,c(xid,x.names)];xs=colnames(x)[-1]}
         x.names=xs
         yid=colnames(y)[1]
         ysid = ! (colnames(y) %in% xs)
@@ -82,6 +82,7 @@ if (method == "glm") {
         #y=merge(y,x,by.x = xid, by.y = yid)
         y=merge(x,y,by.x = xid, by.y = yid)
     }
+    if (is.null(x.names)) x.names=colnames(y)[-1];
 
     ######### analysis ##########
     tt=NULL
@@ -89,7 +90,7 @@ if (method == "glm") {
     {
         ytype=md[i,1];yi=md[i,2];xs=md[i,3];covi=md[i,4];memo=md[i,5]
         if (!is.na(xs) & nchar(xs)>0) xs=strsplit(xs,split="[|]")[[1]]
-        if (is.na(xs)[1]|nchar(xs)[1]==0) xs=x.names 
+        if (is.na(xs)[1]|nchar(xs)[1]==0|xs=="*") xs=x.names 
         if (length(covi)==0) covi=NA
         for (xi in xs)
         {
