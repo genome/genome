@@ -858,7 +858,7 @@ sub __extend_namespace__ {
     # make a model subclass if the processing profile exists
     # this is deprecated: instead we go the other way and infer the profile from the model
     my $pp_subclass_name = 'Genome::ProcessingProfile::' . $ext;
-    my $pp_subclass_meta = UR::Object::Type->get($pp_subclass_name);
+    my $pp_subclass_meta = eval { $pp_subclass_name->__meta__ };
     if ($pp_subclass_meta and $pp_subclass_name->isa('Genome::ProcessingProfile')) {
         my @pp_delegated_properties = map {
             $_ => { via => 'processing_profile' }

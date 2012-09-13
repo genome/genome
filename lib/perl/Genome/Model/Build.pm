@@ -193,7 +193,7 @@ sub __extend_namespace__ {
     return $meta if $meta;
 
     my $model_subclass_name = 'Genome::Model::' . $ext;
-    my $model_subclass_meta = UR::Object::Type->get($model_subclass_name);
+    my $model_subclass_meta = eval { $model_subclass_name->__meta__ };
     if ($model_subclass_meta and $model_subclass_name->isa('Genome::Model')) {
         my $build_subclass_name = 'Genome::Model::Build::' . $ext;
         my @p = $model_subclass_meta->properties();

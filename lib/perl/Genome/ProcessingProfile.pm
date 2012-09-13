@@ -369,7 +369,7 @@ sub __extend_namespace__ {
     my $model_base = $self;
     $model_base =~ s/^Genome::ProcessingProfile/Genome::Model/;
     my $model_subclass_name = $model_base . "::" . $ext;
-    my $model_subclass_meta = UR::Object::Type->get($model_subclass_name);
+    my $model_subclass_meta = eval { $model_subclass_name->__meta__ };
     if ($model_subclass_meta and $model_subclass_name->isa('Genome::Model')) {
         my $profile_subclass_name = $self . '::' . $ext;
         my @p = $model_subclass_meta->properties();
