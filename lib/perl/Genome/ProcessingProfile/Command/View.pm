@@ -419,6 +419,8 @@ sub _parse_strelka_args {
         my ($key, $value) = split("=", $kv_pair);
         chomp($key);
         chomp($value);
+        $key =~ s/^\s*([^\s]*)\s*$/$1/; #remove leading/trailing ws
+        $value =~ s/^\s*([^\s]*)\s*$/$1/;
         $result{$key} = $value || "undef";
     }
     return %result;
