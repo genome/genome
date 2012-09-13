@@ -572,10 +572,6 @@ my $instrument_data_pool = Genome::InstrumentData::Solexa->create(
     rev_clusters => 65536,
     target_region_set_name => 'test-capture-data',
 );
-$instrument_data_pool->add_attribute(
-    attribute_label => 'tgi_lims_status',
-    attribute_value => 'new',
-);
 push @instrument_data, $instrument_data_pool;
 _add_instrument_data_to_projects($instrument_data_pool);
 
@@ -598,6 +594,7 @@ ok($command_2->execute(), 'assign-queued-instrument-data executed successfully.'
 
 my $new_models_2 = $command_2->_newly_created_models;
 is(scalar(keys %$new_models_2), 3, 'the cron created three new models (default, .wu-space, and .tcga-cds)');
+print Data::Dumper::Dumper($new_models_2);
 
 my @models = values %$new_models_2;
 @model_groups = ();

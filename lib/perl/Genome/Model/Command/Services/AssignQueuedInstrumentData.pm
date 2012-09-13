@@ -106,7 +106,8 @@ sub execute {
         my $sequencing_platform = $instrument_data->sequencing_platform;
 
         my @processing;
-        if ( my @processing_profile_ids = grep { defined } $instrument_data->{_qidfgm}->added_param('processing_profile_id') ) {
+        if ( defined $instrument_data->{_qidfgm} and 
+            my @processing_profile_ids = grep { defined } $instrument_data->{_qidfgm}->added_param('processing_profile_id') ) {
             # FIXME: this can be removed after a short period of catch up
             for my $processing_profile_id ( @processing_profile_ids ) {
                 my $processing_profile = Genome::ProcessingProfile->get($processing_profile_id);
@@ -276,8 +277,7 @@ sub execute {
     $self->status_message("Updating instrument data and QIDFGM PSEs...");
     for my $instrument_data ( @instrument_data_to_process ) {
         if ( $instrument_data->{_processed_ok} or $instrument_data->ignored ) {
-            my $pse = $instrument_data->{_qidfgm};
-            $pse->pse_status("completed");
+            $instrument_data->{_qidfgm}->pse_status("completed") if defined $instrument_data->{_qidfgm};
             $self->_update_instrument_data_tgi_lims_status_to_processed($instrument_data);
         }
         else {
@@ -522,16 +522,10 @@ sub _load_instrument_data {
         ps_id => 3733,
         pse_status => 'inprogress',
     );
-    if ( not @qidfgms ) {
-        Carp::confess( $self->error_message('No inprogess QIDFGM PSEs found!') );
-    }
     my %qidfgms;
     for my $qidfgm ( @qidfgms ) {
         my ($instrument_data_id) = $qidfgm->added_param('instrument_data_id');
         $qidfgms{$instrument_data_id} = $qidfgm;
-    }
-    if ( not %qidfgms ) {
-        Carp::confess( $self->error_message('No inprogess QIDFGMS PSEs found with instrument data ids!') );
     }
     $self->status_message('Found '.scalar(keys %qidfgms).' QIDFGM PSEs');
 
@@ -541,18 +535,13 @@ sub _load_instrument_data {
     : sub{ $a->{_priority} <=> $b->{_priority} or $b->id <=> $a->id }; # newest first, then failed
     my @instrument_data_to_process;
     my $max_instrument_data_to_process = $self->_max_instrument_data_to_process;
-    INST_DATA: for my $instrument_data ( sort { $sorter->() } values %instrument_data ) {
-        last INST_DATA if @instrument_data_to_process >= $max_instrument_data_to_process;
-        my $qidfgm = delete $qidfgms{ $instrument_data->id };
-        if ( not $qidfgm ) {
-            $self->warning_message("Failed to find QIDGFM PSE for instrument data! ".$instrument_data->id);
-            next INST_DATA;
-        }
-        elsif ( not $self->_check_instrument_data($instrument_data) ){
+    for my $instrument_data ( sort { $sorter->() } values %instrument_data ) {
+        last if @instrument_data_to_process >= $max_instrument_data_to_process;
+        if ( not $self->_check_instrument_data($instrument_data) ){
             $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);
-            next INST_DATA;
+            next;
         }
-        $instrument_data->{_qidfgm} = $qidfgm;
+        $instrument_data->{_qidfgm} = delete $qidfgms{ $instrument_data->id };
         push @instrument_data_to_process, $instrument_data;
     }
     $self->status_message('Processing '.@instrument_data_to_process.' instrument data');
