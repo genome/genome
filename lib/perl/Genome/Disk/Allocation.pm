@@ -700,12 +700,29 @@ sub _archive {
             Genome::Sys->shellcmd(cmd => $cmd);
         }
         else {
-            my ($job_id, $status) = Genome::Sys->bsub_and_wait(
+            my ($job_id, $status);
+
+            my @signals = qw/ INT TERM /;
+            for my $signal (@signals) {
+                $SIG{$signal} = sub {
+                    print STDERR "Cleanup activated within allocation, cleaning up LSF jobs\n";
+                    eval { Genome::Sys->kill_lsf_job($job_id) } if $job_id;
+                    $self->_cleanup_archive_directory($archive_allocation_path);
+                    die "Received signal, exiting.";
+                }
+            }
+
+            ($job_id, $status) = Genome::Sys->bsub_and_wait(
                 queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
                 log_file => "\"/tmp/$id\"", # Entire path must be wrapped in quotes because older allocation IDs contain spaces
                 cmd => "\"$cmd\"",          # If the command isn't wrapped in quotes, the '&&' is misinterpreted by
                                             # bash (rather than being "bsub '1 && 2' it is looked at as 'bsub 1' && '2')
             );
+
+            for my $signal (@signals) {
+                delete $SIG{$signal};
+            }
+
             unless ($status eq 'DONE') {
                 confess "LSF job $job_id failed to execute $cmd, exited with status $status";
             }
@@ -834,12 +851,32 @@ sub _unarchive {
             Genome::Sys->shellcmd(cmd => $cmd);
         }
         else {
-            my ($job_id, $status) = Genome::Sys->bsub_and_wait(
+            # If this process should be killed, the LSF job needs to be cleaned up
+            my ($job_id, $status);
+
+            # Signal handlers are added like this so an anonymous sub can be used, which handles variables defined
+            # in an outer scope differently than named subs (in this case, $job_id, $self, and $archive_path).
+            my @signals = qw/ INT TERM /;
+            for my $signal (@signals) {
+                $SIG{$signal} = sub {
+                    print STDERR "Cleanup activated within allocation, cleaning up LSF jobs\n";
+                    eval { Genome::Sys->kill_lsf_job($job_id) } if $job_id;
+                    $self->_cleanup_archive_directory($archive_path);
+                    die "Received signal, exiting.";
+                }
+            }
+
+            ($job_id, $status) = Genome::Sys->bsub_and_wait(
                 queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
                 log_file => "\"/tmp/$id\"", # Entire path must be wrapped in quotes because older allocation IDs contain spaces
                 cmd => "\"$cmd\"", # If the command isn't wrapped in quotes, the '&&' is misinterpreted by
                                    # bash (rather than being "bsub '1 && 2' it is looked at as 'bsub 1' && '2')
             );
+
+            for my $signal (@signals) {
+                delete $SIG{$signal};
+            }
+
             unless ($status eq 'DONE') {
                 confess "Could not execute command $cmd via LSF job $job_id, received status $status";
             }
