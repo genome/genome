@@ -8,6 +8,7 @@ use Math::Complex;
 use File::chdir;
 use File::Basename qw( fileparse );
 use Digest::MD5;
+use Carp qw(confess);
 
 class Genome::Model::PhenotypeCorrelation {
     is => 'Genome::ModelDeprecated',
@@ -770,16 +771,28 @@ sub sample_list_file {
     my ($self) = @_;
 
     my $sample_file = $self->output_directory . "/Sample_List.txt";
+    $self->status_message("Attempting to generate sample list file: $sample_file");
     my $sample_fh = Genome::Sys->open_file_for_writing($sample_file);
 
     #limit to just samples in the VCF and the population group
-    my %pop_group_samples = map { $_ => 1 } $self->subject->samples;
+    my %pop_group_samples = map { $_->name => 1 } $self->subject->samples;
+    my @vcf_samples = $self->_samples_from_vcf;
+
+    $self->status_message("Population group contains " . scalar keys(%pop_group_samples) . " samples\n");
+    $self->status_message("Multisample vcf contains " . scalar @vcf_samples . " samples\n");
+
     my @samples;
-    for my $vcf_sample ($self->_samples_from_vcf) {
+    for my $vcf_sample (@vcf_samples) {
         if(exists($pop_group_samples{$vcf_sample})) {
             push @samples, $vcf_sample;
+        } else {
+            $self->error_message("Sample $vcf_sample from VCF does not exist in population group!");
         }
     }
+
+    confess "No samples in the vcf file matched those in the population group, abort!" unless @samples;
+    $self->status_message("Found " . scalar(@samples) . " samples");
+
     print $sample_fh join("\n",@samples),"\n";
     close($sample_fh);
     return $sample_file;
