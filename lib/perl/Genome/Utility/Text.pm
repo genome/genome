@@ -305,115 +305,38 @@ sub tree_to_string {
     $prefix = $prefix || '';
 
     my $result = '';
-    #given(ref($tree)) {
-    #    when('HASH') {
-    #        my @keys = sort(keys %{$tree});
-    #        my $count = 0;
-    #        my $next_foundation = $foundation;
-    #        unless($condensed) {
-    #            $result .= tree_to_string('#', $foundation, $prefix, $condensed);
-    #            $next_foundation = _next_foundation($foundation, $prefix);
-    #        }
-    #        for my $key (@keys) {
-    #            my $next_prefix;
-    #            if($count == $#keys) {
-    #                $next_prefix = '`-';
-    #            } else {
-    #                $next_prefix = '|-';
-    #            }
-    #            if($condensed) {
-    #                $next_prefix = '  ';
-    #            }
-    #            $result .= tree_to_string($key, $next_foundation,
-    #                    $next_prefix, $condensed);
-
-    #            my $child_foundation = _next_foundation($next_foundation,
-    #                    $next_prefix);
-    #            # can only have a single 'value' for each key.
-    #            $result .= tree_to_string($tree->{$key}, $child_foundation,
-    #                    '`-', $condensed);
-    #            $count += 1;
-    #        }
-    #    }
-    #    when('ARRAY') {
-    #        my @items = @{$tree};
-    #        my $count = 0;
-    #        my $next_foundation = $foundation;
-    #        unless($condensed) {
-    #            $result .= tree_to_string('\\', $foundation, $prefix, $condensed);
-    #            $next_foundation = _next_foundation($foundation, $prefix);
-    #        }
-    #        for my $item (@items) {
-    #            my $next_prefix;
-    #            if($count == $#items) {
-    #                $next_prefix = '`-';
-    #            } else {
-    #                $next_prefix = '|-';
-    #            }
-    #            if($condensed) {
-    #                $next_prefix = ' -';
-    #            }
-
-    #            $result .= tree_to_string($item, $next_foundation,
-    #                    $next_prefix, $condensed);
-    #            $count += 1;
-    #        }
-    #    }
-    #    default {
-    #        $result .= sprintf("%s%s%s\n", $foundation, $prefix, $tree);
-    #    }
-    #}
     my $ref = ref($tree);
-    if($ref eq 'HASH') {
-        my @keys = sort(keys %{$tree});
-        my $count = 0;
+    if($ref eq 'HASH' or $ref eq 'ARRAY') {
+        my $root;
+        my @items;
+        if($ref eq 'HASH') {
+            $root = "%";
+            @items = sort(keys %{$tree});
+        } else {
+            $root = "@";
+            @items = @{$tree};
+        }
         my $next_foundation = $foundation;
         unless($condensed) {
-            $result .= tree_to_string('#', $foundation, $prefix, $condensed);
+            $result .= tree_to_string($root, $foundation, $prefix, $condensed);
             $next_foundation = _next_foundation($foundation, $prefix);
         }
-        for my $key (@keys) {
-            my $next_prefix;
-            if($count == $#keys) {
-                $next_prefix = '`-';
-            } else {
-                $next_prefix = '|-';
-            }
-            if($condensed) {
-                $next_prefix = '  ';
-            }
-            $result .= tree_to_string($key, $next_foundation,
-                    $next_prefix, $condensed);
-
-            my $child_foundation = _next_foundation($next_foundation,
-                    $next_prefix);
-            # can only have a single 'value' for each key.
-            $result .= tree_to_string($tree->{$key}, $child_foundation,
-                    '`-', $condensed);
-            $count += 1;
-        }
-    } elsif($ref eq 'ARRAY') {
-        my @items = @{$tree};
         my $count = 0;
-        my $next_foundation = $foundation;
-        unless($condensed) {
-            $result .= tree_to_string('\\', $foundation, $prefix, $condensed);
-            $next_foundation = _next_foundation($foundation, $prefix);
-        }
         for my $item (@items) {
-            my $next_prefix;
-            if($count == $#items) {
-                $next_prefix = '`-';
-            } else {
-                $next_prefix = '|-';
-            }
-            if($condensed) {
-                $next_prefix = ' -';
-            }
+            my $next_prefix = $count == $#items ? '`-' : '|-';
+            $count += 1;
+            $next_prefix = '  ' if $condensed;
 
             $result .= tree_to_string($item, $next_foundation,
                     $next_prefix, $condensed);
-            $count += 1;
+
+            if($ref eq 'HASH') {
+                my $child_foundation = _next_foundation($next_foundation,
+                        $next_prefix);
+                # can only have a single 'value' for each key.
+                $result .= tree_to_string($tree->{$item}, $child_foundation,
+                        '`-', $condensed);
+            }
         }
     } else {
         $result .= sprintf("%s%s%s\n", $foundation, $prefix, $tree);
