@@ -141,7 +141,8 @@ sub pool_and_split_sequence {
     #split files
     my $c = 0; my $n = 0; my $limit = $read_limit;
     my $in = Bio::SeqIO->new(-format => 'fasta', -file => $pooled_file);
-    my $split_file = $blast_dir.'/'.$sample_name.'.'.$file_extensions{$stage}{split_file_ext}.$n.'.fa';
+    my $path = $blast_dir.'/'.$sample_name.'.'.$file_extensions{$stage}{split_file_ext};
+    my $split_file = $path.$n.'.fa';
 
     my $split_out = Bio::SeqIO->new(-format => 'fasta', -file => ">$split_file");
     while (my $seq = $in->next_seq) {
@@ -149,12 +150,17 @@ sub pool_and_split_sequence {
 	$split_out->write_seq($seq);
 	if ($c == $limit) {
 	    $c = 0;
-	    my $split_file = $blast_dir.'/'.$sample_name.'.'.$file_extensions{$stage}{split_file_ext}.++$n.'.fa';
+	    my $split_file = $path.++$n.'.fa';
 	    $split_out = Bio::SeqIO->new(-format => 'fasta', -file => ">$split_file");
 	}
     }
 
     $self->log_event("Pooled data to run $stage completed for $sample_name");
+
+    #clean up empty files which can be made if total # reads if a multiple of read limit
+    for my $fa_file ( glob( "$path*" ) ) {
+        unlink $fa_file if not -s $fa_file;
+    }
 
     return 1;
 }
