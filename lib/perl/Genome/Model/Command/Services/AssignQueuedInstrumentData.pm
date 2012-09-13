@@ -636,7 +636,7 @@ sub assign_instrument_data_to_models {
 
     #we don't want to (automagically) assign rna seq and non-rna seq data to the same model.
     unless ($genome_instrument_data->isa('Genome::InstrumentData::454')) { #454 data should be allowed to be in MC16S models that it's explicitly looking for
-        if (@models and $self->_is_rna_instrument_data($genome_instrument_data)){
+        if (@models and $genome_instrument_data->sample->is_rna) {
             @models = grep($_->isa('Genome::Model::RnaSeq'), @models);
         }else{
             @models = grep(!($_->isa('Genome::Model::RnaSeq')), @models);
@@ -1248,7 +1248,7 @@ sub _resolve_processing_for_instrument_data {
             if ( $instrument_data->sample->name =~ /^n\-cn?trl$/i ) { # Do not process 454 negative control (n-ctrl, n-cntrl)
                 $instrument_data->ignored(1);
             }
-            elsif($self->_is_rna($instrument_data)){ # RNA
+            elsif ( $instrument_data->sample->is_rna ) { # RNA
                 push @processing, { processing_profile_id => $self->_default_rna_seq_processing_profile_id($instrument_data), };
             }
             elsif ( $self->_is_mc16s($instrument_data) ) { # MC16s
@@ -1294,7 +1294,7 @@ sub _resolve_processing_for_instrument_data {
                         reference_sequence_build_id => 106942997,# GRCh37-lite-build37 => 106942997
                     };
                 }
-                elsif ($self->_is_rna($instrument_data)){
+                elsif ( $instrument_data->sample->is_rna ) {
                     if($instrument_data->is_paired_end){
                         push @processing, {
                             processing_profile_id => $self->_default_rna_seq_processing_profile_id($instrument_data),
@@ -1371,26 +1371,6 @@ sub _is_pcgp {
         }
     }
 
-    return 0;
-}
-
-sub _is_rna {
-    my ($self, $instrument_data) = @_;
-
-    my $sample = $instrument_data->sample;
-    if(defined($sample->sample_type) && grep($sample->sample_type eq $_, ('rna', 'cdna', 'total rna', 'cdna library', 'mrna'))) {
-        return 1;
-    }
-    return 0;
-}
-
-sub _is_rna_instrument_data {
-    my $self = shift;
-    my $instrument_data = shift;
-    my $sample = $instrument_data->sample;
-    if(defined($sample->sample_type) && grep($sample->sample_type eq $_, ('rna', 'cdna', 'total rna', 'cdna library', 'mrna'))) {
-        return 1;
-    }
     return 0;
 }
 
