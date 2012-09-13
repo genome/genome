@@ -17,17 +17,15 @@ use Test::More;
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
 
-my $qidfgm_cnt = 0;
-my $sample_cnt = 0;
-my (@samples, @instrument_data, @pses, @pse_params);
+my ($cnt, @samples, @instrument_data);
 
-# GSC Reasearch Project
+# Reasearch Project
 my @projects;
 push @projects, Genome::Project->create(id => -111, name => '__TEST_PROJECT__');
 ok($projects[0], 'create project for research project');
+# GSC WorkOrder
 my $gsc_workorder = Test::MockObject->new();
 $gsc_workorder->set_always(pipeline => '16S 454');
-# GSC WorkOrder
 push @projects, Genome::Project->create(id => -222, name => '__TEST_WORKORDER__');
 ok($projects[1], 'create project for research project');
 # Model groups for projects
@@ -49,15 +47,13 @@ no warnings;
     }
     return values %attrs;
 };
-sub GSC::PSE::get { return grep { not $_->completed } @pses; }
 sub GSC::Setup::WorkOrder::get { return $gsc_workorder; }
 use warnings;
 
 for my $i (1..2) {
-    ok(_qidfgm(), 'create qidfgm');
+    ok(_create_inst_data(), 'create inst data');
 }
-is(@instrument_data, $qidfgm_cnt, "create $qidfgm_cnt inst data");
-is(@pses, $qidfgm_cnt, "create $qidfgm_cnt pses");
+is(@instrument_data, $cnt, "create $cnt inst data");
 
 my $cmd = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($cmd, 'create aqid');
@@ -112,11 +108,10 @@ is_deeply(
     'existing models for run 1',
 );
 
-ok(_qidfgm(), 'made another qdidfgm');
-ok(_qidfgm(sample_name => 'n-ctrl'), 'create qidfgm'); # pse for negative control sample
-ok(_qidfgm(read_count => 0), 'create qidfgm'); # pse for read count 0 inst data
-is(@instrument_data, $qidfgm_cnt, "$qidfgm_cnt inst data");
-is(@pses, $qidfgm_cnt, "$qidfgm_cnt pses");
+ok(_create_inst_data(), 'made another qdidfgm');
+ok(_create_inst_data(sample_name => 'n-ctrl'), 'create inst data for negative control'); # negative control sample
+ok(_create_inst_data(read_count => 0), 'create inst data w/ read count 0'); # read count 0 inst data
+is(@instrument_data, $cnt, "$cnt inst data");
 
 $cmd = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($cmd, 'create aqid');
@@ -173,9 +168,10 @@ done_testing();
 exit;
 
 my $source;
-sub _qidfgm {
+my $sample_cnt = 0;
+sub _create_inst_data {
     my %incoming_params = @_;
-    $qidfgm_cnt++;
+    $cnt++;
 
     $source = Genome::PopulationGroup->__define__(name => '__TEST_POP_GROUP__', taxon => Genome::Taxon->__define__(name => 'Human Metagenome')) if not $source;
     ok($source, 'define source');
@@ -192,7 +188,7 @@ sub _qidfgm {
         name => $sample->name.'-testlib',
         sample_id => $sample->id,
     );
-    ok($library, 'create library '.$qidfgm_cnt);
+    ok($library, 'create library '.$cnt);
 
     my $instrument_data = Genome::InstrumentData::454->create(
         library_id => $library->id,
@@ -200,7 +196,7 @@ sub _qidfgm {
         region_number => 1,
         read_count => ( exists $incoming_params{read_count} ? delete $incoming_params{read_count} : 1 ),
     );
-    ok($instrument_data, 'created instrument data '.$qidfgm_cnt);
+    ok($instrument_data, 'created instrument data '.$cnt);
     $instrument_data->add_attribute(
         attribute_label => 'tgi_lims_status',
         attribute_value => 'new',
@@ -214,37 +210,6 @@ sub _qidfgm {
         );
     }
 
-    my $pse = Test::MockObject->new();
-    $pse->set_always(id => $qidfgm_cnt - 10000);
-    $pse->set_always(pse_id => $qidfgm_cnt - 10000);
-    $pse->set_always(ps_id => 3733);
-    $pse->set_always(ei_id => '464681');
-    $pse->set_false('completed');
-    $pse->mock(pse_status => sub{ $pse->set_true('completed'); });
-    my %params = (
-        instrument_data_type => [qw/ 454 /],
-        instrument_data_id => [ $instrument_data->id ],
-        subject_class_name => [qw/ Genome::Sample /],
-        subject_id => [ $sample->id ],
-    );
-    $pse->mock(
-        add_param => sub{
-            my ($pse, $key, $value) = @_;
-            push @{$params{$key}}, $value;
-            return $value;
-        }
-    );
-    for my $key ( keys %params ) {
-        $pse->add_param($key, $params{$key}->[0]);
-    }
-    $pse->mock(
-        added_param => sub{
-            my ($pse, $key) = @_;
-            return @{$params{$key}} if $params{$key};
-        }
-    );
-
-    push @pses, $pse;
     return 1;
 }
 
