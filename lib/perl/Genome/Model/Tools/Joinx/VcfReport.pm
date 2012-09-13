@@ -94,7 +94,7 @@ sub execute {
     unless($self->generate_report_only) {
         my $cmd = $self->joinx_path . " vcf-report" . " --input-file $input_file";
         my $info_fields = " --info-fields-from-db " . join(" --info-fields-from-db ", split /:/, $self->info_fields_from_db) if($self->info_fields_from_db);
-        $cmd .= $info_fields;
+        $cmd .= $info_fields if $info_fields;
 
         if(defined($self->per_site_output_file)) {
             $per_site_output = $self->per_site_output_file;
