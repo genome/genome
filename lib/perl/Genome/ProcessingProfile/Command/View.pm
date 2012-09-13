@@ -367,8 +367,23 @@ sub _format_detector {
     my ($detector_info) = @_;
 
     # a detector is almost exactly like a filter but with filters...
-    my ($new_key, $params) = _format_filter($detector_info, 'green');
-    my @new_value = @{$params};
+    my ($new_key, $junk) = _format_filter($detector_info, 'green');
+    # show params for filters differently than for detectors... apparently
+    # in DV2 the detectors don't have a particular format for their params,
+    # it is just detector specific, whereas filters are all command style
+    # params.
+
+    my $param_str = $detector_info->{params};
+    my @new_value;
+    if($new_key =~ m/strelka/) {
+        push(@new_value, _format_params($param_str));
+    } else {
+        if($param_str) {
+            my $display_str = sprintf("params: %s",
+                    Term::ANSIColor::colored($param_str, 'bold'));
+            push(@new_value, $display_str);
+        }
+    }
     my @filters = @{$detector_info->{filters}};
     for my $filter_info (@filters) {
         my ($filter_name, $filter_value) = _format_filter($filter_info, 'red');
@@ -416,12 +431,12 @@ sub _parse_strelka_args {
     my @kv_pairs = split(";", $string);
     my %result;
     for my $kv_pair (@kv_pairs) {
-        my ($key, $value) = split("=", $kv_pair);
-        chomp($key);
-        chomp($value);
-        $key =~ s/^\s*([^\s]*)\s*$/$1/; #remove leading/trailing ws
-        $value =~ s/^\s*([^\s]*)\s*$/$1/;
-        $result{$key} = $value || "undef";
+        my ($key, $value) = split(/\s*=\s*/, $kv_pair);
+        if(defined($value) and $value ne '') {
+            $result{$key} = $value;
+        } else {
+            $result{$key} = 'undef';
+        }
     }
     return %result;
 }

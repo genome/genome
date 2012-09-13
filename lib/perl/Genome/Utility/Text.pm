@@ -60,7 +60,7 @@ sub param_string_to_hash {
     }
 
     my %params;
-    my @params = split(/\s?(\-{1,2}\D[\w\d\-]*)\s?/, $param_string);
+    my @params = split(/\s?(\-{1,2}\D[\w\-]*)[\s=]?/, $param_string);
     shift @params;
     for ( my $i = 0; $i < @params; $i += 2 ) {
         my $key = $params[$i];
