@@ -132,8 +132,8 @@ sub create {
     # validate version
     my $version = $self->version; 
     for my $type (qw/ g h /) {
-        my $velvet = $self->_version_path.$self->version.'/velvet'.$type;
-        unless ( -x $velvet ) {
+        my $velvet = $self->_versioned_velvet($type);
+        unless ( $velvet ) {
             $self->error_message("Invalid version ($version) of velvet. Please look in directory $ENV{GENOME_SW}/velvet/ for valid versions.");
             $self->delete;
             return;
@@ -153,6 +153,19 @@ sub create {
     }
 
     return $self;
+}
+
+sub _versioned_velvet {
+    my $self = shift;
+    my $type = shift;
+
+    my $installed = '/usr/bin/velvet'.$type.$self->version;
+    return $installed if -x $installed;
+
+    my $packaged = $self->_version_path.$self->version.'/velvet'.$type;
+    return $packaged if -x $packaged;
+
+    return;
 }
 
 sub execute {
@@ -430,7 +443,7 @@ sub _do_final_velvet_runs {
     my $self = shift;
 
     #params for velvet h
-    my $velveth = $self->_version_path . $self->version .'/velveth';
+    my $velveth = $self->_versioned_velvet('h');
     my $best_hash_size = $self->_best_hash_size();
     my $input_file_format = $self->_input_file_format();
     my $read_type = $self->read_type;
@@ -443,7 +456,7 @@ sub _do_final_velvet_runs {
     }
 
     #params for velvet g
-    my $velvetg = $self->_version_path . $self->version . '/velvetg';
+    my $velvetg = $self->_versioned_velvet('g');
     my $best_exp_cov = $self->_best_exp_coverage();
     my $best_cov_cf = $self->_best_coverage_cutoff();
     my $ins_length_sd = $self->dev_ins_length();
@@ -472,7 +485,7 @@ sub _run_velveth_get_opt_expcov_covcutoff {
     my $read_type = $self->read_type;
 
     #run velveth
-    my $velveth = $self->_version_path . $self->version .'/velveth';
+    my $velveth = $self->_versioned_velvet('h');
     my $input_file_format = $self->_input_file_format(); #fasta or fastq
     my $cmd = $velveth.' '.$self->output_dir.' '.$hash_size.' '.$input_file_format." -$read_type ".$self->file;
 
@@ -653,7 +666,7 @@ sub _pick_best_cov_cutoff {
 sub _run_velvetg_get_n50_total {
     my ($self, $coverage_cutoff, $exp_coverage, $hash_size) = @_;
 
-    my $velvetg = $self->_version_path . $self->version . '/velvetg';
+    my $velvetg = $self->_versioned_velvet('g');
 
     my $ins_length_sd = $self->dev_ins_length();
 
