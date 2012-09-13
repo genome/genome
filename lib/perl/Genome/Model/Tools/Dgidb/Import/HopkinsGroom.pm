@@ -280,6 +280,7 @@ sub import_genes {
         my $human_readable_all = $self->_create_gene_category_report($gene_name, 'human_readable_name', 'HOPKINSGROOM', ''); 
         my $human_readable_name = $hopkins_input->{'DGIDB_Human_Readable'};
         $human_readable_name =~ s/-/ /g;
+        $human_readable_name =~ s/\// /g;
         my $human_readable = $self->_create_gene_category_report($gene_name, 'human_readable_name', uc($human_readable_name), '');
         #Add additional category details
         my $Interpro_Acc = $self->_create_gene_category_report($gene_name, 'Interpro_Acc', $hopkins_input->{'Interpro_Acc'}, '');
