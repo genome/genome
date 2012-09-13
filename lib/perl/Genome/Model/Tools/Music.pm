@@ -65,7 +65,8 @@ EOS
 }
 
 sub _doc_copyright_years {
-    (2007,2011);
+    my $y = (localtime(time))[5] + 1900;
+    (2007,$y);
 }
 
 sub _doc_license {
@@ -79,30 +80,29 @@ associated LICENSE file in this distribution.
 EOS
 }
 
-sub _doc_authors {
-    return <<EOS
-This software is developed by the analysis and engineering teams at 
-The Genome Institute at Washington University School of Medicine in St. Louis,
-with funding from the National Human Genome Research Institute.  Richard K. Wilson, P.I.
-
-The primary authors of the MuSiC suite are:
-
- Nathan D. Dees, Ph.D.
- Cyriac Kandoth, Ph.D.
- Dan Koboldt, M.S.
- William Schierding, M.S.
- Michael Wendl, Ph.D.
- Qunyuan Zhang, Ph.D.
- Thomas B. Mooney, M.S.
-
-EOS
-}
-
-
 sub _doc_bugs {   
     return <<EOS;
 For defects with any software in the genome namespace, contact
  genome-dev ~at~ genome.wustl.edu.
+EOS
+}
+
+sub _doc_citation {
+    return <<EOS
+If you find MuSiC to be useful, please consider citing the reference that describes this work:
+
+Nathan D. Dees, Qunyuan Zhang, Cyriac Kandoth, Michael C. Wendl, William Schierding, Daniel C. Koboldt, Thomas B. Mooney, Matthew B. Callaway, David Dooling, Elaine R. Mardis, Richard K. Wilson, and Li Ding. 2012. MuSiC: Identifying mutational significance in cancer genomes. Genome Research 22:1589-1598.
+EOS
+}
+
+sub _doc_funding {
+    return <<EOS
+This software is developed by the analysis and engineering teams at 
+The Genome Institute at Washington University School of Medicine in St. Louis.
+
+It is funded by the National Human Genome Research Institute, Richard K. Wilson, P.I.,
+and by the National Institutes of Health, Grant #U01HG006517, Li Ding, P.I.
+
 EOS
 }
 
