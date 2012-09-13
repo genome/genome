@@ -34,7 +34,7 @@ class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
         glm_max_cols_per_file => {
             is => "Number",
             doc => "Max number of columns per variant matrix for parallel clinical correlation",
-            default_value => 1000,
+            default_value => 5000,
             is_optional => 1,
         },
         maximum_maf => {

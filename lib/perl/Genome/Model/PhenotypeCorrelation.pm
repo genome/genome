@@ -742,15 +742,15 @@ sub clinical_data_file {
     my $clinical_data_md5 = $self->output_directory . "/Clinical_Data.txt.md5";
     if($self->clinical_data_file_path) {
         $self->status_message("Copying build input: " . $self->clinical_data_file_path->path . " to $clinical_data");
-        Genome::Sys->copy_file($self->clinical_data_file_path->path, $clinical_data); #this croaks if it fails
-        my $ctx = new Digest::MD5;
-        my $data_fh = Genome::Sys->open_file_for_reading($clinical_data);
-        $ctx->addfile($data_fh);
-        my $digest = $ctx->hexdigest;
-        $data_fh->close;
+        # TODO: CaseControl/Unrelated has to read this again to make adjustments to the data. If anything else
+        # ever needs to do something similar, we should let the delegate class modify this data while it is in
+        # memory.
+        # NOTE: we parse and rewrite the file to detect any errors in the input file.
+        my $cd = Genome::Model::PhenotypeCorrelation::ClinicalData->from_file($self->clinical_data_file_path->path);
+        my $digest = $cd->to_file($clinical_data);
         $self->status_message("m5sum of input clinical data: " . $digest . "\n");
         my $fh = Genome::Sys->open_file_for_writing($clinical_data_md5);
-        $fh->write($digest."\n");
+        $fh->write("$digest\n");
         $fh->close;
     }
     else {
