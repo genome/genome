@@ -101,6 +101,21 @@ sub wait_for_lsf_job {
     return $status;
 }
 
+sub kill_lsf_job {
+    my ($class, $job_id) = @_;
+    unless ($job_id) {
+        die "Must be given job id!";
+    }
+
+    my $cmd = "bkill $job_id";
+    my $rv = system($cmd);
+    $rv = $rv >> 8;
+    unless ($rv == 0) {
+        die "Could not kill LSF job $job_id, received return status $rv";
+    }
+    return 1 if $rv == 0;
+}
+
 #####
 # API for accessing software and data by version
 #####
