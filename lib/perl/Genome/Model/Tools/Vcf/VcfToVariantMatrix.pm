@@ -184,6 +184,9 @@ sub execute {                               # replace with real execution logic.
         }
 
         my ($chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples) = split(/\t/, $line);
+        if ($id || $id ne '.') {
+            $id =~ s/,/_/g;
+        }
 
         unless($filter =~ m/PASS/i || $filter eq '.') {
             print "Skipping $chr:$pos:$ref/$alt for having filter status of $filter\n";
@@ -238,10 +241,10 @@ sub execute {                               # replace with real execution logic.
         }
         my $line;
         if($self->matrix_genotype_version=~ m/numerical/i) {
-            $line = $self->format_numeric_output($chr, $pos, $ref, $alt, $gt_location, $ft_location, \@sample_list);
+            $line = $self->format_numeric_output($chr, $pos, $id, $ref, $alt, $gt_location, $ft_location, \@sample_list);
         }
         elsif($self->matrix_genotype_version=~ m/bases/i) {
-           $line = $self->format_basic_output($chr, $pos, $ref, $alt, $gt_location, $ft_location, \@sample_list);
+           $line = $self->format_basic_output($chr, $pos, $id, $ref, $alt, $gt_location, $ft_location, \@sample_list);
         }
         else {
             die "Please specify a proper matrix_genotype_version of either \"Bases\" or \"Numerical\"";
@@ -334,9 +337,11 @@ sub find_most_frequent_alleles {
 
 
 sub format_numeric_output {
-    my ($self, $chr, $pos, $ref, $alt, $gt_location, $ft_location, $sample_ref) = @_;
+    my ($self, $chr, $pos, $id, $ref, $alt, $gt_location, $ft_location, $sample_ref) = @_;
     my @samples = @$sample_ref;
     my ($variant_name, @allele_options) = $self->find_most_frequent_alleles($chr, $pos, $ref, $alt, $gt_location, $ft_location, $sample_ref);
+    $variant_name .= "_$id" if $id && $id ne '.';
+    
     my @return_line = ($variant_name);
     for my $sample_info (@samples) {
         my (@sample_fields) = split(/:/, $sample_info);
@@ -405,10 +410,11 @@ sub format_numeric_output {
 }
 
 sub format_basic_output {
-    my ($self, $chr, $pos, $ref, $alt, $gt_location, $ft_location, $sample_ref) = @_;
+    my ($self, $chr, $pos, $id, $ref, $alt, $gt_location, $ft_location, $sample_ref) = @_;
     my @alt_bases = split(/,/, $alt);
     my @allele_option_bases = ($ref, @alt_bases);
     my $variant_name = "$chr"."_"."$pos"."_"."$ref"."_"."$alt";
+    $variant_name .= "_$id" if $id && $id ne '.';
     my @return_line = ($variant_name);
     for my $sample_info (@$sample_ref) {
         my (@sample_fields) = split(/:/, $sample_info);
