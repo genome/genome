@@ -36,11 +36,14 @@ my $new_dir = "$tmpdir/new";
 mkdir($old_dir);
 mkdir($new_dir);
 
-test_with_clinical_data($old_dir, $old_clinical_data_file);
+test_with_clinical_data($old_dir, $old_clinical_data_file,
+    case_label => "Invasive (high)",
+    control_label => "Cutaneous (low)"
+);
 test_with_clinical_data($new_dir, $new_clinical_data_file);
 
 sub test_with_clinical_data {
-    my ($tmpdir, $clinical_data_file) = @_;
+    my ($tmpdir, $clinical_data_file, %params) = @_;
 
     # Test with string encoding of binary trait (vs 0/1)
     my $input_vcf_file = "$test_data_dir/multisample.vcf";
@@ -68,8 +71,8 @@ sub test_with_clinical_data {
             clinical_data_file => $clinical_data_file,
             glm_model_file => $glm_model_file,
             glm_max_cols_per_file => 5,
-            identify_cases_by => "Invasive (high)",
-            identify_controls_by => "Cutaneous (low)",
+            identify_cases_by => $params{case_label},
+            identify_controls_by =>  $params{control_label}
         );
     ok($cmd, "Created command object");
     $cmd->dump_status_messages(1);

@@ -79,27 +79,27 @@ EOS
 
 $cd = $pkg->from_filehandle($binary);
 ok($cd, "Created clinical data object");
-eval { $cd->coerce_to_binary("T1", one => "high", zero => undef); };
+eval { $cd->convert_attr_to_factor("T1", levels => [undef, "high"]) };
 ok($@, "Attempting to coerce to binary with undef attribute value causes an error");
-eval { $cd->coerce_to_binary("T1", one => undef, zero => "low"); };
+eval { $cd->convert_attr_to_factor("T1", levels => ["low", undef]); };
 ok($@, "Attempting to coerce to binary with undef attribute value causes an error");
-eval { $cd->coerce_to_binary("T1", one => undef, zero => undef); };
+eval { $cd->convert_attr_to_factor("T1", levels => [undef, undef]); };
 ok($@, "Attempting to coerce to binary with undef attribute value causes an error");
 
 
 eval {
-    $cd->coerce_to_binary("T1", one => "bad", zero => "low");
+    $cd->convert_attr_to_factor("T1", levels => ["low", "oops"]);
 };
 ok($@, "Attempting to coerce to binary with nonexistant attribute value causes an error");
 
-my %updates = $cd->coerce_to_binary("T1", one => "High", zero => "Low");
+my %updates = $cd->convert_attr_to_factor("T1", levels => ["Low", "High"]);
 ok(%updates, "Updated clinical data");
 is_deeply(\%updates, { High => 1, Low => 0 }, "Updates are as expected");
 is_deeply($cd->attribute_values("T1"), [1,0,0,1,undef], "Coercion to binary worked");
-%updates = $cd->coerce_to_binary("T1", one => "High", zero => "Low");
+%updates = $cd->convert_attr_to_factor("T1", levels => ["Low", "High"]);
 is_deeply($cd->attribute_values("T1"), [1,0,0,1,undef], "Coercion to binary again didn't fail");
 ok(!%updates, "No updates reported");
-%updates = $cd->coerce_to_binary("T1", one => undef, zero => undef);
+%updates = $cd->convert_attr_to_factor("T1", levels => [undef, undef]);
 ok(!%updates, "Coercion from binary to binary with undef case/control labels is ok");
 is_deeply($cd->attribute_values("T1"), [1,0,0,1,undef], "Coercion to binary again didn't fail");
 

@@ -200,47 +200,44 @@ sub to_filehandle {
     return $md5->hexdigest;
 }
 
-sub coerce_to_binary {
+sub convert_attr_to_factor {
     my ($self, $attribute, %params) = @_;
-    my $one_value = $params{one};
-    my $zero_value = $params{zero};
-    my @ignore_values = $params{ignore_values} || ();
-
+    my $levels = $params{levels};
+    if (!defined $levels || scalar @$levels < 2) {
+        confess "Required parameter levels not supplied or contains <2 values.";
+    }
     my $values = $self->_phenotypes->{$attribute};
     confess "Unknown attribute '$attribute'" unless defined $values;
 
-    my %uniq = map {$_ => 0} grep {defined $_} @$values;
-    if (@ignore_values) {
-        delete $uniq{$_} for @ignore_values;
+
+    # check if this is already categorical data
+    my %invmapping;
+    @invmapping{0..$#$levels} = @$levels;
+    return unless grep {defined $_ && !exists $invmapping{$_}} @$values;
+
+    # if we need to do conversion, then we had better not allow undef as a level
+    # since undef already has a special meaning (NA/missing data)
+    confess "Attempted to coerce attribute '$attribute' to a factor with undef values"
+        if grep {!defined $_} @$levels;
+
+    # compute mapping of level names => indices
+    my %mapping;
+    @mapping{@$levels} = 0..$#$levels;
+
+    my %uniq = map {$_ => 0} grep {$_} @$values;
+    if (grep {!exists $mapping{$_}} keys %uniq) {
+        confess "Unable to coerce attribute '$attribute' to a factor:\n"
+            . "Supplied levels:\n\t" . join("\n\t", @$levels) . "\n"
+            . "Actual values:\n\t" . join("\n\t", keys %uniq) . "\n"
     }
-
-    my $n_uniq = scalar keys(%uniq);
-    if ($n_uniq != 2) {
-        confess "Unable to coerce attribute '$attribute' to binary, it has $n_uniq distinct values:\n\t"
-            . join("\n\t", keys(%uniq));
-    }
-
-    # already binary
-    return if defined $uniq{0} and defined $uniq{1};
-
-    confess "Attempted to coerce attribute '$attribute' to binary with undef values"
-        unless (defined $one_value and defined $zero_value);
-
-    if (!defined $uniq{$one_value} || !defined $uniq{$zero_value}) {
-        confess "Unable to coerce attribute '$attribute' to binary using values $zero_value, $one_value as 0/1.\n"
-            ."The actual values present are:\n\t" . join("\n\t", keys(%uniq));
-    }
-
-    $uniq{$one_value} = 1;
-    $uniq{$zero_value} = 0;
 
     $self->_phenotypes->{$attribute} = [ map {
-        (defined $_ && defined $uniq{$_})
-            ? $uniq{$_}
+        (defined $_ && defined $mapping{$_})
+            ? $mapping{$_}
             : $_
         } @$values ];
 
-    return %uniq;
+    return %mapping;
 }
 
 sub _is_categorical {

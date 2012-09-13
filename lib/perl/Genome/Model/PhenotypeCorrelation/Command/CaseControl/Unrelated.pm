@@ -346,9 +346,8 @@ sub update_clinical_data {
         confess "Found $n_binary_attrs binary attributes ($names) in glm config $glm_file, expected 1";
     }
     my $attr_name = $binary_attrs[0]->{attr_name};
-    my %updates = $cdata->coerce_to_binary($attr_name,
-        one => $self->identify_cases_by,
-        zero => $self->identify_controls_by
+    my %updates = $cdata->convert_attr_to_factor($attr_name,
+        levels => [$self->identify_controls_by, $self->identify_cases_by]
         );
     if (%updates) {
         $self->status_message("The encoding of attribute $attr_name has changed:\n\t"
