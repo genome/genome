@@ -80,22 +80,7 @@ associated LICENSE file in this distribution.
 EOS
 }
 
-sub _doc_bugs {   
-    return <<EOS;
-For defects with any software in the genome namespace, contact
- genome-dev ~at~ genome.wustl.edu.
-EOS
-}
-
-sub _doc_citation {
-    return <<EOS
-If you find MuSiC to be useful, please consider citing the reference that describes this work:
-
-Nathan D. Dees, Qunyuan Zhang, Cyriac Kandoth, Michael C. Wendl, William Schierding, Daniel C. Koboldt, Thomas B. Mooney, Matthew B. Callaway, David Dooling, Elaine R. Mardis, Richard K. Wilson, and Li Ding. 2012. MuSiC: Identifying mutational significance in cancer genomes. Genome Research 22:1589-1598.
-EOS
-}
-
-sub _doc_funding {
+sub _doc_authors {
     return <<EOS
 This software is developed by the analysis and engineering teams at 
 The Genome Institute at Washington University School of Medicine in St. Louis.
@@ -103,6 +88,9 @@ The Genome Institute at Washington University School of Medicine in St. Louis.
 It is funded by the National Human Genome Research Institute, Richard K. Wilson, P.I.,
 and by the National Institutes of Health, Grant #U01HG006517, Li Ding, P.I.
 
+If you find MuSiC to be useful, please consider citing the reference that describes this work:
+
+Nathan D. Dees, Qunyuan Zhang, Cyriac Kandoth, Michael C. Wendl, William Schierding, Daniel C. Koboldt, Thomas B. Mooney, Matthew B. Callaway, David Dooling, Elaine R. Mardis, Richard K. Wilson, and Li Ding. 2012. MuSiC: Identifying mutational significance in cancer genomes. Genome Research 22:1589-1598.
 EOS
 }
 
@@ -120,6 +108,13 @@ MuSiC depends on copies of data from the following databases, packaged in a form
  * SUPERFAMILY - http://supfam.cs.bris.ac.uk/SUPERFAMILY/
  * PatternScan - http://www.expasy.ch/prosite/
 
+EOS
+}
+
+sub _doc_bugs {   
+    return <<EOS;
+For defects with any software in the genome namespace, contact
+ genome-dev ~at~ genome.wustl.edu.
 EOS
 }
 
