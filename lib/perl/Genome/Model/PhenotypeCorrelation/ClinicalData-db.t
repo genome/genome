@@ -34,6 +34,9 @@ my @samples = setup_samples($nomenclature);
 
 my $obj = $pkg->from_database($nomenclature, @samples);
 
+my @sample_names = sort $obj->sample_names;
+is_deeply(\@sample_names, [sort(map({$_->name} @samples))], "sample names match");
+
 my @expected_attrs = map {"attr$_"} 1..10;
 my %expected_attr_types = map {("attr$_" => {categorical => 1})} 1..10;
 is($obj->sample_count, 10, "correct number of samples");

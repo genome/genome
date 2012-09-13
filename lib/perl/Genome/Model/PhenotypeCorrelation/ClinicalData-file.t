@@ -78,6 +78,7 @@ EOS
 );
 
 $cd = $pkg->from_filehandle($binary);
+is_deeply([sort $cd->sample_names], ['A'..'E'], "sample names are correct");
 ok($cd, "Created clinical data object");
 eval { $cd->convert_attr_to_factor("T1", levels => [undef, "high"]) };
 ok($@, "Attempting to coerce to binary with undef attribute value causes an error");

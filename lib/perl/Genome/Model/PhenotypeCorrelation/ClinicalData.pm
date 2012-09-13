@@ -69,6 +69,11 @@ sub attribute_value_for_sample {
     return $self->_phenotypes->{$attr}->[$sample_idx];
 }
 
+sub sample_names {
+    my $self = shift;
+    return keys %{$self->_sample_indices};
+}
+
 sub from_database {
     my ($class, $nomenclature, @samples) = @_;
     my $self = $class->create;
