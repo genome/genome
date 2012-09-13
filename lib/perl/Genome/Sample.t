@@ -14,18 +14,17 @@ use Test::More;
 
 use_ok('Genome::Sample') or die;
 
-my $taxon = Genome::Taxon->create(name => '__TEST_TAXON__');
+my $taxon = Genome::Taxon->__define__(name => '__TEST_TAXON__');
 ok($taxon, 'define taxon');
 
-my $source = Genome::Individual->create(name => '__TEST__IND__', taxon => $taxon);
+my $source = Genome::Individual->__define__(name => '__TEST__IND__', taxon => $taxon);
 ok($source, 'define source');
-print $source->id."\n";
 
 my $sample = Genome::Sample->create(
     name             => 'full_name.test',
     common_name      => 'common',
     extraction_label => 'TCGA-1234-232-12',
-    extraction_type  => 'test sample',
+    extraction_type  => 'genomic dna',
     extraction_desc  => 'This is a test',
     cell_type        => 'primary',
     source           => $source,
@@ -39,8 +38,9 @@ is($sample->subject_type, 'sample_name', 'subject type is organism sample');
 is_deeply($sample->taxon, $source->taxon, 'taxon');
 is($sample->age, 99, 'age');
 is($sample->body_mass_index, 22.4, 'body_mass_index');
-
-ok(eval{ UR::Context->commit; }, 'commit');
+ok(!$sample->is_rna, 'sample is not rna');
+$sample->extraction_type('cdna');
+ok($sample->is_rna, 'sample is now rna');
 
 done_testing();
 exit();

@@ -59,6 +59,16 @@ class Genome::Sample {
                 return $extraction_type;
             },
         },
+        is_rna => {
+            calculate_from => [qw/ extraction_type /],
+            calculate => q|
+                return if not defined $extraction_type;
+                for my $rna_sample_type ( 'rna', 'cdna', 'total rna', 'cdna library', 'mrna' ) {
+                    return 1 if $extraction_type eq $rna_sample_type;
+                }
+                return;
+            |,
+        },
         extraction_desc => { 
             is => 'Text', 
             via => 'attributes',
