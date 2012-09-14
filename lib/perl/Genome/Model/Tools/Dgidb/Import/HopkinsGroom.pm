@@ -283,7 +283,7 @@ sub import_genes {
           }
         }
         #Put all genes in HopkinsGroom category as well as any others
-        my $human_readable_all = $self->_create_gene_category_report($gene_name, 'human_readable_name', 'HOPKINSGROOM', ''); 
+        my $human_readable_all = $self->_create_gene_category_report($gene_name, 'human_readable_name', 'DRUGGABLE GENOME', ''); 
         my $human_readable_name = $hopkins_input->{'DGIDB_Human_Readable'};
         $human_readable_name =~ s/-/ /g;
         $human_readable_name =~ s/\// /g;
