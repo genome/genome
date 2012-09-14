@@ -22,7 +22,7 @@ class Genome::Model::Tools::Sam::FilterUnpairedReads {
 
 sub help_detail {
     return <<HELP
-Removes unpaired reads in a paired BAM file
+Removes unpaired reads in a mixed unpaired and paired BAM file
 HELP
 }
 
