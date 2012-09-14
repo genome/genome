@@ -24,7 +24,7 @@ class Genome::Model::Tools::Dgidb::Import::SantaMonicaLung {
         interactions_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/tmp/SantaMonicaLung_WashU_INTERACTIONS.tsv',
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/SantaMonicaLung_WashU_INTERACTIONS.tsv',
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
         },
         version => {

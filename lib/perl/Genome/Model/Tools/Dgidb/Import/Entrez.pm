@@ -18,7 +18,7 @@ class Genome::Model::Tools::Dgidb::Import::Entrez {
         genes_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/tmp/Entrez_WashU_TARGETS.tsv',
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/Entrez_WashU_TARGETS.tsv',
             doc => 'PATH.  Path to .tsv file for genes (targets)',
         },
         gene_info_file => {

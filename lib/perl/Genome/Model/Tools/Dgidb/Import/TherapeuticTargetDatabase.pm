@@ -32,7 +32,7 @@ class Genome::Model::Tools::Dgidb::Import::TherapeuticTargetDatabase {
         interactions_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/tmp/TTD_WashU_INTERACTIONS.tsv',
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/TTD_WashU_INTERACTIONS.tsv',
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
         },
         citation_base_url => {

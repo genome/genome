@@ -30,7 +30,7 @@ class Genome::Model::Tools::Dgidb::Import::DrugBank {
         drugs_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/tmp/DrugBank_WashU_DRUGS.tsv',
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_DRUGS.tsv',
             doc => 'PATH.  Path to .tsv file for drugs',
         },
         genes_outfile => {
