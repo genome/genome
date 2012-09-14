@@ -54,10 +54,7 @@ sub execute {
     my $self = shift;
 
     my @models = $self->models;
-<<<<<<< HEAD
     # The values are attributes in the GTF file of known annotation
-=======
->>>>>>> 7bda7e47991581bfbc14538bc737886f3b0f5359
     my %feature_types = (
         gene => 'gene_id',
         isoform => 'transcript_id',
