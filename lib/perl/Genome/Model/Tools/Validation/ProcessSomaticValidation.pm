@@ -720,7 +720,7 @@ sub execute {
               my $normal_rc_cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
                   bam_file => $normal_bam,
                   output_file => "$dir/readcounts/$file.nrm.cnt",
-                  snv_file => "$dir/$file",
+                  variant_file => "$dir/$file",
                   genome_build => $ref_seq_fasta,
                   );
               unless ($normal_rc_cmd->execute) {
@@ -732,7 +732,7 @@ sub execute {
           my $tumor_rc_cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
               bam_file => $tumor_bam,
               output_file => "$dir/readcounts/$file.tum.cnt",
-              snv_file => "$dir/$file",
+              variant_file => "$dir/$file",
               genome_build => $ref_seq_fasta,
               );
           unless ($tumor_rc_cmd->execute) {
@@ -784,7 +784,7 @@ sub execute {
                   my $normal_rc2_cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
                       bam_file => $normal_bam_var,
                       output_file => "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.orig.nrm.cnt",
-                      snv_file => "$output_dir/$sample_name/snvs/snvs.notvalidated",
+                      variant_file => "$output_dir/$sample_name/snvs/snvs.notvalidated",
                       genome_build => $ref_seq_fasta,
                       );
                   unless ($normal_rc2_cmd->execute) {
@@ -797,7 +797,7 @@ sub execute {
                   my $tumor_rc2_cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
                       bam_file => $tumor_bam_var,
                       output_file => "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.orig.tum.cnt",
-                      snv_file => "$output_dir/$sample_name/snvs/snvs.notvalidated",
+                      variant_file => "$output_dir/$sample_name/snvs/snvs.notvalidated",
                       genome_build => $ref_seq_fasta,
                       );
                   unless ($tumor_rc2_cmd->execute) {
