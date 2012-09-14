@@ -366,17 +366,20 @@ sub _format_tree {
 sub _format_detector {
     my ($detector_info) = @_;
 
-    # a detector is almost exactly like a filter but with filters...
-    my ($new_key, $junk) = _format_filter($detector_info, 'green');
-    # show params for filters differently than for detectors... apparently
-    # in DV2 the detectors don't have a particular format for their params,
-    # it is just detector specific, whereas filters are all command style
-    # params.
-
+    my $name = $detector_info->{name};
+    my $version = $detector_info->{version};
     my $param_str = $detector_info->{params};
+    my $new_key = Term::ANSIColor::colored($name, "bold green") .
+                  Term::ANSIColor::colored(" $version", 'bold');
     my @new_value;
-    if($new_key =~ m/strelka/) {
-        push(@new_value, _format_params($param_str));
+    if($new_key =~ m/strelka/) { #TODO make this less specific
+        # show params for filters differently than for detectors... apparently
+        # in DV2 the detectors don't have a particular format for their params,
+        # it is just detector specific, whereas filters are all command style
+        # params.
+        use Genome::Model::Tools::DetectVariants2::Strelka;
+        my %params = Genome::Model::Tools::DetectVariants2::Strelka::parse_params($param_str);
+        push(@new_value, _format_params(\%params));
     } else {
         if($param_str) {
             my $display_str = sprintf("params: %s",
@@ -386,19 +389,19 @@ sub _format_detector {
     }
     my @filters = @{$detector_info->{filters}};
     for my $filter_info (@filters) {
-        my ($filter_name, $filter_value) = _format_filter($filter_info, 'red');
+        my ($filter_name, $filter_value) = _format_filter($filter_info);
         push(@new_value, {"filtered by $filter_name" => $filter_value});
     }
     return $new_key, \@new_value;
 }
 
 sub _format_filter {
-    my ($filter_info, $color) = @_;
+    my ($filter_info) = @_;
 
     my $name = $filter_info->{name};
     my $version = $filter_info->{version};
     my $param_str = $filter_info->{params};
-    my $new_key = Term::ANSIColor::colored($name, "bold $color") .
+    my $new_key = Term::ANSIColor::colored($name, "bold red") .
                   Term::ANSIColor::colored(" $version", 'bold');
     my $new_value = [];
     if($param_str) {
@@ -408,13 +411,13 @@ sub _format_filter {
 }
 
 sub _format_params {
-    my ($param_str) = @_;
+    my ($params) = @_;
 
     my %params;
-    if($param_str =~ m/^-/) {
-        %params = param_string_to_hash($param_str);
+    if(ref($params) eq 'HASH') {
+        %params = %{$params};
     } else {
-        %params = _parse_strelka_args($param_str);
+        %params = param_string_to_hash($params);
     }
 
     my @result;
@@ -423,22 +426,6 @@ sub _format_params {
         push(@result, sprintf("%s: %s", $key, $value));
     }
     return \@result;
-}
-
-sub _parse_strelka_args {
-    my ($string) = @_;
-
-    my @kv_pairs = split(";", $string);
-    my %result;
-    for my $kv_pair (@kv_pairs) {
-        my ($key, $value) = split(/\s*=\s*/, $kv_pair);
-        if(defined($value) and $value ne '') {
-            $result{$key} = $value;
-        } else {
-            $result{$key} = 'undef';
-        }
-    }
-    return %result;
 }
 
 
