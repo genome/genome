@@ -173,93 +173,93 @@ sub execute {
                     auto_assign_inst_data => 1,
                 );
 
-            my @assigned = $self->assign_instrument_data_to_models($instrument_data, $reference_sequence_build, @models);
+                my @assigned = $self->assign_instrument_data_to_models($instrument_data, $reference_sequence_build, @models);
 
-            #returns an explicit undef on error
-            if(scalar(@assigned) eq 1 and not defined $assigned[0]) {
-                push @process_errors, $self->error_message;
-                next PP;
-            }
-
-            if(scalar(@assigned > 0)) {
-                #find or create default qc models if applicable
-                $self->create_default_qc_models(@assigned);
-                #find or create somatic models if applicable
-                $self->find_or_create_somatic_variation_models(@assigned);
-
-            } else {
-                # no model found for this PP, make one (or more) and assign all applicable data
-                $DB::single = $DB::stopper;
-                my @new_models = $self->create_default_models_and_assign_all_applicable_instrument_data($instrument_data, $subject, $processing_profile, $reference_sequence_build);
-                unless(@new_models) {
+                #returns an explicit undef on error
+                if(scalar(@assigned) eq 1 and not defined $assigned[0]) {
                     push @process_errors, $self->error_message;
                     next PP;
                 }
-                #find or create somatic models if applicable
-                $self->find_or_create_somatic_variation_models(@new_models);
-            }
-        } # looping through processing profiles for this instdata, finding or creating the default model
-    } elsif ( $sequencing_platform eq 'solexa'
-            and $instrument_data->target_region_set_name
-            and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)
-            and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)->content_type eq 'validation'
-    ) {
-        my @validation = Genome::Model::SomaticValidation->get(
-            target_region_set_name => $instrument_data->target_region_set_name,
-        );
 
-        @validation = grep((($_->tumor_sample and $_->tumor_sample eq $instrument_data->sample) or ($_->normal_sample and $_->normal_sample eq $instrument_data->sample)), @validation);
-        if(@validation) {
-            my $fl = Genome::FeatureList->get(name => $instrument_data->target_region_set_name);
-            my $ok = 0;
+                if(scalar(@assigned > 0)) {
+                    #find or create default qc models if applicable
+                    $self->create_default_qc_models(@assigned);
+                    #find or create somatic models if applicable
+                    $self->find_or_create_somatic_variation_models(@assigned);
 
-            #try all possible matching references
-            for($fl->reference, map($_->destination_reference_build, Genome::Model::Build::ReferenceSequence::Converter->get(source_reference_build_id => $fl->reference->id)) ) {
-                $ok = $self->assign_instrument_data_to_models($instrument_data, $_, @validation) || $ok;
-            }
+                } else {
+                    # no model found for this PP, make one (or more) and assign all applicable data
+                    $DB::single = $DB::stopper;
+                    my @new_models = $self->create_default_models_and_assign_all_applicable_instrument_data($instrument_data, $subject, $processing_profile, $reference_sequence_build);
+                    unless(@new_models) {
+                        push @process_errors, $self->error_message;
+                        next PP;
+                    }
+                    #find or create somatic models if applicable
+                    $self->find_or_create_somatic_variation_models(@new_models);
+                }
+            } # looping through processing profiles for this instdata, finding or creating the default model
+        } elsif ( $sequencing_platform eq 'solexa'
+                and $instrument_data->target_region_set_name
+                and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)
+                and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)->content_type eq 'validation'
+        ) {
+            my @validation = Genome::Model::SomaticValidation->get(
+                target_region_set_name => $instrument_data->target_region_set_name,
+            );
 
-            unless($ok) {
+            @validation = grep((($_->tumor_sample and $_->tumor_sample eq $instrument_data->sample) or ($_->normal_sample and $_->normal_sample eq $instrument_data->sample)), @validation);
+            if(@validation) {
+                my $fl = Genome::FeatureList->get(name => $instrument_data->target_region_set_name);
+                my $ok = 0;
+
+                #try all possible matching references
+                for($fl->reference, map($_->destination_reference_build, Genome::Model::Build::ReferenceSequence::Converter->get(source_reference_build_id => $fl->reference->id)) ) {
+                    $ok = $self->assign_instrument_data_to_models($instrument_data, $_, @validation) || $ok;
+                }
+
+                unless($ok) {
+                    push @process_errors,
+                    $self->error_message('Did not assign validation instrument data to any models.');
+                }
+            } elsif($instrument_data->index_sequence eq 'unknown' && $instrument_data->sample->name =~ /Pooled_Library/) {
+                $self->status_message('Skipping pooled library validation data! '.$instrument_data->id);
+            } else {
                 push @process_errors,
-                $self->error_message('Did not assign validation instrument data to any models.');
+                $self->error_message('No validation models found to assign data (target ' . $instrument_data->target_region_set_name . ' on instrument data ' . $instrument_data->id . '.)');
             }
-        } elsif($instrument_data->index_sequence eq 'unknown' && $instrument_data->sample->name =~ /Pooled_Library/) {
-            $self->status_message('Skipping pooled library validation data! '.$instrument_data->id);
         } else {
-            push @process_errors,
-            $self->error_message('No validation models found to assign data (target ' . $instrument_data->target_region_set_name . ' on instrument data ' . $instrument_data->id . '.)');
-        }
-    } else {
-        $self->status_message('No model generation attempted for instrument data! '.$instrument_data->id);
-    } # done with inst data which specify @processing
+            $self->status_message('No model generation attempted for instrument data! '.$instrument_data->id);
+        } # done with inst data which specify @processing
 
-    # Handle this instdata for other models besides the default
-    {
-        my @found_models;
-        my @check = qw/sample taxon/;
+        # Handle this instdata for other models besides the default
+        {
+            my @found_models;
+            my @check = qw/sample taxon/;
 
-        for my $check (@check) {
-            my $subject = $instrument_data->$check;
-            if (defined($subject)) {
-                my @some_models= Genome::Model->get(
-                    subject_id         => $subject->id,
-                    auto_assign_inst_data => 1,
-                );
+            for my $check (@check) {
+                my $subject = $instrument_data->$check;
+                if (defined($subject)) {
+                    my @some_models= Genome::Model->get(
+                        subject_id         => $subject->id,
+                        auto_assign_inst_data => 1,
+                    );
 
-                my $new_models = $self->_newly_created_models;
-                @some_models = grep { not $new_models->{$_->id} } @some_models;
-                push @found_models,@some_models;
+                    my $new_models = $self->_newly_created_models;
+                    @some_models = grep { not $new_models->{$_->id} } @some_models;
+                    push @found_models,@some_models;
+                }
             }
-        }
-
-        @found_models =
-        grep {
-            $_->processing_profile->can('sequencing_platform')
-        } @found_models;
 
             @found_models =
-                grep {
-                    $_->processing_profile->sequencing_platform() eq $sequencing_platform
-                } @found_models;
+            grep {
+                $_->processing_profile->can('sequencing_platform')
+            } @found_models;
+
+            @found_models =
+            grep {
+                $_->processing_profile->sequencing_platform() eq $sequencing_platform
+            } @found_models;
 
             #Don't care here what ref. seq. was used (if any)
             my @assigned = $self->assign_instrument_data_to_models($instrument_data, undef, @found_models);
@@ -399,7 +399,7 @@ sub find_or_create_somatic_variation_models{
 
             my %somatic_params = (
                 auto_assign_inst_data => 1,
-                );
+            );
             $somatic_params{annotation_build} = Genome::Model::ImportedAnnotation->annotation_build_for_reference($model->reference_sequence_build);
             $self->error_message('Failed to get annotation_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{annotation_build};
             $somatic_params{previously_discovered_variations_build} = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($model->reference_sequence_build);
@@ -562,10 +562,10 @@ sub preload_data {
     $self->status_message("  got " . scalar(@models) . " models");
 
     my %taxon_ids = map { $_->attribute_value => 1 }
-        grep(
-            $_->attribute_value,
-            Genome::SubjectAttribute->get(attribute_label => 'taxon_id', subject_id => [map($_->id, @samples)])
-        );
+    grep(
+        $_->attribute_value,
+        Genome::SubjectAttribute->get(attribute_label => 'taxon_id', subject_id => [map($_->id, @samples)])
+    );
     my @taxon_ids = sort keys %taxon_ids;
     $self->status_message("Pre-loading models for " . scalar(@taxon_ids) . " taxons");
     push @models, Genome::Model->get(subject_id => \@taxon_ids);
@@ -754,8 +754,8 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
 
         my $roi_list = $capture_target;
         if ($reference_sequence_build
-            and $reference_sequence_build->is_compatible_with($root_build37_ref_seq)
-            and exists $build36_to_37_rois{$capture_target}
+                and $reference_sequence_build->is_compatible_with($root_build37_ref_seq)
+                and exists $build36_to_37_rois{$capture_target}
         ) {
             $roi_list = $build36_to_37_rois{$capture_target};
         }
@@ -767,12 +767,12 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
 
         my %roi_sets = (
             'WU-Space' => [
-                'NCBI-human.combined-annotation-58_37c_cds_exon_and_rna_merged_by_gene',
-                'NCBI-human.combined-annotation-54_36p_v2_CDSome_w_RNA',
+            'NCBI-human.combined-annotation-58_37c_cds_exon_and_rna_merged_by_gene',
+            'NCBI-human.combined-annotation-54_36p_v2_CDSome_w_RNA',
             ],
             'TCGA-CDS' => [
-                'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37',
-                'agilent sureselect exome version 2 broad refseq cds only',
+            'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37',
+            'agilent sureselect exome version 2 broad refseq cds only',
             ],
         );
         for my $roi_set (keys %roi_sets) {
