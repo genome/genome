@@ -433,8 +433,8 @@ sub _archive_file_name { # private for now...can be public
 
         if ( (scalar(@base_files) != 1) and (not -d $base_files[0]) ) {
             die $self->error_message(
-                "Could not understand directory structure of raw sra download in $base_dir. "
-                ."Expected one directory, but found something else."
+                "Could not understand directory structure of raw sra download in $base_dir.\n"
+                . "Expected one directory, but found something else."
             );
         }
 
@@ -446,16 +446,38 @@ sub _archive_file_name { # private for now...can be public
         my @sub_files = grep {not ($_ eq '.' or $_ eq '..')} readdir ($sub_dh);
         closedir($sub_dh);
 
-        if ( (scalar(@sub_files) != 1) or (not -s $sub_files[0]) and ($sub_files[0] !~ /\.sra$/) ) {
+        if (scalar(@sub_files) == 1) {
+            my $sra_file = "$sub_dir/$sub_files[0]";
+
+            die $self->error_message("$sra_file had zero size!")
+                if (not -s "$base_dir/$sra_file");
+
+            die $self->error_message("$sra_file was not a .sra file!")
+                if ($sra_file !~ /\.sra$/);
+
+            return "$sub_dir/$sub_files[0]";
+        } elsif (scalar(@sub_files) == 5) {
+
+            my @expected_items = qw(col idx lock md md5);
+
+            for my $item (@expected_items) {
+                die $self->error_message("Missing $item in raw sra directory")
+                    unless grep {$item eq $_} @sub_files;
+            }
+
+            warn $self->status_message(
+                "Warning: Found a directory instead of a single .sra file:\n"
+                . "$base_dir/$sub_dir."
+            );
+
+            return "$sub_dir";
+
+        } else {
             die $self->error_message(
-                "Could not understand directory structure of raw sra download in $base_dir/$sub_dir. "
-                ."Expected one sra file, but found something else."
+                "Did not find expected directory structure of raw sra download:\n"
+                . "$base_dir/$sub_dir."
             );
         }
-
-        my $sra_file = $sub_files[0];
-
-        return "$sub_dir/$sra_file";
     }
     else {
         Carp::confess("Unknown import format: $format");
