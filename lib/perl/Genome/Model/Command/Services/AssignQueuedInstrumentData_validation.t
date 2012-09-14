@@ -12,7 +12,7 @@ BEGIN {
 use above 'Genome';
 
 require Genome::InstrumentData::Solexa;
-use Test::More tests => 31;
+use Test::More tests => 30;
 use Test::MockObject;
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData');
