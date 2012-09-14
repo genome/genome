@@ -453,12 +453,6 @@ sub find_or_create_somatic_variation_models{
     }
 }
 
-sub root_build37_ref_seq {
-    my $self = shift;
-    my $root_build37_ref_seq = Genome::Model::Build::ImportedReferenceSequence->get(106942997) || die;# GRCh37-lite-build37 => 106942997
-    return $root_build37_ref_seq;
-}
-
 sub first_compatible_feature_list_name {
     my $self = shift || die;
     my $reference = shift || die;
@@ -750,7 +744,11 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
     if ( $capture_target and $reference_sequence_build and not $regular_model->isa('Genome::Model::RnaSeq')){
         # FIXME This is a lame hack for these capture sets
         my %build36_to_37_rois = get_build36_to_37_rois();
-        my $root_build37_ref_seq = $self->root_build37_ref_seq;
+        my $root_build37_ref_seq = Genome::Model::Build::ImportedReferenceSequence->get(106942997) || die;# GRCh37-lite-build37 => 106942997
+        if ( not $root_build37_ref_seq ) {
+            $self->error_message('Failed to get reference sequence build for id! '.106942997);
+            return;
+        }
 
         my $roi_list = $capture_target;
         if ($reference_sequence_build
