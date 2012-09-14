@@ -164,7 +164,8 @@ sub c_pileup_error_rate {
 
     my $bam_file = $self->bam_file;
     my $output_file = $self->output_file;
-    my $cmd = "samtools view $bam_file | /gscuser/iferguso/SOFTWARE_IS_NOT_RUNNING_OUT_OF_THIS/bin/errorrate0.4 > $output_file";
+    # C util is running out of my home directory until it has been tested and can be deployed to the blades
+    my $cmd = "samtools view $bam_file | /gscuser/iferguso/bin/errorrate0.4 > $output_file";
     Genome::Sys->shellcmd(
         cmd          => $cmd,
         input_files  => [ $bam_file ],
