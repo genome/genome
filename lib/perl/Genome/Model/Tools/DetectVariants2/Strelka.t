@@ -30,7 +30,7 @@ my $test_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-Tools-DetectVariants-
 ok(-e $test_dir, "Found test dir: $test_dir") or die;
 
 #Define the expected output dir where the expected Strelka results files are stored
-my $expected_output_dir = $test_dir . "expected_outputs/2012-07-28";
+my $expected_output_dir = $test_dir . "expected_outputs/2012-09-14";
 ok(-e $expected_output_dir, "Created or found expected output dir: $expected_output_dir") or die;
 
 #Define paths to a test tumor and normal BAM file
