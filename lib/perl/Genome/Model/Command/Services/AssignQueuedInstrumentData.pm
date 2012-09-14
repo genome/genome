@@ -1224,7 +1224,6 @@ sub request_builds {
 sub _resolve_processing_for_instrument_data {
     my ($self, $instrument_data) = @_;
 
-    my $instrument_data_type = $instrument_data->sequencing_platform;
     my $sequencing_platform = $instrument_data->sequencing_platform;
     my $import_format = eval{ $instrument_data->import_format; };
     my @processing;
@@ -1242,7 +1241,7 @@ sub _resolve_processing_for_instrument_data {
             die $self->error_message;
         }
 
-        if ($instrument_data_type =~ /454/) {
+        if ($sequencing_platform eq '454') {
             if ( $instrument_data->sample->name =~ /^n\-cn?trl$/i ) { # Do not process 454 negative control (n-ctrl, n-cntrl)
                 $instrument_data->ignored(1);
             }
@@ -1261,7 +1260,7 @@ sub _resolve_processing_for_instrument_data {
                 }
             }
         }
-        elsif ($instrument_data_type =~ /sanger/i) {
+        elsif ($sequencing_platform eq 'sanger') {
             push @processing, { processing_profile_id => 2591277, };
         }
         elsif ( $import_format and $import_format eq 'genotype file' ) {
@@ -1282,7 +1281,7 @@ sub _resolve_processing_for_instrument_data {
                 };
             }
         }
-        elsif ($instrument_data_type =~ /solexa/i) {
+        elsif ($sequencing_platform eq  'solexa') {
             if($instrument_data->target_region_set_name and Genome::FeatureList->get(name => $instrument_data->target_region_set_name)->content_type eq 'validation') {
                 #Do not create ref-align models--will try to assign to existing SomaticValidation models.
             } elsif ($taxon->species_latin_name =~ /homo sapiens/i) {
