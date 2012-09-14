@@ -53,3 +53,5 @@ sub execute {
     $output_fh->close;
     return 1;
 }
+
+1;
