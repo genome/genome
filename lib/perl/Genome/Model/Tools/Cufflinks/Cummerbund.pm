@@ -15,8 +15,19 @@ class Genome::Model::Tools::Cufflinks::Cummerbund {
         genes_of_interest => {
             is_optional => 1,
         },
+<<<<<<< HEAD
+        pdf_report_file => {
+            is => 'Text',
+            doc => 'Redirect graphic output to the defined path.',
+            is_optional => 1,
+        },
         image_format => {
             is_optional => 1,
+            doc => 'The output format for each image',
+=======
+        image_format => {
+            is_optional => 1,
+>>>>>>> 7bda7e47991581bfbc14538bc737886f3b0f5359
             default_value => 'png',
             valid_values => ['png','jpeg'],
         },
@@ -81,9 +92,19 @@ sub execute {
 
     # Load Library and Data
     print $tmp_fh 'library("cummeRbund")' ."\n";
+<<<<<<< HEAD
+    if ($self->pdf_report_file) {
+        print $tmp_fh 'pdf("'. $self->pdf_report_file .'")' ."\n";
+    }
     print $tmp_fh 'cuff <- readCufflinks(dir="'. $self->cuffdiff_directory .'")' ."\n";
 
     # Create Gene Set
+    # TODO: we really need a way to validate the genes_of_interest list with actual gene IDs in cuffdiff
+=======
+    print $tmp_fh 'cuff <- readCufflinks(dir="'. $self->cuffdiff_directory .'")' ."\n";
+
+    # Create Gene Set
+>>>>>>> 7bda7e47991581bfbc14538bc737886f3b0f5359
     if ($self->genes_of_interest) {
         my @goi = split(',',$self->genes_of_interest);
         my $goi_string = '"'. join('","',@goi) .'"';
@@ -93,6 +114,40 @@ sub execute {
     }
 
     # Over-dispersion
+<<<<<<< HEAD
+    $self->generate_r_plot_code($tmp_fh,'overdispersion','disp','dispersionPlot(genes(cuff))');
+    
+    # Gene FPKM Density Histogram
+    $self->generate_r_plot_code($tmp_fh,'gene_fpkm_density','dens','csDensity(genes(cuff))');
+
+    # Gene FPKM Density Histogram as Replicates
+    $self->generate_r_plot_code($tmp_fh,'gene_fpkm_density_as_replicates','densRep','csDensity(genes(cuff),replicates=T)');
+    
+    # Gene FPKM Boxplot
+    $self->generate_r_plot_code($tmp_fh,'gene_fpkm_boxplot','b','csBoxplot(genes(cuff))');
+
+    # Gene FPKM Boxplot as Replicates
+    $self->generate_r_plot_code($tmp_fh,'gene_fpkm_boxplot_as_replicates','brep','csBoxplot(genes(cuff),replicates=T)');
+
+    # Gene FPKM Dendrogam
+    $self->generate_r_plot_code($tmp_fh,'gene_fpkm_dendrogram','den','csDendro(genes(cuff))');
+
+    # Gene FPKM Dendrogam as Replicates
+    $self->generate_r_plot_code($tmp_fh,'gene_fpkm_dendrogram_as_replicates','dend.rep','csDendro(genes(cuff),replicates=T)');
+
+    if ($self->genes_of_interest) {
+        # GOI Gene FPKM Heatmap
+        $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_heatmap','h.goi','csHeatmap(myGenes, cluster = "both")');
+
+        # GOI Gene FPKM Heatmap as Replicates
+        $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_heatmap_as_replicates','h.rep','csHeatmap(myGenes,cluster=\'both\',replicates=T)');
+        
+        # GOI Gene FPKM Barplot
+        $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_barplot','b.goi','expressionBarplot(myGenes)');
+        
+        # GOI Gene FPKM Dendrogram
+        $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_dendrogram','den.goi','csDendro(myGenes)');
+=======
     print $tmp_fh $self->resolve_image_device_string('overdispersion') ."\n";
     print $tmp_fh 'disp<-dispersionPlot(genes(cuff))' ."\n";
     print $tmp_fh 'disp' ."\n";
@@ -158,6 +213,7 @@ sub execute {
         print $tmp_fh 'den.goi<-csDendro(myGenes)' ."\n";
         print $tmp_fh 'den.goi' ."\n";
         print $tmp_fh 'dev.off()'. "\n";
+>>>>>>> 7bda7e47991581bfbc14538bc737886f3b0f5359
 
         # Generate per-gene plots
         my @goi = split(',',$self->genes_of_interest);
@@ -166,6 +222,18 @@ sub execute {
             print $tmp_fh 'myGene <- getGene(cuff,myGeneId)'. "\n";
             
             # GOI FPKM Expression Line Plot
+<<<<<<< HEAD
+            $self->generate_r_plot_code($tmp_fh,$goi .'_fpkm_expression_lineplot','gl','expressionPlot(myGene)');
+
+            # GOI FPKM Expression Line Plot as Replicates
+            $self->generate_r_plot_code($tmp_fh,$goi .'_fpkm_expression_lineplot_as_replicates','gl.rep','expressionPlot(myGene,replicates=TRUE)');
+
+            # GOI FPKM Expression Barplot
+            $self->generate_r_plot_code($tmp_fh,$goi .'_fpkm_expression_barplot','gb','expressionBarplot(myGene)');
+
+            # GOI FPKM Expression Barplot as replicates
+            $self->generate_r_plot_code($tmp_fh,$goi .'_fpkm_expression_barplot_as_replicates','gb.rep','expressionBarplot(myGene,replicates=T)');
+=======
             print $tmp_fh $self->resolve_image_device_string($goi .'_fpkm_expression_lineplot') ."\n";
             print $tmp_fh 'gl <- expressionPlot(myGene)' ."\n";
             print $tmp_fh 'gl'. "\n";
@@ -188,6 +256,7 @@ sub execute {
             print $tmp_fh 'gb.rep<-expressionBarplot(myGene,replicates=T)' ."\n";
             print $tmp_fh 'gb.rep'. "\n";
             print $tmp_fh 'dev.off()'. "\n";
+>>>>>>> 7bda7e47991581bfbc14538bc737886f3b0f5359
         }
     }
     
@@ -198,6 +267,33 @@ sub execute {
 
         # Gene FPKM Scatter Plots
         my $scatter_basename = 'gene_fpkm_scatter_'. $condition_1 .'-vs-'. $condition_2;
+<<<<<<< HEAD
+        $self->generate_r_plot_code($tmp_fh,$scatter_basename,'s','csScatter(genes(cuff), "'. $condition_1 .'", "'. $condition_2 .'", smooth = T)');
+
+        # MAPlot
+        $self->generate_r_plot_code($tmp_fh,'MAplot_'. $condition_1 .'-vs-'. $condition_2,'m','MAplot(genes(cuff),"'. $condition_1 .'","'. $condition_2  .'")');
+
+        # MAPlot Count based
+        $self->generate_r_plot_code($tmp_fh,'MAplot_count_'. $condition_1 .'-vs-'. $condition_2,'mCount','MAplot(genes(cuff),"'. $condition_1 .'","'. $condition_2 .'",useCount=T)');
+        
+        # Gene FPKM Volcano Plots
+        my $volcano_basename = 'gene_fpkm_volcano_'. $condition_1 .'-vs-'. $condition_2;
+        $self->generate_r_plot_code($tmp_fh,$volcano_basename,'v','csVolcano(genes(cuff), "'. $condition_1 .'", "'. $condition_2 .'")');
+        
+        if ($self->genes_of_interest) {
+            # GOI Gene FPKM Scatter Plots
+            my $goi_scatter_basename = 'gene_fpkm_goi_scatter_'. $condition_1 .'-vs-'. $condition_2;
+            $self->generate_r_plot_code($tmp_fh,$goi_scatter_basename,'s','csScatter(myGenes, "'. $condition_1 .'", "'. $condition_2 .'", smooth = T)');
+
+            # GOI Gene FPKM Volcano Plots
+            my $goi_volcano_basename = 'gene_fpkm_goi_volcano_'. $condition_1 .'-vs-'. $condition_2;
+            $self->generate_r_plot_code($tmp_fh,$goi_volcano_basename,'v','csVolcano(myGenes, "'. $condition_1 .'", "'. $condition_2 .'")');
+        }
+    }
+    if ($self->pdf_report_file) {
+        print $tmp_fh 'dev.off()' ."\n";
+    }
+=======
         print $tmp_fh $self->resolve_image_device_string($scatter_basename) ."\n";
         print $tmp_fh 's <- csScatter(genes(cuff), "'. $condition_1 .'", "'. $condition_2 .'", smooth = T)' ."\n";
         print $tmp_fh 's' ."\n";
@@ -241,6 +337,7 @@ sub execute {
     # TODO: For each GOI add a set of gene-level plots
     # TODO: we really need a way to validate the genes_of_interest list with actual gene IDs in cuffdiff
     
+>>>>>>> 7bda7e47991581bfbc14538bc737886f3b0f5359
     $tmp_fh->close;
     my $cmd = 'Rscript '. $rscript_file;
     eval {
@@ -278,4 +375,29 @@ sub open_image_device_string {
 }
 
 
+<<<<<<< HEAD
+sub generate_r_plot_code {
+    my $self = shift;
+    my $fh = shift;
+    my $file_basename = shift;
+    my $r_variable = shift;
+    my $r_routine = shift;
+
+    unless ($self->pdf_report_file) {
+        # Write a command that will open an output image device
+        print $fh $self->resolve_image_device_string($file_basename) ."\n";
+    }
+    # Print the command to generate the image
+    print $fh $r_variable .' <- '. $r_routine."\n";
+    # Print the command to render the image
+    print $fh $r_variable ."\n";
+    unless ($self->pdf_report_file) {
+        # Close the image output device
+        print $fh 'dev.off()' ."\n";
+    }
+    return 1;
+}
+
+=======
+>>>>>>> 7bda7e47991581bfbc14538bc737886f3b0f5359
 1;
