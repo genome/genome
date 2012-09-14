@@ -27,6 +27,10 @@ my %model_files = (
 	'Acaninum.9.3.2.mkv2.hmm'	=>	'sn_acmk932v2',
 	'D_viviparus_9.3.1.ec.cgmkv2.hmm'	=> 'sn_dv931cgmkv2',
 	'D_viviparus_9.3.1.ec.mkv2.hmm'	=> 'sn_dv931mkv2',
+    'T_circumcincta.v14.cg.mk2.hmm' => 'sn_tc14cgmkv2',
+    'T_circumcincta.v14.mk2.hmm' => 'sn_tc14mkv2',
+    'A_duodenale.v2.2.cg.mk2.hmm' => 'sn_ad22cgmkv2',
+    'A_duodenale.v2.2.mk2.hmm' => 'sn_ad22mkv2',
 );
 
 sub abbreviation_for_model_file {
