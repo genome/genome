@@ -268,20 +268,28 @@ sub import_genes {
         my $gene_name = $self->_create_gene_name_report($hopkins_input->{'Uniprot_Acc'}, $citation, 'HopkinsGroom_gene_name', '');
         my $uniprot_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Id'}, 'Uniprot_Id', '');
         my $uniprot_protein_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Protein_Name'}, 'Uniprot_Protein_Name', '');
-        my $uniprot_gene_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Gene_Name'}, 'Uniprot_Gene_Name', '');
-        my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Entrez_Id'}, 'Entrez_Id', '');
-        my $ensembl_string=$hopkins_input->{'Ensembl_Id'};
-        $ensembl_string=~s/\s//;
-        my @ensembl_ids=split(";", $ensembl_string);
-        foreach my $ensembl_id (@ensembl_ids){
-          my $ensembl_id_entry = $self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl_Id', '');
+        unless ($hopkins_input->{'Uniprot_Gene_Name'} eq 'NA'){
+          my $uniprot_gene_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Gene_Name'}, 'Uniprot_Gene_Name', '');
+        }
+        unless ($hopkins_input->{'Entrez_Id'} eq 'NA'){
+          my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Entrez_Id'}, 'Entrez_Id', '');
+        }
+        unless ($hopkins_input->{'Ensembl_Id'} eq 'NA'){
+          my $ensembl_string=$hopkins_input->{'Ensembl_Id'};
+          $ensembl_string=~s/\s//;
+          my @ensembl_ids=split(";", $ensembl_string);
+          foreach my $ensembl_id (@ensembl_ids){
+            my $ensembl_id_entry = $self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl_Id', '');
+          }
         }
         #Put all genes in HopkinsGroom category as well as any others
         my $human_readable_all = $self->_create_gene_category_report($gene_name, 'human_readable_name', 'HOPKINSGROOM', ''); 
         my $human_readable_name = $hopkins_input->{'DGIDB_Human_Readable'};
         $human_readable_name =~ s/-/ /g;
         $human_readable_name =~ s/\// /g;
-        my $human_readable = $self->_create_gene_category_report($gene_name, 'human_readable_name', uc($human_readable_name), '');
+        unless ($human_readable_name eq 'NA'){
+          my $human_readable = $self->_create_gene_category_report($gene_name, 'human_readable_name', uc($human_readable_name), '');
+        }
         #Add additional category details
         my $Interpro_Acc = $self->_create_gene_category_report($gene_name, 'Interpro_Acc', $hopkins_input->{'Interpro_Acc'}, '');
         my $Uniprot_Evidence = $self->_create_gene_category_report($gene_name, 'Uniprot_Evidence', $hopkins_input->{'Uniprot_Evidence'}, '');
