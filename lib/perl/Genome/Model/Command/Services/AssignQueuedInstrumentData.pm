@@ -80,6 +80,8 @@ EOS
 sub execute {
     my $self = shift;
 
+    GSC::PSE->class;
+
     unless ( $ENV{UR_DBI_NO_COMMIT} ) {
         my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/genome_model_command_services_assign-queued-instrument-data/loader';
 
