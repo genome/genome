@@ -419,6 +419,44 @@ sub _archive_file_name { # private for now...can be public
     elsif ( $format eq 'sff' ){
         return 'all_sequences.sff';
     }
+    elsif ( $format eq 'raw sra download' ) {
+        my $alloc = $self->allocations;
+        die $self->error_message("Couldn't get allocations")
+            if not $alloc;
+        my $base_dir = $alloc->absolute_path;
+
+        opendir(my $base_dh, $base_dir)
+            || die $self->error_message("Couldn't open $base_dir: $!");
+
+        my @base_files = grep {not ($_ eq '.' or $_ eq '..')} readdir ($base_dh);
+        closedir($base_dh);
+
+        if ( (scalar(@base_files) != 1) and (not -d $base_files[0]) ) {
+            die $self->error_message(
+                "Could not understand directory structure of raw sra download in $base_dir. "
+                ."Expected one directory, but found something else."
+            );
+        }
+
+        my $sub_dir = $base_files[0];
+
+        opendir(my $sub_dh, "$base_dir/$sub_dir")
+            || die $self->error_message("Couldn't open $base_dir/$sub_dir: $!");
+
+        my @sub_files = grep {not ($_ eq '.' or $_ eq '..')} readdir ($sub_dh);
+        closedir($sub_dh);
+
+        if ( (scalar(@sub_files) != 1) or (not -s $sub_files[0]) and ($sub_files[0] !~ /\.sra$/) ) {
+            die $self->error_message(
+                "Could not understand directory structure of raw sra download in $base_dir/$sub_dir. "
+                ."Expected one sra file, but found something else."
+            );
+        }
+
+        my $sra_file = $sub_files[0];
+
+        return "$sub_dir/$sra_file";
+    }
     else {
         Carp::confess("Unknown import format: $format");
     }
