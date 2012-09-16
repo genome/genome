@@ -85,7 +85,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import entrez --entrez-dir ./gene-info --version 3
+gmt dgidb import entrez --gene_info_file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene_info --gene2accession_file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene2accession.gz  --version 3
 HELP
 }
 
