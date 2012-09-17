@@ -75,7 +75,7 @@ sub _doc_license {
     return <<EOS
 Copyright (C) $y[0]-$y[1] Washington University in St. Louis.
 
-It is released under the Lesser GNU Public License (LGPL) version 3.  See the 
+MuSiC is released under the Lesser GNU Public License (LGPL) version 3.  See the 
 associated LICENSE file in this distribution.
 EOS
 }
