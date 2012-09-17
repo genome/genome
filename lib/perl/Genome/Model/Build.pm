@@ -730,6 +730,15 @@ sub add_report {
     }
 }
 
+sub archivable {
+    my $self = shift;
+    my $allocation = $self->disk_allocation;
+    unless ($allocation) {
+        confess "Could not get allocation for build " . $self->__display_name__;
+    }
+    return $allocation->archivable();
+}
+
 sub start {
     my $self = shift;
     my %params = @_;
