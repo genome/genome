@@ -37,18 +37,12 @@ our %CONNECTOR_NAMES = (
 );
 
 class Genome::Model::Build::Command::View {
-    is => 'Command::V2',
+    is => 'Genome::Command::Viewer',
     has => [
         build => {
             is => 'Genome::Model::Build',
             shell_args_position => 1,
             doc => 'Genome::Model::Build',
-        },
-        color => {
-            is => 'Boolean',
-            is_optional => 1,
-            default_value => 1,
-            doc => 'Display report in color.'
         },
         connectors => {
             is => 'Boolean',
@@ -114,46 +108,46 @@ EOP
     return $result;
 }
 
-sub execute {
-    my $self = shift;
+sub write_report {
+    my ($self, $width, $handle) = @_;
 
-    $self->_display_build($self->build);
+    $self->_display_build($handle, $self->build);
 
     if ($self->full || $self->inputs) {
-        $self->_display_inputs($self->build->inputs);
+        $self->_display_inputs($handle, $self->build->inputs);
     }
 
     if ($self->full || $self->events) {
-        $self->_display_events($self->build->events);
+        $self->_display_events($handle, $self->build->events);
     }
 
     if ($self->full || $self->workflow) {
         my $workflow = $self->build->newest_workflow_instance;
-        $self->_display_workflow($workflow);
+        $self->_display_workflow($handle, $workflow);
     }
 
     1;
 }
 
 sub _display_build {
-    my ($self, $build) = @_;
+    my ($self, $handle, $build) = @_;
 
     my $processing_profile = $build->model->processing_profile;
-    
+
     my $format_str = <<EOS;
 %s
 %s %s
 %s %s
 %s %s
-%s       %s 
+%s       %s
 
 %s
 %s
 
 EOS
 
-    print sprintf($format_str, 
-        $self->_color_heading('Build'), 
+    print $handle sprintf($format_str,
+        $self->_color_heading('Build'),
         $self->_color_pair('Build ID',
             $self->_pad_right($build->id, $ID_LENGTH)),
         $self->_color_pair('Build Status',
@@ -172,12 +166,12 @@ EOS
 }
 
 sub _display_inputs {
-    my ($self, @inputs) = @_;
+    my ($self, $handle, @inputs) = @_;
 
     if (@inputs) {
-        print $self->_color_heading('Inputs')."\n";
+        print $handle $self->_color_heading('Inputs')."\n";
         for my $input (@inputs) {
-            $self->_display_input($input);
+            $self->_display_input($handle, $input);
         }
 
         print "\n";
@@ -185,27 +179,27 @@ sub _display_inputs {
 }
 
 sub _display_input {
-    my ($self, $input) = @_;
+    my ($self, $handle, $input) = @_;
 
-    print $input->name . "\n";
-    print $self->_color_pair('    ID', $input->value_id) . "\n";
-    print $self->_color_pair('    Type', $input->value_class_name) . "\n";
+    print $handle $input->name . "\n";
+    print $handle $self->_color_pair('    ID', $input->value_id) . "\n";
+    print $handle $self->_color_pair('    Type', $input->value_class_name) . "\n";
 }
 
 sub _display_events {
-    my ($self, @events) = @_;
+    my ($self, $handle, @events) = @_;
 
     if (@events) {
-        print $self->_color_heading('Events')."\n";
+        print $handle $self->_color_heading('Events')."\n";
         for my $event (@events) {
-            $self->_display_event($event);
+            $self->_display_event($handle, $event);
         }
         print "\n";
     }
 }
 
 sub _display_event {
-    my ($self, $event) = @_;
+    my ($self, $handle, $event) = @_;
 
     my $format_str = <<EOS;
 %s %s
@@ -213,22 +207,22 @@ sub _display_event {
     %s   %s
     %s
 EOS
-    print sprintf($format_str, 
-        $self->_color_pair('ID', $self->_pad_right($event->id, $ID_LENGTH)),  
+    print $handle sprintf($format_str,
+        $self->_color_pair('ID', $self->_pad_right($event->id, $ID_LENGTH)),
         $self->_color_pair('Status',
-            $self->_status_color($event->event_status)), 
-        $self->_color_pair('Name', $event->event_type), 
+            $self->_status_color($event->event_status)),
+        $self->_color_pair('Name', $event->event_type),
         $self->_color_pair('Scheduled',
-            $self->_clean_up_timestamp($event->date_scheduled)),    
+            $self->_clean_up_timestamp($event->date_scheduled)),
         $self->_color_pair('Completed',
-            $self->_clean_up_timestamp($event->date_completed)), 
-        $self->_color_pair('LSF ID', $event->lsf_job_id)); 
+            $self->_clean_up_timestamp($event->date_completed)),
+        $self->_color_pair('LSF ID', $event->lsf_job_id));
 }
 
 sub _display_workflow {
-    my ($self, $workflow) = @_;
+    my ($self, $handle, $workflow) = @_;
 
-    unless ($self->_display_workflow_header($workflow)) {
+    unless ($self->_display_workflow_header($handle, $workflow)) {
         return 0;
     }
 
@@ -236,11 +230,11 @@ sub _display_workflow {
     my $datetime_parser = DateTime::Format::Strptime->new(
             pattern => '%Y-%m-%d %H:%M:%S',
             on_error => 'croak');
-    $self->_display_workflow_children($workflow, $datetime_parser);
+    $self->_display_workflow_children($handle, $workflow, $datetime_parser);
 }
 
 sub _display_workflow_header {
-    my ($self, $workflow) = @_;
+    my ($self, $handle, $workflow) = @_;
 
     unless ($workflow) {
         return 0;
@@ -256,10 +250,10 @@ sub _display_workflow_header {
 %s               %s
 
 EOS
-    print sprintf($format_str, 
-        $self->_color_heading('Workflow'), 
+    print $handle sprintf($format_str,
+        $self->_color_heading('Workflow'),
         $self->_color_pair('ID', $self->_pad_right($workflow->id, $ID_LENGTH)),
-        $self->_color_pair('Name', $workflow->name), 
+        $self->_color_pair('Name', $workflow->name),
         $self->_color_pair('Started',
             $self->_clean_up_timestamp($ie->start_time)),
         $self->_color_pair('Ended', $self->_clean_up_timestamp($ie->end_time)),
@@ -268,18 +262,18 @@ EOS
 }
 
 sub _display_workflow_children {
-    my ($self, $workflow, $datetime_parser) = @_;
+    my ($self, $handle, $workflow, $datetime_parser) = @_;
 
-    print $self->_color_dim($self->_format_workflow_child_line(
+    print $handle $self->_color_dim($self->_format_workflow_child_line(
             "ID", "Status", "LSF ID", "Start Time", "Time Elapsed", "Name"));
 
-    $self->_display_workflow_child($workflow, $datetime_parser, 0);
+    $self->_display_workflow_child($handle, $workflow, $datetime_parser, 0);
 
     1;
 }
 
 sub _display_workflow_child {
-    my ($self, $child, $datetime_parser, $nesting_level) = @_;
+    my ($self, $handle, $child, $datetime_parser, $nesting_level) = @_;
 
     my $status = $child->status;
 
@@ -287,7 +281,7 @@ sub _display_workflow_child {
         $child->start_time, $child->end_time, $status, $datetime_parser);
 
     if ($self->connectors || !$self->_is_connector($child->name)) {
-        print $self->_format_workflow_child_line($child->id, $status,
+        print $handle $self->_format_workflow_child_line($child->id, $status,
             $child->current->dispatch_identifier, $start_time, $elapsed_time,
             ('  'x$nesting_level) . $child->name);
     }
@@ -295,7 +289,7 @@ sub _display_workflow_child {
     if ($self->depth < 0 || $nesting_level < $self->depth) {
         if ($child->can('related_instances')) {
             for my $subchild ($child->related_instances) {
-                $self->_display_workflow_child($subchild,
+                $self->_display_workflow_child($handle, $subchild,
                     $datetime_parser, $nesting_level + 1);
             }
         }
@@ -382,19 +376,7 @@ sub _format_dispatch_id {
     if($dispatch_id =~ /shortcut/) {
         $dispatch_id = $self->_color($dispatch_id, 'white');
     }
-    return $dispatch_id 
-}
-
-sub _color {
-    my $self = shift;
-    my $text = shift;
-
-    my $result;
-    if ($self->color) {
-        return Term::ANSIColor::colored($text, @_);
-    }
-    return $text
-
+    return $dispatch_id
 }
 
 sub _status_color {
@@ -440,7 +422,7 @@ sub _strip_key {
 
 sub _color_heading {
     my ($self, $text) = @_;
-    return $self->_color_dim('=== ') . $self->_color($text, 'bold') . 
+    return $self->_color_dim('=== ') . $self->_color($text, 'bold') .
         $self->_color_dim(' ===');
 }
 
