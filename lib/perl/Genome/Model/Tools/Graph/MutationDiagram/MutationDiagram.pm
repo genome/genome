@@ -24,13 +24,15 @@ use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::Mutation;
 use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::Legend;
 use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::LayoutManager;
 
-my %VEP_MUTATION_PRIORITIES = (
-    'ESSENTIAL_SPLICE_SITE' => 1,
-    'FRAMESHIFT_CODING' => 2,
-    'STOP_GAINED' => 3,
-    'NON_SYNONYMOUS_CODING' => 4,
-    'other' => 'black',
+my @VEP_MUTATION_PRIORITY = (
+    'ESSENTIAL_SPLICE_SITE',
+    'FRAMESHIFT_CODING',
+    'STOP_GAINED',
+    'NON_SYNONYMOUS_CODING'
 );
+
+my %VEP_MUTATION_PRIORITIES;
+@VEP_MUTATION_PRIORITIES{@VEP_MUTATION_PRIORITY} = 0..$#VEP_MUTATION_PRIORITY;
 
 #------------------------------------------------
 sub new {
