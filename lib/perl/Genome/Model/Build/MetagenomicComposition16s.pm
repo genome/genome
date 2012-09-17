@@ -761,7 +761,7 @@ sub perform_post_success_actions {
     $msg .= 'Run name:        '.$instrument_data[0]->run_name."\n";
     $msg .= 'Region number:   '.$instrument_data[0]->region_number."\n";
     $msg .= 'Inluded count:   '.@instrument_data."\n";
-    $msg .= 'Expected count:  '.@instrument_data_for_run_region."\n";
+    $msg .= 'Expected count:  '.$expected_cnt."\n";
     $msg .= 'Attempted:       '.$self->amplicons_attempted."\n";
     $msg .= 'Processed:       '.$self->amplicons_processed."\n";
     $msg .= 'Success :        '.(100 * $self->amplicons_processed_success)."%\n";
