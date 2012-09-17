@@ -4,14 +4,8 @@ use strict;
 use warnings;
 use feature 'switch';
 
-#BEGIN {
-#    $ENV{UR_DBI_NO_COMMIT} = 1;
-#};
-
 use Genome;
-use Term::ReadKey 'GetTerminalSize';
 use List::MoreUtils "uniq";
-use IO::Handle;
 use Genome::Utility::Text qw(strip_color
                              param_string_to_hash
                              tree_to_string
@@ -20,18 +14,12 @@ use Genome::Utility::Text qw(strip_color
 
 class Genome::ProcessingProfile::Command::View {
     doc => "Display basic information about a processing-profile.",
-    is => 'Command::V2',
+    is => 'Genome::Command::Viewer',
     has => [
         processing_profile => {
             is => 'Genome::ProcessingProfile',
             shell_args_position => 1,
             doc => 'Genome::ProcessingProfile',
-        },
-        color => {
-            is => 'Boolean',
-            is_optional => 1,
-            default_value => 1,
-            doc => 'Display report in color.'
         },
         models => {
             is => 'Boolean',
@@ -76,29 +64,6 @@ Displays information about the parameters for a processing-profile as well as
 what models are using it.
 EOP
     return $result;
-}
-
-sub execute {
-    my ($self) = @_;
-
-    my ($screen_width) = GetTerminalSize();
-    my $handle = new IO::Handle;
-    STDOUT->autoflush(1);
-    $handle->fdopen(fileno(STDOUT), 'w');
-
-    $self->write_report($screen_width, $handle);
-    1;
-}
-
-sub get_report {
-    my ($self, $width) = @_;
-
-    my $handle = new IO::String;
-    $self->write_report($width, $handle);
-    my $report = ${$handle->string_ref};
-    $handle->close();
-
-    return $report;
 }
 
 sub write_report {
@@ -315,17 +280,6 @@ sub _write_models {
         printf $handle "... %s of %s models shown" .
                 " (see max-num-models-shown option)\n",
                 $models_shown, $num_models;
-    }
-}
-
-sub _color {
-    my $self = shift;
-    my $string = shift;
-
-    if($self->color) {
-        return Term::ANSIColor::colored($string, @_);
-    } else {
-        return $string;
     }
 }
 
