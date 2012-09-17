@@ -31,6 +31,7 @@ class Genome::Model::Tools::SnpArray::MergeSegments {
 		amp_threshold	=> { is => 'Text', doc => "Minimum seg_mean threshold for amplification", is_optional => 1, is_input => 1, default => 0.25},
 		del_threshold	=> { is => 'Text', doc => "Maximum seg_mean threshold for deletion", is_optional => 1, is_input => 1, default => -0.25},
 		size_threshold	=> { is => 'Text', doc => "Fraction of chromosome arm length above which an event is considered large-scale", is_input => 1, default => 0.25},
+		min_num_mark	=> { is => 'Text', doc => "Minimum number of markers to include a segment (higher = more stringent); 30 is a good start", is_optional => 0, is_input => 1, default => 1},
 		output_basename	=> { is => 'Text', doc => "Base name for output", is_optional => 1, is_input => 1},
 		ref_arm_sizes 	=> { is => 'Text', doc => "Two column file of reference name and size in bp for calling by chromosome arm", default => "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/chromosome_arm_coordinates.tsv"},
 		verbose	=> { is => 'Text', doc => "If set to 1, use for verbose output", is_optional => 1, is_input => 1},
@@ -256,16 +257,25 @@ sub execute
 
 		}
 		
-		## Save the event ##
-		$stats{"$size_category $event_type"}++;
+		if($num_mark >= $self->min_num_mark)
+		{
+			## Save the event ##
+			$stats{"$size_category $event_type"}++;
+	
+			## Save which arm ##
+			$stats{"$size_category $event_type arms"} .= "," if($stats{"$size_category $event_type arms"});
+			$stats{"$size_category $event_type arms"} .= $arm_name;
+	
+			$chrom_arm_fraction = sprintf("%.2f", $chrom_arm_fraction * 100) . '%';
+			$chrom_fraction = sprintf("%.2f", $chrom_fraction * 100) . '%';
 
-		## Save which arm ##
-		$stats{"$size_category $event_type arms"} .= "," if($stats{"$size_category $event_type arms"});
-		$stats{"$size_category $event_type arms"} .= $arm_name;
+			print EVENTS join("\t", $chrom, $chr_start, $chr_stop, $avg_seg_mean, $num_segments, $num_mark, $p_value, $event_type, $event_size, $size_category, $arm_name, $chrom_arm_fraction, $chrom_fraction) . "\n";			
+		}
+		else
+		{
+			$stats{"$event_type filtered"}++;
+		}
 
-		$chrom_arm_fraction = sprintf("%.2f", $chrom_arm_fraction * 100) . '%';
-		$chrom_fraction = sprintf("%.2f", $chrom_fraction * 100) . '%';
-		print EVENTS join("\t", $chrom, $chr_start, $chr_stop, $avg_seg_mean, $num_segments, $num_mark, $p_value, $event_type, $event_size, $size_category, $arm_name, $chrom_arm_fraction, $chrom_fraction) . "\n";
 	}
 
 	close(EVENTS);
@@ -286,12 +296,14 @@ sub execute
 	if($self->verbose)
 	{
 		print $stats{'amplification'} . " classified as amplifications\n";
+		print $stats{'amplification filtered'} . " removed by min-num-mark requirement\n";
 		print $stats{'large-scale amplification'} . " large-scale amplifications ";
 		print "(" . $stats{'large-scale amplification arms'} . ")" if($stats{'large-scale amplification'});
 		print "\n";
 		print $stats{'focal amplification'} . " focal amplifications\n";
 	
 		print $stats{'deletion'} . " classified as deletions\n";
+		print $stats{'deletion filtered'} . " removed by min-num-mark requirement\n";
 		print $stats{'large-scale deletion'} . " large-scale deletions ";
 		print "(" . $stats{'large-scale deletion arms'} . ")" if($stats{'large-scale deletion'});
 		print "\n";
@@ -299,7 +311,7 @@ sub execute
 	}
 	else
 	{
-		print join("\t", $stats{'large-scale amplification'}, $stats{'large-scale deletion'}, $stats{'focal amplification'}, $stats{'focal deletion'}) . "\n";
+		print join("\t", $stats{'large-scale amplification'}, $stats{'large-scale deletion'}, $stats{'focal amplification'}, $stats{'focal deletion'}, "(" . $stats{'amplification filtered'} . ")", "(" . $stats{'deletion filtered'}) . ")" . "\n";
 	}
 
 
