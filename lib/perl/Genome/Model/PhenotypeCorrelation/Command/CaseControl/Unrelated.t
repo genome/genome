@@ -52,6 +52,7 @@ sub test_with_clinical_data {
     my $output_file = "$tmpdir/parallel.txt.glm.csv";
     my $orig_output_file_prefix = "$tmpdir/orig.txt";
     my $orig_output_file = "$orig_output_file_prefix.glm.csv";
+    my $per_site_report = "$test_data_dir/per_site_report.txt";
 
     print "Using temp directory: $tmpdir\n";
 
@@ -72,7 +73,8 @@ sub test_with_clinical_data {
             glm_model_file => $glm_model_file,
             glm_max_cols_per_file => 5,
             identify_cases_by => $params{case_label},
-            identify_controls_by =>  $params{control_label}
+            identify_controls_by =>  $params{control_label},
+            per_site_report_file => $per_site_report,
         );
     ok($cmd, "Created command object");
     $cmd->dump_status_messages(1);
@@ -82,9 +84,11 @@ sub test_with_clinical_data {
 
     my @expected_files = (
         "clinical_correlation_result.glm.csv",
-        "clinical_correlation_result.glm.csv.qqplot.png",
+        "clinical_correlation_result.glm.csv.common",
+        "clinical_correlation_result.glm.csv.common.qqplot.png",
         "clinical_correlation_result.categorical.csv",
-        "clinical_correlation_result.categorical.csv.qqplot.png",
+        "clinical_correlation_result.categorical.csv.common",
+        "clinical_correlation_result.categorical.csv.common.qqplot.png",
         "multisample.vcf.VEP_annotated",
         "multisample.vcf.VEP_annotated.sorted",
         "multisample.vcf.VEP_annotated.for_burden",

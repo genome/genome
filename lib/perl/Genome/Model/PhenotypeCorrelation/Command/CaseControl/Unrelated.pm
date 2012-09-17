@@ -52,6 +52,11 @@ class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
             doc => 'the expression which matches "control" samples, typically by their attributes',
             is_optional => 1,
         },
+        per_site_report_file => {
+            is => "String",
+            doc => "File containing the output of vcf-report for every site in the VCF",
+        },
+
     ],
 };
 
@@ -77,10 +82,12 @@ sub _create_workflow {
     my $clinical_correlation_output_prefix = "$output_directory/clinical_correlation_result";
 
     my $clinical_correlation_glm_output = "$output_directory/clinical_correlation_result.glm.csv";
-    my $clinical_correlation_glm_qqplot = $clinical_correlation_glm_output . ".qqplot";
+    my $filtered_clinical_correlation_glm_output = $clinical_correlation_glm_output . ".common";
+    my $clinical_correlation_glm_qqplot = $filtered_clinical_correlation_glm_output . ".qqplot";
 
     my $clinical_correlation_categorical_output = "$output_directory/clinical_correlation_result.categorical.csv";
-    my $clinical_correlation_categorical_qqplot = $clinical_correlation_categorical_output . ".qqplot";
+    my $filtered_clinical_correlation_categorical_output = "$output_directory/clinical_correlation_result.categorical.csv.common";
+    my $clinical_correlation_categorical_qqplot = $filtered_clinical_correlation_categorical_output . ".qqplot";
 
     my $clinical_data_summary_dir = "$output_directory/clinical_data_summary";
 
@@ -141,6 +148,40 @@ sub _create_workflow {
                 }
             },
         },
+        #filter results for qqplot
+        mfilt_glm => {
+            name => "GLM results filtered by MAF",
+            class => "Genome::Model::PhenotypeCorrelation::Command::FilterCorrelationResults",
+            inputs => {
+                delimiter => "\t",
+                minimum_maf => $self->maximum_maf,
+                output_file => $filtered_clinical_correlation_glm_output,
+                per_site_report_file => $self->per_site_report_file,
+            },
+            inputs_from => {
+                "pcc" => {
+                    glm_output_file => "input_file",
+                },
+            },
+        },
+
+        #filter results for qqplot
+        mfilt_categorical => {
+            name => "Categorical results filtered by MAF",
+            class => "Genome::Model::PhenotypeCorrelation::Command::FilterCorrelationResults",
+            inputs => {
+                delimiter => ",",
+                minimum_maf => $self->maximum_maf,
+                output_file => $filtered_clinical_correlation_categorical_output,
+                per_site_report_file => $self->per_site_report_file,
+            },
+            inputs_from => {
+                "pcc" => {
+                    categorical_output_file => "input_file",
+                },
+            },
+        },
+
 
         # Create glm QQ plot
         qqp_glm => {
@@ -155,8 +196,8 @@ sub _create_workflow {
                 image_type => "png",
             },
             inputs_from => {
-                "pcc" => {
-                    glm_output_file => "input_file",
+                "mfilt_glm" => {
+                    output_file => "input_file",
                 },
             },
         },
@@ -175,8 +216,8 @@ sub _create_workflow {
                 image_type => "png",
             },
             inputs_from => {
-                "pcc" => {
-                    categorical_output_file => "input_file",
+                "mfilt_categorical" => {
+                    output_file => "input_file",
                 },
             },
         },
