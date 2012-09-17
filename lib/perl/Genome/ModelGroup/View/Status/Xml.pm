@@ -45,6 +45,29 @@ class Genome::ModelGroup::View::Status::Xml {
     ]
 };
 
+sub _generate_content {
+    my $self = shift;
+    my $subject = $self->subject;
+
+    if($subject) {
+        #preload data for efficiency
+        my @m = $subject->models;
+        my @in = Genome::Model::Input->get(model_id => [map($_->id, @m)]);
+        my @i = Genome::InstrumentData->get([map($_->value_id, grep { $_->name eq 'instrument_data' } @in)]);
+        Genome::InstrumentDataAttribute->get(instrument_data_id => [map($_->id, @i)], attribute_label => 'flow_cell_id');
+        Genome::Model::Link->get(from_model_id => [map($_->id, @m)]);
+        Genome::Model::Link->get(to_model_id => [map($_->id, @m)]);
+        my @b = Genome::Model::Build->get(model_id => [map($_->id, @m)]);
+        Genome::Model::Build::Input->get(build_id => [map($_->id, @b)]);
+        Genome::Model::Event->get(build_id => [map($_->id, @b)]);
+        Genome::MiscNote->get(subject_id => [map($_->id, (@m, @b))]);
+        my @s = Genome::Subject->get(id => [map($_->subject_id, @m)]);
+        Genome::SubjectAttribute->get(subject_id => [map($_->id, @s)]);
+    }
+
+    return $self->SUPER::_generate_content(@_);
+}
+
 1;
 
 =pod
