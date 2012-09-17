@@ -96,7 +96,7 @@ my @lims_whitelist = (
         ['Genome/Model/Tools/Lims/ApipeBridge/InstrumentDataStatus.pm', 109],
     ],
     'GSC::PSE' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 83],
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 85],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 89],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 118],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForGenotype.pm', 25],

@@ -20,6 +20,7 @@ class Genome::Model::Command::Services::AssignQueuedInstrumentData {
             doc         => 'Max # of instrument data to process in one invocation.',
         },
         _max_instrument_data_to_process => {
+            is_optional => 1,
             is_calculated => 1,
             calculate_from => [qw/ max_pses max_instrument_data_to_process /],
             calculate => q| 
