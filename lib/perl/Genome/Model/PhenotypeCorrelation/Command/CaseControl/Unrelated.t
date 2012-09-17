@@ -84,9 +84,11 @@ sub test_with_clinical_data {
 
     my @expected_files = (
         "clinical_correlation_result.glm.csv",
+        "clinical_correlation_result.glm.csv.qqplot.png",
         "clinical_correlation_result.glm.csv.common",
         "clinical_correlation_result.glm.csv.common.qqplot.png",
         "clinical_correlation_result.categorical.csv",
+        "clinical_correlation_result.categorical.csv.qqplot.png",
         "clinical_correlation_result.categorical.csv.common",
         "clinical_correlation_result.categorical.csv.common.qqplot.png",
         "multisample.vcf.VEP_annotated",
