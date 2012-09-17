@@ -55,11 +55,14 @@ sub execute {
             for my $alloc (@allocations) {
                 next ALLOC if ! $alloc->is_archived();
 
-                print "unarchiving ($build_id): " . $alloc->allocation_path . "\n";
+                print "unarchiving ($build_id - " . $alloc->id . "): " . $alloc->allocation_path . "\n";
                 if ($alloc->unarchive()) {
                     $unarchived_count++;
+                } else {
+                    $self->append_error($build->__display_name__, "ERROR: Failed to unarchive alloc id : $@.");
                 }
             }
+            return 1;
         };
 
         if ($successful and $transaction->commit) {
@@ -67,7 +70,7 @@ sub execute {
             . $build->__display_name__ 
             . ").");
         } else {
-            $self->append_error($build->__display_name__, "ERROR: Failed to unarchive build $build_id: $@.");
+            $self->append_error($build->__display_name__, "ERROR: success = $successful, trying to rollback");
             $transaction->rollback;
         }
     }
