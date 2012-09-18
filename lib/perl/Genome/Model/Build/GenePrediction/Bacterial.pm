@@ -96,11 +96,15 @@ sub create_config_file {
 
     $self->status_message("Creating configuration file at $config_file_path");
 
+
+    my $cell_type = uc($model->domain);
+    $cell_type =~ s/(ARCHAEA|BACTERIA)L/$1/;
+
     my %params = (
         acedb_version    => $model->acedb_version,
         assembly_name    => $self->assembly_name,
         assembly_version => $model->assembly_version,
-        cell_type        => uc($model->domain),
+        cell_type        => $cell_type,
         gram_stain       => $model->gram_stain,
         locus_id         => $self->locus_id,
         locus_tag        => $self->locus_tag,

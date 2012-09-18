@@ -226,7 +226,8 @@ sub execute {
 
 
   #Run CNView analyses on the CNV data to identify amplified/deleted genes
-  #TODO: Currently CNV loci are calculated using combined annotations and then summarized for a list of Ensembl gene names.  Clean this up to use Ensembl data only...
+  #TODO: Currently CNV loci are calculated using combined annotations and then summarized for a hard coded list of Ensembl gene names.  Clean this up to use Ensembl data only...
+  #TODO: Gene annotation information should come from the annotation build!  Not a hard-coded custom path.  Produce a summary for a single gene of interest list, not three of them
   $step++; print MAGENTA, "\n\nStep $step. Identifying CNV altered genes", RESET;
   if ($wgs){
     my @cnv_symbol_lists = qw (Kinase_RonBose CancerGeneCensusPlus_Sanger AntineoplasticTargets_DrugBank AllGenes_Ensembl58);

@@ -793,12 +793,15 @@ sub _unarchive {
         confess "Found no allocation with ID $id";
     }
 
+    # Make sure allocation is archived, exit cleanly if so
+    unless ($self->is_archived) {
+        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
+        $self->status_message("Allocation is not archived, cannot unarchive. Exiting.");
+        return 1;
+    }
+
     my ($volume_lock, $archive_path, $target_path);
     eval {
-        unless ($self->is_archived) {
-            confess "Can't unarchive an allocation that isn't archived: " . $self->absolute_path;
-        }
-
         # Get candidate volumes and pick/lock one
         my @candidate_volumes = $class->_get_candidate_volumes(
             disk_group_name => $self->disk_group_name,

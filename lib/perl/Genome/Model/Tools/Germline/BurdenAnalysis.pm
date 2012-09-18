@@ -5,9 +5,10 @@ use strict;
 use Genome;
 use Workflow;
 use Workflow::Simple;
+use Carp qw/confess/;
 
 class Genome::Model::Tools::Germline::BurdenAnalysis {
-  is => ['Command::V2'],
+  is => ['Genome::Command::Base'],
   has_input => [
     mutation_file => { is => 'Text', doc => "Mutation Matrix" },
     glm_clinical_data_file => { is => 'Text', doc => "Phenotype File" },
@@ -413,6 +414,8 @@ _END_OF_R_
         my $header;
         my $num_fields;
         my @lines;  #since we won't know if we are NULL or not ahead of time, aggregate the header and lines together and then print
+        my $header_source_file;
+        my @null_pairs;
         foreach my $phenotype (sort keys %pheno_covar_type_hash) {
             my ($covariates,$analysis_data_type) = split(/\t/,$pheno_covar_type_hash{$phenotype});
             foreach my $gene (keys %gene_names) {
@@ -428,11 +431,18 @@ _END_OF_R_
                     my $fh = Genome::Sys->open_file_for_reading($result_file);
                     #these should ALWAYS be two lines the way we are writing them, but let's assume the first line is the header and then other lines are results
                     my $header_line = $fh->getline;
-                    unless($header) {
-                        chomp $header_line;
+                    chomp $header_line;
+                    my @header_fields = split(",", $header_line);
+                    if ($header) {
+                        if (@header_fields != $num_fields) {
+                            confess "Header in file $result_file does not match that in $header_source_file:\n"
+                                ."$header_source_file:$header\n"
+                                ."$result_file:$header_line"
+                        }
+                    } else {
                         $header = $header_line;
-                        my @fields = split /\t/, $header_line;
-                        $num_fields = @fields;
+                        $header_source_file = $result_file;
+                        $num_fields = @header_fields;
                     }
                     while(my $line = $fh->getline) {
                         chomp $line;
@@ -440,7 +450,7 @@ _END_OF_R_
                     }
                 }
                 elsif(-e $null_file) {
-                    push @lines, join("\t",$phenotype,$gene,"NA" x ($num_fields - 2));
+                    push @null_pairs, [$phenotype, $gene];
                 }
                 elsif(-e $error_file) {
                     #Workflow should have caught this, but lets just double check
@@ -454,7 +464,12 @@ _END_OF_R_
         }
 
         my $ofh = Genome::Sys->open_file_for_overwriting($self->output_directory . "/burden_test_summary.csv");
-        print $ofh join("\n",$header, @lines) . "\n";
+        $ofh->print("$header\n");
+        $ofh->print(join("\n",
+            @lines, # non-NULL pheno/gene pairs
+            (map { join(",", @$_, ("NA") x ($num_fields-2)) } @null_pairs) # NULL pheno/gene pairs
+            ) . "\n"
+        );
         $ofh->close;
     }
 

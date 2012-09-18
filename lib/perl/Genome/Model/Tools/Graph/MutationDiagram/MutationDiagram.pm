@@ -23,14 +23,27 @@ use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::Domain;
 use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::Mutation;
 use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::Legend;
 use Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::LayoutManager;
+
+my @VEP_MUTATION_PRIORITY = (
+    'ESSENTIAL_SPLICE_SITE',
+    'FRAMESHIFT_CODING',
+    'STOP_GAINED',
+    'NON_SYNONYMOUS_CODING'
+);
+
+my %VEP_MUTATION_PRIORITIES;
+@VEP_MUTATION_PRIORITIES{@VEP_MUTATION_PRIORITY} = 0..$#VEP_MUTATION_PRIORITY;
+
 #------------------------------------------------
 sub new {
     my ($class, %arg) = @_;
 
     my $self = {
         _mutation_file => $arg{annotation} || '',
-        _basename => $arg{basename} || './',
+        _annotation_format => $arg{annotation_format},
+        _basename => $arg{basename} || '',
         _reference_transcripts => $arg{reference_transcripts} || '',
+        _output_directory => $arg{output_directory} || '.',
     };
 
     my ($model_name, $version) = split('/', $self->{_reference_transcripts});
@@ -50,7 +63,7 @@ sub new {
     my @custom_domains =();
     if(defined($arg{custom_domains})) {
         my @domain_specification = split(',',$arg{custom_domains});
-        
+
         while(@domain_specification) {
             my %domain = (type => "CUSTOM");
             @domain{qw(name start end)} = splice @domain_specification,0,3;
@@ -59,7 +72,7 @@ sub new {
     }
 
     $self->{_custom_domains} = \@custom_domains;
-        
+
     my @hugos = ();
     if (defined($arg{hugos})) {
         @hugos = split(',',$arg{hugos});
@@ -69,14 +82,158 @@ sub new {
     }
     $self->{_hugos} = \@hugos;
     bless($self, ref($class) || $class);
-    if($arg{annotation}) {
-        $self->Annotation;
+    die "No mutation file passed to $class" unless $arg{annotation};
+
+    if ($self->{_annotation_format} eq 'vep') {
+        $self->_parse_vep_annotation;
     }
-    else {
-        die "No mutation file passed to $class";
+    elsif ($self->{_annotation_format} eq 'tgi') {
+        $self->Annotation;
+    } else {
+        die "Unknown annotation file format $self->{_annotation_format}";
     }
     $self->MakeDiagrams();
     return $self;
+}
+
+sub _get_transcript_and_domains {
+    my ($self, $transcript_name) = @_;
+    my $build = $self->{_build};
+    my @features;
+    my $transcript;
+    for my $data_directory ($build->determine_data_directory){
+        my $t = Genome::Transcript->get(
+            data_directory => $data_directory,
+            transcript_name => $transcript_name,
+            reference_build_id => $self->{_reference_build_id}
+            );
+        next unless $t;
+        $transcript = $t;
+        push(@features, Genome::InterproResult->get(
+            data_directory => $data_directory,
+            transcript_name => $transcript_name,
+            chrom_name => $transcript->chrom_name
+            ));
+    }
+    if (!defined $transcript) {
+        warn "No transcript found for $transcript_name rb:$self->{_reference_build_id}";
+        return;
+    }
+
+    my @domains;
+    for my $feature (@features) {
+        my ($source, @domain_name_parts) = split(/_/, $feature->name);
+        # Some domain names are underbar delimited, but sources aren't.
+        # Reassemble the damn domain name if necessary
+        my $domain_name;
+        if (scalar (@domain_name_parts) > 1){
+            $domain_name = join("_", @domain_name_parts);
+        }else{
+            $domain_name = pop @domain_name_parts;
+        }
+        push @domains, {
+            name => $domain_name,
+            source => $source,
+            start => $feature->start,
+            end => $feature->stop
+        };
+    }
+    push(@domains, @{$self->{_custom_domains}}) if $self->{_custom_domains}->[0];
+    return $transcript, @domains;
+}
+
+sub _add_mutation {
+    my ($self, %params) = @_;
+    $self->{_data} = {} unless defined $self->{_data};
+    my $data = $self->{_data};
+
+    my $hugo = $params{hugo};
+    my $transcript_name = $params{transcript_name};
+    my $protein_length = $params{protein_length};
+    my $protein_position = $params{protein_position};
+    my $mutation = $params{mutation};
+    my $class = $params{class};
+    my $domains = $params{domains};
+
+    $data->{$hugo}{$transcript_name}{length} = $protein_length;
+    push @{$data->{$hugo}{$transcript_name}{domains}}, @$domains;
+
+    if (defined($protein_position)) {
+        unless (exists($data->{$hugo}{$transcript_name}{mutations}{$mutation})) {
+            $data->{$hugo}{$transcript_name}{mutations}{$mutation} =
+            {
+                res_start => $protein_position,
+                class => $class,
+            };
+        }
+        $data->{$hugo}{$transcript_name}{mutations}{$mutation}{frequency} += 1;
+    }
+}
+
+sub argmin(@) { # really perl?
+    my @arr = @_;
+    return unless @arr;
+    return 0 if @arr <= 1;
+
+    my $minidx = 0;
+    for my $i (1..$#arr) {
+        $minidx = $i if $arr[$i] < $arr[$minidx];
+    }
+    return $minidx;
+}
+
+sub _get_vep_mutation_class {
+    my $type = shift;
+    my @types = split(",", $type);
+    my @type_matches = grep {defined $VEP_MUTATION_PRIORITIES{$_}} @types;
+    return $type unless @type_matches;
+    my @priorities = @VEP_MUTATION_PRIORITIES{@type_matches};
+    my $idx = argmin(@priorities);
+    return $type_matches[$idx];
+}
+
+sub _parse_vep_annotation {
+    my $self = shift;
+
+    my $build = $self->{_build};
+    my $vep_file = $self->{_mutation_file};
+    my $fh = Genome::Sys->open_file_for_reading($vep_file);
+    print STDERR "Parsing VEP annotation file...\n";
+
+    my $graph_all = $self->{_hugos}->[0] eq 'ALL' ? 1 : 0;
+    my %hugos;
+    unless($graph_all) {
+        %hugos = map {$_ => 1} @{$self->{_hugos}}; #convert array to hashset
+    }
+
+    my $header = $fh->getline;
+    chomp $header;
+
+    while(my $line = $fh->getline) {
+        chomp $line;
+        my @fields = split("\t", $line);
+        my ($hugo,$transcript_name,$class,$protein_pos,$aa_change) = @fields[3,4,6,9,10];
+        next unless(defined($transcript_name) && $transcript_name !~ /^\s*$/);
+
+        if($graph_all || exists($hugos{$hugo})) {
+            $class = _get_vep_mutation_class($class);
+            my ($transcript, @domains) = $self->_get_transcript_and_domains($transcript_name);
+            next unless $transcript;
+            #add to the data hash for later graphing
+            my ($orig_aa, $new_aa) = split("/", $aa_change);
+            my $mutation = join($protein_pos, $orig_aa, $new_aa);
+
+            $self->_add_mutation(
+                hugo => $hugo,
+                transcript_name => $transcript_name,
+                protein_length => $transcript->amino_acid_length,
+                protein_position => $protein_pos,
+                mutation => $mutation,
+                class => $class,
+                domains => \@domains
+            );
+        }
+    }
 }
 
 sub Annotation {
@@ -96,70 +253,41 @@ sub Annotation {
     unless($graph_all) {
         %hugos = map {$_ => 1} @{$self->{_hugos}}; #convert array to hashset
     }
-    
+
+    Genome::Model::Tools::Annotate::AminoAcidChange->class();  # Get the module loaded
     while(my $line = $fh->getline) {
         chomp $line;
         next if $line =~/^chromosome/;
         my @fields = split /\t/, $line;
         my ($hugo,$transcript_name,$class,$aa_change) = @fields[6,7,13,15];
+        unless(defined($transcript_name) && $transcript_name !~ /^\s*$/ && $transcript_name ne '-') {
+            next;
+        }
+
         if($graph_all || exists($hugos{$hugo})) {
-            #add to the data hash for later graphing
-            Genome::Model::Tools::Annotate::AminoAcidChange->class();  # Get the module loaded
             my ($residue1, $res_start, $residue2, $res_stop, $new_residue) = @{Genome::Model::Tools::Annotate::AminoAcidChange::check_amino_acid_change_string(amino_acid_change_string => $aa_change)};
             my $mutation = $aa_change;
             $mutation =~ s/p\.//g;
-            unless(defined($transcript_name) && $transcript_name !~ /^\s*$/) {
-                next;
-            }
 
-            my $transcript;
-            my @features;
-            for my $data_directory ($build->determine_data_directory){
-                $transcript = Genome::Transcript->get(data_directory => $data_directory, transcript_name => $transcript_name, reference_build_id => $self->{_reference_build_id});
-                next unless $transcript;
-                my @transcript_features = Genome::InterproResult->get(data_directory => $data_directory, transcript_name => $transcript_name, chrom_name => $transcript->chrom_name);
-                @features = (@features, @transcript_features);
-            }
-            my @domains;
-            if($self->{_custom_domains}->[0]) {
-                push @domains, @{$self->{_custom_domains}};
-            }
-            my $protein_length = get_protein_length($self, $transcript_name);
-            foreach my $feature (@features) {
-                my ($source, @domain_name_parts) = split(/_/, $feature->name);
-                my $domain_name; #Some domain names are underbar delimited, but sources aren't.  Reassemble the damn domain name if necessary
-                if (scalar (@domain_name_parts) > 1){
-                    $domain_name = join("_", @domain_name_parts);
-                }else{
-                    $domain_name = pop @domain_name_parts;
-                }
-                push @domains, {
-                    name => $domain_name,
-                    source => $source, 
-                    start => $feature->start,
-                    end => $feature->stop
-                };
-            }
-            $data{$hugo}{$transcript_name}{length} = $protein_length;
-            push @{$data{$hugo}{$transcript_name}{domains}}, @domains;
+            my ($transcript, @domains) = $self->_get_transcript_and_domains($transcript_name);
+            next unless $transcript;
 
-            if (defined($res_start)) {
-                unless (exists($data{$hugo}{$transcript_name}{mutations}{$mutation})) {
-                    $data{$hugo}{$transcript_name}{mutations}{$mutation} = 
-                    {
-                        res_start => $res_start,
-                        class => $class,
-                    };
-                }
-                $data{$hugo}{$transcript_name}{mutations}{$mutation}{frequency} += 1;
-            }
+            $self->_add_mutation(
+                hugo => $hugo,
+                transcript_name => $transcript_name,
+                protein_length => $transcript->amino_acid_length,
+                protein_position => $res_start,
+                mutation => $mutation,
+                class => $class,
+                domains => \@domains
+            );
+
         }
     }
-    $self->{_data} = \%data;
 }
 
 sub get_protein_length{
-    my $self = shift; #TODO: this is not at all kosher, inuitive, or good.  Fix it when this becomes a UR object 
+    my $self = shift; #TODO: this is not at all kosher, inuitive, or good.  Fix it when this becomes a UR object
     my $transcript_name = shift;
     my $build = $self->{_build};
     my $transcript;
@@ -170,7 +298,7 @@ sub get_protein_length{
     return 0 unless $transcript;
     return 0 unless $transcript->protein;
     return length($transcript->protein->amino_acid_seq);
-} 
+}
 
 sub Data {
     my ($self) = @_;
@@ -180,7 +308,7 @@ sub Data {
 sub MakeDiagrams {
     my ($self) = @_;
     my $data = $self->{_data};
-    my $basename = $self->{_basename};
+    my $basename = join("/", $self->{_output_directory}, $self->{_basename});
     foreach my $hugo (keys %{$data}) {
         foreach my $transcript (keys %{$data->{$hugo}}) {
             unless($self->{_data}{$hugo}{$transcript}{length}) {
@@ -273,6 +401,7 @@ sub Draw {
 
     my @mutation_objects;
     my %mutation_class_colors = (
+        # tgi annotator colors
         'frame_shift_del' => 'darkolivegreen',
         'frame_shift_ins' => 'crimson',
         'in_frame_del' => 'gold',
@@ -281,7 +410,15 @@ sub Draw {
         'splice_site_del' => 'orchid',
         'splice_site_ins' => 'saddlebrown',
         'splice_site_snp' => 'lightpink',
-        'other' => 'black'
+
+        # vep annotator colors
+        'essential_splice_site' => 'orchid',
+        'frameshift_coding' => 'darkolivegreen',
+        'stop_gained' => 'goldenrod',
+        'non_synonymous_coding' => 'cornflowerblue',
+
+
+        'other' => 'black',
     );
     my %mutation_legend;
     my $max_frequency = 0;

@@ -11,13 +11,14 @@ use warnings;
 class Genome::Model::PhenotypeCorrelation::Command::FilterCorrelationResults {
     is => "Genome::Command::Base",
     doc => "Remove lines from a variant matrix based on MAF",
-    has => [
+    has_input => [
         input_file => {
             is => "File",
             doc => "The clinical correlation output to filter.",
         },
         output_file => {
             is => "File",
+            is_output => 1,
             doc => "Path for the output file.",
         },
         per_site_report_file => {
