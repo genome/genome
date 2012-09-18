@@ -59,34 +59,40 @@ sub get_with_lock {
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
 
+    # Only try with lock if object does not exist since locking causes
+    # a performance hit. It is assumed that if an object is found it is
+    # complete. If this is a bad assumption then we need to add a
+    # status to SoftwareResults.
     my $lock;
-    my $subclass = $params_processed->{subclass};
-    unless ($lock = $subclass->_lock(%is_input, %is_param)) {
-        die "Failed to get a lock for " . Dumper(\%is_input,\%is_param);
-    }
+    my @objects = $class->get(%is_input, %is_param);
+    unless (@objects) {
+        my $subclass = $params_processed->{subclass};
+        unless ($lock = $subclass->_lock(%is_input, %is_param)) {
+            die "Failed to get a lock for " . Dumper(\%is_input,\%is_param);
+        }
 
-    my @objects;
-    eval {
-        @objects = $class->get(%is_input, %is_param);
-    };
-    my $error = $@;
+        eval {
+            @objects = $class->get(%is_input, %is_param);
+        };
+        my $error = $@;
 
-    if ($error) {
-        $class->error_message('Failed in get! ' . $error);
-        $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock.");
-        die $class->error_message;
+        if ($error) {
+            $class->error_message('Failed in get! ' . $error);
+            $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock.");
+            die $class->error_message;
+        }
     }
 
     if (@objects > 1) {
         $class->error_message("Multiple results returned for SoftwareResult::get_with_lock.  To avoid this, call get_with_lock with enough parameters to uniquely identify a SoftwareResult.");
         $class->error_message("Parameters used for the get: " . Data::Dumper::Dumper %is_input . Data::Dumper::Dumper %is_param);
         $class->error_message("Objects gotten: " . Data::Dumper::Dumper @objects);
-        $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock with multiple results.");
+        $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock with multiple results.") if $lock;
         die $class->error_message;
     }
 
     my $result = $objects[0];
-    if ($result) {
+    if ($result && $lock) {
         $result->_lock_name($lock);
 
         $result->status_message("Cleaning up lock $lock...");
@@ -95,7 +101,7 @@ sub get_with_lock {
             die "Failed to unlock after getting software result";
         }
         $result->status_message("Cleanup completed for lock $lock.");
-    } else {
+    } elsif ($lock) {
         $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
     }
 
