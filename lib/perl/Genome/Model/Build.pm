@@ -739,6 +739,15 @@ sub archivable {
     return $allocation->archivable();
 }
 
+sub is_archived { 
+    my $self = shift;
+    my $allocation = $self->disk_allocation;
+    unless ($allocation) {
+        confess "Could not get allocation for build " . $self->__display_name__;
+    }
+    return $allocation->is_archived();
+}
+
 sub start {
     my $self = shift;
     my %params = @_;
