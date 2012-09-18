@@ -34,6 +34,9 @@ my $tmp_dir = File::Temp::tempdir(
     CLEANUP => 1,
 );
 
+my $ref_build = Genome::Model::Build::ImportedReferenceSequence->get(name => "NCBI-human-build36");
+my $ref_fa = $ref_build->full_consensus_path('fa');
+
 my @test_out_files = map{$tmp_dir.'/test.'.$_}@file_names;
 
 my $sv_valid = Genome::Model::Tools::Sv::AssemblyValidation->create(
@@ -42,6 +45,7 @@ my $sv_valid = Genome::Model::Tools::Sv::AssemblyValidation->create(
     output_file => $test_out_files[0],
     cm_aln_file => $test_out_files[1],
     breakpoint_seq_file => $test_out_files[2],
+    reference_file => $ref_fa,
 );
 
 ok($sv_valid, 'created AssemblyValidation object');
@@ -68,6 +72,7 @@ $sv_valid = Genome::Model::Tools::Sv::AssemblyValidation->create(
     output_file => $test_out_files[0],
     cm_aln_file => $test_out_files[1],
     breakpoint_seq_file => $test_out_files[2],
+    reference_file => $ref_fa,
 );
 
 ok($sv_valid, 'created AssemblyValidation object');
