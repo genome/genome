@@ -1,4 +1,4 @@
-package HmpSraProcessNew;
+package Genome::InstrumentData::Command::Import::HmpSraProcessNew;
 
 use strict;
 use warnings;
@@ -17,7 +17,7 @@ use File::Path;
 
 
 
-class HmpSraProcessNew {
+class Genome::InstrumentData::Command::Import::HmpSraProcessNew {
     is  => 'Command::V2',
     has => [
 	ascp_user => { is_optional => 0, doc => 'DACC FTP user_name for aspera transfer', },
