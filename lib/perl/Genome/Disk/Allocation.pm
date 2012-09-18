@@ -794,7 +794,7 @@ sub _unarchive {
     }
 
     # Make sure allocation is archived, exit cleanly if so
-    unless ($self->archived) {
+    unless ($self->is_archived) {
         Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
         $self->status_message("Allocation is not archived, cannot unarchive. Exiting.");
         return 1;
