@@ -212,57 +212,54 @@ sub execute {
   #Are there suitable WGS reference alignment models in existence (If not, create)?  If so, what is the status?
   #- Are there tumor/normal DNA samples?
   #- Is there tumor/normal WGS instrument data? If so, is it all included in the existing model?
-  $self->status_message("\nWGS REFERENCE-ALIGNMENT MODELS");
   my @normal_wgs_ref_align_models;
   my @tumor_wgs_ref_align_models;
-  if (scalar(@dna_samples)){
+  my @wgs_somatic_variation_models;
+  if (scalar(@dna_samples) == 2){
+    $self->status_message("\nWGS REFERENCE-ALIGNMENT MODELS");
     @normal_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>'normal', '-dna_samples'=>\@dna_samples);
     @tumor_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>'tumor|met', '-dna_samples'=>\@dna_samples);
+  
+    #Is there a suitable WGS somatic variation model in existence (If not, create)?  If so, what is the status?
+    #- Only proceed with this if the prerequisite WGS tumor/normal ref-align models exist
+    if (scalar(@normal_wgs_ref_align_models) && scalar(@tumor_wgs_ref_align_models)){
+      @wgs_somatic_variation_models = $self->check_somatic_variation_models('-data_type'=>'wgs', '-dna_samples'=>\@dna_samples, '-normal_models'=>\@normal_wgs_ref_align_models, '-tumor_models'=>\@tumor_wgs_ref_align_models);
+    }
   }
 
   #Are there suitable Exome reference alignment models in existence (If not, create)? If so, what is the status?
   #- Are there tumor/normal DNA samples?
   #- Is there tumor/normal Exome instrument data?
   #- What is the target region set name (TRSN) and region of interest (ROI)? If there is data, is it all included in the existing model?
-  $self->status_message("\nEXOME REFERENCE-ALIGNMENT MODELS");
   my @normal_exome_ref_align_models;
   my @tumor_exome_ref_align_models;
-  if (scalar(@dna_samples)){
+  my @exome_somatic_variation_models;
+  if (scalar(@dna_samples) == 2){
+    $self->status_message("\nEXOME REFERENCE-ALIGNMENT MODELS");
     @normal_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>'normal', '-dna_samples'=>\@dna_samples);
     @tumor_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>'tumor|met', '-dna_samples'=>\@dna_samples);
+
+    #Is there a suitable Exome somatic variation model in existence
+    #- Only proceed with this if the prerequisite Exome tumor/normal ref-align models exist
+    if (scalar(@normal_exome_ref_align_models) && scalar(@tumor_exome_ref_align_models)){
+      @exome_somatic_variation_models = $self->check_somatic_variation_models('-data_type'=>'exome', '-dna_samples'=>\@dna_samples, '-normal_models'=>\@normal_exome_ref_align_models, '-tumor_models'=>\@tumor_exome_ref_align_models);
+    }
   }
   
-
-  #Is there a suitable rna-seq models in existence (If not, create)?  If so, what is the status?  
+  #Are there suitable rna-seq models in existence (If not, create)?  If so, what is the status?  
   #- Are there tumor/normal RNA samples?
   #- Is there tumor/normal RNA-seq instrument data? If so, is it all included in the existing model?
-  $self->status_message("\nRNA-SEQ MODELS");
   my @normal_rnaseq_models;
   my @tumor_rnaseq_models;
   if (scalar(@rna_samples)){
+    $self->status_message("\nRNA-SEQ MODELS");
     @normal_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>'normal', '-rna_samples'=>\@rna_samples);
     @tumor_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>'tumor', '-rna_samples'=>\@rna_samples);
   }
 
+  #Is there a suitable clin-seq model in existence (If not, create)?  If so, what is the status?
+  #- Only proceed with this is the prerequisite models (where data exists) are ready.
 
-  #Is there a suitable WGS somatic variation model in existence (If not, create)?  If so, what is the status?
-  #- Only proceed with this if the prerequisite WGS tumor/normal ref-align models exist
-
-
-  #Is there a suitable Exome somatic variation model in existence
-  #- Only proceed with this if the prerequisite Exome tumor/normal ref-align models exist
-
-
-  #Is there a suitable clin-seq mode in existence (If not, create)?  If so, what is the status?  Does it contain neccessary instrument data?
-  #- Only proeed with this is the prerequisite models (where data exists) are ready.
-
-
-
-  #EXAMPLE MODEL QUERIES
-  #my @models = Genome::Model->get(processing_profile_id => 2635769, subject_id => 2882207510);
-  #my @models = Genome::Model::ReferenceAlignment->get(processing_profile_id => 2635769, subject_id => 2882207510, reference_sequence_build_id => 106942997);
-  #my @models = Genome::Model::ReferenceAlignment->get(processing_profile_id => 2635769, subject_id => 2882207510, reference_sequence_build_id => 106942997, annotation_reference_build_id => 124434505);
-  #my @models = Genome::Model::ReferenceAlignment->get(processing_profile_id => 2635769, subject_id => 2882207510, reference_sequence_build_id => 106942997, annotation_reference_build_id => 124434505, dbsnp_build_id => 106375969);
 
 
 
@@ -628,10 +625,10 @@ sub get_instrument_data{
   }
 
   if ($data_type eq 'wgs'){
-    $self->status_message("Could not find any wgs data") unless (scalar(@wgs));
+    $self->status_message("\tCould not find any wgs data") unless (scalar(@wgs));
     return @wgs;
   }elsif($data_type eq 'exome'){
-    $self->status_message("Could not find any exome data") unless (scalar(@exome));
+    $self->status_message("\tCould not find any exome data") unless (scalar(@exome));
     return @exome;
   }else{
     $self->error_message("Data type not understood in get_instrument_data");
@@ -958,6 +955,7 @@ sub check_models_status{
     my $running_builds = 0;
     my $succeeded_builds = 0;
     my $unstartable_builds = 0;
+    my $scheduled_builds = 0;
     foreach my $build (@builds){
       my $status = $build->status;
       if ($status =~ /succeeded/i){
@@ -966,6 +964,8 @@ sub check_models_status{
         $running_builds++;
       }elsif ($status =~ /unstartable/i){
         $unstartable_builds++;
+      }elsif ($status =~ /scheduled/i){
+        $scheduled_builds++;
       }
     }
 
@@ -978,8 +978,10 @@ sub check_models_status{
       $self->status_message("\n\tWARNING\n\tModel: $model_id has running builds...\n\tgenome model status $model_id");
     }elsif ($succeeded_builds){
       $ready_model_count++;
+    }elsif ($scheduled_builds){
+      $self->status_message("\n\tWARNING\n\tModel: $model_id has a scheduled build...\n\tgenome model status $model_id");
     }else{
-      $self->status_message("\n\tWARNING\n\tModel: $model_id needs a build ...\n\tgenome model status $model_id\ngenome model build start $model_id");
+      $self->status_message("\n\tWARNING\n\tModel: $model_id needs a build ...\n\tgenome model status $model_id\n\tgenome model build start $model_id");
     }
   }
 
@@ -1010,6 +1012,19 @@ sub get_final_individual_name{
   return $final_name;
 }
 
+
+#Check for existence of a somatic variation model meeting desired criteria and create one if it does not exist
+sub check_somatic_variation_models{
+  my $self = shift;
+  my %args = @_;
+  my $data_type = $args{'-data_type'};
+  my @dna_samples = @{$args{'-dna_samples'}};
+  my @normal_ref_align_models = $args{'-normal_models'};
+  my @tumor_ref_align_models = $args{'-tumor_models'};
+
+
+  return;
+}
 
 1;
 
