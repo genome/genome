@@ -111,7 +111,6 @@ sub execute {
     my $junk_tmp = $tmp . '/junk';
     Genome::Sys->create_directory($junk_tmp);
 
-    my $errfile;
     my $cmd;
 
     # build the SRA index
@@ -128,33 +127,44 @@ sub execute {
             next;
         }
 
+
         # can we skip downloading this one?
-        if (-d $self->container_dir . "/" . $srr_id) {
-            unless($self->slurp_srr_data(id=>$srr_id,
-                                  directory => $self->container_dir . "/" . $srr_id)) {
-                $self->error_message("Failed slurping SRR data");
-                return; 
-            }
-            next;
-        } 
+	if (defined $self->container_dir) { #Added this to stop error messages about string not being defined in concatenation ... jmartin 120117
+	    if (-d $self->container_dir . "/" . $srr_id) {
+		unless($self->slurp_srr_data(id=>$srr_id,
+					     directory => $self->container_dir . "/" . $srr_id)) {
+		    $self->error_message("Failed slurping SRR data");
+		    return; 
+		}
+		next;
+	    } 
+	}
   
         # check if we need to build the index 
         unless (-e $sra_index_file) {  
-            $errfile = $sra_index_file . '.err';
             $cmd = "cd $junk_tmp; $scripts_dir/build_public_SRA_run_index.pl --reuse_files "
-                . ' > ' . $sra_index_file 
-                . ' 2> ' . $errfile;        
+                . ' > ' . $sra_index_file;
             Genome::Sys->shellcmd(
                 cmd => $cmd,
-                output_files => [$sra_index_file,$errfile],
+                output_files => [$sra_index_file],
                 skip_if_output_is_present => 1,
             );
         }
 
-        # download each
+####DEBUG
+	print "location of SRA index file=>$sra_index_file<=\n";
+####DEBUG
 
+
+        # download each
         my $fof = "$tmp/$srr_id.fof";
         Genome::Sys->write_file($fof, $srr_id);
+
+
+####DEBUG
+	print "temporary fof containing current SRR id=>$fof<=\n";
+####DEBUG
+
         
         my $log = $fof;
         $log =~ s/.fof/.log/;
@@ -174,6 +184,13 @@ sub execute {
 	    #### jmartin ... 100813
             ####my $cmd = "cd $tmp; $scripts_dir/get_SRA_runs.pl ascp $sra_index_file $fof >$out 2>$err";
 	    my $cmd = "cd $tmp; $scripts_dir/get_SRA_runs.pl ascp $sra_index_file $fof >$out 2>$err";
+	    $self->status_message("running ASCP using the command: $cmd");
+
+
+####DEBUG
+	    print "running ASCP using the command=>$cmd<=\n";
+####DEBUG
+
 
             Genome::Sys->shellcmd(
                 cmd => $cmd,
@@ -184,16 +201,34 @@ sub execute {
             );
 
 	    my $out_content = Genome::Sys->read_file($out);
+
+####DEBUG
+	    print "output content from ASCP command=>$out_content<=\n";
+####DEBUG
+
+
 	    ####if ($out_content =~ /transferred .* SRA runs with ascp, (\d+) failures(s) detected/) {
 	    if ($out_content =~ /transferred\s+.*\s+SRA\s+runs\s+with\s+ascp\,\s+(\d+)\s+failure\(s\)\s+detected/) {
 		my $failures = $1;
 		if ($failures == 0) {
 		    $self->status_message("No failures from the download");
-                            unless($self->slurp_srr_data(id=>$srr_id,
-                                               directory => $tmp . "/" . $srr_id)) {
-                $self->error_message("Failed slurping SRR data");
-                return; 
-            }
+		    unless($self->slurp_srr_data(id=>$srr_id,directory => $tmp . "/" . $srr_id)) {
+
+####DEBUG
+			print "failed the slurp_srr_data subroutine...now inside the fail loop for this subroutine and will exit back to HmpSra.pm with null output value\n";
+####DEBUG
+
+
+			$self->error_message("Failed slurping SRR data");
+			return;
+		    }
+
+
+####DEBUG
+		    print "GOT PAST slurp_srr_data WITH NO ERRORS IN SUBROUTINE\n";
+####DEBUG
+
+
                     $self->status_message("Removing synced SRA download from tmp");
                     rmtree($tmp . "/" . $srr_id);
 		}
@@ -209,12 +244,25 @@ sub execute {
         }
     }
 
+
+####DEBUG
+    print "Exiting the HmpSra.pm module at the normal spot, which should return the value 1\n";
+####DEBUG
+
+    
     return 1;
 }
 
 sub slurp_srr_data {
     my $self = shift;
     my %p = @_;
+
+
+####DEBUG
+    print "now inside slurp_srr_data\n";
+####DEBUG
+
+
 
     my $srr_id = $p{id};
     my $path = $p{directory};
@@ -230,17 +278,25 @@ sub slurp_srr_data {
     }
     
     $self->status_message("Slurping $srr_id from path $path");
+
+
+####DEBUG
+    print "Slurping SRR id=>$srr_id<= from the path=>$path<=\n";
+####DEBUG
+
+
     
-    my $original_md5_contents = `cat $path/col/READ/md5 | grep data`;
-    my ($expected_md5) = split /\s+/, $original_md5_contents;
-    my $new_md5 = Genome::Sys->md5sum("$path/col/READ/data");
+    #SRA object format changed...md5 signature no longer available with SRA object ... jmartin 120117
+    ####my $original_md5_contents = `cat $path/col/READ/md5 | grep data`;
+    ####my ($expected_md5) = split /\s+/, $original_md5_contents;
+    ####my $new_md5 = Genome::Sys->md5sum("$path/col/READ/data");
 
-    $self->status_message("Expected $expected_md5, got $new_md5");
+    ####$self->status_message("Expected $expected_md5, got $new_md5");
 
-    unless ($expected_md5 eq $new_md5) {
-        $self->error_message("MD5 hash mismatch, $path failed integrity check: expected $expected_md5, got $new_md5");
-        return;
-    }
+    ####unless ($expected_md5 eq $new_md5) {
+    ####    $self->error_message("MD5 hash mismatch, $path failed integrity check: expected $expected_md5, got $new_md5");
+    ####    return;
+    ####}
 
     my %params = ();
 
@@ -256,37 +312,89 @@ sub slurp_srr_data {
     where ruacc.accession='$srr_id'/);
 
     unless (defined $fc_id && defined $lane) {
+####DEBUG
+	print "IF YOU ARE GETTING THIS MESSAGE, THEN SQL QUERY WAS NOT ABLE TO DERIVE FLOWCELL ID & LANE\n";
+####DEBUG
         $self->error_message("Couldn't recover original flow cell id and lane for this SRR id $srr_id");
         return;
     }
 
+####DEBUG
+    print "flowcell id=>$fc_id<= ... lane=>$lane<=\n";
+####DEBUG
+
+
+
     my $original_inst = Genome::InstrumentData::Solexa->get(flow_cell_id=>$fc_id, lane=>$lane);
 
     unless ($original_inst) {
+####DEBUG
+	print "IF YOU ARE GETTING THIS MESSAGE, THEN HmpSra.pm WAS UNABLE TO GET ORIGINAL INSTRUMENT-DATA OBJECT\n";
+####DEBUG
         $self->error_message("Couldn't recover original instrument data for this SRR id $srr_id");
         return;
     }
 
     $params{library_id} = $original_inst->library_id;
-    $params{sample_id} = $original_inst->sample_id;
-    $params{sample_name} = $original_inst->sample_name;
+    ####$params{sample_id} = $original_inst->sample_id; # Sample info can be derived from library now, these attributes were breaking the import code ...jmartin 120124
+    ####$params{sample_name} = $original_inst->sample_name; # Sample info can be derived from library now, these attributes were breaking the import code ...jmartin 120124
     $params{original_data_path} = $path;
     $params{sequencing_platform} = 'solexa';
     $params{import_format} = 'raw sra download';
     $params{sra_accession} = $srr_id;
 
+
+####DEBUG
+    my $param_contents;
+    foreach my $pc (keys(%params)) {
+	$param_contents .= "PARAMS content: $pc\t$params{$pc}\n";
+    }
+    print "params hash contents are=>$param_contents<=\n";
+####DEBUG
+
+
+
     my $import_instrument_data = Genome::InstrumentData::Imported->create(%params);  
+
+####DEBUG
+    print "GOT TO HERE, JUST AFTER Genome ID Imported create on the params\n";
+####DEBUG
+
+
     unless ($import_instrument_data) {
+####DEBUG
+	print "IF YOU ARE GETTING THIS MESSAGE, THEN HmpSra.pm WAS UNABLE TO RUN: Imported - > create (params)\n";
+####DEBUG
        $self->error_message('Failed to create imported instrument data for '.$self->original_data_path);
        return;
     }
 
+####DEBUG
+    print "got past the test of the presence of import_instrument_data\n";
+####DEBUG
+
+
+
     my $alloc_path = sprintf('instrument_data/imported_raw_sra/%s', $import_instrument_data->id);
+
+
+####DEBUG
+    print "got past the alloc_path derivation\n";
+####DEBUG
+
+
     my $kb_used = $self->disk_usage_for_srr_path($path);
     unless ($kb_used) {
         $self->error_message("Can't resolve kb usage");
         return;
     }
+
+
+####DEBUG
+    print "got back from the disk_usage_for_srr_path subroutine, and the kb_used value is=>$kb_used<=\n";
+####DEBUG
+
+
 
     my %alloc_params = (
         disk_group_name     => 'info_alignments',     #'info_apipe',
@@ -297,8 +405,27 @@ sub slurp_srr_data {
     );
 
 
+####DEBUG
+    my $report_alloc_params;
+    foreach my $key (keys(%alloc_params)) {
+	$report_alloc_params .= "$key\t$alloc_params{$key}\n";
+    }
+    print "alloc_params hash contains this=>$report_alloc_params<=\n";
+####DEBUG
+
+
+
     my $disk_alloc = Genome::Disk::Allocation->allocate(%alloc_params);
+
+####DEBUG
+    print "got past genome disk allocation - > allocate on the alloc_params\n";
+####DEBUG
+
+
     unless ($disk_alloc) {
+####DEBUG
+	print "IF YOU ARE GETTING THIS MESSAGE, THEN HmpSra.pm WAS UNABLE TO ALLOCATE DISK SPACE\n";
+####DEBUG
         $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%alloc_params));
         return;
     }
@@ -310,10 +437,19 @@ sub slurp_srr_data {
     $self->status_message("Running Rsync: $call");
 
     unless ($rv == 0) {
+####DEBUG
+	print "IF YOU ARE GETTING THIS MESSAGE, THEN HmpSra.pm FAILED TO COPY INTO ALLOCATED DISK SPACE\n";
+####DEBUG
         $self->error_message("Did not get a valid return from rsync, rv was $rv for call $call.  Cleaning up and bailing out");
         $disk_alloc->deallocate;
         return;
     }
+
+
+####DEBUG
+    print "trying to exit slurp_srr_data normally, with exit value 1\n";
+####DEBUG
+
 
     return 1;
 }
@@ -322,11 +458,30 @@ sub disk_usage_for_srr_path {
     my $self = shift;
     my $path = shift;
 
+####DEBUG
+    print "inside disk_usage_for_srr_path...\n";
+####DEBUG
+
+
+
     my $cmd = "du -sk $path 2>&1";
     my $du_output = qx{$cmd};
     my $kb_used = ( split( ' ', $du_output, 2 ) )[0];
+
+####DEBUG
+    print "kb_used looks like this=>$kb_used<=\n";
+####DEBUG
+
+
     Scalar::Util::looks_like_number($kb_used)
         or return;
+
+####DEBUG
+    print "got past scalar util looks_like_number of kb_used (which is=>$kb_used<=)\n";
+####DEBUG
+
+
+
     $self->status_message("Successfully got disk usage ($kb_used KB) for $path");
 
     return $kb_used;

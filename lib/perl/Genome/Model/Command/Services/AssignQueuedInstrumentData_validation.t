@@ -12,12 +12,12 @@ BEGIN {
 use above 'Genome';
 
 require Genome::InstrumentData::Solexa;
-use Test::More tests => 31;
+use Test::More tests => 30;
 use Test::MockObject;
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData');
 
-my (@instrument_data, @pses);
+my (@instrument_data);
 no warnings;
 *Genome::InstrumentDataAttribute::get = sub {
     my ($class, %params) = @_;
@@ -33,7 +33,7 @@ no warnings;
     }
     return values %attrs;
 };
-sub GSC::PSE::get { return grep { $_->pse_status eq 'inprogress' } @pses; }
+sub GSC::PSE::get { return; }
 use warnings;
 
 my $taxon = Genome::Taxon->get( species_name => 'human' );
@@ -103,14 +103,6 @@ my $processing_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
 );
 ok($processing_profile, 'Created a processing_profile');
 
-my $pse_1 = GSC::PSE->create(
-    pse_status => 'inprogress',
-    pse_id => '-12345',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_1;
-
 my $sv_model = Genome::Model::SomaticValidation->__define__(
     name => 'test-validation-model',
     target_region_set => $fl,
@@ -121,11 +113,6 @@ my $sv_model = Genome::Model::SomaticValidation->__define__(
     auto_assign_inst_data => 1,
     processing_profile_id => 1,
 );
-
-$pse_1->add_param('instrument_data_type', 'solexa');
-$pse_1->add_param('instrument_data_id', $instrument_data_1->id);
-$pse_1->add_param('subject_class_name', 'Genome::Sample');
-$pse_1->add_param('subject_id', $sample->id);
 
 my $command_1 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_1, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
@@ -176,25 +163,11 @@ $instrument_data_1a->add_attribute(
 ok($instrument_data_1a, 'creat instrument data 1a');
 push @instrument_data, $instrument_data_1a;
 
-my $pse_1a = GSC::PSE->create(
-    pse_status => 'inprogress',
-    pse_id => '-12345678',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_1a;
-
-$pse_1a->add_param('instrument_data_type', 'solexa');
-$pse_1a->add_param('instrument_data_id', $instrument_data_1a->id);
-$pse_1a->add_param('subject_class_name', 'Genome::Sample');
-$pse_1a->add_param('subject_id', $sample1a->id);
-
 my $command_1a = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_1a, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 $command_1a->dump_status_messages(1);
 ok($command_1a->execute(), 'assign-queued-instrument-data executed successfully.');
-
-is($pse_1a->pse_status, 'completed', 'pooled instrument data removed from queue');
+is($instrument_data_1a->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'inst data 1a is processed');
 
 my $fl2 = Genome::FeatureList->__define__(
     id => 'ABCDEFGH',
@@ -204,14 +177,6 @@ my $fl2 = Genome::FeatureList->__define__(
     reference => $ref_seq_build,
     file_content_hash => 1,
 );
-
-my $pse_2 = GSC::PSE->create(
-    pse_status => 'inprogress',
-    pse_id => '-12346',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_2;
 
 my $instrument_data_2 = Genome::InstrumentData::Solexa->create(
     id => '-101',
@@ -265,14 +230,6 @@ my $ref_converter = Genome::Model::Build::ReferenceSequence::Converter->create(
     algorithm => 'chop_chr',
 );
 
-my $pse_2a = GSC::PSE->create(
-    pse_status => 'inprogress',
-    pse_id => '-123467',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_2a;
-
 my $instrument_data_2a = Genome::InstrumentData::Solexa->create(
     id => '-103',
     library_id => $library->id,
@@ -293,16 +250,6 @@ $instrument_data_2a->add_attribute(
 ok($instrument_data_2a, 'create instrument data 2a');
 push @instrument_data, $instrument_data_2a;
 
-
-$pse_2->add_param('instrument_data_type', 'solexa');
-$pse_2->add_param('instrument_data_id', $instrument_data_2->id);
-$pse_2->add_param('subject_class_name', 'Genome::Sample');
-$pse_2->add_param('subject_id', $sample->id);
-$pse_2a->add_param('instrument_data_type', 'solexa');
-$pse_2a->add_param('instrument_data_id', $instrument_data_2a->id);
-$pse_2a->add_param('subject_class_name', 'Genome::Sample');
-$pse_2a->add_param('subject_id', $sample->id);
-
 my $command_2 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_2, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 $command_2->dump_status_messages(1);
@@ -311,8 +258,8 @@ ok($command_2->execute(), 'assign-queued-instrument-data executed successfully.'
 my $err = $command_2->error_message;
 like($err, qr/validation-test-roi/, 'reported error about feature-list');
 
-is($pse_2->pse_status, 'inprogress', 'erroneous PSE still in progress');
-is($pse_2a->pse_status, 'completed', 'good PSE completed');
+is($instrument_data_2->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'inst data 2 is failed');
+is($instrument_data_2a->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'inst data 2a is processed');
 
 $fl2->content_type(undef);
 my $command_3 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
@@ -323,21 +270,7 @@ ok($command_3->execute(), 'assign-queued-instrument-data executed successfully.'
 $err = $command_3->error_message;
 ok($err =~ 'validation-test-roi', 'reported error about feature-list');
 
-is(
-    scalar(grep { $_->attributes(attribute_label => 'tgi_lims_status')->attribute_value eq 'processed' } (@instrument_data)),
-    3,
-    'set tgi lims status to processed for 3 instrument data',
-);
-
 $sv_model_2a->auto_assign_inst_data(0);
-
-my $pse_2b = GSC::PSE->create(
-    pse_status => 'inprogress',
-    pse_id => '-123567',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_2b;
 
 my $instrument_data_2b = Genome::InstrumentData::Solexa->create(
     id => '-113',
@@ -359,22 +292,12 @@ $instrument_data_2b->add_attribute(
 ok($instrument_data_2b, 'create instrument data 2b');
 push @instrument_data, $instrument_data_2b;
 
-
-$pse_2b->add_param('instrument_data_type', 'solexa');
-$pse_2b->add_param('instrument_data_id', $instrument_data_2b->id);
-$pse_2b->add_param('subject_class_name', 'Genome::Sample');
-$pse_2b->add_param('subject_id', $sample->id);
-
 my $command_4 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_4, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 $command_4->dump_status_messages(1);
 ok($command_4->execute(), 'assign-queued-instrument-data executed successfully.');
+is($instrument_data_2b->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'inst data 2b is failed');
 
-is(
-    scalar(grep { $_->attributes(attribute_label => 'tgi_lims_status')->attribute_value eq 'processed' } (@instrument_data)),
-    3,
-    'set tgi lims status to processed for 3 instrument data (of 4)',
-);
-
+done_testing();
 exit;
 

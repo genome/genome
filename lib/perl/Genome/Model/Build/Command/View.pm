@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Utility::Text 'justify';
 
 use DateTime::Format::Strptime;
 use Date::Calc "Delta_DHMS";
@@ -37,18 +38,12 @@ our %CONNECTOR_NAMES = (
 );
 
 class Genome::Model::Build::Command::View {
-    is => 'Command::V2',
+    is => 'Genome::Command::Viewer',
     has => [
         build => {
             is => 'Genome::Model::Build',
             shell_args_position => 1,
             doc => 'Genome::Model::Build',
-        },
-        color => {
-            is => 'Boolean',
-            is_optional => 1,
-            default_value => 1,
-            doc => 'Display report in color.'
         },
         connectors => {
             is => 'Boolean',
@@ -68,11 +63,17 @@ class Genome::Model::Build::Command::View {
             default_value => 0,
             doc => 'Display build events.'
         },
+        notes => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 0,
+            doc => 'Display build notes.'
+        },
         full => {
             is => 'Boolean',
             is_optional => 1,
             default_value => 0,
-            doc => 'Display all build information. Equivalent to "--events --inputs --workflow".'
+            doc => 'Display all build information. Equivalent to "--events --inputs --workflow --notes".'
         },
         inputs => {
             is => 'Boolean',
@@ -114,46 +115,50 @@ EOP
     return $result;
 }
 
-sub execute {
-    my $self = shift;
+sub write_report {
+    my ($self, $width, $handle) = @_;
 
-    $self->_display_build($self->build);
+    my $build = $self->build;
+    $self->_display_build($handle, $build);
 
-    if ($self->full || $self->inputs) {
-        $self->_display_inputs($self->build->inputs);
-    }
-
-    if ($self->full || $self->events) {
-        $self->_display_events($self->build->events);
+    for my $thing (["inputs", "Inputs", "_display_input"],
+                   ["events", "Events", "_display_event"],
+                   ["notes", "Notes", "_display_note"]) {
+        my ($item, $section_name, $method_name) = @{$thing};
+        if($self->full || $self->$item) {
+            my @items = $build->$item;
+            $self->_display_many($handle, $section_name,
+                    $method_name, @items);
+        }
     }
 
     if ($self->full || $self->workflow) {
         my $workflow = $self->build->newest_workflow_instance;
-        $self->_display_workflow($workflow);
+        $self->_display_workflow($handle, $workflow);
     }
 
     1;
 }
 
 sub _display_build {
-    my ($self, $build) = @_;
+    my ($self, $handle, $build) = @_;
 
     my $processing_profile = $build->model->processing_profile;
-    
+
     my $format_str = <<EOS;
 %s
 %s %s
 %s %s
 %s %s
-%s       %s 
+%s       %s
 
 %s
 %s
 
 EOS
 
-    print sprintf($format_str, 
-        $self->_color_heading('Build'), 
+    print $handle sprintf($format_str,
+        $self->_color_heading('Build'),
         $self->_color_pair('Build ID',
             $self->_pad_right($build->id, $ID_LENGTH)),
         $self->_color_pair('Build Status',
@@ -171,41 +176,39 @@ EOS
         $self->_color_pair('Data Directory', $build->data_directory));
 }
 
-sub _display_inputs {
-    my ($self, @inputs) = @_;
+sub _display_many {
+    my ($self, $handle, $section_name, $method_name, @items) = @_;
 
-    if (@inputs) {
-        print $self->_color_heading('Inputs')."\n";
-        for my $input (@inputs) {
-            $self->_display_input($input);
+    print $handle $self->_color_heading($section_name) . "\n";
+    if(@items) {
+        for my $item (@items) {
+            $self->$method_name($handle, $item);
         }
-
-        print "\n";
+    } else {
+        print $handle "None\n";
     }
+    print $handle "\n";
+}
+
+sub _display_note {
+    my ($self, $handle, $note) = @_;
+
+    print $handle $self->_color_pair("Editor", $note->editor_id);
+    print $handle $self->_color_pair("    Date/Time", $note->entry_date) . "\n";
+    print $handle $self->_color_pair("    Header", $note->header_text) . "\n";
+    print $handle $self->_color_pair("    Body", $note->body_text) . "\n";
 }
 
 sub _display_input {
-    my ($self, $input) = @_;
+    my ($self, $handle, $input) = @_;
 
-    print $input->name . "\n";
-    print $self->_color_pair('    ID', $input->value_id) . "\n";
-    print $self->_color_pair('    Type', $input->value_class_name) . "\n";
-}
-
-sub _display_events {
-    my ($self, @events) = @_;
-
-    if (@events) {
-        print $self->_color_heading('Events')."\n";
-        for my $event (@events) {
-            $self->_display_event($event);
-        }
-        print "\n";
-    }
+    print $handle $input->name . "\n";
+    print $handle $self->_color_pair('    ID', $input->value_id) . "\n";
+    print $handle $self->_color_pair('    Type', $input->value_class_name) . "\n";
 }
 
 sub _display_event {
-    my ($self, $event) = @_;
+    my ($self, $handle, $event) = @_;
 
     my $format_str = <<EOS;
 %s %s
@@ -213,22 +216,22 @@ sub _display_event {
     %s   %s
     %s
 EOS
-    print sprintf($format_str, 
-        $self->_color_pair('ID', $self->_pad_right($event->id, $ID_LENGTH)),  
+    print $handle sprintf($format_str,
+        $self->_color_pair('ID', $self->_pad_right($event->id, $ID_LENGTH)),
         $self->_color_pair('Status',
-            $self->_status_color($event->event_status)), 
-        $self->_color_pair('Name', $event->event_type), 
+            $self->_status_color($event->event_status)),
+        $self->_color_pair('Name', $event->event_type),
         $self->_color_pair('Scheduled',
-            $self->_clean_up_timestamp($event->date_scheduled)),    
+            $self->_clean_up_timestamp($event->date_scheduled)),
         $self->_color_pair('Completed',
-            $self->_clean_up_timestamp($event->date_completed)), 
-        $self->_color_pair('LSF ID', $event->lsf_job_id)); 
+            $self->_clean_up_timestamp($event->date_completed)),
+        $self->_color_pair('LSF ID', $event->lsf_job_id));
 }
 
 sub _display_workflow {
-    my ($self, $workflow) = @_;
+    my ($self, $handle, $workflow) = @_;
 
-    unless ($self->_display_workflow_header($workflow)) {
+    unless ($self->_display_workflow_header($handle, $workflow)) {
         return 0;
     }
 
@@ -236,11 +239,38 @@ sub _display_workflow {
     my $datetime_parser = DateTime::Format::Strptime->new(
             pattern => '%Y-%m-%d %H:%M:%S',
             on_error => 'croak');
-    $self->_display_workflow_children($workflow, $datetime_parser);
+    my $failed_workflow_steps = [];
+    $self->_display_workflow_children($handle, $workflow, $datetime_parser,
+            $failed_workflow_steps);
+
+    my @error_log_paths;
+    my @step_names;
+    for my $failed_step (@{$failed_workflow_steps}) {
+        if($failed_step->current->can('stderr')) {
+            my $error_path = $failed_step->current->stderr || ' ';
+            if(-e $error_path) {
+                push(@error_log_paths, $error_path);
+                push(@step_names, $failed_step->name);
+            }
+        }
+    }
+    if(@error_log_paths) {
+        printf $handle "\n%s\n", $self->_color('Error Logs:', 'bold');
+        for my $i (0..$#error_log_paths) {
+            my $name = $step_names[$i];
+            my $length = 22;
+            if(length($name) > $length) {
+                $name = substr($name, 0, $length-3) . "...";
+            }
+            my $log_path = $error_log_paths[$i];
+            printf $handle "%s %s\n", justify($name, 'left', $length),
+                    $log_path;
+        }
+    }
 }
 
 sub _display_workflow_header {
-    my ($self, $workflow) = @_;
+    my ($self, $handle, $workflow) = @_;
 
     unless ($workflow) {
         return 0;
@@ -256,10 +286,10 @@ sub _display_workflow_header {
 %s               %s
 
 EOS
-    print sprintf($format_str, 
-        $self->_color_heading('Workflow'), 
+    print $handle sprintf($format_str,
+        $self->_color_heading('Workflow'),
         $self->_color_pair('ID', $self->_pad_right($workflow->id, $ID_LENGTH)),
-        $self->_color_pair('Name', $workflow->name), 
+        $self->_color_pair('Name', $workflow->name),
         $self->_color_pair('Started',
             $self->_clean_up_timestamp($ie->start_time)),
         $self->_color_pair('Ended', $self->_clean_up_timestamp($ie->end_time)),
@@ -268,18 +298,21 @@ EOS
 }
 
 sub _display_workflow_children {
-    my ($self, $workflow, $datetime_parser) = @_;
+    my ($self, $handle, $workflow, $datetime_parser,
+        $failed_workflow_steps) = @_;
 
-    print $self->_color_dim($self->_format_workflow_child_line(
+    print $handle $self->_color_dim($self->_format_workflow_child_line(
             "ID", "Status", "LSF ID", "Start Time", "Time Elapsed", "Name"));
 
-    $self->_display_workflow_child($workflow, $datetime_parser, 0);
+    $self->_display_workflow_child($handle, $workflow, $datetime_parser, 0,
+            $failed_workflow_steps);
 
     1;
 }
 
 sub _display_workflow_child {
-    my ($self, $child, $datetime_parser, $nesting_level) = @_;
+    my ($self, $handle, $child, $datetime_parser, $nesting_level,
+            $failed_workflow_steps) = @_;
 
     my $status = $child->status;
 
@@ -287,7 +320,10 @@ sub _display_workflow_child {
         $child->start_time, $child->end_time, $status, $datetime_parser);
 
     if ($self->connectors || !$self->_is_connector($child->name)) {
-        print $self->_format_workflow_child_line($child->id, $status,
+        if($status eq 'failed' or $status eq 'crashed') {
+            push(@{$failed_workflow_steps}, $child);
+        }
+        print $handle $self->_format_workflow_child_line($child->id, $status,
             $child->current->dispatch_identifier, $start_time, $elapsed_time,
             ('  'x$nesting_level) . $child->name);
     }
@@ -295,8 +331,9 @@ sub _display_workflow_child {
     if ($self->depth < 0 || $nesting_level < $self->depth) {
         if ($child->can('related_instances')) {
             for my $subchild ($child->related_instances) {
-                $self->_display_workflow_child($subchild,
-                    $datetime_parser, $nesting_level + 1);
+                $self->_display_workflow_child($handle, $subchild,
+                        $datetime_parser, $nesting_level + 1,
+                        $failed_workflow_steps);
             }
         }
     }
@@ -382,19 +419,7 @@ sub _format_dispatch_id {
     if($dispatch_id =~ /shortcut/) {
         $dispatch_id = $self->_color($dispatch_id, 'white');
     }
-    return $dispatch_id 
-}
-
-sub _color {
-    my $self = shift;
-    my $text = shift;
-
-    my $result;
-    if ($self->color) {
-        return Term::ANSIColor::colored($text, @_);
-    }
-    return $text
-
+    return $dispatch_id
 }
 
 sub _status_color {
@@ -440,7 +465,7 @@ sub _strip_key {
 
 sub _color_heading {
     my ($self, $text) = @_;
-    return $self->_color_dim('=== ') . $self->_color($text, 'bold') . 
+    return $self->_color_dim('=== ') . $self->_color($text, 'bold') .
         $self->_color_dim(' ===');
 }
 
@@ -468,14 +493,13 @@ sub _resolve_duration {
 
 sub _pad_left {
     my ($self, $arg, $length) = @_;
+    return justify($arg, 'right', $length);
 
-    return sprintf("% $length"."s", $arg);
 }
 
 sub _pad_right {
     my ($self, $arg, $length) = @_;
-
-    return sprintf("%-$length"."s", $arg);
+    return justify($arg, 'left', $length);
 }
 
 sub _clean_up_timestamp {

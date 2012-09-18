@@ -506,11 +506,17 @@ sub getFiles{
     my $cnv_gain_annot_file_name = "cnv.AllGenes_Ensembl58.amp.tsv";
     my $cnv_gain_drug_file_name = "cnv.AllGenes_Ensembl58.amp."."$filter_name".".tsv";
 
-    my $annot_file_path = $topdir . "cnv/$cnv_gain_annot_file_name";
-    my $drug_file_path = $topdir . "cnv/dgidb/$dgidb_subdir_name/$cnv_gain_drug_file_name";
-    if (-e $annot_file_path && -e $drug_file_path){
-      $files{$final_name}{cnv_gain}{annot_file_path} = $annot_file_path;
-      $files{$final_name}{cnv_gain}{drug_file_path} = $drug_file_path;
+    my $annot_file_path1 = $topdir . "cnv/$cnv_gain_annot_file_name";
+    my $drug_file_path1 = $topdir . "cnv/dgidb/$dgidb_subdir_name/$cnv_gain_drug_file_name";
+    my $annot_file_path2 = $topdir . "cnv/cnview/$cnv_gain_annot_file_name";
+    my $drug_file_path2 = $topdir . "cnv/cnview/dgidb/$dgidb_subdir_name/$cnv_gain_drug_file_name";
+
+    if (-e $annot_file_path1 && -e $drug_file_path1){
+      $files{$final_name}{cnv_gain}{annot_file_path} = $annot_file_path1;
+      $files{$final_name}{cnv_gain}{drug_file_path} = $drug_file_path1;
+    }elsif(-e $annot_file_path2 && -e $drug_file_path2){
+      $files{$final_name}{cnv_gain}{annot_file_path} = $annot_file_path2;
+      $files{$final_name}{cnv_gain}{drug_file_path} = $drug_file_path2;      
     }else{
       print RED, "\n\nCould not find CNV drug-gene and annotation files for $final_name ($subject_name - $subject_common_name) in:\n\t$build_directory\n\n", RESET;
       exit(1);
@@ -520,8 +526,8 @@ sub getFiles{
     my $rna_cufflinks_annot_file_name = "isoforms.merged.fpkm.expsort.top1percent.tsv";
     my $rna_cufflinks_drug_file_name = "isoforms.merged.fpkm.expsort.top1percent."."$filter_name".".tsv";
 
-    $annot_file_path = $topdir . "rnaseq/tumor/cufflinks_absolute/isoforms_merged/$rna_cufflinks_annot_file_name";
-    $drug_file_path = $topdir . "rnaseq/tumor/cufflinks_absolute/isoforms_merged/dgidb/$dgidb_subdir_name/$rna_cufflinks_drug_file_name";
+    my $annot_file_path = $topdir . "rnaseq/tumor/cufflinks_absolute/isoforms_merged/$rna_cufflinks_annot_file_name";
+    my $drug_file_path = $topdir . "rnaseq/tumor/cufflinks_absolute/isoforms_merged/dgidb/$dgidb_subdir_name/$rna_cufflinks_drug_file_name";
     if (-e $annot_file_path && -e $drug_file_path){
       $files{$final_name}{rna_cufflinks_absolute}{annot_file_path} = $annot_file_path;
       $files{$final_name}{rna_cufflinks_absolute}{drug_file_path} = $drug_file_path;

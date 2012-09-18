@@ -35,6 +35,8 @@
       <xsl:with-param name="icon" select="'genome_model_build_32'" />
     </xsl:call-template>
 
+    <span style="visibility:hidden" id="build_id"><xsl:value-of select="/build-status/build/@build-id"/></span>
+
     <div class="content rounded shadow">
       <div class="container">
         <div id="objects" class="span-24 last">
@@ -670,6 +672,13 @@
               </td>
             </tr>
 
+            <tr>
+              <td class="name">disk usage:
+              </td>
+              <td class="value">
+                <div id="disk-summary">loading...</div>
+              </td>
+            </tr>
 
           </tbody>
         </table>

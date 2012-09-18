@@ -28,6 +28,8 @@ class Genome::Model::Tools::BwaSw::AlignToGenome {
 		output_file	=> { is => 'Text', doc => "Output file for Ssaha2 alignments" },
                 reference	=> { is => 'Text', doc => "Path to ssaha-indexed reference [Defaults to Hs36]", is_optional => 1 },
                 bwa_params	=> { is => 'Text', doc => "Options for bwa-sw [none]", is_optional => 1 },
+                bwa_path	=> { is => 'Text', doc => "Path to BWA version to use", is_optional => 0, default => '/gsc/pkg/bio/bwa/bwa-0.5.9-64/bwa' },
+		
 	],
 };
 
@@ -106,7 +108,7 @@ sub execute {                               # replace with real execution logic.
 	print "FQ file: $fq_file\n";
 
 	print "Aligning $fq_file to $reference\n";
-	system("bsub -q apipe -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_file.log \"bwa bwasw $bwa_params $reference $fq_file > $output_file\"");
+	system("bsub -q long -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $output_file.log \"" . $self->bwa_path . " bwasw $bwa_params $reference $fq_file > $output_file\"");
 #	system("ssaha2 $bwa_params -outfile $output_file -save $reference $fq_file");
 	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }

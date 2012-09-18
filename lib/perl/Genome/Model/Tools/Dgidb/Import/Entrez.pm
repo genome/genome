@@ -18,7 +18,7 @@ class Genome::Model::Tools::Dgidb::Import::Entrez {
         genes_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/tmp/Entrez_WashU_TARGETS.tsv',
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/Entrez_WashU_TARGETS.tsv',
             doc => 'PATH.  Path to .tsv file for genes (targets)',
         },
         gene_info_file => {
@@ -85,7 +85,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import entrez --entrez-dir ./gene-info --version 3
+gmt dgidb import entrez --gene_info_file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene_info --gene2accession_file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene2accession.gz  --version 3
 HELP
 }
 

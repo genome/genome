@@ -61,7 +61,7 @@ sub dbsnp_build_for_reference {
     my $reference = shift;
     my $id;
     if ($reference->id eq "102671028" or $reference->id eq "106942997") {
-        $id = 106375969;
+        $id = 127786607;
     }
     elsif ($reference->id eq "107494762" or $reference->id eq "104420993") {
         $id = 127031265;

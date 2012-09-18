@@ -30,7 +30,7 @@ class Genome::Model::Tools::Dgidb::Import::Dgene {
         genes_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/tmp/dGene_WashU_TARGETS.tsv',
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/dGene_WashU_TARGETS.tsv',
             doc => 'PATH.  Path to .tsv file for genes (targets)',
         },
         version => {

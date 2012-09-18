@@ -75,7 +75,7 @@ sub _doc_license {
     return <<EOS
 Copyright (C) $y[0]-$y[1] Washington University in St. Louis.
 
-It is released under the Lesser GNU Public License (LGPL) version 3.  See the 
+MuSiC is released under the Lesser GNU Public License (LGPL) version 3.  See the 
 associated LICENSE file in this distribution.
 EOS
 }
@@ -85,8 +85,7 @@ sub _doc_authors {
 This software is developed by the analysis and engineering teams at 
 The Genome Institute at Washington University School of Medicine in St. Louis.
 
-It is funded by the National Human Genome Research Institute, Richard K. Wilson, P.I.,
-and by the National Institutes of Health, Grant #U01HG006517, Li Ding, P.I.
+Development of MuSiC is funded by the National Human Genome Research Institute, grants #U54HG003079 (PI Richard K. Wilson) and #U01HG006517 (Co-PI's Li Ding and David J. Dooling).
 
 If you find MuSiC to be useful, please consider citing the reference that describes this work:
 

@@ -6,6 +6,8 @@ use strict;
 use Genome;
 use Workflow;
 
+use Config::IniFiles;
+
 #Basic running of Strelka
 #cd /gscmnt/gc2142/techd/analysis/strelka/all_chrs/
 #cp /gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/strelka_workflow/strelka/etc/strelka_config_bwa_default.ini .
@@ -48,33 +50,6 @@ sub _detect_variants {
 
     my $output_dir = $self->_temp_staging_directory;
 
-    #TODO:
-    #Parse the params string specified when the strelka method is called (this will come from the snv_detection_strategy in the processing profile) or by setting
-    #In the processing profile, the snv_detection_strategy will look something like this: strelka 0.4.6.2 [params string]
-    #Instead actually passing this string through to a strelka command-line command, parse this string, produce a custom config file, and copy that to the working dir instead of the default one
-
-    #It seems that the most compact Strelka config file looks something like this (with bwa default 0.4.6.2 values):
-    #[user]
-    #isSkipDepthFilters = 0
-    #depthFilterMultiple = 3.0
-    #snvMaxFilteredBasecallFrac = 0.4
-    #snvMaxSpanningDeletionFrac = 0.75
-    #indelMaxRefRepeat = 8
-    #indelMaxWindowFilteredBasecallFrac = 0.3
-    #indelMaxIntHpolLength = 14
-    #ssnvPrior = 0.000001
-    #sindelPrior = 0.000001
-    #ssnvNoise = 0.0000005
-    #sindelNoise = 0.000001
-    #ssnvNoiseStrandBiasFrac = 0.5
-    #minTier1Mapq = 20
-    #ssnvQuality_LowerBound = 15
-    #sindelQuality_LowerBound = 30
-    #isWriteRealignedBam = 0
-    #binSize = 25000000
-    #extraStrelkaArguments =
-
-    #The order of the options above does not seem to matter
     #Note that all additional arguments to Strelka must be passed to Strelka as a single string using the 'extraStrelkaArguments =' line
     #For example, you could do:
     #extraStrelkaArguments = -used-allele-count-min-qscore 30 -min-qscore 10
@@ -82,32 +57,26 @@ sub _detect_variants {
     #/gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/strelka_workflow/strelka/bin/strelka
     #Note that there are many possible additional arguments!
 
-    my $params_string = $self->params;
-    #If the params are defined, use these to create a Strelka config otherwise use a default string
-    if ($params_string){
-      #Perform basic sanity checks of the params string
-      #TODO: Sanity checking of params may need to be Strelka version specific
-
-    }else{
-      #TODO: The default params string may need to be Strelka version specific (implement something similar to the strelka_path)
-      #Or perhaps we should not allow it to be left empty...
-      $params_string = "isSkipDepthFilters = 0;depthFilterMultiple = 3.0;snvMaxFilteredBasecallFrac = 0.4;snvMaxSpanningDeletionFrac = 0.75;indelMaxRefRepeat = 8;indelMaxWindowFilteredBasecallFrac = 0.3;indelMaxIntHpolLength = 14;ssnvPrior = 0.000001;sindelPrior = 0.000001;ssnvNoise = 0.0000005;sindelNoise = 0.000001;ssnvNoiseStrandBiasFrac = 0.5;minTier1Mapq = 20;ssnvQuality_LowerBound = 15;sindelQuality_LowerBound = 30;isWriteRealignedBam = 0;binSize = 25000000;extraStrelkaArguments =";
+    # Update the default parameters with those passed in.
+    my $default_config_filename = join("/", $self->strelka_path,
+                qw(strelka_workflow strelka etc strelka_config_bwa_default.ini));
+    my $working_config_filename = join("/", $output_dir, "strelka_config.ini");
+    my %params = parse_params($self->params);
+    my $config_file = Config::IniFiles->new(-file=>$default_config_filename);
+    for my $key (keys %params) {
+        unless($config_file->setval('user', $key, $params{$key})) {
+            $self->error_message("$key is an invalid parameter to Strelka.");
+            Carp::croak($self->error_message());
+        }
     }
-    #Prepend the '[user]' field at the beginning of the params string
-    $params_string = "[user];" . $params_string;
-
-    my $strelka_working_config_file = $output_dir . "/strelka_config.ini";
-    my @strelka_params = split(";", $params_string);
-
-    my $strelka_working_config = IO::File->new(">$strelka_working_config_file");
-    $strelka_working_config->print(join("\n", @strelka_params));
+    $config_file->WriteConfig($working_config_filename);
 
     #Run the strelka configuration step that checks your input files and prepares a Makefile
     my $cmd = $self->strelka_path . "/strelka_workflow/configureStrelkaWorkflow.pl" 
                                    . " --tumor " . $self->aligned_reads_input 
                                    . " --normal " . $self->control_aligned_reads_input 
                                    . " --ref " . $self->reference_sequence_input 
-                                   . " --config $strelka_working_config_file"
+                                   . " --config $working_config_filename"
                                    . " --output-dir $output_dir/output";
     Genome::Sys->shellcmd( cmd=>$cmd,
                            input_files=>[$self->aligned_reads_input, $self->control_aligned_reads_input], 
@@ -207,6 +176,18 @@ sub has_version {
         return 1;
     }
     return 0;
+}
+
+sub parse_params {
+    my ($string) = @_;
+
+    my @kv_pairs = split(";", $string);
+    my %result;
+    for my $kv_pair (@kv_pairs) {
+        my ($key, $value) = split(/\s*=\s*/, $kv_pair);
+        $result{$key} = $value;
+        }
+    return %result;
 }
 
 1;

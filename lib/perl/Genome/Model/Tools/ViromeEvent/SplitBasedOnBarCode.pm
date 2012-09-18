@@ -372,6 +372,11 @@ sub _filter_fasta_file {
 	    $self->log_event("No valid sequence left after clipping barcode sequence for ".$seq->primary_id);
 	    next;
 	}
+        #NOT ENOUGH SEQUENCE LEFT FOR FURTHER PROCESSING
+        if ( not length $read_seq >= 10 ) {
+            $self->log_event('Skipping '.$seq->primary_id.' only '.(length $read_seq).' bases remain after clipping pb sequence');
+            next;
+        }
 	#IF 5' AND 3' PRIMER B MATCHES
 	if ($found_5prime_pb && $found_3prime_pb) {
 	    $metrics->{reads_with_3and5prime_pb}++;

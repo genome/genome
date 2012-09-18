@@ -20,6 +20,8 @@ class Genome::Model::Command::Services::AssignQueuedInstrumentData {
             doc         => 'Max # of instrument data to process in one invocation.',
         },
         _max_instrument_data_to_process => {
+            is_optional => 1,
+            is_calculated => 1,
             calculate_from => [qw/ max_pses max_instrument_data_to_process /],
             calculate => q| 
                 return ( $max_pses < $max_instrument_data_to_process )
@@ -79,6 +81,8 @@ EOS
 
 sub execute {
     my $self = shift;
+
+    GSC::PSE->class;
 
     unless ( $ENV{UR_DBI_NO_COMMIT} ) {
         my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/genome_model_command_services_assign-queued-instrument-data/loader';
@@ -503,7 +507,10 @@ sub _load_instrument_data {
     );
     my %instrument_data;
     for my $status_attr ( @status_attrs ) {
-        my $instrument_data = Genome::InstrumentData->get($status_attr->instrument_data_id);
+        my $instrument_data = Genome::InstrumentData->get(
+            id => $status_attr->instrument_data_id,
+            -hint => [ 'sample', 'sample.source', 'sample.source.taxon', ],
+        );
         my $fail_cnt = eval{ $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value; };
         $instrument_data->{_priority} = ( $fail_cnt ? $fail_cnt : 0 ); # if it does not have a fail count, treat as new
         $instrument_data{ $instrument_data->id } = $instrument_data;
@@ -540,37 +547,7 @@ sub _load_instrument_data {
     }
     $self->status_message('Processing '.@instrument_data_to_process.' instrument data');
 
-    # Preload or whatever
-    $self->preload_data(@instrument_data_to_process);
-
     return @instrument_data_to_process;
-}
-
-#for efficiency--load these together instead of separate queries for each one
-sub preload_data {
-    my ($self, @instrument_data) = @_;
-
-    my @samples = map { $_->sample } @instrument_data;
-    $self->status_message("Pre-loading models for " . scalar(@samples) . " samples");
-    my @models = Genome::Model->get(subject_id => [ map { $_->id } @samples ]);
-    $self->status_message("  got " . scalar(@models) . " models");
-
-    my %taxon_ids = map { $_->attribute_value => 1 }
-    grep(
-        $_->attribute_value,
-        Genome::SubjectAttribute->get(attribute_label => 'taxon_id', subject_id => [map($_->id, @samples)])
-    );
-    my @taxon_ids = sort keys %taxon_ids;
-    $self->status_message("Pre-loading models for " . scalar(@taxon_ids) . " taxons");
-    push @models, Genome::Model->get(subject_id => \@taxon_ids);
-    $self->status_message("  got " . scalar(@models) . " models");
-
-    if(scalar @models > 0) {
-        $self->status_message("Pre-loading instrument data inputs for " . scalar(@models) . " models");
-        my @instrument_data_inputs = Genome::Model::Input->get(model_id => [ map { $_->id } @models ]);
-    }
-
-    return 1;
 }
 
 sub _check_instrument_data {

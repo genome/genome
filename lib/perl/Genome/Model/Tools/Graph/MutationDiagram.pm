@@ -13,22 +13,32 @@ class Genome::Model::Tools::Graph::MutationDiagram {
             type => 'String',
             doc => "Annotator output.  Requires --reference-transcripts option",
         },
+        annotation_format => {
+            type => 'String',
+            doc => "annotation file format",
+            valid_values => ["tgi", "vep"],
+            default_value => "tgi",
+        },
         reference_transcripts => {
             type => 'String',
             doc => 'name/version number of the reference transcripts set ("NCBI-human.combined-annotation/0") Defaults to "NCBI-human.combined-annotation/54_36p_v2"',
             default => 'NCBI-human.combined-annotation/54_36p_v2',
         },
-        genes   => { 
-            type => 'String',  
-            doc => "comma separated list of (hugo) gene names (uppercase)--default is ALL", 
+        genes  => {
+            type => 'String',
+            doc => "comma separated list of (hugo) gene names (uppercase)--default is ALL",
             is_optional => 1
         },
-        custom_domains   => { 
-            type => 'String',  
-            doc => "comma separated list of protein domains to add. Expects triplets of name,start,end.", 
+        custom_domains   => {
+            type => 'String',
+            doc => "comma separated list of protein domains to add. Expects triplets of name,start,end.",
             is_optional => 1
         },
-
+        output_directory => {
+            type => 'Text',
+            doc => 'The output directory to write .svg files in',
+            default => '.',
+        }
     ],
     has_optional => [
     ],
@@ -51,15 +61,16 @@ EOS
 }
 
 sub execute {
-    $DB::single = $DB::stopper;
     my $self = shift;
     my $anno_file = $self->annotation;
     if($anno_file) {
         my $anno_obj = new Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram(
             annotation => $anno_file,
+            annotation_format => $self->annotation_format,
             hugos => $self->genes,
             custom_domains => $self->custom_domains,
             reference_transcripts => $self->reference_transcripts,
+            output_directory => $self->output_directory,
         );
     }
     else {

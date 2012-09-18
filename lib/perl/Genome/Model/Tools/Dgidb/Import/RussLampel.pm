@@ -187,6 +187,7 @@ sub import_genes {
         my $gene_name = $self->_create_gene_name_report($input->{'gene_stable_id'}, $citation, 'RussLampel_gene_stable_id', '');
         my $human_readable_name = $input->{'HumanReadableName'};
         $human_readable_name =~ s/-/ /g;
+        if ($human_readable_name eq 'RussLampel'){$human_readable_name="Druggable Genome";} #Create new generic category for such lists
         my $human_readable = $self->_create_gene_category_report($gene_name, 'human_readable_name', uc($human_readable_name), '');
         my $display_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'display_id'}, 'RussLampel_display_id', '');
         my $description = $self->_create_gene_alternate_name_report($gene_name, $input->{'description'}, 'RussLampel_description', '');
