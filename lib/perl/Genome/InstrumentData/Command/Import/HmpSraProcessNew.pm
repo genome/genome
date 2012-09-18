@@ -2,7 +2,7 @@ package Genome::InstrumentData::Command::Import::HmpSraProcessNew;
 
 use strict;
 use warnings;
-use above 'Genome';
+use Genome;
 use Cwd;
 use IO::File;
 use File::Basename;
