@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Genome;
 #bugfix version needs to be encoded as extra precision after the decimal point ie: .0401
-our $VERSION = '0.04';
+our $VERSION = '0.0401';
 
 class Genome::Model::Tools::Music {
     is => ['Command::Tree'],
