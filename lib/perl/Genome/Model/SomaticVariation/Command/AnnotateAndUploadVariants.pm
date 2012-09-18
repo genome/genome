@@ -115,10 +115,13 @@ sub execute{
                 $annotation_params{annotation_filter} = $annotation_filter;
 
                 # "None" will the be the default named output file, since annotated.none sounds a bit weird.
+                my $final_output_file;
                 if ($annotation_filter eq "none") {
-                    $annotation_params{output_file} = $annotated_file;
+                    $final_output_file = $annotated_file;
+                    $annotation_params{output_file} = $final_output_file.".non-dedup";
                 } else {
-                    $annotation_params{output_file} = "$annotated_file.$annotation_filter";
+                    $final_output_file = "$annotated_file.$annotation_filter";
+                    $annotation_params{output_file} = "$final_output_file.non-dedup";
                 }
 
                 $self->status_message("Creating TranscriptVariants object with parameters: " . Dumper \%annotation_params);
@@ -134,6 +137,20 @@ sub execute{
                 unless(-s $annotation_params{output_file}){
                     die $self->error_message("No output from annotate command for $key. Params:\n" . Data::Dumper::Dumper(\%annotation_params));
                 }
+                #Deduplicate the annotation file
+                my $in = Genome::Sys->open_file_for_reading($annotation_params{output_file});
+                my $output = Genome::Sys->open_file_for_writing($final_output_file);
+                my %seen;
+                while(my $line = <$in>) {
+                    chomp $line;
+                    if ($seen{$line}) {
+                        next;
+                    }
+                    $seen{$line} = 1;
+                    print $output $line."\n";
+                }
+                $in->close;
+                $output->close;
             }
 
             my %upload_params = (
