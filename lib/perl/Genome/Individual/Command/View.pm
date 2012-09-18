@@ -3,20 +3,14 @@ package Genome::Individual::Command::View;
 use strict;
 use warnings;
 
-BEGIN {
-    $ENV{UR_DBI_NO_COMMIT} = 1;
-};
-
 use Genome;
-use Term::ReadKey "GetTerminalSize";
 use List::Util "first";
 use List::MoreUtils "uniq";
-use IO::Handle;
 use Genome::Utility::Text qw(justify side_by_side);
 
 class Genome::Individual::Command::View {
     doc => "Display basic information about an individual.",
-    is => 'Command::V2',
+    is => 'Genome::Command::Viewer',
     has => [
         individual => {
             is => 'Genome::Individual',
@@ -34,12 +28,6 @@ class Genome::Individual::Command::View {
             is_many => 1,
             is_optional => 1,
             doc => 'If --filter-by-processing-profiles, then only show models with these processing-profiles',
-        },
-        color => {
-            is => 'Boolean',
-            is_optional => 1,
-            default_value => 1,
-            doc => 'Display report in color.',
         },
     ],
 };
@@ -60,47 +48,31 @@ EOP
     return $result;
 }
 
-sub execute {
-    my ($self) = @_;
-
-    my ($screen_width) = GetTerminalSize();
-    my $handle = new IO::Handle;
-    STDOUT->autoflush(1);
-    $handle->fdopen(fileno(STDOUT), 'w');
-
-    $self->write_report($screen_width, $handle);
-    1;
-}
-
-sub get_report {
-    my ($self, $width) = @_;
-
-    my $handle = new IO::String;
-    $self->write_report($width, $handle);
-    my $report = ${$handle->string_ref};
-    $handle->close();
-
-    return $report;
-}
-
 sub write_report {
     my ($self, $width, $handle) = @_;
 
+    $self->_resolve_default_processing_profiles();
     $self->_write_basic_info($width, $handle);
-    my $sample_lines = {};
-    $self->_write_sample_info($width, $handle, $sample_lines);
-    $self->_write_model_info($width, $handle, $sample_lines);
+    $self->_write_sample_info($width, $handle);
+    $self->_write_model_info($width, $handle);
 }
 
-sub _color {
-    my $self = shift;
-    my $string = shift;
+sub _resolve_default_processing_profiles {
+    my ($self) = @_;
+    return if defined($self->processing_profiles);
 
-    if($self->color) {
-        return Term::ANSIColor::colored($string, @_);
-    } else {
-        return $string;
+    my @default_pp_ids = (
+            2635769, # reference-alignment
+            2756469, # whole genome somatic variation
+            2756470, # exome somatic variation
+            2754795, # rna-seq
+            2649924, # clin-seq
+            );
+    my @pps;
+    for my $pp_id (@default_pp_ids) {
+        push(@pps, Genome::ProcessingProfile->get($pp_id));
     }
+    $self->processing_profiles(\@pps);
 }
 
 sub _write_basic_info {
@@ -165,7 +137,7 @@ sub _get_attributes {
 }
 
 sub _write_sample_info {
-    my ($self, $width, $handle, $sample_lines) = @_;
+    my ($self, $width, $handle) = @_;
 
     my $ind = $self->individual;
     my @samples = $ind->samples;
@@ -176,18 +148,22 @@ sub _write_sample_info {
         return;
     }
 
-    my $hformat = $self->_color("%-12s %-27s  %-14s %-12s", 'bold') . "\n";
+    my $hformat = $self->_color("%6s %-12s %-27s  %-14s %-12s", 'bold') . "\n";
     my $centered_str = justify(" -- Instrument Data --", 'center', 27);
-    my $header = sprintf($hformat, " ", $centered_str, "Extraction", "Common");
-    $header .= sprintf($hformat, 'Sample ID', 'wgs exome rna other unknown',
+    my $header = sprintf($hformat, " ", " ", $centered_str, "Extraction", "Common");
+    $header .= sprintf($hformat, " ", 'Sample ID', 'wgs exome rna other unknown',
             'Type', 'Name');
-    $sample_lines->{header} = $header;
     printf $handle $header;
 
+    my $i = 0;
     for my $sample (@samples) {
-        my $line = justify($sample->id, 'left', 12);
-
+        $i += 1;
+        my $line = justify("$i)", 'right', 6);
         $line .= " ";
+
+        $line .= justify($sample->id, 'left', 12);
+        $line .= " ";
+
         my @counts = _get_instrument_data_counts($sample);
         $line .= justify($counts[0], 'right', 3, '.', '');
         $line .= " ";
@@ -213,7 +189,6 @@ sub _write_sample_info {
         }
         $line .= justify($common_name, 'left', 12);
         print $handle "$line\n";
-        $sample_lines->{$sample->id} = $line;
     }
     return;
 }
@@ -271,7 +246,7 @@ sub _in {
 }
 
 sub _write_model_info {
-    my ($self, $width, $handle, $sample_lines) = @_;
+    my ($self, $width, $handle) = @_;
 
     my $ind = $self->individual;
     my @samples = $ind->samples;
@@ -279,7 +254,16 @@ sub _write_model_info {
 
     printf $handle "\n=== %s ===\n",
             $self->_color("Model Information", 'bold');
+    if($self->filter) {
+        my @pp_ids = map {$_->id} $self->processing_profiles;
+        printf $handle "* Only showing models with the following ".
+                "processing-profiles:\n    %s\n",
+                join(", ", @pp_ids);
+    }
+
+    my $i = 0;
     for my $sample (@samples) {
+        $i += 1;
         my @models = $sample->models;
         next unless scalar(@models);
 
@@ -291,8 +275,7 @@ sub _write_model_info {
         }
 
         next unless scalar(@filtered_models);
-        print $handle $sample_lines->{header};
-        print $handle $sample_lines->{$sample->id} . "\n";
+        printf $handle "For sample %s)\n", $i;
 
         my $header = sprintf("    %s %s %s %s %s",
                 justify("Model ID", 'left', 12),
@@ -329,7 +312,6 @@ sub _write_model_info {
             printf $handle "    + %s models with other processing-profiles.\n",
                     $num_filtered_out;
         }
-        print $handle "\n";
     }
 }
 
