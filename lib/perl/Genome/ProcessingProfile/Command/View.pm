@@ -140,27 +140,13 @@ sub _write_strategies {
                         $self->_color($strategy_str, 'bold'));
             }
             when('raw-tree') {
-                my $tree = _get_strategy_tree($strategy_str);
-                if($tree) {
-                    $formatted_strategy_str =
-                            tree_to_string($tree);
-                } elsif($strategy_str) {
-                    $formatted_strategy_str =
-                        $self->_color("Error parsing strategy!", 'red');
-                }
-                $formatted_strategy_str = "$name\n" . $formatted_strategy_str;
+                $formatted_strategy_str = $self->_format_tree(
+                        $name, $strategy_str, 1);
+
             }
             when('condensed-tree') {
-                my $tree = _get_strategy_tree($strategy_str);
-                if($tree) {
-                    $formatted_strategy_str =
-                            tree_to_condensed_string(
-                            _format_tree($tree));
-                } elsif($strategy_str) {
-                    $formatted_strategy_str =
-                        $self->_color("Error parsing strategy!", 'red');
-                }
-                $formatted_strategy_str = "$name\n" . $formatted_strategy_str;
+                $formatted_strategy_str = $self->_format_tree(
+                        $name, $strategy_str, 0);
             }
         }
         $formatted_strategy_str = strip_color(
@@ -174,6 +160,210 @@ sub _write_strategies {
             max_width => $width,
             stack => 1,
     );
+}
+
+our %STRATEGY_PARSERS = (
+    alignment_strategy => \&_get_alignment_strategy_tree,
+    snv_detection_strategy => \&_get_dv2_strategy_tree,
+    sv_detection_strategy => \&_get_dv2_strategy_tree,
+    indel_detection_strategy => \&_get_dv2_strategy_tree,
+    cnv_detection_strategy => \&_get_dv2_strategy_tree,
+);
+
+our %STRATEGY_FORMATTERS = (
+    alignment_strategy => \&_format_alignment_strategy_tree,
+    snv_detection_strategy => \&_format_dv2_strategy_tree,
+    sv_detection_strategy => \&_format_dv2_strategy_tree,
+    indel_detection_strategy => \&_format_dv2_strategy_tree,
+    cnv_detection_strategy => \&_format_dv2_strategy_tree,
+);
+
+sub _format_tree {
+    my ($self, $name, $strategy_str, $raw) = @_;
+
+    my $parser = $STRATEGY_PARSERS{$name};
+    unless(defined($parser)) {
+        my $warning = "I don't know how to parse this strategy type...";
+        return sprintf("%s\n  %s\n  %s", $name,
+                    $self->_color($warning, 'red'), $strategy_str);
+    }
+
+    my $tree = $parser->($strategy_str);
+    my $result;
+    if($tree) {
+        if($raw) {
+            $result = tree_to_string($tree);
+        } else {
+            my $formatter = $STRATEGY_FORMATTERS{$name};
+            my $formatted_tree = $formatter->($tree, $strategy_str);
+            $result = tree_to_condensed_string($formatted_tree);
+        }
+    } elsif($strategy_str) {
+        $result = $self->_color("Error parsing strategy!", 'red');
+    }
+    $result = "$name\n" . $result;
+
+    return $result;
+}
+
+sub _get_alignment_strategy_tree {
+    my ($strategy_str) = @_;
+
+    my $strategy = Genome::InstrumentData::Composite::Strategy->create(strategy=>$strategy_str);
+    my $tree = $strategy->execute();
+    $strategy->delete();
+    return $tree;
+}
+
+sub _format_alignment_strategy_tree {
+    my ($tree, $strategy_str) = @_;
+
+    my $actions = [];
+    _mine_tree_for_type($tree, 'type', $actions);
+
+    my $names = [];
+    _mine_tree_for_type($tree, 'name', $names);
+
+    my %color_dict;
+    for my $key (@{$actions}) {
+        $color_dict{$key . 'd'} = 'bold magenta';
+        $color_dict{$key . 'ed'} = 'bold magenta';
+    }
+    for my $key (@{$names}) {
+        $color_dict{$key} = 'bold red';
+    }
+
+    my @words = split(/\s/, $strategy_str);
+    my @formatted_words;
+    for my $word (@words) {
+        if($word eq 'then') {
+            push(@formatted_words, sprintf("\n    %s", $word));
+        } elsif($color_dict{$word}) {
+            my $color = $color_dict{$word};
+            push(@formatted_words, Term::ANSIColor::colored($word, $color));
+        } else {
+            push(@formatted_words, $word);
+        }
+    }
+    return join(' ', @formatted_words);
+}
+
+sub _mine_tree_for_type {
+    my ($tree, $name, $bucket) = @_;
+
+    if(ref($tree) eq 'HASH') {
+        for my $key (keys %{$tree}) {
+            if($key eq $name) {
+                push(@{$bucket}, $tree->{$key});
+            } else {
+                _mine_tree_for_type($tree->{$key}, $name, $bucket);
+            }
+        }
+    } elsif(ref($tree) eq 'ARRAY') {
+        for my $item (@{$tree}) {
+            _mine_tree_for_type($item, $name, $bucket);
+        }
+    }
+    return;
+}
+
+sub _get_dv2_strategy_tree {
+    my ($strategy_str) = @_;
+
+    my $strategy = Genome::Model::Tools::DetectVariants2::Strategy->create($strategy_str);
+    my $tree = $strategy->parse($strategy_str);
+    $strategy->delete();
+    return $tree;
+}
+
+sub _format_dv2_strategy_tree {
+    my ($tree) = @_;
+
+    my @result;
+    my @keys = keys %{$tree};
+    for my $key (sort(@keys)) {
+        if($key eq 'detector') {
+            my $detector_info = $tree->{$key};
+            delete $tree->{detector};
+            my ($new_key, $new_value) = _format_detector($detector_info);
+            $tree->{$new_key} = $new_value;
+        } else {
+            my @steps = @{$tree->{$key}};
+            my @new_value;
+            for my $step (@steps) {
+                push(@new_value, _format_dv2_strategy_tree($step));
+            }
+            delete $tree->{$key};
+            $key = Term::ANSIColor::colored($key, 'bold magenta');
+            $tree->{$key} = \@new_value;
+        }
+    }
+    return $tree;
+}
+
+sub _format_detector {
+    my ($detector_info) = @_;
+
+    my $name = $detector_info->{name};
+    my $version = $detector_info->{version};
+    my $param_str = $detector_info->{params};
+    my $new_key = Term::ANSIColor::colored($name, "bold cyan") .
+                  Term::ANSIColor::colored(" $version", 'bold');
+    my @new_value;
+    if($new_key =~ m/strelka/) { #TODO make this less specific
+        # show params for filters differently than for detectors... apparently
+        # in DV2 the detectors don't have a particular format for their params,
+        # it is just detector specific, whereas filters are all command style
+        # params.
+        use Genome::Model::Tools::DetectVariants2::Strelka;
+        my %params = Genome::Model::Tools::DetectVariants2::Strelka::parse_params($param_str);
+        push(@new_value, _format_params(\%params));
+    } else {
+        if($param_str) {
+            my $display_str = sprintf("params: %s",
+                    Term::ANSIColor::colored($param_str, 'bold'));
+            push(@new_value, $display_str);
+        }
+    }
+    my @filters = @{$detector_info->{filters}};
+    for my $filter_info (@filters) {
+        my ($filter_name, $filter_value) = _format_filter($filter_info);
+        push(@new_value, {"filtered by $filter_name" => $filter_value});
+    }
+    return $new_key, \@new_value;
+}
+
+sub _format_filter {
+    my ($filter_info) = @_;
+
+    my $name = $filter_info->{name};
+    my $version = $filter_info->{version};
+    my $param_str = $filter_info->{params};
+    my $new_key = Term::ANSIColor::colored($name, "bold red") .
+                  Term::ANSIColor::colored(" $version", 'bold');
+    my $new_value = [];
+    if($param_str) {
+        $new_value = _format_params($param_str);
+    }
+    return $new_key, $new_value;
+}
+
+sub _format_params {
+    my ($params) = @_;
+
+    my %params;
+    if(ref($params) eq 'HASH') {
+        %params = %{$params};
+    } else {
+        %params = param_string_to_hash($params);
+    }
+
+    my @result;
+    for my $key (sort(keys %params)) {
+        my $value = Term::ANSIColor::colored($params{$key}, 'bold');
+        push(@result, sprintf("%s: %s", $key, $value));
+    }
+    return \@result;
 }
 
 sub _write_models {
@@ -203,7 +393,7 @@ sub _write_models {
                 my $status = $latest_build->status;
                 if(defined($status)) {
                     if($status eq 'Succeeded') {
-                        $color = 'green bold';
+                        $color = 'cyan bold';
                     } else {
                         $color = 'red bold';
                     }
@@ -281,105 +471,6 @@ sub _write_models {
                 " (see max-num-models-shown option)\n",
                 $models_shown, $num_models;
     }
-}
-
-sub _get_strategy_tree {
-    my ($strategy_str) = @_;
-
-    my $strategy = Genome::Model::Tools::DetectVariants2::Strategy->create($strategy_str);
-    my $tree = $strategy->parse($strategy_str);
-    $strategy->delete();
-    return $tree;
-}
-
-sub _format_tree {
-    my ($tree) = @_;
-
-    my @result;
-    my @keys = keys %{$tree};
-    for my $key (sort(@keys)) {
-        if($key eq 'detector') {
-            my $detector_info = $tree->{$key};
-            delete $tree->{detector};
-            my ($new_key, $new_value) = _format_detector($detector_info);
-            $tree->{$new_key} = $new_value;
-        } else {
-            my @steps = @{$tree->{$key}};
-            my @new_value;
-            for my $step (@steps) {
-                push(@new_value, _format_tree($step));
-            }
-            delete $tree->{$key};
-            $key = Term::ANSIColor::colored($key, 'bold magenta');
-            $tree->{$key} = \@new_value;
-        }
-    }
-    return $tree;
-}
-
-sub _format_detector {
-    my ($detector_info) = @_;
-
-    my $name = $detector_info->{name};
-    my $version = $detector_info->{version};
-    my $param_str = $detector_info->{params};
-    my $new_key = Term::ANSIColor::colored($name, "bold green") .
-                  Term::ANSIColor::colored(" $version", 'bold');
-    my @new_value;
-    if($new_key =~ m/strelka/) { #TODO make this less specific
-        # show params for filters differently than for detectors... apparently
-        # in DV2 the detectors don't have a particular format for their params,
-        # it is just detector specific, whereas filters are all command style
-        # params.
-        use Genome::Model::Tools::DetectVariants2::Strelka;
-        my %params = Genome::Model::Tools::DetectVariants2::Strelka::parse_params($param_str);
-        push(@new_value, _format_params(\%params));
-    } else {
-        if($param_str) {
-            my $display_str = sprintf("params: %s",
-                    Term::ANSIColor::colored($param_str, 'bold'));
-            push(@new_value, $display_str);
-        }
-    }
-    my @filters = @{$detector_info->{filters}};
-    for my $filter_info (@filters) {
-        my ($filter_name, $filter_value) = _format_filter($filter_info);
-        push(@new_value, {"filtered by $filter_name" => $filter_value});
-    }
-    return $new_key, \@new_value;
-}
-
-sub _format_filter {
-    my ($filter_info) = @_;
-
-    my $name = $filter_info->{name};
-    my $version = $filter_info->{version};
-    my $param_str = $filter_info->{params};
-    my $new_key = Term::ANSIColor::colored($name, "bold red") .
-                  Term::ANSIColor::colored(" $version", 'bold');
-    my $new_value = [];
-    if($param_str) {
-        $new_value = _format_params($param_str);
-    }
-    return $new_key, $new_value;
-}
-
-sub _format_params {
-    my ($params) = @_;
-
-    my %params;
-    if(ref($params) eq 'HASH') {
-        %params = %{$params};
-    } else {
-        %params = param_string_to_hash($params);
-    }
-
-    my @result;
-    for my $key (sort(keys %params)) {
-        my $value = Term::ANSIColor::colored($params{$key}, 'bold');
-        push(@result, sprintf("%s: %s", $key, $value));
-    }
-    return \@result;
 }
 
 
