@@ -17,9 +17,8 @@ use Test::More;
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
 
-my $qidfgm_cnt = 0;
-my $sample_cnt = 0;
-my (@samples, @instrument_data, @pses, @pse_params);
+my $cnt = 0;
+my (@samples, @instrument_data);
 no warnings;
 *Genome::InstrumentDataAttribute::get = sub {
     my ($class, %params) = @_;
@@ -35,7 +34,6 @@ no warnings;
     }
     return values %attrs;
 };
-sub GSC::PSE::get { return grep { not $_->completed } @pses; }
 use warnings;
 
 my @projects;
@@ -55,9 +53,8 @@ ok($bac_source->taxon, 'define pcgp taxon');
 my $pp_id = 2644306;
 my $pp = Genome::ProcessingProfile->get($pp_id);
 ok($pp, 'got pcgp pp');
-ok(_qidfgm($bac_source), 'create qidfgm for pcgp taxon');
-is(@instrument_data, $qidfgm_cnt, "create $qidfgm_cnt inst data");
-is(@pses, $qidfgm_cnt, "create $qidfgm_cnt pses");
+ok(_create_inst_data($bac_source), 'create inst data for pcgp taxon');
+is(@instrument_data, $cnt, "create $cnt inst data");
 
 my $cmd = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($cmd, 'create aqid');
@@ -91,27 +88,26 @@ is_deeply(
 done_testing();
 exit;
 
-sub _qidfgm {
+sub _create_inst_data {
     my $source = shift;
-    $qidfgm_cnt++;
-    $sample_cnt++;
+    $cnt++;
     my $sample = Genome::Sample->__define__(
-        name => 'AQID-testsample'.$sample_cnt.'.'.lc($source->taxon->name),
+        name => 'AQID-testsample'.$cnt.'.'.lc($source->taxon->name),
         source => $source,
         extraction_type => 'genomic',
     );
-    ok($sample, 'sample '.$sample_cnt);
+    ok($sample, 'sample '.$cnt);
     push @samples, $sample;
     my $library = Genome::Library->__define__(
         name => $sample->name.'-testlib',
         sample_id => $sample->id,
     );
-    ok($library, 'create library '.$qidfgm_cnt);
+    ok($library, 'create library '.$cnt);
 
     my $instrument_data = Genome::InstrumentData::Solexa->__define__(
         library_id => $library->id,
     );
-    ok($instrument_data, 'created instrument data '.$qidfgm_cnt);
+    ok($instrument_data, 'created instrument data '.$cnt);
     push @instrument_data, $instrument_data;
     $instrument_data->add_attribute(
         attribute_label => 'tgi_lims_status',
@@ -125,54 +121,6 @@ sub _qidfgm {
         );
     }
 
-    my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get(name => 'NCBI-human-build36');
-    my $pse = Test::MockObject->new();
-    $pse->set_always(id => $qidfgm_cnt - 10000);
-    $pse->set_always(pse_id => $qidfgm_cnt - 10000);
-    $pse->set_always(ps_id => 3733);
-    $pse->set_always(ei_id => '464681');
-    $pse->mock(pse_status => sub{ $pse->set_true('completed'); });
-    ok($pse, 'create pse '.$qidfgm_cnt);
-    $pse->mock(
-        add_param => sub{
-            my ($pse, $key, $value) = @_;
-            my $param = Test::MockObject->new();
-            push @pse_params, $param;
-            $param->set_always(pse_id => $pse->id);
-            $param->set_always(param_name => $key);
-            $param->set_always(param_value => $value);
-            return $param;
-        }
-    );
-    $pse->mock(
-        added_param => sub{
-            my ($pse, $key) = @_;
-            for my $param ( @pse_params ) {
-                return $param->param_value if $param->pse_id == $pse->id and $param->param_name eq $key;
-            }
-            return;
-        }
-    );
-    $pse->mock(
-        add_reference_sequence_build_param_for_processing_profile => sub {
-            return 1;
-        },
-    );
-    $pse->mock(
-       reference_sequence_build_param_for_processing_profile => sub {
-            return $ref_seq_build->id;
-       },
-    );
-    my %params = (
-        instrument_data_type => 'solexa',
-        instrument_data_id => $instrument_data->id,
-        subject_class_name => 'Genome::Sample',
-        subject_id => $sample->id,
-    );
-    for my $key ( keys %params ) {
-        $pse->add_param($key, $params{$key});
-    }
-    push @pses, $pse;
     return 1;
 }
 

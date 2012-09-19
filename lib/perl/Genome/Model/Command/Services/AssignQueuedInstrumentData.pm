@@ -65,8 +65,6 @@ EOS
 sub execute {
     my $self = shift;
 
-    GSC::PSE->class;
-
     unless ( $ENV{UR_DBI_NO_COMMIT} ) {
         my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/genome_model_command_services_assign-queued-instrument-data/loader';
 
@@ -92,50 +90,14 @@ sub execute {
 
         my $sequencing_platform = $instrument_data->sequencing_platform;
 
-        my @processing;
-        if ( defined $instrument_data->{_qidfgm} and 
-            my @processing_profile_ids = grep { defined } $instrument_data->{_qidfgm}->added_param('processing_profile_id') ) {
-            # FIXME: this can be removed after a short period of catch up
-            for my $processing_profile_id ( @processing_profile_ids ) {
-                my $processing_profile = Genome::ProcessingProfile->get($processing_profile_id);
-                unless ($processing_profile) {
-                    $self->error_message(
-                        "Failed to get processing profile $processing_profile_id' for on QIGFGM PSE! "
-                        .$instrument_data->{_qidfgm}->pse_id 
-                    );
-                    next INST_DATA;
-                }
-                my @reference_sequence_build_ids = $instrument_data->{_qidfgm}->reference_sequence_build_param_for_processing_profile($processing_profile);
-                if ( @reference_sequence_build_ids ) {
-                    my @reference_sequence_builds = Genome::Model::Build::ImportedReferenceSequence->get(@reference_sequence_build_ids);
-                    if ( not @reference_sequence_builds or @reference_sequence_builds != @reference_sequence_build_ids ) {
-                        $self->error_message('Failed to get all reference sequence builds for ids! '.join(' ', @reference_sequence_build_ids));
-                        next INST_DATA;
-                    }
-                    for my $reference_sequence_build ( @reference_sequence_builds ) {
-                        push @processing, {
-                            processing_profile => $processing_profile,
-                            reference_sequence_build => $reference_sequence_build,
-                        };
-                    }
-                }
-                else {
-                    push @processing, {
-                        processing_profile => $processing_profile,
-                    };
-                }
-            }
-        }
-        else {
-            @processing = $self->_resolve_processing_for_instrument_data($instrument_data);
-        }
-        my $subject = $instrument_data->sample;
+        my @processing = $self->_resolve_processing_for_instrument_data($instrument_data);
 
-        if ( $instrument_data->ignored ) {
+        if ( $instrument_data->ignored ) { # could be set in _resolve_processing_for_instrument_data
             $self->status_message('Skipping ignored instrument data! '.$instrument_data->id);
             next INST_DATA;
         }
 
+        my $subject = $instrument_data->sample;
         my @process_errors;
         if ( @processing ) {
             PP: foreach my $processing ( @processing ) {
@@ -168,6 +130,7 @@ sub execute {
                     next PP;
                 }
 
+
                 if(scalar(@assigned > 0)) {
                     #find or create default qc models if applicable
                     $self->create_default_qc_models(@assigned);
@@ -176,7 +139,6 @@ sub execute {
 
                 } else {
                     # no model found for this PP, make one (or more) and assign all applicable data
-                    $DB::single = $DB::stopper;
                     my @new_models = $self->create_default_models_and_assign_all_applicable_instrument_data($instrument_data, $subject, $processing_profile, $reference_sequence_build);
                     unless(@new_models) {
                         push @process_errors, $self->error_message;
@@ -261,10 +223,9 @@ sub execute {
     #schedule new builds for the models we found and stored in the output hashes
     $self->request_builds;
 
-    $self->status_message("Updating instrument data and QIDFGM PSEs...");
+    $self->status_message("Updating instrument data...");
     for my $instrument_data ( @instrument_data_to_process ) {
         if ( $instrument_data->{_processed_ok} or $instrument_data->ignored ) {
-            $instrument_data->{_qidfgm}->pse_status("completed") if defined $instrument_data->{_qidfgm};
             $self->_update_instrument_data_tgi_lims_status_to_processed($instrument_data);
         }
         else {
@@ -362,7 +323,6 @@ sub find_or_create_somatic_variation_models{
             $mate_params{target_region_set_name} = $model->target_region_set_name if $model->can('target_region_set_name') and $model->target_region_set_name;
             $mate_params{region_of_interest_set_name} = $model->region_of_interest_set_name if $model->can('region_of_interest_set_name') and $model->region_of_interest_set_name;
 
-            $DB::single = $DB::stopper;
             my ($mate) = Genome::Model::ReferenceAlignment->get( %mate_params );
             unless ($mate){
                 $mate = $model->copy(
@@ -501,18 +461,6 @@ sub _load_instrument_data {
     $self->status_message('Found '.scalar(grep { $_->{_priority} == 0 } values %instrument_data)." new instrument data\n");
     $self->status_message('Found '.scalar(grep { $_->{_priority} > 0 } values %instrument_data)." previously attempted instrument data\n");
 
-    $self->status_message('Get inprogress QIDFGM PSEs...');
-    my @qidfgms = GSC::PSE->get(
-        ps_id => 3733,
-        pse_status => 'inprogress',
-    );
-    my %qidfgms;
-    for my $qidfgm ( @qidfgms ) {
-        my ($instrument_data_id) = $qidfgm->added_param('instrument_data_id');
-        $qidfgms{$instrument_data_id} = $qidfgm;
-    }
-    $self->status_message('Found '.scalar(keys %qidfgms).' QIDFGM PSEs');
-
     $self->status_message('Filter instrument data we can process...');
     my $sorter = ( $self->newest_first )
     ? sub{ $a->{_priority} <=> $b->{_priority} or $a->id <=> $b->id } # oldest first, then failed
@@ -525,7 +473,6 @@ sub _load_instrument_data {
             $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);
             next;
         }
-        $instrument_data->{_qidfgm} = delete $qidfgms{ $instrument_data->id };
         push @instrument_data_to_process, $instrument_data;
     }
     $self->status_message('Processing '.@instrument_data_to_process.' instrument data');

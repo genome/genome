@@ -47,7 +47,6 @@ no warnings;
     }
     return values %attrs;
 };
-sub GSC::PSE::get { return; }
 sub GSC::Setup::WorkOrder::get { return $gsc_workorder; }
 use warnings;
 

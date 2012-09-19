@@ -89,14 +89,10 @@ use Genome::Site::TGI::Observers;
 
 # A white-list of GSC modules which can be used on the /usr/bin/perl interpreter
 my @lims_whitelist = (
-    'GSC::PSE::QueueInstrumentDataForGenomeModeling' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.t', 108],
-    ],
     'GSC::PSEParam' => [
         ['Genome/Model/Tools/Lims/ApipeBridge/InstrumentDataStatus.pm', 109],
     ],
     'GSC::PSE' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 68],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 89],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 118],
         ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForGenotype.pm', 25],
@@ -121,7 +117,9 @@ my @lims_whitelist = (
     'GSC::Setup::CaptureSet' => [
         ['Genome/Site/TGI/CaptureSet.pm', 104],
     ],
-
+    'GSC::Setup::WorkOrder' => [
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 1288],
+    ],
 );
 
 # re-structured for use in the autoloader callback:
