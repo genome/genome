@@ -10,52 +10,37 @@ use strict;
 use warnings;
 
 use above 'Genome';
-
 use Test::More;
 
-if (Genome::Config->arch_os ne 'x86_64') {
-    plan skip_all => 'requires 64-bit machine';
-}
-else {
-    plan tests => 8;
-}
-
 use_ok('Genome::Model::Tools::Relationship::MergeAndFixVcfs');
-my $version = "0.02";
 
-# TODO This test should define alignment results rather than relying on existing ones
+my $test_data_dir = $ENV{GENOME_TEST_INPUTS} .
+        '/Genome-Model-Tools-Relationship-MergeAndFixVcfs';
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Relationship-MergeAndFixVcfs';
+my $input_denovo = join('/', $test_data_dir, 'DS10000.denovo.vcf.gz');
+my $input_standard = join('/', $test_data_dir, 'DS10000.standard.vcf.gz');
+my $expected = join('/', $test_data_dir, 'DS10000.merged.vcf.gz');
 
+ok(-s $input_denovo, "input denovo vcf file output $input_denovo exists");
+ok(-s $input_standard,
+        "input standard vcf file output $input_standard exists");
+ok(-s $expected, "expected merged vcf file $expected exists");
 
-my $input_denovo_vcf_file = join('/', $test_data_dir, 'DS10000.denovo.vcf.gz');
-my $input_standard_vcf_file = join('/', $test_data_dir, 'DS10000.standard.vcf.gz');
-my $expected_merged_vcf = join('/', $test_data_dir, 'DS10000.merged.vcf.gz');
-
-ok(-s $input_denovo_vcf_file, "input denovo vcf file output $input_denovo_vcf_file exists");
-ok(-s $input_standard_vcf_file, "input standard vcf file output $input_standard_vcf_file exists");
-ok(-s $expected_merged_vcf, "expected merged vcf file $expected_merged_vcf exists");
-
-my $output_dir = File::Temp::tempdir('Relationship-MergeAndFixVcfsXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $output_dir = File::Temp::tempdir('Relationship-MergeAndFixVcfsXXXXX',
+        DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
 my $output_vcf = join('/', $output_dir, 'merged.output.vcf');
 
-
-my $filter_command = Genome::Model::Tools::Relationship::MergeAndFixVcfs->create(
-    denovo_vcf=> $input_denovo_vcf_file,
-    standard_vcf => $input_standard_vcf_file,
-    output_vcf => $output_vcf,
+my $cmd = Genome::Model::Tools::Relationship::MergeAndFixVcfs->create(
+        denovo_vcf=> $input_denovo,
+        standard_vcf => $input_standard,
+        output_vcf => $output_vcf,
 );
-
-$filter_command->dump_status_messages(1);
-isa_ok($filter_command, 'Genome::Model::Tools::Relationship::MergeAndFixVcfs', 'created filter command');
-ok($filter_command->execute(), 'executed filter command');
+ok($cmd->execute(), 'executed filter command');
 
 ok(-s $output_vcf, "denovo vcf output exists and has size");
+my $diff = Genome::Utility::Vcf::diff_vcf_file_vs_file(
+        $expected, $output_vcf);
+ok(!$diff, 'got expected results') or diag($diff);
 
-my $expected_merged_text = `zcat $expected_merged_vcf | grep -v '^##fileDate'`;
-my $test_merged_text = `zcat $output_vcf | grep -v '^##fileDate'`;
-`cp $output_vcf /gscuser/charris/git/new_pipeline/genome/lib/perl/Genome/Model/Tools/Relationship/`;
-my $output_merged_diff = Genome::Sys->diff_text_vs_text($expected_merged_text, $test_merged_text);
-ok(!$output_merged_diff, 'merged output file matches expected result')
-    or diag("diff:\n" . $output_merged_diff);
-
+done_testing();
+1;
