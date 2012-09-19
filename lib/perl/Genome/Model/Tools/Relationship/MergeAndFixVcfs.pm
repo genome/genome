@@ -280,15 +280,18 @@ sub convert_denovo_line_to_tags {
         push @dngl, $fields[$gl_idx];
         push @dngq, $fields[$gq_idx];
     }
-    if(@denovo_alleles > 1) {
-        print join("\t", @denovo_alleles) . "\n";
-        $self->error_message("Two different denovo alleles? $line");
-        die;
-    }
+#    if(@denovo_alleles > 1) {
+#        $self->error_message("Two different denovo alleles? $line");
+#        die;
+#    }
     my $denovo_info_tag = undef;
-    if(@denovo_alleles == 1) {
-        my ($index) = grep { $alts[$_] eq $denovo_alleles[0] } 0..$#alts;
-        $denovo_info_tag =  "DA=" . $index;
+    if(scalar(@denovo_alleles)>= 1) {
+        my @da_indices;
+        for my $denovo_allele (@denovo_alleles) {
+            my ($index) = grep { $alts[$_] eq $denovo_allele } 0..$#alts;
+            push @da_indices, $index;
+        }
+        $denovo_info_tag =  "da=" . join(",", @da_indices);
     }
     shift @alts; #throw away ref base, or alt that was same as ref
     $alt = join (",", @alts);
@@ -339,15 +342,24 @@ sub fix_denovo_vcf_line {
         $fields[$gt_idx]=$new_gt;
         $sample = join(":", @fields);
     }
-    if(@denovo_alleles > 1) {
-        $self->error_message("Two different denovo alleles? $line");
-        die;
-    }
-    if(@denovo_alleles == 1) {
-        my ($index) = grep { $alts[$_] eq $denovo_alleles[0] } 0..$#alts;
-        my $denovo_info_tag =  "DA=" . $index;
+#    if(@denovo_alleles > 1) {
+#        $self->error_message("Two different denovo alleles? $line");
+#        die;
+#    }
+    if(@denovo_alleles>= 1) {
+        my @da_indices;
+        for my $denovo_allele (@denovo_alleles) {
+            my ($index) = grep { $alts[$_] eq $denovo_allele } 0..$#alts;
+            push @da_indices, $index;
+        }
+        my $denovo_info_tag =  "DA=" . join(",", @da_indices);
         $info.= ";$denovo_info_tag";
     }
+#    if(@denovo_alleles == 1) {
+#        my ($index) = grep { $alts[$_] eq $denovo_alleles[0] } 0..$#alts;
+#        my $denovo_info_tag =  "DA=" . $index;
+#        $info.= ";$denovo_info_tag";
+#    }
     shift @alts; #throw away ref base, or alt that was same as ref
     $alt = join (",", @alts);
     $format =~ s/GT/DNGT/;
