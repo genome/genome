@@ -1,4 +1,4 @@
-package Genome::Model::DifferentialExpression::Command::DifferentialExpression::Cuffdiff;
+package Genome::Model::DifferentialExpression::Command::Cuffdiff;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 my $DEFAULT_LSF_RESOURCE = "-R 'select[type==LINUX64 && mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4";
 
-class Genome::Model::DifferentialExpression::Command::DifferentialExpression::Cuffdiff {
+class Genome::Model::DifferentialExpression::Command::Cuffdiff {
     is => ['Command::V2'],
     has => [
         build => { is => 'Genome::Model::Build', id_by => 'build_id', },
