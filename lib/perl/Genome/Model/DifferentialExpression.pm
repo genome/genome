@@ -39,6 +39,10 @@ class Genome::Model::DifferentialExpression {
             doc => 'The parameters used to converge transcripts.',
             is_optional => 1,
         },
+        transcript_convergence_biotypes => {
+            doc => 'The transcript feature biotypes to include in the convergence when using cuffcompare. example: protein_coding,pseudogene,miRNA,lincRNA,snoRNA,snRNA',
+            is_optional => 1,
+        },
         differential_expression_name => {
             doc => 'algorithm used to detect expression levels',
             valid_values => ['cuffdiff'],
