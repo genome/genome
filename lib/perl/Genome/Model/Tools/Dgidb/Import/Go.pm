@@ -133,7 +133,7 @@ sub input_to_tsv {
 sub import_tsv {
     my $self = shift;
     my $genes_outfile = $self->genes_outfile;
-    my $citation = $self->_create_citation('GO', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
+    my $citation = $self->_create_citation('GO', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'The Gene Ontology');
     my @genes = $self->import_genes($genes_outfile, $citation);
     return 1;
 }
@@ -154,10 +154,11 @@ sub import_genes {
     
     $parser->next; #eat the headers
     while(my $go_input = $parser->next){
-        my $gene_name = $self->_create_gene_name_report($go_input->{'go_name'}, $citation, 'go_gene_name', '');
+        my $gene_name = $self->_create_gene_name_report($go_input->{'go_name'}, $citation, 'GO Gene Name', '');
+        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $go_input->{'go_name'}, 'GO Gene Name', '');
         my $human_readable_name = $go_input->{'human_readable_name'};
         $human_readable_name =~ s/-/ /g;
-        my $human_readable = $self->_create_gene_category_report($gene_name, 'human_readable_name', uc($human_readable_name), '');
+        my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
         my $alternate_symbol_references = $go_input->{'alternate_symbol_references'};
         my @alternates = split(/\|/, $alternate_symbol_references);
         for my $alternate (@alternates){
@@ -169,13 +170,12 @@ sub import_genes {
                 my $category_association = $self->_create_gene_category_report($gene_name, $nomenclature, $identifier, $evidence_code) #TODO: still don't know if this is the right thing to do
             }
         }
-        my $go_short_name_and_id_category = $self->_create_gene_category_report($gene_name, 'go_short_name_and_id', join('_', $go_input->{'go_short_name'}, $go_input->{'go_id'}), $go_input->{'go_description'});
+        my $go_short_name_and_id_category = $self->_create_gene_category_report($gene_name, 'GO Short Name and Id', join('_', $go_input->{'go_short_name'}, $go_input->{'go_id'}), $go_input->{'go_description'});
         my $secondary_go_term = $go_input->{'secondary_go_term'};
         if($go_input->{'go_id'} !~ /$secondary_go_term/ ){
-            my $secondary_go_id_category = $self->_create_gene_category_report($gene_name, 'secondary_go_id', $secondary_go_term, '');
+            my $secondary_go_id_category = $self->_create_gene_category_report($gene_name, 'Secondary GO Id', $secondary_go_term, '');
         }
     }
-
     return @genes;
 }
 

@@ -6,7 +6,6 @@
 #Exome SNVs, Exome Indels
 #RNA-seq outlier genes
 
-#TODO: Modify this script so that it can summarize for multiple interaction sources (drugbank, SantaMonica, etc) at once and produce a merged result which can be read directly into the companion R script for creating visualization
 #Longer term, this concept should use the new DGIDB command line modules for getting interactions directly from the database
 
 use strict;

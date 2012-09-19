@@ -6,8 +6,10 @@ druggable_genes_file="/Users/ogriffit/Dropbox/WashU/Projects/G4C/Clinseq_vs_drug
 setwd("/Users/ogriffit/Dropbox/WashU/Projects/G4C/Clinseq_vs_druggable/")
 
 data=read.table(file=druggable_genes_file, header=TRUE, sep="\t", as.is=c(1:6))
-interactions=data[,c(1,3,4)]
+#Fix patient names
+data[which(data[,"patient"]=="AML103"),"patient"]="ALL1"
 
+interactions=data[,c(1,3,4)]
 counts_table=table(interactions[,1:2])
 counts=ddply(interactions, .(patient, data_type), function(d) length(unique(d$gene)))
 

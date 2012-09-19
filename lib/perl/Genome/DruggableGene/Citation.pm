@@ -47,6 +47,12 @@ sub source_db_name_to_url {
         return 'http://ensembl.org/index.html' if /ensembl/i;
         return 'http://www.ncbi.nlm.nih.gov/gene' if /entrez/i;
         return 'http://bidd.nus.edu.sg/group/ttd/ttd.asp' if /ttd/i;
+        return 'http://www.pharmgkb.org/' if /pharmgkb/i;
+        return 'http://www.ncbi.nlm.nih.gov/pubmed/12209152/' if /hopkinsgroom/i;
+        return 'http://pubchem.ncbi.nlm.nih.gov/' if /pubchem/i;
+        return 'http://www.ncbi.nlm.nih.gov/pubmed/16376820/' if /russlampel/i;
+        return 'http://www.ncbi.nlm.nih.gov/pubmed/22005529/' if /talc/i;
+        return 'http://www.geneontology.org/' if /go/i;
     }
     return "http://lmgtfy.com/?q=$source_db_name";#let me google that for you
 }

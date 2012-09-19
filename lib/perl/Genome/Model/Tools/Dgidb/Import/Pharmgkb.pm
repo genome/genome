@@ -35,10 +35,10 @@ class Genome::Model::Tools::Dgidb::Import::Pharmgkb {
             doc => 'VERSION.  Version (date) of release of data files from PharmGKB',
         },
         citation_base_url => {
-            default => 'http://www.ncbi.nlm.nih.gov/pubmed/22103613/',
+            default => 'http://www.pharmgkb.org/', #Note there are two base_urls needed for PharmGKB gene Ids: http://www.pharmgkb.org/gene/ and drug Ids: http://www.pharmgkb.org/drug/
         },
         citation_site_url => {
-            default => 'http://www.pharmgkb.org',
+            default => 'http://www.pharmgkb.org/',
         },
         citation_text => {
           default => 'From pharmacogenomic knowledge acquisition to clinical applications: the PharmGKB as a clinical pharmacogenomic biomarker resource.  McDonagh EM, Whirl-Carrillo M, Garten Y, Altman RB, Klein TE. Biomark Med. 2011 Dec;5(6):795-806. PMID: 22103613',
@@ -386,7 +386,7 @@ sub import_interactions {
         is_regex => 1,
     );
 
-    my $citation = $self->_create_citation('PharmGKB', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
+    my $citation = $self->_create_citation('PharmGKB', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'PharmGKB - The Pharmacogenomics Knowledgebase');
 
     $parser->next; #eat the headers
     while(my $interaction = $parser->next){
@@ -394,9 +394,9 @@ sub import_interactions {
         my $gene_name = $self->_import_gene($interaction, $citation);
         my $drug_gene_interaction = $self->_create_interaction_report($citation, $drug_name, $gene_name, '');
         push @interactions, $drug_gene_interaction;
-#        unless($interaction->{interaction_type} eq 'NA'){ #No interaction type provided in PharmGKB relationships file
-#          my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'interaction_type', $interaction->{interaction_type});
-#        }
+        #No interaction type provided in PharmGKB relationships file
+        #Set to 'n/a' to be consistent with other data sources where intereaction unknown
+        my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'Interaction Type', 'n/a');
     }
     return @interactions;
 }
@@ -406,40 +406,40 @@ sub _import_drug {
     my $interaction = shift;
     my $citation = shift;
     my $drug_accession = $self->_create_drug_name_report($interaction->{Entity1_id}, $citation, 'PharmGKB', '');
-    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Entity1_id}, 'PharmGKB_primary_drug_name', '');
-    my $drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Drug_Name}, 'PharmGKB_drug_name', '');
+    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Entity1_id}, 'Primary Drug Name', '');
+    my $drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Drug_Name}, 'Drug Name', '');
     my @drug_generic_names = split(",", $interaction->{Generic_Names});
     for my $drug_generic_name (@drug_generic_names){
       next if $drug_generic_name eq 'NA';
-      my $synonym_association = $self->_create_drug_alternate_name_report($drug_accession, $drug_generic_name, 'PharmGKB_drug_generic_name', '');
+      my $synonym_association = $self->_create_drug_alternate_name_report($drug_accession, $drug_generic_name, 'Drug Generic Name', '');
     }
     my @drug_tradenames = split(",", $interaction->{Trade_Names});
     for my $drug_tradename (@drug_tradenames){
       next if $drug_tradename eq 'NA';
-      my $tradename_association = $self->_create_drug_alternate_name_report($drug_accession, $drug_tradename, 'PharmGKB_drug_trade_name', '');
+      my $tradename_association = $self->_create_drug_alternate_name_report($drug_accession, $drug_tradename, 'Drug Trade Name', '');
     }
     my @drug_cross_references = split(",", $interaction->{Drug_Cross_References});
     for my $drug_cross_reference (@drug_cross_references){
       next if $drug_cross_reference eq 'NA';
       my @data_pair = split(":", $drug_cross_reference);
-      my $cross_ref_type=join("_", "PharmGKB", $data_pair[0]);
+      my $cross_ref_type=$data_pair[0];
       my $cross_ref_value=$data_pair[1];
       my $cross_reference_association = $self->_create_drug_alternate_name_report($drug_accession, $cross_ref_value, $cross_ref_type, '');
     }
     unless($interaction->{SMILES} eq 'NA'){
-        my $SMILES_association = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{SMILES}, 'PharmGKB_SMILES', '');
+        my $SMILES_association = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{SMILES}, 'SMILES', '');
     }
 
     my @external_vocabs = split(",", $interaction->{External_Vocabulary});
     for my $external_vocab (@external_vocabs){
       next if $external_vocab eq 'NA';
       my @data_pair = split(":", $external_vocab);
-      my $external_vocab_type=join("_", "PharmGKB", $data_pair[0]);
+      my $external_vocab_type=$data_pair[0];
       my $external_vocab_value=$data_pair[1];
       my $external_vocab_association = $self->_create_drug_category_report($drug_accession, $external_vocab_type, $external_vocab_value,'');
     }
     unless($interaction->{Drug_Type} eq 'NA'){
-        my $drug_type_association = $self->_create_drug_category_report($drug_accession, 'PharmGKB_drug_type', $interaction->{Drug_Type}, '');
+        my $drug_type_association = $self->_create_drug_category_report($drug_accession, 'Drug Type', $interaction->{Drug_Type}, '');
     }
     return $drug_accession;
 }
@@ -448,20 +448,20 @@ sub _import_gene {
     my $self = shift;
     my $interaction = shift;
     my $citation = shift;
-    my $gene_accession = $self->_create_gene_name_report($interaction->{Entity2_id}, $citation, 'PharmGKB_gene_accession', '');
-    my $Entrez_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entrez_Id}, 'entrez_id', '');
-    my $Ensembl_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Ensembl_Id}, 'PharmGKB_Ensembl_Id', '');
-    my $Gene_Name_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Gene_Name}, 'PharmGKB_Gene_Name', '');
-    my $Gene_Symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Symbol}, 'PharmGKB_Symbol', '');
+    my $gene_accession = $self->_create_gene_name_report($interaction->{Entity2_id}, $citation, 'PharmGKB Gene Accession', '');
+    my $Entrez_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entrez_Id}, 'Entrez Gene Id', '');
+    my $Ensembl_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Ensembl_Id}, 'Ensembl Gene Id', '');
+    my $Gene_Name_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Gene_Name}, 'Gene Name', '');
+    my $Gene_Symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Symbol}, 'Gene Symbol', '');
     my @Alternate_Names = quotewords(',', 0, $interaction->{Alternate_Names});
     for my $Alternate_Name (@Alternate_Names){
         next if $Alternate_Name eq 'NA';
-        my $alt_name_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Name, 'PharmGKB_Alternate_Name','');
+        my $alt_name_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Name, 'Alternate Name','');
     }
     my @Alternate_Symbols = quotewords(',', 0, $interaction->{Alternate_Symbols});
         for my $Alternate_Symbol (@Alternate_Symbols){      
         next if $Alternate_Symbol eq 'NA';
-        my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'PharmGKB_Alternate_Symbol','');
+        my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'Alternate Symbol','');
     }
 #   my @gene_cross_references = split(",", $interaction->{Gene_Cross_References});
 #    for my $gene_cross_reference (@gene_cross_references){
@@ -472,10 +472,10 @@ sub _import_gene {
 #        my $cross_reference_association = $self->_create_gene_alternate_name_report($gene_accession, $cross_ref_value, $cross_ref_type, '');
 #    }
     unless($interaction->{Is_VIP} eq 'NA'){
-    my $is_vip_association = $self->_create_gene_category_report($gene_accession, 'PharmGKB_Is_VIP', $interaction->{Is_VIP},'');
+    my $is_vip_association = $self->_create_gene_category_report($gene_accession, 'Is VIP', $interaction->{Is_VIP},'');
     }
     unless($interaction->{Has_Variant_Annotation} eq 'NA'){
-    my $has_var_annot_association = $self->_create_gene_category_report($gene_accession, 'PharmGKB_Has_Variant_Annotation', $interaction->{Has_Variant_Annotation},'');
+    my $has_var_annot_association = $self->_create_gene_category_report($gene_accession, 'Has Variant Annotation', $interaction->{Has_Variant_Annotation},'');
     return $gene_accession;
     }
 }

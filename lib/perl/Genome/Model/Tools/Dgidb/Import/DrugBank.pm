@@ -18,7 +18,12 @@ class Genome::Model::Tools::Dgidb::Import::DrugBank {
         infile => {
             is => 'Path',
             is_input => 1,
-            doc => 'PATH.  XML data file dowloaded from www.drugbank.ca',
+            doc => 'PATH.  XML data file downloaded from http://www.drugbank.ca/system/downloads/current/drugbank.xml.zip',
+        },
+        tmp_dir => {
+            is => 'Path',
+            default => '/tmp',
+            doc => 'Directory where temp files will be created',
         },
         verbose => {
             is => 'Boolean',
@@ -36,17 +41,17 @@ class Genome::Model::Tools::Dgidb::Import::DrugBank {
         genes_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/tmp/DrugBank_WashU_TARGETS.tsv',
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_TARGETS.tsv',
             doc => 'PATH.  Path to .tsv file for genes (targets)',
         },
         interactions_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/tmp/DrugBank_WashU_INTERACTIONS.tsv',
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_INTERACTIONS.tsv',
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
         },
         citation_base_url => {
-            default => 'http://drugbank.ca',
+            default => 'http://drugbank.ca/',
         },
         citation_site_url => {
             default => 'http://www.drugbank.ca/',
@@ -100,7 +105,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import drug-bank --infile drugbank.xml --verbose --version 3
+gmt dgidb import drug-bank --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/DrugBank/drugbank.xml --verbose --version="3.0"
 HELP
 }
 
@@ -127,7 +132,7 @@ sub import_tsv {
     my $targets_outfile = $self->genes_outfile;
     my $interactions_outfile = $self->interactions_outfile;
     $self->preload_objects;
-    my $citation = $self->_create_citation('DrugBank', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
+    my $citation = $self->_create_citation('DrugBank', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'DrugBank - Open Data Drug & Drug Target Database');
     my @interactions = $self->import_interactions($interactions_outfile, $citation);
     return 1;
 }
@@ -136,14 +141,14 @@ sub _import_drug {
     my $self = shift;
     my $interaction = shift;
     my $citation = shift;
-    my $drug_name = $self->_create_drug_name_report($interaction->{drug_id}, $citation, 'DrugBank drug identifier', '');
-
-    my $primary_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary DrugBank drug name', '');
+    my $drug_name = $self->_create_drug_name_report($interaction->{drug_id}, $citation, 'DrugBank Drug Identifier', '');
+    my $drug_name_alt = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_id}, 'DrugBank Drug Id', '');
+    my $primary_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary DrugBank Drug Name', '');
 
     my @drug_synonyms = split(', ', $interaction->{drug_synonyms});
     for my $drug_synonym (@drug_synonyms){
         next if $drug_synonym eq 'na';
-        my $drug_name_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'drug_synonym', '');
+        my $drug_name_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'Drug Synonym', '');
     }
 
     my @drug_brands = split(', ', $interaction->{drug_brands});
@@ -153,29 +158,29 @@ sub _import_drug {
         if ($manufacturer){
             $manufacturer =~ s/\)// ;
         } else {
-            $manufacturer = 'drug_brand';
+            $manufacturer = 'Drug Brand';
         }
         my $drug_name_association = $self->_create_drug_alternate_name_report($drug_name, $drug_brand, $manufacturer, '');
     }
 
     unless($interaction->{drug_type} eq 'na'){
-        my $drug_name_category_association = $self->_create_drug_category_report($drug_name, 'drug_type', $interaction->{drug_type}, '');
+        my $drug_name_category_association = $self->_create_drug_category_report($drug_name, 'Drug Type', $interaction->{drug_type}, '');
     }
 
     unless($interaction->{drug_cas_number} eq 'na'){
-        my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'cas_number', '');
+        my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'CAS Number', '');
     }
 
     my @drug_categories = split(', ', $interaction->{drug_categories});
     for my $drug_category (@drug_categories){
         next if $drug_category eq 'na';
-        my $category_association = $self->_create_drug_category_report($drug_name, 'drug_category', $drug_category, '');
+        my $category_association = $self->_create_drug_category_report($drug_name, 'Drug Category', $drug_category, '');
     }
 
     my @drug_groups = split(', ', $interaction->{drug_groups});
     for my $drug_group (@drug_groups){
         next if $drug_group eq 'na';
-        my $group_association = $self->_create_drug_category_report($drug_name, 'drug_group', $drug_group, '');
+        my $group_association = $self->_create_drug_category_report($drug_name, 'Drug Group', $drug_group, '');
     }
 
     return $drug_name;
@@ -188,11 +193,24 @@ sub _import_gene {
     my $gene_partner_id = $interaction->{partner_id};
     my $gene_symbol = $interaction->{gene_symbol};
     my $uniprot_id = $interaction->{uniprot_id};
+    my $entrez_id = $interaction->{entrez_id};
+    my $ensembl_id = $interaction->{ensembl_id};
 
     return if $uniprot_id eq 'na' and $gene_symbol eq 'na'; #if the gene has no gene_symbol or uniprot_id, it isn't a "real" gene. Do not make a gene for this non gene
-    my $gene_name = $self->_create_gene_name_report($gene_partner_id, $citation, 'drugbank_partner_id', '');
-    my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'drugbank_gene_symbol', '');
-    my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'uniprot_id', '');
+    my $gene_name = $self->_create_gene_name_report($gene_partner_id, $citation, 'Drugbank Partner Id', '');
+    my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '');
+    unless ($gene_symbol eq 'na'){
+        my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Gene Symbol', '');
+    }
+    unless ($uniprot_id eq 'na'){
+        my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Id', '');
+    }
+    unless ($entrez_id eq 'na'){
+        my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $entrez_id, 'Entrez Gene Id', '');
+    }
+    unless ($ensembl_id eq 'na'){
+        my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '');
+    }
     return $gene_name;
 }
 
@@ -216,10 +234,10 @@ sub import_interactions {
         my $drug_name = $self->_import_drug($interaction, $citation);
         my $drug_gene_interaction = $self->_create_interaction_report($citation, $drug_name, $gene_name, '');
         push @interactions, $drug_gene_interaction;
-        my $is_known_action = $self->_create_interaction_report_attribute($drug_gene_interaction, 'is_known_action', $interaction->{'known_action'});
+        my $is_known_action = $self->_create_interaction_report_attribute($drug_gene_interaction, 'Is Known Action', $interaction->{'known_action'});
         my @interaction_types = split(', ', $interaction->{target_actions});
         for my $interaction_type (@interaction_types){
-            my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'interaction_type', $interaction_type);
+            my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'Interaction Type', $interaction_type);
         }
     }
 
@@ -281,6 +299,9 @@ sub input_to_tsv {
     #This means that we can not directly look up partner records for each drug.  We must traverse the partner hash for each drug (slow) or create a new data structure that is keyed in partner ID
     my $partners = $xml->{'partners'};
 
+    #Load UniProt to Entrez mapping information from file - This will be used to obtain Entrez IDs from UniProt accessions provided in Drugbank records
+    my %UniProtMapping=%{$self->getUniprotEntrezMapping()};
+
     #Build a new simpler partners object for convenience - since it is keyed on partner ID we could access directly as well...
     my $partners_lite = $self->organizePartners('-partner_ref'=>$partners);
 
@@ -299,13 +320,13 @@ sub input_to_tsv {
     binmode(INTERACTIONS, ":utf8");
 
     #Print out a header line foreach output file
-    my $interactions_header = "interaction_count\tdrug_id\tdrug_name\tdrug_synonyms\tdrug_cas_number\tdrug_brands\tdrug_type\tdrug_groups\tdrug_categories\tpartner_id\tknown_action?\ttarget_actions\tgene_symbol\tuniprot_id";
+    my $interactions_header = "interaction_count\tdrug_id\tdrug_name\tdrug_synonyms\tdrug_cas_number\tdrug_brands\tdrug_type\tdrug_groups\tdrug_categories\tpartner_id\tknown_action?\ttarget_actions\tgene_symbol\tuniprot_id\tentrez_id\tensembl_id";
     print INTERACTIONS "$interactions_header\n";
 
     my $drugs_header = "drug_id\tdrug_name\tdrug_synonyms\tdrug_cas_number\tdrug_brands\tdrug_type\tdrug_groups\tdrug_categories\ttarget_count";
     print DRUGS "$drugs_header\n";
 
-    my $targets_header = "partner_id\tgene_symbol\tuniprot_id";
+    my $targets_header = "partner_id\tgene_symbol\tuniprot_id\tentrez_id\tensembl_id";
     print TARGETS "$targets_header\n";
 
     foreach my $drug_id (sort {$a cmp $b} keys %{$drugs}){
@@ -402,22 +423,39 @@ sub input_to_tsv {
             my $gene_symbol = $partners_lite->{$target_pid}->{gene_symbol};
             my $uniprotkb = $partners_lite->{$target_pid}->{uniprotkb};
 
+            #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
+            my $entrez_id = "na";
+            if ($UniProtMapping{$uniprotkb}{entrez_id}){
+              $entrez_id = $UniProtMapping{$uniprotkb}{entrez_id};
+            }
+            my $ensembl_id = "na";
+            if ($UniProtMapping{$uniprotkb}{ensembl_id}){
+              $ensembl_id = $UniProtMapping{$uniprotkb}{ensembl_id};
+            }
+
             #Strip <tabs> from string variables
             $target_known_action =~ s/\t/ /g;
             $target_actions =~ s/\t/ /g;
 
             $ic++;
-            my $interactions_line = "$ic\t$drug_id\t$drug_name\t$drug_synonyms_string\t$drug_cas_number\t$drug_brands_string\t$drug_type\t$drug_groups_string\t$drug_categories_string\t$target_pid\t$target_known_action\t$target_actions\t$gene_symbol\t$uniprotkb";
+            my $interactions_line = "$ic\t$drug_id\t$drug_name\t$drug_synonyms_string\t$drug_cas_number\t$drug_brands_string\t$drug_type\t$drug_groups_string\t$drug_categories_string\t$target_pid\t$target_known_action\t$target_actions\t$gene_symbol\t$uniprotkb\t$entrez_id\t$ensembl_id";
             print INTERACTIONS "$interactions_line\n";
-
         }
     }
 
     foreach my $pid (sort {$a <=> $b} keys %{$partners_lite}){
         my $gene_symbol = $partners_lite->{$pid}->{gene_symbol};
         my $uniprot_id = $partners_lite->{$pid}->{uniprotkb};
-
-        my $targets_line = "$pid\t$gene_symbol\t$uniprot_id";
+        #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
+        my $entrez_id = "na";
+        if ($UniProtMapping{$uniprot_id}{entrez_id}){
+          $entrez_id = $UniProtMapping{$uniprot_id}{entrez_id};
+        }
+        my $ensembl_id = "na";
+        if ($UniProtMapping{$uniprot_id}{ensembl_id}){
+          $ensembl_id = $UniProtMapping{$uniprot_id}{ensembl_id};
+        }
+        my $targets_line = "$pid\t$gene_symbol\t$uniprot_id\t$entrez_id\t$ensembl_id";
         print TARGETS "$targets_line\n";
     }
 
@@ -429,129 +467,9 @@ sub input_to_tsv {
     return 1;
 }
 
-#######################################################################################################################################################################
-#Load Entrez Data from flatfiles                                                                                                                                      #
-#######################################################################################################################################################################
-sub loadEntrezData{
-    my $self = shift;
-    my %args = @_;
-    my $entrez_dir = $args{'-entrez_dir'};
-    my %edata;
-
-    #Check input dir
-    unless (-e $entrez_dir && -d $entrez_dir){
-        print RED, "\n\nEntrez dir not valid: $entrez_dir\n\n", RESET;
-        exit();
-    }
-    unless ($entrez_dir =~ /\/$/){
-        $entrez_dir .= "/";
-    }
-
-    my %entrez_map;      #Entrez_id -> symbol, synonyms
-    my %symbols_map;     #Symbols   -> entrez_id(s)
-    my %synonyms_map;    #Synonyms  -> entrez_id(s)
-    my %p_acc_map;       #Protein accessions -> entrez_id
-
-    my $gene2accession_file = "$entrez_dir"."gene2accession";
-    my $gene_info_file = "$entrez_dir"."gene_info";
-    open (GENE, "$gene_info_file") || die "\n\nCould not open gene_info file: $gene_info_file\n\n";
-    while(<GENE>){
-        chomp($_);
-        if ($_ =~ /^\#/){
-            next();
-        }
-        my @line = split("\t", $_);
-        my $tax_id = $line[0];
-        #Skip all non-human records
-        unless ($tax_id eq "9606"){
-            next();
-        }
-        my $entrez_id = $line[1];
-        my $symbol = $line[2];
-        my $synonyms = $line[4];
-        if ($synonyms eq "-"){
-            $synonyms = "na";
-        }
-        my @synonyms_array = split("\\|", $synonyms);
-        my %synonyms_hash;   
-        foreach my $syn (@synonyms_array){
-            $synonyms_hash{$syn} = 1;
-        }
-
-        #Store entrez info keyed on entrez id
-        $entrez_map{$entrez_id}{symbol} = $symbol;
-        $entrez_map{$entrez_id}{synonyms_string} = $synonyms;
-        $entrez_map{$entrez_id}{synonyms_array} = \@synonyms_array;
-        $entrez_map{$entrez_id}{synonyms_hash} = \%synonyms_hash;
-
-        #Store entrez info keyed on symbol
-        if ($symbols_map{$symbol}){
-            my $ids = $symbols_map{$symbol}{entrez_ids};
-            $ids->{$entrez_id} = 1;
-        }else{
-            my %tmp;
-            $tmp{$entrez_id} = 1;
-            $symbols_map{$symbol}{entrez_ids} = \%tmp;
-        }
-
-        #Store synonym to entrez_id mappings
-        foreach my $syn (@synonyms_array){
-            if ($synonyms_map{$syn}){
-                my $ids = $synonyms_map{$syn}{entrez_ids};
-                $ids->{$entrez_id} = 1;
-            }else{
-                my %tmp;
-                $tmp{$entrez_id} = 1;
-                $synonyms_map{$syn}{entrez_ids} = \%tmp;
-            }
-        }
-
-    }
-    close (GENE);
-
-    open (ACC, "$gene2accession_file") || die "\n\nCould not open gene2accession file: $gene2accession_file\n\n";
-    while(<ACC>){
-        chomp($_);
-        if ($_ =~ /^\#/){
-            next();
-        }
-        my @line = split("\t", $_);
-        my $tax_id = $line[0];
-        #Skip all non-human records
-        unless ($tax_id eq "9606"){
-            next();
-        }
-        my $entrez_id = $line[1];
-        my $prot_id = $line[5];
-        #If the prot is not defined, skip
-        if ($prot_id eq "-"){next();}
-        #Clip the version number
-        if ($prot_id =~ /(\w+)\.\d+/){
-            $prot_id = $1;
-        }
-        #print "\n$entrez_id\t$prot_id";
-        if ($p_acc_map{$prot_id}){
-            my $ids = $p_acc_map{$prot_id}{entrez_ids};
-            $ids->{$entrez_id} = 1;
-        }else{
-            my %tmp;
-            $tmp{$entrez_id} = 1;
-            $p_acc_map{$prot_id}{entrez_ids} = \%tmp;
-        }
-    }
-    close (ACC);
-
-    $edata{'entrez_ids'} = \%entrez_map;
-    $edata{'symbols'} = \%symbols_map;
-    $edata{'synonyms'} = \%synonyms_map;
-    $edata{'protein_accessions'} = \%p_acc_map;
-
-    return(\%edata);
-}
-
-#######################################################################################################################################################################
-#Utility function for grabbing values from hash/array structures                                                                                                      #
-#######################################################################################################################################################################
+##########################################################################################################################################
+#Utility function for grabbing values from hash/array structures                                                                          
+##########################################################################################################################################
 sub parseTree{
     my $self = shift;
     my %args = @_;
@@ -591,9 +509,9 @@ sub parseTree{
 }
 
 
-#######################################################################################################################################################################
-#Build a new partners object keyed on partner ID                                                                                                                      #
-#######################################################################################################################################################################
+###################################################################################################################################
+#Build a new partners object keyed on partner ID                                                                                  #
+###################################################################################################################################
 sub organizePartners{
     my $self = shift;
     my $verbose = $self->verbose;
@@ -683,8 +601,66 @@ sub organizePartners{
 #  print CYAN, "\n$pid\t$p_lite{$pid}{gene_name}\t$p_lite{$pid}{drug_name}\t$p_lite{$pid}{uniprotkb}", RESET;
 #}
 
-
     return(\%p_lite);
 }
+
+sub download_file {
+    my $self = shift;
+    my %args = @_;
+    my $url = $args{'-mapping_file_url'};
+    my $targetfilename = $args{'-mapping_file_name'};
+    my $tempdir = $self->tmp_dir;
+    my $targetfilepath="$tempdir"."$targetfilename";
+    my $wget_cmd = "wget $url -O $targetfilepath";
+    my $retval = Genome::Sys->shellcmd(cmd=>$wget_cmd);
+    unless ($retval == 1){
+      self->error_message('Failed to wget the specified URL');
+      return;
+    }
+    #unzip if necessary
+    if ($targetfilepath=~/\.gz$/){
+      my $gunzip_cmd = "gunzip -f $targetfilepath";
+      my $retval2 = Genome::Sys->shellcmd(cmd=>$gunzip_cmd);
+      unless ($retval2 == 1){
+        self->error_message('Failed to gunzip the specified file');
+        return;
+      }
+      $targetfilepath=~s/\.gz$//;
+    }
+    print "Downloaded $targetfilepath\n";
+    return $targetfilepath;
+}
+
+sub getUniprotEntrezMapping {
+    my $self = shift;
+    #Get mapping of Uniprot Accessions to Entrez IDs, etc
+    #These can be obtained from here:
+    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/ 
+    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz
+    print "\nAttempting download of UniProt mapping file\n";
+    my $mapping_file_url="ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz";
+    my $mapping_file_name="HUMAN_9606_idmapping_selected.tab.gz";
+    my $mapping_file_path = $self->download_file('-mapping_file_url'=>$mapping_file_url, '-mapping_file_name'=>$mapping_file_name);
+
+    print "\nParsing Uniprot mapping file\n";
+    my %UniProtMapping;
+    open (MAPPING, $mapping_file_path) or die "can't open $mapping_file_path\n";
+    while (<MAPPING>){
+      my @data=split("\t",$_);
+      my $uniprot_acc=$data[0];
+      my $uniprot_id=$data[1];
+      my $entrez_id=$data[2];
+    unless ($entrez_id){$entrez_id="NA";}
+    my $ensembl_id=$data[19];
+    unless ($ensembl_id){$ensembl_id="NA";}
+    $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
+    $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
+    $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;
+  }
+close MAPPING;
+return(\%UniProtMapping);
+}
+
+
 
 1;
