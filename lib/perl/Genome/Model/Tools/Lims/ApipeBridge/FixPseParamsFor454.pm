@@ -1,12 +1,12 @@
-package Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsFor454;
+package Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsFor454;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsFor454 { 
-    is => 'Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForBase', 
+class Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsFor454 { 
+    is => 'Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForBase', 
 };
 
 sub instrument_data_type { return '454'; }

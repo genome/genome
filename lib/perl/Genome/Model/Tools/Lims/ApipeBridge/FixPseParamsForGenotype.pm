@@ -1,12 +1,12 @@
-package Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForGenotype;
+package Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForGenotype;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForGenotype { 
-    is => 'Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForBase',
+class Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForGenotype { 
+    is => 'Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForBase',
 };
 
 sub instrument_data_type { return 'genotyper results'; }

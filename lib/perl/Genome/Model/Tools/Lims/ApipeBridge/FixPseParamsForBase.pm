@@ -1,11 +1,11 @@
-package Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForBase;
+package Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForBase;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForBase { 
+class Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForBase { 
     is => 'Command::V2',
     is_abstract => 1,
     has_optional => [
@@ -31,8 +31,8 @@ class Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForBase {
 sub pidfa_ps_id { return 3870; }
 sub qidfgm_ps_id { return 3733; }
 
-sub help_brief { return 'Fix PIDFA PSE params for '.$_[0]->instrument_data_type; }
-sub help_detail { return 'Given a PIDFA or PIDFA\'s prior PSE, this command can fix some broken '.$_[0]->instrument_data_type.' PIDFAs. After fixing, schedule the pse by using "sw --sched ${PIDFA_ID}"'; }
+sub help_brief { return 'Fix PSE params for '.$_[0]->instrument_data_type; }
+sub help_detail { return 'Given an instrument data id, QIDFGM, PIDFA or PIDFA\'s prior PSE, this command can fix some broken '.$_[0]->instrument_data_type.' PSEs. If necessary, schedule the PIDFA PSE by using "sw --sched ${PIDFA_ID}"'; }
 
 sub execute {
     my $self = shift;
