@@ -9,6 +9,10 @@ class Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForBase {
     is => 'Command::V2',
     is_abstract => 1,
     has_optional => [
+        instrument_data_id => {
+            is => 'Integer',
+            doc => 'Instrument data id to get PIDFA to fix',
+        },
         pidfa_id => {
             is => 'Integer',
             doc => 'Id of PIDFA to fix params.',
@@ -30,13 +34,6 @@ sub qidfgm_ps_id { return 3733; }
 sub help_brief { return 'Fix PIDFA PSE params for '.$_[0]->instrument_data_type; }
 sub help_detail { return 'Given a PIDFA or PIDFA\'s prior PSE, this command can fix some broken '.$_[0]->instrument_data_type.' PIDFAs. After fixing, schedule the pse by using "sw --sched ${PIDFA_ID}"'; }
 
-sub _starting_points { 
-    my $self = shift;
-    my @starting_points = (qw/ prior_id pidfa_id qidfgm_id /);
-    push @starting_points, $self->_additional_starting_points if $self->can('_additional_starting_points');
-    return @starting_points;
-}
-
 sub execute {
     my $self = shift;
     $self->status_message('Fix PIDFA params for '.$self->instrument_data_type.'...');
@@ -44,8 +41,8 @@ sub execute {
     my $starting_point_method = $self->_get_init_method;
     return if not $starting_point_method;
 
-    my ($prior, $pidfa, $qidfgm) = $self->$starting_point_method; # qidfgm is optional!
-    return if not $pidfa;
+    my ($prior, $pidfa, $qidfgm, $sequence_item) = $self->$starting_point_method; # qidfgm is optional!
+    return if not $prior and $pidfa;
 
     $self->status_message('PIDFA: '.$pidfa->id);
     $self->status_message('QIDFGM: '.( $qidfgm ? $qidfgm->id : 'NA'));
@@ -57,7 +54,7 @@ sub execute {
         next;
     }
 
-    my $sequence_item = $self->_get_sequence_item_from_prior($prior);
+    $sequence_item = $self->_get_sequence_item_from_prior($prior) if not $sequence_item;
     return if not $sequence_item;
     $self->status_message('Instrument data: '.$sequence_item->id);
 
@@ -89,7 +86,7 @@ sub execute {
 sub _get_init_method {
     my $self = shift;
 
-    my @starting_points = grep { defined $self->$_ } $self->_starting_points;
+    my @starting_points = grep { defined $self->$_ } (qw/ instrument_data_id prior_id pidfa_id qidfgm_id /);
     if ( not @starting_points ) {
         $self->error_message('No starting point indicated! Select from '.join(', ', @starting_points));
         return;
@@ -100,6 +97,46 @@ sub _get_init_method {
     }
 
     return '_init_with_'.$starting_points[0];
+}
+
+sub _init_with_instrument_data_id {
+    my $self = shift;
+
+    my $sequence_item;
+    for my $sequence_item_class (qw/ GSC::RegionIndex454 GSC::IndexIllumina GSC::Genotyping::External GSC::Genotyping::Internal::Illumina /) {
+        last if $sequence_item = $sequence_item_class->get($self->instrument_data_id);
+    }
+    if ( not $sequence_item ) {
+        $self->error_message('Failed to get sequence item for id! '.$self->instrument_data_id);
+        return;
+    }
+
+    my @pse_params = GSC::PSEParam->get(
+        param_name => 'instrument_data_id',
+        param_value => $self->instrument_data_id,
+    );
+    if ( not @pse_params ) { 
+        $self->error_message('Failed to get PSE params for instrument data id! '.$self->instrument_data_id);
+        return;
+    }
+
+    my @pidfas = GSC::PSE->get(id => [ map { $_->pse_id } @pse_params ], ps_id => pidfa_ps_id(), pse_status => { operator => '!=', value => 'expunged' },);
+    if ( not @pidfas ) {
+        $self->error_message('Failed to get PIDFA for pse param ids! '.join(' ', map { $_->id } @pidfas));
+        return;
+    }
+    elsif ( @pidfas > 1 ) {
+        $self->error_message('Got '.@pidfas.' PIDFAs for instrument data id! '.$self->pidfa_id);
+        return;
+    }
+
+    my $prior = $self->_get_prior_for_pse($pidfas[0]);
+    return if not $prior;
+
+    my $qidfgm = $self->_get_future_for_pse($pidfas[0], qidfgm_ps_id());
+    return if not $qidfgm;
+
+    return ($prior, $pidfas[0], $qidfgm, $sequence_item);
 }
 
 sub _init_with_prior_id {
@@ -196,7 +233,7 @@ sub _get_prior_for_pse {
 sub _get_future_for_pse {
     my ($self, $pse, $ps_id) = @_;
 
-    my ($tp_pse) = GSC::TppPSE->get(pse_id => $pse->id);
+    my ($tp_pse) = GSC::TppPSE->get(prior_pse_id => $pse->id);
     if ( not $tp_pse ) {
         $self->error_message('No transfer pattern pse for prior! '.$pse->id);
         return;
@@ -207,7 +244,7 @@ sub _get_future_for_pse {
         return;
     }
 
-    my %future_params = ( pse_id => $tp_pse->prior_pse_id );
+    my %future_params = ( pse_id => $tp_pse->pse_id );
     $future_params{ps_id} = $ps_id if $ps_id;
     my $future = GSC::PSE->get(%future_params);
     if ( not $future ) {

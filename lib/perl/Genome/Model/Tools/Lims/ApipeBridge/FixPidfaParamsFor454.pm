@@ -27,7 +27,7 @@ sub _get_sequence_item_from_prior {
         return;
     }
     elsif ( @region_indexes > 1 ) {
-        $self->status_message('More than one 454 region index found for prior PSE. This can happen, but cannot be fixed with this command. Sorry.');
+        $self->status_message('More than one 454 region index found for prior PSE. If you know the instrument data id, use that as a staring point.');
         return;
     }
 
@@ -47,6 +47,7 @@ sub _additional_params_to_fix {
         $sff_file = $sff_file_path->absolute if $sff_file_path;
     }
 
+    print "SFF $sff_file\n";
     $params_to_fix->{sff_file} = $sff_file if $sff_file and -e $sff_file;
 
     return 1;
