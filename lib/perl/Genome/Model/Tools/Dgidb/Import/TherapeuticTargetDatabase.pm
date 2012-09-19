@@ -17,6 +17,11 @@ class Genome::Model::Tools::Dgidb::Import::TherapeuticTargetDatabase {
             default => 'http://bidd.nus.edu.sg/group/cjttd/TTD_download.txt',
             doc => 'URL PATH. URL to TTD targets information in raw format',
         },
+        tmp_dir => {
+            is => 'Path',
+            default => '/tmp',
+            doc => 'Directory where temp files will be created',
+        },
         drugs_crossmatching_url => {
             is => 'Text',
             is_input => 1,
@@ -76,7 +81,7 @@ sub import_interactions {
     my $interactions_outfile = shift;
     my $version = $self->version;
     my @interactions;
-    my @headers = qw( drug_id drug_name drug_synonyms drug_cas_number drug_pubchem_cid drug_pubchem_sid target_id target_name target_synonyms target_uniprot_id interaction_types );
+    my @headers = qw( drug_id drug_name drug_synonyms drug_cas_number drug_pubchem_cid drug_pubchem_sid target_id target_name target_synonyms target_uniprot_id target_entrez_id target_ensembl_id interaction_types );
     my $parser = Genome::Utility::IO::SeparatedValueReader->create(
         input => $interactions_outfile,
         headers => \@headers,
@@ -105,7 +110,7 @@ sub _import_drug {
     my $self = shift;
     my $interaction = shift;
     my $citation = shift;
-    my $drug_name = $self->_create_drug_name_report($interaction->{drug_id}, $citation, 'TTD drug id', '');
+    my $drug_name = $self->_create_drug_name_report($interaction->{drug_id}, $citation, 'TTD Drug Id', '');
 
     my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary Drug Name', '');
     my $drug_name_alt = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_id}, 'TTD Drug Id', '');
@@ -135,7 +140,7 @@ sub _import_gene {
     my $self = shift;
     my $interaction = shift;
     my $citation = shift;
-    my $gene_name = $self->_create_gene_name_report($interaction->{target_id}, $citation, 'TTD_partner_id', '');
+    my $gene_name = $self->_create_gene_name_report($interaction->{target_id}, $citation, 'TTD Partner Id', '');
 
     my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_name}, 'Gene Symbol', '');
     my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_id}, 'TTD Gene Id', '');
@@ -146,6 +151,12 @@ sub _import_gene {
         my $gene_synonym = $self->_create_gene_alternate_name_report($gene_name, $target_synonym, 'Gene Synonym', '');
     }
     my $uniprot_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_uniprot_id}, 'Uniprot Id', '');
+    unless ($interaction->{target_entrez_id} eq 'na'){
+        my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $interaction->{target_entrez_id}, 'Entrez Gene Id', '');
+    }
+    unless ($interaction->{target_ensembl_id} eq 'na'){
+        my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $interaction->{target_ensembl_id}, 'Ensembl Gene Id', '');
+    }
     return $gene_name;
 }
 
@@ -158,24 +169,37 @@ sub input_to_tsv {
     #Create interactions output file
     my $interactions_outfile = $self->interactions_outfile;
     my $interactions_fh = IO::File->new($interactions_outfile, 'w');
-    my $interactions_header = join("\t", 'drug_id', 'drug_name', 'drug_synonyms', 'drug_cas_number', 'drug_pubchem_cid', 'drug_pubchem_sid', 'target_id', 'target_name', 'target_synonyms', 'target_uniprot_id', 'interaction_type');
+    my $interactions_header = join("\t", 'drug_id', 'drug_name', 'drug_synonyms', 'drug_cas_number', 'drug_pubchem_cid', 'drug_pubchem_sid', 'target_id', 'target_name', 'target_synonyms', 'target_uniprot_id', 'target_entrez_id', 'target_ensembl_id', 'interaction_type');
     $interactions_fh->print($interactions_header, "\n");
 
     #Get the data in order
-    my $targets_path = $self->download_file($targets_raw_url);
-    my $crossmatch_path = $self->download_file($drugs_crossmatching_url);
-    my $synonyms_path = $self->download_file($drug_synonyms_url);
+    my $targets_path = $self->download_file('-url'=>$targets_raw_url);
+    my $crossmatch_path = $self->download_file('-url'=>$drugs_crossmatching_url);
+    my $synonyms_path = $self->download_file('-url'=>$drug_synonyms_url);
 
     my ($targets, $version) = $self->_parse_targets_file($targets_path);
     $self->version($version) if $version;
     my $drugs = $self->_parse_crossmatch_file($crossmatch_path);
     $self->_parse_synonyms_file($synonyms_path, $drugs);
 
+    #Load UniProt to Entrez mapping information from file - This will be used to obtain Entrez IDs from UniProt accessions provided in Drugbank records
+    my %UniProtMapping=%{$self->getUniprotEntrezMapping()};
+
     #Write data to the file
     for my $target_id (keys %{$targets}){
             #Target Uniprot Id
             my $target_uniprot_id =  pop @{$targets->{$target_id}{'UniProt ID'}};
             $target_uniprot_id = 'na' unless $target_uniprot_id;
+
+            #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
+            my $entrez_id = "na";
+            if ($UniProtMapping{$target_uniprot_id}{entrez_id}){
+              $entrez_id = $UniProtMapping{$target_uniprot_id}{entrez_id};
+            }
+            my $ensembl_id = "na";
+            if ($UniProtMapping{$target_uniprot_id}{ensembl_id}){
+              $ensembl_id = $UniProtMapping{$target_uniprot_id}{ensembl_id};
+            }
 
             #Target Name
             my $target_name = pop @{$targets->{$target_id}{'Name'}};
@@ -221,7 +245,7 @@ sub input_to_tsv {
             my $interaction_type = $self->_determine_interaction_type($targets->{$target_id}, $drug_name, $drug_id);
             $interaction_type = 'na' unless $interaction_type;
 
-            $interactions_fh->print(join("\t", $drug_id, $drug_name, $drug_synonyms, $drug_cas_number, $drug_pubchem_cid, $drug_pubchem_sid, $target_id, $target_name, $target_synonyms, $target_uniprot_id, $interaction_type), "\n");
+            $interactions_fh->print(join("\t", $drug_id, $drug_name, $drug_synonyms, $drug_cas_number, $drug_pubchem_cid, $drug_pubchem_sid, $target_id, $target_name, $target_synonyms, $target_uniprot_id, $entrez_id, $ensembl_id, $interaction_type), "\n");
         }
     }
 
@@ -252,22 +276,6 @@ sub preload_objects {
     }
 
     return 1;
-}
-
-sub download_file {
-    my $self = shift;
-    my $url = shift;
-    my ($fh, $path) = Genome::Sys->create_temp_file();
-    $fh->close;
-    my $wget_cmd = "wget $url -O $path";
-    my $retval = Genome::Sys->shellcmd(cmd=>$wget_cmd);
-
-    unless ($retval == 1){
-      self->error_message('Failed to wget the specified URL');
-      return;
-    }
-
-    return $path;
 }
 
 sub _parse_targets_file {
@@ -373,6 +381,70 @@ sub _determine_interaction_type{
     }
 
     return $interaction_type;
+}
+
+sub getUniprotEntrezMapping {
+    my $self = shift;
+    #Get mapping of Uniprot Accessions to Entrez IDs, etc
+    #These can be obtained from here:
+    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/ 
+    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz
+    print "\nAttempting download of UniProt mapping file\n";
+    my $mapping_file_url="ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz";
+    my $mapping_file_name="HUMAN_9606_idmapping_selected.tab.gz";
+    my $mapping_file_path = $self->download_file('-url'=>$mapping_file_url, '-file_name'=>$mapping_file_name);
+
+    print "\nParsing Uniprot mapping file\n";
+    my %UniProtMapping;
+    open (MAPPING, $mapping_file_path) or die "can't open $mapping_file_path\n";
+    while (<MAPPING>){
+      my @data=split("\t",$_);
+      my $uniprot_acc=$data[0];
+      my $uniprot_id=$data[1];
+      my $entrez_id=$data[2];
+    unless ($entrez_id){$entrez_id="NA";}
+    my $ensembl_id=$data[19];
+    unless ($ensembl_id){$ensembl_id="NA";}
+    $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
+    $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
+    $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;
+  }
+close MAPPING;
+return(\%UniProtMapping);
+}
+
+sub download_file {
+    my $self = shift;
+    my %args = @_;
+    my $url = $args{'-url'};
+    my $targetfilename;
+    if ($args{'-file_name'}){
+      $targetfilename = $args{'-file_name'};
+    }elsif ($url=~/http.+\/(\S+)$/){ #Grab non-whitespace content after last slash to use for temp file name
+      $targetfilename=$1;
+    }else{
+      die "could not determine file name from $url";
+    }
+    my $tempdir = $self->tmp_dir;
+    my $targetfilepath="$tempdir"."$targetfilename";
+    my $wget_cmd = "wget $url -O $targetfilepath";
+    my $retval = Genome::Sys->shellcmd(cmd=>$wget_cmd);
+    unless ($retval == 1){
+      self->error_message('Failed to wget the specified URL');
+      return;
+    }
+    #unzip if necessary
+    if ($targetfilepath=~/\.gz$/){
+      my $gunzip_cmd = "gunzip -f $targetfilepath";
+      my $retval2 = Genome::Sys->shellcmd(cmd=>$gunzip_cmd);
+      unless ($retval2 == 1){
+        self->error_message('Failed to gunzip the specified file');
+        return;
+      }
+      $targetfilepath=~s/\.gz$//;
+    }
+    print "Downloaded $targetfilepath\n";
+    return $targetfilepath;
 }
 
 1;

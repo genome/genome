@@ -129,6 +129,7 @@ sub import_genes {
         my $gene_name = $gene->{entrez_id};
         my $gene_name_report = $self->_create_gene_name_report($gene_name, $citation, 'Entrez Gene Id', '');
         push @gene_name_reports, $gene_name_report;
+        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_id}, 'Entrez Gene Id', '');
         my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_gene_symbol}, 'Gene Symbol', '');
         my @entrez_gene_synonyms = split(',', $gene->{entrez_gene_synonyms});
         for my $entrez_gene_synonym (@entrez_gene_synonyms){

@@ -143,7 +143,7 @@ sub _import_drug {
     my $citation = shift;
     my $drug_name = $self->_create_drug_name_report($interaction->{drug_id}, $citation, 'DrugBank Drug Identifier', '');
     my $drug_name_alt = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_id}, 'DrugBank Drug Id', '');
-    my $primary_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary DrugBank Drug Name', '');
+    my $primary_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary Drug Name', '');
 
     my @drug_synonyms = split(', ', $interaction->{drug_synonyms});
     for my $drug_synonym (@drug_synonyms){
@@ -219,7 +219,7 @@ sub import_interactions {
     my $interaction_outfile = shift;
     my $citation = shift;
     my @interactions;
-    my @headers = qw/ interaction_count drug_id drug_name drug_synonyms drug_cas_number drug_brands drug_type drug_groups drug_categories partner_id known_action target_actions gene_symbol uniprot_id /;
+    my @headers = qw/ interaction_count drug_id drug_name drug_synonyms drug_cas_number drug_brands drug_type drug_groups drug_categories partner_id known_action target_actions gene_symbol uniprot_id entrez_id ensembl_id /;
     my $parser = Genome::Utility::IO::SeparatedValueReader->create(
         input => $interaction_outfile,
         headers => \@headers,
@@ -288,7 +288,6 @@ sub input_to_tsv {
     #Create data object for the entire XML file, allowing mixed array/hash structure for the same field depending of whether is only one element or more than one.
     #Also actually specify the primary IDs you would like the resultng data structures to be keyed on ('drugbank-id' for drug records, 'id' for gene partners)
     my $xml = $xs1->XMLin($infile, KeyAttr => ['drugbank-id', 'id'] );
-
 
     #Get the 'drug' tree
     my $info_source = "DrugBank";
@@ -604,33 +603,6 @@ sub organizePartners{
     return(\%p_lite);
 }
 
-sub download_file {
-    my $self = shift;
-    my %args = @_;
-    my $url = $args{'-mapping_file_url'};
-    my $targetfilename = $args{'-mapping_file_name'};
-    my $tempdir = $self->tmp_dir;
-    my $targetfilepath="$tempdir"."$targetfilename";
-    my $wget_cmd = "wget $url -O $targetfilepath";
-    my $retval = Genome::Sys->shellcmd(cmd=>$wget_cmd);
-    unless ($retval == 1){
-      self->error_message('Failed to wget the specified URL');
-      return;
-    }
-    #unzip if necessary
-    if ($targetfilepath=~/\.gz$/){
-      my $gunzip_cmd = "gunzip -f $targetfilepath";
-      my $retval2 = Genome::Sys->shellcmd(cmd=>$gunzip_cmd);
-      unless ($retval2 == 1){
-        self->error_message('Failed to gunzip the specified file');
-        return;
-      }
-      $targetfilepath=~s/\.gz$//;
-    }
-    print "Downloaded $targetfilepath\n";
-    return $targetfilepath;
-}
-
 sub getUniprotEntrezMapping {
     my $self = shift;
     #Get mapping of Uniprot Accessions to Entrez IDs, etc
@@ -661,6 +633,31 @@ close MAPPING;
 return(\%UniProtMapping);
 }
 
-
+sub download_file {
+    my $self = shift;
+    my %args = @_;
+    my $url = $args{'-mapping_file_url'};
+    my $targetfilename = $args{'-mapping_file_name'};
+    my $tempdir = $self->tmp_dir;
+    my $targetfilepath="$tempdir"."$targetfilename";
+    my $wget_cmd = "wget $url -O $targetfilepath";
+    my $retval = Genome::Sys->shellcmd(cmd=>$wget_cmd);
+    unless ($retval == 1){
+      self->error_message('Failed to wget the specified URL');
+      return;
+    }
+    #unzip if necessary
+    if ($targetfilepath=~/\.gz$/){
+      my $gunzip_cmd = "gunzip -f $targetfilepath";
+      my $retval2 = Genome::Sys->shellcmd(cmd=>$gunzip_cmd);
+      unless ($retval2 == 1){
+        self->error_message('Failed to gunzip the specified file');
+        return;
+      }
+      $targetfilepath=~s/\.gz$//;
+    }
+    print "Downloaded $targetfilepath\n";
+    return $targetfilepath;
+}
 
 1;

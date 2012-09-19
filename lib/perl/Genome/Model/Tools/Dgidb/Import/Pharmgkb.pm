@@ -449,6 +449,7 @@ sub _import_gene {
     my $interaction = shift;
     my $citation = shift;
     my $gene_accession = $self->_create_gene_name_report($interaction->{Entity2_id}, $citation, 'PharmGKB Gene Accession', '');
+    my $gene_accession_alt = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entity2_id}, 'PharmGKB Gene Accession', '');
     my $Entrez_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entrez_Id}, 'Entrez Gene Id', '');
     my $Ensembl_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Ensembl_Id}, 'Ensembl Gene Id', '');
     my $Gene_Name_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Gene_Name}, 'Gene Name', '');
@@ -456,12 +457,12 @@ sub _import_gene {
     my @Alternate_Names = quotewords(',', 0, $interaction->{Alternate_Names});
     for my $Alternate_Name (@Alternate_Names){
         next if $Alternate_Name eq 'NA';
-        my $alt_name_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Name, 'Alternate Name','');
+        my $alt_name_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Name, 'Alternate Gene Name','');
     }
     my @Alternate_Symbols = quotewords(',', 0, $interaction->{Alternate_Symbols});
         for my $Alternate_Symbol (@Alternate_Symbols){      
         next if $Alternate_Symbol eq 'NA';
-        my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'Alternate Symbol','');
+        my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'Gene Synonym','');
     }
 #   my @gene_cross_references = split(",", $interaction->{Gene_Cross_References});
 #    for my $gene_cross_reference (@gene_cross_references){
