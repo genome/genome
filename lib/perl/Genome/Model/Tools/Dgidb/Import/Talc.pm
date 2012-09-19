@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::SantaMonicaLung;
+package Genome::Model::Tools::Dgidb::Import::Talc;
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use Genome;
 
 binmode(STDOUT, ":utf8");
 
-class Genome::Model::Tools::Dgidb::Import::SantaMonicaLung {
+class Genome::Model::Tools::Dgidb::Import::Talc {
   is => 'Genome::Model::Tools::Dgidb::Import::Base',
   has => [
         infile => {
@@ -24,16 +24,16 @@ class Genome::Model::Tools::Dgidb::Import::SantaMonicaLung {
         interactions_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/SantaMonicaLung_WashU_INTERACTIONS.tsv',
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/TALC_WashU_INTERACTIONS.tsv',
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
         },
         version => {
             is => 'Text',
             is_input => 1,
-            doc => 'VERSION.  Version (date) of release of database from Santa Monica Lung group',
+            doc => 'VERSION.  Version (date) of release of database from TALC group',
         },
         citation_base_url => {
-            default => 'http://www.ncbi.nlm.nih.gov/pubmed/22005529/',
+            default => 'http://www.ncbi.nlm.nih.gov/pubmed/22005529/', #No url available for direct linking of genes/drugs
         },
         citation_site_url => {
             default => 'http://www.ncbi.nlm.nih.gov/pubmed/22005529/',
@@ -42,7 +42,7 @@ class Genome::Model::Tools::Dgidb::Import::SantaMonicaLung {
             default => 'Molecular targeted agents and biologic therapies for lung cancer.  Somaiah N, Simon GR.  J Thorac Oncol. 2011 Nov;6(11 Suppl 4):S1758-85.  PMID: 22005529',
         },
     ],
-    doc => 'Parse a tab-delim file from collaborators for Santa Monica Lung database',
+    doc => 'Parse a tab-delim file from collaborators for TALC database',
 };
 
 sub _doc_copyright_years {
@@ -88,13 +88,13 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import santa-monica-lung --infile=SantaMonicaLungCancerDrugDatabase.tsv --version=16Jul2012 --verbose
+gmt dgidb import talc --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/SantaMonicaLung/clean/SantaMonicaLungCancerDrugDatabase.tsv --version="16-Jul-2012" --verbose
 HELP
 }
 
 sub help_detail {
     my $summary = <<HELP
-Parse a tab-delimited database file from the Santa Monica Lung group (published annually)
+Parse a tab-delimited database file from the TALC group (published annually)
 Get drug, interaction and gene info for each drug-gene interaction in the database
 Get gene names and uniprot IDs from Entrez gene
 Add official 'EntrezGene' name to each gene record
@@ -130,7 +130,7 @@ sub import_interactions {
         is_regex => 1,
     );
 
-    my $citation = $self->_create_citation('Targeted Agents in Lung Cancer (Santa Monica Supplement, 2011)', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
+    my $citation = $self->_create_citation('TALC', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'Targeted Agents in Lung Cancer (Santa Monica Supplement, 2011)');
 
     $parser->next; #eat the headers
     while(my $interaction = $parser->next){
@@ -138,8 +138,10 @@ sub import_interactions {
         my $gene_name = $self->_import_gene($interaction, $citation);
         my $drug_gene_interaction = $self->_create_interaction_report($citation, $drug_name, $gene_name, '');
         push @interactions, $drug_gene_interaction;
-        unless($interaction->{interaction_type} eq 'NA'){
-          my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'interaction_type', $interaction->{interaction_type});
+        if($interaction->{interaction_type} eq 'NA'){
+          my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'Interaction Type', 'n/a');
+        }else{
+          my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'Interaction Type', $interaction->{interaction_type});
         }
     }
     return @interactions;
@@ -149,39 +151,39 @@ sub _import_drug {
     my $self = shift;
     my $interaction = shift;
     my $citation = shift;
-    my $drug_name = $self->_create_drug_name_report($interaction->{drug_name}, $citation, 'Targeted Agents in Lung Cancer (Santa Monica Supplement, 2011)', '');
-    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'SantaMonicaLung_primary_drug_name', '');
+    my $drug_name = $self->_create_drug_name_report($interaction->{drug_name}, $citation, 'TALC', '');
+    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary Drug Name', '');
     my @drug_synonyms = split(",", $interaction->{drug_synonym});
     for my $drug_synonym (@drug_synonyms){
       next if $drug_synonym eq 'NA';
-      my $synonym_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'SantaMonicaLung_drug_synonym', '');
+      my $synonym_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'Drug Synonym', '');
     }
 
     unless($interaction->{drug_generic_name} eq 'NA'){
-        my $drug_generic_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_generic_name}, 'SantaMonicaLung_drug_generic_name', '');
+        my $drug_generic_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_generic_name}, 'Drug Generic Name', '');
 
     }
 
     my @drug_tradenames = split(",", $interaction->{drug_trade_name});
     for my $drug_tradename (@drug_tradenames){
       next if $drug_tradename eq 'NA';
-      my $tradename_association = $self->_create_drug_alternate_name_report($drug_name, $drug_tradename, 'SantaMonicaLung_drug_trade_name', '');
+      my $tradename_association = $self->_create_drug_alternate_name_report($drug_name, $drug_tradename, 'Drug Trade Name', '');
     }
 
     unless($interaction->{drug_cas_number} eq 'NA'){
-        my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'cas_number', '');
+        my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'CAS Number', '');
     }
 
     unless($interaction->{drug_drugbank_id} eq 'NA'){
-        my $drug_name_drugbank_id = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_drugbank_id}, 'drug_drugbank_id', '');
+        my $drug_name_drugbank_id = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_drugbank_id}, 'Drugbank Id', '');
     }
 
     unless($interaction->{drug_class} eq 'NA'){
-        my $drug_class = $self->_create_drug_category_report($drug_name, 'SantaMonicaLung_drug_class', $interaction->{drug_class}, '');
+        my $drug_class = $self->_create_drug_category_report($drug_name, 'Drug Class', $interaction->{drug_class}, '');
     }
 
     unless($interaction->{drug_type} eq 'NA'){
-        my $drug_type = $self->_create_drug_category_report($drug_name, 'SantaMonicaLung_drug_type', $interaction->{drug_type}, '');
+        my $drug_type = $self->_create_drug_category_report($drug_name, 'Drug Type', $interaction->{drug_type}, '');
     }
     return $drug_name;
 }
@@ -190,8 +192,9 @@ sub _import_gene {
     my $self = shift;
     my $interaction = shift;
     my $citation = shift;
-    my $gene_name = $self->_create_gene_name_report($interaction->{entrez_id}, $citation, 'SantaMonicaLung_partner_id', '');
-    my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{gene_target}, 'SantaMonicaLung_gene_symbol', '');
+    my $gene_name = $self->_create_gene_name_report($interaction->{entrez_id}, $citation, 'Entrez Gene Id', '');
+    my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{entrez_id}, 'Entrez Gene Id', '');
+    my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{gene_target}, 'Gene Symbol', '');
     return $gene_name;
 }
 
@@ -269,7 +272,7 @@ sub input_to_tsv {
 
 sub preload_objects {
     my $self = shift;
-    my $source_db_name = 'Targeted Agents in Lung Cancer (Santa Monica Supplement, 2011)';
+    my $source_db_name = 'TALC';
     my $source_db_version = $self->version;
 
     #Let's preload anything for this database name and version so that we can avoid death by 1000 queries

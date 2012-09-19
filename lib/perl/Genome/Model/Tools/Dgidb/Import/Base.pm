@@ -40,12 +40,14 @@ sub _create_citation {
     my $base_url = shift;
     my $site_url = shift;
     my $citation_text = shift;
+    my $full_name = shift;
     return Genome::DruggableGene::Citation->create(
         source_db_name => $source_db_name,
         source_db_version => $source_db_version,
         base_url => $base_url,
         site_url => $site_url,
         citation => $citation_text,
+        full_name => $full_name,
     );
 }
 

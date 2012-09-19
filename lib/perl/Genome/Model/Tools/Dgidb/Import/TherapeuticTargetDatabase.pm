@@ -84,7 +84,7 @@ sub import_interactions {
         is_regex => 1,
     );
 
-    my $citation = $self->_create_citation('TTD', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
+    my $citation = $self->_create_citation('TTD', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'Therapeutic Target Database');
 
     $parser->next; #eat the headers
     while(my $interaction = $parser->next){
@@ -94,7 +94,7 @@ sub import_interactions {
         push @interactions, $drug_gene_interaction;
         my @interaction_types = split('; ', $interaction->{interaction_types});
         for my $interaction_type (@interaction_types){
-            my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'interaction_type', $interaction_type);
+            my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'Interaction Type', $interaction_type);
         }
     }
 
@@ -105,26 +105,27 @@ sub _import_drug {
     my $self = shift;
     my $interaction = shift;
     my $citation = shift;
-    my $drug_name = $self->_create_drug_name_report($interaction->{drug_id}, $citation, 'TTD_drug_id', '');
+    my $drug_name = $self->_create_drug_name_report($interaction->{drug_id}, $citation, 'TTD drug id', '');
 
-    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'TTD_primary_drug_name', '');
+    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary Drug Name', '');
+    my $drug_name_alt = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_id}, 'TTD Drug Id', '');
 
     my @drug_synonyms = split("; ", $interaction->{drug_synonyms});
     for my $drug_synonym (@drug_synonyms){
         next if $drug_synonym eq 'na';
-        my $synonym_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'TTD_drug_synonym', '');
+        my $synonym_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'Drug Synonym', '');
     }
 
     unless($interaction->{drug_cas_number} eq 'na'){
-        my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'cas_number', '');
+        my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'CAS Number', '');
     }
 
     unless($interaction->{drug_pubchem_cid} eq 'na'){
-        my $drug_name_pubchem_cid = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_pubchem_cid}, 'pubchem_cid', '');
+        my $drug_name_pubchem_cid = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_pubchem_cid}, 'Pubchem CId', '');
     }
 
     unless($interaction->{drug_pubchem_sid} eq 'na'){
-        my $drug_name_pubchem_sid = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_pubchem_sid}, 'pubchem_sid', '');
+        my $drug_name_pubchem_sid = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_pubchem_sid}, 'Pubchem SId', '');
     }
 
     return $drug_name;
@@ -136,16 +137,15 @@ sub _import_gene {
     my $citation = shift;
     my $gene_name = $self->_create_gene_name_report($interaction->{target_id}, $citation, 'TTD_partner_id', '');
 
-    my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_name}, 'TTD_gene_symbol', '');
+    my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_name}, 'Gene Symbol', '');
+    my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_id}, 'TTD Gene Id', '');
 
     my @target_synonyms = split(";", $interaction->{target_synonyms});
     for my $target_synonym (@target_synonyms){
         next if $target_synonym eq 'na';
-        my $gene_synonym = $self->_create_gene_alternate_name_report($gene_name, $target_synonym, 'TTD_alternate_gene_name', '');
+        my $gene_synonym = $self->_create_gene_alternate_name_report($gene_name, $target_synonym, 'Gene Synonym', '');
     }
-
-    my $uniprot_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_uniprot_id}, 'uniprot_id', '');
-
+    my $uniprot_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_uniprot_id}, 'Uniprot Id', '');
     return $gene_name;
 }
 

@@ -37,10 +37,10 @@ class Genome::Model::Tools::Dgidb::Import::Dgene {
             doc => 'VERSION.  Version (date) of release of database from dGene group',
         },
         citation_base_url => {
-            default => 'TBD', #TODO: fill me in later
+            default => 'http://hematology.wustl.edu/faculty/Bose/BoseBio.html', #To be updated upon publication
         },
         citation_site_url => {
-            default => 'TBD', #TODO: fill me in later
+            default => 'http://hematology.wustl.edu/faculty/Bose/BoseBio.html', #To be updated upon publication
         },
         citation_text => {
             default => "The Druggable Gene List, dGENE, provides a Rapid Filter for Cancer Genome Sequencing Data. Kumar R, Chang L, Ellis MJ, Bose R. Manuscript in preparation.",
@@ -276,7 +276,7 @@ sub _parse_terms_file {
 sub import_tsv {
     my $self = shift;
     my $genes_outfile = $self->genes_outfile;
-    my $citation = $self->_create_citation('dGene', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
+    my $citation = $self->_create_citation('dGene', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'dGENE - The Druggable Gene List');
     my @genes = $self->import_genes($genes_outfile, $citation);
     return 1;
 }
@@ -297,11 +297,12 @@ sub import_genes {
     
     $parser->next; #eat the headers
     while(my $dgene_input = $parser->next){
-        my $gene_name = $self->_create_gene_name_report($dgene_input->{'Symbol'}, $citation, 'dgene_gene_name', '');
+        my $gene_name = $self->_create_gene_name_report($dgene_input->{'Symbol'}, $citation, 'dGene Gene Name', '');
         my $human_readable_name = $dgene_input->{'human_readable_name'};
         $human_readable_name =~ s/-/ /g;
-        my $human_readable = $self->_create_gene_category_report($gene_name, 'human_readable_name', uc($human_readable_name), '');
-        my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $dgene_input->{'GeneID'}, 'entrez_id', '');
+        my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
+        my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $dgene_input->{'GeneID'}, 'Entrez Gene Id', '');
+        my $symbol = $self->_create_gene_alternate_name_report($gene_name, $dgene_input->{'Symbol'}, 'Gene Symbol', '');
         push @genes, $gene_name;
     }
     return @genes;
