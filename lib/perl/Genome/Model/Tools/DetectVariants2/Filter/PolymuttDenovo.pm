@@ -247,13 +247,16 @@ sub prepare_r_input {
         my ($chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples) = split "\t", $line;
         my @alts = split ",", $alt;
         my @possible_alleles = ($ref, @alts);
-        my $novel = 0;
+        my @novel = ();
         my @info_fields = split";", $info; 
         for my $info_field (@info_fields) {
             if($info_field =~m/^DA=/) {
-                my ($novel_idx) = ($info_field =~m/^DA=(\d+)/);
-                $novel = $possible_alleles[$novel_idx];
-                $self->status_message("Selecting base $novel as novel allele for line: $line\n");
+                my ($novel_string) = ($info_field =~m/^DA=(\d+)/);
+                my @novel_idx = split ",", $novel_string;
+                for my $novel_i (@novel_idx) {
+                    push @novel, $possible_alleles[$novel_i];
+                }
+                $self->status_message("Selecting bases @novel as novel allele for line: $line\n");
             }
         }
         my $DNGT_idx=$self->find_format_field($format, "DNGT");
@@ -261,7 +264,7 @@ sub prepare_r_input {
             $self->error_message("Need DNGT field to proceed. couldn't find one in $line");
             die;
         }
-        if($novel) {
+        if(scalar(@novel) >= 1) {
             $r_input_fh->print("$chr\t$pos");
             for (my $i=0; $i < scalar(@samples); $i++) {    
                 my $readcount_file = $readcount_files->[$i];
@@ -270,8 +273,9 @@ sub prepare_r_input {
                 my $prob;
                 my (@format_fields) = split ":", $samples[$i];
                 my $dngt = $format_fields[$DNGT_idx];
-                my @ref_bases = split "[|/]", $dngt;
-                if(grep /$novel/, @ref_bases) {
+                my @ref_indices = split "[|/]", $dngt;
+                my @ref_bases = map { $possible_alleles[$_] } @ref_indices;
+                if($self->contains(\@novel, \@ref_bases)) {
                     $prob = .5;
                 }
                 else {
@@ -283,7 +287,7 @@ sub prepare_r_input {
                     for my $fields (@fields) {
                         my ($base, $depth, @rest)  = split ":", $fields;
                         next if($base =~m/\+/);
-                        if($base eq $novel) {
+                        if(grep /$base/,@novel) {
                             $var_depth+=$depth;
                         }
                         else {
@@ -299,6 +303,22 @@ sub prepare_r_input {
     $r_input_fh->close;
     return $r_input_path;
 }
+
+sub contains {
+    my ($self, $array1, $array2) = @_;
+    my %hash;
+    for my $value (@$array1) {
+        $hash{$value}=1;
+    }
+    for my $value (@$array2) {
+        if(exists($hash{$value})) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
 
 sub r_code {
     my $self = shift;
