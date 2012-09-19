@@ -291,7 +291,7 @@ sub convert_denovo_line_to_tags {
             my ($index) = grep { $alts[$_] eq $denovo_allele } 0..$#alts;
             push @da_indices, $index;
         }
-        $denovo_info_tag =  "da=" . join(",", @da_indices);
+        $denovo_info_tag =  "DA=" . join(",", @da_indices);
     }
     shift @alts; #throw away ref base, or alt that was same as ref
     $alt = join (",", @alts);

@@ -1,12 +1,12 @@
-package Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForSolexa;
+package Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForSolexa;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForSolexa { 
-    is => 'Genome::Model::Tools::Lims::ApipeBridge::FixPidfaParamsForBase',
+class Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForSolexa { 
+    is => 'Genome::Model::Tools::Lims::ApipeBridge::FixPseParamsForBase',
 };
 
 sub instrument_data_type { return 'solexa'; }

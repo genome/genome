@@ -249,3 +249,156 @@ sub xml {
 
 1;
 
+=pod
+
+=head1 Name
+
+Genome::File::IgvXML
+
+=head1 Synopsis
+
+Genome::File::IgvXML contains code for generating IGV XML sessions
+
+=head1 Usage
+
+my $igv = Genome::File::IgvXml->create(id => $filename);
+
+$igv->add_bam_track(file => $bam, name => $sample)
+
+my $igv_fh = $igv->open("w");
+
+print $igv_fh $igv->xml($locus);
+
+$igv_fh->close;
+
+=head1 Methods
+
+=head2 add_bam_track
+
+=over
+
+=item I<Synopsis>
+
+adds a single bam file to the XML file
+
+=item I<Arguments>
+
+a hash of parameters. The following are supported (but only file is required):
+
+=over
+
+=item * file
+
+the file path
+
+=item * name
+
+the label for the bam's track
+
+=item * font_size
+
+size of the font for this track's labels in points
+
+=item * color_option
+
+color option for reads e.g. 'UNEXPECTED_PAIR'
+
+=item * max_depth
+
+maximum depth of the coverage track associated with this BAM. Defaults to 100.
+
+=item * min_depth
+
+minimum depth of the coverage track associated with this BAM. Defaults to 0.
+
+=back
+
+=back
+
+=head2 add_bed_track 
+
+=over
+
+=item I<Synopsis>
+
+adds a BED file to the session
+
+=item I<Arguments>
+
+a hash of parameters. The following are supported (but only file is required):
+
+=over
+
+=item * file
+
+the file path
+
+=item * name
+
+the label for the BED's track
+
+=item * font_size
+
+size of the font for this track's labels in points
+
+=back
+
+=back
+
+=head2 add_junction_track 
+
+=over
+
+=item I<Synopsis>
+
+Add a file of splice junctions
+
+=item I<Arguments>
+
+a hash of parameters. The following are supported (but only file is required):
+
+=over
+
+=item * file
+
+the file path
+
+=item * name
+
+the label for the junction file's track
+
+=item * font_size
+
+size of the font for this track's labels in points
+
+=back
+
+=back
+
+=head2 xml
+
+=over
+
+=item I<Synopsis>
+
+Generate the XML representation of the file as a string
+
+=item I<Arguments>
+
+the starting locus position as a string. By default it is C<12:25398182-2539361>
+
+=item I<Returns>
+
+Text of the XML file
+
+=back
+
+=head1 See Also
+
+L<Genome::File::Base>
+
+=head1 Author(s)
+
+B<David Larson> I<dlarson@genome.wustl.edu>, B<Malachi Griffith> I<mgriffit@genome.wustl.edu>
+
+=cut

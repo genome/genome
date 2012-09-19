@@ -99,7 +99,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _dbsnp_build_id => {
               is => 'Number',
-              default => '106375969',
+              default => '127786607',
         },
         dbsnp_build => {
               is => 'Genome::Model::Build',
@@ -223,6 +223,7 @@ sub execute {
     #Is there a suitable WGS somatic variation model in existence (If not, create)?  If so, what is the status?
     #- Only proceed with this if the prerequisite WGS tumor/normal ref-align models exist
     if (scalar(@normal_wgs_ref_align_models) && scalar(@tumor_wgs_ref_align_models)){
+      $self->status_message("\nWGS SOMATIC-VARIATION MODELS");
       @wgs_somatic_variation_models = $self->check_somatic_variation_models('-data_type'=>'wgs', '-dna_samples'=>\@dna_samples, '-normal_models'=>\@normal_wgs_ref_align_models, '-tumor_models'=>\@tumor_wgs_ref_align_models);
     }
   }
@@ -242,6 +243,7 @@ sub execute {
     #Is there a suitable Exome somatic variation model in existence
     #- Only proceed with this if the prerequisite Exome tumor/normal ref-align models exist
     if (scalar(@normal_exome_ref_align_models) && scalar(@tumor_exome_ref_align_models)){
+      $self->status_message("\nEXOME SOMATIC-VARIATION MODELS");
       @exome_somatic_variation_models = $self->check_somatic_variation_models('-data_type'=>'exome', '-dna_samples'=>\@dna_samples, '-normal_models'=>\@normal_exome_ref_align_models, '-tumor_models'=>\@tumor_exome_ref_align_models);
     }
   }
@@ -261,11 +263,31 @@ sub execute {
   #- Only proceed with this is the prerequisite models (where data exists) are ready.
 
 
-
+  #TODO: Remind the user whether this clinseq model is currently set as do-not-archive and remind them how to do that...
 
   $self->status_message("\n\n");
 
   return 1;
+}
+
+
+#Resolve a human readable individual name from an individual object
+sub get_final_individual_name{
+  my $self = shift;
+  my $individual = $self->individual;
+  my $final_name;
+  my $upn = $individual->upn;
+  if ($individual->common_name){
+    $final_name = $individual->common_name;
+  }elsif($individual->name){
+    $final_name = $individual->name;
+  }else{
+    $final_name = $individual->id;
+  }
+  if ($upn){
+    $final_name .= " ($upn)";
+  }
+  return $final_name;
 }
 
 
@@ -416,177 +438,13 @@ sub rna_samples{
   foreach my $sample (@samples){
     if ($sample->sample_type =~ /rna/i){
       push(@rna_samples, $sample);
+    }elsif($sample->is_rna){
+      push(@rna_samples, $sample);
     }
   }
   my $rna_sample_count = scalar(@rna_samples);
   $self->status_message("Found " . $rna_sample_count . " RNA samples");
   return (@rna_samples);
-}
-
-
-#Gather reference alignment models for a single subject that meet all the specified criteria
-sub check_ref_align_models{
-  my $self = shift;
-  my %args = @_;
-  my $data_type = $args{'-data_type'};
-  my $tissue_type = $args{'-tissue_type'};
-  my @dna_samples = @{$args{'-dna_samples'}};
-
-  my @final_models;
-
-  #Make sure there is only one sample of this sample type (i.e. sample->common_name)
-  my $match = 0;
-  my $sample;
-  my $scn;
-  foreach my $s (@dna_samples){
-    my $current_scn = $s->common_name || "NULL";
-    if ($tissue_type =~ /$current_scn/i){
-      $match++;
-      $sample = $s;
-      $scn = $current_scn;
-    }
-  }
-  if ($match == 0){
-    $self->error_message("\nDid not find a matching DNA sample for tissue type: $tissue_type");
-  }elsif ($match > 1){
-    $self->error_message("\nFound more than one matching DNA sample of tissue type: $tissue_type");
-  }else{
-    $self->status_message("\nFound a DNA sample " . $sample->name . " ($scn) matching tissue type: $tissue_type");
-  }
-
-  #Is there WGS or Exome data?  Get the instrument data of each type for this sample.
-  #- return if there is no data of the desired type
-  my @tmp;
-  my @sample_instrument_data = $self->get_instrument_data('-sample'=>$sample, '-data_type'=>$data_type);
-  return @tmp unless (scalar(@sample_instrument_data));
-
-  my $subject_id = $sample->patient->id;
-  my @models = $sample->models;
-  my $model_count = scalar(@models);
-  $self->status_message("\tStarting with " . $model_count . " $data_type models for this subject");
-
-  #Test for correct processing profile, reference sequence build, annotation build, and dbsnp build
-  #Also make sure that all the instrument data of wgs or exome type is being used (exome can be exome+wgs lanes)
-  foreach my $model (@models){
-    next unless ($model->processing_profile_id == $self->ref_align_pp->id);
-    next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
-    next unless ($model->annotation_reference_build->id == $self->annotation_build->id);
-    next unless ($model->dbsnp_build->id == $self->dbsnp_build->id);
-  
-    #Is this a WGS or an Exome model?
-    #WGS models do not have exome data, Exome models have at least one lane of exome data - skip those that are not the current type being considered
-    next unless ($self->determine_model_data_type('-model'=>$model) eq $data_type);
-
-    #If the desired $data_type is exome.  Check that the TRSN and ROI have been set correctly, exclude models that are not
-    next unless ($self->check_model_trsn_and_roi('-model'=>$model, '-data_type'=>$data_type));
-
-    #Make sure all the wgs or exome data is associated with the model
-    #In both wgs and exome models, additional data will be allowed to handle weird situations.  
-    #Eventually we will need the ability to exclude data as well...
-    next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
-
-    $self->status_message("\t\tName: " . $model->name);
-    push (@final_models, $model);
-  }
-
-  my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable $data_type models (matching default or user specified criteria)");
-
-  #If there are no suitable models, one will need to be created
-  unless ($final_model_count > 0){
-    $self->create_ref_align_model('-data_type'=>$data_type, '-sample_common_name'=>$scn, '-sample'=>$sample, '-sample_instrument_data'=>\@sample_instrument_data);
-    return @tmp;
-  }
-
-  #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
-  my $models_status = $self->check_models_status('-models'=>\@final_models);
-
-  #If there is one or more suitable successful models, return the models objects.  Must return all suitable models to allow checking against available somatic variation models
-  if ($models_status){
-    return @final_models;
-  }else{
-    return @tmp;
-  }
-}
-
-
-#Gather rnaseq models for a single subject that meet all the specified criteria
-sub check_rnaseq_models{
-  my $self = shift;
-  my %args = @_;
-  my $tissue_type = $args{'-tissue_type'};
-  my @rna_samples = @{$args{'-rna_samples'}};
-
-  my @final_models;
-  my @tmp;
-
-  #Make sure there is only one sample of this sample type (i.e. sample->common_name)
-  my $match = 0;
-  my $sample;
-  my $scn;
-  foreach my $s (@rna_samples){
-    my $current_scn = $s->common_name || "NULL";
-    if ($tissue_type =~ /$current_scn/i){
-      $match++;
-      $sample = $s;
-      $scn = $current_scn;
-    }
-  }
-  if ($match == 0){
-    $self->warning_message("\nDid not find a matching RNA sample for tissue type: $tissue_type");
-    return @tmp;
-  }elsif ($match > 1){
-    $self->error_message("\nFound more than one matching RNA sample of tissue type: $tissue_type");
-  }else{
-    $self->status_message("\nFound an RNA sample " . $sample->name . " ($scn) matching tissue type: $tissue_type");
-  }
-
-  #Is there actually any RNA?
-  #- return if there is no data of the desired type
-  my @test = $sample->instrument_data;
-  my @sample_instrument_data;
-  foreach my $instrument_data (@test){
-    next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
-    push (@sample_instrument_data, $instrument_data);
-  }
-  return @tmp unless (scalar(@sample_instrument_data));
-
-  my $subject_id = $sample->patient->id;
-  my @models = $sample->models;
-  my $model_count = scalar(@models);
-  $self->status_message("\tStarting with " . $model_count . " $tissue_type rna-seq models for this subject");
-
-  #Test for correct processing profile, reference sequence build, annotation build
-  foreach my $model (@models){
-    next unless ($model->processing_profile_id == $self->rnaseq_pp->id);
-    next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
-    next unless ($model->annotation_build->id == $self->annotation_build->id);
-  
-    #Make sure all the rna-seq data is associated with the model
-    next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
-
-    $self->status_message("\t\tName: " . $model->name);
-    push (@final_models, $model);
-  }
-
-  my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable $tissue_type models (matching default or user specified criteria)");
-
-  #If there are no suitable models, one will need to be created
-  unless ($final_model_count > 0){
-    $self->create_rnaseq_model('-sample_common_name'=>$scn, '-sample'=>$sample, '-sample_instrument_data'=>\@sample_instrument_data);
-    return @tmp;
-  }
-
-  #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
-  my $models_status = $self->check_models_status('-models'=>\@final_models);
-
-  #If there is one or more suitable successful models, return the models objects.  Must return all suitable models to allow checking against available somatic variation models
-  if ($models_status){
-    return @final_models;
-  }else{
-    return @tmp;
-  }
 }
 
 
@@ -808,12 +666,292 @@ sub check_for_missing_data{
 }
 
 
+#Obtain a genotype microarray model object (if it exists) for a particular sample
+sub get_genotype_microarray_model_id{
+  my $self = shift;
+  my %args = @_;
+  my $sample = $args{'-sample'};
+
+  #Get the imported data that should have been used for the genotype microarray model
+  my $default_genotype_data = $sample->default_genotype_data;
+  my $default_genotype_data_id = $default_genotype_data->id;
+  
+  my $genotype_microarray_model_id = 0;
+
+  my @models = $sample->models;
+
+  foreach my $model (@models){
+    next unless ($model->class eq "Genome::Model::GenotypeMicroarray");
+    $genotype_microarray_model_id = $model->id;
+  }
+
+  return $genotype_microarray_model_id;
+}
+
+
+#Gather reference alignment models for a single subject that meet all the specified criteria
+sub check_ref_align_models{
+  my $self = shift;
+  my %args = @_;
+  my $data_type = $args{'-data_type'};
+  my $tissue_type = $args{'-tissue_type'};
+  my @dna_samples = @{$args{'-dna_samples'}};
+
+  my @final_models;
+
+  #Make sure there is only one sample of this sample type (i.e. sample->common_name)
+  my $match = 0;
+  my $sample;
+  my $scn;
+  foreach my $s (@dna_samples){
+    my $current_scn = $s->common_name || "NULL";
+    if ($tissue_type =~ /$current_scn/i){
+      $match++;
+      $sample = $s;
+      $scn = $current_scn;
+    }
+  }
+  if ($match == 0){
+    $self->error_message("\nDid not find a matching DNA sample for tissue type: $tissue_type");
+  }elsif ($match > 1){
+    $self->error_message("\nFound more than one matching DNA sample of tissue type: $tissue_type");
+  }else{
+    $self->status_message("\nFound a DNA sample " . $sample->name . " ($scn) matching tissue type: $tissue_type");
+  }
+
+  #Is there WGS or Exome data?  Get the instrument data of each type for this sample.
+  #- return if there is no data of the desired type
+  my @tmp;
+  my @sample_instrument_data = $self->get_instrument_data('-sample'=>$sample, '-data_type'=>$data_type);
+  return @tmp unless (scalar(@sample_instrument_data));
+
+  my $subject_id = $sample->patient->id;
+  my @models = $sample->models;
+  my $model_count = scalar(@models);
+  $self->status_message("\tStarting with " . $model_count . " $data_type models for this subject. Candidates that meet criteria:");
+
+  #Test for correct processing profile, reference sequence build, annotation build, and dbsnp build
+  #Also make sure that all the instrument data of wgs or exome type is being used (exome can be exome+wgs lanes)
+  foreach my $model (@models){
+    next unless ($model->class eq "Genome::Model::ReferenceAlignment");
+    next unless ($model->processing_profile_id == $self->ref_align_pp->id);
+    next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
+    if ($model->can("annotation_reference_build")){
+      next unless ($model->annotation_reference_build->id == $self->annotation_build->id);
+    }else{
+      next;
+    }
+    if ($model->can("dbsnp_build")){
+      next unless ($model->dbsnp_build->id == $self->dbsnp_build->id);
+    }else{
+      next;
+    }
+  
+    #Is this a WGS or an Exome model?
+    #WGS models do not have exome data, Exome models have at least one lane of exome data - skip those that are not the current type being considered
+    next unless ($self->determine_model_data_type('-model'=>$model) eq $data_type);
+
+    #If the desired $data_type is exome.  Check that the TRSN and ROI have been set correctly, exclude models that are not
+    next unless ($self->check_model_trsn_and_roi('-model'=>$model, '-data_type'=>$data_type));
+
+    #Make sure all the wgs or exome data is associated with the model
+    #In both wgs and exome models, additional data will be allowed to handle weird situations.  
+    #Eventually we will need the ability to exclude data as well...
+    next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
+
+    $self->status_message("\t\tName: " . $model->name);
+    push (@final_models, $model);
+  }
+
+  my $final_model_count = scalar(@final_models);
+  $self->status_message("\tFound " . $final_model_count . " suitable $data_type models (matching default or user specified criteria)");
+
+  #If there are no suitable models, one will need to be created
+  unless ($final_model_count > 0){
+    $self->create_ref_align_model('-data_type'=>$data_type, '-sample'=>$sample, '-sample_instrument_data'=>\@sample_instrument_data);
+    return @tmp;
+  }
+
+  #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
+  my $models_status = $self->check_models_status('-models'=>\@final_models);
+
+  #If there is one or more suitable successful models, return the models objects.  Must return all suitable models to allow checking against available somatic variation models
+  if ($models_status){
+    return @final_models;
+  }else{
+    return @tmp;
+  }
+}
+
+
+#Gather rnaseq models for a single subject that meet all the specified criteria
+sub check_rnaseq_models{
+  my $self = shift;
+  my %args = @_;
+  my $tissue_type = $args{'-tissue_type'};
+  my @rna_samples = @{$args{'-rna_samples'}};
+
+  my @final_models;
+  my @tmp;
+
+  #Make sure there is only one sample of this sample type (i.e. sample->common_name)
+  my $match = 0;
+  my $sample;
+  my $scn;
+  foreach my $s (@rna_samples){
+    my $current_scn = $s->common_name || "NULL";
+    if ($tissue_type =~ /$current_scn/i){
+      $match++;
+      $sample = $s;
+      $scn = $current_scn;
+    }
+  }
+  if ($match == 0){
+    $self->warning_message("\nDid not find a matching RNA sample for tissue type: $tissue_type");
+    return @tmp;
+  }elsif ($match > 1){
+    $self->error_message("\nFound more than one matching RNA sample of tissue type: $tissue_type");
+  }else{
+    $self->status_message("\nFound an RNA sample " . $sample->name . " ($scn) matching tissue type: $tissue_type");
+  }
+
+  #Is there actually any RNA?
+  #- return if there is no data of the desired type
+  my @test = $sample->instrument_data;
+  my @sample_instrument_data;
+  foreach my $instrument_data (@test){
+    next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
+    push (@sample_instrument_data, $instrument_data);
+  }
+  return @tmp unless (scalar(@sample_instrument_data));
+
+  my $subject_id = $sample->patient->id;
+  my @models = $sample->models;
+  my $model_count = scalar(@models);
+  $self->status_message("\tStarting with " . $model_count . " $tissue_type models for this subject. Candidates that meet criteria:");
+
+  #Test for correct processing profile, reference sequence build, annotation build
+  foreach my $model (@models){
+    next unless ($model->class eq "Genome::Model::RnaSeq");
+    next unless ($model->processing_profile_id == $self->rnaseq_pp->id);
+    next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
+    next unless ($model->annotation_build->id == $self->annotation_build->id);
+  
+    #Make sure all the rna-seq data is associated with the model
+    next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
+
+    $self->status_message("\t\tName: " . $model->name);
+    push (@final_models, $model);
+  }
+
+  my $final_model_count = scalar(@final_models);
+  $self->status_message("\tFound " . $final_model_count . " suitable $tissue_type rna-seq models (matching default or user specified criteria)");
+
+  #If there are no suitable models, one will need to be created
+  unless ($final_model_count > 0){
+    $self->create_rnaseq_model('-sample'=>$sample, '-sample_instrument_data'=>\@sample_instrument_data);
+    return @tmp;
+  }
+
+  #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
+  my $models_status = $self->check_models_status('-models'=>\@final_models);
+
+  #If there is one or more suitable successful models, return the models objects.  Must return all suitable models to allow checking against available somatic variation models
+  if ($models_status){
+    return @final_models;
+  }else{
+    return @tmp;
+  }
+}
+
+
+#Check for existence of a somatic variation model meeting desired criteria and create one if it does not exist
+sub check_somatic_variation_models{
+  my $self = shift;
+  my %args = @_;
+  my $data_type = $args{'-data_type'};
+  my @dna_samples = @{$args{'-dna_samples'}};
+  my @normal_ref_align_models = @{$args{'-normal_models'}};
+  my @tumor_ref_align_models = @{$args{'-tumor_models'}};
+
+  my @final_models;
+  my @tmp;
+
+  my $somatic_variation_pp_id;
+  if ($data_type eq 'wgs'){
+    $somatic_variation_pp_id = $self->wgs_somatic_variation_pp->id;
+  }elsif($data_type eq 'exome'){
+    $somatic_variation_pp_id = $self->exome_somatic_variation_pp->id;
+  }else{
+    $self->error_message("Data type must be wgs or exome but $data_type was provided");
+    exit(1);
+  }
+
+  #Get models for either tumor or normal DNA sample 
+  my @existing_models;
+  foreach my $sample(@dna_samples){
+    my @models = $sample->models;
+    push(@existing_models, @models);
+  }
+  my $existing_model_count = scalar(@existing_models);
+  $self->status_message("\tStarting with " . $existing_model_count . " models for this pair of subjects. Candidates that meet criteria:");
+
+  #Test for correct processing profile, annotation build, previously discovered variations
+  foreach my $model (@existing_models){
+    next unless ($model->class eq "Genome::Model::SomaticVariation");
+    next unless ($model->processing_profile_id == $somatic_variation_pp_id);
+    next unless ($model->annotation_build->id == $self->annotation_build->id);
+    if ($model->can("previously_discovered_variations_build")){
+      next unless ($model->previously_discovered_variations_build->id == $self->previously_discovered_variations->id);
+    }else{
+      next;
+    }
+    
+    #Make sure one of the passing normal AND tumor reference alignment models are specified as inputs to the somatic variation model
+    #next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
+    my $tumor_model_id = $model->tumor_model->id;
+    my $tumor_model_match = 0;
+    foreach my $model (@tumor_ref_align_models){
+      $tumor_model_match = 1 if ($model->id == $tumor_model_id);
+    }
+    my $normal_model_id = $model->normal_model->id;
+    my $normal_model_match = 0;
+    foreach my $model (@normal_ref_align_models){
+      $normal_model_match = 1 if ($model->id == $normal_model_id);
+    }
+    next unless ($tumor_model_match && $normal_model_match);
+
+    $self->status_message("\t\tName: " . $model->name);
+    push (@final_models, $model);
+  }
+  my $final_model_count = scalar(@final_models);
+  $self->status_message("\tFound " . $final_model_count . " suitable $data_type somatic-variation models (matching default or user specified criteria)");
+
+  #If there are no suitable models, one will need to be created
+  unless ($final_model_count > 0){
+    $self->create_somatic_variation_model('-processing_profile_id'=>$somatic_variation_pp_id, '-normal_models'=>\@normal_ref_align_models, '-tumor_models'=>\@tumor_ref_align_models);
+    return @tmp;
+  }
+
+  #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
+  my $models_status = $self->check_models_status('-models'=>\@final_models);
+
+  #If there is one or more suitable successful models, return the models objects.  Must return all suitable models to allow checking against available clinseq models
+  if ($models_status){
+    return @final_models;
+  }else{
+    return @tmp;
+  }
+
+  return;
+}
+
+
 #Create a reference-alignment model for wgs or exome data for a single sample
 sub create_ref_align_model{
   my $self = shift;
   my %args = @_;
   my $data_type = $args{'-data_type'};
-  my $sample_common_name = $args{'-sample_common_name'};
   my $sample = $args{'-sample'};
   my @sample_instrument_data = @{$args{'-sample_instrument_data'}}; #Already limited to data of $data_type
  
@@ -830,14 +968,10 @@ sub create_ref_align_model{
 
   #Come up with a descriptive model name.  May be more trouble than it is worth, perhaps it should be autogenerated?
   my $sample_name = $sample->name;
-  my $annotation_name = $self->annotation_build->name;
   my $annotation_id = $self->annotation_build->id;
-  my $reference_build_name = $self->reference_sequence_build->__display_name__;
   my $reference_build_id = $self->reference_sequence_build->id;
-  my $final_individual_name = $self->get_final_individual_name;
   my $ref_align_pp_id = $self->ref_align_pp->id;
   my $dbsnp_build_id = $self->dbsnp_build->id;
-  my $model_name = "Ref Align - $sample_common_name - $data_type - $reference_build_name - $annotation_name - $final_individual_name - PP$ref_align_pp_id";
 
   my @commands;
 
@@ -870,34 +1004,10 @@ sub create_ref_align_model{
 }
 
 
-#Obtain a genotype microarray model object (if it exists) for a particular sample
-sub get_genotype_microarray_model_id{
-  my $self = shift;
-  my %args = @_;
-  my $sample = $args{'-sample'};
-
-  #Get the imported data that should have been used for the genotype microarray model
-  my $default_genotype_data = $sample->default_genotype_data;
-  my $default_genotype_data_id = $default_genotype_data->id;
-  
-  my $genotype_microarray_model_id = 0;
-
-  my @models = $sample->models;
-
-  foreach my $model (@models){
-    next unless ($model->class eq "Genome::Model::GenotypeMicroarray");
-    $genotype_microarray_model_id = $model->id;
-  }
-
-  return $genotype_microarray_model_id;
-}
-
-
 #Create a rna-seq model for rnaseq data for a single sample
 sub create_rnaseq_model{
   my $self = shift;
   my %args = @_;
-  my $sample_common_name = $args{'-sample_common_name'};
   my $sample = $args{'-sample'};
   my @sample_instrument_data = @{$args{'-sample_instrument_data'}}; #Already limited to data of $data_type
  
@@ -911,13 +1021,9 @@ sub create_rnaseq_model{
 
   #Come up with a descriptive model name.  May be more trouble than it is worth, perhaps it should be autogenerated?
   my $sample_name = $sample->name;
-  my $annotation_name = $self->annotation_build->name;
   my $annotation_id = $self->annotation_build->id;
-  my $reference_build_name = $self->reference_sequence_build->__display_name__;
   my $reference_build_id = $self->reference_sequence_build->id;
-  my $final_individual_name = $self->get_final_individual_name;
   my $rnaseq_pp_id = $self->rnaseq_pp->id;
-  my $model_name = "rnaseq - $sample_common_name - $reference_build_name - $annotation_name - $final_individual_name - PP$rnaseq_pp_id";
 
   my @commands;
 
@@ -931,6 +1037,54 @@ sub create_rnaseq_model{
   }
 
   return;
+}
+
+
+#Create a somatic-variation model for a single tumor/normal pair
+sub create_somatic_variation_model{
+  my $self = shift;
+  my %args = @_;
+  my $processing_profile_id = $args{'-processing_profile_id'};
+  my @normal_models = @{$args{'-normal_models'}};
+  my @tumor_models = @{$args{'-tumor_models'}};
+
+  #If there are multiple suitable normal or tumor reference alignment models, select the 'best' one
+  #The definition of 'best' is not neccessarily clear... Try selecting that with the most data, break ties by creation data (favoring recently created models)
+  my $best_tumor_model = $self->select_best_model('-models'=>\@tumor_models);
+  my $best_normal_model = $self->select_best_model('-models'=>\@normal_models);
+
+  my $tumor_model_id = $best_tumor_model->id;
+  my $normal_model_id = $best_normal_model->id;
+  my $somatic_variation_pp_id = $self->somatic_variation_pp->id;
+  my $annotation_build_id = $self->annotation_build->id;
+
+  my @commands;
+  push(@commands, "\n#Create a Somatic-Variation model as follows:");
+  push(@commands, "genome model define somatic-variation  --processing-profile=$processing_profile_id  --tumor-model=$tumor_model_id  --normal-model=$normal_model_id  --annotation-build=$annotation_build_id");
+  push(@commands, "genome model build start ''");
+
+  return;
+}
+
+
+#Select the best model from a list of suitable models according to simple criteria that may depend on the model type being considered
+sub select_best_model{
+  my $self = shift;
+  my %args = @_;
+  my @models = @{'-models'};
+
+  #If there is only one model, it is the best by default
+  my $best_model = $models[0];
+  return $best_model if (scalar(@models) == 1);
+
+  #Rank models according to amount of instrument data available
+
+  #If there is no clear winner, rank according to 'date_completed' of the last successful build?
+
+  #If there is still no clear winner, arbitrarily return the first one in the array
+
+
+  return $best_model;
 }
 
 
@@ -957,9 +1111,17 @@ sub check_models_status{
     my $unstartable_builds = 0;
     my $scheduled_builds = 0;
     foreach my $build (@builds){
+      my $build_id = $build->id;
       my $status = $build->status;
       if ($status =~ /succeeded/i){
         $succeeded_builds++;
+        #Before attempting to use a model/build as input to another model, make sure it is not archived (and check whether it has been set as do-not-archive)
+        #- Do not start automatically marking these things as do-not-archive, leave it to the end user to mark the actual desired clin-seq models as do-not-archive
+        if ($build->is_archived){
+          $self->status_message("Successful build $build_id of model $model_id that meets desired criteria is currently archived! Consider running: genome model build unarchive $build_id");
+        }elsif ($build->archivable){
+          $self->status_message("Successful build $build_id of model $model_id that meets desired criteria is currently archivable.  Consider running: genome model build set-do-not-archive $build_id");
+        }
       }elsif ($status =~ /running/i){
         $running_builds++;
       }elsif ($status =~ /unstartable/i){
@@ -993,38 +1155,6 @@ sub check_models_status{
 }
 
 
-#Resolve a human readable individual name from an individual object
-sub get_final_individual_name{
-  my $self = shift;
-  my $individual = $self->individual;
-  my $final_name;
-  my $upn = $individual->upn;
-  if ($individual->common_name){
-    $final_name = $individual->common_name;
-  }elsif($individual->name){
-    $final_name = $individual->name;
-  }else{
-    $final_name = $individual->id;
-  }
-  if ($upn){
-    $final_name .= " ($upn)";
-  }
-  return $final_name;
-}
-
-
-#Check for existence of a somatic variation model meeting desired criteria and create one if it does not exist
-sub check_somatic_variation_models{
-  my $self = shift;
-  my %args = @_;
-  my $data_type = $args{'-data_type'};
-  my @dna_samples = @{$args{'-dna_samples'}};
-  my @normal_ref_align_models = $args{'-normal_models'};
-  my @tumor_ref_align_models = $args{'-tumor_models'};
-
-
-  return;
-}
 
 1;
 
