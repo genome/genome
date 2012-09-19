@@ -16,6 +16,14 @@ class Genome::Model::DifferentialExpression {
             is => 'Text',
             doc => 'Each group is a comma-delimited list of model ids corresponding to a defined label(order matters).  Each group (A, B, C & D) is separated by white space. ex: "1,2 3,4 5,6 7,8"',
         },
+        reference_sequence_build => {
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+            is_optional => 1,
+        },
+        annotation_build => {
+            is => "Genome::Model::Build::ImportedAnnotation",
+            is_optional => 1,
+        }
     ],
     has_param => [
         transcript_convergence_name => {
@@ -31,6 +39,10 @@ class Genome::Model::DifferentialExpression {
             doc => 'The parameters used to converge transcripts.',
             is_optional => 1,
         },
+        transcript_convergence_biotypes => {
+            doc => 'The transcript feature biotypes to include in the convergence when using cuffcompare. example: protein_coding,pseudogene,miRNA,lincRNA,snoRNA,snRNA',
+            is_optional => 1,
+        },
         differential_expression_name => {
             doc => 'algorithm used to detect expression levels',
             valid_values => ['cuffdiff'],
@@ -38,6 +50,10 @@ class Genome::Model::DifferentialExpression {
         },
         differential_expression_version => {
             doc => 'the expression detection version used for this model',
+            is_optional => 1,
+        },
+        differential_expression_mask_reference_transcripts => {
+            doc => 'the annotation file basename used to mask known reference transcripts during differential expression.',
             is_optional => 1,
         },
         differential_expression_params => {
@@ -59,6 +75,74 @@ class Genome::Model::DifferentialExpression {
 
 #TODO: Check the processing_profile, reference_sequence, and eventually annotation to see if they match across models.(Possibly in create?).
 
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+
+    unless ($self) { return; }
+
+    unless ($self->_validate_rna_seq_processing_profile) {
+        return;
+    }
+    unless ($self->reference_sequence_build) {
+        unless ($self->_resolve_reference_sequence_build) {
+            return;
+        }
+    } else {
+      # TODO: Validate the reference sequence build with all input models.
+        die('Please implement the logic to validate the defined reference sequence build with the input models!');
+    }
+    unless ($self->annotation_build) {
+        unless ($self->_resolve_annotation_build) {
+            return;
+        }
+    } else {
+        # TODO: Validate the annotation build with all input models.
+        die('Please implement the logic to validate the defined annotation build with the input models!');
+    }
+    #TODO: Validate that all models have a Succeeded build or at minimum an Alignment Result and Cufflinks output
+    return $self;
+}
+
+sub _validate_rna_seq_processing_profile {
+    my $self = shift;
+    
+    my %processing_profiles = map {$_->processing_profile->id => $_->processing_profile } $self->input_models;
+    my @pp_ids = keys %processing_profiles;
+    if (scalar(@pp_ids) == 1) {
+        return 1;
+    }
+    $self->error_message('Multiple processing profile ids found for input models: '. "\n". join("\n",@pp_ids));
+    return;
+}
+
+sub _resolve_reference_sequence_build {
+    my $self = shift;
+    
+    my %reference_sequence_builds = map {$_->reference_sequence_build->id => $_->reference_sequence_build} $self->input_models;
+    my @build_ids = keys %reference_sequence_builds;
+    if (scalar(@build_ids) == 1) {
+        $self->reference_sequence_build($reference_sequence_builds{$build_ids[0]});
+        return 1;
+    }
+    $self->error_message('Multiple reference sequence build ids found for input models: '. "\n". join("\n",@build_ids));
+    return;
+}
+
+sub _resolve_annotation_build {
+    my $self = shift;
+    
+    my %annotation_builds = map {$_->annotation_build->id => $_->annotation_build} $self->input_models;
+    my @build_ids = keys %annotation_builds;
+    if (scalar(@build_ids) == 1) {
+        $self->annotation_build($annotation_builds{$build_ids[0]});
+        return 1;
+    }
+    $self->error_message('Multiple annotation build ids found for input models: '. "\n". join("\n",@build_ids));
+    return;
+
+}
+
 #TODO: We need to create a model_group with all the individual models after the model is created but before generating any builds???
 
 #TODO: Resolve the BAM files for each model and map to a string mimicking the condition_model_ids_string
@@ -77,30 +161,16 @@ sub _resolve_subject {
         $self->error_message("No subjects on input models?  Contact Informatics.");
         return;
     }
-    return $subjects[0];
-    return;
+    my $subject = $subjects[0];
+    $self->subject_class_name($subject->class);
+    return $subject;
 }
 
 sub _infer_candidate_subjects_from_input_models {
     my $self = shift;
 
-    my @condition_model_id_groups = split(/\s+/,$self->condition_model_ids_string);
-    my @all_model_ids;
-    for my $condition_model_id_group (@condition_model_id_groups) {
-        my @condition_model_ids = split(/,/,$condition_model_id_group);
-        push @all_model_ids, @condition_model_ids;
-    }
-    my @input_models;
-    for my $model_id (@all_model_ids) {
-        my $model = Genome::Model->get($model_id);
-        unless ($model) {
-            $self->error_message('Failed to get model '. $model_id .' to resolve subject from!');
-            return;
-        }
-        push @input_models, $model;
-    }
     my %patients;
-    for my $input_model (@input_models) {
+    for my $input_model ($self->input_models) {
         next unless $input_model;
         my $patient;
         if ($input_model->subject->isa("Genome::Individual")) {
@@ -123,7 +193,29 @@ sub _infer_candidate_subjects_from_input_models {
     } else {
         return @patients;
     }
-} 
+}
+
+sub input_models {
+    my $self = shift;
+    
+    my @condition_model_id_groups = split(/\s+/,$self->condition_model_ids_string);
+    my @all_model_ids;
+    for my $condition_model_id_group (@condition_model_id_groups) {
+        my @condition_model_ids = split(/,/,$condition_model_id_group);
+        push @all_model_ids, @condition_model_ids;
+    }
+    my @input_models;
+    for my $model_id (@all_model_ids) {
+        my $model = Genome::Model->get($model_id);
+        unless ($model) {
+            $self->error_message('Failed to get model '. $model_id .' as input model to '. __PACKAGE__);
+            return;
+        }
+        push @input_models, $model;
+    }
+    return @input_models;
+}
+
 #sub _map_workflow_inputs {
 #    my $self = shift;
 #    my $build = shift;
@@ -153,6 +245,8 @@ sub _resolve_workflow_for_build {
 
      my @output_properties = qw/
                                   transcript_convergence_result
+                                  differential_expression_result
+                                  summarize_result
                               /;
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
@@ -171,16 +265,16 @@ sub _resolve_workflow_for_build {
     my $transcript_convergence_operation;
     if ($self->transcript_convergence_name eq 'cuffcompare') {
         $transcript_convergence_operation = $workflow->add_operation(
-            name => 'Differential Expression',
+            name => 'Transcript Convergence',
             operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cuffcompare',
+                command_class_name => 'Genome::Model::DifferentialExpression::Command::ConvergeTranscripts::Cuffcompare',
             )
         );
     } elsif ($self->transcript_convergence_name eq 'cuffmerge') {
         $transcript_convergence_operation = $workflow->add_operation(
-            name => 'Differential Expression',
+            name => 'Transcript Convergence',
             operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cuffmerge',
+                command_class_name => 'Genome::Model::DifferentialExpression::Command::ConvergeTranscripts::Cuffmerge',
             )
         );
     } else {
@@ -189,11 +283,78 @@ sub _resolve_workflow_for_build {
     
     $transcript_convergence_operation->operation_type->lsf_queue($lsf_queue);
     $transcript_convergence_operation->operation_type->lsf_project($lsf_project);
+    $workflow->add_link(
+        left_operation => $input_connector,
+        left_property => 'build_id',
+        right_operation => $transcript_convergence_operation,
+        right_property => 'build_id'
+    );
     
     # Differential Expression
+    my $differential_expression_name = $self->differential_expression_name;
+    my $differential_expression_operation;
+    if ($self->differential_expression_name eq 'cuffdiff') {
+        $differential_expression_operation = $workflow->add_operation(
+            name => 'Differential Expression',
+            operation_type => Workflow::OperationType::Command->create(
+                command_class_name => 'Genome::Model::DifferentialExpression::Command::DifferentialExpression::Cuffdiff',
+            )
+        );
+     } else {
+         die('Unsupported differential_expression_name: '. $self->differential_expression_name);
+    }
+    
+    $differential_expression_operation->operation_type->lsf_queue($lsf_queue);
+    $differential_expression_operation->operation_type->lsf_project($lsf_project);
+    $workflow->add_link(
+        left_operation => $transcript_convergence_operation,
+        left_property => 'build_id',
+        right_operation => $differential_expression_operation,
+        right_property => 'build_id'
+    );
+    
+    # Summarize Results
+    # TODO: cummerbund
+    my $summarize_name = $self->summarize_differential_expression_name;
+    my $summarize_operation;
+    if ($summarize_name eq 'cummerbund') {
+        $summarize_operation = $workflow->add_operation(
+            name => 'Summarize Differential Expression',
+            operation_type => Workflow::OperationType::Command->create(
+                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cummerbund',
+            )
+        );
+    } else {
+         die('Unsupported summarize differential_expression_name: '. $summarize_name);
+     }
+    
+    $summarize_operation->operation_type->lsf_queue($lsf_queue);
+    $summarize_operation->operation_type->lsf_project($lsf_project);
+    $workflow->add_link(
+        left_operation => $differential_expression_operation,
+        left_property => 'build_id',
+        right_operation => $summarize_operation,
+        right_property => 'build_id'
+    );
 
-    # Summary Results
-
+    $workflow->add_link(
+        left_operation => $summarize_operation,
+        left_property => 'result',
+        right_operation => $output_connector,
+        right_property => 'summarize_result'
+    );
+    $workflow->add_link(
+        left_operation => $transcript_convergence_operation,
+        left_property => 'result',
+        right_operation => $output_connector,
+        right_property => 'transcript_convergence_result'
+    );
+    $workflow->add_link(
+        left_operation => $differential_expression_operation,
+        left_property => 'result',
+        right_operation => $output_connector,
+        right_property => 'differential_expression_result'
+    );
     return $workflow;
 }
 

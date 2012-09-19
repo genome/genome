@@ -519,7 +519,12 @@ sub execute {
                         my $varbase = $varInfo[2];
                         if($varbase eq $knownRef){
                             unless ($varResults[1] == 0){
-                                $var_freq = ($varResults[1]/$F[3])*100;
+                                #this isn't entirely correct. To get the proper depth, we should also
+                                #query the following base, get the depth and use it (since 
+                                #samtools reports deletions on the previous base). For now, we're
+                                #using the depth at the prev base as a proxy. Should be accurate to
+                                #within a read or two.
+                                $var_freq = ($varResults[1]/($F[3]+$varResults[1]))*100;
                             }
                             filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $varResults[1], $var_freq,
                                            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 

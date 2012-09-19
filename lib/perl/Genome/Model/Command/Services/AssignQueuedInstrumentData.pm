@@ -6,28 +6,11 @@ use warnings;
 class Genome::Model::Command::Services::AssignQueuedInstrumentData {
     is  => 'Command::V2',
     has => [
-        max_pses => {
-            is          => 'Number',
-            is_optional => 1,
-            len         => 5,
-            default     => 200,
-            doc         => 'Max # of instrument data to process in one invocation.',
-        },
         max_instrument_data_to_process => {
             is          => 'Number',
             is_optional => 1,
             default     => 200,
             doc         => 'Max # of instrument data to process in one invocation.',
-        },
-        _max_instrument_data_to_process => {
-            is_optional => 1,
-            is_calculated => 1,
-            calculate_from => [qw/ max_pses max_instrument_data_to_process /],
-            calculate => q| 
-                return ( $max_pses < $max_instrument_data_to_process )
-                ? $max_pses
-                : $max_instrument_data_to_process;
-            |,
         },
         newest_first => {
             is          => 'Boolean',
@@ -535,7 +518,7 @@ sub _load_instrument_data {
     ? sub{ $a->{_priority} <=> $b->{_priority} or $a->id <=> $b->id } # oldest first, then failed
     : sub{ $a->{_priority} <=> $b->{_priority} or $b->id <=> $a->id }; # newest first, then failed
     my @instrument_data_to_process;
-    my $max_instrument_data_to_process = $self->_max_instrument_data_to_process;
+    my $max_instrument_data_to_process = $self->max_instrument_data_to_process;
     for my $instrument_data ( sort { $sorter->() } values %instrument_data ) {
         last if @instrument_data_to_process >= $max_instrument_data_to_process;
         if ( not $self->_check_instrument_data($instrument_data) ){

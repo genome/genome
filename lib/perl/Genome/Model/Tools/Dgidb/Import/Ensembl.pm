@@ -162,7 +162,7 @@ sub import_tsv {
     my $genes_outfile_path = $self->genes_outfile;
     #TODO: Take in the $genes_outfile_path, parse it, make the db objects;
     $self->preload_objects;
-    my $citation = $self->_create_citation('Ensembl', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
+    my $citation = $self->_create_citation('Ensembl', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'Ensembl');
     my @gene_name_reports = $self->import_genes($genes_outfile_path, $citation); #Imports gene names and related info to Dgidb and returns gene_name_report objects
     #We don't actually need to do anything with these objects, the data is ready to be commited to the database but will not be committed until after the execute finishes
 
@@ -200,19 +200,18 @@ sub import_genes {
 
     $parser->next; #eat the headers
     while(my $gene = $parser->next){
-        my $gene_name_report = $self->_create_gene_name_report($gene->{ensembl_id}, $citation, 'ensembl_id', ''); #Description left undefined for now
+        my $gene_name_report = $self->_create_gene_name_report($gene->{ensembl_id}, $citation, 'Ensembl Gene Id', ''); #Description left undefined for now
         push @gene_name_reports, $gene_name_report;
+        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_id}, 'Ensembl Gene Id', '');
+
         unless($gene->{ensembl_gene_symbol} eq 'na'){
-            my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'ensembl_gene_symbol', '');
+            my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'Gene Symbol', '');
         }
         unless ($gene->{ensembl_gene_biotype} eq 'na'){
-          my $biotype_category = $self->_create_gene_category_report($gene_name_report, 'gene_biotype', $gene->{ensembl_gene_biotype}, '');
+          my $biotype_category = $self->_create_gene_category_report($gene_name_report, 'Gene Biotype', $gene->{ensembl_gene_biotype}, '');
         }
     }
     return @gene_name_reports;
 }
-
-
-
 
 1;

@@ -17,7 +17,7 @@ class Genome::Model::Command::InstrumentData::Assign {
         instrument_data => {
             is => 'Genome::InstrumentData',
             is_many => 1,
-            doc => 'Instrumetn data to assign. Resolved via filter string. To get for a model group, just use the mode lgoup id/name.',
+            doc => 'Instrument data to assign, resolved by filter string. (See examples.)',
         },
         flow_cell_id => {
             is => 'Text',
@@ -62,7 +62,21 @@ sub help_brief {
 }
 
 sub help_detail {
-    return help_brief();
+    return <<'EOHELP'
+Assign instrument data to a model in one of several ways.
+
+--all
+  Assigns any matching instrument data as selected by the model type.
+--flow-cell-id
+  Assigns matching "Solexa" instrument data from this flow cell.
+--instrument-data
+  Assigns matching instrument data by ID or lookup expression.  Examples:
+  To assign two specific instrument data by ID:
+    --instrument-data 12345678,12345679
+  To assign those instrument data found on models in a model-group:
+    --instrument-data models.model_groups.id=12345
+EOHELP
+;
 }
 
 #TODO:put this logic in Genome::Model::assign_instrument_data() and turn this command into a thin wrapper

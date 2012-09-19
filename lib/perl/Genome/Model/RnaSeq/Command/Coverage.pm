@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 use version;
 
-my $DEFAULT_LSF_RESOURCE = "-R 'select[mem>=8000] rusage[mem=8000]' -M 8000000";
+my $DEFAULT_LSF_RESOURCE = "-R 'select[mem>=16000] rusage[mem=16000]' -M 16000000";
 my @DEFAULT_ANNOTATION_FILE_BASENAMES = qw/annotation rRNA rRNA_protein MT pseudogene/;
 my $DEFAULT_MERGE_ANNOTATION_FEATURES = 'both';
 

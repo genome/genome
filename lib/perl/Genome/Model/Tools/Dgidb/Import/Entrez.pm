@@ -85,14 +85,13 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import entrez --gene_info_file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene_info --gene2accession_file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene2accession.gz  --version 3
+gmt dgidb import entrez --gene-info-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene_info.human --gene2accession-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene2accession.human  --version="17-Sep-2012"
 HELP
 }
 
 sub help_detail {
-#TODO: make this accurate
     my $summary = <<HELP
-WRITE ME
+The Entrez gene database forms the preliminary basis for DGIDB gene groups. All human Entrez gene IDs are imported along with their corresponding symbols, synonyms and Ensembl Gene Id where available. Gene entities from other datasources will be grouped into these Entrez based gene groups by matching their identifiers via Entrez ID, Ensembl ID, gene symbol or synonyms. 
 HELP
 }
 
@@ -116,29 +115,34 @@ sub import_genes {
     my $version = $self->version;
     my $gene_outfile = shift;
     my @gene_name_reports;
-    my @headers = qw/ entrez_id entrez_gene_symbol entrez_gene_synonyms /;
+    my @headers = qw/ entrez_id entrez_gene_symbol entrez_gene_synonyms ensembl_ids /;
     my $parser = Genome::Utility::IO::SeparatedValueReader->create(
         input => $gene_outfile,
         headers => \@headers,
         separator => "\t",
         is_regex=> 1,
     );
-    my $citation = $self->_create_citation('Entrez', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text);
+    my $citation = $self->_create_citation('Entrez', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'NCBI Entrez Gene');
 
     $parser->next; #eat the headers
     while(my $gene = $parser->next){
         my $gene_name = $gene->{entrez_id};
-        my $gene_name_report = $self->_create_gene_name_report($gene_name, $citation, 'entrez_id', '');
+        my $gene_name_report = $self->_create_gene_name_report($gene_name, $citation, 'Entrez Gene Id', '');
         push @gene_name_reports, $gene_name_report;
-        my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_gene_symbol}, 'entrez_gene_symbol', '');
+        my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_gene_symbol}, 'Gene Symbol', '');
         my @entrez_gene_synonyms = split(',', $gene->{entrez_gene_synonyms});
         for my $entrez_gene_synonym (@entrez_gene_synonyms){
             if ($entrez_gene_synonym and $entrez_gene_synonym ne 'na'){
-                my $gene_alternate_name_report = $self->_create_gene_alternate_name_report($gene_name_report, $entrez_gene_synonym, 'entrez_gene_synonym', '');
+                my $gene_alternate_name_report = $self->_create_gene_alternate_name_report($gene_name_report, $entrez_gene_synonym, 'Gene Synonym', '');
+            }
+        }
+        my @ensembl_gene_ids = split(',', $gene->{ensembl_ids});
+        for my $ensembl_gene_id (@ensembl_gene_ids){
+            if ($ensembl_gene_id and $ensembl_gene_id ne 'na'){
+                my $ensembl_alternate_name_report = $self->_create_gene_alternate_name_report($gene_name_report, $ensembl_gene_id, 'Ensembl Gene Id', '');
             }
         }
     }
-
     return @gene_name_reports;
 }
 
@@ -173,7 +177,7 @@ sub input_to_tsv {
     open(TARGETS, ">$targets_outfile") || die "\n\nCould not open outfile: $targets_outfile\n\n";
     binmode(TARGETS, ":utf8");
 
-    my $targets_header = join("\t", 'entrez_id', 'entrez_gene_symbol', 'entrez_gene_synonyms');
+    my $targets_header = join("\t", 'entrez_id', 'entrez_gene_symbol', 'entrez_gene_synonyms', 'ensembl_ids');
     print TARGETS "$targets_header\n";
 
     my %entrez_ids = %{$entrez_data->{'entrez_ids'}};
@@ -181,8 +185,10 @@ sub input_to_tsv {
         my %entrez_id_names = %{$entrez_ids{$entrez_id}};
         my $synonyms = $entrez_id_names{synonyms_array};
         $synonyms = join(",", @$synonyms);
+        my $ensembl_ids = $entrez_id_names{ensembl_array};
+        $ensembl_ids = join(",", @$ensembl_ids);
         my $symbol = $entrez_id_names{symbol};
-        print TARGETS join("\t", $entrez_id, $symbol, $synonyms), "\n";
+        print TARGETS join("\t", $entrez_id, $symbol, $synonyms, $ensembl_ids), "\n";
     }
 
     close(TARGETS);
@@ -198,7 +204,7 @@ sub loadEntrezData {
     my $self = shift;
     my %edata;
 
-    my %entrez_map;      #Entrez_id -> symbol, synonyms
+    my %entrez_map;      #Entrez_id -> symbol, synonyms, Ensembl gene id
     my %symbols_map;     #Symbols   -> entrez_id(s)
     my %synonyms_map;    #Synonyms  -> entrez_id(s)
     my %p_acc_map;       #Protein accessions -> entrez_id
@@ -222,15 +228,24 @@ sub loadEntrezData {
         my $synonyms = $line[4];
         my $xref = $line[5]; #we will ignore all cross references except Ensembl for now
 
-        my @synonyms_array = grep{$_ ne '-'} (split("\\|", $synonyms), map{$_ =~ s/Ensembl://; $_} grep{$_ =~ /ENSG/ } split(/\|/, $xref));
+        #my @synonyms_array = grep{$_ ne '-'} (split("\\|", $synonyms), map{$_ =~ s/Ensembl://; $_} grep{$_ =~ /ENSG/ } split(/\|/, $xref));
+        my @synonyms_array = grep{$_ ne '-'} split("\\|", $synonyms);
+        my @ensembl_array = grep{$_ ne '-'} map{$_ =~ s/Ensembl://; $_} grep{$_ =~ /ENSG/ } split(/\|/, $xref);
         $synonyms = join("|", @synonyms_array);
         if ($synonyms eq ''){
             $synonyms = 'na';
         }
-
+        my $ensembl_string = join("|", @ensembl_array);
+        if ($ensembl_string eq ''){
+          $ensembl_string = 'na';
+        }
         my %synonyms_hash;
         foreach my $syn (@synonyms_array){
             $synonyms_hash{$syn} = 1;
+        }
+        my %ensembl_hash;
+        foreach my $ensembl (@ensembl_array){
+          $ensembl_hash{$ensembl} = 1;
         }
 
         #Store entrez info keyed on entrez id
@@ -238,6 +253,9 @@ sub loadEntrezData {
         $entrez_map{$entrez_id}{synonyms_string} = $synonyms;
         $entrez_map{$entrez_id}{synonyms_array} = \@synonyms_array;
         $entrez_map{$entrez_id}{synonyms_hash} = \%synonyms_hash;
+        $entrez_map{$entrez_id}{ensembl_string} = $ensembl_string;
+        $entrez_map{$entrez_id}{ensembl_array} = \@ensembl_array;
+        $entrez_map{$entrez_id}{ensembl_hash} = \%ensembl_hash;
 
         #Store entrez info keyed on symbol
         if ($symbols_map{$symbol}){
@@ -260,7 +278,6 @@ sub loadEntrezData {
                 $synonyms_map{$syn}{entrez_ids} = \%tmp;
             }
         }
-
     }
     close (GENE);
 
