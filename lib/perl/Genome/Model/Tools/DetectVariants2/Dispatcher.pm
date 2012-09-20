@@ -240,7 +240,10 @@ sub _detect_variants {
             if($roi_list->reference->id eq $self->reference_build_id) {
                 $roi_file = $roi_list->file_path;
             } else {
-                $roi_file = $roi_list->converted_bed_file(reference => $self->reference_build);
+                $roi_file = $roi_list->converted_bed_file(
+                        reference => $self->reference_build,
+                        file_path => join("/", $self->output_directory, "converted_roi.bed"),
+                    );
                 unless(-s $roi_file) {
                     die $self->error_message('Failed to convert ' . $roi_list->name . ' to reference ' . $self->reference_build->name);
                 }
