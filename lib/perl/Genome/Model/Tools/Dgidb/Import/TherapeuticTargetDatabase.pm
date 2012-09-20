@@ -22,6 +22,13 @@ class Genome::Model::Tools::Dgidb::Import::TherapeuticTargetDatabase {
             default => '/tmp',
             doc => 'Directory where temp files will be created',
         },
+        skip_pubchem => {
+            is => 'Boolean',
+            is_input => 1,
+            is_optional => 1,
+            default => 0,
+            doc => 'Skip _destroy_and_rebuild_pubchem_and_drug_groups step',
+        },
         drugs_crossmatching_url => {
             is => 'Text',
             is_input => 1,
@@ -64,7 +71,9 @@ sub execute {
     my $self = shift;
     $self->input_to_tsv();
     $self->import_tsv();
-    $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    unless ($self->skip_pubchem){
+        $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    }
     return 1;
 }
 
