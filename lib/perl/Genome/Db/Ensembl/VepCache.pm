@@ -29,7 +29,6 @@ sub create {
     my $self = $class->SUPER::create(@_);
 
     $self->_prepare_staging_directory;
-    $self->_prepare_output_directory;
 
     my $version = $self->version;
     my $species = $self->species;
@@ -65,6 +64,7 @@ sub create {
 
     $self->status_message("Finished downloading vep cache");
     
+    $self->_prepare_output_directory;
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
 
