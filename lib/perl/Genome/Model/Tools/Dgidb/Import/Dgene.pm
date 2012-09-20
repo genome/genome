@@ -88,7 +88,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import dgene --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/RonBose/02Aug2012/DRUGGABLE_GENOME_08022012_2257.txt --dgene-term-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/RonBose/02Aug2012/TargetDgeneTerms.tsv --citation-base-url=Unknown --citation-site-url=Unknown --citation-text=Unknown --version=02Aug2012 
+gmt dgidb import dgene --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/RonBose/02Aug2012/DRUGGABLE_GENOME_08022012_2257.txt --dgene-term-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/RonBose/02Aug2012/TargetDgeneTerms.tsv --version=02Aug2012 
 HELP
 }
 
