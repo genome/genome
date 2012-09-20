@@ -349,8 +349,9 @@ sub find_or_create_somatic_variation_models{
             );
             $somatic_params{annotation_build} = Genome::Model::ImportedAnnotation->annotation_build_for_reference($model->reference_sequence_build);
             $self->error_message('Failed to get annotation_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{annotation_build};
-            $somatic_params{previously_discovered_variations_build} = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($model->reference_sequence_build);
-            $self->error_message('Failed to get previously_discovered_variations_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{previously_discovered_variations_build};
+            #$somatic_params{previously_discovered_variations_build} = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($model->reference_sequence_build);
+            #$self->error_message('Failed to get previously_discovered_variations_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{previously_discovered_variations_build};
+            $somatic_params{previously_discovered_variations_build} = undef;
 
             my $capture_somatic_processing_profile_id = '2642139'; #Nov. 2011 somatic-variation exome
             my $somatic_processing_profile_id = '2642137'; #Nov. 2011 somatic-variation wgs
