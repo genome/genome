@@ -51,7 +51,6 @@ my %TOPHAT_VERSIONS = (
     '1.2.0'  => $ENV{GENOME_SW} . '/tophat/tophat-1.2.0/tophat',
     '1.3.0'  => $ENV{GENOME_SW} . '/tophat/tophat-1.3.0/tophat',
     '1.3.1'  => $ENV{GENOME_SW} . '/tophat/tophat-1.3.1/tophat',
-    '2.0.4'  => '/gscuser/acoffman/tophat-2.0.4/tophat',
     'tophat' => 'tophat',
 );
 
