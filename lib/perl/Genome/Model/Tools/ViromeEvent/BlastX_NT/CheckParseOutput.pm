@@ -34,7 +34,7 @@ sub execute {
     my $dir = $self->dir;
     my $sample_name = basename($dir);
 
-    $self->log_event("Checking NT blastX parse for $sample_name");
+    #$self->log_event("Checking NT blastX parse for $sample_name");
 
     my $blast_dir = $dir.'/'.$sample_name.'.BNFiltered_TBLASTX_nt';
 
