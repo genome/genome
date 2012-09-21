@@ -12,18 +12,17 @@ use Bio::SeqIO;
 
 class Genome::Model::Tools::ViromeEvent::SplitBasedOnBarCode{
     is => 'Genome::Model::Tools::ViromeEvent',
-    has =>
-    [
-     barcode_file => {
-	 doc => 'file of reads to be checked for contamination',
-	 is => 'String',
-	 is_input => 1,
-     },
-     fasta_file => {
-	 doc => 'file of reads to be checked for contamination',
-	 is => 'String',
-	 is_input => 1,
-     },
+    has => [
+        barcode_file => {
+            doc => 'file of reads to be checked for contamination',
+            is => 'String',
+            is_input => 1,
+        },
+        fasta_file => {
+            doc => 'file of reads to be checked for contamination',
+            is => 'String',
+            is_input => 1,
+        },
     ],
 };
 
