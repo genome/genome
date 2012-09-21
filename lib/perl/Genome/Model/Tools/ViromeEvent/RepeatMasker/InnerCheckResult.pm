@@ -51,16 +51,16 @@ sub execute {
 	}
     }
 
-    $self->log_event("Running repeat masker on $file_name");
+    #$self->log_event("Running repeat masker on $file_name");
 
     #RUN REPEAT MASKER USING GZHAO'S LIBRARY
     my $com = "/gscmnt/sata835/info/medseq/virome/scripts_used_by_virome/RepeatMasker " . $file;
 
     if (system($com)) {
-	$self->log_event("Repeat masker failed for $file_name");
+	$self->log_event("Screening failed for $file_name");
 	return;
     }
-    $self->log_event("Finished running repeat masker on $file_name");
+    $self->log_event("Screening completed for $file_name");
     return 1;
 }
 

@@ -44,14 +44,14 @@ sub execute {
 	      ' -c 0.98 -n 8 -G 0 -aS 0.98 -g 1 -r 1 -M 4000 -d 0' .
 	      ' > ' . $cdhitReport;
 
-    $self->log_event("Executing for sample: $sample_name");
+    #$self->log_event("Executing for sample: $sample_name");
 
     if (system($com)) { #returns 0 when successful
         $self->log_event("Failed to successfully run cd-hit for sample: $sample_name");
         return; #need to make sure this exits
     }
 
-    $self->log_event("Cd-hit ran successfully for sample: $sample_name");
+    $self->log_event("Screening completed for sample: $sample_name");
 
     #remove files
 
