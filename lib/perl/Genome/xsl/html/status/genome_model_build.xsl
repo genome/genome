@@ -677,6 +677,10 @@
               </td>
               <td class="value">
                 <div id="disk-summary">loading...</div>
+
+                    <a class="mini btn">
+                        <xsl:attribute name="href">/view/genome/model/build/disk.html?id=<xsl:value-of select="//build/@build-id"/></xsl:attribute>see allocations
+                    </a>
               </td>
             </tr>
 

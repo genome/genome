@@ -50,7 +50,6 @@
 
             var build_id = $("#build_id").html();
             debugger;
-            alert("build is " + build_id);
             var url = "/viewajax/genome/model/build/data-table.json?id=" + build_id;
 
             $('#myTable').dataTable( {
