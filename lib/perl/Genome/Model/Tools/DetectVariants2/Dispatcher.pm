@@ -211,89 +211,14 @@ sub _detect_variants {
         die $self->error_message("We cannot currently mix single-sample and multi-sample variant detectors!  Contact Informatics...");
     }
 
-    # handle the case of doing multi-sample detection on single-sample detectors, where we need a merge
-
+    # handle the case of doing multi-sample detection on single-sample
+    # detectors, where we need a merge
     if ($single_sample_detector_count and scalar(@alignment_results)) {
-        # TODO: instead of running this command, we should be running something like the new DV2 API VCF generation commands/software-results.
-        # This will need to be refactored to merge with that, and all dispatchers should be able to return a terminal SR whether for one or many samples.
-
-        $self->status_message("attempting to use single-sample detectors on multiple samples ...wrapping everything in a cross-sample workflow");
-
-        if (@control_alignment_results) {
-            die $self->error_message("no support for somatic multi-sample variant detection: cannot handle a the control_alignment_results value yet!");
-        }
-
-        my $vcf_output_directory = $self->output_directory;
-        unless (-e $vcf_output_directory) {
-            unless(mkdir $vcf_output_directory) {
-                die $self->error_message("Output directory doesn't exist and can't be created at: ".$vcf_output_directory);
-            }
-            unless(mkdir $vcf_output_directory."/merge_vcfs") {
-                die $self->error_message("Output directory doesn't exist and can't be created at: ".$vcf_output_directory);
-            }
-        }
-       
-        my %region_limiting_params;
-        if (my $roi_list = $self->roi_list) {
-
-            my $roi_file;
-            if($roi_list->reference->id eq $self->reference_build_id) {
-                $roi_file = $roi_list->file_path;
-            } else {
-                $roi_file = $roi_list->converted_bed_file(
-                        reference => $self->reference_build,
-                        file_path => join("/", $self->output_directory, "converted_roi.bed"),
-                    );
-                unless(-s $roi_file) {
-                    die $self->error_message('Failed to convert ' . $roi_list->name . ' to reference ' . $self->reference_build->name);
-                }
-            }
-
-            %region_limiting_params = ( 
-                roi_file => $roi_file,
-                roi_name => $roi_list->name,
-                wingspan => $self->roi_wingspan,
-            );
-        }
-        
-        my $max_merge = (scalar(@alignment_results) <= 50) ? 50 : int(sqrt(scalar(@alignment_results))+1);
-        $self->status_message("Chose max_files_per_merge of: ".$max_merge);
-
-
-        $DB::single = 1;
-
-        # TODO: the tool below shouldn't rely on there being individual builds for each of these software results!
-        my @builds;
-        for my $result (@alignment_results) {
-            my @users_who_are_builds = grep { $_->user_class_name =~ m/Genome\:\:Model\:\:Build\:\:ReferenceAlignment/ } $result->users;
-            push @builds, Genome::Model::Build->get($users_who_are_builds[0]->user_id);
-        }
-
-        my $snv_vcf_creation = Genome::Model::Tools::Vcf::CreateCrossSampleVcf->create(
-            builds => \@builds,
-            output_directory => $vcf_output_directory,
-            max_files_per_merge => $max_merge,
-            variant_type => 'snvs',
-            %region_limiting_params,
-        );
-        
-        my $vcf_result;
-        unless($vcf_result = $snv_vcf_creation->execute){
-            die $self->error_message("Could not complete vcf merging!");
-        }
-        my $vcf_file; 
-        if(-s $vcf_result){
-            $vcf_file = $vcf_result;
-        } else {
-            die $self->error_message("Could not locate an output VCF");
-        }
-        $self->status_message("Merged VCF file located at: ".$vcf_file);
-
+        die "Single-sample detector supplied with multi-sample inputs. This cannot be handled properly. Quiting!";
         return 1;
-    } 
+    }
 
     # proceed normally with either single-sample detectors used on a single sample, or multi-sample detectors used on any number of samples
-
     my $workflow = $self->generate_workflow($trees, $plan);
 
     my @errors = $workflow->validate;
