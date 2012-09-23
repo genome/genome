@@ -169,7 +169,11 @@ sub execute {
     $self->status_message("\nUser must select which samples with --samples in order to proceed\n\n");
     return 1;
   }
- 
+
+  #Define the strings that will be used to match samples as either 'tumor' or 'normal'
+  my $normal_def = "normal";
+  my $tumor_def = "tumor|met|post treatment";
+
   #Get the subset of samples that are of the type DNA or RNA
   $self->status_message("\nGET SAMPLES BY TYPE");
   my @dna_samples = $self->dna_samples('-samples'=>\@samples);
@@ -194,8 +198,8 @@ sub execute {
   my @wgs_somatic_variation_models;
   if (scalar(@dna_samples) == 2){
     $self->status_message("\nWGS REFERENCE-ALIGNMENT MODELS");
-    @normal_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>'normal', '-dna_samples'=>\@dna_samples);
-    @tumor_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>'tumor|met', '-dna_samples'=>\@dna_samples);
+    @normal_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>$normal_def, '-dna_samples'=>\@dna_samples);
+    @tumor_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>$tumor_def, '-dna_samples'=>\@dna_samples);
   
     #Is there a suitable WGS somatic variation model in existence (If not, create)?  If so, what is the status?
     #- Only proceed with this if the prerequisite WGS tumor/normal ref-align models exist
@@ -214,8 +218,8 @@ sub execute {
   my @exome_somatic_variation_models;
   if (scalar(@dna_samples) == 2){
     $self->status_message("\nEXOME REFERENCE-ALIGNMENT MODELS");
-    @normal_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>'normal', '-dna_samples'=>\@dna_samples);
-    @tumor_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>'tumor|met', '-dna_samples'=>\@dna_samples);
+    @normal_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>$normal_def, '-dna_samples'=>\@dna_samples);
+    @tumor_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>$tumor_def, '-dna_samples'=>\@dna_samples);
 
     #Is there a suitable Exome somatic variation model in existence
     #- Only proceed with this if the prerequisite Exome tumor/normal ref-align models exist
@@ -232,8 +236,8 @@ sub execute {
   my @tumor_rnaseq_models;
   if (scalar(@rna_samples)){
     $self->status_message("\nRNA-SEQ MODELS");
-    @normal_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>'normal', '-rna_samples'=>\@rna_samples);
-    @tumor_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>'tumor', '-rna_samples'=>\@rna_samples);
+    @normal_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>$normal_def, '-rna_samples'=>\@rna_samples);
+    @tumor_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>$tumor_def, '-rna_samples'=>\@rna_samples);
   }
 
   #Gather the 'best' suitable WGS somatic-variation, Exome somatic-variation, tumor RNA-seq, and normal RNA-seq models
@@ -668,7 +672,6 @@ sub get_genotype_microarray_model_id{
 
   #Get the imported data that should have been used for the genotype microarray model
   my $default_genotype_data = $sample->default_genotype_data;
-  my $default_genotype_data_id = $default_genotype_data->id;
   
   my $genotype_microarray_model_id = 0;
 
@@ -707,8 +710,10 @@ sub check_ref_align_models{
   }
   if ($match == 0){
     $self->error_message("\nDid not find a matching DNA sample for tissue type: $tissue_type");
+    exit(1);
   }elsif ($match > 1){
     $self->error_message("\nFound more than one matching DNA sample of tissue type: $tissue_type");
+    exit(1);
   }else{
     $self->status_message("\nFound a DNA sample " . $sample->name . " ($scn) matching tissue type: $tissue_type");
   }
