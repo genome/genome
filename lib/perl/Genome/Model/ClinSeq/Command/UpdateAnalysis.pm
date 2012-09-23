@@ -27,7 +27,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         sample_type_filter => {
               is => 'Text',
-              default => 'pcr product,pooled library',
+              default => 'pcr product,pooled library,pooled dna',
               doc => 'When displaying samples, filter out those with certain sample types. [comma separate list]',
         },
         _ref_align_pp_id => {
@@ -171,8 +171,9 @@ sub execute {
   }
 
   #Define the strings that will be used to match samples as either 'tumor' or 'normal'
+  #TODO: Is there are better way to determine which samples are 'normal' and which are 'disease'?
   my $normal_def = "normal";
-  my $tumor_def = "tumor|met|post treatment";
+  my $tumor_def = "tumor|met|post treatment|recurrence met|pre-treatment met";
 
   #Get the subset of samples that are of the type DNA or RNA
   $self->status_message("\nGET SAMPLES BY TYPE");
@@ -258,7 +259,7 @@ sub execute {
   if ($clinseq_model){
     my $clinseq_model_id = $clinseq_model->id;
     my $clinseq_model_name = $clinseq_model->name;
-    $self->status_message("\nRequested clin-seq model exist and is complete:\n\t$clinseq_model_name <$clinseq_model_id>\n\n");
+    $self->status_message("\nRequested clin-seq model exists and is complete:\n\t$clinseq_model_name <$clinseq_model_id>\n\n");
   }else{
     $self->status_message("\nRequested clin-seq model is NOT ready - see above for instructions\n\n");
   }
@@ -400,7 +401,8 @@ sub display_inputs{
   $self->status_message("\nEXAMINE DESIRED MODEL INPUTS");
   $self->status_message("reference_sequence_build: " . $self->reference_sequence_build->__display_name__);
   $self->status_message("annotation_build: " . $self->annotation_build->name . " (" . $self->annotation_build->id . ")");
-  $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__);
+  $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__ . " (version " . $self->dbsnp_build->version . ")");
+
   #$self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__);
   return;
 }
@@ -655,9 +657,9 @@ sub check_for_missing_data{
   }
   if (scalar(@missing_data)){
     my $id_string = join(",", @missing_data);
-    $self->warning_message("Model: " . $model->id . " appears to be missing the following instrument data: @missing_data");
-    $self->status_message("You should consider performing the following update before proceeding:");
-    $self->status_message("genome model instrument-data assign --instrument-data='$id_string'");
+    $self->status_message("\t\t\tWARNING -> Model: " . $model->id . " appears to be missing the following instrument data: @missing_data");
+    $self->status_message("\t\t\tYou should consider performing the following update before proceeding:");
+    $self->status_message("\t\t\tgenome model instrument-data assign --instrument-data='$id_string'");
     return 0;
   }
   return 1;
@@ -736,6 +738,7 @@ sub check_ref_align_models{
     next unless ($model->processing_profile_id == $self->ref_align_pp->id);
     next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
     if ($model->can("annotation_reference_build")){
+      next unless ($model->annotation_reference_build);
       next unless ($model->annotation_reference_build->id == $self->annotation_build->id);
     }else{
       next;
@@ -756,9 +759,9 @@ sub check_ref_align_models{
     #Make sure all the wgs or exome data is associated with the model
     #In both wgs and exome models, additional data will be allowed to handle weird situations.  
     #Eventually we will need the ability to exclude data as well...
+    $self->status_message("\t\tName: " . $model->name);
     next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
 
-    $self->status_message("\t\tName: " . $model->name);
     push (@final_models, $model);
   }
 
@@ -835,11 +838,10 @@ sub check_rnaseq_models{
     next unless ($model->processing_profile_id == $self->rnaseq_pp->id);
     next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
     next unless ($model->annotation_build->id == $self->annotation_build->id);
-  
     #Make sure all the rna-seq data is associated with the model
+    $self->status_message("\t\tName: " . $model->name);
     next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
 
-    $self->status_message("\t\tName: " . $model->name);
     push (@final_models, $model);
   }
 
@@ -913,7 +915,6 @@ sub check_somatic_variation_models{
     #}
     
     #Make sure one of the passing normal AND tumor reference alignment models are specified as inputs to the somatic variation model
-    #next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
     my $tumor_model_id = $model->tumor_model->id;
     my $tumor_model_match = 0;
     foreach my $model (@tumor_ref_align_models){
