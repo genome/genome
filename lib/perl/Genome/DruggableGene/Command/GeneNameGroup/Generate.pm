@@ -69,7 +69,7 @@ sub load {
         print "Skipping $alt\n" and next if $alt =~ /^\d\d$/; #ignore 2 digit names
 
         #Save genes with the same alternate name in an array in a hash with key being the alt-name
-        if($_->nomenclature eq 'entrez_gene_symbol'){
+        if($_->nomenclature eq 'Entrez Gene Symbol'){
             push @{ $alt_to_entrez{$alt} }, $_;
         } else {
             push @{ $alt_to_other{$alt} }, $_;
