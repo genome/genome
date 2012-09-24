@@ -979,16 +979,19 @@ sub create_ref_align_model{
   my $ref_align_pp_id = $self->ref_align_pp->id;
   my $dbsnp_build_id = $self->dbsnp_build->id;
 
+  #TODO: Make sure none of the input models/builds or instrument data has been archived before proceeding...
+
+
   my @commands;
 
-  #WGS example
+  #WGS data
   if ($data_type eq 'wgs'){
     push(@commands, "\n#Create a WGS reference-alignment model as follows:");
     push(@commands, "genome model define reference-alignment  --reference-sequence-build='$reference_build_id'  --annotation-reference-build='$annotation_id'  --subject='$sample_name'  --processing-profile='$ref_align_pp_id'  --genotype-microarray-model='$genotype_microarray_model_id'  --dbsnp-build='$dbsnp_build_id'  --instrument-data='$iids_list'");
     push(@commands, "genome model build start ''");
   }
 
-  #Exome example
+  #Exome data
   if ($data_type eq 'exome'){
     #Determine the target region set name associated with this list of instrument-data
     my $target_region_set_name = $self->get_trsn('-instrument_data'=>\@sample_instrument_data);
@@ -1029,6 +1032,9 @@ sub create_rnaseq_model{
   my $reference_build_id = $self->reference_sequence_build->id;
   my $rnaseq_pp_id = $self->rnaseq_pp->id;
 
+  #TODO: Make sure none of the input models/builds or instrument data has been archived before proceeding...
+
+
   my @commands;
 
   push(@commands, "\n#Create an RNA-seq model as follows:");
@@ -1060,6 +1066,9 @@ sub create_somatic_variation_model{
   my $normal_model_id = $best_normal_model->id;
   my $somatic_variation_pp_id = $processing_profile_id;
   my $annotation_build_id = $self->annotation_build->id;
+
+  #TODO: Make sure none of the input models/builds have been archived before proceeding...
+
 
   my @commands;
   push(@commands, "\n#Create a Somatic-Variation model as follows:");
@@ -1220,6 +1229,7 @@ sub check_clinseq_models{
   my $normal_rnaseq_data = $self->check_instrument_data('-data_type'=>'normal_rnaseq', '-samples'=>\@samples);
   my $tumor_rnaseq_data = $self->check_instrument_data('-data_type'=>'tumor_rnaseq', '-samples'=>\@samples);
 
+
   if ($wgs_data == 2 && !$wgs_model){
     $self->warning_message("WGS data exists but no suitable, complete WGS somatic-variation model was found")
   }
@@ -1311,15 +1321,17 @@ sub create_clinseq_model{
   my $normal_rnaseq_model_id = $normal_rnaseq_model->id if $normal_rnaseq_model;
   my $tumor_rnaseq_model_id = $tumor_rnaseq_model->id if $tumor_rnaseq_model;
 
-  #genome model define clin-seq  --processing-profile='November 2011 Clinical Sequencing'  --wgs-model='2882504846'  --exome-model='2882505032'  --tumor-rnaseq-model='2880794613'
+  #TODO: Make sure none of the input models/builds have been archived before proceeding...
 
+
+  #genome model define clin-seq  --processing-profile='November 2011 Clinical Sequencing'  --wgs-model='2882504846'  --exome-model='2882505032'  --tumor-rnaseq-model='2880794613'
+  my @commands;
   my $clinseq_cmd = "genome model define clin-seq  --processing-profile='$clinseq_pp_id'";
   $clinseq_cmd .= "  --wgs-model='$wgs_model_id'" if $wgs_model;
   $clinseq_cmd .= "  --exome-model='$exome_model_id'" if $exome_model;
   $clinseq_cmd .= "  --normal-rnaseq-model='$normal_rnaseq_model_id'" if $normal_rnaseq_model;
   $clinseq_cmd .= "  --tumor-rnaseq-model='$tumor_rnaseq_model_id'" if $tumor_rnaseq_model;
 
-  my @commands;
   push(@commands, "\n#Create a Clin-Seq model for $final_individual_name as follows:");
   push(@commands, $clinseq_cmd);
   push(@commands, "genome model build start ''");
@@ -1338,8 +1350,6 @@ sub check_instrument_data{
   my %args = @_;
   my $data_type = $args{'-data_type'};
   my @samples = @{$args{'-samples'}};
-  my $samples_with_matching_data = 0;
-
   
   my $samples_with_wgs = 0;
   my $samples_with_exome = 0;
@@ -1378,9 +1388,10 @@ sub check_instrument_data{
     $samples_with_wgs++ if (scalar(@wgs));
     $samples_with_exome++ if (scalar(@exome));
     $samples_with_normal_rnaseq++ if (scalar(@normal_rnaseq));
-    $samples_with_wgs++ if (scalar(@tumor_rnaseq));
+    $samples_with_tumor_rnaseq++ if (scalar(@tumor_rnaseq));
   }
 
+  my $samples_with_matching_data = 0;
   if ($data_type eq 'wgs'){
     $samples_with_matching_data = $samples_with_wgs;
   }elsif($data_type eq 'exome'){
@@ -1393,6 +1404,7 @@ sub check_instrument_data{
     $self->error_message("Data type specified to check_instrument_data not understood");
     exit(1);
   }
+
   return $samples_with_matching_data;
 }
 
