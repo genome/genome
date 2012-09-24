@@ -35,7 +35,7 @@ class Genome::Model::Tools::Dgidb::Import::Pharmgkb {
             doc => 'VERSION.  Version (date) of release of data files from PharmGKB',
         },
         citation_base_url => {
-            default => 'http://www.pharmgkb.org/', #Note there are two base_urls needed for PharmGKB gene Ids: http://www.pharmgkb.org/gene/ and drug Ids: http://www.pharmgkb.org/drug/
+            default => 'http://www.pharmgkb.org',
         },
         citation_site_url => {
             default => 'http://www.pharmgkb.org/',
