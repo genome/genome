@@ -118,7 +118,7 @@ my @lims_whitelist = (
         ['Genome/Site/TGI/CaptureSet.pm', 104],
     ],
     'GSC::Setup::WorkOrder' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 1288],
+        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 1285],
     ],
 );
 
