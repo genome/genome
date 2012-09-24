@@ -349,8 +349,6 @@ sub find_or_create_somatic_variation_models{
             );
             $somatic_params{annotation_build} = Genome::Model::ImportedAnnotation->annotation_build_for_reference($model->reference_sequence_build);
             $self->error_message('Failed to get annotation_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{annotation_build};
-            $somatic_params{previously_discovered_variations_build} = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($model->reference_sequence_build);
-            $self->error_message('Failed to get previously_discovered_variations_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{previously_discovered_variations_build};
 
             my $capture_somatic_processing_profile_id = '2642139'; #Nov. 2011 somatic-variation exome
             my $somatic_processing_profile_id = '2642137'; #Nov. 2011 somatic-variation wgs
@@ -1287,22 +1285,10 @@ sub _is_mc16s {
     my @work_orders = GSC::Setup::WorkOrder->get(id => [ map { $_->id } @projects ]);
     return if not @work_orders;
 
-    my %known_454_16s_pipelines = map { $_ => 1 } (
-        '16S 454',
-        '16S 454 Sequencing',
-        '16S 3730 Sequencing',
-        '16S 3730 Sequencing - Unknown Reference Strain',
-        'Technology Development 16S 454',
-        'Illumina Sequencing,16S 454 Sequencing,PCR-based 3730,16S 3730 Sequencing - Unknown Reference Strain,16S 3730 Sequencing',
-    );
-    foreach my $work_order (@work_orders) {
-        my $pipeline_string = $work_order->pipeline;
-        next if not $pipeline_string;
-        for my $pipeline ( split(',', $pipeline_string) ) {
-            if ( exists($known_454_16s_pipelines{$pipeline}) ) {
-                return 1;
-            }
-        }
+    foreach my $work_order ( @work_orders ) {
+        my $pipeline = $work_order->pipeline;
+        next if not $pipeline;
+        return 1 if $pipeline =~ /16s/i;
     }
 
     return;

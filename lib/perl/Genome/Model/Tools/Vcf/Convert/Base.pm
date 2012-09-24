@@ -9,68 +9,74 @@ class Genome::Model::Tools::Vcf::Convert::Base {
     is => 'Command',
     is_abstract => 1,
     has => [
-    output_file => {
-        is => 'Text',
-        doc => "List of mutations, converted to VCF",
-    },
-    input_file => {
-        is => 'Text',
-        doc => "The file to be converted to VCF" ,
-    },
-    aligned_reads_sample => {
-        is => 'Text',
-        doc => "The label to be used for the aligned_reads sample in the VCF header",
-    },
-    control_aligned_reads_sample => {
-        is => 'Text',
-        doc => "The label to be used for the aligned_reads sample in the VCF header",
-        is_optional => 1,
-    },
-    reference_sequence_build => {
-        is => 'Genome::Model::Build::ImportedReferenceSequence',
-        doc => 'The reference sequence build used to detect variants',
-        id_by => 'reference_sequence_build_id',
-    },
-    reference_sequence_input => {
-        is_constant => 1,
-        calculate_from => ['reference_sequence_build'],
-        calculate => q|
-        my $cache_base_dir = $reference_sequence_build->local_cache_basedir;
-        if ( -d $cache_base_dir ) { # WE ARE ON A MACHINE THAT SUPPORTS CACHING
-        return $reference_sequence_build->cached_full_consensus_path('fa');
-        }
-        else { # USE NETWORK REFERENCE
-        return $reference_sequence_build->full_consensus_path('fa');
-        }
-        |,
-        doc => 'Location of the reference sequence file',
-    },
-    sequencing_center => {
-        is => 'Text',
-        doc => "Center that did the sequencing. Used to figure out the 'reference' section of the header." ,
-        default => "WUSTL",
-        valid_values => ["WUSTL", "BROAD"],
-    },
-    vcf_version => {
-        is => 'Text',
-        doc => "Version of the VCF being printed" ,
-        default => "4.1",
-        valid_values => ["4.1"],
-    },
+        output_file => {
+            is => 'Text',
+            doc => "List of mutations, converted to VCF",
+        },
+        input_file => {
+            is => 'Text',
+            doc => "The file to be converted to VCF" ,
+        },
+        aligned_reads_sample => {
+            is => 'Text',
+            doc => "The label to be used for the aligned_reads sample in the VCF header",
+        },
+        control_aligned_reads_sample => {
+            is => 'Text',
+            doc => "The label to be used for the aligned_reads sample in the VCF header",
+            is_optional => 1,
+        },
+        reference_sequence_build => {
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+            doc => 'The reference sequence build used to detect variants',
+            id_by => 'reference_sequence_build_id',
+        },
+        reference_sequence_input => {
+            is_constant => 1,
+            calculate_from => ['reference_sequence_build'],
+            calculate => q|
+            my $cache_base_dir = $reference_sequence_build->local_cache_basedir;
+            if ( -d $cache_base_dir ) { # WE ARE ON A MACHINE THAT SUPPORTS CACHING
+            return $reference_sequence_build->cached_full_consensus_path('fa');
+            }
+            else { # USE NETWORK REFERENCE
+            return $reference_sequence_build->full_consensus_path('fa');
+            }
+            |,
+            doc => 'Location of the reference sequence file',
+        },
+        sequencing_center => {
+            is => 'Text',
+            doc => "Center that did the sequencing. Used to figure out the 'reference' section of the header." ,
+            default => "WUSTL",
+            valid_values => ["WUSTL", "BROAD"],
+        },
+        vcf_version => {
+            is  => 'Text',
+            doc => "Version of the VCF being printed" ,
+            default => "4.1",
+            valid_values => ["4.1"],
+        },
+        tcga_version => {
+            is  => 'Text',
+            doc => "Version of the TCGA VCF being printed" ,
+            default => '1.2',
+            valid_values => ['1.2'],
+        },
     ],
     has_transient_optional => [
-    _input_fh => {
-        is => 'IO::File',
-        doc => 'Filehandle for the source variant file',
-    },
-    _output_fh => {
-        is => 'IO::File',
-        doc => 'Filehandle for the output VCF',
-    },
+        _input_fh => {
+            is => 'IO::File',
+            doc => 'Filehandle for the source variant file',
+        },
+        _output_fh => {
+            is => 'IO::File',
+            doc => 'Filehandle for the output VCF',
+        },
     ],
-
     doc => 'Base class for tools that convert lists of mutations to VCF',
 };
+
 
 sub execute {
     my $self = shift;
@@ -164,7 +170,8 @@ sub _get_public_ref {
 
     if($ref_seq->sequence_uri) {
         $public_ref = $ref_seq->sequence_uri;
-    } elsif ($subject_name eq 'human') {
+    } 
+    elsif ($subject_name eq 'human') {
         if ($ref_seq_version == 37) {
             $public_ref = "ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz";
         } 
@@ -204,7 +211,9 @@ sub print_header{
     my $output_fh = $self->_output_fh;
 
     $output_fh->print("##fileformat=VCFv" . $self->vcf_version . "\n");
+    $output_fh->print("##tcgaversion=" . $self->tcga_version . "\n");
     $output_fh->print("##fileDate=" . $file_date . "\n");
+    $output_fh->print("##center=WUTGI\n");
     $output_fh->print("##source=" . $source . "\n");
     $output_fh->print("##reference=$public_reference" . "\n");
     $output_fh->print("##phasing=none" . "\n");
@@ -231,6 +240,9 @@ sub print_tag_meta {
         $output_fh->print("$string\n");
     }
 
+    if ($self->get_filter_meta) {
+        map{$output_fh->print(format_filter_meta_line($_)."\n")}$self->get_filter_meta;
+    }
     return 1;
 }
 
@@ -274,10 +286,18 @@ sub extra_format_meta {
 
 # Return an array of hashrefs describing the meta information for INFO fields
 sub get_info_meta {
-    my $self = shift;
-
     # We currently have no INFO fields that are desired in every VCF for snvs (Variant Type) is currently considered redundant
     return;
+}
+
+# some like strelka need filter header info
+sub get_filter_meta {
+    return;
+}
+
+sub format_filter_meta_line {
+    my $tag = shift;
+    return sprintf("##%s=<ID=%s,Description=\"%s\">", $tag->{MetaType}, $tag->{ID},  $tag->{Description});
 }
 
 # Given a hashref representing one meta line, return a formatted line for printing in the header

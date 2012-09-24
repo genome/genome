@@ -40,7 +40,7 @@ sub execute {
     my @fa_files = glob("$hg_blast_dir/*fa");
 
     if (@fa_files == 0) {
-	$self->log_event("No further data available for $sample_name");
+	$self->log_event("No more reads available for $sample_name");
 	return 1;
     }
 
@@ -96,7 +96,6 @@ sub execute {
 	}
 
 	unless (-s $blast_filtered) {
-	    #$self->log_event("Failed to correctly parse $blast_out_file_name");
             $self->log_event("No human reads found in $blast_out_file_name");
 	    #return;
 	}

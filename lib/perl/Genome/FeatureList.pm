@@ -347,12 +347,19 @@ sub converted_bed_file {
 
     my $converted_bed_files = $self->_converted_bed_file_paths;
 
-    unless(exists $converted_bed_files->{$reference->id}) {
-        $converted_bed_files->{$reference->id} = $self->generate_converted_bed_file(%args);
-        $self->_converted_bed_file_paths($converted_bed_files);
+    my $result;
+    if(exists $converted_bed_files->{$reference->id}) {
+        $result = $converted_bed_files->{$reference->id};
+        unless(-e $result) { # cached result may have been deleted
+            $result = $self->generate_converted_bed_file(%args);
+        }
+    } else {
+        $result = $self->generate_converted_bed_file(%args);
     }
+    $converted_bed_files->{$reference->id} = $result;
+    $self->_converted_bed_file_paths($converted_bed_files);
 
-    return $converted_bed_files->{$reference->id};
+    return $result;
 }
 
 sub _resolve_param_value_from_text_by_name_or_id {

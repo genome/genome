@@ -35,7 +35,7 @@ EOS
 sub execute {
     my $self = shift;
     my $lib_name = basename($self->dir);
-    $self->log_event("Assignment Reporting starting for $lib_name");
+    #$self->log_event("Assignment Reporting starting for $lib_name");
     #TABLE TO CONVERT TO CORRECT BLAST NAME AND
     #CORRISPONDING FILE EXTENSIONS FOR EACH BLAST
     my $blasts = $self->_blasts_and_file_exts();

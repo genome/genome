@@ -59,6 +59,9 @@ sub load {
     Genome::DruggableGene::GeneNameGroup->get;
     Genome::DruggableGene::GeneNameGroupBridge->get;
 
+    print "Preloading all citations\n";
+    Genome::DruggableGene::Citation->get;
+
     print "Loading alternate names and creating hash\n";
     my %alt_to_entrez;
     my %alt_to_other;
@@ -69,7 +72,7 @@ sub load {
         print "Skipping $alt\n" and next if $alt =~ /^\d\d$/; #ignore 2 digit names
 
         #Save genes with the same alternate name in an array in a hash with key being the alt-name
-        if($_->nomenclature eq 'entrez_gene_symbol'){
+        if($_->nomenclature eq 'Gene Symbol' and $_->gene->citation->source_db_name eq 'Entrez'){
             push @{ $alt_to_entrez{$alt} }, $_;
         } else {
             push @{ $alt_to_other{$alt} }, $_;

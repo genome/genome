@@ -49,7 +49,7 @@ sub execute {
 	#CHECK FOR *cat.all FILE .. IF PRESENT IT MEANS ALL READS WERE PROCESSED OUT
 	my @cat_files = glob("$repeat_masker_dir/$sample_name*.cat.all");
 	if (@cat_files > 0) {
-	    $self->log_event("All reads have been filtered out for $sample_name");
+	    $self->log_event("All reads have been screened out for $sample_name");
 	    return 1;
 	}
 	#OTHERWISE IT FAILED
@@ -75,7 +75,7 @@ sub execute {
 	}
     }
 
-    $self->log_event("Repeat masker Seq qual control completed for sample: $sample_name");
+    $self->log_event("Reads available for next stage for sample: $sample_name");
     return 1;
 }
 

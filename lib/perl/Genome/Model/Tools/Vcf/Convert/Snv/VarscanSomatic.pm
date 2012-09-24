@@ -33,7 +33,7 @@ sub parse_line {
     my $line = shift;
 
     # TODO snv_qual is not used...
-    my @col = split("\t",$line);
+    my @col = split("\t", $line);
     my $chr = $col[0];
     my $pos = $col[1];
     my $ref = $col[2];
@@ -64,20 +64,10 @@ sub parse_line {
     my $normal_gt = $self->generate_gt($ref, \@alt_alleles, \@normal_alleles);
 
     # We do not have access to much of the normal information from somatic output
-    #genotype quality (consensus quality)
-    my $normal_gq = ".";
-    my $tumor_gq = ".";
-    # avg mapping quality ref/var
-    my $normal_mq = ".";
-    my $tumor_mq = ".";
-    # avg mapping quality ref/var
     my $normal_bq = ".";
-    my $tumor_bq = ".";
-    # allele depth
-    my $normal_ad =  ".";
-    my $tumor_ad =  ".";
+    my $tumor_bq  = ".";
     # fraction of reads supporting alt
-    $col[6] =~ s/\%// ;
+    $col[6]  =~ s/\%// ;
     $col[10] =~ s/\%// ;
     my $normal_fa = $col[6]/100;
     my $tumor_fa = $col[10]/100;
@@ -86,21 +76,36 @@ sub parse_line {
     my $tumor_vaq;
     if($col[14] == 0){
         $tumor_vaq = 99;
-    } else {
+    } 
+    else {
         $tumor_vaq = sprintf "%.0f", -10*log10($col[14]);
     }
     my $normal_vaq = ".";
 
-    # Placeholder for later adjustment
-    my $dbsnp_id = ".";
-    my $qual = "."; # Can also be $tumor_vaq
-    my $filter = "PASS";
-    my $format = "GT:GQ:DP:BQ:MQ:AD:FA:VAQ";
-    my $info = ".";
-    my $tumor_sample_string = join (":", ($tumor_gt, $tumor_gq, $tumor_dp, $tumor_bq, $tumor_mq, $tumor_ad, $tumor_fa, $tumor_vaq));
-    my $normal_sample_string = join (":", ($normal_gt, $normal_gq, $normal_dp, $normal_bq, $normal_mq, $normal_ad, $normal_fa, $normal_vaq));
+    my $n_dp4 = '.';
+    my $t_dp4 = join ',', $col[15], $col[16], $col[17], $col[18];
 
-    my $vcf_line = join("\t", $chr, $pos, $dbsnp_id, $ref, $alt, $qual, $filter, $info, $format, $normal_sample_string, $tumor_sample_string);
+    my %ss = (
+        WILDTYPE => 0,
+        GERMLINE => 1,
+        SOMATIC  => 2,
+        LOH      => 3,
+        UNKNOWN  => 4,
+    );
+    my $t_ss = $ss{uc($col[12])};
+
+    # Placeholder for later adjustment
+    my $dbsnp_id = '.';
+    my $qual     = '.'; # Can also be $tumor_vaq
+    my $filter   = "PASS";
+
+    #my $format = "GT:GQ:DP:BQ:MQ:AD:FA:VAQ";
+    my $format = "GT:DP:DP4:BQ:FA:VAQ:SS";
+    my $info   = ".";
+    my $t_str  = join ':', $tumor_gt,  $tumor_dp,  $t_dp4, $tumor_bq,  $tumor_fa,  $tumor_vaq,  $t_ss;
+    my $n_str  = join ':', $normal_gt, $normal_dp, $n_dp4, $normal_bq, $normal_fa, $normal_vaq, '.';
+
+    my $vcf_line = join("\t", $chr, $pos, $dbsnp_id, $ref, $alt, $qual, $filter, $info, $format, $n_str, $t_str);
 
     return $vcf_line;
 }

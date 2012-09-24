@@ -73,7 +73,7 @@ sub execute {
 	return;
     }
 
-    $self->log_event("Split reads for HG blast completed for $sample_name");
+    $self->log_event("Completed for $sample_name");
 
     return 1;
 }

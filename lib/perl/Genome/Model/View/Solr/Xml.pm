@@ -24,6 +24,10 @@ class Genome::Model::View::Solr::Xml {
                     $solr_type = 'model - somatic';
                 } elsif ($pp_type =~ /rna/i) {
                     $solr_type = 'model - rna';
+                } elsif ($pp_type eq 'clin seq') {
+                    $solr_type = 'model - ClinSeq';
+                } elsif ($pp_type eq 'convergence') {
+                    $solr_type = 'model - convergence';
                 } elsif ($pp_type =~ /microarray/i) {
                     $solr_type = 'model - microarray';
                 } else {

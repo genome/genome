@@ -17,8 +17,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcfResult {
     has_param => [
         max_files_per_merge => { is => 'Text' },
         variant_type => { is => 'Text' },
-        roi_file => { is => 'Text' },
-        roi_name => { is => 'Text' },
+        roi_list => { is => 'Genome::FeatureList' },
         wingspan => { is => 'Text' },
         allow_multiple_processing_profiles => { is => 'Boolean' },
         joinx_version => { is => 'Text' },
@@ -33,13 +32,13 @@ sub _generate_result {
             output_directory => $staging_directory,
             max_files_per_merge => $self->max_files_per_merge,
             variant_type => $self->variant_type,
-            roi_file => $self->roi_file,
-            roi_name => $self->roi_name,
+            roi_list => $self->roi_list,
             wingspan => $self->wingspan,
             allow_multiple_processing_profiles => $self->allow_multiple_processing_profiles,
             joinx_version => $self->joinx_version,
     );
-    Carp::croak($self->error_message('Command failed')) unless $cmd->generate_result();
+    my $return_value = $cmd->generate_result();
+    Carp::croak($self->error_message('Command failed')) unless $return_value;
 }
 
 1;

@@ -12,13 +12,7 @@ BEGIN {
 use above "Genome";
 use File::Temp;
 use Test::More;
-use Data::Dumper;
-use File::Compare;
-
-my $archos = `uname -a`;
-if ($archos !~ /64/) {
-    plan skip_all => "Must run from 64-bit machine";
-}
+use Genome::Utility::Vcf "diff_vcf_file_vs_file";
 
 my $cmd_class = 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf';
 my $sr_class = $cmd_class.'Result';
@@ -26,90 +20,72 @@ my $sr_class = $cmd_class.'Result';
 use_ok($cmd_class);
 use_ok($sr_class);
 
-my $joinx_version = "1.3";
+my $test_data_directory = join("/", $ENV{GENOME_TEST_INPUTS},
+        "Genome-Model-Tools-Vcf-CreateCrossSampleVcf");
+diag("Test data located at: $test_data_directory");
+my $region_file = join("/", $test_data_directory, "input",
+        "2477F2D7AC5111E1874EF15E46F0A7A3_short.bed");
+my $region_file_content_hash = Genome::Sys->md5sum($region_file);
+my $expected_result = join("/", $test_data_directory, "expected_5",
+        "snvs.merged.vcf.gz");
 
-my $refbuild_id = 101947881;
-my $test_data_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-CreateCrossSampleVcf";
-my $region_file = $test_data_directory."/input/feature_list_3.bed.gz";
-
-my @input_builds = map{ Genome::Model::Build->get($_)} (116552788,116559016,116559101);
-
-# Updated to .v2 for correcting an error with newlines
-my $expected_directory = $test_data_directory . "/expected_4";
-my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-Vcf-CreateCrossSampleVcf-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
-
-my %params_test1 = (
-    output_directory => $test_output_base,
-    builds => \@input_builds,
-    max_files_per_merge => 2,
-    variant_type => 'snvs',
-    roi_file => $region_file,
-    roi_name => "TEST_ROI_NAME",
-    wingspan => 500,
-    allow_multiple_processing_profiles => undef,
-    joinx_version => $joinx_version,
-);
-my $ccsv_cmd = $cmd_class->create(%params_test1);
-
-my $output_file = $test_output_base."/snvs.merged.vcf.gz";
-my $expected_file = $expected_directory."/snvs.merged.vcf.gz";
-
-ok($ccsv_cmd, "created CreateCrossSampleVcf object");
-ok($ccsv_cmd->execute(), "executed CreateCrossSampleVcf");
-
-delete $params_test1{'output_directory'};
-my $software_result1 = $sr_class->get_with_lock(%params_test1);
-ok($software_result1, "found software result for test1");
-is($software_result1, $ccsv_cmd->software_result, 'found software result via cmd for test1');
-
-# shouldn't be able to get the same software result as before with fewer inputs.
-my %params_test_subset = %params_test1;
-my @subset_input_builds = map{ Genome::Model::Build->get($_)} (116552788, 116559016);
-$params_test_subset{"builds"} = \@subset_input_builds;
-my $software_result_subset = $sr_class->get_with_lock(%params_test_subset);
-ok(!defined($software_result_subset), "couldn't get software result with subset of (is_many) input.");
-
-ok(-s $output_file, "executed output of CreateCrossSampleVcf, snvs.merged.vcf.gz exists");
-
-#The files will have a timestamp that will differ. Ignore this but check the rest.
-my $expected = `zcat $expected_file | grep -v fileDate`;
-my $output = `zcat $output_file | grep -v fileDate`;
-
-my $diff = Genome::Sys->diff_text_vs_text($output, $expected);
-ok(!$diff, 'output matched expected result')
-    or diag("diff results:\n" . $diff);
-
-my $test_no_max_output_base = File::Temp::tempdir('Genome-Model-Tools-Vcf-CreateCrossSampleVcf-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
-
-my %params_test2 = (
-    output_directory => $test_no_max_output_base,
-    builds => \@input_builds,
-    max_files_per_merge => undef,
-    variant_type => 'snvs',
-    roi_file => $region_file,
-    roi_name => "TEST_ROI_NAME",
-    wingspan => 500,
-    allow_multiple_processing_profiles => undef,
-    joinx_version => $joinx_version,
+my $joinx_version = "1.6";
+my @input_builds = map{ Genome::Model::Build->get($_)}
+        (126835818, 126835841, 126835851);
+my $output_directory = File::Temp::tempdir(
+        'Genome-Model-Tools-Vcf-CreateCrossSampleVcf-XXXXX',
+        DIR => "$ENV{GENOME_TEST_TEMP}",
+        CLEANUP => 1
 );
 
-my $ccsv_no_max_merge_cmd = $cmd_class->create(%params_test2);
+#construct the FeatureList needed
+my $roi_list = Genome::FeatureList->create(
+        name                => 'test feature-list',
+        format              => 'multi-tracked',
+        content_type        => 'targeted',
+        file_path           => $region_file,
+        file_content_hash   => $region_file_content_hash,
+        reference_id        => 108563338,
+);
 
+sub test_cmd {
+    my $name = shift;
+    my %params = @_;
+    my $this_output_directory = join("/", $output_directory, $name);
+    Genome::Sys->create_directory($this_output_directory);
+    $params{output_directory} = $this_output_directory;
 
-my $no_max_output_file = $test_no_max_output_base."/snvs.merged.vcf.gz";
+    my $cmd = $cmd_class->create(%params);
+    ok($cmd, "$name: created CreateCrossSampleVcf object");
 
-ok($ccsv_cmd, "created CreateCrossSampleVcf object");
-ok($ccsv_no_max_merge_cmd->execute(), "executed CreateCrossSampleVcf");
+    ok($cmd->execute(), "$name: executed CreateCrossSampleVcf");
+    my $result = $cmd->final_result;
+    ok(-s $result, "$name: result of CreateCrossSampleVcf, snvs.merged.vcf.gz exists");
 
-delete $params_test2{'output_directory'};
-my $software_result2 = $sr_class->get_with_lock(%params_test2);
-ok($software_result2, "Found software result for test2");
-is($software_result2, $ccsv_no_max_merge_cmd->software_result, 'Found software result via cmd for test2');
+    my %sr_params = %params;
+    delete $sr_params{'output_directory'};
+    my $sr = $sr_class->get_with_lock(%sr_params);
+    ok($sr, "$name: found software result for test1");
+    is($sr, $cmd->software_result, '$name: found software result via cmd for test1');
 
-my $no_max_output = `zcat $output_file | grep -v fileDate`;
+    my $diff = diff_vcf_file_vs_file($result, $expected_result);
+    ok(!$diff, '$name: output matched expected result')
+        or diag("diff results:\n" . $diff);
+}
 
-my $no_max_diff = Genome::Sys->diff_text_vs_text($no_max_output, $expected);
-ok(!$no_max_diff, 'output matched expected result')
-    or diag("diff results:\n" . $no_max_diff);
+my %params = (
+        builds => \@input_builds,
+        max_files_per_merge => 2,
+        variant_type => 'snvs',
+        roi_list => $roi_list,
+        wingspan => 500,
+        allow_multiple_processing_profiles => undef,
+        joinx_version => $joinx_version,
+);
+
+test_cmd("test_1", %params);
+$params{max_files_per_merge} = undef;
+test_cmd("test_2", %params);
+
 
 done_testing();
