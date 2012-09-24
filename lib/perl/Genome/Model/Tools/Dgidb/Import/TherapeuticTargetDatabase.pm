@@ -19,7 +19,7 @@ class Genome::Model::Tools::Dgidb::Import::TherapeuticTargetDatabase {
         },
         tmp_dir => {
             is => 'Path',
-            default => '/tmp',
+            default => '/tmp/',
             doc => 'Directory where temp files will be created',
         },
         skip_pubchem => {

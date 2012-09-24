@@ -88,7 +88,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import hopkins-groom --infile=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/Hopkins_and_Groom_2002/HopkinsGroomGenes.tsv --hopkins-term-file=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/Hopkins_and_Groom_2002/HopkinsGroomTerms2DGIDB.txt --version=11Sep2012
+gmt dgidb import hopkins-groom --infile=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/Hopkins_and_Groom_2002/HopkinsGroomGenes.tsv --hopkins-term-file=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/Hopkins_and_Groom_2002/HopkinsGroomTerms2DGIDB.txt --version="11-Sep-2012"
 HELP
 }
 
@@ -287,6 +287,7 @@ sub import_genes {
         my $human_readable_name = $hopkins_input->{'DGIDB_Human_Readable'};
         $human_readable_name =~ s/-/ /g;
         $human_readable_name =~ s/\// /g;
+        $human_readable_name =~ s/\./_/g;
         unless ($human_readable_name eq 'NA'){
           my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
         }

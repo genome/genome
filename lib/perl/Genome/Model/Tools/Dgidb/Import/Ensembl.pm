@@ -78,7 +78,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import ensembl --version=68_37 --input_gtf_url=ftp://ftp.ensembl.org/pub/release-68/gtf/homo_sapiens/Homo_sapiens.GRCh37.68.gtf.gz
+gmt dgidb import ensembl --version=68_37 --input-gtf-url=ftp://ftp.ensembl.org/pub/release-68/gtf/homo_sapiens/Homo_sapiens.GRCh37.68.gtf.gz
 HELP
 }
 

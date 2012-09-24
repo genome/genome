@@ -83,7 +83,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import russ-lampel --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/Russ_and_Lampel_2005/Andreas_Russ_Druggable_Gene_List.tsv --version=26Jul2011 
+gmt dgidb import russ-lampel --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/Russ_and_Lampel_2005/Andreas_Russ_Druggable_Gene_List.tsv --version="26-Jul-2011" 
 HELP
 }
 
