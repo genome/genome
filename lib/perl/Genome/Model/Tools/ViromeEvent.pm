@@ -221,25 +221,21 @@ sub _blast_params_for_stage {
     my( $self, $stage ) = @_;
     my %p = (
         hg_blast => {
-            #blast_db => '/gscmnt/sata835/info/medseq/virome/blast_db/human_genomic/2009_07_09.humna_genomic',
             blast_db => $self->human_db,
             blast_cmd => 'blastall -p blastn -e 1e-8 -I T -b 2',
             out_file_ext => 'HGblast.out',
         },
         blast_n => {
-            #blast_db => '/gscmnt/sata835/info/medseq/virome/blast_db/nt/nt',
             blast_db => $self->nt_db,
             blast_cmd => 'blastall -p blastn -e 1e-8 -I T',
             out_file_ext => 'blastn.out',
         },
         blastx_nt => {
-            #blast_db => '/gscmnt/sata835/info/medseq/virome/blast_db/nt/nt',
             blast_db => $self->nt_db,
             blast_cmd => 'blastall -p tblastx -e 1e-2 -I T',
             out_file_ext => 'tblastx.out',
         },
         blastx_viral => {
-            #blast_db => '/gscmnt/sata835/info/medseq/virome/blast_db/viral/viral.genomic.fna',
             blast_db => $self->virus_db,
             blast_cmd => 'blastall -p tblastx -e 0.1 -I T',
             out_file_ext => 'tblastx_ViralGenome.out',
@@ -267,9 +263,6 @@ sub run_blast_for_stage {
     my $input_file = $self->file_to_run;
     my $input_file_name = File::Basename::basename( $input_file );
 
-    #$self->log_event( "Checking $stage run status for $input_file_name" );
-
-    #my $blast_done_file_ext = $blast_lookups{$stage}{out_file_ext};
     my $blast_done_file_ext = $blast_params->{out_file_ext};
     my $blast_out_file = $input_file;
     $blast_out_file =~ s/fa$/$blast_done_file_ext/;
@@ -284,7 +277,6 @@ sub run_blast_for_stage {
 
     $self->log_event( "Running $stage for $input_file_name" );
 
-    #my $blast_db = $blast_lookups{$stage}{blast_db};
     my $blast_cmd = $blast_params->{blast_cmd};
     if ( not $blast_cmd ) {
         $self->log_event("Failed to get blast command for stage: $stage");
@@ -295,10 +287,9 @@ sub run_blast_for_stage {
         $self->log_event("Failed to get blast db for stage: $stage");
         return;
     }
-    #my $cmd = $blast_lookups{$stage}{blast_cmd}.' -i '.$input_file.' -o '.$blast_out_file.' -d '.$blast_db;
     my $cmd = $blast_cmd.' -i '.$input_file.' -o '.$blast_out_file.' -d '.$blast_db;
 
-    $self->log_event("Running blast with command: $cmd"); #TODO remove this
+    #$self->log_event("Running blast with command: $cmd"); #TODO remove this
 
     if (system ($cmd)) {
 	$self->log_event("$stage failed for $input_file_name");
