@@ -37,7 +37,7 @@ sub execute {
     my $dir = $self->dir;
     my $sample_name = basename($dir);
 
-    $self->log_event("Checking NT blastN parse for $sample_name");
+    #$self->log_event("Checking NT blastN parse for $sample_name");
 
     my $blast_dir = $dir.'/'.$sample_name.'.HGfiltered_BLASTN';
     unless (-d $blast_dir) {

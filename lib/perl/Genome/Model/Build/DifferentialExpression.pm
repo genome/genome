@@ -29,8 +29,7 @@ sub transcript_gtf_file_path {
     if ($self->model->transcript_convergence_name eq 'cuffcompare') {
         return $self->transcript_gtf_prefix .'.combined.gtf';
     } else {
-        #TODO: setup for cuffmerge
-        die();
+        return $self->transcript_convergence_directory .'/merged.gtf';
     }
 }
 

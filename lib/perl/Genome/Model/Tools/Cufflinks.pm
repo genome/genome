@@ -49,8 +49,6 @@ my %CUFFLINKS_VERSIONS = (
     '1.0.3'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-1.0.3.Linux_x86_64',
     '1.1.0'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-1.1.0.Linux_x86_64',
     '1.2.1'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-1.2.1.Linux_x86_64',
-    '2.0.1'  => '/gscmnt/sata132/techd/solexa/jwalker/bin/cufflinks-2.0.1.Linux_x86_64',
-    '2.0.2'  => '/gscmnt/sata132/techd/solexa/jwalker/bin/cufflinks-2.0.2.Linux_x86_64',
 );
 
 our %MIN_VERSIONS = (

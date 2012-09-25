@@ -31,11 +31,18 @@ class Genome::Model::Tools::Dgidb::Import::Pharmgkb {
             default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/PharmGKB_WashU_INTERACTIONS.tsv',
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
         },
+        skip_pubchem => {
+            is => 'Boolean',
+            is_input => 1,
+            is_optional => 1,
+            default => 0,
+            doc => 'Skip _destroy_and_rebuild_pubchem_and_drug_groups step',
+        },        
         version => {
             doc => 'VERSION.  Version (date) of release of data files from PharmGKB',
         },
         citation_base_url => {
-            default => 'http://www.pharmgkb.org/', #Note there are two base_urls needed for PharmGKB gene Ids: http://www.pharmgkb.org/gene/ and drug Ids: http://www.pharmgkb.org/drug/
+            default => 'http://www.pharmgkb.org',
         },
         citation_site_url => {
             default => 'http://www.pharmgkb.org/',
@@ -90,7 +97,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import pharmgkb --version=\"2012-07-12\" --relationships-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/relationships/relationships.tsv --drugs-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/drugs/drugs.tsv --genes-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/genes/genes.tsv 
+gmt dgidb import pharmgkb --version=\"12-Jul-2012\" --relationships-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/relationships/relationships.tsv --drugs-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/drugs/drugs.tsv --genes-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/genes/genes.tsv 
 HELP
 }
 
@@ -106,7 +113,9 @@ sub execute {
     my $self = shift;
     $self->input_to_tsv();
     $self->import_tsv();
-    $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    unless ($self->skip_pubchem){
+        $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    }
     return 1;
 }
 
@@ -131,111 +140,111 @@ sub input_to_tsv {
     for my $relationship_id (keys %{$relationships}){
         #Interaction Id - Created by joining Entity1_id and Entity2_id
         my $interaction_id =  $relationships->{$relationship_id}{'relationship_id'};
-        $interaction_id = 'NA' unless $interaction_id;
+        $interaction_id = 'N/A' unless $interaction_id;
 
         #Entity1 id (Drug)
         my $Entity1_id =  $relationships->{$relationship_id}{'Entity1_id'};
-        $Entity1_id = 'NA' unless $Entity1_id;
+        $Entity1_id = 'N/A' unless $Entity1_id;
 
         #Entity1 type (Drug)
         my $Entity1_type =  $relationships->{$relationship_id}{'Entity1_type'};
-        $Entity1_type = 'NA' unless $Entity1_type;
+        $Entity1_type = 'N/A' unless $Entity1_type;
 
         #Entity2 id (Gene)
         my $Entity2_id =  $relationships->{$relationship_id}{'Entity2_id'};
-        $Entity2_id = 'NA' unless $Entity2_id;
+        $Entity2_id = 'N/A' unless $Entity2_id;
 
         #Entity2 type (Gene)
         my $Entity2_type =  $relationships->{$relationship_id}{'Entity2_type'};
-        $Entity2_type = 'NA' unless $Entity2_type;
+        $Entity2_type = 'N/A' unless $Entity2_type;
 
         #Interaction Evidence
         my $Evidence =  $relationships->{$relationship_id}{'Evidence'};
-        $Evidence = 'NA' unless $Evidence;
+        $Evidence = 'N/A' unless $Evidence;
 
         #Association
         my $Association =  $relationships->{$relationship_id}{'Association'};
-        $Association = 'NA' unless $Association;
+        $Association = 'N/A' unless $Association;
 
         #PK
         my $PK =  $relationships->{$relationship_id}{'PK'};
-        $PK = 'NA' unless $PK;
+        $PK = 'N/A' unless $PK;
 
         #PD
         my $PD =  $relationships->{$relationship_id}{'PD'};
-        $PD = 'NA' unless $PD;
+        $PD = 'N/A' unless $PD;
 
         #PMIDs
         my $PMIDs =  $relationships->{$relationship_id}{'PMIDs'};
-        $PMIDs = 'NA' unless $PMIDs;
+        $PMIDs = 'N/A' unless $PMIDs;
 
         #Drug Name
         my $Drug_Name =  $drugs->{$Entity1_id}{'Drug_Name'};
-        $Drug_Name = 'NA' unless $Drug_Name;
+        $Drug_Name = 'N/A' unless $Drug_Name;
 
         #Generic Names
         my $Generic_Names =  $drugs->{$Entity1_id}{'Generic_Names'};
-        $Generic_Names = 'NA' unless $Generic_Names;
+        $Generic_Names = 'N/A' unless $Generic_Names;
 
         #Trade Names
         my $Trade_Names =  $drugs->{$Entity1_id}{'Trade_Names'};
-        $Trade_Names = 'NA' unless $Trade_Names;
+        $Trade_Names = 'N/A' unless $Trade_Names;
 
         #Brand Mixtures
         my $Brand_Mixtures =  $drugs->{$Entity1_id}{'Brand_Mixtures'};
-        $Brand_Mixtures = 'NA' unless $Brand_Mixtures;
+        $Brand_Mixtures = 'N/A' unless $Brand_Mixtures;
 
         #Drug Type
         my $Drug_Type =  $drugs->{$Entity1_id}{'Drug_Type'};
-        $Drug_Type = 'NA' unless $Drug_Type;
+        $Drug_Type = 'N/A' unless $Drug_Type;
 
         #Drug Cross References
         my $Drug_Cross_References =  $drugs->{$Entity1_id}{'Drug_Cross_References'};
-        $Drug_Cross_References = 'NA' unless $Drug_Cross_References;
+        $Drug_Cross_References = 'N/A' unless $Drug_Cross_References;
 
         #SMILES
         my $SMILES =  $drugs->{$Entity1_id}{'SMILES'};
-        $SMILES = 'NA' unless $SMILES;
+        $SMILES = 'N/A' unless $SMILES;
 
         #External_Vocabulary
         my $External_Vocabulary =  $drugs->{$Entity1_id}{'External_Vocabulary'};
-        $External_Vocabulary = 'NA' unless $External_Vocabulary;
+        $External_Vocabulary = 'N/A' unless $External_Vocabulary;
 
         #Entrez Id
         my $Entrez_Id =  $genes->{$Entity2_id}{'Entrez_Id'};
-        $Entrez_Id = 'NA' unless $Entrez_Id;
+        $Entrez_Id = 'N/A' unless $Entrez_Id;
 
         #Ensembl Id
         my $Ensembl_Id =  $genes->{$Entity2_id}{'Ensembl_Id'};
-        $Ensembl_Id = 'NA' unless $Ensembl_Id;
+        $Ensembl_Id = 'N/A' unless $Ensembl_Id;
 
         #Gene Name
         my $Gene_Name =  $genes->{$Entity2_id}{'Gene_Name'};
-        $Gene_Name = 'NA' unless $Gene_Name;
+        $Gene_Name = 'N/A' unless $Gene_Name;
 
         #Symbol
         my $Symbol =  $genes->{$Entity2_id}{'Symbol'};
-        $Symbol = 'NA' unless $Symbol;
+        $Symbol = 'N/A' unless $Symbol;
 
         #Alternate Names
         my $Alternate_Names =  $genes->{$Entity2_id}{'Alternate_Names'};
-        $Alternate_Names = 'NA' unless $Alternate_Names;
+        $Alternate_Names = 'N/A' unless $Alternate_Names;
 
         #Alternate Symbols
         my $Alternate_Symbols =  $genes->{$Entity2_id}{'Alternate_Symbols'};
-        $Alternate_Symbols = 'NA' unless $Alternate_Symbols;
+        $Alternate_Symbols = 'N/A' unless $Alternate_Symbols;
 
         #Is_VIP
         my $Is_VIP =  $genes->{$Entity2_id}{'Is_VIP'};
-        $Is_VIP = 'NA' unless $Is_VIP;
+        $Is_VIP = 'N/A' unless $Is_VIP;
 
         #Has Variant Annotation
         my $Has_Variant_Annotation =  $genes->{$Entity2_id}{'Has_Variant_Annotation'};
-        $Has_Variant_Annotation = 'NA' unless $Has_Variant_Annotation;
+        $Has_Variant_Annotation = 'N/A' unless $Has_Variant_Annotation;
 
         #Gene Cross References
         my $Gene_Cross_References =  $genes->{$Entity2_id}{'Gene_Cross_References'};
-        $Gene_Cross_References = 'NA' unless $Gene_Cross_References;
+        $Gene_Cross_References = 'N/A' unless $Gene_Cross_References;
 
         $interactions_fh->print(join("\t", $interaction_id, $Entity1_id, $Entity1_type, $Entity2_id, $Entity2_type, $Evidence, $Association, $PK, $PD, $PMIDs, $Drug_Name, $Generic_Names, $Trade_Names, $Brand_Mixtures, $Drug_Type, $Drug_Cross_References, $SMILES, $External_Vocabulary, $Entrez_Id, $Ensembl_Id, $Gene_Name, $Symbol, $Alternate_Names, $Alternate_Symbols, $Is_VIP, $Has_Variant_Annotation, $Gene_Cross_References), "\n");
     }
@@ -406,39 +415,39 @@ sub _import_drug {
     my $interaction = shift;
     my $citation = shift;
     my $drug_accession = $self->_create_drug_name_report($interaction->{Entity1_id}, $citation, 'PharmGKB', '');
-    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Entity1_id}, 'Primary Drug Name', '');
-    my $drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Drug_Name}, 'Drug Name', '');
+    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Entity1_id}, 'PharmGKB Drug Accession', '');
+    my $drug_name = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{Drug_Name}, 'Primary Drug Name', '');
     my @drug_generic_names = split(",", $interaction->{Generic_Names});
     for my $drug_generic_name (@drug_generic_names){
-      next if $drug_generic_name eq 'NA';
+      next if $drug_generic_name eq 'N/A';
       my $synonym_association = $self->_create_drug_alternate_name_report($drug_accession, $drug_generic_name, 'Drug Generic Name', '');
     }
     my @drug_tradenames = split(",", $interaction->{Trade_Names});
     for my $drug_tradename (@drug_tradenames){
-      next if $drug_tradename eq 'NA';
+      next if $drug_tradename eq 'N/A';
       my $tradename_association = $self->_create_drug_alternate_name_report($drug_accession, $drug_tradename, 'Drug Trade Name', '');
     }
     my @drug_cross_references = split(",", $interaction->{Drug_Cross_References});
     for my $drug_cross_reference (@drug_cross_references){
-      next if $drug_cross_reference eq 'NA';
+      next if $drug_cross_reference eq 'N/A';
       my @data_pair = split(":", $drug_cross_reference);
       my $cross_ref_type=$data_pair[0];
       my $cross_ref_value=$data_pair[1];
       my $cross_reference_association = $self->_create_drug_alternate_name_report($drug_accession, $cross_ref_value, $cross_ref_type, '');
     }
-    unless($interaction->{SMILES} eq 'NA'){
+    unless($interaction->{SMILES} eq 'N/A'){
         my $SMILES_association = $self->_create_drug_alternate_name_report($drug_accession, $interaction->{SMILES}, 'SMILES', '');
     }
 
     my @external_vocabs = split(",", $interaction->{External_Vocabulary});
     for my $external_vocab (@external_vocabs){
-      next if $external_vocab eq 'NA';
+      next if $external_vocab eq 'N/A';
       my @data_pair = split(":", $external_vocab);
       my $external_vocab_type=$data_pair[0];
       my $external_vocab_value=$data_pair[1];
       my $external_vocab_association = $self->_create_drug_category_report($drug_accession, $external_vocab_type, $external_vocab_value,'');
     }
-    unless($interaction->{Drug_Type} eq 'NA'){
+    unless($interaction->{Drug_Type} eq 'N/A'){
         my $drug_type_association = $self->_create_drug_category_report($drug_accession, 'Drug Type', $interaction->{Drug_Type}, '');
     }
     return $drug_accession;
@@ -449,32 +458,42 @@ sub _import_gene {
     my $interaction = shift;
     my $citation = shift;
     my $gene_accession = $self->_create_gene_name_report($interaction->{Entity2_id}, $citation, 'PharmGKB Gene Accession', '');
-    my $Entrez_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entrez_Id}, 'Entrez Gene Id', '');
-    my $Ensembl_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Ensembl_Id}, 'Ensembl Gene Id', '');
-    my $Gene_Name_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Gene_Name}, 'Gene Name', '');
-    my $Gene_Symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Symbol}, 'Gene Symbol', '');
+    my $gene_accession_alt = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entity2_id}, 'PharmGKB Gene Accession', '');
+
+    unless ($interaction->{Entrez_Id} eq 'N/A'){
+        my $Entrez_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entrez_Id}, 'Entrez Gene Id', '');
+    }
+    unless ($interaction->{Ensembl_Id} eq 'N/A'){
+        my $Ensembl_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Ensembl_Id}, 'Ensembl Gene Id', '');
+    }
+    unless ($interaction->{Gene_Name} eq 'N/A'){
+        my $Gene_Name_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Gene_Name}, 'Gene Name', '');
+    }
+    unless ($interaction->{Symbol} eq 'N/A'){
+        my $Gene_Symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Symbol}, 'Gene Symbol', '');
+    }
     my @Alternate_Names = quotewords(',', 0, $interaction->{Alternate_Names});
     for my $Alternate_Name (@Alternate_Names){
-        next if $Alternate_Name eq 'NA';
-        my $alt_name_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Name, 'Alternate Name','');
+        next if $Alternate_Name eq 'N/A';
+        my $alt_name_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Name, 'Alternate Gene Name','');
     }
     my @Alternate_Symbols = quotewords(',', 0, $interaction->{Alternate_Symbols});
         for my $Alternate_Symbol (@Alternate_Symbols){      
-        next if $Alternate_Symbol eq 'NA';
-        my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'Alternate Symbol','');
+        next if $Alternate_Symbol eq 'N/A';
+        my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'Gene Synonym','');
     }
 #   my @gene_cross_references = split(",", $interaction->{Gene_Cross_References});
 #    for my $gene_cross_reference (@gene_cross_references){
-#        next if $gene_cross_reference eq 'NA';
+#        next if $gene_cross_reference eq 'N/A';
 #        my @data_pair = split(":", $gene_cross_reference);
 #        my $cross_ref_type=join("_", "PharmGKB", $data_pair[0]);
 #        my $cross_ref_value=$data_pair[1];
 #        my $cross_reference_association = $self->_create_gene_alternate_name_report($gene_accession, $cross_ref_value, $cross_ref_type, '');
 #    }
-    unless($interaction->{Is_VIP} eq 'NA'){
+    unless($interaction->{Is_VIP} eq 'N/A'){
     my $is_vip_association = $self->_create_gene_category_report($gene_accession, 'Is VIP', $interaction->{Is_VIP},'');
     }
-    unless($interaction->{Has_Variant_Annotation} eq 'NA'){
+    unless($interaction->{Has_Variant_Annotation} eq 'N/A'){
     my $has_var_annot_association = $self->_create_gene_category_report($gene_accession, 'Has Variant Annotation', $interaction->{Has_Variant_Annotation},'');
     return $gene_accession;
     }

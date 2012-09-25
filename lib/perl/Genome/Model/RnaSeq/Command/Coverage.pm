@@ -138,10 +138,15 @@ sub params_for_result {
     unless ($merge_annotation_features && $annotation_file_basenames) {
         die('Must define a default merge_annotation_features and/or annotation_file_basenames parameter!');
     }
+    my $mask_reference_transcripts = undef;
+    if ($pp->transcriptome_coverage_mask_reference_transcripts) {
+        $mask_reference_transcripts = $pp->transcriptome_coverage_mask_reference_transcripts;
+    }
     return (
         alignment_result_id => $alignment_result->id,
         annotation_file_basenames => $annotation_file_basenames,
         merge_annotation_features => $merge_annotation_features,
+        mask_reference_transcripts => $mask_reference_transcripts,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
     );
 }

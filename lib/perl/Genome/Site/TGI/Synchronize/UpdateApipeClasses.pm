@@ -448,16 +448,18 @@ sub _create_instrumentdata_sanger {
 sub _create_regionindex454 {
     my ($self, $original_object, $new_object_class) = @_;
 
-    # Successful PIDFA required! The value is the sff file. It must exist, too!
-    my $sff_file = $instrument_data_with_successful_pidfas{$original_object->id};
-    return 0 unless $sff_file and -s $sff_file;
+    # Successful PIDFA required!
+    return 0 unless exists $instrument_data_with_successful_pidfas{$original_object->id};
 
     my ($direct_properties, $indirect_properties) = $self->_get_direct_and_indirect_properties_for_object(
         $original_object,
         $new_object_class, 
         qw/ sample_name sample_id full_path/
     );
-    $indirect_properties->{sff_file} = $sff_file;
+    # The value of successful pidfas is the sff file. If they are no reads, the SFF will not be defined. 
+    # 454 w/ reads and no SFF should be caught in PIDFA.
+    my $sff_file = $instrument_data_with_successful_pidfas{$original_object->id};
+    $indirect_properties->{sff_file} = $sff_file if $sff_file;
 
     my $object = eval {
         $new_object_class->create(

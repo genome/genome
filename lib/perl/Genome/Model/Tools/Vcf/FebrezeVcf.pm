@@ -6,6 +6,7 @@ use Genome;
 use IO::File;
 use Getopt::Long;
 use FileHandle;
+use Genome::Utility::Vcf qw( open_vcf_file );
 
 class Genome::Model::Tools::Vcf::FebrezeVcf {
     is => 'Command',

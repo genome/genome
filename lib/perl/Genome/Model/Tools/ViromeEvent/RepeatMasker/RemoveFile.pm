@@ -45,7 +45,7 @@ sub execute {
 	unlink $file.'.out' if -e $file.'.out';
     }
 
-    $self->log_event("Remove unnecessary file for $sample_name completed");
+    $self->log_event("Completed for sample: $sample_name");
 
     return 1;
 }

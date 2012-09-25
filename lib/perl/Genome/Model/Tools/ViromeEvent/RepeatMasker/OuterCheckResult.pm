@@ -48,7 +48,7 @@ sub execute
 
     $self->files_to_run( \@fastas );
 
-    $self->log_event("Completed check to run repeat masker for sample: $sample_name");
+    $self->log_event("Reads available for screening: $sample_name");
 
     return 1;
 }

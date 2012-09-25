@@ -108,9 +108,9 @@ while (<MAPPING>){
   my $uniprot_acc=$data[0];
   my $uniprot_id=$data[1];
   my $entrez_id=$data[2];
-  unless ($entrez_id){$entrez_id="NA";}
+  unless ($entrez_id){$entrez_id="N/A";}
   my $ensembl_id=$data[19];
-  unless ($ensembl_id){$ensembl_id="NA";}
+  unless ($ensembl_id){$ensembl_id="N/A";}
   $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
   $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
   $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;
@@ -220,10 +220,10 @@ sub queryUniprotBiomart{
     my @data=split("\t", $result);
     my $Uniprot_acc=$data[0];
     my $Uniprot_id=$data[1];
-    my $Uniprot_protein_name=$data[2]; unless($Uniprot_protein_name){$Uniprot_protein_name="NA";}
-    my $Uniprot_gene_name=$data[3]; unless($Uniprot_gene_name){$Uniprot_gene_name="NA";}
-    my $Uniprot_evidence=$data[4]; unless($Uniprot_evidence){$Uniprot_evidence="NA";}
-    my $Uniprot_status=$data[5]; unless($Uniprot_status){$Uniprot_status="NA";}
+    my $Uniprot_protein_name=$data[2]; unless($Uniprot_protein_name){$Uniprot_protein_name="N/A";}
+    my $Uniprot_gene_name=$data[3]; unless($Uniprot_gene_name){$Uniprot_gene_name="N/A";}
+    my $Uniprot_evidence=$data[4]; unless($Uniprot_evidence){$Uniprot_evidence="N/A";}
+    my $Uniprot_status=$data[5]; unless($Uniprot_status){$Uniprot_status="N/A";}
     unless ($Uniprot_evidence=~/protein level/ || $Uniprot_evidence=~/transcript level/){next;} #Can't filter down to multiple evidence levels above, do here if desired
     push(@accessions,$Uniprot_acc);
     $UniProtDetails{$Uniprot_acc}{Uniprot_id}=$Uniprot_id;

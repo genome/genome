@@ -44,7 +44,9 @@ my $bam_input = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 # Updated to .v4 for correcting the sort order of snvs.hq and indels.hq
 # Updated to .v5 for adding 1 to the start and stop positions of insertions
 # Updated to .v6 for TCGA-compliance vcf header
-my $expected_dir = $test_dir . '/expected.v6/';
+# Updated to .v7 for more TCGA-compliance vcf header: add center and tcgaversion
+
+my $expected_dir = $test_dir . '/expected.v7/';
 ok(-d $expected_dir, "expected results directory exists");
 
 my @versions = qw(r613 r963);

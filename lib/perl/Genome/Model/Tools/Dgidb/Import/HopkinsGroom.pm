@@ -88,7 +88,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import hopkins-groom --infile=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/Hopkins_and_Groom_2002/HopkinsGroomGenes.tsv --hopkins-term-file=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/Hopkins_and_Groom_2002/HopkinsGroomTerms2DGIDB.txt --version=11Sep2012
+gmt dgidb import hopkins-groom --infile=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/Hopkins_and_Groom_2002/HopkinsGroomGenes.tsv --hopkins-term-file=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/Hopkins_and_Groom_2002/HopkinsGroomTerms2DGIDB.txt --version="11-Sep-2012"
 HELP
 }
 
@@ -123,59 +123,59 @@ sub input_to_tsv {
     for my $target_id (keys %{$targets}){
         #relationship id
         my $relationship_id = $targets->{$target_id}{'relationship_id'};
-        $relationship_id = 'NA' unless $relationship_id;
+        $relationship_id = 'N/A' unless $relationship_id;
 
         #Interpro Accession
         my $Interpro_Acc = $targets->{$target_id}{'Interpro_Acc'};
-        $Interpro_Acc = 'NA' unless $Interpro_Acc;
+        $Interpro_Acc = 'N/A' unless $Interpro_Acc;
 
         #Uniprot Accession
         my $Uniprot_Acc = $targets->{$target_id}{'Uniprot_Acc'};
-        $Uniprot_Acc = 'NA' unless $Uniprot_Acc;
+        $Uniprot_Acc = 'N/A' unless $Uniprot_Acc;
 
         #Uniprot Id
         my $Uniprot_Id = $targets->{$target_id}{'Uniprot_Id'};
-        $Uniprot_Id = 'NA' unless $Uniprot_Id;
+        $Uniprot_Id = 'N/A' unless $Uniprot_Id;
 
         #Uniprot Protein Name
         my $Uniprot_Protein_Name = $targets->{$target_id}{'Uniprot_Protein_Name'};
-        $Uniprot_Protein_Name = 'NA' unless $Uniprot_Protein_Name;
+        $Uniprot_Protein_Name = 'N/A' unless $Uniprot_Protein_Name;
 
         #Uniprot Gene Name
         my $Uniprot_Gene_Name = $targets->{$target_id}{'Uniprot_Gene_Name'};
-        $Uniprot_Gene_Name = 'NA' unless $Uniprot_Gene_Name;
+        $Uniprot_Gene_Name = 'N/A' unless $Uniprot_Gene_Name;
 
         #Uniprot Evidence
         my $Uniprot_Evidence = $targets->{$target_id}{'Uniprot_Evidence'};
-        $Uniprot_Evidence = 'NA' unless $Uniprot_Evidence;
+        $Uniprot_Evidence = 'N/A' unless $Uniprot_Evidence;
 
         #Uniprot Status
         my $Uniprot_Status = $targets->{$target_id}{'Uniprot_Status'};
-        $Uniprot_Status = 'NA' unless $Uniprot_Status;
+        $Uniprot_Status = 'N/A' unless $Uniprot_Status;
 
         #Entrez Id
         my $Entrez_Id = $targets->{$target_id}{'Entrez_Id'};
-        $Entrez_Id = 'NA' unless $Entrez_Id;
+        $Entrez_Id = 'N/A' unless $Entrez_Id;
 
         #Ensembl Id
         my $Ensembl_Id = $targets->{$target_id}{'Ensembl_Id'};
-        $Ensembl_Id = 'NA' unless $Ensembl_Id;
+        $Ensembl_Id = 'N/A' unless $Ensembl_Id;
 
         #Term Category Name
         my $Name = $terms->{$Interpro_Acc}{'Name'};
-        $Name = 'NA' unless $Name;
+        $Name = 'N/A' unless $Name;
 
         #Term Category Short Name
         my $Short_Name = $terms->{$Interpro_Acc}{'Short_Name'};
-        $Short_Name = 'NA' unless $Short_Name;
+        $Short_Name = 'N/A' unless $Short_Name;
 
         #Term Category Type
         my $Type = $terms->{$Interpro_Acc}{'Type'};
-        $Type = 'NA' unless $Type;
+        $Type = 'N/A' unless $Type;
 
         #DGIDB Human Readable
         my $DGIDB_Human_Readable = $terms->{$Interpro_Acc}{'DGIDB_Human_Readable'};
-        $DGIDB_Human_Readable = 'NA' unless $DGIDB_Human_Readable;
+        $DGIDB_Human_Readable = 'N/A' unless $DGIDB_Human_Readable;
 
         $out_fh->print(join("\t", $relationship_id,$Interpro_Acc,$Name,$Short_Name,$Type,$DGIDB_Human_Readable,$Uniprot_Acc,$Uniprot_Id,$Uniprot_Protein_Name,$Uniprot_Gene_Name,$Uniprot_Evidence,$Uniprot_Status,$Entrez_Id,$Ensembl_Id), "\n");
     }
@@ -267,14 +267,16 @@ sub import_genes {
         #Create gene record with all alternate names
         my $gene_name = $self->_create_gene_name_report($hopkins_input->{'Uniprot_Acc'}, $citation, 'HopkinsGroom Gene Name', '');
         my $uniprot_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Id'}, 'Uniprot Id', '');
-        my $uniprot_protein_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Protein_Name'}, 'Uniprot Protein Name', '');
-        unless ($hopkins_input->{'Uniprot_Gene_Name'} eq 'NA'){
+        unless ($hopkins_input->{'Uniprot_Protein_Name'} eq 'N/A'){
+            my $uniprot_protein_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Protein_Name'}, 'Uniprot Protein Name', '');
+        }
+        unless ($hopkins_input->{'Uniprot_Gene_Name'} eq 'N/A'){
           my $uniprot_gene_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Gene_Name'}, 'Uniprot Gene Name', '');
         }
-        unless ($hopkins_input->{'Entrez_Id'} eq 'NA'){
+        unless ($hopkins_input->{'Entrez_Id'} eq 'N/A'){
           my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Entrez_Id'}, 'Entrez Gene Id', '');
         }
-        unless ($hopkins_input->{'Ensembl_Id'} eq 'NA'){
+        unless ($hopkins_input->{'Ensembl_Id'} eq 'N/A'){
           my $ensembl_string=$hopkins_input->{'Ensembl_Id'};
           $ensembl_string=~s/\s//;
           my @ensembl_ids=split(";", $ensembl_string);
@@ -287,7 +289,8 @@ sub import_genes {
         my $human_readable_name = $hopkins_input->{'DGIDB_Human_Readable'};
         $human_readable_name =~ s/-/ /g;
         $human_readable_name =~ s/\// /g;
-        unless ($human_readable_name eq 'NA'){
+        $human_readable_name =~ s/\./_/g;
+        unless ($human_readable_name eq 'N/A'){
           my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
         }
         #Add additional category details

@@ -32,7 +32,7 @@ sub execute {
     foreach ( @files ) {
 	unlink $_;
     }
-    $self->log_event("Removed temp files for sample: $sample_name");
+    $self->log_event("Successful for sample: $sample_name");
 
     return 1;
 }

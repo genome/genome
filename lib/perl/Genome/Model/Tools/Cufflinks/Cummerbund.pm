@@ -9,6 +9,10 @@ class Genome::Model::Tools::Cufflinks::Cummerbund {
     is => 'Genome::Model::Tools::Cufflinks',
     has_input => [
         cuffdiff_directory => { },
+        false_discovery_rate => {
+            default_value => '0.05',
+            is_optional => 1,
+        },
         output_directory => {
             is_optional => 1,
         },
@@ -121,20 +125,31 @@ sub execute {
     $self->generate_r_plot_code($tmp_fh,'gene_fpkm_dendrogram','den','csDendro(genes(cuff))');
 
     # Gene FPKM Dendrogam as Replicates
-    $self->generate_r_plot_code($tmp_fh,'gene_fpkm_dendrogram_as_replicates','dend.rep','csDendro(genes(cuff),replicates=T)');
+    $self->generate_r_plot_code($tmp_fh,'gene_fpkm_dendrogram_as_replicates','den.rep','csDendro(genes(cuff),replicates=T)');
 
+    # Global DE Genes
+    print $tmp_fh 'mySigGeneIds <- getSig(cuff,alpha='. $self->false_discovery_rate .',level=\'genes\')' ."\n";
+    print $tmp_fh 'mySigGenes <- getGenes(cuff, mySigGeneIds)' ."\n";
+    print $tmp_fh 'mySigGenes' ."\n";
+
+    $self->generate_r_plot_code($tmp_fh,'sig_gene_fpkm_heatmap','h.sig','csHeatmap(mySigGenes,cluster=\'both\',labRow=F)');
+    $self->generate_r_plot_code($tmp_fh,'sig_gene_fpkm_heatmap_as_replicates','h.sig.rep','csHeatmap(mySigGenes,cluster=\'both\',replicates=T,labRow=F)');
+    
     if ($self->genes_of_interest) {
         # GOI Gene FPKM Heatmap
         $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_heatmap','h.goi','csHeatmap(myGenes, cluster = "both")');
 
         # GOI Gene FPKM Heatmap as Replicates
-        $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_heatmap_as_replicates','h.rep','csHeatmap(myGenes,cluster=\'both\',replicates=T)');
+        $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_heatmap_as_replicates','h.goi.rep','csHeatmap(myGenes,cluster=\'both\',replicates=T)');
         
         # GOI Gene FPKM Barplot
         $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_barplot','b.goi','expressionBarplot(myGenes)');
         
         # GOI Gene FPKM Dendrogram
         $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_dendrogram','den.goi','csDendro(myGenes)');
+
+        # GOI Gene FPKM Dendrogram as Replicates
+        $self->generate_r_plot_code($tmp_fh,'gene_fpkm_goi_dendrogram_as_replicates','den.goi.rep','csDendro(myGenes,replicates=T)');
 
         # Generate per-gene plots
         my @goi = split(',',$self->genes_of_interest);
@@ -151,7 +166,7 @@ sub execute {
             # GOI FPKM Expression Barplot
             $self->generate_r_plot_code($tmp_fh,$goi .'_fpkm_expression_barplot','gb','expressionBarplot(myGene)');
 
-            # GOI FPKM Expression Barplot as replicates
+            # GOI FPKM Expression Barplot as Replicates
             $self->generate_r_plot_code($tmp_fh,$goi .'_fpkm_expression_barplot_as_replicates','gb.rep','expressionBarplot(myGene,replicates=T)');
         }
     }

@@ -22,82 +22,105 @@ sub help_detail {
 HELP
 }
 
+
 sub source {
-    my $self = shift;
-    return "Strelka";
+    return 'Strelka';
 }
 
-#Override most of the print header code so that Strelka's header is concatenated to the TGI default header
-sub print_header{
-    my $self = shift;
-    my $public_reference = $self->_get_public_ref();
-
-    my $input_fh = $self->_input_fh;
-    my $output_fh = $self->_output_fh;
-
-    my @header_columns = $self->_get_header_columns();
-    _print_header($public_reference, $input_fh, $output_fh, \@header_columns);
-    return 1;
+#maintain strelka original vcf as much as possible
+sub extra_format_meta {
+    return (
+        {MetaType => "FORMAT", ID => "FDP",   Number => 1, Type => "Integer", Description => "Number of basecalls filtered from original read depth for tier1"},
+        {MetaType => "FORMAT", ID => "SDP",   Number => 1, Type => "Integer", Description => "Number of reads with deletions spanning this site at tier1"},
+        {MetaType => "FORMAT", ID => "SUBDP", Number => 1, Type => "Integer", Description => "Number of reads below tier1 mapping quality threshold aligned across this site"},
+        {MetaType => "FORMAT", ID => "AU",    Number => 2, Type => "Integer", Description => "Number of 'A' alleles used in tiers 1,2"},
+        {MetaType => "FORMAT", ID => "CU",    Number => 2, Type => "Integer", Description => "Number of 'C' alleles used in tiers 1,2"},
+        {MetaType => "FORMAT", ID => "GU",    Number => 2, Type => "Integer", Description => "Number of 'G' alleles used in tiers 1,2"},
+        {MetaType => "FORMAT", ID => "TU",    Number => 2, Type => "Integer", Description => "Number of 'T' alleles used in tiers 1,2"},
+    );
 }
 
-sub _print_header {
-    my ($public_reference, $input_fh, $output_fh, $header_columns) = @_;
-    my @header_columns = @{$header_columns};
+sub get_info_meta {
+    return (
+        {MetaType => "INFO", ID => "QSS",     Number => 1, Type => "Integer", Description => "Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal"},
+        {MetaType => "INFO", ID => "TQSS",    Number => 1, Type => "Integer", Description => "Data tier used to compute QSS"},
+        {MetaType => "INFO", ID => "NT",      Number => 1, Type => "String",  Description => "Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}."},
+        {MetaType => "INFO", ID => "QSS_NT",  Number => 1, Type => "Integer", Description => "Quality score reflecting the joint probability of a somatic variant and NT"},
+        {MetaType => "INFO", ID => "TQSS_NT", Number => 1, Type => "Integer", Description => "Data tier used to compute QSS_NT"},
+        {MetaType => "INFO", ID => "SGT",     Number => 1, Type => "String",  Description => "Most likely somatic genotype excluding normal noise states"},
+    );
+        ##INFO=<ID=SOMATIC,Number=0,Type=Flag,Description="Somatic mutation">   leave this now
+}
 
-    $output_fh->print("##reference=$public_reference" . "\n");
-    $output_fh->print("##phasing=none" . "\n");
-    $output_fh->print("##Original Strelka header follows:" . "\n");
+sub get_filter_meta {
+    return (
+        {MetaType => "FILTER", ID => "BCNoise", Description => "Fraction of basecalls filtered at this site in either sample is at or above 0.4"},
+        {MetaType => "FILTER", ID => "SpanDel", Description => "Fraction of reads crossing site with spanning deletions in either sample exceeeds 0.75"},
+        {MetaType => "FILTER", ID => "QSS_ref", Description => "Normal sample is not homozygous ref or ssnv Q-score < 15, ie calls with NT!=ref or QSS_NT < 15"},
+    );
+}
 
-    while(my $line = <$input_fh>) {
-      chomp($line);
-      if ($line =~ /^\#\#/){
-        # catch issue with Strelka DP format field having different description to other Vcfs in DV2
-        # incompatible_line = '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth for tier1 (used+filtered)">';
-        # FIXME Once joinx has ability to ignore description fields we should remove this and start using that.
-        if ($line =~ /FORMAT..ID.DP,/) {
-            my $compatible_line = '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Total Read Depth">';
-            $output_fh->print($compatible_line, "\n");
-            next;
-        }
-        $output_fh->print($line, "\n");
-      }elsif($line =~ /^\#CHROM\s+POS\s+ID\s+REF\s+ALT\s+QUAL\s+FILTER\s+INFO\s+FORMAT\s+NORMAL\s+TUMOR/){
-        last;
-      }else{
-        die "Bad header: $line";
-      }
+
+sub parse_line {
+    my ($self, $line) = @_;
+    return if $line =~ /^#/; # no vcf header here
+    my @columns = split /\t/, $line;
+
+    my ($ref, $alt, $info, $n_sample, $t_sample) = map{$columns[$_]}(3, 4, 7, 9, 10);
+    my ($n_gt_info, $n_gt_str, $t_gt_str) = $info =~ /NT=(\S+?);QSS.*SGT=(\S+?)\->(\S+?);/;
+
+    my @n_data = split /:/, $n_sample;
+    my @t_data = split /:/, $t_sample;
+
+    my @alts = split /,/, $alt;
+
+    #sometimes ALT column gets only .
+    my $n_ad = $alt eq '.' ? '.' : parse_ad(\@n_data, \@alts);
+    my $t_ad = $alt eq '.' ? '.' : parse_ad(\@t_data, \@alts);
+
+    my %ids;
+    my $id = 0;
+
+    for my $base ($ref, @alts) {
+        $ids{$base} = $id;
+        $id++;
     }
 
-    #column header:
-    $output_fh->print( "#" . join("\t", @header_columns) . "\n");
-    return 1;
+    my $n_gt = $n_gt_info eq 'ref' ? '0/0' : parse_gt($n_gt_str, \%ids);
+    my $t_gt = parse_gt($t_gt_str, \%ids);
+
+    $columns[8]  = 'GT:AD:BQ:SS:'. $columns[8];
+    $columns[9]  = $n_gt . ':' . $n_ad . ':.:.:' . $n_sample;
+    $columns[10] = $t_gt . ':' . $t_ad . ':.:2:' . $t_sample;
+
+    return join "\t", @columns;
 }
 
 
-#Override the entire conversion process so that Strelka VCF lines are passed through unaltered
-# Loop through each input line, parse it, and print it to output
-sub convert_file {
-  my $self = shift;
-  my $input_fh = $self->_input_fh;
+sub parse_ad {
+    my ($data, $alts) = @_;
+    my @base_cts = splice @$data, -4, 4;
+    my @bases    = qw(A C G T);
+    my %cts;
+    my @ads;
 
-  #Skip comments and check header line and die if we find a problem
-  while(my $line = <$input_fh>) {
-    chomp($line);
-    if ($line =~ /^\#\#/){
-      next;
-    }elsif($line =~ /^\#CHROM\s+POS\s+ID\s+REF\s+ALT\s+QUAL\s+FILTER\s+INFO\s+FORMAT\s+NORMAL\s+TUMOR/){
-      last;
-    }else{
-      last;
+    for my $id (0..3) {
+        my ($base_ct) = $base_cts[$id] =~ /^(\d+),/;  #only take tier1 count since DP takes only tier1 too
+        $cts{$bases[$id]} = $base_ct;
     }
-  }
 
-  #Simply send the data line as is without any parsing
-  while(my $line = $self->get_record($input_fh)) {
-    chomp $line;
-    $self->write_line($line);
-  }
+    for my $alt (@$alts) {
+        push @ads, $cts{$alt};
+    }
 
-  return 1;
+    return join ',', @ads;
+}
+
+
+sub parse_gt {
+    my ($gt_str, $ids) = @_;
+    my @gt_ids = map{$ids->{$_}}(split //, $gt_str);
+    return join '/', sort @gt_ids;
 }
 
 

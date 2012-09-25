@@ -12,6 +12,8 @@ BEGIN {
 use above "Genome";
 use Test::More;
 
+plan skip_all => "This test isn't ready yet.";
+
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
     plan skip_all => "Must run from 64-bit machine";

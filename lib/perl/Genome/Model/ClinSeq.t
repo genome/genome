@@ -52,13 +52,13 @@ my $patient = Genome::Individual->get(common_name => "AML103");
 ok($patient, "got the AML103 patient");
 
 
-my $tumor_rna_sample = $patient->samples(common_name => "tumor", sample_type => "rna");
+my $tumor_rna_sample = $patient->samples(name => "H_KA-306905-1121474");
 ok($tumor_rna_sample, "found the tumor RNA sample");
 
-my $tumor_genome_sample = $patient->samples(common_name => "tumor", sample_type => "genomic dna");
+my $tumor_genome_sample = $patient->samples(name => "H_KA-306905-1121472");
 ok($tumor_genome_sample, "found the tumor genome sample");
 
-my $normal_genome_sample = $patient->samples(common_name => "normal", sample_type => "genomic dna");
+my $normal_genome_sample = $patient->samples(name => "H_KA-306905-S.4294");
 ok($normal_genome_sample, "found the normal genome sample");
 
 #Tumor RNA-seq model: 'AML103/ALL1 - RNA-seq - Ensembl 58_37c - TopHat 1.3.1 - Cufflinks 1.1.0 - Mask rRNA_MT - refcov - build37'

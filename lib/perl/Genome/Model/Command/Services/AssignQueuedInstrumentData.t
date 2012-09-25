@@ -11,7 +11,6 @@ BEGIN {
 
 use above 'Genome';
 
-use Data::Dumper;
 use Test::More;
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
@@ -54,7 +53,7 @@ my $library = Genome::Library->create(
 isa_ok($library, 'Genome::Library');
 isa_ok($sample, 'Genome::Sample');
 
-my (@instrument_data, @pses);
+my (@instrument_data);
 no warnings;
 *Genome::InstrumentDataAttribute::get = sub {
     my ($class, %params) = @_;
@@ -70,7 +69,6 @@ no warnings;
     }
     return values %attrs;
 };
-sub GSC::PSE::get { return grep { $_->pse_status eq 'inprogress' } @pses; }
 use warnings;
 
 my $instrument_data_1 = Genome::InstrumentData::Solexa->create(
@@ -105,21 +103,6 @@ ok($processing_profile, 'Created a processing_profile');
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get(name => 'NCBI-human-build36');
 isa_ok($ref_seq_build, 'Genome::Model::Build::ImportedReferenceSequence') or die;
 
-my $pse_1 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-12345',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_1;
-
-$pse_1->add_param('instrument_data_type', 'solexa');
-$pse_1->add_param('instrument_data_id', $instrument_data_1->id);
-$pse_1->add_param('subject_class_name', 'Genome::Sample');
-$pse_1->add_param('subject_id', $sample->id);
-$pse_1->add_param('processing_profile_id', $processing_profile->id);
-$pse_1->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
-
 my $instrument_data_2 = Genome::InstrumentData::Solexa->create(
     id => '-101',
     library_id => $library->id,
@@ -138,24 +121,8 @@ $instrument_data_2->add_attribute(
 push @instrument_data, $instrument_data_2;
 _add_instrument_data_to_projects($instrument_data_2);
 
-my $pse_2 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-12346',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_2;
-
-$pse_2->add_param('instrument_data_type', 'solexa');
-$pse_2->add_param('instrument_data_id', $instrument_data_2->id);
-$pse_2->add_param('subject_class_name', 'Genome::Sample');
-$pse_2->add_param('subject_id', $sample->id);
-$pse_2->add_param('processing_profile_id', $processing_profile->id);
-$pse_2->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
-
 my $command_1 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_1, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
-$command_1->dump_status_messages(1);
 
 ok($command_1->execute(), 'assign-queued-instrument-data executed successfully.');
 
@@ -164,10 +131,10 @@ is(scalar(keys %$new_models), 1, 'the cron created one model');
 is_deeply([sort map { $_->name } values %$new_models], [sort qw/ AQID-test-sample.prod-refalign /], 'the cron named the new models correctly');
 
 my $models_changed = $command_1->_existing_models_assigned_to;
-is(scalar(keys %$models_changed), 0, 'the cron did no work for the second PSE, since the first assigns all on creation');
+is(scalar(keys %$models_changed), 0, 'no models changed');
 
 my $old_models = $command_1->_existing_models_with_existing_assignments;
-is(scalar(keys %$old_models), 1, 'the cron found models with data [for the second PSE] already assigned');
+is(scalar(keys %$old_models), 1, 'no existing models');
 
 my ($old_model_id) = keys(%$old_models);
 my $new_model = $new_models->{$old_model_id};
@@ -185,10 +152,7 @@ is($models_for_sample[0], $new_model, 'that model is the same one the cron claim
 
 my @model_instrument_data = $new_model->instrument_data;
 is(scalar(@model_instrument_data), 2, 'the first new model has two instrument data assigned');
-is_deeply([sort(@model_instrument_data)], [sort($instrument_data_1, $instrument_data_2)], 'those two instrument data are the ones for our PSEs');
-
-is($pse_1->pse_status, 'completed', 'first pse completed');
-is($pse_2->pse_status, 'completed', 'second pse completed');
+is_deeply([sort(@model_instrument_data)], [sort($instrument_data_1, $instrument_data_2)], 'those two instrument data are the ones for run 2');
 
 my $group = Genome::ModelGroup->get(name => 'AQID');
 ok($group, 'auto-generated model-group exists');
@@ -215,24 +179,10 @@ $instrument_data_ignored->add_attribute(
 push @instrument_data, $instrument_data_ignored;
 _add_instrument_data_to_projects($instrument_data_ignored);
 
-my $pse_ignored = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-123456',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_ignored;
-$pse_ignored->add_param('instrument_data_type', 'solexa');
-$pse_ignored->add_param('instrument_data_id', $instrument_data_ignored->id);
-$pse_ignored->add_param('subject_class_name', 'Genome::Sample');
-$pse_ignored->add_param('subject_id', $sample->id);
-$pse_ignored->add_param('processing_profile_id', $processing_profile->id);
-$pse_ignored->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
-
-
 my $command_ignored = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($command_ignored->execute(), 'assign-queued-instrument-data executed successfully.');
 is(scalar(keys %{$command_ignored->_newly_created_models}), 0, 'the cron created no models from ignores.');
+is($instrument_data_ignored->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on ignored inst data');
 
 # Test AML build 36
 my $aml_sample = Genome::Sample->get(name => "H_KA-758168-0912815");
@@ -258,30 +208,15 @@ $aml_instrument_data->add_attribute(
 push @instrument_data, $aml_instrument_data;
 _add_instrument_data_to_projects($aml_instrument_data);
 
-my $aml_pse = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-765431235235',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $aml_pse;
-$aml_pse->add_param('instrument_data_type', 'solexa');
-$aml_pse->add_param('instrument_data_id', $aml_instrument_data->id);
-$aml_pse->add_param('subject_class_name', 'Genome::Sample');
-$aml_pse->add_param('subject_id', $aml_sample->id);
-$aml_pse->add_param('processing_profile_id', $processing_profile->id);
-$aml_pse->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
-
 my $aml_command = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($aml_command->execute(), 'assign-queued-instrument-data executed successfully.');
 my %aml_new_models = %{$aml_command->_newly_created_models};
 for my $model (values(%aml_new_models)) {
-    is($model->reference_sequence_build_id, 101947881, 'aml model uses correct reference sequence');
+    is($model->reference_sequence_build_id, 106942997, 'aml model uses correct reference sequence');
 }
+is($aml_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on aml inst data');
 
-
-
-# Test MEL build 36
+# Test MEL
 my $aml_library_2 = Genome::Library->create(id => '-12345', name => $aml_sample->name.'-testlib', sample_id => $aml_sample->id);
 isa_ok($aml_library_2, 'Genome::Library');
 my $aml_instrument_data_2 = Genome::InstrumentData::Solexa->create(
@@ -303,25 +238,13 @@ $aml_instrument_data_2->add_attribute(
 push @instrument_data, $aml_instrument_data_2;
 _add_instrument_data_to_projects($aml_instrument_data_2);
 
-my $aml_pse_2 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-7654312352355',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $aml_pse_2;
-$aml_pse_2->add_param('instrument_data_type', 'solexa');
-$aml_pse_2->add_param('instrument_data_id', $aml_instrument_data_2->id);
-$aml_pse_2->add_param('subject_class_name', 'Genome::Sample');
-$aml_pse_2->add_param('subject_id', $aml_sample->id);
-$aml_pse_2->add_param('processing_profile_id', $processing_profile->id);
-$aml_pse_2->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
 my $aml_command_2 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($aml_command_2->execute(), 'assign-queued-instrument-data executed successfully.');
 my %aml_new_models_2 = %{$aml_command_2->_newly_created_models};
 for my $model (values(%aml_new_models_2)) {
-    is($model->reference_sequence_build_id, 101947881, 'aml model uses correct reference sequence');
+    is($model->reference_sequence_build_id, 106942997, 'aml model uses correct reference sequence');
 }
+is($aml_instrument_data_2->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on aml inst data 2');
 
 #Test mouse
 my $mouse_taxon = Genome::Taxon->get( species_name => 'mouse' );
@@ -367,24 +290,10 @@ $mouse_instrument_data->add_attribute(
 push @instrument_data, $mouse_instrument_data;
 _add_instrument_data_to_projects($mouse_instrument_data);
 
-my $mouse_pse = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-765431',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $mouse_pse;
-
-$mouse_pse->add_param('instrument_data_type', 'solexa');
-$mouse_pse->add_param('instrument_data_id', $mouse_instrument_data->id);
-$mouse_pse->add_param('subject_class_name', 'Genome::Sample');
-$mouse_pse->add_param('subject_id', $mouse_sample->id);
-$mouse_pse->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
 my $mouse_command = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($mouse_command->execute(), 'assign-queued-instrument-data executed successfully.');
 
 my %mouse_new_models = %{$mouse_command->_newly_created_models};
-
 is(scalar(keys %mouse_new_models), 1, 'the cron created one model from mouse sample.');
 for my $mouse_model_id (keys %mouse_new_models){
     my $mouse_model = $mouse_new_models{$mouse_model_id};
@@ -393,7 +302,7 @@ for my $mouse_model_id (keys %mouse_new_models){
     my @mouse_instrument_data = scalar($mouse_model->instrument_data);
     is(scalar(@mouse_instrument_data), 1, "mouse model has the expected 1 instrument data");
 }
-is($mouse_pse->pse_status, 'completed', 'mouse pse completed');
+is($mouse_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on mouse inst data');
 
 #Test rna
 my $rna_sample = Genome::Sample->create(
@@ -432,18 +341,6 @@ $rna_instrument_data->add_attribute(
 push @instrument_data, $rna_instrument_data;
 _add_instrument_data_to_projects($rna_instrument_data);
 
-my $rna_pse = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-765432',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $rna_pse;
-$rna_pse->add_param('instrument_data_type', 'solexa');
-$rna_pse->add_param('instrument_data_id', $rna_instrument_data->id);
-$rna_pse->add_param('subject_class_name', 'Genome::Sample');
-$rna_pse->add_param('subject_id', $rna_sample->id);
-
 my $rna_454_instrument_data = Genome::InstrumentData::454->create(
     id => '-14',
     library => $rna_library,
@@ -459,28 +356,17 @@ $rna_454_instrument_data->add_attribute(
 );
 push @instrument_data, $rna_454_instrument_data;
 
-my $rna_454_pse = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-12314',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $rna_454_pse;
-$rna_454_pse->add_param('instrument_data_type', '454');
-$rna_454_pse->add_param('instrument_data_id', $rna_454_instrument_data->id);
-$rna_454_pse->add_param('subject_class_name', 'Genome::Sample');
-$rna_454_pse->add_param('subject_id', $rna_sample->id);
-
 my $rna_command = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($rna_command->execute(), 'assign-queued-instrument-data executed successfully.');
 
 my $rna_new_models = $rna_command->_newly_created_models;
 is(scalar(keys %$rna_new_models), 1, 'the cron created 1 rna model');
-
-#test that the annotion build input is set on the model
 my ($rna_model) = values %$rna_new_models;
 ok($rna_model->annotation_build, 'the cron set the annotation_build input on the rna model');
+is($rna_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on rna solexa inst data');
+is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'Set tgi lims status to failed on rna 454 inst data (no ref)');
 
+# Test ?
 my $instrument_data_3 = Genome::InstrumentData::Solexa->create(
     id => '-102',
     library_id => $library->id,
@@ -500,20 +386,6 @@ $instrument_data_3->add_attribute(
 );
 push @instrument_data, $instrument_data_3;
 _add_instrument_data_to_projects($instrument_data_3);
-
-my $pse_3 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-12347',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_3;
-$pse_3->add_param('instrument_data_type', 'solexa');
-$pse_3->add_param('instrument_data_id', $instrument_data_3->id);
-$pse_3->add_param('subject_class_name', 'Genome::Sample');
-$pse_3->add_param('subject_id', $sample->id);
-$pse_3->add_param('processing_profile_id', $processing_profile->id);
-$pse_3->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
 
 my $fl = Genome::FeatureList->__define__(
     id => 'ABCDEFG',
@@ -575,26 +447,12 @@ my $instrument_data_pool = Genome::InstrumentData::Solexa->create(
 push @instrument_data, $instrument_data_pool;
 _add_instrument_data_to_projects($instrument_data_pool);
 
-my $pse_4 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-12348',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_4;
-$pse_4->add_param('instrument_data_type', 'solexa');
-$pse_4->add_param('instrument_data_id', $instrument_data_4->id);
-$pse_4->add_param('subject_class_name', 'Genome::Sample');
-$pse_4->add_param('subject_id', $sample->id);
-$pse_4->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
-
 my $command_2 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_2, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 ok($command_2->execute(), 'assign-queued-instrument-data executed successfully.');
 
 my $new_models_2 = $command_2->_newly_created_models;
 is(scalar(keys %$new_models_2), 3, 'the cron created three new models (default, .wu-space, and .tcga-cds)');
-print Data::Dumper::Dumper($new_models_2);
 
 my @models = values %$new_models_2;
 @model_groups = ();
@@ -641,14 +499,16 @@ is(scalar(@models_for_sample), 4, 'found 4 models created for the subject');
 
 @instrument_data = $new_model->instrument_data;
 is(scalar(@instrument_data), 3, 'the new model has three instrument data assigned');
-is_deeply([sort(@instrument_data)], [sort($instrument_data_1, $instrument_data_2, $instrument_data_3)], 'those three instrument data are the ones for our PSEs');
-
-is($pse_3->pse_status, 'completed', 'third pse completed');
-is($pse_4->pse_status, 'completed', 'fourth pse completed');
+is_deeply([sort(@instrument_data)], [sort($instrument_data_1, $instrument_data_2, $instrument_data_3)], 'assigned expected inst data to model');
 
 my @members_2 = $group->models;
 is(scalar(@members_2) - scalar(@members), 3, 'two subsequent models added to the group');
 
+is($instrument_data_3->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on inst data 3');
+is($instrument_data_4->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on inst data 4');
+ok(!$instrument_data_pool->attributes(attribute_label => 'tgi_lims_status'), 'No tgi lims status on inst data pool');
+
+# Test Adding to Existing and De Novo
 my $instrument_data_5 = Genome::InstrumentData::Solexa->create(
     id => '-104',
     library_id => $library->id,
@@ -667,38 +527,19 @@ $instrument_data_5->add_attribute(
 push @instrument_data, $instrument_data_5;
 _add_instrument_data_to_projects($instrument_data_5);
 
-my $pse_5 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-12349',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_5;
-$pse_5->add_param('instrument_data_type', 'solexa');
-$pse_5->add_param('instrument_data_id', $instrument_data_5->id);
-$pse_5->add_param('subject_class_name', 'Genome::Sample');
-$pse_5->add_param('subject_id', $sample->id);
-$pse_5->add_param('processing_profile_id', $processing_profile->id);
-
-#omitting this to test failure case
-#$pse_5->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
-
 my $de_novo_taxon = Genome::Taxon->get( species_name => 'Zinnia elegans' );
-
 my $de_novo_individual = Genome::Individual->create(
     id => '-11',
     name => 'AQID-test-individual-ze',
     common_name => 'AQID11',
     taxon_id => $taxon->id,
 );
-
 my $de_novo_sample = Genome::Sample->create(
     id => '-22',
     name => 'AQID-test-sample-ze',
     common_name => 'normal',
     source_id => $de_novo_individual->id,
 );
-
 my $de_novo_library = Genome::Library->create(
     id=>'-33',
     name => $de_novo_sample->name.'-testlib',
@@ -725,19 +566,6 @@ _add_instrument_data_to_projects($instrument_data_6);
 
 my $de_novo_processing_profile = Genome::ProcessingProfile::DeNovoAssembly->get(2354215); #apipe-test-de_novo_velvet_solexa
 
-my $pse_6 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-12350',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_6;
-$pse_6->add_param('instrument_data_type', 'solexa');
-$pse_6->add_param('instrument_data_id', $instrument_data_6->id);
-$pse_6->add_param('subject_class_name', 'Genome::Sample');
-$pse_6->add_param('subject_id', $de_novo_sample->id);
-$pse_6->add_param('processing_profile_id', $de_novo_processing_profile->id);
-
 my $command_3 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_3, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 ok($command_3->execute(), 'assign-queued-instrument-data executed successfully.');
@@ -746,10 +574,10 @@ my $new_models_3 = $command_3->_newly_created_models;
 is(scalar(keys %$new_models_3), 1, 'the cron created another new model');
 
 my $models_changed_3 = $command_3->_existing_models_assigned_to;
-is(scalar(keys %$models_changed_3), 1, 'pse 5 added to existing non-capture model despite pp error');
+is(scalar(keys %$models_changed_3), 1, 'added to existing non-capture model despite pp error');
 
 my $old_models_3 = $command_3->_existing_models_with_existing_assignments;
-is(scalar(keys %$old_models_3), 0, 'no other models were found with this data assigned');
+is(scalar(keys %$old_models_3), 1, 'no other models were found with this data assigned');
 
 my @models_for_de_novo_sample = Genome::Model->get(
     subject_class_name => 'Genome::Sample',
@@ -766,18 +594,10 @@ is($de_novo_instrument_data[0], $instrument_data_6, 'is the expected instrument 
 my($changed_model_3) = values %$models_changed_3;
 is($changed_model_3, $new_model, 'latest addition is to the original model from the first run');
 
-is($pse_5->pse_status, 'inprogress', 'fifth pse inprogress (due to incomplete information)');
-is($instrument_data_5->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'fail status set on failure');
-is($instrument_data_5->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 1, 'fail count set on failure');
-is($pse_6->pse_status, 'completed', 'sixth pse completed');
-is($instrument_data_6->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'processed status set on success');
-ok(!$instrument_data_6->attributes(attribute_label => 'tgi_lims_fail_count'), 'no fail count set when no failure');
+is($instrument_data_5->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lime status to failed for inst data 5');
+is($instrument_data_6->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed for inst data 6');
 
-##Cleanup failure case from previous test
-#$pse_5 = undef;
-#$instrument_data_5->delete;
-##
-
+# Test TCGA
 my $sample_2 = Genome::Sample->create(
     id => '-70',
     name => 'TCGA-TEST-SAMPLE-01A-01D',
@@ -803,6 +623,15 @@ my $library_2 = Genome::Library->create(
 );
 isa_ok($library_2, 'Genome::Library');
 
+my $fl2 = Genome::FeatureList->__define__(
+    name => 'test-tcga-brc10', # This test was using the real BRC10 fl
+    format => 'multi-tracked',
+    content_type => 'targeted',
+    file_content_hash => 1,
+    reference => $ref_seq_build,
+);
+ok($fl2, 'Define feature list 2 for TCGA');
+
 my $instrument_data_7 = Genome::InstrumentData::Solexa->create(
     id => '-700',
     library_id => $library_2->id,
@@ -813,7 +642,7 @@ my $instrument_data_7 = Genome::InstrumentData::Solexa->create(
     rev_read_length => 100,
     fwd_clusters => 65535,
     rev_clusters => 65536,
-    target_region_set_name => 'BRC10 capture chip set',
+    target_region_set_name => $fl2->name,
 );
 ok($instrument_data_7, 'Created an instrument data');
 $instrument_data_7->add_attribute(
@@ -822,20 +651,6 @@ $instrument_data_7->add_attribute(
 );
 push @instrument_data, $instrument_data_7;
 _add_instrument_data_to_projects($instrument_data_7);
-
-my $pse_7 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-7675309',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_7;
-$pse_7->add_param('instrument_data_type', 'solexa');
-$pse_7->add_param('instrument_data_id', $instrument_data_7->id);
-$pse_7->add_param('subject_class_name', 'Genome::Sample');
-$pse_7->add_param('subject_id', $sample_2->id);
-$pse_7->add_param('processing_profile_id', $processing_profile->id);
-$pse_7->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
 
 my $command_4 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_4, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
@@ -858,12 +673,9 @@ is($normal->build_requested, 0, 'the normal model does not have a build requeste
 push(@model_groups, $_->model_groups) for (@models);
 ok((grep {$_->name =~ /\.tcga/} @model_groups), "found tcga-cds model_group");
 
-is($pse_7->pse_status, 'completed', 'seventh pse completed');
+is($instrument_data_7->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed for inst data 7');
 
-is($pse_5->pse_status, 'inprogress', 'fifth pse still inprogress (due to incomplete information)');
-is($instrument_data_5->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'fail status still set on repeated failure');
-is($instrument_data_5->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 2, 'fail count incremented on repeated failure');
-
+# Test ?
 my $library_3 = Genome::Library->create(
     id => '-9',
     name => $sample_3->name.'-testlib',
@@ -881,7 +693,7 @@ my $instrument_data_8 = Genome::InstrumentData::Solexa->create(
     rev_read_length => 100,
     fwd_clusters => 65535,
     rev_clusters => 65536,
-    target_region_set_name => 'BRC10 capture chip set',
+    target_region_set_name => $fl2->name,
 );
 ok($instrument_data_8, 'Created an instrument data');
 $instrument_data_8->add_attribute(
@@ -891,21 +703,6 @@ $instrument_data_8->add_attribute(
 push @instrument_data, $instrument_data_8;
 _add_instrument_data_to_projects($instrument_data_8);
 
-my $pse_8 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-7775309',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_8;
-$pse_8->add_param('instrument_data_type', 'solexa');
-$pse_8->add_param('instrument_data_id', $instrument_data_8->id);
-$pse_8->add_param('subject_class_name', 'Genome::Sample');
-$pse_8->add_param('subject_id', $sample_3->id);
-$pse_8->add_param('processing_profile_id', $processing_profile->id);
-$pse_8->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
-
-
 my $command_5 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_5, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 ok($command_5->execute(), 'assign-queued-instrument-data executed successfully.');
@@ -913,7 +710,9 @@ my $new_models_5 = $command_5->_newly_created_models;
 is(scalar(keys %$new_models_5), 0, 'the cron created zero new models');
 ok(scalar($normal->instrument_data), 'the cron assigned the new instrument data to the empty paired model');
 
-###
+is($instrument_data_8->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed for inst data 8');
+
+# Test ?
 my $sample_4 = Genome::Sample->create(
     id => '-80',
     name => 'TCGA-TEST-SAMPLE2-01A-01D',
@@ -984,34 +783,6 @@ $instrument_data_10->add_attribute(
 push @instrument_data, $instrument_data_10;
 _add_instrument_data_to_projects($instrument_data_10);
 
-my $pse_9 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-7600000',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_9;
-$pse_9->add_param('instrument_data_type', 'solexa');
-$pse_9->add_param('instrument_data_id', $instrument_data_9->id);
-$pse_9->add_param('subject_class_name', 'Genome::Sample');
-$pse_9->add_param('subject_id', $sample_4->id);
-$pse_9->add_param('processing_profile_id', $processing_profile->id);
-$pse_9->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
-
-my $pse_10 = GSC::PSE::QueueInstrumentDataForGenomeModeling->create(
-    pse_status => 'inprogress',
-    pse_id => '-7600001',
-    ps_id => 3733,
-    ei_id => '464681',
-);
-push @pses, $pse_10;
-$pse_10->add_param('instrument_data_type', 'solexa');
-$pse_10->add_param('instrument_data_id', $instrument_data_10->id);
-$pse_10->add_param('subject_class_name', 'Genome::Sample');
-$pse_10->add_param('subject_id', $sample_5->id);
-$pse_10->add_param('processing_profile_id', $processing_profile->id);
-$pse_10->add_reference_sequence_build_param_for_processing_profile( $processing_profile, $ref_seq_build);
-
 my $command_6 = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 isa_ok($command_6, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 ok($command_6->execute(), 'assign-queued-instrument-data executed successfully.');
@@ -1028,6 +799,10 @@ ok(grep($_ ==  $somatic_variation_2->tumor_model, @tumor_2), 'somatic variation 
 is($normal_2, $somatic_variation_2->normal_model, 'somatic variation has the correct normal model');
 is(scalar @{[$normal_2->instrument_data]}, 1, 'one instrument data is assigned to the normal');
 is($normal->build_requested, 1, 'the normal model has build requested since there is instrument data is assigned to it');
+
+is($instrument_data_9->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed for inst data 9');
+
+is($instrument_data_10->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed for inst data 10');
 
 done_testing();
 exit;

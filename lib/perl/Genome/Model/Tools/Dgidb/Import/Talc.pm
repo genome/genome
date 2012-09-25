@@ -21,6 +21,13 @@ class Genome::Model::Tools::Dgidb::Import::Talc {
             default => 0,
             doc => 'Print more output while running',
         },
+        skip_pubchem => {
+            is => 'Boolean',
+            is_input => 1,
+            is_optional => 1,
+            default => 0,
+            doc => 'Skip _destroy_and_rebuild_pubchem_and_drug_groups step',
+        },
         interactions_outfile => {
             is => 'Path',
             is_input => 1,
@@ -105,7 +112,9 @@ sub execute {
     my $self = shift;
     $self->input_to_tsv();
     $self->import_tsv();
-    $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    unless ($self->skip_pubchem){
+        $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    }
     return 1;
 }
 
@@ -138,7 +147,7 @@ sub import_interactions {
         my $gene_name = $self->_import_gene($interaction, $citation);
         my $drug_gene_interaction = $self->_create_interaction_report($citation, $drug_name, $gene_name, '');
         push @interactions, $drug_gene_interaction;
-        if($interaction->{interaction_type} eq 'NA'){
+        if($interaction->{interaction_type} eq 'N/A'){
           my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'Interaction Type', 'n/a');
         }else{
           my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'Interaction Type', $interaction->{interaction_type});
@@ -155,34 +164,34 @@ sub _import_drug {
     my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary Drug Name', '');
     my @drug_synonyms = split(",", $interaction->{drug_synonym});
     for my $drug_synonym (@drug_synonyms){
-      next if $drug_synonym eq 'NA';
+      next if $drug_synonym eq 'N/A';
       my $synonym_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'Drug Synonym', '');
     }
 
-    unless($interaction->{drug_generic_name} eq 'NA'){
+    unless($interaction->{drug_generic_name} eq 'N/A'){
         my $drug_generic_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_generic_name}, 'Drug Generic Name', '');
 
     }
 
     my @drug_tradenames = split(",", $interaction->{drug_trade_name});
     for my $drug_tradename (@drug_tradenames){
-      next if $drug_tradename eq 'NA';
+      next if $drug_tradename eq 'N/A';
       my $tradename_association = $self->_create_drug_alternate_name_report($drug_name, $drug_tradename, 'Drug Trade Name', '');
     }
 
-    unless($interaction->{drug_cas_number} eq 'NA'){
+    unless($interaction->{drug_cas_number} eq 'N/A'){
         my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'CAS Number', '');
     }
 
-    unless($interaction->{drug_drugbank_id} eq 'NA'){
+    unless($interaction->{drug_drugbank_id} eq 'N/A'){
         my $drug_name_drugbank_id = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_drugbank_id}, 'Drugbank Id', '');
     }
 
-    unless($interaction->{drug_class} eq 'NA'){
+    unless($interaction->{drug_class} eq 'N/A'){
         my $drug_class = $self->_create_drug_category_report($drug_name, 'Drug Class', $interaction->{drug_class}, '');
     }
 
-    unless($interaction->{drug_type} eq 'NA'){
+    unless($interaction->{drug_type} eq 'N/A'){
         my $drug_type = $self->_create_drug_category_report($drug_name, 'Drug Type', $interaction->{drug_type}, '');
     }
     return $drug_name;
@@ -217,51 +226,51 @@ sub input_to_tsv {
     for my $target_id (keys %{$targets}){
         #Target Interaction Id
         my $interaction_id =  $targets->{$target_id}{'interaction_id'};
-        $interaction_id = 'NA' unless $interaction_id;
+        $interaction_id = 'N/A' unless $interaction_id;
 
         #Target Gene Name
         my $gene_target =  $targets->{$target_id}{'gene_target'};
-        $gene_target = 'NA' unless $gene_target;
+        $gene_target = 'N/A' unless $gene_target;
 
         #Target Gene Entrez Id
         my $entrez_id =  $targets->{$target_id}{'entrez_id'};
-        $entrez_id = 'NA' unless $entrez_id;
+        $entrez_id = 'N/A' unless $entrez_id;
 
         #Interaction Type 
         my $interaction_type = $targets->{$target_id}{'interaction_type'};
-        $interaction_type = 'NA' unless $interaction_type;
+        $interaction_type = 'N/A' unless $interaction_type;
 
         #Drug name
         my $drug_name = $targets->{$target_id}{'drug_name'};
-        $drug_name = 'NA' unless $drug_name;
+        $drug_name = 'N/A' unless $drug_name;
 
         #Drug class
         my $drug_class = $drugs->{$drug_name}{'drug_class'};
-        $drug_class = 'NA' unless $drug_class;
+        $drug_class = 'N/A' unless $drug_class;
 
         #Drug type
         my $drug_type = $drugs->{$drug_name}{'drug_type'};
-        $drug_type = 'NA' unless $drug_type;
+        $drug_type = 'N/A' unless $drug_type;
 
         #drug_generic_name
         my $drug_generic_name = $drugs->{$drug_name}{'drug_generic_name'};
-        $drug_generic_name = 'NA' unless $drug_generic_name;
+        $drug_generic_name = 'N/A' unless $drug_generic_name;
 
         #drug_trade_name
         my $drug_trade_name = $drugs->{$drug_name}{'drug_trade_name'};
-        $drug_trade_name = 'NA' unless $drug_trade_name;
+        $drug_trade_name = 'N/A' unless $drug_trade_name;
 
         #drug_synonym
         my $drug_synonyms = $drugs->{$drug_name}{'drug_synonym'};
-        $drug_synonyms = 'NA' unless $drug_synonyms;
+        $drug_synonyms = 'N/A' unless $drug_synonyms;
 
         #drug_drugbank_id
         my $drug_drugbank_id = $drugs->{$drug_name}{'drug_drugbank_id'};
-        $drug_drugbank_id = 'NA' unless $drug_drugbank_id;
+        $drug_drugbank_id = 'N/A' unless $drug_drugbank_id;
 
         #CAS Number
         my $drug_cas_number = $drugs->{$drug_name}{'drug_cas_number'};
-        $drug_cas_number = 'NA' unless $drug_cas_number;
+        $drug_cas_number = 'N/A' unless $drug_cas_number;
 
         $interactions_fh->print(join("\t", $interaction_id, $gene_target, $drug_name, $interaction_type, $drug_class, $drug_type, $drug_generic_name, $drug_trade_name, $drug_synonyms, $entrez_id, $drug_cas_number, $drug_drugbank_id), "\n");
         

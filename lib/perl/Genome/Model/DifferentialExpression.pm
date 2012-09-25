@@ -88,20 +88,30 @@ sub create {
         unless ($self->_resolve_reference_sequence_build) {
             return;
         }
-    } else {
-      # TODO: Validate the reference sequence build with all input models.
-        die('Please implement the logic to validate the defined reference sequence build with the input models!');
     }
     unless ($self->annotation_build) {
         unless ($self->_resolve_annotation_build) {
             return;
         }
-    } else {
-        # TODO: Validate the annotation build with all input models.
-        die('Please implement the logic to validate the defined annotation build with the input models!');
     }
     #TODO: Validate that all models have a Succeeded build or at minimum an Alignment Result and Cufflinks output
+    unless ($self->_validate_rna_seq_succeeded_build) {
+        return;
+    }
     return $self;
+}
+
+sub _validate_rna_seq_succeeded_build {
+    my $self = shift;
+
+    for my $input_model ($self->input_models) {
+        unless ($input_model->last_succeeded_build) {
+            $self->error_message('The input model '. $input_model->id. ' does not have a succeeded build!');
+            return;
+        }
+    }
+    
+    return 1;
 }
 
 sub _validate_rna_seq_processing_profile {
@@ -267,14 +277,14 @@ sub _resolve_workflow_for_build {
         $transcript_convergence_operation = $workflow->add_operation(
             name => 'Transcript Convergence',
             operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::DifferentialExpression::Command::ConvergeTranscripts::Cuffcompare',
+                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cuffcompare',
             )
         );
     } elsif ($self->transcript_convergence_name eq 'cuffmerge') {
         $transcript_convergence_operation = $workflow->add_operation(
             name => 'Transcript Convergence',
             operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::DifferentialExpression::Command::ConvergeTranscripts::Cuffmerge',
+                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cuffmerge',
             )
         );
     } else {
@@ -297,7 +307,7 @@ sub _resolve_workflow_for_build {
         $differential_expression_operation = $workflow->add_operation(
             name => 'Differential Expression',
             operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::DifferentialExpression::Command::DifferentialExpression::Cuffdiff',
+                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cuffdiff',
             )
         );
      } else {

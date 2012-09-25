@@ -85,6 +85,13 @@ class Genome::Model::Tools::CopyNumber::Cbs {
             is_optional => 1,
             doc => 'If specified, output becomes 6-column with sample name in first column, followed by chr, st, sp, bins, cn',
         },
+
+        undo_splits_sd => {
+            is => 'Float',
+            is_optional => 1,
+            default => 3,
+            doc => 'apply the undo-splits option, using this number of standard deviations as the threshold. Set to 0 to disable.',
+        },
         
     ]
 };
@@ -124,7 +131,7 @@ sub execute {
     my $convert_names = $self->convert_names;
     my $sample_name = $self->sample_name;
     my $min_width = $self->min_width;
-    
+    my $undo_splits_sd = $self->undo_splits_sd;
     #sanity checks
     unless( (defined($output_R_object)) || (defined($output_file))){
         die $self->error_message("You must specify either the output_file OR output_R_object file");
@@ -154,14 +161,23 @@ sub execute {
     #get input file
     if(defined($bamwindow_file)){
         print R_COMMANDS "cn <- read.table(\"" . $bamwindow_file . '",header=F,sep="\t", colClasses=c("character","numeric","numeric"))' . "\n";        
+        #print R_COMMANDS 'sd <- sd(log2(cn[,3]/median(cn[3],na.rm=T)))' . "\n";
+
     } elsif(defined($bam2cna_file)) {
         print R_COMMANDS 'cn <- read.table("' . $bam2cna_file . '", header=T, sep="\t", comment.char="#", colClasses=c("character","numeric","numeric","numeric","numeric"))' . "\n";
+        #print R_COMMANDS 'sd <- sd(log2(cn[,3]/cn[,4]))' . "\n";
+
     } elsif(defined($array_file)) {
         print R_COMMANDS 'cn <- read.table("' . $array_file . '", header=F, sep="\t", comment.char="#", colClasses=c("character","numeric","numeric"))' . "\n";
+        #print R_COMMANDS 'sd <- sd(cn[,3])' . "\n";
+
     } elsif(defined($binary_array_file)) {
         print R_COMMANDS 'cn <- read.table("' . $array_file . '", header=F, sep="\t", comment.char="#", colClasses=c("character","numeric","numeric"))' . "\n";
+        #print R_COMMANDS 'sd <- NA' . "\n";
+
     } elsif(defined($tcga_array_file)) {
         print R_COMMANDS 'cn <- read.table("' . $tcga_array_file . '", header=F, sep="\t", comment.char="#", colClasses=c("character","character","numeric","numeric"))[,2:4]' . "\n";
+        #print R_COMMANDS 'sd <- sd(cn[,3])' . "\n";
     }
 
     if($convert_names){            
@@ -197,9 +213,15 @@ sub execute {
         print R_COMMANDS "CNA.object <- smooth.CNA(CNA.object)" . "\n";
     }
 
-
-    #segment the data
-    print R_COMMANDS "d <- segment(CNA.object, verbose=0, min.width=" . $min_width . ", undo.splits=\"sdundo\", undo.SD=3,) " . "\n";
+    if(!(defined($undo_splits_sd))){
+        $undo_splits_sd = 3;
+    }
+    if ($undo_splits_sd == 0){
+        print R_COMMANDS "d <- segment(CNA.object, verbose=0, min.width=" . $min_width . ") " . "\n";
+    } else {
+        print R_COMMANDS "d <- segment(CNA.object, verbose=0, min.width=" . $min_width . ", undo.splits=\"sdundo\", undo.SD=" . $undo_splits_sd . ",) " . "\n";
+    }
+    
 
     
     if(defined($output_file)){

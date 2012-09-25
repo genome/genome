@@ -411,14 +411,6 @@ sub _find_or_generate_multisample_vcf {
     my @instdata = map { $_->value } @instdata_assn;
     $build->status_message("found " . scalar(@instdata) . " instdata");
 
-    #
-    # get the alignment results for each sample
-    # this will only work right now if the per-sample model has already run
-    # once Tom's new alignment thing is in place, it would actually generate them in parallel
-    #
-
-    my $actually_gather_alignment_results = 1;
-
     my @per_sample_alignment_results;
     my @bams;
 

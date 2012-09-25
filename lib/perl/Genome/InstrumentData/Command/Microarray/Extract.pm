@@ -350,13 +350,8 @@ sub _annotate_genotypes {
         return;
     }
 
-    my %variant_list_and_id_pos = (
-        130 => 8, #36
-        132 => 7, #37
-    );
-    my $variant_id_pos = $variant_list_and_id_pos{$variation_list_build->version} or die 'No variant id position for '.$variation_list_build->__display_name__;
-
     $self->status_message("Annotate genotypes...");
+    my $variant_id_pos = ( $variation_list_build->version and $variation_list_build->version eq 130 ? 8 : 7 );
     my %annotated_genotypes;
     my $cnt = 0;
     while ( my $line = $dbsnp_fh->getline ) {

@@ -37,6 +37,11 @@ class Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage {
             doc => 'The option to generate coverage on gene-level squashed exons or each unique exon.',
             valid_values => ['yes','no','both'],
         },
+        mask_reference_transcripts => {
+            is_optional => 1,
+            doc => 'A list of transcript types to mask coverage',
+            valid_values => ['rRNA','MT','pseudogene','rRNA_MT','rRNA_MT_pseudogene'],
+        },
     ],
     has => [
         alignment_result => {
@@ -83,6 +88,13 @@ sub execute {
             unless ($bed_file) {
                 die('Failed to find BED annotation transcripts with type: '. $annotation_basename);
             }
+            if ($self->mask_reference_transcripts) {
+                $bed_file = $self->remove_reference_transcripts($bed_file,0);
+                unless ($bed_file) {
+                    $self->error_message('Unable to remove the ROI to be masked.');
+                    return;
+                }
+            }
             my $stats_file = $coverage_directory .'/'. $annotation_basename .'_exon_STATS.tsv';
             my $transcript_stats_file = $coverage_directory .'/'. $annotation_basename .'_transcript_STATS.tsv';
             my @output_files = ($stats_file,$transcript_stats_file);
@@ -108,6 +120,14 @@ sub execute {
             unless ($squashed_bed_file) {
                 $self->warning_message('Failed to find squashed '. $annotation_file_method .' BED file for reference build '. $reference_build->id .' in: '. $annotation_build->data_directory);
                 next;
+            }
+            
+            if ($self->mask_reference_transcripts) {
+                $squashed_bed_file = $self->remove_reference_transcripts($squashed_bed_file,1);
+                unless ($squashed_bed_file) {
+                    $self->error_message('Unable to remove the ROI to be masked!');
+                    return;
+                }
             }
             my $squashed_stats_file = $coverage_directory .'/'. $annotation_basename .'_squashed_by_gene_STATS.tsv';
             my $genes_stats_file = $coverage_directory .'/'. $annotation_basename .'_gene_STATS.tsv';
@@ -142,5 +162,26 @@ sub execute {
     return 1;
 }
 
+sub remove_reference_transcripts {
+    my $self = shift;
+    my $bed_file = shift;
+    my $squashed_flag = shift;
+    
+    my $annotation_build = $self->annotation_build;
+    my $reference_build = $self->reference_build;
+    
+    my $annotation_file_method = $self->mask_reference_transcripts .'_file';
+    my $mask_bed_file = $annotation_build->$annotation_file_method('bed',$reference_build->id,$squashed_flag);
+    my $tmp_bed_file = Genome::Sys->create_temp_file_path();
+    unless (Genome::Model::Tools::BedTools::Subtract->execute(
+        input_file_a => $bed_file,
+        input_file_b => $mask_bed_file,
+        output_file => $tmp_bed_file,
+    )) {
+        $self->error_message('Failed to mask '. $self->mask_reference_transcripts .' reference transcripts!');
+        return;
+    }
+    return $tmp_bed_file;
+};
 
 1;
