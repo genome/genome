@@ -62,11 +62,11 @@ sub attribute_values {
     return $self->_phenotypes->{$attr};
 }
 
-sub attribute_value_for_sample {
-    my ($self, $sample_name, $attr) = @_;
+sub attribute_values_for_samples {
+    my ($self, $attr, @sample_names) = @_;
     $self->_validate_attribute($attr);
-    my $sample_idx = $self->_sample_indices->{$sample_name};
-    return $self->_phenotypes->{$attr}->[$sample_idx];
+    my @sample_indices = @{$self->_sample_indices}{@sample_names};
+    return @{$self->_phenotypes->{$attr}}[@sample_indices];
 }
 
 sub sample_names {
