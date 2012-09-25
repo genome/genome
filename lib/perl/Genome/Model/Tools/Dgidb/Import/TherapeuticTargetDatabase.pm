@@ -67,6 +67,12 @@ class Genome::Model::Tools::Dgidb::Import::TherapeuticTargetDatabase {
     doc => 'Parse TTD download, crossmatching and synonyms files and import interactions',
 };
 
+sub help_synopsis {
+    return <<HELP
+gmt dgidb import therapeutic-target-database 
+HELP
+}
+
 sub execute {
     my $self = shift;
     $self->input_to_tsv();
@@ -126,19 +132,19 @@ sub _import_drug {
 
     my @drug_synonyms = split("; ", $interaction->{drug_synonyms});
     for my $drug_synonym (@drug_synonyms){
-        next if $drug_synonym eq 'na';
+        next if $drug_synonym eq 'N/A';
         my $synonym_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'Drug Synonym', '');
     }
 
-    unless($interaction->{drug_cas_number} eq 'na'){
+    unless($interaction->{drug_cas_number} eq 'N/A'){
         my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'CAS Number', '');
     }
 
-    unless($interaction->{drug_pubchem_cid} eq 'na'){
+    unless($interaction->{drug_pubchem_cid} eq 'N/A'){
         my $drug_name_pubchem_cid = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_pubchem_cid}, 'Pubchem CId', '');
     }
 
-    unless($interaction->{drug_pubchem_sid} eq 'na'){
+    unless($interaction->{drug_pubchem_sid} eq 'N/A'){
         my $drug_name_pubchem_sid = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_pubchem_sid}, 'Pubchem SId', '');
     }
 
@@ -150,20 +156,22 @@ sub _import_gene {
     my $interaction = shift;
     my $citation = shift;
     my $gene_name = $self->_create_gene_name_report($interaction->{target_id}, $citation, 'TTD Partner Id', '');
-
-    my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_name}, 'Gene Symbol', '');
     my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_id}, 'TTD Gene Id', '');
-
+    unless ($interaction->{target_name} eq 'N/A'){
+        my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_name}, 'Gene Name', '');
+    }
     my @target_synonyms = split(";", $interaction->{target_synonyms});
     for my $target_synonym (@target_synonyms){
-        next if $target_synonym eq 'na';
+        next if $target_synonym eq 'N/A';
         my $gene_synonym = $self->_create_gene_alternate_name_report($gene_name, $target_synonym, 'Gene Synonym', '');
     }
-    my $uniprot_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_uniprot_id}, 'Uniprot Id', '');
-    unless ($interaction->{target_entrez_id} eq 'na'){
+    unless ($interaction->{target_uniprot_id} eq 'N/A'){
+        my $uniprot_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_uniprot_id}, 'Uniprot Id', '');
+    }
+    unless ($interaction->{target_entrez_id} eq 'N/A'){
         my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $interaction->{target_entrez_id}, 'Entrez Gene Id', '');
     }
-    unless ($interaction->{target_ensembl_id} eq 'na'){
+    unless ($interaction->{target_ensembl_id} eq 'N/A'){
         my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $interaction->{target_ensembl_id}, 'Ensembl Gene Id', '');
     }
     return $gene_name;
@@ -198,14 +206,14 @@ sub input_to_tsv {
     for my $target_id (keys %{$targets}){
             #Target Uniprot Id
             my $target_uniprot_id =  pop @{$targets->{$target_id}{'UniProt ID'}};
-            $target_uniprot_id = 'na' unless $target_uniprot_id;
+            $target_uniprot_id = 'N/A' unless $target_uniprot_id;
 
             #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
-            my $entrez_id = "na";
+            my $entrez_id = "N/A";
             if ($UniProtMapping{$target_uniprot_id}{entrez_id}){
               $entrez_id = $UniProtMapping{$target_uniprot_id}{entrez_id};
             }
-            my $ensembl_id = "na";
+            my $ensembl_id = "N/A";
             if ($UniProtMapping{$target_uniprot_id}{ensembl_id}){
               $ensembl_id = $UniProtMapping{$target_uniprot_id}{ensembl_id};
             }
@@ -216,7 +224,7 @@ sub input_to_tsv {
             #Target Synonyms
             my $target_synonyms;
             $target_synonyms = join(";", @{$targets->{$target_id}{'Synonyms'}}) if $targets->{$target_id}{'Synonyms'};
-            $target_synonyms = 'na' unless $target_synonyms;
+            $target_synonyms = 'N/A' unless $target_synonyms;
 
         for my $drug_id (keys %{$targets->{$target_id}{'drugs'}}){
             #Drug Name
@@ -227,7 +235,7 @@ sub input_to_tsv {
             if($drug_cas_number){
                 $drug_cas_number =~ s/CAS //;
             }else{
-                $drug_cas_number = 'na';
+                $drug_cas_number = 'N/A';
             }
 
             #PubChem CID
@@ -235,7 +243,7 @@ sub input_to_tsv {
             if($drug_pubchem_cid){
                 $drug_pubchem_cid =~ s/CID //;
             }else{
-                $drug_pubchem_cid = 'na';
+                $drug_pubchem_cid = 'N/A';
             }
 
             #PubChem SID
@@ -243,16 +251,16 @@ sub input_to_tsv {
             if($drug_pubchem_sid){
                 $drug_pubchem_sid =~ s/SID //;
             }else{
-                $drug_pubchem_sid = 'na';
+                $drug_pubchem_sid = 'N/A';
             }
 
             #Drug Synonyms
             my $drug_synonyms = $drugs->{$drug_id}{'synonyms'};
-            $drug_synonyms = "na" unless $drug_synonyms;
+            $drug_synonyms = "N/A" unless $drug_synonyms;
 
             #Interaction Type
             my $interaction_type = $self->_determine_interaction_type($targets->{$target_id}, $drug_name, $drug_id);
-            $interaction_type = 'na' unless $interaction_type;
+            $interaction_type = 'N/A' unless $interaction_type;
 
             $interactions_fh->print(join("\t", $drug_id, $drug_name, $drug_synonyms, $drug_cas_number, $drug_pubchem_cid, $drug_pubchem_sid, $target_id, $target_name, $target_synonyms, $target_uniprot_id, $entrez_id, $ensembl_id, $interaction_type), "\n");
         }
@@ -411,9 +419,9 @@ sub getUniprotEntrezMapping {
       my $uniprot_acc=$data[0];
       my $uniprot_id=$data[1];
       my $entrez_id=$data[2];
-    unless ($entrez_id){$entrez_id="NA";}
+    unless ($entrez_id){$entrez_id="N/A";}
     my $ensembl_id=$data[19];
-    unless ($ensembl_id){$ensembl_id="NA";}
+    unless ($ensembl_id){$ensembl_id="N/A";}
     $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
     $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
     $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;

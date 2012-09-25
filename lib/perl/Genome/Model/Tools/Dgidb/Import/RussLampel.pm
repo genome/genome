@@ -117,15 +117,15 @@ sub input_to_tsv {
 
         #Gene Stable Id (ENSG)
         my $gene_stable_id =  $targets->{$target_id}{'gene_stable_id'};
-        $gene_stable_id = 'NA' unless $gene_stable_id;
+        $gene_stable_id = 'N/A' unless $gene_stable_id;
 
         #Display Id
         my $display_id =  $targets->{$target_id}{'display_id'};
-        $display_id = 'NA' unless $display_id;
+        $display_id = 'N/A' unless $display_id;
 
         #Gene Description
         my $description =  $targets->{$target_id}{'description'};
-        $description = 'NA' unless $description;
+        $description = 'N/A' unless $description;
 
         #Term Category Human Readable Name - No category names provided, all will be set to RussLampel
         my $HumanReadableName = 'RussLampel';
@@ -189,9 +189,15 @@ sub import_genes {
         $human_readable_name =~ s/-/ /g;
         if ($human_readable_name eq 'RussLampel'){$human_readable_name="Druggable Genome";} #Create new generic category for such lists
         my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
-        my $ensembl_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'gene_stable_id'}, 'Ensembl Gene Id', '');
-        my $display_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'display_id'}, 'Display Id', '');
-        my $description = $self->_create_gene_alternate_name_report($gene_name, $input->{'description'}, 'Description', '');
+        unless ($input->{'gene_stable_id'} eq 'N/A'){
+            my $ensembl_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'gene_stable_id'}, 'Ensembl Gene Id', '');
+        }
+        unless ($input->{'display_id'} eq 'N/A'){
+            my $display_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'display_id'}, 'Display Id', '');
+        }
+        unless ($input->{'description'} eq 'N/A'){ 
+            my $description = $self->_create_gene_alternate_name_report($gene_name, $input->{'description'}, 'Description', '');
+        }
         push @genes, $gene_name;
     }
     return @genes;

@@ -138,7 +138,7 @@ sub input_to_tsv {
         $gene_biotype_string =~ s/gene_biotype //i; #Kill the gene_id part leaving the actual ENSG id
         $gene_biotype = uc($gene_biotype_string);
       }else{
-        $gene_biotype = "na";
+        $gene_biotype = "N/A";
       }
       $ensembl_map{$gene_id}{name} = $gene_name_report;
       $ensembl_map{$gene_id}{biotype} = $gene_biotype;
@@ -204,10 +204,10 @@ sub import_genes {
         push @gene_name_reports, $gene_name_report;
         my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_id}, 'Ensembl Gene Id', '');
 
-        unless($gene->{ensembl_gene_symbol} eq 'na'){
+        unless($gene->{ensembl_gene_symbol} eq 'N/A'){
             my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'Gene Symbol', '');
         }
-        unless ($gene->{ensembl_gene_biotype} eq 'na'){
+        unless ($gene->{ensembl_gene_biotype} eq 'N/A'){
           my $biotype_category = $self->_create_gene_category_report($gene_name_report, 'Gene Biotype', $gene->{ensembl_gene_biotype}, '');
         }
     }

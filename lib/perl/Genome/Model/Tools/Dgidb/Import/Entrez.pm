@@ -133,13 +133,13 @@ sub import_genes {
         my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_gene_symbol}, 'Gene Symbol', '');
         my @entrez_gene_synonyms = split(',', $gene->{entrez_gene_synonyms});
         for my $entrez_gene_synonym (@entrez_gene_synonyms){
-            if ($entrez_gene_synonym and $entrez_gene_synonym ne 'na'){
+            if ($entrez_gene_synonym and $entrez_gene_synonym ne 'N/A'){
                 my $gene_alternate_name_report = $self->_create_gene_alternate_name_report($gene_name_report, $entrez_gene_synonym, 'Gene Synonym', '');
             }
         }
         my @ensembl_gene_ids = split(',', $gene->{ensembl_ids});
         for my $ensembl_gene_id (@ensembl_gene_ids){
-            if ($ensembl_gene_id and $ensembl_gene_id ne 'na'){
+            if ($ensembl_gene_id and $ensembl_gene_id ne 'N/A'){
                 my $ensembl_alternate_name_report = $self->_create_gene_alternate_name_report($gene_name_report, $ensembl_gene_id, 'Ensembl Gene Id', '');
             }
         }
@@ -234,11 +234,11 @@ sub loadEntrezData {
         my @ensembl_array = grep{$_ ne '-'} map{$_ =~ s/Ensembl://; $_} grep{$_ =~ /ENSG/ } split(/\|/, $xref);
         $synonyms = join("|", @synonyms_array);
         if ($synonyms eq ''){
-            $synonyms = 'na';
+            $synonyms = 'N/A';
         }
         my $ensembl_string = join("|", @ensembl_array);
         if ($ensembl_string eq ''){
-          $ensembl_string = 'na';
+          $ensembl_string = 'N/A';
         }
         my %synonyms_hash;
         foreach my $syn (@synonyms_array){

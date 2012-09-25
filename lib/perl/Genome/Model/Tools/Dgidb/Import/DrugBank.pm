@@ -156,13 +156,13 @@ sub _import_drug {
 
     my @drug_synonyms = split(', ', $interaction->{drug_synonyms});
     for my $drug_synonym (@drug_synonyms){
-        next if $drug_synonym eq 'na';
+        next if $drug_synonym eq 'N/A';
         my $drug_name_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'Drug Synonym', '');
     }
 
     my @drug_brands = split(', ', $interaction->{drug_brands});
     for my $drug_brand (@drug_brands){
-        next if $drug_brand eq 'na';
+        next if $drug_brand eq 'N/A';
         my ($brand, $manufacturer) = split(/ \(/, $drug_brand); 
         if ($manufacturer){
             $manufacturer =~ s/\)// ;
@@ -172,23 +172,23 @@ sub _import_drug {
         my $drug_name_association = $self->_create_drug_alternate_name_report($drug_name, $drug_brand, $manufacturer, '');
     }
 
-    unless($interaction->{drug_type} eq 'na'){
+    unless($interaction->{drug_type} eq 'N/A'){
         my $drug_name_category_association = $self->_create_drug_category_report($drug_name, 'Drug Type', $interaction->{drug_type}, '');
     }
 
-    unless($interaction->{drug_cas_number} eq 'na'){
+    unless($interaction->{drug_cas_number} eq 'N/A'){
         my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'CAS Number', '');
     }
 
     my @drug_categories = split(', ', $interaction->{drug_categories});
     for my $drug_category (@drug_categories){
-        next if $drug_category eq 'na';
+        next if $drug_category eq 'N/A';
         my $category_association = $self->_create_drug_category_report($drug_name, 'Drug Category', $drug_category, '');
     }
 
     my @drug_groups = split(', ', $interaction->{drug_groups});
     for my $drug_group (@drug_groups){
-        next if $drug_group eq 'na';
+        next if $drug_group eq 'N/A';
         my $group_association = $self->_create_drug_category_report($drug_name, 'Drug Group', $drug_group, '');
     }
 
@@ -205,19 +205,19 @@ sub _import_gene {
     my $entrez_id = $interaction->{entrez_id};
     my $ensembl_id = $interaction->{ensembl_id};
 
-    return if $uniprot_id eq 'na' and $gene_symbol eq 'na'; #if the gene has no gene_symbol or uniprot_id, it isn't a "real" gene. Do not make a gene for this non gene
+    return if $uniprot_id eq 'N/A' and $gene_symbol eq 'N/A'; #if the gene has no gene_symbol or uniprot_id, it isn't a "real" gene. Do not make a gene for this non gene
     my $gene_name = $self->_create_gene_name_report($gene_partner_id, $citation, 'Drugbank Partner Id', '');
     my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '');
-    unless ($gene_symbol eq 'na'){
+    unless ($gene_symbol eq 'N/A'){
         my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Gene Symbol', '');
     }
-    unless ($uniprot_id eq 'na'){
+    unless ($uniprot_id eq 'N/A'){
         my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Id', '');
     }
-    unless ($entrez_id eq 'na'){
+    unless ($entrez_id eq 'N/A'){
         my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $entrez_id, 'Entrez Gene Id', '');
     }
-    unless ($ensembl_id eq 'na'){
+    unless ($ensembl_id eq 'N/A'){
         my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '');
     }
     return $gene_name;
@@ -345,7 +345,7 @@ sub input_to_tsv {
         }
 
         #Get the cas_number
-        my $drug_cas_number = 'na';
+        my $drug_cas_number = 'N/A';
         unless(ref($drugs->{$drug_id}->{'cas-number'})){
             $drug_cas_number = $drugs->{$drug_id}->{'cas-number'};
         }
@@ -432,11 +432,11 @@ sub input_to_tsv {
             my $uniprotkb = $partners_lite->{$target_pid}->{uniprotkb};
 
             #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
-            my $entrez_id = "na";
+            my $entrez_id = "N/A";
             if ($UniProtMapping{$uniprotkb}{entrez_id}){
               $entrez_id = $UniProtMapping{$uniprotkb}{entrez_id};
             }
-            my $ensembl_id = "na";
+            my $ensembl_id = "N/A";
             if ($UniProtMapping{$uniprotkb}{ensembl_id}){
               $ensembl_id = $UniProtMapping{$uniprotkb}{ensembl_id};
             }
@@ -455,11 +455,11 @@ sub input_to_tsv {
         my $gene_symbol = $partners_lite->{$pid}->{gene_symbol};
         my $uniprot_id = $partners_lite->{$pid}->{uniprotkb};
         #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
-        my $entrez_id = "na";
+        my $entrez_id = "N/A";
         if ($UniProtMapping{$uniprot_id}{entrez_id}){
           $entrez_id = $UniProtMapping{$uniprot_id}{entrez_id};
         }
-        my $ensembl_id = "na";
+        my $ensembl_id = "N/A";
         if ($UniProtMapping{$uniprot_id}{ensembl_id}){
           $ensembl_id = $UniProtMapping{$uniprot_id}{ensembl_id};
         }
@@ -501,7 +501,7 @@ sub parseTree{
         if (defined($value)){
             push(@values, $value);
         }else{
-            push(@values, "na");
+            push(@values, "N/A");
         }
     }else{
         foreach my $x (@{$ref}){
@@ -509,7 +509,7 @@ sub parseTree{
             if (defined($value)){
                 push(@values, $value);
             }else{
-                push(@values, "na");
+                push(@values, "N/A");
             }
         }
     }
@@ -543,7 +543,7 @@ sub organizePartners{
             $gene_symbol = $gene_symbol_r;
         }
         unless ($gene_symbol){
-            $gene_symbol = "na";
+            $gene_symbol = "N/A";
         }
 
         #Get the gene name
@@ -555,7 +555,7 @@ sub organizePartners{
             $gene_name = $gene_name_r;
         }
         unless ($gene_name){
-            $gene_name = "na";
+            $gene_name = "N/A";
         }
 
         if ($verbose){
@@ -589,7 +589,7 @@ sub organizePartners{
                 }
             }
         }
-        my $uniprotkb = "na";
+        my $uniprotkb = "N/A";
         if ($external_ids{'UniProtKB'}){
             $uniprotkb = $external_ids{'UniProtKB'};
         }
@@ -631,9 +631,9 @@ sub getUniprotEntrezMapping {
       my $uniprot_acc=$data[0];
       my $uniprot_id=$data[1];
       my $entrez_id=$data[2];
-    unless ($entrez_id){$entrez_id="NA";}
+    unless ($entrez_id){$entrez_id="N/A";}
     my $ensembl_id=$data[19];
-    unless ($ensembl_id){$ensembl_id="NA";}
+    unless ($ensembl_id){$ensembl_id="N/A";}
     $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
     $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
     $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;

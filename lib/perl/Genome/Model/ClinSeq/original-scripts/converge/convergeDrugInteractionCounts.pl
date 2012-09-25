@@ -43,7 +43,9 @@ my $usage=<<INFO;
 
   Additional parameters
   --dgidb_subdir_names         A comma-separated list of drug-gene database source subdir(s) (e.g. 'drugbank,santa_monica_lung')
-  --filter_name                The name appended to each file indicating which filter was applied (e.g. 'default', 'antineo', etc.)
+  --filter_name                The name appended to each file indicating which filter was applied (e.g. 'default', 'antineo', etc.).
+                               Note: If both drugbank and santa_monica_lung are specified a combination of antineo (for drugbank) and default (for santa_monica_lung) is used.
+
   --event_types_list           Specify a comma separated list of valid event types.  Use 'all' to include all types
                                Allowed event types: 'snv,indel,cnv_gain,rna_cufflinks_absolute,rna_tophat_absolute'
 
@@ -184,6 +186,11 @@ sub getFiles{
   if ($verbose){print BLUE, "\n\nGet annotation files and drug-gene interaction files from these builds", RESET;}
   my %mb = %{$models_builds->{cases}};
   foreach my $dgidb_subdir_name (@dgidb_subdir_names){
+    #Note: If both DrugBank and SantaMonica are specified as sources it perhaps does not make sense to use default for drug bank. 
+    #SantaMonica is just cancer drugs so you would be merging apples and oranges.
+    #Need to use the 'default' (i.e., unfiltered) setting for SantaMonica and the 'neoplastic' filter for drugbank.
+    if ($dgidb_subdir_name eq 'drugbank'){$filter_name='antineo';}
+    if ($dgidb_subdir_name eq 'santa_monica_lung'){$filter_name='default';}
     foreach my $c (keys %mb){
       my $b = $mb{$c}{build};
       my $m = $mb{$c}{model};
@@ -236,9 +243,13 @@ sub getFiles{
 
       #3.) Look for CNV gain files
       my $cnv_gain_drug_file_name = "cnv.AllGenes_Ensembl58.amp."."$filter_name".".tsv";
-      my $drug_file_path = $topdir . "cnv/dgidb/$dgidb_subdir_name/$cnv_gain_drug_file_name";
-      if (-e $drug_file_path){
-        $files{$final_name}{$dgidb_subdir_name}{cnv_gain}{wgs}{drug_file_path} = $drug_file_path;
+      my $drug_file_path1 = $topdir . "cnv/dgidb/$dgidb_subdir_name/$cnv_gain_drug_file_name";
+      my $drug_file_path2 = $topdir . "cnv/cnview/dgidb/$dgidb_subdir_name/$cnv_gain_drug_file_name";
+
+      if (-e $drug_file_path1){
+        $files{$final_name}{$dgidb_subdir_name}{cnv_gain}{wgs}{drug_file_path} = $drug_file_path1;
+      }elsif(-e $drug_file_path2){
+        $files{$final_name}{$dgidb_subdir_name}{cnv_gain}{wgs}{drug_file_path} = $drug_file_path2;
       }else{
         print RED, "\n\nCould not find CNV drug-gene file for $final_name ($subject_name - $subject_common_name) in:\n\t$build_directory\n\n", RESET;
         exit(1);
@@ -246,7 +257,7 @@ sub getFiles{
 
       #4.) Look for Cufflinks RNAseq outlier expression files 
       my $rna_cufflinks_drug_file_name = "isoforms.merged.fpkm.expsort.top1percent."."$filter_name".".tsv";
-      $drug_file_path = $topdir . "rnaseq/tumor/cufflinks_absolute/isoforms_merged/dgidb/$dgidb_subdir_name/$rna_cufflinks_drug_file_name";
+      my $drug_file_path = $topdir . "rnaseq/tumor/cufflinks_absolute/isoforms_merged/dgidb/$dgidb_subdir_name/$rna_cufflinks_drug_file_name";
       if (-e $drug_file_path){
         $files{$final_name}{$dgidb_subdir_name}{rna_cufflinks_absolute}{rnaseq}{drug_file_path} = $drug_file_path;
       }else{
