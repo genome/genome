@@ -117,6 +117,11 @@ class Genome::Model::RnaSeq {
             is_optional => 1,
             doc => 'A yes, no or both answer for merging exons for transcriptome coverage metrics.',
         },
+        transcriptome_coverage_mask_reference_transcripts => {
+            doc => 'The mask level to ignore transcripts located in these annotation features',
+            is_optional => 1,
+            valid_values => ['rRNA','MT','pseudogene','rRNA_MT','rRNA_MT_pseudogene'],
+        },
         fusion_detection_strategy => {
             is_optional => 1,
             is => 'Text',

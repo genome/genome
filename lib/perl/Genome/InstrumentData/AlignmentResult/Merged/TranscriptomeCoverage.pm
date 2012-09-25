@@ -25,6 +25,11 @@ class Genome::InstrumentData::AlignmentResult::Merged::TranscriptomeCoverage {
             doc => 'The option to generate coverage on gene-level squashed exons or each unique exon.',
             valid_values => ['yes','no','both'],
         },
+        mask_reference_transcripts => {
+            is_optional => 1,
+            doc => 'The transcript types to mask those transcripts in the annotation file used for coverage.',
+            valid_values => ['rRNA','MT','pseudogene','rRNA_MT','rRNA_MT_pseudogene'],
+        },
     ],
     has_metric => [
         _log_directory => {
@@ -129,6 +134,7 @@ sub create {
         annotation_build => $alignment_result->annotation_build,
         coverage_directory => $coverage_directory,
         merge_annotation_features => $self->merge_annotation_features,
+        mask_reference_transcripts => $self->mask_reference_transcripts,
         annotation_file_basenames => [$self->annotation_file_basenames],
     )) {
         return;
