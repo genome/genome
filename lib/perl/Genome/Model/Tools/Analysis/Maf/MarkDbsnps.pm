@@ -1,4 +1,3 @@
-
 package Genome::Model::Tools::Analysis::Maf::MarkDbsnps;     # rename this when you give the module file a different name <--
 
 #####################################################################################################################################
@@ -219,9 +218,26 @@ sub execute {                               # replace with real execution logic.
             ## Here's how to parse out information for this record ##
 
             my $chromosome = $record{'Chromosome'};
-            my $chr_start = $record{'Start_position'};
-	    my $chr_stop = $record{'End_position'};
-            my $position = $record{'Start_position'};
+            #handle either case of Position
+            my $chr_start;
+            my $position;
+            my $chr_stop;
+            if(defined($record{'Start_position'})){
+                $chr_start = $record{'Start_position'};
+                $position = $record{'Start_position'};
+            } elsif(defined($record{'Start_Position'})){
+                $chr_start = $record{'Start_Position'};
+                $position = $record{'Start_Position'};
+            } else {
+                die("can't find Start_Position column");
+            }
+            if(defined($record{'End_position'})){
+                $chr_stop = $record{'End_position'};
+            } elsif(defined($record{'End_Position'})){
+                $chr_stop = $record{'End_Position'};
+            } else {
+                die("can't find End_Position column");
+            }
 
             my $tumor_sample = $record{'Tumor_Sample_Barcode'};
             my $variant_type = $record{'Variant_Type'};
