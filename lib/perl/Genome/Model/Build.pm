@@ -1451,6 +1451,7 @@ sub success {
         $self->the_master_event->cancel_change_subscription('commit', $commit_callback); #only fire once
         $self->status_message('Firing build success commit callback.');
         my $result = eval {
+            Genome::Search->add($self->model);
             $self->model->_trigger_downstream_builds($self);
         };
         if($@) {
