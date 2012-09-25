@@ -121,7 +121,7 @@ sub create_config_file {
         seq_file_name    => $self->sequence_file_name,
         skip_acedb_parse => $model->skip_acedb_parse,
         workflowxml      => __FILE__.'.noblastp.outer.xml',
-        ber_base_directory => '/gscmnt/sata835/info/annotation/BER/autoannotate_v2.5' #FIXME This should be a parameter!
+        ber_base_directory => '/gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5' #FIXME This should be a parameter!
     );
 
     my $rv = YAML::DumpFile($config_file_path, \%params);
