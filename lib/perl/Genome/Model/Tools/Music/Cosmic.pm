@@ -133,6 +133,9 @@ column headers in the VCF must have these names in the header in order for the t
    TRANSCRIPT_NAME - the transcript name, such as NM_000028
          AA_CHANGE - the amino acid change, such as p.R290H
            STRAND  - the strand of transcript, such as -1/+1
+
+Only nucleotide matches will be reported, if no appended columns provided.
+
 HELP
 }
 
