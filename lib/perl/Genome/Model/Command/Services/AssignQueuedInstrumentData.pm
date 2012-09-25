@@ -445,7 +445,6 @@ sub _load_instrument_data {
 
     $self->status_message('Get instrument data...');
     my @status_attrs = Genome::InstrumentDataAttribute->get(
-        #instrument_data_id => 2888302528,
         attribute_label => 'tgi_lims_status',
         attribute_value => [qw/ new failed /],
     );
