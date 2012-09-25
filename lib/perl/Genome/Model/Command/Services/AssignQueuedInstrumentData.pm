@@ -82,11 +82,9 @@ sub execute {
         )
     }
 
-    $DB::single=1;
     my @instrument_data_to_process = $self->_load_instrument_data;
     return 1 unless @instrument_data_to_process;
 
-    $DB::single=1;
     INST_DATA: foreach my $instrument_data ( @instrument_data_to_process ) {
         $self->status_message('Starting instrument data '.$instrument_data->id);
 
