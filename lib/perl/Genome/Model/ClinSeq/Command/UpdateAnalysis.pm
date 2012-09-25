@@ -402,8 +402,22 @@ sub display_inputs{
   $self->status_message("reference_sequence_build: " . $self->reference_sequence_build->__display_name__);
   $self->status_message("annotation_build: " . $self->annotation_build->name . " (" . $self->annotation_build->id . ")");
   $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__ . " (version " . $self->dbsnp_build->version . ")");
-
   #$self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__);
+
+  #Make sure none of the basic input models/builds have been archived before proceeding...
+  if ($self->reference_sequence_build->is_archived){
+    $self->error_message("Reference sequencing build " . $self->reference_sequence_build->__display_name__ . " has been archived!");
+    exit(1);
+  }
+  if ($self->annotation_build->is_archived){
+    $self->error_message("Annotation build " . $self->annotation_build->name . " has been archived!");
+    exit(1);
+  }
+  if ($self->dbsnp_build->is_archived){
+    $self->error_message("dbSNP build " . $self->dbsnp_build->__display_name__ . " has been archived!");
+    exit(1);
+  }
+
   return;
 }
 
@@ -672,19 +686,40 @@ sub get_genotype_microarray_model_id{
   my %args = @_;
   my $sample = $args{'-sample'};
 
-  #Get the imported data that should have been used for the genotype microarray model
-  my $default_genotype_data = $sample->default_genotype_data;
-  
   my $genotype_microarray_model_id = 0;
 
-  my @models = $sample->models;
+  #Get the imported data that should have been used for the genotype microarray model
+  my $default_genotype_data = $sample->default_genotype_data;
 
+  #If there is no default genotype data defined, return 0
+  return $genotype_microarray_model_id unless $default_genotype_data;
+
+  #If there is genotype microarray data, look for GenotypeMicroarray models
+  my @models = $sample->models;
+  my @final_models;
   foreach my $model (@models){
     next unless ($model->class eq "Genome::Model::GenotypeMicroarray");
-    $genotype_microarray_model_id = $model->id;
+
+    #Make sure the genotype microarray model is on the specified version of the reference genome
+    next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
+
+    #TODO: Make sure the genotype microarray model is using the specified version of dbSNP?  Skip this test for now...
+    #if ($model->can("dbsnp_build")){
+    #  next unless ($model->dbsnp_build->id == $self->dbsnp_build->id);
+    #}else{
+    #  next;
+    #}
+    push (@final_models, $model);
   }
 
-  return $genotype_microarray_model_id;
+  if (scalar(@final_models)){
+    #If there are multiple suitable genotype microarray models, select the best one
+    my $best_model = $self->select_best_model('-models'=> \@final_models);
+    $genotype_microarray_model_id = $best_model->id;
+    return $genotype_microarray_model_id;
+  }else{
+    return 0;
+  }
 }
 
 
@@ -748,7 +783,18 @@ sub check_ref_align_models{
     }else{
       next;
     }
-  
+
+    #Get genotype microarray model for this sample, and create if it does not already exist 
+    my $genotype_microarray_model_id = $self->get_genotype_microarray_model_id('-sample'=>$sample);
+
+    #If genotype microarray data is available:
+    #Make sure a genotype microarray model is defined for this ref-align model
+    #If it is defined, make sure it is the correct one
+    if ($sample->default_genotype_data){
+      next unless ($model->genotype_microarray_model);
+      next unless ($model->genotype_microarray_model->id == $genotype_microarray_model_id);
+    }
+
     #Is this a WGS or an Exome model?
     #WGS models do not have exome data, Exome models have at least one lane of exome data - skip those that are not the current type being considered
     next unless ($self->determine_model_data_type('-model'=>$model) eq $data_type);
@@ -897,7 +943,7 @@ sub check_somatic_variation_models{
   my $existing_model_count = scalar(@existing_models);
   $self->status_message("\tStarting with " . $existing_model_count . " models for this pair of DNA samples. Candidates that meet criteria:");
 
-  #Test for correct processing profile, annotation build, previously discovered variations
+  #Test for correct processing profile, annotation build
   foreach my $model (@existing_models){
     next unless ($model->class eq "Genome::Model::SomaticVariation");
     next unless ($model->processing_profile_id == $somatic_variation_pp_id);
@@ -908,6 +954,7 @@ sub check_somatic_variation_models{
       next if ($model->previously_discovered_variations_build);
     }
 
+    #Check for the correct version of previously discovered variants
     #if ($model->can("previously_discovered_variations_build")){
     #  next unless ($model->previously_discovered_variations_build->id == $self->previously_discovered_variations->id);
     #}else{
@@ -969,8 +1016,14 @@ sub create_ref_align_model{
   }
   my $iids_list = join(",", @iids);
 
-  #Get microarray model
+  #Get genotype microarray model for this sample, and create if it does not already exist 
   my $genotype_microarray_model_id = $self->get_genotype_microarray_model_id('-sample'=>$sample);
+
+  #If genotype microarray data is available but a successful model is not, do not proceed with creation of reference alignment models
+  if ($sample->default_genotype_data && $genotype_microarray_model_id == 0){
+    $self->status_message("WARNING -> genotype microarray data was found but a model with the desired criteria could not be found");
+    return;
+  }
 
   #Come up with a descriptive model name.  May be more trouble than it is worth, perhaps it should be autogenerated?
   my $sample_name = $sample->name;
@@ -979,15 +1032,18 @@ sub create_ref_align_model{
   my $ref_align_pp_id = $self->ref_align_pp->id;
   my $dbsnp_build_id = $self->dbsnp_build->id;
 
-  #TODO: Make sure none of the input models/builds or instrument data has been archived before proceeding...
-
+  #Only specify a genotype microarray model id as input, if one was found
+  my $genotype_microarray_string = '';
+  if ($genotype_microarray_model_id){
+    $genotype_microarray_string = "--genotype-microarray-model='$genotype_microarray_model_id'";
+  }
 
   my @commands;
 
   #WGS data
   if ($data_type eq 'wgs'){
     push(@commands, "\n#Create a WGS reference-alignment model as follows:");
-    push(@commands, "genome model define reference-alignment  --reference-sequence-build='$reference_build_id'  --annotation-reference-build='$annotation_id'  --subject='$sample_name'  --processing-profile='$ref_align_pp_id'  --genotype-microarray-model='$genotype_microarray_model_id'  --dbsnp-build='$dbsnp_build_id'  --instrument-data='$iids_list'");
+    push(@commands, "genome model define reference-alignment  --reference-sequence-build='$reference_build_id'  --annotation-reference-build='$annotation_id'  --subject='$sample_name'  --processing-profile='$ref_align_pp_id'  --dbsnp-build='$dbsnp_build_id'  --instrument-data='$iids_list'  $genotype_microarray_string");
     push(@commands, "genome model build start ''");
   }
 
@@ -1000,7 +1056,7 @@ sub create_ref_align_model{
     my $region_of_interest_set_name = $self->get_roi_name('-target_region_set_name'=>$target_region_set_name);
 
     push(@commands, "\n#Create an Exome reference-alignment model as follows:");
-    push(@commands, "genome model define reference-alignment  --reference-sequence-build='$reference_build_id'  --annotation-reference-build='$annotation_id'  --subject='$sample_name'  --processing-profile='$ref_align_pp_id'  --genotype-microarray-model='$genotype_microarray_model_id'  --dbsnp-build='$dbsnp_build_id'  --target-region-set-names='$target_region_set_name'  --region-of-interest-set-name='$region_of_interest_set_name'  --instrument-data='$iids_list'");
+    push(@commands, "genome model define reference-alignment  --reference-sequence-build='$reference_build_id'  --annotation-reference-build='$annotation_id'  --subject='$sample_name'  --processing-profile='$ref_align_pp_id'  --dbsnp-build='$dbsnp_build_id'  --target-region-set-names='$target_region_set_name'  --region-of-interest-set-name='$region_of_interest_set_name'  --instrument-data='$iids_list'  $genotype_microarray_string");
     push(@commands, "genome model build start ''");
   }
   foreach my $line (@commands){
@@ -1031,9 +1087,6 @@ sub create_rnaseq_model{
   my $annotation_id = $self->annotation_build->id;
   my $reference_build_id = $self->reference_sequence_build->id;
   my $rnaseq_pp_id = $self->rnaseq_pp->id;
-
-  #TODO: Make sure none of the input models/builds or instrument data has been archived before proceeding...
-
 
   my @commands;
 
@@ -1067,9 +1120,17 @@ sub create_somatic_variation_model{
   my $somatic_variation_pp_id = $processing_profile_id;
   my $annotation_build_id = $self->annotation_build->id;
 
-  #TODO: Make sure none of the input models/builds have been archived before proceeding...
-
-
+  #Make sure neither of the input models/builds has been archived before proceeding...
+  my $tumor_build = $best_tumor_model->last_succeeded_build;
+  if ($tumor_build->is_archived){
+    $self->status_message("\tWARNING -> Tumor build is currently archived. Run: genome model build unarchive " . $tumor_build->id);
+    return;
+  }
+  my $normal_build = $best_normal_model->last_succeeded_build;
+  if ($normal_build->is_archived){
+    $self->status_message("\tWARNING -> Normal build is currently archived. Run: genome model build unarchive " . $normal_build->id);
+    return;
+  }
   my @commands;
   push(@commands, "\n#Create a Somatic-Variation model as follows:");
   push(@commands, "genome model define somatic-variation  --processing-profile=$processing_profile_id  --tumor-model=$tumor_model_id  --normal-model=$normal_model_id  --annotation-build=$annotation_build_id");
@@ -1321,8 +1382,29 @@ sub create_clinseq_model{
   my $normal_rnaseq_model_id = $normal_rnaseq_model->id if $normal_rnaseq_model;
   my $tumor_rnaseq_model_id = $tumor_rnaseq_model->id if $tumor_rnaseq_model;
 
-  #TODO: Make sure none of the input models/builds have been archived before proceeding...
+  #Make sure a last_succeeded_build is defined for all input models
+  #Make sure none of the input models/builds have been archived before proceeding...
+  my @test_models = ($wgs_model, $exome_model, $normal_rnaseq_model, $tumor_rnaseq_model);
+  my $ready = 1;
+  foreach my $model (@test_models){
+    next unless $model;
+    my $build = $model->last_succeeded_build;
+    if ($build){
+      if ($build->is_archived){
+        $ready = 0;
+        $self->status_message("\tWARNING -> Build is currently archived for model: " . $model->name . "\n\tRun: genome model build unarchive " . $build->id);
+      }
+    }else{
+      $ready = 0;
+      $self->status_message("\tWARNING -> No successful build for clinseq input model: " . $model->name);
+    }
+  }
 
+  #Unless all defined models have a successful build and are not archived, do not proceed
+  unless ($ready){
+    $self->status_message("\tWARNING -> Not ready to proceed with creation of clin-seq model, see warnings above");
+    return;
+  }
 
   #genome model define clin-seq  --processing-profile='November 2011 Clinical Sequencing'  --wgs-model='2882504846'  --exome-model='2882505032'  --tumor-rnaseq-model='2880794613'
   my @commands;
