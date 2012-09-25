@@ -138,8 +138,10 @@ sub create {
 
     $self->status_message("Resizing the disk allocation...");
     if ($self->_disk_allocation) {
-        unless ($self->_disk_allocation->reallocate) {
-            $self->warning_message("Failed to reallocate disk allocation: " . $self->_disk_allocation->id);
+        my $result = eval { $self->_disk_allocation->reallocate };
+        if($@ or not $result) {
+            my $err = $@;
+            $self->warning_message("Failed to reallocate disk allocation: " . $self->_disk_allocation->id . ($err || ''));
         }
     }
 
