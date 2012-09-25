@@ -82,9 +82,11 @@ sub execute {
         )
     }
 
+    $DB::single=1;
     my @instrument_data_to_process = $self->_load_instrument_data;
     return 1 unless @instrument_data_to_process;
 
+    $DB::single=1;
     INST_DATA: foreach my $instrument_data ( @instrument_data_to_process ) {
         $self->status_message('Starting instrument data '.$instrument_data->id);
 
@@ -443,6 +445,7 @@ sub _load_instrument_data {
 
     $self->status_message('Get instrument data...');
     my @status_attrs = Genome::InstrumentDataAttribute->get(
+        #instrument_data_id => 2888302528,
         attribute_label => 'tgi_lims_status',
         attribute_value => [qw/ new failed /],
     );
@@ -1282,11 +1285,11 @@ sub _is_mc16s {
     my @projects = $self->_get_projects_for_instrument_data($instrument_data);
     return if not @projects;
 
-    my @work_orders = GSC::Setup::WorkOrder->get(id => [ map { $_->id } @projects ]);
-    return if not @work_orders;
+    my @setups = Genome::Site::TGI::Synchronize::Classes::SetupProject->get(id => [ map { $_->id } @projects ]);
+    return if not @setups;
 
-    foreach my $work_order ( @work_orders ) {
-        my $pipeline = $work_order->pipeline;
+    foreach my $setup ( @setups ) {
+        my $pipeline = $setup->pipeline;
         next if not $pipeline;
         return 1 if $pipeline =~ /16s/i;
     }
