@@ -24,6 +24,11 @@ class Genome::Model::Tools::Graph::MutationDiagram {
             doc => 'name/version number of the reference transcripts set ("NCBI-human.combined-annotation/0") Defaults to "NCBI-human.combined-annotation/54_36p_v2"',
             default => 'NCBI-human.combined-annotation/54_36p_v2',
         },
+        annotation_build_id => {
+            type => 'Text',
+            doc => 'The id of the annotation build to use',
+            is_optional => 1,
+        },
         genes  => {
             type => 'String',
             doc => "comma separated list of (hugo) gene names (uppercase)--default is ALL",
@@ -38,6 +43,11 @@ class Genome::Model::Tools::Graph::MutationDiagram {
             type => 'Text',
             doc => 'The output directory to write .svg files in',
             default => '.',
+        },
+        file_prefix => {
+            type => 'Text',
+            doc => 'A prefix to prepend to all filenames',
+            default => '',
         }
     ],
     has_optional => [
@@ -67,10 +77,12 @@ sub execute {
         my $anno_obj = new Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram(
             annotation => $anno_file,
             annotation_format => $self->annotation_format,
+            annotation_build_id => $self->annotation_build_id,
             hugos => $self->genes,
             custom_domains => $self->custom_domains,
             reference_transcripts => $self->reference_transcripts,
             output_directory => $self->output_directory,
+            basename => $self->file_prefix,
         );
     }
     else {
