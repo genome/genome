@@ -10,6 +10,7 @@ our $DEFAULT_VERSION = '0.11';
 use Cwd;
 use File::Basename;
 use File::Path;
+use Genome::Model::Tools::Relationship::RepairVcf 'fix_alt_and_GT_field';
 
 class Genome::Model::Tools::Relationship::RunPolymutt {
     is => 'Command',
@@ -61,6 +62,11 @@ class Genome::Model::Tools::Relationship::RunPolymutt {
             is => "Path",
             is_optional => 1,
             doc => "Output calls on all sites (force genotype) in this roi file.",
+       },
+       fix_alt_and_gt => {
+            is => "Boolean",
+            default => 0,
+            doc => "If set to true, fix all cases where the REF allele is present in the ALT (this currently happens when we set all_sites or roi_file to force genotype)",
        },
     ],
     has_param => [
@@ -128,6 +134,11 @@ sub execute {
     my $threads = $self->threads;
     my $output_vcf = $self->output_vcf;
     my ($temp_output) = Genome::Sys->create_temp_file_path();
+
+    if ( ($self->all_sites or $self->roi_file) and not ($self->fix_alt_and_gt) ) {
+        die $self->error_message("all_sites or roi_file set without setting fix_alt_and_gt. This will produce junky output. Is this intentional?");
+    }
+
     my $cmd = $polymutt_cmd;
      $cmd .= " -p $ped_file";
      $cmd .= " -d $dat_file";
@@ -161,12 +172,116 @@ sub execute {
     if($rv != 1) {
         return;
     }
-    if($self->bgzip) {
-        my $cmd = "bgzip -c $temp_output > $output_vcf";
-        Genome::Sys->shellcmd(cmd=>$cmd); 
-    }
+
+    $self->write_fixed_vcf($temp_output, $output_vcf);
 
     return 1;
+}
+
+# FIXME remove this from merge_and_fix_vcfs
+# Fix the various problems with the polymutt header to bring it up to vcf spec
+sub write_fixed_vcf {
+    my ($self, $input_vcf, $output_vcf) = @_;
+    my @info_lines_to_add = (qq|##INFO=<ID=DQ,Number=1,Type=Float,Description="De Novo Mutation Quality">|);
+    push @info_lines_to_add, qq|##INFO=<ID=DA,Number=1,Type=Integer,Description="De Novo Mutation Allele">|;
+    my @format_lines_to_add = (qq|##FORMAT=<ID=DNGL,Number=10,Type=Integer,Description="Denovo Genotype Likelihoods">|);
+    push @format_lines_to_add, qq|##FORMAT=<ID=DNGT,Number=1,Type=String,Description="Genotype">|;
+    push @format_lines_to_add, qq|##FORMAT=<ID=DNGQ,Number=1,Type=Integer,Description="Genotype Quality">|;
+    ####hack to add in header for bingshan's tag that he hasn't added himself
+    my @missing_info_lines = $self->missing_info_lines($input_vcf);
+    push @info_lines_to_add, @missing_info_lines if (@missing_info_lines);
+    ######
+
+    my $ifh = Genome::Sys->open_file_for_reading($input_vcf);
+    my $fh;
+    if ($self->bgzip) {
+        $fh = Genome::Sys->open_gzip_file_for_writing($output_vcf);
+    } else {
+        $fh = Genome::Sys->open_file_for_writing($output_vcf);
+    }
+
+    my ($info_printed, $format_printed)=(0,0);
+    while(my $line = $ifh->getline) {
+        if($line =~m/^#/) {
+            # Fix incorrect data types
+            if($line =~m/ID=PS/) {
+                $line =~ s/Integer/Float/;
+            }
+            #Fix spacing before description
+            $line =~s/, Description/,Description/;
+
+            # Fix invalid type labels
+            $line =~s/,String/,Type=String/;
+
+            # Fix lines without a "number" tag
+            if ( ($line =~ m/^##INFO/ or $line =~ m/^##FORMAT/) and not ($line =~ m/Number=/) ) {
+                $line =~ s/,/,Number=1,/;
+            }
+
+            if($line =~m/#INFO/ && !$info_printed) {
+                for my $info_line (@info_lines_to_add) {
+                    $fh->print($info_line ."\n");
+                }
+                $info_printed=1;
+            }
+            if($line =~m/#FORMAT/ && !$format_printed) {
+                for my $format_line (@format_lines_to_add) {
+                    $fh->print($format_line ."\n");
+                }
+                $format_printed=1
+            }
+            $fh->print($line);
+        }
+        else {
+            if ($self->fix_alt_and_gt) {
+                my $fixed_line = $self->fix_variant_line($line);
+                $fh->print("$fixed_line\n");
+            } else {
+                $fh->print($line);
+            }
+        }
+    }
+    $fh->close; $ifh->close;
+
+    return 1;
+}
+
+sub fix_variant_line {
+    my ($self, $line) = @_;
+    chomp $line;
+    my($chrom, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples) = split("\t", $line);
+    my ($fixed_alt, $fixed_format, @fixed_samples) = fix_alt_and_GT_field($ref, $alt, $format, @samples);
+    my $new_line = join("\t", ($chrom, $pos, $id, $ref, $fixed_alt, $qual, $filter, $info, $fixed_format, @fixed_samples));
+    return $new_line;
+}
+
+# FIXME copied... call this in Genome::Model::Tools::Relationship::MergeAndFixVcfs or move to a base class
+sub missing_info_lines {
+    my ($self, $input_vcf) = @_;
+
+    my %possible_tags = (
+        AB => qq|##INFO=<ID=AB,Number=1,Type=Float,Description="Allelic Balance">|,
+        BA => qq|##INFO=<ID=BA,Number=1,Type=String,Description="Best Alternative Allele">|,
+    );
+
+    my @info_lines_to_add;
+    for my $tag (keys %possible_tags) {
+        $DB::single=1;
+        chomp(my @number_of_tags = `cat $input_vcf | grep $tag`);
+        if(@number_of_tags) {
+            my $has_header=0;
+            for my $line (@number_of_tags) {
+                if($line=~m/^##INFO=<ID=$tag,/) {
+                    $has_header=1;
+                }
+            }
+            unless($has_header) {
+                push @info_lines_to_add, $possible_tags{$tag};
+            }
+        }
+    }
+
+    return @info_lines_to_add;
 }
 
 1;

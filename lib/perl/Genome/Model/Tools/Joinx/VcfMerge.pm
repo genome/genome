@@ -21,6 +21,10 @@ class Genome::Model::Tools::Joinx::VcfMerge {
             is_output => 1,
             doc => 'The output file (defaults to stdout)',
         },
+        merge_strategy_file => {
+            is => 'Text',
+            doc => "The merge strategy file, provided to joinx to specify how to handle info field merging (-M option)",
+        },
         sample_priority => {
             is => 'Text',
             doc => 'Sample priority. Order prefers data from file A over B. Unfiltered prefers data from the first filtered sample (intersect). Filters prefers data from the first unfiltered sample (union). Requires joinx1.6+',
@@ -131,6 +135,9 @@ sub _resolve_flags {
     my $flags = "";
     if ($self->clear_filters) {
         $flags .= " -c";
+    }
+    if ($self->merge_strategy_file) {
+        $flags .= " -M " . $self->merge_strategy_file;
     }
     if ($self->sample_priority) {
         if($self->sample_priority eq 'order') {
