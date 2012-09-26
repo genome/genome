@@ -159,6 +159,7 @@ sub _import_gene {
     my $self = shift;
     my $interaction = shift;
     my $citation = shift;
+    my $uniprot_id = $interaction->{target_uniprot_id};
     #If a uniprot ID is present, but doesn't map to a human entrez id (all that is attempted) then it is probably not human, don't import
     if ($uniprot_id and ($uniprot_id ne 'N/A')){
         unless ($UniProtMapping{$uniprot_id}){
