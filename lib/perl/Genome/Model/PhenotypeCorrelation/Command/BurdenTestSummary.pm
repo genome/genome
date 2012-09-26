@@ -15,11 +15,6 @@ use warnings;
 class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
     is => "Genome::Command::Base",
     has => [
-        maximum_maf => {
-            is => "Number",
-            doc => "Maximum minor allele frequency cutoff to include",
-            default_value => 0.01,
-        },
         summary_file => {
             is => "Text",
             doc => "Path to burden analysis summary file",
