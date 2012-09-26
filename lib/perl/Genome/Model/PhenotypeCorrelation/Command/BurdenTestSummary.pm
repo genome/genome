@@ -156,23 +156,36 @@ sub _process_gene {
     my @controls = @sample_indices{grep {$self->_trait_values->{$_} == 0} @samples};
 
     # Get allele frequencies and info fields for each of case, control.
+    # TODO: refactor the next two blocks so they call one thing instead of repeating code
     my @case_data = map {
         my ($total, %counts) = $_->allelic_distribution(@cases);
+        my $entry = $_;
         {
             total => $total,
             allele_counts => \%counts,
             chrompos => join(":", $_->chrom, $_->position),
-            info => $_->info,
+            # TODO: make this next block less obnoxious later
+            info_by_alt => {
+                map {
+                    $_ => ($entry->info_for_allele($_) || undef)
+                } keys %counts
+            },
         }
     } @entries;
 
     my @control_data = map {
         my ($total, %counts) = $_->allelic_distribution(@controls);
+        my $entry = $_;
         {
             total => $total,
             allele_counts => \%counts,
             chrompos => join(":", $_->chrom, $_->position),
-            info => $_->info,
+            # TODO: should probably make this next block less obnoxious later too
+            info_by_alt => {
+                map {
+                    $_ => ($entry->info_for_allele($_) || undef)
+                } keys %counts
+            }
         }
     } @entries;
 
@@ -235,14 +248,13 @@ sub _write_merged_annotation {
 
             my $count = $si->{allele_counts}{$alt};
             my $af = $count / $si->{total};
-            my @info = map { "$_=" . $si->{info}{$_} } keys %{$si->{info}};
 
             # add our own extra annotation fields
             $entry->set_extra_field("AF", $af);
             $entry->set_extra_field("COUNT", $count);
             # copy info fields from vcf
-            for my $info_name (keys %{$si->{info}}) {
-                $entry->set_extra_field($info_name, $si->{info}{$info_name});
+            for my $info_name (keys %{$si->{info_by_alt}{$alt}}) {
+                $entry->set_extra_field($info_name, $si->{info_by_alt}{$alt}{$info_name});
             }
             $vep->write($entry);
         }
@@ -433,8 +445,5 @@ sub _insert_result {
         pop(@$arr) if $#$arr >= $max_size;
     }
 }
-
-
-
 
 1;
