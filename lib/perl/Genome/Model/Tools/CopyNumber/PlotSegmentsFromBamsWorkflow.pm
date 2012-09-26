@@ -127,8 +127,12 @@ sub execute {
 
     my %input;    
 
-    
-    $workflow->log_dir($self->output_directory);
+    my $log_dir = $self->output_directory;
+    if(Workflow::Model->parent_workflow_log_dir) {
+        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    }
+
+    $workflow->log_dir($log_dir);
 
     $input{normal_bam} =  $self->normal_bam;
     $input{normal_bamtocn} = $output_dir."/".$normal_bam_name.".bamtocn";
