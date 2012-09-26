@@ -17,6 +17,10 @@ sub fhopen {
     my ($class, $fh, $name) = @_;
     $name |= "unknown file path";
     my $header_txt = $fh->getline;
+    while ($header_txt =~ /^##/) {
+        $header_txt = $fh->getline;
+    }
+    $header_txt =~ s/^#//;
 
     my $self = {
         name => $name,
@@ -34,7 +38,7 @@ sub next {
         ++$self->{line_num};
         chomp $line;
         # There are blank lines in vep files sometimes ._.
-        next unless $line;
+        next if !$line || $line =~ /^#/;
         return Genome::File::Vep::Entry->new($line);
     }
 }
