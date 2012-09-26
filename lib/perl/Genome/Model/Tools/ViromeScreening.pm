@@ -56,6 +56,13 @@ UR::Object::Type->define(
             is_optional => 1,
             default => '/gscmnt/sata835/info/medseq/virome/blast_db/viral/viral.genomic.fna',
         },
+        taxonomy_db => {
+            doc => 'taxonomy db',
+            is => 'String',
+            is_input => 1,
+            is_optional => 1,
+            default => '/gscmnt/sata835/info/medseq/virome/taxonomy_db',
+        },
     ],
 );
 
@@ -72,7 +79,7 @@ sub execute {
     unlink($self->logfile) if (-e $self->logfile);
     $self->_log_dbs_used;
     my $output = run_workflow_lsf(
-	$ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/virome-screening3.xml',
+	$ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/virome-screening4.xml',
 	'fasta_file'  => $self->fasta_file,
 	'barcode_file'=> $self->barcode_file,
 	'dir'         => $self->dir,
@@ -80,6 +87,7 @@ sub execute {
         'human_db'    => $self->human_db,
         'nt_db'       => $self->nt_db,
         'virus_db'    => $self->virus_db,
+        'taxonomy_db' => $self->taxonomy_db,
 	);
     my $mail_dest = Genome::Config->user_email;
     my $sender = Mail::Sender->new({
@@ -99,7 +107,7 @@ sub execute {
 sub _log_dbs_used {
     my $self = shift;
     my $fh = Genome::Sys->open_file_for_writing( $self->logfile );
-    for my $name ( qw/ human nt virus / ) {
+    for my $name ( qw/ human nt virus taxonomy/ ) {
         my $db = $name.'_db';
         $fh->printf("%-15s%40s\n", uc $name.' db:', $self->$db);
     }

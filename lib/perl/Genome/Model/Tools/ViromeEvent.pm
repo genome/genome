@@ -43,6 +43,12 @@ class Genome::Model::Tools::ViromeEvent{
             is_optional => 1,
             is_input => 1,
         },
+        taxonomy_db => {
+            is => 'String',
+            doc => 'taxonomy db',
+            is_optional => 1,
+            is_input => 1,
+        },
     ],
 };
 
@@ -288,8 +294,7 @@ sub run_blast_for_stage {
         return;
     }
     my $cmd = $blast_cmd.' -i '.$input_file.' -o '.$blast_out_file.' -d '.$blast_db;
-
-    #$self->log_event("Running blast with command: $cmd"); #TODO remove this
+    #$self->log_event("Running blast with command: $cmd"); # for test
 
     if (system ($cmd)) {
 	$self->log_event("$stage failed for $input_file_name");
