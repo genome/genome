@@ -22,6 +22,11 @@ class Genome::Model::RnaSeq::Command::FpkmMatrix {
             doc => 'Two groups of comma delimited model identifiers(name,id,subject_name,individual_common_name) separated by whitespace. Ex: 1,2,3 4,5,6',
             is_optional => 1,
         },
+        gene_biotypes => {
+            doc => 'The gene biotypes to limit genes to.',
+            is_optional => 1,
+        },
+        # TODO: Add transcript_biotypes to limit by.
         gene_fpkm_de_tsv_file => {
             doc => 'An optional output tsv file with gene-level FPKM and mean/median differential expression.',
             is_optional => 1,
@@ -138,22 +143,36 @@ sub execute {
     }
     my @model_identifiers = sort keys %model_identifiers;
     
-    my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build->id);
-    $self->status_message('Loading known annotation file: '. $gtf_path);
-    my $gff_reader = Genome::Utility::IO::GffReader->create(
-        input => $gtf_path,
+    my $gene_gtf_path = $annotation_build->annotation_file('gtf',$reference_build->id);
+    if ($self->gene_biotypes) {
+        my $transcript_info_tsv_file = $annotation_build->transcript_info_file($reference_build->id);
+        my $tmp_gtf_path = Genome::Sys->create_temp_file_path();
+        unless (Genome::Model::Tools::Gtf::LimitByBiotype->execute(
+            input_gtf_file => $gene_gtf_path,
+            output_gtf_file => $tmp_gtf_path,
+            gene_biotypes => $self->gene_biotypes,
+            transcript_info_tsv_file => $transcript_info_tsv_file,
+        )) {
+            $self->error_message('Failed to limit  by gene biotypes: '. $self->gene_biotypes);
+            return;
+        }
+        $gene_gtf_path = $tmp_gtf_path;
+    }
+    $self->status_message('Loading known genes annotation file: '. $gene_gtf_path);
+    my $gene_gff_reader = Genome::Utility::IO::GffReader->create(
+        input => $gene_gtf_path,
     );
-    unless ($gff_reader) {
-        die('Failed to read GTF file: '. $gtf_path);
+    unless ($gene_gff_reader) {
+        die('Failed to read GTF file: '. $gene_gtf_path);
     }
     my %gene_transcripts;
-    while (my $data = $gff_reader->next_with_attributes_hash_ref) {
+    while (my $data = $gene_gff_reader->next_with_attributes_hash_ref) {
         my $attributes = delete($data->{attributes_hash_ref});
         $gene_transcripts{$attributes->{gene_id}}{gene_id}{$attributes->{gene_id}} = {};
         $gene_transcripts{$attributes->{gene_id}}{transcript_id}{$attributes->{transcript_id}} = {};
         $gene_transcripts{$attributes->{gene_id}}{gene_name} = $attributes->{gene_name};
     }
-    $self->status_message('There are '. scalar(keys %gene_transcripts) .' genes in annotation file: '. $gtf_path);
+    $self->status_message('There are '. scalar(keys %gene_transcripts) .' genes in annotation file: '. $gene_gtf_path);
     my @fpkm_tracking_headers;
     for my $build (@builds) {
         for my $feature_type (keys %feature_types) {
