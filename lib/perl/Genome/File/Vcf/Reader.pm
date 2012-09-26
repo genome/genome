@@ -55,9 +55,7 @@ sub _parse_header {
         }
     }
     confess "No vcf header found in file $name" unless @lines;
-    my $header = Genome::File::Vcf::Header->create;
-    $header->parse(@lines);
-    $self->header($header);
+    $self->header(Genome::File::Vcf::Header->create(lines => \@lines));
 }
 
 sub next {
@@ -71,8 +69,10 @@ sub next {
     chomp $line if $line;
     return unless $line;
 
-    my $entry = Genome::File::Vcf::Entry->create;
-    $entry->parse($line);
+    my $entry = Genome::File::Vcf::Entry->create(
+        id => $line,
+        header => $self->header
+    );
     return $entry;
 }
 

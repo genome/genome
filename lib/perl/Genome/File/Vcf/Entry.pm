@@ -22,6 +22,17 @@ use constant {
 
 class Genome::File::Vcf::Entry {
     is => ['UR::Object'],
+    id_by => ['id'],
+    has => [
+        id => {
+            is => "Text",
+            doc => "Raw vcf line",
+        },
+        header => {
+            is => "Genome::File::Vcf::Header",
+            doc => "The vcf header associated with this entry",
+        },
+    ],
     has_transient_optional => [
         chrom => {
             is => 'Text',
@@ -80,12 +91,14 @@ class Genome::File::Vcf::Entry {
 
 sub create {
     my $class = shift;
-    return $class->SUPER::create(@_);
+    my $self = $class->SUPER::create(@_);
+    $self->_parse;
+    return $self;
 }
 
-sub parse {
-    my ($self, $line) = @_;
-    #my $line = $self->id;
+sub _parse {
+    my ($self) = @_;
+    my $line = $self->id;
     confess "Attempted to parse null VCF entry" unless $line;
 
     $self->_line($line);
@@ -119,8 +132,9 @@ sub _parse_info {
     my @info_list = _parse_list($info_str, ';');
     return unless @info_list;
     my %info_hash = map {
-            my ($k, $v) = split('=', $_, 2);
-            $k => $v
+        my ($k, $v) = split('=', $_, 2);
+        # we do this rather than just split to handle Flag types (they have undef values)
+        $k => $v
         } @info_list;
     return \%info_hash;
 }
@@ -172,7 +186,42 @@ sub info {
     return $self->info_fields unless $key;
 
     return unless $self->info_fields && exists $self->info_fields->{$key};
-    return $self->info_fields->{$key};
+
+    # The 2nd condition is to deal with flags, they may exist but not have a value
+    return $self->info_fields->{$key} || exists $self->info_fields->{$key};
+}
+
+sub info_for_allele {
+    my ($self, $allele, $key) = @_;
+
+    # nothing to return
+    return unless defined $self->info_fields;
+
+    # we don't have that allele, or it is the reference (idx 0)
+    my $idx = $self->allele_index($allele);
+    return unless defined $idx && $idx > 0;
+    --$idx; # we don't care about the reference allele
+
+    # no header! what are you doing?
+    confess "info_for_allele called on entry with no vcf header!" unless $self->header;
+    
+    my @keys = defined $key ? $key : keys %{$self->info_fields};
+
+    my %result;
+    for my $k (@keys) {
+        my $type = $self->header->info_types->{$k};
+        warn "Unknown info type $k encountered!" if !defined $type;
+        if (defined $type && $type->{number} eq 'A') { # per alt field
+
+            my @values = split(',', $self->info_fields->{$k});
+            next if $idx > $#values;
+            $result{$k} = $values[$idx];
+        } else {
+            $result{$k} = $self->info_fields->{$k}
+        }
+    }
+    my $rv = $key ? $result{$key} : \%result;
+    return $rv;
 }
 
 sub sample_field {
@@ -184,17 +233,22 @@ sub sample_field {
     my $cache = $self->_format_field_hash;
     return unless exists $cache->{$field_name};
     my $field_idx = $cache->{$field_name};
-    use Data::Dumper;
     return $sample_data->[$sample_idx]->[$field_idx];
-}
-
-sub sample_genotype {
-    my ($self, $sample_idx) = @_;
 }
 
 sub alleles {
     my $self = shift;
     return ($self->reference_allele, $self->alternate_alleles);
+}
+
+# return the index of the given allele, or undef if not found
+# note that 0 => reference, 1 => first alt, ...
+sub allele_index {
+    my ($self, $allele) = @_;
+    my @a = $self->alleles;
+    my @idx = grep {$a[$_] eq $allele} 0..$#a;
+    return unless @idx;
+    return $idx[0]
 }
 
 sub allelic_distribution {
