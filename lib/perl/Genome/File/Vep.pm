@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::File::Vep {
-    is => 'Genome::File::Vep',
+    is => 'UR::Object',
 };
 
 1;
