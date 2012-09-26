@@ -30,7 +30,7 @@ class Genome::Model::Tools::Varscan::Consensus {
 		min_coverage	=> { is => 'Text', doc => "Minimum base coverage to report readcounts [4]" , is_optional => 1},
 		min_avg_qual	=> { is => 'Text', doc => "Minimum base quality to count a read [20]" , is_optional => 1},
 		min_var_freq	=> { is => 'Text', doc => "Minimum variant allele frequency to call a variant [0.20]" , is_optional => 1},
-		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs; defaults to build 37" , is_optional => 1, default_value => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'},		
+		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs" , is_optional => 1, default_value => (Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')},		
 	],
 };
 
@@ -79,9 +79,11 @@ sub execute {                               # replace with real execution logic.
 	if(-e $bam_file)
 	{
 		## Prepare pileup commands ##
-		my $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 $bam_file";
-#		my $varscan_path = Genome::Model::Tools::Varscan->path_for_version($self->version);
-		my $cmd = $self->java_command_line("pileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual >$output_file");
+		print "Building ROI pileup file...\n";
+		my $cmd = "samtools view -b -u -q 10 $bam_file | samtools pileup -f $reference - | java -classpath ~dkoboldt/Software/Varscan net.sf.varscan.Varscan limit --positions-file $positions_file --output-file $output_file.pileup";
+		system($cmd);
+		print "Running Varscan pileup2cns...\n";
+		$cmd = $self->java_command_line("pileup2cns $output_file.pileup --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual >$output_file");
 		system($cmd);
 	}
 	else
