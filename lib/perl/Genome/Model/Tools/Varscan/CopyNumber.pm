@@ -29,7 +29,7 @@ class Genome::Model::Tools::Varscan::CopyNumber {
 		samtools_path	=> { is => 'Text', doc => "Path to SAMtools executable", is_optional => 0, is_input => 1, default => "samtools" },
 		output	=> { is => 'Text', doc => "Output file for copy number results", is_optional => 0, is_input => 1, is_output => 1 },
 		target_regions	=> { is => 'Text', doc => "Optional target region(s) for limiting the BAM (e.g 5:1 or 6:11134-11158)", is_optional => 1, is_input => 1 },
-		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs; defaults to build 37" , is_optional => 1, default_value => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'},
+		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs" , is_optional => 1, default_value => (Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')},
 		heap_space	=> { is => 'Text', doc => "Megabytes to reserve for java heap [1000]" , is_optional => 1, is_input => 1},
 		mapping_quality	=> { is => 'Text', doc => "Default minimum mapping quality" , is_optional => 1, is_input => 1, default => 10},
 		skip_if_output_present	=> { is => 'Text', doc => "If set to 1, skip execution if output files exist", is_optional => 1, is_input => 1 },
@@ -126,16 +126,22 @@ sub execute {                               # replace with real execution logic.
 #		my $tumor_pileup = "samtools pileup -f $reference $tumor_bam";
 		my $normal_pileup = my $tumor_pileup = "";
 
-		my $mpileup = $self->samtools_path . " mpileup -f $reference -q 10 -B $normal_bam $tumor_bam";
-		
 		if($self->target_regions)
 		{
-			$mpileup = $self->samtools_path . " mpileup -f $reference -q 10 -B -r " . $self->target_regions . " -B $normal_bam $tumor_bam";
+			$normal_pileup = $self->samtools_path . " view -b -u -q 10 $normal_bam " . $self->target_regions . " | samtools mpileup -f $reference -";
+			$tumor_pileup = $self->samtools_path . " view -b -u -q 10 $tumor_bam " . $self->target_regions . " | samtools mpileup -f $reference -";			
+		}
+		else
+		{
+			$normal_pileup = $self->samtools_path . " mpileup -f $reference -q 10 $normal_bam";
+			$tumor_pileup = $self->samtools_path . " mpileup -f $reference -q 10 $tumor_bam";			
 		}
 		
-		my $varscan_path = Genome::Model::Tools::Varscan->path_for_version($self->version);
-
-		my $cmd = "java -jar $varscan_path copynumber <\($mpileup\) $output --mpileup 1 --data-ratio $normal_tumor_ratio $varscan_params";
+		my $mpileup = $self->samtools_path . " mpileup -f $reference -q 10 $normal_bam $tumor_bam";		
+#		my $cmd = $self->java_command_line("copynumber <\($normal_pileup\) <\($tumor_pileup\) $output --data-ratio $normal_tumor_ratio $varscan_params");
+#		my $cmd = "java -classpath ~dkoboldt/Software/VarScan/Test net.sf.varscan.VarScan copynumber <\($normal_pileup\) <\($tumor_pileup\) $output --data-ratio $normal_tumor_ratio $varscan_params";
+		#my $cmd = $self->java_command_line(" copynumber <\($normal_pileup\) <\($tumor_pileup\) $output --data-ratio $normal_tumor_ratio $varscan_params");
+		my $cmd = "java -classpath ~dkoboldt/Software/VarScan net.sf.varscan.VarScan copynumber <\($mpileup\) $output --mpileup 1 --data-ratio $normal_tumor_ratio $varscan_params";
 		## Run Varscan ##
 		if($self->heap_space)
 		{
