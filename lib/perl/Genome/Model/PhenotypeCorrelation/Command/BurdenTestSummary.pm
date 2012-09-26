@@ -15,9 +15,18 @@ use warnings;
 class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
     is => "Genome::Command::Base",
     has => [
+        maximum_maf => {
+            is => "Number",
+            doc => "Maximum minor allele frequency cutoff to include",
+            default_value => 0.01,
+        },
         summary_file => {
             is => "Text",
             doc => "Path to burden analysis summary file",
+        },
+        burden_results_directory => {
+            is => "Text",
+            doc => "Path to the burden test results",
         },
         top_n => {
             is => "Text",
@@ -109,11 +118,14 @@ sub _process_gene {
 
     # Load vep annotation
     #  returns { header => (header obj), data => { gene => [ (entry objs) ] } }
-    my $gene_annotation = $self->_read_annotation_for_genes($gene);
+    my %snv_ids = $self->_snv_ids_for_gene($gene);
+    my $gene_annotation = $self->_read_annotation_for_genes(genes => [$gene], include_ids => \%snv_ids);
+    
 
     # Build a list of locations (chr:pos strings) we are interested in
     my %locations = map {$_->{location} => 1} @{$gene_annotation->{data}{$gene}};
     my @locations = nsort keys(%locations);
+    confess "Unable to find any variants for gene $gene, something must be wrong." unless @locations;
 
     # Transform locations to ranges: 1:20 => 1:20-20
     my @regions = map {
@@ -203,8 +215,15 @@ sub _process_gene {
 }
 
 sub _read_annotation_for_genes {
-    my ($self, @gene_names) = @_;
-    my %genes = map {$_ => 1} @gene_names;
+    my ($self, %params) = @_;
+    # Params should be:
+    # genes => [gene names],
+    # include_ids => { valid_snv_id => 1, ... }
+    # if include_ids is set, then annotation entries are limited to
+    # those whose id (uploaded_variation) is found in the hashref
+    
+    my %genes = map {$_ => 1} @{$params{genes}};
+
     my $vep = Genome::File::Vep::Reader->new($self->annotation_file);
     
     my $rv = {
@@ -212,8 +231,13 @@ sub _read_annotation_for_genes {
         data => {}
     };
 
-    # Read all the entries where entry->gene in @gene_names
+    # Read all the entries where entry->gene in %genes
     while (my $entry = $vep->next) {
+        # if we are filtering ids, skip things that don't match our list
+        if (exists $params{include_ids} && !exists $params{include_ids}->{$entry->{uploaded_variation}}) {
+            next;
+        }
+
         my $gene = $entry->{gene};
         if (exists $genes{$gene}) {
             $rv->{data}{$gene} = [] unless exists $rv->{data}{$gene};
@@ -444,6 +468,25 @@ sub _insert_result {
         splice(@$arr, $idx, 0, [$gene, $score]);
         pop(@$arr) if $#$arr >= $max_size;
     }
+}
+
+# Look up what snvs the burden test used
+sub _snv_ids_for_gene {
+    my ($self, $gene) = @_;
+    my $filename = $self->trait . "_$gene.single.csv";
+    my $path = join("/", $self->burden_results_directory, $filename);
+
+    my $fh = Genome::Sys->open_file_for_reading($path);
+    $fh->getline;
+    my %snvs;
+    while (my $line = $fh->getline) {
+        chomp $line;
+        my ($snv, @fields) = split(",", $line);
+        # remove leading V that the burden test appends to variant names
+        $snv =~ s/^V//g;
+        $snvs{$snv} = 1;
+    }
+    return %snvs;
 }
 
 1;
