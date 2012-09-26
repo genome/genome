@@ -37,7 +37,7 @@ class Genome::Model::Tools::Dgidb::Import::Dgene {
             doc => 'VERSION.  Version (date) of release of database from dGene group',
         },
         citation_base_url => {
-            default => 'http://hematology.wustl.edu/faculty/Bose/BoseBio.html', #To be updated upon publication
+            default => 'http://www.ncbi.nlm.nih.gov/gene?term=', #Since dGene is based on Entrez genes, dGene records can be linked out to there
         },
         citation_site_url => {
             default => 'http://hematology.wustl.edu/faculty/Bose/BoseBio.html', #To be updated upon publication
@@ -297,7 +297,7 @@ sub import_genes {
     
     $parser->next; #eat the headers
     while(my $dgene_input = $parser->next){
-        my $gene_name = $self->_create_gene_name_report($dgene_input->{'Symbol'}, $citation, 'dGene Gene Name', '');
+        my $gene_name = $self->_create_gene_name_report($dgene_input->{'GeneID'}, $citation, 'dGene Gene Id', '');
         my $human_readable_name = $dgene_input->{'human_readable_name'};
         $human_readable_name =~ s/-/ /g;
         my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');

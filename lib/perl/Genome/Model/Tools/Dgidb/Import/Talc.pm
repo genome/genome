@@ -40,7 +40,7 @@ class Genome::Model::Tools::Dgidb::Import::Talc {
             doc => 'VERSION.  Version (date) of release of database from TALC group',
         },
         citation_base_url => {
-            default => 'http://www.ncbi.nlm.nih.gov/pubmed/22005529/', #No url available for direct linking of genes/drugs
+            default => 'http://www.ncbi.nlm.nih.gov/gene?term=', #For genes, use Entrez ID, Drugs will have to be handled as special case.
         },
         citation_site_url => {
             default => 'http://www.ncbi.nlm.nih.gov/pubmed/22005529/',

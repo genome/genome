@@ -85,7 +85,7 @@ HELP
 sub help_detail {
 #TODO: make this accurate
     my $summary = <<HELP
-WRITE ME
+This importer downloads genes from a current Ensembl Human GTF file.
 HELP
 }
 
@@ -205,7 +205,7 @@ sub import_genes {
         my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_id}, 'Ensembl Gene Id', '');
 
         unless($gene->{ensembl_gene_symbol} eq 'N/A'){
-            my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'Gene Symbol', '');
+            my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'Ensembl Gene Name', '');
         }
         unless ($gene->{ensembl_gene_biotype} eq 'N/A'){
           my $biotype_category = $self->_create_gene_category_report($gene_name_report, 'Gene Biotype', $gene->{ensembl_gene_biotype}, '');
