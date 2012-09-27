@@ -15,7 +15,7 @@ BEGIN {
 
 BEGIN {
     if (!defined $ENV{GENOME_DB_SKIP_POSTGRES}) {
-        $ENV{GENOME_DB_SKIP_POSTGRES} ||= '/gsc/scripts/opt/genome/run/skip_postgres_sync_new';
+        $ENV{GENOME_DB_SKIP_POSTGRES} ||= '/gsc/scripts/opt/genome/run/skip_postgres_sync';
     }
 }
 

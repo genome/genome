@@ -38,7 +38,7 @@ my $output_snp = join('/', $tmpdir, 'varscan.snp');
 my $output_indel = join('/', $tmpdir, 'varscan.indel');
 my $output_validation = join('/', $tmpdir, 'varscan.validation');
 
-my $samtools_version = 'r982';
+my $samtools_version = 'r599';
 my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($samtools_version);
 
 my $varscan_command = Genome::Model::Tools::Varscan::Validation->create(
