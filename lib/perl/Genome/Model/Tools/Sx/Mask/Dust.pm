@@ -22,7 +22,7 @@ sub executable_path { $ENV{GENOME_SW} . '/wu-blast/blast2x64_2006-05-04/filter/d
 sub execute {
     my $self = shift;
 
-    my @input_params = $self->_resolve_cmd_input_configs;
+    my @input_params = $self->_resolve_input_params;
     return if not @input_params;
 
     my $output = $self->_init_ouptut;

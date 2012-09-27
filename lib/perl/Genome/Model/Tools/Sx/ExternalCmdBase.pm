@@ -107,7 +107,7 @@ sub _run_command {
     return 1;
 }
 
-sub _resolve_cmd_input_configs {
+sub _resolve_input_params {
     my $self = shift;
 
     my $cmd_display_name = $self->cmd_display_name;

@@ -124,16 +124,16 @@ sub execute {
     my $resolve_adapters = $self->_resolve_adapters;
     return if not $resolve_adapters;
 
-    my @cmd_input_configs = $self->_resolve_cmd_input_configs;
-    return if not @cmd_input_configs;
+    my @input_params = $self->_resolve_input_params;
+    return if not @input_params;
 
     my $output = $self->_init_ouptut;
     return if not $output;
 
     $self->status_message('Run FAR...');
     my $cmd = $self->build_command;
-    $cmd .= ' --source '.$cmd_input_configs[0]->{file};
-    $cmd .= ' --source2 '.$cmd_input_configs[1]->{file} if $cmd_input_configs[1];
+    $cmd .= ' --source '.$input_params[0]->{file};
+    $cmd .= ' --source2 '.$input_params[1]->{file} if $input_params[1];
     $cmd .= ' --format fastq-sanger';
     $cmd .= ' --target '.$self->_tmpdir.'/output.fastq',
     my $rv = $self->_run_command($cmd);
