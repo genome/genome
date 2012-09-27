@@ -99,32 +99,46 @@ sub _run_pindel2vcf {
     my $self = shift;
 
     my $refseq = $self->_refseq;
-    my $rs = Genome::Model::Build::ImportedReferenceSequence->get($self->reference_build_id);
+    my $rs     = Genome::Model::Build::ImportedReferenceSequence->get($self->reference_build_id);
     my $refseq_name = $rs->name;
     my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
-    my $date = $year . "/" . ($mon+1) . "/" . $mday . "-" . $hour . ":" . $min . ":" . $sec;
+    my $date       = $year . "/" . ($mon+1) . "/" . $mday . "-" . $hour . ":" . $min . ":" . $sec;
     my $pindel_raw = $self->pindel_raw_output;
-    my $output = $self->output_file;
-    my $cmd  = $pindel2vcf_path . " -p ".$pindel_raw." -r ". $refseq . " -R " . $refseq_name . " -d " . $date . " -v " . $output;
-    my $result = Genome::Sys->shellcmd( cmd => $cmd);
+    my $output     = $self->output_file;
+
+    my $cmd    = $pindel2vcf_path . " -p ".$pindel_raw." -r ". $refseq . " -R " . $refseq_name . " -d " . $date . " -v " . $output.'.tmp';
+    my $result = Genome::Sys->shellcmd(cmd => $cmd);
+
     unless($result){
         die $self->error_message("Could not complete pindel2vcf run: ".$result);
     }
-    my $bgzip_cmd = "bgzip -c ".$output." > ".$output.".tmp";
-    $result = Genome::Sys->shellcmd( cmd => $bgzip_cmd );
-    unless($result){
-        die $self->error_message("Could not complete bgzip of output: ".$result);
+
+    my $fh = Genome::Sys->open_file_for_reading($output.'.tmp') or die 'fail to open '.$output.'.tmp';
+    my $col_header;
+
+    while (my $line = $fh->getline) {
+        next unless $line =~ /^#CHROM\s+/;
+        chomp $line;
+        $col_header = $line;
+        last;
     }
-    unlink($output);
-    $result = Genome::Sys->copy_file($output.".tmp",$output);
-    unless($result){
-        die $self->error_message("Could not move tmp zipped output to final output_file location: ".$result);
+    $fh->close;
+
+    my $cmd = Genome::Model::Tools::Vcf::Convert::Indel::PindelTcga->create(
+        input_file    => $output.'.tmp',
+        output_file   => $output,
+        column_header => $col_header,
+        reference_sequence_build_id => $self->reference_build_id,
+    );
+
+    my $rv = $cmd->execute;
+    unlink $output.'.tmp';
+
+    unless ($rv) {
+        $$self->error_message("Failed to run PindelTcga !");
+        return;
     }
-    unlink($output.".tmp");
-    return 1;
-
-
-
+    
     return 1;
 }
 
