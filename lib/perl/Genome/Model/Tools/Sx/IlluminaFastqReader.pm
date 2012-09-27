@@ -9,6 +9,8 @@ class Genome::Model::Tools::Sx::IlluminaFastqReader {
     is => 'Genome::Model::Tools::Sx::FastqReader',
 };
 
+sub type { return 'illumina'; }
+
 sub read {
     my $seq = $_[0]->SUPER::read;
     return if not $seq;
