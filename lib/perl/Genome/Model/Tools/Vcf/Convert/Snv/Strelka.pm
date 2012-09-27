@@ -89,6 +89,7 @@ sub parse_line {
     my $n_gt = $n_gt_info eq 'ref' ? '0/0' : parse_gt($n_gt_str, \%ids);
     my $t_gt = parse_gt($t_gt_str, \%ids);
 
+    $columns[7]  =~ s/SOMATIC;//;  #remove the meaningless SOMATIC, it is contained in every line
     $columns[8]  = 'GT:AD:BQ:SS:'. $columns[8];
     $columns[9]  = $n_gt . ':' . $n_ad . ':.:.:' . $n_sample;
     $columns[10] = $t_gt . ':' . $t_ad . ':.:2:' . $t_sample;
@@ -157,35 +158,6 @@ sub parse_gt {
 #1       10333   .       C       T       .       QSS_ref NT=ref;QSS=4;QSS_NT=4;SGT=CC->CT;SOMATIC;TQSS=1;TQSS_NT=1       DP:FDP:SDP:SUBDP:AU:CU:GU:TU    13:1:0:0:0,0:12,33:0,0:0,1      49:8:2:0:0,0:37,92:0,0:4,10
 #1       10440   .       C       A       .       QSS_ref NT=ref;QSS=5;QSS_NT=5;SGT=CC->AC;SOMATIC;TQSS=2;TQSS_NT=2       DP:FDP:SDP:SUBDP:AU:CU:GU:TU    16:1:27:0:0,1:15,56:0,0:0,0     107:2:69:0:11,18:94,204:0,0:0,0
 #1       10473   .       G       A       .       QSS_ref NT=ref;QSS=6;QSS_NT=6;SGT=GG->AG;SOMATIC;TQSS=1;TQSS_NT=1       DP:FDP:SDP:SUBDP:AU:CU:GU:TU    9:1:0:0:0,0:0,1:8,13:0,0        62:1:0:0:18,23:0,2:43,52:0,0
-
-
-#EXAMPLE VCF RESULT AFTER CONVERTING FROM SOMATIC SNIPER
-##fileformat=VCFv4.1
-##fileDate=20120530
-##source=Sniper
-##reference=ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/ARCHIVE/BUILD.36.3/special_requests/assembly_variants/NCBI36_WUGSC_variant.fa.gz
-##phasing=none
-##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
-##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Total Read Depth">
-##FORMAT=<ID=AD,Number=A,Type=Integer,Description="Allele Depth corresponding to alternate alleles 1/2/3... after software and quality filtering">
-##FORMAT=<ID=DP4,Number=4,Type=Integer,Description="# high-quality ref-forward, ref-reverse, alt-forward and alt-reverse bases">
-##FORMAT=<ID=BQ,Number=A,Type=Integer,Description="Average Base Quality corresponding to alternate alleles 1/2/3... after software and quality filtering">
-##FORMAT=<ID=SS,Number=1,Type=Integer,Description="Somatic status relative to normal counterpart: 0(wildtype), 1(germline), 2(somatic), 3(loh), 4(unknown)">
-##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
-##FORMAT=<ID=MQ,Number=1,Type=Integer,Description="Average Mapping Quality">
-##FORMAT=<ID=FA,Number=1,Type=Float,Description="Fraction of reads supporting ALT">
-##FORMAT=<ID=VAQ,Number=1,Type=Integer,Description="Variant Quality">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	CONTROL_SAMPLE_123	TUMOR_SAMPLE_123
-#1	10002	.	A	C	.	PASS	.	GT:GQ:DP:BQ:MQ:AD:FA:VAQ	.:.:21:.:.:.:.:.	0/1:63:50:23:63:.:.:60
-#1	10003	.	A	T	.	PASS	.	GT:GQ:DP:BQ:MQ:AD:FA:VAQ	.:.:25:.:.:.:.:.	0/1:33:57:22:33:.:.:30
-#1	10248	.	A	T	.	PASS	.	GT:GQ:DP:BQ:MQ:AD:FA:VAQ	.:.:69:.:.:.:.:.	0/1:36:116:26:36:.:.:23
-#1	10469	.	C	A	.	PASS	.	GT:GQ:DP:BQ:MQ:AD:FA:VAQ	.:.:16:.:.:.:.:.	0/1:19:34:34:19:.:.:16
-
-
-#DIRECT COMPARISON OF DATA LINES ONLY
-#CHROM  POS     ID  REF  ALT  QUAL  FILTER   INFO                                                            FORMAT                          NORMAL                         TUMOR                                  
-#1       10231   .   C    A    .     QSS_ref  NT=ref;QSS=1;QSS_NT=1;SGT=AC->AC;SOMATIC;TQSS=2;TQSS_NT=2       DP:FDP:SDP:SUBDP:AU:CU:GU:TU    32:4:8:0:0,3:28,60:0,0:0,1      84:6:69:0:7,21:71,192:0,0:0,1 #Strelka
-#1	      10002   .   A    C    .     PASS     .	                                                             GT:GQ:DP:BQ:MQ:AD:FA:VAQ	       .:.:21:.:.:.:.:.	               0/1:63:50:23:63:.:.:60        #Sniper
 
 
 
