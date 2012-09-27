@@ -138,13 +138,11 @@ sub _resolve_cmd_input_configs {
     $self->status_message('Input count: '.$cnt);
 
     my $format;
-    for my $required_type (qw/ phred sff sanger /) {
-        switch ($required_type) {
-            case 'phred'    { $format = 'fasta' }
-            case 'sanger'   { $format = 'fastq' }
-            case 'illumina' { $format = 'fastq' }
-            else            { $format = $required_type }
-        }
+    switch ($required_type) {
+        case 'phred'    { $format = 'fasta' }
+        case 'sanger'   { $format = 'fastq' }
+        case 'illumina' { $format = 'fastq' }
+        else            { $format = $required_type }
     }
 
     my @writer_config = ( 'file='.$self->_tmpdir."/input_1.$format:type=$required_type" );
