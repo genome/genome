@@ -138,7 +138,7 @@ sub merge_vcfs {
 sub write_merged_header {
     my ($self, $fh, $denovo_vcf, $standard_vcf) = @_;
     my @info_lines_to_add = (qq|##INFO=<ID=DQ,Number=1,Type=Float,Description="De Novo Mutation Quality">|);
-    push @info_lines_to_add, qq|##INFO=<ID=DA,Number=1,Type=Integer,Description="De Novo Mutation Allele">|;
+    push @info_lines_to_add, qq|##INFO=<ID=DA,Number=.,Type=Integer,Description="De Novo Mutation Allele">|;
     my @format_lines_to_add = (qq|##FORMAT=<ID=DNGL,Number=10,Type=Integer,Description="Denovo Genotype Likelihoods">|);
     push @format_lines_to_add, qq|##FORMAT=<ID=DNGT,Number=1,Type=String,Description="Genotype">|;
     push @format_lines_to_add, qq|##FORMAT=<ID=DNGQ,Number=1,Type=Integer,Description="Genotype Quality">|;
