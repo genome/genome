@@ -117,6 +117,7 @@ sub _resolve_cmd_input_configs {
     my @input_params;
     for my $input_config ( @input_configs ) {
         my ($class, $params) = Genome::Model::Tools::Sx::Reader->parse_reader_config($input_config);
+        return if not $class;
         last if $class->type ne $required_type;
         push @input_params, $params;
     }
