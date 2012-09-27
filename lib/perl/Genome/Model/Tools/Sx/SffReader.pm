@@ -11,6 +11,8 @@ class Genome::Model::Tools::Sx::SffReader {
     is => 'Genome::Model::Tools::Sx::FastqReader',
 };
 
+sub type { return 'sff'; }
+
 sub _cmd_for_file {
     my ($self, $file) = @_;
 
