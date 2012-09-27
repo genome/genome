@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 require Cwd;
+use Switch;
 
 class Genome::Model::Tools::Sx::ExternalCmdBase {
     is => 'Genome::Model::Tools::Sx::Base',
@@ -127,7 +128,6 @@ sub _resolve_cmd_input_configs {
             return @input_params;
         }
     }
-    @input_params = ();
 
     $self->status_message("Must write $cmd_display_name input files...");
     my $input = $self->_init_input;
@@ -135,16 +135,30 @@ sub _resolve_cmd_input_configs {
 
     my $seqs = $input->read;
     my $cnt = @$seqs; 
-    my $format = ( grep { $required_type eq $_ } (qw/ sanger illumina /) ) ? 'fastq' : $required_type;
     $self->status_message('Input count: '.$cnt);
-    my @reader_config = ( 'file='.$self->_tmpdir."/input_1.$format:type=$required_type" );
+
+    my $format;
+    for my $required_type (qw/ phred sff sanger /) {
+        switch ($required_type) {
+            case 'phred'    { $format = 'fasta' }
+            case 'sanger'   { $format = 'fastq' }
+            case 'illumina' { $format = 'fastq' }
+            else            { $format = $required_type }
+        }
+    }
+
+    my @writer_config = ( 'file='.$self->_tmpdir."/input_1.$format:type=$required_type" );
+    $writer_config[0] .= ':qual_file='.$self->_tmpdir."/input_1.qual" if $required_type eq 'phred'; # FIXME this will not always work
+
     if ( $cnt == 2 ) { # assume paired
-        $reader_config[0] .= ':name=fwd';
-        push @reader_config, $self->_tmpdir."/input_2.$format:type=$required_type:name=rev";
+        $writer_config[0] .= ':name=fwd';
+        push @writer_config, $self->_tmpdir."/input_2.$format:type=$required_type:name=rev";
+        $writer_config[1] .= ':qual_file='.$self->_tmpdir."/input_1.qual" if $required_type eq 'phred'; # FIXME this will not always work
         $self->status_message('Writing input as paired');
     }
+
     my $input_writer = Genome::Model::Tools::Sx::Writer->create(
-        config => \@reader_config,
+        config => \@writer_config,
     );
     if ( not $input_writer ) {
         $self->error_message('Failed to open input writer!');
@@ -155,8 +169,9 @@ sub _resolve_cmd_input_configs {
     } while $seqs = $input->read;
     $self->status_message('Write input...OK');
 
-    for my $config ( @reader_config ) {
-        my ($class, $params) = Genome::Model::Tools::Sx::Reader->parse_reader_config($config);
+    @input_params = ();
+    for my $config ( @writer_config ) {
+        my ($class, $params) = Genome::Model::Tools::Sx::Writer->parse_writer_config($config);
         push @input_params, $params;
     }
 
