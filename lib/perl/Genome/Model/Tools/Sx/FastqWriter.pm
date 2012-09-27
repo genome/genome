@@ -9,6 +9,8 @@ class Genome::Model::Tools::Sx::FastqWriter {
     is => 'Genome::Model::Tools::Sx::SeqWriter',
 };
 
+sub type { return 'sanger'; }
+
 sub write {
     my ($self, $seq) = @_;
 

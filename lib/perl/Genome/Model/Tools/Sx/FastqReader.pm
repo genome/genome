@@ -9,6 +9,8 @@ class Genome::Model::Tools::Sx::FastqReader {
     is => 'Genome::Model::Tools::Sx::SeqReader',
 };
 
+sub type { return 'sanger'; }
+
 sub read {
     my $self = shift;
 
