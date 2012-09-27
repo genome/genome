@@ -15,6 +15,8 @@ if (Genome::Config->arch_os ne 'x86_64') {
 
 use_ok('Genome::Model::Tools::Sx::BamReader') or die;
 
+is(Genome::Model::Tools::Sx::BamReader->type, 'bam', 'type is bam');
+
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'Created temp dir');
 my $fasta = $tmpdir.'/out.fasta';
