@@ -8,6 +8,8 @@ require Storable;
 class Genome::Model::Tools::Sx::StdoutRefWriter { 
 };
 
+sub type { 'ref' }
+
 sub write {
     Storable::store_fd($_[1], \*STDOUT);
     return 1;
