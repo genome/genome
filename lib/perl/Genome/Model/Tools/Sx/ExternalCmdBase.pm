@@ -127,6 +127,7 @@ sub _resolve_cmd_input_configs {
             return @input_params;
         }
     }
+    @input_params = ();
 
     $self->status_message("Must write $cmd_display_name input files...");
     my $input = $self->_init_input;
@@ -154,7 +155,6 @@ sub _resolve_cmd_input_configs {
     } while $seqs = $input->read;
     $self->status_message('Write input...OK');
 
-    @input_configs = ();
     for my $config ( @reader_config ) {
         my ($class, $params) = Genome::Model::Tools::Sx::Reader->parse_reader_config($config);
         push @input_params, $params;
