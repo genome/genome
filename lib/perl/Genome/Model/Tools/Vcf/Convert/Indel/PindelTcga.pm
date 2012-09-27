@@ -5,9 +5,9 @@ use warnings;
 use Genome;
 use File::Basename;
 
-class Genome::Model::Tools::Vcf::Convert::Indel::GatkSomaticIndel {
+class Genome::Model::Tools::Vcf::Convert::Indel::PindelTcga {
     is  => 'Genome::Model::Tools::Vcf::Convert::Base',
-    doc => 'Generate a VCF file from GATK somatic indel output',
+    doc => 'Generate a TCGA-compliant VCF file from Pindel output',
     has => [
         column_header => {
             type => 'String',

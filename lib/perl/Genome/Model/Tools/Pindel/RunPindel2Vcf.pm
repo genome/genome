@@ -117,14 +117,13 @@ sub _run_pindel2vcf {
     my $col_header;
 
     while (my $line = $fh->getline) {
-        next unless $line =~ /^#CHROM\s+/;
-        chomp $line;
-        $col_header = $line;
+        next unless $line =~ /^#(CHROM\s+.*)/;
+        $col_header = $1;
         last;
     }
     $fh->close;
 
-    my $cmd = Genome::Model::Tools::Vcf::Convert::Indel::PindelTcga->create(
+    $cmd = Genome::Model::Tools::Vcf::Convert::Indel::PindelTcga->create(
         input_file    => $output.'.tmp',
         output_file   => $output,
         column_header => $col_header,
