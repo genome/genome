@@ -10,6 +10,8 @@ class Genome::Model::Tools::Sx::PhredWriter {
     has => [ qual_file => { is => 'Text', is_optional => 1, }, ],
 };
 
+sub type { return 'phred'; }
+
 sub write {
     my ($self, $seq) = @_;
 
