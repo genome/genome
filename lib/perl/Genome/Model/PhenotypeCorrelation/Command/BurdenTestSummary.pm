@@ -31,29 +31,29 @@ class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
         },
         top_n => {
             is => "Text",
-            doc => "Return the top n most significant genes for each trait",
-        },
-        trait => {
-            is => "Text",
-            doc => "The name of the trait to summarize",
+            doc => "Return the top n most significant genes for each given test",
         },
         test_names => {
             is => "Text",
             doc => "The names of the tests to produce data for (",
             is_many => 1,
         },
+        trait => {
+            is => "Text",
+            doc => "The name of the trait to summarize",
+        },
         clinical_data_file => {
             is => "Text",
-            doc => "The path to the clinical data file used to partition samples into groups (e.g., case/control)",
+            doc => "The path to the clinical data file used to partition samples into groups",
         },
         vcf_file => {
             is => "Text",
-            doc => "The bgzipped vcf file to use",
+            doc => "The bgzipped, tabix indexed, vcf file to use",
         },
         per_site_report_file => {
             is => "Text",
             is_optional => 1,
-            doc => "Path to bgzip-compressed per site callset metrics file",
+            doc => "Path to bgzip-compressed per site callset metrics file (from joinx vcf-report)",
         },
         full_annotation_file => {
             is => "Text",
@@ -123,6 +123,7 @@ sub execute {
 
     # Load annotation and burden test data
     $self->_full_annotation($self->_read_annotation_for_genes($self->full_annotation_file, @genes));
+    $self->_burden_input_annotation($self->_read_annotation_for_genes($self->burden_annotation_file, @genes));
     $self->_burden_input_variant_ids($self->_variant_ids_from_burden_matrix);
 
     # If we've gotten this far, we will need somewhere to write
@@ -145,9 +146,10 @@ sub _process_gene {
 
     # All annotation for this gene
     my $full_annotation = $self->_full_annotation->{$gene};
+    my $burden_input_annotation = $self->_burden_input_annotation->{$gene};
 
     # Build a list of regions we can feed to tabix to create a subset of the big vcf
-    my @all_locations = nsort keys %{{map {$_->{location} => 1} @$full_annotation}};
+    my @all_locations = nsort keys %{{map {$_->{location} => undef} @$full_annotation}};
     my @all_regions = map { my @f = split(":"); "$f[0]:$f[1]-$f[1]"; } @all_locations;
     confess "Failed to find any variants to analyze for gene $gene" unless @all_regions;
 
@@ -159,15 +161,23 @@ sub _process_gene {
     $self->_write_per_site_subset($output_psr, @all_regions) if $self->per_site_report_file;
     $self->_write_burden_summary_subset($gene, $self->trait, $output_burden);
 
+    # Read in the vcf entries we just selected
+    my $vcf = Genome::File::Vcf::Reader->new($output_vcf);
+    my @vcf_entries;
+    while (my $entry = $vcf->next) {
+        push(@vcf_entries, $entry) 
+    }
+
     # Update full annotation information with information from the vcf 
     # this adds COUNT and AF for case/control as well as vcf info fields
-    $self->_update_annotation_with_vcf($full_annotation, $output_vcf);
+    $self->_update_annotation_with_vcf($full_annotation, \@vcf_entries, $vcf->header);
+    $self->_update_annotation_with_vcf($burden_input_annotation, \@vcf_entries, $vcf->header);
 
     # Partition annotation into 3 lists
     my %burden_output_variant_ids = $self->_variant_ids_from_burden_result($gene);
     my ($rare, $deleterious, $common) = $self->_partition_vep_entries(
         $full_annotation, # arrayref of vep entries
-        \%burden_output_variant_ids, # hashref {id => 1} of things that came through the burden test
+        \%burden_output_variant_ids, # hashref {id => undef} of things that came through the burden test
         $self->_burden_input_variant_ids # as above, but things that went into the burden test
         # since the set of output ids comes first, it takes priority.
         );
@@ -183,16 +193,20 @@ sub _process_gene {
     $self->_write_annotation($common, $common_file);
 
     # Create mutation-diagram plots
+    # For now, we need to look at the annotation file produced when the burden matrix is created.
+    my $plot_vep = $self->_output_path($gene, "plot.vep");
+    my ($to_plot, $junk) = $self->_partition_vep_entries($burden_input_annotation, \%burden_output_variant_ids);
+    $self->_write_annotation($to_plot, $plot_vep);
     my $case_plots_dir = join("/", $output_dir, "case_plots");
     my $control_plots_dir = join("/", $output_dir, "control_plots");
-    $self->_make_mutation_diagrams($rare_file, $output_dir, 'case.', 'CASE_COUNT');
-    $self->_make_mutation_diagrams($rare_file, $output_dir, 'control.', 'CONTROL_COUNT');
+    $self->_make_mutation_diagrams($plot_vep, $output_dir, 'case.', 'CASE_COUNT');
+    $self->_make_mutation_diagrams($plot_vep, $output_dir, 'control.', 'CONTROL_COUNT');
 }
 
 # _partition_vep_entries
 # params:
 #   $entries - an arrayref of Genome::File::Vep::Entry
-#   @id_arrays - an array of sets of variant ids (hashrefs: id => 1) 
+#   @id_arrays - an array of sets of variant ids (hashrefs: id => undef) 
 # returns:
 #   n+1 disjoint lists of entries where n = length of @id_arrays.
 #   the last list will catch any entries whose ids are not in any of the supplied sets.
@@ -241,10 +255,10 @@ sub _add_vcf_data_to_vep {
     my $case_count = $case_allele_counts{$alt} || 0;
     my $control_count = $control_allele_counts{$alt} || 0;
 
-    # We really shouldn't see division by zero here...
-    my $case_af = $case_count / $n_case_alleles;
-    my $control_af = $control_count / $n_control_alleles;
+    my $case_af = $n_case_alleles ? $case_count / $n_case_alleles : 0;
+    my $control_af = $n_control_alleles ? $control_count / $n_control_alleles : 0;
 
+    $vep->set_extra_field("REF", $vcf->reference_allele);
     $vep->set_extra_field("CASE_COUNT", $case_count);
     $vep->set_extra_field("CASE_AF", $case_af);
     $vep->set_extra_field("CONTROL_COUNT", $control_count);
@@ -258,18 +272,12 @@ sub _add_vcf_data_to_vep {
 }
 
 sub _update_annotation_with_vcf {
-    my ($self, $annotation, $vcf_file) = @_;
+    my ($self, $annotation, $vcf_entries, $vcf_header) = @_;
 
-    # Read the vcf entries
-    my $vcf = Genome::File::Vcf::Reader->create(name => $vcf_file);
-    $vcf->open($vcf_file);
-    my @vcf_entries;
-    while (my $entry = $vcf->next) {
-        push(@vcf_entries, $entry);
-    }
+    $DB::single=1;
 
     # Get sample names and column offsets
-    my @samples = $vcf->header->sample_names;
+    my @samples = $vcf_header->sample_names;
     my %sample_indices;
     @sample_indices{@samples} = 0..$#samples;
 
@@ -296,7 +304,7 @@ sub _update_annotation_with_vcf {
     }
 
     # Roll through the vcf entries updating any matching annotation we can find
-    for my $site (@vcf_entries) {
+    for my $site (@$vcf_entries) {
         for my $alt ($site->alternate_alleles) {
             my $key = sprintf("%s:%d,%s", $site->chrom, $site->position, $alt);
             next unless exists $anno{$key};
@@ -313,14 +321,14 @@ sub _write_annotation {
 
 sub _read_annotation_for_genes {
     my ($self, $path, @genes) = @_;
-    my %genes = map {$_ => 1} @genes;
+    my %genes = map {$_ => undef} @genes;
 
     $self->status_message("Loading annotation data from $path...");
     my $vep = Genome::File::Vep::Reader->new($path);
     my $result = {};
     while (my $entry = $vep->next) {
         # replace gene name by HGNC field if present
-        if (exists $entry->{extra}{HGNC}) {
+        if (exists $entry->{extra}{HGNC} && $entry->{gene} ne $entry->{extra}{HGNC}) {
             $entry->{gene} = $entry->{extra}{HGNC};
             $entry->{uploaded_variation} = "$entry->{gene}_$entry->{uploaded_variation}";
         }
@@ -475,8 +483,8 @@ sub _top_genes_for_tests {
 
     my @test_names = $self->test_names;
     my $top_n = $self->top_n;
-    print "Finding the $top_n most significant genes for tests:\n"
-        . join("\n", @test_names) . "\n";
+    print "Finding the $top_n most significant genes for tests:\n\t"
+        . join("\n\t", @test_names) . "\n";
 
     my $bs = $self->_burden_summary;
     my @unknown_tests = grep {!exists $bs->{column_indices}->{$_}} @test_names;

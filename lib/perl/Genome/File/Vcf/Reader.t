@@ -45,10 +45,9 @@ my $vcf_fh = new IO::String(<<EOS
 EOS
 );
 
-my $reader = $pkg->create(name => "Test");
-$reader->fhopen($vcf_fh);
+my $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
 
-my $header = $reader->header;
+my $header = $reader->{header};
 ok($header, "Got vcf header");
 is_deeply([$header->sample_names], [map {"NA0000$_"} 1..3], "Header has expected sample names");
 my $entry = $reader->next;

@@ -280,4 +280,9 @@ sub allelic_distribution {
     return ($total, %counts);
 }
 
+sub is_filtered {
+    my $self = shift;
+    return $self->filter && grep { $_ && $_ ne "PASS" && $_ ne "."} $self->filter;
+}
+
 1;

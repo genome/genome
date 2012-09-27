@@ -241,6 +241,8 @@ sub _parse_vep_annotation {
             next unless $transcript;
             #add to the data hash for later graphing
             my ($orig_aa, $new_aa) = split("/", $aa_change);
+            $orig_aa |= '';
+            $new_aa |= '';
             my $mutation = join($protein_pos, $orig_aa, $new_aa);
             next if $mutation eq '--';
             my $extra = _get_vep_extra_fields_hash($fields[-1]);

@@ -26,15 +26,23 @@ class Genome::File::Vcf::Reader {
     ],
 };
 
-sub open {
-    my ($self, $path) = @_;
-    return $self->fhopen(Genome::Sys->open_file_for_reading($path));
+sub new {
+    my ($class, $path) = @_;
+    return $class->fhopen(Genome::Sys->open_file_for_reading($path));
 }
 
 sub fhopen {
-    my ($self, $fh) = @_;
-    $self->filehandle($fh);
+    my ($class, $fh, $name) = @_;
+    $name |= "unknown vcf file";
+    my $self = {
+        name => $name,
+        filehandle => $fh,
+        _header => 0,
+        _line_buffer => [],
+    };
+    bless $self, $class;
     $self->_parse_header();
+    return $self;
 }
 
 sub _parse_header {
@@ -43,37 +51,40 @@ sub _parse_header {
     my $name = $self->name;
     my $fh = $self->filehandle;
 
-    $self->_line_buffer([]);
-
     while (my $line = $fh->getline) {
         chomp $line;
         if ($line =~ /^#/) {
             push(@lines, $line);
         } else {
-            push(@{$self->_line_buffer}, $line);
+            push(@{$self->{_line_buffer}}, $line);
             last;
         }
     }
     confess "No vcf header found in file $name" unless @lines;
-    $self->header(Genome::File::Vcf::Header->create(lines => \@lines));
+    $self->{header} = Genome::File::Vcf::Header->create(lines => \@lines);
 }
 
 sub next {
     my $self = shift;
     my $line;
-    if (@{$self->_line_buffer}) {
-        $line = shift @{$self->_line_buffer};
+    if (@{$self->{_line_buffer}}) {
+        $line = shift @{$self->{_line_buffer}};
     } else {
-        $line = $self->filehandle->getline;
+        $line = $self->{filehandle}->getline;
     }
     chomp $line if $line;
     return unless $line;
 
     my $entry = Genome::File::Vcf::Entry->create(
         id => $line,
-        header => $self->header
+        header => $self->{header}
     );
     return $entry;
+}
+
+sub header {
+    my $self = shift;
+    return $self->{header};
 }
 
 1;

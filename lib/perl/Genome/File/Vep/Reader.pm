@@ -15,7 +15,7 @@ sub new {
 
 sub fhopen {
     my ($class, $fh, $name) = @_;
-    $name |= "unknown file path";
+    $name |= "unknown vep file";
     my $header_txt = $fh->getline;
     while ($header_txt =~ /^##/) {
         $header_txt = $fh->getline;

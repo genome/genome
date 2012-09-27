@@ -94,4 +94,14 @@ is($entry->info_for_allele("G", "C"), 9, "info_for_allele 2");
 is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_for_allele (all fields)");
 is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
 
+ok(!$entry->is_filtered, "not filtered");
+$entry->filter(["PASS"]);
+ok(!$entry->is_filtered, "PASS != filtered");
+$entry->filter(["."]);
+ok(!$entry->is_filtered, ". != filtered");
+$entry->filter([]);
+ok(!$entry->is_filtered, "undef != filtered");
+$entry->filter(["x"]);
+ok($entry->is_filtered, "something else == filtered");
+
 done_testing();
