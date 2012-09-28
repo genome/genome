@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use Carp;
 
+use Data::Dumper;
+
 class Genome::Disk::Volume {
     table_name => 'DISK_VOLUME',
     id_by => [
@@ -17,24 +19,80 @@ class Genome::Disk::Volume {
         mount_path => { is => 'Text' },
         disk_status => { is => 'Text' },
         can_allocate => { is => 'Number' },
+
         total_kb => { is => 'Number' },
         total_gb => {
             calculate_from => 'total_kb',
             calculate => q{ return int($total_kb / (2**20)) },
         },
-        unallocated_kb => { is => 'Number' },
+
+        soft_limit_kb => {
+            calculate_from => 'total_kb',
+            calculate => q{ return int($total_kb * 0.95); },
+        },
+        soft_limit_gb => {
+            calculate_from => 'soft_limit_kb',
+            calculate => q{ return int($soft_limit_kb / (2**20)) },
+        },
+        hard_limit_kb => {
+            calculate_from => 'total_kb',
+            calculate => q{ return int($total_kb * 0.98); },
+        },
+        hard_limit_gb => {
+            calculate_from => 'hard_limit_kb',
+            calculate => q{ return int($hard_limit_kb / (2**20)) },
+        },
+
+        unallocated_kb => {
+            calculate_from => ['total_kb', 'allocated_kb'],
+            calculate => q{ $self = shift;
+                            Carp::cluck('Cannot set calculated unallocated_kb') if (@_);
+                            return $total_kb - $allocated_kb;
+            },
+        },
+        old_unallocated_kb => {
+            is => 'Number',
+            default_value => 0,
+            column_name => 'unallocated_kb',
+        },
         unallocated_gb => {
             calculate_from => 'unallocated_kb',
             calculate => q{ return int($unallocated_kb / (2**20)) },
         },
-        allocated_kb => { 
-            calculate_from => ['total_kb','unallocated_kb'],
-            calculate => q{ return ($total_kb - $unallocated_kb); },
+
+        allocated_kb => {
+            calculate_from => ['mount_path'],
+            calculate => q|
+                my $dbh = Genome::DataSource::GMSchema->get_default_handle();
+                my $query_string = 'select sum(kilobytes_requested) from mg.genome_disk_allocation where mount_path = ?';
+                my $query_handle = $dbh->prepare($query_string);
+                $query_handle->bind_param(1, $mount_path);
+                $query_handle->execute();
+
+                my $row_arrayref = $query_handle->fetchrow_arrayref();
+                $query_handle->finish();
+                unless (defined $row_arrayref) {
+                    Genome::Disk::Volume->error_message("Could not calculate allocated kb from database.");
+                }
+                unless (1 == scalar(@$row_arrayref)) {
+                    Genome::Disk::Volume->error_message(sprintf(
+                        "Incorrect number of elements returned from SQL query (%s) expected 1.",
+                        scalar(@$row_arrayref))
+                    );
+                }
+
+                return ($row_arrayref->[0] or 0);
+            |,
+        },
+        old_allocated_kb => {
+            calculate_from => ['total_kb', 'old_unallocated_kb'],
+            calculate => q{ return $total_kb - $old_unallocated_kb; },
         },
         percent_allocated => {
             calculate_from => ['total_kb', 'allocated_kb'],
             calculate => q{ return sprintf("%.2f", ( $allocated_kb / $total_kb ) * 100); },
         },
+
         used_kb => {
             calculate_from => ['mount_path'],
             calculate => sub {
@@ -48,6 +106,7 @@ class Genome::Disk::Volume {
             calculate_from => ['total_kb', 'used_kb'],
             calculate => q{ return sprintf("%.2f", ( $used_kb / $total_kb ) * 100); },
         },
+
         unallocatable_reserve_size => {
             calculate_from => ['total_kb', 'unallocatable_volume_percent', 'maximum_reserve_size'],
             calculate => q{
@@ -78,6 +137,7 @@ class Genome::Disk::Volume {
             calculate_from => 'allocatable_kb',
             calculate => q{ return int($allocatable_kb / (2**20)) },
         },
+
         unallocatable_volume_percent => {
             is => 'Number',
             is_constant => 1,
@@ -92,6 +152,7 @@ class Genome::Disk::Volume {
             column_name => '',
             value => '.02',
         },
+
         maximum_reserve_size => {
             is => 'Number',
             is_constant => 1,
@@ -100,6 +161,7 @@ class Genome::Disk::Volume {
             value => 1_073_741_824,
         },
     ],
+
     has_many_optional => [
         disk_group_names => {
             via => 'groups',
@@ -146,7 +208,6 @@ sub create_dummy_volume {
         $params{mount_path} = File::Temp::tempdir( 'tempXXXXX', TMPDIR => 1, CLEANUP => 1 );
         $volume = Genome::Disk::Volume->__define__(
             mount_path => $params{mount_path},
-            unallocated_kb => 104857600, # 100 GB
             total_kb => 104857600,
             can_allocate => 1,
             disk_status => 'active',

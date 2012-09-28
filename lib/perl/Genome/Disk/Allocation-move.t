@@ -96,6 +96,7 @@ my $rv = $allocation->move(
 ok($rv, 'successfully moved allocation');
 my $new_path = $allocation->absolute_path;
 is($allocation->mount_path, $volumes[1]->mount_path, 'allocation has expected mount path');
+printf("original mount path = %s\n", $original_path);
 ok(!(-d $original_path), 'original allocation path no longer exists after move');
 ok(-d $new_path, 'new path exists, as expected');
 
