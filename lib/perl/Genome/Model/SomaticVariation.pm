@@ -50,6 +50,11 @@ class Genome::Model::SomaticVariation {
             default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
             valid_values => [ 0,1,2,3],
         },
+        filter_previously_discovered_variants => {
+            doc => '',
+            default_value => 0,
+            is => 'Boolean',
+        },
    ],
     has => [
        tumor_model_id => {

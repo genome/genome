@@ -281,12 +281,18 @@ sub params_for_result {
         return; #can't create a result for old things
     }
 
+    my $skip = 1;
+    if ($build->processing_profile->filter_previously_discovered_variants) {
+        $skip = 0;
+    }
+
     return (
         prior_result_id => $prior_result->id,
         previously_discovered_result_id => $previously_discovered_result->id,
         classifier_version => 1,
         variant_type => $variant_type,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        skip_filtering => $skip,
     );
 }
 
