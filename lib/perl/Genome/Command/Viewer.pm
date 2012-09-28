@@ -33,7 +33,7 @@ sub execute {
     $handle->fdopen(fileno(STDOUT), 'w');
 
     $self->write_report($screen_width, $handle);
-    1;
+    return 1;
 }
 
 sub get_report {
@@ -58,4 +58,4 @@ sub _color {
     }
 }
 
-
+1;
