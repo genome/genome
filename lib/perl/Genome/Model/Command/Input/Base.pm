@@ -105,7 +105,7 @@ sub unique_values_from_property_for_filter {
 sub show_inputs_and_values_for_model {
     my ($self, $model) = @_;
 
-    my $names = Genome::Model::Command::Input::Show->create(model => $model->id);
+    my $names = Genome::Model::Command::Input::Show->create(model => $model);
     $names->dump_status_messages(1);
     $names->execute;
 
