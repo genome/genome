@@ -1244,8 +1244,45 @@ sub _get_group_subdir_from_full_path_and_mount_path {
 # Checks for allocations beneath this one, which is also invalid
 sub _verify_no_child_allocations {
     my ($class, $path) = @_;
+
     $path =~ s/\/+$//;
-    return !($class->_get_child_allocations($path));
+
+    my $query_template = <<EOQ;
+select *
+from %s
+where
+    allocation_path like ?
+%s
+EOQ
+
+    my $query_string;
+    if (Genome::DataSource::GMSchema->isa('UR::DataSource::Oracle')) {
+        $query_string = sprintf($query_template,
+            "mg.genome_disk_allocation", "    and rownum <= 1");
+    } elsif (Genome::DataSource::GMSchema->isa('UR::DataSource::Pg')) {
+        $query_string = sprintf($query_template,
+            "genome.disk.allocation", "limit 1");
+    } else {
+        $class->error_message("Falling back on old child allocation detection behavior.");
+        return !($class->_get_child_allocations($path));
+    }
+
+    my $dbh = Genome::DataSource::GMSchema->get_default_handle();
+    my $query_object = $dbh->prepare($query_string);
+    $query_object->bind_param(1, $path . "/%");
+    $query_object->execute();
+
+    my $row_arrayref = $query_object->fetchrow_arrayref();
+    my $err = $dbh->err;
+    my $errstr = $dbh->errstr;
+    $query_object->finish();
+
+    if ($err) {
+        die $class->error_message(sprintf(
+                "Could not verify no child allocations: %s", $errstr));
+    }
+
+    return !defined $row_arrayref;
 }
 
 sub _get_child_allocations {
