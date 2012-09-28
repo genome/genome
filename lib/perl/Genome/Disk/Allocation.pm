@@ -294,7 +294,7 @@ sub _create {
         confess "Can only allocate disk in apipe disk groups, not $disk_group_name. Apipe groups are: " . join(", ", @APIPE_DISK_GROUPS);
     }
 
-    if (-e $ENV{GENOME_DB_PAUSE}) {
+    if ($ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE}) {
         print "Database updating has been paused; not going to attempt to allocate disk until the pause is released. Please stand by...\n";
 
         while (1) {

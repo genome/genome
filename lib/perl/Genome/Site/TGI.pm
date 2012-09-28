@@ -112,7 +112,9 @@ $ENV{GENOME_TEST_TEMP} ||= '/gsc/var/cache/testsuite/running_testsuites';
 $ENV{GENOME_TEST_URL} ||= 'https://gscweb.gsc.wustl.edu/gscmnt/gc4096/info/test_suite_data/';
 
 # configure file that signals that database updates should be paused
-$ENV{GENOME_DB_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_updates';
+if (!$ENV{UR_DBI_NO_COMMIT}) {
+    $ENV{GENOME_DB_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_updates';
+}
 
 # configure our local ensembl db
 $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD} ||= '122704720';
