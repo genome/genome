@@ -154,7 +154,12 @@ sub run_parse {
     my $total_records = 0;
 
     # get a Taxon from a Bio::DB::Taxonomy object
-    my $dbh_sqlite = DBI->connect("dbi:SQLite:/gscmnt/sata835/info/medseq/virome/taxonomy_db");
+    my $taxonomy_db = $self->taxonomy_db;
+    if ( not $taxonomy_db or not -s $taxonomy_db ) {
+        $self->log_event('Taxonomy db file is missing or empty');
+        return;
+    }
+    my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
     my $tax_dir = File::Temp::tempdir (CLEANUP => 1);
     my $dbh = Bio::DB::Taxonomy->new(-source => 'flatfile',
 				 -directory=> "$tax_dir",

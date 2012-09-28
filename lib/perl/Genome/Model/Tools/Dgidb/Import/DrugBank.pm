@@ -22,7 +22,7 @@ class Genome::Model::Tools::Dgidb::Import::DrugBank {
         },
         tmp_dir => {
             is => 'Path',
-            default => '/tmp',
+            default => '/tmp/',
             doc => 'Directory where temp files will be created',
         },
         verbose => {
@@ -31,6 +31,13 @@ class Genome::Model::Tools::Dgidb::Import::DrugBank {
             is_optional => 1,
             default => 0,
             doc => 'Print more output while running',
+        },
+        skip_pubchem => {
+            is => 'Boolean',
+            is_input => 1,
+            is_optional => 1,
+            default => 0,
+            doc => 'Skip _destroy_and_rebuild_pubchem_and_drug_groups step',
         },
         drugs_outfile => {
             is => 'Path',
@@ -118,11 +125,16 @@ Add official 'EntrezGene' name to each gene record
 HELP
 }
 
+my %UniProtMapping;
+
 sub execute {
     my $self = shift;
+    %UniProtMapping=%{$self->getUniprotEntrezMapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
     $self->input_to_tsv();
     $self->import_tsv();
-    $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    unless ($self->skip_pubchem){
+        $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    }
     return 1;
 }
 
@@ -143,17 +155,17 @@ sub _import_drug {
     my $citation = shift;
     my $drug_name = $self->_create_drug_name_report($interaction->{drug_id}, $citation, 'DrugBank Drug Identifier', '');
     my $drug_name_alt = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_id}, 'DrugBank Drug Id', '');
-    my $primary_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary DrugBank Drug Name', '');
+    my $primary_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary Drug Name', '');
 
     my @drug_synonyms = split(', ', $interaction->{drug_synonyms});
     for my $drug_synonym (@drug_synonyms){
-        next if $drug_synonym eq 'na';
+        next if $drug_synonym eq 'N/A';
         my $drug_name_association = $self->_create_drug_alternate_name_report($drug_name, $drug_synonym, 'Drug Synonym', '');
     }
 
     my @drug_brands = split(', ', $interaction->{drug_brands});
     for my $drug_brand (@drug_brands){
-        next if $drug_brand eq 'na';
+        next if $drug_brand eq 'N/A';
         my ($brand, $manufacturer) = split(/ \(/, $drug_brand); 
         if ($manufacturer){
             $manufacturer =~ s/\)// ;
@@ -163,23 +175,23 @@ sub _import_drug {
         my $drug_name_association = $self->_create_drug_alternate_name_report($drug_name, $drug_brand, $manufacturer, '');
     }
 
-    unless($interaction->{drug_type} eq 'na'){
+    unless($interaction->{drug_type} eq 'N/A'){
         my $drug_name_category_association = $self->_create_drug_category_report($drug_name, 'Drug Type', $interaction->{drug_type}, '');
     }
 
-    unless($interaction->{drug_cas_number} eq 'na'){
+    unless($interaction->{drug_cas_number} eq 'N/A'){
         my $drug_name_cas_number = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_cas_number}, 'CAS Number', '');
     }
 
     my @drug_categories = split(', ', $interaction->{drug_categories});
     for my $drug_category (@drug_categories){
-        next if $drug_category eq 'na';
+        next if $drug_category eq 'N/A';
         my $category_association = $self->_create_drug_category_report($drug_name, 'Drug Category', $drug_category, '');
     }
 
     my @drug_groups = split(', ', $interaction->{drug_groups});
     for my $drug_group (@drug_groups){
-        next if $drug_group eq 'na';
+        next if $drug_group eq 'N/A';
         my $group_association = $self->_create_drug_category_report($drug_name, 'Drug Group', $drug_group, '');
     }
 
@@ -195,20 +207,28 @@ sub _import_gene {
     my $uniprot_id = $interaction->{uniprot_id};
     my $entrez_id = $interaction->{entrez_id};
     my $ensembl_id = $interaction->{ensembl_id};
-
-    return if $uniprot_id eq 'na' and $gene_symbol eq 'na'; #if the gene has no gene_symbol or uniprot_id, it isn't a "real" gene. Do not make a gene for this non gene
+    #If a gene has no gene_symbol or uniprot_id, it isn't a "real" gene. Do not make a gene for this non gene
+    if ($uniprot_id eq 'N/A' and $gene_symbol eq 'N/A'){
+      return;
+    }
+    #If a uniprot ID is present, but doesn't map to a human entrez id (all that is attempted) then it is probably not human, don't import
+    if ($uniprot_id and ($uniprot_id ne 'N/A')){
+        unless ($UniProtMapping{$uniprot_id}){
+          return;
+        }     
+    }
     my $gene_name = $self->_create_gene_name_report($gene_partner_id, $citation, 'Drugbank Partner Id', '');
-    my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '');
-    unless ($gene_symbol eq 'na'){
-        my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Gene Symbol', '');
+    #my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '');
+    unless ($gene_symbol eq 'N/A'){
+        my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Drugbank Gene Name', '');
     }
-    unless ($uniprot_id eq 'na'){
-        my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Id', '');
+    unless ($uniprot_id eq 'N/A'){
+        my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Accession', '');
     }
-    unless ($entrez_id eq 'na'){
+    unless ($entrez_id eq 'N/A'){
         my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $entrez_id, 'Entrez Gene Id', '');
     }
-    unless ($ensembl_id eq 'na'){
+    unless ($ensembl_id eq 'N/A'){
         my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '');
     }
     return $gene_name;
@@ -219,7 +239,7 @@ sub import_interactions {
     my $interaction_outfile = shift;
     my $citation = shift;
     my @interactions;
-    my @headers = qw/ interaction_count drug_id drug_name drug_synonyms drug_cas_number drug_brands drug_type drug_groups drug_categories partner_id known_action target_actions gene_symbol uniprot_id /;
+    my @headers = qw/ interaction_count drug_id drug_name drug_synonyms drug_cas_number drug_brands drug_type drug_groups drug_categories partner_id known_action target_actions gene_symbol uniprot_id entrez_id ensembl_id /;
     my $parser = Genome::Utility::IO::SeparatedValueReader->create(
         input => $interaction_outfile,
         headers => \@headers,
@@ -248,12 +268,15 @@ sub preload_objects {
     my $self = shift;
     my $source_db_name = 'DrugBank';
     my $source_db_version = $self->version;
-
+    my $verbose = $self->verbose;
+    if ($verbose){
+        print BLUE, "\nAttempting to preload objects\n", RESET;
+    }
     #Let's preload anything for this database name and version so that we can avoid death by 1000 queries
     my @gene_names = Genome::DruggableGene::GeneNameReport->get(source_db_name => $source_db_name, source_db_version => $source_db_version);
     for my $gene_name (@gene_names){
         $gene_name->gene_alt_names;
-        $gene_name->gene_name_category_report_associations;
+        $gene_name->gene_categories;
     }
     my @drug_names = Genome::DruggableGene::DrugNameReport->get(source_db_name => $source_db_name, source_db_version => $source_db_version);
     for my $drug_name (@drug_names){
@@ -265,7 +288,6 @@ sub preload_objects {
     for my $interaction (@interactions){
         $interaction->interaction_attributes;
     }
-
     return 1;
 }
 
@@ -289,7 +311,6 @@ sub input_to_tsv {
     #Also actually specify the primary IDs you would like the resultng data structures to be keyed on ('drugbank-id' for drug records, 'id' for gene partners)
     my $xml = $xs1->XMLin($infile, KeyAttr => ['drugbank-id', 'id'] );
 
-
     #Get the 'drug' tree
     my $info_source = "DrugBank";
     my $drugs = $xml->{'drug'};
@@ -298,9 +319,6 @@ sub input_to_tsv {
     #Unfortunately, the primary key of this tree is the gene name but drug intereactions seem to be linked by 'partner id'
     #This means that we can not directly look up partner records for each drug.  We must traverse the partner hash for each drug (slow) or create a new data structure that is keyed in partner ID
     my $partners = $xml->{'partners'};
-
-    #Load UniProt to Entrez mapping information from file - This will be used to obtain Entrez IDs from UniProt accessions provided in Drugbank records
-    my %UniProtMapping=%{$self->getUniprotEntrezMapping()};
 
     #Build a new simpler partners object for convenience - since it is keyed on partner ID we could access directly as well...
     my $partners_lite = $self->organizePartners('-partner_ref'=>$partners);
@@ -337,7 +355,7 @@ sub input_to_tsv {
         }
 
         #Get the cas_number
-        my $drug_cas_number = 'na';
+        my $drug_cas_number = 'N/A';
         unless(ref($drugs->{$drug_id}->{'cas-number'})){
             $drug_cas_number = $drugs->{$drug_id}->{'cas-number'};
         }
@@ -424,12 +442,10 @@ sub input_to_tsv {
             my $uniprotkb = $partners_lite->{$target_pid}->{uniprotkb};
 
             #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
-            my $entrez_id = "na";
-            if ($UniProtMapping{$uniprotkb}{entrez_id}){
+            my $entrez_id = "N/A";
+            my $ensembl_id = "N/A";
+            if ($UniProtMapping{$uniprotkb}){
               $entrez_id = $UniProtMapping{$uniprotkb}{entrez_id};
-            }
-            my $ensembl_id = "na";
-            if ($UniProtMapping{$uniprotkb}{ensembl_id}){
               $ensembl_id = $UniProtMapping{$uniprotkb}{ensembl_id};
             }
 
@@ -447,12 +463,10 @@ sub input_to_tsv {
         my $gene_symbol = $partners_lite->{$pid}->{gene_symbol};
         my $uniprot_id = $partners_lite->{$pid}->{uniprotkb};
         #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
-        my $entrez_id = "na";
-        if ($UniProtMapping{$uniprot_id}{entrez_id}){
+        my $entrez_id = "N/A";
+        my $ensembl_id = "N/A";
+        if ($UniProtMapping{$uniprot_id}){
           $entrez_id = $UniProtMapping{$uniprot_id}{entrez_id};
-        }
-        my $ensembl_id = "na";
-        if ($UniProtMapping{$uniprot_id}{ensembl_id}){
           $ensembl_id = $UniProtMapping{$uniprot_id}{ensembl_id};
         }
         my $targets_line = "$pid\t$gene_symbol\t$uniprot_id\t$entrez_id\t$ensembl_id";
@@ -493,7 +507,7 @@ sub parseTree{
         if (defined($value)){
             push(@values, $value);
         }else{
-            push(@values, "na");
+            push(@values, "N/A");
         }
     }else{
         foreach my $x (@{$ref}){
@@ -501,7 +515,7 @@ sub parseTree{
             if (defined($value)){
                 push(@values, $value);
             }else{
-                push(@values, "na");
+                push(@values, "N/A");
             }
         }
     }
@@ -535,7 +549,7 @@ sub organizePartners{
             $gene_symbol = $gene_symbol_r;
         }
         unless ($gene_symbol){
-            $gene_symbol = "na";
+            $gene_symbol = "N/A";
         }
 
         #Get the gene name
@@ -547,7 +561,7 @@ sub organizePartners{
             $gene_name = $gene_name_r;
         }
         unless ($gene_name){
-            $gene_name = "na";
+            $gene_name = "N/A";
         }
 
         if ($verbose){
@@ -581,7 +595,7 @@ sub organizePartners{
                 }
             }
         }
-        my $uniprotkb = "na";
+        my $uniprotkb = "N/A";
         if ($external_ids{'UniProtKB'}){
             $uniprotkb = $external_ids{'UniProtKB'};
         }
@@ -602,6 +616,37 @@ sub organizePartners{
 #}
 
     return(\%p_lite);
+}
+
+sub getUniprotEntrezMapping {
+    my $self = shift;
+    #Get mapping of Uniprot Accessions to Entrez IDs, etc
+    #These can be obtained from here:
+    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/ 
+    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz
+    print "\nAttempting download of UniProt mapping file\n";
+    my $mapping_file_url="ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz";
+    my $mapping_file_name="HUMAN_9606_idmapping_selected.tab.gz";
+    my $mapping_file_path = $self->download_file('-mapping_file_url'=>$mapping_file_url, '-mapping_file_name'=>$mapping_file_name);
+
+    print "\nParsing Uniprot mapping file\n";
+    my %UniProtMapping;
+    open (MAPPING, $mapping_file_path) or die "can't open $mapping_file_path\n";
+    while (<MAPPING>){
+      my @data=split("\t",$_);
+      my $uniprot_acc=$data[0];
+      my $uniprot_id=$data[1];
+      my $entrez_id=$data[2];
+      my $ensembl_id=$data[19];
+      unless ($uniprot_id){$uniprot_id="N/A";}
+      unless ($entrez_id){$entrez_id="N/A";}
+      unless ($ensembl_id){$ensembl_id="N/A";}
+      $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
+      $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
+      $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;
+  }
+close MAPPING;
+return(\%UniProtMapping);
 }
 
 sub download_file {
@@ -630,37 +675,5 @@ sub download_file {
     print "Downloaded $targetfilepath\n";
     return $targetfilepath;
 }
-
-sub getUniprotEntrezMapping {
-    my $self = shift;
-    #Get mapping of Uniprot Accessions to Entrez IDs, etc
-    #These can be obtained from here:
-    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/ 
-    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz
-    print "\nAttempting download of UniProt mapping file\n";
-    my $mapping_file_url="ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz";
-    my $mapping_file_name="HUMAN_9606_idmapping_selected.tab.gz";
-    my $mapping_file_path = $self->download_file('-mapping_file_url'=>$mapping_file_url, '-mapping_file_name'=>$mapping_file_name);
-
-    print "\nParsing Uniprot mapping file\n";
-    my %UniProtMapping;
-    open (MAPPING, $mapping_file_path) or die "can't open $mapping_file_path\n";
-    while (<MAPPING>){
-      my @data=split("\t",$_);
-      my $uniprot_acc=$data[0];
-      my $uniprot_id=$data[1];
-      my $entrez_id=$data[2];
-    unless ($entrez_id){$entrez_id="NA";}
-    my $ensembl_id=$data[19];
-    unless ($ensembl_id){$ensembl_id="NA";}
-    $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
-    $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
-    $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;
-  }
-close MAPPING;
-return(\%UniProtMapping);
-}
-
-
 
 1;

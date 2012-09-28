@@ -564,7 +564,20 @@ sub _index_queue_callback {
     my $meta = $object->__meta__;
     my @trigger_properties = ('create', 'delete', $meta->all_property_names);
     if (grep { $aspect eq $_ } @trigger_properties) {
-        # TODO try using is_loaded insteaf of get to reduce redundancy in the queue
+        $index_queue = Genome::Search->queue_for_update($object);
+    }
+
+    return $index_queue;
+}
+
+sub queue_for_update {
+    my $class = shift;
+    my @objects = @_;
+
+    return unless @objects;
+
+    my @index_queues;
+    for my $object (@objects) {
         my %create_params = (
             subject_id => $object->id,
             subject_class => $object->class,
@@ -572,10 +585,15 @@ sub _index_queue_callback {
         if ($object->class->can('search_index_queue_priority')) {
             $create_params{priority} = $object->class->search_index_queue_priority;
         }
-        $index_queue = Genome::Search::Queue->create(%create_params);
+        my $index_queue = Genome::Search::Queue->create(%create_params);
+        push @index_queues, $index_queue;
     }
 
-    return $index_queue;
+    if(@objects == 1) {
+        return $index_queues[0];
+    } else {
+        return @index_queues;
+    }
 }
 
 my $observer;

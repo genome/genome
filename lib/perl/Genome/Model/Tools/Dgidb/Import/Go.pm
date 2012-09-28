@@ -15,11 +15,12 @@ class Genome::Model::Tools::Dgidb::Import::Go {
     has => {
         go_term_file => {
             is => 'Path',
-            doc => '', #TODO: fill me in
+            is_input => 1,
+            doc => 'Path to GO term file (provides DGIDB Human Readable Names for GO terms)', 
         },
         tmp_dir => {
             is => 'Path',
-            default => '/tmp',
+            default => '/tmp/',
             doc => 'Directory where the go xml files will be downloaded',
         },
         genes_outfile => {
@@ -38,7 +39,7 @@ class Genome::Model::Tools::Dgidb::Import::Go {
             default => "Gene ontology: tool for the unification of biology. The Gene Ontology Consortium. Ashburner M, Ball CA, ..., Rubin GM, Sherlock G. Nat Genet. 2000 May;25(1):25-9. PMID: 10802651.",
         },
     },
-    doc => 'Parse an XML database file from DrugBank',
+    doc => 'Parse XML files from GO',
 };
 
 sub _doc_license {
@@ -79,6 +80,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
+    gmt dgidb import go --version="30-Aug-2012" --go-term-file=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/GO/TargetGoTerms.tsv
 HELP
 }
 

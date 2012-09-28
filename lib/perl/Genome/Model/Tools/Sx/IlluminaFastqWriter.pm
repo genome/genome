@@ -9,6 +9,8 @@ class Genome::Model::Tools::Sx::IlluminaFastqWriter {
     is => 'Genome::Model::Tools::Sx::FastqWriter',
 };
 
+sub type { return 'illumina'; }
+
 sub write {
     my ($self, $seq) = @_;
     # sanger to illumina

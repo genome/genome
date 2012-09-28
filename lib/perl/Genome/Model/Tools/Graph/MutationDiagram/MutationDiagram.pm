@@ -43,22 +43,34 @@ sub new {
         _annotation_format => $arg{annotation_format},
         _basename => $arg{basename} || '',
         _reference_transcripts => $arg{reference_transcripts} || '',
+        _annotation_build_id => $arg{annotation_build_id} || '',
         _output_directory => $arg{output_directory} || '.',
+        _vep_frequency_field => $arg{vep_frequency_field},
     };
 
-    my ($model_name, $version) = split('/', $self->{_reference_transcripts});
-    my $model = Genome::Model->get(name => $model_name);
-    unless ($model){
-        $self->error_message("couldn't get reference transcripts set for $model_name");
+    if ($self->{_annotation_build_id}) {
+        $self->{_build} = Genome::Model::Build->get($self->{_annotation_build_id});
+    }
+    elsif ($self->{_reference_transcripts}) {
+        my ($model_name, $version) = split('/', $self->{_reference_transcripts});
+        my $model = Genome::Model->get(name => $model_name);
+        unless ($model){
+            $self->error_message("couldn't get reference transcripts set for $model_name");
+            return;
+        }
+        my $build = $model->build_by_version($version);
+        $self->{_build} = $build;
+    }
+    else {
+        confess "No value supplied for reference_transcripts or annotation_build_id, abort!";
+    }
+
+    unless ($self->{_build}){
+        $self->error_message("couldn't load reference trascripts set");
         return;
     }
-    my $build = $model->build_by_version($version);
-    unless ($build){
-        $self->error_message("couldn't get build from reference transcripts set $model_name");
-        return;
-    }
-    $self->{_build} = $build;
-    $self->{_reference_build_id} = $build->reference_sequence_id;
+    $self->{_reference_build_id} = $self->{_build}->reference_sequence_id;
+    print STDERR "Using reference transcripts " . $self->{_build}->name . "\n";
 
     my @custom_domains =();
     if(defined($arg{custom_domains})) {
@@ -116,7 +128,7 @@ sub _get_transcript_and_domains {
             ));
     }
     if (!defined $transcript) {
-        warn "No transcript found for $transcript_name rb:$self->{_reference_build_id}";
+        warn "No transcript found for $transcript_name";
         return;
     }
 
@@ -154,6 +166,9 @@ sub _add_mutation {
     my $mutation = $params{mutation};
     my $class = $params{class};
     my $domains = $params{domains};
+    my $frequency = $params{frequency} || 1;
+
+    print STDERR "Adding mutation $hugo $transcript_name $mutation\n";
 
     $data->{$hugo}{$transcript_name}{length} = $protein_length;
     push @{$data->{$hugo}{$transcript_name}{domains}}, @$domains;
@@ -166,7 +181,7 @@ sub _add_mutation {
                 class => $class,
             };
         }
-        $data->{$hugo}{$transcript_name}{mutations}{$mutation}{frequency} += 1;
+        $data->{$hugo}{$transcript_name}{mutations}{$mutation}{frequency} += $frequency;
     }
 }
 
@@ -190,6 +205,11 @@ sub _get_vep_mutation_class {
     my @priorities = @VEP_MUTATION_PRIORITIES{@type_matches};
     my $idx = argmin(@priorities);
     return $type_matches[$idx];
+}
+
+sub _get_vep_extra_fields_hash {
+    my $extra = shift;
+    return { map { split("=") } split(";", $extra) }
 }
 
 sub _parse_vep_annotation {
@@ -221,7 +241,14 @@ sub _parse_vep_annotation {
             next unless $transcript;
             #add to the data hash for later graphing
             my ($orig_aa, $new_aa) = split("/", $aa_change);
+            $orig_aa |= '';
+            $new_aa |= '';
             my $mutation = join($protein_pos, $orig_aa, $new_aa);
+            next if $mutation eq '--';
+            my $extra = _get_vep_extra_fields_hash($fields[-1]);
+            my $frequency = 1;
+            $frequency = $extra->{$self->{_vep_frequency_field}} if exists $extra->{$self->{_vep_frequency_field}};
+            next if !$frequency;
 
             $self->_add_mutation(
                 hugo => $hugo,
@@ -230,7 +257,8 @@ sub _parse_vep_annotation {
                 protein_position => $protein_pos,
                 mutation => $mutation,
                 class => $class,
-                domains => \@domains
+                domains => \@domains,
+                frequency => $frequency
             );
         }
     }

@@ -346,14 +346,18 @@ sub _execute_build {
     #notify which VCF
     $self->status_message("Input VCF: " . $self->multisample_vcf);
 
-    my $samples = $self->sample_intersection;
-    confess "The intersection of samples in the vcf file, population group, and clinical data is empty!" unless @$samples;
-
     #Do annotation based on available inputs
     my $annotated_vcf = $self->_annotate_multisample_vcf($self->output_directory);
     if($annotated_vcf) {
         $self->status_message("Finished annotating the VCF. The following VCF will be used for further analysis: $annotated_vcf"); #the annotate method updates that 
         $self->multisample_vcf($annotated_vcf);
+        my $cmd = Genome::Model::Tools::Tabix::Index->create(
+            input_file => $annotated_vcf,
+            preset => 'vcf',
+        );
+        if (!$cmd->execute) {
+            confess "Failed to create tabix index for file $annotated_vcf";
+        }
     }
     
     # Continue with analysis of the multisample_vcf
@@ -372,6 +376,11 @@ sub _execute_build {
         $self->error_message("No statistical analysis requested.");
         return 1;
     }
+
+    # check that the samples match everywhere they need to
+    my $samples = $self->sample_intersection;
+    confess "The intersection of samples in the vcf file, population group, and clinical data is empty!" unless @$samples;
+
 
     #FIXME Commenting out the delegate class bit until the upstream stuff is sorted out
     my $delegate_class = $self->_generate_delegate_class_name;
@@ -691,7 +700,31 @@ sub _generate_callset_reports {
     #succeeded so set build variables
     $self->per_site_report_file($per_site_file);
     $self->per_sample_report_file($per_sample_file);
+
+    # Compress and index per site report
+    my $cmd = Genome::Model::Tools::Tabix::Index->create(
+        input_file => $self->_per_site_report_bgzip,
+        skip_lines => 1,
+        sequence_column => 1,
+        start_column => 2,
+        end_column => 2,
+    );
+    if (!$cmd->execute) {
+        confess "Failed to create tabix index for file $per_site_file";
+    }
+
     return 1; #not necessary but I feel better knowing it returns true on completion.
+}
+
+sub _per_site_report_bgzip {
+    my $self = shift;
+    my $per_site_file = $self->per_site_report_file;
+    my $per_site_file_gz = "$per_site_file.gz";
+    return $per_site_file_gz if -s $per_site_file_gz;
+
+    my $bgzip_cmd = "bgzip -c $per_site_file > $per_site_file_gz";
+    Genome::Sys->shellcmd(cmd => $bgzip_cmd);
+    return $per_site_file_gz;
 }
 
 sub _generate_delegate_class_name {

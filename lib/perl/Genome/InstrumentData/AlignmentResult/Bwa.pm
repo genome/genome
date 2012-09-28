@@ -25,8 +25,8 @@ sub required_rusage {
     my $instrument_data = delete $p{instrument_data};
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
-    my $mem_mb = 1024 * 14; # increased b/c we have about 16 GB available when 6 jobs run on a 96 Gb server
-    my $cpus = 4;
+    my $mem_mb = 1024 * 8; 
+    my $cpus = 2;
 
     my $mem_kb = $mem_mb*1024;
     my $tmp_gb = $tmp_mb/1024;

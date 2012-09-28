@@ -10,7 +10,7 @@ class Genome::Model::Tools::Germline::Filtering {
     has_input => [
     variant_file => {
         is => 'String',
-        doc => "MAF or VCF file of germline variants that require filtering. Please use a '.maf' or '.vcf' file extension",
+        doc => "MAF, VCF, or WU file of germline variants that require filtering (Valid file extensions: maf, vcf, var). WU variant files must use the standard 5-column format or 21-column annotation format, with an extra column specifying the sample containing the variant (or a comma-delimited list of samples)",
     },
     output_file => {
         is => 'String',
@@ -18,13 +18,13 @@ class Genome::Model::Tools::Germline::Filtering {
     },
     ],
     has_optional_input => [
-    output_vcf => {
-        is => 'String',
-        doc => "VCF file containing all germline variants in input file with updated 'FILTER' fields (Not implemented yet!)",
+    reference_transcripts => {
+        is => 'String', default => "NCBI-human.ensembl/67_37l_v2",
+        doc => "The annotation build to use with the WU annotator, and to find transcript lengths",
     },
     problem_genes => {
         is => 'String', default => "PDE4DIP,CDC27,MUC4,DUX4",
-        doc => "Comma-delimited list of problematic genes whose variants should be filtered out",
+        doc => "Comma-delimited list of genes whose variants should be filtered out (Olfactory receptor genes are always filtered out)",
     },
     liftover_hg18_to_hg19 => {
         is => 'Boolean', default => 0,
@@ -44,10 +44,10 @@ class Genome::Model::Tools::Germline::Filtering {
     },
     num_cases_in_cohort => {
         is => 'Number',
-        doc => "Number of cases in the cohort. This is a required input if --variant-file is a MAF",
+        doc => "Number of cases in the cohort. This is a required input if --variant-file is a MAF or WU variant file",
     },
     ],
-    doc => "A germline variant filtering pipeline",
+    doc => "A germline variant filtering tool",
 };
 
 sub help_synopsis {
@@ -58,15 +58,16 @@ EOS
 
 sub help_detail {
     return <<EOS
-  This pipeline-like tool take as input a germline variant list, and filters out variants that are
-  likely non-functional. Build37 loci are always assumed unless '--liftover-hg18-to-hg19' is set.
+  This tool takes a germline variant list and filters out variants that are likely non-functional.
+  Since filters are designed for Build37 loci only, use --liftover-hg18-to-hg19 if necessary.
 
   The recommended workflow prior to using this tool:
   1) Create a model-group of succeeded somatic-variation models using the TN-pairs under study
   2) Run 'gmt capture somatic-variation-group --output-germline-calls' on the model-group (this
      pulls germline variants from the models, runs standard false-positive-filters, and generates
      WU annotation files per sample)
-  3) Create a variant list (MAF or VCF) containing all germline SNVs and indels
+  3) Concatenate all the resulting WU annotation files into a single file, retaining sample names
+     in a 22nd column, and use it as the input to this tool
 EOS
 }
 
@@ -82,7 +83,7 @@ sub execute {
     my $self = shift;
     $DB::single = 1;
 
-    my ( $variant_file, $output_file, $output_vcf ) = ( $self->variant_file, $self->output_file, $self->output_vcf );
+    my ( $variant_file, $output_file ) = ( $self->variant_file, $self->output_file );
     my %problem_genes = map{($_,1)} split( /,/, $self->problem_genes );
     my ( $max_mut_freq, $max_allele_freq ) = ( $self->max_mut_freq, $self->max_allele_freq );
     my $exclude_3prime_vars = $self->exclude_3prime_vars;
@@ -90,39 +91,42 @@ sub execute {
     # Parse out the variants into a hash with WU annotations
     $self->status_message( "\nParsing the variant file...\n" );
     my %vars = my %all_samples;
-    ( -s $variant_file ) or die "Input file does not exist or has zero size";
+    ( -s $variant_file ) or die "Input file does not exist or has zero size\n";
     if( $variant_file =~ m/\.maf$/ ) {
-        ( defined $self->num_cases_in_cohort ) or die "Please specify '--num-cases-in-cohort' when '--variant-file' is a MAF";
+        ( defined $self->num_cases_in_cohort ) or die "Please specify '--num-cases-in-cohort' when input is a MAF\n";
         %vars = $self->parse_maf( $variant_file, \%all_samples );
     }
     elsif( $variant_file =~ m/\.vcf$/ ) {
         %vars = $self->parse_vcf( $variant_file, \%all_samples );
     }
+    elsif( $variant_file =~ m/\.var$/ ) {
+        ( defined $self->num_cases_in_cohort ) or die "Please specify '--num-cases-in-cohort' when input is a WU variant file\n";
+        %vars = $self->parse_var( $variant_file, \%all_samples );
+    }
     else {
-        die "The input file must have a .maf or .vcf extension";
+        die "The input file must use an extension: .maf, .vcf, or .var\n";
     }
 
     # We need to count the total number of samples in the variant list, unless the user provided it
     my $total_num_samples = scalar( keys %all_samples );
     $total_num_samples = $self->num_cases_in_cohort if( defined $self->num_cases_in_cohort );
 
-    # Load transcript lengths based of Build37 transcripts
-    my %tr_95pc_of_length;
-    my $tr_length_file = '/gscmnt/gc6111/info/medseq/transcript_lengths/58_37c_v2.transcript_lengths';
-    my $tr_length_fh = IO::File->new( $tr_length_file ) or die "Couldn't open $tr_length_file.";
-    while( my $line = $tr_length_fh->getline ) {
-        next if( $line =~ m/^transcript_name/ );
-        chomp $line;
-        my( $tr, $length, $length_95pc ) = split( /\t/, $line );
-        $tr_95pc_of_length{$tr} = $length_95pc;
+    # Check if there are enough samples to apply the max_mut_freq threshold
+    if( $max_mut_freq * $total_num_samples < 1 ) {
+        die "With max-mut-freq = $max_mut_freq, and only $total_num_samples samples, zero variants will pass the filters\n";
     }
-    $tr_length_fh->close;
+    elsif( $max_mut_freq * $total_num_samples < 2 ) {
+        $self->status_message( "WARNING: With max-mut-freq = $max_mut_freq, and only $total_num_samples samples, no recurrent variants will pass the filters\n" );
+    }
 
-    $self->status_message( "\nIndexing 1000G and NHLBI data for fast-lookup...\n" );
+    $self->status_message( "\nLoading transcript lengths based on " . $self->reference_transcripts . "...\n" );
+    my %tr_95pc_of_length;
+    my $anno_dir = Genome::Model::Build::ImportedAnnotation->get( name=>$self->reference_transcripts )->data_directory;
+    map{my @c = split(/\t|,/); if($c[8] eq "utr_exon" and $c[17] ne "0"){$tr_95pc_of_length{$c[30]} = ($c[17]*0.95);}}`cat $anno_dir/annotation_data/substructures/*.csv`;
 
+    $self->status_message( "\nLoading 1000G and NHLBI data...\n" );
     # Locate the tabix-indexed file containing variant allele frequencies and dbSNP IDs from 1000G
     my $onekg_file = '/gscmnt/gc6132/info/medseq/1000_genomes/downloads/2012-03-27/ALL.wgs.phase1_release_v3.20101123.snps_indels.sites.vars.gz';
-
     # Load the NHLBI-exome variant allele frequencies and dbSNP IDs into a hash
     my $nhlbi_file = '/gscmnt/sata170/info/medseq/NHLBI/ESP5400/NHLBI_ESP5400.snv.vars';
     my %nhlbi_af;
@@ -146,19 +150,15 @@ sub execute {
         # Tag variants annotated to transcripts that are not entirely error-free
         $vars{$key}{filter} .= "transcript_error;" unless( $tr_errors eq 'no_errors' );
 
-        # Tag all LOC/ENSG/Corf genes, Olfactory receptor (OR*) genes, and XM/XR transcripts
-        $vars{$key}{filter} .= "LOC_ENSG_Corf;" if( $gene =~ m/^(LOC\d+|ENSG\d+|C\w+orf\d+)$/ );
-        $vars{$key}{filter} .= "olfactory_gene;" if( $gene =~ m/^OR\d+\w+\d+$/ );
-        $vars{$key}{filter} .= "XM_XR;" if( $tr_name =~ m/^(XM|XR)\_\d+/ );
+        # Tag all LOC/ENSG/Corf genes and XM/XR transcripts
+        $vars{$key}{filter} .= "LOC_ENSG_Corf_gene;" if( $gene =~ m/^(LOC\d+|ENSG\d+|C\w+orf\d+)$/ );
+        $vars{$key}{filter} .= "XM_XR_transcript;" if( $tr_name =~ m/^(XM|XR)\_\d+/ );
 
-        # Tag variants on user-defined problematic genes
-        $vars{$key}{filter} .= "problem_gene;" if( defined $problem_genes{$gene} );
+        # Tag variants on user-defined problematic genes and Olfactory receptor (OR*) genes
+        $vars{$key}{filter} .= "problem_gene;" if( defined $problem_genes{$gene} or $gene =~ m/^OR\d+\w+\d+$/ );
 
         # Tag variants in non-coding regions
-        $vars{$key}{filter} .= "non_coding;" unless( $var_class =~ m/^(frame_shift|in_frame|splice_site|missense$|nonsense$|nonstop$|silent)/ );
-
-        # Tag variants uniquely from Ensembl (couldn't be annotated to anything in RefSeq)
-        $vars{$key}{filter} .= "ensembl_only;" if( $tr_source eq 'ensembl' );
+        $vars{$key}{filter} .= "non_coding;" unless( $var_class =~ m/^(frame_shift|in_frame|splice_site|missense$|nonsense$|nonstop$|silent$)/ );
 
         # Tag variants near the 3' end of the transcript, as long as it's not in a known functional domain or splice site
         if( $exclude_3prime_vars ) {
@@ -167,9 +167,6 @@ sub execute {
                 if( defined $tr_95pc_of_length{$tr_name} ) {
                     ( $c_pos_value =~ m/^\d+$/ ) or die "Cannot parse out nucleotide position from $c_pos";
                     $vars{$key}{filter} .= "near_3prime_end;" if( $c_pos_value > $tr_95pc_of_length{$tr_name} );
-                }
-                else {
-                    die "Couldn't find transcript $tr_name in $tr_length_file";
                 }
             }
         }
@@ -197,7 +194,7 @@ sub execute {
         $vars{$key}{filter} = 'PASS' if( $vars{$key}{filter} eq "" );
     }
 
-    # Summary the most common reasons why variants were filtered out
+    # Summarize the most common reasons why variants were filtered out
     $self->status_message( scalar( keys %vars ) . " unique variants across " . $total_num_samples . " cases ran through filters as follows:\n" );
     my %counts;
     ++$counts{$vars{$_}{filter}} foreach( keys %vars );
@@ -227,23 +224,22 @@ sub execute {
 # Parse a MAF and return a hashful of WU annotations per variant
 sub parse_maf {
     my ( $self, $maf_file, $all_samples_ref ) = @_;
-    my %vars;
+    my ( %vars, %dedup_samples );
+    my $line = "";
+    my $need_wu_anno = 0;
 
     # Open the MAF and handle the headers before looping through each variant
     my $maf_fh = IO::File->new( $maf_file ) or die "Couldn't open $maf_file.";
-    my $line = "";
-    my %dedup_samples;
     while( $line = $maf_fh->getline ) { # Skip all comment lines
-        last if( $line !~ m/^#/ );
+        last if( $line !~ m/^(#|$)/ );
     }
     chomp( $line );
-    my $need_wu_anno = 0;
     my @col = split( /\t/, $line );
-    if( $col[0] eq 'Hugo_Symbol') {
+    if( $col[0] eq 'Hugo_Symbol' ) {
         $need_wu_anno = 1 unless( defined $col[52] and $col[52] eq 'transcript_error' );
     }
     else {
-        die "Provided MAF file does not appear to have a header line!";
+        die "Provided MAF file does not appear to have a header line!\n";
     }
 
     # Now we can assume the rest of the file is just variants, and parse it quicker
@@ -257,16 +253,18 @@ sub parse_maf {
         @{$vars{$key}{wu_anno}} = @col[32..52] unless( defined $vars{$key} or $need_wu_anno );
 
         # Keep track of all the samples each variant is reported in
-        push( @{$vars{$key}{samples}}, $sample ) unless( defined $dedup_samples{$key}{$sample} );
-        $dedup_samples{$key}{$sample} = 1;
-        $all_samples_ref->{$sample} = 1;
+        unless( defined $dedup_samples{$key}{$sample} ) {
+            push( @{$vars{$key}{samples}}, $sample );
+            $dedup_samples{$key}{$sample} = 1;
+            $all_samples_ref->{$sample} = 1;
+        }
     }
     $maf_fh->close;
 
     # Before we proceed, make sure the user isn't pulling our leg
     my $sample_count = scalar( keys %{$all_samples_ref} );
     if( defined $self->num_cases_in_cohort && $sample_count > $self->num_cases_in_cohort ) {
-        die "$sample_count samples found in MAF, more that what's specified in '--num-cases-in-cohort'!";
+        die "$sample_count samples found in MAF, more that what's specified in '--num-cases-in-cohort'!\n";
     }
 
     # Write the variants in a 5-col format, in case we need to liftOver and/or annotate
@@ -296,10 +294,9 @@ sub parse_maf {
 # Parse a VCF, run WU annotator, and return a hashful of WU annotations per variant
 sub parse_vcf {
     my ( $self, $vcf_file, $all_samples_ref ) = @_;
-    my @sample_names;
+    my ( @sample_names, @vcf_header );
 
     # Reformat each variant for the WU annotator
-    my @vcf_header;
     my $var_5col_list = Genome::Sys->create_temp_file_path;
     ( $var_5col_list ) or die "Couldn't create a temp file. $!";
     my $outFh = IO::File->new( $var_5col_list, ">" ) or die "Couldn't open $var_5col_list.";
@@ -310,13 +307,13 @@ sub parse_vcf {
         my ( $chr, $pos, $rsid, $ref, $alt_line, $qual, $filter, $info_line, $format_line, @rest ) = split( /\t/, $line );
 
         # Skip headers, but if this is the line containing sample names, parse those out for later
-        next if( $line =~ m/^##/ );
+        next if( $line =~ m/^(##|$)/ );
         if( $line =~ m/^#CHROM/ ) {
             @sample_names = @rest;
             my $sample_count = scalar( @sample_names );
             # Before we proceed, make sure the user isn't pulling our leg
             if( defined $self->num_cases_in_cohort && $sample_count != $self->num_cases_in_cohort ) {
-                die "$sample_count samples found in VCF, differs from what's specified in '--num-cases-in-cohort'!";
+                die "$sample_count samples found in VCF, differs from what's specified in '--num-cases-in-cohort'!\n";
             }
             %{$all_samples_ref} = map{( $_, 1 )} @sample_names;
             next;
@@ -373,7 +370,7 @@ sub parse_vcf {
                 next;
             }
             else { # Poop-out on unknown variant types
-                die "Unhandled variant type in VCF:\n$line\nPlease check parser!";
+                die "Unhandled variant type in VCF:\n$line\nPlease check parser!\n";
             }
 
             # Print variants to a temporary file, keeping track of the samples containing them
@@ -393,6 +390,75 @@ sub parse_vcf {
         %vars = $self->liftover_to_hg19( $var_5col_list_sorted );
     }
     else {
+        %vars = $self->annotate_to_build37( $var_5col_list_sorted );
+    }
+    return %vars;
+}
+
+# Parse a WU variant file and return a hashful of WU annotations per variant
+sub parse_var {
+    my ( $self, $var_file, $all_samples_ref ) = @_;
+    my ( %dedup_samples, %vars );
+    my ( $need_wu_anno, $sample_name_col_idx ) = ( 0, 21 );
+
+    # Check for problems in the WU variant file, and store it into a hash
+    my $var_fh = IO::File->new( $var_file ) or die "Couldn't open $var_file.";
+    while( my $line = $var_fh->getline ) {
+        chomp( $line );
+        next if( $line =~ m/^(#|chromosome_name|$)/ );
+        my @col = split( /\t/, $line );
+
+        # Using the first line in the file, find out if it is missing WU annotation columns
+        unless( %vars ) {
+            if( scalar( @col ) == 6 ) {
+                ( $need_wu_anno, $sample_name_col_idx ) = ( 1, 5 );
+            }
+            elsif( scalar( @col ) != 22 ) {
+                die "Unrecognized WU variant file format! Use the standard 5-column format or 21-column annotation format, with an extra column specifying the sample containing that variant (or a comma-delimited list of samples)\n";
+            }
+        }
+
+        # Fill the hash indexed by locus & ref/var
+        my $key = join( "\t", @col[0..4] );
+        @{$vars{$key}{wu_anno}} = @col[0..20] unless( defined $vars{$key} or $need_wu_anno );
+
+        # Keep track of all the samples each variant is reported in
+        my @samples = split( /,/, $col[$sample_name_col_idx] );
+        foreach my $sample ( @samples ) {
+            unless( defined $dedup_samples{$key}{$sample} ) {
+                push( @{$vars{$key}{samples}}, $sample );
+                $dedup_samples{$key}{$sample} = 1;
+                $all_samples_ref->{$sample} = 1;
+            }
+        }
+    }
+    $var_fh->close;
+
+    # Before we proceed, make sure the user isn't pulling our leg
+    my $sample_count = scalar( keys %{$all_samples_ref} );
+    if( defined $self->num_cases_in_cohort && $sample_count > $self->num_cases_in_cohort ) {
+        die "$sample_count samples found in MAF, more that what's specified in '--num-cases-in-cohort'!\n";
+    }
+
+    # Write the variants in a 5-col format, in case we need to liftOver and/or annotate
+    my $var_5col_list = Genome::Sys->create_temp_file_path;
+    my $var_5col_list_sorted = Genome::Sys->create_temp_file_path;
+    ( $var_5col_list and $var_5col_list_sorted ) or die "Couldn't create a temp file. $!";
+    if( $self->liftover_hg18_to_hg19 or $need_wu_anno ) {
+        my $outFh = IO::File->new( $var_5col_list, ">" ) or die "Couldn't open $var_5col_list.";
+        foreach my $key ( sort keys %vars ) {
+            $outFh->print( "$key\t" . join( ",", @{$vars{$key}{samples}} ) . "\n" );
+        }
+        $outFh->close;
+
+        # Sort the variant list by genomic loci, so that the WU annotator can run quicker
+        Genome::Sys->shellcmd( cmd => "joinx sort --stable --input-file $var_5col_list --output-file $var_5col_list_sorted" );
+    }
+
+    if( $self->liftover_hg18_to_hg19 ) {
+        %vars = $self->liftover_to_hg19( $var_5col_list_sorted );
+    }
+    elsif( $need_wu_anno ) {
         %vars = $self->annotate_to_build37( $var_5col_list_sorted );
     }
     return %vars;
@@ -425,12 +491,12 @@ sub annotate_to_build37 {
     my ( $self, $build37_file ) = @_;
 
     # Run the Build37 WU annotator
-    $self->status_message( "\nRunning WU Annotator based on build: NCBI-human.combined-annotation/58_37c_v2...\n" );
+    $self->status_message( "\nRunning WU Annotator based on build: ". $self->reference_transcripts . "...\n" );
     my $build37_anno = Genome::Sys->create_temp_file_path;
     ( $build37_anno ) or die "Couldn't create a temp file. $!";
     my $anno_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
         variant_file => $build37_file, output_file => $build37_anno,
-        annotation_filter => "top", reference_transcripts => "NCBI-human.combined-annotation/58_37c_v2",
+        annotation_filter => "top", reference_transcripts => $self->reference_transcripts,
         extra_columns => "samples", use_version => 2,
     );
     ( $anno_cmd->execute ) or die "Failed to run 'gmt annotate transcript-variants'";
@@ -440,7 +506,7 @@ sub annotate_to_build37 {
     my %b37_vars;
     my $inFh = IO::File->new( $build37_anno ) or die "Couldn't open $build37_anno.";
     while( my $line = $inFh->getline ) {
-        next if( $line =~ m/^(#|chromosome_name)/ );
+        next if( $line =~ m/^(#|chromosome_name|$)/ );
         chomp( $line );
         my @col = split( /\t/, $line );
 

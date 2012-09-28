@@ -9,6 +9,7 @@ class Genome::Model::Tools::Sx::SamReader {
     is => 'Genome::Model::Tools::Sx::SeqReader',
 };
 
+sub type { 'sam'; }
 sub read {
     my $self = shift;
 

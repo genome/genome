@@ -1282,11 +1282,11 @@ sub _is_mc16s {
     my @projects = $self->_get_projects_for_instrument_data($instrument_data);
     return if not @projects;
 
-    my @work_orders = GSC::Setup::WorkOrder->get(id => [ map { $_->id } @projects ]);
-    return if not @work_orders;
+    my @setups = Genome::Site::TGI::Synchronize::Classes::SetupProject->get(id => [ map { $_->id } @projects ]);
+    return if not @setups;
 
-    foreach my $work_order ( @work_orders ) {
-        my $pipeline = $work_order->pipeline;
+    foreach my $setup ( @setups ) {
+        my $pipeline = $setup->pipeline;
         next if not $pipeline;
         return 1 if $pipeline =~ /16s/i;
     }

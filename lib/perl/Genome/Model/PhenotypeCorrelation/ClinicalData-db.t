@@ -48,7 +48,7 @@ is_deeply($obj->attribute_types, \%expected_attr_types, "correct attribute types
 # test getting attributes for a given sample
 for my $i (0..$#samples) {
     my $sample_name = $samples[$i]->name;
-    my @actual = map { $obj->attribute_value_for_sample($sample_name, "attr$_") || "NA" } 1..10;
+    my @actual = map { $obj->attribute_values_for_samples("attr$_", $sample_name) || "NA" } 1..10;
     my @expected = ("NA") x 10;
     $expected[$i] = "value" . ($i+1);
     is_deeply(\@actual, \@expected, "correct values for $sample_name");

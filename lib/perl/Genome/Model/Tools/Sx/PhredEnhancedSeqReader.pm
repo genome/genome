@@ -12,6 +12,8 @@ class Genome::Model::Tools::Sx::PhredEnhancedSeqReader {
     is => 'Genome::Model::Tools::Sx::PhredReaderBase',
 };
 
+sub type { return 'ephred'; }
+
 sub read {
     my $self = shift;
 

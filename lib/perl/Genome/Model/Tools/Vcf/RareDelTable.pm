@@ -51,10 +51,13 @@ class Genome::Model::Tools::Vcf::RareDelTable {
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		vcf_file	=> { is => 'Text', doc => "Input VCF File" , is_optional => 0},
 		phenotype_file	=> { is => 'Text', doc => "Sample Phenotype File with column named phenotype and values 0 or 1" , is_optional => 0},
+		phenotype_column	=> { is => 'Text', doc => "Name of colum in phenotype file with control/case status (values 0 or 1)" , is_optional => 0},
 		vep_file	=> { is => 'Text', doc => "Input VEP Annotation File" , is_optional => 0},
 		output_table	=> { is => 'Text', doc => "Output file for deleterious table" , is_optional => 0},
 		output_variants	=> { is => 'Text', doc => "Output file for deleterious variants" , is_optional => 0},
 		min_read_depth	=> { is => 'Text', doc => "Minimum read depth to accept backfilled wildtype call" , is_optional => 0, default => 10},
+		deleterious_classes	=> { is => 'Text', doc => "A comma-separated list of VEP classes to consider deleterious" , is_optional => 0, default => 'STOP_GAINED,ESSENTIAL_SPLICE_SITE,NON_SYNONYMOUS_CODING'},
+		deleterious_missense	=> { is => 'Text', doc => "Polyphen/SIFT/Condel requirement for missense SNPs to be considered deleterious [any, all, none]" , is_optional => 0, default => 'any'},
 	],
 };
 
@@ -93,10 +96,10 @@ sub execute {                               # replace with real execution logic.
 	my $phenotype_file = $self->phenotype_file;
 
 	print "Loading sample phenotypes...\n";
-	my %sample_phenotypes = load_phenotypes($phenotype_file);
+	my %sample_phenotypes = load_phenotypes($self, $phenotype_file);
 
 	print "Loading VEP annotation...\n";
-	my %deleterious = load_vep($vep_file);
+	my %deleterious = load_vep($self, $vep_file);
 
 	## Open output file ##
 	
@@ -174,7 +177,10 @@ sub execute {                               # replace with real execution logic.
 				$stats{'variants_pass'}++;
 				## Get the dbSNP Status ##
 				
+				## Save status of the principal variant and secondary ALT alleles ##
 				my $dbsnp_status = "novel";
+				my $dbsnp_status2 = my $dbsnp_status3 = "";
+				
 				my $rs_number = "";
 				
 				if($id && $id ne ".")
@@ -196,6 +202,8 @@ sub execute {                               # replace with real execution logic.
 							$info_values{$info_field} = 1;
 						}
 					}
+					
+
 					
 					## Common variant is marked as "G5" ##
 					
@@ -230,6 +238,40 @@ sub execute {                               # replace with real execution logic.
 							}
 						}
 					}
+
+
+					## Multiple dbSNP build IDs for different alleles ##
+					
+					if($info_values{'dbSNPBuildID'})
+					{
+						my @build_ids = split(/\,/, $info_values{'dbSNPBuildID'});
+						## Second ALT ##
+						if($build_ids[1])
+						{
+							if($build_ids[1] eq '.')
+							{
+								$dbsnp_status2 = "novel";
+							}
+							else
+							{
+								$dbsnp_status2 = $dbsnp_status;
+							}
+						}
+						## Third ALT ##
+						if($build_ids[2])
+						{
+							if($build_ids[2] eq '.')
+							{
+								$dbsnp_status3 = "novel";
+							}
+							else
+							{
+								$dbsnp_status3 = $dbsnp_status;
+							}
+						}
+					}
+
+
 
 				}
 
@@ -501,7 +543,7 @@ sub execute {                               # replace with real execution logic.
 
 sub load_phenotypes
 {
-	my $phenotype_file = shift(@_);
+	my ($self, $phenotype_file) = @_;
 
 	my %sample_phenotypes = ();
 
@@ -534,7 +576,7 @@ sub load_phenotypes
 				{
 					$sample_name = $lineContents[$colCounter];
 				}
-				elsif($column_names[$colCounter] eq "phenotype")
+				elsif($column_names[$colCounter] eq $self->phenotype_column)
 				{
 					$phenotype = $lineContents[$colCounter];
 				}
@@ -561,7 +603,7 @@ sub load_phenotypes
 
 sub load_vep
 {
-	my $vep_file = shift(@_);
+	my ($self, $vep_file) = @_;
 
 	my %annotation = ();
 
@@ -607,7 +649,7 @@ sub load_vep
 			my @classes = split(/\,/, $class);
 			foreach my $class (@classes)
 			{
-				if(is_deleterious($class, $polyphen, $sift, $condel))
+				if(is_deleterious($self, $class, $polyphen, $sift, $condel))
 				{
 					if($polyphen || $sift || $condel)
 					{
@@ -753,22 +795,26 @@ sub fxn_class_code
 
 sub is_deleterious
 {
-	my ($class, $polyphen, $sift, $condel) = @_;
+	my ($self, $class, $polyphen, $sift, $condel) = @_;
 	
-	if($class eq "ESSENTIAL_SPLICE_SITE")
+	my @delClasses = split(/\,/, $self->deleterious_classes);
+	my %deleterious = ();
+	foreach my $class (@delClasses)
 	{
-		return(1);
+		$deleterious{$class} = 1;
 	}
-	elsif($class eq "STOP_GAINED")
+	
+	if($class eq "NON_SYNONYMOUS_CODING" && $deleterious{$class})
 	{
-		return(1);
-	}
-	elsif($class eq "NON_SYNONYMOUS_CODING")
-	{
-		if(is_damaging($polyphen, $sift, $condel))
+		if(is_damaging($polyphen, $sift, $condel, $self->deleterious_missense))
 		{
 			return(1);
 		}
+	}
+	elsif($deleterious{$class})
+	{
+		## Auto-pass other deleterious classes ##
+		return(1);
 	}
 
 	return(0);
@@ -782,19 +828,23 @@ sub is_deleterious
 
 sub is_damaging
 {
-	my ($polyphen, $sift, $condel) = @_;
-	if($polyphen && $polyphen =~ 'damaging')
+	my ($polyphen, $sift, $condel, $missense_rule) = @_;
+	
+	if($missense_rule eq "none")
 	{
-		return(1);
+		return(1);		
 	}
-	if($sift && $sift =~ 'deleterious')
+	elsif($missense_rule eq "any")
 	{
-		return(1);
+		return(1) if($polyphen && $polyphen =~ 'damaging');
+		return(1) if($sift && $sift =~ 'deleterious');
+		return(1) if($condel && $condel =~ 'deleterious');
 	}
-	if($condel && $condel =~ 'deleterious')
+	elsif($missense_rule eq "all")
 	{
-		return(1);
+		return(1) if($polyphen && $polyphen =~ 'damaging' && $sift && $sift =~ 'deleterious' && $condel && $condel =~ 'deleterious');
 	}
+
 	return(0);
 }
 

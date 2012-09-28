@@ -78,14 +78,14 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import ensembl --version 58_37c
+gmt dgidb import ensembl --version=68_37 --input-gtf-url=ftp://ftp.ensembl.org/pub/release-68/gtf/homo_sapiens/Homo_sapiens.GRCh37.68.gtf.gz
 HELP
 }
 
 sub help_detail {
 #TODO: make this accurate
     my $summary = <<HELP
-WRITE ME
+This importer downloads genes from a current Ensembl Human GTF file.
 HELP
 }
 
@@ -138,7 +138,7 @@ sub input_to_tsv {
         $gene_biotype_string =~ s/gene_biotype //i; #Kill the gene_id part leaving the actual ENSG id
         $gene_biotype = uc($gene_biotype_string);
       }else{
-        $gene_biotype = "na";
+        $gene_biotype = "N/A";
       }
       $ensembl_map{$gene_id}{name} = $gene_name_report;
       $ensembl_map{$gene_id}{biotype} = $gene_biotype;
@@ -204,10 +204,10 @@ sub import_genes {
         push @gene_name_reports, $gene_name_report;
         my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_id}, 'Ensembl Gene Id', '');
 
-        unless($gene->{ensembl_gene_symbol} eq 'na'){
-            my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'Gene Symbol', '');
+        unless($gene->{ensembl_gene_symbol} eq 'N/A'){
+            my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'Ensembl Gene Name', '');
         }
-        unless ($gene->{ensembl_gene_biotype} eq 'na'){
+        unless ($gene->{ensembl_gene_biotype} eq 'N/A'){
           my $biotype_category = $self->_create_gene_category_report($gene_name_report, 'Gene Biotype', $gene->{ensembl_gene_biotype}, '');
         }
     }

@@ -43,39 +43,32 @@ sub _update_genotype {
         return;
     }
 
-    my $genotype;
-    GET_GSC_GENTOYPE: for my $genotype_class (qw/ GSC::Genotyping::External GSC::Genotyping::Internal::Illumina /) { 
-        $genotype = $genotype_class->get($genotype_id);
-        last GET_GSC_GENTOYPE if $genotype;
-    }
+    my $genotype = Genome::Site::TGI::Synchronize::Classes->get($genotype_id);
     if ( not $genotype) {
         $self->error_message("No genotype for id! $genotype_id");
         return;
     }
 
-    my $platform = $genotype->get_platform;
-    if ( not $platform ) {
-        $self->error_message('No platform for genotype! '.$genotype_id);
-        return;
-    }
-
-    if ( not $platform->chip_type ) { # some platforms do not have this information
+    my $chip_name = $genotype->chip_name;
+    if ( not $chip_name ) { # some platforms do not have this information
         $self->status_message( join(' ', $instrument_data->id, 'chip-type-na', 'na', 'version-na', 'na' ) );
         return 1;
     }
+    my $version = $genotype->version;
+    $version ||= 'na';
 
     my $chip_attribute = $instrument_data->attributes(attribute_label => 'chip_name');
     my $chip_status = 'ok';
     if ( not $chip_attribute ) {
         $chip_status = 'create';
-        $chip_attribute = $instrument_data->add_attribute(attribute_label => 'chip_name', attribute_value => $platform->chip_type);
+        $chip_attribute = $instrument_data->add_attribute(attribute_label => 'chip_name', attribute_value => $chip_name);
     }
-    elsif ( $chip_attribute->attribute_value ne $platform->chip_type ) {
+    elsif ( $chip_attribute->attribute_value ne $chip_name ) {
         $chip_status = 'update';
         $chip_attribute->delete;
-        $chip_attribute = $instrument_data->add_attribute(attribute_label => 'chip_name', attribute_value => $platform->chip_type);
+        $chip_attribute = $instrument_data->add_attribute(attribute_label => 'chip_name', attribute_value => $chip_name);
     }
-    if ( not $chip_attribute or $chip_attribute->attribute_value ne $platform->chip_type ) {
+    if ( not $chip_attribute or $chip_attribute->attribute_value ne $chip_name ) {
         $self->error_message('Failed to add attribute for chip_name! '.$genotype_id);
         return;
     }
@@ -84,14 +77,14 @@ sub _update_genotype {
     my $verion_status = 'ok';
     if ( not $version_attribute ) {
         $verion_status = 'create';
-        $version_attribute = $instrument_data->add_attribute(attribute_label => 'version', attribute_value => $platform->version);
+        $version_attribute = $instrument_data->add_attribute(attribute_label => 'version', attribute_value => $version);
     }
-    elsif ( $version_attribute->attribute_value ne $platform->version ) {
+    elsif ( $version_attribute->attribute_value ne $version ) {
         $verion_status = 'update';
         $version_attribute->delete;
-        $version_attribute = $instrument_data->add_attribute(attribute_label => 'version', attribute_value => $platform->version);
+        $version_attribute = $instrument_data->add_attribute(attribute_label => 'version', attribute_value => $version);
     }
-    if ( not $version_attribute or $version_attribute->attribute_value ne $platform->version ) {
+    if ( not $version_attribute or $version_attribute->attribute_value ne $version ) {
         $self->error_message('Failed to add attribute for version! '.$genotype_id);
         return;
     }

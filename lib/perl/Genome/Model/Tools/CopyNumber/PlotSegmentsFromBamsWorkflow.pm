@@ -32,8 +32,7 @@ class Genome::Model::Tools::CopyNumber::PlotSegmentsFromBamsWorkflow {
             is => 'String',
             is_input => 1,
             is_output => 1,
-            doc => "choose '36' or '37'",
-            default => '36'
+            doc => "choose from ['36','37','mm9']",
         },
         output_pdf => {
             is => 'String',
@@ -127,8 +126,12 @@ sub execute {
 
     my %input;    
 
-    
-    $workflow->log_dir($self->output_directory);
+    my $log_dir = $self->output_directory;
+    if(Workflow::Model->parent_workflow_log_dir) {
+        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    }
+
+    $workflow->log_dir($log_dir);
 
     $input{normal_bam} =  $self->normal_bam;
     $input{normal_bamtocn} = $output_dir."/".$normal_bam_name.".bamtocn";

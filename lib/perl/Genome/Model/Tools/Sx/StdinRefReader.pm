@@ -8,6 +8,8 @@ require Storable;
 class Genome::Model::Tools::Sx::StdinRefReader { 
 }; 
 
+sub type { 'ref' }
+
 sub read {
     my $self = shift;
 

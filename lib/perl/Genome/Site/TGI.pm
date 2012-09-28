@@ -16,7 +16,7 @@ BEGIN {
 
 BEGIN {
     if (!defined $ENV{GENOME_DB_SKIP_POSTGRES}) {
-        $ENV{GENOME_DB_SKIP_POSTGRES} ||= '/gsc/scripts/opt/genome/run/skip_postgres_sync';
+        $ENV{GENOME_DB_SKIP_POSTGRES} ||= '/gsc/scripts/opt/genome/run/skip_postgres_sync_new';
     }
 }
 
@@ -165,9 +165,6 @@ my @lims_whitelist = (
     ],
     'GSC::Setup::CaptureSet' => [
         ['Genome/Site/TGI/CaptureSet.pm', 104],
-    ],
-    'GSC::Setup::WorkOrder' => [
-        ['Genome/Model/Command/Services/AssignQueuedInstrumentData.pm', 1288],
     ],
 );
 

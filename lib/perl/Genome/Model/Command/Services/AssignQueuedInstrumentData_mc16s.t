@@ -11,27 +11,23 @@ BEGIN {
 
 use above 'Genome';
 
-use Data::Dumper;
-use Test::MockObject;
 use Test::More;
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
-
-my ($cnt, @samples, @instrument_data);
 
 # Reasearch Project
 my @projects;
 push @projects, Genome::Project->create(id => -111, name => '__TEST_PROJECT__');
 ok($projects[0], 'create project for research project');
-# GSC WorkOrder
-my $gsc_workorder = Test::MockObject->new();
-$gsc_workorder->set_always(pipeline => '16S 454');
+# 'GSC WorkOrder'
+my $gsc_workorder = Genome::Site::TGI::Synchronize::Classes::SetupProject->__define__(id => -222, name => '__TEST_WORKORDER__', pipeline => '16s');
 push @projects, Genome::Project->create(id => -222, name => '__TEST_WORKORDER__');
 ok($projects[1], 'create project for research project');
 # Model groups for projects
 my @model_groups = Genome::ModelGroup->get(uuid => [ map { $_->id } @projects ]);
 is(@model_groups, @projects, 'created model groups');
 
+my ($cnt, @samples, @instrument_data);
 no warnings;
 *Genome::InstrumentDataAttribute::get = sub {
     my ($class, %params) = @_;
@@ -47,7 +43,7 @@ no warnings;
     }
     return values %attrs;
 };
-sub GSC::Setup::WorkOrder::get { return $gsc_workorder; }
+#sub GSC::Setup::WorkOrder::get { return $gsc_workorder; }
 use warnings;
 
 for my $i (1..2) {
@@ -63,7 +59,7 @@ my @new_models = values %{$cmd->_newly_created_models};
 my %new_models = _model_hash(@new_models);
 my @existing_models = values %{$cmd->_existing_models_assigned_to};
 my %existing_models = _model_hash(@existing_models);
-#print Dumper(\%new_models,\%existing_models);
+#print Data::Dumper::Dumper(\%new_models,\%existing_models);
 my $model_name_for_entire_run = "R_2011_07_27_14_54_40_FLX08080419_Administrator_113684816_r1.prod-mc16s-qc";
 my @default_processing_profile_ids = Genome::Model::MetagenomicComposition16s->default_processing_profile_ids;
 is_deeply(
@@ -121,7 +117,7 @@ ok($cmd->execute, 'execute');
 %new_models = _model_hash(@new_models);
 @existing_models = values %{$cmd->_existing_models_assigned_to};
 %existing_models = _model_hash(@existing_models);
-#print Dumper(\%new_models,\%existing_models);
+#print Data::Dumper::Dumper(\%new_models,\%existing_models);
 is_deeply(
     \%new_models,
     {

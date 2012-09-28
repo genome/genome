@@ -12,6 +12,9 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::FastqReader') or die;
 use_ok('Genome::Model::Tools::Sx::FastqWriter') or die;
 
+is(Genome::Model::Tools::Sx::FastqReader->type, 'sanger', 'type is sanger');
+is(Genome::Model::Tools::Sx::FastqWriter->type, 'sanger', 'type is sanger');
+
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'Created temp dir');
 my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';

@@ -28,7 +28,13 @@ class Genome::InstrumentData::Command::Import::TcgaBam {
         },
         remove_original_bam => {
             is => 'Boolean',
-            doc => 'Remove (DELETE!) the original bam file after importation, without warning.',
+            doc => 'Remove (DELETE!) the original bam file after importation, without warning',
+            default => 0,
+            is_optional => 1,
+        },
+        skip_refalign => {
+            is => 'Boolean',
+            doc => 'Skip creation of a reference alignment model (e.g. for RNA-seq)',
             default => 0,
             is_optional => 1,
         },
@@ -88,12 +94,12 @@ class Genome::InstrumentData::Command::Import::TcgaBam {
             is_optional => 1,
             doc => 'From CGHub (may be found in metadata.xml or specified)',
         },
-        reference_sequence_build_id => { 
+        reference_sequence_build_id => {
             is => 'Text',
             valid_values => [qw/ 101947881 106942997 /],
             doc => 'The id of the reference sequence that the data was aligned against. Versions: 101947881 (NCBI-human-build36), 106942997 (GRCh37-lite-build37).',
         },
-        reference_sequence_build => { 
+        reference_sequence_build => {
             is_optional => 1,
             calculate_from => [qw/ reference_sequence_build_id /],
             calculate => q| return Genome::Model::Build::ImportedReferenceSequence->get($reference_sequence_build_id); |,
@@ -105,12 +111,12 @@ class Genome::InstrumentData::Command::Import::TcgaBam {
         _absolute_path => { via => '_allocation', to => 'absolute_path', is_optional => 1, },
         _new_bam => {
             is_optional => 1,
-            calculate_from => [qw/ _absolute_path /], 
+            calculate_from => [qw/ _absolute_path /],
             calculate => q| $_absolute_path.'/all_sequences.bam' |,
         },
-        _new_md5 => { 
+        _new_md5 => {
             is_optional => 1,
-            calculate_from => [qw/ _new_bam /], 
+            calculate_from => [qw/ _new_bam /],
             calculate => q| $_new_bam.'.md5' |,
         },
     ],
@@ -123,7 +129,7 @@ sub help_detail {
     * creates an instrument data
     * copies the BAM into the allocated spaace of the instruemt data
     * validates the MD5 of the BAM (optional)
-    * creates a model and requests a build
+    * creates a model and requests a build (optional)
 HELP
 }
 
@@ -133,7 +139,7 @@ sub execute {
     # resolve command-line arguments and read in from metadata (if avail)
     $self->_resolve_args;
 
-    # Ref Seq 
+    # Ref Seq
     if ( not $self->reference_sequence_build ) {
         $self->error_message('No reference sequence build given.');
         return;
@@ -174,7 +180,13 @@ sub execute {
         $self->_remove_original_bam; # no error check
     }
 
-    $self->_create_model_and_request_build; # no error check, prints messages
+    # Unless otherwise specified, realign the imported BAM with our standard ref-alignment pipe
+    if($self->skip_refalign) {
+        $self->status_message("Skipping creation of a ref-alignment model.");
+    }
+    else {
+        $self->_create_model_and_request_build; # no error check, prints messages
+    }
 
     $self->status_message("Importation of BAM completed successfully.");
     $self->status_message("Your instrument-data id is ".$self->import_instrument_data_id);
@@ -201,7 +213,7 @@ sub _resolve_args {
         }
     }
 
-    # handle bam_md5 carefully 
+    # handle bam_md5 carefully
     unless($self->no_md5) {
         $self->bam_md5($self->_resolve_single_arg('bam_md5', $metadata{'bam_md5'}));
         $self->bam_md5($self->_resolve_bam_md5);
@@ -209,7 +221,7 @@ sub _resolve_args {
             die $self->error_message("Required argument (bam_md5) was not passed and couldn't be found in the metadata or an .md5 file in the directory where the bam file is.");
         }
     }
-    return 1; 
+    return 1;
 }
 
 sub _resolve_bam_md5{
@@ -232,7 +244,7 @@ sub _resolve_bam_md5{
     return $md5
 }
 
-# resolve the value of a single argument, falls back to metadata value. 
+# resolve the value of a single argument, falls back to metadata value.
 sub _resolve_single_arg {
     my ($self, $arg_name, $meta_value) = @_;
 
@@ -256,7 +268,7 @@ sub _read_in_metadata {
         $self->metadata_file($base_path . '/metadata.xml');
         if(-e $self->metadata_file){
             $no_xml = 0;
-        } 
+        }
     }
     my %metadata;
     if(not $no_xml) {
@@ -449,7 +461,7 @@ sub _create_imported_instrument_data {
         $params{target_region_set_name} = $target_region
     }
 
-    my $import_instrument_data = Genome::InstrumentData::Imported->create(%params);  
+    my $import_instrument_data = Genome::InstrumentData::Imported->create(%params);
 
     unless ($import_instrument_data) {
        $self->error_message('Failed to create imported instrument data for '.$self->original_data_path);
@@ -602,7 +614,7 @@ sub XX_rsync_bam {
 
     return 1;
 }
- 
+
 sub _bail {
     my $self = shift;
 
