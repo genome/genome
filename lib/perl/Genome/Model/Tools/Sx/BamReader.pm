@@ -11,6 +11,8 @@ class Genome::Model::Tools::Sx::BamReader {
     is => 'Genome::Model::Tools::Sx::SamReader',
 };
 
+sub type { return 'bam'; }
+
 sub _cmd_for_file {
     my ($self, $file) = @_;
 

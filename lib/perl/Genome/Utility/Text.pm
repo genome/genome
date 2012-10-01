@@ -3,7 +3,6 @@ package Genome::Utility::Text;
 use strict;
 use warnings;
 
-use Data::Dumper 'Dumper';
 use POSIX "floor";
 require Carp;
 
@@ -80,7 +79,6 @@ sub param_string_to_hash {
         }
     }
 
-    #print Dumper(\@params, \%params);
     return %params;
 }
 
