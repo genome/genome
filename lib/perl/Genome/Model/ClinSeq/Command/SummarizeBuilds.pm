@@ -105,6 +105,30 @@ sub execute {
 
     $self->status_message("\n***** " . $clinseq_build->__display_name__ . " ****");
 
+    #Get build objects for all builds that might underly a clinseq model (Ref Align, Somatic variation, RNA-seq)
+    my ($wgs_somvar_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build, $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
+
+    $wgs_somvar_build = $clinseq_build->wgs_build;
+    $exome_somvar_build = $clinseq_build->exome_build;
+    $tumor_rnaseq_build = $clinseq_build->tumor_rnaseq_build;
+    $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
+    $wgs_normal_refalign_build = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
+    $wgs_tumor_refalign_build = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
+    $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
+    $exome_tumor_refalign_build = $exome_somvar_build->tumor_build if ($exome_somvar_build);
+
+    #Gather all builds into a single array
+    my @builds = ($wgs_normal_refalign_build, $wgs_tumor_refalign_build, $wgs_somvar_build, $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $clinseq_build);
+
+    #Get a list of sample names for samples associated with this clinseq build
+    my %model_subject_ids;
+    for my $build (@builds){
+      next unless $build;
+      my $model = $build->model;
+      my $subject_id = $model->subject->id;
+      $model_subject_ids{$subject_id}=1;
+    }
+
     #Summarize Individual (id, name, gender, etc.). Check if all models hit the same individual and warn if not
     #... /Genome/lib/perl/Genome/Individual.pm
     $self->status_message("\n\nIndividual (subject/patient) information");
@@ -128,11 +152,13 @@ sub execute {
     $self->status_message("individual_ethnicity: $individual_ethnicity");
     $self->status_message("individual_race: $individual_race");
 
-    #Display instrument data counts for each sample/buid
-    $self->status_message("\n\nSamples and instrument data counts");
+    #Display instrument data counts for each sample/build actually associated with the clinseq model
+    $self->status_message("\n\nSamples and instrument data counts (for samples associated with this clinseq model only - not all samples of the individual)");
     my ($tumor_dna_id_count, $normal_dna_id_count, $tumor_rna_id_count, $normal_rna_id_count) = ("n/a", "n/a", "n/a", "n/a");
     my @samples = $individual->samples;
     for my $sample (@samples) {
+      my $sample_id = $sample->id;
+      next unless $model_subject_ids{$sample_id};
       my @instdata = $sample->instrument_data;
       my $scn = $sample->common_name || "[UNDEF sample common_name]";
       my $tissue_desc = $sample->tissue_desc || "[UNDEF sample tissue_desc]";
@@ -157,21 +183,6 @@ sub execute {
     #... /Genome/lib/perl/Genome/Model/RnaSeq.pm
     #... /Genome/lib/perl/Genome/Model/Build/RnaSeq.pm
 
-
-    #Get build objects for all builds that might underly a clinseq model (Ref Align, Somatic variation, RNA-seq)
-    my ($wgs_somvar_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build, $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
-
-    $wgs_somvar_build = $clinseq_build->wgs_build;
-    $exome_somvar_build = $clinseq_build->exome_build;
-    $tumor_rnaseq_build = $clinseq_build->tumor_rnaseq_build;
-    $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
-    $wgs_normal_refalign_build = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
-    $wgs_tumor_refalign_build = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
-    $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
-    $exome_tumor_refalign_build = $exome_somvar_build->tumor_build if ($exome_somvar_build);
-
-    #Gather all builds into a single array
-    my @builds = ($wgs_normal_refalign_build, $wgs_tumor_refalign_build, $wgs_somvar_build, $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $clinseq_build);
 
     #Summarize the intrument data used by each model
     $self->status_message("\n\nInstrument data actually used by each build");
