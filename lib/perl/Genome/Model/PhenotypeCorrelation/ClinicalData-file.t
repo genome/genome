@@ -104,6 +104,16 @@ ok(!%updates, "No updates reported");
 ok(!%updates, "Coercion from binary to binary with undef case/control labels is ok");
 is_deeply($cd->attribute_values("T1"), [1,0,0,1,undef], "Coercion to binary again didn't fail");
 
+my $null_last_field = new IO::String(<<EOS
+Sample_Name\tT1\tT2\tT3
+A\tHigh\t0.344\t
+EOS
+);
+$cd = $pkg->from_filehandle($null_last_field);
+is_deeply($cd->attribute_values("T1"), ["High"], "attribute T1 values ok");
+is_deeply($cd->attribute_values("T2"), [0.344], "attribute T2 values ok");
+is_deeply($cd->attribute_values("T3"), [undef], "attribute T2 values ok");
+
 
 
 done_testing();
