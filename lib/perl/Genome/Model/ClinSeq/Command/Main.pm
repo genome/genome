@@ -182,10 +182,8 @@ sub execute {
   my $summarize_builds_cmd;
   if ($clinseq_build_id > 0){
     #Watch out for -ve build IDs which will occur when the ClinSeq.t test is run.  In that case, do not run the LIMS reports
-    #$summarize_builds_cmd = "/usr/bin/perl `which genome` model clin-seq summarize-builds  --builds=$clinseq_build_id  --outdir=$input_summary_dir >$log_file 2>&1";
     $summarize_builds_cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$clinseq_build], outdir=>$input_summary_dir);
   }else{
-    #$summarize_builds_cmd = "/usr/bin/perl `which genome` model clin-seq summarize-builds  --builds=$clinseq_build_id  --outdir=$input_summary_dir --skip-lims-reports=1 >$log_file 2>&1";
     $summarize_builds_cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$clinseq_build], outdir=>$input_summary_dir, skip_lims_reports=>1);
   }
   $summarize_builds_cmd->queue_status_messages(1);
@@ -220,9 +218,10 @@ sub execute {
   #Import SNVs and Indels in a more complete form
   #Make copies of Tier1,2,3 files
   #Make a master list of all distinct SNV/Indels - add a column that classifies them by Tier - Exclude Mt positions
-  #For Tier1 and Tier2 run the annotator using the same version of Ensembl as run by the pipeline - make sure the header option is turned on
-  #For Tier1 and Tier2 run the annotator using a more up to date version of Ensembl...
   #For the master list of SNVs (also for INDELS) get the BAM read counts for all positions in tumor and normal
+  #Add dbSNP annotations to the SNVs/InDELs
+  #Add 1000 genomes annotations to the SNVs/InDELs
+
 
 
   #Run CNView analyses on the CNV data to identify amplified/deleted genes
@@ -244,7 +243,18 @@ sub execute {
 
     #Perform QC, splice site, and junction expression analysis using the Tophat output
     $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq tophat alignment results, splice sites and junction expression - Tumor", RESET;
-    &runRnaSeqTophatJunctionsAbsolute('-label'=>'tumor_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$tumor_rnaseq_dir, '-script_dir'=>$script_dir, '-clinseq_annotations_dir'=>$clinseq_annotations_ucsc_dir, '-verbose'=>$verbose);
+
+    #TODO: Abandon the old way of doing this and just assume the result can be obtained from RNA-seq?
+    my $tumor_rnaseq_build = $builds->{tumor_rnaseq};
+    my $tumor_rnaseq_build_dir = $tumor_rnaseq_build->data_directory;
+    my $junctions_dir = $tumor_rnaseq_build_dir . "/junctions/";
+    if (-e $junctions_dir){
+      my $results_dir = &createNewDir('-path'=>$tumor_rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
+      my $cp_cmd = "cp -r $junctions_dir" . "* $results_dir";
+      Genome::Sys->shellcmd(cmd=>$cp_cmd);
+    }else{
+      &runRnaSeqTophatJunctionsAbsolute('-label'=>'tumor_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$tumor_rnaseq_dir, '-script_dir'=>$script_dir, '-clinseq_annotations_dir'=>$clinseq_annotations_ucsc_dir, '-verbose'=>$verbose);
+    }
 
     #Perform the single-tumor outlier analysis (based on Cufflinks files)
     $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq Cufflinks absolute expression values - Tumor", RESET;
@@ -258,14 +268,30 @@ sub execute {
 
     #Perform QC, splice site, and junction expression analysis using the Tophat output
     $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq tophat alignment results, splice sites and junction expression - Normal", RESET;
-    &runRnaSeqTophatJunctionsAbsolute('-label'=>'normal_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$normal_rnaseq_dir, '-script_dir'=>$script_dir, '-clinseq_annotations_dir'=>$clinseq_annotations_ucsc_dir, '-verbose'=>$verbose);
 
+    #TODO: Abandon the old way of doing this and just assume the result can be obtained from RNA-seq?
+    my $normal_rnaseq_build = $builds->{normal_rnaseq};
+    my $normal_rnaseq_build_dir = $normal_rnaseq_build->data_directory;
+    my $junctions_dir = $normal_rnaseq_build_dir . "/junctions/";
+    if (-e $junctions_dir){
+      my $results_dir = &createNewDir('-path'=>$normal_rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
+      my $cp_cmd = "cp -r $junctions_dir" . "* $results_dir";
+      Genome::Sys->shellcmd(cmd=>$cp_cmd);
+    }else{
+      &runRnaSeqTophatJunctionsAbsolute('-label'=>'normal_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$normal_rnaseq_dir, '-script_dir'=>$script_dir, '-clinseq_annotations_dir'=>$clinseq_annotations_ucsc_dir, '-verbose'=>$verbose);
+    }
 
     #Perform the single-normal outlier analysis (based on Cufflinks files)
     $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq Cufflinks absolute expression values - Normal", RESET;
     &runRnaSeqCufflinksAbsolute('-label'=>'normal_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$normal_rnaseq_dir, '-script_dir'=>$script_dir, '-ensembl_version'=>$ensembl_version, '-verbose'=>$verbose);
 
     #Perform the multi-normal differential outlier analysis
+
+  }
+
+  #TODO: If both tumor and normal RNA-seq data are available, run Jason's new differential expression tool (Cuffmerge, Cuffdiff, Cummerbund)
+  #Perform pairwise differential expression analysis
+  if ($tumor_rnaseq && $normal_rnaseq){
 
   }
 
@@ -630,9 +656,30 @@ sub importSNVs{
     if ($verbose){print YELLOW, "\n\n$cp_cmd2", RESET;}
     Genome::Sys->shellcmd(cmd => $cp_cmd2);
 
-    #Define headers in a variant file
-    my @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change score domains1 domains2 unk_1 unk_2);
-    
+    #Get a column count on the file and use this to determine the correct header for the annotated variant file
+    my $col_count = 0;
+    open (TMP, $new_annotated_file) || die "\n\nCould not open variant annotation file: $new_annotated_file\n\n";
+    while(<TMP>){
+      chomp($_);
+      my @line = split("\t", $_);
+      $col_count = scalar(@line);
+    }
+    close(TMP);
+
+    my @input_headers; 
+    if ($col_count == 21){
+      #Old header 
+      #chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change ucsc_cons domain all_domains deletion_substructures transcript_error (21)
+      @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change score domains1 domains2 unk_1 unk_2 gene_biotype ensg_name ensg_name_source ensg_id);
+    }elsif($col_count == 24){
+      #New header
+      #chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id  (24)
+      @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id);
+    }else{
+      $self->error_message("Unexpected column count ($col_count) found in SNV/INDEL file");
+      exit(1);
+    }
+
     #Get AA changes from full .annotated file
     my %aa_changes;
     if ($verbose){print YELLOW, "\n\nReading: $new_annotated_file", RESET;}
@@ -644,12 +691,10 @@ sub importSNVs{
     while (my $data = $reader->next) {
       my $coord = $data->{chr} .':'. $data->{start} .'-'. $data->{stop};
       $data->{coord} = $coord;
-
       #Apply the AA effect filter
       unless ($data->{var_effect_type} =~ /$aa_effect_filter/){
         next();
       }
-
       #Apply the MT/chrM filter
       if ($filter_mt){
         my $chr = $data->{chr};
@@ -670,12 +715,10 @@ sub importSNVs{
 
     while (my $data = $reader->next){
       my $coord = $data->{chr} .':'. $data->{start} .'-'. $data->{stop};
-
       #Apply the AA effect filter
       unless ($data->{var_effect_type} =~ /$aa_effect_filter/){
         next();
       }
-      
       #Apply the MT/chrM filter
       if ($filter_mt){
         my $chr = $data->{chr};
@@ -706,12 +749,10 @@ sub importSNVs{
       my $fixed_gene_name = &fixGeneName('-gene'=>$data->{gene_name}, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
       $data_out{$coord}{mapped_gene_name} = $fixed_gene_name;
       $data_merge{$var_type}{$coord}{mapped_gene_name} = $fixed_gene_name;
-
     }
 
     #Print out the resulting list, sorting on fixed gene name
     open (OUT, ">$compact_file") || die "\n\nCould not open output file: $compact_file\n\n";
-
     print OUT "coord\tgene_name\tmapped_gene_name\taa_changes\tref_base\tvar_base\n";
     foreach my $coord (sort {$data_out{$a}->{mapped_gene_name} cmp $data_out{$b}->{mapped_gene_name}} keys %data_out){
       print OUT "$coord\t$data_out{$coord}{gene_name}\t$data_out{$coord}{mapped_gene_name}\t$data_out{$coord}{aa_changes}\t$data_out{$coord}{ref_base}\t$data_out{$coord}{var_base}\n";
@@ -720,8 +761,6 @@ sub importSNVs{
 
     #Store the path for this output file
     $out_paths->{$data_type}->{$var_type}->{path} = $compact_file;
-
-    #print Dumper %data_out;
   }
 
   #If both WGS and Exome data were present, print out a data merge for SNVs and Indels
@@ -881,12 +920,10 @@ sub runRnaSeqTophatJunctionsAbsolute{
   my $clinseq_annotations_ucsc_dir = $args{'-clinseq_annotations_dir'};
   my $verbose = $args{'-verbose'};
 
-  my $tophat_alignment_summary_script = $script_dir . "qc/tophatAlignmentSummary.pl";
-
   #Skip this analysis if the directory already exists
-  my $results_dir = $rnaseq_dir . "tophat_junctions_absolute/";
-  
+  my $results_dir = &createNewDir('-path'=>$rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
   unless (-e $results_dir && -d $results_dir){
+    my $tophat_alignment_summary_script = $script_dir . "qc/tophatAlignmentSummary.pl";
     my $absolute_rnaseq_dir = &createNewDir('-path'=>$rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
     my $tophat_qc_splice_cmd = "$tophat_alignment_summary_script  --reference_fasta_file=$data_paths->{$label}->{reference_fasta_path}  --tophat_alignment_dir=$data_paths->{$label}->{alignments}  --reference_annotations_dir=$clinseq_annotations_ucsc_dir  --working_dir=$results_dir  --verbose=$verbose";
     if ($verbose){print YELLOW, "\n\n$tophat_qc_splice_cmd\n\n", RESET;}

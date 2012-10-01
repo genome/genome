@@ -891,11 +891,23 @@ sub execute {
 
     #Summarize basic RNA-seq alignment stats for each RNA-seq model
     #Files to grab or summarize if present
-    #/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/alignment_stats.txt
-    #/gscmnt/gc2016/info/model_data/2880794613/build115909698/expression/cufflinks.out
-    #/gscmnt/gc2016/info/model_data/2880794613/build115909698/metrics/PicardRnaSeqMetrics.txt
-    #/gscmnt/gc2016/info/model_data/2880794613/build115909698/metrics/PicardRnaSeqMetrics.png
-    #/gscmnt/gc2016/info/model_data/2880794613/build115909698/metrics/PicardRnaSeqChart.pdf
+    #$build_dir/alignments/alignment_stats.txt (OLD)
+    #$build_dir/expression/cufflinks.out (OLD)
+    #$build_dir/metrics/PicardRnaSeqMetrics.txt (OLD)
+    #$build_dir/metrics/PicardRnaSeqMetrics.png (OLD)
+    #$build_dir/metrics/PicardRnaSeqChart.pdf (OLD)
+
+    #$build_dir/alignment_stats/alignment_stats.txt (NEW)
+    #$build_dir/junctions/summary/PercentGeneJunctionsCovered_BreadthvsDepth_BoxPlot.pdf (NEW)
+    #$build_dir/junctions/summary/ObservedJunctions_SpliceSiteAnchorTypes_Pie.pdf
+    #$build_dir/junctions/summary/ObservedJunctions_SpliceSiteUsage_Pie.pdf
+    #$build_dir/junctions/summary/TranscriptJunctionReadCounts_Log2_Hist.pdf
+    #$build_dir/bam-qc/*.pdf (NEW)
+    #$build_dir/bam-qc/*.html (NEW)
+
+    #https://gscweb.gsc.wustl.edu/$build_dir/bam-qc/
+    #https://gscweb.gsc.wustl.edu/$build_dir/junctions/summary/
+
     $self->status_message("\n\nGet basic RNA-seq alignment stats");
     $self->status_message("\nsample\ttotal_reads\ttotal_reads_mapped_percent\tunmapped_reads_percent\tfragment_size_mean\tfragment_size_std\tpercent_coding_bases\tpercent_utr_bases\tpercent_intronic_bases\tpercent_intergenic_bases\tpercent_ribosomal_bases\tbuild_id");
     for my $build (@builds) {
@@ -929,9 +941,12 @@ sub execute {
       #TODO: The alignment stats file will be moved in new versions of the RNA-seq pipeline.  The following code will need to be updated to find this file
       #In new builds it should be possible to identify this file via an API call similar to the following.  Refer to Jason Walker for details
       #$rna_seq_build->alignment_stats_file; 
+      my $alignment_stats_file;
+      my $as_file1 = $build_dir . "/alignments/alignment_stats.txt";
+      my $as_file2 = $build_dir . "/alignment_stats/alignment_stats.txt";
+      $alignment_stats_file = $as_file1 if (-e $as_file1);
+      $alignment_stats_file = $as_file2 if (-e $as_file2);
 
-      #/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/alignment_stats.txt
-      my $alignment_stats_file = $build_dir . "/alignments/alignment_stats.txt";
       my $total_reads = "n/a";
       my $unmapped_reads_p = "n/a";
       my $total_reads_mapped_p = "n/a";
@@ -956,7 +971,6 @@ sub execute {
               $total_reads_mapped_p = sprintf("%.2f", ($total_reads_mapped/$total_reads)*100);
             }
           }
-
         }
         close (ALIGN);
       }else{
@@ -1024,16 +1038,29 @@ sub execute {
       print STATS "RNA-seq Percent Intergenic Bases\t$pct_intergenic_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to intergenic regions for $common_name $extraction_type data\n";
       print STATS "RNA-seq Percent Ribosomal Bases\t$pct_ribosomal_bases\t$common_name\tClinseq Build Summary\tPercent\tPercent of all mapped RNA-seq reads corresponding to coding ribosomal for $common_name $extraction_type data\n";
 
-      #Make copies of read locations .png and end bias plots for convenience
-      #/gscmnt/gc2016/info/model_data/2880794613/build115909698/metrics/PicardRnaSeqMetrics.png
-      #/gscmnt/gc2016/info/model_data/2880794613/build115909698/metrics/PicardRnaSeqChart.pdf
-      if (-e $build_dir . "/metrics/PicardRnaSeqMetrics.png"){
-        my $cp_cmd1 = "cp " . $build_dir . "/metrics/PicardRnaSeqMetrics.png " . $build_outdir . "PicardRnaSeqMetrics.png";
-        system($cp_cmd1);
+
+      #Display URLs to some handy locations in the RNA-seq build
+      if (-e "$build_dir/bam-qc/"){
+        $self->status_message("\nRNA-seq BAM-QC results:\nhttps://gscweb.gsc.wustl.edu$build_dir/bam-qc/");
       }
-      if (-e $build_dir . "/metrics/PicardRnaSeqChart.pdf"){
-        my $cp_cmd2 = "cp " . $build_dir . "/metrics/PicardRnaSeqChart.pdf " . $build_outdir . "PicardRnaSeqChart.pdf";
-        system($cp_cmd2);
+      if (-e "$build_dir/junctions/summary/"){
+        $self->status_message("\nRNA-seq junction summary results:\nhttps://gscweb.gsc.wustl.edu$build_dir/junctions/summary/");
+      }
+
+      my @rnaseq_files_to_copy;
+      push (@rnaseq_files_to_copy, "$build_dir/metrics/PicardRnaSeqMetrics.png");
+      push (@rnaseq_files_to_copy, "$build_dir/metrics/PicardRnaSeqChart.pdf");
+      push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/PercentGeneJunctionsCovered_BreadthvsDepth_BoxPlot.pdf");
+      push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/ObservedJunctions_SpliceSiteAnchorTypes_Pie.pdf");
+      push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/ObservedJunctions_SpliceSiteUsage_Pie.pdf");
+      push (@rnaseq_files_to_copy, "$build_dir/junctions/summary/TranscriptJunctionReadCounts_Log2_Hist.pdf");
+      push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.pdf");
+      push (@rnaseq_files_to_copy, "$build_dir/bam-qc/*.html");
+
+      #Make copies of read locations .png and end bias plots for convenience
+      foreach my $file (@rnaseq_files_to_copy){
+        my $cp_cmd = "cp $file $build_outdir 1>/dev/null 2>/dev/null";
+        system($cp_cmd);
       }
     }
 
