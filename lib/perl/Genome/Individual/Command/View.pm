@@ -4,9 +4,9 @@ use strict;
 use warnings;
 
 use Genome;
-use List::Util "first";
 use List::MoreUtils "uniq";
 use Genome::Utility::Text qw(justify side_by_side);
+use Genome::Utility::List qw(in);
 
 class Genome::Individual::Command::View {
     doc => "Display basic information about an individual.",
@@ -127,7 +127,7 @@ sub _get_attributes {
     my $labels = '';
     my $values = '';
     for my $attr ($ind->attributes) {
-        unless(first {$_ eq $attr->attribute_label} @attributes_blacklist) {
+        unless(in($attr->attribute_label, @attributes_blacklist)) {
             $labels .= $attr->attribute_label . "\n";
             $values .= sprintf("%s\n",
                     $self->_color($attr->attribute_value, 'bold'));
@@ -200,7 +200,7 @@ sub _get_instrument_data_counts {
     my %instrument_data_index;
     for my $id (@ids) {
         my $category = _determine_instrument_data_type($id);
-        if(first {$_ eq $category} keys %instrument_data_index) {
+        if(in($category, keys %instrument_data_index)) {
             $instrument_data_index{$category} += 1;
         } else {
             $instrument_data_index{$category} = 1;
@@ -238,11 +238,7 @@ sub _determine_instrument_data_type {
 
 sub _in {
     my ($element, $list) = @_;
-    if(defined(first {$element eq $_} @{$list})) {
-        return 1;
-    } else {
-        return 0;
-    }
+    return any {$element eq $_} @{$list};
 }
 
 sub _write_model_info {

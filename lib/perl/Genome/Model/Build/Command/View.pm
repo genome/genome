@@ -5,7 +5,6 @@ use warnings;
 
 use Genome;
 use Genome::Utility::Text 'justify';
-require Genome::Model::Command::Input::Show;
 
 use DateTime::Format::Strptime;
 use Date::Calc "Delta_DHMS";
@@ -128,18 +127,8 @@ sub write_report {
     my $build = $self->build;
     $self->_display_build($handle, $build);
 
-    if($self->full or $self->inputs) {
-        Genome::Model::Command::Input::Show::write_inputs_for_model_or_build(
-                'width' => $width,
-                'handle' => $handle,
-                'target' => $build,
-                'target_type' => "build",
-                'show_display_names' => $self->show_input_display_names,
-                'color' => $self->color,
-        );
-    }
-
-    for my $thing (["events", "Events", "_display_event"],
+    for my $thing (["inputs", "Inputs", "_display_input"],
+                   ["events", "Events", "_display_event"],
                    ["notes", "Notes", "_display_note"]) {
         my ($item, $section_name, $method_name) = @{$thing};
         if($self->full || $self->$item) {

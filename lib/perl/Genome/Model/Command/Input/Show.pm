@@ -2,11 +2,12 @@ package Genome::Model::Command::Input::Show;
 
 use strict;
 use warnings;
-use List::Util 'max';
+use List::Util qw(max first);
 require Term::ANSIColor;
 
 use Genome;
 use Genome::Utility::Text "justify";
+use Genome::Utility::List "in";
 
 
 class Genome::Model::Command::Input::Show {
@@ -41,10 +42,18 @@ sub write_report {
 }
 
 sub _get_sorted_input_properties {
-    my ($meta) = @_;
+    my ($target) = @_;
 
-    my @input_properties = grep {$_->{is_input} or
-            ($_->via and $_->via eq 'inputs')} $meta->property_metas;
+    my @inputs = $target->inputs;
+    my @input_names = map {$_->name} @inputs;
+
+    my $meta = $target->__meta__;
+    my @target_properties = $meta->property_metas();
+
+    my @input_properties = grep {
+            in($_->property_name, @input_names) or
+            ($_->via and $_->via eq 'inputs') or
+            $_->{is_input}} $meta->property_metas;
     return sort {$a->property_name cmp $b->property_name} @input_properties;
 }
 
@@ -58,8 +67,7 @@ sub write_inputs_for_model_or_build {
     my $show_display_names = $params{show_display_names};
     my $color = $params{color};
 
-    my $meta = $target->__meta__;
-    my @properties = _get_sorted_input_properties($meta);
+    my @properties = _get_sorted_input_properties($target);
 
     unless(@properties) {
         printf $handle "No inputs found for %s %s",
