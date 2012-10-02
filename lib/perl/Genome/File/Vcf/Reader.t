@@ -52,9 +52,9 @@ ok($header, "Got vcf header");
 is_deeply([$header->sample_names], [map {"NA0000$_"} 1..3], "Header has expected sample names");
 my $entry = $reader->next;
 ok($entry, "Got first entry");
-is($entry->chrom, "20", "chrom accessor");
-is($entry->position, "14370", "position accessor");
-is($entry->reference_allele, "G", "ref accessor");
+is($entry->{chrom}, "20", "chrom accessor");
+is($entry->{position}, "14370", "position accessor");
+is($entry->{reference_allele}, "G", "ref accessor");
 is($entry->sample_field(0, "GT"), "0|0", "sample field accessor");
 
 my @expected_pos = (17330, 1110696, 1230237, 1234567);
@@ -63,7 +63,7 @@ while (my $e = $reader->next) {
     push(@actual_entries, $e);
 }
 is(scalar(@actual_entries), scalar(@expected_pos), "Read expected number of entries");
-is_deeply([map {$_->position} @actual_entries], \@expected_pos, "Positions of entries are as expected");
+is_deeply([map {$_->{position}} @actual_entries], \@expected_pos, "Positions of entries are as expected");
 
 done_testing();
 

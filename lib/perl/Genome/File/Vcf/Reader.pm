@@ -1,6 +1,6 @@
 package Genome::File::Vcf::Reader;
 
-use Data::Dumper;
+use Genome::File::Vcf::Entry;
 use Genome;
 use Carp qw/confess/;
 use strict;
@@ -27,8 +27,14 @@ class Genome::File::Vcf::Reader {
 };
 
 sub new {
-    my ($class, $path) = @_;
-    return $class->fhopen(Genome::Sys->open_file_for_reading($path));
+    my ($class, $filename) = @_;
+    my $fh;
+    if(Genome::Sys->file_is_gzipped($filename)) {
+        $fh = Genome::Sys->open_gzip_file_for_reading($filename);
+    } else {
+        $fh = Genome::Sys->open_file_for_reading($filename);
+    }
+    return $class->fhopen($fh, $filename);
 }
 
 sub fhopen {
@@ -75,10 +81,7 @@ sub next {
     chomp $line if $line;
     return unless $line;
 
-    my $entry = Genome::File::Vcf::Entry->create(
-        id => $line,
-        header => $self->{header}
-    );
+    my $entry = Genome::File::Vcf::Entry->new($self->{header}, $line);
     return $entry;
 }
 
