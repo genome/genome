@@ -135,15 +135,34 @@ sub backfill_feature_lists_for_capture_sets {
 
     my @feature_lists = Genome::FeatureList->get(); #just preload these--we'll "get" them individually by name later
 
+    my $setup_done;
+
     for my $capture_set (@capture_sets) {
         my $existing_feature_list = Genome::FeatureList->get(name => $capture_set->name);
 
         if($existing_feature_list) {
             #Do nothing; it's already here!
         } else {
+            unless($setup_done) {
+                #the synch cron is allowed to create FLs without content-types.
+                $self->_setup_create_command();
+                $setup_done = 1;
+            }
+
             $self->create_feature_list_for_capture_set($capture_set);
         }
     }
+
+    return 1;
+}
+
+sub _setup_create_command {
+    my $self = shift;
+
+    my $meta = Genome::FeatureList::Command::Create->__meta__;
+    my $pmeta = $meta->property(property_name => 'content_type');
+
+    $pmeta->is_optional(1);
 
     return 1;
 }
