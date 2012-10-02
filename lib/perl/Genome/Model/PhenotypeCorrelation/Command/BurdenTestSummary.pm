@@ -59,10 +59,6 @@ class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
             is => "Text",
             doc => "Annotation file containing variant data and gene names",
         },
-        burden_annotation_file => {
-            is => "Text",
-            doc => "Annotation file containing variant data and gene names",
-        },
         burden_matrix_file => {
             is => "Text",
             doc => "The burden matrix",
@@ -87,10 +83,6 @@ class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
         _full_annotation => {
             is => "HASH",
             doc => "Internal: hashref of gene_name => [vep entries]",
-        },
-        _burden_input_annotation => {
-            is => "HASH",
-            doc => "Internal: hashref of gene_name => [vep entries] that made it into the burden test",
         },
         _burden_input_variant_ids => {
             is => "HASH",
@@ -123,7 +115,6 @@ sub execute {
 
     # Load annotation and burden test data
     $self->_full_annotation($self->_read_annotation_for_genes($self->full_annotation_file, @genes));
-    $self->_burden_input_annotation($self->_read_annotation_for_genes($self->burden_annotation_file, @genes));
     $self->_burden_input_variant_ids($self->_variant_ids_from_burden_matrix);
 
     # If we've gotten this far, we will need somewhere to write
@@ -146,7 +137,6 @@ sub _process_gene {
 
     # All annotation for this gene
     my $full_annotation = $self->_full_annotation->{$gene};
-    my $burden_input_annotation = $self->_burden_input_annotation->{$gene};
 
     # Build a list of regions we can feed to tabix to create a subset of the big vcf
     my @all_locations = nsort keys %{{map {$_->{location} => undef} @$full_annotation}};
@@ -171,7 +161,6 @@ sub _process_gene {
     # Update full annotation information with information from the vcf 
     # this adds COUNT and AF for case/control as well as vcf info fields
     $self->_update_annotation_with_vcf($full_annotation, \@vcf_entries, $vcf->header);
-    $self->_update_annotation_with_vcf($burden_input_annotation, \@vcf_entries, $vcf->header);
 
     # Partition annotation into 3 lists
     my %burden_output_variant_ids = $self->_variant_ids_from_burden_result($gene);
@@ -194,13 +183,8 @@ sub _process_gene {
 
     # Create mutation-diagram plots
     # For now, we need to look at the annotation file produced when the burden matrix is created.
-    my $plot_vep = $self->_output_path($gene, "plot.vep");
-    my ($to_plot, $junk) = $self->_partition_vep_entries($burden_input_annotation, \%burden_output_variant_ids);
-    $self->_write_annotation($to_plot, $plot_vep);
-    my $case_plots_dir = join("/", $output_dir, "case_plots");
-    my $control_plots_dir = join("/", $output_dir, "control_plots");
-    $self->_make_mutation_diagrams($plot_vep, $output_dir, 'case.', 'CASE_COUNT');
-    $self->_make_mutation_diagrams($plot_vep, $output_dir, 'control.', 'CONTROL_COUNT');
+    $self->_make_mutation_diagrams($rare_file, $output_dir, 'case.', 'CASE_COUNT');
+    $self->_make_mutation_diagrams($rare_file, $output_dir, 'control.', 'CONTROL_COUNT');
 }
 
 # _partition_vep_entries
@@ -258,7 +242,7 @@ sub _add_vcf_data_to_vep {
     my $case_af = $n_case_alleles ? $case_count / $n_case_alleles : 0;
     my $control_af = $n_control_alleles ? $control_count / $n_control_alleles : 0;
 
-    $vep->set_extra_field("REF", $vcf->reference_allele);
+    $vep->set_extra_field("REF", $vcf->{reference_allele});
     $vep->set_extra_field("CASE_COUNT", $case_count);
     $vep->set_extra_field("CASE_AF", $case_af);
     $vep->set_extra_field("CONTROL_COUNT", $control_count);
@@ -273,8 +257,6 @@ sub _add_vcf_data_to_vep {
 
 sub _update_annotation_with_vcf {
     my ($self, $annotation, $vcf_entries, $vcf_header) = @_;
-
-    $DB::single=1;
 
     # Get sample names and column offsets
     my @samples = $vcf_header->sample_names;
@@ -305,8 +287,8 @@ sub _update_annotation_with_vcf {
 
     # Roll through the vcf entries updating any matching annotation we can find
     for my $site (@$vcf_entries) {
-        for my $alt ($site->alternate_alleles) {
-            my $key = sprintf("%s:%d,%s", $site->chrom, $site->position, $alt);
+        for my $alt (@{$site->{alternate_alleles}}) {
+            my $key = sprintf("%s:%d,%s", $site->{chrom}, $site->{position}, $alt);
             next unless exists $anno{$key};
             _add_vcf_data_to_vep($_, $site, \@cases, \@controls) for (@{$anno{$key}});
         }
