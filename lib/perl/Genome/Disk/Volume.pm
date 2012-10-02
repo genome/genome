@@ -186,6 +186,11 @@ class Genome::Disk::Volume {
     doc => 'Represents a particular disk volume (eg, sata483)',
 };
 
+sub __display_name__ {
+    my $self = shift;
+    return $self->mount_path;
+}
+
 sub get_lock {
     my ($class, $mount_path, $tries) = @_;
     $tries ||= 120;
