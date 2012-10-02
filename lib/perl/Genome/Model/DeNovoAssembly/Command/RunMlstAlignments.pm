@@ -33,11 +33,6 @@ class Genome::Model::DeNovoAssembly::Command::RunMlstAlignments {
             is => 'Text',
             doc => 'Directory to output alignments to',
         },
-        show_coords_params => {
-            is => 'Text',
-            doc => 'Params to use to run show-coords, eg \'-rclT -I 0.5 -M 500\'',
-            is_optional => 1,
-        },
     ],
 };
 
@@ -49,7 +44,7 @@ sub help_detail {
     return <<"EOS"
 genome model de-novo-assembly run-mlst-alignments --sample-names MRSA-6461-N121,MRSA-6365-A50 --reference-build-id 121034788 --output-dir /gscmnt/100/MLSTs
 genome model de-novo-assembly run-mlst-alignments --sample-list /gscmnt/100/sample.txt --reference-build-id 121034788 --output-dir /gscmnt/100/MLSTs
-genome model de-novo-assembly run-mlst-alignments --query-build-ids 121482147,121483135 --show-coords-params '-rclT' --reference-build-id 121034788 --output-dir /gscmnt/100/MLSTs
+genome model de-novo-assembly run-mlst-alignments --query-build-ids 121482147,121483135 --reference-build-id 121034788 --output-dir /gscmnt/100/MLSTs
 EOS
 }
 
@@ -60,17 +55,10 @@ sub execute {
     $self->status_message('Invalid output dir name: '.$self->output_dir) and return if
         not -d $self->output_dir;
 
-    # validate show-coords params
-    my %show_coords_params;
-    if ( $self->show_coords_params ) {
-        if ( not %show_coords_params = $self->_validate_show_coords_params ) {
-            $self->error_message('Failed to validate show-coords params');
-            return;
-        }
-    }
-    
     # verify sample names and get builds, ids
     my ( $query_builds, $ref_seq_build ) = $self->_validate_samples_and_get_builds;
+
+    my @output_files;
 
     for my $build ( @$query_builds ) {
         # run nucmer
@@ -92,10 +80,15 @@ sub execute {
         $self->status_message('Successfully ran nucmer on sample: '.$build->subject_name);
 
         # run show-coords
+        my $output_file = $self->output_dir.'/'.$build->subject_name.'.alignments.txt';
+        push @output_files, $output_file;
         my $show_coords = Genome::Model::Tools::Mummer::ShowCoords->create(
             input_delta_file => $nucmer_out_file,
-            output_file      => $self->output_dir.'/'.$build->subject_name.'.alignments.txt',
-            %show_coords_params,
+            output_file      => $output_file,
+            r                => 1,
+            c                => 1,
+            l                => 1,
+            T                => 1,
         );
         if ( not $show_coords ) {
             $self->error_message('Failed to create show-coords tool');
@@ -108,6 +101,51 @@ sub execute {
         $self->status_message('Successfully ran show-coords for sample: '.$build->subject_name);
     }
 
+    # summarize output files
+    if ( not $self->summarize_outputs(@output_files) ) {
+        $self->status_message('Failed to summarize alignment results');
+        return;
+    }
+
+    return 1;
+}
+
+sub summarize_outputs {
+    my ($self, @files) = @_;
+
+    my $summary_file = $self->output_dir.'/alignments_summary.txt';
+    unlink $summary_file if -e $summary_file;
+    my $summary_fh = Genome::Sys->open_file_for_writing($summary_file);
+
+    my @headers = qw/ Subject Locus Allel Qlength Rlength Identity Coverage /;
+    $summary_fh->printf("%-35s%-12s%-12s%-12s%-12s%-12s%-12s\n", @headers );
+
+    for my $file (@files ) {
+        my $file_name = File::Basename::basename($file);
+        my ($subject) = $file_name =~ /(\S+)\.alignments\.txt$/;
+        my $align_fh = Genome::Sys->open_file_for_reading($file);
+        while( my $line = $align_fh->getline ) {
+            chomp $line;
+            if ( $line =~ /^\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\.\d+/ ) {
+                my @tmp = split( "\t", $line );
+                # tmp[5] = query length
+                # tmp[6] = identity
+                # tmp[7] = ref length
+                # tmp[9] = coverage
+                # tmp[11] = locus_allel, eg, adk_1
+                  # locus = adk
+                  # allel = 1
+                my($locus,$allel) = $tmp[11] =~ /^(\S+)_(\d+)$/;
+                $locus = ( defined $locus ) ? $locus : 'undef';
+                $allel = ( defined $allel ) ? $allel : 'undef';
+
+                my @fields = ( $subject, $locus, $allel, $tmp[5], $tmp[7], $tmp[6], $tmp[9] );
+                $summary_fh->printf("%-35s%-12s%-12s%-12s%-12s%-12s%-12s\n", @fields );
+            }
+        }
+        $align_fh->close;
+    }
+    $summary_fh->close;
     return 1;
 }
 
@@ -122,7 +160,6 @@ sub _validate_reference_seq_build {
     $self->error_message('Failed to get ref seq file from build or file is zero size') and return if
         not -s $build->full_consensus_path('fa');
 
-    #print $build->species_name."\n";
     return $build;
 }
 
@@ -159,8 +196,9 @@ sub _validate_samples_and_get_builds {
             my $sample = Genome::Sample->get( name => $name );
             $self->status_message("Skipping .. can not get genome sample for name: $name") and next if
                 not $sample;
-            $self->warning_message('Sample species name: '. $sample->species_name.' does not match ref seq species name: '.$ref_seq_build->species_name.', for sample '.$sample->name) if
-                not $sample->species_name eq $ref_seq_build->species_name;
+            $self->warning_message(
+                    'Sample species name: '. $sample->species_name.' does not match ref seq species name: '.$ref_seq_build->species_name.', for sample '.$sample->name
+                ) if not $sample->species_name eq $ref_seq_build->species_name;
             my @builds = Genome::Model::Build->get(
                 subject_id    => $sample->id,
                 subclass_name => $expected_subclass,
