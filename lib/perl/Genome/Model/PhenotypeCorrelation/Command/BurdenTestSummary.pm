@@ -155,10 +155,11 @@ sub _process_gene {
     my $vcf = Genome::File::Vcf::Reader->new($output_vcf);
     my @vcf_entries;
     while (my $entry = $vcf->next) {
-        push(@vcf_entries, $entry) 
+        next if $entry->is_filtered;
+        push(@vcf_entries, $entry)
     }
 
-    # Update full annotation information with information from the vcf 
+    # Update full annotation information with information from the vcf
     # this adds COUNT and AF for case/control as well as vcf info fields
     $self->_update_annotation_with_vcf($full_annotation, \@vcf_entries, $vcf->header);
 
@@ -171,7 +172,9 @@ sub _process_gene {
         # since the set of output ids comes first, it takes priority.
         );
 
-    confess "Unable to find any rare variants for gene $gene, something must be wrong." unless @$rare;
+    unless (@$rare) {
+        warn "Unable to find any rare variants for gene $gene, something must be wrong.";
+    }
 
     # Write out the 3 lists of annotation
     my $rare_file = $self->_output_path($gene, "rare-deleterious.vep");
@@ -190,7 +193,7 @@ sub _process_gene {
 # _partition_vep_entries
 # params:
 #   $entries - an arrayref of Genome::File::Vep::Entry
-#   @id_arrays - an array of sets of variant ids (hashrefs: id => undef) 
+#   @id_arrays - an array of sets of variant ids (hashrefs: id => undef)
 # returns:
 #   n+1 disjoint lists of entries where n = length of @id_arrays.
 #   the last list will catch any entries whose ids are not in any of the supplied sets.
@@ -310,10 +313,11 @@ sub _read_annotation_for_genes {
     my $result = {};
     while (my $entry = $vep->next) {
         # replace gene name by HGNC field if present
-        if (exists $entry->{extra}{HGNC} && $entry->{gene} ne $entry->{extra}{HGNC}) {
+        if (exists $entry->{extra}{HGNC} && $entry->{gene}) {
             $entry->{gene} = $entry->{extra}{HGNC};
-            $entry->{uploaded_variation} = "$entry->{gene}_$entry->{uploaded_variation}";
         }
+
+        $entry->{uploaded_variation} = "$entry->{gene}_$entry->{uploaded_variation}";
         $entry->{uploaded_variation} =~ s/[^A-Za-z0-9]/_/g;
 
         my $gene = $entry->{gene};
@@ -399,7 +403,7 @@ sub _write_per_site_subset {
 
 # Make a mutation diagram for the specified Vep annotation file
 sub _make_mutation_diagrams {
-    my ($self, $annotation_file, $output_dir, $prefix, $frequency_field) = @_; 
+    my ($self, $annotation_file, $output_dir, $prefix, $frequency_field) = @_;
     Genome::Sys->create_directory($output_dir);
     my $b = Genome::Model::Build->get($self->annotation_build_id);
     my %params = (
@@ -453,7 +457,7 @@ sub _write_burden_summary_subset {
     my $bs = $self->_burden_summary;
     confess "Attempted to write burden summary info for trait $trait, gene $gene which does not exist"
         unless exists $bs->{traits}{$trait}{$gene};
-    
+
     my $ofh = Genome::Sys->open_file_for_writing($output_file);
     $ofh->print(join(",", @{$bs->{header}}) . "\n");
     $ofh->print(join(",", @{$bs->{traits}{$trait}{$gene}}) . "\n");
@@ -465,8 +469,8 @@ sub _top_genes_for_tests {
 
     my @test_names = $self->test_names;
     my $top_n = $self->top_n;
-    print "Finding the $top_n most significant genes for tests:\n\t"
-        . join("\n\t", @test_names) . "\n";
+    $self->status_message("Finding the $top_n most significant genes for tests:\n\t"
+        . join("\n\t", @test_names) . "\n");
 
     my $bs = $self->_burden_summary;
     my @unknown_tests = grep {!exists $bs->{column_indices}->{$_}} @test_names;
@@ -495,8 +499,8 @@ sub _top_genes_for_tests {
         }
     }
 
-    my @genes = map {$_->[0]} map {@$_} map {values %{$results{$_}} } keys %results;
-    return @genes;
+    my %genes = map {$_->[0] => 1} map {@$_} map {values %{$results{$_}} } keys %results;
+    return sort keys %genes;
 }
 
 # Helper to build up list of interesting genes
