@@ -32,7 +32,7 @@ class Genome::Model::Tools::Dgidb::Import::RussLampel {
             doc => 'VERSION.  Version (date) of download/import (no proper version available)',
         },
         citation_base_url => {
-            default => 'http://www.ncbi.nlm.nih.gov/pubmed/16376820/', #No url available for direct linking of genes/drugs
+            default => 'http://useast.ensembl.org/Homo_sapiens/Gene/Summary?g=', #No url available for direct linking of genes/drugs
         },
         citation_site_url => {
             default => 'http://www.ncbi.nlm.nih.gov/pubmed/16376820/',

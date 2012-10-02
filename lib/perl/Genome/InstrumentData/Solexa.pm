@@ -257,7 +257,7 @@ class Genome::InstrumentData::Solexa {
 
 sub __display_name__ {
     my $self = $_[0];
-    return $self->flow_cell_id . '/' . $self->subset_name;
+    return $self->flow_cell_id . '/' . $self->subset_name . " (" . $self->id . ")";
 }
 
 sub _calculate_paired_end_kb_usage {

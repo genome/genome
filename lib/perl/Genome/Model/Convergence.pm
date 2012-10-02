@@ -5,8 +5,6 @@ use warnings;
 
 use Genome;
 
-use Array::Compare;
-
 class Genome::Model::Convergence {
     is  => 'Genome::ModelDeprecated',
     has => [
@@ -55,6 +53,23 @@ sub check_for_updates {
     return 1;
 }
 
+# Return true of the lists have the same values, possibly in a different order
+sub _are_list_contents_same {
+    my($list1, $list2) = @_;
+
+    return if (@$list1 != @$list2);  # different length
+
+    my @list1 = sort @$list1;
+    my @list2 = sort @$list2;
+
+    my $len = scalar(@list1);
+    for (my $i = 0; $i < $len; $i++) {
+        return unless $list1[$i] eq $list2[$i];
+    }
+
+    return 1;
+}
+
 sub build_needed {
     my $self = shift;
 
@@ -73,8 +88,7 @@ sub build_needed {
 
         my @last_members = $last_build->members;
 
-        my $comparator = Array::Compare->new;
-        if($comparator->perm(\@last_members, \@potential_members)) {
+        if (_are_list_contents_same(\@last_members, \@potential_members)) {
             #$self->status_message('Skipping convergence rebuild--list of members that would be included is identical to last build.');
             return;
 

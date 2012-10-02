@@ -15,6 +15,8 @@ if (Genome::Config->arch_os ne 'x86_64') {
 
 use_ok('Genome::Model::Tools::Sx::SffReader') or die;
 
+is(Genome::Model::Tools::Sx::SffReader->type, 'sff', 'type is sff');
+
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'Created temp dir');
 my $fastq = $tmpdir.'/out.fastq';

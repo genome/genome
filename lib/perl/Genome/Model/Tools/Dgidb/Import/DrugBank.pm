@@ -125,8 +125,11 @@ Add official 'EntrezGene' name to each gene record
 HELP
 }
 
+my %UniProtMapping;
+
 sub execute {
     my $self = shift;
+    %UniProtMapping=%{$self->getUniprotEntrezMapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
     $self->input_to_tsv();
     $self->import_tsv();
     unless ($self->skip_pubchem){
@@ -204,15 +207,23 @@ sub _import_gene {
     my $uniprot_id = $interaction->{uniprot_id};
     my $entrez_id = $interaction->{entrez_id};
     my $ensembl_id = $interaction->{ensembl_id};
-
-    return if $uniprot_id eq 'N/A' and $gene_symbol eq 'N/A'; #if the gene has no gene_symbol or uniprot_id, it isn't a "real" gene. Do not make a gene for this non gene
+    #If a gene has no gene_symbol or uniprot_id, it isn't a "real" gene. Do not make a gene for this non gene
+    if ($uniprot_id eq 'N/A' and $gene_symbol eq 'N/A'){
+      return;
+    }
+    #If a uniprot ID is present, but doesn't map to a human entrez id (all that is attempted) then it is probably not human, don't import
+    if ($uniprot_id and ($uniprot_id ne 'N/A')){
+        unless ($UniProtMapping{$uniprot_id}){
+          return;
+        }     
+    }
     my $gene_name = $self->_create_gene_name_report($gene_partner_id, $citation, 'Drugbank Partner Id', '');
-    my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '');
+    #my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '');
     unless ($gene_symbol eq 'N/A'){
-        my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Gene Symbol', '');
+        my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Drugbank Gene Name', '');
     }
     unless ($uniprot_id eq 'N/A'){
-        my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Id', '');
+        my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Accession', '');
     }
     unless ($entrez_id eq 'N/A'){
         my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $entrez_id, 'Entrez Gene Id', '');
@@ -257,12 +268,15 @@ sub preload_objects {
     my $self = shift;
     my $source_db_name = 'DrugBank';
     my $source_db_version = $self->version;
-
+    my $verbose = $self->verbose;
+    if ($verbose){
+        print BLUE, "\nAttempting to preload objects\n", RESET;
+    }
     #Let's preload anything for this database name and version so that we can avoid death by 1000 queries
     my @gene_names = Genome::DruggableGene::GeneNameReport->get(source_db_name => $source_db_name, source_db_version => $source_db_version);
     for my $gene_name (@gene_names){
         $gene_name->gene_alt_names;
-        $gene_name->gene_name_category_report_associations;
+        $gene_name->gene_categories;
     }
     my @drug_names = Genome::DruggableGene::DrugNameReport->get(source_db_name => $source_db_name, source_db_version => $source_db_version);
     for my $drug_name (@drug_names){
@@ -274,7 +288,6 @@ sub preload_objects {
     for my $interaction (@interactions){
         $interaction->interaction_attributes;
     }
-
     return 1;
 }
 
@@ -306,9 +319,6 @@ sub input_to_tsv {
     #Unfortunately, the primary key of this tree is the gene name but drug intereactions seem to be linked by 'partner id'
     #This means that we can not directly look up partner records for each drug.  We must traverse the partner hash for each drug (slow) or create a new data structure that is keyed in partner ID
     my $partners = $xml->{'partners'};
-
-    #Load UniProt to Entrez mapping information from file - This will be used to obtain Entrez IDs from UniProt accessions provided in Drugbank records
-    my %UniProtMapping=%{$self->getUniprotEntrezMapping()};
 
     #Build a new simpler partners object for convenience - since it is keyed on partner ID we could access directly as well...
     my $partners_lite = $self->organizePartners('-partner_ref'=>$partners);
@@ -433,11 +443,9 @@ sub input_to_tsv {
 
             #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
             my $entrez_id = "N/A";
-            if ($UniProtMapping{$uniprotkb}{entrez_id}){
-              $entrez_id = $UniProtMapping{$uniprotkb}{entrez_id};
-            }
             my $ensembl_id = "N/A";
-            if ($UniProtMapping{$uniprotkb}{ensembl_id}){
+            if ($UniProtMapping{$uniprotkb}){
+              $entrez_id = $UniProtMapping{$uniprotkb}{entrez_id};
               $ensembl_id = $UniProtMapping{$uniprotkb}{ensembl_id};
             }
 
@@ -456,11 +464,9 @@ sub input_to_tsv {
         my $uniprot_id = $partners_lite->{$pid}->{uniprotkb};
         #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
         my $entrez_id = "N/A";
-        if ($UniProtMapping{$uniprot_id}{entrez_id}){
-          $entrez_id = $UniProtMapping{$uniprot_id}{entrez_id};
-        }
         my $ensembl_id = "N/A";
-        if ($UniProtMapping{$uniprot_id}{ensembl_id}){
+        if ($UniProtMapping{$uniprot_id}){
+          $entrez_id = $UniProtMapping{$uniprot_id}{entrez_id};
           $ensembl_id = $UniProtMapping{$uniprot_id}{ensembl_id};
         }
         my $targets_line = "$pid\t$gene_symbol\t$uniprot_id\t$entrez_id\t$ensembl_id";
@@ -631,12 +637,13 @@ sub getUniprotEntrezMapping {
       my $uniprot_acc=$data[0];
       my $uniprot_id=$data[1];
       my $entrez_id=$data[2];
-    unless ($entrez_id){$entrez_id="N/A";}
-    my $ensembl_id=$data[19];
-    unless ($ensembl_id){$ensembl_id="N/A";}
-    $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
-    $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
-    $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;
+      my $ensembl_id=$data[19];
+      unless ($uniprot_id){$uniprot_id="N/A";}
+      unless ($entrez_id){$entrez_id="N/A";}
+      unless ($ensembl_id){$ensembl_id="N/A";}
+      $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
+      $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
+      $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;
   }
 close MAPPING;
 return(\%UniProtMapping);

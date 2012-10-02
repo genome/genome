@@ -73,8 +73,11 @@ gmt dgidb import therapeutic-target-database
 HELP
 }
 
+my %UniProtMapping;
+
 sub execute {
     my $self = shift;
+    %UniProtMapping=%{$self->getUniprotEntrezMapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
     $self->input_to_tsv();
     $self->import_tsv();
     unless ($self->skip_pubchem){
@@ -108,8 +111,9 @@ sub import_interactions {
 
     $parser->next; #eat the headers
     while(my $interaction = $parser->next){
-        my $drug_name = $self->_import_drug($interaction, $citation);
         my $gene_name = $self->_import_gene($interaction, $citation);
+        next unless $gene_name; #if no gene was created, there is no gene for this interaction.  Skip this drug and interaction
+        my $drug_name = $self->_import_drug($interaction, $citation);
         my $drug_gene_interaction = $self->_create_interaction_report($citation, $drug_name, $gene_name, '');
         push @interactions, $drug_gene_interaction;
         my @interaction_types = split('; ', $interaction->{interaction_types});
@@ -155,8 +159,15 @@ sub _import_gene {
     my $self = shift;
     my $interaction = shift;
     my $citation = shift;
+    my $uniprot_id = $interaction->{target_uniprot_id};
+    #If a uniprot ID is present, but doesn't map to a human entrez id (all that is attempted) then it is probably not human, don't import
+    if ($uniprot_id and ($uniprot_id ne 'N/A')){
+        unless ($UniProtMapping{$uniprot_id}){
+          return;
+        }     
+    }
     my $gene_name = $self->_create_gene_name_report($interaction->{target_id}, $citation, 'TTD Partner Id', '');
-    my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_id}, 'TTD Gene Id', '');
+    #my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_id}, 'TTD Gene Id', '');
     unless ($interaction->{target_name} eq 'N/A'){
         my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_name}, 'Gene Name', '');
     }
@@ -166,7 +177,7 @@ sub _import_gene {
         my $gene_synonym = $self->_create_gene_alternate_name_report($gene_name, $target_synonym, 'Gene Synonym', '');
     }
     unless ($interaction->{target_uniprot_id} eq 'N/A'){
-        my $uniprot_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_uniprot_id}, 'Uniprot Id', '');
+        my $uniprot_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_uniprot_id}, 'Uniprot Accession', '');
     }
     unless ($interaction->{target_entrez_id} eq 'N/A'){
         my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $interaction->{target_entrez_id}, 'Entrez Gene Id', '');
@@ -210,11 +221,9 @@ sub input_to_tsv {
 
             #Retrieve Entrez/Ensembl IDs for interaction protein (if available)
             my $entrez_id = "N/A";
-            if ($UniProtMapping{$target_uniprot_id}{entrez_id}){
-              $entrez_id = $UniProtMapping{$target_uniprot_id}{entrez_id};
-            }
             my $ensembl_id = "N/A";
-            if ($UniProtMapping{$target_uniprot_id}{ensembl_id}){
+            if ($UniProtMapping{$target_uniprot_id}){
+              $entrez_id = $UniProtMapping{$target_uniprot_id}{entrez_id};
               $ensembl_id = $UniProtMapping{$target_uniprot_id}{ensembl_id};
             }
 
@@ -419,8 +428,9 @@ sub getUniprotEntrezMapping {
       my $uniprot_acc=$data[0];
       my $uniprot_id=$data[1];
       my $entrez_id=$data[2];
-    unless ($entrez_id){$entrez_id="N/A";}
     my $ensembl_id=$data[19];
+    unless ($uniprot_id){$uniprot_id="N/A";}
+    unless ($entrez_id){$entrez_id="N/A";}
     unless ($ensembl_id){$ensembl_id="N/A";}
     $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
     $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;

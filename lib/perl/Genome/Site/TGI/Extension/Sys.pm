@@ -1010,9 +1010,7 @@ sub remove_directory_tree {
     }
 
     File::Path::remove_tree($directory, { error => \my $remove_errors });
-    # remove_errors will be an empty array if no errors are encountered (not undef), so
-    # we've succeeded if the array has no elements
-    unless (@$remove_errors) {
+    if (@$remove_errors) {
         my $error_summary;
         for my $error (@$remove_errors) {
             my ($file, $message) = %$error;

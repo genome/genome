@@ -92,6 +92,7 @@ sub parse_line {
     my ($n_ad) = $n_sample =~ /^\d+:\d+:(\d+),/;
     my ($t_ad) = $t_sample =~ /^\d+:\d+:(\d+),/;
 
+    $columns[7]  =~ s/SOMATIC;//;  #remove the meaningless SOMATIC, it is contained in every line
     $columns[8]  = 'GT:AD:BQ:SS:'. $columns[8];
     $columns[9]  = $n_gt . ':' . $n_ad . ':.:.:' . $n_sample;
     $columns[10] = $t_gt . ':' . $t_ad . ':.:2:' . $t_sample;

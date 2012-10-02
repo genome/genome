@@ -13,6 +13,10 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::IlluminaFastqReader') or die;
 use_ok('Genome::Model::Tools::Sx::IlluminaFastqWriter') or die;
 
+#< Type >#
+is(Genome::Model::Tools::Sx::IlluminaFastqReader->type, 'illumina', 'type is illumina');
+is(Genome::Model::Tools::Sx::IlluminaFastqWriter->type, 'illumina', 'type is illumina');
+
 my $failed_write = eval{ Genome::Model::Tools::Sx::IlluminaFastqWriter->write(); };
 diag($@);
 ok(($@ && !$failed_write), 'Failed to write w/o fastqs');

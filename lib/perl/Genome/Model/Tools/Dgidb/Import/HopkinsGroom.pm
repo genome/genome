@@ -37,7 +37,7 @@ class Genome::Model::Tools::Dgidb::Import::HopkinsGroom {
             doc => 'VERSION.  Version (date) of last update of HopkinsGroom mapping to current Interpro/protein/gene IDs',
         },
         citation_base_url => {
-            default => 'http://www.ncbi.nlm.nih.gov/pubmed/12209152/', #No url available for direct linking of genes/drugs
+            default => 'http://www.uniprot.org/uniprot/', #HopkinsGroom genes are uniprot ids - link to there for lack of better place
         },
         citation_site_url => {
             default => 'http://www.ncbi.nlm.nih.gov/pubmed/12209152/', 
@@ -266,6 +266,7 @@ sub import_genes {
     while(my $hopkins_input = $parser->next){
         #Create gene record with all alternate names
         my $gene_name = $self->_create_gene_name_report($hopkins_input->{'Uniprot_Acc'}, $citation, 'HopkinsGroom Gene Name', '');
+        my $uniprot_acc = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Acc'}, 'Uniprot Accession', '');
         my $uniprot_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Id'}, 'Uniprot Id', '');
         unless ($hopkins_input->{'Uniprot_Protein_Name'} eq 'N/A'){
             my $uniprot_protein_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Protein_Name'}, 'Uniprot Protein Name', '');
@@ -287,10 +288,10 @@ sub import_genes {
         #Put all genes in HopkinsGroom category as well as any others
         my $human_readable_all = $self->_create_gene_category_report($gene_name, 'Human Readable Name', 'DRUGGABLE GENOME', ''); 
         my $human_readable_name = $hopkins_input->{'DGIDB_Human_Readable'};
-        $human_readable_name =~ s/-/ /g;
-        $human_readable_name =~ s/\// /g;
-        $human_readable_name =~ s/\./_/g;
         unless ($human_readable_name eq 'N/A'){
+          $human_readable_name =~ s/-/ /g;
+          $human_readable_name =~ s/\// /g;
+          $human_readable_name =~ s/\./_/g;
           my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
         }
         #Add additional category details

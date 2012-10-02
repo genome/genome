@@ -458,7 +458,7 @@ sub _import_gene {
     my $interaction = shift;
     my $citation = shift;
     my $gene_accession = $self->_create_gene_name_report($interaction->{Entity2_id}, $citation, 'PharmGKB Gene Accession', '');
-    my $gene_accession_alt = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entity2_id}, 'PharmGKB Gene Accession', '');
+    #my $gene_accession_alt = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entity2_id}, 'PharmGKB Gene Accession', '');
 
     unless ($interaction->{Entrez_Id} eq 'N/A'){
         my $Entrez_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entrez_Id}, 'Entrez Gene Id', '');

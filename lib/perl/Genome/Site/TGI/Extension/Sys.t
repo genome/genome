@@ -245,6 +245,14 @@ ok(Genome::Sys->create_directory($dir_tree_node), "Created new node dir for tree
 ok(Genome::Sys->remove_directory_tree($dir_tree_root), "removed directory tree at $dir_tree_root successfully");
 ok(!-d $dir_tree_root, "root directory $dir_tree_root is indeed gone");
 
+# NOTE: There should be a testfor remove_directory_tree that tests error cases, but there's no way for a non-root
+# process to create a file that it can't remove, so testing is difficult. The few ways that came to mind:
+# 1) if the filesystem is mounted with ACL enabled (access control list), you can mark a file immutable.
+# 2) modify remove_directory_tree to take parameters that are passed to File::Path->remove_tree
+# The first option is beyond a typical user's control, and the second was kinda hairy. You'd have to turn
+# on the "safe" option, which disables the chmodding that remove_tree would typically do. Instead, I just manually
+# tested by creating a file, chowning it to someone else (as root), and attempting to remove it.
+
 # SYMLINK
 my $target = $existing_file;
 my $new_link = sprintf('%s/existing_link.txt', $tmpdir);

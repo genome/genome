@@ -62,7 +62,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
 
     unless ($self){
-        die $self->error_message("Failed to create software-result!");
+        die $class->error_message("Failed to create software-result!");
     }
 
     unless($self->_prepare_output_directory){

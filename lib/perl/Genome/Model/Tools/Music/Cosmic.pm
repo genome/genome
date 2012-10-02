@@ -17,12 +17,12 @@ class Genome::Model::Tools::Music::Cosmic {
     has_input => [
         var_file => {
             is => 'String',
-            doc => "List of variants using TCGA MAF specification v2.3, VCF v4.0 or WU annotation",
+            doc => "List of variants using TCGA MAF specification v2.3, VCF v4.0/v4.1 or WU (Washington University) annotation",
         },
 
         output_file => { 
             is => 'String', 
-            doc => "Output MAF file with additional data",
+            doc => "Output MAF, VCF or WU annotation file with additional data",
         },
 
         ref_build => {
@@ -62,7 +62,7 @@ class Genome::Model::Tools::Music::Cosmic {
         vcf_annotation => {
             is => 'Boolean', 
             default => 0,
-            doc => "Use this if input file is VCF v4.0 format",
+            doc => "Use this if input file is VCF v4.0/v4.1 format",
         },
 
         nuc_range => {
@@ -103,22 +103,41 @@ class Genome::Model::Tools::Music::Cosmic {
 
 sub help_detail {
     return <<HELP;
-This module compares variants in the MAF, WU annotation or VCF format file user submitted to known variants in COSMIC and OMIM databases with six conditions following:
+This module compares variants in the MAF, WU annotation or VCF format file user submitted to known variants in COSMIC V61, OMIM (2012.09.20) and GDSC V1.1 databases with six conditions following:
+
+Position match:
 
 1. Identify variants that exactly match a known variant in COSMIC for both nucleotide AND Amino Acid (when AA is available);
 2. Identify variants that match the same genomic locus but report a different nucleotide change;
 3. Identify variants that match the same Amino Acid but report a different Amino Acid change;
-4. Identify variants that are within N bps of distance to a known variant in COSMIC (The user can specify N);
-5. Identify variants that are within M AA of distance to a known variant in COSMIC and OMIM (The user can specify M);
 
-The database files are specially prepared for this task and provided with the MuSiC suite. The module reports various types of matches, including matches within "near proximity", where "near proximity" is currently defined as a linear DNA distance of 5 bases or 2 amino acids. (This type of matching helps to account for the possibility of subtle differences in reported positions for variants due to differences in transcript definitions or other things of this nature.) Any site without a match in a particular databases is reported as "NA" with respect to that database.
+Proximity match:
 
-This module also check the drugs information of annotated genes from MAF file, using gene & drug mapping data from http://www.cancerrxgene.org/. 
-For each gene that a variant is annotated to, the drugs that can target it are reported and also also reports the drugs based on given p-value and IC_50 value..
+4. Identify variants that are within N bps of distance to a known variant in COSMIC (default N = 5);
+5. Identify variants that are within M AA of distance to a known variant in COSMIC and OMIM (default M = 2);
 
-The output of this module returns each row the original input MAF, VCF or WU annotation file with 4 columns appended to the end of each, one column for each of the databases. Also included is a STDOUT printout of a summary of what was found in the input MAF. The Omim and Cosmic directories must point to the output of the downloader, named appropriately, as they don't recognize the OMIM database in the raw download format.
+This module also check the drugs information of annotated genes from MAF file, using gene & drug mapping data from GDSC database. 
+For each gene that a variant is annotated to, the drugs that can target it and the drugs based on given p-value and IC_50 value from Multivariate ANOVA for all compounds will be reported.
+Any site without a match in a particular databases is reported as "NA" with respect to that database.
 
-By preprocessing of lift-over, this module compares both build 36 and build 37 coordinates that are specified in Cosmic to the coordinates in your variants file.
+The output of this module returns each row the original input MAF and WU annotation file with 4 columns appended to the end of each, the first two columns for COSMIC matches and one column for each of the OMIM and GDSC databases. For VCF format, the output information will be added into "INFO" part of VCF file. 
+
+The detailed appended columns format for MAF and WU annotaion is described in the following:
+
+------------------------------------------
+
+COSMIC_Nuc/COSMIC_AA/OMIM   GDSC
+
+exact|position|proximity  Target_drugs|drugs_based_on_cutoff
+
+** 
+Exact, position and proximity mean different match types, each separated by a "|" symbol. 
+For "COSMIC_Nuc" column, the number of samples and tissue types will be reported for each type of match.
+For "COSMIC_AA" and "OMIM" columns, only amino acid change will be reported for each type of match.
+For "GDSC" column, list drugs will be reported for each type of match, each separated by a "|" symbol.
+
+The detailed appended "INFO" format for VCF format will be shown in the outputfile header.
+By preprocessing of lift-over, this module compares both build 36 and build 37 coordinates that are specified in COSMIC to the coordinates in your variants file.
 
 In addition to the standard version 2.3 MAF headers, there needs to be 3 columns appended. These
 column headers in the MAF must have these names in the header in order for the tool to find them:
@@ -127,12 +146,8 @@ column headers in the MAF must have these names in the header in order for the t
  Amino_acid_change - the amino acid change, such as p.R290H
            Strand  - the strand of transcript, such as -1/+1
 
-In addition to the standard version 4.0 VCF headers, there needs to be 3 columns appended. These
-column headers in the VCF must have these names in the header in order for the tool to find them:
+Only nucleotide matches from COSMIC database will be reported, if no appended columns provided.
 
-   TRANSCRIPT_NAME - the transcript name, such as NM_000028
-         AA_CHANGE - the amino acid change, such as p.R290H
-           STRAND  - the strand of transcript, such as -1/+1
 HELP
 }
 
@@ -241,22 +256,19 @@ sub execute {
     $fh_omim->close;
 
     # parse maf file and find hits
-    my @matches;
     my @cosmic_ps = ($nuc_range, $max_span, $aa_range, $strand_op);
     my @manova_ps = ($mano_ic_50, $mano_p_value, $default_cutoff);
-    my $mfh = new FileHandle;
-    die "Could not open maf file\n" unless($mfh->open($maf_file));
-    $self->status_message("Comaring MAF to COSMIC database ...\n");
+    my @hash_ps   = ($cosmics, $gene_drugs, $manova_pout, $omimaa, $wu_anno, $vcf_anno);
+    my $mfh   = new FileHandle;
+    my $outfh = new FileHandle;
+    die "Could not open maf file\n"       unless($mfh->open($maf_file));
+    die "Could not create output file\n"  unless($outfh->open(">$output_file"));
+    $self->status_message("Comaring to COSMIC database ...\n");
     # Find COSMIC/OMIM/GDSC matches
-    FindMatches($mfh, \@matches, $cosmics, \@cosmic_ps, $gene_drugs, $manova_pout, \@manova_ps, $omimaa, $wu_anno, $vcf_anno);
+    FindMatches($mfh, $outfh, \@cosmic_ps, \@manova_ps, \@hash_ps);
     $mfh->close;
+    $outfh->close;
 
-    # write results
-    die "Could not open file for writing\n" unless(open(OUTPUT, ">$output_file"));
-    foreach my $ll (@matches) {
-        print OUTPUT $ll;
-    }
-    close(OUTPUT);
     #&TestSub();
     $self->status_message("Processing Done. \n");
     return 1;
@@ -386,52 +398,115 @@ sub ParseOMIMFile {
 ## Match hits finding
 sub FindMatches {
 
-    my($smfh, $hits, $cosmics, $cosmic_ps, $g_d, $m_pout, $m_ps, $omim, $wu_anno, $vcf_anno) = @_;
+    my($smfh, $outfh, $cosmic_ps, $m_ps, $h_ps) = @_;
 
     # cosmic and omim paras
-    my($dis, $max_sp, $aa_ran, $strand_op)   = @$cosmic_ps;
+    my($dis, $max_sp, $aa_ran, $strand_op) = @$cosmic_ps;
+    my($cosmics, $g_d, $m_pout, $omim, $wu_anno, $vcf_anno) = @$h_ps;
     my($def_ic, $def_p, $def_or) = @$m_ps;
 
-    my($total, $header, $rcols) = FileHeadParse($smfh, $wu_anno, $vcf_anno);
+    my($total, $header, $rcols, $info_col) = FileHeadParse($smfh, $wu_anno, $vcf_anno);
+
     #print $header;
-    push(@$hits, $header);
+    print $outfh $header;
+
     # content parse
     my $hited = {};
     while (my $ll = <$smfh>) {
 
         # This part should be improve based one different file format 
         chomp($ll);
-        my ($gene, $mafchr, $mafstart, $mafstop, 
-             $mafref, $mafvar, $maftrans, $mafstrand, 
-             $mafaa) =  ParseCols($ll, $total, $rcols, $wu_anno, $vcf_anno);
-        ## Nucletide match part
-        my @maf_ps = ($mafchr, $mafstart, $mafstop, $mafref, $mafvar);
-        my $cosmic_nuc_results = COSMIC_Compare_nucleotide($cosmics, \@maf_ps, $dis, $max_sp);
-        ## Amino Acid match part
-        my $strand_char = ($mafstrand eq "-1" ? "-" : "+");
-        unless($strand_op) {
-            $strand_char = "=";
-        } 
-        #$strand_char = "=" if ($strand_op);
-        my @maf_ps_omim = ($gene, $maftrans, $mafaa, $aa_ran, $strand_char);
-        my $cosmicaa_omim_results = COSMIC_Compare_aa($cosmics, $omim, \@maf_ps_omim);
-        # GDSC target drugs
-        my $target_drugs = GDSCtargetDrugs($g_d, $gene);
-        my $gdsc_manova  = GDSCMANOVADrugs($m_pout, $gene, $def_or, $def_p, $def_ic);
-        # GDSC MAVOVA results drugs
+        # VCF format 
+        if ($vcf_anno) {
+           my ($nucinfo, $resinfo) = ParseCols($ll, $total, $rcols, $wu_anno, $vcf_anno);
 
-        # only for test
-        my $gdsc_output = $target_drugs."|".$gdsc_manova;
-        my $results_output = $cosmic_nuc_results."\t".$cosmicaa_omim_results."\t".$gdsc_output;
-        # load match hits information
-        push(@$hits, $ll."\t".$results_output."\n");
+           #nucleotide match
+           my $vcf_nuc_cosmic_results = "";
+           my $vcf_aa_cosmic_results  = "";
+           my $vcf_gdsc_results = "";
+
+           foreach my $nuc_info_line (@{$nucinfo}) {
+               #print $nuc_info_line."\n";
+               my ($mafchr, $mafstart, $mafstop, $mafref, $mafvar) = split(/\|/, $nuc_info_line);
+  
+               my @vcf_ps0 = ($mafchr, $mafstart, $mafstop, $mafref, $mafvar);
+               my $vcf_nuc_results = COSMIC_Compare_nucleotide($cosmics, \@vcf_ps0, $dis, $max_sp);
+               #print $vcf_nuc_results."\n";
+               $vcf_nuc_cosmic_results .= $mafvar."|".$vcf_nuc_results.",";
+           }
+           chop($vcf_nuc_cosmic_results) if ($vcf_nuc_cosmic_results);
+           ## Amino Acid match part
+           my $strand_char = "+";
+           unless($strand_op) {
+               $strand_char = "=";
+           }
+
+           my %count_gene = ();
+           foreach my $res_info_line (@{$resinfo}) {
+               my ($maftrans, $mafaa, $gene) = split(/\|/, $res_info_line);
+               my @vcf_ps_omim = ($gene, $maftrans, $mafaa, $aa_ran, $strand_char);
+               my $vcf_cosmicaa_omim_results = COSMIC_Compare_aa($cosmics, $omim, \@vcf_ps_omim);
+               $vcf_cosmicaa_omim_results =~s/\t/\|/;
+               $vcf_aa_cosmic_results .= $maftrans."|".$gene."|".$vcf_cosmicaa_omim_results.",";
+               next if (exists($count_gene{$gene}));
+               $count_gene{$gene} = 1;
+               my $vcf_tmp_targets = GDSCtargetDrugs($g_d, $gene);
+               my $vcf_tmp_manova  = GDSCMANOVADrugs($m_pout, $gene, $def_or, $def_p, $def_ic);
+               $vcf_gdsc_results .= $gene."|".$vcf_tmp_targets."|".$vcf_tmp_manova.",";
+           }
+           chop($vcf_aa_cosmic_results) if ($vcf_aa_cosmic_results);
+           chop($vcf_gdsc_results)      if ($vcf_gdsc_results);
+
+           # output
+           my @vcf_content = split(/\t/, $ll);
+           my $iter = 0;
+           my $test_cont = "";
+           my $vcf_each_line = "";
+           foreach my $vcf_item (@vcf_content) {
+               if ($iter == $info_col) {
+                   $vcf_item  .= "COSMIC_NUC=".$vcf_nuc_cosmic_results.";" if ($vcf_nuc_cosmic_results);
+                   $vcf_item  .= "COSMIC_OMIM_AA=".$vcf_aa_cosmic_results.";" if ($vcf_aa_cosmic_results);
+                   $vcf_item  .= "GDSC=".$vcf_gdsc_results.";" if ($vcf_gdsc_results);
+               }
+               $vcf_each_line .= $vcf_item."\t";
+               $iter++;
+           }
+           chop($vcf_each_line);
+           $vcf_each_line .= "\n";
+           print $outfh $vcf_each_line;
+        }
+        else { # MAF file or WU annotation
+            my ($gene, $mafchr, $mafstart, $mafstop, 
+                 $mafref, $mafvar, $maftrans, $mafstrand,
+                 $mafaa) =  ParseCols($ll, $total, $rcols, $wu_anno, $vcf_anno);
+            ## Nucletide match part
+            my @maf_ps = ($mafchr, $mafstart, $mafstop, $mafref, $mafvar);
+            my $cosmic_nuc_results = COSMIC_Compare_nucleotide($cosmics, \@maf_ps, $dis, $max_sp);
+            ## Amino Acid match part
+            my $strand_char = ($mafstrand eq "-1" ? "-" : "+");
+            unless($strand_op) {
+                $strand_char = "=";
+            } 
+            my @maf_ps_omim = ($gene, $maftrans, $mafaa, $aa_ran, $strand_char);
+            my $cosmicaa_omim_results = COSMIC_Compare_aa($cosmics, $omim, \@maf_ps_omim);
+            # GDSC target drugs
+            my $target_drugs = GDSCtargetDrugs($g_d, $gene);
+            my $gdsc_manova  = GDSCMANOVADrugs($m_pout, $gene, $def_or, $def_p, $def_ic);
+            # GDSC MAVOVA results drugs
+
+            # only for test
+            my $gdsc_output = $target_drugs."|".$gdsc_manova;
+            my $results_output = $cosmic_nuc_results."\t".$cosmicaa_omim_results."\t".$gdsc_output;
+            # load match hits information
+            print $outfh $ll."\t".$results_output."\n";
+        }
     }
 }
 
 ## GDSC MANOVA
 sub GDSCMANOVADrugs {
 
-    my ($m_pout, $g_def, $g_psort, $g_dlist, $gene, $def_or, $def_p, $def_ic) = @_;
+    my ($m_pout, $gene, $def_or, $def_p, $def_ic) = @_;
     
     # GDSC MAVOVA results drugs
     my $gdsc_manova_con = "";
@@ -794,9 +869,17 @@ sub FileHeadParse {
     my $total   = 1;
 
     $temp_header = "\t"."COSMIC_Nuc\tCOSMIC_AA\tOMIM\tGDSC\n";
+    # appended VCF header information
+    my $c1_info = "##INFO=<ID=COS_NUC,Number=.,Type=String,Description=\"Cosmic nucleotide matches. Format: Exact_matches|Position_matches|Proximity_matches\">\n";
+    my $c2_info = "##INFO=<ID=COS_AA,Number=.,Type=String,Description=\"Cosmic Amino Acid Change matches. Format: Exact_matches|Position_matches|Proximity_matches\">\n";
+    my $om_info = "##INFO=<ID=OMIM,Number=.,Type=String,Description=\"Cosmic nucleotide matches. Format: Exact_matches|Position_matches|Proximity_matches\">\n";
+    my $gd_info = "##INFO=<ID=GDSC,Number=.,Type=String,Description=\"Target drugs matches. Format: Target_drugs|Target_drugs_based_on_pvalue\">\n";
+
     if ($vcf) {
         while (my $ll = <$fh>) {
             if ($ll =~ m/^#CHROM/) {
+                # added vcf header
+                $header .= $c1_info.$c2_info.$om_info.$gd_info;
                 chomp($ll);
                 my $i = 0;
                 my @t = split(/\t/, $ll);
@@ -820,21 +903,12 @@ sub FileHeadParse {
                 and defined($wu_nah{"INFO"})) {
             die "not a valid VCF annotation file!\n";
         }
-        @cols = ($wu_nah{"GENE"}, 
-                 $wu_nah{"#CHROM"}, 
+        @cols = ($wu_nah{"#CHROM"}, 
                  $wu_nah{"POS"},
                  $wu_nah{"REF"}, 
                  $wu_nah{"ALT"}, 
-                 $wu_nah{"TRANSCRIPT_NAME"},
-                 $wu_nah{"STRAND"}, 
-                 $wu_nah{"AA_CHANGE"});
-
-        unless(    defined($wu_nah{"TRANSCRIPT_NAME"}) 
-               and defined($wu_nah{"STRAND"})
-               and defined($wu_nah{"AA_CHANGE"})) {
-            $total = 0;
-        }
-        return($total, $header, \@cols);
+                 $wu_nah{"INFO"});
+        return($total, $header, \@cols, $wu_nah{"INFO"});
     }
 
     if ($wuanno) {
@@ -915,13 +989,11 @@ sub FileHeadParse {
              $wu_nah{"Transcript_name"}, 
              $wu_nah{"Strand"},
              $wu_nah{"Amino_acid_change"});
-
     unless(     defined($wu_nah{"Transcript_name"}) 
             and defined($wu_nah{"Strand"}) 
             and defined($wu_nah{"Amino_acid_change"})) {
         $total = 0;
     }
-
     return($total, $header, \@cols);
 }
 
@@ -931,25 +1003,22 @@ sub ParseCols {
     my ($line, $total, $rcols, $wuanno, $vcf) = @_;
 
     # For vcf 
-    my ($pos, $vcfref, $vcfalt); 
+    my ($pos, $vcfref, $vcfalt, $vcfinfo, @vcfnuc, @vcfres); 
     # For MAF
     my ($a1, $a2);
     my ($chr, $start, $stop, $ref, $var);
     my ($gene, $trans, $strand, $aa) = ("NA", "NA", "NA", "NA");
 
     my @cols = split(/\t/, $line);
+
     # VCF annotation
     if ($vcf) {
-        if ($total) {
-            ($gene, $chr, $pos, $vcfref, $vcfalt, 
-             $trans, $strand, $aa) = @cols[@$rcols];
+        ($chr, $pos, $vcfref, $vcfalt, $vcfinfo) = @cols[@$rcols];
+        unless ($vcfinfo =~ /CSQ=/) {
+            die "input is not valid Ensembl VEP annotation file\n";
         }
-        else { 
-             ($chr, $pos, $vcfref, $vcfalt) = @cols[@$rcols[1..4]];
-        }
-        # get position and variant info
-        ($start, $stop, $ref, $var) = VariantVCF($pos, $vcfref, $vcfalt);
-        return($gene, $chr, $start, $stop, $ref, $var, $trans, $strand, $aa);
+        VariantVCF($chr, $pos, $vcfref, $vcfalt, $vcfinfo, \@vcfnuc, \@vcfres);
+        return(\@vcfnuc, \@vcfres);
     }
     # WU annotation
     if ($wuanno) {
@@ -971,31 +1040,57 @@ sub ParseCols {
     return($gene, $chr, $start, $stop, $ref, $var, $trans, $strand, $aa);
 }
 
-
 # Parse variants of VCF 
 sub VariantVCF {
-    my($pos, $vcfref, $vcfalt) = @_;
 
-    my($start, $stop, $ref, $var);
-    if (length($vcfref) == length($vcfalt)) {
-        $start = $pos;
-        $stop  = $pos + length($vcfref);
-        $ref   = $vcfref;
-        $var   = $vcfalt;
-    } 
-    elsif (length($vcfref) > length($vcfalt)) {
-        $start = $pos + 1;
-        $stop  = $pos + length($vcfref) - 1;
-        $ref   = substr($vcfref, 1);
-        $var   = "-";
+    my ($vcfchr, $pos, $vcfref, $vcfalt, $vcfinfo, $vcfnuc, $vcfres) = @_;
+
+    my ($start, $stop, $ref, $var);
+
+    my @t = split(/,/, $vcfalt);
+    foreach my $item (@t) {
+        if (length($vcfref) == length($item)) {
+            $start = $pos;
+            $stop  = $pos + length($item) - 1;
+            $ref   = $vcfref;
+            $var   = $item;
+        } 
+        elsif (length($vcfref) > length($item)) {
+            $start = $pos + 1;
+            $stop  = $pos + length($vcfref) - 1;
+            $ref   = substr($vcfref, 1);
+            $var   = "-";
+        }
+        else {
+            $start = $pos;
+            $stop  = $pos + 1;
+            $ref   = "-";
+            $var   = substr($item, 1);;
+        }
+        push(@$vcfnuc, $vcfchr."|".$start."|".$stop."|".$ref."|".$var);
     }
-    else {
-        $start = $pos;
-        $stop  = $pos + 1;
-        $ref   = "-";
-        $var   = substr($vcfalt, 1);;
+    # amino acid part
+    $vcfinfo =~ /CSQ=(\S+)/;
+    my @t0 = split(/,/, $1);
+    foreach my $it0 (@t0) {
+        $it0 .= " ";
+        my @t1 = split(/\|/, $it0);
+        my ($allel, $trans, $transt, $pos, $res, $gene) = @t1[0,2,3,7,8,13];
+        unless ($transt eq "Transcript") {next;}
+        unless ($trans) { $trans = "NA"; } 
+        unless ($gene) { $gene = "NA"; }
+        my $aa = "NA";
+        if ($pos and $res) {
+            if ($res =~ /(\S+)\/(\S+)/) {
+                $aa = "p.$1$pos$2";
+            }
+            else {
+                $aa = "p.$res$pos";
+            }
+        }
+        push(@$vcfres, $trans."|".$aa."|".$gene);
     }
 
-    return($start, $stop, $ref, $var);
 }
+
 

@@ -82,14 +82,15 @@ sub execute {
     $self->status_message("Preparing directories");
     $self->prepare_directories;
 
+    $self->status_message("Performing region limiting on the original polymutt variant vcfs if requested");
+    $self->region_limit_model_group;
+
     $self->status_message("Resolving the segregating sites file to be used");
     my $segregating_sites_file = $self->resolve_segregating_sites_file;
 
     $self->status_message("Running Polymutt with the segregating sites file");
     $self->run_polymutt_on_segregating_sites($segregating_sites_file);
 
-    $self->status_message("Performing region limiting if requested");
-    $self->region_limit_model_group;
 
     $self->status_message("Backfilling all original vcfs with force-genotype data");
     $self->combine_individual_vcfs;
@@ -185,7 +186,7 @@ sub assemble_list_of_segregating_sites {
     my %positions;
     #open every final original snvs.vcf.gz and accumulate all unique positions that will need to be polled across the model group. (CHR POS)
     for my $build (@builds) {
-        my $snvs_vcf = $self->original_vcf_for_build($build);
+        my $snvs_vcf = $self->variant_vcf_for_build($build);
         my $fh = Genome::Sys->open_gzip_file_for_reading($snvs_vcf);
         while(my $line = $fh->getline) {
             if($line =~ m/^#/) {
@@ -311,16 +312,6 @@ sub force_genotype_vcf_for_build {
     return $vcf;
 }
 
-# Return the force-genotype vcf (before header fixing) that has been created for this build
-sub pre_fix_force_genotype_vcf_for_build {
-    my ($self, $build, $verify_existance) = @_;
-    my $vcf = $self->subdir_for_build($build) . "/pre_vcf_fix.snvs.vcf.gz";
-    if ($verify_existance && !(-s $vcf)) {
-        die $self->error_message("Pre-vcf-fix force genotyped vcf $vcf does not exist or has no size");
-    }
-    return $vcf;
-}
-
 # Return the backfilled vcf which was created from the force genotype vcf and the original vcf combined
 sub backfilled_vcf_for_build {
     my ($self, $build, $verify_existance) = @_;
@@ -342,6 +333,7 @@ sub run_polymutt_on_segregating_sites {
         roi_file => $segregating_sites_file,
         bgzip => 1,
         chr2process => $self->chr2process,
+        fix_alt_and_gt => 1,
     );
 
     my @global_input_properties = keys %params;
@@ -356,13 +348,13 @@ sub run_polymutt_on_segregating_sites {
 
     my @builds = $self->_builds;
     for my $build (@builds) {
-        my $pre_fix_vcf = $self->pre_fix_force_genotype_vcf_for_build($build);
+        my $output_vcf = $self->force_genotype_vcf_for_build($build);
         my $ped_file = $build->pedigree_file_path->path;
         my $family_id = $self->family_id_for_build($build);
 
         # params that differ per operation
         my %params_for_family;
-        $params_for_family{$family_id."_output_vcf"} = $pre_fix_vcf;
+        $params_for_family{$family_id."_output_vcf"} = $output_vcf;
         $params_for_family{$family_id."_glf_index"} = $self->new_glf_index_for_build($build);
         $params_for_family{$family_id."_dat_file"} = $self->dat_file_for_build($build);
         $params_for_family{$family_id."_ped_file"} = $ped_file;
@@ -422,29 +414,30 @@ sub run_polymutt_on_segregating_sites {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
+
+    # Dump the workflow
+    my $xml_file = Genome::Sys->open_file_for_writing($self->output_dir . "/run_polymutt_on_segregating_sites.xml");
+    $workflow_model->save_to_xml(OutputFile => $xml_file);
+    $xml_file->close();
+
     my $result = Workflow::Simple::run_workflow_lsf($workflow_model, %params);
     unless($result){
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("Workflow did not return correctly.");
     }
 
-    # Fix up the vcfs
-    # FIXME move this to RunPolymutt, or the workflow, rather than doing it inline
-    for my $build (@builds) {
-        my $pre_fix_vcf = $self->pre_fix_force_genotype_vcf_for_build($build);
-        my $post_fix_vcf = $self->force_genotype_vcf_for_build($build);
-        $self->status_message("Fixing polymutt vcf $pre_fix_vcf and storing the fix at $post_fix_vcf");
-        $self->write_fixed_vcf($pre_fix_vcf, $post_fix_vcf);
-    }
-
     return 1;
-
 }
-
 
 # Combine each force-genotyped vcf with its original vcf to create one "backfilled" vcf for each original build
 sub combine_individual_vcfs {
     my $self = shift;
+
+    # Create the necessary strategy file for these merge operations. Maintain original variant call INFO field values.
+    my $merge_strategy_file = $self->output_dir . "/joinx_merge_strategy.individual";
+    my $strategy_fh = Genome::Sys->open_file_for_writing($merge_strategy_file);
+    $strategy_fh->print("default=first\n");
+    $strategy_fh->close;
 
     # Params for every operation
     my %params = (
@@ -452,6 +445,7 @@ sub combine_individual_vcfs {
         sample_priority => 'order',
         merge_samples => 1,
         use_bgzip => 1,
+        merge_strategy_file => $merge_strategy_file,
     );
 
     my @global_input_properties = keys %params;
@@ -531,6 +525,12 @@ sub combine_individual_vcfs {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
+
+    # Dump the workflow
+    my $xml_file = Genome::Sys->open_file_for_writing($self->output_dir . "/combine_individual_vcfs.xml");
+    $workflow_model->save_to_xml(OutputFile => $xml_file);
+    $xml_file->close();
+
     my $result = Workflow::Simple::run_workflow_lsf($workflow_model, %params);
     unless($result){
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
@@ -548,15 +548,28 @@ sub create_final_vcf {
     my @builds = $self->_builds;
     my @backfilled_vcfs;
     for my $build (@builds) {
-        my $per_build_output_file = $self->backfilled_vcf_for_build($build);
+        my $per_build_output_file = $self->backfilled_vcf_for_build($build, 1);
         push @backfilled_vcfs, $per_build_output_file;
     }
 
-    my $command = Genome::Model::Tools::Joinx::VcfMerge->create(
+    my $working_directory = $self->output_dir . "/sub_merge_working_dir";
+    Genome::Sys->create_directory($working_directory);
+
+    # Create the necessary strategy file for this merge operation. Ignore all INFO fields since joining them makes little sense cross sample.
+    my $merge_strategy_file = $self->output_dir . "/joinx_merge_strategy.final";
+    my $strategy_fh = Genome::Sys->open_file_for_writing($merge_strategy_file);
+    $strategy_fh->print("default=ignore\n");
+    $strategy_fh->close;
+
+    my $command = Genome::Model::Tools::Joinx::SafeVcfMerge->create(
         use_version => $self->joinx_version,
         input_files => \@backfilled_vcfs,
         use_bgzip => 1,
         output_file => $output_file,
+        max_files_per_merge => 100, # FIXME the default is probably fine, let's test it
+        remove_intermediate_files => 0, # FIXME probably stop doing this once debugging is done
+        merge_strategy_file => $merge_strategy_file,
+        working_directory => $working_directory,
     );
 
     $self->status_message("Running joinx vcf-merge to join all backfilled vcfs to output $output_file");
@@ -668,6 +681,11 @@ sub region_limit_model_group {
         die "Errors validating region-limiting workflow\n";
     }
 
+    # Dump the workflow
+    my $xml_file = Genome::Sys->open_file_for_writing($self->output_dir . "/region_limiting_workflow.xml");
+    $workflow->save_to_xml(OutputFile => $xml_file);
+    $xml_file->close();
+
     $self->status_message("Now launching the region-limiting workflow.");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
 
@@ -683,92 +701,6 @@ sub region_limit_model_group {
 
     #return a list of the output files
     return @answers;
-}
-
-# FIXME copied... call this in Genome::Model::Tools::Relationship::MergeAndFixVcfs or move to a base class
-# Copy is a conglomoration of write_merged_header and fix_vcf_header
-sub write_fixed_vcf {
-    my ($self, $input_vcf, $output_vcf) = @_;
-    my @info_lines_to_add = (qq|##INFO=<ID=DQ,Number=1,Type=Float,Description="De Novo Mutation Quality">|);
-    push @info_lines_to_add, qq|##INFO=<ID=DA,Number=1,Type=Integer,Description="De Novo Mutation Allele">|;
-    my @format_lines_to_add = (qq|##FORMAT=<ID=DNGL,Number=10,Type=Integer,Description="Denovo Genotype Likelihoods">|);
-    push @format_lines_to_add, qq|##FORMAT=<ID=DNGT,Number=1,Type=String,Description="Genotype">|;
-    push @format_lines_to_add, qq|##FORMAT=<ID=DNGQ,Number=1,Type=Integer,Description="Genotype Quality">|;
-    ####hack to add in header for bingshan's tag that he hasn't added himself
-    my @missing_info_lines = $self->missing_info_lines($input_vcf);
-    push @info_lines_to_add, @missing_info_lines if (@missing_info_lines);
-    ######
-
-    my $fh = Genome::Sys->open_gzip_file_for_writing($output_vcf);
-    my $ifh = Genome::Sys->open_gzip_file_for_reading($input_vcf);
-    my ($info_printed, $format_printed)=(0,0);
-    while(my $line = $ifh->getline) {
-        if($line =~m/^#/) {
-            # Fix incorrect data types
-            if($line =~m/ID=PS/) {
-                $line =~ s/Integer/Float/;
-            }
-            #Fix spacing before description
-            $line =~s/, Description/,Description/;
-
-            # Fix invalid type labels
-            $line =~s/,String/,Type=String/;
-
-            # Fix lines without a "number" tag
-            if ( ($line =~ m/^##INFO/ or $line =~ m/^##FORMAT/) and not ($line =~ m/Number=/) ) {
-                $line =~ s/,/,Number=1,/;
-            }
-
-            if($line =~m/#INFO/ && !$info_printed) {
-                for my $info_line (@info_lines_to_add) {
-                    $fh->print($info_line ."\n");
-                }
-                $info_printed=1;
-            }
-            if($line =~m/#FORMAT/ && !$format_printed) {
-                for my $format_line (@format_lines_to_add) {
-                    $fh->print($format_line ."\n");
-                }
-                $format_printed=1
-            }
-            $fh->print($line);
-        }
-        else {
-            $fh->print($line);
-        }
-    }
-    $fh->close; $ifh->close;
-
-    return 1;
-}
-
-# FIXME copied... call this in Genome::Model::Tools::Relationship::MergeAndFixVcfs or move to a base class
-sub missing_info_lines {
-    my ($self, $input_vcf) = @_;
-
-    my %possible_tags = (
-        AB => qq|##INFO=<ID=AB,Number=1,Type=Float,Description="Allelic Balance">|,
-        BA => qq|##INFO=<ID=BA,Number=1,Type=String,Description="Best Alternative Allele">|,
-    );
-
-    my @info_lines_to_add;
-    for my $tag (keys %possible_tags) {
-        $DB::single=1;
-        chomp(my @number_of_tags = `zcat $input_vcf | grep $tag`);
-        if(@number_of_tags) {
-            my $has_header=0;
-            for my $line (@number_of_tags) {
-                if($line=~m/^##INFO=<ID=$tag,/) {
-                    $has_header=1;
-                }
-            }
-            unless($has_header) {
-                push @info_lines_to_add, $possible_tags{$tag};
-            }
-        }
-    }
-
-    return @info_lines_to_add;
 }
 
 1;

@@ -36,6 +36,7 @@ EOS
 }
 
 my %VARSCAN_VERSIONS = (
+    '2.3.2' => '/gsc/scripts/lib/java/VarScan/VarScan.v2.3.2.jar',
     '2.2.9' => '/gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar',
     '2.2.6' => '/gsc/scripts/lib/java/VarScan/VarScan.v2.2.6.jar',
     '2.2.4' => '/gsc/scripts/lib/java/VarScan/VarScan.v2.2.4.jar',

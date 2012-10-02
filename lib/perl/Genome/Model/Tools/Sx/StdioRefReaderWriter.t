@@ -10,11 +10,13 @@ require IO::File;
 use Test::More;
 
 use_ok('Genome::Model::Tools::Sx::StdoutRefWriter') or die;
+is(Genome::Model::Tools::Sx::StdoutRefWriter->type, 'ref', 'type is ref');
 my $writer = Genome::Model::Tools::Sx::StdoutRefWriter->create();
 ok($writer, 'Created writer');
 can_ok($writer, 'write');
 
 use_ok('Genome::Model::Tools::Sx::StdinRefReader') or die;
+is(Genome::Model::Tools::Sx::StdinRefReader->type, 'ref', 'type is ref');
 my $reader = Genome::Model::Tools::Sx::StdinRefReader->create();
 ok($reader, 'Created reader');
 can_ok($reader, 'read');
