@@ -20,6 +20,7 @@ my $vep_fh = new IO::String(<<EOS
 Uploaded_variation	Location	Allele	Gene	Feature	Feature_type	Consequence	cDNA_position	CDS_position	Protein_position	Amino_acids	Codons	Existing_variation	Extra
 HELLO1_1_10_A_T	1:10	T	GENE1	TS1	Transcript	NON_SYNONYMOUS_CODING	3	3	1	D/V	gAt/gTt	-	EX1=e1;HGNC=HELLO1
 HELLO2_1_20_G_A	1:20	A	GENE2	TS2	Transcript	STOP_GAINED	6	6	2	W/*	tgG/tgA	-	HGNC=HELLO2
+#COMMENTED	1:20	A	GENE2	TS2	Transcript	STOP_GAINED	6	6	2	W/*	tgG/tgA	-	HGNC=HELLO2
 EOS
 );
 
@@ -32,8 +33,12 @@ is($entry->{chrom}, "1", "entry chrom");
 is($entry->{position}, "10", "entry pos");
 is($entry->{allele}, "T", "entry allele");
 
+$entry = $reader->peek;
+ok($entry, "peek at entry 2");
+is($entry->{uploaded_variation}, "HELLO2_1_20_G_A", "uploaded_variant");
+
 $entry = $reader->next;
-ok($entry, "Read entry 2");
+ok($entry, "get entry 2 after peek");
 is($entry->{uploaded_variation}, "HELLO2_1_20_G_A", "uploaded_variant");
 
 ok(!$reader->next, "next at EOF yields undef");
