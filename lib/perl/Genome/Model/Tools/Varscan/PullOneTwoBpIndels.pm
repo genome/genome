@@ -7,6 +7,7 @@ package Genome::Model::Tools::Varscan::PullOneTwoBpIndels;     # rename this whe
 #
 #       CREATED:        11/29/2010 by W.S.
 #       MODIFIED:       11/29/2010 by W.S.
+#       MODIFIED:       09/28/2012 by N.D.
 #
 #       NOTES:
 #
@@ -25,93 +26,93 @@ class Genome::Model::Tools::Varscan::PullOneTwoBpIndels {
 
     has => [                               
 # specify the command's single-value properties (parameters) <---
-        project_name => { 
-            is => 'Text',
-            doc => "Name of the project i.e. ASMS" ,
-            is_optional => 1},
-        
-        file_list => { 
-            is => 'Text',
-            doc => "File of indel files to include,  1 name per line, tab delim, no headers. Should be chr start stop ref var blahhhhhhhhhhhh." ,
-            is_optional => 1},
+    project_name => { 
+        is => 'Text',
+        doc => "Name of the project i.e. ASMS" ,
+        is_optional => 1},
 
-        small_indel_outfile => {
-            is => 'Text',
-            doc => "File of small indels to be realigned" ,
-            is_optional => 0},
+    list_of_indel_files_to_validate => { 
+        is => 'Text',
+        doc => "A file listing indel files to include in the validation process, 1 filename per line, no headers. Files should either be named ending in '.bed' or be in annotation format: chr start stop ref var... If you specify a somatic validation build and the variants/indels.hq.bed file is not in your file list, those indels will be included in the validation process in addition to your file list. If any file on your list ends with '.bed', then it will be converted to annotation format for processing via Varscan, etc, which expect 1-based start positions (not bed)." ,
+        is_optional => 1},
 
-        large_indel_outfile => {
-            is => 'Text',
-            doc => "File of large indels to be realigned" ,
-            is_optional => 1},
+    small_indel_output_bed => {
+        is => 'Text',
+        doc => "File of small indels to be realigned. BED format - must be named *.bed! Note that the '.bed' output version of this file has padded start and stop to allow more robust local realignment. The '.annotation_format' output version has true coordinates." ,
+        is_optional => 0},
 
-        tumor_bam   => {
-            is => 'Text',
-            doc => "Tumor Bam File (Validation Bam)" ,
-            is_optional => 1},
+    large_indel_output_bed => {
+        is => 'Text',
+        doc => "File of large indels to be processed using other tools. BED format - must be named *.bed!" ,
+        is_optional => 1},
 
-        normal_bam  => {
-            is => 'Text',
-            doc => "Normal Bam File (Validation Bam)" ,
-            is_optional => 1},
+    tumor_bam   => {
+        is => 'Text',
+        doc => "Tumor Bam File (Validation Bam)" ,
+        is_optional => 1},
 
-        relapse_bam => {
-            is => 'Text',
-            doc => "(Optional) Relapse Bam File (Validation Bam)" ,
-            is_optional => 1},
+    normal_bam  => {
+        is => 'Text',
+        doc => "Normal Bam File (Validation Bam)" ,
+        is_optional => 1},
 
-        reference_fasta => {
-            is => 'Text',
-            doc => "Reference Fasta" ,
-            is_optional => 1,
-            #default => "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa"},
-        },
+    relapse_bam => {
+        is => 'Text',
+        doc => "(Optional) Relapse Bam File (Validation Bam)" ,
+        is_optional => 1},
 
-        output_indel => {
-            is => 'Text',
-            doc => "gmt varscan validate input" ,
-            is_optional => 1},
+    reference_fasta => {
+        is => 'Text',
+        doc => "Reference Fasta" ,
+        is_optional => 1,
+        #default => "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa"},
+    },
 
-        output_snp  => {
-            is => 'Text',
-            doc => "gmt varscan validate input" ,
-            is_optional => 1},
+    varscan_indel_output => {
+        is => 'Text',
+        doc => "gmt varscan validation output run on realigned bams" ,
+        is_optional => 1},
 
-        final_output_file   => {
-            is => 'Text',
-            doc => "process-validation-indels output file" ,
-            is_optional => 0},
+    varscan_snp_output  => {
+        is => 'Text',
+        doc => "gmt varscan validation output run on realigned bams" ,
+        is_optional => 1},
 
-        skip_if_output_present      => {
-            is => 'Boolean',
-            doc => "Skip Creating new Bam Files if they exist" ,
-            is_optional => 1,
-            default => ""},
+    final_output_file   => {
+        is => 'Text',
+        doc => "gmt varscan process-validation-indels final output file labeling indels as Somatic or otherwise" ,
+        is_optional => 0},
 
-        realigned_bam_file_directory => {
-            is => 'Text',
-            doc => "Where to dump the realigned bam file",
-            is_optional => 0},
+    skip_if_output_present      => {
+        is => 'Boolean',
+        doc => "Skip Creating new Bam Files if they exist" ,
+        is_optional => 1,
+        default => ""},
 
-        normal_purity => {
-            is => 'Float',
-            doc => "Normal purity param to pass to varscan",
-            is_optional => 0,
-            default => 1},
+    realigned_bam_file_directory => {
+        is => 'Text',
+        doc => "Where to dump the realigned bam file",
+        is_optional => 0},
 
-        min_var_frequency => {
-            is => 'Float',
-            doc => "Minimum variant frequency to pass to varscan",
-            is_optional => 0,
-            default => 0.08},
-        
-        somatic_validation_build => {
-            is => 'Integer',
-            doc => "directory for ",
-            is_optional => 1,
-        }
+    normal_purity => {
+        is => 'Float',
+        doc => "Normal purity param to pass to varscan",
+        is_optional => 0,
+        default => 1},
 
-        ],    
+    min_var_frequency => {
+        is => 'Float',
+        doc => "Minimum variant frequency to pass to varscan",
+        is_optional => 0,
+        default => 0.08},
+
+    somatic_validation_build => {
+        is => 'Integer',
+        doc => "directory for ",
+        is_optional => 1,
+    }
+
+    ],    
 };
 
 sub sub_command_sort_position { 12 }
@@ -122,130 +123,100 @@ sub help_brief {                            # keep this to just a few words <---
 
 sub help_synopsis {
     return <<EOS
-        Generate lists of 1-2 bp and 3+ indels, run GATK recalibration, and then sort and index bams
-EXAMPLE:        gmt varscan pull-one-two-bp-indels
+        Generate lists of 1-2 bp and 3+ indels, run GATK recalibration, and then sort and index bams. Run varscan validation on the realigned bams, and then run varscan process-validation-indels on the output.
 EOS
 }
 
 sub help_detail {                           # this is what the user will see with the longer version of help. <---
     return <<EOS
-                Generate lists of 1-2 bp and 3+ indels, run GATK recalibration, and then sort and index bams
-EXAMPLE:        gmt varscan pull-one-two-bp-indels
+                Generate lists of 1-2 bp and 3+ indels, run GATK recalibration, and then sort and index bams. Run varscan validation on the realigned bams, and then run varscan process-validation-indels on the output.
 EOS
 }
 
+##############################################################################################
+# convert_indel_bed_file - for converting to anno format and returning a temp file path
+#
+##############################################################################################
+sub convert_indel_bed_file {
+    my $self = shift;
+    my $bed_file = shift;
+    my $anno_file = Genome::Sys->create_temp_file_path;
+    my %convert_params = (indel_file => $bed_file, output => $anno_file);
+    my $convert_class = "Genome::Model::Tools::Bed::Convert::BedToAnnotation";
+    $convert_class->execute(%convert_params) || ($self->error_message("Could not convert BED file to annotator format: $bed_file") and return);
+    return $anno_file;
+}
 
 ################################################################################################
 # Execute - the main program logic
 #
 ################################################################################################
 
-sub execute {                               # replace with real execution logic.
+sub execute {
     my $self = shift;
     my $project_name = $self->project_name;
-    my $small_indel_list = $self->small_indel_outfile;
-    my $large_indel_list = $self->large_indel_outfile;
-    my $file_list_file = $self->file_list;
+    my $small_indel_list = $self->small_indel_output_bed;
+    my $large_indel_list = $self->large_indel_output_bed;
+    my $file_list_file = $self->list_of_indel_files_to_validate;
     my $normal_bam = $self->normal_bam;
     my $tumor_bam = $self->tumor_bam;
     my $reference = $self->reference_fasta;
-    my $output_indel = $self->output_indel;
-    my $output_snp = $self->output_snp;
+    my $output_indel = $self->varscan_indel_output;
+    my $output_snp = $self->varscan_snp_output;
     my $final_output_file = $self->final_output_file;
     my $skip_if_output_present = $self->skip_if_output_present;
     my $somatic_validation_build = $self->somatic_validation_build;
 
-    if(defined($somatic_validation_build)){
+    # check small/large indel list filename for bed nomenclature (to eliminate future confusion) #
+    unless ($small_indel_list =~ m/\.bed$/i && $large_indel_list =~ m/\.bed$/i) {
+        $self->error_message("Both small and large indel files must end in .bed (because will schierding said so) (and to eliminate future confusion)");
+        return;
+    }
 
-        #get some parameters from the build
+    # process somatic validation build #
+    if (defined($somatic_validation_build)) {
+
+        #get some parameters from the build #
         my $build = Genome::Model::Build->get($somatic_validation_build);
-        my $build_dir = $build->data_directory;
         my $model = Genome::Model->get($build->model_id);
-        my $refseq_build_id = $model->reference_sequence_build->build_id;
-        my $refseq_dir = Genome::Model::Build::ReferenceSequence->get($refseq_build_id)->data_directory;        
-        $reference = $refseq_dir . "/all_sequences.fa";
-
+        my $ref_seq_build_id = $model->reference_sequence_build->build_id;
+        my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
+        $reference = $ref_seq_build->full_consensus_path('fa');
         $normal_bam = $build->normal_bam;
         $tumor_bam = $build->tumor_bam;
+        my $build_dir = $build->data_directory;
+        my $val_build_indels_file = $build_dir . "/variants/indels.hq.bed";
 
-
-        #convert the bed file to unsplit the ref/var alleles and convert to annotation format
-
-        #create a tmp file for the converted file
-        my ($tfh,$newfile) = Genome::Sys->create_temp_file;
-        unless($tfh) {
-            $self->error_message("Unable to create temporary file $!");
-            die;
-        }
-        open(OUTFILE,">$newfile") || die "can't open temp file for writing ($newfile)\n";
-
-        #open the bed file, do the conversion
-        my $inFh = IO::File->new( $build_dir . "/variants/indels.hq.bed" ) || die "can't open indels file\n";
-        while( my $line = $inFh->getline )
-        {
-            chomp($line);
-            my @F = split("\t",$line);
-            $F[3] =~ s/\*/-/g;
-            $F[3] =~ s/0/-/g;
-            my @a = split(/\//,$F[3]);
-
-            if (($F[3] =~ /^0/) || ($F[3] =~ /^\-/)){ #indel INS
-                $F[2] = $F[2]+1;
-                print OUTFILE join("\t",($F[0],$F[1],$F[2],$a[0],$a[1]));;
-            } elsif (($F[3] =~ /0$/) || ($F[3] =~ /\-$/)){ #indel DEL
-                $F[1] = $F[1]+1;
-                print OUTFILE join("\t",($F[0],$F[1],$F[2],$a[0],$a[1]));;
-            } else { #SNV
-                $F[1] = $F[1]+1;
-                print OUTFILE join("\t",($F[0],$F[1],$F[2],$a[0],Genome::Info::IUB::variant_alleles_for_iub($a[0],$a[1])));;
+        # check to see if the build's indel file is in the file list #
+        if (-s $file_list_file) {
+            my $contains_som_val_build_file = 0;
+            my $file_list_fh = new IO::File $file_list_file,"r";
+            while (my $line = $file_list_fh->getline) {
+                chomp $line;
+                if ($line eq $val_build_indels_file) { $contains_som_val_build_file++; }
             }
-            
-            if(@F > 3){
-                print OUTFILE "\t" . join("\t",@F[4..$#F])
-            }
-            print OUTFILE "\n";
-        }
-        close(OUTFILE);
-        
+            $file_list_fh->close;
 
-        #create a tmp file for the file list
-        my ($tfh2,$newfile2) = Genome::Sys->create_temp_file;
-        unless($tfh2) {
-            $self->error_message("Unable to create temporary file $!");
-            die;
+            # add the build indel file to file list if needed
+            unless ($contains_som_val_build_file) {
+                my $file_list_append_fh = new IO::File $file_list_file,">>";
+                print $file_list_append_fh $val_build_indels_file . "\n";
+                $file_list_append_fh->close;
+            }
         }
-        open(OUTFILE,">$newfile2") || die "can't open temp file for writing ($newfile)\n";
-        print OUTFILE $newfile . "\n";
-        close(OUTFILE);    
-        $file_list_file = $newfile2;
-        
-        
-    } else {#no som-val build - require all these other params
-        if(!(defined($file_list_file)) || 
-           !(defined($tumor_bam)) || 
-           !(defined($normal_bam)) || 
-           !(defined($reference))){
-            
-            die("if a somatic-validation build is not defined, you must provide the following parameters:\n  file_list\n  tumor-bam\n  normal-bam\n  reference-fasta\n  output-indel\n  output-snp");
+    }
+
+    # else if there is no som-val build defined - require other params #
+    else {
+        unless (defined($file_list_file) && defined($tumor_bam) && defined($normal_bam) && defined($reference)) {
+            $self->error_message("If a somatic-validation build is not defined, you must provide the following parameters:\n  file_list\n  tumor-bam\n  normal-bam\n  reference-fasta\n  output-indel\n  output-snp");
+            return;
         }                    
     }
 
-
-
-    unless ($small_indel_list =~ m/\.bed/i) {
-        die "Indel File Must end in .bed (because will says so)";
-    }
-
-    my $small_indel_list_nobed = $small_indel_list;
-    $small_indel_list_nobed =~ s/\.bed//;
-    $small_indel_list_nobed = "$small_indel_list_nobed.txt";
-
-    my $large_indel_list_nobed = $large_indel_list;
-    if($large_indel_list) {
-        $large_indel_list_nobed =~ s/\.bed//;
-        $large_indel_list_nobed = "$large_indel_list_nobed.txt";
-    }
-
+    # define output filenames #
+    (my $small_indel_list_nobed = $small_indel_list) =~ s/\.bed$/\.annotation_format/;
+    $small_indel_list =~ s/\.bed$/.padded1bp.bed/;
     my $realigned_bam_file_directory = $self->realigned_bam_file_directory;
 
     my $realigned_normal_bam_file = basename($normal_bam,qr{\.bam});
@@ -263,31 +234,32 @@ sub execute {                               # replace with real execution logic.
 
     }
 
-    ## Open the outfiles ##
-    my $bed_indel_outfile = $small_indel_list;
-    my $nobed_indel_outfile = $small_indel_list_nobed;
-    open(INDELS_OUT, ">$bed_indel_outfile") or die "Can't open output file1: $!\n";
-    open(NOBED_INDELS_OUT, ">$nobed_indel_outfile") or die "Can't open output file2: $!\n";
-    if($large_indel_list) {
-        my $large_bed_indel_outfile = $large_indel_list;
-        my $large_nobed_indel_outfile = $large_indel_list_nobed;
-        open(LARGE_INDELS_OUT, ">$large_bed_indel_outfile") or die "Can't open output file3: $!\n";
-        open(LARGE_NOBED_INDELS_OUT, ">$large_nobed_indel_outfile") or die "Can't open output file4: $!\n";
-    }
+    # open output filehandles #
+    open(INDELS_OUT, ">$small_indel_list") or die "Can't open small indel output bed file: $!\n";
+    open(NOBED_INDELS_OUT, ">$small_indel_list_nobed") or die "Can't open small indel output annotation_format file: $!\n";
+    if($large_indel_list) { open(LARGE_INDELS_OUT, ">$large_indel_list") or die "Can't open large indel output file: $!\n"; }
+
     my $file_input = new FileHandle ($file_list_file);
     unless($file_input) {
-        $self->error_message("Unable to open $file_list_file");
+        $self->error_message("Unable to open file list: $file_list_file");
         return;
     }
 
+    # read through the file list and print each files' indels into the appropriate size-specific output file #
     while (my $file = <$file_input>) {
         chomp($file);
-        my $indel_input = new FileHandle ($file);
+
+        # if file is in .bed format, convert it to anno format before further processing #
+        $file = $self->convert_indel_bed_file($file);
+
+        # open filehandle for processing indels in $file #
+        my $indel_input = new IO::File $file,"r";
         unless($indel_input) {
-            $self->error_message("Unable to open $file");
+            $self->error_message("Unable to open indel-containing file: $file");
             return;
         }
 
+        # process indels in indel file #
         while (my $line = <$indel_input>) {
             chomp($line);
             my ($chr, $start, $stop, $ref, $var, @everything_else) = split(/\t/, $line);
@@ -318,41 +290,40 @@ sub execute {                               # replace with real execution logic.
             }
             if ( $size > 0 && $size <= 2) {
                 #Add 1 bp padding to bed because we just want to look at regions
-                $bedstart--;
-                $bedstop++;
-                print INDELS_OUT "$chr\t$bedstart\t$bedstop\t$ref\t$var\n";
+                $bedstart-=1;
+                $bedstop+=1;
+                print INDELS_OUT "$chr\t$bedstart\t$bedstop\t$ref/$var\n";
                 print NOBED_INDELS_OUT "$chr\t$start\t$stop\t$ref\t$var\n";
             }
             elsif ( $size > 2 && $large_indel_list) {
-                print LARGE_INDELS_OUT "$chr\t$bedstart\t$bedstop\t$ref\t$var\t$type\n";
-                print LARGE_NOBED_INDELS_OUT "$chr\t$start\t$stop\t$ref\t$var\t$type\n";
+                print LARGE_INDELS_OUT "$chr\t$bedstart\t$bedstop\t$ref/$var\t$type\n";
             }
         }
         close($indel_input);
     }
     close($file_input);
 
+    # set up realignment jobs and varscan indel calling jobs using input files defined above #
     my $min_freq = $self->min_var_frequency;
     my $normal_purity = $self->normal_purity;
     my $varscan_params = "--validation 1 --somatic-p-value 1.0e-02 --p-value 0.10 --min-coverage 8 --min-var-freq $min_freq --normal-purity $normal_purity";
     my $default_varscan_params = "--validation 1 --somatic-p-value 1.0e-02 --p-value 0.10 --min-coverage 8 --min-var-freq 0.08 --normal-purity 1";
-
     my $bsub = 'bsub -q long -R "select[type==LINUX64 && mem>16000 && tmp>10000] rusage[mem=16000, tmp=10000]" -M 16000000 ';
 
-
+    # put several jobs into array @cmds
     my @cmds;
     my $user = $ENV{USER};
     if ($skip_if_output_present && -e $realigned_normal_bam_file && -e $realigned_tumor_bam_file) {
         if ($self->relapse_bam){
-            push(@cmds,"$bsub -J varscan_validation_tumnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel.tumnor --output-snp $output_snp.tumnor --varscan-params \"$varscan_params\"\'");
-            push(@cmds, "$bsub -J varscan_validation_relnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.relnor --output-snp $output_snp.relnor --varscan-params \"$varscan_params\"\'");
-            push(@cmds,"$bsub -J varscan_validation_reltum \'gmt varscan validation --normal-bam $realigned_tumor_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.reltum --output-snp $output_snp.reltum --varscan-params \"$varscan_params\"\'");
+            push(@cmds,"$bsub -J varscan_validation_tumnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel.tumnor --output-snp $output_snp.tumnor --reference $reference --varscan-params \"$varscan_params\"\'");
+            push(@cmds, "$bsub -J varscan_validation_relnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.relnor --output-snp $output_snp.relnor --reference $reference --varscan-params \"$varscan_params\"\'");
+            push(@cmds,"$bsub -J varscan_validation_reltum \'gmt varscan validation --normal-bam $realigned_tumor_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.reltum --output-snp $output_snp.reltum --reference $reference --varscan-params \"$varscan_params\"\'");
             push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_tumnor -w \'ended(JOB0))\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
             push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_relnor -w \'ended(JOB1)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
             push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_reltum -w \'ended(JOB2)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
         }
         else {
-            push(@cmds,"$bsub -J varscan_validation \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel --output-snp $output_snp --varscan-params \"$varscan_params\"\'");
+            push(@cmds,"$bsub -J varscan_validation \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel --output-snp $output_snp --reference $reference --varscan-params \"$varscan_params\"\'");
 
             push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation -w \'ended(JOB0)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel --validation-snp-file $output_snp --variants-file $small_indel_list_nobed --output-file $final_output_file\'");
         }
@@ -373,9 +344,9 @@ sub execute {                               # replace with real execution logic.
         push(@cmds,"$bsub -J bamindex_tumor -w \'ended(JOB1)\' \'samtools index $realigned_tumor_bam_file\'");
         push(@cmds,"$bsub -J bamindex_relapse -w \'ended(JOB2)\' \'samtools index $realigned_relapse_bam_file\'");
 
-        push(@cmds,"$bsub -J varscan_validation_tumnor -w \'ended(JOB3) && ended(JOB4)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel.tumnor --output-snp $output_snp.tumnor --varscan-params \"$varscan_params\"\'");
-        push(@cmds,"$bsub -J varscan_validation_relnor -w \'ended(JOB3) && ended(JOB5)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.relnor --output-snp $output_snp.relnor --varscan-params \"$default_varscan_params\"\'");
-        push(@cmds,"$bsub -J varscan_validation_reltum -w \'ended(JOB4) && ended(JOB5)\' \'gmt varscan validation --normal-bam $realigned_tumor_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.reltum --output-snp $output_snp.reltum --varscan-params \"$default_varscan_params\"\'");
+        push(@cmds,"$bsub -J varscan_validation_tumnor -w \'ended(JOB3) && ended(JOB4)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel.tumnor --output-snp $output_snp.tumnor --reference $reference --varscan-params \"$varscan_params\"\'");
+        push(@cmds,"$bsub -J varscan_validation_relnor -w \'ended(JOB3) && ended(JOB5)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.relnor --output-snp $output_snp.relnor --reference $reference --varscan-params \"$default_varscan_params\"\'");
+        push(@cmds,"$bsub -J varscan_validation_reltum -w \'ended(JOB4) && ended(JOB5)\' \'gmt varscan validation --normal-bam $realigned_tumor_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.reltum --output-snp $output_snp.reltum --reference $reference --varscan-params \"$default_varscan_params\"\'");
 
         push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_tumnor -w \'ended(JOB6)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
         push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_relnor -w \'ended(JOB7)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
@@ -393,14 +364,15 @@ sub execute {                               # replace with real execution logic.
 
         push(@cmds, "$bsub -J bamindex_normal -w \'ended(JOB0)\' \'samtools index $realigned_normal_bam_file\'");
         push(@cmds, "$bsub -J bamindex_tumor -w \'ended(JOB1)\' \'samtools index $realigned_tumor_bam_file\'");
-        push(@cmds, "$bsub -J varscan_validation -w \'ended(JOB2) && ended(JOB3)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel --output-snp $output_snp --varscan-params \"$varscan_params\"\'");
+        push(@cmds, "$bsub -J varscan_validation -w \'ended(JOB2) && ended(JOB3)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel --output-snp $output_snp --reference $reference --varscan-params \"$varscan_params\"\'");
 
         push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation -w \'ended(JOB4)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel --validation-snp-file $output_snp --variants-file $small_indel_list_nobed --output-file $final_output_file\'");
     }
 
+    # run jobs in @cmds #
     my @jobids;
     foreach my $cmd (@cmds){        
-        #waiting on two jobs
+        # waiting on two jobs #
         if($cmd =~ /JOB(\d).+JOB(\d)/){
             my $j1 = $1;
             my $j2 = $2;
@@ -409,7 +381,7 @@ sub execute {                               # replace with real execution logic.
             $cmd =~ s/JOB$j1/$jobid1/g;
             $cmd =~ s/JOB$j2/$jobid2/g;            
 
-        #waiting on one job
+            # waiting on one job #
         } elsif($cmd =~ /JOB(\d)/){
             my $job = $1;
             my $jobid = $jobids[$job];
@@ -429,20 +401,3 @@ sub execute {                               # replace with real execution logic.
     print STDERR "\njob ids: " . join(" ",@jobids) . "\n";
     return 1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
