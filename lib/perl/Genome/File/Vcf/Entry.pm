@@ -222,4 +222,10 @@ sub is_filtered {
     return $self->{filter} && grep { $_ && $_ ne "PASS" && $_ ne "."} @{$self->{filter}};
 }
 
+sub is_sample_filtered {
+    my ($self, $idx) = @_;
+    my $ft = $self->sample_field($idx, "FT");
+    return defined $ft && ($ft ne "PASS" && $ft ne ".");
+}
+
 1;
