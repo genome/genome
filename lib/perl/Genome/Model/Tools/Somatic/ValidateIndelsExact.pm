@@ -197,11 +197,11 @@ sub leftshift_indels {
     my $reference_build_fasta;
     if ($reference_build =~ m/36/) {
             my $reference_build_fasta_object= Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
-            $reference_build_fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+            $reference_build_fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     }
     elsif ($reference_build =~ m/37/) {
             my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
-            $reference_build_fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+            $reference_build_fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     }
     else {
            die "Please specify either build 36 or 37";

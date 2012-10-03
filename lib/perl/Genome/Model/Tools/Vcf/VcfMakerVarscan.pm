@@ -120,11 +120,11 @@ sub execute {                               # replace with real execution logic.
     my $genome_build_fasta;
     if ($genome_build =~ m/36/) {
         my $genome_build_fasta_object= Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
-        $genome_build_fasta = $genome_build_fasta_object->data_directory . "/all_sequences.fa";
+        $genome_build_fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     }
     elsif ($genome_build =~ m/37/) {
         my $genome_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
-        $genome_build_fasta = $genome_build_fasta_object->data_directory . "/all_sequences.fa";
+        $genome_build_fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     }
     else {
         die "Please specify either build 36 or 37";
