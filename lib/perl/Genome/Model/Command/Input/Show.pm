@@ -7,7 +7,6 @@ require Term::ANSIColor;
 
 use Genome;
 use Genome::Utility::Text "justify";
-use Genome::Utility::List "in";
 
 
 class Genome::Model::Command::Input::Show {
@@ -44,20 +43,14 @@ sub write_report {
 sub _get_sorted_input_properties {
     my ($self, $target) = @_;
 
-    my @inputs = $target->inputs;
-    my @input_names = map {$_->name} @inputs;
+    if($target->can('real_input_properties')) {
+        return $target->real_input_properties;
+    } else {
+        die $self->error_message('Could not load properties for target.'); #TODO support builds?
+    }
 
-    my $meta = $target->__meta__;
-    my @target_properties = $meta->property_metas();
-
-    my @input_properties = grep {
-            in($_->property_name, @input_names) or
-            ($_->via and $_->via eq 'inputs') or
-            $_->{is_input}} $meta->property_metas;
-    return sort {$a->property_name cmp $b->property_name} @input_properties;
 }
 
-# this is also called by 'genome model build view'
 sub write_inputs_for_model_or_build {
     my $self = shift;
     my %params = @_;
@@ -86,7 +79,7 @@ sub write_inputs_for_model_or_build {
     my @input_name_lengths = (length($name_header));
     my @input_value_lengths = (length($value_header));
     for my $property (@properties) {
-        my $name = $property->property_name;
+        my $name = $property->{name};
         push(@input_name_lengths, length($name));
 
         my @values;
@@ -112,7 +105,7 @@ sub write_inputs_for_model_or_build {
         @input_value_lengths = (@input_value_lengths, @value_lengths);
 
         $inputs{$name} = \@values;
-        $is_many{$name} = $property->is_many;
+        $is_many{$name} = $property->{is_many};
     }
 
     # determine widths of columns of table
