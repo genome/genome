@@ -130,7 +130,7 @@ sub write_inputs_for_model_or_build {
 
     # print out table
     for my $name (sort keys %inputs) {
-        my $name_part = justify($name, 'right', $max_name_length);
+        my $name_part = justify($name, 'right', $max_name_length, " ", "");
         my $is_many_part = sprintf('  %s  ',
                 _format_is_many($is_many{$name}), $color);
         my $value_part = _format_values($inputs{$name},
