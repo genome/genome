@@ -83,6 +83,10 @@ sub _additional_help_sections {
 =back
 
 =back
+
+=cut
+
+
 EOS
   );
 }
