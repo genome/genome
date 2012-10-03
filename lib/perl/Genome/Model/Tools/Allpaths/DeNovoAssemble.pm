@@ -52,6 +52,11 @@ class Genome::Model::Tools::Allpaths::DeNovoAssemble {
             doc => 'Run Allpaths with haploidify option',
             default_value => 0,
         },
+        max_memory_gb => {
+            is => 'Number',
+            doc => 'Maximum memory that allpaths should use',
+            default_value => 0,
+        },
     ],
 };
 
@@ -111,7 +116,7 @@ sub execute {
     else {
         $haploidify="False";
     }
-    my $cmd = 'ulimit -s 100000 && '.$self->executable_for_version("RunAllPathsLG").' PRE='.$self->pre.' REFERENCE_NAME='.$self->reference_name.' DATA_SUBDIR=data RUN='.$self->run.' SUBDIR='.$self->sub_dir.' TARGETS=standard OVERWRITE='.$overwrite.' HAPLOIDIFY='.$haploidify;
+    my $cmd = 'ulimit -s 100000 && '.$self->executable_for_version("RunAllPathsLG").' PRE='.$self->pre.' REFERENCE_NAME='.$self->reference_name.' DATA_SUBDIR=data RUN='.$self->run.' SUBDIR='.$self->sub_dir.' TARGETS=standard OVERWRITE='.$overwrite.' HAPLOIDIFY='.$haploidify.' MAX_MEMORY_GB='.$self->max_memory_gb;
 
     $self->status_message("Run ALLPATHS de novo");
     Genome::Sys->shellcmd(cmd => $cmd);

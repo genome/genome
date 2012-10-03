@@ -188,6 +188,7 @@ sub assembler_params {
     $params{pre} = $self->data_directory;
     $params{in_group_file} = $self->_allpaths_in_group_file;
     $params{in_libs_file} = $self->_allpaths_in_libs_file;
+    $params{max_memory_gb} = $self->_mem_in_gb;
 
     return %params;
 }
@@ -224,6 +225,15 @@ sub read_processor_params_for_instrument_data {
 sub resolve_assemble_lsf_resource {
     my $self = shift;
 
+    my $mem = $self->_mem_in_gb;
+
+    my $template = "-n 4 -R 'span[hosts=1] select[type==LINUX64 && mem>%s000] rusage[mem=%s000]' -M %s000000";
+    return sprintf($template, $mem, $mem, $mem);
+}
+
+sub _mem_in_gb {
+ 
+    my $self = shift;
     my $mem = 494;
     my $egs = $self->_get_estimated_genome_size();
 
@@ -232,9 +242,7 @@ sub resolve_assemble_lsf_resource {
     } elsif ($egs and $egs <= 40_000_000) {
         $mem = 200;
     }
-
-    my $template = "-n 4 -R 'span[hosts=1] select[type==LINUX64 && mem>%s000] rusage[mem=%s000]' -M %s000000";
-    return sprintf($template, $mem, $mem, $mem);
+    return $mem;
 }
 
 sub resolve_assemble_lsf_queue {
