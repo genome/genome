@@ -31,7 +31,7 @@ sub write_report {
     my ($self, $width, $handle) = @_;
     my $model = $self->model;
 
-    write_inputs_for_model_or_build(
+    $self->write_inputs_for_model_or_build(
             'width' => $width,
             'handle' => $handle,
             'target' => $model,
@@ -42,7 +42,7 @@ sub write_report {
 }
 
 sub _get_sorted_input_properties {
-    my ($target) = @_;
+    my ($self, $target) = @_;
 
     my @inputs = $target->inputs;
     my @input_names = map {$_->name} @inputs;
@@ -59,6 +59,7 @@ sub _get_sorted_input_properties {
 
 # this is also called by 'genome model build view'
 sub write_inputs_for_model_or_build {
+    my $self = shift;
     my %params = @_;
     my $width = $params{width};
     my $handle = $params{handle};
@@ -67,7 +68,7 @@ sub write_inputs_for_model_or_build {
     my $show_display_names = $params{show_display_names};
     my $color = $params{color};
 
-    my @properties = _get_sorted_input_properties($target);
+    my @properties = $self->_get_sorted_input_properties($target);
 
     unless(@properties) {
         printf $handle "No inputs found for %s %s",
@@ -132,8 +133,8 @@ sub write_inputs_for_model_or_build {
     for my $name (sort keys %inputs) {
         my $name_part = justify($name, 'right', $max_name_length, " ", "");
         my $is_many_part = sprintf('  %s  ',
-                _format_is_many($is_many{$name}), $color);
-        my $value_part = _format_values($inputs{$name},
+                $self->_format_is_many($is_many{$name}), $color);
+        my $value_part = $self->_format_values($inputs{$name},
                 $max_name_length + length($is_many_header) + 2,
                 $max_value_length,
                 $color);
@@ -144,17 +145,17 @@ sub write_inputs_for_model_or_build {
 
 
 sub _format_is_many {
-    my ($is_many, $color) = @_;
+    my ($self, $is_many, $color) = @_;
     my ($pre, $post, $true, $false) = ('[', ']', 'X',' ');
 
-    $pre = _color($pre, 'white', $color);
-    $post = _color($post, 'white', $color);
+    $pre = $self->_color($pre, 'white', $color);
+    $post = $self->_color($post, 'white', $color);
     my $mid = $is_many ? $true : $false;
     return join('', $pre, $mid, $post);
 }
 
 sub _color {
-    my ($value, $color, $flag) = @_;
+    my ($self, $value, $color, $flag) = @_;
     if($flag) {
         return Term::ANSIColor::colored($value, $color);
     } else {
@@ -163,7 +164,7 @@ sub _color {
 }
 
 sub _format_values {
-    my ($values, $left_padding, $right_size, $color) = @_;
+    my ($self, $values, $left_padding, $right_size, $color) = @_;
     my @values = @{$values};
 
     my @formatted_values;
@@ -179,7 +180,7 @@ sub _format_values {
                     $right_size + $left_padding);
         }
         if($value eq 'undef') {
-            $padded_value = _color($padded_value, 'cyan', $color);
+            $padded_value = $self->_color($padded_value, 'cyan', $color);
         }
         push(@formatted_values, $padded_value);
     }
