@@ -182,17 +182,6 @@ for my $child (1..$children) {
 
     my @lines = read_file($log);
     ok(@lines == 3, 'there are three lines of output in the log, create/reallocate/deallocate') || system("cat $log");
-#    unless (scalar(@lines) == 3) {
-#        print "contents of abnormal log file '$log':\n";
-#        `cat $log`;
-##        for my $line (@lines) {
-##            print "$line\n";
-##        }
-#    } else {
-#        print "contents of normal log file '$log':\n";
-#        `cat $log`;
-#        sleep(600);
-#    }
     for my $line (@lines) {
         chomp $line;
         ok($line =~ /SUCCESS/, "log indicates success: $line");

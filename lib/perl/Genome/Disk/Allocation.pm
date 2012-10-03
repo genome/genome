@@ -944,41 +944,23 @@ sub _execute_system_command {
     my $allocation;
     if ($ENV{UR_DBI_NO_COMMIT}) {
         $allocation = $class->$method(%params);
-        UR::Context->commit();
     }
     else {
+        # Serialize params hash, construct command, and execute
+        my $param_string = Genome::Utility::Text::hash_to_string(\%params);
+        my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
+        my $cmd = qq{$^X $includes -e "use above Genome; $class->$method($param_string); UR::Context->commit;"};
 
-# Merge conflict during rebase but at this point in time the concepts
-# diverge due to fork vs. system. Later we switch back to system so we
-# kept the other code in comments.
-#        # Serialize params hash, construct command, and execute
-#        my $param_string = Genome::Utility::Text::hash_to_string(\%params);
-#        my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
-#        my $cmd = qq{$^X $includes -e "use above Genome; $class->$method($param_string); UR::Context->commit;"};
-#
-#        unless (eval { system($cmd) } == 0) {
-#            my $msg = "Could not perform allocation action!";
-#            if ($@) {
-#                $msg .= " Error: $@";
-        my $pid = UR::Context::Process->fork();
-
-        if ($pid) {
-            # Parent
-            my $wp_code = waitpid($pid, 0);
-            if (-1 == $wp_code) {
-                warn "Child pid already reaped.";
-            } elsif (0 == $wp_code) {
-                warn $?;
+        unless (eval { system($cmd) } == 0) {
+            my $msg = "Could not perform allocation action!";
+            if ($@) {
+                $msg .= " Error: $@";
             }
-        } else {
-            # Child
-            $class->$method(%params);
-            UR::Context->commit();
-            exit();
+            confess $msg;
         }
-
         $allocation = $class->_reload_allocation($params{allocation_id});
     }
+
 
     return $allocation;
 }
