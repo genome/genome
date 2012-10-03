@@ -118,15 +118,15 @@ sub execute {
     my $fasta;
     if ($genome_build eq "36") {
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
-        $fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+        $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     }
     elsif( ($genome_build eq "37") || ($genome_build eq "37lite") ){
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
-        $fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+        $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     }
     elsif ($genome_build eq "mus37") {
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-mouse-build37");
-        $fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+        $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     } elsif ($genome_build eq "mus37wOSK") {
         $fasta = "/gscmnt/sata135/info/medseq/dlarson/iPS_analysis/lentiviral_reference/mousebuild37_plus_lentivirus.fa";
     } elsif ($genome_build eq "mm9") {

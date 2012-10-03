@@ -106,7 +106,7 @@ sub execute {                               # replace with real execution logic.
             ($chrom, $chr_start) = split(/:/,$Location);
             $var = $Allele;
             my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "$reference_build");
-            my $reference_build_fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+            my $reference_build_fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
             $ref = `samtools faidx $reference_build_fasta $chrom:$chr_start-$chr_start | grep -v ">"`;
             chomp($ref);
         }
