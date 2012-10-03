@@ -219,7 +219,8 @@ sub execute {
     #Set up the outdir and a temp file that will be used to gather read support counts dumped by pairoscope
     my $pairoscope_outdir = $build_outdir . "pairoscope/";
     mkdir($pairoscope_outdir);
-    my $pairoscope_tmp_file = $pairoscope_outdir . "pairoscope.tmp";
+    my $pairoscope_tmp_tumor_file = $pairoscope_outdir . "pairoscope_tumor.tmp";
+    my $pairoscope_tmp_normal_file = $pairoscope_outdir . "pairoscope_normal.tmp";
 
     #Pairoscope run parameters
     my $min_mapping_quality = 1;
@@ -257,10 +258,11 @@ sub execute {
 
       #Pairoscope plot for Tumor BAM
       my $tumor_outfile = $pairoscope_outdir . "$gene1-$gene2"."_tumor_$l".".png";
-      my $pairoscope_tumor_cmd = "pairoscope $params_string $transcript_string -o $tumor_outfile $tumor_bam $chr1 $start1 $end1 $tumor_bam $chr2 $start2 $end2 2>$pairoscope_tmp_file";
+      my $pairoscope_tumor_cmd = "pairoscope $params_string $transcript_string -o $tumor_outfile $tumor_bam $chr1 $start1 $end1 $tumor_bam $chr2 $start2 $end2 2>$pairoscope_tmp_tumor_file";
+      Genome::Sys->shellcmd(cmd => $pairoscope_tumor_cmd);
       my $pairoscope_tumor_reads = 0;
-      if (-e $pairoscope_tmp_file){
-        open (TMP1, "$pairoscope_tmp_file") || die "\n\nCould not open tmp file: $pairoscope_tmp_file\n\n";
+      if (-e $pairoscope_tmp_tumor_file){
+        open (TMP1, "$pairoscope_tmp_tumor_file") || die "\n\nCould not open tmp file: $pairoscope_tmp_tumor_file\n\n";
         while(<TMP1>){
           chomp($_);
           my @line = split("\t", $_);
@@ -270,15 +272,15 @@ sub execute {
         close (TMP1);
       }
       $data{$l}{pairoscope_tumor_reads} = $pairoscope_tumor_reads;
-      #print "\n\nDEBUG: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\n$pairoscope_tumor_cmd";
-      Genome::Sys->shellcmd(cmd => $pairoscope_tumor_cmd);
+      #print "\n\nTUMOR: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\ttumor count = $pairoscope_tumor_reads\n$pairoscope_tumor_cmd";
 
       #Pairoscope plot for Normal BAM
       my $normal_outfile = $pairoscope_outdir . "$gene1-$gene2"."_normal_$l".".png";
-      my $pairoscope_normal_cmd = "pairoscope $params_string $transcript_string -o $normal_outfile $normal_bam $chr1 $start1 $end1 $normal_bam $chr2 $start2 $end2 2>$pairoscope_tmp_file";
+      my $pairoscope_normal_cmd = "pairoscope $params_string $transcript_string -o $normal_outfile $normal_bam $chr1 $start1 $end1 $normal_bam $chr2 $start2 $end2 2>$pairoscope_tmp_normal_file";
+      Genome::Sys->shellcmd(cmd => $pairoscope_normal_cmd);
       my $pairoscope_normal_reads = 0;
-      if (-e $pairoscope_tmp_file){
-        open (TMP2, "$pairoscope_tmp_file") || die "\n\nCould not open tmp file: $pairoscope_tmp_file\n\n";
+      if (-e $pairoscope_tmp_normal_file){
+        open (TMP2, "$pairoscope_tmp_normal_file") || die "\n\nCould not open tmp file: $pairoscope_tmp_normal_file\n\n";
         while(<TMP2>){
           chomp($_);
           my @line = split("\t", $_);
@@ -288,23 +290,18 @@ sub execute {
         close (TMP2);
       }
       $data{$l}{pairoscope_normal_reads} = $pairoscope_normal_reads;
-      #print "\n\nDEBUG: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\n$pairoscope_normal_cmd";
-      Genome::Sys->shellcmd(cmd => $pairoscope_normal_cmd);
+      #print "\n\nNORMAL: $gene1 $coords2 $transcript1\t\t$gene2 $coords2 $transcript2\tnormal count = $pairoscope_normal_reads\n$pairoscope_normal_cmd";
 
+      #Clean-up the pairoscope temp files
+      system("rm -f $pairoscope_tmp_tumor_file");
+      system("rm -f $pairoscope_tmp_normal_file");
     }
-    #Clean-up the pairoscope temp file
-    if (-e $pairoscope_tmp_file){
-      Genome::Sys->shellcmd(cmd => "rm -f $pairoscope_tmp_file");
-    }
-
-
-
 
     #Print out a new file containing the extra annotation columns
     open (FUSION_OUT, ">$fusion_candidate_outfile") || die "\n\nCould not open fusion outfile\n\n";
     my @gene_symbol_list_names = sort {$gene_symbol_lists->{$a}->{order} <=> $gene_symbol_lists->{$b}->{order}} keys %{$gene_symbol_lists};
     my $gene_symbol_list_name_string = join("\t", @gene_symbol_list_names);
-    my $header_line = "gene_pair\tgene1\tgene2\tcoord1\tcoord2\tmapped_gene_name1\tmapped_gene_name2\tpairoscope_tumor_reads\tpairoscope_normal_reads\t";
+    my $header_line = "gene_pair\tgene1\tgene2\tcoord1\tcoord2\tmapped_gene_name1\tmapped_gene_name2\tpairoscope_tumor_reads\tpairoscope_normal_reads";
     print FUSION_OUT "$header_line\t$gene_symbol_list_name_string\n";
     foreach my $l (sort {$a <=> $b} keys %data){
       my @tmp;
