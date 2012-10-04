@@ -107,9 +107,9 @@ sub execute {
         #get refseq build id from model unless already defined
         my $ref_seq_build_id = $model->reference_sequence_build->build_id;
         my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
-        my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
+        $ref_seq = $ref_seq_build->full_consensus_path('fa');
 
-        my $patient_id = $mbuild->tumor_sample->name;
+        $patient_id = $mbuild->tumor_sample->name;
 
 
     } else { #no som-val model, grab manually specified params

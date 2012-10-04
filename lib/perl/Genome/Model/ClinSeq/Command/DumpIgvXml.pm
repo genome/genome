@@ -469,7 +469,11 @@ sub generate_track_xml {
       return(0);
     }
   }elsif ($resource_type eq 'junctions' && $pp_type eq 'rna seq'){
-    $resource_file = $build_dir . "/alignments/junctions.bed";
+    if (-e $build_dir . "/alignments/junctions.bed"){
+      $resource_file = $build_dir . "/alignments/junctions.bed";
+    }elsif(-e $build_dir . "/junctions/junctions.bed"){
+      $resource_file = $build_dir . "/junctions/junctions.bed";
+    }
     unless (-e $resource_file){
       self->error_message("junctions.bed file not found for rna seq build: $build_dir");
       exit(1);

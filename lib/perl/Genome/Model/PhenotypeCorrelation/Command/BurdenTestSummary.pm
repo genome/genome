@@ -1,5 +1,11 @@
 package Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary;
 
+# 3 annotation files:
+#   things that passed the BT
+#   things that got into but failed BT
+#   everything else for that gene
+# 1 big vcf
+
 use Carp qw/confess/;
 use Compress::Zlib;
 use Data::Dumper;
@@ -25,33 +31,37 @@ class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
         },
         top_n => {
             is => "Text",
-            doc => "Return the top n most significant genes for each trait",
-        },
-        trait => {
-            is => "Text",
-            doc => "The name of the trait to summarize",
+            doc => "Return the top n most significant genes for each given test",
         },
         test_names => {
             is => "Text",
             doc => "The names of the tests to produce data for (",
             is_many => 1,
         },
+        trait => {
+            is => "Text",
+            doc => "The name of the trait to summarize",
+        },
         clinical_data_file => {
             is => "Text",
-            doc => "The path to the clinical data file used to partition samples into groups (e.g., case/control)",
+            doc => "The path to the clinical data file used to partition samples into groups",
         },
         vcf_file => {
             is => "Text",
-            doc => "The bgzipped vcf file to use",
+            doc => "The bgzipped, tabix indexed, vcf file to use",
         },
         per_site_report_file => {
             is => "Text",
             is_optional => 1,
-            doc => "Path to bgzip-compressed per site callset metrics file",
+            doc => "Path to bgzip-compressed per site callset metrics file (from joinx vcf-report)",
         },
-        annotation_file => {
+        full_annotation_file => {
             is => "Text",
             doc => "Annotation file containing variant data and gene names",
+        },
+        burden_matrix_file => {
+            is => "Text",
+            doc => "The burden matrix",
         },
         output_directory => {
             is => "Text",
@@ -61,7 +71,7 @@ class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
             is => "Text",
             doc => "The id of the ImportedAnnotation build to use",
             default_value => $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD},
-        }
+        },
     ],
     has_transient_optional => [
         _trait_values => {
@@ -69,14 +79,29 @@ class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
         },
         _burden_summary => {
             is => "HASH",
-        }
+        },
+        _full_annotation => {
+            is => "HASH",
+            doc => "Internal: hashref of gene_name => [vep entries]",
+        },
+        _burden_input_variant_ids => {
+            is => "HASH",
+            doc => "Internal: Set of variant ids from the burden matrix file",
+        },
     ]
 };
+
+
+# join path components by / and prepend the output directory
+sub _output_path {
+    my $self = shift;
+    return join("/", $self->output_directory, @_);
+}
 
 sub execute {
     my $self = shift;
 
-    # Load clinical data and get attribute values for each sample
+    # Load clinical data and get trait values for each sample
     my $cdata = Genome::Model::PhenotypeCorrelation::ClinicalData->from_file($self->clinical_data_file);
     my @sample_names = $cdata->sample_names;
     my %trait_values;
@@ -88,7 +113,11 @@ sub execute {
     my @genes = $self->_top_genes_for_tests();
     $self->status_message("Reporting on genes:\n\t" . join("\n\t", @genes) . "\n");
 
-    # If we've gotten this far we had better have somewhere to write
+    # Load annotation and burden test data
+    $self->_full_annotation($self->_read_annotation_for_genes($self->full_annotation_file, @genes));
+    $self->_burden_input_variant_ids($self->_variant_ids_from_burden_matrix);
+
+    # If we've gotten this far, we will need somewhere to write
     Genome::Sys->create_directory($self->output_directory)
         unless -d $self->output_directory;
 
@@ -98,54 +127,142 @@ sub execute {
     return 1;
 }
 
-# join path components by / and prepend the output directory
-sub _output_path {
-    my $self = shift;
-    return join("/", $self->output_directory, @_);
-}
-
 sub _process_gene {
     my ($self, $gene) = @_;
     $self->status_message("Processing gene $gene...");
 
+    # Create subdirectory for this gene
     my $output_dir = $self->_output_path($gene);
     Genome::Sys->create_directory($output_dir);
 
-    # Load vep annotation
-    #  returns { header => (header obj), data => { gene => [ (entry objs) ] } }
-    my %snv_ids = $self->_snv_ids_for_gene($gene);
-    my $gene_annotation = $self->_read_annotation_for_genes(genes => [$gene], include_ids => \%snv_ids);
-    
+    # All annotation for this gene
+    my $full_annotation = $self->_full_annotation->{$gene};
 
-    # Build a list of locations (chr:pos strings) we are interested in
-    my %locations = map {$_->{location} => 1} @{$gene_annotation->{data}{$gene}};
-    my @locations = nsort keys(%locations);
-    confess "Unable to find any variants for gene $gene, something must be wrong." unless @locations;
+    # Build a list of regions we can feed to tabix to create a subset of the big vcf
+    my @all_locations = nsort keys %{{map {$_->{location} => undef} @$full_annotation}};
+    my @all_regions = map { my @f = split(":"); "$f[0]:$f[1]-$f[1]"; } @all_locations;
+    confess "Failed to find any variants to analyze for gene $gene" unless @all_regions;
 
-    # Transform locations to ranges: 1:20 => 1:20-20
-    my @regions = map {
-        my @f = split(":");
-        "$f[0]:$f[1]-$f[1]";
-        } @locations;
-
-    # Write out subsets of our input files
+    # Write output vcf, per-site report, and burden summary for this gene
     my $output_vcf = $self->_output_path($gene, "mutations.vcf");
     my $output_psr = $self->_output_path($gene, "per_site_report.txt");
     my $output_burden = $self->_output_path($gene, "burden.csv");
-    $self->_write_vcf_subset($output_vcf, @regions);
-    $self->_write_per_site_subset($output_psr, @regions) if $self->per_site_report_file;
+    $self->_write_vcf_subset($output_vcf, @all_regions);
+    $self->_write_per_site_subset($output_psr, @all_regions) if $self->per_site_report_file;
     $self->_write_burden_summary_subset($gene, $self->trait, $output_burden);
 
-    # Read in the subset of the vcf we just created
-    my $vcf = Genome::File::Vcf::Reader->create(name => $output_vcf);
-    $vcf->open($output_vcf);
-    my @entries;
+    # Read in the vcf entries we just selected
+    my $vcf = Genome::File::Vcf::Reader->new($output_vcf);
+    my @vcf_entries;
     while (my $entry = $vcf->next) {
-        push(@entries, $entry);
+        next if $entry->is_filtered;
+        push(@vcf_entries, $entry)
     }
 
+    # Update full annotation information with information from the vcf
+    # this adds COUNT and AF for case/control as well as vcf info fields
+    $self->_update_annotation_with_vcf($full_annotation, \@vcf_entries, $vcf->header);
+
+    # Partition annotation into 3 lists
+    my %burden_output_variant_ids = $self->_variant_ids_from_burden_result($gene);
+    my ($rare, $deleterious, $common) = $self->_partition_vep_entries(
+        $full_annotation, # arrayref of vep entries
+        \%burden_output_variant_ids, # hashref {id => undef} of things that came through the burden test
+        $self->_burden_input_variant_ids # as above, but things that went into the burden test
+        # since the set of output ids comes first, it takes priority.
+        );
+
+    unless (@$rare) {
+        warn "Unable to find any rare variants for gene $gene, something must be wrong.";
+    }
+
+    # Write out the 3 lists of annotation
+    my $rare_file = $self->_output_path($gene, "rare-deleterious.vep");
+    my $deleterious_file = $self->_output_path($gene, "deleterious.vep"); # watch out for this file ;)
+    my $common_file = $self->_output_path($gene, "common.vep");
+    $self->_write_annotation($rare, $rare_file);
+    $self->_write_annotation($deleterious, $deleterious_file);
+    $self->_write_annotation($common, $common_file);
+
+    # Create mutation-diagram plots
+    # For now, we need to look at the annotation file produced when the burden matrix is created.
+    $self->_make_mutation_diagrams($rare_file, $output_dir, 'case.', 'CASE_COUNT');
+    $self->_make_mutation_diagrams($rare_file, $output_dir, 'control.', 'CONTROL_COUNT');
+}
+
+# _partition_vep_entries
+# params:
+#   $entries - an arrayref of Genome::File::Vep::Entry
+#   @id_arrays - an array of sets of variant ids (hashrefs: id => undef)
+# returns:
+#   n+1 disjoint lists of entries where n = length of @id_arrays.
+#   the last list will catch any entries whose ids are not in any of the supplied sets.
+# notes:
+#   sets that appear earlier in @id_arrays will take precedence over those appearing
+#   later.
+sub _partition_vep_entries {
+    my ($self, $entries, @id_sets) = @_;
+
+    # Create array of n+1 arrayrefs to hold results
+    my @results = map {[]} 0..scalar(@id_sets);
+
+    # Merge the sets into one hashref mapping ids to the index of the
+    # first set they appear in. Then, the index of the output list for
+    # a given entry is just $ids_to_indices{$id} (assuming $id exists).
+    my %ids_to_indices;
+    # roll through the list of sets in reverse order so things with lower
+    # indices can clobber things that come later
+    for my $idx (0..$#id_sets) {
+        my $ridx = $#id_sets - $idx;
+        my $id_set = $id_sets[$ridx];
+        my @ids = keys %{$id_sets[$ridx]};
+        @ids_to_indices{@ids} = ($ridx) x @ids;
+    }
+
+    for my $entry (@$entries) {
+        my $idx = -1;
+        if (exists $ids_to_indices{$entry->{uploaded_variation}}) {
+            $idx = $ids_to_indices{$entry->{uploaded_variation}};
+        }
+        push(@{$results[$idx]}, $entry);
+    }
+    return @results;
+}
+
+# Add INFO,AF,COUNT for case/control to vep entries
+sub _add_vcf_data_to_vep {
+    my ($vep, $vcf, $cases, $controls) = @_;
+
+    my $alt = $vep->{allele};
+
+    # Compute allele count and relative frequency for each of case, control
+    my ($n_case_alleles, %case_allele_counts) = $vcf->allelic_distribution(@$cases);
+    my ($n_control_alleles, %control_allele_counts) = $vcf->allelic_distribution(@$controls);
+
+    my $case_count = $case_allele_counts{$alt} || 0;
+    my $control_count = $control_allele_counts{$alt} || 0;
+
+    my $case_af = $n_case_alleles ? $case_count / $n_case_alleles : 0;
+    my $control_af = $n_control_alleles ? $control_count / $n_control_alleles : 0;
+
+    $vep->set_extra_field("REF", $vcf->{reference_allele});
+    $vep->set_extra_field("CASE_COUNT", $case_count);
+    $vep->set_extra_field("CASE_AF", $case_af);
+    $vep->set_extra_field("CONTROL_COUNT", $control_count);
+    $vep->set_extra_field("CONTROL_AF", $control_af);
+
+    # Add relevant info fields from vcf to vep entries
+    my $info_fields = $vcf->info_for_allele($alt);
+    for my $iname (keys %$info_fields) {
+        $vep->set_extra_field($iname, $info_fields->{$iname});
+    }
+}
+
+sub _update_annotation_with_vcf {
+    my ($self, $annotation, $vcf_entries, $vcf_header) = @_;
+
     # Get sample names and column offsets
-    my @samples = $vcf->header->sample_names;
+    my @samples = $vcf_header->sample_names;
     my %sample_indices;
     @sample_indices{@samples} = 0..$#samples;
 
@@ -162,122 +279,55 @@ sub _process_gene {
     my @cases = @sample_indices{grep {$self->_trait_values->{$_} == 1} @samples};
     my @controls = @sample_indices{grep {$self->_trait_values->{$_} == 0} @samples};
 
-    # Get allele frequencies and info fields for each of case, control.
-    # TODO: refactor the next two blocks so they call one thing instead of repeating code
-    my @case_data = map {
-        my ($total, %counts) = $_->allelic_distribution(@cases);
-        my $entry = $_;
-        {
-            total => $total,
-            allele_counts => \%counts,
-            chrompos => join(":", $_->chrom, $_->position),
-            # TODO: make this next block less obnoxious later
-            info_by_alt => {
-                map {
-                    $_ => ($entry->info_for_allele($_) || undef)
-                } keys %counts
-            },
+    # build a hash of annotation entries keyed on loc,alt (e.g., 1:30,C <- snp at chr1:30, alt=C)
+    # now we can look them up quickly given a vcf entry
+    my %anno;
+    for my $a (@{$annotation}) {
+        my $key = join(",", $a->{location}, $a->{allele});
+        $anno{$key} = [] if !exists $anno{$key};
+        push(@{$anno{$key}}, $a);
+    }
+
+    # Roll through the vcf entries updating any matching annotation we can find
+    for my $site (@$vcf_entries) {
+        for my $alt (@{$site->{alternate_alleles}}) {
+            my $key = sprintf("%s:%d,%s", $site->{chrom}, $site->{position}, $alt);
+            next unless exists $anno{$key};
+            _add_vcf_data_to_vep($_, $site, \@cases, \@controls) for (@{$anno{$key}});
         }
-    } @entries;
+    }
+}
 
-    my @control_data = map {
-        my ($total, %counts) = $_->allelic_distribution(@controls);
-        my $entry = $_;
-        {
-            total => $total,
-            allele_counts => \%counts,
-            chrompos => join(":", $_->chrom, $_->position),
-            # TODO: should probably make this next block less obnoxious later too
-            info_by_alt => {
-                map {
-                    $_ => ($entry->info_for_allele($_) || undef)
-                } keys %counts
-            }
-        }
-    } @entries;
-
-    # Write out new annotation files for each of case, control
-    my $cases_annotation_file = $self->_output_path($gene, "cases.vep");
-    my $controls_annotation_file = $self->_output_path($gene, "controls.vep");
-    $self->_write_merged_annotation($gene_annotation, $gene, \@case_data, $cases_annotation_file);
-    $self->_write_merged_annotation($gene_annotation, $gene, \@control_data, $controls_annotation_file);
-
-    # Create mutation-diagram plots
-    my $case_plots_dir = join("/", $output_dir, "case_plots");
-    my $control_plots_dir = join("/", $output_dir, "control_plots");
-    $self->_make_mutation_diagrams($cases_annotation_file, $output_dir, 'case.');
-    $self->_make_mutation_diagrams($controls_annotation_file, $output_dir, 'control.');
+sub _write_annotation {
+    my ($self, $entries, $path) = @_;
+    my $ofh = Genome::File::Vep::Writer->new($path);
+    $ofh->write($_) for (@$entries);
 }
 
 sub _read_annotation_for_genes {
-    my ($self, %params) = @_;
-    # Params should be:
-    # genes => [gene names],
-    # include_ids => { valid_snv_id => 1, ... }
-    # if include_ids is set, then annotation entries are limited to
-    # those whose id (uploaded_variation) is found in the hashref
-    
-    my %genes = map {$_ => 1} @{$params{genes}};
+    my ($self, $path, @genes) = @_;
+    my %genes = map {$_ => undef} @genes;
 
-    my $vep = Genome::File::Vep::Reader->new($self->annotation_file);
-    
-    my $rv = {
-        header => $vep->{header},
-        data => {}
-    };
-
-    # Read all the entries where entry->gene in %genes
+    $self->status_message("Loading annotation data from $path...");
+    my $vep = Genome::File::Vep::Reader->new($path);
+    my $result = {};
     while (my $entry = $vep->next) {
-        # if we are filtering ids, skip things that don't match our list
-        if (exists $params{include_ids} && !exists $params{include_ids}->{$entry->{uploaded_variation}}) {
-            next;
+        # replace gene name by HGNC field if present
+        if (exists $entry->{extra}{HGNC} && $entry->{gene}) {
+            $entry->{gene} = $entry->{extra}{HGNC};
         }
+
+        $entry->{uploaded_variation} = "$entry->{gene}_$entry->{uploaded_variation}";
+        $entry->{uploaded_variation} =~ s/[^A-Za-z0-9]/_/g;
 
         my $gene = $entry->{gene};
         if (exists $genes{$gene}) {
-            $rv->{data}{$gene} = [] unless exists $rv->{data}{$gene};
-            push(@{$rv->{data}{$gene}}, $entry);
+            $result->{$gene} = [] unless exists $result->{$gene};
+            push(@{$result->{$gene}}, $entry)
         }
     }
-    return $rv;
-}
 
-# Given some annotation data, and some extra data about the snps (vcf info fields, allele
-# frequency, ...), extend the Vep annotation by appending this snp info to the EXTRA
-# field and write the result to disk.
-sub _write_merged_annotation {
-    my ($self, $annotation, $gene, $snp_data, $output_file) = @_;
-    my $vep = new Genome::File::Vep::Writer($output_file);
-
-    # build a hash of annotation entries keyed on loc,alt (e.g., 1:30,C <- snp at chr1:30, alt=C)
-    # now we can look them up quickly given a snp
-    my %anno = map { join(",", $_->{location}, $_->{allele}) => $_ } @{$annotation->{data}{$gene}};
-
-    # for each site
-    for my $si (@{$snp_data}) {
-        my @alleles = keys %{$si->{allele_counts}};
-        # for each snp at the site
-        for my $alt (@alleles) {
-            # look up the annotation for this snp or skip it
-            my $key = join(",", $si->{chrompos}, $alt);
-            next unless exists $anno{$key};
-
-            # we want to modify a copy of the entry
-            my $entry = $anno{$key}->clone();
-
-            my $count = $si->{allele_counts}{$alt};
-            my $af = $count / $si->{total};
-
-            # add our own extra annotation fields
-            $entry->set_extra_field("AF", $af);
-            $entry->set_extra_field("COUNT", $count);
-            # copy info fields from vcf
-            for my $info_name (keys %{$si->{info_by_alt}{$alt}}) {
-                $entry->set_extra_field($info_name, $si->{info_by_alt}{$alt}{$info_name});
-            }
-            $vep->write($entry);
-        }
-    }
+    return $result;
 }
 
 # Use tabix to grab interesting sites from the main vcf
@@ -287,7 +337,7 @@ sub _write_vcf_subset {
     my $input_file = $self->vcf_file;
 
     $self->status_message("Copying " . scalar(@regions) .
-        " snvs from $input_file to $output_file");
+        " variants from $input_file to $output_file");
     my $tmp_unsorted = Genome::Sys->create_temp_file_path;
     my $cmd = Genome::Model::Tools::Tabix::Fetch->create(
         input_file => $input_file,
@@ -353,7 +403,7 @@ sub _write_per_site_subset {
 
 # Make a mutation diagram for the specified Vep annotation file
 sub _make_mutation_diagrams {
-    my ($self, $annotation_file, $output_dir, $prefix) = @_; 
+    my ($self, $annotation_file, $output_dir, $prefix, $frequency_field) = @_;
     Genome::Sys->create_directory($output_dir);
     my $b = Genome::Model::Build->get($self->annotation_build_id);
     my %params = (
@@ -361,7 +411,8 @@ sub _make_mutation_diagrams {
         annotation_format => 'vep',
         annotation_build_id => $self->annotation_build_id,
         output_directory => $output_dir,
-        file_prefix => $prefix
+        file_prefix => $prefix,
+        vep_frequency_field => $frequency_field,
         );
 
     my $cmd = Genome::Model::Tools::Graph::MutationDiagram->create(%params);
@@ -406,7 +457,7 @@ sub _write_burden_summary_subset {
     my $bs = $self->_burden_summary;
     confess "Attempted to write burden summary info for trait $trait, gene $gene which does not exist"
         unless exists $bs->{traits}{$trait}{$gene};
-    
+
     my $ofh = Genome::Sys->open_file_for_writing($output_file);
     $ofh->print(join(",", @{$bs->{header}}) . "\n");
     $ofh->print(join(",", @{$bs->{traits}{$trait}{$gene}}) . "\n");
@@ -418,8 +469,8 @@ sub _top_genes_for_tests {
 
     my @test_names = $self->test_names;
     my $top_n = $self->top_n;
-    print "Finding the $top_n most significant genes for tests:\n"
-        . join("\n", @test_names) . "\n";
+    $self->status_message("Finding the $top_n most significant genes for tests:\n\t"
+        . join("\n\t", @test_names) . "\n");
 
     my $bs = $self->_burden_summary;
     my @unknown_tests = grep {!exists $bs->{column_indices}->{$_}} @test_names;
@@ -448,8 +499,8 @@ sub _top_genes_for_tests {
         }
     }
 
-    my @genes = map {$_->[0]} map {@$_} map {values %{$results{$_}} } keys %results;
-    return @genes;
+    my %genes = map {$_->[0] => 1} map {@$_} map {values %{$results{$_}} } keys %results;
+    return sort keys %genes;
 }
 
 # Helper to build up list of interesting genes
@@ -465,23 +516,38 @@ sub _insert_result {
     }
 }
 
-# Look up what snvs the burden test used
-sub _snv_ids_for_gene {
+# Look up what variants the burden test used
+sub _variant_ids_from_burden_result {
     my ($self, $gene) = @_;
     my $filename = $self->trait . "_$gene.single.csv";
     my $path = join("/", $self->burden_results_directory, $filename);
 
     my $fh = Genome::Sys->open_file_for_reading($path);
     $fh->getline;
-    my %snvs;
+    my %variants;
     while (my $line = $fh->getline) {
         chomp $line;
-        my ($snv, @fields) = split(",", $line);
+        my ($variant, @fields) = split(",", $line);
         # remove leading V that the burden test appends to variant names
-        $snv =~ s/^V//g;
-        $snvs{$snv} = 1;
+        $variant =~ s/^V//g;
+        $variants{$variant} = 1;
     }
-    return %snvs;
+    return %variants;
+}
+
+sub _variant_ids_from_burden_matrix {
+    my $self = shift;
+    my $fh = Genome::Sys->open_file_for_reading($self->burden_matrix_file);
+    # discard header
+    $fh->getline;
+    my $result = {};
+    while (my $line = $fh->getline) {
+        chomp $line;
+        next unless $line;
+        my ($id, @rest) = split("\t", $line);
+        $result->{$id} = 1;
+    }
+    return $result;
 }
 
 1;

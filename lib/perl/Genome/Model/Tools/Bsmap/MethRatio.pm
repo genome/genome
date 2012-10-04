@@ -73,11 +73,11 @@ sub execute {
 
     if ($self->reference eq "36") {
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
-        $fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+        $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     }
     elsif ($self->reference eq "37") {
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
-        $fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+        $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     } else { #path to fasta
         if( -s $self->reference){
             $fasta = $self->reference;

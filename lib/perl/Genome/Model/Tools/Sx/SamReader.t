@@ -11,6 +11,8 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Sx::SamReader') or die;
 
+is(Genome::Model::Tools::Sx::SamReader->type, 'sam', 'type is sam');
+
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'Created temp dir');
 my $fasta = $tmpdir.'/out.fasta';

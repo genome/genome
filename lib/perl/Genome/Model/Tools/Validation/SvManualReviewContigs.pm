@@ -46,8 +46,7 @@ class Genome::Model::Tools::Validation::SvManualReviewContigs {
         },
         reference_sequence_build_id => {
             is => 'Integer',
-            doc => 'reference sequence path (default: NCBI-human-build36 reference sequence build_id 101947881)',
-            default => '101947881'
+            doc => 'reference sequence build to be used for creating new reference with appended contigs',
         },
         ],
                 doc => 'create and align validation data to an SV contig reference',
@@ -221,7 +220,7 @@ sub execute {
         append_to => $ref_seq_build,
         version => $version,
         fasta_file => $contigs_file,
-        prefix => $sample_id,
+        prefix => $sample_id . "_SV_Contigs",
     );
     unless ($new_ref_cmd->execute) {
         $self->error_message('Failed to execute the definition of the new reference sequence with added contigs.');
@@ -396,7 +395,7 @@ sub execute {
     print "\n\n\n###################### IMPORTANT INFORMATION ######################\n\n";
 
     #alert user to run builds for these copied models
-    print "To start alignments against the new reference sequence which contains the indel contigs, please run this command from genome stable:\n\ngenome model build start $new_tumor_model_id $new_normal_model_id\n\n";
+    print "To start alignments against the new reference sequence which contains the SV contigs, please run this command from genome stable:\n\ngenome model build start $new_tumor_model_id $new_normal_model_id\n\n";
 
     return 1;
 

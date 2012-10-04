@@ -176,6 +176,8 @@ sub _additional_help_sections {
 
 =back
 
+=cut
+
 EOS
     );
 }

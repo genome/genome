@@ -13,6 +13,9 @@ my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx';
 use_ok('Genome::Model::Tools::Sx::PhredReader') or die;
 use_ok('Genome::Model::Tools::Sx::PhredWriter') or die;
 
+is(Genome::Model::Tools::Sx::PhredReader->type, 'phred', 'type is phred');
+is(Genome::Model::Tools::Sx::PhredWriter->type, 'phred', 'type is phred');
+
 my $input_fasta = $dir.'/reader_writer.fasta';
 ok(-s $input_fasta, 'Input fasta exists') or die;
 my $input_qual = $input_fasta.'.qual';

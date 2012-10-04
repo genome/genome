@@ -48,25 +48,23 @@ my @fields = (
 );
 
 my $entry_txt = join("\t", @fields);
-my $entry = $pkg->create(id => $entry_txt, header => $header);
-is($entry->chrom, '1', 'Parsed chromosome');
-is($entry->position, '10', 'Parsed position');
-ok(!$entry->identifiers, 'Parsed null identifiers');
-is($entry->reference_allele, 'A', 'Parsed reference allele');
-my @alts = $entry->alternate_alleles;
-is_deeply(\@alts, ['C', 'G'], 'Parsed alternate alleles');
+my $entry = $pkg->new($header, $entry_txt);
+
+is($entry->{chrom}, '1', 'Parsed chromosome');
+is($entry->{position}, '10', 'Parsed position');
+ok(!$entry->{identifiers}, 'Parsed null identifiers');
+is($entry->{reference_allele}, 'A', 'Parsed reference allele');
+is_deeply($entry->{alternate_alleles}, ['C', 'G'], 'Parsed alternate alleles');
 my @alleles = $entry->alleles;
 is_deeply(\@alleles, ['A', 'C', 'G'], 'All alleles accessor');
 is($entry->allele_index('A'), 0, 'allele index');
 is($entry->allele_index('C'), 1, 'allele index');
 is($entry->allele_index('G'), 2, 'allele index');
 ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
-is($entry->quality, '10.3', 'Parsed quality');
-my @filter = $entry->filter;
-is_deeply(\@filter, ['PASS'], 'Parsed filter');
-is_deeply($entry->info_fields, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
-my @format = $entry->format;
-is_deeply(\@format, ['GT', 'DP', 'FT'], 'Parsed format');
+is($entry->{quality}, '10.3', 'Parsed quality');
+is_deeply($entry->{filter}, ['PASS'], 'Parsed filter');
+is_deeply($entry->{info_fields}, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
+is_deeply($entry->{format}, ['GT', 'DP', 'FT'], 'Parsed format');
 
 is($entry->info('A'), 'B', 'Info accessor works for A');
 is($entry->info('C'), '8,9', 'Info accessor works for C');
@@ -93,5 +91,22 @@ is($entry->info_for_allele("C", "C"), 8, "info_for_allele 1");
 is($entry->info_for_allele("G", "C"), 9, "info_for_allele 2");
 is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_for_allele (all fields)");
 is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
+
+ok(!$entry->is_filtered, "not filtered");
+$entry->{filter} = ["PASS"];
+ok(!$entry->is_filtered, "PASS != filtered");
+$entry->{filter} = ["."];
+ok(!$entry->is_filtered, ". != filtered");
+$entry->{filter} = undef;
+ok(!$entry->is_filtered, "undef != filtered");
+$entry->{filter} = [];
+ok(!$entry->is_filtered, "[] != filtered");
+$entry->{filter} = ["x"];
+ok($entry->is_filtered, "something else == filtered");
+
+ok(!$entry->is_sample_filtered(0), 'is_sample_filtered(0)');
+ok(!$entry->is_sample_filtered(1), 'is_sample_filtered(1)');
+ok(!$entry->is_sample_filtered(2), 'is_sample_filtered(2)');
+ok($entry->is_sample_filtered(3), 'is_sample_filtered(3)');
 
 done_testing();

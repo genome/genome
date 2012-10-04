@@ -714,6 +714,7 @@ sub _archive {
 
             ($job_id, $status) = Genome::Sys->bsub_and_wait(
                 queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
+                job_group => '/archive',
                 log_file => "\"/tmp/$id\"", # Entire path must be wrapped in quotes because older allocation IDs contain spaces
                 cmd => "\"$cmd\"",          # If the command isn't wrapped in quotes, the '&&' is misinterpreted by
                                             # bash (rather than being "bsub '1 && 2' it is looked at as 'bsub 1' && '2')
@@ -871,6 +872,7 @@ sub _unarchive {
 
             ($job_id, $status) = Genome::Sys->bsub_and_wait(
                 queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
+                job_group => '/unarchive',
                 log_file => "\"/tmp/$id\"", # Entire path must be wrapped in quotes because older allocation IDs contain spaces
                 cmd => "\"$cmd\"", # If the command isn't wrapped in quotes, the '&&' is misinterpreted by
                                    # bash (rather than being "bsub '1 && 2' it is looked at as 'bsub 1' && '2')

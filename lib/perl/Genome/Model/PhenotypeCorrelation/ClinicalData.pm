@@ -135,7 +135,9 @@ sub from_filehandle {
                 scalar(grep {$val eq $_} ('', $missing_string)) > 0
                     ? undef
                     : $_
-            } split("\t", $line);
+            } split("\t", $line, -1);
+            # the LIMIT=-1 arg to split here makes sure trailing undef: are detected
+            # (the case where the line ends with tab)
 
         if (scalar @fields - 1 != scalar @attr_names) { # - 1 for Sample_name
             confess "At line $line_num: # of columns does not match header:\n"

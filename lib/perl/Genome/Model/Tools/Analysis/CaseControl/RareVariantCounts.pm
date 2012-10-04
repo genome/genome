@@ -871,7 +871,7 @@ sub load_transcript_annotation_VEP {
             ($chrom, $chr_start) = split(/:/,$Location);
             $var = $Allele;
             my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "$reference_build");
-            my $reference_build_fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+            my $reference_build_fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
             $ref = `samtools faidx $reference_build_fasta $chrom:$chr_start-$chr_start | grep -v ">"`;
             chomp($ref);
         }
@@ -928,7 +928,7 @@ sub load_vep_annotation {
                 ($chrom, $position) = split(/:/,$lineContents[1]);
                 $var = $lineContents[2];
                 my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "$reference_build");
-                my $reference_build_fasta = $reference_build_fasta_object->data_directory . "/all_sequences.fa";
+                my $reference_build_fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
                 $ref = `samtools faidx $reference_build_fasta $chrom:$position-$position | grep -v ">"`;
                 chomp($ref);
             }

@@ -81,6 +81,12 @@ class Genome::Model::Build::Command::View {
             default_value => 0,
             doc => 'Display build inputs.'
         },
+        show_input_display_names => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 1,
+            doc => "Show display_name instead ID for each input."
+        },
         workflow => {
             is => 'Boolean',
             is_optional => 1,
@@ -132,7 +138,7 @@ sub write_report {
         }
     }
 
-    if ($self->full || $self->workflow) {
+    if($self->full || $self->workflow) {
         my $workflow = $self->build->newest_workflow_instance;
         $self->_display_workflow($handle, $workflow);
     }

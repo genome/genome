@@ -2,34 +2,72 @@ package Genome::Model::Command::Input::Show;
 
 use strict;
 use warnings;
-use List::Util 'max';
+use List::Util qw(max first);
 require Term::ANSIColor;
 
 use Genome;
+use Genome::Utility::Text "justify";
 
 
 class Genome::Model::Command::Input::Show {
-    is => ['Command::V2'],
+    is => 'Genome::Command::Viewer',
     has => [
         model => {
             is => 'Genome::Model',
             shell_args_position => 1,
         },
-        color => {
+        show_display_names => {
             is => 'Boolean',
+            is_optional => 1,
             default_value => 1,
-            doc => 'Display in color.'
+            doc => "Show display_name instead ID for each input."
         },
     ],
-    doc => 'Show the inputs of a model or type.',
+    doc => 'Show the inputs of a model.',
 };
 
-sub execute {
-    my ($self) = @_;
+sub write_report {
+    my ($self, $width, $handle) = @_;
     my $model = $self->model;
 
-    my @properties = eval{ $model->real_input_properties };
-    return if not @properties;
+    $self->write_inputs_for_model_or_build(
+            'width' => $width,
+            'handle' => $handle,
+            'target' => $model,
+            'target_type' => "model",
+            'show_display_names' => $self->show_display_names,
+            'color' => $self->color,
+    );
+}
+
+sub _get_sorted_input_properties {
+    my ($self, $target) = @_;
+
+    if($target->can('real_input_properties')) {
+        return $target->real_input_properties;
+    } else {
+        die $self->error_message('Could not load properties for target.'); #TODO support builds?
+    }
+
+}
+
+sub write_inputs_for_model_or_build {
+    my $self = shift;
+    my %params = @_;
+    my $width = $params{width};
+    my $handle = $params{handle};
+    my $target = $params{target};
+    my $target_type = $params{target_type};
+    my $show_display_names = $params{show_display_names};
+    my $color = $params{color};
+
+    my @properties = $self->_get_sorted_input_properties($target);
+
+    unless(@properties) {
+        printf $handle "No inputs found for %s %s",
+                $target_type, $target->id;
+        return;
+    }
 
     my $name_header = 'Input Name';
     my $is_many_header = "Is Many";
@@ -45,10 +83,14 @@ sub execute {
         push(@input_name_lengths, length($name));
 
         my @values;
-        for my $value ($model->$name) {
+        for my $value ($target->$name) {
             if($value) {
-                if ( eval{ $value->can('__display_name__') } ) {
+                if($show_display_names and 
+                        eval {$value->can('__display_name__')}) {
                     push(@values, $value->__display_name__);
+                } elsif(eval {$value->can('class')} and 
+                        eval {$value->can('id')}) {
+                    push(@values, sprintf("%s(%s)", $value->class, $value->id));
                 } else {
                     push(@values, $value);
                 }
@@ -71,54 +113,51 @@ sub execute {
     my $max_value_length = max(@input_value_lengths);
 
     # print out table header
-    my $header1 = sprintf("%s %s %s\n", _pad_left($name_header, $max_name_length),
-                                       $is_many_header,
-                                       _pad_right($value_header, $max_value_length));
-    $self->status_message($header1);
-    my $header2 = sprintf("%s %s %s\n", '-' x $max_name_length,
-                                       '-' x length($is_many_header),
-                                       '-' x $max_value_length);
-    $self->status_message($header2);
+    printf $handle "%s %s %s\n", 
+            justify($name_header, 'right', $max_name_length),
+            $is_many_header,
+            justify($value_header, 'left', $max_value_length);
+
+    printf $handle "%s %s %s\n", '-' x $max_name_length,
+                                 '-' x length($is_many_header),
+                                 '-' x $max_value_length;
 
     # print out table
     for my $name (sort keys %inputs) {
-        my $name_part = _pad_left($name, $max_name_length);
-        my $is_many_part = '  ' . _format_is_many($is_many{$name}, $self->color) . '  ';
-        my $value_part = _format_values($inputs{$name},
-                                         $self->color,
-                                         $max_name_length + length($is_many_header) + 2,
-                                         $max_value_length);
-        $self->status_message(join(' ', $name_part, $is_many_part, $value_part));
+        my $name_part = justify($name, 'right', $max_name_length, " ", "");
+        my $is_many_part = sprintf('  %s  ',
+                $self->_format_is_many($is_many{$name}), $color);
+        my $value_part = $self->_format_values($inputs{$name},
+                $max_name_length + length($is_many_header) + 2,
+                $max_value_length,
+                $color);
+        print $handle join(' ', $name_part, $is_many_part, $value_part);
     }
-
-    return 1;
+    print $handle "\n";
 }
 
 
 sub _format_is_many {
-    my ($is_many, $color) = @_;
-    my ($pre, $post, $true, $false) = ('[', ']', '*',' ');
+    my ($self, $is_many, $color) = @_;
+    my ($pre, $post, $true, $false) = ('[', ']', 'X',' ');
 
-    if($color) {
-        $pre = Term::ANSIColor::colored($pre, 'white');
-        $post = Term::ANSIColor::colored($post, 'white');
-    }
+    $pre = $self->_color($pre, 'white', $color);
+    $post = $self->_color($post, 'white', $color);
     my $mid = $is_many ? $true : $false;
     return join('', $pre, $mid, $post);
 }
 
-sub _pad_left {
-    my ($arg, $length) = @_;
-    return sprintf("% $length"."s", $arg);
-}
-
-sub _pad_right {
-    my ($arg, $length) = @_;
-    return sprintf("%-$length"."s", $arg);
+sub _color {
+    my ($self, $value, $color, $flag) = @_;
+    if($flag) {
+        return Term::ANSIColor::colored($value, $color);
+    } else {
+        return $value;
+    }
 }
 
 sub _format_values {
-    my ($values, $color, $left_padding, $right_size) = @_;
+    my ($self, $values, $left_padding, $right_size, $color) = @_;
     my @values = @{$values};
 
     my @formatted_values;
@@ -126,14 +165,15 @@ sub _format_values {
     for my $value (@values) {
         my $padded_value;
         if($first_value) {
-            $padded_value = _pad_right($value, $right_size);
+            $padded_value = justify($value, 'left', $right_size);
             $first_value = 0;
         } else {
-            $padded_value = _pad_right($value, $right_size);
-            $padded_value = _pad_left($padded_value, $right_size + $left_padding);
+            $padded_value = justify($value, 'left', $right_size);
+            $padded_value = justify($padded_value, 'right',
+                    $right_size + $left_padding);
         }
-        if($color and $value eq 'undef') {
-            $padded_value = Term::ANSIColor::colored($padded_value, 'cyan');
+        if($value eq 'undef') {
+            $padded_value = $self->_color($padded_value, 'cyan', $color);
         }
         push(@formatted_values, $padded_value);
     }

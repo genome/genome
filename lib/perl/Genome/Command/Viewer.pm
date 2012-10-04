@@ -27,13 +27,16 @@ sub write_report {
 sub execute {
     my ($self) = @_;
 
-    my ($screen_width) = GetTerminalSize();
+    my $screen_width = 80;
+    # this can fail in cases where no terminal is queriable
+    eval {($screen_width) = GetTerminalSize();};
+
     my $handle = new IO::Handle;
     STDOUT->autoflush(1);
     $handle->fdopen(fileno(STDOUT), 'w');
 
     $self->write_report($screen_width, $handle);
-    1;
+    return 1;
 }
 
 sub get_report {
@@ -58,4 +61,4 @@ sub _color {
     }
 }
 
-
+1;

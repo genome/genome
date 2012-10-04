@@ -268,6 +268,28 @@ sub _filter_variants {
         }
     }
     else {
+        if($skip_count eq scalar(keys %fastqs)) {
+            my $svs_hq_file = join("/", $self->detector_directory, "svs.hq");
+            my $svs_hq_fh = Genome::Sys->open_file_for_reading($svs_hq_file);
+
+            while(<$svs_hq_fh>) {
+                next if $_ =~ /^#/; #skip header lines
+
+                #found a variant
+                $self->error_message('All libraries were skipped but there appear to be variants in the svs.hq file.');
+                $svs_hq_fh->close;
+                die;
+            }
+
+            #if we get here we didn't find any variants
+            $svs_hq_fh->close;
+            $self->status_message('No SVs in svs.hq, skipping run');
+            my $output_file = $self->pass_staging_output;
+            `touch $output_file`;
+            return 1;
+        }
+
+
         $self->error_message('There is no per library rmdup bam');
         die;
     }

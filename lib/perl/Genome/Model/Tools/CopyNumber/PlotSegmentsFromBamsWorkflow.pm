@@ -32,8 +32,7 @@ class Genome::Model::Tools::CopyNumber::PlotSegmentsFromBamsWorkflow {
             is => 'String',
             is_input => 1,
             is_output => 1,
-            doc => "choose '36' or '37'",
-            default => '36'
+            doc => "choose from ['36','37','mm9']",
         },
         output_pdf => {
             is => 'String',
