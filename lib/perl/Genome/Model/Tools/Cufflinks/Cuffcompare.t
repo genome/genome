@@ -11,7 +11,7 @@ use Test::More skip_all => 'expected data was accidentally deleted'; # RT 86548
 
 use_ok('Genome::Model::Tools::Cufflinks::Cuffcompare');
 
-my $data_dir = "$ENV{GENOME_TEST_TEMP}/Genome-Model-Tools-Cufflinks-Cuffcompare";
+my $data_dir = "$ENV{GENOME_TEST_INPUTS}/Genome-Model-Tools-Cufflinks-Cuffcompare";
 
 my $gtf_basename = 'test.gtf';
 my $gtf_file = $data_dir .'/'. $gtf_basename;
