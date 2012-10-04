@@ -15,7 +15,7 @@ BEGIN {
         # look for a config module matching all or part of the hostname 
         use Sys::Hostname;
         my $hostname = Sys::Hostname::hostname();
-        my @hwords = map { s/-/_/ } reverse split('\.',$hostname);
+        my @hwords = map { s/-/_/g; $_ } reverse split('\.',$hostname);
         while (@hwords) {
             my $pkg = 'Genome::Site::' . join("::",@hwords);
             local $SIG{__DIE__};
