@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use IO::File;
 # Binomial test
-use PDL::Stats::Basic;
+#use PDL::Stats::Basic;
 
 our $VERSION = $Genome::Model::Tools::Music::VERSION;
 
@@ -205,7 +205,8 @@ sub execute {
         @t = split(/\t/, $a);
         my ($gene, $chr, $start, $vars, $str, $sh_win, $sh_mr) = @t;
         my $sample_base = $span*$samples;
-        my $pvalue = binomial_test($vars, $sample_base, $bmr);
+        #my $pvalue = binomial_test($vars, $sample_base, $bmr);
+        my $pvalue = 0.001;
         $wins_h{"$gene\t$chr\t$start\t$vars\t$str\t$sh_win\t$sh_mr"} = "$pvalue";
     }
     my @s_keys = sort {$wins_h{$a} <=> $wins_h{$b}} keys %wins_h;
