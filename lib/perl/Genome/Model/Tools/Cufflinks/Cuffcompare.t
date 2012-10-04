@@ -6,8 +6,7 @@ use warnings;
 use above 'Genome';
 
 use File::Compare;
-use Test::More skip_all => 'expected data was accidentally deleted'; # RT 86548
-#use Test::More tests => 10;
+use Test::More tests => 10;
 
 use_ok('Genome::Model::Tools::Cufflinks::Cuffcompare');
 
