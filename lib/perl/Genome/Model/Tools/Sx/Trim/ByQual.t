@@ -5,38 +5,40 @@ use warnings;
 
 use above "Genome";
 
-require File::Compare;
 use Test::More;
 
 # Use
 use_ok('Genome::Model::Tools::Sx::Trim::ByQual') or die;
 
 # Create failures
-ok(scalar(Genome::Model::Tools::Sx::Trim::ByQual->create->__errors__), 'Create w/o quality');
-ok(scalar(Genome::Model::Tools::Sx::Trim::ByQual->create(quality => 'all')->__errors__), 'Create w/ quality => all');
-ok(scalar(Genome::Model::Tools::Sx::Trim::ByQual->create(quality => 0)->__errors__), 'Create w/ quality => 0');
+ok(scalar(Genome::Model::Tools::Sx::Trim::ByQual->create->__errors__), 'Create fails w/o quality');
+ok(scalar(Genome::Model::Tools::Sx::Trim::ByQual->create(quality => 'all')->__errors__), 'Create fails w/ quality => all');
+ok(scalar(Genome::Model::Tools::Sx::Trim::ByQual->create(quality => -1)->__errors__), 'Create fails w/ quality => -1');
 
-# Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/TrimByQual';
-my $in_fastq = $dir.'/in.fastq';
-ok(-s $in_fastq, 'in fastq');
-my $example_fastq = $dir.'/out.fastq';
-ok(-s $example_fastq, 'example fastq');
+# Trimming
+my $trimmer = Genome::Model::Tools::Sx::Trim::ByQual->create(quality => 2);
+ok($trimmer, 'Create trimmer');
+my ($seq, $qual);
+for (0..93) { $seq .= 'A'; $qual .= chr($_ + 33); }
+$qual = reverse $qual;
+is(length($seq), length($qual), 'Seq and qual length match');
+my $seq1a = { seq => $seq, qual => $qual };
+my $seq1b = { seq => $seq, qual => $qual };
+$trimmer->_eval_seqs([ $seq1a, $seq1b ]);
+is(length($seq1a->{seq}), 91, 'Seq 1a seq trimmed to 91 bases');
+is(length($seq1a->{qual}), 91, 'Seq 1a qual trimmed to 91 bases');
+is(length($seq1b->{seq}), 91, 'Seq 1b seq trimmed to 91 bases');
+is(length($seq1b->{qual}), 91, 'Seq 1b qual trimmed to 91 bases');
+$trimmer->quality(25);
+my $seq2 = { seq => $seq, qual => $qual };
+$trimmer->_eval_seqs([ $seq2 ]);
+is(length($seq2->{seq}), 68, 'Seq 2 seq trimmed to 68 bases');
+is(length($seq2->{qual}), 68, 'Seq 2 qual trimmed to 68 bases');
+$trimmer->quality(100);
+$trimmer->_eval_seqs([ $seq2 ]);
+is(length($seq2->{seq}), 0, 'Seq 3 seq trimmed to 0 bases');
+is(length($seq2->{qual}), 0, 'Seq 3 qual trimmed to 0 bases');
 
-my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-my $out_fastq = $tmp_dir.'/out.fastq';
-
-# Ok
-my $trimmer = Genome::Model::Tools::Sx::Trim::ByQual->create(
-    input  => [ $in_fastq ],
-    output => [ $out_fastq ],
-    quality => 25,
-);
-ok($trimmer, 'create trimmer');
-ok($trimmer->execute, 'execute trimmer');
-is(File::Compare::compare($example_fastq, $out_fastq), 0, "fastq trimmed as expected");
-
-print "gvimdiff $example_fastq $out_fastq\n"; <STDIN>;
 done_testing();
 exit;
 
