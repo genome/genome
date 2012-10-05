@@ -453,49 +453,30 @@ sub dump_trimmed_fastq_files {
     unless($trimmer_name) {
         return $self->dump_sanger_fastq_files(%$segment_params, directory => $data_directory, discard_fragments => $discard_fragments);
     }
-    my @fastq_pathnames = $self->dump_sanger_fastq_files(%$segment_params);
 
-    # see if there is an SX API trimmer for this trimmer name
-    my $class_name = 'Genome::Model::Tools::Sx::Trim';
-    my @words = split(' ',$trimmer_name);
-    for my $word (@words) {
-        my @parts = map { ucfirst($_) } split('-',$word);
-        $class_name .= "::" . join('',@parts);
-    }
-    eval { $class_name->class };
-
-    if (not $@) {
-        # SX trimmer: yay
-
-        my @params;
-        if($trimmer_params =~ '=>') {
-            @params = eval("no strict; no warnings; $trimmer_params");
-            if ($@) {
-                die "error in params: $@\n$trimmer_params\n";
-            }
-        } elsif($trimmer_params =~ /--\S+?[= ]\S+/) {
-            while($trimmer_params =~ /--(\S+)?[= ](\S+)/g) {
-                my ($key, $value) = ($1, $2);
-                #for compatibility with pre-SX far processing profiles
-                if($class_name eq 'Genome::Model::Tools::Sx::Trim::Far') {
-                    next if $key eq 'format';
-                }
-
-                $key =~ s/-/_/g;
-                push @params, $key => $value;
-            }
-            #for compatibility with pre-SX far processing profiles
-            if($class_name eq 'Genome::Model::Tools::Sx::Trim::Far') {
-                push @params, 'version' => $trimmer_version;
-            }
-
-        } else {
-            die "error in params: does not appear to be hash or --key value format";
+    $self->status_message('Trimmer name: '.$trimmer_name);
+    my @sx_cmd_parts = $self->_convert_trimmer_name_to_sx_command_parts($trimmer_name);
+    if ( @sx_cmd_parts ) {
+        $self->status_message('SX processing detected!');
+        # OLD: Convert trimmer params if given.
+        if ( defined $trimmer_params ) {
+            $self->status_message('Old SX trimmer params: '.$trimmer_params);
+            my $cmd_line_params = $self->_convert_trimmer_params_to_command_line_params(
+                trimmer_name => $trimmer_name,
+                trimmer_params => $trimmer_params,
+                trimmer_version => $trimmer_version,
+            );
+            return if not $cmd_line_params;
+            $sx_cmd_parts[0] .= ' '.$cmd_line_params;
         }
 
-        my @trimmed_fastq_pathnames;
+        # Inputs
+        my @fastq_pathnames = $self->dump_sanger_fastq_files(%$segment_params); # dies on error
+        $sx_cmd_parts[0] .= ' --input '.join(',', map { 'file='. $_ .':type=sanger' } @fastq_pathnames);
+        $self->status_message('SX inputs: '.join(' ', @fastq_pathnames));
 
-        my @output;
+        # Outputs and file names
+        my (@trimmed_fastq_pathnames, @output);
         if ($self->is_paired_end) {
             @trimmed_fastq_pathnames = 
                 map { $data_directory . '/trimmed-sanger-fastq-' . $_ . '.fastq' } 
@@ -513,36 +494,29 @@ sub dump_trimmed_fastq_files {
                     ('fragment');
             @output = $trimmed_fastq_pathnames[0];
         }
+        $sx_cmd_parts[$#sx_cmd_parts] .= ' --output '.join(',', @output);
+        $self->status_message('SX outputs: '.join(' ', @trimmed_fastq_pathnames));
 
-        $self->status_message('Creating fastq trim command...');
-        my @trimmer_inputs;
-        for my $fastq_pathname (@fastq_pathnames) {
-            push @trimmer_inputs, 'file='. $fastq_pathname .':type=sanger';
+        # Run SX
+        # Assemble command
+        my $sx_cmd = join(' | ', map { 'gmt sx '.$_ } @sx_cmd_parts);
+        $self->status_message('SX command: '.$sx_cmd);
+        # Run
+        my $cmd_ran_ok = eval{ Genome::Sys->shellcmd(cmd => $sx_cmd); };
+        if ( not $cmd_ran_ok ) {
+            die $self->error_message('Failed to run SX trim command! '.$sx_cmd);
         }
-        my $trimmer = $class_name->create(
-            input => \@trimmer_inputs,
-            output => \@output,
-            @params,
-        );
+        $self->status_message('Run SX command...OK');
 
-        unless ($trimmer) {
-            $self->
-            $self->error_message('Failed to create fastq trim command');
-            die($self->error_message);
-        }
-        
-        unless ($trimmer->execute) {
-            $self->error_message('Failed to execute fastq trim command '. $trimmer->command_name);
-            die($self->error_message);
-        }
-
+        # Remove original dumped fastqs
         for my $input_fastq_pathname (@fastq_pathnames) {
             if ($input_fastq_pathname =~ m/^\/tmp/) {
-                $self->status_message("Removing original file from before trimming to save space: $input_fastq_pathname");
-                unlink($input_fastq_pathname);
+                $self->status_message("Removing original file from after trimming to save space: $input_fastq_pathname");
+                #unlink($input_fastq_pathname);
             }
         }
-        #in paired end trimming, only return trimmed files with reads, check for errors
+
+        # in paired end trimming, only return trimmed files with reads, check for errors
         my @paths;
         if (@trimmed_fastq_pathnames == 3){
             my $paired_with_size = grep { -s $_ } @trimmed_fastq_pathnames[0,1];
@@ -563,14 +537,14 @@ sub dump_trimmed_fastq_files {
         }
         return @paths;
     }
-    
     # if the above did not work, we have a legacy trimmer.
-
 
     # DO __NOT__ ADD TO THE CONDITIONAL LOGIC HERE
     # MAKE A TRIMMER IN THE SX API, AND FALL THROUGH TO THE "ELSE" BLOCK
     # EVENTUALLY, ALL OF THIS IF STATMENT NEEDS TO GO AWAY -SSMITH
 
+    $self->status_message('Preceding w/ non SX processing');
+    my @fastq_pathnames = $self->dump_sanger_fastq_files(%$segment_params); # dies on error
     my @trimmed_fastq_pathnames;
     #if the trimmer supports paired end, we just run it once, otherwise we need to loop over the fastqs
     if(@fastq_pathnames == 2 && $trimmer_name eq 'far' && $trimmer_version >= '2.0') {
@@ -728,6 +702,77 @@ sub dump_trimmed_fastq_files {
         }
     }
     return @trimmed_fastq_pathnames;
+}
+
+sub _convert_trimmer_name_to_sx_command_parts {
+    my ($self, $trimmer_name) = @_;
+
+    Carp::confess('No trimmer name provided to convert trimmer name to SX command parts!') if not $trimmer_name;
+
+    # New SX! Support running multiple SX functons as a command.
+    my $is_sx_cmd = $trimmer_name =~ s/^gmt sx //;
+    return split(/\s*\|\s*/, $trimmer_name) if $is_sx_cmd;
+
+    # Old SX way. Only supports one trimmer.
+    my $is_sx_trimmer_class = eval{
+        return if not $trimmer_name;
+        my $class_name = 'Genome::Model::Tools::Sx::Trim';
+        my @words = split(' ', $trimmer_name);
+        for my $word (@words) {
+            my @parts = map { ucfirst($_) } split('-',$word);
+            $class_name .= "::" . join('',@parts);
+        }
+        $class_name->class;
+    };
+
+    return ( 'trim '.$trimmer_name ) if $is_sx_trimmer_class;
+    return;
+}
+
+sub _convert_trimmer_params_to_command_line_params {
+    my ($self, %params) = @_;
+
+    my $trimmer_name = $params{trimmer_name};
+    Carp::confess('No trimmer name provided to convert trimmer params to comand line params!') if not $trimmer_name;
+    my $trimmer_params = $params{trimmer_params};
+    Carp::confess('No trimmer params provided to convert trimmer params to command line params!') if not $trimmer_params;
+    my $trimmer_version = $params{trimmer_version};
+
+    my @params;
+    if($trimmer_params =~ '=>') {
+        @params = eval("no strict; no warnings; $trimmer_params");
+        if ( not @params ) {
+            $self->error_message("Invalid params ($trimmer_params) to convert to command line params! $@");
+            return;
+        }
+    } elsif ( $trimmer_params =~ /--\S+?[= ]\S+/ ) {
+        while($trimmer_params =~ /--(\S+)?[= ](\S+)/g) {
+            my ($key, $value) = ($1, $2);
+            #for compatibility with pre-SX far processing profiles
+            if($trimmer_name eq 'far') {
+                next if $key eq 'format';
+            }
+
+            push @params, $key => $value;
+        }
+        #for compatibility with pre-SX far processing profiles
+        if($trimmer_version and $trimmer_name eq 'far') {
+            push @params, 'version' => $trimmer_version;
+        }
+
+    } else {
+        $self->error_message("Invalid params ($trimmer_params) to convert to command line params! $@");
+        return;
+    }
+
+    # Add -- to the odd, and quotes to the even
+    for ( my $i = 0; $i < @params; $i += 2 ) {
+        $params[$i] =~ s/_/\-/g;
+        $params[$i] = '--'.$params[$i];
+        $params[$i + 1] = "'".$params[$i + 1]."'";
+    }
+
+    return join(' ', @params);
 }
 
 sub _get_trimq2_params {

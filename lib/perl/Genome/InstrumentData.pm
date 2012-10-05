@@ -321,7 +321,10 @@ sub dump_fastqs_from_bam {
     }
 
     my $directory = delete $p{directory};
-    $directory ||= Genome::Sys->create_temp_directory('unpacked_bam_'.$self->id);
+    if ( not $directory ) {
+        $directory = Genome::Sys->base_temp_directory.'/'.'unpacked_bam_'.$self->id;
+        Genome::Sys->create_directory($directory) if not -d $directory;
+    }
 
     my $subset = (defined $self->subset_name ? $self->subset_name : 0);
 
