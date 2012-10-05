@@ -80,11 +80,11 @@ is($entry->sample_field(1, 'XX'), undef, 'Sample field accessor');
 
 my ($total, %counts) = $entry->allelic_distribution;
 is($total, 6, "allelic_distribution: total");
-is_deeply(\%counts, {A => 3, C => 1, G => 2}, "allelic_distribution: counts");
+is_deeply(\%counts, {0 => 3, 1 => 1, 2 => 2}, "allelic_distribution: counts");
 
 ($total, %counts) = $entry->allelic_distribution(1);
 is($total, 2, "allelic_distribution(1): total");
-is_deeply(\%counts, {A => 1, G => 1}, "allelic_distribution(1): counts");
+is_deeply(\%counts, {0 => 1, 2 => 1}, "allelic_distribution(1): counts");
 
 ok(!$entry->info_for_allele("X"), "info_for_allele with bad allele name");
 is($entry->info_for_allele("C", "C"), 8, "info_for_allele 1");
@@ -103,10 +103,5 @@ $entry->{filter} = [];
 ok(!$entry->is_filtered, "[] != filtered");
 $entry->{filter} = ["x"];
 ok($entry->is_filtered, "something else == filtered");
-
-ok(!$entry->is_sample_filtered(0), 'is_sample_filtered(0)');
-ok(!$entry->is_sample_filtered(1), 'is_sample_filtered(1)');
-ok(!$entry->is_sample_filtered(2), 'is_sample_filtered(2)');
-ok($entry->is_sample_filtered(3), 'is_sample_filtered(3)');
 
 done_testing();

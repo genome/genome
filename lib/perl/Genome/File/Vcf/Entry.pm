@@ -36,6 +36,7 @@ sub _parse {
     confess "Attempted to parse null VCF entry" unless $self->{_line};
 
     my @fields = split("\t", $self->{_line});
+    $self->{_fields} = \@fields;
 
     # set mandatory fields
     $self->{chrom} = $fields[CHROM];
@@ -51,7 +52,6 @@ sub _parse {
     $self->{filter} = [_parse_list($fields[FILTER], ',')];
     $self->{info_fields} = _parse_info($fields[INFO]);
     $self->{format} = [_parse_list($fields[FORMAT], ':')];
-    $self->{sample_data} = $self->_parse_samples(\@fields);
 }
 
 # This is to avoid warnings about splitting undef values and to translate
@@ -78,7 +78,9 @@ sub _parse_info {
 
 # this assumes $self->{format} is set
 sub _parse_samples {
-    my ($self, $fields) = @_; # arrayref of all vcf fields
+    my ($self) = @_; # arrayref of all vcf fields
+
+    my $fields = $self->{_fields};
 
     # it is an error to have sample data with no format specification
     confess "VCF entry has sample data but no format specification: " . $self->{_line}
@@ -161,9 +163,17 @@ sub info_for_allele {
     return $rv;
 }
 
+sub sample_data {
+    my $self = shift;
+    if (!exists $self->{_sample_data}) {
+        $self->{_sample_data} = $self->_parse_samples;
+    }
+    return $self->{_sample_data};
+}
+
 sub sample_field {
     my ($self, $sample_idx, $field_name) = @_;
-    my $sample_data = $self->{sample_data};
+    my $sample_data = $self->sample_data;
     confess "Invalid sample index $sample_idx (have $#$sample_data): " . $self->{_line}
         unless ($sample_idx >= 0 && $sample_idx <= $#$sample_data);
 
@@ -191,26 +201,39 @@ sub allele_index {
 sub allelic_distribution {
     my ($self, @sample_indices) = @_;
 
+    my $format = $self->_format_field_hash;
+    my $gtidx = $format->{GT};
+    my $sample_data = $self->sample_data;
+    return unless defined $gtidx && defined $sample_data;
+
     # If @sample_indices was not passed, default to all samples
-    @sample_indices = 0..$#{$self->{sample_data}} unless @sample_indices;
+    @sample_indices = 0..$#{$sample_data} unless @sample_indices;
 
     # Find all samples that passed filters
-    my @passed_filters = grep {
-            my $ft = $self->sample_field($_, "FT");
+    if (exists $format->{FT}) {
+        my $ftidx = $format->{FT};
+        @sample_indices = grep {
+            my $ft = $sample_data->[$_]->[$ftidx];
             !defined $ft || $ft eq "PASS" || $ft eq "."
-        } @sample_indices;
+            } @sample_indices;
+    }
 
     # Get all defined genotypes
-    my @gts = grep {defined $_} map {$self->sample_field($_, "GT")} @passed_filters;
+    my @gts = 
+        grep {defined $_} 
+        map {$sample_data->[$_]->[$gtidx]}
+        @sample_indices;
 
     # Split gts on |/ and flatten into one list
-    my @allele_indices = grep {defined $_ && $_ ne '.'} map {split("[/|]", $_)} @gts;
+    my @allele_indices = 
+        grep {defined $_ && $_ ne '.'}
+        map {split("[/|]", $_)}
+        @gts;
 
     # Get list of all alleles (ref, alt1, ..., altn)
-    my @alleles = $self->alleles;
     my %counts;
     my $total = 0;
-    for my $a (@alleles[@allele_indices]) {
+    for my $a (@allele_indices) {
         ++$counts{$a};
         ++$total;
     }
@@ -220,12 +243,6 @@ sub allelic_distribution {
 sub is_filtered {
     my $self = shift;
     return $self->{filter} && grep { $_ && $_ ne "PASS" && $_ ne "."} @{$self->{filter}};
-}
-
-sub is_sample_filtered {
-    my ($self, $idx) = @_;
-    my $ft = $self->sample_field($idx, "FT");
-    return defined $ft && ($ft ne "PASS" && $ft ne ".");
 }
 
 1;
