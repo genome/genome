@@ -9,14 +9,14 @@ use strict;
 use warnings;
 
 sub new {
-    my ($class, $path) = @_;
-    return $class->fhopen(Genome::Sys->open_file_for_writing($path), $path);
+    my ($class, $path, $header) = @_;
+    return $class->fhopen(Genome::Sys->open_file_for_writing($path), $path, $header);
 }
 
 sub fhopen {
-    my ($class, $fh, $name) = @_;
+    my ($class, $fh, $name, $header) = @_;
     $name |= "unknown file path";
-    my $header = new Genome::File::Vep::Header;
+    $header = new Genome::File::Vep::Header if !defined $header;
     $fh->print($header->to_string . "\n");
 
     my $self = {

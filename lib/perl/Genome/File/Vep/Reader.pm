@@ -17,15 +17,17 @@ sub fhopen {
     my ($class, $fh, $name) = @_;
     $name |= "unknown vep file";
     my $header_txt = $fh->getline;
+    my @lines;
     while ($header_txt =~ /^##/) {
+        push(@lines, $header_txt);
         $header_txt = $fh->getline;
     }
-    $header_txt =~ s/^#//;
+    push(@lines, $header_txt);
 
     my $self = {
         name => $name,
         filehandle => $fh,
-        header => new Genome::File::Vep::Header($header_txt),
+        header => new Genome::File::Vep::Header(\@lines),
         line_num => 1,
         _cached_entry => undef,
     };
