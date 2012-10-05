@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Cwd;
+use IO::Handle;
 
 my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
@@ -152,6 +153,18 @@ sub help_detail {
 EOS
 }
 
+sub _open_input_file {
+    my $self = shift;
+    my $input_file = $self->input_file;
+    return Genome::Sys->open_file_for_reading($input_file) if $input_file ne '-';
+
+    my $ioh = new IO::Handle;
+    unless ($ioh->fdopen(fileno(STDIN), "r")) {
+        die $self->error_message("Failed to open standard input");
+    }
+    return $ioh;
+}
+
 sub execute {
     my $self = shift;
 
@@ -180,9 +193,20 @@ sub execute {
     # fails cryptically when given one-based indels
 
     if ($format eq "ensembl"){
-        my $inFh = IO::File->new( $self->input_file ) || die "can't open file\n";
+        my $inFh = $self->_open_input_file;
+        my $tfh;
+        my $tmpfile;
+
+        # If we are reading from stdin, we won't be able to reopen the input, so dump
+        # to a temp file while verifying the format
+        if ($input_file eq '-') {
+            ($tfh, $tmpfile) = Genome::Sys->create_temp_file;
+        }
+
         while( my $line = $inFh->getline )
         {
+            $tfh->print($line) if $tfh;
+
             chomp($line);
             my @F = split("\t",$line);
 
@@ -215,6 +239,8 @@ sub execute {
             }
         }
         close($inFh);
+
+        $input_file = $tmpfile if $tmpfile;
     }
 
     # If bed format is input, we do a conversion to ensembl format. This is necessary
@@ -229,13 +255,11 @@ sub execute {
         #create a tmp file for ensembl file
         my ($tfh,$tmpfile) = Genome::Sys->create_temp_file;
         unless($tfh) {
-            $self->error_message("Unable to create temporary file $!");
-            die;
+            die $self->error_message("Unable to create temporary file $!");
         }
-        open(OUTFILE,">$tmpfile") || die "can't open temp file for writing ($tmpfile)\n";
 
         #convert the bed file
-        my $inFh = IO::File->new( $self->input_file ) || die "can't open file\n";
+        my $inFh = $self->_open_input_file;
         while( my $line = $inFh->getline ){
             chomp($line);
             my @F = split("\t",$line);
@@ -287,13 +311,11 @@ sub execute {
             else {
                 die ("This variant is not in valid BED format:\n$line\n");
             }
-            print OUTFILE join("\t",(@F[0..2],join("/",@vars),"+",@suffix)) . "\n";
+            $tfh->print(join("\t",(@F[0..2],join("/",@vars),"+",@suffix)) . "\n");
         }
 
         $format = "ensembl";
         $input_file = $tmpfile;
-        
-        close(OUTFILE);
     }
 
     my $script_path = $VEP_SCRIPT_PATH.$self->{version}.".pl";
@@ -336,7 +358,10 @@ sub execute {
 
     #have to replace these arg, because it may have changed (from bed -> ensembl)
     $string_args =~ s/--format (\w+)/--format $format/;
-    $string_args =~ s/--input_file ([^\s]+)/--input_file $input_file/;
+    # the vep script does not understand --input_file - as read from stdin.
+    # instead, we must leave out the --input_file arg to get that behavior.
+    my $input_file_arg = $input_file eq '-' ? "" : "--input_file $input_file";
+    $string_args =~ s/--input_file ([^\s]+)/$input_file_arg/;
 
     my $bool_args = "";
     $bool_args = join (' ',
@@ -370,11 +395,15 @@ sub execute {
 
     print STDERR $cmd . "\n";
 
-    $annotation_build->prepend_api_path_and_execute(
+    my %params = (
         cmd=>$cmd,
-        input_files => [$input_file],
         output_files => [$self->{output_file}],
         skip_if_output_is_present => 0,
+    );
+    $params{input_files} = [$input_file] unless $input_file eq '-';
+
+    $annotation_build->prepend_api_path_and_execute(
+        %params
     );
     return 1;
 }
