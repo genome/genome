@@ -356,7 +356,7 @@ sub execute {
     my $ensembl_version = Genome::Db::Ensembl::Import::Run->ensembl_version_string($annotation_build->version);
 
     my $cache_result;
-    eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(version => $ensembl_version, species => $self->species);
+    eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(version => $ensembl_version, species => $self->species,test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME});
     };
 
     my $cmd = "$script_path $string_args $bool_args $host_param $user_param $password_param $port_param";
