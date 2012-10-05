@@ -26,7 +26,7 @@ my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Varscan-Vali
 my $tumor_bam =  join('/', $test_data_dir, 'tumor.tiny.bam');
 my $normal_bam = join('/', $test_data_dir, 'normal.tiny.bam');
 
-my $expected_result_dir = join('/', $test_data_dir, '1');
+my $expected_result_dir = join('/', $test_data_dir, '2');
 
 my $expected_snp_file = join('/', $expected_result_dir, 'varscan.snp');
 my $expected_indel_file = join('/', $expected_result_dir, 'varscan.indel');
@@ -38,7 +38,7 @@ my $output_snp = join('/', $tmpdir, 'varscan.snp');
 my $output_indel = join('/', $tmpdir, 'varscan.indel');
 my $output_validation = join('/', $tmpdir, 'varscan.validation');
 
-my $samtools_version = 'r599';
+my $samtools_version = 'r982';
 my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($samtools_version);
 
 my $varscan_command = Genome::Model::Tools::Varscan::Validation->create(
@@ -50,7 +50,7 @@ my $varscan_command = Genome::Model::Tools::Varscan::Validation->create(
     reference => $ref_seq->fasta_file,
     samtools_path => $samtools_path,
     varscan_params => '--min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.01 --validation 1 --min-coverage 8',
-    version => '2.2.4',
+    version => '2.3.2',
 );
 
 isa_ok($varscan_command, 'Genome::Model::Tools::Varscan::Validation', 'created validation command');
@@ -67,3 +67,7 @@ ok(!$indel_diff, 'indel output matches expected result')
 my $validation_diff = Genome::Sys->diff_file_vs_file($output_validation, $expected_validation_file);
 ok(!$validation_diff, 'validation output matches expected result')
     or diag("Diff:\n" . $validation_diff);
+
+system("cp $output_snp ~/varscan_validation");
+system("cp $output_indel ~/varscan_validation");
+system("cp $output_validation ~/varscan_validation");
