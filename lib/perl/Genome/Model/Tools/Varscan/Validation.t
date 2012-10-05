@@ -67,7 +67,3 @@ ok(!$indel_diff, 'indel output matches expected result')
 my $validation_diff = Genome::Sys->diff_file_vs_file($output_validation, $expected_validation_file);
 ok(!$validation_diff, 'validation output matches expected result')
     or diag("Diff:\n" . $validation_diff);
-
-system("cp $output_snp ~/varscan_validation");
-system("cp $output_indel ~/varscan_validation");
-system("cp $output_validation ~/varscan_validation");
