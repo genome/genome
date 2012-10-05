@@ -89,7 +89,8 @@ sub dispatch_request {
     },
     sub (/view/whoami) {
         my $u = $request->{'REMOTE_USER'} || Genome::Sys->username();
-        my $c = { username => $u };
+        my $sys_user = Genome::Sys::User->get(username => $u);
+        my $c = { username => $u, id => $sys_user->id };
         use JSON;
         my $body = to_json( $c, { ascii => 1, allow_nonref => 1, });
         return [ 200, [ 'Content-type'   => "text/plain" ], [$body] ];
