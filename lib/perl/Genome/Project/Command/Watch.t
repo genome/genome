@@ -8,6 +8,11 @@ BEGIN {
 use Test::More;
 use above "Genome";
 
+use Genome::Sys;
+no warnings 'redefine';
+*Genome::Sys::current_user_is_admin = sub { return 1 };
+use warnings;
+
 my $p = Genome::Project->create(name => 'Genome::Project::Watch Test');
 my $user = Genome::Sys::User->create(id => 'johndoe@wustl.edu');
 
