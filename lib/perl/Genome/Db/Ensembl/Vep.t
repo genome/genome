@@ -32,8 +32,8 @@ ok($cmd_1->execute, 'execute');
 ok(-s $output_file, 'output file is non-zero');
 
 
-my $expected = `cat $expected_output_file | grep -v "Output produced at"`;
-my $output = `cat $output_file | grep -v "Output produced at"`;
+my $expected = `cat $expected_output_file | grep -v "Output produced at" | grep -v "Using cache"`;
+my $output = `cat $output_file | grep -v "Output produced at" | grep -v "Using cache"`;
 
 my $diff = Genome::Sys->diff_text_vs_text($output, $expected);
 ok(!$diff, 'output matched expected result');
