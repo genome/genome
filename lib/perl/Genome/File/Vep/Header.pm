@@ -34,7 +34,7 @@ sub new {
 }
 
 sub to_string {
-    return join("\t", @expected_header);
+    return "#" . join("\t", @expected_header);
 }
 
 1;

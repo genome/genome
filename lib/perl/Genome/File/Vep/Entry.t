@@ -19,12 +19,13 @@ use_ok($pkg);
 my $vep_str = <<EOS;
 HELLO1_1_10_A_T	1:10	T	GENE1	TS1	Transcript	NON_SYNONYMOUS_CODING	3	3	1	D/V	gAt/gTt	-	EX1=e1;HGNC=HELLO1
 HELLO2_1_20_G_A	1:20	A	GENE2	TS2	Transcript	STOP_GAINED	6	6	2	W/*	tgG/tgA	-	HGNC=HELLO2
+HELLO3_3_20_G_A	3:30	T	GENE3	TS3	Transcript	UPSTREAM	-	-	-	-	-	-	-
 EOS
 
 my @lines = split("\n", $vep_str);
 chomp @lines;
 my @entries = map {$pkg->new($_)} @lines;
-is(scalar(@entries), 2, "Got 2 entries");
+is(scalar(@entries), scalar(@lines), "Got expected # entries");
 ok($entries[0] && $entries[1], "entries non-null");
 
 # entry 1
@@ -100,5 +101,9 @@ $cloned->set_extra_field("CLONE", "TRUE");
 is($cloned->{extra}->{CLONE}, "TRUE", "add field to clone");
 ok(!exists $entries[0]->{extra}->{CLONE}, "field added to clone not in source object");
 is($cloned->to_string, $entries[0]->to_string . ';CLONE=TRUE', "cloned modified independently");
+
+is_deeply($entries[2]->{extra}, {}, "empty extra fields");
+is($entries[2]->to_string, $lines[2], "to_string with empty extra fields");
+print $entries[2]->to_string . "\n";
 
 done_testing();
