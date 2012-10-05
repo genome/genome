@@ -12,6 +12,8 @@
       <xsl:with-param name="icon" select="'genome_project_32'" />
     </xsl:call-template>
 
+    <span id="projectID" style="visibility:hidden"><xsl:value-of select="/object/@id"/></span>
+
     <script type="text/javascript" src="https://imp.gsc.wustl.edu/resources/report_resources/jquery/dataTables-1.5/media/js/jquery.dataTables.js"></script>
     <script type="text/javascript" src="https://imp.gsc.wustl.edu/resources/report_resources/jquery/dataTables-1.5/media/js/jquery.dataTables.plugin.formatted-num.js"></script>
     <link rel="stylesheet" href="https://imp.gsc.wustl.edu/resources/report_resources/jquery/dataTables-1.5/media/css/gc_table.css" type="text/css" media="screen"></link>
