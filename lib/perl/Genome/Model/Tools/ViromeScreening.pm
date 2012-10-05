@@ -61,7 +61,7 @@ UR::Object::Type->define(
             is => 'String',
             is_input => 1,
             is_optional => 1,
-            default => '/gscmnt/sata835/info/medseq/virome/taxonomy_db_2012_04_02',
+            default => '/gscmnt/sata835/info/medseq/virome/taxonomy_db_2010_03_16',
         },
     ],
 );
