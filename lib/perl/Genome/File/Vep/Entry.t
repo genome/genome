@@ -104,6 +104,5 @@ is($cloned->to_string, $entries[0]->to_string . ';CLONE=TRUE', "cloned modified 
 
 is_deeply($entries[2]->{extra}, {}, "empty extra fields");
 is($entries[2]->to_string, $lines[2], "to_string with empty extra fields");
-print $entries[2]->to_string . "\n";
 
 done_testing();
