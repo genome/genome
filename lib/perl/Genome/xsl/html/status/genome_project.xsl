@@ -36,7 +36,7 @@
           <div class="container">
             <table id="parts_table" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top: 0;" class="list display">
                 <xsl:for-each select="aspect[@name='parts']/object">
-                    <tr>
+                    <tr><xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
                         <td>
                             <input class="partCheckbox" type="checkbox">
                             <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
