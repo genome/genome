@@ -854,9 +854,11 @@ sub check_rnaseq_models{
       $scn = $current_scn;
     }
   }
-  if ($match == 0){
-    $self->warning_message("Did not find a matching RNA sample for tissue type: $tissue_type");
+  if ($match == 0 && $tissue_type =~ /normal/i){
     return @tmp;
+  }elsif($match == 0){
+    $self->warning_message("Did not find a matching RNA sample for tissue type: $tissue_type");
+    return @tmp;    
   }elsif ($match > 1){
     $self->error_message("\nFound more than one matching RNA sample of tissue type: $tissue_type");
   }else{

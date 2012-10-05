@@ -19,31 +19,31 @@ BEGIN{
 }
 
 #This script running a series of commands obtained from Nate Dees that results in the creation of a clonality plot (.pdf)
-my $somatic_var_model_id = '';
+my $somatic_var_build_id = '';
 my $working_dir = '';
 my $common_name = '';
 my $verbose = 0;
 
-GetOptions ('somatic_var_model_id=i'=>\$somatic_var_model_id, 'working_dir=s'=>\$working_dir, 'common_name=s'=>\$common_name, 'verbose=i'=>\$verbose);
+GetOptions ('somatic_var_build_id=i'=>\$somatic_var_build_id, 'working_dir=s'=>\$working_dir, 'common_name=s'=>\$common_name, 'verbose=i'=>\$verbose);
 
 my $usage=<<INFO;
 
   Example usage: 
   
-  generateClonalityPlot.pl  --somatic_var_model_id=2880746426  --working_dir=/gscmnt/sata132/techd/mgriffit/hgs/hg1/clonality/  --common_name='hg1'
+  generateClonalityPlot.pl  --somatic_var_build_id=?  --working_dir=/gscmnt/sata132/techd/mgriffit/hgs/hg1/clonality/  --common_name='hg1'
   
   Intro:
   This script attempts to automate the process of creating a 'clonality' plot
 
   Details:
-  --somatic_var_model_id          Model ID for a somatic variation model
+  --somatic_var_build_id          Build ID for a somatic variation model
   --working_dir                   Directory to place temp files and results
   --common_name                   Human readable name for the patient / sample comparison 
   --verbose                       To display more output, set to 1
 
 INFO
 
-unless ($somatic_var_model_id && $working_dir && $common_name){
+unless ($somatic_var_build_id && $working_dir && $common_name){
   print GREEN, "$usage", RESET;
   exit();
 }
@@ -52,26 +52,20 @@ if ($verbose){print BLUE, "\n\nCreating clonality plot for $common_name", RESET;
 
 #Get somatic variation effects dir, tumor bam and normal bam from a somatic variation model ID
 my %data_paths;
-if ($somatic_var_model_id){
-  my $somatic_var_model = Genome::Model->get($somatic_var_model_id);
-  if ($somatic_var_model){
-    my $somatic_var_build = $somatic_var_model->last_succeeded_build;
-    if ($somatic_var_build){
-      #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-      $data_paths{root_dir} = $somatic_var_build->data_directory ."/";
-      $data_paths{effects_dir} = "$data_paths{root_dir}"."effects/";
-      $data_paths{cnvs_hq} = "$data_paths{root_dir}"."variants/cnvs.hq";
-      $data_paths{normal_bam} = $somatic_var_build->normal_bam;
-      $data_paths{tumor_bam} = $somatic_var_build->tumor_bam;
-      my $reference_build = $somatic_var_build->reference_sequence_build;
-      $data_paths{reference_fasta} = $reference_build->full_consensus_path('fa');
-      $data_paths{display_name} = $reference_build->__display_name__;
-    }else{
-      print RED, "\n\nA model ID was specified, but a successful build could not be found!\n\n", RESET;
-      exit();
-    }
+if ($somatic_var_build_id){
+  my $somatic_var_build = Genome::Model::Build->get($somatic_var_build_id);
+  if ($somatic_var_build){
+    #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
+    $data_paths{root_dir} = $somatic_var_build->data_directory ."/";
+    $data_paths{effects_dir} = "$data_paths{root_dir}"."effects/";
+    $data_paths{cnvs_hq} = "$data_paths{root_dir}"."variants/cnvs.hq";
+    $data_paths{normal_bam} = $somatic_var_build->normal_bam;
+    $data_paths{tumor_bam} = $somatic_var_build->tumor_bam;
+    my $reference_build = $somatic_var_build->reference_sequence_build;
+    $data_paths{reference_fasta} = $reference_build->full_consensus_path('fa');
+    $data_paths{display_name} = $reference_build->__display_name__;
   }else{
-    print RED, "\n\nA model ID was specified, but it could not be found!\n\n", RESET;
+    print RED, "\n\nA build ID was specified, but a successful build could not be found!\n\n", RESET;
     exit();
   }
 }
@@ -184,7 +178,9 @@ my $clustered_data_output_file = $working_dir . $common_name . ".clustered.data.
 my $output_image_file2 = "$working_dir"."$common_name".".clonality.clusters.pdf";
 my $clonality_cmd2 = "gmt validation clonality-plot  --cnvhmm-file=$cnvhmm_file  --output-image=$output_image_file2  --r-script-output-file=$r_script_file  --varscan-file=$varscan_file  --analysis-type=wgs  --sample-id='$uc_common_name'  --plot-clusters  --clustered-data-output-file=$clustered_data_output_file";
 if ($verbose){print YELLOW, "\n\n$clonality_cmd2\n", RESET;}
-Genome::Sys->shellcmd(cmd => $clonality_cmd2);
+
+#TODO: until the --plot-clusters functionality is more stable, allow a failed exit code
+Genome::Sys->shellcmd(cmd => $clonality_cmd2, allow_failed_exit_code => 1);
 
 #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters 
 #Delete intermediate files though?
