@@ -43,19 +43,29 @@ class Genome::Project {
             reverse_as => 'project',
             doc => 'All the parts that compose this project',
         },
+        watcher_ids => {
+            is => 'Genome::Sys::User',
+            via => 'parts',
+            to => 'entity_id',
+            where => [ 'entity_class_name' => 'Genome::Sys::User', 'role' => 'watcher' ],
+            is_mutable => 0,
+            is_many => 0,
+        },
+        watchers => {
+            is => 'Genome::Sys::User',
+            via => 'parts',
+            to => 'entity',
+            where => [ 'entity_class_name' => 'Genome::Sys::User', 'role' => 'watcher' ],
+            is_mutable => 0,
+            is_many => 0,
+        },
         creator => {
             is => 'Genome::Sys::User',
-            is_calculated => 1,
-            calculate_from => ['parts'],
-            calculate => sub {
-                my (@parts) = @_;
-                for my $p (@parts) {
-                    if ($p->role && $p->role eq 'creator') {
-                        return $p->entity();
-                    }
-                }
-                return undef;
-            }
+            via => 'parts',
+            to => 'entity',
+            where => [ 'entity_class_name' => 'Genome::Sys::User', 'role' => 'creator' ],
+            is_mutable => 0,
+            is_many => 0,
         },
         part_set => {
             is => 'Genome::ProjectPart::Set',
@@ -182,6 +192,18 @@ sub delete {
     return $self->SUPER::delete();
 }
 
+sub add_watcher {
+    my $self = shift;
+    my $watcher = shift;
+    return $self->add_part(entity => $watcher, role => 'watcher');
+}
+
+sub remove_watcher {
+    my $self = shift;
+    my $watcher = shift;
+    my $part = $self->parts(entity => $watcher, role => 'watcher');
+    return $part->delete;
+}
 
 
 1;
