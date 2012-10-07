@@ -15,6 +15,7 @@ class Genome::ProjectPart::View::Status::Xml {
                 'entity_class_name',
                 'entity_class_name_pretty',
                 'entity',
+                'role',
             ]
         }
     ]

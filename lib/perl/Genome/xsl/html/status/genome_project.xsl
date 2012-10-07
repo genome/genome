@@ -42,7 +42,7 @@
                             <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
                             </input>
                         </td>
-                        <td><xsl:value-of select="aspect[@name='entity_class_name_pretty']/value"/></td>
+                        <td><xsl:value-of select="aspect[@name='entity_class_name_pretty']/value"/><xsl:if test="aspect[@name='role']/value != ''"> (<xsl:value-of select="aspect[@name='role']/value" />)</xsl:if></td>
                         <td>
                                 <xsl:for-each select="aspect[@name='entity']/object">
                                     <xsl:call-template name="object_link">
