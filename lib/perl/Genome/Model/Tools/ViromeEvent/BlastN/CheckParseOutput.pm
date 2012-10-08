@@ -176,13 +176,11 @@ sub run_parser {
         $self->log_event('Taxonomy db file is missing or empty');
         return;
     }
-    $self->log_event('Starting db create');
     my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
     my $dbh = Bio::DB::Taxonomy->new(-source => 'flatfile',
                                      -directory => "$tax_dir",
                                      -nodesfile => $self->taxonomy_nodes_file,
 				     -namesfile => $self->taxonomy_names_file,);
-    $self->log_event('Ending db create');
     my @keep_for_tblastx = (); # query should be kept for further analysis
     my $total_records = 0;
     my $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'blastn');
