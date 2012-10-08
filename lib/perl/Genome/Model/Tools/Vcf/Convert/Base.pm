@@ -2,7 +2,10 @@ package Genome::Model::Tools::Vcf::Convert::Base;
 
 use strict;
 use warnings;
+
+use JSON;
 use Genome;
+use File::Slurp;
 use POSIX 'strftime';
 
 class Genome::Model::Tools::Vcf::Convert::Base {
@@ -61,18 +64,24 @@ class Genome::Model::Tools::Vcf::Convert::Base {
         tcga_version => {
             is  => 'Text',
             doc => "Version of the TCGA VCF being printed" ,
-            default => '1.2',
-            valid_values => ['1.2'],
+            default => '1.1',
+            valid_values => ['1.1', '1.2'],
+            is_optional => 1,
         },
     ],
     has_transient_optional => [
         _input_fh => {
-            is => 'IO::File',
+            is  => 'IO::File',
             doc => 'Filehandle for the source variant file',
         },
         _output_fh => {
-            is => 'IO::File',
+            is  => 'IO::File',
             doc => 'Filehandle for the output VCF',
+        },
+        _tcga_vcf  => {
+            is  => 'Boolean',
+            doc => 'flag to show TCGA vcf or not',
+            default => 0,
         },
     ],
     doc => 'Base class for tools that convert lists of mutations to VCF',
@@ -86,10 +95,9 @@ sub execute {
         return;
     }
 
+    $self->check_tcga_vcf;
     $self->print_header;
-
     $self->convert_file;
-
     $self->close_filehandles;
 
     return 1;
@@ -133,6 +141,26 @@ sub close_filehandles {
 
     return 1;
 }
+
+sub check_tcga_vcf {
+    my $self = shift;
+    
+    if ($self->aligned_reads_sample) {
+        if ($self->aligned_reads_sample =~ /^TCGA\-/) {
+            $self->_tcga_vcf(1);
+            return 1;
+        }
+    }
+
+    if ($self->control_aligned_reads_sample) {
+        if ($self->control_aligned_reads_sample =~ /^TCGA\-/) {
+            $self->_tcga_vcf(1);
+        }
+    }
+
+    return 1;
+}
+
 
 # Get the base at this position in the reference. Used when an anchor (previous base) is needed for the reference column
 sub get_base_at_position {
@@ -212,12 +240,12 @@ sub print_header{
     my $output_fh = $self->_output_fh;
 
     $output_fh->print("##fileformat=VCFv" . $self->vcf_version . "\n");
-    $output_fh->print("##tcgaversion=" . $self->tcga_version . "\n");
     $output_fh->print("##fileDate=" . $file_date . "\n");
-    $output_fh->print("##center=WUTGI\n");
     $output_fh->print("##source=" . $source . "\n");
     $output_fh->print("##reference=$public_reference" . "\n");
     $output_fh->print("##phasing=none" . "\n");
+    $output_fh->print("##center=WUTGI\n");
+    $output_fh->print("##tcgaversion=" . $self->tcga_version . "\n") if $self->_tcga_vcf;
 
     $self->print_tag_meta;
 
@@ -243,6 +271,10 @@ sub print_tag_meta {
 
     if ($self->get_filter_meta) {
         map{$output_fh->print(format_filter_meta_line($_)."\n")}$self->get_filter_meta;
+    }
+
+    if ($self->get_sample_meta) {
+        map{$output_fh->print($_."\n")}$self->get_sample_meta;
     }
     return 1;
 }
@@ -309,8 +341,52 @@ sub format_meta_line {
     $self->validate_meta_tag($tag);
 
     my $string = sprintf("##%s=<ID=%s,Number=%s,Type=%s,Description=\"%s\">", $tag->{MetaType}, $tag->{ID}, $tag->{Number}, $tag->{Type}, $tag->{Description});
-
     return $string;
+}
+
+#For TCGA vcf 
+sub get_sample_meta {
+    my $self = shift;
+
+    if ($self->_tcga_vcf) {
+        my @tcga_barcodes;
+        my ($n_sample, $t_sample) = ($self->control_aligned_reads_sample, $self->aligned_reads_sample);
+        push @tcga_barcodes, $n_sample if $n_sample =~ /^TCGA\-/;
+        push @tcga_barcodes, $t_sample if $t_sample =~ /^TCGA\-/;
+        my $barcode_str = join ',', @tcga_barcodes;
+        
+        my $content;
+        my $try = 0;
+
+        while (!$content) {
+            last if $try == 5; #try 5 times
+            sleep 60 if $try;
+            $try++;
+            $content = qx(curl -k -X POST --data \"$barcode_str\" --header \"Content-Type: text/plain\" https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch);
+        }
+
+        unless ($content) {
+            die $self->error_message("No content returned from API query for $barcode_str");
+        }
+        if ($content =~ /errorMessage/) {
+            die $self->error_message("API query failed with the following response:\n$content");
+        }
+        
+        my $json = new JSON;
+        my $json_text = $json->allow_nonref->utf8->relaxed->decode($content);
+    
+        my %uuids;
+        my @lines;
+        for my $pair (@{$json_text->{uuidMapping}}){
+            my ($id, $uuid) = ($pair->{barcode}, $pair->{uuid});
+            push @lines, '##SAMPLE=<ID='.$id.',SampleUUID='.$uuid.',SampleTCGABarcode='.$id.',File='."$id.bam".',Platform=Illumina,Source=dbGAP,Accession=phs000178.v4.p4';
+        }
+        return @lines;
+
+    }
+    else {
+        return;
+    }
 }
 
 # Takes in a hashref representing one meta tag from the header and makes sure it has the required information

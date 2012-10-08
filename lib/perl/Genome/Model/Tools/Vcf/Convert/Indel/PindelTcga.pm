@@ -43,7 +43,7 @@ sub get_info_meta {
     return (
         {MetaType => "INFO", ID => "END",    Number => 1,   Type => "Integer", Description => "End position of the variant described in this record"},
         {MetaType => "INFO", ID => "HOMLEN", Number => 1,   Type => "Integer", Description => "Length of base pair identical micro-homology at event breakpoints"},
-        {MetaType => "INFO", ID => "HOMSEQ", Number => -1,  Type => "String",  Description => "Sequence of base pair identical micro-homology at event breakpoints"},
+        {MetaType => "INFO", ID => "HOMSEQ", Number => ".", Type => "String",  Description => "Sequence of base pair identical micro-homology at event breakpoints"},
         {MetaType => "INFO", ID => "SVLEN",  Number => 1,   Type => "Integer", Description => "Difference in length between REF and ALT alleles"},
         {MetaType => "INFO", ID => "SVTYPE", Number => 1,   Type => "String",  Description => "Type of structural variant"},
         {MetaType => "INFO", ID => "NTLEN",  Number => ".", Type => "Integer", Description => "Number of bases inserted in place of deleted code"},
