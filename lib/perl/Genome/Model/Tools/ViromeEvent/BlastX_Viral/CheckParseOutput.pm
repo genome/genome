@@ -49,7 +49,7 @@ sub execute {
         $self->log_event("No files found in viral blastx dir .. probably all reads were filtered out in earlier blast stage");
         return 1;
     } else {
-        my $filtered_file = $dir.'/'.$sample_name.'TBXNTFiltered.fa';
+        my $filtered_file = $dir.'/'.$sample_name.'.TBXNTfiltered.fa';
         if ( not -s $filtered_file > 0 ) {
             $self->log_event('Viral blast filtered fasta file is empty .. probably all reads were filtered out');
         }
@@ -162,9 +162,9 @@ sub run_parse {
     my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
     my $tax_dir = File::Temp::tempdir (CLEANUP => 1);
     my $dbh = Bio::DB::Taxonomy->new(-source => 'flatfile',
-				 -directory=> "$tax_dir",
-				 -nodesfile=> '/gscmnt/sata835/info/medseq/virome/taxonomy/nodes.dmp',
-				 -namesfile=> '/gscmnt/sata835/info/medseq/virome/taxonomy/names.dmp',);
+                                     -directory=> "$tax_dir",
+                                     -nodesfile=> $self->taxonomy_nodes_file,
+                                     -namesfile=> $self->taxonomy_names_file,);
 
     my $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');
     unless ($report) {
@@ -173,6 +173,20 @@ sub run_parse {
     }
     $out_fh->print("QueryName\tQueryLen\tAssignment\tlineage\tHit\tSignificance\n");
 
+    # store taxid from dmp file
+    my %gis;
+    while ( my $result = $report->next_result ) {
+        while ( my $hit = $result->next_hit ) {
+            my @tmp = split(/\|/, $hit->name);
+            next if $tmp[2] eq 'pdb'; # skip pdb database
+            $gis{$tmp[1]} = 1;
+        }
+    }
+    my $gi_taxids = $self->get_taxids_for_gis(\%gis);
+    $self->log_event('Attempted to get taxids for '. scalar ( keys %gis ).' gis .. got '.(scalar keys %$gi_taxids).' taxids');
+
+    $out_fh->print("QueryName\tQueryLen\tAssignment\tlineage\tHit\tSignificance\n");
+    $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');
     # Go through BLAST reports one by one      
     while(my $result = $report->next_result) {# next query output
         $total_records++;
@@ -198,12 +212,21 @@ sub run_parse {
 	        my $have_significant_hit = 1;
 	        if ($hit->significance == $best_e) {
 		    # from gi get taxonomy lineage
-		    my $sth = $dbh_sqlite->prepare("SELECT * FROM gi_taxid where gi = $temp_arr[1]");
-		    $sth->execute();
-		    my $ref = $sth->fetchrow_hashref();
-		    $sth->finish();
-		    if ($ref->{'taxid'}) { # some gi don't have record in gi_taxid_nucl, this is for situation that has
-		        my $taxon_obj = $dbh->get_taxon(-taxonid => $ref->{'taxid'});
+                    my $taxID;
+                    my $gi = $temp_arr[1];
+                    # get taxid from hash
+                    if ( exists $gi_taxids->{$gi} ) {
+                        $taxID = $gi_taxids->{$gi} if not $gi_taxids->{$gi} == 0;
+                    }
+                    #if ( not defined $taxID ) {
+                    #    my $sth = $dbh_sqlite->prepare("SELECT * FROM gi_taxid where gi = $gi");
+                    #    $sth->execute();
+                    #    my $ref = $sth->fetchrow_hashref();
+                    #    $sth->finish();
+                    #    $taxID = $ref->{'taxid'};
+                    #}
+		    if ( defined $taxID ) { # some gi don't have record in gi_taxid_nucl, this is for situation that has
+		        my $taxon_obj = $dbh->get_taxon(-taxonid => $taxID);
 		        if (!(defined $taxon_obj)) {
 			    my $description .= "undefined taxon\t".$hit->name."\t".$hit->significance;
 			    $assignment{"Viruses"} = $description;

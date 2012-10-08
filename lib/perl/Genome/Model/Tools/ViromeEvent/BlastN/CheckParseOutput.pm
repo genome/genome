@@ -37,8 +37,6 @@ sub execute {
     my $dir = $self->dir;
     my $sample_name = basename($dir);
 
-    #$self->log_event("Checking NT blastN parse for $sample_name");
-
     my $blast_dir = $dir.'/'.$sample_name.'.HGfiltered_BLASTN';
     unless (-d $blast_dir) {
 	$self->log_event("Failed to find NT blastN dir for $sample_name");
@@ -178,11 +176,13 @@ sub run_parser {
         $self->log_event('Taxonomy db file is missing or empty');
         return;
     }
+    $self->log_event('Starting db create');
     my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
-    my $dbh = Bio::DB::Taxonomy->new(-source    => 'flatfile',
-				     -directory => "$tax_dir",
-				     -nodesfile => '/gscmnt/sata835/info/medseq/virome/taxonomy/nodes.dmp',
-				     -namesfile => '/gscmnt/sata835/info/medseq/virome/taxonomy/names.dmp',);
+    my $dbh = Bio::DB::Taxonomy->new(-source => 'flatfile',
+                                     -directory => "$tax_dir",
+                                     -nodesfile => $self->taxonomy_nodes_file,
+				     -namesfile => $self->taxonomy_names_file,);
+    $self->log_event('Ending db create');
     my @keep_for_tblastx = (); # query should be kept for further analysis
     my $total_records = 0;
     my $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'blastn');
@@ -190,6 +190,19 @@ sub run_parser {
 	$self->log_event("Failed to create Bio SearchIO to parse ".basename($blast_out_file));
 	return;
     }
+    # store taxid from dmp file
+    my %gis;
+    while ( my $result = $report->next_result ) {
+        while ( my $hit = $result->next_hit ) {
+            my @tmp = split(/\|/, $hit->name);
+            next if $tmp[2] eq 'pdb'; # skip pdb database
+            $gis{$tmp[1]} = 1;
+        }
+    }
+    my $gi_taxids = $self->get_taxids_for_gis(\%gis);
+    $self->log_event('Attempted to get taxids for '. scalar ( keys %gis ).' gis .. got '.(scalar keys %$gi_taxids).' taxids');
+
+    $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'blastn');
     while(my $result = $report->next_result) {# next query output
 	$total_records++;
 	my $keep_for_tblastx = 1;  my %assignment = ();   my $best_e = 100;  my $hit_count = 0;
@@ -204,16 +217,25 @@ sub run_parser {
 	    if ($best_e <= $E_cutoff) { # similar to known, need Phylotyped
 		$keep_for_tblastx = 0;
 		if ($hit->significance == $best_e) { # only get best hits
+                    # get taxid from hash
+                    my $gi = $temp_arr[1];
+                    my $taxID;
+                    if ( exists $gi_taxids->{$gi} ) {
+                        $taxID = $gi_taxids->{$gi} if not $gi_taxids->{$gi} == 0;
+                    }
+                    #if ( not defined $taxID ) {
 		    # from gi get taxonomy lineage
-		    my $sth = $dbh_sqlite->prepare("SELECT * FROM gi_taxid where gi = $temp_arr[1]");
-		    $sth->execute();
-		    unless ($sth->execute()) {
-			$self->log_event("Failed to get taxonomy for gi = $temp_arr[1] in ".basename($blast_out_file));
-		    }
-		    my $ref = $sth->fetchrow_hashref();
-		    $sth->finish();
-		    if ($ref->{'taxid'}) { # some gi don't have record in gi_taxid_nucl
-			my $taxon_obj = $dbh->get_taxon(-taxonid => $ref->{'taxid'});
+                    #    my $sth = $dbh_sqlite->prepare("SELECT * FROM gi_taxid where gi = $gi");
+                    #    $sth->execute();
+                    #    unless ($sth->execute()) {
+                    #        $self->log_event("Failed to get taxonomy for gi = $gi in ".basename($blast_out_file));
+                    #    }
+                    #    my $ref = $sth->fetchrow_hashref();
+                    #    $sth->finish();
+                    #    $taxID = $ref->{'taxid'} if $ref->{'taxid'};
+                    #}
+		    if (defined $taxID) { # some gi don't have record in gi_taxid_nucl
+			my $taxon_obj = $dbh->get_taxon(-taxonid => $taxID);
 			if (!(defined $taxon_obj)) {
 			    my $description = "undefined taxon ".$hit->description."\t".$hit->name."\t".$hit->significance;
 			    $assignment{"other"} = $description;
