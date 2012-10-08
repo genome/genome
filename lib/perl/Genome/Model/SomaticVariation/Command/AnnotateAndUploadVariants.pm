@@ -201,6 +201,7 @@ sub execute{
             for my $key (keys(%vcf_files)) {
                 my $variant_file = $vcf_files{$key};
                 my $output_file = $variant_file.".annotated.vcf.gz";
+                $output_file = s/vcf.gz.//;
                 my $info_string = "dbSNPBuildID=dbSNPBuildID";
                 my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->execute(
                     input_file=> $variant_file,
