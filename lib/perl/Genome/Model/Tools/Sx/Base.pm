@@ -233,16 +233,18 @@ sub execute {
     my $reader = $self->_input;
     my $writer = $self->_output;
 
+    my $evaluator = $self->_create_evaluator;
+    return if not $evaluator;
+
     while ( my $seqs = $reader->read ) {
-        $self->_eval_seqs($seqs) or return;
-        next if not @$seqs;
+        next if not $evaluator->($seqs);
         $writer->write($seqs);
     }
 
     return 1;
 }
 
-sub _eval_seqs { return 1; }
+sub _create_evaluator { return sub{ 1;}; }
 
 sub _add_result_observer { # to write metrics file
     my $self = shift;
