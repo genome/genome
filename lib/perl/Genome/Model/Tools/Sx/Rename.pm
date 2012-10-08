@@ -5,8 +5,6 @@ use warnings;
 
 use Genome;
 
-use Data::Dumper 'Dumper';
-
 class Genome::Model::Tools::Sx::Rename {
     is  => 'Genome::Model::Tools::Sx::Base',
     has => [
@@ -34,47 +32,46 @@ sub help_brief {
     return 'Rename sequences';
 }
 
-sub create {
-    my ($class , %params) = @_;
-
-    my $self = $class->SUPER::create(%params)
-        or return;
-
-    my @matches = $self->matches;
-    unless ( @matches ) {
-        $self->error_message("No match and replace patterns given.");
-        $self->delete;
-        return;
-    }
-
+sub __errors__ {
+    my $self = shift;
+    my @errors = $self->SUPER::__errors__(@_);
+    return @errors if @errors;
+    
     my @match_and_replace;
-    for my $match ( @matches ) {
+    MATCH: for my $match ( $self->matches ) {
         my ($match, $replace) = split('=', $match);
         my $evald_match = eval($match);
         unless ( defined $evald_match ) {
-            $self->error_message("Can't compile match ($match) string: $@");
-            return;
+            push @errors, UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ matches /],
+                desc => "Failed to compile match ($match) string: $@",
+            );
+            next MATCH;
         }
         push @match_and_replace, [ $evald_match, $replace ];
     }
+    $self->_match_and_replace(\@match_and_replace) if not @errors;
 
-    $self->_match_and_replace(\@match_and_replace);
-
-    return $self;
+    return @errors;
 }
 
-sub _eval_seqs {
-    my ($self, $seqs) = @_;
 
-    for my $seq ( @$seqs ) { 
-        MnR: for my $match_and_replace ( @{$self->_match_and_replace} ) {
-            if ( $seq->{id} =~ s/$match_and_replace->[0]/$match_and_replace->[1]/g ) {
-                last MnR if $self->first_only;
+sub _create_evaluator {
+    my $self = shift;
+
+    my @match_and_replace = @{$self->_match_and_replace};
+    my $first_only = $self->first_only;
+    return sub{
+        for my $seq ( @{$_[0]} ) {
+            MnR: for my $match_and_replace ( @match_and_replace ) {
+                if ( $seq->{id} =~ s/$match_and_replace->[0]/$match_and_replace->[1]/g ) {
+                    last MnR if $first_only;
+                }
             }
         }
+        return 1;
     }
-
-    return 1;
 }
 
 1;
