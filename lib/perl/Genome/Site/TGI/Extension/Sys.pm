@@ -10,6 +10,9 @@ use warnings;
 use Genome;
 use Genome::Sys;  # ensure our overrides take precedence
 
+use Time::HiRes;
+use Genome::Utility::Instrumentation;
+
 use Data::Dumper;
 require Carp;
 require IO::Dir;
@@ -545,6 +548,8 @@ sub cat {
 sub lock_resource {
     my ($self,%args) = @_;
 
+    my $total_lock_start_time = Time::HiRes::time();
+
     my $resource_lock = delete $args{resource_lock};
     my ($lock_directory,$resource_id,$parent_dir);
     if ($resource_lock) {
@@ -598,6 +603,8 @@ sub lock_resource {
 
     my $initial_time = time;
     my $last_wait_announce_time = $initial_time;
+
+    my $lock_attempts = 1;
     my $ret;
     while(!($ret = symlink($tempdir,$resource_lock))) {
         # TONY: The only allowable failure is EEXIST, right?
@@ -697,12 +704,33 @@ END_CONTENT
                }
            }
         sleep $block_sleep;
+        $lock_attempts += 1;
        }
     $SYMLINKS_TO_REMOVE{$resource_lock} = 1;
 
     # do we need to activate a cleanup handler?
     $self->cleanup_handler_check();
+
+    my $total_lock_stop_time = Time::HiRes::time();
+    my $lock_time_miliseconds = 1000 * ($total_lock_stop_time - $total_lock_start_time);
+
+    my $caller_name = _resolve_caller_name(caller());
+
+    Genome::Utility::Instrumentation::timing("lock_resource.$caller_name", $lock_time_miliseconds);
+    Genome::Utility::Instrumentation::timing("lock_resource_attempts.$caller_name",
+        $lock_attempts);
+
+    Genome::Utility::Instrumentation::timing('lock_resource.total', $lock_time_miliseconds);
+    Genome::Utility::Instrumentation::timing('lock_resource_attempts.total',
+        $lock_attempts);
+
     return $resource_lock;
+}
+
+sub _resolve_caller_name {
+    my ($package, $filename, $line) = @_;
+    $package =~ s/::/./g;
+    return $package;
 }
 
 sub unlock_resource {
