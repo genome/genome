@@ -64,7 +64,7 @@ sub execute{
         $self->error_message('Failed to execute far');
         die($self->error_message);
     }
-    my @trimmed_fastq_pathnames = glob "$target*fastq";
+    my @trimmed_fastq_pathnames = grep { $_ !~ /single/ } glob "$target*fastq";
     unless (@trimmed_fastq_pathnames){
         die $self->error_message("Failed to get expected trimmed output files");
     }
