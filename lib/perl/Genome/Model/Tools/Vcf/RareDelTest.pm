@@ -81,11 +81,11 @@ test.row <- function(x) {
     fisher.test(m)\$p.value;
 }
 
-fisher_p_value <- apply(x, 1, test.row);
+fet_p_value <- apply(x, 1, test.row);
 
 # Append p-value column, find significant entries, and write result files
-y <- cbind(x, fisher_p_value);
-signif <- y[fisher_p_value < $p_threshold,];
+y <- cbind(x, fet_p_value);
+signif <- y[fet_p_value < $p_threshold,];
 write.table(y, "$output_file", sep="\t", quote=FALSE, row.names=FALSE);
 write.table(signif, "$output_significant", sep="\t", quote=FALSE, row.names=FALSE);
 EOS
