@@ -113,7 +113,6 @@ sub execute {                               # replace with real execution logic.
     if(-e $normal_bam && -e $tumor_bam) {
         ## Prepare pileup commands ##
 
-        my $mpileup = $self->samtools_path . " mpileup -f $reference $normal_bam $tumor_bam";
         my $varscan_path = Genome::Model::Tools::Varscan->path_for_version($self->version);
 
         my $cmd = "";
@@ -125,6 +124,7 @@ sub execute {                               # replace with real execution logic.
         }
         else
         {
+            my $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 $normal_bam $tumor_bam";
             $cmd = $self->java_command_line("somatic <\($mpileup\) $temp_output --mpileup 1 --output-snp $temp_snp --output-indel $temp_indel $varscan_params");            
         }
 
