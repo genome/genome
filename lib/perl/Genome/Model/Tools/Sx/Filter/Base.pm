@@ -23,7 +23,7 @@ sub execute {
     my $reader = $self->_reader;
     my $writer = $self->_writer;
 
-    my $evaluator = $self->_create_sequence_evaluator;
+    my $evaluator = $self->_create_evaluator;
     return if not $evaluator;
 
     while ( my $seqs = $reader->read ) {
@@ -34,7 +34,7 @@ sub execute {
     return 1;
 }
 
-sub _create_sequence_evaluator {
+sub _create_evaluator {
     my $self = shift;
 
     my @filters = $self->_create_filters;
