@@ -121,11 +121,11 @@ sub execute {                               # replace with real execution logic.
         {
 	    my $normal_pileup = $self->pileup_command_for_reference_and_bam($reference, $normal_bam);
 	    my $tumor_pileup = $self->pileup_command_for_reference_and_bam($reference, $tumor_bam);			
-            my $cmd = $self->java_command_line("somatic <\($normal_pileup\) <\($tumor_pileup\) $temp_output --output-snp $temp_snp --output-indel $temp_indel $varscan_params");            
+            $cmd = $self->java_command_line("somatic <\($normal_pileup\) <\($tumor_pileup\) $temp_output --output-snp $temp_snp --output-indel $temp_indel $varscan_params");            
         }
         else
         {
-            my $cmd = $self->java_command_line("somatic <\($mpileup\) $temp_output --mpileup 1 --output-snp $temp_snp --output-indel $temp_indel $varscan_params");            
+            $cmd = $self->java_command_line("somatic <\($mpileup\) $temp_output --mpileup 1 --output-snp $temp_snp --output-indel $temp_indel $varscan_params");            
         }
 
 
