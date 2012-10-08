@@ -25,17 +25,29 @@ sub execute {
     my $reader = $self->_reader;
     my $writer = $self->_writer;
 
-    my @filters = $self->_create_filters;
-    return if not @filters;
+    my $evaluator = $self->_create_sequence_evaluator;
+    return if not $evaluator;
 
     SEQS: while ( my $seqs = $reader->read ) {
-        for my $filter ( @filters ) {
-            next SEQS if not $filter->($seqs);
-        }
+        next if not $evaluator->($seqs);
         $writer->write($seqs);
     }
 
     return 1;
+}
+
+sub _create_sequence_evaluator {
+    my $self = shift;
+
+    my @filters = $self->_create_filters;
+    return if not @filters;
+
+    return sub{
+        for my $filter ( @filters ) {
+            return if not $filter->($_[0]);
+        }
+        return 1;
+    }
 }
 
 1;
