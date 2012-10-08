@@ -5,8 +5,6 @@ use warnings;
 
 use Genome;
 
-use Data::Dumper 'Dumper';
-
 class Genome::Model::Tools::Sx::Filter::Base {
     is  => 'Genome::Model::Tools::Sx::Base',
     is_abstract => 1,
@@ -28,7 +26,7 @@ sub execute {
     my $evaluator = $self->_create_sequence_evaluator;
     return if not $evaluator;
 
-    SEQS: while ( my $seqs = $reader->read ) {
+    while ( my $seqs = $reader->read ) {
         next if not $evaluator->($seqs);
         $writer->write($seqs);
     }
