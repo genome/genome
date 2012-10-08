@@ -307,7 +307,7 @@ sub _create_workflow {
         # Create burden variant matrix
         bvm => {
             name => "Create variant matrix for burden analysis",
-            class => "Genome::Model::Tools::Vcf::CreateBurdenMatrix",
+            class => "Genome::Model::Tools::Vcf::VcfToBurdenMatrix",
             inputs => {
                 vcf_file => $multisample_vcf,
                 output_file => $burden_matrix_file,
