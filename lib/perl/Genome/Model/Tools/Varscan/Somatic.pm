@@ -115,22 +115,21 @@ sub execute {                               # replace with real execution logic.
 	if(-e $normal_bam && -e $tumor_bam)
 	{
 		## Prepare pileup commands ##
-#        my $normal_pileup = $self->pileup_command_for_reference_and_bam($reference, $normal_bam);
- #       my $tumor_pileup = $self->pileup_command_for_reference_and_bam($reference, $tumor_bam);
-	my $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 $normal_bam $tumor_bam";
 
-		## First, head the pileup files to get SAMtools warmed up ##
-#		print "Heading pileup files to get SAMtools warmed up...\n";
-#		system("$normal_pileup | head");
-#		system("$tumor_pileup | head");		
-		
-		my $cmd = $self->java_command_line(" somatic <\($mpileup\) --mpileup 1 --output-snp $output_snp --output-indel $output_indel $varscan_params");
-
-		## Run Varscan ##
-		if($self->heap_space)
+		my $cmd = "";
+		if($self->version eq "2.2.6" || $self->version eq "2.2.4")
 		{
-#			system("java -Xms" . $self->heap_space . "m -Xmx" . $self->heap_space . "m -classpath ~dkoboldt/Software/Varscan net.sf.varscan.Varscan somatic <($normal_pileup) <($tumor_pileup) $output $varscan_params");						
+			my $normal_pileup = $self->pileup_command_for_reference_and_bam($reference, $normal_bam);
+			my $tumor_pileup = $self->pileup_command_for_reference_and_bam($reference, $tumor_bam);			
+			$cmd = $self->java_command_line(" somatic <\($normal_pileup\) <\($tumor_pileup\) $output --output-snp $output_snp --output-indel $output_indel $varscan_params");			
 		}
+		else
+		{
+			my $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 $normal_bam $tumor_bam";	
+			$cmd = $self->java_command_line(" somatic <\($mpileup\) --mpileup 1 --output-snp $output_snp --output-indel $output_indel $varscan_params");			
+		}
+
+
 
         $self->status_message("Running $cmd\n");
         unless ( Genome::Sys->shellcmd(cmd => $cmd) == 1 ) {
