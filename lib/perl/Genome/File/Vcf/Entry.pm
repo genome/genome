@@ -50,7 +50,6 @@ sub _parse {
     $self->{alternate_alleles} = [split(',', $fields[ALT])];
     $self->{quality} = $fields[QUAL] eq '.' ? undef : $fields[QUAL];
     $self->{filter} = [_parse_list($fields[FILTER], ',')];
-    $self->{info_fields} = _parse_info($fields[INFO]);
     $self->{format} = [_parse_list($fields[FORMAT], ':')];
 }
 
@@ -106,7 +105,7 @@ sub _parse_samples {
 
 # Returns a hash of format field names to their indices in per-sample
 # lists.
-sub _format_field_hash {
+sub format_field_index {
     my ($self, $key) = @_;
     if (!exists $self->{_format_key_to_idx}) {
         my @format = @{$self->{format}};
@@ -122,6 +121,8 @@ sub _format_field_hash {
 
 sub info {
     my ($self, $key) = @_;
+    $self->{info_fields} = _parse_info($fields[INFO]) unless exists $self->{info_fields};
+
     return $self->{info_fields} unless $key;
 
     return unless $self->{info_fields} && exists $self->{info_fields}->{$key};
@@ -177,7 +178,7 @@ sub sample_field {
     confess "Invalid sample index $sample_idx (have $#$sample_data): " . $self->{_line}
         unless ($sample_idx >= 0 && $sample_idx <= $#$sample_data);
 
-    my $cache = $self->_format_field_hash;
+    my $cache = $self->format_field_index;
     return unless exists $cache->{$field_name};
     my $field_idx = $cache->{$field_name};
     return $sample_data->[$sample_idx]->[$field_idx];
@@ -201,7 +202,7 @@ sub allele_index {
 sub allelic_distribution {
     my ($self, @sample_indices) = @_;
 
-    my $format = $self->_format_field_hash;
+    my $format = $self->format_field_index;
     my $gtidx = $format->{GT};
     my $sample_data = $self->sample_data;
     return unless defined $gtidx && defined $sample_data;
