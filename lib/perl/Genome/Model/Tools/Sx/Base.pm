@@ -227,14 +227,14 @@ sub create {
 sub execute {
     my $self = shift;
 
+    my $evaluator = $self->_create_evaluator;
+    return if not $evaluator;
+
     my $init = $self->_init;
     return if not $init;
 
     my $reader = $self->_input;
     my $writer = $self->_output;
-
-    my $evaluator = $self->_create_evaluator;
-    return if not $evaluator;
 
     while ( my $seqs = $reader->read ) {
         next if not $evaluator->($seqs);
