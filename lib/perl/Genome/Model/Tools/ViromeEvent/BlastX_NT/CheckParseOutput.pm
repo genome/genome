@@ -258,8 +258,7 @@ sub run_parser {
 
 			    if (scalar @lineage) {
 				$determined = 1;
-				#$self->PhyloType(\@lineage,$hit, $best_e, $dbh_sqlite, $dbh, \%assignment);
-				$self->PhyloType(\@lineage,$hit, $dbh_sqlite, $dbh, \%assignment);
+				$self->PhyloType(\@lineage,$hit, $dbh, \%assignment);
 			    }
 			}
 		    }
@@ -361,7 +360,7 @@ sub run_parser {
 }
 		
 sub PhyloType {
-    my ($self, $lineage_ref, $hit_ref, $dbh_sqlite, $dbh_taxonomy, $assignment_ref) = @_;
+    my ($self, $lineage_ref, $hit_ref, $dbh_taxonomy, $assignment_ref) = @_;
     my $description = "";
     my $node_id; 
     my $obj;
