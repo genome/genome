@@ -34,17 +34,17 @@ my $unit_cmd = $pkg->create(
 );
 
 eval {
-    $unit_cmd->_fails_missingness(%parsed_line);
+    $unit_cmd->_fails_missingness(0.1, %parsed_line);
 };
 ok(defined $@, "Old file format throws an error when calculating missing rate");
 
 eval {
-    $unit_cmd->_fails_filtered_rate(%parsed_line);
+    $unit_cmd->_fails_filtered_rate(0.1, %parsed_line);
 };
 ok(defined $@, "Old file format throws an error when calculating filtered rate");
 
 eval {
-    $unit_cmd->_fails_excluded_rate(%parsed_line);
+    $unit_cmd->_fails_excluded_rate(0.1, %parsed_line);
 };
 ok(defined $@, "Old file format throws an error when calculating excluded rate");
 
