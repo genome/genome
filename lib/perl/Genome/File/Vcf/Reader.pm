@@ -6,26 +6,6 @@ use Carp qw/confess/;
 use strict;
 use warnings;
 
-class Genome::File::Vcf::Reader {
-    is => "UR::Object",
-    has => [
-        name => {
-            is => "Text",
-        },
-    ],
-    has_transient_optional => [
-        filehandle => {
-            is => "SCALAR",
-        },
-        header => {
-            is => "Genome::File::Vcf::Header",
-        },
-        _line_buffer => {
-            is => "ARRAY",
-        },
-    ],
-};
-
 sub new {
     my ($class, $filename) = @_;
     my $fh;
@@ -45,17 +25,23 @@ sub fhopen {
         filehandle => $fh,
         _header => 0,
         _line_buffer => [],
+        _filters => [],
     };
     bless $self, $class;
     $self->_parse_header();
     return $self;
 }
 
+sub add_filter {
+    my ($self, $filter_coderef) = @_;
+    push(@{$self->{_filters}}, $filter_coderef);
+}
+
 sub _parse_header {
     my $self = shift;
     my @lines;
-    my $name = $self->name;
-    my $fh = $self->filehandle;
+    my $name = $self->{name};
+    my $fh = $self->{filehandle};
 
     while (my $line = $fh->getline) {
         chomp $line;
@@ -70,7 +56,7 @@ sub _parse_header {
     $self->{header} = Genome::File::Vcf::Header->create(lines => \@lines);
 }
 
-sub next {
+sub _next_entry {
     my $self = shift;
     my $line;
     if (@{$self->{_line_buffer}}) {
@@ -83,6 +69,19 @@ sub next {
 
     my $entry = Genome::File::Vcf::Entry->new($self->{header}, $line);
     return $entry;
+}
+
+sub next {
+    my $self = shift;
+    ENTRY: while (my $entry = $self->_next_entry) {
+        if (defined $self->{_filters}) {
+            for my $filter (@{$self->{_filters}}) {
+                next ENTRY unless $filter->($entry);
+            }
+        }
+        return $entry;
+    }
+    return;
 }
 
 sub header {
