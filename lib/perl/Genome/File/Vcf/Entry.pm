@@ -121,7 +121,8 @@ sub format_field_index {
 
 sub info {
     my ($self, $key) = @_;
-    $self->{info_fields} = _parse_info($fields[INFO]) unless exists $self->{info_fields};
+
+    $self->{info_fields} = _parse_info($self->{_fields}->[INFO]);
 
     return $self->{info_fields} unless $key;
 

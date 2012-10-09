@@ -63,7 +63,7 @@ is($entry->allele_index('G'), 2, 'allele index');
 ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
 is($entry->{quality}, '10.3', 'Parsed quality');
 is_deeply($entry->{filter}, ['PASS'], 'Parsed filter');
-is_deeply($entry->{info_fields}, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
+is_deeply($entry->info, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
 is_deeply($entry->{format}, ['GT', 'DP', 'FT'], 'Parsed format');
 
 is($entry->info('A'), 'B', 'Info accessor works for A');
