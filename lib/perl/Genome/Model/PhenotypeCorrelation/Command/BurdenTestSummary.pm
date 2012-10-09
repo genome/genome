@@ -12,6 +12,7 @@ use Data::Dumper;
 use Genome;
 use Genome::File::Vep::Reader;
 use Genome::File::Vep::Writer;
+use Genome::File::Vcf::Reader;
 
 use Sort::Naturally qw/nsort/;
 use Storable qw/dclone/;
