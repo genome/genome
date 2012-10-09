@@ -237,7 +237,7 @@ sub run_parse {
 			    # each lineage node is a Bio::Tree::NodeI object
 			    if (scalar @lineage) {				
 			        $determined = 1;
-			        $self->PhyloType(\@lineage,$hit, $best_e, $dbh_sqlite, $dbh, \%assignment);
+			        $self->PhyloType(\@lineage,$hit, $best_e, $dbh, \%assignment);
 			    }
 		        }
 		    }
@@ -287,7 +287,7 @@ sub run_parse {
 }
 		
 sub PhyloType {
-    my ($self,$lineage_ref, $hit_ref, $best_e, $dbh_sqlite, $dbh_taxonomy, $assignment_ref) = @_;
+    my ($self,$lineage_ref, $hit_ref, $best_e, $dbh_taxonomy, $assignment_ref) = @_;
     my $description = "";
     my $node_id; 
     my $obj;

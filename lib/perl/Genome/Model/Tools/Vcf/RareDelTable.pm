@@ -56,6 +56,8 @@ class Genome::Model::Tools::Vcf::RareDelTable {
 		output_table	=> { is => 'Text', doc => "Output file for deleterious table" , is_optional => 0},
 		output_variants	=> { is => 'Text', doc => "Output file for deleterious variants" , is_optional => 0},
 		min_read_depth	=> { is => 'Text', doc => "Minimum read depth to accept backfilled wildtype call" , is_optional => 0, default => 10},
+		max_maf_dbsnp	=> { is => 'Text', doc => "Maximum dbSNP GMAF to be considered rare" , is_optional => 0, default => 0.01},
+		max_maf_cohort	=> { is => 'Text', doc => "Maximum MAF in cohort to exclude (default=off)" , is_optional => 0, default => 0},
 		deleterious_classes	=> { is => 'Text', doc => "A comma-separated list of VEP classes to consider deleterious" , is_optional => 0, default => 'STOP_GAINED,ESSENTIAL_SPLICE_SITE,NON_SYNONYMOUS_CODING'},
 		deleterious_missense	=> { is => 'Text', doc => "Polyphen/SIFT/Condel requirement for missense SNPs to be considered deleterious [any, all, none]" , is_optional => 0, default => 'any'},
 	],
@@ -205,39 +207,28 @@ sub execute {                               # replace with real execution logic.
 					
 
 					
-					## Common variant is marked as "G5" ##
-					
-					if($info_values{'G5'} || $info_values{'G5A'})
+					## Determine if common or rare variant ##
+				
+					if($info_values{'GMAF'})
 					{
-						## Global MAF of >5% in one or all populations ##
-						$dbsnp_status = "common";
-					}
-					else
-					{
-						if($info_values{'GMAF'})
+						if($info_values{'GMAF'} >= $self->max_maf_dbsnp)
 						{
-							if($info_values{'GMAF'} >= 0.05)
-							{
-								$dbsnp_status = "common";
-							}
-							elsif($info_values{'GMAF'} >= 0.01)
-							{
-								$dbsnp_status = "uncommon";
-							}
-							else
-							{
-								$dbsnp_status = "rare";
-							}
+							$dbsnp_status = "common";
 						}
 						else
 						{
-							## If a very rare mutation ##
-							if($info_values{'MUT'} || $info_values{'CLN'})
-							{
-								$dbsnp_status = "mutation";
-							}
+							$dbsnp_status = "rare";
 						}
 					}
+					else
+					{
+						## If a very rare mutation ##
+						if($info_values{'MUT'} || $info_values{'CLN'})
+						{
+							$dbsnp_status = "mutation";
+						}
+					}
+				
 
 
 					## Multiple dbSNP build IDs for different alleles ##
@@ -391,9 +382,9 @@ sub execute {                               # replace with real execution logic.
 							
 							## Determine rare status ##
 							
-#							if($dbsnp_status eq "novel" || $dbsnp_status eq "rare" || $dbsnp_status eq "mutation")
-#							{
-								if($vaf < 0.05)
+							if($dbsnp_status ne "common")
+							{
+								if(!$self->max_maf_cohort || $vaf < $self->max_maf_cohort)
 								{
 									## Rare variant ##
 									$stats{'variants_pass_rare'}++;
@@ -438,11 +429,8 @@ sub execute {                               # replace with real execution logic.
 								{
 									$stats{'variants_pass_not_rare_in_cohort'}++;
 								}
-#							}
-#							else
-#							{
-#								
-#							}							
+							}
+
 						}
 						else
 						{

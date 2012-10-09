@@ -9,7 +9,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 5;
+    plan tests => 9;
 }
 
 use above 'Genome';
@@ -48,3 +48,30 @@ my $output = `zcat $output_file | grep -v fileDate`;
 my $diff = Genome::Sys->diff_text_vs_text($output, $expected);
 ok(!$diff, 'output matched expected result')
     or diag("diff results:\n" . $diff);
+
+
+$expected_base = "expected.v8.vcf";
+$expected_dir = "$test_dir/$expected_base";
+$expected_file = "$expected_dir/output.vcf";
+
+$output_file = Genome::Sys->create_temp_file_path;
+$input_file = "$test_dir/vcf-test.v1/snvs.hq";
+
+$command = Genome::Model::Tools::Vcf::Convert::Snv::Sniper->create( input_file => $input_file, 
+                                                                       output_file  => $output_file,
+                                                                       aligned_reads_sample => "TUMOR_SAMPLE_123",
+                                                                       control_aligned_reads_sample => "CONTROL_SAMPLE_123",
+                                                                       reference_sequence_build_id => 106942997);
+
+ok($command, 'Command created');
+$rv = $command->execute;
+ok($rv, 'Command completed successfully');
+ok(-s $output_file, "output file $output_file created");
+
+# The files will have a timestamp that will differ. Ignore this but check the rest.
+$expected = `cat $expected_file | grep -v fileDate`;
+$output = `zcat $output_file | grep -v fileDate`;
+$diff = Genome::Sys->diff_text_vs_text($output, $expected);
+ok(!$diff, 'output matched expected result')
+    or diag("diff results:\n" . $diff);
+
