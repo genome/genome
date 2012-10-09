@@ -30,12 +30,18 @@ sub fhopen {
         header => new Genome::File::Vep::Header(\@lines),
         line_num => 1,
         _cached_entry => undef,
+        _filters => [],
     };
 
     return bless $self, $class;
 }
 
-sub next {
+sub add_filter {
+    my ($self, $filter_coderef) = @_;
+    push(@{$self->{_filters}}, $filter_coderef);
+}
+
+sub _next_entry {
     my $self = shift;
     if ($self->{_cached_entry}) {
         my $rv = $self->{_cached_entry};
@@ -49,6 +55,19 @@ sub next {
         next if !$line || $line =~ /^#/;
         return Genome::File::Vep::Entry->new($line);
     }
+}
+
+sub next {
+    my $self = shift;
+    ENTRY: while (my $entry = $self->_next_entry) {
+        if (defined $self->{_filters}) {
+            for my $filter (@{$self->{_filters}}) {
+                next ENTRY unless $filter->($entry);
+            }
+        }
+        return $entry;
+    }
+    return;
 }
 
 sub peek {
