@@ -10,6 +10,8 @@ use POSIX qw(ceil);
 use File::Copy;
 use Carp qw(confess);
 
+use Genome::Utility::Instrumentation;
+
 use warnings;
 use strict;
 
