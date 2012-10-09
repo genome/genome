@@ -16,6 +16,60 @@ BEGIN {
 my $pkg = 'Genome::Model::PhenotypeCorrelation::Command::FilterCorrelationResults';
 use_ok($pkg);
 
+#some unit testing here
+my @header = split "\t", "Chrom	Pos	Ref	Alt	TotalSamples	NumberFiltered	NumberMissing	ByAltTransition	TotalTransitions	TotalTransversions	ByAltNovel	TotalNovel	TotalKnown	GenotypeDist	AlleleDistBySample	AlleleDist	ByAltAlleleFreq	MAF";
+my @line = split "\t", "1	14653	C	T	271	34	1	1	1	0	1	1	0	179,54,3	233,57	412,60	0.872881,0.127119	0.127119";
+
+my @old_header = @header[0..3,7..17];
+my @old_line = @line[0..3,7..17];
+my %parsed_line;
+@parsed_line{@old_header} = @old_line;
+
+#testing object
+my $unit_cmd = $pkg->create(
+    input_file => "some_fake.file",
+    minimum_maf => 0.03,
+    output_file => "some_fake_output",
+    per_site_report_file => "some_per_site_output_file",
+);
+
+eval {
+    $unit_cmd->_fails_missingness(%parsed_line);
+};
+ok(defined $@, "Old file format throws an error when calculating missing rate");
+
+eval {
+    $unit_cmd->_fails_filtered_rate(%parsed_line);
+};
+ok(defined $@, "Old file format throws an error when calculating filtered rate");
+
+eval {
+    $unit_cmd->_fails_excluded_rate(%parsed_line);
+};
+ok(defined $@, "Old file format throws an error when calculating excluded rate");
+
+#test filtering
+my %new_line;
+@new_line{@header} = @line;
+
+#this line should
+# 1) fail a maf of .13
+# 2) pass a maf of .12
+# 3) fail a missingness of 0.0001
+# 3) Pass a missingness of 0.05
+# 4) Fail a filtered rate of 0.1
+# 5) Pass a filtered rate of 0.15
+# 6) Fail an excluded rate of 0.11
+# 7) Pass an excluded rate of 0.5
+ok($unit_cmd->_fails_maf(0.13, %new_line), "MAF cutoff appropriately fails line");
+ok(!$unit_cmd->_fails_maf(0.12, %new_line), "MAF cutoff appropriately passes line");
+ok($unit_cmd->_fails_missingness(0.0001, %new_line), "Missing rate cutoff appropriately fails line");
+ok(!$unit_cmd->_fails_missingness(0.05, %new_line), "Missing rate cutoff appropriately passes line");
+ok($unit_cmd->_fails_filtered_rate(0.1, %new_line), "Filtered rate cutoff appropriately fails line");
+ok(!$unit_cmd->_fails_filtered_rate(0.15, %new_line), "Filtered rate cutoff appropriately passes line");
+ok($unit_cmd->_fails_excluded_rate(0.11, %new_line), "Excluded rate cutoff appropriately fails line");
+ok(!$unit_cmd->_fails_excluded_rate(0.5, %new_line), "Excluded rate cutoff appropriately passes line");
+
 
 #This is crappy but use heredocs to make our files
 my $persitedata = <<PERSITE;
@@ -77,7 +131,7 @@ ok(-s $output, "Got non-empty output");
 
 # CHECK RESULTS
 my $diff = Genome::Sys->diff_file_vs_file($expected_corr, $output);
-ok(!$diff, 'File filtered as expected') or diag("diff results:\n" . $diff);
+ok(!$diff, 'File filtered on maf as expected') or diag("diff results:\n" . $diff);
 
 done_testing(); 
 
