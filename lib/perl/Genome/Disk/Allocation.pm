@@ -562,6 +562,9 @@ sub _move {
         allocation_path => sprintf("move_allocation_destination/%s",
             $self->allocation_path),
     );
+
+    # I think that it's dangerous to specify the new mount path, but this
+    # feature existed, so nnutter and I kept it during this refactor.
     if ($new_mount_path) {
         $creation_params{'mount_path'} = $new_mount_path;
     }
@@ -648,10 +651,6 @@ sub _archive {
     my $archive_allocation_path = join('/', $self->volume->archive_mount_path, $self->group_subdirectory, $self->allocation_path);
     my $tar_path = join('/', $archive_allocation_path, 'archive.tar');
 
-    # Pre-declare volume lock so it can be cleaned up if necessary. Not acquiring lock until tarball has been created
-    # on archive volume to minimize the amount of time the volume is locked.
-    my $volume_lock;
-
     # This gets set to true immediately before tarball creation is started. This allows for conditional clean up of the
     # archive directory in case of failure, which is nice because that requires an LSF job be scheduled.
     my $tarball_created = 0;
@@ -671,9 +670,12 @@ sub _archive {
             confess "Some files in allocation directory $current_allocation_path are not readable or writable, this must be fixed before archiving can continue";
         }
 
-        my $allocation_size = Genome::Sys->disk_usage_for_path($current_allocation_path);
-        if (!$ENV{UR_DBI_NO_COMMIT} and $allocation_size < 1048576) { # Must be greater than 1GB to be archived
-            confess "Total size of files at path $current_allocation_path is only $allocation_size, which is not greater than 1GB!";
+        # Reallocate so we're reflecting the correct size at time of archive.
+        $self->reallocate();
+        if (!$ENV{UR_DBI_NO_COMMIT} and $self->allocated_kb < 1048576) { # Must be greater than 1GB to be archived
+            confess(sprintf(
+                "Total size of files at path %s is only %s, which is not greater than 1GB!",
+                $current_allocation_path, $self->allocated_kb));
         }
 
         my $mkdir_cmd = "mkdir -p $archive_allocation_path";
@@ -717,16 +719,6 @@ sub _archive {
             }
         }
 
-        $volume_lock = Genome::Disk::Volume->get_lock($self->volume->mount_path);
-        unless ($volume_lock) {
-            confess "Could not get lock for volume " . $self->volume->mount_path;
-        }
-        my $volume = Genome::Disk::Volume->$mode(mount_path => $self->volume->mount_path, disk_status => 'active');
-        unless ($volume) {
-            confess "Found no volume with mount path " . $self->volume->mount_path;
-        }
-
-        $volume->unallocated_kb($volume->unallocated_kb + $self->kilobytes_requested);
         $self->mount_path($self->volume->archive_mount_path);
         $self->_update_owner_for_move;
 
@@ -737,7 +729,6 @@ sub _archive {
 
     # If only there were finally blocks...
     Genome::Sys->unlock_resource(resource_lock => $allocation_lock) if $allocation_lock;
-    Genome::Sys->unlock_resource(resource_lock => $volume_lock) if $volume_lock;
 
     if ($error) {
         eval {
@@ -764,6 +755,15 @@ sub _archive {
 }
 
 sub _unarchive {
+    # ~~~ PLAN ~~~
+    # (this should be similar to _move)
+    # error checking to make sure allocation can be unarchived
+    # lock allocation (are we locking based on the mount path?)
+    # create shadow allocation
+    # unarchive stuff into shadow allocation
+    # move shadow allocation to the right place
+    # unlock allocation
+
     my ($class, %params) = @_;
     my $id = delete $params{allocation_id};
     if (%params) {
@@ -782,66 +782,35 @@ sub _unarchive {
         confess "Found no allocation with ID $id";
     }
 
-    # Make sure allocation is archived, exit cleanly if so
     unless ($self->is_archived) {
         Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
         $self->status_message("Allocation is not archived, cannot unarchive. Exiting.");
         return 1;
     }
 
-    my ($volume_lock, $archive_path, $target_path);
+    my %creation_params = (
+        disk_group_name => $self->disk_group_name,
+        kilobytes_requested => $self->kilobytes_requested,
+        owner_class_name => "UR::Value",
+        owner_id => "shadow_allocation",
+        allocation_path => sprintf("unarchive_allocation_destination/%s",
+            $self->allocation_path),
+    );
+    # shadow_allocation ensures that we wont over allocate our destination volume
+    my $shadow_allocation = $class->create(%creation_params);
+    Genome::Sys->create_directory($shadow_allocation->absolute_path);
+
+    my $archive_path = $self->absolute_path;
+    my $target_path = $shadow_allocation->absolute_path;
+    my $tar_path = $self->tar_path;
+    my $cmd = "tar -C $target_path -xf $tar_path";
+
     eval {
-        # Get candidate volumes and pick/lock one
-        my @candidate_volumes = $class->_get_candidate_volumes(
-            disk_group_name => $self->disk_group_name,
-        );
-        unless (@candidate_volumes) {
-            confess "Found no volumes in group " . $self->disk_group_name . " that have at least " .
-                $self->kilobytes_requested . " kb available for allocation " . $self->id;
-        }
-        my $volume;
-        ($volume, $volume_lock) = $class->_lock_volume_from_list($self->kilobytes_requested, @candidate_volumes);
-        unless ($volume and $volume_lock) {
-            confess "Could not find and lock a target volume!";
-        }
-
-        # Update size of target volume and immediately commit/unlock. Do not want to hold on to that lock for longer than is necessary
-        $volume->unallocated_kb($volume->unallocated_kb - $self->kilobytes_requested);
-        unless (UR::Context->commit) {
-            confess "Could not commit updates to target volume " . $volume->mount_path;
-        }
-        Genome::Sys->unlock_resource(resource_lock => $volume_lock);
-        $volume_lock = undef;
-
-        # If rollback occurs, need to increment size of the target volume
-        my $volume_change = UR::Context::Transaction->log_change(
-            $self, 'UR::Value', $self->id, 'external_change', sub { $volume->unallocated_kb($volume->unallocated_kb + $self->kilobytes_requested) }
-        );
-
-        my $tar_path = $self->tar_path;
-        $archive_path = $self->absolute_path;
-        $target_path = join('/', $volume->mount_path, $self->group_subdirectory, $self->allocation_path);
-        (my $old_target_path = $archive_path) =~ s/^\/gscarchive/\/gscmnt/;
-        my @commands = (
-            "mkdir -p $target_path",
-            "tar -C $target_path -xf $tar_path",
-        );
-        if ($old_target_path ne $target_path) {
-            my $old_parent_dir = File::Basename::dirname($old_target_path);
-            unless(-e $old_parent_dir && -d $old_parent_dir){
-                push @commands, "mkdir -p $old_parent_dir";
-            }
-            # to fix previously existing/broken symlinks by redirecting
-            push @commands, "ln -fs $target_path $old_target_path";
-        }
-        my $cmd = join(' && ', @commands);
-
         # It's very possible that if no commit is on, the volumes/allocations being dealt with are test objects that don't
         # exist out of this local UR context, so bsubbing jobs would fail.
         if ($ENV{UR_DBI_NO_COMMIT}) {
             Genome::Sys->shellcmd(cmd => $cmd);
-        }
-        else {
+        } else {
             # If this process should be killed, the LSF job needs to be cleaned up
             my ($job_id, $status);
 
@@ -875,7 +844,14 @@ sub _unarchive {
         }
 
         # Make updates to the allocation
-        $self->mount_path($volume->mount_path);
+        $self->mount_path($shadow_allocation->volume->mount_path);
+        Genome::Sys->create_directory($self->absolute_path);
+        unless (rename $shadow_allocation->absolute_path, $self->absolute_path) {
+            confess($self->error_message(sprintf(
+                    "Could not move shadow allocation path (%s) to final path (%s).  This should never happen, even when 100%% full.",
+                    $shadow_allocation->absolute_path, $self->absolute_path)));
+        }
+        $shadow_allocation->delete();
         $self->_update_owner_for_move;
         $self->archivable(0, 'allocation was unarchived'); # Wouldn't want this to be immediately re-archived... trolololol
 
@@ -887,7 +863,6 @@ sub _unarchive {
 
     # finally blocks would be really sweet. Alas...
     Genome::Sys->unlock_resource(resource_lock => $allocation_lock) if $allocation_lock;
-    Genome::Sys->unlock_resource(resource_lock => $volume_lock) if $volume_lock;
 
     if ($error) {
         if ($target_path and -d $target_path and not $ENV{UR_DBI_NO_COMMIT}) {
@@ -1294,45 +1269,6 @@ sub _get_candidate_volumes {
     return @volumes;
 }
 
-
-# Locks and returns a volume from the provided list
-sub _lock_volume_from_list {
-    my ($self, $kilobytes_requested, @candidate_volumes) = @_;
-    confess "No volumes to choose from!" unless @candidate_volumes;
-
-    my $volume;
-    my $volume_lock;
-    my $attempts = 0;
-    my $max_attempts = 30;
-    while (1) {
-        if ($attempts++ > $max_attempts) {
-            confess "Could not lock a volume after $max_attempts attempts, giving up";
-        }
-
-        # Pick a random volume from the list of candidates and try to lock it
-        my $index = int(rand(@candidate_volumes));
-        my $candidate_volume = $candidate_volumes[$index];
-        my $lock = Genome::Disk::Volume->get_lock($candidate_volume->mount_path);
-        next unless defined $lock;
-
-        # Reload volume, if anything has changed restart (there's a small window between looking at the volume
-        # and locking it in which someone could modify it)
-        my $mode = $self->_retrieve_mode;
-        $candidate_volume = Genome::Disk::Volume->$mode($candidate_volume->id);
-        unless($candidate_volume->unallocated_kb >= $kilobytes_requested
-                and $candidate_volume->can_allocate eq '1'
-                and $candidate_volume->disk_status eq 'active') {
-            Genome::Sys->unlock_resource(resource_lock => $lock);
-            next;
-        }
-
-        $volume = $candidate_volume;
-        $volume_lock = $lock;
-        last;
-    }
-
-    return ($volume, $volume_lock);
-}
 
 # When no commit is on, ordinarily an allocation goes to a dummy volume that only exists locally. Trying to load
 # that dummy volume would lead to an error, so use a get instead.
