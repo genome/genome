@@ -11,13 +11,14 @@ use_ok('Genome::Model::Tools::Bed::Convert::Indel::StrelkaToBed');
 
 my $tmpdir = File::Temp::tempdir('Bed-Convert-Indel-StrelkaToBedXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
 
-my $input_file = __FILE__ . '.input';
-my $expected_file = __FILE__ . '.expected';
 
+my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-Tools-Bed-Convert-Indel/2012-10-10/';
+
+my $input_file = $expected_data_directory . 'StrelkaToBed.t.input';
+my $expected_file = $expected_data_directory . 'StrelkaToBed.t.expected';
 my $output_file = "$tmpdir/actual.out";
 
 # all
-
 my $command = Genome::Model::Tools::Bed::Convert::Indel::StrelkaToBed->create( source => $input_file, output => $output_file );
 ok($command, 'Command created');
 my $rv = $command->execute;
@@ -29,7 +30,6 @@ ok(!$diff, 'output matched expected result')
     or diag("diff results:\n" . $diff);
 
 # hq
-
 $command = Genome::Model::Tools::Bed::Convert::Indel::StrelkaToBed->create( source => $input_file, output => $output_file . '.hqonly', limit_variants_to => 'hq' );
 ok($command, 'Command created');
 $rv = $command->execute;
@@ -41,7 +41,6 @@ ok(!$diff, 'output matched expected result')
     or diag("diff results:\n" . $diff);
 
 # lq
-
 $command = Genome::Model::Tools::Bed::Convert::Indel::StrelkaToBed->create( source => $input_file, output => $output_file . '.lqonly', limit_variants_to => 'lq' );
 ok($command, 'Command created');
 $rv = $command->execute;
@@ -53,4 +52,8 @@ ok(!$diff, 'output matched expected result')
     or diag("diff results:\n" . $diff);
 
 #print $tmpdir, "\n";
-    
+#mkdir ("/tmp/last-strelka-to-bed-result/");
+#system ("cp -r $tmpdir/* /tmp/last-strelka-to-bed-result/");
+
+
+

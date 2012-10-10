@@ -120,7 +120,10 @@ sub process_source {
 
         #position => 1-based position of the Indel
         #BED uses 0-based position of and after the event
-        $self->write_bed_line($chromosome, $position - 1, $end_position - 1, $deleted_bases, $inserted_bases, $somatic_score, $tumor_depth);
+        #But Strelka is reporting Indels with an additional reference base on the left side.  So effectively the coordinates are already 0-based...
+        #If we subtract 1 from each here, we get an off-by-one error
+        #$self->write_bed_line($chromosome, $position - 1, $end_position - 1, $deleted_bases, $inserted_bases, $somatic_score, $tumor_depth);
+        $self->write_bed_line($chromosome, $position, $end_position, $deleted_bases, $inserted_bases, $somatic_score, $tumor_depth);
 
      }
     
