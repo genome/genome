@@ -48,6 +48,9 @@ sub help_synopsis {
 EOS
 }
 
+sub cmdline {
+}
+
 sub execute {
     my $self = shift;
     my $tabix = $self->tabix_path;
@@ -68,6 +71,7 @@ sub execute {
         my $batch = join(" ", splice(@regions, 0, $len));
         my $cmd = "$tabix $print_header $input $batch $output";
         Genome::Sys->shellcmd(cmd => $cmd);
+        $print_header = ''; # we only want to print the header once
     }
 
     return 1;

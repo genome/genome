@@ -114,7 +114,8 @@ $(document).data('updatedOn', new Date(]]><xsl:copy-of select="$currentTime"/><!
   <xsl:template name="app_header">
     <xsl:param name="app_name"/>
     <xsl:param name="icon"/>
-    <span id="authUser" style="visibility:hidden">-</span>
+    <span id="hiddenAuthUser" style="visibility:hidden">-</span>
+    <span id="hiddenAuthUserID" style="visibility:hidden">-</span>
 
     <xsl:comment>template: /html/common_includes/components.xsl:app_header</xsl:comment>
 
@@ -133,6 +134,8 @@ $(document).data('updatedOn', new Date(]]><xsl:copy-of select="$currentTime"/><!
     <xsl:param name="display_name"/>
     <xsl:param name="perspective" select="$currentPerspective"/>
     <xsl:param name="icon"/>
+    <span id="hiddenAuthUser" style="visibility:hidden">-</span>
+    <span id="hiddenAuthUserID" style="visibility:hidden">-</span>
 
     <xsl:comment>template: /html/common_includes/components.xsl:view_header</xsl:comment>
 

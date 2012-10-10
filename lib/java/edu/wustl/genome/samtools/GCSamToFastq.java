@@ -30,6 +30,7 @@ import net.sf.picard.cmdline.StandardOptionDefinitions;
 import net.sf.picard.cmdline.Usage;
 import net.sf.picard.fastq.FastqRecord;
 import net.sf.picard.fastq.FastqWriter;
+import net.sf.picard.fastq.FastqWriterFactory;
 import net.sf.picard.io.IoUtil;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMReadGroupRecord;
@@ -104,6 +105,15 @@ public class GCSamToFastq extends CommandLineProgram {
         System.exit(new GCSamToFastq().instanceMain(argv));
     }
 
+    private static FastqWriterFactory fastqWriterFactory;
+
+    private static FastqWriterFactory FastqWriterFactoryInstance(){
+      if(fastqWriterFactory == null){
+        fastqWriterFactory = new FastqWriterFactory();
+      }
+      return fastqWriterFactory;
+    }
+
     protected int doWork() {
         IoUtil.assertFileIsReadable(INPUT);
         
@@ -125,7 +135,7 @@ public class GCSamToFastq extends CommandLineProgram {
     protected void doUnpaired() {
 
         final SAMFileReader reader = new SAMFileReader(IoUtil.openFileForReading(INPUT));
-        final FastqWriter writer = new FastqWriter(FASTQ);
+        final FastqWriter writer = FastqWriterFactoryInstance().newWriter(FASTQ);
 
         for (final SAMRecord record : reader ) {
             if (record.getReadFailsVendorQualityCheckFlag() && !INCLUDE_NON_PF_READS) {
@@ -149,9 +159,9 @@ public class GCSamToFastq extends CommandLineProgram {
         IoUtil.assertFileIsWritable(FRAGMENT_FASTQ);
 
         final SAMFileReader reader = new SAMFileReader(IoUtil.openFileForReading(INPUT));
-        final FastqWriter writer1 = new FastqWriter(FASTQ);
-        final FastqWriter writer2 = new FastqWriter(SECOND_END_FASTQ);
-        final FastqWriter fragWriter = new FastqWriter(FRAGMENT_FASTQ);
+        final FastqWriter writer1 = FastqWriterFactoryInstance().newWriter(FASTQ);
+        final FastqWriter writer2 = FastqWriterFactoryInstance().newWriter(SECOND_END_FASTQ);
+        final FastqWriter fragWriter = FastqWriterFactoryInstance().newWriter(FRAGMENT_FASTQ);
         final Map<String,SAMRecord> firstSeenMates = new HashMap<String,SAMRecord>();
         final Set<String> failedReadNames = new HashSet<String>();
 
@@ -281,8 +291,8 @@ public class GCSamToFastq extends CommandLineProgram {
                 IoUtil.assertFileIsWritable(fq2);
 
                 writerPair = new ArrayList<FastqWriter>();
-                writerPair.add(new FastqWriter(fq1));
-                writerPair.add(new FastqWriter(fq2));
+                writerPair.add(FastqWriterFactoryInstance().newWriter(fq1));
+                writerPair.add(FastqWriterFactoryInstance().newWriter(fq2));
                 writers.put(readGroup, writerPair);
             }
 
@@ -307,7 +317,7 @@ public class GCSamToFastq extends CommandLineProgram {
             IoUtil.assertFileIsWritable(fq1);
 
             writerList = new ArrayList<FastqWriter>();
-            writerList.add(new FastqWriter(fq1));
+            writerList.add(FastqWriterFactoryInstance().newWriter(fq1));
         }
 
         writeRecord(currentRecord, null, writerList.get(0));

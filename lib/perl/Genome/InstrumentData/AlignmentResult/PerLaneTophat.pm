@@ -301,6 +301,9 @@ sub prepare_reference_sequence_index {
             Genome::Sys->create_symlink($bowtie_fasta_path, $staged_fasta_file . ".fa");
         } else {
             my $bowtie_fasta_path = $bowtie_index->full_consensus_path('bowtie');
+            unless(-e $bowtie_fasta_path){
+              $bowtie_fasta_path = $bowtie_index->full_consensus_path('fa');
+            }
             Genome::Sys->create_symlink($bowtie_fasta_path, $staging_dir .'/all_sequences.bowtie.fa');
         }
     }

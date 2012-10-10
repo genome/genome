@@ -30,7 +30,7 @@ class Genome::Model::Tools::Varscan::CopyNumberParallel {
 		samtools_path	=> { is => 'Text', doc => "Path to SAMtools executable", is_optional => 0, is_input => 1, default => "samtools" },
 		output	=> { is => 'Text', doc => "Output file for copy number results", is_optional => 0, is_input => 1, is_output => 1 },
 		target_regions	=> { is => 'Text', doc => "Optional target region(s) for limiting the BAM (e.g 5:1 or 6:11134-11158)", is_optional => 1, is_input => 1 },
-		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs" , is_optional => 1, default_value => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'},
+		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs;defaults to build37" , is_optional => 1, default_value => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'},
 		heap_space	=> { is => 'Text', doc => "Megabytes to reserve for java heap [1000]" , is_optional => 1, is_input => 1},
 		mapping_quality	=> { is => 'Text', doc => "Default minimum mapping quality" , is_optional => 1, is_input => 1, default => 10},
 		skip_if_output_present	=> { is => 'Text', doc => "If set to 1, skip execution if output files exist", is_optional => 1, is_input => 1 },
@@ -152,11 +152,11 @@ sub execute {                               # replace with real execution logic.
 					{
 						print "$chrom\t";
 						my $output_file = $output . ".$chrom";
-				
-						my $mpileup = $self->samtools_path . " mpileup -f $reference -q 10 -r $chrom:1 $normal_bam $tumor_bam";
+						my $varscan_path = Genome::Model::Tools::Varscan->path_for_version($self->version);
+						my $mpileup = $self->samtools_path . " mpileup -f $reference -B -q 10 -r $chrom:1 $normal_bam $tumor_bam";
 	
 	#					my $cmd = $self->java_command_line(" copynumber <\($mpileup\) $output_file --mpileup 1 $varscan_params");
-						my $cmd = "bash -c \"java -cp ~dkoboldt/Software/VarScan net.sf.varscan.VarScan copynumber <\($mpileup\) $output_file --mpileup 1 --data-ratio $normal_tumor_ratio $varscan_params\"";
+						my $cmd = "bash -c \"java -jar $varscan_path copynumber <\($mpileup\) $output_file --mpileup 1 --data-ratio $normal_tumor_ratio $varscan_params\"";
 		
 						system("bsub -q long -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" -oo $output_file.log $cmd");
 						

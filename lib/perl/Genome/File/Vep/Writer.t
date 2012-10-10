@@ -18,7 +18,8 @@ use_ok($pkg);
 
 # NOTE: this data is "clean".
 my $in_txt = <<EOS;
-Uploaded_variation	Location	Allele	Gene	Feature	Feature_type	Consequence	cDNA_position	CDS_position	Protein_position	Amino_acids	Codons	Existing_variation	Extra
+## Howdy
+#Uploaded_variation	Location	Allele	Gene	Feature	Feature_type	Consequence	cDNA_position	CDS_position	Protein_position	Amino_acids	Codons	Existing_variation	Extra
 HELLO1_1_10_A_T	1:10	T	GENE1	TS1	Transcript	NON_SYNONYMOUS_CODING	3	3	1	D/V	gAt/gTt	-	EX1=e1;HGNC=HELLO1
 HELLO2_1_20_G_A	1:20	A	GENE2	TS2	Transcript	STOP_GAINED	6	6	2	W/*	tgG/tgA	-	HGNC=HELLO2
 EOS
@@ -33,7 +34,7 @@ while (my $entry = $reader->next) {
 
 my $out_buf;
 my $out_fh = new IO::String($out_buf);
-my $writer = $pkg->fhopen($out_fh);
+my $writer = $pkg->fhopen($out_fh, "test", $reader->{header});
 $writer->write(@entries);
 
 is($out_buf, $in_txt, "writer wrote expected output");

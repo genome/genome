@@ -7,7 +7,6 @@ require Term::ANSIColor;
 
 use Genome;
 use Genome::Utility::Text "justify";
-use Genome::Utility::List "in";
 
 
 class Genome::Model::Command::Input::Show {
@@ -31,7 +30,7 @@ sub write_report {
     my ($self, $width, $handle) = @_;
     my $model = $self->model;
 
-    write_inputs_for_model_or_build(
+    $self->write_inputs_for_model_or_build(
             'width' => $width,
             'handle' => $handle,
             'target' => $model,
@@ -42,23 +41,18 @@ sub write_report {
 }
 
 sub _get_sorted_input_properties {
-    my ($target) = @_;
+    my ($self, $target) = @_;
 
-    my @inputs = $target->inputs;
-    my @input_names = map {$_->name} @inputs;
+    if($target->can('real_input_properties')) {
+        return $target->real_input_properties;
+    } else {
+        die $self->error_message('Could not load properties for target.'); #TODO support builds?
+    }
 
-    my $meta = $target->__meta__;
-    my @target_properties = $meta->property_metas();
-
-    my @input_properties = grep {
-            in($_->property_name, @input_names) or
-            ($_->via and $_->via eq 'inputs') or
-            $_->{is_input}} $meta->property_metas;
-    return sort {$a->property_name cmp $b->property_name} @input_properties;
 }
 
-# this is also called by 'genome model build view'
 sub write_inputs_for_model_or_build {
+    my $self = shift;
     my %params = @_;
     my $width = $params{width};
     my $handle = $params{handle};
@@ -67,7 +61,7 @@ sub write_inputs_for_model_or_build {
     my $show_display_names = $params{show_display_names};
     my $color = $params{color};
 
-    my @properties = _get_sorted_input_properties($target);
+    my @properties = $self->_get_sorted_input_properties($target);
 
     unless(@properties) {
         printf $handle "No inputs found for %s %s",
@@ -85,7 +79,7 @@ sub write_inputs_for_model_or_build {
     my @input_name_lengths = (length($name_header));
     my @input_value_lengths = (length($value_header));
     for my $property (@properties) {
-        my $name = $property->property_name;
+        my $name = $property->{name};
         push(@input_name_lengths, length($name));
 
         my @values;
@@ -111,7 +105,7 @@ sub write_inputs_for_model_or_build {
         @input_value_lengths = (@input_value_lengths, @value_lengths);
 
         $inputs{$name} = \@values;
-        $is_many{$name} = $property->is_many;
+        $is_many{$name} = $property->{is_many};
     }
 
     # determine widths of columns of table
@@ -130,10 +124,10 @@ sub write_inputs_for_model_or_build {
 
     # print out table
     for my $name (sort keys %inputs) {
-        my $name_part = justify($name, 'right', $max_name_length);
+        my $name_part = justify($name, 'right', $max_name_length, " ", "");
         my $is_many_part = sprintf('  %s  ',
-                _format_is_many($is_many{$name}), $color);
-        my $value_part = _format_values($inputs{$name},
+                $self->_format_is_many($is_many{$name}), $color);
+        my $value_part = $self->_format_values($inputs{$name},
                 $max_name_length + length($is_many_header) + 2,
                 $max_value_length,
                 $color);
@@ -144,17 +138,17 @@ sub write_inputs_for_model_or_build {
 
 
 sub _format_is_many {
-    my ($is_many, $color) = @_;
+    my ($self, $is_many, $color) = @_;
     my ($pre, $post, $true, $false) = ('[', ']', 'X',' ');
 
-    $pre = _color($pre, 'white', $color);
-    $post = _color($post, 'white', $color);
+    $pre = $self->_color($pre, 'white', $color);
+    $post = $self->_color($post, 'white', $color);
     my $mid = $is_many ? $true : $false;
     return join('', $pre, $mid, $post);
 }
 
 sub _color {
-    my ($value, $color, $flag) = @_;
+    my ($self, $value, $color, $flag) = @_;
     if($flag) {
         return Term::ANSIColor::colored($value, $color);
     } else {
@@ -163,7 +157,7 @@ sub _color {
 }
 
 sub _format_values {
-    my ($values, $left_padding, $right_size, $color) = @_;
+    my ($self, $values, $left_padding, $right_size, $color) = @_;
     my @values = @{$values};
 
     my @formatted_values;
@@ -179,7 +173,7 @@ sub _format_values {
                     $right_size + $left_padding);
         }
         if($value eq 'undef') {
-            $padded_value = _color($padded_value, 'cyan', $color);
+            $padded_value = $self->_color($padded_value, 'cyan', $color);
         }
         push(@formatted_values, $padded_value);
     }

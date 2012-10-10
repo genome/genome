@@ -46,7 +46,8 @@ sub test_with_clinical_data {
     my ($tmpdir, $clinical_data_file, %params) = @_;
 
     # Test with string encoding of binary trait (vs 0/1)
-    my $input_vcf_file = "$test_data_dir/multisample.vcf";
+    my $input_vcf_file = "$test_data_dir/multisample.vcf.gz";
+    my $input_vcf_file_index = "$input_vcf_file.tbi";
     my $glm_model_file = "$test_data_dir/glm-model.txt";
     my $sample_list_file = "$test_data_dir/samples.txt";
     my $output_file = "$tmpdir/parallel.txt.glm.csv";
@@ -59,8 +60,10 @@ sub test_with_clinical_data {
     # FIXME: This module currently tries to write things next to the multisample vcf
     # which would be in the test data directory. For now, we'll just make a symlink
     # to the vcf in the output directory.
-    my $vcf_file = "$tmpdir/multisample.vcf";
+    my $vcf_file = "$tmpdir/multisample.vcf.gz";
+    my $vcf_file_index = "$vcf_file.tbi";
     symlink($input_vcf_file, $vcf_file);
+    symlink($input_vcf_file_index, $vcf_file_index);
     symlink($clinical_data_file, "$tmpdir/clinical.txt");
     print "symlink($clinical_data_file, $tmpdir/clinical.txt)\n";
     $clinical_data_file = "$tmpdir/clinical.txt";
@@ -91,9 +94,9 @@ sub test_with_clinical_data {
         "clinical_correlation_result.categorical.csv.qqplot.png",
         "clinical_correlation_result.categorical.csv.common",
         "clinical_correlation_result.categorical.csv.common.qqplot.png",
-        "multisample.vcf.VEP_annotated",
-        "multisample.vcf.VEP_annotated.sorted",
-        "multisample.vcf.VEP_annotated.for_burden",
+        "multisample.vcf.gz.VEP_annotated",
+        "multisample.vcf.gz.VEP_annotated.sorted",
+        "multisample.vcf.gz.VEP_annotated.for_burden",
         "variant_matrix.txt",
         "burden_matrix.txt",
     );

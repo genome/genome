@@ -109,6 +109,7 @@ EOS
 # NOTE: These are in order.
 # Please put the most recent first.
 my @PICARD_VERSIONS = (
+    '1.77' => '/gsc/scripts/lib/java/samtools/picard-tools-1.77',
     '1.52' => '/gsc/scripts/lib/java/samtools/picard-tools-1.52',
     '1.46' => '/gsc/scripts/lib/java/samtools/picard-tools-1.46',
     '1.42' => '/gsc/scripts/lib/java/samtools/picard-tools-1.42',

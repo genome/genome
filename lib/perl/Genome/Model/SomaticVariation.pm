@@ -50,6 +50,16 @@ class Genome::Model::SomaticVariation {
             default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
             valid_values => [ 0,1,2,3],
         },
+        filter_previously_discovered_variants => {
+            doc => 'Should variants be divided into previously discovered and novel variants',
+            default_value => 0,
+            is => 'Boolean',
+        },
+        vcf_annotate_dbsnp_info_field_string => {
+            doc => 'String that indicates which dbsnp info fields should be included in the annotated vcf',
+            is => 'Text',
+            default_value => "NO_INFO",
+        },
    ],
     has => [
        tumor_model_id => {

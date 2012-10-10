@@ -8,7 +8,7 @@ use Genome;
 use Data::Dumper 'Dumper';
 
 class Genome::Model::Tools::Sx::Trim {
-    is => 'Command',
+    is => 'Command::Tree',
     is_abstract => 1,
 };
 

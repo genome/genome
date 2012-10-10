@@ -149,7 +149,7 @@ sub clean_up_tmp_dir {
 
 sub run_parser {
     my ($self, $blast_out_file) = @_;
-    
+
     my $E_cutoff = 1e-5;
 
     my @unassigned = (); # query should be kept for further analysis
@@ -170,9 +170,9 @@ sub run_parser {
     }
     my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
     my $dbh = Bio::DB::Taxonomy->new(-source => 'flatfile',
-				 -directory=> "$tax_dir",
-				 -nodesfile=> '/gscmnt/sata835/info/medseq/virome/taxonomy/nodes.dmp',
-				 -namesfile=> '/gscmnt/sata835/info/medseq/virome/taxonomy/names.dmp',);
+                                     -directory => "$tax_dir",
+                                     -nodesfile => $self->taxonomy_nodes_file,
+				     -namesfile => $self->taxonomy_names_file,);
     my $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');
 
     unless ($report) {
@@ -182,6 +182,19 @@ sub run_parser {
 
     $out_fh->print("QueryName\tQueryLen\tAssignment\tlineage\tHit\tSignificance\n");
 
+    my %gis;
+    $self->log_event('Getting taxids for gis');
+    while ( my $result = $report->next_result ) {
+        while ( my $hit = $result->next_hit ) {
+            my @tmp = split(/\|/, $hit->name);
+            next if $tmp[2] eq 'pdb'; # skip pdb database
+            $gis{$tmp[1]} = 1;
+        }
+    }
+    my $gi_taxids = $self->get_taxids_for_gis(\%gis);
+    $self->log_event('Attempted to get taxids for '. scalar ( keys %gis ).' gis .. got '.(scalar keys %$gi_taxids).' taxids');
+
+    $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');
     # Go through BLAST reports one by one      
     while(my $result = $report->next_result) {# next query output
 	$total_records++;
@@ -207,7 +220,6 @@ sub run_parser {
 	    my @temp_arr = split(/\|/, $hit->name); # gi|num|database|accessionNum|
 	    my $gi = $temp_arr[1];
 	    next if $temp_arr[2] eq 'pdb'; # skip data from pdb database
-
 	    $haveHit = 1;
 	    $hit_count++;
 	    if ($hit_count == 1) {
@@ -221,12 +233,18 @@ sub run_parser {
 		if ($highest_bit_value == $best_bit_value) {
 
 		    # from gi get taxonomy lineage
-		    my $sth = $dbh_sqlite->prepare("SELECT * FROM gi_taxid where gi = $gi");
-		    $sth->execute();
-		    my $ref = $sth->fetchrow_hashref();
+                    my $taxID;
+                    if ( exists $gi_taxids->{$gi} ) {
+                        $taxID = $gi_taxids->{$gi} if not $gi_taxids->{$gi} == 0;
+                    }
+                    #if ( not defined $taxID ) {
+                    #    my $sth = $dbh_sqlite->prepare("SELECT * FROM gi_taxid where gi = $gi");
+                    #    $sth->execute();
+                    #    my $ref = $sth->fetchrow_hashref();
+                    #    $sth->finish();
+                    #    $taxID = $ref->{'taxid'} if exists $ref->{'taxid'};
+                    #}
 
-		    $sth->finish();
-		    my $taxID = $ref->{'taxid'};
 		    if ($taxID) { # some gi don't have record in gi_taxid_nucl, this is for situation that has
 			my $taxon_obj = $dbh->get_taxon(-taxonid => $taxID);
 			if (!(defined $taxon_obj)) {
@@ -240,8 +258,7 @@ sub run_parser {
 
 			    if (scalar @lineage) {
 				$determined = 1;
-				#$self->PhyloType(\@lineage,$hit, $best_e, $dbh_sqlite, $dbh, \%assignment);
-				$self->PhyloType(\@lineage,$hit, $dbh_sqlite, $dbh, \%assignment);
+				$self->PhyloType(\@lineage,$hit, $dbh, \%assignment);
 			    }
 			}
 		    }
@@ -343,7 +360,7 @@ sub run_parser {
 }
 		
 sub PhyloType {
-    my ($self, $lineage_ref, $hit_ref, $dbh_sqlite, $dbh_taxonomy, $assignment_ref) = @_;
+    my ($self, $lineage_ref, $hit_ref, $dbh_taxonomy, $assignment_ref) = @_;
     my $description = "";
     my $node_id; 
     my $obj;

@@ -254,7 +254,6 @@ sub get_enrichment_factor_v2_node {
 
         for my $result (@results) {
             my $model_node = $self->_get_model_node($model, $result);
-            $ef_node->addChild( $model_node );
 
             # get BED file
             my $bedf;
@@ -319,7 +318,10 @@ sub get_enrichment_factor_v2_node {
 
             # get wingspan 0 alignment metrics
             # Note: this may need to be changed to alignment_summary_v2_hash_ref()
-            my $ws_zero = $result->alignment_summary_v2_hash_ref->{'0'};
+            my $ws_zero = eval { $result->alignment_summary_v2_hash_ref->{'0'} };
+            if ($@) {
+                next;
+            }
 
             # calculate enrichment factor!
             my $myEF = Genome::Model::Tools::TechD::CaptureEnrichmentFactor->execute(
@@ -339,6 +341,8 @@ sub get_enrichment_factor_v2_node {
                 $unique_on_target_enrichment_factor = $myEF->unique_on_target_enrichment_factor();
                 $total_on_target_enrichment_factor  = $myEF->total_on_target_enrichment_factor();
             }
+
+            $ef_node->addChild( $model_node );
 
             my $uotef_node = $model_node->addChild( $xml_doc->createElement('unique_on_target_enrichment_factor') );
             $uotef_node->addChild( $xml_doc->createTextNode( $unique_on_target_enrichment_factor ) );
@@ -397,9 +401,13 @@ sub get_alignment_summary_v2_node {
 
         for my $result (@results) {
             my $model_node = $self->_get_model_node($model, $result);
-            $as_node->addChild( $model_node );
 
-            my $alignment_summary_hash_ref = $result->alignment_summary_v2_hash_ref;
+            my $alignment_summary_hash_ref = eval { $result->alignment_summary_v2_hash_ref };
+            if ($@) {
+                next;
+            }
+
+            $as_node->addChild( $model_node );
             for my $ws_key (keys %{$alignment_summary_hash_ref}) {
                 my $ws_node = $model_node->addChild( $xml_doc->createElement('wingspan') );
                 $ws_node->addChild( $xml_doc->createAttribute('size', $ws_key) );

@@ -73,6 +73,7 @@ EOS
 
 sub _create_workflow {
     my $self = shift;
+
     my $multisample_vcf = $self->multisample_vcf;
     my $clinical_data = $self->clinical_data_file;
     my $glm_model_file = $self->glm_model_file;
@@ -98,6 +99,11 @@ sub _create_workflow {
     my $burden_matrix_file = "$output_directory/burden_matrix.txt";
     my $vep_burden_file = "$vep_annotation_file_path.for_burden";
     my $burden_test_output_directory = "$output_directory/burden_analysis";
+
+    my $log_dir = "$output_directory/logs";
+    my $vep_work_directory = "$output_directory/vep_tmp";
+
+
 
     for my $p ($burden_test_output_directory, $clinical_data_summary_dir) {
         unless(Genome::Sys->create_directory($p)) {
@@ -264,15 +270,21 @@ sub _create_workflow {
         # Run VEP
         vep => {
             name => "VEP annotation",
-            class => "Genome::Db::Ensembl::Vep",
+            #class => "Genome::Db::Ensembl::Vep",
+            class => "Genome::Model::PhenotypeCorrelation::Command::ParallelVep",
             inputs => {
-                input_file => $multisample_vcf,
+                input_vcf => $multisample_vcf,
                 output_file => $vep_annotation_file_path,
-                format => "vcf",
-                condel => "b",
-                polyphen => "b",
-                sift => "b",
-                hgnc => 1,
+                work_dir => $vep_work_directory,
+                log_dir => $log_dir,
+
+                #input_file => $multisample_vcf,
+                #output_file => $vep_annotation_file_path,
+                #format => "vcf",
+                #condel => "b",
+                #polyphen => "b",
+                #sift => "b",
+                #hgnc => 1,
             },
             inputs_from => {
             },
@@ -300,7 +312,6 @@ sub _create_workflow {
                 vcf_file => $multisample_vcf,
                 output_file => $burden_matrix_file,
                 burden_test_annotation_file => $vep_burden_file,
-                transpose => 0,
             },
             inputs_from => {
                 svep => {

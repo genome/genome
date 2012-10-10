@@ -316,7 +316,7 @@ sub execute {
   if ($wgs){push(@positions_files, $out_paths->{'wgs'}->{'snv'}->{path});}
   if ($exome){push(@positions_files, $out_paths->{'exome'}->{'snv'}->{path});}
   if ($wgs && $exome){push(@positions_files, $out_paths->{'wgs_exome'}->{'snv'}->{path});}
-  &runSnvBamReadCounts('-builds'=>$builds, '-positions_files'=>\@positions_files, '-ensembl_version'=>$ensembl_version, '-out_paths'=>$out_paths, '-verbose'=>$verbose);
+  &runSnvBamReadCounts('-builds'=>$builds, '-positions_files'=>\@positions_files, '-ensembl_version'=>$ensembl_version, '-out_paths'=>$out_paths, '-verbose'=>0);
 
 
   #Generate a clonality plot for this patient (if WGS data is available)
@@ -330,10 +330,11 @@ sub execute {
       if ($verbose){print YELLOW, "\n\nClonality dir already exists - skipping", RESET;}
     }else{
       my $clonality_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'clonality', '-silent'=>1);
-      my $wgs_som_var_model_id = $builds->{wgs}->model->id;
+      my $wgs_somatic_build = $builds->{wgs};
+      my $wgs_somatic_build_id = $wgs_somatic_build->id;
       
       # TODO: switch this to take build IDs
-      my $master_clonality_cmd = "$script_dir"."snv/generateClonalityPlot.pl  --somatic_var_model_id=$wgs_som_var_model_id  --working_dir=$clonality_dir  --common_name='$common_name'  --verbose=$verbose";
+      my $master_clonality_cmd = "$script_dir"."snv/generateClonalityPlot.pl  --somatic_var_build_id=$wgs_somatic_build_id  --working_dir=$clonality_dir  --common_name='$common_name'  --verbose=$verbose";
       if ($verbose){
         print YELLOW, "\n\n$master_clonality_cmd", RESET;
       }else{

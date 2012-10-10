@@ -1518,6 +1518,8 @@ sub _verify_build_is_not_abandoned_and_set_status_to {
 
 sub abandon {
     my $self = shift;
+    my $header_text = shift || 'Build Abandoned';
+    my $body_text = shift;
 
     my $status = $self->status;
     if ($status && $status eq 'Abandoned') {
@@ -1541,7 +1543,8 @@ sub abandon {
         or return;
 
     $self->add_note(
-        header_text => 'Build Abandoned',
+        header_text => $header_text,
+        body_text => $body_text,
     );
 
     return 1;

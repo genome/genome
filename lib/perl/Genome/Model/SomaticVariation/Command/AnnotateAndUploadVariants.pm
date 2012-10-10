@@ -30,6 +30,12 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         lsf_queue => {
             default => 'apipe',
         },
+        joinx_version => {
+            is => "Text",
+            doc => "Version of joinx to use",
+            is_optional => 0,
+            default => 1.6,
+        },
     ],
 };
 
@@ -46,6 +52,7 @@ sub execute{
     #my $version = GMT:BED:CONVERT::version();  TODO, something like this instead of hardcoding
     
     my %files;
+    my %vcf_files;
 
     my ($tier1_snvs, $tier2_snvs, $tier1_indels, $tier2_indels);
     
@@ -61,6 +68,11 @@ sub execute{
             die $self->error_message("No tier 2 snvs file for build!");
         }
         $files{'snvs.hq.tier2'} = $tier2_snvs;
+        my $snvs_vcf = $build->data_directory."/variants/snvs.vcf.gz";
+        unless(-e $snvs_vcf) {
+            die $self->error_message("No snvs vcf");
+        }
+        $vcf_files{'snvs.hq'} = $snvs_vcf;
     }
 
     if ($build->indel_detection_strategy){
@@ -151,6 +163,8 @@ sub execute{
                 }
                 $in->close;
                 $output->close;
+                my $rm_cmd = "rm -f ".$annotation_params{output_file};
+                `$rm_cmd`;
             }
 
             my %upload_params = (
@@ -179,6 +193,33 @@ sub execute{
             File::Copy::copy($variant_file, $annotated_file);
             File::Copy::copy($variant_file, "$annotated_file.top");
             File::Copy::copy($variant_file, $uploaded_file);
+        }
+    }
+
+    #Annotate vcfs with dbsnp ids
+    if ($build->previously_discovered_variations_build) {
+        my $annotation_vcf = $build->previously_discovered_variations_build->snvs_vcf;
+        if (-e $annotation_vcf) {
+            for my $key (keys(%vcf_files)) {
+                my $variant_file = $vcf_files{$key};
+                my $output_file = $variant_file.".annotated.vcf.gz";
+                $output_file =~ s/vcf.gz.//;
+                my $info_string = $build->processing_profile->vcf_annotate_dbsnp_info_field_string eq "NO_INFO" ? "" : $build->processing_profile->vcf_annotate_dbsnp_info_field_string;
+                my $info = $info_string eq "" ? 0 : 1;
+                my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->execute(
+                    input_file=> $variant_file,
+                    annotation_file=>$annotation_vcf,
+                    output_file=>$output_file,
+                    use_bgzip=>1,
+                    info_fields=>$info_string,
+                    info => $info,
+                    use_version => $self->joinx_version,
+                ) || die "Failed to execute Joinx Vcf annotation using db: $annotation_vcf";
+                $self->status_message("Successfully annotated VCF with information from $annotation_vcf");
+            }
+        }
+        else {
+            $self->warning_message("No snvs vcf available for previously_discovered_variations_build");
         }
     }
     

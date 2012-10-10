@@ -48,25 +48,23 @@ my @fields = (
 );
 
 my $entry_txt = join("\t", @fields);
-my $entry = $pkg->create(id => $entry_txt, header => $header);
-is($entry->chrom, '1', 'Parsed chromosome');
-is($entry->position, '10', 'Parsed position');
-ok(!$entry->identifiers, 'Parsed null identifiers');
-is($entry->reference_allele, 'A', 'Parsed reference allele');
-my @alts = $entry->alternate_alleles;
-is_deeply(\@alts, ['C', 'G'], 'Parsed alternate alleles');
+my $entry = $pkg->new($header, $entry_txt);
+
+is($entry->{chrom}, '1', 'Parsed chromosome');
+is($entry->{position}, '10', 'Parsed position');
+ok(!$entry->{identifiers}, 'Parsed null identifiers');
+is($entry->{reference_allele}, 'A', 'Parsed reference allele');
+is_deeply($entry->{alternate_alleles}, ['C', 'G'], 'Parsed alternate alleles');
 my @alleles = $entry->alleles;
 is_deeply(\@alleles, ['A', 'C', 'G'], 'All alleles accessor');
 is($entry->allele_index('A'), 0, 'allele index');
 is($entry->allele_index('C'), 1, 'allele index');
 is($entry->allele_index('G'), 2, 'allele index');
 ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
-is($entry->quality, '10.3', 'Parsed quality');
-my @filter = $entry->filter;
-is_deeply(\@filter, ['PASS'], 'Parsed filter');
-is_deeply($entry->info_fields, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
-my @format = $entry->format;
-is_deeply(\@format, ['GT', 'DP', 'FT'], 'Parsed format');
+is($entry->{quality}, '10.3', 'Parsed quality');
+is_deeply($entry->{filter}, ['PASS'], 'Parsed filter');
+is_deeply($entry->info, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
+is_deeply($entry->{format}, ['GT', 'DP', 'FT'], 'Parsed format');
 
 is($entry->info('A'), 'B', 'Info accessor works for A');
 is($entry->info('C'), '8,9', 'Info accessor works for C');
@@ -82,11 +80,11 @@ is($entry->sample_field(1, 'XX'), undef, 'Sample field accessor');
 
 my ($total, %counts) = $entry->allelic_distribution;
 is($total, 6, "allelic_distribution: total");
-is_deeply(\%counts, {A => 3, C => 1, G => 2}, "allelic_distribution: counts");
+is_deeply(\%counts, {0 => 3, 1 => 1, 2 => 2}, "allelic_distribution: counts");
 
 ($total, %counts) = $entry->allelic_distribution(1);
 is($total, 2, "allelic_distribution(1): total");
-is_deeply(\%counts, {A => 1, G => 1}, "allelic_distribution(1): counts");
+is_deeply(\%counts, {0 => 1, 2 => 1}, "allelic_distribution(1): counts");
 
 ok(!$entry->info_for_allele("X"), "info_for_allele with bad allele name");
 is($entry->info_for_allele("C", "C"), 8, "info_for_allele 1");
@@ -95,13 +93,15 @@ is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_
 is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
 
 ok(!$entry->is_filtered, "not filtered");
-$entry->filter(["PASS"]);
+$entry->{filter} = ["PASS"];
 ok(!$entry->is_filtered, "PASS != filtered");
-$entry->filter(["."]);
+$entry->{filter} = ["."];
 ok(!$entry->is_filtered, ". != filtered");
-$entry->filter([]);
+$entry->{filter} = undef;
 ok(!$entry->is_filtered, "undef != filtered");
-$entry->filter(["x"]);
+$entry->{filter} = [];
+ok(!$entry->is_filtered, "[] != filtered");
+$entry->{filter} = ["x"];
 ok($entry->is_filtered, "something else == filtered");
 
 done_testing();

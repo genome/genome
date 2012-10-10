@@ -19,6 +19,11 @@ class Genome::Model::Tools::DetectVariants2::Classify::PreviouslyDiscovered {
             id_by => 'previously_discovered_result_id',
         },
     ],
+    has_param => [
+        skip_filtering => {
+            is => 'Boolean',
+        },
+    ],
 };
 
 sub _validate_inputs {
@@ -50,7 +55,19 @@ sub _classify_variants {
     my $previously_discovered_path = $self->previously_discovered_result->path($type . 's.hq.bed');
     my $prior_path = $self->prior_result->path($type . 's.hq.bed');
 
-    if (-s $prior_path){
+    unless (-s $prior_path){
+    
+        $self->status_message("high confidence input is empty, skipping intersection");
+        File::Copy::copy($prior_path, $output_file);
+        File::Copy::copy($prior_path, $previously_detected_output_file);
+        return 1;
+    }
+    if ($self->skip_filtering) {
+        File::Copy::copy($prior_path, $output_file);
+        my $fh = Genome::Sys->open_file_for_writing($previously_detected_output_file);
+        $fh->close;
+    }
+    else {
         my $snv_compare = Genome::Model::Tools::Joinx::Intersect->create(
             input_file_a => $prior_path,
             input_file_b => $previously_discovered_path,
@@ -66,11 +83,8 @@ sub _classify_variants {
         unless ($snv_rv){
             die $self->error_message("Failed to execute snv comparison(err: $snv_err )");
         }
-    } else {
-        $self->status_message("high confidence input is empty, skipping intersection");
-        File::Copy::copy($prior_path, $output_file);
-        File::Copy::copy($prior_path, $previously_detected_output_file);
     }
+    
 
     return 1;
 }

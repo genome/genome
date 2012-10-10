@@ -57,7 +57,13 @@ sub dispatch_request {
         my $status;
         eval {
             local *FCGI::Stream::PRINT = $new_print;
-            my @objs = $class->get(@ids);
+            my @objs;
+            if (@ids > 1 || (@ids && $ids[0] != undef)) {
+                @objs = $class->get(@ids);
+            } else {
+                my $obj = $class->get($params);
+                @objs = ($obj);
+            }
             if (@objs > 200) { die 'remove this when youre ready to delete lots of stuff from a url ;)'; }
             for my $obj (@objs) {
                 $obj->delete();

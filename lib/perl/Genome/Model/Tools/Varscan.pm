@@ -7,7 +7,7 @@ use Genome;
 use Data::Dumper;
 use File::Temp;
 
-my $DEFAULT_VERSION = '2.2.6';
+my $DEFAULT_VERSION = '2.3.2';
 
 class Genome::Model::Tools::Varscan {
     is => ['Command'],
@@ -37,6 +37,7 @@ EOS
 
 my %VARSCAN_VERSIONS = (
     '2.3.2' => '/gsc/scripts/lib/java/VarScan/VarScan.v2.3.2.jar',
+    '2.3.1' => '/gsc/scripts/lib/java/VarScan/VarScan.v2.3.1.jar',
     '2.2.9' => '/gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar',
     '2.2.6' => '/gsc/scripts/lib/java/VarScan/VarScan.v2.2.6.jar',
     '2.2.4' => '/gsc/scripts/lib/java/VarScan/VarScan.v2.2.4.jar',

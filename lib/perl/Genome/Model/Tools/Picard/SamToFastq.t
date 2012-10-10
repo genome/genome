@@ -8,7 +8,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
    plan skip_all => 'requires 64-bit machine';
 }
 else {
-   plan tests => 4;
+   plan tests => 8;
 }
 
 use above 'Genome';
@@ -39,6 +39,24 @@ my $cmd_1  = Genome::Model::Tools::Picard::SamToFastq->create(
 isa_ok( $cmd_1, 'Genome::Model::Tools::Picard::SamToFastq' );
 $cmd_1->dump_status_messages(1);
 ok( $cmd_1->execute, 'execute' );
+ok( -s $fq1,         'output file is non-zero' );
+ok( -s $fq2,         'output file is non-zero' );
+
+unlink($fq1->stringify, $fq2->stringify, $fq3->stringify);
+
+my $cmd_2  = Genome::Model::Tools::Picard::SamToFastq->create(
+    input  => $bam . '',
+    fastq  => $fq1 . '',
+    fastq2 => $fq2 . '',
+    fragment_fastq => $fq3 . '',
+    no_orphans => 1,
+    read_group_id => 2854142190,
+    use_version => '1.77'
+);
+
+isa_ok( $cmd_2, 'Genome::Model::Tools::Picard::SamToFastq' );
+$cmd_2->dump_status_messages(1);
+ok( $cmd_2->execute, 'execute' );
 ok( -s $fq1,         'output file is non-zero' );
 ok( -s $fq2,         'output file is non-zero' );
 

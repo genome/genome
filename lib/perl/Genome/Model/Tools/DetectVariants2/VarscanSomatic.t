@@ -37,10 +37,10 @@ my $normal_bam = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 # Updated to .v8 due to directory structure changes
 # Updated to .v9 due to DetVar2 module
 # Updated to .v14 due to increasing insertion start/stop positions by 1
-my $expected_dir = $test_dir . '/expected.v14/';
+my $expected_dir = $test_dir . '/expected.v15/';
 ok(-d $expected_dir, "expected results directory exists");
 
-my $version = '2.2.6'; 
+my $version = '2.3.2'; 
 
 my $command = Genome::Model::Tools::DetectVariants2::VarscanSomatic->create(
     reference_build_id => $refbuild_id,
@@ -66,7 +66,7 @@ my @file_names = qw|    indels.hq
 
 for my $file_name (@file_names){
     my $file = $expected_dir."/".$file_name;
-    ok( -s $file, "$file_name exists and has size");
+    ok( -e $file, "$file_name exists");
 }
 
 for my $file_name (@file_names){

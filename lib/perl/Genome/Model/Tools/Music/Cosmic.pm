@@ -15,95 +15,30 @@ our $VERSION = $Genome::Model::Tools::Music::VERSION;
 class Genome::Model::Tools::Music::Cosmic {
     is => 'Command::V2',
     has_input => [
-        var_file => {
-            is => 'String',
-            doc => "List of variants using TCGA MAF specification v2.3, VCF v4.0/v4.1 or WU (Washington University) annotation",
-        },
-
-        output_file => { 
-            is => 'String', 
-            doc => "Output MAF, VCF or WU annotation file with additional data",
-        },
-
-        ref_build => {
-            is => 'Text',
-            default => 'Build37',
-            valid_values => ['Build36', 'Build37'],
-            doc => "Specify the genome build used by genomic loci in the provided variant list",
-        },
-
+        var_file    => { is => 'String', doc => "List of variants using TCGA MAF specification v2.3, VCF v4.0/v4.1 or WU (Washington University) annotation" },
+        output_file => { is => 'String', doc => "Output MAF, VCF or WU annotation file with additional data" },
+        ref_build   => { is => 'Text', default => 'Build37', valid_values => ['Build36', 'Build37'], doc => "Specify the genome build used by genomic loci in the provided variant list" },
     ],
-
     has_optional_input => [
-        gdsc_dir => {
-            is => 'Path',
-            default => '/gscuser/bniu/gscmnt-bniu/project/cosmic/var_files_v60',
-            doc => "Folder contains of the association information of drugs and targets",
-        },
-
-        cosmic_dir => {
-            is => 'Path', 
-            default => '/gscuser/bniu/gscmnt-bniu/project/cosmic/var_files_v60',
-            doc => 'Cosmic mutation database folder',
-        },
-
-        omimaa_dir => {
-            is => 'Path', 
-            default => '/gscuser/bniu/gscmnt-bniu/project/cosmic/var_files_v60',
-            doc => 'omim amino acid mutation database folder',
-        },
-
-        wu_annotation => {
-            is => 'Boolean', 
-            default => 0,
-            doc => "Use this if input MAF contains WUSTL annotation format headers",
-        },
-
-        vcf_annotation => {
-            is => 'Boolean', 
-            default => 0,
-            doc => "Use this if input file is VCF v4.0/v4.1 format",
-        },
-
-        nuc_range => {
-            is => 'Integer',
-            default => '5',
-            doc => "Set how close a 'near' match is when searching for nucleotide position near matches",
-        },
-
-        aa_range => {
-            is => 'Integer', 
-            default => 2,
-            doc => "Set how close a 'near' match is when searching for amino acid near matches",
-        },
-
-        strand_option => {
-            is => 'Boolean', 
-            default => 0,
-            doc => "Set optional strand for Cosmic amino acid when searching for amino acid matches, default is strand sensitive",
-        },
-
-        p_value => {
-            is => 'Number',
-            default => '0.0137033',
-            doc => "Set a significance value cutoff from GDSC Genomic correlations with MANOVA, default is 20% FDR",
-        },
-
-        ic_50 => {
-            is => 'Number',
-            default => '1.0',
-            doc => "Set a IC50 Effect cutoff from GDSC Genomic correlations with MANOVA, default is 1.0",
-        },
-
-
+        gdsc_dir       => { is => 'Path', default => '/gscuser/bniu/gscmnt-bniu/project/cosmic/var_files_v60', doc => "Folder contains of the association information of drugs and targets" },
+        cosmic_dir     => { is => 'Path', default => '/gscuser/bniu/gscmnt-bniu/project/cosmic/var_files_v60', doc => 'Cosmic mutation database folder' },
+        omimaa_dir     => { is => 'Path', default => '/gscuser/bniu/gscmnt-bniu/project/cosmic/var_files_v60', doc => 'omim amino acid mutation database folder' },
+        dgene_dir      => { is => 'Path', default => '/gscuser/bniu/gscmnt-bniu/project/cosmic/var_files_v60', doc => 'dGene database folder' },
+        wu_annotation  => { is => 'Boolean', default => 0, doc => "Use this if input MAF contains WUSTL annotation format headers" },
+        vcf_annotation => { is => 'Boolean', default => 0, doc => "Use this if input file is VCF v4.0/v4.1 format" },
+        nuc_range      => { is => 'Integer', default => '5', doc => "Set how close a 'near' match is when searching for nucleotide position near matches" },
+        aa_range       => { is => 'Integer', default => 2, doc => "Set how close a 'near' match is when searching for amino acid near matches" },
+        strand_option  => { is => 'Boolean', default => 0, doc => "Set optional strand for Cosmic amino acid when searching for amino acid matches, default is strand sensitive" },
+        p_value        => { is => 'Number', default => '0.0137033', doc => "Set a significance value cutoff from GDSC Genomic correlations with MANOVA, default is 20% FDR" },
+        ic_50          => { is => 'Number', default => '1.0', doc => "Set a IC50 Effect cutoff from GDSC Genomic correlations with MANOVA, default is 1.0" },
     ],
-
     doc => "Match a list of variants to those in COSMIC, and highlight druggable targets",
 };
-
 sub help_detail {
     return <<HELP;
-This module compares variants in the MAF, WU annotation or VCF format file user submitted to known variants in COSMIC V61, OMIM (2012.09.20) and GDSC V1.1 databases with six conditions following:
+This module compares variants in the MAF, WU annotation or VCF format file user submitted 
+to known variants in COSMIC V61, OMIM (2012.09.20) and GDSC V1.1 databases with 
+six conditions following:
 
 Position match:
 
@@ -116,41 +51,59 @@ Proximity match:
 4. Identify variants that are within N bps of distance to a known variant in COSMIC (default N = 5);
 5. Identify variants that are within M AA of distance to a known variant in COSMIC and OMIM (default M = 2);
 
-This module also check the drugs information of annotated genes from MAF file, using gene & drug mapping data from GDSC database. 
-For each gene that a variant is annotated to, the drugs that can target it and the drugs based on given p-value and IC_50 value from Multivariate ANOVA for all compounds will be reported.
-Any site without a match in a particular databases is reported as "NA" with respect to that database.
+This module also check drugable genes using dGgene database and the drugs information of 
+annotated genes from MAF file, using gene & drug mapping data from GDSC database. For each 
+gene that a variant is annotated to, the drugs that can target it and the drugs based on 
+given p-value and IC_50 value from Multivariate ANOVA for all compounds will be reported. 
+Any site without a match in a particular databases is reported as "NA" with respect to 
+that database.
 
-The output of this module returns each row the original input MAF and WU annotation file with 4 columns appended to the end of each, the first two columns for COSMIC matches and one column for each of the OMIM and GDSC databases. For VCF format, the output information will be added into "INFO" part of VCF file. 
+The output of this module returns each row the original input MAF and WU annotation file 
+with 4 columns appended to the end of each, the first two columns for COSMIC matches and 
+one column for each of the OMIM and GDSC databases. For VCF format, the output information 
+will be added into "INFO" part of VCF file. 
 
 The detailed appended columns format for MAF and WU annotaion is described in the following:
 
 ------------------------------------------
 
-COSMIC_Nuc/COSMIC_AA/OMIM   GDSC
+COSMIC_Nuc/COSMIC_AA/OMIM   GDSC  dGene  
 
-exact|position|proximity  Target_drugs|drugs_based_on_cutoff
+exact|position|proximity  Target_drugs|drugs_based_on_cutoff    dGene_description
 
 ** 
 Exact, position and proximity mean different match types, each separated by a "|" symbol. 
 For "COSMIC_Nuc" column, the number of samples and tissue types will be reported for each type of match.
 For "COSMIC_AA" and "OMIM" columns, only amino acid change will be reported for each type of match.
 For "GDSC" column, list drugs will be reported for each type of match, each separated by a "|" symbol.
+For "dGene" column, the matched drugable gene description will be reported.
 
 The detailed appended "INFO" format for VCF format will be shown in the outputfile header.
-By preprocessing of lift-over, this module compares both build 36 and build 37 coordinates that are specified in COSMIC to the coordinates in your variants file.
+By preprocessing of lift-over, this module compares both build 36 and build 37 coordinates 
+that are specified in COSMIC to the coordinates in your variants file.
 
-In addition to the standard version 2.3 MAF headers, there needs to be 3 columns appended. These
-column headers in the MAF must have these names in the header in order for the tool to find them:
+In addition to the standard version 2.3 MAF headers, there needs to be 3 columns appended. 
+Only nucleotide matches from COSMIC database will be reported, if no appended columns provided. 
+These column headers in the MAF must have these names in the header in order for the tool to find them:
 
    Transcript_name - the transcript name, such as NM_000028
  Amino_acid_change - the amino acid change, such as p.R290H
            Strand  - the strand of transcript, such as -1/+1
-
-Only nucleotide matches from COSMIC database will be reported, if no appended columns provided.
-
 HELP
 }
+sub help_synopsis {
+    return <<EOS;
+ ... music cosmic \\
+        --var-file input_dir/myMAF.tsv \\
+        --output-file output_dir/myMAF_output.tsv \\
 
+ ... music cosmic \\
+        --var-file input_dir/myMAF.tsv \\
+        --output-file output_dir/myMAF_output.tsv \\
+        --omimaa-dir omim_dir/ \\
+        --cosmic-dir cosmic_dir/ \\
+EOS
+}
 sub _doc_credits {
     return <<EOS
 
@@ -162,47 +115,47 @@ This tool depends on copies of data from the following databases, packaged in a 
 
 EOS
 }
-
 sub _doc_authors {
     return <<EOS
         Beifang Niu, Ph.D.
 EOS
 }
-
 sub doc_copyright_years {
     my $year = (localtime(time))[5] + 1900;
     return ($year);
 }
+
 #########################################################################
 
 sub execute {
     my $self = shift;
-
     ## Based on preprocessing of COSMIC db
+    my $wu_anno      = $self->wu_annotation;
     my $maf_file     = $self->var_file;
-    my $cosmic_dir   = $self->cosmic_dir;
-    my $output_file  = $self->output_file;
-    my $nuc_range    = $self->nuc_range;
-    my $ref_build    = $self->ref_build;
-    my $mano_p_value = $self->p_value;
-    my $mano_ic_50   = $self->ic_50;
     my $omim_dir     = $self->omimaa_dir;
     my $aa_range     = $self->aa_range;
-    my $strand_op    = $self->strand_option;
-    my $wu_anno      = $self->wu_annotation;
     my $vcf_anno     = $self->vcf_annotation; 
-
+    my $nuc_range    = $self->nuc_range;
+    my $strand_op    = $self->strand_option;
+    my $ref_build    = $self->ref_build;
+    my $mano_ic_50   = $self->ic_50;
+    my $cosmic_dir   = $self->cosmic_dir;
+    my $output_file  = $self->output_file;
+    my $mano_p_value = $self->p_value;
     # GDSC MANOVA results
     my $gdsc_dir     = $self->gdsc_dir;
-    my ($gdsc_file, $gdsc_manova_file);
-    my ($cosmic_mu, $omim_file);
-
+    my $gdsc_file;
+    my $omim_file;
+    my $cosmic_mu;
+    my $gdsc_manova_file;
+    # dGene results
+    my $dgene_dir    = $self->dgene_dir;
+    my $dgene_file;
     # Default pvalue and ic50 cutoff
-    my $default_pvalue = PVALUE;
-    my $default_ic50   = IC50;
     my $default_cutoff = 1;
+    my $default_ic50   = IC50;
+    my $default_pvalue = PVALUE;
     $default_cutoff = 0 if ($mano_p_value != PVALUE or $mano_ic_50 != IC50);
-
     ## Preprocessing
     # Para check
     unless($ref_build =~ m/build36/i xor $ref_build =~ m/build37/i) {
@@ -213,15 +166,13 @@ sub execute {
         $self->error_message("You must specify nucletide range N bps (0< N <=100)");
         die $self->error_message;
     }
-
     # Input file check
-    $cosmic_mu = "$cosmic_dir/Cosmic.Parse.v60.var.v1"         if (-d $cosmic_dir);
     $omim_file = "$omim_dir/OMIM_aa_20120921.csv"              if (-d $omim_dir);
+    $cosmic_mu = "$cosmic_dir/Cosmic.Parse.v60.var.v1"         if (-d $cosmic_dir);
     $gdsc_file = "$gdsc_dir/drugs_targets_associations.info"   if (-d $gdsc_dir);
     $gdsc_manova_file = "$gdsc_dir/gdsc_manova_output_w2.csv"  if (-d $gdsc_dir);
-
+    $dgene_file = "$dgene_dir/dgene.tsv"                       if (-d $dgene_dir);
     ## Main proccessing
-
     # parse var file
     # maximal length of variant
     my $max_span = 0;
@@ -232,21 +183,24 @@ sub execute {
     $self->status_message("loading and parsing COSMIC database ...\n");
     my $cosmics = ParseCosmicMutation($fh, $build, \$max_span, $strand_op);
     $fh->close;
-
     # parse GDSC target drugs file
     my $gfh = new FileHandle;
     die "Could not open GDSC drug targets file\n" unless($gfh->open($gdsc_file));
     $self->status_message("loading and parsing GDSC drug response database ...\n");
     my $gene_drugs = ParseGdscFile($gfh);
     $gfh->close;
-
     # parse GDSC drug manova results file
     my $gfh_manova = new FileHandle;
     die "Could not open GDSC MANOVA results file\n" unless($gfh_manova->open($gdsc_manova_file));
     $self->status_message("loading and parsing GDSC MANOVA results database ...\n");
     my $manova_pout = ParseGdscManovaFile($gfh_manova, $default_ic50, $default_pvalue);
     $gfh_manova->close;
-
+    # parse dGene database file
+    my $dgenefh = new FileHandle;
+    die "Could not open dGene database file\n" unless($dgenefh->open($dgene_file));
+    $self->status_message("loading and parsing dGene database ...\n");
+    my $dgene_pout = ParsedGeneFile($dgenefh);
+    $dgenefh->close;
     # parse OMIM database
     my $omimaa = {};
     my $fh_omim = new FileHandle;
@@ -254,11 +208,10 @@ sub execute {
     $self->status_message("loading and parsing GDSC MANOVA results database ...\n");
     ParseOMIMFile($fh_omim, $omimaa);
     $fh_omim->close;
-
     # parse maf file and find hits
     my @cosmic_ps = ($nuc_range, $max_span, $aa_range, $strand_op);
     my @manova_ps = ($mano_ic_50, $mano_p_value, $default_cutoff);
-    my @hash_ps   = ($cosmics, $gene_drugs, $manova_pout, $omimaa, $wu_anno, $vcf_anno);
+    my @hash_ps   = ($cosmics, $gene_drugs, $dgene_pout, $manova_pout, $omimaa, $wu_anno, $vcf_anno);
     my $mfh   = new FileHandle;
     my $outfh = new FileHandle;
     die "Could not open maf file\n"       unless($mfh->open($maf_file));
@@ -268,25 +221,15 @@ sub execute {
     FindMatches($mfh, $outfh, \@cosmic_ps, \@manova_ps, \@hash_ps);
     $mfh->close;
     $outfh->close;
-
-    #&TestSub();
     $self->status_message("Processing Done. \n");
     return 1;
-
 }
 
 #############################################################
 
-## Subroutines
-sub TestSub {
-    print "test subroutine \n";
-}
-
 ## Parse COSMIC mutation file
 sub ParseCosmicMutation {
-    
     my($cos_mu_file, $bd, $max_sp, $strandop) = @_;
-
     my $refc = {};
     $$max_sp = 0;
     while (my $ll = <$cos_mu_file>) {
@@ -301,7 +244,6 @@ sub ParseCosmicMutation {
         my $stop  = ($bd eq "b36" ? $b36stop  : $b37stop);
         my $span = $stop - $start;
         $$max_sp = $span if ($span > $$max_sp);
-
         # parse smaple id and tissue
         my @ta0 = map{[split/,/]} split /:/, $sp_ts;
         foreach my $tai0 (@ta0) {
@@ -334,14 +276,11 @@ sub ParseCosmicMutation {
     }
     return ($refc);
 }
-
 ## Parse GDSC drug targets file
 sub ParseGdscFile {
     my($g_file) = @_;
-
     # Drug targets parse results
     my $g_s = {};
-    
     while (my $ll = <$g_file>) {
         chomp($ll);
         my @cols = split(/\t/, $ll);
@@ -351,14 +290,26 @@ sub ParseGdscFile {
     return ($g_s);
 }
 
+## Parse dGene database file
+sub ParsedGeneFile {
+    my($dg_file) = @_;
+    # dGene parse results
+    my $dg_s = {};
+    while (my $ll = <$dg_file>) {
+        next if ($ll =~ /^tax_id/);
+        chomp($ll);
+        my @cols = split(/\t/, $ll);
+        my ($gene, $chr, $desc) = @cols[2,6,8];
+        $dg_s->{$gene}->{$chr} = $desc;
+    }
+    return ($dg_s);
+}
+
 ## Parse GDSC manovo results
 sub ParseGdscManovaFile {
-
     my($g_file, $def_ic, $def_p) = @_;
-
     # MANOVA parse results
     my $m_pout = {};
-    
     while (my $ll = <$g_file>) {
         next if ($ll =~ /^drug,gene,/);
         chomp($ll);
@@ -370,7 +321,6 @@ sub ParseGdscManovaFile {
         }
         $m_pout->{dlist}->{$gene}->{$pvalue}->{$ic50}->{$drug} = 1;
     }
-
     my @t0 = keys %{$m_pout->{dlist}};
     foreach my $item (@t0) {
         my @t1 = keys %{$m_pout->{dlist}->{$item}};
@@ -379,10 +329,8 @@ sub ParseGdscManovaFile {
     }
     return($m_pout);
 }
-
 ## Parse OMIM database
 sub ParseOMIMFile {
-
     my($omim_fh, $omim_aa) = @_;
     while (my $ll = <$omim_fh>) {
         next if ($ll =~ /^gene/);
@@ -392,46 +340,34 @@ sub ParseOMIMFile {
         my ($gene, $pos, $aao, $aamu) = @t[0,2,3,4];
         $omim_aa->{$gene}->{$pos}->{$aao.$pos.$aamu} = 1;
     }
-
 }
-
 ## Match hits finding
 sub FindMatches {
-
     my($smfh, $outfh, $cosmic_ps, $m_ps, $h_ps) = @_;
-
     # cosmic and omim paras
     my($dis, $max_sp, $aa_ran, $strand_op) = @$cosmic_ps;
-    my($cosmics, $g_d, $m_pout, $omim, $wu_anno, $vcf_anno) = @$h_ps;
+    my($cosmics, $g_d, $dg_pout, $m_pout, $omim, $wu_anno, $vcf_anno) = @$h_ps;
     my($def_ic, $def_p, $def_or) = @$m_ps;
-
     my($total, $header, $rcols, $info_col) = FileHeadParse($smfh, $wu_anno, $vcf_anno);
-
     #print $header;
     print $outfh $header;
-
     # content parse
     my $hited = {};
     while (my $ll = <$smfh>) {
-
         # This part should be improve based one different file format 
         chomp($ll);
         # VCF format 
         if ($vcf_anno) {
            my ($nucinfo, $resinfo) = ParseCols($ll, $total, $rcols, $wu_anno, $vcf_anno);
-
            #nucleotide match
            my $vcf_nuc_cosmic_results = "";
            my $vcf_aa_cosmic_results  = "";
            my $vcf_gdsc_results = "";
-
+           my $vcf_dgene_results = "";
            foreach my $nuc_info_line (@{$nucinfo}) {
-               #print $nuc_info_line."\n";
                my ($mafchr, $mafstart, $mafstop, $mafref, $mafvar) = split(/\|/, $nuc_info_line);
-  
                my @vcf_ps0 = ($mafchr, $mafstart, $mafstop, $mafref, $mafvar);
                my $vcf_nuc_results = COSMIC_Compare_nucleotide($cosmics, \@vcf_ps0, $dis, $max_sp);
-               #print $vcf_nuc_results."\n";
                $vcf_nuc_cosmic_results .= $mafvar."|".$vcf_nuc_results.",";
            }
            chop($vcf_nuc_cosmic_results) if ($vcf_nuc_cosmic_results);
@@ -440,10 +376,9 @@ sub FindMatches {
            unless($strand_op) {
                $strand_char = "=";
            }
-
            my %count_gene = ();
            foreach my $res_info_line (@{$resinfo}) {
-               my ($maftrans, $mafaa, $gene) = split(/\|/, $res_info_line);
+               my ($maftrans, $mafaa, $gene, $chr_dg) = split(/\|/, $res_info_line);
                my @vcf_ps_omim = ($gene, $maftrans, $mafaa, $aa_ran, $strand_char);
                my $vcf_cosmicaa_omim_results = COSMIC_Compare_aa($cosmics, $omim, \@vcf_ps_omim);
                $vcf_cosmicaa_omim_results =~s/\t/\|/;
@@ -453,10 +388,12 @@ sub FindMatches {
                my $vcf_tmp_targets = GDSCtargetDrugs($g_d, $gene);
                my $vcf_tmp_manova  = GDSCMANOVADrugs($m_pout, $gene, $def_or, $def_p, $def_ic);
                $vcf_gdsc_results .= $gene."|".$vcf_tmp_targets."|".$vcf_tmp_manova.",";
+               my $vcf_tmp_dgene = dGeneCompare($dg_pout, $gene, $chr_dg);
+               $vcf_dgene_results .= $gene."|".$vcf_tmp_dgene.",";
            }
            chop($vcf_aa_cosmic_results) if ($vcf_aa_cosmic_results);
            chop($vcf_gdsc_results)      if ($vcf_gdsc_results);
-
+           chop($vcf_dgene_results)      if ($vcf_dgene_results);
            # output
            my @vcf_content = split(/\t/, $ll);
            my $iter = 0;
@@ -467,6 +404,7 @@ sub FindMatches {
                    $vcf_item  .= "COSMIC_NUC=".$vcf_nuc_cosmic_results.";" if ($vcf_nuc_cosmic_results);
                    $vcf_item  .= "COSMIC_OMIM_AA=".$vcf_aa_cosmic_results.";" if ($vcf_aa_cosmic_results);
                    $vcf_item  .= "GDSC=".$vcf_gdsc_results.";" if ($vcf_gdsc_results);
+                   $vcf_item  .= "DGENE=".$vcf_dgene_results.";" if ($vcf_dgene_results);
                }
                $vcf_each_line .= $vcf_item."\t";
                $iter++;
@@ -493,21 +431,18 @@ sub FindMatches {
             my $target_drugs = GDSCtargetDrugs($g_d, $gene);
             my $gdsc_manova  = GDSCMANOVADrugs($m_pout, $gene, $def_or, $def_p, $def_ic);
             # GDSC MAVOVA results drugs
-
-            # only for test
             my $gdsc_output = $target_drugs."|".$gdsc_manova;
-            my $results_output = $cosmic_nuc_results."\t".$cosmicaa_omim_results."\t".$gdsc_output;
+            # dGene output
+            my $dgene_output = dGeneCompare($dg_pout, $gene, $mafchr);
+            my $results_output = $cosmic_nuc_results."\t".$cosmicaa_omim_results."\t".$gdsc_output."\t".$dgene_output;
             # load match hits information
             print $outfh $ll."\t".$results_output."\n";
         }
     }
 }
-
 ## GDSC MANOVA
 sub GDSCMANOVADrugs {
-
     my ($m_pout, $gene, $def_or, $def_p, $def_ic) = @_;
-    
     # GDSC MAVOVA results drugs
     my $gdsc_manova_con = "";
     if ($def_or) {
@@ -544,17 +479,12 @@ sub GDSCMANOVADrugs {
         $gdsc_manova_con .= $temp_con if ($temp_con); 
         $gdsc_manova_con = "NA" if ($gdsc_manova_con eq "");
     }
-
     # drug list
     return($gdsc_manova_con);
-
 }
-
 ## GDSC target drugs
 sub GDSCtargetDrugs {
-
     my ($gene_drugs, $gene) = @_;
-    
     # GDSC target drugs
     my $gdsc_con = "";
     my $temp_con = "";
@@ -574,17 +504,27 @@ sub GDSCtargetDrugs {
     return ($gdsc_con);
 }
 
+# dGene match
+sub dGeneCompare {
+    my ($dgout, $gene, $chr) = @_;
+    my $gdsc_con = "";
+    my $d5 = exists($dgout->{$gene}->{$chr});
+    if ($d5) {
+        $gdsc_con = $dgout->{$gene}->{$chr};
+    }
+    # cut last ch
+    $gdsc_con = "NA" if ($gdsc_con eq "");
+    return($gdsc_con);
+}
+
 ## COSMIC nucle comparing
 sub COSMIC_Compare_nucleotide {
-
     my ($cosmics, $maf_ps, $dis, $max_sp) = @_;
     my($mafchr, $mafstart, $mafstop, $mafref, $mafvar) = @$maf_ps; 
-
     # Nucleotide match infor container
     my $perfect_con     = "NA";
     my $samlocation_con = "NA";
     my $neighbor_con    = "NA";
-
     ## Nucletide match part
     # perfect match
     my $d1 = exists($cosmics->{nues}->{$mafchr}->{$mafstart}->{$mafstop.$mafref.$mafvar});
@@ -634,7 +574,6 @@ sub COSMIC_Compare_nucleotide {
             chop($samlocation_con);
         }
     }
-
     # neighbor hits
     %te_samples = ();
     %te_tissue  = ();
@@ -643,12 +582,10 @@ sub COSMIC_Compare_nucleotide {
     my $nstop     = $mafstop  + $dis;
     $nstart    = 1 if ($nstart    <= 0);
     $det_start = 1 if ($det_start <= 0);
-     
     foreach my $k ($det_start..$nstop) {
         # skip the first two steps
         next if ($k == $mafstart);
         my $d3 = exists($cosmics->{nups}->{$mafchr}->{$k});
-
         if ($d3) {
             my @t4 = keys %{$cosmics->{nups}->{$mafchr}->{$k}};
             foreach my $item5 (@t4) {
@@ -675,23 +612,18 @@ sub COSMIC_Compare_nucleotide {
         }
         chop($neighbor_con);
     }
-
     # results
     my $cosmic_nuc_results = $perfect_con."|".$samlocation_con."|".$neighbor_con;
     return($cosmic_nuc_results);
 }
-
 ## COSMIC database comparing (AA)
 sub COSMIC_Compare_aa {
-
     my ($cosmics, $omim, $maf_ps) = @_;
     my($gene, $maftrans, $mafaa, $aa_range, $strand_char) = @$maf_ps;
-
     # Amino Acid change match infor container
     my $aa_perfect_con     = "NA";
     my $aa_samlocation_con = "NA";
     my $aa_neighbor_con    = "NA";
-
     # Grab aa information
     my($mafres1, $mafrstart, $mafres2, $mafrstop, $mafnew_res) = AA_Check($mafaa);
     unless($mafrstart) {
@@ -767,16 +699,12 @@ sub COSMIC_Compare_aa {
     # return both cosmic and omim results
     return($cosmic_omim);
 }
-
 ## OMIM database comparing 
 sub OMIM_Compare {
-
     my ($omim, $gene, $start, $aa0, $aa1, $aa_range) = @_;
-
     my $perfect_con     = "NA";
     my $samlocation_con = "NA";
     my $neighbor_con    = "NA";
-
     my $its = $aa0.$start.$aa1;
     # perfect match
     my $ad = exists($omim->{$gene}->{$start}->{$its});
@@ -815,9 +743,8 @@ sub OMIM_Compare {
     my $omim_results = $perfect_con."|".$samlocation_con."|".$neighbor_con;
     return($omim_results);
 }
-
+# Amino Acid change check
 sub AA_Check {
-    
     my ($aachange) = @_;
     my ($res1, $start, $res2, $stop, $new_res);
     unless (defined($aachange)) {
@@ -852,40 +779,32 @@ sub AA_Check {
          $new_res =~ s/^ > //x;
      }
      $new_res ||= '';
-
      return ($res1, $start, $res2, $stop, $new_res);
 }
-
 # Parse the head of input file
 sub FileHeadParse {
-    
     my ($fh, $wuanno, $vcf) = @_;
-
     # Parse input file and get head info
     my @cols;
     my $header;
     my $temp_header;
     my %wu_nah  = ();
     my $total   = 1;
-
-    $temp_header = "\t"."COSMIC_Nuc\tCOSMIC_AA\tOMIM\tGDSC\n";
+    $temp_header = "\t"."COSMIC_Nuc\tCOSMIC_AA\tOMIM\tGDSC\tDGENE\n";
     # appended VCF header information
     my $c1_info = "##INFO=<ID=COS_NUC,Number=.,Type=String,Description=\"Cosmic nucleotide matches. Format: Exact_matches|Position_matches|Proximity_matches\">\n";
     my $c2_info = "##INFO=<ID=COS_AA,Number=.,Type=String,Description=\"Cosmic Amino Acid Change matches. Format: Exact_matches|Position_matches|Proximity_matches\">\n";
     my $om_info = "##INFO=<ID=OMIM,Number=.,Type=String,Description=\"Cosmic nucleotide matches. Format: Exact_matches|Position_matches|Proximity_matches\">\n";
     my $gd_info = "##INFO=<ID=GDSC,Number=.,Type=String,Description=\"Target drugs matches. Format: Target_drugs|Target_drugs_based_on_pvalue\">\n";
-
+    my $dgene_info = "##INFO=<ID=DGENE,Number=.,Type=String,Description=\"Drugable gene matches. Format: Gene|Describtion\">\n";
     if ($vcf) {
         while (my $ll = <$fh>) {
             if ($ll =~ m/^#CHROM/) {
                 # added vcf header
-                $header .= $c1_info.$c2_info.$om_info.$gd_info;
+                $header .= $c1_info.$c2_info.$om_info.$gd_info.$dgene_info;
                 chomp($ll);
                 my $i = 0;
-                my @t = split(/\t/, $ll);
-                foreach my $it (@t) {
-                    $wu_nah{$it} = $i++;
-                }
+                %wu_nah = map {($_, $i++)} split(/\t/, $ll);
                 $header .= $ll.$temp_header;
                 last;
             }
@@ -910,16 +829,12 @@ sub FileHeadParse {
                  $wu_nah{"INFO"});
         return($total, $header, \@cols, $wu_nah{"INFO"});
     }
-
     if ($wuanno) {
         while (my $ll = <$fh>) {
             if ($ll =~ m/^Hugo_Symbol/) {
                 chomp($ll);
                 my $i = 0;
-                my @t = split(/\t/, $ll);
-                foreach my $it (@t) {
-                    $wu_nah{$it} = $i++;
-                }
+                %wu_nah = map {($_, $i++)} split(/\t/, $ll);
                 $header .= $ll.$temp_header;
                 last;
            }
@@ -927,7 +842,6 @@ sub FileHeadParse {
                $header .= $ll;
            }
        }
-
        unless(    defined($wu_nah{"gene_name"}) 
               and defined($wu_nah{"chromosome_name"}) 
               and defined($wu_nah{"start"})
@@ -950,16 +864,12 @@ sub FileHeadParse {
                 $wu_nah{"amino_acid_change"});
        return($total, $header, \@cols);
     }
-
     # MAF file
     while (my $ll = <$fh>) {
        if ($ll =~ m/^Hugo_Symbol/) {
             chomp($ll);
             my $i = 0;
-            my @t = split(/\t/, $ll);
-            foreach my $it (@t) {
-                $wu_nah{$it} = $i++;
-            }
+            %wu_nah = map {($_, $i++)} split(/\t/, $ll);
             $header .= $ll.$temp_header;
             last;
        }
@@ -967,7 +877,6 @@ sub FileHeadParse {
            $header .= $ll;
        } 
     }
-
     unless (    defined($wu_nah{"Hugo_Symbol"}) 
             and defined($wu_nah{"Chromosome"}) 
             and defined($wu_nah{"Start_position"})                                
@@ -978,7 +887,6 @@ sub FileHeadParse {
             and defined($wu_nah{"Strand"})) {
         die "not a valid MAF annotation file!\n";
     }
-
     @cols = ($wu_nah{"Hugo_Symbol"}, 
              $wu_nah{"Chromosome"}, 
              $wu_nah{"Start_position"},                        
@@ -996,21 +904,16 @@ sub FileHeadParse {
     }
     return($total, $header, \@cols);
 }
-
 # Parse info of lines 
 sub ParseCols {
-
     my ($line, $total, $rcols, $wuanno, $vcf) = @_;
-
     # For vcf 
     my ($pos, $vcfref, $vcfalt, $vcfinfo, @vcfnuc, @vcfres); 
     # For MAF
     my ($a1, $a2);
     my ($chr, $start, $stop, $ref, $var);
     my ($gene, $trans, $strand, $aa) = ("NA", "NA", "NA", "NA");
-
     my @cols = split(/\t/, $line);
-
     # VCF annotation
     if ($vcf) {
         ($chr, $pos, $vcfref, $vcfalt, $vcfinfo) = @cols[@$rcols];
@@ -1040,13 +943,11 @@ sub ParseCols {
     return($gene, $chr, $start, $stop, $ref, $var, $trans, $strand, $aa);
 }
 
+
 # Parse variants of VCF 
 sub VariantVCF {
-
     my ($vcfchr, $pos, $vcfref, $vcfalt, $vcfinfo, $vcfnuc, $vcfres) = @_;
-
     my ($start, $stop, $ref, $var);
-
     my @t = split(/,/, $vcfalt);
     foreach my $item (@t) {
         if (length($vcfref) == length($item)) {
@@ -1088,9 +989,10 @@ sub VariantVCF {
                 $aa = "p.$res$pos";
             }
         }
-        push(@$vcfres, $trans."|".$aa."|".$gene);
+        push(@$vcfres, $trans."|".$aa."|".$gene."|".$vcfchr);
     }
-
+    return 1;
 }
 
+1;
 

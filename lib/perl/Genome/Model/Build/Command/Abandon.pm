@@ -15,6 +15,16 @@ class Genome::Model::Build::Command::Abandon {
             doc => 'Build(s) to use. Resolved from command line via text string.',
             require_user_verify => 1,
         },
+        header_text => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Header for build note.',
+        },
+        body_text => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Body for build note.',
+        },
     ],
 };
 
@@ -36,7 +46,7 @@ sub execute {
     for my $build (@builds) {
         $self->_total_command_count($self->_total_command_count + 1);
         my $transaction = UR::Context::Transaction->begin();
-        my $successful = eval { $build->abandon };
+        my $successful = eval { $build->abandon($self->header_text, $self->body_text) };
         if ($successful and $transaction->commit) {
             $self->status_message( "Successfully abandoned build (" . $build->__display_name__ . ")." );
         }

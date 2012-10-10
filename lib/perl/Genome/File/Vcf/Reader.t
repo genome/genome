@@ -41,7 +41,7 @@ my $vcf_fh = new IO::String(<<EOS
 20\t17330\t.\tT\tA\t3\tq10\tNS=3;DP=11;AF=0.017\tGT:GQ:DP:HQ\t0|0:49:3:58,50\t0|1:3:5:65,3\t0/0:41:3
 20\t1110696\trs6040355\tA\tG,T\t67\tPASS\tNS=2;DP=10;AF=0.333,0.667;AA=T;DB\tGT:GQ:DP:HQ\t1|2:21:6:23,27\t2|1:2:0:18,2\t2/2:35:4
 20\t1230237\t.\tT\t.\t47\tPASS\tNS=3;DP=13;AA=T\tGT:GQ:DP:HQ\t0|0:54:7:56,60\t0|0:48:4:51,51\t0/0:61:2
-20\t1234567\tmicrosat1\tGTC\tG,GTCT\t50\tPASS\tNS=3;DP=9;AA=G\tGT:GQ:DP\t0/1:35:4\t0/2:17:2\t1/1:40:3
+20\t1234567\tmicrosat1,foo\tGTC\tG,GTCT\t50\tPASS\tNS=3;DP=9;AA=G\tGT:GQ:DP\t0/1:35:4\t0/2:17:2\t1/1:40:3
 EOS
 );
 
@@ -52,9 +52,9 @@ ok($header, "Got vcf header");
 is_deeply([$header->sample_names], [map {"NA0000$_"} 1..3], "Header has expected sample names");
 my $entry = $reader->next;
 ok($entry, "Got first entry");
-is($entry->chrom, "20", "chrom accessor");
-is($entry->position, "14370", "position accessor");
-is($entry->reference_allele, "G", "ref accessor");
+is($entry->{chrom}, "20", "chrom accessor");
+is($entry->{position}, "14370", "position accessor");
+is($entry->{reference_allele}, "G", "ref accessor");
 is($entry->sample_field(0, "GT"), "0|0", "sample field accessor");
 
 my @expected_pos = (17330, 1110696, 1230237, 1234567);
@@ -63,8 +63,46 @@ while (my $e = $reader->next) {
     push(@actual_entries, $e);
 }
 is(scalar(@actual_entries), scalar(@expected_pos), "Read expected number of entries");
-is_deeply([map {$_->position} @actual_entries], \@expected_pos, "Positions of entries are as expected");
+is_deeply([map {$_->{position}} @actual_entries], \@expected_pos, "Positions of entries are as expected");
+
+###############################################################################
+# Now let us rewind and test filtering
+$vcf_fh->seek(0);
+$reader = $pkg->fhopen($vcf_fh, "Test Vcf");
+
+# Returns true when an entry has an identifier (e.g., rsid)
+my $has_identifiers = sub { 
+    my $entry = shift;
+    return defined $entry->{identifiers};
+};
+
+$reader->add_filter($has_identifiers);
+my @entries;
+while (my $entry = $reader->next) {
+    push(@entries, $entry);
+}
+
+is_deeply([map {$_->{identifiers}} @entries],
+    [ ["rs6054257"], ["rs6040355"], ["microsat1","foo"] ],
+    "Correctly filtered out entries with no identifiers");
+
+# another test, for unfiltered entries only
+$vcf_fh->seek(0);
+$reader = $pkg->fhopen($vcf_fh, "Test Vcf");
+
+# Returns true when an entry has an identifier (e.g., rsid)
+my $has_identifiers = sub { 
+    my $entry = shift;
+    return !$entry->is_filtered;
+};
+$reader->add_filter($has_identifiers);
+my @entries;
+while (my $entry = $reader->next) {
+    push(@entries, $entry);
+}
+
+is_deeply([map {$_->{position}} @entries],
+    [ 14370, 1110696, 1230237, 1234567 ],
+    "Correctly filtered out entries that failed filters");
 
 done_testing();
-
-

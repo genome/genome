@@ -39,9 +39,10 @@ sub _parse {
 
     # create new fields for chromosome and position, and parse extra into hash
     ($self->{chrom}, $self->{position}) = split(":", $self->{location});
-    $self->{_extra_order} = [ map { s/=.*//; $_ } split(";", $self->{extra}) ];
+    $self->{_extra_order} = [
+        grep {$_ ne '-' }
+        map { s/=.*//; $_ } split(";", $self->{extra}) ];
     
-   
     $self->{extra} = {
         map { split("=") } grep {$_ ne '-'} split(";", $self->{extra})
     };
@@ -52,7 +53,7 @@ sub _parse {
 sub to_string {
     my $self = shift;
     my @fields = @{$self}{@FIELD_NAMES};
-    $fields[-1] = join(";", map {"$_=$self->{extra}{$_}"} @{$self->{_extra_order}});
+    $fields[-1] = join(";", map {"$_=$self->{extra}{$_}"} @{$self->{_extra_order}}) || '-';
     return join("\t", @fields);
 }
 

@@ -958,6 +958,10 @@ sub execute {
       $alignment_stats_file = $as_file1 if (-e $as_file1);
       $alignment_stats_file = $as_file2 if (-e $as_file2);
 
+      my $total_top_alignments = 0;
+      my $total_top_spliced_alignments = 0;
+      my $mt_top_alignments = 0;
+      
       my $total_reads = "n/a";
       my $unmapped_reads_p = "n/a";
       my $total_reads_mapped_p = "n/a";
@@ -967,6 +971,7 @@ sub execute {
         open (ALIGN, "$alignment_stats_file");
         while(<ALIGN>){
           chomp($_);
+          my @line = split("\t", $_);
           if ($_ =~ /Total\s+Reads\:\s+(\d+)/){
             $total_reads = $1;
           }
@@ -982,10 +987,23 @@ sub execute {
               $total_reads_mapped_p = sprintf("%.2f", ($total_reads_mapped/$total_reads)*100);
             }
           }
+          if (scalar(@line) == 9){
+            $total_top_alignments += $line[1];
+            $total_top_spliced_alignments += $line[2];
+            if ($line[0] eq "MT"){
+              $mt_top_alignments = $line[1];
+            }
+          }
         }
         close (ALIGN);
       }else{
         $self->status_message("Could not find alignment_stats.txt file for build: $build_id");
+      }
+      my $spliced_alignments_p = "n/a";
+      my $mt_alignments_p = "n/a";
+      if ($total_top_alignments){
+        $spliced_alignments_p = sprintf("%.2f", (($total_top_spliced_alignments/$total_top_alignments)*100));
+        $mt_alignments_p = sprintf("%.2f", (($mt_top_alignments/$total_top_alignments)*100));
       }
 
       #/gscmnt/gc2016/info/model_data/2880794613/build115909698/expression/cufflinks.out
@@ -1039,6 +1057,9 @@ sub execute {
       #Summarize RNA-seq metrics for each build
       $self->status_message("$subject_name ($common_name | $tissue_desc | $extraction_type)\t$total_reads\t$total_reads_mapped_p\t$unmapped_reads_p\t$frag_size_mean\t$frag_size_std\t$pct_coding_bases\t$pct_utr_bases\t$pct_intronic_bases\t$pct_intergenic_bases\t$pct_ribosomal_bases\t$build_id");
       print STATS "RNA-seq Total Reads\t$total_reads\t$common_name\tClinseq Build Summary\tCount\tTotal RNA-seq reads for $common_name $extraction_type data\n";
+
+      print STATS "RNA-seq Percent Spliced Alignments\t$spliced_alignments_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads mapped across splice junctions for $common_name $extraction_type data\n";
+      print STATS "RNA-seq Percent MT Alignments\t$mt_alignments_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads mapped to the MT chromosome for $common_name $extraction_type data\n";
       print STATS "RNA-seq Percent Reads Mapped\t$total_reads_mapped_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads mapped for $common_name $extraction_type data\n";
       print STATS "RNA-seq Percent Reads UnMapped\t$unmapped_reads_p\t$common_name\tClinseq Build Summary\tPercent\tPercent of RNA-seq reads unmapped for $common_name $extraction_type data\n";
       print STATS "RNA-seq Mean Fragment Size\t$frag_size_mean\t$common_name\tClinseq Build Summary\tFloat\tMean cDNA fragment size inferred from RNA-seq reads for $common_name $extraction_type data\n";
@@ -1190,8 +1211,24 @@ sub execute {
       my $build_id = $build->id;
       my $build_dir = $build->data_directory;
 
-      my $sv_annot_search = "$build_dir/variants/sv/*/svs.hq.merge.annot.somatic";
-      my $sv_annot_file = `ls $sv_annot_search`;
+
+      my $sv_annot_search1 = $build_dir . "/variants/sv/union-union*/svs.hq.merge.annot.somatic";
+      my $sv_annot_search2 = $build_dir . "/variants/sv/union-sv*/svs.hq.merge.annot.somatic";
+
+      my $sv_annot_file = 'NULL';
+
+      my $sv_annot_file1 = `ls $sv_annot_search1 2>/dev/null` || "NULL";
+      chomp($sv_annot_file1);
+
+      my $sv_annot_file2 = `ls $sv_annot_search2 2>/dev/null` || "NULL";
+      chomp($sv_annot_file2);
+
+      if (-e $sv_annot_file1){
+        $sv_annot_file = $sv_annot_file1;
+      }elsif (-e $sv_annot_file2){
+        $sv_annot_file = $sv_annot_file2;
+      }
+      
       chomp($sv_annot_file);
       my $sv_count = 0;
       my $ctx_count = 0;
@@ -1213,7 +1250,7 @@ sub execute {
         close(SV);
         $self->status_message("$pp_name\t$sv_count\t$ctx_count\t$del_count\t$inv_count\t$itx_count\t$build_id");
       }else{
-        $self->status_message("Could not find SV file with search: ls $sv_annot_search");
+        $self->status_message("Could not find SV file with search:\nls $sv_annot_search1\nls $sv_annot_search2");
       }
     }
 

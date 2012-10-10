@@ -24,17 +24,43 @@ my @expected_header = qw/
     /;
 
 sub new {
-    my ($class, $txt) = @_;
-    if (defined $txt) {
-        chomp $txt;
-        my $expected = join("\t", @expected_header);
-        confess "Invalid Vep header:\n$txt\nExpected:\n$expected" unless $expected eq $txt;
+    my ($class, $lines) = @_;
+    
+    my $expected = "#".join("\t", @expected_header);
+    if (!$lines) {
+        return $class->new([$expected]);
     }
-    return bless { fields => \@expected_header }, $class;
+
+    my @meta;
+    my @fields;
+
+    my $idx = 0;
+    chomp @$lines;
+    for (; $idx <= $#$lines; ++$idx) {
+        my $line = $lines->[$idx];
+
+        if ($line =~ /^##/) {
+            push(@meta, $line);
+        } elsif ($line =~ /^#/) {
+            confess "Invalid Vep header:\n$line\nExpected:\n$expected" unless $expected eq $line;
+            $line =~ s/^#//g;
+            @fields = split("\t", $line);
+            last;
+        } else {
+            confess "Unexpected data in vep header: $line";
+        }
+    }
+
+    if (@fields == 0 || $idx != $#$lines) {
+        confess "Invalid Vep header:\n\t" . join("\n\t", @$lines);
+    }
+
+    return bless { _meta => \@meta, _fields => \@fields }, $class;
 }
 
 sub to_string {
-    return join("\t", @expected_header);
+    my $self = shift;
+    return join("\n", @{$self->{_meta}}, "#".join("\t", @{$self->{_fields}}));
 }
 
 1;

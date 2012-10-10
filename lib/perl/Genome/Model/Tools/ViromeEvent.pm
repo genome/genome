@@ -306,4 +306,62 @@ sub run_blast_for_stage {
     return 1;
 }
 
+sub versioned_taxonomy_dir {
+    my $self = shift;
+
+    my ($version) = $self->taxonomy_db =~ /taxonomy_db_(\S+)$/;
+    $self->log_event('Could not derive taxonomy version') and return
+        if not $version;
+
+    my $version_dir = "/gscmnt/sata835/info/medseq/virome/taxonomy_$version";
+    $self->log_event("Could not get taxonomy dir for version: $version") and return
+        if not -d $version_dir;
+
+    return $version_dir;
+}
+
+
+sub get_taxids_for_gis {
+    my($self, $gis) = @_;
+
+    my $taxonomy_dir = $self->versioned_taxonomy_dir;
+
+    my $gi_file = $taxonomy_dir.'/gi_taxid_nucl.dmp';
+    $self->log_event('Could not get gi file for taxonomy version $version') and return
+        if not -s $gi_file;
+        
+    my %taxids;
+    my $fh = Genome::Sys->open_file_for_reading($gi_file);
+    while ( my $line = $fh->getline ) {
+        my @tmp = split( /\s+/, $line);
+        #tmp[0] = gi
+        #tmp[1] = taxid
+        $taxids{$tmp[0]} = $tmp[1] if exists $gis->{$tmp[0]};
+    }
+    $fh->close;
+    return \%taxids;
+}
+
+sub taxonomy_nodes_file {
+    my $self = shift;
+
+    my $file = $self->versioned_taxonomy_dir.'/nodes.dmp';
+
+    $self->log_event("Failed to find taxnonomy nodes file: $file") and return
+        if not -s $file;
+
+    return $file;
+}
+
+sub taxonomy_names_file {
+    my $self = shift;
+
+    my $file = $self->versioned_taxonomy_dir.'/names.dmp';
+
+    $self->log_event("Failed to find taxonomy names file: $file") and return
+        if not -s $file;
+
+    return $file;
+}
+
 1;

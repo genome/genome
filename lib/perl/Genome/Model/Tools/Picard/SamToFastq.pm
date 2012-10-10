@@ -5,6 +5,7 @@ use strict;
 use warnings FATAL => 'all';
 
 use Genome;
+use version;
 
 class Genome::Model::Tools::Picard::SamToFastq {
     is  => 'Genome::Model::Tools::Picard',
@@ -84,7 +85,16 @@ sub execute {
     my $picard_dir = $self->picard_path;
     my $picard_jar_path = $picard_dir . "/sam-".$picard_version.".jar";
     my $sam_jar_path = $picard_dir . "/picard-".$picard_version.".jar";
-    my $tool_jar_path = $self->class->base_dir . "/GCSamToFastq.jar";
+
+    my $picard_api_change_version = version->parse('1.77');
+    my $picard_use_version = version->parse($picard_version);
+    my $tool_jar_path = '';
+
+    if($picard_use_version >= $picard_api_change_version){
+      $tool_jar_path = $self->class->base_dir . "/GCSamToFastqPicard177.jar";
+    }else{
+      $tool_jar_path = $self->class->base_dir . "/GCSamToFastq.jar";
+    }
 
     my $cp = join ":", ($picard_jar_path, $sam_jar_path, $tool_jar_path);
 
