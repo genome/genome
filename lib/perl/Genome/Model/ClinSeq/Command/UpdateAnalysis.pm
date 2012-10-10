@@ -59,7 +59,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _rnaseq_pp_id => {
               is => 'Number',
-              default => '2754795',
+              default => '2762841',
         },
         rnaseq_pp => {
               is => 'Genome::ProcessingProfile',
@@ -104,7 +104,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         #_previously_discovered_variations_id => {
         #      is => 'Number',
-        #      default => '110108854',
+        #      default => '127786607',
         #},
         #previously_discovered_variations => {
         #      is => 'Genome::Model::Build',

@@ -110,12 +110,14 @@ sub execute {
     my $sv_annot_search1 = $build_dir . "/variants/sv/union-union*/svs.hq.merge.annot.somatic";
     my $sv_annot_search2 = $build_dir . "/variants/sv/union-sv*/svs.hq.merge.annot.somatic";
      
+    my $sv_annot_file = 'NULL';
+    
     my $sv_annot_file1 = `ls $sv_annot_search1 2>/dev/null` || "NULL";
     chomp($sv_annot_file1);
+
     my $sv_annot_file2 = `ls $sv_annot_search2 2>/dev/null` || "NULL";
     chomp($sv_annot_file2);
 
-    my $sv_annot_file = 'NULL';
     if (-e $sv_annot_file1){
       $sv_annot_file = $sv_annot_file1;
     }elsif (-e $sv_annot_file2){
