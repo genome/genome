@@ -12,7 +12,8 @@ use Carp 'confess';
 
 use List::Util;
 
-my $AUTO_REMOVE_TEST_PATHS = 1;
+our $AUTO_REMOVE_TEST_PATHS = 1;
+our $TESTING_DISK_ALLOCATION = 0;
 
 class Genome::Disk::Allocation {
     is => 'Genome::Notable',
@@ -139,13 +140,12 @@ sub create {
 
     # If no commit is on, make a dummy volume to allocate to
     if ($ENV{UR_DBI_NO_COMMIT}) {
-        if ($CREATE_DUMMY_VOLUMES_FOR_TESTING && !$params{mount_path}) {
-            Carp::cluck("Creating dummy volume.");
+        if ($CREATE_DUMMY_VOLUMES_FOR_TESTING) { # && !$params{mount_path}) {
             my $tmp_volume = Genome::Disk::Volume->create_dummy_volume(
-#                mount_path => $params{mount_path},
+                mount_path => $params{mount_path},
                 disk_group_name => $params{disk_group_name},
             );
-#            $params{mount_path} = $tmp_volume->mount_path;
+            $params{mount_path} = $tmp_volume->mount_path;
         }
     }
 
@@ -414,21 +414,24 @@ sub _get_allocation_without_lock {
     my $chosen_allocation;
     my @randomized_candidate_volumes = List::Util::shuffle(@$candidate_volumes);
     for my $candidate_volume (@randomized_candidate_volumes) {
-        if ($candidate_volume->allocated_kb + $kilobytes_requested < $candidate_volume->soft_limit_kb) {
+        if ($candidate_volume->allocated_kb + $kilobytes_requested
+                < $candidate_volume->soft_limit_kb) {
             my $candidate_allocation = $class->SUPER::create(
                 mount_path => $candidate_volume->mount_path,
                 %$parameters,
             );
-            UR::Context->commit();
+            $candidate_allocation->volume;
+            _commit_unless_testing();
 
             # Reload so we guarantee that we calculate the correct allocated_kb
             UR::Context->current->reload($candidate_volume);
-            if ($candidate_volume->allocated_kb < $candidate_volume->soft_limit_kb) {
+            if ($candidate_volume->allocated_kb
+                    < $candidate_volume->soft_limit_kb) {
                 $chosen_allocation = $candidate_allocation;
                 last;
             } else {
                 $candidate_allocation->delete();
-                UR::Context->commit();
+                _commit_unless_testing();
             }
         }
     }
@@ -486,7 +489,7 @@ sub _reallocate {
 
     $self->reallocation_time(UR::Time->now);
     $self->kilobytes_requested($actual_kb_requested);
-    UR::Context->commit();
+    _commit_unless_testing();
 
     my $volume = $self->volume;
     my $succeeded;
@@ -513,7 +516,7 @@ sub _reallocate {
     unless ($succeeded) {
         # Rollback kilobytes_requested
         $self->kilobytes_requested(List::Util::max($kb_used, $old_kb_requested));
-        UR::Context->commit();
+        _commit_unless_testing();
     }
 
     return $succeeded;
@@ -560,7 +563,6 @@ sub _move {
             $self->allocation_path),
     );
     if ($new_mount_path) {
-        Carp::cluck("creating on mount_path $new_mount_path\n");
         $creation_params{'mount_path'} = $new_mount_path;
     }
 
@@ -611,7 +613,7 @@ sub _move {
     $self->mount_path($shadow_allocation->mount_path);
     $shadow_allocation->mount_path($old_mount_path);
 
-    UR::Context->commit();
+    _commit_unless_testing();
 
     Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
 
@@ -1387,6 +1389,12 @@ sub get_allocation_for_path {
     }
 
     return $allocation;
+}
+
+sub _commit_unless_testing {
+    if ($TESTING_DISK_ALLOCATION || !$ENV{UR_DBI_NO_COMMIT}) {
+        UR::Context->commit();
+    }
 }
 
 1;

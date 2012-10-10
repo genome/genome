@@ -18,6 +18,8 @@ use_ok('Genome::Disk::Allocation') or die;
 use Genome::Disk::Allocation;
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
 $Genome::Disk::Allocation::AUTO_REMOVE_TEST_PATHS = 0;
+$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
+
 
 my $group = Genome::Disk::Group->create(
     disk_group_name => 'testing',
