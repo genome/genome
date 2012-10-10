@@ -77,6 +77,8 @@ sub execute {
         chomp;
         my %fields;
         @fields{@header_fields} = split($delim);
+        #Travis added the rsId to the marker id. This needs to be stripped
+        $fields{'x'} =~ s/(_[^ACTG]+$)//;
         if( exists($markers_to_retain{$fields{'x'}}) ) {
             print $ofh $_,"\n";
         }
