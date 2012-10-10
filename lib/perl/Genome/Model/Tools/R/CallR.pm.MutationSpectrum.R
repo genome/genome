@@ -18,6 +18,23 @@ plot_spectrum=function(spectrum_file="",output_file="",genome="",absolute_axis=T
     dev.off();
 }
 
+sequence_context_pvalue = function(p0=NULL,sample_successes=NULL,n=NULL,outfile=NULL) {
+    p0 = as.numeric(p0);
+    sample_successes = as.numeric(sample_successes);
+    n = as.numeric(n);
+    # this is a proportion test. z-score followed by standard normal distribution p-value.
+    pbar = sample_successes / n;
+    z=(pbar-p0)/sqrt(p0*(1-p0)/n);
+    pval = 2*pnorm(-abs(z),lower.tail=TRUE);
+    #return(pval);
+    cat(paste("Null hypothesis: Sample proportion is equivalent to hypothesized proportion.",sep=""),file=outfile,sep="\n");
+    cat(paste("Hypothesized Porportion (Control Proportion): ",p0,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("Sample Size: ",n,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("Sample Successes: ",sample_successes,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("Sample Proportion: ",pbar,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("P-value: ",pval,sep=""),file=outfile,sep="\n",append=T);
+}
+
 
 plot_multi_mutation_spectrum <- function(input_file,plot_title="Mutation Spectrum",output_file=NULL,plot_type="facet1",pvalue=FALSE,plot.sample.order=NULL) {
 
