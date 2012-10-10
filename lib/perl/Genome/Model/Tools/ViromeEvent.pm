@@ -324,19 +324,24 @@ sub versioned_taxonomy_dir {
 sub get_taxids_for_gis {
     my($self, $gis) = @_;
 
+    my %taxids;
+    return \%taxids if not %$gis;
+
     my $taxonomy_dir = $self->versioned_taxonomy_dir;
 
     my $gi_file = $taxonomy_dir.'/gi_taxid_nucl.dmp';
     $self->log_event('Could not get gi file for taxonomy version $version') and return
         if not -s $gi_file;
         
-    my %taxids;
     my $fh = Genome::Sys->open_file_for_reading($gi_file);
     while ( my $line = $fh->getline ) {
         my @tmp = split( /\s+/, $line);
         #tmp[0] = gi
         #tmp[1] = taxid
-        $taxids{$tmp[0]} = $tmp[1] if exists $gis->{$tmp[0]};
+        next if not exists $gis->{$tmp[0]};
+        $taxids{$tmp[0]} = $tmp[1];
+        delete $gis->{$tmp[0]};
+        last if not %$gis;
     }
     $fh->close;
     return \%taxids;

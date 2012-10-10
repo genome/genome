@@ -182,8 +182,9 @@ sub run_parse {
             $gis{$tmp[1]} = 1;
         }
     }
+    my $gis_count = scalar ( keys %gis );
     my $gi_taxids = $self->get_taxids_for_gis(\%gis);
-    $self->log_event('Attempted to get taxids for '. scalar ( keys %gis ).' gis .. got '.(scalar keys %$gi_taxids).' taxids');
+    $self->log_event("Attempted to get taxids for $gis_count gis .. got ".(scalar keys %$gi_taxids).' taxids');
 
     $out_fh->print("QueryName\tQueryLen\tAssignment\tlineage\tHit\tSignificance\n");
     $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');

@@ -183,7 +183,6 @@ sub run_parser {
     $out_fh->print("QueryName\tQueryLen\tAssignment\tlineage\tHit\tSignificance\n");
 
     my %gis;
-    $self->log_event('Getting taxids for gis');
     while ( my $result = $report->next_result ) {
         while ( my $hit = $result->next_hit ) {
             my @tmp = split(/\|/, $hit->name);
@@ -191,8 +190,9 @@ sub run_parser {
             $gis{$tmp[1]} = 1;
         }
     }
+    my $gis_count = scalar ( keys %gis );
     my $gi_taxids = $self->get_taxids_for_gis(\%gis);
-    $self->log_event('Attempted to get taxids for '. scalar ( keys %gis ).' gis .. got '.(scalar keys %$gi_taxids).' taxids');
+    $self->log_event("Attempted to get taxids for $gis_count gis .. got ".(scalar keys %$gi_taxids).' taxids');
 
     $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');
     # Go through BLAST reports one by one      
