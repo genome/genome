@@ -58,8 +58,19 @@ sub initialize_filehandles {
             die $self->error_message("sniper raw.vcf is not available under the input directory");
         }
 
-        $input = $raw_vcf;
-    }
+        my $sorted_vcf = Genome::Sys->create_temp_file_path;
+
+        my $sort_cmd = Genome::Model::Tools::Bed::ChromSort->create(
+            input => $raw_vcf,
+            output => $sorted_vcf,
+        );
+        unless ($sort_cmd->execute) {
+            $self->error_message("Couldn't sort Sniper vcf");
+            return;
+        }
+
+        $input = $sorted_vcf;
+}
 
     my $input_fh  = Genome::Sys->open_file_for_reading($input)
         or die "Failed to open input $input for reading\n";

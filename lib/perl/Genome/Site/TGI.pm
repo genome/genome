@@ -19,14 +19,6 @@ BEGIN {
     }
 }
 
-BEGIN {
-    # configure local statsd server
-    unless ($ENV{UR_DBI_NO_COMMIT}) {
-        $ENV{GENOME_STATSD_HOST} ||= 'apipe-statsd.gsc.wustl.edu';
-        $ENV{GENOME_STATSD_PORT} ||= 8125;
-    }
-};
-
 # this conflicts with all sorts of Finishing/Finfo stuff
 # ironicall it is used by Pcap stuff
 BEGIN { $INC{"UNIVERSAL/can.pm"} = 'no' };
@@ -55,8 +47,6 @@ $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD} ||= '122704720';
 $ENV{GENOME_DB_ENSEMBL_HOST} ||= 'mysql1';
 $ENV{GENOME_DB_ENSEMBL_USER} ||= 'mse';
 $ENV{GENOME_DB_ENSEMBL_PORT} ||= '3306';
-
-
 
 # Log directory
 $ENV{GENOME_LOG_DIR} ||= '/gsc/var/log/genome';

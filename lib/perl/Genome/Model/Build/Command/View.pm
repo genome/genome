@@ -63,12 +63,6 @@ class Genome::Model::Build::Command::View {
             default_value => 0,
             doc => 'Display build events.'
         },
-        notes => {
-            is => 'Boolean',
-            is_optional => 1,
-            default_value => 0,
-            doc => 'Display build notes.'
-        },
         full => {
             is => 'Boolean',
             is_optional => 1,
@@ -80,6 +74,18 @@ class Genome::Model::Build::Command::View {
             is_optional => 1,
             default_value => 0,
             doc => 'Display build inputs.'
+        },
+        logs => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 1,
+            doc => 'Display path of error logs for running, crashed, and failed steps, (requires --workflow).',
+        },
+        notes => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 0,
+            doc => 'Display build notes.'
         },
         show_input_display_names => {
             is => 'Boolean',
@@ -160,6 +166,7 @@ sub _display_build {
 
 %s
 %s
+%s
 
 EOS
 
@@ -178,6 +185,7 @@ EOS
             $self->_clean_up_timestamp($build->date_scheduled)),
         $self->_color_pair('Build Completed',
             $self->_clean_up_timestamp($build->date_completed)),
+        $self->_color_pair('Build Class', $build->class),
         $self->_color_pair('Software Revision', $build->software_revision),
         $self->_color_pair('Data Directory', $build->data_directory));
 }
@@ -245,32 +253,39 @@ sub _display_workflow {
     my $datetime_parser = DateTime::Format::Strptime->new(
             pattern => '%Y-%m-%d %H:%M:%S',
             on_error => 'croak');
-    my $failed_workflow_steps = [];
+    my $unfinished_workflow_steps = [];
     $self->_display_workflow_children($handle, $workflow, $datetime_parser,
-            $failed_workflow_steps);
+            $unfinished_workflow_steps);
 
-    my @error_log_paths;
-    my @step_names;
-    for my $failed_step (@{$failed_workflow_steps}) {
-        if($failed_step->current->can('stderr')) {
-            my $error_path = $failed_step->current->stderr || ' ';
-            if(-e $error_path) {
-                push(@error_log_paths, $error_path);
-                push(@step_names, $failed_step->name);
+    if($self->logs) {
+        my @error_log_paths;
+        my @step_names;
+        my @step_statuses;
+        for my $step (@{$unfinished_workflow_steps}) {
+            if($step->current->can('stderr')) {
+                my $error_path = $step->current->stderr || ' ';
+                if(-e $error_path) {
+                    push(@error_log_paths, $error_path);
+                    push(@step_names, $step->name);
+                    push(@step_statuses, $step->status);
+                }
             }
         }
-    }
-    if(@error_log_paths) {
-        printf $handle "\n%s\n", $self->_color('Error Logs:', 'bold');
-        for my $i (0..$#error_log_paths) {
-            my $name = $step_names[$i];
-            my $length = 22;
-            if(length($name) > $length) {
-                $name = substr($name, 0, $length-3) . "...";
+        if(@error_log_paths) {
+            printf $handle "\n%s\n", $self->_color('Error Logs:', 'bold');
+            for my $i (0..$#error_log_paths) {
+                my $status = $step_statuses[$i];
+                my $name = $step_names[$i];
+                my $length = 22;
+                if(length($name) > $length) {
+                    $name = substr($name, 0, $length-3) . "...";
+                }
+                my $log_path = $error_log_paths[$i];
+                printf $handle "%s %s %s\n", 
+                        $self->_status_color($status),
+                        justify($name, 'left', $length),
+                        $log_path;
             }
-            my $log_path = $error_log_paths[$i];
-            printf $handle "%s %s\n", justify($name, 'left', $length),
-                    $log_path;
         }
     }
 }
@@ -326,7 +341,8 @@ sub _display_workflow_child {
         $child->start_time, $child->end_time, $status, $datetime_parser);
 
     if ($self->connectors || !$self->_is_connector($child->name)) {
-        if($status eq 'failed' or $status eq 'crashed') {
+        if($status eq 'failed' or $status eq 'crashed' or
+           $status eq 'running') {
             push(@{$failed_workflow_steps}, $child);
         }
         print $handle $self->_format_workflow_child_line($child->id, $status,

@@ -104,8 +104,10 @@ sub execute {
     }
 
     my $cmd = $self->joinx_path . " vcf-annotate" . " --input-file $input_file" . " --annotation-file $annotation_file";
-    my $info_fields = " --info-fields " . join(" --info-fields ", split /:/, $self->info_fields);
-    $cmd .= $info_fields;
+    if($self->info_fields) {
+        my $info_fields = " --info-fields " . join(" --info-fields ", split /:/, $self->info_fields);
+        $cmd .= $info_fields;
+    }
     unless($self->identifiers) {
         $cmd .= " --no-identifiers";
     }
