@@ -1542,10 +1542,9 @@ sub abandon {
     $self->_unregister_software_results
         or return;
 
-    $self->add_note(
-        header_text => $header_text,
-        body_text => $body_text,
-    );
+    my %add_note_args = (header_text => $header_text);
+    $add_note_args{body_text} = $body_text if defined $body_text;
+    $self->add_note(%add_note_args);
 
     return 1;
 }
