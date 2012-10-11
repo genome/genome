@@ -160,11 +160,13 @@ sub run_parse {
         return;
     }
     my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
-    my $tax_dir = File::Temp::tempdir (CLEANUP => 1);
-    my $dbh = Bio::DB::Taxonomy->new(-source => 'flatfile',
-                                     -directory=> "$tax_dir",
-                                     -nodesfile=> $self->taxonomy_nodes_file,
-                                     -namesfile=> $self->taxonomy_names_file,);
+
+    # taxon info look up by taxid
+    my $taxon_db = $self->taxon_db;
+    if ( not $taxon_db ) {
+        $self->log_event('Failed to get taxon_db');
+        return;
+    }
 
     my $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');
     unless ($report) {
@@ -227,7 +229,7 @@ sub run_parse {
                     #    $taxID = $ref->{'taxid'};
                     #}
 		    if ( defined $taxID ) { # some gi don't have record in gi_taxid_nucl, this is for situation that has
-		        my $taxon_obj = $dbh->get_taxon(-taxonid => $taxID);
+		        my $taxon_obj = $taxon_db->get_taxon(-taxonid => $taxID);
 		        if (!(defined $taxon_obj)) {
 			    my $description .= "undefined taxon\t".$hit->name."\t".$hit->significance;
 			    $assignment{"Viruses"} = $description;
@@ -238,7 +240,7 @@ sub run_parse {
 			    # each lineage node is a Bio::Tree::NodeI object
 			    if (scalar @lineage) {				
 			        $determined = 1;
-			        $self->PhyloType(\@lineage,$hit, $best_e, $dbh, \%assignment);
+			        $self->PhyloType(\@lineage,$hit, $best_e, $taxon_db, \%assignment);
 			    }
 		        }
 		    }
