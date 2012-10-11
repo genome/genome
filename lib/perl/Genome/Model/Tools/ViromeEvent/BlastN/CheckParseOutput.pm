@@ -91,7 +91,6 @@ sub execute {
 	    }
 	}
 	else {
-	    $self->log_event("Running NT blastX parse for ".basename($blast_out_file));
 	    if ($self->run_parser($blast_out_file)) {
 		$self->log_event("Parsing ran successfully for ".basename($blast_out_file));
 	    }
