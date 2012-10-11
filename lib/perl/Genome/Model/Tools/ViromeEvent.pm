@@ -71,12 +71,11 @@ sub execute {
 }
 
 sub log_event {
-    my ($self,$str) = @_;
-    my $dir = $self->dir;
-    my $logfile = $self->logfile;
-    my @name = split("=",$self);
-    my $fh = IO::File->new(">> $logfile");
-    print $fh localtime(time) . "\t " . $name[0] . ":\t$str\n";
+    my ($self,$message) = @_;
+    my ($event) = $self->class =~ /ViromeEvent::(\S+)$/;
+    my $fh = Genome::Sys->open_file_for_appending( $self->logfile );
+    my $time = localtime(time);
+    $fh->printf("%-30s%-45s%10s\n", $time, $event, $message);
     $fh->close();
 }
 
@@ -281,7 +280,7 @@ sub run_blast_for_stage {
 	}
     }
 
-    $self->log_event( "Running $stage for $input_file_name" );
+    #$self->log_event( "Running $stage for $input_file_name" );
 
     my $blast_cmd = $blast_params->{blast_cmd};
     if ( not $blast_cmd ) {
@@ -367,6 +366,26 @@ sub taxonomy_names_file {
         if not -s $file;
 
     return $file;
+}
+
+sub taxon_db {
+    my $self = shift;
+
+    return $self->{taxon_db} if $self->{taxon_db};
+
+    my $tax_dir = Genome::Sys->create_temp_directory();
+
+    my $taxon_db = Bio::DB::Taxonomy->new(
+        -source => 'flatfile',
+        -directory => $tax_dir,
+        -nodesfile => $self->taxonomy_nodes_file,
+        -namesfile => $self->taxonomy_names_file,
+    );
+    return if not $taxon_db;
+
+    $self->{taxon_db} = $taxon_db;
+
+    return $self->{taxon_db};
 }
 
 1;

@@ -169,10 +169,14 @@ sub run_parser {
         return;
     }
     my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
-    my $dbh = Bio::DB::Taxonomy->new(-source => 'flatfile',
-                                     -directory => "$tax_dir",
-                                     -nodesfile => $self->taxonomy_nodes_file,
-				     -namesfile => $self->taxonomy_names_file,);
+
+    # taxon look up by taxid
+    my $taxon_db = $self->taxon_db;
+    if ( not $taxon_db ) {
+        $self->log_event('Failed to get taxon_db');
+        return;
+    }
+
     my $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');
 
     unless ($report) {
@@ -246,7 +250,7 @@ sub run_parser {
                     #}
 
 		    if ($taxID) { # some gi don't have record in gi_taxid_nucl, this is for situation that has
-			my $taxon_obj = $dbh->get_taxon(-taxonid => $taxID);
+			my $taxon_obj = $taxon_db->get_taxon(-taxonid => $taxID);
 			if (!(defined $taxon_obj)) {
 			    my $description .= "undefined taxon\t".$hit->name."\t".$hit->significance;
 			    $assignment{"other"} = $description;
@@ -258,7 +262,7 @@ sub run_parser {
 
 			    if (scalar @lineage) {
 				$determined = 1;
-				$self->PhyloType(\@lineage,$hit, $dbh, \%assignment);
+				$self->PhyloType(\@lineage,$hit, $taxon_db, \%assignment);
 			    }
 			}
 		    }
