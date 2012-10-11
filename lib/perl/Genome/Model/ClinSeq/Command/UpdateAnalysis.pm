@@ -41,7 +41,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _wgs_somatic_variation_pp_id => {
               is => 'Number',
-              default => '2756469',
+              default => '2762562',
         },
         wgs_somatic_variation_pp => {
               is => 'Genome::ProcessingProfile',
@@ -50,7 +50,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _exome_somatic_variation_pp_id => {
               is => 'Number',
-              default => '2756470',
+              default => '2762563',
         },
         exome_somatic_variation_pp => {
               is => 'Genome::ProcessingProfile',
@@ -102,15 +102,15 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               id_by => '_dbsnp_build_id',
               doc => 'Desired dbSNP build',
         },
-        #_previously_discovered_variations_id => {
-        #      is => 'Number',
-        #      default => '127786607',
-        #},
-        #previously_discovered_variations => {
-        #      is => 'Genome::Model::Build',
-        #      id_by => '_previously_discovered_variations_id',
-        #      doc => 'Desired previously discovered variants build',
-        #},
+        _previously_discovered_variations_id => {
+              is => 'Number',
+              default => '127786607',
+        },
+        previously_discovered_variations => {
+              is => 'Genome::Model::Build',
+              id_by => '_previously_discovered_variations_id',
+              doc => 'Desired previously discovered variants build',
+        },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
 };
@@ -402,7 +402,7 @@ sub display_inputs{
   $self->status_message("reference_sequence_build: " . $self->reference_sequence_build->__display_name__);
   $self->status_message("annotation_build: " . $self->annotation_build->name . " (" . $self->annotation_build->id . ")");
   $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__ . " (version " . $self->dbsnp_build->version . ")");
-  #$self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__);
+  $self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__);
 
   #Make sure none of the basic input models/builds have been archived before proceeding...
   if ($self->reference_sequence_build->is_archived){
@@ -952,16 +952,17 @@ sub check_somatic_variation_models{
     next unless ($model->annotation_build->id == $self->annotation_build->id);
 
     #If previously discovered variants was defined as an input to the somatic-variation model, disallow it...
-    if ($model->can("previously_discovered_variations_build")){
-      next if ($model->previously_discovered_variations_build);
-    }
+    #-> Don't do this now that previously discovered variations build is only used to annotate variants with dbSNP ids
+    #if ($model->can("previously_discovered_variations_build")){
+    #  next if ($model->previously_discovered_variations_build);
+    #}
 
     #Check for the correct version of previously discovered variants
-    #if ($model->can("previously_discovered_variations_build")){
-    #  next unless ($model->previously_discovered_variations_build->id == $self->previously_discovered_variations->id);
-    #}else{
-    #  next;
-    #}
+    if ($model->can("previously_discovered_variations_build")){
+      next unless ($model->previously_discovered_variations_build->id == $self->previously_discovered_variations->id);
+    }else{
+      next;
+    }
     
     #Make sure one of the passing normal AND tumor reference alignment models are specified as inputs to the somatic variation model
     my $tumor_model_id = $model->tumor_model->id;
@@ -1121,6 +1122,7 @@ sub create_somatic_variation_model{
   my $normal_model_id = $best_normal_model->id;
   my $somatic_variation_pp_id = $processing_profile_id;
   my $annotation_build_id = $self->annotation_build->id;
+  my $previously_discovered_variations_build_id = $self->previously_discovered_variations->id;
 
   #Make sure neither of the input models/builds has been archived before proceeding...
   my $tumor_build = $best_tumor_model->last_succeeded_build;
@@ -1135,7 +1137,7 @@ sub create_somatic_variation_model{
   }
   my @commands;
   push(@commands, "\n#Create a Somatic-Variation model as follows:");
-  push(@commands, "genome model define somatic-variation  --processing-profile=$processing_profile_id  --tumor-model=$tumor_model_id  --normal-model=$normal_model_id  --annotation-build=$annotation_build_id");
+  push(@commands, "genome model define somatic-variation  --processing-profile=$processing_profile_id  --tumor-model=$tumor_model_id  --normal-model=$normal_model_id  --annotation-build=$annotation_build_id  --previously-discovered-variations-build=$previously_discovered_variations_build_id");
   push(@commands, "genome model build start ''");
 
   foreach my $line (@commands){
