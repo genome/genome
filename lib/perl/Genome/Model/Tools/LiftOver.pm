@@ -80,16 +80,15 @@ sub execute {
     $unmapped_file = Genome::Sys->create_temp_file_path unless( defined $unmapped_file );
     ( $unmapped_file ) or die "Unable to create temporary file $!";
 
-
     # If input is annotation format, convert to a bed for liftOver, and convert back to anno later
     my $anno_headers = "";
     #### anno ####
     if( $self->input_is_annoformat ) {
         # Create temp directory for munging, and replace the source/dest files that liftOver will use
-        my $tempdir = Genome::Sys->create_temp_directory;        
+        my $tempdir = Genome::Sys->create_temp_directory;
         ( $tempdir ) or die "Unable to create temporary directory $!";
         ( $source_file, $dest_file ) = ( "$tempdir/inbed", "$tempdir/outbed" );
-        
+
         my $outFh = IO::File->new( $source_file, ">" ) or die "Can't open temp file $source_file";
         my $inFh = IO::File->new( $self->source_file ) or die "Can't open file $self->source_file";
         while( my $line = $inFh->getline ) {
@@ -121,9 +120,9 @@ sub execute {
         }
         $inFh->close;
         $outFh->close;
-
+    }
     #### maf ####
-    } elsif( $self->input_is_maf_format ) {
+    elsif( $self->input_is_maf_format ) {
         # Create temp directory for munging, and replace the source/dest files that liftOver will use
         my $tempdir = Genome::Sys->create_temp_directory;
         ( $tempdir ) or die "Unable to create temporary directory $!";
@@ -134,7 +133,7 @@ sub execute {
         while( my $line = $inFh->getline ) {
 
             # Save header lines if any, to write to output later
-            if( $line =~ m/^(#|Hugo)/ ) {
+            if( $line =~ m/^(#|Hugo_Symbol)/ ) {
                 $anno_headers .= $line;
                 next;
             }
@@ -158,8 +157,9 @@ sub execute {
         }
         $inFh->close;
         $outFh->close;
+    }
     #### vcf ####
-    } elsif( $self->input_is_vcf_format ) {
+    elsif( $self->input_is_vcf_format ) {
         # Create temp directory for munging, and replace the source/dest files that liftOver will use
         my $tempdir = Genome::Sys->create_temp_directory;
         ( $tempdir ) or die "Unable to create temporary directory $!";
@@ -172,7 +172,7 @@ sub execute {
             # Save header lines if any, to write to output later
             if( $line =~ m/^#/ ) {
                 #update reference to avoid confusion
-                if ($line =~ /##reference=/){
+                if( $line =~ /##reference=/ ){
                     $line = "##reference=Lifted with $chain_file\n";
                 }
                 $anno_headers .= $line;
@@ -190,7 +190,7 @@ sub execute {
             # something equally unlikely
             $extraFields =~ s/ /?_?/g;
 
-            # Since everything has one coordinate in VCF, we're going to treat everything like a 
+            # Since everything has one coordinate in VCF, we're going to treat everything like a
             # SNP for simplicity
             $F[1]--;
             $outFh->print( join( "\t", ( "chr$F[0]", $F[1]++, $F[1], $extraFields )) . "\n" );
@@ -218,71 +218,63 @@ sub execute {
         while( my $line = $inFh->getline ) {
             chomp( $line );
             my @F = split( "\t", $line );
-            my @bases = split( /\?\|\?/, $F[3] );
+            my @extra = split( /\?\|\?/, $F[3] );
+            my $ref = $extra[0];
 
             # Restore trailing fields
-            my $extraFields;
-            if( @bases > 2 ) {
-                $extraFields = join( "\t", @bases[2..$#bases] );
-                $extraFields =~ s/\?_\?/ /g;
-            }
+            my $post = join( "\t", @extra );
+            $post =~ s/\?_\?/ /g;
 
             $F[0] =~ s/^chr//g;
             # Increment start locus for deletions and SNVs, but not for insertions
-            ++$F[1] unless( $bases[0] =~ m/^[-0*]$/ );
-            $outFh->print( join( "\t", ( $F[0], $F[1], $F[2], $bases[0], $bases[1] )));
-            $outFh->print( "\t" . $extraFields ) if( @bases > 2 );
-            $outFh->print( "\n" );
+            ++$F[1] unless( $ref =~ m/^[-0*]$/ );
+            $outFh->print( join( "\t", ( $F[0], $F[1], $F[2], $post )) . "\n" );
         }
         $inFh->close;
         $outFh->close;
 
+    }
     # Convert back to maf format if necessary
-    } elsif( $self->input_is_maf_format ) {
+    elsif( $self->input_is_maf_format ) {
         my $outFh = IO::File->new( $self->destination_file, ">" );
         $outFh->print( $anno_headers ); # Print header lines copied from the input file
         my $inFh = IO::File->new( $dest_file ) or die "can't open file\n";
         while( my $line = $inFh->getline ) {
             chomp( $line );
             my @F = split( "\t", $line );
-
             my @extra = split( /\?\|\?/, $F[3] );
-            # Restore non-coordinate fields
-            my @bases = ($extra[7],$extra[9]);
+            my $ref = $extra[7];
 
-            my $pre = join("\t",@extra[0..3]);
+            # Restore non-coordinate fields
+            my $pre = join( "\t", @extra[0..3] );
             $pre =~ s/\?_\?/ /g;
 
-            my $post = join("\t",@extra[4..$#extra]);
+            my $post = join( "\t", @extra[4..$#extra] );
             $post =~ s/\?_\?/ /g;
 
             $F[0] =~ s/^chr//g;
             # Increment start locus for deletions and SNVs, but not for insertions
-            ++$F[1] unless( $bases[0] =~ m/^[-0*]$/ );
-            $outFh->print( join( "\t", ( $pre, $F[0], $F[1], $F[2], $post )));
-            $outFh->print( "\n" );
+            ++$F[1] unless( $ref =~ m/^[-0*]$/ );
+            $outFh->print( join( "\t", ( $pre, $F[0], $F[1], $F[2], $post )) . "\n" );
         }
         $inFh->close;
         $outFh->close;
 
+    }
     # Convert back to vcf format if necessary
-    } elsif( $self->input_is_vcf_format ) {
+    elsif( $self->input_is_vcf_format ) {
         my $outFh = IO::File->new( $self->destination_file, ">" );
         $outFh->print( $anno_headers ); # Print header lines copied from the input file
         my $inFh = IO::File->new( $dest_file ) or die "can't open file\n";
         while( my $line = $inFh->getline ) {
             chomp( $line );
             my @F = split( "\t", $line );
-
             my @extra = split( /\?\|\?/, $F[3] );
-            
-            my $post = join("\t",@extra);
+            my $post = join( "\t",@extra );
             $post =~ s/\?_\?/ /g;
 
             $F[0] =~ s/^chr//g;
-
-            $outFh->print( join( "\t", ( $F[0], $F[1], $post )));
-            $outFh->print( "\n" );
+            $outFh->print( join( "\t", ( $F[0], $F[1], $post )) . "\n" );
         }
         $inFh->close;
         $outFh->close;
