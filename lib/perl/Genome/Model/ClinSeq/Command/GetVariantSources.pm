@@ -135,19 +135,21 @@ sub execute {
     #Depending on whether the somatic variation build is for exome or wgs data, the paths will differ - this should also be determined automatically
 
     my ($indel_strelka_results_file, $indel_gatk_results_file, $indel_pindel_results_file, $indel_varscan_results_file);
-    my $indel_strelka_results_file_exome = $build_dir . "/variants/indel/strelka-0.4.6.2-bc1213eb5850cc1810af3214c95cf30d/indels.hq.bed";
+    #my $indel_strelka_results_file_exome = $build_dir . "/variants/indel/strelka-0.4.6.2-bc1213eb5850cc1810af3214c95cf30d/indels.hq.bed";
+    my $indel_strelka_results_file_exome = $build_dir . "/variants/indel/strelka-0.4.6.2-c5009c08801c3ffa834ecb28d4293d27/indels.hq.bed";
     my $indel_strelka_results_file_wgs = $build_dir . "/variants/indel/strelka-0.4.6.2-673995e8237c2c733def86d8d9b3d5a6/indels.hq.bed";
+
     $indel_strelka_results_file=&checkResultFile($indel_strelka_results_file_wgs, $indel_strelka_results_file_exome, "strelka");
     $indel_gatk_results_file = $build_dir . "/variants/indel/gatk-somatic-indel-5336-d41d8cd98f00b204e9800998ecf8427e/false-indel-v1-05fbf69c10534fd630b99e44ddf73c7f/indels.hq.bed";
     $indel_pindel_results_file = $build_dir . "/variants/indel/pindel-0.5-d41d8cd98f00b204e9800998ecf8427e/pindel-somatic-calls-v1-d41d8cd98f00b204e9800998ecf8427e/pindel-vaf-filter-v1-34c9479830c83a54e5d4f73f71e9c660/pindel-read-support-v1-d41d8cd98f00b204e9800998ecf8427e/indels.hq.bed";
     $indel_varscan_results_file = $build_dir . "/variants/indel/varscan-somatic-2.2.6-d41d8cd98f00b204e9800998ecf8427e/varscan-high-confidence-indel-v1-d41d8cd98f00b204e9800998ecf8427e/false-indel-v1-05fbf69c10534fd630b99e44ddf73c7f/indels.hq.bed";
 
 
-    my ($snv_strelka_results_file, $snv_samtools_results_file, $snv_sniper_results_file, $snv_varscan_results_file);
-    my $snv_strelka_results_file_exome = $build_dir . "/variants/snv/strelka-0.4.6.2-bc1213eb5850cc1810af3214c95cf30d/snvs.hq.bed";
+    my ($snv_strelka_results_file, $snv_sniper_results_file, $snv_varscan_results_file);
+    #my $snv_strelka_results_file_exome = $build_dir . "/variants/snv/strelka-0.4.6.2-bc1213eb5850cc1810af3214c95cf30d/snvs.hq.bed";
+    my $snv_strelka_results_file_exome = $build_dir . "/variants/snv/strelka-0.4.6.2-c5009c08801c3ffa834ecb28d4293d27/snvs.hq.bed";
     my $snv_strelka_results_file_wgs = $build_dir . "/variants/snv/strelka-0.4.6.2-673995e8237c2c733def86d8d9b3d5a6/snvs.hq.bed";
     $snv_strelka_results_file=&checkResultFile($snv_strelka_results_file_wgs, $snv_strelka_results_file_exome, "strelka");
-    $snv_samtools_results_file = $build_dir . "/variants/snv/samtools-r963-67b654281932619f0b6c5f28fae43235/snp-filter-v1-d41d8cd98f00b204e9800998ecf8427e/snvs.hq.bed";
     $snv_sniper_results_file = $build_dir . "/variants/snv/sniper-1.0.2-74a151fc61a7a2171177397f4c4f3633/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/somatic-score-mapping-quality-v1-39b60f48b6f8c9e63436a5424305e9fd/snvs.hq.bed";
     $snv_varscan_results_file = $build_dir . "/variants/snv/varscan-somatic-2.2.6-d41d8cd98f00b204e9800998ecf8427e/varscan-high-confidence-v1-d41d8cd98f00b204e9800998ecf8427e/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/snvs.hq.bed";
 
@@ -159,7 +161,6 @@ sub execute {
     my $indel_pindel_outfile = $build_outdir . "indel_pindel.bed";
     my $indel_varscan_outfile = $build_outdir . "indel_varscan.bed";
     my $snv_strelka_outfile = $build_outdir . "snv_strelka.bed";
-    my $snv_samtools_outfile = $build_outdir . "snv_samtools.bed";
     my $snv_sniper_outfile = $build_outdir . "snv_sniper.bed";
     my $snv_varscan_outfile = $build_outdir . "snv_varscan.bed";
 
@@ -168,7 +169,6 @@ sub execute {
     print "Looking for overlapping indel results between:\n$indel_results_file\n$indel_pindel_results_file\n\n";
     print "Looking for overlapping indel results between:\n$indel_results_file\n$indel_varscan_results_file\n\n";
     print "Looking for overlapping snv results between:\n$snv_results_file\n$snv_strelka_results_file\n\n";
-    print "Looking for overlapping snv results between:\n$snv_results_file\n$snv_samtools_results_file\n\n";
     print "Looking for overlapping snv results between:\n$snv_results_file\n$snv_sniper_results_file\n\n";
     print "Looking for overlapping snv results between:\n$snv_results_file\n$snv_varscan_results_file\n\n";
 
@@ -177,7 +177,6 @@ sub execute {
     my $joinx_indel_pindel_cmd = "gmt joinx intersect $indel_results_file $indel_pindel_results_file $params_string --output-file $indel_pindel_outfile";
     my $joinx_indel_varscan_cmd = "gmt joinx intersect $indel_results_file $indel_varscan_results_file $params_string --output-file $indel_varscan_outfile";
     my $joinx_snv_strelka_cmd = "gmt joinx intersect $snv_results_file $snv_strelka_results_file $params_string --output-file $snv_strelka_outfile";
-    my $joinx_snv_samtools_cmd = "gmt joinx intersect $snv_results_file $snv_samtools_results_file $params_string --output-file $snv_samtools_outfile";
     my $joinx_snv_sniper_cmd = "gmt joinx intersect $snv_results_file $snv_sniper_results_file $params_string --output-file $snv_sniper_outfile";
     my $joinx_snv_varscan_cmd = "gmt joinx intersect $snv_results_file $snv_varscan_results_file $params_string --output-file $snv_varscan_outfile";
 
@@ -186,7 +185,6 @@ sub execute {
     Genome::Sys->shellcmd(cmd => $joinx_indel_pindel_cmd);
     Genome::Sys->shellcmd(cmd => $joinx_indel_varscan_cmd);
     Genome::Sys->shellcmd(cmd => $joinx_snv_strelka_cmd);
-    Genome::Sys->shellcmd(cmd => $joinx_snv_samtools_cmd);
     Genome::Sys->shellcmd(cmd => $joinx_snv_sniper_cmd);
     Genome::Sys->shellcmd(cmd => $joinx_snv_varscan_cmd);
 
@@ -196,22 +194,37 @@ sub execute {
     &noteCaller($indel_pindel_outfile, "pindel", "indel");
     &noteCaller($indel_varscan_outfile, "varscan", "indel");
     &noteCaller($snv_strelka_outfile, "strelka", "snv");
-    &noteCaller($snv_samtools_outfile, "samtools", "snv");
     &noteCaller($snv_sniper_outfile, "sniper", "snv");
     &noteCaller($snv_varscan_outfile, "varscan", "snv");
 
     #Print out a new file containing the extra source columns
     open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
+    print INDEL_OUT "chr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tgatk\tpindel\tvarscan\tcoord_string\n";
+
     foreach my $indel (sort keys %indels){
       my @callers = sort keys %{$indel_caller{$indels{$indel}{variant_string}}};
-      print INDEL_OUT "$indels{$indel}{line}\t",join(",",@callers),"\t$indels{$indel}{coord_string}","\n";
+      my $strelka=0; my $gatk=0; my $pindel=0; my $varscan=0;
+      foreach my $caller (@callers){
+        if ($caller eq 'strelka'){$strelka=1;}
+        if ($caller eq 'gatk'){$gatk=1;}
+        if ($caller eq 'pindel'){$pindel=1;}
+        if ($caller eq 'varscan'){$varscan=1;}
+      }
+      print INDEL_OUT "$indels{$indel}{line}\t",join(",",@callers),"\t$strelka\t$gatk\t$pindel\t$varscan","\t$indels{$indel}{coord_string}","\n";
     }
     close(INDEL_OUT);
 
     open (SNV_OUT, ">$snv_outfile") || die "\n\nCould not open $snv_outfile\n\n";
+    print SNV_OUT "chr\tstart\tend\tvariant\tscore1\tscore2\tcallers\tstrelka\tsniper\tvarscan\tcoord_string\n";
     foreach my $snv (sort keys %snvs){
       my @callers = sort keys %{$snv_caller{$snvs{$snv}{variant_string}}};
-      print SNV_OUT "$snvs{$snv}{line}\t",join(",",@callers),"\t$snvs{$snv}{coord_string}","\n";
+      my $strelka=0; my $sniper=0; my $varscan=0;
+      foreach my $caller (@callers){
+        if ($caller eq 'strelka'){$strelka=1;}
+        if ($caller eq 'sniper'){$sniper=1;}
+        if ($caller eq 'varscan'){$varscan=1;}
+      }
+      print SNV_OUT "$snvs{$snv}{line}\t",join(",",@callers),"\t$strelka\t$sniper\t$varscan","\t$snvs{$snv}{coord_string}","\n";
     }
     close(INDEL_OUT);
   }
@@ -253,7 +266,7 @@ sub checkResultFile{
   }elsif (-e $exome_file){
     $result_file=$exome_file;
   }else{
-    print "$caller indel result not found\n";
+    print "$caller result not found\n";
     exit;
   }
 return($result_file);
