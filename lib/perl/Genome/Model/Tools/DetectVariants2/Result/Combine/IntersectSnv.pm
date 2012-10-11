@@ -67,39 +67,6 @@ sub _combine_variants {
         die $self->error_message;
     }
 
-    $self->_generate_vcf;
-
-    return 1;
-}
-
-sub _generate_vcf {
-    my $self = shift;
-    my $input_a_vcf = $self->input_directory_a."/snvs.vcf.gz";
-    unless(-s $input_a_vcf){
-        $self->status_message("Could not find vcf at: ".$input_a_vcf." not creating a vcf for this operation.");
-        return;
-    }
-    my $input_b_vcf = $self->input_directory_b."/snvs.vcf.gz";
-    unless(-s $input_b_vcf){
-        $self->status_message("Could not find vcf at: ".$input_b_vcf." not creating a vcf for this operation.");
-        return;
-    }
-    my $output_file = $self->temp_staging_directory."/snvs.vcf.gz";
-
-    my $merge_cmd = Genome::Model::Tools::Joinx::VcfMerge->create(
-        input_files => [ ($input_a_vcf,$input_b_vcf)],
-        output_file => $output_file,
-        merge_samples => 1,
-        clear_filters => 1,
-        use_bgzip => 1,
-        use_version => "1.6",
-        ratio_filter => "1.0,IntersectionFailure,Variant callers do not agree on this position",
-    );
-
-    unless($merge_cmd->execute){
-        die $self->error_message("Could not complete merge operation.");
-    }
-
     return 1;
 }
 
