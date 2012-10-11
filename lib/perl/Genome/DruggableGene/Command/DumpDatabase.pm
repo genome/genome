@@ -29,7 +29,7 @@ sub execute {
     my $self = shift;
     my $postgres_host = $self->postgres_host;
     my $output_file = $self->output_file;
-    system("pg_dump -f $output_file -h $postgres_host -U genome -n dgidb");
+    system("pg_dump -a -f $output_file -h $postgres_host -U genome -n dgidb");
     1;
 }
 
