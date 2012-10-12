@@ -71,6 +71,11 @@ class Genome::Model::MutationalSignificance::Command::CompileValidationList {
             doc => 'Only include genes with fdr less than this value',
             default => 1,
         },
+        regions_of_interest => {
+            is => 'Genome::FeatureList',
+            doc => 'Lists of regions to include in the validation list',
+            is_many => 1,
+        },
     ],
     has_input_output => [
         significant_variant_list => {
@@ -153,6 +158,11 @@ sub execute {
 
         if (-s $genes_to_include_bed_file) {
             push @indel_files, $genes_to_include_bed_file;
+        }
+        if ($self->regions_of_interest) {
+            foreach my $feature_list ($self->regions_of_interest) {
+                push @indel_files, $feature_list->file_path;
+            }
         }
 
         my $fh = Genome::Sys->open_file_for_writing($input_file);
