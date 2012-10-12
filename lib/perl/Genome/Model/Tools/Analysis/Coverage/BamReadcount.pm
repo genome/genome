@@ -74,8 +74,13 @@ class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
             is_optional => 1,
 	    doc => 'maximum indel size to grab readcounts for. (The larger the indel, the more skewed the readcounts due to mapping problems)',
             default => 2,
-        }
+        },
 
+        count_non_reference_reads => {
+            is => 'Boolean',
+            is_optional => 1,
+	    doc => 'if this flag is set, the tool will return the count and frequency of all non-reference reads, not just the frequency of the variant listed. Currently only works on SNVs, will skip indels'
+        },
         ]
 };
 
@@ -97,6 +102,11 @@ sub execute {
     my $output_file = $self->output_file;
     my $genome_build = $self->genome_build;
     my $min_quality_score = $self->min_quality_score;
+    my $indel_size_limit = $self->indel_size_limit;
+    my $count_non_reference_reads = $self->count_non_reference_reads;
+    if($count_non_reference_reads){
+        $indel_size_limit = 0;
+    }
 
     my $min_vaf = $self->min_vaf;
     my $max_vaf = $self->max_vaf;
@@ -105,6 +115,7 @@ sub execute {
 
     my $chrom = $self->chrom;
 
+    #grab the appropriate fasta file
     my $fasta;
     if ($genome_build eq "36") {
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
@@ -302,7 +313,7 @@ sub execute {
             (length($fields[3]) > 1) || (length($fields[4]) > 1)){
             
             #is it longer than the max length?
-            if((length($fields[3]) > $self->indel_size_limit) || (length($fields[4]) > $self->indel_size_limit)){
+            if((length($fields[3]) > $indel_size_limit) || (length($fields[4]) > $indel_size_limit)){
                 $tooLongIndels{join("\t",($fields[0],$fields[1],$fields[3],$fields[4]))} = 0;
             } else {
                 #could have more than one indel per position
@@ -380,29 +391,44 @@ sub execute {
                 #go through each base at that position, grab the correct one
                 foreach my $count_stats (@counts) {
                     my ($allele, $count, $mq, $bq) = split /:/, $count_stats;
-                    
+
                     # assume that the ref call is ACTG, not iub 
                     # (assumption looks valid in my files)
                     if ($allele eq $knownRef){
                         $ref_count += $count;
+                        next;
                     }
-                    
+
+                    # if we're counting all non-reference reads, not just the specified allele
+                    if($count_non_reference_reads){
+                        unless($allele eq $knownRef){
+                            $var_count += $count;
+                        }
+                        next;
+                    }
+                                        
                     # if this base is included in the IUB code for
                     # for the variant, (but doesn't match the ref)
                     if (matchIub($allele,$knownRef,$knownVar)){
                         $var_count += $count;
                     }
-                    
-                    if ($depth ne '0') {
-                        $var_freq = $var_count/$depth * 100;
-                    }            
-                }                        
+                        
+                }
+                if ($depth ne '0') {
+                    $var_freq = $var_count/$depth * 100;
+                }            
+
+                $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
+
+                if($count_non_reference_reads){
+                    $knownVar = "NonRef";
+                }
+                     
                 filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
                                $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
                 
-                $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
-            }
-            
+
+            }            
         }
     }    
     
