@@ -1190,27 +1190,22 @@ sub _verify_no_child_allocations {
 
     $path =~ s/\/+$//;
 
-    my $query_template = <<EOQ;
-select *
-from %s
-where
-    allocation_path like ?
-%s
-EOQ
-
+    my $meta        = $class->__meta__;
+    my $table_name  = $meta->table_name;
+    my $data_source = $meta->data_source;
+    my $owner       = $data_source->owner;
     my $query_string;
-    if (Genome::DataSource::GMSchema->isa('UR::DataSource::Oracle')) {
-        $query_string = sprintf($query_template,
-            "mg.genome_disk_allocation", "    and rownum <= 1");
-    } elsif (Genome::DataSource::GMSchema->isa('UR::DataSource::Pg')) {
-        $query_string = sprintf($query_template,
-            "genome.disk.allocation", "limit 1");
+    if ($data_source->isa('UR::DataSource::Oracle')) {
+        my $fq_table_name = join('.', $owner, $table_name);
+        $query_string = sprintf(q(select * from %s where allocation_path like ? AND rownum <= 1), $fq_table_name);
+    } elsif ($data_source->isa('UR::DataSource::Pg') || $data_source->isa('UR::DataSource::SQLite')) {
+        $query_string = sprintf(q(select * from %s where allocation_path like ? LIMIT 1), $table_name);
     } else {
         $class->error_message("Falling back on old child allocation detection behavior.");
         return !($class->_get_child_allocations($path));
     }
 
-    my $dbh = Genome::DataSource::GMSchema->get_default_handle();
+    my $dbh = $data_source->get_default_handle();
     my $query_object = $dbh->prepare($query_string);
     $query_object->bind_param(1, $path . "/%");
     $query_object->execute();

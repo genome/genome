@@ -62,9 +62,22 @@ class Genome::Disk::Volume {
 
         allocated_kb => {
             calculate_from => ['mount_path'],
-            calculate => q|
-                my $dbh = Genome::DataSource::GMSchema->get_default_handle();
-                my $query_string = 'select sum(kilobytes_requested) from mg.genome_disk_allocation where mount_path = ?';
+            calculate => q/
+                my $meta        = Genome::Disk::Allocation->__meta__;
+                my $table_name  = $meta->table_name;
+                my $data_source = $meta->data_source;
+                my $owner       = $data_source->owner;
+
+                my $query_string;
+                if ($data_source->isa('UR::DataSource::Oracle')) {
+                    my $fq_table_name = join('.', $owner, $table_name);
+                    $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $fq_table_name);
+                } elsif ($data_source->isa('UR::DataSource::Pg') || $data_source->isa('UR::DataSource::SQLite')) {
+                    $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $table_name);
+                } else {
+                    die sprintf('allocated_kb cannot be calculated for %s', $data_source->class);
+                }
+                my $dbh = $data_source->get_default_handle();
                 my $query_handle = $dbh->prepare($query_string);
                 $query_handle->bind_param(1, $mount_path);
                 $query_handle->execute();
@@ -82,7 +95,7 @@ class Genome::Disk::Volume {
                 }
 
                 return ($row_arrayref->[0] or 0);
-            |,
+            /,
         },
         old_allocated_kb => {
             calculate_from => ['total_kb', 'old_unallocated_kb'],
