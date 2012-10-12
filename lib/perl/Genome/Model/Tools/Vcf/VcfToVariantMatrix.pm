@@ -507,7 +507,7 @@ sub _write_final_output {
         confess "Failed to generate variant matrix: no data stored in temp files!";
     } elsif (@{$self->_temp_files} == 1) {
         #move the output file to overwrite the input file
-        unless(mv($$self->_temp_files->[0], $destination)) {
+        unless(mv($self->_temp_files->[0], $destination)) {
             die $!;
         }
     } else {
