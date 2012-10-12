@@ -402,7 +402,7 @@ sub display_inputs{
   $self->status_message("reference_sequence_build: " . $self->reference_sequence_build->__display_name__);
   $self->status_message("annotation_build: " . $self->annotation_build->name . " (" . $self->annotation_build->id . ")");
   $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__ . " (version " . $self->dbsnp_build->version . ")");
-  $self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__);
+  $self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__ . " (version " . $self->previously_discovered_variations->version . ")");
 
   #Make sure none of the basic input models/builds have been archived before proceeding...
   if ($self->reference_sequence_build->is_archived){
@@ -658,7 +658,7 @@ sub check_for_missing_data{
   my $model = $args{'-model'};
   my @sample_instrument_data = @{$args{'-sample_instrument_data'}};
   my @model_instrument_data = $model->instrument_data;
-  my @missing_data;
+  my @missing_model_data;
   foreach my $sample_instrument_data (@sample_instrument_data){
     next unless ($sample_instrument_data->class eq "Genome::InstrumentData::Solexa");
     my $sid = $sample_instrument_data->id;
@@ -667,15 +667,40 @@ sub check_for_missing_data{
       my $mid = $model_instrument_data->id;
       $match = 1 if ($mid == $sid);
     }
-    push(@missing_data, $sid) unless $match;
+    push(@missing_model_data, $sid) unless $match;
   }
-  if (scalar(@missing_data)){
-    my $id_string = join(",", @missing_data);
-    $self->status_message("\t\t\tWARNING -> Model: " . $model->id . " appears to be missing the following instrument data: @missing_data");
+  if (scalar(@missing_model_data)){
+    my $id_string = join(",", @missing_model_data);
+    $self->status_message("\t\t\tWARNING -> Model: " . $model->id . " appears to be missing the following instrument data: @missing_model_data");
     $self->status_message("\t\t\tYou should consider performing the following update before proceeding:");
     $self->status_message("\t\t\tgenome model instrument-data assign --instrument-data='$id_string'");
     return 0;
   }
+
+  #Does the last succeeded build actually use all the data?
+  my $last_build = $model->last_succeeded_build;
+  if ($last_build){
+    my @build_instrument_data = $last_build->instrument_data;
+    my @missing_build_data;
+    foreach my $sample_instrument_data (@sample_instrument_data){
+      next unless ($sample_instrument_data->class eq "Genome::InstrumentData::Solexa");
+      my $sid = $sample_instrument_data->id;
+      my $match = 0;
+      foreach my $build_instrument_data (@build_instrument_data){
+        my $mid = $build_instrument_data->id;
+        $match = 1 if ($mid == $sid);
+      }
+      push(@missing_build_data, $sid) unless $match;
+    }
+    if (scalar(@missing_build_data)){
+      my $id_string = join(",", @missing_build_data);
+      $self->status_message("\t\t\tWARNING -> Last succeeded build of Model: " . $model->id . " appears to be missing the following instrument data: @missing_build_data");
+      $self->status_message("\t\t\tIt is on the model so you may need to start a new build before proceeding:");
+      $self->status_message("\t\t\tgenome model build start " . $model->id);
+      return 0;
+    }
+  }
+
   return 1;
 }
 
