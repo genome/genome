@@ -9,6 +9,7 @@ use IO::File;
 use File::Basename;
 
 use Bio::SeqIO;
+use Bio::SearchIO;
 
 class Genome::Model::Tools::ViromeEvent{
     is => 'Command',
@@ -386,6 +387,26 @@ sub taxon_db {
     $self->{taxon_db} = $taxon_db;
 
     return $self->{taxon_db};
+}
+
+sub get_blast_report {
+    my ( $self, %p ) = @_;
+
+    my $file = $p{blast_out_file};
+    my $type = $p{blast_type};
+
+    my $report = new Bio::SearchIO(
+        -format      => 'blast',
+        -file        => $file,
+        -report_type => $type,
+    );
+    
+    if ( not $report ) {
+        $self->log_event('Failed to create blast report');
+        return;
+    }
+    
+    return $report;
 }
 
 1;

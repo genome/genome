@@ -160,38 +160,36 @@ sub check_completed_parse {
 
 sub run_parser {
     my ($self, $blast_out_file) = @_;
-    # cutoff value for having a good hit
+
     my $E_cutoff = 1e-10;
 
-    # create ouput file
-    my $parse_out_file = $blast_out_file;
-    $parse_out_file =~ s/out$/parsed/;
-    my $out_fh = IO::File->new("> $parse_out_file") ||
-	die "Can not create file handle for $parse_out_file";
-
+    # db to look up taxid by gi
     my $taxonomy_db = $self->taxonomy_db;
     if ( not $taxonomy_db or not -s $taxonomy_db ) {
         $self->log_event('Taxonomy db file is missing or empty');
         return;
     }
-    # look up taxid by gi
     my $taxid_db = DBI->connect("dbi:SQLite:$taxonomy_db");
 
-    # look up taxon info by taxid
+    # db to look up taxon info by taxid
     my $taxon_db = $self->taxon_db;
     if ( not $taxon_db ) {
         $self->log_event('Failed to get taxon_db');
         return;
     }
 
-    my @keep_for_tblastx = (); # query should be kept for further analysis
-    my $total_records = 0;
-    my $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'blastn');
-    unless ($report) {
-	$self->log_event("Failed to create Bio SearchIO to parse ".basename($blast_out_file));
-	return;
+    # get report from blast out file
+    my %report_params = (
+        blast_out_file => $blast_out_file,
+        blast_type     => 'blastn',
+    );
+    my $report = $self->get_blast_report( %report_params );
+    if ( not $report ) {
+        $self->log_event('Failed get blastN blast report');
+        return;
     }
-    # store taxid from dmp file
+
+    # get taxids for gis in report
     my %gis;
     while ( my $result = $report->next_result ) {
         while ( my $hit = $result->next_hit ) {
@@ -204,7 +202,21 @@ sub run_parser {
     my $gi_taxids = $self->get_taxids_for_gis(\%gis);
     $self->log_event("Attempted to get taxids for $gis_count gis .. got ".(scalar keys %$gi_taxids).' taxids');
 
-    $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'blastn');
+    # get report again .. this time to get taxon
+    $report = $self->get_blast_report( %report_params );
+    if ( not $report ) {
+        $self->log_event('Failed get blastN blast report');
+        return;
+    }
+
+    # create ouput file
+    my $parse_out_file = $blast_out_file;
+    $parse_out_file =~ s/out$/parsed/;
+    my $out_fh = Genome::Sys->open_file_for_writing( $parse_out_file );
+
+    my @keep_for_tblastx;
+    my $total_records = 0;
+
     while(my $result = $report->next_result) {# next query output
 	$total_records++;
 	my $keep_for_tblastx = 1;  my %assignment = ();   my $best_e = 100;  my $hit_count = 0;
