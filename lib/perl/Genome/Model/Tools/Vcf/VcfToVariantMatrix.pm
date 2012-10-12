@@ -9,66 +9,74 @@ use Getopt::Long;
 use FileHandle;
 use File::Copy "mv";
 use Genome::Sys;
+use Carp qw/confess/;
 
 class Genome::Model::Tools::Vcf::VcfToVariantMatrix {
     is => 'Command',
     has => [
-    output_file => {
-        is => 'Text',
-        doc => "Output variant matrix format",
-        is_input => 1,
-        is_output => 1,
-        is_optional => 0,
-    },
-    vcf_file => {
-        is => 'Text',
-        is_optional => 0,
-        doc => "Merged Multisample Vcf containing mutations from all samples",
-        is_input => 1,
-    },
-    positions_file => {
-        is => 'Text',
-        is_optional => 1,
-        doc => "Limit Variant Matrix to Sites - File format chr\\tpos\\tref\\talt",
-    },
-    bed_roi_file => {
-        is => 'Text',
-        is_optional => 1,
-        doc => "Limit Variant Matrix to Sites Within an ROI - Bed format chr\\tstart\\tstop\\tref\\talt",
-    },
-    sample_list_file => {
-        is => 'Text',
-        is_optional => 1,
-        doc => "Limit Samples in the Variant Matrix to Samples Within this File - Sample_Id should be the first column of a tab-delimited file, all other columns are ignored",
-    },
-    project_name => {
-        is => 'Text',
-        is_optional => 1,
-        doc => "Name of the project, will be inserted into output file cell A1",
-        default => "Variant_Matrix",
-    },
-    matrix_genotype_version => {
-        is => 'Text',
-        is_optional => 1,
-        valid_values => [ qw( Bases Numerical) ],
-        doc => "Whether or not to output the genotype as the number of non-reference alleles (Numeric) or the actual bases (Bases)",
-        default => "Bases",
-        is_input => 1,
-    },
-    transpose=> {
-        is => 'Boolean',
-        is_optional => 1,
-        doc => "attempt to flip the matrix so that rows  are people, columns are variants, takes more memory",
-        default=>0,
-        is_input => 1,
-    },
-    line_buffer_number => {
-        is => 'Integer',
-        is_optional => 0,
-        doc => "Number of lines to buffer before transposing and appending columns to the file. Decrease this number if you are running out of memory.",
-        default => 1000,
-    },
+        output_file => {
+            is => 'Text',
+            doc => "Output variant matrix format",
+            is_input => 1,
+            is_output => 1,
+            is_optional => 0,
+        },
+        vcf_file => {
+            is => 'Text',
+            is_optional => 0,
+            doc => "Merged Multisample Vcf containing mutations from all samples",
+            is_input => 1,
+        },
+        positions_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "Limit Variant Matrix to Sites - File format chr\\tpos\\tref\\talt",
+        },
+        bed_roi_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "Limit Variant Matrix to Sites Within an ROI - Bed format chr\\tstart\\tstop\\tref\\talt",
+        },
+        sample_list_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "Limit Samples in the Variant Matrix to Samples Within this File - Sample_Id should be the first column of a tab-delimited file, all other columns are ignored",
+        },
+        project_name => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "Name of the project, will be inserted into output file cell A1",
+            default => "Variant_Matrix",
+        },
+        matrix_genotype_version => {
+            is => 'Text',
+            is_optional => 1,
+            valid_values => [ qw( Bases Numerical) ],
+            doc => "Whether or not to output the genotype as the number of non-reference alleles (Numeric) or the actual bases (Bases)",
+            default => "Bases",
+            is_input => 1,
+        },
+        transpose=> {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => "attempt to flip the matrix so that rows  are people, columns are variants, takes more memory",
+            default=>0,
+            is_input => 1,
+        },
+        line_buffer_number => {
+            is => 'Integer',
+            is_optional => 0,
+            doc => "Number of lines to buffer before transposing and appending columns to the file. Decrease this number if you are running out of memory.",
+            default => 50000,
+        },
     ],
+    has_transient_optional => [
+        _temp_files => {
+            is => "ARRAY",
+            default => [],
+        },
+    ],
+    
 };
 
 
@@ -254,7 +262,7 @@ sub execute {                               # replace with real execution logic.
             if(scalar @finished_file >= $self->line_buffer_number) {
                 #flush buffer
                 my $transposed = $self->transpose_row(\@finished_file); #FIXME this requires two copies of the array.
-                $self->append_columns_to_file($output_file,$transposed,"\t");
+                $self->append_columns_to_file($transposed,"\t");
                 undef @finished_file;
             }
 
@@ -266,7 +274,8 @@ sub execute {                               # replace with real execution logic.
     #flush remaining lines
     if($self->transpose) {
         my $transposed = $self->transpose_row(\@finished_file); #FIXME this requires two copies of the array.
-        $self->append_columns_to_file($output_file,$transposed,"\t");
+        $self->append_columns_to_file($transposed,"\t");
+        $self->_write_final_output($output_file, "\t");
     }
     $fh->close if $fh;
     return 1;
@@ -478,33 +487,45 @@ sub transpose_row {
 
 
 sub append_columns_to_file {
-    my ($self, $file, $contents, $sep) = @_;
+    my ($self, $contents, $sep) = @_;
 
-    my $temp_output_file = "$file.append";
-    my $ofh = Genome::Sys->open_file_for_writing($temp_output_file);
-    #open input file
-    if(-s $file) {
-        my $ifh = Genome::Sys->open_file_for_reading($file);
+    my ($ofh, $path) = Genome::Sys->create_temp_file;
+    push(@{$self->_temp_files}, $path);
+    $self->status_message("Creating temp file #" .scalar(@{$self->_temp_files}). ": $path");
+    for my $line (@$contents) {
+        $ofh->print(join($sep, @$line)."\n");
+    }
 
-        while(my $line = $ifh->getline) {
-            chomp $line; #assume we're writing out the newline every single time
-            my $append_line = shift @$contents;
-            print $ofh join($sep,$line,@$append_line), "\n";
+    $ofh->close();
+
+}
+
+sub _write_final_output {
+    my ($self, $destination, $sep) = @_;
+
+    if (@{$self->_temp_files} == 0) {
+        confess "Failed to generate variant matrix: no data stored in temp files!";
+    } elsif (@{$self->_temp_files} == 1) {
+        #move the output file to overwrite the input file
+        unless(mv($$self->_temp_files->[0], $destination)) {
+            die $!;
         }
-        close($ifh);
-    }
-    else {
-        for my $line (@$contents) {
-            print $ofh join($sep, @$line),"\n";
+    } else {
+        my $ofh = Genome::Sys->open_file_for_writing($destination);
+        # Hopefully we don't need more than the max # of file descriptors here.
+        # I'm comfortable with that assumption for now.
+        my @fh = map {Genome::Sys->open_file_for_reading($_)} @{$self->_temp_files};
+        print "Merging from " . scalar(@fh) . " temp files.\n";
+        while (my @lines = map {$_->getline} @fh) {
+            my $undefs = grep {!defined $_} @lines;
+            last if ($undefs == @fh);
+            if ($undefs) {
+                confess "Inconsistent data in temporary files!";
+            }
+            chomp @lines;
+            $ofh->print(join($sep, @lines) . "\n");
         }
     }
-
-    close($ofh);
-    #move the output file to overwrite the input file
-    unless(mv($temp_output_file, $file)) {
-        die $!;
-    }
-
 }
 
 
