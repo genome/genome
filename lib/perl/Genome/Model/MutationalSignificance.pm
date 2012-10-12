@@ -44,13 +44,13 @@ BEGIN {
             somatic_variation_builds => ['input connector', 'somatic_variation_builds'],
         },
         'Genome::Model::MutationalSignificance::Command::CompileValidationList' => {
-            #significantly_mutated_gene_list => ["Genome::Model::MutationalSignificance::Command::PlayMusic", "smg_result"],
+            significantly_mutated_gene_list => $DONT_USE,
             tiers_to_use => ['input connector', "tiers_to_use"],
             significant_variant_list => ['input connector', 'significant_variant_list'],
             somatic_variation_builds => ['input connector', 'somatic_variation_builds'],
             reference_sequence_build => ['input connector', 'reference_sequence_build'],
-            #genes_to_include => ["Genome::Model::MutationalSignificance::Command::PlayMusic", "smg_result"],
             exon_bed => ["Genome::Model::MutationalSignificance::Command::CreateROI", "roi_path"],
+            regions_of_interest => ['input connector', 'regions_of_interest'],
         },
     );
     my %additional_params = (
@@ -107,6 +107,11 @@ class Genome::Model::MutationalSignificance {
         review_file_dir => {
             is => 'UR::Value::DirectoryPath',
             is_optional => 1,
+        },
+        regions_of_interest => {
+            is => 'Genome::FeatureList',
+            is_many => 1,
+            doc => 'Lists of regions to include in validation',
         },
     ],
     has_param => \@has_param,
@@ -379,27 +384,47 @@ sub _append_command_to_workflow {
                 $property_def = [$workflow->get_input_connector->name, $property_name];
             }
         }
-        if(!$property->is_optional or defined $property_def) {
-            if (!$property->is_optional and not defined $property_def) {
+        if(!$property->is_optional) {
+            if (not defined $property_def) {
                 die ("Non-optional property ".$property->property_name." is not provided\n");
             }
-            my $from_op = $self->_get_operation_for_module_name($property_def->[0], $workflow);
-            if (!$from_op) {
-                print "looking for left operation ".$property_def->[0]."\n";
-                print "left property ".$property_def->[1]."\n";
-                print "right operation ".$operation->name."\n";
-                print "right property ".$property_name."\n";
-                die ("Didn't get a from operation for the link\n");
+            $workflow = $self->_add_link($property_name, $property_def, $operation, $workflow);
+        }
+        elsif (defined $property_def) { 
+            if ($property_def->[0] eq $workflow->get_input_connector->name) {
+                if (grep {/^$property_name$/} @{$workflow->operation_type->input_properties}) {
+                    $workflow = $self->_add_link($property_name, $property_def, $operation, $workflow);
+                }
             }
-            my $link = $workflow->add_link(
-            left_operation => $from_op,
-            left_property => $property_def->[1],
-            right_operation => $operation,
-            right_property => $property_name,
-            );
-
+            else {
+                $workflow = $self->_add_link($property_name, $property_def, $operation, $workflow);
+            }
         }
     }
+    return $workflow;
+}
+
+sub _add_link {
+    my $self = shift;
+    my $property_name = shift;
+    my $property_def = shift;
+    my $operation = shift;
+    my $workflow = shift;
+
+    my $from_op = $self->_get_operation_for_module_name($property_def->[0], $workflow);
+    if (!$from_op) {
+        print "looking for left operation ".$property_def->[0]."\n";
+        print "left property ".$property_def->[1]."\n";
+        print "right operation ".$operation->name."\n";
+        print "right property ".$property_name."\n";
+        die ("Didn't get a from operation for the link\n");
+    }
+    my $link = $workflow->add_link(
+        left_operation => $from_op,
+        left_property => $property_def->[1],
+        right_operation => $operation,
+        right_property => $property_name,
+    );
     return $workflow;
 }
 

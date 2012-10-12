@@ -51,9 +51,14 @@ class Genome::Model::SomaticVariation {
             valid_values => [ 0,1,2,3],
         },
         filter_previously_discovered_variants => {
-            doc => '',
+            doc => 'Should variants be divided into previously discovered and novel variants',
             default_value => 0,
             is => 'Boolean',
+        },
+        vcf_annotate_dbsnp_info_field_string => {
+            doc => 'String that indicates which dbsnp info fields should be included in the annotated vcf',
+            is => 'Text',
+            default_value => "NO_INFO",
         },
    ],
     has => [
@@ -61,28 +66,28 @@ class Genome::Model::SomaticVariation {
             is => 'Text',
             via => 'inputs',
             to => 'value_id',
-            where => [ name => 'tumor_model', value_class_name => 'Genome::Model::ReferenceAlignment' ],
+            where => [ name => 'tumor_model', value_class_name => 'Genome::Model' ],
             is_many => 0,
             is_mutable => 1,
             is_optional => 0,
             doc => 'tumor model for somatic analysis'
         },
         tumor_model => {
-            is => 'Genome::Model::ReferenceAlignment',
+            is => 'Genome::Model',
             id_by => 'tumor_model_id',
         },
         normal_model_id => {
             is => 'Text',
             via => 'inputs',
             to => 'value_id',
-            where => [ name => 'normal_model', value_class_name => 'Genome::Model::ReferenceAlignment' ],
+            where => [ name => 'normal_model', value_class_name => 'Genome::Model' ],
             is_many => 0,
             is_mutable => 1,
             is_optional => 0,
             doc => 'normal model for somatic analysis'
         },
         normal_model => {
-            is => 'Genome::Model::ReferenceAlignment',
+            is => 'Genome::Model',
             id_by => 'normal_model_id',
         },
         annotation_build_id => {
@@ -437,13 +442,22 @@ sub map_workflow_inputs {
         die $self->error_message;
     }
 
-    my $tumor_bam = $tumor_build->whole_rmdup_bam_file;
+    my $tumor_bam;
+    if ($tumor_build->isa('Genome::Model::Build::RnaSeq')) {
+        $tumor_bam = $tumor_build->merged_alignment_result->bam_file;
+    } else {
+        $tumor_bam = $tumor_build->whole_rmdup_bam_file;
+    }
     unless (-e $tumor_bam) {
         $self->error_message("Tumor bam file $tumor_bam does not exist!");
         die $self->error_message;
     }
-
-    my $normal_bam = $normal_build->whole_rmdup_bam_file;
+    my $normal_bam;
+    if ($normal_build->isa('Genome::Model::Build::RnaSeq')) {
+        $normal_bam = $normal_build->merged_alignment_result->bam_file;
+    } else {
+        $normal_bam = $normal_build->whole_rmdup_bam_file;
+    }
     unless (-e $normal_bam) {
         $self->error_message("Normal bam file $normal_bam does not exist!");
         die $self->error_message;

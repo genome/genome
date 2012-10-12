@@ -44,6 +44,17 @@ sub sub_command_sort_position { 7 }
 sub shortcut {
     my $self = shift;
     my $build = $self->build;
+    
+    my $pp = $build->processing_profile;
+    if ($pp->transcriptome_coverage_annotation_file_basenames eq 'none') {
+        $self->status_message('The annotation file defined in the processing profile is \'none\'.  Transcriptome coverage will be skipped.');
+        return 1;
+    }
+    my $annotation_build = $build->annotation_build;
+    unless ($annotation_build) {
+        $self->status_message('Skipping TranscriptomeCoverage since annotation_build is not defined');
+        return 1;
+    }
     my $alignment_result = $build->alignment_result;
     if ($alignment_result->isa('Genome::InstrumentData::AlignmentResult::Merged')) {
         my %params = $self->params_for_result;
@@ -61,6 +72,11 @@ sub execute {
     my $self = shift;
 
     my $build = $self->build;
+    my $pp = $build->processing_profile;
+    if ($pp->transcriptome_coverage_annotation_file_basenames eq 'none') {
+        $self->status_message('The annotation file defined in the processing profile is \'none\'.  Transcriptome coverage will be skipped.');
+        return 1;
+    }
     my $annotation_build = $build->annotation_build;
     unless ($annotation_build) {
         $self->status_message('Skipping TranscriptomeCoverage since annotation_build is not defined');

@@ -99,12 +99,18 @@ library(ggplot2)
 $device_setup
 read.table("$input_file",sep="$sep",header=$header)->x
 p = x[$p_value_expression]
-o = -log10( sort(p,decreasing=F) )
-e = -log10( 1:length(o)/length(o) )
+p = sort(p[which(!is.na(p))]) #remove any NAs
+p_quantiles = sort(qchisq(p, 1, low = FALSE))
+expected_p = sort(ppoints(p))
+expected_p_quantiles = sort(qchisq(1 - expected_p, 1))
+s <- summary(lm(p_quantiles ~ 0 + expected_p_quantiles))\$coeff
+o = -log10( p )
+e = -log10( expected_p )
 plot = qplot(e,o, xlim=c(0,max(e)), ylim=c(0,max(o)), geom="point",colour=I("blue")) + stat_abline(intercept=0,slope=1)
 plot = plot + opts(title="$title")
 plot = plot + scale_x_continuous(name=expression(Expected~~-log[10](italic(p))))
 plot = plot + scale_y_continuous(name=expression(Observed~~-log[10](italic(p))))
+plot = plot + annotate("text",label=paste(sep="","list(lambda==",signif(s[1,1],5),",s.e.==",signif(s[1, 2],5),")"), x = max(e), y = 0, hjust=1, vjust=1, parse=T)
 plot
 dev.off()
 __RSCRIPT__

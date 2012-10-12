@@ -17,7 +17,7 @@
 -->
 
 <script type="text/javascript" src="/res/js/app/genome_search_query.js"></script>
-<script type="text/javascript" src="/res/js/app/genome_projectbox.js"></script>
+<script type="text/javascript" src="/res/js/app/genome_projectbox_v2.js"></script>
 
 
 <style>

@@ -36,7 +36,7 @@ EOS
 sub execute {
     my $self = shift;
     my $lib_name = basename($self->dir);
-    $self->log_event("Assignment Summary starting on $lib_name");
+
     #ASSIGNMENT SUMMARY FILE
     my $assignment_sum_file = $self->dir.'/'.$lib_name.'.AssignmentSummary';
     my $asum_fh = IO::File->new("> $assignment_sum_file") || die

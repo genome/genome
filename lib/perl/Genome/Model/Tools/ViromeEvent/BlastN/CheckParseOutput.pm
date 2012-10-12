@@ -91,7 +91,6 @@ sub execute {
 	    }
 	}
 	else {
-	    $self->log_event("Running NT blastX parse for ".basename($blast_out_file));
 	    if ($self->run_parser($blast_out_file)) {
 		$self->log_event("Parsing ran successfully for ".basename($blast_out_file));
 	    }
@@ -161,34 +160,36 @@ sub check_completed_parse {
 
 sub run_parser {
     my ($self, $blast_out_file) = @_;
-    # cutoff value for having a good hit
+
     my $E_cutoff = 1e-10;
 
-    # create ouput file
-    my $parse_out_file = $blast_out_file;
-    $parse_out_file =~ s/out$/parsed/;
-    my $out_fh = IO::File->new("> $parse_out_file") ||
-	die "Can not create file handle for $parse_out_file";
-    # get a Taxon from a Bio::DB::Taxonomy object
-    my $tax_dir = File::Temp::tempdir (CLEANUP => 1);
+    # db to look up taxid by gi
     my $taxonomy_db = $self->taxonomy_db;
     if ( not $taxonomy_db or not -s $taxonomy_db ) {
         $self->log_event('Taxonomy db file is missing or empty');
         return;
     }
-    my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
-    my $dbh = Bio::DB::Taxonomy->new(-source => 'flatfile',
-                                     -directory => "$tax_dir",
-                                     -nodesfile => $self->taxonomy_nodes_file,
-				     -namesfile => $self->taxonomy_names_file,);
-    my @keep_for_tblastx = (); # query should be kept for further analysis
-    my $total_records = 0;
-    my $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'blastn');
-    unless ($report) {
-	$self->log_event("Failed to create Bio SearchIO to parse ".basename($blast_out_file));
-	return;
+    my $taxid_db = DBI->connect("dbi:SQLite:$taxonomy_db");
+
+    # db to look up taxon info by taxid
+    my $taxon_db = $self->taxon_db;
+    if ( not $taxon_db ) {
+        $self->log_event('Failed to get taxon_db');
+        return;
     }
-    # store taxid from dmp file
+
+    # get report from blast out file
+    my %report_params = (
+        blast_out_file => $blast_out_file,
+        blast_type     => 'blastn',
+    );
+    my $report = $self->get_blast_report( %report_params );
+    if ( not $report ) {
+        $self->log_event('Failed get blastN blast report');
+        return;
+    }
+
+    # get taxids for gis in report
     my %gis;
     while ( my $result = $report->next_result ) {
         while ( my $hit = $result->next_hit ) {
@@ -197,10 +198,25 @@ sub run_parser {
             $gis{$tmp[1]} = 1;
         }
     }
+    my $gis_count = scalar ( keys %gis );
     my $gi_taxids = $self->get_taxids_for_gis(\%gis);
-    $self->log_event('Attempted to get taxids for '. scalar ( keys %gis ).' gis .. got '.(scalar keys %$gi_taxids).' taxids');
+    $self->log_event("Attempted to get taxids for $gis_count gis .. got ".(scalar keys %$gi_taxids).' taxids');
 
-    $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'blastn');
+    # get report again .. this time to get taxon
+    $report = $self->get_blast_report( %report_params );
+    if ( not $report ) {
+        $self->log_event('Failed get blastN blast report');
+        return;
+    }
+
+    # create ouput file
+    my $parse_out_file = $blast_out_file;
+    $parse_out_file =~ s/out$/parsed/;
+    my $out_fh = Genome::Sys->open_file_for_writing( $parse_out_file );
+
+    my @keep_for_tblastx;
+    my $total_records = 0;
+
     while(my $result = $report->next_result) {# next query output
 	$total_records++;
 	my $keep_for_tblastx = 1;  my %assignment = ();   my $best_e = 100;  my $hit_count = 0;
@@ -223,17 +239,14 @@ sub run_parser {
                     }
                     #if ( not defined $taxID ) {
 		    # from gi get taxonomy lineage
-                    #    my $sth = $dbh_sqlite->prepare("SELECT * FROM gi_taxid where gi = $gi");
+                    #    my $sth = $taxid_db->prepare("SELECT * FROM gi_taxid where gi = $gi");
                     #    $sth->execute();
-                    #    unless ($sth->execute()) {
-                    #        $self->log_event("Failed to get taxonomy for gi = $gi in ".basename($blast_out_file));
-                    #    }
                     #    my $ref = $sth->fetchrow_hashref();
                     #    $sth->finish();
                     #    $taxID = $ref->{'taxid'} if $ref->{'taxid'};
                     #}
 		    if (defined $taxID) { # some gi don't have record in gi_taxid_nucl
-			my $taxon_obj = $dbh->get_taxon(-taxonid => $taxID);
+			my $taxon_obj = $taxon_db->get_taxon(-taxonid => $taxID);
 			if (!(defined $taxon_obj)) {
 			    my $description = "undefined taxon ".$hit->description."\t".$hit->name."\t".$hit->significance;
 			    $assignment{"other"} = $description;
@@ -243,7 +256,7 @@ sub run_parser {
 			    my @lineage = $tree_function->get_lineage_nodes($taxon_obj);
 			    # each lineage node is a Bio::Tree::NodeI object
 			    if (scalar @lineage) {				
-				$self->PhyloType(\@lineage,$hit, $best_e, $dbh, \%assignment);
+				$self->PhyloType(\@lineage,$hit, $best_e, $taxon_db, \%assignment);
 			    }
 			}
 		    }	
@@ -277,7 +290,7 @@ sub run_parser {
     $out_fh->print("# Summary: ", scalar @keep_for_tblastx, " out of $total_records ", scalar @keep_for_tblastx/$total_records, " is saved for TBLASTX analysis.\n");
     $out_fh->close;
 
-    $dbh_sqlite->disconnect();
+    $taxid_db->disconnect();
 
     #CREATE A FASTA FILE OF ALL UNKNOWN SEQUENCES TO RUN NT BLASTX
     my $root_file_name = $blast_out_file;
@@ -309,7 +322,7 @@ sub run_parser {
 	
 ############################################
 sub PhyloType {
-    my ($self,$lineage_ref, $hit_ref, $best_e, $dbh_taxonomy, $assignment_ref) = @_;
+    my ($self,$lineage_ref, $hit_ref, $best_e, $taxon_db, $assignment_ref) = @_;
     my $description = "";
     my $node_id; 
     my $obj;
@@ -319,7 +332,7 @@ sub PhyloType {
     my $Lineage = "";
     for (my $i = 0; $i <= $#$lineage_ref; $i++) { 
 	my $temp_node_id = $lineage_ref->[$i]->id;
-	my $temp_obj = $dbh_taxonomy->get_taxon(-taxonid=>$temp_node_id);
+	my $temp_obj = $taxon_db->get_taxon(-taxonid=>$temp_node_id);
 	my $temp_name = $temp_obj->scientific_name;
 	$Lineage .= $temp_name.";";
     }					
@@ -327,13 +340,13 @@ sub PhyloType {
     # check to see if it is a human sequence
     if (scalar @{$lineage_ref} >= 4) {
 	$node_id = $lineage_ref->[3]->id;
-	$obj = $dbh_taxonomy->get_taxon(-taxonid=>$node_id);
+	$obj = $taxon_db->get_taxon(-taxonid=>$node_id);
 	$name = $obj->scientific_name;
 	if ($name eq "Metazoa") {
 	    # make assignment
 	    for (my $i = 0; $i <= $#$lineage_ref; $i++) { 
 		my $temp_node_id = $lineage_ref->[$i]->id;
-		my $temp_obj = $dbh_taxonomy->get_taxon(-taxonid=>$temp_node_id);
+		my $temp_obj = $taxon_db->get_taxon(-taxonid=>$temp_node_id);
 		my $temp_name = $temp_obj->scientific_name;
 		if ($temp_name eq "Homo") {
 		    $description .= "Homo\t".$hit_ref->name."\t".$hit_ref->significance;
@@ -345,7 +358,7 @@ sub PhyloType {
 	    if (!$assigned) {
 		for (my $i = 0; $i <= $#$lineage_ref; $i++) { 
 		    my $temp_node_id = $lineage_ref->[$i]->id;
-		    my $temp_obj = $dbh_taxonomy->get_taxon(-taxonid=>$temp_node_id);
+		    my $temp_obj = $taxon_db->get_taxon(-taxonid=>$temp_node_id);
 		    my $temp_name = $temp_obj->scientific_name;
 		    
 		    if ($temp_name eq "Mus") {
@@ -367,7 +380,7 @@ sub PhyloType {
     # check to see if it is bacteria sequence
     if ((scalar @{$lineage_ref} >= 2)&&(!$assigned)) {
 	$node_id = $lineage_ref->[1]->id;
-	$obj = $dbh_taxonomy->get_taxon(-taxonid=>$node_id);
+	$obj = $taxon_db->get_taxon(-taxonid=>$node_id);
 	$name = $obj->scientific_name;
 	if ($name eq "Bacteria") {
 	    $description = $Lineage."\t".$hit_ref->name."\t".$hit_ref->significance;
@@ -379,12 +392,12 @@ sub PhyloType {
     # check to see if it is a phage virus sequence
     if (!$assigned) {
 	$node_id = $lineage_ref->[0]->id;
-	$obj = $dbh_taxonomy->get_taxon(-taxonid=>$node_id);
+	$obj = $taxon_db->get_taxon(-taxonid=>$node_id);
 	$name = $obj->scientific_name;
 	if ($name eq "Viruses") {
 	    for (my $i = 0; $i <= $#$lineage_ref; $i++) { 
 		my $temp_node_id = $lineage_ref->[$i]->id;
-		my $temp_obj = $dbh_taxonomy->get_taxon(-taxonid=>$temp_node_id);
+		my $temp_obj = $taxon_db->get_taxon(-taxonid=>$temp_node_id);
 		my $temp_name = $temp_obj->scientific_name;
 		$description .= $temp_name.";";
 		if (($temp_name eq "Lipothrixviridae")||($temp_name eq "Caudovirales")||($temp_name eq "Corticoviridae")||($temp_name eq "Cystoviridae")||($temp_name eq "Inoviridae")||($temp_name eq "Leviviridae")||($temp_name eq "Microviridae")||($temp_name eq "Tectiviridae")||($temp_name =~ /phage/i)) {
@@ -401,7 +414,7 @@ sub PhyloType {
     $description = "";
     if (!$assigned) {
 	$node_id = $lineage_ref->[0]->id;
-	$obj = $dbh_taxonomy->get_taxon(-taxonid=>$node_id);
+	$obj = $taxon_db->get_taxon(-taxonid=>$node_id);
 	$name = $obj->scientific_name;
 	if ($name eq "Viruses") {
 	    $description = $Lineage."\t".$hit_ref->name."\t".$hit_ref->significance;
@@ -413,7 +426,7 @@ sub PhyloType {
     # check to see if it is a fungi sequence
     if ((scalar @{$lineage_ref} >= 4)&&(!$assigned)) {
 	$node_id = $lineage_ref->[3]->id;
-	$obj = $dbh_taxonomy->get_taxon(-taxonid=>$node_id);
+	$obj = $taxon_db->get_taxon(-taxonid=>$node_id);
 	$name = $obj->scientific_name;
 	if ($name eq "Fungi") {
 	    $description = $Lineage."\t".$hit_ref->name."\t".$hit_ref->significance;

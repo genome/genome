@@ -150,6 +150,11 @@ sub accumulated_expression_directory {
     return $self->data_directory . '/expression';
 }
 
+sub merged_alignment_result {
+    my $self = shift;
+    return $self->alignment_result;
+}
+
 sub alignment_result {
     my $self = shift;
 

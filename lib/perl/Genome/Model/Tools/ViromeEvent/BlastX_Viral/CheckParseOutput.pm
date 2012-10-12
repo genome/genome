@@ -144,15 +144,6 @@ sub run_parse {
 
     my $E_cutoff = 1e-5;
 
-    my $parse_out_file = $blast_out_file;
-    $parse_out_file =~ s/out$/parsed/;
-
-    my $out_fh = IO::File->new("> $parse_out_file") ||
-	die "Can not create file handle for $parse_out_file";
-
-    my @unassigned = (); # query should be kept for further analysis
-    my $total_records = 0;
-
     # get a Taxon from a Bio::DB::Taxonomy object
     my $taxonomy_db = $self->taxonomy_db;
     if ( not $taxonomy_db or not -s $taxonomy_db ) {
@@ -160,18 +151,24 @@ sub run_parse {
         return;
     }
     my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
-    my $tax_dir = File::Temp::tempdir (CLEANUP => 1);
-    my $dbh = Bio::DB::Taxonomy->new(-source => 'flatfile',
-                                     -directory=> "$tax_dir",
-                                     -nodesfile=> $self->taxonomy_nodes_file,
-                                     -namesfile=> $self->taxonomy_names_file,);
 
-    my $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');
-    unless ($report) {
-	$self->log_event("Failed to create Bio SearchIO to parse ".basename($blast_out_file));
-	return;
+    # taxon info look up by taxid
+    my $taxon_db = $self->taxon_db;
+    if ( not $taxon_db ) {
+        $self->log_event('Failed to get taxon_db');
+        return;
     }
-    $out_fh->print("QueryName\tQueryLen\tAssignment\tlineage\tHit\tSignificance\n");
+
+    # get report from blast out file
+    my %report_params = (
+        blast_out_file => $blast_out_file,
+        blast_type     => 'tblastx',
+    );
+    my $report = $self->get_blast_report( %report_params );
+    if ( not $report ) {
+        $self->log_event('Failed get blastN blast report');
+        return;
+    }
 
     # store taxid from dmp file
     my %gis;
@@ -182,11 +179,26 @@ sub run_parse {
             $gis{$tmp[1]} = 1;
         }
     }
+    my $gis_count = scalar ( keys %gis );
     my $gi_taxids = $self->get_taxids_for_gis(\%gis);
-    $self->log_event('Attempted to get taxids for '. scalar ( keys %gis ).' gis .. got '.(scalar keys %$gi_taxids).' taxids');
+    $self->log_event("Attempted to get taxids for $gis_count gis .. got ".(scalar keys %$gi_taxids).' taxids');
 
+    # get report again .. this time to get taxon
+    $report = $self->get_blast_report( %report_params );
+    if ( not $report ) {
+        $self->log_event('Failed get blastN blast report');
+        return;
+    }
+
+    # output blast parse to file
+    my $parse_out_file = $blast_out_file;
+    $parse_out_file =~ s/out$/parsed/;
+    my $out_fh = Genome::Sys->open_file_for_writing( $parse_out_file );
     $out_fh->print("QueryName\tQueryLen\tAssignment\tlineage\tHit\tSignificance\n");
-    $report = new Bio::SearchIO(-format => 'blast', -file => $blast_out_file, -report_type => 'tblastx');
+
+    my @unassigned = ();
+    my $total_records = 0;
+
     # Go through BLAST reports one by one      
     while(my $result = $report->next_result) {# next query output
         $total_records++;
@@ -226,7 +238,7 @@ sub run_parse {
                     #    $taxID = $ref->{'taxid'};
                     #}
 		    if ( defined $taxID ) { # some gi don't have record in gi_taxid_nucl, this is for situation that has
-		        my $taxon_obj = $dbh->get_taxon(-taxonid => $taxID);
+		        my $taxon_obj = $taxon_db->get_taxon(-taxonid => $taxID);
 		        if (!(defined $taxon_obj)) {
 			    my $description .= "undefined taxon\t".$hit->name."\t".$hit->significance;
 			    $assignment{"Viruses"} = $description;
@@ -237,7 +249,7 @@ sub run_parse {
 			    # each lineage node is a Bio::Tree::NodeI object
 			    if (scalar @lineage) {				
 			        $determined = 1;
-			        $self->PhyloType(\@lineage,$hit, $best_e, $dbh, \%assignment);
+			        $self->PhyloType(\@lineage,$hit, $best_e, $taxon_db, \%assignment);
 			    }
 		        }
 		    }

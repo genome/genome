@@ -10,8 +10,6 @@ use POSIX qw(ceil);
 use File::Copy;
 use Carp qw(confess);
 
-use Genome::Utility::Instrumentation;
-
 use warnings;
 use strict;
 
@@ -982,9 +980,6 @@ sub _compute_alignment_metrics {
       $self->proper_paired_end_base_count ($res->{proper_paired_end_bp});
       $self->singleton_read_count         ($res->{singleton});
       $self->singleton_base_count         ($res->{singleton_bp});
-
-      Genome::Utility::Instrumentation::inc('alignment_result.read_count',
-          $self->total_read_count);
     }
 
     #Collect extra metrics for retiring eland for now, this might move to

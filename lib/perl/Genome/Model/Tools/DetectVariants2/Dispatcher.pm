@@ -470,7 +470,13 @@ sub generate_workflow {
             @output_properties
         ],
     );
-    $workflow_model->log_dir($self->output_directory);
+
+    my $log_dir = $self->output_directory;
+    if(Workflow::Model->parent_workflow_log_dir) {
+        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    }
+
+    $workflow_model->log_dir($log_dir);
     for my $detector (keys %$plan) {
         # Get the hashref that contains all versions to be run for a detector
         my $detector_hash = $plan->{$detector};

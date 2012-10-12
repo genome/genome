@@ -163,6 +163,8 @@ sub execute{
                 }
                 $in->close;
                 $output->close;
+                my $rm_cmd = "rm -f ".$annotation_params{output_file};
+                `$rm_cmd`;
             }
 
             my %upload_params = (
@@ -201,14 +203,16 @@ sub execute{
             for my $key (keys(%vcf_files)) {
                 my $variant_file = $vcf_files{$key};
                 my $output_file = $variant_file.".annotated.vcf.gz";
-                $output_file = s/vcf.gz.//;
-                my $info_string = "dbSNPBuildID=dbSNPBuildID";
+                $output_file =~ s/vcf.gz.//;
+                my $info_string = $build->processing_profile->vcf_annotate_dbsnp_info_field_string eq "NO_INFO" ? "" : $build->processing_profile->vcf_annotate_dbsnp_info_field_string;
+                my $info = $info_string eq "" ? 0 : 1;
                 my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->execute(
                     input_file=> $variant_file,
                     annotation_file=>$annotation_vcf,
                     output_file=>$output_file,
                     use_bgzip=>1,
                     info_fields=>$info_string,
+                    info => $info,
                     use_version => $self->joinx_version,
                 ) || die "Failed to execute Joinx Vcf annotation using db: $annotation_vcf";
                 $self->status_message("Successfully annotated VCF with information from $annotation_vcf");

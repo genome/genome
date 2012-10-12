@@ -52,19 +52,42 @@ sub _sync_database {
 
     # fork if we don't skip.
     my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES}); 
-    my $pid = ( $skip_postgres ? $$ : UR::Context::Process->fork());
+	my $use_postgres = !$skip_postgres;
+	
+	
 
+	my ($pg_signal_reader, $pg_signal_writer);
+
+	my $pid;
+	
+	if ($use_postgres) {
+		pipe($pg_signal_reader, $pg_signal_writer);
+		$pid = UR::Context::Process->fork();
+	} else {
+		$pid = $$;
+	}
+	
     if ($pid) {
+		# we're in the parent, close the reader.
+		if ($use_postgres) {
+			close($pg_signal_reader);
+			$pg_signal_writer->autoflush(1);
+		}
+		
         my $sync_time_start = Time::HiRes::time();
         my $oracle_sync_rv = Genome::DataSource::GMSchemaOracle->_sync_database(@_);
+
         my $sync_time_duration = Time::HiRes::time() - $sync_time_start;
         unless ($oracle_sync_rv) {
             Carp::confess "Could not sync to oracle!";
         }
-        if (!$skip_postgres) {
+        if ($use_postgres) {
             log_commit_time('oracle',$sync_time_duration);
             waitpid($pid, -1);
-        }
+			
+			print $pg_signal_writer("1\n");
+			close($pg_signal_writer);
+        }		
         return 1;
     } elsif (defined $pid) {
         # Fork twice so parent (process doing Oracle commit) doesn't wait for child
@@ -77,6 +100,14 @@ sub _sync_database {
             # Using POSIX exit prevents END and DESTROY blocks from executing.
             POSIX::_exit(0);
         }
+
+        # close this to stop us from blocking on the read even when our parent exits.
+        close($pg_signal_writer);
+
+        # builds will bomb out unless we tell POE that we forked.
+        eval {
+                POE::Kernel->has_forked();
+        };
     
         # Turtles all the way down... the logging logic can potentially bomb and emit warnings that the user
         # shouldn't see, so eval everything!
@@ -85,16 +116,24 @@ sub _sync_database {
             local *STDERR;
             open STDERR, '>', \$stderr;
             my $sync_time_start = Time::HiRes::time();
+			
             eval {
                 $DB::single = 1;
+				my $pg_commit_rv;
                 my $pg_sync_rv = Genome::DataSource::PGTest->_sync_database(@_);
-                my $pg_commit_rv = Genome::DataSource::PGTest->commit;
+				
+												
+				my $pg_signal = <$pg_signal_reader>;
+				if (defined $pg_signal) {
+					$pg_commit_rv = Genome::DataSource::PGTest->commit;
+				}
             };
             my $sync_time_duration = Time::HiRes::time() - $sync_time_start;
             if ($stderr ne '' || $@) {
                 my $error = '';
                 $error .= "EXCEPTION:" . $@ if $@;
                 $error .= "STDERR: " . $stderr if $stderr;
+				print $error, "\n";
                 my $log_string = create_log_message($error);
                 my $log_fh = open_error_log();
                 # If we can't get a file handle to the log file, no worries. Just continue without making a peep.

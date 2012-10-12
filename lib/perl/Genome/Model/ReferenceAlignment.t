@@ -37,9 +37,8 @@ unless ($last_complete_build->id == $build_id) {
 }
 
 my $data_directory = $m->complete_build_directory;
-#my $expected = '/gscmnt/sata821/info/model_data/2771359026/build96402993';
-my $expected ='/gscmnt/sata905/info/model_data/2771359026/build97848505';
-is($data_directory, $expected, "resolved data directory");  # FIX WHEN WE SWITCH MODELS
+my $expected ='model_data/2771359026/build97848505';
+like($data_directory, qr/$expected$/, "resolved data directory");  # FIX WHEN WE SWITCH MODELS
 
 my $f = $m->accumulated_alignments_directory();
 is($f, "$data_directory/alignments", "found alignments directory");

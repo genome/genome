@@ -1518,6 +1518,8 @@ sub _verify_build_is_not_abandoned_and_set_status_to {
 
 sub abandon {
     my $self = shift;
+    my $header_text = shift || 'Build Abandoned';
+    my $body_text = shift;
 
     my $status = $self->status;
     if ($status && $status eq 'Abandoned') {
@@ -1540,9 +1542,9 @@ sub abandon {
     $self->_unregister_software_results
         or return;
 
-    $self->add_note(
-        header_text => 'Build Abandoned',
-    );
+    my %add_note_args = (header_text => $header_text);
+    $add_note_args{body_text} = $body_text if defined $body_text;
+    $self->add_note(%add_note_args);
 
     return 1;
 }

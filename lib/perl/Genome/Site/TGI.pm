@@ -11,6 +11,7 @@ BEGIN {
         $ENV{GENOME_SYS_SERVICES_MEMCACHE} ||= 'imp-apipe.gsc.wustl.edu:11211';
         $ENV{GENOME_SYS_SERVICES_SOLR} ||= 'http://solr:8080/solr';
     }
+	
 }
 
 BEGIN {
@@ -20,12 +21,52 @@ BEGIN {
 }
 
 BEGIN {
-    # configure local statsd server
-    unless ($ENV{UR_DBI_NO_COMMIT}) {
-        $ENV{GENOME_STATSD_HOST} ||= 'apipe-statsd.gsc.wustl.edu';
-        $ENV{GENOME_STATSD_PORT} ||= 8125;
-    }
-};
+	if (defined $ENV{GENOME_QUERY_POSTGRES}) {
+		no warnings;
+		use UR::Context;
+		use UR::DataSource::Pg;
+		use Workflow;
+		*UR::Context::resolve_data_sources_for_class_meta_and_rule_genome_filtered = \&UR::Context::resolve_data_sources_for_class_meta_and_rule;;
+		*UR::Context::resolve_data_sources_for_class_meta_and_rule = \&Genome::Site::TGI::resolve_data_sources_for_class_meta_and_rule;
+	
+		*UR::Object::Type::table_name_filtered = \&UR::Object::Type::table_name;
+		*UR::Object::Type::table_name = \&Genome::Site::TGI::table_name_patch;
+		use warnings;
+	}
+}
+
+sub table_name_patch {
+	my $self = shift;
+
+	if (@_) {
+		return $self->table_name_filtered(@_);
+	} else {
+		my $table_name = $self->table_name_filtered;
+		my $mapped_table_name = Genome::DataSource::Main->postgres_table_name_for_oracle_table(lc($table_name)) || 
+								Workflow::DataSource::InstanceSchemaPostgres->postgres_table_name_for_oracle_table(lc($table_name));
+	
+		if ($mapped_table_name) {
+			$table_name =$mapped_table_name;
+		} 
+		return $table_name;
+	}
+
+}
+
+sub resolve_data_sources_for_class_meta_and_rule {
+	my $context = shift; 
+	my $data_source = $context->resolve_data_sources_for_class_meta_and_rule_genome_filtered(@_);
+
+	if ($data_source) {
+		if ($data_source->isa('Genome::DataSource::GMSchema')) {
+			$data_source = Genome::DataSource::PGTest->get();
+		} elsif ($data_source->isa('Workflow::DataSource::InstanceSchema')) {
+			$data_source = Workflow::DataSource::InstanceSchemaPostgres->get();
+		}
+	}
+		
+	return $data_source;
+}
 
 # this conflicts with all sorts of Finishing/Finfo stuff
 # ironicall it is used by Pcap stuff
@@ -55,8 +96,6 @@ $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD} ||= '122704720';
 $ENV{GENOME_DB_ENSEMBL_HOST} ||= 'mysql1';
 $ENV{GENOME_DB_ENSEMBL_USER} ||= 'mse';
 $ENV{GENOME_DB_ENSEMBL_PORT} ||= '3306';
-
-
 
 # Log directory
 $ENV{GENOME_LOG_DIR} ||= '/gsc/var/log/genome';
