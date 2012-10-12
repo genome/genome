@@ -123,6 +123,7 @@ those tools.
  Edward Belter
  Paul Bender
  Anthony Brummett
+ Mark Burnett
  Todd C. Carter
  Matthew Callaway
  C.J. Carey
@@ -144,6 +145,7 @@ those tools.
  Xian Fan
  Ian Ferguson
  Malachi Griffith
+ Obi Griffith
  Chris Harris
  Amy Hawkins
  Todd Hepler
@@ -173,6 +175,7 @@ those tools.
  Josh McMichael
  Rick Meyer
  Thomas Mooney
+ David Morton
  William Nash
  Nathan Nutter
  Ben Oberkfell
