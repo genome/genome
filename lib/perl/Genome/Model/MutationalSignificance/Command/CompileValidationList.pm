@@ -23,10 +23,6 @@ class Genome::Model::MutationalSignificance::Command::CompileValidationList {
             doc => 'A list of tiers to be included in the variant list',
             default_value => [1],
         },
-        #genes_to_include => {
-        #    type => 'Path',
-        #    doc => 'A list of genes to include in the validation list',
-        #},
         exon_bed => {
             type => 'Path',
             doc => 'A bed file containing the coordinates of genes that may be of interest',
@@ -76,6 +72,11 @@ class Genome::Model::MutationalSignificance::Command::CompileValidationList {
             doc => 'Lists of regions to include in the validation list',
             is_many => 1,
         },
+        gene_black_lists => {
+            is => 'File',
+            doc => 'Lists of genes to exclude from the validation list.  Gene symbols must match symbols in annotation file',
+            is_many => 1,
+        },
     ],
     has_input_output => [
         significant_variant_list => {
@@ -88,6 +89,17 @@ class Genome::Model::MutationalSignificance::Command::CompileValidationList {
 sub execute {
     my $self = shift;
     my $genes_to_include_bed_file = Genome::Sys->create_temp_file_path;
+    my %black_list;
+    if ($self->gene_black_lists) {
+        foreach my $list ($self->gene_black_lists) {
+            my $in = Genome::Sys->open_file_for_reading($list);
+            while (my $line = <$in>) {
+                chomp $line;
+                my @fields = split /\t/, $line;
+                $black_list{$fields[0]} = 1;
+            }
+        }
+    }
     if ($self->significantly_mutated_gene_list) {
         my $fdr_cutoff = $self->fdr_cutoff;
         my $fh = Genome::Sys->open_file_for_reading($self->significantly_mutated_gene_list);
@@ -104,7 +116,7 @@ sub execute {
                 }
                 next;
             }
-            if ($fields[$headers{"FDR LRT"}] <= $fdr_cutoff) {
+            if ($fields[$headers{"FDR LRT"}] <= $fdr_cutoff and !$black_list{$fields[$headers{"#Gene"}]}) {
                 $gene_hash{$fields[0]} = 1;
             }
         }
@@ -132,7 +144,6 @@ sub execute {
             return;
         }
 
-        my $sorted_merged_gene_bed = Genome::Sys->create_temp_file_path;
         my $merge_rv = Genome::Model::Tools::BedTools::Merge->execute(
             input_file => $sorted_gene_bed,
             output_file => $genes_to_include_bed_file,
@@ -150,9 +161,33 @@ sub execute {
 
         foreach my $build ($self->somatic_variation_builds) {
             foreach my $tier ($self->tiers_to_use){
-                push @snv_files, $build->data_set_path("effects/snvs.hq.tier$tier",$tier,"annotated.top");
-                push @indel_files, $build->data_set_path("effects/indels.hq.tier$tier",$tier,"annotated.top");
-                push @sv_files, $build->data_set_path("effects/svs.hq.tier$tier",$tier,"annotated.top");
+                my $anno = $build->data_set_path("effects/snvs.hq.tier$tier",1,"annotated.top");
+                if (-e $anno) {
+                    my $filtered_file = $self->_filtered_file_based_on_black_list(\%black_list, $anno);
+                    push @snv_files, $filtered_file;
+                }
+                else {#TODO: need to shift to 1-based start?
+                    my $bed = $build->data_set_path("effects/snvs.hq.novel.tier$tier",2,"bed");
+                    push @snv_files, $bed;
+                }
+                $anno = $build->data_set_path("effects/indels.hq.tier$tier",1,"annotated.top");
+                if (-e $anno) {
+                    my $filtered_file = $self->_filtered_file_based_on_black_list(\%black_list, $anno);
+                    push @indel_files, $filtered_file;
+                }
+                else {
+                    my $bed = $build->data_set_path("effects/indels.hq.novel.tier$tier",2,"bed");
+                    push @snv_files, $bed;
+                }
+                $anno = $build->data_set_path("effects/svs.hq.tier$tier",1,"annotated.top");
+                if (-e $anno) {
+                    my $filtered_file = $self->_filtered_file_based_on_black_list(\%black_list, $anno);
+                    push @sv_files, $anno;
+                }
+                else {
+                    my $bed = $build->data_set_path("effects/svs.hq.novel.tier$tier",2,"bed");
+                    push @sv_files, $bed;
+                }
             }
         }
 
@@ -208,5 +243,22 @@ sub execute {
     return 1;
 }
 
+sub _filtered_file_based_on_black_list {
+    my ($self, $hash, $file_name) = @_;
+    my ($filtered_fh, $filtered_file) = Genome::Sys->create_temp_file;
+    my $anno_in = Genome::Sys->open_file_for_reading($file_name);
+    while(my $line = <$anno_in>) {
+        chomp $line;
+        if ($line =~ /^#/) {
+            next;
+        }
+        my @fields = split /\t/, $line;
+        unless ($hash->{$fields[6]}) {
+            $filtered_fh->print($line."\n");
+        }
+    }
+    $filtered_fh->close;
+    return $filtered_file;
+}
 1;
 
