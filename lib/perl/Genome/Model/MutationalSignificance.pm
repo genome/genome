@@ -51,6 +51,7 @@ BEGIN {
             reference_sequence_build => ['input connector', 'reference_sequence_build'],
             exon_bed => ["Genome::Model::MutationalSignificance::Command::CreateROI", "roi_path"],
             regions_of_interest => ['input connector', 'regions_of_interest'],
+            gene_black_lists => ['input connector', 'gene_black_lists'],
         },
     );
     my %additional_params = (
@@ -112,6 +113,11 @@ class Genome::Model::MutationalSignificance {
             is => 'Genome::FeatureList',
             is_many => 1,
             doc => 'Lists of regions to include in validation',
+        },
+        gene_black_lists => {
+            is => 'File',
+            is_many => 1,
+            doc => 'Lists of genes to exclude from the validation.  One gene symbol per line.  Gene symbols must match symbols in annotation files',
         },
     ],
     has_param => \@has_param,
