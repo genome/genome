@@ -43,7 +43,7 @@ sub execute {
         my $build_id = $build->id;
         $self->_total_command_count($self->_total_command_count + 1);
 
-        my ($alloc_count, $unarchived_count);
+        my ($alloc_count, $unarchived_count) = (0, 0);
 
         my $transaction = UR::Context::Transaction->begin();
         my $successful = eval {
