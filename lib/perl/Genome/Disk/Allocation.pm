@@ -683,6 +683,10 @@ sub _archive {
             confess "Allocation path $current_allocation_path does not exist!";
         }
 
+        unless (Genome::Sys->recursively_validate_directory_for_read_write_access($current_allocation_path)) {
+            confess "Some files in allocation directory $current_allocation_path are not readable or writable, this must be fixed before archiving can continue";
+        }
+
         my $allocation_size = Genome::Sys->disk_usage_for_path($current_allocation_path);
         if (!$ENV{UR_DBI_NO_COMMIT} and $allocation_size < 1048576) { # Must be greater than 1GB to be archived
             confess "Total size of files at path $current_allocation_path is only $allocation_size, which is not greater than 1GB!";
