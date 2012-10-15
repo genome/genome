@@ -27,6 +27,10 @@ sub auth {
 sub owner {
     "MG";}
 
+sub _my_data_source_id {
+    "Genome::DataSource::GMSchema";
+}
+
 
 sub table_and_column_names_are_upper_case { 1; }
 
@@ -158,6 +162,22 @@ sub _resolve_class_name_for_table_name_fixups {
         }
     }
     return @words;
+}
+
+sub _lookup_class_for_table_name {
+    my $self = shift;
+    my $table_name = shift;
+    
+    my $class = $self->SUPER::_lookup_class_for_table_name($table_name);
+    
+    if (!$class && $ENV{GENOME_QUERY_POSTGRES}) {
+        my %ora_map = Genome::DataSource::Main->oracle_to_postgres_table_mapping;
+        my $mapped = $ora_map{lc($table_name)};
+        print STDERR "OK falling back to $mapped\n";
+
+        $class = $self->SUPER::_lookup_class_for_table_name($mapped);
+    }
+    return $class;
 }
 
 

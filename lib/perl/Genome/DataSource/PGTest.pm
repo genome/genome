@@ -15,6 +15,10 @@ class Genome::DataSource::PGTest {
     ],
 };
 
+sub _my_data_source_id {
+    'Genome::DataSource::GMSchema';
+}
+
 sub _ds_tag {
     'Genome::DataSource::PGTest';
 }
