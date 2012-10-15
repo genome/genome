@@ -34,10 +34,9 @@ our %EULER_PARAMS = (
 );
 
 class Genome::Model::Tools::Sx::Trim::EulerEc {
-    is => 'Genome::Model::Tools::Sx::Base',
+    is => 'Genome::Model::Tools::Sx::ExternalCmdBase',
     has => [
         %EULER_PARAMS,
-        _tmpdir => { is_transient => 1, is_optional => 1 },
         save_files => { is => 'Boolean', is_optional => 1, doc => 'Save euler output files' },
     ],
 };
@@ -53,7 +52,7 @@ sub execute {
     my $cwd = cwd();
 
     #run in tmp directory
-    $self->_tmpdir( Genome::Sys->base_temp_directory );
+    $self->_tmpdir;
     for my $set ( 1 .. 2 ) { #run fwd/rev in separate dirs
         Genome::Sys->create_directory( $self->_tmpdir."/$set" );
     }
