@@ -13,14 +13,14 @@ use File::Spec;
 class Genome::Model::Build::ImportedAnnotation {
     is => 'Genome::Model::Build',
     has => [
-        version => { 
+        version => {
             via => 'inputs',
             is => 'Text',
-            to => 'value_id', 
-            where => [ name => 'version', value_class_name => 'UR::Value'], 
-            is_mutable => 1 
+            to => 'value_id',
+            where => [ name => 'version', value_class_name => 'UR::Value'],
+            is_mutable => 1
         },
-        ensembl_version => { 
+        ensembl_version => {
             is => 'Text',
             calculate_from => 'version',
             calculate => q|
@@ -220,10 +220,14 @@ sub get_or_create_roi_bed {
             if ($params{flank_size} and $params{flank_size} > 0 ) {
                 $name = $name."_".$params{flank_size}."bp-flank";
             }
+
+            if ($params{print_reading_frame}) {
+                $name = $name."_with-reading-frame";
+            }
     }
 
-    my $roi = Genome::FeatureList->get(subject => $self,
-        name => $name);
+    # If the same params were requested before, retreive the existing feature list
+    my $roi = Genome::FeatureList->get(subject => $self, name => $name);
     if ($roi) {
         return $roi;
     }
@@ -244,53 +248,55 @@ sub get_or_create_roi_bed {
             my $stop = $fields[10];
             my $gene_id = $fields[37];
             my $transcript_id = $fields[30];
-            my $structure_type = $fields[8];
+            my $feature_type = $fields[8];
             my $ordinal = $fields[11];
-            my $strand;
 
+            # Skip anything with a chrom name that's not in the reference sequence
             unless ($chrom_stop{$chrom}) {
                 next;
             }
+
+            # If the strand is anything but +1 or -1, let's assume that it's fwd
+            my $strand;
             if ($fields[32] eq '-1') {
                 $strand = 'rev';
             }
             else {
                 $strand = 'fwd';
             }
-            my $description = join(":", $gene_id, $transcript_id,
-                $structure_type, $ordinal,
-                $strand);
+            # Find the reading frame (0, 1, or 2) of this isoform at the start of this feature
+            my $reading_frame = $fields[17] % 3;
+            # Describe this feature in the format "PTEN:ENST00000371953:cds_exon:3:fwd"
+            my $description = join(":", $gene_id, $transcript_id, $feature_type, $ordinal, $strand);
+            $description .= ":$reading_frame" if (%params and $params{print_reading_frame});
 
             if (%params) {
                 if ($params{one_based}) {
                     $start++;
                 }
-                if ($exclude_patterns) {
-                    if ($chrom =~ /$exclude_patterns/) {
-                        next;
-                    }
+                if ($exclude_patterns and $chrom =~ /$exclude_patterns/) {
+                    next;
                 }
-                if ($include_patterns) {
-                    if (!($structure_type =~ /$include_patterns/)) {
-                        next;
-                    }
+                if ($include_patterns and $feature_type !~ /$include_patterns/) {
+                    next;
                 }
                 if ($params{condense_feature_name}) {
                     $description = $gene_id;
                 }
                 if ($params{flank_size} and $params{flank_size} > 0) {
+                    $start -= $params{flank_size};
+                    $stop += $params{flank_size};
                     if ($start > $chrom_stop{$chrom}) {
                         next;
                     }
-                    $start -= $params{flank_size};
-                    $stop += $params{flank_size};
-                    $start = 1 if ($start < 1);
+                    $start = 0 if ($start < 0);
+                    $start = 1 if ($start < 1 and $params{one_based});
                     $stop = $chrom_stop{$chrom} if ($stop > $chrom_stop{$chrom});
                 }
             }
 
             my $string = join("\t",$chrom, $start, $stop, $description);
-            if ($structure_type ne 'flank') {
+            if ($feature_type ne 'flank') {
                 print $out_file "$string\n";
             }
         }
@@ -298,11 +304,11 @@ sub get_or_create_roi_bed {
     close $out_file;
 
     my $sorted_out = Genome::Sys->create_temp_file_path;
-
-    my $rv = Genome::Model::Tools::Joinx::Sort->execute(input_files => [$out],
+    my $rv = Genome::Model::Tools::Joinx::Sort->execute(
+        input_files => [$out],
         unique => 1,
-        output_file => $sorted_out );
-
+        output_file => $sorted_out
+    );
     my $file_content_hash = Genome::Sys->md5sum($sorted_out);
 
     my $format;
@@ -337,14 +343,14 @@ sub determine_data_directory {
     my @directories;
     my @composite_builds = $self->from_builds;
     if (@composite_builds) {
-        for (@composite_builds) { 
+        for (@composite_builds) {
             my @data_dirs = $_->determine_data_directory();
             return unless @data_dirs;
             push @directories, @data_dirs;
         }
     }
     else {
-        if (-d $self->_annotation_data_directory) { 
+        if (-d $self->_annotation_data_directory) {
             push @directories, $self->_annotation_data_directory;
         }
         else {
@@ -358,7 +364,7 @@ sub determine_data_directory {
 
 sub determine_merged_data_directory{
     my $self = shift;
-    if (-d $self->_annotation_data_directory) { 
+    if (-d $self->_annotation_data_directory) {
         return $self->_annotation_data_directory;
     }
     else {
@@ -419,7 +425,7 @@ sub transcript_iterator{
         }
 
         if ($chrom_name){
-            return Genome::Transcript->create_iterator(data_directory => $data_dir, 
+            return Genome::Transcript->create_iterator(data_directory => $data_dir,
                                                         chrom_name => $chrom_name,
                                                         reference_build_id => $self->reference_sequence_id);
         }
@@ -462,7 +468,7 @@ sub _resolve_annotation_file_name {
     my $reference_sequence_id = shift;
     my $squashed = shift;
     my $with_strand = shift;
-    
+
     unless (defined($reference_sequence_id)) {
         unless ($self->reference_sequence_id) {
             die('There is no reference sequence build associated with imported annotation build: '. $self->id);
@@ -552,7 +558,7 @@ sub generate_annotation_file {
     my $reference_sequence_id = shift;
     my $squashed = shift;
     my $with_strand = shift;
-    
+
     unless ($suffix) {
         die('Must provide file suffix as parameter to annotation_file method in '.  __PACKAGE__);
     }
@@ -594,7 +600,7 @@ sub generate_annotation_file {
             )) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
-            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name 
+            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
             $self->remove_long_squashed_bed_names($tmp_file,$file_name,$with_strand);
         } else {
             #This is not just a gtf file converted to bed, but rather limited to only exon feature types to remove CDS redundancy
@@ -618,7 +624,7 @@ sub remove_long_squashed_bed_names {
     # Output file
     my $file_name = shift;
     my $with_strand = shift;
-    
+
     my @headers = qw/chr start end name/;
     my $reader = Genome::Utility::IO::SeparatedValueReader->create(
         input => $tmp_file,
@@ -679,7 +685,7 @@ sub generate_RNA_annotation_files {
     unless(-e $self->_rna_annotation_directory){
         Genome::Sys->create_directory($self->_rna_annotation_directory);
     }
-    
+
     unless ($self->transcript_info_file($reference_sequence_id)) {
         my $status = $self->generate_transcript_info_file($reference_sequence_id);
         unless ($status) {
@@ -718,12 +724,12 @@ sub generate_rRNA_MT_pseudogene_file {
     my $rRNA_file = $self->rRNA_file($suffix,$reference_sequence_id,$squashed);
     my $pseudo_file = $self->pseudogene_file($suffix,$reference_sequence_id,$squashed);
     my @input_files = ($rRNA_file,$pseudo_file);
-    
+
     my $MT_file = $self->MT_file($suffix,$reference_sequence_id,$squashed);
     if ($MT_file) {
         push @input_files, $MT_file;
     }
-    
+
     if ($suffix eq 'gtf') {
         if ($squashed) {
             die('Support for squashed representations of GTF files is not supported!');
@@ -746,7 +752,7 @@ sub generate_rRNA_MT_pseudogene_file {
             )) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
-            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name 
+            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
             $self->remove_long_squashed_bed_names($tmp_file,$file_name);
         } else {
             #This is not just a gtf file converted to bed, but rather limited to only exon feature types to remove CDS redundancy
@@ -771,7 +777,7 @@ sub rRNA_MT_pseudogene_file {
     my $suffix = shift;
     my $reference_sequence_id = shift;
     my $squashed = shift;
-    
+
     unless ($suffix) {
         die('Must provide file suffix as parameter to rRNA_MT_pseudogene_file method in '.  __PACKAGE__);
     }
@@ -787,7 +793,7 @@ sub generate_rRNA_MT_file {
     my $suffix = shift;
     my $reference_sequence_id = shift;
     my $squashed = shift;
-    
+
     unless ($suffix) {
         die('Must provide file suffix as parameter to rRNA_MT_file method in '.  __PACKAGE__);
     }
@@ -798,7 +804,7 @@ sub generate_rRNA_MT_file {
 
     my $rRNA_file = $self->rRNA_file($suffix,$reference_sequence_id,$squashed);
     my @input_files = ($rRNA_file);
-    
+
     my $MT_file = $self->MT_file($suffix,$reference_sequence_id,$squashed);
     if ($MT_file) {
         push @input_files, $MT_file;
@@ -825,7 +831,7 @@ sub generate_rRNA_MT_file {
             )) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
-            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name 
+            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
             $self->remove_long_squashed_bed_names($tmp_file,$file_name);
         } else {
             #This is not just a gtf file converted to bed, but rather limited to only exon feature types to remove CDS redundancy
@@ -850,7 +856,7 @@ sub rRNA_MT_file {
     my $suffix = shift;
     my $reference_sequence_id = shift;
     my $squashed = shift;
-    
+
     unless ($suffix) {
         die('Must provide file suffix as parameter to rRNA_MT_file method in '.  __PACKAGE__);
     }
@@ -912,7 +918,7 @@ sub generate_rRNA_file {
             )) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
-            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name 
+            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
             $self->remove_long_squashed_bed_names($tmp_file,$file_name);
         } else {
             #This is not just a gtf file converted to bed, but rather limited to only exon feature types to remove CDS redundancy
@@ -1018,7 +1024,7 @@ sub generate_rRNA_protein_file {
             )) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
-            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name 
+            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
             $self->remove_long_squashed_bed_names($tmp_file,$file_name);
         } else {
             #This is not just a gtf file converted to bed, but rather limited to only exon feature types to remove CDS redundancy
@@ -1105,7 +1111,7 @@ sub generate_MT_file {
                 )) {
                     $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
                 }
-                # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name 
+                # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
                 $self->remove_long_squashed_bed_names($tmp_file,$file_name);
             } else {
                 `touch $file_name`;
@@ -1201,7 +1207,7 @@ sub generate_pseudogene_file {
             )) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
-            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name 
+            # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
             $self->remove_long_squashed_bed_names($tmp_file,$file_name);
         } else {
             #This is not just a gtf file converted to bed, but rather limited to only exon feature types to remove CDS redundancy
