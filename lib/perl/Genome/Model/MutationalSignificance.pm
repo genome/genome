@@ -52,6 +52,9 @@ BEGIN {
             exon_bed => ["Genome::Model::MutationalSignificance::Command::CreateROI", "roi_path"],
             regions_of_interest => ['input connector', 'regions_of_interest'],
             gene_black_lists => ['input connector', 'gene_black_lists'],
+            additional_snv_lists => ['input connector', 'additional_snv_lists'],
+            additional_indel_lists => ['input connector', 'additional_indel_lists'],
+            additional_sv_lists => ['input connector', 'additional_sv_lists'],
         },
     );
     my %additional_params = (
@@ -118,6 +121,21 @@ class Genome::Model::MutationalSignificance {
             is => 'File',
             is_many => 1,
             doc => 'Lists of genes to exclude from the validation.  One gene symbol per line.  Gene symbols must match symbols in annotation files',
+        },
+        additional_snv_lists => {
+            is => 'Genome::FeatureList',
+            is_many => 1,
+            doc => 'Lists of additional snv variants to include in validation',
+        },
+        additional_indel_lists => {
+            is => 'Genome::FeatureList',
+            is_many => 1,
+            doc => 'Lists of additional indel variants to include in validation',
+        },
+        additional_sv_lists => {
+            is => 'Genome::FeatureList',
+            is_many => 1,
+            doc => 'Lists of additional structural variants to include in validation',
         },
     ],
     has_param => \@has_param,
