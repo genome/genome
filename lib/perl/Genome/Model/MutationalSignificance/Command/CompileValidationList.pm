@@ -77,6 +77,21 @@ class Genome::Model::MutationalSignificance::Command::CompileValidationList {
             doc => 'Lists of genes to exclude from the validation list.  Gene symbols must match symbols in annotation file',
             is_many => 1,
         },
+        additional_snv_lists => {
+            is => 'Genome::FeatureList',
+            doc => 'Lists of additional snv variants to include in the validation list',
+            is_many => 1,
+        },
+        additional_indel_lists => {
+            is => 'Genome::FeatureList',
+            doc => 'Lists of additional indel variants to include in the validation list',
+            is_many => 1,
+        },
+        additional_sv_lists => {
+            is => 'Genome::FeatureList',
+            doc => 'Lists of additional structural variants to include in the validation list',
+            is_many => 1,
+        },
     ],
     has_input_output => [
         significant_variant_list => {
@@ -188,6 +203,22 @@ sub execute {
                     my $bed = $build->data_set_path("effects/svs.hq.novel.tier$tier",2,"bed");
                     push @sv_files, $bed;
                 }
+            }
+        }
+
+        if ($self->additional_snv_lists) {
+            foreach my $additional_snvs ($self->additional_snv_lists) {
+                push @snv_files, $additional_snvs;
+            }
+        }
+        if ($self->additional_indel_lists) {
+            foreach my $additional_indels ($self->additional_indel_lists) {
+                push @indel_files, $additional_indels;
+            }
+        }
+        if ($self->additional_sv_lists) {
+            foreach my $additional_svs ($self->additional_sv_lists) {
+                push @sv_files, $additional_svs;
             }
         }
 
