@@ -477,6 +477,27 @@ sub validate_directory_for_read_write_access {
     return $self->_can_write_to_directory($directory);
 }
 
+sub recursively_validate_directory_for_read_write_access {
+    my ($self, $directory) = @_;
+
+    my $wanted = sub {
+        my $full_path = $File::Find::name;
+        if (-f $full_path) {
+            eval {
+                Genome::Sys->validate_file_for_reading($full_path);
+                Genome::Sys->validate_file_for_writing($full_path);
+            };
+
+            if ($@) {
+                Carp::croak "Directory $directory has unreadable or unwritable files in it!";
+            }
+        }
+    };
+
+    find($wanted, $directory);
+    return 1;
+}
+
 sub _can_read_from_directory {
     my ($self, $directory) = @_;
 
