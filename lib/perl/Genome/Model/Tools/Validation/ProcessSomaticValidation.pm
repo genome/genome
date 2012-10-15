@@ -708,8 +708,8 @@ sub execute {
 
 
 
-  #add readcounts
-  print STDERR "Getting readcounts...\n";
+  #add snv readcounts
+  print STDERR "Getting snv readcounts...\n";
   mkdir "$output_dir/$sample_name/snvs/readcounts";
   foreach my $file ("snvs.validated","snvs.notvalidated",basename($snv_file)){
 
@@ -734,6 +734,41 @@ sub execute {
               output_file => "$dir/readcounts/$file.tum.cnt",
               variant_file => "$dir/$file",
               genome_build => $ref_seq_fasta,
+              );
+          unless ($tumor_rc_cmd->execute) {
+              die "Failed to obtain tumor readcounts for file $file.\n";
+          }
+      }
+  }
+
+  #add indel readcounts
+  print STDERR "Getting indel readcounts...\n";
+  mkdir "$output_dir/$sample_name/indels/readcounts";
+  foreach my $file ("indels.validated","indels.notvalidated",basename($indel_file)){
+
+      my $dir = "$output_dir/$sample_name/indels/";
+      if( -s "$dir/$file" ){
+          unless($tumor_only){
+              #get readcounts from the normal bam
+              my $normal_rc_cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
+                  bam_file => $normal_bam,
+                  output_file => "$dir/readcounts/$file.nrm.cnt",
+                  variant_file => "$dir/$file",
+                  genome_build => $ref_seq_fasta,
+                  indel_size_limit => 4,
+                  );
+              unless ($normal_rc_cmd->execute) {
+                  die "Failed to obtain normal readcounts for file $file.\n";
+              }
+          }
+
+          #get readcounts from the tumor bam
+          my $tumor_rc_cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
+              bam_file => $tumor_bam,
+              output_file => "$dir/readcounts/$file.tum.cnt",
+              variant_file => "$dir/$file",
+              genome_build => $ref_seq_fasta,
+              indel_size_limit => 4,
               );
           unless ($tumor_rc_cmd->execute) {
               die "Failed to obtain tumor readcounts for file $file.\n";
