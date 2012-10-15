@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Sx::EulerEc;
+package Genome::Model::Tools::Sx::Trim::EulerEc;
 
 use strict;
 use warnings;
@@ -33,7 +33,7 @@ our %EULER_PARAMS = (
     },    
 );
 
-class Genome::Model::Tools::Sx::EulerEc {
+class Genome::Model::Tools::Sx::Trim::EulerEc {
     is => 'Genome::Model::Tools::Sx::Base',
     has => [
         %EULER_PARAMS,
