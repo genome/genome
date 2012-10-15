@@ -29,7 +29,8 @@ my $out_file = $tmpdir.'/out.fasta';
 my $input_metrics_file = $tmpdir.'/metrics.in.txt';
 my $output_metrics_file = $tmpdir.'/metrics.out.txt';
 
-my $fq = Genome::Model::Tools::Sx::Base->create(
+class Sx::Test { is => 'Genome::Model::Tools::Sx::Base', };
+my $fq = Sx::Test->create(
     input => [ $example_in_file ],
     input_metrics => $input_metrics_file,
     output => [ $out_file ],

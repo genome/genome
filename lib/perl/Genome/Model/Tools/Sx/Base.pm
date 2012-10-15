@@ -7,7 +7,8 @@ use Genome;
 use File::Copy::Recursive;
 
 class Genome::Model::Tools::Sx::Base {
-    is  => 'Command',
+    is  => 'Command::V2',
+    is_abstract => 1,
     has => [
         input => {
             is => 'Text',
