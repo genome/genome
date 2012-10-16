@@ -22,7 +22,6 @@ BEGIN {
 
 BEGIN {
 	if (defined $ENV{GENOME_QUERY_POSTGRES}) {
-                print "OK HERE WE GO\n";
 		no warnings;
 		use UR::Context;
 		use UR::DataSource::Pg;
