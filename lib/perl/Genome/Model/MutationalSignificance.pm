@@ -115,6 +115,7 @@ class Genome::Model::MutationalSignificance {
         review_file_dir => {
             is => 'UR::Value::DirectoryPath',
             is_optional => 1,
+            doc => 'Path to directory of variant files with reviews.  Any variant with a review status other than S or V will be  ignored.',
         },
         regions_of_interest => {
             is => 'Genome::FeatureList',
