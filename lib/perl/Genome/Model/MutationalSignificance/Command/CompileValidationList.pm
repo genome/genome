@@ -17,11 +17,25 @@ class Genome::Model::MutationalSignificance::Command::CompileValidationList {
             is => 'Genome::Model::Build::SomaticVariation',
             is_many => 1,
         },
-        tiers_to_use => {
-            is => 'Number',
-            is_many => 1,
-            doc => 'A list of tiers to be included in the variant list',
-            default_value => [1],
+        use_tier_1 => {
+            is => 'Boolean',
+            doc => 'Include tier 1 variants in the variant list',
+            default_value => 1,
+        },
+        use_tier_2 => {
+            is => 'Boolean',
+            doc => 'Include tier 2 variants in the variant list',
+            default_value => 0,
+        },
+        use_tier_3 => {
+            is => 'Boolean',
+            doc => 'Include tier 3 variants in the variant list',
+            default_value => 0,
+        },
+        use_tier_4 => {
+            is => 'Boolean',
+            doc => 'Include tier 4 variants in the variant list',
+            default_value => 0,
         },
         exon_bed => {
             type => 'Path',
@@ -56,6 +70,11 @@ class Genome::Model::MutationalSignificance::Command::CompileValidationList {
             type => 'Genome::Model::Build::ImportedReferenceSequence',
             doc => "Reference sequence in use, to check chromosomal bounds (E.g. GRCh37-lite-build37)",
         },
+        validate_svs => {
+            type => 'Boolean',
+            default => 1,
+            doc => "Whether or not to include svs in validation list",
+        },
     ],
     has_optional_input => [
         significantly_mutated_gene_list => {
@@ -76,6 +95,11 @@ class Genome::Model::MutationalSignificance::Command::CompileValidationList {
             is => 'File',
             doc => 'Lists of genes to exclude from the validation list.  Gene symbols must match symbols in annotation file',
             is_many => 1,
+        },
+        variant_black_lists => {
+            is => 'Genome::FeatureList',
+            is_many => 1,
+            doc => 'Lists of variants in the bed files to exclude from the validation list.',
         },
         additional_snv_lists => {
             is => 'Genome::FeatureList',
@@ -105,6 +129,7 @@ sub execute {
     my $self = shift;
     my $genes_to_include_bed_file = Genome::Sys->create_temp_file_path;
     my %black_list;
+    my %variant_black_list;
     if ($self->gene_black_lists) {
         foreach my $list ($self->gene_black_lists) {
             my $in = Genome::Sys->open_file_for_reading($list);
@@ -173,38 +198,55 @@ sub execute {
         my @indel_files;
         my @sv_files;
         my $input_file = Genome::Sys->create_temp_file_path;
+        my $bed_version = 2;
+        my $anno_version = 1;
+
+        my @tiers_to_use;
+        if ($self->use_tier_1) {
+            push @tiers_to_use, 1;
+        }
+        if ($self->use_tier_2) {
+            push @tiers_to_use, 2;
+        }
+        if ($self->use_tier_3) {
+            push @tiers_to_use, 3;
+        }
+        if ($self->use_tier_4) {
+            push @tiers_to_use, 4;
+        }
 
         foreach my $build ($self->somatic_variation_builds) {
-            foreach my $tier ($self->tiers_to_use){
-                my $anno = $build->data_set_path("effects/snvs.hq.tier$tier",1,"annotated.top");
+            foreach my $tier (@tiers_to_use){
+                my $anno = $build->data_set_path("effects/snvs.hq.tier$tier",$anno_version,"annotated.top");
+                my $bed = $build->data_set_path("effects/snvs.hq.novel.tier$tier",$bed_version,"bed");
                 if (-e $anno) {
                     my $filtered_file = $self->_filtered_file_based_on_black_list(\%black_list, $anno);
                     push @snv_files, $filtered_file;
                 }
-                else {#TODO: need to shift to 1-based start?
-                    my $bed = $build->data_set_path("effects/snvs.hq.novel.tier$tier",2,"bed");
-                    push @snv_files, $bed;
+                elsif (-e $bed) {#TODO: need to shift to 1-based start?
+                    my $filtered_file = $self->_filtered_file_based_on_variant_black_list($bed);
+                    push @snv_files, $filtered_file;
                 }
-                $anno = $build->data_set_path("effects/indels.hq.tier$tier",1,"annotated.top");
+                $anno = $build->data_set_path("effects/indels.hq.tier$tier",$anno_version,"annotated.top");
+                $bed = $build->data_set_path("effects/indels.hq.novel.tier$tier",$bed_version,"bed");
                 if (-e $anno) {
                     my $filtered_file = $self->_filtered_file_based_on_black_list(\%black_list, $anno);
                     push @indel_files, $filtered_file;
                 }
-                else {
-                    my $bed = $build->data_set_path("effects/indels.hq.novel.tier$tier",2,"bed");
-                    push @snv_files, $bed;
+                elsif (-e $bed) {
+                    my $filtered_file = $self->_filtered_file_based_on_variant_black_list($bed);
+                    push @indel_files, $filtered_file;
                 }
-                $anno = $build->data_set_path("effects/svs.hq.tier$tier",1,"annotated.top");
-                if (-e $anno) {
-                    my $filtered_file = $self->_filtered_file_based_on_black_list(\%black_list, $anno);
-                    push @sv_files, $anno;
-                }
-                else {
-                    my $bed = $build->data_set_path("effects/svs.hq.novel.tier$tier",2,"bed");
+            }
+            if ($self->validate_svs) {
+                my $bed = $build->data_set_path("variants/svs.hq",$bed_version,'bed');
+                if (-e $bed) {
                     push @sv_files, $bed;
                 }
             }
         }
+
+
 
         if ($self->additional_snv_lists) {
             foreach my $additional_snvs ($self->additional_snv_lists) {
@@ -272,6 +314,30 @@ sub execute {
         };
     }
     return 1;
+}
+
+sub _filtered_file_based_on_variant_black_list {
+    my ($self, $file_name) = @_;
+    my $filtered_file;
+    if ($self->variant_black_lists) {
+        foreach my $variant_black_list ($self->variant_black_lists) {
+            $filtered_file = Genome::Sys->create_temp_file_path;
+            my $rv = Genome::Model::Tools::Joinx::Intersect->execute(
+                input_file_a => $file_name,
+                input_file_b => $variant_black_list->file_path,
+                miss_a_file => $filtered_file,
+            );
+            unless ($rv) {
+                $self->error_message("Failed to filter black listed variants");
+                return;
+            }
+            $file_name = $filtered_file;
+        }
+    }
+    else {
+        $filtered_file = $file_name;
+    }
+    return $filtered_file;
 }
 
 sub _filtered_file_based_on_black_list {
