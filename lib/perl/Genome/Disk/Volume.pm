@@ -7,6 +7,7 @@ use Genome;
 use Carp;
 
 use Data::Dumper;
+use Filesys::Df 'df';
 
 class Genome::Disk::Volume {
     table_name => 'DISK_VOLUME',
@@ -294,6 +295,48 @@ sub active_volume {
     my $self = shift;
     return if not $self->is_archive;
     return Genome::Disk::Volume->get(mount_path => $self->active_mount_path);
+}
+
+sub is_mounted {
+    my $self = shift;
+
+    # We can't use Filesys::Df::df because it doesn't report the mount path only the stats.
+    my $mount_path = $self->mount_path;
+    my @df_output = qx(df -P $mount_path 2> /dev/null);
+    if ($! && $! !~ /No such file or directory/) {
+        die $self->error_message(sprintf('Failed to `df %s` to check if volume is mounted: %s', $mount_path, $!));
+    }
+
+    my ($df_output) = grep { /\s$mount_path$/ } @df_output;
+    return ($df_output ? 1 : 0);
+}
+
+sub sync_usage {
+    my $self = shift;
+    my %args = @_;
+    my $verbose = delete $args{verbose};
+    if (keys %args) {
+        die $self->error_message('Unexpected args to sync_meta: ' . join(', ', keys %args));
+    }
+
+    unless ($self->is_mounted) {
+        die $self->error_message(sprintf('Volume %s is not mounted!', $self->mount_path));
+    }
+
+    my $df = df($self->mount_path);
+    my $total_kb = $df->{blocks};
+    my $unallocated_kb = $self->unallocated_kb;
+
+    if ($self->total_kb != $total_kb) {
+        if ($verbose) { $self->status_message(sprintf('Changing total_kb from %d to %d.', $self->total_kb, $total_kb)) }
+        $self->total_kb($total_kb);
+    }
+    if ($self->old_unallocated_kb != $unallocated_kb) {
+        if ($verbose) { $self->status_message(sprintf('Changing old_unallocated_kb from %d to %d.', $self->old_unallocated_kb, $unallocated_kb)) }
+        $self->old_unallocated_kb($unallocated_kb);
+    }
+
+    return 1;
 }
 
 1;
