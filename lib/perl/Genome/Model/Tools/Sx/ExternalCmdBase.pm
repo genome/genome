@@ -181,59 +181,43 @@ sub _resolve_input_params {
     return @input_params;
 }
 
-# FIXME
 sub save_read_processor_output_files {
     my $self = shift;
 
-    my $class = $self->class;
-    my ( $subclass ) = $class =~ /::(\w+)$/;
-
-    $self->status_message('Could not derive class/tool name from class: '.$class.' expected GMT::Sx::ToolName') and return
-        if not $subclass;
-
-    my $output_path;
-    if ( not $output_path = $self->output_path ) {
-        $self->status_message('Failed to derive output path from sx output');
+    my $tmpdir = $self->_tmpdir;
+    if ( not $tmpdir or not -d $tmpdir ) {
+        $self->error_message('Expected to copy files in tmp dir but does not exist');
         return;
     }
-
-    Genome::Sys->create_directory( $output_path.'/'.$subclass ) if not -d $output_path.'/'.$subclass;
-    $output_path .= '/'.$subclass;
-
-    $self->status_message("Copying EulerEC output files to $output_path");
-
-    if ( not $self->_tmpdir or not -d $self->_tmpdir ) {
-        $self->error_message('Expected to copy files in _tmpdir but _tmpdir is not defined or does not exist');
-        return;
-    }
-
-    my $rv = eval{ File::Copy::Recursive::dircopy( $self->_tmpdir, $output_path ); };
-
-    if ( not $rv ) {
-        $self->error_message("Failed to copy $subclass output files from ". $self->_tmpdir." to $output_path");
-        return;
-    }
-
-    $self->status_message("Finished copying $subclass output files from ".$self->_tmpdir." to $output_path");
-
-    return 1
-}
-
-sub output_path {
-    my $self = shift;
 
     my ( $class, $params ) = $self->_output->parse_writer_config( $self->_output->config );
     $self->error_message('Failed to derive class and params from writer config') and return
         if not $class or not $params;
 
-    my $dir = File::Basename::dirname($params->{file});
-    $self->error_message("Expected this to be a directory: $dir") and return
-        if not -d $dir;
+    my $output_path = File::Basename::dirname($params->{file});
+    $self->error_message("Expected this to be a directory: $output_path") and return
+        if not -d $output_path;
 
-    return $dir;
+    if ( not $output_path = $self->output_path ) {
+        $self->status_message('Failed to derive output path from sx output');
+        return;
+    }
+
+    my $cmd_display_name = $self->cmd_display_name;
+    $output_path .= '/'.$cmd_display_name;
+    Genome::Sys->create_directory( $output_path ) if not -d $output_path;
+
+    $self->status_message("Copying $cmd_display_name output files to $output_path");
+    my $rv = eval{ File::Copy::Recursive::dircopy( $tmpdir, $output_path ); };
+    if ( not $rv ) {
+        $self->error_message("Failed to copy $cmd_display_name output files from $tmpdir to $output_path");
+        return;
+    }
+
+    $self->status_message("Finished copying $cmd_display_name output files from $tmpdir to $output_path");
+
+    return 1
 }
-
-
 
 1;
 
