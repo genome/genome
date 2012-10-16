@@ -45,7 +45,7 @@ sub execute {
     }
     #fastx_quality_stats (as of 0.0.7) won't process from tmp with -i and -o
     #my $cmd = $self->fastx_tool_path .' < '. $self->fastq_file .' > '. $self->stats_file;
-    my $cmd = "gmt sx base -input ".$self->fastq_file.":type=sanger -output file=-:type=illumina | ".$self->fastx_tool_path.' > '.$self->stats_file;
+    my $cmd = "gmt sx -input ".$self->fastq_file.":type=sanger -output file=-:type=illumina | ".$self->fastx_tool_path.' > '.$self->stats_file;
     Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files => [$self->fastq_file],

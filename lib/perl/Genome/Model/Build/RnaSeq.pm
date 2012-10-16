@@ -327,5 +327,18 @@ sub validate_for_start_methods {
     return @methods;
 }
 
+sub reference_being_replaced_for_input {
+    my $self = shift;
+    my $input = shift;
+
+    return unless $input;
+    return if $self->processing_profile->read_aligner_name eq 'imported';
+
+    #we're going to realign, so any existing reference on the data is unimportant
+    return 1 if $input->name eq 'instrument_data';
+
+    return;
+}
+
 1;
 

@@ -8,14 +8,14 @@ use above 'Genome';
 require File::Compare;
 use Test::More;
 
-use_ok('Genome::Model::Tools::Sx::Quake') or die;
+use_ok('Genome::Model::Tools::Sx::Trim::Quake') or die;
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
 my $input = $test_dir.'/reader_writer.collated.fastq';
 my $tmp_dir = Genome::Sys->base_temp_directory;
 my $output = $tmp_dir.'/output.fastq';
 
-my %quake_params = map { $_ => 1 } Genome::Model::Tools::Sx::Quake->quake_param_names;
+my %quake_params = map { $_ => 1 } Genome::Model::Tools::Sx::Trim::Quake->quake_param_names;
 $quake_params{input} = [$input.':cnt=2'];
 $quake_params{output} = [$output];
 my $quake;
@@ -33,7 +33,7 @@ no warnings;
 };
 use warnings;
 
-$quake = Genome::Model::Tools::Sx::Quake->create(
+$quake = Genome::Model::Tools::Sx::Trim::Quake->create(
     %quake_params,
 );
 ok($quake, 'create');

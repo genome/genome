@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Sx::Quake;
+package Genome::Model::Tools::Sx::Trim::Quake;
 
 use strict;
 use warnings;
@@ -74,14 +74,14 @@ our %QUAKE_PARAMS = (
     },
 );
 
-class Genome::Model::Tools::Sx::Quake {
-    is  => 'Genome::Model::Tools::Sx::Base',
+class Genome::Model::Tools::Sx::Trim::Quake {
+    is  => 'Genome::Model::Tools::Sx::ExternalCmdBase',
     has => [ 
         %QUAKE_PARAMS,
-        _tmpdir => { is_transient => 1, is_optional => 1, },
-        save_files => {is=> 'Boolean', is_optional => 1, doc => 'Save quake output files' },
     ],
 };
+
+sub cmd_display_name { 'Quake' }
 
 sub quake_param_names {
     return sort keys %QUAKE_PARAMS;
@@ -97,8 +97,7 @@ sub execute {
     my $init = $self->_init;
     return if not $init;
 
-    my $tmpdir = $self->_tmpdir( Genome::Sys->base_temp_directory );
-
+    my $tmpdir = $self->_tmpdir;
     my $quake_input = $tmpdir.'/quake.fastq';
     my $quake_intput_writer = Genome::Model::Tools::Sx::Writer->create(
         config => [ $quake_input.':type=sanger', ],

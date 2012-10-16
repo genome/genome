@@ -741,11 +741,15 @@ sub archivable {
 
 sub is_archived { 
     my $self = shift;
-    my $allocation = $self->disk_allocation;
-    unless ($allocation) {
-        confess "Could not get allocation for build " . $self->__display_name__;
+    my $is_archived = 0;
+    my @allocations = $self->all_allocations;
+    for my $allocation (@allocations) {
+        if ($allocation->is_archived()) {
+            $is_archived = 1;
+            last;
+        }
     }
-    return $allocation->is_archived();
+    return $is_archived;
 }
 
 sub start {

@@ -51,7 +51,7 @@ sub validate_command {
     );
     $self->status_message('Class: '.$class);
 
-    my $class_meta = eval{ $class->get_class_object; };
+    my $class_meta = eval{ $class->__meta__; };
     if ( not $class_meta ) {
         $self->error_message("Cannot validate class ($class) for command ($command): $@");
         return;
