@@ -62,17 +62,36 @@ sub _run_vcf_converter {
     }
     my $output_file = $dirname . '/'.$type.'.vcf.gz';
 
-    my $input_a_vcf = $self->incoming_vcf_result_a->output_dir."/".$type.".vcf.gz";
-    my $input_b_vcf = $self->incoming_vcf_result_b->output_dir."/".$type.".vcf.gz";
-    for my $input_vcf ($input_a_vcf,$input_b_vcf){
+    my @input_files;
+    my @labeled_input_files;
+    for my $vcf_result ($self->incoming_vcf_result_a, $self->incoming_vcf_result_b) {
+        my $input_vcf = $vcf_result->output_dir."/".$type.".vcf.gz";
         unless(-s $input_vcf){
             $self->status_message("Skipping VCF generation, no vcf in the previous result: $input_vcf");
             return 0;
         }
+
+        # Using a label (-D in joinx) preserves that input column.
+        # We want to preserve the original input columns (via joinx) for each detector result
+        # but not combination operations (because that would be redundant as they would have already been preserved)
+        if ($vcf_result->isa("Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine")) {
+            push @input_files, $input_vcf;
+        } else {
+            my $detector_class = $vcf_result->input->detector_name;
+            my @class_path = split "::", $detector_class;
+            my $detector_name = $class_path[-1];
+            unless ($detector_name) {
+                die $self->error_message("Could not get a detector name from detector class $detector_class from software result id" . $vcf_result->id);
+            }
+            my $tag = "-$detector_name";
+            $input_vcf .= "=$tag";
+            push @labeled_input_files, $input_vcf;
+        }
     }
 
     my %params = ( 
-        input_files => [ ($input_a_vcf,$input_b_vcf)],
+        input_files => \@input_files,
+        labeled_input_files => \@labeled_input_files,
         output_file => $output_file,
         merge_samples => 1,
         clear_filters => 1,

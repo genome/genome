@@ -20,6 +20,10 @@ my @non_empty_input_files = (
     join('/', $test_data_directory, 'input.clean.vcf'),
     join('/', $test_data_directory, 'input2.clean.vcf'),
 );
+my @non_empty_labeled_input_files = (
+    join('/', $test_data_directory, 'input.clean.vcf=inputone'),
+    join('/', $test_data_directory, 'input2.clean.vcf=inputtwo'),
+);
 my @empty_input_files = (
     join('/', $test_data_directory, 'test_empty1.clean.vcf'),
     join('/', $test_data_directory, 'test_empty2.clean.vcf'),
@@ -79,13 +83,14 @@ my $joinx_bin_path = 'JOINX';
 my $flags = 'FLAGS';
 my $inputs = \@non_empty_input_files;
 my $output_file = $missing_input_files[0];
+my $labeled_inputs;
 
 $cmd = $cmd_class->create(
     input_files => \@non_empty_input_files, # not optional
     output_file => $missing_input_files[0],
 );
 ($output) = $cmd->_generate_joinx_command($joinx_bin_path, $flags,
-        $inputs, $output_file);
+        $inputs, $labeled_inputs, $output_file);
 my $expected = sprintf("JOINX vcf-merge FLAGS %s -o " . __FILE__ . ".d/foo",
         join(' ', @non_empty_input_files));
 is($output, $expected, 'Command is generated correctly 1');
@@ -96,7 +101,7 @@ $cmd = $cmd_class->create(
     use_bgzip => 1,
 );
 ($output) = $cmd->_generate_joinx_command($joinx_bin_path, $flags,
-        $inputs, $output_file);
+        $inputs, $labeled_inputs, $output_file);
 $expected = sprintf("JOINX vcf-merge FLAGS %s | bgzip -c > " . __FILE__ . ".d/foo",
         join(' ', map { "<(zcat $_)" } @non_empty_input_files));
 is($output, $expected, 'Command is generated correctly 2');
@@ -108,7 +113,7 @@ $cmd = $cmd_class->create(
     error_log => 'ERROR',
 );
 ($output) = $cmd->_generate_joinx_command($joinx_bin_path, $flags,
-        $inputs, $output_file);
+        $inputs, $labeled_inputs, $output_file);
 $expected = sprintf("JOINX vcf-merge FLAGS %s 2> ERROR | bgzip -c > " . __FILE__ . ".d/foo",
         join(' ', map { "<(zcat $_)" } @non_empty_input_files));
 is($output, $expected, 'Command is generated correctly 3');
@@ -119,7 +124,7 @@ $cmd = $cmd_class->create(
     error_log => 'ERROR',
 );
 ($output) = $cmd->_generate_joinx_command($joinx_bin_path, $flags,
-        $inputs, $output_file);
+        $inputs, $labeled_inputs, $output_file);
 $expected = sprintf("JOINX vcf-merge FLAGS %s -o " . __FILE__ . ".d/foo 2> ERROR",
         join(' ', @non_empty_input_files));
 is($output, $expected, 'Command is generated correctly 4');
@@ -138,6 +143,18 @@ $output = $cmd->execute();
 ok($output, 'Executed successfully');
 ok(-e $output_vcf, 'Output file exists');
 
+# LABELED OUTPUT INTEGRATION TEST
+$temp_dir = Genome::Sys->create_temp_directory();
+$output_vcf = join('/', $temp_dir, 'output.vcf');
+$cmd = $cmd_class->create(
+    labeled_input_files => \@non_empty_labeled_input_files,
+    output_file => $output_vcf,
+    merge_samples => 1,
+);
+ok(!-e $output_vcf, 'Output file does not exist yet');
+$output = $cmd->execute();
+ok($output, 'Executed successfully');
+ok(-e $output_vcf, 'Output file exists');
 
 # BGZIP INTEGRATION TEST
 my @gzip_files;
@@ -160,5 +177,6 @@ ok($output, 'Executed successfully');
 ok(-e $output_vcf, 'bgzipped output file exists');
 
 done_testing();
+
 
 1;
