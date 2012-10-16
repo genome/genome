@@ -82,6 +82,8 @@ class Genome::Model::Tools::Sx::Trim::Quake {
     ],
 };
 
+sub cmd_display_name { 'Quake' }
+
 sub quake_param_names {
     return sort keys %QUAKE_PARAMS;
 }

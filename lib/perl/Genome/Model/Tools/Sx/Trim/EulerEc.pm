@@ -41,6 +41,8 @@ class Genome::Model::Tools::Sx::Trim::EulerEc {
     ],
 };
 
+sub cmd_display_name { 'Euler-EC' }
+
 sub help_brief {
     'Tool to run Error correction program EulerEc.pl',
 }
