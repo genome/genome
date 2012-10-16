@@ -313,8 +313,8 @@ sub _create {
     unless (defined $kilobytes_requested && $kilobytes_requested >= 0) {
         confess 'Kilobytes requested is not valid!';
     }
-    unless ($class->_verify_no_parent_allocation($allocation_path)) {
-        confess "Parent allocation found for $allocation_path";
+    if (my $parent_alloc = $class->_get_parent_allocation($allocation_path)) {
+        confess sprintf("Parent allocation (%s) found for %s", $parent_alloc->allocation_path, $allocation_path);
     }
     unless ($class->_verify_no_child_allocations($allocation_path)) {
         confess "Child allocation found for $allocation_path!";
