@@ -21,7 +21,7 @@ my $barrier = create_barrier();
 my @pids;
 diag 'Errors below about not creating allocations are to be expected.';
 for my $n (1..$max_n) {
-    my $allocation_path = sprintf('testing/%s', $n);
+    my $allocation_path = sprintf('test/soft_limit_kb_brute_force/%s', $n); # this has to be three deep?
     push @pids, spawn_child(
         barrier => $barrier,
         closure => sub {
