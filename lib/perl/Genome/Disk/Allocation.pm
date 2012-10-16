@@ -915,6 +915,7 @@ sub __display_name__ {
 # which can either lead to outright rejection by the database if a constraint is violated or
 # other more subtle problems in the software. So, that leaves making a subprocess, which is
 # slow but won't lead to other problems.
+our @_execute_system_command_perl5opt = '-Mabove=Genome';
 sub _execute_system_command {
     my ($class, $method, %params) = @_;
     if (ref($class)) {
@@ -931,7 +932,9 @@ sub _execute_system_command {
         # Serialize params hash, construct command, and execute
         my $param_string = Genome::Utility::Text::hash_to_string(\%params);
         my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
-        my $cmd = qq{$^X $includes -e "use above Genome; $class->$method($param_string); UR::Context->commit;"};
+        my $perl5opt = join(' ', @_execute_system_command_perl5opt);
+        my $cmd_template = '%s %s %s -e "%s->%s(%s); UR::Context->commit;"';
+        my $cmd = sprintf($cmd_template, $^X, $includes, $perl5opt, $class, $method, $param_string);
 
         unless (eval { system($cmd) } == 0) {
             my $msg = "Could not perform allocation action!";
