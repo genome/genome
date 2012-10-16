@@ -81,13 +81,21 @@ test.row <- function(x) {
     fisher.test(m)\$p.value;
 }
 
-fet_p_value <- apply(x, 1, test.row);
+print("Rare del test dim:");
+print(dim(x));
+if (dim(x)[1] > 0) {
+    fet_p_value <- apply(x, 1, test.row);
 
-# Append p-value column, find significant entries, and write result files
-y <- cbind(x, fet_p_value);
-signif <- y[fet_p_value < $p_threshold,];
-write.table(y, "$output_file", sep="\t", quote=FALSE, row.names=FALSE);
-write.table(signif, "$output_significant", sep="\t", quote=FALSE, row.names=FALSE);
+    # Append p-value column, find significant entries, and write result files
+    y <- cbind(x, fet_p_value);
+    signif <- y[fet_p_value < $p_threshold,];
+    write.table(y, "$output_file", sep="\t", quote=FALSE, row.names=FALSE);
+    write.table(signif, "$output_significant", sep="\t", quote=FALSE, row.names=FALSE);
+} else {
+    print("Writing null file");
+    write.table(x, "$output_file", sep="\t", quote=FALSE, row.names=FALSE);
+    write.table(x, "$output_significant", sep="\t", quote=FALSE, row.names=FALSE);
+}
 EOS
 
     my ($fh, $path) = Genome::Sys->create_temp_file;
