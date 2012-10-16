@@ -42,10 +42,8 @@ class Genome::Model::Command::Services::AssignQueuedInstrumentData {
 sub _default_rna_seq_processing_profile_id {
     my $self = shift;
     my $instrument_data = shift;
-    if($instrument_data->sample->taxon->name eq 'human'){
-        return 2694793;
-    }
-    return 2694792; #mouse
+
+    return 2762841;
 }
 
 sub help_brief {
