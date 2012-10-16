@@ -849,7 +849,7 @@ sub _unarchive {
                 push @commands, "mkdir -p $old_parent_dir";
             }
             # to fix previously existing/broken symlinks by redirecting
-            push @commands, "ln -s $target_path $old_target_path";
+            push @commands, "ln -fs $target_path $old_target_path";
         }
         my $cmd = join(' && ', @commands);
 
