@@ -10,7 +10,7 @@ use File::Copy::Recursive 'dircopy';
 use File::Copy;
 use Carp 'confess';
 
-use List::Util;
+use List::Util 'shuffle';
 
 our $AUTO_REMOVE_TEST_PATHS = 1;
 our $TESTING_DISK_ALLOCATION = 0;
@@ -411,8 +411,10 @@ sub _get_allocation_without_lock {
     my ($class, $candidate_volumes, $parameters) = @_;
     my $kilobytes_requested = $parameters->{'kilobytes_requested'};
 
+    my @candidate_volumes = (@$candidate_volumes, @$candidate_volumes, @$candidate_volumes);
+    my @randomized_candidate_volumes = shuffle(@candidate_volumes);
+
     my $chosen_allocation;
-    my @randomized_candidate_volumes = List::Util::shuffle(@$candidate_volumes);
     for my $candidate_volume (@randomized_candidate_volumes) {
         if ($candidate_volume->allocated_kb + $kilobytes_requested
                 <= $candidate_volume->soft_limit_kb) {
