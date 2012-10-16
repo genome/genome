@@ -58,6 +58,12 @@ class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
         },
 
     ],
+    has_transient_optional => [
+        _phenotype_name => {
+            is => "Text",
+            doc => "The column name of the phenotype under consideration in the clinical data file",
+        },
+    ],
 };
 
 sub help_synopsis {
@@ -86,6 +92,11 @@ sub _create_workflow {
     my $clinical_correlation_glm_qqplot = $clinical_correlation_glm_output . ".qqplot";
     my $filtered_clinical_correlation_glm_output = $clinical_correlation_glm_output . ".common";
     my $filtered_clinical_correlation_glm_qqplot = $filtered_clinical_correlation_glm_output . ".qqplot";
+
+    my $rare_delet_table = "$output_directory/rare.deltable.tsv";
+    my $rare_delet_variants = "$output_directory/rare.deltable.variants.tsv";
+    my $rare_delet_result = "$output_directory/rare.deltable.result.tsv";
+    my $rare_delet_result_signif = "$output_directory/rare.deltable.result.signif.tsv";
 
     my $clinical_correlation_categorical_output = "$output_directory/clinical_correlation_result.categorical.csv";
     my $clinical_correlation_categorical_qqplot = $clinical_correlation_categorical_output . ".qqplot";
@@ -304,6 +315,40 @@ sub _create_workflow {
             },
         },
 
+        # Create rare+deleteterious table
+        rare_del_table => {
+            name => "Create rare+deleterious table",
+            class => "Genome::Model::Tools::Vcf::RareDelTable",
+            inputs => {
+                vcf_file => $multisample_vcf,
+                phenotype_file => $clinical_data,
+                phenotype_column => $self->_phenotype_name,
+                output_table => $rare_delet_table,
+                output_variants => $rare_delet_variants,
+                max_maf_cohort => $self->maximum_maf,
+            },
+            inputs_from => {
+                svep => {
+                    output_file => "vep_file",
+                },
+            },
+        },
+
+        rare_del_test => {
+            name => "Rare+deleterious mutation test by gene",
+            class => "Genome::Model::Tools::Vcf::RareDelTest",
+            inputs => {
+                output_file => $rare_delet_result,
+                output_significant => $rare_delet_result_signif,
+            },
+            inputs_from => {
+                rare_del_table => {
+                    output_table => "gene_file",
+                },
+            },
+
+        },
+
         # Create burden variant matrix
         bvm => {
             name => "Create variant matrix for burden analysis",
@@ -422,7 +467,7 @@ sub _create_workflow {
 }
 
 # Binary traits may need to be coerced into 0/1 encoding
-sub update_clinical_data {
+sub update_clinical_data_and_get_phenotype_name {
     my $self = shift;
     my $cdata_file = $self->clinical_data_file;
     $self->status_message("Checking clinical data file $cdata_file...");
@@ -453,11 +498,12 @@ sub update_clinical_data {
         $md5_fh->write("$md5\n");
         $md5_fh->close();
     }
+    return $attr_name;
 }
 
 sub execute {
     my $self = shift;
-    $self->update_clinical_data();
+    $self->_phenotype_name($self->update_clinical_data_and_get_phenotype_name);
 
     my ($workflow, %inputs) = $self->_create_workflow();
     my $workflow_xml_file = $self->output_directory . "/workflow.xml";
