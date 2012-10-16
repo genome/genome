@@ -33,11 +33,25 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
             doc => 'Path to directory of variant files with reviews.  Any variant with a review status other than S or V will be ignored.',
             is_optional => 1,
         },
-        tiers_to_use => {
-            is => 'Number',
-            is_many => 1,
-            doc => 'A list of tiers to be included in the analysis',
-            default_value => [1],
+        use_tier_1 => {
+            is => 'Boolean',
+            doc => 'Include tier 1 in the analysis',
+            default_value => 1,
+        },
+        use_tier_2 => {
+            is => 'Boolean',
+            doc => 'Include tier 2 in the analysis',
+            default_value => 0,
+        },
+        use_tier_3 => {
+            is => 'Boolean',
+            doc => 'Include tier 3 in the analysis',
+            default_value => 0,
+        },
+        use_tier_4 => {
+            is => 'Boolean',
+            doc => 'Include tier 4 in the analysis',
+            default_value => 0,
         },
     ],
     has_output => [
@@ -73,7 +87,20 @@ sub execute {
     #Deduplicate and sort the snv file (copied from gmt capture manual-review)
     my ($snv_anno_fh, $snv_anno_file) = Genome::Sys->create_temp_file;
 
-    foreach my $tier ($self->tiers_to_use){
+    my @tiers_to_use;
+    if ($self->use_tier_1) {
+        push @tiers_to_use, 1;
+    }
+    if ($self->use_tier_2) {
+        push @tiers_to_use, 2;
+    }
+    if ($self->use_tier_3) {
+        push @tiers_to_use, 3;
+    }
+    if ($self->use_tier_4) {
+        push @tiers_to_use, 4;
+    }
+    foreach my $tier (@tiers_to_use){
         my $snv_anno = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$tier,"annotated.top");
         my @snv_lines = `cat $snv_anno`;
         chomp @snv_lines;
@@ -109,7 +136,7 @@ sub execute {
     }
 
     my @indel_lines;
-    foreach my $tier ($self->tiers_to_use){
+    foreach my $tier (@tiers_to_use){
         my $indel_anno = $self->somatic_variation_build->data_set_path("effects/indels.hq.tier$tier", $tier, "annotated.top");
 
         my @tier_indel_lines = `cat $indel_anno`;
