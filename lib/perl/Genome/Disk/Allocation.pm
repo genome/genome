@@ -7,7 +7,6 @@ use Genome;
 use Genome::Utility::Instrumentation;
 
 use File::Copy::Recursive 'dircopy';
-use File::Copy;
 use Carp 'confess';
 
 use List::Util 'shuffle';
