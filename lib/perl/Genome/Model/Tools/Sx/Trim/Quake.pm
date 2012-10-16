@@ -78,7 +78,6 @@ class Genome::Model::Tools::Sx::Trim::Quake {
     is  => 'Genome::Model::Tools::Sx::ExternalCmdBase',
     has => [ 
         %QUAKE_PARAMS,
-        save_files => {is=> 'Boolean', is_optional => 1, doc => 'Save quake output files' },
     ],
 };
 

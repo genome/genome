@@ -11,10 +11,14 @@ use Switch;
 class Genome::Model::Tools::Sx::ExternalCmdBase {
     is => 'Genome::Model::Tools::Sx::Base',
     is_abstract => 1,
-    has => [
+    has_optional => [
+        save_files => {
+            is=> 'Boolean', 
+            default_value => 0,
+            doc => 'Save intermediate output files.',
+        },
         _cmds => {
             is => 'Array',
-            is_optional => 1,
             is_transient => 1,
             default_value => [],
             doc => 'Commands that were run.',

@@ -37,7 +37,6 @@ class Genome::Model::Tools::Sx::Trim::EulerEc {
     is => 'Genome::Model::Tools::Sx::ExternalCmdBase',
     has => [
         %EULER_PARAMS,
-        save_files => { is => 'Boolean', is_optional => 1, doc => 'Save euler output files' },
     ],
 };
 
