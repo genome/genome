@@ -277,7 +277,7 @@ sub __profile_errors__ {
 }
 
 sub _resolve_resource_requirements_for_build {
-    return "-R 'select[mem>4000] rusage[mem=4000]' -M 4000000"
+    return "-R 'select[mem>8000] rusage[mem=8000]' -M 8000000"
 }
 
 our $SHORTCUT_ALIGNMENT_QUERY = 0;
