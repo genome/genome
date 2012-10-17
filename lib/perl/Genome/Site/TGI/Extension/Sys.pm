@@ -485,11 +485,11 @@ sub recursively_validate_directory_for_read_write_access {
         if (-f $full_path) {
             eval {
                 Genome::Sys->validate_file_for_reading($full_path);
-                Genome::Sys->validate_file_for_writing($full_path);
+                Genome::Sys->validate_file_for_writing_overwrite($full_path);
             };
 
             if ($@) {
-                Carp::croak "Directory $directory has unreadable or unwritable files in it!";
+                Carp::croak "Cannot read or write $full_path in $directory!";
             }
         }
     };
