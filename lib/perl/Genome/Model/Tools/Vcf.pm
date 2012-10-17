@@ -10,9 +10,9 @@ use Genome;
 # 5 was incremented from 4: Varscan now rounds tumor vaq to the nearest integer value so it agrees with the header type field
 # 6 was incremented from 5: some TCGA-compliance format, fix VcfFilter bug to mis-treat some samtools mpileup indel
 # 7 was incremented from 6: more TCGA-compliance format, add TCGA format output of snv and indel to streka tool, add fix to Varscan Somatic snv vcf
-# 8 was incremented from 7: When combining vcfs in DV2, keep the original per-detector sample columns. We will now have one column per sample and detector plus a per-sample consensus column.
 
-my $VCF_VERSION = "8";
+
+my $VCF_VERSION = "7";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],

@@ -7,18 +7,15 @@ use Genome;
 
 class Genome::Model::Tools::Joinx::VcfMerge {
     is => 'Genome::Model::Tools::Joinx',
-    has_optional_input => [
+    has_input => [
         input_files => {
             is => 'Text',
             is_many => 1,
             doc => 'List of vcf files to merge',
             shell_args_position => 1,
         },
-        labeled_input_files => {
-            is => 'Text',
-            is_many => 1,
-            doc => 'List of vcf files to merge and maintain duplicate columns with the joinx -D option. Must be specified like "file.vcf=tag". Only works for joinx 1.6 or later.',
-        },
+    ],
+    has_optional_input => [
         output_file => {
             is => 'Text',
             is_output => 1,
@@ -74,14 +71,9 @@ EOS
 sub execute {
     my ($self) = @_;
 
-    unless ($self->input_files or $self->labeled_input_files) {
-        die $self->error_message("You must provide either input_files, labeled_input_files, or both");
-    }
-
     my @inputs = $self->_resolve_inputs();
-    my $labeled_inputs = $self->_resolve_labeled_inputs();
     my $output = $self->_resolve_output();
-    unless(@inputs or $labeled_inputs) {
+    unless(@inputs) {
         if(defined($self->output_file)) {
             # make output file exist (for downstream tools)
             unless(system("touch $output") == 0) {
@@ -94,7 +86,7 @@ sub execute {
     my $flags = $self->_resolve_flags();
     my $joinx_bin_path = $self->joinx_path();
     my ($cmd, $params) = $self->_generate_joinx_command($joinx_bin_path,
-            $flags, \@inputs, $labeled_inputs, $output);
+            $flags, \@inputs, $output);
     my %params = %{$params};
 
     $self->status_message("Executing command: $cmd");
@@ -172,27 +164,12 @@ sub _resolve_flags {
 # combine the parts of the joinx command together and return the command and
 # params for Sys->shellcmd
 sub _generate_joinx_command {
-    my ($self, $joinx_bin_path, $flags, $inputs, $labeled_inputs, $output) = @_;
+    my ($self, $joinx_bin_path, $flags, $inputs, $output) = @_;
     my @inputs = @{$inputs};
 
     @inputs = map {"<(zcat $_)"} @inputs if $self->use_bgzip;
 
-    my @labeled_inputs;
-    for my $file (keys %$labeled_inputs) {
-        my $tag = $labeled_inputs->{$file};
-        my $labeled_input;
-        if($self->use_bgzip) {
-            $labeled_input = "-D <(zcat $file)=$tag";
-        } else {
-            $labeled_input = "-D $file=$tag";
-        }
-        push @labeled_inputs, $labeled_input;
-    }
-
-    my $cmd = $joinx_bin_path . " vcf-merge $flags ";
-    $cmd .= join(" ", @inputs) if @inputs;
-    $cmd .= join(" ", @labeled_inputs) if @labeled_inputs;
-
+    my $cmd = $joinx_bin_path . " vcf-merge $flags " . join(" ", @inputs);
     if($self->output_file) {
         my $log_part = '';
         $log_part = sprintf(' 2> %s', $self->error_log) if $self->error_log;
@@ -211,27 +188,6 @@ sub _generate_joinx_command {
     );
     $params{output_files} = [$output] if $self->output_file;
     return ($cmd, \%params);
-}
-
-# Make sure labeled inputs make sense and return a hash mapping tags to files
-# Each labeled input should be a filename.vcf=sometag or filename.vcf.gz=sometag
-sub _resolve_labeled_inputs {
-    my $self = shift;
-
-    my $file_to_label_map;
-    my @inputs = $self->labeled_input_files;
-    for my $input (@inputs) {
-        my ($file, $tag, @extras) = split "=", $input;
-        unless ($file and $tag and not @extras) {
-            die $self->error_message("Labeled input ($input) does not match the expected pattern of filename.vcf[.gz]=tag");
-        }
-        unless (-s $file) {
-            die $self->error_message("Labeled input ($input) file ($file) does not exist or has no size!");
-        }
-        $file_to_label_map->{$file} = $tag;
-    }
-
-    return $file_to_label_map;
 }
 
 1;
