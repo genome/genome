@@ -80,7 +80,6 @@ sub _sync_database {
                     my $non_ghost_meta = UR::Object::Type->get($non_ghost_class);
                     if ($non_ghost_meta) {
                         $meta->table_name($non_ghost_meta->table_name);
-                        print "Rewrote table to " . $meta->table_name ."\n";
                     }
                     else {
                         Carp::confess "Could not find meta object for non-ghost class $non_ghost_class!";
