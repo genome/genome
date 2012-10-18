@@ -16,6 +16,10 @@ class Genome::Db::Ensembl::VepCache {
             is => 'Text',
             doc => 'Species contained in cache',
         },
+        sift => {
+            is => 'Boolean',
+            doc => 'Include sift, condel, and polyphen in cache',
+        },
     ],
 };
 
@@ -35,9 +39,18 @@ sub create {
     if ($SPECIES_LOOKUP{$species}) {
         $species = $SPECIES_LOOKUP{$species};
     }
-    $self->status_message("Download ensembl vep cache version $version of species $species");
+    print ("Download ensembl vep cache version $version of species $species");
 
-    my $base_url = "ftp://ftp.ensembl.org/pub/release-VERSION/variation/VEP/SPECIES_vep_VERSION.tar.gz";
+    #ensembl-66 and later
+    #my $base_url = "ftp://ftp.ensembl.org/pub/release-VERSION/variation/VEP/SPECIES_vep_VERSION";
+    #ensembl-64 and 65
+    my $base_url = "ftp://ftp.ensembl.org/pub/release-VERSION/variation/VEP/SPECIES/SPECIES_vep_VERSION";
+
+    if ($self->sift) {
+        $base_url = $base_url."_sift_polyphen";
+    }
+
+    $base_url = $base_url.".tar.gz";
 
     my $temp_directory_path = $self->temp_staging_directory;
 
