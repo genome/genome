@@ -19,10 +19,16 @@ class Genome::ModelGroupBridge {
             id_by           => 'model_id',
             constraint_name => 'GMG_GM_FK'
         },
-        model_group => {
+        group => {
             is              => 'Genome::ModelGroup',
             id_by           => 'model_group_id',
             constraint_name => 'GMG_MG_FK'
+        },
+        model_group => {
+            is              => 'Genome::ModelGroup',
+            id_by           => 'model_group_id',
+            is_deprecated => 1,
+            # redundant/old version of "group"
         },
     ],
     schema_name => 'GMSchema',
