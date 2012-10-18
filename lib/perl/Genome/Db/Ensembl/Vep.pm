@@ -10,7 +10,7 @@ my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
 
 class Genome::Db::Ensembl::Vep {
-    is => 'Command',
+    is => 'Command::V2',
     doc => 'Run VEP',
     has => [
         version => {
@@ -167,13 +167,11 @@ sub _open_input_file {
 
 sub execute {
     my $self = shift;
-
     # check for imported annotation build
     unless($self->ensembl_annotation_build_id) {
         $self->error_message("No ensembl annotation build specified");
         return;
     }
-    
     my $annotation_build = Genome::Model::Build::ImportedAnnotation->get($self->ensembl_annotation_build_id);
 
     unless ($annotation_build) {
@@ -376,12 +374,21 @@ sub execute {
     my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
     my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
     my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
-
     my $cache_param;
     my $ensembl_version = Genome::Db::Ensembl::Import::Run->ensembl_version_string($annotation_build->version);
 
     my $cache_result;
-    eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(version => $ensembl_version, species => $self->species,test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME});
+    my %cache_result_params;
+    $cache_result_params{version} = $ensembl_version;
+    $cache_result_params{species} = $self->species;
+    $cache_result_params{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+    if ($self->sift or $self->condel or $self->polyphen) {
+        $cache_result_params{sift} = 1;
+    }
+    else {
+        $cache_result_params{sift} = 0;
+    }
+    eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
     };
 
     my $cmd = "$script_path $string_args $bool_args $host_param $user_param $password_param $port_param";
