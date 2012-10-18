@@ -42,9 +42,9 @@ sub create {
     print ("Download ensembl vep cache version $version of species $species");
 
     #ensembl-66 and later
-    #my $base_url = "ftp://ftp.ensembl.org/pub/release-VERSION/variation/VEP/SPECIES_vep_VERSION";
+    my $base_url = "ftp://ftp.ensembl.org/pub/release-VERSION/variation/VEP/SPECIES_vep_VERSION";
     #ensembl-64 and 65
-    my $base_url = "ftp://ftp.ensembl.org/pub/release-VERSION/variation/VEP/SPECIES/SPECIES_vep_VERSION";
+    #my $base_url = "ftp://ftp.ensembl.org/pub/release-VERSION/variation/VEP/SPECIES/SPECIES_vep_VERSION";
 
     if ($self->sift) {
         $base_url = $base_url."_sift_polyphen";
