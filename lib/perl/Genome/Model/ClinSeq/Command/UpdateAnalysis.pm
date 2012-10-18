@@ -111,6 +111,11 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               id_by => '_previously_discovered_variations_id',
               doc => 'Desired previously discovered variants build',
         },
+        force => {
+              is => 'Number',
+              default => 0,
+              doc => 'Allow certain warnings/errors to be by-passed',
+        },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
 };
@@ -371,8 +376,12 @@ sub get_samples{
   }
 
   if ($sample_mismatch){
-    $self->warning_message("Found $sample_mismatch samples provided by the user that do not match the specified patient.  Aborting ...\n");
-    exit(1);
+    if ($self->force){
+      $self->warning_message("Found $sample_mismatch samples provided by the user that do not match the specified patient.  Allowing since --force was used\n");
+    }else{
+      $self->warning_message("Found $sample_mismatch samples provided by the user that do not match the specified patient.  Aborting ...\n");
+      exit(1);
+    }
   }
 
   if ($self->sample_type_filter && $skip_count){

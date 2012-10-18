@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Sx::EulerEc;
+package Genome::Model::Tools::Sx::Trim::EulerEc;
 
 use strict;
 use warnings;
@@ -33,14 +33,14 @@ our %EULER_PARAMS = (
     },    
 );
 
-class Genome::Model::Tools::Sx::EulerEc {
-    is => 'Genome::Model::Tools::Sx::Base',
+class Genome::Model::Tools::Sx::Trim::EulerEc {
+    is => 'Genome::Model::Tools::Sx::ExternalCmdBase',
     has => [
         %EULER_PARAMS,
-        _tmpdir => { is_transient => 1, is_optional => 1 },
-        save_files => { is => 'Boolean', is_optional => 1, doc => 'Save euler output files' },
     ],
 };
+
+sub cmd_display_name { 'EulerEC' }
 
 sub help_brief {
     'Tool to run Error correction program EulerEc.pl',
@@ -53,7 +53,7 @@ sub execute {
     my $cwd = cwd();
 
     #run in tmp directory
-    $self->_tmpdir( Genome::Sys->base_temp_directory );
+    $self->_tmpdir;
     for my $set ( 1 .. 2 ) { #run fwd/rev in separate dirs
         Genome::Sys->create_directory( $self->_tmpdir."/$set" );
     }

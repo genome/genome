@@ -146,5 +146,10 @@ sub oracle_to_postgres_table_mapping {
         'genome_model_variant' => 'model.variant',
     );
 }
+
+sub commit {
+    my $self = shift;
+    return $self->SUPER::commit(@_);
+}
 1;
 

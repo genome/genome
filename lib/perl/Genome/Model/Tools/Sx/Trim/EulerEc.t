@@ -8,7 +8,7 @@ use above 'Genome';
 use Test::More;
 require File::Compare;
 
-use_ok( 'Genome::Model::Tools::Sx::EulerEc' ) or die;
+use_ok( 'Genome::Model::Tools::Sx::Trim::EulerEc' ) or die;
 
 #input files
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
@@ -28,14 +28,14 @@ my %fail_params1 = (
     output    => [ $output_file.':type=sanger' ],
     min_multi => 10,
 );
-my $fail_run1 = Genome::Model::Tools::Sx::EulerEc->create( %fail_params1 );
+my $fail_run1 = Genome::Model::Tools::Sx::Trim::EulerEc->create( %fail_params1 );
 ok( ! $fail_run1->execute, "Failed with kmer_size not set" );
 my %fail_params2 = (
     input     => [ $input_file.':type=sanger:cnt=2' ],
     output    => [ $output_file.':type=sanger' ],
     min_multi => 10,
 );
-my $fail_run2 = Genome::Model::Tools::Sx::EulerEc->create( %fail_params1 );
+my $fail_run2 = Genome::Model::Tools::Sx::Trim::EulerEc->create( %fail_params1 );
 ok( ! $fail_run2->execute, "Failed with min_multi not set" );
 
 #pass test
@@ -45,7 +45,7 @@ my %params = (
     kmer_size => 61,
     min_multi => 10,
 );
-my $run = Genome::Model::Tools::Sx::EulerEc->create( %params );
+my $run = Genome::Model::Tools::Sx::Trim::EulerEc->create( %params );
 ok( $run, 'Created tool' );
 ok( $run->execute, 'Executed tool' );
 

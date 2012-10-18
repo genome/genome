@@ -27,7 +27,7 @@ ok(-s $sff, 'sff exists') or die;
 my $example_fastq = $dir.'/reader.sff.fastq';
 ok(-s $example_fastq, 'example fastq exists') or die;
 
-my $cmd = "gmt sx base -input $sff -output $fastq";
+my $cmd = "gmt sx -input $sff -output $fastq";
 my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
 
 is(File::Compare::compare($example_fastq, $fastq), 0, 'fastq files match');

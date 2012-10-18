@@ -29,12 +29,23 @@ sub owner {
     "MG";
 }
 
+
+sub clone_db_handles_for_child_process {
+    my $self = shift;
+
+    Genome::DataSource::GMSchemaOracle->get()->clone_db_handles_for_child_process;
+    Genome::DataSource::PGTest->get()->clone_db_handles_for_child_process;
+
+    return $self->SUPER::clone_db_handles_for_child_process;
+}
+
 our $THIS_COMMIT_ID = 'not within _sync_database';
 
 # This datasource now commits to both Oracle AND postgres. The postgres commit is
 # done within an eval so its result does not in any way affect the Oracle commit.
 sub _sync_database {
     my $self = shift;
+    my %params = @_;
 
     local $THIS_COMMIT_ID = UR::Object::Type->autogenerate_new_object_id_uuid();
 
@@ -50,9 +61,33 @@ sub _sync_database {
 
     $self->pause_db_if_necessary;
 
+
     # fork if we don't skip.
     my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES}); 
-	my $use_postgres = !$skip_postgres;
+    my $use_postgres = !$skip_postgres;
+
+    if ($ENV{GENOME_QUERY_POSTGRES}) {
+        Genome::Site::TGI->undo_table_name_patch;
+        my %classes = map { $_->class => 1 } @{$params{changed_objects}};
+        for my $class (sort keys %classes) {
+            my $meta = UR::Object::Type->get($class);
+            next unless $meta;
+            my @metas = ($meta, $meta->ancestry_class_metas);
+            for my $meta (@metas) {
+                if ($meta->class_name =~ /::Ghost$/) {
+                    my $non_ghost_class = $meta->class_name;
+                    $non_ghost_class =~ s/::Ghost$//;
+                    my $non_ghost_meta = UR::Object::Type->get($non_ghost_class);
+                    if ($non_ghost_meta) {
+                        $meta->table_name($non_ghost_meta->table_name);
+                    }
+                    else {
+                        Carp::confess "Could not find meta object for non-ghost class $non_ghost_class!";
+                    }
+                }
+            }
+        }
+    }
 	
 	
 
@@ -61,18 +96,19 @@ sub _sync_database {
 	my $pid;
 	
 	if ($use_postgres) {
-		pipe($pg_signal_reader, $pg_signal_writer);
-		$pid = UR::Context::Process->fork();
+            pipe($pg_signal_reader, $pg_signal_writer);
+            $pid = UR::Context::Process->fork();
 	} else {
-		$pid = $$;
+            $pid = $$;
 	}
 	
     if ($pid) {
-		# we're in the parent, close the reader.
-		if ($use_postgres) {
-			close($pg_signal_reader);
-			$pg_signal_writer->autoflush(1);
-		}
+        # we're in the parent, close the reader.
+        if ($use_postgres) {
+                close($pg_signal_reader);
+                $pg_signal_writer->autoflush(1);
+        }
+
 		
         my $sync_time_start = Time::HiRes::time();
         my $oracle_sync_rv = Genome::DataSource::GMSchemaOracle->_sync_database(@_);
@@ -88,6 +124,9 @@ sub _sync_database {
 			print $pg_signal_writer("1\n");
 			close($pg_signal_writer);
         }		
+        if ($ENV{GENOME_QUERY_POSTGRES}) {
+            Genome::Site::TGI->redo_table_name_patch;
+        }
         return 1;
     } elsif (defined $pid) {
         # Fork twice so parent (process doing Oracle commit) doesn't wait for child
@@ -119,14 +158,14 @@ sub _sync_database {
 			
             eval {
                 $DB::single = 1;
-				my $pg_commit_rv;
+                my $pg_commit_rv;
                 my $pg_sync_rv = Genome::DataSource::PGTest->_sync_database(@_);
 				
 												
-				my $pg_signal = <$pg_signal_reader>;
-				if (defined $pg_signal) {
-					$pg_commit_rv = Genome::DataSource::PGTest->commit;
-				}
+                my $pg_signal = <$pg_signal_reader>;
+                if (defined $pg_signal) {
+                    $pg_commit_rv = Genome::DataSource::PGTest->commit;
+                }
             };
             my $sync_time_duration = Time::HiRes::time() - $sync_time_start;
             if ($stderr ne '' || $@) {

@@ -29,39 +29,42 @@ sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__(@_);
     return @errors if @errors;
-    if ( $self->quality !~ /^$RE{num}{int}$/ or $self->quality < 1 ) {
+    my $quality = $self->quality;
+    if ( $quality !~ /^$RE{num}{int}$/ or $quality < 1 ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
             properties => [qw/ length /],
-            desc => 'Quality is not a integer greater than 0 => '.$self->quality,
+            desc => 'Quality is not a integer greater than 0 => '.$quality,
         );
     }
     return @errors;
 }
 
-sub _eval_seqs {
-    my ($self, $seqs) = @_;
+sub _create_evaluator {
+    my $self = shift;
 
-    SEQ: for my $seq (@$seqs) {
-        my $orig_seq = $seq->{seq};
-        my $orig_qual = $seq->{qual};
-        my $i = 0;
-        while ( 1 ) {
-            $i++;
-            $seq->{seq} = substr($orig_seq, 0, $i);
-            $seq->{qual} = substr($orig_qual, 0, $i);
-            if ( Genome::Model::Tools::Sx::Functions->calculate_average_quality($seq->{qual}) < $self->quality ) { 
-                chop $seq->{seq};
-                chop $seq->{qual};
-                next SEQ;
-            }
-            if ( length($seq->{seq}) == length($orig_seq) ) {
-                next SEQ;
+    my $quality = $self->quality;
+    return sub{
+        SEQ: for my $seq ( @{$_[0]} ) {
+            my $orig_seq = $seq->{seq};
+            my $orig_qual = $seq->{qual};
+            my $i = 0;
+            while ( 1 ) {
+                $i++;
+                $seq->{seq} = substr($orig_seq, 0, $i);
+                $seq->{qual} = substr($orig_qual, 0, $i);
+                if ( Genome::Model::Tools::Sx::Functions->calculate_average_quality($seq->{qual}) < $quality ) { 
+                    chop $seq->{seq};
+                    chop $seq->{qual};
+                    next SEQ;
+                }
+                if ( length($seq->{seq}) == length($orig_seq) ) {
+                    next SEQ;
+                }
             }
         }
+        return 1;
     }
-
-    return 1;
 }
 
 1;

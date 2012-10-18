@@ -91,7 +91,7 @@ sub type_specific_parameters_for_create {
         force            => $self->force,
     );
 
-    $param{previously_discovered_variations_build} = $self->previously_discovered_variations_build 
+    $param{previously_discovered_variations} = $self->previously_discovered_variations_build
         if $self->previously_discovered_variations_build;
 
     push @params, %param;

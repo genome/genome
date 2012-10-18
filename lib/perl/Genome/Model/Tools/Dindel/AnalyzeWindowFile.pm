@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Basename;
 
 class Genome::Model::Tools::Dindel::AnalyzeWindowFile {
     is => 'Command',
@@ -57,7 +58,9 @@ EOS
 sub execute {
     my $self = shift;
     my $dindel_location = "/gscmnt/gc2146/info/medseq/dindel/binaries/dindel-1.01-linux-64bit";
-    my $callback_script = $INC[0] . "/Genome/Model/Tools/Dindel/merge_bam_callback.pl";
+    my (undef, $callback_script_path) = File::Basename::fileparse(__FILE__);
+    my $callback_script = $callback_script_path . "merge_bam_callback.pl";
+
     if($self->output_bam) {
         unless(-s $callback_script) {
             $self->error_message("unable to locate dindel helper script at location: $callback_script\n");

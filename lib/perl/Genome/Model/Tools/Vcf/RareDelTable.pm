@@ -16,6 +16,7 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome::Utility::Vcf qw/open_vcf_file/;
 
 
 ## Pre-define a ranking system for VEP annotation, where higher = more severe ##
@@ -48,12 +49,17 @@ my %stats = ();
 class Genome::Model::Tools::Vcf::RareDelTable {
 	is => 'Command',                       
 	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
+	has_input => [                                # specify the command's single-value properties (parameters) <--- 
 		vcf_file	=> { is => 'Text', doc => "Input VCF File" , is_optional => 0},
 		phenotype_file	=> { is => 'Text', doc => "Sample Phenotype File with column named phenotype and values 0 or 1" , is_optional => 0},
 		phenotype_column	=> { is => 'Text', doc => "Name of colum in phenotype file with control/case status (values 0 or 1)" , is_optional => 0},
 		vep_file	=> { is => 'Text', doc => "Input VEP Annotation File" , is_optional => 0},
-		output_table	=> { is => 'Text', doc => "Output file for deleterious table" , is_optional => 0},
+		output_table	=> {
+            is => 'Text',
+            doc => "Output file for deleterious table" ,
+            is_optional => 0,
+            is_output => 1,
+        },
 		output_variants	=> { is => 'Text', doc => "Output file for deleterious variants" , is_optional => 0},
 		min_read_depth	=> { is => 'Text', doc => "Minimum read depth to accept backfilled wildtype call" , is_optional => 0, default => 10},
 		max_maf_dbsnp	=> { is => 'Text', doc => "Maximum dbSNP GMAF to be considered rare" , is_optional => 0, default => 0.01},
@@ -91,7 +97,7 @@ EOS
 sub execute {                               # replace with real execution logic.
 	my $self = shift;
 
-        my $vcf_file = $self->vcf_file;
+    my $vcf_file = $self->vcf_file;
 	my $output_table = $self->output_table;
 	my $output_variants = $self->output_variants;
 	my $vep_file = $self->vep_file;
@@ -122,7 +128,7 @@ sub execute {                               # replace with real execution logic.
 
 	## Parse the file ##
 
-	my $input = new FileHandle ($vcf_file);
+	my $input = open_vcf_file($vcf_file);
 	my $lineCounter = 0;
 	
 	while (<$input>)
@@ -142,14 +148,14 @@ sub execute {                               # replace with real execution logic.
 				## Get the sample names ##
 				my @lineContents = split(/\t/, $line);
 				my $numContents = @lineContents;
-				
+
 				for(my $colCounter = 9; $colCounter < $numContents; $colCounter++)
 				{
 					my $sample = $lineContents[$colCounter];
 					$stats{'samples'}++;
 					$sample_names[$numSamples] = $sample;
 					
-					if($sample_phenotypes{$sample} && $sample_phenotypes{$sample} eq "1")
+					if(exists $sample_phenotypes{$sample} && $sample_phenotypes{$sample} eq "1")
 					{
 						$sample_statuses[$numSamples] = "case";
 						$stats{'samples_case'}++;
@@ -174,7 +180,7 @@ sub execute {                               # replace with real execution logic.
 			
 			$stats{'variants'}++;
 			
-			if($filter eq '.' || $filter eq 'PASS')
+			if(!defined $filter || $filter eq '.' || $filter eq 'PASS')
 			{
 				$stats{'variants_pass'}++;
 				## Get the dbSNP Status ##

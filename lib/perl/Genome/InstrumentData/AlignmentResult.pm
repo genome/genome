@@ -649,12 +649,16 @@ sub collect_inputs {
     if (defined $self->instrument_data_segment_id) {
         $self->status_message('Extract input read group bam');
         $bam_file = $self->_extract_input_read_group_bam;
+        unless ($bam_file) {
+            $self->error_message(sprintf('Failed to extract read group (%s) into temporary BAM.', $self->instrument_data_segment_id));
+            return;
+        }
     }
 
     # Some old imported bam does not have is_paired_end set, patch for now
     $self->status_message("Checking if this read group is paired end");
     my $paired = $instr_data->is_paired_end;
-    if (!$paired && $instr_data->can('import_format') && $instr_data->import_format eq 'bam') {
+    if ((!$paired || $self->instrument_data_segment_id) && $instr_data->can('import_format') && $instr_data->import_format eq 'bam') {
         if ($bam_file and -e $bam_file) {
             my $output_file = $bam_file . '.flagstat';
             unless (-s $output_file) {

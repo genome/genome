@@ -114,10 +114,20 @@ sub resolve_geno_path_for_build {
             die $self->error_message("Failed to sort feature list BED.");
         }
 
+        my $sorted_gold2geno_bed_path = Genome::Sys->create_temp_file_path;
+        my $rv = Genome::Model::Tools::Joinx::Sort->execute(
+            input_files => [$gold2geno_bed_path],
+            output_file => "$sorted_gold2geno_bed_path",
+        );
+        unless ($rv) {
+            $self->error_message("Failed to sort gold2geno bed");
+            return;
+        }
+
         my $intersected_gold2geno_path = UR::Value::FilePath->get("$output_dir/intersected_genotype.gold2geno");
         my $intersected_gold2geno_bed_path = UR::Value::FilePath->get("$intersected_gold2geno_path.bed");
         my $intersect_cmd = Genome::Model::Tools::Joinx::Intersect->create(
-            input_file_a => "$gold2geno_bed_path", # genotype first
+            input_file_a => "$sorted_gold2geno_bed_path", # genotype first
             input_file_b => "$sorted_bed_path",
             output_file  => "$intersected_gold2geno_bed_path",
         );

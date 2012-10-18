@@ -40,19 +40,21 @@ sub __errors__ {
     return @errors;
 }
 
-sub _eval_seqs {
-    my ($self, $seqs) = @_;
+sub _create_evaluator {
+    my $self = shift;
 
-    for my $seq (@$seqs) {
-        my $qual = chop $seq->{qual};
-        while ( $qual ne '' and Genome::Model::Tools::Sx::Functions->calculate_quality($qual) <= $self->quality ) {
-            chop $seq->{seq};
-            $qual = chop $seq->{qual};
+    my $quality = $self->quality;
+    return sub{
+        for my $seq ( @{$_[0]} ) {
+            my $qual = chop $seq->{qual};
+            while ( $qual ne '' and Genome::Model::Tools::Sx::Functions->calculate_quality($qual) <= $quality ) {
+                chop $seq->{seq};
+                $qual = chop $seq->{qual};
+            }
+            $seq->{qual} .= $qual if defined $qual;
         }
-        $seq->{qual} .= $qual if defined $qual;
+        return 1;
     }
-
-    return 1;
 }
 
 1;
