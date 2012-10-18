@@ -420,6 +420,9 @@ sub _get_allocation_without_lock {
                 mount_path => $candidate_volume->mount_path,
                 %$parameters,
             );
+            unless ($candidate_allocation) {
+                die 'Failed to create candidate allocation';
+            }
             $candidate_allocation->volume;
             _commit_unless_testing();
 
