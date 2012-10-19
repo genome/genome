@@ -716,11 +716,10 @@ sub whole_rmdup_bam_file {
 
 sub merged_alignment_result {
     my $self = shift;
-
     my @u = Genome::SoftwareResult::User->get(user_id => $self->build_id);
+    return unless @u;
     my $merged_alignment = Genome::InstrumentData::AlignmentResult::Merged->get([map($_->software_result_id, @u)]);
     return $merged_alignment;
-    #return $self->_fetch_merged_alignment_result('get');
 }
 
 sub merged_alignment_result_with_lock {
