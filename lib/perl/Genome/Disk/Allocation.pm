@@ -123,7 +123,6 @@ our @APIPE_DISK_GROUPS = qw/
     systems_benchmarking
 /;
 our $CREATE_DUMMY_VOLUMES_FOR_TESTING = 1;
-our $MAX_VOLUMES = 5;
 my @PATHS_TO_REMOVE; # Keeps track of paths created when no commit is on
 
 sub allocate { return shift->create(@_); }
@@ -360,11 +359,7 @@ sub _create {
         }
 
         push @candidate_volumes, $volume;
-    }
-    # If not given a mount path, get all the volumes that belong to the supplied group that have enough space and
-    # pick one at random from the top MAX_VOLUMES. It's been decided that we want to fill up a small subset of volumes
-    # at a time instead of all of them.
-    else {
+    } else {
         my %candidate_volume_params = (
             disk_group_name => $disk_group_name,
         );
@@ -1265,9 +1260,6 @@ sub _get_candidate_volumes {
         confess "Did not get any allocatable and active volumes belonging to group $disk_group_name.";
     }
 
-    # Only allocate to the first MAX_VOLUMES retrieved
-    my $max = @volumes > $MAX_VOLUMES ? $MAX_VOLUMES : @volumes;
-    @volumes = @volumes[0..($max - 1)];
     return @volumes;
 }
 
