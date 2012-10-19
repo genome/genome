@@ -644,6 +644,14 @@ sub collect_inputs {
     # snag the bam from the instrument data
     my $instr_data = $self->instrument_data;
     my $bam_file = $instr_data->bam_path;
+    unless ($bam_file) {
+        $self->error_message('Instrument data has no bam_path!');
+        return;
+    }
+    unless (-e $bam_file) {
+        $self->error_message("BAM not found: $bam_file");
+        return;
+    }
 
     # maybe we want to extract a read group from that bam and deal with that instead...
     if (defined $self->instrument_data_segment_id) {
@@ -656,25 +664,31 @@ sub collect_inputs {
     }
 
     # Some old imported bam does not have is_paired_end set, patch for now
-    $self->status_message("Checking if this read group is paired end");
+    $self->status_message("Checking if this read group is paired end...");
     my $paired = $instr_data->is_paired_end;
-    if ((!$paired || $self->instrument_data_segment_id) && $instr_data->can('import_format') && $instr_data->import_format eq 'bam') {
-        if ($bam_file and -e $bam_file) {
-            my $output_file = $bam_file . '.flagstat';
-            unless (-s $output_file) {
-                $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
-                die unless $self->_create_bam_flagstat($bam_file, $output_file);
-            }
-            my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
-            die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
+    if ((!$paired || defined $self->instrument_data_segment_id) && $instr_data->can('import_format') && $instr_data->import_format eq 'bam') {
+        if (defined $self->instrument_data_segment_id) {
+            $self->status_message(sprintf('Inferring paired end status for "%s" segment...', $self->instrument_data_segment_id));
+        } else {
+            $self->status_message('Inferring paired end status...');
+        }
 
-            if ($stats->{reads_paired_in_sequencing} > 0) {
-                $self->_is_inferred_paired_end(1);
-                $paired = 1;
-            } else {
-                $self->_is_inferred_paired_end(0);
-                $paired = 0;
-            }
+        my $output_file = $bam_file . '.flagstat';
+        unless (-s $output_file) {
+            $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
+            die unless $self->_create_bam_flagstat($bam_file, $output_file);
+        }
+        my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
+        die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
+
+        if ($stats->{reads_paired_in_sequencing} > 0) {
+            $self->status_message('Setting paired end status to true.');
+            $self->_is_inferred_paired_end(1);
+            $paired = 1;
+        } else {
+            $self->status_message('Setting paired end status to false.');
+            $self->_is_inferred_paired_end(0);
+            $paired = 0;
         }
     }
 
