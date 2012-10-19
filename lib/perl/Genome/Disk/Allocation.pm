@@ -390,9 +390,9 @@ sub _create {
     my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
 
     unless (defined $self) {
-        $class->error_message(sprintf(
-            "Could not create allocation in specified disk group (%s), which contains %d volumes.",
-            $disk_group_name, scalar(@candidate_volumes)
+        Carp::confess $class->error_message(sprintf(
+            "Could not create allocation in specified disk group (%s), which contains %d volumes:\n%s\n",
+            $disk_group_name, scalar(@candidate_volumes), join("\n", map { $_->mount_path } @candidate_volumes),
         ));
     }
 
