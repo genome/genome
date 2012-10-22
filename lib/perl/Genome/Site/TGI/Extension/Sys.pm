@@ -27,6 +27,8 @@ require MIME::Lite;
 
 #####
 # Methods useful for bsubbing jobs and checking their status
+# FIXME There's a lower level API to LSF that doesn't rely on a the command line 
+# interface. That should be used here, but this works well enough for now.
 #####
 
 sub bsub_and_wait {
@@ -99,6 +101,31 @@ sub wait_for_lsf_job {
         sleep 10;
     }
     return $status;
+}
+
+sub wait_for_lsf_jobs {
+    my ($class, @job_ids) = @_;
+    unless (@job_ids) {
+        die "Must be given job ids!";
+    }
+
+    my %job_statuses;
+    my $all_jobs_complete = 1;
+    $DB::single = 1;
+    do {
+        $all_jobs_complete = 1;
+        JOB_ID: for my $job_id (@job_ids) {
+            if (exists $job_statuses{$job_id} and ($job_statuses{$job_id} eq 'DONE'
+                    or $job_statuses{$job_id} eq 'EXIT')) {
+                next JOB_ID;
+            }
+            my $status = $class->get_lsf_job_status($job_id);
+            $job_statuses{$job_id} = $status;
+            $all_jobs_complete = 0 unless $status eq 'DONE' or $status eq 'EXIT';
+        }
+    } while (!$all_jobs_complete);
+
+    return %job_statuses;
 }
 
 sub kill_lsf_job {
