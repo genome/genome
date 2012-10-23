@@ -8,10 +8,12 @@ class Genome::Disk::Assignment {
     id_by => [
         dg_id => {
             is => 'Number',
+            column_name => 'group_id',
             doc => 'disk group ID',
         },
         dv_id => {
             is => 'Number',
+            column_name => 'volume_id',
             doc => 'disk volume ID'
         },
     ],
@@ -38,7 +40,7 @@ class Genome::Disk::Assignment {
             calculate => q| return $mount_path .'/'. $subdirectory; |,
         },
     ],
-    data_source => 'Genome::DataSource::Oltp',
+    data_source => 'Genome::DataSource::GMSchema',
 };
 
 1;

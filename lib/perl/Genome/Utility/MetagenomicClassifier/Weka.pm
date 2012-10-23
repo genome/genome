@@ -12,6 +12,11 @@ require Genome::Utility::MetagenomicClassifier::SequenceClassification;
 
 #$ENV{PERL_INLINE_JAVA_JNI} = 1;
 
+BEGIN {
+    $ENV{CLASSPATH} = '/usr/share/java/weka-3.6.0.jar' 
+      . ($ENV{CLASSPATH} ? ':' . $ENV{CLASSPATH} : '');
+};
+
 use Inline(
     Java => <<'END', 
 // Generated with Weka 3.6.0

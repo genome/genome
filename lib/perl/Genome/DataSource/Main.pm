@@ -8,9 +8,9 @@ use Carp;
 class Genome::DataSource::Main {
     is => 'UR::DataSource::Pg',
     has_constant => [
-        server => { default_value => 'dbname=genome;host=postgres' },
+        server => { default_value => 'dbname=genome' },
         login => { default_value => 'genome' },
-        auth => { default_value => 'TGI_pg_1' },
+        auth => { default_value => undef },
         owner => { default_value => 'public' },
     ],
 };
@@ -53,28 +53,8 @@ sub _sync_database {
                 }
             }
 
-            if (defined $meta->data_source and $meta->data_source->id eq 'Genome::DataSource::GMSchema') {
-                $meta->data_source($self->_ds_tag);
-
-                # Columns are stored directly on the meta object as an optimization, need to be updated
-                # in addition to table/column objects.
-                my (undef, $cols) = @{$meta->{'_all_properties_columns'}};
-                $_ = lc $_ foreach (@$cols);
-
-                if (defined $meta->table_name) {
-                    my $oracle_table = $meta->table_name;
-                    my $postgres_table = $self->postgres_table_name_for_oracle_table($oracle_table);
-                    unless ($postgres_table) {
-                        Carp::confess "Could not find postgres equivalent for oracle table $oracle_table while working on class $class";
-                    }
-                    $meta->table_name($postgres_table);
-
-                    my @properties = $meta->all_property_metas;
-                    for my $property (@properties) {
-                        next unless $property->column_name;
-                        $property->column_name(lc $property->column_name);
-                    }
-                }
+            if (defined $meta->data_source) {
+                $self->rewrite_classdef_to_use_postgres($meta);     
             }
         }
     }
@@ -91,7 +71,59 @@ sub _sync_database {
     
     return $self->SUPER::_sync_database(@_);
 }
+
+# called whenever we generate an ID
+sub autogenerate_new_object_id_for_class_name_and_rule {
+    my $self = shift;
+    UR::Object::Type->autogenerate_new_object_id_uuid; 
+}
+
+# called before attempting to write an SQL query
+our %rewritten;
+sub _generate_class_data_for_loading {
+    my ($self, $meta) = @_;
+    my @ancestor_metas = $meta->ancestry_class_metas;
+    for my $m ($meta, @ancestor_metas) {
+        $self->rewrite_classdef_to_use_postgres($m);
+    }
+    $self->SUPER::_generate_class_data_for_loading($meta);
+}
+
+# used before query _and_ from _sync_database
+sub rewrite_classdef_to_use_postgres {
+    my $self = shift;
+    my $meta = shift;
+
+    if ($rewritten{$meta->id}) {
+        return;
+    }
+    $rewritten{$meta->id} = 1;
     
+    my $class = $meta->class_name;
+
+    $meta->data_source($self->_ds_tag);
+
+    # Columns are stored directly on the meta object as an optimization, need to be updated
+    # in addition to table/column objects.
+    my (undef, $cols) = @{$meta->{'_all_properties_columns'}};
+    $_ = lc $_ foreach (@$cols);
+
+    if (defined $meta->table_name) {
+        my $oracle_table = $meta->table_name;
+        my $postgres_table = $self->postgres_table_name_for_oracle_table($oracle_table);
+        unless ($postgres_table) {
+            Carp::confess "Could not find postgres equivalent for oracle table $oracle_table while working on class $class";
+        }
+        $meta->table_name($postgres_table);
+
+        my @properties = $meta->all_property_metas;
+        for my $property (@properties) {
+            next unless $property->column_name;
+            $property->column_name(lc $property->column_name);
+        }
+    }
+}
+
 sub postgres_table_name_for_oracle_table {
     my $self = shift;
     my $oracle_table = shift;
@@ -106,6 +138,9 @@ sub oracle_to_postgres_table_mapping {
         'feature_list' => 'model.feature_list',
         'fragment_library' => 'instrument.fragment_library',
         'genome_disk_allocation' => 'disk.allocation',
+        'disk_volume' => 'disk.volume',
+        'disk_group' => 'disk.group',
+        'disk_volume_group' => 'disk.volume_group_bridge',
         'genome_model' => 'model.model',
         'genome_model_build' => 'model.build',
         'genome_model_build_input' => 'model.build_input',

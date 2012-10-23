@@ -1,34 +1,23 @@
-package Genome::DataSource::GMSchema;
+package Genome::DataSource::GMSchema; # an exact copy of ::Main except the name
 
 use strict;
 use warnings;
 use Genome;
 use Carp;
-use File::lockf;
-
-
+    
 class Genome::DataSource::GMSchema {
-    is => ['UR::DataSource::Oracle'],
+    is => 'UR::DataSource::Pg',
+    has_constant => [
+        server => { default_value => 'dbname=genome' },
+        login => { default_value => 'genome' },
+        auth => { default_value => undef },
+        owner => { default_value => 'public' },
+    ],
 };
 
-sub table_and_column_names_are_upper_case { 1; }
-
-sub server {
-    "dwrac";
+sub _ds_tag {
+    'Genome::DataSource::GMSchema';
 }
-
-sub login {
-    "mguser";
-}
-
-sub auth {
-    "mguser_prd";
-}
-
-sub owner {
-    "MG";
-}
-
 
 sub clone_db_handles_for_child_process {
     my $self = shift;
@@ -47,154 +36,53 @@ sub _sync_database {
     my $self = shift;
     my %params = @_;
 
-    local $THIS_COMMIT_ID = UR::Object::Type->autogenerate_new_object_id_uuid();
-
-    # Not disconnecting/forking with no commit on to prevent transactions from being
-    # closed, which can cause failures in tests that have multiple commits.
-    if ($ENV{UR_DBI_NO_COMMIT}) {
-        my $oracle_sync_rv = Genome::DataSource::GMSchemaOracle->_sync_database(@_);
-        unless ($oracle_sync_rv) {
-            Carp::confess "Could not sync to oracle!";
-        }
-        return 1;
+    # Need to remove all commit observers, they will be fired during commit and that's no good!
+    my @observers = UR::Observer->get();
+    for my $observer (@observers) {
+        $observer->delete;
     }
 
-    $self->pause_db_if_necessary;
+    # Need to update all classes that have been changed (and all of their parent
+    # classes) to use the postgres datasource instead of Oracle.
+    my %classes = map { $_->class => 1 } @{$params{changed_objects}};
+    for my $class (sort keys %classes) {
+        my $meta = UR::Object::Type->get($class);
+        next unless $meta;
+        my @metas = ($meta, $meta->ancestry_class_metas);
+        for my $meta (@metas) {
 
-
-    # fork if we don't skip.
-    my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES}); 
-    my $use_postgres = !$skip_postgres;
-
-    if ($ENV{GENOME_QUERY_POSTGRES}) {
-        Genome::Site::TGI->undo_table_name_patch;
-        my %classes = map { $_->class => 1 } @{$params{changed_objects}};
-        for my $class (sort keys %classes) {
-            my $meta = UR::Object::Type->get($class);
-            next unless $meta;
-            my @metas = ($meta, $meta->ancestry_class_metas);
-            for my $meta (@metas) {
-                if ($meta->class_name =~ /::Ghost$/) {
-                    my $non_ghost_class = $meta->class_name;
-                    $non_ghost_class =~ s/::Ghost$//;
-                    my $non_ghost_meta = UR::Object::Type->get($non_ghost_class);
-                    if ($non_ghost_meta) {
-                        $meta->table_name($non_ghost_meta->table_name);
-                    }
-                    else {
-                        Carp::confess "Could not find meta object for non-ghost class $non_ghost_class!";
-                    }
+            # If the object has been deleted and we're dealing with the Ghost, need to find the non-Ghost class
+            # and add that to the list of metas we need to update. Otherwise, that class won't get updated to use
+            # postgres and an error will occur.
+            if ($meta->class_name =~ /::Ghost$/) {
+                my $non_ghost_class = $meta->class_name;
+                $non_ghost_class =~ s/::Ghost$//;
+                my $non_ghost_meta = UR::Object::Type->get($non_ghost_class);
+                if ($non_ghost_meta) {
+                    push @metas, $non_ghost_meta;
                 }
+                else {
+                    Carp::confess "Could not find meta object for non-ghost class $non_ghost_class!";
+                }
+            }
+
+            if (defined $meta->data_source) {
+                $self->rewrite_classdef_to_use_postgres($meta);     
             }
         }
     }
-	
-	
 
-	my ($pg_signal_reader, $pg_signal_writer);
+    # Update meta datasource to point to an empty file so we don't get failures due to not being
+    # able to find column/table meta data.
+    my $temp_file_fh = File::Temp->new;
+    my $temp_file = $temp_file_fh->filename;
+    $temp_file_fh->close;
 
-	my $pid;
-	
-	if ($use_postgres) {
-            pipe($pg_signal_reader, $pg_signal_writer);
-            $pid = UR::Context::Process->fork();
-	} else {
-            $pid = $$;
-	}
-	
-    if ($pid) {
-        # we're in the parent, close the reader.
-        if ($use_postgres) {
-                close($pg_signal_reader);
-                $pg_signal_writer->autoflush(1);
-        }
-
-		
-        my $sync_time_start = Time::HiRes::time();
-        my $oracle_sync_rv = Genome::DataSource::GMSchemaOracle->_sync_database(@_);
-
-        my $sync_time_duration = Time::HiRes::time() - $sync_time_start;
-        unless ($oracle_sync_rv) {
-            Carp::confess "Could not sync to oracle!";
-        }
-        if ($use_postgres) {
-            log_commit_time('oracle',$sync_time_duration);
-            waitpid($pid, -1);
-			
-			print $pg_signal_writer("1\n");
-			close($pg_signal_writer);
-        }		
-        if ($ENV{GENOME_QUERY_POSTGRES}) {
-            Genome::Site::TGI->redo_table_name_patch;
-        }
-        return 1;
-    } elsif (defined $pid) {
-        # Fork twice so parent (process doing Oracle commit) doesn't wait for child
-        # to finish.
-        # Ignoring SIG_CHLD prevents "Child process #### reaped" from appearing in logs
-        $SIG{CHLD} = 'IGNORE';
-        my $second_pid = fork();
-        Carp::confess "Can't fork" unless defined $second_pid;
-        if ($second_pid) {
-            # Using POSIX exit prevents END and DESTROY blocks from executing.
-            POSIX::_exit(0);
-        }
-
-        # close this to stop us from blocking on the read even when our parent exits.
-        close($pg_signal_writer);
-
-        # builds will bomb out unless we tell POE that we forked.
-        eval {
-                POE::Kernel->has_forked();
-        };
+    my $meta_ds = Genome::DataSource::Meta->_singleton_object;
+    $meta_ds->get_default_handle->disconnect;
+    $meta_ds->server($temp_file);
     
-        # Turtles all the way down... the logging logic can potentially bomb and emit warnings that the user
-        # shouldn't see, so eval everything!
-        eval { 
-            my $stderr = '';;
-            local *STDERR;
-            open STDERR, '>', \$stderr;
-            my $sync_time_start = Time::HiRes::time();
-			
-            eval {
-                $DB::single = 1;
-                my $pg_commit_rv;
-                my $pg_sync_rv = Genome::DataSource::PGTest->_sync_database(@_);
-				
-												
-                my $pg_signal = <$pg_signal_reader>;
-                if (defined $pg_signal) {
-                    $pg_commit_rv = Genome::DataSource::PGTest->commit;
-                }
-            };
-            my $sync_time_duration = Time::HiRes::time() - $sync_time_start;
-            if ($stderr ne '' || $@) {
-                my $error = '';
-                $error .= "EXCEPTION:" . $@ if $@;
-                $error .= "STDERR: " . $stderr if $stderr;
-				print $error, "\n";
-                my $log_string = create_log_message($error);
-                my $log_fh = open_error_log();
-                # If we can't get a file handle to the log file, no worries. Just continue without making a peep.
-                if ($log_fh) {
-                    my $lock_status = File::lockf::lock($log_fh);
-                    # this returns 0 on success
-                    unless ($lock_status != 0) {
-                        $log_fh->print("$log_string\n");
-                        File::lockf::ulock($log_fh);
-                    }
-                    $log_fh->close;
-                }
-            }
-            log_commit_time('pg',$sync_time_duration);
-        };
-        POSIX::_exit(0);
-    }
-    else {
-        Carp::confess "Problem forking for postgres commit!";
-    }
-
-    return 1;
+    return $self->SUPER::_sync_database(@_);
 }
 
 sub log_commit_time {
@@ -229,140 +117,119 @@ sub log_commit_time {
     $fh->close();
 }
 
-
-sub create_log_message {
-    my $error = shift;
-
-    require DateTime;
-    my $dt = DateTime->now;
-    $dt->set_time_zone('America/Chicago');
-    my $date = $dt->ymd;
-    my $time = $dt->hms;
-    my $user = Genome::Sys->username;
-
-    require Sys::Hostname;
-    my $host = Sys::Hostname::hostname();
-
-    my $string = join("\n", join(',', $date, $time, $host, $user, $THIS_COMMIT_ID), $error);
-    return $string;
+# called whenever we generate an ID
+sub autogenerate_new_object_id_for_class_name_and_rule {
+    my $self = shift;
+    UR::Object::Type->autogenerate_new_object_id_uuid; 
 }
 
-sub _determine_base_log_pathname {
-    require DateTime;
-    my $dt = DateTime->now;
-    my $date = $dt->ymd;
-
-    my $base_dir = '/gsc/var/log/genome/postgres/';
-    my $dir = join('/', $base_dir, $dt->year);
-    unless (-d $dir) {
-        mkdir $dir;
-        chmod(0777, $dir);
+# called before attempting to write an SQL query
+our %rewritten;
+sub _generate_class_data_for_loading {
+    my ($self, $meta) = @_;
+    #$DB::single = 1 if $meta->{class_name} eq 'Genome::SubjectAttribute';
+    my @ancestor_metas = $meta->ancestry_class_metas;
+    for my $m ($meta, @ancestor_metas) {
+        $self->rewrite_classdef_to_use_postgres($m);
     }
-
-    my $file = join('-', $dt->month, $dt->day);
-    return join('/',$dir, $file);
+    $self->SUPER::_generate_class_data_for_loading($meta);
 }
 
-sub open_error_log {
-    my $path = _determine_base_log_pathname();
-    $path .= '.log';
-    my $fh = IO::File->new($path, '>>');
-    unless ($fh) {
-        print STDERR "Couldn't open $path for appending: $!\n";
+# used before query _and_ from _sync_database
+sub rewrite_classdef_to_use_postgres {
+    my $self = shift;
+    my $meta = shift;
+
+    if ($rewritten{$meta->id}) {
         return;
     }
-    chmod(0666,$path);
-    return $fh;
-}
+    $rewritten{$meta->id} = 1;
 
+    if (my ($entity_class) = ($meta->id =~ /^(.*)::Ghost$/)) {
+        my $other_meta = $entity_class->__meta__;
+        return $self->rewrite_classdef_to_use_postgres($other_meta);
+    }
+    
+    my $class = $meta->class_name;
 
-sub _init_created_dbh {
-    my ($self, $dbh) = @_;
-    return unless defined $dbh;
+    $meta->data_source_id($self->_ds_tag);
 
-    $self->SUPER::_init_created_dbh($dbh);
+    # Columns are stored directly on the meta object as an optimization, need to be updated
+    # in addition to table/column objects.
+    my (undef, $cols) = @{$meta->{'_all_properties_columns'}};
+    $_ = lc $_ foreach (@$cols);
 
-    $dbh->do('alter session set "_hash_join_enabled"=TRUE');
+    if (defined $meta->table_name) {
+        my $oracle_table = $meta->table_name;
+        my $postgres_table = $self->postgres_table_name_for_oracle_table($oracle_table);
+        unless ($postgres_table) {
+            Carp::confess "Could not find postgres equivalent for oracle table $oracle_table while working on class $class";
+        }
+        $meta->table_name($postgres_table);
 
-    # stores program name as "MODULE" and user name as "ACTION"
-    $self->set_userenv(
-        'dbh' => $dbh,
-        'module' => substr(Cwd::abs_path($0), -48, 48)
-    ); # our oracle module variable is 48 characters
-
-    return $dbh;
-}
-
-sub _get_sequence_name_for_table_and_column {
-    my ($self, $table_name, $column_name) = @_;
-    if ($table_name =~ /PROCESSING_PROFILE/) {
-        return 'PROCESSING_PROFILE_SEQ';
-    }
-    elsif($table_name =~ /GENOME_MODEL_BUILD/) {
-        return 'GENOME_MODEL_EVENT_SEQ';
-    }
-    elsif($table_name =~ /SOFTWARE_RESULT/) {
-        return 'GENOME_MODEL_EVENT_SEQ';
-    }
-    elsif($table_name =~ /MISC_NOTE/) {
-        return 'GENOME_MODEL_SEQ';
-    }
-    elsif ($table_name =~ /INSTRUMENT_DATA/) {
-        return 'SEQ_SEQ';
-    }
-    elsif ($column_name eq 'ID') {
-        return $table_name . '_SEQ';
-    }
-    elsif($table_name =~ /GSC./) {
-        return 'IMPORTED_INSTRUMENT_DATA_SEQ';
-    }
-    else {
-        $self->SUPER::_get_sequence_name_for_table_and_column($table_name, $column_name);
+        my @properties = $meta->all_property_metas;
+        for my $property (@properties) {
+            next unless $property->column_name;
+            $property->column_name(lc $property->column_name);
+        }
     }
 }
 
-sub pause_db_if_necessary {
+sub postgres_table_name_for_oracle_table {
     my $self = shift;
-    return 1 unless -e $ENV{GENOME_DB_PAUSE};
+    my $oracle_table = shift;
+    return unless $oracle_table;
+    my %mapping = $self->oracle_to_postgres_table_mapping;
+    return $mapping{lc $oracle_table};
+}
 
-    my @o = grep { ref($_) eq 'UR::DeletedRef' } UR::Context->all_objects_loaded('UR::Object');
-    if (@o) {
-        print Data::Dumper::Dumper(\@o);
-        Carp::confess();
-    }
-
-    # Determine what has changed.
-    my @changed_objects = (
-        UR::Context->all_objects_loaded('UR::Object::Ghost'),
-        grep { $_->__changes__ } UR::Context->all_objects_loaded('UR::Object')
-        #UR::Util->mapreduce_grep(sub { $_[0]->__changes__ },$self->all_objects_loaded('UR::Object'))
+sub oracle_to_postgres_table_mapping {
+    return (
+        'search_index_queue' => 'web.search_index_queue',
+        'feature_list' => 'model.feature_list',
+        'fragment_library' => 'instrument.fragment_library',
+        'genome_disk_allocation' => 'disk.allocation',
+        'disk_volume' => 'disk.volume',
+        'disk_group' => 'disk.group',
+        'disk_volume_group' => 'disk.volume_group_bridge',
+        'genome_model' => 'model.model',
+        'genome_model_build' => 'model.build',
+        'genome_model_build_input' => 'model.build_input',
+        'genome_model_build_link' => 'model.build_link',
+        'genome_model_metric' => 'model.build_metric',
+        'genome_model_event' => 'model.event',
+        'genome_model_event_input' => 'model.event_input',
+        'genome_model_event_metric' => 'model.event_metric',
+        'genome_model_event_output' => 'model.event_output',
+        'genome_model_group' => 'model.model_group_bridge',
+        'genome_model_input' => 'model.model_input',
+        'genome_model_link' => 'model.model_link',
+        'genome_nomenclature' => 'web.nomenclature',
+        'genome_nomenclature_enum_value' => 'web.nomenclature_enum_value',
+        'genome_nomenclature_field' => 'web.nomenclature_field',
+        'genome_project' => 'subject.project',
+        'genome_project_part' => 'subject.project_part',
+        'genome_subject' => 'subject.subject',
+        'genome_subject_attribute' => 'subject.subject_attribute',
+        'genome_sys_user' => 'subject.user',
+        'genome_task' => 'web.task',
+        'genome_task_params' => 'web.task_params',
+        'instrument_data' => 'instrument.data',
+        'instrument_data_attribute' => 'instrument.data_attribute',
+        'misc_attribute' => 'subject.misc_attribute',
+        'misc_note' => 'subject.misc_note',
+        'model_group' => 'model.model_group',
+        'processing_profile' => 'model.processing_profile',
+        'processing_profile_param' => 'model.processing_profile_param',
+        'software_result' => 'result.software_result',
+        'software_result_input' => 'result.input',
+        'software_result_metric' => 'result.metric',
+        'software_result_param' => 'result.param',
+        'software_result_user' => 'result.user',
+        'genome_model_build_variant' => 'model.build_variant',
+        'genome_model_variant' => 'model.variant',
     );
-
-    my @real_changed_objects = grep {UR::Context->resolve_data_source_for_object($_)} @changed_objects;
-
-    return 1 unless (@real_changed_objects);
-
-
-    print "Database updating has been paused, please wait until updating has been resumed...\n";
-
-    my @data_sources = UR::Context->all_objects_loaded('UR::DataSource::RDBMS');
-    for my $ds (@data_sources) {
-        $ds->disconnect_default_handle if $ds->has_default_handle;
-    }
-
-    while (1) {
-        sleep sleep_length();
-        last unless -e $ENV{GENOME_DB_PAUSE};
-    }
-
-    print "Database updating has been resumed, continuing commit!\n";
-    return 1;
 }
-
-sub sleep_length {
-    return 30;
-}
-
 
 1;
 

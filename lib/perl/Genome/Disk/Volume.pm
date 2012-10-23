@@ -9,7 +9,7 @@ use Carp;
 class Genome::Disk::Volume {
     table_name => 'DISK_VOLUME',
     id_by => [
-        dv_id => {is => 'Number'},
+        dv_id => { is => 'Number', column_name => 'id'},
     ],
     has => [
         hostname => { is => 'Text' },
@@ -120,7 +120,7 @@ class Genome::Disk::Volume {
             calculate => q| return Genome::Disk::Allocation->get(mount_path => $mount_path); |,
         },
     ],
-    data_source => 'Genome::DataSource::Oltp',
+    data_source => 'Genome::DataSource::GMSchema',
     doc => 'Represents a particular disk volume (eg, sata483)',
 };
 

@@ -6,10 +6,10 @@ use warnings;
 class Genome::Disk::Group {
     table_name => 'DISK_GROUP',
     id_by => [
-        dg_id => { is => 'Number' },
+        dg_id => { is => 'Number', column_name => 'id' },
     ],
     has => [
-        disk_group_name => { is => 'Text' },
+        disk_group_name => { is => 'Text', column_name => 'name' },
         permissions => { is => 'Number' },
         sticky => { is => 'Number' },
         subdirectory => { is => 'Text' },
@@ -45,7 +45,7 @@ class Genome::Disk::Group {
             reverse_id_by => 'group',
         },
     ],
-    data_source => 'Genome::DataSource::Oltp',
+    data_source => 'Genome::DataSource::GMSchema',
     doc => 'Represents a disk group (eg, info_apipe), which contains any number of disk volumes',
 };
 
