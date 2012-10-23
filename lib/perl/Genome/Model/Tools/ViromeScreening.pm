@@ -106,6 +106,7 @@ sub execute {
 
 sub _log_dbs_used {
     my $self = shift;
+    unlink $self->logfile;
     my $fh = Genome::Sys->open_file_for_writing( $self->logfile );
     for my $name ( qw/ human nt virus taxonomy/ ) {
         my $db = $name.'_db';
