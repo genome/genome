@@ -110,8 +110,8 @@ sub _bsub_unarchives {
         my $allocation_id = $allocation->id;
         my $job_id = Genome::Sys->bsub(
             queue => 'long',
-            cmd => "genome disk allocation unarchive $allocation_id",
-            log_file => "$log_file_dir/$allocation_id"
+            cmd => "genome disk allocation unarchive '$allocation_id'",
+            log_file => "'$log_file_dir/$allocation_id'"
         );
         $job_to_allocation_mapping{$job_id} = $allocation_id;
         $self->debug_message("Scheduled unarchive of allocation $allocation_id  " .
