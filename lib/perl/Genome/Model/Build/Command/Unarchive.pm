@@ -47,7 +47,7 @@ sub execute {
     BUILD: for my $build (@builds) {
         # Print progress information
         $current_build_num++;
-        $self->status_message("Working on build " . $build->id . 
+        $self->status_message("\nWorking on build " . $build->id . 
             " ($current_build_num of $total_builds)");
 
         my @allocations = grep { $_->is_archived } $build->all_allocations;
@@ -86,7 +86,7 @@ sub execute {
     }
 
     # Print error summary (if needed) and exit
-    $self->status_message("Unarchives for all builds have completed.");
+    $self->status_message("\nUnarchives for all builds have completed.");
     if (%failed_allocations_per_build) {
         $self->status_message("Errors occurred during unarchiving. An error summary follows. " .
             "Once all errors have been addressed, please remove the log directory $dir");
