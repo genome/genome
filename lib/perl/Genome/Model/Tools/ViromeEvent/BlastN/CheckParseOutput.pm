@@ -212,6 +212,7 @@ sub run_parser {
     # create ouput file
     my $parse_out_file = $blast_out_file;
     $parse_out_file =~ s/out$/parsed/;
+    unlink $parse_out_file;
     my $out_fh = Genome::Sys->open_file_for_writing( $parse_out_file );
 
     my @keep_for_tblastx;

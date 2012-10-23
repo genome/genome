@@ -99,6 +99,11 @@ sub execute {
         my @process_errors;
         if ( @processing ) {
             PP: foreach my $processing ( @processing ) {
+                if(exists $processing->{error}) {
+                    push @process_errors, $processing->{error};
+                    next PP;
+                }
+
                 my $processing_profile = $processing->{processing_profile};
                 my $reference_sequence_build = $processing->{reference_sequence_build};
 
@@ -1252,8 +1257,8 @@ sub _resolve_processing_for_instrument_data {
     };
     if($@){
         #something went horribly wrong.  do something about it.
-        # FIXME: actually DO something
-        $self->warning_message('Failed to get processing for instrument data id ('.$instrument_data->id.'): '.$@);
+        $self->error_message('Failed to get processing for instrument data id ('.$instrument_data->id.'): '.$@);
+        push @processing, {error => $self->error_message};
     }
     return @processing;
 }

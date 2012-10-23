@@ -10,6 +10,9 @@ use warnings;
 use Genome;
 use Genome::Sys;  # ensure our overrides take precedence
 
+use Time::HiRes;
+use Genome::Utility::Instrumentation;
+
 use Data::Dumper;
 require Carp;
 require IO::Dir;
@@ -27,6 +30,8 @@ require MIME::Lite;
 
 #####
 # Methods useful for bsubbing jobs and checking their status
+# FIXME There's a lower level API to LSF that doesn't rely on a the command line 
+# interface. That should be used here, but this works well enough for now.
 #####
 
 sub bsub_and_wait {
@@ -99,6 +104,31 @@ sub wait_for_lsf_job {
         sleep 10;
     }
     return $status;
+}
+
+sub wait_for_lsf_jobs {
+    my ($class, @job_ids) = @_;
+    unless (@job_ids) {
+        die "Must be given job ids!";
+    }
+
+    my %job_statuses;
+    my $all_jobs_complete = 1;
+    $DB::single = 1;
+    do {
+        $all_jobs_complete = 1;
+        JOB_ID: for my $job_id (@job_ids) {
+            if (exists $job_statuses{$job_id} and ($job_statuses{$job_id} eq 'DONE'
+                    or $job_statuses{$job_id} eq 'EXIT')) {
+                next JOB_ID;
+            }
+            my $status = $class->get_lsf_job_status($job_id);
+            $job_statuses{$job_id} = $status;
+            $all_jobs_complete = 0 unless $status eq 'DONE' or $status eq 'EXIT';
+        }
+    } while (!$all_jobs_complete);
+
+    return %job_statuses;
 }
 
 sub kill_lsf_job {
@@ -566,6 +596,8 @@ sub cat {
 sub lock_resource {
     my ($self,%args) = @_;
 
+    my $total_lock_start_time = Time::HiRes::time();
+
     my $resource_lock = delete $args{resource_lock};
     my ($lock_directory,$resource_id,$parent_dir);
     if ($resource_lock) {
@@ -619,6 +651,8 @@ sub lock_resource {
 
     my $initial_time = time;
     my $last_wait_announce_time = $initial_time;
+
+    my $lock_attempts = 1;
     my $ret;
     while(!($ret = symlink($tempdir,$resource_lock))) {
         # TONY: The only allowable failure is EEXIST, right?
@@ -718,12 +752,33 @@ END_CONTENT
                }
            }
         sleep $block_sleep;
+        $lock_attempts += 1;
        }
     $SYMLINKS_TO_REMOVE{$resource_lock} = 1;
 
     # do we need to activate a cleanup handler?
     $self->cleanup_handler_check();
+
+    my $total_lock_stop_time = Time::HiRes::time();
+    my $lock_time_miliseconds = 1000 * ($total_lock_stop_time - $total_lock_start_time);
+
+    my $caller_name = _resolve_caller_name(caller());
+
+    Genome::Utility::Instrumentation::timing("lock_resource.$caller_name", $lock_time_miliseconds);
+    Genome::Utility::Instrumentation::timing("lock_resource_attempts.$caller_name",
+        $lock_attempts);
+
+    Genome::Utility::Instrumentation::timing('lock_resource.total', $lock_time_miliseconds);
+    Genome::Utility::Instrumentation::timing('lock_resource_attempts.total',
+        $lock_attempts);
+
     return $resource_lock;
+}
+
+sub _resolve_caller_name {
+    my ($package, $filename, $line) = @_;
+    $package =~ s/::/./g;
+    return $package;
 }
 
 sub unlock_resource {
