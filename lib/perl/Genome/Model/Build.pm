@@ -2355,86 +2355,107 @@ sub _preprocess_subclass_description {
 sub heartbeat {
     my $self = shift;
     my %options = @_;
+    my %heartbeat = $self->_heartbeat;
+    return ( $options{versbose} ? $heartbeat{is_ok} : $heartbeat{message} );
+}
 
-    my $verbose = delete $options{verbose};
+sub _heartbeat {
+    my $self = shift;
 
-    if (grep { $self->status eq $_ } ('Succeeded', 'Preserved')) {
-        return 1;
+    my %heartbeat = ( 
+        id => $self->id,
+        status => $self->status,
+        is_ok => 0,
+    );
+    if (grep { $heartbeat{status} eq $_ } ('Succeeded', 'Preserved')) {
+        $heartbeat{is_ok} = 1;
+        $heartbeat{message} = 'Build is succeeded. Stauts is '.$heartbeat{status}.'.';
+        return %heartbeat;
     }
 
     unless (grep { $self->status eq $_ } ('Running', 'Scheduled')) {
-        return $verbose ? 'Build is not running/scheduled.' : 0;
+        $heartbeat{message} = 'Build is not running/scheduled.';
+        return %heartbeat;
     }
 
     my @wf_instances = ($self->newest_workflow_instance, $self->child_workflow_instances);
     my @wf_instance_execs = map { $_->current } @wf_instances;
 
-    for my $wf_instance_exec (@wf_instance_execs) {
+    WF: for my $wf_instance_exec (@wf_instance_execs) {
         my $lsf_job_id = $wf_instance_exec->dispatch_identifier;
         my $wf_instance_exec_status = $wf_instance_exec->status;
         my $wf_instance_exec_id = $wf_instance_exec->execution_id;
 
         if (grep { $wf_instance_exec_status eq $_ } ('new', 'done')) {
-            next;
+            next WF;
         }
 
         # only certaion operation types would have LSF jobs and everything below is inspecting LSF status
         my $operation_type = $wf_instance_exec->operation_instance->operation->operation_type;
         unless ( grep { $operation_type->isa($_) } ('Workflow::OperationType::Command', 'Workflow::OperationType::Event') ) {
-            next;
+            next WF;
         }
 
         unless ($lsf_job_id) {
-            return $verbose ? "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) has no LSF job ID" : 0;
+            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) has no LSF job ID";
+            last WF;
         }
 
         if ($lsf_job_id =~ /^P/) {
-            next;
+            next WF;
         }
 
         my $bjobs_output = qx(bjobs -l $lsf_job_id 2> /dev/null | tr '\\n' '\\0' | sed -r -e 's/\\x0\\s{21}//g' -e 's/\\x0/\\n\\n/g');
         chomp $bjobs_output;
         unless($bjobs_output) {
-            return $verbose ? "Expected bjobs (LSF ID: $lsf_job_id) output but received none." : 0;
+            $heartbeat{message} = "Expected bjobs (LSF ID: $lsf_job_id) output but received none.";
+            last WF;
         }
 
         my $lsf_status = $self->status_from_bjobs_output($bjobs_output);
         if ($wf_instance_exec_status eq 'scheduled' && $lsf_status ne 'pend') {
-            return $verbose ? "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)" : 0;
+            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)";
+            last WF;
         }
         elsif ($wf_instance_exec_status eq 'scheduled' && $lsf_status eq 'pend') {
-            next;
+            next WF;
         }
 
         if ($wf_instance_exec_status eq 'running' && $lsf_status ne 'run') {
-            return $verbose ? "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)" : 0;
+            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)";
+            last WF;
         }
 
         if ($wf_instance_exec_status eq 'crashed' && ($lsf_status eq 'done' || $lsf_status eq 'exit')) {
-            return $verbose ? "Workflow Instance Execution (ID: $wf_instance_exec_id) crashed." : 0;
+            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) crashed.";
+            last WF;
         }
 
         if ($wf_instance_exec_status ne 'running' || $lsf_status ne 'run') {
-            die "Missing state ($wf_instance_exec_status/$lsf_status) condition, only running/run should reach this point";
+            $heartbeat{message} = "Missing state ($wf_instance_exec_status/$lsf_status) condition, only running/run should reach this point";
+            last WF;
         }
 
         my @pids = $self->pids_from_bjobs_output($bjobs_output);
         my $execution_host = $self->execution_host_from_bjobs_output($bjobs_output);
         unless ($execution_host) {
-            return $verbose ? 'Expected execution host.' : 0;
+            $heartbeat{message} = 'Expected execution host.';
+            last WF;
         }
         my $ps_cmd = "ssh $execution_host ps -o pid= -o stat= -p " . join(" -p ", @pids) . ' 2> /dev/null';
         my @ps_output = qx($ps_cmd);
         chomp(@ps_output);
 
         if (@ps_output != @pids) {
-            return $verbose ? 'Expected ps output for ' . @pids . ' PIDs (' . $execution_host . ': ' . join(', ', @pids) . ').' : 0;
+            $heartbeat{message} = 'Expected ps output for ' . @pids . ' PIDs (' . $execution_host . ': ' . join(', ', @pids) . ').';
+            last WF;
         }
 
         for my $ps_output (@ps_output) {
             my ($stat) = $ps_output =~ /\d+\s+(.*)/;
             unless($stat =~ /^(R|S)/) {
-                return $verbose ? 'Expected PID to be in a R or S stat.' : 0;
+                $heartbeat{message} = 'Expected PID to be in a R or S stat.';
+                last WF;
             }
         }
 
@@ -2447,11 +2468,15 @@ sub heartbeat {
         if (($elapsed_mtime_output_file/3600 > 48) && ($elapsed_mtime_error_file/3600 > 48)) {
             my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/3600);
             my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/3600);
-            return $verbose ? "Process is running BUT output and/or error file have not been modified in 48+ hours     ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file" : 0;
+            $heartbeat{message} = "Process is running BUT output and/or error file have not been modified in 48+ hours     ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file";
+
+            last WF;
         }
+        $heartbeat{message} = 'OK. Seems to be running!';
+        $heartbeat{is_ok} = 1;
     }
 
-    return 1;
+    return %heartbeat;
 }
 
 sub output_file_from_bjobs_output {
