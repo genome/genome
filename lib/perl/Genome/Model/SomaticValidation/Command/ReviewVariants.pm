@@ -725,13 +725,15 @@ sub _filter_regions {
     my $variant_file = shift;
 
     my $filtered_variant_file = "$variant_file.filteredReg";
-    #TODO Replace me with gmt call?
-    my $cmd = "joinx intersect --miss-a $filtered_variant_file -a $variant_file -b $filter_regions_file >/dev/null";
-    my $result = Genome::Sys->shellcmd(
-        cmd => "$cmd",
+    my $dev_null = Genome::Sys->create_temp_file_path(); #shellcmd doesn't currently like /dev/null
+    my $intersect_cmd = Genome::Model::Tools::Joinx::Intersect->create(
+        input_file_a => $variant_file,
+        input_file_b => $filter_regions_file,
+        miss_a_file => $filtered_variant_file,
+        output_file => $dev_null,
     );
-    unless($result) {
-        $self->error_message("Failed to execute joinx: Returned $result");
+    unless($intersect_cmd->execute) {
+        $self->error_message("Failed to execute joinx");
         die $self->error_message;
     }
 
