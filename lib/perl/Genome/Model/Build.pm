@@ -2359,6 +2359,10 @@ sub heartbeat {
     return ( $options{versbose} ? $heartbeat{is_ok} : $heartbeat{message} );
 }
 
+sub heartbeat_verbose {
+    return $_[0]->heartbeat(verbose => 1);
+}
+
 sub _heartbeat {
     my $self = shift;
 
