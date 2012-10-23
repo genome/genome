@@ -109,6 +109,7 @@ sub parse_blast_file {
 
     my $parse_out_file = $blast_file;
     $parse_out_file =~ s/out$/parsed/;
+    unlink $parse_out_file;
     my $parse_out_fh = Genome::Sys->open_file_for_writing( $parse_out_file );
 
     # get report from blast out file
