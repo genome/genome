@@ -33,8 +33,9 @@ sub import {
         $lds->hijack_class('Genome::Disk::Volume') or die;
         $lds->hijack_class('Genome::Disk::Allocation') or die;
 
-    $Genome::Disk::Allocation::_execute_system_command_template =
-        '%s %s -e "use above Genome; use Genome::Disk::Allocation::Test; %s->%s(%s); UR::Context->commit;"';
+        # ensure test environment is loaded for _execute_system_command
+        push @Genome::Disk::Allocation::_execute_system_command_perl5opt,
+            '-MGenome::Disk::Allocation::Test';
         $imported = 1;
     }
 
