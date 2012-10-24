@@ -891,9 +891,18 @@ sub shellcmd {
     else {
         $self->status_message("RUN: $cmd");
 
+        if ($!) {
+            $self->warning_message(sprintf('$! had been "%s" but is being reset to "" before executing this cmd.', $!));
+            $! = 0;
+        }
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+        my $error_message = $!;
+        if ($error_message eq 0) {
+            $error_message = "Inspect log between RUN <cmd> and ERROR for error information.";
+        }
+
         if ( $exit_code == -1 ) {
             Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd");
         } elsif ( $exit_code & 127 ) {
@@ -905,7 +914,7 @@ sub shellcmd {
             $exit_code = $exit_code >> 8;
             $DB::single = $DB::stopper;
             if ($allow_failed_exit_code) {
-                Carp::carp("TOLERATING Exit code $exit_code, msg $! from: $cmd");
+                Carp::carp("TOLERATING Exit code $exit_code, msg $error_message from: $cmd");
             } else {
                 if($! eq 'No such file or directory') {
                     for my $missing_input_file (grep { not -s $_ } @$input_files) {
@@ -920,7 +929,7 @@ sub shellcmd {
                         }
                     }
                 }
-                Carp::croak("ERROR RUNNING COMMAND.  Exit code $exit_code, msg $! from: $cmd");
+                Carp::croak("ERROR RUNNING COMMAND.  Exit code $exit_code, msg $error_message from: $cmd");
             }
         }
     }
