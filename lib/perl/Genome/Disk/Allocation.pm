@@ -415,7 +415,7 @@ sub _get_allocation_without_lock {
     my @randomized_candidate_volumes = List::Util::shuffle(@$candidate_volumes);
     for my $candidate_volume (@randomized_candidate_volumes) {
         if ($candidate_volume->allocated_kb + $kilobytes_requested
-                < $candidate_volume->soft_limit_kb) {
+                <= $candidate_volume->soft_limit_kb) {
             my $candidate_allocation = $class->SUPER::create(
                 mount_path => $candidate_volume->mount_path,
                 %$parameters,
@@ -426,7 +426,7 @@ sub _get_allocation_without_lock {
             # Reload so we guarantee that we calculate the correct allocated_kb
             UR::Context->current->reload($candidate_volume);
             if ($candidate_volume->allocated_kb
-                    < $candidate_volume->soft_limit_kb) {
+                    <= $candidate_volume->soft_limit_kb) {
                 $chosen_allocation = $candidate_allocation;
                 last;
             } else {
