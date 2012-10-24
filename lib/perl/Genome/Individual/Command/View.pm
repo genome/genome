@@ -10,7 +10,7 @@ use Genome::Utility::List qw(in);
 
 class Genome::Individual::Command::View {
     doc => "Display basic information about an individual.",
-    is => 'Genome::Command::Viewer',
+    is => ['Genome::Command::Viewer', 'Genome::Command::ColorMixin'],
     has => [
         individual => {
             is => 'Genome::Individual',
@@ -236,11 +236,6 @@ sub _determine_instrument_data_type {
     }
 }
 
-sub _in {
-    my ($element, $list) = @_;
-    return any {$element eq $_} @{$list};
-}
-
 sub _write_model_info {
     my ($self, $width, $handle) = @_;
 
@@ -267,7 +262,7 @@ sub _write_model_info {
         if($self->filter) {
             my @pp_ids = map {$_->id} $self->processing_profiles;
             @filtered_models = grep
-                    {_in($_->processing_profile->id, \@pp_ids)} @models;
+                    {in($_->processing_profile->id, \@pp_ids)} @models;
         }
 
         next unless scalar(@filtered_models);
