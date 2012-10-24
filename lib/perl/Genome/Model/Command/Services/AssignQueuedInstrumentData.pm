@@ -1224,7 +1224,7 @@ sub _resolve_processing_for_instrument_data {
             elsif ($taxon->species_latin_name =~ /zea mays/i) {
                 push @processing, {
                     processing_profile_id => Genome::ProcessingProfile::ReferenceAlignment->default_profile_id,
-                    reference_sequence_build_id => 12319608,# MGSC-maize-buildB73 => 123196088
+                    reference_sequence_build_id => 123196088,# MGSC-maize-buildB73 => 123196088
                 };
             }
             elsif ($taxon->domain =~ /bacteria/i) {
