@@ -1179,6 +1179,7 @@ sub _resolve_processing_for_instrument_data {
                 affymetrix => 2166946,
                 infinium => 2575175,
                 unknown => 2186707,
+                plink => 2591110,
             );
             my $processing_profile_id = $genotype_platforms_and_processing_ids{$sequencing_platform};
             die $self->error_message('No genotype processing profile for platform! '.$sequencing_platform) if not $processing_profile_id;
