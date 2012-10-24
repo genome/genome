@@ -1,13 +1,13 @@
-package Genome::Model::Tools::Vcf::Convert::Indel::PindelTcga;
+package Genome::Model::Tools::Vcf::Convert::Indel::PindelVcf;
 
 use strict;
 use warnings;
 use Genome;
 use File::Basename;
 
-class Genome::Model::Tools::Vcf::Convert::Indel::PindelTcga {
+class Genome::Model::Tools::Vcf::Convert::Indel::PindelVcf {
     is  => 'Genome::Model::Tools::Vcf::Convert::Base',
-    doc => 'Generate a TCGA-compliant VCF file from Pindel output',
+    doc => 'Generate a TGI standard VCF file from Pindel output, TCGA-compliant or not',
 };
 
 
@@ -24,7 +24,7 @@ HELP
 }
 
 sub source {
-    return 'PindelTcga';
+    return 'PindelVcf';
 }
 
 
@@ -35,7 +35,6 @@ sub get_info_meta {
         {MetaType => "INFO", ID => "HOMLEN", Number => ".", Type => "Integer", Description => "Length of base pair identical micro-homology at event breakpoints"},
         {MetaType => "INFO", ID => "HOMSEQ", Number => ".", Type => "String",  Description => "Sequence of base pair identical micro-homology at event breakpoints"},
         {MetaType => "INFO", ID => "SVLEN",  Number => ".", Type => "Integer", Description => "Difference in length between REF and ALT alleles"},
-        {MetaType => "INFO", ID => "SVTYPE", Number => 1,   Type => "String",  Description => "Type of structural variant"},
         {MetaType => "INFO", ID => "NTLEN",  Number => ".", Type => "Integer", Description => "Number of bases inserted in place of deleted code"},
     );
 }
@@ -49,8 +48,16 @@ sub get_info_meta {
 sub parse_line {
     my ($self, $line) = @_;
     return if $line =~ /^#/;  #skip the header
-    my @columns = split /\t/, $line;
 
+    my @columns = split /\t/, $line;
+    my @infos   = split /;/, $columns[7];
+    my @new_infos;
+
+    for my $info (@infos) {
+        push @new_infos, $info unless $info =~ /^SVTYPE\=/;  #SVTYPE not useful and conflict with TCGA definition
+    }
+
+    $columns[7]   = join ';', @new_infos;
     $columns[8]  .= ':DP:BQ:SS';
     $columns[9]  .= ':.:.:.';
     $columns[10] .= ':.:.:2';

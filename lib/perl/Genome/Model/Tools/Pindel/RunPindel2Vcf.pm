@@ -12,12 +12,24 @@ my $PINDEL_COMMAND = 'pindel';
 class Genome::Model::Tools::Pindel::RunPindel2Vcf {
     is => ['Command'],
     has => [
+        aligned_reads_sample => {
+            is => 'String',
+            is_input => 1,
+            is_optional => 1,
+            doc => 'tumor sample name',
+        },
+        control_aligned_reads_sample => {
+            is => 'String',
+            is_input => 1,
+            is_optional => 1,
+            doc => 'normal sample name',
+        },
         output_file => {
             is => 'String',
             is_optional => 0,
             is_input => 1,
             is_output => 1,
-            doc => 'Where the output should go.'
+            doc => 'Where the output should go.',
         },
         pindel_raw_output => {
             is => 'String',
@@ -44,7 +56,7 @@ class Genome::Model::Tools::Pindel::RunPindel2Vcf {
     # Make workflow choose 64 bit blades
     has_param => [
         lsf_queue => {
-            default_value => 'apipe'
+            default_value => 'apipe',
         }, 
         lsf_resource => {
             default_value => "-M 16000000 -R 'select[type==LINUX64 && mem>16000] rusage[mem=16000]'",
@@ -113,28 +125,22 @@ sub _run_pindel2vcf {
         die $self->error_message("Could not complete pindel2vcf run: ".$result);
     }
 
-    my $fh = Genome::Sys->open_file_for_reading($output.'.tmp') or die 'fail to open '.$output.'.tmp';
-    my $col_header;
-
-    while (my $line = $fh->getline) {
-        next unless $line =~ /^#(CHROM\s+.*)/;
-        $col_header = $1;
-        last;
-    }
-    $fh->close;
-
-    $cmd = Genome::Model::Tools::Vcf::Convert::Indel::PindelTcga->create(
-        input_file    => $output.'.tmp',
-        output_file   => $output,
-        column_header => $col_header,
+    my %params = (
+        input_file  => $output.'.tmp',
+        output_file => $output,
+        aligned_reads_sample        => $self->aligned_reads_sample,
         reference_sequence_build_id => $self->reference_build_id,
     );
 
+    $params{control_aligned_reads_sample} = $self->control_aligned_reads_sample 
+        if $self->control_aligned_reads_sample;
+    $cmd = Genome::Model::Tools::Vcf::Convert::Indel::PindelVcf->create(%params);
+      
     my $rv = $cmd->execute;
     unlink $output.'.tmp';
 
     unless ($rv) {
-        $$self->error_message("Failed to run PindelTcga !");
+        $self->error_message("Failed to run PindelVcf !");
         return;
     }
     

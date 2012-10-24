@@ -10,19 +10,19 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 
-use_ok('Genome::Model::Tools::Vcf::Convert::Indel::GatkSomaticIndel');
+use_ok('Genome::Model::Tools::Vcf::Convert::Indel::PindelVcf');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Vcf-Convert-Indel-GatkSomaticIndel';
-my $expected_file = "$test_dir/expected.v2/indels.vcf.gz";
-my $input_file    = "$test_dir/indels.hq";
+my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Vcf-Convert-Indel-PindelVcf';
+my $expected_file = "$test_dir/v1/indels.vcf.gz";
+my $input_file    = "$test_dir/input.vcf";
 my $output_file   = Genome::Sys->create_temp_file_path;
 
-my $command = Genome::Model::Tools::Vcf::Convert::Indel::GatkSomaticIndel->create( 
-    input_file  => $input_file,
-    output_file => $output_file,
-    aligned_reads_sample         => "TUMOR_SAMPLE_123",
-    control_aligned_reads_sample => "CONTROL_SAMPLE_123",
-    reference_sequence_build_id  => 101947881
+my $command = Genome::Model::Tools::Vcf::Convert::Indel::PindelVcf->create( 
+    input_file    => $input_file,
+    output_file   => $output_file,
+    aligned_reads_sample         => 'tumor',
+    control_aligned_reads_sample => 'normal',
+    reference_sequence_build_id  => 101947881,
 );
 
 ok($command, 'Command created');

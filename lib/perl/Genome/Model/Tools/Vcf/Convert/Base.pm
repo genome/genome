@@ -226,11 +226,6 @@ sub _get_public_ref {
     return $public_ref;
 }
 
-# Print the header to the output file... currently assumes "standard" columns of GT,GQ,DP,BQ,MQ,AD,FA,VAQ in the FORMAT field and VT in the INFO field.
-# TODO
-# sample header
-# ##tcgaversion=1.0
-# vcfProcessLog 
 sub print_header{
     my $self = shift;
     my $source           = $self->source;
@@ -244,8 +239,12 @@ sub print_header{
     $output_fh->print("##source=" . $source . "\n");
     $output_fh->print("##reference=$public_reference" . "\n");
     $output_fh->print("##phasing=none" . "\n");
-    $output_fh->print("##center=WUTGI\n");
-    $output_fh->print("##tcgaversion=" . $self->tcga_version . "\n") if $self->_tcga_vcf;
+    $output_fh->print("##center=genome.wustl.edu\n");
+
+    if ($self->_tcga_vcf) {
+        $output_fh->print("##tcgaversion=" . $self->tcga_version . "\n");
+        $output_fh->print("##vcfProcessLog=<InputVCFSource=<$source>>\n");
+    }
 
     $self->print_tag_meta;
 
@@ -299,21 +298,21 @@ sub get_format_meta {
 sub common_format_meta {
     return (
         {MetaType => "FORMAT", ID => "GT",  Number => 1,   Type => "String",  Description => "Genotype"},
-        {MetaType => "FORMAT", ID => "DP",  Number => 1,   Type => "Integer", Description => "Total Read Depth"},
-        {MetaType => "FORMAT", ID => "AD",  Number => "A", Type => "Integer", Description => "Allele Depth corresponding to alternate alleles 1/2/3... after software and quality filtering"},
-        {MetaType => "FORMAT", ID => "DP4", Number => 4,   Type => "Integer", Description => "# high-quality ref-forward, ref-reverse, alt-forward and alt-reverse bases"},
-        {MetaType => "FORMAT", ID => "BQ",  Number => "A", Type => "Integer", Description => "Average Base Quality corresponding to alternate alleles 1/2/3... after software and quality filtering"},
-        {MetaType => "FORMAT", ID => "SS",  Number => 1,   Type => "Integer", Description => "Somatic status relative to normal counterpart: 0(wildtype), 1(germline), 2(somatic), 3(loh), 4(unknown)"},
+        {MetaType => "FORMAT", ID => "DP",  Number => 1,   Type => "Integer", Description => "Read depth at this position in the sample"},
+        {MetaType => "FORMAT", ID => "AD",  Number => ".", Type => "Integer", Description => "Depth of reads supporting alleles 0/1/2/3..."},
+        {MetaType => "FORMAT", ID => "DP4", Number => 4,   Type => "Integer", Description => "Number of high-quality ref-forward, ref-reverse, alt-forward and alt-reverse bases"},
+        {MetaType => "FORMAT", ID => "BQ",  Number => ".", Type => "Integer", Description => "Average base quality for reads supporting alleles"},
+        {MetaType => "FORMAT", ID => "SS",  Number => 1,   Type => "Integer", Description => "Variant status relative to non-adjacent Normal,0=wildtype,1=germline,2=somatic,3=LOH,4=post-transcriptional modification,5=unknown"},
     );
 }
 
 
 sub extra_format_meta {
     return (
-        {MetaType => "FORMAT", ID => "GQ",  Number => 1, Type => "Integer", Description => "Genotype Quality"},
-        {MetaType => "FORMAT", ID => "MQ",  Number => 1, Type => "Integer", Description => "Average Mapping Quality"},
-        {MetaType => "FORMAT", ID => "FA",  Number => 1, Type => "Float",   Description => "Fraction of reads supporting ALT"},
-        {MetaType => "FORMAT", ID => "VAQ", Number => 1, Type => "Integer", Description => "Variant Quality"},
+        {MetaType => "FORMAT", ID => "GQ",  Number => ".", Type => "Integer", Description => "Conditional Phred-scaled genotype quality"},
+        {MetaType => "FORMAT", ID => "MQ",  Number => 1,   Type => "Integer", Description => "Phred style probability score that the variant is novel with respect to the genome's ancestor"},
+        {MetaType => "FORMAT", ID => "FA",  Number => 1,   Type => "Float",   Description => "Fraction of reads supporting ALT"},
+        {MetaType => "FORMAT", ID => "VAQ", Number => 1,   Type => "Integer", Description => "Variant allele quality"},
     );
 }
 
@@ -351,8 +350,8 @@ sub get_sample_meta {
     if ($self->_tcga_vcf) {
         my @tcga_barcodes;
         my ($n_sample, $t_sample) = ($self->control_aligned_reads_sample, $self->aligned_reads_sample);
-        push @tcga_barcodes, $n_sample if $n_sample =~ /^TCGA\-/;
-        push @tcga_barcodes, $t_sample if $t_sample =~ /^TCGA\-/;
+        push @tcga_barcodes, $n_sample if $n_sample and $n_sample =~ /^TCGA\-/;
+        push @tcga_barcodes, $t_sample if $t_sample and $t_sample =~ /^TCGA\-/;
         my $barcode_str = join ',', @tcga_barcodes;
         
         my $content;
@@ -377,12 +376,17 @@ sub get_sample_meta {
     
         my %uuids;
         my @lines;
-        for my $pair (@{$json_text->{uuidMapping}}){
-            my ($id, $uuid) = ($pair->{barcode}, $pair->{uuid});
-            push @lines, '##SAMPLE=<ID='.$id.',SampleUUID='.$uuid.',SampleTCGABarcode='.$id.',File='."$id.bam".',Platform=Illumina,Source=dbGAP,Accession=phs000178.v4.p4';
+        if (@tcga_barcodes == 2) {
+            for my $pair (@{$json_text->{uuidMapping}}){
+                my ($id, $uuid) = ($pair->{barcode}, $pair->{uuid});
+                push @lines, '##SAMPLE=<ID='.$id.',SampleUUID='.$uuid.',SampleTCGABarcode='.$id.',File='."$id.bam".',Platform=Illumina,Source=dbGap,Accession=phs000178>';
+            }
+        }
+        else {#if get only one request $json_text->{uuidMapping} is a hash ref not array ref
+            my ($id, $uuid) = ($json_text->{uuidMapping}->{barcode}, $json_text->{uuidMapping}->{uuid});
+            @lines = ('##SAMPLE=<ID='.$id.',SampleUUID='.$uuid.',SampleTCGABarcode='.$id.',File='."$id.bam".',Platform=Illumina,Source=dbGap,Accession=phs000178>');
         }
         return @lines;
-
     }
     else {
         return;

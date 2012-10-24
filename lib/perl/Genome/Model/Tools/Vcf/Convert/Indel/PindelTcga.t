@@ -20,7 +20,8 @@ my $output_file   = Genome::Sys->create_temp_file_path;
 my $command = Genome::Model::Tools::Vcf::Convert::Indel::PindelTcga->create( 
     input_file    => $input_file,
     output_file   => $output_file,
-    column_header => "CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	normal	tumor",
+    aligned_reads_sample         => 'tumor',
+    control_aligned_reads_sample => 'normal',
     reference_sequence_build_id  => 101947881,
 );
 
