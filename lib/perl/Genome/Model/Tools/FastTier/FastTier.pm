@@ -131,7 +131,8 @@ sub execute {
         }
         my @tiers = map { $self->tier_file_location."/tier".$_.".bed";} (1,2,3,4);
         for my $t (@tiers){
-            unless(-s $t){
+            # This previously checked -s, but some things (like mouse) do not have every tier available
+            unless(-e $t){
                 $self->error_message("Could not locate a bed file at ".$t."\n");
                 die $self->error_message;
             }
