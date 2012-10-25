@@ -259,7 +259,7 @@ sub execute {
         print STDERR "wcmd: " . join("|",@windowcmds) . "\n";
         if((@windowcmds > 1) && ($self->processors > 1)){
             #run in parallel if we've got multiple processors and multiple jobs
-            my $pid = fork();
+            my $pid = UR::Context::Process->fork();
             if($pid == 0){
                 system("$windowcmds[0]");
             } else {

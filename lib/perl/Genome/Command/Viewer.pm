@@ -19,6 +19,7 @@ class Genome::Command::Viewer {
     ],
 };
 
+
 sub write_report {
     my ($self, $width, $handle) = @_;
     Carp::croak("Method write_report must be implemented in sub-classes.");
@@ -48,17 +49,6 @@ sub get_report {
     $handle->close();
 
     return $report;
-}
-
-sub _color {
-    my $self = shift;
-    my $string = shift;
-
-    if($self->color) {
-        return Term::ANSIColor::colored($string, @_);
-    } else {
-        return $string;
-    }
 }
 
 1;

@@ -63,7 +63,7 @@ sub execute {
             push @docs, shift @all_docs;
         }
 
-        my $pid = fork();
+        my $pid = UR::Context::Process->fork();
         if (not defined $pid) {
             die "Failed to fork ($!).";
         }
