@@ -79,7 +79,9 @@ sub timer {
 }
 
 sub timing {
-    Net::Statsd::timing(@_);
+    eval {
+        Net::Statsd::timing(@_);
+    };
 }
 
 1;
