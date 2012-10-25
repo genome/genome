@@ -11,9 +11,6 @@ use Time::HiRes qw(usleep);
 use above 'Genome';
 
 BEGIN {
-    if ( ! -t STDIN ) {
-        plan skip_all => 'This test can only be run interactively!';
-    }
     if ( $ENV{UR_DBI_NO_COMMIT} ) {
         plan skip_all => 'This test can not be run with UR_DBI_NO_COMMIT enabled!';
     }
@@ -47,18 +44,21 @@ sub create_tmpfs {
     our %tmpfs_mnt_pts;
     my %arg = @_;
     my $size = delete $arg{size} || die;
-    my $path = delete $arg{path};
+    my $mount_path = delete $arg{path};
 
-    unless ($path) {
-        $path = File::Temp::tempdir('tmpfs_XXXX', TMPDIR => 1);
+    unless ($mount_path) {
+        $mount_path = File::Temp::tempdir('allocation_test_mount_XXXX', TMPDIR => 1);
     }
 
-    # TODO: check exit code
-    system("sudo mount -t tmpfs -o size=$size tmpfs $path");
+    my (undef, $fs_path) = File::Temp::tempfile('allocation_test_fs_XXXX', TMPDIR => 1, OPEN => 1);
+    system("dd if=/dev/zero of=${fs_path} bs=1k count=${size}") && die "dd failed: $!";
+    system("/sbin/mkfs.ext2 -F ${fs_path}") && die "mkfs failed: $!";
 
-    push @{$tmpfs_mnt_pts{$$}}, $path;
+    system("fuseext2 -o rw+ ${fs_path} ${mount_path}") && die "fuseext2 failed: $!";
 
-    return $path;
+    push @{$tmpfs_mnt_pts{$$}}, [$fs_path, $mount_path];
+
+    return $mount_path;
 }
 
 sub create_tmpfs_volume {
@@ -66,7 +66,7 @@ sub create_tmpfs_volume {
     my $total_kb = delete $arg{total_kb} || die;
     my $group = delete $arg{group} || die;
 
-    my $mount_path = create_tmpfs(size => "${total_kb}k");
+    my $mount_path = create_tmpfs(size => "${total_kb}");
 
     my $volume = Genome::Disk::Volume->create(
         disk_status    => 'active',
@@ -173,10 +173,17 @@ sub waitpids {
 
 END {
     our %tmpfs_mnt_pts;
-    for my $path (@{$tmpfs_mnt_pts{$$}}) {
-        system("sudo umount $path");
-        if (-d $path) {
-            system("rmdir $path");
+    for my $ref (@{$tmpfs_mnt_pts{$$}}) {
+        my ($fs_path, $mount_path) = @$ref;
+
+        system("fusermount -u ${mount_path}") && warn "fusermount failed";
+
+        if (-d $mount_path) {
+            system("find $mount_path -type d -delete") && warn "find -delete failed";
+        }
+
+        if (-f $fs_path) {
+            system("rm ${fs_path}") && warn "rm failed";
         }
     }
 };
