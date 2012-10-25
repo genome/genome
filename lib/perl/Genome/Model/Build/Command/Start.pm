@@ -100,7 +100,6 @@ sub execute {
     $self->_start_params->{server_dispatch} = $self->server_dispatch if ($self->server_dispatch);
 
     my @models = $self->models;
-    my $start_time = Time::HiRes::time();
     for my $model (@models) {
         if ($self->max_builds && $self->_builds_started >= $self->max_builds){
             $self->status_message("Already started max builds $self->_builds_started, quitting");
@@ -116,16 +115,14 @@ sub execute {
             next;
         }
 
-        $self->create_and_start_build($model);
+        Genome::Utility::Instrumentation::timer('command.model.build.start', sub {
+            $self->create_and_start_build($model);
+        });
     }
 
     $self->display_builds_started();
     $self->display_command_summary_report();
 
-    my $stop_time = Time::HiRes::time();
-    my $time_per_build = ($stop_time - $start_time) / scalar(@models);
-    Genome::Utility::Instrumentation::timing('command.model.build.start',
-        1000 * $time_per_build);
 
     return !scalar(keys %{$self->_command_errors});
 }

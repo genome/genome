@@ -263,7 +263,7 @@ sub open_consed
     {
         unlink $edit_dir."/consedSocketLocalPortNumber";
     }
-    my $pid = fork();
+    my $pid = UR::Context::Process->fork();
     if ($pid)
     {
         my $i=0;

@@ -182,41 +182,6 @@ sub annoToBed{
     return(join("\t",($chr,$start,$stop,$ref,$var)));
 }
 
-sub annoFileToSlashedBedFile{
-    my $fh = shift;
-    my $input_file = shift;
-
-    my $inFh = IO::File->new( $input_file ) || die "can't open file\n";
-    while( my $line = $inFh->getline )
-    {
-        chomp($line);
-        my $tmp = annoToBed($line);
-        my @tmp2 = split("\t",$tmp);
-        print $fh join("\t",(@tmp2[0..2], ($tmp2[3] . "/" . $tmp2[4]))) . "\n"; 
-    }
-    close($fh);
-    close($inFh);
-}
-
-sub slashedBedFileToAnnoFile{
-    my $fh = shift;
-    my $input_file = shift;
-
-    my $inFh = IO::File->new( $input_file ) || die "can't open file\n";
-    while( my $line = $inFh->getline )
-    {
-        chomp($line);
-        my ( $chr, $start, $stop, $refvar, @rest ) = split( /\t/, $line );
-        my @alleles = split("/",$refvar);
-        my $line2 = bedToAnno(join("\t",($chr, $start, $stop, $alleles[0], $alleles[1]))) . "\n";
-        print $fh $line2 . "\n";
-
-    }
-    close($fh);
-    close($inFh);
-}
-
-
 sub intersects{
     my ($st,$sp,$st2,$sp2) = @_;
     if((($sp2 >= $st) && ($sp2 <= $sp)) ||
@@ -624,10 +589,18 @@ sub dbsnp_filter_variant_file {
     my $self = shift;
     my $variant_file = shift;
 
+    my ($type) = $variant_file =~ /(snv|indel)s/;
+    unless($type) {
+        die $self->error_message('Cannot determine variant type of file ' . $variant_file);
+    }
     my $variant_bed_file = Genome::Sys->create_temp_file_path;
-    my $variant_bed_file_fh = Genome::Sys->open_file_for_writing();
-    annoFileToSlashedBedFile($variant_bed_file_fh, $variant_file);
-    $variant_bed_file_fh->close();
+    my $anno_to_bed_cmd = Genome::Model::Tools::Bed::Convert::AnnotationToBed->create(
+        source => $variant_file,
+        output => $variant_bed_file,
+    );
+    unless($anno_to_bed_cmd->execute()) {
+        die $self->error_message('Failed to convert variant file to BED format.');
+    }
 
     my $filter_file = $self->dbsnp_filter;
 
@@ -638,12 +611,20 @@ sub dbsnp_filter_variant_file {
         output_file => Genome::Sys->create_temp_file_path, #/dev/null
         miss_a_file => $novel_bed_file,
     );
-
+    unless($cmd->execute) {
+        die $self->error_message('Failed to execute joinx');
+    }
 
     my $pass_filter_file = "$variant_file.novel";
-    my $pass_filter_fh = Genome::Sys->open_file_for_writing($pass_filter_file);
-    slashedBedFileToAnnoFile($pass_filter_fh, $novel_bed_file);
-    $pass_filter_fh->close();
+    my $bed_to_anno_cmd = Genome::Model::Tools::Bed::Convert::BedToAnnotation->create(
+
+        "${type}_file" => $novel_bed_file,
+        output => $pass_filter_file,
+        annotator_version => 2,
+    );
+    unless($bed_to_anno_cmd->execute()) {
+        die $self->error_message('Failed to convert joinx result to annotation format');
+    }
 
     return $pass_filter_file;
 }

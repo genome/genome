@@ -367,7 +367,7 @@ my $children = 20;
 
 for my $child (1...$children) {
     my $pid;
-    if ($pid = fork()) {
+    if ($pid = UR::Context::Process->fork()) {
         push @pids, $pid;
     } else {
         my $output_offset = $child;
