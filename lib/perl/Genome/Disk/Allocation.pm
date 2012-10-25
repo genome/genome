@@ -1051,8 +1051,7 @@ sub _create_directory_closure {
 sub _remove_directory_closure {
     my ($class, $path) = @_;
     return sub {
-#        if (-d $path and not $ENV{UR_DBI_NO_COMMIT}) {
-        if (-d $path) {
+        if (-d $path and not $ENV{UR_DBI_NO_COMMIT}) {
             print STDERR "Removing allocation directory $path\n";
             my $rv = Genome::Sys->remove_directory_tree($path);
             unless (defined $rv and $rv == 1) {
