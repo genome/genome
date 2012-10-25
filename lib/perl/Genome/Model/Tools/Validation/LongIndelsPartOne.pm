@@ -21,6 +21,10 @@ class Genome::Model::Tools::Validation::LongIndelsPartOne {
             is => 'String',
             doc => 'some string to use in model names, etc, such as "BRC2"',
         },
+        reference_transcripts => {
+            is => 'String',
+            doc => 'reference transcripts plus version to be used to annotate input indel file',
+        },
     ],
     has_optional_input => [
         tumor_val_model_id => {
@@ -34,11 +38,6 @@ class Genome::Model::Tools::Validation::LongIndelsPartOne {
         somatic_validation_model_id => {
             is => 'Number',
             doc => 'somatic-validation build ID (contains both tumor and normal)',
-        },
-        reference_transcripts => {
-            is => 'String',
-            doc => 'reference transcripts plus version to be used to annotate input indel file',
-            default => 'NCBI-human.combined-annotation/54_36p_v2',
         },
         reference_sequence_build_id => {
             is => 'Integer',
@@ -185,7 +184,7 @@ sub execute {
         } else {
             $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
         }
-        my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
+        $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
 
         $tumor_sample = $build->tumor_sample;
         $tumor_sample_id = $build->tumor_sample->sample_id;
