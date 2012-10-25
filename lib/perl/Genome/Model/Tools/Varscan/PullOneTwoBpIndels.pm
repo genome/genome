@@ -137,14 +137,14 @@ EOS
 # convert_indel_bed_file - for converting to anno format and returning a temp file path
 #
 ##############################################################################################
-sub convert_indel_bed_file {
+sub convert_anno_indel_file_to_bed {
     my $self = shift;
-    my $bed_file = shift;
-    my $anno_file = Genome::Sys->create_temp_file_path;
-    my %convert_params = (indel_file => $bed_file, output => $anno_file);
-    my $convert_class = "Genome::Model::Tools::Bed::Convert::BedToAnnotation";
-    $convert_class->execute(%convert_params) || ($self->error_message("Could not convert BED file to annotator format: $bed_file") and return);
-    return $anno_file;
+    my $anno_file = shift;
+    my $bed_file = Genome::Sys->create_temp_file_path;
+    my %convert_params = (source => $anno_file, output => $bed_file);
+    my $convert_class = "Genome::Model::Tools::Bed::Convert::AnnotationToBed";
+    $convert_class->execute(%convert_params) || ($self->error_message("Could not convert annotation file to BED format: $anno_file") and return);
+    return $bed_file;
 }
 
 ################################################################################################
@@ -235,9 +235,9 @@ sub execute {
     }
 
     # open output filehandles #
-    open(INDELS_OUT, ">$small_indel_list") or die "Can't open small indel output bed file: $!\n";
-    open(NOBED_INDELS_OUT, ">$small_indel_list_nobed") or die "Can't open small indel output annotation_format file: $!\n";
-    if($large_indel_list) { open(LARGE_INDELS_OUT, ">$large_indel_list") or die "Can't open large indel output file: $!\n"; }
+    open(INDELS_OUT_BED, ">$small_indel_list") or die "Can't open small indel output bed file: $!\n";
+    open(INDELS_OUT_ANNO, ">$small_indel_list_nobed") or die "Can't open small indel output annotation_format file: $!\n";
+    if($large_indel_list) { open(LARGE_INDELS_OUT_BED, ">$large_indel_list") or die "Can't open large indel output file: $!\n"; }
 
     my $file_input = new FileHandle ($file_list_file);
     unless($file_input) {
@@ -249,8 +249,8 @@ sub execute {
     while (my $file = <$file_input>) {
         chomp($file);
 
-        # if file is in .bed format, convert it to anno format before further processing #
-        $file = $self->convert_indel_bed_file($file);
+        # unless file is already in .bed format, convert it to bed format before further processing #
+        unless ($file =~ m/\.bed$/i) { $file = $self->convert_anno_indel_file_to_bed($file); }
 
         # open filehandle for processing indels in $file #
         my $indel_input = new IO::File $file,"r";
@@ -262,26 +262,25 @@ sub execute {
         # process indels in indel file #
         while (my $line = <$indel_input>) {
             chomp($line);
-            my ($chr, $start, $stop, $ref, $var, @everything_else) = split(/\t/, $line);
+            my ($chr, $start, $stop, $ref_var, @everything_else) = split(/\t/, $line);
             my $size;
-            my $bedstart;
-            my $bedstop;
+            my $annostart;
+            my $annostop;
             my $type;
-            if ($ref =~ m/\//) {
-                my $split = $ref;
-                ($ref, $var) = split(/\//, $split);
-            }
-            if ($ref eq '-' || $ref eq '0') { #ins
+            my ($ref,$var) = split(/\//,$ref_var);
+            if ($ref eq '-' || $ref eq '0' || $ref eq '*') { #ins
                 #count number of bases inserted
+                $ref = "-";
                 $size = length($var);
-                $bedstart = ($start);
-                $bedstop = ($stop - 1);
+                $annostart = ($start);
+                $annostop = ($stop + 1);
                 $type = 'INS';
             }
-            elsif ($var eq '-' || $var eq '0') { #del
+            elsif ($var eq '-' || $var eq '0' || $var eq '*') { #del
+                $var = "-";
                 $size = length($ref);
-                $bedstart = ($start - 1);
-                $bedstop = ($stop);
+                $annostart = ($start + 1);
+                $annostop = ($stop);
                 $type = 'DEL';
             }
             else {
@@ -290,13 +289,13 @@ sub execute {
             }
             if ( $size > 0 && $size <= 2) {
                 #Add 1 bp padding to bed because we just want to look at regions
-                $bedstart-=1;
-                $bedstop+=1;
-                print INDELS_OUT "$chr\t$bedstart\t$bedstop\t$ref/$var\n";
-                print NOBED_INDELS_OUT "$chr\t$start\t$stop\t$ref\t$var\n";
+                $start-=1;
+                $stop+=1;
+                print INDELS_OUT_BED "$chr\t$start\t$stop\t$ref/$var\n";
+                print INDELS_OUT_ANNO "$chr\t$annostart\t$annostop\t$ref\t$var\n";
             }
             elsif ( $size > 2 && $large_indel_list) {
-                print LARGE_INDELS_OUT "$chr\t$bedstart\t$bedstop\t$ref/$var\t$type\n";
+                print LARGE_INDELS_OUT_BED "$chr\t$start\t$stop\t$ref/$var\t$type\n";
             }
         }
         close($indel_input);
