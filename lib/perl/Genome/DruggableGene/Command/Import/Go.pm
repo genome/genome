@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::Go;
+package Genome::DruggableGene::Command::Import::Go;
 
 use strict;
 use warnings;
@@ -10,8 +10,8 @@ use XML::Simple;
 my $high = 750000;
 UR::Context->object_cache_size_highwater($high);
 
-class Genome::Model::Tools::Dgidb::Import::Go {
-    is => 'Genome::Model::Tools::Dgidb::Import::Base',
+class Genome::DruggableGene::Command::Import::Go {
+    is => 'Genome::DruggableGene::Command::Import::Base',
     has => {
         go_term_file => {
             is => 'Path',
@@ -68,7 +68,7 @@ sub _doc_credits {
 
 sub _doc_see_also {
     return <<EOS
-B<gmt>(1)
+B<genome>(1)
 EOS
 }
 
@@ -80,7 +80,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-    gmt dgidb import go --version="30-Aug-2012" --go-term-file=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/GO/TargetGoTerms.tsv
+    genome druggable-gene import go --version="30-Aug-2012" --go-term-file=/gscuser/ogriffit/Projects/DruggableGenes/PotentiallyDruggable/GO/TargetGoTerms.tsv
 HELP
 }
 

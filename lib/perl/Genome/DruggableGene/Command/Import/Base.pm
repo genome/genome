@@ -1,11 +1,11 @@
-package Genome::Model::Tools::Dgidb::Import::Base;
+package Genome::DruggableGene::Command::Import::Base;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::Dgidb::Import::Base {
+class Genome::DruggableGene::Command::Import::Base {
     is => 'Command::V2',
     is_abstract => 1,
     has => [
@@ -175,7 +175,7 @@ sub _destroy_and_rebuild_pubchem_and_drug_groups {
     #nuke pubchem
     Genome::DruggableGene::Command::RemoveDatasource->execute(source_db_name => 'PubChem');
     #reimport pubchem
-    Genome::Model::Tools::Dgidb::Import::Pubchem->execute(postgres_host => 'postgres', scratch_dir => '/tmp/', citation_text => $citation_text, generate_uuids_locally => 1); #TODO: handle different postgres hosts
+    Genome::DruggableGene::Command::Import::Pubchem->execute(postgres_host => 'postgres', scratch_dir => '/tmp/', citation_text => $citation_text, generate_uuids_locally => 1); #TODO: handle different postgres hosts
     #regroup_drugs
     Genome::DruggableGene::Command::DrugNameGroup::Generate->execute();
     return 1;

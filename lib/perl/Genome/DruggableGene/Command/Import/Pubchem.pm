@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::Pubchem;
+package Genome::DruggableGene::Command::Import::Pubchem;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ use Data::UUID;
 use POSIX qw/strftime/;
 use DBI;
 
-class Genome::Model::Tools::Dgidb::Import::Pubchem {
+class Genome::DruggableGene::Command::Import::Pubchem {
     is => 'Genome::Command::Base',
     has_optional => [
         postgres_host => {

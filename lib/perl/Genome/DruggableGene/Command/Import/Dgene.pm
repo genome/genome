@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::Dgene;
+package Genome::DruggableGene::Command::Import::Dgene;
 
 use strict;
 use warnings;
@@ -9,8 +9,8 @@ use IO::File;
 my $high = 750000;
 UR::Context->object_cache_size_highwater($high);
 
-class Genome::Model::Tools::Dgidb::Import::Dgene {
-    is => 'Genome::Model::Tools::Dgidb::Import::Base',
+class Genome::DruggableGene::Command::Import::Dgene {
+    is => 'Genome::DruggableGene::Command::Import::Base',
     has => {
         infile => {
             is => 'Path',
@@ -76,7 +76,7 @@ sub _doc_credits {
 
 sub _doc_see_also {
     return <<EOS
-B<gmt>(1)
+B<genome>(1)
 EOS
 }
 
@@ -88,7 +88,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import dgene --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/RonBose/02Aug2012/DRUGGABLE_GENOME_08022012_2257.txt --dgene-term-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/RonBose/02Aug2012/TargetDgeneTerms.tsv --version="02-Aug-2012" 
+genome druggable-gene import dgene --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/RonBose/02Aug2012/DRUGGABLE_GENOME_08022012_2257.txt --dgene-term-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/RonBose/02Aug2012/TargetDgeneTerms.tsv --version="02-Aug-2012" 
 HELP
 }
 

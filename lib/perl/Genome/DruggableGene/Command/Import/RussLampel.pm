@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::RussLampel;
+package Genome::DruggableGene::Command::Import::RussLampel;
 
 use strict;
 use warnings;
@@ -9,8 +9,8 @@ use IO::File;
 my $high = 750000;
 UR::Context->object_cache_size_highwater($high);
 
-class Genome::Model::Tools::Dgidb::Import::RussLampel {
-    is => 'Genome::Model::Tools::Dgidb::Import::Base',
+class Genome::DruggableGene::Command::Import::RussLampel {
+    is => 'Genome::DruggableGene::Command::Import::Base',
     has => {
         infile => {
             is => 'Path',
@@ -71,7 +71,7 @@ sub _doc_credits {
 
 sub _doc_see_also {
     return <<EOS
-B<gmt>(1)
+B<genome>(1)
 EOS
 }
 
@@ -83,7 +83,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import russ-lampel --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/Russ_and_Lampel_2005/Andreas_Russ_Druggable_Gene_List.tsv --version="26-Jul-2011" 
+genome druggable-gene import russ-lampel --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/PotentiallyDruggable/Russ_and_Lampel_2005/Andreas_Russ_Druggable_Gene_List.tsv --version="26-Jul-2011" 
 HELP
 }
 

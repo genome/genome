@@ -1,10 +1,10 @@
-package Genome::Model::Tools::Dbidb::Import::Template;
+package Genome::DruggableGene::Command::Import::Template;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::Tools::Dgidb::Import::Template {
+class Genome::DruggableGene::Command::Import::Template {
     has => [
         foo => {
             is => 'Text',
@@ -33,7 +33,7 @@ sub help_detail {
 }
 
 sub help_synopsis {
-    return 'gmt dgidb import template --foo blah --bar 4';
+    return 'genome druggable-gene import template --foo blah --bar 4';
 }
 
 sub do_stuff {

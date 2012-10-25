@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::TherapeuticTargetDatabase;
+package Genome::DruggableGene::Command::Import::TherapeuticTargetDatabase;
 
 use strict;
 use warnings;
@@ -8,8 +8,8 @@ use Genome;
 my $high = 750000;
 UR::Context->object_cache_size_highwater($high);
 
-class Genome::Model::Tools::Dgidb::Import::TherapeuticTargetDatabase {
-    is => 'Genome::Model::Tools::Dgidb::Import::Base',
+class Genome::DruggableGene::Command::Import::TherapeuticTargetDatabase {
+    is => 'Genome::DruggableGene::Command::Import::Base',
     has => [
         targets_raw_url => {
             is => 'Text',
@@ -69,7 +69,7 @@ class Genome::Model::Tools::Dgidb::Import::TherapeuticTargetDatabase {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import therapeutic-target-database 
+genome druggable-gene import therapeutic-target-database 
 HELP
 }
 
