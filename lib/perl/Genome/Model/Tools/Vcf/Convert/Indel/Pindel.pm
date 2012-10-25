@@ -46,7 +46,7 @@ sub execute {
     my $control_sample = $self->control_aligned_reads_sample;
 
     my ($output_directory) = dirname($output);
-    $self->status_message("Output Directory for pindel-single-genome vcf creation will be: ".$output_directory);
+    $self->status_message("Output Directory for pindel vcf creation will be: ".$output_directory);
 
     my @prop_names = qw(
         pindel_raw_output 

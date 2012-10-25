@@ -23,7 +23,6 @@ class Genome::Model::Tools::Vcf::Convert::Base {
         aligned_reads_sample => {
             is => 'Text',
             doc => "The label to be used for the aligned_reads sample in the VCF header",
-            is_optional => 1,
         },
         control_aligned_reads_sample => {
             is => 'Text',

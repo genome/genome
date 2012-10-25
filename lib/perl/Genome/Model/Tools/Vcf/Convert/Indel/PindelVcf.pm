@@ -24,9 +24,8 @@ HELP
 }
 
 sub source {
-    return 'PindelVcf';
+    return 'Pindel';
 }
-
 
 
 sub get_info_meta {
@@ -60,7 +59,7 @@ sub parse_line {
     $columns[7]   = join ';', @new_infos;
     $columns[8]  .= ':DP:BQ:SS';
     $columns[9]  .= ':.:.:.';
-    $columns[10] .= ':.:.:2';
+    $columns[10] .= ':.:.:2' if $columns[10];  #sometimes it gets germline single bam
 
     return join "\t", @columns;
 }

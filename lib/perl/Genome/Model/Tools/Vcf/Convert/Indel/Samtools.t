@@ -22,7 +22,8 @@ my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Indel
 # V3 - Correct reference sequence specification and description of BQ and AD fields
 # V4 - Vcf header format change
 # V5 - vcf header format change: add center and tcgaversion
-my $expected_base = "expected.v5";
+# V6 - More TCGA compliant vcf change
+my $expected_base = "expected.v6";
 my $input_base = "test_input.v2";
 my $expected_dir = "$test_dir/$expected_base";
 my $input_dir = "$test_dir/$input_base";
