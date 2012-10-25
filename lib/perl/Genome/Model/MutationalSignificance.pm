@@ -9,9 +9,10 @@ my @has_param;
 my %module_input_exceptions;
 my %parallel_by;
 
-my $DONT_USE = "don't use this";
+my $DONT_USE;
 
 BEGIN {
+    $DONT_USE = "don't use this";
     %parallel_by = (
         "Genome::Model::MutationalSignificance::Command::CreateMafFile" => "somatic_variation_build",
     );
@@ -34,6 +35,7 @@ BEGIN {
             bam_list => ["input connector", "bam_list"],
         },
         'Genome::Model::MutationalSignificance::Command::PlayMusic' => {
+            input_clinical_correlation_matrix_file => $DONT_USE,
             bam_list => ["Genome::Model::MutationalSignificance::Command::CreateBamList", "bam_list"],
             maf_file => ["Genome::Model::MutationalSignificance::Command::MergeMafFiles", "maf_path"],
             roi_file => ["Genome::Model::MutationalSignificance::Command::CreateROI", "roi_path"],
@@ -42,6 +44,17 @@ BEGIN {
             log_directory => ['input connector', 'log_directory'],
             music_build => ['input connector', 'music_build'],
             somatic_variation_builds => ['input connector', 'somatic_variation_builds'],
+            pathway_file => ['input connector', 'pathway_file'],
+            categorical_clinical_data_file => ['input connector', 'categorical_clinical_data_file'],
+            numeric_clinical_data_file => ['input connector', 'numeric_clinical_data_file'],
+            glm_clinical_data_file => ['input connector', 'glm_clinical_data_file'],
+            glm_model_file => ['input connector', 'glm_model_file'],
+            omimaa_dir => ['input connector', 'omimaa_dir'],
+            cosmic_dir => ['input connector', 'cosmic_dir'],
+            bmr_modifier_file => ['input connector', 'bmr_modifier_file'],
+            mutation_matrix_file => ['input connector', 'mutation_matrix_file'],
+            clinical_correlation_matrix_file => ['input connector', 'clinical_correlation_matrix_file'],
+            reference_build => ['input connector', 'reference_build'],
         },
         'Genome::Model::MutationalSignificance::Command::CompileValidationList' => {
             significantly_mutated_gene_list => $DONT_USE,
@@ -76,7 +89,7 @@ BEGIN {
         for my $p (@p) {
             if ($p->can("is_input") and $p->is_input){
                 my $name = $p->property_name;
-                unless ($seen{$p->property_name} or $module_input_exceptions{$module}{$name}) {
+                unless ($seen{$name} or $module_input_exceptions{$module}{$name}) {
                     my %data = %{ UR::Util::deep_copy($p) };
                     for my $key (keys %data) {
                         delete $data{$key} if $key =~ /^_/;
@@ -120,32 +133,81 @@ class Genome::Model::MutationalSignificance {
         regions_of_interest => {
             is => 'Genome::FeatureList',
             is_many => 1,
-            doc => 'Lists of regions to include in validation',
+            doc => 'FeatureLists of regions to include in validation',
+            is_optional => 1,
         },
         gene_black_lists => {
             is => 'File',
             is_many => 1,
+            is_optional => 1,
             doc => 'Lists of genes to exclude from the validation.  One gene symbol per line.  Gene symbols must match symbols in annotation files',
         },
         variant_black_lists => {
             is => 'Genome::FeatureList',
             is_many => 1,
-            doc => 'Lists of variants to exclude from the validation.',
+            is_optional => 1,
+            doc => 'FeatureLists of variants to exclude from the validation.',
         },
         additional_snv_lists => {
             is => 'Genome::FeatureList',
             is_many => 1,
-            doc => 'Lists of additional snv variants to include in validation',
+            is_optional => 1,
+            doc => 'FeatureLists of additional snv variants to include in validation',
         },
         additional_indel_lists => {
             is => 'Genome::FeatureList',
             is_many => 1,
-            doc => 'Lists of additional indel variants to include in validation',
+            is_optional => 1,
+            doc => 'FeatureLists of additional indel variants to include in validation',
         },
         additional_sv_lists => {
             is => 'Genome::FeatureList',
             is_many => 1,
-            doc => 'Lists of additional structural variants to include in validation',
+            is_optional => 1,
+            doc => 'FeatureLists of additional structural variants to include in validation',
+        },
+        pathway_file => {
+            is => 'File',
+            is_optional => 1,
+            doc => "Tab-delimited file of pathway information",
+            default_value => "/gscmnt/gc2108/info/medseq/ckandoth/music/pathscan/all_pathway_files/KEGG_120910",
+        },
+        categorical_clinical_data_file => {
+            is => 'File',
+            is_optional => 1,
+            doc => "Table of samples (y) vs. categorical clinical data category (x)",
+        },
+        numeric_clinical_data_file => {
+            is => 'File',
+            is_optional => 1,
+            doc => 'Table of samples (y) vs. numeric clinical data category (x)',
+        },
+        glm_clinical_data_file => {
+            is => 'File',
+            is_optional => 1,
+            doc => "Clinical traits, mutational profiles, other mixed clinical data",
+        },
+        glm_model_file => {
+            is => 'File',
+            is_optional => 1,
+            doc => "File outlining the type of model, response variable, covariants, etc. for the GLM analysis.",
+        },
+        omimaa_dir => {
+            is => 'File',
+            is_optional => 1,
+            doc => "omim amino acid mutation database folder",
+            default_value => "/gsc/scripts/opt/genome/db/omim/20110721",
+        },
+        cosmic_dir => {
+            is => 'File',
+            is_optional => 1,
+            doc => "cosmic amino acid mutation database folder",
+            default_value => "/gsc/scripts/opt/genome/db/cosmic/54",
+        },
+        bmr_modifier_file => {
+            is => 'File',
+            is_optional => 1,
+            doc => "Tab delimited multipliers per gene that modify BMR before testing",
         },
     ],
     has_param => \@has_param,
@@ -154,19 +216,29 @@ class Genome::Model::MutationalSignificance {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-TO DO
+TODO
 EOS
 }
 
 sub help_detail_for_create_profile {
     return <<EOS
-  TO DO
+genome processing-profile create mutational-significance --based-on "Oct 2012 Default" --name "New example processing profile with larger flank size" --flank-size 2
 EOS
 }
 
-sub help_manual_for_define_model {
+sub _help_detail_for_model_define {
     return <<EOS
-TO DO
+The mutational significance genome model represents analysis on a collection of somatic variation models.  There is an option to run the MuSiC pipeline to run various statistical tests on the collection of variants.  Additionally, a list of variants can be compiled that should be suitable for use as a validation list.
+EOS
+}
+
+sub _help_synopsis_for_model_define {
+    return <<EOS
+First, determine what group of somatic variation models you want to work on.  This might be all models in a model group, for example.
+Next, create a population group to use as subject:
+genome population-group create --models model_groups.id=29624
+Finally, define your model using the query for somatic variation models and the id of the population group you just created.
+genome model define mutational-significance --model-name "Example Mutational Significance" --processing-profile "Oct 2012 Default" --annotation-build 106409619 --somatic-variation-models model_groups.id=29624 --subject id=2882703149
 EOS
 }
 
@@ -176,7 +248,6 @@ sub _resolve_workflow_for_build {
     # Returns a Workflow::Operation
     # By default, builds this from stages(), but can be overridden for custom workflow.
     my $self = shift;
-$self->warning_message('The logic for building a MuSiC model is not yet functional.  Contact Allison Regier');
     my $build = shift;
     my $lsf_queue = shift; # TODO: the workflow shouldn't need this yet
     my $lsf_project = shift;
@@ -215,6 +286,9 @@ $self->warning_message('The logic for building a MuSiC model is not yet function
     push @input_properties, "reference_sequence_build";
     push @input_properties, "log_directory";
     push @input_properties, "significant_variant_list";
+    push @input_properties, "mutation_matrix_file";
+    push @input_properties, "clinical_correlation_matrix_file";
+    push @input_properties, "reference_build";
 
     my @output_properties;
     if ($self->play_music) {
@@ -487,7 +561,9 @@ sub map_workflow_inputs {
     my @builds = $build->somatic_variation_builds;
     my $base_dir = $build->data_directory;
 
-    $inputs{review_file_dir} = $build->review_file_dir;
+    if ($build->review_file_dir) {
+        $inputs{review_file_dir} = $build->review_file_dir;
+    }
     $inputs{music_build} = $build;
     $inputs{log_directory} = $build->log_directory;
     $inputs{merged_maf_path} = $base_dir."/final.maf";
@@ -498,6 +574,16 @@ sub map_workflow_inputs {
     $inputs{bam_list} = $base_dir."/bam_list.txt";
     $inputs{clinical_data_file} = $base_dir."/clinical_data.txt";
     $inputs{significant_variant_list} = $base_dir."/significant_variant_list";
+    $inputs{mutation_matrix_file} = $base_dir."/mutation_matrix_file";
+    $inputs{clinical_correlation_matrix_file} = $base_dir."/clinical_correlation_matrix_file";
+
+    my $reference_build_name = $builds[0]->reference_sequence_build->name;
+    my $calculated_reference_build = "37";
+    unless ($reference_build_name =~ /$calculated_reference_build/) {
+        $calculated_reference_build = "36";
+    }
+
+    $inputs{reference_build} = "Build".$calculated_reference_build;
 
     return %inputs;
 }
