@@ -801,6 +801,11 @@ sub _unarchive {
 
     my $archive_path = $self->absolute_path;
     my $target_path = $shadow_allocation->absolute_path;
+
+    # Inferred path prior to archiving so we can symlink the new allocation,
+    # to this old location.
+    (my $old_absolute_path = $archive_path) =~ s/^\/gscarchive/\/gscmnt/;
+
     my $tar_path = $self->tar_path;
     my $cmd = "tar -C $target_path -xf $tar_path";
 
@@ -853,6 +858,17 @@ sub _unarchive {
         $shadow_allocation->delete();
         $self->_update_owner_for_move;
         $self->archivable(0, 'allocation was unarchived'); # Wouldn't want this to be immediately re-archived... trolololol
+
+        # to fix previously existing/broken symlinks by redirecting
+        if ($old_absolute_path ne $self->absolute_path) {
+            my $old_parent_dir = File::Basename::dirname($old_absolute_path);
+            if(! -e $old_parent_dir){
+                mkpath $old_parent_dir;
+            }
+            if(-d $old_parent_dir && ! -e $old_absolute_path) {
+                symlink $self->absolute_path, $old_absolute_path;
+            }
+        }
 
         unless (UR::Context->commit) {
             confess "Could not commit!";
