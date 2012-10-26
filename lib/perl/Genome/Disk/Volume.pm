@@ -143,7 +143,7 @@ sub create_dummy_volume {
     my $mount_path = $params{mount_path};
     my $volume;
     if (!$mount_path || ($mount_path && $mount_path !~ /^\/tmp\//)) {
-        $params{mount_path} = File::Temp::tempdir( TEMPLATE => 'tempXXXXX', CLEANUP => 1 );
+        $params{mount_path} = File::Temp::tempdir( 'tempXXXXX', CLEANUP => 1 );
         $volume = Genome::Disk::Volume->__define__(
             mount_path => $params{mount_path},
             unallocated_kb => 104857600, # 100 GB

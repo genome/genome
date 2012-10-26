@@ -31,7 +31,7 @@ push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
 # Temp testing directory, used as mount path for test volumes and allocations
 my $test_dir_base = "$ENV{GENOME_TEST_TEMP}/";
 my $test_dir = tempdir(
-    TEMPLATE => 'allocation_testing_XXXXXX',
+    'allocation_testing_XXXXXX',
     DIR => $test_dir_base,
     UNLINK => 1,
     CLEANUP => 1,
@@ -39,7 +39,7 @@ my $test_dir = tempdir(
 
 # Create temp mount path for testing volume
 my $volume_path = tempdir(
-    TEMPLATE => "test_volume_XXXXXXX",
+    "test_volume_XXXXXXX",
     DIR => $test_dir,
     CLEANUP => 1,
     UNLINK => 1,
@@ -57,7 +57,7 @@ ok($volume, 'created test volume');
 
 # Create another temp mount path for another testing volume
 my $other_volume_path = tempdir(
-    TEMPLATE => "test_volume_XXXXXXX",
+    "test_volume_XXXXXXX",
     DIR => $test_dir,
     CLEANUP => 1,
     UNLINK => 1,
@@ -90,7 +90,7 @@ Genome::Sys->create_directory(join('/', $other_volume->mount_path, $group->subdi
 
 # Make test allocation
 my $allocation_path = tempdir(
-    TEMPLATE => "allocation_test_1_XXXXXX",
+    "allocation_test_1_XXXXXX",
     CLEANUP => 1,
     UNLINK => 1,
 );

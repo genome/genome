@@ -22,7 +22,7 @@ use_ok('Genome::Disk::Group') or die;
 
 my $test_dir_base = "$ENV{GENOME_TEST_TEMP}/";
 my $test_dir = tempdir(
-    TEMPLATE => 'allocation_testing_XXXXXX',
+    'allocation_testing_XXXXXX',
     DIR => $test_dir_base,
     UNLINK => 1,
     CLEANUP => 1,
@@ -47,7 +47,7 @@ ok($group, 'successfully made testing group') or die;
 my @volumes;
 for (1..5) {
     my $volume_path = tempdir(
-        TEMPLATE => "test_volume_" . $_ . "_XXXXXXX",
+        "test_volume_" . $_ . "_XXXXXXX",
         DIR => $test_dir,
         CLEANUP => 1,
         UNLINK => 1,
@@ -78,7 +78,7 @@ ok(UR::Context->commit, 'commit of dummy objects to db successful') or die;
 # Create a dummy allocation
 # This gets made in temp, but I'm only interested in the dirname
 my $allocation_path = tempdir(
-    TEMPLATE => "allocation_test_1_XXXXXX",
+    "allocation_test_1_XXXXXX",
     CLEANUP => 1,
     UNLINK => 1,
 );
@@ -208,7 +208,7 @@ sub do_race_lock {
     my $fh = new IO::File(">$output_file");
 
     my $path = tempdir(
-        TEMPLATE => 'allocation_lock_testing_' . $child_id . '_XXXXXXX',
+        'allocation_lock_testing_' . $child_id . '_XXXXXXX',
         DIR => $volume->mount_path, 
         CLEANUP => 1,
         UNLINK => 1,

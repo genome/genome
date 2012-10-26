@@ -18,7 +18,7 @@ use_ok('Genome::Disk::Allocation') or die;
 
 my $test_dir_base = "$ENV{GENOME_TEST_TEMP}/";
 my $test_dir = tempdir(
-    TEMPLATE => 'allocation_testing_XXXXXX',
+    'allocation_testing_XXXXXX',
     DIR => $test_dir_base,
     UNLINK => 1,
     CLEANUP => 1,
@@ -43,7 +43,7 @@ ok($group, 'successfully made testing group') or die;
 my @volumes;
 for (1..2) {
     my $volume_path = tempdir(
-        TEMPLATE => "test_volume_" . $_ . "_XXXXXXX",
+        "test_volume_" . $_ . "_XXXXXXX",
         DIR => $test_dir,
         CLEANUP => 1,
         UNLINK => 1,
