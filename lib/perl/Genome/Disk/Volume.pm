@@ -339,5 +339,21 @@ sub sync_usage {
     return 1;
 }
 
+sub is_over_soft_limit {
+    my $self = shift;
+    return (
+        $self->allocated_kb > $self->soft_limit_kb
+        || $self->used_kb > $self->soft_limit_kb
+    );
+}
+
+sub is_over_hard_limit {
+    my $self = shift;
+    return (
+        $self->allocated_kb > $self->hard_limit_kb
+        || $self->used_kb > $self->hard_limit_kb
+    );
+}
+
 1;
 
