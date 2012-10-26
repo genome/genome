@@ -424,13 +424,12 @@ sub _get_allocation_without_lock {
 
             # Reload so we guarantee that we calculate the correct allocated_kb
             UR::Context->current->reload($candidate_volume);
-            if ($candidate_volume->allocated_kb
-                    <= $candidate_volume->soft_limit_kb) {
-                $chosen_allocation = $candidate_allocation;
-                last;
-            } else {
+            if ($candidate_volume->is_over_soft_limit) {
                 $candidate_allocation->delete();
                 _commit_unless_testing();
+            } else {
+                $chosen_allocation = $candidate_allocation;
+                last;
             }
         }
     }
