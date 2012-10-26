@@ -14,6 +14,13 @@ use Genome::Model::Tools::Relationship::RepairVcf 'fix_alt_and_GT_field';
 
 class Genome::Model::Tools::Relationship::RunPolymutt {
     is => 'Command',
+    has => [
+       fix_alt_and_gt => {
+            is => "Boolean",
+            default => 0,
+            doc => "If set to true, fix all cases where the REF allele is present in the ALT (this currently happens when we set all_sites or roi_file to force genotype)",
+       },
+    ],
     has_input => [
         version => {
             is => 'Text',
@@ -62,11 +69,6 @@ class Genome::Model::Tools::Relationship::RunPolymutt {
             is => "Path",
             is_optional => 1,
             doc => "Output calls on all sites (force genotype) in this roi file.",
-       },
-       fix_alt_and_gt => {
-            is => "Boolean",
-            default => 0,
-            doc => "If set to true, fix all cases where the REF allele is present in the ALT (this currently happens when we set all_sites or roi_file to force genotype)",
        },
     ],
     has_param => [
