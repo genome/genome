@@ -51,7 +51,7 @@ class Genome::Disk::Volume {
                             return $total_kb - $allocated_kb;
             },
         },
-        old_unallocated_kb => {
+        cached_unallocated_kb => {
             is => 'Number',
             default_value => 0,
             column_name => 'unallocated_kb',
@@ -99,8 +99,8 @@ class Genome::Disk::Volume {
             /,
         },
         old_allocated_kb => {
-            calculate_from => ['total_kb', 'old_unallocated_kb'],
-            calculate => q{ return $total_kb - $old_unallocated_kb; },
+            calculate_from => ['total_kb', 'cached_unallocated_kb'],
+            calculate => q{ return $total_kb - $cached_unallocated_kb; },
         },
         percent_allocated => {
             calculate_from => ['total_kb', 'allocated_kb'],
@@ -334,9 +334,9 @@ sub sync_usage {
         if ($verbose) { $self->status_message(sprintf('Changing total_kb from %d to %d.', $self->total_kb, $total_kb)) }
         $self->total_kb($total_kb);
     }
-    if ($self->old_unallocated_kb != $unallocated_kb) {
-        if ($verbose) { $self->status_message(sprintf('Changing old_unallocated_kb from %d to %d.', $self->old_unallocated_kb, $unallocated_kb)) }
-        $self->old_unallocated_kb($unallocated_kb);
+    if ($self->cached_unallocated_kb != $unallocated_kb) {
+        if ($verbose) { $self->status_message(sprintf('Changing cached_unallocated_kb from %d to %d.', $self->cached_unallocated_kb, $unallocated_kb)) }
+        $self->cached_unallocated_kb($unallocated_kb);
     }
 
     return 1;
