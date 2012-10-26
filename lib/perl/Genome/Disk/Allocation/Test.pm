@@ -10,34 +10,71 @@ use Test::More;
 use Time::HiRes qw(usleep);
 use above 'Genome';
 
+require Genome::DataSource::LocalDataSource;
+
 BEGIN {
     if ( $ENV{UR_DBI_NO_COMMIT} ) {
         plan skip_all => 'This test can not be run with UR_DBI_NO_COMMIT enabled!';
     }
 };
 
-our $imported = 0;
 sub import {
-    unless ($imported) {
-        protect_real_data_sources();
-        if ($ENV{UR_DBI_NO_COMMIT}) {
-            die 'This is mean to be run with UR_DBI_NO_COMMIT not enabled.';
-        }
+    # Don't change @_!
+    my $class = $_[0];
 
-        my $lds = Genome::DataSource::LocalDataSource->get();
-        $lds->hijack_class('Genome::Disk::Assignment') or die;
-        $lds->hijack_class('Genome::Disk::Group') or die;
-        $lds->hijack_class('Genome::Disk::Volume') or die;
-        $lds->hijack_class('Genome::Disk::Allocation') or die;
+    protect_real_data_sources();
 
-        # ensure test environment is loaded for _execute_system_command
-        push @Genome::Disk::Allocation::_execute_system_command_perl5opt,
-            '-MGenome::Disk::Allocation::Test';
-        $imported = 1;
+    Genome::DataSource::LocalDataSource->import(qw(
+        Genome::Disk::Allocation
+        Genome::Disk::Assignment
+        Genome::Disk::Group
+        Genome::Disk::Volume
+    ));
+
+    # ensure test environment is loaded for _execute_system_command
+    my $option = '-MGenome::Disk::Allocation::Test';
+    unless (grep { $_ eq $option } @Genome::Disk::Allocation::_execute_system_command_perl5opt) {
+        push @Genome::Disk::Allocation::_execute_system_command_perl5opt, $option;
     }
 
-    # Now call Exporter's import, a.k.a. export_to_level...
-    Genome::Disk::Allocation::Test->export_to_level(1, @_);
+    $class->export_to_level(1, @_);
+}
+
+
+sub class_to_filename {
+    my $class = shift;
+    my $filename = $class;
+    $filename =~ s/::/\//g;
+    $filename .= '.pm';
+    return $filename;
+}
+
+sub protect_real_data_sources {
+    warn "protect_real_data_sources ran";
+    my $lds = Genome::DataSource::LocalDataSource->get();
+    my $lds_path = $lds->__meta__->module_path;
+
+    my %ds_module_filename = (
+        'Genome::DataSource::Main' => 'Genome/DataSource/Main.pm',
+        'Genome::DataSource::GMSchema' => 'Genome/DataSource/GMSchema.pm',
+    );
+    for my $ds_module (keys %ds_module_filename) {
+        my $ds_module_filename = $ds_module_filename{$ds_module};
+
+        if ($INC{$ds_module_filename}) {
+            if ($INC{$ds_module_filename} eq $lds_path) {
+                warn "$ds_module already protected!";
+            } else {
+                die "$ds_module already loaded; cannot protect it!";
+            }
+        }
+
+        $INC{$ds_module_filename} = $lds_path;
+        UR::Object::Type->define(
+            class_name => $ds_module,
+            is => $lds->class,
+        );
+    }
 }
 
 sub create_tmpfs {
@@ -86,29 +123,6 @@ sub create_tmpfs_volume {
     UR::Context->commit;
 
     return $volume;
-}
-
-sub protect_real_data_sources {
-    my @ds_module_filenames = grep { /Genome\/DataSource/ } keys %INC;
-    if (@ds_module_filenames) {
-        warn "Genome::DataSources already loaded:\n" . join("\n", @ds_module_filenames);
-        die('Genome::DataSources already loaded! This test runs without UR_DBI_NO_COMMIT enabled so we do not allow this.');
-    }
-
-    my $lds = Genome::DataSource::LocalDataSource->get();
-
-    my %ds_module_filename = (
-        'Genome::DataSource::Main' => 'Genome/DataSource/Main.pm',
-        'Genome::DataSource::GMSchema' => 'Genome/DataSource/GMSchema.pm',
-    );
-    for my $ds_module (keys %ds_module_filename) {
-        my $ds_module_filename = $ds_module_filename{$ds_module};
-        $INC{$ds_module_filename} = $lds->__meta__->module_path;
-        UR::Object::Type->define(
-            class_name => $ds_module,
-            is => $lds->class,
-        );
-    }
 }
 
 sub create_group {

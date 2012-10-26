@@ -3,14 +3,33 @@ package Genome::DataSource::LocalDataSource;
 use strict;
 use warnings;
 
-use Carp;
+use Carp qw(croak);
+use File::Temp;
 
 class Genome::DataSource::LocalDataSource {
     is => [ 'UR::DataSource::SQLite', 'UR::Singleton' ],
 };
 
+sub known_classes {
+    return qw(
+        Genome::Disk::Allocation
+        Genome::Disk::Assignment
+        Genome::Disk::Group
+        Genome::Disk::Volume
+    );
+}
 
-use File::Temp;
+our @hijacked_classes;
+sub import {
+    my $class = shift;
+    my @classes_to_hijack = @_;
+
+    my $self = $class->get();
+    for my $class_to_hijack (@classes_to_hijack) {
+        $self->hijack_class($class_to_hijack) or die;
+    }
+}
+
 sub server {
     our $PID;
 
@@ -93,7 +112,6 @@ sub hijack_class {
 
     return 1;
 }
-
 
 END {
     our $PID;
