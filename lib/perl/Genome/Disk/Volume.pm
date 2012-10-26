@@ -217,6 +217,7 @@ sub get_lock {
     return $volume_lock;
 }
 
+our @dummy_volumes;
 sub create_dummy_volume {
     my ($class, %params) = @_;
     my $mount_path = $params{mount_path};
@@ -231,6 +232,7 @@ sub create_dummy_volume {
             hostname => 'localhost',
             physical_path => '/tmp',
         );
+        push @dummy_volumes, $volume;
         my $disk_group = Genome::Disk::Group->get(disk_group_name => $params{disk_group_name});
         Genome::Disk::Assignment->__define__(
             volume => $volume,
@@ -298,8 +300,12 @@ sub active_volume {
 sub is_mounted {
     my $self = shift;
 
-    # We can't use Filesys::Df::df because it doesn't report the mount path only the stats.
     my $mount_path = $self->mount_path;
+    if (grep { $_->mount_path eq $mount_path } @dummy_volumes) {
+        return 1;
+    }
+
+    # We can't use Filesys::Df::df because it doesn't report the mount path only the stats.
     my @df_output = qx(df -P $mount_path 2> /dev/null);
     if ($! && $! !~ /No such file or directory/) {
         die $self->error_message(sprintf('Failed to `df %s` to check if volume is mounted: %s', $mount_path, $!));
