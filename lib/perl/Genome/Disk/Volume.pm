@@ -106,14 +106,11 @@ class Genome::Disk::Volume {
             calculate_from => ['total_kb', 'allocated_kb'],
             calculate => q{ return sprintf("%.2f", ( $allocated_kb / $total_kb ) * 100); },
         },
-
         used_kb => {
             calculate_from => ['mount_path'],
-            calculate => sub {
-                my $mount_path = shift;
-                return 0 unless -e $mount_path;
-                my ($used_kb) = qx(df -Pk $mount_path | grep $mount_path | awk '{print \$3}') =~ /(\d+)/; 
-                return $used_kb
+            calculate => q{
+                $self = shift;
+                return $self->df->{used};
             },
         },
         percent_used => {
