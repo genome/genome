@@ -992,7 +992,7 @@ sub _execute_system_command {
         # Serialize params hash, construct command, and execute
         my $param_string = Genome::Utility::Text::hash_to_string(\%params);
         my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
-        my $cmd = qq{perl $includes -e "use above Genome; $class->$method($param_string); UR::Context->commit;"};
+        my $cmd = qq{$^X $includes -e "use above Genome; $class->$method($param_string); UR::Context->commit;"};
 
         unless (eval { system($cmd) } == 0) {
             my $msg = "Could not perform allocation action!";
