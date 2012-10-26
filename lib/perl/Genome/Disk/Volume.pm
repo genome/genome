@@ -7,7 +7,7 @@ use Genome;
 use Carp;
 
 use Data::Dumper;
-use Filesys::Df 'df';
+use Filesys::Df qw();
 
 class Genome::Disk::Volume {
     table_name => 'DISK_VOLUME',
@@ -311,6 +311,16 @@ sub is_mounted {
     return ($df_output ? 1 : 0);
 }
 
+sub df {
+    my $self = shift;
+
+    unless ($self->is_mounted) {
+        die $self->error_message(sprintf('Volume %s is not mounted!', $self->mount_path));
+    }
+
+    return Filesys::Df::df($self->mount_path);
+}
+
 sub sync_usage {
     my $self = shift;
     my %args = @_;
@@ -319,12 +329,7 @@ sub sync_usage {
         die $self->error_message('Unexpected args to sync_meta: ' . join(', ', keys %args));
     }
 
-    unless ($self->is_mounted) {
-        die $self->error_message(sprintf('Volume %s is not mounted!', $self->mount_path));
-    }
-
-    my $df = df($self->mount_path);
-    my $total_kb = $df->{blocks};
+    my $total_kb = $self->df->{blocks};
     my $unallocated_kb = $self->unallocated_kb;
 
     if ($self->total_kb != $total_kb) {
