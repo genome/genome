@@ -10,15 +10,13 @@ use Term::ANSIColor qw(:constants);
 
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {
     is => 'Command::V2',
-    has_input => [
+    has_optional => [
         individual => { 
               is => 'Genome::Individual',
               is_many => 0,
               require_user_verify => 0,
               doc => 'Individual to query',
         },
-    ],
-    has_optional => [
         samples => {
               is => 'Genome::Sample',
               is_many => 1,
@@ -111,6 +109,10 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               id_by => '_previously_discovered_variations_id',
               doc => 'Desired previously discovered variants build',
         },
+        display_defaults => {
+              is => 'Boolean',
+              doc => 'Display current default processing profiles and annotation/reference genome inputs',
+        },
         force => {
               is => 'Number',
               default => 0,
@@ -133,6 +135,11 @@ genome model clin-seq update-analysis  --individual='common_name=AML103'
 genome model clin-seq update-analysis  --individual='H_KA-306905' --samples='id in [2878747496,2878747497,2879495575]'
 genome model clin-seq update-analysis  --individual='H_KA-306905' --samples='name in ["H_KA-306905-1121472","H_KA-306905-1121474","H_KA-306905-S.4294"]'
 
+
+To summarize default processing profiles and inputs:
+genome model clin-seq update-analysis  --display-defaults
+
+
 All processing-profile and build input parameters can be specified by ID, name, etc. and should resolve
 
 EOS
@@ -152,6 +159,22 @@ EOS
 
 sub execute {
   my $self = shift;
+
+  #If the user selected the --display-defaults option, simply print out a summmary and exit
+  if ($self->display_defaults){
+    $self->status_message("\n\nSummarizing default processing profiles and inputs");
+    $self->display_processing_profiles;
+    $self->display_inputs;
+    $self->status_message("\nExiting...  --display-defaults mode is used for summarizing purposes only\n\n");
+    return 1;
+  }
+
+  #Make sure an individual is defined
+  unless ($self->individual){
+    $self->error_message("Missing required parameter: --individual.");
+    exit 1;
+  }
+
   my $individual = $self->individual;
 
   #Display basic info about the individual

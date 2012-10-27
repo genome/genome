@@ -11,7 +11,7 @@ class Genome::Model::ClinSeq {
         exome_model         => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
         tumor_rnaseq_model  => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
         normal_rnaseq_model => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
-        force               => { is => 'UR::Value::Boolean', doc => 'skip sanity checks on input models' },  
+        force               => { is => 'Boolean', doc => 'skip sanity checks on input models' },  
     ],
     has_optional_param => [
         #Processing profile parameters would go in here
@@ -55,11 +55,15 @@ sub _resolve_subject {
     my $self = shift;
     my @subjects = $self->_infer_candidate_subjects_from_input_models();
     if (@subjects > 1) {
+      if ($self->force){
+        @subjects = ($subjects[0]);
+      }else{
         $self->error_message(
             "Conflicting subjects on input models!:\n\t"
             . join("\n\t", map { $_->__display_name__ } @subjects)
         );
         return;
+      }
     }
     elsif (@subjects == 0) {
         $self->error_message("No subjects on input models?  Contact Informatics.");
