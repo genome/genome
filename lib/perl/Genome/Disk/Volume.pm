@@ -309,12 +309,12 @@ sub active_volume {
 sub is_mounted {
     my $self = shift;
 
-    my $mount_path = $self->mount_path;
-    if (grep { $_->mount_path eq $mount_path } @dummy_volumes) {
+    if ($ENV{UR_DBI_NO_COMMIT}) {
         return 1;
     }
 
     # We can't use Filesys::Df::df because it doesn't report the mount path only the stats.
+    my $mount_path = $self->mount_path;
     my @df_output = qx(df -P $mount_path 2> /dev/null);
     if ($! && $! !~ /No such file or directory/) {
         die $self->error_message(sprintf('Failed to `df %s` to check if volume is mounted: %s', $mount_path, $!));
