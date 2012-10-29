@@ -753,15 +753,6 @@ sub _archive {
 }
 
 sub _unarchive {
-    # ~~~ PLAN ~~~
-    # (this should be similar to _move)
-    # error checking to make sure allocation can be unarchived
-    # lock allocation (are we locking based on the mount path?)
-    # create shadow allocation
-    # unarchive stuff into shadow allocation
-    # move shadow allocation to the right place
-    # unlock allocation
-
     my ($class, %params) = @_;
     my $id = delete $params{allocation_id};
     if (%params) {
