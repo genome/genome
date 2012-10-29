@@ -261,14 +261,6 @@ sub archivable {
     return $self->__archivable;
 }
 
-sub _get_root_of_path {
-    my $whole_path = shift;
-
-    $whole_path =~ m/^\/?(.+)/;
-    my @tmp = split('/', $1);
-    return $tmp[0];
-}
-
 sub _create {
     my $class = shift;
     my %params = @_;
@@ -540,7 +532,6 @@ sub _move {
     }
 
     my $original_absolute_path = $self->absolute_path;
-    my $allocation_path_root = _get_root_of_path($self->allocation_path);
 
     # make shadow allocation
     my %creation_params = (
