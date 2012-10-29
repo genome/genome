@@ -59,7 +59,7 @@ class Genome::Disk::Allocation {
         },
         absolute_path => {
             calculate_from => ['mount_path','group_subdirectory','allocation_path'],
-            calculate => q{ return $mount_path .'/'. $group_subdirectory .'/'. $allocation_path; },
+            calculate => q{ $self->_absolute_path($mount_path, $group_subdirectory, $allocation_path); },
         },
         volume => {
             is => 'Genome::Disk::Volume',
@@ -124,6 +124,12 @@ our @APIPE_DISK_GROUPS = qw/
 /;
 our $CREATE_DUMMY_VOLUMES_FOR_TESTING = 1;
 my @PATHS_TO_REMOVE; # Keeps track of paths created when no commit is on
+
+sub _absolute_path {
+    my $class = shift;
+    my ($mount_path, $group_subdirectory, $allocation_path) = @_;
+    return $mount_path .'/'. $group_subdirectory .'/'. $allocation_path;
+}
 
 sub allocate { return shift->create(@_); }
 sub create {
@@ -592,9 +598,11 @@ sub _move {
                 $self->id, $original_absolute_path, $shadow_absolute_path, $copy_error_message));
     }
 
-    my $new_volume_final_path = sprintf("%s/%s/%s",
-        $shadow_allocation->mount_path, $shadow_allocation->group_subdirectory,
+    my $new_volume_final_path = $class->_absolute_path(
+        $shadow_allocation->mount_path,
+        $shadow_allocation->group_subdirectory,
         $self->allocation_path);
+
 
     Genome::Sys->create_directory($new_volume_final_path);
     unless (rename $shadow_allocation->absolute_path, $new_volume_final_path) {
