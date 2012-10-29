@@ -99,17 +99,9 @@ class Genome::Disk::Volume {
                 return ($row_arrayref->[0] or 0);
             /,
         },
-        old_allocated_kb => {
-            calculate_from => ['total_kb', 'cached_unallocated_kb'],
-            calculate => q{ return $total_kb - $cached_unallocated_kb; },
-        },
         percent_allocated => {
             calculate_from => ['total_kb', 'allocated_kb'],
             calculate => q{ return sprintf("%.2f", ( $allocated_kb / $total_kb ) * 100); },
-        },
-        available_kb => {
-            calculate_from => ['mount_path'],
-            calculate => q{ $self = shift; return $self->df->{bavail} },
         },
         used_kb => {
             calculate_from => ['mount_path'],
@@ -119,53 +111,6 @@ class Genome::Disk::Volume {
             calculate_from => ['total_kb', 'used_kb'],
             calculate => q{ return sprintf("%.2f", ( $used_kb / $total_kb ) * 100); },
         },
-
-        unallocatable_reserve_size => {
-            calculate_from => ['total_kb', 'unallocatable_volume_percent', 'maximum_reserve_size'],
-            calculate => q{
-                my $buffer = int($total_kb * $unallocatable_volume_percent);
-                $buffer = $maximum_reserve_size if $buffer > $maximum_reserve_size;
-                return $buffer;
-            },
-            doc => 'Size of reserve in kb that cannot be allocated to but can still be used by reallocations',
-        },
-        unusable_reserve_size => {
-            calculate_from => ['total_kb', 'unusable_volume_percent', 'unallocatable_reserve_size'],
-            calculate => q{
-                my $buffer = int($total_kb * $unusable_volume_percent);
-                $buffer = $unallocatable_reserve_size if $buffer > $unallocatable_reserve_size;
-                return $buffer;
-            },
-            doc => 'Size of reserve in kb that cannot be allocated to in any way',
-        },
-        allocatable_kb => {
-            calculate_from => ['unallocated_kb', 'unallocatable_reserve_size'],
-            calculate => q{ 
-                my $allocatable = $unallocated_kb - $unallocatable_reserve_size;
-                $allocatable = 0 if $allocatable < 0;  # Possible due to reallocation having a smaller reserve
-                return $allocatable;
-            },
-        },
-        allocatable_gb => {
-            calculate_from => 'allocatable_kb',
-            calculate => q{ return int($allocatable_kb / (2**20)) },
-        },
-
-        unallocatable_volume_percent => {
-            is => 'Number',
-            is_constant => 1,
-            is_classwide => 1,
-            column_name => '',
-            value => '.05',
-        },
-        unusable_volume_percent => {
-            is => 'Number',
-            is_constant => 1,
-            is_classwide => 1,
-            column_name => '',
-            value => '.02',
-        },
-
         maximum_reserve_size => {
             is => 'Number',
             is_constant => 1,
