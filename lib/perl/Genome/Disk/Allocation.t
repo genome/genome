@@ -13,6 +13,7 @@ use above 'Genome';
 use Test::More;
 use File::Temp 'tempdir';
 use File::Slurp;
+use Filesys::Df qw();
 
 $| = 1;
 use_ok('Genome::Disk::Allocation') or die;
@@ -61,8 +62,7 @@ for (1..5) {
         hostname => 'foo',
         physical_path => 'foo/bar',
         mount_path => $volume_path,
-        total_kb => 1024,
-#        unallocated_kb => 1024,
+        total_kb => Filesys::Df::df($volume_path)->{blocks},
         disk_status => 'active',
         can_allocate => '1',
     );
@@ -110,7 +110,7 @@ ok(!$subdir_allocation, 'allocation creation failed as expected');
 # Now try to make an allocation that's too big for the volume
 $params{allocation_path} =~ s/allocation_test_1/allocation_test_2/;
 $params{allocation_path} =~ s/subdir//;
-$params{kilobytes_requested} = 10000;
+$params{kilobytes_requested} = $volumes[0]->total_kb;
 my $big_allocation = eval { Genome::Disk::Allocation->create(%params) };
 ok(!$big_allocation, 'allocation fails when request is too big, as expected');
 
@@ -139,11 +139,13 @@ ok(-e $touch_file, "touched file exists in allocation directory");
 
 my $current_volume = $allocation->volume;
 my $old_allocation_size = $allocation->kilobytes_requested;
-#$current_volume->unallocated_kb(100);
+
+# temporarily shrink volume to force reallocate with move
 $current_volume->total_kb($current_volume->allocated_kb + 100);
 my $current_volume_unallocated_kb = $current_volume->unallocated_kb;
-
 my $move_rv = Genome::Disk::Allocation->reallocate(allocation_id => $allocation->id, kilobytes_requested => 500, allow_reallocate_with_move => 1);
+# resets total_kb to actual usage; unshrink volume; needed for creating new allocations later in forked children
+$current_volume->sync_usage();
 
 ok($allocation->volume->mount_path ne $current_volume, "allocation moved to new volume");
 ok(-e $allocation->absolute_path . "/test_file", "touched file correctly moved to new allocation directory");

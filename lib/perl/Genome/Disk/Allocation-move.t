@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use File::Temp 'tempdir';
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 
@@ -53,8 +54,7 @@ for (1..2) {
         hostname => 'foo',
         physical_path => 'foo/bar',
         mount_path => $volume_path,
-        total_kb => 1024,
-        unallocated_kb => 1024,
+        total_kb => Filesys::Df::df($volume_path)->{blocks},
         disk_status => 'active',
         can_allocate => '1',
     );

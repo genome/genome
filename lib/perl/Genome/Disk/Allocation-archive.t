@@ -13,6 +13,7 @@ use Test::More;
 use File::Temp 'tempdir';
 use File::Basename;
 use File::Find;
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
@@ -122,8 +123,7 @@ sub create_test_volumes {
             hostname => 'foo',
             physical_path => 'foo/bar',
             mount_path => $volume_path,
-            total_kb => 1024,
-#            unallocated_kb => 1024,
+            total_kb => Filesys::Df::df($volume_path)->{blocks},
             disk_status => 'active',
             can_allocate => '1',
         );

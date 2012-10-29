@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More; #skip_all => 'archiving not fully implemented yet';
 use File::Temp 'tempdir';
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
@@ -53,8 +54,7 @@ my $archive_volume = Genome::Disk::Volume->create(
     mount_path => $archive_volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($archive_volume_path)->{blocks},
 );
 ok($archive_volume, 'created test volume');
 
@@ -71,8 +71,7 @@ my $volume = Genome::Disk::Volume->create(
     mount_path => $volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($volume_path)->{blocks},
 );
 ok($volume, 'created test volume');
 

@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use File::Temp 'tempdir';
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Command::Allocation::Move') or die;
 use_ok('Genome::Disk::Allocation') or die;
@@ -54,8 +55,7 @@ my $volume = Genome::Disk::Volume->create(
     mount_path => $volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($volume_path)->{blocks},
 );
 ok($volume, 'created test volume');
 
@@ -72,8 +72,7 @@ my $other_volume = Genome::Disk::Volume->create(
     mount_path => $other_volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($volume_path)->{blocks},
 );
 ok($other_volume, 'created another test volume');
 
