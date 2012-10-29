@@ -158,11 +158,13 @@ sub create {
         $self = $class->_execute_system_command('_create', %params);
     });
 
-    if ($ENV{UR_DBI_NO_COMMIT}) {
-        push @PATHS_TO_REMOVE, $self->absolute_path;
-    }
-    else {
-        $self->_log_change_for_rollback;
+    if ($self) {
+        if ($ENV{UR_DBI_NO_COMMIT}) {
+            push @PATHS_TO_REMOVE, $self->absolute_path;
+        }
+        else {
+            $self->_log_change_for_rollback;
+        }
     }
 
 
