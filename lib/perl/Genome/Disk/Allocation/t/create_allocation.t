@@ -4,11 +4,9 @@ use warnings;
 use Test::More;
 
 use above 'Genome';
-use Genome::Disk::Allocation::Test qw(create_group create_tmpfs_volume create_barrier spawn_child waitpids);
+use Genome::Disk::Allocation::Test qw(create_tmpfs_volume create_barrier spawn_child waitpids);
 
-my $group_name = 'info_apipe';
-my $group   = create_group($group_name);
-my $volume  = create_tmpfs_volume(total_kb => 500, group => $group);
+my $volume  = create_tmpfs_volume(total_kb => 500);
 my $allocation_path = 'test/create_allocation/some_allocation'; # this has to be three deep?
 {
     my @child_allocations = Genome::Disk::Allocation->get('allocation_path like' => "$allocation_path/%");
@@ -19,6 +17,7 @@ my $allocation_path = 'test/create_allocation/some_allocation'; # this has to be
     is($allocation, undef, 'allocation does not already exist');
 }
 {
+    my ($group) = $volume->groups;
     my $allocation = Genome::Disk::Allocation->create(
         disk_group_name => $group->disk_group_name,
         allocation_path => $allocation_path,

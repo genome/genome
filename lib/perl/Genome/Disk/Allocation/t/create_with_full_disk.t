@@ -4,11 +4,10 @@ use warnings;
 use Test::More;
 
 use above 'Genome';
-use Genome::Disk::Allocation::Test qw(create_group create_tmpfs_volume create_barrier spawn_child waitpids);
+use Genome::Disk::Allocation::Test qw(create_tmpfs_volume create_barrier spawn_child waitpids);
 
-my $group_name = 'info_apipe';
-my $group   = create_group($group_name);
-my $volume  = create_tmpfs_volume(total_kb => 500, group => $group);
+my $volume  = create_tmpfs_volume(total_kb => 500);
+my ($group) = $volume->groups;
 
 my $file_kb = $volume->soft_limit_kb - $volume->used_kb + 1;
 my $filename = join('/', $volume->mount_path, 'space_filler');

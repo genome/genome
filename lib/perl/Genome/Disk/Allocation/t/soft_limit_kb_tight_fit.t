@@ -5,14 +5,15 @@ use Test::More;
 
 use Time::HiRes qw(usleep);
 use above 'Genome';
-use Genome::Disk::Allocation::Test qw(create_group create_tmpfs_volume create_barrier spawn_child waitpids);
+use Genome::Disk::Allocation::Test qw(create_tmpfs_volume create_barrier spawn_child waitpids);
 
 # soft_limit_kb_tight_fit.t
 # The purpose of this test is ...
 
-my $group   = create_group('info_apipe');
+my $group;
 for my $total_kb (600, 600, 1200) {
-    my $volume = create_tmpfs_volume(total_kb => $total_kb, group => $group);
+    my $volume = create_tmpfs_volume(total_kb => $total_kb);
+    ($group) = $volume->groups;
     ok($volume, sprintf('created %s', $volume->mount_path));
 }
 my $kilobytes_requested = 500;

@@ -5,15 +5,16 @@ use Test::More;
 
 use Time::HiRes qw(usleep);
 use above 'Genome';
-use Genome::Disk::Allocation::Test qw(create_group create_tmpfs_volume create_barrier spawn_child waitpids);
+use Genome::Disk::Allocation::Test qw(create_tmpfs_volume create_barrier spawn_child waitpids);
 
 my $group_total_kb = 0;
-my $group   = create_group('info_apipe');
+my $group;
 my $n_volumes = 10;
 for my $n (1..$n_volumes) {
     my $total_kb = 100;
     $group_total_kb += $total_kb;
-    my $volume = create_tmpfs_volume(total_kb => $total_kb, group => $group);
+    my $volume = create_tmpfs_volume(total_kb => $total_kb);
+    ($group) = $volume->groups;
     ok($volume, sprintf('created %s', $volume->mount_path));
 }
 

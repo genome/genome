@@ -5,7 +5,7 @@ use Test::More;
 
 use Time::HiRes qw(usleep);
 use above 'Genome';
-use Genome::Disk::Allocation::Test qw(create_group create_tmpfs_volume create_barrier spawn_child waitpids);
+use Genome::Disk::Allocation::Test qw(create_tmpfs_volume create_barrier spawn_child waitpids);
 
 # soft_limit_kb.t
 # The purpose of this test is to determine whether the soft_limit_kb is respected. To do that we attempt to create many more allocations than a volume can hold and see how full the volume gets.
@@ -14,9 +14,9 @@ my $total_kb = 1000;
 my $kilobytes_requested = 50;
 my $max_n = int($total_kb / $kilobytes_requested) + 5;
 
-my $group_name = 'info_apipe';
-my $group   = create_group($group_name);
-my $volume  = create_tmpfs_volume(total_kb => $total_kb, group => $group);
+my $volume  = create_tmpfs_volume(total_kb => $total_kb);
+my ($group) = $volume->groups;
+
 my $barrier = create_barrier();
 my @pids;
 diag 'Errors below about not creating allocations are to be expected.';
