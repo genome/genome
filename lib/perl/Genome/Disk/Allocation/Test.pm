@@ -50,7 +50,6 @@ sub class_to_filename {
 }
 
 sub protect_real_data_sources {
-    warn "protect_real_data_sources ran";
     my $lds = Genome::DataSource::LocalDataSource->get();
     my $lds_path = $lds->__meta__->module_path;
 
