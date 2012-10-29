@@ -2356,7 +2356,7 @@ sub heartbeat {
     my $self = shift;
     my %options = @_;
     my %heartbeat = $self->_heartbeat;
-    return ( $options{versbose} ? $heartbeat{is_ok} : $heartbeat{message} );
+    return ( $options{verbose} ? $heartbeat{message} : $heartbeat{is_ok} );
 }
 
 sub heartbeat_verbose {
@@ -2472,7 +2472,7 @@ sub _heartbeat {
         if (($elapsed_mtime_output_file/3600 > 48) && ($elapsed_mtime_error_file/3600 > 48)) {
             my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/3600);
             my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/3600);
-            $heartbeat{message} = "Process is running BUT output and/or error file have not been modified in 48+ hours     ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file";
+            $heartbeat{message} = "Process is running BUT output and/or error file have not been modified in 48+ hours ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file";
 
             last WF;
         }
