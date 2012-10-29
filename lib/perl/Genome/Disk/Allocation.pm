@@ -157,19 +157,6 @@ sub create {
     Genome::Utility::Instrumentation::timer('disk.allocation.create', sub {
         $self = $class->_execute_system_command('_create', %params);
     });
-    unless ($self) {
-        Carp::cluck("No allocation created.");
-    }
-
-    unless (Genome::Disk::Volume->get(mount_path => $self->mount_path, disk_status => 'active')) {
-        Carp::cluck(sprintf("Volume (%s) un gettable after _create call :(",
-                $self->mount_path));
-    }
-    unless($self->volume) {
-        Carp::cluck(sprintf(
-                "Something seriously wrong here!  Can't \$self->volume (\$self->mount_path = %s)",
-                $self->mount_path));
-    }
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
         push @PATHS_TO_REMOVE, $self->absolute_path;
