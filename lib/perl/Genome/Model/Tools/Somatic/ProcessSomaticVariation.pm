@@ -139,7 +139,13 @@ sub annoToBed{
     } else { #indel DEL or SNV
         $start = $start-1;
     }
-    return(join("\t",($chr,$start,$stop,$ref,$var)));
+    #handle 5 col or 4 col ref/var
+    if(defined($var)){
+        return(join("\t",($chr,$start,$stop,$ref,$var)));
+    } else {
+        return(join("\t",($chr,$start,$stop,$ref)));
+    }
+
 }
 
 sub annoFileToSlashedBedFile{
@@ -350,7 +356,7 @@ sub execute {
               while( my $line = $inFh->getline )
               {
                   chomp($line);
-                  next if $line =~ /^track name/;
+                  next if $line =~ /^track/;
                   my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
                   #remove chr if present
                   $chr =~ s/^chr//g;
@@ -429,7 +435,7 @@ sub execute {
           die "Failed to tier variants successfully.\n";
       }
       $snv_file = "$snv_file.tier1";
-      
+
       $tier_cmd = Genome::Model::Tools::FastTier::FastTier->create(
           tier_file_location => $self->tier_file_location,
           variant_bed_file => $indel_file,
