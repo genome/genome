@@ -190,8 +190,7 @@ sub _generate_joinx_command {
     }
 
     my $cmd = $joinx_bin_path . " vcf-merge $flags ";
-    $cmd .= join(" ", @inputs) if @inputs;
-    $cmd .= join(" ", @labeled_inputs) if @labeled_inputs;
+    $cmd .= join(" ", @inputs, @labeled_inputs);
 
     if($self->output_file) {
         my $log_part = '';
@@ -204,6 +203,7 @@ sub _generate_joinx_command {
         }
     }
 
+    print "Command is $cmd\n";
     my %params = (
         cmd => $cmd,
         input_files => $inputs, #without zcat wrapper
