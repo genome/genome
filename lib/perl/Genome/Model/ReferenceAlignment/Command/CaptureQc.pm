@@ -100,7 +100,7 @@ sub metric_names {
         '%TotalOn',
         '%TotalOff',
         '%Unaligned',
-        'Total',
+        'TotalReads',
         'SNPsCalled',
         'WithGenotype',
         'MetMinDepth',
@@ -316,7 +316,7 @@ sub get_metrics_for_non_qc_data {
     $metric_to_value{'%TotalOn'} = $percent_duplicate_on_target + $percent_unique_on_target || 0;
     $metric_to_value{'%TotalOff'} = $percent_duplicate_off_target + $percent_unique_off_target || 0;
     $metric_to_value{'%Unaligned'} = $percent_unaligned || 0;
-    $metric_to_value{'Total'} = $total || 0;
+    $metric_to_value{'TotalReads'} = $total || 0;
 
 
     if ($self->debug) {
