@@ -792,7 +792,6 @@ sub _unarchive {
     );
     # shadow_allocation ensures that we wont over allocate our destination volume
     my $shadow_allocation = $class->create(%creation_params);
-    Genome::Sys->create_directory($shadow_allocation->absolute_path);
 
     my $archive_path = $self->absolute_path;
     my $target_path = $shadow_allocation->absolute_path;
