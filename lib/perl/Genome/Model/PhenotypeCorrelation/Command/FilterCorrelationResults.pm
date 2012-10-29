@@ -77,8 +77,10 @@ sub execute {
         chomp;
         my %fields;
         @fields{@header_fields} = split($delim);
-        #Travis added the rsId to the marker id. This needs to be stripped
-        $fields{'x'} =~ s/(_[^ACTG]+$)//;
+
+        #restrict the variant id to just the chromosome and position
+        ($fields{'x'}) = $fields{'x'} =~ m/(^[^_]+_\d+)_/;
+        
         if( exists($markers_to_retain{$fields{'x'}}) ) {
             print $ofh $_,"\n";
         }
@@ -124,9 +126,7 @@ sub _generate_variant_id {
     if($chrom =~ /^(\d+)$/) {
         $chrom = "X$chrom";
     }
-    my $id = join("_",$chrom, $pos,$ref,$alts);
-    #remove out any commas
-    $id =~ s/,/./g;
+    my $id = join("_",$chrom, $pos);
     return $id;
 }
 
