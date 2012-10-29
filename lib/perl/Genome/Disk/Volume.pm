@@ -359,10 +359,19 @@ sub sync_usage {
 
 sub is_over_soft_limit {
     my $self = shift;
-    return (
-        $self->allocated_kb > $self->soft_limit_kb
-        || $self->used_kb > $self->soft_limit_kb
-    );
+
+    my $allocated_kb = $self->allocated_kb; # "cache" value
+    if ($allocated_kb > $self->soft_limit_kb) {
+        $self->status_message(sprintf("%s's allocated_kb exceeded soft limit (%d > %d), rolling back allocation.", $self->mount_path, $allocated_kb, $self->soft_limit_kb));
+        return 1;
+    }
+
+    my $used_kb = $self->used_kb; # "cache" value
+    if ($self->used_kb > $self->soft_limit_kb) {
+        $self->status_message(sprintf("%s's used_kb exceeded soft limit (%d > %d), rolling back allocation.", $self->mount_path, $used_kb, $self->soft_limit_kb));
+        return 1;
+    }
+    return 0;
 }
 
 sub is_over_hard_limit {
