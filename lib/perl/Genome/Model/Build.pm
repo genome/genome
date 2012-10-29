@@ -1550,6 +1550,8 @@ sub abandon {
     $add_note_args{body_text} = $body_text if defined $body_text;
     $self->add_note(%add_note_args);
 
+    Genome::Search->queue_for_update($self->model);
+
     return 1;
 }
 
