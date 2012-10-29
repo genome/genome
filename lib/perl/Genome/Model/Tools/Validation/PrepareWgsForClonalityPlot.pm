@@ -36,7 +36,7 @@ class Genome::Model::Tools::Validation::PrepareWgsForClonalityPlot{
         genome_build => {
             is => 'String',
             is_optional => 1,
-	    doc => 'genome build (36, 37lite, or path to fasta file for genome)',
+	    doc => 'genome build (36, 37, or path to fasta file for genome)',
             default => '36',
         },
         
@@ -89,7 +89,7 @@ sub execute {
         my $reference_build_fasta_object= Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
         $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     }
-    elsif ($genome_build eq "37lite") {
+    elsif (($genome_build eq "37lite") || ($genome_build eq "37")){
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
         $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     } elsif (-e $genome_build) {
