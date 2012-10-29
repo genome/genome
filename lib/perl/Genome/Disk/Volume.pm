@@ -8,6 +8,7 @@ use Carp;
 
 use Data::Dumper;
 use Filesys::Df qw();
+use List::Util qw(max);
 
 class Genome::Disk::Volume {
     table_name => 'DISK_VOLUME',
@@ -28,16 +29,16 @@ class Genome::Disk::Volume {
         },
 
         soft_limit_kb => {
-            calculate_from => 'total_kb',
-            calculate => q{ return int($total_kb * 0.95); },
+            calculate_from => ['total_kb', 'maximum_reserve_size'],
+            calculate => q{ $self->_compute_lower_limit($total_kb, 0.95, $maximum_reserve_size); },
         },
         soft_limit_gb => {
             calculate_from => 'soft_limit_kb',
             calculate => q{ return int($soft_limit_kb / (2**20)) },
         },
         hard_limit_kb => {
-            calculate_from => 'total_kb',
-            calculate => q{ return int($total_kb * 0.98); },
+            calculate_from => ['total_kb', 'maximum_reserve_size'],
+            calculate => q{ $self->_compute_lower_limit($total_kb, 0.98, int(0.5 * $maximum_reserve_size)); },
         },
         hard_limit_gb => {
             calculate_from => 'hard_limit_kb',
@@ -201,6 +202,14 @@ class Genome::Disk::Volume {
 sub __display_name__ {
     my $self = shift;
     return $self->mount_path;
+}
+
+sub _compute_lower_limit {
+    my $class = shift;
+    my ($total_kb, $fraction, $maximum_reserve_size) = @_;
+    my $fractional_limit = int($total_kb * $fraction);
+    my $subtractive_limit = $total_kb - $maximum_reserve_size;
+    return max($fractional_limit, $subtractive_limit);
 }
 
 sub get_lock {
