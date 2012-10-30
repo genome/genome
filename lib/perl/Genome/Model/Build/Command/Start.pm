@@ -5,6 +5,9 @@ use warnings;
 
 use Genome;
 
+use Genome::Utility::Instrumentation;
+use Time::HiRes;
+
 use Data::Dumper 'Dumper';
 use Regexp::Common;
 
@@ -112,11 +115,14 @@ sub execute {
             next;
         }
 
-        $self->create_and_start_build($model);
+        Genome::Utility::Instrumentation::timer('command.model.build.start', sub {
+            $self->create_and_start_build($model);
+        });
     }
 
     $self->display_builds_started();
     $self->display_command_summary_report();
+
 
     return !scalar(keys %{$self->_command_errors});
 }

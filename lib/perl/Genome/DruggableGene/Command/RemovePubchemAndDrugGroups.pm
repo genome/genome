@@ -1,12 +1,12 @@
-package Genome::Model::Tools::Dgidb::RemovePubchemAndDrugGroups;
+package Genome::DruggableGene::Command::RemovePubchemAndDrugGroups;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::Dgidb::RemovePubchemAndDrugGroups {
-    is => 'Genome::Model::Tools::Dgidb',
+class Genome::DruggableGene::Command::RemovePubchemAndDrugGroups {
+    is => 'Genome::Command::Base',
     has => [
         version => {
             is => 'Text',

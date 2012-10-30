@@ -63,6 +63,7 @@ sub execute {
     open(OUTFILE, ">" . $output_file) or die "Can't open outfile: $!\n";
     while(my $line = $fh->getline) {
         chomp $line;
+        next if $line =~ /chrom/;
         my ($chr, $start, $stop, $ref, $var, @rest) = split /\t/, $line;   #not checking type directly here
         unless($current_chr && $chr eq $current_chr) {
             #load the chromosomal sequence

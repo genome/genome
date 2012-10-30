@@ -4,6 +4,9 @@ use strict;
 use warnings;
 
 $Genome::Sys::IS_TESTING=1;
+BEGIN {
+    $ENV{UR_DBI_NO_COMMIT} = 1;
+};
 
 use above 'Genome';
 
@@ -364,7 +367,7 @@ my $children = 20;
 
 for my $child (1...$children) {
     my $pid;
-    if ($pid = fork()) {
+    if ($pid = UR::Context::Process->fork()) {
         push @pids, $pid;
     } else {
         my $output_offset = $child;

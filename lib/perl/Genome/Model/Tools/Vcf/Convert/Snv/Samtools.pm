@@ -67,8 +67,10 @@ sub parse_line {
     $ref =~ s/[^ACGTN\-]/N/g;
 
     my @alt_alleles = Genome::Info::IUB->variant_alleles_for_iub($ref, $genotype);
-    my @alleles = Genome::Info::IUB->iub_to_alleles($genotype);
-    my $alt = join(",", @alt_alleles);
+    my @alleles     = Genome::Info::IUB->iub_to_alleles($genotype);
+    my @all_alleles = (uc($ref), @alt_alleles);
+
+    my $alt = join ",", @alt_alleles;
 
     #add the ref and alt alleles' positions in the allele array to the GT field
     my $gt = $self->generate_gt($ref, \@alt_alleles, \@alleles);
@@ -91,13 +93,17 @@ sub parse_line {
     }
 
     # Count the number of times the variant occurs in the pileup string (AD) and its quality from the quality string (BQ)
-    my @bases = split("", $read_bases);
+    my @bases     = split("", $read_bases);
     my @qualities = split("", $base_quality);
+    my $total_ad  = 0;
+
     for (my $index = 0; $index < scalar(@bases); $index++) {
         my $base = uc($bases[$index]);
-        for my $variant (@alt_alleles) {
+        $base    = uc($ref) if $base eq '.' or $base eq ',';
+        for my $variant (@all_alleles) {
             if ($variant eq $base) {
                 $ad{$variant}++;
+                $total_ad++ unless $variant eq uc($ref);
                 #http://samtools.sourceforge.net/pileup.shtml base quality is the same as mapping quality
                 $bq_total{$variant} += ord($qualities[$index]) - 33; 
             }
@@ -106,26 +112,26 @@ sub parse_line {
 
     # Get an average of the quality for BQ
     my %bq;
-    for my $variant (@alt_alleles) {
+    
+    for my $variant (@all_alleles) {
         if ($ad{$variant}) {
             $bq{$variant} = int($bq_total{$variant} / $ad{$variant});
-        } else {
+        } 
+        else {
             $bq{$variant} = 0;
             $ad{$variant} = 0;
         }
     }
-    $bq_string = join ",", map { $bq{$_} } @alt_alleles;
-    $ad_string = join ",", map { $ad{$_} } @alt_alleles;
+    $bq_string = join ",", map { $bq{$_} } @all_alleles;
+    $ad_string = join ",", map { $ad{$_} } @all_alleles;
 
     # fraction of reads supporting alt
-    my $total_ad;
-    map { $total_ad += $ad{$_} } keys %ad;
     my $fa = $total_ad / $dp; 
     $fa = sprintf "%.3f", $fa; # Round to 3 decimal places since we dont have that many significant digits
 
     # If the variant called is N, just null out the GT and FET fields to minimize interference with cross-sample VCFs
     if ($genotype eq "N") {
-        $gt = ".";
+        $gt  = ".";
         $alt = ".";
         $ad_string = ".";
         $bq_string = ".";
@@ -136,9 +142,10 @@ sub parse_line {
     my $dbsnp_id = ".";
     my $qual = $vaq;
     my $filter = "PASS";
-    my $format = "GT:GQ:DP:BQ:MQ:AD:FA:VAQ";
+    my $format = "GT:GQ:DP:BQ:MQ:AD:FA:VAQ:SS";
     my $info = ".";
-    my $sample_string = join (":", ($gt, $gq, $dp, $bq_string, $mq, $ad_string, $fa, $vaq));
+    my $ss   = ".";
+    my $sample_string = join (":", ($gt, $gq, $dp, $bq_string, $mq, $ad_string, $fa, $vaq, $ss));
 
     my $vcf_line = join("\t", $chr, $pos, $dbsnp_id, $ref, $alt, $qual, $filter, $info, $format, $sample_string);
 

@@ -150,8 +150,8 @@ sub _ui_start {
                 callback => sub
                 {
                     $self->gtk2_dialogs->info_dialog("Launching firefox, please wait");
-                    my $pid = fork();
-                    if ($pid) { 
+                    my $pid = UR::Context::Process->fork();
+                    if ($pid) {
                         # parent falls thru
                     }
                     elsif (defined($pid)) {

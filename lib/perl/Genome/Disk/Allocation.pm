@@ -1,7 +1,11 @@
 package Genome::Disk::Allocation;
+
 use strict;
 use warnings;
+
 use Genome;
+use Genome::Utility::Instrumentation;
+
 use File::Copy::Recursive 'dircopy';
 use Carp 'confess';
 
@@ -121,6 +125,8 @@ sub allocate { return shift->create(@_); }
 sub create {
     my ($class, %params) = @_;
 
+    Genome::Utility::Instrumentation::inc('disk.allocation.create');
+
     # TODO Switch from %params to BoolExpr and pass in BX to autogenerate_new_object_id
     unless (exists $params{allocation_id}) {
         $params{allocation_id} = $class->__meta__->autogenerate_new_object_id;
@@ -137,7 +143,10 @@ sub create {
         }
     }
 
-    my $self = $class->_execute_system_command('_create', %params);
+    my $self;
+    Genome::Utility::Instrumentation::timer('disk.allocation.create', sub {
+        $self = $class->_execute_system_command('_create', %params);
+    });
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
         push @PATHS_TO_REMOVE, $self->absolute_path;
@@ -152,17 +161,26 @@ sub create {
 sub deallocate { return shift->delete(@_); }
 sub delete {
     my ($class, %params) = @_;
+
+    Genome::Utility::Instrumentation::inc('disk.allocation.delete');
+
     $class->_execute_system_command('_delete', %params);
     return 1;
 }
 
 sub reallocate {
     my ($class, %params) = @_;
+
+    Genome::Utility::Instrumentation::inc('disk.allocation.reallocate');
+
     return $class->_execute_system_command('_reallocate', %params);
 }
 
 sub move {
     my ($class, %params) = @_;
+
+    Genome::Utility::Instrumentation::inc('disk.allocation.move');
+
     return $class->_execute_system_command('_move', %params);
 }
 
@@ -171,6 +189,9 @@ sub archive {
     unless (Genome::Sys->current_user_has_role('archive')) {
         confess "Only users with role 'archive' can archive allocations!";
     }
+
+    Genome::Utility::Instrumentation::inc('disk.allocation.archive');
+
     return $class->_execute_system_command('_archive', %params);
 }
 
@@ -179,6 +200,9 @@ sub unarchive {
     unless (Genome::Sys->current_user_has_role('archive')) {
         confess "Only users with role 'archive' can unarchive allocations!";
     }
+
+    Genome::Utility::Instrumentation::inc('disk.allocation.unarchive');
+
     return $class->_execute_system_command('_unarchive', %params);
 }
 
@@ -968,7 +992,7 @@ sub _execute_system_command {
         # Serialize params hash, construct command, and execute
         my $param_string = Genome::Utility::Text::hash_to_string(\%params);
         my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
-        my $cmd = qq{perl $includes -e "use above Genome; $class->$method($param_string); UR::Context->commit;"};
+        my $cmd = qq{$^X $includes -e "use above Genome; $class->$method($param_string); UR::Context->commit;"};
 
         unless (eval { system($cmd) } == 0) {
             my $msg = "Could not perform allocation action!";

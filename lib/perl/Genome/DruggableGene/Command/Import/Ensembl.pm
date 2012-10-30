@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::Ensembl;
+package Genome::DruggableGene::Command::Import::Ensembl;
 
 use strict;
 use warnings;
@@ -8,8 +8,8 @@ use Genome;
 my $high = 750000; #Number of UR objects allowed in Cache before attempting to prune them down
 UR::Context->object_cache_size_highwater($high);
 
-class Genome::Model::Tools::Dgidb::Import::Ensembl {
-    is => 'Genome::Model::Tools::Dgidb::Import::Base',
+class Genome::DruggableGene::Command::Import::Ensembl {
+    is => 'Genome::DruggableGene::Command::Import::Base',
     has => [
         genes_outfile => {
             is => 'Path',
@@ -66,7 +66,7 @@ sub _doc_credits {
 
 sub _doc_see_also {
     return <<EOS
-B<gmt>(1)
+B<genome>(1)
 EOS
 }
 
@@ -78,7 +78,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import ensembl --version=68_37 --input-gtf-url=ftp://ftp.ensembl.org/pub/release-68/gtf/homo_sapiens/Homo_sapiens.GRCh37.68.gtf.gz
+genome druggable-gene import ensembl --version=68_37 --input-gtf-url=ftp://ftp.ensembl.org/pub/release-68/gtf/homo_sapiens/Homo_sapiens.GRCh37.68.gtf.gz
 HELP
 }
 

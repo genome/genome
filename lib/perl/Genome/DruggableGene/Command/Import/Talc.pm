@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::Talc;
+package Genome::DruggableGene::Command::Import::Talc;
 
 use strict;
 use warnings;
@@ -6,8 +6,8 @@ use Genome;
 
 binmode(STDOUT, ":utf8");
 
-class Genome::Model::Tools::Dgidb::Import::Talc {
-  is => 'Genome::Model::Tools::Dgidb::Import::Base',
+class Genome::DruggableGene::Command::Import::Talc {
+  is => 'Genome::DruggableGene::Command::Import::Base',
   has => [
         infile => {
             is => 'Path',
@@ -83,7 +83,7 @@ sub _doc_credits {
 
 sub _doc_see_also {
     return <<EOS
-B<gmt>(1)
+B<genome>(1)
 EOS
 }
 
@@ -95,7 +95,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import talc --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/SantaMonicaLung/clean/SantaMonicaLungCancerDrugDatabase.tsv --version="16-Jul-2012" --verbose
+genome druggable-gene import talc --infile=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/SantaMonicaLung/clean/SantaMonicaLungCancerDrugDatabase.tsv --version="16-Jul-2012" --verbose
 HELP
 }
 

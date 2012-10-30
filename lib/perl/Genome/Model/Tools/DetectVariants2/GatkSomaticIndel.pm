@@ -30,14 +30,17 @@ sub _detect_variants {
     my $gatk_raw_output = $self->_temp_staging_directory."/gatk_output_file";
     my $gatk_somatic_output = $self->_temp_staging_directory."/indels.hq";
 
-    my $gatk_cmd = Genome::Model::Tools::Gatk::SomaticIndel->create( 
-        tumor_bam => $self->aligned_reads_input, 
-        normal_bam => $self->control_aligned_reads_input,
+    my %parameters = (
+        tumor_bam   => $self->aligned_reads_input, 
+        normal_bam  => $self->control_aligned_reads_input,
         output_file => $gatk_raw_output,
-        mb_of_ram => $self->mb_of_ram,
-        reference => $refseq,
-        version => $self->version,
+        mb_of_ram   => $self->mb_of_ram,
+        reference   => $refseq,
+        version     => $self->version,
     );
+    $parameters{gatk_params} = $self->params if $self->params;
+
+    my $gatk_cmd = Genome::Model::Tools::Gatk::SomaticIndel->create(%parameters); 
     unless($gatk_cmd->execute){
         $self->error_message("Failed to run GATK command.");
         die $self->error_message;

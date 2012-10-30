@@ -57,6 +57,7 @@ sub get_filter_meta {
         {MetaType => "FILTER", ID => "BCNoise", Description => "Fraction of basecalls filtered at this site in either sample is at or above 0.4"},
         {MetaType => "FILTER", ID => "SpanDel", Description => "Fraction of reads crossing site with spanning deletions in either sample exceeeds 0.75"},
         {MetaType => "FILTER", ID => "QSS_ref", Description => "Normal sample is not homozygous ref or ssnv Q-score < 15, ie calls with NT!=ref or QSS_NT < 15"},
+        {MetaType => "FILTER", ID => "DP",      Description => "Greater than 3x chromosomal mean depth in Normal sample"},
     );
 }
 
@@ -66,13 +67,14 @@ sub parse_line {
     return if $line =~ /^#/; # no vcf header here
     my @columns = split /\t/, $line;
 
-    my ($ref, $alt, $info, $n_sample, $t_sample) = map{$columns[$_]}(3, 4, 7, 9, 10);
+    my ($ref, $alt, $filter, $info, $n_sample, $t_sample) = map{$columns[$_]}(3, 4, 6, 7, 9, 10);
     my ($n_gt_info, $n_gt_str, $t_gt_str) = $info =~ /NT=(\S+?);QSS.*SGT=(\S+?)\->(\S+?);/;
 
     my @n_data = split /:/, $n_sample;
     my @t_data = split /:/, $t_sample;
 
     my @alts = split /,/, $alt;
+    unshift @alts, $ref;   #AD is for 0/1/2/3, not 1/2/3
 
     #sometimes ALT column gets only .
     my $n_ad = $alt eq '.' ? '.' : parse_ad(\@n_data, \@alts);
@@ -81,7 +83,7 @@ sub parse_line {
     my %ids;
     my $id = 0;
 
-    for my $base ($ref, @alts) {
+    for my $base (@alts) {
         $ids{$base} = $id;
         $id++;
     }
@@ -89,6 +91,20 @@ sub parse_line {
     my $n_gt = $n_gt_info eq 'ref' ? '0/0' : parse_gt($n_gt_str, \%ids);
     my $t_gt = parse_gt($t_gt_str, \%ids);
 
+=cut    
+    if ($filter =~ /;/) { #odd lines contain things like: QSS_ref;DP   Hacky fix for now
+        my @filter_list = map{$_->{ID}}$self->get_filter_meta;
+        my @filters = split /;/, $filter;
+        my @valid_filters;
+        for my $filter (@filters) {
+            push @valid_filters, $filter if grep{$filter eq $_}@filter_list;
+        }
+
+        $columns[6] = join ';', @valid_filters;
+    }
+=cut    
+
+    $columns[4]  = 'N' if $alt eq '.';
     $columns[7]  =~ s/SOMATIC;//;  #remove the meaningless SOMATIC, it is contained in every line
     $columns[8]  = 'GT:AD:BQ:SS:'. $columns[8];
     $columns[9]  = $n_gt . ':' . $n_ad . ':.:.:' . $n_sample;

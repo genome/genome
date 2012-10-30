@@ -12,7 +12,7 @@ use Genome;
 # 7 was incremented from 6: more TCGA-compliance format, add TCGA format output of snv and indel to streka tool, add fix to Varscan Somatic snv vcf
 
 
-my $VCF_VERSION = "7";
+my $VCF_VERSION = "8";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],
