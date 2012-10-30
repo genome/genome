@@ -189,7 +189,7 @@ my @lims_whitelist = (
         ['Genome/Model/Tools/Lims/ImportSangerRuns.pm', 105],
     ],
     'GSC::Setup::CaptureSet' => [
-        ['Genome/Site/TGI/CaptureSet.pm', 104],
+        ['Genome/Site/TGI/CaptureSet.pm', 110],
     ],
 );
 
