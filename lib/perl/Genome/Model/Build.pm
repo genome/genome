@@ -17,7 +17,7 @@ use YAML;
 use Date::Manip;
 
 class Genome::Model::Build {
-    is => 'Genome::Notable',
+    is => ['Genome::Notable','Genome::Searchable'],
     type_name => 'genome model build',
     table_name => 'GENOME_MODEL_BUILD',
     is_abstract => 1,
