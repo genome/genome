@@ -99,7 +99,7 @@ sub convert_indel {
         elsif ($indel =~ /^[ACTG]$/) {
             #13	85935825	A	+CT	53	38	41.76%	*/+CT	60	4	6.25%	A	LOH	1.0	2.7536750660204944E-7	34	30	2	2
             #13	86203103	T	-TA	55	10	15.38%	*/-TA	46	0	0%	    T	LOH	1.0	0.0034732332318821516	31	15	0	0
-            my ($n_var) = $n_gt =~ /([+-]\S+)$/;
+            my ($n_var) = $n_gt =~ /\/([+-]\S+)$/;
             if ($var eq $n_var) {
                 if (substr($var, 0, 1) eq '+') {
                     $reference = '*';
