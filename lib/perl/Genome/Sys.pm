@@ -891,10 +891,6 @@ sub shellcmd {
     else {
         $self->status_message("RUN: $cmd");
 
-        if ($!) {
-            $self->warning_message(sprintf('$! had been "%s" but is being reset to "" before executing this cmd.', $!));
-            $! = 0;
-        }
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
