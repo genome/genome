@@ -292,6 +292,9 @@ sub _create {
         confess "Extra parameters detected: " . Data::Dumper::Dumper(\%params);
     }
 
+    if ($mount_path && $exclude_mount_paths) {
+        confess "exclude_mount_paths is ignored when mount_path is specified!";
+    }
     unless ($owner_class_name->__meta__) {
         confess "Could not find meta information for owner class $owner_class_name, make sure this class exists!";
     }
