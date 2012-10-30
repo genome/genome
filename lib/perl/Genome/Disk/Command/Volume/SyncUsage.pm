@@ -6,12 +6,17 @@ use warnings;
 use Genome;
 
 class Genome::Disk::Command::Volume::SyncUsage {
-    is => 'Command::V2',
+    is => ['Genome::Role::Logger', 'Command'],
     has => [
         filter => {
             is => 'Text',
             doc => 'Filter expression for volume(s) to sync.',
             shell_args_position => 1,
+        },
+        tie_stderr => {
+            is => 'Boolean',
+            default => 1,
+            doc => '(warning) globally tie STDERR to this logger',
         },
     ],
     doc => 'Sync usage info for volume (e.g. total KB and unallocated KB)',
@@ -29,7 +34,7 @@ sub execute {
 
     my $volume_iter = $data_type->create_iterator($bx);
     while (my $volume = $volume_iter->next) {
-        $self->status_message(sprintf('Syncing %s...', $volume->mount_path));
+        $self->info(sprintf('Syncing %s...', $volume->mount_path));
         $volume->sync_usage(verbose => 1);
     }
 
