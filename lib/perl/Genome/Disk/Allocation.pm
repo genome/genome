@@ -994,8 +994,18 @@ sub _update_owner_for_move {
 # Unloads the allocation and then reloads to ensure that changes from database are retrieved
 sub _reload_allocation {
     my ($class, $id) = @_;
+
+    my $allocation;
     my $mode = $class->_retrieve_mode;
-    return Genome::Disk::Allocation->$mode($id);
+    if ($mode eq 'get') {
+        $allocation = Genome::Disk::Allocation->get($id);
+    } elsif ($mode eq 'load') {
+        $allocation = UR::Context->current->reload($class, id => $id);
+    } else {
+        die 'Unrecognized _retrieve_mode: ' . $class->_retrieve_mode;
+    }
+
+    return $allocation;
 }
 
 # Creates an observer that executes the supplied closures
