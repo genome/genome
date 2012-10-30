@@ -27,7 +27,6 @@ class Genome::Disk::Volume {
             calculate_from => 'total_kb',
             calculate => q{ return int($total_kb / (2**20)) },
         },
-
         soft_limit_kb => {
             calculate_from => ['total_kb', 'maximum_reserve_size'],
             calculate => q{ $self->_compute_lower_limit($total_kb, 0.95, $maximum_reserve_size); },
@@ -44,7 +43,6 @@ class Genome::Disk::Volume {
             calculate_from => 'hard_limit_kb',
             calculate => q{ return int($hard_limit_kb / (2**20)) },
         },
-
         unallocated_kb => {
             calculate_from => ['total_kb', 'allocated_kb'],
             calculate => q{ return $total_kb - $allocated_kb },
@@ -58,7 +56,6 @@ class Genome::Disk::Volume {
             calculate_from => 'unallocated_kb',
             calculate => q{ return int($unallocated_kb / (2**20)) },
         },
-
         allocated_kb => {
             calculate_from => ['mount_path'],
             calculate => q/
