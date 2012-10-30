@@ -9,44 +9,6 @@ use File::Basename;
 class Genome::Model::Build::SomaticVariation {
     is => 'Genome::Model::Build',
     has => [
-        tumor_model => {
-            is => 'Genome::Model',
-            via => 'model',
-        },
-        tumor_build_id => {
-            is => 'Text',
-            via => 'tumor_build',
-            to => 'id',
-            is_mutable => 1,
-        },
-        tumor_build => {
-            is => 'Genome::Model::Build',
-            via => 'inputs',
-            is_many => 0,
-            to => 'value',
-            where => [ name => 'tumor_build', ],
-            is_mutable => 1,
-        },
-        normal_model => {
-            is => 'Genome::Model',
-            via => 'model',
-        },
-        normal_build => {
-            is => 'Genome::Model::Build',
-            via => 'inputs',
-            is_many => 0,
-            to => 'value',
-            where => [ name => 'normal_build', ],
-            is_mutable => 1,
-        },
-        annotation_build => {
-            is => 'Genome::Model::Build::ImportedAnnotation',
-            via => 'model',
-        },
-        previously_discovered_variations_build => {
-            is => 'Genome::Model::Build::ImportedVariationList',
-            via => 'model',
-        },
         snv_detection_strategy => {
             is => 'Text',
             via => 'model',
@@ -70,6 +32,64 @@ class Genome::Model::Build::SomaticVariation {
         loh_version => {
             is => 'Text',
             via => 'model',
+        },
+
+        # INPUTS
+        normal_model => {
+            is => 'Genome::Model',
+            via => 'model',
+        },
+        normal_build => {
+            is => 'Genome::Model::Build',
+            via => 'inputs',
+            is_many => 0,
+            to => 'value',
+            where => [ name => 'normal_build', ],
+            is_mutable => 1,
+        },
+        tumor_model => {
+            is => 'Genome::Model',
+            via => 'tumor_build',
+            to => 'model',
+        },
+        tumor_build_id => {
+            is => 'Text',
+            via => 'tumor_build',
+            to => 'id',
+            is_mutable => 1,
+        },
+        tumor_build => {
+            is => 'Genome::Model::Build',
+            via => 'inputs',
+            is_many => 0,
+            to => 'value',
+            where => [ name => 'tumor_build', ],
+            is_mutable => 1,
+        },
+        annotation_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+            via => 'inputs',
+            is_many => 0,
+            to => 'value',
+            where => [ name => 'annoation_build' ],
+            is_mutable => 1,
+        },
+        previously_discovered_variations => {
+            is => 'Genome::Model::Build::ImportedVariationList',
+            via => 'inputs',
+            is_many => 0,
+            to => 'value',
+            where => [ name => 'previously_discovered_variations', ],
+            is_mutable => 1,
+        },
+        previously_discovered_variations_build_id => {
+            is => 'Text',
+            via => 'previously_discovered_variations',
+            to => 'id',
+        },
+        previously_discovered_variations_build => {
+            is => 'Genome::Model::Build::ImportedVariationList',
+            id_by => 'previously_discovered_variations_build_id',
         },
    ],
 };
