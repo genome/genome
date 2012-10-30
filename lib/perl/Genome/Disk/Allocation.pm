@@ -877,6 +877,8 @@ sub get_lock {
         max_try => $tries,
         block_sleep => 1,
     );
+    # lock implies mutation so object should be reloaded
+    UR::Context->current->reload($class, id => $id);
     return $allocation_lock;
 }
 
