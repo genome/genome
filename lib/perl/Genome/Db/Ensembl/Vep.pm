@@ -401,7 +401,7 @@ sub execute {
     );
 
     my $temp_config_dir = Genome::Sys->create_temp_directory;
-    my $plugin_args;
+    my $plugin_args = "";
     if ($self->plugins) {
         my $temp_plugins_dir = "$temp_config_dir/Plugins";
         my $temp_plugins_config_dir = "$temp_plugins_dir/config";
