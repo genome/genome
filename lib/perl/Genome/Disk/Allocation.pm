@@ -909,7 +909,7 @@ sub __display_name__ {
 # which can either lead to outright rejection by the database if a constraint is violated or
 # other more subtle problems in the software. So, that leaves making a subprocess, which is
 # slow but won't lead to other problems.
-our @_execute_system_command_perl5opt = '-Mabove=Genome';
+our @_execute_system_command_perl5opt = '-MGenome';
 sub _execute_system_command {
     my ($class, $method, %params) = @_;
     if (ref($class)) {
