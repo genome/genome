@@ -433,7 +433,7 @@ sub map_workflow_inputs {
     }
 }
 
-sub _map_workflow_inputs_for_import {
+sub _map_workflow_inputs_for_normal_import {
     my $self = shift;
     my $build = shift;
 
@@ -485,7 +485,7 @@ sub _resolve_workflow_for_import {
     my $input_connector = $workflow->get_input_connector();
     my $output_connector = $workflow->get_output_connector();
 
-    my $import_op = $self->_add_operation($workflow, 'Import', {
+    my $import_op = _add_operation($workflow, 'Import', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
     $workflow->add_link(
