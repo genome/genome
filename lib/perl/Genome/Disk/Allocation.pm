@@ -11,7 +11,6 @@ use Carp 'confess';
 
 use List::Util 'shuffle';
 
-our $AUTO_REMOVE_TEST_PATHS = 1;
 our $TESTING_DISK_ALLOCATION = 0;
 
 class Genome::Disk::Allocation {
@@ -1287,9 +1286,7 @@ sub _cleanup_archive_directory {
 # Cleans up directories, useful when no commit is on and the test doesn't clean up its allocation directories
 # or in the case of reallocate with move when a copy fails and temp data needs to be removed
 END {
-    if ($AUTO_REMOVE_TEST_PATHS) {
-        remove_test_paths();
-    }
+    remove_test_paths();
 }
 sub remove_test_paths {
     for my $path (@PATHS_TO_REMOVE) {
