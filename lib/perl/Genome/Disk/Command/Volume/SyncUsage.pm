@@ -11,6 +11,7 @@ class Genome::Disk::Command::Volume::SyncUsage {
         filter => {
             is => 'Text',
             doc => 'Filter expression for volume(s) to sync.',
+            shell_args_position => 1,
         },
     ],
     doc => 'Sync usage info for volume (e.g. total KB and unallocated KB)',
