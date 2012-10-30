@@ -207,8 +207,8 @@ if (method == "glm") {
             tt[,"p"]=as.character(tt[,"p"]);
             tt[,"p"]=as.numeric(tt[,"p"]);
             fdr=p.adjust(tt[,"p"],method="fdr");
-            bon=p.adjust(tt[,"p"],method="bon");
-            tt=cbind(tt,fdr,bon);
+            #bon=p.adjust(tt[,"p"],method="bon");
+            tt=cbind(tt,fdr);
             tt=tt[order(tt[,"p"]),];
         }
 
@@ -254,27 +254,27 @@ if (method == "glm") {
             tt[,"p"]=as.character(tt[,"p"]);
             tt[,"p"]=as.numeric(tt[,"p"]);
             fdr=p.adjust(tt[,"p"],method="fdr");
-            bon=p.adjust(tt[,"p"],method="bon");
-            tt=cbind(tt,fdr,bon);
+            #bon=p.adjust(tt[,"p"],method="bon");
+            tt=cbind(tt,fdr);
             tt=tt[order(tt[,"p"]),];
         }
 
 
         if (!is.null(outf))
         {
-            colnames(tt)=c("x","y","method","n","s","p","fdr","bon");
-
+            #colnames(tt)=c("x","y","method","n","s","p","fdr");
             #The amount of precision that R prints with is somehow machine dependent (or the R version?)
             tt[,"s"] = sapply(tt[,"s"], sprintf, fmt="%.4E");
             tt[,"p"] = sapply(tt[,"p"], sprintf, fmt="%.4E");
             tt[,"fdr"] = sapply(tt[,"fdr"], sprintf, fmt="%.2E");
-            tt[,"bon"] = sapply(tt[,"bon"], sprintf, fmt="%.2E");
+            #tt[,"bon"] = sapply(tt[,"bon"], sprintf, fmt="%.2E");
 
             #The ordering should be done after reformatting the precision (duh)
             tt=tt[order(tt[,"x"]),];
             tt=tt[order(tt[,"p"]),];
-
-            write.table(tt,file=outf,quote=FALSE,row.names=FALSE,sep=",");
+            #rename the column headers to something more pleasant
+            colnames(tt)=c("Gene","ClinParam","Method","NumCases","Statistic","P-val","FDR");
+            write.table(tt,file=outf,quote=FALSE,row.names=FALSE,sep="\t");
         }
         invisible(tt);
     }
