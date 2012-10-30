@@ -894,38 +894,22 @@ sub shellcmd {
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
-        my $error_message = $!;
-        if ($error_message eq 0) {
-            $error_message = "Inspect log between RUN <cmd> and ERROR for error information.";
-        }
 
         if ( $exit_code == -1 ) {
-            Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd");
+            Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd\n\tError was: $!");
+
         } elsif ( $exit_code & 127 ) {
             my $signal = $exit_code & 127;
             my $withcore = ( $exit_code & 128 ) ? 'with' : 'without';
-
             Carp::croak("COMMAND KILLED. Signal $signal, $withcore coredump: $cmd");
+
         } elsif ($exit_code >> 8 != 0) {
             $exit_code = $exit_code >> 8;
             $DB::single = $DB::stopper;
             if ($allow_failed_exit_code) {
-                Carp::carp("TOLERATING Exit code $exit_code, msg $error_message from: $cmd");
+                Carp::carp("TOLERATING Exit code $exit_code from: $cmd");
             } else {
-                if($! eq 'No such file or directory') {
-                    for my $missing_input_file (grep { not -s $_ } @$input_files) {
-                        $self->status_message("Missing file ($missing_input_file)");
-                    }
-                    for my $output_file (@$output_files) {
-                        my $output_dir = (File::Basename::fileparse($output_file))[1];
-                        if (not -d $output_dir) {
-                            $self->status_message("Missing output dir ($output_dir)");
-                        } elsif (not -s $output_file) {
-                            $self->status_message("Missing output file ($output_file)");
-                        }
-                    }
-                }
-                Carp::croak("ERROR RUNNING COMMAND.  Exit code $exit_code, msg $error_message from: $cmd");
+                Carp::croak("ERROR RUNNING COMMAND.  Exit code $exit_code from: $cmd\nSee the command's captured STDERR (if it exists) for more information");
             }
         }
     }
