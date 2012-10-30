@@ -113,7 +113,6 @@ sub create_tmpfs_volume {
         physical_path  => $mount_path,
         mount_path     => $mount_path,
         total_kb       => $total_kb,
-        unallocated_kb => $total_kb,
         can_allocate   => 1,
     );
 

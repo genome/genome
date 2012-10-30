@@ -47,10 +47,7 @@ class Genome::Disk::Volume {
 
         unallocated_kb => {
             calculate_from => ['total_kb', 'allocated_kb'],
-            calculate => q{ $self = shift;
-                            Carp::cluck('Cannot set calculated unallocated_kb') if (@_);
-                            return $total_kb - $allocated_kb;
-            },
+            calculate => q{ return $total_kb - $allocated_kb },
         },
         cached_unallocated_kb => {
             is => 'Number',
