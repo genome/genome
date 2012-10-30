@@ -66,6 +66,13 @@ class Genome::Db::Ensembl::Vep {
             valid_values => [qw(p s b)],
             is_input => 1,
         },
+        condel => {
+            is => 'String',
+            doc => 'Add Condel [p]rediction, [s]core or [b]oth',
+            is_optional => 1,
+            valid_values => [qw(p s b)],
+            is_input => 1,
+        },
         regulatory => {
             is => 'Boolean',
             doc => 'Look for overlap with regulatory regions.',
