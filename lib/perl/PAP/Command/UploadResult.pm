@@ -6,6 +6,8 @@ use warnings;
 use Bio::DB::BioDB;
 use Bio::DB::Query::BioQuery;
 
+use Genome::Sys;
+
 class PAP::Command::UploadResult {
     is  => 'PAP::Command',
     has => [
@@ -44,6 +46,27 @@ sub help_brief {
 
 sub execute {
     my $self = shift;
+
+    my $lock_path = $ENV{GENOME_LOCK_DIR} . "/PAP_Command/UploadResult";
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock => $lock_path,
+        block_sleep => 90,
+        max_try => 10_000,
+    );
+    unless ($lock) {
+        die "Failed to get the lock to upload to BioSQL";
+    }
+
+    my $commit_observer;
+    my $unlock_sub = sub {
+        Genome::Sys->unlock_resource(resource_lock => $lock);
+        $commit_observer->delete;
+    };
+    $commit_observer = UR::Context->process->add_observer(aspect => 'commit', callback => $unlock_sub);
+    unless ($commit_observer) {
+        $self->error_message("Failed to add commit observer to unlock $lock.");
+    }
+
 
     if ($self->skip) {
         return 1;
