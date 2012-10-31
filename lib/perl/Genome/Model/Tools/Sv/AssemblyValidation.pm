@@ -260,8 +260,7 @@ sub execute {
     $self->status_message("Data directory: $datadir");
     $self->_data_dir($datadir);
 
-    #my $tigra_sv_cmd = Genome::Sys->swpath('tigra-sv', '0.1');
-    my $tigra_sv_cmd = "/gscuser/tabbott/bin/tigra-sv";
+    my $tigra_sv_cmd = Genome::Sys->swpath('tigra-sv', '0.1');
     my $tigra_sv_options = $self->_get_tigra_options;
     my $bam_files = $self->_check_bam;
     my $tigra_sv_desc_file = $self->tigra_sv_output_description_file;
