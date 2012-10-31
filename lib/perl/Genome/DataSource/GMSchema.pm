@@ -10,7 +10,7 @@ class Genome::DataSource::GMSchema {
     has_constant => [
         server => { default_value => 'dbname=genome' },
         login => { default_value => 'genome' },
-        auth => { default_value => undef },
+        auth => { default_value => 'changeme' },
         owner => { default_value => 'public' },
     ],
 };
