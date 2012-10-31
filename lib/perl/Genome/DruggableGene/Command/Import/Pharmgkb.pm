@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::Pharmgkb;
+package Genome::DruggableGene::Command::Import::Pharmgkb;
 
 use strict;
 use warnings;
@@ -7,8 +7,8 @@ use Text::ParseWords;
 
 binmode(STDOUT, ":utf8");
 
-class Genome::Model::Tools::Dgidb::Import::Pharmgkb {
-  is => 'Genome::Model::Tools::Dgidb::Import::Base',
+class Genome::DruggableGene::Command::Import::Pharmgkb {
+  is => 'Genome::DruggableGene::Command::Import::Base',
   has => [
         relationships_file => {
             is => 'Path',
@@ -85,7 +85,7 @@ sub _doc_credits {
 
 sub _doc_see_also {
     return <<EOS
-B<gmt>(1)
+B<genome>(1)
 EOS
 }
 
@@ -97,7 +97,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import pharmgkb --version=\"12-Jul-2012\" --relationships-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/relationships/relationships.tsv --drugs-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/drugs/drugs.tsv --genes-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/genes/genes.tsv 
+genome druggable-gene import pharmgkb --version=\"12-Jul-2012\" --relationships-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/relationships/relationships.tsv --drugs-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/drugs/drugs.tsv --genes-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/KnownDruggable/PharmGKB/2012-07-12/genes/genes.tsv 
 HELP
 }
 

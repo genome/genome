@@ -30,7 +30,7 @@ class Genome::Model::Tools::Validation::ClonalityPlot {
 
     cbs_file => { 
         is => 'Text',
-        doc => "File of CN-altered segments according to CBS",
+        doc => "File of CN-altered segments according to CBS - assumes segment mean is log2 value",
         is_optional => 1,
         is_input => 1 },        
 
@@ -246,7 +246,7 @@ sub execute {
         %copynumber_hash_tumor=%{&build_hash($cnvhmm_file)};
     } elsif(defined($cbs_file)){
         #build the copy number hashes
-        %copynumber_hash_tumor=%{&build_hash($cbs_file)};
+        %copynumber_hash_tumor=%{&build_hash_cbs($cbs_file)};
     } 
 
 
@@ -920,6 +920,10 @@ sub build_hash_cbs
         chomp($line);
         unless ($line =~ /^#/){ next;}
         my ($chr,$start,$end,$nmarkers,$adjusted_cn);
+        #convert from log2 to abs copy number here 
+        $adjusted_cn = (2^$adjusted_cn)*2;
+        #round to nearest integer
+        $adjusted_cn = sprintf("%.0f", $adjusted_cn);
         my $pos=$start."_".$end;
         $info_hash{$chr}{$pos}=$adjusted_cn;
     }

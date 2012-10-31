@@ -16,7 +16,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 16;
+    plan tests => 21;
 }
 
 use_ok('Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine');
@@ -26,12 +26,14 @@ use_ok('Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine');
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Result-Vcf-Combine';
 my $inputs = $test_dir."/inputs";
 
-my $expected_dir = $test_dir."/expected.v4";
+my $expected_dir = $test_dir."/expected.v5";
 
 my $detector_union_expected_file = $expected_dir."/detector_test/union_snvs.vcf.gz";
 my $filter_union_expected_file = $expected_dir."/filter_test/union_snvs.vcf.gz";
 my $detector_intersect_expected_file = $expected_dir."/detector_test/intersect_snvs.vcf.gz";
 my $filter_intersect_expected_file = $expected_dir."/filter_test/intersect_snvs.vcf.gz";
+my $combine_union_expected_file = $expected_dir."/combine_test/union_snvs.vcf.gz";
+my $combine_intersect_expected_file = $expected_dir."/combine_test/intersect_snvs.vcf.gz";
 
 my $varscan_detector_directory = $inputs."/varscan";
 my $varscan_detector_vcf_directory = $inputs."/varscan_vcf_result";
@@ -42,6 +44,10 @@ my $snp_filter_directory = $inputs."/snp_filter_result";
 my $snp_filter_vcf_directory = $inputs."/snp_filter_vcf_result";
 my $false_positive_filter_directory = $inputs."/false_positive_filter_result";
 my $false_positive_filter_vcf_directory = $inputs."/false_positive_filter_vcf_result";
+my $intersect_directory = $inputs."/intersect_result";
+my $union_directory = $inputs."/union_result";
+my $intersect_vcf_directory = $inputs."/intersect_vcf_result";
+my $union_vcf_directory = $inputs."/union_vcf_result";
 
 my $bam_file = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 
@@ -139,6 +145,40 @@ my $false_positive_filter_vcf_result = Genome::Model::Tools::DetectVariants2::Re
 
 $false_positive_filter_result->add_user(user => $false_positive_filter_vcf_result, label => 'uses');
 
+my $union_result = Genome::Model::Tools::DetectVariants2::Result::Combine::UnionSnv->__define__(
+    input_a => $snp_filter_result,
+    input_b => $false_positive_filter_result,
+    output_dir => $union_directory,
+    version => 42,
+);
+
+my $union_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(
+    incoming_vcf_result_a => $snp_filter_vcf_result,
+    incoming_vcf_result_b => $false_positive_filter_vcf_result,
+    output_dir => $union_vcf_directory,
+    variant_type => "snvs",
+    joinx_version => 1.6,
+);
+
+$union_result->add_user(user => $union_vcf_result, label => 'uses');
+
+my $intersect_result = Genome::Model::Tools::DetectVariants2::Result::Combine::IntersectSnv->__define__(
+    input_a => $snp_filter_result,
+    input_b => $false_positive_filter_result,
+    output_dir => $intersect_directory,
+    version => 42,
+);
+
+my $intersect_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(
+    incoming_vcf_result_a => $snp_filter_vcf_result,
+    incoming_vcf_result_b => $false_positive_filter_vcf_result,
+    output_dir => $intersect_vcf_directory,
+    variant_type => "snvs",
+    joinx_version => 1.6,
+);
+
+$intersect_result->add_user(user => $intersect_vcf_result, label => 'uses');
+
 #Test combining detector results with union
 run_combine_test($samtools_detector_result,$varscan_detector_result, $detector_union_expected_file, "Union");
 
@@ -151,6 +191,9 @@ run_combine_test($snp_filter_result,$false_positive_filter_result, $filter_union
 
 #Test combining filter results with intersection
 run_combine_test($snp_filter_result,$false_positive_filter_result, $filter_intersect_expected_file, "Intersect");
+
+# Test combining a union and intersection result with a union
+run_combine_test($intersect_result, $union_result, $combine_union_expected_file, "Union");
 
 sub run_combine_test {
     my $result_a = shift;

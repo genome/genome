@@ -24,7 +24,7 @@ my $test_output_base_dir = "$ENV{GENOME_TEST_TEMP}/";
 ok(-d $test_output_base_dir, "base output dir exists at $test_output_base_dir");
 
 my $temp_dir = tempdir(
-    TEMPLATE => 'egap_predictions_to_ace_XXXXXX',
+    'egap_predictions_to_ace_XXXXXX',
     DIR => $test_output_base_dir,
     CLEANUP => 1,
     UNLINK => 1,

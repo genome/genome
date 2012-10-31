@@ -549,6 +549,7 @@ sub _find_or_generate_multisample_vcf {
             output_dir=>"$output_dir/IBD_QC",
         );
         my $IBD_STATUS = $sqc_obj->execute();
+        $sqc_obj->software_result->add_user(label => 'uses', user => $build);
         if($IBD_STATUS eq 'Fail') {
             $self->error_message("Sequencing QC module returned fail code, this ped/model-group has a relationship problem");
             return 0;

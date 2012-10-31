@@ -365,7 +365,7 @@ sub create_sample_gene_matrix_gene {
         $matrix_fh->print($sample);
         for my $gene (@all_genes) {
             if (exists $mutations{$sample}{$gene}) {
-                $matrix_fh->print("\t$mutations{$sample}{$gene}");
+                $matrix_fh->print("\t1");
             }
             else {
                 $matrix_fh->print("\t0");

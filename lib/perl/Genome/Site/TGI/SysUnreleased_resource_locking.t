@@ -10,7 +10,7 @@ ok($tmp_dir, "created temp dir ($tmp_dir)");
 my @common_params = (lock_directory => $tmp_dir, resource_id => "foo", block_sleep => 0);
 
 $SIG{CHLD} = sub { wait };
-my $child_pid = fork;
+my $child_pid = UR::Context::Process->fork;
 if ($child_pid == 0) { # child thread
     print "CHILD: Locking $tmp_dir/foo...\n";
     my $child_lock = Genome::Sys->lock_resource(@common_params, max_try => 0);

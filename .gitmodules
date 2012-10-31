@@ -226,3 +226,6 @@
 [submodule "vendor/r-cran-stringr"]
     path = vendor/r-cran-stringr
     url = git@github.com:genome-vendor/r-cran-stringr.git
+[submodule "vendor/VEP_plugins"]
+	path = vendor/VEP_plugins
+	url = https://github.com/genome-vendor/VEP_plugins.git

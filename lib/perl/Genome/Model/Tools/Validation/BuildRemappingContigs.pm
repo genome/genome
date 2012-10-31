@@ -22,15 +22,23 @@ class Genome::Model::Tools::Validation::BuildRemappingContigs {
             is_optional => 0,
             doc => 'The input file used for assembly. This is used to track which variants assembled',
         },
+        tumor_assembly_file => {
+            type => 'String',
+            doc => 'The tumor assembly output file',
+        },
         tumor_assembly_breakpoints_file => {
             type => 'String',
             is_optional => 0,
-            doc => 'The file of normal breakpoints picked by assembly in fasta format',
+            doc => 'The file of tumor breakpoints picked by assembly in fasta format',
+        },
+        normal_assembly_file => {
+            type => 'String',
+            doc => 'The normal assembly output file',
         },
         normal_assembly_breakpoints_file => {
             type => 'String',
             is_optional => 0,
-            doc => 'The file of tumor breakpoints picked by assembly in fasta format',
+            doc => 'The file of normal breakpoints picked by assembly in fasta format',
         },
         relapse_assembly_breakpoints_file => {
             type => 'String',
@@ -143,13 +151,16 @@ sub execute {
     #read in files
     my $tumor_breakpoints = $self->tumor_assembly_breakpoints_file;
     my $normal_breakpoints = $self->normal_assembly_breakpoints_file;
+    my $tumor_assembly_file = $self->tumor_assembly_file;
+    my $normal_assembly_file = $self->normal_assembly_file;
 
-    my $tumor_contigs = $self->read_in_breakpoints($tumor_breakpoints,'tumor');
+
+    my $tumor_contigs = $self->read_in_breakpoints($tumor_breakpoints, $tumor_assembly_file, 'tumor');
     unless($tumor_contigs) {
         $self->error_message("Unable to parse $tumor_breakpoints");
         return;
     }
-    my $normal_contigs = $self->read_in_breakpoints($normal_breakpoints,'normal');
+    my $normal_contigs = $self->read_in_breakpoints($normal_breakpoints, $normal_assembly_file, 'normal');
     unless($normal_contigs) {
         $self->error_message("Unable to parse $normal_breakpoints");
         return;
@@ -369,7 +380,10 @@ sub execute {
 }
 
 sub read_in_breakpoints {
-    my ($self, $breakpoint_file, $source) = @_;
+    my ($self, $breakpoint_file, $assembly_file, $source) = @_;
+    my $assembly_info_array = Genome::Model::Tools::TigraSv->parse_assembly_file($assembly_file);
+    my %assembly_info = map {$_->{prefix} => $_} @$assembly_info_array;
+
     my $fh = Genome::Sys->open_file_for_reading($breakpoint_file);
     if($fh) {
         my @contigs;
@@ -405,6 +419,8 @@ sub read_in_breakpoints {
 
                     #check to make sure we didn't get back something crazy
                     if($current_contig->{'assem_type'} !~ /INS|DEL|ITX/i) {
+use Data::Dumper;
+print Dumper($current_contig);
                         $self->error_message("Skipping contig that assembled as a type other than insertion, tandem duplication (ITX) or deletion with variant starting at " . $current_contig->{'pred_pos1'});
                     }
                     else {
@@ -425,7 +441,7 @@ sub read_in_breakpoints {
                     }
 
                 }
-                $current_contig = $self->parse_breakpoint_contig_header($line);
+                $current_contig = $self->parse_breakpoint_contig_header($line, \%assembly_info);
                 $current_contig_sequence = "";
             }
             else {
@@ -492,24 +508,26 @@ sub read_in_breakpoints {
 #contig "objects" should be better defined and there needs to be some sort of determination that the header is actually generating a valid object
 
 sub parse_breakpoint_contig_header {
-    my ($self, $header_line) = @_;
+    my ($self, $header_line, $assembly_info) = @_;
     my %contig;
     $header_line =~ s/^.//;    #remove the caret
     my @header_fields = split ",", $header_line;
     for my $field (@header_fields) {
         my ($tag,$entry) = $field =~ /(\w+):*(\S*)/;
         if($tag =~ /^ID/) {
+            die "Sequence prefix $entry not found in assembly info!" unless exists $assembly_info->{$entry};
+            my $e = $assembly_info->{$entry};
             #this contains info about the original call
-            @contig{ qw( pred_chr1 pred_pos1 pred_chr2 pred_pos2 pred_type pred_size pred_orientation) } = split /\./, $entry;
+            @contig{ qw( pred_chr1 pred_pos1 pred_chr2 pred_pos2 pred_type pred_size pred_orientation) } = @$e{ qw(chr1 pos1 chr2 pos2 type ori) };
 
             #also store the id for identification later
             $contig{'id'} = $entry;
         }
-        elsif($tag =~ /^Var/) {
+        elsif($tag =~ /^CrossMatch/) {
             #this contains info about what the crossmatch parsing thing thought was the variant
             #remember that the reported coordinates include any microhomology
             #In the future Ken says variant supporting reads would be reads that overlap this region with at least N bases of overlap where N is the microhomology size
-            @contig{ qw( assem_chr1 assem_pos1 assem_chr2 assem_pos2 assem_type assem_size assem_orientation) } = split /\./, $entry;
+            @contig{ qw( assem_chr1 assem_pos1 assem_chr2 assem_pos2 assem_type assem_size assem_orientation) } = split('\|', $entry);
 
             #convert ITX into INS
             if($contig{assem_type} eq 'ITX') {

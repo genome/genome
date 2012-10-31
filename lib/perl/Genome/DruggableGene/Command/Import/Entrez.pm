@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Dgidb::Import::Entrez;
+package Genome::DruggableGene::Command::Import::Entrez;
 
 use strict;
 use warnings;
@@ -12,8 +12,8 @@ binmode(STDOUT, ":utf8");
 my $high = 750000;
 UR::Context->object_cache_size_highwater($high);
 
-class Genome::Model::Tools::Dgidb::Import::Entrez {
-    is => 'Genome::Model::Tools::Dgidb::Import::Base',
+class Genome::DruggableGene::Command::Import::Entrez {
+    is => 'Genome::DruggableGene::Command::Import::Base',
     has => [
         genes_outfile => {
             is => 'Path',
@@ -73,7 +73,7 @@ sub _doc_credits {
 
 sub _doc_see_also {
     return <<EOS
-B<gmt>(1)
+B<go>(1)
 EOS
 }
 
@@ -85,7 +85,7 @@ sub _doc_manual_body {
 
 sub help_synopsis {
     return <<HELP
-gmt dgidb import entrez --gene-info-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene_info.human --gene2accession-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene2accession.human  --version="17-Sep-2012"
+genome druggable-gene import entrez --gene-info-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene_info.human --gene2accession-file=/gscmnt/sata132/techd/mgriffit/DruggableGenes/EntrezGene/gene2accession.human  --version="17-Sep-2012"
 HELP
 }
 

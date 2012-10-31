@@ -218,7 +218,7 @@ sub get_record {
 
 sub get_format_meta {
     my $self   = shift;
-    my $MQ_tag = {MetaType => "FORMAT", ID => "MQ",  Number => 1, Type => "Integer", Description => "Average Mapping Quality"};
+    my $MQ_tag = {MetaType => "FORMAT", ID => "MQ",  Number => 1, Type => "Integer", Description => "Phred style probability score that the variant is novel with respect to the genome's ancestor"};
 
     return ($self->common_format_meta, $MQ_tag);
 }

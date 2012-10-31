@@ -1,12 +1,12 @@
-package Genome::Model::Tools::Dgidb::Import;
+package Genome::DruggableGene::Command::Import;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::Dgidb::Import {
-    is => 'Genome::Model::Tools::Dgidb',
+class Genome::DruggableGene::Command::Import {
+    is => 'Genome::Command::Base',
     has => [],
 };
 
@@ -16,7 +16,7 @@ sub help_brief {
 
 sub help_synopsis {
     return <<EOS
-gmt dgidb import ...
+genome druggable-gene import ...
 EOS
 }
 

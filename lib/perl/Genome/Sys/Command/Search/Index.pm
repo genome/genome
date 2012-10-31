@@ -110,7 +110,7 @@ sub daemon {
     local $SIG{TERM} = sub { print STDERR "\nDaemon will exit as soon as possible.\n"; $signaled_to_quit = 1 };
 
     while (!$signaled_to_quit) {
-        my $pid = fork();
+        my $pid = UR::Context::Process->fork();
         if (not defined $pid) {
             die "Failed to fork";
             exit if $signaled_to_quit;

@@ -336,7 +336,7 @@ sub _resolve_subclass_name {
         my $event_type = $_[0]->event_type;
         return $class->_resolve_subclass_name_for_event_type($event_type);
     }
-    elsif (my $event_type = $class->get_rule_for_params(@_)->specified_value_for_property_name('event_type')) {
+    elsif (my $event_type = $class->define_boolexpr(@_)->specified_value_for_property_name('event_type')) {
         return $class->_resolve_subclass_name_for_event_type($event_type);
     }
     else {

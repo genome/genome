@@ -423,7 +423,7 @@ sub _X_resolve_subclass_name {
     }
 
     unless ( $sequencing_platform ) {
-        my $rule = $class->get_rule_for_params(@_);
+        my $rule = $class->define_boolexpr(@_);
         $sequencing_platform = $rule->specified_value_for_property_name('sequencing_platform');
     }
 

@@ -109,7 +109,7 @@ sub parse_line {
 
     # We do not have access to much of the normal information from somatic output
     my $normal_gt = ".";
-    #genotype quality (consensus quality)
+    # genotype quality (consensus quality)
     my $normal_gq = ".";
     # avg mapping quality ref/var
     my $normal_mq = ".";
@@ -123,15 +123,18 @@ sub parse_line {
     my $tumor_fa =  ".";
     # vaq
     my $normal_vaq = ".";
+    # somatic status
+    my $normal_ss = ".";
+    my $tumor_ss  = 2;
 
     # Placeholder for later adjustment
     my $dbsnp_id = ".";
     my $qual = "."; # Can also be $tumor_vaq
     my $filter = "PASS";
-    my $format = "GT:GQ:DP:BQ:MQ:AD:FA:VAQ";
+    my $format = "GT:GQ:DP:BQ:MQ:AD:FA:VAQ:SS";
     my $info = ".";
-    my $tumor_sample_string = join (":", ($tumor_gt, $tumor_gq, $tumor_dp, $tumor_bq, $tumor_mq, $tumor_ad, $tumor_fa, $tumor_vaq));
-    my $normal_sample_string = join (":", ($normal_gt, $normal_gq, $normal_dp, $normal_bq, $normal_mq, $normal_ad, $normal_fa, $normal_vaq));
+    my $tumor_sample_string = join (":", ($tumor_gt, $tumor_gq, $tumor_dp, $tumor_bq, $tumor_mq, $tumor_ad, $tumor_fa, $tumor_vaq, $tumor_ss));
+    my $normal_sample_string = join (":", ($normal_gt, $normal_gq, $normal_dp, $normal_bq, $normal_mq, $normal_ad, $normal_fa, $normal_vaq, $normal_ss));
 
     my $vcf_line = join("\t", $chr, $pos, $dbsnp_id, $ref, $alt, $qual, $filter, $info, $format, $normal_sample_string, $tumor_sample_string);
 
@@ -150,7 +153,7 @@ sub get_format_meta {
     my $igt = {MetaType => "FORMAT", ID => "IGT",    Number => 1,   Type => "String",  Description => "Genotype when called independently (only filled if called in joint prior mode)"};
     my $bct = {MetaType => "FORMAT", ID => "BCOUNT", Number => 4,   Type => "Integer", Description => "Occurrence count for each base at this site (A,C,G,T)"};
     my $jgq = {MetaType => "FORMAT", ID => "JGQ" ,   Number => 1,   Type => "Integer", Description => "Joint genotype quality (only filled if called in join prior mode)"};
-    my $ssc = {MetaType => "FORMAT", ID => "SSC",    Number => 1,   Type => "Integer", Description => "Somatic Score"};
+    my $ssc = {MetaType => "FORMAT", ID => "SSC",    Number => 1,   Type => "Integer", Description => "Somatic score between 0 and 255"};
     
     return (@tags, $amq, $igt, $bct, $jgq, $ssc);
 }

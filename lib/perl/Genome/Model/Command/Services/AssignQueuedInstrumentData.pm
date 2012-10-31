@@ -99,6 +99,11 @@ sub execute {
         my @process_errors;
         if ( @processing ) {
             PP: foreach my $processing ( @processing ) {
+                if(exists $processing->{error}) {
+                    push @process_errors, $processing->{error};
+                    next PP;
+                }
+
                 my $processing_profile = $processing->{processing_profile};
                 my $reference_sequence_build = $processing->{reference_sequence_build};
 
@@ -1174,6 +1179,7 @@ sub _resolve_processing_for_instrument_data {
                 affymetrix => 2166946,
                 infinium => 2575175,
                 unknown => 2186707,
+                plink => 2591110,
             );
             my $processing_profile_id = $genotype_platforms_and_processing_ids{$sequencing_platform};
             die $self->error_message('No genotype processing profile for platform! '.$sequencing_platform) if not $processing_profile_id;
@@ -1218,7 +1224,7 @@ sub _resolve_processing_for_instrument_data {
             elsif ($taxon->species_latin_name =~ /zea mays/i) {
                 push @processing, {
                     processing_profile_id => Genome::ProcessingProfile::ReferenceAlignment->default_profile_id,
-                    reference_sequence_build_id => 12319608,# MGSC-maize-buildB73 => 123196088
+                    reference_sequence_build_id => 123196088,# MGSC-maize-buildB73 => 123196088
                 };
             }
             elsif ($taxon->domain =~ /bacteria/i) {
@@ -1252,8 +1258,8 @@ sub _resolve_processing_for_instrument_data {
     };
     if($@){
         #something went horribly wrong.  do something about it.
-        # FIXME: actually DO something
-        $self->warning_message('Failed to get processing for instrument data id ('.$instrument_data->id.'): '.$@);
+        $self->error_message('Failed to get processing for instrument data id ('.$instrument_data->id.'): '.$@);
+        push @processing, {error => $self->error_message};
     }
     return @processing;
 }

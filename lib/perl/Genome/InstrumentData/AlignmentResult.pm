@@ -10,6 +10,8 @@ use POSIX qw(ceil);
 use File::Copy;
 use Carp qw(confess);
 
+use Genome::Utility::Instrumentation;
+
 use warnings;
 use strict;
 
@@ -350,7 +352,7 @@ sub _resolve_subclass_name {
         my $aligner_name = $_[0]->aligner_name;
         return join('::', 'Genome::InstrumentData::AlignmentResult', $class->_resolve_subclass_name_for_aligner_name($aligner_name));
     }
-    elsif (my $aligner_name = $class->get_rule_for_params(@_)->specified_value_for_property_name('aligner_name')) {
+    elsif (my $aligner_name = $class->define_boolexpr(@_)->specified_value_for_property_name('aligner_name')) {
         return join('::', 'Genome::InstrumentData::AlignmentResult', $class->_resolve_subclass_name_for_aligner_name($aligner_name));
     }
     return;
@@ -998,6 +1000,9 @@ sub _compute_alignment_metrics {
       $self->proper_paired_end_base_count ($res->{proper_paired_end_bp});
       $self->singleton_read_count         ($res->{singleton});
       $self->singleton_base_count         ($res->{singleton_bp});
+
+      Genome::Utility::Instrumentation::inc('alignment_result.read_count',
+          $self->total_read_count);
     }
 
     #Collect extra metrics for retiring eland for now, this might move to

@@ -83,6 +83,14 @@ sub resolve_data_sources_for_class_meta_and_rule {
         return $data_source;
 }
 
+# configure local statsd server
+BEGIN {
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        $ENV{GENOME_STATSD_HOST} ||= 'apipe-statsd.gsc.wustl.edu';
+        $ENV{GENOME_STATSD_PORT} ||= 8125;
+    }
+};
+
 # this conflicts with all sorts of Finishing/Finfo stuff
 # ironicall it is used by Pcap stuff
 BEGIN { $INC{"UNIVERSAL/can.pm"} = 'no' };
@@ -104,13 +112,17 @@ $ENV{GENOME_TEST_TEMP} ||= '/gsc/var/cache/testsuite/running_testsuites';
 $ENV{GENOME_TEST_URL} ||= 'https://gscweb.gsc.wustl.edu/gscmnt/gc4096/info/test_suite_data/';
 
 # configure file that signals that database updates should be paused
-$ENV{GENOME_DB_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_updates';
+if (!$ENV{UR_DBI_NO_COMMIT}) {
+    $ENV{GENOME_DB_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_updates';
+}
 
 # configure our local ensembl db
 $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD} ||= '122704720';
 $ENV{GENOME_DB_ENSEMBL_HOST} ||= 'mysql1';
 $ENV{GENOME_DB_ENSEMBL_USER} ||= 'mse';
 $ENV{GENOME_DB_ENSEMBL_PORT} ||= '3306';
+
+
 
 # Log directory
 $ENV{GENOME_LOG_DIR} ||= '/gsc/var/log/genome';
@@ -179,7 +191,7 @@ my @lims_whitelist = (
         ['Genome/Model/Tools/Lims/ImportSangerRuns.pm', 105],
     ],
     'GSC::Setup::CaptureSet' => [
-        ['Genome/Site/TGI/CaptureSet.pm', 104],
+        ['Genome/Site/TGI/CaptureSet.pm', 110],
     ],
 );
 

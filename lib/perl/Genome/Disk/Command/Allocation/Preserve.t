@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use File::Temp 'tempdir';
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
@@ -21,7 +22,7 @@ $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
 # Temp testing directory, used as mount path for test volumes and allocations
 my $test_dir_base = "$ENV{GENOME_TEST_TEMP}/";
 my $test_dir = tempdir(
-    TEMPLATE => 'allocation_testing_XXXXXX',
+    'allocation_testing_XXXXXX',
     DIR => $test_dir_base,
     UNLINK => 1,
     CLEANUP => 1,
@@ -40,7 +41,7 @@ ok($group, 'created test disk group');
 
 # Create temp volume
 my $volume_path = tempdir(
-    TEMPLATE => "test_volume_XXXXXXX",
+    "test_volume_XXXXXXX",
     DIR => $test_dir,
     CLEANUP => 1,
     UNLINK => 1,
@@ -51,8 +52,7 @@ my $volume = Genome::Disk::Volume->create(
     mount_path => $volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($volume_path)->{blocks},
 );
 ok($volume, 'created test volume');
 
@@ -65,7 +65,7 @@ Genome::Sys->create_directory(join('/', $volume->mount_path, $group->subdirector
 
 # Make test allocation
 my $allocation_path = tempdir(
-    TEMPLATE => "allocation_test_1_XXXXXX",
+    "allocation_test_1_XXXXXX",
     CLEANUP => 1,
     UNLINK => 1,
     DIR => $test_dir,

@@ -18,7 +18,7 @@ else {
 use_ok('Genome::Model::Tools::Validation::SvCalls');
 
 #set up input filenames
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Validation-SvCalls/";
+my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Validation-SvCalls/v2";
 my @input_filenames = qw(bd_del_call sd_del_call test.t.9.bam test.n.9.bam test.t.9.bam.bai test.n.9.bam.bai);
 @input_filenames = map { "$test_dir/$_" } @input_filenames;
 

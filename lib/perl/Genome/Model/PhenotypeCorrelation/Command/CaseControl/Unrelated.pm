@@ -189,7 +189,8 @@ sub _create_workflow {
             name => "Categorical results filtered by MAF",
             class => "Genome::Model::PhenotypeCorrelation::Command::FilterCorrelationResults",
             inputs => {
-                delimiter => ",",
+                variant_id_column => 'Gene',
+                delimiter => "\t",
                 minimum_maf => $self->maximum_maf,
                 output_file => $filtered_clinical_correlation_categorical_output,
                 per_site_report_file => $self->per_site_report_file,
@@ -248,8 +249,8 @@ sub _create_workflow {
             inputs => {
                 output_file_basename => $clinical_correlation_categorical_qqplot,
                 header => 1,
-                separator => ",",
-                pvalue_column => "p",
+                separator => "\t",
+                pvalue_column => "P.val",
                 title => "Quantile-quantile plot of p-values from FET",
                 image_type => "png",
             },
@@ -266,8 +267,8 @@ sub _create_workflow {
             inputs => {
                 output_file_basename => $filtered_clinical_correlation_categorical_qqplot,
                 header => 1,
-                separator => ",",
-                pvalue_column => "p",
+                separator => "\t",
+                pvalue_column => "P.val",
                 title => "Quantile-quantile plot of p-values from FET",
                 image_type => "png",
             },

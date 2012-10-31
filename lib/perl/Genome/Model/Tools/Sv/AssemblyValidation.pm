@@ -68,6 +68,10 @@ class Genome::Model::Tools::Sv::AssemblyValidation {
         },
     ],
     has_optional => [
+        tigra_sv_output_description_file => {
+            is => "String",
+            doc => "Optional path to save description of tigra-sv output",
+        },
         intermediate_save_dir => {
             type => 'String',
             doc  => 'Directory where all intermediate files are saved',
@@ -190,10 +194,15 @@ class Genome::Model::Tools::Sv::AssemblyValidation {
         _WeightAvgSize => {
             type => 'Number',
         },
+        _tigra_sv_output_map => {
+            is => "HASH",
+            is_transient => 1,
+        }
     ],
 };
 
-        
+
+       
 sub execute {
     my $self    = shift;
     my $sv_file = $self->sv_file;
@@ -254,8 +263,13 @@ sub execute {
     my $tigra_sv_cmd = Genome::Sys->swpath('tigra-sv', '0.1');
     my $tigra_sv_options = $self->_get_tigra_options;
     my $bam_files = $self->_check_bam;
+    my $tigra_sv_desc_file = $self->tigra_sv_output_description_file;
+    $tigra_sv_desc_file = "$datadir/output_description.tsv" unless $tigra_sv_desc_file;
+    $tigra_sv_cmd .= " -D $tigra_sv_desc_file ";
     $tigra_sv_cmd .= ' '. $tigra_sv_options . $sv_file . $bam_files . " > " . $out_file;
 
+    print "tigra-sv command: $tigra_sv_cmd";
+    $self->status_message("tigra-sv command: $tigra_sv_cmd");
     my $rv = Genome::Sys->shellcmd(
         cmd           => $tigra_sv_cmd,
         input_files   => [$sv_file],
@@ -275,10 +289,24 @@ sub execute {
     my $out_fh = new IO::File;
     $out_fh->open(">>$out_file");
 
+    my $output_map = Genome::Model::Tools::TigraSv->parse_output_description($tigra_sv_desc_file);
+    $self->_tigra_sv_output_map($output_map);
 
     for my $tigra_sv_fa (@tigra_sv_fas) {
-        my ($tigra_sv_name) = basename $tigra_sv_fa =~ /^(\S+)\.fa\.contigs\.fa/;
+        my ($tigra_sv_filename) = basename $tigra_sv_fa;
+        my ($tigra_sv_name) = $tigra_sv_filename =~ /^(\S+)\.fa\.contigs\.fa/;
         my ($chr1,$start,$chr2,$end,$type,$size,$ori,undef) = split /\./, $tigra_sv_name; # you get the $size from $prefix        
+        if (exists $output_map->{$tigra_sv_filename}) {
+            my $p = $output_map->{$tigra_sv_filename};
+            $chr1 = $p->{chr1};
+            $start = $p->{start};
+            $chr2 = $p->{chr2};
+            $end = $p->{end};
+            $type = $p->{type};
+            $size = $p->{size};
+            $ori = $p->{ori};
+        }
+
         if(defined $self->specify_chr){
             if($chr2 ne $self->specify_chr){
                 next;
@@ -292,7 +320,7 @@ sub execute {
         
         #test homo, het contigs
         for my $ctg_type ('homo', 'het') {
-            $self->_cross_match_validation($ctg_type, $tigra_sv_name);
+            $self->_cross_match_validation($ctg_type, $tigra_sv_name, $tigra_sv_filename);
         }
         
         my $maxSV = $self->_maxSV;
@@ -311,9 +339,10 @@ sub execute {
         
             if ($bp_io) {  #save breakpoint sequence
                 my $coord = join(".",$maxSV->{chr1},$maxSV->{start1},$maxSV->{chr2},$maxSV->{start2},$maxSV->{type},$maxSV->{size},$maxSV->{ori});
+                my $coord_pipe = join("|",$maxSV->{chr1},$maxSV->{start1},$maxSV->{chr2},$maxSV->{start2},$maxSV->{type},$maxSV->{size},$maxSV->{ori});
                 my $contigsize = $maxSV->{contiglens};
                 my $seqobj = Bio::Seq->new( 
-                    -display_id => "ID:$prefix,Var:$coord,Ins:$maxSV->{bkstart}\-$maxSV->{bkend},Length:$contigsize,KmerCoverage:$maxSV->{contigcovs},Strand:$maxSV->{strand},Assembly_Score:$maxSV->{weightedsize},PercNonRefKmerUtil:$maxSV->{kmerutil},Ref_start:$maxSV->{refpos1},Ref_end:$maxSV->{refpos2},Contig_start:$maxSV->{rpos1},Contig_end:$maxSV->{rpos2},TIGRA",
+                    -display_id => "ID:$prefix,Var:$coord,Ins:$maxSV->{bkstart}\-$maxSV->{bkend},Length:$contigsize,KmerCoverage:$maxSV->{contigcovs},Strand:$maxSV->{strand},Assembly_Score:$maxSV->{weightedsize},PercNonRefKmerUtil:$maxSV->{kmerutil},Ref_start:$maxSV->{refpos1},Ref_end:$maxSV->{refpos2},Contig_start:$maxSV->{rpos1},Contig_end:$maxSV->{rpos2},CrossMatch:$coord_pipe,TIGRA",
                     -seq => $maxSV->{contig}, 
                 );
                 $bp_io->write_seq($seqobj);
@@ -414,8 +443,23 @@ sub _get_tigra_options {
 
 
 sub _cross_match_validation {
-    my ($self, $ctg_type, $tigra_sv_name) = @_;
+    my ($self, $ctg_type, $tigra_sv_name, $tigra_sv_filename) = @_;
     my ($chr1,$start,$chr2,$end,$type,$size,$ori,$regionsize,$pos1,$pos2) = split /\./, $tigra_sv_name;
+
+    my $output_map = $self->_tigra_sv_output_map;
+    if (exists $output_map->{$tigra_sv_filename}) {
+        my $p = $output_map->{$tigra_sv_filename};
+        $chr1 = $p->{chr1};
+        $start = $p->{start};
+        $chr2 = $p->{chr2};
+        $end = $p->{end};
+        $type = $p->{type};
+        $size = $p->{size};
+        $ori = $p->{ori};
+        $regionsize = $p->{region_size};
+        $pos1 = $p->{pos1};
+        $pos2 = $p->{pos2};
+    }
 
     my $posstr = join '_', $chr1, $pos1, $chr2, $pos2, $type, $size, $ori;
     my $head   = join '.', $chr1, $start, $chr2, $end, $type, $size, $ori;

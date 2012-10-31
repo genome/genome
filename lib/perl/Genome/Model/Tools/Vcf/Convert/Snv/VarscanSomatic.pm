@@ -82,7 +82,7 @@ sub parse_line {
     }
     my $normal_vaq = ".";
 
-    my $n_dp4 = '.';
+    my $n_dp4 = '.,.,.,.';
     my $t_dp4 = join ',', $col[15], $col[16], $col[17], $col[18];
 
     my %ss = (
@@ -90,7 +90,7 @@ sub parse_line {
         GERMLINE => 1,
         SOMATIC  => 2,
         LOH      => 3,
-        UNKNOWN  => 4,
+        UNKNOWN  => 5,
     );
     my $t_ss = $ss{uc($col[12])};
 
