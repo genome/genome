@@ -11,11 +11,15 @@ use warnings;
 use above "Genome";
 use Test::More;
 use File::Temp 'tempdir';
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Command::Allocation::Move') or die;
 use_ok('Genome::Disk::Allocation') or die;
 
-$Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 1;
+use Genome::Disk::Allocation;
+$Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
+
 
 my $group = Genome::Disk::Group->create(
     disk_group_name => 'testing',
@@ -50,8 +54,7 @@ my $volume = Genome::Disk::Volume->create(
     mount_path => $volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($volume_path)->{blocks},
 );
 ok($volume, 'created test volume');
 
@@ -68,8 +71,7 @@ my $other_volume = Genome::Disk::Volume->create(
     mount_path => $other_volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($volume_path)->{blocks},
 );
 ok($other_volume, 'created another test volume');
 
@@ -103,14 +105,20 @@ my $allocation = Genome::Disk::Allocation->create(
     owner_id => 'test',
 );
 ok($allocation, 'created test allocation');
+printf("Created allocation with mount_path = %s, expected mount_path = %s\n",
+    $allocation->mount_path,
+    $volume->mount_path);
 
 # Create and exeucte move command object
 my $cmd = Genome::Disk::Command::Allocation::Move->create(
     allocations => [$allocation],
     target_volume => $other_volume,
 );
+
 ok($cmd, 'created move command successfully');
 ok($cmd->execute, 'executed command');
+printf("alloc mount path: '%s', target mount path: '%s'\n",
+    $allocation->mount_path, $other_volume->mount_path);
 is($allocation->volume->id, $other_volume->id, 'allocation successfully moved to other volume');
 
 # Now simulate the command being run from the CLI

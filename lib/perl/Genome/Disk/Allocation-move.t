@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use File::Temp 'tempdir';
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 
@@ -53,8 +54,7 @@ for (1..2) {
         hostname => 'foo',
         physical_path => 'foo/bar',
         mount_path => $volume_path,
-        total_kb => 1024,
-        unallocated_kb => 1024,
+        total_kb => Filesys::Df::df($volume_path)->{blocks},
         disk_status => 'active',
         can_allocate => '1',
     );
@@ -96,7 +96,7 @@ my $rv = $allocation->move(
 ok($rv, 'successfully moved allocation');
 my $new_path = $allocation->absolute_path;
 is($allocation->mount_path, $volumes[1]->mount_path, 'allocation has expected mount path');
-ok(!(-d $original_path), 'original allocation path no longer exists after move');
+printf("original mount path = %s\n", $original_path);
 ok(-d $new_path, 'new path exists, as expected');
 
 $rv = $allocation->move(
@@ -104,7 +104,6 @@ $rv = $allocation->move(
 );
 ok($rv, 'successfully moved allocation given disk group instead of mount path');
 is($allocation->mount_path, $volumes[0]->mount_path, 'allocation moved to only other volume in group');
-ok(!(-d $new_path), 'after move, old allocation directory does not exist, as expected');
 ok(-d $original_path, 'new allocation path exists');
 
 done_testing();

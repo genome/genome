@@ -65,7 +65,6 @@ sub execute {
 
             $archive_volume = Genome::Disk::Volume->create(
                 total_kb => 1_099_511_627_776,        # one P-P-PETABYTE
-                unallocated_kb => 1_099_511_627_776,
                 hostname => $volume->hostname,
                 can_allocate => 1,
                 disk_status => 'active',

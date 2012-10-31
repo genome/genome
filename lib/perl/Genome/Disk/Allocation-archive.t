@@ -13,6 +13,7 @@ use Test::More;
 use File::Temp 'tempdir';
 use File::Basename;
 use File::Find;
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
@@ -20,6 +21,9 @@ use_ok('Genome::Disk::Volume') or die;
 no warnings 'redefine';
 *Genome::Sys::current_user_has_role = sub { return 1 };
 use warnings;
+
+use Genome::Disk::Allocation;
+$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
 my @volumes = create_test_volumes();
 
@@ -33,6 +37,8 @@ my $allocation = Genome::Disk::Allocation->create(
 );
 ok($allocation, 'created test allocation on non-archive disk');
 is($allocation->mount_path, $volumes[0]->mount_path, 'allocation on expected volume');
+
+my $original_absolute_path = $allocation->absolute_path;
 
 # Make a few testing files in the allocation directory
 my @files = qw( a.out b.out c.out .hidden.out test/d.out test/.hidden.out);
@@ -65,6 +71,9 @@ is($total_tar_files, $total_expected_files, 'found expected number of files/dirs
 for my $file (@files, @dirs) {
     ok((grep { $file =~ /$_/ } @tar_files), "found $file in tarball");
 }
+
+# Remove the original files
+Genome::Sys->remove_directory_tree($original_absolute_path);
 
 # Now unarchive
 $rv = $allocation->unarchive();
@@ -114,8 +123,7 @@ sub create_test_volumes {
             hostname => 'foo',
             physical_path => 'foo/bar',
             mount_path => $volume_path,
-            total_kb => 1024,
-            unallocated_kb => 1024,
+            total_kb => Filesys::Df::df($volume_path)->{blocks},
             disk_status => 'active',
             can_allocate => '1',
         );
