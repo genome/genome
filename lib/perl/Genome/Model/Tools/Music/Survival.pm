@@ -366,10 +366,10 @@ sub create_sample_gene_matrix_gene {
         $matrix_fh->print( $sample );
         for my $gene ( @all_genes ) {
             if( exists $mutations{$sample}{$gene} ) {
-                $matrix_fh->print( "\t$mutations{$sample}{$gene}" );
+                $matrix_fh->print( "\tMutated" );
             }
             else {
-                $matrix_fh->print( "\t0" );
+                $matrix_fh->print( "\tWildtype" );
             }
         }
         $matrix_fh->print( "\n" );
