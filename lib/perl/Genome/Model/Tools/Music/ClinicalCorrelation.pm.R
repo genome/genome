@@ -273,7 +273,7 @@ if (method == "glm") {
             tt=tt[order(tt[,"x"]),];
             tt=tt[order(tt[,"p"]),];
             #rename the column headers to something more pleasant
-            colnames(tt)=c("Gene","ClinParam","Method","NumCases","Statistic","P-val","FDR");
+            colnames(tt)=c("Gene","ClinParam","Method","NumCases","Statistic","Pval","FDR");
             write.table(tt,file=outf,quote=FALSE,row.names=FALSE,sep="\t");
         }
         invisible(tt);
