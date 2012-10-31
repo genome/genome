@@ -86,9 +86,9 @@ In addition to the standard version 2.3 MAF headers, there needs to be 3 columns
 Only nucleotide matches from COSMIC database will be reported, if no appended columns provided. 
 These column headers in the MAF must have these names in the header in order for the tool to find them:
 
-   Transcript_name - the transcript name, such as NM_000028
- Amino_acid_change - the amino acid change, such as p.R290H
-           Strand  - the strand of transcript, such as -1/+1
+   transcript_name - the transcript name, such as NM_000028
+ amino_acid_change - the amino acid change, such as p.R290H
+           strand  - the strand of transcript, such as -1/+1
 HELP
 }
 sub help_synopsis {
@@ -879,27 +879,26 @@ sub FileHeadParse {
     }
     unless (    defined($wu_nah{"Hugo_Symbol"}) 
             and defined($wu_nah{"Chromosome"}) 
-            and defined($wu_nah{"Start_position"})                                
-            and defined($wu_nah{"End_position"}) 
+            and defined($wu_nah{"Start_Position"})                                
+            and defined($wu_nah{"End_Position"}) 
             and defined($wu_nah{"Reference_Allele"})                                
             and defined($wu_nah{"Tumor_Seq_Allele1"}) 
-            and defined($wu_nah{"Tumor_Seq_Allele2"})
-            and defined($wu_nah{"Strand"})) {
+            and defined($wu_nah{"Tumor_Seq_Allele2"})) {
         die "not a valid MAF annotation file!\n";
     }
     @cols = ($wu_nah{"Hugo_Symbol"}, 
              $wu_nah{"Chromosome"}, 
-             $wu_nah{"Start_position"},                        
-             $wu_nah{"End_position"}, 
+             $wu_nah{"Start_Position"},                        
+             $wu_nah{"End_Position"}, 
              $wu_nah{"Reference_Allele"}, 
              $wu_nah{"Tumor_Seq_Allele1"},                        
              $wu_nah{"Tumor_Seq_Allele2"}, 
-             $wu_nah{"Transcript_name"}, 
-             $wu_nah{"Strand"},
-             $wu_nah{"Amino_acid_change"});
-    unless(     defined($wu_nah{"Transcript_name"}) 
-            and defined($wu_nah{"Strand"}) 
-            and defined($wu_nah{"Amino_acid_change"})) {
+             $wu_nah{"transcript_name"}, 
+             $wu_nah{"strand"},
+             $wu_nah{"amino_acid_change"});
+    unless(     defined($wu_nah{"transcript_name"}) 
+            and defined($wu_nah{"strand"}) 
+            and defined($wu_nah{"amino_acid_change"})) {
         $total = 0;
     }
     return($total, $header, \@cols);

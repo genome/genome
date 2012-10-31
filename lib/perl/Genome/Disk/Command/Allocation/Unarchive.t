@@ -11,12 +11,15 @@ use warnings;
 use above "Genome";
 use Test::More; #skip_all => 'unarchiving not fully implemented yet';
 use File::Temp 'tempdir';
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
 
+use Genome::Disk::Allocation;
 push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, 'test';
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
 # Temp testing directory, used as mount path for test volumes and allocations
 my $test_dir_base = "$ENV{GENOME_TEST_TEMP}/";
@@ -51,8 +54,7 @@ my $archive_volume = Genome::Disk::Volume->create(
     mount_path => $archive_volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($archive_volume_path)->{blocks},
 );
 ok($archive_volume, 'created test volume');
 
@@ -69,8 +71,7 @@ my $volume = Genome::Disk::Volume->create(
     mount_path => $volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($volume_path)->{blocks},
 );
 ok($volume, 'created test volume');
 
