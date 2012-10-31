@@ -79,7 +79,7 @@ sub fork_and_call_browser {
 }
 
 sub psgi_path {
-    my $module_path = __PACKAGE__->get_class_object->module_path;
+    my $module_path = __PACKAGE__->__meta__->module_path;
     $module_path =~ s/\.pm$//g;
 
     return $module_path;

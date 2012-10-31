@@ -59,7 +59,7 @@ sub create {
         }
     }
 
-    unless ($class->get_class_object->property_meta_for_name("model")->is_optional or $self->model) {
+    unless ($class->__meta__->property_meta_for_name("model")->is_optional or $self->model) {
         if ($self->name_pattern) {
             my $pattern = $self->name_pattern;
             if ($pattern) {

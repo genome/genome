@@ -1707,7 +1707,7 @@ sub _resolve_subclass_name {
 
     if (defined $type_name ) {
         my $subclass_name = $class->_resolve_subclass_name_for_type_name($type_name);
-        my $sub_classification_method_name = $class->get_class_object->sub_classification_method_name;
+        my $sub_classification_method_name = $class->__meta__->sub_classification_method_name;
         if ( $sub_classification_method_name ) {
             if ( $subclass_name->can($sub_classification_method_name)
                  eq $class->can($sub_classification_method_name) ) {
