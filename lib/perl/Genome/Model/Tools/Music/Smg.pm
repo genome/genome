@@ -155,7 +155,9 @@ sub execute {
         my ( $gene, $type, $covd_bps, $mut_cnt, undef ) = split( /\t/, $line );
 
         # Warn user about cases where there could be fewer covered bps than mutations detected
-        ( $mut_cnt <= $covd_bps ) or warn "More $type seen in $gene than there are bps with sufficient coverage!\n";
+        if( $type ne "Overall" and $mut_cnt <= $covd_bps ) {
+            warn "More $type seen in $gene than there are bps with sufficient coverage!\n";
+        }
 
         if( $type eq "Overall" ) {
             $gene_muts{$gene}{Overall} = $mut_cnt;
