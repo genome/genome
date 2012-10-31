@@ -4,109 +4,146 @@ use strict;
 use warnings;
 use Genome;
 
-sub setup_test_model {
-    my $test_profile = Genome::ProcessingProfile::ReferenceAlignment->create(
-        name => 'test_profile',
+sub create_somatic_variation_model {
+    my $ref_align_pp = Genome::ProcessingProfile::ReferenceAlignment->create(
+        name => 'ref_align_pp',
         sequencing_platform => 'solexa',
         dna_type => 'cdna',
         read_aligner_name => 'bwa',
         snv_detection_strategy => 'samtools',
     );
+    my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
 
-    my $test_somvar_pp = Genome::ProcessingProfile::SomaticVariation->create(
-        name => 'test somvar pp',
+    create_test_subjects();
+    my $tumor_model = Genome::Model->create(
+        name => 'test_reference_aligment_model_TUMOR',
+        subject_name => 'test_tumor_subject',
+        subject_type => 'sample_name',
+        processing_profile_id => $ref_align_pp->id,
+        reference_sequence_build => $reference_sequence_build,
+    );
+    my $test_instrument_data = Genome::InstrumentData::Solexa->create();
+    $tumor_model->add_instrument_data($test_instrument_data);
+    my $tumor_build = Genome::Model::Build->create(
+        model_id => $tumor_model->id,
+        data_directory => Genome::Sys->create_temp_directory(),
+    );
+    Genome::Model::Event::Build->__define__(
+        build_id => $tumor_build->id,
+        event_type => 'genome model build',
+        event_status => 'Succeeded',
+        model_id => $tumor_model->id,
+        date_completed => '1999-01-01 15:19:01',
+    );
+
+    my $normal_model = Genome::Model->create(
+        name => 'test_reference_aligment_model_mock_NORMAL',
+        subject_name => 'test_normal_subject',
+        subject_type => 'sample_name',
+        processing_profile_id => $ref_align_pp->id,
+        reference_sequence_build => $reference_sequence_build,
+    );
+    $normal_model->add_instrument_data($test_instrument_data);
+    my $normal_build = Genome::Model::Build->create(
+        model_id => $normal_model->id,
+        data_directory => Genome::Sys->create_temp_directory(),
+    );
+    Genome::Model::Event::Build->__define__(
+        build_id => $normal_build->id,
+        event_type => 'genome model build',
+        event_status => 'Succeeded',
+        model_id => $normal_model->id,
+        date_completed => '1999-01-01 15:19:01',
+    );
+
+    my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(model_id => '-1');
+    my $somvar_pp = Genome::ProcessingProfile::SomaticVariation->create(
+        name => 'somvar_pp',
         snv_detection_strategy => 'samtools r599 [--test=1]',
         tiering_version => 1,
     );
-
-    my $test_pdv_profile = Genome::ProcessingProfile::ImportedVariationList->create(
-        name => 'test_pdv_profile',
-    );
-
-    my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
-        model_id => '-1',
-    );
-
-    my $test_individual = Genome::Individual->create(
-        common_name => 'TEST',
-        name => 'test_individual',
-    );
-
-    my $test_sample = Genome::Sample->create(
-        name => 'test_subject',
-        source_id => $test_individual->id,
-    );
-
-    my $test_control_sample = Genome::Sample->create(
-        name => 'test_control_subject',
-        source_id => $test_individual->id,
-    );
-
-    my $test_instrument_data = Genome::InstrumentData::Solexa->create(
-    );
-
-    my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
-
-    my $test_model = Genome::Model->create(
-        name => 'test_reference_aligment_model_TUMOR',
-        subject_name => 'test_subject',
-        subject_type => 'sample_name',
-        processing_profile_id => $test_profile->id,
-        reference_sequence_build => $reference_sequence_build,
-    );
-
-    my $add_ok = $test_model->add_instrument_data($test_instrument_data);
-
-    my $temp_build_data_dir = Genome::Sys->create_temp_directory;
-
-    my $test_build = Genome::Model::Build->create(
-        model_id => $test_model->id,
-        data_directory => $temp_build_data_dir,
-    );
-
-    my $test_model_two = Genome::Model->create(
-        name => 'test_reference_aligment_model_mock_NORMAL',
-        subject_name => 'test_control_subject',
-        subject_type => 'sample_name',
-        processing_profile_id => $test_profile->id,
-        reference_sequence_build => $reference_sequence_build,
-    );
-
-    $add_ok = $test_model_two->add_instrument_data($test_instrument_data);
-
-    my $test_build_two = Genome::Model::Build->create(
-        model_id => $test_model_two->id,
-        data_directory => $temp_build_data_dir,
-    );
-
-    my $pdv_model = Genome::Model::ImportedVariationList->create(
-        processing_profile => $test_pdv_profile,
-        subject_name => 'test_control_subject',
-        subject_type => 'sample_name',
-        reference => $reference_sequence_build,
-        name => "test imported-variation-list model",
-    );
-
-    my $temp_pdv_build_data_dir1 = Genome::Sys->create_temp_directory;
-    my $pdv_build_1 = Genome::Model::Build::ImportedVariationList->create(
-        model_id => $pdv_model->id,
-        data_directory => $temp_pdv_build_data_dir1,
-    );
-
     my $somvar_model = Genome::Model::SomaticVariation->create(
-        tumor_model => $test_model,
-        normal_model => $test_model_two,
+        processing_profile => $somvar_pp,
+        tumor_model => $tumor_model,
+        normal_model => $normal_model,
         name => 'test somvar model',
-        processing_profile => $test_somvar_pp,
         annotation_build => $annotation_build,
-        previously_discovered_variations => $pdv_build_1,
+        previously_discovered_variations =>
+                create_pdv_build($reference_sequence_build),
     );
+    return $somvar_model, $tumor_build, $normal_build;
+}
+
+
+# create Samples so they can be used in tumor/normal_models.
+sub create_test_subjects {
+    # don't create them more than once.
+    unless (Genome::Individual->get(name => 'test_individual')) {
+        my $test_individual = Genome::Individual->create(
+            common_name => 'TEST',
+            name => 'test_individual',
+        );
+        Genome::Sample->create(
+            name => 'test_tumor_subject',
+            source_id => $test_individual->id,
+        );
+        Genome::Sample->create(
+            name => 'test_normal_subject',
+            source_id => $test_individual->id,
+        );
+    }
+}
+
+sub create_pdv_model {
+    my ($reference_sequence_build) = @_;
+
+    my $pdv_model = Genome::Model::ImportedVariationList->get(
+            name => "test imported-variation-list model",
+    );
+    unless ($pdv_model) {
+        my $pdv_pp = Genome::ProcessingProfile::ImportedVariationList->create(name => 'pdv_pp');
+        $pdv_model = Genome::Model::ImportedVariationList->create(
+            processing_profile => $pdv_pp,
+            subject_name => 'test_normal_subject',
+            subject_type => 'sample_name',
+            reference => $reference_sequence_build,
+            name => "test imported-variation-list model",
+        );
+    }
+    return $pdv_model;
+}
+
+sub create_pdv_build {
+    my ($reference_sequence_build) = @_;
+
+    create_test_subjects();
+    my $pdv_model = create_pdv_model();
+    my $pdv_build = Genome::Model::Build::ImportedVariationList->create(
+        model_id => $pdv_model->id,
+        data_directory => Genome::Sys->create_temp_directory(),
+    );
+    return $pdv_build;
+}
+
+
+sub setup_test_build {
+    my ($somvar_model, $tumor_build, $normal_build) = create_somatic_variation_model();
+
+    my $somvar_build = Genome::Model::Build::SomaticVariation->create(
+        model_id => $somvar_model->id,
+        data_directory => Genome::Sys->create_temp_directory(),
+    );
+    return $somvar_build, $somvar_model;
+}
+
+sub setup_test_model {
+    my ($somvar_model, $tumor_build, $normal_build) = create_somatic_variation_model();
 
     my $somvar_build = Genome::Model::Build::SomaticVariation->__define__(
         model_id => $somvar_model->id,
-        data_directory => $temp_build_data_dir,
-        tumor_build => $test_build_two,
-        normal_build => $test_build,
+        data_directory => Genome::Sys->create_temp_directory(),
+        tumor_build => $tumor_build,
+        normal_build => $normal_build,
     );
     my $e = Genome::Model::Event::Build->__define__(
         build_id => $somvar_build->id,
@@ -117,11 +154,11 @@ sub setup_test_model {
     );
 
 
-    my $output_dir = Genome::Sys->create_temp_directory;
+    my $output_dir = Genome::Sys->create_temp_directory();
     my $tier_result = Genome::Model::Tools::DetectVariants2::Classify::Tier->__define__(
         output_dir => $output_dir,
         variant_type => 'snv',
-    );
+    ); 
     $tier_result->add_user(user => $somvar_build, label => 'uses');
 
     #no relation to any real tiers

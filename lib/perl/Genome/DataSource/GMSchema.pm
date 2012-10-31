@@ -323,7 +323,7 @@ sub _get_sequence_name_for_table_and_column {
 
 sub pause_db_if_necessary {
     my $self = shift;
-    return 1 unless -e $ENV{GENOME_DB_PAUSE};
+    return 1 unless $ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE};
 
     my @o = grep { ref($_) eq 'UR::DeletedRef' } UR::Context->all_objects_loaded('UR::Object');
     if (@o) {
@@ -352,7 +352,7 @@ sub pause_db_if_necessary {
 
     while (1) {
         sleep sleep_length();
-        last unless -e $ENV{GENOME_DB_PAUSE};
+        last unless $ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE};
     }
 
     print "Database updating has been resumed, continuing commit!\n";

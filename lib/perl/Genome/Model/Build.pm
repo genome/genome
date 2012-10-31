@@ -17,7 +17,7 @@ use YAML;
 use Date::Manip;
 
 class Genome::Model::Build {
-    is => 'Genome::Notable',
+    is => ['Genome::Notable','Genome::Searchable'],
     type_name => 'genome model build',
     table_name => 'GENOME_MODEL_BUILD',
     is_abstract => 1,
@@ -332,7 +332,8 @@ sub _copy_model_inputs {
         };
         if ($@) {
             $self->warning_message("Could not copy model input " . $input->__display_name__ .
-                " to build " . $self->__display_name__ . " of model " . $self->model->__display_name__);
+                " to build " . $self->__display_name__ . " of model " . $self->model->__display_name__ .
+                " because $@");
             next;
         }
     }
@@ -1549,6 +1550,8 @@ sub abandon {
     my %add_note_args = (header_text => $header_text);
     $add_note_args{body_text} = $body_text if defined $body_text;
     $self->add_note(%add_note_args);
+
+    Genome::Search->queue_for_update($self->model);
 
     return 1;
 }

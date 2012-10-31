@@ -13,7 +13,7 @@ use Test::More;
 
 use_ok("Genome::Db::Ensembl::Vep");
 
-my $VERSION = '1';
+my $VERSION = '2';
 my $input_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Db-Ensembl-Vep';
 my $expected_data_dir = $input_data_dir . '/expected_output';
 my $expected_output_file = $expected_data_dir.'/output.'.$VERSION;
@@ -25,6 +25,9 @@ my $cmd_1 = Genome::Db::Ensembl::Vep->create(
     output_file => $output_file,
     sift => "b",
     regulatory => 1,
+    plugins => ["Condel,PLUGIN_DIR,b,2"],
+    version => "2_5",
+    ensembl_annotation_build_id => 124434505,
 );
 
 isa_ok($cmd_1, 'Genome::Db::Ensembl::Vep');
