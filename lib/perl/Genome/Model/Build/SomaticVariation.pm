@@ -71,7 +71,7 @@ class Genome::Model::Build::SomaticVariation {
             via => 'inputs',
             is_many => 0,
             to => 'value',
-            where => [ name => 'annoation_build' ],
+            where => [ name => 'annotation_build' ],
             is_mutable => 1,
         },
         previously_discovered_variations => {
