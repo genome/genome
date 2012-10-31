@@ -54,7 +54,7 @@ sub help_detail {
     return <<"EOS"
 This command exists in order to facilitate parallelization of
 music's clinical correlation command. The output file will
-be named \$output_directory/\$variant_matrix.results.glm.csv.
+be named \$output_directory/\$variant_matrix.results.glm.tsv.
 This allows us to split a variant matrix into many parts and
 process them in parallel easily with Workflow.
 EOS
@@ -69,7 +69,7 @@ sub execute {
     my $clin_file = $self->clinical_data_file;
     my $categorical_file = $self->categorical_clinical_data_file;
     my $samples_file = $self->sample_list_file;
-    # the .glm.csv is added by the actual ClinicalCorrelation command
+    # the .glm.tsv is added by the actual ClinicalCorrelation command
     my $output_file = join("/", $out_dir, basename($variant_matrix)) . ".results";
     
     my %params = (

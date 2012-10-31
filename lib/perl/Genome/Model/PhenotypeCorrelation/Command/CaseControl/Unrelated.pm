@@ -88,7 +88,7 @@ sub _create_workflow {
     my $single_mutation_matrix = "$output_directory/variant_matrix.txt";
     my $clinical_correlation_output_prefix = "$output_directory/clinical_correlation_result";
 
-    my $clinical_correlation_glm_output = "$output_directory/clinical_correlation_result.glm.csv";
+    my $clinical_correlation_glm_output = "$output_directory/clinical_correlation_result.glm.tsv";
     my $clinical_correlation_glm_qqplot = $clinical_correlation_glm_output . ".qqplot";
     my $filtered_clinical_correlation_glm_output = $clinical_correlation_glm_output . ".common";
     my $filtered_clinical_correlation_glm_qqplot = $filtered_clinical_correlation_glm_output . ".qqplot";
@@ -98,7 +98,7 @@ sub _create_workflow {
     my $rare_delet_result = "$output_directory/rare.deltable.result.tsv";
     my $rare_delet_result_signif = "$output_directory/rare.deltable.result.signif.tsv";
 
-    my $clinical_correlation_categorical_output = "$output_directory/clinical_correlation_result.categorical.csv";
+    my $clinical_correlation_categorical_output = "$output_directory/clinical_correlation_result.categorical.tsv";
     my $clinical_correlation_categorical_qqplot = $clinical_correlation_categorical_output . ".qqplot";
     my $filtered_clinical_correlation_categorical_output = $clinical_correlation_categorical_output . ".common";
     my $filtered_clinical_correlation_categorical_qqplot = $filtered_clinical_correlation_categorical_output . ".qqplot";
@@ -250,7 +250,7 @@ sub _create_workflow {
                 output_file_basename => $clinical_correlation_categorical_qqplot,
                 header => 1,
                 separator => "\t",
-                pvalue_column => "P.val",
+                pvalue_column => "Pval",
                 title => "Quantile-quantile plot of p-values from FET",
                 image_type => "png",
             },
@@ -268,7 +268,7 @@ sub _create_workflow {
                 output_file_basename => $filtered_clinical_correlation_categorical_qqplot,
                 header => 1,
                 separator => "\t",
-                pvalue_column => "P.val",
+                pvalue_column => "Pval",
                 title => "Quantile-quantile plot of p-values from FET",
                 image_type => "png",
             },

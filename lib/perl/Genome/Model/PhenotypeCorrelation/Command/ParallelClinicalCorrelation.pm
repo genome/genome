@@ -109,8 +109,8 @@ sub execute {
 
     $self->work_directory($work_dir);
 
-    my $glm_output_file = $self->output_prefix . ".glm.csv";
-    my $categorical_output_file = $self->output_prefix . ".categorical.csv";
+    my $glm_output_file = $self->output_prefix . ".glm.tsv";
+    my $categorical_output_file = $self->output_prefix . ".categorical.tsv";
     my $submatrix_dir = "$work_dir/submatrices";
     my $sub_results_dir = "$work_dir/sub_results";
 
@@ -165,8 +165,8 @@ sub execute {
     }
     $self->status_message("Workflow completed, merging intermediate results...");
 
-    my @glm_results = nsort glob("$sub_results_dir/*.glm.csv");
-    my @categorical_results = nsort glob("$sub_results_dir/*.categorical.csv");
+    my @glm_results = nsort glob("$sub_results_dir/*.glm.tsv");
+    my @categorical_results = nsort glob("$sub_results_dir/*.categorical.tsv");
 
     if (@glm_results) {
         $self->status_message("Merging " .scalar(@glm_results). " glm results");
@@ -247,20 +247,18 @@ sub _recalculate_categorical_stats {
 
     my $R_code = <<EOR;
 tt <- read.table("$infile", sep="\t", header=TRUE);
-tt\$FDR = p.adjust(tt\$P.val, "fdr");
-#tt\$BON = p.adjust(tt\$P.val, "bon");
+tt\$FDR = p.adjust(tt\$Pval, "fdr");
 
 # Match formatting in GMT/Music/ClinicalCorrelation.pm.R
 tt[,"Statistic"] = sapply(tt[,"Statistic"], sprintf, fmt="%.4E");
-tt[,"P.val"] = sapply(tt[,"P.val"], sprintf, fmt="%.4E");
+tt[,"Pval"] = sapply(tt[,"Pval"], sprintf, fmt="%.4E");
 tt[,"FDR"] = sapply(tt[,"FDR"], sprintf, fmt="%.2E");
-#tt[,"BON"] = sapply(tt[,"BON"], sprintf, fmt="%.2E");
 
 # Match ordering in GMT/Music/ClinicalCorrelation.pm.R
 tt=tt[order(tt[,"Gene"]),];
-tt=tt[order(tt[,"P.val"]),];
+tt=tt[order(tt[,"Pval"]),];
 
-colnames(tt)=c("Gene","ClinParam","Method","NumCases","Statistic","P-val","FDR");
+colnames(tt)=c("Gene","ClinParam","Method","NumCases","Statistic","Pval","FDR");
 
 write.table(tt,file="$outfile",quote=FALSE,row.names=FALSE,sep="\t");
 

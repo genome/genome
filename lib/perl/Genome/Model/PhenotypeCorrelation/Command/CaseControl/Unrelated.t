@@ -50,9 +50,9 @@ sub test_with_clinical_data {
     my $input_vcf_file_index = "$input_vcf_file.tbi";
     my $glm_model_file = "$test_data_dir/glm-model.txt";
     my $sample_list_file = "$test_data_dir/samples.txt";
-    my $output_file = "$tmpdir/parallel.txt.glm.csv";
+    my $output_file = "$tmpdir/parallel.txt.glm.tsv";
     my $orig_output_file_prefix = "$tmpdir/orig.txt";
-    my $orig_output_file = "$orig_output_file_prefix.glm.csv";
+    my $orig_output_file = "$orig_output_file_prefix.glm.tsv";
     my $per_site_report = "$test_data_dir/per_site_report.txt";
 
     print "Using temp directory: $tmpdir\n";
@@ -86,14 +86,14 @@ sub test_with_clinical_data {
     ok(-d "$tmpdir/burden_analysis", "Burden analysis subdirectory exists");
 
     my @expected_files = (
-        "clinical_correlation_result.glm.csv",
-        "clinical_correlation_result.glm.csv.qqplot.png",
-        "clinical_correlation_result.glm.csv.common",
-        "clinical_correlation_result.glm.csv.common.qqplot.png",
-        "clinical_correlation_result.categorical.csv",
-        "clinical_correlation_result.categorical.csv.qqplot.png",
-        "clinical_correlation_result.categorical.csv.common",
-        "clinical_correlation_result.categorical.csv.common.qqplot.png",
+        "clinical_correlation_result.glm.tsv",
+        "clinical_correlation_result.glm.tsv.qqplot.png",
+        "clinical_correlation_result.glm.tsv.common",
+        "clinical_correlation_result.glm.tsv.common.qqplot.png",
+        "clinical_correlation_result.categorical.tsv",
+        "clinical_correlation_result.categorical.tsv.qqplot.png",
+        "clinical_correlation_result.categorical.tsv.common",
+        "clinical_correlation_result.categorical.tsv.common.qqplot.png",
         "multisample.vcf.gz.VEP_annotated",
         "multisample.vcf.gz.VEP_annotated.sorted",
         "multisample.vcf.gz.VEP_annotated.for_burden",

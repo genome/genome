@@ -106,6 +106,40 @@ BEGIN {
 class Genome::Model::MutationalSignificance::Command::PlayMusic {
     is => ['Command::V2'],
     has => \@has,
+    has_input => [
+         run_clinical_correlation => {
+            is => 'Boolean',
+            default => 1,
+        },
+        run_cosmic_omim => {
+            is => 'Boolean',
+            default => 1,
+        },
+        run_mutation_relation => {
+            is => 'Boolean',
+            default => 1,
+        },
+        run_path_scan => {
+            is => 'Boolean',
+            default => 1,
+        },
+        run_pfam => {
+            is => 'Boolean',
+            default => 1,
+        },
+        run_proximity => {
+            is => 'Boolean',
+            default => 1,
+        },
+        run_smg => {
+            is => 'Boolean',
+            default => 1,
+        },
+        run_survival => {
+            is => 'Boolean',
+            default => 1,
+        },
+    ],
     has_optional_input => [
         music_build => {
             is => 'Genome::Model::Build',
@@ -123,7 +157,7 @@ class Genome::Model::MutationalSignificance::Command::PlayMusic {
     ],
 
 
-    has_output => [
+    has_optional_output => [
         smg_result => {
             is => 'Text',
             doc => 'Output file from Smg tool',
@@ -246,8 +280,23 @@ sub execute {
 
     $properties{roi_covg_dir} = $roi_covg_dir;
 
-    foreach my $module (qw/path_scan smg mutation_relation clinical_correlation cosmic_omim pfam/) {
-        $properties{$module."_output_file"} = $self->output_dir."/$module";
+    if ($self->run_smg or $self->run_path_scan or $self->run_mutation_relation) {
+        $properties{"smg_output_file"} = $self->output_dir."/smg";
+    }
+    if ($self->run_path_scan) {
+        $properties{"path_scan_output_file"} = $self->output_dir."/path_scan";
+    }
+    if ($self->run_mutation_relation) {
+        $properties{"mutation_relation_output_file"} = $self->output_dir."/mutation_relation";
+    }
+    if ($self->run_pfam) {
+        $properties{"pfam_output_file"} = $self->output_dir."/pfam";
+    }
+    if ($self->run_cosmic_omim) {
+        $properties{"cosmic_omim_output_file"} = $self->output_dir."/cosmic_omim";
+    }
+    if ($self->run_clinical_correlation) {
+        $properties{"clinical_correlation_output_file"} = $self->output_dir."/clinical_correlation";
     }
 
     $workflow->save_to_xml(OutputFile => $self->output_dir . '/play_music_build.xml');
@@ -270,13 +319,27 @@ sub execute {
         return;
     }
 
-    $self->smg_result($output->{smg_result});
-    $self->pathscan_result($output->{pathscan_result});
-    $self->mr_result($output->{mr_result});
-    $self->pfam_result($output->{pfam_result});
-    $self->proximity_result($output->{proximity_result});
-    $self->cosmic_result($output->{cosmic_result});
-    $self->cct_result($output->{cct_result});
+    if ($self->run_smg or $self->run_path_scan or $self->run_mutation_relation) {
+        $self->smg_result($output->{smg_result});
+    }
+    if ($self->run_path_scan) {
+        $self->pathscan_result($output->{pathscan_result});
+    }
+    if ($self->run_mutation_relation) {
+        $self->mr_result($output->{mr_result});
+    }
+    if ($self->run_pfam) {
+        $self->pfam_result($output->{pfam_result});
+    }
+    if ($self->run_proximity) {
+        $self->proximity_result($output->{proximity_result});
+    }
+    if ($self->run_cosmic_omim) {
+        $self->cosmic_result($output->{cosmic_result});
+    }
+    if ($self->run_clinical_correlation) {
+        $self->cct_result($output->{cct_result});
+    }
 
     return 1;
 }
@@ -299,13 +362,34 @@ sub _create_workflow {
     push @input_properties, "normal_tumor_pairs";
     push @input_properties, "roi_covg_dir";
 
-    my @output_params = $meta->properties(
-        class_name => __PACKAGE__,
-        is_output => 1,
-    );
-
     my @output_properties;
-    map {push @output_properties, $_->property_name} @output_params;
+    if ($self->run_proximity) {
+        push @output_properties, 'proximity_result';
+    }
+
+    if ($self->run_pfam) {
+        push @output_properties, 'pfam_result';
+    }
+
+    if ($self->run_mutation_relation) {
+        push @output_properties, 'mr_result';
+    }
+
+    if ($self->run_path_scan) {
+        push @output_properties, 'pathscan_result';
+    }
+
+    if ($self->run_smg or $self->run_mutation_relation) {
+        push @output_properties, 'smg_result';
+    }
+    
+    if ($self->run_cosmic_omim) {
+        push @output_properties, 'cosmic_result';
+    }
+
+    if ($self->run_clinical_correlation) {
+        push @output_properties, 'cct_result';
+    }
 
     my $workflow = Workflow::Model->create(
         name => 'Play Music Inner Workflow',
@@ -337,71 +421,115 @@ sub _create_workflow {
         $module_input_exceptions{"Genome::Model::MutationalSignificance::Command::MergeCalcCovg"}{"output_files"} = ['Genome::Model::Tools::Music::Bmr::CalcCovgHelper',"final_output_file"],
     }
 
-    my @no_dependencies = ('Genome::Model::Tools::Music::Proximity', 'Genome::Model::Tools::Music::ClinicalCorrelation', 'Genome::Model::Tools::Music::CosmicOmim', 'Genome::Model::Tools::Music::Pfam');
-    my @bmr = ('Genome::Model::MutationalSignificance::Command::CalcCovg', 'Genome::Model::Tools::Music::Bmr::CalcCovgHelper', 'Genome::Model::MutationalSignificance::Command::MergeCalcCovg','Genome::Model::Tools::Music::Bmr::CalcCovg', 'Genome::Model::Tools::Music::Bmr::CalcBmr');
-    my @depend_on_bmr = ('Genome::Model::Tools::Music::PathScan', 'Genome::Model::Tools::Music::Smg');
-    my @depend_on_smg = ('Genome::Model::Tools::Music::MutationRelation');
+    my @no_dependencies;
+    if ($self->run_proximity) {
+        push @no_dependencies, "Genome::Model::Tools::Music::Proximity";
+    }
+    if ($self->run_clinical_correlation) {
+        push @no_dependencies, "Genome::Model::Tools::Music::ClinicalCorrelation";
+    }
+    if ($self->run_cosmic_omim) {
+        push @no_dependencies, "Genome::Model::Tools::Music::CosmicOmim";
+    }
+    if ($self->run_pfam) {
+        push @no_dependencies, "Genome::Model::Tools::Music::Pfam";
+    }
+    my @bmr;
+    if ($self->run_path_scan or $self->run_mutation_relation or $self->run_smg) {
+        push @bmr, "Genome::Model::MutationalSignificance::Command::CalcCovg";
+        push @bmr, "Genome::Model::Tools::Music::Bmr::CalcCovgHelper";
+        push @bmr, "Genome::Model::MutationalSignificance::Command::MergeCalcCovg";
+        push @bmr, "Genome::Model::Tools::Music::Bmr::CalcCovg";
+        push @bmr, "Genome::Model::Tools::Music::Bmr::CalcBmr";
+    }
+    my @depend_on_bmr;
+    if ($self->run_path_scan) {
+        push @depend_on_bmr, "Genome::Model::Tools::Music::PathScan";
+    }
+    if ($self->run_smg or $self->run_mutation_relation) {
+        push @depend_on_bmr, "Genome::Model::Tools::Music::Smg";
+    }
+    my @depend_on_smg;
+    if ($self->run_mutation_relation) {
+        push @depend_on_smg, "Genome::Model::Tools::Music::MutationRelation";
+    }
     for my $command_name (@no_dependencies, @bmr, @depend_on_bmr, @depend_on_smg) {
         $workflow = $self->_append_command_to_workflow($command_name, $workflow)
                     or return;
     }
 
     my $link;
-    $link = $workflow->add_link(
-        left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Proximity',                                                            $workflow),
-        left_property => 'output_file',
-        right_operation => $output_connector,
-        right_property => 'proximity_result',
-    );
+    if ($self->run_proximity) {
+        $link = $workflow->add_link(
+            left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Proximity',                                                            $workflow),
+            left_property => 'output_file',
+            right_operation => $output_connector,
+            right_property => 'proximity_result',
+        );
+    }
 
-    $link = $workflow->add_link(
-        left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Pfam', $workflow),
-        left_property => 'output_file',
-        right_operation => $output_connector,
-        right_property => 'pfam_result',
-    );
+    if ($self->run_pfam) {
+        $link = $workflow->add_link(
+            left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Pfam', $workflow),
+            left_property => 'output_file',
+            right_operation => $output_connector,
+            right_property => 'pfam_result',
+        );
+    }
 
-    $link = $workflow->add_link(
-        left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::MutationRelation', $workflow),
-        left_property => 'output_file',
-        right_operation => $output_connector,
-        right_property => 'mr_result',
-    );
+    if ($self->run_mutation_relation) {
+        $link = $workflow->add_link(
+            left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::MutationRelation', $workflow),
+            left_property => 'output_file',
+            right_operation => $output_connector,
+            right_property => 'mr_result',
+        );
+    }
 
-    $link = $workflow->add_link(
-        left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::PathScan', $workflow),
-        left_property => 'output_file',
-        right_operation => $output_connector,
-        right_property => 'pathscan_result',
-    );
+    if ($self->run_path_scan) {
+        $link = $workflow->add_link(
+            left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::PathScan', $workflow),
+            left_property => 'output_file',
+            right_operation => $output_connector,
+            right_property => 'pathscan_result',
+        );
+    }
 
-    $link = $workflow->add_link(
-        left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Smg', $workflow),
-        left_property => 'output_file',
-        right_operation => $output_connector,
-        right_property => 'smg_result',
-    );
+    if ($self->run_smg or $self->run_mutation_relation) {
+        $link = $workflow->add_link(
+            left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Smg', $workflow),
+            left_property => 'output_file',
+            right_operation => $output_connector,
+            right_property => 'smg_result',
+        );
+    }
     
-    $link = $workflow->add_link(
-        left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::CosmicOmim', $workflow),
-        left_property => 'output_file',
-        right_operation => $output_connector,
-        right_property => 'cosmic_result',
-    );
+    if ($self->run_cosmic_omim) {
+        $link = $workflow->add_link(
+            left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::CosmicOmim', $workflow),
+            left_property => 'output_file',
+            right_operation => $output_connector,
+            right_property => 'cosmic_result',
+        );
+    }
 
-    $link = $workflow->add_link(
-        left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::ClinicalCorrelation', $workflow),
-        left_property => 'output_file',
-        right_operation => $output_connector,
-        right_property => 'cct_result',
-    );
+    if ($self->run_clinical_correlation) {
+        $link = $workflow->add_link(
+            left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::ClinicalCorrelation', $workflow),
+            left_property => 'output_file',
+            right_operation => $output_connector,
+            right_property => 'cct_result',
+        );
+    }
 
-    my $op = $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Bmr::CalcCovg', $workflow);
-    $op->operation_type->lsf_resource("-R \'select[mem>16000] rusage[mem=16000]\' -M 16000000");
-    $op = $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Bmr::CalcBmr', $workflow);
-    $op->operation_type->lsf_resource("-R \'select[mem>64000] rusage[mem=64000]\' -M 64000000");
-    $op = $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Smg', $workflow);
-    $op->operation_type->lsf_resource("-R \'select[mem>16000] rusage[mem=16000] span[hosts=1]\' -n ".$self->processors." -M 16000000");
+    if ($self->run_smg or $self->run_mutation_relation or $self->run_path_scan) {
+        my $op = $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Bmr::CalcCovg', $workflow);
+        $op->operation_type->lsf_resource("-R \'select[mem>16000] rusage[mem=16000]\' -M 16000000");
+        $op = $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Bmr::CalcBmr', $workflow);
+        $op->operation_type->lsf_resource("-R \'select[mem>64000] rusage[mem=64000]\' -M 64000000");
+        $op = $self->_get_operation_for_module_name('Genome::Model::Tools::Music::Smg', $workflow);
+        $op->operation_type->lsf_resource("-R \'select[mem>16000] rusage[mem=16000] span[hosts=1]\' -n ".$self->processors." -M 16000000");
+    }
     return $workflow;
 }
 
