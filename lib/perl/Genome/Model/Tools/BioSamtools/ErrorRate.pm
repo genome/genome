@@ -173,13 +173,49 @@ sub c_pileup_error_rate {
         skip_if_output_is_present => 0,
     );
 
+    $self->run_r_script;
+    return 1;
+}
+
+sub run_r_script {
+    my $self = shift;
+
+    my ($basename,$dirname,$suffix) = File::Basename::fileparse($self->output_file,qw/.tsv/);
+
+    my %read_ends;
+    open my $tsv_fh, '<', $self->output_file;
+
+    my $confirmed_header = 0;
+
+    for (my $line = <$tsv_fh>) {
+        chomp $line;
+        my @fields = split /\s+/, $line;
+
+        if (not $confirmed_header) {
+            if ($fields[0] ne 'read_end') {
+                die sprintf "Unable to parse header in '%s'. Expected first field to be read_end, but it was '%s'.",
+                    $self->output_file,
+                    $fields[0];
+            }
+            $confirmed_header = 1;
+            next;
+        }
+
+        if ($fields[0] !~ /^[012]$/) {
+            die sprintf "Read end was '%s', which was not 0, 1, or 2.", $fields[0];
+        }
+        $read_ends{$fields[0]} = 1;
+    }
+    close $tsv_fh;
+
     my $r_library = $self->get_class_object->module_path;
     $r_library =~ s/\.pm/\.R/;
     $self->status_message('R LIBRARY: '. $r_library);
     my $tempdir = Genome::Sys->create_temp_directory();
 
     my $cwd = getcwd();
-    for my $read_end (1..2) {
+
+    for my $read_end (keys %read_ends) {
         my $input_file = $self->output_file;
 
         my $count_plot_file = $dirname . $basename .'_counts_'. $read_end .'.png';
@@ -217,7 +253,7 @@ sub perl_pileup_error_rate {
     unless ($suffix eq '.tsv') {
         die('Unable to parse output *.tsv file name: '. $self->output_file);
     }
-    
+
     my $fai = Bio::DB::Sam::Fai->load($self->reference_fasta);
     unless ($fai) {
         die('Failed to load fai for: '. $self->reference_fasta);
@@ -439,40 +475,7 @@ sub perl_pileup_error_rate {
     # Close the fh
     $writer->output->close;
 
-    my $r_library = $self->get_class_object->module_path;
-    $r_library =~ s/\.pm/\.R/;
-    $self->status_message('R LIBRARY: '. $r_library);
-    my $tempdir = Genome::Sys->create_temp_directory();
-
-    my $cwd = getcwd();
-    for my $read_end (keys (%read_counts)) {
-        my $input_file = $self->output_file;
-
-        my $count_plot_file = $dirname . $basename .'_counts_'. $read_end .'.png';
-        my $rate_plot_file = $dirname . $basename .'_rates_'. $read_end .'.png';
-        my $rate_dist_file = $dirname . $basename .'_rate_distribution_'. $read_end .'.png';
-
-        # The rate plot is all that is necessary at this time
-        #my $r_cmd = "generatePlots('$input_file','$read_end','$count_plot_file','$rate_plot_file','$rate_dist_file')";
-
-        my $r_script = $tempdir .'/'. $basename .'_error_rate_'. $read_end .'.R';
-        my $r_script_fh = Genome::Sys->open_file_for_writing($r_script);
-
-        print $r_script_fh "source('$r_library')\n";
-        print $r_script_fh "fullFile <- readTable('$input_file')\n";
-        print $r_script_fh "readEndErrorRate <- getReadEnd(fullFile,'$read_end')\n";
-        print $r_script_fh "positionErrorRate <- getPositionErrorRate(readEndErrorRate)\n";
-        print $r_script_fh "makeRatePlot(positionErrorRate,'$rate_plot_file','$read_end')\n";
-        #print $r_script_fh "$r_cmd\n";
-        $r_script_fh->close;
-
-        my $cmd = 'Rscript '. $r_script;
-        Genome::Sys->shellcmd(
-            cmd => $cmd,
-        );
-        unlink($r_script);
-    }
-    chdir $cwd;
+    $self->run_r_script;
     return 1;
 }
 

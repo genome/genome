@@ -292,8 +292,27 @@ sub _resolve_workflow_for_build {
 
     my @output_properties;
     if ($self->play_music) {
-        @output_properties = ('smg_result','pathscan_result','mr_result','pfam_result',              
-        'proximity_result', 'cosmic_result','cct_result');
+        if ($self->run_smg or $self->run_mutation_relation) {
+            push @output_properties, 'smg_result';
+        }
+        if ($self->run_path_scan) {
+            push @output_properties, 'pathscan_result';
+        }
+        if ($self->run_mutation_relation) {
+            push @output_properties, 'mr_result';
+        }
+        if ($self->run_pfam) {
+            push @output_properties, 'pfam_result';
+        }
+        if ($self->run_proximity) {
+            push @output_properties, 'proximity_result';
+        }
+        if ($self->run_cosmic_omim) {
+            push @output_properties, 'cosmic_result';
+        }
+        if ($self->run_clinical_correlation) {
+            push @output_properties, 'cct_result';
+        }
     }
     else {
         @output_properties = ('roi_path', 'maf_path', 'bam_list');
@@ -311,27 +330,6 @@ sub _resolve_workflow_for_build {
  
     my $output_connector = $workflow->get_output_connector;
 
-    # For now, just get the ultra-high confidence variants.
-    # TODO: figure out how to add in the manual review ones
-
-=cut
-    #Create clinical data file
-    $command_module = 'Genome::Model::MutationalSignificance::Command::CreateClinicalData',
-    my $clinical_data_operation = $workflow->add_operation(
-        name => $command_module,
-        operation_type => Workflow::OperationType::Command->create(
-            command_class_name => $command_module,
-        )
-    );
-
-    $link = $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'clinical_data_file',
-        right_operation => $clinical_data_operation,
-        right_property => 'clinical_data_file',
-    );
-=cut
-
     my @commands = ('Genome::Model::MutationalSignificance::Command::CreateMafFile','Genome::Model::MutationalSignificance::Command::MergeMafFiles','Genome::Model::MutationalSignificance::Command::CreateROI','Genome::Model::MutationalSignificance::Command::CreateBamList','Genome::Model::MutationalSignificance::Command::CompileValidationList');
 
     for my $command_name (@commands) {
@@ -342,64 +340,80 @@ sub _resolve_workflow_for_build {
     if ($self->play_music) {
 
         $workflow = $self->_append_command_to_workflow("Genome::Model::MutationalSignificance::Command::PlayMusic", $workflow, $lsf_project, $lsf_queue) or return;
-        $link = $workflow->add_link(
-            left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
-                $workflow),
-            left_property => 'proximity_result',
-            right_operation => $output_connector,
-            right_property => 'proximity_result',
-        );
-        $link = $workflow->add_link(
-            left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
-                $workflow),
-            left_property => 'pfam_result',
-            right_operation => $output_connector,
-            right_property => 'pfam_result',
-        );
-        $link = $workflow->add_link(
-            left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
-                $workflow),
-            left_property => 'mr_result',
-            right_operation => $output_connector,
-            right_property => 'mr_result',
-        );
-        $link = $workflow->add_link(
-            left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
-                $workflow),
-            left_property => 'pathscan_result',
-            right_operation => $output_connector,
-            right_property => 'pathscan_result',
-        );
-        $link = $workflow->add_link(
-            left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
-                $workflow),
-            left_property => 'smg_result',
-            right_operation => $output_connector,
-            right_property => 'smg_result',
-        );
-        $link = $workflow->add_link(
-            left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
-                $workflow),
-            left_property => 'cosmic_result',
-            right_operation => $output_connector,
-            right_property => 'cosmic_result',
-        );
+        if ($self->run_proximity) {
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
+                    $workflow),
+                left_property => 'proximity_result',
+                right_operation => $output_connector,
+                right_property => 'proximity_result',
+            );
+        }
+        if ($self->run_pfam) {
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
+                    $workflow),
+                left_property => 'pfam_result',
+                right_operation => $output_connector,
+                right_property => 'pfam_result',
+            );
+        }
+        if ($self->run_mutation_relation) {
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
+                    $workflow),
+                left_property => 'mr_result',
+                right_operation => $output_connector,
+                right_property => 'mr_result',
+            );
+        }
+        if ($self->run_path_scan) {
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
+                    $workflow),
+                left_property => 'pathscan_result',
+                right_operation => $output_connector,
+                right_property => 'pathscan_result',
+            );
+        }
+        if ($self->run_smg or $self->run_mutation_relation) {
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
+                    $workflow),
+                left_property => 'smg_result',
+                right_operation => $output_connector,
+                right_property => 'smg_result',
+            );
+        }
+        if ($self->run_cosmic_omim) {
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
+                    $workflow),
+                left_property => 'cosmic_result',
+                right_operation => $output_connector,
+                right_property => 'cosmic_result',
+            );
+        }
 
-        $link = $workflow->add_link(
-            left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
-                $workflow),
-            left_property => 'cct_result',
-            right_operation => $output_connector,
-            right_property => 'cct_result',
-        );
-        $link = $workflow->add_link(
-            left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
-                $workflow),
-            left_property => 'smg_result',
-            right_operation => $self->_get_operation_for_module_name("Genome::Model::MutationalSignificance::Command::CompileValidationList",
-                $workflow),
-            right_property => "significantly_mutated_gene_list",
-        );
+        if ($self->run_clinical_correlation) {
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
+                    $workflow),
+                left_property => 'cct_result',
+                right_operation => $output_connector,
+                right_property => 'cct_result',
+            );
+        }
+        if ($self->run_smg or $self->run_mutation_relation) {
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic',
+                    $workflow),
+                left_property => 'smg_result',
+                right_operation => $self->_get_operation_for_module_name("Genome::Model::MutationalSignificance::Command::CompileValidationList",
+                    $workflow),
+                right_property => "significantly_mutated_gene_list",
+            );
+        }
     }
     else {
         $link = $workflow->add_link(

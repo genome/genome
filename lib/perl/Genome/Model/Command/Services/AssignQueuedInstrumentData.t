@@ -364,7 +364,11 @@ is(scalar(keys %$rna_new_models), 1, 'the cron created 1 rna model');
 my ($rna_model) = values %$rna_new_models;
 ok($rna_model->annotation_build, 'the cron set the annotation_build input on the rna model');
 is($rna_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on rna solexa inst data');
-is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'Set tgi lims status to failed on rna 454 inst data (no ref)');
+is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'Set tgi_lims_status to failed on rna 454 inst data (no ref)');
+is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, 'Failed to set reference sequence build during processing instrument data! -14', 'Set tgi_lims_fail_message on rna 454 inst data (no ref)');
+is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 1, 'Set tgi_lims_fail_count to 1 on rna 454 inst data (no ref)');
+
+done_testing(); exit;
 
 # Test ?
 my $instrument_data_3 = Genome::InstrumentData::Solexa->create(
@@ -594,7 +598,7 @@ is($de_novo_instrument_data[0], $instrument_data_6, 'is the expected instrument 
 my($changed_model_3) = values %$models_changed_3;
 is($changed_model_3, $new_model, 'latest addition is to the original model from the first run');
 
-is($instrument_data_5->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lime status to failed for inst data 5');
+is($instrument_data_5->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lime status to processed for inst data 5');
 is($instrument_data_6->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed for inst data 6');
 
 # Test TCGA

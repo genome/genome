@@ -221,6 +221,7 @@ sub execute {
         } # end of adding instdata to non-autogen models
 
         $instrument_data->{_processed_ok} = ( @process_errors > 0 ) ? 0 : 1;
+        $instrument_data->{_tgi_lims_fail_message} = substr(join("\n", @process_errors), 0, 512) if @process_errors; # max for msg is 512
     } # end of INST_DATA loop
 
     #schedule new builds for the models we found and stored in the output hashes
@@ -266,6 +267,7 @@ sub _update_instrument_data_tgi_lims_status_to_processed {
     my $set_status = $self->_update_instrument_data_tgi_lims_status_to($instrument_data, 'processed');
     return if not $set_status;
 
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_message');
     $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_count');
 
     return 1;
@@ -274,14 +276,24 @@ sub _update_instrument_data_tgi_lims_status_to_processed {
 sub _update_instrument_data_tgi_lims_status_to_failed {
     my ($self, $instrument_data) = @_;
 
+    Carp::confess('No message sent to update tgi lims status to failed!') if not defined $instrument_data->{_tgi_lims_fail_message};
+
     my $set_status = $self->_update_instrument_data_tgi_lims_status_to($instrument_data, 'failed');
     return if not $set_status;
 
-    my $current = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count');
+    my $fail_msg_attr = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_message');
+    $fail_msg_attr->delete if $fail_msg_attr;
+
+    $instrument_data->add_attribute(
+        attribute_label => 'tgi_lims_fail_message',
+        attribute_value => $instrument_data->{_tgi_lims_fail_message},
+    );
+
+    my $fail_count_attr = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count');
     my $previous_count = 0;
-    if($current) {
-        $previous_count = $current->attribute_value;
-        $current->delete;
+    if ( $fail_count_attr ) {
+        $previous_count = $fail_count_attr->attribute_value;
+        $fail_count_attr->delete;
     }
 
     $instrument_data->add_attribute(
@@ -352,6 +364,9 @@ sub find_or_create_somatic_variation_models{
             );
             $somatic_params{annotation_build} = Genome::Model::ImportedAnnotation->annotation_build_for_reference($model->reference_sequence_build);
             $self->error_message('Failed to get annotation_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{annotation_build};
+            $somatic_params{previously_discovered_variations_build} = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($model->reference_sequence_build);
+            $self->error_message('Failed to get previously_discovered_variations_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{previously_discovered_variations_build};
+ 
 
             my $capture_somatic_processing_profile_id = '2642139'; #Nov. 2011 somatic-variation exome
             my $somatic_processing_profile_id = '2642137'; #Nov. 2011 somatic-variation wgs
@@ -487,22 +502,22 @@ sub _check_instrument_data {
     if ( $instrument_data->isa('Genome::InstrumentData::Solexa') ) {
         if($instrument_data->target_region_set_name) {
             my $fl = Genome::FeatureList->get(name => $instrument_data->target_region_set_name);
-            unless($fl) {
-                $self->error_message('Failed to get a feature-list matching target region set name ' . $instrument_data->target_region_set_name);
-                return;
+            if(not $fl) {
+                $instrument_data->{_tgi_lims_fail_message} = 'Failed to get a feature-list matching target region set name ' . $instrument_data->target_region_set_name;
             }
-
-            unless($fl->content_type) {
-                $self->error_message('No content-type set on feature-list ' . $fl->name);
-                return;
+            elsif(not $fl->content_type) {
+                $instrument_data->{_tgi_lims_fail_message} = 'No content-type set on feature-list ' . $fl->name;
             } elsif ($fl->content_type eq 'roi') {
-                $self->error_message('Unexpected "roi"-typed feature-list set as target region set name: ' . $fl->name);
-                return;
+                $instrument_data->{_tgi_lims_fail_message} = 'Unexpected "roi"-typed feature-list set as target region set name: ' . $fl->name;
             } elsif (!grep($_ eq $fl->content_type, 'exome', 'validation', 'targeted')) {
-                $self->error_message('Unknown/unhandled content-type ' . $fl->content_type . ' on feature-list ' . $fl->name);
-                return;
+                $instrument_data->{_tgi_lims_fail_message} = 'Unknown/unhandled content-type ' . $fl->content_type . ' on feature-list ' . $fl->name;
             }
         }
+    }
+
+    if ( $instrument_data->{_tgi_lims_fail_message} ) {
+        $self->error_message($instrument_data->{_tgi_lims_fail_message});
+        return;
     }
 
     return 1;
