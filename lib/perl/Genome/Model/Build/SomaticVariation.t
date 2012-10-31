@@ -19,6 +19,7 @@ ok($m, "Created SomaticVariation model");
 ok($b, "Created SomaticVariation build");
 
 test_build_inputs_dont_reference_model();
+test_annotation_build_accessor();
 done_testing();
 
 # these tests may seem obvious, but the build USED to reference model inputs directly.
@@ -40,4 +41,6 @@ sub test_build_inputs_dont_reference_model {
             $pdv_build->id, "Build input did not change when model input was updated");
 }
 
-
+sub test_annotation_build_accessor {
+    is($b->annotation_build, $m->annotation_build, "Annotation build is the same as the model build")
+}
