@@ -174,7 +174,7 @@ sub create_dummy_volume {
         $params{mount_path} = File::Temp::tempdir( 'tempXXXXX', TMPDIR => 1, CLEANUP => 1 );
         $volume = Genome::Disk::Volume->__define__(
             mount_path => $params{mount_path},
-            total_kb => 104857600,
+            total_kb => Filesys::Df::df($params{mount_path})->{blocks},,
             can_allocate => 1,
             disk_status => 'active',
             hostname => 'localhost',
