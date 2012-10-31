@@ -10,7 +10,7 @@ class Genome::Model::Tools::BioDbFasta {
 };
 
 sub help_brief {
-    shift->get_class_object->doc;
+    shift->__meta__->doc;
 }
 
 sub help_detail {

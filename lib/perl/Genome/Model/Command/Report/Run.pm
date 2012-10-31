@@ -256,7 +256,7 @@ sub _resolve_valid_report_class_for_build_and_name{
     my @model_classes = (
         grep { $_->isa('Genome::Model') }
         map { $_, $_->inheritance }
-        $build->model->get_class_object->class_name
+        $build->model->__meta__->class_name
     );
 
     my $report_class_meta;

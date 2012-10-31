@@ -93,7 +93,7 @@ sub execute {
         output_file => $output_file,
         output_directory => $tmp_dir,
     );
-    my $module_path = $self->get_class_object->module_path;
+    my $module_path = $self->__meta__->module_path;
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
     my $workflow = Workflow::Operation->create_from_xml($xml_path);

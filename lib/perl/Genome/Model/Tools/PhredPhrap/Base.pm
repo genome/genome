@@ -181,7 +181,7 @@ sub _params_for_class {
     my %params_for_class;
     for my $property ( grep {
             $_->class_name ne 'UR::Object' and $_->class_name ne 'Command' 
-        }$class->get_class_object->all_property_metas ) {
+        }$class->__meta__->all_property_metas ) {
         my $property_name = $property->property_name;
         my $value;# = $self->$property_name;
         unless ( $self->can($property_name) and defined($value = $self->$property_name) ) {
