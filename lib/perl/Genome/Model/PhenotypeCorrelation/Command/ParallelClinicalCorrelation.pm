@@ -185,7 +185,6 @@ sub execute {
         $merged_categorical_fh->close();
         $self->_recalculate_categorical_stats($tempfile, $categorical_output_file);
         unlink($tempfile);
-        $self->status_message("No categorical results produced");
         $self->categorical_output_file($categorical_output_file);
     }
     else {
@@ -247,21 +246,23 @@ sub _recalculate_categorical_stats {
     my ($self, $infile, $outfile) = @_;
 
     my $R_code = <<EOR;
-tt <- read.table("$infile", sep=",", header=TRUE);
-tt\$fdr = p.adjust(tt\$p, "fdr");
-tt\$bon = p.adjust(tt\$p, "bon");
+tt <- read.table("$infile", sep="\t", header=TRUE);
+tt\$FDR = p.adjust(tt\$P.val, "fdr");
+#tt\$BON = p.adjust(tt\$P.val, "bon");
 
 # Match formatting in GMT/Music/ClinicalCorrelation.pm.R
-tt[,"s"] = sapply(tt[,"s"], sprintf, fmt="%.4E");
-tt[,"p"] = sapply(tt[,"p"], sprintf, fmt="%.4E");
-tt[,"fdr"] = sapply(tt[,"fdr"], sprintf, fmt="%.2E");
-tt[,"bon"] = sapply(tt[,"bon"], sprintf, fmt="%.2E");
+tt[,"Statistic"] = sapply(tt[,"Statistic"], sprintf, fmt="%.4E");
+tt[,"P.val"] = sapply(tt[,"P.val"], sprintf, fmt="%.4E");
+tt[,"FDR"] = sapply(tt[,"FDR"], sprintf, fmt="%.2E");
+#tt[,"BON"] = sapply(tt[,"BON"], sprintf, fmt="%.2E");
 
 # Match ordering in GMT/Music/ClinicalCorrelation.pm.R
-tt=tt[order(tt[,"x"]),];
-tt=tt[order(tt[,"p"]),];
+tt=tt[order(tt[,"Gene"]),];
+tt=tt[order(tt[,"P.val"]),];
 
-write.table(tt,file="$outfile",quote=FALSE,row.names=FALSE,sep=",");
+colnames(tt)=c("Gene","ClinParam","Method","NumCases","Statistic","P-val","FDR");
+
+write.table(tt,file="$outfile",quote=FALSE,row.names=FALSE,sep="\t");
 
 EOR
     my $R_script = "$outfile.tmp.R";
