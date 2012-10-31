@@ -354,7 +354,7 @@ sub _resolve_subclass_name {
         return $filter_name ? 'Genome::Model::Tools::DetectVariants2::Result::Filter' : 'Genome::Model::Tools::DetectVariants2::Result';
     }
     else {
-        my $filter_name = $class->get_rule_for_params(@_)->specified_value_for_property_name('filter_name');
+        my $filter_name = $class->define_boolexpr(@_)->specified_value_for_property_name('filter_name');
         return $filter_name ? 'Genome::Model::Tools::DetectVariants2::Result::Filter' : 'Genome::Model::Tools::DetectVariants2::Result';
     }
     return;
