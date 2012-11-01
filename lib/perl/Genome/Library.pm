@@ -1,4 +1,4 @@
-package Genome::Library; 
+package Genome::Library;
 
 use strict;
 use warnings;
@@ -7,66 +7,66 @@ use Genome;
 class Genome::Library {
     is => ['Genome::Notable','Genome::Searchable'],
     id_by => [
-        library_id => { 
-            is => 'Number', 
+        library_id => {
+            is => 'Number',
         },
     ],
     has => [
-        name => { 
-            is => 'Text', 
-            column_name => 'FULL_NAME', 
-            doc => 'Name of the library. Usually has the sample name and an extension.', 
+        name => {
+            is => 'Text',
+            column_name => 'FULL_NAME',
+            doc => 'Name of the library. Usually has the sample name and an extension.',
         },
-        sample_id => { 
-            is => 'Text', 
+        sample_id => {
+            is => 'Text',
         },
-        sample => { 
-            is => 'Genome::Sample', 
-            id_by => 'sample_id', 
-            doc => 'Sample that this library came from.', 
+        sample => {
+            is => 'Genome::Sample',
+            id_by => 'sample_id',
+            doc => 'Sample that this library came from.',
         },
-        sample_name => { 
-            is => 'Text', 
-            via => 'sample', 
-            to => 'name' 
+        sample_name => {
+            is => 'Text',
+            via => 'sample',
+            to => 'name'
         },
     ],
     has_optional => [
-        fragment_size_range => { 
-            is => 'Text', 
+        fragment_size_range => {
+            is => 'Text',
             column_name => 'LIBRARY_INSERT_SIZE',
-            doc => 'intended size range of fragments from library construction' 
+            doc => 'intended size range of fragments from library construction'
         },
-        taxon_id => { 
-            is => 'Number', 
-            via => 'sample', 
+        taxon_id => {
+            is => 'Number',
+            via => 'sample',
         },
-        taxon => { 
-            is => 'Genome::Taxon', 
-            via => 'sample', 
+        taxon => {
+            is => 'Genome::Taxon',
+            via => 'sample',
         },
-        species_name => { 
-            is => 'Text', 
-            via => 'taxon', 
+        species_name => {
+            is => 'Text',
+            via => 'taxon',
         },
-        protocol_name => { 
-            is_transient => 1, 
-            is => 'Text', 
+        protocol_name => {
+            is_transient => 1,
+            is => 'Text',
         },
-        sample_source => { 
-            via => 'sample', 
-            to => 'source', 
-            doc => 'Source of the sample', 
+        sample_source => {
+            via => 'sample',
+            to => 'source',
+            doc => 'Source of the sample',
         },
-        sample_source_name => { 
-            via => 'sample_source', 
-            to => 'name', 
-            doc => 'Name of the sample\'s source' 
+        sample_source_name => {
+            via => 'sample_source',
+            to => 'name',
+            doc => 'Name of the sample\'s source'
         },
-        sample_source_id => { 
-            via => 'sample_source', 
-            to => 'id', 
-            doc => 'ID of the sample\'s source' 
+        sample_source_id => {
+            via => 'sample_source',
+            to => 'id',
+            doc => 'ID of the sample\'s source'
         },
         models => {
             is => 'Genome::Model',
