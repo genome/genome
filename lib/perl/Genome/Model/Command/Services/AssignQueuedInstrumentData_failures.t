@@ -38,7 +38,7 @@ my $library = Genome::Library->__define__(name => '__TEST_SAMPLE__-testlib');
 ok($library, 'define library');
 
 $instrument_data = Genome::InstrumentData::Solexa->__define__(
-    id => '-1234',
+    id => '-123',
     library_id => $library->id,
 );
 ok($instrument_data, 'defined instrument data');
@@ -52,7 +52,7 @@ my $cmd = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($cmd, 'create aqid');
 ok($cmd->execute, 'execute');
 is($instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'instrument data tgi_lims_status is failed');
-like($instrument_data->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, qr/^Failed to get processing for instrument data id \(\-1234\): Failed to get a sample for instrument data! \-1234/, 'instrument data tgi_lims_fail_message is correct');
+like($instrument_data->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, qr/^Failed to get processing for instrument data id \(\-123\): Failed to get a sample for instrument data! \-123/, 'instrument data tgi_lims_fail_message is correct');
 is($instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 1, 'instrument data tgi_lims_fail_count is 1');
 
 # Fail - no sample source
@@ -62,7 +62,7 @@ $library->sample_id($sample->id);
 $library = Genome::Library->__define__(name => '__TEST_SAMPLE__-testlib', sample => $sample);
 ok($library, 'define library');
 $instrument_data = Genome::InstrumentData::Solexa->__define__(
-    id => '-12345',
+    id => '-1234',
     library_id => $library->id,
 );
 ok($instrument_data, 'defined instrument data');
@@ -76,7 +76,7 @@ $cmd = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($cmd, 'create aqid');
 ok($cmd->execute, 'execute');
 is($instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'instrument data tgi_lims_status is failed');
-like($instrument_data->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, qr/^Failed to get processing for instrument data id \(\-12345\): Failed to get a sample source for instrument data! \-12345/, 'instrument data tgi_lims_fail_message is correct');
+like($instrument_data->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, qr/^Failed to get processing for instrument data id \(\-1234\): Failed to get a sample source for instrument data! \-1234/, 'instrument data tgi_lims_fail_message is correct');
 is($instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 1, 'instrument data tgi_lims_fail_count is 1');
 
 # Fail - no taxon
@@ -87,7 +87,7 @@ $library->sample_id($sample->id);
 $library = Genome::Library->__define__(name => '__TEST_SAMPLE__-testlib', sample => $sample);
 ok($library, 'define library');
 $instrument_data = Genome::InstrumentData::Solexa->__define__(
-    id => '-123456',
+    id => '-12345',
     library_id => $library->id,
 );
 ok($instrument_data, 'defined instrument data');
@@ -101,11 +101,11 @@ $instrument_data->add_attribute(
 );
 is($instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'new', 'instrument data tgi_lims_status is new');
 
-my $cmd = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
+$cmd = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($cmd, 'create aqid');
 ok($cmd->execute, 'execute');
 is($instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'instrument data tgi_lims_status is failed');
-like($instrument_data->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, qr/^Failed to get processing for instrument data id \(\-123456\): Failed to get a taxon from sample source for instrument data! \-123456/, 'instrument data tgi_lims_fail_message is correct');
+like($instrument_data->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, qr/^Failed to get processing for instrument data id \(\-12345\): Failed to get a taxon from sample source for instrument data! \-12345/, 'instrument data tgi_lims_fail_message is correct');
 is($instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 3, 'instrument data tgi_lims_fail_count is 3');
 
 done_testing();

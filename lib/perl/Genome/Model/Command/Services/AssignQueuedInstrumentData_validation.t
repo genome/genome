@@ -167,7 +167,7 @@ my $command_1a = Genome::Model::Command::Services::AssignQueuedInstrumentData->c
 isa_ok($command_1a, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 $command_1a->dump_status_messages(1);
 ok($command_1a->execute(), 'assign-queued-instrument-data executed successfully.');
-is($instrument_data_1a->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'inst data 1a is processed');
+is($instrument_data_1a->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'skipped', 'inst data 1a is skipped');
 
 my $fl2 = Genome::FeatureList->__define__(
     id => 'ABCDEFGH',

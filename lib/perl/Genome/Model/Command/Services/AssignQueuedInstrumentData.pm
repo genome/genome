@@ -176,12 +176,14 @@ sub execute {
                 }
             } elsif($instrument_data->index_sequence eq 'unknown' && $instrument_data->sample->name =~ /Pooled_Library/) {
                 $self->status_message('Skipping pooled library validation data! '.$instrument_data->id);
+                $instrument_data->{_skipped} = 1;
             } else {
                 push @process_errors,
                 $self->error_message('No validation models found to assign data (target ' . $instrument_data->target_region_set_name . ' on instrument data ' . $instrument_data->id . '.)');
             }
         } else {
             $self->status_message('No model generation attempted for instrument data! '.$instrument_data->id);
+            $instrument_data->{_skipped} = 1;
         } # done with inst data which specify @processing
 
         # Handle this instdata for other models besides the default
@@ -220,7 +222,6 @@ sub execute {
             }
         } # end of adding instdata to non-autogen models
 
-        $instrument_data->{_processed_ok} = ( @process_errors > 0 ) ? 0 : 1;
         $instrument_data->{_tgi_lims_fail_message} = substr(join("\n", @process_errors), 0, 512) if @process_errors; # max for msg is 512
     } # end of INST_DATA loop
 
@@ -229,11 +230,14 @@ sub execute {
 
     $self->status_message("Updating instrument data...");
     for my $instrument_data ( @instrument_data_to_process ) {
-        if ( $instrument_data->{_processed_ok} or $instrument_data->ignored ) {
-            $self->_update_instrument_data_tgi_lims_status_to_processed($instrument_data);
+        if ( $instrument_data->ignored or $instrument_data->{_skipped} ) { # skipped
+            $self->_update_instrument_data_tgi_lims_status_to_skipped($instrument_data);
         }
-        else {
+        elsif ( $instrument_data->{_tgi_lims_fail_message} ) { # failed
             $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);
+        }
+        else { # processed!
+            $self->_update_instrument_data_tgi_lims_status_to_processed($instrument_data);
         }
     }
 
@@ -246,7 +250,7 @@ sub _update_instrument_data_tgi_lims_status_to {
     # These should not happen - developer error
     Carp::confess('No instrument data given to update instrument data tgi lims status!') if not $instrument_data;
     Carp::confess('No status given to update instrument data tgi lims status!') if not $status;
-    Carp::confess("No invalid status ($status) given to update instrument data tgi lims status!") if not grep { $status eq $_ } (qw/ processed failed /);
+    Carp::confess("No invalid status ($status) given to update instrument data tgi lims status!") if not grep { $status eq $_ } (qw/ processed skipped failed /);
 
     # Rm tgi lims status attribute(s)
     $instrument_data->remove_attribute(attribute_label => 'tgi_lims_status');
@@ -265,6 +269,18 @@ sub _update_instrument_data_tgi_lims_status_to_processed {
     my ($self, $instrument_data) = @_;
 
     my $set_status = $self->_update_instrument_data_tgi_lims_status_to($instrument_data, 'processed');
+    return if not $set_status;
+
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_message');
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_count');
+
+    return 1;
+}
+
+sub _update_instrument_data_tgi_lims_status_to_skipped {
+    my ($self, $instrument_data) = @_;
+
+    my $set_status = $self->_update_instrument_data_tgi_lims_status_to($instrument_data, 'skipped');
     return if not $set_status;
 
     $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_message');
@@ -1185,8 +1201,8 @@ sub _resolve_processing_for_instrument_data {
                     $instrument_data->ignored(1);
                 }
             }
-            else {
-                # DO NOTHING
+            else { # skip
+                $self->status_message('Skipping 454 instrument data because it is not RNA or MC16s! '.$instrument_data->id);
             }
         }
         elsif ($sequencing_platform eq 'sanger') {
@@ -1278,7 +1294,6 @@ sub _resolve_processing_for_instrument_data {
 
     };
     if($@){
-        #something went horribly wrong.  do something about it.
         $self->error_message('Failed to get processing for instrument data id ('.$instrument_data->id.'): '.$@);
         push @processing, {error => $self->error_message};
     }
