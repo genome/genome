@@ -1154,14 +1154,17 @@ sub _resolve_processing_for_instrument_data {
 
         my $sample = $instrument_data->sample;
         unless (defined($sample)) {
-            $self->error_message('failed to get a Genome::Sample for id ' . $instrument_data->id);
-            die $self->error_message;
+            die $self->error_message('Failed to get a sample for instrument data! '.$instrument_data->id);
         }
 
-        my $taxon = $sample->taxon;
+        my $source = $sample->source; # taxon is via the source, so check it first
+        if ( not $source ) {
+            die $self->error_message('Failed to get a sample source for instrument data! '.$instrument_data->id);
+        }
+
+        my $taxon = $source->taxon;
         unless (defined($taxon)) {
-            $self->error_message('failed to get taxon via Genome::Taxon for id ' . $instrument_data->id);
-            die $self->error_message;
+            die $self->error_message('Failed to get a taxon from sample source for instrument data! '.$instrument_data->id);
         }
 
         if ($sequencing_platform eq '454') {
@@ -1181,6 +1184,9 @@ sub _resolve_processing_for_instrument_data {
                 else {
                     $instrument_data->ignored(1);
                 }
+            }
+            else {
+                # DO NOTHING
             }
         }
         elsif ($sequencing_platform eq 'sanger') {
