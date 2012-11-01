@@ -235,13 +235,14 @@ sub _add_vcf_data_to_vep {
     my ($vep, $vcf, $cases, $controls) = @_;
 
     my $alt = $vep->{allele};
+    my $alt_idx = $vcf->allele_index($alt);
 
     # Compute allele count and relative frequency for each of case, control
     my ($n_case_alleles, %case_allele_counts) = $vcf->allelic_distribution(@$cases);
     my ($n_control_alleles, %control_allele_counts) = $vcf->allelic_distribution(@$controls);
 
-    my $case_count = $case_allele_counts{$alt} || 0;
-    my $control_count = $control_allele_counts{$alt} || 0;
+    my $case_count = $case_allele_counts{$alt_idx} || 0;
+    my $control_count = $control_allele_counts{$alt_idx} || 0;
 
     my $case_af = $n_case_alleles ? $case_count / $n_case_alleles : 0;
     my $control_af = $n_control_alleles ? $control_count / $n_control_alleles : 0;
