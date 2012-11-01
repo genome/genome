@@ -26,7 +26,7 @@ use_ok('Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine');
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Result-Vcf-Combine';
 my $inputs = $test_dir."/inputs";
 
-my $expected_dir = $test_dir."/expected.v5";
+my $expected_dir = $test_dir."/expected.v6";
 
 my $detector_union_expected_file = $expected_dir."/detector_test/union_snvs.vcf.gz";
 my $filter_union_expected_file = $expected_dir."/filter_test/union_snvs.vcf.gz";
