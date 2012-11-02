@@ -21,6 +21,7 @@ class Genome::Search::Queue {
         },
         timestamp => {
             is => 'Time',
+            default_value => UR::Context->now,
             doc => 'Timestamp of first request. Automatically added if not provided.',
         },
         priority => {
