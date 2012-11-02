@@ -460,6 +460,7 @@ sub _reallocate {
     confess "Require allocation ID!" unless defined $id;
     my $kilobytes_requested = delete $params{kilobytes_requested} || 0;
     my $allow_reallocate_with_move = delete $params{allow_reallocate_with_move};
+    my $grow_only = delete $params{grow_only};
     if (%params) {
         confess "Found extra params: " . Data::Dumper::Dumper(\%params);
     }
@@ -470,6 +471,11 @@ sub _reallocate {
     my $kb_used = Genome::Sys->disk_usage_for_path($self->absolute_path) || 0;
 
     my $actual_kb_requested = List::Util::max($kb_used, $kilobytes_requested);
+    if ($grow_only && ($actual_kb_requested <= $old_kb_requested)) {
+        $self->status_message(
+            "Not changing kilobytes_requested, because grow_only = 1 & actual usage < original_kilobytes_requested");
+        return 1;
+    }
     if ($actual_kb_requested > $kilobytes_requested) {
         $self->status_message(sprintf(
                 "Setting kilobytes_requested to %s based on `du` for allocation %s",
