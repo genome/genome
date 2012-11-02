@@ -48,8 +48,6 @@ sub create {
         input_files => [$fastq1, $fastq2, $index_dir, $output_directory],
     );
 
-    $DB::single=1;
-
     $self->_promote_data();
     $self->_remove_staging_directory();
     $self->_reallocate_disk_allocation();
@@ -63,15 +61,21 @@ sub _staging_disk_usage {
 }
 
 sub _path_for_version {
-    my ($class,$version) = @_;
-    die("You requested an unavailable version of Chimerascan. Requested: $version") unless $version eq '0.4.3';
-    return $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version/chimerascan";
+    my ($class, $version) = @_;
+    return $class->_get_chimerascan_path_for_version($version) . '/chimerascan';
 }
 
 sub _python_path_for_version {
-    my ($class,$version) = @_;
-    die("You requested an unavailable version of Chimerascan. Requested: $version") unless $version eq '0.4.3';
-    return $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version/build/lib.linux-x86_64-2.6";
+    my ($class, $version) = @_;
+    my $chimerascan_path = $class->_get_chimerascan_path_for_version($version);
+    return $chimerascan_path . "/build/lib.linux-x86_64-2.6";
+}
+
+sub _get_chimerascan_path_for_version {
+  my ($class, $version) = @_;
+  my $path = $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version";
+  die("You requested an unavailable version of Chimerascan. Requested: $version") unless (-e $path);
+  return $path;
 }
 
 sub _resolve_index_dir {
