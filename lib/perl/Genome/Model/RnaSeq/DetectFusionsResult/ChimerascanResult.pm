@@ -3,7 +3,7 @@ package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
 use strict;
 use warnings;
 
-use Genome;
+use above 'Genome';
 
 # Notes from Chris Miller:
 # bsub -oo err.log -q long
@@ -35,9 +35,7 @@ sub create {
     my $params = $self->detector_params;
     my $output_directory = $self->output_dir;
 
-    my $n_threads = $self->_available_cpu_count;
-
-    my $cmd = "python $cmd_path/chimerascan_run.py -v -p $n_threads $params $index_dir $fastq1 $fastq2 $output_directory >$output_directory/chimera_result.out";
+    my $cmd = "python $cmd_path/chimerascan_run.py -v $params $index_dir $fastq1 $fastq2 $output_directory >$output_directory/chimera_result.out";
 
     local $ENV{PYTHONPATH} =  ($ENV{PYTHONPATH} ? $ENV{PYTHONPATH} . ":" : "")  . $self->_python_path_for_version($self->version);
 
