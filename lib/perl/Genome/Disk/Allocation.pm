@@ -1263,7 +1263,8 @@ sub _get_candidate_volumes {
         disk_status => 'active',
     );
 
-    $volume_params{'mount_path not like'} = $exclude if $exclude;
+    # 'not like' caused conversion error on Oracle but 'not in' with anonymous array works
+    $volume_params{'mount_path not in'} = [$exclude] if $exclude;
     # XXX Shouldn't need this, 'archive' should obviously be a status.
     #       This might be a performance issue.
     my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(%volume_params);
