@@ -341,7 +341,7 @@ sub _create {
         push @reasons, 'disk is not active' if $volume->disk_status ne 'active';
         push @reasons, 'allocation turned off for this disk' if $volume->can_allocate != 1;
 
-        if ($volume->mount_path eq $exclude_mount_path) {
+        if ($exclude_mount_path && $volume->mount_path eq $exclude_mount_path) {
             push @reasons, 'Specified mount path matched the excluded mount path.';
         }
 
