@@ -86,6 +86,21 @@ class Genome::InstrumentData::IntermediateAlignmentResult {
                                     is_optional => 1,
                                     doc => 'the samtools version used',
                                 },
+        trimmer_name            => {
+                                    is => 'Text',
+                                    doc => 'Trimmer strategy used to create input file.',
+                                    is_optional=>1,
+                                },
+        trimmer_version         => {
+                                    is => 'Text',
+                                    doc => 'Trimmer version to used to create input file.',
+                                    is_optional=>1,
+                                },
+        trimmer_params          => {
+                                    is => 'Text',
+                                    is_optional=>1,
+                                    doc => 'Trimmer parameters used to create input file.',
+                                },
     ],
     has_transient => [
         temp_scratch_directory  => {

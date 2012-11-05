@@ -142,6 +142,9 @@ sub _intermediate_result {
             instrument_data_segment_type => $self->instrument_data_segment_type,
             instrument_data_segment_id   => $self->instrument_data_segment_id,
             samtools_version             => $self->samtools_version,
+            trimmer_name                 => $self->trimmer_name,
+            trimmer_version              => $self->trimmer_version,
+            trimmer_params               => $self->trimmer_params,
             test_name                    => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         );
 
