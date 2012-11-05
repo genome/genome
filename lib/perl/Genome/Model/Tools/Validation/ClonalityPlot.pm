@@ -602,12 +602,14 @@ _END_OF_R_
 
             if (class(test) == 'try-error') {
                 percents[i] = "Error";
-                print("Common mixdist error when looking for ",i," components.",sep="");
+                print(paste("Common mixdist error when looking for ",i," components.",sep=""));
             }
             else {
                 percents[i]=list(test\$parameters\$pi)
                 chisq[i]=test\$chisq;
                 pval[i] = test\$P;
+
+                #print(paste("PLOTTING ",i)); filename = paste("plot_component_",i,".pdf",sep=""); dev.new(); plot(test); dev.copy(pdf,filename); dev.off(); ## TEST
             }
         }
         num_clusters = process_percents(percents,chisq,pval,distr);
