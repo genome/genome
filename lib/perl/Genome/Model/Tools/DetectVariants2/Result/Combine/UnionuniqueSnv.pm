@@ -61,9 +61,25 @@ sub _validate_output {
         CLEANUP => 1
         );
     my $temp_intersect_file = $scratch_dir . "/UnionuniqueSnv.intersected";
+    my $sorted_input_a_file = $scratch_dir . "/UnionuniqueSnv.a.sorted";
+    my $sorted_input_b_file = $scratch_dir . "/UnionuniqueSnv.b.sorted";
+    my $sort_command_a = Genome::Model::Tools::Joinx::Sort->create(
+        input_files => [$input_a_file],
+        output_file => $sorted_input_a_file,
+    );
+    unless($sort_command_a->execute()) {
+        die "Failed to sort $input_a_file, $@";
+    }
+    my $sort_command_b = Genome::Model::Tools::Joinx::Sort->create(
+        input_files => [$input_b_file],
+        output_file => $sorted_input_b_file,
+    );
+    unless($sort_command_b->execute()) { 
+        die "Failed to sort $input_b_file, $@";
+    }
     my $intersect_command = Genome::Model::Tools::Joinx::Intersect->create(
-        input_file_a => $input_a_file,
-        input_file_b => $input_b_file,
+        input_file_a => $sorted_input_a_file,
+        input_file_b => $sorted_input_b_file,
         output_file => $temp_intersect_file,
         exact_pos => 1,
         exact_allele => 1,
