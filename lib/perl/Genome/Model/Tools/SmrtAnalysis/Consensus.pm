@@ -181,7 +181,7 @@ sub execute {
         gff_to_bed_name => 'variants',
         gff_to_bed_description => 'PacBio: snps, insertions, and deletions derived from consensus calls against reference',
     );
-    my $module_path = $self->get_class_object->module_path;
+    my $module_path = $self->__meta__->module_path;
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
     my $workflow = Workflow::Operation->create_from_xml($xml_path);

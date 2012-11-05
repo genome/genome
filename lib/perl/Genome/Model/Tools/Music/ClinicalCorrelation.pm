@@ -41,7 +41,7 @@ class Genome::Model::Tools::Music::ClinicalCorrelation {
             doc => "Table of samples (y) vs. numeric clinical data category (x)",
         },
         numerical_data_test_method => {
-            is => 'Text', is_optional => 1, default => 'cor',
+            is => 'Text', is_optional => 1, default => 'wilcox',
             doc => "Either 'cor' for Pearson Correlation or 'wilcox' for the Wilcoxon Rank-Sum Test for numerical clinical data",
         },
         categorical_clinical_data_file => {

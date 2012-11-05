@@ -182,7 +182,7 @@ _add_instrument_data_to_projects($instrument_data_ignored);
 my $command_ignored = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
 ok($command_ignored->execute(), 'assign-queued-instrument-data executed successfully.');
 is(scalar(keys %{$command_ignored->_newly_created_models}), 0, 'the cron created no models from ignores.');
-is($instrument_data_ignored->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on ignored inst data');
+is($instrument_data_ignored->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'skipped', 'Set tgi_lims_status to skipped on ignored inst data');
 
 # Test AML build 36
 my $aml_sample = Genome::Sample->get(name => "H_KA-758168-0912815");

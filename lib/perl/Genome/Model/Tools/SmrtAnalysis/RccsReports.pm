@@ -56,7 +56,7 @@ sub execute {
         results_directory => $output_directory,
         rccs_per_base_info_file => $self->rccs_per_base_info_file,
     );
-    my $module_path = $self->get_class_object->module_path;
+    my $module_path = $self->__meta__->module_path;
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
     my $workflow = Workflow::Operation->create_from_xml($xml_path);

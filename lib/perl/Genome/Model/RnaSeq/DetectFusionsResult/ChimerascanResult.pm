@@ -3,7 +3,7 @@ package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
 use strict;
 use warnings;
 
-use Genome;
+use above 'Genome';
 
 # Notes from Chris Miller:
 # bsub -oo err.log -q long
@@ -35,9 +35,7 @@ sub create {
     my $params = $self->detector_params;
     my $output_directory = $self->output_dir;
 
-    my $n_threads = $self->_available_cpu_count;
-
-    my $cmd = "python $cmd_path/chimerascan_run.py -v -p $n_threads $params $index_dir $fastq1 $fastq2 $output_directory >$output_directory/chimera_result.out";
+    my $cmd = "python $cmd_path/chimerascan_run.py -v $params $index_dir $fastq1 $fastq2 $output_directory >$output_directory/chimera_result.out";
 
     local $ENV{PYTHONPATH} =  ($ENV{PYTHONPATH} ? $ENV{PYTHONPATH} . ":" : "")  . $self->_python_path_for_version($self->version);
 
@@ -47,8 +45,6 @@ sub create {
         cmd => $cmd,
         input_files => [$fastq1, $fastq2, $index_dir, $output_directory],
     );
-
-    $DB::single=1;
 
     $self->_promote_data();
     $self->_remove_staging_directory();
@@ -63,15 +59,21 @@ sub _staging_disk_usage {
 }
 
 sub _path_for_version {
-    my ($class,$version) = @_;
-    die("You requested an unavailable version of Chimerascan. Requested: $version") unless $version eq '0.4.3';
-    return $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version/chimerascan";
+    my ($class, $version) = @_;
+    return $class->_get_chimerascan_path_for_version($version) . '/chimerascan';
 }
 
 sub _python_path_for_version {
-    my ($class,$version) = @_;
-    die("You requested an unavailable version of Chimerascan. Requested: $version") unless $version eq '0.4.3';
-    return $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version/build/lib.linux-x86_64-2.6";
+    my ($class, $version) = @_;
+    my $chimerascan_path = $class->_get_chimerascan_path_for_version($version);
+    return $chimerascan_path . "/build/lib.linux-x86_64-2.6";
+}
+
+sub _get_chimerascan_path_for_version {
+  my ($class, $version) = @_;
+  my $path = $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version";
+  die("You requested an unavailable version of Chimerascan. Requested: $version") unless (-e $path);
+  return $path;
 }
 
 sub _resolve_index_dir {

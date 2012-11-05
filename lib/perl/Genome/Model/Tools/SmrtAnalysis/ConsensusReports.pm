@@ -63,7 +63,7 @@ sub execute {
         reference_directory => $self->reference_directory,
         variants_gff_file => $self->variants_gff_file,
     );
-    my $module_path = $self->get_class_object->module_path;
+    my $module_path = $self->__meta__->module_path;
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
     my $workflow = Workflow::Operation->create_from_xml($xml_path);

@@ -208,7 +208,7 @@ sub run_r_script {
     }
     close $tsv_fh;
 
-    my $r_library = $self->get_class_object->module_path;
+    my $r_library = $self->__meta__->module_path;
     $r_library =~ s/\.pm/\.R/;
     $self->status_message('R LIBRARY: '. $r_library);
     my $tempdir = Genome::Sys->create_temp_directory();
@@ -474,7 +474,6 @@ sub perl_pileup_error_rate {
     }
     # Close the fh
     $writer->output->close;
-
     $self->run_r_script;
     return 1;
 }

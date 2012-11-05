@@ -262,7 +262,7 @@ sub validate_param_name {
     my ( $self, %params ) = @_;
 
     my $class = 'Genome::Model::Tools::Mummer::ShowCoords';
-    my $class_meta = $class->get_class_object; # dies if not
+    my $class_meta = $class->__meta__; # dies if not
     if ( not $class_meta ) {
         $self->error_message("No genome class found for $class");
         return;

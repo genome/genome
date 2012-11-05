@@ -1125,7 +1125,7 @@ sub generate_summary_and_plots {
     #- Produce ranked gene expression lists based on exon-junction values
     #- What is the distribution of observed intron sizes versus known intron sizes
     #- Produce a Top N% expressed file
-    my $r_script = $self->get_class_object->module_path;
+    my $r_script = $self->__meta__->module_path;
     $r_script =~ s/\.pm/\.R/;
     $self->status_message('R script: '. $r_script);
     my $r_cmd = 'Rscript '. $r_script .' '. $self->output_directory .' '. $self->annotation_name;
