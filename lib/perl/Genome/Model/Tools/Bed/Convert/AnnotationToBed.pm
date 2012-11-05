@@ -28,7 +28,6 @@ EOS
 
 sub process_source {
     my $self = shift;
-$DB::single = 1;
     my $input_fh = $self->_input_fh;
 
     while(my $line = <$input_fh>) {
