@@ -60,20 +60,50 @@ sub _staging_disk_usage {
 
 sub _path_for_version {
     my ($class, $version) = @_;
-    return $class->_get_chimerascan_path_for_version($version) . '/chimerascan';
+
+    my ($base_path, $bin_sub, $python_sub) = _get_chimerascan_path_for_version($version);
+    my $result = join('/', $base_path, $bin_sub);
+
+    if (-e $result) {
+        return $result;
+    } else {
+        die("Binary path ($bin_sub) does not exist under chimerascan path ($base_path)!");
+    }
 }
 
 sub _python_path_for_version {
     my ($class, $version) = @_;
-    my $chimerascan_path = $class->_get_chimerascan_path_for_version($version);
-    return $chimerascan_path . "/build/lib.linux-x86_64-2.6";
+
+    my ($base_path, $bin_sub, $python_sub) = _get_chimerascan_path_for_version($version);
+    my $result = join('/', $base_path, $python_sub);
+
+    if (-e $result) {
+        return $result;
+    } else {
+        die("Python path ($python_sub) does not exist under chimerascan path ($base_path)!");
+    }
 }
 
 sub _get_chimerascan_path_for_version {
-  my ($class, $version) = @_;
-  my $path = $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version";
-  die("You requested an unavailable version of Chimerascan. Requested: $version") unless (-e $path);
-  return $path;
+    my ($version) = @_;
+
+    my $path = sprintf("/usr/lib/chimerascan%s", $version);
+    if (-e $path) {
+        # installed via deb-package method
+        my $bin_sub = 'bin';
+        my $python_sub = join('/', 'lib', 'python2.6', 'site-packages');
+        return $path, $bin_sub, $python_sub;
+    } else {
+        # fall back to old installation method
+        $path = $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version";
+        if (-e $path) {
+            my $bin_sub = 'chimerascan';
+            my $python_sub = join('/', 'build', 'lib.linux-x86_64-2.6');
+            return $path, $bin_sub, $python_sub;
+        } else {
+            die("You requested an unavailable version of Chimerascan. Requested: $version");
+        }
+    }
 }
 
 sub _resolve_index_dir {
