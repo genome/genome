@@ -458,28 +458,39 @@ sub _resolve_builds {
     if ($self->builds and not $self->model_group) {
         my @not_succeeded = grep { $_->status ne 'Succeeded' } $self->builds;
         if (@not_succeeded) {
-            die "Some builds are not successful: " . join(',', map { $_->id } @not_succeeded);
+            die $self->error_message("Some builds are not successful: " . join(',', map { $_->id } @not_succeeded));
         }
         @builds = $self->builds;
     }
     elsif ($self->model_group and not $self->builds) {
         for my $model ($self->model_group->models) {
             unless ($model->isa('Genome::Model::ReferenceAlignment')) {
-                die "Model " . $model->__display_name__ . " of model group " . $self->model_group->__display_name__ .
-                    " is not a reference alignment model, it's a " . $model->class_name;
+                die $self->error_message("Model " . $model->__display_name__ . " of model group " . $self->model_group->__display_name__ .
+                    " is not a reference alignment model, it's a " . $model->class_name);
             }
             my $build = $model->last_complete_build;
             if ($build) {
                 push @builds, $build;
             }
             else {
-                die "Found no last complete build for model " . $model->__display_name__;
+                die $self->error_message("Found no last complete build for model " . $model->__display_name__);
             }
         }
         $self->builds(\@builds);
     }
     else {
-        die "Given both builds and model-groups or neither."; #TODO make all die msgs $self->error_message
+        die $self->error_message("Given both builds and model-groups or neither.");
+    }
+
+    # Make sure there are no duplicate samples
+    my %subjects;
+    for my $build (@builds) {
+        my $subject_id = $build->model->subject->id;
+        if ($subjects{$subject_id}) {
+            die $self->error_message("Subject $subject_id occurs in more than one build. Please provide a list of builds or a model_group that contains no duplicate subjects.\n"
+                                     . "problems: build " . $subjects{$subject_id}->id . " (" .   $subjects{$subject_id}->model->id . ")" . " and " . $build->id . " (" . $build->model->id . ")" );
+        }
+        $subjects{$subject_id} = $build;
     }
 
     return @builds;
