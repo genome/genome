@@ -142,6 +142,9 @@ sub _intermediate_result {
             instrument_data_segment_type => $self->instrument_data_segment_type,
             instrument_data_segment_id   => $self->instrument_data_segment_id,
             samtools_version             => $self->samtools_version,
+            trimmer_name                 => $self->trimmer_name,
+            trimmer_version              => $self->trimmer_version,
+            trimmer_params               => $self->trimmer_params,
             test_name                    => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         );
 
@@ -366,7 +369,13 @@ sub _verify_bwa_samxe_did_happen {
     my $rp_ct;
 
     @last_lines = grep {!/^\[bwtcache_destroy\] \d+ cache waits encountered/} @last_lines;
-    my $last_line = $last_lines[-1];
+
+    my $last_line;
+    if ($self->aligner_version eq '0.6.2') {
+        $last_line = $last_lines[-4];
+    } else {
+        $last_line = $last_lines[-1];
+    }
 
     if ($last_line =~ /(\d+) sequences have been processed/) {
         $rp_ct = $1;
@@ -533,12 +542,17 @@ sub prepare_reference_sequence_index {
 
     my $fasta_size = -s $actual_fasta_file;
     my $bwa_index_algorithm = ($fasta_size < 11_000_000) ? "is" : "bwtsw";
-    my $bwa_path = Genome::Model::Tools::Bwa->path_for_bwa_version($refindex->aligner_version);
+    my $bwa_version = $refindex->aligner_version;
+    my $bwa_path = Genome::Model::Tools::Bwa->path_for_bwa_version($bwa_version);
 
     $class->status_message(sprintf("Building a BWA index in %s using %s.  The file size is %s; selecting the %s algorithm to build it.", $staging_dir, $staged_fasta_file, $fasta_size, $bwa_index_algorithm));
 
     # expected output files from bwa index
-    my @output_files = map {sprintf("%s.%s", $staged_fasta_file, $_)} qw(amb ann bwt pac rbwt rpac rsa sa);
+    my @output_files = map {sprintf("%s.%s", $staged_fasta_file, $_)} qw(amb ann bwt pac sa);
+    my @reverse_output_files = map {sprintf("%s.%s", $staged_fasta_file, $_)} qw(rbwt rpac rsa);
+    unless ($bwa_version eq '0.6.2') {
+        push @output_files, @reverse_output_files;
+    }
 
     my $bwa_cmd = sprintf('%s index -a %s %s', $bwa_path, $bwa_index_algorithm, $staged_fasta_file);
     my $rv = Genome::Sys->shellcmd(

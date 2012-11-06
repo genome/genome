@@ -149,10 +149,15 @@ is_deeply(
     },
     'existing models for run 2',
 );
-is( # processed all
+is( # processed 3
     scalar(grep { $_->attributes(attribute_label => 'tgi_lims_status')->attribute_value  eq 'processed' } @instrument_data),
-    5,
-    'set tgi lims status to processed for all instrument data',
+    3,
+    'set tgi_lims_status to processed for 3 instrument data',
+);
+is( # skipped 2
+    scalar(grep { $_->attributes(attribute_label => 'tgi_lims_status')->attribute_value  eq 'skipped' } @instrument_data),
+    2,
+    'set tgi_lims_status to skipped for 2 instrument data',
 );
 is( # ignored 2
     scalar(grep { $_->ignored } @instrument_data),

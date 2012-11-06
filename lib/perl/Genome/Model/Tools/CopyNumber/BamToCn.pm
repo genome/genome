@@ -142,6 +142,7 @@ sub execute {
     foreach my $chr(@chrs){
       my $tmpchr=$chr; $tmpchr=~s/chr//i;
       next unless($tmpchr=~/^\d+/);  #skip non-autosome
+      next unless defined($data{$chr});
       my $chr_median=&Get_Median($data{$chr});
       #print $output "#Chr${chr}_Median:$chr_median\n";
       $median->add_data($chr_median);

@@ -22,11 +22,11 @@ class Genome::Taxon {
         species_name => {
             is => 'Text',
             calculate_from => 'name',
-            calculate => q{ 
+            calculate => q{
                 $self = shift;
                 my $new_name = shift;
                 if ($new_name) { $self->name($new_name); }
-                return $name; 
+                return $name;
             },
             doc => 'Plain text species name',
         },
@@ -41,11 +41,11 @@ class Genome::Taxon {
 #       SubjectAttributes.
         common_name => {
             calculate_from => 'name',
-            calculate => q{ 
+            calculate => q{
                 $self = shift;
                 my $new_name = shift;
                 if ($new_name) { $self->name($new_name); }
-                return $name 
+                return $name
             },
         },
         strain_name=> {

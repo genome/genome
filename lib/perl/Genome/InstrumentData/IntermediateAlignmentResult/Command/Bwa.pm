@@ -50,6 +50,21 @@ class Genome::InstrumentData::IntermediateAlignmentResult::Command::Bwa {
             is => 'Text',
             doc => 'The samtools version used',
         },
+        trimmer_name => {
+            is => 'Text',
+            doc => 'Trimmer strategy used to create input file.',
+            is_optional=>1,
+        },
+        trimmer_version => {
+            is => 'Text',
+            doc => 'Trimmer version to used to create input file.',
+            is_optional=>1,
+        },
+        trimmer_params => {
+            is => 'Text',
+            is_optional=>1,
+            doc => 'Trimmer parameters used to create input file.',
+        },
         test_name => {
             is => 'Text',
             doc => 'A test name for the software result',
@@ -78,6 +93,9 @@ sub execute {
         instrument_data_segment_type => $self->instrument_data_segment_type,
         instrument_data_segment_id => $self->instrument_data_segment_id,
         samtools_version => $self->samtools_version,
+        trimmer_name => $self->trimmer_name,
+        trimmer_version => $self->trimmer_version,
+        trimmer_params => $self->trimmer_params,
         test_name => $self->test_name,
     );
 

@@ -69,7 +69,7 @@ class Genome::Model::Build {
         master_event_status     => { via => 'the_master_event', to => 'event_status' },
     ],
     has_optional => [
-        _newest_workflow_instance => { 
+        _newest_workflow_instance => {
             is => 'Workflow::Operation::Instance',
             is_calculated => 1,
             calculate => q{ return $self->newest_workflow_instance(); }
@@ -436,7 +436,7 @@ sub _cpu_slot_usage_breakdown {
     my @params = @_;
 
     my %steps;
-    
+
     my $workflow_instance = $self->newest_workflow_instance;
     if (1) { #($workflow_instance) {
         my $bx;
@@ -499,16 +499,16 @@ sub _cpu_slot_usage_breakdown {
             my $d2    = Date::Manip::ParseDate( $op_inst->start_time );
             my $delta = Date::Manip::DateCalc( $d2, $d1 );
             my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
-    
+
             if ($value eq '') {
                 #print "null value for " . $op_inst->start_time . " - " . $op_inst->end_time . "\n";
                 $value = 0; # for crashed/incomplete steps
-            }       
-    
+            }
+
             if ($cpus eq '') {
                 die "null cpus??? resource was $rusage\n";
             }
-            
+
             #print "$op_type\t$op_name\t$rusage\t$cpus\n";# . $op_inst->start_time . "\t" . $op_inst->end_time . "\t$value\n";
 
             my $key         = $op_inst->name;
@@ -740,7 +740,7 @@ sub archivable {
     return $allocation->archivable();
 }
 
-sub is_archived { 
+sub is_archived {
     my $self = shift;
     my $is_archived = 0;
     my @allocations = $self->all_allocations;
@@ -1384,6 +1384,10 @@ sub fail {
 
     $self->_verify_build_is_not_abandoned_and_set_status_to('Failed', 1)
         or return;
+
+    if ($self->disk_allocation) {
+        $self->reallocate;
+    }
 
     # set event status
     for my $e ($self->the_events(event_status => 'Running')) {
@@ -2369,7 +2373,7 @@ sub heartbeat_verbose {
 sub _heartbeat {
     my $self = shift;
 
-    my %heartbeat = ( 
+    my %heartbeat = (
         id => $self->id,
         status => $self->status,
         is_ok => 0,

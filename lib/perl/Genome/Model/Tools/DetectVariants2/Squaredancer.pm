@@ -44,7 +44,7 @@ class Genome::Model::Tools::DetectVariants2::Squaredancer{
     ],
     has_param => [ 
         lsf_resource => {
-            default_value => "-M 20000000 -R 'select[mem>20000] rusage[mem=20000]'",
+            default_value => "-M 30000000 -R 'select[mem>30000] rusage[mem=30000]'",
         },
     ],
 };

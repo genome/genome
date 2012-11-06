@@ -201,7 +201,13 @@ sub _inspect_log_file {
         return;
     }
 
-    my $last_line = `tail -1 $log_file`;
+    my $last_line;
+
+    if ($self->aligner_version eq '0.6.2') {
+        $last_line = `tail -4 $log_file | head -1`;
+    } else {
+        $last_line = `tail -1 $log_file`;
+    }
     my $check_nonzero = 0;
 
     my $log_regex = $p{log_regex};

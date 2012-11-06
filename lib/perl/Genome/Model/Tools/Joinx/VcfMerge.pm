@@ -79,9 +79,9 @@ sub execute {
     }
 
     my @inputs = $self->_resolve_inputs();
-    my $labeled_inputs = $self->_resolve_labeled_inputs();
+    my ($labeled_inputs, $labeled_inputs_hash) = $self->_resolve_labeled_inputs();
     my $output = $self->_resolve_output();
-    unless(@inputs or $labeled_inputs) {
+    unless(@inputs or @$labeled_inputs) {
         if(defined($self->output_file)) {
             # make output file exist (for downstream tools)
             unless(system("touch $output") == 0) {
@@ -94,7 +94,7 @@ sub execute {
     my $flags = $self->_resolve_flags();
     my $joinx_bin_path = $self->joinx_path();
     my ($cmd, $params) = $self->_generate_joinx_command($joinx_bin_path,
-            $flags, \@inputs, $labeled_inputs, $output);
+            $flags, \@inputs, $labeled_inputs, $labeled_inputs_hash, $output);
     my %params = %{$params};
 
     $self->status_message("Executing command: $cmd");
@@ -172,14 +172,14 @@ sub _resolve_flags {
 # combine the parts of the joinx command together and return the command and
 # params for Sys->shellcmd
 sub _generate_joinx_command {
-    my ($self, $joinx_bin_path, $flags, $inputs, $labeled_inputs, $output) = @_;
+    my ($self, $joinx_bin_path, $flags, $inputs, $labeled_inputs_order, $labeled_inputs_hash, $output) = @_;
     my @inputs = @{$inputs};
 
     @inputs = map {"<(zcat $_)"} @inputs if $self->use_bgzip;
 
     my @labeled_inputs;
-    for my $file (keys %$labeled_inputs) {
-        my $tag = $labeled_inputs->{$file};
+    for my $file (@$labeled_inputs_order) {
+        my $tag = $labeled_inputs_hash->{$file};
         my $labeled_input;
         if($self->use_bgzip) {
             $labeled_input = "-D <(zcat $file)=$tag";
@@ -220,6 +220,7 @@ sub _resolve_labeled_inputs {
 
     my $file_to_label_map;
     my @inputs = $self->labeled_input_files;
+    my @input_paths;
     for my $input (@inputs) {
         my ($file, $tag, @extras) = split "=", $input;
         unless ($file and $tag and not @extras) {
@@ -229,9 +230,10 @@ sub _resolve_labeled_inputs {
             die $self->error_message("Labeled input ($input) file ($file) does not exist or has no size!");
         }
         $file_to_label_map->{$file} = $tag;
+        push(@input_paths, $file);
     }
 
-    return $file_to_label_map;
+    return \@input_paths, $file_to_label_map;
 }
 
 1;

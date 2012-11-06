@@ -206,6 +206,10 @@ sub execute {
         my $skipped_bed = $self->somatic_variation_build->data_set_path("effects/snvs.hq.previously_detected.tier1",2,"bed");
         next unless (-e $skipped_bed); #nothing was skipped
         my $skipped = Genome::Sys->create_temp_file_path;
+        my $annotation_build = $self->somatic_variation_build->annotation_build;
+        unless ($annotation_build) {
+            print "annotation build was null for somatic variation build ".$self->somatic_variation_build->id."\n";
+        }
         my $annotation_build_id = $self->somatic_variation_build->annotation_build->id; 
         my $rv = `gmt annotate transcript-variants --variant-bed-file $skipped_bed --output-file $skipped --build-id $annotation_build_id --annotation-filter top --accept-reference-IUB-codes`;
         my @skipped_loci = `cat $skipped`;

@@ -18,21 +18,31 @@ plot_spectrum=function(spectrum_file="",output_file="",genome="",absolute_axis=T
     dev.off();
 }
 
-sequence_context_pvalue = function(p0=NULL,sample_successes=NULL,n=NULL,outfile=NULL) {
+sequence_context_pvalue = function(p0=NULL,ts_before_cs=NULL,n=NULL,outfile=NULL,cs_before_cs=NULL,before_or_after="before") {
     p0 = as.numeric(p0);
-    sample_successes = as.numeric(sample_successes);
+    ts_before_cs = as.numeric(ts_before_cs);
+    cs_before_cs = as.numeric(cs_before_cs);
     n = as.numeric(n);
-    # this is a proportion test. z-score followed by standard normal distribution p-value.
+    before_or_after = as.character(before_or_after);
+    pyramidine_base_before_Cs_percentage = sprintf('%.2f',((ts_before_cs + cs_before_cs)*100)/n);
+    # this is a proportion test. z-score followed by standard normal distribution p-value. #
+    # sample_successes = ts_before_cs;
+    sample_successes = ts_before_cs + cs_before_cs;
     pbar = sample_successes / n;
     z=(pbar-p0)/sqrt(p0*(1-p0)/n);
     pval = 2*pnorm(-abs(z),lower.tail=TRUE);
-    #return(pval);
+
+    # print results to file #
     cat(paste("Null hypothesis: Sample proportion is equivalent to hypothesized proportion.",sep=""),file=outfile,sep="\n");
-    cat(paste("Hypothesized Porportion (Control Proportion): ",p0,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("Hypothesized Porportion (Control Proportion): ",sprintf('%.3f',p0),sep=""),file=outfile,sep="\n",append=T);
     cat(paste("Sample Size: ",n,sep=""),file=outfile,sep="\n",append=T);
-    cat(paste("Sample Successes: ",sample_successes,sep=""),file=outfile,sep="\n",append=T);
-    cat(paste("Sample Proportion: ",pbar,sep=""),file=outfile,sep="\n",append=T);
-    cat(paste("P-value: ",pval,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("Num of Ts ",before_or_after," Cs: ",ts_before_cs,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("Num of Cs ",before_or_after," Cs: ",cs_before_cs,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("% pyramidine bases ",before_or_after," Cs: ",pyramidine_base_before_Cs_percentage,"%",sep=""),file=outfile,sep="\n",append=T);
+    # cat(paste("Sample Successes (Here, Ts before Cs): ",sample_successes,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("Sample Successes (Here, Cs and Ts ",before_or_after," Cs): ",sample_successes,sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("Sample Proportion: ",sprintf('%.3f',pbar),sep=""),file=outfile,sep="\n",append=T);
+    cat(paste("P-value: ",sprintf('%.5e',pval),sep=""),file=outfile,sep="\n",append=T);
 }
 
 

@@ -9,6 +9,10 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
+use Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
+
+*Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::_staging_disk_usage
+    = sub { return 40 * 1024 };
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult";
 my $tophat_data = $data_dir . "/tophat_data/";

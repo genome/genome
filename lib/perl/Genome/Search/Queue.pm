@@ -21,6 +21,7 @@ class Genome::Search::Queue {
         },
         timestamp => {
             is => 'Time',
+            default_value => UR::Context->now,
             doc => 'Timestamp of first request. Automatically added if not provided.',
         },
         priority => {
@@ -53,7 +54,7 @@ sub create {
         Carp::croak "subject_class not specified, cannot check if it is indexable";
     }
     unless (Genome::Search->is_indexable($subject_class)) {
-        Carp::croak "subject_class must be indexable in order to add to IndexQueue";
+        Carp::croak "subject_class ($subject_class) must be indexable in order to add to IndexQueue";
     }
 
     unless ($bx->specifies_value_for('timestamp')) {
