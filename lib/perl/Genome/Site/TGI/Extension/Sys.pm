@@ -161,13 +161,6 @@ sub _simplify_inc {
     return @inc;
 }
 
-sub _uniq {
-    my $self = shift;
-    my @list = @_;
-    my %seen = ();
-    my @unique = grep { ! $seen{$_} ++ } @list;
-    return @unique;
-}
 # this helps us clean-up locks
 
 my %SYMLINKS_TO_REMOVE;

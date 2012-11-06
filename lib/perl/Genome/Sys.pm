@@ -55,6 +55,14 @@ sub snapshot_revision {
     return join(':', @inc);
 }
 
+sub _uniq {
+    my $self = shift;
+    my @list = @_;
+    my %seen = ();
+    my @unique = grep { ! $seen{$_} ++ } @list;
+    return @unique;
+}
+
 # access to paths to code and data
 
 sub dbpath {
