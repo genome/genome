@@ -146,40 +146,11 @@ sub kill_lsf_job {
     return 1 if $rv == 0;
 }
 
-#####
-# API for accessing software and data by version
-#####
 
-sub snapshot_revision {
-    my $class = shift;
-
-    # Previously we just used UR::Util::used_libs_perl5lib_prefix but this did not
-    # "detect" a software revision when using code from PERL5LIB or compile-time
-    # lib paths. Since it is common for developers to run just Genome from a Git
-    # checkout we really want to record what versions of UR, Genome, and Workflow
-    # were used.
-
-    my @orig_inc = @INC;
-    my @libs = ($INC{'UR.pm'}, $INC{'Genome.pm'});
-    die $class->error_message('Did not find both modules loaded (UR and Genome).') unless @libs == 2;
-
-    # assemble list of "important" libs
-    @libs = map { File::Basename::dirname($_) } @libs;
-    push @libs, UR::Util->used_libs;
-
-    # remove trailing slashes
-    map { $_ =~ s/\/+$// } (@libs, @orig_inc);
-
-    @libs = $class->_uniq(@libs);
-
-    # preserve the list order as appeared @INC
-    my @inc;
-    for my $inc (@orig_inc) {
-        push @inc, grep { $inc eq $_ } @libs;
-    }
-
-    @inc = $class->_uniq(@inc);
-
+# used by Genome::Sys->snapshot_revision when present
+sub _simplify_inc {
+    my $self = shift;
+    my @inc = @_;
     # if the only path is like /gsc/scripts/opt/genome/snapshots/genome-1213/lib/perl then just call it genome-1213
     # /gsc/scripts/opt/genome/snapshots/genome-1213/lib/perl -> genome-1213
     # /gsc/scripts/opt/genome/snapshots/custom/genome-foo/lib/perl -> custom/genome-foo
@@ -187,18 +158,9 @@ sub snapshot_revision {
         $inc[0] =~ s/^\/gsc\/scripts\/opt\/genome\/snapshots\///;
         $inc[0] =~ s/\/lib\/perl$//;
     }
-
-    return join(':', @inc);
+    return @inc;
 }
 
-
-sub _uniq {
-    my $self = shift;
-    my @list = @_;
-    my %seen = ();
-    my @unique = grep { ! $seen{$_} ++ } @list;
-    return @unique;
-}
 # this helps us clean-up locks
 
 my %SYMLINKS_TO_REMOVE;
