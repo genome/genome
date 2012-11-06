@@ -838,7 +838,7 @@ sub resolve_fastq_filenames {
     my @errors;
     
     # First check the archive directory and second get the gerald directory
-    for my $dir_type qw(archive_path gerald_directory) {
+    for my $dir_type (qw(archive_path gerald_directory)) {
         $self->status_message("Now trying to get fastq from $dir_type for $desc");
         
         my $directory = $self->$dir_type;
