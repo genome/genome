@@ -129,12 +129,26 @@ sub generate_result {
 
     my $num_builds = scalar(@builds);
     my $accessor = sprintf("get_%s_vcf", $self->variant_type);
-    my @vcf_files = map{ $_->$accessor } @builds;
-    my @existing_files = grep { -s $_ } @vcf_files;
-    unless( scalar(@existing_files) == $num_builds){
+
+
+    my (@builds_with_file, @builds_without_file, @vcf_files);
+    for my $build (@builds) {
+        my $vcf_file = $build->$accessor;
+        if (-s $vcf_file) {
+            push @builds_with_file, $build->id;
+            push @vcf_files, $vcf_file;
+        } else {
+            push @builds_without_file, $build->id;
+        }
+    }
+
+    unless( scalar(@builds_with_file) == $num_builds){
         die $self->error_message("The number of input builds ($num_builds) did not match the" .
-            " number of vcf files found (" . scalar (@existing_files) . ").\n" .
-            "Check the input builds for completeness.");
+            " number of vcf files found (" . scalar (@builds_with_file) . ").\n" .
+            "Check the input builds for completeness.\n" .
+            "Builds with a file present: " . join(",", @builds_with_file) . "\n" .
+            "Builds with missing or zero size file: " . join(",", @builds_without_file) . "\n"
+        );
     }
 
     my $reference_sequence_build = $builds[0]->reference_sequence_build;
