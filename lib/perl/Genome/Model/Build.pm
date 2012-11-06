@@ -1706,7 +1706,7 @@ sub _resolve_subclass_name {
 
     unless ( $type_name ) {
         my $rule = $class->define_boolexpr(@_);
-        $type_name = $rule->specified_value_for_property_name('type_name');
+        $type_name = $rule->value_for('type_name');
     }
 
     if (defined $type_name ) {
