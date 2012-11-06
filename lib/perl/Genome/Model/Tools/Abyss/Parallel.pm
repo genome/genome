@@ -75,7 +75,14 @@ sub mpirun_cmd {
     my $log_file = "$output_directory/abyss_parallel.log";
     my $num_jobs = $self->num_jobs;
     my $job_queue = $self->job_queue;
-    return "bsub -K -oo $log_file -n $num_jobs -a openmpi -q $job_queue -R '$rusage' mpirun.lsf -x PATH";
+    my $PATH = $self->bindir . ":$ENV{PATH}";
+
+    # mpirun (of openmpi) parses environment variables in an unexpected way so
+    # rather than just doing "-x PATH" we have to provide the value here. Otherwise
+    # mpirun can see an equals sign in the *value* of an environment variable and
+    # then decides to put the value into the envrionment instead of the key=value
+    # into the environment.
+    return qq(bsub -K -oo $log_file -n $num_jobs -a openmpi -q $job_queue -R '$rusage' mpirun.lsf -x PATH="$PATH");
 }
 
 sub parse_kmer_range {
@@ -145,7 +152,6 @@ sub execute {
         make_path($output_dir);
         pushd($output_dir);
         chdir($output_dir);
-        local $ENV{PATH} = $self->bindir . ":$ENV{PATH}";
         return unless Genome::Sys->shellcmd( cmd => join(' ', @cmd),);
     }
 
