@@ -290,6 +290,12 @@ sub run_breakdancer {
         allow_zero_size_output_files => 1,
     );
 
+    my $md5file = $self->_sv_staging_output . '.fastq-md5s';
+    my @fastqs = glob($self->_sv_staging_output . ".*");
+    for my $fastq (@fastqs) {
+        Genome::Sys->shellcmd(cmd => "md5sum $fastq | tee -a $md5file 1>&2");
+    }
+
     unless ($return) {
         $self->error_message("Running breakdancer failed using command: $cmd");
         die;
