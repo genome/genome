@@ -410,7 +410,6 @@ sub _get_allocation_without_lock {
             unless ($candidate_allocation) {
                 die 'Failed to create candidate allocation';
             }
-            $candidate_allocation->volume;
             _commit_unless_testing();
 
             # Reload so we guarantee that we calculate the correct allocated_kb
