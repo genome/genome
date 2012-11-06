@@ -250,6 +250,7 @@ sub oracle_to_postgres_table_mapping {
         'genome_subject' => 'subject.subject',
         'genome_subject_attribute' => 'subject.subject_attribute',
         'genome_sys_user' => 'subject.user',
+        'genome_sys_user_role' => 'subject.role',
         'genome_task' => 'web.task',
         'genome_task_params' => 'web.task_params',
         'instrument_data' => 'instrument.data',
