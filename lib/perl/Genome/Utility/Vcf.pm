@@ -32,7 +32,7 @@ sub open_vcf_file {
 # if evaluated in ARRAY context it also returns the open file-handle 
 # positioned at the first line that is not a header.
 sub get_vcf_header {
-    my $filename = @_;
+    my ($filename) = @_;
     my $input_fh = open_vcf_file($filename);
 
     my $header = '';
