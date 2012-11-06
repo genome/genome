@@ -847,7 +847,7 @@ sub _unarchive {
         if ($old_absolute_path ne $self->absolute_path) {
             my $old_parent_dir = File::Basename::dirname($old_absolute_path);
             if(! -e $old_parent_dir){
-                mkpath $old_parent_dir;
+                Genome::Sys->create_directory($old_parent_dir);
             }
             if(-d $old_parent_dir && ! -e $old_absolute_path) {
                 symlink $self->absolute_path, $old_absolute_path;
