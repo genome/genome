@@ -18,6 +18,45 @@ our $VERSION = $Genome::VERSION;
 
 class Genome::Sys {};
 
+# API for accessing software and data by version
+
+sub snapshot_revision {
+    my $class = shift;
+
+    # Previously we just used UR::Util::used_libs_perl5lib_prefix but this did not
+    # "detect" a software revision when using code from PERL5LIB or compile-time
+    # lib paths. Since it is common for developers to run just Genome from a Git
+    # checkout we really want to record what versions of UR, Genome, and Workflow
+    # were used.
+
+    my @orig_inc = @INC;
+    my @libs = ($INC{'UR.pm'}, $INC{'Genome.pm'});
+    die $class->error_message('Did not find both modules loaded (UR and Genome).') unless @libs == 2;
+
+    # assemble list of "important" libs
+    @libs = map { File::Basename::dirname($_) } @libs;
+    push @libs, UR::Util->used_libs;
+
+    # remove trailing slashes
+    map { $_ =~ s/\/+$// } (@libs, @orig_inc);
+
+    @libs = $class->_uniq(@libs);
+
+    # preserve the list order as appeared @INC
+    my @inc;
+    for my $inc (@orig_inc) {
+        push @inc, grep { $inc eq $_ } @libs;
+    }
+
+    @inc = $class->_uniq(@inc);
+
+    @inc = $class->_simplify_inc(@inc) if $class->can('_simplify_inc');
+
+    return join(':', @inc);
+}
+
+# access to paths to code and data
+
 sub dbpath {
     my ($class, $name, $version) = @_;
     my $envname = $class->dbname_to_envname($name);
