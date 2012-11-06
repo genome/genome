@@ -37,6 +37,19 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariationPartTwo {
           doc => "add a tier column to the output table",
       },
 
+      keep_ambiguous_calls =>{
+          is => 'Boolean',
+          is_optional => 1,
+          default => 0,
+          doc => "Pass through sites that are reviewed ambiguous. The default is to keep only sites reviewed as somatic",
+      },      
+      create_maf =>{
+          is => 'Boolean',
+          is_optional => 1,
+          default => 1,
+          doc => "create a maf file of tier1 variants",
+      },
+
       review_file =>{
           is => 'String',
           is_optional => 1,
@@ -62,7 +75,8 @@ AUTHS
 
 
 sub bedToAnno{
-    my ($chr,$start,$stop,$ref,$var,@rest) = split("\t",$_[0]);
+    my ($chr,$start,$stop,$refvar,@rest) = split("\t",$_[0]);
+    my ( $ref, $var ) = split("/",$refvar);
     if ($ref =~ /0|\-|\*/){ #indel INS
         $stop = $stop+1;
     } else { #indel DEL or SNV
@@ -128,7 +142,8 @@ sub execute {
   unless( -e $review_file ){
       die "ERROR: review file for $sample_name not found at $review_file. Specify the correct location using --review-file\n";
   }
-
+  print STDERR "using review file $review_file\n";
+  
   die "snv directory not found at $output_dir/$sample_name/snvs - did you specify the right output directory?" unless( -e "$output_dir/$sample_name/snvs" );
   die "indel directory not found at $output_dir/$sample_name/indels - did you specify the right output directory?" unless( -e "$output_dir/$sample_name/indels" );
 
@@ -157,17 +172,25 @@ sub execute {
       #status is not
       die "no review status on $line\n" unless defined($status);
 
-#      next if $line =~/ambiguous but looks like normal contamination - restored/;
-
       if(($ref =~ /0|\-|\*/) || ($var =~ /0|\-|\*/)){ #indel
           print INDELREVFILE join("\t",( $chr, $start, $stop, $ref, $var, $status, $notes)) . "\n";
           if($status eq "S"){
               print INDELSOMFILE join("\t",( $chr, $start, $stop, $ref, $var)) . "\n";
+              print STDERR "s indel\n";
+          }
+          if( ($self->keep_ambiguous_calls) && ($status eq "A")){
+              print INDELSOMFILE join("\t",( $chr, $start, $stop, $ref, $var)) . "\n";
+              print STDERR "a indel\n";
           }
       } else { #snv
           print SNVREVFILE join("\t",( $chr, $start, $stop, $ref, $var, $status, $notes)) . "\n";
           if($status eq "S"){
               print SNVSOMFILE join("\t",( $chr, $start, $stop, $ref, $var)) . "\n";
+              print STDERR "s snv\n";
+          }
+          if( ($self->keep_ambiguous_calls) && ($status eq "A")){
+              print SNVSOMFILE join("\t",( $chr, $start, $stop, $ref, $var)) . "\n";
+              print STDERR "a snv\n";
           }
       }
   }
@@ -257,32 +280,20 @@ sub execute {
       if($self->add_readcounts){
           print STDERR "adding readcounts\n";
           #get readcounts from the normal bam
-          my $normal_rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-              bam_file => $normal_bam,
+          my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+              bam_files => "$normal_bam,$tumor_bam",
               variant_file => $tmpfile,
-              output_file => $tmpfile . ".nrm",
+              output_file => $tmpfile . ".rcnt",
               genome_build => $ref_seq_fasta,
-              header_prefix => "Normal",
+              header_prefixes => "Normal,Tumor",
               );
-          unless ($normal_rc_cmd->execute) {
-              die "Failed to obtain normal readcounts.\n";
+          unless ($rc_cmd->execute) {
+              die "Failed to obtain readcounts.\n";
           }
           
-          #get readcounts from the tumor bam
-          my $tumor_rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-              bam_file => $tumor_bam,
-              variant_file => $tmpfile . ".nrm",
-              output_file => $tmpfile . ".nrm.tum",
-              genome_build => $ref_seq_fasta,
-              header_prefix => "Tumor",
-              );
-          unless ($tumor_rc_cmd->execute) {
-              die "Failed to obtain tumor readcounts.\n";
-          }
-          $tmpfile = $tmpfile . ".nrm.tum";
       }
   
-      `mv $tmpfile $output_dir/$sample_name/somatic.variants.anno`;
+      `mv $tmpfile.rcnt $output_dir/$sample_name/somatic.variants.anno`;
       `rm -f $output_dir/$sample_name/tmp*`;
   } else {
       `touch $output_dir/$sample_name/somatic.variants.anno`;
@@ -290,49 +301,53 @@ sub execute {
 
 
   #--------------
-  print STDERR "creating maf file\n";
+
+
   #create maf file for this sample
-  
-  #have to tier things first so that we only include tier1 variants in the maf. grar.
-  my $sfile = "$output_dir/$sample_name/snvs/snvs.reviewed.somatic";
-  my $sannofile = "$output_dir/$sample_name/snvs/snvs.reviewed.somatic.anno";
-  my $ifile = "$output_dir/$sample_name/indels/indels.reviewed.somatic";
-  my $iannofile = "$output_dir/$sample_name/indels/indels.reviewed.somatic.anno";
-  my @files = ($sfile, $sannofile, $ifile, $iannofile);
-
-  foreach my $file (@files){
-      if( -s $file){
-          my $tier_cmd  = Genome::Model::Tools::FastTier::AddTiers->create(
-              input_file => $file,
-              output_file => $file . ".tiered",
-              build => $genome_build_number,
-              );
-          unless ($tier_cmd->execute) {
-              die "Failed to tier variants.\n";
-          }  
-          #grep out tier 1 variants from these files
-          my $tfile = $file . ".tiered";
-          `grep "tier1" $tfile >$file.tier1`;
-      } else {
-          `touch $file.tiered`;
-          `touch $file.tier1`;
+  if($self->create_maf){
+      print STDERR "creating maf file\n";
+      #have to tier things first so that we only include tier1 variants in the maf. grar.
+      my $sfile = "$output_dir/$sample_name/snvs/snvs.reviewed.somatic";
+      my $sannofile = "$output_dir/$sample_name/snvs/snvs.reviewed.somatic.anno";
+      my $ifile = "$output_dir/$sample_name/indels/indels.reviewed.somatic";
+      my $iannofile = "$output_dir/$sample_name/indels/indels.reviewed.somatic.anno";
+      my @files = ($sfile, $sannofile, $ifile, $iannofile);
+      
+      
+      foreach my $file (@files){
+          if( -s $file){
+              my $tier_cmd  = Genome::Model::Tools::FastTier::AddTiers->create(
+                  input_file => $file,
+                  output_file => $file . ".tiered",
+                  build => $genome_build_number,
+                  );
+              unless ($tier_cmd->execute) {
+                  die "Failed to tier variants.\n";
+              }  
+              #grep out tier 1 variants from these files
+              my $tfile = $file . ".tiered";
+              `grep "tier1" $tfile >$file.tier1`;
+          } else {
+              `touch $file.tiered`;
+              `touch $file.tier1`;
+          }
       }
-  }
-
-
-  
-  my $maf_cmd = Genome::Model::Tools::Capture::CreateMafFile->create(
-      output_file => "$output_dir/$sample_name/somatic.maf",
-      genome_build => $genome_build_number,
-      indel_file => "$output_dir/$sample_name/indels/indels.reviewed.somatic.tier1",
-      indel_annotation_file => "$output_dir/$sample_name/indels/indels.reviewed.somatic.anno.tier1",
-      snv_file => "$output_dir/$sample_name/snvs/snvs.reviewed.somatic.tier1",
-      snv_annotation_file => "$output_dir/$sample_name/snvs/snvs.reviewed.somatic.anno.tier1",
-      normal_sample => "$normal_sample_name",
-      tumor_sample => "$sample_name",
-      );
-  unless ($maf_cmd->execute) {
-      die "Failed to create maf file";
+      
+      
+      
+      my $maf_cmd = Genome::Model::Tools::Capture::CreateMafFile->create(
+          output_file => "$output_dir/$sample_name/somatic.maf",
+          genome_build => $genome_build_number,
+          indel_file => "$output_dir/$sample_name/indels/indels.reviewed.somatic.tier1",
+          indel_annotation_file => "$output_dir/$sample_name/indels/indels.reviewed.somatic.anno.tier1",
+          snv_file => "$output_dir/$sample_name/snvs/snvs.reviewed.somatic.tier1",
+          snv_annotation_file => "$output_dir/$sample_name/snvs/snvs.reviewed.somatic.anno.tier1",
+          normal_sample => "$normal_sample_name",
+          tumor_sample => "$sample_name",
+          );
+      unless ($maf_cmd->execute) {
+          die "Failed to create maf file";
+      }
   }
 
   
