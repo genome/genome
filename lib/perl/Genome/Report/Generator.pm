@@ -125,7 +125,7 @@ sub generator {
 }
 
 sub date { 
-    return UR::Time->now; 
+    return UR::Context->current->now; 
 }
 
 sub _get_params_for_generation {

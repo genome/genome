@@ -18,7 +18,7 @@ my $key = 'memcache.t';
         $m->delete($key);
     }
 
-my $now = UR::Time->now();
+my $now = UR::Context->current->now();
 ok($m->set($key, $now, 10), 'setting cache item');
 
 cmp_ok($m->get($key), 'eq', $now, "getting cache item $now");

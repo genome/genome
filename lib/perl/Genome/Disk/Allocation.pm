@@ -370,7 +370,7 @@ sub _create {
         owner_id                     => $owner_id,
         group_subdirectory           => $group_subdirectory,
         id                           => $id,
-        creation_time                => UR::Time->now,
+        creation_time                => UR::Context->current->now,
     );
 
     my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
@@ -482,7 +482,7 @@ sub _reallocate {
                 $actual_kb_requested, $self->id));
     }
 
-    $self->reallocation_time(UR::Time->now);
+    $self->reallocation_time(UR::Context->current->now);
     $self->kilobytes_requested($actual_kb_requested);
     _commit_unless_testing();
 

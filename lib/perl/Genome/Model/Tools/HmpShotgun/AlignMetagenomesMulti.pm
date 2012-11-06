@@ -64,7 +64,7 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running AlignMetagenomes at ".UR::Time->now);
+    $self->status_message(">>>Running AlignMetagenomes at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
     $self->status_message("Reads and reference: ".$self->reads_and_references);
 
@@ -117,7 +117,7 @@ sub execute {
     }
     
     #$self->aligned_file($alignment_file);
-    #$self->status_message("<<<Completed AlignMetagenomes for testing at at ".UR::Time->now);
+    #$self->status_message("<<<Completed AlignMetagenomes for testing at at ".UR::Context->current->now);
     #return 1;
     
     #expected output files
@@ -138,7 +138,7 @@ sub execute {
 	    	$self->status_message("Skipping this step.  Alignments exist for reads file $reads_basename against reference sequence $refseq_basename. If you would like to regenerate these files, remove them and rerun.");
                 $self->aligned_file($alignment_file);
     	        $self->working_directory($parent_directory);
-    	        $self->status_message("<<<Completed alignment at ".UR::Time->now);
+    	        $self->status_message("<<<Completed alignment at ".UR::Context->current->now);
                 return 1;
 	    } 
     } 
@@ -147,7 +147,7 @@ sub execute {
 	my $aligner;
 
     if ($self->generate_concise) { 
-    	$self->status_message("Aligning with Concise option at ".UR::Time->now);
+    	$self->status_message("Aligning with Concise option at ".UR::Context->current->now);
     	$self->status_message("Reads file: ".$reads_file);
     	$aligner = Genome::Model::Tools::Bwa::AlignReadsMulti->create(dna_type=>'dna', 
     									align_options=>$alignment_options, 
@@ -160,7 +160,7 @@ sub execute {
                                                                         top_hits=>$top_hits,
             							);
     } else {				
-    	$self->status_message("Aligning with standard options at ".UR::Time->now);
+    	$self->status_message("Aligning with standard options at ".UR::Context->current->now);
     	$aligner = Genome::Model::Tools::Bwa::AlignReads->create(dna_type=>'dna', 
     									align_options=>$alignment_options, 
     									ref_seq_file=>$reference_sequence,
@@ -173,7 +173,7 @@ sub execute {
             							);
     }
     															
-    $self->status_message("Aligning at ".UR::Time->now);
+    $self->status_message("Aligning at ".UR::Context->current->now);
     my $rv_aligner = $aligner->execute;
 
     if ($rv_aligner != 1) {
@@ -186,7 +186,7 @@ sub execute {
     	$self->aligned_file($alignment_file);
     	$self->working_directory($parent_directory);
     	Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
-    	$self->status_message("<<<Completed alignment at ".UR::Time->now);
+    	$self->status_message("<<<Completed alignment at ".UR::Context->current->now);
     	return 1;
     }
     
@@ -216,7 +216,7 @@ sub execute {
     $self->working_directory($parent_directory);
     Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
     
-    $self->status_message("<<<Completed alignment at ".UR::Time->now);
+    $self->status_message("<<<Completed alignment at ".UR::Context->current->now);
     
     return 1;
 }

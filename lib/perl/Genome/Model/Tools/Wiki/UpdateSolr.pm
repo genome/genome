@@ -40,7 +40,7 @@ sub execute {
     die 'someone else has the wiki_loader lock' if !$lock;
 
     my $cache = Genome::Memcache->server() || die 'cant get memcache server';
-    my $now = UR::Time->now();
+    my $now = UR::Context->current->now();
     my $timeout = 60 * 60 * 24; # this is just storing which changes we've notified solr about
     print "inserting wiki pages to solr index at $now\n";
 

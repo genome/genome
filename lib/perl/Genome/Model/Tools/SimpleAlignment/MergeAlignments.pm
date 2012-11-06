@@ -47,7 +47,7 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running MergeAlignments at ".UR::Time->now);
+    $self->status_message(">>>Running MergeAlignments at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
     my $alignment_files_ref = $self->alignment_files;
     my @alignment_files = @$alignment_files_ref;
@@ -89,7 +89,7 @@ sub execute {
     }
     
     #Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
-    $self->status_message("<<<Completed MergeAlignments at ".UR::Time->now);
+    $self->status_message("<<<Completed MergeAlignments at ".UR::Context->current->now);
     return 1;
  
 }

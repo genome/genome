@@ -107,7 +107,7 @@ sub successful_create_model {
         $params{subject_name} = 'invalid_subject_name';
     }
     my $expected_user_name = Genome::Sys->username;
-    my $current_time = UR::Time->now;
+    my $current_time = UR::Context->current->now;
     my ($expected_date) = split('\w',$current_time);
   
     my $define_class;

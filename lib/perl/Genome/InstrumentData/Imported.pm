@@ -252,7 +252,7 @@ sub create {
     my %params = @_;
     
     unless (exists $params{import_date}) {
-        my $date = UR::Time->now;
+        my $date = UR::Context->current->now;
         $params{import_date} = $date;
     }
     unless (exists $params{user_name}) {

@@ -65,7 +65,7 @@ sub execute {
     $self->dump_error_messages(1);
     $self->dump_warning_messages(1);
 
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
     $self->status_message(">>>Starting ConvertUnalignedReadsToSamFiles execute() at $now"); 
     
     my $working_dir = $self->working_directory;
@@ -256,7 +256,7 @@ sub execute {
 
     print "\nDone with unaligned map to sam conversion.\n";
 
-    $now = UR::Time->now;
+    $now = UR::Context->current->now;
     #$self->dump_status_messages(1); 
     $self->status_message("<<<Completed ConvertUnalignedReadsToSamFiles execute() at $now"); 
     $ua_log->close;

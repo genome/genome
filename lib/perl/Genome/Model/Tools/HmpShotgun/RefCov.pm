@@ -65,13 +65,13 @@ sub execute {
 
     $self->dump_status_messages(1);
     
-    $self->status_message(">>>Running HMP RefCov at ".UR::Time->now);
+    $self->status_message(">>>Running HMP RefCov at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
     $self->status_message("Aligned Bam File: ".$self->aligned_bam_file);
     $self->status_message("Regions file: ".$self->regions_file);
     $self->status_message("Read count file: ".$self->read_count_file);
     
-    #$self->status_message("<<<Completed HMP RefCov for testing at ".UR::Time->now);
+    #$self->status_message("<<<Completed HMP RefCov for testing at ".UR::Context->current->now);
     #return 1;
     
     #expected output files
@@ -94,12 +94,12 @@ sub execute {
   
     	my $cmd = "genome-perl5.10 `which gmt` ref-cov standard ".$self->aligned_bam_file." ".$self->regions_file." ".$stats_file;    
      														
-    	$self->status_message("Running ref cov report at ".UR::Time->now);
+    	$self->status_message("Running ref cov report at ".UR::Context->current->now);
     	my $rv = Genome::Sys->shellcmd(cmd=>$cmd);
     	if ($rv == 1) {
     		Genome::Sys->mark_files_ok(input_files=>\@expected_refcov_output_files);
     	}
-    	$self->status_message("RefCov file generated at ".UR::Time->now);
+    	$self->status_message("RefCov file generated at ".UR::Context->current->now);
     }
     	
     	
@@ -109,14 +109,14 @@ sub execute {
     #then the subsequent report files should be regenerated.
     if ($rv_output_check && $rv_check) {
    		$self->status_message("Expected output files exist.  Skipping generation of the combined file.");
-   		$self->status_message("<<<Completed RefCov at ".UR::Time->now);
+   		$self->status_message("<<<Completed RefCov at ".UR::Context->current->now);
    		return 1;
     } else {
     	$self->status_message("The previous ref cov stats file may have been regenerated.  Attempting to explicitly delete: $combined_file" );
     	unlink($combined_file);
     }
     
-    $self->status_message("Now combining ref cov stats at ".UR::Time->now);
+    $self->status_message("Now combining ref cov stats at ".UR::Context->current->now);
     
     my $refcov_headers_file = "/gscmnt/sata409/research/mmitreva/databases/Bacterial_assemblies.Dec2009.headers_for_refcov.txt";
     
@@ -126,13 +126,13 @@ sub execute {
     
     my $rv_combine = Genome::Sys->shellcmd(cmd=>$cmd_combine);
     
-    $self->status_message("Done combining ref cov stats with read counts at ".UR::Time->now);
+    $self->status_message("Done combining ref cov stats with read counts at ".UR::Context->current->now);
     
     if ($rv_combine) {
     	Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
     }
     
-    $self->status_message("<<<Completed RefCov at ".UR::Time->now);
+    $self->status_message("<<<Completed RefCov at ".UR::Context->current->now);
     
     return 1;
 }

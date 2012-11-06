@@ -61,7 +61,7 @@ sub execute {
        @list = @{$self->command_list};   	#the parallelized code will only receive a list of one item. 
     }
 
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
     my $rv;
     $self->status_message("*** Starting parallel command at $now. ***");
     for my $list_item ( @list  ) {
@@ -75,7 +75,7 @@ sub execute {
        	#	return;
     	#}
     }
-    $now = UR::Time->now;
+    $now = UR::Context->current->now;
     $self->status_message("*** Parallel command completed at $now. ***");
          
     #return 1;

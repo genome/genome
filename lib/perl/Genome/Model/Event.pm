@@ -114,7 +114,7 @@ sub create {
         $self->event_type($self->command_name);
     }
     unless ($self->date_scheduled) {
-        $self->date_scheduled(UR::Time->now);
+        $self->date_scheduled(UR::Context->current->now);
     }
     unless ($self->user_name) {
         my $user = getpwuid($<);
@@ -501,7 +501,7 @@ sub execute_with_bsub {
         }
         my $fh = IO::File->new(">> $log_file");
         $fh->print("\n\n########################################################\n");
-        $fh->print( sprintf('Submitted at %s: %s', UR::Time->now, $cmdline) );
+        $fh->print( sprintf('Submitted at %s: %s', UR::Context->current->now, $cmdline) );
         $fh->close;
     }
     my $bsub_output = `$cmdline`;
@@ -528,7 +528,7 @@ sub schedule {
 
     # FYI: user_name is set in create
     $self->event_status("Scheduled");
-    $self->date_scheduled( UR::Time->now );
+    $self->date_scheduled( UR::Context->current->now );
     $self->date_completed(undef);
     $self->retry_count(0) unless defined $self->retry_count;
 
@@ -562,7 +562,7 @@ sub abandon {
         }
     }
     $self->event_status("Abandoned");
-    $self->date_completed(UR::Time->now);
+    $self->date_completed(UR::Context->current->now);
     return 1;
 }
 
@@ -823,7 +823,7 @@ sub lsf_state {
     foreach my $line (@eventlines) {
         if ($line =~ /PENDING REASONS:/) {
             @pending_reasons = (
-                                UR::Time->now,
+                                UR::Context->current->now,
                                 {}
                             );
             next;

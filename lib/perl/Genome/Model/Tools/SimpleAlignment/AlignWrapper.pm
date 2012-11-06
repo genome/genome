@@ -56,7 +56,7 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running AlignWrapper at ".UR::Time->now);
+    $self->status_message(">>>Running AlignWrapper at ".UR::Context->current->now);
     $self->status_message("Ref seq: ".$self->reference_name);
     $self->status_message("Working directory: ".$self->working_directory);
    
@@ -88,7 +88,7 @@ sub execute {
     $self->status_message("Setting aligned file to: $alignment_file");  	
     $self->aligned_file($alignment_file);
      
-    $self->status_message("<<<Completed alignment at ".UR::Time->now);
+    $self->status_message("<<<Completed alignment at ".UR::Context->current->now);
     
     return 1;
 }

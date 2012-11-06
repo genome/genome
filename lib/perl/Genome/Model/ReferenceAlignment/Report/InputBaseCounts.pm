@@ -21,7 +21,7 @@ class Genome::Model::ReferenceAlignment::Report::InputBaseCounts {
         name                        => { default_value => 'Input_Base_Counts' },
         description => {
             calculate => q|
-            return "<div>Input Base Counts for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Time->now.'</div>';
+            return "<div>Input Base Counts for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Context->current->now.'</div>';
             |,
         },
         report_templates => {
@@ -89,7 +89,7 @@ sub generate_report_brief
 {
     my $self=shift;
 #    my $build = $self->build;
-    return "<div>Input Base Counts for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Time->now.'</div>';
+    return "<div>Input Base Counts for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Context->current->now.'</div>';
 }
 
 sub generate_report_detail 

@@ -1519,7 +1519,7 @@ sub _verify_build_is_not_abandoned_and_set_status_to {
 
     # Set status and date completed
     $build_event->event_status($status);
-    $build_event->date_completed( UR::Time->now ) if $set_date_completed;
+    $build_event->date_completed( UR::Context->current->now ) if $set_date_completed;
 
     return $build_event;
 }

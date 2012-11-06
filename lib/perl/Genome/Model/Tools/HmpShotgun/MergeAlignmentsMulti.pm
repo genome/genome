@@ -55,7 +55,7 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running MergeAlignmentsMulti at ".UR::Time->now);
+    $self->status_message(">>>Running MergeAlignmentsMulti at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
     my $concise_files_ref = $self->concise_files;
     my @concise_files = @$concise_files_ref;
@@ -82,7 +82,7 @@ sub execute {
     
     $self->paired_end1_concise_file($pe1_output_file);
     $self->paired_end2_concise_file($pe2_output_file);
-    $self->status_message("<<<Completed MergeAlignmentsMulti for testing at at ".UR::Time->now);
+    $self->status_message("<<<Completed MergeAlignmentsMulti for testing at at ".UR::Context->current->now);
     return 1;
 }
 
