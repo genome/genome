@@ -15,7 +15,7 @@ class Genome::Model::Event {
     sub_classification_method_name => '_resolve_subclass_name',
     subclass_description_preprocessor => 'Genome::Model::Event::_preprocess_subclass_description',
     id_by => [
-        genome_model_event_id => { is => 'NUMBER', len => 11 },
+        genome_model_event_id => { is => 'Text' },
     ],
     has => [
         model        => { is => 'Genome::Model', id_by => 'model_id', constraint_name => 'GME_GM_FK' },
