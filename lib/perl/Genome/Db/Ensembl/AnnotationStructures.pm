@@ -79,6 +79,9 @@ sub create
     my $slice_adaptor = $registry->get_adaptor( $ucfirst_species, $data_set, 'Slice');
     my $assembly_exception_feature_adaptor = $registry->get_adaptor( $ucfirst_species, $data_set, 'AssemblyExceptionFeature');
 
+    my $ontology_adaptor = $registry->get_adaptor('Multi', 'Ontology', 'OntologyTerm');
+    my $biotype_mapper = new BiotypeMapper($ontology_adaptor);
+
     my @slices = @{ $slice_adaptor->fetch_all('toplevel', undef, 1, 1, 1) };
 
     my $idx = 0;
@@ -391,7 +394,8 @@ sub create
                     my $structure_type = 'utr_exon';
 
                     #Check the transcript biotype to classify it as ncRNA
-                    if ($biotype =~/ncrna|antisense|sense_intronic|sense_overlapping/i) {
+                    if ($biotype_mapper->member_of_group($biotype, 'ncrna') and
+                        not $biotype_mapper->member_of_group($biotype, 'pseudogene')) {
                         $structure_type = 'rna';
                     }
 
