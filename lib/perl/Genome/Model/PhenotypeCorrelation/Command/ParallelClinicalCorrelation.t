@@ -36,11 +36,11 @@ my $glm_model_file = "$test_data_dir/glm-model.txt";
 my $clinical_data_file = "$test_data_dir/clinical.txt";
 my $sample_list_file = "$test_data_dir/samples.txt";
 my $output_prefix = "$tmpdir/parallel.txt";
-my $glm_output_file = "$tmpdir/parallel.txt.glm.csv";
-my $categorical_output_file = "$tmpdir/parallel.txt.categorical.csv";
+my $glm_output_file = "$tmpdir/parallel.txt.glm.tsv";
+my $categorical_output_file = "$tmpdir/parallel.txt.categorical.tsv";
 my $orig_output_file_prefix = "$tmpdir/orig.txt";
-my $orig_glm_output_file = "$orig_output_file_prefix.glm.csv";
-my $orig_categorical_output_file = "$orig_output_file_prefix.categorical.csv";
+my $orig_glm_output_file = "$orig_output_file_prefix.glm.tsv";
+my $orig_categorical_output_file = "$orig_output_file_prefix.categorical.tsv";
 my $categorical_clinical_data_file = "$tmpdir/categorical.txt";
 
 my $parallel_cmd = $pkg->create(

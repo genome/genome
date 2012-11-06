@@ -28,21 +28,33 @@ EOS
 
 sub process_source {
     my $self = shift;
-
     my $input_fh = $self->_input_fh;
 
     while(my $line = <$input_fh>) {
         chomp $line;
         my ($chromosome, $start, $stop, $reference, $consensus, $type, @extra) = split("\t", $line);
         # convert from 1-based to 0 based
+        
+        # if $type is defined #
         if(defined($type)){
             if ($type eq "INS") {
                 --$stop;
             } elsif ($type eq "DEL|SNP") {
                 --$start;
-            } 
+            
+            # if type is some other column not really indicating type #
+            
+            } elsif ($reference =~ /0|\-|\*/){ ##INS
+                --$stop;
+            } elsif ($consensus =~ /0|\-|\*/){ ##DEL
+                --$start;
+            } else { #SNP
+                --$start;
+            }
+        }
 
-        } else { #5col format without type
+        # or if $type is not defined #
+        else {
             if ($reference =~ /0|\-|\*/){ ##INS
                 --$stop;
             } elsif ($consensus =~ /0|\-|\*/){ ##DEL
@@ -51,6 +63,7 @@ sub process_source {
                 --$start;
             }
         }
+
         #my $depth = 0;
         #my $qual = 0;
         #$self->write_bed_line($chromosome, $start, $stop, $reference, $consensus, $depth, $qual);

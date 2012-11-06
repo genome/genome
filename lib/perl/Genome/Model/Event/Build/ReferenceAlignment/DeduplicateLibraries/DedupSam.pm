@@ -81,7 +81,7 @@ sub execute {
        die "Could not open file ".$log_file." for writing.";
     } 
 
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
     print $log_fh "Executing DedupSam.pm at $now"."\n";
 
     my @list;
@@ -101,7 +101,7 @@ sub execute {
             my @library_maps = @{$hash{$library}};
             print $log_fh "key:>$library<  /  value:>".scalar(@library_maps)."<"."\n";
 
-            $now = UR::Time->now;
+            $now = UR::Context->current->now;
             print $log_fh ">>> Starting bam merge at $now for library: $library ."."\n";
             print $log_fh "Merging maps:\n";
             print $log_fh join("\n",@library_maps);
@@ -116,7 +116,7 @@ sub execute {
             if (-e $merged_file) {
                 print $log_fh "A merged library file already exists at: $merged_file \n";
                 print $log_fh "Please remove this file if you wish to regenerate. Skipping to rmdup phase.\n";
-                $now = UR::Time->now;
+                $now = UR::Context->current->now;
                 print $log_fh "<<< Skipped bam merge at $now for library: $library ."."\n";
             } 
             else {
@@ -140,7 +140,7 @@ sub execute {
                     return; 
                 }
                 
-                $now = UR::Time->now;
+                $now = UR::Context->current->now;
                 print $log_fh "<<< Completed bam merge at $now for library: $library ."."\n";
             } 
             print $log_fh ">>> Starting rmdup at $now  for library: $library ."."\n";
@@ -150,7 +150,7 @@ sub execute {
             if (-e $rmdup_file) {
                print $log_fh "An rmdup'd library file already exists at: $rmdup_file \n";
                print $log_fh "Please remove this file if you wish to regenerate. Quitting. \n";
-               $now = UR::Time->now;
+               $now = UR::Context->current->now;
                print $log_fh "<<< Skipped rmdup at $now  for library: $library ."."\n";
                $log_fh->close;
                return 1;  
@@ -172,7 +172,7 @@ sub execute {
                 return; 
             }
 
-            $now = UR::Time->now;
+            $now = UR::Context->current->now;
             print $log_fh "<<< Completed rmdup at $now  for library: $library ."."\n";
 
 	}#end library loop 

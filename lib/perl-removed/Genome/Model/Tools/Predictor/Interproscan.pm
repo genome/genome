@@ -151,29 +151,12 @@ sub create_ace_file {
 
     for my $feature ($self->bio_seq_features) {
         my $display_name = $feature->display_name();
-        my $new_display_name;
-
-        if (($display_name =~ /^(\w+\d+)\.(\w+)\.(\d+)$/) ||
-                ($display_name =~ /^(\w+\d+)\.(\w+)\.(\d+)\.InterPro\.\d+$/) ||
-                ($display_name =~ /^(\w+\d+\.\d+)\.(\w+)\.(\d+)$/) ||
-                ($display_name =~ /^(\w+\d+\.\d+)\.(\w+)\.(\d+)\.InterPro\.\d+$/)) {
-            my ($seq_id, $source, $number) = ($1, $2, $3);
-            $new_display_name = join('.', $seq_id, $source, 'p5_hybrid', $number);
-        }
-        elsif ($self->gram_stain) { #should have matched above (whereas eukaryotic may not)
-            # FIXME Is this really necessary? I think some further study into exactly what the
-            # new display name should be would discover that all this parsing could be simplified.
-            die "Failed to parse display name $display_name, does not match expected pattern";
-        } else {
-            $self->status_message('Skipped parsing of ' . $display_name . ' since assuming eukaryotic with no gram_stain defined');
-        }
-        $new_display_name =~ s/\.InterPro\.\d+//g;
 
         my ($dblink) = grep { $_->database() eq 'InterPro' } $feature->annotation->get_Annotations();
         next unless $dblink;
 
         my $ipr_number = $dblink->primary_id();
-        $ipr{$new_display_name}{$ipr_number} = 1;
+        $ipr{$display_name}{$ipr_number} = 1;
         my ($analysis) = $feature->each_tag_value('interpro_analysis');
         my ($evalue)   = $feature->each_tag_value('interpro_evalue');
         my ($desc)     = $feature->each_tag_value('interpro_description');
@@ -181,7 +164,7 @@ sub create_ace_file {
         ## Bug for bug replication...
         if ($evalue == 1e10) { $evalue = ''; }
 
-        $ace_file_fh->print("Sequence $new_display_name\n");
+        $ace_file_fh->print("Sequence $display_name\n");
         $ace_file_fh->print("Interpro   \"$analysis : $ipr_number $desc : pval $evalue\"\n\n");
     }
     $ace_file_fh->close;

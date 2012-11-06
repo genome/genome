@@ -123,7 +123,7 @@ sub _resolve_subclass_name {
 		my $sequencing_platform = $_[0]->subclass_name;
 		return $class->_resolve_subclass_name_for_sequencing_platform($sequencing_platform);
 	}
-    elsif (my $sequencing_platform = $class->define_boolexpr(@_)->specified_value_for_property_name('subclass_name')) {
+    elsif (my $sequencing_platform = $class->define_boolexpr(@_)->value_for('subclass_name')) {
         return $class->_resolve_subclass_name_for_sequencing_platform($sequencing_platform);
     }
 	else {

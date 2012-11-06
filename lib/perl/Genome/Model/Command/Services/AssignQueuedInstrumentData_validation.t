@@ -12,7 +12,7 @@ BEGIN {
 use above 'Genome';
 
 require Genome::InstrumentData::Solexa;
-use Test::More tests => 30;
+use Test::More tests => 34;
 use Test::MockObject;
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData');
@@ -167,7 +167,7 @@ my $command_1a = Genome::Model::Command::Services::AssignQueuedInstrumentData->c
 isa_ok($command_1a, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 $command_1a->dump_status_messages(1);
 ok($command_1a->execute(), 'assign-queued-instrument-data executed successfully.');
-is($instrument_data_1a->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'inst data 1a is processed');
+is($instrument_data_1a->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'skipped', 'inst data 1a is skipped');
 
 my $fl2 = Genome::FeatureList->__define__(
     id => 'ABCDEFGH',
@@ -259,6 +259,8 @@ my $err = $command_2->error_message;
 like($err, qr/validation-test-roi/, 'reported error about feature-list');
 
 is($instrument_data_2->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'inst data 2 is failed');
+is($instrument_data_2->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, 'Unexpected "roi"-typed feature-list set as target region set name: validation-test-roi', 'inst data 2 tgi_lims_fail_message is correct');
+is($instrument_data_2->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 1, 'inst data 2 tgi_lims_fail_count is 1');
 is($instrument_data_2a->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'inst data 2a is processed');
 
 $fl2->content_type(undef);
@@ -297,6 +299,8 @@ isa_ok($command_4, 'Genome::Model::Command::Services::AssignQueuedInstrumentData
 $command_4->dump_status_messages(1);
 ok($command_4->execute(), 'assign-queued-instrument-data executed successfully.');
 is($instrument_data_2b->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'inst data 2b is failed');
+is($instrument_data_2b->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, 'Did not assign validation instrument data to any models.', 'inst data 2b is failed');
+is($instrument_data_2b->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 1, 'inst data 2b is failed');
 
 done_testing();
 exit;

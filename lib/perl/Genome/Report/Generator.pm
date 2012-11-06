@@ -125,14 +125,14 @@ sub generator {
 }
 
 sub date { 
-    return UR::Time->now; 
+    return UR::Context->current->now; 
 }
 
 sub _get_params_for_generation {
     my $self = shift;
 
     my %params;
-    for my $property ( $self->get_class_object->all_property_metas ) {
+    for my $property ( $self->__meta__->all_property_metas ) {
         my $property_name = $property->property_name;
         next if $property_name =~ /^_/;
         next if grep { $property_name eq $_ } (qw/ name description /);

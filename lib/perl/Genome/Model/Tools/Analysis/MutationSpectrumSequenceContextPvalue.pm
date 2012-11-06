@@ -3,7 +3,6 @@ package Genome::Model::Tools::Analysis::MutationSpectrumSequenceContextPvalue;
 
 use warnings;
 use strict;
-#use Math::Round;
 use Genome;
 use Workflow;
 use FileHandle;
@@ -27,25 +26,11 @@ class Genome::Model::Tools::Analysis::MutationSpectrumSequenceContextPvalue {
         default_value => '10',
         doc => 'number of bases before and after each position in ROI file to look',
     },
-    plot_title => { 
-        is  => 'String',
-        is_input=>1, 
-        is_optional => 1,
-        default_value => 'Mutation Spectrum Sequence Context',
-        doc => 'The title of the plot',
-    },
-    output_file => { 
+    pvalue_output_file => { 
         is  => 'String',
         is_input=>1, 
         is_optional => 0,
-        #default_value => 'output.pdf',
-        doc => 'The name of pdf file to save the plot to',
-    },
-    file4plot => {
-	is_input => 1,
-        is_optional => 1,
-	is => 'String',
-	doc => 'The name of the file to save the sequence context data to be plotted.  If not specified, file will be deleted after use',
+        doc => 'The name of the file to write pvalue info to',
     },
     ref_seq => {
 	is_input => 1,
@@ -58,53 +43,40 @@ class Genome::Model::Tools::Analysis::MutationSpectrumSequenceContextPvalue {
         is_optional => 0,
         doc => 'a fraction between 0 and 1 that the window size of Ts before Cs is compared against',
     },
+    location_of_interest => {
+        is_input => 1,
+        is_optional => 1,
+        default => 'before',
+        doc => 'Use either "before" or "after", indicating which side of the mutated base you would like a p-value on',
+    },
     ],
 };
 
 sub help_brief {
-    "Given an annotation file, gives a picture of sequence context and a p-value for the number of Ts before Cs from the window";
-}
-
-sub help_synopsis {
-    my $self = shift;
-    return <<"EOS"
-gmt analysis mutation-spectrum-sequence-context --roi-file=SJMEL001003-0260.alltier.snv --output-file=SJMEL.pdf --plot-title="SJMEL001003-0260 --window-size=10"
-
-EOS
+    "This tool creates a P-value for the pyrimidine bases before and after C->T transitions using an R function."
 }
 
 sub help_detail {                           
     return <<EOS 
-    This tool summarizes the mutation spectrum sequence context.  It produces a stacked barplot for each mutation cateogry showing the proportion of bases around the point of interest (position 0) +/- window_size basepairs.
+    This tool creates a P-value for the pyrimidine bases before and after C->T transitions using an R function.
 EOS
     }
 
 sub execute {
     my $self = shift;
-    $DB::single = 1;
 
-
+    # input params #
     my $ROI_file = $self->roi_file;
     my $window_size = $self->window_size;
-    my $plot_output_file = abs_path($self->output_file);
+    my $pvalue_output_file = abs_path($self->pvalue_output_file);
     my $ref_seq_fasta = $self->ref_seq;
-    my $plot_title = $self->plot_title;
     my $hprop = $self->hypothesized_population_proportion;
-
-    my $plot_input_file;
-    if($self->file4plot) {
-	$plot_input_file = abs_path($self->file4plot);
-    }else {
-	my ($fh, $tempfile) = Genome::Sys->create_temp_file;
-	$plot_input_file = abs_path($tempfile);
-    }
-   
+    my $location_of_interest = $self->location_of_interest;
 
     if($window_size !~ /^\d+$/) {
-	print STDERR "--window_size $window_size is not a integer!\n";
-	return 0;
+        print STDERR "--window_size $window_size is not a integer!\n";
+        return 0;
     }
-
 
     my $mutation_context={
 #        'A->C' => {},
@@ -115,26 +87,27 @@ sub execute {
         'C->T' => {},
     };
 
-
+    # grab reference sequence around snps #
     my $joinxRefstatInput = makeinput4Joinx($ROI_file,$window_size);
-    my ($fh, $joinxOUT) = Genome::Sys->create_temp_file;
+    my ($fh2, $joinxOUT) = Genome::Sys->create_temp_file;
     my $cmd = "joinx1.6 ref-stats -b $joinxRefstatInput -f $ref_seq_fasta -r  | cut -f 1-4,8 > $joinxOUT ";
     my $return = Genome::Sys->shellcmd(
         cmd => "$cmd",
     );
     unless($return) {
-        #$self->error_message("Failed to execute: Returned $return");
-        die "$cmd failed to execute!";
+        $self->error_message("Failed to execute: Returned $return");
+        return;
     }
-    $fh->close;
+    $fh2->close;
 
     # variables to record sample population stats (n and pbar) #
     my $sample_n = 0;
-    my $Ts_before_Cs = 0;
+    my $Ts_before_or_after_Cs = 0;
+    my $Cs_before_or_after_Cs = 0;
 
     # read through sites/sequences and record sample stats #
     my $joinxFH = IO::File->new($joinxOUT) or die "Unable to open the file $joinxOUT due to $!"; 
-    while(my $line = $joinxFH->getline) {
+    while (my $line = $joinxFH->getline) {
         next if($line =~/\#/);
         chomp $line;
         my @list = split(/\t/,$line);
@@ -145,7 +118,8 @@ sub execute {
         if(!exists($mutation_context->{$key})) {
             $key = return_mutation_spectrum_category($ref,$var);
             if(!defined($key)) {
-                print STDERR "Warning, cannot classify mutation category for $key, skipping...\n";
+                $key = join("->",($ref,$var));
+                print STDERR "Skipping category $key...\n";
                 next;
             }
             $rev_compl= 1;
@@ -153,72 +127,55 @@ sub execute {
 
         my $relative_pos = -1*$window_size;
         my $neg_one_pos = $window_size - 1;
+        my $plus_one_pos = $window_size + 1;
         my $seq = $list[4]; #reference sequence fragment
-        #my $seq = `samtools faidx $ref_seq_fasta $roi | grep -v '>' `;
         $seq = reverse_complement($seq) if($rev_compl);
         my @seq = split('',$seq);
 
         # run through sequence before the C position and see if the entire window contains Ts #
         my $all_Ts = 1;
-        for my $i (0 .. $neg_one_pos) {
-            if ($seq[$i] eq 'T') { next; }
-            else { $all_Ts = 0; last; }
+        my $all_Cs = 1;
+
+        if ($location_of_interest eq 'before') {
+            # check seq for Ts #
+            for my $i (0 .. $neg_one_pos) {
+                if ($seq[$i] eq 'T') { next; }
+                else { $all_Ts = 0; last; }
+            }
+            # check seq for Cs #
+            for my $i (0 .. $neg_one_pos) {
+                if ($seq[$i] eq 'C') { next; }
+                else { $all_Cs = 0; last; }
+            }
+        }
+
+        if ($location_of_interest eq 'after') {
+            # check seq for Ts #
+            for my $i ($plus_one_pos .. $#seq) {
+                if ($seq[$i] eq 'T') { next; }
+                else { $all_Ts = 0; last; }
+            }
+            # check seq for Cs #
+            for my $i ($plus_one_pos .. $#seq) {
+                if ($seq[$i] eq 'C') { next; }
+                else { $all_Cs = 0; last; }
+            }
         }
 
         $sample_n++;
-        if ($all_Ts) { $Ts_before_Cs++; }
-
-
-#        for my $base (@seq) {
-#            if(!exists($mutation_context->{$key}->{$relative_pos})) {  #initialize the counts 
-#                $mutation_context->{$key}->{$relative_pos} = { 'A'=> 0,'T'=> 0,'C'=> 0,'G'=> 0 };
-#            }
-#            $mutation_context->{$key}->{$relative_pos}->{$base}++;
-#            $relative_pos++;
-#        }
+        if ($all_Ts) { $Ts_before_or_after_Cs++; }
+        if ($all_Cs) { $Cs_before_or_after_Cs++; }
 
     }
     $joinxFH->close;
 
     # find P-value for sample population stats #
-    my $pval_cmd = qq{ sequence_context_pvalue(p0="$hprop",sample_successes="$Ts_before_Cs",n="$sample_n") };
+    my $pval_cmd = qq{sequence_context_pvalue(p0="$hprop",ts_before_cs="$Ts_before_or_after_Cs",n="$sample_n",outfile="$pvalue_output_file",cs_before_cs="$Cs_before_or_after_Cs",before_or_after="$location_of_interest") };
+    print STDERR "Running Command:\n$pval_cmd\n";
     my $call = Genome::Model::Tools::R::CallR->create(command=>$pval_cmd, library=> "MutationSpectrum.R");
     $call->execute;
 
-#    # make plot #
-#    make_file4plot($mutation_context,$plot_input_file);
-#    my $plot_cmd;
-#    $plot_cmd = qq{ plot_mutation_spectrum_seq_context(input_file="$plot_input_file",output_file="$plot_output_file",plot_title="$plot_title") };
-#    my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
-#    $call->execute;
-
     return 1;                               
-}
-
-
-
-
-
-sub make_file4plot {
-
-    my $data = shift;
-    my $outputfile = shift;
-
-    my $outFH = IO::File->new($outputfile, "w") or die "Can't write to $outputfile\n";
-    #open(OUT, ">", $outputfile) or die "Can't write to $outputfile\n";
-    foreach my $category (keys %$data) {
-        foreach my $rel_pos (sort{$a<=>$b} keys %{ $data->{$category} } ) {
-            foreach my $base ( keys %{ $data->{$category}->{$rel_pos} }   ) {
-                my $count = $data->{$category}->{$rel_pos}->{$base};
-                $outFH->print("$category\t$rel_pos\t$base\t$count\n");
-            }
-
-        }
-
-    }
-    $outFH->close;
-
-
 }
 
 sub reverse_complement {
@@ -231,10 +188,6 @@ sub reverse_complement {
     $revcomp =~ tr/ACGTacgt/TGCAtgca/;
     return $revcomp;
 }
-
-
-
-
 
 sub return_mutation_spectrum_category {
 
@@ -256,13 +209,11 @@ sub return_mutation_spectrum_category {
         'G->A' => 'C->T',
     };
 
-
-    if(!exists($mutation_spectrum->{"${ref}->${var}"})) {
+    if (!exists($mutation_spectrum->{"${ref}->${var}"})) {
         return undef;
-    }else {
+    } else {
         return $mutation_spectrum->{"${ref}->${var}"};
     }
-
 }
 
 sub makeinput4Joinx {
@@ -271,7 +222,7 @@ sub makeinput4Joinx {
     my $window_size = shift;
 
     open(ROI, $file) or die "Unable to open the file $file due to $!";
-    my ($fh, $tempfile) = Genome::Sys->create_temp_file;
+    my ($fh3, $tempfile) = Genome::Sys->create_temp_file;
     #open(OUT, "> ROI.out") or die "Can't write to ROI.out\n";
     while(<ROI>) {
         chomp;
@@ -280,24 +231,16 @@ sub makeinput4Joinx {
         my $key = join("_",@list[0,1,3,4]);
         my $win_start = $list[1]-$window_size-1; #zero based for the joinx tool
         my $win_end = $list[1]+$window_size;
-        $fh->print("$list[0]\t$win_start\t$win_end\t$key\n");
+        $fh3->print("$list[0]\t$win_start\t$win_end\t$key\n");
     }
     close ROI;
-    $fh->close;
-
+    $fh3->close;
     return $tempfile;
-
 }
 
-
-
-
 sub rem_white_space {
-
     my $string = shift;
-
     $string =~ s/^\s+//;
     $string =~ s/\s+$//;
-
     return $string;
 }

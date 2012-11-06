@@ -66,7 +66,7 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running MergeAlignments at ".UR::Time->now);
+    $self->status_message(">>>Running MergeAlignments at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
     my $alignment_files_ref = $self->alignment_files;
     my @alignment_files = @$alignment_files_ref;
@@ -130,7 +130,7 @@ sub execute {
 	    	$self->reference1_aligned_file($refseq1_name_sorted_sam);
             $self->reference2_aligned_file($refseq2_name_sorted_sam);
 	    	$self->status_message("Skipping this step.  If you would like to regenerate these files, remove them and rerun.");
-	   	    $self->status_message("<<<Completed MergeAlignments at ".UR::Time->now);
+	   	    $self->status_message("<<<Completed MergeAlignments at ".UR::Context->current->now);
 	   	    return 1;
 	    }
     }
@@ -194,7 +194,7 @@ sub execute {
     Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
     $self->reference1_aligned_file($refseq1_name_sorted_sam);
     $self->reference2_aligned_file($refseq2_name_sorted_sam);
-    $self->status_message("<<<Completed MergeAlignments for testing at at ".UR::Time->now);
+    $self->status_message("<<<Completed MergeAlignments for testing at at ".UR::Context->current->now);
     return 1;
  
 }

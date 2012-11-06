@@ -18,6 +18,11 @@ my $import_dbsnp_build = Genome::Model::ImportedVariationList::Command::ImportDb
     reference_sequence_build => $reference_sequence_build ,
 );
 
+# The kB requested is hard-coded at 20GB but the test does not need
+# to make a 20GB allocation.
+*Genome::Model::ImportedVariationList::Command::ImportDbsnpBuild::kilobytes_requested
+    = sub { return 5_000 };
+
 ok($import_dbsnp_build->execute(), "Dbsnp build import completed");
 
 my $build = $import_dbsnp_build->build;

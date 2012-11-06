@@ -6,6 +6,7 @@ use warnings;
 use Sys::Hostname;
 use File::stat;
 use File::Path 'rmtree';
+use List::MoreUtils qw{ uniq };
 
 use Genome;
 
@@ -727,5 +728,34 @@ sub _cleanup {
        $allocation->deallocate; 
     }
 }
+
+sub bowtie_version { return shift->scalar_property_from_underlying_alignment_results('bowtie_version'); }
+
+sub scalar_property_from_underlying_alignment_results {
+    my ($self, $property) = @_;
+    my @properties;
+    my @bad_alignments;
+    for ($self->collect_individual_alignments) {
+        if ($_->can($property)) {
+            push @properties, $_->$property;
+        } else {
+          push @bad_alignments, $_->id;
+        }
+    }
+
+    die("The following alignment results do not have the property $property: " . join(',',  @bad_alignments)) if @bad_alignments;
+
+    @properties = uniq @properties;
+    if ( scalar(@properties) > 1 ) {
+        my @sorted_properties = sort @properties;
+        warn("Merged alignment results contains mismatched $property values, picking " . $sorted_properties[0]);
+        return $sorted_properties[0];
+    } elsif (scalar(@properties) ) {
+        return $properties[0];
+    } else {
+        die("Could not determine $property value for your alignments!");
+    }
+}
+
 
 1;

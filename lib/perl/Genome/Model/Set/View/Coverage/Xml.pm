@@ -54,7 +54,7 @@ sub _generate_content {
 
     my $object = $xml_doc->createElement('object');
     $xml_doc->setDocumentElement($object);
-    my $time = UR::Time->now();
+    my $time = UR::Context->current->now();
     $object->addChild( $xml_doc->createAttribute('id',$subject->id) );
     $object->addChild( $xml_doc->createAttribute('generated-at',$time) );
 

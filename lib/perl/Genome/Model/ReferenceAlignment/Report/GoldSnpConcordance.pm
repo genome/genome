@@ -18,7 +18,7 @@ class Genome::Model::ReferenceAlignment::Report::GoldSnpConcordance {
         name                        => { default_value => 'Gold_SNP_Concordance' },
         description => {
             calculate => q|
-            return "<div>Gold Snp coverage for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Time->now.'</div>';
+            return "<div>Gold Snp coverage for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Context->current->now.'</div>';
             |,
         },
         report_templates => {
@@ -37,7 +37,7 @@ sub _add_to_report_xml {
 sub generate_report_brief {
     my $self=shift;
     my $build = $self->build;
-    return "<div>Gold Snp coverage for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Time->now.'</div>';
+    return "<div>Gold Snp coverage for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Context->current->now.'</div>';
 }
 
 sub generate_report_detail {

@@ -47,6 +47,13 @@
 #- Added a detailed summary of builds going into a ClinSeq model, including extensive QC values
 #- Added automatic creation of IGV XML sessions for each ClinSeq model
 #- Refactored BamRead counts commands to use method code instead of shelling out to a system call
+#- Run pairoscope on all predicted gene fusions from SV files
+#- Scatter plot of Variant Allele Frequency in WGS Tumor vs Exome Tumor - report the R^2 and n
+#- Scatter plot of Variant Allele Frequency in WGS Normal vs Exome Normal - report the R^2 and n
+#- Experiment with some ways to visualize mutation variant allele frequency in combination with RNA expression
+#  - WGS VAF (total RC) + Exome VAF (total RC) + RNA-seq VAF (total RC) + RNA-seq Gene FPKM...
+#  - scatter plot of Exome VAF vs. RNAseq VAF and then color points according to gene FPKM
+
 
 #TODO / FEATURE WISH LIST
 #- Cosmetic.  Stop using Ansicolor warning and status messages in ClinSeq code.  Use $self->status_message and $self->warning_message instead
@@ -68,7 +75,6 @@
 #- RNA-seq outlier analysis
 #  - Differential / relative comparisons to other samples / tumors of the same type
 #- SVs.  Annotation strategies, validation, filtering
-#  - Run pairoscope on all predicted gene fusions from SV files
 
 #- RNA-seq gene fusions
 #  - Tophat fusion, Chimera scan
@@ -118,15 +124,6 @@
 #- Number and Proportion of TopHat mapped reads for RNA-seq library that mapped to splice junctions
 #- Number and Proportion of TopHat mapped reads for RNA-seq library that mapped to known splice junctions
 
-
-#Figures
-#- Scatter plot of Variant Allele Frequency in WGS Tumor vs Exome Tumor - report the R^2 and n
-#- Scatter plot of Variant Allele Frequency in WGS Normal vs Exome Normal - report the R^2 and n
-
-#- Experiment with some ways to visualize mutation variant allele frequency in combination with RNA expression
-#  - WGS VAF (total RC) + Exome VAF (total RC) + RNA-seq VAF (total RC) + RNA-seq Gene FPKM...
-#  - bar plot? 
-#  - scatter plot of Exome VAF vs. RNAseq VAF and then color points according to gene FPKM
 
 #CLINSEQ - CLINICAL SEQUENCING REPORTS
 #Executive summary
@@ -200,15 +197,4 @@
 #- Novel private events in high impact genes
 #- Previously known events that are novel to the current cancer type
 #- Etc.
-
-#Fix lib paths code to be more robust for adhoc .pl scripts in the ClinSeq code base by adding something like this (Scott Smith for details):
-#use File::Basename;
-#my $lib_dir;
-#BEGIN {
-#    $lib_dir = File::Basename::dirname(__FILE__) . '/../../';
-#      print STDERR "using libraries at $lib_dir…\n";  # remove this when you've double checked it
-#}
-#use lib $lib_dir;
-
-
 

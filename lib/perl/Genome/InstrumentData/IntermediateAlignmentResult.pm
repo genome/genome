@@ -86,6 +86,21 @@ class Genome::InstrumentData::IntermediateAlignmentResult {
                                     is_optional => 1,
                                     doc => 'the samtools version used',
                                 },
+        trimmer_name            => {
+                                    is => 'Text',
+                                    doc => 'Trimmer strategy used to create input file.',
+                                    is_optional=>1,
+                                },
+        trimmer_version         => {
+                                    is => 'Text',
+                                    doc => 'Trimmer version to used to create input file.',
+                                    is_optional=>1,
+                                },
+        trimmer_params          => {
+                                    is => 'Text',
+                                    is_optional=>1,
+                                    doc => 'Trimmer parameters used to create input file.',
+                                },
     ],
     has_transient => [
         temp_scratch_directory  => {
@@ -122,7 +137,7 @@ sub _resolve_subclass_name {
         my $aligner_name = $_[0]->aligner_name;
         return join('::', 'Genome::InstrumentData::IntermediateAlignmentResult', $class->_resolve_subclass_name_for_aligner_name($aligner_name));
     }
-    elsif (my $aligner_name = $class->define_boolexpr(@_)->specified_value_for_property_name('aligner_name')) {
+    elsif (my $aligner_name = $class->define_boolexpr(@_)->value_for('aligner_name')) {
         return join('::', 'Genome::InstrumentData::IntermediateAlignmentResult', $class->_resolve_subclass_name_for_aligner_name($aligner_name));
     }
     return;

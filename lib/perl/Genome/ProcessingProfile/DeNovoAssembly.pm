@@ -293,7 +293,7 @@ sub _validate_post_assemble_steps {
     my $class = $base_class . '::' . $class_name;
 
     my $class_meta;
-    eval { $class_meta = $class->get_class_object; };
+    eval { $class_meta = $class->__meta__; };
     unless ( $class_meta ) {
         $self->error_message("Can't validate tool: $class_name, this tool does not exist: $class");
         return;

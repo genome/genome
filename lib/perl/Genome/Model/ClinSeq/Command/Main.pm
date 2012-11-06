@@ -291,6 +291,7 @@ sub execute {
 
   #TODO: If both tumor and normal RNA-seq data are available, run Jason's new differential expression tool (Cuffmerge, Cuffdiff, Cummerbund)
   #Perform pairwise differential expression analysis
+  #Perhaps this should be done outside of clin-seq and take a differential analysis model as input...
   if ($tumor_rnaseq && $normal_rnaseq){
 
   }
@@ -303,6 +304,7 @@ sub execute {
   &annotateGeneFiles('-gene_symbol_lists'=>$gene_symbol_lists, '-out_paths'=>$out_paths, '-verbose'=>$verbose);
 
 
+  #TODO: Replace this with use of DGIdb command line tool that performs queries against more sources with better cancer relevance filtering
   #Create drugDB interaction files
   #Perform druggable genes analysis on each list (filtered, kinase-only, inhibitor-only, antineoplastic-only)
   $step++; print MAGENTA, "\n\nStep $step. Intersecting gene lists with druggable genes of various categories", RESET;
@@ -333,7 +335,6 @@ sub execute {
       my $wgs_somatic_build = $builds->{wgs};
       my $wgs_somatic_build_id = $wgs_somatic_build->id;
       
-      # TODO: switch this to take build IDs
       my $master_clonality_cmd = "$script_dir"."snv/generateClonalityPlot.pl  --somatic_var_build_id=$wgs_somatic_build_id  --working_dir=$clonality_dir  --common_name='$common_name'  --verbose=$verbose";
       if ($verbose){
         print YELLOW, "\n\n$master_clonality_cmd", RESET;
@@ -457,9 +458,6 @@ sub getEnsemblVersion{
       exit(1);
     }
   }
-
-  #TODO: what if the only input to Clinseq was an RNA-seq model that is old and has no annotation_build object associated?
-  
 
   #Final sanity check ... 
   unless ($ensembl_version =~ /^\d+$/){

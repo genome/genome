@@ -110,6 +110,9 @@ class Genome::Model::SomaticValidation::Command::ReviewVariants {
         tier_file_location =>{
             is => 'String',
             is_optional => 1,
+            is_calculated => 1,
+            calculate_from => ['build'],
+            calculate => q { $build->annotation_build->tiering_bed_files_by_version($build->processing_profile->tiering_version) },
             doc => "if tier1-only is specified, this needs to be a path to the appropriate tiering files",
         },
 
@@ -319,16 +322,17 @@ sub execute {
     }
 
 
+    my $notvalidated_snvs_file = "$output_dir/snvs/snvs.notvalidated";
+    my $validated_snvs_file = "$output_dir/snvs/snvs.validated";
     #add readcounts
     $self->status_message("Getting readcounts...");
-    foreach my $filename ("snvs.validated","snvs.notvalidated",basename($current_snv_file)){
-
-        my $dir = "$output_dir/snvs/";
-        my $file = "$dir/$filename";
+    foreach my $file ($validated_snvs_file,$notvalidated_snvs_file,$current_snv_file){
         if( -s $file ){
             $self->generate_readcounts($file);
         }
     }
+
+
 
     ## we're not going to do this in most cases - if not called in validation, we just ditch the call,
     ## but it may be useful in some cases.
@@ -338,7 +342,6 @@ sub execute {
     #to determine whether they were missed due to poor coverage.
     #if coverage is fine, dump them (most), but if coverage was poor in validation (and good in wgs), send for review
     #we can only really do this for snvs at the moment, until indel readcounting is tweaked
-    my $notvalidated_snvs_file = "$output_dir/snvs/snvs.notvalidated";
     if(-s $notvalidated_snvs_file and $self->recover_non_validated_calls) {
         $self->recover_low_coverage_variants($notvalidated_snvs_file);
     }
@@ -353,6 +356,9 @@ sub execute {
     } else {
         $self->status_message("No variants found that were called in the validation, but not found in original genomes");
     }
+
+    ###process the validated list for examination
+    $self->process_validation_list($validated_snvs_file);
 
     return 1;
 }
@@ -922,22 +928,25 @@ sub gather_new_sites {
     #now get the files together for review
     $self->status_message("Generating Review files...");
     my $revfile;
-    if ( -s "$snv_file.failuhc"){
-        $revfile = "$snv_file.failuhc";
+    if ( -s "$snv_file.passuhc"){
+        $revfile = "$snv_file.passuhc";
     } else {
         $revfile = "$snv_file";
     }
 
     my $output_dir = $self->output_dir;
-    my $newcalls_bed_fh = Genome::Sys->open_file_for_writing("$output_dir/review/newcalls.bed");
-
-    my $review_fh = Genome::Sys->open_file_for_reading($revfile);
-    while( my $line = $review_fh->getline ) {
-        chomp($line);
-        my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
-        print $newcalls_bed_fh annoToBed(join("\t",($chr, $start, $stop, $ref, $var ))) . "\n";
+    my $newcalls_bed_file = "$revfile.bed";
+    my $anno_to_bed_cmd = Genome::Model::Tools::Bed::Convert::AnnotationToBed->create(
+        source => $revfile,
+        output => $newcalls_bed_file,
+    );
+    unless($anno_to_bed_cmd->execute) {
+        die $self->error_message('Failed to convert review file to BED format.');
     }
-    $newcalls_bed_fh->close;
+
+    my $tier1_bed_file = $self->tier_variant_file($newcalls_bed_file);
+    my $tier1_review_bed_file = "$output_dir/review/newcalls.bed";
+    Genome::Sys->copy_file($tier1_bed_file, $tier1_review_bed_file);
 
     my $sample_name = $build->tumor_sample->name;
 
@@ -967,7 +976,7 @@ sub gather_new_sites {
         labels => $labels,
         output_file => "$output_dir/review/newcalls.xml",
         genome_name => $sample_name,
-        review_bed_file => "$output_dir/review/newcalls.bed",
+        review_bed_file => $tier1_review_bed_file,
         reference_name => $self->igv_reference_name,
     );
     unless ($dump_xml->execute) {
@@ -977,14 +986,42 @@ sub gather_new_sites {
     $self->status_message(join("\n",
         "--------------------------------------------------------------------------------",
         "Sites to review that were not found original genomes, but were found in validation are here:",
-        "    $output_dir/review/newcalls.bed",
+        "    $output_dir/review/newcalls.bed.tier1",
         "IGV XML file is here:",
         "    $output_dir/review/newcalls.xml",
     ));
 
+    return 1;
+}
 
+sub process_validation_list {
+    my $self = shift;
+    my $variant_file = shift;
 
+    my $variant_bed_file = "$variant_file.bed";
+    my $anno_to_bed_cmd = Genome::Model::Tools::Bed::Convert::AnnotationToBed->create(
+        source => $variant_file,
+        output => $variant_bed_file,
+    );
+    unless($anno_to_bed_cmd->execute()) {
+        die $self->error_message('Failed to convert variant file back to BED format.');
+    }
 
+    my $tier1_bed = $self->tier_variant_file($variant_bed_file);
+
+    my $annotation_build = $self->build->annotation_build;
+    my $annotator_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
+        use_version => 2,
+        variant_bed_file => $tier1_bed,
+        annotation_filter => 'top',
+        build_id => $annotation_build->id,
+        output_file => "$tier1_bed.anno"
+    );
+    unless($annotator_cmd->execute()) {
+        die $self->error_message('Failed to annotated variants.');
+    }
+
+    return 1;
 }
 
 1;

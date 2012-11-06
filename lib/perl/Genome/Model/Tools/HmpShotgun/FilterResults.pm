@@ -96,7 +96,7 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running FilterResults at ".UR::Time->now);
+    $self->status_message(">>>Running FilterResults at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
     $self->status_message("Aligned Bam File for refseq1: ".$self->reference1_top_hit_alignment_file);
     $self->status_message("Aligned Bam File for refseq2: ".$self->reference2_top_hit_alignment_file);
@@ -134,7 +134,7 @@ sub execute {
         $self->other_hits_file("some_other_hits_file_tbd");
  
     	$self->status_message("Expected output files exist.  Skipping processing.");
-    	$self->status_message("<<<Completed FilterResults at ".UR::Time->now);
+    	$self->status_message("<<<Completed FilterResults at ".UR::Context->current->now);
     	return 1;
     }
 
@@ -147,13 +147,13 @@ sub execute {
      														
     $self->status_message("FilterResults cmd: $cmd");
 
-    $self->status_message("Running filter at ".UR::Time->now);
+    $self->status_message("Running filter at ".UR::Context->current->now);
     my $rv_filter = Genome::Sys->shellcmd(cmd=>$cmd);
   
     if ( $rv_filter != 1) {
         $self->error_message("<<<Failed FilterResults on filter script.  Return value: $rv_filter");
     } 
-    $self->status_message("Completed filter at ".UR::Time->now);
+    $self->status_message("Completed filter at ".UR::Context->current->now);
     
     my @input_files = ( $self->sam_header, $filtered_alignment_file_no_header );
     my $rv_cat = Genome::Sys->cat(input_files=>\@input_files,output_file=>$filtered_alignment_file); 
@@ -196,7 +196,7 @@ sub execute {
     unlink($filtered_alignment_file_unsorted_bam);
     unlink($filtered_alignment_file_no_header);
     
-    $self->status_message("<<<Completed FilterResults at ".UR::Time->now);
+    $self->status_message("<<<Completed FilterResults at ".UR::Context->current->now);
     
     return 1;
 }

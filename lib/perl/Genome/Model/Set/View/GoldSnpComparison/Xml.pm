@@ -76,7 +76,7 @@ sub _get_meta_node {
 
     $meta_node->addChild($self->tnode('name','Model Builds Report'));
     $meta_node->addChild($self->tnode('description','Shows the gigabases, filtered gold SNP concordance, and flow cells for all the builds in a model'));
-    $meta_node->addChild($self->tnode('date',UR::Time->now()));
+    $meta_node->addChild($self->tnode('date',UR::Context->current->now()));
     $meta_node->addChild($self->tnode('generator',ref($self)));
     
     my $params_node = $self->_xml_doc->createElement("generator-params");

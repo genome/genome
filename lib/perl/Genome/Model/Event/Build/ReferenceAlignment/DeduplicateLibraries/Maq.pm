@@ -20,7 +20,7 @@ class Genome::Model::Event::Build::ReferenceAlignment::DeduplicateLibraries::Maq
 
 sub execute {
     my $self = shift;
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
   
     $self->status_message("Starting DeduplicateLibraries::Maq");
     my $alignments_dir = $self->resolve_accumulated_alignments_path;
@@ -123,7 +123,7 @@ sub execute {
     }
  
    #merge those Bam files...BAM!!!
-   $now = UR::Time->now;
+   $now = UR::Context->current->now;
    $self->status_message(">>> Beginning Bam merge at $now.");
    my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->model->merger_version);
    my $bam_merge_tool = $sam_path.' merge';
@@ -211,11 +211,11 @@ sub execute {
             $self->error_message("Bam index error!  Return value: $bam_index_rv");
        }
 
-       $now = UR::Time->now;
+       $now = UR::Context->current->now;
        $self->status_message("<<< Completing Bam merge at $now.");
 
        #remove intermediate files
-       $now = UR::Time->now;
+       $now = UR::Context->current->now;
        $self->status_message(">>> Removing intermediate files at $now");
        
        #remove bam files 
@@ -233,11 +233,11 @@ sub execute {
 
    } #end else for Bam merge process
 
-   $now = UR::Time->now;
+   $now = UR::Context->current->now;
    $self->status_message("<<< Completed removing intermediate files at $now");
 
    #starting map merge of all library maps 
-   $now = UR::Time->now;
+   $now = UR::Context->current->now;
    $self->status_message(">>> Beginning mapmerge at $now .");
    my $out_filepath = $alignments_dir;
 
@@ -253,7 +253,7 @@ sub execute {
    }
 
    if (@maps_to_merge) {
-       $now = UR::Time->now;
+       $now = UR::Context->current->now;
        my $maq_pathname = Genome::Model::Tools::Maq->path_for_maq_version($self->model->read_aligner_version);                                
        $cmd ="$maq_pathname mapmerge ". $self->build->whole_rmdup_map_file ." ".join(" ",@maps_to_merge);
    }
@@ -276,7 +276,7 @@ sub execute {
         chmod 0444, $file;
     }
 
-    $now = UR::Time->now;
+    $now = UR::Context->current->now;
     $self->status_message("<<< Completed mapmerge at $now .");
     $self->status_message("*** All processes completed. ***");
 

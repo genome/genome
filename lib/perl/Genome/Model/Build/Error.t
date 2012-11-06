@@ -88,8 +88,8 @@ merge results <591886> (new)
   result_1
 EOS
         ,
-        start_time => UR::Time->now,
-        end_time => UR::Time->now,
+        start_time => UR::Context->current->now,
+        end_time => UR::Context->current->now,
     );
 
     push @wf_errors, WFE->__define__(
@@ -102,8 +102,8 @@ EOS
         dispatch_identifier => 1000002,
         # ERROR_STRING
         error => 'A really long error message to see if wrapping the text of this error looks good in the report that is generated for users to see why their build failed and what happened to cause it to fail.',
-        start_time => UR::Time->now,
-        end_time => UR::Time->now,
+        start_time => UR::Context->current->now,
+        end_time => UR::Context->current->now,
     );
 
     return @wf_errors;

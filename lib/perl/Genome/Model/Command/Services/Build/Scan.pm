@@ -198,7 +198,7 @@ sub correct_status {
         return 1;
     } elsif ( $action eq 'abandon' ) {
         $build->build_event->event_status('Abandoned');
-        $build->build_event->date_completed( UR::Time->now );
+        $build->build_event->date_completed( UR::Context->current->now );
         return 1;
     }
     return 0;

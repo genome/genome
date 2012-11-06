@@ -67,7 +67,7 @@ sub _generate_content {
     #create the xml nodes and fill them up with data
     #root node
     my $build_status_node = $doc->createElement("build-status");
-    my $time = UR::Time->now();
+    my $time = UR::Context->current->now();
     $build_status_node->addChild( $doc->createAttribute("generated-at",$time) );
 
     #build node

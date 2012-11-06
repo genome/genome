@@ -284,7 +284,7 @@ sub _create {
     my $allocation_path = delete $params{allocation_path};
     my $disk_group_name = delete $params{disk_group_name};
     my $mount_path = delete $params{mount_path};
-    my $exclude_mount_paths = delete $params{exclude_mount_paths};
+    my $exclude_mount_path = delete $params{exclude_mount_path};
     my $group_subdirectory = delete $params{group_subdirectory};
     my $kilobytes_used = delete $params{kilobytes_used} || 0;
     if (%params) {
@@ -341,12 +341,8 @@ sub _create {
         push @reasons, 'disk is not active' if $volume->disk_status ne 'active';
         push @reasons, 'allocation turned off for this disk' if $volume->can_allocate != 1;
 
-        if (
-            grep { $volume->mount_path eq $_->mount_path }
-            map { Genome::Disk::Volume->get(mount_path => $_) }
-            @$exclude_mount_paths
-        ) {
-            push @reasons, 'Specified mount path matched an excluded mount path.';
+        if ($exclude_mount_path && $volume->mount_path eq $exclude_mount_path) {
+            push @reasons, 'Specified mount path matched the excluded mount path.';
         }
 
         if (@reasons) {
@@ -358,8 +354,8 @@ sub _create {
         my %candidate_volume_params = (
             disk_group_name => $disk_group_name,
         );
-        if (defined $exclude_mount_paths) {
-            $candidate_volume_params{'exclude'} = $exclude_mount_paths;
+        if (defined $exclude_mount_path) {
+            $candidate_volume_params{'exclude'} = $exclude_mount_path;
         }
         push @candidate_volumes, $class->_get_candidate_volumes(
             %candidate_volume_params);
@@ -374,7 +370,7 @@ sub _create {
         owner_id                     => $owner_id,
         group_subdirectory           => $group_subdirectory,
         id                           => $id,
-        creation_time                => UR::Time->now,
+        creation_time                => UR::Context->current->now,
     );
 
     my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
@@ -464,6 +460,7 @@ sub _reallocate {
     confess "Require allocation ID!" unless defined $id;
     my $kilobytes_requested = delete $params{kilobytes_requested} || 0;
     my $allow_reallocate_with_move = delete $params{allow_reallocate_with_move};
+    my $grow_only = delete $params{grow_only};
     if (%params) {
         confess "Found extra params: " . Data::Dumper::Dumper(\%params);
     }
@@ -474,13 +471,18 @@ sub _reallocate {
     my $kb_used = Genome::Sys->disk_usage_for_path($self->absolute_path) || 0;
 
     my $actual_kb_requested = List::Util::max($kb_used, $kilobytes_requested);
+    if ($grow_only && ($actual_kb_requested <= $old_kb_requested)) {
+        $self->status_message(
+            "Not changing kilobytes_requested, because grow_only = 1 & actual usage < original_kilobytes_requested");
+        return 1;
+    }
     if ($actual_kb_requested > $kilobytes_requested) {
         $self->status_message(sprintf(
                 "Setting kilobytes_requested to %s based on `du` for allocation %s",
                 $actual_kb_requested, $self->id));
     }
 
-    $self->reallocation_time(UR::Time->now);
+    $self->reallocation_time(UR::Context->current->now);
     $self->kilobytes_requested($actual_kb_requested);
     _commit_unless_testing();
 
@@ -547,8 +549,8 @@ sub _move {
         kilobytes_requested => $self->kilobytes_requested,
         owner_class_name => "UR::Value",
         owner_id => "shadow_allocation",
-        exclude_mount_paths => [$self->mount_path],
-        allocation_path => sprintf("move_allocation_destination/%s",
+        exclude_mount_path => $self->mount_path,
+        allocation_path => sprintf("%s-move_allocation_destination",
             $self->allocation_path),
     );
 
@@ -775,7 +777,7 @@ sub _unarchive {
         kilobytes_requested => $self->kilobytes_requested,
         owner_class_name => "UR::Value",
         owner_id => "shadow_allocation",
-        allocation_path => sprintf("unarchive_allocation_destination/%s",
+        allocation_path => sprintf("%s-unarchive_allocation_destination",
             $self->allocation_path),
     );
     # shadow_allocation ensures that we wont over allocate our destination volume
@@ -1261,7 +1263,8 @@ sub _get_candidate_volumes {
         disk_status => 'active',
     );
 
-    $volume_params{'mount_path not in'} = $exclude if $exclude;
+    # 'not like' caused conversion error on Oracle but 'not in' with anonymous array works
+    $volume_params{'mount_path not in'} = [$exclude] if $exclude;
     # XXX Shouldn't need this, 'archive' should obviously be a status.
     #       This might be a performance issue.
     my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(%volume_params);

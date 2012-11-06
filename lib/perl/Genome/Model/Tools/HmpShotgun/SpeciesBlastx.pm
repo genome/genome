@@ -84,11 +84,11 @@ sub execute {
 	#--params="wordmask=seg W=4 T=12 B=1 V=1" 
 	#--output-directory=/gscmnt/temp206/info/seqana/species_independant/jpeck/tmp/blastx_output
 
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
     $self->status_message(">>>Starting SpeciesBlastX execute() at $now"); 
     $self->status_message("Bailing for alignment testing...");
     $self->final_file("species_blastx_final_file_path");
-    $self->status_message("<<<Completed SpeciesBlastX at ".UR::Time->now);
+    $self->status_message("<<<Completed SpeciesBlastX at ".UR::Context->current->now);
     return 1;
     
     
@@ -119,7 +119,7 @@ sub execute {
 	    if ($rv_check == 1) {
 	    	#shortcut this step, all the required files exist.  Quit.
 	    	$self->status_message("Skipping this step.  If you would like to regenerate these files, remove them and rerun.");
-	   	    $self->status_message("<<<Completed SpeciesBlastX at ".UR::Time->now);
+	   	    $self->status_message("<<<Completed SpeciesBlastX at ".UR::Context->current->now);
 	   	    return 1;
 	    }
 	}
@@ -139,7 +139,7 @@ sub execute {
     Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
     
     $self->final_file("species_blastx_final_file_path");
-    $self->status_message("<<<Completed species_blastx execute() at ".UR::Time->now); 
+    $self->status_message("<<<Completed species_blastx execute() at ".UR::Context->current->now); 
     return 1;
 
 }

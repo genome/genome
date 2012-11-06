@@ -309,7 +309,7 @@ sub execute {
         return;
     }
     #merge those Bam files...BAM!!!
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
     $self->status_message(">>> Beginning Bam merge at $now.");
     $self->use_version($self->merger_version) if $self->merger_name eq 'samtools'; #set samtools_path using the same version of samtools as merger_version
     my $sam_path = $self->samtools_path; 
@@ -423,7 +423,7 @@ sub execute {
         }
     }
 
-    $now = UR::Time->now;
+    $now = UR::Context->current->now;
     $self->status_message("<<< Completing Bam merge at $now.");
 
 
