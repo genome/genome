@@ -13,7 +13,7 @@ class Genome::Model::Input {
     id_by => [
         value_class_name => { is => 'VARCHAR2', len => 255 },
         value_id         => { is => 'VARCHAR2', len => 1000, implied_by => 'value' },
-        model_id         => { is => 'NUMBER', len => 11, implied_by => 'model' },
+        model_id         => { is => 'Number', len => 32, implied_by => 'model' },
         name             => { is => 'VARCHAR2', len => 255 },
     ],
     has => [
