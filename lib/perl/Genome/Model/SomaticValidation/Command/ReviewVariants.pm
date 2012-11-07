@@ -579,6 +579,11 @@ sub tier_variant_file {
     my $self = shift;
     my $variant_file = shift;
 
+    unless(-s $variant_file) {
+        $self->status_message('Empty variant file.  Skipping tiering.');
+        return $variant_file;
+    }
+
     my $cmd = Genome::Model::Tools::FastTier::FastTier->create(
         tier_file_location => $self->tier_file_location,
         variant_bed_file => $variant_file,
