@@ -12,10 +12,11 @@ class Genome::Model::Tools::Gtf::ToGenePred {
             is => 'Text',
             doc => 'The output genePred format file.',
         },
-        extended => {
-            is => 'Boolean',
-            doc => 'Output the extended format which includes strandedness.',
-            default_value => 1,
+        use_version => {
+            is => 'Text',
+            doc => 'The version of the chimerascan software.',
+            is_optional => 1,
+            default_value => '0.4.5',
         },
     ],
 };
@@ -23,10 +24,8 @@ class Genome::Model::Tools::Gtf::ToGenePred {
 sub execute {
     my $self = shift;
 
-    my $cmd = '/gscmnt/sata132/techd/solexa/jwalker/bin/gtfToGenePred';
-    if ($self->extended) {
-        $cmd .= ' -genePredExt';
-    }
+    # Is there a better way to find the python script?
+    my $cmd = 'gtf_to_genepred.py'. $self->use_version;
     $cmd .= ' '. $self->input_gtf_file .' '. $self->output_file;
     Genome::Sys->shellcmd(
         cmd => $cmd,

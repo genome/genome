@@ -21,7 +21,6 @@ sub execute {
     my $tmp_gene_pred = Genome::Sys->create_temp_file_path();
     unless (Genome::Model::Tools::Gtf::ToGenePred->execute(
         input_gtf_file => $self->input_gtf_file,
-        extended => 1,
         output_file => $tmp_gene_pred,
     )) {
         $self->error_message('Failed to convert GTF to genePredExt: '. $self->input_gtf_file);
@@ -33,7 +32,7 @@ sub execute {
         chomp($line);
         my @entry = split("\t",$line);
         my @new_entry;
-        push @new_entry, $entry[11];
+        push @new_entry, $entry[10];
         for (0 .. 9) {
             push @new_entry, $entry[$_];
         }
