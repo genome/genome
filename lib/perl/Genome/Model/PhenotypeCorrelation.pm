@@ -629,14 +629,15 @@ sub _vcf_annotate {
 }
 
 sub _dbsnp_info_fields_for_version {
+    my $self = shift;
     my $version = shift;
-    my $fields = "GMAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT";
+    my @fields = ("GMAF", "dbSNPBuildID=dbSNPBuildID,per-alt", "MUT");
     if ($version >= 137) {
-        $fields .= "PM";
+        push(@fields, "PM");
     } else {
-        $fields .= "CLN";
+        push(@fields, "CLN");
     }
-    return $fields;
+    return join(":", @fields);
 }
 
 sub _annotate_multisample_vcf {
