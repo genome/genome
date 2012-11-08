@@ -49,6 +49,22 @@ sub create {
     return $self;
 }
 
+sub validate {
+    my $self = shift;
+
+    while ( 1 ) {
+        my $seq = eval{ $self->read; };
+        if ( $@ ) { 
+            $self->error_message($@);
+            $self->error_message('Failed to validate! '.$self->file);
+            return;
+        }
+        last if not $seq;
+    }
+
+    return 1;
+}
+
 sub _file_properties {
     my $self = shift;
 
