@@ -57,7 +57,11 @@ class Genome::Disk::Volume {
             calculate => q{ return int($unallocated_kb / (2**20)) },
         },
         allocated_kb => {
-            calculate => q/ $self->_allocated_kb /,
+            calculate => q/
+                my $allocated_kb;
+                Genome::Utility::Instrumentation::timer('disk.volume.allocated_kb', sub { $allocated_kb = $self->_allocated_kb });
+                return $allocated_kb;
+            /,
         },
         percent_allocated => {
             calculate_from => ['total_kb', 'allocated_kb'],
