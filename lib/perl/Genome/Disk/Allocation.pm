@@ -666,10 +666,10 @@ sub _archive {
 
         # Reallocate so we're reflecting the correct size at time of archive.
         $self->reallocate();
-        if (!$ENV{UR_DBI_NO_COMMIT} and $self->allocated_kb < 1048576) { # Must be greater than 1GB to be archived
+        if (!$ENV{UR_DBI_NO_COMMIT} and $self->kilobytes_requested < 1048576) { # Must be greater than 1GB to be archived
             confess(sprintf(
                 "Total size of files at path %s is only %s, which is not greater than 1GB!",
-                $current_allocation_path, $self->allocated_kb));
+                $current_allocation_path, $self->kilobytes_requested));
         }
 
         my $mkdir_cmd = "mkdir -p $archive_allocation_path";
