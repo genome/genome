@@ -124,24 +124,30 @@ sub _compute_lower_limit {
 sub _allocated_kb {
     my $self = shift;
 
-    # This is a copy of UR::Object::Set's server-side aggregate logic.
-    # Raw SQL was originally used because performance is critical and
-    # UR::Object::Set's aggregate functions will fallback on client
-    # side calculations if any member has changes. This is a comprimise
-    # to "force" the server-side logic without requiring the raw SQL.
+    # This used to use a copy of UR::Object::Set's server-side aggregate
+    # logic to ensure no client-side calculation was done (for performance).
+    # Now we're going to just let the set do the sum and monitor the
+    # performance (in allocated_kb calculated property). If performance
+    # is bad we can revert.
+
     my $set = Genome::Disk::Allocation->define_set(mount_path => $self->mount_path);
-    my $f = 'sum(kilobytes_requested)';
-    my $rule = $set->rule->add_filter(-aggregate => [$f])->add_filter(-group_by => []);
-    UR::Context->current->get_objects_for_class_and_rule(
-        $set->member_class_name,
-        $rule,
-        1,    # load
-        0,    # return_closure
-    );
+    my $field = 'kilobytes_requested';
+    my $f = "sum($field)";
+
+    # UR caches the value so we're just going to reach in and "fix" it.
+    if(exists $set->{$f}) {
+        delete $set->{$f}
+    }
+
+    my $allocated_kb = ($set->sum($field) or 0);
+
+    # Now we'll check that it is cached so we test that the underlying
+    # structure hasn't changed.
     unless(exists $set->{$f}) {
         die $self->error_message("$f value not found in set's hash. Did underlying object structure change?");
     }
-    return ($set->{$f} or 0);
+
+    return $allocated_kb;
 }
 
 sub get_lock {
