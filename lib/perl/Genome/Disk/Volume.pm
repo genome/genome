@@ -124,38 +124,24 @@ sub _compute_lower_limit {
 sub _allocated_kb {
     my $self = shift;
 
-    my $meta        = Genome::Disk::Allocation->__meta__;
-    my $table_name  = $meta->table_name;
-    my $data_source = $meta->data_source;
-    my $owner       = $data_source->owner;
-
-    my $query_string;
-    if ($data_source->isa('UR::DataSource::Oracle')) {
-        my $fq_table_name = join('.', $owner, $table_name);
-        $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $fq_table_name);
-    } elsif ($data_source->isa('UR::DataSource::Pg') || $data_source->isa('UR::DataSource::SQLite')) {
-        $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $table_name);
-    } else {
-        die sprintf('allocated_kb cannot be calculated for %s', $data_source->class);
+    # This is a copy of UR::Object::Set's server-side aggregate logic.
+    # Raw SQL was originally used because performance is critical and
+    # UR::Object::Set's aggregate functions will fallback on client
+    # side calculations if any member has changes. This is a comprimise
+    # to "force" the server-side logic without requiring the raw SQL.
+    my $set = Genome::Disk::Allocation->define_set(mount_path => $self->mount_path);
+    my $f = 'sum(kilobytes_requested)';
+    my $rule = $set->rule->add_filter(-aggregate => [$f])->add_filter(-group_by => []);
+    UR::Context->current->get_objects_for_class_and_rule(
+        $set->member_class_name,
+        $rule,
+        1,    # load
+        0,    # return_closure
+    );
+    unless(exists $set->{$f}) {
+        die $self->error_message("$f value not found in set's hash. Did underlying object structure change?");
     }
-    my $dbh = $data_source->get_default_handle();
-    my $query_handle = $dbh->prepare($query_string);
-    $query_handle->bind_param(1, $self->mount_path);
-    $query_handle->execute();
-
-    my $row_arrayref = $query_handle->fetchrow_arrayref();
-    $query_handle->finish();
-    unless (defined $row_arrayref) {
-        Genome::Disk::Volume->error_message("Could not calculate allocated kb from database.");
-    }
-    unless (1 == scalar(@$row_arrayref)) {
-        Genome::Disk::Volume->error_message(sprintf(
-            "Incorrect number of elements returned from SQL query (%s) expected 1.",
-            scalar(@$row_arrayref))
-        );
-    }
-
-    return ($row_arrayref->[0] or 0);
+    return ($set->{$f} or 0);
 }
 
 sub get_lock {
