@@ -193,6 +193,7 @@ sub run_breakdancer {
         return 1;
     }
 
+    my $is_ctx = 0;
     if ($bd_params =~ /\-o/) {
         my $chr = $self->chromosome;
         if ($chr eq 'all') {
@@ -273,6 +274,7 @@ sub run_breakdancer {
         }
     }
     elsif ($bd_params =~ /\-d/) {
+        $is_ctx = 1;
         my $sv_staging_out = $self->_sv_staging_output;
         $bd_params =~ s/\-d/\-d $sv_staging_out/;
     }
@@ -290,12 +292,6 @@ sub run_breakdancer {
         allow_zero_size_output_files => 1,
     );
 
-    my $md5file = $self->_sv_staging_output . '.fastq-md5s';
-    my @fastqs = glob($self->_sv_staging_output . ".*");
-    for my $fastq (@fastqs) {
-        Genome::Sys->shellcmd(cmd => "md5sum $fastq | tee -a $md5file 1>&2");
-    }
-
     unless ($return) {
         $self->error_message("Running breakdancer failed using command: $cmd");
         die;
@@ -304,6 +300,13 @@ sub run_breakdancer {
     unless (-s $self->_sv_staging_output) {
         $self->error_message("$cmd output " . $self->_sv_staging_output . " does not exist or has zero size");
         die;
+    }
+
+    if ( $is_ctx ) { # validate the output fastqs and write an md5 for them
+        $self->status_message('Validate CTX fastqs...');
+        my $validate_fastqs = $self->_validate_ctx_fastqs;
+        die if not $validate_fastqs;
+        $self->status_message('Validate CTX fastqs...OK');
     }
 
     $self->status_message('breakdancer run finished ok');
@@ -364,6 +367,44 @@ sub params_for_detector_result {
 
     $params->{chromosome_list} = $self->chromosome;
     return $params;
+}
+
+sub _validate_ctx_fastqs {
+    my $self = shift;
+
+    # Get the fastqs [only for ctx]
+    my @fastqs = grep { -s } glob($self->_sv_staging_output . "*.fastq");
+    if ( not @fastqs ) {
+        $self->error_message('Expected fastqs in sv staging output! '.$self->_sv_staging_output);
+        return;
+    }
+
+    my $md5sum;
+    for my $fastq ( @fastqs ) {
+        # Validate fastq
+        my $reader = Genome::Model::Tools::Sx::FastqReader->create(file => $fastq);
+        if ( not $reader ) {
+            $self->error_message('Failed to open fastq file! '.$fastq);
+            return;
+        }
+        return if not $reader->validate;
+        # Add md5sum
+        my $md5sum_for_fastq = eval{ Genome::Sys->md5sum($fastq); };
+        if ( not $md5sum_for_fastq ) {
+            $self->error_message($@) if $@;
+            $self->error_message("Failed to get md5sum for fastq $fastq");
+            return;
+        }
+        my $basename = File::Basename::basename($fastq);
+        $md5sum .= "$md5sum_for_fastq\t$basename\n";
+    }
+
+    my $md5file = $self->_sv_staging_output . '.fastqs.md5';
+    my $fh = Genome::Sys->open_file_for_writing($md5file);
+    $fh->print($md5sum);
+    $fh->close;
+
+    return 1;
 }
 
 1;

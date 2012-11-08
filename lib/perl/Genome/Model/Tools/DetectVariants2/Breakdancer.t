@@ -27,7 +27,7 @@ my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbui
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Breakdancer';
-my $test_base_dir = File::Temp::tempdir('DetectVariants2-Breakdancer-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $test_base_dir = File::Temp::tempdir(CLEANUP => 1);
 my $test_working_dir = "$test_base_dir/output";
 
 my $normal_bam = $test_dir . '/normal.bam';
@@ -35,7 +35,6 @@ my $tumor_bam  = $test_dir . '/tumor.bam';
 my $cfg_file   = $test_dir . '/breakdancer_config';
 
 my $chromosome = 22;
-my $expected_output = join "/", ($test_dir, "svs.hq.$chromosome".'_current');
 my $test_out   = $test_working_dir . '/' . $chromosome . '/svs.hq.'.$chromosome;
 
 my $version = '1.2';
@@ -55,7 +54,28 @@ ok($command, 'Created `gmt detect-variants2 breakdancer` command');
 $command->dump_status_messages(1);
 ok($command->execute, 'Executed `gmt detect-variants2 breakdancer` command');
 
+my $expected_output = join "/", ($test_dir, "svs.hq.$chromosome".'_current');
 is(compare($expected_output, $test_out), 0, "svs.hq output as expected");
+
+# Test fastq QC
+my $good_fastq_dir = $command->_temp_staging_directory($test_base_dir.'/good');
+Genome::Sys->create_directory($good_fastq_dir);
+for my $cnt (1..2) {
+    my $good_fastq_file = $command->_sv_staging_output.'.good.'.$cnt.'.fastq';
+    my $good_fastq_fh = Genome::Sys->open_file_for_writing($good_fastq_file);
+    $good_fastq_fh->print( join("\n", '@read1', join('', map { 'A' } (1..$cnt+3)), '+', join('', (1..$cnt+3)), '') );
+    $good_fastq_fh->close;
+}
+ok($command->_validate_ctx_fastqs, 'validate ctx fastqs');
+my $good_md5 = Genome::Sys->read_file($command->_sv_staging_output.'.fastqs.md5');
+is($good_md5, "d14cc59113d6baa186496776b55e6ebe\tsvs.hq.22.good.1.fastq\nf2768207c9cd0a01b6aaf5a6f044526c\tsvs.hq.22.good.2.fastq\n", 'MD5 for good fastq matches');
+
+my $bad_fastq_file = $command->_sv_staging_output.'.bad.1.fastq';
+my $bad_fastq_fh = Genome::Sys->open_file_for_writing($bad_fastq_file);
+$bad_fastq_fh->print( join("\n", '@read1', 'ATCG', '+', 'BLAH!', '') );
+$bad_fastq_fh->close;
+ok(!$command->_validate_ctx_fastqs, 'validate ctx fastqs failed b/c of bad fastq');
+#print $command->_sv_staging_output."\n";<STDIN>;
 
 done_testing();
 exit;
