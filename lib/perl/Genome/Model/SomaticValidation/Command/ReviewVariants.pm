@@ -1014,16 +1014,18 @@ sub process_validation_list {
 
     my $tier1_bed = $self->tier_variant_file($variant_bed_file);
 
-    my $annotation_build = $self->build->annotation_build;
-    my $annotator_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-        use_version => 2,
-        variant_bed_file => $tier1_bed,
-        annotation_filter => 'top',
-        build_id => $annotation_build->id,
-        output_file => "$tier1_bed.anno"
-    );
-    unless($annotator_cmd->execute()) {
-        die $self->error_message('Failed to annotated variants.');
+    if(-s $tier1_bed) { #only annotate if we have something to annotate!
+        my $annotation_build = $self->build->annotation_build;
+        my $annotator_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
+            use_version => 2,
+            variant_bed_file => $tier1_bed,
+            annotation_filter => 'top',
+            build_id => $annotation_build->id,
+            output_file => "$tier1_bed.anno"
+        );
+        unless($annotator_cmd->execute()) {
+            die $self->error_message('Failed to annotated variants.');
+        }
     }
 
     return 1;
