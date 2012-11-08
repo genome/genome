@@ -649,7 +649,7 @@ sub _annotate_multisample_vcf {
         #FIXME maybe allow info fields that aren't hardcoded at some point in the future
         my $dbsnp_vcf = $self->dbsnp_build->snvs_vcf;
         $self->status_message("Annotating with dbSNP VCF");
-        my $dbsnp_info_fields = _dbsnp_info_fields_for_version($self->dbsnp_build->version);
+        my $dbsnp_info_fields = $self->_dbsnp_info_fields_for_version($self->dbsnp_build->version);
         $annotated_vcf = $self->_vcf_annotate($vcf, $dbsnp_vcf, $dbsnp_info_fields);
         #set vcf variable so other predefined annotation sources can use it
         $vcf = $annotated_vcf;
