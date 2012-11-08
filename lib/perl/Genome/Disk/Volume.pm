@@ -57,41 +57,7 @@ class Genome::Disk::Volume {
             calculate => q{ return int($unallocated_kb / (2**20)) },
         },
         allocated_kb => {
-            calculate_from => ['mount_path'],
-            calculate => q/
-                my $meta        = Genome::Disk::Allocation->__meta__;
-                my $table_name  = $meta->table_name;
-                my $data_source = $meta->data_source;
-                my $owner       = $data_source->owner;
-
-                my $query_string;
-                if ($data_source->isa('UR::DataSource::Oracle')) {
-                    my $fq_table_name = join('.', $owner, $table_name);
-                    $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $fq_table_name);
-                } elsif ($data_source->isa('UR::DataSource::Pg') || $data_source->isa('UR::DataSource::SQLite')) {
-                    $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $table_name);
-                } else {
-                    die sprintf('allocated_kb cannot be calculated for %s', $data_source->class);
-                }
-                my $dbh = $data_source->get_default_handle();
-                my $query_handle = $dbh->prepare($query_string);
-                $query_handle->bind_param(1, $mount_path);
-                $query_handle->execute();
-
-                my $row_arrayref = $query_handle->fetchrow_arrayref();
-                $query_handle->finish();
-                unless (defined $row_arrayref) {
-                    Genome::Disk::Volume->error_message("Could not calculate allocated kb from database.");
-                }
-                unless (1 == scalar(@$row_arrayref)) {
-                    Genome::Disk::Volume->error_message(sprintf(
-                        "Incorrect number of elements returned from SQL query (%s) expected 1.",
-                        scalar(@$row_arrayref))
-                    );
-                }
-
-                return ($row_arrayref->[0] or 0);
-            /,
+            calculate => q/ $self->_allocated_kb /,
         },
         percent_allocated => {
             calculate_from => ['total_kb', 'allocated_kb'],
@@ -149,6 +115,43 @@ sub _compute_lower_limit {
     my $fractional_limit = int($total_kb * $fraction);
     my $subtractive_limit = $total_kb - $maximum_reserve_size;
     return max($fractional_limit, $subtractive_limit);
+}
+
+sub _allocated_kb {
+    my $self = shift;
+
+    my $meta        = Genome::Disk::Allocation->__meta__;
+    my $table_name  = $meta->table_name;
+    my $data_source = $meta->data_source;
+    my $owner       = $data_source->owner;
+
+    my $query_string;
+    if ($data_source->isa('UR::DataSource::Oracle')) {
+        my $fq_table_name = join('.', $owner, $table_name);
+        $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $fq_table_name);
+    } elsif ($data_source->isa('UR::DataSource::Pg') || $data_source->isa('UR::DataSource::SQLite')) {
+        $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $table_name);
+    } else {
+        die sprintf('allocated_kb cannot be calculated for %s', $data_source->class);
+    }
+    my $dbh = $data_source->get_default_handle();
+    my $query_handle = $dbh->prepare($query_string);
+    $query_handle->bind_param(1, $self->mount_path);
+    $query_handle->execute();
+
+    my $row_arrayref = $query_handle->fetchrow_arrayref();
+    $query_handle->finish();
+    unless (defined $row_arrayref) {
+        Genome::Disk::Volume->error_message("Could not calculate allocated kb from database.");
+    }
+    unless (1 == scalar(@$row_arrayref)) {
+        Genome::Disk::Volume->error_message(sprintf(
+            "Incorrect number of elements returned from SQL query (%s) expected 1.",
+            scalar(@$row_arrayref))
+        );
+    }
+
+    return ($row_arrayref->[0] or 0);
 }
 
 sub get_lock {
