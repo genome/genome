@@ -15,7 +15,8 @@ my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-VcfFilter";
 # V4 corrects the FT header to be a string
 # V5 makes this test actually meaningful. The previous test data was broken. It set bed_input but snvs.hq was not a bed file.
 # V6 changes the expected output file name to snvs and indels since we are now testing indels
-my $expected_base = "expected.v6";
+# V7 change the description of format "FT" to match that of TCGA-compliant format
+my $expected_base = "expected.v7";
 my $expected_dir = "$test_dir/$expected_base";
 
 for my $input_type ("unfiltered_input", "filtered_input") {

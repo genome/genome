@@ -410,11 +410,12 @@ sub _get_allocation_without_lock {
             unless ($candidate_allocation) {
                 die 'Failed to create candidate allocation';
             }
-            $candidate_allocation->volume;
             _commit_unless_testing();
 
             # Reload so we guarantee that we calculate the correct allocated_kb
-            UR::Context->current->reload($candidate_volume);
+            if (not $ENV{UR_DBI_NO_COMMIT}) {
+                UR::Context->current->reload($candidate_volume);
+            }
             if ($candidate_volume->is_over_soft_limit) {
                 $candidate_allocation->delete();
                 _commit_unless_testing();

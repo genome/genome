@@ -187,7 +187,7 @@ sub execute {
         elsif ($line =~ /^#CHROM/) {
             $done_with_header = 1;
             unless ($found_ft_header) {
-                print $outfile '##FORMAT=<ID=FT,Number=1,Type=String,Description="Filter Status">' . "\n";
+                print $outfile '##FORMAT=<ID=FT,Number=1,Type=String,Description="Sample genotype filter">' . "\n";
             }
             print $outfile $line . "\n";
         } 
