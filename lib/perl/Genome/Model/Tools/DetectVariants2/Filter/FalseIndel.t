@@ -29,7 +29,7 @@ my $detector_vcf_directory = $test_base_dir. "/detector_vcf_result";
 my $bam_file = join('/', $test_data_dir, 'tumor.tiny.bam');
 my $variant_file = join('/', $test_data_dir, 'indels.hq.bed');
 
-my $expected_result_dir = join('/', $test_base_dir, '4');
+my $expected_result_dir = join('/', $test_base_dir, '5');
 my $expected_output_file = join('/', $expected_result_dir, 'indels.hq.bed');
 my $expected_filtered_file = join('/', $expected_result_dir, 'indels.lq.bed');
 
