@@ -512,7 +512,7 @@ sub dump_trimmed_fastq_files {
         for my $input_fastq_pathname (@fastq_pathnames) {
             if ($input_fastq_pathname =~ m/^\/tmp/) {
                 $self->status_message("Removing original file from after trimming to save space: $input_fastq_pathname");
-                #unlink($input_fastq_pathname);
+                unlink($input_fastq_pathname);
             }
         }
 
