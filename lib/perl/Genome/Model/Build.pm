@@ -1971,6 +1971,7 @@ sub metrics_ignored_by_diff {
 # Each suffix should have a method called diff_<SUFFIX> that'll contain the logic.
 sub regex_for_custom_diff {
     return (
+        hq     => '\.hq$',
         gz     => '(?<!\.vcf)\.gz$',
         vcf    => '\.vcf$',
         vcf_gz => '\.vcf\.gz$',
@@ -2005,6 +2006,13 @@ sub diff_vcf {
     my ($self, $first_file, $second_file) = @_;
     my $first_md5  = qx(grep -vP '^##fileDate' $first_file | md5sum);
     my $second_md5 = qx(grep -vP '^##fileDate' $second_file | md5sum);
+    return ($first_md5 eq $second_md5 ? 1 : 0);
+}
+
+sub diff_hq {
+    my ($self, $first_file, $second_file) = @_;
+    my $first_md5  = qx(grep -vP '^##fileDate' $first_file | grep -vP '^##startTime' | grep -vP '^##cmdline' | md5sum);
+    my $second_md5 = qx(grep -vP '^##fileDate' $second_file | grep -vP '^##startTime' | grep -vP '^##cmdline' | md5sum);
     return ($first_md5 eq $second_md5 ? 1 : 0);
 }
 
