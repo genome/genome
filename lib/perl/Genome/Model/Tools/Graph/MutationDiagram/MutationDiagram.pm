@@ -42,6 +42,7 @@ sub new {
         _mutation_file => $arg{annotation} || '',
         _annotation_format => $arg{annotation_format},
         _basename => $arg{basename} || '',
+        _output_suffix => $arg{suffix} || '',
         _reference_transcripts => $arg{reference_transcripts} || '',
         _annotation_build_id => $arg{annotation_build_id} || '',
         _output_directory => $arg{output_directory} || '.',
@@ -337,13 +338,14 @@ sub MakeDiagrams {
     my ($self) = @_;
     my $data = $self->{_data};
     my $basename = join("/", $self->{_output_directory}, $self->{_basename});
+    my $suffix = $self->{_output_suffix};
     foreach my $hugo (keys %{$data}) {
         foreach my $transcript (keys %{$data->{$hugo}}) {
             unless($self->{_data}{$hugo}{$transcript}{length}) {
                 warn "$transcript has no protein length and is likely non-coding. Skipping...\n";
                 next;
             }
-            my $svg_file = $basename . $hugo . '_' . $transcript . '.svg';
+            my $svg_file = $basename . $hugo . '_' . $transcript . "$suffix.svg";
             my $svg_fh = new FileHandle;
             unless ($svg_fh->open (">$svg_file")) {
                 die "Could not create file '$svg_file' for writing $$";
