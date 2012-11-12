@@ -228,6 +228,8 @@ sub files_ignored_by_diff {
         variants/sv/squaredancer
         svs\.merge\.index$
         cnv_graph\.pdf$
+        output/Makefile$
+        output/task.complete$
     );
 }
 
@@ -237,6 +239,9 @@ sub dirs_ignored_by_diff {
         variants/\d+/
         variants/sv/breakdancer
         variants/sv/squaredancer
+        output/config
+        output/chromosomes
+        output/results
     );
 }
 
