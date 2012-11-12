@@ -497,8 +497,19 @@ sub _resolve_lock_name {
     $class_string =~ s/\:/\-/g;
 
     my $be = UR::BoolExpr->resolve_normalized($class, @_);
+    my @params = $be->params_list;
+    my @converted_params;
+    for my $p (@params) {
+        if(ref($p) and $p->isa('UR::Object')) {
+            #the object itself as a string has its memory location, which varies in each process,
+            #so convert it to something constant
+            push @converted_params, $p->class . '_' . $p->id;
+        } else {
+            push @converted_params, $p;
+        }
+    }
     no warnings;
-    my $params_and_inputs_list=join "___", $be->params_list;
+    my $params_and_inputs_list= join "___", @converted_params;
     # sub out dangerous directory separators
     $params_and_inputs_list =~ s/\//\./g;
     use warnings;
