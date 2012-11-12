@@ -38,6 +38,10 @@ class Genome::Model::Tools::Dbsnp::Import {
             is => 'Number',
             doc => '0-based column number containing names you want to translate to',
         },
+        chromosome_names => {
+            is => 'String',
+            is_many => 1,
+        },
     ],
 };
 
@@ -58,10 +62,6 @@ for creating a Genome::Model::Build::ImportedVariationList
 EOS
 }
 
-sub chromosome_designators {
-    return qw(1 10 11 12 13 14 15 16 17 18 19 2 20 21 22 3 4 5 6 7 8 9 MT X Y);
-}
-
 sub execute {
     my $self = shift;
 
@@ -69,7 +69,7 @@ sub execute {
 
     my $output_file = join("/", $temp_dir, "/unsorted.bed");
 
-    for my $chromosome ($self->chromosome_designators){
+    for my $chromosome ($self->chromosome_names){
         my $flatfile = $self->filename_pattern;
         $flatfile =~ s/X/$chromosome/;
         my $file_url = join('/', $self->flat_file_url, $flatfile);

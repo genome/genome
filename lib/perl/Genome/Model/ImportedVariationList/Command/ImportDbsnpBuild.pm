@@ -40,6 +40,22 @@ class Genome::Model::ImportedVariationList::Command::ImportDbsnpBuild {
            is_optional => 1,
            doc => '0-based column number containing names you want to translate to',
        },
+       chromosome_names => {
+           is => 'String',
+           is_many => 1,
+           is_optional => 1,
+           default_value => ["1", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "2", "20", "21", "22", "3", "4", "5", "6", "7", "8", "9", "MT", "X", "Y"],
+       },
+       import_vcf => {
+           is => 'Boolean',
+           default => 1,
+           doc => "Whether to import the dbsnp build as a vcf",
+       },
+       import_bed => {
+           is => 'Boolean',
+           default => 1,
+           doc => "Whether to import the dbsnp build as a bed",
+       },
    ],
    has_transient_optional_output => [
        build => {
@@ -79,42 +95,75 @@ sub execute {
     local $ENV{'TMPDIR'} = $allocation->absolute_path;
 
     my $original_file_path = $allocation->absolute_path . '/merged_dbsnp.vcf';
-    my $import_vcf = Genome::Model::Tools::Dbsnp::ImportVcf->create(
-        vcf_file_url => $self->vcf_file_url,
-        ($self->flat_file_pattern ? (flat_file_pattern => $self->flat_file_pattern) : ()),
-        output_file_path => $original_file_path,
-        flat_url => $self->flat_url,
-    );
+    if ($self->import_vcf) {
+        my $import_vcf = Genome::Model::Tools::Dbsnp::ImportVcf->create(
+            vcf_file_url => $self->vcf_file_url,
+            ($self->flat_file_pattern ? (flat_file_pattern => $self->flat_file_pattern) : ()),
+            output_file_path => $original_file_path,
+            flat_url => $self->flat_url,
+        );
 
-    unless ($import_vcf->execute()){
-        die($self->error_message("VCF file download and merge failed"));
+        unless ($import_vcf->execute()){
+            die($self->error_message("VCF file download and merge failed"));
+        }
     }
 
-    my $bed_file_path = $allocation->absolute_path."/dbsnp.bed";
-    my $import_bed = Genome::Model::Tools::Dbsnp::Import->create(
-        flat_file_url => $self->flat_url,
-        ($self->flat_file_pattern ? (filename_pattern => $self->flat_file_pattern) : ()),
-        output_file => $bed_file_path,
-        ($self->contig_names_translation_file ? (contig_name_translation_file => $self->contig_names_translation_file):()),
-        ($self->from_names_column ? (from_names_column => $self->from_names_column):()),
-        ($self->to_names_column ? (to_names_column => $self->to_names_column):()),
-    );
+    my $bed_file_path;
+    if ($self->import_bed) {
+        $bed_file_path = $allocation->absolute_path."/dbsnp.bed";
+        my $import_bed = Genome::Model::Tools::Dbsnp::Import->create(
+            flat_file_url => $self->flat_url,
+            ($self->flat_file_pattern ? (filename_pattern => $self->flat_file_pattern) : ()),
+            output_file => $bed_file_path,
+            ($self->contig_names_translation_file ? (contig_name_translation_file => $self->contig_names_translation_file):()),
+            ($self->from_names_column ? (from_names_column => $self->from_names_column):()),
+            ($self->to_names_column ? (to_names_column => $self->to_names_column):()),
+            ($self->chromosome_names ? (chromosome_names => [$self->chromosome_names]):()),
+        );
 
-    unless ($import_bed->execute()){
-        die($self->error_message("Bed file import failed"));
+        unless ($import_bed->execute()){
+            die($self->error_message("Bed file import failed"));
+        }
     }
 
-    my $import_cmd = Genome::Model::ImportedVariationList::Command::ImportVariants->create(
-        input_path => $original_file_path,
-        reference_sequence_build => $self->reference_sequence_build,
-        source_name => "dbsnp",
-        description => "this had better work!",
-        description => 'Imported VCF file from DBSnp ' . $self->vcf_file_url,
-        variant_type => "snv",
-        format => "vcf",
-        version => $self->version,
-        bed_file => $bed_file_path,
-    );
+    my $import_cmd;
+    if ($self->import_vcf and $self->import_bed) {
+        $import_cmd = Genome::Model::ImportedVariationList::Command::ImportVariants->create(
+            input_path => $original_file_path,
+            reference_sequence_build => $self->reference_sequence_build,
+            source_name => "dbsnp",
+            description => "this had better work!",
+            description => 'Imported VCF file from DBSnp ' . $self->vcf_file_url,
+            variant_type => "snv",
+            format => "vcf",
+            version => $self->version,
+            bed_file => $bed_file_path,
+        );
+    }
+    elsif ($self->import_vcf) {
+        $import_cmd = Genome::Model::ImportedVariationList::Command::ImportVariants->create(
+            input_path => $original_file_path,
+            reference_sequence_build => $self->reference_sequence_build,
+            source_name => "dbsnp",
+            description => "this had better work!",
+            description => 'Imported VCF file from DBSnp ' . $self->vcf_file_url,
+            variant_type => "snv",
+            format => "vcf",
+            version => $self->version,
+        )
+    }
+    elsif ($self->import_bed) {
+        $import_cmd = Genome::Model::ImportedVariationList::Command::ImportVariants->create(
+            input_path => $bed_file_path,
+            reference_sequence_build => $self->reference_sequence_build,
+            source_name => "dbsnp",
+            description => "this had better work!",
+            description => 'Imported bed file from DBSnp ' . $self->flat_url,
+            variant_type => "snv",
+            format => "bed",
+            version => $self->version,
+        )
+    }
 
 
     my $rv = $import_cmd->execute;
