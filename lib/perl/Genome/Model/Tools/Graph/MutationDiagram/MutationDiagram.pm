@@ -378,7 +378,7 @@ sub Draw {
         backbone_height
         =>
         50,
-        style => {fill => 'none', stroke => 'black'},
+        style => {overflow => 'visible', fill => 'none', stroke => 'black'},
         id => "protein_diagram",
         $document->content_view);
     $backbone->draw;

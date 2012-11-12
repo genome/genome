@@ -593,6 +593,7 @@ sub check_model_trsn_and_roi{
   my @model_instrument_data = $model->instrument_data;
   my $model_trsn = $model->target_region_set_name;
   my $model_roi = $model->region_of_interest_set_name;
+  my $model_id = $model->id; 
 
   my $trsn_ref;
   foreach my $instrument_data (@model_instrument_data){
@@ -606,7 +607,7 @@ sub check_model_trsn_and_roi{
   #Watch out for cases where multiple TRSNs have been combined...
   my $trsn_count = keys %trsns;
   if ($trsn_count >= 2){
-    $self->warning_message("Intrument data from more than one target region set are being combined...");
+    $self->warning_message("Intrument data from more than one target region set are being combined... (model id = $model_id)");
   }elsif($trsn_count == 0){
     $self->error_message("There is no instrument data with a target region set name!  How is this an exome data set?");
     exit(1);
@@ -703,9 +704,10 @@ sub check_for_missing_data{
   }
   if (scalar(@missing_model_data)){
     my $id_string = join(",", @missing_model_data);
-    $self->status_message("\t\t\tWARNING -> Model: " . $model->id . " appears to be missing the following instrument data: @missing_model_data");
+    my $model_id = $model->id;
+    $self->status_message("\t\t\tWARNING -> Model: $model_id appears to be missing the following instrument data: @missing_model_data");
     $self->status_message("\t\t\tYou should consider performing the following update before proceeding:");
-    $self->status_message("\t\t\tgenome model instrument-data assign --instrument-data='$id_string'");
+    $self->status_message("\t\t\tgenome model instrument-data assign --instrument-data='$id_string'  --model=$model_id\n\t\t\tgenome model build start $model_id");
     return 0;
   }
 
