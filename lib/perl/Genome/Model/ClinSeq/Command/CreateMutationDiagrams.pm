@@ -50,6 +50,18 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
               is_optional => 1,
               doc => 'Use this parameter to exclude INDEL variant files that have a large number of variants (e.g. hyper-mutant cases)',
         },
+        max_cosmic_sites => {
+              is => 'Number',
+              is_optional => 1,
+              default => 25,
+              doc => 'The max number of cosmic amino acid mutation positions to show for a single transcript',
+        },
+        max_count_per_cosmic_site => {
+              is => 'Number',
+              is_optional => 1,
+              default => 10,
+              doc => 'The max number of observations to display for a single COSMIC mutation',
+        },
     ],
     doc => 'summarize the SVs of somatic variation build',
 };
@@ -78,7 +90,7 @@ Create mutation diagrams ('loli-plots') for one or more somatic-variation builds
 
 A similar plot will be created for Cosmic mutations based on the annotation build of the somatic-variation builds specified
 
-In clin-seq it would be typical to specify and *merge* two somatic-variation builds, one WGS and one Exome
+In clin-seq it would be typical to specify and *collapse* two somatic-variation builds, one from WGS and one Exome data
 
 (put more content here)
 EOS
@@ -437,8 +449,6 @@ sub import_cosmic_variants{
   #If there is a mutation in a transcript with more than N variants, rescale the counts to max out at $max_var (or perhap convert to log2 scale?)
   my $t_count = keys %trans_var;
   $self->status_message("Creating filtered Cosmic variants file for $t_count transcripts that had somatic variants");
-  my $max_count_per_site = 10;
-  my $max_sites = 25;
   open (OUT, ">$filtered_variants_file") || die "\n\nCould not open cosmic variants file for output: $filtered_variants_file\n\n";
   foreach my $tid (sort {$trans_var{$a}->{gene} cmp $trans_var{$b}->{gene}} keys %trans_var){
     my $anno = $trans_var{$tid}{anno};
@@ -448,13 +458,13 @@ sub import_cosmic_variants{
     my $sites = 0;
     foreach my $record (sort {$anno->{$b} <=> $anno->{$a}} keys %{$anno}){
       $sites++;
-      last if ($sites >= $max_sites);
+      last if ($sites >= $self->max_cosmic_sites);
 
       my $record_count = $anno->{$record};
 
       #If there is a max mutation count higher than that allowed, all record counts will be rescaled.  Otherwise they will be unchanged
-      if ($max_mutation_count > $max_count_per_site){
-        my $x = ($record_count/$max_mutation_count)*$max_count_per_site;
+      if ($max_mutation_count > $self->max_count_per_cosmic_site){
+        my $x = ($record_count/$max_mutation_count)*$self->max_count_per_cosmic_site;
         my $xf = sprintf("%.0f", $x);
         $xf = 1 if ($xf < 1);
         $record_count = $xf;
@@ -497,11 +507,11 @@ sub draw_mutation_diagrams{
   $outdir .= "images/";
   mkdir($outdir);
   
-  my $mut_diag_cmd1 = "gmt graph mutation-diagram  --annotation='$somatic_variants_file'  --reference-transcripts='$ab_name' --output-directory='$outdir'  --file-prefix='SOMATIC_' 1>$stdout_file1 2>$stderr_file1";
+  my $mut_diag_cmd1 = "gmt graph mutation-diagram  --annotation='$somatic_variants_file'  --reference-transcripts='$ab_name' --output-directory='$outdir'  --file-suffix='_SOMATIC' 1>$stdout_file1 2>$stderr_file1";
   $self->status_message("$mut_diag_cmd1");
   Genome::Sys->shellcmd(cmd => $mut_diag_cmd1);
 
-  my $mut_diag_cmd2 = "gmt graph mutation-diagram  --annotation='$cosmic_variants_file'  --reference-transcripts='$ab_name' --output-directory='$outdir'  --file-prefix='COSMIC_' 1>$stdout_file2 2>$stderr_file2";
+  my $mut_diag_cmd2 = "gmt graph mutation-diagram  --annotation='$cosmic_variants_file'  --reference-transcripts='$ab_name' --output-directory='$outdir'  --file-suffix='_COSMIC' 1>$stdout_file2 2>$stderr_file2";
   $self->status_message("$mut_diag_cmd2");
   Genome::Sys->shellcmd(cmd => $mut_diag_cmd2);
 
