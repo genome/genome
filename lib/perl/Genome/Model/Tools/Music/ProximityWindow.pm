@@ -4,8 +4,7 @@ use warnings;
 use strict;
 use IO::File;
 # Binomial test
-#use PDL::Stats::Basic;
-
+use PDL::Stats::Basic;
 our $VERSION = $Genome::Model::Tools::Music::VERSION;
 
 class Genome::Model::Tools::Music::ProximityWindow {
@@ -14,14 +13,11 @@ class Genome::Model::Tools::Music::ProximityWindow {
     maf_file    => { is => 'Text', doc => "List of mutations using TCGA MAF specifications v2.3" },
     bed_file    => { is => 'Text', doc => "Coding regions list with BED format "},
     bam_list    => { is => 'Text', doc => "Tab delimited list of BAM files [sample_name, normal_bam, tumor_bam]" },
-    output_dir  => { is => 'Text', doc => "Directory where output files will be written" },
+    output_file => { is => 'Text', doc => "Output files will be written" },
     bmr         => { is => 'Number', doc => "Background mutation rate", is_optional => 1, default => '1e-6' },
     window_size => { is => 'Integer', doc => "Fixed window size for sliding", is_optional => 1, default => '10' },
     skip_silent => { is => 'Boolean', doc => "Skip silent mutations from the provided MAF file", is_optional => 1, default => 1 },
     skip_non_coding => { is => 'Boolean', doc => "Skip non-coding mutations from the provided MAF file", is_optional => 1, default => 1 },
-  ],
-  has_output => [
-    output_file => {is => 'Text', doc => "TODO"},
   ],
   doc => "Perform a sliding window proximity analysis on a list of mutations."
 };
@@ -40,17 +36,15 @@ Start, Stop, Ref_Allele, Var_Allele, Sample
 
 HELP
 }
-
 sub help_synopsis {
   return <<EOS
  ... music proximity \\
         --maf-file input_dir/myMAF.tsv \\
         --bef_file input_dir/myBED.bed \\
         --bam_list input_dir/myBAMlist \\
-        --output-dir output_dir/ \\
+        --output-file output_dir/report\\
 EOS
 }
-
 sub _doc_authors {
   return <<EOS
  Beifang Niu, Ph.D.
@@ -59,27 +53,22 @@ EOS
 
 sub execute {
     my $self = shift;
-    my $bmr = $self->bmr;
     my $maf_file = $self->maf_file;
     my $bed_file = $self->bed_file;
     my $bam_list  = $self->bam_list;
-    my $output_dir = $self->output_dir;
+    my $output_file = $self->output_file;
+    my $bmr = $self->bmr;
     my $window_size = $self->window_size;
     my $skip_silent = $self->skip_silent;
     my $skip_non_coding = $self->skip_non_coding;
-    
-    $output_dir =~ s/(\/)+$//; # Remove trailing forward slashes if any
     # Check on all the input data before starting work
     print STDERR "MAF file not found or is empty: $maf_file\n" unless(-s $maf_file);
     print STDERR "BED file not found or is empty: $bed_file\n" unless(-s $bed_file);
     print STDERR "BAM list file not found or is empty: $bam_list\n" unless(-s $bam_list);
-    print STDERR "Output directory not found: $output_dir\n"   unless(-e $output_dir);
-    return undef unless( -s $maf_file && -s $bed_file && -s $bam_list && -e $output_dir );
-
+    return undef unless( -s $maf_file && -s $bed_file && -s $bam_list);
     # Output of this script will be written to this location in the output directory
-    my $out_file = "$output_dir/proximity_report";
-    $self->output_file($out_file);
-
+    my $outfh = new FileHandle;
+    die "Could not create output file\n"  unless($outfh->open(">$output_file"));
     my %genes = ();
     my @parse_bed;
     # Parse location information from .bed file
@@ -87,16 +76,13 @@ sub execute {
     while (my $line = <$bedFh>) {
         my @t = $line =~ /^(\w+)\t(\d+)\t(\d+)\t(\S+)\n/;
         my ($chr, $start, $stop, $gene) = @t;
-        if (defined($genes{$gene})) {
-            push(@{$genes{$gene}}, "$chr\t$start\t$stop");
-        }
+        if (defined($genes{$gene})) { push(@{$genes{$gene}}, "$chr\t$start\t$stop"); } 
         else {
             my @t0;
             $genes{$gene} = \@t0;
             push(@{$genes{$gene}}, "$chr\t$start\t$stop");
         }
     }
-
     # parse information from .maf file list
     my @t = keys %genes;
     foreach my $item (@t) {
@@ -109,9 +95,7 @@ sub execute {
             my ($i_chr, $i_start, $i_stop) = @t2;
             next if (($i_chr eq $chr) and ($stop >= $i_stop));
             if ($i_chr eq $chr) {
-                if ($stop >= $i_start) {
-                    $stop  = $i_stop;
-                }
+                if ($stop >= $i_start) { $stop  = $i_stop; }
                 else {
                     push(@parse_bed, "$chr\t$start\t$stop\t$item");
                     $chr   = $i_chr;
@@ -171,12 +155,9 @@ sub execute {
                 $gene_locs{$gene}{$chr}{$a} += $weight;
                 $dele_locs{$gene}{$chr}{$a} = 1;
             }
-            else {
-                $gene_locs{$gene}{$chr}{$a}++;
-            }
+            else { $gene_locs{$gene}{$chr}{$a}++; }
         }
     }
-
     my $span = $window_size;
     # Windows container
     my @windows;
@@ -186,18 +167,14 @@ sub execute {
             @t = sort {$a <=> $b} @t;
             my %loc_count = ();
             # processing sliding part
-            foreach my $c (@t) {
-                $loc_count{$c} = $gene_locs{$e}{$f}{$c};
-            }
+            foreach my $c (@t) { $loc_count{$c} = $gene_locs{$e}{$f}{$c}; }
             my @paras = ($span, $e, $f);
             WindowSliding(\@t, \%loc_count, \@windows, \@paras);
         }
     }
-    
     # Test windows
-    my $window_num = scalar(@windows);
+    my $window_num = scalar(@windows); 
     print "Total windows:  $window_num\n";
-    
     my %wins_h;
     # P-value caculating
     foreach my $a (@windows) {
@@ -205,15 +182,13 @@ sub execute {
         @t = split(/\t/, $a);
         my ($gene, $chr, $start, $vars, $str, $sh_win, $sh_mr) = @t;
         my $sample_base = $span*$samples;
-        #my $pvalue = binomial_test($vars, $sample_base, $bmr);
-        my $pvalue = 0.001;
+        my $pvalue = binomial_test($vars, $sample_base, $bmr);
         $wins_h{"$gene\t$chr\t$start\t$vars\t$str\t$sh_win\t$sh_mr"} = "$pvalue";
     }
     my @s_keys = sort {$wins_h{$a} <=> $wins_h{$b}} keys %wins_h;
-    foreach (@s_keys) {
-        print "$_\t$wins_h{$_}\n";
-    }
-
+    foreach (@s_keys) { print $outfh "$_\t$wins_h{$_}\n"; }
+    $outfh->close;
+    print STDERR "Processing Done. \n";
 }
 
 # Shrink window part
@@ -243,9 +218,7 @@ sub WindowSliding {
         }
     }
     # last unit
-    if (@container) {
-        UnitSliding(\@container, $loc_count, $wins, \@paras0);
-    }
+    if (@container) { UnitSliding(\@container, $loc_count, $wins, \@paras0); }
     undef @container;
 }
 
@@ -260,9 +233,7 @@ sub UnitSliding {
     my $wstop  = $a_ref->[-1];
     my $number = $stop - $start + 1;
     my @array = (0) x $number;
-    foreach my $a (@$a_ref) {
-        $array[$a - $start] = $loc_count->{$a};
-    }
+    foreach my $a (@$a_ref) { $array[$a - $start] = $loc_count->{$a}; }
     foreach my $b ($wstart..$wstop) {
         my $varcount = 0;
         my $windowstr = "";
@@ -270,11 +241,8 @@ sub UnitSliding {
         my $astop  = $astart + $span;
         foreach my $c ($astart..$astop) {
             $varcount += $array[$c - $start];
-            if ($array[$c - $start] == 0) {
-                $windowstr .= 'o';
-            }else{
-                $windowstr .= 'x';
-            }
+            if ($array[$c - $start] == 0) { $windowstr .= 'o'; }
+            else{ $windowstr .= 'x'; }
         }
         my $est_vars = int($varcount + 0.5);
         next unless($est_vars > 0);
