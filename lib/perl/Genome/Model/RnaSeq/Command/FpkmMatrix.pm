@@ -292,7 +292,7 @@ sub execute {
         }
     }
     if ($self->de_model_groups) {
-         my $r_script_path = $self->get_class_object->module_path;
+         my $r_script_path = $self->__meta__->module_path;
          $r_script_path =~ s/\.pm/\.R/;
 
         my @groups = split(/ /,$self->de_model_groups);

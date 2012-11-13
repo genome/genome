@@ -33,7 +33,7 @@ eval {
     local $SIG{__DIE__};
     require Genome::Search;
 };
-# This ensures that the search system is updated when certain classes are updated 
+# This ensures that the search system is updated when certain classes are updated
 # The search system is optional so it skips this if usage above fails
 if ($INC{"Genome/Search.pm"}) {
     Genome::Search->register_callbacks('Genome::Searchable');
@@ -43,7 +43,7 @@ if ($INC{"Genome/Search.pm"}) {
 if ($] < 5.01) {
     no warnings;
     *Carp::caller_info = sub {
-        package 
+        package
             Carp;
         our $MaxArgNums;
         my $i = shift(@_) + 1;
@@ -101,21 +101,21 @@ This is the base namespace module for the Genome software tree.
 
 That tree has several primary components:
 
- Genome::Model:         a data modeling pipeline management system for genomics 
+ Genome::Model:         a data modeling pipeline management system for genomics
 
  Genome::Model::Tools   a tree of >1000 tools and tool wrappers for genomics
 
  Genome::*              a variety of sample tracking classes with an RDBMS back-end
 
-Only the tools system is currently released.  
+Only the tools system is currently released.
 
 See B<genome> for a complete inventory of all tool packages, and for command-line access to
 those tools.
 
 =head1 AUTHORS
 
- This software is developed by the analysis and engineering teams at 
- The Genome Center at Washington Univiersity in St. Louis, with funding from 
+ This software is developed by the analysis and engineering teams at
+ The Genome Center at Washington Univiersity in St. Louis, with funding from
  the National Human Genome Research Institute.  Richard K. Wilson, P.I.
 
  Scott Abbott
@@ -123,6 +123,7 @@ those tools.
  Edward Belter
  Paul Bender
  Anthony Brummett
+ Mark Burnett
  Todd C. Carter
  Matthew Callaway
  C.J. Carey
@@ -144,6 +145,7 @@ those tools.
  Xian Fan
  Ian Ferguson
  Malachi Griffith
+ Obi Griffith
  Chris Harris
  Amy Hawkins
  Todd Hepler
@@ -173,6 +175,7 @@ those tools.
  Josh McMichael
  Rick Meyer
  Thomas Mooney
+ David Morton
  William Nash
  Nathan Nutter
  Ben Oberkfell
@@ -190,6 +193,7 @@ those tools.
  Christopher Schuster
  Xiaoqi Shi
  Scott Smith
+ Gary Stiehr
  Sasi Suruliraj
  Kenneth Swanson
  Jason Walker
@@ -202,7 +206,7 @@ those tools.
 
 Copyright (C) 2007-2012 Washington University in St. Louis.
 
-It is released under the Lesser GNU Public License (LGPL) version 3.  See the 
+It is released under the Lesser GNU Public License (LGPL) version 3.  See the
 associated LICENSE file in this distribution.
 
 =head1 BUGS

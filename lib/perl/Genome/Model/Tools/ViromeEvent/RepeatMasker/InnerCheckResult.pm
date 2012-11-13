@@ -61,6 +61,12 @@ sub execute {
 	return;
     }
     $self->log_event("Screening completed for $file_name");
+
+    # remove uesless files
+    for my $file_ext (qw/ cat tbl ref out /) {
+        unlink $file.'.'.$file_ext;
+    }
+
     return 1;
 }
 

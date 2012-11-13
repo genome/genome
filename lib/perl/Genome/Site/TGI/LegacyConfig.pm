@@ -66,7 +66,7 @@ sub user_email {
 
 
 sub admin_notice_users {
-    qw/abrummet boberkfe jeldred jlolofie ssmith apipe-run/;
+    qw/abrummet boberkfe jeldred ssmith apipe-run/;
 }
 
 sub namespaces {

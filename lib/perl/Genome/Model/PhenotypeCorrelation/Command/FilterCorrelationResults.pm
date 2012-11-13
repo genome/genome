@@ -50,7 +50,11 @@ class Genome::Model::PhenotypeCorrelation::Command::FilterCorrelationResults {
             doc => "The maximum rate of filtered + missing calls for a site to be retained. This does not differentiate between alleles.",
             is_optional => 1,
         },
-
+        variant_id_column => {
+            is => "Text",
+            doc => "The name of the variant id column in the input file",
+            default_value => "x",
+        },
     ],
 };
 
@@ -69,15 +73,25 @@ sub execute {
     my $header_line = <$ifh>;
     chomp $header_line;
     my @header_fields = split($delim, $header_line);
+    my $var_id_col = $self->variant_id_column;
+    unless (grep {$_ eq $var_id_col} @header_fields) {
+        die "Variant id column '$var_id_col' not found in input file header ($input_file): $header_line.\n";
+    }
+
     #open output file
     my $ofh = Genome::Sys->open_file_for_writing($output_file);
     print $ofh $header_line, "\n";
+
 
     while (<$ifh>) {
         chomp;
         my %fields;
         @fields{@header_fields} = split($delim);
-        if( exists($markers_to_retain{$fields{'x'}}) ) {
+
+        #restrict the variant id to just the chromosome and position
+        ($fields{$var_id_col}) = $fields{$var_id_col} =~ m/(^[^_]+_\d+)_/;
+        
+        if( exists($markers_to_retain{$fields{$var_id_col}}) ) {
             print $ofh $_,"\n";
         }
     }
@@ -122,9 +136,7 @@ sub _generate_variant_id {
     if($chrom =~ /^(\d+)$/) {
         $chrom = "X$chrom";
     }
-    my $id = join("_",$chrom, $pos,$ref,$alts);
-    #remove out any commas
-    $id =~ s/,/./g;
+    my $id = join("_",$chrom, $pos);
     return $id;
 }
 

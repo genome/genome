@@ -142,6 +142,9 @@ sub _intermediate_result {
             instrument_data_segment_type => $self->instrument_data_segment_type,
             instrument_data_segment_id   => $self->instrument_data_segment_id,
             samtools_version             => $self->samtools_version,
+            trimmer_name                 => $self->trimmer_name,
+            trimmer_version              => $self->trimmer_version,
+            trimmer_params               => $self->trimmer_params,
             test_name                    => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         );
 
@@ -366,7 +369,13 @@ sub _verify_bwa_samxe_did_happen {
     my $rp_ct;
 
     @last_lines = grep {!/^\[bwtcache_destroy\] \d+ cache waits encountered/} @last_lines;
-    my $last_line = $last_lines[-1];
+
+    my $last_line;
+    if ($self->aligner_version eq '0.6.2') {
+        $last_line = $last_lines[-4];
+    } else {
+        $last_line = $last_lines[-1];
+    }
 
     if ($last_line =~ /(\d+) sequences have been processed/) {
         $rp_ct = $1;
@@ -392,22 +401,26 @@ sub _verify_bwa_samxe_did_happen {
     #}
 
     chomp (my $fail_ct = qx(grep -c 'fail to infer insert size: too few good pairs' $log_file));
-    
-    if ($fail_ct) {
-        my $line = qx(grep -m1 'sequences have been processed' $log_file);
-        my ($batch_size) = $line =~ /(\d+) sequences/;
-        $self->warning_message("The batch size: $batch_size is not 262144 as expected. Check bwa source code")
-            unless $batch_size == 262144;
-        #hard code fail percentile threshold for now. The percentile calculation is not accurate 
-        #because the last batch count is mostly smaller than 262114, but this estimate is close enough 
-        #since threshold is arbitrary too.
-        my $threshold = 55;
-        my $fail_percentile = sprintf("%.2f", $fail_ct * $batch_size * 100 / $rp_ct);
-        if ($fail_percentile > $threshold) {
-            $fail_percentile = 100 if $fail_percentile > 100; #a calculation bug
-            $self->error_message("samxe failed to infer insert size on $fail_percentile% read pairs. The current threshold is $threshold%");
-            return;
-        }
+
+    my $line = qx(grep -m1 'sequences have been processed' $log_file);
+    my ($batch_size) = $line =~ /(\d+) sequences/;
+    $self->warning_message("The batch size: $batch_size is not 262144 as expected. Check bwa source code")
+        unless $batch_size == 262144;
+    #hard code fail percentile threshold for now. The percentile calculation is not accurate 
+    #because the last batch count is mostly smaller than 262114, but this estimate is close enough 
+    #since threshold is arbitrary too.
+    my $threshold = 55;
+    my $fail_percentile = sprintf("%.2f", $fail_ct * $batch_size * 100 / $rp_ct);
+
+    # NOTE: To get distribution statistics, we're pretending this is a timing.
+    Genome::Utility::Instrumentation::timing(
+        'alignment_result.bwa.infer_insert_size_fail_percent',
+        $fail_percentile);
+
+    if ($fail_percentile > $threshold) {
+        $fail_percentile = 100 if $fail_percentile > 100; #a calculation bug
+        $self->error_message("samxe failed to infer insert size on $fail_percentile% read pairs. The current threshold is $threshold%");
+        return;
     }
 
     return 1;
@@ -529,12 +542,17 @@ sub prepare_reference_sequence_index {
 
     my $fasta_size = -s $actual_fasta_file;
     my $bwa_index_algorithm = ($fasta_size < 11_000_000) ? "is" : "bwtsw";
-    my $bwa_path = Genome::Model::Tools::Bwa->path_for_bwa_version($refindex->aligner_version);
+    my $bwa_version = $refindex->aligner_version;
+    my $bwa_path = Genome::Model::Tools::Bwa->path_for_bwa_version($bwa_version);
 
     $class->status_message(sprintf("Building a BWA index in %s using %s.  The file size is %s; selecting the %s algorithm to build it.", $staging_dir, $staged_fasta_file, $fasta_size, $bwa_index_algorithm));
 
     # expected output files from bwa index
-    my @output_files = map {sprintf("%s.%s", $staged_fasta_file, $_)} qw(amb ann bwt pac rbwt rpac rsa sa);
+    my @output_files = map {sprintf("%s.%s", $staged_fasta_file, $_)} qw(amb ann bwt pac sa);
+    my @reverse_output_files = map {sprintf("%s.%s", $staged_fasta_file, $_)} qw(rbwt rpac rsa);
+    unless ($bwa_version eq '0.6.2') {
+        push @output_files, @reverse_output_files;
+    }
 
     my $bwa_cmd = sprintf('%s index -a %s %s', $bwa_path, $bwa_index_algorithm, $staged_fasta_file);
     my $rv = Genome::Sys->shellcmd(

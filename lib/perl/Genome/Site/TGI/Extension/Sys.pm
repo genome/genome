@@ -10,6 +10,9 @@ use warnings;
 use Genome;
 use Genome::Sys;  # ensure our overrides take precedence
 
+use Time::HiRes;
+use Genome::Utility::Instrumentation;
+
 use Data::Dumper;
 require Carp;
 require IO::Dir;
@@ -27,6 +30,8 @@ require MIME::Lite;
 
 #####
 # Methods useful for bsubbing jobs and checking their status
+# FIXME There's a lower level API to LSF that doesn't rely on a the command line 
+# interface. That should be used here, but this works well enough for now.
 #####
 
 sub bsub_and_wait {
@@ -101,6 +106,31 @@ sub wait_for_lsf_job {
     return $status;
 }
 
+sub wait_for_lsf_jobs {
+    my ($class, @job_ids) = @_;
+    unless (@job_ids) {
+        die "Must be given job ids!";
+    }
+
+    my %job_statuses;
+    my $all_jobs_complete = 1;
+    $DB::single = 1;
+    do {
+        $all_jobs_complete = 1;
+        JOB_ID: for my $job_id (@job_ids) {
+            if (exists $job_statuses{$job_id} and ($job_statuses{$job_id} eq 'DONE'
+                    or $job_statuses{$job_id} eq 'EXIT')) {
+                next JOB_ID;
+            }
+            my $status = $class->get_lsf_job_status($job_id);
+            $job_statuses{$job_id} = $status;
+            $all_jobs_complete = 0 unless $status eq 'DONE' or $status eq 'EXIT';
+        }
+    } while (!$all_jobs_complete);
+
+    return %job_statuses;
+}
+
 sub kill_lsf_job {
     my ($class, $job_id) = @_;
     unless ($job_id) {
@@ -116,40 +146,11 @@ sub kill_lsf_job {
     return 1 if $rv == 0;
 }
 
-#####
-# API for accessing software and data by version
-#####
 
-sub snapshot_revision {
-    my $class = shift;
-
-    # Previously we just used UR::Util::used_libs_perl5lib_prefix but this did not
-    # "detect" a software revision when using code from PERL5LIB or compile-time
-    # lib paths. Since it is common for developers to run just Genome from a Git
-    # checkout we really want to record what versions of UR, Genome, and Workflow
-    # were used.
-
-    my @orig_inc = @INC;
-    my @libs = ($INC{'UR.pm'}, $INC{'Genome.pm'});
-    die $class->error_message('Did not find both modules loaded (UR and Genome).') unless @libs == 2;
-
-    # assemble list of "important" libs
-    @libs = map { File::Basename::dirname($_) } @libs;
-    push @libs, UR::Util->used_libs;
-
-    # remove trailing slashes
-    map { $_ =~ s/\/+$// } (@libs, @orig_inc);
-
-    @libs = $class->_uniq(@libs);
-
-    # preserve the list order as appeared @INC
-    my @inc;
-    for my $inc (@orig_inc) {
-        push @inc, grep { $inc eq $_ } @libs;
-    }
-
-    @inc = $class->_uniq(@inc);
-
+# used by Genome::Sys->snapshot_revision when present
+sub _simplify_inc {
+    my $self = shift;
+    my @inc = @_;
     # if the only path is like /gsc/scripts/opt/genome/snapshots/genome-1213/lib/perl then just call it genome-1213
     # /gsc/scripts/opt/genome/snapshots/genome-1213/lib/perl -> genome-1213
     # /gsc/scripts/opt/genome/snapshots/custom/genome-foo/lib/perl -> custom/genome-foo
@@ -157,18 +158,9 @@ sub snapshot_revision {
         $inc[0] =~ s/^\/gsc\/scripts\/opt\/genome\/snapshots\///;
         $inc[0] =~ s/\/lib\/perl$//;
     }
-
-    return join(':', @inc);
+    return @inc;
 }
 
-
-sub _uniq {
-    my $self = shift;
-    my @list = @_;
-    my %seen = ();
-    my @unique = grep { ! $seen{$_} ++ } @list;
-    return @unique;
-}
 # this helps us clean-up locks
 
 my %SYMLINKS_TO_REMOVE;
@@ -477,6 +469,27 @@ sub validate_directory_for_read_write_access {
     return $self->_can_write_to_directory($directory);
 }
 
+sub recursively_validate_directory_for_read_write_access {
+    my ($self, $directory) = @_;
+
+    my $wanted = sub {
+        my $full_path = $File::Find::name;
+        if (-f $full_path) {
+            eval {
+                Genome::Sys->validate_file_for_reading($full_path);
+                Genome::Sys->validate_file_for_writing_overwrite($full_path);
+            };
+
+            if ($@) {
+                Carp::croak "Cannot read or write $full_path in $directory!";
+            }
+        }
+    };
+
+    find($wanted, $directory);
+    return 1;
+}
+
 sub _can_read_from_directory {
     my ($self, $directory) = @_;
 
@@ -545,6 +558,8 @@ sub cat {
 sub lock_resource {
     my ($self,%args) = @_;
 
+    my $total_lock_start_time = Time::HiRes::time();
+
     my $resource_lock = delete $args{resource_lock};
     my ($lock_directory,$resource_id,$parent_dir);
     if ($resource_lock) {
@@ -598,6 +613,8 @@ sub lock_resource {
 
     my $initial_time = time;
     my $last_wait_announce_time = $initial_time;
+
+    my $lock_attempts = 1;
     my $ret;
     while(!($ret = symlink($tempdir,$resource_lock))) {
         # TONY: The only allowable failure is EEXIST, right?
@@ -697,12 +714,33 @@ END_CONTENT
                }
            }
         sleep $block_sleep;
+        $lock_attempts += 1;
        }
     $SYMLINKS_TO_REMOVE{$resource_lock} = 1;
 
     # do we need to activate a cleanup handler?
     $self->cleanup_handler_check();
+
+    my $total_lock_stop_time = Time::HiRes::time();
+    my $lock_time_miliseconds = 1000 * ($total_lock_stop_time - $total_lock_start_time);
+
+    my $caller_name = _resolve_caller_name(caller());
+
+    Genome::Utility::Instrumentation::timing("lock_resource.$caller_name", $lock_time_miliseconds);
+    Genome::Utility::Instrumentation::timing("lock_resource_attempts.$caller_name",
+        $lock_attempts);
+
+    Genome::Utility::Instrumentation::timing('lock_resource.total', $lock_time_miliseconds);
+    Genome::Utility::Instrumentation::timing('lock_resource_attempts.total',
+        $lock_attempts);
+
     return $resource_lock;
+}
+
+sub _resolve_caller_name {
+    my ($package, $filename, $line) = @_;
+    $package =~ s/::/./g;
+    return $package;
 }
 
 sub unlock_resource {

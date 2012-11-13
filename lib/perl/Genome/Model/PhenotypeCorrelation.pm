@@ -277,7 +277,7 @@ sub __profile_errors__ {
 }
 
 sub _resolve_resource_requirements_for_build {
-    return "-R 'select[mem>4000] rusage[mem=4000]' -M 4000000"
+    return "-R 'select[mem>8000] rusage[mem=8000]' -M 8000000"
 }
 
 our $SHORTCUT_ALIGNMENT_QUERY = 0;
@@ -549,6 +549,7 @@ sub _find_or_generate_multisample_vcf {
             output_dir=>"$output_dir/IBD_QC",
         );
         my $IBD_STATUS = $sqc_obj->execute();
+        $sqc_obj->software_result->add_user(label => 'uses', user => $build);
         if($IBD_STATUS eq 'Fail') {
             $self->error_message("Sequencing QC module returned fail code, this ped/model-group has a relationship problem");
             return 0;
@@ -627,6 +628,18 @@ sub _vcf_annotate {
     return $output_file;
 }
 
+sub _dbsnp_info_fields_for_version {
+    my $self = shift;
+    my $version = shift;
+    my @fields = ("GMAF", "dbSNPBuildID=dbSNPBuildID,per-alt", "MUT");
+    if ($version >= 137) {
+        push(@fields, "PM");
+    } else {
+        push(@fields, "CLN");
+    }
+    return join(":", @fields);
+}
+
 sub _annotate_multisample_vcf {
     my ($self,$output_dir) = @_;
     my $vcf = $self->multisample_vcf;
@@ -636,7 +649,8 @@ sub _annotate_multisample_vcf {
         #FIXME maybe allow info fields that aren't hardcoded at some point in the future
         my $dbsnp_vcf = $self->dbsnp_build->snvs_vcf;
         $self->status_message("Annotating with dbSNP VCF");
-        $annotated_vcf = $self->_vcf_annotate($vcf, $dbsnp_vcf, "GMAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT:CLN");
+        my $dbsnp_info_fields = $self->_dbsnp_info_fields_for_version($self->dbsnp_build->version);
+        $annotated_vcf = $self->_vcf_annotate($vcf, $dbsnp_vcf, $dbsnp_info_fields);
         #set vcf variable so other predefined annotation sources can use it
         $vcf = $annotated_vcf;
     }

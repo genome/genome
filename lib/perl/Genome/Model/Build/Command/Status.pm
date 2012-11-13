@@ -6,7 +6,9 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::Status {
-    is => 'Genome::Command::Base',
+    # The order of inheritance here matters since Command::Base does some complicated
+    # parameter checking/resolution.
+    is => ['Genome::Command::ColorMixin', 'Genome::Command::Base'],
     doc => "prints status of non-succeeded builds and tallies all build statuses",
     has => [
         builds => {
@@ -44,13 +46,13 @@ sub execute {
         if (not grep { lc $_ eq lc $build_status } @hide_statuses) {
             if (!$model_name || $model_name ne $build->model_name) {
                 $model_name = $build->model_name;
-                $self->print_message("\nModel: ".$model_name);
+                printf "\nModel: %s   Model ID: %s\n", $model_name, $build->model->id;
                 my $header = "BUILD_ID\tSTATUS";
                 $header .= "\t\tPARENT_EVENT_ID\tPARENT_START_TIME\tOLDEST_CHILD_ID\tOLDEST_CHILD_START" if ($self->show_event_info);
                 $self->print_message($header);
             }
 
-            my $info = $build->id."\t$build_status";
+            my $info = sprintf("%s\t%s", $build->id, $self->_status_color($build_status));
 
             if ($self->show_event_info) {
                 my $build_id = $build->id;
@@ -80,7 +82,7 @@ sub execute {
 
     print "\n";
     for my $key (sort keys %status) {
-        print "$key: $status{$key}\t";
+        printf "%s: %s\t", $self->_status_color($key), $status{$key};
     }
     print "Total: $total\n";
 

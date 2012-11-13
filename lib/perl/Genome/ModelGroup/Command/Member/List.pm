@@ -18,7 +18,7 @@ class Genome::ModelGroup::Command::Member::List {
             value => 'Genome::ModelGroupBridge'
         },
     ],
-    doc => 'list the member models of a model-group',
+    doc => 'list the member models of a model-group (use model.* or group.* in filter/show)',
 };
 
 1;

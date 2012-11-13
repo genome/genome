@@ -25,12 +25,54 @@ sub execute {
     $self->status_message('Copying files from '
         . $build->model->import_location . " to $target_dir\n");
 
-    for my $file ($build->required_files, $build->optional_files) {
-        my $name = File::Basename::basename($file);
-        Genome::Sys->copy_file($file, "$target_dir/$name");
-        $self->status_message("Copied $file to $target_dir/$name");
+    for my $name ( $self->_required_file_names ) {
+        my $file = $build->model->import_location."/$name";
+        if ( not -e $file ) {
+            $self->warning_message("Required file name, $name, is missing: $file");
+            next;
+        }
+        Genome::Sys->copy_file( $file, "$target_dir/$name");
+        $self->status_message("Copied $file to $target_dir");
     }
+
+    for my $name ( $self->_optional_file_names ) {
+        my $file = $build->model->import_location."/$name";
+        if ( -e $file ) {
+            Genome::Sys->copy_file( $file, "$target_dir/$name");
+            $self->status_message("Copied $file to $target_dir");
+        }
+    }
+
     return 1;
+}
+
+
+sub _required_file_names {
+    return qw/
+ASSEMBLER
+AUTHOR
+BIOPROJECT
+COVERAGE
+READ_TYPE
+RELEASE_NOTES
+contigs.bases
+supercontigs.fasta
+supercontigs.agp
+/;
+}
+
+sub _optional_file_names {
+    return qw/
+BUILD_ID
+README
+readme
+VERSION
+version
+stats.txt
+basic.stats.txt
+contigs.quals
+supercontigs.quals
+/;
 }
 
 1;

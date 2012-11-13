@@ -512,7 +512,7 @@ sub dump_trimmed_fastq_files {
         for my $input_fastq_pathname (@fastq_pathnames) {
             if ($input_fastq_pathname =~ m/^\/tmp/) {
                 $self->status_message("Removing original file from after trimming to save space: $input_fastq_pathname");
-                #unlink($input_fastq_pathname);
+                unlink($input_fastq_pathname);
             }
         }
 
@@ -838,7 +838,7 @@ sub resolve_fastq_filenames {
     my @errors;
     
     # First check the archive directory and second get the gerald directory
-    for my $dir_type qw(archive_path gerald_directory) {
+    for my $dir_type (qw(archive_path gerald_directory)) {
         $self->status_message("Now trying to get fastq from $dir_type for $desc");
         
         my $directory = $self->$dir_type;
@@ -1146,17 +1146,44 @@ sub get_default_alignment_metrics { #means BWA
     return;
 }
 
-sub get_default_alignment_results {  #means BWA and created in auto-cron by apipe-builder
+sub get_default_alignment_results {
     my $self = shift;
-    my $pp   = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
 
-    my @sr = Genome::InstrumentData::AlignmentResult->get(
+    # Get alignment results for this inst data and the default aligner name, newest first
+    my $pp = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
+    my @alignment_results = sort { $b->id <=> $a->id } Genome::InstrumentData::AlignmentResult->get(
         instrument_data_id => $self->id,
         aligner_name       => $pp->read_aligner_name,
     );
+    return if not @alignment_results;
 
-    #grep alignment results only created by apipe-builder and latest result list first
-    return grep{$_->output_dir =~ /\-apipe\-builder\-/}sort{$b->id <=> $a->id}@sr;
+    # Filter out any results that are not part of an apipe-builder model
+    my @alignment_results_from_apipe_builder_models;
+    for my $alignment_results ( @alignment_results ) {
+        my @builds = grep { $_->isa('Genome::Model::Build') } map { $_->user } $alignment_results->users;
+        if(not @builds) {
+            my @sr = grep { $_->isa('Genome::SoftwareResult') } map { $_->user } $alignment_results->users;
+            if(@sr) {
+                #look for build with one degree of indirection
+                @builds = grep { $_->isa('Genome::Model::Build') } map { $_->user } map { $_->users} @sr;
+            }
+        }
+        next if not @builds;
+        my @models_by_apipe_builder = grep { $_->user_name =~ /^apipe-builder/ } map { $_->model } @builds;
+        push @alignment_results_from_apipe_builder_models, $alignment_results;
+    }
+    return if not @alignment_results_from_apipe_builder_models;
+
+    # Filter out results that were not created by apipe-builder
+    my @alignment_results_created_by_apipe_builder_from_apipe_builder_models = grep {
+        $_->output_dir =~ /\-apipe\-builder\-/
+    } @alignment_results_from_apipe_builder_models;
+
+    # Prefer to return apipe-builder run alignment results
+    return @alignment_results_created_by_apipe_builder_from_apipe_builder_models if @alignment_results_created_by_apipe_builder_from_apipe_builder_models;
+
+    # Return the alignment result linked to the model run by other users
+    return @alignment_results_from_apipe_builder_models;
 }
 
 #This method is used in GSC::IndexIllumina to get bwa alignment metrics to retire eland 

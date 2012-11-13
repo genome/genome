@@ -231,6 +231,8 @@ sub files_ignored_by_diff {
         alignments/.*\.bam\.md5$
         alignments/.*\.bam$
         alignments/.*\.bam\.bai$
+        control_variants_for_loh/dispatcher.cmd
+        validation/review/newcalls.xml
     );
 }
 sub dirs_ignored_by_diff {

@@ -46,7 +46,7 @@ sub execute {
     my $sender = Mail::Sender->new({ smtp => 'gscsmtp.wustl.edu', from => 'jlolofie@genome.wustl.edu', });
 
     $sender->MailMsg({
-        to => 'jlolofie@genome.wustl.edu',
+        to => 'apipe-builder@genome.wustl.edu',
         subject => 'lims -> apipe sync',
         msg => join("\n",@msg)
     });

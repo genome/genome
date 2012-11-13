@@ -66,7 +66,7 @@ sub execute {
 
         my $sum;
         for my $volume (@volumes) {
-            my $space = $volume->unallocated_kb - $volume->unallocatable_reserve_size;
+            my $space = $volume->soft_limit_kb - $volume->allocated_kb;
             $sum += $space unless $space < 0;  # I've learned not to trust the system to be consistent
         }
 

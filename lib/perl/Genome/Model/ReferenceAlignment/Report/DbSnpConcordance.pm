@@ -17,7 +17,7 @@ class Genome::Model::ReferenceAlignment::Report::DbSnpConcordance {
         name                        => { default_value => 'dbSNP Concordance' },
         description => {
             calculate => q|
-            return "<div>Db Snp coverage for " . $self->model->name . " (build " . $self->build_id . ") as of " . UR::Time->now.'</div>';
+            return "<div>Db Snp coverage for " . $self->model->name . " (build " . $self->build_id . ") as of " . UR::Context->current->now.'</div>';
             |,
         },
 
@@ -41,7 +41,7 @@ sub generate_report_brief
 {
     my $self=shift;
     my $build = $self->build;
-    return "<div>Db Snp coverage for " . $self->model->name . " (build " . $self->build_id . ") as of " . UR::Time->now.'</div>';
+    return "<div>Db Snp coverage for " . $self->model->name . " (build " . $self->build_id . ") as of " . UR::Context->current->now.'</div>';
 }
 
 sub generate_report_detail 

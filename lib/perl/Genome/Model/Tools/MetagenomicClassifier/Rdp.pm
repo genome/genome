@@ -78,7 +78,7 @@ sub execute {
         my $batch_pos = $batch_cnt * $batch_sz;
         $batch_cnt++;
         $self->status_message('Batch '.$batch_cnt.' from '.($batch_pos + 1).' to '.($batch_pos + @seqs));
-        my $pid = fork();
+        my $pid = UR::Context::Process->fork();
         if ( not defined $pid ) {
             die 'Cannot fork!';
         }

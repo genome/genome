@@ -60,58 +60,23 @@ class Genome::Model::SomaticVariation {
             is => 'Text',
             default_value => "NO_INFO",
         },
-   ],
+    ],
     has => [
-       tumor_model_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'tumor_model', value_class_name => 'Genome::Model::ReferenceAlignment' ],
-            is_many => 0,
-            is_mutable => 1,
-            is_optional => 0,
-            doc => 'tumor model for somatic analysis'
-        },
-        tumor_model => {
-            is => 'Genome::Model::ReferenceAlignment',
-            id_by => 'tumor_model_id',
+        tumor_model_id => {
+            via => 'tumor_model',
+            to => 'id',
         },
         normal_model_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'normal_model', value_class_name => 'Genome::Model::ReferenceAlignment' ],
-            is_many => 0,
-            is_mutable => 1,
-            is_optional => 0,
-            doc => 'normal model for somatic analysis'
-        },
-        normal_model => {
-            is => 'Genome::Model::ReferenceAlignment',
-            id_by => 'normal_model_id',
+            via => 'normal_model',
+            to => 'id',
         },
         annotation_build_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'annotation_build', value_class_name => 'Genome::Model::Build::ImportedAnnotation' ],
-            is_many => 0,
-            is_mutable => 1,
-            is_optional => 0,
-            doc => 'annotation build for fast tiering'
-        },
-        annotation_build => {
-            is => 'Genome::Model::Build::ImportedAnnotation',
-            id_by => 'annotation_build_id',
+            via => 'annotation_build',
+            to => 'id',
         },
         previously_discovered_variations_build_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'previously_discovered_variations', value_class_name => "Genome::Model::Build::ImportedVariationList"],
-            is_many => 0,
-            is_mutable => 1,
-            is_optional => 1,
+            via => 'previously_discovered_variations',
+            to => 'id',
             doc => 'previous variants genome feature set to screen somatic mutations against',
         },
         previously_discovered_variations_build => {
@@ -124,6 +89,20 @@ class Genome::Model::SomaticVariation {
             is_many => 0,
             default => 0,
             doc => 'Allow creation of somatic variation models where --tumor_model and --normal_model do not have matching Genome::Individuals',
+        },
+    ],
+    has_input => [
+        tumor_model => {
+            is => 'Genome::Model',
+        },
+        normal_model => {
+            is => 'Genome::Model',
+        },
+        annotation_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+        },
+        previously_discovered_variations => {
+            is => 'Genome::Model::Build::ImportedVariationList',
         },
     ],
 };
@@ -442,13 +421,22 @@ sub map_workflow_inputs {
         die $self->error_message;
     }
 
-    my $tumor_bam = $tumor_build->whole_rmdup_bam_file;
+    my $tumor_bam;
+    if ($tumor_build->isa('Genome::Model::Build::RnaSeq')) {
+        $tumor_bam = $tumor_build->merged_alignment_result->bam_file;
+    } else {
+        $tumor_bam = $tumor_build->whole_rmdup_bam_file;
+    }
     unless (-e $tumor_bam) {
         $self->error_message("Tumor bam file $tumor_bam does not exist!");
         die $self->error_message;
     }
-
-    my $normal_bam = $normal_build->whole_rmdup_bam_file;
+    my $normal_bam;
+    if ($normal_build->isa('Genome::Model::Build::RnaSeq')) {
+        $normal_bam = $normal_build->merged_alignment_result->bam_file;
+    } else {
+        $normal_bam = $normal_build->whole_rmdup_bam_file;
+    }
     unless (-e $normal_bam) {
         $self->error_message("Normal bam file $normal_bam does not exist!");
         die $self->error_message;

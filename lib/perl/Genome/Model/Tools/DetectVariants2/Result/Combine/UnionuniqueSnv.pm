@@ -38,38 +38,6 @@ sub _combine_variants {
     # When unioning, there is no "fail" really, everything should be in the hq file
     my $lq_file = $self->temp_staging_directory."/snvs.lq.bed";
     `touch $lq_file`;
-    $self->_generate_vcf;
-    $DB::single=1;
-    return 1;
-}
-
-sub _generate_vcf {
-    my $self = shift;
-    my $input_a_vcf = $self->input_directory_a."/snvs.vcf.gz";
-    unless(-s $input_a_vcf){
-        $self->status_message("Could not find vcf at: ".$input_a_vcf." not creating a vcf for this operation.");
-        return;
-    }
-    my $input_b_vcf = $self->input_directory_b."/snvs.vcf.gz";
-    unless(-s $input_b_vcf){
-        $self->status_message("Could not find vcf at: ".$input_b_vcf." not creating a vcf for this operation.");
-        return;
-    }
-    my $output_file = $self->temp_staging_directory."/snvs.vcf.gz";
-
-    my $merge_cmd = Genome::Model::Tools::Joinx::VcfMerge->create(
-        input_files => [ ($input_a_vcf,$input_b_vcf)],
-        output_file => $output_file,
-        merge_samples => 1,
-        clear_filters => 1,
-        use_bgzip => 1,
-        use_version => "1.6",
-    );
-
-    unless($merge_cmd->execute){
-        die $self->error_message("Could not complete merge operation.");
-    }
-
     return 1;
 }
 
@@ -93,9 +61,25 @@ sub _validate_output {
         CLEANUP => 1
         );
     my $temp_intersect_file = $scratch_dir . "/UnionuniqueSnv.intersected";
+    my $sorted_input_a_file = $scratch_dir . "/UnionuniqueSnv.a.sorted";
+    my $sorted_input_b_file = $scratch_dir . "/UnionuniqueSnv.b.sorted";
+    my $sort_command_a = Genome::Model::Tools::Joinx::Sort->create(
+        input_files => [$input_a_file],
+        output_file => $sorted_input_a_file,
+    );
+    unless($sort_command_a->execute()) {
+        die "Failed to sort $input_a_file, $@";
+    }
+    my $sort_command_b = Genome::Model::Tools::Joinx::Sort->create(
+        input_files => [$input_b_file],
+        output_file => $sorted_input_b_file,
+    );
+    unless($sort_command_b->execute()) { 
+        die "Failed to sort $input_b_file, $@";
+    }
     my $intersect_command = Genome::Model::Tools::Joinx::Intersect->create(
-        input_file_a => $input_a_file,
-        input_file_b => $input_b_file,
+        input_file_a => $sorted_input_a_file,
+        input_file_b => $sorted_input_b_file,
         output_file => $temp_intersect_file,
         exact_pos => 1,
         exact_allele => 1,

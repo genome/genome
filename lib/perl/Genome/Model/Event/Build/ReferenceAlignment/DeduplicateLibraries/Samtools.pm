@@ -24,7 +24,7 @@ class Genome::Model::Event::Build::ReferenceAlignment::DeduplicateLibraries::Sam
 
 sub execute {
     my $self = shift;
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
   
     $self->status_message("Starting DeduplicateLibraries::Samtools");
     my $alignments_dir = $self->resolve_accumulated_alignments_path;
@@ -40,7 +40,7 @@ sub execute {
     if (-e $bam_merged_output_file) {
         $self->status_message("A merged and rmdup'd bam file has been found at: $bam_merged_output_file");
         $self->status_message("If you would like to regenerate this file, please delete it and rerun.");
-        $now = UR::Time->now;
+        $now = UR::Context->current->now;
         $self->status_message("Skipping the rest of DeduplicateLibraries::Samtools at $now");
         $self->status_message("*** All processes skipped. ***");
         return 1;
@@ -149,7 +149,7 @@ sub execute {
    }
  
    #merge those Bam files...BAM!!!
-   $now = UR::Time->now;
+   $now = UR::Context->current->now;
    $self->status_message(">>> Beginning Bam merge at $now.");
    #my $bam_merged_output_file = $alignments_dir."/".$self->model->subject_name."_merged_rmdup.bam";
 
@@ -178,11 +178,11 @@ sub execute {
        merger_params => $merger_params
    ); 
 
-   $now = UR::Time->now;
+   $now = UR::Context->current->now;
    $self->status_message("<<< Completing Bam merge at $now.");
 
    #remove intermediate files
-   $now = UR::Time->now;
+   $now = UR::Context->current->now;
    $self->status_message(">>> Removing intermediate files at $now");
 
     #delete everything except big dedup bam file and index 
@@ -207,7 +207,7 @@ sub execute {
         chmod 0444, $file;
     }
 
-    $now = UR::Time->now;
+    $now = UR::Context->current->now;
     $self->status_message("<<< Completed removing intermediate files at $now");
     $self->status_message("*** All processes completed. ***");
 

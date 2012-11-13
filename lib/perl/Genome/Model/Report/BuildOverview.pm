@@ -78,7 +78,7 @@ sub _base_path_for_templates {
 sub generate_report_brief {
     my $self=shift;
     print "calling generate_report_brief\n";
-    return "<div>Build Overview for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Time->now.'</div>';
+    return "<div>Build Overview for " . $self->model_name . " (build " . $self->build_id . ") as of " . UR::Context->current->now.'</div>';
 }
 
 sub generate_report_detail {
@@ -111,7 +111,7 @@ sub generate_report_detail {
     my $content = '';
 
     my @vars = (
-        time_now           => UR::Time->now,
+        time_now           => UR::Context->current->now,
         build        => $build,
         model        => $model,
         pprofile     => $pprofile,

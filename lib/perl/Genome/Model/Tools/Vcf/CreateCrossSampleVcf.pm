@@ -129,12 +129,26 @@ sub generate_result {
 
     my $num_builds = scalar(@builds);
     my $accessor = sprintf("get_%s_vcf", $self->variant_type);
-    my @vcf_files = map{ $_->$accessor } @builds;
-    my @existing_files = grep { -s $_ } @vcf_files;
-    unless( scalar(@existing_files) == $num_builds){
+
+
+    my (@builds_with_file, @builds_without_file, @vcf_files);
+    for my $build (@builds) {
+        my $vcf_file = $build->$accessor;
+        if (-s $vcf_file) {
+            push @builds_with_file, $build->id;
+            push @vcf_files, $vcf_file;
+        } else {
+            push @builds_without_file, $build->id;
+        }
+    }
+
+    unless( scalar(@builds_with_file) == $num_builds){
         die $self->error_message("The number of input builds ($num_builds) did not match the" .
-            " number of vcf files found (" . scalar (@existing_files) . ").\n" .
-            "Check the input builds for completeness.");
+            " number of vcf files found (" . scalar (@builds_with_file) . ").\n" .
+            "Check the input builds for completeness.\n" .
+            "Builds with a file present: " . join(",", @builds_with_file) . "\n" .
+            "Builds with missing or zero size file: " . join(",", @builds_without_file) . "\n"
+        );
     }
 
     my $reference_sequence_build = $builds[0]->reference_sequence_build;
@@ -458,28 +472,39 @@ sub _resolve_builds {
     if ($self->builds and not $self->model_group) {
         my @not_succeeded = grep { $_->status ne 'Succeeded' } $self->builds;
         if (@not_succeeded) {
-            die "Some builds are not successful: " . join(',', map { $_->id } @not_succeeded);
+            die $self->error_message("Some builds are not successful: " . join(',', map { $_->id } @not_succeeded));
         }
         @builds = $self->builds;
     }
     elsif ($self->model_group and not $self->builds) {
         for my $model ($self->model_group->models) {
             unless ($model->isa('Genome::Model::ReferenceAlignment')) {
-                die "Model " . $model->__display_name__ . " of model group " . $self->model_group->__display_name__ .
-                    " is not a reference alignment model, it's a " . $model->class_name;
+                die $self->error_message("Model " . $model->__display_name__ . " of model group " . $self->model_group->__display_name__ .
+                    " is not a reference alignment model, it's a " . $model->class_name);
             }
             my $build = $model->last_complete_build;
             if ($build) {
                 push @builds, $build;
             }
             else {
-                die "Found no last complete build for model " . $model->__display_name__;
+                die $self->error_message("Found no last complete build for model " . $model->__display_name__);
             }
         }
         $self->builds(\@builds);
     }
     else {
-        die "Given both builds and model-groups or neither."; #TODO make all die msgs $self->error_message
+        die $self->error_message("Given both builds and model-groups or neither.");
+    }
+
+    # Make sure there are no duplicate samples
+    my %subjects;
+    for my $build (@builds) {
+        my $subject_id = $build->model->subject->id;
+        if ($subjects{$subject_id}) {
+            die $self->error_message("Subject $subject_id occurs in more than one build. Please provide a list of builds or a model_group that contains no duplicate subjects.\n"
+                                     . "problems: build " . $subjects{$subject_id}->id . " (" .   $subjects{$subject_id}->model->id . ")" . " and " . $build->id . " (" . $build->model->id . ")" );
+        }
+        $subjects{$subject_id} = $build;
     }
 
     return @builds;

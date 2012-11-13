@@ -10,6 +10,8 @@ use POSIX qw(ceil);
 use File::Copy;
 use Carp qw(confess);
 
+use Genome::Utility::Instrumentation;
+
 use warnings;
 use strict;
 
@@ -350,7 +352,7 @@ sub _resolve_subclass_name {
         my $aligner_name = $_[0]->aligner_name;
         return join('::', 'Genome::InstrumentData::AlignmentResult', $class->_resolve_subclass_name_for_aligner_name($aligner_name));
     }
-    elsif (my $aligner_name = $class->get_rule_for_params(@_)->specified_value_for_property_name('aligner_name')) {
+    elsif (my $aligner_name = $class->define_boolexpr(@_)->value_for('aligner_name')) {
         return join('::', 'Genome::InstrumentData::AlignmentResult', $class->_resolve_subclass_name_for_aligner_name($aligner_name));
     }
     return;
@@ -644,33 +646,65 @@ sub collect_inputs {
     # snag the bam from the instrument data
     my $instr_data = $self->instrument_data;
     my $bam_file = $instr_data->bam_path;
+    unless ($bam_file) {
+        $self->error_message('Instrument data has no bam_path!');
+        return;
+    }
+    unless (-e $bam_file) {
+        $self->error_message("BAM not found: $bam_file");
+        return;
+    }
 
     # maybe we want to extract a read group from that bam and deal with that instead...
     if (defined $self->instrument_data_segment_id) {
         $self->status_message('Extract input read group bam');
         $bam_file = $self->_extract_input_read_group_bam;
+        unless ($bam_file) {
+            $self->error_message(sprintf('Failed to extract read group (%s) into temporary BAM.', $self->instrument_data_segment_id));
+            return;
+        }
     }
 
     # Some old imported bam does not have is_paired_end set, patch for now
-    $self->status_message("Checking if this read group is paired end");
+    $self->status_message("Checking if this read group is paired end...");
     my $paired = $instr_data->is_paired_end;
-    if (!$paired && $instr_data->can('import_format') && $instr_data->import_format eq 'bam') {
-        if ($bam_file and -e $bam_file) {
-            my $output_file = $bam_file . '.flagstat';
-            unless (-s $output_file) {
-                $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
-                die unless $self->_create_bam_flagstat($bam_file, $output_file);
-            }
-            my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
-            die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
 
-            if ($stats->{reads_paired_in_sequencing} > 0) {
-                $self->_is_inferred_paired_end(1);
-                $paired = 1;
-            } else {
-                $self->_is_inferred_paired_end(0);
-                $paired = 0;
-            }
+    # Should !$paired be !defined($paired)?
+    if ((!$paired || defined $self->instrument_data_segment_id) && $instr_data->can('import_format') && $instr_data->import_format eq 'bam') {
+        if (defined $self->instrument_data_segment_id) {
+            $self->status_message(sprintf('Inferring paired end status for "%s" segment...', $self->instrument_data_segment_id));
+        } else {
+            $self->status_message('Inferring paired end status...');
+        }
+
+        my $output_file = $bam_file . '.flagstat';
+        unless (-s $output_file) {
+            $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
+            die unless $self->_create_bam_flagstat($bam_file, $output_file);
+        }
+        my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
+        die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
+
+        # I guess ideally we would align both paired end and fragment if this
+        # were not 100% but we can't do that yet. I don't know at what point we
+        # should flip $paired to true but I don't think it should be based on a
+        # raw count nor based on non-zero.
+        my $percent_paired = $stats->{reads_paired_in_sequencing} / $stats->{total_reads};
+
+        # Boundaries were arbitrarily chosen, feel free to adjust as a matter
+        # of policy.
+        if ($percent_paired > 0.1 && $percent_paired < 0.9) {
+            die $self->error_message(sprintf(
+                'Trying to infer paired end status on mixed data (%.2f%% paired), not sure which to choose!',
+                100 * $percent_paired));
+        } elsif ($percent_paired >= 0.9) {
+            $self->status_message('Setting paired end status to true.');
+            $self->_is_inferred_paired_end(1);
+            $paired = 1;
+        } else {
+            $self->status_message('Setting paired end status to false.');
+            $self->_is_inferred_paired_end(0);
+            $paired = 0;
         }
     }
 
@@ -980,6 +1014,9 @@ sub _compute_alignment_metrics {
       $self->proper_paired_end_base_count ($res->{proper_paired_end_bp});
       $self->singleton_read_count         ($res->{singleton});
       $self->singleton_base_count         ($res->{singleton_bp});
+
+      Genome::Utility::Instrumentation::inc('alignment_result.read_count',
+          $self->total_read_count);
     }
 
     #Collect extra metrics for retiring eland for now, this might move to

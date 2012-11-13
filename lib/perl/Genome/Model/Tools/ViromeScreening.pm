@@ -79,7 +79,7 @@ sub execute {
     unlink($self->logfile) if (-e $self->logfile);
     $self->_log_dbs_used;
     my $output = run_workflow_lsf(
-	$ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/virome-screening4.xml',
+	$ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/virome-screening6.xml',
 	'fasta_file'  => $self->fasta_file,
 	'barcode_file'=> $self->barcode_file,
 	'dir'         => $self->dir,
@@ -106,6 +106,7 @@ sub execute {
 
 sub _log_dbs_used {
     my $self = shift;
+    unlink $self->logfile;
     my $fh = Genome::Sys->open_file_for_writing( $self->logfile );
     for my $name ( qw/ human nt virus taxonomy/ ) {
         my $db = $name.'_db';

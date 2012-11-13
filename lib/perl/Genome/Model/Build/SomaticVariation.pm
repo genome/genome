@@ -9,44 +9,6 @@ use File::Basename;
 class Genome::Model::Build::SomaticVariation {
     is => 'Genome::Model::Build',
     has => [
-        tumor_model => {
-            is => 'Genome::Model::ReferenceAlignment',
-            via => 'model',
-        },
-        tumor_build_id => {
-            is => 'Text',
-            via => 'tumor_build',
-            to => 'id',
-            is_mutable => 1,
-        },
-        tumor_build => {
-            is => 'Genome::Model::Build::ReferenceAlignment',
-            via => 'inputs',
-            is_many => 0,
-            to => 'value',
-            where => [ name => 'tumor_build', ],
-            is_mutable => 1,
-        },
-        normal_model => {
-            is => 'Genome::Model::ReferenceAlignment',
-            via => 'model',
-        },
-        normal_build => {
-            is => 'Genome::Model::Build::ReferenceAlignment',
-            via => 'inputs',
-            is_many => 0,
-            to => 'value',
-            where => [ name => 'normal_build', ],
-            is_mutable => 1,
-        },
-        annotation_build => {
-            is => 'Genome::Model::Build::ImportedAnnotation',
-            via => 'model',
-        },
-        previously_discovered_variations_build => {
-            is => 'Genome::Model::Build::ImportedVariationList',
-            via => 'model',
-        },
         snv_detection_strategy => {
             is => 'Text',
             via => 'model',
@@ -70,6 +32,64 @@ class Genome::Model::Build::SomaticVariation {
         loh_version => {
             is => 'Text',
             via => 'model',
+        },
+
+        # INPUTS
+        normal_model => {
+            is => 'Genome::Model',
+            via => 'model',
+        },
+        normal_build => {
+            is => 'Genome::Model::Build',
+            via => 'inputs',
+            is_many => 0,
+            to => 'value',
+            where => [ name => 'normal_build', ],
+            is_mutable => 1,
+        },
+        tumor_model => {
+            is => 'Genome::Model',
+            via => 'tumor_build',
+            to => 'model',
+        },
+        tumor_build_id => {
+            is => 'Text',
+            via => 'tumor_build',
+            to => 'id',
+            is_mutable => 1,
+        },
+        tumor_build => {
+            is => 'Genome::Model::Build',
+            via => 'inputs',
+            is_many => 0,
+            to => 'value',
+            where => [ name => 'tumor_build', ],
+            is_mutable => 1,
+        },
+        annotation_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+            via => 'inputs',
+            is_many => 0,
+            to => 'value',
+            where => [ name => 'annotation_build' ],
+            is_mutable => 1,
+        },
+        previously_discovered_variations => {
+            is => 'Genome::Model::Build::ImportedVariationList',
+            via => 'inputs',
+            is_many => 0,
+            to => 'value',
+            where => [ name => 'previously_discovered_variations', ],
+            is_mutable => 1,
+        },
+        previously_discovered_variations_build_id => {
+            is => 'Text',
+            via => 'previously_discovered_variations',
+            to => 'id',
+        },
+        previously_discovered_variations_build => {
+            is => 'Genome::Model::Build::ImportedVariationList',
+            id_by => 'previously_discovered_variations_build_id',
         },
    ],
 };
@@ -139,9 +159,14 @@ sub post_allocation_initialization {
 sub tumor_bam {
     my $self = shift;
     my $tumor_build = $self->tumor_build;
-    my $tumor_bam = $tumor_build->whole_rmdup_bam_file;
+    my $tumor_bam;
+    if ($tumor_build->isa('Genome::Model::Build::RnaSeq')) {
+        $tumor_bam = $tumor_build->merged_alignment_result->bam_file;
+    } else {
+        $tumor_bam = $tumor_build->whole_rmdup_bam_file;
+    }
     unless ($tumor_bam){
-        die $self->error_message("No whole_rmdup_bam file found for tumor build!");
+        die $self->error_message("No BAM file found for tumor build!");
     }
     return $tumor_bam;
 }
@@ -149,9 +174,14 @@ sub tumor_bam {
 sub normal_bam {
     my $self = shift;
     my $normal_build = $self->normal_build;
-    my $normal_bam = $normal_build->whole_rmdup_bam_file;
+    my $normal_bam;
+    if ($normal_build->isa('Genome::Model::Build::RnaSeq')) {
+        $normal_bam = $normal_build->merged_alignment_result->bam_file;
+    } else {
+        $normal_bam = $normal_build->whole_rmdup_bam_file;
+    }
     unless ($normal_bam){
-        die $self->error_message("No whole_rmdup_bam file found for normal build!");
+        die $self->error_message("No BAM file found for normal build!");
     }
     return $normal_bam;
 }
@@ -198,6 +228,8 @@ sub files_ignored_by_diff {
         variants/sv/squaredancer
         svs\.merge\.index$
         cnv_graph\.pdf$
+        output/Makefile$
+        output/task.complete$
     );
 }
 
@@ -207,6 +239,9 @@ sub dirs_ignored_by_diff {
         variants/\d+/
         variants/sv/breakdancer
         variants/sv/squaredancer
+        output/config
+        output/chromosomes
+        output/results
     );
 }
 

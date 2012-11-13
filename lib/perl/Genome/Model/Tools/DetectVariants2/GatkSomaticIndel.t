@@ -27,7 +27,7 @@ my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbui
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
 my $test_data = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-GatkSomaticIndel";
-my $expected_data = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-GatkSomaticIndel/expected_6";
+my $expected_data = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-GatkSomaticIndel/expected_7";
 my $tumor =  $test_data.'/true_positive_tumor_validation.bam';
 my $normal = $test_data.'/true_positive_normal_validation.bam';
 

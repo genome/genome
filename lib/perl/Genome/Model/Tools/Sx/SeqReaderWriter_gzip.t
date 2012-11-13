@@ -24,7 +24,7 @@ my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $gzfasta = $tmpdir.'/out.fasta.gz';
 my $gzqual = $tmpdir.'/out.qual.gz';
 
-my $cmd = "gmt sx base -input file=$example_gzfasta:qual_file=$example_gzqual -output type=phred:file=$gzfasta:qual_file=$gzqual"; 
+my $cmd = "gmt sx -input file=$example_gzfasta:qual_file=$example_gzqual -output type=phred:file=$gzfasta:qual_file=$gzqual"; 
 my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
 ok($rv, 'execute sx cmd');
 

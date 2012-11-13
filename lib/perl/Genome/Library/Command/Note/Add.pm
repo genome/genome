@@ -87,7 +87,7 @@ sub execute {
         header_text => $self->header,
         body_text => $self->detail,
         editor_id => 'me@somewhere',
-        entry_date => UR::Time->now(),
+        entry_date => UR::Context->current->now(),
     );
 
     my $n2 = $subject->add_note(

@@ -125,7 +125,7 @@ sub execute {
        die "Could not open file ".$log_file." for writing: " .  Genome::Sys->error_message;
     } 
 
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
     print $log_fh "Executing Dedup.pm at $now"."\n";
 
     my @list;
@@ -186,10 +186,10 @@ sub execute {
                 Genome::DataSource::GMSchema->disconnect_default_dbh();
             }
 
-            $now = UR::Time->now;
+            $now = UR::Context->current->now;
             print $log_fh ">>> Starting make_real_rmdupped_map_file() at $now for library: $library ."."\n";
             my $map_file =  $self->make_real_rmdupped_map_file($final_library_maplist, $library, $log_fh, $working_directory);
-            $now = UR::Time->now;
+            $now = UR::Context->current->now;
             print $log_fh "<<< Completed make_real_rmdupped_map_file() at $now for library: $library ."."\n";
 
             unless($map_file) {
@@ -201,7 +201,7 @@ sub execute {
             ###############
             #Beginning Map-2-Bam conversion
 
-            $now = UR::Time->now;
+            $now = UR::Context->current->now;
             print $log_fh ">>> Beginning MapToBam conversion at $now for library: $library ."."\n";
             print $log_fh "MapToBam inputs for library: $library"."\n";
             print $log_fh "maq_version: ".$self->aligner_version."\n";
@@ -221,7 +221,7 @@ sub execute {
                 $log_fh->close;
                 return;
             }
-            $now = UR::Time->now;
+            $now = UR::Context->current->now;
             print $log_fh "<<< Ending MapToBam conversion at $now for library: $library ."."\n";
     
         }#end library loop 

@@ -150,6 +150,11 @@ sub accumulated_expression_directory {
     return $self->data_directory . '/expression';
 }
 
+sub merged_alignment_result {
+    my $self = shift;
+    return $self->alignment_result;
+}
+
 sub alignment_result {
     my $self = shift;
 
@@ -320,6 +325,19 @@ sub validate_for_start_methods {
     my @methods = $self->SUPER::validate_for_start_methods;
     push @methods, 'ensure_annotation_build_provided';
     return @methods;
+}
+
+sub reference_being_replaced_for_input {
+    my $self = shift;
+    my $input = shift;
+
+    return unless $input;
+    return if $self->processing_profile->read_aligner_name eq 'imported';
+
+    #we're going to realign, so any existing reference on the data is unimportant
+    return 1 if $input->name eq 'instrument_data';
+
+    return;
 }
 
 1;

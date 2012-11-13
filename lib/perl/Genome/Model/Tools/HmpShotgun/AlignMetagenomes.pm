@@ -56,7 +56,7 @@ sub execute {
     my $self = shift;
 
     $self->dump_status_messages(1);
-    $self->status_message(">>>Running AlignMetagenomes at ".UR::Time->now);
+    $self->status_message(">>>Running AlignMetagenomes at ".UR::Context->current->now);
     #my $model_id = $self->model_id;
     $self->status_message("Ref seq: ".$self->reference_name);
     #$self->status_message("Reads: ".$self->reads_file);
@@ -72,7 +72,7 @@ sub execute {
     
     #my $alignment_file = $working_directory."/alignment_file.bam";
     #$self->aligned_file($alignment_file);
-    #$self->status_message("<<<Completed AlignMetagenomes for testing at at ".UR::Time->now);
+    #$self->status_message("<<<Completed AlignMetagenomes for testing at at ".UR::Context->current->now);
     #return 1;
     
     #expected output files
@@ -91,7 +91,7 @@ sub execute {
 #	    if ($rv_check == 1) {
 #	    	#shortcut this step, all the required files exist.  Quit.
 #	    	$self->status_message("Skipping this step.  If you would like to regenerate these files, remove them and rerun.");
-#	   	    $self->status_message("<<<Completed alignment at ".UR::Time->now);
+#	   	    $self->status_message("<<<Completed alignment at ".UR::Context->current->now);
 #	   	    return 1;
 #	    }
 #	}
@@ -135,7 +135,7 @@ sub execute {
 #    															alignment_file=>$alignment_file,
 #    															);
 #    															
-#    $self->status_message("Aligning at ".UR::Time->now);
+#    $self->status_message("Aligning at ".UR::Context->current->now);
 #    my $rv_aligner = $aligner->execute;
 #    
 #   
@@ -165,7 +165,7 @@ sub execute {
 #    	
 #    Genome::Sys->mark_files_ok(input_files=>\@expected_output_files);
 #    
-    $self->status_message("<<<Completed alignment at ".UR::Time->now);
+    $self->status_message("<<<Completed alignment at ".UR::Context->current->now);
     
     return 1;
 }

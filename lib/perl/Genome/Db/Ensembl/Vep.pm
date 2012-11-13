@@ -5,12 +5,13 @@ use warnings;
 use Genome;
 use Cwd;
 use IO::Handle;
+use File::Basename;
 
 my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
 
 class Genome::Db::Ensembl::Vep {
-    is => 'Command',
+    is => 'Command::V2',
     doc => 'Run VEP',
     has => [
         version => {
@@ -42,7 +43,7 @@ class Genome::Db::Ensembl::Vep {
             is => 'String',
             doc => 'Species to use',
             is_optional => 1,
-            default_value => 'human',
+            default_value => 'homo_sapiens',
         },
         terms => {
             is => 'String',
@@ -67,7 +68,7 @@ class Genome::Db::Ensembl::Vep {
         },
         condel => {
             is => 'String',
-            doc => 'Add Condel SIFT/PolyPhen consensus [p]rediction, [s]core or [b]oth',
+            doc => 'Add Condel [p]rediction, [s]core or [b]oth',
             is_optional => 1,
             valid_values => [qw(p s b)],
             is_input => 1,
@@ -126,6 +127,17 @@ class Genome::Db::Ensembl::Vep {
             doc => 'ID of ImportedAnnotation build with the desired ensembl version',
             default_value => $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD},
         },
+        plugins => {
+            is => 'String',
+            is_many => 1,
+            is_optional => 1,
+            doc => 'Plugins to use.  These should be formated: PluginName,arg1,arg2,...  If you need to reference the plugin config directory in any of the args, use the placeholder PLUGIN_DIR.  For example, the Condel plugin should be called as follows: Condel,PLUGIN_DIR,b,2',
+        },
+        plugins_version => {
+            is => 'String',
+            default => "1",
+            doc => 'Version of the vepplugins package to use',
+        },
     ],
 };
 
@@ -167,13 +179,11 @@ sub _open_input_file {
 
 sub execute {
     my $self = shift;
-
     # check for imported annotation build
     unless($self->ensembl_annotation_build_id) {
         $self->error_message("No ensembl annotation build specified");
         return;
     }
-    
     my $annotation_build = Genome::Model::Build::ImportedAnnotation->get($self->ensembl_annotation_build_id);
 
     unless ($annotation_build) {
@@ -348,6 +358,24 @@ sub execute {
         $count++;
     }
 
+    $count = 0;
+    foreach my $arg (@all_string_args) {
+        if ($arg->property_name eq 'plugins') {
+            splice @all_string_args, $count, 1;
+            last;
+        }
+        $count++;
+    }
+
+    $count = 0;
+    foreach my $arg (@all_string_args) {
+        if ($arg->property_name eq 'plugins_version') {
+            splice @all_string_args, $count, 1;
+            last;
+        }
+        $count++;
+    }
+
     $string_args = join( ' ',
         map {
             my $name = $_->property_name;
@@ -372,28 +400,77 @@ sub execute {
         } @all_bool_args
     );
 
+    my $temp_config_dir = Genome::Sys->create_temp_directory;
+    my $plugin_args = "";
+    if ($self->plugins) {
+        my $temp_plugins_dir = "$temp_config_dir/Plugins";
+        my $temp_plugins_config_dir = "$temp_plugins_dir/config";
+        my $plugins_version = $self->plugins_version;
+        my $plugins_source_dir = "/usr/lib/vepplugins-$plugins_version/";
+        Genome::Sys->create_directory($temp_plugins_dir);
+        Genome::Sys->create_directory($temp_plugins_config_dir);
+        foreach my $plugin ($self->plugins) {
+            my @plugin_fields = split /,/, $plugin;
+            my $plugin_name = $plugin_fields[0];
+            my $plugin_source_file = "$plugins_source_dir/$plugin_name.pm";
+            if (-e $plugin_source_file){
+                Genome::Sys->copy_file($plugin_source_file, "$temp_plugins_dir/$plugin_name.pm");
+            }
+            my $plugin_dir = "$plugins_source_dir/config/$plugin_name";
+            my $temp_plugin_config_dir = "$temp_plugins_config_dir/$plugin_name/config";
+            if (-d $plugin_dir) {
+                `cp -r $plugin_dir $temp_plugins_config_dir`;
+                foreach my $config_file (glob "$temp_plugin_config_dir/*") {
+                    my $sed_cmd = "s|path/to/config/|$temp_plugins_config_dir/|";
+                    `sed "$sed_cmd" $config_file > $config_file.new; mv $config_file.new $config_file`;
+                }
+            }
+            $plugin =~ s|PLUGIN_DIR|$temp_plugin_config_dir|;
+            $plugin_args .= " --plugin $plugin";
+        }
+    }
+
     my $host_param = defined $ENV{GENOME_DB_ENSEMBL_HOST} ? "--host ".$ENV{GENOME_DB_ENSEMBL_HOST} : "";
     my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
     my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
     my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
-
     my $cache_param;
     my $ensembl_version = Genome::Db::Ensembl::Import::Run->ensembl_version_string($annotation_build->version);
 
     my $cache_result;
-    eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(version => $ensembl_version, species => $self->species,test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME});
+    my %cache_result_params;
+    $cache_result_params{version} = $ensembl_version;
+    my $rename_species = $self->_species_lookup($self->species);
+    if ($rename_species) {
+        $cache_result_params{species} = $rename_species;
+    }
+    else {
+        $cache_result_params{species} = $self->species;
+    }
+    $cache_result_params{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+    if ($self->sift or $self->polyphen) {
+        $cache_result_params{sift} = 1;
+    }
+    else {
+        $cache_result_params{sift} = 0;
+    }
+    eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
     };
 
-    my $cmd = "$script_path $string_args $bool_args $host_param $user_param $password_param $port_param";
+    my $cmd = "$script_path $string_args $bool_args $plugin_args $host_param $user_param $password_param $port_param";
 
     if ($cache_result) {
-        $cmd = "$cmd --cache --dir ".$cache_result->output_dir;
+        $self->status_message("Using VEP cache result ".$cache_result->id);
+        $cmd = "$cmd --cache --dir ".$temp_config_dir;
+        foreach my $file (glob $cache_result->output_dir."/*"){
+            `ln -s $file $temp_config_dir`;
+        }
     }
     else {
         $self->warning_message("No cache result available, running from database");
     }
 
-    print STDERR $cmd . "\n";
+    $self->status_message("Running command:\n$cmd");
 
     my %params = (
         cmd=>$cmd,
@@ -406,6 +483,17 @@ sub execute {
         %params
     );
     return 1;
+}
+
+sub _species_lookup {
+    my ($self, $species) = @_;
+
+    if ($species eq "homo_sapiens") {
+        return "human";
+    }
+    else {
+        return;
+    }
 }
 
 

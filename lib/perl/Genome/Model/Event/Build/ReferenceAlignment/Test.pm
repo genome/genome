@@ -357,7 +357,7 @@ sub execute_event_test  {
 
 sub set_event_status {
     my ($event,$status) = @_;
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
     $event->event_status($status);
     $event->date_completed($now);
 }

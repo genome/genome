@@ -39,7 +39,7 @@ sub _generate_content {
     # the header line is the class followed by the id
     my $object = $xml_doc->createElement('object');
     $xml_doc->setDocumentElement($object);
-    my $time = UR::Time->now();
+    my $time = UR::Context->current->now();
     $object->addChild( $xml_doc->createAttribute("generated-at",$time) );
 
     $object->addChild( $xml_doc->createAttribute('type', $self->subject_class_name) );

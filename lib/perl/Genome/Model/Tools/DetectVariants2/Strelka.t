@@ -30,7 +30,7 @@ my $test_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-Tools-DetectVariants-
 ok(-e $test_dir, "Found test dir: $test_dir") or die;
 
 #Define the expected output dir where the expected Strelka results files are stored
-my $expected_output_dir = $test_dir . "expected_outputs/2012-09-14";
+my $expected_output_dir = $test_dir . "expected_outputs/2012-10-10";
 ok(-e $expected_output_dir, "Created or found expected output dir: $expected_output_dir") or die;
 
 #Define paths to a test tumor and normal BAM file
@@ -87,12 +87,12 @@ is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
 #Found 74 differing lines in the first test run against the expected result.  
 #These all seem to correspond to lines containing dates or randomly generated temp dir paths
 my @diff = `diff -r -x '*chromosomes*' $expected_output_dir $actual_output_dir`;
-ok(@diff == 74 || @diff == 98, "Only 74 or 98 differences from expected results and actual were found (the number expected for same and different day testing respectively)")
+ok(@diff == 72 || @diff == 74 || @diff == 98, "Only 72, 74, or 98 differences from expected results and actual were found (the number expected for same and different day testing respectively)")
 or do { 
   my $diff_line_count = scalar(@diff);
   diag("$diff_line_count differences are:");
   diag(@diff);
-  print "\n\nFound $diff_line_count differing lines but expected 74\n\n";
+  print "\n\nFound $diff_line_count differing lines but expected 72, 74, or 98\n\n";
   Genome::Sys->shellcmd(cmd => "cp -L -r $actual_output_dir /tmp/last-strelka-test-result");
 };
 

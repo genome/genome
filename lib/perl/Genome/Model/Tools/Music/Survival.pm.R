@@ -3,8 +3,8 @@
 ### original location of code: /gscuser/qzhang/gstat/survival/survival.R
 ### example input file: /gscuser/qzhang/gstat/survival/tcga.tsv
 
-### Run it on command line like below 
-### for example,   R --no-save --args < survival.R vital_status.input mut_matrix.input legend.placement output_dir & 
+### Run it on command line like below
+### for example,   R --no-save --args < survival.R vital_status.input mut_matrix.input legend.placement output_dir &
 
 ### clinical data /vital status input file, first three columns are sample_ID, survival_time, vital_status (0=living, 1=deceased)
 
@@ -15,23 +15,23 @@ mut.data=commandArgs()[5];
 legend.placement=commandArgs()[6];
 out.dir=commandArgs()[7];
 
-######################## read and prepare data 
+######################## read and prepare data
 
 vitals = read.table(clinical.survival.data,header=T);
 mut_matrix = read.table(mut.data,header=T);
 x = merge(vitals,mut_matrix,by.x=1,by.y=1);
-write.table(x,file=paste(out.dir,"survival_analysis_data_matrix.csv",sep="/"),quote=F,append=F,row.names=F,sep="\t")
+write.table(x,file=paste(out.dir,"survival_analysis_data_matrix.tsv",sep="/"),quote=F,append=F,row.names=F,sep="\t")
 colnames(x)[-c(1:3)]->phenos
 if (class(x[,phenos])=="integer" & length(unique(x[,phenos]))<6) x[,phenos] [x[,phenos]>1]=1
-
-
+# Make a list of distinctive colors using afriggeri.github.com/RYB
+distinctColors = c(rgb(255,63,0,maxColorValue=255),rgb(51,23,0,maxColorValue=255),rgb(0,168,51,maxColorValue=255),rgb(41,95,153,maxColorValue=255),rgb(255,127,0,maxColorValue=255),rgb(255,127,127,maxColorValue=255),rgb(127,0,127,maxColorValue=255),rgb(127,211,25,maxColorValue=255),rgb(148,175,204,maxColorValue=255),rgb(153,75,0,maxColorValue=255),rgb(255,255,127,maxColorValue=255),rgb(89,11,63,maxColorValue=255),rgb(20,131,102,maxColorValue=255),rgb(191,0,63,maxColorValue=255),rgb(127,211,25,maxColorValue=255),rgb(255,255,0,maxColorValue=255),rgb(25,96,25,maxColorValue=255));
 
 ######################### survival analysis
 
 library(survival)
 logr=NULL
 
-for (phenotype in phenos) 
+for (phenotype in phenos)
 {
     #clean data
     loopdata <- x;
@@ -53,20 +53,20 @@ for (phenotype in phenos)
     ## file name for plot
     bitmap(file=paste(out.dir,"/",phenotype,"_survival_plot.png",sep=""))
     ## create survival plot
-    plot(mfit.by,lty=1:10,ylab="Survival Probability",xlab="Time",col=c(1:10))
+    plot(mfit.by,lty=1:10,ylab="Survival Probability",xlab="Time",col=distinctColors)
     if (dim(table(x1))>1) {
         title(paste(phenotype,", P=",signif(p,3),sep=""));
-    } else {
+    }
+    else {
         title(paste(phenotype));
     }
-    legend(x=legend.placement, legend=names(table(x1)), lty = 1:10, col=c(1:10)) 
+    legend(x=legend.placement, legend=names(table(x1)), lty = 1:10, col=distinctColors)
     dev.off()
-
 }
 
 ########################## calculate fdr
 
-logr=logr[,-5]; 
+logr=logr[,-5];
 if (length(phenos) < 2) { logr=(t(logr)); }
 fdr=p.adjust(as.numeric(logr[,"p"]),"fdr")
 logr=cbind(logr,fdr)
@@ -75,4 +75,4 @@ logr=cbind(logr,fdr)
 
 colnames(logr)[1:9]=c("base.class","comparison.class","phenotype","hazard.ratio","lower.95","upper.95","2-class-p-value","p-value","fdr")
 logr=logr[order(logr[,"p-value"]),]
-write.table(logr,file=paste(out.dir,"survival_analysis_test_results.csv",sep="/"),quote=F,append=F,row.names=F,sep="\t")
+write.table(logr,file=paste(out.dir,"survival_analysis_test_results.tsv",sep="/"),quote=F,append=F,row.names=F,sep="\t")

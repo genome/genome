@@ -74,7 +74,7 @@ sub execute {
     die($self->error_message("Unable to download the VCF file at: " . $self->vcf_file_url)) unless $response == RC_OK;
 
     my $vcf_input_fh  = Genome::Sys->open_gzip_file_for_reading($vcf_download_location);
-    my $vcf_output_fh = Genome::Sys->open_file_for_writing($self->output_file_path);
+    my ($vcf_output_fh, $vcf_temp_output) = Genome::Sys->create_temp_file();
 
     my @vcf_row = ();
     while (my $line = <$vcf_input_fh>) {                                                                                                                                                                    
@@ -105,6 +105,12 @@ sub execute {
 
     $vcf_input_fh->close;
     $vcf_output_fh->close;
+    my $rv = Genome::Model::Tools::Bed::ChromSort->execute(input => $vcf_temp_output, output => $self->output_file_path);
+    unless ($rv) {
+        $self->error_message("Failed to sort dbsnp VCF file");
+        return;
+    }
+    return 1;
 }
 
 sub _get_submitter_for_chromosome_and_snp_id {

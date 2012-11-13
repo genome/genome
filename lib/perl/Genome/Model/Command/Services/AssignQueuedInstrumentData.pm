@@ -42,10 +42,8 @@ class Genome::Model::Command::Services::AssignQueuedInstrumentData {
 sub _default_rna_seq_processing_profile_id {
     my $self = shift;
     my $instrument_data = shift;
-    if($instrument_data->sample->taxon->name eq 'human'){
-        return 2694793;
-    }
-    return 2694792; #mouse
+
+    return 2762841;
 }
 
 sub help_brief {
@@ -101,6 +99,11 @@ sub execute {
         my @process_errors;
         if ( @processing ) {
             PP: foreach my $processing ( @processing ) {
+                if(exists $processing->{error}) {
+                    push @process_errors, $processing->{error};
+                    next PP;
+                }
+
                 my $processing_profile = $processing->{processing_profile};
                 my $reference_sequence_build = $processing->{reference_sequence_build};
 
@@ -173,12 +176,14 @@ sub execute {
                 }
             } elsif($instrument_data->index_sequence eq 'unknown' && $instrument_data->sample->name =~ /Pooled_Library/) {
                 $self->status_message('Skipping pooled library validation data! '.$instrument_data->id);
+                $instrument_data->{_skipped} = 1;
             } else {
                 push @process_errors,
                 $self->error_message('No validation models found to assign data (target ' . $instrument_data->target_region_set_name . ' on instrument data ' . $instrument_data->id . '.)');
             }
         } else {
             $self->status_message('No model generation attempted for instrument data! '.$instrument_data->id);
+            $instrument_data->{_skipped} = 1;
         } # done with inst data which specify @processing
 
         # Handle this instdata for other models besides the default
@@ -217,7 +222,7 @@ sub execute {
             }
         } # end of adding instdata to non-autogen models
 
-        $instrument_data->{_processed_ok} = ( @process_errors > 0 ) ? 0 : 1;
+        $instrument_data->{_tgi_lims_fail_message} = substr(join("\n", @process_errors), 0, 512) if @process_errors; # max for msg is 512
     } # end of INST_DATA loop
 
     #schedule new builds for the models we found and stored in the output hashes
@@ -225,11 +230,14 @@ sub execute {
 
     $self->status_message("Updating instrument data...");
     for my $instrument_data ( @instrument_data_to_process ) {
-        if ( $instrument_data->{_processed_ok} or $instrument_data->ignored ) {
-            $self->_update_instrument_data_tgi_lims_status_to_processed($instrument_data);
+        if ( $instrument_data->ignored or $instrument_data->{_skipped} ) { # skipped
+            $self->_update_instrument_data_tgi_lims_status_to_skipped($instrument_data);
         }
-        else {
+        elsif ( $instrument_data->{_tgi_lims_fail_message} ) { # failed
             $self->_update_instrument_data_tgi_lims_status_to_failed($instrument_data);
+        }
+        else { # processed!
+            $self->_update_instrument_data_tgi_lims_status_to_processed($instrument_data);
         }
     }
 
@@ -242,7 +250,7 @@ sub _update_instrument_data_tgi_lims_status_to {
     # These should not happen - developer error
     Carp::confess('No instrument data given to update instrument data tgi lims status!') if not $instrument_data;
     Carp::confess('No status given to update instrument data tgi lims status!') if not $status;
-    Carp::confess("No invalid status ($status) given to update instrument data tgi lims status!") if not grep { $status eq $_ } (qw/ processed failed /);
+    Carp::confess("No invalid status ($status) given to update instrument data tgi lims status!") if not grep { $status eq $_ } (qw/ processed skipped failed /);
 
     # Rm tgi lims status attribute(s)
     $instrument_data->remove_attribute(attribute_label => 'tgi_lims_status');
@@ -263,6 +271,19 @@ sub _update_instrument_data_tgi_lims_status_to_processed {
     my $set_status = $self->_update_instrument_data_tgi_lims_status_to($instrument_data, 'processed');
     return if not $set_status;
 
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_message');
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_count');
+
+    return 1;
+}
+
+sub _update_instrument_data_tgi_lims_status_to_skipped {
+    my ($self, $instrument_data) = @_;
+
+    my $set_status = $self->_update_instrument_data_tgi_lims_status_to($instrument_data, 'skipped');
+    return if not $set_status;
+
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_message');
     $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_count');
 
     return 1;
@@ -271,14 +292,24 @@ sub _update_instrument_data_tgi_lims_status_to_processed {
 sub _update_instrument_data_tgi_lims_status_to_failed {
     my ($self, $instrument_data) = @_;
 
+    Carp::confess('No message sent to update tgi lims status to failed!') if not defined $instrument_data->{_tgi_lims_fail_message};
+
     my $set_status = $self->_update_instrument_data_tgi_lims_status_to($instrument_data, 'failed');
     return if not $set_status;
 
-    my $current = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count');
+    my $fail_msg_attr = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_message');
+    $fail_msg_attr->delete if $fail_msg_attr;
+
+    $instrument_data->add_attribute(
+        attribute_label => 'tgi_lims_fail_message',
+        attribute_value => $instrument_data->{_tgi_lims_fail_message},
+    );
+
+    my $fail_count_attr = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count');
     my $previous_count = 0;
-    if($current) {
-        $previous_count = $current->attribute_value;
-        $current->delete;
+    if ( $fail_count_attr ) {
+        $previous_count = $fail_count_attr->attribute_value;
+        $fail_count_attr->delete;
     }
 
     $instrument_data->add_attribute(
@@ -349,9 +380,12 @@ sub find_or_create_somatic_variation_models{
             );
             $somatic_params{annotation_build} = Genome::Model::ImportedAnnotation->annotation_build_for_reference($model->reference_sequence_build);
             $self->error_message('Failed to get annotation_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{annotation_build};
+            $somatic_params{previously_discovered_variations_build} = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($model->reference_sequence_build);
+            $self->error_message('Failed to get previously_discovered_variations_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{previously_discovered_variations_build};
+ 
 
-            my $capture_somatic_processing_profile_id = '2642139'; #Nov. 2011 somatic-variation exome
-            my $somatic_processing_profile_id = '2642137'; #Nov. 2011 somatic-variation wgs
+            my $capture_somatic_processing_profile_id = '2762563'; #Oct 2012 Default Somatic Variation Exome
+            my $somatic_processing_profile_id = '2762562'; #Oct 2012 Default Somatic Variation WGS
             my $capture_target = eval{$model->target_region_set_name};
             if($capture_target){
                 $somatic_params{processing_profile_id} = $capture_somatic_processing_profile_id;
@@ -484,22 +518,22 @@ sub _check_instrument_data {
     if ( $instrument_data->isa('Genome::InstrumentData::Solexa') ) {
         if($instrument_data->target_region_set_name) {
             my $fl = Genome::FeatureList->get(name => $instrument_data->target_region_set_name);
-            unless($fl) {
-                $self->error_message('Failed to get a feature-list matching target region set name ' . $instrument_data->target_region_set_name);
-                return;
+            if(not $fl) {
+                $instrument_data->{_tgi_lims_fail_message} = 'Failed to get a feature-list matching target region set name ' . $instrument_data->target_region_set_name;
             }
-
-            unless($fl->content_type) {
-                $self->error_message('No content-type set on feature-list ' . $fl->name);
-                return;
+            elsif(not $fl->content_type) {
+                $instrument_data->{_tgi_lims_fail_message} = 'No content-type set on feature-list ' . $fl->name;
             } elsif ($fl->content_type eq 'roi') {
-                $self->error_message('Unexpected "roi"-typed feature-list set as target region set name: ' . $fl->name);
-                return;
+                $instrument_data->{_tgi_lims_fail_message} = 'Unexpected "roi"-typed feature-list set as target region set name: ' . $fl->name;
             } elsif (!grep($_ eq $fl->content_type, 'exome', 'validation', 'targeted')) {
-                $self->error_message('Unknown/unhandled content-type ' . $fl->content_type . ' on feature-list ' . $fl->name);
-                return;
+                $instrument_data->{_tgi_lims_fail_message} = 'Unknown/unhandled content-type ' . $fl->content_type . ' on feature-list ' . $fl->name;
             }
         }
+    }
+
+    if ( $instrument_data->{_tgi_lims_fail_message} ) {
+        $self->error_message($instrument_data->{_tgi_lims_fail_message});
+        return;
     }
 
     return 1;
@@ -1136,14 +1170,17 @@ sub _resolve_processing_for_instrument_data {
 
         my $sample = $instrument_data->sample;
         unless (defined($sample)) {
-            $self->error_message('failed to get a Genome::Sample for id ' . $instrument_data->id);
-            die $self->error_message;
+            die $self->error_message('Failed to get a sample for instrument data! '.$instrument_data->id);
         }
 
-        my $taxon = $sample->taxon;
+        my $source = $sample->source; # taxon is via the source, so check it first
+        if ( not $source ) {
+            die $self->error_message('Failed to get a sample source for instrument data! '.$instrument_data->id);
+        }
+
+        my $taxon = $source->taxon;
         unless (defined($taxon)) {
-            $self->error_message('failed to get taxon via Genome::Taxon for id ' . $instrument_data->id);
-            die $self->error_message;
+            die $self->error_message('Failed to get a taxon from sample source for instrument data! '.$instrument_data->id);
         }
 
         if ($sequencing_platform eq '454') {
@@ -1164,6 +1201,9 @@ sub _resolve_processing_for_instrument_data {
                     $instrument_data->ignored(1);
                 }
             }
+            else { # skip
+                $self->status_message('Skipping 454 instrument data because it is not RNA or MC16s! '.$instrument_data->id);
+            }
         }
         elsif ($sequencing_platform eq 'sanger') {
             push @processing, { processing_profile_id => 2591277, };
@@ -1176,6 +1216,7 @@ sub _resolve_processing_for_instrument_data {
                 affymetrix => 2166946,
                 infinium => 2575175,
                 unknown => 2186707,
+                plink => 2591110,
             );
             my $processing_profile_id = $genotype_platforms_and_processing_ids{$sequencing_platform};
             die $self->error_message('No genotype processing profile for platform! '.$sequencing_platform) if not $processing_profile_id;
@@ -1220,7 +1261,7 @@ sub _resolve_processing_for_instrument_data {
             elsif ($taxon->species_latin_name =~ /zea mays/i) {
                 push @processing, {
                     processing_profile_id => Genome::ProcessingProfile::ReferenceAlignment->default_profile_id,
-                    reference_sequence_build_id => 12319608,# MGSC-maize-buildB73 => 123196088
+                    reference_sequence_build_id => 123196088,# MGSC-maize-buildB73 => 123196088
                 };
             }
             elsif ($taxon->domain =~ /bacteria/i) {
@@ -1253,9 +1294,8 @@ sub _resolve_processing_for_instrument_data {
 
     };
     if($@){
-        #something went horribly wrong.  do something about it.
-        # FIXME: actually DO something
-        $self->warning_message('Failed to get processing for instrument data id ('.$instrument_data->id.'): '.$@);
+        $self->error_message('Failed to get processing for instrument data id ('.$instrument_data->id.'): '.$@);
+        push @processing, {error => $self->error_message};
     }
     return @processing;
 }

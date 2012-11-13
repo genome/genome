@@ -26,12 +26,12 @@ use Genome;                                 # using the namespace authorizes Cla
 my %stats = ();
 
 class Genome::Model::Tools::Vcf::RareDelTest {
-    is => 'Command',
+    is => 'Command::V2',
 
-    has => [                                # specify the command's single-value properties (parameters) <---
+    has_input => [                                # specify the command's single-value properties (parameters) <---
         gene_file    => { is => 'Text', doc => "Input rare-deleterious gene table" , is_optional => 0},
-        output_file    => { is => 'Text', doc => "Output file for genes with FET p-value" , is_optional => 0},
-        output_significant    => { is => 'Text', doc => "Output file for genes with significant FET p-value" , is_optional => 0},
+        output_file    => { is => 'Text', doc => "Output file for genes with FET p-value" , is_optional => 0, is_output => 1},
+        output_significant    => { is => 'Text', doc => "Output file for genes with significant FET p-value" , is_optional => 0, is_output => 1},
         output_details    => { is => 'Text', doc => "Output file for details of significant genes" , is_optional => 1},
         p_value_threshold    => { is => 'Text', doc => "Default p-value threshold to report details for genes" , is_optional => 0, default => 0.05},
     ],
@@ -81,13 +81,21 @@ test.row <- function(x) {
     fisher.test(m)\$p.value;
 }
 
-fet_p_value <- apply(x, 1, test.row);
+print("Rare del test dim:");
+print(dim(x));
+if (dim(x)[1] > 0) {
+    fet_p_value <- apply(x, 1, test.row);
 
-# Append p-value column, find significant entries, and write result files
-y <- cbind(x, fet_p_value);
-signif <- y[fet_p_value < $p_threshold,];
-write.table(y, "$output_file", sep="\t", quote=FALSE, row.names=FALSE);
-write.table(signif, "$output_significant", sep="\t", quote=FALSE, row.names=FALSE);
+    # Append p-value column, find significant entries, and write result files
+    y <- cbind(x, fet_p_value);
+    signif <- y[fet_p_value < $p_threshold,];
+    write.table(y, "$output_file", sep="\t", quote=FALSE, row.names=FALSE);
+    write.table(signif, "$output_significant", sep="\t", quote=FALSE, row.names=FALSE);
+} else {
+    print("Writing null file");
+    write.table(x, "$output_file", sep="\t", quote=FALSE, row.names=FALSE);
+    write.table(x, "$output_significant", sep="\t", quote=FALSE, row.names=FALSE);
+}
 EOS
 
     my ($fh, $path) = Genome::Sys->create_temp_file;

@@ -27,6 +27,11 @@ class Genome::Disk::Command::Allocation::Reallocate {
             default => 0,
             doc => 'Allow the allocation to be moved to a new volume if current volume is too small.',
         },
+        grow_only => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'Do not reduce allocation size, only increase it if needed (by du).',
+        },
     ],
     doc => 'changes the requested kilobytes for a target allocation',
 };
@@ -57,6 +62,7 @@ sub execute {
         $params{allocation_id} = $allocation->id;
         $params{kilobytes_requested} = $self->kilobytes_requested if defined $self->kilobytes_requested;
         $params{allow_reallocate_with_move} = $self->allow_reallocate_with_move;
+        $params{grow_only} = $self->grow_only;
 
         my $transaction = UR::Context::Transaction->begin();
         my $successful = eval {Genome::Disk::Allocation->reallocate(%params) };

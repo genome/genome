@@ -11,10 +11,14 @@ use Switch;
 class Genome::Model::Tools::Sx::ExternalCmdBase {
     is => 'Genome::Model::Tools::Sx::Base',
     is_abstract => 1,
-    has => [
+    has_optional => [
+        save_files => {
+            is=> 'Boolean', 
+            default_value => 0,
+            doc => 'Save intermediate output files.',
+        },
         _cmds => {
             is => 'Array',
-            is_optional => 1,
             is_transient => 1,
             default_value => [],
             doc => 'Commands that were run.',
@@ -175,6 +179,44 @@ sub _resolve_input_params {
     }
 
     return @input_params;
+}
+
+sub save_read_processor_output_files {
+    my $self = shift;
+
+    my $tmpdir = $self->_tmpdir;
+    if ( not $tmpdir or not -d $tmpdir ) {
+        $self->error_message('Expected to copy files in tmp dir but does not exist');
+        return;
+    }
+
+    my ( $class, $params ) = $self->_output->parse_writer_config( $self->_output->config );
+    $self->error_message('Failed to derive class and params from writer config') and return
+        if not $class or not $params;
+
+    my $output_path = File::Basename::dirname($params->{file});
+    $self->error_message("Expected this to be a directory: $output_path") and return
+        if not -d $output_path;
+
+    if ( not $output_path = $self->output_path ) {
+        $self->status_message('Failed to derive output path from sx output');
+        return;
+    }
+
+    my $cmd_display_name = $self->cmd_display_name;
+    $output_path .= '/'.$cmd_display_name;
+    Genome::Sys->create_directory( $output_path ) if not -d $output_path;
+
+    $self->status_message("Copying $cmd_display_name output files to $output_path");
+    my $rv = eval{ File::Copy::Recursive::dircopy( $tmpdir, $output_path ); };
+    if ( not $rv ) {
+        $self->error_message("Failed to copy $cmd_display_name output files from $tmpdir to $output_path");
+        return;
+    }
+
+    $self->status_message("Finished copying $cmd_display_name output files from $tmpdir to $output_path");
+
+    return 1
 }
 
 1;

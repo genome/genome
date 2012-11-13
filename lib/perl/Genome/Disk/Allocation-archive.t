@@ -13,6 +13,7 @@ use Test::More;
 use File::Temp 'tempdir';
 use File::Basename;
 use File::Find;
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
@@ -20,6 +21,9 @@ use_ok('Genome::Disk::Volume') or die;
 no warnings 'redefine';
 *Genome::Sys::current_user_has_role = sub { return 1 };
 use warnings;
+
+use Genome::Disk::Allocation;
+$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
 my @volumes = create_test_volumes();
 
@@ -33,6 +37,8 @@ my $allocation = Genome::Disk::Allocation->create(
 );
 ok($allocation, 'created test allocation on non-archive disk');
 is($allocation->mount_path, $volumes[0]->mount_path, 'allocation on expected volume');
+
+my $original_absolute_path = $allocation->absolute_path;
 
 # Make a few testing files in the allocation directory
 my @files = qw( a.out b.out c.out .hidden.out test/d.out test/.hidden.out);
@@ -66,6 +72,9 @@ for my $file (@files, @dirs) {
     ok((grep { $file =~ /$_/ } @tar_files), "found $file in tarball");
 }
 
+# Remove the original files
+Genome::Sys->remove_directory_tree($original_absolute_path);
+
 # Now unarchive
 $rv = $allocation->unarchive();
 ok($rv, 'unarchive successfully executed');
@@ -89,7 +98,7 @@ done_testing();
 sub create_test_volumes {
     my $test_dir_base = "$ENV{GENOME_TEST_TEMP}/";
     my $test_dir = tempdir(
-        TEMPLATE => 'allocation_testing_XXXXXX',
+        'allocation_testing_XXXXXX',
         DIR => $test_dir_base,
         UNLINK => 1,
         CLEANUP => 1,
@@ -104,7 +113,7 @@ sub create_test_volumes {
     my @volumes;
     for (1..2) {
         my $volume_path = tempdir(
-            TEMPLATE => "test_volume_" . $_ . "_XXXXXXX",
+            "test_volume_" . $_ . "_XXXXXXX",
             DIR => $test_dir,
             CLEANUP => 1,
             UNLINK => 1,
@@ -114,8 +123,7 @@ sub create_test_volumes {
             hostname => 'foo',
             physical_path => 'foo/bar',
             mount_path => $volume_path,
-            total_kb => 1024,
-            unallocated_kb => 1024,
+            total_kb => Filesys::Df::df($volume_path)->{blocks},
             disk_status => 'active',
             can_allocate => '1',
         );

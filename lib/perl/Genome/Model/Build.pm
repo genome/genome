@@ -17,7 +17,7 @@ use YAML;
 use Date::Manip;
 
 class Genome::Model::Build {
-    is => 'Genome::Notable',
+    is => ['Genome::Notable','Genome::Searchable'],
     type_name => 'genome model build',
     table_name => 'GENOME_MODEL_BUILD',
     is_abstract => 1,
@@ -69,7 +69,7 @@ class Genome::Model::Build {
         master_event_status     => { via => 'the_master_event', to => 'event_status' },
     ],
     has_optional => [
-        _newest_workflow_instance => { 
+        _newest_workflow_instance => {
             is => 'Workflow::Operation::Instance',
             is_calculated => 1,
             calculate => q{ return $self->newest_workflow_instance(); }
@@ -332,7 +332,8 @@ sub _copy_model_inputs {
         };
         if ($@) {
             $self->warning_message("Could not copy model input " . $input->__display_name__ .
-                " to build " . $self->__display_name__ . " of model " . $self->model->__display_name__);
+                " to build " . $self->__display_name__ . " of model " . $self->model->__display_name__ .
+                " because $@");
             next;
         }
     }
@@ -435,7 +436,7 @@ sub _cpu_slot_usage_breakdown {
     my @params = @_;
 
     my %steps;
-    
+
     my $workflow_instance = $self->newest_workflow_instance;
     if (1) { #($workflow_instance) {
         my $bx;
@@ -498,16 +499,16 @@ sub _cpu_slot_usage_breakdown {
             my $d2    = Date::Manip::ParseDate( $op_inst->start_time );
             my $delta = Date::Manip::DateCalc( $d2, $d1 );
             my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
-    
+
             if ($value eq '') {
                 #print "null value for " . $op_inst->start_time . " - " . $op_inst->end_time . "\n";
                 $value = 0; # for crashed/incomplete steps
-            }       
-    
+            }
+
             if ($cpus eq '') {
                 die "null cpus??? resource was $rusage\n";
             }
-            
+
             #print "$op_type\t$op_name\t$rusage\t$cpus\n";# . $op_inst->start_time . "\t" . $op_inst->end_time . "\t$value\n";
 
             my $key         = $op_inst->name;
@@ -739,13 +740,17 @@ sub archivable {
     return $allocation->archivable();
 }
 
-sub is_archived { 
+sub is_archived {
     my $self = shift;
-    my $allocation = $self->disk_allocation;
-    unless ($allocation) {
-        confess "Could not get allocation for build " . $self->__display_name__;
+    my $is_archived = 0;
+    my @allocations = $self->all_allocations;
+    for my $allocation (@allocations) {
+        if ($allocation->is_archived()) {
+            $is_archived = 1;
+            last;
+        }
     }
-    return $allocation->is_archived();
+    return $is_archived;
 }
 
 sub start {
@@ -1380,6 +1385,10 @@ sub fail {
     $self->_verify_build_is_not_abandoned_and_set_status_to('Failed', 1)
         or return;
 
+    if ($self->disk_allocation) {
+        $self->reallocate;
+    }
+
     # set event status
     for my $e ($self->the_events(event_status => 'Running')) {
         $e->event_status('Failed');
@@ -1510,7 +1519,7 @@ sub _verify_build_is_not_abandoned_and_set_status_to {
 
     # Set status and date completed
     $build_event->event_status($status);
-    $build_event->date_completed( UR::Time->now ) if $set_date_completed;
+    $build_event->date_completed( UR::Context->current->now ) if $set_date_completed;
 
     return $build_event;
 }
@@ -1518,6 +1527,8 @@ sub _verify_build_is_not_abandoned_and_set_status_to {
 
 sub abandon {
     my $self = shift;
+    my $header_text = shift || 'Build Abandoned';
+    my $body_text = shift;
 
     my $status = $self->status;
     if ($status && $status eq 'Abandoned') {
@@ -1540,9 +1551,11 @@ sub abandon {
     $self->_unregister_software_results
         or return;
 
-    $self->add_note(
-        header_text => 'Build Abandoned',
-    );
+    my %add_note_args = (header_text => $header_text);
+    $add_note_args{body_text} = $body_text if defined $body_text;
+    $self->add_note(%add_note_args);
+
+    Genome::Search->queue_for_update($self->model);
 
     return 1;
 }
@@ -1693,12 +1706,12 @@ sub _resolve_subclass_name {
 
     unless ( $type_name ) {
         my $rule = $class->define_boolexpr(@_);
-        $type_name = $rule->specified_value_for_property_name('type_name');
+        $type_name = $rule->value_for('type_name');
     }
 
     if (defined $type_name ) {
         my $subclass_name = $class->_resolve_subclass_name_for_type_name($type_name);
-        my $sub_classification_method_name = $class->get_class_object->sub_classification_method_name;
+        my $sub_classification_method_name = $class->__meta__->sub_classification_method_name;
         if ( $sub_classification_method_name ) {
             if ( $subclass_name->can($sub_classification_method_name)
                  eq $class->can($sub_classification_method_name) ) {
@@ -1958,6 +1971,7 @@ sub metrics_ignored_by_diff {
 # Each suffix should have a method called diff_<SUFFIX> that'll contain the logic.
 sub regex_for_custom_diff {
     return (
+        hq     => '\.hq$',
         gz     => '(?<!\.vcf)\.gz$',
         vcf    => '\.vcf$',
         vcf_gz => '\.vcf\.gz$',
@@ -1992,6 +2006,13 @@ sub diff_vcf {
     my ($self, $first_file, $second_file) = @_;
     my $first_md5  = qx(grep -vP '^##fileDate' $first_file | md5sum);
     my $second_md5 = qx(grep -vP '^##fileDate' $second_file | md5sum);
+    return ($first_md5 eq $second_md5 ? 1 : 0);
+}
+
+sub diff_hq {
+    my ($self, $first_file, $second_file) = @_;
+    my $first_md5  = qx(grep -vP '^##fileDate' $first_file | grep -vP '^##startTime' | grep -vP '^##cmdline' | md5sum);
+    my $second_md5 = qx(grep -vP '^##fileDate' $second_file | grep -vP '^##startTime' | grep -vP '^##cmdline' | md5sum);
     return ($first_md5 eq $second_md5 ? 1 : 0);
 }
 
@@ -2349,86 +2370,111 @@ sub _preprocess_subclass_description {
 sub heartbeat {
     my $self = shift;
     my %options = @_;
+    my %heartbeat = $self->_heartbeat;
+    return ( $options{verbose} ? $heartbeat{message} : $heartbeat{is_ok} );
+}
 
-    my $verbose = delete $options{verbose};
+sub heartbeat_verbose {
+    return $_[0]->heartbeat(verbose => 1);
+}
 
-    if (grep { $self->status eq $_ } ('Succeeded', 'Preserved')) {
-        return 1;
+sub _heartbeat {
+    my $self = shift;
+
+    my %heartbeat = (
+        id => $self->id,
+        status => $self->status,
+        is_ok => 0,
+    );
+    if (grep { $heartbeat{status} eq $_ } ('Succeeded', 'Preserved')) {
+        $heartbeat{is_ok} = 1;
+        $heartbeat{message} = 'Build is succeeded. Stauts is '.$heartbeat{status}.'.';
+        return %heartbeat;
     }
 
     unless (grep { $self->status eq $_ } ('Running', 'Scheduled')) {
-        return $verbose ? 'Build is not running/scheduled.' : 0;
+        $heartbeat{message} = 'Build is not running/scheduled.';
+        return %heartbeat;
     }
 
     my @wf_instances = ($self->newest_workflow_instance, $self->child_workflow_instances);
     my @wf_instance_execs = map { $_->current } @wf_instances;
 
-    for my $wf_instance_exec (@wf_instance_execs) {
+    WF: for my $wf_instance_exec (@wf_instance_execs) {
         my $lsf_job_id = $wf_instance_exec->dispatch_identifier;
         my $wf_instance_exec_status = $wf_instance_exec->status;
         my $wf_instance_exec_id = $wf_instance_exec->execution_id;
 
         if (grep { $wf_instance_exec_status eq $_ } ('new', 'done')) {
-            next;
+            next WF;
         }
 
         # only certaion operation types would have LSF jobs and everything below is inspecting LSF status
         my $operation_type = $wf_instance_exec->operation_instance->operation->operation_type;
         unless ( grep { $operation_type->isa($_) } ('Workflow::OperationType::Command', 'Workflow::OperationType::Event') ) {
-            next;
+            next WF;
         }
 
         unless ($lsf_job_id) {
-            return $verbose ? "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) has no LSF job ID" : 0;
+            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) has no LSF job ID";
+            last WF;
         }
 
         if ($lsf_job_id =~ /^P/) {
-            next;
+            next WF;
         }
 
         my $bjobs_output = qx(bjobs -l $lsf_job_id 2> /dev/null | tr '\\n' '\\0' | sed -r -e 's/\\x0\\s{21}//g' -e 's/\\x0/\\n\\n/g');
         chomp $bjobs_output;
         unless($bjobs_output) {
-            return $verbose ? "Expected bjobs (LSF ID: $lsf_job_id) output but received none." : 0;
+            $heartbeat{message} = "Expected bjobs (LSF ID: $lsf_job_id) output but received none.";
+            last WF;
         }
 
         my $lsf_status = $self->status_from_bjobs_output($bjobs_output);
         if ($wf_instance_exec_status eq 'scheduled' && $lsf_status ne 'pend') {
-            return $verbose ? "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)" : 0;
+            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)";
+            last WF;
         }
         elsif ($wf_instance_exec_status eq 'scheduled' && $lsf_status eq 'pend') {
-            next;
+            next WF;
         }
 
         if ($wf_instance_exec_status eq 'running' && $lsf_status ne 'run') {
-            return $verbose ? "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)" : 0;
+            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)";
+            last WF;
         }
 
         if ($wf_instance_exec_status eq 'crashed' && ($lsf_status eq 'done' || $lsf_status eq 'exit')) {
-            return $verbose ? "Workflow Instance Execution (ID: $wf_instance_exec_id) crashed." : 0;
+            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) crashed.";
+            last WF;
         }
 
         if ($wf_instance_exec_status ne 'running' || $lsf_status ne 'run') {
-            die "Missing state ($wf_instance_exec_status/$lsf_status) condition, only running/run should reach this point";
+            $heartbeat{message} = "Missing state ($wf_instance_exec_status/$lsf_status) condition, only running/run should reach this point";
+            last WF;
         }
 
         my @pids = $self->pids_from_bjobs_output($bjobs_output);
         my $execution_host = $self->execution_host_from_bjobs_output($bjobs_output);
         unless ($execution_host) {
-            return $verbose ? 'Expected execution host.' : 0;
+            $heartbeat{message} = 'Expected execution host.';
+            last WF;
         }
         my $ps_cmd = "ssh $execution_host ps -o pid= -o stat= -p " . join(" -p ", @pids) . ' 2> /dev/null';
         my @ps_output = qx($ps_cmd);
         chomp(@ps_output);
 
         if (@ps_output != @pids) {
-            return $verbose ? 'Expected ps output for ' . @pids . ' PIDs (' . $execution_host . ': ' . join(', ', @pids) . ').' : 0;
+            $heartbeat{message} = 'Expected ps output for ' . @pids . ' PIDs (' . $execution_host . ': ' . join(', ', @pids) . ').';
+            last WF;
         }
 
         for my $ps_output (@ps_output) {
             my ($stat) = $ps_output =~ /\d+\s+(.*)/;
             unless($stat =~ /^(R|S)/) {
-                return $verbose ? 'Expected PID to be in a R or S stat.' : 0;
+                $heartbeat{message} = 'Expected PID to be in a R or S stat.';
+                last WF;
             }
         }
 
@@ -2441,11 +2487,15 @@ sub heartbeat {
         if (($elapsed_mtime_output_file/3600 > 48) && ($elapsed_mtime_error_file/3600 > 48)) {
             my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/3600);
             my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/3600);
-            return $verbose ? "Process is running BUT output and/or error file have not been modified in 48+ hours     ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file" : 0;
+            $heartbeat{message} = "Process is running BUT output and/or error file have not been modified in 48+ hours ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file";
+
+            last WF;
         }
+        $heartbeat{message} = 'OK. Seems to be running!';
+        $heartbeat{is_ok} = 1;
     }
 
-    return 1;
+    return %heartbeat;
 }
 
 sub output_file_from_bjobs_output {

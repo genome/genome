@@ -93,7 +93,7 @@ sub flags {
             push(@flags, $tmp);
         }
     }
-        
+
     push(@flags, "--miss-a " . $self->miss_a_file) if defined $self->miss_a_file;
     push(@flags, "--miss-b " . $self->miss_b_file) if defined $self->miss_b_file;
 

@@ -20,14 +20,23 @@ my $test_data_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Predictor';
 my $test_fasta = join('/', $test_data_path, 'medium.fasta');
 ok(-e $test_fasta, "test fasta file exists at $test_fasta");
 
+
+my $version = '4.8';
 my $interpro = Genome::Model::Tools::Predictor::Interproscan->create(
     output_directory => $temp_output_dir,
     input_fasta_file => $test_fasta,
-    version => '4.8',
+    version => $version,
     parameters => '-cli -appl hmmpfam -appl hmmtigr -goterms -verbose -iprlookup -seqtype p -format raw',
     dump_predictions_to_file => 1,
 );
 ok($interpro, 'successfully created interpro command object');
+
+my $ipr_tmp_path = $interpro->tool_path_for_version($version);
+$ipr_tmp_path =~ s!/bin/iprscan!/tmp/!;
+
+my ($used_kb) = qx(df -Pk $ipr_tmp_path | tail -n 1 | awk '{print \$4}') =~ /(\d+)/;
+cmp_ok($used_kb, ">", (1024*1024), ">1GB free space in iprscan tmp directory")
+    or diag("disk containing iprscan tmp at $ipr_tmp_path is almost full! Try removing old runs to free space.");
 
 ok($interpro->execute, 'successfully executed interpro');
 ok(-e $interpro->raw_output_path, "raw output file exists at expected location " . $interpro->raw_output_path);

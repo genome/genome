@@ -222,7 +222,7 @@ sub example_build_for_model {
     }
 
     $build->status('Succeeded');
-    $build->the_master_event->date_completed(UR::Time->now);
+    $build->the_master_event->date_completed(UR::Context->current->now);
     $build->create_subdirectories;
 
     return $build;

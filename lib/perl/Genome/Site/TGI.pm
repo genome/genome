@@ -11,6 +11,7 @@ BEGIN {
         $ENV{GENOME_SYS_SERVICES_MEMCACHE} ||= 'imp-apipe.gsc.wustl.edu:11211';
         $ENV{GENOME_SYS_SERVICES_SOLR} ||= 'http://solr:8080/solr';
     }
+	
 }
 
 BEGIN {
@@ -18,6 +19,77 @@ BEGIN {
         $ENV{GENOME_DB_SKIP_POSTGRES} ||= '/gsc/scripts/opt/genome/run/skip_postgres_sync_new';
     }
 }
+
+BEGIN {
+	if (defined $ENV{GENOME_QUERY_POSTGRES}) {
+		no warnings;
+		use UR::Context;
+		use UR::DataSource::Pg;
+		use Workflow;
+		*UR::Context::resolve_data_sources_for_class_meta_and_rule_genome_filtered = \&UR::Context::resolve_data_sources_for_class_meta_and_rule;;
+		*UR::Context::resolve_data_sources_for_class_meta_and_rule = \&Genome::Site::TGI::resolve_data_sources_for_class_meta_and_rule;
+	
+		*UR::Object::Type::table_name_filtered = \&UR::Object::Type::table_name;
+		*UR::Object::Type::table_name = \&Genome::Site::TGI::table_name_patch;
+		use warnings;
+	}
+}
+
+sub undo_table_name_patch {
+    no warnings;
+    *UR::Object::Type::table_name = \&UR::Object::Type::table_name_filtered;
+    use warnings;
+}
+
+sub redo_table_name_patch {
+    no warnings;
+    *UR::Object::Type::table_name = \&Genome::Site::TGI::table_name_patch;
+    use warnings;
+}
+
+sub table_name_patch {
+        my $self = shift;
+        my $is_generating_id = ((caller(1))[3] eq 'UR::DataSource::RDBMS::autogenerate_new_object_id_for_class_name_and_rule');
+
+        if (@_ || $is_generating_id) {
+                return $self->table_name_filtered(@_);
+        } else {
+                my $table_name = $self->table_name_filtered;
+                my $mapped_table_name = Genome::DataSource::Main->postgres_table_name_for_oracle_table(lc($table_name));
+#    || Workflow::DataSource::InstanceSchemaPostgres->postgres_table_name_for_oracle_table(lc($table_name));
+        
+                if ($mapped_table_name) {
+                        $table_name =$mapped_table_name;
+                } 
+                return $table_name;
+        }
+
+}
+
+sub resolve_data_sources_for_class_meta_and_rule {
+        my $context = shift; 
+        my $data_source = $context->resolve_data_sources_for_class_meta_and_rule_genome_filtered(@_);
+
+        if ($data_source) {
+                my $caller = (caller(1))[3];
+                return $data_source if ($caller eq 'UR::Object::Type::autogenerate_new_object_id');
+                if ($data_source->isa('Genome::DataSource::GMSchema')) {
+                        $data_source = Genome::DataSource::PGTest->get();
+#                } elsif ($data_source->isa('Workflow::DataSource::InstanceSchema')) {
+#                        $data_source = Workflow::DataSource::InstanceSchemaPostgres->get();
+                }
+        }
+                
+        return $data_source;
+}
+
+# configure local statsd server
+BEGIN {
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        $ENV{GENOME_STATSD_HOST} ||= 'apipe-statsd.gsc.wustl.edu';
+        $ENV{GENOME_STATSD_PORT} ||= 8125;
+    }
+};
 
 # this conflicts with all sorts of Finishing/Finfo stuff
 # ironicall it is used by Pcap stuff
@@ -40,13 +112,18 @@ $ENV{GENOME_TEST_TEMP} ||= '/gsc/var/cache/testsuite/running_testsuites';
 $ENV{GENOME_TEST_URL} ||= 'https://gscweb.gsc.wustl.edu/gscmnt/gc4096/info/test_suite_data/';
 
 # configure file that signals that database updates should be paused
-$ENV{GENOME_DB_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_updates';
+if (!$ENV{UR_DBI_NO_COMMIT}) {
+    $ENV{GENOME_DB_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_updates';
+}
 
 # configure our local ensembl db
 $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD} ||= '122704720';
 $ENV{GENOME_DB_ENSEMBL_HOST} ||= 'mysql1';
 $ENV{GENOME_DB_ENSEMBL_USER} ||= 'mse';
 $ENV{GENOME_DB_ENSEMBL_PORT} ||= '3306';
+
+# default nomenclature for new instrument data and sample attributes
+$ENV{GENOME_NOMENCLATURE_DEFAULT} ||= 'WUGC';
 
 # Log directory
 $ENV{GENOME_LOG_DIR} ||= '/gsc/var/log/genome';
@@ -115,7 +192,7 @@ my @lims_whitelist = (
         ['Genome/Model/Tools/Lims/ImportSangerRuns.pm', 105],
     ],
     'GSC::Setup::CaptureSet' => [
-        ['Genome/Site/TGI/CaptureSet.pm', 104],
+        ['Genome/Site/TGI/CaptureSet.pm', 110],
     ],
 );
 

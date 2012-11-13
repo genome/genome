@@ -63,11 +63,13 @@ sub _classify_variants {
         return 1;
     }
     if ($self->skip_filtering) {
+        $self->status_message("Skipping filtering");
         File::Copy::copy($prior_path, $output_file);
         my $fh = Genome::Sys->open_file_for_writing($previously_detected_output_file);
         $fh->close;
     }
     else {
+        $self->status_message("Not skipping filtering");
         my $snv_compare = Genome::Model::Tools::Joinx::Intersect->create(
             input_file_a => $prior_path,
             input_file_b => $previously_discovered_path,

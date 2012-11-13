@@ -141,7 +141,9 @@ sub backfill_feature_lists_for_capture_sets {
         my $existing_feature_list = Genome::FeatureList->get(name => $capture_set->name);
 
         if($existing_feature_list) {
-            #Do nothing; it's already here!
+            if(not $existing_feature_list->content_type and $capture_set->content_type) {
+                $existing_feature_list->content_type($capture_set->content_type);
+            }
         } else {
             unless($setup_done) {
                 #the synch cron is allowed to create FLs without content-types.

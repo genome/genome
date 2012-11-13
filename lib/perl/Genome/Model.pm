@@ -729,7 +729,7 @@ sub _verify_no_other_models_with_same_name_and_type_exist {
         );
 
         $self->delete;
-        Carp::confess $message;
+        Carp::croak $message;
     }
 
     return 1

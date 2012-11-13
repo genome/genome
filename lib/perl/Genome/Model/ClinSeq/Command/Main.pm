@@ -213,6 +213,16 @@ sub execute {
     $self->importSNVs('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-patient_dir'=>$patient_dir, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>$verbose, '-filter_mt'=>$filter_mt);
   }
 
+  #Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
+  my @mutation_diagram_builds;
+  push (@mutation_diagram_builds, $builds->{wgs}) if $builds->{wgs};
+  push (@mutation_diagram_builds, $builds->{exome}) if $builds->{exome};
+  if (scalar(@mutation_diagram_builds)){
+    $step++; print MAGENTA, "\n\nStep $step. Creating mutation-diagram plots", RESET;
+    my $mutation_diagram_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'mutation_diagrams', '-silent'=>1);
+    my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(builds=>@mutation_diagram_builds, outdir=>$mutation_diagram_dir, collapse_variants=>'true', max_snvs_per_file=>'250', max_indels_per_file=>'250');
+    my $r = $mutation_diagram_cmd->execute();
+  }
 
   #TODO: More comprehensive processing of SNVs and InDels
   #Import SNVs and Indels in a more complete form
@@ -289,13 +299,6 @@ sub execute {
 
   }
 
-  #TODO: If both tumor and normal RNA-seq data are available, run Jason's new differential expression tool (Cuffmerge, Cuffdiff, Cummerbund)
-  #Perform pairwise differential expression analysis
-  if ($tumor_rnaseq && $normal_rnaseq){
-
-  }
-
-
   #Annotate gene lists to deal with commonly asked questions like: is each gene a kinase?
   #Read in file, get gene name column, fix gene name, compare to list, set answer to 1/0, overwrite old file
   #Repeat this process for each gene symbol list defined
@@ -303,6 +306,7 @@ sub execute {
   &annotateGeneFiles('-gene_symbol_lists'=>$gene_symbol_lists, '-out_paths'=>$out_paths, '-verbose'=>$verbose);
 
 
+  #TODO: Replace this with use of DGIdb command line tool that performs queries against more sources with better cancer relevance filtering
   #Create drugDB interaction files
   #Perform druggable genes analysis on each list (filtered, kinase-only, inhibitor-only, antineoplastic-only)
   $step++; print MAGENTA, "\n\nStep $step. Intersecting gene lists with druggable genes of various categories", RESET;
@@ -333,7 +337,6 @@ sub execute {
       my $wgs_somatic_build = $builds->{wgs};
       my $wgs_somatic_build_id = $wgs_somatic_build->id;
       
-      # TODO: switch this to take build IDs
       my $master_clonality_cmd = "$script_dir"."snv/generateClonalityPlot.pl  --somatic_var_build_id=$wgs_somatic_build_id  --working_dir=$clonality_dir  --common_name='$common_name'  --verbose=$verbose";
       if ($verbose){
         print YELLOW, "\n\n$master_clonality_cmd", RESET;
@@ -457,9 +460,6 @@ sub getEnsemblVersion{
       exit(1);
     }
   }
-
-  #TODO: what if the only input to Clinseq was an RNA-seq model that is old and has no annotation_build object associated?
-  
 
   #Final sanity check ... 
   unless ($ensembl_version =~ /^\d+$/){

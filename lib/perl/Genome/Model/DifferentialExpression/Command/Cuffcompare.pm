@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-class Genome::Model::DifferentialExpression::Command::ConvergeTranscripts::Cuffcompare {
+class Genome::Model::DifferentialExpression::Command::Cuffcompare {
     is => ['Command::V2'],
     has => [
         build => { is => 'Genome::Model::Build', id_by => 'build_id', },

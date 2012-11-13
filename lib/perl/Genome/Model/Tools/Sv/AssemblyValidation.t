@@ -21,7 +21,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::Sv::AssemblyValidation');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sv-AssemblyValidation/';
+my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sv-AssemblyValidation/v2/';
 my $normal_bam  = $test_input_dir . 'normal.bam';
 my $sv_file     = $test_input_dir . 'sv.file';
 

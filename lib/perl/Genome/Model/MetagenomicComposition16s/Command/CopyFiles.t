@@ -46,7 +46,7 @@ my $example_build = Genome::Model::Build->create(
 ok($example_build, 'example build') or die;
 ok($example_build->get_or_create_data_directory, 'resolved data dir');
 is($example_build->the_master_event->event_status('Succeeded'), 'Succeeded', 'build is succeeded');
-ok($example_build->the_master_event->date_completed( UR::Time->now ), 'build has date completed');
+ok($example_build->the_master_event->date_completed( UR::Context->current->now ), 'build has date completed');
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 

@@ -11,12 +11,12 @@ class Genome::Model::Command::Define::SomaticVariation {
     is => 'Genome::Model::Command::Define::HelperDeprecated',
     has => [
         tumor_model => {
-            is => 'Genome::Model::ReferenceAlignment',
+            is => 'Genome::Model',
             is_input => 1,
             doc => 'Name or id of tumor model being analyzed',
         },
         normal_model => {
-            is => 'Genome::Model::ReferenceAlignment',
+            is => 'Genome::Model',
             is_input => 1,
             doc => 'Name or id of normal model being analyzed',
         },
@@ -91,7 +91,7 @@ sub type_specific_parameters_for_create {
         force            => $self->force,
     );
 
-    $param{previously_discovered_variations_build} = $self->previously_discovered_variations_build 
+    $param{previously_discovered_variations} = $self->previously_discovered_variations_build
         if $self->previously_discovered_variations_build;
 
     push @params, %param;

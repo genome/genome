@@ -1,5 +1,9 @@
 #!/usr/bin/env genome-perl
 
+BEGIN {
+    $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+};
+
 use strict;
 use warnings;
 
@@ -22,19 +26,12 @@ my $out_fastq = $tmp_dir.'/out.fastq';
 
 # Fail
 ok( # no match_and_replace
-    !Genome::Model::Tools::Sx::Rename->create(
-        input  => [ $in_fastq ],
-        output => [ $out_fastq ],
-    ),
-    'create w/o match_and_replace',
+    Genome::Model::Tools::Sx::Rename->create->__errors__,
+    'errors when create w/o match_and_replace',
 );
 ok( # invalid match_and_replace
-    !Genome::Model::Tools::Sx::Rename->create(
-        input  => [ $in_fastq ],
-        output => [ $out_fastq ],
-        matches => [ 'qr/foo/g=bar' ],
-    ),
-    'create w/o match_and_replace',
+    Genome::Model::Tools::Sx::Rename->create(matches => [ 'qr/foo/g=bar' ])->__errors__,
+    'errors when create w/ invalid match_and_replace',
 );
 
 # Ok

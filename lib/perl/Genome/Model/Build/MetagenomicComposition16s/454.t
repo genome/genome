@@ -205,7 +205,7 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
         my $example_amplicon = $example_amplicon_sets[$i]->next_amplicon;
         is($amplicon->{name}, $example_amplicon->{name}, 'matches example amplicon');
         ok($amplicon->{classification}, $amplicon->{name}.' has a classification');
-        is_deeply([@{$amplicon->{classification}}[0..4]], [@{$example_amplicon->{classification}}[0..4]], 'classification matches');
+        is_deeply([@{$amplicon->{classification}}[0..3]], [@{$example_amplicon->{classification}}[0..3]], 'classification matches');
     }
 }
 

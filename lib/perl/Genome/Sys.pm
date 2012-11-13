@@ -18,6 +18,53 @@ our $VERSION = $Genome::VERSION;
 
 class Genome::Sys {};
 
+# API for accessing software and data by version
+
+sub snapshot_revision {
+    my $class = shift;
+
+    # Previously we just used UR::Util::used_libs_perl5lib_prefix but this did not
+    # "detect" a software revision when using code from PERL5LIB or compile-time
+    # lib paths. Since it is common for developers to run just Genome from a Git
+    # checkout we really want to record what versions of UR, Genome, and Workflow
+    # were used.
+
+    my @orig_inc = @INC;
+    my @libs = ($INC{'UR.pm'}, $INC{'Genome.pm'});
+    die $class->error_message('Did not find both modules loaded (UR and Genome).') unless @libs == 2;
+
+    # assemble list of "important" libs
+    @libs = map { File::Basename::dirname($_) } @libs;
+    push @libs, UR::Util->used_libs;
+
+    # remove trailing slashes
+    map { $_ =~ s/\/+$// } (@libs, @orig_inc);
+
+    @libs = $class->_uniq(@libs);
+
+    # preserve the list order as appeared @INC
+    my @inc;
+    for my $inc (@orig_inc) {
+        push @inc, grep { $inc eq $_ } @libs;
+    }
+
+    @inc = $class->_uniq(@inc);
+
+    @inc = $class->_simplify_inc(@inc) if $class->can('_simplify_inc');
+
+    return join(':', @inc);
+}
+
+sub _uniq {
+    my $self = shift;
+    my @list = @_;
+    my %seen = ();
+    my @unique = grep { ! $seen{$_} ++ } @list;
+    return @unique;
+}
+
+# access to paths to code and data
+
 sub dbpath {
     my ($class, $name, $version) = @_;
     my $envname = $class->dbname_to_envname($name);
@@ -894,33 +941,22 @@ sub shellcmd {
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+
         if ( $exit_code == -1 ) {
-            Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd");
+            Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd\n\tError was: $!");
+
         } elsif ( $exit_code & 127 ) {
             my $signal = $exit_code & 127;
             my $withcore = ( $exit_code & 128 ) ? 'with' : 'without';
-
             Carp::croak("COMMAND KILLED. Signal $signal, $withcore coredump: $cmd");
+
         } elsif ($exit_code >> 8 != 0) {
             $exit_code = $exit_code >> 8;
             $DB::single = $DB::stopper;
             if ($allow_failed_exit_code) {
-                Carp::carp("TOLERATING Exit code $exit_code, msg $! from: $cmd");
+                Carp::carp("TOLERATING Exit code $exit_code from: $cmd");
             } else {
-                if($! eq 'No such file or directory') {
-                    for my $missing_input_file (grep { not -s $_ } @$input_files) {
-                        $self->status_message("Missing file ($missing_input_file)");
-                    }
-                    for my $output_file (@$output_files) {
-                        my $output_dir = (File::Basename::fileparse($output_file))[1];
-                        if (not -d $output_dir) {
-                            $self->status_message("Missing output dir ($output_dir)");
-                        } elsif (not -s $output_file) {
-                            $self->status_message("Missing output file ($output_file)");
-                        }
-                    }
-                }
-                Carp::croak("ERROR RUNNING COMMAND.  Exit code $exit_code, msg $! from: $cmd");
+                Carp::croak("ERROR RUNNING COMMAND.  Exit code $exit_code from: $cmd\nSee the command's captured STDERR (if it exists) for more information");
             }
         }
     }

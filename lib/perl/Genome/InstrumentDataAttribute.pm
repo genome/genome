@@ -28,6 +28,17 @@ class Genome::InstrumentDataAttribute {
             is => 'Genome::InstrumentData',
             id_by => 'instrument_data_id',
         },
+        
+        # TODO: we have been simplifying the name/value stuff for some time
+        # Switch to these by default, and test the inversion.
+        name => {
+            via => '__self__',
+            to => 'attribute_label',
+        },
+        value => {
+            via => '__self__',
+            to => 'attribute_value',
+        },
     ],
 };
 
@@ -38,9 +49,10 @@ sub create {
     # and have a default value. Doing so in the class definition doesn't work due
     # to some sort of UR bug that Tony is aware of.
     unless ($bx->specifies_value_for('nomenclature')) {
-        $bx = $bx->add_filter('nomenclature' => 'WUGC');
+        $bx = $bx->add_filter('nomenclature' => $ENV{GENOME_NOMENCLATURE_DEFAULT});
     }
     return $class->SUPER::create($bx);
 }
+
 1;
 

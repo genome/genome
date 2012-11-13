@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Data::Dumper;
 use File::Temp;
+use File::Basename 'dirname';
 use IPC::Cmd;
 
 my $BOWTIE_DEFAULT = '0.12.5';
@@ -41,6 +42,12 @@ my %BOWTIE_VERSIONS = (
     '0.9.8' => $ENV{GENOME_SW} . '/bowtie/bowtie-0.9.8',
     '0.9.4' => $ENV{GENOME_SW} . '/bowtie/bowtie-0.9.4',
 );
+
+sub base_path {
+    my $class = shift;
+    my $full_path = $class->path_for_bowtie_version(@_);
+    return dirname($full_path);
+}
 
 sub path_for_bowtie_version {
     my ($class, $version, $subcommand) = @_;

@@ -25,31 +25,34 @@ sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__(@_);
     return @errors if @errors;
-    if ( $self->length !~ /^$RE{num}{int}$/ or $self->length < 1 ) {
+    my $length = $self->length;
+    if ( $length !~ /^$RE{num}{int}$/ or $length < 1 ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
             properties => [qw/ length /],
-            desc => 'The remove length (length) is not a integer greater than 0 => '.$self->length,
+            desc => 'The remove length (length) is not a integer greater than 0 => '.$length,
         );
     }
     return @errors;
 }
 
-sub _eval_seqs {
-    my ($self, $seqs) = @_;
+sub _create_evaluator {
+    my $self = shift;
 
-    for my $seq ( @$seqs ) {
-        if ( $self->length > length($seq->{seq}) ) {
-            $seq->{seq} = '';
-            $seq->{qual} = '';
+    my $length = $self->length;
+    return sub{
+        for my $seq ( @{$_[0]} ) {
+            if ( $length > length($seq->{seq}) ) {
+                $seq->{seq} = '';
+                $seq->{qual} = '';
+            }
+            else {
+                $seq->{seq} = substr($seq->{seq}, $length);
+                $seq->{qual} =substr($seq->{qual}, $length);
+            }
         }
-        else {
-            $seq->{seq} = substr($seq->{seq}, $self->length);
-            $seq->{qual} =substr($seq->{qual}, $self->length);
-        }
+        return 1;
     }
-
-    return $seqs;
 }
 
 1;

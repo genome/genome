@@ -484,7 +484,7 @@ sub _parse_barcode_file {
 	next unless $tag; #SKIP IF TAG SEQ IS COMPOSED ENTIRELY OF PB SEQ
 	$lib =~ s/\W+/_/g;
 	my $sample_name = "S".$sample_number."_".$lib;
-	$self->log_event("tag = $tag, samp_name =$sample_name");
+	$self->log_event("tag = $tag, sample_name = $sample_name");
 	if (exists $barcode{$tag}) {
 	    $self->log_event("$tag is duplicated");
 	    return; #SHOULD EXIT

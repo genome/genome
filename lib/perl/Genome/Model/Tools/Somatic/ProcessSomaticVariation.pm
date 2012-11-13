@@ -139,7 +139,13 @@ sub annoToBed{
     } else { #indel DEL or SNV
         $start = $start-1;
     }
-    return(join("\t",($chr,$start,$stop,$ref,$var)));
+    #handle 5 col or 4 col ref/var
+    if(defined($var)){
+        return(join("\t",($chr,$start,$stop,$ref,$var)));
+    } else {
+        return(join("\t",($chr,$start,$stop,$ref)));
+    }
+
 }
 
 sub annoFileToSlashedBedFile{
@@ -350,7 +356,7 @@ sub execute {
               while( my $line = $inFh->getline )
               {
                   chomp($line);
-                  next if $line =~ /^track name/;
+                  next if $line =~ /^track/;
                   my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
                   #remove chr if present
                   $chr =~ s/^chr//g;
@@ -429,7 +435,7 @@ sub execute {
           die "Failed to tier variants successfully.\n";
       }
       $snv_file = "$snv_file.tier1";
-      
+
       $tier_cmd = Genome::Model::Tools::FastTier::FastTier->create(
           tier_file_location => $self->tier_file_location,
           variant_bed_file => $indel_file,
@@ -695,73 +701,75 @@ sub execute {
       $indel_file = "$indel_file.notautopassed";
   }
 
-
-  #-------------------------------------------------
-  #remove pindel-called indels, if they exist and aren't called by the other indel callers
-  my $pindel_calls = glob( "$build_dir/variants/indel/pindel-*/pindel-somatic-calls-*/pindel-vaf-filter-*/pindel-read-support-*/indels.hq.bed" );
+  ##
+  ## This isn't needed - pindel vaf filter solved most of this problem
+  ##
+  # #-------------------------------------------------
+  # #remove pindel-called indels, if they exist and aren't called by the other indel callers
+  # my $pindel_calls = glob( "$build_dir/variants/indel/pindel-*/pindel-somatic-calls-*/pindel-vaf-filter-*/pindel-read-support-*/indels.hq.bed" );
   
-  if($pindel_calls && -s $pindel_calls){
-      my $tmpdir = "$output_dir/$sample_name/indels/tmp";
-      mkdir $tmpdir unless ( -e $tmpdir );
+  # if($pindel_calls && -s $pindel_calls){
+  #     my $tmpdir = "$output_dir/$sample_name/indels/tmp";
+  #     mkdir $tmpdir unless ( -e $tmpdir );
       
-      my @indel_callers = glob("$build_dir/variants/indel/*");
+  #     my @indel_callers = glob("$build_dir/variants/indel/*");
       
-      open(PFILE,">>$tmpdir/pindelcalls");
-      open(OFILE,">>$tmpdir/othercalls");
+  #     open(PFILE,">>$tmpdir/pindelcalls");
+  #     open(OFILE,">>$tmpdir/othercalls");
       
-      foreach my $dir (@indel_callers){
-          next if $dir =~ /union|intersect/;
-          next if $dir =~ /pindel/;
+  #     foreach my $dir (@indel_callers){
+  #         next if $dir =~ /union|intersect/;
+  #         next if $dir =~ /pindel/;
           
-          #grab the non-pindel variants
-          my $calls;
-          if($dir =~ /gatk/){
-              $calls = "$dir/indels.hq.bed";
-          } elsif ($dir =~ /varscan/){
-              $calls = glob("$dir/varscan-high-confidence-indel*/false-indel*/indels.hq.bed");
-          } else {
-              $self->error_message("can't parse indel caller directory $dir\nEdit the code to provide the path to final filtered indels.hq.bed for this caller");
-              return 0;
-          }
+  #         #grab the non-pindel variants
+  #         my $calls;
+  #         if($dir =~ /gatk/){
+  #             $calls = "$dir/indels.hq.bed";
+  #         } elsif ($dir =~ /varscan/){
+  #             $calls = glob("$dir/varscan-high-confidence-indel*/false-indel*/indels.hq.bed");
+  #         } else {
+  #             $self->error_message("can't parse indel caller directory $dir\nEdit the code to provide the path to final filtered indels.hq.bed for this caller");
+  #             return 0;
+  #         }
 
-          my $infile = IO::File->new( $calls ) || die "can't open file $calls\n";
-          while( my $line = $infile->getline )
-          {
-              chomp($line);
-              my ( $chr, $start, $stop, $refvar ) = split( /\t/, $line );
-              $refvar =~ s/\*/-/g;
-              $refvar =~ s/0/-/g;
-              print OFILE join("\t",( $chr, $start, $stop, $refvar )) . "\n";
-          } 
-          close($infile);
-      }
+  #         my $infile = IO::File->new( $calls ) || die "can't open file $calls\n";
+  #         while( my $line = $infile->getline )
+  #         {
+  #             chomp($line);
+  #             my ( $chr, $start, $stop, $refvar ) = split( /\t/, $line );
+  #             $refvar =~ s/\*/-/g;
+  #             $refvar =~ s/0/-/g;
+  #             print OFILE join("\t",( $chr, $start, $stop, $refvar )) . "\n";
+  #         } 
+  #         close($infile);
+  #     }
 
-      my $infile = IO::File->new( $pindel_calls ) || die "can't open file10\n";
-      while( my $line = $infile->getline )
-      {
-          chomp($line);
-          my ( $chr, $start, $stop, $refvar ) = split( /\t/, $line );
-          $refvar =~ s/\*/-/g;
-          $refvar =~ s/0/-/g;
-          print PFILE join("\t",( $chr, $start, $stop, $refvar )) . "\n";
-      } 
-      close($infile);
+  #     my $infile = IO::File->new( $pindel_calls ) || die "can't open file10\n";
+  #     while( my $line = $infile->getline )
+  #     {
+  #         chomp($line);
+  #         my ( $chr, $start, $stop, $refvar ) = split( /\t/, $line );
+  #         $refvar =~ s/\*/-/g;
+  #         $refvar =~ s/0/-/g;
+  #         print PFILE join("\t",( $chr, $start, $stop, $refvar )) . "\n";
+  #     } 
+  #     close($infile);
       
-      ##TODO -wrap these commands properly,
-      `joinx sort $tmpdir/othercalls | uniq >$tmpdir/othercalls.sorted`;
-      `joinx sort $tmpdir/pindelcalls | uniq >$tmpdir/pindelcalls.sorted`;
+  #     ##TODO -wrap these commands properly,
+  #     `joinx sort $tmpdir/othercalls | uniq >$tmpdir/othercalls.sorted`;
+  #     `joinx sort $tmpdir/pindelcalls | uniq >$tmpdir/pindelcalls.sorted`;
 
-      print STDERR "Splitting out pindel indels, since they can't be reviewed...\n";
-      my $cmd = "joinx intersect --miss-a $indel_file.pindel -a $indel_file -b $tmpdir/othercalls.sorted >$indel_file.non_pindel";
-      my $result = Genome::Sys->shellcmd(
-          cmd => "$cmd",
-          );
-      unless($result) {
-          $self->error_message("Failed to execute joinx: Returned $result");
-          die $self->error_message;
-      }
-      $indel_file = "$indel_file.non_pindel";
-  }
+  #     print STDERR "Splitting out pindel indels, since they can't be reviewed...\n";
+  #     my $cmd = "joinx intersect --miss-a $indel_file.pindel -a $indel_file -b $tmpdir/othercalls.sorted >$indel_file.non_pindel";
+  #     my $result = Genome::Sys->shellcmd(
+  #         cmd => "$cmd",
+  #         );
+  #     unless($result) {
+  #         $self->error_message("Failed to execute joinx: Returned $result");
+  #         die $self->error_message;
+  #     }
+  #     $indel_file = "$indel_file.non_pindel";
+  # }
 
 
 

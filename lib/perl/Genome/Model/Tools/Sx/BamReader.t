@@ -30,7 +30,7 @@ ok(-s $example_fasta, 'example fasta exists') or die;
 my $example_qual = $dir.'/example.qual';
 ok(-s $example_qual, 'example qual exists') or die;
 
-my $cmd = "gmt sx base -input $bam -output file=$fasta:qual_file=$qual";
+my $cmd = "gmt sx -input $bam -output file=$fasta:qual_file=$qual";
 my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
 
 is(File::Compare::compare($example_fasta, $fasta), 0, 'fasta files match');

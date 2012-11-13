@@ -49,6 +49,11 @@ class Genome::Model::Tools::Graph::MutationDiagram {
             doc => 'A prefix to prepend to all filenames',
             default => '',
         },
+        file_suffix => {
+            type => 'Text',
+            doc => 'A suffix to append to all filenames (before the extension)',
+            default => '',
+        },
         vep_frequency_field => {
             type => 'Text',
             doc => 'For VEP annotation, the name of a field in the EXTRA column that specifies the frequency of mutations',
@@ -88,6 +93,7 @@ sub execute {
             reference_transcripts => $self->reference_transcripts,
             output_directory => $self->output_directory,
             basename => $self->file_prefix,
+            suffix => $self->file_suffix,
             vep_frequency_field => $self->vep_frequency_field,
         );
     }

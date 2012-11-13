@@ -107,7 +107,7 @@ sub execute {
     }
     
     #merge those Bam files...BAM!!!
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
     $self->status_message(">>> Beginning mark duplicates at $now");
 
     my %params = (
@@ -171,7 +171,7 @@ sub execute {
         $self->status_message("Success.  Duplicates marked in file: $result");
     }
 
-    $now = UR::Time->now;
+    $now = UR::Context->current->now;
     $self->status_message("<<< Completing mark duplicates at $now.");
     
     return 1;

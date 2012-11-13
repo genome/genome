@@ -25,7 +25,8 @@ my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Snv-S
 # V7 - Correct reference sequence specification and description of BQ and AD fields
 # V8 - Vcf header change
 # V9 - VCF header change: add center and tcgaversion
-my $expected_base = "expected.v9";
+# v10 - TCGA-compliant VCF; add SS field; change BQ and AD by adding ref
+my $expected_base = "expected.v10";
 my $expected_dir = "$test_dir/$expected_base";
 my $expected_file = "$expected_dir/output.vcf";
 

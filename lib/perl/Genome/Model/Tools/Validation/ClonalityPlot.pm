@@ -30,7 +30,7 @@ class Genome::Model::Tools::Validation::ClonalityPlot {
 
     cbs_file => { 
         is => 'Text',
-        doc => "File of CN-altered segments according to CBS",
+        doc => "File of CN-altered segments according to CBS - assumes segment mean is log2 value",
         is_optional => 1,
         is_input => 1 },        
 
@@ -246,7 +246,7 @@ sub execute {
         %copynumber_hash_tumor=%{&build_hash($cnvhmm_file)};
     } elsif(defined($cbs_file)){
         #build the copy number hashes
-        %copynumber_hash_tumor=%{&build_hash($cbs_file)};
+        %copynumber_hash_tumor=%{&build_hash_cbs($cbs_file)};
     } 
 
 
@@ -527,127 +527,137 @@ _END_OF_R_
     maxden100 = max(c(den1factor100,den2factor100,den3factor100,den4factor100));
 
     #determine tumor purity
+    analysis_type = \"$analysis_type\";
     purity = $tumor_purity;
-    if (purity == 0) { 
-        purity = max(cn2peakpos100[which(cn2peakpos100<50)])*2;
-        if (purity == 0) { purity = 100; }
-        print(paste("Tumor purity estimated to be ",purity,".",sep=""));
+    if (purity == 0) {
+    if (analysis_type == \"wgs\") {
+        purity = max(cn2peakpos[which(cn2peakpos<=50)])*2;
+        next_highest_peak = min(cn2peakpos[which(cn2peakpos>50)]);
+        if (next_highest_peak > 50 && next_highest_peak < 60 && purity < 60) { purity = 100; }
+    } else { #capture
+        purity = max(cn2peakpos100[which(cn2peakpos100<=50)])*2;
+        next_highest_peak = min(cn2peakpos100[which(cn2peakpos100>50)]);
+        if (next_highest_peak > 50 && next_highest_peak < 60 && purity < 60) { purity = 100; }
+    }
+    if (purity == 0) { purity = 100; }
+    print(paste("Tumor purity estimated to be ",purity,".",sep=""));
     }
 
     #determine number of clusters in the dataset
     num_clusters = 0;
     if ($plot_clusters) {
 
-        print("Performing 'mixdist' analysis...");
-        max_clusters_to_look_for = $max_clusters_to_look_for;
-        component_dist = \"$component_dist\";
-        analysis_type = \"$analysis_type\";
+    print("Performing 'mixdist' analysis...");
+    max_clusters_to_look_for = $max_clusters_to_look_for;
+    component_dist = \"$component_dist\";
 
-        #function to process mixdist results
-        process_percents <- function(percents,chisq,pval,distr) {
-            minchisq = NULL;
-            best_fit_component_assessment = 0;
-            minpval = NULL;
-            true_cluster_count = NULL;
+    #function to process mixdist results
+    process_percents <- function(percents,chisq,pval,distr) {
+    minchisq = NULL;
+    best_fit_component_assessment = 0;
+    minpval = NULL;
+    true_cluster_count = NULL;
 
-            for (i in 1:max_clusters_to_look_for) {
-                if (percents[i]!="Error" && !is.nan(pval[i]) && pval[i] < 0.05) {
-                    if (is.null(minchisq) || chisq[i] < minchisq) {
-                        minchisq = chisq[i];
-                        minpval = pval[i];
-                        best_fit_component_assessment = i;
-                    }
-                }
-                true_cluster_count[i] = 0;
-                percentage_per_cluster = as.numeric(percents[[i]]);
-                true_clusters = percentage_per_cluster > 0.02;
-                for (j in 1:i) {
-                    if (isTRUE(true_clusters[j])) {
-                        true_cluster_count[i] = true_cluster_count[i] + 1;
-                    }
-                }
-            }
-            print(paste("chosen_component_assessment = ",best_fit_component_assessment,", true_component_count = ",true_cluster_count[best_fit_component_assessment],", assessment_chisq_value = ",minchisq,", assessment_p-value = ",minpval,sep=""));
-            return(true_cluster_count[best_fit_component_assessment]);
-        }
+    for (i in 1:max_clusters_to_look_for) {
+    if (percents[i]!="Error" && !is.nan(pval[i]) && pval[i] < 0.05) {
+    if (is.null(minchisq) || chisq[i] < minchisq) {
+    minchisq = chisq[i];
+    minpval = pval[i];
+    best_fit_component_assessment = i;
+    }
+    }
+    true_cluster_count[i] = 0;
+    percentage_per_cluster = as.numeric(percents[[i]]);
+    true_clusters = percentage_per_cluster > 0.02;
+    for (j in 1:i) {
+    if (isTRUE(true_clusters[j])) {
+    true_cluster_count[i] = true_cluster_count[i] + 1;
+    }
+    }
+    }
+    print(paste("chosen_component_assessment = ",best_fit_component_assessment,", true_component_count = ",true_cluster_count[best_fit_component_assessment],", assessment_chisq_value = ",minchisq,", assessment_p-value = ",minpval,sep=""));
+    return(true_cluster_count[best_fit_component_assessment]);
+    }
 
-        # run mixdist
-        library(mixdist);
-        data = NULL;
-        if (analysis_type == \"wgs\") { data = round(cn2\$V11); } else { data = round(cn2100x\$V11); }
-        grouped_data = NULL;
+    # run mixdist
+    library(mixdist);
+    data = NULL;
+    if (analysis_type == \"wgs\") { data = round(cn2\$V11); } else { data = round(cn2100x\$V11); }
+    grouped_data = NULL;
 
-        # if ceiling of max(data) is odd, then add 1 and group data. else, group data using the even ceiling
-        if (ceiling(max(data))%%2) {
-            grouped_data = mixgroup(data, breaks = c(seq(0,ceiling(max(data))+1,2)));
-        } else { 
-            grouped_data = mixgroup(data, breaks = c(seq(0,ceiling(max(data)),2)));
-        }
+    # if ceiling of max(data) is odd, then add 1 and group data. else, group data using the even ceiling
+    if (ceiling(max(data))%%2) {
+    grouped_data = mixgroup(data, breaks = c(seq(0,ceiling(max(data))+1,2)));
+    } else { 
+    grouped_data = mixgroup(data, breaks = c(seq(0,ceiling(max(data)),2)));
+    }
 
-        # for each component count, get mixdist fit estimates for normal distribution
-        percents=NULL; chisq=NULL; pval=NULL; distr=component_dist;
-        for (i in 1:max_clusters_to_look_for) {
-            
-            data_params = NULL;
-            test = NULL;
+    # for each component count, get mixdist fit estimates for normal distribution
+    percents=NULL; chisq=NULL; pval=NULL; distr=component_dist;
+    for (i in 1:max_clusters_to_look_for) {
 
-            if (distr == \"Normal\") {
-                data_params = mixparam(c(1:i)*(purity/2)/i,rep(sd(data),i));
-                test=try(mix(mixdat=grouped_data,mixpar=data_params, emsteps=3, dist="norm"), silent=TRUE);
-            }
-            if (distr == \"Binomial\") {
-                data_params = mixparam(c(1:i)*(purity/2)/i,rep(sd(data)/2,i));
-                test=try(mix(mixdat=grouped_data,mixpar=data_params, emsteps=3, dist="binom", constr=mixconstr(consigma="BINOM",size=rep(round(length(data)),i))), silent=TRUE);
-            }
+    data_params = NULL;
+    test = NULL;
 
-            if (class(test) == 'try-error') {
-                percents[i] = "Error";
-                print("Common mixdist error when looking for ",i," components.",sep="");
-            }
-            else {
-                percents[i]=list(test\$parameters\$pi)
-                chisq[i]=test\$chisq;
-                pval[i] = test\$P;
-            }
-        }
-        num_clusters = process_percents(percents,chisq,pval,distr);
+    if (distr == \"Normal\") {
+    data_params = mixparam(c(1:i)*(purity/2)/i,rep(sd(data),i));
+    test=try(mix(mixdat=grouped_data,mixpar=data_params, emsteps=3, dist="norm"), silent=TRUE);
+    }
+    if (distr == \"Binomial\") {
+    data_params = mixparam(c(1:i)*(purity/2)/i,rep(sd(data)/2,i));
+    test=try(mix(mixdat=grouped_data,mixpar=data_params, emsteps=3, dist="binom", constr=mixconstr(consigma="BINOM",size=rep(round(length(data)),i))), silent=TRUE);
+    }
+
+    if (class(test) == 'try-error') {
+    percents[i] = "Error";
+    print(paste("Common mixdist error when looking for ",i," components.",sep=""));
+    }
+    else {
+    percents[i]=list(test\$parameters\$pi)
+    chisq[i]=test\$chisq;
+    pval[i] = test\$P;
+
+    #print(paste("PLOTTING ",i)); filename = paste("plot_component_",i,".pdf",sep=""); dev.new(); plot(test); dev.copy(pdf,filename); dev.off(); ## TEST
+    }
+    }
+    num_clusters = process_percents(percents,chisq,pval,distr);
     }
 
 _END_OF_R_
 #-------------------------------------------------
 
-    print R_COMMANDS "$R_command\n";
+print R_COMMANDS "$R_command\n";
 
 
-    #open up image for plotting
-    if ($output_image =~ /.pdf/) {
-        print R_COMMANDS "pdf(file=\"$output_image\",width=3.3,height=7.5,bg=\"white\");"."\n";
+#open up image for plotting
+if ($output_image =~ /.pdf/) {
+print R_COMMANDS "pdf(file=\"$output_image\",width=3.3,height=7.5,bg=\"white\");"."\n";
 
-    } elsif ($output_image =~ /.png/) {
-        print R_COMMANDS "png(file=\"$output_image\",width=400,height=800);"."\n";
+} elsif ($output_image =~ /.png/) {
+    print R_COMMANDS "png(file=\"$output_image\",width=400,height=800);"."\n";
 
-    } else {
-        die "unrecognized coverage output file type...please append .pdf or .png to the end of your coverage output file\n";
-    }
-    print R_COMMANDS "par(mfcol=c(5,1),mar=c(0.5,3,1,1.5),oma=c(3,0,4,0),mgp = c(3,1,0));"."\n";
-    # } else {
-    #     if ($output_image =~ /.pdf/) {
-    #         print R_COMMANDS "pdf(file=\"$output_image\",width=3.3,height=3.3,bg=\"white\");"."\n";
+} else {
+    die "unrecognized coverage output file type...please append .pdf or .png to the end of your coverage output file\n";
+}
+print R_COMMANDS "par(mfcol=c(5,1),mar=c(0.5,3,1,1.5),oma=c(3,0,4,0),mgp = c(3,1,0));"."\n";
+# } else {
+#     if ($output_image =~ /.pdf/) {
+#         print R_COMMANDS "pdf(file=\"$output_image\",width=3.3,height=3.3,bg=\"white\");"."\n";
 
-    #     } elsif ($output_image =~ /.png/) {
-    #         print R_COMMANDS "png(file=\"$output_image\",width=400,height=340);"."\n";
+#     } elsif ($output_image =~ /.png/) {
+#         print R_COMMANDS "png(file=\"$output_image\",width=400,height=340);"."\n";
 
-    #     } else {
-    #         die "unrecognized coverage output file type...please append .pdf or .png to the end of your coverage output file\n";
-    #     }
+#     } else {
+#         die "unrecognized coverage output file type...please append .pdf or .png to the end of your coverage output file\n";
+#     }
 
-    #     print R_COMMANDS "par(mfcol=c(2,1),mar=c(0.5,3,1,1.5),oma=c(3,0,4,0),mgp = c(3,1,0));"."\n";
-    # }
+#     print R_COMMANDS "par(mfcol=c(2,1),mar=c(0.5,3,1,1.5),oma=c(3,0,4,0),mgp = c(3,1,0));"."\n";
+# }
 
 
-    if ($analysis_type eq 'capture') {
+if ($analysis_type eq 'capture') {
 #-------------------------------------------------
-        $R_command = <<"_END_OF_R_";
+    $R_command = <<"_END_OF_R_";
     #final figure format
     finalfactor = 25 / maxden100;
 
@@ -726,31 +736,31 @@ _END_OF_R_
 
 _END_OF_R_
 #-------------------------------------------------
-        print R_COMMANDS "$R_command\n";
+    print R_COMMANDS "$R_command\n";
 
 
-        #if cn is being plotted
-        if((defined($cnvhmm_file) || (defined($cbs_file))) && !($plot_only_CN2)){
-            print R_COMMANDS 'drawPlot(z1, cn1minus100x, cn1xchr100, additional_plot_points_cn1, cncircle=1)' . "\n";
-            print R_COMMANDS 'drawPlot(z1, cn2100x, cn2xchr100, additional_plot_points_cn2, cncircle=2, num_clusters=num_clusters, output_filename=clustered_data_output_file)' . "\n";
-            print R_COMMANDS 'drawPlot(z1, cn3100x, cn3xchr100, additional_plot_points_cn3, cncircle=3)' . "\n";
-            print R_COMMANDS 'drawPlot(z1, cn4plus100x, cn4xchr100, additional_plot_points_cn4, cncircle=4)' . "\n";
-        } else {
-            print R_COMMANDS 'drawPlot(z1, cn2100x, cn2xchr100, additional_plot_points_cn2, num_clusters=num_clusters, output_filename=clustered_data_output_file)' . "\n";
-        }
+    #if cn is being plotted
+    if((defined($cnvhmm_file) || (defined($cbs_file))) && !($plot_only_CN2)){
+        print R_COMMANDS 'drawPlot(z1, cn1minus100x, cn1xchr100, additional_plot_points_cn1, cncircle=1)' . "\n";
+        print R_COMMANDS 'drawPlot(z1, cn2100x, cn2xchr100, additional_plot_points_cn2, cncircle=2, num_clusters=num_clusters, output_filename=clustered_data_output_file)' . "\n";
+        print R_COMMANDS 'drawPlot(z1, cn3100x, cn3xchr100, additional_plot_points_cn3, cncircle=3)' . "\n";
+        print R_COMMANDS 'drawPlot(z1, cn4plus100x, cn4xchr100, additional_plot_points_cn4, cncircle=4)' . "\n";
+    } else {
+        print R_COMMANDS 'drawPlot(z1, cn2100x, cn2xchr100, additional_plot_points_cn2, num_clusters=num_clusters, output_filename=clustered_data_output_file)' . "\n";
+    }
 #-------------------------------------------------
-        $R_command = <<"_END_OF_R_";
+    $R_command = <<"_END_OF_R_";
     axis(side=1,at=c(0,20,40,60,80,100),labels=c(0,20,40,60,80,100),cex.axis=0.6,lwd=0.5,lwd.ticks=0.5,padj=-1.2);
 mtext("Tumor Variant Allele Frequency",adj=0.5,padj=3.2,cex=0.5,side=1);
 
 _END_OF_R_
 #-------------------------------------------------
-        print R_COMMANDS "$R_command\n";
+    print R_COMMANDS "$R_command\n";
 
-    } elsif ($analysis_type eq 'wgs') {
+} elsif ($analysis_type eq 'wgs') {
 
 #-------------------------------------------------
-        $R_command = <<"_END_OF_R_";
+    $R_command = <<"_END_OF_R_";
 
     #all coverage points plotted
     finalfactor = 25 / maxden;
@@ -834,40 +844,40 @@ _END_OF_R_
 
 _END_OF_R_
 #-------------------------------------------------
-        print R_COMMANDS "$R_command\n";
+    print R_COMMANDS "$R_command\n";
 
-        #if cn is being plotted
-        if((defined($cnvhmm_file) || defined($cbs_file)) && !($plot_only_CN2)){
-            print R_COMMANDS 'drawPlot(z1, cn1minus, cn1xchr, additional_plot_points_cn1, cncircle=1)' . "\n";
-            print R_COMMANDS 'drawPlot(z1, cn2, cn2xchr, additional_plot_points_cn2, cncircle=2, num_clusters=num_clusters, output_filename=clustered_data_output_file)' . "\n";        
-            print R_COMMANDS 'drawPlot(z1, cn3, cn3xchr, additional_plot_points_cn3, cncircle=3)' . "\n";
-            print R_COMMANDS 'drawPlot(z1, cn4plus, cn4xchr, additional_plot_points_cn4, cncircle=4)' . "\n";
-        } else {
-            print R_COMMANDS 'drawPlot(z1, cn2, cn2xchr, additional_plot_points_cn2, num_clusters=num_clusters, output_filename=clustered_data_output_file)' . "\n";
-        }
+    #if cn is being plotted
+    if((defined($cnvhmm_file) || defined($cbs_file)) && !($plot_only_CN2)){
+        print R_COMMANDS 'drawPlot(z1, cn1minus, cn1xchr, additional_plot_points_cn1, cncircle=1)' . "\n";
+        print R_COMMANDS 'drawPlot(z1, cn2, cn2xchr, additional_plot_points_cn2, cncircle=2, num_clusters=num_clusters, output_filename=clustered_data_output_file)' . "\n";        
+        print R_COMMANDS 'drawPlot(z1, cn3, cn3xchr, additional_plot_points_cn3, cncircle=3)' . "\n";
+        print R_COMMANDS 'drawPlot(z1, cn4plus, cn4xchr, additional_plot_points_cn4, cncircle=4)' . "\n";
+    } else {
+        print R_COMMANDS 'drawPlot(z1, cn2, cn2xchr, additional_plot_points_cn2, num_clusters=num_clusters, output_filename=clustered_data_output_file)' . "\n";
     }
+}
 #-------------------------------------------------
-    $R_command = <<"_END_OF_R_";
+$R_command = <<"_END_OF_R_";
 devoff <- dev.off();
 q();
 _END_OF_R_
 #-------------------------------------------------
 
-    print R_COMMANDS "$R_command\n";
+print R_COMMANDS "$R_command\n";
 
-    close R_COMMANDS;
+close R_COMMANDS;
 
-    my $cmd = "R --vanilla --slave \< $r_script_output_file";
-    my $return = Genome::Sys->shellcmd(
-        cmd => "$cmd",
-        output_files => [$output_image],
-        skip_if_output_is_present => $skip_if_output_is_present,
-    );
-    unless($return) { 
-        $self->error_message("Failed to execute: Returned $return");
-        die $self->error_message;
-    }
-    return $return;
+my $cmd = "R --vanilla --slave \< $r_script_output_file";
+my $return = Genome::Sys->shellcmd(
+    cmd => "$cmd",
+    output_files => [$output_image],
+    skip_if_output_is_present => $skip_if_output_is_present,
+);
+unless($return) { 
+    $self->error_message("Failed to execute: Returned $return");
+    die $self->error_message;
+}
+return $return;
 }
 
 sub get_cn
@@ -920,6 +930,10 @@ sub build_hash_cbs
         chomp($line);
         unless ($line =~ /^#/){ next;}
         my ($chr,$start,$end,$nmarkers,$adjusted_cn);
+        #convert from log2 to abs copy number here 
+        $adjusted_cn = (2^$adjusted_cn)*2;
+        #round to nearest integer
+        $adjusted_cn = sprintf("%.0f", $adjusted_cn);
         my $pos=$start."_".$end;
         $info_hash{$chr}{$pos}=$adjusted_cn;
     }

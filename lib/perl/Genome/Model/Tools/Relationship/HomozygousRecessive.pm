@@ -107,8 +107,8 @@ sub find_recessive_homozygotes {
     my @unaffecteds = $self->find_indices($ped_hash,'unaffected');
     $DB::single=1;
     my ($output_fh, $output_name) = Genome::Sys->create_temp_file;
-    my @header = get_vcf_header($input_vcf);
-    $output_fh->print(@header);
+    my $header = get_vcf_header($input_vcf);
+    $output_fh->print($header);
 
     my $fh = open_vcf_file($input_vcf);
     while(my $line = $fh->getline) {
@@ -138,7 +138,8 @@ sub find_recessive_homozygotes {
 sub parse_ped {
     my ($self, $ped_file, $input_vcf) = @_;
     my %ped_hash;
-    my @header_lines = get_vcf_header($input_vcf);
+    my $header_lines = get_vcf_header($input_vcf);
+    my @header_lines = split("\n", $header_lines);
     my $header_line = $header_lines[-1];
     my ($chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples) = split "\t", $header_line;
     for (my $i=0; $i < scalar(@samples); $i++) {

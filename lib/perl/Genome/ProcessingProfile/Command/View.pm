@@ -14,7 +14,7 @@ use Genome::Utility::Text qw(strip_color
 
 class Genome::ProcessingProfile::Command::View {
     doc => "Display basic information about a processing-profile.",
-    is => 'Genome::Command::Viewer',
+    is => ['Genome::Command::Viewer', 'Genome::Command::ColorMixin'],
     has => [
         processing_profile => {
             is => 'Genome::ProcessingProfile',

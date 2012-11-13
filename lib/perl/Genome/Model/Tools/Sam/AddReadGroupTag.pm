@@ -84,7 +84,7 @@ sub execute {
 
     $self->status_message("Attempting to add read group tag $read_group_tag.");
 
-    my $now = UR::Time->now;
+    my $now = UR::Context->current->now;
     $self->status_message(">>> Beginning add read tag at $now");
 
     my $rg_added_records = 0;
@@ -114,7 +114,7 @@ sub execute {
     unless ($self->output_filehandle) {
         $output_fh->close;
     }
-    $now = UR::Time->now;
+    $now = UR::Context->current->now;
     $self->status_message("<<< Completed add read tag at $now.  Processed $rg_added_records SAM records.");
 
     return 1;

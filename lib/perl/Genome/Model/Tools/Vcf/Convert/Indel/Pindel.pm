@@ -39,29 +39,35 @@ sub source {
 
 sub execute {
     my $self = shift;
-    my $output = $self->output_file;
-    my $pindel_raw = $self->input_file;
-    my $refbuild_id = $self->reference_sequence_build->id;
+    my $output         = $self->output_file;
+    my $pindel_raw     = $self->input_file;
+    my $refbuild_id    = $self->reference_sequence_build->id;
+    my $target_sample  = $self->aligned_reads_sample;
+    my $control_sample = $self->control_aligned_reads_sample;
 
     my ($output_directory) = dirname($output);
-    $self->status_message("Output Directory for pindel-single-genome vcf creation will be: ".$output_directory);
+    $self->status_message("Output Directory for pindel vcf creation will be: ".$output_directory);
+
+    my @prop_names = qw(
+        pindel_raw_output 
+        output_file
+        reference_build_id
+        aligned_reads_sample
+    );
+    push @prop_names, 'control_aligned_reads_sample' if $control_sample;
 
     my %inputs;
     $inputs{pindel_raw_output} = $pindel_raw;
     $inputs{output_file} = $output;
     $self->status_message("VCF conversion output will be at: ".$output);
-    $inputs{reference_build_id} = $refbuild_id;
+    $inputs{reference_build_id}   = $refbuild_id;
+    $inputs{aligned_reads_sample} = $target_sample;
+    $inputs{control_aligned_reads_sample} = $control_sample if $control_sample;
 
     my $workflow = Workflow::Model->create(
         name => 'Multi-Vcf Merge',
-        input_properties => [
-            'pindel_raw_output',
-            'output_file',
-            'reference_build_id',
-        ],
-        output_properties => [
-            'output',
-        ],
+        input_properties  => \@prop_names,        
+        output_properties => ['output'],
     );
     $workflow->log_dir($output_directory);
 
@@ -70,20 +76,20 @@ sub execute {
         operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Pindel::RunPindel2Vcf"),
     );
 
-    for my $prop_name ("pindel_raw_output","output_file","reference_build_id"){
+    for my $prop_name (@prop_names) {
         $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $prop_name,
+            left_operation  => $workflow->get_input_connector,
+            left_property   => $prop_name,
             right_operation => $pindel2vcf,
-            right_property => $prop_name,
+            right_property  => $prop_name,
         );
     }
 
     $workflow->add_link(
-        left_operation => $pindel2vcf,
-        left_property => "output_file",
+        left_operation  => $pindel2vcf,
+        left_property   => "output_file",
         right_operation => $workflow->get_output_connector,
-        right_property => "output",
+        right_property  => "output",
     );
 
     my @errors = $workflow->validate;

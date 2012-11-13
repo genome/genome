@@ -11,17 +11,20 @@ use warnings;
 use above "Genome";
 use Test::More; #skip_all => 'archiving not fully implemented yet';
 use File::Temp 'tempdir';
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
 
+use Genome::Disk::Allocation;
 push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, 'test';
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
 # Temp testing directory, used as mount path for test volumes and allocations
 my $test_dir_base = "$ENV{GENOME_TEST_TEMP}/";
 my $test_dir = tempdir(
-    TEMPLATE => 'allocation_testing_XXXXXX',
+    'allocation_testing_XXXXXX',
     DIR => $test_dir_base,
     UNLINK => 1,
     CLEANUP => 1,
@@ -40,7 +43,7 @@ ok($group, 'created test disk group');
 
 # Create temp archive volume
 my $archive_volume_path = tempdir(
-    TEMPLATE => "test_volume_XXXXXXX",
+    "test_volume_XXXXXXX",
     DIR => $test_dir,
     CLEANUP => 1,
     UNLINK => 1,
@@ -51,14 +54,13 @@ my $archive_volume = Genome::Disk::Volume->create(
     mount_path => $archive_volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($archive_volume_path)->{blocks},
 );
 ok($archive_volume, 'created test volume');
 
 # Create temp active volume
 my $volume_path = tempdir(
-    TEMPLATE => "test_volume_XXXXXXX",
+    "test_volume_XXXXXXX",
     DIR => $test_dir,
     CLEANUP => 1,
     UNLINK => 1,
@@ -69,8 +71,7 @@ my $volume = Genome::Disk::Volume->create(
     mount_path => $volume_path,
     disk_status => 'active',
     can_allocate => 1,
-    total_kb => 1000,
-    unallocated_kb => 1000,
+    total_kb => Filesys::Df::df($volume_path)->{blocks},
 );
 ok($volume, 'created test volume');
 
@@ -90,7 +91,7 @@ Genome::Sys->create_directory(join('/', $archive_volume->mount_path, $group->sub
 
 # Make test allocation
 my $allocation_path = tempdir(
-    TEMPLATE => "allocation_test_1_XXXXXX",
+    "allocation_test_1_XXXXXX",
     CLEANUP => 1,
     UNLINK => 1,
     DIR => $test_dir,
@@ -124,7 +125,7 @@ ok($allocation->is_archived, 'allocation is now archived');
 
 # Make another allocation
 $allocation_path = tempdir(
-    TEMPLATE => "allocation_test_1_XXXXXX",
+    "allocation_test_1_XXXXXX",
     CLEANUP => 1,
     UNLINK => 1,
 );

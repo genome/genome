@@ -252,7 +252,7 @@ sub create {
     my %params = @_;
     
     unless (exists $params{import_date}) {
-        my $date = UR::Time->now;
+        my $date = UR::Context->current->now;
         $params{import_date} = $date;
     }
     unless (exists $params{user_name}) {
@@ -302,6 +302,8 @@ no warnings 'once';
 *get_default_alignment_metrics = \&Genome::InstrumentData::Solexa::get_default_alignment_metrics;
 *get_default_alignment_results = \&Genome::InstrumentData::Solexa::get_default_alignment_results;
 *get_default_alignment_metrics_hash = \&Genome::InstrumentData::Solexa::get_default_alignment_metrics_hash;
+*_convert_trimmer_name_to_sx_command_parts = \&Genome::InstrumentData::Solexa::_convert_trimmer_name_to_sx_command_parts;
+*_convert_trimmer_params_to_command_line_params= \&Genome::InstrumentData::Solexa::_convert_trimmer_params_to_command_line_params;
 }
 
 sub dump_sanger_fastq_files {

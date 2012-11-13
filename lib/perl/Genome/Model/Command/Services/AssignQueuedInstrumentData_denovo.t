@@ -68,8 +68,8 @@ ok(_create_inst_data($unknown_source), 'create inst data for unknown');
 is(@instrument_data, $cnt, "create $cnt inst data");
 is_deeply(
     [ map { $_->attribute_value } map { $_->attributes(attribute_label => 'tgi_lims_status') } @instrument_data ],
-    [ map { 'failed' } @instrument_data ],
-    'set tgi lims status to new',
+    [ map { 'new' } @instrument_data ],
+    'set tgi_lims_status to new',
 );
 
 my $cmd = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
@@ -136,7 +136,7 @@ sub _create_inst_data {
     push @instrument_data, $instrument_data;
     $instrument_data->add_attribute(
         attribute_label => 'tgi_lims_status',
-        attribute_value => 'failed',
+        attribute_value => 'new',
     );
     for my $project ( @projects ) {
         $project->add_part(

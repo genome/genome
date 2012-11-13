@@ -62,7 +62,10 @@ class Genome::Site::TGI::CaptureSet {
         content_type => {
             is => 'Number',
             calculate => q{
-                return undef; #No way to determine at this time
+                unless($self->_content_type) {
+                    $self->_content_type($self->_resolve_content_type);
+                }
+                return $self->_content_type;
             },
         },
         file_path => {
@@ -94,7 +97,10 @@ class Genome::Site::TGI::CaptureSet {
         },
         _file_path => {
             is => 'Text',
-        }
+        },
+        _content_type => {
+            is => 'Text',
+        },
     ],
     doc         => '',
     data_source => 'Genome::DataSource::GMSchema',
@@ -190,6 +196,12 @@ sub _resolve_reference {
     } else {
         return undef;
     }
+}
+
+sub _resolve_content_type {
+    my $self = shift;
+
+    return $self->_capture_set->content_type || undef;
 }
 
 1;

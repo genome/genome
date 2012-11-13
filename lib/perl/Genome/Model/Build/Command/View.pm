@@ -11,22 +11,6 @@ use Date::Calc "Delta_DHMS";
 
 our $ID_LENGTH = 32;
 
-our %STATUS_COLORS = (
-    new => "white",
-    scheduled => "white",
-
-    running => "cyan",
-
-    done => "green",
-    succeeded => "green",
-
-    abandoned => "magenta",
-
-    crashed => "red",
-    failed => "red",
-    unstartable => "red",
-);
-
 our %WORKFLOW_NAME_COLORS = (
     "inputconnector" => "white",
     "outputconnector" => "white",
@@ -38,7 +22,7 @@ our %CONNECTOR_NAMES = (
 );
 
 class Genome::Model::Build::Command::View {
-    is => 'Genome::Command::Viewer',
+    is => ['Genome::Command::Viewer', 'Genome::Command::ColorMixin'],
     has => [
         build => {
             is => 'Genome::Model::Build',
@@ -444,11 +428,6 @@ sub _format_dispatch_id {
     return $dispatch_id
 }
 
-sub _status_color {
-    my ($self, $text) = @_;
-    return $self->_colorize_text_by_map($text, $text, %STATUS_COLORS);
-}
-
 sub _workflow_name_color {
     my ($self, $text) = @_;
     return $self->_colorize_text_by_map($text, $text, %WORKFLOW_NAME_COLORS);
@@ -462,27 +441,6 @@ sub _workflow_elapsed_color {
         return $self->_colorize_text_by_map($text, $workflow_name,
             %WORKFLOW_NAME_COLORS);
     }
-}
-
-sub _colorize_text_by_map {
-    my ($self, $text, $color_key, %color_map) = @_;
-
-    my $stripped_key = $self->_strip_key($color_key);
-    if (exists $color_map{$stripped_key}) {
-        return $self->_color($text, $color_map{$stripped_key});
-    }
-
-    return $text;
-}
-
-sub _strip_key {
-    my ($self, $text) = @_;
-
-    my $stripped_text = $text;
-    $stripped_text =~ tr/A-Z/a-z/;
-    $stripped_text =~ s/ //g;
-
-    return $stripped_text;
 }
 
 sub _color_heading {

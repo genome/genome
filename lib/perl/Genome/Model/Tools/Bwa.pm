@@ -54,6 +54,7 @@ my %BWA_VERSIONS = (
     '0.5.9-pem0.1' => '/usr/bin/bwa-0.5.9-pem0.1',
     '0.5.9-i0.3'   => '/usr/bin/ibwa-0.5.9-0.3',
     '0.5.9-i0.4'   => '/gscuser/tabbott/bin/ibwa-0.5.9-0.4',
+    '0.6.2'        => '/gscuser/iferguso/bin/bwa-0.6.2',
     'bwa'          => 'bwa',
 );
 

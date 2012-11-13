@@ -90,8 +90,11 @@ sub execute {
     #my $version = GMT:BED:CONVERT::version();  TODO, something like this instead of hardcoding
 
     if ($build->snv_detection_strategy){
-        if(my @params = $self->params_for_result('snv')) {
+        my @params = $self->params_for_result('snv');
+        $self->status_message(Data::Dumper::Dumper(\@params));
+        if(@params) {
             my $result = Genome::Model::Tools::DetectVariants2::Classify::PreviouslyDiscovered->get_or_create(@params);
+            $self->status_message("Using result from get_or_create ".$result->id);
             $self->link_result_to_build($result);
         } elsif($snv_result) {
 
@@ -109,33 +112,42 @@ sub execute {
                 die $self->error_message("No high confidence detected snvs to filter against previously discovered variants");
             }
 
-            if (-s $detected_snv_path){
-                my $snv_output_tmp_file = Genome::Sys->create_temp_file_path();
-                my $previously_detected_output_tmp_file = Genome::Sys->create_temp_file_path();
-                my $snv_compare = Genome::Model::Tools::Joinx::Intersect->create(
-                    input_file_a => $detected_snv_path,
-                    input_file_b => $snv_result_path,
-                    miss_a_file => $snv_output_tmp_file,
-                    output_file => $previously_detected_output_tmp_file,
-                    dbsnp_match => 1,
-                );
-                unless ($snv_compare){
-                    die $self->error_message("Couldn't create snv comparison tool!");
+            if ($build->processing_profile->filter_previously_discovered_variants) {
+                if (-s $detected_snv_path){
+                    my $snv_output_tmp_file = Genome::Sys->create_temp_file_path();
+                    my $previously_detected_output_tmp_file = Genome::Sys->create_temp_file_path();
+                    my $snv_compare = Genome::Model::Tools::Joinx::Intersect->create(
+                        input_file_a => $detected_snv_path,
+                        input_file_b => $snv_result_path,
+                        miss_a_file => $snv_output_tmp_file,
+                        output_file => $previously_detected_output_tmp_file,
+                        dbsnp_match => 1,
+                    );
+                    unless ($snv_compare){
+                        die $self->error_message("Couldn't create snv comparison tool!");
+                    }
+                    my $snv_rv = $snv_compare->execute();
+                    my $snv_err = $@;
+                    unless ($snv_rv){
+                        die $self->error_message("Failed to execute snv comparison(err: $snv_err )");
+                    }
+                    $self->status_message("Intersection against previously discovered snv feature list complete");
+                    File::Copy::copy($snv_output_tmp_file, $novel_detected_snv_path);
+                    File::Copy::copy($previously_detected_output_tmp_file, $previously_detected_snv_path);
                 }
-                my $snv_rv = $snv_compare->execute();
-                my $snv_err = $@;
-                unless ($snv_rv){
-                    die $self->error_message("Failed to execute snv comparison(err: $snv_err )");
+                else{
+                    $self->status_message("high confidence snv output is empty, skipping intersection");
+                    Genome::Sys->create_directory($build->data_directory."/novel");
+                    File::Copy::copy($detected_snv_path, $novel_detected_snv_path);
+                    File::Copy::copy($detected_snv_path, $previously_detected_snv_path);
                 }
-                $self->status_message("Intersection against previously discovered snv feature list complete");
-                File::Copy::copy($snv_output_tmp_file, $novel_detected_snv_path);
-                File::Copy::copy($previously_detected_output_tmp_file, $previously_detected_snv_path);
             }
-            else{
-                $self->status_message("high confidence snv output is empty, skipping intersection");
+            else {
+                $self->status_message("Skipping filtering");
                 Genome::Sys->create_directory($build->data_directory."/novel");
                 File::Copy::copy($detected_snv_path, $novel_detected_snv_path);
-                File::Copy::copy($detected_snv_path, $previously_detected_snv_path);
+                my $fh = Genome::Sys->open_file_for_writing($previously_detected_snv_path);
+                $fh->close;
             }
         }
         else{

@@ -106,15 +106,23 @@ sub execute {
 
 sub parse_blast_file {
     my ($self, $blast_file) = @_;
+
     my $parse_out_file = $blast_file;
     $parse_out_file =~ s/out$/parsed/;
-    my $parse_out_fh = IO::File->new(">$parse_out_file") ||
-	die "Can not create file handle for parsing blast out file";
-    my $report = Bio::SearchIO->new(-format => 'blast', -report_type => 'blastn', -file => $blast_file);
-    unless ($report) {
-	$self->log_event("Failed create report IO for $blast_file");
-	return;
-    }
+    unlink $parse_out_file;
+    my $parse_out_fh = Genome::Sys->open_file_for_writing( $parse_out_file );
+
+    # get report from blast out file
+    my %report_params = (
+        blast_out_file => $blast_file,
+        blast_type     => 'blastn',
+    );
+    my $report = $self->get_blast_report( %report_params );
+    if ( not $report ) {
+        $self->log_event('Failed get blastN blast report');
+        return;
+    } 
+
     my @filtered_reads; #READS THAT WILL NOT BE KEPT
     my $e_cutoff = 1e-10;
     my $read_count = 0;

@@ -27,7 +27,7 @@ my $build = Genome::Model::Build::MetagenomicComposition16s->create(
     model => $model,
 );
 ok($build, 'Added build to model');
-ok($build->the_master_event->date_completed(UR::Time->now), 'build has date completed');
+ok($build->the_master_event->date_completed(UR::Context->current->now), 'build has date completed');
 
 #< FAIL >#
 # fail - no builds

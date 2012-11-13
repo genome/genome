@@ -21,6 +21,7 @@ my $allocation = Genome::Disk::Allocation->create(
     owner_class_name => 'UR::Value',
     owner_id => 'test',
 );
+ok($allocation->volume);
 ok($allocation, 'Successfully created test allocation') or die;
 
 my $cmd = Genome::Disk::Command::Allocation::Reallocate->create(

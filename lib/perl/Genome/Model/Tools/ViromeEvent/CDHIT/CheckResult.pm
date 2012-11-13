@@ -53,8 +53,9 @@ sub execute {
 
     $self->log_event("Screening completed for sample: $sample_name");
 
-    #remove files
-
+    # remove useless files
+    unlink $faFile.'.cdhit_out.bak.clstr';
+    unlink $faFile.'.cdhit_out.clstr';
     return 1;
 }
 

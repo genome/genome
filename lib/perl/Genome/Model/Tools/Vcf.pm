@@ -6,13 +6,15 @@ use warnings;
 use Genome;
 
 #This is the variable to change if you wish to change the version of all vcf files being created
-# 4 was incremented from 3: because of a bug in VcfFilter.pm. When filtered twice, FT fields were being wiped out rather than propagated from "FILTER".
-# 5 was incremented from 4: Varscan now rounds tumor vaq to the nearest integer value so it agrees with the header type field
-# 6 was incremented from 5: some TCGA-compliance format, fix VcfFilter bug to mis-treat some samtools mpileup indel
-# 7 was incremented from 6: more TCGA-compliance format, add TCGA format output of snv and indel to streka tool, add fix to Varscan Somatic snv vcf
+# 4: because of a bug in VcfFilter.pm. When filtered twice, FT fields were being wiped out rather than propagated from "FILTER".
+# 5: Varscan now rounds tumor vaq to the nearest integer value so it agrees with the header type field
+# 6: some TCGA-compliance format, fix VcfFilter bug to mis-treat some samtools mpileup indel
+# 7: more TCGA-compliance format, add TCGA format output of snv and indel to streka tool, add fix to Varscan Somatic snv vcf
+# 8: TCGA compliant vcf headers
+# 9: When combining vcfs in DV2, keep the original per-detector sample columns. We will now have one column per sample and detector plus a per-sample consensus column.
+#10: Change the description of FORMAT "FT" to be TCGA-compliant
 
-
-my $VCF_VERSION = "7";
+my $VCF_VERSION = "10";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],

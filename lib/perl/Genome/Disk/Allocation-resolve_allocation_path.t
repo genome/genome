@@ -11,12 +11,13 @@ use warnings;
 use above "Genome";
 use Test::More;
 use File::Temp 'tempdir';
+use Filesys::Df qw();
 
 use_ok('Genome::Disk::Allocation') or die;
 
 my $test_dir_base = "$ENV{GENOME_TEST_TEMP}/";
 my $test_dir = tempdir(
-    TEMPLATE => 'allocation_testing_XXXXXX',
+    'allocation_testing_XXXXXX',
     DIR => $test_dir_base,
     UNLINK => 1,
     CLEANUP => 1,
@@ -25,7 +26,7 @@ ok(-d $test_dir, "created test dir at $test_dir");
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
 
 my $volume_path = tempdir(
-    TEMPLATE => "test_volume_" . "_XXXXXXX",
+    "test_volume_" . "_XXXXXXX",
     DIR => $test_dir,
     CLEANUP => 1,
     UNLINK => 1,
@@ -34,8 +35,7 @@ my $volume = Genome::Disk::Volume->create(
     hostname => 'foo',
     physical_path => 'foo/bar',
     mount_path => $volume_path,
-    total_kb => 1024,
-    unallocated_kb => 1024,
+    total_kb => Filesys::Df::df($volume_path)->{blocks},
     disk_status => 'active',
     can_allocate => '1',
 );
