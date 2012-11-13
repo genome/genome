@@ -22,6 +22,20 @@ class Genome::Model::Tools::DetectVariants2::Classify::Tier {
     ],
 };
 
+sub path {
+    my ($self, $pattern) = @_;
+
+    my @filenames = glob sprintf('%s/%s', $self->output_dir, $pattern);
+
+    unless (1 == scalar(@filenames)) {
+        die $self->error_message(sprintf(
+                "Found %s files matching pattern '%s' in (%s); expected 1.",
+                scalar(@filenames), $pattern, $self->output_dir))
+    }
+
+    return pop @filenames;
+}
+
 sub _validate_inputs {
     my $self = shift;
 
