@@ -21,7 +21,7 @@ class Genome::Model::Tools::Vcf::TcgaSanitize{
         },
         package_for_tcga => {
             is => 'Boolean',
-            default => 1,
+            default => 0,
             doc => "Instead of just printing out a sanitized vcf, package and md5 it for TCGA validation and submission",
         },
     ],
@@ -291,6 +291,7 @@ sub fix_odd_chromosomes {
 # Package up the vcf in a tarball with md5s as needed to submit to tcga
 sub package_file_for_tcga {
     my $self = shift;
+    die $self->error_message("package_file_for_tcga functionality is not done\n");
 
     my @suffixes = qw(.vcf .vcf.gz .tar .tar.gz .vcf.tar.gz);
     my ($filename, $directory, $suffix) = fileparse($self->output_file, @suffixes);
@@ -314,7 +315,6 @@ sub package_file_for_tcga {
     unless (system($tar_cmd) == 0 ) {
         die $self->error_message("Failed to run $tar_cmd");
     }
-    die "$tar_cmd\n";
 
     my $whole_md5 = Genome::Sys->md5sum($self->output_file);
     my $md5_file = $self->output_file . ".md5";
