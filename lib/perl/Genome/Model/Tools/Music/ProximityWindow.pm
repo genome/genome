@@ -36,6 +36,7 @@ Start, Stop, Ref_Allele, Var_Allele, Sample
 
 HELP
 }
+
 sub help_synopsis {
   return <<EOS
  ... music proximity \\
