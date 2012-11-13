@@ -164,7 +164,7 @@ sub link_result_to_build {
 
     my $type = 'hq';
     my $prior_result = $result->prior_result;
-    if($prior_result->isa('Genome::Model::Tools::DetectVariants2::Combine::LqUnion')) {
+    if($prior_result->isa('Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion')) {
         $type = 'lq';
     }
 
