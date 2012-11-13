@@ -156,6 +156,7 @@ sub execute {
     my $default_ic50   = IC50;
     my $default_pvalue = PVALUE;
     $default_cutoff = 0 if ($mano_p_value != PVALUE or $mano_ic_50 != IC50);
+
     ## Preprocessing
     # Para check
     unless($ref_build =~ m/build36/i xor $ref_build =~ m/build37/i) {
