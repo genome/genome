@@ -213,6 +213,16 @@ sub execute {
     $self->importSNVs('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-patient_dir'=>$patient_dir, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>$verbose, '-filter_mt'=>$filter_mt);
   }
 
+  #Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
+  my @mutation_diagram_builds;
+  push (@mutation_diagram_builds, $builds->{wgs}) if $builds->{wgs};
+  push (@mutation_diagram_builds, $builds->{exome}) if $builds->{exome};
+  if (scalar(@mutation_diagram_builds)){
+    $step++; print MAGENTA, "\n\nStep $step. Creating mutation-diagram plots", RESET;
+    my $mutation_diagram_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'mutation_diagrams', '-silent'=>1);
+    my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(builds=>@mutation_diagram_builds, outdir=>$mutation_diagram_dir, collapse_variants=>'true', max_snvs_per_file=>'250', max_indels_per_file=>'250');
+    my $r = $mutation_diagram_cmd->execute();
+  }
 
   #TODO: More comprehensive processing of SNVs and InDels
   #Import SNVs and Indels in a more complete form
@@ -288,14 +298,6 @@ sub execute {
     #Perform the multi-normal differential outlier analysis
 
   }
-
-  #TODO: If both tumor and normal RNA-seq data are available, run Jason's new differential expression tool (Cuffmerge, Cuffdiff, Cummerbund)
-  #Perform pairwise differential expression analysis
-  #Perhaps this should be done outside of clin-seq and take a differential analysis model as input...
-  if ($tumor_rnaseq && $normal_rnaseq){
-
-  }
-
 
   #Annotate gene lists to deal with commonly asked questions like: is each gene a kinase?
   #Read in file, get gene name column, fix gene name, compare to list, set answer to 1/0, overwrite old file

@@ -726,7 +726,7 @@ filename = "Stats.tsv"
 write.table(stats, file=filename, sep="\t", row.names=FALSE, quote=FALSE)
 
 #Write out the amended data.frame so that the user can identify Mutant biased gene expression etc.
-filename = "ProcessedData.tsv"
+filename = "VariantExpressionSummary.tsv"
 write.table(readcounts, file=filename, sep="\t", row.names=FALSE, quote=FALSE)
 
 
