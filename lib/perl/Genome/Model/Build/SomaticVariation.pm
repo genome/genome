@@ -216,6 +216,8 @@ sub files_ignored_by_diff {
         reports/Build_Initialized/report.xml
         reports/Build_Succeeded/report.xml
         variants/dispatcher.cmd
+        variants/snvs_tcga.tar.gz
+        variants/snvs_tcga.tar.gz.md5
         \.vcf$
         \.vcf.idx$
         workflow\.xml$
