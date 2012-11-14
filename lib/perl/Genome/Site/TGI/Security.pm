@@ -46,19 +46,6 @@ sub log_command {
     unless ($log_fh) {
         print STDERR "Could not get file handle for log file at $log_path, command execution will continue!\n";
 
-        my $email_msg = "User: " . Genome::Sys->username . "\n" .
-                        "Date: $date\n" .
-                        "Time: $time\n" .
-                        "Host: $host\n" .
-                        "Command: $command\n" .
-                        "Could not write to log file at $log_path : $!\n";
-
-        App::Mail->mail(
-            To      => 'jeldred@genome.wustl.edu',
-            From    => Genome::Config->user_email,
-            Subject => "Error writing to log file",
-            Message => $email_msg
-        );
         exit 0;
     }
 
