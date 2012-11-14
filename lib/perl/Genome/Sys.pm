@@ -69,7 +69,7 @@ sub dbpath {
     my ($class, $name, $version) = @_;
     my $envname = $class->dbname_to_envname($name);
     my $dbpath;
-    if ($ENV{$envname}) {
+    if ($envname and $ENV{$envname}) {
         $dbpath = $ENV{$envname};
         print STDERR "Using '$dbpath' from $envname.\n";
     } else {
