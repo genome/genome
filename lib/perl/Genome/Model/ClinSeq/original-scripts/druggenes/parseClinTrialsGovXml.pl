@@ -1,4 +1,4 @@
-#!/usr/bin/env genome-perl -w
+#!/usr/bin/env genome-perl
 #Written by Malachi Griffith
 
 #Purpose:
