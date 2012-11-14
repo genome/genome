@@ -13,8 +13,9 @@ use Genome;
 # 8: TCGA compliant vcf headers
 # 9: When combining vcfs in DV2, keep the original per-detector sample columns. We will now have one column per sample and detector plus a per-sample consensus column.
 #10: Change the description of FORMAT "FT" to be TCGA-compliant
+#11: Joinx now creates new ##SAMPLE columns when using the -D option
 
-my $VCF_VERSION = "10";
+my $VCF_VERSION = "11";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],

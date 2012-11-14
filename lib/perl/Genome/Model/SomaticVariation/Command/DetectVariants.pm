@@ -109,6 +109,20 @@ sub execute{
             }
             symlink($unexpected_filename_output, $lq_result);
         }
+
+        # Create a TCGA compliant vcf
+        my $snv_vcf = $build->data_directory . "/variants/snvs.vcf.gz";
+        my $tcga_vcf = $build->data_directory . "/variants/snvs_tcga.tar.gz";
+        if (-s $snv_vcf) {
+            my $tcga_command = Genome::Model::Tools::Vcf::TcgaSanitize->create(
+                input_file => $snv_vcf,
+                output_file => $tcga_vcf,
+                package_for_tcga => 1,
+            );
+            unless ($tcga_command->execute) {
+                die $self->error_message("Failed to TcgaSanitize the final snvs vcf file");
+            }
+        }
     }
             
     if ($build->indel_detection_strategy){
