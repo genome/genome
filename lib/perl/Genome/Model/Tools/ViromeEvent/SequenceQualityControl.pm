@@ -44,20 +44,14 @@ sub execute {
         return;
     }
 
-    my @masked_files = glob ("$repeat_masker_dir/$sample_name*.fa.masked");
-    unless (scalar @masked_files > 0) {
-	#CHECK FOR *cat.all FILE .. IF PRESENT IT MEANS ALL READS WERE PROCESSED OUT
-	my @cat_files = glob("$repeat_masker_dir/$sample_name*.cat.all");
-	if (@cat_files > 0) {
-	    $self->log_event("All reads have been screened out for $sample_name");
-	    return 1;
-	}
-	#OTHERWISE IT FAILED
-        $self->log_event("No masked fastas for repeat masker run found for sample: $sample_name");
-        return;
+    my @reads_files = glob ("$repeat_masker_dir/$sample_name*.fa.masked");
+    if ( not @reads_files ) {
+        # no masked file means no reads were masked so get the original
+        # input reads and proceed on
+        @reads_files = glob("$repeat_masker_dir/$sample_name*.fa");
     }
 
-    foreach my $file (@masked_files) {
+    foreach my $file (@reads_files) {
 	my $io = Bio::SeqIO->new(-format => 'fasta', -file => $file);
 	while (my $seq = $io->next_seq) {
 	    #LOOK FOR 50+ CONTIGUIOUS BASES(NONE-NS)
