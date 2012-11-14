@@ -45,6 +45,10 @@ sub execute {
     my $ofh;
     # If we are packaging for tcga, we don't want the output file zipped, because it will be later
     if ($self->package_for_tcga) {
+        # This is dumb but better than being unclear
+        unless ($self->output_file =~ m/\.tar\.gz$/) {
+            die $self->error_message("If packaging for TCGA, the file must end in .tar.gz (sorry, blame the tcga validator)");
+        }
         $ofh = Genome::Sys->open_file_for_writing($self->output_file);
     } else {
         $ofh = Genome::Sys->open_gzip_file_for_writing($self->output_file);
@@ -291,28 +295,23 @@ sub fix_odd_chromosomes {
 # Package up the vcf in a tarball with md5s as needed to submit to tcga
 sub package_file_for_tcga {
     my $self = shift;
-    die $self->error_message("package_file_for_tcga functionality is not done\n");
 
-    my @suffixes = qw(.vcf .vcf.gz .tar .tar.gz .vcf.tar.gz);
-    my ($filename, $directory, $suffix) = fileparse($self->output_file, @suffixes);
-    my $basename = basename($self->output_file);
-
+    my ($filename, $directory, $suffix) = fileparse($self->output_file, ("\.tar\.gz"));
     my $working_dir = Genome::Sys->create_directory("$directory/$filename");
-    my $working_file = $working_dir . "/$basename";
+    my $working_file_basename = "$filename.vcf";
+    my $working_file = $working_dir . "/$working_file_basename";
 
     Genome::Sys->copy_file($self->output_file, $working_file);
     unlink($self->output_file);
-    #$self->output_file($working_file . ".tar.gz"); # Make sure the zipped file ends this way so the tcga validator doesnt throw a fit.
-    $self->output_file($working_file); # Make sure the zipped file ends this way so the tcga validator doesnt throw a fit.
+
     my $md5 = Genome::Sys->md5sum($working_file);
     my $manifest_file = "$working_dir/MANIFEST.txt";
     my $mfh = Genome::Sys->open_file_for_writing($manifest_file);
-    $mfh->print($md5 . " " . $basename);
+    $mfh->print($md5 . " " . $working_file_basename);
     $mfh->close;
 
-    my $tar_cmd = "tar -cvzf " . $self->output_file;
-    $self->status_message("Running $tar_cmd");
-    unless (system($tar_cmd) == 0 ) {
+    my $tar_cmd = "tar -cvzf " . $self->output_file . " $working_dir";
+    unless (Genome::Sys->shellcmd(cmd =>$tar_cmd), output_files => [$self->output_file, $self->output_file.".md5"]) {
         die $self->error_message("Failed to run $tar_cmd");
     }
 

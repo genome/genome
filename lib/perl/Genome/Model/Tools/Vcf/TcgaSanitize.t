@@ -5,7 +5,7 @@ use warnings;
 
 use above 'Genome';
 use Genome::Utility::Vcf ('diff_vcf_file_vs_file');
-use Test::More tests => 5;
+use Test::More tests => 9;
 
 use_ok('Genome::Model::Tools::Vcf::Backfill');
 
@@ -32,8 +32,7 @@ my $diff = diff_vcf_file_vs_file($output_file, $expected_file);
 ok(!$diff, 'output matched expected result')
     or diag("diff results:\n" . $diff);
 
-=cut
-my $output_file2 = Genome::Sys->create_temp_directory . "/genome.wustl.edu_CESC.IlluminaGA_DNASeq.Level_2.2.9.0.vcf";
+my $output_file2 = Genome::Sys->create_temp_directory . "/genome.wustl.edu_CESC.IlluminaGA_DNASeq.Level_2.2.9.0.tar.gz";
 my $command2 = Genome::Model::Tools::Vcf::TcgaSanitize->create( input_file => $input_vcf, 
                                                                output_file  => $output_file2,
                                                                package_for_tcga => 1,
@@ -41,5 +40,5 @@ my $command2 = Genome::Model::Tools::Vcf::TcgaSanitize->create( input_file => $i
 ok($command2, 'Command created');
 my $rv2 = $command2->execute;
 ok($rv2, 'Command completed successfully');
-my $expected_output_zip = $output_file2 =~ s/vcf/tar.gz/;
-ok(-s $expected_output_zip, "Output zip exists");
+ok(-s $output_file2, "Output zip exists");
+ok(-s $output_file2.".md5", "Output zip md5 exists");
