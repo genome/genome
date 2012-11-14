@@ -5,6 +5,7 @@ use warnings;
 
 use above 'Genome';
 
+use IO::File;
 use Test::More;
 
 use_ok('Genome::Model::Tools::Sx::SeqReader') or die;
@@ -60,6 +61,25 @@ ok($w->write, 'write');
 ok($r->read, 'read after append');
 
 ok($w->close, 'close writer');
+
+class Genome::Model::Tools::Sx::SeqReaderTestValidate {
+    is => 'Genome::Model::Tools::Sx::SeqReader',
+};
+my $validate_ok;
+sub Genome::Model::Tools::Sx::SeqReaderTestValidate::read {
+    if ( $validate_ok ) {
+        return;
+    }
+    else {
+        die 'Validate failed!';
+    }
+}
+my $validate_test = Genome::Model::Tools::Sx::SeqReaderTestValidate->create(file => $ENV{GENOME_TEST_INPUTS}.'/Genome-Model-Tools-Sx/SeqReaderWriter/file_to_test_validate');
+ok($validate_test, 'create validate test for good file');
+$validate_ok = 1;
+ok($validate_test->validate, 'validate ok');
+$validate_ok = 0;
+ok(!$validate_test->validate, 'validate bad');
 
 done_testing();
 exit;

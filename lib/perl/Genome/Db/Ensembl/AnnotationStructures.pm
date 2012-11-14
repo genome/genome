@@ -79,8 +79,12 @@ sub create
     my $slice_adaptor = $registry->get_adaptor( $ucfirst_species, $data_set, 'Slice');
     my $assembly_exception_feature_adaptor = $registry->get_adaptor( $ucfirst_species, $data_set, 'AssemblyExceptionFeature');
 
-    my $ontology_adaptor = $registry->get_adaptor('Multi', 'Ontology', 'OntologyTerm');
-    my $biotype_mapper = new BiotypeMapper($ontology_adaptor);
+    # Map Ensembl and GENCODE biotypes to more general categories that our annotator can use
+    my %biotype_class;
+    map{$biotype_class{lc($_)} = 'ncrna'} qw( 3prime_overlapping_ncrna Mt_rRNA Mt_tRNA antisense lincRNA miRNA misc_RNA ncRNA ncrna_host non_coding processed_transcript rRNA sense_intronic sense_overlapping snRNA snoRNA tRNA );
+    map{$biotype_class{lc($_)} = 'ncrna_pseudogene'} qw( Mt_tRNA_pseudogene miRNA_pseudogene misc_RNA_pseudogene rRNA_pseudogene scRNA_pseudogene snRNA_pseudogene snoRNA_pseudogene tRNA_pseudogene );
+    map{$biotype_class{lc($_)} = 'coding'} qw( LRG_gene IG_C_gene IG_D_gene IG_J_gene IG_V_gene TR_C_gene TR_D_gene TR_J_gene TR_V_gene protein_coding ambiguous_orf disrupted_domain non_stop_decay nonsense_mediated_decay retained_intron TEC );
+    map{$biotype_class{lc($_)} = 'coding_pseudogene'} qw( retrotransposed TR_J_pseudogene TR_V_pseudogene IG_C_pseudogene IG_J_pseudogene IG_V_pseudogene polymorphic_pseudogene processed_pseudogene pseudogene transcribed_processed_pseudogene transcribed_unprocessed_pseudogene unitary_pseudogene unprocessed_pseudogene );
 
     my @slices = @{ $slice_adaptor->fetch_all('toplevel', undef, 1, 1, 1) };
 
@@ -133,7 +137,15 @@ sub create
             }
 
             $count++;
-            my $biotype = $ensembl_transcript->biotype(); #used in determining rna sub_structures and pseudogene status
+
+            #The Ensembl/GENCODE biotype is used to determine RNA sub_structures and pseudogene status
+            my $biotype = $ensembl_transcript->biotype();
+            unless (defined $biotype_class{lc($biotype)}) {
+                $self->error_message("Novel biotype \"" . $biotype . "\" seen in DB! Please update the \%biotype_class hash.");
+                die;
+            }
+            $biotype = lc( $biotype );
+
             my $ensembl_gene  = $gene_adaptor->fetch_by_transcript_id( $ensembl_transcript->dbID );
             my $ensembl_gene_id = $ensembl_gene->dbID;
 
@@ -393,9 +405,8 @@ sub create
                     #If we reached here, then this entire exon is either a UTR or non-coding RNA
                     my $structure_type = 'utr_exon';
 
-                    #Check the transcript biotype to classify it as ncRNA
-                    if ($biotype_mapper->member_of_group($biotype, 'ncrna') and
-                        not $biotype_mapper->member_of_group($biotype, 'pseudogene')) {
+                    #Check if this exon belongs to a non-coding transcript. Include ncRNA pseudogenes
+                    if ($biotype_class{$biotype} eq 'ncrna' or $biotype_class{$biotype} eq 'ncrna_pseudogene') {
                         $structure_type = 'rna';
                     }
 
@@ -513,8 +524,7 @@ sub create
             # Assign various fields to the transcript
             my %transcript_info;
             $transcript_info{pseudogene} = 0;
-            $transcript_info{pseudogene} = 1 if $biotype =~ /pseudogene/i;
-            if ($biotype =~ /retrotransposed/ and not $transcript->cds_exons) {
+            if ( $biotype_class{$biotype} eq 'ncrna_pseudogene' or $biotype_class{$biotype} eq 'coding_pseudogene' ) {
                 $transcript_info{pseudogene} = 1;
             }
             $self->calculate_transcript_info($transcript, \%transcript_info);
@@ -788,7 +798,7 @@ sub calculate_transcript_info {
 
     for my $method (@methods) {
         my $rv = $self->$method($transcript);
-        confess "Problem exectuting $method during annotation import!" unless $rv;
+        confess "Problem executing $method during annotation import!" unless $rv;
     }
 
     return 1 unless defined $transcript_info;

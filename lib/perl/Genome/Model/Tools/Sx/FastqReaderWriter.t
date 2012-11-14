@@ -48,6 +48,14 @@ is($count, 12, 'Read/write 12 fastq sets');
 ok($writer->flush, 'flush');
 is(File::Compare::compare($forward_fastq, $out_fastq), 0, 'files match');
 
+my $validate_good_reader = Genome::Model::Tools::Sx::FastqReader->create(file =>  $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/FastqReaderWriter/good.fastq');
+ok($validate_good_reader, 'create reader to validate file');
+ok($validate_good_reader->validate, 'validated good fastq');
+
+my $validate_bad_reader = Genome::Model::Tools::Sx::FastqReader->create(file =>  $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/FastqReaderWriter/bad.fastq');
+ok($validate_bad_reader, 'create reader to validate file');
+ok(!$validate_bad_reader->validate, 'failed to validate bad fastq');
+
 my $rv = eval{ $writer->write({ id => 'SEQ', seq => 'AATTGGCC', qual => 'abcdefg', }); };
 ok(!$rv, 'Failed to write when seq and qual are not the same length');
 ok($writer->write({ id => 'SEQ', seq => '', qual => '', }), 'write w/o seq and qual');

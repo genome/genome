@@ -31,6 +31,7 @@ sub new {
                       };
         $create_parameters{width} = $arg{width};
         $create_parameters{height} = $arg{height};
+        $create_parameters{style}{overflow} = $arg{style}{overflow} if defined $arg{style} and $arg{style}{overflow};
         
         $self->{_parent} = $arg{parent};       
         $self->{_style} = $arg{style};

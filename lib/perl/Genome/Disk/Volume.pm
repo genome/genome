@@ -57,40 +57,10 @@ class Genome::Disk::Volume {
             calculate => q{ return int($unallocated_kb / (2**20)) },
         },
         allocated_kb => {
-            calculate_from => ['mount_path'],
             calculate => q/
-                my $meta        = Genome::Disk::Allocation->__meta__;
-                my $table_name  = $meta->table_name;
-                my $data_source = $meta->data_source;
-                my $owner       = $data_source->owner;
-
-                my $query_string;
-                if ($data_source->isa('UR::DataSource::Oracle')) {
-                    my $fq_table_name = join('.', $owner, $table_name);
-                    $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $fq_table_name);
-                } elsif ($data_source->isa('UR::DataSource::Pg') || $data_source->isa('UR::DataSource::SQLite')) {
-                    $query_string = sprintf(q(select sum(kilobytes_requested) from %s where mount_path = ?), $table_name);
-                } else {
-                    die sprintf('allocated_kb cannot be calculated for %s', $data_source->class);
-                }
-                my $dbh = $data_source->get_default_handle();
-                my $query_handle = $dbh->prepare($query_string);
-                $query_handle->bind_param(1, $mount_path);
-                $query_handle->execute();
-
-                my $row_arrayref = $query_handle->fetchrow_arrayref();
-                $query_handle->finish();
-                unless (defined $row_arrayref) {
-                    Genome::Disk::Volume->error_message("Could not calculate allocated kb from database.");
-                }
-                unless (1 == scalar(@$row_arrayref)) {
-                    Genome::Disk::Volume->error_message(sprintf(
-                        "Incorrect number of elements returned from SQL query (%s) expected 1.",
-                        scalar(@$row_arrayref))
-                    );
-                }
-
-                return ($row_arrayref->[0] or 0);
+                my $allocated_kb;
+                Genome::Utility::Instrumentation::timer('disk.volume.allocated_kb', sub { $allocated_kb = $self->_allocated_kb });
+                return $allocated_kb;
             /,
         },
         percent_allocated => {
@@ -149,6 +119,35 @@ sub _compute_lower_limit {
     my $fractional_limit = int($total_kb * $fraction);
     my $subtractive_limit = $total_kb - $maximum_reserve_size;
     return max($fractional_limit, $subtractive_limit);
+}
+
+sub _allocated_kb {
+    my $self = shift;
+
+    # This used to use a copy of UR::Object::Set's server-side aggregate
+    # logic to ensure no client-side calculation was done (for performance).
+    # Now we're going to just let the set do the sum and monitor the
+    # performance (in allocated_kb calculated property). If performance
+    # is bad we can revert.
+
+    my $set = Genome::Disk::Allocation->define_set(mount_path => $self->mount_path);
+    my $field = 'kilobytes_requested';
+    my $f = "sum($field)";
+
+    # UR caches the value so we're just going to reach in and "fix" it.
+    if(exists $set->{$f}) {
+        delete $set->{$f}
+    }
+
+    my $allocated_kb = ($set->sum($field) or 0);
+
+    # Now we'll check that it is cached so we test that the underlying
+    # structure hasn't changed.
+    unless(exists $set->{$f}) {
+        die $self->error_message("$f value not found in set's hash. Did underlying object structure change?");
+    }
+
+    return $allocated_kb;
 }
 
 sub get_lock {

@@ -235,11 +235,7 @@ sub ParseCosmicMutation {
     while (my $ll = <$cos_mu_file>) {
         chomp($ll);
         my @cols = split(/\t/, $ll);
-        my ($chr, 
-            $b36start, $b36stop, 
-            $b37start, $b37stop, 
-            $ref, $var, $sp_ts,
-            $aach) = @cols;
+        my ($chr, $b36start, $b36stop, $b37start, $b37stop, $ref, $var, $sp_ts, $aach) = @cols;
         my $start = ($bd eq "b36" ? $b36start : $b37start);
         my $stop  = ($bd eq "b36" ? $b36stop  : $b37stop);
         my $span = $stop - $start;
@@ -263,9 +259,7 @@ sub ParseCosmicMutation {
             my($res1, $rstart, $res2, $rstop, $new_res) = AA_Check($aa);
             if ($rstart) {
                 my $strand_char = ($strand eq "+1" ? "+" : "-");
-                unless($strandop){
-                    $strand_char = "=";
-                }
+                unless($strandop){ $strand_char = "="; }
                 my $t_aa = $res1.$rstart.$res2;
                 # Amino Acid exact or same position Cosmic match
                 $refc->{resp}->{$strand_char}->{$trans}->{$rstart}->{$res1.$rstop.$res2}->{$t_aa} = 1;
@@ -316,9 +310,7 @@ sub ParseGdscManovaFile {
         my @t = split(/,/, $ll);
         my ($drug, $gene, $pvalue, $ic50) = @t[0,1,6,47];
         next if ($pvalue eq "NaN" or $ic50 eq "NaN");
-        if ($pvalue <= $def_p and $ic50 <= $def_ic) {
-            $m_pout->{def}->{$gene}->{$drug} = 1;
-        }
+        if ($pvalue <= $def_p and $ic50 <= $def_ic) { $m_pout->{def}->{$gene}->{$drug} = 1; }
         $m_pout->{dlist}->{$gene}->{$pvalue}->{$ic50}->{$drug} = 1;
     }
     my @t0 = keys %{$m_pout->{dlist}};
@@ -373,9 +365,7 @@ sub FindMatches {
            chop($vcf_nuc_cosmic_results) if ($vcf_nuc_cosmic_results);
            ## Amino Acid match part
            my $strand_char = "+";
-           unless($strand_op) {
-               $strand_char = "=";
-           }
+           unless($strand_op) { $strand_char = "="; }
            my %count_gene = ();
            foreach my $res_info_line (@{$resinfo}) {
                my ($maftrans, $mafaa, $gene, $chr_dg) = split(/\|/, $res_info_line);
@@ -393,7 +383,7 @@ sub FindMatches {
            }
            chop($vcf_aa_cosmic_results) if ($vcf_aa_cosmic_results);
            chop($vcf_gdsc_results)      if ($vcf_gdsc_results);
-           chop($vcf_dgene_results)      if ($vcf_dgene_results);
+           chop($vcf_dgene_results)     if ($vcf_dgene_results);
            # output
            my @vcf_content = split(/\t/, $ll);
            my $iter = 0;
@@ -450,9 +440,7 @@ sub GDSCMANOVADrugs {
         my $d6 = exists($m_pout->{def}->{$gene});
         if ($d6) {
             my @t9 = keys %{$m_pout->{def}->{$gene}};
-            foreach my $item9 (@t9) {
-                $temp_con .= $item9.",";
-            }
+            foreach my $item9 (@t9) { $temp_con .= $item9.","; }
         }
         chop($temp_con) if ($temp_con);
         $gdsc_manova_con .= $temp_con if ($temp_con); 
@@ -469,9 +457,7 @@ sub GDSCMANOVADrugs {
                 foreach my $item11 (@t11) {
                     next if ($item11 > $def_ic);
                     my @t12 = keys %{$m_pout->{dlist}->{$gene}->{$item10}->{$item11}};
-                    foreach my $item12 (@t12) {
-                        $temp_con .= $item12.",";
-                    } 
+                    foreach my $item12 (@t12) { $temp_con .= $item12.","; } 
                 }
             }
         }
@@ -491,9 +477,7 @@ sub GDSCtargetDrugs {
     my $d5 = exists($gene_drugs->{$gene});
     if ($d5) {
         my @t = keys %{$gene_drugs->{$gene}};
-        foreach my $item (@t) {
-            $temp_con .= $item.",";
-        }
+        foreach my $item (@t) { $temp_con .= $item.","; }
     }
     # cut last ch
     chop($temp_con) if ($temp_con);
@@ -509,9 +493,7 @@ sub dGeneCompare {
     my ($dgout, $gene, $chr) = @_;
     my $gdsc_con = "";
     my $d5 = exists($dgout->{$gene}->{$chr});
-    if ($d5) {
-        $gdsc_con = $dgout->{$gene}->{$chr};
-    }
+    if ($d5) { $gdsc_con = $dgout->{$gene}->{$chr}; }
     # cut last ch
     $gdsc_con = "NA" if ($gdsc_con eq "");
     return($gdsc_con);
@@ -537,9 +519,7 @@ sub COSMIC_Compare_nucleotide {
         $perfect_con .= $samples.":";
         my $href2 = $cosmics->{nuet}->{$mafchr}->{$mafstart}->{$mafstop.$mafref.$mafvar};
         my @t0 = keys %{$href2};
-        foreach my $item (@t0) {
-            $perfect_con .= $item." ".$href2->{$item}.",";
-        }
+        foreach my $item (@t0) { $perfect_con .= $item." ".$href2->{$item}.","; }
         chop($perfect_con);
     }
     # same locations hits
@@ -553,9 +533,7 @@ sub COSMIC_Compare_nucleotide {
         foreach my $item (@t) {
             next if ($item eq $ex_item);
             my @t0 = keys %{$href3->{$item}};
-            foreach my $item0 (@t0) {
-                $te_samples{$item0} = 1;
-            }
+            foreach my $item0 (@t0) { $te_samples{$item0} = 1; }
             my $href4 = $cosmics->{nuet}->{$mafchr}->{$mafstart}->{$item};
             my @t2 = keys %{$href4};
             foreach my $item2 (@t2) {
@@ -635,9 +613,7 @@ sub COSMIC_Compare_aa {
         my $ahref0 = $cosmics->{resp}->{$strand_char}->{$maftrans}->{$mafrstart}->{$mafres1.$mafrstop.$mafres2};
         $aa_perfect_con = "";
         my @at0 = keys %{$ahref0};
-        foreach my $aitem0 (@at0) {
-            $aa_perfect_con .= $aitem0.",";
-        }
+        foreach my $aitem0 (@at0) { $aa_perfect_con .= $aitem0.","; }
         chop($aa_perfect_con) if ($aa_perfect_con);
         $aa_perfect_con = "NA" if ($aa_perfect_con eq "");
     }
@@ -651,17 +627,13 @@ sub COSMIC_Compare_aa {
         foreach my $aitem1 (@at1) {
             next if ($aitem1 eq $aex_item);
             my @at2 = keys %{$ahref1->{$aitem1}};
-            foreach my $aitem2 (@at2) {
-                $ate_aac{$aitem2} = 1;
-            }
+            foreach my $aitem2 (@at2) { $ate_aac{$aitem2} = 1; }
         }
         #write results
         my @at3 = keys %ate_aac;
         if (@at3) {
             $aa_samlocation_con = "";
-            foreach my $aitem3 (@at3) {
-                $aa_samlocation_con .= $aitem3.",";
-            }
+            foreach my $aitem3 (@at3) { $aa_samlocation_con .= $aitem3.","; }
             chop($aa_samlocation_con) if ($aa_samlocation_con);
         }
         $aa_samlocation_con = "NA" if ($aa_samlocation_con eq "");
@@ -676,18 +648,14 @@ sub COSMIC_Compare_aa {
         my $ad3 = exists($cosmics->{respp}->{$strand_char}->{$maftrans}->{$aitem4});
         if ($ad3) {
             my @at4 = keys %{$cosmics->{respp}->{$strand_char}->{$maftrans}->{$aitem4}};
-            foreach my $aitem5 (@at4) {
-                $ate_aac{$aitem5} = 1;
-            }
+            foreach my $aitem5 (@at4) { $ate_aac{$aitem5} = 1; }
         }
     }
     # write results
     my @at5 = keys %ate_aac;
     if (@at5) {
         $aa_neighbor_con = "";
-        foreach my $aitem6 (@at5) {
-            $aa_neighbor_con .= $aitem6.",";
-        }
+        foreach my $aitem6 (@at5) { $aa_neighbor_con .= $aitem6.","; }
         chop($aa_neighbor_con) if ($aa_neighbor_con);
     }
     $aa_neighbor_con = "NA" if ($aa_neighbor_con eq "");
@@ -708,9 +676,7 @@ sub OMIM_Compare {
     my $its = $aa0.$start.$aa1;
     # perfect match
     my $ad = exists($omim->{$gene}->{$start}->{$its});
-    if ($ad) {
-        $perfect_con = $its;
-    }
+    if ($ad) { $perfect_con = $its; }
     # position match
     my $ad0 = exists($omim->{$gene}->{$start});
     if ($ad0) {
@@ -733,9 +699,7 @@ sub OMIM_Compare {
         my $ad1 = exists($omim->{$gene}->{$it0});
         if ($ad1) {
             my @t = keys %{$omim->{$gene}->{$it0}};
-            foreach my $it0 (@t) {
-                $neighbor_con .= $it0.",";
-            }
+            foreach my $it0 (@t) { $neighbor_con .= $it0.","; }
         }
     }
     chop($neighbor_con) if ($neighbor_con);
@@ -747,12 +711,8 @@ sub OMIM_Compare {
 sub AA_Check {
     my ($aachange) = @_;
     my ($res1, $start, $res2, $stop, $new_res);
-    unless (defined($aachange)) {
-        return ($res1, $start, $res2, $stop, $new_res);
-    }
-    unless ($aachange =~ /^p\./) {
-        return ($res1, $start, $res2, $stop, $new_res);
-    }
+    unless (defined($aachange)) { return ($res1, $start, $res2, $stop, $new_res); }
+    unless ($aachange =~ /^p\./) { return ($res1, $start, $res2, $stop, $new_res); }
     #__FORMULATE ERROR STRING JUST IN CASE
     #__VALIDATE
      $aachange =~ s/^p\.//x;
@@ -775,9 +735,7 @@ sub AA_Check {
          $res2 = ' ';
          $stop = $start;
      }
-     if (defined($new_res)) {
-         $new_res =~ s/^ > //x;
-     }
+     if (defined($new_res)) { $new_res =~ s/^ > //x; }
      $new_res ||= '';
      return ($res1, $start, $res2, $stop, $new_res);
 }

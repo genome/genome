@@ -56,12 +56,40 @@ my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index
     output_dir => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/IndexResult/'
 );
 
+eval {
+    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
+        alignment_result => $alignment_result,
+        version => '0.4.3',
+        detector_params => "",
+    );
+    die;
+};
+if ($@) {
+    my $error_str = $@;
+    my $expected = "You must supply a bowtie version";
+    ok($error_str =~ m/$expected/, "Crashed if not supplied with bowtie-version");
+}
+
+eval {
+    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
+        alignment_result => $alignment_result,
+        version => '0.4.3',
+        detector_params => "--bowtie-version 2.0.0", # --bowtie-version=2.0.0
+        # space or = are both valid syntax  ^ here             or here ^
+    );
+    die;
+};
+if ($@) {
+    my $error_str = $@;
+    my $expected = "Chimerascan currently only supports";
+    ok($error_str =~ m/$expected/, "Crashed with wrong bowtie version.");
+}
+
 my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
     alignment_result => $alignment_result,
     version => '0.4.3',
-    detector_params => "",
+    detector_params => "--bowtie-version=0.12.7",
 );
-
 isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
 
 done_testing();

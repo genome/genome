@@ -122,7 +122,8 @@ $ENV{GENOME_DB_ENSEMBL_HOST} ||= 'mysql1';
 $ENV{GENOME_DB_ENSEMBL_USER} ||= 'mse';
 $ENV{GENOME_DB_ENSEMBL_PORT} ||= '3306';
 
-
+# default nomenclature for new instrument data and sample attributes
+$ENV{GENOME_NOMENCLATURE_DEFAULT} ||= 'WUGC';
 
 # Log directory
 $ENV{GENOME_LOG_DIR} ||= '/gsc/var/log/genome';

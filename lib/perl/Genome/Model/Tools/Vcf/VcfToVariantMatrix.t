@@ -8,7 +8,7 @@ use Test::More tests => 17;
 
 use_ok('Genome::Model::Tools::Vcf::VcfToVariantMatrix');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Vcf-To-Variant-Matrix2/v2";
+my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Vcf-To-Variant-Matrix2/v3";
 my $input_file = "$test_dir/vcf-to-variant-matrix.test.input";
 
 
