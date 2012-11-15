@@ -60,14 +60,30 @@ eval {
     my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
         alignment_result => $alignment_result,
         version => '0.4.3',
+        detector_params => "--bowtie-version=",
+    );
+    die;
+};
+if ($@) {
+    my $error_str = $@;
+    diag $error_str;
+    my $expected = "You must supply a bowtie version";
+    ok($error_str =~ m/$expected/, "Crashed if not supplied with bowtie-version");
+}
+
+eval {
+    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
+        alignment_result => $alignment_result,
+        version => '0.4.3',
         detector_params => "",
     );
     die;
 };
 if ($@) {
     my $error_str = $@;
-    my $expected = "You must supply a bowtie version";
-    ok($error_str =~ m/$expected/, "Crashed if not supplied with bowtie-version");
+    diag $error_str;
+    my $expected = "Could";
+    ok($error_str =~ m/$expected/, "Crashed if not provided --bowtie-version");
 }
 
 eval {
@@ -81,6 +97,7 @@ eval {
 };
 if ($@) {
     my $error_str = $@;
+    diag $error_str;
     my $expected = "Chimerascan currently only supports";
     ok($error_str =~ m/$expected/, "Crashed with wrong bowtie version.");
 }
