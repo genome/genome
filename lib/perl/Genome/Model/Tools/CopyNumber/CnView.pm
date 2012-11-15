@@ -11,9 +11,10 @@ use Genome::Model::ClinSeq::Util qw(:all);
 class Genome::Model::Tools::CopyNumber::CnView{
   is=>'Command::V2',
   has=>[
-    reference_build => { is => 'Text', valid_values => ['hg18', 'hg19'], default_value => 'hg19', doc => 'Supply a reference sequence build' },
+    annotation_build => { is => 'Genome::Model::Build::ImportedAnnotation', doc => 'Supply an annotation build id (e.g., 124434505 for NCBI-human.ensembl/67_37l_v2)' },
     output_dir => { is => 'Text', doc => 'The output directory' },
     sample_name => { is => 'Text', doc => 'Typically sample common name (e.g., PNC6)' },
+    segments_file     => { is => 'Text', doc => 'Path to cnaseq.cnvhmm file' },
   ],
   has_optional_input => [
     cnv_file          => { is => 'Text', doc => 'Path to cnvs.hq file' },
@@ -25,7 +26,7 @@ class Genome::Model::Tools::CopyNumber::CnView{
     name              => { is => 'Text', doc => 'Name for list of gene symbols to be highlighted ("Cancer Genes" will be used by default).' },
     cnv_results_file  => { is => 'Text', doc => 'If you have already generated a CNV results file for a list of genes, you can supply it and skip to the graph generation step' },
     ideogram_file     => { is => 'Text', doc => 'Chromosome ideogram coordinates for the reference build.  Will be automatically selected based on the reference build specified' },
-    chr               => { is => 'Text', doc => 'If you wish to limit analysis to a single chromosome, use --chr (e.g. --chr=chr17). Otherwise all will be processed' },
+    chr               => { is => 'Text', doc => 'If you wish to limit analysis to a single chromosome, use --chr (e.g. --chr=17). Otherwise all will be processed' },
     chr_start         => { is => 'Number', doc => 'If you specify a single chromosome, you may also specify start position using --chr-start' },
     chr_end           => { is => 'Number', doc => 'If you specify a single chromosome, you may also specify end position using --chr-end' },
   ],
@@ -39,7 +40,7 @@ class Genome::Model::Tools::CopyNumber::CnView{
 
 sub help_synopsis {
   return <<EOS
-gmt copy-number cn-view --reference-build=hg19 --cnv-file=/gscmnt/gc13001/info/model_data/2888915570/build129973671/variants/cnvs.hq --working-dir=/tmp/ --sample-name=PNC6 --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt --name='CancerGeneCensusPlus_Sanger' --force
+gmt copy-number cn-view --annotation-build=124434505 --cnv-file=/gscmnt/gc13001/info/model_data/2888915570/build129973671/variants/cnvs.hq --segments-file=/gscmnt/gc2013/info/model_data/2889110844/build130030495/PNC6/clonality/cnaseq.cnvhmm --output-dir=/tmp/ --sample-name=PNC6 --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt --name='CancerGeneCensusPlus_Sanger' --force
 EOS
 }
 
@@ -52,10 +53,11 @@ EOS
 
 sub execute{
   my $self = shift;
-
+$DB::single = 1;
   #Required
-  my $reference_build = $self->reference_build;
+  my $annotation_build = $self->annotation_build;
   my $cnv_file = $self->cnv_file;
+  my $segments_file = $self->segments_file;
   my $model_build = ($self->model_build ? $self->model_build->id : undef);
   my $output_dir = $self->output_dir;
   my $sample_name = $self->sample_name;
@@ -79,7 +81,7 @@ sub execute{
 
   #Check/format all input parameters and options
   #Based on the reference build specified, define paths to transcript/gene id mapping files
-  my ($gene_to_trans_file, $transcript_bed_file, $subdir, $outfile, $outfile_amp, $outfile_del, $outfile_ampdel, $name_f);
+  my ($transcript_info_file, $subdir, $outfile, $outfile_amp, $outfile_del, $outfile_ampdel, $name_f);
   my $extra_flank = 100000;
 
   ####################################################################################################################################
@@ -87,37 +89,52 @@ sub execute{
 
 
   my $inputs_are_good = eval { 
-    unless ($reference_build && ($cnv_file || $model_build) && $output_dir && $sample_name){
+    unless ($cnv_file || $model_build){
       $self->usage_message($self->help_usage_complete_text);
+      $self->error_message("Must supply either cnv_file or model_build (Somatic Variation)");
       return;
     }
-
-    #Based on the reference build specified, define paths to transcript/gene id mapping files
-    my $clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
-    if ($reference_build =~ /hg18/i){
-      $gene_to_trans_file = $clinseq_annotations_dir . "hg18/transcript_to_gene/ALL.Genes.map";
-      $transcript_bed_file = $clinseq_annotations_dir . "hg18/ALL.Genes.bed";
-      $ideogram_file = $clinseq_annotations_dir . "hg18/ideogram/ChrBandIdeogram.tsv";
-    }elsif($reference_build =~ /hg19/i){
-      $gene_to_trans_file = $clinseq_annotations_dir . "hg19/transcript_to_gene/ALL.Genes.map";
-      $transcript_bed_file = $clinseq_annotations_dir . "hg19/ALL.Genes.bed";
-      $ideogram_file = $clinseq_annotations_dir . "hg19/ideogram/ChrBandIdeogram.tsv";
-    }else{
+    my $clinseq_annotations_dir="/gscmnt/sata132/techd/mgriffit/reference_annotations/";
+    my $annotation_data_dir=$annotation_build->data_directory;
+    $transcript_info_file = $annotation_data_dir . "/annotation_data/transcripts.csv";
+    
+    my $reference_sequence_build=$annotation_build->reference_sequence;
+    my $default_build37 = Genome::Model::Build->get(102671028);
+    my $default_build36 = Genome::Model::Build->get(101947881);
+    if ($reference_sequence_build->is_compatible_with($default_build37)){
+      $ideogram_file ||= $clinseq_annotations_dir . "hg19/ideogram/ChrBandIdeogram.tsv";
+    }
+    elsif ($reference_sequence_build->is_compatible_with($default_build36)){
+      $ideogram_file ||= $clinseq_annotations_dir . "hg18/ideogram/ChrBandIdeogram.tsv";
+    }
+    else {
       print RED, "\n\nSpecified reference build not understood.  Allowed values are: hg18, hg19\n\n", RESET;
       return;
     }
-    unless (-e $gene_to_trans_file && -e $transcript_bed_file && -e $ideogram_file){
-      print RED, "\n\nOne or more of the following annotation files is missing:\n$gene_to_trans_file\n$transcript_bed_file\n$ideogram_file\n\n", RESET;
+
+    unless (-e $transcript_info_file && -e $ideogram_file){
+      print RED, "\n\nOne or more of the following annotation files is missing:\n$transcript_info_file\n$ideogram_file\n\n", RESET;
       return;
     }
+
+    # TODO: switch that name and version (date) for a value in the processing profile if this changes
+    my $gene_symbol_lists_dir = Genome::Sys->dbpath("tgi-gene-symbol-lists","2012-11-13");
+
     #Set the default gene targets file if it wasnt specified by the user
     unless ($gene_targets_file){
-      $gene_targets_file = $clinseq_annotations_dir . "GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt"
+      $gene_targets_file = $gene_symbol_lists_dir . "/CancerGeneCensusPlus_Sanger.txt"
     }
     unless (-e $gene_targets_file){
       print RED, "\n\nGene targets file not found:\n$gene_targets_file\n\n", RESET;
       return;
     }
+
+    #Check for segments file
+    unless (-e $segments_file){
+        print RED, "\n\nSegments file missing:\n$segments_file\n\n", RESET;
+        return;
+    }
+
     #Check input CNV data
     if ($cnv_file){
       unless (-e $cnv_file){
@@ -201,7 +218,7 @@ sub execute{
       mkdir($subdir);
     }
    
-    #Check the chromosome specified by the user for format (should be chrN).   If not specified, set $chr to 'ALL' and set $chr_start and $chr_end to 0
+    #Check the chromosome specified by the user for format (should be N).   If not specified, set $chr to 'ALL' and set $chr_start and $chr_end to 0
     chomp($chr);
     chomp($chr_start);
     chomp($chr_end);
@@ -230,9 +247,6 @@ sub execute{
     }
 
     if ($chr){
-      unless ($chr =~ /^chr/){
-        $chr = "chr$chr";
-      }
       if ($chr =~ /all/i){
         $chr = "ALL";
       }
@@ -248,16 +262,16 @@ sub execute{
       $outfile_amp = "$subdir"."CNView_"."$name_f".".amp.tsv";
       $outfile_del = "$subdir"."CNView_"."$name_f".".del.tsv";
       $outfile_ampdel = "$subdir"."CNView_"."$name_f".".ampdel.tsv";
-    }elsif (($chr =~ /chr/i) && $chr_start && $chr_end){
-      $outfile = "$subdir"."CNView_"."$name_f"."_"."$chr"."_"."$chr_start-$chr_end".".tsv";
-      $outfile_amp = "$subdir"."CNView_"."$name_f"."_"."$chr"."_"."$chr_start-$chr_end".".amp.tsv";
-      $outfile_del = "$subdir"."CNView_"."$name_f"."_"."$chr"."_"."$chr_start-$chr_end".".del.tsv";
-      $outfile_ampdel = "$subdir"."CNView_"."$name_f"."_"."$chr"."_"."$chr_start-$chr_end".".ampdel.tsv";
+    }elsif ($chr_start && $chr_end){
+      $outfile = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".tsv";
+      $outfile_amp = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".amp.tsv";
+      $outfile_del = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".del.tsv";
+      $outfile_ampdel = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".ampdel.tsv";
     }else{
-      $outfile = "$subdir"."CNView_"."$name_f"."_"."$chr".".tsv";
-      $outfile_amp = "$subdir"."CNView_"."$name_f"."_"."$chr".".amp.tsv";
-      $outfile_del = "$subdir"."CNView_"."$name_f"."_"."$chr".".del.tsv";
-      $outfile_ampdel = "$subdir"."CNView_"."$name_f"."_"."$chr".".ampdel.tsv";
+      $outfile = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".tsv";
+      $outfile_amp = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".amp.tsv";
+      $outfile_del = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".del.tsv";
+      $outfile_ampdel = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".ampdel.tsv";
     }
 
     #If specified check the cnv results file
@@ -292,7 +306,7 @@ sub execute{
   my $entrez_ensembl_data = &loadEntrezEnsemblData();
 
   #If the user is supplying a pre-computed CNV file, the following steps will be skipped
-  my ($gt_map, $t_coords, $window_size, $cnvs, $targets);
+  my ($gt_map, $t_coords, $window_size, $cnvs, $segments, $targets);
   if ($cnv_results_file){
     if($verbose){ print BLUE, "\n\nUsing user supplied CNV results file: $cnv_results_file", RESET; }
   }else{
@@ -307,6 +321,9 @@ sub execute{
 
     #Load the CNV window coordinates and copy number estimates
     $cnvs = &loadCnvData();
+
+    #Load the CNV segments and copy number estimates
+    $segments = &loadSegmentData();
 
     #Load the gene targets of interest
     $targets = &loadTargetGenes();
@@ -371,7 +388,7 @@ sub execute{
         my $chr = $line[$columns{'Chr'}{position}];
         my $chr_start = $line[$columns{'Start'}{position}];
         my $chr_end = $line[$columns{'End'}{position}];
-        my $cytoband_string = &getCytoband('-ideo_data'=>$ideo_data, '-chr'=>$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end);
+        my $cytoband_string = &getCytoband('-ideo_data'=>$ideo_data, '-chr'=>"chr".$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end);
         $data{$l}{cytoband} = $cytoband_string;
       }
       close (CNV);
@@ -404,31 +421,27 @@ sub execute{
 #####################################################################################################################################################################
   sub loadGtMap{
     my %gt_map;
-    open (GT, "$gene_to_trans_file") || die "\n\nCould not open input file: $gene_to_trans_file\n\n";
+    open (GT, "$transcript_info_file") || die "\n\nCould not open input file: $transcript_info_file\n\n";
     while(<GT>){
       chomp($_);
-      my @line = split("\t", $_);
-      my $tid = $line[0];
-      my $gstring = $line[1];
-      unless ($gstring){
+      my @line = split(",", $_);
+      my $tid = $line[4];
+      my $gene = $line[11];
+      unless ($gene){
         next();
       }
-      my @genes = split(",", $gstring);
-      foreach my $gene (@genes){
-        if ($gt_map{$gene}){ 
-          my $trans_ref = $gt_map{$gene}{trans};
-          $trans_ref->{$tid}=1;
-        }else{
-          my %trans;
-          $trans{$tid}=1;
-          $gt_map{$gene}{trans} = \%trans;
-        }
+      if ($gt_map{$gene}){ 
+        my $trans_ref = $gt_map{$gene}{trans};
+        $trans_ref->{$tid}=1;
+      }else{
+        my %trans;
+        $trans{$tid}=1;
+        $gt_map{$gene}{trans} = \%trans;
       }
     }
     close(GT);
     return(\%gt_map);
   }
-
 
 #####################################################################################################################################################################
 #Load the transcripts outer coords
@@ -436,19 +449,18 @@ sub execute{
   sub loadTranscriptCoords{
     my %t_coords;
     
-    open (TC, "$transcript_bed_file") || die "\n\nCould not open input file: $gene_to_trans_file\n\n";
+    open (TC, "$transcript_info_file") || die "\n\nCould not open input file: $transcript_info_file\n\n";
     while(<TC>){
       chomp($_);
-      my @line = split("\t", $_);
-      my $tid = $line[3];
-      my $chr_input = $line[0];
+      my @line = split(",", $_);
+      my $tid = $line[4];
+      my $chr_input = $line[7];
 
       $t_coords{$tid}{chr} = $chr_input;
-      $t_coords{$tid}{start} = $line[1];
-      $t_coords{$tid}{end} = $line[2];
+      $t_coords{$tid}{start} = $line[2];
+      $t_coords{$tid}{end} = $line[3];
     }
     close(TC);
-
     return(\%t_coords);
   }
 
@@ -468,7 +480,7 @@ sub execute{
       }
       $c++;
       my @line = split("\t", $_);
-      my $chr_input = "chr"."$line[0]";
+      my $chr_input = $line[0];
       my $start = $line[1];
       if ($c == 1){$p1 = $start;}
       if ($c == 2){$p2 = $start;}
@@ -482,6 +494,40 @@ sub execute{
       print YELLOW, "\n\nDetected a CNV window size of $window_size bp.  Using this for overlap calculations", RESET;
     }
     return(\%cnvs);
+  }
+
+#####################################################################################################################################################################
+#Load the CNV segments coordinates and copy number estimates
+#####################################################################################################################################################################
+  sub loadSegmentData{
+    my %segments;
+    open(SEGMENTS, "$segments_file") || die "\n\nCould not open input file: $segments_file\n\n";
+    while(<SEGMENTS>){
+      chomp($_);
+      if ($_=~/^\#CHR/ || $_=~/^---/ || $_=~/^Iter\=/ || $_=~/^purity/ || $_=~/CNA predicted/){
+        next(); #skip all header lines
+      }
+      my @line = split("\t", $_);
+      my $chr_input = "$line[0]";
+      my $start = $line[1];
+      my $end = $line[2];
+      my $cn1 = $line[5];
+      my $cn1_adj = $line[6];
+      my $cn2 = $line[7];
+      my $cn2_adj = $line[8];
+      my $llr_somatic = $line[9];
+      my $status = $line[10];
+      my $cn_adj_diff = $cn1_adj - $cn2_adj;
+      $segments{$chr_input}{$start}{$end}{cn1} = $cn1;
+      $segments{$chr_input}{$start}{$end}{cn1_adj} = $cn1_adj;
+      $segments{$chr_input}{$start}{$end}{cn2} = $cn2;
+      $segments{$chr_input}{$start}{$end}{cn2_adj} = $cn2_adj;
+      $segments{$chr_input}{$start}{$end}{llr_somatic} = $llr_somatic;
+      $segments{$chr_input}{$start}{$end}{status} = $status;
+      $segments{$chr_input}{$start}{$end}{cn_adj_diff} = $cn_adj_diff;
+    }
+    close(SEGMENTS);
+    return(\%segments);
   }
 
 #####################################################################################################################################################################
