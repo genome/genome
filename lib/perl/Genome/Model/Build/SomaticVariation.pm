@@ -218,7 +218,8 @@ sub files_ignored_by_diff {
         variants/dispatcher.cmd
         variants/snvs_tcga.tar.gz
         variants/snvs_tcga.tar.gz.md5
-        \.vcf$
+        variants/snvs_tcga/MANIFEST.txt
+        gatk_output_file.vcf
         \.vcf.idx$
         workflow\.xml$
         build\.xml$
