@@ -13,15 +13,16 @@
 args = (commandArgs(TRUE))
 category_name = args[1];          #Name of gene group being considered (e.g. 'Cancer Gene Census')
 cnv_file = args[2];               #Path to file containing raw CNV diff values from the somatic variation pipeline
-gene_file = args[3];              #Path to file containing gene records and associated mean CNV diff values for each gene
-ideogram_file = args[4];          #Path to a file containing chromosome ideogram values
-outdir = args[5];                 #Directory where output files will be generated
-chr = args[6];                    #Chr to be processed or 'ALL' for all chromosomes
-chr_start = as.numeric(args[7]);  #If a single Chr is specified, a sub-region of the Chr can also be plotted - start position for this zoom in
-chr_end = as.numeric(args[8]);    #If a single Chr is specified, a sub-region of the Chr can also be plotted - end position for this zoom in
-image_type = args[9];
+gene_file = args[3];#Path to file containing gene records and associated mean CNV diff values for each gene
+segments_file = args[4];
+ideogram_file = args[5];          #Path to a file containing chromosome ideogram values
+outdir = args[6];                 #Directory where output files will be generated
+chr = args[7];                    #Chr to be processed or 'ALL' for all chromosomes
+chr_start = as.numeric(args[8]);  #If a single Chr is specified, a sub-region of the Chr can also be plotted - start position for this zoom in
+chr_end = as.numeric(args[9]);    #If a single Chr is specified, a sub-region of the Chr can also be plotted - end position for this zoom in
+image_type = args[10];
 
-if (length(args) < 9){
+if (length(args) < 10){
   message_text = "Required arguments missing for CNView.R"
   stop(message_text)
   message(message_text)
@@ -66,8 +67,11 @@ plotChrCNV = function(target_chr){
 
   #Define some display genes.  Those in the input gene list on the target chr
   #They should also be below the lowest cut or above the highest cut
-  gi_up = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] >= cut5)
-  gi_down = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] <= cut2)
+  gi_up = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] >= cut5 | genes[,"CNVhmm.Status"]=="Gain"))
+  gi_down = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] <= cut2 | genes[,"CNVhmm.Status"]=="Loss"))
+#  gi_up = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] >= cut5)
+#  gi_down = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] <= cut2)
+#  print(genes)
 
   #Show more genes...
   #gi_up = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] >= cut4)
@@ -79,12 +83,12 @@ plotChrCNV = function(target_chr){
 
   #Assign colors according to the magnitude of the DIFF
   cnvs[,"COLOR"] = "grey50"
-  ii = which(cnvs[,"DIFF"] <= cut1 & cnvs[,"DIFF"] > cut2); if (length(ii) > 0){cnvs[ii, "COLOR"] = "light blue"}
-  ii = which(cnvs[,"DIFF"] <= cut2 & cnvs[,"DIFF"] > cut3); if (length(ii) > 0){cnvs[ii, "COLOR"] = "blue"}
-  ii = which(cnvs[,"DIFF"] <= cut3); if (length(ii) > 0){cnvs[ii, "COLOR"] = "dark blue"}
-  ii = which(cnvs[,"DIFF"] >= cut4 & cnvs[,"DIFF"] < cut5); if (length(ii) > 0){cnvs[ii, "COLOR"] = "yellow"}
-  ii = which(cnvs[,"DIFF"] >= cut5 & cnvs[,"DIFF"] < cut6); if (length(ii) > 0){cnvs[ii, "COLOR"] = "orange"}
-  ii = which(cnvs[,"DIFF"] >= cut6); if (length(ii) > 0){cnvs[ii, "COLOR"] = "red"}
+  ii = which(cnvs[,"DIFF"] <= cut1 & cnvs[,"DIFF"] > cut2); if (length(ii) > 0){cnvs[ii, "COLOR"] = losscolor1}
+  ii = which(cnvs[,"DIFF"] <= cut2 & cnvs[,"DIFF"] > cut3); if (length(ii) > 0){cnvs[ii, "COLOR"] = losscolor2}
+  ii = which(cnvs[,"DIFF"] <= cut3); if (length(ii) > 0){cnvs[ii, "COLOR"] = losscolor3}
+  ii = which(cnvs[,"DIFF"] >= cut4 & cnvs[,"DIFF"] < cut5); if (length(ii) > 0){cnvs[ii, "COLOR"] = gaincolor1}
+  ii = which(cnvs[,"DIFF"] >= cut5 & cnvs[,"DIFF"] < cut6); if (length(ii) > 0){cnvs[ii, "COLOR"] = gaincolor2}
+  ii = which(cnvs[,"DIFF"] >= cut6); if (length(ii) > 0){cnvs[ii, "COLOR"] = gaincolor3}
 
   #Grab the CNV and POS values for that region.  Divide into two groups to help with skewed scale
   total_windows=length(i)
@@ -93,13 +97,18 @@ plotChrCNV = function(target_chr){
   cnvs_chr=cnvs[i,]
   gain_i = which(cnvs_chr[,"DIFF"] > display_cut_up)
   loss_i = which(cnvs_chr[,"DIFF"] < display_cut_down)
-
   xg=cnvs_chr[gain_i,"MID"]
   yg=cnvs_chr[gain_i,"DIFF"]
   cg=cnvs_chr[gain_i,"COLOR"]
   xl=cnvs_chr[loss_i,"MID"]
   yl=cnvs_chr[loss_i,"DIFF"]
   cl=cnvs_chr[loss_i,"COLOR"]
+
+  #Grab the CNV HMM segments
+  j = which(segments[,"CHR"] == target_chr)
+  segments_chr=segments[j,]
+  gain_j = which(segments_chr[,"Status"] == "Gain")
+  loss_j = which(segments_chr[,"Status"] == "Loss")
 
   yu1 = max(yg)
   yu2 = max(yg)
@@ -130,26 +139,32 @@ plotChrCNV = function(target_chr){
   ylim_upper=yu3; if (ylim_upper < 2){ylim_upper = 2}
   plot(x=xg, y=yg, pch=16, col=cg, ylim=c(ylim_lower, ylim_upper), xlab="", ylab=ylabel, main=mainlabel)
   abline(h=0, lty=3, lwd=0.5, col="black")
-  abline(h=cut4, lty=2, lwd=0.5, col="yellow")
-  abline(h=cut5, lty=2, lwd=0.5, col="orange")
-  abline(h=cut6, lty=2, lwd=0.5, col="red")
+  abline(h=cut4, lty=2, lwd=0.5, col=gaincolor1)
+  abline(h=cut5, lty=2, lwd=0.5, col=gaincolor2)
+  abline(h=cut6, lty=2, lwd=0.5, col=gaincolor3)
   #If a hardcap is being utilized... mark it
   if (max(yg) >= hard_cap_upper){
-    abline(h=hard_cap_upper, lty=3, lwd=0.5, col="red")
+    abline(h=hard_cap_upper, lty=3, lwd=0.5, col=gaincolor3)
   }
   cex_text=0.75
   if (length(gi_up) > 10){cex_text=0.6}
   if(length(gi_up) > 0){ 
     odds_up=seq(1, length(gi_up), 2)
     x0_odd=genes[gi_up[odds_up],"Mid"]; x1_odd=x0_odd; y0_odd=rep(cut5, length(x0_odd)); y1_odd=rep(yu1, length(x0_odd))
-    segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col="orange", lty=2, lwd=0.5)
-    text(x=genes[gi_up[odds_up],"Mid"], y=yu1, labels=genes[gi_up[odds_up],"Symbol"], srt=45, cex=cex_text, col="red")
+    segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col=gaincolor2, lty=2, lwd=0.5)
+    text(x=genes[gi_up[odds_up],"Mid"], y=yu1, labels=genes[gi_up[odds_up],"Symbol"], srt=45, cex=cex_text, col=gaincolor4)
   }
   if(length(gi_up) > 1){ 
     evens_up=seq(2, length(gi_up), 2)
     x0_even=genes[gi_up[evens_up],"Mid"]; x1_even=x0_even; y0_even=rep(cut5, length(x0_even)); y1_even=rep(yu2, length(x0_even))
-    segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col="orange", lty=2, lwd=0.5)
-    text(x=genes[gi_up[evens_up],"Mid"], y=yu2, labels=genes[gi_up[evens_up],"Symbol"], srt=45, cex=cex_text, col="red")
+    segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col=gaincolor2, lty=2, lwd=0.5)
+    text(x=genes[gi_up[evens_up],"Mid"], y=yu2, labels=genes[gi_up[evens_up],"Symbol"], srt=45, cex=cex_text, col=gaincolor4)
+  }
+  if (length(gain_j)>0){
+    segx1g = segments_chr[gain_j,"START"]
+    segx2g = segments_chr[gain_j,"END"]
+    segyg = segments_chr[gain_j,"Adjusted_CN_DIFF"]
+    segments(x0=segx1g, x1=segx2g, y0=segyg, y1=segyg, col=gaincolor4, lty=1, lwd=2)
   }
 
   #Plot 3
@@ -159,12 +174,12 @@ plotChrCNV = function(target_chr){
   ylim_upper=display_cut_down;
   plot(x=xl, y=yl, pch=16, col=cl, ylim=c(ylim_lower,ylim_upper), xlab=xlabel, ylab=ylabel, main=mainlabel)
   abline(h=0, lty=3, lwd=0.5, col="black")
-  abline(h=cut1, lty=2, lwd=0.5, col="light blue")
-  abline(h=cut2, lty=2, lwd=0.5, col="blue")
-  abline(h=cut3, lty=2, lwd=0.5, col="dark blue")
+  abline(h=cut1, lty=2, lwd=0.5, col=losscolor1)
+  abline(h=cut2, lty=2, lwd=0.5, col=losscolor2)
+  abline(h=cut3, lty=2, lwd=0.5, col=losscolor3)
   #If a hardcap is being utilized... mark it
   if (min(yl) <= hard_cap_lower){
-    abline(h=hard_cap_lower, lty=3, lwd=0.5, col="dark blue")
+    abline(h=hard_cap_lower, lty=3, lwd=0.5, col=losscolor3)
   }
   cex_text=0.75
 
@@ -173,14 +188,20 @@ plotChrCNV = function(target_chr){
   if (length(gi_down) > 0){
     odds_down=seq(1, length(gi_down), 2)
     x0_odd=genes[gi_down[odds_down],"Mid"]; x1_odd=x0_odd; y0_odd=rep(cut2, length(x0_odd)); y1_odd=rep(yd1, length(x0_odd))
-    segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col="light blue", lty=2, lwd=0.5)
-    text(x=genes[gi_down[odds_down],"Mid"], y=yd1, labels=genes[gi_down[odds_down],"Symbol"], srt=45, cex=cex_text, col="blue")
+    segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col=losscolor1, lty=2, lwd=0.5)
+    text(x=genes[gi_down[odds_down],"Mid"], y=yd1, labels=genes[gi_down[odds_down],"Symbol"], srt=45, cex=cex_text, col=losscolor4)
   }
   if (length(gi_down) > 1){
     evens_down=seq(2, length(gi_down), 2)
     x0_even=genes[gi_down[evens_down],"Mid"]; x1_even=x0_even; y0_even=rep(cut2, length(x0_even)); y1_even=rep(yd2, length(x0_even))
-    segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col="light blue", lty=2, lwd=0.5)
-    text(x=genes[gi_down[evens_down],"Mid"], y=yd2, labels=genes[gi_down[evens_down],"Symbol"], srt=45, cex=cex_text, col="blue")
+    segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col=losscolor1, lty=2, lwd=0.5)
+    text(x=genes[gi_down[evens_down],"Mid"], y=yd2, labels=genes[gi_down[evens_down],"Symbol"], srt=45, cex=cex_text, col=losscolor4)
+  }
+  if (length(loss_j)>0){
+    segx1l = segments_chr[loss_j,"START"]
+    segx2l = segments_chr[loss_j,"END"]
+    segyl = segments_chr[loss_j,"Adjusted_CN_DIFF"]
+    segments(x0=segx1l, x1=segx2l, y0=segyl, y1=segyl, col=losscolor4, lty=1, lwd=2)
   }
 
   #Plot 4 - legend for ideogram
@@ -191,31 +212,33 @@ plotChrCNV = function(target_chr){
   legend("left", col=ideo_legend_cols, pch=15, legend=ideo_legend_text, title="Giemsa staining", cex=1)
 
   #Plot 5
-  red_count = length(which(cnvs_chr[,"COLOR"] == "red"))
-  orange_count = length(which(cnvs_chr[,"COLOR"] == "orange"))
-  yellow_count = length(which(cnvs_chr[,"COLOR"] == "yellow"))
+  red_count = length(which(cnvs_chr[,"COLOR"] == gaincolor3))
+  orange_count = length(which(cnvs_chr[,"COLOR"] == gaincolor2))
+  yellow_count = length(which(cnvs_chr[,"COLOR"] == gaincolor1))
 
   plot.new()
   par(mar=c(0,0,0,0))
   gain_legend_text=c(paste("Gain > ", cut6, " (n = ", prettyNum(red_count, big.mark=",", scientific=FALSE), ")", sep=""), 
                      paste("Gain > ", cut5, " (n = ", prettyNum(orange_count, big.mark=",", scientific=FALSE), ")", sep=""), 
-                     paste("Gain > ", cut4, " (n = ", prettyNum(yellow_count, big.mark=",", scientific=FALSE), ")", sep=""))
-  gain_legend_cols=c("red", "orange", "yellow")
+                     paste("Gain > ", cut4, " (n = ", prettyNum(yellow_count, big.mark=",", scientific=FALSE), ")", sep=""),
+                     "HMM Gain Segs")
+  gain_legend_cols=c(gaincolor3, gaincolor2, gaincolor1, gaincolor4)
   gain_legend_title=paste("Gain (Windows = ", prettyNum(total_windows, big.mark=",", scientific=FALSE), ")", sep="")
-  legend("center", col=gain_legend_cols, pch=16, lty=2, legend=gain_legend_text, title=gain_legend_title, cex=1)
+  legend("center", col=gain_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=gain_legend_text, title=gain_legend_title, cex=1)
  
   #Plot 6
-  lightblue_count = length(which(cnvs_chr[,"COLOR"] == "light blue"))
-  blue_count = length(which(cnvs_chr[,"COLOR"] == "blue"))
-  darkblue_count = length(which(cnvs_chr[,"COLOR"] == "dark blue"))
+  lightblue_count = length(which(cnvs_chr[,"COLOR"] == losscolor1))
+  blue_count = length(which(cnvs_chr[,"COLOR"] == losscolor2))
+  darkblue_count = length(which(cnvs_chr[,"COLOR"] == losscolor3))
   plot.new()
   par(mar=c(0,0,0,0))
   loss_legend_text=c(paste("Loss < ", cut1, " (n = ", prettyNum(lightblue_count, big.mark=",", scientific=FALSE), ")", sep=""), 
                      paste("Loss < ", cut2, " (n = ", prettyNum(blue_count, big.mark=",", scientific=FALSE), ")", sep=""), 
-                     paste("Loss < ", cut3, " (n = ", prettyNum(darkblue_count, big.mark=",", scientific=FALSE), ")", sep=""))
-  loss_legend_cols=c("light blue", "blue", "dark blue")
+                     paste("Loss < ", cut3, " (n = ", prettyNum(darkblue_count, big.mark=",", scientific=FALSE), ")", sep=""),
+                     "HMM Loss Segs")
+  loss_legend_cols=c(losscolor1, losscolor2, losscolor3, losscolor4)
   loss_legend_title=paste("Loss (Windows = ", prettyNum(total_windows, big.mark=",", scientific=FALSE), ")", sep="")
-  legend("center", col=loss_legend_cols, pch=16, lty=2, legend=loss_legend_text, title=loss_legend_title, cex=1)
+  legend("center", col=loss_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=loss_legend_text, title=loss_legend_title, cex=1)
 }
 
 #############################################################################################################################################
@@ -227,15 +250,15 @@ plotChrCNV_Compact = function(target_chr, type){
 	
   #Get the chromosome or region of interest
   i = which(cnvs[,"CHR"] == target_chr)
-  gi_up = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] >= cut5)
-  gi_down = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] <= cut2)
+  gi_up = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] >= cut5 | genes[,"CNVhmm.Status"]=="Gain"))
+  gi_down = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] <= cut2 | genes[,"CNVhmm.Status"]=="Loss"))
   cnvs[,"COLOR"] = "grey50"
-  ii = which(cnvs[,"DIFF"] <= cut1 & cnvs[,"DIFF"] > cut2); if (length(ii) > 0){cnvs[ii, "COLOR"] = "light blue"}
-  ii = which(cnvs[,"DIFF"] <= cut2 & cnvs[,"DIFF"] > cut3); if (length(ii) > 0){cnvs[ii, "COLOR"] = "blue"}
-  ii = which(cnvs[,"DIFF"] <= cut3); if (length(ii) > 0){cnvs[ii, "COLOR"] = "dark blue"}
-  ii = which(cnvs[,"DIFF"] >= cut4 & cnvs[,"DIFF"] < cut5); if (length(ii) > 0){cnvs[ii, "COLOR"] = "yellow"}
-  ii = which(cnvs[,"DIFF"] >= cut5 & cnvs[,"DIFF"] < cut6); if (length(ii) > 0){cnvs[ii, "COLOR"] = "orange"}
-  ii = which(cnvs[,"DIFF"] >= cut6); if (length(ii) > 0){cnvs[ii, "COLOR"] = "red"}
+  ii = which(cnvs[,"DIFF"] <= cut1 & cnvs[,"DIFF"] > cut2); if (length(ii) > 0){cnvs[ii, "COLOR"] = losscolor1}
+  ii = which(cnvs[,"DIFF"] <= cut2 & cnvs[,"DIFF"] > cut3); if (length(ii) > 0){cnvs[ii, "COLOR"] = losscolor2}
+  ii = which(cnvs[,"DIFF"] <= cut3); if (length(ii) > 0){cnvs[ii, "COLOR"] = losscolor3}
+  ii = which(cnvs[,"DIFF"] >= cut4 & cnvs[,"DIFF"] < cut5); if (length(ii) > 0){cnvs[ii, "COLOR"] = gaincolor1}
+  ii = which(cnvs[,"DIFF"] >= cut5 & cnvs[,"DIFF"] < cut6); if (length(ii) > 0){cnvs[ii, "COLOR"] = gaincolor2}
+  ii = which(cnvs[,"DIFF"] >= cut6); if (length(ii) > 0){cnvs[ii, "COLOR"] = gaincolor3}
   display_cut_up=-2
   display_cut_down=1
   cnvs_chr=cnvs[i,]
@@ -247,6 +270,13 @@ plotChrCNV_Compact = function(target_chr, type){
   xl=cnvs_chr[loss_i,"MID"]
   yl=cnvs_chr[loss_i,"DIFF"]
   cl=cnvs_chr[loss_i,"COLOR"]
+
+  #Grab the CNV HMM segments
+  j = which(segments[,"CHR"] == target_chr)
+  segments_chr=segments[j,]
+  gain_j = which(segments_chr[,"Status"] == "Gain")
+  loss_j = which(segments_chr[,"Status"] == "Loss")
+
   if (type == "GAIN"){
     ylim_lower = min(yg); if (ylim_lower > -2){ylim_lower = -2}
     ylim_upper = max(yg); if (ylim_upper < 2){ylim_upper = 2}
@@ -256,13 +286,25 @@ plotChrCNV_Compact = function(target_chr, type){
     ylim_upper = 1
     plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
   }
+  if (length(gain_j)>0){
+    segx1g = segments_chr[gain_j,"START"]
+    segx2g = segments_chr[gain_j,"END"]
+    segyg = segments_chr[gain_j,"Adjusted_CN_DIFF"]
+    segments(x0=segx1g, x1=segx2g, y0=segyg, y1=segyg, col=gaincolor4, lty=1, lwd=2)
+  }
+  if (length(loss_j)>0){
+    segx1l = segments_chr[loss_j,"START"]
+    segx2l = segments_chr[loss_j,"END"]
+    segyl = segments_chr[loss_j,"Adjusted_CN_DIFF"]
+    segments(x0=segx1l, x1=segx2l, y0=segyl, y1=segyl, col=losscolor4, lty=1, lwd=2)
+  }
   abline(h=0, lty=2, lwd=1, col="black")
-  abline(h=cut4, lty=2, lwd=0.5, col="yellow")
-  abline(h=cut5, lty=2, lwd=0.5, col="orange")
-  abline(h=cut6, lty=2, lwd=0.5, col="red")
-  abline(h=cut1, lty=2, lwd=0.5, col="light blue")
-  abline(h=cut2, lty=2, lwd=0.5, col="blue")
-  abline(h=cut3, lty=2, lwd=0.5, col="dark blue")
+  abline(h=cut4, lty=2, lwd=0.5, col=gaincolor1)
+  abline(h=cut5, lty=2, lwd=0.5, col=gaincolor2)
+  abline(h=cut6, lty=2, lwd=0.5, col=gaincolor3)
+  abline(h=cut1, lty=2, lwd=0.5, col=losscolor1)
+  abline(h=cut2, lty=2, lwd=0.5, col=losscolor2)
+  abline(h=cut3, lty=2, lwd=0.5, col=losscolor3)
 }
 
 #############################################################################################################################################
@@ -359,6 +401,7 @@ openImageFile = function(name, type, image_width, image_height){
 
 #Load data
 cnvs=read.table(cnv_file, comment.char="#", header=TRUE)
+segments=read.table(segments_file, sep="\t", as.is=c(1,11), header=TRUE)
 genes=read.table(gene_file, sep="\t", header=TRUE, as.is=c(1:3))
 ideo_data = read.table(ideogram_file, sep="\t", header=FALSE, comment.char="#", as.is=c(1,4,5))
 names(ideo_data) = c("chrom","chromStart", "chromEnd", "name", "gieStain")
@@ -382,8 +425,13 @@ if (chr == "ALL"){
   chr_list=c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX")
 }
 
-#Add "chr" to the chromosome names in the cnv object
+#Add "chr" to the chromosome names in the cnv and segments object
 cnvs[,"CHR"]=paste("chr", cnvs[,"CHR"], sep="")
+segments[,"CHR"]=paste("chr", segments[,"CHR"], sep="")
+genes[,"Chr"]=paste("chr", genes[,"Chr"], sep="")
+
+#Calculate the adjusted CN difference for segments
+segments[,"Adjusted_CN_DIFF"]=segments[,"Adjusted_CN1"]-segments[,"Adjusted_CN2"]
 
 #If the user specified a subrange of a single chromosome, remove all other data
 if (length(chr_list) == 1 & chr_start > 0){
@@ -420,6 +468,16 @@ cut4=1
 cut5=2
 cut6=5
 
+#Define gain/loss colors
+gaincolor1="#FDCC8A"
+gaincolor2="#FC8D59"
+gaincolor3="#E34A33"
+gaincolor4="#B30000"
+losscolor1="#BDC9E1"
+losscolor2="#74A9CF"
+losscolor3="#2B8CBE"
+losscolor4="#045A8D"
+
 #Generate a figure for each chromosome
 for (chr_name in chr_list){
   if (image_type == "none"){
@@ -440,54 +498,42 @@ legend_text=c(paste("Copy number gain > ", cut6, sep=""),
               paste("Copy number gain > ", cut4, sep=""),
               paste("Copy number loss < ", cut1, sep=""),
               paste("Copy number loss < ", cut2, sep=""),
-              paste("Copy number loss < ", cut3, sep=""))
+              paste("Copy number loss < ", cut3, sep=""),
+              "HMM Gain Seg",
+              "HMM Loss Seg")
 legend_cex=1
 
 if (length(chr_list) > 1){
-  if (image_type == "none"){
-    par(mfrow=c(6,4), mar=margins)
-    print("All chromosomes - Gains")
-    for (chr_name in chr_list){
-      plotChrCNV_Compact(chr_name, "GAIN")
-    }
-    plot.new()
-    par(mar=c(0,0,0,0))
-    legend("center", col=c("red", "orange", "yellow","light blue", "blue", "dark blue"), pch=16, lty=2, legend=legend_text, title="Cutoffs", cex=legend_cex)
-  }else{
+  if (image_type != "none"){
     openImageFile("Gains_AllChrs", image_type, image_width_2, image_height_2)
-    par(mfrow=c(6,4), mar=margins)
-    print("All chromosomes - Gains")
-    for (chr_name in chr_list){
-      plotChrCNV_Compact(chr_name, "GAIN")
-    }
-    plot.new()
-    par(mar=c(0,0,0,0))
-    legend("center", col=c("red", "orange", "yellow","light blue", "blue", "dark blue"), pch=16, lty=2, legend=legend_text, title="Cutoffs", cex=legend_cex)
+  }
+  par(mfrow=c(6,4), mar=margins)
+  print("All chromosomes - Gains")
+  for (chr_name in chr_list){
+    plotChrCNV_Compact(chr_name, "GAIN")
+  }
+  plot.new()
+  par(mar=c(0,0,0,0))
+  legend("center", col=c(gaincolor3, gaincolor2, gaincolor1,losscolor1, losscolor2, losscolor3, gaincolor4, losscolor4), pch=c(16,16,16,16,16,16,NA,NA), lty=c(2,2,2,2,2,2,1,1), lwd=c(1,1,1,1,1,1,2,2), legend=legend_text, title="Cutoffs", cex=legend_cex)
+  if (image_type != "none"){
     dev.off()
   }
 }
 
 #Generate a figure for all chromosome losses on a single page
 if (length(chr_list) > 1){
-  if (image_type == "none"){
-    par(mfrow=c(6,4), mar=margins)
-    print("All chromosomes - Losses")
-    for (chr_name in chr_list){
-      plotChrCNV_Compact(chr_name, "LOSS")
-    }
-    plot.new()
-    par(mar=c(0,0,0,0))
-    legend("center", col=c("red", "orange", "yellow","light blue", "blue", "dark blue"), pch=16, lty=2, legend=legend_text, title="Cutoffs", cex=legend_cex)
-  }else{
+  if (image_type != "none"){
     openImageFile("Losses_AllChrs", image_type, image_width_2, image_height_2)
-    par(mfrow=c(6,4), mar=margins)
-    print("All chromosomes - Losses")
-    for (chr_name in chr_list){
-      plotChrCNV_Compact(chr_name, "LOSS")
-    }
-    plot.new()
-    par(mar=c(0,0,0,0))
-    legend("center", col=c("red", "orange", "yellow","light blue", "blue", "dark blue"), pch=16, lty=2, legend=legend_text, title="Cutoffs", cex=legend_cex)
+  }
+  par(mfrow=c(6,4), mar=margins)
+  print("All chromosomes - Losses")
+  for (chr_name in chr_list){
+    plotChrCNV_Compact(chr_name, "LOSS")
+  }
+  plot.new()
+  par(mar=c(0,0,0,0))
+  legend("center", col=c(gaincolor3, gaincolor2, gaincolor1,losscolor1, losscolor2, losscolor3, gaincolor4, losscolor4), pch=c(16,16,16,16,16,16,NA,NA), lty=c(2,2,2,2,2,2,1,1), lwd=c(1,1,1,1,1,1,2,2), legend=legend_text, title="Cutoffs", cex=legend_cex)
+  if (image_type != "none"){
     dev.off()
   }
 }

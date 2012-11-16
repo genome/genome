@@ -51,7 +51,6 @@ sub help_detail {
 }
 
 sub execute {
-    $DB::single=1;
     my $self=shift;
     my ($denovo_vcf, $standard_vcf) = ($self->denovo_vcf, $self->standard_vcf);
     unless(-s $denovo_vcf) {
@@ -62,24 +61,29 @@ sub execute {
         $self->error_message("Standard VCF $standard_vcf has no size or is not found. Exiting");
         die;
     }
-    $DB::single=1;
     my $temp_output_vcf = $self->merge_vcfs($denovo_vcf, $standard_vcf);
-    $DB::single=1;
+    my $sorted_vcf = Genome::Sys->create_temp_file_path();
+    my $sort_cmd = Genome::Model::Tools::Joinx::Sort->create(
+        input_files => [$temp_output_vcf],
+        output_file => $sorted_vcf
+    );
+    unless ($sort_cmd->execute()) {
+        die $self->error_message("Failed to sort vcf file $temp_output_vcf and write to $sorted_vcf!");
+    }
     my $output_vcf = $self->output_vcf;
     if($self->bgzip) {
-        my $cmd = "bgzip $temp_output_vcf";
+        my $cmd = "bgzip $sorted_vcf";
         Genome::Sys->shellcmd(cmd=>$cmd); 
-        $temp_output_vcf.=".gz";
-        `cp $temp_output_vcf $output_vcf`;
+        $sorted_vcf.=".gz";
+        `cp $sorted_vcf $output_vcf`;
     }else { 
-        `cp $temp_output_vcf $output_vcf`;
+        `cp $sorted_vcf $output_vcf`;
     }
     return 1;
 }
 
 sub merge_vcfs {
     my ($self, $denovo_vcf, $standard_vcf) = @_;
-    $DB::single=1;
     my ($temp_ofh, $temp_output_filename) = Genome::Sys->create_temp_file();
     $self->write_merged_header($temp_ofh, $denovo_vcf, $standard_vcf);
     my $denovo_sites = $self->objectify_denovo_vcf($denovo_vcf);
@@ -87,6 +91,7 @@ sub merge_vcfs {
     my ($last_chr, $last_pos) = 0;
     my @denovo_positions;
     my $merged=0;
+    my $denovo_idx = 0;
     while(my $line = $standard_fh->getline) {
         if($line =~m/^#/) { next;}
         if($line =~m/ERROR/) { 
@@ -96,18 +101,31 @@ sub merge_vcfs {
         chomp($line);
         my ($chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples) = split "\t", $line;
         if($chr ne $last_chr) {
+            while ($denovo_idx <= $#denovo_positions) {
+                my $denovo_position = $denovo_positions[$denovo_idx];
+                $temp_ofh->print($self->fix_denovo_vcf_line($denovo_sites->{$last_chr}->{$denovo_position}));
+                delete $denovo_sites->{$last_chr}->{$denovo_position};
+                ++$denovo_idx;
+            }
+
             @denovo_positions = sort {$a <=> $b} keys %{$denovo_sites->{$chr}};
+            $denovo_idx = 0;
             $last_pos = 0;
         }
-        for my $denovo_position (@denovo_positions) {
+        POS: while ($denovo_idx <= $#denovo_positions) {
+            my $denovo_position = $denovo_positions[$denovo_idx];
             if($denovo_position eq $pos) {
                 $temp_ofh->print($self->merge_line($line, $denovo_sites->{$chr}->{$pos}));
                 delete $denovo_sites->{$chr}->{$pos};
                 $merged=1;
+                ++$denovo_idx;
             }
             elsif(($denovo_position < $pos) && ($denovo_position > $last_pos)) {
                 $temp_ofh->print($self->fix_denovo_vcf_line($denovo_sites->{$chr}->{$denovo_position}));
                 delete $denovo_sites->{$chr}->{$denovo_position};
+                ++$denovo_idx;
+            } else {
+                last POS;
             }
         }
         if($merged) {
@@ -121,6 +139,7 @@ sub merge_vcfs {
     }
     for my $chr (keys %{$denovo_sites}) { #did we fail to use any-- i.e. was standard missing a whole chromosome
         for my $pos (sort {$a <=> $b} keys %{$denovo_sites->{$chr}}) {
+            $self->warning_message("Printing out skipped denovo line: $denovo_sites->{$chr}{$pos}");
             $temp_ofh->print($self->fix_denovo_vcf_line($denovo_sites->{$chr}->{$pos}));
             delete $denovo_sites->{$chr}->{$pos};
         }

@@ -220,7 +220,7 @@ sub execute {
   if (scalar(@mutation_diagram_builds)){
     $step++; print MAGENTA, "\n\nStep $step. Creating mutation-diagram plots", RESET;
     my $mutation_diagram_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'mutation_diagrams', '-silent'=>1);
-    my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(builds=>@mutation_diagram_builds, outdir=>$mutation_diagram_dir, collapse_variants=>'true', max_snvs_per_file=>'250', max_indels_per_file=>'250');
+    my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(builds=>\@mutation_diagram_builds, outdir=>$mutation_diagram_dir, collapse_variants=>1, max_snvs_per_file=>250, max_indels_per_file=>250);
     my $r = $mutation_diagram_cmd->execute();
   }
 
