@@ -14,7 +14,7 @@ class Genome::InstrumentData::AlignmentResult::Clc {
     has_constant => [
         aligner_name => { value => 'clc', is_param=>1 },
     ],
-    has_optional => [
+    has_transient_optional => [
          _Clc_sam_cmd => { is=>'Text' }
     ]
 };

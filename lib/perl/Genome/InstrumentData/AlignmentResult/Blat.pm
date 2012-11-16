@@ -11,7 +11,7 @@ class Genome::InstrumentData::AlignmentResult::Blat {
     has_constant => [
         aligner_name => { value => 'Blat', is_param=>1 },
     ],
-    has_optional => [
+    has_transient_optional => [
          _Blat_sam_cmd => { is=>'Text' }
     ]
 };

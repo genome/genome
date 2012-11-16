@@ -18,7 +18,7 @@ class Genome::InstrumentData::AlignmentResult::Crossmatch {
     has_constant => [
         aligner_name => { value => 'Crossmatch', is_param=>1 },
     ],
-    has_optional => [
+    has_transient_optional => [
          _Crossmatch_sam_cmd => { is=>'Text' }
     ]
 };

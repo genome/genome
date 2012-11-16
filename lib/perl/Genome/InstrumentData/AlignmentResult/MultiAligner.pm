@@ -12,8 +12,8 @@ class Genome::InstrumentData::AlignmentResult::MultiAligner {
     has_constant => [
         aligner_name => { value => 'multi aligner', is_param=>1 },
     ],
-    has_transient => [
-        any_fillmd => { is => 'Integer', is_optional=>1 },
+    has_transient_optional => [
+        any_fillmd => { is => 'Integer' },
     ],
 };
 

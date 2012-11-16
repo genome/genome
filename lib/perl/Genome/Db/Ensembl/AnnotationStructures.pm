@@ -18,9 +18,13 @@ class Genome::Db::Ensembl::AnnotationStructures {
         },
         log_file => {
             is => 'Text',
+            is_optional  => 1,
+            is_transient => 1,
         },
         dump_file => {
             is => 'Text',
+            is_optional  => 1,
+            is_transient => 1,
         },
     ],
     has_param => [
