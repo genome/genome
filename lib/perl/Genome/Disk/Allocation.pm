@@ -610,6 +610,8 @@ sub _move {
     # calculate their data_directories from their disk_allocations.
     $self->_update_owner_for_move;
 
+    _symlink($self->absolute_path, $original_absolute_path);
+
     _commit_unless_testing();
 
     Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
