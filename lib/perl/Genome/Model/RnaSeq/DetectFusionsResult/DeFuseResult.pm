@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::RnaSeq::DetectFusionsResult::DeFuseResult{
     is => "Genome::Model::RnaSeq::DetectFusionsResult",
-    has => [
+    has_param => [
         detector_params => {
             doc => 'params to pass along to deFuse including (required) ensembl_release=num'
         }

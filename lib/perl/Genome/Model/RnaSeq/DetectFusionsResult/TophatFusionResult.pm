@@ -24,6 +24,7 @@ class Genome::Model::RnaSeq::DetectFusionsResult::TophatFusionResult{
             doc => "id of the known fusions software result"
         },
         detector_params => {
+            is_param => 1,
             doc => 'params for tophat-fusion and tophat fusion post, separated by a colon (:)'
         }
     ],
@@ -44,7 +45,6 @@ sub create {
 
     my($params, $post_params) = split(/:/, $self->detector_params);
     my $output_directory = $self->temp_staging_directory;
-    #my ($fastq1, $fastq2) = $self->_get_fastq_files_for_model();
     my $n_threads = $self->_available_cpu_count;
 
     $self->_put_bowtie_version_in_path();

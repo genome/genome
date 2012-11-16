@@ -60,8 +60,8 @@ sub _resolve_chimerascan_arguments {
     my $index_dir = $self->_resolve_index_dir($bowtie_version);
     my $bowtie_path = Genome::Model::Tools::Bowtie->base_path($bowtie_version);
 
-    my ($fastq1, $fastq2) = $self->_get_fastq_files_for_model();
-    my $output_directory = $self->output_dir;
+    my ($fastq1, $fastq2) = @{$self->_fastq_files};
+    my $output_directory = $self->temp_staging_directory;
 
     my @arguments = ($index_dir, $fastq1, $fastq2, $output_directory);
     return \@arguments;

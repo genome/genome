@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::RnaSeq::DetectFusionsResult::BreakFusionResult{
     is => "Genome::Model::RnaSeq::DetectFusionsResult",
-    has => [
+    has_param => [
         detector_params => {
             #TODO
             doc => 'params to use for sub steps in this detector breakdancer params : tigra-sv params : break annot params'
