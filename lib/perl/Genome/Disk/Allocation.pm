@@ -844,16 +844,10 @@ sub _unarchive {
         $self->_update_owner_for_move;
         $self->archivable(0, 'allocation was unarchived'); # Wouldn't want this to be immediately re-archived... trolololol
 
-        # to fix previously existing/broken symlinks by redirecting
         if ($old_absolute_path ne $self->absolute_path) {
-            my $old_parent_dir = File::Basename::dirname($old_absolute_path);
-            if(! -e $old_parent_dir){
-                Genome::Sys->create_directory($old_parent_dir);
-            }
-            if(-d $old_parent_dir && ! -e $old_absolute_path) {
-                symlink $self->absolute_path, $old_absolute_path;
-            }
+            _symlink($old_absolute_path, $self->absolute_path);
         }
+
 
         unless (UR::Context->commit) {
             confess "Could not commit!";
@@ -1334,6 +1328,22 @@ sub get_allocation_for_path {
     }
 
     return $allocation;
+}
+
+sub _symlink {
+    # to fix previously existing/broken symlinks by restoring chain
+    my $real_path = shift;
+    my $old_path = shift;
+
+    my $old_parent_dir = File::Basename::dirname($old_path);
+    if(! -e $old_parent_dir){
+        Genome::Sys->create_directory($old_parent_dir);
+    }
+    if(-d $old_parent_dir && ! -e $old_path) {
+        symlink $real_path, $old_path;
+    }
+
+    return (-l $old_path && readlink($old_path) eq $real_path);
 }
 
 sub _commit_unless_testing {
