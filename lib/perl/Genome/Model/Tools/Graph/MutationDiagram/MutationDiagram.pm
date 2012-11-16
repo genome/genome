@@ -367,8 +367,8 @@ sub Draw {
     $DB::single = 1;
     my $document = Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::View->new(width=>'800',height=>'600',
         'viewport' => {x => 0, y => 0,
-            width => 1600,
-            height => 1200},
+            width => 800,
+            height => 600},
         left_margin => 50,
         right_margin => 50,
         id => "main_document");
@@ -380,7 +380,7 @@ sub Draw {
         backbone_height
         =>
         50,
-        style => {overflow => 'visible', fill => 'none', stroke => 'black'},
+        style => {fill => 'none', stroke => 'black'},
         id => "protein_diagram",
         $document->content_view);
     $backbone->draw;
