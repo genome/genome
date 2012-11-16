@@ -81,7 +81,7 @@ $DB::single = 1;
 
   #Check/format all input parameters and options
   #Based on the reference build specified, define paths to transcript/gene id mapping files
-  my ($transcript_info_file, $subdir, $outfile, $outfile_amp, $outfile_del, $outfile_ampdel, $name_f);
+  my ($transcript_info_file, $subdir, $outfile, $outfile_amp, $outfile_del, $outfile_ampdel, $outfile_cnvhmm, $name_f);
   my $extra_flank = 100000;
 
   ####################################################################################################################################
@@ -256,22 +256,25 @@ $DB::single = 1;
       $chr_end = 0;
     }
 
-    #Name the output file
+    #Name the output files
     if ($chr eq "ALL"){
       $outfile = "$subdir"."CNView_"."$name_f".".tsv";
       $outfile_amp = "$subdir"."CNView_"."$name_f".".amp.tsv";
       $outfile_del = "$subdir"."CNView_"."$name_f".".del.tsv";
       $outfile_ampdel = "$subdir"."CNView_"."$name_f".".ampdel.tsv";
+      $outfile_cnvhmm = "$subdir"."cnaseq.cnvhmm.tsv";
     }elsif ($chr_start && $chr_end){
       $outfile = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".tsv";
       $outfile_amp = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".amp.tsv";
       $outfile_del = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".del.tsv";
       $outfile_ampdel = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".ampdel.tsv";
+      $outfile_cnvhmm = "$subdir"."cnaseq.cnvhmm.tsv";
     }else{
       $outfile = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".tsv";
       $outfile_amp = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".amp.tsv";
       $outfile_del = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".del.tsv";
       $outfile_ampdel = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".ampdel.tsv";
+      $outfile_cnvhmm = "$subdir"."cnaseq.cnvhmm.tsv";
     }
 
     #If specified check the cnv results file
@@ -340,8 +343,10 @@ $DB::single = 1;
   #Assume that the CNview.R script resides in the same dir as this script and obtain the path automatically
 
   #Execute the R script that generates the CNV plots
+  my $chr_name=$chr; #R script still expects chr number to be prefixed with "chr"
+  unless ($chr_name eq 'ALL'){$chr_name="chr".$chr;}
   my $rscript = __FILE__.".R";
-  my $r_cmd = "$rscript '$name' $cnv_file $cnv_results_file $ideogram_file $subdir $chr $chr_start $chr_end $image_type";
+  my $r_cmd = "$rscript '$name' $cnv_file $cnv_results_file $outfile_cnvhmm $ideogram_file $subdir $chr_name $chr_start $chr_end $image_type";
   my $r_cmd_stdout = "$subdir"."CNView.R.stdout";
   my $r_cmd_stderr = "$subdir"."CNView.R.stderr";
   if ($verbose){
@@ -502,11 +507,14 @@ $DB::single = 1;
   sub loadSegmentData{
     my %segments;
     open(SEGMENTS, "$segments_file") || die "\n\nCould not open input file: $segments_file\n\n";
+    open(SEGMENTS_CLEAN, ">$outfile_cnvhmm") || die "\n\nCould not open input file: $outfile_cnvhmm\n\n";
+    print SEGMENTS_CLEAN "CHR\tSTART\tEND\tSIZE\tnMarkers\tCN1\tAdjusted_CN1\tCN2\tAdjusted_CN2\tLLR_Somatic\tStatus\n";
     while(<SEGMENTS>){
       chomp($_);
       if ($_=~/^\#CHR/ || $_=~/^---/ || $_=~/^Iter\=/ || $_=~/^purity/ || $_=~/CNA predicted/){
         next(); #skip all header lines
       }
+      print SEGMENTS_CLEAN "$_\n"; #Create new segments file for use with R script
       my @line = split("\t", $_);
       my $chr_input = "$line[0]";
       my $start = $line[1];
@@ -527,6 +535,7 @@ $DB::single = 1;
       $segments{$chr_input}{$start}{$end}{cn_adj_diff} = $cn_adj_diff;
     }
     close(SEGMENTS);
+    close(SEGMENTS_CLEAN);
     return(\%segments);
   }
 
@@ -664,7 +673,45 @@ $DB::single = 1;
           print BLUE, "\n\tFound $overlaps overlapping CNV windows with mean diff: $mean_diff", RESET;
         }
         $targets->{$target}->{mean_diff} = $mean_diff;
-    
+
+        #Determine the CN status of the gene of interest according to HMM segmentation analysis
+        #First, identify the copy number segments that overlap this gene
+        $targets->{$target}->{cnseg_status} = "NA";
+        if ($segments->{$grand_chr}){
+          my %chr_segments = %{$segments->{$grand_chr}};
+          my $segment_count = keys %chr_cnvs;
+          if ($verbose){
+            print BLUE, "\n\tFound $segment_count segments for this chromosome", RESET;
+          }
+          #Determine the CN status for the gene of interest
+          my $segoverlaps = 0;
+          my @statuses;
+          foreach my $seg_start (sort {$a <=> $b} keys %chr_segments){
+            foreach my $seg_end (sort {$a <=> $b} keys %{$chr_segments{$seg_start}}){
+              if (($seg_start >= $grand_start && $seg_start <= $grand_end) || ($seg_end >= $grand_start && $seg_end <= $grand_end) || ($seg_start <= $grand_start && $seg_end >= $grand_end)){
+              $segoverlaps++;
+              push (@statuses, $chr_segments{$seg_start}{$seg_end}{status});
+              }
+            }
+          }
+          if ($segoverlaps > 0){
+            my $gain_sum = 0;
+            my $loss_sum = 0;
+            foreach my $status (@statuses){
+              if ($status eq 'Gain'){$gain_sum++};
+              if ($status eq 'Loss'){$loss_sum++};
+            }
+            if ($gain_sum>0 && $gain_sum>$loss_sum){
+              $targets->{$target}->{cnseg_status} = "Gain";
+            }
+            if ($loss_sum>0 && $loss_sum>$gain_sum){
+              $targets->{$target}->{cnseg_status} = "Loss";
+            }
+          }
+          if ($verbose){
+            print BLUE, "\n\tFound $segoverlaps overlapping segments with status: $targets->{$target}->{cnseg_status}", RESET;
+          }
+        }
       }else{
         if ($verbose){
           print YELLOW, "\n\tCould not find any transcripts for this gene: $target", RESET;
@@ -673,6 +720,8 @@ $DB::single = 1;
     }
     return();
   }
+
+
 
 
 #####################################################################################################################################################################
@@ -685,10 +734,10 @@ $DB::single = 1;
     open (OUT_AMP, ">$outfile_amp") || die "\n\nCould not open outfile: $outfile_amp for writting\n\n";
     open (OUT_DEL, ">$outfile_del") || die "\n\nCould not open outfile: $outfile_del for writting\n\n";
     open (OUT_AMPDEL, ">$outfile_ampdel") || die "\n\nCould not open outfile: $outfile_ampdel for writting\n\n";
-    print OUT "Symbol\tmapped_gene_name\tSample\tChr\tStart\tEnd\tMean CNV Diff\n";
-    print OUT_AMP "Symbol\tmapped_gene_name\tSample\tChr\tStart\tEnd\tMean CNV Diff\n";
-    print OUT_DEL "Symbol\tmapped_gene_name\tSample\tChr\tStart\tEnd\tMean CNV Diff\n";
-    print OUT_AMPDEL "Symbol\tmapped_gene_name\tSample\tChr\tStart\tEnd\tMean CNV Diff\n";
+    print OUT "Symbol\tmapped_gene_name\tSample\tChr\tStart\tEnd\tMean CNV Diff\tCNVhmm Status\n";
+    print OUT_AMP "Symbol\tmapped_gene_name\tSample\tChr\tStart\tEnd\tMean CNV Diff\tCNVhmm Status\n";
+    print OUT_DEL "Symbol\tmapped_gene_name\tSample\tChr\tStart\tEnd\tMean CNV Diff\tCNVhmm Status\n";
+    print OUT_AMPDEL "Symbol\tmapped_gene_name\tSample\tChr\tStart\tEnd\tMean CNV Diff\tCNVhmm Status\n";
 
     foreach my $target (sort {abs($targets->{$b}->{mean_diff}) <=> abs($targets->{$a}->{mean_diff})} keys %{$targets}){
       if ($targets->{$target}->{found}){
@@ -697,15 +746,16 @@ $DB::single = 1;
         my $target_chr_start = $targets->{$target}->{start};
         my $target_chr_end = $targets->{$target}->{end};
         my $mean_diff = $targets->{$target}->{mean_diff};
-        my $string = "$target\t$fixed_gene_name\t$sample_name\t$target_chr\t$target_chr_start\t$target_chr_end\t$mean_diff\n";
+        my $cnseg_status = $targets->{$target}->{cnseg_status};
+        my $string = "$target\t$fixed_gene_name\t$sample_name\t$target_chr\t$target_chr_start\t$target_chr_end\t$mean_diff\t$cnseg_status\n";
         #Name the output file
         if ($chr eq "ALL"){
           print OUT "$string";
-          if ($mean_diff >= $amp_cutoff){
+          if ($mean_diff >= $amp_cutoff || $cnseg_status eq "Gain"){
             print OUT_AMP "$string";
             print OUT_AMPDEL "$string";
           }
-          if ($mean_diff <= $del_cutoff){
+          if ($mean_diff <= $del_cutoff || $cnseg_status eq "Loss"){
             print OUT_DEL "$string";
             print OUT_AMPDEL "$string";
           }
@@ -714,11 +764,11 @@ $DB::single = 1;
             next();
           }
           print OUT "$string";
-          if ($mean_diff >= $amp_cutoff){
+          if ($mean_diff >= $amp_cutoff || $cnseg_status eq "Gain"){
             print OUT_AMP "$string";
             print OUT_AMPDEL "$string";
           }
-          if ($mean_diff <= $del_cutoff){
+          if ($mean_diff <= $del_cutoff || $cnseg_status eq "Loss"){
             print OUT_DEL "$string";
             print OUT_AMPDEL "$string";
           }
@@ -728,11 +778,11 @@ $DB::single = 1;
             next();
           }
           print OUT "$string";
-          if ($mean_diff >= $amp_cutoff){
+          if ($mean_diff >= $amp_cutoff || $cnseg_status eq "Gain"){
             print OUT_AMP "$string";
             print OUT_AMPDEL "$string";
           }
-          if ($mean_diff <= $del_cutoff){
+          if ($mean_diff <= $del_cutoff || $cnseg_status eq "Loss"){
             print OUT_DEL "$string";
             print OUT_AMPDEL "$string";
           }
