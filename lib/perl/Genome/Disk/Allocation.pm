@@ -600,15 +600,15 @@ sub _move {
                 $shadow_allocation->absolute_path, $self->absolute_path)));
     }
 
-    # This is here because certain objects (Build & SoftwareResult) don't
-    # calculate their data_directories from their disk_allocations.
-    $self->_update_owner_for_move;
-
     # Change the shadow allocation to reserve some disk on the old volume until
     # those files are deleted.
     my $old_mount_path = $self->mount_path;
     $self->mount_path($shadow_allocation->mount_path);
     $shadow_allocation->mount_path($old_mount_path);
+
+    # This is here because certain objects (Build & SoftwareResult) don't
+    # calculate their data_directories from their disk_allocations.
+    $self->_update_owner_for_move;
 
     _commit_unless_testing();
 
