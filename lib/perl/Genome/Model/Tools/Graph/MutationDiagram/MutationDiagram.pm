@@ -398,6 +398,10 @@ sub Draw {
         if (exists($domain_legend{$domain->{name}})) {
             $domain_color = $domain_legend{$domain->{name}};
         } else {
+            if($color == @colors) {
+                #protect against an array overrun
+                $color = 0;
+            }
             $domain_color = $colors[$color++];
             $domain_legend{$domain->{name}} = $domain_color;
         }
