@@ -22,10 +22,6 @@ use Genome;
 class Genome::Model::Tools::Analysis::LaneQc::CompareSnpsResult {
 	is => 'Genome::SoftwareResult::Stageable',
 
-    has => [
-        output_file   => { is => 'Text' },
-    ],
-
     #TODO: Use class pre-processor to sync the result class and the command class
     has_param => [
         verbose       => { is => 'Text', doc => "Turns on verbose output [0]", is_optional => 1},
