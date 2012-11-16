@@ -62,6 +62,11 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
               default => 10,
               doc => 'The max number of observations to display for a single COSMIC mutation',
         },
+        max_transcripts => {
+              is => 'Number',
+              is_optional => 1,
+              doc => 'For debugging purposes, limit to this number of transcripts',
+        },
     ],
     doc => 'summarize the SVs of somatic variation build',
 };
@@ -284,6 +289,11 @@ sub import_somatic_variants{
     
     next if ($line[13] =~ /$filter_string/);
     $c++;
+
+    if ($self->max_transcripts){
+      next if ($c > $self->max_transcripts);
+    }
+
     print VARF "$_\n";
 
     if ($var{$tid}){
