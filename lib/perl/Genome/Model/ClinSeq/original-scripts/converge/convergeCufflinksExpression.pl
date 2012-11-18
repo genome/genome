@@ -195,7 +195,7 @@ sub getCufflinksFiles{
     if ($verbose){print BLUE, "\n\t$final_name\t$build_id\t$data_directory", RESET;}
 
     #/gscmnt/gc8002/info/model_data/2881869913/build120828540/BRC18/rnaseq/tumor/cufflinks_absolute/isoforms_merged
-    my $ls_cmd = "ls $data_directory/*/rnaseq/*/cufflinks_absolute/$expression_subdir/*";
+    my $ls_cmd = "ls $data_directory/*/rnaseq/*/cufflinks_absolute/$expression_subdir/* 2>/dev/null";
     my @result = `$ls_cmd`;
     chomp(@result);
     my @files;
@@ -320,7 +320,7 @@ sub parseCufflinksFiles{
       unless ($first_file){
         unless (defined($exp{$id})){
           print RED, "\n\nFound an ID in a file that was not present in the first file parsed. ID: $id\n\n", RESET;
-          exit(1);
+          #exit(1);
         }
         if (defined($exp{$id}{$column_name})){
           print RED, "\n\nFound a duplicate ID: $id\n\n", RESET;
@@ -345,8 +345,8 @@ sub parseCufflinksFiles{
     #Check that the total number of records stored equals the total number of data lines in the input file (i.e. there were no duplicate IDs)
     my $data_count = keys %exp;
     unless ($data_count == $line_count){
-      print RED, "\n\nData count did not match the expected line count!\n\n", RESET;
-      exit(1);
+      print RED, "\n\nData count ($data_count) did not match the expected line count ($line_count)!\n\n", RESET;
+      #exit(1);
     }
     $first_file = 0;
   }
