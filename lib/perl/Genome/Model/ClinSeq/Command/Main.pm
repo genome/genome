@@ -133,8 +133,8 @@ sub execute {
 
   #Determine Ensembl version used in the analysis by examining input builds of the clinseq model - watch out for conflicting versions!
   $step++; print MAGENTA, "\n\nStep $step. Determining Ensembl version used in the analysis by examining input builds of the clinseq model", RESET;
-  my $ensembl_version = $self->getEnsemblVersion('-clinseq_build_id'=>$clinseq_build_id);
-  print BLUE, "\n\tEnsembl version = $ensembl_version", RESET;
+  my ($ensembl_version, $annotation_build_id) = $self->getEnsemblVersion('-clinseq_build_id'=>$clinseq_build_id);
+  print BLUE, "\n\tEnsembl version = $ensembl_version (ID $annotation_build_id)", RESET;
 
   #Get Entrez and Ensembl data for gene name mappings
   my $entrez_ensembl_data = &loadEntrezEnsemblData();
@@ -232,6 +232,30 @@ sub execute {
   #Add dbSNP annotations to the SNVs/InDELs
   #Add 1000 genomes annotations to the SNVs/InDELs
 
+  #This is now being run earlier so that the cna-seg output can be used by cn-view
+  #Generate a clonality plot for this patient (if WGS data is available)
+  my $clonality_dir = $patient_dir . "clonality/";
+  if ($wgs){
+    $step++; print MAGENTA, "\n\nStep $step. Creating clonality plot for $common_name", RESET;
+    my $clonality_stdout = $clonality_dir . "clonality.stdout";
+    my $clonality_stderr = $clonality_dir . "clonality.stderr";
+
+    if (-e $clonality_dir && -d $clonality_dir){
+      if ($verbose){print YELLOW, "\n\nClonality dir already exists - skipping", RESET;}
+    }else{
+      my $clonality_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'clonality', '-silent'=>1);
+      my $wgs_somatic_build = $builds->{wgs};
+      my $wgs_somatic_build_id = $wgs_somatic_build->id;
+      
+      my $master_clonality_cmd = "$script_dir"."snv/generateClonalityPlot.pl  --somatic_var_build_id=$wgs_somatic_build_id  --working_dir=$clonality_dir  --common_name='$common_name'  --verbose=$verbose";
+      if ($verbose){
+        print YELLOW, "\n\n$master_clonality_cmd", RESET;
+      }else{
+        $master_clonality_cmd .= " 1>$clonality_stdout 2>$clonality_stderr";
+      }
+      Genome::Sys->shellcmd(cmd=>$master_clonality_cmd, output_files=>["$clonality_dir$common_name.clonality.pdf"]);
+    }
+  }
 
 
   #Run CNView analyses on the CNV data to identify amplified/deleted genes
@@ -240,7 +264,7 @@ sub execute {
   $step++; print MAGENTA, "\n\nStep $step. Identifying CNV altered genes", RESET;
   if ($wgs){
     my @cnv_symbol_lists = qw (Kinase_RonBose CancerGeneCensusPlus_Sanger AntineoplasticTargets_DrugBank AllGenes_Ensembl58);
-    &identifyCnvGenes('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-reference_build_name'=>$reference_build_ucsc, '-common_name'=>$common_name, '-patient_dir'=>$patient_dir, '-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@cnv_symbol_lists, '-verbose'=>$verbose);
+    &identifyCnvGenes('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-reference_build_name'=>$reference_build_ucsc, '-common_name'=>$common_name, '-patient_dir'=>$patient_dir, '-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@cnv_symbol_lists, '-annotation_build_id'=>$annotation_build_id, '-segments_file'=>$clonality_dir.'/cnaseq.cnvhmm','-verbose'=>$verbose);
   }
 
   #Run RNA-seq analysis on the RNA-seq data (if available)
@@ -323,30 +347,6 @@ sub execute {
   &runSnvBamReadCounts('-builds'=>$builds, '-positions_files'=>\@positions_files, '-ensembl_version'=>$ensembl_version, '-out_paths'=>$out_paths, '-verbose'=>0);
 
 
-  #Generate a clonality plot for this patient (if WGS data is available)
-  if ($wgs){
-    $step++; print MAGENTA, "\n\nStep $step. Creating clonality plot for $common_name", RESET;
-    my $clonality_dir = $patient_dir . "clonality/";
-    my $clonality_stdout = $clonality_dir . "clonality.stdout";
-    my $clonality_stderr = $clonality_dir . "clonality.stderr";
-
-    if (-e $clonality_dir && -d $clonality_dir){
-      if ($verbose){print YELLOW, "\n\nClonality dir already exists - skipping", RESET;}
-    }else{
-      my $clonality_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'clonality', '-silent'=>1);
-      my $wgs_somatic_build = $builds->{wgs};
-      my $wgs_somatic_build_id = $wgs_somatic_build->id;
-      
-      my $master_clonality_cmd = "$script_dir"."snv/generateClonalityPlot.pl  --somatic_var_build_id=$wgs_somatic_build_id  --working_dir=$clonality_dir  --common_name='$common_name'  --verbose=$verbose";
-      if ($verbose){
-        print YELLOW, "\n\n$master_clonality_cmd", RESET;
-      }else{
-        $master_clonality_cmd .= " 1>$clonality_stdout 2>$clonality_stderr";
-      }
-      Genome::Sys->shellcmd(cmd=>$master_clonality_cmd, output_files=>["$clonality_dir$common_name.clonality.pdf"]);
-    }
-  }
-
   #Generate a summary of SV results from the WGS SV results
   if ($wgs){
     my $wgs_somatic_build = $builds->{wgs};
@@ -406,7 +406,7 @@ sub getEnsemblVersion{
       my $ab = $m->annotation_reference_build;
       if ($ab){
         my $ab_name = $ab->name;
-        $annotation_refs{$ab_name}=1;
+        $annotation_refs{$ab_name}=$ab->id;
       }else{
         print YELLOW, "\n\nUndefined annotation build name for model!\n$model_name\n\n", RESET;
       }
@@ -414,7 +414,7 @@ sub getEnsemblVersion{
       my $ab = $m->annotation_build;
       if ($ab){
         my $ab_name = $ab->name;
-        $annotation_refs{$ab_name}=1;
+        $annotation_refs{$ab_name}=$ab->id;
       }else{
         print YELLOW, "\n\nUndefined annotation build name for model!\n$model_name\n\n", RESET;
       }
@@ -422,6 +422,7 @@ sub getEnsemblVersion{
   }   
 
   my $ar_count = keys %annotation_refs;
+  my $annotation_build_id;
   if ($ar_count == 0){
     print RED, "\n\nUnable to determine a single annotation reference name from the input models!\n\n", RESET;
     exit(1);
@@ -430,8 +431,10 @@ sub getEnsemblVersion{
       my $ar_string = $ar_name;
       if ($ar_string =~ /ensembl\/(\d+)\_/){
         $ensembl_version = $1;
+        $annotation_build_id = $annotation_refs{$ar_name};
       }elsif ($ar_string =~ /annotation\/(\d+)\_/){
         $ensembl_version = $1;
+        $annotation_build_id = $annotation_refs{$ar_name};
       }else{
         print RED, "\n\nUnable to determine Ensembl version by parsing annotation reference build names!\n\n", RESET;
         exit(1);
@@ -443,9 +446,11 @@ sub getEnsemblVersion{
       my $ar_string = $ar_name;
       if ($ar_string =~ /ensembl\/(\d+)\_/){
         $ensembl_version = $1;
+        $annotation_build_id = $annotation_refs{$ar_name};
         $ensembl_versions{$1} = 1;
       }elsif ($ar_string =~ /annotation\/(\d+)\_/){
         $ensembl_version = $1;
+        $annotation_build_id = $annotation_refs{$ar_name};
         $ensembl_versions{$1} = $1;
       }else{
         print RED, "\n\nUnable to determine Ensembl version by parsing annotation reference build names!\n\n", RESET;
@@ -460,14 +465,13 @@ sub getEnsemblVersion{
       exit(1);
     }
   }
-
   #Final sanity check ... 
   unless ($ensembl_version =~ /^\d+$/){
     print RED, "\n\nFormat of Ensembl version identified by parsing annotation build names is not correct: $ensembl_version\n\n", RESET;
     exit(1);
   }
 
-  return($ensembl_version);
+  return ($ensembl_version, $annotation_build_id);
 }
 
 
@@ -815,14 +819,25 @@ sub identifyCnvGenes{
   my $gene_symbol_lists_dir = $args{'-gene_symbol_lists_dir'};
   my @symbol_list_names = @{$args{'-symbol_list_names'}}; 
   my $verbose = $args{'-verbose'};
+  my $annotation_build_id = $args{'-annotation_build_id'};
+  my $segments_file = $args{'-segments_file'};
 
+  unless ($segments_file) {
+    die "no segments_file passed to identifyCnvGenes!"
+  }
+  unless (-e $segments_file) {
+    die "segments file $segments_file does not exist!";
+  }
+  unless ($annotation_build_id) {
+    die "no annotation build id supplied to identifyCnvGenes!";
+  }
+  
   my $variants_dir = $data_paths->{'wgs'}->{'variants'};
   my $cnv_data_file = $variants_dir."cnvs.hq";
 
   #Create main CNV dir: 'cnv'
   my $cnv_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'cnv', '-silent'=>1);
   my $cnview_dir = &createNewDir('-path'=>$cnv_dir, '-new_dir_name'=>'cnview', '-silent'=>1);
-  my $cnview_script = "$script_dir"."cnv/CNView.pl";
 
   #Create a copy of the cnvs.hq file for later convenience
   my $cnv_cp_cmd = "cp $cnv_data_file $cnv_dir";
@@ -835,7 +850,7 @@ sub identifyCnvGenes{
     #Only run CNView if the directory is not already present
     my $new_dir = "$cnview_dir"."CNView_"."$symbol_list_name"."/";
     unless (-e $new_dir && -d $new_dir){
-      my $cnview_cmd = "$cnview_script  --reference_build=$reference_build_name  --cnv_file=$cnv_data_file  --working_dir=$cnview_dir  --sample_name=$common_name  --gene_targets_file=$gene_targets_file  --name='$symbol_list_name'  --force=1";
+      my $cnview_cmd = "gmt copy-number cn-view --annotation-build=$annotation_build_id  --cnv-file=$cnv_data_file  --segments-file=$segments_file  --output-dir=$cnview_dir  --sample-name=$common_name  --gene-targets-file=$gene_targets_file  --name='$symbol_list_name'  --force";
       Genome::Sys->shellcmd(cmd => $cnview_cmd);
     }
 

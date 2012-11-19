@@ -8,10 +8,10 @@ use Genome;
 class Genome::Model::Tools::Sam::IndexBam {
     is  => 'Genome::Model::Tools::Sam',
     has_input => [
-	bam_file => {
-	    is  => 'Text',
-	    doc => 'BAM input file to index',
-	},
+    bam_file => {
+        is  => 'Text',
+        doc => 'BAM input file to index',
+    },
         bam_index_file => {
             is => 'Text',
             is_optional => 1,

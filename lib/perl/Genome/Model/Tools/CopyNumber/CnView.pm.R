@@ -425,13 +425,19 @@ if (chr == "ALL"){
   chr_list=c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "chrX")
 }
 
-#Add "chr" to the chromosome names in the cnv and segments object
+#Add "chr" to the chromosome names in the cnv and genes objects
 cnvs[,"CHR"]=paste("chr", cnvs[,"CHR"], sep="")
-segments[,"CHR"]=paste("chr", segments[,"CHR"], sep="")
 genes[,"Chr"]=paste("chr", genes[,"Chr"], sep="")
 
-#Calculate the adjusted CN difference for segments
-segments[,"Adjusted_CN_DIFF"]=segments[,"Adjusted_CN1"]-segments[,"Adjusted_CN2"]
+#Make sure segments file has at least one row of data, otherwise following commands will choke, need to be skipped  
+if (length(rownames(segments))>0){
+  #Add "chr" to the chromosome names in the segments object
+  segments[,"CHR"]=paste("chr", segments[,"CHR"], sep="")
+  #Calculate the adjusted CN difference for segments
+  segments[,"Adjusted_CN_DIFF"]=segments[,"Adjusted_CN1"]-segments[,"Adjusted_CN2"]
+}else{ #Just add colnames to empty matrix to prevent further downstream errors
+  segments=as.data.frame(setNames(replicate(length(colnames(segments))+1,numeric(0), simplify = F), c(colnames(segments),"Adjusted_CN_DIFF")))
+}
 
 #If the user specified a subrange of a single chromosome, remove all other data
 if (length(chr_list) == 1 & chr_start > 0){
