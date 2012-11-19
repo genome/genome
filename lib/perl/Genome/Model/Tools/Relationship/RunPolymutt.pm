@@ -205,6 +205,10 @@ sub write_fixed_vcf {
     my ($info_printed, $format_printed)=(0,0);
     while(my $line = $ifh->getline) {
         if($line =~m/^#/) {
+            if ($line =~ m/ID=GL.*Type=Unsigned Char/) {
+                $line =~ s/Unsigned Char/Integer/;
+            }
+
             # Fix incorrect data types
             if($line =~m/ID=PS/) {
                 $line =~ s/Integer/Float/;
