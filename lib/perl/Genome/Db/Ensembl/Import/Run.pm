@@ -17,6 +17,9 @@ class Genome::Db::Ensembl::Import::Run {
             is => 'Genome::Model::Build::ImportedAnnotation',
             doc => 'Imported anntation build',
         },
+        software_version => {
+            is => 'Text',
+        },
     ],
 };
 
@@ -76,7 +79,8 @@ sub execute {
         "--reference-build-id $reference_build_id",
         "--log-file $log_file",
         "--dump-file $dump_file",
-        "--build-id ".$build->id);
+        "--build-id ".$build->id,
+        "--software-version ".$self->software_version);
     $build->prepend_api_path_and_execute(cmd => $command);
 
 }

@@ -39,6 +39,9 @@ class Genome::Model::Tools::FastTier::MakeTierBitmasks {
             is_input => 1,
             is_optional => 1,
         },
+        annotation_import_version => {
+            is_input => 1,
+        },
     ],
 };
 
@@ -60,6 +63,7 @@ sub execute {
     my $result = Genome::Model::Tools::FastTier::TierBitmasks->get_or_create(
         reference_sequence_build => $self->reference_sequence_build,
         annotation_structures => Genome::Db::Ensembl::AnnotationStructures->get_or_create(version => $self->transcript_version,
+               software_version => $self->annotation_import_version,
                reference_build_id => $self->reference_sequence_build->id,
                species => $self->species,
                data_set => 'Core',
