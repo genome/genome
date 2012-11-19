@@ -41,9 +41,6 @@ class Genome::Db::Ensembl::Import::CreateAnnotationStructures {
             is => "Text",
             doc => "Version of ensembl db to import",
         },
-        software_version => {
-            is => 'Text',
-        },
     ],
     has_input =>  [
         reference_build_id => {
@@ -84,7 +81,6 @@ sub execute
         data_set => $self->data_set,
         dump_file => $self->dump_file,
         log_file => $self->log_file,
-        software_version => $self->software_version,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
     );
 

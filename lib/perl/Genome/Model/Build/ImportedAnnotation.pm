@@ -35,12 +35,6 @@ class Genome::Model::Build::ImportedAnnotation {
             where => [ name => 'species_name', value_class_name => 'UR::Value' ],
             is_mutable => 1,
         },
-        annotation_import_version => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [name => 'annotation_import_version', value_class_name => 'UR::Value'],
-        },
         name => {
             is => 'Text',
             via => 'inputs',
