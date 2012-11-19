@@ -30,7 +30,6 @@ class Genome::Model::Command::Define::ImportedAnnotation {
         },
         annotation_import_version => {
             is => 'Text',
-            default => 2,
         },
     ],
     has_transient => [
@@ -57,7 +56,6 @@ sub execute {
     return unless $model;
 
     $self->result_model_id($model->id);
-
     my $build = $self->_create_build($model);
     return unless $build;
 
@@ -88,6 +86,7 @@ sub _get_or_create_model {
             }
             unless($model->annotation_import_version eq $self->annotation_import_version) {
                 $self->error_message("Found model with name: $model_name, but specified annotation_import_version does not match annotation_import_version found on model (" .$model->annotation_import_version .") Please update the input on the model");
+                return;
             }
             return $model;
         }
@@ -121,7 +120,6 @@ sub _create_build {
         model_id => $model->id,
         version => $self->version,
         reference_sequence_id => $self->reference_sequence_build->id,
-        status => 'Succeeded',
     );
 
     my $build = Genome::Model::Build::ImportedAnnotation->get(@build_parameters);
