@@ -9,7 +9,7 @@ use Data::Dumper;
 require File::Basename;
 
 class Genome::Command::Base {
-    is => 'Command',
+    is => ['Genome::Command::ColorMixin', 'Command'],
     is_abstract => 1,
     has_optional => [
         _total_command_count => {
@@ -779,7 +779,7 @@ sub display_command_summary_report {
             my $errors = $command_errors{$key};
             $errors = [$errors] unless (ref($errors) and ref($errors) eq 'ARRAY');
             my @errors = @{$errors};
-            print "$key: \n";
+            printf "%s: \n" , $self->_color($key, 'red');
             for my $error (@errors) {
                 $error = $self->truncate_error_message($error);
                 print "\t- $error\n";
@@ -789,10 +789,19 @@ sub display_command_summary_report {
 
     if ($total_count > 1) {
         my $error_count = scalar(keys %command_errors);
+
+        my $successful_count = ($total_count - $error_count);
+        my $success_msg = " Successful: $successful_count";
+        my $error_msg   = "     Errors: $error_count";
+        my $total_msg   = "      Total: $total_count";
+
+        $success_msg = $self->_color($success_msg, 'green') if $successful_count;
+        $error_msg   = $self->_color($error_msg, 'red') if $error_count;
+
         $self->status_message("\n\nCommand Summary:");
-        $self->status_message(" Successful: " . ($total_count - $error_count));
-        $self->status_message("     Errors: " . $error_count);
-        $self->status_message("      Total: " . $total_count);
+        $self->status_message($success_msg);
+        $self->status_message($error_msg);
+        $self->status_message($total_msg);
     }
 }
 

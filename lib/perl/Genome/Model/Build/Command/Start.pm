@@ -111,7 +111,8 @@ sub execute {
             next;
         }
         if ($self->skip_succeeded and $model->status eq 'Succeeded') {
-            $self->status_message('Skipping succeeded model ' . $model->__display_name__);
+            my $msg = 'Skipping succeeded model ' . $model->__display_name__;
+            $self->status_message($self->_color($msg, 'cyan'));
             next;
         }
 
@@ -151,7 +152,8 @@ sub create_and_start_build {
         if ($start_transaction->commit) {
             if ($build_started) {
                 $self->_builds_started($self->_builds_started + 1);
-                $self->status_message("Successfully started build (" . $build->__display_name__ . ").");
+                my $msg = "Successfully started build (" . $build->__display_name__ . ").";
+                $self->status_message($self->_color($msg, 'green'));
             }
             else {
                 if ($build->status eq 'Unstartable') {
