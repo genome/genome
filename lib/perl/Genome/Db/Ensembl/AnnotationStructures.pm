@@ -38,10 +38,6 @@ class Genome::Db::Ensembl::AnnotationStructures {
             doc => 'Ensembl data set to import',
             default => 'Core',
         },
-        software_version => {
-            is => 'Text',
-            doc => 'This should be incremented when a software change is made that would change the annotation structures',
-        },
     ],
     has_input =>  [
         reference_build_id => {
@@ -571,14 +567,10 @@ sub create
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
 
-    if ($self->_user_test_name) {
-        $self->test_name($self->_user_test_name);
-    }
-    else {
+    unless ($self->_user_test_name) {
         my $param = Genome::SoftwareResult::Param->get(name => 'test_name', software_result_id => $self->id);
         $param->delete;
     }
-    UR::Context->commit;
 
     return $self;
 }
