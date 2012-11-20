@@ -137,20 +137,19 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
 sub help_synopsis {
     return <<EOS
 
-When trying to determine what samples to use for the clin-seq analyis:
+Creating or updating a clin-seq analysis involves the following three basic steps:
 
+Step 1. Summarize the current default processing profiles and inputs:
+genome model clin-seq update-analysis  --display-defaults
+
+Step 2. Examine available samples for your individual:
 genome model clin-seq update-analysis  --individual='2878747495'
 genome model clin-seq update-analysis  --individual='H_KA-306905'
 genome model clin-seq update-analysis  --individual='common_name=AML103'
 
-
+Step 3: Run the update-analysis component to determine what models need to be created:
 genome model clin-seq update-analysis  --individual='H_KA-306905' --samples='id in [2878747496,2878747497,2879495575]'
 genome model clin-seq update-analysis  --individual='H_KA-306905' --samples='name in ["H_KA-306905-1121472","H_KA-306905-1121474","H_KA-306905-S.4294"]'
-
-
-To summarize default processing profiles and inputs:
-genome model clin-seq update-analysis  --display-defaults
-
 
 All processing-profile and build input parameters can be specified by ID, name, etc. and should resolve
 
@@ -160,6 +159,10 @@ EOS
 sub help_detail {
     return <<EOS
 For a given individual, find the available samples and display to the user to select those desired for clinseq analysis
+
+A clin-seq model can consist of various combinations of reference alignment, wgs somatic, exome somatic, and rna-seq models, 
+
+Only up to two DNA and two RNA samples may be specified. You can run with only DNA, only RNA or both.
 
 Once samples are set by the user, search for reference alignment, somatic variation, and rna-seq models for these samples
 
