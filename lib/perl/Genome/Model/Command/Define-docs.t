@@ -48,7 +48,7 @@ is("@sub_commands", "@sub_commands_expected", "sub-command list is as expected")
 my $expected_dir = __FILE__ . '.expected-output';
 my $actual_dir;
 
-if ($ARGV[0] eq 'REBUILD') {
+if (@ARGV and $ARGV[0] eq 'REBUILD') {
     note("******** regenerating test data in $expected_dir to reset this test case! ***********");
     $actual_dir = $expected_dir;
 }
