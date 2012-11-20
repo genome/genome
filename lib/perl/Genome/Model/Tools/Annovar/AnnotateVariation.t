@@ -20,18 +20,18 @@ my $temp_dir = Genome::Sys->create_temp_directory;
 my $cmd = Genome::Model::Tools::Annovar::AnnotateVariation->create(
     input_file => $test_dir."/input.vcf",
     buildver => "hg19",
-    table_names => ["wgEncodeRegDnaseClustered"],
+    table_names => ["wgEncodeRegDnaseClustered","bed"],
     outfile => $temp_dir."/expected_output",
     annotation_type => "regionanno",
     scorecolumn => 5,
+    bedfile => $test_dir."/sample.bed",
 );
 ok($cmd, "Created command");
 my $rv = $cmd->execute;
 ok($rv, "Executed command successfully");
 
 my $expected_output_prefix = $test_dir."/expected_output";
-
-foreach my $expected_file (("hg19_wgEncodeRegDnaseClustered", "summary")) {
+foreach my $expected_file (("hg19_wgEncodeRegDnaseClustered", "hg19_bed", "summary")) {
     my $diff_output = `diff $temp_dir/expected_output.$expected_file $test_dir/expected_output.$expected_file`;
     ok(!$diff_output, "No diffs for expected_output.$expected_file") or diag("diff results\n". $diff_output);
 }

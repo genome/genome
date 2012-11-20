@@ -3,6 +3,7 @@ package Genome::Model::Tools::Annovar::AnnotateVariation;
 use strict;
 use warnings;
 use Genome;
+use File::Basename;
 
 class Genome::Model::Tools::Annovar::AnnotateVariation {
     is => 'Genome::Model::Tools::Annovar::Base',
@@ -28,6 +29,9 @@ class Genome::Model::Tools::Annovar::AnnotateVariation {
     has_optional_input => [
         scorecolumn => {
             is => 'Number',
+        },
+        bedfile => {
+            is => 'Text',
         },
     ],
 };
@@ -61,18 +65,27 @@ sub execute {
 
 
     foreach my $table_name ($self->table_names) {
-        my $db = Genome::Model::Tools::Annovar::Db->get_or_create(
-            buildver => $self->buildver,
-            table_name => $table_name,
-            test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
-        );
-
-        unless ($db) {
-            $self->error_message("Couldn't get ANNOVAR db result for ".$table_name." buildver ".$self->buildver);
-            return;
+        my $db;
+        my $bedname;
+        my $bedpath;
+        if ($table_name eq "bed") {
+            ($bedname, $bedpath) = fileparse($self->bedfile);
         }
+        else {
 
-        $self->status_message("Annotating with ".$table_name." in ".$db->output_dir);
+            $db = Genome::Model::Tools::Annovar::Db->get_or_create(
+                buildver => $self->buildver,
+                table_name => $table_name,
+                test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+            );
+
+            unless ($db) {
+                $self->error_message("Couldn't get ANNOVAR db result for ".$table_name." buildver ".$self->buildver);
+                return;
+            }
+
+            $self->status_message("Annotating with ".$table_name." in ".$db->output_dir);
+        }
 
         my $cmd = $self->script_path."annotate_variation.pl --outfile ".$self->outfile." --buildver ".$self->buildver;
         if ($self->annotation_type eq "geneanno") {
@@ -83,8 +96,18 @@ sub execute {
                 $cmd .= " -scorecolumn ".$self->scorecolumn." ";
             }
             $cmd .= " -regionanno -dbtype ".$table_name;
+            if ($table_name eq "bed") {
+                $cmd .= " -bedfile $bedname";
+            }
         }
-        $cmd .= " ".$input_file." ".$db->output_dir;
+        $cmd .= " ".$input_file;
+        if ($table_name eq "bed") {
+            $cmd .= " $bedpath --colswanted 4";
+        }
+        else {
+            $cmd .= " ".$db->output_dir;
+        }
+
         $self->status_message("Executing command $cmd");
         my $rv = Genome::Sys->shellcmd(cmd => $cmd);
         unless ($rv) {
