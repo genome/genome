@@ -812,8 +812,14 @@ sub get_genotype_microarray_model_id{
   #If there is genotype microarray data, look for GenotypeMicroarray models
   my @models = $sample->models;
   my @final_models;
+  my @skipped;
   foreach my $model (@models){
     next unless ($model->class eq "Genome::Model::GenotypeMicroarray");
+
+    unless ($model->reference_sequence_build) {
+        push @skipped, "No reference_sequence_build on microarray model " . $model->__display_name__;
+        next;
+    }
 
     #Make sure the genotype microarray model is on the specified version of the reference genome
     next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
@@ -825,6 +831,15 @@ sub get_genotype_microarray_model_id{
     #  next;
     #}
     push (@final_models, $model);
+  }
+
+  # only omit warnings if zero things were found
+  if (@final_models == 0) {
+    if (@skipped) {
+      for my $msg (@skipped) {
+        $self->warning_message($msg)
+      }
+    }
   }
 
   if (scalar(@final_models)){

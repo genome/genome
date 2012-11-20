@@ -1,0 +1,40 @@
+
+[4mUSAGE[0m
+ [1mgenome model define metagenomic-composition16s[0m --processing-profile=?
+    [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--model-name=?]
+    [--auto-assign-inst-data] [--projects=?[,?]] [--auto-build-alignments]
+
+[4mSYNOPSIS[0m
+genome model define reference-alignment 
+  --model-name test5
+  --subject ley_aml_patient1_tumor
+  --processing-profile nature_aml_08
+
+[4mREQUIRED INPUTS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an id 
+
+[4mOPTIONAL INPUTS[0m
+  [1minstrument-data[0m
+    Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
+  [1msubject[0m
+    Subject for the model, can provide either a name or an id. If instrument data is provided and
+    this is not, an attempt will be made to resolve it based on the provided instrument data 
+  [1mgroups[0m
+    Model groups to put the newly created model into 
+  [1mmodel-name[0m
+    User meaningful name for this model, a default is used if none is provided 
+  [1mauto-assign-inst-data[0m
+    Assigning instrument data to the model is performed automatically 
+    Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mnoauto-assign-inst-data[0m
+    Make auto-assign-inst-data 'false' 
+  [1mprojects[0m
+    Projects for the model. 
+  [1mauto-build-alignments[0m
+    The building of the model is performed automatically 
+    Default value 'true' if not specified
+  [1mnoauto-build-alignments[0m
+    Make auto-build-alignments 'false' 
+
+
