@@ -199,9 +199,23 @@ sub _get_chimerascan_path_for_version {
 sub _resolve_index_dir {
     my ($self, $bowtie_version) = @_;
 
+    #We want to shell out and create the chimerscan index in a different UR context.
+    #That way it is committed, even if we fail and other builds don't need to wait on
+    #the overall chimerscan run just to get their index results.
+    my $cmd = 'genome model rna-seq detect-fusions chimerascan-index';
+    $cmd .= ' --version=' . $self->version;
+    $cmd .= ' --bowtie-version=' . $self->bowtie_version;
+    $cmd .= ' --reference-build=' . $self->alignment_result->reference_build->id;
+    $cmd .= ' --annotation-build=' . $self->annotation_build->id;
+    $cmd .= ' --build=' . $self->build->id;
+
+    Genome::Sys->shellcmd(
+        cmd => $cmd
+    );
+
     my $index_class = 'Genome::Model::RnaSeq::DetectFusionsResult' .
                       '::ChimerascanResult::Index';
-    my $index = $index_class->get_or_create(
+    my $index = $index_class->get_with_lock(
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         version => $self->version,
         bowtie_version => $bowtie_version,
