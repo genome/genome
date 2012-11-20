@@ -102,7 +102,6 @@ sub execute{
     my $annotation_build_id = $self->build->annotation_build->id;
 
     my %annotation_params = (
-        no_headers => 1,
         use_version => $annotator_version,
         build_id => $annotation_build_id,
     );
@@ -170,6 +169,10 @@ sub execute{
                 $output->close;
                 my $rm_cmd = "rm -f ".$annotation_params{output_file};
                 `$rm_cmd`;
+                
+                #Make a version of the annotation file without a header
+                `mv $final_output_file $final_output_file.header`;
+                `grep -v "^chromosome_name" $final_output_file.header > $final_output_file`;
             }
 
             #upload variants
