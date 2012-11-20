@@ -10,14 +10,14 @@ use Carp 'confess';
 class Genome::Model::Command::Define::Helper {
     is => 'Command::V2',
     is_abstract => 1,
-    has => [
+    has_input => [
         processing_profile => {
             is => 'Genome::ProcessingProfile',
             id_by => 'processing_profile_id',
             doc => 'Processing profile to be used by model, can provide either a name or an id',
         },
     ],
-    has_optional => [
+    has_optional_input => [
         subject => {
             is => 'Genome::Subject',
             id_by => 'subject_id',
@@ -28,6 +28,13 @@ class Genome::Model::Command::Define::Helper {
             is => 'Text',
             doc => 'User meaningful name for this model, a default is used if none is provided',
         },
+        result_model_id => {
+            is => 'Number',
+            is_transient => 1,
+            doc => 'Stores the ID of the newly created model, useful when running this command from a script',
+        },
+    ],
+    has_optional_param => [
         auto_assign_inst_data => {
             is => 'Boolean',
             default_value => 0,
@@ -38,13 +45,8 @@ class Genome::Model::Command::Define::Helper {
             default_value => 1,
             doc => 'The building of the model is performed automatically',
         },
-        result_model_id => {
-            is => 'Number',
-            is_transient => 1,
-            doc => 'Stores the ID of the newly created model, useful when running this command from a script',
-        },
     ],
-    has_many_optional => [
+    has_many_optional_input => [
         instrument_data => {
             is => 'Genome::InstrumentData',
             doc => 'Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc'

@@ -1,13 +1,16 @@
 
 [4mUSAGE[0m
- [1mgenome model define imported-annotation[0m --processing-profile=? [--instrument-data=?[,?]]
-    [--subject=?] [--groups=?[,?]] [--model-name=?] [--auto-assign-inst-data] [--projects=?[,?]]
-    [--auto-build-alignments] --species-name=? --version=? --reference-sequence-build=?
-    --build-name=? --annotation-import-version=? [--gtf-file=?]
+ [1mgenome model define imported-annotation[0m [--auto-assign-inst-data]
+    [--auto-build-alignments] --processing-profile=? --species-name=? --version=?
+    --reference-sequence-build=? --build-name=? --annotation-import-version=?
+    [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--model-name=?] [--projects=?[,?]]
+    [--gtf-file=?]
 
 [4mSYNOPSIS[0m
 genome model define imported-annotation --species-name=human --version=58_37c --reference-sequence-build=GRCh37-lite-build37 --build_name=NCBI-human.ensembl/58_37c --processing-profile=imported-annotation.ensembl --model_name=NCBI-human.ensembl
 [4mREQUIRED INPUTS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an id 
   [1mspecies-name[0m
     species name for annotation build (mouse, human) 
   [1mversion[0m
@@ -20,15 +23,7 @@ genome model define imported-annotation --species-name=human --version=58_37c --
   [1mannotation-import-version[0m
     (undocumented) 
 
-[4mREQUIRED PARAMS[0m
-  [1mprocessing-profile[0m
-    Processing profile to be used by model, can provide either a name or an id 
-
 [4mOPTIONAL INPUTS[0m
-  [1mgtf-file[0m
-    gtf file for rnaSeq annotation.  ONLY use for models that are rna_seq_only 
-
-[4mOPTIONAL PARAMS[0m
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -38,18 +33,18 @@ genome model define imported-annotation --species-name=human --version=58_37c --
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
+  [1mprojects[0m
+    Projects for the model. 
+  [1mgtf-file[0m
+    gtf file for rnaSeq annotation.  ONLY use for models that are rna_seq_only 
+
+[4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
-  [1mnoauto-assign-inst-data[0m
-    Make auto-assign-inst-data 'false' 
-  [1mprojects[0m
-    Projects for the model. 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
-  [1mnoauto-build-alignments[0m
-    Make auto-build-alignments 'false' 
 
 [4mDESCRIPTION[0m
     creates a new annotation build
