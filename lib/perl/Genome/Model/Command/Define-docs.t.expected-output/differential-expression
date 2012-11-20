@@ -13,17 +13,23 @@ genome model define reference-alignment
   --processing-profile nature_aml_08
 
 [4mREQUIRED INPUTS[0m
-  [1mprocessing-profile[0m
-    Processing profile to be used by model, can provide either a name or an id 
-
-[4mREQUIRED PARAMS[0m
   [1mcondition-labels-string[0m
     A comma-delimmited list of labels used to represent each group or condition. ex: "A,B,C,D" 
   [1mcondition-model-ids-string[0m
     Each group is a comma-delimited list of model ids corresponding to a defined label(order
     matters).  Each group (A, B, C & D) is separated by white space. ex: "1,2 3,4 5,6 7,8" 
 
+[4mREQUIRED PARAMS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an id 
+
 [4mOPTIONAL INPUTS[0m
+  [1mreference-sequence-build[0m
+    (undocumented) 
+  [1mannotation-build[0m
+    (undocumented) 
+
+[4mOPTIONAL PARAMS[0m
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -45,12 +51,6 @@ genome model define reference-alignment
     Default value 'true' if not specified
   [1mnoauto-build-alignments[0m
     Make auto-build-alignments 'false' 
-
-[4mOPTIONAL PARAMS[0m
-  [1mreference-sequence-build[0m
-    (undocumented) 
-  [1mannotation-build[0m
-    (undocumented) 
 
 [4mDESCRIPTION[0m
     This defines a new genome model for the specified subject, using the specified processing

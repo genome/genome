@@ -10,7 +10,7 @@ genome model define genotype-microarray
   --processing-profile-name PROCESSING_PROFILE_NAME 
   --reference GRCh37-lite-build37
 
-[4mREQUIRED INPUTS[0m
+[4mREQUIRED PARAMS[0m
   [1mprocessing-profile[0m
     Processing profile to be used by model, can provide either a name or an id 
   [1mprocessing-profile-name[0m
@@ -18,7 +18,7 @@ genome model define genotype-microarray
   [1mreference[0m
     reference sequence build for this model 
 
-[4mOPTIONAL INPUTS[0m
+[4mOPTIONAL PARAMS[0m
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m

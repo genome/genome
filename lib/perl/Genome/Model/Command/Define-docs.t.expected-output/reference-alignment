@@ -14,17 +14,25 @@ genome model define reference-alignment
   --processing-profile nature_aml_08
 
 [4mREQUIRED INPUTS[0m
+  [1mreference-sequence-build[0m
+    ID or name of the reference sequence to align against 
+    Default value 'NCBI-human-build36' if not specified
+
+[4mREQUIRED PARAMS[0m
   [1mprocessing-profile[0m
     Processing profile to be used by model, can provide either a name or an id 
   [1mprocessing-profile-name[0m
     (undocumented) 
 
-[4mREQUIRED PARAMS[0m
-  [1mreference-sequence-build[0m
-    ID or name of the reference sequence to align against 
-    Default value 'NCBI-human-build36' if not specified
-
 [4mOPTIONAL INPUTS[0m
+  [1mannotation-reference-build[0m
+    ID or name of the the build containing the reference transcript set used for variant annotation 
+  [1mdbsnp-model[0m
+    ID or name of the dbSNP model to compare against (the latest build will be selected) 
+  [1mdbsnp-build[0m
+    ID or name of the dbSNP build to compare against 
+
+[4mOPTIONAL PARAMS[0m
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -70,14 +78,6 @@ genome model define reference-alignment
     valid values:
      target_region
      tiled_region 
-
-[4mOPTIONAL PARAMS[0m
-  [1mannotation-reference-build[0m
-    ID or name of the the build containing the reference transcript set used for variant annotation 
-  [1mdbsnp-model[0m
-    ID or name of the dbSNP model to compare against (the latest build will be selected) 
-  [1mdbsnp-build[0m
-    ID or name of the dbSNP build to compare against 
 
 [4mDESCRIPTION[0m
     This defines a new genome model for the specified subject, using the specified processing

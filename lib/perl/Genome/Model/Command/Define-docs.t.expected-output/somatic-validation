@@ -4,7 +4,7 @@
     [--tumor-sample=?] [--normal-sample=?] [--sample-list-file=?] [--region-of-interest-set=?]
     [--processing-profile=?] [--groups=?[,?]] [DESIGN] [TARGET] [VARIANTS]
 
-[4mOPTIONAL PARAMS[0m
+[4mOPTIONAL INPUTS[0m
   [1mname[0m
     A name for the model 
   [1mauto-assign-inst-data[0m

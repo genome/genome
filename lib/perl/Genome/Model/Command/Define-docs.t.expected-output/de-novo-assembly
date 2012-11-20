@@ -11,7 +11,7 @@ genome model define reference-alignment
   --subject ley_aml_patient1_tumor
   --processing-profile nature_aml_08
 
-[4mREQUIRED INPUTS[0m
+[4mREQUIRED PARAMS[0m
   [1mcenter-name[0m
     Center name.
     valid values:
@@ -23,7 +23,7 @@ genome model define reference-alignment
   [1mprocessing-profile-name[0m
     (undocumented) 
 
-[4mOPTIONAL INPUTS[0m
+[4mOPTIONAL PARAMS[0m
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m

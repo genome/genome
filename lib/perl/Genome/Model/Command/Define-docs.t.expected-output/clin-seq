@@ -13,11 +13,25 @@
     
     # Automatically builds if/when the models have a complete underlying build
 
-[4mREQUIRED INPUTS[0m
+[4mREQUIRED PARAMS[0m
   [1mprocessing-profile[0m
     Processing profile to be used by model, can provide either a name or an id 
 
 [4mOPTIONAL INPUTS[0m
+  [1mwgs-model[0m
+    somatic variation model for wgs data 
+  [1mexome-model[0m
+    somatic variation model for exome data 
+  [1mtumor-rnaseq-model[0m
+    rnaseq model for tumor rna-seq data 
+  [1mnormal-rnaseq-model[0m
+    rnaseq model for normal rna-seq data 
+  [1mforce[0m
+    skip sanity checks on input models 
+  [1mnoforce[0m
+    Make force 'false' 
+
+[4mOPTIONAL PARAMS[0m
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -39,20 +53,6 @@
     Default value 'true' if not specified
   [1mnoauto-build-alignments[0m
     Make auto-build-alignments 'false' 
-
-[4mOPTIONAL PARAMS[0m
-  [1mwgs-model[0m
-    somatic variation model for wgs data 
-  [1mexome-model[0m
-    somatic variation model for exome data 
-  [1mtumor-rnaseq-model[0m
-    rnaseq model for tumor rna-seq data 
-  [1mnormal-rnaseq-model[0m
-    rnaseq model for normal rna-seq data 
-  [1mforce[0m
-    skip sanity checks on input models 
-  [1mnoforce[0m
-    Make force 'false' 
 
 [4mDESCRIPTION[0m
     The ClinSeq pipeline takes four models, each of which is optional, and produces data sets
