@@ -52,4 +52,11 @@ genome model define reference-alignment
   [1mannotation-build[0m
     (undocumented) 
 
+[4mDESCRIPTION[0m
+    This defines a new genome model for the specified subject, using the specified processing
+    profile.
+
+    The first build of a model must be explicitly requested after the model is defined.
+
+
 

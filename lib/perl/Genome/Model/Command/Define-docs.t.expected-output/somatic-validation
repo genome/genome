@@ -34,4 +34,23 @@
   [1mVARIANTS[0m
     One or more BED files (or database ids) of the variants to validate 
 
+[4mDESCRIPTION[0m
+    To set up the model to run the validation process, three pieces of information are needed: the
+    design (as sent to the vendor), the target set (as received from the vendor), and the variants
+    to be validated. Each of these constituent parts are tracked individually by the analysis
+    system, and this model takes the individual pieces and links them together.
+
+    First, the individual pieces need to be added to the system. For the designs we send to the
+    vendor and targets we get back from the vendor, the files are stored as feature lists. For the
+    lists of variants, we track them as detect variants results, either directly from the Somatic
+    Variation pipeline or from manual curation. Then the parts are assembled with this command. The
+    two main commands to add the individual pieces are:
+
+    `genome feature-list create` to create the feature lists, once for the design, and once for the
+    target set.
+
+    `genome model somatic-validation manual-result` to record the manually curated results, if
+    necessary. (One per file of variants.)
+
+
 

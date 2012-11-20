@@ -45,4 +45,9 @@ genome model define convergence
   [1mprojects[0m
     Projects for the model. 
 
+[4mDESCRIPTION[0m
+    This defines a new genome model representing the harmonic convergence analysis for a group of
+    models.
+
+
 

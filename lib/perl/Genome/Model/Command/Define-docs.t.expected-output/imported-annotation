@@ -51,4 +51,8 @@ genome model define imported-annotation --species-name=human --version=58_37c --
   [1mgtf-file[0m
     gtf file for rnaSeq annotation.  ONLY use for models that are rna_seq_only 
 
+[4mDESCRIPTION[0m
+    creates a new annotation build
+
+
 

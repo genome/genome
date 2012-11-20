@@ -71,6 +71,10 @@ for my $sub_command (@sub_commands) {
         waitpid($pid,0);
     } else {
         eval {
+            if (@ARGV and $ARGV[0] eq 'REBUILD') {
+                # the previous results may already exist, which will fail the open below
+                unlink $actual_out;
+            }
             local *STDOUT = Genome::Sys->open_file_for_writing($actual_out);
             local *STDERR = *STDOUT;
             local @ARGV = ("model", "define", $sub_command, "-h");
@@ -89,7 +93,7 @@ for my $sub_command (@sub_commands) {
 
     next unless -e $actual_dir;
 
-    my @diff = `diff -r --brief $expected_out $actual_out`;
+    my @diff = `diff -r $expected_out $actual_out`;
     is(scalar(@diff), 0, "no differences between actual output and expected output for $sub_command")
         or do {
             for(@diff) { diag($_) };

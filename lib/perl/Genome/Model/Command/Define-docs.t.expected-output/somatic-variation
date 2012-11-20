@@ -59,4 +59,9 @@ genome model define somatic-variation --tumor-model aml3-tumor1-v2 --normal-mode
     Subject name is derived from normal and tumor models and is not necessary as input to somatic
     models 
 
+[4mDESCRIPTION[0m
+    This defines a new genome model representing the somatic analysis between a normal and tumor
+    model.
+
+
 

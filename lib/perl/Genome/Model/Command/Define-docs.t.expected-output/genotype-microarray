@@ -43,4 +43,8 @@ genome model define genotype-microarray
   [1mnoauto-build-alignments[0m
     Make auto-build-alignments 'false' 
 
+[4mDESCRIPTION[0m
+    Define a new genome model with genotype information based on microarray data.
+
+
 

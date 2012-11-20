@@ -45,4 +45,11 @@ genome model define reference-alignment
   [1mref-model-coverage[0m
     Ref model with coverage against second ROI list   
 
+[4mDESCRIPTION[0m
+    This defines a new genome model for the specified subject, using the specified processing
+    profile.
+
+    The first build of a model must be explicitly requested after the model is defined.
+
+
 

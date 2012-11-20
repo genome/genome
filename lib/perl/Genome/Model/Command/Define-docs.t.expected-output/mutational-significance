@@ -89,4 +89,11 @@ genome model define mutational-significance --model-name "Example Mutational Sig
     '/gscmnt/gc2108/info/medseq/ckandoth/music/pathscan/all_pathway_files/KEGG_120910' if not
     specified
 
+[4mDESCRIPTION[0m
+    The mutational significance genome model represents analysis on a collection of somatic
+    variation models. There is an option to run the MuSiC pipeline to run various statistical tests
+    on the collection of variants. Additionally, a list of variants can be compiled that should be
+    suitable for use as a validation list.
+
+
 

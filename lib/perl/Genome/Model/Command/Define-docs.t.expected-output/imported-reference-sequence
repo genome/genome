@@ -91,4 +91,24 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1msubject-name[0m
     Copied from species_name. 
 
+[4mDESCRIPTION[0m
+      # for a regular, complete fasta
+      genome model define imported-reference-sequence \
+        --prefix=GRClite \
+        --species-name=human \
+        --version=37 \
+        --use-default-sequence-uri 
+        --fasta-file=complete.fa \
+    
+      # for a reference which extends another
+      # (a remap file can have the same name as the fasta and be next-to it)
+      genome model define imported-reference-sequence \
+        --prefix=GRC \
+        --species-name=human \
+        --version=37-p8-test7 \
+        --use-default-sequence-uri 
+        --fasta-file=additions.fa \
+        --append-to 106942997 
+
+
 
