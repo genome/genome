@@ -26,7 +26,7 @@ sub create {
     
     $self->_prepare_staging_directory;
 
-    my $cmd = "Annovar.d/annotate_variation.pl --downdb --buildver ".$self->buildver." ".$self->table_name." ".$self->temp_staging_directory;
+    my $cmd = Genome::Model::Tools::Annovar::Base->script_path."/annotate_variation.pl --downdb --buildver ".$self->buildver." ".$self->table_name." ".$self->temp_staging_directory;
 print "Running command $cmd\n";
     $self->status_message("Running command $cmd");
     my $rv = Genome::Sys->shellcmd(cmd => $cmd);

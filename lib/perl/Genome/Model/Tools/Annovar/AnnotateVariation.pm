@@ -4,11 +4,8 @@ use strict;
 use warnings;
 use Genome;
 
-my ($ANNOVAR_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
-my $ANNOVAR_SCRIPT_PATH = $ANNOVAR_DIR . "/Annovar.d/";
-
 class Genome::Model::Tools::Annovar::AnnotateVariation {
-    is => 'Command::V2',
+    is => 'Genome::Model::Tools::Annovar::Base',
     has_input => [
         buildver => {
             is => "String",
@@ -53,7 +50,7 @@ sub execute {
             $out->close;
         }
         $input_file = Genome::Sys->create_temp_file_path;
-        my $convert = $ANNOVAR_SCRIPT_PATH."convert2annovar.pl $converter_input -format vcf4 -outfile ".$input_file;
+        my $convert = $self->script_path."convert2annovar.pl $converter_input -format vcf4 -outfile ".$input_file;
         $self->status_message("Running convert command: $convert");
         my $rv = Genome::Sys->shellcmd(cmd => $convert);
         unless ($rv) {
@@ -77,7 +74,7 @@ sub execute {
 
         $self->status_message("Annotating with ".$table_name." in ".$db->output_dir);
 
-        my $cmd = $ANNOVAR_SCRIPT_PATH."annotate_variation.pl --outfile ".$self->outfile." --buildver ".$self->buildver;
+        my $cmd = $self->script_path."annotate_variation.pl --outfile ".$self->outfile." --buildver ".$self->buildver;
         if ($self->annotation_type eq "geneanno") {
             $cmd .= " --geneanno ";
         }
