@@ -46,6 +46,11 @@ class Genome::Model::ImportedVariationList::Command::ImportDbsnpBuild {
            is_optional => 1,
            default_value => ["1", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "2", "20", "21", "22", "3", "4", "5", "6", "7", "8", "9", "MT", "X", "Y"],
        },
+       reference_coordinates => {
+           is => 'String',
+           is_optional => 1,
+           doc => 'reference_coordinates whose coordinates will be used, regex syntax accepted for matching multiple   patch levels',
+       },
        import_vcf => {
            is => 'Boolean',
            default => 1,
@@ -119,16 +124,18 @@ sub execute {
             ($self->from_names_column ? (from_names_column => $self->from_names_column):()),
             ($self->to_names_column ? (to_names_column => $self->to_names_column):()),
             ($self->chromosome_names ? (chromosome_names => [$self->chromosome_names]):()),
+            ($self->reference_coordinates ? (reference_coordinates => $self->reference_coordinates) : ()),
         );
 
         unless ($import_bed->execute()){
             die($self->error_message("Bed file import failed"));
         }
+    `cp $bed_file_path /gscuser/aregier/scratch/mousedbsnp`;
     }
 
     my $import_cmd;
     if ($self->import_vcf and $self->import_bed) {
-        $import_cmd = Genome::Model::ImportedVariationList::Command::ImportVariants->create(
+        my %params = (
             input_path => $original_file_path,
             reference_sequence_build => $self->reference_sequence_build,
             source_name => "dbsnp",
@@ -139,6 +146,8 @@ sub execute {
             version => $self->version,
             bed_file => $bed_file_path,
         );
+        
+        $import_cmd = Genome::Model::ImportedVariationList::Command::ImportVariants->create(%params);
     }
     elsif ($self->import_vcf) {
         $import_cmd = Genome::Model::ImportedVariationList::Command::ImportVariants->create(

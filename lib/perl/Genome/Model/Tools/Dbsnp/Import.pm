@@ -24,8 +24,13 @@ class Genome::Model::Tools::Dbsnp::Import {
             is_output => 1,
             doc => 'Path to the final output file in .bed',
         },
+        
     ],
     has_optional => [
+        reference_coordinates => {
+            is => 'String',
+            doc => 'reference_coordinates whose coordinates will be used, regex syntax accepted for matching multiple   patch levels'
+        },
         contig_name_translation_file => {
             is => 'Path',
             doc => 'File path that contains translations of contig names',
@@ -68,13 +73,17 @@ sub execute {
     my $temp_dir = Genome::Sys->base_temp_directory();
 
     my $output_file = join("/", $temp_dir, "/unsorted.bed");
+    $self->status_message("Using reference coordinates ".$self->reference_coordinates);
 
     for my $chromosome ($self->chromosome_names){
         my $flatfile = $self->filename_pattern;
         $flatfile =~ s/X/$chromosome/;
         my $file_url = join('/', $self->flat_file_url, $flatfile);
-        my $cmd = Genome::Model::Tools::Dbsnp::Import::Flatfile->create(flatfile => $file_url, 
-                                                                        output_file => $output_file);
+        my %params = (flatfile => $file_url, output_file => $output_file);
+        if ($self->reference_coordinates) {
+            $params{reference_coordinates} = $self->reference_coordinates;
+        }
+        my $cmd = Genome::Model::Tools::Dbsnp::Import::Flatfile->create(%params);
         unless($cmd->execute){
             $self->error_message("Failed to import flatfile $flatfile: $@");
             return 0;
@@ -83,7 +92,9 @@ sub execute {
     my $flatfile = $self->filename_pattern;
     $flatfile =~ s/X/Un/;
     my $file_url = join('/', $self->flat_file_url, $flatfile);
-    my $cmd = Genome::Model::Tools::Dbsnp::Import::Flatfile->create(flatfile => $file_url, 
+    my $cmd = Genome::Model::Tools::Dbsnp::Import::Flatfile->create(
+                ($self->reference_coordinates ? (reference_coordinates => $self->reference_coordinates):()),
+                flatfile => $file_url, 
                 output_file => $output_file,
                 ($self->contig_name_translation_file ? (contig_name_translation_file => $self->contig_name_translation_file) : ()),
                 ($self->from_names_column ? (from_names_column => $self->from_names_column) :()),
