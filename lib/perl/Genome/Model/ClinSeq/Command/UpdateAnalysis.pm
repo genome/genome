@@ -113,6 +113,18 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Boolean',
               doc => 'Display current default processing profiles and annotation/reference genome inputs',
         },
+        normal_sample_common_names => {
+              #TODO: Is there a better way to determine which samples are 'normal'?
+              is => 'Text',
+              default => 'normal',
+              doc => 'The possible sample common names used in the database to specify a Normal sample',
+        },
+        tumor_sample_common_names => {
+              #TODO: Is there a better way to determine which samples are 'tumor'?
+              is => 'Text',
+              default => 'tumor|met|post treatment|recurrence met|pre-treatment met',
+              doc => 'The possible sample common names used in the database to specify a Tumor sample',
+        },
         force => {
               is => 'Number',
               default => 0,
@@ -198,10 +210,6 @@ sub execute {
     return 1;
   }
 
-  #Define the strings that will be used to match samples as either 'tumor' or 'normal'
-  #TODO: Is there are better way to determine which samples are 'normal' and which are 'disease'?
-  my $normal_def = "normal";
-  my $tumor_def = "tumor|met|post treatment|recurrence met|pre-treatment met";
 
   #Get the subset of samples that are of the type DNA or RNA
   $self->status_message("\nGET SAMPLES BY TYPE");
@@ -224,12 +232,14 @@ sub execute {
   #- Is there tumor/normal WGS instrument data? If so, is it all included in the existing model?
   my @normal_wgs_ref_align_models;
   my @tumor_wgs_ref_align_models;
+  if (scalar(@dna_samples) >= 1){
+    $self->status_message("\nWGS REFERENCE-ALIGNMENT MODELS");
+    @normal_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>$self->normal_sample_common_names, '-dna_samples'=>\@dna_samples);
+    @tumor_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>$self->tumor_sample_common_names, '-dna_samples'=>\@dna_samples);
+  }
+
   my @wgs_somatic_variation_models;
   if (scalar(@dna_samples) == 2){
-    $self->status_message("\nWGS REFERENCE-ALIGNMENT MODELS");
-    @normal_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>$normal_def, '-dna_samples'=>\@dna_samples);
-    @tumor_wgs_ref_align_models = $self->check_ref_align_models('-data_type'=>'wgs', '-tissue_type'=>$tumor_def, '-dna_samples'=>\@dna_samples);
-  
     #Is there a suitable WGS somatic variation model in existence (If not, create)?  If so, what is the status?
     #- Only proceed with this if the prerequisite WGS tumor/normal ref-align models exist
     if (scalar(@normal_wgs_ref_align_models) && scalar(@tumor_wgs_ref_align_models)){
@@ -242,14 +252,16 @@ sub execute {
   #- Are there tumor/normal DNA samples?
   #- Is there tumor/normal Exome instrument data?
   #- What is the target region set name (TRSN) and region of interest (ROI)? If there is data, is it all included in the existing model?
+  $self->status_message("\nEXOME REFERENCE-ALIGNMENT MODELS");
   my @normal_exome_ref_align_models;
   my @tumor_exome_ref_align_models;
+  if (scalar(@dna_samples) >= 1){
+    @normal_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>$self->normal_sample_common_names, '-dna_samples'=>\@dna_samples);
+    @tumor_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>$self->tumor_sample_common_names, '-dna_samples'=>\@dna_samples);
+  }
+
   my @exome_somatic_variation_models;
   if (scalar(@dna_samples) == 2){
-    $self->status_message("\nEXOME REFERENCE-ALIGNMENT MODELS");
-    @normal_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>$normal_def, '-dna_samples'=>\@dna_samples);
-    @tumor_exome_ref_align_models = $self->check_ref_align_models('-data_type'=>'exome', '-tissue_type'=>$tumor_def, '-dna_samples'=>\@dna_samples);
-
     #Is there a suitable Exome somatic variation model in existence
     #- Only proceed with this if the prerequisite Exome tumor/normal ref-align models exist
     if (scalar(@normal_exome_ref_align_models) && scalar(@tumor_exome_ref_align_models)){
@@ -265,8 +277,8 @@ sub execute {
   my @tumor_rnaseq_models;
   if (scalar(@rna_samples)){
     $self->status_message("\nRNA-SEQ MODELS");
-    @normal_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>$normal_def, '-rna_samples'=>\@rna_samples);
-    @tumor_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>$tumor_def, '-rna_samples'=>\@rna_samples);
+    @normal_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>$self->normal_sample_common_names, '-rna_samples'=>\@rna_samples);
+    @tumor_rnaseq_models = $self->check_rnaseq_models('-tissue_type'=>$self->tumor_sample_common_names, '-rna_samples'=>\@rna_samples);
   }
 
   #Gather the 'best' suitable WGS somatic-variation, Exome somatic-variation, tumor RNA-seq, and normal RNA-seq models
@@ -468,6 +480,29 @@ sub dna_samples{
   }
   my $dna_sample_count = scalar(@dna_samples);
   $self->status_message("Found " . $dna_sample_count . " DNA samples");
+
+  #Clin-Seq does not support more than 2 DNA samples and expects that one will be 'tumor' and one will be 'normal'
+  if ($dna_sample_count > 2){
+    $self->error_message("ClinSeq does not support more than 2 DNA samples ... please supply up to 1 tumor and 1 normal");
+    exit(1);
+  }
+  my @normal_samples;
+  my @tumor_samples;
+
+  foreach my $s (@dna_samples){
+    my $current_scn = $s->common_name || "NULL";
+    my $normal_def = $self->normal_sample_common_names;
+    push (@normal_samples, $s) if ($current_scn =~ /$normal_def/i);
+    my $tumor_def = $self->tumor_sample_common_names;
+    push (@tumor_samples, $s) if ($current_scn =~ /$tumor_def/i);
+  }
+  if (scalar(@normal_samples) > 1){
+    $self->error_message("More than one normal DNA sample was specified for this individual - check samples or normal/tumor definitions");
+  }
+  if (scalar(@tumor_samples) > 1){
+    $self->error_message("More than one tumor DNA sample was specified for this individual - check samples or normal/tumor definitions");
+  }
+
   return (@dna_samples);
 }
 
@@ -488,6 +523,27 @@ sub rna_samples{
   }
   my $rna_sample_count = scalar(@rna_samples);
   $self->status_message("Found " . $rna_sample_count . " RNA samples");
+  
+  #Clin-Seq does not support more than 2 RNA samples and expects that one will be 'tumor' and one will be 'normal'
+  if ($rna_sample_count > 2){
+    $self->error_message("ClinSeq does not support more than 2 RNA samples ... please supply up to 1 tumor and 1 normal");
+    exit(1);
+  }
+  my @normal_samples;
+  my @tumor_samples;
+
+  foreach my $s (@rna_samples){
+    my $current_scn = $s->common_name || "NULL";
+    push (@normal_samples, $s) if ($current_scn =~ /$self->normal_sample_common_names/i);
+    push (@tumor_samples, $s) if ($current_scn =~ /$self->tumor_sample_common_names/i);
+  }
+  if (scalar(@normal_samples) > 1){
+    $self->error_message("More than one normal RNA sample was specified for this individual - check samples or normal/tumor definitions");
+  }
+  if (scalar(@tumor_samples) > 1){
+    $self->error_message("More than one tumor RNA sample was specified for this individual - check samples or normal/tumor definitions");
+  }
+
   return (@rna_samples);
 }
 
@@ -805,10 +861,10 @@ sub check_ref_align_models{
     }
   }
   if ($match == 0){
-    $self->error_message("\nDid not find a matching DNA sample for tissue type: $tissue_type");
+    $self->error_message("Did not find a matching DNA sample for tissue type: $tissue_type");
     exit(1);
   }elsif ($match > 1){
-    $self->error_message("\nFound more than one matching DNA sample of tissue type: $tissue_type");
+    $self->error_message("Found more than one matching DNA sample of tissue type: $tissue_type");
     exit(1);
   }else{
     $self->status_message("\nFound a DNA sample " . $sample->name . " ($scn) matching tissue type: $tissue_type");
@@ -919,7 +975,7 @@ sub check_rnaseq_models{
     $self->warning_message("Did not find a matching RNA sample for tissue type: $tissue_type");
     return @tmp;    
   }elsif ($match > 1){
-    $self->error_message("\nFound more than one matching RNA sample of tissue type: $tissue_type");
+    $self->error_message("Found more than one matching RNA sample of tissue type: $tissue_type");
   }else{
     $self->status_message("\nFound an RNA sample " . $sample->name . " ($scn) matching tissue type: $tissue_type");
   }
