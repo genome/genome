@@ -41,7 +41,7 @@ my @sub_commands_expected = qw/
   test-pipeline
 /;
 
-plan tests => ((scalar(@sub_commands_expected)*4)+1);
+plan tests => ((scalar(@sub_commands_expected)*3)+1);
 
 is("@sub_commands", "@sub_commands_expected", "sub-command list is as expected");
 
@@ -62,21 +62,35 @@ else {
 for my $sub_command (@sub_commands) {
     my $actual_out = $actual_dir . '/' . $sub_command;
     my $expected_out = $expected_dir . '/' . $sub_command;
-    my $cmd = "genome model define $sub_command -h >|$actual_out 2>&1";
 
-    eval { Genome::Sys->shellcmd(cmd => $cmd, allow_failed_exit_code => 1) };
-    ok(!$@, "successfull exeuction of 'genome model define $sub_command -h'")
-        or next;
+    #my $cmd = "genome model define $sub_command -h >|$actual_out 2>&1";
+    #eval { Genome::Sys->shellcmd(cmd => $cmd, allow_failed_exit_code => 1) };
+    my $pid = UR::Context::Process->fork();
 
-    ok(-e $actual_dir, " output data was generated for $sub_command");
-    
-    ok(-e $expected_out, " reference data is available for $sub_command under $expected_dir")
+    if($pid) {
+        waitpid($pid,0);
+    } else {
+        eval {
+            local *STDOUT = Genome::Sys->open_file_for_writing($actual_out);
+            local *STDERR = *STDOUT;
+            local @ARGV = ("model", "define", $sub_command, "-h");
+            Genome::Command->execute_with_shell_params_and_exit();
+        };
+
+        #the above should exit() so we only get here if it fails somehow
+        fail("successful execution of 'genome model define $sub_command -h'");
+        exit;
+    }
+
+    ok(-s $actual_dir, "output data was generated for $sub_command");
+
+    ok(-s $expected_out, "reference data is available for $sub_command under $expected_dir")
         or next;
 
     next unless -e $actual_dir;
 
     my @diff = `diff -r --brief $expected_out $actual_out`;
-    is(scalar(@diff), 0, " no differences between actual output and expected output for $sub_command")
+    is(scalar(@diff), 0, "no differences between actual output and expected output for $sub_command")
         or do {
             for(@diff) { diag($_) };
         }
