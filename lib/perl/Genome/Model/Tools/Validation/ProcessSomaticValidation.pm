@@ -21,69 +21,69 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           doc => "Directory where output will be stored (under a subdirectory with the sample name)",
       },
 
-      ],
+  ],
 
   has_optional_input => [
 
-      variant_list =>{
+      variant_list => {
           is => 'Text',
           is_optional => 1,
-          doc => "list of variants that we're trying to validate, in bed format. If not specified, it will try to grab this list from the model. If no list is found, it will assume that this is an extension experiment (and that there are no variants to validate)",
+          doc => "List of variants that we're trying to validate, in bed format. If not specified, it will try to grab this list from the model. If no list is found, it will assume that this is an extension experiment (and that there are no variants to validate)",
       },
 
-      somatic_variation_model_id =>{
+      somatic_variation_model_id => {
           is => 'Text',
           is_optional => 1,
-          doc => "somatic variation model that was used to call the variants in the first place. Only used if --review-non-validated-calls is true. If not specified, we'll try to grab this from the som-val model link",
+          doc => "Somatic variation model that was used to call the variants in the first place. Only used if --review-non-validated-calls is true. If not specified, we'll try to grab this from the som-val model link",
       },
 
-      igv_reference_name =>{
+      igv_reference_name => {
           is => 'Text',
           is_optional => 1,
-          doc => "name of the igv reference to use",
+          doc => "Name of the igv reference to use",
           default => "reference_build36",
       },
 
-      tumor_only =>{
+      tumor_only => {
           is => 'Boolean',
           is_optional => 1,
           default => 0,
-          doc => "model is an extension with only tumor data",
+          doc => "Model is an extension with only tumor data",
       },
 
-      filter_sites =>{
+      filter_sites => {
           is => 'Text',
           is_optional => 1,
-          doc => "comma separated list of bed files containing sites to be removed (example - removing cell-line sites from tumors grown on them). Only sites with these exact coordinates and that match the ref and var alleles are removed.",
+          doc => "Comma separated list of bed files containing sites to be removed (example - removing cell-line sites from tumors grown on them). Only sites with these exact coordinates and that match the ref and var alleles are removed.",
       },
 
-      filter_regions =>{
+      filter_regions => {
           is => 'Text',
           is_optional => 1,
-          doc => "comma separated list of bed files containing regions to be removed (example - removing paralog regions) Any sites intersecting these regions are removed.",
+          doc => "Comma separated list of bed files containing regions to be removed (example - removing paralog regions) Any sites intersecting these regions are removed.",
       },
 
-      restrict_to_target_regions =>{
+      restrict_to_target_regions => {
           is => 'Boolean',
           is_optional => 1,
           default => 1,
-          doc => "only keep snv calls within the target regions. These are pulled from the build",
+          doc => "Only keep snv calls within the target regions. These are pulled from the build",
       },
 
-      tier1_only =>{
+      tier1_only => {
           is => 'Boolean',
           is_optional => 1,
           default => 0,
-          doc => "only keep and review calls that are tier 1",
+          doc => "Only keep and review calls that are tier 1",
       },
 
-      tier_file_location =>{
+      tier_file_location => {
           is => 'String',
           is_optional => 1,
-          doc => "if tier1-only is specified, this needs to be a path to the appropriate tiering files",
+          doc => "If tier1-only is specified, this needs to be a path to the appropriate tiering files",
       },
 
-      recover_non_validated_calls =>{
+      recover_non_validated_calls => {
           is => 'Boolean',
           is_optional => 1,
           doc => "Do readcounting on calls that are non-validated, find sites that have high coverage (>20x tumor and normal) in the original, but poor (<8x tumor/ <6x norm) coverage in the validation. Send these for review",
@@ -100,7 +100,7 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
       dbsnp_filter => {
           is => 'String',
           is_optional => 1,
-          doc => "path to a dbsnp bed file of sites that should be removed from consideration",
+          doc => "Path to a dbsnp bed file of sites that should be removed from consideration",
       },
 
       ##restrict to targeted region - grab from build
@@ -112,15 +112,14 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
       #     default => 0
       #   },
 
-      ],
+  ],
 };
-
 
 sub help_detail {
   return <<HELP;
 Given a SomaticValidation model, this tool will gather the resulting variants, remove
 off-target sites, tier the variants, optionally filter them, and match them up with the
-initial predictions sent for validation.  It will then divide them into categories (validated,
+initial predictions sent for validation. It will then divide them into categories (validated,
 non-validated, and new calls). New calls are prepped for manual review in the review/ directory.
 HELP
 }
@@ -131,77 +130,73 @@ sub _doc_authors {
 AUTHS
 }
 
-sub bedToAnno{
+sub bedToAnno {
     my ($chr,$start,$stop,$ref,$var) = split("\t",$_[0]);
     #print STDERR join("|",($chr,$start,$stop,$ref,$var)) . "\n";
-    if ($ref =~ /^\-/){ #indel INS
+    if ($ref =~ /^\-/) { #indel INS
         $stop = $stop+1;
-    } else { #indel DEL or SNV
+    }
+    else { #indel DEL or SNV
         $start = $start+1;
     }
     return(join("\t",($chr,$start,$stop,$ref,$var)));
 }
 
-sub annoToBed{
+sub annoToBed {
     my ($chr,$start,$stop,$ref,$var) = split("\t",$_[0]);
-    if ($ref =~ /^\-/){ #indel INS
+    if ($ref =~ /^\-/) { #indel INS
         $stop = $stop-1;
-    } else { #indel DEL or SNV
+    }
+    else { #indel DEL or SNV
         $start = $start-1;
     }
     return(join("\t",($chr,$start,$stop,$ref,$var)));
 }
 
-sub annoFileToSlashedBedFile{
+sub annoFileToSlashedBedFile {
     my $fh = shift;
     my $input_file = shift;
-    
-    my $inFh = IO::File->new( $input_file ) || die "can't open file\n";
-    while( my $line = $inFh->getline )
-    {
+
+    my $inFh = IO::File->new( $input_file ) or die "Can't open file!";
+    while( my $line = $inFh->getline ) {
         chomp($line);
         my $tmp = annoToBed($line);
         my @tmp2 = split("\t",$tmp);
-        print $fh join("\t",(@tmp2[0..2], ($tmp2[3] . "/" . $tmp2[4]))) . "\n"; 
+        print $fh join("\t",(@tmp2[0..2], ($tmp2[3] . "/" . $tmp2[4]))) . "\n";
     }
     close($fh);
     close($inFh);
 }
 
-sub slashedBedFileToAnnoFile{
+sub slashedBedFileToAnnoFile {
     my $fh = shift;
     my $input_file = shift;
-    
-    my $inFh = IO::File->new( $input_file ) || die "can't open file\n";
-    while( my $line = $inFh->getline )
-    {
+
+    my $inFh = IO::File->new( $input_file ) or die "Can't open file!";
+    while( my $line = $inFh->getline ) {
         chomp($line);
         my ( $chr, $start, $stop, $refvar, @rest ) = split( /\t/, $line );
         my @alleles = split("/",$refvar);
         my $line2 = bedToAnno(join("\t",($chr, $start, $stop, $alleles[0], $alleles[1]))) . "\n";
         print $fh $line2 . "\n";
-            
     }
     close($fh);
     close($inFh);
 }
 
-
-sub intersects{
+sub intersects {
     my ($st,$sp,$st2,$sp2) = @_;
-    if((($sp2 >= $st) && ($sp2 <= $sp)) ||
-       (($sp >= $st2) && ($sp <= $sp2))){
+    if ((($sp2 >= $st) && ($sp2 <= $sp)) || (($sp >= $st2) && ($sp <= $sp2))) {
         return 1;
     }
     return 0;
 }
 
-sub fixIUB{
+sub fixIUB {
     my ($ref,$var) = @_;
     my @vars = Genome::Info::IUB->variant_alleles_for_iub($ref,$var);
     return @vars;
 }
-
 
 sub execute {
   my $self = shift;
@@ -216,7 +211,6 @@ sub execute {
   print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
   return undef unless( defined $model && -e $output_dir );
 
-
   #grab the info from all of the models
   my %bams; # Hash to store the model info
   my $build = $model->last_succeeded_build;
@@ -229,7 +223,7 @@ sub execute {
   my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
   my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
   my $sample_name = $model->tumor_sample->name;
-  print STDERR "processing model with sample_name: " . $sample_name . "\n";
+  $self->status_message( "Processing model with sample_name: " . $sample_name . "\n" );
   my $tumor_bam = $build->tumor_bam;
   my $build_dir = $build->data_directory;
 
@@ -248,7 +242,6 @@ sub execute {
       die "ERROR: INDEL results annotations for $sample_name not found at $indel_file\n";
   }
 
-
   # create subdirectories, get files in place
   mkdir "$output_dir/$sample_name" unless( -e "$output_dir/$sample_name" );
   mkdir "$output_dir/$sample_name/snvs" unless( -e "$output_dir/$sample_name/snvs" );
@@ -260,17 +253,15 @@ sub execute {
   $snv_file = "$output_dir/$sample_name/snvs/snvs.hq.bed";
   $indel_file = "$output_dir/$sample_name/indels/indels.hq.bed";
 
-
   my %dups;
   #munge through SNV file to remove duplicates and fix IUB codes
   #--------------------------------------------------------------
   my $filenm = $snv_file;
   $filenm =~ s/.bed/.clean.bed/g;
 
-  open(SNVFILE,">$filenm") || die ("couldn't open filter file");
-  my $inFh = IO::File->new( $snv_file ) || die "can't open file\n";
-  while( my $line = $inFh->getline )
-  {
+  open(SNVFILE,">$filenm") or die "Can't open filter file!";
+  my $inFh = IO::File->new( $snv_file ) or die "Can't open file!";
+  while( my $line = $inFh->getline ) {
       chomp($line);
       my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
       if($ref =~ /\//){
@@ -291,10 +282,9 @@ sub execute {
   $filenm = $indel_file;
   $filenm =~ s/.bed/.clean.bed/g;
 
-  open(INDELFILE,">$filenm") || die ("couldn't open filter file");
-  $inFh = IO::File->new( $indel_file ) || die "can't open file\n";
-  while( my $line = $inFh->getline )
-  {
+  open(INDELFILE,">$filenm") or die "Can't open filter file!";
+  $inFh = IO::File->new( $indel_file ) or die "Can't open file!";
+  while( my $line = $inFh->getline ) {
       chomp($line);
       my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
       if($ref =~ /\//){
@@ -312,7 +302,6 @@ sub execute {
   close(INDELFILE);
   $indel_file = $filenm;
 
-
   #-------------------------------------------------
   #store the previously called variants into a hash
   my %prevCalls;
@@ -320,17 +309,18 @@ sub execute {
   my $variant_list = "";
   if(defined($self->variant_list)){
       $variant_list = $self->variant_list;
-  } else { #look in model
+  }
+  else { #look in model
       if(defined($model->snv_variant_list)){
           $variant_list = $model->snv_variant_list->original_file_path
       }
   }
   if(defined($variant_list)){
-      print "using variant list: $variant_list\n";
+      print "Using variant list: $variant_list\n";
   }
 
   if( -e $variant_list){
-      my $inFh = IO::File->new( $variant_list ) || die "can't open file\n";
+      my $inFh = IO::File->new( $variant_list ) or die "Can't open file!";
       while( my $line = $inFh->getline )
       {
           chomp($line);
@@ -348,16 +338,19 @@ sub execute {
               my $key = join("\t",($chr, $start, $stop, $ref, $var ));
               if($self->variant_list_is_one_based){
                   $prevCalls{annoToBed($key)} = 0;
-              } else {
+              }
+              else {
                   $prevCalls{$key} = 0;
               }
-          } else {
+          }
+          else {
               my @vars = fixIUB($ref, $var);
               foreach my $v (@vars){
                   my $key = join("\t",($chr, $start, $stop, $ref, $v ));
                   if($self->variant_list_is_one_based){
                       $prevCalls{annoToBed($key)} = 0;
-                  } else {
+                  }
+                  else {
                       $prevCalls{$key} = 0;
                   }
               }
@@ -365,8 +358,9 @@ sub execute {
       }
       close($inFh);
 
-  } else {
-      print STDERR "WARNING: bed file of targeted variants not found for $sample_name.\nAssuming that there were no calls for this model (and it was an extension experiment)\n";
+  }
+  else {
+      $self->status_message( "WARNING: BED file of targeted variants not found for $sample_name.\nAssuming that there were no calls for this model (and it was an extension experiment)\n" );
   }
 
   #--------------------------------------------------------
@@ -377,7 +371,7 @@ sub execute {
   open(NEWFILE,">$output_dir/$sample_name/snvs/snvs.newcalls");
   open(MISFILE,">$output_dir/$sample_name/snvs/snvs.notvalidated");
 
-  $inFh = IO::File->new( $snv_file ) || die "can't open file\n";
+  $inFh = IO::File->new( $snv_file ) or die "can't open file!";
   while( my $line = $inFh->getline )
   {
       chomp($line);
@@ -389,7 +383,8 @@ sub execute {
       if (exists($prevCalls{join("\t",($chr, $start, $stop, $ref, $var ))})){
           print VALFILE bedToAnno(join("\t",($chr, $start, $stop, $ref, $var ))) . "\n";
           $prevCalls{join("\t",($chr, $start, $stop, $ref, $var ))} = 1;
-      } else {
+      }
+      else {
           print NEWFILE bedToAnno(join("\t",($chr, $start, $stop, $ref, $var ))) . "\n";
       }
   }
@@ -409,12 +404,11 @@ sub execute {
   close(NEWFILE);
   close(MISFILE);
 
-
   #---now indels---
   open(VALFILE,">$output_dir/$sample_name/indels/indels.validated");
   open(NEWFILE,">$output_dir/$sample_name/indels/indels.newcalls");
   open(MISFILE,">$output_dir/$sample_name/indels/indels.notvalidated");
-  $inFh = IO::File->new( $indel_file ) || die "can't open file\n";
+  $inFh = IO::File->new( $indel_file ) or die "Can't open file!";
   while( my $line = $inFh->getline )
   {
       chomp($line);
@@ -429,7 +423,8 @@ sub execute {
           print VALFILE bedToAnno(join("\t",($chr, $start, $stop, $ref, $var ))) . "\n";
           #mark as found
           $prevCalls{join("\t",($chr, $start, $stop, $ref, $var ))} = 1;
-      } else { #case 2: new indel not found in original targets
+      }
+      else { #case 2: new indel not found in original targets
           print NEWFILE bedToAnno(join("\t",($chr, $start, $stop, $ref, $var ))) . "\n";
       }
   }
@@ -450,46 +445,45 @@ sub execute {
   $indel_file = "$output_dir/$sample_name/indels/indels.newcalls";
   $snv_file = "$output_dir/$sample_name/snvs/snvs.newcalls";
 
-
   #-------------------------------------------------
   #filter out the off-target regions, if target regions are available
-  if($self->restrict_to_target_regions){
-      print STDERR "Filtering out off-target regions...\n";
-      my %targetRegions;
-      my $featurelist_id = $model->target_region_set->id;
-      print STDERR "using target regions in feature list $featurelist_id\n";
-      my $featurelist = Genome::FeatureList->get($featurelist_id)->file_path;
-      if ( -e $featurelist ){
-          my $inFh = IO::File->new( $featurelist ) || die "can't open file\n";
-          while( my $line = $inFh->getline )
-          {
+  if ($self->restrict_to_target_regions) {
+      $self->status_message( "Filtering out off-target regions...\n" );
+
+      #Locate the BED file of targeted regions used in the SomVal model
+      my ( $featurelist_name, $featurelist_id ) = ( $model->target_region_set->name, $model->target_region_set->id );
+      $self->status_message( "Using target regions in feature-list $featurelist_name (ID: $featurelist_id)\n" );
+      my $featurelist_file = Genome::FeatureList->get($featurelist_id)->file_path;
+
+      if ( -e $featurelist_file ) {
+          my %targetRegions;
+          my $inFh = IO::File->new( $featurelist_file ) or die "Can't open file!";
+          while( my $line = $inFh->getline ) {
               chomp($line);
               next if $line =~ /^track name/;
-              my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
+              my ($chr, $start, $stop, @rest) = split( /\t/, $line );
               #remove chr if present
               $chr =~ s/^chr//g;
               $targetRegions{$chr}{join("\t",($start, $stop))} = 0;
           }
           close($inFh);
 
-
           #compare the snvs to the targets
-          open(TARFILE,">$snv_file.ontarget") || die ("couldn't open target file");
-          $inFh = IO::File->new( $snv_file ) || die "can't open file\n";
-          while( my $line = $inFh->getline )
-          {
+          open(TARFILE,">$snv_file.ontarget") or die "Can't open target file!";
+          $inFh = IO::File->new( $snv_file ) or die "Can't open file!";
+          while( my $line = $inFh->getline ) {
               chomp($line);
               my ( $chr, $start, $stop, @rest ) = split( /\t/, $line );
 
               #if we run into huge lists, this will be slow - refactor to use joinx - TODO
               my $found = 0;
-              foreach my $pos (keys(%{$targetRegions{$chr}})){
+              foreach my $pos (keys(%{$targetRegions{$chr}})) {
                   my ($tst, $tsp) = split("\t",$pos);
-                  if(intersects($start,$stop,$tst,$tsp)){
+                  if(intersects($start,$stop,$tst,$tsp)) {
                       $found = 1;
                   }
               }
-              if($found){
+              if($found) {
                   print TARFILE $line . "\n";
               }
           }
@@ -497,17 +491,15 @@ sub execute {
           close(TARFILE);
           $snv_file = "$snv_file.ontarget";
 
-
           #compare the indels to the targets
-          open(TARFILE,">$indel_file.ontarget") || die ("couldn't open target file");
-          $inFh = IO::File->new( $indel_file ) || die "can't open file\n";
-          while( my $line = $inFh->getline )
-          {
+          open(TARFILE,">$indel_file.ontarget") or die "Can't open target file!";
+          $inFh = IO::File->new( $indel_file ) or die "Can't open file!";
+          while( my $line = $inFh->getline ) {
               chomp($line);
               my ( $chr, $start, $stop, @rest ) = split( /\t/, $line );
-              foreach my $pos (keys(%{$targetRegions{$chr}})){
+              foreach my $pos (keys(%{$targetRegions{$chr}})) {
                   my ($tst, $tsp) = split("\t",$pos);
-                  if(intersects($start,$stop,$tst,$tsp)){
+                  if(intersects($start,$stop,$tst,$tsp)) {
                       print TARFILE $line . "\n";
                   }
               }
@@ -515,16 +507,16 @@ sub execute {
           close($inFh);
           close(TARFILE);
           $indel_file = "$indel_file.ontarget";
-
-      } else {
-          print STDERR "WARNING: feature list not found at location $featurelist\nNo target region filtering being done\n";
+      }
+      else {
+          $self->status_message( "WARNING: Feature list not found at $featurelist_file\nNo target region filtering being done\n" );
       }
   }
 
   ##------------------------------------------------------
   #remove all but tier 1 sites, if that option is specified
-  if($self->tier1_only){
-  print STDERR "Doing Tiering...\n";
+  if($self->tier1_only) {
+  $self->status_message( "Doing Tiering...\n" );
       my $tier_cmd = Genome::Model::Tools::FastTier::FastTier->create(
           tier_file_location => $self->tier_file_location,
           variant_bed_file => $snv_file,
@@ -546,8 +538,8 @@ sub execute {
 
   ##-------------------------------------------------
   #use joinx to remove dbsnp sites
-  if(defined($self->dbsnp_filter)){
-      print STDERR "Applying dbsnp filter...\n";
+  if(defined($self->dbsnp_filter)) {
+      $self->status_message( "Applying dbsnp filter...\n" );
 
       #snvs - convert back to slashed bed file before joinx intersect
       my ($fh,$temp_bed_file) = Genome::Sys->create_temp_file;
@@ -556,16 +548,14 @@ sub execute {
 
       my ($fh2,$temp_novel_file) = Genome::Sys->create_temp_file;
       my $cmd = "joinx intersect --dbsnp-match --miss-a $temp_novel_file -a $temp_bed_file -b " . $self->dbsnp_filter . ">/dev/null";
-      my $result = Genome::Sys->shellcmd(
-        cmd => "$cmd",
-          );
+      my $result = Genome::Sys->shellcmd( cmd => "$cmd" );
       unless($result) {
           $self->error_message("Failed to execute joinx: Returned $result");
           die $self->error_message;
       }
 
       my $ofh;
-      open($ofh,">$snv_file.novel");      
+      open($ofh,">$snv_file.novel");
       slashedBedFileToAnnoFile($ofh, $temp_novel_file);
       close($ofh);
       $snv_file = "$snv_file.novel";
@@ -577,38 +567,34 @@ sub execute {
 
       my ($fh4,$temp_novel_file2) = Genome::Sys->create_temp_file;
       $cmd = "joinx intersect --dbsnp-match --miss-a $temp_novel_file2 -a $temp_bed_file2 -b " . $self->dbsnp_filter . ">/dev/null";
-      $result = Genome::Sys->shellcmd(
-        cmd => "$cmd",
-          );
+      $result = Genome::Sys->shellcmd( cmd => "$cmd" );
       unless($result) {
           $self->error_message("Failed to execute joinx: Returned $result");
           die $self->error_message;
       }
 
-      open($ofh,">$indel_file.novel");      
+      open($ofh,">$indel_file.novel");
       slashedBedFileToAnnoFile($ofh, $temp_novel_file);
       close($ofh);
-      # $inFh = IO::File->new( "$indel_file.novel" );      
+      # $inFh = IO::File->new( "$indel_file.novel" );
       # slashedBedFileToAnnoFile($inFh, $temp_novel_file2);
       # close($inFh);
       $indel_file = "$indel_file.novel";
 
   }
 
-
   #-------------------------------------------------
   #remove filter sites specified by the user
-  if(defined($self->filter_sites)){
-      print STDERR "Applying user-supplied filter...\n";
+  if(defined($self->filter_sites)) {
+      $self->status_message( "Applying user-supplied filter...\n" );
       my @filters = split(",",$self->filter_sites);
       my %filterSites;
 
-      foreach my $filterfile (@filters){
-          if( -e $filterfile){
+      foreach my $filterfile (@filters) {
+          if( -e $filterfile) {
               #store sites to filter out in a hash
-              my $inFh = IO::File->new( $filterfile ) || die "can't open file\n";
-              while( my $line = $inFh->getline )
-              {
+              my $inFh = IO::File->new( $filterfile ) or die "Can't open file!";
+              while( my $line = $inFh->getline ) {
                   chomp($line);
                   #handle either 5 col (Ref\tVar) or 4 col (Ref/Var) bed
                   my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
@@ -624,15 +610,15 @@ sub execute {
                   }
               }
               close($inFh);
-          } else {
-              die("filter sites file does not exist: " . $filterfile);
+          }
+          else {
+              die("Filter sites file does not exist: " . $filterfile);
           }
 
           #remove snvs
-          open(FILFILE,">$snv_file.filtered") || die ("couldn't open filter file");
-          $inFh = IO::File->new( $snv_file ) || die "can't open file\n";
-          while( my $line = $inFh->getline )
-          {
+          open(FILFILE,">$snv_file.filtered") or die "Can't open filter file!";
+          $inFh = IO::File->new( $snv_file ) or die "Can't open file!";
+          while( my $line = $inFh->getline ) {
               chomp($line);
               my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
               if($ref =~ /\//){
@@ -646,10 +632,9 @@ sub execute {
           $snv_file = "$snv_file.filtered";
 
           #remove indels
-          open(FILFILE,">$indel_file.filtered") || die ("couldn't open filter file");
-          $inFh = IO::File->new( $indel_file ) || die "can't open file\n";
-          while( my $line = $inFh->getline )
-          {
+          open(FILFILE,">$indel_file.filtered") or die "Can't open filter file!";
+          $inFh = IO::File->new( $indel_file ) or die "Can't open file!";
+          while( my $line = $inFh->getline ) {
               chomp($line);
               my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
               if($ref =~ /\//){
@@ -674,20 +659,17 @@ sub execute {
       my ($fh,$temp_file) = Genome::Sys->create_temp_file;
 
       foreach my $filterfile (@filters){
-          my $inFh2 = IO::File->new( $filterfile ) || die "can't open file\n";
-          while( my $line = $inFh2->getline )
-          {
+          my $inFh2 = IO::File->new( $filterfile ) or die "Can't open file!";
+          while( my $line = $inFh2->getline ) {
               print $fh $line;
           }
           close $inFh2;
       }
       close($fh);
 
-      print STDERR "Removing user-specified filter...\n";
+      $self->status_message( "Removing user-specified filter...\n" );
       my $cmd = "joinx intersect --miss-a $snv_file.filteredReg -a $snv_file -b $temp_file >/dev/null";
-      my $result = Genome::Sys->shellcmd(
-          cmd => "$cmd",
-          );
+      my $result = Genome::Sys->shellcmd( cmd => "$cmd" );
       unless($result) {
           $self->error_message("Failed to execute joinx: Returned $result");
           die $self->error_message;
@@ -695,9 +677,7 @@ sub execute {
       $snv_file = "$snv_file.filteredReg";
 
       $cmd = "joinx intersect --miss-a $indel_file.filteredReg -a $indel_file -b $temp_file >/dev/null";
-      $result = Genome::Sys->shellcmd(
-          cmd => "$cmd",
-          );
+      $result = Genome::Sys->shellcmd( cmd => "$cmd" );
       unless($result) {
           $self->error_message("Failed to execute joinx: Returned $result");
           die $self->error_message;
@@ -705,11 +685,8 @@ sub execute {
       $indel_file = "$indel_file.filteredReg";
   }
 
-
-
-
   #add snv readcounts
-  print STDERR "Getting snv readcounts...\n";
+  $self->status_message( "Getting snv readcounts...\n" );
   mkdir "$output_dir/$sample_name/snvs/readcounts";
   foreach my $file ("snvs.validated","snvs.notvalidated",basename($snv_file)){
 
@@ -742,7 +719,7 @@ sub execute {
   }
 
   #add indel readcounts
-  print STDERR "Getting indel readcounts...\n";
+  $self->status_message( "Getting indel readcounts...\n" );
   mkdir "$output_dir/$sample_name/indels/readcounts";
   foreach my $file ("indels.validated","indels.notvalidated",basename($indel_file)){
 
@@ -776,7 +753,6 @@ sub execute {
       }
   }
 
-
   ## we're not going to do this in most cases - if not called in validation, we just ditch the call,
   ## but it may be useful in some cases.
 
@@ -788,7 +764,8 @@ sub execute {
   my $somvarid;
   if(defined($self->somatic_variation_model_id)){
       $somvarid = $self->somatic_variation_model_id;
-  } else {
+  }
+  else {
       if(defined($model->snv_variant_list)){
           if(defined($model->snv_variant_list->source_build)){
               $somvarid = $model->snv_variant_list->source_build->model->id;
@@ -805,8 +782,9 @@ sub execute {
       if($self->recover_non_validated_calls){
 
           if(!(defined($somvarid))){
-              print STDERR "ERROR: no somatic variation build found - can't recover non-validated calls.\n";
-          } else {
+              print STDERR "ERROR: No somatic variation build found - can't recover non-validated calls.\n";
+          }
+          else {
               #get original bams
               my $tumor_bam_var = $som_var_model->tumor_model->last_succeeded_build->whole_rmdup_bam_file;
               print STDERR "ERROR: Somatic Variation tumor bam not found\n" unless( -e $tumor_bam_var );
@@ -846,9 +824,8 @@ sub execute {
               my %poorly_covered_snvs;
 
               unless($tumor_only){
-                  my $inFh = IO::File->new( "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.nrm.cnt" ) || die "can't open file\n";
-                  while( my $line = $inFh->getline )
-                  {
+                  my $inFh = IO::File->new( "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.nrm.cnt" ) or die "Can't open file!";
+                  while( my $line = $inFh->getline ) {
                       chomp($line);
                       my ( $chr, $start, $ref, $var, $refcnt, $varcnt, $vaf) = split("\t",$line);
                       if(($refcnt+$varcnt) < 6){
@@ -858,9 +835,8 @@ sub execute {
                   close($inFh);
               }
 
-              $inFh = IO::File->new( "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.tum.cnt" ) || die "can't open file\n";
-              while( my $line = $inFh->getline )
-              {
+              $inFh = IO::File->new( "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.tum.cnt" ) or die "Can't open file!";
+              while( my $line = $inFh->getline ) {
                   chomp($line);
                   my ( $chr, $start, $ref, $var, $refcnt, $varcnt, $vaf) = split("\t",$line);
                   if(($refcnt+$varcnt) < 8){
@@ -870,9 +846,8 @@ sub execute {
               close($inFh);
 
               #now, go through the original readcounts, and flag any that do have good coverage for manual review
-              $inFh = IO::File->new( "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.orig.nrm.cnt" ) || die "can't open file\n";
-              while( my $line = $inFh->getline )
-              {
+              $inFh = IO::File->new( "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.orig.nrm.cnt" ) or die "Can't open file!";
+              while( my $line = $inFh->getline ) {
                   chomp($line);
                   my ( $chr, $start, $ref, $var, $refcnt, $varcnt, $vaf) = split("\t",$line);
 
@@ -886,9 +861,8 @@ sub execute {
 
               my $poorCount = 0;
               my @poorOutput;
-              $inFh = IO::File->new( "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.orig.tum.cnt" ) || die "can't open file\n";
-              while( my $line = $inFh->getline )
-              {
+              $inFh = IO::File->new( "$output_dir/$sample_name/snvs/readcounts/snvs.notvalidated.orig.tum.cnt" ) or die "Can't open file!";
+              while( my $line = $inFh->getline ) {
                   chomp($line);
                   my ( $chr, $start, $ref, $var, $refcnt, $varcnt, $vaf) = split("\t",$line);
                   if(($refcnt+$varcnt) >= 20){
@@ -910,7 +884,6 @@ sub execute {
                   close(OUTFILE)
               }
 
-
               if($poorCount > 0){
                   #create the xml file for this 4-way review
                   my $dumpCovXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
@@ -925,14 +898,14 @@ sub execute {
                       die "Failed to dump IGV xml for poorly covered sites.\n";
                   }
 
-                  print STDERR "--------------------------------------------------------------------------------\n";
-                  print STDERR "Sites for review with poor coverage in validation but good coverage in original are here:\n";
-                  print STDERR "$output_dir/review/$sample_name.poorValCoverage.bed\n";
-                  print STDERR "IGV XML file is here:";
-                  print STDERR "$output_dir/$sample_name/review/poorValCoverage.xml\n\n";
+                  $self->status_message( "--------------------------------------------------------------------------------\n" .
+                      "Sites for review with poor coverage in validation but good coverage in original are here:\n" .
+                      "$output_dir/review/$sample_name.poorValCoverage.bed\n" .
+                      "IGV XML file is here:\n" .
+                      "$output_dir/$sample_name/review/poorValCoverage.xml\n\n"
+                  );
               }
           }
-
       }
   }
 
@@ -965,15 +938,15 @@ sub execute {
       my $revfile;
       if ( -s "$snv_file.failuhc"){
           $revfile = "$snv_file.failuhc";
-      } else {
+      }
+      else {
           $revfile = "$snv_file";
       }
 
-      open(OUTFILE2,">$output_dir/review/$sample_name.newcalls.bed") || die "couldn't open outfile";
+      open(OUTFILE2,">$output_dir/review/$sample_name.newcalls.bed") or die "Can't open outfile!";
 
-      $inFh = IO::File->new( $revfile ) || die "can't open file\n";
-      while( my $line = $inFh->getline )
-      {
+      $inFh = IO::File->new( $revfile ) or die "Can't open file!";
+      while( my $line = $inFh->getline ) {
           chomp($line);
           my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
           print OUTFILE2 annoToBed(join("\t",($chr, $start, $stop, $ref, $var ))) . "\n";
@@ -990,15 +963,16 @@ sub execute {
               my $nbam = $som_var_model->normal_model->last_succeeded_build->whole_rmdup_bam_file;
               $bam_files = join(",",($tumor_bam,$tbam,$nbam));
               $labels = join(",",("validation tumor $sample_name","original tumor $sample_name","original normal $sample_name"));
-          } else {
+          }
+          else {
               $bam_files = join(",",($tumor_bam));
               $labels = join(",",("validation tumor $sample_name"));
           }
-      } else {
+      }
+      else {
           $bam_files = join(",",($normal_bam,$tumor_bam));
           $labels = join(",",("validation normal $sample_name","validation tumor $sample_name"));
       }
-
 
       #create the xml file for review
       my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
@@ -1013,15 +987,14 @@ sub execute {
           die "Failed to dump IGV xml for poorly covered sites.\n";
       }
 
-      print STDERR "\n--------------------------------------------------------------------------------\n";
-      print STDERR "Sites to review that were not found original genomes, but were found in validation are here:\n";
-      print STDERR "$output_dir/review/$sample_name.newcalls.bed\n";
-      print STDERR "IGV XML file is here:";
-      print STDERR "$output_dir/review/$sample_name.newcalls.xml\n\n";
-
-
-
-  } else {
+      $self->status_message( "\n--------------------------------------------------------------------------------\n" .
+          "Sites to review that were not found original genomes, but were found in validation are here:\n" .
+          "$output_dir/review/$sample_name.newcalls.bed\n" .
+          "IGV XML file is here:\n" .
+          "$output_dir/review/$sample_name.newcalls.xml\n\n"
+      );
+  }
+  else {
       print STDERR "No variants found that were called in the validation, but not found in original genomes\n";
   }
 
