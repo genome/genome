@@ -51,7 +51,6 @@ sub properties_to_copy {# 12
 sub properties_to_keep_updated {# 11
     return (qw/
         name
-        taxon_id
         common_name
         description
         ethnicity
@@ -60,8 +59,19 @@ sub properties_to_keep_updated {# 11
         mother_id 
         nomenclature
         race
+        taxon_id
         upn
     /);
+}
+
+sub lims_name_to_apipe_name {
+    my ($class, $name) = @_;
+    my %lims_name_to_apipe_name = (
+        full_name => 'name',
+        name => 'upn',
+    );
+    return $lims_name_to_apipe_name{$name} if exists $lims_name_to_apipe_name{$name};
+    return $name;
 }
 
 1;

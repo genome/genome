@@ -68,5 +68,16 @@ sub properties_to_keep_updated {# 12
      /);
 }
 
+sub lims_name_to_apipe_name {
+    my ($class, $name) = @_;
+    my %lims_name_to_apipe_name = (
+        species_name => 'name',
+        estimated_organism_genome_size => 'estimated_genome_size',
+        model_individual_organism_id => 'model_member_id',
+    );
+    return $lims_name_to_apipe_name{$name} if exists $lims_name_to_apipe_name{$name};
+    return $name;
+}
+
 1;
 

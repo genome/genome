@@ -39,5 +39,10 @@ sub properties_to_keep_updated {# 3
     /);
 }
 
+sub lims_name_to_apipe_name {
+    my ($class, $name) = @_;
+    return $name;
+}
+
 1;
 
