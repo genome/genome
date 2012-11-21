@@ -199,16 +199,40 @@ sub _get_chimerascan_path_for_version {
 sub _resolve_index_dir {
     my ($self, $bowtie_version) = @_;
 
-    #We want to shell out and create the chimerscan index in a different UR context.
-    #That way it is committed, even if we fail and other builds don't need to wait on
-    #the overall chimerscan run just to get their index results.
-    my $cmd = 'genome model rna-seq detect-fusions chimerascan-index';
-    $cmd .= ' --version=' . $self->version;
-    $cmd .= ' --bowtie-version=' . $bowtie_version;
-    $cmd .= ' --reference-build=' . $self->alignment_result->reference_build->id;
-    $cmd .= ' --annotation-build=' . $self->annotation_build->id;
+    my $index = $self->_get_index($bowtie_version);
 
-    Genome::Sys->shellcmd(cmd => $cmd);
+    unless ($index) {
+        #We want to shell out and create the chimerscan index in a different UR context.
+        #That way it is committed, even if we fail and other builds don't need to wait on
+        #the overall chimerscan run just to get their index results.
+        my $cmd = 'genome model rna-seq detect-fusions chimerascan-index';
+        $cmd .= ' --version=' . $self->version;
+        $cmd .= ' --bowtie-version=' . $bowtie_version;
+        $cmd .= ' --reference-build=' . $self->alignment_result->reference_build->id;
+        $cmd .= ' --annotation-build=' . $self->annotation_build->id;
+
+        Genome::Sys->shellcmd(cmd => $cmd);
+
+        # Force UR to query the datasource instead of using its cache for this lookup.
+        my $previous_value = $UR::Context->query_underlying_context;
+        UR::Context->query_underlying_context(1);
+        $index = $self->_get_index($bowtie_version);
+        UR::Context->query_underlying_context($previous_value);
+    }
+
+    if ($index) {
+        $self->status_message('Registering software result ' . $self->id . ' (self) as a user " .
+                "of the generated index');
+        $index->add_user(user => $self, label => 'uses');
+    } else {
+        die("Unable to get a chimerascan index result");
+    }
+
+    return $index->output_dir;
+}
+
+sub _get_index {
+    my ($self, $bowtie_version) = @_;
 
     my $index_class = 'Genome::Model::RnaSeq::DetectFusionsResult' .
                       '::ChimerascanResult::Index';
@@ -220,14 +244,7 @@ sub _resolve_index_dir {
         annotation_build => $self->annotation_build,
     );
 
-    if ($index) {
-        $self->status_message( 'Registering ' . $self->build->id . ' as a user of the generated index' );
-        $index->add_user( user => $self->build, label => 'uses' );
-    } else {
-        die("Unable to get a chimerascan index result");
-    }
-
-    return $index->output_dir;
+    return $index;
 }
 
 sub resolve_allocation_subdirectory {
