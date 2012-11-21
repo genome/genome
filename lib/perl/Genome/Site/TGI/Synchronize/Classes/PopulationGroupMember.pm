@@ -13,8 +13,8 @@ class Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember {
     is => 'UR::Object',
     table_name => 'GSC.POPULATION_GROUP_MEMBER',
     id_by => [
-        member_id => { is => 'Number', },
         population_group_id => { is => 'Number', },
+        member_id => { is => 'Number', },
     ],
     data_source => 'Genome::DataSource::GMSchema',
 };
