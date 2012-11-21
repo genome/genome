@@ -4,6 +4,9 @@ use strict;
 use warnings;
 use Test::More; 
 
+Genome::SoftwareResult->class; #This emits warnings under no-commit, so get them out of the way.
+
+
 # run with REBUILD on the cmdline to re-generate the reference docs
 
 my @sub_commands = `genome model define 2>&1 | grep '^ ' | awk '{ print \$1 }'`;

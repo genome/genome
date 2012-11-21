@@ -81,7 +81,8 @@ class Genome::Model::SomaticVariation {
         },
         previously_discovered_variations_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            id_by => 'previously_discovered_variations_build_id',
+            via => '__self__',
+            to => 'previously_discovered_variations',
         },
         force => {
             is => 'Boolean',
