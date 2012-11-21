@@ -1,43 +1,38 @@
-package Genome::Site::TGI::Synchronize::ReconcileUpdates;
+package Genome::Site::TGI::Synchronize::ReconcileMiscUpdate;
 
 use strict;
 use warnings;
+
 use Genome;
-use Data::Dumper;
 
 use Mail::Sender;
 
-class Genome::Site::TGI::Synchronize::ReconcileUpdates {
-    is => 'Command',
+class Genome::Site::TGI::Synchronize::ReconcileMiscUpdate {
+    is => 'Command::V2',
     has => [
     ],
 };
 
-
-#        "gsc.index_illumina" => 'Genome::InstrumentData::Solexa',
-#        "gsc.library_summary" => 'Genome::Library',
-#        "gsc.run_region_454" => 'Genome::InstrumentData::454',
-#        "mg.imported_instrument_data" => 'Genome::InstrumentData::Imported',
 sub table_to_class_mapping {
-    return {
-        "gsc.organism_sample" => 'Genome::Sample',
+    return (
         "gsc.organism_taxon" => 'Genome::Taxon',
         "gsc.organism_individual" => 'Genome::Individual',
-    };
-
-# TODO: project names / work order names
-
+        "gsc.organism_population_group" => 'Genome::PopulationGroup',
+        "gsc.organism_sample" => 'Genome::Sample',
+        "gsc.sample_attribute" => 'Genome::SubjectAttribute',
+        "gsc.population_group_member" => 'Genome::SubjectAttribute',
+    );
 }
 
 sub class_for_table {
     my ($self, $table) = @_;
-    my $m = $self->table_to_class_mapping();
-    return $m->{$table} ? $m->{$table} : undef;
+    my %m = $self->table_to_class_mapping;
+    return $m{$table};
 }
 
 sub execute {
+    my $self = shift;
 
-    my ($self) = @_;
     my @msg;
 
     push @msg, $self->sync_properties_that_map_directly();
@@ -77,7 +72,7 @@ sub sync_properties_that_map_directly {
         my $updates_to_review = $self->process_updates($table, $class, \@updates);
 
         $msg .= "Table: $table Class: $class\n";
-        $msg .= Dumper $updates_to_review;
+        $msg .= Data::Dumper::Dumper $updates_to_review;
     }
 
     return $msg;
@@ -149,12 +144,9 @@ sub process_updates {
     }
 
     print $table . " -> " . $class . "\n";
-    print Dumper $update_list;
+    print Data::Dumper::Dumper $update_list;
     return $updates_to_review; 
 }
 
-
 1;
-
-
 
