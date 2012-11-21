@@ -247,7 +247,7 @@ sub execute {
       my $wgs_somatic_build = $builds->{wgs};
       my $wgs_somatic_build_id = $wgs_somatic_build->id;
       
-      my $master_clonality_cmd = "$script_dir"."snv/generateClonalityPlot.pl  --somatic_var_build_id=$wgs_somatic_build_id  --working_dir=$clonality_dir  --common_name='$common_name'  --verbose=$verbose";
+      my $master_clonality_cmd = "genome model clin-seq generate-clonality-plots --somatic-var-build=$wgs_somatic_build_id  --output-dir=$clonality_dir  --common_name='$common_name'" . ($verbose ? " --verbose" : "");
       if ($verbose){
         print YELLOW, "\n\n$master_clonality_cmd", RESET;
       }else{
