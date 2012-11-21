@@ -9,7 +9,6 @@ use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use Genome::Model::ClinSeq::Util qw(:all);
 
-#time ../original-scripts/snv/generateClonalityPlot.pl  --somatic_var_build_id=129396826  --output_dir=GenerateClonalityPlots.t-expected-output/  --common_name='AML54'  --verbose=1
 
 class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
     is => 'Command::V2',
