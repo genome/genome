@@ -204,14 +204,11 @@ sub _resolve_index_dir {
     #the overall chimerscan run just to get their index results.
     my $cmd = 'genome model rna-seq detect-fusions chimerascan-index';
     $cmd .= ' --version=' . $self->version;
-    $cmd .= ' --bowtie-version=' . $self->bowtie_version;
+    $cmd .= ' --bowtie-version=' . $bowtie_version;
     $cmd .= ' --reference-build=' . $self->alignment_result->reference_build->id;
     $cmd .= ' --annotation-build=' . $self->annotation_build->id;
-    $cmd .= ' --build=' . $self->build->id;
 
-    Genome::Sys->shellcmd(
-        cmd => $cmd
-    );
+    Genome::Sys->shellcmd(cmd => $cmd);
 
     my $index_class = 'Genome::Model::RnaSeq::DetectFusionsResult' .
                       '::ChimerascanResult::Index';
@@ -223,7 +220,10 @@ sub _resolve_index_dir {
         annotation_build => $self->annotation_build,
     );
 
-    unless($index){
+    if ($index) {
+        $self->status_message( 'Registering ' . $self->build->id . ' as a user of the generated index' );
+        $index->add_user( user => $self->build, label => 'uses' );
+    } else {
         die("Unable to get a chimerascan index result");
     }
 
