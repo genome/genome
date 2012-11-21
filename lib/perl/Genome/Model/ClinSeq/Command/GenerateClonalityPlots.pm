@@ -21,6 +21,9 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
         
         output_dir          => { is => 'Text', 
                                 doc => 'Directory to place temp files and results' },
+
+        read_counts         => { is => 'Text', is_optional => 1,
+                                doc => 'Instead of generating read counts, use this pre-prepared readcount file' },
     ],
     has_param => [
         verbose             => { is => 'Boolean', is_optional => 1, default_value => 0,
@@ -137,10 +140,16 @@ sub execute {
     my $normal_bam = $data_paths{normal_bam};
 
     #Step 4 - run bam readcounts and assess the particular reads for the reference and variant and print out details about the numbers of reads and the percentages for multiple bam files:
-    my $readcounts_outfile = "$adapted_file".".readcounts";
-    my $read_counts_cmd = "$script_dir"."borrowed/ndees/give_me_readcounts.pl  --sites_file=$adapted_file --bam_list=\"Tumor:$tumor_bam,Normal:$normal_bam\" --reference_fasta=$data_paths{reference_fasta} --output_file=$readcounts_outfile";
-    if ($verbose){print YELLOW, "\n\n$read_counts_cmd", RESET;}
-    Genome::Sys->shellcmd(cmd => $read_counts_cmd);
+    my $readcounts_outfile;
+    if ($self->read_counts) {
+        $readcounts_outfile = $self->read_counts;
+    }
+    else {
+        $readcounts_outfile = "$adapted_file".".readcounts";
+        my $read_counts_cmd = "$script_dir"."borrowed/ndees/give_me_readcounts.pl  --sites_file=$adapted_file --bam_list=\"Tumor:$tumor_bam,Normal:$normal_bam\" --reference_fasta=$data_paths{reference_fasta} --output_file=$readcounts_outfile";
+        if ($verbose){print YELLOW, "\n\n$read_counts_cmd", RESET;}
+        Genome::Sys->shellcmd(cmd => $read_counts_cmd);
+    }
 
     #Step 5 - create a varscan-format file from these outputs:
     #perl ~kkanchi/bin/create_pseudo_varscan.pl     allsnvs.hq.novel.tier123.v2.bed.adapted     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts     >     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan

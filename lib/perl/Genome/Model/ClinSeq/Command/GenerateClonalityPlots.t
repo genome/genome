@@ -3,9 +3,9 @@ use strict;
 use warnings;
 use above "Genome";
 #use Test::More skip_all => "very slow";
-use Test::More tests => 2; 
+use Test::More tests => 3; 
 
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-GenerateClonalityPlots/2012-11-20';
+my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-GenerateClonalityPlots/2012-11-21.full';
 
 # "REBUILD" on the command-line when running the test sets the output to be the reference data set
 # IMPORTANT: change the directory above to a new date when updating test data!
@@ -19,8 +19,12 @@ else {
     $actual_out = Genome::Sys->create_temp_directory;
 }
 
+ok(-d $expected_out, "directory of expected output exists: $expected_out");
+
 # Run the tool as described in the synopsis.
 my $cmd = "genome model clin-seq generate-clonality-plots --somatic-var-build=129396826  --output-dir=$actual_out  --common-name='AML54'  --verbose";
+#$cmd .= " --limit=1000";
+#$cmd .= " --read-counts=$expected_out/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts"; 
 eval { Genome::Sys->shellcmd(cmd => $cmd); };
 ok(!$@, "executed command correctly: $cmd")
     or do {
