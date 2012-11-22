@@ -20,7 +20,7 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
+sub help_detail {
     return <<EOS
     This is a small tool to take indel calls in annotation format and convert them to a common BED format (using the first five columns).
 EOS
@@ -34,16 +34,16 @@ sub process_source {
         chomp $line;
         my ($chromosome, $start, $stop, $reference, $consensus, $type, @extra) = split("\t", $line);
         # convert from 1-based to 0 based
-        
+
         # if $type is defined #
         if(defined($type)){
             if ($type eq "INS") {
                 --$stop;
             } elsif ($type eq "DEL|SNP") {
                 --$start;
-            
+
             # if type is some other column not really indicating type #
-            
+
             } elsif ($reference =~ /0|\-|\*/){ ##INS
                 --$stop;
             } elsif ($consensus =~ /0|\-|\*/){ ##DEL

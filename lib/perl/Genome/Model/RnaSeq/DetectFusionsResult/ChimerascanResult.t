@@ -56,57 +56,47 @@ my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index
     output_dir => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/IndexResult/'
 );
 
-eval {
-    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
-        alignment_result => $alignment_result,
-        version => '0.4.3',
-        detector_params => "--bowtie-version=",
-    );
-    die;
-};
-if ($@) {
-    my $error_str = $@;
-    diag $error_str;
-    my $expected = "You must supply a bowtie version";
-    ok($error_str =~ m/$expected/, "Crashed if not supplied with bowtie-version");
-}
+my %params = (
+    alignment_result => $alignment_result,
+    version => '0.4.3',
+    detector_params => "--reuse-bam 0 --bowtie-version=",
+);
+my $class = 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult';
 
-eval {
-    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
-        alignment_result => $alignment_result,
-        version => '0.4.3',
-        detector_params => "",
-    );
-    die;
-};
-if ($@) {
-    my $error_str = $@;
-    diag $error_str;
-    my $expected = "Could";
-    ok($error_str =~ m/$expected/, "Crashed if not provided --bowtie-version");
-}
+test_for_error($class, \%params, "You must supply a bowtie version");
 
-eval {
-    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
-        alignment_result => $alignment_result,
-        version => '0.4.3',
-        detector_params => "--bowtie-version 2.0.0", # --bowtie-version=2.0.0
-        # space or = are both valid syntax  ^ here             or here ^
-    );
-    die;
-};
-if ($@) {
-    my $error_str = $@;
-    diag $error_str;
-    my $expected = "Chimerascan currently only supports";
-    ok($error_str =~ m/$expected/, "Crashed with wrong bowtie version.");
-}
+$params{'detector_params'} = "--reuse-bam 0";
+test_for_error($class, \%params, "Couldn't find parameter");
+
+$params{'detector_params'} = "--bowtie-version 2.0.0 --reuse-bam 0", # --bowtie-version=2.0.0
+          # space or = are both valid syntax  ^ here             or here ^
+test_for_error($class, \%params, "Chimerascan currently only supports");
+
+$params{'detector_params'} = "--bowtie-version 0.12.7 --reuse-bam bad";
+test_for_error($class, \%params, "You must specify either");
 
 my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
     alignment_result => $alignment_result,
     version => '0.4.3',
-    detector_params => "--bowtie-version=0.12.7",
+    detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
 );
 isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
 
 done_testing();
+
+sub test_for_error {
+    my ($class, $params, $expected_error) = @_;
+
+    eval {
+        my $result = $class->get_or_create(%{$params});
+        die "failed test";
+    };
+    if ($@) {
+        my $error_str = $@;
+        chomp $error_str;
+        diag "Got: \"$error_str\"";
+        ok($error_str =~ m/\Q$expected_error\E/, "Crashed as expected with \"$expected_error\"");
+    }
+}
+
+1;

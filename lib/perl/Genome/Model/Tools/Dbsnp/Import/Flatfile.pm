@@ -108,7 +108,8 @@ my @fd_order = qw(
 
 sub execute {
     my $self = shift;
-    print STDERR "Processing file ".$self->flatfile."\n";
+    $self->status_message("Processing file ".$self->flatfile);
+    $self->status_message("Using reference_coordinates $self->reference_coordinates");
 
     if ($self->contig_name_translation_file) {
         my %translate;
@@ -173,7 +174,6 @@ sub process_block {
     my $self = shift;
     my $output_fh = shift;
     my $reference_coordinates = $self->reference_coordinates;
-
     my @ss = sort { $b->[-1] cmp $a->[-1] } (grep { $_->[0] =~ /^ss/ } @_);
     my @submitters = uniq map { $_->[1] } @ss;
     my ($snp) = grep { $_->[0] eq 'SNP' } @_;
@@ -182,7 +182,7 @@ sub process_block {
     
     my $converted_type = $ds_type_conv{$_[0][3]};
     unless ($converted_type) {
-        print STDERR "Could not convert type ".$_[0][3]."\n";
+        $self->warning_message("Could not convert type ".$_[0][3]);
     }
     my %record = ('ds_id'        => 0,
                   'rs_id'        => $_[0][0],
@@ -207,12 +207,11 @@ sub process_block {
             #TODO: this is janky, but it quiets the warnings for now
             next if $val_type eq "suspect";
             unless($val_type_conv{$val_type}) {
-                print STDERR "Warning: $val_type not found in table\n";
+                $self->warning_message("$val_type not found in table");
             }
             $record{$val_type_conv{$val_type}} = 1;
         }
     }
-    
     for my $ctg (@ctgs){
         my $contig_name;
         if ($self->use_contig) {

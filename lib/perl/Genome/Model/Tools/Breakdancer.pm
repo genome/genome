@@ -66,6 +66,11 @@ my %BREAKDANCER_VERSIONS = (
         cfg => 'usr/lib/breakdancer-max1.3/bam2cfg.pl',
         max => 'usr/bin/breakdancer-max1.3',
     },
+    '1.3.7' => {
+        dir => '/',
+        cfg => 'usr/lib/breakdancer-max1.3.7/bam2cfg.pl',
+        max => 'usr/bin/breakdancer-max1.3.7',
+    },
 );
 
 
