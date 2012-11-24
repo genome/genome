@@ -14,6 +14,15 @@ class Genome::Model::ClinSeq::Command::SummarizeModels {
             require_user_verify => 0,
             doc => 'clinseq models to sumamrize'
         },
+        outdir => { 
+            is => 'FilesystemPath',
+            doc => 'Directory where output files will be written', 
+        },
+        skip_lims_reports => {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'Use this option to skip LIMS use of illumina_info run/lane/library report tool',
+        }
     ],
     doc => 'summarize clinseq model status, input models, processing profiles, and results',
 };
@@ -21,13 +30,13 @@ class Genome::Model::ClinSeq::Command::SummarizeModels {
 sub help_synopsis {
     return <<EOS
 
-genome model clin-seq summarize-models 2882726707
+genome model clin-seq summarize-models --outdir=/tmp/ 2882726707
 
-genome model clin-seq summarize-models "name='ClinSeq - ALL1 - (Nov. 2011 PP) - v2'"
+genome model clin-seq summarize-models --outdir=/tmp/ "name='ClinSeq - ALL1 - (Nov. 2011 PP) - v2'"
 
-genome model clin-seq summarize-models subject.common_name=HG1
+genome model clin-seq summarize-models --outdir=/tmp/ subject.common_name=HG1
 
-genome model clin-seq summarize-models "subject.common_name like 'HG%'"
+genome model clin-seq summarize-models --outdir=/tmp/ "subject.common_name like 'HG%'"
 
 EOS
 }
@@ -54,7 +63,7 @@ sub execute {
       next;
     }
     
-    my $run = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$clinseq_build]);
+    my $run = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(outdir=>$self->outdir, skip_lims_reports=>1, builds=>[$clinseq_build]);
     $run->dump_status_messages(1);
     $run->execute;
 
