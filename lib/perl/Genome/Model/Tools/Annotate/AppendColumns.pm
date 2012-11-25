@@ -29,6 +29,17 @@ sub execute {
     my $self = shift;
 
     my %additional_info;
+
+    my $variants_in = Genome::Sys->open_file_for_reading($self->input_variants);
+    my $variants_header_line = <$variants_in>;
+    
+    while(my $line = <$variants_in>) {
+        chomp $line;
+        my @fields = split(/\t/, $line);
+        $additional_info{$fields[0]}{$fields[1]}{$fields[2]} = 1;
+    }
+    $variants_in->close;
+
     my $in = Genome::Sys->open_file_for_reading($self->additional_columns_file);
 
     my $header_line = <$in>;
@@ -46,8 +57,11 @@ sub execute {
     while(my $line = <$in>) {
         chomp $line;
         my @fields = split (/\t/, $line);
-        foreach my $column (@columns_list) {
-            $additional_info{$fields[0]}{$fields[1]}{$fields[2]}{$column} = $fields[$header{$column}];
+        if (defined $additional_info{$fields[0]}{$fields[1]}{$fields[2]} and $additional_info{$fields[0]}{$fields[1]}{$fields[2]} == 1) {
+            $additional_info{$fields[0]}{$fields[1]}{$fields[2]} = {};
+            foreach my $column (@columns_list) {
+                $additional_info{$fields[0]}{$fields[1]}{$fields[2]}{$column} = $fields[$header{$column}];
+            }
         }
     }
     $in->close;
