@@ -8,6 +8,15 @@ use Genome;
 class Genome::Model::Tools::Sv::MergeAssembledCallsets {
     is => 'Command::V2',
     has => [
+        index_file => { #ARGV[0]
+            is => 'Text',
+            doc => 'the result index file (three columns: set name, .csv file, .fasta file',
+        },
+        output_file => {
+            is => 'Text',
+            default_value => '-',
+            doc => 'Where to write the output (defaults to STDOUT)',
+        },
         max_merge_distance => { #-d
             is => 'Integer',
             default_value => 20,
@@ -88,7 +97,8 @@ sub execute {
     my %f_fasta;
     my %diff_size;
     my %diff_loc;
-    open(INX,"<$ARGV[0]") || die "unable to open $ARGV[0]\n";
+    my $index_file = $self->index_file;
+    open(INX,"<$index_file") || die "unable to open $index_file";
     while(<INX>){
         chomp;
         next if(/^\#/);
@@ -98,6 +108,13 @@ sub execute {
         $f_fasta{$set}=$f_fasta;
         $diff_size{$set}=$diff_size if(defined $diff_size);
         $diff_loc{$set}=$diff_loc if(defined $diff_loc);
+    }
+
+    my $output_fh;
+    if($self->output_file and $self->output_file ne '-') {
+        $output_fh = Genome::Sys->open_file_for_writing($self->output_file);
+    } else {
+        $output_fh = \*STDOUT;
     }
 
     my %SVs;
@@ -129,7 +146,7 @@ sub execute {
                     my $SV=$SVs{$chr}{$chr2}{$pos};
                     my $hit= $self->_overlap(\%EXSVs, $chr,$chr2,$pos,$SV);
                     if($hit){
-#	  printf "exclude: %s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%d\t%s\t%s\n",$chr,$SV->{OuterStart},$SV->{InnerStart},$chr2,$SV->{InnerEnd},$SV->{OuterEnd},$SV->{type},join(',',@{$SV->{ori}}),$SV->{minsize},$SV->{maxsize},join(',',@{$SV->{group}}),join(',',@{$SV->{wAsmscore}});
+#	  $output_fh->printf( "exclude: %s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%d\t%s\t%s\n",$chr,$SV->{OuterStart},$SV->{InnerStart},$chr2,$SV->{InnerEnd},$SV->{OuterEnd},$SV->{type},join(',',@{$SV->{ori}}),$SV->{minsize},$SV->{maxsize},join(',',@{$SV->{group}}),join(',',@{$SV->{wAsmscore}}));
                         delete $SVs{$chr}{$chr2}{$pos};
                     }
                 }
@@ -138,9 +155,9 @@ sub execute {
     }
 
 #print table
-#printf "#ID\tCHR\tPOS\tTYPE\tSIZE\tGROUPS\tHET\n";
-#printf "#ID\tCHR1\tOUTER_START\tINNER_START\tCHR2\tINNER_END\tOUTER_END\tTYPE\tORIENTATION\tMINSIZE\tMAXSIZE\tSOURCE\tSCORES\tCopy_Number\tGene\tKnown\n";
-    printf "#ID\tCHR1\tOUTER_START\tINNER_START\tCHR2\tINNER_END\tOUTER_END\tTYPE\tORIENTATION\tMINSIZE\tMAXSIZE\tSOURCE\tSCORES\tCopy_Number\n";
+#$output_fh->printf( "#ID\tCHR\tPOS\tTYPE\tSIZE\tGROUPS\tHET\n");
+#$output_fh->printf( "#ID\tCHR1\tOUTER_START\tINNER_START\tCHR2\tINNER_END\tOUTER_END\tTYPE\tORIENTATION\tMINSIZE\tMAXSIZE\tSOURCE\tSCORES\tCopy_Number\tGene\tKnown\n");
+    $output_fh->printf( "#ID\tCHR1\tOUTER_START\tINNER_START\tCHR2\tINNER_END\tOUTER_END\tTYPE\tORIENTATION\tMINSIZE\tMAXSIZE\tSOURCE\tSCORES\tCopy_Number\n");
 
     my $fout;
     if($self->output_fasta){
@@ -161,7 +178,7 @@ sub execute {
                 my $cid="$chr.$idx";
                 #my $pos=($SV->{OuterStart}==$SV->{InnerStart})?$SV->{OuterStart}:join(',',$SV->{OuterStart},$SV->{InnerStart});
                 my $size=($SV->{minsize}==$SV->{maxsize})?$SV->{minsize}:join('-',$SV->{minsize},$SV->{maxsize});
-                #printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",$cid,$chr,$pos,"Deletion",$size,join(',',@{$SV->{group}}),join(',',@{$SV->{het}});
+                #$output_fh->printf( "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",$cid,$chr,$pos,"Deletion",$size,join(',',@{$SV->{group}}),join(',',@{$SV->{het}}));
                 my $maxscore=-1;
                 my $winningGroup;
                 my $winningContig;
@@ -194,7 +211,7 @@ sub execute {
     foreach my $key(@SVkeys){
         my ($cid,$chr,$chr2,$pos,$winningGroup,$winningContig)=split /\|/,$key;
         my $SV=$SVs{$chr}{$chr2}{$pos};
-        printf "%s\t%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%d\t%s\t%s\t%s\n",$cid,$chr,$SV->{OuterStart},$SV->{InnerStart},$chr2,$SV->{InnerEnd},$SV->{OuterEnd},$SV->{type},join(',',@{$SV->{ori}}),$SV->{minsize},$SV->{maxsize},join(',',@{$SV->{group}}),join(',',@{$SV->{wAsmscore}}),$SV->{extra};
+        $output_fh->printf( "%s\t%s\t%d\t%d\t%s\t%d\t%d\t%s\t%s\t%d\t%d\t%s\t%s\t%s\n",$cid,$chr,$SV->{OuterStart},$SV->{InnerStart},$chr2,$SV->{InnerEnd},$SV->{OuterEnd},$SV->{type},join(',',@{$SV->{ori}}),$SV->{minsize},$SV->{maxsize},join(',',@{$SV->{group}}),join(',',@{$SV->{wAsmscore}}),$SV->{extra});
 
         if($self->output_fasta){
             my $seqobj;
@@ -284,7 +301,7 @@ sub _add_svs {
             next;
         }
 
-        #printf "%s\t%d\t%s\t%d\t%s\t%d\t%s\t%s\t%d\t%d\t%d%%\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s\n", $chr,$start,$chr2,$end,$ori,$size,$type,$het,$wAsmscore,$read_len,$perc_aligned,$n_seg,$n_sub,$n_indel,$nbp_indel,$microhomology,$scarstr,$prestr,$asm_parm;
+        #$output_fh->printf( "%s\t%d\t%s\t%d\t%s\t%d\t%s\t%s\t%d\t%d\t%d%%\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s\n", $chr,$start,$chr2,$end,$ori,$size,$type,$het,$wAsmscore,$read_len,$perc_aligned,$n_seg,$n_sub,$n_indel,$nbp_indel,$microhomology,$scarstr,$prestr,$asm_parm);
 
         my $found;
         my @tds=($type && $type=~/ctx/i)?(0):(-$size,0,$size);
