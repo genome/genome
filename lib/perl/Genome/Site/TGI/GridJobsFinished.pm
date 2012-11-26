@@ -327,17 +327,17 @@ class Genome::Site::TGI::GridJobsFinished {
     data_source => 'Genome::DataSource::GMSchema',
 };
 
-sub cpu_chunk_size {
+sub cpu_instance_size {
     return 1;
 }
 
-sub memory_chunk_size {
-    return 2147483648; # 2 GB
+sub memory_instance_size {
+    return 4294967296; # 4 GB
 }
 
-sub cpu_chunks_used {
+sub cpu_instances_used {
     my $self = shift;
-    return POSIX::ceil($self->num_cpus / $self->cpu_chunk_size);
+    return POSIX::ceil($self->num_cpus / $self->cpu_instance_size);
 }
 
 # Memory requested can be 0 if the user didn't actually request any, or they
@@ -347,14 +347,14 @@ sub actual_memory_used {
     return List::Util::max($self->memory_requested, $self->max_memory);
 }
 
-sub memory_chunks_used {
+sub memory_instances_used {
     my $self = shift;
-    return POSIX::ceil($self->actual_memory_used / $self->memory_chunk_size);
+    return POSIX::ceil($self->actual_memory_used / $self->memory_instance_size);
 }
 
-sub total_chunks_used {
+sub total_instances_used {
     my $self = shift;
-    return List::Util::max($self->cpu_chunks_used, $self->memory_chunks_used);
+    return List::Util::max($self->cpu_instances_used, $self->memory_instances_used);
 }
 
 sub wallclock_time_seconds {
@@ -367,9 +367,9 @@ sub wallclock_time_hours {
     return $self->wallclock_time_seconds / 60;
 }
 
-sub total_chunk_hours_used {
+sub total_instance_hours_used {
     my $self = shift;
-    return $self->total_chunks_used / $self->wallclock_time_hours;
+    return $self->total_instances_used / $self->wallclock_time_hours;
 }
 
 1;
