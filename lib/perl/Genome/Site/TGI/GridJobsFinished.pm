@@ -3,6 +3,7 @@ package Genome::Site::TGI::GridJobsFinished;
 use strict;
 use warnings;
 use Genome;
+use POSIX;
 
 class Genome::Site::TGI::GridJobsFinished {
     table_name => "GSC.GRID_JOBS_FINISHED",
@@ -293,19 +294,24 @@ class Genome::Site::TGI::GridJobsFinished {
             is => 'Text',
             column_name => 'dependcond',
         },
-        mem_used => {
+        memory_used => {
             is => 'Text',
+            column_name => 'mem_used',
+            default => 0,
         },
         max_memory => {
             is => 'Number',
+            default => 0,
         },
         max_swap => {
             is => 'Number',
         },
-        mem_requested => {
+        memory_requested => {
             is => 'Number',
+            column_name => 'mem_requested',
+            default => 0,
         },
-        mem_requested_operation => {
+        memory_requested_operation => {
             is => 'Text',
             column_name => 'mem_requested_oper',
         },
@@ -320,5 +326,44 @@ class Genome::Site::TGI::GridJobsFinished {
     ],
     data_source => 'Genome::DataSource::GMSchema',
 };
+
+sub cpu_chunk_size {
+    return 1;
+}
+
+sub memory_chunk_size {
+    return 2147483648; # 2 GB
+}
+
+sub cpu_chunks_used {
+    my $self = shift;
+    return POSIX::ceil($self->num_cpus / $self->cpu_chunk_size);
+}
+
+sub memory_chunks_used {
+    my $self = shift;
+    my $memory_used = List::Util::max($self->memory_requested, $self->max_memory);
+    return POSIX::ceil($memory_used / $self->memory_chunk_size);
+}
+
+sub total_chunks_used {
+    my $self = shift;
+    return List::Util::max($self->cpu_chunks_used, $self->memory_chunks_used);
+}
+
+sub wallclock_time_seconds {
+    my $self = shift;
+    return $self->run_time;
+}
+
+sub wallclock_time_hours {
+    my $self = shift;
+    return $self->wallclock_time_seconds / 60;
+}
+
+sub chunk_hours {
+    my $self = shift;
+    return $self->total_chunks_used / $self->wallclock_time_hours;
+}
 
 1;
