@@ -49,6 +49,13 @@ class Genome::Model::Tools::Validation::SvManualReviewContigs {
             doc => 'reference sequence build to be used for creating new reference with appended contigs',
         },
         ],
+    has_transient_optional_output => [
+        realignment_model_ids => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'the ids of the models that we made for aligning to our new contigs',
+        },
+        ],
                 doc => 'create and align validation data to an SV contig reference',
 };
 
@@ -390,6 +397,8 @@ sub execute {
         my $new_normal_model = $normal_copy->_new_model;
         my $new_normal_model_id = $new_normal_model->id;
     }
+
+    $self->realignment_model_ids([$new_tumor_model_id, $new_normal_model_id]);
 
     #final notices to user
     print "\n\n\n###################### IMPORTANT INFORMATION ######################\n\n";
