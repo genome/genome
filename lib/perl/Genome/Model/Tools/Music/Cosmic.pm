@@ -34,6 +34,7 @@ class Genome::Model::Tools::Music::Cosmic {
     ],
     doc => "Match a list of variants to those in COSMIC, and highlight druggable targets",
 };
+
 sub help_detail {
     return <<HELP;
 This module compares variants in the MAF, WU annotation or VCF format file user submitted 
@@ -91,6 +92,7 @@ These column headers in the MAF must have these names in the header in order for
            strand  - the strand of transcript, such as -1/+1
 HELP
 }
+
 sub help_synopsis {
     return <<EOS;
  ... music cosmic \\
