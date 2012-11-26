@@ -340,10 +340,16 @@ sub cpu_chunks_used {
     return POSIX::ceil($self->num_cpus / $self->cpu_chunk_size);
 }
 
+# Memory requested can be 0 if the user didn't actually request any, or they
+# could have under-requested. In either case, the actual memory usage is stored.
+sub actual_memory_used {
+    my $self = shift;
+    return List::Util::max($self->memory_requested, $self->max_memory);
+}
+
 sub memory_chunks_used {
     my $self = shift;
-    my $memory_used = List::Util::max($self->memory_requested, $self->max_memory);
-    return POSIX::ceil($memory_used / $self->memory_chunk_size);
+    return POSIX::ceil($self->actual_memory_used / $self->memory_chunk_size);
 }
 
 sub total_chunks_used {
@@ -361,7 +367,7 @@ sub wallclock_time_hours {
     return $self->wallclock_time_seconds / 60;
 }
 
-sub chunk_hours {
+sub total_chunk_hours_used {
     my $self = shift;
     return $self->total_chunks_used / $self->wallclock_time_hours;
 }
