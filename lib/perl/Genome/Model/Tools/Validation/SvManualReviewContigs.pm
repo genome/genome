@@ -30,7 +30,7 @@ class Genome::Model::Tools::Validation::SvManualReviewContigs {
             is => 'String',
             doc => 'some string to use in model names, etc, such as "BRC2"',
         },
-        ],
+    ],
     has_optional_input => [
         somatic_validation_model_id => {
             is => 'Number',
@@ -48,20 +48,20 @@ class Genome::Model::Tools::Validation::SvManualReviewContigs {
             is => 'Integer',
             doc => 'reference sequence build to be used for creating new reference with appended contigs',
         },
-        ],
+    ],
     has_transient_optional_output => [
         realignment_model_ids => {
             is => 'Text',
             is_many => 1,
             doc => 'the ids of the models that we made for aligning to our new contigs',
         },
-        ],
-                doc => 'create and align validation data to an SV contig reference',
+    ],
+    doc => 'create and align validation data to an SV contig reference',
 };
 
 sub help_detail {
     return <<EOS
-    This tool takes as input a file of SV-calls and an associated assembly fasta output file. Assembly contigs are matched to each event, and then appendended to the reference sequence specified via --reference-sequence-build-id. This modified reference sequence is imported into the system, and then current validation builds are copied, with the copies modified from the original to align to the new reference sequence. A command is given via STDOUT for use in running builds of these realignment models, after which alignments to the SV contigs may be used for manual review.
+This tool takes as input a file of SV-calls and an associated assembly fasta output file. Assembly contigs are matched to each event, and then appendended to the reference sequence specified via --reference-sequence-build-id. This modified reference sequence is imported into the system, and then current validation builds are copied, with the copies modified from the original to align to the new reference sequence. A command is given via STDOUT for use in running builds of these realignment models, after which alignments to the SV contigs may be used for manual review.
 EOS
 }
 
@@ -265,7 +265,7 @@ sub execute {
         my $tumor_sample = $build->tumor_sample;
         my $tumor_sample_id = $build->tumor_sample->sample_id;
         my $tumor_subject = Genome::Subject->get($tumor_sample->subject_id);
-        
+
         my $normal_sample = $build->normal_sample;
         my $normal_sample_id = $build->normal_sample->sample_id;
         my $normal_subject = Genome::Subject->get($normal_sample->subject_id);
@@ -278,31 +278,31 @@ sub execute {
             my $library_id = $inst_data->library_id;
             my $library = Genome::Library->get($library_id);
             my $sample_id = $library->sample_id;
-            
+
             if($sample_id eq $tumor_sample_id){
                 push(@tumor_instrument_data,$inst_data);
             } elsif ($sample_id eq $normal_sample_id){
                 push(@normal_instrument_data,$inst_data);
-                
+
             } else {
                 die "sample id $sample_id from instrument data does not match sample id from either tumor (" . $build->tumor_sample->sample_id . ") or normal (" . $build->normal_sample->sample_id . ")\n";
             }
         }
-       
+
         #make sure these model names aren't taken. If they are, add a digit to the end
         my $new_tumor_model_name = $sample_id . "-Tumor-SV-Validation-ManRevContigs";
         my $new_normal_model_name = $sample_id . "-Normal-SV-Validation-ManRevContigs";
-        
+
         $new_tumor_model_name = checkModelName($new_tumor_model_name);
         $new_normal_model_name = checkModelName($new_normal_model_name);
-        
+
         print STDERR "creating models $new_normal_model_name and $new_tumor_model_name\n";
 
         my $new_pp = Genome::ProcessingProfile->get("2599983");
         print STDERR "---\n";
         print STDERR join("\n",($new_ref_build,join("|",@tumor_instrument_data),$tumor_subject,$new_tumor_model_name,$new_pp)) . "\n";
         print STDERR "---\n";
-        
+
 
 
         #new tumor model
@@ -348,19 +348,19 @@ sub execute {
         #make sure these model names aren't taken. If they are, add a digit to the end
         my $new_tumor_model_name = $sample_id . "-Tumor-SV-Validation-ManRevContigs";
         my $new_normal_model_name = $sample_id . "-Normal-SV-Validation-ManRevContigs";
-        
+
         $new_tumor_model_name = checkModelName($new_tumor_model_name);
         $new_normal_model_name = checkModelName($new_normal_model_name);
-        
+
         print STDERR "creating models $new_normal_model_name and $new_tumor_model_name\n";
-        
-        
+
+
         #my $new_pp = "dlarson bwa0.5.9 -q 5 indel contig test picard1.42";
         #my $new_pp = Genome::ProcessingProfile->get("2599983");
         my $new_pp = 2599983;
         my $tumor_model = Genome::Model->get($self->tumor_val_model_id) or die "Could not find tumor model with id $self->tumor_val_model_id.\n";
         my $normal_model = Genome::Model->get($self->normal_val_model_id) or die "Could not find normal model with id $self->normal_val_model_id.\n";
-        
+
         #new tumor model
         my $tumor_copy = Genome::Model::Command::Copy->create(
             model => $tumor_model,
