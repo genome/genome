@@ -278,7 +278,6 @@ sub execute {
     #Perform QC, splice site, and junction expression analysis using the Tophat output
     $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq tophat alignment results, splice sites and junction expression - Tumor", RESET;
 
-    #TODO: Abandon the old way of doing this and just assume the result can be obtained from RNA-seq?
     my $tumor_rnaseq_build = $builds->{tumor_rnaseq};
     my $tumor_rnaseq_build_dir = $tumor_rnaseq_build->data_directory;
     my $junctions_dir = $tumor_rnaseq_build_dir . "/junctions/";
@@ -286,16 +285,11 @@ sub execute {
       my $results_dir = &createNewDir('-path'=>$tumor_rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
       my $cp_cmd = "cp -r $junctions_dir" . "* $results_dir";
       Genome::Sys->shellcmd(cmd=>$cp_cmd);
-    }else{
-      &runRnaSeqTophatJunctionsAbsolute('-label'=>'tumor_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$tumor_rnaseq_dir, '-script_dir'=>$script_dir, '-clinseq_annotations_dir'=>$clinseq_annotations_ucsc_dir, '-verbose'=>$verbose);
     }
 
     #Perform the single-tumor outlier analysis (based on Cufflinks files)
     $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq Cufflinks absolute expression values - Tumor", RESET;
     &runRnaSeqCufflinksAbsolute('-label'=>'tumor_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$tumor_rnaseq_dir, '-script_dir'=>$script_dir, '-ensembl_version'=>$ensembl_version, '-verbose'=>$verbose);
-
-    #Perform the multi-tumor differential outlier analysis
-
   }
   if ($normal_rnaseq){
     my $normal_rnaseq_dir = &createNewDir('-path'=>$rnaseq_dir, '-new_dir_name'=>'normal', '-silent'=>1);
@@ -303,7 +297,6 @@ sub execute {
     #Perform QC, splice site, and junction expression analysis using the Tophat output
     $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq tophat alignment results, splice sites and junction expression - Normal", RESET;
 
-    #TODO: Abandon the old way of doing this and just assume the result can be obtained from RNA-seq?
     my $normal_rnaseq_build = $builds->{normal_rnaseq};
     my $normal_rnaseq_build_dir = $normal_rnaseq_build->data_directory;
     my $junctions_dir = $normal_rnaseq_build_dir . "/junctions/";
@@ -311,16 +304,11 @@ sub execute {
       my $results_dir = &createNewDir('-path'=>$normal_rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
       my $cp_cmd = "cp -r $junctions_dir" . "* $results_dir";
       Genome::Sys->shellcmd(cmd=>$cp_cmd);
-    }else{
-      &runRnaSeqTophatJunctionsAbsolute('-label'=>'normal_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$normal_rnaseq_dir, '-script_dir'=>$script_dir, '-clinseq_annotations_dir'=>$clinseq_annotations_ucsc_dir, '-verbose'=>$verbose);
     }
 
     #Perform the single-normal outlier analysis (based on Cufflinks files)
     $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq Cufflinks absolute expression values - Normal", RESET;
     &runRnaSeqCufflinksAbsolute('-label'=>'normal_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$normal_rnaseq_dir, '-script_dir'=>$script_dir, '-ensembl_version'=>$ensembl_version, '-verbose'=>$verbose);
-
-    #Perform the multi-normal differential outlier analysis
-
   }
 
   #Annotate gene lists to deal with commonly asked questions like: is each gene a kinase?
@@ -919,49 +907,6 @@ sub runRnaSeqCufflinksAbsolute{
       }
     }
   }
-  return();
-}
-
-
-###################################################################################################################################
-#                                                                                                     
-###################################################################################################################################
-sub runRnaSeqTophatJunctionsAbsolute{
-  my %args = @_;
-  my $label = $args{'-label'};
-  my $data_paths = $args{'-data_paths'};
-  my $out_paths = $args{'-out_paths'};
-  my $rnaseq_dir = $args{'-rnaseq_dir'};
-  my $script_dir = $args{'-script_dir'};
-  my $clinseq_annotations_ucsc_dir = $args{'-clinseq_annotations_dir'};
-  my $verbose = $args{'-verbose'};
-
-  #Skip this analysis if the directory already exists
-  my $results_dir = &createNewDir('-path'=>$rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
-  unless (-e $results_dir && -d $results_dir){
-    my $tophat_alignment_summary_script = $script_dir . "qc/tophatAlignmentSummary.pl";
-    my $absolute_rnaseq_dir = &createNewDir('-path'=>$rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
-    my $tophat_qc_splice_cmd = "$tophat_alignment_summary_script  --reference_fasta_file=$data_paths->{$label}->{reference_fasta_path}  --tophat_alignment_dir=$data_paths->{$label}->{alignments}  --reference_annotations_dir=$clinseq_annotations_ucsc_dir  --working_dir=$results_dir  --verbose=$verbose";
-    if ($verbose){print YELLOW, "\n\n$tophat_qc_splice_cmd\n\n", RESET;}
-    Genome::Sys->shellcmd(cmd => $tophat_qc_splice_cmd);
-  }
-
-  #Store the file paths for later processing
-  my $label_1 = $label . "tophat_junctions_absolute_genes";
-  my $label_2 = $label . "tophat_junctions_absolute_transcripts";
-
-  opendir(DIR, $results_dir);
-  my @files = readdir(DIR);
-  closedir(DIR);
-  foreach my $file (@files){
-    #Only store certain .tsv files
-    if ($file =~ /Ensembl\.Junction/){
-      #Store the files to be annotated later:
-      my $new_label = $label . "_tophat_junctions_absolute";
-      $out_paths->{$new_label}->{$file}->{'path'} = $results_dir.$file;
-    }
-  }
-
   return();
 }
 
