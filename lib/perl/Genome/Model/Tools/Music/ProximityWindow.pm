@@ -41,7 +41,7 @@ sub help_synopsis {
   return <<EOS
  ... music proximity \\
         --maf-file input_dir/myMAF.tsv \\
-        --bef_file input_dir/myBED.bed \\
+        --bed_file input_dir/myBED.bed \\
         --bam_list input_dir/myBAMlist \\
         --output-file output_dir/report\\
 EOS
