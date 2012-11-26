@@ -337,9 +337,6 @@ sub execute {
         my $new_normal_model = Genome::Model->get($new_normal_model_id);
         print STDERR "normal model defined: $new_normal_model_id\n";
 
-        UR::Context->commit;
-
-
     #-------------------------------------------------------
     } else { # $input_model_type eq "pairedref"
 
