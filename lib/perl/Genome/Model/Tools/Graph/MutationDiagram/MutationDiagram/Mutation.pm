@@ -11,6 +11,7 @@ our $VERSION = '1.0';
 use strict;
 use warnings;
 use SVG;
+use Carp;
 
 # If you know about and want to use inheritance:
 #use Base::Class;
@@ -27,6 +28,7 @@ sub new {
 							_text => $arg{text},
 							_id => $arg{id},
                             _max_frequency => $arg{max_freq},
+                            _shape => $arg{shape},
 						 };
     $self->{_feature_length} = 1;
 
@@ -68,6 +70,14 @@ sub new {
     $self->{_text_label}{y} = $backbone->dimensions->{y}-$mutation_top;
 
     bless($self, ref($class) || $class);
+
+    if($arg{shape}) {
+        $self->{_shape} = "_" . lc($self->{_shape});
+        unless($self->can($self->{_shape})) {
+            croak "Shape $arg{shape} is currently unsupported";
+        }
+    }
+    
     return $self;
 }
 #----------------------------------
@@ -129,16 +139,17 @@ sub draw {
         style => $self->{_style}, 
     );
 
+    my $shape_func = $self->{_shape};
     my $drawable_frequency = defined $self->{_max_frequency} && $self->{_frequency} > $self->{_max_frequency} ? $self->{_max_frequency} : $self->{_frequency};                                        
     for (my $i = 0; $i < $drawable_frequency; $i++) {
         #draw lollipop                                            
-        my $shape = $self->_circle($svg, $self->{_id} . "_lollipop_" . $i, $self->{_lollipop}{x}, $self->{_lollipop}{y} - ($i * 13), 5, {fill => $self->{_color}, stroke => 'black'});  
+        my $shape = $self->$shape_func($svg, $self->{_id} . "_lollipop_" . $i, $self->{_lollipop}{x}, $self->{_lollipop}{y} - ($i * 13), 5, {fill => $self->{_color}, stroke => 'black'});  
     }
 
     if(defined $self->{_max_frequency} && $self->{_frequency} > $self->{_max_frequency}) {
         #frequency is truncated
         $self->_broken_count_indicator($svg, $self->{_lollipop}{x}, $self->{_lollipop}{y} - ($drawable_frequency * 13), 5);
-        my $shape = $self->_circle($svg, $self->{_id} . "_lollipop_" . "gutter", $self->{_lollipop}{x}, $self->{_lollipop}{y} - (($drawable_frequency + 1) * 13), 5, {fill => $self->{_color}, stroke => 'black'});  
+        my $shape = $self->$shape_func($svg, $self->{_id} . "_lollipop_" . "gutter", $self->{_lollipop}{x}, $self->{_lollipop}{y} - (($drawable_frequency + 1) * 13), 5, {fill => $self->{_color}, stroke => 'black'});  
     }
 
     #add text

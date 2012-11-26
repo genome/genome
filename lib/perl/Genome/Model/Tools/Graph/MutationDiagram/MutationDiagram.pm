@@ -472,6 +472,7 @@ sub Draw {
             color => $mutation_color,
             style => {stroke => 'black', fill => 'none'},
             max_freq => $self->{_max_display_freq},
+            shape => 'circle',
         );
 
 
