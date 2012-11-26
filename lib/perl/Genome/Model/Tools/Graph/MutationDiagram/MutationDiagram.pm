@@ -47,6 +47,7 @@ sub new {
         _annotation_build_id => $arg{annotation_build_id} || '',
         _output_directory => $arg{output_directory} || '.',
         _vep_frequency_field => $arg{vep_frequency_field},
+        _max_display_freq => $arg{max_display_freq},
     };
 
     if ($self->{_annotation_build_id}) {
@@ -469,7 +470,9 @@ sub Draw {
             text => $mutation,
             frequency => $mutations->{$mutation}{frequency},
             color => $mutation_color,
-            style => {stroke => 'black', fill => 'none'});
+            style => {stroke => 'black', fill => 'none'},
+            max_freq => $self->{_max_display_freq},
+        );
 
 
         #jitter labels as a test
