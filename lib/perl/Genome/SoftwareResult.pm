@@ -72,14 +72,13 @@ sub _faster_get {
             $statsd_prefix . "alternate_get_time." . $statsd_class_suffix,
             $alternate_time);
 
-        my @results;
-        for my $object (@objects_with_params) {
-            if ($object->inputs) {
-                next;
-            }
-            push @results, $object;
-        }
-        return @results;
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "full_time.total", $alternate_time);
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "full_time." . $statsd_class_suffix,
+            $alternate_time);
+
+        return @objects_with_params;
     }
 
     my @objects_with_inputs = $class->get(%inputs);
@@ -97,8 +96,10 @@ sub _faster_get {
             $statsd_prefix . "first_get_count.total", 0);
         Genome::Utility::Instrumentation::timing(
             $statsd_prefix . "first_get_count." . $statsd_class_suffix, 0);
+
         return @objects_with_inputs;
     }
+
     my $first_get_count = scalar(@objects_with_inputs);
     Genome::Utility::Instrumentation::timing(
         $statsd_prefix . "first_get_count.total", $first_get_count);
@@ -115,8 +116,8 @@ sub _faster_get {
         for my $param_name (@param_names) {
             my $object_value = $object->$param_name;
             my $param_value = $params{$param_name};
-            if (defined($object_value)) {
-                if (defined($param_value)) {
+            if ($object_value) {
+                if ($param_value) {
                     if($object_value ne $param_value) {
                         next OBJECT;
                     }
@@ -124,7 +125,7 @@ sub _faster_get {
                     next OBJECT;
                 }
             } else {
-                if (defined($param_value)) {
+                if ($param_value) {
                     next OBJECT;
                 }
             }
@@ -204,7 +205,9 @@ sub get_with_lock {
 sub get_or_create {
     my $class = shift;
 
+
     my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
 
@@ -217,7 +220,7 @@ sub get_or_create {
             @objects = $class->_faster_get(\%is_input, \%is_param);
             unless (@objects) {
                 $class->error_message("Could not create a $class for params " . Data::Dumper::Dumper(\@_) . " even after trying!");
-                die $class->error_message();
+                confess $class->error_message();
             }
         }
     }
@@ -240,10 +243,12 @@ sub create {
     }
 
     my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
 
     my @previously_existing = $class->_faster_get(\%is_input, \%is_param);
+
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         return;
