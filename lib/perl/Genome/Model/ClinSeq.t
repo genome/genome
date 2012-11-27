@@ -48,45 +48,42 @@ else {
     $dry_run = 1;
 }
 
-my $patient = Genome::Individual->get(common_name => "AML103");
-ok($patient, "got the AML103 patient");
+my $patient = Genome::Individual->get(common_name => "PNC6");
+ok($patient, "got the PNC6 patient");
 
 
-my $tumor_rna_sample = $patient->samples(name => "H_KA-306905-1121474");
+my $tumor_rna_sample = $patient->samples(name => "H_LF-09-213F-1221858");
 ok($tumor_rna_sample, "found the tumor RNA sample");
 
-my $tumor_genome_sample = $patient->samples(name => "H_KA-306905-1121472");
+my $tumor_genome_sample = $patient->samples(name => "H_LF-09-213F-1221853");
 ok($tumor_genome_sample, "found the tumor genome sample");
 
-my $normal_genome_sample = $patient->samples(name => "H_KA-306905-S.4294");
+my $normal_genome_sample = $patient->samples(name => "H_LF-09-213F-1221853");
 ok($normal_genome_sample, "found the normal genome sample");
 
-#Tumor RNA-seq model: 'AML103/ALL1 - RNA-seq - Ensembl 58_37c - TopHat 1.3.1 - Cufflinks 1.1.0 - Mask rRNA_MT - refcov - build37'
 my $tumor_rnaseq_model = Genome::Model::RnaSeq->get(
-    id => '2880794613',
+    id => 2888811351,
 );
 ok($tumor_rnaseq_model, "got the RNASeq model");
 
-#WGS somatic model: 'ALL1/AML103 - tumor/normal - wgs somatic variation - build37/hg19 - nov 2011 PP'
 my $wgs_model = Genome::Model::SomaticVariation->get(
-    id => '2882504846',
+    id => 2888915570, 
 );
 ok($wgs_model, "got the WGS Somatic Variation model");
 
-#Exome somatic model: 'ALL1/AML103 - exome somatic variation - build37/hg19 - nov 2011 PP'
 my $exome_model = Genome::Model::SomaticVariation->get(
-    id => '2882505032',
+    id => 2888844901,
 );
 ok($exome_model, "got the exome Somatic Variation model");
 
 my $p = Genome::ProcessingProfile::ClinSeq->create(
-    id   => -10001,
-    name => 'TESTSUITE ClinSeq Profile 1',
+    id   => -10002,
+    name => 'TESTSUITE ClinSeq Profile 2',
 );
 ok($p, "created a processing profile") or diag(Genome::ProcessingProfile::ClinSeq->error_message);
 
 my $m = $p->add_model(
-    name            => 'TESTSUITE-clinseq-model1',
+    name            => 'TESTSUITE-clinseq-model2',
     subclass_name   => 'Genome::Model::ClinSeq',
     subject         => $patient,
 );
@@ -140,13 +137,20 @@ is($retval, 1, 'execution of the build returned true');
 is($@, '', 'no exceptions thrown during build process') or diag $@;
 
 #Perform a diff between the stored results and the newly generated directory of results
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2012-07-26';
+my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2012-11-27';
 #print "\n\n$expected_data_directory\n\n";
+
+my $cleanup= 'cat ' 
+    . $temp_dir 
+    . q{/PNC6/clonality/PNC6.clustered.data.tsv | perl -nae '$F[-1] = "?"; print join("\t",@F),"\n"' } 
+    . ' >| ' . $temp_dir . q{/PNC6/clonality/PNC6.clustered.data.tsv.testmasked};
+
+Genome::Sys->shellcmd(cmd => $cleanup);
 
 unless ($dry_run) {
 
     #Exclude some files from the diff that tend to change when regenerated for the same build
-    my @diff = `diff -r --brief -x '*.R' -x '*.pdf' -x 'SummarizeBuilds.log.tsv' -x 'DumpIgvXml.log.txt' $expected_data_directory $temp_dir`;
+    my @diff = `diff -r --brief -x '*.R' -x '*.pdf' -x '*_COSMIC.svg' -x '*.clustered.data.tsv' -x 'SummarizeBuilds.log.tsv' -x 'DumpIgvXml.log.txt' $expected_data_directory $temp_dir`;
     ok(@diff == 0, "no differences from expected results and actual")
         or do { 
             diag("differences are:");
@@ -154,30 +158,5 @@ unless ($dry_run) {
             Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-clinseq-test-result");
         };
 }
+
         
-__END__
-
-# When the pipeline actually runs, and is perhaps slow, we'll need to run on fake data
-# Here is a start:
-
-my $human = Genome::Taxon->get(name => 'human');
-ok($human, "got the human taxon");
-
-my $patient = Genome::Individual->create(
-    name => 'TEST-patient99',
-    taxon => $human,
-);
-ok($patient, "defined a test patient");
-
-my $tumor = $patient->add_sample(
-    name => 'TEST-patient99-tumor',
-);
-ok($tumor, "created a tumor sample");
-
-my $normal = $patient->add_sample(
-    name => 'TEST-patient99-normal',
-);
-ok($normal, "created a normal sample");
-
-#...
-#
