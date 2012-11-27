@@ -50,6 +50,8 @@ class Genome::SoftwareResult {
 
 our %LOCKS;
 
+our @INPUTS_BLACKLIST = qw(reference_build_id annotation_build_id);
+our @PARAMS_WHITELIST = qw(test_name);
 sub _faster_get {
     my $class = shift();
     my %inputs = %{shift()};
@@ -60,6 +62,18 @@ sub _faster_get {
     $statsd_class_suffix =~ s/::/_/g;
 
     my $start_time = Time::HiRes::time();
+
+    for my $blacklisted_input (@INPUTS_BLACKLIST) {
+        if (exists $inputs{$blacklisted_input}) {
+            $params{$blacklisted_input} = delete $inputs{$blacklisted_input};
+        }
+    }
+    for my $whitelisted_param (@PARAMS_WHITELIST) {
+        if (exists $params{$whitelisted_param}) {
+            $inputs{$whitelisted_param} = delete $params{$whitelisted_param};
+        }
+    }
+
     unless (scalar(keys(%inputs))) {
         $class->warning_message(
             "No inputs provided for SoftwareResult lookup, using params only (this may be slow).");
