@@ -10,7 +10,7 @@ class Genome::DruggableGene::Command::RemoveDatasource {
     has => [
         source_db_name => {
             is => 'Text',
-            doc => 'source_db_name of the datasource to remove',
+            doc => 'source_db_name of the datasource to remove (e.g., dGene, DrugBank, Ensembl, Entrez, GO, HopkinsGroom, PharmGKB, RussLampel, TALC, TTD)',
         },
         source_db_version => {
             is => 'Text',
@@ -22,7 +22,11 @@ class Genome::DruggableGene::Command::RemoveDatasource {
 
 sub help_brief { 'Completely remove a DGIDB data source' }
 
-sub help_synopsis { help_brief() }
+sub help_synopsis {
+    return <<HELP
+genome druggable-gene remove-datasource --source-db-name=Entrez
+HELP
+}
 
 sub help_detail { help_brief() }
 

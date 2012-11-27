@@ -115,7 +115,7 @@ sub import_genes {
     my $version = $self->version;
     my $gene_outfile = shift;
     my @gene_name_reports;
-    my @headers = qw/ entrez_id entrez_gene_symbol entrez_gene_synonyms ensembl_ids /;
+    my @headers = qw/ entrez_id entrez_gene_symbol entrez_gene_synonyms ensembl_ids description/;
     my $parser = Genome::Utility::IO::SeparatedValueReader->create(
         input => $gene_outfile,
         headers => \@headers,
@@ -129,6 +129,8 @@ sub import_genes {
         my $gene_name = $gene->{entrez_id};
         my $gene_name_report = $self->_create_gene_name_report($gene_name, $citation, 'Entrez Gene Id', '');
         push @gene_name_reports, $gene_name_report;
+        my $description = $gene->{description};
+        my $desc_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{description}, 'Gene Description', '');
         my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_id}, 'Entrez Gene Id', '');
         my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_gene_symbol}, 'Gene Symbol', '');
         my @entrez_gene_synonyms = split(',', $gene->{entrez_gene_synonyms});
@@ -178,7 +180,7 @@ sub input_to_tsv {
     open(TARGETS, ">$targets_outfile") || die "\n\nCould not open outfile: $targets_outfile\n\n";
     binmode(TARGETS, ":utf8");
 
-    my $targets_header = join("\t", 'entrez_id', 'entrez_gene_symbol', 'entrez_gene_synonyms', 'ensembl_ids');
+    my $targets_header = join("\t", 'entrez_id', 'entrez_gene_symbol', 'entrez_gene_synonyms', 'ensembl_ids', 'description');
     print TARGETS "$targets_header\n";
 
     my %entrez_ids = %{$entrez_data->{'entrez_ids'}};
@@ -189,7 +191,8 @@ sub input_to_tsv {
         my $ensembl_ids = $entrez_id_names{ensembl_array};
         $ensembl_ids = join(",", @$ensembl_ids);
         my $symbol = $entrez_id_names{symbol};
-        print TARGETS join("\t", $entrez_id, $symbol, $synonyms, $ensembl_ids), "\n";
+        my $description = $entrez_id_names{description};
+        print TARGETS join("\t", $entrez_id, $symbol, $synonyms, $ensembl_ids, $description), "\n";
     }
 
     close(TARGETS);
@@ -228,6 +231,7 @@ sub loadEntrezData {
         my $symbol = $line[2];
         my $synonyms = $line[4];
         my $xref = $line[5]; #we will ignore all cross references except Ensembl for now
+        my $description = $line[8]; #Be aware this string contains commas, semicolons, and doubtless many other potentially problematic characters 
 
         #my @synonyms_array = grep{$_ ne '-'} (split("\\|", $synonyms), map{$_ =~ s/Ensembl://; $_} grep{$_ =~ /ENSG/ } split(/\|/, $xref));
         my @synonyms_array = grep{$_ ne '-'} split("\\|", $synonyms);
@@ -251,6 +255,7 @@ sub loadEntrezData {
 
         #Store entrez info keyed on entrez id
         $entrez_map{$entrez_id}{symbol} = $symbol;
+        $entrez_map{$entrez_id}{description} = $description;
         $entrez_map{$entrez_id}{synonyms_string} = $synonyms;
         $entrez_map{$entrez_id}{synonyms_array} = \@synonyms_array;
         $entrez_map{$entrez_id}{synonyms_hash} = \%synonyms_hash;
