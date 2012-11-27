@@ -118,6 +118,7 @@ sub execute {
 
     my %variants;
 
+    $self->status_message("Creating summary of all tables");
     foreach my $table_name ($self->table_names) {
         my $annotated_file = $self->outfile.".".$self->buildver."_".$table_name;
         my $in = Genome::Sys->open_file_for_reading($annotated_file);
@@ -136,10 +137,12 @@ sub execute {
     
 
     my $in = Genome::Sys->open_file_for_reading($input_file);
+    my $in_header = <$in>;
     my $out = Genome::Sys->open_file_for_writing($self->outfile.".summary");
     #print header
     $out->print(join("\t", "#Chr", "Start", "Stop", "RefAllele", "VarAllele", $self->table_names)."\n");
     
+    $self->status_message("Writing annotation summary");
     while (my $line = <$in>) {
         chomp $line;
         my @fields = split(/\t/, $line);
@@ -155,6 +158,8 @@ sub execute {
         }
         $out->print("\n");
     }
+    $self->status_message("Done writing annotation summary");
+    $in->close;
     $out->close;
     return 1;
 }

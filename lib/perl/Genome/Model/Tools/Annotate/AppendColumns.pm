@@ -54,6 +54,7 @@ sub execute {
         $header{$header_field} = $counter;
         $counter++;
     }
+    $self->status_message("Reading in additional columns");
     while(my $line = <$in>) {
         chomp $line;
         my @fields = split (/\t/, $line);
@@ -68,10 +69,11 @@ sub execute {
 
     $in = Genome::Sys->open_file_for_reading($self->input_variants);
     my $out = Genome::Sys->open_file_for_writing($self->output_file);
-    my $header_line = <$in>;
+    $header_line = <$in>;
     chomp $header_line;
     $out->print(join("\t", $header_line, @columns_list)."\n");
 
+    $self->status_message("Writing final output file");
     while(my $line = <$in>) {
         chomp $line;
         my @fields = split (/\t/, $line);
