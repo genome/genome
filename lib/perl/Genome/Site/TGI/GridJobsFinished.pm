@@ -364,12 +364,12 @@ sub wallclock_time_seconds {
 
 sub wallclock_time_hours {
     my $self = shift;
-    return $self->wallclock_time_seconds / 60;
+    return $self->wallclock_time_seconds / (60 * 60);
 }
 
 sub total_instance_hours_used {
     my $self = shift;
-    return $self->total_instances_used / $self->wallclock_time_hours;
+    return $self->total_instances_used * $self->wallclock_time_hours;
 }
 
 1;
