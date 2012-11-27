@@ -48,6 +48,7 @@ sub new {
         _output_directory => $arg{output_directory} || '.',
         _vep_frequency_field => $arg{vep_frequency_field},
         _max_display_freq => $arg{max_display_freq},
+        _lolli_shape => $arg{lolli_shape},
     };
 
     if ($self->{_annotation_build_id}) {
@@ -472,7 +473,7 @@ sub Draw {
             color => $mutation_color,
             style => {stroke => 'black', fill => 'none'},
             max_freq => $self->{_max_display_freq},
-            shape => 'circle',
+            shape => $self->{_lolli_shape},
         );
 
 
