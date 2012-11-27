@@ -47,8 +47,6 @@ sub execute {
 
     my $synchronous = ($self->auto and $self->auto_batch_size);  # whether we should start builds as we go or wait until the end
 
-    my $cleanup_succeeded = Genome::Model::Command::Admin::CleanupSucceeded->create();
-
     # Header for the report produced at the end of the loop
     $self->print_message(join("\t", qw(model_id action latest_build_status first_nondone_step latest_build_rev model_name pp_name fail_count)));
     $self->print_message(join("\t", qw(-------- ------ ------------------- ------------------ ---------------- ---------- ------- ----------)));
@@ -138,7 +136,7 @@ sub execute {
         elsif ($latest_build && $latest_build->status eq 'Succeeded') {
             $action = 'cleanup';
             if ($self->auto) {
-                $cleanup_succeeded->models([$model]);
+                my $cleanup_succeeded = Genome::Model::Command::Admin::CleanupSucceeded->create(models => [$model]);
                 $cleanup_succeeded->execute;
                 $cleanup_rv{$cleanup_succeeded->result}++;
                 $track_change->();
