@@ -39,7 +39,7 @@ class Genome::Model::Tools::Varscan::PullOneTwoBpIndels {
     small_indel_output_bed => {
         is => 'Text',
         doc => "File of small indels to be realigned. BED format - must be named *.bed! Note that the '.bed' output version of this file has padded start and stop to allow more robust local realignment. The '.annotation_format' output version has true coordinates." ,
-        is_optional => 0},
+        is_optional => 1 },
 
     large_indel_output_bed => {
         is => 'Text',
@@ -81,7 +81,8 @@ class Genome::Model::Tools::Varscan::PullOneTwoBpIndels {
     final_output_file   => {
         is => 'Text',
         doc => "gmt varscan process-validation-indels final output file labeling indels as Somatic or otherwise" ,
-        is_optional => 0},
+        is_output => 1,
+        is_optional => 1},
 
     skip_if_output_present      => {
         is => 'Boolean',
@@ -92,7 +93,7 @@ class Genome::Model::Tools::Varscan::PullOneTwoBpIndels {
     realigned_bam_file_directory => {
         is => 'Text',
         doc => "Where to dump the realigned bam file",
-        is_optional => 0},
+        is_optional => 1},
 
     normal_purity => {
         is => 'Float',
@@ -108,8 +109,9 @@ class Genome::Model::Tools::Varscan::PullOneTwoBpIndels {
 
     somatic_validation_build => {
         is => 'Integer',
-        doc => "directory for ",
+        doc => "Somatic validation build to use. If this is set, defaults will be set inside that build directory for final_output_file,realigned_bam_file_directory,small_indel_output_bed,large_indel_output_bed.",
         is_optional => 1,
+        is_input => 1,
     }
 
     ],    
@@ -154,6 +156,48 @@ sub convert_anno_indel_file_to_bed {
 
 sub execute {
     my $self = shift;
+
+    # Make sure that if output paths arent set that the somatic variation build is, and set good defaults
+    if ($self->somatic_validation_build) {
+        my $build = Genome::Model::Build->get($self->somatic_validation_build);
+        die $self->error_message("Could not get a build for id " . $self->somatic_validation_build) unless ($build);
+        my $base_dir = $build->data_directory . "/indel_validation";
+        Genome::Sys->create_directory($base_dir);
+        unless ($self->final_output_file) {
+            $self->final_output_file($base_dir."/final_output");
+        }
+        unless ($self->realigned_bam_file_directory) {
+            my $realigned_dir = "$base_dir/realigned_bams";
+            Genome::Sys->create_directory($realigned_dir);
+            $self->realigned_bam_file_directory($realigned_dir);
+        }
+        unless ($self->small_indel_output_bed) {
+            $self->small_indel_output_bed("$base_dir/small_indels.bed");
+        }
+        unless ($self->large_indel_output_bed) {
+            $self->large_indel_output_bed("$base_dir/large_indels.bed");
+        }
+        unless ($self->list_of_indel_files_to_validate) {
+            $self->list_of_indel_files_to_validate("$base_dir/indel_files_to_validate");
+        }
+        unless ($self->varscan_indel_output) {
+            $self->varscan_indel_output("$base_dir/varscan_indels");
+        }
+        unless ($self->varscan_snp_output) {
+            $self->varscan_snp_output("$base_dir/varscan_snps");
+        }
+    } else {
+        my @required_properties = qw(final_output_file realigned_bam_file_directory small_indel_output_bed list_of_indel_files_to_validate varscan_indel_output varscan_snp_output);
+        my $fail = 0;
+        for my $property (@required_properties) {
+            $fail = 1;
+            unless (defined $self->$property) {
+                $self->error_message("$property is not set and must be if somatic_validation_build is not set");
+            }
+        }
+        die $self->error_message("All of the above properties must be set unless somatic_validation_build is set.") if $fail;
+    }
+
     my $project_name = $self->project_name;
     my $small_indel_list = $self->small_indel_output_bed;
     my $large_indel_list = $self->large_indel_output_bed;
@@ -169,7 +213,7 @@ sub execute {
 
     # check small/large indel list filename for bed nomenclature (to eliminate future confusion) #
     unless ($small_indel_list =~ m/\.bed$/i && $large_indel_list =~ m/\.bed$/i) {
-        $self->error_message("Both small and large indel files must end in .bed (because will schierding said so) (and to eliminate future confusion)");
+        $self->error_message("Both small and large indel files must end in .bed");
         return;
     }
 
@@ -203,6 +247,10 @@ sub execute {
                 print $file_list_append_fh $val_build_indels_file . "\n";
                 $file_list_append_fh->close;
             }
+        } else {
+            my $file_list_append_fh = new IO::File $file_list_file,">>";
+            print $file_list_append_fh $val_build_indels_file . "\n";
+            $file_list_append_fh->close;
         }
     }
 
