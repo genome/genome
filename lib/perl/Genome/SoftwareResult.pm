@@ -60,34 +60,53 @@ sub _faster_get {
     $statsd_class_suffix =~ s/::/_/g;
 
     my $start_time = Time::HiRes::time();
-    my @objects_with_inputs;
-    if (scalar(keys(%inputs))) {
-        @objects_with_inputs = $class->get(%inputs);
-        my $input_stop_time = Time::HiRes::time();
-        my $first_get_time = 1000 * ($input_stop_time - $start_time);
+    unless (scalar(keys(%inputs))) {
+        $class->warning_message(
+            "No inputs provided for SoftwareResult lookup, using params only (this may be slow).");
+        my @objects_with_params = $class->get(%params);
+        my $alternate_stop_time = Time::HiRes::time();
+        my $alternate_time = 1000 * ($alternate_stop_time - $start_time);
         Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "first_get_time.total", $first_get_time);
+            $statsd_prefix . "alternate_get_time.total", $alternate_time);
         Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "first_get_time." . $statsd_class_suffix,
-            $first_get_time);
+            $statsd_prefix . "alternate_get_time." . $statsd_class_suffix,
+            $alternate_time);
 
-        unless (@objects_with_inputs) {
-            $class->debug_message("Found no software result for inputs");
-            Genome::Utility::Instrumentation::timing(
-                $statsd_prefix . "first_get_count.total", 0);
-            Genome::Utility::Instrumentation::timing(
-                $statsd_prefix . "first_get_count." . $statsd_class_suffix, 0);
-            return @objects_with_inputs;
+        my @results;
+        for my $object (@objects_with_params) {
+            if ($object->inputs) {
+                next;
+            }
+            push @results, $object;
         }
-        my $first_get_count = scalar(@objects_with_inputs);
-        Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "first_get_count.total", $first_get_count);
-        Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "first_get_count." . $statsd_class_suffix,
-                $first_get_count);
-        $class->debug_message(sprintf("Found %d software results for inputs\n",
-                $first_get_count));
+        return @results;
     }
+
+    my @objects_with_inputs = $class->get(%inputs);
+    my $input_stop_time = Time::HiRes::time();
+    my $first_get_time = 1000 * ($input_stop_time - $start_time);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "first_get_time.total", $first_get_time);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "first_get_time." . $statsd_class_suffix,
+        $first_get_time);
+
+    unless (@objects_with_inputs) {
+        $class->debug_message("Found no software result for inputs");
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "first_get_count.total", 0);
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "first_get_count." . $statsd_class_suffix, 0);
+        return @objects_with_inputs;
+    }
+    my $first_get_count = scalar(@objects_with_inputs);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "first_get_count.total", $first_get_count);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "first_get_count." . $statsd_class_suffix,
+            $first_get_count);
+    $class->debug_message(sprintf("Found %d software results for inputs\n",
+            $first_get_count));
 
     my @param_names = keys %params;
     my @keepers;
@@ -118,7 +137,7 @@ sub _faster_get {
             $full_time);
     Genome::Utility::Instrumentation::timing(
         $statsd_prefix . "full_time." . $statsd_class_suffix, $full_time);
-    print "full time = $full_time\n";
+
     return @keepers;
 }
 
