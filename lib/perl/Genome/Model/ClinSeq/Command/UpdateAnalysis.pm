@@ -125,6 +125,10 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               default => 'tumor|met|post treatment|recurrence met|pre-treatment met',
               doc => 'The possible sample common names used in the database to specify a Tumor sample',
         },
+        instrument_data_to_exclude => {
+              is => 'Text',
+              doc => 'Instrument data to exclude from all consideration. Supply as a comma separated list of instrument data IDs. Supply a mix of dna and rna data if required.',
+        },
         force => {
               is => 'Number',
               default => 0,
@@ -366,13 +370,13 @@ sub get_samples{
   my $sample_count = scalar(@samples);
   $self->status_message("\nEXAMINE SAMPLES");
   $self->status_message("Found $sample_count samples:");
-  $self->status_message("id\tname\tcommon_name\tsample_type\tcell_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
+  $self->status_message("id\tname\tsample_common_name\tsample_type\tcell_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
   my $skip_count = 0;
   my $sample_mismatch = 0;
   foreach my $sample (@samples){
     my $id = $sample->id;
     my $name = $sample->name;
-    my $common_name = $sample->common_name || "NULL";
+    my $sample_common_name = $sample->common_name || "NULL";
     my $extraction_label = $sample->extraction_label || "NULL";
     my $extraction_type = $sample->extraction_type || "NULL";
     my $sample_type = $sample->sample_type || "NULL";
@@ -388,6 +392,7 @@ sub get_samples{
     my @libraries = $sample->libraries;
     my $library_count = scalar(@libraries);
     my @instrument_data = $sample->instrument_data;
+    @instrument_data = @{$self->exclude_instrument_data('-instrument_data'=>\@instrument_data)};    
     my $id_count = scalar(@instrument_data);
     my $skip = 0;
     if ($self->sample_type_filter){
@@ -408,8 +413,8 @@ sub get_samples{
       $self->error_message("ID of individual supplied by user ($individual_id) does not match that associated with a sample ($patient_id)");
       $sample_mismatch++;
     }
-
-    $self->status_message("$id\t$name\t$common_name\t$sample_type\t$cell_type\t$tissue_desc\t$default_genotype_data_id\t$model_count\t$library_count\t$id_count");
+    #$self->status_message("id\tname\tsample_common_name\tsample_type\tcell_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
+    $self->status_message("$id\t$name\t$sample_common_name\t$sample_type\t$cell_type\t$tissue_desc\t$default_genotype_data_id\t$model_count\t$library_count\t$id_count");
     push(@final_samples, $sample);
   }
 
@@ -418,7 +423,7 @@ sub get_samples{
       $self->warning_message("Found $sample_mismatch samples provided by the user that do not match the specified patient.  Allowing since --force was used\n");
     }else{
       $self->warning_message("Found $sample_mismatch samples provided by the user that do not match the specified patient.  Aborting ...\n");
-      exit(1);
+      exit 1;
     }
   }
 
@@ -454,15 +459,15 @@ sub display_inputs{
   #Make sure none of the basic input models/builds have been archived before proceeding...
   if ($self->reference_sequence_build->is_archived){
     $self->error_message("Reference sequencing build " . $self->reference_sequence_build->__display_name__ . " has been archived!");
-    exit(1);
+    exit 1;
   }
   if ($self->annotation_build->is_archived){
     $self->error_message("Annotation build " . $self->annotation_build->name . " has been archived!");
-    exit(1);
+    exit 1;
   }
   if ($self->dbsnp_build->is_archived){
     $self->error_message("dbSNP build " . $self->dbsnp_build->__display_name__ . " has been archived!");
-    exit(1);
+    exit 1;
   }
 
   return;
@@ -487,7 +492,7 @@ sub dna_samples{
   #Clin-Seq does not support more than 2 DNA samples and expects that one will be 'tumor' and one will be 'normal'
   if ($dna_sample_count > 2){
     $self->error_message("ClinSeq does not support more than 2 DNA samples ... please supply up to 1 tumor and 1 normal");
-    exit(1);
+    exit 1;
   }
   my @normal_samples;
   my @tumor_samples;
@@ -530,7 +535,7 @@ sub rna_samples{
   #Clin-Seq does not support more than 2 RNA samples and expects that one will be 'tumor' and one will be 'normal'
   if ($rna_sample_count > 2){
     $self->error_message("ClinSeq does not support more than 2 RNA samples ... please supply up to 1 tumor and 1 normal");
-    exit(1);
+    exit 1;
   }
   my @normal_samples;
   my @tumor_samples;
@@ -559,6 +564,7 @@ sub get_instrument_data{
   my $data_type = $args{'-data_type'};
 
   my @sample_instrument_data = $sample->instrument_data;
+  @sample_instrument_data = @{$self->exclude_instrument_data('-instrument_data'=>\@sample_instrument_data)};
   my $instrument_data_count = scalar(@sample_instrument_data);
   
   my @exome;
@@ -568,7 +574,6 @@ sub get_instrument_data{
   my %trsns;
 
   foreach my $instrument_data (@sample_instrument_data){
-    next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
     my $trsn = $instrument_data->target_region_set_name;
     if ($trsn){
       my $fl = Genome::FeatureList->get(name => $trsn);
@@ -669,7 +674,7 @@ sub check_model_trsn_and_roi{
     $self->warning_message("Intrument data from more than one target region set are being combined... (model id = $model_id)");
   }elsif($trsn_count == 0){
     $self->error_message("There is no instrument data with a target region set name!  How is this an exome data set?");
-    exit(1);
+    exit 1;
   }
 
   #The target region set name of the model should match that of the data.
@@ -721,7 +726,7 @@ sub get_trsn{
     $self->warning_message("Intrument data from more than one target region set are being combined...");
   }elsif($trsn_count == 0){
     $self->error_message("There is no instrument data with a target region set name!  How is this an exome data set?");
-    exit(1);
+    exit 1;
   }
   return $trsn_ref; 
 }
@@ -751,8 +756,8 @@ sub check_for_missing_data{
   my @sample_instrument_data = @{$args{'-sample_instrument_data'}};
   my @model_instrument_data = $model->instrument_data;
   my @missing_model_data;
+
   foreach my $sample_instrument_data (@sample_instrument_data){
-    next unless ($sample_instrument_data->class eq "Genome::InstrumentData::Solexa");
     my $sid = $sample_instrument_data->id;
     my $match = 0;
     foreach my $model_instrument_data (@model_instrument_data){
@@ -776,7 +781,6 @@ sub check_for_missing_data{
     my @build_instrument_data = $last_build->instrument_data;
     my @missing_build_data;
     foreach my $sample_instrument_data (@sample_instrument_data){
-      next unless ($sample_instrument_data->class eq "Genome::InstrumentData::Solexa");
       my $sid = $sample_instrument_data->id;
       my $match = 0;
       foreach my $build_instrument_data (@build_instrument_data){
@@ -880,10 +884,10 @@ sub check_ref_align_models{
   }
   if ($match == 0){
     $self->error_message("Did not find a matching DNA sample for tissue type: $tissue_type");
-    exit(1);
+    exit 1;
   }elsif ($match > 1){
     $self->error_message("Found more than one matching DNA sample of tissue type: $tissue_type");
-    exit(1);
+    exit 1;
   }else{
     $self->status_message("\nFound a DNA sample " . $sample->name . " ($scn) matching tissue type: $tissue_type");
   }
@@ -1000,14 +1004,12 @@ sub check_rnaseq_models{
 
   #Is there actually any RNA?
   #- return if there is no data of the desired type
-  my @test = $sample->instrument_data;
-  my @sample_instrument_data;
-  foreach my $instrument_data (@test){
-    next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
-    push (@sample_instrument_data, $instrument_data);
+  my @sample_instrument_data = $sample->instrument_data;
+  @sample_instrument_data = @{$self->exclude_instrument_data('-instrument_data'=>\@sample_instrument_data)};
+  unless (scalar(@sample_instrument_data)){
+    $self->status_message("\tCould not find any rna-seq data");
+    return @tmp;
   }
-  return @tmp unless (scalar(@sample_instrument_data));
-
   my $subject_id = $sample->patient->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
@@ -1066,7 +1068,7 @@ sub check_somatic_variation_models{
     $somatic_variation_pp_id = $self->exome_somatic_variation_pp->id;
   }else{
     $self->error_message("Data type must be wgs or exome but $data_type was provided");
-    exit(1);
+    exit 1;
   }
 
   #Get models for either tumor or normal DNA sample 
@@ -1565,7 +1567,7 @@ sub create_clinseq_model{
 
 #Check whether instrument data of a particular type is available in a list of samples...
 sub check_instrument_data{
-  my $self= shift;
+  my $self = shift;
   my %args = @_;
   my $data_type = $args{'-data_type'};
   my @samples = @{$args{'-samples'}};
@@ -1583,8 +1585,9 @@ sub check_instrument_data{
     my @unknown;
     my @other;
     my @sample_instrument_data = $sample->instrument_data;
+    @sample_instrument_data = @{$self->exclude_instrument_data('-instrument_data'=>\@sample_instrument_data)};
+    
     foreach my $instrument_data (@sample_instrument_data){
-      next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
       my $trsn = $instrument_data->target_region_set_name;
 
       if ($sample->is_rna){
@@ -1621,10 +1624,51 @@ sub check_instrument_data{
     $samples_with_matching_data = $samples_with_tumor_rnaseq;        
   }else{
     $self->error_message("Data type specified to check_instrument_data not understood");
-    exit(1);
+    exit 1;
   }
 
   return $samples_with_matching_data;
+}
+
+
+#Take an array of instrument data objects and return an amended array that removes certain instrument data if specified by the user with the --instrument_data_to_exclude parameter
+sub exclude_instrument_data{
+  my $self = shift;
+  my %args = @_;
+  my @instrument_data = @{$args{'-instrument_data'}};
+
+  #If the user specified some instrument data to skip, deal with that first
+  my @tmp1;
+  if ($self->instrument_data_to_exclude){
+    #Check format of list of data to exclude
+    my @exclude_list = split(",", $self->instrument_data_to_exclude);
+    unless (scalar(@exclude_list)){
+      $self->error_message("Could not obtain instrument data IDs from list supplied by --instrument_data_to_exclude");
+      exit 1;
+    }
+    #Cross reference instrument data to exclude with the instrument data supplied to the subroutine and create an amended array
+    my %exclude_list;
+    foreach my $iid (@exclude_list){
+      $exclude_list{$iid}=1;
+    }
+    foreach my $instrument_data (@instrument_data){
+      my $instrument_data_id = $instrument_data->id;
+      push (@tmp1, $instrument_data) unless $exclude_list{$instrument_data_id};
+    }
+    @instrument_data = @tmp1;
+  }
+
+  #Now skip instrument data that is not really Illumina instrument data
+  #TODO:  The following method may miss 'Solexa' instrument data that is imported but is not properly classed as 'Solexa' ...
+  my @tmp2;
+  foreach my $instrument_data (@instrument_data){
+    next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
+    push(@tmp2, $instrument_data);
+  }
+  @instrument_data = @tmp2;
+
+  #Return the amended array
+  return (\@instrument_data);
 }
 
 

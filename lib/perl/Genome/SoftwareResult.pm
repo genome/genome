@@ -9,6 +9,8 @@ use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
 
+use Genome::Utility::Instrumentation;
+
 class Genome::SoftwareResult {
     is_abstract => 1,
     table_name => 'SOFTWARE_RESULT',
@@ -48,6 +50,112 @@ class Genome::SoftwareResult {
 
 our %LOCKS;
 
+our @INPUTS_BLACKLIST = qw(reference_build_id annotation_build_id);
+our @PARAMS_WHITELIST = qw(test_name);
+sub _faster_get {
+    my $class = shift();
+    my %inputs = %{shift()};
+    my %params = %{shift()};
+
+    my $statsd_prefix = "software_result_get.";
+    my $statsd_class_suffix = "$class";
+    $statsd_class_suffix =~ s/::/_/g;
+
+    my $start_time = Time::HiRes::time();
+
+    for my $blacklisted_input (@INPUTS_BLACKLIST) {
+        if (exists $inputs{$blacklisted_input}) {
+            $params{$blacklisted_input} = delete $inputs{$blacklisted_input};
+        }
+    }
+    for my $whitelisted_param (@PARAMS_WHITELIST) {
+        if (exists $params{$whitelisted_param}) {
+            $inputs{$whitelisted_param} = delete $params{$whitelisted_param};
+        }
+    }
+
+    unless (scalar(keys(%inputs))) {
+        $class->warning_message(
+            "No inputs provided for SoftwareResult lookup, using params only (this may be slow).");
+        my @objects_with_params = $class->get(%params);
+        my $alternate_stop_time = Time::HiRes::time();
+        my $alternate_time = 1000 * ($alternate_stop_time - $start_time);
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "alternate_get_time.total", $alternate_time);
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "alternate_get_time." . $statsd_class_suffix,
+            $alternate_time);
+
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "full_time.total", $alternate_time);
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "full_time." . $statsd_class_suffix,
+            $alternate_time);
+
+        return @objects_with_params;
+    }
+
+    my @objects_with_inputs = $class->get(%inputs);
+    my $input_stop_time = Time::HiRes::time();
+    my $first_get_time = 1000 * ($input_stop_time - $start_time);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "first_get_time.total", $first_get_time);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "first_get_time." . $statsd_class_suffix,
+        $first_get_time);
+
+    unless (@objects_with_inputs) {
+        $class->debug_message("Found no software result for inputs");
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "first_get_count.total", 0);
+        Genome::Utility::Instrumentation::timing(
+            $statsd_prefix . "first_get_count." . $statsd_class_suffix, 0);
+
+        return @objects_with_inputs;
+    }
+
+    my $first_get_count = scalar(@objects_with_inputs);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "first_get_count.total", $first_get_count);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "first_get_count." . $statsd_class_suffix,
+            $first_get_count);
+    $class->debug_message(sprintf("Found %d software results for inputs\n",
+            $first_get_count));
+
+    my @param_names = keys %params;
+    my @keepers;
+    OBJECT:
+    for my $object (@objects_with_inputs) {
+        for my $param_name (@param_names) {
+            my $object_value = $object->$param_name;
+            my $param_value = $params{$param_name};
+            if ($object_value) {
+                if ($param_value) {
+                    if($object_value ne $param_value) {
+                        next OBJECT;
+                    }
+                } else {
+                    next OBJECT;
+                }
+            } else {
+                if ($param_value) {
+                    next OBJECT;
+                }
+            }
+        }
+        push(@keepers, $object);
+    }
+    my $final_time = Time::HiRes::time();
+    my $full_time = 1000 * ($final_time - $start_time);
+    Genome::Utility::Instrumentation::timing($statsd_prefix . "full_time.total",
+            $full_time);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "full_time." . $statsd_class_suffix, $full_time);
+
+    return @keepers;
+}
+
 # You must specify enough parameters to uniquely identify an object to get a result.
 # If two users specify different sets of parameters that uniquely identify the result,
 # they will create different locks.
@@ -64,7 +172,7 @@ sub get_with_lock {
     # complete. If this is a bad assumption then we need to add a
     # status to SoftwareResults.
     my $lock;
-    my @objects = $class->get(%is_input, %is_param);
+    my @objects = $class->_faster_get(\%is_input, \%is_param);
     unless (@objects) {
         my $subclass = $params_processed->{subclass};
         unless ($lock = $subclass->_lock(%is_input, %is_param)) {
@@ -72,7 +180,7 @@ sub get_with_lock {
         }
 
         eval {
-            @objects = $class->get(%is_input, %is_param);
+            @objects = $class->_faster_get(\%is_input, \%is_param);
         };
         my $error = $@;
 
@@ -111,24 +219,26 @@ sub get_with_lock {
 sub get_or_create {
     my $class = shift;
 
+
     my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
-    
-    my @objects = $class->get(%is_input, %is_param);
+
+    my @objects = $class->_faster_get(\%is_input, \%is_param);
 
     unless (@objects) {
         @objects = $class->create(@_);
         unless (@objects) {
             # see if the reason we failed was b/c the objects were created while we were locking...
-            @objects = $class->get(%is_input, %is_param);
+            @objects = $class->_faster_get(\%is_input, \%is_param);
             unless (@objects) {
                 $class->error_message("Could not create a $class for params " . Data::Dumper::Dumper(\@_) . " even after trying!");
-                die $class->error_message();
+                confess $class->error_message();
             }
         }
     }
-   
+
     if (@objects > 1) {
         return @objects if wantarray;
         my @ids = map { $_->id } @objects;
@@ -147,10 +257,12 @@ sub create {
     }
 
     my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
 
-    my @previously_existing = $class->get(%is_input, %is_param);
+    my @previously_existing = $class->_faster_get(\%is_input, \%is_param);
+
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         return;
@@ -172,9 +284,9 @@ sub create {
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         $class->_release_lock_or_die($lock, "Failed to release lock in create before committing SoftwareResult.");
-        return; 
+        return;
     }
-    
+
     # We need to update the indirect mutable accessor logic for non-nullable
     # hang-offs to delete the entry instead of setting it to null.  Otherwise
     # we get SOFTWARE_RESULT_PARAM entries with a NULL, and unsavable PARAM_VALUE.
@@ -207,7 +319,7 @@ sub create {
             my @files = glob("$output_dir/*");
             if (@files) {
                 $self->delete;
-                die "Found files in output directory $output_dir!:\n\t" 
+                die "Found files in output directory $output_dir!:\n\t"
                     . join("\n\t", @files);
             }
             else {
@@ -328,7 +440,7 @@ sub _expand_param_and_input_properties {
                     $name_name = 'metric_name';
                 }
                 else {
-                    # TODO This logic was borrowed in the Model.pm's _resolve_to_for_prop_desc so 
+                    # TODO This logic was borrowed in the Model.pm's _resolve_to_for_prop_desc so
                     # when this is refactored, that should also be updated.
                     if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
                         my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
@@ -340,11 +452,11 @@ sub _expand_param_and_input_properties {
                         } else {
                             $prop_desc->{'to'} = 'value_obj';
                         }
-                    } 
+                    }
                     else {
                         $prop_desc->{'to'} = 'value_id';
                     }
-                    $name_name = 'name';    
+                    $name_name = 'name';
                 }
 
                 $prop_desc->{'is_delegated'} = 1;
@@ -353,13 +465,13 @@ sub _expand_param_and_input_properties {
                     $prop_desc->{'where'} = [
                         $name_name . ' like' => $prop_name . '-%',
                     ];
-                } 
+                }
                 else {
                     $prop_desc->{'where'} = [
                         $name_name => $prop_name
                     ];
                 }
-                
+
 
                 $prop_desc->{'is_mutable'} = 1;
                 $prop_desc->{'via'} = $t.'s';
@@ -418,7 +530,7 @@ sub delete {
             .join("\n\t", map { $_->user_class . "\t" . $_->user_id } @users);
     }
 
-    my @to_nuke = ($self->params, $self->inputs, $self->metrics); 
+    my @to_nuke = ($self->params, $self->inputs, $self->metrics);
 
     #If we use any other results, unregister ourselves as users
     push @to_nuke, Genome::SoftwareResult::User->get(user_class_name => $class_name, user_id => $self->id);
@@ -431,29 +543,29 @@ sub delete {
 
     #creating an anonymous sub to delete allocations when commit happens
     my $id = $self->id;
-    my $upon_delete_callback = sub { 
+    my $upon_delete_callback = sub {
         print "Now Deleting Allocation with owner_id = $id\n";
         my $allocation = Genome::Disk::Allocation->get(owner_id=>$id, owner_class_name=>$class_name);
         if ($allocation) {
-            $allocation->deallocate; 
+            $allocation->deallocate;
         }
     };
 
     #hook our anonymous sub into the commit callback
     $class_name->ghost_class->add_observer(aspect=>'commit', callback=>$upon_delete_callback);
-    
-    return $self->SUPER::delete(@_); 
+
+    return $self->SUPER::delete(@_);
 }
 
 sub _lock {
     my $class = shift;
-    
+
     my $resource_lock_name = $class->_resolve_lock_name(@_);
 
     # if we're already locked, just increment the lock count
     $LOCKS{$resource_lock_name} += 1;
     return $resource_lock_name if ($LOCKS{$resource_lock_name} > 1);
-   
+
     my $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, max_try => 2);
     unless ($lock) {
         $class->status_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
@@ -552,16 +664,16 @@ sub generate_expected_metrics {
     unless (@names) {
         @names = $self->metric_names;
     }
-    
+
     # pre-load all metrics
     my @existing_metrics = $self->metrics;
-    
+
     for my $name (@names) {
         my $metric = $self->metric(name => $name);
         if ($metric) {
             $self->status_message(
                 $self->display_name . " has metric "
-                . $metric->name 
+                . $metric->name
                 . " with value "
                 . $metric->value
             );
@@ -574,14 +686,14 @@ sub generate_expected_metrics {
         }
         $self->status_message(
             $self->display_name . " is generating a value for metric "
-            . $metric->name 
+            . $metric->name
             . "..."
         );
         my $value = $self->$method();
         unless (defined($value)) {
             $self->error_message(
                 $self->display_name . " has metric "
-                . $metric->name 
+                . $metric->name
                 . " FAILED TO CALCULATE A DEFINED VALUE"
             );
             next;
@@ -589,7 +701,7 @@ sub generate_expected_metrics {
         $self->$metric($value);
         $self->status_message(
             $self->display_name . " has metric "
-            . $metric->name 
+            . $metric->name
             . " with value "
             . $metric->value
         );
@@ -597,7 +709,7 @@ sub generate_expected_metrics {
 }
 
 sub _available_cpu_count {
-    my $self = shift; 
+    my $self = shift;
 
     # Not running on LSF, allow only one CPU
     if (!exists $ENV{LSB_MCPU_HOSTS}) {
@@ -613,12 +725,12 @@ sub _available_cpu_count {
     }
 
     if ($mval =~ m/(\.*?) (\d+)/) {
-        return $2; 
+        return $2;
     } else {
-        $self->error_message("Couldn't parse the LSB_MCPU_HOSTS environment variable (value is '$mval'). "); 
+        $self->error_message("Couldn't parse the LSB_MCPU_HOSTS environment variable (value is '$mval'). ");
         die $self->error_message;
     }
-    
+
 }
 
 sub _resolve_param_value_from_text_by_name_or_id {

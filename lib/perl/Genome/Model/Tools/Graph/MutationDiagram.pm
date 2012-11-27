@@ -61,6 +61,16 @@ class Genome::Model::Tools::Graph::MutationDiagram {
         },
     ],
     has_optional => [
+        max_display_frequency => {
+            type => 'Number',
+            doc => "The maximum number of single lollis for any one mutations. Those sites exceeding this number will be truncated. Specifying this option automatically adds the number of mutations to the labels.",
+        },
+        lolli_shape => {
+            type => 'Text',
+            valid_values => ["circle", "diamond", "square"],
+            default_value => "circle",
+            doc => 'shape of the lolli part of each lollipop',
+        },
     ],
 };
 
@@ -95,6 +105,8 @@ sub execute {
             basename => $self->file_prefix,
             suffix => $self->file_suffix,
             vep_frequency_field => $self->vep_frequency_field,
+            max_display_freq => $self->max_display_frequency,
+            lolli_shape => $self->lolli_shape,
         );
     }
     else {

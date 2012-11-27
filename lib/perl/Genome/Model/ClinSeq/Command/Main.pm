@@ -413,7 +413,7 @@ sub getEnsemblVersion{
   my $annotation_build_id;
   if ($ar_count == 0){
     print RED, "\n\nUnable to determine a single annotation reference name from the input models!\n\n", RESET;
-    exit(1);
+    die;
   }elsif($ar_count == 1){
     foreach my $ar_name (keys %annotation_refs){
       my $ar_string = $ar_name;
@@ -425,7 +425,7 @@ sub getEnsemblVersion{
         $annotation_build_id = $annotation_refs{$ar_name};
       }else{
         print RED, "\n\nUnable to determine Ensembl version by parsing annotation reference build names!\n\n", RESET;
-        exit(1);
+        die();
       }
     }
   }else{
@@ -442,7 +442,7 @@ sub getEnsemblVersion{
         $ensembl_versions{$1} = $1;
       }else{
         print RED, "\n\nUnable to determine Ensembl version by parsing annotation reference build names!\n\n", RESET;
-        exit(1);
+        die();
       }
     }
     my $ensembl_version_count = keys %ensembl_versions;
@@ -450,13 +450,13 @@ sub getEnsemblVersion{
       my @version_list = keys %ensembl_versions;
       my $version_string = join(",", @version_list);
       print RED, "\n\nFound conflicting Ensembl versions being used in the input models of this ClinSeq model: $version_string\n\n", RESET;
-      exit(1);
+      die();
     }
   }
   #Final sanity check ... 
   unless ($ensembl_version =~ /^\d+$/){
     print RED, "\n\nFormat of Ensembl version identified by parsing annotation build names is not correct: $ensembl_version\n\n", RESET;
-    exit(1);
+    die();
   }
 
   return ($ensembl_version, $annotation_build_id);
@@ -670,7 +670,7 @@ sub importSNVs{
       @input_headers = qw (chr start stop ref_base var_base var_type gene_name transcript_id species transcript_source transcript_version strand transcript_status var_effect_type coding_pos aa_change ucsc_cons domain all_domains deletion_substructures transcript_error default_gene_name gene_name_source ensembl_gene_id);
     }else{
       $self->error_message("Unexpected column count ($col_count) found in SNV/INDEL file");
-      exit(1);
+      die();
     }
 
     #Get AA changes from full .annotated file
