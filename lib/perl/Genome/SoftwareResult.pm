@@ -420,6 +420,11 @@ sub _preprocess_params_for_get_or_create {
 sub calculate_query {
     my $self = shift;
 
+    # Pre-fetch things, since we're going loop through them.
+    $self->inputs;
+    $self->params;
+    $self->metrics;
+
     my @query;
 
     my $class_object = $self->__meta__;
