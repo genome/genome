@@ -138,7 +138,7 @@ my %subject_class_names_to_site_tgi_class_names = (
     "sample_attribute" => 'Genome::Site::TGI::Synchronize::Classes::SubjectAttribute',
     "population_group_member" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember',
 );
-sub genome_property_name {
+sub perform_update {
     my $self = shift;
 
     my $lims_table_name = $self->lims_table_name;
@@ -147,39 +147,24 @@ sub genome_property_name {
     my $site_tgi_class_name = $subject_class_names_to_site_tgi_class_names{$lims_table_name};
     if ( not $site_tgi_class_name ) {
         $self->error_message('No site tgi class name for lims table name => '.$lims_table_name);
-        return;
+        return $self->failure;
     }
 
     my $lims_property_name = $self->subject_property_name;
     my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($lims_property_name);
     if ( not $genome_property_name ) {
         $self->error_message('No genome property name for lims property name => '.$lims_property_name);
-        return;
-    }
-
-    if ( not grep { $genome_property_name eq $_ } $site_tgi_class_name->properties_to_keep_updated ) {
-        $self->error_message('Update for genome property name not supported => '.$genome_property_name);
-        return;
-    }
-
-    return $genome_property_name;
-}
-
-sub perform_update {
-    my $self = shift;
-
-    my $lims_table_name = $self->lims_table_name;
-    if (not $lims_table_name ) {
         return $self->failure;
     }
+
     if ( grep { $lims_table_name eq $_ } (qw/ sample_attribute population_group_member /) ) {
         $self->error_message("Cannot UPDATE $lims_table_name! It must be INSERTED then DELETED!");
         return $self->failure;
     }
 
-    my $genome_property_name = $self->genome_property_name;
-    if ( not $genome_property_name ) {
-        return $self->failure;
+    if ( not grep { $genome_property_name eq $_ } $site_tgi_class_name->properties_to_keep_updated ) {
+        $self->error_message('Update for genome property name not supported => '.$genome_property_name);
+        return $self->skip;
     }
 
     my $genome_class_name = $self->genome_class_name;
@@ -251,10 +236,9 @@ sub perform_update {
     return $self->success;
 }
 
-sub success {
-    my $self = shift;
+sub _set_result {
+    my ($self, $result) = @_;
 
-    my $result = uc($self->description);
     $self->result($result);
     $self->status(
         join("\t", 
@@ -264,25 +248,24 @@ sub success {
             map({ defined $_ ? "'".$_."'" : "'NULL'"; }  $self->old_value, $self->new_value,),
         )
     );
-    $self->is_reconciled(1);
+}
 
+sub success {
+    my $self = shift;
+    $self->_set_result( uc($self->description) );
+    $self->is_reconciled(1);
     return 1;
 }
 
+sub skip {
+    my $self = shift;
+    $self->_set_result('SKIPPED');
+    return 1;
+}
 
 sub failure {
     my $self = shift;
-
-    $self->result('FAILED');
-    $self->status(
-        join("\t", 
-            'FAILED', 
-            map({ $self->$_; } (qw/ subject_class_name subject_id subject_property_name /)),
-            "'".( $self->{_current_value} // 'NA' )."'",
-            map({ defined $_ ? "'".$_."'" : "'NULL'"; }  $self->old_value, $self->new_value,),
-        )
-    );
-
+    $self->_set_result('FAILED');
     return;
 }
 

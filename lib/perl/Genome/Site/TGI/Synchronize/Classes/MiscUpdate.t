@@ -34,7 +34,6 @@ ok($misc_update, 'Define misc update');
 is($misc_update->lims_table_name, 'organism_taxon', 'Correct lims table name');
 my $genome_class_name = $misc_update->genome_class_name;
 is($genome_class_name, 'Genome::Taxon', 'Correct genome class name');
-is($misc_update->genome_property_name, 'estimated_genome_size', 'Corrext genome property name');
 my $genome_entity = $misc_update->genome_entity;
 ok($genome_entity, 'Got genome entity');
 is($genome_entity->class, $genome_class_name, 'Correct genome entity class name');
@@ -110,6 +109,7 @@ ok(!$misc_update->lims_table_name, 'Failed to get lims table name from invalid s
 $error_message = $misc_update->error_message;
 is($error_message, 'Failed to get lims table name from subject class name => schema.', 'Correct error msg');
 
+# PERFORM UPDATE FAILS
 # Invalid subject class name
 $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     subject_class_name => 'schema.org',
@@ -117,18 +117,20 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     subject_property_name => 'name',
     editor_id => 'lims',
     edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
-    old_value => undef,
-    new_value => undef,
+    old_value => '__TEST_TAXON__',
+    new_value => '__NEW_NAME__',
     description => 'UPDATE',
     is_reconciled => 0,
 );
-ok(!$misc_update->genome_property_name, 'Failed to get genome property name from invalid subject class name');
+ok(!$misc_update->perform_update, 'Failed to perform update for invalid subject class name');
 $error_message = $misc_update->error_message;
+is($misc_update->result, 'FAILED', 'Correct result (FAILED) after update');
+is($misc_update->status, "FAILED	schema.org	-100	name	'NA'	'__TEST_TAXON__'	'__NEW_NAME__'", 'Correct status after update');
 is($error_message, 'No site tgi class name for lims table name => org', 'Correct error msg');
+ok(!$misc_update->is_reconciled, 'Is not reconciled');
 
-# PERFORM UPDATE FAILS
 # Old value not the same as current value
-my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     subject_class_name => 'test.organism_taxon',
     subject_id => $taxon->id,
     subject_property_name => 'estimated_organism_genome_size',
@@ -141,11 +143,30 @@ my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define_
 );
 ok($misc_update, 'Define misc update');
 ok(!$misc_update->perform_update, 'Failed to perform update');
-is($misc_update->result, 'FAILED', 'Correct result after update');
+is($misc_update->result, 'FAILED', 'Correct result (FAILED) after update');
 is($misc_update->status, "FAILED	test.organism_taxon	-100	estimated_organism_genome_size	'1000'	'not the same as the current value'	'10000'", 'Correct status after update');
 is($misc_update->error_message, 'Current APipe value (1000) does not match the LIMS old value (not the same as the current value)!', 'Correct error after update');
 ok(!$misc_update->is_reconciled, 'Is not reconciled');
 is($taxon->estimated_genome_size, 1000, 'Did not alter estimated_genome_size on taxon');
+
+# PERFORM UPDATE SKIP
+# Unsupported lims attr
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+    subject_class_name => 'test.organism_taxon',
+    subject_id => $taxon->id,
+    subject_property_name => 'next_amplicon_iteration',
+    editor_id => 'lims',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+    old_value => 'not the same as the current value',
+    new_value => 10_000,
+    description => 'UPDATE',
+    is_reconciled => 0,
+);
+ok($misc_update, 'Define misc update');
+ok($misc_update->perform_update, 'Failed to perform update');
+is($misc_update->result, 'SKIPPED', 'Correct result (SKIPPED) after update');
+is($misc_update->status, "SKIPPED	test.organism_taxon	-100	next_amplicon_iteration	'NA'	'not the same as the current value'	'10000'", 'Correct status after update');
+ok(!$misc_update->is_reconciled, 'Is not reconciled');
 
 done_testing();
 exit;
