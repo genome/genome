@@ -229,14 +229,9 @@ sub create {
 
     $self->_lock_name($lock);
 
-    my $calculate_hash_callback = sub {
-        $self->lookup_hash($self->calclulate_lookup_hash());
-    };
     my $unlock_callback = sub {
         $self->_unlock;
     };
-    $self->create_subscription(method=>'precommit',
-        callback=>$calculate_hash_callback);
     $self->create_subscription(method=>'commit', callback=>$unlock_callback);
     $self->create_subscription(method=>'delete', callback=>$unlock_callback);
 
@@ -266,6 +261,7 @@ sub create {
 
     $self->module_version($self->resolve_module_version) unless defined $self->module_version;
     $self->subclass_name($class);
+    $self->lookup_hash($self->calculate_lookup_hash());
     return $self;
 }
 
@@ -378,14 +374,39 @@ sub calculate_lookup_hash {
 
 sub _process_params_for_lookup_hash {
     my $class = shift;
-    my %params = @_;
+    my %initial_params;
 
-    $class->_modify_params_for_lookup_hash(\%params);
+    # Handle the case of a boolean expression (used by _faster_get)
+    if (1 == scalar(@_)) {
+        %initial_params = $_[0]->params_list;
+    } else {
+        %initial_params = @_;
+    }
+
+    $class->_modify_params_for_lookup_hash(\%initial_params);
+
+    my ($bx, @extra) = $class->define_boolexpr(%initial_params);
+
+    die sprintf('got extra parameters: [%s]', join(',', @extra)) if @extra;
+
+    my %params = $bx->params_list;
 
     my $class_object = $class->__meta__;
     for my $key ($class->property_names) {
         my $meta = $class_object->property_meta_for_name($key);
-        next unless $meta->{is_input} or $meta->{is_param};
+        unless ($meta->{is_input} or $meta->{is_param}) {
+            delete $params{$key};
+            next;
+        }
+
+        if ($meta->is_transient) {
+            delete $params{$key};
+            next;
+        }
+
+        if (defined($meta->default_value) and not exists $params{$key}) {
+            $params{$key} = $meta->default_value;
+        }
 
         die 'incomplete object specification: missing ' . $key unless exists $params{$key} or $meta->is_optional;
 
