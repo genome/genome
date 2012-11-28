@@ -439,15 +439,15 @@ sub calculate_query {
     return @query;
 }
 
-sub calculate_hash {
+sub calculate_lookup_hash {
     my $self = shift;
 
     my @query = $self->calculate_query;
-    my %processed_params = $self->_process_params_for_hash(@query);
-    return $self->_generate_hash_value(\%processed_params);
+    my %processed_params = $self->_process_params_for_lookup_hash(@query);
+    return $self->_generate_lookup_hash(\%processed_params);
 }
 
-sub _process_params_for_hash {
+sub _process_params_for_lookup_hash {
     my $class = shift;
     my %params = @_;
 
@@ -462,9 +462,11 @@ sub _process_params_for_hash {
             if ($meta->{'is_' . $t} && $meta->is_many) {
                 my $value_list = delete $params{$key};
                 if((defined $value_list) && (scalar @$value_list)) {
-                    my @values = sort map { Scalar::Util::blessed($_)? $_->id : $_ } @$value_list;
+                    my @values = sort map { _resolve_object_id($_) } @$value_list;
                     $params{$key} = \@values;
                 }
+            } else {
+                $params{$key} = _resolve_object_id($params{$key});
             }
         }
 
@@ -484,13 +486,19 @@ sub _process_params_for_hash {
     return %params;
 }
 
-sub _generate_hash_value {
+sub _resolve_object_id {
+    my $object = shift;
+
+    return Scalar::Util::blessed($object) ? $object->id : $object;
+}
+
+sub _generate_lookup_hash {
     my $class = shift;
-    my $magical_hash = shift;
+    my $hash_to_encode = shift;
 
     my $json = JSON->new();
     $json->canonical([1]);
-    my $result = $json->encode($magical_hash);
+    my $result = $json->encode($hash_to_encode);
 
     return Genome::Sys->md5sum_data($result);
 }
