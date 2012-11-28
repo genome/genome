@@ -1662,7 +1662,11 @@ sub exclude_instrument_data{
   #TODO:  The following method may miss 'Solexa' instrument data that is imported but is not properly classed as 'Solexa' ...
   my @tmp2;
   foreach my $instrument_data (@instrument_data){
-    next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
+    #next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
+    #Allow all instrument data that is defined as sequencing_platform of 'solexa' (includes those with class Genome::InstrumentData::Solexa and Genome::InstrumentData::Imported)
+    #Limit to file types of bam or %fastq% (illumina fastq, sanger fastq, solexa fastq)
+    next unless ($instrument_data->sequencing_platform eq "solexa");
+    next unless ($instrument_data->import_format eq "bam" || $instrument_data->import_format =~ /fastq/);
     push(@tmp2, $instrument_data);
   }
   @instrument_data = @tmp2;
