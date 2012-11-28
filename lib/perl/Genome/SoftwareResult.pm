@@ -53,12 +53,8 @@ class Genome::SoftwareResult {
 
 our %LOCKS;
 
-our @INPUTS_BLACKLIST = qw(reference_build_id annotation_build_id);
-our @PARAMS_WHITELIST = qw(test_name);
 sub _faster_get {
-    my $class = shift();
-    my %inputs = %{shift()};
-    my %params = %{shift()};
+    my $class = shift;
 
     my $statsd_prefix = "software_result_get.";
     my $statsd_class_suffix = "$class";
@@ -66,89 +62,11 @@ sub _faster_get {
 
     my $start_time = Time::HiRes::time();
 
-    for my $blacklisted_input (@INPUTS_BLACKLIST) {
-        if (exists $inputs{$blacklisted_input}) {
-            $params{$blacklisted_input} = delete $inputs{$blacklisted_input};
-        }
-    }
-    for my $whitelisted_param (@PARAMS_WHITELIST) {
-        if (exists $params{$whitelisted_param}) {
-            $inputs{$whitelisted_param} = delete $params{$whitelisted_param};
-        }
-    }
+    my %processed_params = $class->_process_params_for_lookup_hash(@_);
+    my $lookup_hash =  $class->_generate_lookup_hash(\%processed_params);
 
-    unless (scalar(keys(%inputs))) {
-        $class->warning_message(
-            "No inputs provided for SoftwareResult lookup, using params only (this may be slow).");
-        my @objects_with_params = $class->get(%params);
-        my $alternate_stop_time = Time::HiRes::time();
-        my $alternate_time = 1000 * ($alternate_stop_time - $start_time);
-        Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "alternate_get_time.total", $alternate_time);
-        Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "alternate_get_time." . $statsd_class_suffix,
-            $alternate_time);
+    my @objects = $class->get(lookup_hash => $lookup_hash);
 
-        Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "full_time.total", $alternate_time);
-        Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "full_time." . $statsd_class_suffix,
-            $alternate_time);
-
-        return @objects_with_params;
-    }
-
-    my @objects_with_inputs = $class->get(%inputs);
-    my $input_stop_time = Time::HiRes::time();
-    my $first_get_time = 1000 * ($input_stop_time - $start_time);
-    Genome::Utility::Instrumentation::timing(
-        $statsd_prefix . "first_get_time.total", $first_get_time);
-    Genome::Utility::Instrumentation::timing(
-        $statsd_prefix . "first_get_time." . $statsd_class_suffix,
-        $first_get_time);
-
-    unless (@objects_with_inputs) {
-        $class->debug_message("Found no software result for inputs");
-        Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "first_get_count.total", 0);
-        Genome::Utility::Instrumentation::timing(
-            $statsd_prefix . "first_get_count." . $statsd_class_suffix, 0);
-
-        return @objects_with_inputs;
-    }
-
-    my $first_get_count = scalar(@objects_with_inputs);
-    Genome::Utility::Instrumentation::timing(
-        $statsd_prefix . "first_get_count.total", $first_get_count);
-    Genome::Utility::Instrumentation::timing(
-        $statsd_prefix . "first_get_count." . $statsd_class_suffix,
-            $first_get_count);
-    $class->debug_message(sprintf("Found %d software results for inputs\n",
-            $first_get_count));
-
-    my @param_names = keys %params;
-    my @keepers;
-    OBJECT:
-    for my $object (@objects_with_inputs) {
-        for my $param_name (@param_names) {
-            my $object_value = $object->$param_name;
-            my $param_value = $params{$param_name};
-            if ($object_value) {
-                if ($param_value) {
-                    if($object_value ne $param_value) {
-                        next OBJECT;
-                    }
-                } else {
-                    next OBJECT;
-                }
-            } else {
-                if ($param_value) {
-                    next OBJECT;
-                }
-            }
-        }
-        push(@keepers, $object);
-    }
     my $final_time = Time::HiRes::time();
     my $full_time = 1000 * ($final_time - $start_time);
     Genome::Utility::Instrumentation::timing($statsd_prefix . "full_time.total",
@@ -156,7 +74,7 @@ sub _faster_get {
     Genome::Utility::Instrumentation::timing(
         $statsd_prefix . "full_time." . $statsd_class_suffix, $full_time);
 
-    return @keepers;
+    return @objects;
 }
 
 # You must specify enough parameters to uniquely identify an object to get a result.
@@ -175,7 +93,7 @@ sub get_with_lock {
     # complete. If this is a bad assumption then we need to add a
     # status to SoftwareResults.
     my $lock;
-    my @objects = $class->_faster_get(\%is_input, \%is_param);
+    my @objects = $class->_faster_get(@_);
     unless (@objects) {
         my $subclass = $params_processed->{subclass};
         unless ($lock = $subclass->_lock(%is_input, %is_param)) {
@@ -183,7 +101,7 @@ sub get_with_lock {
         }
 
         eval {
-            @objects = $class->_faster_get(\%is_input, \%is_param);
+            @objects = $class->_faster_get(@_);
         };
         my $error = $@;
 
@@ -228,13 +146,13 @@ sub get_or_create {
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
 
-    my @objects = $class->_faster_get(\%is_input, \%is_param);
+    my @objects = $class->_faster_get(@_);
 
     unless (@objects) {
         @objects = $class->create(@_);
         unless (@objects) {
             # see if the reason we failed was b/c the objects were created while we were locking...
-            @objects = $class->_faster_get(\%is_input, \%is_param);
+            @objects = $class->_faster_get(@_);
             unless (@objects) {
                 $class->error_message("Could not create a $class for params " . Data::Dumper::Dumper(\@_) . " even after trying!");
                 confess $class->error_message();
@@ -264,7 +182,7 @@ sub create {
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
 
-    my @previously_existing = $class->_faster_get(\%is_input, \%is_param);
+    my @previously_existing = $class->_faster_get(@_);
 
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
@@ -311,9 +229,14 @@ sub create {
 
     $self->_lock_name($lock);
 
+    my $calculate_hash_callback = sub {
+        $self->lookup_hash($self->calclulate_lookup_hash());
+    };
     my $unlock_callback = sub {
         $self->_unlock;
     };
+    $self->create_subscription(method=>'precommit',
+        callback=>$calculate_hash_callback);
     $self->create_subscription(method=>'commit', callback=>$unlock_callback);
     $self->create_subscription(method=>'delete', callback=>$unlock_callback);
 
