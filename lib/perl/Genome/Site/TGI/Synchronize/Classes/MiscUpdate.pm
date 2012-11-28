@@ -259,7 +259,7 @@ sub success {
 
 sub skip {
     my $self = shift;
-    $self->_set_result('SKIPPED');
+    $self->_set_result('SKIP');
     return 1;
 }
 

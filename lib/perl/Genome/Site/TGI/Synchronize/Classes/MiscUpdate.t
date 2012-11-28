@@ -164,8 +164,8 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
 );
 ok($misc_update, 'Define misc update');
 ok($misc_update->perform_update, 'Failed to perform update');
-is($misc_update->result, 'SKIPPED', 'Correct result (SKIPPED) after update');
-is($misc_update->status, "SKIPPED	test.organism_taxon	-100	next_amplicon_iteration	'NA'	'not the same as the current value'	'10000'", 'Correct status after update');
+is($misc_update->result, 'SKIP', 'Correct result (SKIP) after update');
+is($misc_update->status, "SKIPtest.organism_taxon	-100	next_amplicon_iteration	'NA'	'not the same as the current value'	'10000'", 'Correct status after update');
 ok(!$misc_update->is_reconciled, 'Is not reconciled');
 
 done_testing();
