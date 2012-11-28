@@ -64,13 +64,13 @@ sub properties_to_keep_updated {# 11
     /);
 }
 
-sub lims_name_to_apipe_name {
+sub lims_property_name_to_genome_property_name {
     my ($class, $name) = @_;
-    my %lims_name_to_apipe_name = (
+    my %lims_to_genome = (
         full_name => 'name',
         name => 'upn',
     );
-    return $lims_name_to_apipe_name{$name} if exists $lims_name_to_apipe_name{$name};
+    return $lims_to_genome{$name} if exists $lims_to_genome{$name};
     return $name;
 }
 
