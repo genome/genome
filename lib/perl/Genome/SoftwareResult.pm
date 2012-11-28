@@ -474,7 +474,9 @@ sub _process_params_for_hash {
 
         next unless exists $params{$key};
 
-        if(($meta->data_type eq 'Boolean' or $meta->data_type eq 'UR::Value::Boolean') and $params{$key} eq 0){
+        if(defined($meta->data_type) and
+                ($meta->data_type eq 'Boolean' or
+                 $meta->data_type eq 'UR::Value::Boolean') and $params{$key} eq 0){
             delete $params{$key};
         }
     }
