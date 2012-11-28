@@ -163,7 +163,7 @@ sub perform_update {
     }
 
     if ( not grep { $genome_property_name eq $_ } $site_tgi_class_name->properties_to_keep_updated ) {
-        $self->error_message('Update for genome property name not supported => '.$genome_property_name);
+        $self->status_message('Update for genome property name not supported => '.$genome_property_name);
         return $self->skip;
     }
 
