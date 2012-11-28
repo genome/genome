@@ -965,7 +965,7 @@ sub execute {
       my $total_top_alignments = 0;
       my $total_top_spliced_alignments = 0;
       my $mt_top_alignments = 0;
-      
+
       my $total_reads = "n/a";
       my $unmapped_reads_p = "n/a";
       my $total_reads_mapped_p = "n/a";
@@ -992,6 +992,7 @@ sub execute {
             }
           }
           if (scalar(@line) == 9){
+            next if ($line[0] =~ /^chr$/);
             $total_top_alignments += $line[1];
             $total_top_spliced_alignments += $line[2];
             if ($line[0] eq "MT"){

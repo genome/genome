@@ -66,6 +66,12 @@ sub execute {
 	}
 
   foreach my $model ( @models ) {
+
+    unless ( $model->class =~ /Genome::Model::SomaticVariation/ ) {
+        die( 'This tool can only be used with Somatic Variation Models! ' . $model->name .
+            ' is of type: ' . $model->class . ".\n" );
+    };
+
     $stats{models_in_group}++;
 
     # Pull information about this SomVar model and all of it's builds

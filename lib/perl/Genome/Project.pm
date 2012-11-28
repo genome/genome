@@ -91,8 +91,13 @@ class Genome::Project {
 
 sub create {
     my $class = shift;
-    
-    my $self = eval { $class->SUPER::create(@_) };
+    my ($boolexpr, %extra) = $class->define_boolexpr(@_);
+
+    my $watch = delete $extra{watch};
+    #die if any unknown args other than 'watch' are passed in
+    die ( 'Unknown argument(s) passed to create! ' . join ( ',',  keys %extra ) ) if ( keys %extra );
+
+    my $self = eval { $class->SUPER::create($boolexpr) };
     if ($@ or not $self) {
         my $msg = "Could not create new object of type $class!" .  ($@ ? " Reason: $@" : '');
         $class->error_message($msg);
@@ -114,6 +119,9 @@ sub create {
         $self->delete;
         return;
     }
+
+    #set watcher if requested
+    $self->add_watcher( $creator ) if ( $watch );
 
     return $self;
 }
