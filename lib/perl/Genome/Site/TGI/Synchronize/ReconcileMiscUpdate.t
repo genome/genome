@@ -48,9 +48,9 @@ my @misc_updates = _define_misc_updates($entities, $update_params);
 ok(@misc_updates, 'Define misc updates');
 my $update_cnt = @$update_params;
 is(@misc_updates, $update_cnt, "Defined $update_cnt defined misc updates");
-my @multi_misc_updates = _define_multi_misc_updates($entities);
-ok(@multi_misc_updates, 'Define multi misc updates');
-is(@multi_misc_updates, 8, 'Defined 8 misc updates for sample attr and pgm');
+my @misc_indels = _define_misc_indels();
+ok(@misc_indels, 'Define multi misc indels');
+is(@misc_indels, 24, 'Defined 24 misc indels');
 my @misc_updates_that_fail = _define_misc_updates_that_fail();
 ok(@misc_updates_that_fail, 'Define misc updates that fail');
 
@@ -76,8 +76,10 @@ for my $misc_update ( @misc_updates ) {
 
 diag('Checking INDELS...');
 my %multi_misc_updates_to_check;
-foreach my $multi_misc_update ( @multi_misc_updates ) {
-   $multi_misc_updates_to_check{$multi_misc_update->subject_id}=$multi_misc_update;
+foreach my $misc_indel ( @misc_indels ) {
+    my %multi_misc_update_params = map { $_ => $misc_indel->$_ } (qw/ subject_class_name subject_id edit_date description /);
+    my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->get(%multi_misc_update_params);
+    $multi_misc_updates_to_check{$multi_misc_update->subject_id}=$multi_misc_update;
 }
 
 for my $multi_misc_update (values %multi_misc_updates_to_check) {
@@ -260,7 +262,7 @@ sub _define_misc_updates {
     return @misc_updates;
 }
 
-sub _define_multi_misc_updates {
+sub _define_misc_indels {
     my %subject_class_names_to_properties= (
         population_group_member => [qw/ pg_id member_id /],
         sample_attribute => [qw/ organism_sample_id attribute_label attribute_value nomenclature /],
@@ -281,33 +283,31 @@ sub _define_multi_misc_updates {
         [ 'sample_attribute', 'DELETE', -1000, 'foo', 'bar', 'baz',  ],
     );
 
-    my @misc_updates;
+    my @misc_indels;
     for my $update ( @updates ) {
         my ($subject_class_name, $description, @ids) = @$update;
         my $subject_id = join('-', @ids);
-        my %multi_misc_update_params = (
+        my %params = (
             subject_class_name => 'test.'.$subject_class_name,
             subject_id => $subject_id,
             description => $description,
             edit_date => '01-JAN-00 00.00.00.'.sprintf('%05d', $cnt++).' AM',
         );
-        my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->create(%multi_misc_update_params);
-        push @multi_misc_updates, $multi_misc_update;
         my $subject_property_names = $subject_class_names_to_properties{$subject_class_name};
         for ( my $i = 0; $i < @{$subject_class_names_to_properties{$subject_class_name}}; $i++ ) {
-            my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
-                %multi_misc_update_params,
+            my $misc_indel = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+                %params,
                 subject_property_name => $subject_class_names_to_properties{$subject_class_name}->[$i],
                 editor_id => 'lims',
                 old_value => undef,
                 new_value => $ids[$i],
                 is_reconciled => 0,
             );
-            $multi_misc_update->add_misc_update($misc_update);
+            push @misc_indels, $misc_indel;
         }
     }
 
-    return @multi_misc_updates;
+    return @misc_indels;
 }
 
 sub _define_misc_updates_that_fail {

@@ -134,10 +134,9 @@ sub _execute_report {
         $stats{attempted}++;
         $stats{ $misc_update->result }++;
         push @status, $misc_update->status;
-        if ( $misc_update->result eq 'FAILED' ) {
-            $errors{ $misc_update->id } = $misc_update->error_message || 'No error message given!';
-        }
+        $errors{ $misc_update->id } = $misc_update->error_message if $misc_update->result eq 'FAILED';
     }
+
 #    my $sender = Mail::Sender->new({ smtp => 'gscsmtp.wustl.edu', from => 'jlolofie@genome.wustl.edu', });
 #    $sender->MailMsg({
 #        to => 'apipe-builder@genome.wustl.edu',
