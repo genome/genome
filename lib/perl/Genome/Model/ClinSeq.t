@@ -140,14 +140,13 @@ is($@, '', 'no exceptions thrown during build process') or diag $@;
 my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2012-11-27';
 #print "\n\n$expected_data_directory\n\n";
 
-my $cleanup= 'cat ' 
-    . $temp_dir 
-    . q{/PNC6/clonality/PNC6.clustered.data.tsv | perl -nae '$F[-1] = "?"; print join("\t",@F),"\n"' } 
-    . ' >| ' . $temp_dir . q{/PNC6/clonality/PNC6.clustered.data.tsv.testmasked};
-
-Genome::Sys->shellcmd(cmd => $cleanup);
-
 unless ($dry_run) {
+    # add a masked version of the clonality tsv since it has non-deterministic output in the final column
+    my $mask_command = 'cat ' 
+        . $temp_dir 
+        . q{/PNC6/clonality/PNC6.clustered.data.tsv | perl -nae '$F[-1] = "?"; print join("\t",@F),"\n"' } 
+        . ' >| ' . $temp_dir . q{/PNC6/clonality/PNC6.clustered.data.tsv.testmasked};
+    Genome::Sys->shellcmd(cmd => $mask_command);
 
     #Exclude some files from the diff that tend to change when regenerated for the same build
     my @diff = `diff -r --brief -x '*.R' -x '*.pdf' -x '*_COSMIC.svg' -x '*.clustered.data.tsv' -x 'SummarizeBuilds.log.tsv' -x 'DumpIgvXml.log.txt' $expected_data_directory $temp_dir`;
