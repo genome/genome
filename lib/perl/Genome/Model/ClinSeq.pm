@@ -233,6 +233,7 @@ sub files_ignored_by_build_diff {
         .*.SummarizeBuilds.log.tsv$
         .*.DumpIgvXml.log.txt
         .*/mutation_diagrams/cosmic.mutation-diagram.stderr
+        .*/mutation_diagrams/somatic.mutation-diagram.stderr
     );
 };
 
