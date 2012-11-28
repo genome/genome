@@ -277,10 +277,13 @@ sub collect_individual_alignments {
         my @segment_params;
         if($segments->{$i->id}) {
             for my $type (keys %{ $segments->{$i->id} }) {
-                push @segment_params, {
-                    'instrument_data_segment_type' => $type,
-                    'instrument_data_segment_id' => $segments->{$i->id}{$type},
-                };
+                my $segment_ids = $segments->{$i->id}{$type};
+                for my $segment_id (@$segment_ids) {
+                    push @segment_params, {
+                        'instrument_data_segment_type' => $type,
+                        'instrument_data_segment_id' => $segment_id,
+                    };
+                }
             }
         } else {
             push @segment_params, {
@@ -290,7 +293,7 @@ sub collect_individual_alignments {
         }
 
         for my $segment_param (@segment_params) {
-            my @alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
+            my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
                 %params,
                 reference_build_id => $self->reference_build_id,
                 annotation_build_id => ($self->annotation_build_id || undef),
@@ -299,8 +302,8 @@ sub collect_individual_alignments {
                 %$segment_param,
             );
 
-            if(@alignment and (!defined $segment_param->{instrument_data_segment_id} or scalar @alignment eq scalar @{ $segment_param->{instrument_data_segment_id} })) {
-                push @alignments, @alignment;
+            if($alignment) {
+                push @alignments, $alignment;
             } else {
                 push @not_found, $i;
             }
