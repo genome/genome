@@ -18,9 +18,7 @@ class Genome::Site::TGI::Synchronize::ReconcileMiscUpdate {
     ],
     has_optional_transient => [
         _misc_updates => { is => 'Array', default_value => [], },
-        _stats => { is => 'Hash', default_value => {}, },
-        _status => { is => 'Array', default_value => [], },
-        _errors => { is => 'Hash', default_value => {}, },
+        stats => { is => 'Hash', default_value => {}, },
     ],
 };
 
@@ -54,7 +52,6 @@ sub __errors__ {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Reconcile Misc Update...');
 
     my $execute_updates = $self->_execute_updates;
     return if not $execute_updates;
@@ -62,16 +59,12 @@ sub execute {
     my $execute_indels = $self->_execute_indels;
     return if not $execute_indels;
 
-    $self->_execute_report;
-    $self->status_message('Done.');
-    return 1;
+    return $self->_execute_report;
 }
 
 sub _execute_updates {
     my $self = shift;
 
-    $self->status_message('Executing UPDATES...');
-    $self->status_message('Date is: '.$self->date);
     my @misc_updates = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->get(
         'edit_date like' => $self->date.' %',
         is_reconciled => 0,
@@ -79,22 +72,17 @@ sub _execute_updates {
         '-order_by' => 'edit_date',
     );
     push @{$self->_misc_updates}, @misc_updates;
-    $self->status_message('Updates found: '.@misc_updates);
 
     for my $misc_update ( @misc_updates ) {
-        $self->status_message( $misc_update->__display_name__ );
         $misc_update->perform_update;
     }
 
-    $self->status_message('UPDATES done');
     return 1;
 }
 
 sub _execute_indels {
     my $self = shift;
-    $self->status_message('Executing INSERTS/DELETES...');
 
-    $self->status_message('Date is: '.$self->date);
     my @misc_updates = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->get(
         'edit_date like' => $self->date.' %',
         is_reconciled => 0,
@@ -115,38 +103,33 @@ sub _execute_indels {
         }
         $multi_misc_update->add_misc_update($misc_update);
     }
-    $self->status_message('Inserts/Deletes found: '.@misc_updates);
 
     for my $multi_misc_update ( @multi_misc_updates ) {
-        $self->status_message( $multi_misc_update->__display_name__ );
         $multi_misc_update->perform_update;
     }
 
-    $self->status_message('INSERTS/DELETES done');
     return 1;
 }
 
 sub _execute_report {
     my $self = shift;
 
-    my (%stats, @status, %errors);
+    my (%stats, $errors);
+    my $status = join("\t", (qw/ STATUS SUBJECT_CLASS_NAME SUBJECT_ID SUBJECT_PROPERTY_NAME CURRENT_VALUE OLD_VALUE NEW_VALUE /))."\n";
     for my $misc_update ( @{$self->_misc_updates} ) {
-        $stats{attempted}++;
+        $stats{ATTEMPTED}++;
         $stats{ $misc_update->result }++;
-        push @status, $misc_update->status;
-        $errors{ $misc_update->id } = $misc_update->error_message if $misc_update->result eq 'FAILED';
+        $status .= $misc_update->status."\n";
+        $errors .= $misc_update->id." '".$misc_update->error_message."'\n" if $misc_update->result eq 'FAILED';
     }
 
-#    my $sender = Mail::Sender->new({ smtp => 'gscsmtp.wustl.edu', from => 'jlolofie@genome.wustl.edu', });
-#    $sender->MailMsg({
-#        to => 'apipe-builder@genome.wustl.edu',
-#        subject => 'lims -> apipe sync',
-#        msg => join("\n",@msg)
-#    });
-
-    print Data::Dumper::Dumper( \%stats, \@status, \%errors);
-
-    return 1;
+    return print join(
+        "\n\n",
+        'RECONCILE MISC UPDATE FOR '.$self->date,
+        "STATS:\n".join("\n", map { sprintf('%-10s => %s', $_, $stats{$_}) } sort keys %stats),
+        "STATUS:\n$status",
+        "ERRORS [These will remain unreconciled until addressed!]:\n$errors",
+    );
 }
 
 1;

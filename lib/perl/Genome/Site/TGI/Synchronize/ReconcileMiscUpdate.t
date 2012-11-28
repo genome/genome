@@ -116,68 +116,19 @@ exit;
 sub _entity_attrs {
     return [
         # Taxon
-        {
-            _type => 'Taxon',
-            id => -100,
-            estimated_genome_size => 1000,
-        },
-        {
-            _type => 'Taxon',
-            id => -101,
-            estimated_genome_size => 1000,
-        },
+        { _type => 'Taxon', id => -100, estimated_genome_size => 1000, },
+        { _type => 'Taxon', id => -101, estimated_genome_size => 1000, },
         # Individual
-        {
-            _type => 'Individual',
-            id => -200,
-            taxon_id => -100,
-        },
-        {
-            _type => 'Individual',
-            id => -201,
-            taxon_id => -100,
-        },
-        {
-            _type => 'Individual',
-            id => -202,
-            taxon_id => -100,
-        },
+        { _type => 'Individual', id => -200, taxon_id => -100, },
+        { _type => 'Individual', id => -201, taxon_id => -100, },
+        { _type => 'Individual', id => -202, taxon_id => -100, },
         # Pop Group
-        {
-            _type => 'PopulationGroup',
-            id => -300,
-            taxon_id => -100,
-        },
-        {
-            _type => 'PopulationGroup',
-            id => -301,
-            taxon_id => -100,
-        },
+        { _type => 'PopulationGroup', id => -300, taxon_id => -100, },
+        { _type => 'PopulationGroup', id => -301, taxon_id => -100, },
         # Sample
-        {
-            _type => 'Sample',
-            id => -400,
-            source_id => -200,
-            cell_type => 'primary',
-            nomenclature => 'WUGC',
-            is_control => 1,
-        },
-        {
-            _type => 'Sample',
-            id => -401,
-            source_id => -201,
-            cell_type => 'primary',
-            nomenclature => 'WUGC',
-            is_control => 1,
-        },
-        {
-            _type => 'Sample',
-            id => -402,
-            source_id => -202,
-            cell_type => 'primary',
-            nomenclature => 'WUGC',
-            is_control => 1,
-        },
+        { _type => 'Sample', id => -400, source_id => -200, cell_type => 'primary', nomenclature => 'WUGC', is_control => 1, },
+        { _type => 'Sample', id => -401, source_id => -201, cell_type => 'primary', nomenclature => 'WUGC', is_control => 1, },
+        { _type => 'Sample', id => -402, source_id => -202, cell_type => 'primary', nomenclature => 'WUGC', is_control => 1, },
     ];
 }
 
