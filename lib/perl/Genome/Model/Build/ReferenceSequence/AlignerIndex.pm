@@ -233,6 +233,15 @@ sub _prepare_reference_index {
     return $self;
 }
 
+sub _modify_params_for_lookup_hash {
+    my ($class, $params_ref) = @_;
+
+    if (exists $params_ref->{aligner_name} &&
+            $class->aligner_requires_param_masking($params_ref->{aligner_name})) {
+        $params_ref->{aligner_params} = undef;
+    }
+}
+
 sub _gather_params_for_get_or_create {
     my $class = shift;
     my $p = $class->SUPER::_gather_params_for_get_or_create(@_);

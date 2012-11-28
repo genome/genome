@@ -451,6 +451,8 @@ sub _process_params_for_lookup_hash {
     my $class = shift;
     my %params = @_;
 
+    $class->_modify_params_for_lookup_hash(\%params);
+
     my $class_object = $class->__meta__;
     for my $key ($class->property_names) {
         my $meta = $class_object->property_meta_for_name($key);
@@ -484,6 +486,9 @@ sub _process_params_for_lookup_hash {
     }
 
     return %params;
+}
+
+sub _modify_params_for_lookup_hash {
 }
 
 sub _resolve_object_id {

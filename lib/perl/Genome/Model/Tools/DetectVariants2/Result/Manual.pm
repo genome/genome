@@ -95,23 +95,44 @@ class Genome::Model::Tools::DetectVariants2::Result::Manual {
     ],
 };
 
+sub _modify_params_for_lookup_hash {
+    my ($class, $params_ref) = @_;
+
+    my $original_file_path = delete $params_ref->{'original_file_path'};
+    my $specified_checksum = $params_ref->{'file_content_hash'};
+    $params_ref->{'file_content_hash'} = $class->_calculate_and_compare_md5_hashes(
+        $original_file_path, $specified_checksum);
+}
+
+sub _calculate_and_compare_md5_hashes {
+    my ($class, $original_file_path, $specified_checksum) = @_;
+
+    my $checksum;
+    if (-e $original_file_path) {
+        $checksum = Genome::Sys->md5sum($original_file_path);
+        if (defined($specified_checksum) and $specified_checksum ne $checksum) {
+            die $class->error_message(
+                'file_content_hash does not match md5sum output for original_file_path');
+        }
+    }
+
+    return $checksum;
+}
+
 sub _gather_params_for_get_or_create {
     my $class = shift;
 
     my $bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
 
     if($bx->specifies_value_for('original_file_path')) {
-        my $val = $bx->value_for('original_file_path');
-        if(-e $val) {
-            my $checksum = Genome::Sys->md5sum($val);
-            if($bx->specifies_value_for('file_content_hash')) {
-                unless($bx->value_for('file_content_hash') eq $checksum) {
-                    die('file_content_hash does not match md5sum output for the original file.');
-                }
-            } else {
-                $bx = $bx->add_filter('file_content_hash', $checksum);
-            }
+        my $original_file_path = $bx->value_for('original_file_path');
+        my $specified_checksum;
+        if ($bx->specifies_value_for('file_content_hash')) {
+            $specified_checksum = $bx->value_for('file_content_hash');
         }
+        $bx = $bx->add_filter('file_content_hash',
+            $class->_calculate_and_compare_md5_hashes(
+                $original_file_path, $specified_checksum));
     }
 
     my %params = $bx->params_list;
