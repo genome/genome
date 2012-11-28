@@ -222,14 +222,17 @@ sub _resolve_resource_requirements_for_build {
 # Keep it in sync with the diff conditions in ClinSeq.t.
 sub files_ignored_by_build_diff {
     return qw(
+        build.xml
         reports/Build_Initialized/report.xml
         reports/Build_Succeeded/report.xml
+        logs/.*
         .*.R$
         .*.pdf$
         .*._COSMIC.svg$
         .*.clustered.data.tsv$
         .*.SummarizeBuilds.log.tsv$
         .*.DumpIgvXml.log.txt
+        .*/mutation_diagrams/cosmic.mutation-diagram.stderr
     );
 };
 
