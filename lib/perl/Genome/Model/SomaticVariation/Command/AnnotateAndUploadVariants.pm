@@ -109,6 +109,7 @@ sub execute{
     my $annotation_output_version=1;  #TODO, do we even have an annotation file format?  need to figure out how to resolve this w/ data_set_path
     my $upload_output_version = 1; #TODO, same issue here as with annotation output version
 
+
     for my $key (keys %files){
         my $variant_file = $files{$key};
         unless ($variant_file){
@@ -330,6 +331,66 @@ sub execute{
             $self->warning_message('No sv software result for this build');
         }
     }
+
+    my $annovar = Genome::Model::Tools::Annovar::AnnotateVariation->execute(
+        input_file => $build->data_directory."/variants/snvs.annotated.vcf.gz",
+        buildver => "hg19",
+        table_names => ["wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed"],
+        outfile => $build->data_directory."/effects/all_snvs.annovar",
+        annotation_type => "regionanno",
+        scorecolumn => 5,
+        bedfile => "/gscuser/aregier/scratch/dhs_promoters/gene_names2.bed",
+    );
+    unless ($annovar) {
+        $self->error_message("Annovar failed");
+        return;
+    }
+    if ($build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.header")){
+        my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
+            additional_columns_file => $build->data_directory."/effects/all_snvs.annovar.summary",
+            input_variants => $build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.header"),
+            output_file => $build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.annovar"),
+            columns_to_append => "wgEncodeRegDnaseClustered,wgEncodeRegTfbsClustered,bed",
+        );
+        unless ($append) {
+            $self->error_message("Append columns failed for tier2 snvs");
+            return;
+        }
+    }
+    if ($build->data_set_path("effects/snvs.hq.novel.tier3", $version, "bed")) {
+        my $temp_file = Genome::Sys->create_temp_file_path;
+        my $convert = Genome::Model::Tools::Bed::Convert::BedToAnnotation->execute(
+            snv_file => $build->data_set_path("effects/snvs.hq.novel.tier3", $version, "bed"),
+            output => $temp_file,
+            annotator_version => 3,
+        );
+        #Add a header
+        my $output_file = Genome::Sys->open_file_for_writing($build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno"));
+        $output_file->print("chromosome_name\tstart\tstop\treference\tvariant\n");
+        my $in = Genome::Sys->open_file_for_reading($temp_file);
+        while(my $line = <$in>) {
+            $output_file->print($line);
+        }
+        $in->close;
+        $output_file->close;
+
+        unless ($convert) {
+            $self->error_message("Conversion from bed to anno coords failed for tier3 snvs");
+            return;
+        }
+        my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
+            additional_columns_file => $build->data_directory."/effects/all_snvs.annovar.summary",
+            input_variants => $build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno"),
+            output_file => $build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno.annovar"),
+            columns_to_append => "wgEncodeRegDnaseClustered,wgEncodeRegTfbsClustered,bed",
+        );
+        unless($append) {
+            $self->error_message("Append columns failed for tier3 snvs");
+            return;
+        }
+    }
+
+    #upload variants
 
     ##upload metrics
     $self->status_message("Uploading metrics");
