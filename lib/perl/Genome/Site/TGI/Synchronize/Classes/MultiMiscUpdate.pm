@@ -13,8 +13,9 @@ class Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate {
         description => { is => 'Text' },
         edit_date => { is => 'Text', },
     ],
-    has => [
-        priority => { is => 'Number', },
+    has_optional => [
+        result => { is => 'Text', },
+        #status => { is => 'Text', },
     ],
     has_many => [
         misc_updates => { is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate', },
@@ -27,8 +28,14 @@ sub perform_update {
     return $self->$method;
 }
 
-sub genome_enitity_params {
+sub genome_entity_params {
     my $self = shift;
+
+    my @misc_updates = $self->misc_updates;
+    if ( not @misc_updates ) {
+        $self->error_message('No misc updates to get genome entity params!');
+        return;
+    }
 
     my (%params, $lims_table_name);
     for my $misc_update ( $self->misc_updates ) {
@@ -46,7 +53,14 @@ sub genome_enitity_params {
         $params{subject_id} = delete $params{organism_sample_id};
     }
     else {
-        Carp::confess('Unsupported lims table name => '.$lims_table_name);
+        $self->error_message('Unsupported lims table name => '.$lims_table_name);
+        return;
+    }
+
+    for my $required_key (qw/ subject_id attribute_label attribute_value nomenclature /) {
+        next if defined $params{$required_key};
+        $self->error_message("Missing required key ($required_key) in genome entity params!");
+        return;
     }
 
     return %params;
@@ -55,31 +69,34 @@ sub genome_enitity_params {
 sub _insert {
     my $self = shift;
 
-    my %params = $self->genome_enitity_params;
-    my $genome_enitity = Genome::SubjectAttribute->get(%params);
-    
-    if ( not $genome_enitity ) {
-        $genome_enitity = Genome::SubjectAttribute->create(%params);
-        if ( not $genome_enitity ) {
-            return $self->_failure('failed', 'Failed to create genome entity!');
+    my %params = $self->genome_entity_params;
+    return $self->_failure if not %params;
+
+    my $genome_entity = Genome::SubjectAttribute->get(%params);
+    if ( not $genome_entity ) {
+        $genome_entity = Genome::SubjectAttribute->create(%params);
+        if ( not $genome_entity ) {
+            $self->error_message('Failed to create genome entity!');
+            return $self->_failure;
         }
     }
 
-    return $self->_success('inserted');
+    return $self->_success;
 }
 
 sub _delete {
     my $self = shift;
 
-    my %params = $self->genome_enitity_params;
-    my $genome_enitity = Genome::SubjectAttribute->get(%params);
-    if ( $genome_enitity ) {
-        if ( not $genome_enitity->delete ) {
-            return $self->_failure('failed', 'Failed to delete genome entity!');
+    my %params = $self->genome_entity_params;
+    my $genome_entity = Genome::SubjectAttribute->get(%params);
+    if ( $genome_entity ) {
+        if ( not $genome_entity->delete ) {
+            $self->error_message('Failed to delete genome entity!');
+            return $self->_failure;
         }
     }
 
-    return $self->_success('deleted');
+    return $self->_success;
 }
 
 sub _success {
@@ -87,15 +104,19 @@ sub _success {
     for my $misc_update ( $self->misc_updates ) {
         $misc_update->success;
     }
+    $self->result( $self->description );
     return 1;
 }
 
 sub _failure {
-    my ($self, $error) = @_;
+    my $self = shift;
+    my $error_message = $self->error_message // 'NO ERROR SET!';
     for my $misc_update ( $self->misc_updates ) {
-        $misc_update->failure($error);
+        $misc_update->error_message($error_message);
+        $misc_update->failure;
     }
-    return 1;
+    $self->result('FAILED');
+    return; 
 }
 
 1;

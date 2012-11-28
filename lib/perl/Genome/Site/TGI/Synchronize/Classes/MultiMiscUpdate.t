@@ -15,23 +15,48 @@ use Test::More;
 
 use_ok('Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate') or die;
 
+my $cnt = 0;
+
+# Success
 my @multi_misc_updates = _define_multiple_misc_updates();
 ok(@multi_misc_updates, 'Define multi misc updates');
 is(@multi_misc_updates, 4, 'Defined 4 multi misc updates');
 is(scalar( map { $_->misc_updates } @multi_misc_updates), 12, 'Defined 12 misc updates');
 for my $multi_misc_update ( @multi_misc_updates ) {
     ok($multi_misc_update->perform_update, 'perfromed update: '.$multi_misc_update->description);
-    my %genome_enitity_params = $multi_misc_update->genome_enitity_params;
-    ok(%genome_enitity_params, 'Got genome entity params');
-    is(scalar(keys %genome_enitity_params), 4, 'Correct number of genome entity params');
-    my $genome_enitity = Genome::SubjectAttribute->get(%genome_enitity_params);
+    my %genome_entity_params = $multi_misc_update->genome_entity_params;
+    ok(%genome_entity_params, 'Got genome entity params');
+    is(scalar(keys %genome_entity_params), 4, 'Correct number of genome entity params');
+    my $genome_entity = Genome::SubjectAttribute->get(%genome_entity_params);
     if ( $multi_misc_update->description eq 'INSERT' ) {
-        ok($genome_enitity, 'INSERT genome entity: '.$genome_enitity->__display_name__);
+        ok($genome_entity, 'INSERT genome entity: '.$genome_entity->__display_name__);
     }
     else {
-        ok(!$genome_enitity, 'DELETE genome entity: '.$multi_misc_update->__display_name__);
+        ok(!$genome_entity, 'DELETE genome entity: '.$multi_misc_update->__display_name__);
     }
+    is($multi_misc_update->result, $multi_misc_update->description, 'Correct result');
+    ok(!$multi_misc_update->error_message, 'No errors set on multi misc update!');
+    is(scalar(grep {defined} map {$_->error_message} $multi_misc_update->misc_updates), 0, 'No errors set on misc updates!');
 }
+
+# Failures
+# no misc updates
+my %multi_misc_update_params = (
+    subject_class_name => 'test.sample_attribute',
+    subject_id => join('-', 'sample_attribute', -100, 'foo', 'bar', 'baz'),
+    description => 'INSERT',
+    edit_date => '01-JAN-00 00.00.00.'.sprintf('%05d', $cnt++).' AM',
+);
+my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->create(%multi_misc_update_params);
+ok(!$multi_misc_update->perform_update, 'Failed to perform update w/o misc updates');
+is($multi_misc_update->error_message, 'No misc updates to get genome entity params!', 'Correct error');
+is($multi_misc_update->result, 'FAILED', 'Correct result');
+
+# Missing required key
+$multi_misc_update->add_misc_update(($multi_misc_updates[0]->misc_updates)[0]);
+ok(!$multi_misc_update->perform_update, 'Failed to perform update w/o misc updates');
+is($multi_misc_update->error_message, 'Missing required key (attribute_value) in genome entity params!', 'Correct error');
+is($multi_misc_update->result, 'FAILED', 'Correct result');
 
 done_testing();
 exit;
@@ -41,8 +66,7 @@ sub _define_multiple_misc_updates {
         population_group_member => [qw/ pg_id member_id /],
         sample_attribute => [qw/ organism_sample_id attribute_label attribute_value nomenclature /],
     );
-   
-    my $cnt = 0;
+
     my @misc_updates;
     for my $update ( [ 'population_group_member', -100, -101, ], [ 'sample_attribute', -100, 'foo', 'bar', 'baz',  ], ) {
         my ($subject_class_name, @ids) = @$update;
