@@ -108,7 +108,7 @@ sub _calculate_and_compare_md5_hashes {
     my ($class, $original_file_path, $specified_checksum) = @_;
 
     my $checksum;
-    if (-e $original_file_path) {
+    if (defined($original_file_path) and -e $original_file_path) {
         $checksum = Genome::Sys->md5sum($original_file_path);
         if (defined($specified_checksum) and $specified_checksum ne $checksum) {
             die $class->error_message(
