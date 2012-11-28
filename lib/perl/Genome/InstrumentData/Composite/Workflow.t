@@ -163,7 +163,6 @@ sub construct_merge_result {
         duplication_handler_name => 'picard',
         duplication_handler_version => '1.29',
     );
-    $merge_result->lookup_hash($merge_result->calculate_lookup_hash());
     for my $i (0..$#id) {
         $merge_result->add_input(
             name => 'instrument_data_id-' . $i,
@@ -187,6 +186,7 @@ sub construct_merge_result {
         name => 'instrument_data_segment_count',
         value_id => 0,
     );
+    $merge_result->lookup_hash($merge_result->calculate_lookup_hash());
 
     return $merge_result;
 }
