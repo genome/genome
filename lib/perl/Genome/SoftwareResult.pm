@@ -9,6 +9,8 @@ use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
 
+use JSON;
+
 use Genome::Utility::Instrumentation;
 
 class Genome::SoftwareResult {
@@ -412,6 +414,83 @@ sub _preprocess_params_for_get_or_create {
         }
     }
     return %params;
+}
+
+sub calculate_query {
+    my $self = shift;
+
+    my @query;
+
+    my $class_object = $self->__meta__;
+    for my $key ($self->property_names) {
+        my $meta = $class_object->property_meta_for_name($key);
+        next unless $meta->{is_input} or $meta->{is_param};
+        next if $key =~ /(.+?)_(?:md5|count)$/ and $class_object->property_meta_for_name($1); #TODO remove these params completely!
+
+        if($meta->is_many) {
+            push @query,
+                $key, [$self->$key];
+        } else {
+            push @query,
+                $key, $self->$key;
+        }
+    }
+
+    return @query;
+}
+
+sub calculate_hash {
+    my $self = shift;
+
+    my @query = $self->calculate_query;
+    my %processed_params = $self->_process_params_for_hash(@query);
+    return $self->_generate_hash_value(\%processed_params);
+}
+
+sub _process_params_for_hash {
+    my $class = shift;
+    my %params = @_;
+
+    my $class_object = $class->__meta__;
+    for my $key ($class->property_names) {
+        my $meta = $class_object->property_meta_for_name($key);
+        next unless $meta->{is_input} or $meta->{is_param};
+
+        die 'incomplete object specification: missing ' . $key unless exists $params{$key} or $meta->is_optional;
+
+        for my $t ('input', 'param') {
+            if ($meta->{'is_' . $t} && $meta->is_many) {
+                my $value_list = delete $params{$key};
+                if((defined $value_list) && (scalar @$value_list)) {
+                    my @values = sort map { Scalar::Util::blessed($_)? $_->id : $_ } @$value_list;
+                    $params{$key} = \@values;
+                }
+            }
+        }
+
+        if(not defined $params{$key} or $params{$key} eq '') {
+            delete $params{$key};
+        }
+
+        next unless exists $params{$key};
+
+        if(($meta->data_type eq 'Boolean' or $meta->data_type eq 'UR::Value::Boolean') and $params{$key} eq 0){
+            delete $params{$key};
+        }
+    }
+
+    return %params;
+}
+
+sub _generate_hash_value {
+    my $class = shift;
+    my $magical_hash = shift;
+
+    my $json = JSON->new();
+    $json->canonical([1]);
+    my $result = $json->encode($magical_hash);
+
+    return Genome::Sys->md5sum_data($result);
 }
 
 sub resolve_module_version {
