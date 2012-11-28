@@ -1938,11 +1938,22 @@ sub full_path_to_relative {
     return $rel_path;
 }
 
+#
+# Diff Methods
+#
+# There has been a slow migration away from individually written build subclasses.
+# Ony one of these methods has been updated to defer to the model definition.
+# The others will need some sort of updating.
+#
+
 # Returns a list of files that should be ignored by the diffing done by compare_output
 # Files should be relative to the data directory of the build and can contain regex.
 # Override in subclasses!
 sub files_ignored_by_diff {
-    return ();
+    my $self = shift;
+    my $model_class = $self->class;
+    $model_class =~ s/::Model::Build/::Model/;
+    return $model_class->files_ignored_by_build_diff($self);
 }
 
 # Returns a list of directories that should be ignored by the diffing done by compare_output

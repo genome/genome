@@ -627,12 +627,16 @@ sub execute {
       #Only process each sample once
       unless ($samples_processed{$subject_name}){
         $samples_processed{$subject_name} = 1;
-        my $id_sample_summary_file_csv = $build_outdir . $subject_name . "_APIPE_Sample_Sequence_QC.csv";
-        my $id_sample_summary_file_html = $build_outdir . $subject_name . "_APIPE_Sample_Sequence_QC.html";
+        #Occasionally the sample name will contain problem characters like "(" and ")" which need to be escaped or replaced
+        my $subject_name_escaped = $subject_name;
+        $subject_name_escaped =~s/\(/_/g;
+        $subject_name_escaped =~s/\)//g;
+        my $id_sample_summary_file_csv = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.csv";
+        my $id_sample_summary_file_html = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.html";
 
         #Produce the sample sequencing summary in csv format
-        my $id_list_cmd1 = "/usr/bin/perl `which genome` instrument-data list solexa --filter sample_name='$subject_name'  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv > $id_sample_summary_file_csv";
-        my $id_list_cmd2 = "/usr/bin/perl `which genome` instrument-data list solexa --filter sample_name='$subject_name'  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=html > $id_sample_summary_file_html";
+        my $id_list_cmd1 = "/usr/bin/perl `which genome` instrument-data list solexa --filter \"sample_name='$subject_name'\"  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv > $id_sample_summary_file_csv";
+        my $id_list_cmd2 = "/usr/bin/perl `which genome` instrument-data list solexa --filter \"sample_name='$subject_name'\"  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=html > $id_sample_summary_file_html";
 
         $self->status_message("\n");
         Genome::Sys->shellcmd(cmd => $id_list_cmd1, output_files=>["$id_sample_summary_file_csv"]);

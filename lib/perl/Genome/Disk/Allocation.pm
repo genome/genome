@@ -1079,6 +1079,18 @@ sub _remove_directory_closure {
 sub _mark_for_deletion_closure {
     my ($class, $path) = @_;
     return sub {
+        # In some instances -d $path will return true even if $path was
+        # recently moved (or possibly deleted?). This causes a "touch
+        # $path/ALLOCATION_DELETED" even though $path does not exist, causing
+        # touch to fail.  Attempting to opendir $path (even though it doesn't
+        # exist) before testing -d $path seems to fix the issue. This is
+        # probably an issue with NFS caching everything in 'struct stat', which
+        # is used by stat(), which is used by -d. We tried to stat($path) and
+        # system("stat $path") before testing -d, and in both cases stat()
+        # returned information about a non-existent path.
+        # See here: http://irccrew.org/~cras/nfs-coding-howto.html#attrcache (visited Nov 27 2012)
+        my $rv = opendir(my $dh, $path) // 0;
+        closedir $dh if ($rv == 1);
         if (-d $path and not $ENV{UR_DBI_NO_COMMIT}) {
             print STDERR "Marking directory at $path as deallocated\n";
             system("touch $path/ALLOCATION_DELETED");
