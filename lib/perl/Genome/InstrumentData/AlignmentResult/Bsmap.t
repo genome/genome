@@ -186,13 +186,13 @@ sub test_shortcutting {
     # Step 2: Attempt to get an alignment that's already created
     #
     #################################################
-    my $alignment = Genome::InstrumentData::AlignmentResult->get(
+    my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
                                                               instrument_data_id => $fake_instrument_data->id,
                                                               aligner_name => $aligner_name,
                                                               aligner_version => $aligner_version,
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
-                                                              reference_build => $reference_build, 
+                                                              reference_build => $reference_build,
                                                               );
     ok($alignment, "got an alignment object");
 
@@ -207,16 +207,6 @@ sub test_shortcutting {
     ok(-d $dir, "result is a real directory");
     ok(-s $dir."/all_sequences.bam", "found a bam file in there");
 
-    my $alignment_from_lock = Genome::InstrumentData::AlignmentResult->get_with_lock(
-                                                              instrument_data_id => $fake_instrument_data->id,
-                                                              aligner_name => $aligner_name,
-                                                              aligner_version => $aligner_version,
-                                                              samtools_version => $samtools_version,
-                                                              picard_version => $picard_version,
-                                                              reference_build => $reference_build,
-                                                              );
-    ok($alignment_from_lock, "got an alignment object using get_with_lock");
-    is($alignment_from_lock, $alignment, "got same object as without locking");
 }
 
 

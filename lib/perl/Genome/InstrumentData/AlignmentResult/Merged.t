@@ -137,11 +137,8 @@ isnt($filtered_alignment_result, $existing_alignment_result, 'produced a differe
 my $existing_filtered_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@filtered_params);
 is($existing_filtered_alignment_result, $filtered_alignment_result, 'got back the previously created filtered result');
 
-SKIP: {
-skip 'Currently cannot get with same params as create...', 1;
 my $gotten_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_with_lock(@params);
 is($gotten_alignment_result, $existing_alignment_result, 'using get returns same result as get_or_create');
-}
 
 my @segmented_params = (
      aligner_name=>$aligner_name,
