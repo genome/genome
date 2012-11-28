@@ -273,7 +273,6 @@ sub success {
 sub failure {
     my $self = shift;
 
-    my $error = $self->error_message // 'NO ERROR SET!';
     $self->result('FAILED');
     $self->status(
         join("\t", 
@@ -283,7 +282,6 @@ sub failure {
             map({ defined $_ ? "'".$_."'" : "'NULL'"; }  $self->old_value, $self->new_value,),
         )
     );
-    $self->error_message($error);
 
     return;
 }
