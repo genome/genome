@@ -36,6 +36,7 @@ my %refcov_stats_params = (
     print_headers =>1,
     embed_bed =>1,
     use_short_roi_names => 0,
+    roi_track_name => '',
 );
 
 my $refcov_result = Genome::InstrumentData::AlignmentResult::Merged::RefCov->get_or_create(%refcov_stats_params);
