@@ -140,6 +140,7 @@ sub test_shortcutting {
                  picard_version=>$picard_version,
                  reference_build => $reference_build, 
     );
+    $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash);
 
     # Alignment Result is a subclass of Software Result. Make sure this is true here.
     isa_ok($alignment_result, 'Genome::SoftwareResult');
