@@ -220,20 +220,18 @@ sub _resolve_resource_requirements_for_build {
 # This is implemented here until refactoring is done on the model/build API
 # It ensures that when the CI server compares two clinseq builds it ignores the correct files.
 # Keep it in sync with the diff conditions in ClinSeq.t.
-Genome::Model::Build::ClinSeq->class;
-*Genome::Model::Build::ClinSeq::files_ignored_by_diff  = 
-    sub {
-        return qw(
-            reports/Build_Initialized/report.xml
-            reports/Build_Succeeded/report.xml
-            .*.R$
-            .*.pdf$
-            .*._COSMIC.svg$
-            .*.clustered.data.tsv$
-            .*.SummarizeBuilds.log.tsv$
-            .*.DumpIgvXml.log.txt
-        );
-    };
+sub files_ignored_by_build_diff {
+    return qw(
+        reports/Build_Initialized/report.xml
+        reports/Build_Succeeded/report.xml
+        .*.R$
+        .*.pdf$
+        .*._COSMIC.svg$
+        .*.clustered.data.tsv$
+        .*.SummarizeBuilds.log.tsv$
+        .*.DumpIgvXml.log.txt
+    );
+};
 
 1;
 
