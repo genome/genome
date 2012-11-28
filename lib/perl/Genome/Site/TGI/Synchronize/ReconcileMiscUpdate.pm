@@ -5,147 +5,149 @@ use warnings;
 
 use Genome;
 
+use Date::Format;
 use Mail::Sender;
 
 class Genome::Site::TGI::Synchronize::ReconcileMiscUpdate {
     is => 'Command::V2',
-    has => [
+    has_optional => [
+        date => {
+            is => 'Text',
+            doc => 'Look for updates on this date. Default is to look for updates on the previous day. Format is day-month-year (Date::Format => %d-%b-%y). January 1st 2000 would be "01-JAN-00".',
+        },
+    ],
+    has_optional_transient => [
+        _misc_updates => { is => 'Array', default_value => [], },
+        _stats => { is => 'Hash', default_value => {}, },
+        _status => { is => 'Array', default_value => [], },
+        _errors => { is => 'Hash', default_value => {}, },
     ],
 };
 
-sub table_to_class_mapping {
-    return (
-        "gsc.organism_taxon" => 'Genome::Taxon',
-        "gsc.organism_individual" => 'Genome::Individual',
-        "gsc.organism_population_group" => 'Genome::PopulationGroup',
-        "gsc.organism_sample" => 'Genome::Sample',
-        "gsc.sample_attribute" => 'Genome::SubjectAttribute',
-        "gsc.population_group_member" => 'Genome::SubjectAttribute',
-    );
-}
+sub __errors__ {
+    my $self = shift;
 
-sub class_for_table {
-    my ($self, $table) = @_;
-    my %m = $self->table_to_class_mapping;
-    return $m{$table};
+    my @errors = $self->SUPER::__errors__;
+    return if @errors;
+
+    my $date = $self->date;
+    if ( $date ) {
+        my @tokens = split('-', $date);
+        # There is a better way to do this, but it should not be run stand alone very often
+        if ( not @tokens or @tokens != 3 or $tokens[0] !~ /^\d{2}$/ or $tokens[1] !~ /^[A-Z]{3}$/ or $tokens[2] !~ /^\d{2}$/ ) {
+            push @errors, UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ date /],
+                desc => 'Invalid date format => '.$date,
+            );
+        }
+    }
+    else {
+        my $format = "%d-%b-%y";
+        my $now = time();
+        my $date = uc(Date::Format::time2str($format, ($now - 86400)));
+        $self->date($date);
+    }
+
+    return @errors;
 }
 
 sub execute {
     my $self = shift;
+    $self->status_message('Reconcile Misc Update...');
 
-    my @msg;
+    my $execute_updates = $self->_execute_updates;
+    return if not $execute_updates;
 
-    push @msg, $self->sync_properties_that_map_directly();
+    my $execute_indels = $self->_execute_indels;
+    return if not $execute_indels;
 
-#    push @msg, $self->sync_work_order_project();
-    my $sender = Mail::Sender->new({ smtp => 'gscsmtp.wustl.edu', from => 'jlolofie@genome.wustl.edu', });
-
-    $sender->MailMsg({
-        to => 'apipe-builder@genome.wustl.edu',
-        subject => 'lims -> apipe sync',
-        msg => join("\n",@msg)
-    });
-
+    $self->_execute_report;
+    $self->status_message('Done.');
+    return 1;
 }
 
-sub sync_work_order_project {
+sub _execute_updates {
+    my $self = shift;
 
-    my ($self) = @_;
-    # TODO: here
-}
+    $self->status_message('Executing UPDATES...');
+    $self->status_message('Date is: '.$self->date);
+    my @misc_updates = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->get(
+        'edit_date like' => $self->date.' %',
+        is_reconciled => 0,
+        description => 'UPDATE',
+        '-order_by' => 'edit_date',
+    );
+    push @{$self->_misc_updates}, @misc_updates;
+    $self->status_message('Updates found: '.@misc_updates);
 
-sub sync_properties_that_map_directly {
-
-    my ($self) = @_;
-
-    my $table_for_class = $self->table_to_class_mapping();
-    my $msg;
-
-    for my $table (keys %$table_for_class) {
-        my @updates = Genome::Site::TGI::MiscUpdate->get(is_reconciled => 0, table_name => $table);
-        my $class = $table_for_class->{$table};
-        if (!$class) {
-            $self->warning_message("Skipping table $table (no class mapping)");
-            next;
-        }
-        $self->status_message("Found " . scalar @updates . " unreconciled updates for $table ($class)");
-        my $updates_to_review = $self->process_updates($table, $class, \@updates);
-
-        $msg .= "Table: $table Class: $class\n";
-        $msg .= Data::Dumper::Dumper $updates_to_review;
+    for my $misc_update ( @misc_updates ) {
+        $self->status_message( $misc_update->__display_name__ );
+        $misc_update->perform_update;
     }
 
-    return $msg;
+    $self->status_message('UPDATES done');
+    return 1;
 }
 
-sub process_updates {
+sub _execute_indels {
+    my $self = shift;
+    $self->status_message('Executing INSERTS/DELETES...');
 
-    my ($self, $table, $class, $updates) = @_;
+    $self->status_message('Date is: '.$self->date);
+    my @misc_updates = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->get(
+        'edit_date like' => $self->date.' %',
+        is_reconciled => 0,
+        'description in'=> [qw/ INSERT DELETE /],
+        '-order_by' => 'edit_date',
+    );
+    push @{$self->_misc_updates}, @misc_updates;
 
-    my $updates_to_review = {};
-    my @completed_updates;
-    my $update_list = {};
-
-    for my $update (@$updates) {
-
-        my $column = $update->column_name;
-        unless ($column) {
-            $self->warning_message("Update " . $update->__display_name__ . " has no column name, cannot apply!");
-            $update->is_reconciled(1);
-            next;
+    my @multi_misc_updates;
+    foreach my $misc_update ( @misc_updates ) {
+        my %multi_misc_update_params = map { $_ => $misc_update->$_ } (qw/ subject_class_name subject_id edit_date description /);
+        my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->get(%multi_misc_update_params);
+        if ( not $multi_misc_update ) {
+            $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->create(
+                %multi_misc_update_params,
+            );
+            push @multi_misc_updates, $multi_misc_update;
         }
+        $multi_misc_update->add_misc_update($misc_update);
+    }
+    $self->status_message('Inserts/Deletes found: '.@misc_updates);
 
-        my $lims_old_value = $update->old_value;
-        my $lims_new_value = $update->new_value;
-
-        if ($lims_old_value && $lims_new_value) {
-            next if $lims_old_value eq $lims_new_value;
-        }
-
-        my $object = $class->get($update->updated_row_primary_key);
-        unless ($object) {
-            $self->warning_message("Found no object of class $class with id " . $update->updated_row_primary_key);
-#            push @{ $updates_to_review->{'could_not_find_genome_object'} }, join("\t",$class,$update->updated_row_primary_key);
-            $updates_to_review->{'could_not_find_genome_object'}++;
-            $update->is_reconciled(1);
-            next;
-        }
-
-        if (! grep { $_->property_name eq $column } $class->__meta__->properties() ) {
-#            $self->warning_message("Column '$column' doesnt exist for class '$class'");
-#            push @{ $updates_to_review->{'property_doesnt_exist_for_column'} }, join("\t",$class,$column,$update->id);
-            $updates_to_review->{'property_doesnt_exist_for_column'}++;
-            $update->is_reconciled(1);
-            next;
-        }
-
-        my $apipe_current_value = $object->$column;
-        if ($apipe_current_value and $apipe_current_value eq $lims_new_value) {
-            $update->is_reconciled(1);
-            next;
-        }
-
-        if ( ! $lims_old_value or ($apipe_current_value ne $lims_old_value) ) {
-            $self->warning_message("Object " . $object->__display_name__ . " property $column " . 
-                "currently has value '$apipe_current_value', but update claims value should be '$lims_old_value'. " . 
-                "Cannot safely apply update, marking for later review and skipping");
-            $updates_to_review->{'current_value_doesnt_match_old'}++;
-#            push @{ $updates_to_review->{'current_value_doesnt_match_old'} }, join("\t",$class,$column,$update->id);
-            next;
-        }
-
-#        print "JTAL: would have changed $column to '$new_value' from '$current_value'\n";
-
-        $update_list->{$column}++;
-        printf("%s\t%s\t%s\t%s\t%s\t%s\n", $apipe_current_value, $lims_old_value, $lims_new_value, $class, $object->id, $column);
-#        $object->$column($new_value);
-#        $update->is_reconciled(1);
-        push @completed_updates, $update;
+    for my $multi_misc_update ( @multi_misc_updates ) {
+        $self->status_message( $multi_misc_update->__display_name__ );
+        $multi_misc_update->perform_update;
     }
 
-    print $table . " -> " . $class . "\n";
-    print Data::Dumper::Dumper $update_list;
-    return $updates_to_review; 
+    $self->status_message('INSERTS/DELETES done');
+    return 1;
+}
+
+sub _execute_report {
+    my $self = shift;
+
+    my (%stats, @status, %errors);
+    for my $misc_update ( @{$self->_misc_updates} ) {
+        $stats{attempted}++;
+        $stats{ $misc_update->result }++;
+        push @status, $misc_update->status;
+        if ( $misc_update->result eq 'FAILED' ) {
+            $errors{ $misc_update->id } = $misc_update->error_message || 'No error message given!';
+        }
+    }
+#    my $sender = Mail::Sender->new({ smtp => 'gscsmtp.wustl.edu', from => 'jlolofie@genome.wustl.edu', });
+#    $sender->MailMsg({
+#        to => 'apipe-builder@genome.wustl.edu',
+#        subject => 'lims -> apipe sync',
+#        msg => join("\n",@msg)
+#    });
+
+    print Data::Dumper::Dumper( \%stats, \@status, \%errors);
+
+    return 1;
 }
 
 1;
