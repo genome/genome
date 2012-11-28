@@ -29,6 +29,7 @@ class Genome::SoftwareResult {
     has => [
         module_version      => { is => 'Text', len => 64, column_name => 'VERSION', is_optional => 1 },
         subclass_name       => { is => 'Text', len => 255, column_name => 'CLASS_NAME' },
+        lookup_hash         => { is => 'Text', len => 32, column_name => 'LOOKUP_HASH', is_optional => 1 },
         inputs_bx           => { is => 'UR::BoolExpr', id_by => 'inputs_id', is_optional => 1 },
         inputs_id           => { is => 'Text', len => 4000, column_name => 'INPUTS_ID', implied_by => 'inputs_bx', is_optional => 1 },
         params_bx           => { is => 'UR::BoolExpr', id_by => 'params_id', is_optional => 1 },
