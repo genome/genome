@@ -139,7 +139,7 @@ is($existing_filtered_alignment_result, $filtered_alignment_result, 'got back th
 
 SKIP: {
 skip 'Currently cannot get with same params as create...', 1;
-my $gotten_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get(@params);
+my $gotten_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_with_lock(@params);
 is($gotten_alignment_result, $existing_alignment_result, 'using get returns same result as get_or_create');
 }
 
@@ -211,6 +211,7 @@ sub generate_individual_alignment_results {
             test_name => 'merged_unit_test',
             filter_name => 'forward-only',
         );
+        $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
         
         isa_ok($alignment_result, 'Genome::InstrumentData::AlignmentResult');
         push @alignment_results, $alignment_result;

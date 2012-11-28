@@ -290,7 +290,7 @@ sub collect_individual_alignments {
         }
 
         for my $segment_param (@segment_params) {
-            my @alignment = Genome::InstrumentData::AlignmentResult->get(
+            my @alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
                 %params,
                 reference_build_id => $self->reference_build_id,
                 annotation_build_id => ($self->annotation_build_id || undef),
