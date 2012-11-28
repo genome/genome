@@ -15,7 +15,7 @@ use Test::More;
 
 use_ok('Genome::Site::TGI::Synchronize::ReconcileMiscUpdate') or die;
 
-my $cnt = 1;
+my $cnt = 0;
 
 # Default date
 my $reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create;
@@ -55,7 +55,7 @@ my @misc_updates_that_fail = _define_misc_updates_that_fail();
 ok(@misc_updates_that_fail, 'Define misc updates that fail');
 
 # Reconcile
-$reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(date => '01-JAN-00');
+$reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(date => '2000-01-01');
 ok($reconcile, 'Create reconcile command');
 @errors = $reconcile->__errors__;
 ok(!@errors, 'No errors for test date');
@@ -193,12 +193,12 @@ sub _define_misc_updates {
         my $subject_property_name = $obj->lims_property_name_to_genome_property_name($property_name);
         my $current_update_id = join(' ', $type, $pos, $property_name);
         my $old_value = ( $prev_update_id eq $current_update_id ) ? $prev_update_value : $obj->$property_name;
-        my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+        my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
             subject_class_name => 'test.'.$type_to_subject_class_name{$type},
             subject_id => $obj->id,
             subject_property_name => $subject_property_name,
             editor_id => 'lims',
-            edit_date => '01-JAN-00 00.00.00.'.sprintf('%05d', $cnt++).' AM',
+            edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
             old_value => $old_value,
             new_value => $new_value,
             description => 'UPDATE',
@@ -242,11 +242,11 @@ sub _define_misc_indels {
             subject_class_name => 'test.'.$subject_class_name,
             subject_id => $subject_id,
             description => $description,
-            edit_date => '01-JAN-00 00.00.00.'.sprintf('%05d', $cnt++).' AM',
+            edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         );
         my $subject_property_names = $subject_class_names_to_properties{$subject_class_name};
         for ( my $i = 0; $i < @{$subject_class_names_to_properties{$subject_class_name}}; $i++ ) {
-            my $misc_indel = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+            my $misc_indel = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
                 %params,
                 subject_property_name => $subject_class_names_to_properties{$subject_class_name}->[$i],
                 editor_id => 'lims',
@@ -266,12 +266,12 @@ sub _define_misc_updates_that_fail {
 
     # Invalid genome class
     my @misc_updates_that_fail;
-    my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+    my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
         subject_class_name => 'test.blah',
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '01-JAN-00 00.00.00.00000 AM',
+        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON__',
         new_value => '__FAILED__',
         description => 'UPDATE',
@@ -280,12 +280,12 @@ sub _define_misc_updates_that_fail {
     push @misc_updates_that_fail, $misc_update;
 
     # No obj for subject id
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
         subject_class_name => 'test.organism_taxon',
         subject_id => -10000,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '01-JAN-00 00.00.00.00000 AM',
+        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON__',
         new_value => '__FAILED__',
         description => 'UPDATE',
@@ -294,12 +294,12 @@ sub _define_misc_updates_that_fail {
     push @misc_updates_that_fail, $misc_update;
 
     # Can not update sample attr
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
         subject_class_name => 'test.sample_attribute',
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '01-JAN-00 00.00.00.00000 AM',
+        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_SAMPLE_ATTR__',
         new_value => '__FAILED__',
         description => 'UPDATE',
@@ -308,12 +308,12 @@ sub _define_misc_updates_that_fail {
     push @misc_updates_that_fail, $misc_update;
 
     # Can not update pop group member
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
         subject_class_name => 'test.population_group_member',
         subject_id => -301,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '01-JAN-00 00.00.00.00000 AM',
+        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_POP_GROUP_MEMBER__',
         new_value => '__FAILED__',
         description => 'UPDATE',
@@ -322,12 +322,12 @@ sub _define_misc_updates_that_fail {
     push @misc_updates_that_fail, $misc_update;
 
     # Old value ne to current
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
         subject_class_name => 'test.organism_taxon',
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '01-JAN-00 00.00.00.00000 AM',
+        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON2__',
         new_value => '__FAILED__',
         description => 'UPDATE',
@@ -336,12 +336,12 @@ sub _define_misc_updates_that_fail {
     push @misc_updates_that_fail, $misc_update;
 
     # Unsupported attr
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
         subject_class_name => 'test.organism_sample',
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '01-JAN-00 00.00.00.00000 AM',
+        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_SAMPLE__',
         new_value => '__FAILED__',
         description => 'UPDATE',

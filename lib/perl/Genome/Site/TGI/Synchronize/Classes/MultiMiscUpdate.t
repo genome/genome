@@ -45,7 +45,7 @@ my %multi_misc_update_params = (
     subject_class_name => 'test.sample_attribute',
     subject_id => join('-', 'sample_attribute', -100, 'foo', 'bar', 'baz'),
     description => 'INSERT',
-    edit_date => '01-JAN-00 00.00.00.'.sprintf('%05d', $cnt++).' AM',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
 );
 my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->create(%multi_misc_update_params);
 ok(!$multi_misc_update->perform_update, 'Failed to perform update w/o misc updates');
@@ -76,7 +76,7 @@ sub _define_multiple_misc_updates {
                 subject_class_name => 'test.'.$subject_class_name,
                 subject_id => $subject_id,
                 description => $description,
-                edit_date => '01-JAN-00 00.00.00.'.sprintf('%05d', $cnt++).' AM',
+                edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
             );
             my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->create(%multi_misc_update_params);
             push @multi_misc_updates, $multi_misc_update;

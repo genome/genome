@@ -15,6 +15,8 @@ use Test::More;
 
 use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate') or die;
 
+my $cnt = 0;
+
 # Valid
 my $taxon = Genome::Taxon->__define__(id => -100, name => '__TEST_TAXON__');
 my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
@@ -22,7 +24,7 @@ my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define_
     subject_id => $taxon->id,
     subject_property_name => 'estimated_organism_genome_size',
     editor_id => 'lims',
-    edit_date => '01-JAN-00 00.00.00.00000 AM',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => undef,
     new_value => 1_000,
     description => 'UPDATE',
@@ -50,7 +52,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     subject_id => -100,
     subject_property_name => 'name',
     editor_id => 'lims',
-    edit_date => '01-JAN-00 00.00.00.00000 AM',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => undef,
     new_value => undef,
     description => 'UPDATE',
@@ -66,7 +68,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     subject_id => -10000,
     subject_property_name => 'name',
     editor_id => 'lims',
-    edit_date => '01-JAN-00 00.00.00.00000 AM',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => undef,
     new_value => undef,
     description => 'UPDATE',
@@ -82,7 +84,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     subject_id => $taxon->id,
     subject_property_name => 'name',
     editor_id => 'lims',
-    edit_date => '01-JAN-00 00.00.00.00000 AM',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => undef,
     new_value => undef,
     description => 'UPDATE',
@@ -98,7 +100,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     subject_id => $taxon->id,
     subject_property_name => 'name',
     editor_id => 'lims',
-    edit_date => '01-JAN-00 00.00.00.00000 AM',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => undef,
     new_value => undef,
     description => 'UPDATE',
@@ -114,7 +116,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     subject_id => $taxon->id,
     subject_property_name => 'name',
     editor_id => 'lims',
-    edit_date => '01-JAN-00 00.00.00.00000 AM',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => undef,
     new_value => undef,
     description => 'UPDATE',
@@ -131,7 +133,7 @@ my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define_
     subject_id => $taxon->id,
     subject_property_name => 'estimated_organism_genome_size',
     editor_id => 'lims',
-    edit_date => '01-JAN-00 00.00.00.00001 AM',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => 'not the same as the current value',
     new_value => 10_000,
     description => 'UPDATE',

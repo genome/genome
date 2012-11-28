@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 use Date::Format;
-use Mail::Sender;
+use Date::Parse;
 
 class Genome::Site::TGI::Synchronize::ReconcileMiscUpdate {
     is => 'Command::V2',
@@ -29,10 +29,10 @@ sub __errors__ {
     return if @errors;
 
     my $date = $self->date;
+    my $time;
     if ( $date ) {
-        my @tokens = split('-', $date);
-        # There is a better way to do this, but it should not be run stand alone very often
-        if ( not @tokens or @tokens != 3 or $tokens[0] !~ /^\d{2}$/ or $tokens[1] !~ /^[A-Z]{3}$/ or $tokens[2] !~ /^\d{2}$/ ) {
+        $time = Date::Parse::str2time($date);
+        if ( not $time ) {
             push @errors, UR::Object::Tag->create(
                 type => 'invalid',
                 properties => [qw/ date /],
@@ -41,11 +41,10 @@ sub __errors__ {
         }
     }
     else {
-        my $format = "%d-%b-%y";
-        my $now = time();
-        my $date = uc(Date::Format::time2str($format, ($now - 86400)));
-        $self->date($date);
+        $time = time() - 86400;
     }
+
+    $self->date( Date::Format::time2str("%Y-%m-%d", $time) );
 
     return @errors;
 }
