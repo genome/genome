@@ -321,7 +321,7 @@ sub get_annotation_index {
     my $self = shift;
     my $annotation_build = shift || $self->annotation_build;
 
-    my $index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get(
+    my $index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_with_lock(
         aligner_name => $self->aligner_name,
         aligner_version => $self->aligner_version,
         aligner_params => $self->aligner_params,

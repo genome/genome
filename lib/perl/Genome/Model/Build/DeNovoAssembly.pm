@@ -173,7 +173,7 @@ sub input_metrics_file_for_instrument_data {
     my $self = shift;
     my $instrument_data = shift;
     my %params = $self->read_processor_params_for_instrument_data($instrument_data);
-    my $result = Genome::InstrumentData::SxResult->get(%params);
+    my $result = Genome::InstrumentData::SxResult->get_with_lock(%params);
     return $self->data_directory.'/'.$result->read_processor_input_metric_file;
 }
  
@@ -181,7 +181,7 @@ sub output_metrics_file_for_instrument_data {
     my $self = shift;
     my $instrument_data = shift;
     my %params = $self->read_processor_params_for_instrument_data($instrument_data);
-    my $result = Genome::InstrumentData::SxResult->get(%params);
+    my $result = Genome::InstrumentData::SxResult->get_with_lock(%params);
     return $self->data_directory.'/'.$result->read_processor_input_metric_file;
 }
 

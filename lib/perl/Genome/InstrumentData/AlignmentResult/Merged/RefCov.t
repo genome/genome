@@ -45,7 +45,7 @@ isa_ok($refcov_result, 'Genome::InstrumentData::AlignmentResult::Merged::RefCov'
 #my $refcov_stats = $refcov_result->refcov_stats_hash_ref;
 #ok($refcov_stats, 'produced stats');
 
-my $refcov_result2 = Genome::InstrumentData::AlignmentResult::Merged::RefCov->get(%refcov_stats_params);
+my $refcov_result2 = Genome::InstrumentData::AlignmentResult::Merged::RefCov->get_with_lock(%refcov_stats_params);
 is($refcov_result2, $refcov_result, 'got same result for get() after get_or_create()');
 
 #my $refcov_result3 = Genome::InstrumentData::AlignmentResult::Merged::RefCov->get_or_create(%refcov_stats_params);

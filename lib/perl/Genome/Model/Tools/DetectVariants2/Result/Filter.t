@@ -130,5 +130,5 @@ my %result_params = (
         chromosome_list => $filter_result->chromosome_list,
 );
 
-my $filter_result_get = Genome::Model::Tools::DetectVariants2::Result::Filter->get(%result_params);
+my $filter_result_get = Genome::Model::Tools::DetectVariants2::Result::Filter->get_with_lock(%result_params);
 is($filter_result_get, $filter_result, 'got back filter result through regular get');

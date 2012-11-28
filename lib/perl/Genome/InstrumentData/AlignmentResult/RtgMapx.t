@@ -170,7 +170,7 @@ sub test_shortcutting {
     # Step 2: Attempt to get an alignment that's already created
     #
     #################################################
-    my $alignment = Genome::InstrumentData::AlignmentResult->get(
+    my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
                                                               instrument_data_id => $fake_instrument_data->id,
                                                               aligner_name => $aligner_name,
                                                               aligner_version => $aligner_version,
