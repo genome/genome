@@ -62,8 +62,7 @@ sub _faster_get {
 
     my $start_time = Time::HiRes::time();
 
-    my %processed_params = $class->_process_params_for_lookup_hash(@_);
-    my $lookup_hash =  $class->_generate_lookup_hash(\%processed_params);
+    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
 
     my @objects = $class->get(lookup_hash => $lookup_hash);
 
@@ -200,7 +199,8 @@ sub create {
     # we might have had to wait on the lock, in which case someone else was probably creating that entity
     # do a "reload" here to force another trip back to the database to see if a software result was created
     # while we were waiting on the lock.
-    (@previously_existing) = UR::Context->current->reload($class,%is_input,%is_param);
+    (@previously_existing) = UR::Context->current->reload($class,
+        lookup_hash => $class->calculate_lookup_hash_from_arguments(@_));
 
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
@@ -364,12 +364,18 @@ sub calculate_query {
     return @query;
 }
 
+sub calculate_lookup_hash_from_arguments {
+    my $class = shift;
+
+    my %processed_params = $class->_process_params_for_lookup_hash(@_);
+    return $class->_generate_lookup_hash(\%processed_params);
+}
+
 sub calculate_lookup_hash {
     my $self = shift;
 
     my @query = $self->calculate_query;
-    my %processed_params = $self->_process_params_for_lookup_hash(@query);
-    return $self->_generate_lookup_hash(\%processed_params);
+    return $self->calculate_lookup_hash_from_arguments(@query);
 }
 
 sub _process_params_for_lookup_hash {
@@ -408,7 +414,9 @@ sub _process_params_for_lookup_hash {
             $params{$key} = $meta->default_value;
         }
 
-        die 'incomplete object specification: missing ' . $key unless exists $params{$key} or $meta->is_optional;
+        unless ($meta->is_optional or $meta->is_many or exists $params{$key}) {
+            die 'incomplete object specification: missing ' . $key;
+        }
 
         for my $t ('input', 'param') {
             if ($meta->{'is_' . $t} && $meta->is_many) {
