@@ -48,6 +48,7 @@ my $alignment_result = Genome::InstrumentData::AlignmentResult::Tophat->__define
     reference_build_id => $reference_build->id,
     bowtie_version => '0.12.7'
 );
+$alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
 
 my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index->__define__(
     version => "0.4.3",
@@ -55,6 +56,7 @@ my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index
     reference_build => $reference_build,
     output_dir => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/IndexResult/'
 );
+$index->lookup_hash($index->calculate_lookup_hash());
 
 my %params = (
     alignment_result => $alignment_result,

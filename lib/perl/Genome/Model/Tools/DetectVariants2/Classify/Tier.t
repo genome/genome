@@ -37,6 +37,7 @@ my $pd_result = Genome::Model::Tools::DetectVariants2::Classify::PreviouslyDisco
     output_dir => $prior_dir,
     variant_type => 'snv',
 );
+$pd_result->lookup_hash($pd_result->calculate_lookup_hash());
 $DB::single = 1;
 my $tier_result = Genome::Model::Tools::DetectVariants2::Classify::Tier->create(
     variant_type => 'snv',

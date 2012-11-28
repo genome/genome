@@ -51,6 +51,7 @@ sub setup_prior_results {
         detector_version => 'r599',
         output_dir => $somatic_output_dir,
     );
+    $somatic_snv_result->lookup_hash($somatic_snv_result->calculate_lookup_hash());
     my $somatic_snv_file = join('/', $somatic_output_dir, 'snvs.hq');
     Genome::Sys->write_file($somatic_snv_file, <<EOFILE
 1	2612085	T	G	99	22	49	51	35	244	127
@@ -86,6 +87,7 @@ EOFILE
         detector_version => 'r599',
         output_dir => $control_output_dir,
     );
+    $control_snv_result->lookup_hash($control_snv_result->calculate_lookup_hash());
     my $control_snv_file = join('/', $control_output_dir, 'snvs.hq');
     Genome::Sys->write_file($control_snv_file, <<EOFILE
 1	2612085	T	G	99	22	49	51	35	244	127

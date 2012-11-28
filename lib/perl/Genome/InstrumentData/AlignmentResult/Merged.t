@@ -189,7 +189,8 @@ sub generate_individual_alignment_results {
             reference_build => $reference_build,
             test_name => 'merged_unit_test',
         );
-        
+        $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
+
         isa_ok($alignment_result, 'Genome::InstrumentData::AlignmentResult');
         push @alignment_results, $alignment_result;
     }

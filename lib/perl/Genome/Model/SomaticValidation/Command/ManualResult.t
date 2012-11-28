@@ -137,6 +137,7 @@ sub setup_somatic_variation_build {
         output_dir => Cwd::abs_path($dir),
         id => -2013,
     );
+    $result->lookup_hash($result->calculate_lookup_hash());
 
     my $data = <<EOBED
 1	10003	10004	A/T

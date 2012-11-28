@@ -44,6 +44,7 @@ my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
     aligned_reads => $tumor_bam_file,
     reference_build_id => $refbuild_id,
 );
+$detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 
 my $library_support_filter = Genome::Model::Tools::DetectVariants2::Filter::LibrarySupport->create(
     previous_result_id => $detector_result->id,

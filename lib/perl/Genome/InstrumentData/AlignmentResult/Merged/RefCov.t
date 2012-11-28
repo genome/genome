@@ -60,6 +60,7 @@ sub setup_data {
         output_dir => ($data_dir . '/merged_result'),
         reference_build => $refseq,
     );
+    $merged_result->lookup_hash($merged_result->calculate_lookup_hash());
     isa_ok($merged_result, 'Genome::InstrumentData::AlignmentResult::Merged', 'created merged result');
 
     my $fl_cmd = Genome::FeatureList::Command::Create->create(
