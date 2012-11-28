@@ -901,4 +901,13 @@ sub _create_command_tree {
     return $command_class;
 }
 
+# diff methods
+#
+# The build diff methods delegate here so that a pipeline definition doesn't require a hand-written build subclass.
+# Only the methods actually used from Build.pm have been migrated.
+
+sub files_ignored_by_build_diff {
+    ()
+}
+
 1;
