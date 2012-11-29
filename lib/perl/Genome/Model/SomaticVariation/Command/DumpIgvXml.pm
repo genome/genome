@@ -22,7 +22,13 @@ class Genome::Model::SomaticVariation::Command::DumpIgvXml {
               is => 'FilesystemPath',
               doc => 'Directory where output files will be written', 
         },
-
+    ],
+    has_optional => [
+        review_files => {
+              is => 'Text',
+              is_input => 1,
+              doc => 'Use this to specify one or more files to copy into xml session folder for review purposes (e.g., effects/snvs.hq.novel.tier1.v2.bed, effects/indels.hq.novel.tier1.v2.bed)',
+        },
     ],
     doc => 'Based on the inputs of a somatic variation build create a series of IGV session XML files',
 };
@@ -35,6 +41,8 @@ genome model somatic-variation dump-igv-xml  --outdir=/tmp/  129987732
 genome model somatic-variation dump-igv-xml  --outdir=/tmp/  id=129987732
 
 genome model somatic-variation dump-igv-xml  --outdir=/tmp/  'id in [129987732,129987685]'
+
+genome model somatic-variation dump-igv-xml  --outdir=/tmp/  'id in [129987732,129987685]' --review-files='effects/snvs.hq.novel.tier1.v2.bed,effects/indels.hq.novel.tier1.v2.bed'
 
 EOS
 }
@@ -222,8 +230,8 @@ sub execute {
     push(@resources, $wgs_tumor_track->{resource});
     $main_features_track_xml .= $wgs_tumor_xml;
 
-
     #For each level of detail (increasing amounts of feature tracks) produce an output XML file
+    my @resources_all=@resources;
     foreach my $l (sort {$a <=> $b} keys %{$levels}){
 
       #Start with the existing extra features tracks and add more
@@ -236,6 +244,7 @@ sub execute {
         if ($extra_track){
           my $extra_track_xml = $extra_track->{xml};
           push(@resources_level, $extra_track->{resource});
+          push(@resources_all, $extra_track->{resource});
           $extra_features_track_xml_level .= $extra_track_xml;
         }
       }
@@ -262,6 +271,33 @@ sub execute {
       my $outfile = IO::File->new(">$outfile_name");
       $outfile->print($final_xml);
     }
+
+
+
+
+
+
+    #Copy any review files specified to new output build dir
+    if ($self->review_files){
+      print "copying files for review to new xml session folder(s)\n\n";
+      my $review_files = $self->review_files;
+      my @review_files = split(",", $review_files);
+      foreach my $review_file (@review_files){
+        foreach my $resource (@resources_all){
+          #print "Checking $review_file against $resource\n";
+          if ($resource=~/$review_file/){
+            my $resource_path=$resource;
+            $resource_path=~s/https\:\/\/gscweb\.gsc\.wustl\.edu//; #Eliminate leading base url
+            my $cp_cmd = "cp $resource_path $build_outdir";
+            if (-e $resource_path){
+              Genome::Sys->shellcmd(cmd => $cp_cmd);
+            }
+          last;
+          }
+        }
+      }
+    }
+
   }
 
   #Summarize the tracks used for each level

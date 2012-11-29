@@ -47,6 +47,7 @@ my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
     control_aligned_reads => $tumor_bam,
     reference_build_id => $refbuild_id,
 );
+$detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 
 my $sv_valid = Genome::Model::Tools::DetectVariants2::Filter::TigraValidation->create(
     previous_result_id => $detector_result->id,

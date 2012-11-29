@@ -26,7 +26,7 @@ use_ok('Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine');
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Result-Vcf-Combine';
 my $inputs = $test_dir."/inputs";
 
-my $expected_dir = $test_dir."/expected.v6";
+my $expected_dir = $test_dir."/expected.v7";
 
 my $detector_union_expected_file = $expected_dir."/detector_test/union_snvs.vcf.gz";
 my $filter_union_expected_file = $expected_dir."/filter_test/union_snvs.vcf.gz";
@@ -72,6 +72,7 @@ my $varscan_detector_result = Genome::Model::Tools::DetectVariants2::Result->__d
     aligned_reads => $bam_file,
     reference_build_id => $refbuild_id,
 );
+$varscan_detector_result->lookup_hash($varscan_detector_result->calculate_lookup_hash);
 
 my $varscan_detector_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
     input => $varscan_detector_result,
@@ -79,6 +80,7 @@ my $varscan_detector_vcf_result = Genome::Model::Tools::DetectVariants2::Result:
     aligned_reads_sample => "TEST",
     vcf_version => $vcf_version,
 );
+$varscan_detector_vcf_result->lookup_hash($varscan_detector_vcf_result->calculate_lookup_hash);
 
 $varscan_detector_result->add_user(user => $varscan_detector_vcf_result, label => 'uses');
 
@@ -90,6 +92,7 @@ my $samtools_detector_result = Genome::Model::Tools::DetectVariants2::Result->__
     aligned_reads => $bam_file,
     reference_build_id => $refbuild_id,
 );
+$samtools_detector_result->lookup_hash($samtools_detector_result->calculate_lookup_hash);
 
 my $samtools_detector_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
     input => $samtools_detector_result,
@@ -97,6 +100,7 @@ my $samtools_detector_vcf_result = Genome::Model::Tools::DetectVariants2::Result
     aligned_reads_sample => "TEST",
     vcf_version => $vcf_version,
 );
+$samtools_detector_vcf_result->lookup_hash($samtools_detector_vcf_result->calculate_lookup_hash);
 
 $samtools_detector_result->add_user(user => $samtools_detector_vcf_result, label => 'uses');
 
@@ -114,6 +118,7 @@ my $snp_filter_result = Genome::Model::Tools::DetectVariants2::Result::Filter->_
     filter_params => '',
     filter_version => 'v1',
 );
+$snp_filter_result->lookup_hash($snp_filter_result->calculate_lookup_hash);
 
 my $snp_filter_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter->__define__(
     input => $snp_filter_result,
@@ -121,6 +126,7 @@ my $snp_filter_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::
     aligned_reads_sample => "TEST",
     vcf_version => $vcf_version,
 );
+$snp_filter_vcf_result->lookup_hash($snp_filter_vcf_result->calculate_lookup_hash);
 
 $snp_filter_result->add_user(user => $snp_filter_vcf_result, label => 'uses');
 
@@ -135,6 +141,7 @@ my $false_positive_filter_result = Genome::Model::Tools::DetectVariants2::Result
     filter_params => '',
     filter_version => 'v1',
 );
+$false_positive_filter_result->lookup_hash($false_positive_filter_result->calculate_lookup_hash);
 
 my $false_positive_filter_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter->__define__(
     input => $false_positive_filter_result,
@@ -142,6 +149,7 @@ my $false_positive_filter_vcf_result = Genome::Model::Tools::DetectVariants2::Re
     aligned_reads_sample => "TEST",
     vcf_version => $vcf_version,
 );
+$false_positive_filter_vcf_result->lookup_hash($false_positive_filter_vcf_result->calculate_lookup_hash);
 
 $false_positive_filter_result->add_user(user => $false_positive_filter_vcf_result, label => 'uses');
 
@@ -151,14 +159,17 @@ my $union_result = Genome::Model::Tools::DetectVariants2::Result::Combine::Union
     output_dir => $union_directory,
     version => 42,
 );
+$union_result->lookup_hash($union_result->calculate_lookup_hash);
 
 my $union_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(
     incoming_vcf_result_a => $snp_filter_vcf_result,
     incoming_vcf_result_b => $false_positive_filter_vcf_result,
+    input => $union_result,
     output_dir => $union_vcf_directory,
     variant_type => "snvs",
     joinx_version => 1.6,
 );
+$union_vcf_result->lookup_hash($union_vcf_result->calculate_lookup_hash);
 
 $union_result->add_user(user => $union_vcf_result, label => 'uses');
 
@@ -168,14 +179,17 @@ my $intersect_result = Genome::Model::Tools::DetectVariants2::Result::Combine::I
     output_dir => $intersect_directory,
     version => 42,
 );
+$intersect_result->lookup_hash($intersect_result->calculate_lookup_hash);
 
 my $intersect_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(
     incoming_vcf_result_a => $snp_filter_vcf_result,
     incoming_vcf_result_b => $false_positive_filter_vcf_result,
+    input => $intersect_result,
     output_dir => $intersect_vcf_directory,
     variant_type => "snvs",
     joinx_version => 1.6,
 );
+$intersect_vcf_result->lookup_hash($intersect_vcf_result->calculate_lookup_hash);
 
 $intersect_result->add_user(user => $intersect_vcf_result, label => 'uses');
 

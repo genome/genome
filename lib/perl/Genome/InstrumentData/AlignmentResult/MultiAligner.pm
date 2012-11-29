@@ -126,13 +126,16 @@ sub get_alignment_module {
     my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::$aln_class";
     eval "use $alignment_result_class_name";
     # sneaky way to instantiate an AlignmentResult without starting all over
-    return $alignment_result_class_name->__define__(
+    my $alignment_result = $alignment_result_class_name->__define__(
                                           instrument_data_id => $self->instrument_data->id,
                                           aligner_name => $aln_name,
                                           reference_build => $self->reference_build, 
                                           temp_scratch_directory => $self->temp_scratch_directory,
                                           temp_staging_directory => $self->temp_staging_directory,
                                           %params );
+
+    $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash);
+    return $alignment_result;
 }
 
 # true if any of the component aligners' fillmd is true

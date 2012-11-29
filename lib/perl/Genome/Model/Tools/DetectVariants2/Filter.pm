@@ -796,7 +796,7 @@ sub detector_directory {
     my @alignment_results = $self->alignment_results;
     my @control_alignment_results = $self->control_alignment_results;
     unless($self->_detector_directory) {
-        my $detector_result = Genome::Model::Tools::DetectVariants2::Result->get(
+        my $detector_result = Genome::Model::Tools::DetectVariants2::Result->get_with_lock(
             detector_name => $self->detector_name,
             detector_params => $self->detector_params,
             detector_version => $self->detector_version,

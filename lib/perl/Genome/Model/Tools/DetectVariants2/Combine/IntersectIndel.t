@@ -44,6 +44,7 @@ my $detector_a = Genome::Model::Tools::DetectVariants2::Result->__define__(
     aligned_reads         => $aligned_reads,
     control_aligned_reads => $control_aligned_reads,
 );
+$detector_a->lookup_hash($detector_a->calculate_lookup_hash());
 isa_ok($detector_a, 'Genome::Model::Tools::DetectVariants2::Result', 'detector_a');
 
 my $detector_name_b    = 'Genome::Model::Tools::DetectVariants2::VarscanSomatic';
@@ -58,6 +59,7 @@ my $detector_b = Genome::Model::Tools::DetectVariants2::Result->__define__(
     aligned_reads         => $aligned_reads,
     control_aligned_reads => $control_aligned_reads,
 );
+$detector_b->lookup_hash($detector_b->calculate_lookup_hash());
 isa_ok($detector_b, 'Genome::Model::Tools::DetectVariants2::Result', 'detector_b');
 
 

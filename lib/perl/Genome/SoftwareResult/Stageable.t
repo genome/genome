@@ -30,8 +30,8 @@ class Genome::Foo {
         p4 => { is => 'Number', is_many => 1 },
         p5 => { is => 'Genome::Bar', is_many => 1 },
         p6 => { is => 'Boolean', default_value => 1 },
-        initial_du => { is => 'Number' },
-        realloc_du => { is => 'Number' },
+        initial_du => { is => 'Number', is_optional => 1 },
+        realloc_du => { is => 'Number', is_optional => 1 },
     ],
     has_input => [
         i1 => { is => 'Text' },
@@ -73,6 +73,7 @@ sub create {
     $self->_reallocate_disk_allocation; 
 
     $self->realloc_du($alloc->kilobytes_requested);
+    $self->lookup_hash($self->calculate_lookup_hash);
 
     close($fh);
     return $self;
@@ -175,6 +176,9 @@ ok(!$@, "no exception during save (commit disabled)!")
     or diag("exception: $@");
 
 my $prev_id = $f->id;
+my $initial_du = $f->initial_du;
+my $realloc_du = $f-> realloc_du;
+print Data::Dumper::Dumper($f);
 for ($f->params, $f->inputs, $f) {
     $_->unload;
 }
@@ -182,6 +186,8 @@ for ($f->params, $f->inputs, $f) {
 # do it again with the same params and be sure it shortcuts
 my $f2 = Genome::Foo->get_or_create(
     %params,
+    initial_du => $initial_du,
+    realloc_du => $realloc_du,
 );
 
 ok($f2, "got a software result on the second call");

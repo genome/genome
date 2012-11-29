@@ -24,6 +24,7 @@ my $r = Genome::Model::Tools::DetectVariants2::Result::Manual->__define__(
     original_file_path => '/tmp/only-a-test',
     username => 'apipe-tester',
 );
+$r->lookup_hash($r->calculate_lookup_hash);
 
 $r->add_user(label => 'testy', user => $s);
 

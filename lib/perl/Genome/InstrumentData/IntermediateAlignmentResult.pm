@@ -208,6 +208,15 @@ sub _process_params {
     return ($bx, @extra);
 }
 
+sub _modify_params_for_lookup_hash {
+    my ($class, $params_ref) = @_;
+
+    my $absolute_path = $params_ref->{'input_file'};
+    if (defined($absolute_path)) {
+        $params_ref->{'input_file'} = basename($absolute_path);
+    }
+}
+
 sub create {
     my $class = shift;
     if ($class eq __PACKAGE__ or $class->__meta__->is_abstract) {

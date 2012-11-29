@@ -149,6 +149,7 @@ sub generate_fake_alignment_result {
                  aligner_name => $aligner_name,
                  aligner_version => $aligner_version,
     );
+    $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
     ok($alignment_result, 'created fake alignment result');
 
     return $alignment_result;

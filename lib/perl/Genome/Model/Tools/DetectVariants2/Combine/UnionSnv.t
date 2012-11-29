@@ -47,6 +47,7 @@ my $detector_a = Genome::Model::Tools::DetectVariants2::Result->__define__(
     aligned_reads         => $aligned_reads,
     control_aligned_reads => $control_aligned_reads,
 );
+$detector_a->lookup_hash($detector_a->calculate_lookup_hash());
 
 my $detector_a_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
     input => $detector_a,
@@ -56,6 +57,7 @@ my $detector_a_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::
     vcf_version => $vcf_version,
 );
 
+$detector_a_vcf_result->lookup_hash($detector_a_vcf_result->calculate_lookup_hash());
 $detector_a->add_user(user => $detector_a_vcf_result, label => 'uses');
 
 isa_ok($detector_a, 'Genome::Model::Tools::DetectVariants2::Result', 'detector_a');
@@ -72,6 +74,7 @@ my $detector_b = Genome::Model::Tools::DetectVariants2::Result->__define__(
     aligned_reads         => $aligned_reads,
     control_aligned_reads => $control_aligned_reads,
 );
+$detector_b->lookup_hash($detector_b->calculate_lookup_hash());
 
 my $detector_b_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
     input => $detector_b,
@@ -80,6 +83,7 @@ my $detector_b_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::
     control_aligned_reads_sample => "TEST-normal",
     vcf_version => $vcf_version,
 );
+$detector_b_vcf_result->lookup_hash($detector_b_vcf_result->calculate_lookup_hash());
 
 $detector_b->add_user(user => $detector_b_vcf_result, label => 'uses');
 

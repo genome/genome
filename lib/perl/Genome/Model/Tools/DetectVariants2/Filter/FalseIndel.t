@@ -51,12 +51,14 @@ my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
     aligned_reads => $bam_file,
     reference_build_id => $reference->id,
 );
+$detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 my $detector_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector->__define__(
     input => $detector_result,
     output_dir => $detector_vcf_directory,
     aligned_reads_sample => "TEST",
     vcf_version => $vcf_version,
 );
+$detector_vcf_result->lookup_hash($detector_vcf_result->calculate_lookup_hash());
 
 $detector_result->add_user(user => $detector_vcf_result, label => 'uses');
 

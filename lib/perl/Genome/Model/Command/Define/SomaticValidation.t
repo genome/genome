@@ -284,6 +284,7 @@ sub setup_somatic_variation_build {
         output_dir => Cwd::abs_path($dir),
         id => (-2013 - $i),
     );
+    $result->lookup_hash($result->calculate_lookup_hash());
 
     my $bed_file = $dir . '/snvs.hq.bed';
     Genome::Sys->write_file($bed_file, <<EOBED
@@ -305,6 +306,7 @@ SAMTOOLSFILE
         output_dir => Cwd::abs_path($dir2),
         id => (-3014 - $i),
     );
+    $result2->lookup_hash($result2->calculate_lookup_hash());
 
 
     $result->add_user(user => $somvar_build, label => 'uses');

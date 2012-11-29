@@ -36,6 +36,7 @@ EOFILE
 my $loh_result = Genome::Model::Tools::DetectVariants2::Classify::Loh->__define__(
     output_dir => $temp_dir,
 );
+$loh_result->lookup_hash($loh_result->calculate_lookup_hash());
 
 #real data
 my $dbsnp_build = Genome::Model::Build::ImportedVariationList->get(
