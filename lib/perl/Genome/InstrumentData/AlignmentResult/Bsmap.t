@@ -10,7 +10,7 @@ use above 'Genome';
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
         #plan tests => 31; # TODO change this back when force_fragment is fixed
-        plan tests => 25;
+        plan tests => 23;
     } else {
         plan skip_all => 'Must run on a 64 bit machine';
     }
