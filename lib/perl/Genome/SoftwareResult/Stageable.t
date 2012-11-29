@@ -176,6 +176,9 @@ ok(!$@, "no exception during save (commit disabled)!")
     or diag("exception: $@");
 
 my $prev_id = $f->id;
+my $initial_du = $f->initial_du;
+my $realloc_du = $f-> realloc_du;
+print Data::Dumper::Dumper($f);
 for ($f->params, $f->inputs, $f) {
     $_->unload;
 }
@@ -183,6 +186,8 @@ for ($f->params, $f->inputs, $f) {
 # do it again with the same params and be sure it shortcuts
 my $f2 = Genome::Foo->get_or_create(
     %params,
+    initial_du => $initial_du,
+    realloc_du => $realloc_du,
 );
 
 ok($f2, "got a software result on the second call");
