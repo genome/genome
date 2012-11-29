@@ -468,13 +468,11 @@ sub _generate_lookup_hash {
     return Genome::Sys->md5sum_data($result);
 }
 
-sub test_name {
-    my $self = shift;
-    return $self->__test_name unless @_;
+sub set_test_name {
+    my ($self, $new_test_name) = @_;
 
-    my $result = $self->__test_name(@_);
-    $self->lookup_hash($self->calculate_lookup_hash);
-    return $result;
+    $self->test_name($new_test_name);
+    return $self->lookup_hash($self->calculate_lookup_hash);
 }
 
 sub resolve_module_version {
