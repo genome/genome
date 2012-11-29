@@ -9,15 +9,7 @@ use Sys::Hostname;
 
 class Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine {
     is  => ['Genome::Model::Tools::DetectVariants2::Result::Vcf'],
-    has => [
-        incoming_vcf_result_a => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-            doc => 'This is the vcf-result of the first detector or filter being run on',
-        },
-        incoming_vcf_result_b => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-            doc => 'This is the vcf-result of the second detector or filter being run on',
-        },
+    has_param => [
         input_a_id => {
             is => 'Text',
             doc => 'ID of the first incoming software result',
@@ -35,6 +27,14 @@ class Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine {
             is => 'Text',
             is_input => 1,
             doc => 'Version of joinx to use for the combination',
+        },
+        incoming_vcf_result_a => {
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
+            doc => 'This is the vcf-result of the first detector or filter being run on',
+        },
+        incoming_vcf_result_b => {
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
+            doc => 'This is the vcf-result of the second detector or filter being run on',
         },
     ],
     has_param => [
