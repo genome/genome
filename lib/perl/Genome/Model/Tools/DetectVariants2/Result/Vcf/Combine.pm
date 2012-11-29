@@ -41,7 +41,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine {
         #This isn't set on combine results--they use the samples of their inputs
         aligned_reads_sample => {
             is => 'Text',
-            default_value => '',
+            is_optional => 1,
         }
     ]
 };
