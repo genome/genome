@@ -71,7 +71,7 @@ sub create
     else {
         #This is necessary because we call commit after each chromosome,
         #so even if it crashes, the software result will stick around
-        $self->test_name("Creation of this software result is not complete");
+        $self->set_test_name("Creation of this software result is not complete");
     }
 
     $self->_prepare_staging_directory;
@@ -575,12 +575,8 @@ sub create
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
 
-    if ($self->_user_test_name) {
-        $self->test_name($self->_user_test_name);
-    }
-    else {
-        my $param = Genome::SoftwareResult::Param->get(name => 'test_name', software_result_id => $self->id);
-        $param->delete;
+    unless ($self->_user_test_name) {
+        $self->remove_test_name();
     }
     UR::Context->commit;
 
