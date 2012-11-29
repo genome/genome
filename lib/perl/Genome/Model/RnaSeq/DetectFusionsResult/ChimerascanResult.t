@@ -42,6 +42,20 @@ my $reference_build = Genome::Model::Build::ImportedReferenceSequence->create(
     version         => '37',
 );
 
+
+my $annotation_model = Genome::Model::ImportedAnnotation->create(
+    name => '1 chr test annotation',
+    subject => $ref_model->subject,
+    processing_profile => Genome::ProcessingProfile->get(name => 'imported-annotation.ensembl'),
+    reference_sequence => $reference_build,
+);
+
+my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
+    version => 'v1',
+    model => $annotation_model,
+    data_directory => '/gscmnt/gc8002/info/model_data/2772828715/build125092315', #65_37j_v6
+);
+
 my $alignment_result = Genome::InstrumentData::AlignmentResult::Tophat->__define__(
     aligner_name => 'tophat',
     output_dir => $tophat_data,
@@ -54,7 +68,8 @@ my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index
     version => "0.4.3",
     bowtie_version => "0.12.7",
     reference_build => $reference_build,
-    output_dir => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/IndexResult/'
+    output_dir => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/IndexResult/',
+    annotation_build => $annotation_build,
 );
 $index->lookup_hash($index->calculate_lookup_hash());
 
@@ -62,6 +77,7 @@ my %params = (
     alignment_result => $alignment_result,
     version => '0.4.3',
     detector_params => "--reuse-bam 0 --bowtie-version=",
+    annotation_build => $annotation_build,
 );
 my $class = 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult';
 
@@ -81,6 +97,7 @@ my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_
     alignment_result => $alignment_result,
     version => '0.4.3',
     detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
+    annotation_build => $annotation_build,
 );
 isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
 
