@@ -468,6 +468,13 @@ sub _generate_lookup_hash {
     return Genome::Sys->md5sum_data($result);
 }
 
+sub set_test_name {
+    my ($self, $new_test_name) = @_;
+
+    $self->test_name($new_test_name);
+    return $self->lookup_hash($self->calculate_lookup_hash);
+}
+
 sub resolve_module_version {
     my $class = shift;
     my $revision = Genome::Sys->snapshot_revision;
