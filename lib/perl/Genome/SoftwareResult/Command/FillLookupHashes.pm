@@ -12,7 +12,7 @@ class Genome::SoftwareResult::Command::FillLookupHashes {
     has_optional => [
         commit_size => {
             is => 'Number',
-            default_value => '10000',
+            default_value => '100',
         },
     ],
 };
