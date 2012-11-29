@@ -10,9 +10,10 @@ class Genome::SoftwareResult::Command::SetTestName {
     is => 'Command::V2',
 
     has_input => [
-        software_result => {
+        software_results => {
             is => 'Genome::Softwareresult',
-            doc => 'software result to set name on'
+            is_many => 1,
+            doc => 'software result(s) to set name on'
         },
         new_test_name => {
             is => 'Text',
@@ -24,7 +25,9 @@ class Genome::SoftwareResult::Command::SetTestName {
 sub execute {
     my $self = shift;
 
-    $self->software_result->set_test_name($self->new_test_name);
+    for my $result ($self->software_result) {
+        $result->test_name($self->new_test_name);
+    }
 
     return 1;
 }
