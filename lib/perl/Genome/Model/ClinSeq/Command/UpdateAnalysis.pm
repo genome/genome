@@ -1662,17 +1662,21 @@ sub exclude_instrument_data{
   #TODO:  The following method may miss 'Solexa' instrument data that is imported but is not properly classed as 'Solexa' ...
   my @tmp2;
   foreach my $instrument_data (@instrument_data){
-    #next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
+    next unless ($instrument_data->class eq "Genome::InstrumentData::Solexa");
+
+    #TODO: Problem with the approach ... Some Solexa data produced here has been duplicated as 'imported data'
+    #Its hard to tell the difference between this and real imported data that was not produced here. :(
     #Allow all instrument data that is defined as sequencing_platform of 'solexa' (includes those with class Genome::InstrumentData::Solexa and Genome::InstrumentData::Imported)
     #Limit to file types of bam or %fastq% (illumina fastq, sanger fastq, solexa fastq)
-    next unless ($instrument_data->sequencing_platform eq "solexa");
-    my $is_bam = 0;
-    my $is_fastq = 0;
-    if ($instrument_data->can("import_format")){
-      $is_bam = 1 if ($instrument_data->import_format eq "bam");
-      $is_fastq = 1 if ($instrument_data->import_format =~ /fastq/);
-      next unless ($is_bam || $is_fastq);
-    }
+    #next unless ($instrument_data->sequencing_platform eq "solexa");
+    #my $is_bam = 0;
+    #my $is_fastq = 0;
+    #if ($instrument_data->can("import_format")){
+    #  $is_bam = 1 if ($instrument_data->import_format eq "bam");
+    #  $is_fastq = 1 if ($instrument_data->import_format =~ /fastq/);
+    #  next unless ($is_bam || $is_fastq);
+    #}
+
     push(@tmp2, $instrument_data);
   }
   @instrument_data = @tmp2;
