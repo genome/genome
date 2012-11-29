@@ -9,6 +9,8 @@ use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
 
+use Carp;
+
 use JSON;
 
 use Genome::Utility::Instrumentation;
@@ -415,7 +417,7 @@ sub _process_params_for_lookup_hash {
         }
 
         unless ($meta->is_optional or $meta->is_many or exists $params{$key}) {
-            die 'incomplete object specification: missing ' . $key;
+            confess('incomplete object specification: missing ' . $key);
         }
 
         for my $t ('input', 'param') {
