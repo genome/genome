@@ -18,6 +18,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Combine {
     has_param => [
         version => {
             is => 'Integer',
+            is_optional => 1,
         },
     ],
     has_optional => [
