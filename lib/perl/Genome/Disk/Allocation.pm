@@ -1085,8 +1085,8 @@ sub _mark_for_deletion_closure {
         # system("stat $path") before testing -d, and in both cases stat()
         # returned information about a non-existent path.
         # See here: http://irccrew.org/~cras/nfs-coding-howto.html#attrcache (visited Nov 27 2012)
-        my $rv = opendir(my $dh, $path) // 0;
-        closedir $dh if ($rv == 1);
+        my $rv = opendir(my $dh, $path);
+        closedir $dh if ($rv);
         if (-d $path and not $ENV{UR_DBI_NO_COMMIT}) {
             print STDERR "Marking directory at $path as deallocated\n";
             system("touch $path/ALLOCATION_DELETED");
