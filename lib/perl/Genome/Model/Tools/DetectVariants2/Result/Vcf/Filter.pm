@@ -9,7 +9,7 @@ use Sys::Hostname;
 
 class Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter {
     is  => ['Genome::Model::Tools::DetectVariants2::Result::Vcf'],
-    has => [
+    has_param => [
         incoming_vcf_result => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
             doc => 'This is the vcf-result of the detector or filter being run on',
@@ -27,15 +27,18 @@ class Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter {
             doc => 'Params for the filter',
             is_optional => 1,
         },
-        filter_description => {
-            is => 'Text',
-            doc => 'Description of the filter applied to this data',
-            default => 'Filter variants',
-        },
         previous_filter_strategy => {
             is => 'Text',
             doc => 'Name version and params for the previous filter, if there is one.',
             is_optional => 1,
+        },
+    ],
+    has_optional => [
+        # This is not saved in the db but is used to create the vcf file
+        filter_description => {
+            is => 'Text',
+            doc => 'Description of the filter applied to this data',
+            default => 'Filter variants',
         },
     ],
 };
