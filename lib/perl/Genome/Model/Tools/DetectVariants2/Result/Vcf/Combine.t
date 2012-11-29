@@ -26,7 +26,7 @@ use_ok('Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine');
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Result-Vcf-Combine';
 my $inputs = $test_dir."/inputs";
 
-my $expected_dir = $test_dir."/expected.v6";
+my $expected_dir = $test_dir."/expected.v7";
 
 my $detector_union_expected_file = $expected_dir."/detector_test/union_snvs.vcf.gz";
 my $filter_union_expected_file = $expected_dir."/filter_test/union_snvs.vcf.gz";
@@ -164,6 +164,7 @@ $union_result->lookup_hash($union_result->calculate_lookup_hash);
 my $union_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(
     incoming_vcf_result_a => $snp_filter_vcf_result,
     incoming_vcf_result_b => $false_positive_filter_vcf_result,
+    input => $union_result,
     output_dir => $union_vcf_directory,
     variant_type => "snvs",
     joinx_version => 1.6,
@@ -183,6 +184,7 @@ $intersect_result->lookup_hash($intersect_result->calculate_lookup_hash);
 my $intersect_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(
     incoming_vcf_result_a => $snp_filter_vcf_result,
     incoming_vcf_result_b => $false_positive_filter_vcf_result,
+    input => $intersect_result,
     output_dir => $intersect_vcf_directory,
     variant_type => "snvs",
     joinx_version => 1.6,
