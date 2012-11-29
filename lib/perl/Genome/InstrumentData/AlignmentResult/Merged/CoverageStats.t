@@ -68,7 +68,7 @@ sub setup_data {
         id => '-10000', #hardcoded so calculated 'merged_alignment_bam_path' returns expected result
         output_dir => ($data_dir . '/merged_result'),
         reference_build => $refseq,
- _   );
+    );
     $merged_result->lookup_hash($merged_result->calculate_lookup_hash());
     isa_ok($merged_result, 'Genome::InstrumentData::AlignmentResult::Merged', 'created merged result');
 

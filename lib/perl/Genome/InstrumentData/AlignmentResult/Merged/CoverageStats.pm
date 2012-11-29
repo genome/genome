@@ -43,6 +43,7 @@ class Genome::InstrumentData::AlignmentResult::Merged::CoverageStats {
         roi_track_name => {
             is => 'Text',
             doc => 'For multi-tracked ROI use this named track',
+            is_optional => 1,
         },
         merge_contiguous_regions => {
             is => 'Boolean',
