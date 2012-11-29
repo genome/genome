@@ -475,6 +475,16 @@ sub set_test_name {
     return $self->lookup_hash($self->calculate_lookup_hash);
 }
 
+sub remove_test_name {
+    my $self = shift;
+
+    my $param = Genome::SoftwareResult::Param->get(name => 'test_name',
+        software_result_id => $self->id);
+    $param->delete;
+
+    return $self->lookup_hash($self->calculate_lookup_hash);
+}
+
 sub resolve_module_version {
     my $class = shift;
     my $revision = Genome::Sys->snapshot_revision;
