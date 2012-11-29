@@ -1666,7 +1666,13 @@ sub exclude_instrument_data{
     #Allow all instrument data that is defined as sequencing_platform of 'solexa' (includes those with class Genome::InstrumentData::Solexa and Genome::InstrumentData::Imported)
     #Limit to file types of bam or %fastq% (illumina fastq, sanger fastq, solexa fastq)
     next unless ($instrument_data->sequencing_platform eq "solexa");
-    next unless ($instrument_data->import_format eq "bam" || $instrument_data->import_format =~ /fastq/);
+    my $is_bam = 0;
+    my $is_fastq = 0;
+    if ($instrument_data->can("import_format")){
+      $is_bam = 1 if ($instrument_data->import_format eq "bam");
+      $is_fastq = 1 if ($instrument_data->import_format =~ /fastq/);
+      next unless ($is_bam || $is_fastq);
+    }
     push(@tmp2, $instrument_data);
   }
   @instrument_data = @tmp2;

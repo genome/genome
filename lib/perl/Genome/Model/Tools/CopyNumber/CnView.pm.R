@@ -13,8 +13,8 @@
 args = (commandArgs(TRUE))
 category_name = args[1];          #Name of gene group being considered (e.g. 'Cancer Gene Census')
 cnv_file = args[2];               #Path to file containing raw CNV diff values from the somatic variation pipeline
-gene_file = args[3];#Path to file containing gene records and associated mean CNV diff values for each gene
-segments_file = args[4];
+gene_file = args[3];              #Path to file containing gene records and associated mean CNV diff values for each gene
+segments_file = args[4];          #Path to file containing 
 ideogram_file = args[5];          #Path to a file containing chromosome ideogram values
 outdir = args[6];                 #Directory where output files will be generated
 chr = args[7];                    #Chr to be processed or 'ALL' for all chromosomes
@@ -69,17 +69,6 @@ plotChrCNV = function(target_chr){
   #They should also be below the lowest cut or above the highest cut
   gi_up = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] >= cut5 | genes[,"CNVhmm.Status"]=="Gain"))
   gi_down = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] <= cut2 | genes[,"CNVhmm.Status"]=="Loss"))
-#  gi_up = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] >= cut5)
-#  gi_down = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] <= cut2)
-#  print(genes)
-
-  #Show more genes...
-  #gi_up = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] >= cut4)
-  #gi_down = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] <= cut1)
-
-  #Show all genes regardless of cutoff
-  #gi_up = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] >= 0)
-  #gi_down = which(genes[,"Chr"] == target_chr & genes[,"Mean.CNV.Diff"] <= 0)
 
   #Assign colors according to the magnitude of the DIFF
   cnvs[,"COLOR"] = "grey50"

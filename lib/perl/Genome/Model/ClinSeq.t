@@ -149,7 +149,7 @@ unless ($dry_run) {
     Genome::Sys->shellcmd(cmd => $mask_command);
 
     #Exclude some files from the diff that tend to change when regenerated for the same build
-    my @diff = `diff -r --brief -x '*.R' -x '*.pdf' -x '*_COSMIC.svg' -x '*.clustered.data.tsv' -x 'SummarizeBuilds.log.tsv' -x 'DumpIgvXml.log.txt' $expected_data_directory $temp_dir`;
+    my @diff = `diff -r --brief -x '*.R' -x '*.pdf' -x '*.mutation-diagram.stderr' -x '*_COSMIC.svg' -x '*.clustered.data.tsv' -x 'SummarizeBuilds.log.tsv' -x 'DumpIgvXml.log.txt' $expected_data_directory $temp_dir`;
     ok(@diff == 0, "no differences from expected results and actual")
         or do { 
             diag("differences are:");
