@@ -5,7 +5,7 @@ use warnings;
 use above "Genome";
 use Test::More tests => 5;
 
-my $expected_results = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-CnView-fast/2012-11-16";
+my $expected_results = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-CnView-fast/2012-11-28";
 ok(-d $expected_results, "test data dir is " . $expected_results)
   or die "cannot continue";
 
@@ -19,11 +19,9 @@ my $cmd = <<EOS;
     --cnv-file=/gscmnt/gc13001/info/model_data/2888915570/build129973671/variants/cnvs.hq \\
     --segments-file=/gscmnt/gc2013/info/model_data/2889110844/build130030495/PNC6/clonality/cnaseq.cnvhmm \\
     --output-dir=$actual_results \\
-    --sample-name=PNC6 \\
     --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt \\
     --name='CancerGeneCensusPlus_Sanger' \\
     --chr=21 \\
-    --force
 EOS
 eval { Genome::Sys->shellcmd(cmd => $cmd) };
 ok(!$@, "no exceptions running the tool")
@@ -42,8 +40,8 @@ ok($file_check, "chr21.jpeg found with non-zero size")
    };
 
 if (@ARGV == 1 and $ARGV[0] eq 'KEEP') {
-  my $stash = "/tmp/last-failed-cnview-test";
-  note("failed results moved to $stash");
+  my $stash = "/tmp/last-failed-cnview-fast-test";
+  note("temp results moved to $stash");
   system "mv $actual_results $stash";
 }
 

@@ -264,7 +264,7 @@ sub execute {
   $step++; print MAGENTA, "\n\nStep $step. Identifying CNV altered genes", RESET;
   if ($wgs){
     my @cnv_symbol_lists = qw (Kinase_RonBose CancerGeneCensusPlus_Sanger AntineoplasticTargets_DrugBank AllGenes_Ensembl58);
-    &identifyCnvGenes('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-reference_build_name'=>$reference_build_ucsc, '-common_name'=>$common_name, '-patient_dir'=>$patient_dir, '-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@cnv_symbol_lists, '-annotation_build_id'=>$annotation_build_id, '-segments_file'=>$clonality_dir.'/cnaseq.cnvhmm','-verbose'=>$verbose);
+    &identifyCnvGenes('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-reference_build_name'=>$reference_build_ucsc, '-patient_dir'=>$patient_dir, '-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@cnv_symbol_lists, '-annotation_build_id'=>$annotation_build_id, '-segments_file'=>$clonality_dir.'/cnaseq.cnvhmm','-verbose'=>$verbose);
   }
 
   #Run RNA-seq analysis on the RNA-seq data (if available)
@@ -799,7 +799,6 @@ sub identifyCnvGenes{
   my %args = @_;
   my $data_paths = $args{'-data_paths'};
   my $out_paths = $args{'-out_paths'};
-  my $common_name = $args{'-common_name'};
   my $reference_build_name = $args{'-reference_build_name'};
   my $patient_dir = $args{'-patient_dir'}; 
   my $gene_symbol_lists_dir = $args{'-gene_symbol_lists_dir'};
@@ -836,7 +835,7 @@ sub identifyCnvGenes{
     #Only run CNView if the directory is not already present
     my $new_dir = "$cnview_dir"."CNView_"."$symbol_list_name"."/";
     unless (-e $new_dir && -d $new_dir){
-      my $cnview_cmd = "gmt copy-number cn-view --annotation-build=$annotation_build_id  --cnv-file=$cnv_data_file  --segments-file=$segments_file  --output-dir=$cnview_dir  --sample-name=$common_name  --gene-targets-file=$gene_targets_file  --name='$symbol_list_name'  --force";
+      my $cnview_cmd = "gmt copy-number cn-view --annotation-build=$annotation_build_id  --cnv-file=$cnv_data_file  --segments-file=$segments_file  --output-dir=$cnview_dir  --gene-targets-file=$gene_targets_file  --name='$symbol_list_name'";
       Genome::Sys->shellcmd(cmd => $cnview_cmd);
     }
 
