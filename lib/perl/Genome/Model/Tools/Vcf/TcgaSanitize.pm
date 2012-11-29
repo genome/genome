@@ -261,8 +261,10 @@ sub fix_null_fields {
 sub fix_ft {
     my ($self, $line, $sample_names) = @_;
     my $parsed_line = parse_vcf_line($line, $sample_names);
-    
-    $parsed_line->{"filter"} =~ s/;/-/g;
+
+    if (defined $parsed_line->{"filter"}) {
+        $parsed_line->{"filter"} =~ s/;/-/g;
+    }
     for my $sample (@$sample_names) {
         if (defined $parsed_line->{"sample"}->{$sample}->{"FT"}) {
             $parsed_line->{"sample"}->{$sample}->{"FT"} =~ s/;/-/g;
