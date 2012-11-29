@@ -264,7 +264,9 @@ sub fix_ft {
     
     $parsed_line->{"filter"} =~ s/;/-/g;
     for my $sample (@$sample_names) {
-        $parsed_line->{"sample"}->{$sample}->{"FT"} =~ s/;/-/g;
+        if (defined $parsed_line->{"sample"}->{$sample}->{"FT"}) {
+            $parsed_line->{"sample"}->{$sample}->{"FT"} =~ s/;/-/g;
+        }
     }
     $line = deparse_vcf_line($parsed_line, $sample_names);
 
