@@ -84,6 +84,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Manual {
         sample => {
             is => 'Genome::Sample',
             id_by => 'sample_id',
+            is_optional => 1,
         },
         control_sample => {
             is => 'Genome::Sample',
