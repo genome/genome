@@ -68,11 +68,13 @@ class Genome::Model::Tools::DetectVariants2::Result::Manual {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
             id_by => 'previous_result_id',
             doc => 'The result upon which these manually chosen variants were based',
+            is_optional => 1,
         },
         source_build => {
             is => 'Genome::Model::Build',
             id_by => 'source_build_id',
             doc => 'The build which was used to discover the variants upon which this result is based',
+            is_optional => 1,
         },
         reference_build => {
             is => 'Genome::Model::Build::ReferenceSequence',
@@ -86,6 +88,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Manual {
         control_sample => {
             is => 'Genome::Sample',
             id_by => 'control_sample_id',
+            is_optional => 1,
         },
         aligned_reads_sample => { #name to match GMT DV2 Base
             is => 'Text',
@@ -107,7 +110,7 @@ sub _modify_params_for_lookup_hash {
 sub _calculate_and_compare_md5_hashes {
     my ($class, $original_file_path, $specified_checksum) = @_;
 
-    my $checksum;
+    my $checksum = $specified_checksum;
     if (defined($original_file_path) and -e $original_file_path) {
         $checksum = Genome::Sys->md5sum($original_file_path);
         if (defined($specified_checksum) and $specified_checksum ne $checksum) {
@@ -183,6 +186,7 @@ sub create {
     my $symlink_dest = join('/', $self->temp_staging_directory, $self->variant_type . 's.hq');
     Genome::Sys->create_symlink($self->original_file_path, $symlink_dest);
     $self->file_content_hash(Genome::Sys->md5sum($self->original_file_path));
+    $self->lookup_hash($self->calculate_lookup_hash); #reset after modifying file_content_hash
 
     $self->generate_standard_files($symlink_dest);
 
