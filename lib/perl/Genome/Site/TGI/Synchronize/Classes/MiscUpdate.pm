@@ -68,6 +68,14 @@ class Genome::Site::TGI::Synchronize::Classes::MiscUpdate {
     data_source => 'Genome::DataSource::GMSchema',
 };
 
+my %lims_table_names_to_site_tgi_class_names = (
+    "organism_taxon" => 'Genome::Site::TGI::Synchronize::Classes::Taxon',
+    "organism_individual" => 'Genome::Site::TGI::Synchronize::Classes::Individual',
+    "population_group" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroup',
+    "organism_sample" => 'Genome::Site::TGI::Synchronize::Classes::Sample',
+    #"sample_attribute" => 'Genome::Site::TGI::Synchronize::Classes::SubjectAttribute',
+    #"population_group_member" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember',
+);
 sub lims_table_name {
     my $self = shift;
 
@@ -83,6 +91,19 @@ sub lims_table_name {
     }
 
     return $lims_table_name;
+}
+
+sub site_tgi_class_name {
+    my $self = shift;
+
+    my $lims_table_name = $self->lims_table_name;
+    my $site_tgi_class_name = $lims_table_names_to_site_tgi_class_names{$lims_table_name};
+    if ( not $site_tgi_class_name ) {
+        $self->error_message('Unsupported LIMS table name => '.$lims_table_name);
+        return;
+    }
+
+    return $site_tgi_class_name;
 }
 
 my %subject_class_names_to_genome_class_names = (
@@ -130,35 +151,20 @@ sub genome_entity {
     return $genome_entity;
 }
 
-my %subject_class_names_to_site_tgi_class_names = (
-    "organism_taxon" => 'Genome::Site::TGI::Synchronize::Classes::Taxon',
-    "organism_individual" => 'Genome::Site::TGI::Synchronize::Classes::Individual',
-    "population_group" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroup',
-    "organism_sample" => 'Genome::Site::TGI::Synchronize::Classes::Sample',
-    "sample_attribute" => 'Genome::Site::TGI::Synchronize::Classes::SubjectAttribute',
-    "population_group_member" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember',
-);
 sub perform_update {
     my $self = shift;
 
     my $lims_table_name = $self->lims_table_name;
     return if not $lims_table_name;
 
-    my $site_tgi_class_name = $subject_class_names_to_site_tgi_class_names{$lims_table_name};
+    my $site_tgi_class_name = $self->site_tgi_class_name;
     if ( not $site_tgi_class_name ) {
-        $self->error_message('No site tgi class name for lims table name => '.$lims_table_name);
         return $self->failure;
     }
 
-    my $lims_property_name = $self->subject_property_name;
-    my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($lims_property_name);
+    my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($self->subject_property_name);
     if ( not $genome_property_name ) {
-        $self->error_message('No genome property name for lims property name => '.$lims_property_name);
-        return $self->failure;
-    }
-
-    if ( grep { $lims_table_name eq $_ } (qw/ sample_attribute population_group_member /) ) {
-        $self->error_message("Cannot UPDATE $lims_table_name! It must be INSERTED then DELETED!");
+        $self->error_message('No genome property name for lims property name => '.$self->subject_property_name);
         return $self->failure;
     }
 

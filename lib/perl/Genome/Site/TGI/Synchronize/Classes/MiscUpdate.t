@@ -126,7 +126,7 @@ ok(!$misc_update->perform_update, 'Failed to perform update for invalid subject 
 $error_message = $misc_update->error_message;
 is($misc_update->result, 'FAILED', 'Correct result (FAILED) after update');
 is($misc_update->status, "FAILED	schema.org	-100	name	'NA'	'__TEST_TAXON__'	'__NEW_NAME__'", 'Correct status after update');
-is($error_message, 'No site tgi class name for lims table name => org', 'Correct error msg');
+is($error_message, 'Unsupported LIMS table name => org', 'Correct error msg');
 ok(!$misc_update->is_reconciled, 'Is not reconciled');
 
 # Old value not the same as current value
@@ -165,7 +165,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
 ok($misc_update, 'Define misc update');
 ok($misc_update->perform_update, 'Failed to perform update');
 is($misc_update->result, 'SKIP', 'Correct result (SKIP) after update');
-is($misc_update->status, "SKIPtest.organism_taxon	-100	next_amplicon_iteration	'NA'	'not the same as the current value'	'10000'", 'Correct status after update');
+is($misc_update->status, "SKIP	test.organism_taxon	-100	next_amplicon_iteration	'NA'	'not the same as the current value'	'10000'", 'Correct status after update');
 ok(!$misc_update->is_reconciled, 'Is not reconciled');
 
 done_testing();

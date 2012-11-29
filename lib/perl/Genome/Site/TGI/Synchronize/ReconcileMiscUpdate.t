@@ -51,8 +51,8 @@ is(@misc_updates, $update_cnt, "Defined $update_cnt defined misc updates");
 my @misc_indels = _define_misc_indels();
 ok(@misc_indels, 'Define multi misc indels');
 is(@misc_indels, 24, 'Defined 24 misc indels');
-my @misc_updates_that_fail = _define_misc_updates_that_fail();
-ok(@misc_updates_that_fail, 'Define misc updates that fail');
+my @misc_updates_that_skip_or_fail = _define_misc_updates_that_skpip_or_fail();
+ok(@misc_updates_that_skip_or_fail, 'Define misc updates that fail');
 
 # Reconcile
 $reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(date => '2000-01-01');
@@ -62,19 +62,20 @@ ok(!@errors, 'No errors for test date');
 diag('Test date: '.$reconcile->date);
 ok($reconcile->execute, 'Execute reconcile command');
 
-diag('Checking UPDATES...');
+diag('Checking successful UPDATES...');
 for my $misc_update ( @misc_updates ) {
     next if $misc_update->{_skip_check};
     my $new_value = $misc_update->new_value;
     my $genome_entity = $misc_update->genome_entity;
-    my $genome_property_name = $misc_update->genome_property_name;
+    my $site_tgi_class_name = $misc_update->site_tgi_class_name;
+    my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($misc_update->subject_property_name);
     is($genome_entity->$genome_property_name, $misc_update->new_value, 'Set new value ('.$new_value.') on '.$genome_entity->class.' '.$genome_entity->id);
     is($misc_update->result, $misc_update->description, 'Correct result');
     ok($misc_update->status, 'Set status');
     is($misc_update->is_reconciled, 1, 'Misc update correctly reconciled');
 }
 
-diag('Checking INDELS...');
+diag('Checking successful INDELS...');
 my %multi_misc_updates_to_check;
 foreach my $misc_indel ( @misc_indels ) {
     my %multi_misc_update_params = map { $_ => $misc_indel->$_ } (qw/ subject_class_name subject_id edit_date description /);
@@ -99,16 +100,23 @@ for my $multi_misc_update (values %multi_misc_updates_to_check) {
     is(scalar(grep {defined} map {$_->error_message} $multi_misc_update->misc_updates), 0, 'No errors set on misc updates!');
 }
 
-diag('Checking FAILED updates...');
-my($fail_cnt, $error_cnt, $not_reconciled) = (qw/ 0 0 0 /);
-for my $failed_misc_update ( @misc_updates_that_fail ) {
-    $fail_cnt++ if $failed_misc_update->result eq 'FAILED';
-    $error_cnt++ if defined $failed_misc_update->error_message;
-    $not_reconciled++ if $failed_misc_update->is_reconciled eq 0;
+diag('Checking SKIP/FAILED updates...');
+my ($skip_cnt, $fail_cnt, $error_cnt, $not_reconciled) = (qw/ 0 0 0 0 /);
+for my $misc_update ( @misc_updates_that_skip_or_fail ) {
+    $not_reconciled++ if $misc_update->is_reconciled eq 0;
+    $error_cnt++ if defined $misc_update->error_message;
+    if ( $misc_update->result eq 'SKIP' ) {
+        $skip_cnt++;
+    }
+    else {#FAILED
+        $fail_cnt++;
+    }
 }
-is($fail_cnt, @misc_updates_that_fail, 'Failed misc updates have status FAILED');
-is($error_cnt, @misc_updates_that_fail, 'Failed misc updates have errors');
-is($not_reconciled, @misc_updates_that_fail, 'Failed misc updates are not reconciled');
+is($skip_cnt, @misc_updates_that_skip_or_fail - $fail_cnt, 'SKIP expected number misc updates');
+is($skip_cnt, @misc_updates_that_skip_or_fail - $error_cnt, 'SKIP misc updates do not have errors');
+is($fail_cnt, @misc_updates_that_skip_or_fail - $skip_cnt, 'FAILED expected number of misc updates');
+is($error_cnt, $fail_cnt, 'FAILED misc updates have errors');
+is($not_reconciled, @misc_updates_that_skip_or_fail, 'SKIP/FAILED misc updates are not reconciled');
 
 done_testing();
 exit;
@@ -261,94 +269,93 @@ sub _define_misc_indels {
     return @misc_indels;
 }
 
-sub _define_misc_updates_that_fail {
-    my ($entities) = @_;
+sub _define_misc_updates_that_skpip_or_fail {
+    my @skip_or_fail;
 
     # Invalid genome class
-    my @misc_updates_that_fail;
-    my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
         subject_class_name => 'test.blah',
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON__',
-        new_value => '__FAILED__',
+        new_value => 'FAILED',
         description => 'UPDATE',
         is_reconciled => 0,
     );
-    push @misc_updates_that_fail, $misc_update;
+    push @skip_or_fail, $misc_update;
 
     # No obj for subject id
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
         subject_class_name => 'test.organism_taxon',
         subject_id => -10000,
         subject_property_name => 'name',
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON__',
-        new_value => '__FAILED__',
+        new_value => 'FAILED',
         description => 'UPDATE',
         is_reconciled => 0,
     );
-    push @misc_updates_that_fail, $misc_update;
+    push @skip_or_fail, $misc_update;
 
     # Can not update sample attr
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
         subject_class_name => 'test.sample_attribute',
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_SAMPLE_ATTR__',
-        new_value => '__FAILED__',
+        new_value => 'FAILED',
         description => 'UPDATE',
         is_reconciled => 0,
     );
-    push @misc_updates_that_fail, $misc_update;
+    push @skip_or_fail, $misc_update;
 
     # Can not update pop group member
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
         subject_class_name => 'test.population_group_member',
         subject_id => -301,
         subject_property_name => 'name',
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_POP_GROUP_MEMBER__',
-        new_value => '__FAILED__',
+        new_value => 'FAILED',
         description => 'UPDATE',
         is_reconciled => 0,
     );
-    push @misc_updates_that_fail, $misc_update;
+    push @skip_or_fail, $misc_update;
 
     # Old value ne to current
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
         subject_class_name => 'test.organism_taxon',
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON2__',
-        new_value => '__FAILED__',
+        new_value => 'FAILED',
         description => 'UPDATE',
         is_reconciled => 0,
     );
-    push @misc_updates_that_fail, $misc_update;
+    push @skip_or_fail, $misc_update;
 
     # Unsupported attr
-    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
         subject_class_name => 'test.organism_sample',
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_SAMPLE__',
-        new_value => '__FAILED__',
+        new_value => 'SKIP',
         description => 'UPDATE',
         is_reconciled => 0,
     );
-    push @misc_updates_that_fail, $misc_update;
+    push @skip_or_fail, $misc_update;
 
-    return @misc_updates_that_fail;
+    return @skip_or_fail;
 }
 
