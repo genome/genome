@@ -21,8 +21,7 @@ use Data::Dumper;
 if ($] < 5.010) {
   plan skip_all => "this test is only runnable on perl 5.10+"
 }
-#plan tests => 11;
-plan skip_all => "disabled so we can push out important SoftwareResult fix";
+plan tests => 12;
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
@@ -36,7 +35,8 @@ my $code_dir = abs_path(File::Basename::dirname(__FILE__));
 ok(-e $code_dir, "Found current code dir: $code_dir");
 
 #Define the path to test input and expected results files
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-GetBamReadCounts/2012-08-28';
+my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-GetBamReadCounts/2012-11-29';
+ok(-e $expected_data_directory, "Found expected data directory: $expected_data_directory");
 
 #Check for input positions file
 my $input_positions_file = $expected_data_directory . "/" . "GetBamReadCounts.t.input";
@@ -46,7 +46,7 @@ ok(-e $input_positions_file, "Found expected input positions file: GetBamReadCou
 my $expected_result_file = $expected_data_directory . "/" . "GetBamReadCounts.t.expected";
 ok(-e $expected_result_file, "Found expected results file: GetBamReadCounts.t.expected");
 
-#Create a test case based on an existing clinseq build: 126680687 of 2887519760
+#Create a test case based on an existing clinseq build: 126680687 of 2887519760 (AML103)
 #Use the input Somatic Variation and RNA-seq builds from that ClinSeq build for testing here
 
 #WGS somatic variation build
@@ -90,10 +90,10 @@ is(@diff, 0, "no differences from expected results and actual")
   or do { 
       diag("differences are:");
       diag(@diff);
-      if (-e "/tmp/last-summarize-builds-test-result"){
-        Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-summarize-builds-test-result");
+      if (-e "/tmp/last-get-bam-read-counts-test-result"){
+        Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-get-bam-read-counts-test-result");
       }
-      Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-summarize-builds-test-result");
+      Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-get-bam-read-counts-test-result");
   };
 
 
