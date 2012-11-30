@@ -269,7 +269,9 @@ sub create {
 
 sub _gather_params_for_get_or_create {
     my $class = shift;
-    my $bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
+
+    my ($bx, @extra) = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
+    die sprintf('got extra parameters: [%s]', join(',', @extra)) if @extra;
 
     my %params = $bx->params_list;
     my %is_input;
