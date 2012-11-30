@@ -346,16 +346,29 @@ sub execute{
         return;
     }
     if ($build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.header")){
-        my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
-            additional_columns_file => $build->data_directory."/effects/all_snvs.annovar.summary",
-            input_variants => $build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.header"),
-            output_file => $build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.annovar"),
-            columns_to_append => "wgEncodeRegDnaseClustered,wgEncodeRegTfbsClustered,bed",
-        );
-        unless ($append) {
-            $self->error_message("Append columns failed for tier2 snvs");
-            return;
+        my $temp = Genome::Sys->create_temp_file_path;
+        my $counter = 0;
+        my $in_file = $build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.header");
+        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed")) {
+            $counter++;
+            my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
+                additional_columns_file => $build->data_directory."/effects/all_snvs.annovar.hg19_".$table_name,
+                input_variants => $in_file,
+                output_file => "$temp.$counter",
+                column_to_append => 2,
+                header => $table_name,
+                chrom_column => 3,
+                start_column => 4,
+                stop_column => 5,
+            );
+            unless ($append) {
+                $self->error_message("Append columns failed for tier2 snvs");
+                return;
+            }
+            $in_file = "$temp.$counter";
         }
+        my $cmd = "mv $temp.$counter ".$build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.annovar");
+        `$cmd`;
     }
     if ($build->data_set_path("effects/snvs.hq.novel.tier3", $version, "bed")) {
         my $temp_file = Genome::Sys->create_temp_file_path;
@@ -378,16 +391,28 @@ sub execute{
             $self->error_message("Conversion from bed to anno coords failed for tier3 snvs");
             return;
         }
-        my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
-            additional_columns_file => $build->data_directory."/effects/all_snvs.annovar.summary",
-            input_variants => $build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno"),
-            output_file => $build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno.annovar"),
-            columns_to_append => "wgEncodeRegDnaseClustered,wgEncodeRegTfbsClustered,bed",
-        );
-        unless($append) {
-            $self->error_message("Append columns failed for tier3 snvs");
-            return;
+        my $temp = Genome::Sys->create_temp_file_path;
+        my $in_file = $build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno");
+        my $counter = 0;
+        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed")) {
+            $counter++;
+            my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
+                additional_columns_file => $build->data_directory."/effects/all_snvs.annovar.hg19_".$table_name,
+                input_variants => $in_file,
+                output_file => "$temp.$counter",
+                column_to_append => 2,
+                header => $table_name,
+                chrom_column => 3,
+                start_column => 4,
+                stop_column => 5,
+            );
+            unless($append) {
+                $self->error_message("Append columns failed for tier3 snvs");
+                return;
+            }
         }
+        my $cmd = "mv $temp.$counter ".$build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno.annovar");
+        `$cmd`;
     }
 
     #upload variants

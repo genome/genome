@@ -31,7 +31,8 @@ my $rv = $cmd->execute;
 ok($rv, "Executed command successfully");
 
 my $expected_output_prefix = $test_dir."/expected_output";
-foreach my $expected_file (("hg19_wgEncodeRegDnaseClustered", "hg19_bed", "summary")) {
+foreach my $expected_file (("hg19_wgEncodeRegDnaseClustered", "hg19_bed")) {
+    ok(-e "$temp_dir/expected_output.$expected_file", "$expected_file exists");
     my $diff_output = `diff $temp_dir/expected_output.$expected_file $test_dir/expected_output.$expected_file`;
     ok(!$diff_output, "No diffs for expected_output.$expected_file") or diag("diff results\n". $diff_output);
 }

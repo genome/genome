@@ -115,7 +115,7 @@ sub execute {
             return;
         }
     }
-
+=cut
     my %variants;
 
     $self->status_message("Creating summary of all tables");
@@ -161,6 +161,7 @@ sub execute {
     $self->status_message("Done writing annotation summary");
     $in->close;
     $out->close;
+=cut
     return 1;
 }
 

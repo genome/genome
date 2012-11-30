@@ -18,9 +18,28 @@ class Genome::Model::Tools::Annotate::AppendColumns {
             is => 'File',
             doc => "File with the columns to append",
         },
-        columns_to_append => {
-            is => 'String',
-            doc => "Headers of the columns to append.  Separate by commas.",
+        column_to_append => {
+            is => 'Number',
+            doc => "1-based index of the column to append.",
+        },
+        header => {
+            is => 'Text',
+            doc => "String to use as header for new column",
+        },
+        chrom_column => {
+            is => 'Number',
+            doc => '1-based index of the chromosome name column in additional-columns-file',
+            default => 1,
+        },
+        start_column => {
+            is => 'Number',
+            doc => '1-based index of the start coord column in additional-columns-file',
+            default => 2,
+        },
+        stop_column => {
+            is => 'Number',
+            doc => '1-based index of the stop coord column in the additional-columns-file',
+            default => 3,
         },
     ],
 };
@@ -29,6 +48,7 @@ sub execute {
     my $self = shift;
 
     my %additional_info;
+    my %additional_info2;
 
     my $variants_in = Genome::Sys->open_file_for_reading($self->input_variants);
     my $variants_header_line = <$variants_in>;
@@ -36,54 +56,41 @@ sub execute {
     while(my $line = <$variants_in>) {
         chomp $line;
         my @fields = split(/\t/, $line);
-        $additional_info{$fields[0]}{$fields[1]}{$fields[2]} = 1;
+        $additional_info2{$fields[0]}{$fields[1]}{$fields[2]} = 1;
     }
     $variants_in->close;
 
     my $in = Genome::Sys->open_file_for_reading($self->additional_columns_file);
 
-    my $header_line = <$in>;
-    chomp $header_line;
-    my @header_fields = split(/\t/, $header_line);
-
-    my @columns_list = split ",", $self->columns_to_append;
-
-    my %header;
-    my $counter = 0;
-    foreach my $header_field (@header_fields) {
-        $header{$header_field} = $counter;
-        $counter++;
-    }
     $self->status_message("Reading in additional columns");
+    my $chrom_column = $self->chrom_column - 1;
+    my $start_column = $self->start_column - 1;
+    my $stop_column = $self->stop_column - 1;
+
     while(my $line = <$in>) {
         chomp $line;
         my @fields = split (/\t/, $line);
-        if (defined $additional_info{$fields[0]}{$fields[1]}{$fields[2]} and $additional_info{$fields[0]}{$fields[1]}{$fields[2]} == 1) {
-            $additional_info{$fields[0]}{$fields[1]}{$fields[2]} = {};
-            foreach my $column (@columns_list) {
-                $additional_info{$fields[0]}{$fields[1]}{$fields[2]}{$column} = $fields[$header{$column}];
-            }
+        if (defined $additional_info2{$fields[$chrom_column]}{$fields[$start_column]}{$fields[$stop_column]} and $additional_info2{$fields[$chrom_column]}{$fields[$start_column]}{$fields[$stop_column]} == 1) {
+            $additional_info{$fields[$chrom_column]}{$fields[$start_column]}{$fields[$stop_column]} = $fields[$self->column_to_append - 1];
         }
     }
     $in->close;
 
     $in = Genome::Sys->open_file_for_reading($self->input_variants);
     my $out = Genome::Sys->open_file_for_writing($self->output_file);
-    $header_line = <$in>;
+    my $header_line = <$in>;
     chomp $header_line;
-    $out->print(join("\t", $header_line, @columns_list)."\n");
+    $out->print(join("\t", $header_line, $self->header)."\n");
 
     $self->status_message("Writing final output file");
     while(my $line = <$in>) {
         chomp $line;
         my @fields = split (/\t/, $line);
-        foreach my $column (@columns_list) {
-            if (defined $additional_info{$fields[0]}{$fields[1]}{$fields[2]}{$column}) {
-                $line = join ("\t", $line, $additional_info{$fields[0]}{$fields[1]}{$fields[2]}{$column});
-            }
-            else {
-                $line = join ("\t", $line, "-");
-            }
+        if (defined $additional_info{$fields[0]}{$fields[1]}{$fields[2]}) {
+            $line = join ("\t", $line, $additional_info{$fields[0]}{$fields[1]}{$fields[2]});
+        }
+        else {
+            $line = join ("\t", $line, "-");
         }
         $out->print($line."\n");
     }
