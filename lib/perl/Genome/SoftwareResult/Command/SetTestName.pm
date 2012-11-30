@@ -11,7 +11,7 @@ class Genome::SoftwareResult::Command::SetTestName {
 
     has_input => [
         software_results => {
-            is => 'Genome::Softwareresult',
+            is => 'Genome::SoftwareResult',
             is_many => 1,
             doc => 'software result to set name on'
         },
