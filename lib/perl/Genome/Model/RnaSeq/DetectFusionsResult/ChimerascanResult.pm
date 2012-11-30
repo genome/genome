@@ -102,7 +102,7 @@ sub _link_in_aligned_reads_bam {
     my $cmd = Genome::Model::Tools::Picard::FilterSamReads->create(
         input_file  => $input_file,
         output_file => $output_file,
-        filter      => 'indludeAligned',
+        filter      => 'includeAligned',
     );
 
     $cmd->execute();
@@ -361,7 +361,7 @@ sub _resolve_index_dir {
         Genome::Sys->shellcmd(cmd => $cmd);
 
         # Force UR to query the datasource instead of using its cache for this lookup.
-        my $previous_value = $UR::Context->query_underlying_context;
+        my $previous_value = UR::Context->query_underlying_context;
         UR::Context->query_underlying_context(1);
         $index = $self->_get_index($bowtie_version);
         UR::Context->query_underlying_context($previous_value);
