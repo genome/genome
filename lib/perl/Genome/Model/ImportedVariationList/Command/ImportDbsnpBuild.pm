@@ -44,7 +44,7 @@ class Genome::Model::ImportedVariationList::Command::ImportDbsnpBuild {
            is => 'String',
            is_many => 1,
            is_optional => 1,
-           default_value => ["1", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "2", "20", "21", "22", "3", "4", "5", "6", "7", "8", "9", "MT", "X", "Y"],
+           default_value => ["1", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "2", "20", "21", "22", "3", "4", "5", "6", "7", "8", "9", "MT", "X", "Y", "Multi"],
        },
        reference_coordinates => {
            is => 'String',
