@@ -102,7 +102,7 @@ sub _link_in_aligned_reads_bam {
     my $cmd = Genome::Model::Tools::Picard::FilterSamReads->create(
         input_file  => $input_file,
         output_file => $output_file,
-        filter      => 'indludeAligned',
+        filter      => 'includeAligned',
     );
 
     $cmd->execute();
