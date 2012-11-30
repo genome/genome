@@ -25,25 +25,32 @@ class Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine {
         },
         joinx_version => {
             is => 'Text',
-            is_input => 1,
             doc => 'Version of joinx to use for the combination',
         },
-        incoming_vcf_result_a => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-            doc => 'This is the vcf-result of the first detector or filter being run on',
-        },
-        incoming_vcf_result_b => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-            doc => 'This is the vcf-result of the second detector or filter being run on',
-        },
-    ],
-    has_param => [
         #This isn't set on combine results--they use the samples of their inputs
         aligned_reads_sample => {
             is => 'Text',
             is_optional => 1,
-        }
-    ]
+        },
+        incoming_vcf_result_a_id => {
+            is => 'Number',
+        },
+        incoming_vcf_result_b_id => {
+            is => 'Number',
+        },
+    ],
+    has => [
+        incoming_vcf_result_a => {
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
+            id_by => 'incoming_vcf_result_a_id',
+            doc => 'This is the vcf-result of the first detector or filter being run on',
+        },
+        incoming_vcf_result_b => {
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
+            id_by => 'incoming_vcf_result_b_id',
+            doc => 'This is the vcf-result of the second detector or filter being run on',
+        },
+    ],
 };
 
 sub _generate_vcf {
