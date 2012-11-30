@@ -3,7 +3,7 @@
  [1mgenome model define clin-seq[0m [--auto-assign-inst-data] [--auto-build-alignments]
     --processing-profile=? [--instrument-data=?[,?]] [--subject=?] [--wgs-model=?]
     [--exome-model=?] [--groups=?[,?]] [--model-name=?] [--projects=?[,?]] [--tumor-rnaseq-model=?]
-    [--normal-rnaseq-model=?] [--force]
+    [--normal-rnaseq-model=?] [--force] [--dry-run]
 
 [4mSYNOPSIS[0m
 
@@ -39,6 +39,8 @@
     rnaseq model for normal rna-seq data 
   [1mforce[0m
     skip sanity checks on input models 
+  [1mdry-run[0m
+    skip doing actual work (tests API) 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m

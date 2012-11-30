@@ -11,7 +11,8 @@ class Genome::Model::ClinSeq {
         exome_model         => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
         tumor_rnaseq_model  => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
         normal_rnaseq_model => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
-        force               => { is => 'Boolean', doc => 'skip sanity checks on input models' },  
+        force               => { is => 'Boolean', doc => 'skip sanity checks on input models' }, 
+        dry_run             => { is => 'Boolean', doc => 'skip doing actual work (tests API)', },
     ],
     has_optional_param => [
         #Processing profile parameters would go in here
@@ -94,13 +95,9 @@ sub __errors__ {
     return @errors;
 }
 
-
-sub _execute_build {
-    my ($self,$build) = @_;
-
-    #Make sure the right libraries are used (in case someone runs with a perl -I statement).
-    my $prefix = UR::Util->used_libs_perl5lib_prefix;
-    local $ENV{PERL5LIB} = $prefix . ':' . $ENV{PERL5LIB};
+sub map_workflow_inputs {
+    my $self = shift;
+    my $build = shift;
 
     my $data_directory = $build->data_directory;
 
@@ -110,8 +107,7 @@ sub _execute_build {
     my $normal_rnaseq_build = $build->normal_rnaseq_build;
     
     #This input is used for testing, and when set will not actually do any work just organize params
-    my $dry_run = $build->inputs(name => 'dry_run');
-    $dry_run = $dry_run->value if $dry_run;
+    my $dry_run = $build->dry_run;
 
     #Note that the option names are being truncated below here deliberately.  Getopt will allow the names to be arbitrarily shorter as long as they are still unique/unambiguous
     my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
@@ -142,38 +138,166 @@ sub _execute_build {
       }
     }
 
-    #Before executing, change the environment variable for R_LIBS to be ''
-    #This will force R to use it own local notion of library paths instead of the /gsc/ versions
-    #This should work for R installed on the machine /usr/bin/R  OR  a standalone version of R installed by a local user. e.g. /gscmnt/gc2142/techd/tools/R/R-2.14.0/bin/R
-    local $ENV{R_LIBS}='';
-
-    my $cmd = Genome::Model::ClinSeq::Command::Main->create(
-      build_id => $build->id,
-      ($wgs_build ? (wgs_som_var_data_set => $wgs_build->id) : ()),
-      ($exome_build ? (exome_som_var_data_set => $exome_build->id) : ()),
-      ($tumor_rnaseq_build ? (tumor_rna_seq_data_set => $tumor_rnaseq_build->id) : ()),
-      ($normal_rnaseq_build ? (normal_rna_seq_data_set => $normal_rnaseq_build->id) : ()),
-      working_dir => $data_directory,
-      common_name => $final_name,
-      verbose => 1,
-      clean => 1,
+    # initial inputs are for the "Main" component which does 
+    # all of the legacy/non-parellel tasks
+    my @inputs = (
+        build => $build,
+        wgs_som_var_data_set => $wgs_build,
+        exome_som_var_data_set => $exome_build,
+        tumor_rna_seq_data_set => $tumor_rnaseq_build,
+        normal_rna_seq_data_set => $normal_rnaseq_build,
+        working_dir => $data_directory,
+        common_name => $final_name,
+        verbose => 1,
+        clean => 1,
+        dry_run => $dry_run,
     );
 
-    #Unless a dry run, execute the ClinSeq Main command
-    if ($dry_run) {
-        $build->status_message("NOT running!");
-    }else {
-      open(OLD, ">&STDOUT"); #Save stdout
-      open(STDOUT,">&STDERR"); #Redirect stdout to go to stderr
-      my $result = $cmd->execute();
-      open(STDOUT, ">&OLD"); #Return stdout to its usual state
-      if (!$result){
-        die "Bad return value from ClinSeq::Command::Main";
-      } 
-      close(OLD);
+    return @inputs;
+}
+
+sub _resolve_workflow_for_build {
+    # This is called by Genome::Model::Build::start()
+    # Returns a Workflow::Operation
+    my $self = shift;
+    my $build = shift;
+    my $lsf_queue = shift; # TODO: the workflow shouldn't need this yet
+    my $lsf_project = shift;
+
+    if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
+        $lsf_queue = 'apipe';
+    }
+    if (!defined $lsf_project || $lsf_project eq '') {
+        $lsf_project = 'build' . $build->id;
     }
 
-    return 1;
+    # The wf system will call this method after we finish
+    # but it consolidates logic to make a workflow which will
+    # automatically take all inputs that method will assign.
+    my %inputs = $self->map_workflow_inputs($build);
+    my @input_properties = sort keys %inputs;
+   
+    # This must be updated for each new tool added which is "terminal" in the workflow!
+    # (too bad it can't just be inferred from a dynamically expanding output connector)
+    my @output_properties = qw(
+        summarize_svs_result
+        summarize_cnvs_result
+    );
+
+    my $workflow = Workflow::Model->create(
+        name => $build->workflow_name,
+        input_properties => \@input_properties, 
+        output_properties => \@output_properties,
+    );
+
+    my $log_directory = $build->log_directory;
+    $workflow->log_dir($log_directory);
+
+    my $input_connector = $workflow->get_input_connector;
+    my $output_connector = $workflow->get_output_connector;
+
+    my %steps_by_name; 
+    my $step = 0;
+    my $add_step = sub {
+        my ($name, $cmd) = @_;
+
+        if (substr($cmd,0,2) eq '::') {
+            $cmd = 'Genome::Model::ClinSeq::Command' . $cmd;
+        }
+        
+        unless ($cmd->can("execute")) {
+            die "bad command $cmd!";
+        }
+
+        die "$name already used!" if $steps_by_name{$name};
+
+        my $op = $workflow->add_operation(
+            name => $name,
+            operation_type => Workflow::OperationType::Command->create(
+                command_class_name => $cmd,
+            )
+        );
+        $op->operation_type->lsf_queue($lsf_queue);
+        $op->operation_type->lsf_project($lsf_project);
+        $steps_by_name{$name} = $op;
+        return $op;
+    };
+
+    my $add_link = sub {
+        my ($from_op, $from_p, $to_op, $to_p) = @_;
+        my $link = $workflow->add_link(
+            left_operation => $from_op,
+            left_property => $from_p,
+            right_operation => $to_op,
+            right_property => $to_p
+        );
+        $link or die "Failed to make link from $link from $from_p to $to_p!";
+        return $link;
+    };
+  
+    #
+    # ADD STEPS
+    #
+
+    # Main contains all of the original clinseq non-parallel code
+    my $main_op = $add_step->("ClinSeq Main", "Genome::Model::ClinSeq::Command::Main");
+    for my $in (qw/ 
+        build
+        wgs_som_var_data_set
+        exome_som_var_data_set
+        tumor_rna_seq_data_set
+        normal_rna_seq_data_set
+        working_dir
+        common_name
+        verbose
+        clean
+        dry_run
+    /) {
+        $add_link->($input_connector, $in, $main_op, $in);
+    }
+  
+    # When the dry_run input is set, skip the rest of the workflow (for testing).
+    if ($build->dry_run) {
+        # skip the rest of the workflow and have the result from Main 
+        # result stand-in for all of the results from other steps.
+        for my $out (@output_properties) {
+            $add_link->($main_op, 'result', $output_connector, $out);
+        }
+        # bail and return the one step workflow
+        # with dry-run set it won't do any work
+        return $workflow;
+    }
+    
+    # add steps which follow the main step...
+
+    # As we refactor start with things which do not feed into anything else down-stream,
+    # or which only feed into things which have already been broken-out.
+
+    #Generate a summary of SV results from the WGS SV results
+    if ($build->wgs_build) {
+        $step++; 
+        my $msg = "Step $step. Summarizing SV results from WGS somatic variation";
+        my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
+        $add_link->($main_op, 'build', $summarize_svs_op, 'builds');
+        $add_link->($main_op, 'sv_summary_dir', $summarize_svs_op, 'outdir');
+        $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
+    }
+
+    #Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
+    if ($build->wgs_build) {
+        $step++;
+        my $msg = "Step $step. Summarizing CNV results from WGS somatic variation";
+        my $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
+        $add_link->($main_op, 'build', $summarize_cnvs_op, 'builds');
+        $add_link->($main_op, 'cnv_summary_dir', $summarize_cnvs_op, 'outdir');
+        $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
+    }
+
+    # REMINDER:
+    # For new steps be sure to add their result to the output connector if they do not feed into another step.
+    # When you do that, expand the list of output properties at line 182 above. 
+
+    return $workflow;
 }
 
 sub _infer_candidate_subjects_from_input_models {

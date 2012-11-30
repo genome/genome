@@ -39,14 +39,13 @@ use Genome::Model::ClinSeq;
 my $dry_run;
 if (@ARGV and $ARGV[0] eq 'RUN') {
     note("NOT A DRY RUN...");
-    plan tests => 16;
     $dry_run = 0;
 }
 else {
     note("DRY RUN... put 'RUN' on the command line for this test to actually generate and compare results");
-    plan tests => 16;
     $dry_run = 1;
 }
+plan tests => 15;
 
 my $patient = Genome::Individual->get(common_name => "PNC6");
 ok($patient, "got the PNC6 patient");
@@ -126,20 +125,18 @@ my $b = $m->add_build(
 ok($b, "created a new build");
 
 # we would normally do $build->start() but this is easier to debug minus workflow guts when you just call _execute_build
-#$b->start(
-#    server_dispatch => 'inline',
-#    job_dispatch    => 'inline',
-#);
-#is($b->status, 'Succeeded', "build succeeded!");
+$ENV{PERL5LIB} = UR::Util->used_libs_perl5lib_prefix . "::" . $ENV{PERL5LIB};
+$b->start(
+    server_dispatch => 'inline',
+    job_dispatch    => 'inline',
+);
+is($b->status, 'Succeeded', "build succeeded!");
 
-my $retval = eval { $m->_execute_build($b); };
-is($retval, 1, 'execution of the build returned true');
-is($@, '', 'no exceptions thrown during build process') or diag $@;
-
-#Perform a diff between the stored results and the newly generated directory of results
+# perform a diff between the stored results and the newly generated directory of results
 my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2012-11-27';
 #print "\n\n$expected_data_directory\n\n";
 
+# this is very slow, but tests the pipeline the same way the build tests test the pipeline
 unless ($dry_run) {
     # add a masked version of the clonality tsv since it has non-deterministic output in the final column
     my $mask_command = 'cat ' 
@@ -149,7 +146,7 @@ unless ($dry_run) {
     Genome::Sys->shellcmd(cmd => $mask_command);
 
     #Exclude some files from the diff that tend to change when regenerated for the same build
-    my @diff = `diff -r --brief -x '*.R' -x '*.pdf' -x '*.mutation-diagram.stderr' -x '*_COSMIC.svg' -x '*.clustered.data.tsv' -x 'SummarizeBuilds.log.tsv' -x 'DumpIgvXml.log.txt' $expected_data_directory $temp_dir`;
+    my @diff = `diff -r --brief -x 'logs/*' -x 'build.xml' -x 'reports/*' -x '*.R' -x '*.pdf' -x '*.mutation-diagram.stderr' -x '*_COSMIC.svg' -x '*.clustered.data.tsv' -x 'SummarizeBuilds.log.tsv' -x 'DumpIgvXml.log.txt' $expected_data_directory $temp_dir`;
     ok(@diff == 0, "no differences from expected results and actual")
         or do { 
             diag("differences are:");
