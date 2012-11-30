@@ -19,6 +19,7 @@
   <link fromOperation="Validate SVs" fromProperty="output_dir" toOperation="output connector" toProperty="sv_validation_output"/>
 
   <link fromOperation="Detect Variants" fromProperty="build_id" toOperation="Validate Small Indels" toProperty="somatic_validation_build" />
+  <link fromOperation="Validate Small Indels" fromProperty="somatic_validation_build" toOperation="Validate Large Indels" toProperty="build_id" />
 
   <link fromOperation="Detect Variants" fromProperty="hq_snv_file" toOperation="Varscan Process-Validation" toProperty="filtered_validation_file"/>
   <link fromOperation="Detect Variants" fromProperty="build_id" toOperation="Varscan Process-Validation" toProperty="build_id" />
@@ -31,7 +32,7 @@
   <link fromOperation="Tier Variants" fromProperty="build_id" toOperation="Annotate Variants" toProperty="build_id" />
   <link fromOperation="Annotate Variants" fromProperty="build_id" toOperation="Review Variants" toProperty="build_id" />
   <link fromOperation="Review Variants" fromProperty="build_id" toOperation="output connector" toProperty="build_id" />
-  <link fromOperation="Validate Small Indels" fromProperty="final_output_file" toOperation="output connector" toProperty="small_indel_validation_output" />
+  <link fromOperation="Validate Large Indels" fromProperty="build_id" toOperation="output connector" toProperty="large_indel_build_id" /> <!-- FIXME temporary output property -->
 
   <link fromOperation="input connector" fromProperty="targeted_snv_validation" toOperation="Varscan Process-Validation" toProperty="output_file" />
   <link fromOperation="input connector" fromProperty="minimum_coverage" toOperation="Varscan Process-Validation" toProperty="min_coverage" />
@@ -57,10 +58,14 @@
 
   <operation name="Detect Variants">
     <operationtype commandClass="Genome::Model::SomaticValidation::Command::DetectVariants" typeClass="Workflow::OperationType::Command" />
-</operation>
+  </operation>
 
   <operation name="Validate Small Indels">
     <operationtype commandClass="Genome::Model::Tools::Varscan::PullOneTwoBpIndels" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operation name="Validate Large Indels">
+    <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateLargeIndels" typeClass="Workflow::OperationType::Command"/>
   </operation>
 
   <operation name="Identify DNPs">
@@ -104,8 +109,8 @@
     <outputproperty>tumor_reference_coverage_result</outputproperty>
     <outputproperty>normal_reference_coverage_result</outputproperty>
     <outputproperty>build_id</outputproperty>
-    <outputproperty>small_indel_validation_output</outputproperty>
     <outputproperty>sv_validation_output</outputproperty>
+    <outputproperty>large_indel_build_id</outputproperty>
 
   </operationtype>
 

@@ -37,11 +37,23 @@ class Genome::Model::Tools::Validation::LongIndelsPartOne {
         },
         somatic_validation_model_id => {
             is => 'Number',
-            doc => 'somatic-validation build ID (contains both tumor and normal)',
+            doc => 'somatic-validation model ID (contains both tumor and normal)',
         },
         reference_sequence_build_id => {
             is => 'Integer',
             doc => 'Optional reference sequence path (default is to grab it from the input models)',
+        },
+    ],
+    has => [
+        _new_tumor_model => {
+            is => 'Genome::Model',
+            is_optional => 1,
+            doc => 'The new tumor model created by execute',
+        },
+        _new_normal_model => {
+            is => 'Genome::Model',
+            is_optional => 1,
+            doc => 'The new normal model created by execute',
         },
     ],
     doc => 'Begin validation of 3bp indels.',
@@ -363,6 +375,7 @@ sub execute {
     #-----------------------------
     #create models to align data to new reference
 
+    my ($new_tumor_model, $new_normal_model);
     if($input_model_type eq "somval"){
         #my $new_pp = "dlarson bwa0.5.9 -q 5 indel contig test picard1.42";
         my $new_pp = Genome::ProcessingProfile->get("2599983");
@@ -375,6 +388,7 @@ sub execute {
 
 
         #new tumor model
+        # FIXME check for an existing model
         my $tumor_copy = Genome::Model::Command::Define::ReferenceAlignment->create(
             reference_sequence_build => $new_ref_build,
             auto_build_alignments => 0,
@@ -387,15 +401,15 @@ sub execute {
         $tumor_copy->dump_status_messages(1);
         $tumor_copy->execute or die "tumor define failed";
         my $new_tumor_model_id = $tumor_copy->result_model_id;
-        my $new_tumor_model = Genome::Model->get($new_tumor_model_id);
+        $new_tumor_model = Genome::Model->get($new_tumor_model_id);
         print STDERR "tumor model defined: $new_tumor_model_id\n";
 
 
         #new normal model
         my $new_normal_model_id;
-        my $new_normal_model;
         if(defined($self->normal_val_model_id)){ #separate refalign model with normal bam
             #new normal model
+        # FIXME check for an existing model
             my $normal_copy = Genome::Model::Command::Copy->create(
                 model => $normal_model,
                 overrides => [
@@ -414,6 +428,7 @@ sub execute {
             $new_normal_model_id = $new_normal_model->id;
 
         } else {
+        # FIXME check for an existing model
             my $normal_copy = Genome::Model::Command::Define::ReferenceAlignment->create(
                 reference_sequence_build => $new_ref_build,
                 auto_build_alignments => 0,
@@ -469,6 +484,7 @@ sub execute {
         $new_normal_model_name = checkForDupName($new_normal_model_name);
 
         #new tumor model
+        # FIXME check for an existing model
         my $tumor_copy = Genome::Model::Command::Copy->create(
             model => $tumor_model,
             overrides => [
@@ -487,6 +503,7 @@ sub execute {
         my $new_tumor_model_id = $new_tumor_model->id;
 
         #new normal model
+        # FIXME check for an existing model
         my $normal_copy = Genome::Model::Command::Copy->create(
             model => $normal_model,
             overrides => [
@@ -527,6 +544,10 @@ sub execute {
         print "New reference sequence with contigs: $new_ref_build_fa\n";
 
     }
+
+    $self->_new_tumor_model($new_tumor_model);
+    $self->_new_normal_model($new_normal_model);
+
     return 1;
 }
 
