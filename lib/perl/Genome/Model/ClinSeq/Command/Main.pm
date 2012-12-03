@@ -189,10 +189,14 @@ sub _execute {
   #Make the patient subdir
   $step++; print MAGENTA, "\n\nStep $step. Checking/creating the working dir for this patient", RESET;
   my $patient_dir;
+
   if ($clean){
       $patient_dir = &createNewDir('-path'=>$working_dir, '-new_dir_name'=>$common_name, '-force'=>"yes");
   }else{
-      $patient_dir = &createNewDir('-path'=>$working_dir, '-new_dir_name'=>$common_name);
+      $patient_dir = $working_dir . '/' . $common_name . '/';
+      unless (-d $patient_dir) {
+          Genome::Sys->create_directory($patient_dir);
+      }
   }
 
   if ($self->dry_run) {
@@ -229,24 +233,7 @@ sub _execute {
         my %out_paths;
         my $out_paths = \%out_paths;
 
-        #Summarize build inputs using SummarizeBuilds.pm
-        my $input_summary_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'input', '-silent'=>1);
-        my $log_file = $input_summary_dir . "SummarizeBuilds.log.tsv";
-        
-        #Create a summarize-builds command calling the code directly.  Since summarize-builds prints out using $self->status_message() statements we will need to capture those and dump to a file
-        $step++; print MAGENTA, "\n\nStep $step. Creating a summary of input builds using summarize-builds", RESET;
-        my $summarize_builds_cmd;
-        if ($clinseq_build_id > 0){
-            #Watch out for -ve build IDs which will occur when the ClinSeq.t test is run.  In that case, do not run the LIMS reports
-            $summarize_builds_cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$clinseq_build], outdir=>$input_summary_dir);
-        }else{
-            $summarize_builds_cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$clinseq_build], outdir=>$input_summary_dir, skip_lims_reports=>1);
-        }
-        $summarize_builds_cmd->queue_status_messages(1);
-        my $r = $summarize_builds_cmd->execute();
-        my @output = $summarize_builds_cmd->status_messages();
-        my $log = IO::File->new(">$log_file");
-        $log->print(join("\n", @output));
+        # ** Summarize Builds is now in the workflow **
 
         #Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
         #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
@@ -254,10 +241,10 @@ sub _execute {
         my $igv_session_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'igv', '-silent'=>1);
         my $igv_xml_cmd = Genome::Model::ClinSeq::Command::DumpIgvXml->create(builds=>[$clinseq_build], outdir=>$igv_session_dir);
         $igv_xml_cmd->queue_status_messages(1);
-        $r = $igv_xml_cmd->execute();
-        @output = $igv_xml_cmd->status_messages();
+        my $r = $igv_xml_cmd->execute();
+        my @output = $igv_xml_cmd->status_messages();
         my $igv_log_file = $igv_session_dir . "DumpIgvXml.log.txt";
-        $log = IO::File->new(">$igv_log_file");
+        my $log = IO::File->new(">$igv_log_file");
         $log->print(join("\n", @output));
 
 
@@ -290,7 +277,7 @@ sub _execute {
 
         #This is now being run earlier so that the cna-seg output can be used by cn-view
         #Generate a clonality plot for this patient (if WGS data is available)
-        my $clonality_dir = $patient_dir . "clonality/";
+        my $clonality_dir = $patient_dir . "/clonality/";
         if ($wgs){
             $step++; print MAGENTA, "\n\nStep $step. Creating clonality plot for $common_name", RESET;
             my $clonality_stdout = $clonality_dir . "clonality.stdout";
@@ -395,18 +382,14 @@ sub _execute {
   if ($wgs){
     my $sv_summary_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'sv', '-silent'=>1);
     $self->sv_summary_dir($sv_summary_dir);
-    #  $step++; print MAGENTA, "\n\nStep $step. Summarizing SV results from WGS somatic variation", RESET;
-    #  my $summarize_svs_cmd = Genome::Model::ClinSeq::Command::SummarizeSvs->create(builds=>[$wgs_somatic_build], outdir=>$sv_summary_dir);
-    #  my $r = $summarize_svs_cmd->execute();
+    # ** Summarize SVs is now in the workflow
   }
 
   #Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
   if ($wgs) {      
-    my $cnv_summary_dir = $patient_dir . "cnv/";
+    my $cnv_summary_dir = $patient_dir . "/cnv/";
     $self->cnv_summary_dir($cnv_summary_dir);
-    #  $step++; print MAGENTA, "\n\nStep $step. Summarizing CNV results from WGS somatic variation", RESET;
-    #  my $summarize_cnvs_cmd = Genome::Model::ClinSeq::Command::SummarizeCnvs->create(builds=>[$clinseq_build], outdir=>$cnv_summary_dir);
-    #  my $r = $summarize_cnvs_cmd->execute();
+    # ** Summarize CNVs is now in the workflow
   }
 
 

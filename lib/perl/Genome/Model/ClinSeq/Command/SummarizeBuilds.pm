@@ -26,7 +26,12 @@ class Genome::Model::ClinSeq::Command::SummarizeBuilds {
               is => 'Number',
               is_optional => 1,
               doc => 'Use this option to skip LIMS use of illumina_info run/lane/library report tool',
-        }
+        },
+        log_file => {
+              is => 'FilesystemPath',
+              is_optional => 1,
+              doc => 'All status messages go to the specified log file',
+        },
     ],
     doc => 'summarize the inputs of a clinseq build (models/builds, processing profiles, etc.)',
 };
@@ -75,6 +80,15 @@ sub execute {
   my $self = shift;
   my @builds = $self->builds;
   my $outdir = $self->outdir;
+  my $log_file = $self->log_file;
+
+  unless (-e $outdir) {
+    Genome::Sys->create_directory($outdir);
+  }
+
+  if ($log_file) {
+    $self->queue_status_messages(1);
+  }
 
   unless ($outdir =~ /\/$/){
     $outdir .= "/";
@@ -1370,6 +1384,14 @@ sub execute {
     close(STATS);
   }
   $self->status_message("\n\n");
+
+  my @output = $self->status_messages();
+  my $log = IO::File->new(">$log_file");
+  $log->print(join("\n", @output));
+  $log->close;
+
+  $self->queue_status_messages(0);
+  $self->status_message("Log file written to $log_file\n");
 
   return 1;
 }
