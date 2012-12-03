@@ -70,7 +70,7 @@ for my $misc_update ( @misc_updates ) {
     my $site_tgi_class_name = $misc_update->site_tgi_class_name;
     my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($misc_update->subject_property_name);
     is($genome_entity->$genome_property_name, $misc_update->new_value, 'Set new value ('.$new_value.') on '.$genome_entity->class.' '.$genome_entity->id);
-    is($misc_update->result, $misc_update->description, 'Correct result');
+    is($misc_update->result, 'PASS', 'Correct result');
     ok($misc_update->status, 'Set status');
     is($misc_update->is_reconciled, 1, 'Misc update correctly reconciled');
 }
