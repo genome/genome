@@ -149,9 +149,33 @@ sub map_workflow_inputs {
         working_dir => $data_directory,
         common_name => $final_name,
         verbose => 1,
-        clean => 1,
+        clean => 0, # unfriendly to parallelization ..dir is new and will be clean
         dry_run => $dry_run,
     );
+
+    my $patient_dir = $data_directory . "/" . $final_name;
+    my @dirs = ($patient_dir);
+
+    # summarize builds
+    my $input_summary_dir = $patient_dir . "/input";
+    push @dirs, $input_summary_dir;
+    push @inputs, summarize_builds_outdir => $input_summary_dir;
+    push @inputs, summarize_builds_log_file => $input_summary_dir . "/SummarizeBuilds.log.tsv";
+
+    if ($build->id > 0) {
+        push @inputs, summarize_builds_skip_lims_reports => 0;
+    }
+    else {
+        #Watch out for -ve build IDs which will occur when the ClinSeq.t test is run.  In that case, do not run the LIMS reports
+        push @inputs, summarize_builds_skip_lims_reports => 1;
+    }
+
+    # For now it works to create directories here because the data_directory
+    # has been allocated.  It is possible that this would not happen until
+    # later, which would mess up assigning inputs to many of the commands.
+    for my $dir (@dirs) {
+        Genome::Sys->create_directory($input_summary_dir);
+    }
 
     return @inputs;
 }
@@ -180,6 +204,7 @@ sub _resolve_workflow_for_build {
     # This must be updated for each new tool added which is "terminal" in the workflow!
     # (too bad it can't just be inferred from a dynamically expanding output connector)
     my @output_properties = qw(
+        summarize_builds_result
         summarize_svs_result
         summarize_cnvs_result
     );
@@ -235,12 +260,32 @@ sub _resolve_workflow_for_build {
         return $link;
     };
   
+
+
     #
-    # ADD STEPS
+    # Add steps which go in parallel with the Main step before setting up Main.
+    # This will ensure testing goes more quickly because these will happen first.
+    #
+    
+    unless ($build->dry_run) {
+        #Summarize build inputs using SummarizeBuilds.pm
+        $step++; 
+        my $msg = "Step $step. Creating a summary of input builds using summarize-builds";
+        my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
+        $add_link->($input_connector, 'build', $summarize_builds_op, 'builds');
+        $add_link->($input_connector, 'summarize_builds_outdir', $summarize_builds_op, 'outdir');
+        $add_link->($input_connector, 'summarize_builds_skip_lims_reports', $summarize_builds_op, 'skip_lims_reports');
+        $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
+        $add_link->($summarize_builds_op, 'result', $output_connector, 'summarize_builds_result');
+    }
+
+    #
+    # Main contains all of the original clinseq non-parallel code.
+    # Re-factor out pieces which are completely independent, or which are at the end first.
     #
 
-    # Main contains all of the original clinseq non-parallel code
-    my $main_op = $add_step->("ClinSeq Main", "Genome::Model::ClinSeq::Command::Main");
+    $step++;
+    my $main_op = $add_step->("Step $step. ClinSeq Main", "Genome::Model::ClinSeq::Command::Main");
     for my $in (qw/ 
         build
         wgs_som_var_data_set
@@ -256,29 +301,37 @@ sub _resolve_workflow_for_build {
         $add_link->($input_connector, $in, $main_op, $in);
     }
   
+
+    #
     # When the dry_run input is set, skip the rest of the workflow (for testing).
+    #
+
     if ($build->dry_run) {
         # skip the rest of the workflow and have the result from Main 
         # result stand-in for all of the results from other steps.
         for my $out (@output_properties) {
+            # If we enable a step for use during dry-run skip
+            # and it links to the final output connector, skip it here
+            ## next if $out =~ /^summarize_builds/;
             $add_link->($main_op, 'result', $output_connector, $out);
         }
         # bail and return the one step workflow
         # with dry-run set it won't do any work
         return $workflow;
     }
-    
-    # add steps which follow the main step...
-
+   
+    #
+    # Add steps which follow the main step...
     # As we refactor start with things which do not feed into anything else down-stream,
     # or which only feed into things which have already been broken-out.
+    #
 
     #Generate a summary of SV results from the WGS SV results
     if ($build->wgs_build) {
         $step++; 
         my $msg = "Step $step. Summarizing SV results from WGS somatic variation";
         my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-        $add_link->($main_op, 'build', $summarize_svs_op, 'builds');
+        $add_link->($main_op, 'wgs_som_var_data_set', $summarize_svs_op, 'builds');
         $add_link->($main_op, 'sv_summary_dir', $summarize_svs_op, 'outdir');
         $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
     }
@@ -296,6 +349,14 @@ sub _resolve_workflow_for_build {
     # REMINDER:
     # For new steps be sure to add their result to the output connector if they do not feed into another step.
     # When you do that, expand the list of output properties at line 182 above. 
+
+    my @errors = $workflow->validate();
+    if (@errors) {
+        for my $error (@errors) {
+            $self->error_message($error);
+        }
+        die "Invalid workflow!";
+    }
 
     return $workflow;
 }
