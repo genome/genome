@@ -16,6 +16,11 @@ class Genome::Model::Command::Admin::ModelSummary {
             is_optional => 1,
             doc => 'Hide build details for statuses listed.',
         },
+        hide_no_action_needed => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'Hide models that do not require any action.',
+        },
         auto => {
             is => 'Boolean',
             default => 0,
@@ -40,8 +45,13 @@ sub execute {
     my @hide_statuses = $self->hide_statuses;
 
     #preload data
+    my %failed_build_params = (
+        run_by => Genome::Sys->username,
+        status => 'Failed',
+    );
     my @builds = Genome::Model::Build->get(
         model_id => [map($_->id, @models)],
+        %failed_build_params,
         -hint => ['the_master_event'],
     );
 
@@ -86,7 +96,8 @@ sub execute {
         my $latest_build_status = ($latest_build ? $latest_build->status : '-');
         $latest_build_status = 'Requested' if $model->build_requested;
 
-        my $fail_count   = ($model ? scalar $model->failed_builds     : undef);
+        my @failed_builds = $model->builds(%failed_build_params);
+        my $fail_count   = scalar @failed_builds;
         my $model_id     = ($model ? $model->id                       : '-');
         my $model_name   = ($model ? $model->name                     : '-');
         my $pp_name      = ($model ? $model->processing_profile->name : '-');
@@ -133,7 +144,7 @@ sub execute {
         elsif ($latest_build->status eq 'Scheduled' || $latest_build->status eq 'Running' || $model->build_requested) {
             $action = 'none';
         }
-        elsif ($latest_build && $latest_build->status eq 'Succeeded') {
+        elsif ($latest_build && $latest_build->status eq 'Succeeded' && $fail_count) {
             $action = 'cleanup';
             if ($self->auto) {
                 my $cleanup_succeeded = Genome::Model::Command::Admin::CleanupSucceeded->create(models => [$model]);
@@ -141,6 +152,9 @@ sub execute {
                 $cleanup_rv{$cleanup_succeeded->result}++;
                 $track_change->();
             }
+        }
+        elsif ($latest_build->status eq 'Succeeded') {
+            $action = 'none';
         }
         elsif (should_review_model($model)) {
             $action = 'review';
@@ -153,7 +167,9 @@ sub execute {
             }
         }
 
-        unless (grep { lc $_ eq lc $latest_build_status } @hide_statuses) {
+        my $has_hidden_status = grep { lc $_ eq lc $latest_build_status } @hide_statuses;
+        my $should_hide_none = $self->hide_no_action_needed && $action eq 'none';
+        unless ($has_hidden_status || $should_hide_none) {
             $self->print_message(join "\t", $model_id, $action, $latest_build_status, $first_nondone_step, $latest_build_revision, $model_name, $pp_name, $fail_count);
         }
 
