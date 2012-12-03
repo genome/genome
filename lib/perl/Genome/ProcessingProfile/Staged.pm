@@ -45,13 +45,13 @@ sub objects_for_stage {
 sub _steps_to_append_from_processing_profile_for_stage {
     my $self = shift;
     my $stage = shift;
-    
+
     unless ($self->append_event_steps) {
         return;
     }
-    
+
     my @stages = $self->stages;
-    
+
     my $append_event_steps_value = $self->append_event_steps;
     my %append_event_steps;
     {
@@ -64,7 +64,7 @@ sub _steps_to_append_from_processing_profile_for_stage {
         $err_msg .= "\n" . Dumper(\%append_event_steps);
         die $self->error_message($err_msg);
     }
-    
+
     for my $key (keys %append_event_steps) {
         unless (grep { $_ =~ /$key/ } @stages) {
             die $self->error_message("Failed to find $key in stages (" . join(", ", @stages) . ").");
@@ -81,7 +81,7 @@ sub _steps_to_append_from_processing_profile_for_stage {
         } else {
             @steps = ($steps);
         }
-        
+
         my $pp_type = (split('::', $self->subclass_name))[2];
         for my $step (@steps) {
             unless ($step =~ /Genome\:\:Model\:\:Event\:\:Build\:\:$pp_type/) {
@@ -100,11 +100,11 @@ sub _steps_to_append_from_processing_profile_for_stage {
                 die $self->error_message("Error ($@) while executing $step->class.");
             }
         }
-        
+
         return @steps;
     } else {
         return;
-    }   
+    }
 }
 
 sub _resolve_workflow_for_build {
@@ -134,7 +134,7 @@ sub _resolve_workflow_for_build {
 
     # ssmith ????  is this really ok?
     return unless @workflow_stages; # ok, may not have stages
-    
+
     # FIXME check for errors here???
     my $workflow = $self->_merge_stage_workflows($build,@workflow_stages);
 
@@ -152,8 +152,8 @@ sub _generate_events_for_build {
     unless (@stage_names) {
         die ('No stages on processing profile in '  . (ref($self) || $self));
     }
-    
-    my @events_by_stage; 
+
+    my @events_by_stage;
     for my $stage_name ( @stage_names ) {
         # FIXME why are we attempting to schedule stages that have no classes??
         my @events = $self->_generate_events_for_build_stage($build,$stage_name);
@@ -167,7 +167,7 @@ sub _generate_events_for_build {
         }
         push @events_by_stage, { name => $stage_name, events => \@events };
     }
-    
+
     return $build->{events_by_stage} = \@events_by_stage;
 }
 
@@ -195,7 +195,7 @@ sub _generate_events_for_build_stage {
             $object_id = $object;
         }
 
-        # Putting status message on build event because some tests expect it.  
+        # Putting status message on build event because some tests expect it.
         #  Prolly can (re)move this to somewhere...
         if ($object_class->isa('Genome::InstrumentData')) {
             $build->status_message('Scheduling jobs for '
@@ -239,7 +239,7 @@ sub _generate_events_for_object {
                 }
             }
 
-            # Who did this???????????? 
+            # Who did this????????????
             my $command;
             if ($command_class =~ /MergeAlignments|UpdateGenotype|FindVariations/) {
                 if (ref($object)) {
@@ -264,14 +264,14 @@ sub _generate_events_for_object {
                         instrument_data_id => $object->id,
                         model_id => $build->model_id,
                     );
-                    
+
                     if ($segment_identifier) {
                         $command->add_input(name=>'instrument_data_segment_type',
                                             value=>$segment_identifier->{segment_type});
                         $command->add_input(name=>'instrument_data_segment_id',
                                             value=>$segment_identifier->{segment_id})
                     }
-                     
+
                 } else {
                     my $error_message = 'Expecting Genome::InstrumentData object but got '. ref($object);
                     $build->error_message($error_message);
@@ -325,7 +325,7 @@ sub _workflow_for_stage {
         $self->error_message('Failed to get events for stage '. $stage_name);
         return;
     }
-    
+
 
     my $stage = Workflow::Model->create(
         name => $build->id . ' ' . $stage_name,
@@ -428,7 +428,7 @@ sub _merge_stage_workflows {
     my $self = shift;
     my $build = shift;
     my @workflows = @_;
-    
+
     my $w = Workflow::Model->create(
         name => $build->id . ' all stages',
         input_properties => [
@@ -438,10 +438,10 @@ sub _merge_stage_workflows {
             'result'
         ]
     );
-    
+
     my $last_op = $w->get_input_connector;
     my $last_op_prop = 'prior_result';
-    foreach my $inner (@workflows) {    
+    foreach my $inner (@workflows) {
         $inner->workflow_model($w);
 
         $w->add_link(
@@ -450,18 +450,18 @@ sub _merge_stage_workflows {
             right_operation => $inner,
             right_property => 'prior_result'
         );
-        
+
         $last_op = $inner;
         $last_op_prop = 'result';
     }
-    
+
     $w->add_link(
         left_operation => $last_op,
         left_property => $last_op_prop,
         right_operation => $w->get_output_connector,
         right_property => 'result'
     );
-    
+
     return $w;
 }
 
