@@ -170,6 +170,24 @@
               </td>
             </tr>
 
+            <tr>
+                <td class="name">Blacklisted Segments:</td>
+                <td class="value">
+                    <xsl:choose>
+                        <xsl:when test="aspect[@name='blacklisted_segments']/value">
+                            <table>
+                                <xsl:for-each select="aspect[@name='blacklisted_segments']/value">
+                                    <tr><td><xsl:value-of select="."/></td></tr>
+                                </xsl:for-each>
+                            </table>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            None
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </td>
+            </tr>
+
           </tbody>
         </table>
       </div>
