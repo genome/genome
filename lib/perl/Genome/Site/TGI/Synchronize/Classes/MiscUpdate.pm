@@ -275,5 +275,10 @@ sub failure {
     return;
 }
 
+sub has_failed {
+    my $self = shift;
+    return 1 if $self->result and $self->result eq 'FAIL';
+}
+
 1;
 

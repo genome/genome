@@ -125,6 +125,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
 ok(!$misc_update->perform_update, 'Failed to perform update for invalid subject class name');
 $error_message = $misc_update->error_message;
 is($misc_update->result, 'FAIL', 'Correct result (FAIL) after update');
+ok($misc_update->has_failed, 'Misc update "has_failed"');
 is($misc_update->status, "FAIL	UPDATE	schema.org	-100	name	'NA'	'__TEST_TAXON__'	'__NEW_NAME__'", 'Correct status after update');
 is($error_message, 'Unsupported LIMS table name => org', 'Correct error msg');
 ok(!$misc_update->is_reconciled, 'Is not reconciled');
@@ -144,6 +145,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
 ok($misc_update, 'Define misc update');
 ok(!$misc_update->perform_update, 'Failed to perform update');
 is($misc_update->result, 'FAIL', 'Correct result (FAIL) after update');
+ok($misc_update->has_failed, 'Misc update "has_failed"');
 is($misc_update->status, "FAIL	UPDATE	test.organism_taxon	-100	estimated_organism_genome_size	'1000'	'not the same as the current value'	'10000'", 'Correct status after update');
 is($misc_update->error_message, 'Current APipe value (1000) does not match the LIMS old value (not the same as the current value)!', 'Correct error after update');
 ok(!$misc_update->is_reconciled, 'Is not reconciled');

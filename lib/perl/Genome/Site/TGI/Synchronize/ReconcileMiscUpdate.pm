@@ -124,7 +124,7 @@ sub _execute_report {
         $stats{ATTEMPTED}++;
         $stats{ $misc_update->result }++;
         $status .= $misc_update->status."\n";
-        $errors .= $misc_update->id." '".$misc_update->error_message."'\n" if $misc_update->result eq 'FAILED';
+        $errors .= $misc_update->id." '".$misc_update->error_message."'\n" if $misc_update->has_failed;
     }
 
     return print join(
