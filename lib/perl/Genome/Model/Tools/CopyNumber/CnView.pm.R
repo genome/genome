@@ -67,8 +67,8 @@ plotChrCNV = function(target_chr){
 
   #Define some display genes.  Those in the input gene list on the target chr
   #They should also be below the lowest cut or above the highest cut
-  gi_up = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] >= cut5 | genes[,"CNVhmm.Status"]=="Gain"))
-  gi_down = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] <= cut2 | genes[,"CNVhmm.Status"]=="Loss"))
+  gi_up = which(genes[,"chr"] == target_chr & (genes[,"mean_cnv_diff"] >= cut5 | genes[,"cnvhmm_status"]=="Gain"))
+  gi_down = which(genes[,"chr"] == target_chr & (genes[,"mean_cnv_diff"] <= cut2 | genes[,"cnvhmm_status"]=="Loss"))
 
   #Assign colors according to the magnitude of the DIFF
   cnvs[,"COLOR"] = "grey50"
@@ -141,13 +141,13 @@ plotChrCNV = function(target_chr){
     odds_up=seq(1, length(gi_up), 2)
     x0_odd=genes[gi_up[odds_up],"Mid"]; x1_odd=x0_odd; y0_odd=rep(cut5, length(x0_odd)); y1_odd=rep(yu1, length(x0_odd))
     segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col=gaincolor2, lty=2, lwd=0.5)
-    text(x=genes[gi_up[odds_up],"Mid"], y=yu1, labels=genes[gi_up[odds_up],"Symbol"], srt=45, cex=cex_text, col=gaincolor4)
+    text(x=genes[gi_up[odds_up],"Mid"], y=yu1, labels=genes[gi_up[odds_up],"mapped_gene_name"], srt=45, cex=cex_text, col=gaincolor4)
   }
   if(length(gi_up) > 1){ 
     evens_up=seq(2, length(gi_up), 2)
     x0_even=genes[gi_up[evens_up],"Mid"]; x1_even=x0_even; y0_even=rep(cut5, length(x0_even)); y1_even=rep(yu2, length(x0_even))
     segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col=gaincolor2, lty=2, lwd=0.5)
-    text(x=genes[gi_up[evens_up],"Mid"], y=yu2, labels=genes[gi_up[evens_up],"Symbol"], srt=45, cex=cex_text, col=gaincolor4)
+    text(x=genes[gi_up[evens_up],"Mid"], y=yu2, labels=genes[gi_up[evens_up],"mapped_gene_name"], srt=45, cex=cex_text, col=gaincolor4)
   }
   if (length(gain_j)>0){
     segx1g = segments_chr[gain_j,"START"]
@@ -178,13 +178,13 @@ plotChrCNV = function(target_chr){
     odds_down=seq(1, length(gi_down), 2)
     x0_odd=genes[gi_down[odds_down],"Mid"]; x1_odd=x0_odd; y0_odd=rep(cut2, length(x0_odd)); y1_odd=rep(yd1, length(x0_odd))
     segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col=losscolor1, lty=2, lwd=0.5)
-    text(x=genes[gi_down[odds_down],"Mid"], y=yd1, labels=genes[gi_down[odds_down],"Symbol"], srt=45, cex=cex_text, col=losscolor4)
+    text(x=genes[gi_down[odds_down],"Mid"], y=yd1, labels=genes[gi_down[odds_down],"mapped_gene_name"], srt=45, cex=cex_text, col=losscolor4)
   }
   if (length(gi_down) > 1){
     evens_down=seq(2, length(gi_down), 2)
     x0_even=genes[gi_down[evens_down],"Mid"]; x1_even=x0_even; y0_even=rep(cut2, length(x0_even)); y1_even=rep(yd2, length(x0_even))
     segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col=losscolor1, lty=2, lwd=0.5)
-    text(x=genes[gi_down[evens_down],"Mid"], y=yd2, labels=genes[gi_down[evens_down],"Symbol"], srt=45, cex=cex_text, col=losscolor4)
+    text(x=genes[gi_down[evens_down],"Mid"], y=yd2, labels=genes[gi_down[evens_down],"mapped_gene_name"], srt=45, cex=cex_text, col=losscolor4)
   }
   if (length(loss_j)>0){
     segx1l = segments_chr[loss_j,"START"]
@@ -239,8 +239,8 @@ plotChrCNV_Compact = function(target_chr, type){
 	
   #Get the chromosome or region of interest
   i = which(cnvs[,"CHR"] == target_chr)
-  gi_up = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] >= cut5 | genes[,"CNVhmm.Status"]=="Gain"))
-  gi_down = which(genes[,"Chr"] == target_chr & (genes[,"Mean.CNV.Diff"] <= cut2 | genes[,"CNVhmm.Status"]=="Loss"))
+  gi_up = which(genes[,"chr"] == target_chr & (genes[,"mean_cnv_diff"] >= cut5 | genes[,"cnvhmm_status"]=="Gain"))
+  gi_down = which(genes[,"chr"] == target_chr & (genes[,"mean_cnv_diff"] <= cut2 | genes[,"cnvhmm_status"]=="Loss"))
   cnvs[,"COLOR"] = "grey50"
   ii = which(cnvs[,"DIFF"] <= cut1 & cnvs[,"DIFF"] > cut2); if (length(ii) > 0){cnvs[ii, "COLOR"] = losscolor1}
   ii = which(cnvs[,"DIFF"] <= cut2 & cnvs[,"DIFF"] > cut3); if (length(ii) > 0){cnvs[ii, "COLOR"] = losscolor2}
@@ -391,7 +391,7 @@ openImageFile = function(name, type, image_width, image_height){
 #Load data
 cnvs=read.table(cnv_file, comment.char="#", header=TRUE)
 segments=read.table(segments_file, sep="\t", as.is=c(1,11), header=TRUE)
-genes=read.table(gene_file, sep="\t", header=TRUE, as.is=c(1:3))
+genes=read.table(gene_file, sep="\t", header=TRUE, as.is=c(1:5,8,10))
 ideo_data = read.table(ideogram_file, sep="\t", header=FALSE, comment.char="#", as.is=c(1,4,5))
 names(ideo_data) = c("chrom","chromStart", "chromEnd", "name", "gieStain")
 
@@ -416,7 +416,7 @@ if (chr == "ALL"){
 
 #Add "chr" to the chromosome names in the cnv and genes objects
 cnvs[,"CHR"]=paste("chr", cnvs[,"CHR"], sep="")
-genes[,"Chr"]=paste("chr", genes[,"Chr"], sep="")
+genes[,"chr"]=paste("chr", genes[,"chr"], sep="")
 
 #Make sure segments file has at least one row of data, otherwise following commands will choke, need to be skipped  
 if (length(rownames(segments))>0){
@@ -435,7 +435,7 @@ if (length(chr_list) == 1 & chr_start > 0){
 }
 
 #Reorder genes by start position
-o=order(genes[,"Start"])
+o=order(genes[,"start"])
 genes=genes[o,]
 
 #Calculate the midpoint for CNV window coords
@@ -443,7 +443,7 @@ window_size=cnvs[2,"POS"]-cnvs[1,"POS"]
 cnvs[,"MID"] = cnvs[,"POS"]+(window_size/2)
 
 #Calculate the midpoint for gene coords
-genes[,"Mid"] = genes[,"Start"]+((genes[,"End"]-genes[,"Start"])/2)
+genes[,"Mid"] = genes[,"start"]+((genes[,"end"]-genes[,"start"])/2)
 
 #Reset values smaller than -2 to be -2 (both copies deleted)
 if (length(which(cnvs[,"DIFF"] < hard_cap_lower)) > 0){

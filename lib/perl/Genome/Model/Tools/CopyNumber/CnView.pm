@@ -30,10 +30,10 @@ class Genome::Model::Tools::CopyNumber::CnView{
       doc => 'Instead of supplying a "cnvs.hq" file, you can specify a somatic variation build ID and the file will be found automatically' },
     gene_targets_file => { 
       is => 'Text', 
-      doc => 'List of gene symbols. These will be highlighted if they meet the minimum CNV cutoffs.  The cancer gene census will be used by default.' },
+      doc => 'List of gene symbols. These will be highlighted if they meet the minimum CNV cutoffs.  If not specified all genes will be used by default.' },
     name              => { 
       is => 'Text', 
-      doc => 'Name for list of gene symbols to be highlighted ("Cancer Genes" will be used by default).' },
+      doc => 'Human readable name describing the gene symbols to be highlighted. Use "All" if no gene_targets_file is specified' },
     cnv_results_file  => { 
       is => 'Text', 
       doc => 'If you have already generated a CNV results file for a list of genes, you can supply it and skip to the graph generation step' },
@@ -64,7 +64,7 @@ class Genome::Model::Tools::CopyNumber::CnView{
 
 sub help_synopsis {
   return <<EOS
-gmt copy-number cn-view --annotation-build=124434505 --cnv-file=/gscmnt/gc13001/info/model_data/2888915570/build129973671/variants/cnvs.hq --segments-file=/gscmnt/gc2013/info/model_data/2889110844/build130030495/PNC6/clonality/cnaseq.cnvhmm --output-dir=/tmp/ --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt --name='CancerGeneCensusPlus_Sanger' 
+gmt copy-number cn-view --annotation-build=124434505 --cnv-file=/gscmnt/gc13001/info/model_data/2888915570/build129973671/variants/cnvs.hq --segments-file=/gscmnt/gc2013/info/model_data/2889110844/build130030495/PNC6/clonality/cnaseq.cnvhmm --output-dir=/tmp/ --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt --name='Cancer Genes'  --chr=1  --verbose
 EOS
 }
 
@@ -87,13 +87,12 @@ $DB::single = 1;
   my $segments_file = $self->segments_file;
   my $somatic_build = $self->somatic_build;
   my $output_dir = $self->output_dir;
+  my $name = $self->name;
 
   #Optional
   my $gene_targets_file = $self->gene_targets_file;
-  my $name = $self->name;
   my $cnv_results_file = $self->cnv_results_file;
   my $ideogram_file = $self->ideogram_file;
-  my $verbose = $self->verbose;
   my $chr = $self->chr;
   my $chr_start = $self->chr_start;
   my $chr_end = $self->chr_end;
@@ -106,7 +105,7 @@ $DB::single = 1;
 
   #Check/format all input parameters and options
   #Based on the reference build specified, define paths to transcript/gene id mapping files
-  my ($transcript_info_file, $subdir, $outfile, $outfile_amp, $outfile_del, $outfile_ampdel, $outfile_cnvhmm, $name_f);
+  my ($gtf_file, $subdir, $outfile_prefix, $outfile_cnvhmm, $name_f);
   my $extra_flank = 100000;
 
   ####################################################################################################################################
@@ -117,9 +116,10 @@ $DB::single = 1;
       $self->error_message("Must supply either cnv_file or somatic_build (Somatic Variation)");
       return;
     }
+
+    #Check annotation build and clinseq annotations dir
     my $clinseq_annotations_dir="/gscmnt/sata132/techd/mgriffit/reference_annotations/";
     my $annotation_data_dir=$annotation_build->data_directory;
-    
     my $reference_sequence_build=$annotation_build->reference_sequence;
     my $default_build37 = Genome::Model::Build->get(102671028);
     my $default_build36 = Genome::Model::Build->get(101947881);
@@ -132,22 +132,23 @@ $DB::single = 1;
       return;
     }
 
-    $transcript_info_file = $annotation_data_dir . "/annotation_data/transcripts.csv";
-    unless (-e $transcript_info_file && -e $ideogram_file){
-      $self->error_message("One or more of the following annotation files is missing:\n$transcript_info_file\n$ideogram_file");
+    #Check GTF file
+    $gtf_file = `ls $annotation_data_dir/annotation_data/rna_annotation/*-all_sequences.gtf`;
+    chomp($gtf_file);
+    unless (-e $gtf_file && -e $ideogram_file){
+      $self->error_message("One or more of the following annotation files is missing:\ngtf_file = $gtf_file\nideogram_file = $ideogram_file");
       return;
     }
 
     # TODO: switch that name and version (date) for a value in the processing profile if this changes
     my $gene_symbol_lists_dir = Genome::Sys->dbpath("tgi-gene-symbol-lists","2012-11-13");
 
-    #Set the default gene targets file if it wasnt specified by the user
-    unless ($gene_targets_file){
-      $gene_targets_file = $gene_symbol_lists_dir . "/CancerGeneCensusPlus_Sanger.txt"
-    }
-    unless (-e $gene_targets_file){
-      $self->error_message("Gene targets file not found: $gene_targets_file");
-      return;
+    #Check gene targets file if defined
+    if ($self->gene_targets_file){    
+      unless (-e $gene_targets_file){
+        $self->error_message("Gene targets file not found: $gene_targets_file");
+        return;
+      }
     }
 
     #Check for segments file
@@ -172,8 +173,9 @@ $DB::single = 1;
       $cnv_file = $path;
     }
 
+    #Check output dir
     unless (-e $output_dir && -d $output_dir){
-      $self->status_message("Creating dir: $output_dir");
+      $self->status_message("Creating dir: $output_dir") if $self->verbose;
       mkdir($output_dir);
     }
     unless ($output_dir =~ /\/$/){
@@ -185,9 +187,8 @@ $DB::single = 1;
       $name_f = $name;
       $name_f =~ s/ //g;
     }else{
-      $name = "Cancer Genes";
-      $name_f = $name;
-      $name_f =~ s/ //g;
+      $self->error_message("Must specify a valid --name parameter");
+      return;
     }
     
     #Create a subdirectory within the working directory
@@ -235,24 +236,13 @@ $DB::single = 1;
     }
 
     #Name the output files
+    $outfile_cnvhmm = "$subdir"."cnaseq.cnvhmm.tsv";
     if ($chr eq "ALL"){
-      $outfile = "$subdir"."CNView_"."$name_f".".tsv";
-      $outfile_amp = "$subdir"."CNView_"."$name_f".".amp.tsv";
-      $outfile_del = "$subdir"."CNView_"."$name_f".".del.tsv";
-      $outfile_ampdel = "$subdir"."CNView_"."$name_f".".ampdel.tsv";
-      $outfile_cnvhmm = "$subdir"."cnaseq.cnvhmm.tsv";
+      $outfile_prefix = "$subdir"."CNView_"."$name_f";
     }elsif ($chr_start && $chr_end){
-      $outfile = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".tsv";
-      $outfile_amp = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".amp.tsv";
-      $outfile_del = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".del.tsv";
-      $outfile_ampdel = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end".".ampdel.tsv";
-      $outfile_cnvhmm = "$subdir"."cnaseq.cnvhmm.tsv";
+      $outfile_prefix = "$subdir"."CNView_"."$name_f"."_chr"."$chr"."_"."$chr_start-$chr_end";
     }else{
-      $outfile = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".tsv";
-      $outfile_amp = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".amp.tsv";
-      $outfile_del = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".del.tsv";
-      $outfile_ampdel = "$subdir"."CNView_"."$name_f"."_chr"."$chr".".ampdel.tsv";
-      $outfile_cnvhmm = "$subdir"."cnaseq.cnvhmm.tsv";
+      $outfile_prefix = "$subdir"."CNView_"."$name_f"."_chr"."$chr";
     }
 
     #If specified check the cnv results file
@@ -283,39 +273,58 @@ $DB::single = 1;
   #Done checking inputs
   ####################################################################################################################################
 
+  #Load ensembl/entrez data for fixing gene names
   my $entrez_ensembl_data = &loadEntrezEnsemblData();
 
+  #Import ideogram data
+  my $ideo_data = &importIdeogramData('-ideogram_file'=>$ideogram_file);
+
   #If the user is supplying a pre-computed CNV file, the following steps will be skipped
-  my ($gt_map, $t_coords, $window_size, $cnvs, $segments, $targets);
+  my ($g_map, $t_map, $cnvs, $segments, $targets);
+  my @genes_results_files;
+  my @trans_results_files;
+
   if ($cnv_results_file){
-    if($verbose){ print BLUE, "\n\nUsing user supplied CNV results file: $cnv_results_file", RESET; }
+    $self->status_message("Using user supplied CNV results file: $cnv_results_file") if $self->verbose;
   }else{
-    if($verbose){ print BLUE, "\n\nGenerating CNV results file: $cnv_results_file", RESET; }
+    $self->status_message("Generating CNV results file") if $self->verbose;
+
+    #Load the gene targets of interest
+    if ($self->gene_targets_file){
+      $targets = $self->loadTargetGenes('-gene_targets_file'=>$gene_targets_file, '-entrez_ensembl_data'=>$entrez_ensembl_data);
+    }
 
     #Load the gene to transcript name mappings.
     #Key on unique gene ID - reference to a hash containing all transcript IDs associated with that gene
-    $gt_map = $self->loadGtMap('-transcript_info_file'=>$transcript_info_file);
-
-    #Load the transcripts outer coords
-    $t_coords = $self->loadTranscriptCoords('-transcript_info_file'=>$transcript_info_file);
+    my $r = $self->loadGeneTranscriptMap('-gtf_file'=>$gtf_file, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-targets'=>$targets, '-ideo_data'=>$ideo_data, '-target_chr'=>$chr, '-target_chr_start'=>$chr_start, '-target_chr_end'=>$chr_end);
+    $g_map = $r->{genes};
+    $t_map = $r->{trans};
 
     #Load the CNV window coordinates and copy number estimates
-    $cnvs = $self->loadCnvData('-cnv_file'=>$cnv_file, '-window_size'=>\$window_size);
-
+    $cnvs = $self->loadCnvData('-cnv_file'=>$cnv_file, '-target_chr'=>$chr, '-target_chr_start'=>$chr_start, '-target_chr_end'=>$chr_end);
+    
     #Load the CNV segments and copy number estimates
     $segments = $self->loadSegmentData('-segments_file'=>$segments_file, '-outfile_cnvhmm'=>$outfile_cnvhmm);
 
-    #Load the gene targets of interest
-    $targets = $self->loadTargetGenes('-gene_targets_file'=>$gene_targets_file);
+    #Get CNV status and CNV value for each gene
+    $self->status_message("Determining CNV status for genes") if $self->verbose;
+    $self->calculateMeanCnvDiff('-f_map'=>$g_map, '-f_name'=>'genes', '-cnvs'=>$cnvs, '-segments'=>$segments, '-output_dir'=>$subdir);
 
-    #For each gene target, get the corresponding transcripts
-    #Merge these coordinates and get the grand outer coordinates for the gene of interest
-    #Then get the mean CNV Diff for each gene
-    $self->calculateMeanCnvDiff('-targets'=>$targets, '-gt_map'=>$gt_map, '-t_coords'=>$t_coords, '-cnvs'=>$cnvs, '-window_size'=>$window_size, '-segments'=>$segments);
+    #Get CNV status and CNV value for each gene
+    $self->status_message("Determining CNV status for transcripts") if $self->verbose;
+    $self->calculateMeanCnvDiff('-f_map'=>$t_map, '-f_name'=>'transcripts', '-cnvs'=>$cnvs, '-segments'=>$segments, '-output_dir'=>$subdir);
+    
+    #Print gene results to a series of output files
+    @genes_results_files = @{$self->printCnvResultFile('-outfile_prefix'=>$outfile_prefix."_genes", '-f_map'=>$g_map, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-amp_cutoff'=>$amp_cutoff, '-del_cutoff'=>$del_cutoff)};
 
-    #Print result to an output file
-    $self->printCnvResultFile('-outfile'=>$outfile, '-outfile_amp'=>$outfile_amp, '-outfile_del'=>$outfile_del, '-outfile_ampdel'=>$outfile_ampdel, '-targets'=>$targets, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-amp_cutoff'=>$amp_cutoff, '-del_cutoff'=>$del_cutoff, '-chr'=>$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end, '-cnv_results_file'=>\$cnv_results_file);
+    #Print transcript results to a series of output files
+    @trans_results_files = @{$self->printCnvResultFile('-outfile_prefix'=>$outfile_prefix."_transcripts", '-f_map'=>$t_map, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-amp_cutoff'=>$amp_cutoff, '-del_cutoff'=>$del_cutoff)};
+
   }
+
+  #Only the genes CNV results file will be fed into the R script for generating plots
+  $cnv_results_file = $genes_results_files[0];
+
 
   #Assume that the CNview.R script resides in the same dir as this script and obtain the path automatically
 
@@ -326,139 +335,180 @@ $DB::single = 1;
   my $r_cmd = "$rscript '$name' $cnv_file $cnv_results_file $outfile_cnvhmm $ideogram_file $subdir $chr_name $chr_start $chr_end $image_type";
   my $r_cmd_stdout = "$subdir"."CNView.R.stdout";
   my $r_cmd_stderr = "$subdir"."CNView.R.stderr";
-  if ($verbose){
-    print BLUE, "\n\nExecuting R code:\n$r_cmd\n", RESET;
+  if ($self->verbose){
+    $self->status_message("Executing R code:\n$r_cmd") if $self->verbose;
   }else{
     $r_cmd .= " 1>$r_cmd_stdout 2>$r_cmd_stderr";
   }
+
   Genome::Sys->shellcmd(cmd => $r_cmd);
 
-  #Annotate all gene entries in the output file with a cytoband label using the coordinates in the ideogram data file, and the coordinates of the gene
-
-  #Parse import the coordinates of the ideogram file using a subroutine
-  my $ideo_data = &importIdeogramData('-ideogram_file'=>$ideogram_file);
-
-  #Modify the output files ($cnv_results_file) above to annotate each gene with the corresponding cytoband(s) spanned by the gene
-  #Load file, get: (chr, start, end), determine cytobands that overlap, update output file, replace old file with new
-  #e.g. of cytoband: 11q13.2  OR  11q13.2 - 11q13.3
-  my @results_files = ($outfile, $outfile_amp, $outfile_del, $outfile_ampdel);
-  foreach my $results_file (@results_files){
-    if (-e $results_file){
-      #Parse input file and determine cytobands for each gene
-      my %data;
-      my $new_cnv_results_file = "$results_file".".tmp";
-      my $header_line = '';
-      my $header = 1;
-      my $l = 0;
-      open (CNV, "$results_file") || die "\n\nCould not open CNV results file: $results_file\n\n";
-      my %columns;
-      while(<CNV>){
-        $l++;
-        chomp($_);
-        my @line = split("\t", $_);
-        if ($header){
-          $header = 0;
-          $header_line = $_;
-          my $p = 0;
-          foreach my $col (@line){
-            $columns{$col}{position} = $p;
-            $p++;
-          }
-          next();
-        }
-        $data{$l}{line} = $_;
-        my $chr = $line[$columns{'Chr'}{position}];
-        my $chr_start = $line[$columns{'Start'}{position}];
-        my $chr_end = $line[$columns{'End'}{position}];
-        my $cytoband_string = &getCytoband('-ideo_data'=>$ideo_data, '-chr'=>"chr".$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end);
-        $data{$l}{cytoband} = $cytoband_string;
-      }
-      close (CNV);
-
-      #Print out new file containing the cytoband info
-      open(CNV_NEW, ">$new_cnv_results_file") || die "\n\nCould not open new CNV results file: $new_cnv_results_file\n\n";
-      print CNV_NEW "$header_line\tCytoband\n";
-      foreach my $l (sort {$a <=> $b} keys %data){
-        print CNV_NEW "$data{$l}{line}\t$data{$l}{cytoband}\n";
-      }
-      close(CNV_NEW);
-
-      #Overwrite the old file with the new file
-      my $mv_cmd = "mv $new_cnv_results_file $results_file";
-      Genome::Sys->shellcmd(cmd => $mv_cmd);
-
-    }else{
-      print YELLOW, "\n\nCNV results file not found - not possible to annotate with Cytoband info\n\n", RESET;
-    }
-  }
-
-  if ($verbose){ print BLUE, "\n\nResults written to:\n$subdir\n\n", RESET; }
+  $self->status_message("Results written to:\n$subdir") if $self->verbose;
 
   return(1);
 }
 
 
-#TODO: Flip the logic of this whole script around so that the primary data object is the ensembl genes from the annotation object
-#TODO: If the user supplies a gene symbol list, filter this list down so that only matching symbols are allowed
-#TODO: If the user does not supply such as list, process all genes.
-#TODO: The final output file should be the same except it should contain the Ensembl gene ID as well as the symbol
-
-
 #####################################################################################################################################################################
-#Load the gene to transcript name mappings.
-#Key on unique gene ID - reference to a hash containing all transcript IDs associated with that gene
+#Load the gene targets of interest
 #####################################################################################################################################################################
-sub loadGtMap{
+sub loadTargetGenes{
   my $self = shift;
   my %args = @_;
-  my $transcript_info_file = $args{'-transcript_info_file'};
+  my $gene_targets_file = $args{'-gene_targets_file'}; 
+  my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
 
-  my %gt_map;
-  open (GT, "$transcript_info_file") || die "\n\nCould not open input file: $transcript_info_file\n\n";
-  while(<GT>){
+  my %targets_gene_name;
+  my %targets_mapped_gene_name;
+  open (TARGET ,"$gene_targets_file") || die "\n\nCould not open gene targets file\n\n";
+  while(<TARGET>){
     chomp($_);
-    my @line = split(",", $_);
-    my $tid = $line[4];
-    my $gene = $line[11];
-    unless ($gene){
-      next();
-    }
-    if ($gt_map{$gene}){ 
-      my $trans_ref = $gt_map{$gene}{trans};
-      $trans_ref->{$tid}=1;
-    }else{
-      my %trans;
-      $trans{$tid}=1;
-      $gt_map{$gene}{trans} = \%trans;
+    if ($_ =~ /(\S+)/){
+      my $gene_name = $1;
+      #Skip "n/a"
+      if ($gene_name eq "n/a"){
+        next();
+      }else{
+        my $mapped_gene_name = &fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);      
+        $targets_gene_name{$gene_name} = 1;
+        $targets_mapped_gene_name{$mapped_gene_name} = 1;
+      }
     }
   }
-  close(GT);
-  return(\%gt_map);
+  close(TARGET);
+  my %targets;
+  $targets{gene_name} = \%targets_gene_name;
+  $targets{mapped_gene_name} = \%targets_mapped_gene_name;
+  return(\%targets);
 }
 
 
 #####################################################################################################################################################################
-#Load the transcripts outer coords
+#Load a genes object including gene to transcript mappings, also load a transcript object, key on unique gid or tid                                                 #
 #####################################################################################################################################################################
-sub loadTranscriptCoords{
+sub loadGeneTranscriptMap{
   my $self = shift;
   my %args = @_;
-  my $transcript_info_file = $args{'-transcript_info_file'};
-  my %t_coords;
+  my $gtf_file = $args{'-gtf_file'};
+  my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
+  my $targets = $args{'-targets'};
+  my $ideo_data = $args{'-ideo_data'};
+  my $target_chr = $args{'-target_chr'};
+  my $target_chr_start = $args{'-target_chr_start'};
+  my $target_chr_end = $args{'-target_chr_end'};
   
-  open (TC, "$transcript_info_file") || die "\n\nCould not open input file: $transcript_info_file\n\n";
-  while(<TC>){
-    chomp($_);
-    my @line = split(",", $_);
-    my $tid = $line[4];
-    my $chr_input = $line[7];
+  my $targets_gene_name = $targets->{gene_name};
+  my $targets_mapped_gene_name = $targets->{mapped_gene_name};
+ 
+  my %genes;
+  my %trans;
 
-    $t_coords{$tid}{chr} = $chr_input;
-    $t_coords{$tid}{start} = $line[2];
-    $t_coords{$tid}{end} = $line[3];
+  open (GTF, "$gtf_file") || die "\n\nCould not open input file: $gtf_file\n\n";
+  while(<GTF>){
+    chomp($_);
+    my @line = split("\t", $_);
+    next unless ($line[2] eq "exon");
+    my $chr = $line[0];
+    my $chr_start = $line[3];
+    my $chr_end = $line[4];
+    my $id_string = $line[8];
+    my @ids = split(";", $id_string);
+    my $gene_name_string = $ids[0];
+    my $gene_id_string = $ids[1];
+    my $transcript_id_string = $ids[2];
+    my $gene_name;
+    my $gid;
+    my $tid;
+    if ($gene_name_string =~ /gene\_name\s+\"(.*)\"/){
+      $gene_name = $1;
+    }else{
+      $self->error_message("Could not resolve gene name from GTF file and string:\n\t$gtf_file\n\t$id_string");
+      exit 1;
+    }
+    if ($gene_id_string =~ /gene\_id\s+\"(.*)\"/){
+      $gid = $1;
+    }else{
+      $self->error_message("Could not resolve gene id from GTF file and string:\n\t$gtf_file\n\t$id_string");
+      exit 1;
+    }
+    if ($transcript_id_string =~ /transcript\_id\s+\"(.*)\"/){
+      $tid = $1;
+    }else{
+      $self->error_message("Could not resolve transcript id from GTF file and string:\n\t$gtf_file\n\t$id_string");
+      exit 1;
+    }
+
+    #Get a 'fixed' version of the gene name
+    my $mapped_gene_name = &fixGeneName('-gene'=>$gene_name, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+
+    #If the user defined a gene target list, limit import of genes/transcripts at this point to symbol matches from that list
+    if ($self->gene_targets_file){
+      next unless ($targets_gene_name->{$gene_name} || $targets_mapped_gene_name->{$gene_name});
+    }
+
+    #If the user defined a target_chr or target_chr and target_chr_start-target_chr_end - apply that limit now
+    if ($target_chr_start && $target_chr_end){
+      next unless (($chr eq $target_chr) && (($chr_start >= $target_chr_start && $chr_start <= $target_chr_end) || ($chr_end >= $target_chr_start && $chr_end <= $target_chr_end) || ($chr_start <= $target_chr_start && $chr_end >= $target_chr_end)));
+    }elsif($target_chr && $target_chr ne "ALL"){
+      next unless ($chr eq $target_chr);
+    }
+
+    #Store Gene level data
+    if ($genes{$gid}){ 
+      $genes{$gid}{start} = $chr_start if ($chr_start < $genes{$gid}{start});
+      $genes{$gid}{end} = $chr_end if ($chr_end > $genes{$gid}{end});
+    }else{
+      $genes{$gid}{gid} = $gid;
+      $genes{$gid}{gene_name} = $gene_name;
+      $genes{$gid}{mapped_gene_name} = $mapped_gene_name;
+      $genes{$gid}{chr} = $chr;
+      $genes{$gid}{start} = $chr_start;
+      $genes{$gid}{end} = $chr_end;
+    }
+    
+    #Store Transcript level data
+    if ($trans{$tid}){
+      $trans{$tid}{start} = $chr_start if ($chr_start < $trans{$tid}{start});
+      $trans{$tid}{end} = $chr_end if ($chr_end > $trans{$tid}{end});
+    }else{
+      $trans{$tid}{gene_name} = $gene_name;
+      $trans{$tid}{mapped_gene_name} = $mapped_gene_name;
+      $trans{$tid}{gid} = $gid;
+      $trans{$tid}{chr} = $chr;
+      $trans{$tid}{start} = $chr_start;
+      $trans{$tid}{end} = $chr_end;
+    }
   }
-  close(TC);
-  return(\%t_coords);
+  close(GTF);
+
+  my $genes_count = keys %genes;
+  my $trans_count = keys %trans;
+  $self->status_message("Imported $genes_count genes from $gtf_file") if $self->verbose;
+  $self->status_message("Imported $trans_count transcripts from $gtf_file") if $self->verbose;
+
+  #Add cytoband annotation for every transcript and gene
+  $self->status_message("Annotating genes with cytoband names") if $self->verbose;
+  foreach my $gid (keys %genes){
+    my $chr = $genes{$gid}{chr};
+    my $chr_start = $genes{$gid}{start};
+    my $chr_end = $genes{$gid}{end};
+    my $cytoband_string = &getCytoband('-ideo_data'=>$ideo_data, '-chr'=>"chr".$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end);
+    $genes{$gid}{cytoband} = $cytoband_string;
+  }
+  $self->status_message("Annotating transcripts with cytoband names") if $self->verbose;
+  foreach my $tid (keys %trans){
+    my $chr = $trans{$tid}{chr};
+    my $chr_start = $trans{$tid}{start};
+    my $chr_end = $trans{$tid}{end};
+    my $cytoband_string = &getCytoband('-ideo_data'=>$ideo_data, '-chr'=>"chr".$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end);
+    $trans{$tid}{cytoband} = $cytoband_string;
+  }
+  
+  my %result;
+  $result{genes} = \%genes;
+  $result{trans} = \%trans;
+  
+  return(\%result);
 }
 
 
@@ -469,7 +519,9 @@ sub loadCnvData{
   my $self = shift;
   my %args = @_;
   my $cnv_file = $args{'-cnv_file'};
-  my $window_size = $args{'-window_size'};
+  my $target_chr = $args{'-target_chr'};
+  my $target_chr_start = $args{'-target_chr_start'};
+  my $target_chr_end = $args{'-target_chr_end'};
 
   my %cnvs;
   open(CNV, "$cnv_file") || die "\n\nCould not open input file: $cnv_file\n\n";
@@ -483,20 +535,40 @@ sub loadCnvData{
     }
     $c++;
     my @line = split("\t", $_);
-    my $chr_input = $line[0];
-    my $start = $line[1];
-    if ($c == 1){$p1 = $start;}
-    if ($c == 2){$p2 = $start;}
-    $cnvs{$chr_input}{$start}{tumor} = $line[2];
-    $cnvs{$chr_input}{$start}{normal} = $line[3];
-    $cnvs{$chr_input}{$start}{diff} = $line[4];
+    my $chr = $line[0];
+    my $chr_start = $line[1];
+    if ($c == 1){$p1 = $chr_start;}
+    if ($c == 2){$p2 = $chr_start;}
+    $cnvs{$chr}{$chr_start}{diff} = $line[4];
   }
   close(CNV);
-  ${$window_size} = $p2 - $p1;
+  my $window_size = $p2 - $p1;
   if ($self->verbose){
-    $self->status_message("Detected a CNV window size of $window_size bp.  Using this for overlap calculations");
+    $self->status_message("Detected a CNV window size of $window_size bp.  Using this for overlap calculations") if $self->verbose;
   }
-  return(\%cnvs);
+
+  #Now that we know the size, reorganize this object
+  my %cnvs2;
+  foreach my $chr (keys %cnvs){
+    my %chr_cnvs = %{$cnvs{$chr}};
+    foreach my $chr_start (sort {$a <=> $b} keys %chr_cnvs){
+      my $chr_end = $chr_start+$window_size;
+      my $coord = "$chr:$chr_start-$chr_end";
+
+      #If the user defined a target_chr or target_chr and target_chr_start-target_chr_end - apply that limit now
+      if ($target_chr_start && $target_chr_end){
+        next unless (($chr eq $target_chr) && (($chr_start >= $target_chr_start && $chr_start <= $target_chr_end) || ($chr_end >= $target_chr_start && $chr_end <= $target_chr_end) || ($chr_start <= $target_chr_start && $chr_end >= $target_chr_end)));
+      }elsif($target_chr && $target_chr ne "ALL"){
+        next unless ($chr eq $target_chr);
+      }
+      $cnvs2{$coord}{chr} = $chr;
+      $cnvs2{$coord}{start} = $chr_start;
+      $cnvs2{$coord}{end} = $chr_end;
+      $cnvs2{$coord}{diff} = $cnvs{$chr}{$chr_start}{diff};
+    }
+  }
+
+  return(\%cnvs2);
 }
 
 
@@ -508,6 +580,11 @@ sub loadSegmentData{
   my %args = @_;
   my $segments_file = $args{'-segments_file'};
   my $outfile_cnvhmm = $args{'-outfile_cnvhmm'};
+  my $target_chr = $args{'-target_chr'};
+  my $target_chr_start = $args{'-target_chr_start'};
+  my $target_chr_end = $args{'-target_chr_end'};
+
+  #TODO: If the user limited analysis to a single chromosome or piece of a chromosome, only import segments that qualify
 
   my %segments;
   open(SEGMENTS, "$segments_file") || die "\n\nCould not open segments input file: $segments_file\n\n";
@@ -520,9 +597,10 @@ sub loadSegmentData{
     }
     print SEGMENTS_CLEAN "$_\n"; #Create new segments file for use with R script
     my @line = split("\t", $_);
-    my $chr_input = "$line[0]";
-    my $start = $line[1];
-    my $end = $line[2];
+    my $chr = $line[0];
+    my $chr_start = $line[1];
+    my $chr_end = $line[2];
+    my $coord = "$chr:$chr_start-$chr_end";
     my $cn1 = $line[5];
     my $cn1_adj = $line[6];
     my $cn2 = $line[7];
@@ -530,43 +608,29 @@ sub loadSegmentData{
     my $llr_somatic = $line[9];
     my $status = $line[10];
     my $cn_adj_diff = $cn1_adj - $cn2_adj;
-    $segments{$chr_input}{$start}{$end}{cn1} = $cn1;
-    $segments{$chr_input}{$start}{$end}{cn1_adj} = $cn1_adj;
-    $segments{$chr_input}{$start}{$end}{cn2} = $cn2;
-    $segments{$chr_input}{$start}{$end}{cn2_adj} = $cn2_adj;
-    $segments{$chr_input}{$start}{$end}{llr_somatic} = $llr_somatic;
-    $segments{$chr_input}{$start}{$end}{status} = $status;
-    $segments{$chr_input}{$start}{$end}{cn_adj_diff} = $cn_adj_diff;
+
+
+    #If the user defined a target_chr or target_chr and target_chr_start-target_chr_end - apply that limit now
+    if ($target_chr_start && $target_chr_end){
+      next unless (($chr eq $target_chr) && (($chr_start >= $target_chr_start && $chr_start <= $target_chr_end) || ($chr_end >= $target_chr_start && $chr_end <= $target_chr_end) || ($chr_start <= $target_chr_start && $chr_end >= $target_chr_end)));
+    }elsif($target_chr && $target_chr ne "ALL"){
+      next unless ($chr eq $target_chr);
+    }
+
+    $segments{$coord}{chr} = $chr;
+    $segments{$coord}{start} = $chr_start;
+    $segments{$coord}{end} = $chr_end;
+    $segments{$coord}{cn1} = $cn1;
+    $segments{$coord}{cn1_adj} = $cn1_adj;
+    $segments{$coord}{cn2} = $cn2;
+    $segments{$coord}{cn2_adj} = $cn2_adj;
+    $segments{$coord}{llr_somatic} = $llr_somatic;
+    $segments{$coord}{status} = $status;
+    $segments{$coord}{cn_adj_diff} = $cn_adj_diff;
   }
   close(SEGMENTS);
   close(SEGMENTS_CLEAN);
   return(\%segments);
-}
-
-
-#####################################################################################################################################################################
-#Load the gene targets of interest
-#####################################################################################################################################################################
-sub loadTargetGenes{
-  my $self = shift;
-  my %args = @_;
-  my $gene_targets_file = $args{'-gene_targets_file'}; 
-
-  my %targets;
-  open (TARGET ,"$gene_targets_file") || die "\n\nCould not open gene targets file\n\n";
-  while(<TARGET>){
-    chomp($_);
-    if ($_ =~ /(\S+)/){
-      #Skip "n/a"
-      if ($1 eq "n/a"){
-        next();
-      }else{
-        $targets{$1}{found} = 0;
-      }
-    }
-  }
-  close(TARGET);
-  return(\%targets);
 }
 
 
@@ -578,164 +642,100 @@ sub loadTargetGenes{
 sub calculateMeanCnvDiff{
   my $self = shift;
   my %args = @_;
-  my $targets = $args{'-targets'};
-  my $gt_map = $args{'-gt_map'};
-  my $t_coords = $args{'-t_coords'};
+  my $f_map = $args{'-f_map'};
+  my $f_name = $args{'-f_name'};
   my $cnvs = $args{'-cnvs'};
-  my $window_size = $args{'-window_size'};
   my $segments = $args{'-segments'};
+  my $output_dir = $args{'-output_dir'};
 
-  #TODO: This subroutine should be going through the ensembl gene IDs (*not* the target symbols)
+  #Dump bed files for cnvs, segments and features
+  my $features_bed_file = $output_dir . "$f_name" . ".bed";
+  my $cnvs_bed_file = $output_dir . "cnvs" . ".bed";
+  my $segments_bed_file = $output_dir . "segments" . ".bed";
+  $self->writeBed('-features'=>$f_map, '-file'=>$features_bed_file);
+  $self->writeBed('-features'=>$cnvs, '-file'=>$cnvs_bed_file);
+  $self->writeBed('-features'=>$segments, '-file'=>$segments_bed_file);
 
-  foreach my $target (sort keys %{$targets}){
-    if ($self->verbose){
-      print BLUE, "\n\n$target", RESET;
+  #Note, when running bedtools, file B is loaded into memory
+  #bedtools intersect command might look something like this:
+  #my $bed_cmd3 = "$bedtools_bin_dir"."intersectBed -a $temp_known_acceptors -b $temp_obs_junctions -f 1.0 -s -wa -wb > $result_file"
+
+  #Use intersectBed to get the overlap between the features (genes/transcripts) and cnv windows
+  #Parse the overlaps and store for lookup.  Key on feature $coord and store an array of overlapping window/segment $coords;
+  my $features_vs_cnv_windows_file = $output_dir . "$f_name" . "_vs_cnv_windows.bed";
+  my $bed_cmd_cnvs = "intersectBed -a $features_bed_file -b $cnvs_bed_file -wa -wb > $features_vs_cnv_windows_file";
+  Genome::Sys->shellcmd(cmd => $bed_cmd_cnvs);
+  my $feature_window_overlaps = $self->parseIntersectBed('-file'=>$features_vs_cnv_windows_file);
+
+  #Use intersectBed to get the overlap between the features (genes/transcripts) and cnv segments
+  my $features_vs_segments_file = $output_dir . "$f_name" . "_vs_segments.bed";
+  my $bed_cmd_segments = "intersectBed -a $features_bed_file -b $segments_bed_file -wa -wb > $features_vs_segments_file";
+  Genome::Sys->shellcmd(cmd => $bed_cmd_segments);
+  my $feature_segment_overlaps = $self->parseIntersectBed('-file'=>$features_vs_segments_file);
+
+  #Process each 'feature' (gene or transcript) and calculate the CNV status and average CNV value
+  my $cnv_diffs_found = 0;
+  my $cnv_statuses_found = 0;
+  foreach my $fid (sort keys %{$f_map}){
+    $f_map->{$fid}->{mean_diff} = 0;
+    my $f_chr = $f_map->{$fid}->{chr};
+    my $f_start = $f_map->{$fid}->{start};
+    my $f_end = $f_map->{$fid}->{end};
+    my $f_coord = "$f_chr:$f_start-$f_end";
+
+    my @f_cnv_overlaps;
+    @f_cnv_overlaps = @{$feature_window_overlaps->{$f_coord}} if ($feature_window_overlaps->{$f_coord});
+
+    #Calculate the average copy number for the gene of interest
+    my $overlaps = scalar(@f_cnv_overlaps);
+    my @diffs;
+    foreach my $coord (@f_cnv_overlaps){
+      push (@diffs, $cnvs->{$coord}->{diff});
     }
-    $targets->{$target}->{mean_diff} = 0;
-    if ($gt_map->{$target}){
-      #NOTE: A target is only found if the NAME matches exactly.  This should be improved...
-      #Get the transcript list of this gene
-      my $trans_ref = $gt_map->{$target}->{trans};
-      my $tcount = keys %{$trans_ref};
-      if ($self->verbose){
-        print BLUE, "\n\tFound $tcount transcripts", RESET;
-      }
+    my $sum = 0;
+    my $mean_diff = 0;
+    foreach my $diff (@diffs){$sum+=$diff;}
+    if ($overlaps > 0){
+      $mean_diff = $sum/$overlaps;
+      $cnv_diffs_found++;
+    }
+    $mean_diff = sprintf("%.10f", $mean_diff) if ($mean_diff);
+    $f_map->{$fid}->{mean_diff} = $mean_diff;
 
-      #Merge the transcript coordinates.  Make sure all coordinates are from the same chromosome
-      my %chr_list;
-      my $grand_chr = '';
-      my $grand_start = 1000000000000000000000000000000000000;
-      my $grand_end = 0;
-
-      #Check chromosomes of transcripts.  If there is more than one, chose the one with the most support
-      foreach my $tid (keys %{$trans_ref}){
-        my $chr = $t_coords->{$tid}->{chr};
-        #Ignore transcripts from the haplotype chromosomes - Add to this list as they come up...
-        if ($chr =~ /chr4_ctg9_hap1|chr6_apd_hap1|chr6_mann_hap4|chr6_qbl_hap6|chr6_ssto_hap7|chr6_mcf_hap5|chr6_cox_hap2|chr6_dbb_hap3|chr17_ctg5_hap1/){
-          next();        
-        }
-        $chr_list{$chr}{count}++;
+    #Determine the CN status of the gene of interest according to HMM segmentation analysis
+    #First, identify the copy number segments that overlap this gene
+    $f_map->{$fid}->{cnseg_status} = "NA";
+    my @f_segment_overlaps;
+    @f_segment_overlaps = @{$feature_segment_overlaps->{$f_coord}} if ($feature_segment_overlaps->{$f_coord});
+    
+    my $segoverlaps = scalar(@f_segment_overlaps);
+    my @statuses;
+    foreach my $coord (@f_segment_overlaps){
+      push (@statuses, $segments->{$coord}->{status});
+    }
+    if ($segoverlaps > 0){
+      my $gain_sum = 0;
+      my $loss_sum = 0;
+      foreach my $status (@statuses){
+        if ($status eq 'Gain'){$gain_sum++};
+        if ($status eq 'Loss'){$loss_sum++};
       }
-      my $i = 0;
-      foreach my $chr (sort {$chr_list{$b}{count} <=> $chr_list{$a}{count}} keys %chr_list){
-        $i++;
-        if ($i == 1){
-          $grand_chr = $chr;
-        }
-      }
-
-      #Now using the chr identified above, get the grand coords
-      foreach my $tid (keys %{$trans_ref}){
-        my $chr = $t_coords->{$tid}->{chr};
-        unless ($chr eq $grand_chr){
-          next();
-        }
-        my $start = $t_coords->{$tid}->{start};
-        my $end = $t_coords->{$tid}->{end};
-        if ($start < $grand_start){$grand_start = $start;}
-        if ($end > $grand_end){$grand_end = $end;}
-      }
-      my $chr_count = keys %chr_list;
-      my $grand_size = $grand_end - $grand_start;
-      if ($chr_count == 1){
-        if ($self->verbose){
-          $self->status_message("\t$grand_chr:$grand_start-$grand_end ($grand_size)");
-        }
-      }else{
-        my @chrs = keys %chr_list;
-        if ($self->verbose){
-          $self->warning_message("\tDid not find a single chromosome for this gene!  (@chrs) - chose the one with the most support (i.e. most transcripts)");
-          $self->status_message("\t$grand_chr:$grand_start-$grand_end ($grand_size)");
-        }
-      }
-      #Make sure CNV value exists for this chromosome
-      unless ($cnvs->{$grand_chr}){
-        if ($self->verbose){
-          $self->warning_message("\tNo CNV data defined for this chromosome: $grand_chr");
-        }
-        next();
-      }
-
-      #Now identify the copy number windows that overlap this gene
-      my %chr_cnvs = %{$cnvs->{$grand_chr}};
-      my $window_count = keys %chr_cnvs;
-      if ($self->verbose){
-        $self->status_message("\tFound $window_count windows for this chromosome");
-      }
-
-      #Store values for later
-      $targets->{$target}->{found} = 1;
-      $targets->{$target}->{chr} = $grand_chr;
-      $targets->{$target}->{start}= $grand_start;
-      $targets->{$target}->{end} = $grand_end;
-      $targets->{$target}->{size} = $grand_size;
-
-      #Calculate the average copy number for the gene of interest
-      my $overlaps = 0;
-      my @diffs;
-      foreach my $pos (sort {$a <=> $b} keys %chr_cnvs){
-        my $cnv_start = $pos;
-        my $cnv_end = $pos+$window_size;
-        if (($cnv_start >= $grand_start && $cnv_start <= $grand_end) || ($cnv_end >= $grand_start && $cnv_end <= $grand_end) || ($cnv_start <= $grand_start && $cnv_end >= $grand_end)){
-          $overlaps++;
-          push (@diffs, $chr_cnvs{$pos}{diff});
-        }
-      }
-      my $sum = 0;
-      my $mean_diff = 0;
-      foreach my $diff (@diffs){$sum+=$diff;}
-      if ($overlaps > 0){
-        $mean_diff = $sum/$overlaps;
-      }
-      if ($self->verbose){
-        $self->status_message("\tFound $overlaps overlapping CNV windows with mean diff: $mean_diff");
-      }
-      $targets->{$target}->{mean_diff} = $mean_diff;
-
-      #Determine the CN status of the gene of interest according to HMM segmentation analysis
-      #First, identify the copy number segments that overlap this gene
-      $targets->{$target}->{cnseg_status} = "NA";
-      if ($segments->{$grand_chr}){
-        my %chr_segments = %{$segments->{$grand_chr}};
-        my $segment_count = keys %chr_cnvs;
-        if ($self->verbose){
-          $self->status_message("\n\tFound $segment_count segments for this chromosome");
-        }
-        #Determine the CN status for the gene of interest
-        my $segoverlaps = 0;
-        my @statuses;
-        foreach my $seg_start (sort {$a <=> $b} keys %chr_segments){
-          foreach my $seg_end (sort {$a <=> $b} keys %{$chr_segments{$seg_start}}){
-            if (($seg_start >= $grand_start && $seg_start <= $grand_end) || ($seg_end >= $grand_start && $seg_end <= $grand_end) || ($seg_start <= $grand_start && $seg_end >= $grand_end)){
-            $segoverlaps++;
-            push (@statuses, $chr_segments{$seg_start}{$seg_end}{status});
-            }
-          }
-        }
-        if ($segoverlaps > 0){
-          my $gain_sum = 0;
-          my $loss_sum = 0;
-          foreach my $status (@statuses){
-            if ($status eq 'Gain'){$gain_sum++};
-            if ($status eq 'Loss'){$loss_sum++};
-          }
-          if ($gain_sum>0 && $gain_sum>$loss_sum){
-            $targets->{$target}->{cnseg_status} = "Gain";
-          }
-          if ($loss_sum>0 && $loss_sum>$gain_sum){
-            $targets->{$target}->{cnseg_status} = "Loss";
-          }
-        }
-        if ($self->verbose){
-          $self->status_message("\tFound $segoverlaps overlapping segments with status: $targets->{$target}->{cnseg_status}");
-        }
-      }
-    }else{
-      if ($self->verbose){
-        $self->status_message("\tCould not find any transcripts for this gene: $target");
+      if (($gain_sum > 0) && ($gain_sum > $loss_sum)){
+        $f_map->{$fid}->{cnseg_status} = "Gain";
+        $cnv_statuses_found++;
+      }elsif (($loss_sum > 0) && ($loss_sum > $gain_sum)){
+        $f_map->{$fid}->{cnseg_status} = "Loss";
+        $cnv_statuses_found++;
       }
     }
   }
+
+  #Clean up all the temp files
+  Genome::Sys->shellcmd(cmd => "rm -f $features_bed_file $cnvs_bed_file $segments_bed_file $features_vs_cnv_windows_file $features_vs_segments_file");
+
+  $self->status_message("\tFound non-zero CNV diff for $cnv_diffs_found features") if $self->verbose;
+  $self->status_message("\tFound cnvhmm gain or loss status for $cnv_statuses_found features") if $self->verbose;
+
   return();
 }
 
@@ -746,87 +746,112 @@ sub calculateMeanCnvDiff{
 sub printCnvResultFile{
   my $self = shift;
   my %args = @_;
-  my $outfile = $args{'-outfile'};
-  my $outfile_amp = $args{'-outfile_amp'};
-  my $outfile_del = $args{'-outfile_del'};
-  my $outfile_ampdel = $args{'-outfile_ampdel'};
-  my $targets = $args{'-targets'};
+  my $outfile_prefix = $args{'-outfile_prefix'};
+  my $f_map = $args{'-f_map'};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $amp_cutoff = $args{'-amp_cutoff'};
   my $del_cutoff = $args{'-del_cutoff'};
-  my $chr = $args{'-chr'};
-  my $chr_start = $args{'-chr_start'};
-  my $chr_end = $args{'-chr_end'};
-  my $cnv_results_file = $args{'-cnv_results_file'};
+
+  my $outfile = $outfile_prefix . ".tsv";
+  my $outfile_amp = $outfile_prefix . ".amp.tsv";
+  my $outfile_del = $outfile_prefix . ".del.tsv";
+  my $outfile_ampdel = $outfile_prefix . ".ampdel.tsv";
+  my @results_files = ($outfile, $outfile_amp, $outfile_del, $outfile_ampdel);
 
   #Write four files, one with all results, one with amplifications passing a cutoff, one with deletions passing a cutoff, and one with both amplifications and deletions passing cutoffs
   open (OUT, ">$outfile") || die "\n\nCould not open outfile: $outfile for writting\n\n";
   open (OUT_AMP, ">$outfile_amp") || die "\n\nCould not open outfile: $outfile_amp for writting\n\n";
   open (OUT_DEL, ">$outfile_del") || die "\n\nCould not open outfile: $outfile_del for writting\n\n";
   open (OUT_AMPDEL, ">$outfile_ampdel") || die "\n\nCould not open outfile: $outfile_ampdel for writting\n\n";
-  print OUT "Symbol\tmapped_gene_name\tChr\tStart\tEnd\tMean CNV Diff\tCNVhmm Status\n";
-  print OUT_AMP "Symbol\tmapped_gene_name\tChr\tStart\tEnd\tMean CNV Diff\tCNVhmm Status\n";
-  print OUT_DEL "Symbol\tmapped_gene_name\tChr\tStart\tEnd\tMean CNV Diff\tCNVhmm Status\n";
-  print OUT_AMPDEL "Symbol\tmapped_gene_name\tChr\tStart\tEnd\tMean CNV Diff\tCNVhmm Status\n";
 
-  foreach my $target (sort {abs($targets->{$b}->{mean_diff}) <=> abs($targets->{$a}->{mean_diff})} keys %{$targets}){
-    if ($targets->{$target}->{found}){
-      my $fixed_gene_name = &fixGeneName('-gene'=>$target, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>$self->verbose);
-      my $target_chr = $targets->{$target}->{chr};
-      my $target_chr_start = $targets->{$target}->{start};
-      my $target_chr_end = $targets->{$target}->{end};
-      my $mean_diff = $targets->{$target}->{mean_diff};
-      my $cnseg_status = $targets->{$target}->{cnseg_status};
-      my $string = "$target\t$fixed_gene_name\t$target_chr\t$target_chr_start\t$target_chr_end\t$mean_diff\t$cnseg_status\n";
-      #Name the output file
-      if ($chr eq "ALL"){
-        print OUT "$string";
-        if ($mean_diff >= $amp_cutoff || $cnseg_status eq "Gain"){
-          print OUT_AMP "$string";
-          print OUT_AMPDEL "$string";
-        }
-        if ($mean_diff <= $del_cutoff || $cnseg_status eq "Loss"){
-          print OUT_DEL "$string";
-          print OUT_AMPDEL "$string";
-        }
-      }elsif (($chr =~ /chr/i) && $chr_start && $chr_end){
-        unless (($target_chr eq $chr) && (($target_chr_start >= $chr_start && $target_chr_start <= $chr_end) || ($target_chr_end >= $chr_start && $target_chr_end <= $chr_end) || ($target_chr_start <= $chr_start && $target_chr_end >= $chr_end))){
-          next();
-        }
-        print OUT "$string";
-        if ($mean_diff >= $amp_cutoff || $cnseg_status eq "Gain"){
-          print OUT_AMP "$string";
-          print OUT_AMPDEL "$string";
-        }
-        if ($mean_diff <= $del_cutoff || $cnseg_status eq "Loss"){
-          print OUT_DEL "$string";
-          print OUT_AMPDEL "$string";
-        }
+  #Print headers
+  my $header = "fid\tgene_id\tgene_name\tmapped_gene_name\tchr\tstart\tend\tcytoband\tmean_cnv_diff\tcnvhmm_status\n";
+  print OUT "$header";
+  print OUT_AMP "$header";
+  print OUT_DEL "$header";
+  print OUT_AMPDEL "$header";
 
-      }else{
-        unless ($target_chr eq $chr){
-          next();
-        }
-        print OUT "$string";
-        if ($mean_diff >= $amp_cutoff || $cnseg_status eq "Gain"){
-          print OUT_AMP "$string";
-          print OUT_AMPDEL "$string";
-        }
-        if ($mean_diff <= $del_cutoff || $cnseg_status eq "Loss"){
-          print OUT_DEL "$string";
-          print OUT_AMPDEL "$string";
-        }
-      }
+  foreach my $fid (sort {abs($f_map->{$b}->{mean_diff}) <=> abs($f_map->{$a}->{mean_diff})} keys %{$f_map}){
+    my $gid = $f_map->{$fid}->{gid};
+    my $gene_name = $f_map->{$fid}->{gene_name};
+    my $mapped_gene_name = $f_map->{$fid}->{mapped_gene_name};
+    my $f_chr = $f_map->{$fid}->{chr};
+    my $f_start = $f_map->{$fid}->{start};
+    my $f_end = $f_map->{$fid}->{end};
+    my $f_cytoband = $f_map->{$fid}->{cytoband};
+    my $mean_diff = $f_map->{$fid}->{mean_diff};
+    my $cnseg_status = $f_map->{$fid}->{cnseg_status};
+    my $string = "$fid\t$gid\t$gene_name\t$mapped_gene_name\t$f_chr\t$f_start\t$f_end\t$f_cytoband\t$mean_diff\t$cnseg_status\n";
+
+    print OUT "$string";
+    if ($mean_diff >= $amp_cutoff || $cnseg_status eq "Gain"){
+      print OUT_AMP "$string";
+      print OUT_AMPDEL "$string";
+    }
+    if ($mean_diff <= $del_cutoff || $cnseg_status eq "Loss"){
+      print OUT_DEL "$string";
+      print OUT_AMPDEL "$string";
     }
   }
-  ${$cnv_results_file} = $outfile;
 
   close(OUT);
   close(OUT_AMP);
   close(OUT_DEL);
   close(OUT_AMPDEL);
 
-  return();
+  return(\@results_files);
 }
 
+
+#####################################################################################################################################
+#For any features hash with a unique key and 'chr', 'chr_start', and 'chr_end' values write a bed file of the specified name        #
+#####################################################################################################################################
+sub writeBed{
+  my $self = shift;
+  my %args = @_;
+  my $features = $args{'-features'};
+  my $file = $args{'-file'};
+
+  $self->status_message("Writing BED file: $file");
+  open (BED, ">$file") || die "\n\nCould not open output BED file: $file\n\n";
+  foreach my $fid (sort keys %{$features}){
+    my $chr = $features->{$fid}->{chr};
+    my $chr_start = $features->{$fid}->{start};
+    my $chr_end = $features->{$fid}->{end};
+
+    print BED "$chr\t$chr_start\t$chr_end\n";
+  }
+  close (BED);
+
+  return;
+}
+
+
+#####################################################################################################################################
+#Parse overlaps between features (genes/transcripts) and cnv windows or cnv segments
+#####################################################################################################################################
+sub parseIntersectBed{
+  my $self = shift;
+  my %args = @_;
+  my $file = $args{'-file'};
+  my %overlaps;
+
+  open (INTERSECT, "$file") || die "\n\nCould not open BED intersect file: $file\n\n";
+  while(<INTERSECT>){
+    chomp($_);
+    my @line = split("\t", $_);
+    my $coord1 = "$line[0]:$line[1]-$line[2]";
+    my $coord2 = "$line[3]:$line[4]-$line[5]";
+    if ($overlaps{$coord1}){
+      push(@{$overlaps{$coord1}}, $coord2);
+    }else{
+      my @tmp;
+      push(@tmp, $coord2);
+      $overlaps{$coord1} = \@tmp;
+    }
+  }
+  close(INTERSECT);
+
+  return(\%overlaps);
+}
 
