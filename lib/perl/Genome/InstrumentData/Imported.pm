@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use File::stat;
 use File::Path;
+use Set::Scalar;
 
 class Genome::InstrumentData::Imported {
     is => ['Genome::InstrumentData','Genome::Searchable'],
@@ -165,6 +166,14 @@ class Genome::InstrumentData::Imported {
             is_optional => 1,
             is_mutable => 1,
             where => [ attribute_label => 'genotype_file' ],
+        },
+        blacklisted_segments => {
+            is_many => 1,
+            is => 'Text',
+            via => 'attributes',
+            to => 'attribute_value',
+            is_mutable => 1,
+            where => [ attribute_label => 'blacklisted_segments' ],
         },
     ],
     schema_name => 'GMSchema',
@@ -499,6 +508,14 @@ sub archive_path {
 sub get_segments {
     my $self = shift;
 
+    my %options = @_;
+    my $allow_blacklisted_segments = delete $options{allow_blacklisted_segments};
+
+    my @unknown_options = keys %options;
+    if (@unknown_options) {
+        die $self->error_message('Unknown option(s): ' . join(', ', @unknown_options));
+    }
+
     unless ($self->import_format eq "bam") {
         return ();
     }
@@ -521,9 +538,13 @@ sub get_segments {
         die $self->error_message;
     }
 
-    my @read_groups = $cmd->read_groups;
+    my $read_groups = Set::Scalar->new($cmd->read_groups);
+    unless ($allow_blacklisted_segments) {
+        my $blacklisted_segments = Set::Scalar->new($self->blacklisted_segments);
+        $read_groups = $read_groups - $blacklisted_segments;
+    }
 
-    return map {{segment_type=>'read_group', segment_id=>$_}} @read_groups;
+    return map {{segment_type=>'read_group', segment_id=>$_}} $read_groups->elements;
 }
 
 # Microarray stuff eventually need to subclass
