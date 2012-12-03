@@ -336,7 +336,7 @@ sub execute{
         input_file => $build->data_directory."/variants/snvs.annotated.vcf.gz",
         buildver => "hg19",
         table_names => ["wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed"],
-        outfile => $build->data_directory."/effects/all_snvs.annovar",
+        outfile => $build->data_directory."/effects/snvs.annovar",
         annotation_type => "regionanno",
         scorecolumn => 5,
         bedfile => "/gscuser/aregier/scratch/dhs_promoters/gene_names2.bed",
@@ -352,7 +352,7 @@ sub execute{
         foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed")) {
             $counter++;
             my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
-                additional_columns_file => $build->data_directory."/effects/all_snvs.annovar.hg19_".$table_name,
+                additional_columns_file => $build->data_directory."/effects/snvs.annovar.hg19_".$table_name,
                 input_variants => $in_file,
                 output_file => "$temp.$counter",
                 column_to_append => 2,
@@ -397,7 +397,7 @@ sub execute{
         foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed")) {
             $counter++;
             my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
-                additional_columns_file => $build->data_directory."/effects/all_snvs.annovar.hg19_".$table_name,
+                additional_columns_file => $build->data_directory."/effects/snvs.annovar.hg19_".$table_name,
                 input_variants => $in_file,
                 output_file => "$temp.$counter",
                 column_to_append => 2,
