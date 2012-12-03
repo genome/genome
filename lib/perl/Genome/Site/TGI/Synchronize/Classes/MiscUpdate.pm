@@ -249,7 +249,7 @@ sub _set_result {
     $self->status(
         join("\t", 
             $result, 
-            map({ $self->$_; } (qw/ subject_class_name subject_id subject_property_name /)),
+            map({ $self->$_; } (qw/ description subject_class_name subject_id subject_property_name /)),
             "'".( $self->{_current_value} // 'NA' )."'",
             map({ defined $_ ? "'".$_."'" : "'NULL'"; }  $self->old_value, $self->new_value,),
         )
@@ -258,7 +258,7 @@ sub _set_result {
 
 sub success {
     my $self = shift;
-    $self->_set_result( uc($self->description) );
+    $self->_set_result('PASS');
     $self->is_reconciled(1);
     return 1;
 }
@@ -271,7 +271,7 @@ sub skip {
 
 sub failure {
     my $self = shift;
-    $self->_set_result('FAILED');
+    $self->_set_result('FAIL');
     return;
 }
 
