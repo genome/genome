@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Basename qw(dirname basename);
 
 class Genome::Model::GenotypeMicroarray{
     is => 'Genome::ModelDeprecated',
@@ -247,7 +248,17 @@ sub _execute_build {
     $self->status_message('Genotype file: '.$genotype_file);
     my $gold2geno_file = $build->gold2geno_file_path;
     $self->status_message('Gold2geno file: '.$gold2geno_file);
-    Genome::Sys->create_symlink($genotype_file, $gold2geno_file);
+
+    # Make a relative symlink if they are in the same directory. I think this
+    # will always be the case but since gold2geno_file_path is not locally
+    # defined I will check. Relative is better in case build's allocation is
+    # moved or archived -> unarchived.
+    if (dirname($genotype_file) eq dirname($gold2geno_file)) {
+        Genome::Sys->create_symlink(basename($genotype_file), $gold2geno_file);
+    } else {
+        Genome::Sys->create_symlink($genotype_file, $gold2geno_file);
+    }
+
     if ( not -l $gold2geno_file  or not -s $gold2geno_file ) {
         $self->error_message('Failed to link genotype file to gold2geno file!');
         return;

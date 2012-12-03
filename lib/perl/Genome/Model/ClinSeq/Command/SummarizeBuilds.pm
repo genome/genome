@@ -1386,12 +1386,14 @@ sub execute {
   $self->status_message("\n\n");
 
   my @output = $self->status_messages();
-  my $log = IO::File->new(">$log_file");
-  $log->print(join("\n", @output));
-  $log->close;
+  if ($log_file) {
+      my $log = IO::File->new(">$log_file");
+      $log->print(join("\n", @output));
+      $log->close;
 
-  $self->queue_status_messages(0);
-  $self->status_message("Log file written to $log_file\n");
+      $self->queue_status_messages(0);
+      $self->status_message("Log file written to $log_file\n");
+  }
 
   return 1;
 }

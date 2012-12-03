@@ -11,6 +11,13 @@ require File::Basename;
 class Genome::Command::Base {
     is => ['Genome::Command::ColorMixin', 'Command'],
     is_abstract => 1,
+    has => [
+        show_display_command_summary_report => {
+            is => 'Boolean',
+            default => 1,
+            doc => 'Enable/disable summy report.',
+        },
+    ],
     has_optional => [
         _total_command_count => {
             is => 'Integer',
@@ -770,6 +777,9 @@ sub _unique_elements {
 
 sub display_command_summary_report {
     my $self = shift;
+
+    return unless $self->show_display_command_summary_report;
+
     my $total_count = $self->_total_command_count;
     my %command_errors = %{$self->_command_errors};
 
