@@ -235,17 +235,17 @@ sub _fetch_alignment_sets {
     my $mode = shift;
 
     my $model = $input->model;
-    
+
     my @param_sets = $self->params_for_alignment($input);
     unless (@param_sets) {
         $self->error_message('Could not get alignment parameters for this instrument data input');
         return;
     }
-    my @alignments;    
+    my @alignments;
     for (@param_sets)  {
         my %params = %$_;
-      
-        # override segments if requested 
+
+        # override segments if requested
         if (exists $segment_info->{instrument_data_segment_id}) {
             delete $params{instrument_data_segment_id};
             delete $params{instrument_data_segment_type};
@@ -332,7 +332,7 @@ sub params_for_merged_alignment {
         for my $i (0..$#inputs) {
             my $input = $inputs[$i];
             my @alignment_events = grep {$_->instrument_data_id == $input->value->id} @align_reads_events;
-        
+
             #if multiple events, this is a chunked alignment
             if (@alignment_events > 1 or (@alignment_events == 1 and defined $alignment_events[0]->instrument_data_segment_id)) {
                 for my $alignment_event (@alignment_events) {
@@ -427,7 +427,7 @@ sub _X_resolve_subclass_name {
         $sequencing_platform = $rule->value_for('sequencing_platform');
     }
 
-    return ( defined $sequencing_platform ) 
+    return ( defined $sequencing_platform )
     ? $class->_resolve_subclass_name_for_sequencing_platform($sequencing_platform)
     : undef;
 }
@@ -435,10 +435,10 @@ sub _X_resolve_subclass_name {
 sub _resolve_subclass_name_for_sequencing_platform {
     my ($class,$sequencing_platform) = @_;
     my @type_parts = split(' ',$sequencing_platform);
-	
+
     my @sub_parts = map { ucfirst } @type_parts;
     my $subclass = join('',@sub_parts);
-	
+
     my $class_name = join('::', 'Genome::ProcessingProfile::ReferenceAlignment' , $subclass);
     return $class_name;
 }
@@ -450,7 +450,7 @@ sub _resolve_sequencing_platform_for_class {
     return unless $subclass;
 
     return lc join(" ", ($subclass =~ /[a-z\d]+|[A-Z\d](?:[A-Z\d]+|[a-z]*)(?=$|[A-Z\d])/gx));
-    
+
     my @words = $subclass =~ /[a-z\d]+|[A-Z\d](?:[A-Z\d]+|[a-z]*)(?=$|[A-Z\d])/gx;
     return lc(join(" ", @words));
 }
@@ -471,14 +471,14 @@ sub stages {
         transcript_annotation => 0,
         generate_reports      => 0,
     );
-    
+
     my @filtered_stages;
     for (my $i=0; $i < $#stages; $i += 2) {
         my $method = $stages[$i] . '_job_classes';
-        
+
         push @filtered_stages, $stages[$i] if ($stages[$i+1] || $self->$method());
     }
-    
+
     return @filtered_stages;
 }
 
@@ -543,7 +543,7 @@ sub merge_and_deduplication_job_classes {
         return ('Genome::Model::Event::Build::ReferenceAlignment::DeduplicateLibraries');
     }
 
-    my @steps = ( 
+    my @steps = (
         'Genome::Model::Event::Build::ReferenceAlignment::MergeAlignments',
     );
     if(defined $self->merger_name) {
@@ -587,7 +587,7 @@ sub alignment_objects {
     my @instrument_data = $model->instrument_data;
     my @instrument_data_output = grep {! $_->can('get_segments')} @instrument_data;
     my @segmentable_data = grep {$_->can('get_segments')} @instrument_data;
-    
+
     for my $instr (@segmentable_data) {
         my @segments = $instr->get_segments();
 
@@ -600,7 +600,7 @@ sub alignment_objects {
             push @instrument_data_output, $instr;
         }
     }
-    
+
     return @instrument_data_output;
 }
 
@@ -650,7 +650,7 @@ sub default_profile_id {
 }
 
 sub default_profile {
-    return __PACKAGE__->get(shift->default_profile_id);  
+    return __PACKAGE__->get(shift->default_profile_id);
 }
 
 
