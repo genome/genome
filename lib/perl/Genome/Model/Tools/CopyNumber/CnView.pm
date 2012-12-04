@@ -78,9 +78,6 @@ EOS
 sub execute{
   my $self = shift;
 
-  #WTF does this mean? Put a comment here...
-$DB::single = 1;
-
   #Required
   my $annotation_build = $self->annotation_build;
   my $cnv_file = $self->cnv_file;
