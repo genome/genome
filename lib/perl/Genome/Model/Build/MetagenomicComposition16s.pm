@@ -482,10 +482,20 @@ sub detect_and_remove_chimeras {
     my $self = shift;
     $self->status_message('Detect and remove chimeras...');
 
-    my $attempted = $self->amplicons_attempted;
-    if ( not defined $attempted ) {
-        $self->error_message('No value for amplicons attempted set. Cannot remove chimeras!');
+    if ( not $self->processing_profile->chimera_detector ) {
+        $self->error_message('Tried to detect and remove chimeras, but there is not a chimera detector on the processing profile!');
         return;
+    }
+
+    my $amplicons_classified = $self->amplicons_classified;
+    if ( not defined $amplicons_classified ) {
+        $self->error_message('Cannot deteect and remove chimeras because "amplicons classified" metric is not set!');
+        return;
+    }
+
+    if ( $amplicons_classified == 0 ) {
+        $self->status_message("No amplicons were successfully classified, skipping detect and remove chimeras.");
+        return 1;
     }
 
     my @amplicon_sets = $self->amplicon_sets;
@@ -501,17 +511,17 @@ sub detect_and_remove_chimeras {
 
     my %metrics = ( input => 0, output => 0, );
     for my $amplicon_set ( @amplicon_sets ) {
-        my $processed_fasta = $amplicon_set->processed_fasta_file;
-        next if not -s $processed_fasta;
+        my $fasta_file = $amplicon_set->oriented_fasta_file;
+        next if not -s $fasta_file;
         $self->status_message('Amplicon set'.($amplicon_set->name ? ' '.$amplicon_set->name : ''));
 
         # DETECT
         $self->status_message('Detect chimeras...');
-        my $processed_fasta_base_name = File::Basename::basename($processed_fasta);
-        my $sequences = $amplicon_set->chimera_dir.'/'.$processed_fasta_base_name;
-        symlink($processed_fasta, $sequences);
+        my $fasta_base_name = File::Basename::basename($fasta_file);
+        my $sequences = $amplicon_set->chimera_dir.'/'.$fasta_base_name;
+        symlink($fasta_file, $sequences);
         if ( not -s $sequences ) {
-            $self->error_message("Failed to link processed fasta ($processed_fasta) to chimera dir!");
+            $self->error_message("Failed to link oriented fasta ($fasta_file) to chimera dir!");
             return;
         }
         my $chimera_file = $amplicon_set->chimera_file;
@@ -526,9 +536,9 @@ sub detect_and_remove_chimeras {
         $self->status_message('Detect chimeras...OK');
 
         $self->status_message('Remove chimeras...');
-        my $reader = $amplicon_set->seq_reader_for('processed');
+        my $reader = $amplicon_set->seq_reader_for('oriented');
         if ( not $reader ) {
-            $self->error_message('Failed to get processed seq reader!');
+            $self->error_message('Failed to get oriented seq reader!');
             return;
         }
 
@@ -558,19 +568,19 @@ sub detect_and_remove_chimeras {
         $self->status_message('Remove chimeras...OK');
     }
 
-    my $amplicons_processed = $self->amplicons_processed;
-    if ( $amplicons_processed != $metrics{input} ) {
-        $self->error_message("Amplicons processed ($amplicons_processed) and amplicons put through chimera detection ($metrics{input}) do not match!");
+    my $amplicons_classified = $self->amplicons_classified;
+    if ( $amplicons_classified != $metrics{input} ) {
+        $self->error_message("Amplicons oriented ($amplicons_classified) and amplicons put through chimera detection ($metrics{input}) do not match!");
         return;
     }
 
     my $amplicons_chimeric = $metrics{input} - $metrics{output};
     $self->amplicons_chimeric($amplicons_chimeric);
-    $self->amplicons_chimeric_percent( sprintf('%.2f', $amplicons_chimeric / $amplicons_processed) );
+    $self->amplicons_chimeric_percent( sprintf('%.2f', $amplicons_chimeric / $amplicons_classified) );
 
-    $self->status_message('Processed:        '.$self->amplicons_processed);
-    $self->status_message('Chimeric:         '.$self->amplicons_chimeric);
-    $self->status_message('Chimeric percent: '.($self->amplicons_chimeric_percent * 100).'%');
+    $self->status_message('Classifed and oriented: '.$self->amplicons_classified);
+    $self->status_message('Chimeric:               '.$self->amplicons_chimeric);
+    $self->status_message('Chimeric percent:       '.($self->amplicons_chimeric_percent * 100).'%');
 
     $self->status_message('Detect and remove chimeras...OK');
     return 1;
@@ -584,7 +594,7 @@ sub orient_amplicons {
 
     my $amplicons_classified = $self->amplicons_classified;
     if ( not defined $amplicons_classified ) {
-        $self->error_message('Cannot orient apmplicons because "amplicons classified" metric is not set for '.$self->description);
+        $self->error_message('Cannot orient amplicons because "amplicons classified" metric is not set!');
         return;
     }
 
@@ -629,7 +639,6 @@ sub orient_amplicons {
     }
 
     $self->status_message('Orient amplicons...OK');
-
     return 1;
 }
 
@@ -657,8 +666,7 @@ sub classify_amplicons {
     my %metrics;
     @metrics{qw/ attempted success error total /} = (qw/ 0 0 0 0 /);
     for my $amplicon_set ( @amplicon_sets ) {
-        my %inputs = $amplicon_set->amplicon_iterator_input_fasta_and_qual;
-        my $fasta_file = $inputs{file};
+        my $fasta_file = $amplicon_set->processed_fasta_file;
         next if not $fasta_file or not -s $fasta_file;
 
         my $classification_file = $amplicon_set->classification_file;

@@ -104,22 +104,9 @@ sub stages {
 
 sub one_job_classes {
     my $self = shift;
-
-    my @subclasses;
-
-    my $sequencing_platform_cc = Genome::Utility::Text::string_to_camel_case(
-        $self->sequencing_platform
-    );
-
-    # Prepare
-    push @subclasses, 'PrepareInstrumentData';
-
-    # Detect chrimra
-    push @subclasses, 'DetectAndRemoveChimeras' if $self->chimera_detector;
-
-    # Classify, Orient, Reports and work w/ all mc16s builds
-    push @subclasses, (qw/ Classify Orient Reports /);
-
+    my @subclasses = (qw/ PrepareInstrumentData Classify Orient /);
+    push @subclasses, (qw/ DetectAndRemoveChimeras /) if $self->chimera_detector;
+    push @subclasses, (qw/ Reports /);
     return map { 'Genome::Model::Event::Build::MetagenomicComposition16s::'.$_ } @subclasses;
 }
 

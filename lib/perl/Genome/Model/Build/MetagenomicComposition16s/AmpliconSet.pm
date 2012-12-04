@@ -61,10 +61,20 @@ sub amplicon_iterator {
 
     return $self->{_amplicon_iterator} if $self->{_amplicon_iterator};
 
-    my %input = $self->amplicon_iterator_input_fasta_and_qual;
-    return if not %input;
+    my $fasta_file = $self->oriented_fasta_file;
+    my $qual_file = $self->oriented_qual_file;
+    if ( not -e $fasta_file or not -e $qual_file ) {
+        $fasta_file = $self->processed_fasta_file;
+        $qual_file = $self->processed_qual_file;
+        if ( not -e $fasta_file or not -e $qual_file ) {
+            return;
+        }
+    }
 
-    my $reader =  Genome::Model::Tools::Sx::PhredReader->create(%input);
+    my $reader =  Genome::Model::Tools::Sx::PhredReader->create( 
+        file => $fasta_file,
+        qual_file => $qual_file, 
+    );
     if ( not  $reader ) {
         $self->error_message('Failed create phred reader');
         return;
@@ -84,7 +94,7 @@ sub amplicon_iterator {
 
     my $amplicon_iterator = sub{
         my $seq = $reader->read;
-        return unless $seq;  #<-- HERER
+        return unless $seq;
 
         my %amplicon = (
             name => $seq->{id},
@@ -122,8 +132,8 @@ sub _file_for {
     my %types_and_props = (
         processed_fasta => [qw/ fasta_dir processed.fasta /],
         processed_qual => [qw/ fasta_dir processed.fasta.qual /],
-        chimera_free_fasta => [qw/ fasta_dir chimera_free.fasta /],
-        chimera_free_qual => [qw/ fasta_dir chimera_free.fasta.qual /],
+        chimera_free_fasta => [qw/ fasta_dir oriented.chimera_free.fasta /],
+        chimera_free_qual => [qw/ fasta_dir oriented.chimera_free.fasta.qual /],
         oriented_fasta => [qw/ fasta_dir oriented.fasta /],
         oriented_qual => [qw/ fasta_dir oriented.fasta.qual /],
         chimera => [qw/ chimera_dir chimera /],
@@ -182,22 +192,6 @@ sub seq_writer_for {
     }
 
     return $writer;
-}
-
-sub amplicon_iterator_input_fasta_and_qual {
-    my $self = shift;
-
-    my $fasta_file = $self->chimera_free_fasta_file;
-    my $qual_file = $self->chimera_free_qual_file;
-    if ( not -e $fasta_file or not -e $qual_file ) {
-        $fasta_file = $self->processed_fasta_file;
-        $qual_file = $self->processed_qual_file;
-        if ( not -e $fasta_file or not -e $qual_file ) {
-            return; # no amplicons to iterate
-        }
-    }
-
-    return ( file => $fasta_file, qual_file => $qual_file, );
 }
 #<>#
 

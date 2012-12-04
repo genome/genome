@@ -21,7 +21,7 @@ use_ok('Genome::Model::Build::MetagenomicComposition16s::454') or die;
 # sample, lib
 my $sample = Genome::Sample->create(
     id => -1234,
-    name => 'H_GV-933124G-S.MOCK',
+    name => '__TEST_SAMPLE__',
 );
 ok($sample, 'create sample');
 
@@ -52,8 +52,17 @@ ok(-s $instrument_data->dump_fasta_file, 'fasta file');
 ok(-s $instrument_data->dump_sanger_fastq_files, 'fastq file');
 
 # pp MC16s-WashU-454-RDP2.1
-my $pp = Genome::ProcessingProfile->get(2742461);
-ok($pp, 'got 454 pp') or die;
+my $pp = Genome::ProcessingProfile->__define__(
+    type_name => 'metagenomic composition 16s',
+    amplicon_processor => 'filter by-min-length --length 200',
+    chimera_detector => 'chimera-slayer',
+    chimera_detector_params => "--nastier-params '-num_top_hits 10' --chimera-slayer-params '-windowSize 50 -printCSalignments -windowStep 5'",
+    classifier => 'rdp2-2',
+    classifier_params => '-training-set 6 -format hmp_fix_ranks -version 2x2',
+    sequencing_center => 'gsc',
+    sequencing_platform => '454',
+);
+ok($pp, 'define pp') or die;
 
 # model
 my $model = Genome::Model::MetagenomicComposition16s->create(
@@ -76,7 +85,7 @@ ok($build->get_or_create_data_directory, 'resolved data dir');
 my $example_build = Genome::Model::Build->create(
     model=> $model,
     id => -2288,
-    data_directory => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/build_v4.2chimeras', # start w/ 2 chimeras
+    data_directory => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/build_v5.2chimeras', # start w/ 2 chimeras
 );
 ok($example_build, 'example build') or die;
 
@@ -126,23 +135,29 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
     #print join(' ', 'gvimdiff', $fasta_file, $example_fasta_file, "\n");<STDIN>;
 }
 
-# metrics
-is($build->amplicons_attempted, 20, 'amplicons attempted is 20');
-is($build->amplicons_processed, 14, 'amplicons processed is 14');
-is($build->amplicons_processed_success, '0.70', 'amplicons processed success is 0.70');
-is($build->reads_attempted, 20, 'reads attempted is 20');
-is($build->reads_processed, 14, 'reads processed is 14');
-is($build->reads_processed_success, '0.70', 'reads processed success is 0.70');
+#< CLASSIFY >#
+ok($build->classify_amplicons, 'classify amplicons');
+is($build->amplicons_classified, $build->amplicons_processed, 'amplicons classified matches processed: '.$build->amplicons_processed);
+is($build->amplicons_classified_success, '1.00', 'amplicons classified success is 1.00');
+is($build->amplicons_classification_error, 0, 'amplicons classified error is 0');
 
-#< DETECT CHIMERAS ># this is not deterministic!
+#< ORIENT >#
+ok($build->orient_amplicons, 'orient amplicons');
+
+#< DETECT & RM CHIMERAS ># this is not deterministic!
+my $chimera_detector = $pp->chimera_detector;
+$pp->chimera_detector(undef);
+ok(!$build->detect_and_remove_chimeras, 'detect and remove chimeras fails w/o chimera detector on processing profile');
+$pp->chimera_detector($chimera_detector);
 ok($build->detect_and_remove_chimeras, 'detect and remove chimeras');
 my $amplicons_chimeric = 2;
 if ( $build->amplicons_chimeric == 3 ) { # switch to 3 chimeras if necessary
-    $example_build->data_directory($ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/build_v4.3chimeras');
+    $example_build->data_directory($ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/build_v5.3chimeras');
     # Get the sets again to pickup the new data_directory otherwise the old data_directory is used.
     @example_amplicon_sets = $example_build->amplicon_sets;
     $amplicons_chimeric = 3;
 }
+
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
     ok(-s $amplicon_sets[$i]->chimera_file, 'chimera file');
 
@@ -156,20 +171,6 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
     my $chimera_free_qual_file_diff = qx(diff -u $example_chimera_free_qual_file $chimera_free_qual_file);
     ok(!$chimera_free_qual_file_diff, 'no differences between chimera_free_qual_files') || print $chimera_free_qual_file_diff;
 }
-# metrics
-is($build->amplicons_processed, 14, 'amplicons processed is 14');
-is($build->amplicons_chimeric, $amplicons_chimeric, 'amplicons chimeric is '.$amplicons_chimeric);
-my $chimeric_pct = sprintf('%.2f', $build->amplicons_chimeric / $build->amplicons_processed);
-is($build->amplicons_chimeric_percent, $chimeric_pct, 'amplicons chimeric percent is '.$chimeric_pct);
-
-#< CLASSIFY >#
-ok($build->classify_amplicons, 'classify amplicons');
-is($build->amplicons_classified, $build->amplicons_processed, 'amplicons classified matches processed: '.$build->amplicons_processed);
-is($build->amplicons_classified_success, '1.00', 'amplicons classified success is 1.00');
-is($build->amplicons_classification_error, 0, 'amplicons classified error is 0');
-
-#< ORIENT >#
-ok($build->orient_amplicons, 'orient amplicons');
 
 #< AMPLICON SETS >#
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
@@ -208,6 +209,18 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
         is_deeply([@{$amplicon->{classification}}[0..3]], [@{$example_amplicon->{classification}}[0..3]], 'classification matches');
     }
 }
+
+# Metrics
+is($build->reads_attempted, 20, 'reads attempted is 20');
+is($build->reads_processed, 14, 'reads processed is 14');
+is($build->reads_processed_success, '0.70', 'reads processed success is 0.70');
+is($build->amplicons_attempted, 20, 'amplicons attempted is 20');
+is($build->amplicons_processed, 14, 'amplicons processed is 14');
+is($build->amplicons_processed_success, '0.70', 'amplicons processed success is 0.70');
+is($build->amplicons_processed, 14, 'amplicons processed is 14');
+is($build->amplicons_chimeric, $amplicons_chimeric, 'amplicons chimeric is '.$amplicons_chimeric);
+my $chimeric_pct = sprintf('%.2f', $build->amplicons_chimeric / $build->amplicons_processed);
+is($build->amplicons_chimeric_percent, $chimeric_pct, 'amplicons chimeric percent is '.$chimeric_pct);
 
 #< QC Model Email >#
 ok($build->perform_post_success_actions, 'perform post success actions');
