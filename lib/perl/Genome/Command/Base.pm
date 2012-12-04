@@ -15,7 +15,8 @@ class Genome::Command::Base {
         show_display_command_summary_report => {
             is => 'Boolean',
             default => 1,
-            doc => 'Enable/disable summy report.',
+            doc => 'Enable/disable summary report.',
+            is_transient => 1, # hide this from docs
         },
     ],
     has_optional => [
