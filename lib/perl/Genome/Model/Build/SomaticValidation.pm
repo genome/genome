@@ -233,10 +233,6 @@ sub files_ignored_by_diff {
         alignments/.*\.bam\.bai$
         control_variants_for_loh/dispatcher.cmd
         validation/review/newcalls.xml
-        indel_validation/realigned_bams/realignment_normal.out
-        indel_validation/realigned_bams/realignment_tumor.out
-        indel_validation/realigned_bams/*.realigned.bam
-        indel_validation/realigned_bams/*.realigned.bam.bai
         indel_validation/indel_files_to_validate
     );
 }
@@ -248,6 +244,7 @@ sub dirs_ignored_by_diff {
         variants/sv/breakdancer
         variants/sv/squaredancer
         variants/sv/union
+        indel_validation/realigned_bams
     );
 }
 
