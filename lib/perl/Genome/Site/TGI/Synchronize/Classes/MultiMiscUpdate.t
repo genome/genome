@@ -24,15 +24,17 @@ is(@multi_misc_updates, 4, 'Defined 4 multi misc updates');
 is(scalar( map { $_->misc_updates } @multi_misc_updates), 12, 'Defined 12 misc updates');
 for my $multi_misc_update ( @multi_misc_updates ) {
     ok($multi_misc_update->perform_update, 'perfromed update: '.$multi_misc_update->description);
-    my %genome_entity_params = $multi_misc_update->genome_entity_params;
+    my %genome_entity_params = $multi_misc_update->_resolve_genome_entity_params;
     ok(%genome_entity_params, 'Got genome entity params');
     is(scalar(keys %genome_entity_params), 4, 'Correct number of genome entity params');
     my $genome_entity = Genome::SubjectAttribute->get(%genome_entity_params);
     if ( $multi_misc_update->description eq 'INSERT' ) {
         ok($genome_entity, 'INSERT genome entity: '.$genome_entity->__display_name__);
+        is($multi_misc_update->value_method, 'new_value', 'Correct value method');
     }
     else {
         ok(!$genome_entity, 'DELETE genome entity: '.$multi_misc_update->__display_name__);
+        is($multi_misc_update->value_method, 'old_value', 'Correct value method');
     }
     is($multi_misc_update->result, $multi_misc_update->description, 'Correct result');
     ok(!$multi_misc_update->error_message, 'No errors set on multi misc update!');
@@ -49,7 +51,7 @@ my %multi_misc_update_params = (
 );
 my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->create(%multi_misc_update_params);
 ok(!$multi_misc_update->perform_update, 'Failed to perform update w/o misc updates');
-is($multi_misc_update->error_message, 'No misc updates to get genome entity params!', 'Correct error');
+is($multi_misc_update->error_message, 'No misc updates set to get genome entity params!', 'Correct error');
 is($multi_misc_update->result, 'FAILED', 'Correct result');
 
 # Missing required key
@@ -86,8 +88,8 @@ sub _define_multiple_misc_updates {
                     %multi_misc_update_params,
                     subject_property_name => $subject_class_names_to_properties{$subject_class_name}->[$i],
                     editor_id => 'lims',
-                    old_value => undef,
-                    new_value => $ids[$i],
+                    old_value => ( $description eq 'DELETE' ? $ids[$i] : undef ),
+                    new_value => ( $description eq 'INSERT' ? $ids[$i] : undef ),
                     is_reconciled => 0,
                 );
                 $multi_misc_update->add_misc_update($misc_update);

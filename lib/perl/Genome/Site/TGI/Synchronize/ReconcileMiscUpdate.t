@@ -84,9 +84,9 @@ foreach my $misc_indel ( @misc_indels ) {
 }
 
 for my $multi_misc_update (values %multi_misc_updates_to_check) {
-    ok($multi_misc_update->perform_update, 'perfromed update: '.$multi_misc_update->description);
-    my %genome_entity_params = $multi_misc_update->genome_entity_params;
-    ok(%genome_entity_params, 'Got genome entity params');
+    ok($multi_misc_update->perform_update, 'performed update: '.$multi_misc_update->description);
+    my %genome_entity_params = $multi_misc_update->_resolve_genome_entity_params;
+    ok(%genome_entity_params, 'Got genome entity params') or die;
     is(scalar(keys %genome_entity_params), 4, 'Correct number of genome entity params');
     my $genome_entity = Genome::SubjectAttribute->get(%genome_entity_params);
     if ( $multi_misc_update->description eq 'INSERT' ) {
@@ -258,7 +258,7 @@ sub _define_misc_indels {
                 %params,
                 subject_property_name => $subject_class_names_to_properties{$subject_class_name}->[$i],
                 editor_id => 'lims',
-                old_value => undef,
+                old_value => $ids[$i],
                 new_value => $ids[$i],
                 is_reconciled => 0,
             );
