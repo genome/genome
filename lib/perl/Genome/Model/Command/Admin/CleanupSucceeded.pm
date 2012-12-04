@@ -44,6 +44,7 @@ sub execute {
     if (@builds_to_abandon) {
         my $abandon_failed = Genome::Model::Build::Command::Abandon->create(
             builds => \@builds_to_abandon,
+            show_display_command_summary_report => 0,
         );
         $abandon_failed->dump_status_messages(1);
         return $abandon_failed->execute();

@@ -113,18 +113,18 @@ sub _execute_indels {
 sub _execute_report {
     my $self = shift;
 
-    my @misc_updates = $self->_misc_updates;
-    if ( not @misc_updates ) {
-        return print 'RECONCILE MISC UPDATE FOR '.$self->date."\nNONE FOUND!\n";
+    my $misc_updates = $self->_misc_updates;
+    if ( not @$misc_updates ) {
+        return print 'RECONCILE MISC UPDATE FOR '.$self->date."\nNO MISC UPDATES FOUND!\n";
     }
 
     my (%stats, $errors);
-    my $status = join("\t", (qw/ STATUS SUBJECT_CLASS_NAME SUBJECT_ID SUBJECT_PROPERTY_NAME CURRENT_VALUE OLD_VALUE NEW_VALUE /))."\n";
-    for my $misc_update ( @{$self->_misc_updates} ) {
+    my $status = join("\t", (qw/ STATUS SUBJECT_CLASS_NAME SUBJECT_ID SUBJECT_PROPERTY_NAME DESCRIPTION CURRENT_VALUE OLD_VALUE NEW_VALUE /))."\n";
+    for my $misc_update ( @$misc_updates ) {
         $stats{ATTEMPTED}++;
         $stats{ $misc_update->result }++;
         $status .= $misc_update->status."\n";
-        $errors .= $misc_update->id." '".$misc_update->error_message."'\n" if $misc_update->result eq 'FAILED';
+        $errors .= $misc_update->id." '".$misc_update->error_message."'\n" if $misc_update->has_failed;
     }
 
     return print join(
@@ -132,7 +132,7 @@ sub _execute_report {
         'RECONCILE MISC UPDATE FOR '.$self->date,
         "STATS:\n".join("\n", map { sprintf('%-10s => %s', $_, $stats{$_}) } sort keys %stats),
         "STATUS:\n$status",
-        "ERRORS [These will remain unreconciled until addressed!]:\n".( $errors // 'NONE :)' ),
+        "ERRORS [These will remain unreconciled until addressed!]:\n".( $errors // "NONE :)\n" ),
     );
 }
 

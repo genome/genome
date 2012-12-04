@@ -88,6 +88,8 @@ sub _delete {
     my $self = shift;
 
     my %params = $self->genome_entity_params;
+    return $self->_failure if not %params;
+
     my $genome_entity = Genome::SubjectAttribute->get(%params);
     if ( $genome_entity ) {
         if ( not $genome_entity->delete ) {

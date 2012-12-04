@@ -450,10 +450,6 @@ sub create_symlink {
         Carp::croak("Can't create_symlink: no 'link' given");
     }
 
-    unless ( -e $target ) {
-        Carp::croak("Cannot create link ($link) to target ($target): target does not exist");
-    }
-
     if ( -e $link ) { # the link exists and points to spmething
         Carp::croak("Link ($link) for target ($target) already exists.");
     }
