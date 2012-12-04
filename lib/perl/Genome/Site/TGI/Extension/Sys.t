@@ -278,10 +278,6 @@ $worked = eval { Genome::Sys->create_symlink(undef, $new_link) };
 ok(!$worked, 'Failed as expected - create_symlink w/o target');
 like($@, qr/Can't create_symlink: no target given/, 'exception message is correct');
 
-$worked = eval { Genome::Sys->create_symlink($tmpdir.'/target', $new_link) };
-ok(!$worked, 'Failed as expected - create_symlink when target does not exist');
-like($@, qr/Cannot create link \($new_link\) to target \(.*target\): target does not exist/, 'exception message is correct');
-
 # RESOURCE LOCKING
 my $bogus_id = '-55555';
 $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
