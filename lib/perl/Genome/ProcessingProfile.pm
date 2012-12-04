@@ -376,7 +376,7 @@ sub __extend_namespace__ {
         my @has;
         for my $p (@p) {
             if ($p->can("is_param") and $p->is_param) {
-                my %data = %{ UR::Util::deep_copy($p) };
+                my %data = %{$p};
                 if (exists $data{_profile_default_value}) {
                     $data{default_value} = delete $data{_profile_default_value};
                 }

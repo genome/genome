@@ -90,7 +90,7 @@ BEGIN {
             if ($p->can("is_input") and $p->is_input){
                 my $name = $p->property_name;
                 unless ($seen{$name} or $module_input_exceptions{$module}{$name}) {
-                    my %data = %{ UR::Util::deep_copy($p) };
+                    my %data = %{$p};
                     for my $key (keys %data) {
                         delete $data{$key} if $key =~ /^_/;
                     }

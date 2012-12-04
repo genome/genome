@@ -201,7 +201,7 @@ sub __extend_namespace__ {
         for my $p (@p) {
             if ($p->can("is_input") and $p->is_input) {
                 my $name = $p->property_name;
-                my %data = %{ UR::Util::deep_copy($p) };
+                my %data = %{$p};
                 my $type = $data{data_type};
                 for my $key (keys %data) {
                     delete $data{$key} unless $key =~ /^is_/;
