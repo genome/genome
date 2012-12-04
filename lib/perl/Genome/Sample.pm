@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+my $default_nomenclature = $ENV{GENOME_NOMENCLATURE_DEFAULT};
+
 class Genome::Sample {
     is => ['Genome::Subject','Genome::Searchable'],
     has => [
@@ -24,7 +26,7 @@ class Genome::Sample {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'common_name' ],
+            where => [ attribute_label => 'common_name', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Typically tumor, normal, etc. A very brief description of the sample',                                        
         },
