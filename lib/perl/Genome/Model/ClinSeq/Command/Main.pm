@@ -869,23 +869,14 @@ sub identifyCnvGenes{
       #Copy these files to the top CNV dir
       my $new_dir = "$cnview_dir"."CNView_"."$symbol_list_name/";
 
-      my $cnv_path1 = "$new_dir"."CNView_"."$symbol_list_name"."_genes.tsv";
-      my $cnv_path2 = "$cnview_dir"."cnv."."$symbol_list_name"."_genes.tsv";
-      Genome::Sys->shellcmd(cmd => "cp $cnv_path1 $cnv_path2");
-      my $cnv_amp_path1 = "$new_dir"."CNView_"."$symbol_list_name"."_genes.amp.tsv";
-      my $cnv_amp_path2 = "$cnview_dir"."cnv."."$symbol_list_name"."_genes.amp.tsv";
-      Genome::Sys->shellcmd(cmd => "cp $cnv_amp_path1 $cnv_amp_path2");
-      my $cnv_del_path1 = "$new_dir"."CNView_"."$symbol_list_name"."_genes.del.tsv";
-      my $cnv_del_path2 = "$cnview_dir"."cnv."."$symbol_list_name"."_genes.del.tsv";
-      Genome::Sys->shellcmd(cmd => "cp $cnv_del_path1 $cnv_del_path2");
-      my $cnv_ampdel_path1 = "$new_dir"."CNView_"."$symbol_list_name"."_genes.ampdel.tsv";
-      my $cnv_ampdel_path2 = "$cnview_dir"."cnv."."$symbol_list_name"."_genes.ampdel.tsv";
-      Genome::Sys->shellcmd(cmd => "cp $cnv_ampdel_path1 $cnv_ampdel_path2");
-      
-      $out_paths->{'wgs'}->{'cnv'}->{'path'} = $cnv_path2;
-      $out_paths->{'wgs'}->{'cnv_amp'}->{'path'} = $cnv_amp_path2;
-      $out_paths->{'wgs'}->{'cnv_del'}->{'path'} = $cnv_del_path2;
-      $out_paths->{'wgs'}->{'cnv_ampdel'}->{'path'} = $cnv_ampdel_path2;
+      my @suffixes = qw (_genes _genes.amp _genes.del _genes.ampdel _transcripts _transcripts.amp _transcripts.del _transcripts.ampdel);
+      foreach my $suffix (@suffixes){
+        my $path1 = "$new_dir"."CNView_"."$symbol_list_name"."$suffix".".tsv";
+        my $path2 = "$cnview_dir"."cnv."."$symbol_list_name"."$suffix".".tsv";
+        Genome::Sys->shellcmd(cmd => "cp $path1 $path2");
+        my $dataname = "cnv".$suffix;
+        $out_paths->{'wgs'}->{$dataname}->{'path'} = $path2;
+      }
     }else{
       my $gene_targets_file = "$gene_symbol_lists_dir"."$symbol_list_name".".txt";
       my $cnview_cmd = "gmt copy-number cn-view --annotation-build=$annotation_build_id  --cnv-file=$cnv_data_file  --segments-file=$segments_file  --output-dir=$cnview_dir  --gene-targets-file=$gene_targets_file  --name='$symbol_list_name'";
