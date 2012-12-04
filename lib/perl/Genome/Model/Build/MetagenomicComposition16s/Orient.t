@@ -40,12 +40,15 @@ $build->amplicons_classification_error(0);
 ok($build->orient_amplicons, 'orient amplicons');
 
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
-    is($amplicon_sets[$i]->name, $example_amplicon_sets[$i]->name, 'set name: '.$amplicon_sets[$i]->name);
-    my $fasta_file = $amplicon_sets[$i]->oriented_fasta_file;
-    ok(-s $fasta_file, 'oriented fasta file name exists for set '.$amplicon_sets[$i]->name);
-    my $example_fasta_file = $example_amplicon_sets[$i]->oriented_fasta_file;
-    ok(-s $fasta_file, 'example oriented fasta file name exists for set '.$example_amplicon_sets[$i]->name);
-    is(File::Compare::compare($fasta_file, $example_fasta_file), 0, 'oriented fasta file name exists for set .'.$amplicon_sets[$i]->name);
+    my $set_name = $amplicon_sets[$i]->name;
+    is($set_name, $example_amplicon_sets[$i]->name, "set name: $set_name");
+    for my $file_name (qw/ oriented_fasta_file oriented_qual_file /) {
+        my $file = $amplicon_sets[$i]->$file_name;
+        ok(-s $file, "$file_name exists for set $set_name");
+        my $example_file = $example_amplicon_sets[$i]->$file_name;
+        ok(-s $example_file, "example $file_name name exists for set $set_name");
+        is(File::Compare::compare($file, $example_file), 0, "$file_name exists for set $set_name");
+    }
 }
 
 #print $build->data_directory."\n"; <STDIN>;
