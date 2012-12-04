@@ -108,6 +108,10 @@ sub _read_progress_index {
         my $fh = Genome::Sys->open_file_for_reading($filename);
         my $json_text = <$fh>;
         $progress_index = $json->decode($json_text);
+        $self->status_message(
+            sprintf("Read in %d filled_ids, and %d unfillable_ids",
+            scalar(keys %{$progress_index->{'filled_ids'}}),
+            scalar(keys %{$progress_index->{'unfillable_ids'}})));
     } else {
         $self->status_message("Couldn't find $filename to open as json text.");
         $progress_index = {filled_ids => {}, unfillable_ids => {}};
@@ -161,7 +165,7 @@ sub fill_hashes {
     my $total = 0;
     my $i = 0;
     my $iterator = $self->_get_iterator();
-    my $progress_index = {filled_ids => {}, unfillable_ids => {}};
+    my $progress_index = $self->_read_progress_index($remainder);
 
     while (my $sr = $iterator->next()) {
         my $sr_id = $sr->id;
@@ -185,7 +189,7 @@ sub fill_hashes {
 
         if ($i >= $self->commit_size) {
             $total += $i;
-            $self->status_message("Committing chunk of $i rows on process $remainder");
+            $self->status_message("Committing $i of $total rows on process $remainder");
             $i = 0;
 
             # Destroy iterator before commit, so we don't get a warning
@@ -200,8 +204,7 @@ sub fill_hashes {
 
     if ($i) {
         $total += $i;
-        $self->status_message("Committing chunk of $i rows on process $remainder");
-        $self->status_message("Committing chunk of $i rows");
+        $self->status_message("Committing $i of $total rows on process $remainder");
 
         # Destroy iterator before commit, so we don't get a warning
         undef $iterator;
@@ -245,7 +248,7 @@ sub fix_filter_result {
     # Get the vcf result for the non-vcf step before this. This will be the vcf file that came before this vcf file.
     # ...with OUR vcf version (to connect each version together as appropriate)
     my $aligned_reads_sample = $result_to_fix->aligned_reads_sample;
-    my $vcf_result_i_am_filtering = get_vcf_result($result_i_am_filtering, $result_to_fix->vcf_version, 
+    my $vcf_result_i_am_filtering = get_vcf_result($result_i_am_filtering, $result_to_fix->vcf_version,
             $aligned_reads_sample) || return 0;
 
     # Set the current result from the non-vcf result
@@ -271,7 +274,9 @@ sub fix_filter_result {
 
     my @users = _get_user_objects($vcf_result_i_am_filtering);
     unless (in($result_to_fix,@users)) {
-        die ("Sanity check failed... I am not using the previous result's vcf result\n");
+        print "Sanity check failed... I am not using the previous result's vcf result " .
+            $result_to_fix->id . "\n";
+        return 0;
     }
     return 1;
 }
@@ -315,13 +320,17 @@ sub fix_combine_result {
     my @users_a = _get_user_objects($input_result_vcf_a);
     my @users_b = _get_user_objects($input_result_vcf_b);
     unless (in($result_to_fix,@users_a) and in($result_to_fix,@users_b)) {
-        die ("Sanity check failed... I am not using the previous result's vcf result\n");
+        print "Sanity check failed... I am not using the previous result's vcf result " .
+            $result_to_fix->id . "\n";
+        return 0;
     }
 
     my @nonvcf_users_a = _get_user_objects($result_i_am_combining_a);
     my @nonvcf_users_b = _get_user_objects($result_i_am_combining_b);
     unless (in($pre_vcf_conversion_input,@nonvcf_users_a) and in($pre_vcf_conversion_input,@nonvcf_users_b)) {
-        die ("Sanity check failed... my nonvcf result is not using the previous nonvcf results\n");
+        print "Sanity check failed... my nonvcf result is not using the previous nonvcf results" .
+            $result_to_fix->id . "\n";
+        return 0;
     }
 
     $result_to_fix->input_a_id($input_a_id);
