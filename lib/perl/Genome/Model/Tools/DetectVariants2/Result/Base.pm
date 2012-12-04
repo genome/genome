@@ -26,7 +26,7 @@ sub get_vcf_result {
         vcf_version => $vcf_version,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
-    unless(@result < 2){
+    if (@result > 1){
         die $self->error_message("Found ".scalar(@result)." vcf results for vcf_version: ".$vcf_version . " and input_id: " . $self->id);
     }
     my $vcf_result = (@result == 1) ? $result[0] : undef;
