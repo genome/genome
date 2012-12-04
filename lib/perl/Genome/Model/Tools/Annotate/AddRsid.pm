@@ -2,12 +2,8 @@ package Genome::Model::Tools::Annotate::AddRsid;
 
 use strict;
 use warnings;
-
 use Genome;
 
-my $DEFAULT_OUTPUT_FORMAT = 'gtf';
-my $DEFAULT_VERSION = '54_36p_v2';
-my $DEFAULT_ANNO_DB = 'NCBI-human.combined-annotation';
 
 class Genome::Model::Tools::Annotate::AddRsid {
     is => ['Command'],
@@ -73,11 +69,29 @@ sub store_RSid {
 	chomp;
 	my ($chr,$pos,$rsID,$ref,$var,@rest) = split(/\t/,$_);
 	next if($rsID eq '.'); #skip if RSid not defined
-	my @var_alleles = split(/,/,$var);
+
 	my $key = join("_",($chr,$pos));
-	foreach(@var_alleles) {
-	    $RSid->{$key}->{$_}=$rsID;
+	my @var_alleles = split(/,/,$var);
+	my $RSid_var_allele;
+	if(@var_alleles > 1) { #multiple variant alleles
+	    my $INFO=$rest[2];
+	    my ($dbSNPinfo) = $INFO =~ /dbSNPBuildID=([0-9,.]+)/;
+	    if($dbSNPinfo !~ /\./) {
+		#print STDERR "Error, multiple dbSNPbuildVersion found for $chr,$pos,$ref:$var,$rsID,$rest[2]\n";
+	    }
+	    my @dbSNPids = split(/,/,$dbSNPinfo);
+	    for(my $i=0;$i<@dbSNPids;$i++) {
+		if($dbSNPids[$i] =~ /^\d+$/) {
+		    $RSid_var_allele = $var_alleles[$i];
+		    $RSid->{$key}->{$RSid_var_allele}=$rsID;
+		}
+	    }
+	}else { #just 1 variant allele
+	    $RSid_var_allele = $var;
+	    $RSid->{$key}->{$RSid_var_allele}=$rsID;
 	}
+	
+
     }
     $vcf_fh->close();
 
