@@ -122,6 +122,7 @@ sub type_specific_parameters_for_create {
     my $self = shift;
     my $model_class = $self->class;
     $model_class =~ s/::Command::Define::/::/;
+    my $helper_meta = __PACKAGE__->__meta__;
     my @p = 
         map { 
             my $meta = $_;
@@ -138,6 +139,7 @@ sub type_specific_parameters_for_create {
                 ($name => $values[0]);
             }
         }
+        grep { $_->class_meta ne $helper_meta } #these should already be accounted for
         grep { $model_class->can($_->property_name) }
         grep { $_->can("is_input") and $_->is_input }
         $self->__meta__->properties();
