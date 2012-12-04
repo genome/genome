@@ -181,4 +181,35 @@ sub _destroy_and_rebuild_pubchem_and_drug_groups {
     return 1;
 }
 
+sub _get_uniprot_entrez_mapping {
+    my $self = shift;
+    #Get mapping of Uniprot Accessions to Entrez IDs, etc
+    #These can be obtained from here:
+    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/ 
+    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz
+    print "\nAttempting download of UniProt mapping file\n";
+    my $mapping_file_url="ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz";
+    my $mapping_file_name="HUMAN_9606_idmapping_selected.tab.gz";
+    my $mapping_file_path = $self->download_file('-mapping_file_url'=>$mapping_file_url, '-mapping_file_name'=>$mapping_file_name);
+
+    print "\nParsing Uniprot mapping file\n";
+    my %UniProtMapping;
+    open (MAPPING, $mapping_file_path) or die "can't open $mapping_file_path\n";
+    while (<MAPPING>){
+      my @data=split("\t",$_);
+      my $uniprot_acc=$data[0];
+      my $uniprot_id=$data[1];
+      my $entrez_id=$data[2];
+      my $ensembl_id=$data[19];
+      unless ($uniprot_id){$uniprot_id="N/A";}
+      unless ($entrez_id){$entrez_id="N/A";}
+      unless ($ensembl_id){$ensembl_id="N/A";}
+      $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
+      $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
+      $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;
+    }
+    close MAPPING;
+    return(\%UniProtMapping);
+}
+
 1;
