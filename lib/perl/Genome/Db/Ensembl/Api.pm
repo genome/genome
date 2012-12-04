@@ -81,5 +81,23 @@ sub resolve_allocation_disk_group_name {
     return 'info_genome_models';
 }
 
+sub prepend_api_path_and_execute {
+    my $self = shift;
+    my %shellcmd_params = @_;
+    my @api_path = glob($self->output_dir."/ensembl*/modules");
+    my $lib;
+    if (@api_path){
+        $lib = join(" ", $^X, '-S', map(join(" ", '-I', '"' . $_ . '"'), @api_path));
+    }else{
+        $self->error_message("No API path found for annotation build: " . $self->id);
+        return;
+    }
+
+    $shellcmd_params{'cmd'} = join(" ", $lib, $shellcmd_params{'cmd'});
+    my $rv = Genome::Sys->shellcmd(%shellcmd_params);
+
+    return $rv;
+}
+
 1;
 
