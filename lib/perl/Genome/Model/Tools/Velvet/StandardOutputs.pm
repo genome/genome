@@ -16,10 +16,15 @@ class Genome::Model::Tools::Velvet::StandardOutputs {
         min_contig_length => {
             is => 'Number',
             doc => 'Minimum contig length to consider for post assembly files',
-        }
+        },
+        sequencing_platform => {
+            is => 'Text',
+            is_optional => 1,
+            is_many => 1,
+            doc => 'Technology used to sequence data, solexa, 454, sanger, etc',
+        },
     ],
 };
-
 
 sub help_brief {
     "Tool to create default post assembly output files for velvet assembly";
@@ -97,6 +102,27 @@ sub execute {
 	return;
     }
     $self->status_message("Completed creating supercontigs.fasta and agp files");
+
+
+    # create contigs.cmt file
+    $self->status_message("Creating contigs.cmt file");
+    my $assembler_version = ( $self->version )
+        ? $self->version
+        : 'Unknown' ;
+    my @sequencing_platform = ( $self->sequencing_platform )
+        ? $self->sequencing_platform
+        : 'unknown' ;
+
+    my $cmt_file = Genome::Model::Tools::Velvet::CmtFile->create(
+        %params,
+        version => $assembler_version,
+        sequencing_technologies => \@sequencing_platform,
+    );
+    if( not $cmt_file->execute ) {
+        $self->error_message("Failed to execute creating of contigs.cmt file");
+        return;
+    }
+    $self->status_message("Completed creating contigs.cmt file");
 
     return 1;
 }

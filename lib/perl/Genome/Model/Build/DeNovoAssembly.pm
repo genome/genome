@@ -236,6 +236,24 @@ sub domain_name {
     return $taxon->domain;
 }
 
+sub sequencing_platform {
+    my $self = shift;
+    my @platforms;
+    for my $i ( $self->model->instrument_data ) {
+        my $platform = $i->sequencing_platform;
+        push @platforms, $platform if not grep {/$platform/i} @platforms;
+    }
+    return \@platforms;
+}
+
+sub assembler_name {
+    return $_[0]->processing_profile->assembler_name;
+}
+
+sub assembler_version {
+    return $_[0]->processing_profile->assembler_version;
+}
+
 sub calculate_base_limit_from_coverage {
     my $self = shift;
 
