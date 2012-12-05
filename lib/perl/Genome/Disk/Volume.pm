@@ -22,6 +22,15 @@ class Genome::Disk::Volume {
         disk_status => { is => 'Text' },
         can_allocate => { is => 'Number' },
 
+        # TODO remove this field when we switch to postgres
+        _placeholder_creation_event_id => {
+            is => 'Number',
+            is_optional => 1,
+            default_value => '1',
+            column_name => 'creation_event_id',
+            doc => 'This is here because of RT #88076.  Remove when we switch to postgres',
+        },
+
         total_kb => { is => 'Number' },
         total_gb => {
             calculate_from => 'total_kb',
