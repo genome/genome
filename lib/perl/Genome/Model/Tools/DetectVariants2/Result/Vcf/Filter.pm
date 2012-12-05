@@ -21,6 +21,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter {
         filter_version => {
             is => 'Text',
             doc => 'Version of the filter',
+            is_optional => 1,
         },
         filter_params => {
             is => 'Text',
