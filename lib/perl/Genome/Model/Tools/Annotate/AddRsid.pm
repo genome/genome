@@ -41,9 +41,11 @@ sub execute {
 	my @list = split(/\t/,$_);
 	my $k = join("_",@list[0,1]);
 	if(exists($RSid->{$k}->{$list[4]})) {
-	    push(@list,$RSid->{$k}->{$list[4]});
+	    #push(@list,$RSid->{$k}->{$list[4]});
+	    push(@list,($RSid->{$k}->{$list[4]}->{'rsID'},$RSid->{$k}->{$list[4]}->{'GMAF'}));
 	}else {
-	    push(@list,"-");
+	    push(@list,("-",'-'));
+	    #push(@list,"-");
 	}
 	my $str = join("\t",@list);
 	$out_fh->print("$str\n");
@@ -72,10 +74,13 @@ sub store_RSid {
 
 	my $key = join("_",($chr,$pos));
 	my @var_alleles = split(/,/,$var);
+	my $INFO=$rest[2];
+	my ($GMAFinfo) = $INFO =~ /(GMAF=[0-9.]+)/;
+	$GMAFinfo = '-' if(!$GMAFinfo);
+	my ($dbSNPinfo) = $INFO =~ /dbSNPBuildID=([0-9,.]+)/;
 	my $RSid_var_allele;
 	if(@var_alleles > 1) { #multiple variant alleles
-	    my $INFO=$rest[2];
-	    my ($dbSNPinfo) = $INFO =~ /dbSNPBuildID=([0-9,.]+)/;
+	    #my ($dbSNPinfo) = $INFO =~ /dbSNPBuildID=([0-9,.]+)/;
 	    if($dbSNPinfo !~ /\./) {
 		#print STDERR "Error, multiple dbSNPbuildVersion found for $chr,$pos,$ref:$var,$rsID,$rest[2]\n";
 	    }
@@ -83,12 +88,16 @@ sub store_RSid {
 	    for(my $i=0;$i<@dbSNPids;$i++) {
 		if($dbSNPids[$i] =~ /^\d+$/) {
 		    $RSid_var_allele = $var_alleles[$i];
-		    $RSid->{$key}->{$RSid_var_allele}=$rsID;
+		    $RSid->{$key}->{$RSid_var_allele}->{'rsID'} = $rsID;
+		    $RSid->{$key}->{$RSid_var_allele}->{'GMAF'} = $GMAFinfo
+		    #$RSid->{$key}->{$RSid_var_allele}=$rsID;
 		}
 	    }
 	}else { #just 1 variant allele
 	    $RSid_var_allele = $var;
-	    $RSid->{$key}->{$RSid_var_allele}=$rsID;
+	    $RSid->{$key}->{$RSid_var_allele}->{'rsID'} = $rsID;
+	    $RSid->{$key}->{$RSid_var_allele}->{'GMAF'} = $GMAFinfo;
+	    #$RSid->{$key}->{$RSid_var_allele}=$rsID;
 	}
 	
 
