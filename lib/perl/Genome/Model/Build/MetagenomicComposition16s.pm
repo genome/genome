@@ -255,21 +255,24 @@ sub classification_files {
 #<>#
 
 #< Prepare instrument data >#
+sub process_instrument_data {
+    my ($self, $instrument_data) = @_;
+    # create sx result for each inst data
+    # assemble sanger into as input to sx
+    # link to build dir by region
+    # link result and build
+    return 1;
+}
+
+sub merge_sx_results {
+    my ($self, $instrument_data) = @_;
+    # merge sx results into a file for each region
+    return 1;
+}
+
 sub prepare_instrument_data {
     my $self = shift;
     $self->status_message('Prepare instrument data...');
-
-    #call a separate command for sanger
-    if ( $self->sequencing_platform eq 'sanger' ) {
-        my $cmd = Genome::Model::MetagenomicComposition16s::Command::ProcessSangerInstrumentData->create(
-            build => $self,
-            );
-        unless ( $cmd->prepare_instrument_data ) {
-            $self->error_message("Failed to execute mc16s process sanger");
-            return;
-        }
-        return 1;
-    }
 
     my @instrument_data = $self->instrument_data;
     $self->status_message('Instrument data count: '.@instrument_data);
@@ -568,7 +571,6 @@ sub detect_and_remove_chimeras {
         $self->status_message('Remove chimeras...OK');
     }
 
-    my $amplicons_classified = $self->amplicons_classified;
     if ( $amplicons_classified != $metrics{input} ) {
         $self->error_message("Amplicons oriented ($amplicons_classified) and amplicons put through chimera detection ($metrics{input}) do not match!");
         return;
