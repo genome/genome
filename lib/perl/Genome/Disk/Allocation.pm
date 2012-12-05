@@ -375,20 +375,22 @@ sub _create {
 
     my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
 
-    unless (defined $self) {
-        Carp::confess $class->error_message(sprintf(
-            "Could not create allocation in specified disk group (%s), which contains %d volumes:\n%s\n",
-            $disk_group_name, scalar(@candidate_volumes), join("\n", map { $_->mount_path } @candidate_volumes),
-        ));
-    }
-
     $self->status_message(sprintf("Allocation (%s) created at %s",
         $id, $self->absolute_path));
 
-    # Add commit hooks to unlock and create directory (in that order)
-    $class->_create_observer(
-        $class->_create_directory_closure($self->absolute_path)
-    );
+    # If we cannot create the directory delete the new allocation
+    my $dir = eval {
+        Genome::Sys->create_directory($self->absolute_path);
+    };
+    my $error = $@;
+    unless (defined($dir) and ( -d $dir ) and not $error) {
+        $class->error_message(sprintf(
+                "Failed to create directory (%s) with return value = '%s', and error:\n%s",
+                $self->absolute_path, $dir || '', $error));
+        $self->delete;
+        confess $error;
+    }
+
     return $self;
 }
 
@@ -396,8 +398,8 @@ sub _get_allocation_without_lock {
     my ($class, $candidate_volumes, $parameters) = @_;
     my $kilobytes_requested = $parameters->{'kilobytes_requested'};
 
-    my @candidate_volumes = (@$candidate_volumes, @$candidate_volumes, @$candidate_volumes);
-    my @randomized_candidate_volumes = shuffle(@candidate_volumes);
+    my @randomized_candidate_volumes = shuffle(
+        @$candidate_volumes, @$candidate_volumes, @$candidate_volumes);
 
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
@@ -424,6 +426,14 @@ sub _get_allocation_without_lock {
                 last;
             }
         }
+    }
+
+    unless (defined $chosen_allocation) {
+        Carp::confess $class->error_message(sprintf(
+            "Could not create allocation in specified disk group (%s), which contains %d volumes:\n%s\n",
+            $parameters->{disk_group_name}, scalar(@$candidate_volumes),
+            join("\n", map { $_->mount_path } @$candidate_volumes),
+        ));
     }
 
     return $chosen_allocation;
@@ -595,9 +605,11 @@ sub _move {
     Genome::Sys->create_directory($new_volume_final_path);
     unless (rename $shadow_allocation->absolute_path, $new_volume_final_path) {
         Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
+        my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
+        $shadow_allocation->delete;
         confess($self->error_message(sprintf(
                 "Could not move shadow allocation path (%s) to final path (%s).  This should never happen, even when 100%% full.",
-                $shadow_allocation->absolute_path, $self->absolute_path)));
+                $shadow_allocation_abs_path, $self->absolute_path)));
     }
 
     # Change the shadow allocation to reserve some disk on the old volume until
@@ -785,6 +797,10 @@ sub _unarchive {
     );
     # shadow_allocation ensures that we wont over allocate our destination volume
     my $shadow_allocation = $class->create(%creation_params);
+    unless ($shadow_allocation) {
+        confess(sprintf("Failed to create shadow allocation from params %s",
+                Data::Dumper::Dumper(\%creation_params)));
+    }
 
     my $archive_path = $self->absolute_path;
     my $target_path = $shadow_allocation->absolute_path;
@@ -842,14 +858,12 @@ sub _unarchive {
                     "Could not move shadow allocation path (%s) to final path (%s).  This should never happen, even when 100%% full.",
                     $shadow_allocation->absolute_path, $self->absolute_path)));
         }
-        $shadow_allocation->delete();
         $self->_update_owner_for_move;
         $self->archivable(0, 'allocation was unarchived'); # Wouldn't want this to be immediately re-archived... trolololol
 
         if ($old_absolute_path ne $self->absolute_path) {
             _symlink($old_absolute_path, $self->absolute_path);
         }
-
 
         unless (UR::Context->commit) {
             confess "Could not commit!";
@@ -859,6 +873,7 @@ sub _unarchive {
 
     # finally blocks would be really sweet. Alas...
     Genome::Sys->unlock_resource(resource_lock => $allocation_lock) if $allocation_lock;
+    $shadow_allocation->delete();
 
     if ($error) {
         if ($target_path and -d $target_path and not $ENV{UR_DBI_NO_COMMIT}) {
