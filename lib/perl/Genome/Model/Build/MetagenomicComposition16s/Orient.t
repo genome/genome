@@ -37,7 +37,9 @@ $build->amplicons_classified(14);
 $build->amplicons_classified_success('1.00');
 $build->amplicons_classification_error(0);
 
-ok($build->orient_amplicons, 'orient amplicons');
+my $cmd = Genome::Model::Build::MetagenomicComposition16s::Orient->create(build => $build);
+ok($cmd, 'create orient cmd');
+ok($cmd->execute, 'execute orient cmd');
 
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
     my $set_name = $amplicon_sets[$i]->name;
