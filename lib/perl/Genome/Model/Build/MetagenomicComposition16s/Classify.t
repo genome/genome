@@ -40,13 +40,13 @@ is($build->amplicons_classified_success, '1.00', 'amplicons classified success i
 is($build->amplicons_classification_error, 0, 'amplicons classified error is 0');
 
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
-    # classification
+    my $set_name = $amplicon_sets[$i]->name;
+    is($set_name, $example_amplicon_sets[$i]->name, "set name: $set_name");
     my $diff_ok = Genome::Model::Build::MetagenomicComposition16s->diff_rdp(
         $example_amplicon_sets[$i]->classification_file,
         $amplicon_sets[$i]->classification_file,
     );
     ok($diff_ok, 'diff classification files');
-    # amplicons
     while ( my $amplicon = $amplicon_sets[$i]->next_amplicon ) {
         my $example_amplicon = $example_amplicon_sets[$i]->next_amplicon;
         is($amplicon->{name}, $example_amplicon->{name}, 'matches example amplicon');
