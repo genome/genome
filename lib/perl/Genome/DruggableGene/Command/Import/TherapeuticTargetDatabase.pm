@@ -201,9 +201,9 @@ sub input_to_tsv {
     $interactions_fh->print($interactions_header, "\n");
 
     #Get the data in order
-    my $targets_path = $self->download_file('-url'=>$targets_raw_url);
-    my $crossmatch_path = $self->download_file('-url'=>$drugs_crossmatching_url);
-    my $synonyms_path = $self->download_file('-url'=>$drug_synonyms_url);
+    my $targets_path = $self->_download_file('-url'=>$targets_raw_url);
+    my $crossmatch_path = $self->_download_file('-url'=>$drugs_crossmatching_url);
+    my $synonyms_path = $self->_download_file('-url'=>$drug_synonyms_url);
 
     my ($targets, $version) = $self->_parse_targets_file($targets_path);
     $self->version($version) if $version;
@@ -409,38 +409,5 @@ sub _determine_interaction_type{
     return $interaction_type;
 }
 
-sub download_file {
-    my $self = shift;
-    my %args = @_;
-    my $url = $args{'-url'};
-    my $targetfilename;
-    if ($args{'-file_name'}){
-      $targetfilename = $args{'-file_name'};
-    }elsif ($url=~/http.+\/(\S+)$/){ #Grab non-whitespace content after last slash to use for temp file name
-      $targetfilename=$1;
-    }else{
-      die "could not determine file name from $url";
-    }
-    my $tempdir = $self->tmp_dir;
-    my $targetfilepath="$tempdir"."$targetfilename";
-    my $wget_cmd = "wget $url -O $targetfilepath";
-    my $retval = Genome::Sys->shellcmd(cmd=>$wget_cmd);
-    unless ($retval == 1){
-      self->error_message('Failed to wget the specified URL');
-      return;
-    }
-    #unzip if necessary
-    if ($targetfilepath=~/\.gz$/){
-      my $gunzip_cmd = "gunzip -f $targetfilepath";
-      my $retval2 = Genome::Sys->shellcmd(cmd=>$gunzip_cmd);
-      unless ($retval2 == 1){
-        self->error_message('Failed to gunzip the specified file');
-        return;
-      }
-      $targetfilepath=~s/\.gz$//;
-    }
-    print "Downloaded $targetfilepath\n";
-    return $targetfilepath;
-}
 
 1;

@@ -29,6 +29,11 @@ class Genome::DruggableGene::Command::Import::Base {
             is_input => 1,
             doc => 'citation text for this datasource',
         },
+        tmp_dir => {
+            is => 'Path',
+            default => '/tmp/',
+            doc => 'Directory where temp files will be created',
+        },        
     ],
     doc => 'Base class for importing datasets into DGI:DB',
 };
@@ -190,7 +195,7 @@ sub _get_uniprot_entrez_mapping {
     print "\nAttempting download of UniProt mapping file\n";
     my $mapping_file_url="ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz";
     my $mapping_file_name="HUMAN_9606_idmapping_selected.tab.gz";
-    my $mapping_file_path = $self->download_file('-mapping_file_url'=>$mapping_file_url, '-mapping_file_name'=>$mapping_file_name);
+    my $mapping_file_path = $self->_download_file('-url'=>$mapping_file_url, '-file_name'=>$mapping_file_name);
 
     print "\nParsing Uniprot mapping file\n";
     my %UniProtMapping;
@@ -211,5 +216,40 @@ sub _get_uniprot_entrez_mapping {
     close MAPPING;
     return(\%UniProtMapping);
 }
+
+sub _download_file {
+    my $self = shift;
+    my %args = @_;
+    my $url = $args{'-url'};
+    my $targetfilename;
+    if ($args{'-file_name'}){
+      $targetfilename = $args{'-file_name'};
+    }elsif ($url=~/http.+\/(\S+)$/){ #Grab non-whitespace content after last slash to use for temp file name
+      $targetfilename=$1;
+    }else{
+      die "could not determine file name from $url";
+    }
+    my $tempdir = $self->tmp_dir;
+    my $targetfilepath="$tempdir"."$targetfilename";
+    my $wget_cmd = "wget $url -O $targetfilepath";
+    my $retval = Genome::Sys->shellcmd(cmd=>$wget_cmd);
+    unless ($retval == 1){
+      self->error_message('Failed to wget the specified URL');
+      return;
+    }
+    #unzip if necessary
+    if ($targetfilepath=~/\.gz$/){
+      my $gunzip_cmd = "gunzip -f $targetfilepath";
+      my $retval2 = Genome::Sys->shellcmd(cmd=>$gunzip_cmd);
+      unless ($retval2 == 1){
+        self->error_message('Failed to gunzip the specified file');
+        return;
+      }
+      $targetfilepath=~s/\.gz$//;
+    }
+    print "Downloaded $targetfilepath\n";
+    return $targetfilepath;
+}
+
 
 1;
