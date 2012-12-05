@@ -14,7 +14,7 @@ use above 'Genome';
 require File::Compare;
 use Test::More;
 
-use_ok('Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimera') or die;
+use_ok('Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimeras') or die;
 
 use_ok('Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory') or die;
 my ($build, $example_build) = Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory->build_with_example_build_for_454;
@@ -42,7 +42,10 @@ $build->model->processing_profile->chimera_detector(undef);
 ok(!$build->detect_and_remove_chimeras, 'detect and remove chimeras fails w/o chimera detector on processing profile');
 $build->model->processing_profile->chimera_detector($chimera_detector);
 
-ok($build->detect_and_remove_chimeras, 'detect and remove chimeras');
+my $cmd = Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimeras->create(build => $build);
+ok($cmd, 'create detect and remove chimeras cmd');
+ok($cmd->execute, 'execute detect and remove chimeras cmd');
+
 my $amplicons_chimeric = 2;
 if ( $build->amplicons_chimeric == 3 ) { # switch to 3 chimeras if necessary
     $example_build->data_directory($ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/build_v5.3chimeras');

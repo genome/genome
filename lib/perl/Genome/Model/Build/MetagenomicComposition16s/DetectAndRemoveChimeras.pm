@@ -1,11 +1,11 @@
-package Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimera;
+package Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimeras;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimera {
+class Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimeras {
     is => 'Command::V2',
     has_input => [
         build => {
