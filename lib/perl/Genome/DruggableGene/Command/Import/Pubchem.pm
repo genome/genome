@@ -59,6 +59,22 @@ sub help_brief { 'Import synonyms from pubchem into a postgres db' }
 
 sub help_detail { help_brief() }
 
+sub __errors__ {
+  my $self = shift;
+  my @errors = $self->SUPER::__errors__(@_);
+  my $test_psql = `which psql`;
+  chomp($test_psql);
+
+  unless ($test_psql) {
+      push @errors, UR::Object::Tag->create(
+	                                          type => 'error',
+                                            properties => ['psql'],
+	                                          desc => "psql command not found on this machine!",
+                                          );
+  }
+  return @errors;
+}
+
 sub execute {
     my $self = shift;
 
@@ -129,7 +145,7 @@ sub write_tsvs {
     my $generate_uuids_locally = shift;
     my %existing_drugs = @_;
 
-    my $synonym_file_lines = 54576397; #hard coded to save time calculating for its only used in progress counter and won't affect generated data
+    my $synonym_file_lines = 72000000; #hard coded to save time calculating for its only used in progress counter and won't affect generated data
     my $uuid_gen = new Data::UUID;
 
     if (-e 'drug_name_report_pubchem.tsv' and -e 'drug_name_report_association_pubchem.tsv' and -e 'citation_pubchem.tsv'){

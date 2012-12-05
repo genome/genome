@@ -37,7 +37,8 @@ sub execute {
     my @drugs = $self->_fetch_drugs;
     my @genes = $self->_fetch_genes;
     my @interactions;
-    
+
+    $self->status_message("Found " . scalar(@genes) . " genes.  Removing from database...");
     for my $gene (@genes){
         for my $a ($gene->gene_alt_names){
             $a->delete;
@@ -52,6 +53,7 @@ sub execute {
         $gene->delete;
     }
 
+    $self->status_message("Found " . scalar(@drugs) . " drugs.  Removing from database...");
     for my $drug (@drugs){
         for my $b ($drug->drug_alt_names){
             $b->delete;
@@ -67,6 +69,7 @@ sub execute {
     }
 
     @interactions = uniq @interactions;
+    $self->status_message("Found " . scalar(@interactions) . " interactions.  Removing from database...");
 
     for my $interaction (@interactions){
         for my $att ($interaction->interaction_attributes){
@@ -75,6 +78,7 @@ sub execute {
         $interaction->delete;
     }
 
+    $self->status_message("Found " . scalar(@citation) . " citations.  Removing from database...");
     for my $citation (@citation){
         $citation->delete;
     }
