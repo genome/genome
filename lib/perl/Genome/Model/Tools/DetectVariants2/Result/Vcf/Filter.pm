@@ -40,6 +40,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter {
             is => 'Text',
             doc => 'Description of the filter applied to this data',
             default => 'Filter variants',
+            is_transient => 1,
         },
     ],
 };

@@ -19,6 +19,7 @@ class Genome::Model::RnaSeq::DetectFusionsResult::TophatFusionResult{
         #TODO - not ideal, hardcoded a default ID for now so we don't have to pass this input all the way up to the RnaSeq model,
         #if this gets used, we'll want to revisit it
         known_fusions_result_id => {
+            is_transient => 1,
             is => "Integer",
             default_value => 121542754,
             doc => "id of the known fusions software result"

@@ -14,8 +14,8 @@ class Genome::InstrumentData::AlignmentResult::RtgMapx{
         aligner_name => { value => 'rtg mapx', is_param=>1 },
     ],
     has => [
-        _max_read_id_seen => { default_value => 0, is_optional => 1},
-        _file_input_option =>   { default_value => 'fastq', is_optional => 1},
+        _max_read_id_seen => { default_value => 0, is_optional => 1, is_transient => 1 },
+        _file_input_option =>   { default_value => 'fastq', is_optional => 1, is_transient => 1 },
     ]
 };
 
