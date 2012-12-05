@@ -378,8 +378,13 @@ sub contigs_quals_file {
     my $self = shift;
     return $self->resolve_contigs_quals_file;
 }
+
 sub resolve_contigs_quals_file {
     return $_[0]->resolve_edit_dir.'/contigs.quals';
+}
+
+sub contigs_cmt_file {
+    return $_[0]->assembly_directory.'/edit_dir/contigs.cmt';
 }
 
 sub gap_sizes_file {
