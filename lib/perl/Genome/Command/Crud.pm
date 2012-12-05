@@ -99,6 +99,7 @@ sub init_sub_commands {
     # Create the sub commands
     my @command_names = (qw/ create list update delete /);
     my @command_classes;
+    my @command_names_used; #omits anything skipped
     for my $command_name ( @command_names ) {
         # config for this sub command
         my %command_config;
@@ -127,6 +128,7 @@ sub init_sub_commands {
             Carp::confess('Cannot dynamically create class for sub command name: '.$command_name);
         }
         push @command_classes, $sub_class;
+        push @command_names_used, $command_name;
         no strict;
         *{ $sub_class.'::_display_name_for_value' } = \&display_name_for_value;
     }
@@ -139,9 +141,11 @@ sub init_sub_commands {
 
     # Overload sub command classes to return these in memory ones, plus the existing ones
     my %sub_command_classes = map { $_ => 1 } ( @command_classes, @namespace_sub_command_classes );
+    my %sub_command_names = map { $_ => 1 } ( @command_names_used, @namespace_sub_command_names );
     no strict;
     *{ $config{namespace}.'::sub_command_classes' } = sub{ return keys %sub_command_classes; };
-    
+    *{ $config{namespace}.'::sub_command_names' } = sub{ return keys %sub_command_names; };
+
     return 1;
 }
 
