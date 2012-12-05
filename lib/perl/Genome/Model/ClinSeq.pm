@@ -204,10 +204,16 @@ sub _resolve_workflow_for_build {
     # This must be updated for each new tool added which is "terminal" in the workflow!
     # (too bad it can't just be inferred from a dynamically expanding output connector)
     my @output_properties = qw(
+        main_result
         summarize_builds_result
-        summarize_svs_result
-        summarize_cnvs_result
     );
+
+    if ($build->wgs_build) {
+        push @output_properties, qw( 
+            summarize_svs_result
+            summarize_cnvs_result
+        );
+    }
 
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
@@ -300,6 +306,7 @@ sub _resolve_workflow_for_build {
     /) {
         $add_link->($input_connector, $in, $main_op, $in);
     }
+    $add_link->($main_op, 'result', $output_connector, 'main_result');
   
 
     #
