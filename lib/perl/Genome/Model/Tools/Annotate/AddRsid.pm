@@ -21,6 +21,20 @@ class Genome::Model::Tools::Annotate::AddRsid {
     ],
 };
 
+sub help_synopsis {
+    my $self = shift;
+    return <<"EOS"
+gmt annotate add-rsid --anno-file test.annotate.top --vcf-file=snvs.annotated.vcf.gz --output-file=test.annotate.rsid.top
+EOS
+}
+
+sub help_detail {                           
+    return <<EOS 
+    This tool appends Rsid and GMAF information to the end of the annotation file as 2 extra columns.  It grabs the dbSNP id and GMAF information from the annotated snv vcf file in the somatic varation build variants subdirectory.  Missing or undefined values are denoted by '-'.
+
+EOS
+    }
+
 sub execute {
 
     $DB::single=1;
