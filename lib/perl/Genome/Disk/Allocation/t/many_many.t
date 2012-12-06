@@ -11,7 +11,7 @@ my $group_total_kb = 0;
 my $group;
 my $n_volumes = 10;
 for my $n (1..$n_volumes) {
-    my $total_kb = 100;
+    my $total_kb = 200;
     $group_total_kb += $total_kb;
     my $volume = create_tmpfs_volume(total_kb => $total_kb);
     ($group) = $volume->groups;
@@ -25,7 +25,7 @@ my @pids;
 diag 'Errors below about not creating allocations are to be expected.';
 while ($allocated_kb < int(0.95 * $group_total_kb)) {
     my $allocations_per_child = 10;
-    my $kilobytes_requested = 1 + int(rand(10));
+    my $kilobytes_requested = 10 + int(rand(20));
     push @pids, spawn_child(
         barrier => $barrier,
         closure => sub {
