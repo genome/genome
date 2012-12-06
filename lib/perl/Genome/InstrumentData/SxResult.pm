@@ -256,8 +256,7 @@ sub _output_config_params {
                 $self->error_message('No basename for SX output config params! '.Data::Dumper::Dumper(\%params));
                 return;
             }
-            elsif ( $params{basename} !~ /^[\w\d\-_]$/ ) {
-                #elsif ( $params{basename} =~ m#^/# or $params{basename} !~ /^[\w\d\-_]$/ ) {
+            elsif ( $params{basename} !~ /^[\w\d\.\-_]+$/ ) {
                 $self->error_message('Malformed basename for SX output config params! '.Data::Dumper::Dumper(\%params));
                 return;
             }
