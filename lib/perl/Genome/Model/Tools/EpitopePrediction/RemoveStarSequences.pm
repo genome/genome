@@ -1,4 +1,4 @@
-#!/gsc/bin/perl
+package Genome::Model::Tools::EpitopePrediction::RemoveStarSequences;
 
 use strict;
 use warnings;
