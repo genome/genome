@@ -13,8 +13,11 @@ use Test::More;
 
 use above qw(Genome);
 
+ok(-f '../Genome.pm', 'currently at top of namespace') or die;
+
 my $sr_classname = 'Genome::SoftwareResult';
-my @classnames = qx(ur show subclasses --superclass $sr_classname --flat);
+my @classnames = qx(ur show subclasses --superclass $sr_classname --flat --recalculate);
+is($?, 0, 'ur show subclasses command exited 0') or die;
 chomp @classnames;
 ok(@classnames > 0, "got subclasses of $sr_classname");
 
