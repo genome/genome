@@ -21,7 +21,7 @@ sub execute {
         my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData->create(
             build => $self->build,
         );
-        $process_ok = $cmd->prepare_instrument_data;
+        $process_ok = $cmd->execute;
     }
     else {
         $process_ok = $self->build->prepare_instrument_data;

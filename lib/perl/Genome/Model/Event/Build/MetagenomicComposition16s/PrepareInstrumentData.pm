@@ -18,10 +18,10 @@ sub execute {
 
     my $process_ok;
     if ( $self->sequencing_platform eq 'sanger' ) {
-        my $cmd = Genome::Model::MetagenomicComposition16s::Command::ProcessSangerInstrumentData->create(
+        my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData->create(
             build => $self->build,
         );
-        $process_ok = $cmd->prepare_instrument_data;
+        $process_ok = $cmd->execute;
     }
     else {
         $process_ok = $self->build->prepare_instrument_data;
