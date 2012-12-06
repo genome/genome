@@ -72,24 +72,10 @@ sub parse_reader_config {
 
     Carp::confess('No config to parse') if not $config;
 
-    my %params;
-    my (@tokens) = split(':', $config);
-    if ( not @tokens ) {
-        $self->error_message("Failed to split config: $config");
+    my %params = Genome::Model::Tools::Sx::Functions->config_to_hash($config);
+    if ( not %params ) {
+        $self->error_message("Failed to parse config! $config");
         return;
-    }
-
-    for my $token ( @tokens ) {
-        my ($key, $value) = split('=', $token);
-        if ( defined $value ) {
-            $params{$key} = $value;
-            next;
-        }
-        if ( $params{file} ) {
-            $self->error_message('Multiple values for "file" in config');
-            return;
-        }
-        $params{file} = $key;
     }
 
     if ( not $params{file} ) {

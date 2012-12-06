@@ -17,6 +17,30 @@ is(Genome::Model::Tools::Sx::Functions->calculate_qualities_over_minumum('BBAB<B
 is(Genome::Model::Tools::Sx::Functions->minimum_quality('BBBBBBBBBB<BBBBBBBBBB'), 27, 'minimum quality'); 
 is(Genome::Model::Tools::Sx::Functions->maximum_quality('BBBBBBBBBBCBBBBBBBBBB'), 34, 'maximum quality'); 
 
+# Config processing
+# fail
+ok(!Genome::Model::Tools::Sx::Functions->hash_to_config, 'Hash to config fails w/o hash');
+is(Genome::Model::Tools::Sx::Functions->error_message, 'No hash to convert to config!', 'Correct error message');
+ok(!Genome::Model::Tools::Sx::Functions->hash_to_config(array => []), 'Hash to config fails w/ array value');
+like(Genome::Model::Tools::Sx::Functions->error_message, qr/^Unsupported data type \(ARRAY\) in hash!/, 'Correct error message');
+
+ok(!Genome::Model::Tools::Sx::Functions->config_to_hash, 'Config to hash fails w/o hash');
+is(Genome::Model::Tools::Sx::Functions->error_message, 'No config to convert to hash!', 'Correct error message');
+ok(!Genome::Model::Tools::Sx::Functions->config_to_hash('array=val1:array=val2'), 'Config to hash fails w/ multiple values');
+is(Genome::Model::Tools::Sx::Functions->error_message, 'Duplicate key (array) in config! array=val1:array=val2', 'Correct error message');
+
+# success
+my %expected_hash = (
+    name => 'Barack',
+    type => 'president',
+    other => 'Obama'
+);
+my $expected_config = 'name=Barack:other=Obama:type=president';
+my $config = Genome::Model::Tools::Sx::Functions->hash_to_config(%expected_hash);
+is($config, $expected_config, 'Hash to config');
+my %hash = Genome::Model::Tools::Sx::Functions->config_to_hash($config);
+is_deeply(\%hash, \%expected_hash, 'Config to hash');
+
 done_testing();
 exit;
 
