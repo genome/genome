@@ -287,6 +287,11 @@ sub reference_being_replaced_for_input {
             }
         }
     }
+
+    if($input->name eq 'instrument_data') {
+        return ($self->processing_profile->alignment_strategy !~ 'imported'); #as long as it's not "imported", we'll re-align
+    }
+
     return;
 }
 

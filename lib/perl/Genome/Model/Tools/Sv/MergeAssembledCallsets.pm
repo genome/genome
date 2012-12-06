@@ -56,10 +56,6 @@ class Genome::Model::Tools::Sv::MergeAssembledCallsets {
             is => 'Text',
             doc => 'dump breakpoint sequences to this fasta file',
         },
-        name_filter => { #-L
-            is => 'Text',
-            doc => 'ignore SVs that are detected in sets with this string in the name',
-        },
         use_hq_alignment_filter => { #-h
             is => 'Boolean',
             default_value => 0,
@@ -86,6 +82,10 @@ class Genome::Model::Tools::Sv::MergeAssembledCallsets {
             is => 'Float',
             default_value => '0.8',
             doc => 'used with "exclude_file" option: fraction of overlap between two events',
+        },
+        name_filter => { #-L
+            is => 'Text',
+            doc => 'ignore SVs that are detected in sets with this string in the name',
         },
     ],
 };
