@@ -1,4 +1,4 @@
-package Genome::Model::MetagenomicComposition16s::Command::ProcessSangerInstrumentData; 
+package Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData; 
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use Carp 'confess';
 
-class Genome::Model::MetagenomicComposition16s::Command::ProcessSangerInstrumentData {
+class Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData {
     is => 'Command::V2',
     has => [
         build => {
