@@ -100,7 +100,7 @@ sub parse_line {
     my @alt_alleles;
     my $alt_allele;
     my $ref_allele;
-  
+
     if ($indel_call_1 ne '*') {
         push(@alt_alleles, $indel_call_1);
     }
@@ -110,39 +110,47 @@ sub parse_line {
     if (@alt_alleles == 0) {
         die $self->error_message("No indel calls were made on this line: $indel_call_1/$indel_call_2");
     }
-
-    #Assumption: if there are two alternate alleles, they are either both
-    #insertions or both deletions.
-    if ($alt_alleles[0] =~m/\+/) { #insertion
-        $alt_allele = $leading_base.substr($alt_alleles[0],1);
-        if (defined $alt_alleles[1]) {
-            $alt_allele .= ','.$leading_base.substr($alt_alleles[1],1);
+    
+    # Partition calls into insertions and deletions
+    my @insertions;
+    my @deletions;
+    for my $alt (@alt_alleles) {
+        if ($alt =~ /^\+/) {
+            push(@insertions, substr($alt, 1));
         }
-        $ref_allele = $leading_base;
-    }
-    elsif ($alt_alleles[0] =~m/-/) { #deletion
-        $alt_allele = $leading_base;
-
-        #If there are two or more deletions, we want the longer one as the
-        #ref allele
-        if (defined $alt_alleles[1]) {
-            my $length_difference = abs(length($alt_alleles[0]) - length($alt_alleles[1]));
-            if (length($alt_alleles[0]) > length($alt_alleles[1])) {
-                $ref_allele = $leading_base.substr($alt_alleles[0],1);
-                $alt_allele .= ','.$leading_base.substr($alt_alleles[1], 1);
-            }
-            else {
-                $ref_allele = $leading_base.substr($alt_alleles[1],1);
-                $alt_allele .= ','.$leading_base.substr($alt_alleles[0], 1);
-            }
+        elsif ($alt =~ /^\-/) {
+            push(@deletions, substr($alt, 1));
         }
         else {
-            $ref_allele = $leading_base.substr($alt_alleles[0],1);
+            die $self->error_message("Insertion/deletion type not recognized: ".$alt_alleles[0]);
         }
     }
-    else {
-        die $self->error_message("Insertion/deletion type not recognized: ".$alt_alleles[0]);
+
+    @deletions = sort { length($b) <=> length($a) } @deletions;
+
+    my $ref_tail = "";
+    if (!@deletions) {
+        $ref_allele = $leading_base;
+    } else {
+        $ref_allele = $leading_base . $deletions[0];
+        $ref_tail = $deletions[0];
     }
+
+    my @final_alts;
+    for my $ins (@insertions) {
+        push(@final_alts, $leading_base . $ins . $ref_tail);
+    }
+
+    for my $del (@deletions) {
+        my $tail = "";
+        if (length($del) < length($ref_tail)) {
+            $tail = substr($ref_tail, length($del));
+        }
+        push(@final_alts, $leading_base . $tail);
+    }
+
+    $alt_allele = join(",", @final_alts);
+
 
     #TODO this is turned off for now because it interferes with applying filters (bed coordinates will be different once left shifted)
     # ($chr, $pos, $ref_allele, $alt_allele) = $self->normalize_indel_location($chr, $pos, $ref_allele, $alt_allele);
