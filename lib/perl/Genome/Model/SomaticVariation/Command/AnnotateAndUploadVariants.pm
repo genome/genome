@@ -217,6 +217,19 @@ sub execute{
                 ) || die "Failed to execute Joinx Vcf annotation using db: $annotation_vcf";
                 $self->status_message("Successfully annotated VCF with information from $annotation_vcf");
             }
+            foreach my $annotation_prefix ("snvs.hq.tier1", "snvs.hq.tier2") {
+                my $annotation_top_file = $build->data_set_path("effects/$annotation_prefix", $annotation_output_version, "annotated.top");
+                next unless (-e $annotation_top_file);
+                my $vcf_file = $vcf_files{"snvs.hq"};
+                $vcf_file = $vcf_file.".annotated.vcf.gz";
+                $vcf_file =~ s/vcf.gz.//;
+                $self->status_message("Adding rsid column for $annotation_prefix from vcf file ".$vcf_file);
+                my $rv = Genome::Model::Tools::Annotate::AddRsid->execute(
+                    anno_file => $annotation_top_file,
+                    vcf_file => $vcf_file,
+                    output_file => $build->data_set_path("effects/$annotation_prefix.rsid", $annotation_output_version, "annotated.top"),
+                );
+            }
         }
         else {
             $self->warning_message("No snvs vcf available for previously_discovered_variations_build");

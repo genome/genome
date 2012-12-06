@@ -1262,12 +1262,12 @@ sub create_somatic_variation_model{
   #Make sure neither of the input models/builds has been archived before proceeding...
   my $tumor_build = $best_tumor_model->last_succeeded_build;
   if ($tumor_build->is_archived){
-    $self->status_message("\tWARNING -> Tumor build is currently archived. Run: genome model build unarchive " . $tumor_build->id);
+    $self->status_message("\tWARNING -> Tumor build is currently archived. Run: bsub genome model build unarchive " . $tumor_build->id);
     return;
   }
   my $normal_build = $best_normal_model->last_succeeded_build;
   if ($normal_build->is_archived){
-    $self->status_message("\tWARNING -> Normal build is currently archived. Run: genome model build unarchive " . $normal_build->id);
+    $self->status_message("\tWARNING -> Normal build is currently archived. Run: bsub genome model build unarchive " . $normal_build->id);
     return;
   }
   my @commands;
@@ -1368,9 +1368,9 @@ sub check_models_status{
         #Before attempting to use a model/build as input to another model, make sure it is not archived (and check whether it has been set as do-not-archive)
         #- Do not start automatically marking these things as do-not-archive, leave it to the end user to mark the actual desired clin-seq models as do-not-archive
         if ($build->is_archived){
-          $self->status_message("\tWARNING -> Successful build $build_id of model $model_id that meets desired criteria is currently archived! Consider running: genome model build unarchive $build_id") unless $silent;
+          $self->status_message("\tWARNING -> Successful build $build_id of model $model_id that meets desired criteria is currently archived! Consider running: bsub genome model build unarchive $build_id") unless $silent;
         }elsif ($build->archivable){
-          $self->status_message("\tSuccessful build $build_id of model $model_id that meets desired criteria is currently archivable. Consider running: genome model build set-do-not-archive $build_id") unless $silent;
+          $self->status_message("\tSuccessful build $build_id of model $model_id that meets desired criteria is currently archivable. Consider running: genome model build set-do-not-archive --reason='build needed for clin-seq model' $build_id") unless $silent;
         }
       }elsif ($status =~ /running/i){
         $running_builds++;
@@ -1531,7 +1531,7 @@ sub create_clinseq_model{
     if ($build){
       if ($build->is_archived){
         $ready = 0;
-        $self->status_message("\tWARNING -> Build is currently archived for model: " . $model->name . "\n\tRun: genome model build unarchive " . $build->id);
+        $self->status_message("\tWARNING -> Build is currently archived for model: " . $model->name . "\n\tRun: bsub genome model build unarchive " . $build->id);
       }
     }else{
       $ready = 0;

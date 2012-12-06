@@ -14,6 +14,9 @@
 
   <link fromOperation="Alignments" fromProperty="merged_bam_path" toOperation="Detect Variants" toProperty="bam_path"/>
   <link fromOperation="Alignments" fromProperty="control_merged_bam_path" toOperation="Detect Variants" toProperty="control_bam_path"/>
+  <link fromOperation="Alignments" fromProperty="build_id" toOperation="Validate SVs" toProperty="build_id"/>
+
+  <link fromOperation="Validate SVs" fromProperty="output_dir" toOperation="output connector" toProperty="sv_validation_output"/>
 
   <link fromOperation="Detect Variants" fromProperty="build_id" toOperation="Validate Small Indels" toProperty="somatic_validation_build" />
 
@@ -46,6 +49,10 @@
   </operation>
   <operation name="Reference Coverage Stats (Normal)">
       <operationtype commandClass="Genome::Model::SomaticValidation::Command::CoverageStats" typeClass="Workflow::OperationType::Command"/>
+  </operation>
+
+  <operation name="Validate SVs">
+      <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateSvs" typeClass="Workflow::OperationType::Command"/>
   </operation>
 
   <operation name="Detect Variants">
@@ -98,6 +105,7 @@
     <outputproperty>normal_reference_coverage_result</outputproperty>
     <outputproperty>build_id</outputproperty>
     <outputproperty>small_indel_validation_output</outputproperty>
+    <outputproperty>sv_validation_output</outputproperty>
 
   </operationtype>
 
