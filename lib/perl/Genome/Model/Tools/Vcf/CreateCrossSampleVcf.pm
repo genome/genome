@@ -108,6 +108,8 @@ sub execute {
             joinx_version => $self->joinx_version,
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
+    $self->status_message("Got or created software result with id "
+        . $software_result->id . " (test_name='" . $software_result->test_name . "')");
     Genome::Sys->symlink_directory($software_result->output_dir,
         $self->output_directory);
     $self->software_result($software_result);
@@ -175,6 +177,7 @@ sub _handle_indels {
     my $indel_vcf_header = "";
     my $indel_vcf_format = "";
     my @samples = ();
+    my @sample_names = ();
     my $num_samples = @samples;
     my %sample_indels = ();
 
@@ -183,7 +186,9 @@ sub _handle_indels {
     my $ea = each_array(@builds, @indel_files);
     while( my ($build, $indel_file) = $ea->() ) {
         my $sample = $build->model->subject->id;
+        my $sample_name = $build->model->subject->name;
         push @samples, $sample;
+        push @sample_names, $sample_name;
         $num_samples++;
 
         ## Create output directory for this sample ##
@@ -231,9 +236,9 @@ sub _handle_indels {
     my $OUTFILE = Genome::Sys->open_file_for_writing($out_filename);
     print $OUTFILE "$indel_vcf_header\n";
     print $OUTFILE "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT";
-    foreach my $sample (@samples)
+    foreach my $sample_name (@sample_names)
     {
-        print $OUTFILE "\t$sample";
+        print $OUTFILE "\t$sample_name";
     }
     print $OUTFILE "\n";
 
