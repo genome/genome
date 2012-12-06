@@ -166,7 +166,14 @@ sub execute {
             $success = Workflow::Simple::resume_lsf($w->id);
         }
         else {
-            my %inputs = $build->model->map_workflow_inputs($build);
+            my %inputs;
+            eval {
+                %inputs = $build->model->map_workflow_inputs($build);
+            };
+            if($@) {
+                return $self->_post_build_failure($@);
+            }
+
             if (Workflow::DataSource::InstanceSchema->has_default_handle) {
                 $self->status_message("Disconnecting InstanceSchema default handle.");
                 Workflow::DataSource::InstanceSchema->disconnect_default_dbh();
