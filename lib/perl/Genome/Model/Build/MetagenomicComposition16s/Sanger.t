@@ -134,10 +134,10 @@ for my $file_name ( keys %file_methods_and_results ) {
 }
 
 #< PREPARE >#
-my $cmd = Genome::Model::MetagenomicComposition16s::Command::ProcessSangerInstrumentData->create(
+my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData->create(
     build => $build,
 );
-my $process_ok = $cmd->prepare_instrument_data;
+my $process_ok = $cmd->execute;
 ok($process_ok, 'prepare instrument data');
 ok(-s $amplicon_set->processed_fasta_file, 'processed fasta file');
 is(

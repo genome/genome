@@ -18,7 +18,7 @@ class Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentDa
     ],
 };
 
-sub prepare_instrument_data {
+sub execute {
     my $self = shift;
 
     $self->_dump_and_link_instrument_data
