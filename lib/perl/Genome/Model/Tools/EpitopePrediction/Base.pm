@@ -11,6 +11,7 @@ class Genome::Model::Tools::EpitopePrediction::Base {
 	is_abstract => 1,
 	
 };
+
 sub help_detail {
     "These commands are setup to run epitope prediction";
 }
