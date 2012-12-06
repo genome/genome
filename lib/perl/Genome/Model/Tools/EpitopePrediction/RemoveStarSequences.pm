@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use Bio::SeqIO;
 
-
-
 class Genome::Model::Tools::EpitopePrediction::RemoveStarSequences {
     is => 'Genome::Model::Tools::EpitopePrediction::Base',
     has_input => [
@@ -20,12 +18,9 @@ class Genome::Model::Tools::EpitopePrediction::RemoveStarSequences {
     ],
 };
 
-
 sub help_brief {
     "Outputs a FASTA file after removing *s from the input Fasta sequence",
 }
-
-
 
 sub execute {
     my $self = shift;

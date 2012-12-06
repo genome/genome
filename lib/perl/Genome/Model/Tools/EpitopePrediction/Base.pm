@@ -5,11 +5,9 @@ use warnings;
 
 use Genome;
 
-
 class Genome::Model::Tools::EpitopePrediction::Base {
-	is          => 'Command::V2',
-	is_abstract => 1,
-	
+    is          => 'Command::V2',
+    is_abstract => 1,
 };
 
 sub help_detail {
@@ -22,6 +20,5 @@ sub create {
     unless ($self) { return; }
     return $self;
 }
-
 
 1;
