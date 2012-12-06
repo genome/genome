@@ -315,7 +315,7 @@ sub package_file_for_tcga {
     $mfh->close;
 
     my $tar_cmd = "tar -cvzf " . $self->output_file . " $working_dir";
-    unless (Genome::Sys->shellcmd(cmd =>$tar_cmd, output_files => [$self->output_file, $self->output_file.".md5"])) {
+    unless (Genome::Sys->shellcmd(cmd =>$tar_cmd, output_files => [$self->output_file])) {
         die $self->error_message("Failed to run $tar_cmd");
     }
 
