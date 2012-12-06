@@ -1,4 +1,4 @@
-package Genome::Model::Tools::EpitopePrediction;
+package Genome::Model::Tools::EpitopePrediction::Base;
 
 use strict;
 use warnings;
