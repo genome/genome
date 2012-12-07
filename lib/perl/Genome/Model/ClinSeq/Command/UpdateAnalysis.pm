@@ -122,7 +122,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         tumor_sample_common_names => {
               #TODO: Is there a better way to determine which samples are 'tumor'?
               is => 'Text',
-              default => 'tumor|met|post treatment|recurrence met|pre-treatment met',
+              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion',
               doc => 'The possible sample common names used in the database to specify a Tumor sample',
         },
         instrument_data_to_exclude => {
@@ -499,10 +499,8 @@ sub dna_samples{
 
   foreach my $s (@dna_samples){
     my $current_scn = $s->common_name || "NULL";
-    my $normal_def = $self->normal_sample_common_names;
-    push (@normal_samples, $s) if ($current_scn =~ /$normal_def/i);
-    my $tumor_def = $self->tumor_sample_common_names;
-    push (@tumor_samples, $s) if ($current_scn =~ /$tumor_def/i);
+    push (@normal_samples, $s) if ($current_scn =~ /$self->normal_sample_common_names/i);
+    push (@tumor_samples, $s) if ($current_scn =~ /$self->tumor_sample_common_names/i);
   }
   if (scalar(@normal_samples) > 1){
     $self->error_message("More than one normal DNA sample was specified for this individual - check samples or normal/tumor definitions");
