@@ -63,7 +63,7 @@ sub config_to_hash {
     my %hash;
     for my $part ( split(':', $config) ) {
         my ($key, $value) = split('=', $part);
-        if ( not $value ) {
+        if ( not defined $value ) {
             $value = $key;
             $key = 'file';
         }
