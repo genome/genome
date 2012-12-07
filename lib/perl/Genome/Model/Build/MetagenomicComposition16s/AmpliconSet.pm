@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+require File::Basename;
+
 class Genome::Model::Build::MetagenomicComposition16s::AmpliconSet {
     is => 'UR::Object',
     has => [
@@ -125,6 +127,16 @@ sub amplicon_iterator {
 #<>#
 
 #< FILES/READERS/WRITERS >#
+sub base_name_for {
+    my ($self, $type) = @_;
+
+    my $file = $self->_file_for($type);
+    my $base_name = File::Basename::basename($file);
+    Carp::confess("Failed to get base name for file! $file") if not $base_name;
+
+    return $base_name;
+}
+
 sub _file_for {
     my ($self, $type) = @_;
 
