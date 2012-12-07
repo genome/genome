@@ -12,7 +12,6 @@ class Genome::Model::ClinSeq {
         tumor_rnaseq_model  => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
         normal_rnaseq_model => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
         force               => { is => 'Boolean', doc => 'skip sanity checks on input models' }, 
-        dry_run             => { is => 'Boolean', doc => 'skip doing actual work (tests API)', },
     ],
     has_optional_param => [
         #Processing profile parameters would go in here
@@ -106,9 +105,6 @@ sub map_workflow_inputs {
     my $tumor_rnaseq_build  = $build->tumor_rnaseq_build;
     my $normal_rnaseq_build = $build->normal_rnaseq_build;
     
-    #This input is used for testing, and when set will not actually do any work just organize params
-    my $dry_run = $build->dry_run;
-
     #Note that the option names are being truncated below here deliberately.  Getopt will allow the names to be arbitrarily shorter as long as they are still unique/unambiguous
     my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
     if ($wgs_build) {
@@ -150,7 +146,6 @@ sub map_workflow_inputs {
         common_name => $final_name,
         verbose => 1,
         clean => 0, # unfriendly to parallelization ..dir is new and will be clean
-        dry_run => $dry_run,
     );
 
     my $patient_dir = $data_directory . "/" . $final_name;
@@ -210,10 +205,22 @@ sub _resolve_workflow_for_build {
 
     if ($build->wgs_build) {
         push @output_properties, qw( 
+            summarize_wgs_tier1_snv_support_result
             summarize_svs_result
             summarize_cnvs_result
         );
     }
+
+    if ($build->exome_build) {
+        push @output_properties, 'summarize_exome_tier1_snv_support_result';
+    }
+
+    if ($build->wgs_build and $build->exome_build) {
+        push @output_properties, 'summarize_wgs_exome_tier1_snv_support_result';
+
+    }
+
+    # Make the workflow and some convenience wrappers for adding steps and links
 
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
@@ -256,6 +263,7 @@ sub _resolve_workflow_for_build {
 
     my $add_link = sub {
         my ($from_op, $from_p, $to_op, $to_p) = @_;
+        $to_p = $from_p if not defined $to_p;
         my $link = $workflow->add_link(
             left_operation => $from_op,
             left_property => $from_p,
@@ -267,23 +275,20 @@ sub _resolve_workflow_for_build {
     };
   
 
-
     #
     # Add steps which go in parallel with the Main step before setting up Main.
     # This will ensure testing goes more quickly because these will happen first.
     #
     
-    unless ($build->dry_run) {
-        #Summarize build inputs using SummarizeBuilds.pm
-        $step++; 
-        my $msg = "Step $step. Creating a summary of input builds using summarize-builds";
-        my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
-        $add_link->($input_connector, 'build', $summarize_builds_op, 'builds');
-        $add_link->($input_connector, 'summarize_builds_outdir', $summarize_builds_op, 'outdir');
-        $add_link->($input_connector, 'summarize_builds_skip_lims_reports', $summarize_builds_op, 'skip_lims_reports');
-        $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
-        $add_link->($summarize_builds_op, 'result', $output_connector, 'summarize_builds_result');
-    }
+    #Summarize build inputs using SummarizeBuilds.pm
+    $step++; 
+    my $msg = "Step $step. Creating a summary of input builds using summarize-builds";
+    my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
+    $add_link->($input_connector, 'build', $summarize_builds_op, 'builds');
+    $add_link->($input_connector, 'summarize_builds_outdir', $summarize_builds_op, 'outdir');
+    $add_link->($input_connector, 'summarize_builds_skip_lims_reports', $summarize_builds_op, 'skip_lims_reports');
+    $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
+    $add_link->($summarize_builds_op, 'result', $output_connector, 'summarize_builds_result');
 
     #
     # Main contains all of the original clinseq non-parallel code.
@@ -302,7 +307,6 @@ sub _resolve_workflow_for_build {
         common_name
         verbose
         clean
-        dry_run
     /) {
         $add_link->($input_connector, $in, $main_op, $in);
     }
@@ -310,29 +314,37 @@ sub _resolve_workflow_for_build {
   
 
     #
-    # When the dry_run input is set, skip the rest of the workflow (for testing).
-    #
-
-    if ($build->dry_run) {
-        # skip the rest of the workflow and have the result from Main 
-        # result stand-in for all of the results from other steps.
-        for my $out (@output_properties) {
-            # If we enable a step for use during dry-run skip
-            # and it links to the final output connector, skip it here
-            ## next if $out =~ /^summarize_builds/;
-            $add_link->($main_op, 'result', $output_connector, $out);
-        }
-        # bail and return the one step workflow
-        # with dry-run set it won't do any work
-        return $workflow;
-    }
-   
-    #
     # Add steps which follow the main step...
     # As we refactor start with things which do not feed into anything else down-stream,
     # or which only feed into things which have already been broken-out.
     #
 
+    #For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
+    #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
+    for my $run (qw/wgs exome wgs_exome/) {
+        if ($run eq 'wgs' and not $build->wgs_build) {
+            next;
+        }
+        if ($run eq 'exome' and not $build->exome_build) {
+            next;
+        }
+        if ($run eq 'wgs_exome' and not ($build->wgs_build and $build->exome_build)) {
+            next;
+        }
+        $step++;
+        my $txt_name = $run;
+        $txt_name =~ s/_/ plus /g;
+        $txt_name =~ s/wgs/WGS/;
+        $txt_name =~ s/exome/Exome/;
+        $msg = "Step $step. $txt_name BAM read counts for all BAMs associated with input models (and expression values if available) - for candidate SNVs only (VAF and FPKM)";
+        my $op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
+        $add_link->($main_op, $run . "_positions_file", $op);
+        $add_link->($main_op, 'tumor_fpkm_file', $op);
+        $add_link->($main_op, 'annotation_version', $op);
+        $add_link->($main_op, 'verbose', $op);
+        $add_link->($op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
+    }
+    
     #Generate a summary of SV results from the WGS SV results
     if ($build->wgs_build) {
         $step++; 

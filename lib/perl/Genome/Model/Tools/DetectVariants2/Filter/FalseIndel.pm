@@ -465,7 +465,12 @@ sub fails_homopolymer_check {
     ## Build a query string for the homopolymer check ##
     my $query_string = $chrom . ":" . ($chr_start - $min_homopolymer) . "-" . ($chr_stop + $min_homopolymer);
 
-    my $sequence = `samtools faidx $reference $query_string | grep -v \">\"`;
+    open my $seq_fh, '-|', 'samtools', 'faidx', $reference, $query_string
+        or die "failed to call faidx";
+    my @l = <$seq_fh>;
+    close $seq_fh;
+    my $sequence = join("", grep { $_ !~ /^>/ } @l);
+
     chomp($sequence);
 
     if($sequence) {

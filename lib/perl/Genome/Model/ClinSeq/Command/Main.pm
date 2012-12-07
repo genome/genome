@@ -19,7 +19,7 @@ BEGIN{
   $script_dir .= "/";
 }
 
-class Genome::Model::ClinSeq::Command::Main{
+class Genome::Model::ClinSeq::Command::Main {
   is => 'Command::V2',
   has_input => [
       build => { 
@@ -69,14 +69,17 @@ class Genome::Model::ClinSeq::Command::Main{
                     default_value => 0,
                     valid_values => [0,1],
                  },
-      dry_run => {
-                    is => 'Boolean',
-                    doc => 'skip actual running just verify params',
-                    default_value => 0,
-                    is_optional => 1,
-                  },
   ],
   has_output => [
+    # for SummarizeTier1SnvSupport
+    wgs_positions_file          => { is => 'FilesystemPath', is_optional => 1 },
+    exome_positions_file        => { is => 'FilesystemPath', is_optional => 1 },
+    wgs_exome_positions_file    => { is => 'FilesystemPath', is_optional => 1 },
+    tumor_fpkm_file             => { is => 'FilesystemPath', is_optional => 1 },
+    annotation_version          => { is => 'FilesystemPath', is_optional => 1,
+                                    doc => 'the "ensembl version" string used in clinseq components  ...TODO: replace with annotation build ID',
+                                },
+
     sv_summary_dir => {
                         is => 'FilesystemPath',
                         doc => 'directory for Summarize SVs',
@@ -201,185 +204,176 @@ sub _execute {
       }
   }
 
-  if ($self->dry_run) {
-    $self->status_message("\nThe Main component in ClinSeq is NOT doing any real work because 'dry run' is set!");
-  } 
-  else {
-        # THIS CODE IS ONLY RUN WHEN IN NOT IN DRY-RUN/TESTING MODE
+  #Get Entrez and Ensembl data for gene name mappings
+  my $entrez_ensembl_data = &loadEntrezEnsemblData();
 
-        #Get Entrez and Ensembl data for gene name mappings
-        my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  #Define reference builds - TODO: should determine this automatically from input builds
+  my $reference_build_ucsc = "hg19";
 
-        #Define reference builds - TODO: should determine this automatically from input builds
-        my $reference_build_ucsc = "hg19";
+  #Reference annotations - Extra annotation files not currently part of the APIPE system...
+  #TODO: Create official versions of these data on allocated disk
+  my $clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
+  my $clinseq_annotations_ucsc_dir = $clinseq_annotations_dir . "$reference_build_ucsc/";
 
-        #Reference annotations - Extra annotation files not currently part of the APIPE system...
-        #TODO: Create official versions of these data on allocated disk
-        my $clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
-        my $clinseq_annotations_ucsc_dir = $clinseq_annotations_dir . "$reference_build_ucsc/";
+  #Directory of gene lists for various purposes
+  my $gene_symbol_lists_dir = $clinseq_annotations_dir . "GeneSymbolLists/";
+  $gene_symbol_lists_dir = &checkDir('-dir'=>$gene_symbol_lists_dir, '-clear'=>"no");
 
-        #Directory of gene lists for various purposes
-        my $gene_symbol_lists_dir = $clinseq_annotations_dir . "GeneSymbolLists/";
-        $gene_symbol_lists_dir = &checkDir('-dir'=>$gene_symbol_lists_dir, '-clear'=>"no");
+  #Import a set of gene symbol lists (these files must be gene symbols in the first column, .txt extension, tab-delimited if multiple columns, one symbol per field, no header)
+  #Different sets of genes list could be used for different purposes
+  #Fix gene names as they are being imported
+  $step++; print MAGENTA, "\n\nStep $step. Importing gene symbol lists (from $gene_symbol_lists_dir)", RESET;
+  my $symbol_list_names = &importSymbolListNames('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-verbose'=>$verbose);
+  my $master_list = $symbol_list_names->{master_list};
+  my @symbol_list_names = sort {$master_list->{$a}->{order} <=> $master_list->{$b}->{order}} keys %{$master_list};
+  my $gene_symbol_lists = &importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
 
-        #Import a set of gene symbol lists (these files must be gene symbols in the first column, .txt extension, tab-delimited if multiple columns, one symbol per field, no header)
-        #Different sets of genes list could be used for different purposes
-        #Fix gene names as they are being imported
-        $step++; print MAGENTA, "\n\nStep $step. Importing gene symbol lists (from $gene_symbol_lists_dir)", RESET;
-        my $symbol_list_names = &importSymbolListNames('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-verbose'=>$verbose);
-        my $master_list = $symbol_list_names->{master_list};
-        my @symbol_list_names = sort {$master_list->{$a}->{order} <=> $master_list->{$b}->{order}} keys %{$master_list};
-        my $gene_symbol_lists = &importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+  #Create a hash for storing output files as they are created
+  my %out_paths;
+  my $out_paths = \%out_paths;
 
-        #Create a hash for storing output files as they are created
-        my %out_paths;
-        my $out_paths = \%out_paths;
+  # ** Summarize Builds is now in the workflow **
 
-        # ** Summarize Builds is now in the workflow **
-
-        #Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
-        #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
-        $step++; print MAGENTA, "\n\nStep $step. Create IGV XML session files for varying levels of detail using the input builds", RESET;
-        my $igv_session_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'igv', '-silent'=>1);
-        my $igv_xml_cmd = Genome::Model::ClinSeq::Command::DumpIgvXml->create(builds=>[$clinseq_build], outdir=>$igv_session_dir);
-        $igv_xml_cmd->queue_status_messages(1);
-        my $r = $igv_xml_cmd->execute();
-        my @output = $igv_xml_cmd->status_messages();
-        my $igv_log_file = $igv_session_dir . "DumpIgvXml.log.txt";
-        my $log = IO::File->new(">$igv_log_file");
-        $log->print(join("\n", @output));
+  #Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
+  #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
+  $step++; print MAGENTA, "\n\nStep $step. Create IGV XML session files for varying levels of detail using the input builds", RESET;
+  my $igv_session_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'igv', '-silent'=>1);
+  my $igv_xml_cmd = Genome::Model::ClinSeq::Command::DumpIgvXml->create(builds=>[$clinseq_build], outdir=>$igv_session_dir);
+  $igv_xml_cmd->queue_status_messages(1);
+  my $r = $igv_xml_cmd->execute();
+  my @output = $igv_xml_cmd->status_messages();
+  my $igv_log_file = $igv_session_dir . "DumpIgvXml.log.txt";
+  my $log = IO::File->new(">$igv_log_file");
+  $log->print(join("\n", @output));
 
 
-        #Create a summarized file of SNVs for: WGS, exome, and WGS+exome merged
-        #Grab the gene name used in the 'annotation.top' file, but grab the AA changes from the '.annotation' file
-        #Fix the gene name if neccessary...
-        $step++; print MAGENTA, "\n\nStep $step. Summarizing SNVs and Indels", RESET;
-        if ($wgs || $exome){
-            $self->importSNVs('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-patient_dir'=>$patient_dir, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>$verbose, '-filter_mt'=>$filter_mt);
+  #Create a summarized file of SNVs for: WGS, exome, and WGS+exome merged
+  #Grab the gene name used in the 'annotation.top' file, but grab the AA changes from the '.annotation' file
+  #Fix the gene name if neccessary...
+  $step++; print MAGENTA, "\n\nStep $step. Summarizing SNVs and Indels", RESET;
+  if ($wgs || $exome){
+      $self->importSNVs('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-patient_dir'=>$patient_dir, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>$verbose, '-filter_mt'=>$filter_mt);
+  }
+
+  #Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
+  my @mutation_diagram_builds;
+  push (@mutation_diagram_builds, $builds->{wgs}) if $builds->{wgs};
+  push (@mutation_diagram_builds, $builds->{exome}) if $builds->{exome};
+  if (scalar(@mutation_diagram_builds)){
+      $step++; print MAGENTA, "\n\nStep $step. Creating mutation-diagram plots", RESET;
+      my $mutation_diagram_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'mutation_diagrams', '-silent'=>1);
+      my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(builds=>\@mutation_diagram_builds, outdir=>$mutation_diagram_dir, collapse_variants=>1, max_snvs_per_file=>250, max_indels_per_file=>250);
+      my $r = $mutation_diagram_cmd->execute();
+  }
+
+  #TODO: More comprehensive processing of SNVs and InDels
+  #Import SNVs and Indels in a more complete form
+  #Make copies of Tier1,2,3 files
+  #Make a master list of all distinct SNV/Indels - add a column that classifies them by Tier - Exclude Mt positions
+  #For the master list of SNVs (also for INDELS) get the BAM read counts for all positions in tumor and normal
+  #Add dbSNP annotations to the SNVs/InDELs
+  #Add 1000 genomes annotations to the SNVs/InDELs
+
+  #This is now being run earlier so that the cna-seg output can be used by cn-view
+  #Generate a clonality plot for this patient (if WGS data is available)
+  my $clonality_dir = $patient_dir . "/clonality/";
+  if ($wgs){
+      $step++; print MAGENTA, "\n\nStep $step. Creating clonality plot for $common_name", RESET;
+      my $clonality_stdout = $clonality_dir . "clonality.stdout";
+      my $clonality_stderr = $clonality_dir . "clonality.stderr";
+
+      if (-e $clonality_dir && -d $clonality_dir){
+      if ($verbose){print YELLOW, "\n\nClonality dir already exists - skipping", RESET;}
+      }else{
+        my $clonality_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'clonality', '-silent'=>1);
+        my $wgs_somatic_build = $builds->{wgs};
+        my $wgs_somatic_build_id = $wgs_somatic_build->id;
+        
+        my $master_clonality_cmd = "genome model clin-seq generate-clonality-plots --somatic-var-build=$wgs_somatic_build_id  --output-dir=$clonality_dir  --common-name='$common_name'" . ($verbose ? " --verbose" : "");
+        if ($verbose){
+            print YELLOW, "\n\n$master_clonality_cmd", RESET;
+        }else{
+            $master_clonality_cmd .= " 1>$clonality_stdout 2>$clonality_stderr";
         }
-
-        #Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
-        my @mutation_diagram_builds;
-        push (@mutation_diagram_builds, $builds->{wgs}) if $builds->{wgs};
-        push (@mutation_diagram_builds, $builds->{exome}) if $builds->{exome};
-        if (scalar(@mutation_diagram_builds)){
-            $step++; print MAGENTA, "\n\nStep $step. Creating mutation-diagram plots", RESET;
-            my $mutation_diagram_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'mutation_diagrams', '-silent'=>1);
-            my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(builds=>\@mutation_diagram_builds, outdir=>$mutation_diagram_dir, collapse_variants=>1, max_snvs_per_file=>250, max_indels_per_file=>250);
-            my $r = $mutation_diagram_cmd->execute();
-        }
-
-        #TODO: More comprehensive processing of SNVs and InDels
-        #Import SNVs and Indels in a more complete form
-        #Make copies of Tier1,2,3 files
-        #Make a master list of all distinct SNV/Indels - add a column that classifies them by Tier - Exclude Mt positions
-        #For the master list of SNVs (also for INDELS) get the BAM read counts for all positions in tumor and normal
-        #Add dbSNP annotations to the SNVs/InDELs
-        #Add 1000 genomes annotations to the SNVs/InDELs
-
-        #This is now being run earlier so that the cna-seg output can be used by cn-view
-        #Generate a clonality plot for this patient (if WGS data is available)
-        my $clonality_dir = $patient_dir . "/clonality/";
-        if ($wgs){
-            $step++; print MAGENTA, "\n\nStep $step. Creating clonality plot for $common_name", RESET;
-            my $clonality_stdout = $clonality_dir . "clonality.stdout";
-            my $clonality_stderr = $clonality_dir . "clonality.stderr";
-
-            if (-e $clonality_dir && -d $clonality_dir){
-            if ($verbose){print YELLOW, "\n\nClonality dir already exists - skipping", RESET;}
-            }else{
-              my $clonality_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'clonality', '-silent'=>1);
-              my $wgs_somatic_build = $builds->{wgs};
-              my $wgs_somatic_build_id = $wgs_somatic_build->id;
-              
-              my $master_clonality_cmd = "genome model clin-seq generate-clonality-plots --somatic-var-build=$wgs_somatic_build_id  --output-dir=$clonality_dir  --common-name='$common_name'" . ($verbose ? " --verbose" : "");
-              if ($verbose){
-                  print YELLOW, "\n\n$master_clonality_cmd", RESET;
-              }else{
-                  $master_clonality_cmd .= " 1>$clonality_stdout 2>$clonality_stderr";
-              }
-              Genome::Sys->shellcmd(cmd=>$master_clonality_cmd, output_files=>["$clonality_dir$common_name.clonality.pdf"]);  
-            }
-        }
+        Genome::Sys->shellcmd(cmd=>$master_clonality_cmd, output_files=>["$clonality_dir$common_name.clonality.pdf"]);  
+      }
+  }
 
 
-        #Run CNView analyses on the CNV data to identify amplified/deleted genes
-        #TODO: Currently CNV loci are calculated using combined annotations and then summarized for a hard coded list of Ensembl gene names.  Clean this up to use Ensembl data only...
-        #TODO: Gene annotation information should come from the annotation build!  Not a hard-coded custom path.  Produce a summary for a single gene of interest list, not three of them
-        $step++; print MAGENTA, "\n\nStep $step. Identifying CNV altered genes", RESET;
-        if ($wgs){
-            my @cnv_symbol_lists = qw (All Kinase_dGene CancerGeneCensusPlus_Sanger AntineoplasticTargets_DrugBank);
-            &identifyCnvGenes('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-reference_build_name'=>$reference_build_ucsc, '-patient_dir'=>$patient_dir, '-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@cnv_symbol_lists, '-annotation_build_id'=>$annotation_build_id, '-segments_file'=>$clonality_dir.'/cnaseq.cnvhmm','-verbose'=>$verbose);
-        }
+  #Run CNView analyses on the CNV data to identify amplified/deleted genes
+  #TODO: Currently CNV loci are calculated using combined annotations and then summarized for a hard coded list of Ensembl gene names.  Clean this up to use Ensembl data only...
+  #TODO: Gene annotation information should come from the annotation build!  Not a hard-coded custom path.  Produce a summary for a single gene of interest list, not three of them
+  $step++; print MAGENTA, "\n\nStep $step. Identifying CNV altered genes", RESET;
+  if ($wgs){
+      my @cnv_symbol_lists = qw (All Kinase_dGene CancerGeneCensusPlus_Sanger AntineoplasticTargets_DrugBank);
+      &identifyCnvGenes('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-reference_build_name'=>$reference_build_ucsc, '-patient_dir'=>$patient_dir, '-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@cnv_symbol_lists, '-annotation_build_id'=>$annotation_build_id, '-segments_file'=>$clonality_dir.'/cnaseq.cnvhmm','-verbose'=>$verbose);
+  }
 
-        #Run RNA-seq analysis on the RNA-seq data (if available)
-        my $rnaseq_dir;
-        if ($tumor_rnaseq || $normal_rnaseq){
+  #Run RNA-seq analysis on the RNA-seq data (if available)
+  my $rnaseq_dir;
+  if ($tumor_rnaseq || $normal_rnaseq){
   
-          $rnaseq_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'rnaseq', '-silent'=>1);
-        }
-        if ($tumor_rnaseq){
-            my $tumor_rnaseq_dir = &createNewDir('-path'=>$rnaseq_dir, '-new_dir_name'=>'tumor', '-silent'=>1);
+    $rnaseq_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'rnaseq', '-silent'=>1);
+  }
+  if ($tumor_rnaseq){
+      my $tumor_rnaseq_dir = &createNewDir('-path'=>$rnaseq_dir, '-new_dir_name'=>'tumor', '-silent'=>1);
 
-            #Perform QC, splice site, and junction expression analysis using the Tophat output
-            $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq tophat alignment results, splice sites and junction expression - Tumor", RESET;
+      #Perform QC, splice site, and junction expression analysis using the Tophat output
+      $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq tophat alignment results, splice sites and junction expression - Tumor", RESET;
 
-            my $tumor_rnaseq_build = $builds->{tumor_rnaseq};
-            my $tumor_rnaseq_build_dir = $tumor_rnaseq_build->data_directory;
-            my $junctions_dir = $tumor_rnaseq_build_dir . "/junctions/";
-            if (-e $junctions_dir){
-            my $results_dir = &createNewDir('-path'=>$tumor_rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
-            my $cp_cmd = "cp -r $junctions_dir" . "* $results_dir";
-            Genome::Sys->shellcmd(cmd=>$cp_cmd);
-            }
+      my $tumor_rnaseq_build = $builds->{tumor_rnaseq};
+      my $tumor_rnaseq_build_dir = $tumor_rnaseq_build->data_directory;
+      my $junctions_dir = $tumor_rnaseq_build_dir . "/junctions/";
+      if (-e $junctions_dir){
+      my $results_dir = &createNewDir('-path'=>$tumor_rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
+      my $cp_cmd = "cp -r $junctions_dir" . "* $results_dir";
+      Genome::Sys->shellcmd(cmd=>$cp_cmd);
+      }
 
-            #Perform the single-tumor outlier analysis (based on Cufflinks files)
-            $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq Cufflinks absolute expression values - Tumor", RESET;
-            &runRnaSeqCufflinksAbsolute('-label'=>'tumor_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$tumor_rnaseq_dir, '-script_dir'=>$script_dir, '-ensembl_version'=>$ensembl_version, '-verbose'=>$verbose);
-        }
-        if ($normal_rnaseq){
-            my $normal_rnaseq_dir = &createNewDir('-path'=>$rnaseq_dir, '-new_dir_name'=>'normal', '-silent'=>1);
+      #Perform the single-tumor outlier analysis (based on Cufflinks files)
+      $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq Cufflinks absolute expression values - Tumor", RESET;
+      &runRnaSeqCufflinksAbsolute('-label'=>'tumor_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$tumor_rnaseq_dir, '-script_dir'=>$script_dir, '-ensembl_version'=>$ensembl_version, '-verbose'=>$verbose);
+  }
+  if ($normal_rnaseq){
+      my $normal_rnaseq_dir = &createNewDir('-path'=>$rnaseq_dir, '-new_dir_name'=>'normal', '-silent'=>1);
 
-            #Perform QC, splice site, and junction expression analysis using the Tophat output
-            $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq tophat alignment results, splice sites and junction expression - Normal", RESET;
+      #Perform QC, splice site, and junction expression analysis using the Tophat output
+      $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq tophat alignment results, splice sites and junction expression - Normal", RESET;
 
-            my $normal_rnaseq_build = $builds->{normal_rnaseq};
-            my $normal_rnaseq_build_dir = $normal_rnaseq_build->data_directory;
-            my $junctions_dir = $normal_rnaseq_build_dir . "/junctions/";
-            if (-e $junctions_dir){
-            my $results_dir = &createNewDir('-path'=>$normal_rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
-            my $cp_cmd = "cp -r $junctions_dir" . "* $results_dir";
-            Genome::Sys->shellcmd(cmd=>$cp_cmd);
-            }
+      my $normal_rnaseq_build = $builds->{normal_rnaseq};
+      my $normal_rnaseq_build_dir = $normal_rnaseq_build->data_directory;
+      my $junctions_dir = $normal_rnaseq_build_dir . "/junctions/";
+      if (-e $junctions_dir){
+      my $results_dir = &createNewDir('-path'=>$normal_rnaseq_dir, '-new_dir_name'=>'tophat_junctions_absolute', '-silent'=>1);
+      my $cp_cmd = "cp -r $junctions_dir" . "* $results_dir";
+      Genome::Sys->shellcmd(cmd=>$cp_cmd);
+      }
 
-            #Perform the single-normal outlier analysis (based on Cufflinks files)
-            $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq Cufflinks absolute expression values - Normal", RESET;
-            &runRnaSeqCufflinksAbsolute('-label'=>'normal_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$normal_rnaseq_dir, '-script_dir'=>$script_dir, '-ensembl_version'=>$ensembl_version, '-verbose'=>$verbose);
-        }
+      #Perform the single-normal outlier analysis (based on Cufflinks files)
+      $step++; print MAGENTA, "\n\nStep $step. Summarizing RNA-seq Cufflinks absolute expression values - Normal", RESET;
+      &runRnaSeqCufflinksAbsolute('-label'=>'normal_rnaseq', '-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-rnaseq_dir'=>$normal_rnaseq_dir, '-script_dir'=>$script_dir, '-ensembl_version'=>$ensembl_version, '-verbose'=>$verbose);
+  }
 
-        #Annotate gene lists to deal with commonly asked questions like: is each gene a kinase?
-        #Read in file, get gene name column, fix gene name, compare to list, set answer to 1/0, overwrite old file
-        #Repeat this process for each gene symbol list defined
-        $step++; print MAGENTA, "\n\nStep $step. Annotating gene files", RESET;
-        &annotateGeneFiles('-gene_symbol_lists'=>$gene_symbol_lists, '-out_paths'=>$out_paths, '-verbose'=>$verbose);
+  #Annotate gene lists to deal with commonly asked questions like: is each gene a kinase?
+  #Read in file, get gene name column, fix gene name, compare to list, set answer to 1/0, overwrite old file
+  #Repeat this process for each gene symbol list defined
+  $step++; print MAGENTA, "\n\nStep $step. Annotating gene files", RESET;
+  &annotateGeneFiles('-gene_symbol_lists'=>$gene_symbol_lists, '-out_paths'=>$out_paths, '-verbose'=>$verbose);
 
+  #TODO: Replace this with use of DGIdb command line tool that performs queries against more sources with better cancer relevance filtering
+  #Create drugDB interaction files
+  #Perform druggable genes analysis on each list (filtered, kinase-only, inhibitor-only, antineoplastic-only)
+  $step++; print MAGENTA, "\n\nStep $step. Intersecting gene lists with druggable genes of various categories", RESET;
+  &drugDbIntersections('-script_dir'=>$script_dir, '-out_paths'=>$out_paths, '-verbose'=>$verbose);
 
-        #TODO: Replace this with use of DGIdb command line tool that performs queries against more sources with better cancer relevance filtering
-        #Create drugDB interaction files
-        #Perform druggable genes analysis on each list (filtered, kinase-only, inhibitor-only, antineoplastic-only)
-        $step++; print MAGENTA, "\n\nStep $step. Intersecting gene lists with druggable genes of various categories", RESET;
-        &drugDbIntersections('-script_dir'=>$script_dir, '-out_paths'=>$out_paths, '-verbose'=>$verbose);
+  #For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
+  #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
+  $self->wgs_positions_file($out_paths->{'wgs'}->{'snv'}->{path});
+  $self->exome_positions_file($out_paths->{'exome'}->{'snv'}->{path});
+  $self->wgs_exome_positions_file($out_paths->{'wgs_exome'}->{'snv'}->{path});
+  $self->tumor_fpkm_file($out_paths->{'tumor_rnaseq_cufflinks_absolute'}->{'isoforms.merged.fpkm.expsort.tsv'}->{path});
+  # ** runSnvBamReadCounts is now in the workflow 
 
-
-        #For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
-        #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
-        $step++; print MAGENTA, "\n\nStep $step. Getting BAM read counts for all BAMs associated with input models (and expression values if available) - for candidate SNVs only", RESET;
-        my @positions_files;
-        if ($wgs){push(@positions_files, $out_paths->{'wgs'}->{'snv'}->{path});}
-        if ($exome){push(@positions_files, $out_paths->{'exome'}->{'snv'}->{path});}
-        if ($wgs && $exome){push(@positions_files, $out_paths->{'wgs_exome'}->{'snv'}->{path});}
-        &runSnvBamReadCounts('-builds'=>$builds, '-positions_files'=>\@positions_files, '-ensembl_version'=>$ensembl_version, '-out_paths'=>$out_paths, '-verbose'=>0);
-  } # END OF CORE / NON-DRY-RUN CODE
 
   #Generate a summary of SV results from the WGS SV results
   if ($wgs){
@@ -395,6 +389,9 @@ sub _execute {
     # ** Summarize CNVs is now in the workflow
   }
 
+  # this is used by the down-stream summary tools
+  # TODO: switch to relaying the annotation build ID instead
+  $self->annotation_version($ensembl_version);
 
   #print Dumper $out_paths;
   print "\n\nPROCESSING COMPLETE\n\n";
@@ -1115,77 +1112,6 @@ sub drugDbIntersections{
   return();
 }
 
-###################################################################################################################################
-#Get BAM red counts for SNV positions from WGS, Exome and RNAseq BAMS                                                             #
-###################################################################################################################################
-sub runSnvBamReadCounts{
-  my %args = @_;
-  my $builds = $args{'-builds'};
-  my @positions_files = @{$args{'-positions_files'}};
-  my $ensembl_version = $args{'-ensembl_version'};
-  my $out_paths = $args{'-out_paths'};
-  my $verbose = $args{'-verbose'};
-
-  my $read_counts_summary_script = "$script_dir"."snv/WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R";
-
-  foreach my $positions_file (@positions_files){
-    my $fb = &getFilePathBase('-path'=>$positions_file);
-    my $output_file = $fb->{$positions_file}->{base} . ".readcounts" . $fb->{$positions_file}->{extension};
-    my $output_stats_dir = $fb->{$positions_file}->{base_dir} . "summary/";
-
-    my @params = ('positions_file' => $positions_file);
-    push (@params, ('wgs_som_var_build' => $builds->{wgs})) if $builds->{wgs};
-    push (@params, ('exome_som_var_build' => $builds->{exome})) if $builds->{exome};
-    push (@params, ('rna_seq_tumor_build' => $builds->{tumor_rnaseq})) if $builds->{tumor_rnaseq};
-    push (@params, ('rna_seq_normal_build' => $builds->{normal_rnaseq})) if $builds->{normal_rnaseq};
-    push (@params, ('ensembl_version' => $ensembl_version));
-    push (@params, ('output_file' => $output_file));
-    push (@params, ('verbose' => $verbose));
-
-    my $bam_rc_cmd = Genome::Model::ClinSeq::Command::GetBamReadCounts->create(@params);
-
-    #Summarize the positions file using an R script.  BUT if no variants are present, skip this positions file.
-    my $positions_count = 0;
-    open (POS, "$positions_file") || die "\n\nCould not open positions file: $positions_file\n\n";
-    my $header = 1;
-    while(<POS>){
-      if ($header){
-        $header = 0;
-        next();
-      }
-      $positions_count++;
-    }
-    close(POS);
-    unless($positions_count > 0){
-      if ($verbose){
-        print YELLOW, "\n\nNo SNV positions found, skipping summary", RESET;
-      }
-      next();
-    }
-
-    #First get the read counts for the current file of SNVs (from WGS, Exome, or WGS+Exome)
-    my $r = $bam_rc_cmd->execute();
-
-    #Set up the read count summary script command (an R script)
-    my $rc_summary_cmd;
-    my $rc_summary_stdout = "$output_stats_dir"."rc_summary.stdout";
-    my $rc_summary_stderr = "$output_stats_dir"."rc_summary.stderr";
-    if ($builds->{tumor_rnaseq}){
-      my $tumor_fpkm_file = $out_paths->{'tumor_rnaseq_cufflinks_absolute'}->{'isoforms.merged.fpkm.expsort.tsv'}->{path};
-      $rc_summary_cmd = "$read_counts_summary_script $output_stats_dir $output_file $tumor_fpkm_file";
-    }else{
-      $rc_summary_cmd = "$read_counts_summary_script $output_stats_dir $output_file";
-    }
-    unless ($verbose){
-      $rc_summary_cmd .= " 1>$rc_summary_stdout 2>$rc_summary_stderr";
-    }
-    #Summarize the BAM readcounts results for candidate variants - produce descriptive statistics, figures etc.
-    if ($verbose){print YELLOW, "\n\n$rc_summary_cmd", RESET;}
-    mkdir($output_stats_dir);
-    Genome::Sys->shellcmd(cmd => $rc_summary_cmd);
-  }
-  return();
-}
 
 
 1;

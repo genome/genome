@@ -106,15 +106,6 @@ my $i3 = $m->add_input(
 );
 ok($i3, "add a tumor rnaseq model to it");
 
-if ($dry_run) {
-    my $i4 = $m->add_input(
-        name => 'dry_run',
-        value_class_name => 'UR::Value::Boolean',
-        value_id => 1, 
-    );
-    ok($i4, "set the dry run flag");
-}
-
 # this will prevent disk allocation during build initiation
 # we will have to turn this off if the tasks in this pipeline spread to other machines
 my $temp_dir = Genome::Sys->create_temp_directory("dummy-clinseq-build-dir");
@@ -125,19 +116,27 @@ my $b = $m->add_build(
 ok($b, "created a new build");
 
 # we would normally do $build->start() but this is easier to debug minus workflow guts when you just call _execute_build
-$ENV{PERL5LIB} = UR::Util->used_libs_perl5lib_prefix . "::" . $ENV{PERL5LIB};
-$b->start(
-    server_dispatch => 'inline',
-    job_dispatch    => 'inline',
-);
-is($b->status, 'Succeeded', "build succeeded!");
+if ($dry_run) {
+    my @errors = $b->validate_for_start;
+    is(scalar(@errors), 0, "build is valid to start")
+        or diag(join("\n",@errors));
+    my $wf = $b->_initialize_workflow("inline");
+    ok($wf, "workflow validates");
+    note("exiting without running the pipeline because RUN was not manually specified");
+}
+else {
+    # this is very slow, but tests the pipeline the same way the build tests test the pipeline
+    $ENV{PERL5LIB} = UR::Util->used_libs_perl5lib_prefix . "::" . $ENV{PERL5LIB};
+    $b->start(
+        server_dispatch => 'inline',
+        job_dispatch    => 'inline',
+    );
+    is($b->status, 'Succeeded', "build succeeded!");
 
-# perform a diff between the stored results and the newly generated directory of results
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2012-11-27';
-#print "\n\n$expected_data_directory\n\n";
-
-# this is very slow, but tests the pipeline the same way the build tests test the pipeline
-unless ($dry_run) {
+    # perform a diff between the stored results and the newly generated directory of results
+    my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2012-11-27';
+    #print "\n\n$expected_data_directory\n\n";
+    
     # add a masked version of the clonality tsv since it has non-deterministic output in the final column
     my $mask_command = 'cat ' 
         . $temp_dir 

@@ -32,17 +32,22 @@ class Genome::Model::Tools::Validation::SvManualReviewContigs {
         },
     ],
     has_optional_input => [
-        somatic_validation_model_id => {
+        somatic_validation_build_id => {
             is => 'Number',
             doc => 'somatic-validation build ID (contains both tumor and normal)',
         },
+        somatic_validation_model_id => {
+            is => 'Number',
+            is_deprecated => 1,
+            doc => 'somatic-validation model ID (contains both tumor and normal). will grab last succeeded build and do some possibly inconsistent analysis with it',
+        },
         tumor_val_model_id => {
             is => 'Number',
-            doc => 'tumor validation model to copy for alignment to new reference',
+            doc => 'tumor validation model to copy for alignment to new reference', #FIXME This is also possibly bad--use builds.
         },
         normal_val_model_id => {
             is => 'Integer',
-            doc => 'normal validation model to copy for alignment to new reference',
+            doc => 'normal validation model to copy for alignment to new reference', #FIXME This is also possibly bad--use builds.
         },
         reference_sequence_build_id => {
             is => 'Integer',
@@ -78,7 +83,7 @@ sub execute {
 
     my $input_model_type;
 
-    if(defined($self->somatic_validation_model_id)){
+    if(defined($self->somatic_validation_build_id or $self->somatic_validation_model_id)){
         $input_model_type = "somval";
     } elsif(defined($self->tumor_val_model_id) && defined($self->normal_val_model_id)){
         $input_model_type = "pairedref";
@@ -201,10 +206,12 @@ sub execute {
         $ref_seq_build = Genome::Model::Build->get($self->reference_sequence_build_id);
     } else {
         if($input_model_type eq "somval"){
-            my $model = Genome::Model->get($self->somatic_validation_model_id) or
-                die "Could not find model ($self->somatic_validation_model_id)\n";
+            my $build_or_model = Genome::Model::Build->get($self->somatic_validation_build_id);
+            $build_or_model ||= Genome::Model->get($self->somatic_validation_model_id); #fallback for now
 
-            my $ref_seq_build_id = $model->reference_sequence_build->build_id;
+            $build_or_model or die "Could not find model ($self->somatic_validation_model_id)\n";
+
+            my $ref_seq_build_id = $build_or_model->reference_sequence_build->build_id;
             $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
         } else {
             my $model = Genome::Model->get($self->tumor_val_model_id);
@@ -218,7 +225,8 @@ sub execute {
 
     my $version = "500bp_assembled_contigs_sv";
     #don't overwrite an existing model...
-    $version = checkRefBuildName($sample_id,$version);
+
+    $version = checkRefBuildName($sample_id . "_SV_Contigs",$version);
 
     my $new_ref_cmd = Genome::Model::Command::Define::ImportedReferenceSequence->create(
         species_name => 'human',
@@ -256,10 +264,20 @@ sub execute {
         #create new tumor and normal validation models to align data to new reference
 
         #first, grab a bunch of params we need:
-        my $model = Genome::Model->get($self->somatic_validation_model_id) or
+
+        my ($build, $model);
+
+        if($self->somatic_validation_build_id) {
+            $build = Genome::Model::Build->get($self->somatic_validation_build_id);
+            $model = $build->model;
+        } else {
+            $model = Genome::Model->get($self->somatic_validation_model_id);
+            $build = $model->last_succeeded_build;
+        }
+        $model or
             die "Could not find model ($self->somatic_validation_model_id\n";
 
-        my $build = $model->last_succeeded_build or
+        $build or
             die "Could not find last succeeded build from somatic model $self->somatic_validation_model_id.\n";
 
         my $tumor_sample = $build->tumor_sample;
