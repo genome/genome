@@ -9,7 +9,7 @@
 
 use strict;
 use warnings;
-use Test::More skip_all => 'Need to figure out Jenkins differences...';
+use Test::More;
 
 use above qw(Genome);
 
