@@ -1,4 +1,5 @@
-package Genomee::Model::ClinSeq::Command::SummarizeTier1SnvSupport;
+package Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport;
+
 use strict;
 use warnings;
 use Genome;
@@ -37,6 +38,7 @@ sub positions_files {
 
 sub execute {
   my $self = shift;
+  $self->status_message("starting summarize tier1 snvs with " . Data::Dumper::Dumper($self));
   my $wgs_build = $self->wgs_build;
   my $exome_build = $self->exome_build;
   my $rnaseq_tumor_build = $self->rnaseq_tumor_build;
@@ -47,6 +49,8 @@ sub execute {
   my $verbose = $self->verbose;
 
   my $read_counts_summary_script = __FILE__ . '.R'; #"$script_dir"."snv/WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R";
+
+  $self->status_messages("Positions files are " . Data::Dumper::Dumper(\@positions_files));
 
   foreach my $positions_file (@positions_files){
     my $fb = &getFilePathBase('-path'=>$positions_file);
