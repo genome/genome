@@ -6,6 +6,8 @@
 # properties do not need to be saved to the superclasses data source. So this
 # test is to try to force properties to be set to either is_input, is_param, or
 # is_transient (for non-calculated or non-delegated properties).
+#
+# We had ~300k objects affected by this, see RT #88011.
 
 use strict;
 use warnings;
