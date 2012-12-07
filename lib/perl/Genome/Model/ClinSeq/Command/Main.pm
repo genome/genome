@@ -79,11 +79,13 @@ class Genome::Model::ClinSeq::Command::Main{
   has_output => [
     sv_summary_dir => {
                         is => 'FilesystemPath',
-                        doc => 'directory for Summarize SVs'                
+                        doc => 'directory for Summarize SVs',
+                        is_optional => 1,                    
                     },
     cnv_summary_dir => {
                         is => 'FilesystemPath',
-                        doc => 'directory for Summarize CNVs'
+                        doc => 'directory for Summarize CNVs',
+                        is_optional => 1,
                     },
 
   ],
