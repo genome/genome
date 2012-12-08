@@ -27,22 +27,22 @@ class Genome::Model::ClinSeq::Command::Main {
                     id_by => 'build_id',
                     doc => 'Used to pass in the current ID of a Clinseq build (not used when running clinseq.pl directly)',
                   },
-      wgs_som_var_data_set => {
+      wgs_build => {
                     is => 'Genome::Model::Build::SomaticVariation',
                     doc => 'Whole genome sequence (WGS) somatic variation build',
                     is_optional => 1,
                   },
-      exome_som_var_data_set => {
+      exome_build => {
                     is => 'Genome::Model::Build::SomaticVariation',
                     doc => 'Exome capture sequence somatic variation build',
                     is_optional => 1,
                    },
-      tumor_rna_seq_data_set => {
+      tumor_rnaseq_build => {
                     is => 'Genome::Model::Build::RnaSeq',
                     doc => 'RNA-seq build for the tumor sample',
                     is_optional => 1,
                    },
-      normal_rna_seq_data_set => {       
+      normal_rnaseq_build => {       
                     is => 'Genome::Model::Build::RnaSeq',
                     doc => 'RNA-seq build for the normal sample',
                     is_optional => 1,
@@ -158,10 +158,10 @@ sub _execute {
   my $self = shift;
   my $clinseq_build_id = $self->build_id; #Build ID of the current clinseq run...
   my $clinseq_build = Genome::Model::Build->get($clinseq_build_id);
-  my $wgs_som_var_data_set = $self->wgs_som_var_data_set;
-  my $exome_som_var_data_set = $self->exome_som_var_data_set;
-  my $tumor_rna_seq_data_set = $self->tumor_rna_seq_data_set;
-  my $normal_rna_seq_data_set = $self->normal_rna_seq_data_set;
+  my $wgs_som_var_data_set = $self->wgs_build;
+  my $exome_som_var_data_set = $self->exome_build;
+  my $tumor_rna_seq_data_set = $self->tumor_rnaseq_build;
+  my $normal_rna_seq_data_set = $self->normal_rnaseq_build;
   my $working_dir = $self->working_dir;
   my $common_name = $self->common_name;
   my $verbose = $self->verbose;
@@ -616,7 +616,7 @@ sub importSNVs{
 
   #Define the dataset: WGS SNV, WGS indel, Exome SNV, Exome indel
   my %dataset;
-  if ($self->wgs_som_var_data_set){
+  if ($self->wgs_build){
     my $snv_wgs_dir = &createNewDir('-path'=>$snv_dir, '-new_dir_name'=>'wgs', '-silent'=>1);
     my $indel_wgs_dir = &createNewDir('-path'=>$indel_dir, '-new_dir_name'=>'wgs', '-silent'=>1);
     my $effects_dir = $data_paths->{'wgs'}->{'effects'};
@@ -638,7 +638,7 @@ sub importSNVs{
     $dataset{'2'}{aa_effect_filter} = $indel_filter;
     $dataset{'2'}{target_dir} = $indel_wgs_dir;
   }
-  if ($self->exome_som_var_data_set){
+  if ($self->exome_build){
     my $snv_exome_dir = &createNewDir('-path'=>$snv_dir, '-new_dir_name'=>'exome', '-silent'=>1);  
     my $indel_exome_dir = &createNewDir('-path'=>$indel_dir, '-new_dir_name'=>'exome', '-silent'=>1);
     my $effects_dir = $data_paths->{'exome'}->{'effects'};
@@ -790,7 +790,7 @@ sub importSNVs{
   }
 
   #If both WGS and Exome data were present, print out a data merge for SNVs and Indels
-  if ($self->wgs_som_var_data_set && $self->exome_som_var_data_set){
+  if ($self->wgs_build && $self->exome_build){
     my $snv_wgs_exome_dir = &createNewDir('-path'=>$snv_dir, '-new_dir_name'=>'wgs_exome', '-silent'=>1);
     my $indel_wgs_exome_dir = &createNewDir('-path'=>$indel_dir, '-new_dir_name'=>'wgs_exome', '-silent'=>1);
     my $snv_merge_file = "$snv_wgs_exome_dir"."snvs.hq.tier1.v1.annotated.compact.tsv";

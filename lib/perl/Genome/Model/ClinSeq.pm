@@ -138,10 +138,10 @@ sub map_workflow_inputs {
     # all of the legacy/non-parellel tasks
     my @inputs = (
         build => $build,
-        wgs_som_var_data_set => $wgs_build,
-        exome_som_var_data_set => $exome_build,
-        tumor_rna_seq_data_set => $tumor_rnaseq_build,
-        normal_rna_seq_data_set => $normal_rnaseq_build,
+        wgs_build => $wgs_build,
+        exome_build => $exome_build,
+        tumor_rnaseq_build => $tumor_rnaseq_build,
+        normal_rnaseq_build => $normal_rnaseq_build,
         working_dir => $data_directory,
         common_name => $final_name,
         verbose => 1,
@@ -299,10 +299,10 @@ sub _resolve_workflow_for_build {
     my $main_op = $add_step->("Step $step. ClinSeq Main", "Genome::Model::ClinSeq::Command::Main");
     for my $in (qw/ 
         build
-        wgs_som_var_data_set
-        exome_som_var_data_set
-        tumor_rna_seq_data_set
-        normal_rna_seq_data_set
+        wgs_build
+        exome_build
+        tumor_rnaseq_build
+        normal_rnaseq_build
         working_dir
         common_name
         verbose
@@ -321,6 +321,7 @@ sub _resolve_workflow_for_build {
 
     #For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
     #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
+    #TODO: Break this down to do direct calls to GetBamReadCounts instead of wrapping it.
     for my $run (qw/wgs exome wgs_exome/) {
         if ($run eq 'wgs' and not $build->wgs_build) {
             next;
@@ -339,6 +340,10 @@ sub _resolve_workflow_for_build {
         $msg = "Step $step. $txt_name BAM read counts for all BAMs associated with input models (and expression values if available) - for candidate SNVs only (VAF and FPKM)";
         my $op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
         $add_link->($main_op, $run . "_positions_file", $op);
+        $add_link->($main_op, 'wgs_build', $op);
+        $add_link->($main_op, 'exome_build', $op);
+        $add_link->($main_op, 'tumor_rnaseq_build', $op);
+        $add_link->($main_op, 'normal_rnaseq_build', $op);
         $add_link->($main_op, 'tumor_fpkm_file', $op);
         $add_link->($main_op, 'annotation_version', $op);
         $add_link->($main_op, 'verbose', $op);
@@ -350,7 +355,7 @@ sub _resolve_workflow_for_build {
         $step++; 
         my $msg = "Step $step. Summarizing SV results from WGS somatic variation";
         my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-        $add_link->($main_op, 'wgs_som_var_data_set', $summarize_svs_op, 'builds');
+        $add_link->($main_op, 'wgs_build', $summarize_svs_op, 'builds');
         $add_link->($main_op, 'sv_summary_dir', $summarize_svs_op, 'outdir');
         $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
     }
