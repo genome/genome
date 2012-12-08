@@ -21,7 +21,6 @@ require File::Basename;
 require File::Path;
 require File::Copy;
 require Genome::Utility::Text;
-use Digest::MD5;
 use Sys::Hostname;
 use File::Find;
 #use Archive::Extract;
@@ -905,32 +904,6 @@ sub get_classes_in_subdirectory_that_isa {
     return @classes;
 }
 
-sub md5sum {
-    my ($self, $file) = @_;
-
-    my $digest;
-
-    my $fh = IO::File->new($file);
-    unless ($fh) {
-        Carp::croak("Can't open file ($file) to md5sum: $!");
-    }
-    my $d = Digest::MD5->new;
-    $d->addfile($fh);
-    $digest = $d->hexdigest;
-    $fh->close;
-
-    return $digest;
-}
-
-sub md5sum_data {
-    my ($self, $data) = @_;
-    unless (defined $data) {
-        Carp::croak('No data passed to md5sum_data');
-    }
-    my $digest = Digest::MD5->new;
-    $digest->add($data);
-    return $digest->hexdigest;
-}
 
 sub directory_size_recursive {
     my ($self,$directory) = @_;

@@ -13,11 +13,40 @@ use IO::File;
 use LWP::Simple qw(getstore RC_OK);
 use List::MoreUtils "each_array";
 use Set::Scalar;
+use Digest::MD5;
 
 our $VERSION = $Genome::VERSION;
 
 class Genome::Sys {};
 
+# MD5
+
+sub md5sum {
+    my ($self, $file) = @_;
+
+    my $digest;
+
+    my $fh = IO::File->new($file);
+    unless ($fh) {
+        Carp::croak("Can't open file ($file) to md5sum: $!");
+    }
+    my $d = Digest::MD5->new;
+    $d->addfile($fh);
+    $digest = $d->hexdigest;
+    $fh->close;
+
+    return $digest;
+}
+
+sub md5sum_data {
+    my ($self, $data) = @_;
+    unless (defined $data) {
+        Carp::croak('No data passed to md5sum_data');
+    }
+    my $digest = Digest::MD5->new;
+    $digest->add($data);
+    return $digest->hexdigest;
+}
 # API for accessing software and data by version
 
 sub snapshot_revision {
