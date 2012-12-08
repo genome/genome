@@ -55,6 +55,7 @@ my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
     detector_version => 'awesome',
     reference_build_id => 101947881,
 );
+$detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 
 my $i = 0;
 for my $result (@test_alignment_results) {

@@ -17,7 +17,7 @@ class Genome::Db::Ensembl::Vep {
         version => {
             is => 'String',
             doc => 'version of the Variant Effects Predictor to use',
-            valid_values => [qw(2_2 2_5)],
+            valid_values => [qw(2_2 2_5 2_7)],
             is_optional => 1,
             default_value => "2_2",
         },
@@ -73,6 +73,17 @@ class Genome::Db::Ensembl::Vep {
             valid_values => [qw(p s b)],
             is_input => 1,
         },
+        gtf_cache => {
+            is => 'Boolean',
+            doc => 'Whether to use gtf_cache',
+            is_optional => 1,
+            default => 0,
+        },
+        gtf_file => {
+            is => 'Text',
+            doc => 'Gtf file to create cache rather than using db',
+            is_optional => 1,
+        },
         regulatory => {
             is => 'Boolean',
             doc => 'Look for overlap with regulatory regions.',
@@ -126,6 +137,11 @@ class Genome::Db::Ensembl::Vep {
             is => 'String',
             doc => 'ID of ImportedAnnotation build with the desired ensembl version',
             default_value => $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD},
+        },
+        reference_build_id => {
+            is => "String",
+            doc => "Id of ReferenceSequence that the annotation is based on.  Only needed if --gtf-cache is specified",
+            is_optional => 1,
         },
         plugins => {
             is => 'String',
@@ -376,6 +392,25 @@ sub execute {
         $count++;
     }
 
+    $count = 0;
+    foreach my $arg (@all_string_args) {
+        if ($arg->property_name eq 'gtf_file') {
+            splice @all_string_args, $count, 1;
+            last;
+        }
+        $count++;
+    }
+
+    $count = 0;
+    foreach my $arg (@all_string_args) {
+        if ($arg->property_name eq 'reference_build_id') {
+            splice @all_string_args, $count, 1;
+            last;
+        }
+        $count++;
+    }
+
+
     $string_args = join( ' ',
         map {
             my $name = $_->property_name;
@@ -390,6 +425,16 @@ sub execute {
     # instead, we must leave out the --input_file arg to get that behavior.
     my $input_file_arg = $input_file eq '-' ? "" : "--input_file $input_file";
     $string_args =~ s/--input_file ([^\s]+)/$input_file_arg/;
+
+    $count = 0;
+    foreach my $arg (@all_bool_args) {
+        if ($arg->property_name eq 'gtf_cache') {
+            splice @all_bool_args, $count, 1;
+            last;
+        }
+        $count++;
+    }
+
 
     my $bool_args = "";
     $bool_args = join (' ',
@@ -448,22 +493,38 @@ sub execute {
         $cache_result_params{species} = $self->species;
     }
     $cache_result_params{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
-    if ($self->sift or $self->polyphen) {
-        $cache_result_params{sift} = 1;
+    if ($self->gtf_cache) {
+        $cache_result_params{reference_build_id} = $self->reference_build_id;
+        if (defined $self->gtf_file) {
+            $cache_result_params{gtf_file_path} = $self->gtf_file;
+            $cache_result_params{vep_version} = $self->version;
+            $cache_result = Genome::Db::Ensembl::GtfCache->get_or_create(%cache_result_params);
+        }
+        else {
+            $cache_result = Genome::Db::Ensembl::GtfCache->get(%cache_result_params);
+        }
     }
     else {
-        $cache_result_params{sift} = 0;
+        if ($self->sift or $self->polyphen) {
+            $cache_result_params{sift} = 1;
+        }
+        else {
+            $cache_result_params{sift} = 0;
+        }
+        eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
+        };
     }
-    eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
-    };
 
     my $cmd = "$script_path $string_args $bool_args $plugin_args $host_param $user_param $password_param $port_param";
 
     if ($cache_result) {
         $self->status_message("Using VEP cache result ".$cache_result->id);
-        $cmd = "$cmd --cache --dir ".$temp_config_dir;
+        $cmd = "$cmd --cache --dir ".$temp_config_dir."/";
         foreach my $file (glob $cache_result->output_dir."/*"){
             `ln -s $file $temp_config_dir`;
+        }
+        if ($self->gtf_cache) {
+            $cmd = "$cmd --offline";
         }
     }
     else {

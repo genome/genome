@@ -31,6 +31,13 @@ class Genome::Model::RnaSeq::DetectFusionsResult {
             doc => 'annotation build (for gene models)',
         },
     ],
+    has => [
+        _fastq_files => {
+            # returns an array ref of [fastq1, fastq2]
+            is_constant => 1,
+            calculate => q($self->_get_fastq_files();),
+        },
+    ],
 };
 
 sub resolve_allocation_subdirectory {
@@ -65,7 +72,7 @@ sub _put_bowtie_version_in_path {
     $ENV{PATH} = $bowtie_path . ":" . $ENV{PATH};
 }
 
-sub _get_fastq_files_for_model {
+sub _get_fastq_files {
     my $self = shift;
 
     my $alignment_result = $self->alignment_result;
@@ -98,7 +105,8 @@ sub _get_fastq_files_for_model {
         die("Could not convert the bam file to fastq! (second reads)");
     }
 
-    return ($fastq1, $fastq2);
+    my @result = ($fastq1, $fastq2);
+    return \@result;
 }
 
 sub _prepare_staging_directory {

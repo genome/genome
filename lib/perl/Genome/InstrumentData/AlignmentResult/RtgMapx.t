@@ -140,6 +140,7 @@ sub test_shortcutting {
                  picard_version=>$picard_version,
                  reference_build => $reference_build, 
     );
+    $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash);
 
     # Alignment Result is a subclass of Software Result. Make sure this is true here.
     isa_ok($alignment_result, 'Genome::SoftwareResult');
@@ -169,7 +170,7 @@ sub test_shortcutting {
     # Step 2: Attempt to get an alignment that's already created
     #
     #################################################
-    my $alignment = Genome::InstrumentData::AlignmentResult->get(
+    my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
                                                               instrument_data_id => $fake_instrument_data->id,
                                                               aligner_name => $aligner_name,
                                                               aligner_version => $aligner_version,

@@ -159,6 +159,7 @@ sub setup_test_model {
         output_dir => $output_dir,
         variant_type => 'snv',
     ); 
+    $tier_result->lookup_hash($tier_result->calculate_lookup_hash());
     $tier_result->add_user(user => $somvar_build, label => 'uses');
 
     #no relation to any real tiers

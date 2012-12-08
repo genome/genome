@@ -198,9 +198,9 @@ sub execute {
       my $var_rc = $read_counts->{$snv_pos}->{var_rc};
       my $var_allele_frequency = $read_counts->{$snv_pos}->{var_allele_frequency};
       if ($new_snv{$snv_pos}){
-	$new_snv{$snv_pos}{read_count_string} .= "\t$ref_rc\t$var_rc\t$var_allele_frequency";
+        $new_snv{$snv_pos}{read_count_string} .= "\t$ref_rc\t$var_rc\t$var_allele_frequency";
       }else{
-	$new_snv{$snv_pos}{read_count_string} = "\t$ref_rc\t$var_rc\t$var_allele_frequency";
+        $new_snv{$snv_pos}{read_count_string} = "\t$ref_rc\t$var_rc\t$var_allele_frequency";
       }
     }
 
@@ -209,14 +209,14 @@ sub execute {
       my $new_header = "\t$data_type"."_"."$sample_type"."_gene_FPKM\t"."$data_type"."_"."$sample_type"."_gene_FPKM_percentile";
       $snv_header .= $new_header;
       foreach my $snv_pos (keys %{$gene_exp}){
-	my $fpkm = $gene_exp->{$snv_pos}->{FPKM};
-	my $percentile = $gene_exp->{$snv_pos}->{percentile};
-	my $rank = $gene_exp->{$snv_pos}->{rank};
-	if ($new_snv{$snv_pos}){
-	  $new_snv{$snv_pos}{read_count_string} .= "\t$fpkm\t$percentile";
-	}else{
-	  $new_snv{$snv_pos}{read_count_string} = "\t$fpkm\t$percentile";
-	}
+        my $fpkm = $gene_exp->{$snv_pos}->{FPKM};
+        my $percentile = $gene_exp->{$snv_pos}->{percentile};
+        my $rank = $gene_exp->{$snv_pos}->{rank};
+        if ($new_snv{$snv_pos}){
+          $new_snv{$snv_pos}{read_count_string} .= "\t$fpkm\t$percentile";
+	      }else{
+	        $new_snv{$snv_pos}{read_count_string} = "\t$fpkm\t$percentile";
+	      }
       }
     }
   }
@@ -260,8 +260,8 @@ sub importPositions{
       $header = 0;
       $header_line = $_;
       #Make sure all neccessary columns are defined
-      unless (defined($columns{'coord'}) && defined($columns{'mapped_gene_name'}) && defined($columns{'ref_base'}) && defined($columns{'var_base'})){
-        print RED, "\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base)", RESET;
+      unless (defined($columns{'coord'}) && defined($columns{'mapped_gene_name'}) && defined($columns{'ref_base'}) && defined($columns{'var_base'}) && defined($columns{'ensembl_gene_id'})){
+        print RED, "\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)", RESET;
         exit(1);
       }
       next();
@@ -270,6 +270,7 @@ sub importPositions{
     my $coord = $line[$columns{'coord'}{position}];
     $s{$coord}{order} = $order;
     $s{$coord}{mapped_gene_name} = $line[$columns{'mapped_gene_name'}{position}];
+    $s{$coord}{ensembl_gene_id} = $line[$columns{'ensembl_gene_id'}{position}];
     $s{$coord}{ref_base} = $line[$columns{'ref_base'}{position}];
     $s{$coord}{var_base} = $line[$columns{'var_base'}{position}];
     $s{$coord}{line} = $_;
@@ -616,36 +617,19 @@ sub getExpressionValues{
   #Calculate the ranks and percentiles for all genes
   my $rank = 0;
   my $gene_count = keys %{$merged_fpkm};
-  foreach my $gene_id (sort {$merged_fpkm->{$b}->{FPKM} <=> $merged_fpkm->{$a}->{FPKM}} keys %{$merged_fpkm}){
+  foreach my $ensembl_gene_id (sort {$merged_fpkm->{$b}->{FPKM} <=> $merged_fpkm->{$a}->{FPKM}} keys %{$merged_fpkm}){
     $rank++;
-    $merged_fpkm->{$gene_id}->{rank} = $rank;
-    $merged_fpkm->{$gene_id}->{percentile} = sprintf("%.3f", (($rank/$gene_count)*100));
-  }
-
-  #Create a new FPKM hash keyed on gene name.  Set ambiguous values to 'NA'.  i.e. where one gene name could mean multiple genes...
-  my %genes;
-  foreach my $gene_id (sort {$merged_fpkm->{$b}->{FPKM} <=> $merged_fpkm->{$a}->{FPKM}} keys %{$merged_fpkm}){
-    my $mapped_gene_name = $merged_fpkm->{$gene_id}->{mapped_gene_name};
-
-    #If this gene was already observed (i.e. multiple genes with the same name) - set values to NA
-    if ($genes{$mapped_gene_name}){
-      #Ambiguous mapping
-      $genes{$mapped_gene_name}{FPKM} = "NA";
-      $genes{$mapped_gene_name}{rank} = "NA";
-      $genes{$mapped_gene_name}{percentile} = "NA";
-    }else{
-      $genes{$mapped_gene_name}{FPKM} = $merged_fpkm->{$gene_id}->{FPKM};
-      $genes{$mapped_gene_name}{rank} = $merged_fpkm->{$gene_id}->{rank};
-      $genes{$mapped_gene_name}{percentile} = $merged_fpkm->{$gene_id}->{percentile};
-    }
+    $merged_fpkm->{$ensembl_gene_id}->{rank} = $rank;
+    $merged_fpkm->{$ensembl_gene_id}->{percentile} = sprintf("%.3f", (($rank/$gene_count)*100));
   }
 
   foreach my $snv_pos (keys %{$snvs}){
     my $mapped_gene_name = $snvs->{$snv_pos}->{mapped_gene_name};
-    if ($genes{$mapped_gene_name}){
-      $e{$snv_pos}{FPKM} = $genes{$mapped_gene_name}{FPKM};
-      $e{$snv_pos}{rank} = $genes{$mapped_gene_name}{rank};
-      $e{$snv_pos}{percentile} = $genes{$mapped_gene_name}{percentile};
+    my $ensembl_gene_id = $snvs->{$snv_pos}->{ensembl_gene_id};
+    if ($merged_fpkm->{$ensembl_gene_id}){
+      $e{$snv_pos}{FPKM} = $merged_fpkm->{$ensembl_gene_id}->{FPKM};
+      $e{$snv_pos}{rank} = $merged_fpkm->{$ensembl_gene_id}->{rank};
+      $e{$snv_pos}{percentile} = $merged_fpkm->{$ensembl_gene_id}->{percentile};
     }else{
       #Unmappable
       $e{$snv_pos}{FPKM} = "NA";

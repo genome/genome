@@ -163,9 +163,11 @@ sub link_result_to_build {
     my $build = $self->build;
 
     my $type = 'hq';
+    my $opposite_type = 'lq';
     my $prior_result = $result->prior_result;
-    if($prior_result->isa('Genome::Model::Tools::DetectVariants2::Combine::LqUnion')) {
+    if($prior_result->isa('Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion')) {
         $type = 'lq';
+        $opposite_type = 'hq';
     }
 
     $result->add_user(label => $result->variant_type . '_tiered_' . $type, user => $build);
@@ -177,7 +179,7 @@ sub link_result_to_build {
 
     for my $f (glob($result->output_dir . '/*')) {
         my $name = File::Basename::fileparse($f);
-        next unless $name =~ $type;
+        next unless $name !~ $opposite_type;
 
         Genome::Sys->create_symlink($f, join('/', $effects_dir, $name));
     }

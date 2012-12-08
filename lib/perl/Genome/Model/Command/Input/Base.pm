@@ -47,7 +47,7 @@ sub values_from_property_for_filter {
     my ($self, $property, $filter) = @_;
 
     Carp::confess('No property to get values for filter') if not $property;
-    Carp::confess('No filter to get values from property') if not $filter;
+    Carp::confess('No filter to get values from property') if not defined $filter; # use '' for undef == in the db
 
     my $data_type = $property->{data_type};
     my $name = $property->{name};

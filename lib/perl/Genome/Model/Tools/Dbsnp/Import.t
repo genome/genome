@@ -23,7 +23,7 @@ use_ok('Genome::Model::Tools::Dbsnp::Import');
 my $sub_dir = "/Genome-Model-Tools-Dbsnp-Import";
 my $test_dir = $ENV{GENOME_TEST_INPUTS}.$sub_dir;
 ok (-d $test_dir, "test directory $test_dir is present");
-my $test_output = "$test_dir/v2/output.bed";
+my $test_output = "$test_dir/v3/output.bed";
 ok(-e $test_output, "test output $test_output exists");
 my $test_url = $ENV{GENOME_TEST_URL}.$sub_dir;
 
@@ -39,6 +39,7 @@ my $cmd = Genome::Model::Tools::Dbsnp::Import->create(
     output_file => $command_output,
     flat_file_url => $test_url,
     filename_pattern => "ds_flat_chX.flat",
+    chromosome_names => \@chromosomes,
 );
 ok ($cmd, 'created the importer');
 ok($cmd->execute, 'importer ran successfully');

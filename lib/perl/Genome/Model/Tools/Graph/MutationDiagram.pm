@@ -49,6 +49,11 @@ class Genome::Model::Tools::Graph::MutationDiagram {
             doc => 'A prefix to prepend to all filenames',
             default => '',
         },
+        file_suffix => {
+            type => 'Text',
+            doc => 'A suffix to append to all filenames (before the extension)',
+            default => '',
+        },
         vep_frequency_field => {
             type => 'Text',
             doc => 'For VEP annotation, the name of a field in the EXTRA column that specifies the frequency of mutations',
@@ -56,6 +61,16 @@ class Genome::Model::Tools::Graph::MutationDiagram {
         },
     ],
     has_optional => [
+        max_display_frequency => {
+            type => 'Number',
+            doc => "The maximum number of single lollis for any one mutations. Those sites exceeding this number will be truncated. Specifying this option automatically adds the number of mutations to the labels.",
+        },
+        lolli_shape => {
+            type => 'Text',
+            valid_values => ["circle", "diamond", "square"],
+            default_value => "circle",
+            doc => 'shape of the lolli part of each lollipop',
+        },
     ],
 };
 
@@ -88,7 +103,10 @@ sub execute {
             reference_transcripts => $self->reference_transcripts,
             output_directory => $self->output_directory,
             basename => $self->file_prefix,
+            suffix => $self->file_suffix,
             vep_frequency_field => $self->vep_frequency_field,
+            max_display_freq => $self->max_display_frequency,
+            lolli_shape => $self->lolli_shape,
         );
     }
     else {

@@ -69,7 +69,7 @@ sub dbpath {
     my ($class, $name, $version) = @_;
     my $envname = $class->dbname_to_envname($name);
     my $dbpath;
-    if ($ENV{$envname}) {
+    if ($envname and $ENV{$envname}) {
         $dbpath = $ENV{$envname};
         print STDERR "Using '$dbpath' from $envname.\n";
     } else {
@@ -448,10 +448,6 @@ sub create_symlink {
 
     unless ( defined $link ) {
         Carp::croak("Can't create_symlink: no 'link' given");
-    }
-
-    unless ( -e $target ) {
-        Carp::croak("Cannot create link ($link) to target ($target): target does not exist");
     }
 
     if ( -e $link ) { # the link exists and points to spmething
@@ -941,6 +937,7 @@ sub shellcmd {
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+        my $child_exit_code = $exit_code >> 8;
 
         if ( $exit_code == -1 ) {
             Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd\n\tError was: $!");
@@ -950,16 +947,15 @@ sub shellcmd {
             my $withcore = ( $exit_code & 128 ) ? 'with' : 'without';
             Carp::croak("COMMAND KILLED. Signal $signal, $withcore coredump: $cmd");
 
-        } elsif ($exit_code >> 8 != 0) {
-            $exit_code = $exit_code >> 8;
-            $DB::single = $DB::stopper;
+        } elsif ($child_exit_code != 0) {
             if ($allow_failed_exit_code) {
-                Carp::carp("TOLERATING Exit code $exit_code from: $cmd");
+                Carp::carp("TOLERATING Exit code $child_exit_code from: $cmd");
             } else {
-                Carp::croak("ERROR RUNNING COMMAND.  Exit code $exit_code from: $cmd\nSee the command's captured STDERR (if it exists) for more information");
+                Carp::croak("ERROR RUNNING COMMAND.  Exit code $child_exit_code from: $cmd\nSee the command's captured STDERR (if it exists) for more information");
             }
         }
     }
+
 
     my @missing_output_files;
     if ($output_files and @$output_files) {

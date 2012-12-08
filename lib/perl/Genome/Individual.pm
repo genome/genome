@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use Carp;
 
+my $default_nomenclature = $ENV{GENOME_NOMENCLATURE_DEFAULT};
+
 class Genome::Individual {
     is => ['Genome::SampleSource','Genome::Searchable'],
     has => [
@@ -22,7 +24,7 @@ class Genome::Individual {
             is => 'Number',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'taxon_id' ],
+            where => [ attribute_label => 'taxon_id', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Taxon ID for this individual',
         },
@@ -39,7 +41,7 @@ class Genome::Individual {
             is => 'Number',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'father_id' ],
+            where => [ attribute_label => 'father_id', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'ID of this individual\' father',
         },
@@ -57,7 +59,7 @@ class Genome::Individual {
             is => 'Number',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'mother_id' ],
+            where => [ attribute_label => 'mother_id', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'ID of this individual\'s mother',
         },
@@ -75,7 +77,7 @@ class Genome::Individual {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'upn' ],
+            where => [ attribute_label => 'upn', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Fully qualified internal name for the patient',
         },
@@ -83,7 +85,7 @@ class Genome::Individual {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'common_name' ],
+            where => [ attribute_label => 'common_name', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'A name like "aml1" for the patient, by which the patient is commonly referred-to in the lab'
         },
@@ -91,7 +93,7 @@ class Genome::Individual {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'gender' ],
+            where => [ attribute_label => 'gender', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'when the gender of the individual is known, this value is set to male/female/...'
         },
@@ -99,7 +101,7 @@ class Genome::Individual {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'ethnicity' ],
+            where => [ attribute_label => 'ethnicity', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'The "ethnicity" of the individual, Hispanic/Non-Hispanic/...'
         },
@@ -107,7 +109,7 @@ class Genome::Individual {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'race' ],
+            where => [ attribute_label => 'race', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'The "race" of the individual, African American/Caucasian/...'
         },

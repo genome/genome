@@ -53,10 +53,12 @@ my %params_for_result = (
 
 my @results;
 for my $i (@instrument_data) {
-    push @results, Genome::InstrumentData::AlignmentResult::Bwa->__define__(
+    my $r = Genome::InstrumentData::AlignmentResult::Bwa->__define__(
         %params_for_result,
         instrument_data_id => $i->id,
     );
+    $r->lookup_hash($r->calculate_lookup_hash());
+    push @results, $r;
 }
 
 
@@ -77,6 +79,7 @@ my $result_3 = Genome::InstrumentData::AlignmentResult::Bwa->__define__(
     %params_for_result,
     instrument_data_id => $instrument_data_3->id,
 );
+$result_3->lookup_hash($result_3->calculate_lookup_hash());
 
 my $merge_result2 = construct_merge_result($instrument_data_3);
 
@@ -183,6 +186,7 @@ sub construct_merge_result {
         name => 'instrument_data_segment_count',
         value_id => 0,
     );
+    $merge_result->lookup_hash($merge_result->calculate_lookup_hash());
 
     return $merge_result;
 }

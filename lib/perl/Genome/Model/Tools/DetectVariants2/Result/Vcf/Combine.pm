@@ -9,15 +9,7 @@ use Sys::Hostname;
 
 class Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine {
     is  => ['Genome::Model::Tools::DetectVariants2::Result::Vcf'],
-    has => [
-        incoming_vcf_result_a => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-            doc => 'This is the vcf-result of the first detector or filter being run on',
-        },
-        incoming_vcf_result_b => {
-            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
-            doc => 'This is the vcf-result of the second detector or filter being run on',
-        },
+    has_param => [
         input_a_id => {
             is => 'Text',
             doc => 'ID of the first incoming software result',
@@ -33,8 +25,30 @@ class Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine {
         },
         joinx_version => {
             is => 'Text',
-            is_input => 1,
             doc => 'Version of joinx to use for the combination',
+        },
+        #This isn't set on combine results--they use the samples of their inputs
+        aligned_reads_sample => {
+            is => 'Text',
+            is_optional => 1,
+        },
+        incoming_vcf_result_a_id => {
+            is => 'Number',
+        },
+        incoming_vcf_result_b_id => {
+            is => 'Number',
+        },
+    ],
+    has => [
+        incoming_vcf_result_a => {
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
+            id_by => 'incoming_vcf_result_a_id',
+            doc => 'This is the vcf-result of the first detector or filter being run on',
+        },
+        incoming_vcf_result_b => {
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
+            id_by => 'incoming_vcf_result_b_id',
+            doc => 'This is the vcf-result of the second detector or filter being run on',
         },
     ],
 };
@@ -113,41 +127,6 @@ sub _run_vcf_converter {
         die $self->error_message("Could not complete call to gmt vcf vcf-filter!");
     }
     return 1;
-}
-
-sub _gather_params_for_get_or_create {
-    my $class = shift;
-
-    my $bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
-
-    my %params = $bx->params_list;
-    my %is_input;
-    my %is_param;
-    my $class_object = $class->__meta__;
-    for my $key ($class->property_names) {
-        my $meta = $class_object->property_meta_for_name($key);
-        if ($meta->{is_input} && exists $params{$key}) {
-            $is_input{$key} = $params{$key};
-        } elsif ($meta->{is_param} && exists $params{$key}) {
-            $is_param{$key} = $params{$key};
-        }
-    }
-
-    my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %is_input);
-    my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %is_param);
-
-    my %software_result_params = (
-        params_id => $params_bx->id,
-        inputs_id => $inputs_bx->id,
-        subclass_name => $class,
-    );
-
-    return {
-        software_result_params => \%software_result_params,
-        subclass => $class,
-        inputs => \%is_input,
-        params => \%is_param,
-    };
 }
 
 sub _validate_input {

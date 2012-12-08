@@ -1,0 +1,106 @@
+
+[4mUSAGE[0m
+ [1mgenome model define imported-reference-sequence[0m --processing-profile-name=?
+    [--auto-assign-inst-data] [--auto-build-alignments] --fasta-file=? --processing-profile=?
+    --processing-profile-id=? [--append-to=?] [--instrument-data=?[,?]] [--subject=?]
+    [--groups=?[,?]] [--sequence-uri=?] [--skip-bases-files] [--on-warning=?] [--job-dispatch=?]
+    [--server-dispatch=?] [--projects=?[,?]] [--use-default-sequence-uri] [--assembly-name=?]
+    [--derived-from=?] [--prefix=?] [--species-name=?] [--version=?] [--model-name=?]
+    [--subject-name=?]
+
+[4mSYNOPSIS[0m
+genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta
+
+[4mREQUIRED INPUTS[0m
+  [1mfasta-file[0m
+    The full path and filename of the reference sequence fasta file to import. 
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an id 
+  [1mprocessing-profile-id[0m
+    (undocumented) 
+    Default value '1990904' if not specified
+
+[4mREQUIRED PARAMS[0m
+  [1mprocessing-profile-name[0m
+    (undocumented) 
+
+[4mOPTIONAL INPUTS[0m
+  [1mappend-to[0m
+    When specified, the newly created build will contain all sequences from the "append_to" build,
+    followed by those from the fasta file specified. 
+  [1minstrument-data[0m
+    Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
+  [1msubject[0m
+    Subject for the model, can provide either a name or an id. If instrument data is provided and
+    this is not, an attempt will be made to resolve it based on the provided instrument data 
+  [1mgroups[0m
+    Model groups to put the newly created model into 
+  [1msequence-uri[0m
+    URI to the sequence gzip file to write into BAM headers for alignments against this reference. 
+  [1mskip-bases-files[0m
+    If set, bases files for quick sequence/position look up will not be created.  Useful for
+    importing files with a large number of sequences 
+  [1mon-warning[0m
+    The action to take when emitting a warning.
+    valid values:
+     prompt
+     exit
+     continue 
+    Default value 'prompt' if not specified
+  [1mjob-dispatch[0m
+    dispatch specification: an LSF queue or "inline" 
+    Default value 'inline' if not specified
+  [1mserver-dispatch[0m
+    dispatch specification: an LSF queue or "inline" 
+    Default value 'inline' if not specified
+  [1mprojects[0m
+    Projects for the model. 
+  [1muse-default-sequence-uri[0m
+    Use a default generated URI for the BAM header. 
+    Default value 'false' (--nouse-default-sequence-uri) if not specified
+  [1massembly-name[0m
+    Assembly name to store in the SAM header.  Autoderived if not specified. 
+  [1mderived-from[0m
+    The reference sequence build from which this one is derived (if any). 
+  [1mprefix[0m
+    The source of the sequence, such as "NCBI".  May not have spaces. 
+  [1mspecies-name[0m
+    The species name of the reference.	This value must correspond to a species name found in the
+    gsc.organism_taxon table. 
+  [1mversion[0m
+    The version number and/or description of the reference.  May not have spaces.  This may be, for
+    example "37" or "37_human_contamination". 
+  [1mmodel-name[0m
+    $PREFIX-$SPECIES_NAME unless otherwise specified. 
+  [1msubject-name[0m
+    Copied from species_name. 
+
+[4mOPTIONAL PARAMS[0m
+  [1mauto-assign-inst-data[0m
+    Assigning instrument data to the model is performed automatically 
+    Default value 'false' (--noauto-assign-inst-data) if not specified
+  [1mauto-build-alignments[0m
+    The building of the model is performed automatically 
+    Default value 'true' if not specified
+
+[4mDESCRIPTION[0m
+      # for a regular, complete fasta
+      genome model define imported-reference-sequence \
+        --prefix=GRClite \
+        --species-name=human \
+        --version=37 \
+        --use-default-sequence-uri 
+        --fasta-file=complete.fa \
+    
+      # for a reference which extends another
+      # (a remap file can have the same name as the fasta and be next-to it)
+      genome model define imported-reference-sequence \
+        --prefix=GRC \
+        --species-name=human \
+        --version=37-p8-test7 \
+        --use-default-sequence-uri 
+        --fasta-file=additions.fa \
+        --append-to 106942997 
+
+
+

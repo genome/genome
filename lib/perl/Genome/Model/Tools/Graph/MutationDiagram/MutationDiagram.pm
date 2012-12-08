@@ -42,10 +42,13 @@ sub new {
         _mutation_file => $arg{annotation} || '',
         _annotation_format => $arg{annotation_format},
         _basename => $arg{basename} || '',
+        _output_suffix => $arg{suffix} || '',
         _reference_transcripts => $arg{reference_transcripts} || '',
         _annotation_build_id => $arg{annotation_build_id} || '',
         _output_directory => $arg{output_directory} || '.',
         _vep_frequency_field => $arg{vep_frequency_field},
+        _max_display_freq => $arg{max_display_freq},
+        _lolli_shape => $arg{lolli_shape},
     };
 
     if ($self->{_annotation_build_id}) {
@@ -337,13 +340,14 @@ sub MakeDiagrams {
     my ($self) = @_;
     my $data = $self->{_data};
     my $basename = join("/", $self->{_output_directory}, $self->{_basename});
+    my $suffix = $self->{_output_suffix};
     foreach my $hugo (keys %{$data}) {
         foreach my $transcript (keys %{$data->{$hugo}}) {
             unless($self->{_data}{$hugo}{$transcript}{length}) {
                 warn "$transcript has no protein length and is likely non-coding. Skipping...\n";
                 next;
             }
-            my $svg_file = $basename . $hugo . '_' . $transcript . '.svg';
+            my $svg_file = $basename . $hugo . '_' . $transcript . "$suffix.svg";
             my $svg_fh = new FileHandle;
             unless ($svg_fh->open (">$svg_file")) {
                 die "Could not create file '$svg_file' for writing $$";
@@ -365,8 +369,8 @@ sub Draw {
     $DB::single = 1;
     my $document = Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram::View->new(width=>'800',height=>'600',
         'viewport' => {x => 0, y => 0,
-            width => 1600,
-            height => 1200},
+            width => 800,
+            height => 600},
         left_margin => 50,
         right_margin => 50,
         id => "main_document");
@@ -396,6 +400,10 @@ sub Draw {
         if (exists($domain_legend{$domain->{name}})) {
             $domain_color = $domain_legend{$domain->{name}};
         } else {
+            if($color == @colors) {
+                #protect against an array overrun
+                $color = 0;
+            }
             $domain_color = $colors[$color++];
             $domain_legend{$domain->{name}} = $domain_color;
         }
@@ -463,7 +471,10 @@ sub Draw {
             text => $mutation,
             frequency => $mutations->{$mutation}{frequency},
             color => $mutation_color,
-            style => {stroke => 'black', fill => 'none'});
+            style => {stroke => 'black', fill => 'none'},
+            max_freq => $self->{_max_display_freq},
+            shape => $self->{_lolli_shape},
+        );
 
 
         #jitter labels as a test

@@ -49,6 +49,7 @@ my $alignment_result = Genome::InstrumentData::AlignmentResult::Tophat->__define
     reference_build_id => $reference_build->id,
     bowtie_version => '0.12.7',
 );
+$alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
 
 $alignment_result->add_input(name => 'instrument_data_id-0', value_id => $instrument_data->id, value_class_name => "UR::Value");
 $alignment_result->add_param(name => 'instrument_data_id_count', value_id => 1, value_class_name => "UR::Value");
@@ -58,6 +59,7 @@ my $index = Genome::Model::RnaSeq::DetectFusionsResult::BreakFusionResult::Index
     reference_build => $reference_build,
     output_dir => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-RnaSeq-DetectFusionsResult-BreakFusionResult/IndexResult'
 );
+$index->lookup_hash($index->calculate_lookup_hash());
 
 my $result = Genome::Model::RnaSeq::DetectFusionsResult::BreakFusionResult->get_or_create(
     alignment_result => $alignment_result,

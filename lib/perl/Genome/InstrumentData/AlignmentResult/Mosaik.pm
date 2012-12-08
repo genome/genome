@@ -11,7 +11,7 @@ class Genome::InstrumentData::AlignmentResult::Mosaik {
     has_constant => [
         aligner_name => { value => 'Mosaik', is_param=>1 },
     ],
-    has_optional => [
+    has_transient_optional => [
          _Mosaik_sam_cmd => { is=>'Text' }
     ]
 };

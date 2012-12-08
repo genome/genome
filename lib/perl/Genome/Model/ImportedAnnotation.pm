@@ -31,6 +31,13 @@ class Genome::Model::ImportedAnnotation{
             where => [ name => 'species_name', value_class_name => 'UR::Value'],
             is_mutable => 1,
         },
+        annotation_import_version => {
+            is => 'UR::Value',
+            via => 'inputs',
+            to => 'value_id',
+            where => [ name => 'annotation_import_version', value_class_name => 'UR::Value'],
+            is_mutable => 1,
+        },
         reference_sequence_id => {
             is => 'Text',
             via => 'inputs',
@@ -139,6 +146,7 @@ sub _execute_build{
         my $cmd = $importer_class_name->execute(
             data_set => 'Core', 
             imported_annotation_build => $build,
+            software_version => $build->annotation_import_version,
         );
 
         my $tiering_cmd;
@@ -167,6 +175,7 @@ sub _execute_build{
                 transcript_version => $build->ensembl_version,
                 ucsc_directory => $build->reference_sequence->get_or_create_ucsc_tiering_directory,
                 species => $species_name,
+                annotation_import_version => $build->annotation_import_version,
             );
 
             $tiering_cmd->execute;

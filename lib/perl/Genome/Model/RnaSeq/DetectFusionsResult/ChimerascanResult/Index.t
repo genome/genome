@@ -61,3 +61,4 @@ isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::
 
 done_testing();
 
+1;

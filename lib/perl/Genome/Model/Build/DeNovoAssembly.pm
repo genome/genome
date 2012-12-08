@@ -173,7 +173,7 @@ sub input_metrics_file_for_instrument_data {
     my $self = shift;
     my $instrument_data = shift;
     my %params = $self->read_processor_params_for_instrument_data($instrument_data);
-    my $result = Genome::InstrumentData::SxResult->get(%params);
+    my $result = Genome::InstrumentData::SxResult->get_with_lock(%params);
     return $self->data_directory.'/'.$result->read_processor_input_metric_file;
 }
  
@@ -181,7 +181,7 @@ sub output_metrics_file_for_instrument_data {
     my $self = shift;
     my $instrument_data = shift;
     my %params = $self->read_processor_params_for_instrument_data($instrument_data);
-    my $result = Genome::InstrumentData::SxResult->get(%params);
+    my $result = Genome::InstrumentData::SxResult->get_with_lock(%params);
     return $self->data_directory.'/'.$result->read_processor_input_metric_file;
 }
 
@@ -234,6 +234,24 @@ sub domain_name {
     return 'unknown' if not $taxon->domain;
     
     return $taxon->domain;
+}
+
+sub sequencing_platform {
+    my $self = shift;
+    my @platforms;
+    for my $i ( $self->model->instrument_data ) {
+        my $platform = $i->sequencing_platform;
+        push @platforms, $platform if not grep {/$platform/i} @platforms;
+    }
+    return \@platforms;
+}
+
+sub assembler_name {
+    return $_[0]->processing_profile->assembler_name;
+}
+
+sub assembler_version {
+    return $_[0]->processing_profile->assembler_version;
 }
 
 sub calculate_base_limit_from_coverage {

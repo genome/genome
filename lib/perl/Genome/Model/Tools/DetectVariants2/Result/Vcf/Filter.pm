@@ -9,7 +9,7 @@ use Sys::Hostname;
 
 class Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter {
     is  => ['Genome::Model::Tools::DetectVariants2::Result::Vcf'],
-    has => [
+    has_param => [
         incoming_vcf_result => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Vcf',
             doc => 'This is the vcf-result of the detector or filter being run on',
@@ -21,21 +21,26 @@ class Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter {
         filter_version => {
             is => 'Text',
             doc => 'Version of the filter',
+            is_optional => 1,
         },
         filter_params => {
             is => 'Text',
             doc => 'Params for the filter',
             is_optional => 1,
         },
-        filter_description => {
-            is => 'Text',
-            doc => 'Description of the filter applied to this data',
-            default => 'Filter variants',
-        },
         previous_filter_strategy => {
             is => 'Text',
             doc => 'Name version and params for the previous filter, if there is one.',
             is_optional => 1,
+        },
+    ],
+    has_optional => [
+        # This is not saved in the db but is used to create the vcf file
+        filter_description => {
+            is => 'Text',
+            doc => 'Description of the filter applied to this data',
+            default => 'Filter variants',
+            is_transient => 1,
         },
     ],
 };
@@ -101,41 +106,6 @@ sub _run_vcf_converter {
         die $self->error_message("Could not complete call to gmt vcf vcf-filter!");
     }
     return 1;
-}
-
-sub _gather_params_for_get_or_create {
-    my $class = shift;
-
-    my $bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
-
-    my %params = $bx->params_list;
-    my %is_input;
-    my %is_param;
-    my $class_object = $class->__meta__;
-    for my $key ($class->property_names) {
-        my $meta = $class_object->property_meta_for_name($key);
-        if ($meta->{is_input} && exists $params{$key}) {
-            $is_input{$key} = $params{$key};
-        } elsif ($meta->{is_param} && exists $params{$key}) {
-            $is_param{$key} = $params{$key};
-        }
-    }
-
-    my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %is_input);
-    my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %is_param);
-
-    my %software_result_params = (
-        params_id => $params_bx->id,
-        inputs_id => $inputs_bx->id,
-        subclass_name => $class,
-    );
-
-    return {
-        software_result_params => \%software_result_params,
-        subclass => $class,
-        inputs => \%is_input,
-        params => \%is_param,
-    };
 }
 
 sub _needs_symlinks_followed_when_syncing { 

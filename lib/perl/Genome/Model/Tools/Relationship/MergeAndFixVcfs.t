@@ -19,7 +19,7 @@ my $test_data_dir = $ENV{GENOME_TEST_INPUTS} .
 
 my $input_denovo = join('/', $test_data_dir, 'DS10000.denovo.vcf.gz');
 my $input_standard = join('/', $test_data_dir, 'DS10000.standard.vcf.gz');
-my $expected_dir = "$test_data_dir/expected.v2";
+my $expected_dir = "$test_data_dir/expected.v3";
 my $expected = join('/', $expected_dir, 'DS10000.merged.vcf.gz');
 
 ok(-s $input_denovo, "input denovo vcf file output $input_denovo exists");

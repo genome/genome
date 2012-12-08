@@ -31,6 +31,7 @@ sub new {
                       };
         $create_parameters{width} = $arg{width};
         $create_parameters{height} = $arg{height};
+        $create_parameters{style}{overflow} = $arg{style}{overflow} if defined $arg{style} and $arg{style}{overflow};
         
         $self->{_parent} = $arg{parent};       
         $self->{_style} = $arg{style};
@@ -66,8 +67,8 @@ sub new {
         if(defined($self->{_parent})) {
             $subview_number++;
             $self->{_svg} = $self->{_parent}->svg;
-            $self->{_svg} = $self->{_svg}->svg(%create_parameters); 
-            $self->{_svg}->group(id => "view$subview_number");
+            #$self->{_svg} = $self->{_svg}->svg(%create_parameters); 
+            $self->{_svg} = $self->{_svg}->group(id => "view$subview_number", transform => "translate($arg{x},$arg{y})");
         }
         else {
             #root svg

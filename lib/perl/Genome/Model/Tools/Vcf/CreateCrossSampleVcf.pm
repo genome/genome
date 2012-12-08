@@ -108,6 +108,8 @@ sub execute {
             joinx_version => $self->joinx_version,
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
+    $self->status_message("Got or created software result with id "
+        . $software_result->id . " (test_name='" . $software_result->test_name . "')");
     Genome::Sys->symlink_directory($software_result->output_dir,
         $self->output_directory);
     $self->software_result($software_result);
@@ -129,12 +131,26 @@ sub generate_result {
 
     my $num_builds = scalar(@builds);
     my $accessor = sprintf("get_%s_vcf", $self->variant_type);
-    my @vcf_files = map{ $_->$accessor } @builds;
-    my @existing_files = grep { -s $_ } @vcf_files;
-    unless( scalar(@existing_files) == $num_builds){
+
+
+    my (@builds_with_file, @builds_without_file, @vcf_files);
+    for my $build (@builds) {
+        my $vcf_file = $build->$accessor;
+        if (-s $vcf_file) {
+            push @builds_with_file, $build->id;
+            push @vcf_files, $vcf_file;
+        } else {
+            push @builds_without_file, $build->id;
+        }
+    }
+
+    unless( scalar(@builds_with_file) == $num_builds){
         die $self->error_message("The number of input builds ($num_builds) did not match the" .
-            " number of vcf files found (" . scalar (@existing_files) . ").\n" .
-            "Check the input builds for completeness.");
+            " number of vcf files found (" . scalar (@builds_with_file) . ").\n" .
+            "Check the input builds for completeness.\n" .
+            "Builds with a file present: " . join(",", @builds_with_file) . "\n" .
+            "Builds with missing or zero size file: " . join(",", @builds_without_file) . "\n"
+        );
     }
 
     my $reference_sequence_build = $builds[0]->reference_sequence_build;
@@ -161,6 +177,7 @@ sub _handle_indels {
     my $indel_vcf_header = "";
     my $indel_vcf_format = "";
     my @samples = ();
+    my @sample_names = ();
     my $num_samples = @samples;
     my %sample_indels = ();
 
@@ -169,7 +186,9 @@ sub _handle_indels {
     my $ea = each_array(@builds, @indel_files);
     while( my ($build, $indel_file) = $ea->() ) {
         my $sample = $build->model->subject->id;
+        my $sample_name = $build->model->subject->name;
         push @samples, $sample;
+        push @sample_names, $sample_name;
         $num_samples++;
 
         ## Create output directory for this sample ##
@@ -217,9 +236,9 @@ sub _handle_indels {
     my $OUTFILE = Genome::Sys->open_file_for_writing($out_filename);
     print $OUTFILE "$indel_vcf_header\n";
     print $OUTFILE "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT";
-    foreach my $sample (@samples)
+    foreach my $sample_name (@sample_names)
     {
-        print $OUTFILE "\t$sample";
+        print $OUTFILE "\t$sample_name";
     }
     print $OUTFILE "\n";
 

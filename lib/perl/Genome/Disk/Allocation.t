@@ -141,13 +141,16 @@ my $current_volume = $allocation->volume;
 my $old_allocation_size = $allocation->kilobytes_requested;
 
 # temporarily shrink volume to force reallocate with move
-$current_volume->total_kb($current_volume->allocated_kb + 100);
+$current_volume->total_kb($current_volume->allocated_kb);
 my $current_volume_unallocated_kb = $current_volume->unallocated_kb;
-my $move_rv = Genome::Disk::Allocation->reallocate(allocation_id => $allocation->id, kilobytes_requested => 500, allow_reallocate_with_move => 1);
+my $move_rv = Genome::Disk::Allocation->reallocate(
+    allocation_id => $allocation->id,
+    kilobytes_requested => $allocation->kilobytes_requested + 100,
+    allow_reallocate_with_move => 1);
 # resets total_kb to actual usage; unshrink volume; needed for creating new allocations later in forked children
 $current_volume->sync_usage();
 
-ok($allocation->volume->mount_path ne $current_volume, "allocation moved to new volume");
+ok($allocation->volume->mount_path ne $current_volume->mount_path, "allocation moved to new volume");
 ok(-e $allocation->absolute_path . "/test_file", "touched file correctly moved to new allocation directory");
 ok(!Genome::Disk::Allocation->get(mount_path => $current_volume->mount_path, allocation_path => $allocation->allocation_path), 'no redundant allocation on old volume');
 

@@ -111,9 +111,11 @@ sub execute {
     my $indel_size_limit = $self->indel_size_limit;
 
     my $chrom = $self->chrom;
-
+    my @header_prefixes;
     my @bams = split(",",$bam_files);
-    my @header_prefixes = split(",",$self->header_prefixes);
+    if(defined($self->header_prefixes)){
+        @header_prefixes = split(",",$self->header_prefixes);
+    }
 
     my $fasta;
     if ($genome_build eq "36") {
@@ -220,7 +222,7 @@ sub execute {
             
             if($count == 0){ #check for header
                 if($sline =~ /^(#|Hugo_Symbol|Chr|chromosome)/){
-                    #good header match
+                    #good header match                    
                     if(defined($header_prefixes[$prefix-1])){
                         my $pre = $header_prefixes[$prefix-1];
                         print OUTFILE join("\t",($sline,$pre . "_ref_count", $pre . "_var_count", $pre ."_VAF")) . "\n";

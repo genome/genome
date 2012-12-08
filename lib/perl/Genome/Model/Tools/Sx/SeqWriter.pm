@@ -75,8 +75,9 @@ sub flush {
     my $self = shift;
 
     for my $property ( $self->_file_properties ) {
-        next if not $self->{'_'.$property->property_name};
-        $self->{'_'.$property->property_name}->flush;
+        my $fh = $self->{'_'.$property->property_name};
+        next if not $fh or ref $fh or not $fh->can('flush');
+        $fh->flush;
     }
 
     return 1;

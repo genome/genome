@@ -36,6 +36,7 @@ my %refcov_stats_params = (
     print_headers =>1,
     embed_bed =>1,
     use_short_roi_names => 0,
+    roi_track_name => '',
 );
 
 my $refcov_result = Genome::InstrumentData::AlignmentResult::Merged::RefCov->get_or_create(%refcov_stats_params);
@@ -44,7 +45,7 @@ isa_ok($refcov_result, 'Genome::InstrumentData::AlignmentResult::Merged::RefCov'
 #my $refcov_stats = $refcov_result->refcov_stats_hash_ref;
 #ok($refcov_stats, 'produced stats');
 
-my $refcov_result2 = Genome::InstrumentData::AlignmentResult::Merged::RefCov->get(%refcov_stats_params);
+my $refcov_result2 = Genome::InstrumentData::AlignmentResult::Merged::RefCov->get_with_lock(%refcov_stats_params);
 is($refcov_result2, $refcov_result, 'got same result for get() after get_or_create()');
 
 #my $refcov_result3 = Genome::InstrumentData::AlignmentResult::Merged::RefCov->get_or_create(%refcov_stats_params);
@@ -60,6 +61,7 @@ sub setup_data {
         output_dir => ($data_dir . '/merged_result'),
         reference_build => $refseq,
     );
+    $merged_result->lookup_hash($merged_result->calculate_lookup_hash());
     isa_ok($merged_result, 'Genome::InstrumentData::AlignmentResult::Merged', 'created merged result');
 
     my $fl_cmd = Genome::FeatureList::Command::Create->create(

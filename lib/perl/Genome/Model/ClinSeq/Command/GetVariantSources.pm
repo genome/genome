@@ -141,16 +141,16 @@ sub execute {
                                "$build_dir/variants/indel/strelka-0.4.6.2-c5009c08801c3ffa834ecb28d4293d27/indels.hq.bed",
                                "$build_dir/variants/indel/strelka-0.4.6.2-14acc00d0b01975892118ec71cfc3506/indels.hq.bed",
                                "$build_dir/variants/indel/strelka-0.4.6.2-673995e8237c2c733def86d8d9b3d5a6/indels.hq.bed");
-    $indel_strelka_results_file = &checkResultFile('-paths'=>\@strelka_indel_paths, '-caller'=>"strelka");
+    $indel_strelka_results_file = $self->checkResultFile('-paths'=>\@strelka_indel_paths, '-caller'=>"strelka");
 
     my @gatk_indel_paths = ("$build_dir/variants/indel/gatk-somatic-indel-5336-d41d8cd98f00b204e9800998ecf8427e/false-indel-v1-05fbf69c10534fd630b99e44ddf73c7f/indels.hq.bed");
-    $indel_gatk_results_file = &checkResultFile('-paths'=>\@gatk_indel_paths, '-caller'=>"gatk");
+    $indel_gatk_results_file = $self->checkResultFile('-paths'=>\@gatk_indel_paths, '-caller'=>"gatk");
     
     my @pindel_indel_paths = ("$build_dir/variants/indel/pindel-0.5-d41d8cd98f00b204e9800998ecf8427e/pindel-somatic-calls-v1-d41d8cd98f00b204e9800998ecf8427e/pindel-vaf-filter-v1-34c9479830c83a54e5d4f73f71e9c660/pindel-read-support-v1-d41d8cd98f00b204e9800998ecf8427e/indels.hq.bed");
-    $indel_pindel_results_file = &checkResultFile('-paths'=>\@pindel_indel_paths, '-caller'=>"pindel");
+    $indel_pindel_results_file = $self->checkResultFile('-paths'=>\@pindel_indel_paths, '-caller'=>"pindel");
 
     my @varscan_indel_paths = ("$build_dir/variants/indel/varscan-somatic-2.2.6-d41d8cd98f00b204e9800998ecf8427e/varscan-high-confidence-indel-v1-d41d8cd98f00b204e9800998ecf8427e/false-indel-v1-05fbf69c10534fd630b99e44ddf73c7f/indels.hq.bed");
-    $indel_varscan_results_file = &checkResultFile('-paths'=>\@varscan_indel_paths, '-caller'=>"varscan");
+    $indel_varscan_results_file = $self->checkResultFile('-paths'=>\@varscan_indel_paths, '-caller'=>"varscan");
 
     my ($snv_strelka_results_file, $snv_sniper_results_file, $snv_varscan_results_file);
 
@@ -159,13 +159,13 @@ sub execute {
                              "$build_dir/variants/snv/strelka-0.4.6.2-c5009c08801c3ffa834ecb28d4293d27/snvs.hq.bed",
                              "$build_dir/variants/snv/strelka-0.4.6.2-673995e8237c2c733def86d8d9b3d5a6/snvs.hq.bed",
                              "$build_dir/variants/snv/strelka-0.4.6.2-14acc00d0b01975892118ec71cfc3506/snvs.hq.bed");
-    $snv_strelka_results_file = &checkResultFile('-paths'=>\@strelka_snv_paths, '-caller'=>"strelka");
+    $snv_strelka_results_file = $self->checkResultFile('-paths'=>\@strelka_snv_paths, '-caller'=>"strelka");
 
     my @sniper_snv_paths = ("$build_dir/variants/snv/sniper-1.0.2-74a151fc61a7a2171177397f4c4f3633/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/somatic-score-mapping-quality-v1-39b60f48b6f8c9e63436a5424305e9fd/snvs.hq.bed");
-    $snv_sniper_results_file = &checkResultFile('-paths'=>\@sniper_snv_paths, '-caller'=>"sniper");
+    $snv_sniper_results_file = $self->checkResultFile('-paths'=>\@sniper_snv_paths, '-caller'=>"sniper");
 
     my @varscan_snv_paths = ("$build_dir/variants/snv/varscan-somatic-2.2.6-d41d8cd98f00b204e9800998ecf8427e/varscan-high-confidence-v1-d41d8cd98f00b204e9800998ecf8427e/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/snvs.hq.bed");
-    $snv_varscan_results_file = &checkResultFile('-paths'=>\@varscan_snv_paths, '-caller'=>"varscan");
+    $snv_varscan_results_file = $self->checkResultFile('-paths'=>\@varscan_snv_paths, '-caller'=>"varscan");
 
 
     #Use 'joinx intersect' to determine which indels in the merged/union file are found in each individual caller's results file
@@ -179,13 +179,13 @@ sub execute {
     my $snv_sniper_outfile = $build_outdir . "snv_sniper.bed";
     my $snv_varscan_outfile = $build_outdir . "snv_varscan.bed";
 
-    print "Looking for overlapping indel results between:\n$indel_results_file\n$indel_strelka_results_file\n\n";
-    print "Looking for overlapping indel results between:\n$indel_results_file\n$indel_gatk_results_file\n\n";
-    print "Looking for overlapping indel results between:\n$indel_results_file\n$indel_pindel_results_file\n\n";
-    print "Looking for overlapping indel results between:\n$indel_results_file\n$indel_varscan_results_file\n\n";
-    print "Looking for overlapping snv results between:\n$snv_results_file\n$snv_strelka_results_file\n\n";
-    print "Looking for overlapping snv results between:\n$snv_results_file\n$snv_sniper_results_file\n\n";
-    print "Looking for overlapping snv results between:\n$snv_results_file\n$snv_varscan_results_file\n\n";
+    $self->status_message("Looking for overlapping indel results between:\n$indel_results_file\n$indel_strelka_results_file\n\n");
+    $self->status_message("Looking for overlapping indel results between:\n$indel_results_file\n$indel_gatk_results_file\n\n");
+    $self->status_message("Looking for overlapping indel results between:\n$indel_results_file\n$indel_pindel_results_file\n\n");
+    $self->status_message("Looking for overlapping indel results between:\n$indel_results_file\n$indel_varscan_results_file\n\n");
+    $self->status_message("Looking for overlapping snv results between:\n$snv_results_file\n$snv_strelka_results_file\n\n");
+    $self->status_message("Looking for overlapping snv results between:\n$snv_results_file\n$snv_sniper_results_file\n\n");
+    $self->status_message("Looking for overlapping snv results between:\n$snv_results_file\n$snv_varscan_results_file\n\n");
 
     my $joinx_indel_strelka_cmd = "gmt joinx intersect $indel_results_file $indel_strelka_results_file $params_string --output-file $indel_strelka_outfile";
     my $joinx_indel_gatk_cmd = "gmt joinx intersect $indel_results_file $indel_gatk_results_file $params_string --output-file $indel_gatk_outfile";
@@ -204,13 +204,13 @@ sub execute {
     Genome::Sys->shellcmd(cmd => $joinx_snv_varscan_cmd);
 
     #Go through original indels and note all files from different callers where that indel was called
-    &noteCaller($indel_strelka_outfile, "strelka", "indel");
-    &noteCaller($indel_gatk_outfile, "gatk", "indel");
-    &noteCaller($indel_pindel_outfile, "pindel", "indel");
-    &noteCaller($indel_varscan_outfile, "varscan", "indel");
-    &noteCaller($snv_strelka_outfile, "strelka", "snv");
-    &noteCaller($snv_sniper_outfile, "sniper", "snv");
-    &noteCaller($snv_varscan_outfile, "varscan", "snv");
+    $self->noteCaller($indel_strelka_outfile, "strelka", "indel");
+    $self->noteCaller($indel_gatk_outfile, "gatk", "indel");
+    $self->noteCaller($indel_pindel_outfile, "pindel", "indel");
+    $self->noteCaller($indel_varscan_outfile, "varscan", "indel");
+    $self->noteCaller($snv_strelka_outfile, "strelka", "snv");
+    $self->noteCaller($snv_sniper_outfile, "sniper", "snv");
+    $self->noteCaller($snv_varscan_outfile, "varscan", "snv");
 
     #Print out a new file containing the extra source columns
     open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
@@ -249,6 +249,7 @@ sub execute {
 }
 
 sub noteCaller{
+  my $self = shift;
   my $intersect_file=shift;
   my $caller=shift;
   my $variant_type=shift;
@@ -272,6 +273,7 @@ sub noteCaller{
 }
 
 sub checkResultFile{
+  my $self = shift;
   my %args = @_;
   my @paths = @{$args{'-paths'}};
   my $caller = $args{'-caller'};
@@ -283,7 +285,7 @@ sub checkResultFile{
   }
   unless (-e $result_file){
     my $path_list = join("\n", @paths);
-    print "$caller result not found in the following list of paths\n\n$path_list\n";
+    $self->error_message("$caller result not found in the following list of paths\n\n$path_list\n");
     exit;
   }
   return($result_file);

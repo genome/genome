@@ -60,7 +60,7 @@ sub help_detail{
 sub execute{
     my $self = shift;
     my @feature_lists = $self->feature_list;
-    my @property_names = map { $_->property_name } grep { $_->is_input } $self->__meta__->_legacy_properties;
+    my @property_names = map { $_->property_name } grep { $_->can('is_input') and $_->is_input } $self->__meta__->_legacy_properties;
 
     for my $feature_list (@feature_lists) {
         for my $property (@property_names) {

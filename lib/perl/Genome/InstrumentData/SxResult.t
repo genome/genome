@@ -42,7 +42,7 @@ ok($read_processor_output_metric_file, 'produced read processor output metric fi
 ok($read_processor_input_metric_file, 'produced read processor input metric file');
 
 $sx_result_params{output_file_count} = 1;
-my $sx_result3 = Genome::InstrumentData::SxResult->get(%sx_result_params);
+my $sx_result3 = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);
 ok(!$sx_result3, 'request with different (yet unrun) parameters returns no result');
 
 my $sx_result4 = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);

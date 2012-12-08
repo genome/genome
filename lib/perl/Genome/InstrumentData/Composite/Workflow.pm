@@ -232,7 +232,20 @@ sub generate_workflow {
         my $input_connector = $master_workflow->get_input_connector;
         my $output_connector = $master_workflow->get_output_connector;
 
+        my $cname = $operation->{operation}->operation_type->command_class_name;
+        my $cmeta = $cname->__meta__;
         for my $property (@{$operation->{operation}->operation_type->input_properties}){
+            # This was written before the id_by properties were supported as inputs
+            # so they were previously ignored.  We ignore them explicitly here
+            # in this link autogen code because the associated ID property is
+            # assigned directly.
+            # In an updated version of the code we might skip things with implied_by
+            # set to true, which would go the other way and capture the object,
+            # while ignoring its supporting identity property.
+            my $pmeta = $cmeta->property($property);
+            if ($pmeta->id_by) {
+                next;
+            }
             $self->_add_link_to_workflow($master_workflow,
                 left_workflow_operation_id => $input_connector->id,
                 left_property => join('_', "index", $operation->{index}, $property),

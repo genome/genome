@@ -19,11 +19,13 @@ class Genome::Model::RnaSeq::DetectFusionsResult::TophatFusionResult{
         #TODO - not ideal, hardcoded a default ID for now so we don't have to pass this input all the way up to the RnaSeq model,
         #if this gets used, we'll want to revisit it
         known_fusions_result_id => {
+            is_transient => 1,
             is => "Integer",
             default_value => 121542754,
             doc => "id of the known fusions software result"
         },
         detector_params => {
+            is_param => 1,
             doc => 'params for tophat-fusion and tophat fusion post, separated by a colon (:)'
         }
     ],
@@ -44,7 +46,6 @@ sub create {
 
     my($params, $post_params) = split(/:/, $self->detector_params);
     my $output_directory = $self->temp_staging_directory;
-    #my ($fastq1, $fastq2) = $self->_get_fastq_files_for_model();
     my $n_threads = $self->_available_cpu_count;
 
     $self->_put_bowtie_version_in_path();

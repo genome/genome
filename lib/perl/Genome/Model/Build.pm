@@ -201,7 +201,7 @@ sub __extend_namespace__ {
         for my $p (@p) {
             if ($p->can("is_input") and $p->is_input) {
                 my $name = $p->property_name;
-                my %data = %{ UR::Util::deep_copy($p) };
+                my %data = %{$p};
                 my $type = $data{data_type};
                 for my $key (keys %data) {
                     delete $data{$key} unless $key =~ /^is_/;
@@ -1938,11 +1938,22 @@ sub full_path_to_relative {
     return $rel_path;
 }
 
+#
+# Diff Methods
+#
+# There has been a slow migration away from individually written build subclasses.
+# Ony one of these methods has been updated to defer to the model definition.
+# The others will need some sort of updating.
+#
+
 # Returns a list of files that should be ignored by the diffing done by compare_output
 # Files should be relative to the data directory of the build and can contain regex.
 # Override in subclasses!
 sub files_ignored_by_diff {
-    return ();
+    my $self = shift;
+    my $model_class = $self->class;
+    $model_class =~ s/::Model::Build/::Model/;
+    return $model_class->files_ignored_by_build_diff($self);
 }
 
 # Returns a list of directories that should be ignored by the diffing done by compare_output
@@ -1971,6 +1982,7 @@ sub metrics_ignored_by_diff {
 # Each suffix should have a method called diff_<SUFFIX> that'll contain the logic.
 sub regex_for_custom_diff {
     return (
+        hq     => '\.hq$',
         gz     => '(?<!\.vcf)\.gz$',
         vcf    => '\.vcf$',
         vcf_gz => '\.vcf\.gz$',
@@ -2005,6 +2017,13 @@ sub diff_vcf {
     my ($self, $first_file, $second_file) = @_;
     my $first_md5  = qx(grep -vP '^##fileDate' $first_file | md5sum);
     my $second_md5 = qx(grep -vP '^##fileDate' $second_file | md5sum);
+    return ($first_md5 eq $second_md5 ? 1 : 0);
+}
+
+sub diff_hq {
+    my ($self, $first_file, $second_file) = @_;
+    my $first_md5  = qx(grep -vP '^##fileDate' $first_file | grep -vP '^##startTime' | grep -vP '^##cmdline' | md5sum);
+    my $second_md5 = qx(grep -vP '^##fileDate' $second_file | grep -vP '^##startTime' | grep -vP '^##cmdline' | md5sum);
     return ($first_md5 eq $second_md5 ? 1 : 0);
 }
 

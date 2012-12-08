@@ -11,6 +11,7 @@ our $VERSION = '1.0';
 use strict;
 use warnings;
 use SVG;
+use Carp;
 
 # If you know about and want to use inheritance:
 #use Base::Class;
@@ -26,6 +27,8 @@ sub new {
 							_amino_acid => $arg{start_aa},
 							_text => $arg{text},
 							_id => $arg{id},
+                            _max_frequency => $arg{max_freq},
+                            _shape => $arg{shape},
 						 };
     $self->{_feature_length} = 1;
 
@@ -36,6 +39,15 @@ sub new {
     my $mutation_top = 70;
     if($self->{_frequency} > 3) {
         $mutation_top += ($self->{_frequency} - 3) * 13; 
+    }
+
+    if($self->{_max_frequency}) {
+        my $gutter_till_label = 14;
+        my $first_mutation_location = 30;
+        $mutation_top = $first_mutation_location + ($self->{_max_frequency} + 1) * 13 + $gutter_till_label;
+
+        #add in the allele count to the label
+        $self->{_text} = "(" . $self->{_frequency} . ") " . $self->{_text};
     }
 
     
@@ -58,6 +70,14 @@ sub new {
     $self->{_text_label}{y} = $backbone->dimensions->{y}-$mutation_top;
 
     bless($self, ref($class) || $class);
+
+    if($arg{shape}) {
+        $self->{_shape} = "_" . lc($self->{_shape});
+        unless($self->can($self->{_shape})) {
+            croak "Shape $arg{shape} is currently unsupported";
+        }
+    }
+    
     return $self;
 }
 #----------------------------------
@@ -113,26 +133,79 @@ sub draw {
         x=>$self->{_line_path_x}, y=>$self->{_line_path_y},
         -type=>'path',
     );
-	$svg->path(
-													     %$path,   	
-                                                         id => $self->{_id}, 
-														 style => $self->{_style}, 
-												);
-		for (my $i = 0; $i < $self->{_frequency};$i++) {
-			#draw lollipop                                            
-			my $circle = $svg->circle( cx => $self->{_lollipop}{x}, 
-																 cy => $self->{_lollipop}{y} - ($i * 13), 
-																 r => 5,
-																 id=>$self->{_id}."_lollipop_" . $i,
-																 style => {fill => $self->{_color}, stroke => 'black'});  
-		}
+    $svg->path(
+        %$path,   	
+        id => $self->{_id}, 
+        style => $self->{_style}, 
+    );
+
+    my $shape_func = $self->{_shape};
+    my $drawable_frequency = defined $self->{_max_frequency} && $self->{_frequency} > $self->{_max_frequency} ? $self->{_max_frequency} : $self->{_frequency};                                        
+    for (my $i = 0; $i < $drawable_frequency; $i++) {
+        #draw lollipop                                            
+        my $shape = $self->$shape_func($svg, $self->{_id} . "_lollipop_" . $i, $self->{_lollipop}{x}, $self->{_lollipop}{y} - ($i * 13), 5, {fill => $self->{_color}, stroke => 'black'});  
+    }
+
+    if(defined $self->{_max_frequency} && $self->{_frequency} > $self->{_max_frequency}) {
+        #frequency is truncated
+        $self->_broken_count_indicator($svg, $self->{_lollipop}{x}, $self->{_lollipop}{y} - ($drawable_frequency * 13), 5);
+        my $shape = $self->$shape_func($svg, $self->{_id} . "_lollipop_" . "gutter", $self->{_lollipop}{x}, $self->{_lollipop}{y} - (($drawable_frequency + 1) * 13), 5, {fill => $self->{_color}, stroke => 'black'});  
+    }
+
     #add text
     my $transform = sprintf("matrix(0 -1 1 0 %f %f)",$self->{_text_label}{x},$self->{_text_label}{y});
     my $text = $svg->text(id => $self->{_id}."_label",
-                          transform => $transform,
+        transform => $transform,
 
-                      )->cdata($self->{_text});
+    )->cdata($self->{_text});
                                                 
+}
+
+sub _broken_count_indicator {
+    my ($self, $svg, $x, $y, $radius) = @_;
+    my @x = ($x-$radius,$x+$radius,$x+$radius,$x-$radius);
+    my @y = ($y+$radius/2,$y,$y-$radius/2,$y);
+
+    my $group = $svg->group(id => $self->{_id} . "_count_break_group");
+
+    my $path = $group->get_path( x => \@x, y => \@y, -type => 'polygon' );
+    $group->polygon( %$path, id => $self->{_id} . "_count_break",style => {fill => 'white', stroke => 'white'});
+
+    $group->line( id => $self->{_id} . "_count_break" . "_bottom_line", x1 => $x[0], x2 => $x[1], y1 => $y[0], y2 => $y[1], style => {stroke => 'black'});
+    $group->line( id => $self->{_id} . "_count_break" . "_top_line", x1 => $x[2], x2 => $x[3], y1 => $y[2], y2 => $y[3],style=>{stroke => 'black'});
+    return $group;
+}
+
+sub _circle {
+    my ($self, $svg, $id, $x, $y, $radius, $style) = @_;
+    my $circle = $svg->circle( cx => $x, 
+        cy => $y, 
+        r => $radius,
+        id => $id,
+        style => $style);
+    return $circle;
+}
+
+sub _diamond {
+    my ($self, $svg, $id, $x, $y, $radius, $style) = @_;
+    my @x = ($x-$radius,$x,$x+$radius,$x);
+    my @y = ($y,$y+$radius,$y,$y-$radius);
+    my $path = $svg->get_path( x => \@x, y => \@y, -type => 'polygon' );
+    my $diamond = $svg->polygon( %$path,
+        id => $id,
+        style => $style);
+    return $diamond;
+}
+
+sub _square {
+    my ($self, $svg, $id, $x, $y, $radius, $style) = @_;
+    my $rect = $svg->rect( x => $x - $radius, 
+        y => $y - $radius, 
+        width => $radius * 2, 
+        height => $radius * 2,
+        id => $id,
+        style => $style);
+    return $rect;
 }
 
 =head1 AUTHOR

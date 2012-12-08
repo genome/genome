@@ -139,6 +139,7 @@ sub setup_test_builds {
         original_file_path => $dbsnp_file,
         format => 'bed',
         variant_type => 'snv',
+        reference_build => $reference_sequence_build,
     );
     ok($result, 'created test result');
 

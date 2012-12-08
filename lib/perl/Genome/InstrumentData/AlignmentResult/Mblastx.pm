@@ -22,16 +22,6 @@ class Genome::InstrumentData::AlignmentResult::Mblastx {
             is_param => 1, 
         }, 
     ],
-    has => [
-        _max_read_id_seen => { 
-            default_value => 0,
-            is_optional => 1, 
-        },
-        _file_input_option => { 
-            default_value => 'fasta', 
-            is_optional => 1, 
-        },
-    ],
 };
 
 sub required_arch_os { 'x86_64' }

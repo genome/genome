@@ -26,7 +26,12 @@ class Genome::Model::ClinSeq::Command::SummarizeBuilds {
               is => 'Number',
               is_optional => 1,
               doc => 'Use this option to skip LIMS use of illumina_info run/lane/library report tool',
-        }
+        },
+        log_file => {
+              is => 'FilesystemPath',
+              is_optional => 1,
+              doc => 'All status messages go to the specified log file',
+        },
     ],
     doc => 'summarize the inputs of a clinseq build (models/builds, processing profiles, etc.)',
 };
@@ -75,6 +80,15 @@ sub execute {
   my $self = shift;
   my @builds = $self->builds;
   my $outdir = $self->outdir;
+  my $log_file = $self->log_file;
+
+  unless (-e $outdir) {
+    Genome::Sys->create_directory($outdir);
+  }
+
+  if ($log_file) {
+    $self->queue_status_messages(1);
+  }
 
   unless ($outdir =~ /\/$/){
     $outdir .= "/";
@@ -627,12 +641,16 @@ sub execute {
       #Only process each sample once
       unless ($samples_processed{$subject_name}){
         $samples_processed{$subject_name} = 1;
-        my $id_sample_summary_file_csv = $build_outdir . $subject_name . "_APIPE_Sample_Sequence_QC.csv";
-        my $id_sample_summary_file_html = $build_outdir . $subject_name . "_APIPE_Sample_Sequence_QC.html";
+        #Occasionally the sample name will contain problem characters like "(" and ")" which need to be escaped or replaced
+        my $subject_name_escaped = $subject_name;
+        $subject_name_escaped =~s/\(/_/g;
+        $subject_name_escaped =~s/\)//g;
+        my $id_sample_summary_file_csv = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.csv";
+        my $id_sample_summary_file_html = $build_outdir . $subject_name_escaped . "_APIPE_Sample_Sequence_QC.html";
 
         #Produce the sample sequencing summary in csv format
-        my $id_list_cmd1 = "/usr/bin/perl `which genome` instrument-data list solexa --filter sample_name='$subject_name'  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv > $id_sample_summary_file_csv";
-        my $id_list_cmd2 = "/usr/bin/perl `which genome` instrument-data list solexa --filter sample_name='$subject_name'  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=html > $id_sample_summary_file_html";
+        my $id_list_cmd1 = "/usr/bin/perl `which genome` instrument-data list solexa --filter \"sample_name='$subject_name'\"  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv > $id_sample_summary_file_csv";
+        my $id_list_cmd2 = "/usr/bin/perl `which genome` instrument-data list solexa --filter \"sample_name='$subject_name'\"  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=html > $id_sample_summary_file_html";
 
         $self->status_message("\n");
         Genome::Sys->shellcmd(cmd => $id_list_cmd1, output_files=>["$id_sample_summary_file_csv"]);
@@ -961,7 +979,7 @@ sub execute {
       my $total_top_alignments = 0;
       my $total_top_spliced_alignments = 0;
       my $mt_top_alignments = 0;
-      
+
       my $total_reads = "n/a";
       my $unmapped_reads_p = "n/a";
       my $total_reads_mapped_p = "n/a";
@@ -988,6 +1006,7 @@ sub execute {
             }
           }
           if (scalar(@line) == 9){
+            next if ($line[0] =~ /^chr$/);
             $total_top_alignments += $line[1];
             $total_top_spliced_alignments += $line[2];
             if ($line[0] eq "MT"){
@@ -1365,6 +1384,16 @@ sub execute {
     close(STATS);
   }
   $self->status_message("\n\n");
+
+  my @output = $self->status_messages();
+  if ($log_file) {
+      my $log = IO::File->new(">$log_file");
+      $log->print(join("\n", @output));
+      $log->close;
+
+      $self->queue_status_messages(0);
+      $self->status_message("Log file written to $log_file\n");
+  }
 
   return 1;
 }

@@ -6,9 +6,9 @@ use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 
 #Import the SNV summary stats 'Stats.tsv' file for all LUCs - produce a table compiling the stats for all patients
-#Create a new list of SNVs based on the 'ProcessedData.tsv' file for each patient
+#Create a new list of SNVs based on the 'VariantExpressionSummary.tsv' file for each patient
 #- To this file add the hg18 coordinates back on so that both hg18 and hg19 coords are provide side by side
-#- Create a new file merging the ProcessedData.tsv onto the original SNV file imported for each patient
+#- Create a new file merging the VariantExpressionSummary.tsv onto the original SNV file imported for each patient
 
 my $working_dir = "/gscmnt/sata132/techd/mgriffit/luc/rnaseq_vs_snv/";
 my $readcounts_files_merge_dir_hg19 = "/gscmnt/sata132/techd/mgriffit/luc/rnaseq_vs_snv/readcounts_merge_hg19/";
@@ -19,7 +19,7 @@ while (my $file = readdir(DIR)) {
   if ($file =~ /LUC/){
     my $patient = $file;
     my $stats_file = $readcounts_files_merge_dir_hg19 . $patient . "/summary/Stats.tsv";
-    my $processed_data_file = $readcounts_files_merge_dir_hg19 . $patient . "/summary/ProcessedData.tsv";
+    my $processed_data_file = $readcounts_files_merge_dir_hg19 . $patient . "/summary/VariantExpressionSummary.tsv";
     $files{$patient}{stats_file} = $stats_file;
     $files{$patient}{processed_data_file} = $processed_data_file;
   }

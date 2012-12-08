@@ -579,6 +579,11 @@ sub tier_variant_file {
     my $self = shift;
     my $variant_file = shift;
 
+    unless(-s $variant_file) {
+        $self->status_message('Empty variant file.  Skipping tiering.');
+        return $variant_file;
+    }
+
     my $cmd = Genome::Model::Tools::FastTier::FastTier->create(
         tier_file_location => $self->tier_file_location,
         variant_bed_file => $variant_file,
@@ -1009,16 +1014,18 @@ sub process_validation_list {
 
     my $tier1_bed = $self->tier_variant_file($variant_bed_file);
 
-    my $annotation_build = $self->build->annotation_build;
-    my $annotator_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-        use_version => 2,
-        variant_bed_file => $tier1_bed,
-        annotation_filter => 'top',
-        build_id => $annotation_build->id,
-        output_file => "$tier1_bed.anno"
-    );
-    unless($annotator_cmd->execute()) {
-        die $self->error_message('Failed to annotated variants.');
+    if(-s $tier1_bed) { #only annotate if we have something to annotate!
+        my $annotation_build = $self->build->annotation_build;
+        my $annotator_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
+            use_version => 2,
+            variant_bed_file => $tier1_bed,
+            annotation_filter => 'top',
+            build_id => $annotation_build->id,
+            output_file => "$tier1_bed.anno"
+        );
+        unless($annotator_cmd->execute()) {
+            die $self->error_message('Failed to annotated variants.');
+        }
     }
 
     return 1;

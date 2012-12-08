@@ -49,6 +49,10 @@ class Genome::Model::ClinSeq::Command::GetBamReadCountsMatrix {
         no_fasta_check          => { is => 'Number',
                                      is_optional => 1,
                                      doc => 'Do not check that ref base matches expected in reference fasta', },
+        max_positions           => { is => 'Number',
+                                     is_optional => 1,
+                                     doc => 'For debugging/testing purposes, limit counting to this many positions',
+                                   },
 
     ],
     doc => 'This script attempts to get read counts for an arbitrary set of positions from an arbitrary list of reference alignment BAMs',
@@ -62,7 +66,9 @@ sub help_detail {
 
  This script takes a list of somatic variation builds, gathers the unique set of SNV positions for those and 
  obtains BAM read counts for the underlying reference alignment builds or an explicitly provided list of them.
- Notes: Do NOT use for Indels!  SNVs only.
+ Note: Do NOT use for Indels!  SNVs only.
+ Note: The output will be a matrix file for read counts and one for VAFs.  One column will be written for each somatic variation build ID specified.
+
 EOS
 }
 
@@ -152,8 +158,24 @@ sub execute {
   }else{
     $pos = $self->write_positions_file('-target_file_names'=>\@target_file_names);
   }
+
   my $pos_count = keys %{$pos};
   $self->status_message("Found $pos_count unique positions to obtain counts for");
+
+  #If the user defined --max-positions, thin the list of target positions to this max
+  if ($self->max_positions){
+    $self->warning_message("Limiting counting to " . $self->max_positions . " positions as specified by --max_positions");
+    my $c = 0;
+    foreach my $p (sort keys %{$pos}){
+      $c++;
+      if ($c > $self->max_positions){
+        delete $pos->{$p};
+      }
+    }
+  }
+
+  $pos_count = keys %{$pos};
+  $self->status_message("\tProceeding to obtain counts for $pos_count positions");
 
   #Get reference alignment builds (from ref_align_build_ids or somatic_build_ids) and associated BAM files to be counted
   my $ref_align_builds = $self->get_ref_align_builds;
@@ -266,7 +288,6 @@ sub execute {
 
     print RC "$annotation\t$rc_string\n";
     print VAF "$annotation\t$vaf_string\n";
-
   }
   
   close(RC);

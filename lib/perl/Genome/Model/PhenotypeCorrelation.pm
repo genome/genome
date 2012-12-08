@@ -628,6 +628,18 @@ sub _vcf_annotate {
     return $output_file;
 }
 
+sub _dbsnp_info_fields_for_version {
+    my $self = shift;
+    my $version = shift;
+    my @fields = ("GMAF", "dbSNPBuildID=dbSNPBuildID,per-alt", "MUT");
+    if ($version >= 137) {
+        push(@fields, "PM");
+    } else {
+        push(@fields, "CLN");
+    }
+    return join(":", @fields);
+}
+
 sub _annotate_multisample_vcf {
     my ($self,$output_dir) = @_;
     my $vcf = $self->multisample_vcf;
@@ -637,7 +649,8 @@ sub _annotate_multisample_vcf {
         #FIXME maybe allow info fields that aren't hardcoded at some point in the future
         my $dbsnp_vcf = $self->dbsnp_build->snvs_vcf;
         $self->status_message("Annotating with dbSNP VCF");
-        $annotated_vcf = $self->_vcf_annotate($vcf, $dbsnp_vcf, "GMAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT:CLN");
+        my $dbsnp_info_fields = $self->_dbsnp_info_fields_for_version($self->dbsnp_build->version);
+        $annotated_vcf = $self->_vcf_annotate($vcf, $dbsnp_vcf, $dbsnp_info_fields);
         #set vcf variable so other predefined annotation sources can use it
         $vcf = $annotated_vcf;
     }

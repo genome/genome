@@ -375,20 +375,22 @@ sub _create {
 
     my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
 
-    unless (defined $self) {
-        Carp::confess $class->error_message(sprintf(
-            "Could not create allocation in specified disk group (%s), which contains %d volumes:\n%s\n",
-            $disk_group_name, scalar(@candidate_volumes), join("\n", map { $_->mount_path } @candidate_volumes),
-        ));
-    }
-
     $self->status_message(sprintf("Allocation (%s) created at %s",
         $id, $self->absolute_path));
 
-    # Add commit hooks to unlock and create directory (in that order)
-    $class->_create_observer(
-        $class->_create_directory_closure($self->absolute_path)
-    );
+    # If we cannot create the directory delete the new allocation
+    my $dir = eval {
+        Genome::Sys->create_directory($self->absolute_path);
+    };
+    my $error = $@;
+    unless (defined($dir) and ( -d $dir ) and not $error) {
+        $class->error_message(sprintf(
+                "Failed to create directory (%s) with return value = '%s', and error:\n%s",
+                $self->absolute_path, $dir || '', $error));
+        $self->delete;
+        confess $error;
+    }
+
     return $self;
 }
 
@@ -396,8 +398,8 @@ sub _get_allocation_without_lock {
     my ($class, $candidate_volumes, $parameters) = @_;
     my $kilobytes_requested = $parameters->{'kilobytes_requested'};
 
-    my @candidate_volumes = (@$candidate_volumes, @$candidate_volumes, @$candidate_volumes);
-    my @randomized_candidate_volumes = shuffle(@candidate_volumes);
+    my @randomized_candidate_volumes = shuffle(
+        @$candidate_volumes, @$candidate_volumes, @$candidate_volumes);
 
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
@@ -410,11 +412,12 @@ sub _get_allocation_without_lock {
             unless ($candidate_allocation) {
                 die 'Failed to create candidate allocation';
             }
-            $candidate_allocation->volume;
             _commit_unless_testing();
 
             # Reload so we guarantee that we calculate the correct allocated_kb
-            UR::Context->current->reload($candidate_volume);
+            if (not $ENV{UR_DBI_NO_COMMIT}) {
+                UR::Context->current->reload($candidate_volume);
+            }
             if ($candidate_volume->is_over_soft_limit) {
                 $candidate_allocation->delete();
                 _commit_unless_testing();
@@ -423,6 +426,14 @@ sub _get_allocation_without_lock {
                 last;
             }
         }
+    }
+
+    unless (defined $chosen_allocation) {
+        Carp::confess $class->error_message(sprintf(
+            "Could not create allocation in specified disk group (%s), which contains %d volumes:\n%s\n",
+            $parameters->{disk_group_name}, scalar(@$candidate_volumes),
+            join("\n", map { $_->mount_path } @$candidate_volumes),
+        ));
     }
 
     return $chosen_allocation;
@@ -594,20 +605,24 @@ sub _move {
     Genome::Sys->create_directory($new_volume_final_path);
     unless (rename $shadow_allocation->absolute_path, $new_volume_final_path) {
         Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
+        my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
+        $shadow_allocation->delete;
         confess($self->error_message(sprintf(
                 "Could not move shadow allocation path (%s) to final path (%s).  This should never happen, even when 100%% full.",
-                $shadow_allocation->absolute_path, $self->absolute_path)));
+                $shadow_allocation_abs_path, $self->absolute_path)));
     }
-
-    # This is here because certain objects (Build & SoftwareResult) don't
-    # calculate their data_directories from their disk_allocations.
-    $self->_update_owner_for_move;
 
     # Change the shadow allocation to reserve some disk on the old volume until
     # those files are deleted.
     my $old_mount_path = $self->mount_path;
     $self->mount_path($shadow_allocation->mount_path);
     $shadow_allocation->mount_path($old_mount_path);
+
+    # This is here because certain objects (Build & SoftwareResult) don't
+    # calculate their data_directories from their disk_allocations.
+    $self->_update_owner_for_move;
+
+    _symlink($self->absolute_path, $original_absolute_path);
 
     _commit_unless_testing();
 
@@ -665,10 +680,10 @@ sub _archive {
 
         # Reallocate so we're reflecting the correct size at time of archive.
         $self->reallocate();
-        if (!$ENV{UR_DBI_NO_COMMIT} and $self->allocated_kb < 1048576) { # Must be greater than 1GB to be archived
+        if (!$ENV{UR_DBI_NO_COMMIT} and $self->kilobytes_requested < 1048576) { # Must be greater than 1GB to be archived
             confess(sprintf(
                 "Total size of files at path %s is only %s, which is not greater than 1GB!",
-                $current_allocation_path, $self->allocated_kb));
+                $current_allocation_path, $self->kilobytes_requested));
         }
 
         my $mkdir_cmd = "mkdir -p $archive_allocation_path";
@@ -782,6 +797,10 @@ sub _unarchive {
     );
     # shadow_allocation ensures that we wont over allocate our destination volume
     my $shadow_allocation = $class->create(%creation_params);
+    unless ($shadow_allocation) {
+        confess(sprintf("Failed to create shadow allocation from params %s",
+                Data::Dumper::Dumper(\%creation_params)));
+    }
 
     my $archive_path = $self->absolute_path;
     my $target_path = $shadow_allocation->absolute_path;
@@ -839,19 +858,11 @@ sub _unarchive {
                     "Could not move shadow allocation path (%s) to final path (%s).  This should never happen, even when 100%% full.",
                     $shadow_allocation->absolute_path, $self->absolute_path)));
         }
-        $shadow_allocation->delete();
         $self->_update_owner_for_move;
         $self->archivable(0, 'allocation was unarchived'); # Wouldn't want this to be immediately re-archived... trolololol
 
-        # to fix previously existing/broken symlinks by redirecting
         if ($old_absolute_path ne $self->absolute_path) {
-            my $old_parent_dir = File::Basename::dirname($old_absolute_path);
-            if(! -e $old_parent_dir){
-                mkpath $old_parent_dir;
-            }
-            if(-d $old_parent_dir && ! -e $old_absolute_path) {
-                symlink $self->absolute_path, $old_absolute_path;
-            }
+            _symlink($old_absolute_path, $self->absolute_path);
         }
 
         unless (UR::Context->commit) {
@@ -862,6 +873,7 @@ sub _unarchive {
 
     # finally blocks would be really sweet. Alas...
     Genome::Sys->unlock_resource(resource_lock => $allocation_lock) if $allocation_lock;
+    $shadow_allocation->delete();
 
     if ($error) {
         if ($target_path and -d $target_path and not $ENV{UR_DBI_NO_COMMIT}) {
@@ -1078,6 +1090,18 @@ sub _remove_directory_closure {
 sub _mark_for_deletion_closure {
     my ($class, $path) = @_;
     return sub {
+        # In some instances -d $path will return true even if $path was
+        # recently moved (or possibly deleted?). This causes a "touch
+        # $path/ALLOCATION_DELETED" even though $path does not exist, causing
+        # touch to fail.  Attempting to opendir $path (even though it doesn't
+        # exist) before testing -d $path seems to fix the issue. This is
+        # probably an issue with NFS caching everything in 'struct stat', which
+        # is used by stat(), which is used by -d. We tried to stat($path) and
+        # system("stat $path") before testing -d, and in both cases stat()
+        # returned information about a non-existent path.
+        # See here: http://irccrew.org/~cras/nfs-coding-howto.html#attrcache (visited Nov 27 2012)
+        my $rv = opendir(my $dh, $path);
+        closedir $dh if ($rv);
         if (-d $path and not $ENV{UR_DBI_NO_COMMIT}) {
             print STDERR "Marking directory at $path as deallocated\n";
             system("touch $path/ALLOCATION_DELETED");
@@ -1205,6 +1229,10 @@ sub _verify_no_child_allocations {
     my $data_source = $meta->data_source;
     my $owner       = $data_source->owner;
     my $query_string;
+
+    #POSTGRES TODO:  remove this little ugly hack when we go 100% postgres.
+    $data_source = Genome::DataSource::PGTest->get() if ($ENV{'GENOME_QUERY_POSTGRES'}); 
+
     if ($data_source->isa('UR::DataSource::Oracle')) {
         my $fq_table_name = join('.', $owner, $table_name);
         $query_string = sprintf(q(select * from %s where allocation_path like ? AND rownum <= 1), $fq_table_name);
@@ -1329,6 +1357,22 @@ sub get_allocation_for_path {
     }
 
     return $allocation;
+}
+
+sub _symlink {
+    # to fix previously existing/broken symlinks by restoring chain
+    my $real_path = shift;
+    my $old_path = shift;
+
+    my $old_parent_dir = File::Basename::dirname($old_path);
+    if(! -e $old_parent_dir){
+        Genome::Sys->create_directory($old_parent_dir);
+    }
+    if(-d $old_parent_dir && ! -e $old_path) {
+        symlink $real_path, $old_path;
+    }
+
+    return (-l $old_path && readlink($old_path) eq $real_path);
 }
 
 sub _commit_unless_testing {

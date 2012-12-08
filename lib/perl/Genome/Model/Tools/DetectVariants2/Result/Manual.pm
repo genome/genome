@@ -68,11 +68,13 @@ class Genome::Model::Tools::DetectVariants2::Result::Manual {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
             id_by => 'previous_result_id',
             doc => 'The result upon which these manually chosen variants were based',
+            is_optional => 1,
         },
         source_build => {
             is => 'Genome::Model::Build',
             id_by => 'source_build_id',
             doc => 'The build which was used to discover the variants upon which this result is based',
+            is_optional => 1,
         },
         reference_build => {
             is => 'Genome::Model::Build::ReferenceSequence',
@@ -82,10 +84,12 @@ class Genome::Model::Tools::DetectVariants2::Result::Manual {
         sample => {
             is => 'Genome::Sample',
             id_by => 'sample_id',
+            is_optional => 1,
         },
         control_sample => {
             is => 'Genome::Sample',
             id_by => 'control_sample_id',
+            is_optional => 1,
         },
         aligned_reads_sample => { #name to match GMT DV2 Base
             is => 'Text',
@@ -95,23 +99,44 @@ class Genome::Model::Tools::DetectVariants2::Result::Manual {
     ],
 };
 
+sub _modify_params_for_lookup_hash {
+    my ($class, $params_ref) = @_;
+
+    my $original_file_path = delete $params_ref->{'original_file_path'};
+    my $specified_checksum = $params_ref->{'file_content_hash'};
+    $params_ref->{'file_content_hash'} = $class->_calculate_and_compare_md5_hashes(
+        $original_file_path, $specified_checksum);
+}
+
+sub _calculate_and_compare_md5_hashes {
+    my ($class, $original_file_path, $specified_checksum) = @_;
+
+    my $checksum = $specified_checksum;
+    if (defined($original_file_path) and -e $original_file_path) {
+        $checksum = Genome::Sys->md5sum($original_file_path);
+        if (defined($specified_checksum) and $specified_checksum ne $checksum) {
+            die $class->error_message(
+                'file_content_hash does not match md5sum output for original_file_path');
+        }
+    }
+
+    return $checksum;
+}
+
 sub _gather_params_for_get_or_create {
     my $class = shift;
 
     my $bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
 
     if($bx->specifies_value_for('original_file_path')) {
-        my $val = $bx->value_for('original_file_path');
-        if(-e $val) {
-            my $checksum = Genome::Sys->md5sum($val);
-            if($bx->specifies_value_for('file_content_hash')) {
-                unless($bx->value_for('file_content_hash') eq $checksum) {
-                    die('file_content_hash does not match md5sum output for the original file.');
-                }
-            } else {
-                $bx = $bx->add_filter('file_content_hash', $checksum);
-            }
+        my $original_file_path = $bx->value_for('original_file_path');
+        my $specified_checksum;
+        if ($bx->specifies_value_for('file_content_hash')) {
+            $specified_checksum = $bx->value_for('file_content_hash');
         }
+        $bx = $bx->add_filter('file_content_hash',
+            $class->_calculate_and_compare_md5_hashes(
+                $original_file_path, $specified_checksum));
     }
 
     my %params = $bx->params_list;
@@ -162,6 +187,7 @@ sub create {
     my $symlink_dest = join('/', $self->temp_staging_directory, $self->variant_type . 's.hq');
     Genome::Sys->create_symlink($self->original_file_path, $symlink_dest);
     $self->file_content_hash(Genome::Sys->md5sum($self->original_file_path));
+    $self->lookup_hash($self->calculate_lookup_hash); #reset after modifying file_content_hash
 
     $self->generate_standard_files($symlink_dest);
 

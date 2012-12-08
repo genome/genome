@@ -384,8 +384,8 @@ sub find_or_create_somatic_variation_models{
             $self->error_message('Failed to get previously_discovered_variations_build for somatic variation model with model: ' . $model->name) and next unless $somatic_params{previously_discovered_variations_build};
  
 
-            my $capture_somatic_processing_profile_id = '2642139'; #Nov. 2011 somatic-variation exome
-            my $somatic_processing_profile_id = '2642137'; #Nov. 2011 somatic-variation wgs
+            my $capture_somatic_processing_profile_id = '2762563'; #Oct 2012 Default Somatic Variation Exome
+            my $somatic_processing_profile_id = '2762562'; #Oct 2012 Default Somatic Variation WGS
             my $capture_target = eval{$model->target_region_set_name};
             if($capture_target){
                 $somatic_params{processing_profile_id} = $capture_somatic_processing_profile_id;

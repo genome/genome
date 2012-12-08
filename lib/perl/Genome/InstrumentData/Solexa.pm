@@ -512,7 +512,7 @@ sub dump_trimmed_fastq_files {
         for my $input_fastq_pathname (@fastq_pathnames) {
             if ($input_fastq_pathname =~ m/^\/tmp/) {
                 $self->status_message("Removing original file from after trimming to save space: $input_fastq_pathname");
-                #unlink($input_fastq_pathname);
+                unlink($input_fastq_pathname);
             }
         }
 
@@ -1161,6 +1161,13 @@ sub get_default_alignment_results {
     my @alignment_results_from_apipe_builder_models;
     for my $alignment_results ( @alignment_results ) {
         my @builds = grep { $_->isa('Genome::Model::Build') } map { $_->user } $alignment_results->users;
+        if(not @builds) {
+            my @sr = grep { $_->isa('Genome::SoftwareResult') } map { $_->user } $alignment_results->users;
+            if(@sr) {
+                #look for build with one degree of indirection
+                @builds = grep { $_->isa('Genome::Model::Build') } map { $_->user } map { $_->users} @sr;
+            }
+        }
         next if not @builds;
         my @models_by_apipe_builder = grep { $_->user_name =~ /^apipe-builder/ } map { $_->model } @builds;
         push @alignment_results_from_apipe_builder_models, $alignment_results;

@@ -28,6 +28,9 @@ class Genome::Model::Command::Define::ImportedAnnotation {
             is_optional => 1,
             doc => 'gtf file for rnaSeq annotation.  ONLY use for models that are rna_seq_only',
         },
+        annotation_import_version => {
+            is => 'Text',
+        },
     ],
     has_transient => [
         result_build_id => {
@@ -53,7 +56,6 @@ sub execute {
     return unless $model;
 
     $self->result_model_id($model->id);
-
     my $build = $self->_create_build($model);
     return unless $build;
 
@@ -82,12 +84,16 @@ sub _get_or_create_model {
                 $self->error_message("Found model with name: $model_name, but specified species name " . $species_name . " does not match species name found on model (" . $model->species_name . ")");
                 return;
             }
+            unless($model->annotation_import_version eq $self->annotation_import_version) {
+                $self->error_message("Found model with name: $model_name, but specified annotation_import_version does not match annotation_import_version found on model (" .$model->annotation_import_version .") Please update the input on the model");
+                return;
+            }
             return $model;
         }
     }
 
     #Try to find a model with the same species and processing_profile (annotation source)
-    $model = Genome::Model::ImportedAnnotation->get(species_name => $self->species_name, processing_profile => $self->processing_profile);
+    $model = Genome::Model::ImportedAnnotation->get(species_name => $self->species_name, processing_profile => $self->processing_profile, annotation_import_version => $self->annotation_import_version);
     return $model if $model;
 
     #Generate a name if one wasn't specified
@@ -102,6 +108,7 @@ sub _get_or_create_model {
                                                     subject => $self->reference_sequence_build->model->subject,
                                                 );
     $model->species_name($self->species_name);
+    $model->annotation_import_version($self->annotation_import_version);
     return $model;
 }
 
@@ -112,7 +119,7 @@ sub _create_build {
     my @build_parameters = (
         model_id => $model->id,
         version => $self->version,
-        reference_sequence => $self->reference_sequence_build,
+        reference_sequence_id => $self->reference_sequence_build->id,
     );
 
     my $build = Genome::Model::Build::ImportedAnnotation->get(@build_parameters);
@@ -132,7 +139,6 @@ sub _create_build {
     }
 
     $self->status_message('Starting build.');
-    # if($build->start(server_dispatch => 'inline')){ #TODO: make this an option or somethign
     my $rv;
     if ($build->processing_profile->rna_seq_only) {
         $rv = $build->start(server_dispatch => "inline");

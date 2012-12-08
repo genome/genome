@@ -165,6 +165,7 @@ sub test_execute_build {
         file_content_hash => 'c746fb7b7a88712d27cf71f8262dd6e8',
         output_dir => $testdir.'/dbsnp',
     );
+    $fl->lookup_hash($fl->calculate_lookup_hash());
     ok($fl, 'create dv2 result');
     my $variation_list_build = Genome::Model::Build::ImportedVariationList->__define__(
         model => Genome::Model->get(2868377411),

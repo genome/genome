@@ -29,7 +29,7 @@ sub _build_sub_command {
         my @has;
         for my $p (@p) {
             if ($p->can("is_input") and $p->is_input) {
-                my %data = %{ UR::Util::deep_copy($p) };
+                my %data = %{$p};
                 for my $key (keys %data) {
                     delete $data{$key} if $key =~ /^_/;
                 }

@@ -19,7 +19,9 @@ sub execute {
     my $self = shift;
     my @bridges = Genome::DruggableGene::DrugNameGroupBridge->get();
     my @groups = Genome::DruggableGene::DrugNameGroup->get();
+    $self->status_message("Found " . scalar(@groups) . " drug name group entries ... deleting these now");
     map($_->delete, (@bridges, @groups));
+    return 1;
 }
 
 1;

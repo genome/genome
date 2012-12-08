@@ -89,7 +89,8 @@ class Genome::Model::Build::SomaticVariation {
         },
         previously_discovered_variations_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            id_by => 'previously_discovered_variations_build_id',
+            via => '__self__',
+            to => 'previously_discovered_variations',
         },
    ],
 };
@@ -216,7 +217,10 @@ sub files_ignored_by_diff {
         reports/Build_Initialized/report.xml
         reports/Build_Succeeded/report.xml
         variants/dispatcher.cmd
-        \.vcf$
+        variants/snvs_tcga.tar.gz
+        variants/snvs_tcga.tar.gz.md5
+        variants/snvs_tcga/MANIFEST.txt
+        gatk_output_file.vcf
         \.vcf.idx$
         workflow\.xml$
         build\.xml$
@@ -228,6 +232,8 @@ sub files_ignored_by_diff {
         variants/sv/squaredancer
         svs\.merge\.index$
         cnv_graph\.pdf$
+        output/Makefile$
+        output/task.complete$
     );
 }
 
@@ -237,6 +243,9 @@ sub dirs_ignored_by_diff {
         variants/\d+/
         variants/sv/breakdancer
         variants/sv/squaredancer
+        output/config
+        output/chromosomes
+        output/results
     );
 }
 

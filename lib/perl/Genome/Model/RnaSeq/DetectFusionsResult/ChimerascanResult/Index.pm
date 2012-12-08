@@ -104,7 +104,8 @@ sub run_indexer {
     my $fasta = $self->reference_build->full_consensus_path('fa');
     my $gene_file = $self->gene_file;
     my $output_dir = $self->temp_staging_directory;
-    (my $bowtie_dir =  Genome::Model::Tools::Bowtie->path_for_bowtie_version($self->bowtie_version)) =~  s/\/bowtie$//;
+
+    my $bowtie_dir =  Genome::Model::Tools::Bowtie->base_path($self->bowtie_version);
     my $cmd_path = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->_path_for_version($self->version);
 
     my $cmd = "python $cmd_path/chimerascan_index.py --bowtie-dir=$bowtie_dir $fasta $gene_file $output_dir";

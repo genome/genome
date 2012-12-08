@@ -34,6 +34,7 @@ my $existing_cmd = Genome::Model::Command::Define::ImportedAnnotation->create(
             build_name => $build_name,
             processing_profile => $processing_profile,
             model_name => $model_name,
+            annotation_import_version => 2,
           );
 ok($existing_cmd, 'Successfully created ImportedAnnotation definition command');
 ok(!$existing_cmd->execute, 'Failed to create a build for existing 58_37c');
@@ -50,6 +51,7 @@ my $good_cmd = Genome::Model::Command::Define::ImportedAnnotation->create(
             build_name => $build_name,
             processing_profile => $processing_profile,
             model_name => $model_name,
+            annotation_import_version => 2,
           );
 ok($good_cmd, 'Successfully created ImportedAnnotation definition command');
 ok($good_cmd->execute, 'Successfully defined ImportedAnnotation build');
@@ -71,6 +73,7 @@ my $cmd = Genome::Model::Command::Define::ImportedAnnotation->create(
             reference_sequence_build => $reference_sequence_build,
             build_name => $build_name,
             processing_profile => $processing_profile,
+            annotation_import_version => 2,
           );
 ok($cmd, 'Successfully created ImportedAnnotation definition command');
 # ok($cmd->execute, 'Successfully defined ImportedAnnotation build');
@@ -92,6 +95,7 @@ my $mouse_cmd = Genome::Model::Command::Define::ImportedAnnotation->create(
             build_name => $build_name,
             processing_profile => $processing_profile,
             model_name => $model_name,
+            annotation_import_version => 1,
           );
 ok($mouse_cmd, 'Successfully created ImportedAnnotation definition command');
 ok($mouse_cmd->execute, 'Successfully defined ImportedAnnotation build');

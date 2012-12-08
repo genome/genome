@@ -36,7 +36,7 @@ class Genome::Model::ClinSeq::Command::Test {
 sub help_synopsis {
     return <<EOS
 
-genome model clin-seq test --outdir=/tmp/  119390903
+genome model clin-seq test --outdir=/tmp/create_mutation_diagram/  'id in [129973671,129708625]'
 
 EOS
 }
@@ -51,12 +51,20 @@ EOS
 sub execute {
   my $self = shift;
 
-  $self->append_message("1", "Test message 1");
-  $self->calculate_something();
-  $self->append_message("3", "Test message 3");
+  #$self->append_message("1", "Test message 1");
+  #$self->calculate_something();
+  #$self->append_message("3", "Test message 3");
 
-  my %messages = %{$self->_messages};
-  print Dumper %messages;
+  #my %messages = %{$self->_messages};
+  #print Dumper %messages;
+
+
+  my @mutation_diagram_builds;
+  push(@mutation_diagram_builds, Genome::Model::Build->get(129973671));
+  push(@mutation_diagram_builds, Genome::Model::Build->get(129708625));
+
+  my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(builds=>\@mutation_diagram_builds, outdir=>$self->outdir, collapse_variants=>1, max_snvs_per_file=>250, max_indels_per_file=>250);
+  my $r = $mutation_diagram_cmd->execute();
 
 
   return 1;

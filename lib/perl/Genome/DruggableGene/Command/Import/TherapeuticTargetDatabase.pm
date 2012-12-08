@@ -77,7 +77,7 @@ my %UniProtMapping;
 
 sub execute {
     my $self = shift;
-    %UniProtMapping=%{$self->getUniprotEntrezMapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
+    %UniProtMapping=%{$self->_get_uniprot_entrez_mapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
     $self->input_to_tsv();
     $self->import_tsv();
     unless ($self->skip_pubchem){
@@ -201,9 +201,9 @@ sub input_to_tsv {
     $interactions_fh->print($interactions_header, "\n");
 
     #Get the data in order
-    my $targets_path = $self->download_file('-url'=>$targets_raw_url);
-    my $crossmatch_path = $self->download_file('-url'=>$drugs_crossmatching_url);
-    my $synonyms_path = $self->download_file('-url'=>$drug_synonyms_url);
+    my $targets_path = $self->_download_file('-url'=>$targets_raw_url);
+    my $crossmatch_path = $self->_download_file('-url'=>$drugs_crossmatching_url);
+    my $synonyms_path = $self->_download_file('-url'=>$drug_synonyms_url);
 
     my ($targets, $version) = $self->_parse_targets_file($targets_path);
     $self->version($version) if $version;
@@ -211,7 +211,7 @@ sub input_to_tsv {
     $self->_parse_synonyms_file($synonyms_path, $drugs);
 
     #Load UniProt to Entrez mapping information from file - This will be used to obtain Entrez IDs from UniProt accessions provided in Drugbank records
-    my %UniProtMapping=%{$self->getUniprotEntrezMapping()};
+    my %UniProtMapping=%{$self->_get_uniprot_entrez_mapping()};
 
     #Write data to the file
     for my $target_id (keys %{$targets}){
@@ -409,69 +409,5 @@ sub _determine_interaction_type{
     return $interaction_type;
 }
 
-sub getUniprotEntrezMapping {
-    my $self = shift;
-    #Get mapping of Uniprot Accessions to Entrez IDs, etc
-    #These can be obtained from here:
-    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/ 
-    #ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz
-    print "\nAttempting download of UniProt mapping file\n";
-    my $mapping_file_url="ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz";
-    my $mapping_file_name="HUMAN_9606_idmapping_selected.tab.gz";
-    my $mapping_file_path = $self->download_file('-url'=>$mapping_file_url, '-file_name'=>$mapping_file_name);
-
-    print "\nParsing Uniprot mapping file\n";
-    my %UniProtMapping;
-    open (MAPPING, $mapping_file_path) or die "can't open $mapping_file_path\n";
-    while (<MAPPING>){
-      my @data=split("\t",$_);
-      my $uniprot_acc=$data[0];
-      my $uniprot_id=$data[1];
-      my $entrez_id=$data[2];
-    my $ensembl_id=$data[19];
-    unless ($uniprot_id){$uniprot_id="N/A";}
-    unless ($entrez_id){$entrez_id="N/A";}
-    unless ($ensembl_id){$ensembl_id="N/A";}
-    $UniProtMapping{$uniprot_acc}{uniprot_acc}=$uniprot_acc;
-    $UniProtMapping{$uniprot_acc}{entrez_id}=$entrez_id;
-    $UniProtMapping{$uniprot_acc}{ensembl_id}=$ensembl_id;
-  }
-close MAPPING;
-return(\%UniProtMapping);
-}
-
-sub download_file {
-    my $self = shift;
-    my %args = @_;
-    my $url = $args{'-url'};
-    my $targetfilename;
-    if ($args{'-file_name'}){
-      $targetfilename = $args{'-file_name'};
-    }elsif ($url=~/http.+\/(\S+)$/){ #Grab non-whitespace content after last slash to use for temp file name
-      $targetfilename=$1;
-    }else{
-      die "could not determine file name from $url";
-    }
-    my $tempdir = $self->tmp_dir;
-    my $targetfilepath="$tempdir"."$targetfilename";
-    my $wget_cmd = "wget $url -O $targetfilepath";
-    my $retval = Genome::Sys->shellcmd(cmd=>$wget_cmd);
-    unless ($retval == 1){
-      self->error_message('Failed to wget the specified URL');
-      return;
-    }
-    #unzip if necessary
-    if ($targetfilepath=~/\.gz$/){
-      my $gunzip_cmd = "gunzip -f $targetfilepath";
-      my $retval2 = Genome::Sys->shellcmd(cmd=>$gunzip_cmd);
-      unless ($retval2 == 1){
-        self->error_message('Failed to gunzip the specified file');
-        return;
-      }
-      $targetfilepath=~s/\.gz$//;
-    }
-    print "Downloaded $targetfilepath\n";
-    return $targetfilepath;
-}
 
 1;

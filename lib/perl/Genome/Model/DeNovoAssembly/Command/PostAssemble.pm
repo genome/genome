@@ -73,7 +73,8 @@ sub _execute_tool {
                 $self->status_message("Skipping running tool, $class_name.  Failed to get param_value from class, $class, using method, $method");
                 next;
             }
-            $params{$param_name} = lc $derived_value
+            $derived_value = lc $derived_value if not ref $derived_value; # lc value if values are not HASH OR ARRAY REFS
+            $params{$param_name} = $derived_value
         }
     }
 

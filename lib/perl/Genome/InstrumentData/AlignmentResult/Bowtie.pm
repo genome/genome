@@ -11,7 +11,7 @@ class Genome::InstrumentData::AlignmentResult::Bowtie {
     has_constant => [
         aligner_name => { value => 'Bowtie', is_param=>1 },
     ],
-    has_optional => [
+    has_transient_optional => [
          _bwa_sam_cmd => { is=>'Text' }
     ]
 };

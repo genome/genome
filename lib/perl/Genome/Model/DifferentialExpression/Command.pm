@@ -7,7 +7,6 @@ use Genome;
 
 class Genome::Model::DifferentialExpression::Command {
     is => 'Command::Tree',
-    is_abstract => 1,
     doc => 'operate on differential expression models',
 };
 

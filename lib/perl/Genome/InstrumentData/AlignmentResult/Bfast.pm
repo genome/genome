@@ -13,7 +13,7 @@ class Genome::InstrumentData::AlignmentResult::Bfast {
     has_constant => [
         aligner_name => { value => 'Bfast', is_param=>1 },
     ],
-    has_optional => [
+    has_transient_optional => [
          _Bfast_sam_cmd => { is=>'Text' }
     ]
 };

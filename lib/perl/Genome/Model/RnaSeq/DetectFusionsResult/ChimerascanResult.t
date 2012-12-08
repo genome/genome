@@ -42,26 +42,80 @@ my $reference_build = Genome::Model::Build::ImportedReferenceSequence->create(
     version         => '37',
 );
 
+
+my $annotation_model = Genome::Model::ImportedAnnotation->create(
+    name => '1 chr test annotation',
+    subject => $ref_model->subject,
+    processing_profile => Genome::ProcessingProfile->get(name => 'imported-annotation.ensembl'),
+    reference_sequence => $reference_build,
+);
+
+my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
+    version => 'v1',
+    model => $annotation_model,
+    data_directory => '/gscmnt/gc8002/info/model_data/2772828715/build125092315', #65_37j_v6
+);
+
 my $alignment_result = Genome::InstrumentData::AlignmentResult::Tophat->__define__(
     aligner_name => 'tophat',
     output_dir => $tophat_data,
     reference_build_id => $reference_build->id,
     bowtie_version => '0.12.7'
 );
+$alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
 
 my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index->__define__(
     version => "0.4.3",
     bowtie_version => "0.12.7",
     reference_build => $reference_build,
-    output_dir => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/IndexResult/'
+    output_dir => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/IndexResult/',
+    annotation_build => $annotation_build,
 );
+$index->lookup_hash($index->calculate_lookup_hash());
+
+my %params = (
+    alignment_result => $alignment_result,
+    version => '0.4.3',
+    detector_params => "--reuse-bam 0 --bowtie-version=",
+    annotation_build => $annotation_build,
+);
+my $class = 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult';
+
+test_for_error($class, \%params, "You must supply a bowtie version");
+
+$params{'detector_params'} = "--reuse-bam 0";
+test_for_error($class, \%params, "Couldn't find parameter");
+
+$params{'detector_params'} = "--bowtie-version 2.0.0 --reuse-bam 0", # --bowtie-version=2.0.0
+          # space or = are both valid syntax  ^ here             or here ^
+test_for_error($class, \%params, "Chimerascan currently only supports");
+
+$params{'detector_params'} = "--bowtie-version 0.12.7 --reuse-bam bad";
+test_for_error($class, \%params, "You must specify either");
 
 my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
     alignment_result => $alignment_result,
     version => '0.4.3',
-    detector_params => "",
+    detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
+    annotation_build => $annotation_build,
 );
-
 isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
 
 done_testing();
+
+sub test_for_error {
+    my ($class, $params, $expected_error) = @_;
+
+    eval {
+        my $result = $class->get_or_create(%{$params});
+        die "failed test";
+    };
+    if ($@) {
+        my $error_str = $@;
+        chomp $error_str;
+        diag "Got: \"$error_str\"";
+        ok($error_str =~ m/\Q$expected_error\E/, "Crashed as expected with \"$expected_error\"");
+    }
+}
+
+1;

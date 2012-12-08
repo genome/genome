@@ -10,7 +10,7 @@ class Genome::DruggableGene::Command::RemoveDatasource {
     has => [
         source_db_name => {
             is => 'Text',
-            doc => 'source_db_name of the datasource to remove',
+            doc => 'source_db_name of the datasource to remove (e.g., dGene, DrugBank, Ensembl, Entrez, GO, HopkinsGroom, PharmGKB, RussLampel, TALC, TTD)',
         },
         source_db_version => {
             is => 'Text',
@@ -22,7 +22,11 @@ class Genome::DruggableGene::Command::RemoveDatasource {
 
 sub help_brief { 'Completely remove a DGIDB data source' }
 
-sub help_synopsis { help_brief() }
+sub help_synopsis {
+    return <<HELP
+genome druggable-gene remove-datasource --source-db-name=Entrez
+HELP
+}
 
 sub help_detail { help_brief() }
 
@@ -33,7 +37,8 @@ sub execute {
     my @drugs = $self->_fetch_drugs;
     my @genes = $self->_fetch_genes;
     my @interactions;
-    
+
+    $self->status_message("Found " . scalar(@genes) . " genes.  Removing from database...");
     for my $gene (@genes){
         for my $a ($gene->gene_alt_names){
             $a->delete;
@@ -48,6 +53,7 @@ sub execute {
         $gene->delete;
     }
 
+    $self->status_message("Found " . scalar(@drugs) . " drugs.  Removing from database...");
     for my $drug (@drugs){
         for my $b ($drug->drug_alt_names){
             $b->delete;
@@ -63,6 +69,7 @@ sub execute {
     }
 
     @interactions = uniq @interactions;
+    $self->status_message("Found " . scalar(@interactions) . " interactions.  Removing from database...");
 
     for my $interaction (@interactions){
         for my $att ($interaction->interaction_attributes){
@@ -71,6 +78,7 @@ sub execute {
         $interaction->delete;
     }
 
+    $self->status_message("Found " . scalar(@citation) . " citations.  Removing from database...");
     for my $citation (@citation){
         $citation->delete;
     }

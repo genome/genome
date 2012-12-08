@@ -14,6 +14,11 @@
 
   <link fromOperation="Alignments" fromProperty="merged_bam_path" toOperation="Detect Variants" toProperty="bam_path"/>
   <link fromOperation="Alignments" fromProperty="control_merged_bam_path" toOperation="Detect Variants" toProperty="control_bam_path"/>
+  <link fromOperation="Alignments" fromProperty="build_id" toOperation="Validate SVs" toProperty="build_id"/>
+
+  <link fromOperation="Validate SVs" fromProperty="output_dir" toOperation="output connector" toProperty="sv_validation_output"/>
+
+  <link fromOperation="Detect Variants" fromProperty="build_id" toOperation="Validate Small Indels" toProperty="somatic_validation_build" />
 
   <link fromOperation="Detect Variants" fromProperty="hq_snv_file" toOperation="Varscan Process-Validation" toProperty="filtered_validation_file"/>
   <link fromOperation="Detect Variants" fromProperty="build_id" toOperation="Varscan Process-Validation" toProperty="build_id" />
@@ -23,8 +28,10 @@
   <link fromOperation="Detect Variants" fromProperty="build_id" toOperation="Identify LOH" toProperty="build_id" />
   <link fromOperation="Identify LOH" fromProperty="build_id" toOperation="Identify Previously Discovered Variations" toProperty="build_id" />
   <link fromOperation="Identify Previously Discovered Variations" fromProperty="build_id" toOperation="Tier Variants" toProperty="build_id" />
-  <link fromOperation="Tier Variants" fromProperty="build_id" toOperation="Review Variants" toProperty="build_id" />
+  <link fromOperation="Tier Variants" fromProperty="build_id" toOperation="Annotate Variants" toProperty="build_id" />
+  <link fromOperation="Annotate Variants" fromProperty="build_id" toOperation="Review Variants" toProperty="build_id" />
   <link fromOperation="Review Variants" fromProperty="build_id" toOperation="output connector" toProperty="build_id" />
+  <link fromOperation="Validate Small Indels" fromProperty="final_output_file" toOperation="output connector" toProperty="small_indel_validation_output" />
 
   <link fromOperation="input connector" fromProperty="targeted_snv_validation" toOperation="Varscan Process-Validation" toProperty="output_file" />
   <link fromOperation="input connector" fromProperty="minimum_coverage" toOperation="Varscan Process-Validation" toProperty="min_coverage" />
@@ -44,8 +51,16 @@
       <operationtype commandClass="Genome::Model::SomaticValidation::Command::CoverageStats" typeClass="Workflow::OperationType::Command"/>
   </operation>
 
+  <operation name="Validate SVs">
+      <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateSvs" typeClass="Workflow::OperationType::Command"/>
+  </operation>
+
   <operation name="Detect Variants">
     <operationtype commandClass="Genome::Model::SomaticValidation::Command::DetectVariants" typeClass="Workflow::OperationType::Command" />
+</operation>
+
+  <operation name="Validate Small Indels">
+    <operationtype commandClass="Genome::Model::Tools::Varscan::PullOneTwoBpIndels" typeClass="Workflow::OperationType::Command" />
   </operation>
 
   <operation name="Identify DNPs">
@@ -68,6 +83,10 @@
     <operationtype commandClass="Genome::Model::SomaticValidation::Command::TierVariants" typeClass="Workflow::OperationType::Command" />
   </operation>
 
+  <operation name="Annotate Variants">
+    <operationtype commandClass="Genome::Model::SomaticValidation::Command::AnnotateVariants" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
   <operation name="Review Variants">
     <operationtype commandClass="Genome::Model::SomaticValidation::Command::ReviewVariants" typeClass="Workflow::OperationType::Command" />
   </operation>
@@ -85,6 +104,9 @@
     <outputproperty>tumor_reference_coverage_result</outputproperty>
     <outputproperty>normal_reference_coverage_result</outputproperty>
     <outputproperty>build_id</outputproperty>
+    <outputproperty>small_indel_validation_output</outputproperty>
+    <outputproperty>sv_validation_output</outputproperty>
+
   </operationtype>
 
 </workflow>

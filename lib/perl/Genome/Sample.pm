@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+my $default_nomenclature = $ENV{GENOME_NOMENCLATURE_DEFAULT};
+
 class Genome::Sample {
     is => ['Genome::Subject','Genome::Searchable'],
     has => [
@@ -24,7 +26,7 @@ class Genome::Sample {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'common_name' ],
+            where => [ attribute_label => 'common_name', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Typically tumor, normal, etc. A very brief description of the sample',                                        
         },
@@ -38,7 +40,7 @@ class Genome::Sample {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'extraction_label' ],
+            where => [ attribute_label => 'extraction_label', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Identifies the specimen sent from the laboratory which extracted DNA/RNA',
         },
@@ -46,7 +48,7 @@ class Genome::Sample {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'extraction_type' ],
+            where => [ attribute_label => 'extraction_type', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Either "genomic dna" or "rna" in most cases',
         },
@@ -73,7 +75,7 @@ class Genome::Sample {
             is => 'Text', 
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'extraction_desc' ],
+            where => [ attribute_label => 'extraction_desc', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Notes specified when the specimen entered this site', 
         },
@@ -81,7 +83,7 @@ class Genome::Sample {
             is => 'Text', 
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'cell_type' ],
+            where => [ attribute_label => 'cell_type', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Typically "primary"' 
         },
@@ -89,7 +91,7 @@ class Genome::Sample {
             is => 'Text', 
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'tissue_label' ],
+            where => [ attribute_label => 'tissue_label', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Identifies/labels the original tissue sample from which this extraction was made' 
         },
@@ -97,7 +99,7 @@ class Genome::Sample {
             is => 'Text', 
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'tissue_desc' ],
+            where => [ attribute_label => 'tissue_desc', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Describes the original tissue sample',
         },
@@ -105,7 +107,7 @@ class Genome::Sample {
             is => 'Text', 
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'is_control' ],
+            where => [ attribute_label => 'is_control', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'Describes if this sample is control',
         },
@@ -113,7 +115,7 @@ class Genome::Sample {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'organ_name' ],
+            where => [ attribute_label => 'organ_name', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'The name of the organ from which the sample was taken' 
         }, 
@@ -121,7 +123,7 @@ class Genome::Sample {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'disease' ],
+            where => [ attribute_label => 'disease', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'The name of the disease if present in the sample.', 
         }, 
@@ -129,7 +131,7 @@ class Genome::Sample {
             is => 'Number',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'default_genotype_data' ],
+            where => [ attribute_label => 'default_genotype_data', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'ID of genotype microarray data associated with this sample',
         },
@@ -142,7 +144,7 @@ class Genome::Sample {
             is => 'Number',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'source_id' ],
+            where => [ attribute_label => 'source_id', nomenclature => $default_nomenclature ],
             is_mutable => 1,
             doc => 'ID of the source of this sample, either a Genome::Individual or Genome::PopulationGroup',
         },

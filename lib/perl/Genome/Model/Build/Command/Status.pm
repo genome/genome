@@ -6,9 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::Status {
-    # The order of inheritance here matters since Command::Base does some complicated
-    # parameter checking/resolution.
-    is => ['Genome::Command::ColorMixin', 'Genome::Command::Base'],
+    is => 'Genome::Command::Base',
     doc => "prints status of non-succeeded builds and tallies all build statuses",
     has => [
         builds => {

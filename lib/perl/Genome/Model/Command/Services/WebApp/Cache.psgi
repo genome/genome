@@ -301,7 +301,12 @@ sub {
             $(this).removeClass('loading').addClass('success').html('Success').hide('slow');
         })
         .bind("ajaxError", function(){
-            $(this).removeClass('loading').addClass('error').html('Error loading page. Please email apipe@genome.wustl.edu.');
+            var mailtoAddr = 'apipe-support@rt.gsc.wustl.edu';
+            var mailtoSubj = 'Error Loading Page';
+            var mailtoBody = 'URL: ' + encodeURIComponent(window.location.href);
+            var mailtoLink = encodeURI('mailto:' + mailtoAddr + '?subject=' + mailtoSubj + '&body=' + mailtoBody);
+            var theError   = 'Error loading page. Please email <a href="' + mailtoLink + '">' + mailtoAddr + '</a> if you believe this page should exist.';
+            $(this).removeClass('loading').addClass('error').html(theError);
         })
         .hide();
 

@@ -14,7 +14,7 @@ class Genome::InstrumentData::AlignmentResult::RtgMap{
         aligner_name => { value => 'rtg map', is_param=>1 },
     ],
     has => [
-        _file_input_option =>   { default_value => 'fastq', is_optional => 1},
+        _file_input_option =>   { default_value => 'fastq', is_optional => 1, is_transient => 1 },
     ]
 };
 

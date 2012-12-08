@@ -49,11 +49,11 @@ ok($coverage_stats, 'produced stats');
 my $coverage_stats_summary = $coverage_result->coverage_stats_summary_hash_ref;
 ok($coverage_stats_summary, 'produced coverage stats summary');
 
-my $coverage_result2 = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get(%coverage_stats_params);
+my $coverage_result2 = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get_with_lock(%coverage_stats_params);
 is($coverage_result2, $coverage_result, 'got same result for get() after get_or_create()');
 
 $coverage_stats_params{wingspan_values} = '0,100';
-my $coverage_result3 = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get(%coverage_stats_params);
+my $coverage_result3 = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get_with_lock(%coverage_stats_params);
 ok(!$coverage_result3, 'request with different (yet unrun) parameters returns no result');
 
 my $coverage_result4 = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get_or_create(%coverage_stats_params);
@@ -69,6 +69,7 @@ sub setup_data {
         output_dir => ($data_dir . '/merged_result'),
         reference_build => $refseq,
     );
+    $merged_result->lookup_hash($merged_result->calculate_lookup_hash());
     isa_ok($merged_result, 'Genome::InstrumentData::AlignmentResult::Merged', 'created merged result');
 
     my $fl_cmd = Genome::FeatureList::Command::Create->create(

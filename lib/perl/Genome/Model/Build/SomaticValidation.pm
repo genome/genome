@@ -231,6 +231,9 @@ sub files_ignored_by_diff {
         alignments/.*\.bam\.md5$
         alignments/.*\.bam$
         alignments/.*\.bam\.bai$
+        control_variants_for_loh/dispatcher.cmd
+        validation/review/newcalls.xml
+        indel_validation/indel_files_to_validate
     );
 }
 sub dirs_ignored_by_diff {
@@ -241,6 +244,7 @@ sub dirs_ignored_by_diff {
         variants/sv/breakdancer
         variants/sv/squaredancer
         variants/sv/union
+        indel_validation/realigned_bams
     );
 }
 
@@ -273,7 +277,7 @@ sub reference_being_replaced_for_input {
         }
 
         if ($roi_reference and !$rsb->is_compatible_with($roi_reference)) {
-            my $converter =  Genome::Model::Build::ReferenceSequence::Converter->get(
+            my $converter =  Genome::Model::Build::ReferenceSequence::Converter->get_with_lock(
                 source_reference_build => $roi_reference, 
                 destination_reference_build => $rsb,
             );
@@ -283,6 +287,11 @@ sub reference_being_replaced_for_input {
             }
         }
     }
+
+    if($input->name eq 'instrument_data') {
+        return ($self->processing_profile->alignment_strategy !~ 'imported'); #as long as it's not "imported", we'll re-align
+    }
+
     return;
 }
 

@@ -9,6 +9,12 @@ use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
 
+use Carp;
+
+use JSON;
+
+use Genome::Utility::Instrumentation;
+
 class Genome::SoftwareResult {
     is_abstract => 1,
     table_name => 'SOFTWARE_RESULT',
@@ -25,6 +31,7 @@ class Genome::SoftwareResult {
     has => [
         module_version      => { is => 'Text', len => 64, column_name => 'VERSION', is_optional => 1 },
         subclass_name       => { is => 'Text', len => 255, column_name => 'CLASS_NAME' },
+        lookup_hash         => { is => 'Text', len => 32, column_name => 'LOOKUP_HASH', is_optional => 1 },
         inputs_bx           => { is => 'UR::BoolExpr', id_by => 'inputs_id', is_optional => 1 },
         inputs_id           => { is => 'Text', len => 4000, column_name => 'INPUTS_ID', implied_by => 'inputs_bx', is_optional => 1 },
         params_bx           => { is => 'UR::BoolExpr', id_by => 'params_id', is_optional => 1 },
@@ -48,6 +55,29 @@ class Genome::SoftwareResult {
 
 our %LOCKS;
 
+sub _faster_get {
+    my $class = shift;
+
+    my $statsd_prefix = "software_result_get.";
+    my $statsd_class_suffix = "$class";
+    $statsd_class_suffix =~ s/::/_/g;
+
+    my $start_time = Time::HiRes::time();
+
+    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
+
+    my @objects = $class->get(lookup_hash => $lookup_hash);
+
+    my $final_time = Time::HiRes::time();
+    my $full_time = 1000 * ($final_time - $start_time);
+    Genome::Utility::Instrumentation::timing($statsd_prefix . "full_time.total",
+            $full_time);
+    Genome::Utility::Instrumentation::timing(
+        $statsd_prefix . "full_time." . $statsd_class_suffix, $full_time);
+
+    return @objects;
+}
+
 # You must specify enough parameters to uniquely identify an object to get a result.
 # If two users specify different sets of parameters that uniquely identify the result,
 # they will create different locks.
@@ -64,7 +94,7 @@ sub get_with_lock {
     # complete. If this is a bad assumption then we need to add a
     # status to SoftwareResults.
     my $lock;
-    my @objects = $class->get(%is_input, %is_param);
+    my @objects = $class->_faster_get(@_);
     unless (@objects) {
         my $subclass = $params_processed->{subclass};
         unless ($lock = $subclass->_lock(%is_input, %is_param)) {
@@ -72,7 +102,7 @@ sub get_with_lock {
         }
 
         eval {
-            @objects = $class->get(%is_input, %is_param);
+            @objects = $class->_faster_get(@_);
         };
         my $error = $@;
 
@@ -111,24 +141,26 @@ sub get_with_lock {
 sub get_or_create {
     my $class = shift;
 
+
     my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
-    
-    my @objects = $class->get(%is_input, %is_param);
+
+    my @objects = $class->_faster_get(@_);
 
     unless (@objects) {
         @objects = $class->create(@_);
         unless (@objects) {
             # see if the reason we failed was b/c the objects were created while we were locking...
-            @objects = $class->get(%is_input, %is_param);
+            @objects = $class->_faster_get(@_);
             unless (@objects) {
                 $class->error_message("Could not create a $class for params " . Data::Dumper::Dumper(\@_) . " even after trying!");
-                die $class->error_message();
+                confess $class->error_message();
             }
         }
     }
-   
+
     if (@objects > 1) {
         return @objects if wantarray;
         my @ids = map { $_->id } @objects;
@@ -147,10 +179,12 @@ sub create {
     }
 
     my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
 
-    my @previously_existing = $class->get(%is_input, %is_param);
+    my @previously_existing = $class->_faster_get(@_);
+
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         return;
@@ -167,14 +201,15 @@ sub create {
     # we might have had to wait on the lock, in which case someone else was probably creating that entity
     # do a "reload" here to force another trip back to the database to see if a software result was created
     # while we were waiting on the lock.
-    (@previously_existing) = UR::Context->current->reload($class,%is_input,%is_param);
+    (@previously_existing) = UR::Context->current->reload($class,
+        lookup_hash => $class->calculate_lookup_hash_from_arguments(@_));
 
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         $class->_release_lock_or_die($lock, "Failed to release lock in create before committing SoftwareResult.");
-        return; 
+        return;
     }
-    
+
     # We need to update the indirect mutable accessor logic for non-nullable
     # hang-offs to delete the entry instead of setting it to null.  Otherwise
     # we get SOFTWARE_RESULT_PARAM entries with a NULL, and unsavable PARAM_VALUE.
@@ -207,7 +242,7 @@ sub create {
             my @files = glob("$output_dir/*");
             if (@files) {
                 $self->delete;
-                die "Found files in output directory $output_dir!:\n\t" 
+                die "Found files in output directory $output_dir!:\n\t"
                     . join("\n\t", @files);
             }
             else {
@@ -228,12 +263,15 @@ sub create {
 
     $self->module_version($self->resolve_module_version) unless defined $self->module_version;
     $self->subclass_name($class);
+    $self->lookup_hash($self->calculate_lookup_hash());
     return $self;
 }
 
 sub _gather_params_for_get_or_create {
     my $class = shift;
-    my $bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
+
+    my ($bx, @extra) = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, @_);
+    die sprintf('got extra parameters: [%s]', join(',', @extra)) if @extra;
 
     my %params = $bx->params_list;
     my %is_input;
@@ -302,6 +340,153 @@ sub _preprocess_params_for_get_or_create {
     return %params;
 }
 
+sub calculate_query {
+    my $self = shift;
+
+    # Pre-fetch things, since we're going loop through them.
+    $self->inputs;
+    $self->params;
+    $self->metrics;
+
+    my @query;
+
+    my $class_object = $self->__meta__;
+    for my $key ($self->property_names) {
+        my $meta = $class_object->property_meta_for_name($key);
+        next unless $meta->{is_input} or $meta->{is_param};
+        next if $key =~ /(.+?)_(?:md5|count)$/ and $class_object->property_meta_for_name($1); #TODO remove these params completely!
+
+        if($meta->is_many) {
+            push @query,
+                $key, [$self->$key];
+        } else {
+            push @query,
+                $key, $self->$key;
+        }
+    }
+
+    return @query;
+}
+
+sub calculate_lookup_hash_from_arguments {
+    my $class = shift;
+
+    my %processed_params = $class->_process_params_for_lookup_hash(@_);
+    return $class->_generate_lookup_hash(\%processed_params);
+}
+
+sub calculate_lookup_hash {
+    my $self = shift;
+
+    my @query = $self->calculate_query;
+    return $self->calculate_lookup_hash_from_arguments(@query);
+}
+
+sub _process_params_for_lookup_hash {
+    my $class = shift;
+    my %initial_params;
+
+    # Handle the case of a boolean expression (used by _faster_get)
+    if (1 == scalar(@_)) {
+        %initial_params = $_[0]->params_list;
+    } else {
+        %initial_params = @_;
+    }
+
+    $class->_modify_params_for_lookup_hash(\%initial_params);
+
+    my ($bx, @extra) = $class->define_boolexpr(%initial_params);
+
+    die sprintf('got extra parameters: [%s]', join(',', @extra)) if @extra;
+
+    my %params = $bx->params_list;
+
+    my $class_object = $class->__meta__;
+    for my $key ($class->property_names) {
+        my $meta = $class_object->property_meta_for_name($key);
+        unless ($meta->{is_input} or $meta->{is_param}) {
+            delete $params{$key};
+            next;
+        }
+
+        if ($meta->is_transient) {
+            delete $params{$key};
+            next;
+        }
+
+        if (defined($meta->default_value) and not exists $params{$key}) {
+            $params{$key} = $meta->default_value;
+        }
+
+        unless ($meta->is_optional or $meta->is_many or exists $params{$key}) {
+            confess('incomplete object specification: missing ' . $key);
+        }
+
+        for my $t ('input', 'param') {
+            if ($meta->{'is_' . $t} && $meta->is_many) {
+                my $value_list = delete $params{$key};
+                if((defined $value_list) && (scalar @$value_list)) {
+                    my @values = sort map { _resolve_object_id($_) } @$value_list;
+                    $params{$key} = \@values;
+                }
+            } else {
+                $params{$key} = _resolve_object_id($params{$key});
+            }
+        }
+
+        if(not defined $params{$key} or $params{$key} eq '') {
+            delete $params{$key};
+        }
+
+        next unless exists $params{$key};
+
+        if(defined($meta->data_type) and
+                ($meta->data_type eq 'Boolean' or
+                 $meta->data_type eq 'UR::Value::Boolean') and $params{$key} eq 0){
+            delete $params{$key};
+        }
+    }
+
+    return %params;
+}
+
+sub _modify_params_for_lookup_hash {
+}
+
+sub _resolve_object_id {
+    my $object = shift;
+
+    return Scalar::Util::blessed($object) ? $object->id : $object;
+}
+
+sub _generate_lookup_hash {
+    my $class = shift;
+    my $hash_to_encode = shift;
+
+    my $json = JSON->new();
+    $json->canonical([1]);
+    my $result = $json->encode($hash_to_encode);
+
+    return Genome::Sys->md5sum_data($result);
+}
+
+sub set_test_name {
+    my ($self, $new_test_name) = @_;
+
+    $self->test_name($new_test_name);
+    return $self->lookup_hash($self->calculate_lookup_hash);
+}
+
+sub remove_test_name {
+    my $self = shift;
+
+    my $param = Genome::SoftwareResult::Param->get(name => 'test_name',
+        software_result_id => $self->id);
+    $param->delete;
+
+    return $self->lookup_hash($self->calculate_lookup_hash);
+}
+
 sub resolve_module_version {
     my $class = shift;
     my $revision = Genome::Sys->snapshot_revision;
@@ -328,7 +513,7 @@ sub _expand_param_and_input_properties {
                     $name_name = 'metric_name';
                 }
                 else {
-                    # TODO This logic was borrowed in the Model.pm's _resolve_to_for_prop_desc so 
+                    # TODO This logic was borrowed in the Model.pm's _resolve_to_for_prop_desc so
                     # when this is refactored, that should also be updated.
                     if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
                         my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
@@ -340,11 +525,11 @@ sub _expand_param_and_input_properties {
                         } else {
                             $prop_desc->{'to'} = 'value_obj';
                         }
-                    } 
+                    }
                     else {
                         $prop_desc->{'to'} = 'value_id';
                     }
-                    $name_name = 'name';    
+                    $name_name = 'name';
                 }
 
                 $prop_desc->{'is_delegated'} = 1;
@@ -353,13 +538,13 @@ sub _expand_param_and_input_properties {
                     $prop_desc->{'where'} = [
                         $name_name . ' like' => $prop_name . '-%',
                     ];
-                } 
+                }
                 else {
                     $prop_desc->{'where'} = [
                         $name_name => $prop_name
                     ];
                 }
-                
+
 
                 $prop_desc->{'is_mutable'} = 1;
                 $prop_desc->{'via'} = $t.'s';
@@ -418,7 +603,7 @@ sub delete {
             .join("\n\t", map { $_->user_class . "\t" . $_->user_id } @users);
     }
 
-    my @to_nuke = ($self->params, $self->inputs, $self->metrics); 
+    my @to_nuke = ($self->params, $self->inputs, $self->metrics);
 
     #If we use any other results, unregister ourselves as users
     push @to_nuke, Genome::SoftwareResult::User->get(user_class_name => $class_name, user_id => $self->id);
@@ -431,29 +616,29 @@ sub delete {
 
     #creating an anonymous sub to delete allocations when commit happens
     my $id = $self->id;
-    my $upon_delete_callback = sub { 
+    my $upon_delete_callback = sub {
         print "Now Deleting Allocation with owner_id = $id\n";
         my $allocation = Genome::Disk::Allocation->get(owner_id=>$id, owner_class_name=>$class_name);
         if ($allocation) {
-            $allocation->deallocate; 
+            $allocation->deallocate;
         }
     };
 
     #hook our anonymous sub into the commit callback
     $class_name->ghost_class->add_observer(aspect=>'commit', callback=>$upon_delete_callback);
-    
-    return $self->SUPER::delete(@_); 
+
+    return $self->SUPER::delete(@_);
 }
 
 sub _lock {
     my $class = shift;
-    
+
     my $resource_lock_name = $class->_resolve_lock_name(@_);
 
     # if we're already locked, just increment the lock count
     $LOCKS{$resource_lock_name} += 1;
     return $resource_lock_name if ($LOCKS{$resource_lock_name} > 1);
-   
+
     my $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, max_try => 2);
     unless ($lock) {
         $class->status_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
@@ -497,8 +682,19 @@ sub _resolve_lock_name {
     $class_string =~ s/\:/\-/g;
 
     my $be = UR::BoolExpr->resolve_normalized($class, @_);
+    my @params = $be->params_list;
+    my @converted_params;
+    for my $p (@params) {
+        if(ref($p) and $p->isa('UR::Object')) {
+            #the object itself as a string has its memory location, which varies in each process,
+            #so convert it to something constant
+            push @converted_params, $p->class . '_' . $p->id;
+        } else {
+            push @converted_params, $p;
+        }
+    }
     no warnings;
-    my $params_and_inputs_list=join "___", $be->params_list;
+    my $params_and_inputs_list= join "___", @converted_params;
     # sub out dangerous directory separators
     $params_and_inputs_list =~ s/\//\./g;
     use warnings;
@@ -541,16 +737,16 @@ sub generate_expected_metrics {
     unless (@names) {
         @names = $self->metric_names;
     }
-    
+
     # pre-load all metrics
     my @existing_metrics = $self->metrics;
-    
+
     for my $name (@names) {
         my $metric = $self->metric(name => $name);
         if ($metric) {
             $self->status_message(
                 $self->display_name . " has metric "
-                . $metric->name 
+                . $metric->name
                 . " with value "
                 . $metric->value
             );
@@ -563,14 +759,14 @@ sub generate_expected_metrics {
         }
         $self->status_message(
             $self->display_name . " is generating a value for metric "
-            . $metric->name 
+            . $metric->name
             . "..."
         );
         my $value = $self->$method();
         unless (defined($value)) {
             $self->error_message(
                 $self->display_name . " has metric "
-                . $metric->name 
+                . $metric->name
                 . " FAILED TO CALCULATE A DEFINED VALUE"
             );
             next;
@@ -578,7 +774,7 @@ sub generate_expected_metrics {
         $self->$metric($value);
         $self->status_message(
             $self->display_name . " has metric "
-            . $metric->name 
+            . $metric->name
             . " with value "
             . $metric->value
         );
@@ -586,7 +782,7 @@ sub generate_expected_metrics {
 }
 
 sub _available_cpu_count {
-    my $self = shift; 
+    my $self = shift;
 
     # Not running on LSF, allow only one CPU
     if (!exists $ENV{LSB_MCPU_HOSTS}) {
@@ -602,12 +798,12 @@ sub _available_cpu_count {
     }
 
     if ($mval =~ m/(\.*?) (\d+)/) {
-        return $2; 
+        return $2;
     } else {
-        $self->error_message("Couldn't parse the LSB_MCPU_HOSTS environment variable (value is '$mval'). "); 
+        $self->error_message("Couldn't parse the LSB_MCPU_HOSTS environment variable (value is '$mval'). ");
         die $self->error_message;
     }
-    
+
 }
 
 sub _resolve_param_value_from_text_by_name_or_id {
