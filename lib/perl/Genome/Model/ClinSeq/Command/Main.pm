@@ -372,6 +372,13 @@ sub _execute {
   $self->exome_positions_file($out_paths->{'exome'}->{'snv'}->{path});
   $self->wgs_exome_positions_file($out_paths->{'wgs_exome'}->{'snv'}->{path});
   $self->tumor_fpkm_file($out_paths->{'tumor_rnaseq_cufflinks_absolute'}->{'isoforms.merged.fpkm.expsort.tsv'}->{path});
+  # this is used by the down-stream summary tools
+  # TODO: switch to relaying the annotation build ID instead
+  $self->annotation_version($ensembl_version);
+  for my $p (qw/wgs_positions_file exome_positions_file wgs_exome_positions_file tumor_fpkm_file annotation_version/) {
+        no warnings;
+        $self->status_message("$p set to " . $self->$p . "\n");
+  }
   # ** runSnvBamReadCounts is now in the workflow 
 
 
@@ -389,9 +396,6 @@ sub _execute {
     # ** Summarize CNVs is now in the workflow
   }
 
-  # this is used by the down-stream summary tools
-  # TODO: switch to relaying the annotation build ID instead
-  $self->annotation_version($ensembl_version);
 
   #print Dumper $out_paths;
   print "\n\nPROCESSING COMPLETE\n\n";

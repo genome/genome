@@ -33,7 +33,7 @@ class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
 
 sub positions_files {
     my $self = shift;
-    grep { $self->$_ } map { $_ . '_positions_file' } qw/wgs exome wgs_exome/;
+    grep { $_ } map { $self->$_ } map { $_ . '_positions_file' } qw/wgs exome wgs_exome/;
 }
 
 sub execute {
@@ -50,7 +50,7 @@ sub execute {
 
   my $read_counts_summary_script = __FILE__ . '.R'; #"$script_dir"."snv/WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R";
 
-  $self->status_messages("Positions files are " . Data::Dumper::Dumper(\@positions_files));
+  $self->status_message("Positions files are " . Data::Dumper::Dumper(\@positions_files));
 
   foreach my $positions_file (@positions_files){
     my $fb = &getFilePathBase('-path'=>$positions_file);
