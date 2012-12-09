@@ -61,7 +61,7 @@ EOS
 sub execute {
     my $self = shift;
 
-    for my $type qw(input refseq) {
+    for my $type (qw(input refseq)) {
         my $property_name = $type.'_file';
         unless ($self->$property_name and -s $self->$property_name) {
             $self->error_message("$property_name is invalid");

@@ -69,7 +69,7 @@ sub execute {
     my $self = shift;
 
     my @input_files;
-    for my $type qw(input ribosomal_intervals ref_flat) {
+    for my $type (qw(input ribosomal_intervals ref_flat)) {
         my $property_name = $type.'_file';
         unless ($self->$property_name and -s $self->$property_name) {
             $self->error_message("$property_name is invalid");
