@@ -649,9 +649,9 @@ sub calculateMeanCnvDiff{
   my $features_bed_file = $output_dir . "$f_name" . ".bed";
   my $cnvs_bed_file = $output_dir . "cnvs" . ".bed";
   my $segments_bed_file = $output_dir . "segments" . ".bed";
-  $self->writeBed('-features'=>$f_map, '-file'=>$features_bed_file);
-  $self->writeBed('-features'=>$cnvs, '-file'=>$cnvs_bed_file);
-  $self->writeBed('-features'=>$segments, '-file'=>$segments_bed_file);
+  my $f_count = $self->writeBed('-features'=>$f_map, '-file'=>$features_bed_file);
+  my $cnv_count = $self->writeBed('-features'=>$cnvs, '-file'=>$cnvs_bed_file);
+  my $segment_count = $self->writeBed('-features'=>$segments, '-file'=>$segments_bed_file);
 
   #Note, when running bedtools, file B is loaded into memory
   #bedtools intersect command might look something like this:
@@ -660,14 +660,22 @@ sub calculateMeanCnvDiff{
   #Use intersectBed to get the overlap between the features (genes/transcripts) and cnv windows
   #Parse the overlaps and store for lookup.  Key on feature $coord and store an array of overlapping window/segment $coords;
   my $features_vs_cnv_windows_file = $output_dir . "$f_name" . "_vs_cnv_windows.bed";
-  my $bed_cmd_cnvs = "intersectBed -a $features_bed_file -b $cnvs_bed_file -wa -wb > $features_vs_cnv_windows_file";
-  Genome::Sys->shellcmd(cmd => $bed_cmd_cnvs);
+  if ($f_count && $cnv_count){
+    my $bed_cmd_cnvs = "intersectBed -a $features_bed_file -b $cnvs_bed_file -wa -wb > $features_vs_cnv_windows_file";
+    Genome::Sys->shellcmd(cmd => $bed_cmd_cnvs);
+  }else{
+    Genome::Sys->shelcmd(cmd => "touch $features_vs_cnv_windows_file");
+  }
   my $feature_window_overlaps = $self->parseIntersectBed('-file'=>$features_vs_cnv_windows_file);
 
   #Use intersectBed to get the overlap between the features (genes/transcripts) and cnv segments
   my $features_vs_segments_file = $output_dir . "$f_name" . "_vs_segments.bed";
-  my $bed_cmd_segments = "intersectBed -a $features_bed_file -b $segments_bed_file -wa -wb > $features_vs_segments_file";
-  Genome::Sys->shellcmd(cmd => $bed_cmd_segments);
+  if ($f_count && $segment_count){
+    my $bed_cmd_segments = "intersectBed -a $features_bed_file -b $segments_bed_file -wa -wb > $features_vs_segments_file";
+    Genome::Sys->shellcmd(cmd => $bed_cmd_segments);
+  }else{
+    Genome::Sys->shellcmd(cmd => "touch $features_vs_segments_file");
+  }
   my $feature_segment_overlaps = $self->parseIntersectBed('-file'=>$features_vs_segments_file);
 
   #Process each 'feature' (gene or transcript) and calculate the CNV status and average CNV value
@@ -811,16 +819,17 @@ sub writeBed{
 
   $self->status_message("Writing BED file: $file");
   open (BED, ">$file") || die "\n\nCould not open output BED file: $file\n\n";
+  my $f_count = 0;
   foreach my $fid (sort keys %{$features}){
     my $chr = $features->{$fid}->{chr};
     my $chr_start = $features->{$fid}->{start};
     my $chr_end = $features->{$fid}->{end};
-
     print BED "$chr\t$chr_start\t$chr_end\n";
+    $f_count++;
   }
   close (BED);
 
-  return;
+  return $f_count;
 }
 
 

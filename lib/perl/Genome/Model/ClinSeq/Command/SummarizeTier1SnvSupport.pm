@@ -13,8 +13,8 @@ class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
     has_input => [
         wgs_build           => { is => 'Genome::Model::Build', is_optional => 1, },
         exome_build         => { is => 'Genome::Model::Build', is_optional => 1, },
-        rnaseq_tumor_build  => { is => 'Genome::Model::Build', is_optional => 1, },
-        rnaseq_normal_build => { is => 'Genome::Model::Build', is_optional => 1, },
+        tumor_rnaseq_build  => { is => 'Genome::Model::Build', is_optional => 1, },
+        normal_rnaseq_build => { is => 'Genome::Model::Build', is_optional => 1, },
         
         wgs_positions_file          => { is => 'FilesystemPath', is_optional => 1 },
         exome_positions_file        => { is => 'FilesystemPath', is_optional => 1 },
@@ -41,8 +41,8 @@ sub execute {
   $self->status_message("starting summarize tier1 snvs with " . Data::Dumper::Dumper($self));
   my $wgs_build = $self->wgs_build;
   my $exome_build = $self->exome_build;
-  my $rnaseq_tumor_build = $self->rnaseq_tumor_build;
-  my $rnaseq_normal_build = $self->rnaseq_normal_build;
+  my $tumor_rnaseq_build = $self->tumor_rnaseq_build;
+  my $normal_rnaseq_build = $self->normal_rnaseq_build;
   my @positions_files = $self->positions_files;
   my $tumor_fpkm_file = $self->tumor_fpkm_file;
   my $ensembl_version = $self->annotation_version;
@@ -60,12 +60,13 @@ sub execute {
     my @params = ('positions_file' => $positions_file);
     push (@params, ('wgs_som_var_build' => $wgs_build)) if $wgs_build;
     push (@params, ('exome_som_var_build' => $exome_build)) if $exome_build;
-    push (@params, ('rna_seq_tumor_build' => $rnaseq_tumor_build)) if $rnaseq_tumor_build;
-    push (@params, ('rna_seq_normal_build' => $rnaseq_normal_build)) if $rnaseq_normal_build;
+    push (@params, ('rna_seq_tumor_build' => $tumor_rnaseq_build)) if $tumor_rnaseq_build;
+    push (@params, ('rna_seq_normal_build' => $normal_rnaseq_build)) if $normal_rnaseq_build;
     push (@params, ('ensembl_version' => $ensembl_version));
     push (@params, ('output_file' => $output_file));
     push (@params, ('verbose' => $verbose));
 
+    $self->status_message("Params for GetBamReadCounts are " . Data::Dumper::Dumper({ @params }));
     my $bam_rc_cmd = Genome::Model::ClinSeq::Command::GetBamReadCounts->create(@params);
 
     #Summarize the positions file using an R script.  BUT if no variants are present, skip this positions file.
@@ -89,12 +90,15 @@ sub execute {
 
     #First get the read counts for the current file of SNVs (from WGS, Exome, or WGS+Exome)
     my $r = $bam_rc_cmd->execute();
+    unless ($r) {
+        $self->error_message("Error from GetBamReadCounts: " . $bam_rc_cmd->error_message);
+    }
 
     #Set up the read count summary script command (an R script)
     my $rc_summary_cmd;
     my $rc_summary_stdout = "$output_stats_dir"."rc_summary.stdout";
     my $rc_summary_stderr = "$output_stats_dir"."rc_summary.stderr";
-    if ($rnaseq_tumor_build){
+    if ($tumor_rnaseq_build){
       #my $tumor_fpkm_file = $out_paths->{'tumor_rnaseq_cufflinks_absolute'}->{'isoforms.merged.fpkm.expsort.tsv'}->{path};
       $rc_summary_cmd = "$read_counts_summary_script $output_stats_dir $output_file $tumor_fpkm_file";
     }else{
@@ -108,7 +112,9 @@ sub execute {
     mkdir($output_stats_dir);
     Genome::Sys->shellcmd(cmd => $rc_summary_cmd);
   }
-  return();
+ 
+  return 1;
 }
+
 1;
 
