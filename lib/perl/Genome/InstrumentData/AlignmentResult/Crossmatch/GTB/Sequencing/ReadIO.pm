@@ -451,7 +451,7 @@ sub _read_prb {
 
         my $called_q = $four_scores[$index{$called_base}];
         my $qual_pushed = 0;
-        foreach my $base qw( A C G T )
+        foreach my $base (qw( A C G T ))
         {
             my $index_no = $index{$base};
             if (!defined ($index_no))

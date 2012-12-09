@@ -159,7 +159,7 @@ sub run_squaredancer {
     }
 
     my @bam_list;
-    for my $bam_type qw(aligned_reads_input control_aligned_reads_input) {
+    for my $bam_type (qw(aligned_reads_input control_aligned_reads_input)) {
         push @bam_list, $self->$bam_type if $self->$bam_type;
     }
     my $bam_string = join ' ', @bam_list;
