@@ -19,12 +19,23 @@ class Genome::Model::Tools::Fasta::Chunker {
     is  => ['Genome::Model::Tools::Fasta'],
     has_input => [                                  
         chunk_size  => { is => 'SCALAR', doc => 'number of sequences per output file', default => 10},  
-        tmp_dir     => { is => 'SCALAR', doc => 'directory for saving temporary file chunks', default => Genome::Sys->create_temp_directory},
+        tmp_dir     => { is => 'SCALAR', doc => 'directory for saving temporary file chunks', is_optional => 1 },
     ],
     has_output => [
         file_chunks => { is => 'ARRAY',  doc => 'array of fasta file names', is_optional => 1 },
     ],
 };
+
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+    return unless $self;
+    unless ($self->tmp_dir) {
+        my $dir = Genome::Sys->create_temp_directory;
+        $self->tmp_dir($dir);
+    }
+    return $self; 
+}
 
 sub sub_command_sort_position { 10 }
 
