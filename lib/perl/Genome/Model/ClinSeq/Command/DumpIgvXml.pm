@@ -384,13 +384,13 @@ sub generate_track_xml {
   my $extraction_type = "extraction_unknown";
   my $common_name = "n/a";
   if ($subject->can("common_name")){
-    $common_name = $build->subject->common_name;
+    $common_name = $build->subject->common_name || "n/a";
   }
   if ($subject->can("tissue_desc")){
-    $tissue_desc = $build->subject->tissue_desc;
+    $tissue_desc = $build->subject->tissue_desc || "n/a";
   }
   if ($subject->can("extraction_type")){
-    $extraction_type = $build->subject->extraction_type;
+    $extraction_type = $build->subject->extraction_type || "n/a";
   }
 
   #Infer whether the data is wgs or exome based on the presence of target region set names
