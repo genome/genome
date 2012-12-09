@@ -175,7 +175,8 @@ class Genome::Model::ReferenceAlignment {
         filter_ruleset_params => { via => 'processing_profile' },
         target_region_set_name => {
             is_many => 1, is_mutable => 1, is => 'Text', via => 'inputs', to => 'value_id', 
-            where => [ name => 'target_region_set_name', value_class_name => 'UR::Value' ]
+            where => [ name => 'target_region_set_name', value_class_name => 'UR::Value' ],
+            is_optional => 1,
         },
     ],
     doc => 'A genome model produced by aligning DNA reads to a reference sequence.'
