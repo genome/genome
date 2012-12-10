@@ -983,13 +983,14 @@ sub check_rnaseq_models{
   my $scn;
   foreach my $s (@rna_samples){
     my $current_scn = $s->common_name || "NULL";
-    if ($tissue_type =~ /$current_scn/i){
+    if ($current_scn =~ /$tissue_type/i){
       $match++;
       $sample = $s;
       $scn = $current_scn;
     }
   }
-  if ($match == 0 && $tissue_type =~ /normal/i){
+  if ($match == 0 && ($tissue_type =~ /normal/i)){
+    #$self->warning_message("Did not find a matching RNA sample for tissue type: $tissue_type");
     return @tmp;
   }elsif($match == 0){
     $self->warning_message("Did not find a matching RNA sample for tissue type: $tissue_type");
@@ -1590,8 +1591,8 @@ sub check_instrument_data{
 
       if ($sample->is_rna){
         my $scn = $sample->common_name || "NULL";
-        push (@normal_rnaseq, $instrument_data) if ($scn =~ /normal/i);
-        push (@tumor_rnaseq, $instrument_data) if ($scn =~ /tumor|met/i);
+        push (@normal_rnaseq, $instrument_data) if ($scn =~ /$self->normal_sample_common_names/i);
+        push (@tumor_rnaseq, $instrument_data) if ($scn =~ /$self->tumor_sample_common_names/i);
       }elsif ($trsn){
         my $fl = Genome::FeatureList->get(name => $trsn);
         if (not $fl or not $fl->content_type) {
