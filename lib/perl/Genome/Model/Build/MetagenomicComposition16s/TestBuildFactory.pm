@@ -92,6 +92,7 @@ sub build_with_example_build_for_454 {
 sub instrument_data_454 {
     my $library = library();
 
+    my $inst_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/inst_data';
     $entities{instrument_data_454} = Genome::InstrumentData::454->create(
         id => --$id,
         run_name => 'R_2010_01_09_11_08_12_FLX08080418_Administrator_100737113',
@@ -99,16 +100,11 @@ sub instrument_data_454 {
         total_reads => 20,
         library => $library,
         sequencing_platform => '454',
+        archive_path =>  $inst_data_dir.'/archive.tgz',
     ) if not $entities{instrument_data_454};
     die 'Failed to create instrument data 454!' if not $entities{instrument_data_454};
 
-    my $inst_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/inst_data';
-    no warnings qw/ once redefine /;
-    *Genome::InstrumentData::454::dump_fasta_file = sub{ return $inst_data_dir.'/-7777.fasta'; };
-    *Genome::InstrumentData::454::dump_sanger_fastq_files = sub{ return $inst_data_dir.'/-7777.fastq'; };
-    use warnings;
-    die 'dump_fasta_file' if not -s $entities{instrument_data_454}->dump_fasta_file, 'fasta file';
-    die 'dump_sanger_fastq_files' if not -s $entities{instrument_data_454}->dump_sanger_fastq_files, 'fastq file';
+    die 'archive_path' if not -s $entities{instrument_data_454}->attributes(attribute_label => 'archive_path')->attribute_value;
 
     return $entities{instrument_data_454};
 }
