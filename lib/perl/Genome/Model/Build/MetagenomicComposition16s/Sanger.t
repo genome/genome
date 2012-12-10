@@ -134,7 +134,7 @@ for my $file_name ( keys %file_methods_and_results ) {
 }
 
 #< PREPARE >#
-my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData->create(
+my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData->create(
     build => $build,
 );
 my $process_ok = $cmd->execute;
