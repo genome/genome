@@ -131,7 +131,7 @@ sub _generate_class_data_for_loading {
     my @ancestor_metas = $meta->ancestry_class_metas;
     for my $m ($meta, @ancestor_metas) {
         my $ds = $m->data_source;
-        if ($ds eq $self) {
+        if ($ds and $ds == $self) {
             $self->rewrite_classdef_to_use_postgres($m);
         }
     }
