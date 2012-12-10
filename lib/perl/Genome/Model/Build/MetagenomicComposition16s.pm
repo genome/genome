@@ -128,12 +128,31 @@ sub amplicon_sets {
 
     return @amplicon_sets;
 }
+
+sub amplicon_sets_for_processing {
+    my $self = shift;
+
+    my @amplicon_sets = $self->amplicon_sets;
+    return if not @amplicon_sets;
+
+    if ( @amplicon_sets > 1 ) {
+        push @amplicon_sets, Genome::Model::Build::MetagenomicComposition16s::AmpliconSet->create(
+            name => 'none',
+            directory => $self->data_directory,
+            file_base_name => $self->file_base_name,
+            classifier => $self->classifier,
+        );
+    }
+
+    return @amplicon_sets;
+}
+
 #<>#
 
 #< Dirs >#
 sub create_subdirectories {
     my $self = shift;
-    my @methods = (qw| classification_dir fasta_dir reports_dir |);
+    my @methods = (qw| classification_dir fasta_dir reports_dir sx_dir |);
     push @methods, (qw/ chimera_dir /) if $self->processing_profile->chimera_detector;
     push @methods, (qw/ chromat_dir edit_dir /) if $self->sequencing_platform eq 'sanger';
     for my $method ( @methods ) {
@@ -162,6 +181,10 @@ sub fasta_dir {
 
 sub reports_dir {
     return $_[0]->data_directory.'/reports';
+}
+
+sub sx_dir {
+    return $_[0]->data_directory.'/sx';
 }
 
 sub edit_dir {
@@ -254,19 +277,133 @@ sub classification_files {
 }
 #<>#
 
-#< Prepare instrument data >#
+#< Process instrument data >#
+sub sx_result_params_for_instrument_data {
+    my ($self, @instrument_data) = @_;
+
+    Carp::confess('No instrument data to get sx result params!') if not @instrument_data;
+
+    my @amplicon_sets = $self->amplicon_sets_for_processing;
+    return if not @amplicon_sets;
+
+    my (@primers, @output_configs);
+    for my $amplicon_set ( @amplicon_sets ) {
+        my @set_primers = $amplicon_set->primers;
+        for my $primer ( @set_primers ) {
+            push @primers, $amplicon_set->name.'='.$primer;
+        }
+        push @output_configs, {
+            basename => $amplicon_set->base_name_for('processed_fastq'),
+            type => 'sanger',
+        };
+        my $writer_name = $amplicon_set->name;
+        if ( $writer_name ) {
+            if ( $writer_name eq 'none' ) {
+                $writer_name = 'discard';
+            }
+            else {
+                #strip off .F/.R for paired sets
+                $writer_name =~ s/\.[FR]$//;
+            }
+        }
+        $output_configs[$#output_configs]->{name} = $writer_name;
+    }
+
+    my @read_processor = ( 'rm-desc' );
+    if ( @amplicon_sets > 1 ) {
+        push @read_processor, 'bin by-primer --remove --primers '.join(',', @primers);
+    }
+
+    my @output_file_configs = map { Genome::Model::Tools::Sx::Functions->hash_to_config(%$_) } @output_configs;
+    if ( @output_configs and ( not @output_file_configs or @output_file_configs != @output_configs ) ) {
+        $self->error_message('Failed to get output file config as strings!');
+        return;
+    }
+
+    if ( $self->processing_profile->amplicon_processor ) {
+        push @read_processor, $self->processing_profile->amplicon_processor;
+    }
+
+    return (
+        instrument_data_id => ( @instrument_data > 1 ? [ map { $_->id } @instrument_data ] : $instrument_data[0]->id ),
+        read_processor => join(' | ', @read_processor),
+        output_file_config => \@output_file_configs,
+    );
+}
+
 sub process_instrument_data {
     my ($self, $instrument_data) = @_;
-    # create sx result for each inst data
-    # assemble sanger into as input to sx
-    # link to build dir by region
-    # link result and build
+    $self->status_message('Process instrument data...');
+
+    Carp::confess('No instrument data given to process!') if not $instrument_data;
+
+    my %sx_result_params = $self->sx_result_params_for_instrument_data($instrument_data);
+    return if not %sx_result_params;
+
+    my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
+    if ( not $sx_result ) {
+        $self->error_message('Failed to create SX result!');
+        return;
+    }
+
+    $self->status_message('Process instrument data...OK');
     return 1;
 }
 
-sub merge_sx_results {
-    my ($self, $instrument_data) = @_;
-    # merge sx results into a file for each region
+sub merge_processed_instrument_data {
+    my $self = shift;
+    $self->status_message('Merge processed instrument data...');
+
+    my @amplicon_sets = $self->amplicon_sets;
+    if ( not @amplicon_sets ) {
+        $self->error_message('No amplicon sets for '.$self->description);
+        return;
+    }
+
+    my @instrument_data = $self->instrument_data;
+    if ( not @instrument_data ) {
+        $self->error_message('No instrument data to get sx results to merge!');
+        return;
+    }
+
+    my %sx_result_params = $self->sx_result_params_for_instrument_data(@instrument_data);
+    return if not %sx_result_params;
+
+    my @sx_results = Genome::InstrumentData::SxResult->get(%sx_result_params);
+    if ( not @sx_results or @sx_results != @instrument_data ) {
+        $self->error_message('Failed to find sx results for instrument data!');
+        return;
+    }
+
+    for my $amplicon_set ( @amplicon_sets ) {
+        my @sx_processed_fastq_files;
+        for my $sx_result ( @sx_results ) {
+            my $sx_processed_fastq_file = $sx_result->output_dir.'/'.$amplicon_set->base_name_for('processed_fastq');
+            next if not -s $sx_processed_fastq_file; # ok
+            print $sx_processed_fastq_file."\n";
+            push @sx_processed_fastq_files, $sx_processed_fastq_file;
+        }
+
+        my $reader = Genome::Model::Tools::Sx::Reader->create(config => \@sx_processed_fastq_files);
+        Carp::confess('Failed to open fastq reader for processed sx result fastqs! '.join(', ', @sx_processed_fastq_files)) if not $reader;
+
+        my $processed_fasta_file = $amplicon_set->processed_fasta_file;
+        my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
+            file => $processed_fasta_file,
+            qual_file => $amplicon_set->processed_qual_file,
+            mode => 'a',
+        );
+        Carp::confess("Failed to open phred writer for file! ".$amplicon_set->processed_fasta_file) if not $writer;
+        while ( my $seqs = $reader->read ) { 
+            for my $seq ( @$seqs ) { 
+                $writer->write($seq); 
+            }
+        }
+    }
+
+    # link orig inst data files and sx processing stats
+
+    $self->status_message('Merge processed instrument data...');
     return 1;
 }
 

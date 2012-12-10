@@ -15,25 +15,47 @@ require File::Compare;
 use Test::More;
 
 use_ok('Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData') or die;
+use_ok('Genome::Model::Build::MetagenomicComposition16s::MergeProcessedInstrumentData') or die;
 
 use_ok('Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory') or die;
 my ($build, $example_build) = Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory->build_with_example_build_for_454;
 ok($build && $example_build, 'Got build and example_build');
 
-my @amplicon_sets = $build->amplicon_sets;
-my @example_amplicon_sets = $example_build->amplicon_sets;
+my @amplicon_sets = $build->amplicon_sets_for_processing;
+my @example_amplicon_sets = $example_build->amplicon_sets_for_processing;
 ok(@amplicon_sets && @example_amplicon_sets, 'Got amplicon sets');
-for ( my $i = 0; $i < @example_amplicon_sets; $i++ ) {
-    for my $file_name (qw/ processed_fasta_file processed_qual_file /) {
-        my $file = $example_amplicon_sets[$i]->$file_name;
-        die "File ($file_name: $file) does not exist!" if not -s $file;
-        Genome::Sys->create_symlink($file, $amplicon_sets[$i]->$file_name);
+
+# PROCESS
+my $process = Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData->create(
+    build => $build,
+    instrument_data => $build->instrument_data,
+);
+ok($process, 'create process inst data cmd');
+ok($process->execute, 'execute process inst data cmd');
+
+my @instrument_data = $build->instrument_data;
+my %sx_result_params = $build->sx_result_params_for_instrument_data(@instrument_data);
+ok(%sx_result_params, 'Got sx result params for build inst data');
+my @sx_results = Genome::InstrumentData::SxResult->get(%sx_result_params);
+is(@sx_results, 1, 'Got an SX result for inst data');
+
+for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
+    my $set_name = $amplicon_sets[$i]->name;
+    is($set_name, $example_amplicon_sets[$i]->name, "set name: $set_name");
+    for my $type (qw/ processed_fastq_file /) {
+        my $file = $amplicon_sets[$i]->$type;
+        my $basename = File::Basename::basename($file);
+        my $sx_file = $sx_results[0]->output_dir.'/'.$basename;
+        ok(-s $sx_file, "$type exists for set $set_name");
     }
 }
 
-my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData->create(build => $build);
-ok($cmd, 'create process inst data cmd');
-ok($cmd->execute, 'execute process inst data cmd');
+# MERGE
+my $merge = Genome::Model::Build::MetagenomicComposition16s::MergeProcessedInstrumentData->create(
+    build => $build,
+);
+ok($merge, 'create merge inst data cmd');
+ok($merge->execute, 'execute merge inst data cmd');
 
 is($build->amplicons_attempted, 20, 'amplicons_attempted');
 is($build->amplicons_processed, 14, 'amplicons_processed');
@@ -42,16 +64,16 @@ is($build->amplicons_processed_success, '0.70', 'amplicons_processed_success');
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
     my $set_name = $amplicon_sets[$i]->name;
     is($set_name, $example_amplicon_sets[$i]->name, "set name: $set_name");
-    for my $file_name (qw/ processed_fasta_file processed_qual_file /) {
-        my $file = $amplicon_sets[$i]->$file_name;
-        ok(-s $file, "$file_name exists for set $set_name");
-        my $example_file = $example_amplicon_sets[$i]->$file_name;
-        ok(-s $example_file, "example $file_name name exists for set $set_name");
-        is(File::Compare::compare($file, $example_file), 0, "$file_name exists for set $set_name");
+    for my $type (qw/ processed_fasta_file processed_qual_file /) {
+        my $file = $amplicon_sets[$i]->$type;
+        ok(-s $file, "$type exists for set $set_name");
+        my $example_file = $example_amplicon_sets[$i]->$type;
+        ok(-s $example_file, "example $type name exists for set $set_name");
+        is(File::Compare::compare($file, $example_file), 0, "generated $type matches example");
     }
 }
 
-print $build->data_directory."\n"; <STDIN>;
+#print join("\n", $sx_results[0]->output_dir, $build->data_directory, $example_build->data_directory)."\n"; <STDIN>;
 done_testing();
 exit;
 
