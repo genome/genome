@@ -130,7 +130,10 @@ sub _generate_class_data_for_loading {
     #$DB::single = 1 if $meta->{class_name} eq 'Genome::SubjectAttribute';
     my @ancestor_metas = $meta->ancestry_class_metas;
     for my $m ($meta, @ancestor_metas) {
-        $self->rewrite_classdef_to_use_postgres($m);
+        my $ds = $m->data_source;
+        if ($ds eq $self) {
+            $self->rewrite_classdef_to_use_postgres($m);
+        }
     }
     $self->SUPER::_generate_class_data_for_loading($meta);
 }
