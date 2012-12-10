@@ -325,8 +325,8 @@ sub write_to_named_writers {
 
     for my $seq ( @$seqs ) {
         if ( not $seq->{writer_name} ) { # OK, write to discard or nothing
-            if ( $self->{'discard'}  ) {
-                $self->{discard} ->write($seq);
+            if ( $self->{discard}  ) {
+                $self->{discard}->write($seq);
             }
             next;
         }
