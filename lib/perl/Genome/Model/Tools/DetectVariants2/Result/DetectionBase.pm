@@ -172,7 +172,7 @@ sub _check_instance_output {
     my ($class, $instance_output) = @_;
     $class = ref $class if ref $class;
 
-    if (-e $instance_output) {
+    if (-l $instance_output or -e $instance_output) {
         # If the detector output is not a symlink, it was generated before these were software results.
         # Archive the existing stuff and regenerate so we get a nifty software result.
         if (not -l $instance_output and -d $instance_output) {
