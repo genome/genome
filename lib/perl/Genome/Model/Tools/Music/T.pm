@@ -33,10 +33,6 @@ if( @ARGV ) {
         }
     }
 }
-else {
-    # Use a temp dir if none were specified as arguments
-    $actual_output_dir = Genome::Sys->create_temp_directory( "music" );
-};
 
 sub run_test_case {
     my %case = @_;
@@ -44,6 +40,11 @@ sub run_test_case {
     if ($case{skip}) {
         plan skip_all => $case{skip};
         return;
+    }
+
+    unless ($actual_output_dir) {
+        # use a temp dir if none was specified
+        $actual_output_dir = Genome::Sys->create_temp_directory( "music" );
     }
 
     # Pre-determine how many tests will run so the test harness knows if we exit early
