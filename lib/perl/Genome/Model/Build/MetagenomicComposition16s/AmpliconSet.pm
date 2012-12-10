@@ -18,6 +18,7 @@ class Genome::Model::Build::MetagenomicComposition16s::AmpliconSet {
         fasta_dir => { calculate => q| return $self->directory.'/fasta'; |, },
         processed_fasta_file => { calculate => q| return $self->_file_for('processed_fasta'); |, },
         processed_qual_file => { calculate => q| return $_[0]->_file_for('processed_qual'); |, },
+        processed_fastq_file => { calculate => q| return $self->_file_for('processed_fastq'); |, },
         chimera_free_fasta_file => { calculate => q| return $_[0]->_file_for('chimera_free_fasta'); |, },
         chimera_free_qual_file => { calculate => q| return $_[0]->_file_for('chimera_free_qual'); |, },
         oriented_fasta_file => { calculate => q| return $_[0]->_file_for('oriented_fasta'); |, },
@@ -144,6 +145,7 @@ sub _file_for {
     my %types_and_props = (
         processed_fasta => [qw/ fasta_dir processed.fasta /],
         processed_qual => [qw/ fasta_dir processed.fasta.qual /],
+        processed_fastq => [qw/ fasta_dir processed.fastq /],
         chimera_free_fasta => [qw/ fasta_dir oriented.chimera_free.fasta /],
         chimera_free_qual => [qw/ fasta_dir oriented.chimera_free.fasta.qual /],
         oriented_fasta => [qw/ fasta_dir oriented.fasta /],
