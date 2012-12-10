@@ -8,27 +8,22 @@ use Genome;
 class Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData {
     is => 'Command::V2',
     has_input => [
-        build => { is => 'Genome::Model::Build::MetagenomicComposition16s',
-            is_output => 1},
+        build => { 
+            is => 'Genome::Model::Build::MetagenomicComposition16s',
+            is_output => 1,
+        },
+        instrument_data => {
+            is => 'Genome::InstrumentData',
+        },
     ],
 };
 
 sub execute {
     my $self = shift;
 
-    my $process_ok;
-    if ( $self->build->sequencing_platform eq 'sanger' ) {
-        my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData->create(
-            build => $self->build,
-        );
-        $process_ok = $cmd->execute;
-    }
-    else {
-        $process_ok = $self->build->prepare_instrument_data;
-    }
-
+    my $process_ok = $self->build->process_instrument_data( $self->instrument_data );
     if ( not $process_ok ) {
-        $self->error_message('Failed to prepare instrument data for '.$self->build->description);
+        $self->error_message('Failed to process instrument data for '.$self->build->description);
         return;
     }
 
