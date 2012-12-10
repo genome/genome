@@ -105,6 +105,7 @@ BEGIN { $INC{ "UR/Time.pm"} = "no" };
 $ENV{GENOME_DB} ||= '/gsc/scripts/opt/genome/db';
 $ENV{GENOME_SW} ||= '/gsc/pkg/bio';
 $ENV{GENOME_LOCK_DIR} ||= '/gsc/var/lock';
+$ENV{GENOME_SYS_GROUP} ||= 'info';
 
 # testsuite data
 $ENV{GENOME_TEST_INPUTS} ||= '/gsc/var/cache/testsuite/data';

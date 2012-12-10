@@ -450,7 +450,7 @@ sub create_directory {
 
     my $errors;
     # make_path may throw its own exceptions...
-    File::Path::make_path($directory, { mode => 02775, group => 'info', error => \$errors });
+    File::Path::make_path($directory, { mode => 02775, group => $ENV{GENOME_SYS_GROUP}, error => \$errors });
 
     if ($errors and @$errors) {
         my $message = "create_directory for path $directory failed:\n";
