@@ -75,14 +75,20 @@ sub create {
 
     $self->status_message('Verify output files...');
     my @output_files = $self->read_processor_output_files;
+    my $existing_cnt = 0;
     foreach my $output_file (@output_files) {
-        if ( not -s $self->temp_staging_directory.'/'.
-                $output_file) {
-            $self->error_message('Output file '.$output_file.
-                ' was not created');
-            $self->delete;
-            return;
+        my $temp_staging_output_file = $self->temp_staging_directory.'/'.$output_file;
+        if ( not -s $temp_staging_output_file ) {
+            unlink $temp_staging_output_file;
         }
+        else { 
+            $existing_cnt++;
+        }
+    }
+    if ( not $existing_cnt ) {
+        $self->error_message('No output files were created!');
+        $self->delete;
+        return;
     }
     if (not -s $self->temp_staging_directory.'/'.
             $self->read_processor_output_metric_file) {
@@ -168,8 +174,9 @@ sub _process_instrument_data {
     elsif ( my $sff = eval{ $instrument_data->sff_file } ) {
         @inputs = ( $sff.':type=sff:cnt='.$input_cnt );
     }
-    elsif ( my $archive = eval{ $instrument_data->archive_path; } ){
-        my $qual_type = $instrument_data->native_qual_format;
+    elsif ( my $archive = eval{ $instrument_data->attributes(attribute_label => 'archive_path')->attribute_value; } ){
+        my $qual_type = eval{ $instrument_data->native_qual_format; };
+        $qual_type // 'sanger';
         
         if ( $instrument_data->can('resolve_quality_converter') ) {
             my $converter = eval{ $instrument_data->resolve_quality_converter };
