@@ -3,6 +3,7 @@ package Genome::Model::Build::DeNovoAssembly::Allpaths;;
 use strict;
 use warnings;
 use Genome;
+use List::Util;
 
 class Genome::Model::Build::DeNovoAssembly::Allpaths {
     is => 'Genome::Model::Build::DeNovoAssembly',
@@ -254,15 +255,16 @@ sub resolve_assemble_lsf_queue {
 
 sub calculate_estimated_kb_usage {
     my $self = shift;
+    my $kb_per_read_count = 2; #based on the first 15 succeeded builds
 
-    my $kb_reserved = 1_500_000_000;
-    my $egs = $self->_get_estimated_genome_size();
-
-    if ($egs and $egs <= 40_000_000) {
-        $kb_reserved = 400_000_000;
+    my $min_kb_reserved = 400_000_000;
+    my $total_read_count = 0;
+    foreach my $id ($self->instrument_data) {
+        $total_read_count += $id->read_count;
     }
+    my $estimate = $total_read_count*$kb_per_read_count;
 
-    return $kb_reserved;
+    return List::Util::max($min_kb_reserved, $estimate);
 }
 
 sub _get_estimated_genome_size {
