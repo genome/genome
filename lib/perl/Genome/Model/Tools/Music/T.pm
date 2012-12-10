@@ -14,7 +14,6 @@ our @EXPORT_OK = qw(run_test_case $input_dir $actual_output_dir);
 # the package with this data is a dependency so this should work when deployed externally
 my $test_data_dir = Genome::Sys->dbpath( 'genome-music-testdata', $Genome::Model::Tools::Music::VERSION) ;
 my $expected_output_dir = $test_data_dir . '/expected_outputs/';
-our $input_dir = $test_data_dir . '/inputs';
 our $actual_output_dir;
 
 # Decide where output goes depending on how this test was invoked
@@ -33,10 +32,18 @@ if( @ARGV ) {
         }
     }
 }
-else {
-    # Use a temp dir if none were specified as arguments
-    $actual_output_dir = Genome::Sys->create_temp_directory( "music" );
-};
+
+sub input_dir {
+    return $test_data_dir . '/inputs';
+}
+
+sub output_dir {
+    unless ($actual_output_dir) {
+        # use a temp dir if none was specified
+        $actual_output_dir = Genome::Sys->create_temp_directory( "music" );
+    }
+    return $actual_output_dir;
+}
 
 sub run_test_case {
     my %case = @_;
@@ -47,7 +54,7 @@ sub run_test_case {
     }
 
     # Pre-determine how many tests will run so the test harness knows if we exit early
-    my $tests = 3; # These are the 3 tests looking for the test-data
+    my $tests = 4; # These are the 3 tests looking for the test-data
     my $expect = $case{expect};
 
 # TODO huh?
@@ -60,7 +67,8 @@ sub run_test_case {
     plan tests => $tests;
 
     ok( -d $test_data_dir, 'Directory with genome-music-testdata exists') or die;
-    ok( -d $input_dir, 'Directory with genome-music-testdata inputs exists') or die;
+    ok( -d input_dir(), 'Directory with genome-music-testdata inputs exists') or die;
+    ok( -d output_dir(), 'Output directory for test case exists') or die;
     ok( -d $expected_output_dir, 'Directory with genome-music-testdata expected outputs exists') or die;
 
     my $cmd = $case{run};

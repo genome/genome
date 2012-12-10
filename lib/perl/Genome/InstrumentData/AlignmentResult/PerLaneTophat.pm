@@ -173,8 +173,10 @@ sub prepare_annotation_index {
     my $bowtie_extension = 'bt2';
     my $reference_extension = 'fa';
     my $aligner_params = $annotation_index->aligner_params;
+    my $bowtie_version = $class->_get_bowtie_version($aligner_params);
     $aligner_params =~ s/--bowtie-version(?:\s+|=)(.+?)(?:\s+|$)//i;
-    unless ($1 =~ /^2/) {
+
+    unless ($bowtie_version =~ /^2/) {
         $aligner_params .= ' --bowtie1';
         $bowtie_extension = 'ebwt';
         $reference_extension = 'bowtie';
@@ -184,7 +186,6 @@ sub prepare_annotation_index {
     my $staging_dir = $annotation_index->temp_staging_directory;
     
     # Build a transcriptome index if an annotation build is provided
-    my $bowtie_version = $class->_get_bowtie_version($aligner_params);
     my $annotation_build = $annotation_index->annotation_build;
 
     my $gtf_path = $annotation_build->annotation_file('gtf',$refindex->reference_build_id);
