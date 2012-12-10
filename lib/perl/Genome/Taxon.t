@@ -41,5 +41,3 @@ $taxon = Genome::Taxon->get(name => 'Wookiee');
 ok($taxon, 'got new taxon');
 
 done_testing();
-exit();
-
