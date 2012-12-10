@@ -1,5 +1,4 @@
 package Genome;
-
 use warnings;
 use strict;
 
@@ -7,6 +6,7 @@ our $VERSION = '0.080001';
 $DB::deep = 10000;
 
 use UR;
+use UR::ObjectV001removed;
 use File::Temp;
 use IO::String;
 use File::Basename;
