@@ -86,7 +86,7 @@ sub execute {
         # get existing values
         my %existing_values;
         for my $value ( $model->$name ) {
-            my $id = ( $value->can('id') ? $value->id : $value );
+            my $id = ( (ref($value) && $value->can('id')) ? $value->id : $value );
             $existing_values{$id} = $value;
         }
 
