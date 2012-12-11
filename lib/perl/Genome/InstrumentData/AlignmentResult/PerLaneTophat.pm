@@ -223,15 +223,15 @@ sub prepare_annotation_index {
     my $bowtie_path = Genome::Model::Tools::Bowtie->path_variable_for_bowtie_version($bowtie_version);
 
     my $temp_directory = Genome::Sys->create_temp_directory();
-    my ($read_fh,$fake_read) = Genome::Sys->create_temp_file('read.fasta');
-    my $read_length = 100;
-    my @nucleotides = qw/A T G C/;
-    print $read_fh '>read'."\n";
-    for (1 .. $read_length) {
-        print $read_fh $nucleotides[int(rand(3))];
-    }
-    print $read_fh "\n";
-    $read_fh->close;
+    my ($fake_read) = Genome::Sys->create_temp_file_path('read.fasta');
+    Genome::Sys->write_file($fake_read, #a few in silico reads for gene TTN (from unit test)
+        ">read1\n",
+        "GATGTCTTTCAGCATGGAAGTAATCATGATTGGGGTGACTGTCAGGGTGGCACTGACTTGGTCATTGCCACAGACAAATGTGTATTCTGCCGAGTCCTCT\n",
+        ">read2\n",
+        "GCAGCTGGTGTGTCAAGCACTTTAACACTCACAGTTGAAGACTTAGGTTCACCAACTCCATTTTCTATTGTGAGAATATATTTTCCTGTATCATTGCGAG\n",
+        ">read3\n",
+        "TCCTTCTGTGCATGAGTGTTCTGAAGGGACTAGGGGCTCATAGTTTACCTGAGAGATCATGACATCAGGACTCTGGAGACTCTCCACGTGTCCCTCAGCT\n"
+    );
 
     my $cmd = 'PATH=' . $bowtie_path . ':$PATH ' . $path .' '. $aligner_params .' --transcriptome-only --output-dir '. $temp_directory .' '. $reference_prefix .' '. $fake_read;
 

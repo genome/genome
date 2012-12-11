@@ -158,7 +158,6 @@ class Genome::InstrumentData::Imported {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             id_by => 'reference_sequence_build_id',
         },
-        bam_path => { calculate => q|my $f = $self->allocations->absolute_path . '/all_sequences.bam';  return $f if (-e $f);| },
         genotype_file => {
             is => 'Text',
             via => 'attributes',
@@ -505,6 +504,38 @@ sub archive_path {
     return $alloc->absolute_path.'/'.$file_name;
 }
 
+sub bam_path {
+    my ($self) = @_;
+
+    my ($allocation) = $self->allocations;
+    unless ($allocation) {
+        $self->error_message("Found no disk allocation for imported instrument data " . $self->id, ", so cannot find bam!");
+        die $self->error_message;
+    }
+
+    my $bam_file = $allocation->absolute_path . "/all_sequences.bam";
+    return $bam_file;
+}
+
+sub get_read_groups_set {
+    my ($self) = @_;
+
+    my $bam_file = $self->bam_path;
+    unless (-e $bam_file) {
+        $self->error_message("Bam file $bam_file doesn't exist");
+        die $self->error_message;
+    }
+    my $cmd = Genome::Model::Tools::Sam::ListReadGroups->create(input=>$bam_file,
+            silence_output=>1);
+    unless ($cmd->execute) {
+        $self->error_message("Failed to run list read groups command for $bam_file");
+        die $self->error_message;
+    }
+
+    my $read_groups = Set::Scalar->new($cmd->read_groups);
+    return $read_groups;
+}
+
 sub get_segments {
     my $self = shift;
 
@@ -520,25 +551,7 @@ sub get_segments {
         return ();
     }
 
-    my ($allocation) = $self->allocations;
-    unless ($allocation) {
-        $self->error_message("Found no disk allocation for imported instrument data " . $self->id, ", so cannot find bam!");
-        die $self->error_message;
-    }
-
-    my $bam_file = $allocation->absolute_path . "/all_sequences.bam";
-
-    unless (-e $bam_file) {
-        $self->error_message("Bam file $bam_file doesn't exist, can't get segments for it.");
-        die $self->error_message;
-    }
-    my $cmd = Genome::Model::Tools::Sam::ListReadGroups->create(input=>$bam_file, silence_output=>1);
-    unless ($cmd->execute) {
-        $self->error_message("Failed to run list read groups command for $bam_file");
-        die $self->error_message;
-    }
-
-    my $read_groups = Set::Scalar->new($cmd->read_groups);
+    my $read_groups = $self->get_read_groups_set();
     unless ($allow_blacklisted_segments) {
         my $blacklisted_segments = Set::Scalar->new($self->blacklisted_segments);
         $read_groups = $read_groups - $blacklisted_segments;

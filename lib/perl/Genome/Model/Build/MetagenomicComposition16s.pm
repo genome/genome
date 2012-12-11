@@ -494,6 +494,15 @@ sub detect_and_remove_chimeras {
         return;
     }
 
+    my $amplicons_processed = $self->amplicons_processed;
+    if (! defined($amplicons_processed)) {
+        $self->error_message("No value for amplicons processed.  Cannot remove chimeras!");
+        return;
+    } elsif ($amplicons_processed == 0) {
+        $self->status_message('amplicons processed is 0.  Skipping chimera removal.');
+        return 1;
+    }
+
     $self->status_message('Chimera detector: '.$self->processing_profile->chimera_detector);
     $self->status_message('Chimera detector params: '.$self->processing_profile->chimera_detector_params);
     my $detector = $self->processing_profile->chimera_detector;
@@ -558,7 +567,6 @@ sub detect_and_remove_chimeras {
         $self->status_message('Remove chimeras...OK');
     }
 
-    my $amplicons_processed = $self->amplicons_processed;
     if ( $amplicons_processed != $metrics{input} ) {
         $self->error_message("Amplicons processed ($amplicons_processed) and amplicons put through chimera detection ($metrics{input}) do not match!");
         return;
