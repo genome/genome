@@ -14,10 +14,118 @@ use LWP::Simple qw(getstore RC_OK);
 use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
+use Genome::Sys::Lock;
 
 our $VERSION = $Genome::VERSION;
 
 class Genome::Sys {};
+
+# locking has been moved into its own module
+
+sub lock_resource {
+    shift;
+    Genome::Sys::Lock->lock_resource(@_);
+}
+
+sub unlock_resource {
+    shift;
+    Genome::Sys::Lock->unlock_resource(@_);
+}
+
+# directory manipulation
+
+sub validate_existing_directory {
+    my ($self, $directory) = @_;
+
+    unless ( defined $directory ) {
+        Carp::croak("Can't validate_existing_directory: No directory given");
+    }
+
+    unless ( -e $directory ) {
+        Carp::croak("Can't validate_existing_director: $directory: Path does not exist");
+    }
+
+
+    unless ( -d $directory ) {
+        Carp::croak("Can't validate_existing_director: $directory: path exists but is not a directory");
+    }
+
+    return 1;
+}
+
+sub validate_directory_for_read_access {
+    my ($self, $directory) = @_;
+
+    # Both underlying methods throw their own exceptions
+    $self->validate_existing_directory($directory)
+        or return;
+
+    return $self->_can_read_from_directory($directory);
+}
+
+sub validate_directory_for_write_access {
+    my ($self, $directory) = @_;
+
+    # Both underlying methods throw their own exceptions
+    $self->validate_existing_directory($directory)
+        or return;
+
+    return $self->_can_write_to_directory($directory);
+}
+
+sub validate_directory_for_read_write_access {
+    my ($self, $directory) = @_;
+
+    # All three underlying methods throw their own exceptions
+    $self->validate_existing_directory($directory)
+        or return;
+
+    $self->_can_read_from_directory($directory)
+        or return;
+
+    return $self->_can_write_to_directory($directory);
+}
+
+sub recursively_validate_directory_for_read_write_access {
+    my ($self, $directory) = @_;
+
+    my $wanted = sub {
+        my $full_path = $File::Find::name;
+        if (-f $full_path) {
+            eval {
+                Genome::Sys->validate_file_for_reading($full_path);
+                Genome::Sys->validate_file_for_writing_overwrite($full_path);
+            };
+
+            if ($@) {
+                Carp::croak "Cannot read or write $full_path in $directory!";
+            }
+        }
+    };
+
+    find($wanted, $directory);
+    return 1;
+}
+
+sub _can_read_from_directory {
+    my ($self, $directory) = @_;
+
+    unless ( -r $directory ) {
+        Carp::croak("Directory ($directory) is not readable");
+    }
+
+    return 1;
+}
+
+sub _can_write_to_directory {
+    my ($self, $directory) = @_;
+
+    unless ( -w $directory ) {
+        Carp::croak("Directory ($directory) is not writable");
+    }
+
+    return 1;
+}
 
 # MD5
 

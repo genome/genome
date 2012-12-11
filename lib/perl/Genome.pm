@@ -33,6 +33,9 @@ eval {
     local $SIG{__DIE__};
     require Genome::Search;
 };
+
+require Genome::Site::TGI::LegacyConfig;
+
 # This ensures that the search system is updated when certain classes are updated
 # The search system is optional so it skips this if usage above fails
 if ($INC{"Genome/Search.pm"}) {

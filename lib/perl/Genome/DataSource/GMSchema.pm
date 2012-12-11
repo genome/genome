@@ -37,10 +37,10 @@ sub _sync_database {
     my %params = @_;
 
     # Need to remove all commit observers, they will be fired during commit and that's no good!
-    my @observers = UR::Observer->get();
-    for my $observer (@observers) {
-        $observer->delete;
-    }
+    #my @observers = UR::Observer->get();
+    #for my $observer (@observers) {
+    #    $observer->delete;
+    #}
 
     # Need to update all classes that have been changed (and all of their parent
     # classes) to use the postgres datasource instead of Oracle.

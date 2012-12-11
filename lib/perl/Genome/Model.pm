@@ -12,7 +12,7 @@ class Genome::Model {
     subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
-        genome_model_id => { is => 'Number', },
+        genome_model_id => { is => 'Text', },
     ],
     attributes_have => [
         is_input    => { is => 'Boolean', is_optional => 1, },
