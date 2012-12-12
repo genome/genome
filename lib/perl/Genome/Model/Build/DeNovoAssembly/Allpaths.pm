@@ -228,8 +228,10 @@ sub resolve_assemble_lsf_resource {
 
     my $mem = $self->_mem_in_gb;
 
-    my $template = "-n 4 -R 'span[hosts=1] select[type==LINUX64 && mem>%s000] rusage[mem=%s000]' -M %s000000";
-    return sprintf($template, $mem, $mem, $mem);
+    my $mem_reserve = $mem*1024;
+    my $mem_limit = $mem_reserve*1024 + 1048576;
+    my $template = "-n 4 -R 'span[hosts=1] select[type==LINUX64 && mem>%s] rusage[mem=%s]' -M %s";
+    return sprintf($template, $mem_reserve, $mem_reserve, $mem_limit);
 }
 
 sub _mem_in_gb {
