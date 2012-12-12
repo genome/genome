@@ -105,7 +105,7 @@ my @params_and_xml_list = (
   <link fromOperation="Assemble" fromProperty="build" toOperation="Report" toProperty="build" />
   <link fromOperation="Report" fromProperty="report_directory" toOperation="output connector" toProperty="report_directory" />
   <operation name="Assemble">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Assemble" lsfProject="build%s" lsfQueue="alignment-pd" lsfResource="-n 4 -R 'span[hosts=1] select[type==LINUX64 &amp;&amp; mem&gt;60000] rusage[mem=60000]' -M 60000000" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Assemble" lsfProject="build%s" lsfQueue="alignment-pd" lsfResource="-n 4 -R 'span[hosts=1] select[type==LINUX64 &amp;&amp; mem&gt;61440] rusage[mem=61440]' -M 63963136" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="ProcessInstrumentData" parallelBy="instrument_data">
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::ProcessInstrumentData" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[type==LINUX64 &amp;&amp; mem&gt;32000 &amp;&amp; tmp&gt;200000] rusage[mem=32000:tmp=200000] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
@@ -193,6 +193,8 @@ for my $params_and_xml (@params_and_xml_list) {
 
     my $diff = Genome::Sys->diff_text_vs_text($actual_xml,
         $expected_xml);
+        print "Expected: $expected_xml\n";
+        print "Actual: $actual_xml\n";
     ok(!$diff, sprintf("workflow xml diffs for '%s'",
             $params_and_xml->{'params'}->{'name'}));
 }
