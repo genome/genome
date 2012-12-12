@@ -24,7 +24,7 @@ class Genome::Model::Build {
     subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
-        build_id => { is => 'NUMBER', },
+        build_id => { is => 'Number', },
     ],
     attributes_have => [
         is_input    => { is => 'Boolean', is_optional => 1, },
@@ -1286,11 +1286,11 @@ sub _initialize_workflow {
 
     my $model = $self->model;
     my $processing_profile = $self->processing_profile;
-
     my $workflow = $model->_resolve_workflow_for_build($self, $optional_lsf_queue);
 
     ## so developers dont fail before the workflow changes get deployed to /gsc/scripts
-    if ($workflow->can('notify_url')) {
+    # NOTE: Genome::Config is obsolete, so this code must work when it is not installed as well.
+    if ($workflow->can('notify_url') and Genome::Config->can("base_web_uri")) {
         require UR::Object::View::Default::Xsl;
 
         my $cachetrigger = Genome::Config->base_web_uri;
