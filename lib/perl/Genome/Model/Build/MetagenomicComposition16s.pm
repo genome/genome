@@ -5,9 +5,9 @@ use warnings;
 
 use Genome;
 
-use Carp 'confess';
-use Data::Dumper 'Dumper';
+require Carp;
 require Mail::Sendmail;
+require File::Basename;
 
 class Genome::Model::Build::MetagenomicComposition16s {
     is => 'Genome::Model::Build',
@@ -152,7 +152,7 @@ sub amplicon_sets_for_processing {
 #< Dirs >#
 sub create_subdirectories {
     my $self = shift;
-    my @methods = (qw| classification_dir fasta_dir reports_dir sx_dir |);
+    my @methods = (qw| classification_dir fasta_dir reports_dir |);
     push @methods, (qw/ chimera_dir /) if $self->processing_profile->chimera_detector;
     push @methods, (qw/ chromat_dir edit_dir /) if $self->sequencing_platform eq 'sanger';
     for my $method ( @methods ) {
@@ -181,10 +181,6 @@ sub fasta_dir {
 
 sub reports_dir {
     return $_[0]->data_directory.'/reports';
-}
-
-sub sx_dir {
-    return $_[0]->data_directory.'/sx';
 }
 
 sub edit_dir {
@@ -346,6 +342,8 @@ sub process_instrument_data {
         return;
     }
 
+    $sx_result->add_user(user => $self, label => 'sx_result');
+
     $self->status_message('Process instrument data...OK');
     return 1;
 }
@@ -354,18 +352,10 @@ sub merge_processed_instrument_data {
     my $self = shift;
     $self->status_message('Merge processed instrument data...');
 
-    my @amplicon_sets = $self->amplicon_sets;
-    if ( not @amplicon_sets ) {
-        $self->error_message('No amplicon sets for '.$self->description);
-        return;
-    }
+    my @amplicon_sets = $self->amplicon_sets_for_processing;
+    return if not @amplicon_sets;
 
     my @instrument_data = $self->instrument_data;
-    if ( not @instrument_data ) {
-        $self->error_message('No instrument data to get sx results to merge!');
-        return;
-    }
-
     my %sx_result_params = $self->sx_result_params_for_instrument_data(@instrument_data);
     return if not %sx_result_params;
 
@@ -375,12 +365,12 @@ sub merge_processed_instrument_data {
         return;
     }
 
+    $self->status_message('Merge SX results...');
     for my $amplicon_set ( @amplicon_sets ) {
         my @sx_processed_fastq_files;
         for my $sx_result ( @sx_results ) {
             my $sx_processed_fastq_file = $sx_result->output_dir.'/'.$amplicon_set->base_name_for('processed_fastq');
             next if not -s $sx_processed_fastq_file; # ok
-            print $sx_processed_fastq_file."\n";
             push @sx_processed_fastq_files, $sx_processed_fastq_file;
         }
 
@@ -400,8 +390,52 @@ sub merge_processed_instrument_data {
             }
         }
     }
+    $self->status_message('Merge SX results...OK');
 
-    # link orig inst data files and sx processing stats
+    $self->status_message('Instrument data processed metrics...');
+    my $inst_data_metrics_fh = Genome::Sys->open_file_for_writing( $self->fasta_dir.'/metrics.processed' );
+    my %metrics;
+    for my $sx_result ( @sx_results ) {
+        my $instrument_data = $sx_result->instrument_data;
+        # link original data path
+        my $original_data_path = 'NA';
+        ORIGINAL_DATA_PATH: for my $attribute_label (qw/ bam_path sff_file archive_path /) {
+            my $attribute = $instrument_data->attributes(attribute_label => $attribute_label);
+            next if not $attribute;
+            my $attribute_value = $attribute->attribute_value;
+            next if not -e $attribute_value;
+            last ORIGINAL_DATA_PATH;
+            $original_data_path = $attribute_value;
+        }
+
+        # metrics: link files and get attempted and processed
+        my %sx_metrics;
+        for my $type (qw/ input output /) {
+            my $file_method = 'read_processor_'.$type.'_metric_file';
+            my $metrics_file_name = $sx_result->$file_method;
+            my $metrics_file = $sx_result->output_dir.'/'.$metrics_file_name;
+            my $metrics = Genome::Model::Tools::Sx::Metrics->from_file($metrics_file);
+            Carp::confess("Failed to get $type metrics for SX result! ".$sx_result->id) if not $metrics;
+            $sx_metrics{$type.'_bases'} += $metrics->bases;
+            $sx_metrics{$type.'_count'} += $metrics->count;
+        }
+        $metrics{amplicons_attempted} += $sx_metrics{input_count};
+        $metrics{amplicons_processed} += $sx_metrics{output_count};
+        $inst_data_metrics_fh->print(
+            join(' ', $metrics{input_count}, $sx_metrics{output_count}, $original_data_path)."\n"
+        );
+    }
+    $inst_data_metrics_fh->close;
+    $self->status_message('Instrument data processed metrics...OK');
+
+    $self->amplicons_attempted( $metrics{amplicons_attempted} );
+    $self->amplicons_processed( $metrics{amplicons_processed} );
+    $self->amplicons_processed_success( 
+        $metrics{amplicons_attempted} > 0 ?  sprintf('%.2f', $metrics{amplicons_processed} / $metrics{amplicons_attempted}) : 0
+    );
+    $self->status_message('Attempted: '.$self->amplicons_attempted);
+    $self->status_message('Processed: '.$self->amplicons_processed);
+    $self->status_message('Success:   '.($self->amplicons_processed_success * 100).'%');
 
     $self->status_message('Merge processed instrument data...');
     return 1;
@@ -425,7 +459,7 @@ sub prepare_instrument_data {
     #read in orig fastq file
     my $orig_fastq = $self->combined_original_fastq_file;
     if ( not -s $orig_fastq ) {
-      Carp::confess( "Original fasta file did not get created or is blank" );
+        Carp::confess( "Original fasta file did not get created or is blank" );
     }
 
     my @cmd_parts = ( 'gmt sx rm-desc' );
@@ -983,7 +1017,7 @@ sub calculate_estimated_kb_usage_sanger {
 
     my $instrument_data_count = $self->instrument_data_count;
     unless ( $instrument_data_count ) { # very bad; should be checked when the build is created
-        confess("No instrument data found for build ".$self->description);
+        Carp::confess("No instrument data found for build ".$self->description);
     }
 
     return $instrument_data_count * 30000;

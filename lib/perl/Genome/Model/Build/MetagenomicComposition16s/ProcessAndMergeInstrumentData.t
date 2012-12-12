@@ -26,18 +26,20 @@ my @example_amplicon_sets = $example_build->amplicon_sets_for_processing;
 ok(@amplicon_sets && @example_amplicon_sets, 'Got amplicon sets');
 
 # PROCESS
+my $instrument_data = $build->instrument_data;
 my $process = Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData->create(
     build => $build,
-    instrument_data => $build->instrument_data,
+    instrument_data => $instrument_data,
 );
 ok($process, 'create process inst data cmd');
 ok($process->execute, 'execute process inst data cmd');
 
-my @instrument_data = $build->instrument_data;
-my %sx_result_params = $build->sx_result_params_for_instrument_data(@instrument_data);
+my %sx_result_params = $build->sx_result_params_for_instrument_data($instrument_data);
 ok(%sx_result_params, 'Got sx result params for build inst data');
 my @sx_results = Genome::InstrumentData::SxResult->get(%sx_result_params);
 is(@sx_results, 1, 'Got an SX result for inst data');
+my @users = map { $_->user } map { $_->users } @sx_results;
+is_deeply(\@users, [$build], 'Build is registered as user for SX result');
 
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
     my $set_name = $amplicon_sets[$i]->name;
@@ -72,6 +74,7 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
         is(File::Compare::compare($file, $example_file), 0, "generated $type matches example");
     }
 }
+is(File::Compare::compare($build->fasta_dir.'/metrics.processed', $example_build->fasta_dir.'/metrics.processed'), 0, 'processed metrics file');
 
 #print join("\n", $sx_results[0]->output_dir, $build->data_directory, $example_build->data_directory)."\n"; <STDIN>;
 done_testing();
