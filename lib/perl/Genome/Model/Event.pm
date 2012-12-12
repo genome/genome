@@ -800,6 +800,8 @@ sub lsf_state {
     my ($self, $lsf_job_id) = @_;
 
     my $spool = `bjobs -l $lsf_job_id 2>&1`;
+    return if not defined $spool;
+    return if ($spool =~ /No command 'bjobs' found/);
     return if ($spool =~ /Job <$lsf_job_id> is not found/);
 
     # this regex nukes the indentation and line feed
