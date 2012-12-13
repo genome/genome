@@ -24,11 +24,7 @@ class Genome::Model::Build {
     subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
-<<<<<<< HEAD
-        build_id => { is => 'Text', },
-=======
         build_id => { is => 'Number', },
->>>>>>> master
     ],
     attributes_have => [
         is_input    => { is => 'Boolean', is_optional => 1, },
