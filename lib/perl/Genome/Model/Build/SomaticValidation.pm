@@ -246,6 +246,7 @@ sub dirs_ignored_by_diff {
         variants/sv/squaredancer
         variants/sv/union
         indel_validation/realigned_bams
+        indel_validation
     );
 }
 
