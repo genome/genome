@@ -15,7 +15,7 @@ class Genome::Model::Event {
     sub_classification_method_name => '_resolve_subclass_name',
     subclass_description_preprocessor => 'Genome::Model::Event::_preprocess_subclass_description',
     id_by => [
-        genome_model_event_id => { is => 'NUMBER', len => 11 },
+        genome_model_event_id => { is => 'Number', },
     ],
     has => [
         model        => { is => 'Genome::Model', id_by => 'model_id', constraint_name => 'GME_GM_FK' },
@@ -43,9 +43,7 @@ class Genome::Model::Event {
         lsf_job_id         => { is => 'VARCHAR2', len => 64 },
         retry_count        => { is => 'NUMBER', len => 3 },
         status_detail      => { is => 'VARCHAR2', len => 200 },
-        parent_event_id    => { is => 'NUMBER', len => 10, implied_by => 'parent_event' },
         build              => { is => 'Genome::Model::Build', id_by => 'build_id' },
-        prior_event_id     => { is => 'NUMBER', len => 10, implied_by => 'prior_event' },
         should_calculate   => { calculate_from => 'event_status',
                          calculate => q(
                                  if ($event_status eq 'Failed' or $event_status eq 'Crashed') {
