@@ -514,6 +514,9 @@ sub bam_path {
     }
 
     my $bam_file = $allocation->absolute_path . "/all_sequences.bam";
+
+    return if not -e $bam_file;
+
     return $bam_file;
 }
 
@@ -521,7 +524,7 @@ sub get_read_groups_set {
     my ($self) = @_;
 
     my $bam_file = $self->bam_path;
-    unless (-e $bam_file) {
+    unless ($bam_file and -e $bam_file) {
         $self->error_message("Bam file $bam_file doesn't exist");
         die $self->error_message;
     }

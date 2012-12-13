@@ -139,7 +139,7 @@ sub _execute_build {
         config => $config_file_path,
         dev => $model->dev,
         skip_core_check => $self->skip_core_gene_check,
-        skip_protein_annotation => (not ($self->keggscan_version || $self->interpro_version)), # TODO Include protein annotation if we have a pp. params suggesting we want it
+        skip_protein_annotation => (not ($self->keggscan_version || $self->interpro_version)), #Include protein annotation if we have a pp. params suggesting we want it
         keggscan_version => $self->keggscan_version,
         interpro_version => $self->interpro_version,
     );

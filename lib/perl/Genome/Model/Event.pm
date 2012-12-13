@@ -43,9 +43,7 @@ class Genome::Model::Event {
         lsf_job_id         => { is => 'VARCHAR2', len => 64 },
         retry_count        => { is => 'NUMBER', len => 3 },
         status_detail      => { is => 'VARCHAR2', len => 200 },
-        parent_event_id    => { is => 'NUMBER', len => 10, implied_by => 'parent_event' },
         build              => { is => 'Genome::Model::Build', id_by => 'build_id' },
-        prior_event_id     => { is => 'NUMBER', len => 10, implied_by => 'prior_event' },
         should_calculate   => { calculate_from => 'event_status',
                          calculate => q(
                                  if ($event_status eq 'Failed' or $event_status eq 'Crashed') {
@@ -800,7 +798,6 @@ sub lsf_state {
     my ($self, $lsf_job_id) = @_;
 
     my $spool = `bjobs -l $lsf_job_id 2>&1`;
-    $DB::single = 1;
     return if not defined $spool;
     return if ($spool =~ /No command 'bjobs' found/);
     return if ($spool =~ /Job <$lsf_job_id> is not found/);

@@ -201,6 +201,7 @@ sub _process_instrument_data {
         my $qual_type = 'sanger'; # imported will be sanger; check solexa
         if ( $instrument_data->can('resolve_quality_converter') ) {
             my $converter = eval{ $instrument_data->resolve_quality_converter };
+            $qual_type = 'illumina';
             if ( not $converter ) {
                 $self->error_message('No quality converter for instrument data '.$instrument_data->id);
                 return;
@@ -209,7 +210,9 @@ sub _process_instrument_data {
                 $self->error_message('Cannot process old illumina data! Instrument data '.$instrument_data->id);
                 return;
             }
-            $qual_type = 'illumina';
+            elsif ( $converter eq 'none' ) { # sanger fastqs
+                $qual_type = 'sanger';
+            }
         }
         my $instrument_data_tempdir = File::Temp::tempdir(CLEANUP => 1);
         if ( not -d $instrument_data_tempdir ) {
