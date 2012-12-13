@@ -167,8 +167,6 @@ sub _execute {
   my $verbose = $self->verbose;
   my $clean = $self->clean;
 
-
-
   #Get build directories for the three datatypes: $data_paths->{'wgs'}->*, $data_paths->{'exome'}->*, $data_paths->{'tumor_rnaseq'}->*
   my $step = 0;
   $step++; print MAGENTA, "\n\nStep $step. Getting data paths from 'genome' for specified model ids\n", RESET;
@@ -234,18 +232,7 @@ sub _execute {
 
   # ** Summarize Builds is now in the workflow **
 
-  #Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
-  #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
-  $step++; print MAGENTA, "\n\nStep $step. Create IGV XML session files for varying levels of detail using the input builds", RESET;
-  my $igv_session_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'igv', '-silent'=>1);
-  my $igv_xml_cmd = Genome::Model::ClinSeq::Command::DumpIgvXml->create(builds=>[$clinseq_build], outdir=>$igv_session_dir);
-  $igv_xml_cmd->queue_status_messages(1);
-  my $r = $igv_xml_cmd->execute();
-  my @output = $igv_xml_cmd->status_messages();
-  my $igv_log_file = $igv_session_dir . "DumpIgvXml.log.txt";
-  my $log = IO::File->new(">$igv_log_file");
-  $log->print(join("\n", @output));
-
+  # ** DumpIgvXml is now in the workflow **
 
   #Create a summarized file of SNVs for: WGS, exome, and WGS+exome merged
   #Grab the gene name used in the 'annotation.top' file, but grab the AA changes from the '.annotation' file
@@ -256,15 +243,7 @@ sub _execute {
   }
 
   #Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
-  my @mutation_diagram_builds;
-  push (@mutation_diagram_builds, $builds->{wgs}) if $builds->{wgs};
-  push (@mutation_diagram_builds, $builds->{exome}) if $builds->{exome};
-  if (scalar(@mutation_diagram_builds)){
-      $step++; print MAGENTA, "\n\nStep $step. Creating mutation-diagram plots", RESET;
-      my $mutation_diagram_dir = createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'mutation_diagrams', '-silent'=>1);
-      my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(builds=>\@mutation_diagram_builds, outdir=>$mutation_diagram_dir, collapse_variants=>1, max_snvs_per_file=>750, max_indels_per_file=>750);
-      my $r = $mutation_diagram_cmd->execute();
-  }
+  # ** this has been moved into the workflow
 
   #TODO: More comprehensive processing of SNVs and InDels
   #Import SNVs and Indels in a more complete form

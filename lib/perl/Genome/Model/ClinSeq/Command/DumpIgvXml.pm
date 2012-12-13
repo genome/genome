@@ -21,7 +21,6 @@ class Genome::Model::ClinSeq::Command::DumpIgvXml {
               is => 'FilesystemPath',
               doc => 'Directory where output files will be written', 
         },
-
     ],
     doc => 'Based on the inputs of a clinseq build create a series of IGV session XML files',
 };
@@ -136,6 +135,8 @@ sub execute {
   my $self = shift;
   my @clinseq_builds = $self->builds;
   my $outdir = $self->outdir;
+
+  $self->queue_status_messages(1);
 
   my $levels = $self->get_levels;
   unless ($outdir =~ /\/$/){
@@ -347,6 +348,10 @@ sub execute {
     }
   }
   $self->status_message("\n\n");
+
+  my @output = $self->status_messages();
+  my $log = IO::File->new(">$outdir/DumpIgvXml.log.txt");
+  $log->print(join("\n", @output));
 
   return 1;
 }

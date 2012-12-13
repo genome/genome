@@ -165,11 +165,30 @@ sub map_workflow_inputs {
         push @inputs, summarize_builds_skip_lims_reports => 1;
     }
 
+    # dump igv xml
+    my $igv_session_dir = $patient_dir . '/igv';
+    push @dirs, $igv_session_dir;
+    $igv_session_dir .= '/';
+    push @inputs, 'igv_session_dir', $igv_session_dir;
+
+    # Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
+    if ($build->wgs_build or $build->exome_build) {
+        my $mutation_diagram_dir = $patient_dir . '/mutation_diagrams';
+        push @dirs, $mutation_diagram_dir;
+        $mutation_diagram_dir .= '/';
+        push @inputs, (
+            mutation_diagram_outdir => $mutation_diagram_dir,
+            mutation_diagram_collapse_variants=>1, 
+            mutation_diagram_max_snvs_per_file=>750, 
+            mutation_diagram_max_indels_per_file=>750
+        );
+    }
+
     # For now it works to create directories here because the data_directory
     # has been allocated.  It is possible that this would not happen until
     # later, which would mess up assigning inputs to many of the commands.
     for my $dir (@dirs) {
-        Genome::Sys->create_directory($input_summary_dir);
+        Genome::Sys->create_directory($dir);
     }
 
     return @inputs;
@@ -201,6 +220,7 @@ sub _resolve_workflow_for_build {
     my @output_properties = qw(
         main_result
         summarize_builds_result
+        igv_session_result
     );
 
     if ($build->wgs_build) {
@@ -217,7 +237,10 @@ sub _resolve_workflow_for_build {
 
     if ($build->wgs_build and $build->exome_build) {
         push @output_properties, 'summarize_wgs_exome_tier1_snv_support_result';
+    }
 
+    if ($build->wgs_build or $build->exome_build) {
+        push @output_properties, 'mutation_diagram_result';
     }
 
     # Make the workflow and some convenience wrappers for adding steps and links
@@ -261,28 +284,112 @@ sub _resolve_workflow_for_build {
         return $op;
     };
 
+    my $converge;
+
     my $add_link = sub {
         my ($from_op, $from_p, $to_op, $to_p) = @_;
         $to_p = $from_p if not defined $to_p;
-        my $link = $workflow->add_link(
-            left_operation => $from_op,
-            left_property => $from_p,
-            right_operation => $to_op,
-            right_property => $to_p
-        );
+        
+        if (ref($to_p) eq 'ARRAY') {
+            Carp::confess("the 'to' property in a link cannot be a list!");
+        }
+
+        my $link;
+        if (ref($from_p) eq 'ARRAY') {
+            my $cname = "(combine @$from_p for \"" . $to_op->name . "$to_p\")";
+            my $converge_op = $converge->($cname,$from_op,$from_p);
+            $link = $workflow->add_link(
+                left_operation => $converge_op,
+                left_property => 'outputs',
+                right_operation => $to_op,
+                right_property => $to_p
+            );
+        }
+        else {
+            $link = $workflow->add_link(
+                left_operation => $from_op,
+                left_property => $from_p,
+                right_operation => $to_op,
+                right_property => $to_p
+            );
+        }
         $link or die "Failed to make link from $link from $from_p to $to_p!";
         return $link;
     };
-  
 
+    my $combo_cnt = 0;
+    $converge = sub {
+        my $cname = shift;
+        my @params1 = @_;
+        my @params2 = @_;
+
+        # make a friendly name
+        my $name = '';
+        my $combo_cnt++;
+        my $input_count = 0;
+        while (@params1) {
+            my $from_op = shift @params1;
+            my $from_props = shift @params1;
+            unless ($from_props) {
+                die "expected \$op2,['p1','p2',...],\$op2,['p3','p4'],...";
+            }
+            unless (ref($from_props) eq 'ARRAY') {
+                die "expected the second param (and every even param) in converge to be an arrayref of property names"; 
+            }
+            $input_count += scalar(@$from_props);
+            if ($name) {
+                $name .= " and ";
+            }
+            else {
+                $name = "combine ($combo_cnt): ";
+            }
+            if ($from_op->name eq 'input_conector') {
+                $name = "($combo_cnt)";
+            }
+            else {
+                $name .= $from_op->name . "(";
+            }
+            for my $p (@$from_props) {
+                $name .= $p;
+                $name .= "," unless $p eq $from_props->[-1];
+            }
+            $name .= ")";
+        }
+        my $op = $workflow->add_operation(
+            name => $cname,
+            operation_type => Workflow::OperationType::Converge->create(
+                input_properties => [ map { "i$_" } (1..$input_count) ],
+                output_properties => ['outputs'],
+            )
+        );
+        
+        # create links
+        my $input_n = 0;
+        while (@params2) {
+            my $from_op = shift @params2;
+            my $from_props = shift @params2;
+            for my $from_prop (@$from_props) {
+                $input_n++;
+                $add_link->(
+                    $from_op,
+                    $from_prop,
+                    $op,
+                    "i$input_n"
+                );
+            }
+        }
+
+        # return the op which will have a single "output"
+        return $op;
+    };
+  
     #
     # Add steps which go in parallel with the Main step before setting up Main.
     # This will ensure testing goes more quickly because these will happen first.
     #
     
     #Summarize build inputs using SummarizeBuilds.pm
-    $step++; 
-    my $msg = "Step $step. Creating a summary of input builds using summarize-builds";
+    my $msg = "Creating a summary of input builds using summarize-builds";
     my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
     $add_link->($input_connector, 'build', $summarize_builds_op, 'builds');
     $add_link->($input_connector, 'summarize_builds_outdir', $summarize_builds_op, 'outdir');
@@ -290,13 +397,45 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
     $add_link->($summarize_builds_op, 'result', $output_connector, 'summarize_builds_result');
 
+    #Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
+    if ($build->wgs_build or $build->exome_build) {
+        my $msg = "Creating mutation-diagram plots";
+        my $mutation_diagram_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::CreateMutationDiagrams");
+        $DB::single = 1;
+        if ($build->wgs_build and $build->exome_build) {
+            $add_link->($input_connector,['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
+        }
+        elsif ($build->wgs_build) {
+            $add_link->($input_connector,'wgs_build',$mutation_diagram_op);
+        }
+        elsif ($build->exome_build) {
+            $add_link->($input_connector,'exome_build',$mutation_diagram_op);
+        }
+        else {
+            die "impossible!";
+        }
+        $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
+        
+        for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
+            my $input_name = 'mutation_diagram_' . $p;
+            $add_link->($input_connector,$input_name,$mutation_diagram_op,$p);
+        }
+    }
+
+    #Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
+    #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
+    $msg = "Create IGV XML session files for varying levels of detail using the input builds";
+    my $igv_session_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::DumpIgvXml");
+    $add_link->($input_connector, 'build', $igv_session_op, 'builds');
+    $add_link->($input_connector, 'igv_session_dir', $igv_session_op, 'outdir');
+    $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result'); 
+
     #
     # Main contains all of the original clinseq non-parallel code.
     # Re-factor out pieces which are completely independent, or which are at the end first.
     #
 
-    $step++;
-    my $main_op = $add_step->("Step $step. ClinSeq Main", "Genome::Model::ClinSeq::Command::Main");
+    my $main_op = $add_step->("ClinSeq Main", "Genome::Model::ClinSeq::Command::Main");
     for my $in (qw/ 
         build
         wgs_build
@@ -311,7 +450,6 @@ sub _resolve_workflow_for_build {
         $add_link->($input_connector, $in, $main_op, $in);
     }
     $add_link->($main_op, 'result', $output_connector, 'main_result');
-  
 
     #
     # Add steps which follow the main step...
@@ -332,12 +470,11 @@ sub _resolve_workflow_for_build {
         if ($run eq 'wgs_exome' and not ($build->wgs_build and $build->exome_build)) {
             next;
         }
-        $step++;
         my $txt_name = $run;
         $txt_name =~ s/_/ plus /g;
         $txt_name =~ s/wgs/WGS/;
         $txt_name =~ s/exome/Exome/;
-        $msg = "Step $step. $txt_name BAM read counts for all BAMs associated with input models (and expression values if available) - for candidate SNVs only (VAF and FPKM)";
+        $msg = "$txt_name Summarize Tier 1 SNV Support (BAM read counts)";
         my $op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
         $add_link->($main_op, $run . "_positions_file", $op);
         $add_link->($main_op, 'wgs_build', $op);
@@ -352,8 +489,7 @@ sub _resolve_workflow_for_build {
     
     #Generate a summary of SV results from the WGS SV results
     if ($build->wgs_build) {
-        $step++; 
-        my $msg = "Step $step. Summarizing SV results from WGS somatic variation";
+        my $msg = "Summarize SV results from WGS somatic variation";
         my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
         $add_link->($main_op, 'wgs_build', $summarize_svs_op, 'builds');
         $add_link->($main_op, 'sv_summary_dir', $summarize_svs_op, 'outdir');
@@ -362,8 +498,7 @@ sub _resolve_workflow_for_build {
 
     #Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
     if ($build->wgs_build) {
-        $step++;
-        my $msg = "Step $step. Summarizing CNV results from WGS somatic variation";
+        my $msg = "Summarize CNV results from WGS somatic variation";
         my $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
         $add_link->($main_op, 'build', $summarize_cnvs_op, 'builds');
         $add_link->($main_op, 'cnv_summary_dir', $summarize_cnvs_op, 'outdir');

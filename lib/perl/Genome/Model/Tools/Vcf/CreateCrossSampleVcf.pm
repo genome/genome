@@ -169,6 +169,7 @@ sub _handle_indels {
     my ($self, $builds, $indel_files, $reference_sequence_build) = @_;
     my @builds = @{$builds};
     my @indel_files = @{$indel_files};
+    my $joinx_path = Genome::Model::Tools::Joinx->joinx_path($self->joinx_version);
 
 #    die "Indel code not implemented.";
 #    die "Cannot handle region_limiting indel files." if($region_limited);
@@ -198,7 +199,7 @@ sub _handle_indels {
         ## Get the indel file ##
         my $output_file = "$dir/normalized." . $self->variant_type . ".vcf";
         $self->status_message("Normalizing $indel_file for $sample");
-        my $cmd = "joinx vcf-normalize-indels -f " .
+        my $cmd = "$joinx_path vcf-normalize-indels -f " .
                 $reference_sequence_build->full_consensus_path('fa') .
                 " -i <(zcat $indel_file) -o $output_file";
         if(-e $output_file) {
@@ -273,7 +274,7 @@ sub _handle_indels {
     close($OUTFILE);
 
     ## Run VCF site filter ##
-    my $cmd = "joinx vcf-site-filter -i " . $self->output_directory . "/" . $self->variant_type . ".merged.vcf  -o" . $self->output_directory . "/" . $self->variant_type . ".merged.pass.vcf -f 0.5";
+    my $cmd = "$joinx_path vcf-site-filter -i " . $self->output_directory . "/" . $self->variant_type . ".merged.vcf  -o" . $self->output_directory . "/" . $self->variant_type . ".merged.pass.vcf -f 0.5";
     system($cmd);
     print "$total_indels total indels\n";
 
