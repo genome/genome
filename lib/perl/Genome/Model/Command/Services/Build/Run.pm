@@ -76,11 +76,6 @@ sub _verify_build {
         return;
     }
 
-    unless ( $self->build_id =~ /^$RE{num}{int}$/ ) {
-        $self->error_message( sprintf('Build id given (%s) is not an integer', $self->build_id) );
-        return;
-    }
-
     unless ( $self->build ) {
         $self->error_message( sprintf('Can\'t get build for id (%s) ', $self->build_id) );
         return;

@@ -64,6 +64,16 @@ sub execute {
     return 1;
 }
 
+sub get_input_path_for_tier {
+    my ($self, $tiering_result, $tier, $type) = @_;
+
+    if ($self->build->previously_discovered_variations_build and $type eq 'hq') {
+        return $tiering_result->path(sprintf('*novel*tier%s*.bed', $tier));
+    } else {
+        return $tiering_result->path(sprintf('*tier%s*.bed', $tier));
+    }
+}
+
 sub annotate_snvs {
     my ($self, $annotation_directory) = @_;
 
@@ -76,7 +86,7 @@ sub annotate_snvs {
 
             my $tiering_result = $self->build->result_user(
                 label => sprintf('snv_tiered_%s', $type))->software_result;
-            my $input_path = $tiering_result->path(sprintf('*tier%s*.bed', $tier));
+            my $input_path = $self->get_input_path_for_tier($tiering_result, $tier, $type);
             $self->status_message(sprintf('Preparing to annotate file: %s',
                     $input_path));
 

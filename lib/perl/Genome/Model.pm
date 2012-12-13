@@ -382,8 +382,10 @@ sub completed_builds {
 # Returns the latest build of the model, regardless of status
 sub latest_build {
     my $self = shift;
-    my @builds = $self->sorted_builds;
-    return pop @builds;
+    my $build_event_iterator = Genome::Model::Event->create_iterator(model_id => $self->id, event_type => 'genome model build', -order_by => '-date_scheduled');
+    my $event = $build_event_iterator->next;
+    return unless $event;
+    return $event->build
 }
 
 # Returns the latest build of the model that successfully completed
@@ -391,8 +393,10 @@ sub last_succeeded_build { return $_[0]->resolve_last_complete_build; }
 sub last_complete_build { return $_[0]->resolve_last_complete_build; }
 sub resolve_last_complete_build {
     my $self = shift;
-    my @completed_builds = $self->completed_builds;
-    return pop @completed_builds;
+    my $build_event_iterator = Genome::Model::Event->create_iterator(model_id => $self->id, event_type => 'genome model build', event_status => 'Succeeded', -order_by => '-date_scheduled');
+    my $event = $build_event_iterator->next;
+    return unless $event;
+    return $event->build
 }
 
 # Returns a list of builds with the specified status sorted from oldest to newest

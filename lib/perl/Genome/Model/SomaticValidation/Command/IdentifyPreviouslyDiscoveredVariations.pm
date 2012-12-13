@@ -168,6 +168,7 @@ sub params_for_result {
         classifier_version => 1,
         variant_type => $variant_type,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        skip_filtering => undef,
     );
 }
 
