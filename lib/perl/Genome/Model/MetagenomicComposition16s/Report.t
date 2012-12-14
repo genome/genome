@@ -10,7 +10,7 @@ use Test::More;
 use_ok('Genome::Model::MetagenomicComposition16s::Report');
 
 done_testing();
-exit;
+
 
 =pod
 
@@ -33,4 +33,3 @@ exit;
 
 #$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/trunk/Genome/Model/Event/Build/AmpliconAssembly/PrepareInstrumentData.t $
 #$Id: PrepareInstrumentData.t 53854 2009-12-15 01:26:25Z eclark $
-

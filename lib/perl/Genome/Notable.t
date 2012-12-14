@@ -59,4 +59,3 @@ is(scalar(@o1notes),1,"got expected note count for object 1");
 UR::Context->_sync_databases() or die;
 
 1;
-

@@ -23,5 +23,3 @@ my $dup_rate = Genome::Model::Tools::Kmer::DuplicationRate->create(
 isa_ok($dup_rate,'Genome::Model::Tools::Kmer::DuplicationRate');
 ok($dup_rate->execute,'execute command '. $dup_rate->command_name);
 ok(!compare($expected_file,$dup_rate->output_file),'expected output file '. $expected_file .' is identical to '. $dup_rate->output_file);
-exit;
-

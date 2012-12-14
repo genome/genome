@@ -217,5 +217,3 @@ ok(-s $build->oriented_qual_file, 'created oriented qual file');
 
 #print $build->data_directory."\n";<STDIN>;
 done_testing();
-exit;
-

@@ -84,7 +84,7 @@ ok(@models, 'models for sanger work order');
 #>
 
 done_testing();
-exit;
+
 
 =pod
 
@@ -107,4 +107,3 @@ exit;
 
 #$HeadURL$
 #$Id$
-

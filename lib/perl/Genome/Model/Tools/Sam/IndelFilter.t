@@ -36,6 +36,3 @@ isa_ok($filter,'Genome::Model::Tools::Sam::IndelFilter');
 ok($filter->execute,'executed ok');
 
 cmp_ok(compare($out_file, $ori_file), '==', 0, 'Sam indelfilter file was created ok');
-
-exit;
-

@@ -41,5 +41,3 @@ ok($stats->execute,'execute CoverageStats command '. $stats->command_name);
 is(scalar($stats->alignment_summaries),scalar(@wingspans),'found the correcnt number of alignment summaries');
 is(scalar($stats->stats_summaries),(scalar(@wingspans)),'found the correct number of stats summaries');
 is(scalar($stats->stats_files),(scalar(@wingspans)),'found the correct number of stats files');
-
-exit;

@@ -56,5 +56,3 @@ is($notes[0]->header_text, 'test', 'note on object has expected header_text');
 is($notes[0]->body_text, 'blah', 'note on object has expected body_text');
 
 done_testing();
-
-

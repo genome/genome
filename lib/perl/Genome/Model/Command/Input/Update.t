@@ -218,5 +218,3 @@ $update->dump_status_messages(1);
 ok(!$update->execute, 'execute failed to update "lots" - an "is_many" property');
 
 done_testing();
-exit;
-

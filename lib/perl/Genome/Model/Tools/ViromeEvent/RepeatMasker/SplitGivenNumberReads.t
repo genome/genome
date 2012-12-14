@@ -17,5 +17,3 @@ my $c = Genome::Model::Tools::ViromeEvent::RepeatMasker::SplitGivenNumberReads->
 ok($c, "Created repeat masker split given number of reads event");
 
 done_testing();
-
-exit;

@@ -70,4 +70,3 @@ my $diff = Genome::Sys->diff_text_vs_text($output, $expected);
 ok(!$diff, 'Actual file is the same as the expected file: indels.vcf.gz')
     or diag("diff results:\n" . $diff);
 done_testing();
-exit;

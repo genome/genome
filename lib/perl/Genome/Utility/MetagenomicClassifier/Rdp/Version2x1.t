@@ -48,5 +48,3 @@ like($@, qr(No sequence given to classify), 'fail to classify w/ undef sequence'
 ok(!$classifier->classify( Bio::Seq->new(-id => 'Short Seq', -seq => 'A') ), 'fail to classify short sequence');
 
 done_testing();
-exit;
-

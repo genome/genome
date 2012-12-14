@@ -53,4 +53,3 @@ ok(!$@, "the command did not crash");
 is($exit_code1, 0, "command believes it succeeded");
 
 done_testing();
-exit;

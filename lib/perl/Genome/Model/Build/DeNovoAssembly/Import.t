@@ -10,4 +10,3 @@ use Test::More;
 use_ok('Genome::Model::Build::DeNovoAssembly::Import') or die;
 
 done_testing();
-exit;

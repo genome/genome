@@ -46,4 +46,3 @@ foreach my $feature (@features) {
 }
 
 done_testing();
-

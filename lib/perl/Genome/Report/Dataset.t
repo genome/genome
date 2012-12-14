@@ -90,5 +90,3 @@ ok(!$dataset->get_row_values_for_header(), 'get_row_values_for_header failed as 
 ok(!$dataset->get_row_values_for_header('not there'), 'get_row_values_for_header failed as expected - header not found');
 
 done_testing();
-exit;
-

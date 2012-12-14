@@ -41,4 +41,3 @@ ok($cmd->execute, 'executed sorter');
 ok(!Genome::Sys->diff_file_vs_file($expected, $output), 'sorted file matches expected output');
 
 done_testing();
-

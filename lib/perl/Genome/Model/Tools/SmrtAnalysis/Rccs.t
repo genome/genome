@@ -36,5 +36,3 @@ my $rccs = Genome::Model::Tools::SmrtAnalysis::Rccs->create(
 );
 isa_ok($rccs,'Genome::Model::Tools::SmrtAnalysis::Rccs');
 ok($rccs->execute,'Execute command '. $rccs->command_name);
-
-exit;

@@ -171,5 +171,3 @@ is($misc_update->status, "SKIP	UPDATE	test.organism_taxon	-100	next_amplicon_ite
 ok(!$misc_update->is_reconciled, 'Is not reconciled');
 
 done_testing();
-exit;
-

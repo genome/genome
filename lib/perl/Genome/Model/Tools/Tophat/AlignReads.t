@@ -50,5 +50,3 @@ ok((compare($aligner->insertions_file,$expected_insertions_file) == 0),'insertio
 ok((compare($aligner->deletions_file,$expected_deletions_file) == 0),'deletions are identical');
 ok((compare($aligner->left_kept_reads_info,$expected_left_kept_reads_info) == 0),'left_kept_reads.info is identical');
 ok((compare($aligner->right_kept_reads_info,$expected_right_kept_reads_info) == 0),'right_kept_reads.info is identical');
-
-exit;

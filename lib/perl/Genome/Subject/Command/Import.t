@@ -98,7 +98,7 @@ my $obj8 = Genome::Subject::Command::Import->create(
 cmp_ok($obj8->execute(), '==', 3, 'with bad individual');
 
 
-exit;
+
 
 
 sub good_data {
@@ -193,4 +193,3 @@ sub make_fake_nomenclature {
 
     return $n;
 }
-

@@ -94,5 +94,3 @@ or do {
   print "\n\nFound $diff_line_count differing lines\n\n";
   Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-update-analysis-test-result");
 };
-
-

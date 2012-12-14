@@ -12,4 +12,3 @@ use Genome::Model::Tools::ImportAnnotation;
 ok(!UR::Context->object_cache_size_highwater, 'object_cache_size_highwater is not set');
 
 done_testing();
-

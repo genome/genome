@@ -299,5 +299,3 @@ sub create_reference_builds {
 
     return ($rbuild, $rbuild2, $abuild);
 }
-
-

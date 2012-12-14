@@ -303,5 +303,3 @@ is($instrument_data_2b->attributes(attribute_label => 'tgi_lims_fail_message')->
 is($instrument_data_2b->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 1, 'inst data 2b is failed');
 
 done_testing();
-exit;
-

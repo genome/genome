@@ -16,7 +16,7 @@ use_ok('Genome::Site::TGI::Library') or die;
 _create_and_get_library(1);
 
 done_testing();
-exit();
+
 
 #################################
 
@@ -44,4 +44,3 @@ sub _create_and_get_library {
 
     return 1;
 }
-

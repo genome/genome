@@ -55,5 +55,3 @@ is($entry->{uploaded_variation}, "HELLO4_4_20_G_A", "filtered next skips unwante
 ok(!$reader->next, "next at EOF yields undef");
 
 done_testing();
-
-

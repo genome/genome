@@ -38,7 +38,7 @@ $tnl->dump_status_messages(1);
 ok($tnl->execute, 'execute');
 
 done_testing();
-exit;
+
 
 =pod
 
@@ -58,4 +58,3 @@ exit;
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-

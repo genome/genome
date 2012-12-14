@@ -27,5 +27,3 @@ for my $tissue_desc ( keys %tissue_descs_and_name_parts ) {
 }
 
 done_testing();
-exit;
-

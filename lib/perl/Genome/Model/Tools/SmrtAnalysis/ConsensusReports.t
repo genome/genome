@@ -33,5 +33,3 @@ my $evi_cons = Genome::Model::Tools::SmrtAnalysis::ConsensusReports->create(
 );
 isa_ok($evi_cons,'Genome::Model::Tools::SmrtAnalysis::ConsensusReports');
 ok($evi_cons->execute,'Execute command '. $evi_cons->command_name);
-
-exit;

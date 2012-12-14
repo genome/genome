@@ -25,5 +25,3 @@ isa_ok($sol2sanger,'Genome::Model::Tools::Fastq::Sol2sanger');
 ok($sol2sanger->execute,'execute command '. $sol2sanger->command_name);
 $DB::single = 1;
 ok(compare($sol2sanger->sanger_fastq_file,$expected_sanger_fastq_file) == 0,'files are the same');
-
-exit;

@@ -41,5 +41,3 @@ ok($report, 'Generated report');
 #print $report->xml_string."\n";
 #print $build->classification_file_for_set_name('');<STDIN>;
 done_testing();
-exit;
-

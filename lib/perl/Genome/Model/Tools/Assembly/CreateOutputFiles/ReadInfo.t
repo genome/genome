@@ -29,5 +29,3 @@ ok( -s $temp_dir.'/edit_dir/readinfo.txt', "New readinfo file created" );
 ok( File::Compare::compare( $data_dir.'/edit_dir/readinfo.txt', $temp_dir.'/edit_dir/readinfo.txt' ) == 0, "Files match" );
 
 done_testing();
-
-exit;

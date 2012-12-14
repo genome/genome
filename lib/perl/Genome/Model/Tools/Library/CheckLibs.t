@@ -36,4 +36,3 @@ ok($check_lib->execute(), "executed CheckLib object for build id $test_build_id"
 
 ok(-s $output_file, 'generated output file');
 is(compare($output_file, $expected_output_file), 0, "output for build $test_build_id matched expected results");
-

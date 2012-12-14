@@ -48,5 +48,3 @@ ok(!$classifier->classify( Bio::Seq->new(-id => 'Short Seq', -seq => 'A') ), 'fa
 ok(!$classifier->classify( Bio::Seq->new(-id => 'Seq w/o 42 n free words', -seq => 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANAAAAAAAAAAAAAAAAA') ), 'fail to classify sequence w/o 42 n free words');
 
 done_testing();
-exit;
-

@@ -96,7 +96,7 @@ ok($delete_command->execute(), 'executed model-group delete command');
 is(ref($project), 'UR::DeletedRef', 'deleted project with model group');
 
 done_testing();
-exit;
+
 
 ###
 # Create some test models with builds and all of their prerequisites

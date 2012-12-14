@@ -27,7 +27,7 @@ my @navs = $reader->all;
 ok(@navs, 'Got navs');
 is_deeply(\@navs, $navs->{navs}, 'Navs match');
 
-exit;
+
 
 =pod
 
@@ -50,4 +50,3 @@ exit;
 
 #$HeadURL$
 #$Id$
-

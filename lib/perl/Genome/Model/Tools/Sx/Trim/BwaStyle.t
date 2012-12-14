@@ -44,5 +44,3 @@ is(File::Compare::compare($example_fastq, $out_fastq), 0, "fastq trimmed as expe
 
 #print "diff $example_fastq $out_fastq\n"; <STDIN>;
 done_testing();
-exit;
-

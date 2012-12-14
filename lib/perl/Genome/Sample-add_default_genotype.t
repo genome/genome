@@ -197,6 +197,3 @@ sub create_test_genotype_data {
         library_id => $library->id,
     );
 }
-
-
-

@@ -33,5 +33,3 @@ my $xml = $view_obj->_generate_content();
 ok($xml, "view returns XML");
 
 done_testing();
-exit;
-

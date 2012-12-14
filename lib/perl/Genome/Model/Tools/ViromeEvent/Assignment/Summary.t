@@ -17,5 +17,3 @@ my $c = Genome::Model::Tools::ViromeEvent::Assignment::Summary->create(
 ok($c, "Created assignment summary event");
 
 done_testing();
-
-exit;

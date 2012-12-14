@@ -77,5 +77,3 @@ cmp_ok(compare($output_file, $compare_to_file), '==', 0, 'Coverage output file c
 #my $haploid_coverage=$1 if defined($1);
 
 #ok( $haploid_coverage eq '223.681', "haploid coverage calculated correctly" );
-
-exit;

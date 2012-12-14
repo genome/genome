@@ -107,6 +107,6 @@ is($allocation->mount_path, $volumes[0]->mount_path, 'allocation moved to only o
 ok(-d $original_path, 'new allocation path exists');
 
 done_testing();
-exit 0;
+
 
 1;

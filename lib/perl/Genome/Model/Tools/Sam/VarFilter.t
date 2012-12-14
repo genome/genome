@@ -85,5 +85,3 @@ for my $format (@formats) {
 }
 
 done_testing();
-
-

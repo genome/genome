@@ -87,4 +87,3 @@ $expect_file = $test_input_dir.'/output_dir/svs.hq.noheader';
 is(compare($tmp_out_file_noheader, $expect_file), 0, "output svs.hq matches as expected");
 
 done_testing();
-

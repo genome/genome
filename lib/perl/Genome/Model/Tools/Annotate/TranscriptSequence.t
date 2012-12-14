@@ -29,4 +29,3 @@ is(File::Compare::compare($example_output, "$tmpdir/$transcript.txt"), 0, 'Outpu
 
 #print "$tmpdir\n";<STDIN>;
 done_testing();
-exit;

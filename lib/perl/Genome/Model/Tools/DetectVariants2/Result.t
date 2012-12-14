@@ -112,4 +112,3 @@ my $output_dir5 = $command5->output_directory;
 is(readlink($output_dir5), $result4->output_dir, 'created second symlink to fourth result');
 
 done_testing();
-exit;

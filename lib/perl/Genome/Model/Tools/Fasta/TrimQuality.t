@@ -84,7 +84,3 @@ my $trim5 = Genome::Model::Tools::Fasta::TrimQuality->create(
 #eval(my $rv = $trim5->execute);
 #print $rv;
 ok(!$trim5->execute, "This supposed to fail because trim5 uses non-integer as min_trim_length");
-
-exit;
-
-

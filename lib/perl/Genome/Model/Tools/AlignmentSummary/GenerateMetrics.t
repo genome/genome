@@ -29,5 +29,3 @@ isa_ok($as_cmd,'Genome::Model::Tools::AlignmentSummary::GenerateMetrics');
 ok($as_cmd->execute,'execute command '. $as_cmd->command_name);
 
 ok( (compare($as_cmd->output_file,$expected_as) == 0),'The alignment summary YAML file is the same!');
-
-exit;

@@ -43,5 +43,3 @@ ok( $c->execute, "Successfully executed event" );
 ok( -s $temp_dir."/$run/$sample/$blast_dir/$sample".'.fa.cdhit_out.masked.goodSeq_file0.fa', "Created pooled fasta file" );
 
 done_testing();
-
-exit;

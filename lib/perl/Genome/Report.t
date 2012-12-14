@@ -112,5 +112,3 @@ print "$@\n";
 ok(!@reports, 'Failed as expected - create reports w/ invalid parent_directory');
 
 done_testing();
-exit;
-

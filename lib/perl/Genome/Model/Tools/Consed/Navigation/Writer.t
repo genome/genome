@@ -35,7 +35,7 @@ for my $nav ( @{$navs->{navs}} ) {
 is($count, @{$navs->{navs}}, 'Wrote all navs');
 is(compare($nav, $expected_nav), 0, 'Expected and generated nav file matches');
 
-exit;
+
 
 =pod
 
@@ -58,4 +58,3 @@ exit;
 
 #$HeadURL$
 #$Id$
-

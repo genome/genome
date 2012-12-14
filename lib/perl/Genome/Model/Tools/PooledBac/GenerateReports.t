@@ -59,5 +59,3 @@ for my $file ( @files_to_compare ) {
 #<STDIN>;
 
 done_testing();
-
-exit;

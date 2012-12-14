@@ -64,4 +64,3 @@ my $rv1= $sniper_v1->execute;
 is($rv1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv1);
 
 done_testing();
-exit;

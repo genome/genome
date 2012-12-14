@@ -38,5 +38,3 @@ is(File::Compare::compare($bed_file, $example_bed_file), 0, 'Bed file matches');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

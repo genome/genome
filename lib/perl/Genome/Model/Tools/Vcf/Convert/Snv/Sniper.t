@@ -75,4 +75,3 @@ $output   = `zcat $output_file | grep -v fileDate`;
 $diff = Genome::Sys->diff_text_vs_text($output, $expected);
 ok(!$diff, 'output matched expected result')
     or diag("diff results:\n" . $diff);
-

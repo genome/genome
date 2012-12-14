@@ -49,5 +49,3 @@ foreach ('readinfo.txt', 'reads.placed') {
 #<STDIN>;
 
 done_testing();
-
-exit;

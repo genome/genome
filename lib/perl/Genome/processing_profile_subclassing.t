@@ -94,6 +94,3 @@ ok($pp, 'Created an RnaSeq PP');
 isa_ok($pp, 'Genome::ProcessingProfile::RnaSeq');
 isa_ok($pp, 'Genome::ProcessingProfile');
 }
-
-
-

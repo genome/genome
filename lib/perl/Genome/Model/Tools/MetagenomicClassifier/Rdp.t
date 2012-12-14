@@ -77,5 +77,3 @@ $fh->close;
 is_deeply(\%metrics, { total => 10, success => 10, error => 0, }, 'metrics match');
 
 done_testing();
-exit;
-

@@ -47,5 +47,3 @@ foreach (qw/ test_asm1.ace.contigs_removed.ace test_asm2.ace.contigs_removed.ace
 }
 
 done_testing();
-
-exit;

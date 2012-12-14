@@ -50,7 +50,7 @@ my $groups = join ",", ($group1->name, $group2->name);
 test_model_from_params_with_group($groups);
 
 done_testing();
-exit;
+
 
 ########################################################3
 
@@ -265,4 +265,3 @@ sub is_group_writable {
 }
 
 1;
-

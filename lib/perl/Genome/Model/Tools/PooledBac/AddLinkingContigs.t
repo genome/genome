@@ -46,5 +46,3 @@ ok( File::Compare::compare($tmp_dir."/$report_file",$test_dir."/$report_file")==
 #<STDIN>;
 
 done_testing();
-
-exit;

@@ -37,5 +37,3 @@ ok(-s $output_dir."/tier1_annoatated.csv", 'found annoatation output.');
 
 #ok(-e $i->data_directory, "output directory is present");
 =cut0
-
-

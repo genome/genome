@@ -38,4 +38,3 @@ my @pg_result = grep (/PG:Z:123456/,@result_file);
 
 ok( scalar(@rg_result) eq 49, "found 49 RG tags.");
 ok( scalar(@pg_result) eq 49, "found 49 PG tags.");
-

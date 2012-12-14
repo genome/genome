@@ -88,7 +88,7 @@ ok(!$writer, 'Failed as expected - create writer w/ object cant "print"');
 $writer = NoWriteOne->create();
 ok(!$writer, 'Failed as expected - create writer w/o "write_one" method');
 
-exit;
+
 
 #########
 
@@ -113,4 +113,3 @@ exit;
 
 #$HeadURL$
 #$Id$
-

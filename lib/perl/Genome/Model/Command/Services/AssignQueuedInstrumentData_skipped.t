@@ -60,5 +60,3 @@ ok($cmd->execute, 'execute');
 is($instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'skipped', 'instrument data tgi_lims_status is skipped');
 
 done_testing();
-exit;
-

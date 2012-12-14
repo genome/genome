@@ -77,5 +77,3 @@ $fail_cmd->dump_status_messages(1);
 ok(!eval{ $fail_cmd->execute; }, 'failed to execute w/ property that is calculated');
 
 done_testing();
-exit;
-

@@ -13,5 +13,3 @@ use Test::More;
 use_ok('Genome::Model::Build::DeNovoAssembly') or die;
 
 done_testing();
-exit;
-

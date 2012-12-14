@@ -32,5 +32,3 @@ ok($renamer->execute, 'Execute renamer');
 is_deeply([ map { $_->name } @models], [qw/ human.denovo.wugc human.denovo-1.wugc /], 'Renamed models');
 
 done_testing();
-exit;
-

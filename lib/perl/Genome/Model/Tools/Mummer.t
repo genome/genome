@@ -10,5 +10,3 @@ use_ok('Genome::Model::Tools::Mummer');
 
 #<STDIN>;
 done_testing();
-
-exit;

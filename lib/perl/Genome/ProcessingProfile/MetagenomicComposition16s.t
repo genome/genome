@@ -77,5 +77,3 @@ $rv = $pp->validate_chimera_detector;
 ok(!$rv, 'bad chimera detector params fails to validate');
 
 done_testing();
-exit;
-

@@ -43,5 +43,3 @@ my @diff = `sdiff -s $temp_ace $test_ace`;
 is (scalar @diff, 0, "New merged ace file matches test merged ace file");
 
 done_testing();
-
-exit;

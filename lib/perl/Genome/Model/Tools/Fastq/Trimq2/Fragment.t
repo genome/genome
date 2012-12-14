@@ -40,5 +40,3 @@ for my $file qw(test_fragment.trimq2.fastq trimq2.fragment.filtered.fastq trimq2
 }
 
 #TODO should also add Illumina fastq trim test
-
-exit;

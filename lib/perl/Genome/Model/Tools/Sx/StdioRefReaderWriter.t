@@ -29,5 +29,3 @@ chomp $value;
 is($value, 100, 'Write object to STDIN, read object from STDOUT, got correct value');
 
 done_testing();
-exit;
-

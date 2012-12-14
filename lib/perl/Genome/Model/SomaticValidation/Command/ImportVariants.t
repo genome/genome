@@ -193,5 +193,3 @@ EOBED
 
     return @somvar_models;
 }
-
-

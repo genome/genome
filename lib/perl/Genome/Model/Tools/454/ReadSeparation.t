@@ -34,5 +34,3 @@ foreach my $sub_dir (@version_subdirs) {
 									    );
     ok($read_separation->execute,'execute '. $read_separation->command_name);
 }
-exit;
-

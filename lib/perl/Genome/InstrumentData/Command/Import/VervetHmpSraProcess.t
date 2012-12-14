@@ -130,4 +130,3 @@ foreach my $sample_name (sort {$a cmp $b} keys(%{$index})) { #This example shoul
 
 #Exit the test
 done_testing();
-exit;

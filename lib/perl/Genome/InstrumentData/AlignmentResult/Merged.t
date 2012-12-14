@@ -248,4 +248,3 @@ sub generate_fake_instrument_data {
 
     return @instrument_data;
 }
-

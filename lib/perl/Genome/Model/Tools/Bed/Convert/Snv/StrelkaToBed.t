@@ -53,4 +53,3 @@ ok(!$diff, 'output matched expected result')
     or diag("diff results:\n" . $diff);
 
 #print $tmpdir, "\n";
-    

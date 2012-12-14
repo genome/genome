@@ -69,5 +69,3 @@ is(File::Compare::compare($pair2_fastq, $dir.'/bin_by_primer.PAIR2.rm.fastq'), 0
 #print "$tmp_dir\n"; <STDIN>;
 
 done_testing();
-exit;
-

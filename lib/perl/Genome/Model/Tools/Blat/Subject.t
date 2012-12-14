@@ -35,5 +35,3 @@ isa_ok($blat,'Genome::Model::Tools::Blat::Subject');
 ok($blat->execute,'execute command '. $blat->command_name);
 ok($blat->alignment_file =~ /\/test_11\.psl$/,'expected alignment file');
 ok(-s $blat->alignment_file,'alignment file has size');
-
-exit;

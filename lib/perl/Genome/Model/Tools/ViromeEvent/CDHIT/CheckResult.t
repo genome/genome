@@ -20,5 +20,3 @@ my $cr = Genome::Model::Tools::ViromeEvent::CDHIT::CheckResult->create(
 ok( $cr, "Created virome check-result event" );
 
 done_testing();
-
-exit;

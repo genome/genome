@@ -153,5 +153,3 @@ is(
 
 #print $build->data_directory;<STDIN>;
 done_testing();
-exit;
-

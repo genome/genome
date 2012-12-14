@@ -30,5 +30,3 @@ isa_ok($slop,'Genome::Model::Tools::BedTools::Slop');
 ok($slop->execute,'execute command '. $slop->command_name);
 
 ok( (compare($slop->output_file,$expected_bed) == 0),'slop BED are identical');
-
-exit;

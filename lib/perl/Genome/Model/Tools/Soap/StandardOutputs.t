@@ -36,6 +36,3 @@ ok ($tool->execute, "Successfully executed soap default post assemble tool") or 
 #compare output files - these files differ with each run
 
 done_testing();
-
-exit;
-

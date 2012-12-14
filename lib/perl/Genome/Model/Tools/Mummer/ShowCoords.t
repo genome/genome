@@ -38,5 +38,3 @@ ok( File::Compare::compare( $data_dir."/$output_file",$test_dir."/$output_file" 
 
 #<STDIN>;
 done_testing();
-
-exit;

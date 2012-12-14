@@ -43,5 +43,3 @@ $sample->extraction_type('cdna');
 ok($sample->is_rna, 'sample is now rna');
 
 done_testing();
-exit();
-

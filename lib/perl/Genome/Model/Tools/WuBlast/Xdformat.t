@@ -63,7 +63,7 @@ my $verify_fail = Genome::Model::Tools::WuBlast::Xdformat::Verify->create(
 isa_ok($verify_fail,'Genome::Model::Tools::WuBlast::Xdformat::Verify');
 ok(!$verify_fail->execute,'expected verify to fail');
 
-exit;
+
 
 #$HeadURL$
 #$Id$

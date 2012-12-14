@@ -57,5 +57,3 @@ for my $file ( @files_to_check ) {
 #<STDIN>;
 
 done_testing();
-
-exit;

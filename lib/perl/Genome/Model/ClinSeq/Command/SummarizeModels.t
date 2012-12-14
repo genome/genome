@@ -63,4 +63,3 @@ or do {
   Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-summarize-models-result");
 };
 chdir("/");
-

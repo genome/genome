@@ -15,5 +15,3 @@ ok($filter->filter({id => 'nathan'}), 'did not filter id not in list');
 ok(!$filter->filter({id => 'rs1010408'}), 'filter id in list');
 
 done_testing();
-exit;
-

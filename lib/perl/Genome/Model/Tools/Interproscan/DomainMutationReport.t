@@ -24,7 +24,3 @@ ok($dmr->execute,'domain mutation report generation');
 #my @sub_fastq_files = @$sub_fastq_files_ref;
 #my $expected = (($total/4)/$size);
 #is(scalar(@sub_fastq_files),$expected,'file count');
-
-
-exit;
-

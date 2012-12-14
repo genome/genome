@@ -56,7 +56,7 @@ my $i = 0;
 
 #TODO: Test combining flags to get say all mapped duplicates read 1
 
-exit;
+
 
 sub run_tests {
     my %params = @_;

@@ -23,4 +23,3 @@ my $command = Genome::Model::Command::Services::AssignQueuedInstrumentData->crea
 isa_ok($command, 'Genome::Model::Command::Services::AssignQueuedInstrumentData');
 $command->dump_status_messages(1);
 ok($command->execute(), 'assign-queued-instrument-data executed successfully.');
-

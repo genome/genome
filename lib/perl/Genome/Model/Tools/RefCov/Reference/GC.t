@@ -22,7 +22,7 @@ $myRef->calculate_nucleotide_coverage(
     sequence => \@seq,
 );
 print  Data::Dumper::Dumper($myRef);
-exit;
+
 print "GC REFLEN\t" . $myRef->GC_reflen_percent()   . "\n";
 print "GC COV   \t" . $myRef->GC_covlen_percent()   . "\n";
 print "GC UNCOV \t" . $myRef->GC_uncovlen_percent() . "\n";

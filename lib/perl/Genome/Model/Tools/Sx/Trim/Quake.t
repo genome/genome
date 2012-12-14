@@ -44,5 +44,3 @@ is(File::Compare::compare($output, $input), 0, 'output file matches');
 
 #print "$tmp_dir\n";<STDIN>;
 done_testing();
-exit;
-

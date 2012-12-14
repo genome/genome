@@ -28,4 +28,3 @@ my $run_cmd = Genome::Task::Command::Run->create(task=>$task);
 ok($run_cmd, "created run cmd successfully");
 
 ok($run_cmd->execute, "executed cmd ok");
-

@@ -39,5 +39,3 @@ ok(File::Compare::compare($data_dir.'/supercontigs.agp', $temp_dir.'/edit_dir/su
 #print $temp_dir."\n"; <STDIN>;
 
 done_testing();
-
-exit;

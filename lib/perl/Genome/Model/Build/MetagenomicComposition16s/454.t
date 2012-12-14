@@ -233,5 +233,3 @@ for my $type (qw/ in out /) {
 
 #print $build->data_directory."\n";<STDIN>;
 done_testing();
-exit;
-

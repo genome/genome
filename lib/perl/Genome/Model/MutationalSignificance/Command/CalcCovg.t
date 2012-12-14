@@ -14,4 +14,3 @@ use Test::More;
 use_ok('Genome::Model::MutationalSignificance::Command::CalcCovg');
 
 done_testing;
-

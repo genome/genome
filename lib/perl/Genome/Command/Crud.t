@@ -424,5 +424,3 @@ is(Genome::Command::Crud->display_name_for_value($mom), $mom->name, 'display nam
 is(Genome::Command::Crud->display_name_for_value([ $ronnie, $mom ]), $ronnie->name.' '.$mom->name, 'display name for [ $ronnie $mom ]');
 
 done_testing();
-exit;
-

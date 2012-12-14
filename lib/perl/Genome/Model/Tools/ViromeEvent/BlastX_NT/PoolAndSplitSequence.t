@@ -49,5 +49,3 @@ ok( -s $temp_dir."/$run/$sample_name/$curr_blast_dir/$sample_name".'.BNFiltered.
 #<STDIN>;
 
 done_testing();
-
-exit;

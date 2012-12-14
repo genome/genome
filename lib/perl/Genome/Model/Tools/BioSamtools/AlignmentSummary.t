@@ -65,5 +65,3 @@ my $w_500_as = Genome::Model::Tools::BioSamtools::AlignmentSummary->create(
 isa_ok($w_500_as,'Genome::Model::Tools::BioSamtools::AlignmentSummary');
 ok($w_500_as->execute,'execute AlignmentSummary command '. $w_500_as->command_name);
 ok(!compare($expected_w_500_file,$w_500_as->output_file),'expected output file '. $expected_w_500_file .' is identical to '. $w_500_as->output_file);
-
-exit;

@@ -82,5 +82,3 @@ $validate_ok = 0;
 ok(!$validate_test->validate, 'validate bad');
 
 done_testing();
-exit;
-

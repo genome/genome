@@ -37,6 +37,3 @@ isa_ok($tool,'Genome::Model::Tools::SmrtAnalysis::Pls2Fasta');
 ok($tool->execute,'Execute command '. $tool->command_name);
 
 is(compare($fasta_file,$expected_fasta_file),0,'Expected FASTA file '. $expected_fasta_file .' matches '. $fasta_file);
-
-exit;
-

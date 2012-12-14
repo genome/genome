@@ -16,6 +16,3 @@ use_ok('Genome::Disk::Command::Allocation::List') or die;
 # TODO Actually create and execute command here
 
 done_testing();
-
-
-

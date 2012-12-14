@@ -19,7 +19,7 @@ $status->dump_status_messages(1);
 ok($status->execute, 'execute'); # will fail at sample., but does some testing
 
 done_testing();
-exit;
+
 
 =pod
 
@@ -39,4 +39,3 @@ exit;
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-

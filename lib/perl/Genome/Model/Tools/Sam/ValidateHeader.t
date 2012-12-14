@@ -31,5 +31,3 @@ ok($hv2, "created command");
 
 my $result2 = $hv2->execute;
 ok(!defined($result2), "executed, successfully reported bad header");
-
-

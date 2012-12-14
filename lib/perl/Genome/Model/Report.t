@@ -9,7 +9,7 @@ use Test::More tests => 1;
 
 use_ok('Genome::Model::Report');
 
-exit;
+
 
 #$HeadURL$
 #$Id$

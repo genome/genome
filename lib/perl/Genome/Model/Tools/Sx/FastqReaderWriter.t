@@ -62,5 +62,3 @@ ok($writer->write({ id => 'SEQ', seq => '', qual => '', }), 'write w/o seq and q
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

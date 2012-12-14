@@ -40,5 +40,3 @@ foreach ('contigs.bases', 'contigs.quals') {
 #<STDIN>;
 
 done_testing();
-
-exit;

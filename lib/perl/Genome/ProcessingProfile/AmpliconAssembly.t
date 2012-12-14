@@ -48,5 +48,3 @@ for my $param ( keys %invalid_params ) {
 }
 
 done_testing();
-exit;
-

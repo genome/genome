@@ -38,5 +38,3 @@ is(File::Compare::compare($example_qual, $qual), 0, 'qual files match');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

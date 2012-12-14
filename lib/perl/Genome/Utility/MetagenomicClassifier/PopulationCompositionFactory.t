@@ -25,5 +25,3 @@ ok($composition, 'Got composition from factory');
 isa_ok($composition, 'Genome::Utility::MetagenomicClassifier::PopulationComposition');
 
 done_testing();
-exit;
-

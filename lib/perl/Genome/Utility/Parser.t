@@ -49,7 +49,3 @@ $csv_parser->close;
 
 # Test equality of tab versus comma delimited
 eq_or_diff(\%tsv_data,\%csv_data,'data produced by tab and comma delimited files');
-
-
-
-exit;

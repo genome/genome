@@ -43,5 +43,3 @@ foreach my $c (@dbi_classes) {
     diag('DBI->connect while loading: ' . $c);
 }
 ok(scalar @dbi_classes == 0, 'no classes caused DBI connect during loading');
-
-

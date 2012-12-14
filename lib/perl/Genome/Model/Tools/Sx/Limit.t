@@ -10,5 +10,3 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::Limit') or die;
 
 done_testing();
-exit;
-

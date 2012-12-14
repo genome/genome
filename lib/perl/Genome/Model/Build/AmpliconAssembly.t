@@ -180,5 +180,3 @@ ok($build->get_report('Composition'), 'got composition report');
 
 #print $build->data_directory."\n";<STDIN>;
 done_testing();
-exit;
-

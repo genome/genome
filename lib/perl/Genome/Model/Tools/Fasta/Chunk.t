@@ -29,6 +29,3 @@ my $chunk = Genome::Model::Tools::Fasta::Chunk->create(
 
 my $out = $chunk->execute;
 ok($out, "fasta_chunk runs ok");
-
-exit;
-

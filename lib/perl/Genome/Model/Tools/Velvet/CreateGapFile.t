@@ -43,5 +43,3 @@ is(scalar (@diffs), 0, "New gap file matches test gap file");
 #<STDIN>;
 
 done_testing();
-
-exit;

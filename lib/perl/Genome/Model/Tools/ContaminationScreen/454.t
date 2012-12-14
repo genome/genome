@@ -17,7 +17,3 @@ $params{database} = '/gscmnt/sata156/research/mmitreva/databases/human_build36/H
 my $hcs_454 = Genome::Model::Tools::ContaminationScreen::454->create(%params);
 
 isa_ok($hcs_454, 'Genome::Model::Tools::ContaminationScreen::454');
-
-
-
-

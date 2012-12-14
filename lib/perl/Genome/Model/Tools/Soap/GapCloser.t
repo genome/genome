@@ -81,5 +81,3 @@ for my $file ( qw/ gapfill gapfill.fill / ) {
 #<STDIN>;
 
 done_testing();
-
-exit;

@@ -22,7 +22,7 @@ check_output($variants, $annotations->{none});
 check_prioritization($variants, $annotations);
 
 done_testing();
-exit;
+
 
 ################################################################################
 

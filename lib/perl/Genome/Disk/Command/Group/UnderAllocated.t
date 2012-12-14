@@ -23,5 +23,3 @@ my $rv = $cmd->execute;
 ok($rv, 'Successfully executed underallocated command');
 
 done_testing();
-
-

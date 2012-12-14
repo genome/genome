@@ -81,5 +81,3 @@ for my $file ( glob( "$temp_dir/consed/edit_dir/*" ) ) {
 #<STDIN>;
 
 done_testing();
-
-exit;

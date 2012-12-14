@@ -49,6 +49,3 @@ ok(-l $temp_test_dir.'/chimeras', 'linked output file to chimeras file');
 #<STDIN>;
 
 done_testing();
-
-exit;
-

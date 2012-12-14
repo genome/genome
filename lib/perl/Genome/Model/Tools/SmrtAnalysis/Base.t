@@ -13,7 +13,3 @@ unless (Genome::Sys->username eq 'smrtanalysis') {
 plan tests => 1;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::Base');
-
-
-exit;
-

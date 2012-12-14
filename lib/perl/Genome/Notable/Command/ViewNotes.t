@@ -77,4 +77,3 @@ my @cmd2_notes = $cmd2->_notes;
 ok(@cmd2_notes == 0, 'Command found no notes with given header text, as expected');
 
 done_testing();
-

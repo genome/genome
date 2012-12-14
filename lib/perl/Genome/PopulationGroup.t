@@ -57,7 +57,7 @@ my $commit = eval{ UR::Context->commit; };
 ok($commit, 'commit');
 
 done_testing();
-exit();
+
 
 sub make_test_pop_group {
     my %params = @_;

@@ -27,5 +27,3 @@ ok(-f $expected_output, "expected output file exists");
 
 my $diff = `diff $output $expected_output`;
 ok($diff eq '', "output as expected");
-
-

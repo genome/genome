@@ -33,4 +33,3 @@ $DB::single=1;
 is($count, 3, "copied the correct number of ucsc files over");
 
 done_testing();
-

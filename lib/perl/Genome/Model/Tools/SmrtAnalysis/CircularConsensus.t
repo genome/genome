@@ -34,5 +34,3 @@ my $rccs = Genome::Model::Tools::SmrtAnalysis::CircularConsensus->create(
 );
 isa_ok($rccs,'Genome::Model::Tools::SmrtAnalysis::CircularConsensus');
 ok($rccs->execute,'Execute command '. $rccs->command_name);
-
-exit;

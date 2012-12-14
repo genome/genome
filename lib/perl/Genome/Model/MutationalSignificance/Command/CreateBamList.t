@@ -14,4 +14,3 @@ use Test::More;
 use_ok("Genome::Model::MutationalSignificance::Command::CreateROI");
 
 done_testing();
-

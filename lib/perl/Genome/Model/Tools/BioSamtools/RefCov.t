@@ -58,6 +58,3 @@ my $q20_q1_ref_cov = Genome::Model::Tools::BioSamtools::RefCov->create(
 isa_ok($q20_q1_ref_cov,'Genome::Model::Tools::BioSamtools::RefCov');
 ok($q20_q1_ref_cov->execute,'execute RefCov command '. $q20_q1_ref_cov->command_name);
 ok(compare($expected_q20_q1_stats_file,$q20_q1_ref_cov->stats_file) == 0,'expected stats file '. $expected_q20_q1_stats_file .' is identical to '. $q20_q1_ref_cov->stats_file);
-
-
-exit;

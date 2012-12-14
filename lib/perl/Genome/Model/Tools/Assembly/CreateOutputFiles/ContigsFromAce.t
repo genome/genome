@@ -30,6 +30,3 @@ foreach my $file ('contigs.bases', 'contigs.quals') {
 }
 
 done_testing();
-
-exit;
-

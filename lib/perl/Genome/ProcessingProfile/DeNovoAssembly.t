@@ -200,4 +200,3 @@ for my $params_and_xml (@params_and_xml_list) {
 }
 
 done_testing();
-exit;

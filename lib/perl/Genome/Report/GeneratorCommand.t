@@ -26,5 +26,3 @@ ok($report, 'Generated report');
 isa_ok($report, 'Genome::Report');
 
 done_testing();
-exit;
-

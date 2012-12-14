@@ -41,5 +41,3 @@ like($@, qr|^Length of sequence|, 'correct error for seq length diff');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

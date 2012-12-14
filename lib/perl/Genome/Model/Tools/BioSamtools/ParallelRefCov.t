@@ -35,6 +35,3 @@ isa_ok($ref_cov,'Genome::Model::Tools::BioSamtools::ParallelRefCov');
 ok($ref_cov->execute,'execute RefCov command '. $ref_cov->command_name);
 
 ok(!compare($expected_stats_file,$ref_cov->stats_file),'expected stats file '. $expected_stats_file .' is identical to '. $ref_cov->stats_file);
-
-
-exit;

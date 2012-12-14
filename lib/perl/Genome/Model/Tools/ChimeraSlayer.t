@@ -68,5 +68,3 @@ for my $file ( qw/ chims1.NAST.CPS chims1.NAST.CPS_RENAST / ) {
 #<STDIN>;
 
 done_testing();
-
-exit;

@@ -84,7 +84,7 @@ $orient = Genome::Model::Tools::Fasta::Orient->create(
 );
 ok(!$orient, "anti_sense file is invalid");
 
-exit;
+
 
 #$HeadURL$
 #$Id$

@@ -35,5 +35,3 @@ for my $attr (qw/ name description svr /) {
 }
 
 done_testing();
-exit;
-

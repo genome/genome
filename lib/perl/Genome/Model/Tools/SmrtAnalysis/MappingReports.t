@@ -35,5 +35,3 @@ my $filter = Genome::Model::Tools::SmrtAnalysis::MappingReports->create(
 );
 isa_ok($filter,'Genome::Model::Tools::SmrtAnalysis::MappingReports');
 ok($filter->execute,'Execute command '. $filter->command_name);
-
-exit;

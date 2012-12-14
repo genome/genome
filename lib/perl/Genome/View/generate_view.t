@@ -52,6 +52,3 @@ done_testing();
 #    The new behavior is to only send the 'load' signal for the subclassed
 #    thing, and never send signals for the abstract, parent class thing
 #
-
-
-

@@ -47,4 +47,3 @@ ok($ref_cov->execute,'execute WholeGenome command '. $ref_cov->command_name);
 
 ok(!compare($expected_stats_file,$ref_cov->stats_file),'expected stats file '. $expected_stats_file .' is identical to '. $ref_cov->stats_file);
 ok(!compare($expected_merged_stats_file,$ref_cov->merged_stats_file),'expected merged stats file '. $expected_merged_stats_file .' is identical to '. $ref_cov->merged_stats_file);
-exit;

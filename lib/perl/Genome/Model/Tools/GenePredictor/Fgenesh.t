@@ -87,4 +87,3 @@ ok(defined $transcript, "able to grab transcript from exon via indirect property
 
 $gene = $exon->coding_gene;
 ok(defined $gene, "able to grab coding gene from exon via indirect property");
-

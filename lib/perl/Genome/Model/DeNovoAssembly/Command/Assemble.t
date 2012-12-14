@@ -11,5 +11,3 @@ diag('TESTS ARE DONE IN BUILD SUBCLASSES');
 use_ok('Genome::Model::DeNovoAssembly::Command::Assemble') or die;
 
 done_testing();
-exit;
-

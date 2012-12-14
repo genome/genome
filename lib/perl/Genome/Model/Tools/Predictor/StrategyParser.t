@@ -61,12 +61,3 @@ ok($result{$predictors[1]}{parameters} eq 'foo', 'got expected params');
 ok($result{$predictors[1]}{version} eq '', 'got expected version');
 
 done_testing();
-
-
-
-
-
-
-
-
-

@@ -101,5 +101,3 @@ ok((!$rv && $@ =~ /^Number of qualities does not match/), 'Failed when id in fas
 
 #print $tmpdir; <STDIN>;
 done_testing();
-exit;
-

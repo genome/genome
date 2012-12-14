@@ -160,4 +160,3 @@ done_testing;
 sub by_date {
     $a->date_scheduled cmp $b->date_scheduled
 }
-

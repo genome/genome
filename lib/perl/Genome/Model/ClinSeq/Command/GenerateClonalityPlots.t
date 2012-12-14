@@ -51,4 +51,3 @@ is(scalar(@diff), 0, "no differences")
         for (@diff) { diag($_) }
         warn "*** if the above differences are not in error, rebuild the test data by running this test with REBUILD on the command-line ***";
     }
-

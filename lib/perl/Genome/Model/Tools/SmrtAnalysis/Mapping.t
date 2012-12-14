@@ -32,5 +32,3 @@ my $control = Genome::Model::Tools::SmrtAnalysis::Mapping->create(
 );
 isa_ok($control,'Genome::Model::Tools::SmrtAnalysis::Mapping');
 ok($control->execute,'Execute command '. $control->command_name);
-
-exit;

@@ -92,4 +92,3 @@ my $diff = Genome::Sys->diff_text_vs_text($output, $expected);
 ok(!$diff, 'indels.vcf.gz output matched expected output')
     or diag("diff results:\n" . $diff);
 done_testing();
-

@@ -18,5 +18,3 @@ is(Genome::Model::Tools::Sx::Functions->minimum_quality('BBBBBBBBBB<BBBBBBBBBB')
 is(Genome::Model::Tools::Sx::Functions->maximum_quality('BBBBBBBBBBCBBBBBBBBBB'), 34, 'maximum quality'); 
 
 done_testing();
-exit;
-

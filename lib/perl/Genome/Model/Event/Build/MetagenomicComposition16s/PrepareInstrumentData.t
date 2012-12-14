@@ -10,5 +10,3 @@ use Test::More;
 use_ok('Genome::Model::Event::Build::MetagenomicComposition16s::PrepareInstrumentData') or die;
 
 done_testing();
-exit;
-

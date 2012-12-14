@@ -26,4 +26,3 @@ my $rv = eval { $cmd->execute };
 ok($rv, 'Successfully executed command') or die;
 
 done_testing();
-

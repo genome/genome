@@ -45,5 +45,3 @@ ok( File::Compare::compare($data_dir.'/'.$output, $temp_dir.'/'.$output) == 0, '
 #<STDIN>;
 
 done_testing();
-
-exit;

@@ -34,5 +34,3 @@ is_deeply($cmd->_metrics, { sequences => 7, chimeras => 3, output => 4, }, 'metr
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

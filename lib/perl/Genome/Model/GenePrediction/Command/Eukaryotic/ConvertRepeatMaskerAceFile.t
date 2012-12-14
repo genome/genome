@@ -55,5 +55,3 @@ my $actual_md5 = Genome::Sys->md5sum($output_file);
 ok($expected_md5 eq $actual_md5, "actual output matches expected output");
 
 done_testing();
-
-

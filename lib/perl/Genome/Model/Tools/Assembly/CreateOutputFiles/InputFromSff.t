@@ -41,5 +41,3 @@ for ('GABJJ9O01.fasta.gz', 'GABJJ9O01.fasta.gz') {
 }
 
 done_testing();
-
-exit;

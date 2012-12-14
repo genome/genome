@@ -23,5 +23,3 @@ ok($filter->filter({gc_score => .70}), 'did not filter .70');
 ok(!$filter->filter({gc_score => .69}), 'filtered .69');
 
 done_testing();
-exit;
-

@@ -97,5 +97,3 @@ $reader = Album::Reader->create(input => IO::NoGetline->create());
 ok(!$reader, 'Failed as expected - create reader w/ object cant "getline"');
 
 done_testing();
-exit;
-

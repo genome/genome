@@ -53,4 +53,3 @@ is($stats->minimum_coverage_depth,0,'Minimum depth of coverage is zero.');
 is($stats->maximum_coverage_depth,5,'Maximum depth of coverage is five.');
 
 # TODO: Repeat tests with min_depth filter on and coverage values sufficient for such test
-exit;

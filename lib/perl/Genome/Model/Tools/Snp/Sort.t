@@ -24,5 +24,3 @@ my $snp_sorter = Genome::Model::Tools::Snp::Sort->create(
 isa_ok($snp_sorter,'Genome::Model::Tools::Snp::Sort');
 ok($snp_sorter->execute,'execute command '. $snp_sorter->command_name);
 ok(!compare($expected_out_file,$output_file),'sorted output file matches expected output');
-
-exit;

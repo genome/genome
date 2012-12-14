@@ -26,5 +26,3 @@ is_deeply( $files_for_blast, [
 $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/Titanium17/Titanium17_undecodable/Titanium17_undecodable.fa.cdhit_out.masked.goodSeq_HGblast/Titanium17_undecodable.fa.cdhit_out.masked.goodSeq_file0.fa', ], "Got files for blasting" );
 
 done_testing;
-
-exit;

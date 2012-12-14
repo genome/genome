@@ -82,5 +82,3 @@ ok($amplicon->{classification}, 'amplicon classification');
 
 #print "$tempdir\n"; <STDIN>;
 done_testing();
-exit;
-

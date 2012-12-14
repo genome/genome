@@ -21,5 +21,3 @@ my $c = Genome::Model::Tools::ViromeEvent::RepeatMasker::OuterCheckResult->creat
 ok($c, "Created repeat masker outer check result event");
 
 done_testing();
-
-exit;

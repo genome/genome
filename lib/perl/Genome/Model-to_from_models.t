@@ -65,6 +65,3 @@ ok(scalar(@to_models) == 1, 'got 1 to model');
 ok($to_models[0]->id eq $test_model->id, 'got expected to model');
 
 done_testing();
-
-
-

@@ -12,5 +12,3 @@ use_ok( 'Genome::Model::Tools::ListReferenceSequences' );
 my $result = Genome::Model::Tools::ListReferenceSequences->execute;
 
 ok($result, 'Test ran ok');
-
-

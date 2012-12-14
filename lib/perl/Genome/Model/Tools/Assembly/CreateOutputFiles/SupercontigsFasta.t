@@ -31,6 +31,3 @@ ok( -s $temp_dir.'/edit_dir/supercontigs.fasta', "New supercontigs.fasta file cr
 ok( File::Compare::compare($data_dir.'/edit_dir/supercontigs.fasta', $temp_dir.'/edit_dir/supercontigs.fasta') == 0, "Output files match" );
 
 done_testing();
-
-exit;
-

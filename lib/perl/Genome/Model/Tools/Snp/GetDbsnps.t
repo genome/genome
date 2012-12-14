@@ -34,4 +34,3 @@ ok(-e $dbsnpout, "dbsnp output file exists");
 
 my $diff = `diff $dbsnpout $expected_output`;
 ok($diff eq '', "output as expected");
-

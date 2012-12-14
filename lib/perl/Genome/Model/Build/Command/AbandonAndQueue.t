@@ -58,4 +58,3 @@ is($exit_code1, 0, "command believes it succeeded");
 ok($m->build_requested, 'build is requested');
 
 done_testing();
-exit;

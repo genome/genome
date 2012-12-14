@@ -86,4 +86,3 @@ sub make_temp_file_in_dir {
     my $name = join('-', 'repeat_masker_merge_output', time, hostname, $$, $file_count++);
     return join('/', $dir, $name);
 }
-

@@ -55,4 +55,3 @@ is($i_d->target_region_set_name, 'none', "Target region set name");
 my $ok;
 eval { $ok = UR::Context->_sync_databases(); };
 ok($ok, "saves to the database!");
-

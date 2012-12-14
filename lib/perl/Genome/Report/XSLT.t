@@ -54,5 +54,3 @@ for my $media_type ( keys %media_and_output_types ) {
 }
 
 done_testing();
-exit;
-

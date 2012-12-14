@@ -43,5 +43,3 @@ ok ( File::Compare::compare( $data_dir."/$alignment_out", $test_dir."/$alignment
 #print $test_dir."\n";<STDIN>; 
 
 done_testing();
-
-exit;

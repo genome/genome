@@ -62,4 +62,3 @@ my $diff = Genome::Sys->diff_text_vs_text($expected_output_text, $test_output_te
 ok(!$diff, "svs.hq output as expected");
 
 done_testing();
-exit;

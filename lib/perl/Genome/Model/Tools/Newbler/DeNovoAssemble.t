@@ -64,5 +64,3 @@ for my $file ( '/consed/edit_dir/454Contigs.ace.1', '/consed/phdball_dir/phd.bal
 #<STDIN>;
 
 done_testing();
-
-exit;

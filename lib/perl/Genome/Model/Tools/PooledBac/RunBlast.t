@@ -45,6 +45,3 @@ for my $file( @blast_files ) {
 #<STDIN>;
 
 done_testing();
-
-exit;
-

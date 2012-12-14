@@ -31,4 +31,3 @@ ok($regions->execute(), "successfully executed command");
 
 my $diff = `sdiff -s $output $expected_output`;
 ok($diff eq '', "output as expected") or diag($diff);
-

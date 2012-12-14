@@ -50,5 +50,3 @@ is_deeply({ bases => $output_metrics->bases, count => $output_metrics->count }, 
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-    

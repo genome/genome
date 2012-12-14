@@ -46,4 +46,3 @@ ok($detector_test->_workflow_result->{snv_result_class}, 'snv_result_class defin
 ok($detector_test->snv_result, 'snv_result defined on command');
 
 done_testing();
-exit;

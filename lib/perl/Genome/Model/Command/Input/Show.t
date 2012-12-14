@@ -15,5 +15,3 @@ ok($show, 'create');
 ok(!$show->execute, 'execute');
 
 done_testing();
-exit;
-
