@@ -29,9 +29,12 @@ sub _sync_database {
         $observer->delete;
     }
 
+    my $changed_objects_ref = delete $params{changed_objects};
+    my @changed_objects = @$changed_objects_ref;
+
     # Need to update all classes that have been changed (and all of their parent
     # classes) to use the postgres datasource instead of Oracle.
-    my %classes = map { $_->class => 1 } @{$params{changed_objects}};
+    my %classes = map { $_->class => 1 } @changed_objects;
     for my $class (sort keys %classes) {
         my $meta = UR::Object::Type->get($class);
         next unless $meta;

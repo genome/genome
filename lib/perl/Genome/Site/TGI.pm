@@ -35,6 +35,10 @@ BEGIN {
 	}
 }
 
+$ENV{WF_TEST_QUEUE} = 'short' if !defined($ENV{WF_TEST_QUEUE}) or $ENV{WF_TEST_QUEUE} eq 'normal';
+$ENV{WF_SERVER_QUEUE} = 'workflow' if !defined($ENV{WF_TEST_QUEUE}) or $ENV{WF_SERVER_QUEUE} eq 'normal';
+$ENV{WF_JOB_QUEUE} = 'apipe' if !defined($ENV{WF_TEST_QUEUE}) or $ENV{WF_JOB_QUEUE} eq 'normal';
+
 sub undo_table_name_patch {
     no warnings;
     *UR::Object::Type::table_name = \&UR::Object::Type::table_name_filtered;
