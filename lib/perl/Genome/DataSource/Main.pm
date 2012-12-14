@@ -29,9 +29,12 @@ sub _sync_database {
         $observer->delete;
     }
 
+    my $changed_objects_ref = delete $params{changed_objects};
+    my @changed_objects = @$changed_objects_ref;
+
     # Need to update all classes that have been changed (and all of their parent
     # classes) to use the postgres datasource instead of Oracle.
-    my %classes = map { $_->class => 1 } @{$params{changed_objects}};
+    my %classes = map { $_->class => 1 } @changed_objects;
     for my $class (sort keys %classes) {
         my $meta = UR::Object::Type->get($class);
         next unless $meta;
@@ -65,7 +68,10 @@ sub _sync_database {
                     my $oracle_table = $meta->table_name;
                     my $postgres_table = $self->postgres_table_name_for_oracle_table($oracle_table);
                     unless ($postgres_table) {
-                        Carp::confess "Could not find postgres equivalent for oracle table $oracle_table while working on class $class";
+                        warn "Could not find postgres equivalent for oracle table $oracle_table while working on class $class; not writing to Postgres";
+                        delete $classes{$class};
+                        @changed_objects = grep {ref($_) ne $class} @changed_objects;
+                        next;
                     }
                     $meta->table_name($postgres_table);
 

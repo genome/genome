@@ -5,19 +5,23 @@ use warnings;
 
 class Genome::Model::Command::Services::AssignQueuedInstrumentData {
     is  => 'Command::V2',
-    has => [
+    has_optional => [
+        instrument_data => {
+            is          => 'Genome::InstrumentData',
+            is_many     => 1,
+            doc         => '[Re]process these instrument data.',
+        },
         max_instrument_data_to_process => {
             is          => 'Number',
-            is_optional => 1,
             default     => 200,
             doc         => 'Max # of instrument data to process in one invocation.',
         },
         newest_first => {
             is          => 'Boolean',
-            is_optional => 1,
-            default     => 0,
             doc         => 'Process newest instrument data first.',
         },
+    ],
+    has_transient => [
         _existing_models_with_existing_assignments => {
             is => 'HASH',
             doc => 'Existing models that already had the instrument data assigned.',
@@ -476,19 +480,25 @@ sub _load_instrument_data {
     my $self = shift;
 
     $self->status_message('Get instrument data...');
-    my @status_attrs = Genome::InstrumentDataAttribute->get(
-        attribute_label => 'tgi_lims_status',
-        attribute_value => [qw/ new failed /],
-    );
+    
     my %instrument_data;
-    for my $status_attr ( @status_attrs ) {
-        my $instrument_data = Genome::InstrumentData->get(
-            id => $status_attr->instrument_data_id,
-            -hint => [ 'sample', 'sample.source', 'sample.source.taxon', ],
+    if ( $self->instrument_data ) {
+        %instrument_data = map { $_->{_priority} = 0; $_->id => $_ } $self->instrument_data;
+    }
+    else {
+        my @status_attrs = Genome::InstrumentDataAttribute->get(
+            attribute_label => 'tgi_lims_status',
+            attribute_value => [qw/ new failed /],
         );
-        my $fail_cnt = eval{ $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value; };
-        $instrument_data->{_priority} = ( $fail_cnt ? $fail_cnt : 0 ); # if it does not have a fail count, treat as new
-        $instrument_data{ $instrument_data->id } = $instrument_data;
+        for my $status_attr ( @status_attrs ) {
+            my $instrument_data = Genome::InstrumentData->get(
+                id => $status_attr->instrument_data_id,
+                -hint => [ 'sample', 'sample.source', 'sample.source.taxon', ],
+            );
+            my $fail_cnt = eval{ $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value; };
+            $instrument_data->{_priority} = ( $fail_cnt ? $fail_cnt : 0 ); # if it does not have a fail count, treat as new
+            $instrument_data{ $instrument_data->id } = $instrument_data;
+        }
     }
     $self->status_message('Found '.scalar(grep { $_->{_priority} == 0 } values %instrument_data)." new instrument data\n");
     $self->status_message('Found '.scalar(grep { $_->{_priority} > 0 } values %instrument_data)." previously attempted instrument data\n");

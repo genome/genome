@@ -120,6 +120,11 @@ sub _execute_build {
 
     $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
+    my($auto_suffix) = $build->input(name => 'auto_suffix');
+    if($auto_suffix and $auto_suffix->value_id eq 1 and not $build->locus_suffix) {
+        $build->add_input(name => 'locus_suffix', value_id => time(), value_class_name => 'UR::Value::Text'); #pick a unique suffix for this build
+    }
+
     my $model = $build->model;
     $self->status_message("Executing build logic for " . $self->__display_name__ . ":" . $build->__display_name__);
 
@@ -139,7 +144,7 @@ sub _execute_build {
         config => $config_file_path,
         dev => $model->dev,
         skip_core_check => $self->skip_core_gene_check,
-        skip_protein_annotation => (not ($self->keggscan_version || $self->interpro_version)), # TODO Include protein annotation if we have a pp. params suggesting we want it
+        skip_protein_annotation => (not ($self->keggscan_version || $self->interpro_version)), #Include protein annotation if we have a pp. params suggesting we want it
         keggscan_version => $self->keggscan_version,
         interpro_version => $self->interpro_version,
     );
