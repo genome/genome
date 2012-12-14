@@ -115,7 +115,19 @@ sub execute {
     
     my @out = (\@chunk_fa_files);
     push @out, \@chunk_qa_files if $self->have_qual_file;
+
+    $self->_set_chunk_dir_permissions();
     return \@out;
+}
+
+# File::Temp sets the mode of the created directory to 700.
+# This changes it to match the user's umask
+sub _set_chunk_dir_permissions {
+    my $self = shift;
+
+    my $umask = umask();
+    my $mode = 0777 & ( ~ $umask);
+    chmod $mode, $self->chunk_dir();
 }
 
 
