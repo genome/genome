@@ -13,6 +13,16 @@ class Genome::Disk::Command::Volume::SyncUsage {
             doc => 'Filter expression for volume(s) to sync.',
             shell_args_position => 1,
         },
+        total_kb => {
+            is => 'Boolean',
+            default => 1,
+            doc => 'Sync total_kb?',
+        },
+        unallocated_kb => {
+            is => 'Boolean',
+            default => 1,
+            doc => 'Sync unallocated_kb?',
+        },
         tie_stderr => {
             is => 'Boolean',
             default => 1,
@@ -35,7 +45,15 @@ sub execute {
     my $volume_iter = $data_type->create_iterator($bx);
     while (my $volume = $volume_iter->next) {
         $self->info(sprintf('Syncing %s...', $volume->mount_path));
-        $volume->sync_usage(verbose => 1);
+        my %args = (verbose => 1);
+        if ($self->total_kb)      {
+            $self->debug('sync_total_kb');
+            $volume->sync_total_kb(%args);
+        }
+        if ($self->unallocated_kb) {
+            $self->debug('sync_unallocated_kb');
+            $volume->sync_unallocated_kb(%args);
+        }
     }
 
     return 1;
