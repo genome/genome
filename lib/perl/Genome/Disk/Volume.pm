@@ -275,7 +275,8 @@ sub df {
     my $self = shift;
 
     unless ($self->is_mounted) {
-        die $self->error_message(sprintf('Volume %s is not mounted!', $self->mount_path));
+        warn $self->error_message(sprintf('Volume %s is not mounted!', $self->mount_path));
+        return {};
     }
 
     return Filesys::Df::df($self->mount_path);
