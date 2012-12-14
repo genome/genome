@@ -47,6 +47,7 @@ sub create {
     my $class = shift;
     
     my $self = $class->SUPER::create(@_);
+    return unless $self;
     my $root_dir = $self->chunk_dir || dirname $self->fasta_file;
     
     my $chunk_dir = File::Temp::tempdir(
