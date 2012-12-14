@@ -49,4 +49,3 @@ ok($result,"Tool exited properly.");
 ok(-s $output_file,"Found output file, it has size.");
 
 is(compare($output_file,$example_output_file), 0, "$output_file matched example pileup output file");
-

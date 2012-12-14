@@ -42,5 +42,3 @@ ok(File::Compare::compare("$data_dir/$file_name", "$temp_dir/edit_dir/$file_name
 #<STDIN>;
 
 done_testing();
-
-exit;

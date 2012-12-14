@@ -34,5 +34,3 @@ ok( File::Compare::compare($data_dir.'/'.$ace_out,$test_dir.'/'.$ace_out)== 0, '
 #<STDIN>;
 
 done_testing();
-
-exit;

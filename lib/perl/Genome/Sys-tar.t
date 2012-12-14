@@ -71,7 +71,3 @@ for my $file_path (glob("$other_test_dir/*")) {
 }
 
 done_testing();
-
-
-
-

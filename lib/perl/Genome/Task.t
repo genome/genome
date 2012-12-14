@@ -28,4 +28,3 @@ ok($good_task, "task created for good params");
 
 my $another_task = Genome::Task->create(command_class=>'Genome::Model::Command::List', status=>'pending', params=>encode_json($task_params), user_id=>'boberkfe', time_submitted=>UR::Context->current->now);
 ok($another_task, "created task");
-

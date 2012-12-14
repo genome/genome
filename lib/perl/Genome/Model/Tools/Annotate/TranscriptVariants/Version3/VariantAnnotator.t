@@ -21,7 +21,7 @@ my $annotator_version = 3;
 check_prioritization($variants, $annotations);
 
 done_testing();
-exit;
+
 
 ################################################################################
 

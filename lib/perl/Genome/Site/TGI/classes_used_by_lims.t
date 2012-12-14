@@ -44,5 +44,3 @@ for my $class ( @apipe_classes_used_by_lims ) {
 }
 
 done_testing( scalar(@apipe_classes_used_by_lims) );
-exit;
-

@@ -36,5 +36,3 @@ my $cmd_2 = Genome::Model::Tools::Picard::MergeSamFiles->create(
 ok($cmd_2, "created command");
 ok($cmd_2->execute, "executed");
 ok(-s $out_2_file->filename, "output file is nonzero");
-
-

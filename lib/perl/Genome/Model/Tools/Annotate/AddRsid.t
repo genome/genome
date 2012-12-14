@@ -21,5 +21,3 @@ ok ($rv);
 ok (-e $tmp_file);
 my $knowndiff = `diff $input_dir/test.out $tmp_file`;
 ok($knowndiff eq '', "known output as expected");
-
-

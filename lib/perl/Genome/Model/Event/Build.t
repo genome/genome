@@ -10,5 +10,3 @@ use Test::More;
 use_ok('Genome::Model::Event::Build') or die;
 
 done_testing();
-exit;
-

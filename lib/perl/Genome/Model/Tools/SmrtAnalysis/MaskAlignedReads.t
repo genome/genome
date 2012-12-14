@@ -35,7 +35,3 @@ my $tool = Genome::Model::Tools::SmrtAnalysis::MaskAlignedReads->create(
 );
 isa_ok($tool,'Genome::Model::Tools::SmrtAnalysis::MaskAlignedReads');
 ok($tool->execute,'Execute command '. $tool->command_name);
-
-
-exit;
-

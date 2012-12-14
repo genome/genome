@@ -103,5 +103,3 @@ isa_ok($project, 'UR::DeletedRef', 'delete project');
 isa_ok($model_group, 'UR::DeletedRef', 'delete model group');
 
 done_testing();
-exit;
-

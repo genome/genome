@@ -63,5 +63,3 @@ my @project_models = sort { $a->id cmp $b->id } map { $_->entity } $project->par
 is_deeply(\@project_models, \@models, 'added models to project');
 
 done_testing();
-exit;
-

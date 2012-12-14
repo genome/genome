@@ -13,5 +13,3 @@ use_ok('Genome::Model::MetagenomicCompositionShotgun::Command::TaxonomyReport') 
 ok(!Genome::Model::MetagenomicCompositionShotgun::Command::TaxonomyReport->execute(), 'failed to execute w/o params');
 
 done_testing();
-exit;
-

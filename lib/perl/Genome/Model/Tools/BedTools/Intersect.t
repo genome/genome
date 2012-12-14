@@ -41,5 +41,3 @@ for my $test_number (0..2) {
     ok(!$diff, 'expected BED file '. $expected_file .' is identical to '. $intersect->output_file)
         or diag("  diff results:\n" . $diff);
 }
-
-exit;

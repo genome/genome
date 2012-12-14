@@ -54,4 +54,3 @@ for my $job_id (@job_ids) {
 }
 
 done_testing;
-exit 0;

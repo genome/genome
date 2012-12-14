@@ -53,4 +53,3 @@ my $output_indel_file = $tmpdir . "/indels.hq.bed";
 ok(-s $output_indel_file,'Testing success: Expecting a indel output file exists');
 
 done_testing();
-exit;

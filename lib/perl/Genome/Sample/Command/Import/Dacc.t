@@ -69,5 +69,3 @@ is_deeply($import->_library->sample, $import->_sample, 'library sample');
 ok(!$import->_created_objects, 'did not create any objects');
 
 done_testing();
-exit;
-

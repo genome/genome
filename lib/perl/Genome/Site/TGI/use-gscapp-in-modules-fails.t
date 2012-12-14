@@ -22,4 +22,3 @@ is($v3,$v1,"the UNIVERSAL::isa method has the same value after using GSCApp");
 
 eval "use GSCApp";
 ok(!$@, "used GSCApp does nothing but does not crash after actually using GSC modules");
-

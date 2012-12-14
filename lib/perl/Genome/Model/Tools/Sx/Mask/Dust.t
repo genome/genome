@@ -40,5 +40,3 @@ ok($cmd2->execute, "execute");
 is(Genome::Sys->md5sum($output2), Genome::Sys->md5sum($expected_output), 'dust output matches');
 
 done_testing();
-exit;
-

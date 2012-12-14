@@ -75,7 +75,7 @@ ok($class->create_bioseq_writer($fasta_file), 'created bioseq writer');
 ok($class->create_bioseq_reader($fasta_file), 'created bioseq reader');
 
 done_testing();
-exit;
+
 
 =pod
 

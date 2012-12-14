@@ -71,7 +71,7 @@ $params{output_directory} = $test_working_dirs[1];
 run_test('mpileup', \%params);
 
 done_testing();
-exit;
+
 
 
 sub run_test {
@@ -128,4 +128,3 @@ sub diff_vcf_gz {
     is ($test_md5, $expect_md5, "$file_name output matched expected output");
     return 1;
 }
-

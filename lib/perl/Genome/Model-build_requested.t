@@ -66,6 +66,3 @@ is($note->header_text, 'build_requested', 'header of new note is build_requested
 is($note->body_text, 'test build', 'body of new note set to expected value');
 
 done_testing();
-
-
-

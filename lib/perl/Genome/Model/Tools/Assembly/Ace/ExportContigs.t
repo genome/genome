@@ -46,5 +46,3 @@ foreach (@result_aces) {
 }
 
 done_testing();
-
-exit;

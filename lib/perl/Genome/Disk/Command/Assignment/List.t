@@ -13,5 +13,3 @@ use Test::More;
 
 use_ok('Genome::Disk::Command::Assignment::List') or die;
 done_testing();
-
-

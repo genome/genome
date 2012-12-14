@@ -118,5 +118,3 @@ ok($reader->next, 'Succeeded as expected');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

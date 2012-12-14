@@ -47,4 +47,3 @@ is($f, "$data_directory/alignments", "found alignments directory");
 sub all_exist {
     return (!(grep{ ! -e $_ } @_) ? 1 : 0);
 }
-

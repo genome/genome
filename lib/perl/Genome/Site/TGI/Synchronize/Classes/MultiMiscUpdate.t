@@ -61,7 +61,7 @@ is($multi_misc_update->error_message, 'Missing required key (attribute_value) in
 is($multi_misc_update->result, 'FAILED', 'Correct result');
 
 done_testing();
-exit;
+
 
 sub _define_multiple_misc_updates {
     my %subject_class_names_to_properties= (
@@ -101,4 +101,3 @@ sub _define_multiple_misc_updates {
 }
 
 1;
-

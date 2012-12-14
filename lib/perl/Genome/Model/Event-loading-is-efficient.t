@@ -52,7 +52,3 @@ $load_count = 0;
 ok(scalar(@events), "Genome::Model::Event::Build::ReferenceAlignment::Solexa->get() returned at least one event");
 is($query_count, 0, "get() generated no queries");
 is($load_count, 0, "and correctly loaded no objects");
-
-
-
-exit;

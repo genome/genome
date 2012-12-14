@@ -119,7 +119,7 @@ is($error_cnt, $fail_cnt, 'FAILED misc updates have errors');
 is($not_reconciled, @misc_updates_that_skip_or_fail, 'SKIP/FAILED misc updates are not reconciled');
 
 done_testing();
-exit;
+
 
 sub _entity_attrs {
     return [
@@ -358,4 +358,3 @@ sub _define_misc_updates_that_skpip_or_fail {
 
     return @skip_or_fail;
 }
-

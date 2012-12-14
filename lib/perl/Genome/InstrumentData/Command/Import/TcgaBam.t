@@ -147,5 +147,3 @@ ok($@, "expected failure for missing required arg");
 is($test_cmd6->error_message, "Required argument (tcga_name) was not passed and couldn't be found in the metadata.", 'failed properly required arg is missing.');   
 
 done_testing();
-exit;
-

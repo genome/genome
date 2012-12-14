@@ -30,6 +30,3 @@ my $snp_gd = Genome::Model::Tools::Snp::GenotypeDetail->create(
 isa_ok($snp_gd,'Genome::Model::Tools::Snp::GenotypeDetail');
 ok($snp_gd->execute,'execute command ok'. $snp_gd->command_name);
 cmp_ok(compare($out_file, $exp_out_file), '==', 0, 'Sam SNP genotype-detail output matches the expected original one.');
-
-
-exit;

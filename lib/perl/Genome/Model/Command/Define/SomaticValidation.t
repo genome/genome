@@ -314,4 +314,3 @@ SAMTOOLSFILE
 
     return $somvar_build;
 }
-

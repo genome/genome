@@ -24,5 +24,3 @@ $get_ds->dump_status_messages(1);
 ok($get_ds->execute, 'execute');
 
 done_testing();
-exit;
-

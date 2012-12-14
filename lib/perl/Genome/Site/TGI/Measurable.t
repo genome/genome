@@ -16,5 +16,3 @@ use_ok('Genome::Site::TGI::Measurable') or die;
 ## GET_FILE TESTS ARE IN Sample.t ##
 
 done_testing();
-exit();
-

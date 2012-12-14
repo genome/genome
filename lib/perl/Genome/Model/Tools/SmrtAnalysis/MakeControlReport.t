@@ -38,6 +38,3 @@ isa_ok($tool,'Genome::Model::Tools::SmrtAnalysis::MakeControlReport');
 ok($tool->execute,'Execute command '. $tool->command_name);
 
 is(compare($report_xml_file,$expected_report_xml_file),0,'Expected report xml file '. $expected_report_xml_file .' matches '. $report_xml_file);
-
-exit;
-

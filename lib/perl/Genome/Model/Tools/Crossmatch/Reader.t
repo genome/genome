@@ -22,7 +22,7 @@ while ( my $aln = $reader->next ) {
 is($aln_cnt, @alns, 'got correct number of alignments');
 
 done_testing();
-exit;
+
 
 ###
 
@@ -188,4 +188,3 @@ sub _alns {
           }
     );
 }
-

@@ -39,5 +39,3 @@ foreach ('supercontigs.fasta', 'supercontigs.agp') {
 #<STDIN>;
 
 done_testing();
-
-exit;

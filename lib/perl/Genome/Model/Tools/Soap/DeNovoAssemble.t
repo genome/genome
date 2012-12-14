@@ -61,5 +61,3 @@ is (scalar (@diffs), 0, "Run outputs match");
 #<STDIN>;
 
 done_testing();
-
-exit;

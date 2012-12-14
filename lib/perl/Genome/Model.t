@@ -286,5 +286,3 @@ ok(!$model->copy(foo => [qw/ BAR baz /]), 'failed to copy model overriding singl
 ok(!$model->copy(unknown => [qw/ BAR baz /]), 'failed to copy model w/ unknown override');
 
 done_testing();
-exit;
-

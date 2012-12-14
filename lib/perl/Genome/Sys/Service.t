@@ -11,5 +11,3 @@ ok(scalar(@services) > 0, "got " . scalar(@services) . " services");
 
 my @bad = grep { not ($_->isa("Genome::Sys::Service") and $_->isa("UR::Singleton")) } @services;
 is(scalar(@bad), 0, "got zero bad services, as expected");
-
-

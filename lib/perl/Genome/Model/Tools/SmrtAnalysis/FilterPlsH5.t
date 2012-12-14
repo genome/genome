@@ -91,6 +91,3 @@ my $rccs_read_white_list_tool = Genome::Model::Tools::SmrtAnalysis::FilterPlsH5-
 );
 isa_ok($rccs_read_white_list_tool,'Genome::Model::Tools::SmrtAnalysis::FilterPlsH5');
 ok($rccs_read_white_list_tool->execute,'Execute command '. $rccs_read_white_list_tool->command_name);
-
-exit;
-

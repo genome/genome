@@ -42,5 +42,3 @@ foreach ('reads.unplaced', 'reads.unplaced.fasta') {
 }
 
 done_testing();
-
-exit;

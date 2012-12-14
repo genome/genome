@@ -31,5 +31,3 @@ my $filter = Genome::Model::Tools::SmrtAnalysis::ControlReports->create(
 );
 isa_ok($filter,'Genome::Model::Tools::SmrtAnalysis::ControlReports');
 ok($filter->execute,'Execute command '. $filter->command_name);
-
-exit;

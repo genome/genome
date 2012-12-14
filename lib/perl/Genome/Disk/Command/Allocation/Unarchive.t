@@ -165,6 +165,6 @@ ok($rv == 0, 'successfully executed command using simulated command line argumen
 is($allocation->volume->id, $volume->id, 'allocation updated as expected after archive');
 
 done_testing();
-exit 0;
+
 
 1;

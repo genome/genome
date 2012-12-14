@@ -29,6 +29,3 @@ ok($cmd_1, 'created command');
 ok($cmd_1->execute, 'executed');
 my $sub_bam_files = $cmd_1->sub_bam_files;
 is(scalar(@{$sub_bam_files}),$expected_number_bam_files,'Found the expected number of sub bam files');
-
-exit;
-

@@ -86,7 +86,7 @@ is_deeply(
 );
 
 done_testing();
-exit;
+
 
 sub _create_inst_data {
     my $source = shift;
@@ -136,4 +136,3 @@ sub _model_hash {
         }
     } @_;
 }
-

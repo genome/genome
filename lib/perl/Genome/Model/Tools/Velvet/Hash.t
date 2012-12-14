@@ -31,5 +31,3 @@ my $vh = Genome::Model::Tools::Velvet::Hash->create(
 );
 
 ok($vh->execute, 'velveth runs ok');
-
-exit;

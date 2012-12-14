@@ -81,5 +81,3 @@ $sob->dump_status_messages(1);
 ok(!$sob->execute, 'execute');
 
 done_testing();
-exit;
-

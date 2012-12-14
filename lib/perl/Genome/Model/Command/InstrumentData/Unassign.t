@@ -97,5 +97,3 @@ ok($unassign->execute, 'execute');
 is(scalar(@assigned_inst_data), 0, 'all data unassigned');
 
 done_testing();
-exit;
-

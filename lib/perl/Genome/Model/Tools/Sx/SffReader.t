@@ -34,5 +34,3 @@ is(File::Compare::compare($example_fastq, $fastq), 0, 'fastq files match');
 
 #print "gvimdiff $fastq $example_fastq\n"; <STDIN>;
 done_testing();
-exit;
-

@@ -76,7 +76,7 @@ ok(
     "Create w/ invalid replace string - failed as expected"
 );
 
-exit;
+
 
 #$HeadURL$
 #$Id$

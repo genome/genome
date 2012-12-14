@@ -40,9 +40,3 @@ my $limit_indels = Genome::Model::Tools::Sam::LimitVariants->create(
 isa_ok($limit_indels,'Genome::Model::Tools::Sam::LimitVariants');
 ok($limit_indels->execute,'executed ok');
 cmp_ok(compare($output_indel_file, $expected_indel_file), '==', 0, 'LimitVaraints file was created ok');
-
-
-
-
-exit;
-

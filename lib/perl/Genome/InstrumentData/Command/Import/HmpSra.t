@@ -29,4 +29,3 @@ is($i_d->reference_sequence_build_id, 103107618, "Reference sequence properly re
 my $ok;
 eval { $ok = UR::Context->_sync_databases(); };
 ok($ok, "saves to the database!");
-

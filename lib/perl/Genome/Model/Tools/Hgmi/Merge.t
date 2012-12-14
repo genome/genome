@@ -47,5 +47,3 @@ remove \1, qw{ $tmpdir } ;
 
 #my $cmd = $m->gather_details();
 #diag( join(" ", @{$cmd[0]})."\n");
-
-exit 0;

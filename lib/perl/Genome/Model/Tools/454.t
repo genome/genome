@@ -52,4 +52,3 @@ foreach my $link (@installed_links) {
 
     is( $tool_454->bin_path, $installed_bin,'expected path found for bin directory' );
 }
-

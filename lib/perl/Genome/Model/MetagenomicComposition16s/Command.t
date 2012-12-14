@@ -64,5 +64,3 @@ ok($cmd->execute, 'execute');
 is_deeply([$cmd->_builds], [$build], 'builds from cmd');
 
 done_testing();
-exit;
-

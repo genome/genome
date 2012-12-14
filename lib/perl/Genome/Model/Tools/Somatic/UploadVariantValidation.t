@@ -60,7 +60,3 @@ eval {
 ok ($@, "Execute with bad input died with an error");
 
 ok(! -s $invalid_output_file, 'output file for bad input does not exist');
-
-
-
-

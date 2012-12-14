@@ -9,5 +9,3 @@ use Test::More;
 use_ok( 'Genome::Model::Tools::Assembly::CreateOutputFiles' );
 
 done_testing();
-
-exit;

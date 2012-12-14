@@ -63,4 +63,3 @@ ok($result, "Got a software result");
 is ($result->chromosome_list, join(",",@chromosomes_to_test), "Chromosome list from the software result is as expected");
 
 done_testing();
-exit;

@@ -23,4 +23,3 @@ my $differences = `diff $out $expected_out | wc -l`;
 chomp $differences;
 
 is($differences,0,"no difference between actual and expected output");
-

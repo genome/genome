@@ -51,4 +51,3 @@ for my $rg_id ('-123456','-123457','-123458') {
     Genome::Sys->md5sum($expected_file_sam), "sam content matches what is expected")
                                     
 }
-

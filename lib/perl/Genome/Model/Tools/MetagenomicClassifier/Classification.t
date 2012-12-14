@@ -68,7 +68,7 @@ is(File::Compare::compare($reader->file, $writer->file), 0, 'files match for hmp
 
 #print 'gvimdiff '.$reader->file.' '.$writer->file."\n"; <STDIN>;
 done_testing();
-exit;
+
 
 sub _expected_counts {
     return {
@@ -128,4 +128,3 @@ sub _expected_counts {
         }
     };
 }
-

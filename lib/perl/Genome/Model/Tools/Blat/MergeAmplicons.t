@@ -58,5 +58,3 @@ $bad_merge_amplicons->dump_error_messages(0);
 $bad_merge_amplicons->queue_error_messages(1);
 ok(!$bad_merge_amplicons->execute,'failed execute command '. $bad_merge_amplicons->command_name);
 is(scalar(grep { /Different headers found for/ } $bad_merge_amplicons->error_messages),1,'found one error message about different headers');
-
-exit;

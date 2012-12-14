@@ -61,5 +61,3 @@ or do {
   Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-bam-readcounts-matrix-result/");
   Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-bam-readcounts-matrix-result");
 };
-
-

@@ -47,5 +47,3 @@ my $html = $view_obj->_generate_content();
 ok($html, "view returns HTML") or die;
 
 done_testing();
-exit;
-

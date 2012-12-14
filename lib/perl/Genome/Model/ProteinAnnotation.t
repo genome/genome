@@ -59,5 +59,3 @@ ok($workflow, 'generated workflow for protein annotation build');
 $workflow->validate();
 
 done_testing();
-exit 0;
-

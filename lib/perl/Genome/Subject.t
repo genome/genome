@@ -28,5 +28,3 @@ ok($subject, 'create subject');
 is_deeply([$subject->projects], [$project], 'subject has projects');
 
 done_testing();
-exit;
-

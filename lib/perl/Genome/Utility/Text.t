@@ -47,5 +47,3 @@ is(Genome::Utility::Text::capitalize_words($uncap_string2, '-'), $cap_string, 'c
 ok(!eval{Genome::Utility::Text::capitalize_words(undef)}, 'failed as expected - capitalize w/o string words');
 
 done_testing();
-exit;
-

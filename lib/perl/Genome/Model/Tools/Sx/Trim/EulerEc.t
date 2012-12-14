@@ -57,5 +57,3 @@ ok( File::Compare::compare( $output_file,$test_dir.'/euler.1_2.output.fastq' )==
 #print $temp_dir."\n";<STDIN>;
 
 done_testing();
-
-exit;

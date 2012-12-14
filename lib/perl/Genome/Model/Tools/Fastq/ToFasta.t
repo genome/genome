@@ -22,6 +22,3 @@ my $fastq_to_fasta = Genome::Model::Tools::Fastq::ToFasta->create(
 isa_ok($fastq_to_fasta,'Genome::Model::Tools::Fastq::ToFasta');
 ok($fastq_to_fasta->execute,'execute command '. $fastq_to_fasta->command_name);
 ok(!compare($expected_fasta_file,$fastq_to_fasta->fasta_file),'expected fasta file '. $expected_fasta_file .' is identical to '. $fastq_to_fasta->fasta_file);
-
-exit;
-

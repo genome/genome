@@ -50,7 +50,7 @@ ok(!$@, "the command did not crash");
 is($rv, 1, "command believes it succeeded");
 
 done_testing();
-exit;
+
 
 #$HeadURL$
 #$Id$

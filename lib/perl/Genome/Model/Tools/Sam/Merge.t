@@ -74,5 +74,3 @@ ok($cmd_2, "created command");
 ok($cmd_2->execute, "executed");
 ok(-s $merged_file2, "output file is nonzero");
 is(compare($bam_index, $merged_file2.'.bai'), 0, 'The bam index is generated as expected'); 
-
-

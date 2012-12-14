@@ -93,5 +93,3 @@ is(Genome::Sys->md5sum($output[0]), 'd2fe25c6ab7bb486907fc225b42459eb', "single 
 
 #print $cmd3->_tmpdir."\n$temp_dir\n"; <STDIN>;
 done_testing();
-exit;
-

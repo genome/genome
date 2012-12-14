@@ -14,4 +14,3 @@ ok($subject, 'found expected build subject');
 
 my $view_obj = Genome::Model::Build::ReferenceAlignment::View::ReferenceCoverage::Html->create(subject_id => 102576025);
 isa_ok($view_obj,'Genome::Model::Build::ReferenceAlignment::View::ReferenceCoverage::Html');
-exit;

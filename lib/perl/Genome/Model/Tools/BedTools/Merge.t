@@ -26,6 +26,3 @@ isa_ok($merge,'Genome::Model::Tools::BedTools::Merge');
 ok($merge->execute,'execute mergeBed command '. $merge->command_name);
 
 ok(!compare($expected_file,$merge->output_file),'expected BED file '. $expected_file .' is identical to '. $merge->output_file);
-
-
-exit;

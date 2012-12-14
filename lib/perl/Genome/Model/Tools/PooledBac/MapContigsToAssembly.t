@@ -34,5 +34,3 @@ is(File::Compare::compare($example_contig_map, $tmpdir.'/CONTIG_MAP'), 0, 'conti
 
 #print STDERR "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

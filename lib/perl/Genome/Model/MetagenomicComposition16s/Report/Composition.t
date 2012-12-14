@@ -23,5 +23,3 @@ ok($report, 'generate report');
 #print $report->xml_string."\n";
 #print $example_build->classification_file_for_set_name('');<STDIN>;
 done_testing();
-exit;
-

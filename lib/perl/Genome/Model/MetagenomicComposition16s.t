@@ -10,5 +10,3 @@ use Test::More;
 use_ok('Genome::Model::MetagenomicComposition16s');
 
 done_testing();
-exit;
-

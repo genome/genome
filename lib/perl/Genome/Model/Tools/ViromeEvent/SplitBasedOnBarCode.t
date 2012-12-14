@@ -23,5 +23,3 @@ my $sbob = Genome::Model::Tools::ViromeEvent::SplitBasedOnBarCode->create(
 ok( $sbob, "Created split-based-on-barcode event" );
 
 done_testing();
-
-exit;

@@ -58,5 +58,3 @@ sub compare_output {
         unlink $output_file if $style eq 'hard'; #make file name available for next round
     }
 }
-
-exit;

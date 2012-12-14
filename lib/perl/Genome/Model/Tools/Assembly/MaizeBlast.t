@@ -14,5 +14,3 @@ foreach ('xnd', 'xni', 'xns', 'xnt') {
 }
 
 done_testing();
-
-exit;

@@ -39,6 +39,3 @@ my $to_ballscf = Genome::Model::Tools::Fastq::ToPhdballScf->create(%params);
 
 isa_ok($to_ballscf,'Genome::Model::Tools::Fastq::ToPhdballScf');
 ok($to_ballscf->execute,'ToPhdballScf executes ok');
-
-exit;
-

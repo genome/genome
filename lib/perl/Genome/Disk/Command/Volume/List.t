@@ -13,6 +13,3 @@ use Test::More;
 
 use_ok('Genome::Disk::Command::Volume::List') or die;
 done_testing();
-
-
-

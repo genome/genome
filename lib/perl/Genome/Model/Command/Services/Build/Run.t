@@ -46,5 +46,3 @@ ok($run->execute, 'execute');
 is($build->status, 'Succeeded', 'build is succeeded');
 
 done_testing();
-exit;
-

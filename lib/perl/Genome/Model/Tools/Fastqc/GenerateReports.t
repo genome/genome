@@ -22,5 +22,3 @@ isa_ok($fastqc,'Genome::Model::Tools::Fastqc::GenerateReports');
 ok($fastqc->execute,'execute command '. $fastqc->command_name);
 
 #TODO: Add file comparsion or another test to verify output is complete and correct
-
-exit;

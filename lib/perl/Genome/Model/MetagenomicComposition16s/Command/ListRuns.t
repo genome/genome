@@ -24,5 +24,3 @@ $cmd->dump_status_messages(1);
 ok($cmd->execute, 'Execute list runs ok');
 
 done_testing();
-exit;
-

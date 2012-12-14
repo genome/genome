@@ -38,6 +38,3 @@ my $tool = Genome::Model::Tools::SmrtAnalysis::SummarizeCompareByMovie->create(
 isa_ok($tool,'Genome::Model::Tools::SmrtAnalysis::SummarizeCompareByMovie');
 ok($tool->execute,'Execute command '. $tool->command_name);
 is(compare($output_csv_file,$expected_output_csv_file),0,'Expected output csv file '. $expected_output_csv_file .' matches the output csv file '. $output_csv_file);
-
-exit;
-

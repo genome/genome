@@ -37,4 +37,3 @@ while (!$vcf_fh->eof() && (!$found_submitter_data || !$found_submitter_header)) 
 }
 
 ok($found_submitter_header && $found_submitter_data, "Submitter data was written to the VCF header and file entries");
-

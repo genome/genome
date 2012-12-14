@@ -62,5 +62,3 @@ or do {
   Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-summarize-svs-result/");
   Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-summarize-svs-result");
 };
-
-

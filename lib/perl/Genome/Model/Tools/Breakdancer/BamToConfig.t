@@ -46,5 +46,3 @@ for my $file (glob($tmp_dir."/*insertsize_histogram*"), $out_file) {
     my $test_file = $test_input_dir . "/$base_name";
     is(compare($file, $test_file), 0, "$base_name output as expected");
 }
-
-

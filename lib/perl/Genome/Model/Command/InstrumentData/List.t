@@ -72,5 +72,3 @@ ok($lister, 'Created the lister trying to list assigned AND compatible inst data
 ok(!$lister->execute, 'Execution fails as expected');
 
 done_testing();
-exit;
-

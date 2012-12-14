@@ -55,7 +55,7 @@ ok($note, 'found a note about the build being requested');
 is($note->body_text, $reason, 'note has expected reason');
 
 done_testing();
-exit;
+
 
 #$HeadURL$
 #$Id$

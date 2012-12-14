@@ -35,5 +35,3 @@ my $stats = Genome::Model::Tools::BioSamtools::MultiAlignmentStats->create(
 isa_ok($stats,'Genome::Model::Tools::BioSamtools::MultiAlignmentStats');
 ok($stats->execute,'execute Standard command '. $stats->command_name);
 ok(!compare($expected_stats_file,$stats->output_stats_tsv),'expected stats file '. $expected_stats_file .' is identical to '. $stats->output_stats_tsv);
-
-exit;

@@ -10,5 +10,3 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::Bin') or die;
 
 done_testing();
-exit;
-

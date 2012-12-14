@@ -88,4 +88,3 @@ ok($rv == 0, 'successfully execute command using simulated command line argument
 is($allocation->preserved, 1, 'allocation is preserved after executing command');
 
 done_testing();
-

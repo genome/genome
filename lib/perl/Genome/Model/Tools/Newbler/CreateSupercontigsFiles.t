@@ -67,7 +67,7 @@ for my $test_type ( qw/ scaffolded unscaffolded / ) {
 
 done_testing();
 
-exit;
+
 
 sub scaffolded_input_files {
     return (qw/ 454AllContigs.fna 454AllContigs.qual 454Scaffolds.txt / );

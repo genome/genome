@@ -37,5 +37,3 @@ my @diffs = `sdiff -s $temp_stats $data_stats`;
 is (scalar @diffs, 0, "Stats files match") or diag(@diffs);
 
 done_testing();
-
-exit;

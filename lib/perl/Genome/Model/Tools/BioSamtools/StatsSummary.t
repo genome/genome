@@ -29,5 +29,3 @@ my $as = Genome::Model::Tools::BioSamtools::StatsSummary->create(
 isa_ok($as,'Genome::Model::Tools::BioSamtools::StatsSummary');
 ok($as->execute,'execute StatsSummary command '. $as->command_name);
 ok(!(compare($expected_file,$as->output_file)),'expected file '. $expected_file .' matched the output file '. $as->output_file);
-
-exit;

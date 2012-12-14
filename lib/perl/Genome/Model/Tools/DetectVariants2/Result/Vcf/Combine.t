@@ -243,5 +243,3 @@ sub run_combine_test {
     ok(!$diff, 'output matched expected result')
         or diag("diff results:\n" . $diff);
 }
-
-

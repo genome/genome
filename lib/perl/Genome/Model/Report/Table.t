@@ -27,5 +27,3 @@ my $report = $generator->generate_report;
 ok($report, 'generate report');
 
 done_testing();
-exit;
-

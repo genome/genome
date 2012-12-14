@@ -68,4 +68,3 @@ ok(-e $tier3_file, 'generated (possibly empty) tier 3 file');
 ok(-e $tier4_file, 'generated (possibly empty) tier 4 file');
 
 is(compare($tier1_file, $tier1_file_for_comparison), 0, 'same tier 1 output regardless of only_tier_1 flag.');
-

@@ -78,5 +78,3 @@ ok($renamer->execute, 'Executed the renamer');
 is($pp->name, $new_name, 'Rename successful');
 
 done_testing();
-exit;
-

@@ -73,7 +73,7 @@ for my $file (@files){
 }
 
 done_testing();
-exit;
+
 
 ###
 
@@ -99,4 +99,3 @@ sub _load_snvs_hq {
 
     return (\%params, \@data);
 }
-

@@ -61,4 +61,3 @@ ok( -s $fq1,         'output file is non-zero' );
 ok( -s $fq2,         'output file is non-zero' );
 
 $tmpdir->rmtree;
-

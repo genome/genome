@@ -29,4 +29,3 @@ my $merge = Genome::Model::Tools::RepeatMasker::MergeTables->create(
 isa_ok($merge,'Genome::Model::Tools::RepeatMasker::MergeTables');
 ok($merge->execute,'execute command '. $merge->command_name);
 ok(!compare($merged_file,$expected_file),'files are identical');
-exit;

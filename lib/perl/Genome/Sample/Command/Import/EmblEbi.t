@@ -45,5 +45,3 @@ is_deeply($import->_library->sample, $import->_sample, 'library sample');
 is(@{$import->_created_objects}, 3, 'created 3 objects');
 
 done_testing();
-exit();
-

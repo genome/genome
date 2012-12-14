@@ -69,5 +69,3 @@ ok(!$sequence_classification->_get_taxon_name_for_rank('blah'), "As expected - n
 ok(!$sequence_classification->_get_taxon_confidence_for_rank('blah'), "As expected - no blah confidence");
 
 done_testing();
-exit;
-

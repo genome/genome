@@ -55,5 +55,3 @@ sub get_lock_name {
 
     return ($foo_lock, $bar_memory_address);
 }
-
-

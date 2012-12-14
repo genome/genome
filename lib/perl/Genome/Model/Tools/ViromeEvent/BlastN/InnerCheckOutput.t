@@ -28,5 +28,3 @@ ok( $c, "Created nt blastN event" ) or die;
 ok( $c->execute, "Successfully executed event" );
 
 done_testing();
-
-exit;

@@ -28,5 +28,3 @@ is($pos->{type}, 'S', 'type matches');
 is($pos->{base}, 'C', 'base matches');
 is($pos->{rpos}, '194', 'rpos matches');
 is($pos->{aln_orient}, 'C', 'aln_orient matches');
-
-

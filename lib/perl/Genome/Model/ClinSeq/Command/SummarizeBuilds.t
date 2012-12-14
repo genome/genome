@@ -54,4 +54,3 @@ is(@diff, 5, "no differences from expected results and actual other than the 5 l
 #The summarize-builds tool changes the current working directory because the LIMS illumina_info tool writes output there and has no option to control this behavior
 #We need to change to somewhere else so that the testing harness can clean up the temp file created
 chdir("/");
-

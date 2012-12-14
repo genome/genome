@@ -109,5 +109,3 @@ for my $file ( glob( $build->data_directory."/edit_dir/*" ) ) {
 }
 
 done_testing();
-exit;
-

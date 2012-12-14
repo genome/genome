@@ -13,6 +13,3 @@ use_ok( 'Genome::Model::Tools::Lims::UpdateSeqMgr' );
 #Genome::Model::Tools::Lims::UpdateSeqMgr->execute(project_dir => $project_dir);
 
 done_testing();
-
-exit;
-

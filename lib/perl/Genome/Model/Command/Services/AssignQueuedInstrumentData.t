@@ -809,7 +809,7 @@ is($instrument_data_9->attributes(attribute_label => 'tgi_lims_status')->attribu
 is($instrument_data_10->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed for inst data 10');
 
 done_testing();
-exit;
+
 
 sub _add_instrument_data_to_projects {
     my $instrument_data = shift;
@@ -822,4 +822,3 @@ sub _add_instrument_data_to_projects {
     }
     return 1;
 }
-

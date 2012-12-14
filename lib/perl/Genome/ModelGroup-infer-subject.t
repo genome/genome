@@ -133,5 +133,3 @@ sub make_test_ref_seq_build {
 
     return $build;
 }
-
-

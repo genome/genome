@@ -17,4 +17,3 @@ my $Contig_number = $ace_reference->{Contig_number};
 ok ($Contig_number eq "Contig1");
 my $reseqid = $ace_reference->{reseqid};
 ok ($reseqid eq "AML_Validation_22_Trios-43114216_43116216-Ensembl.c1");
-

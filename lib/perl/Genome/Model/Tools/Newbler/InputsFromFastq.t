@@ -37,5 +37,3 @@ for my $file ('2869511846-input.fasta', '2869511846-input.fasta.qual' ) {
 #<STDIN>;
 
 done_testing();
-
-exit;

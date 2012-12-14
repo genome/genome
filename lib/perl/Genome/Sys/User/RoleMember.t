@@ -53,5 +53,3 @@ my $duplicate_bridge = eval {
 ok(!$duplicate_bridge, 'duplicate bridge object could not be created');
 
 done_testing();
-
-

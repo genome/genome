@@ -131,4 +131,3 @@ ok($b->start(server_dispatch => 'inline', job_dispatch => 'inline'), "build star
 is($execute_build,$b,"the build execution logic ran");
 is($b->status,'Succeeded',"the build status is Succeeded");
 ok(-d $b->data_directory, "the data directory " . $b->data_directory . " is present");
-

@@ -54,8 +54,3 @@ for my $file ( qw/ contigs.bases.clipped contigs.quals.clipped / ) {
 #print $test_dir."\n"; <STDIN>;
 
 done_testing();
-
-exit;
-
-
-

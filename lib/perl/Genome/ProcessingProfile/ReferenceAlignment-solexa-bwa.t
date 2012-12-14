@@ -123,7 +123,7 @@ is(scalar(@bad),0, "count of significant differences with the expected directory
         my $rv = Genome::Sys->copy_directory($tmp_dir, $0 . '.last_failure');
     };
 
-exit;
+
 
 sub setup_test_data {
     my $subject_name = shift;
@@ -227,4 +227,3 @@ sub parse_regular_run_directory {
 }
 
 1;
-

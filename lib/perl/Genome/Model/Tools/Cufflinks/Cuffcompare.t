@@ -57,5 +57,3 @@ ok( (compare($refmap_paths[0],$expected_refmap_path) == 0),'refmap are identical
 my @tmap_paths = @{$compare->tmap_paths};
 is(scalar(@tmap_paths),1,'Found 1 refmap path');
 ok( (compare($tmap_paths[0],$expected_tmap_path) == 0),'tmap are identical');
-
-exit;

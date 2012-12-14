@@ -28,4 +28,3 @@ is(File::Compare::compare($phd_to_fasta->fasta_file, "$path/PhdToFasta/_fasta_ou
 is(File::Compare::compare($phd_to_fasta->qual_file, "$path/PhdToFasta/_fasta_output.qual.static"), 0, 'qual file matches');
 
 done_testing();
-exit;

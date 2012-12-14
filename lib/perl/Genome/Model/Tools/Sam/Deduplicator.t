@@ -19,4 +19,3 @@ my ($deduplicated_file1) = ('/gscmnt/sata409/research/mmitreva/edemello/paired/6
 my ($deduplicator1) = (Genome::Model::Tools::Sam::Deduplicator->create(sam_file=>$sam_file1, deduplicated_file=>$deduplicated_file1));
 
 isa_ok($deduplicator1, 'Genome::Model::Tools::Sam::Deduplicator');
-

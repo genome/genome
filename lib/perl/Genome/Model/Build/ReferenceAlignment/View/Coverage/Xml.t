@@ -19,4 +19,3 @@ my $view_obj = Genome::Model::Build::ReferenceAlignment::View::Coverage::Xml->cr
 isa_ok($view_obj,'Genome::Model::Build::ReferenceAlignment::View::Coverage::Xml');
 my $xml = $view_obj->_generate_content;
 ok($xml,'got xml content');
-exit;

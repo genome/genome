@@ -28,5 +28,3 @@ my $expected_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreen
 is_deeply( $files_for_blast, [ $expected_file, ], "Got expected files for blast" );
 
 done_testing();
-
-exit;

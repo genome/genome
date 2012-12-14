@@ -153,5 +153,3 @@ else {
             Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-clinseq-test-result");
         };
 }
-
-        

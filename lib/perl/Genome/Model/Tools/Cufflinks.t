@@ -17,4 +17,3 @@ for my $app (@executables) {
     my $p2 = $v2->$method;
     is($p2, $ENV{GENOME_SW} . "/cufflinks/cufflinks-1.2.1.Linux_x86_64/$app", "finds $app path $p2 for legacy cufflinks installation");
 }
-

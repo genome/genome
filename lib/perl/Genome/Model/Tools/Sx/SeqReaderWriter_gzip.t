@@ -42,5 +42,3 @@ ok(!$zdiff_qual, 'gzipped qual match');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

@@ -29,5 +29,3 @@ diag("$@\n");
 ok(!$eval, 'Failed as expected - create w/ invalid confidence_threhold');
 
 done_testing();
-exit;
-

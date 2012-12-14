@@ -46,5 +46,3 @@ test_pair_end_1.trimq2.fastq test_pair_end_2.trimq2.fastq trimq2.pair_end.filter
 }
 
 #TODO should also add Illumina fastq trim test
-
-exit;

@@ -52,7 +52,7 @@ for my $format ( Genome::Model::Tools::Consed::AceToOut->formats ) {
 
 #print "$TMPDIR\n"; <STDIN>;
 done_testing();
-exit;
+
 
 #####################################################
 

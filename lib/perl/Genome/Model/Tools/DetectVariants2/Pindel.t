@@ -59,4 +59,3 @@ my $output_indel_file = $pindel->output_directory . "/indels.hq.bed";
 ok(-s $output_indel_file,'Testing success: Expecting a indel output file exists');
 
 done_testing();
-exit;

@@ -39,5 +39,3 @@ foreach my $sub_dir (@version_subdirs) {
     isa_ok($sfffile,'Genome::Model::Tools::454::Sfffile');
     ok($sfffile->execute,'execute '. $sfffile->command_name);
 }
-
-exit;

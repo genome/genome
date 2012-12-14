@@ -63,5 +63,3 @@ is($result, 1, 'Testing for execution.  Expecting 1.  Got: '.$result);
 is(compare($output_06,$expected_output_06),0,'Output for v0.5 is identical to expected output');
 
 done_testing();
-exit;
-

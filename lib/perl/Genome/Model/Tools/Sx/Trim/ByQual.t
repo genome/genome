@@ -43,5 +43,3 @@ is(length($seq2->{seq}), 0, 'Seq 3 seq trimmed to 0 bases');
 is(length($seq2->{qual}), 0, 'Seq 3 qual trimmed to 0 bases');
 
 done_testing();
-exit;
-

@@ -19,7 +19,7 @@ ok(@woi, 'Got work order items');
 #print Dumper(\@$woi);
 
 done_testing();
-exit;
+
 
 =pod
 

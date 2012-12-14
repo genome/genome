@@ -95,7 +95,3 @@ is(@diff, 0, "no differences from expected results and actual")
       }
       Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-get-bam-read-counts-test-result");
   };
-
-
-
-

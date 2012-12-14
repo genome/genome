@@ -143,5 +143,3 @@ foreach my $subdir (@version_subdirs) {
     isa_ok($version_run_assembly,'Genome::Model::Tools::454::Newbler::RunAssembly');
     is ($version_run_assembly->newbler_bin, $expected_path, 'found expected path');
 }
-
-exit;

@@ -53,6 +53,3 @@ my $sam_report = `gt snv expected-snv-intersection --snv-file $sam_snv_file --ex
 
 ok($sam_report,'SAM expected-snv-intersection execute ok');
 is($sam_report, $exp_sam_report, 'SAM expected-snv-intersection output matches the expected original one.');
-
-
-exit;

@@ -107,5 +107,3 @@ $import_fail->dump_status_messages(1);
 ok(!$import_fail->execute, 'execute failed b/c name has too many parts');
 
 done_testing();
-exit;
-

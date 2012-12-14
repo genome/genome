@@ -21,5 +21,3 @@ my $c = Genome::Model::Tools::ViromeEvent::BlastX_NT::CheckParseOutput->create(
 ok($c, "Created blastx nt check parse output event");
 
 done_testing();
-
-exit;

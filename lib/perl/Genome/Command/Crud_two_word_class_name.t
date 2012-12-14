@@ -105,5 +105,3 @@ ok(!$deleted_jimmy, 'deleted Spiderman confirmed');
 ok(UR::Context->commit, 'commit');
 
 done_testing();
-exit;
-

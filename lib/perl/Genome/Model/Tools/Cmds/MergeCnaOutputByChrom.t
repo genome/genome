@@ -12,4 +12,3 @@ BEGIN {
 
     use_ok('Genome::Model::Tools::Cmds::MergeCnaOutputByChrom');    
 }
-

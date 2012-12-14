@@ -38,5 +38,3 @@ is(File::Compare::compare($example_fastq, $out_fastq), 0, "sorted as expected");
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
-exit;
-

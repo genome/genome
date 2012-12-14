@@ -60,5 +60,3 @@ for (0..6) {
     }),'run temp pl');
 
 };
-
-exit;

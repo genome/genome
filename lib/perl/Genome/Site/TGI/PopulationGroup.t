@@ -38,5 +38,3 @@ $pg = Genome::Site::TGI::PopulationGroup->get($id);
 ok($pg, 're-get pg');
 
 done_testing();
-exit();
-

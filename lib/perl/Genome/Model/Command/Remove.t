@@ -101,4 +101,3 @@ ok($remove_cmd->execute,'delete model did work');
 ok_run($mname,'--force-delete');
 isa_ok($m,"UR::DeletedRef", "model object is deleted");
 #isa_ok($b1,"UR::DeletedRef", "build object is deleted");
-

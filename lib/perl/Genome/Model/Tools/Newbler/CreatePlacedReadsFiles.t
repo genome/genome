@@ -39,5 +39,3 @@ for my $file ( '/consed/edit_dir/readinfo.txt', '/consed/edit_dir/reads.placed' 
 #<STDIN>;
 
 done_testing();
-
-exit;

@@ -22,5 +22,3 @@ my $expected_classifications = retrieve($ENV{GENOME_TEST_INPUTS} . '/Genome-Util
 is_deeply(\@classifications, $expected_classifications, 'Generated and exclassifications.storpected classification objects match');
 
 done_testing();
-exit;
-

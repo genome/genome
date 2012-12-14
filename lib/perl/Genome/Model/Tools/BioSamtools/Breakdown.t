@@ -31,5 +31,3 @@ ok($cmd->execute,'execute breakdown command '. $cmd->command_name);
 ok(-f $cmd->output_file,'found output tsv file '. $cmd->output_file);
 ok(-s $cmd->output_file,'output tsv file '. $cmd->output_file .' has size');
 ok(!compare($cmd->output_file,$expected_tsv),'output tsv '. $cmd->output_file .' matches expected '. $expected_tsv);
-
-exit;

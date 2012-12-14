@@ -11,5 +11,3 @@ use Test::More;
 use_ok('Genome::Model::Input') or die;
 
 done_testing();
-exit;
-

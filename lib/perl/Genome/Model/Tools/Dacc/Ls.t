@@ -16,7 +16,7 @@ ok($ls, 'create');
 # do not test execute
 
 done_testing();
-exit;
+
 
 =pod
 
@@ -36,4 +36,3 @@ exit;
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-

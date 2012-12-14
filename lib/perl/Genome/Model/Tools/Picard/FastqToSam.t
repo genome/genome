@@ -32,6 +32,3 @@ my $cmd_1 = Genome::Model::Tools::Picard::FastqToSam->create(
 isa_ok( $cmd_1, 'Genome::Model::Tools::Picard::FastqToSam' );
 ok( $cmd_1->execute,          'execute' );
 ok( -s $out_1_file->filename, 'output file is non-zero' );
-
-
-

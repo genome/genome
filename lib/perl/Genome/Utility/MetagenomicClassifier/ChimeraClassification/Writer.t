@@ -10,5 +10,3 @@ use Test::More;
 use_ok('Genome::Utility::MetagenomicClassifier::ChimeraClassification::Writer');
 
 done_testing();
-exit;
-

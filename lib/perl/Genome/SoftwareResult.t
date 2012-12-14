@@ -186,5 +186,3 @@ eval {
 
 ok(!$@, "no exception during save (commit disabled)!")
     or diag("exception: $@");
-
-

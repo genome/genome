@@ -54,5 +54,3 @@ isa_ok($bad, 'Genome::ProcessingProfile::Command::Remove');
 ok(!$bad->execute, 'Could not execute the bad remover');
 
 done_testing();
-exit;
-

@@ -34,5 +34,3 @@ my $reseq = Genome::Model::Tools::SmrtAnalysis::ConsensusStats->create(
 );
 isa_ok($reseq,'Genome::Model::Tools::SmrtAnalysis::ConsensusStats');
 ok($reseq->execute,'Execute command '. $reseq->command_name);
-
-exit;

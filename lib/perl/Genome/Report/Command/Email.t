@@ -26,5 +26,3 @@ $cmd->dump_status_messages(1);
 ok($cmd->execute, 'execute');
 
 done_testing();
-exit;
-

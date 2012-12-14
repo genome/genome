@@ -232,7 +232,7 @@ SKIP: {
     &test_lsf();
 }
 
-exit;
+
 
 sub test_lsf {
     my $bogus_id = 0;

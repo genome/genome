@@ -37,4 +37,3 @@ ok($tigra_2_bd->execute(), 'TigraToBreakdancer executed ok');
 
 is(compare($pass_file, $tmp_pass_file), 0, 'pass_filter_file output as expected');
 is(compare($fail_file, $tmp_fail_file), 0, 'fail_filter_file output as expected');
-

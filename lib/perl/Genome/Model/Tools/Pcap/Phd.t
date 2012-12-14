@@ -8,5 +8,3 @@ my $po = Genome::Model::Tools::Pcap::Phd->new(input_directory => $ENV{GENOME_TES
 
 my $phd = $po->get_phd("L25990P6007H3.g1.phd.1");
 is($phd->name,"L25990P6007H3.g1","Phd name survives creation");
-
-

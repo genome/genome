@@ -31,4 +31,3 @@ ok($merge, 'merge created ok');
 ok($merge->execute(), 'merge executed ok');
 
 is(compare($merge_file, $expect_out), 0, 'merge output is generated as expected');
-

@@ -46,7 +46,7 @@ ok (-s $tmpdir."/$file_base.$date.nav", 'created navigator');
 ok (-s $tmpdir."/$file_base.$date.csv", 'created spreadsheet');
 
 done_testing();
-exit;
+
 
 ###
 

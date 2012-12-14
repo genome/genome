@@ -27,5 +27,3 @@ $u0->add_project($project);
 is_deeply([$u0->projects], [$project], "Got project from project creator");
 
 done_testing();
-exit;
-

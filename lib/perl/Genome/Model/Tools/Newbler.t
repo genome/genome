@@ -9,5 +9,3 @@ use above "Genome";
 use_ok( 'Genome::Model::Tools::Newbler' );
 
 done_testing();
-
-exit;

@@ -20,5 +20,3 @@ my $c = Genome::Model::Tools::ViromeEvent::BlastX_Viral::CheckParseOutput->creat
 ok($c, "Created blastx viral check parse output event");
 
 done_testing();
-
-exit;

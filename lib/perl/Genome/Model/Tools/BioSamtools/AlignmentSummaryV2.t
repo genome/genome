@@ -633,7 +633,7 @@ for (my $i = 0; $i < @test_data; $i++) {
     }
     is($stats->{$_} || 0, 0, "$_ is 0") foreach keys %$stats;
 }
-exit;
+
 
 
 
@@ -743,5 +743,3 @@ sub _clone {
     bless $copy, ref $self;
     return $copy;
 }
-
-

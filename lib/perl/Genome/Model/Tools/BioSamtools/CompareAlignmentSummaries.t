@@ -33,6 +33,3 @@ isa_ok($mas,'Genome::Model::Tools::BioSamtools::CompareAlignmentSummaries');
 ok($mas->execute,'execute AlignmentSummary command '. $mas->command_name);
 
 ok(!compare($expected_output_file,$mas->output_file),'expected output file '. $expected_output_file .' is identical to '. $mas->output_file);
-
-
-exit;

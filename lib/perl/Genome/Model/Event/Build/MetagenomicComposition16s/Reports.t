@@ -52,7 +52,7 @@ ok(-s $build->reports_directory.'/Composition/report.xml', 'Created composition 
 
 #print $self->_build->data_directory."\n";<STDIN>;
 done_testing();
-exit;
+
 
 #####################################
 
@@ -78,4 +78,3 @@ sub _link_example_data {
 
     return 1;
 }
-

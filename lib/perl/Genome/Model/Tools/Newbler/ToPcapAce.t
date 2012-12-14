@@ -74,7 +74,7 @@ for my $test_type ( qw/ scaffolded unscaffolded / ) {
 
 done_testing();
 
-exit;
+
 
 sub scaffolded_input_files {
     return ( '454Scaffolds.txt', '/consed/edit_dir/454Contigs.ace.1' );

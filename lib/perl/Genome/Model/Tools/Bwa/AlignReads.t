@@ -103,4 +103,3 @@ ok($aligner->execute,'AlignReads execution, paired read solexa input, forcing fr
 #check the number of files in the output directory, should be 2.
 @listing = glob($output_dir.'/*');
 ok( scalar(@listing) eq $expected_output, "Number of output files expected = ".$expected_output );
-

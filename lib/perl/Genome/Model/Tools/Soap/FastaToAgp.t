@@ -43,5 +43,3 @@ ok ($c->execute, "Successfully executed fasta-to-agp tool") or die;
 #TODO - compare output files
 
 done_testing();
-
-exit;

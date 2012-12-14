@@ -47,5 +47,3 @@ ok( File::Compare::compare( $test_dir."/edit_dir/$ace_out",$temp_dir."/edit_dir/
 #<STDIN>;
 
 done_testing();
-
-exit;

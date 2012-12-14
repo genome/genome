@@ -62,5 +62,3 @@ for my $type ( keys %types_methods ) {
 }
 
 done_testing();
-exit;
-

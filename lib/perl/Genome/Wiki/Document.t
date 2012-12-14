@@ -15,6 +15,3 @@ diag('crude test of parsing');
 ok($doc->user(), 'user');
 ok($doc->timestamp(), 'timestamp');
 ok($doc->content(), 'content');
-
-
-

@@ -32,5 +32,3 @@ is($taxon->estimated_genome_size, 10_000_000, 'update genome est genome size');
 is($gsc_taxon->estimated_genome_size, 10_000_000, 'updated lims est genome size');
 
 done_testing();
-exit;
-

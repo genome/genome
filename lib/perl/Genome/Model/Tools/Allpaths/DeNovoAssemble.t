@@ -35,4 +35,3 @@ ok( $create, "Created gmt allpaths de-novo-assemble");
 #fast enough to put in a perl test.  It may be possible.
 
 done_testing();
-

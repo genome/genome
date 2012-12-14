@@ -10,5 +10,3 @@ use Test::More;
 use_ok('Genome::Report::Command');
 
 done_testing();
-exit;
-

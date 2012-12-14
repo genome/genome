@@ -57,5 +57,3 @@ is(File::Compare::compare($output, $build->genotype_file_path), 0, 'output file 
 
 #print "$tempdir\n"; <STDIN>;
 done_testing();
-exit;
-

@@ -95,5 +95,3 @@ $import->dump_status_messages(1);
 ok(!$import->execute, 'execute failed for name w/ invalid extrraction type');
 
 done_testing();
-exit();
-

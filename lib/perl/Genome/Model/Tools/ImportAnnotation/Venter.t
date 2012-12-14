@@ -7,4 +7,3 @@ use above 'Genome';
 BEGIN {
     use_ok("Genome::Model::Tools::ImportAnnotation::Venter");
 };
-

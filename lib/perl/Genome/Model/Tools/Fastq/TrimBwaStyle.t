@@ -27,5 +27,3 @@ for my $file qw(test.trimmed.fastq trim.report) {
     my $expect_file = $base_dir."/$file";
     ok(compare($output_file, $expect_file) == 0, "Output: $file is created as expected");
 }
-
-exit;

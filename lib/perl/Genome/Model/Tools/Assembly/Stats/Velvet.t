@@ -51,6 +51,5 @@ is(scalar @diff, 0, "Stats files match") or diag(@diff);
 
 done_testing();
 
-exit;
- 
 
+ 

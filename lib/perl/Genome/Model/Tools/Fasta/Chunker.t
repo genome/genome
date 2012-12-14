@@ -31,4 +31,3 @@ for (my ($i,$static_chunk) = (0,undef); $i < $chunk_size; $i++)
     $static_chunk = $dir . 'CHUNK_' . $i . '.static';    
     cmp_ok(compare(@$file_chunks[$i],$static_chunk), '==', 0, "$static_chunk matches " . @$file_chunks[$i]);
 }
-

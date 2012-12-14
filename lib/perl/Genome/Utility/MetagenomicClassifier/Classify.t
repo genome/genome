@@ -51,5 +51,4 @@ use Genome::Utility::MetagenomicClassifier::PopulationCompositionFactory;
     isa_ok($composition, 'Genome::Utility::MetagenomicClassifier::PopulationComposition');
 
     done_testing();
-    exit;
-
+    

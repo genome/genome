@@ -36,6 +36,3 @@ my $solexa = Genome::Model::Tools::ContaminationScreen::Solexa->create(%params);
 isa_ok($solexa, 'Genome::Model::Tools::ContaminationScreen::Solexa');
 
 ok($solexa->execute, "solexa executing");
-
-
-

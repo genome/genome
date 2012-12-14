@@ -48,6 +48,3 @@ ok($to_scf->execute, 'To::Scf excutes ok');
 
 my @list = map{$dir."/$_"}(@phd_list, @scf_list);
 map{unlink}@list;
-
-exit;
-

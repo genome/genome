@@ -42,5 +42,3 @@ ok($expression->execute,'execute command '. $expression->command_name);
 #ok( (compare($expression->transcripts_file,$expected_transcripts_file) == 0),'transcripts are identical');
 #ok( (compare($expression->gene_fpkm_file,$expected_gene_fpkm_file) == 0),'gene fpkm are identical');
 #ok( (compare($expression->isoform_fpkm_file,$expected_isoform_fpkm_file) == 0),'isoform fpkm are identical');
-
-exit;

@@ -77,5 +77,3 @@ is(compare($bed_lc_file_default, $bed_lc_file_default_expected), 0, 'bed_lc_file
 is(compare($bed_hc_file_default, $bed_hc_file_default_expected), 0, 'bed_hc_file output matched expected output');
 is(compare($anno_lc_file_default, $anno_lc_file_default_expected), 0, 'anno_lc_file output matched expected output');
 is(compare($anno_hc_file_default, $anno_hc_file_default_expected), 0, 'anno_hc_file output matched expected output');
-
-

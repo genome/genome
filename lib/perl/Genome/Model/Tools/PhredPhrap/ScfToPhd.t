@@ -30,4 +30,3 @@ ok($scf_to_phd->execute,'execute ScfToPhd');
 is(File::Compare::compare($scf_to_phd->phd_file, "$path/ScfToPhd/phd.txt"), 0, 'phds file is the same');
 
 done_testing();
-exit;

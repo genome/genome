@@ -80,6 +80,3 @@ for my $output_file (@expected_output_files){
 ok(-s $test_working_dir."/snvs.vcf.gz", "Found VCF file");
 
 done_testing();
-
-
-exit;

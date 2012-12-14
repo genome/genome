@@ -10,7 +10,7 @@ use Test::More;
 use_ok('Genome::Model::DeNovoAssembly::Command') or die;
 
 done_testing();
-exit;
+
 
 =pod
 
@@ -33,4 +33,3 @@ exit;
 
 #$HeadURL$
 #$Id$
-

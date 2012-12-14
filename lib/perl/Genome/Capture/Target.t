@@ -14,4 +14,3 @@ is($target->region_id,'77373','Found region id');
 isa_ok($target->region,'Genome::Capture::Region');
 is($target->tag_id,'2764758292','Found tag id ');
 is($target->pse_id,'95372894','Found pse id');
-exit;

@@ -66,5 +66,3 @@ my $sam_cmd = Genome::Model::Tools::Snp::GoldSnpIntersection->create(
 $sam_cmd->execute;
 ok($sam_cmd->_report_txt,'SAM gold-snp-intersection execute ok');
 is($sam_cmd->_report_txt, $exp_sam_report, 'SAM gold-snp-intersection output matches the expected original one.');
-
-exit;
