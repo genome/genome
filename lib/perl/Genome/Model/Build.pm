@@ -472,7 +472,7 @@ sub _cpu_slot_usage_breakdown {
                 next;
             }
 
-            if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue) and $op_type->lsf_queue eq 'workflow') {
+            if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue) and ($op_type->lsf_queue eq 'workflow' or $op_type->lsf_queue eq $ENV{WF_SERVER_QUEUE})) {
                 # skip jobs which run in workflow because they internally run another workflow
                 #print "\tskipping workflow queue job...\n";
                 next;
@@ -790,7 +790,7 @@ sub start {
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
-        unless ($self->_initialize_workflow($params{job_dispatch} || 'apipe')) {
+        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{WF_JOB_QUEUE})) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
 
@@ -1149,7 +1149,7 @@ sub _launch {
     } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
         $server_dispatch = $model->server_dispatch;
     } else {
-        $server_dispatch = 'workflow';
+        $server_dispatch = $ENV{WF_SERVER_QUEUE};
     }
 
     # resolve job_dispatch
@@ -1217,7 +1217,7 @@ sub _launch {
             'bsub -N -H',
             '-P', $lsf_project,
             '-q', $server_dispatch,
-            $job_group_spec,
+            ($ENV{WF_EXCLUDE_JOB_GROUP} ? '' : $job_group_spec),
             '-u', $user . '@genome.wustl.edu',
             '-o', $build_event->output_log_file,
             '-e', $build_event->error_log_file,
