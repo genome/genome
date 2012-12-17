@@ -19,7 +19,6 @@ my $pp = Genome::ProcessingProfile->create(
     type_name => 'metagenomic composition 16s',
     name => '16S Test Sanger',
     amplicon_processor => 'filter by-min-length --length 1150',
-    sequencing_center => 'gsc',
     sequencing_platform => 'sanger',
     assembler => 'phred_phrap',
     assembler_params => '-vector_bound 1000 -trim_qual 1000',

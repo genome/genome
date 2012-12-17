@@ -151,9 +151,8 @@ sub _amplicon_iterator {
                 my $read_amplicon_name = $1;
                 unless ( $read_amplicon_name ) {
                     Carp::confess sprintf(
-                        'Could not determine amplicon name for %s read name (%s) for build (%s)',
+                        'Could not determine amplicon name from read name (%s) for build (%s)',
                         $all_read_names[$pos],
-                        $self->build->sequencing_center,
                         $self->build->id,
                     );
                 }

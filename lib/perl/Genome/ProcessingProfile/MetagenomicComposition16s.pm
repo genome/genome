@@ -14,11 +14,6 @@ class Genome::ProcessingProfile::MetagenomicComposition16s {
             is_optional => 1,
             doc => 'A string of paramters to process amplicons by',
         },
-        sequencing_center => {
-            is => 'Text',
-            doc => 'Place from whence the reads have come.',
-            valid_values => [qw/ gsc broad /],
-        },
         sequencing_platform => {
             is => 'Text',
             doc => 'Platform (machine) from whence the reads where created.',
