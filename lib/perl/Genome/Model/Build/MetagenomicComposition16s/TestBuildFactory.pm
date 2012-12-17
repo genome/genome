@@ -10,6 +10,22 @@ use Test::More;
 
 my $id = -9000;
 my %entities;
+my %pp_params = (
+    454 => {
+        amplicon_processor => 'filter by-min-length --length 200',
+        chimera_detector => 'chimera-slayer',
+        chimera_detector_params => "--nastier-params '-num_top_hits 10' --chimera-slayer-params '-windowSize 50 -printCSalignments -windowStep 5'",
+        classifier => 'rdp2-2',
+        classifier_params => '-training-set 6 -format hmp_fix_ranks -version 2x2',
+    },
+    sanger => {
+        amplicon_processor => 'filter by-min-length --length 1150',
+        assembler => 'phred_phrap',
+        assembler_params => '-vector_bound 0 -trim_qual 0',
+        classifier => 'rdp2-1',
+        classifier_params => '-training-set broad -format hmp_fix_ranks -version 2x1',
+    }
+);
 
 sub library {
     return $entities{library} if $entities{library};
@@ -41,12 +57,8 @@ sub build_with_example_build {
     $entities{pp} = Genome::ProcessingProfile->__define__(
         id => --$id,
         type_name => 'metagenomic composition 16s',
-        amplicon_processor => 'filter by-min-length --length 200',
-        chimera_detector => 'chimera-slayer',
-        chimera_detector_params => "--nastier-params '-num_top_hits 10' --chimera-slayer-params '-windowSize 50 -printCSalignments -windowStep 5'",
-        classifier => 'rdp2-2',
-        classifier_params => '-training-set 6 -format hmp_fix_ranks -version 2x2',
         sequencing_platform => $sequencing_platform,
+        %{$pp_params{$sequencing_platform}},
     ) if not $entities{pp};
 
     my $sample = sample();
@@ -67,8 +79,6 @@ sub build_with_example_build {
     die 'Failed to create MC16s model!' if not $entities{build};
     $entities{build}->create_subdirectories;
 
-    my $instrument_data = instrument_data_454();
-    $entities{build}->add_instrument_data($instrument_data) or die 'Failed to add instrument data to build!';
 
     $entities{example_build} = Genome::Model::Build->__define__(
         model=> $entities{model},
@@ -78,8 +88,15 @@ sub build_with_example_build {
 
     my %example_data_directories = (
         454 => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/build_v5.2chimeras', # start w/ 2 chimeras
+        sanger => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16sSanger/build_v3',
     );
     $entities{example_build}->data_directory( $example_data_directories{$sequencing_platform} ) or die 'Failed to get example data directory!';
+
+    my $instrument_data_method = 'instrument_data_'.$sequencing_platform;
+    my $instrument_data = __PACKAGE__->$instrument_data_method;
+    $entities{model}->add_instrument_data($instrument_data) or die 'Failed to add instrument data to model!';
+    $entities{build}->add_instrument_data($instrument_data) or die 'Failed to add instrument data to build!';
+    $entities{example_build}->add_instrument_data($instrument_data) or die 'Failed to add instrument data to example build!';
 
     return ($entities{build}, $entities{example_build});
 }
@@ -104,9 +121,31 @@ sub instrument_data_454 {
     ) if not $entities{instrument_data_454};
     die 'Failed to create instrument data 454!' if not $entities{instrument_data_454};
 
-    die 'archive_path' if not -s $entities{instrument_data_454}->attributes(attribute_label => 'archive_path')->attribute_value;
+    die 'archive_path 454!' if not -s $entities{instrument_data_454}->attributes(attribute_label => 'archive_path')->attribute_value;
 
     return $entities{instrument_data_454};
+}
+
+sub build_with_example_build_for_sanger {
+    my ($build, $example_build) = build_with_example_build('sanger');
+    return ($build, $example_build);
+}
+
+sub instrument_data_sanger {
+    $entities{instrument_data_sanger} = Genome::InstrumentData::Sanger->create(
+        id => '01jan00.101amaa',
+        library => $entities{library},
+    );
+    die 'Failed to create instrument data sanger!' if not $entities{instrument_data_sanger};
+
+    no warnings qw/ once redefine /;
+    *Genome::InstrumentData::Sanger::dump_to_file_system = sub{ 1; };
+    *Genome::InstrumentData::Sanger::full_path = sub{ $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16sSanger/inst_data/'.$entities{instrument_data_sanger}->id; };
+    use warnings;
+
+    die 'full_path sanger!' if not -d $entities{instrument_data_sanger}->full_path;
+
+    return $entities{instrument_data_sanger};
 }
 
 1;
