@@ -42,7 +42,13 @@ class Genome::Model::SomaticValidation::Command::ValidateLargeIndels {
 sub execute {
     my $self = shift;
 
-    $self->_long_indel_bed_file($self->_resolve_long_indel_bed_file);
+    my $long_indel_bed_file = $self->_resolve_long_indel_bed_file;
+    unless ($long_indel_bed_file) {
+        $self->warning_message("No long indel bed file exists with size. Skipping validation.");
+        return 1;
+    }
+
+    $self->_long_indel_bed_file($long_indel_bed_file);
     my $output_directory = $self->_create_output_directory();
 
     $self->status_message("Running step 1");
@@ -67,7 +73,8 @@ sub _resolve_long_indel_bed_file {
     my $self = shift;
     my $long_indel_bed_file = $self->build->data_directory . "/indel_validation/large_indels.bed";
     unless (-s $long_indel_bed_file) {
-        die $self->error_message("Long indel bed file $long_indel_bed_file does not exist or has no size");
+        $self->warning_message("Long indel bed file $long_indel_bed_file does not exist or has no size");
+        return;
     }
     return $long_indel_bed_file;
 }
