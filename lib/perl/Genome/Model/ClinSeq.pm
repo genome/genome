@@ -406,10 +406,10 @@ sub _resolve_workflow_for_build {
             $add_link->($input_connector,['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
         }
         elsif ($build->wgs_build) {
-            $add_link->($input_connector,'wgs_build',$mutation_diagram_op);
+            $add_link->($input_connector,'wgs_build',$mutation_diagram_op,'builds');
         }
         elsif ($build->exome_build) {
-            $add_link->($input_connector,'exome_build',$mutation_diagram_op);
+            $add_link->($input_connector,'exome_build',$mutation_diagram_op,'builds');
         }
         else {
             die "impossible!";
