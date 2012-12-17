@@ -71,7 +71,7 @@ sub build_with_example_build {
     ) if not $entities{model};
     die 'Failed to create MC16s model!' if not $entities{model};
 
-    $entities{build} = Genome::Model::Build::MetagenomicComposition16s->__define__(
+    $entities{build} = Genome::Model::Build::MetagenomicComposition16s->create(
         id => --$id,
         model => $entities{model},
         data_directory => File::Temp::tempdir(CLEANUP => 1),
@@ -79,8 +79,7 @@ sub build_with_example_build {
     die 'Failed to create MC16s model!' if not $entities{build};
     $entities{build}->create_subdirectories;
 
-
-    $entities{example_build} = Genome::Model::Build->__define__(
+    $entities{example_build} = Genome::Model::Build->create(
         model=> $entities{model},
         id => --$id,
     ) if not $entities{example_build};
@@ -91,6 +90,7 @@ sub build_with_example_build {
         sanger => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16sSanger/build_v3',
     );
     $entities{example_build}->data_directory( $example_data_directories{$sequencing_platform} ) or die 'Failed to get example data directory!';
+    $entities{example_build}->the_master_event->event_status('Succeeded');
 
     my $instrument_data_method = 'instrument_data_'.$sequencing_platform;
     my $instrument_data = __PACKAGE__->$instrument_data_method;
