@@ -94,22 +94,11 @@ sub description {
 }
 
 #< Amplicon Sets >#
-sub amplicon_set_names {
-    my $self = shift;
-    my %set_names_and_primers = $self->amplicon_set_names_and_primers;
-    return sort keys %set_names_and_primers;
-}
-
-sub amplicon_set_names_and_primers {
-    my $self = shift;
-    my $sequencing_platform = $self->processing_profile->sequencing_platform;
-    return Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($sequencing_platform);
-}
-
 sub amplicon_sets {
     my $self = shift;
 
-    my %amplicon_set_names_and_primers = $self->amplicon_set_names_and_primers;
+    my $sequencing_platform = $self->processing_profile->sequencing_platform;
+    my %amplicon_set_names_and_primers = Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($sequencing_platform);
     my @amplicon_sets;
     for my $set_name ( sort { $a cmp $b } keys %amplicon_set_names_and_primers ) {
         push @amplicon_sets, Genome::Model::Build::MetagenomicComposition16s::AmpliconSet->create(
