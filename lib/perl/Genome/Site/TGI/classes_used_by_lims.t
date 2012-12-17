@@ -39,8 +39,8 @@ my @apipe_classes_used_by_lims = (qw/
 
 diag("Perl Version: $]");
 for my $class ( @apipe_classes_used_by_lims ) {
-    my $cmd = "/gsc/bin/perl -MGenome -e '$class->class;'";
     $class->class; # Load the class here too so it can be tracked.
+    my $cmd = "/gsc/bin/perl -Mabove=Genome -e '$class->class;'";
     system "$cmd";
     is($?, 0, "$class is usable by LIMS");
 }
