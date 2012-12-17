@@ -368,8 +368,6 @@ is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_status')->a
 is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, 'Failed to set reference sequence build during processing instrument data! -14', 'Set tgi_lims_fail_message on rna 454 inst data (no ref)');
 is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 1, 'Set tgi_lims_fail_count to 1 on rna 454 inst data (no ref)');
 
-done_testing(); exit;
-
 # Test ?
 my $instrument_data_3 = Genome::InstrumentData::Solexa->create(
     id => '-102',
