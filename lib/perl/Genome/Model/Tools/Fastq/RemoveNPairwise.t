@@ -3,10 +3,9 @@ use strict;
 use warnings;
 use above "Genome";  # forces a 'use lib' when run directly from the cmdline
 use Test::More tests => 7;
-use FindBin qw($Bin);
 use File::Temp;
 
-my $datadir = $Bin . '/RemoveNPairwise.t.d';
+my $datadir = __FILE__ . '.d';
  
 my $fwd_fastq = $datadir . '/fwd.txt';
 my $rev_fastq = $datadir . '/rev.txt';

@@ -5,9 +5,8 @@ use warnings;
 
 use above 'Genome';
 use Test::More tests => 2;
-use FindBin qw($Bin);
 
-my $datadir = $Bin . '/454.t.d';
+my $datadir = __FILE__ . '.d';
 
 BEGIN {use_ok('Genome::Model::Tools::ContaminationScreen::454');}
 
