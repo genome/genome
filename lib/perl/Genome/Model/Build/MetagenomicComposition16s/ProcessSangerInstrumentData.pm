@@ -5,8 +5,6 @@ use warnings;
 
 use Genome;
 
-use Carp 'confess';
-
 class Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData {
     is => 'Command::V2',
     has => [
@@ -14,64 +12,86 @@ class Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentDa
             is => 'Genome::Model::Build',
             doc => 'The build, resolved via string.',
         },
-        _raw_reads_fasta_and_qual_writer => { is_optional => 1, is_transient => 1, },
+    ],
+    has_constant => [
+        amplicon_size => {
+            calculate_from => [qw/ build /],
+            calculate => q| 
+                my $string = $build->processing_profile->amplicon_processor;
+                return unless $string; #ok
+                my ($amplicon_size) = $string =~ /filter\s+by-min-length\s+--?length\s+(\d+)/;
+                return return $amplicon_size;
+                |,
+        },
+        chromat_dir => {
+            calculate => q| return $self->build->data_directory.'/chromat_dir'; |,
+        },
+        edit_dir => {
+            calculate => q| return $self->build->data_directory.'/edit_dir'; |,
+        },
+    ],
+    has_optional_transient => [
+        _raw_reads_fasta_and_qual_writer => { },
+        _processed_reads_fasta_and_qual_writer => { },
     ],
 };
 
 sub execute {
     my $self = shift;
 
-    $self->_dump_and_link_instrument_data
-        or return;
+    for my $subdir_name (qw/ chromat_dir edit_dir /) {
+        Genome::Sys->create_directory($self->$subdir_name);
+    }
 
-    my @amplicon_set_names = $self->build->amplicon_set_names;
-    Carp::confess('No amplicon set names for '.$self->description) if not @amplicon_set_names; # bad
-
-    my $fasta_file = $self->raw_reads_fasta_file;
-    unlink $fasta_file if -e $fasta_file;
-    my $qual_file = $self->raw_reads_qual_file;
-    unlink  $qual_file if -e $qual_file;
-    my $raw_reads_writer = Genome::Model::Tools::Sx::PhredWriter->create(
-        file => $fasta_file,
-        qual_file => $qual_file,
-    );
-    if ( not $raw_reads_writer ) {
-        $self->error_message('Failed to create phred reader for raw reads');
+    my @amplicon_sets = $self->build->amplicon_sets;
+    return if not @amplicon_sets;
+    if ( @amplicon_sets != 1 ) {
+        $self->error_message('Expected only 1 amplicon set to process sanger inst data!');
         return;
     }
-    $self->_raw_reads_fasta_and_qual_writer($raw_reads_writer);
 
+    my $link_ok = $self->_dump_and_link_instrument_data;
+    return if not $link_ok;
+
+    my $raw_reads_writer = $self->_create_raw_reads_writer;
+    return if not $raw_reads_writer;
+
+    my $processed_reads_writer = $self->_create_processed_reads_writer;
+    return if not $processed_reads_writer;
+
+    $DB::single = 1;
     my %assembler_params = $self->build->processing_profile->assembler_params_as_hash;
 
+    my $writer = $amplicon_sets[0]->seq_writer_for('processed');
+    return if not $writer;
+
+    my $amplicon_iterator = $self->_amplicon_iterator;
+    return if not $amplicon_iterator;
+
     my ($attempted, $processed, $reads_attempted, $reads_processed) = (qw/ 0 0 0 /);
-    for my $name ( @amplicon_set_names ) {
-        my $amplicon_set = $self->amplicon_set_for_name($name);
-        next if not $amplicon_set; # ok
+    while ( my $amplicon = $amplicon_iterator->() ) {
+        $attempted++;
+        $reads_attempted += @{$amplicon->{reads}};
+        my $prepare_ok = $self->_prepare($amplicon);
+        return if not $prepare_ok;
 
-        my $writer = $amplicon_set->seq_writer_for('processed');
-        return if not $writer;
+        my $trim_ok = $self->_trim($amplicon);
+        return if not $trim_ok;
 
-        while ( my $amplicon = $amplicon_set->next_amplicon ) {
-            $attempted++;
-            $reads_attempted += @{$amplicon->{reads}};
-            my $prepare_ok = $self->_prepare($amplicon);
-            return if not $prepare_ok;
+        my $assemble_ok = $self->_assemble($amplicon, %assembler_params);
+        return if not $assemble_ok;
 
-            my $trim_ok = $self->_trim($amplicon);
-            return if not $trim_ok;
+        $self->_clean_up($amplicon);
 
-            my $assemble_ok = $self->_assemble($amplicon, %assembler_params);
-            return if not $assemble_ok;
-
-            $self->_clean_up($amplicon);
-
-            $self->load_seq_for_amplicon($amplicon)
-                or next; # ok
-            $writer->write($amplicon->{seq});
-            $processed++;
-            $reads_processed += $amplicon->{reads_processed};
-        }
+        $self->load_seq_for_amplicon($amplicon)
+            or next; # ok
+        $writer->write($amplicon->{seq});
+        $processed++;
+        $reads_processed += $amplicon->{reads_processed};
     }
+
+    $self->_raw_reads_fasta_and_qual_writer->flush;
+    $self->_processed_reads_fasta_and_qual_writer->flush;
 
     $self->build->amplicons_attempted($attempted);
     $self->build->amplicons_processed($processed);
@@ -81,6 +101,117 @@ sub execute {
     $self->build->reads_processed_success( $reads_attempted > 0 ?  sprintf('%.2f', $reads_processed / $reads_attempted) : 0 );
 
     return 1;
+}
+
+sub _amplicon_iterator {
+    my $self = shift;
+
+    # open chromat_dir
+    my $dh = Genome::Sys->open_directory( $self->chromat_dir );
+    unless ( $dh ) {
+        $self->error_message("Can't open chromat dir to get reads. See above error.");
+        return;
+    }
+
+    # collect the read names
+    for (1..2) {  # . and ..
+        my $dot_dir = $dh->read;
+        Carp::confess("Expecting one of the dot directories, but got $dot_dir for ".$self->build->description) unless $dot_dir =~ /^\.{1,2}$/;
+    }
+    my @all_read_names;
+    while ( my $read_name = $dh->read ) {
+        $read_name =~ s/\.gz$//;
+        push @all_read_names, $read_name;
+    }
+    # make sure we got some 
+    unless ( @all_read_names ) {
+        $self->error_message( "No reads found in chromat dir! ".$self->chromat_dir);
+        return;
+    }
+    #sort
+    @all_read_names = sort { $a cmp $b } @all_read_names;
+
+    my $amplicon_name_reqgexp = qr/^(.+)\.[bg]\d+$/;
+    my $pos = 0;
+    return sub{
+        AMPLICON: while ( $pos < $#all_read_names ) {
+            # Get amplicon name
+            $all_read_names[$pos] =~ $amplicon_name_reqgexp;
+            my $amplicon_name = $1;
+            unless ( $amplicon_name ) {
+                Carp::confess('Could not determine amplicon name for read: '.$all_read_names[$pos]);
+            }
+            # Start reads list
+            my @read_names = ( $all_read_names[$pos] );
+            READS: while ( $pos < $#all_read_names ) {
+                # incremnent
+                $pos++;
+                # Get amplicon name
+                $all_read_names[$pos] =~ $amplicon_name_reqgexp;
+                my $read_amplicon_name = $1;
+                unless ( $read_amplicon_name ) {
+                    Carp::confess sprintf(
+                        'Could not determine amplicon name for %s read name (%s) for build (%s)',
+                        $all_read_names[$pos],
+                        $self->build->sequencing_center,
+                        $self->build->id,
+                    );
+                }
+                unless ( $read_amplicon_name eq $amplicon_name ) { 
+                    # go on to filtering
+                    last READS; 
+                }
+                push @read_names, $all_read_names[$pos]; # add read
+            }
+
+            # Create amplicon object
+            my $amplicon = {
+                name => $amplicon_name,
+                reads => \@read_names,
+            };
+
+            # Processed oseq
+            $self->load_seq_for_amplicon($amplicon); # dies on error
+
+            return $amplicon;
+        }
+    };
+}
+
+sub _create_raw_reads_writer {
+    my $self = shift;
+
+    my $fasta_file = $self->build->fasta_dir.'/'.$self->build->file_base_name.'.reads.raw.fasta';
+    my $qual_file = $fasta_file.'.qual';
+    my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
+        file => $fasta_file,
+        qual_file => $qual_file,
+    );
+    if ( not $writer ) {
+        $self->error_message('Failed to create raw reads writer');
+        return;
+    my $amplicon_name_reqgexp = qr/^(.+)\.[bg]\d+$/;
+    }
+
+    return $self->_raw_reads_fasta_and_qual_writer($writer);
+}
+
+sub _create_processed_reads_writer {
+    my $self = shift;
+
+    my $fasta_file = $self->build->fasta_dir.'/'.$self->build->file_base_name.'.reads.processed.fasta';
+    my $qual_file = $fasta_file.'.qual';
+    my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
+        file => $fasta_file,
+        qual_file => $qual_file,
+    );
+    if ( not $writer ) {
+    my $amplicon_name_reqgexp = qr/^(.+)\.[bg]\d+$/;
+        $self->error_message('Failed to create processed reads writer');
+        return;
+    }
+
+    return $self->_processed_reads_fasta_and_qual_writer($writer);
 }
 
 sub _dump_and_link_instrument_data {
@@ -107,15 +238,15 @@ sub _dump_and_link_instrument_data {
             );
             return;
         }
-        # link
 
+        # link
         my $instrument_data_dir = $instrument_data->full_path;
         my $dh = Genome::Sys->open_directory($instrument_data_dir);
         return if not $dh;
 
         for (1..2) {  # . and ..
             my $dot_dir = $dh->read;
-            confess("Expecting one of the dot directories, but got $dot_dir for ".$self->build->description) unless $dot_dir =~ /^\.{1,2}$/;
+            Carp::confess("Expecting one of the dot directories, but got $dot_dir for ".$self->build->description) unless $dot_dir =~ /^\.{1,2}$/;
         }
         my $cnt = 0;
         while ( my $trace = $dh->read ) {
@@ -213,49 +344,16 @@ sub _trim {
 
     next unless -s $fasta_file; # ok
 
-    my $qual_file = $fasta_file.'.qual';
-    $self->_add_amplicon_reads_fasta_and_qual_to_build_processed_fasta_and_qual(
-        $fasta_file, $qual_file
-    )
-        or return;
-
-    return 1;
-}
-
-sub _add_amplicon_reads_fasta_and_qual_to_build_processed_fasta_and_qual {
-    my ($self, $fasta_file, $qual_file) = @_;
-
-    # Write the 'raw' read fastas
     my $reader = Genome::Model::Tools::Sx::PhredReader->create(
         file => $fasta_file,
-        qual_file => $qual_file,
+        qual_file => $fasta_file.'.qual',
     );
     return if not $reader;
     while ( my $seq = $reader->read ) {
-        $self->_processed_reads_fasta_and_qual_writer->write($seq)
-            or return;
+        $self->_processed_reads_fasta_and_qual_writer->write($seq) or return;
     }
  
     return 1;
-}
-
-sub _processed_reads_fasta_and_qual_writer {
-    my $self = shift;
-
-    unless ( $self->{_processed_reads_fasta_and_qual_writer} ) {
-        my $fasta_file = $self->processed_reads_fasta_file;
-        unlink $fasta_file if -e $fasta_file;
-        my $qual_file = $self->processed_reads_qual_file;
-        unlink  $qual_file if -e $qual_file;
-        my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
-            file => $fasta_file,
-            qual_file => $qual_file,
-        );
-        return if not $writer;
-        $self->{_processed_reads_fasta_and_qual_writer} = $writer;
-    }
-
-    return $self->{_processed_reads_fasta_and_qual_writer};
 }
 
 sub _assemble {
@@ -299,185 +397,15 @@ sub _clean_up {
     return 1;
 }
 
-
-#< DIRS >#
-sub _sub_dirs {
-    return (qw/ chromat_dir edit_dir /);
-}
-
-sub edit_dir {
-    my $edit_dir = $_[0]->build->data_directory.'/edit_dir';
-    unless ( -d $edit_dir ) {
-        Genome::Sys->create_directory( $edit_dir );
-    }
-    return $edit_dir;
-}
-
-sub chromat_dir {
-    my $chromat_dir = $_[0]->build->data_directory.'/chromat_dir';
-    unless ( -d $chromat_dir ) {
-        Genome::Sys->create_directory( $chromat_dir );
-    }
-    return $chromat_dir;
-}
-
-#< Files >#
-# raw reads
-sub raw_reads_fasta_file {
-    return $_[0]->build->fasta_dir.'/'.$_[0]->build->file_base_name.'.reads.raw.fasta';
-}
-
-sub raw_reads_qual_file {
-    return $_[0]->raw_reads_fasta_file.'.qual';
-}
-
-# processsed reads
-sub processed_reads_fasta_file {
-    return $_[0]->build->fasta_dir.'/'.$_[0]->build->file_base_name.'.reads.processed.fasta';
-}
-
-sub processed_reads_qual_file {
-    return $_[0]->processed_reads_fasta_file.'.qual';
-}
-
-#< Amplicons >#
-sub amplicon_set_for_name { #moved from g:m:b:mc16s base class
-    my ($self, $set_name) = @_;
-
-    Carp::confess('No amplicon set name to get amplicon iterator') if not defined $set_name;
-
-    my $amplicon_set = Genome::Model::Build::MetagenomicComposition16s::AmpliconSet->create(
-        name => $set_name,
-        directory => $self->build->data_directory,
-        file_base_name => $self->build->file_base_name,
-        classifier => $self->build->classifier,
-    );
-
-    my $amplicon_iterator = $self->_amplicon_iterator_for_set($amplicon_set);
-    return if not $amplicon_iterator;
-    $amplicon_set->_amplicon_iterator($amplicon_iterator);
-
-    return $amplicon_set;
-}
-
-sub _amplicon_iterator_for_set {
-    my ($self, $amplicon_set) = @_;
-
-    # open chromt_dir
-    my $dh = Genome::Sys->open_directory( $self->chromat_dir );
-    unless ( $dh ) {
-        $self->error_message("Can't open chromat dir to get reads. See above error.");
-        return;
-    }
-    # collect the read names
-    my @all_read_names;
-    while ( my $read_name = $dh->read ) {
-        next if $read_name eq '.' or $read_name eq '..';
-        $read_name =~ s/\.gz$//;
-        push @all_read_names, $read_name;
-    }
-    # make sure we got some 
-    unless ( @all_read_names ) {
-        $self->error_message(
-            sprintf(
-                "No reads found in chromat dir of build (%s) data directory (%s)",
-                $self->build->id,
-                $self->build->data_directory,
-            )
-        );
-        return;
-    }
-    #sort
-    @all_read_names = sort { $a cmp $b } @all_read_names;
-
-    my $classification_file = $amplicon_set->classification_file;
-    my ($classification_io, $classification_line);
-    if ( -s $classification_file ) {
-        $classification_io = eval{ Genome::Sys->open_file_for_reading($classification_file); };
-        if ( not $classification_io ) {
-            $self->error_message('Failed to open classification file: '.$classification_file);
-            return;
-        }
-        $classification_line = $classification_io->getline;
-        chomp $classification_line;
-    }
-
-    my $amplicon_name_for_read_name = '_get_amplicon_name_for_gsc_read_name';
-    my $pos = 0;
-    return sub{
-        AMPLICON: while ( $pos < $#all_read_names ) {
-            # Get amplicon name
-            my $amplicon_name = $self->$amplicon_name_for_read_name($all_read_names[$pos]);
-            unless ( $amplicon_name ) {
-                Carp::confess('Could not determine amplicon name for read: '.$all_read_names[$pos]);
-            }
-            # Start reads list
-            my @read_names = ( $all_read_names[$pos] );
-            READS: while ( $pos < $#all_read_names ) {
-                # incremnent
-                $pos++;
-                # Get amplicon name
-                my $read_amplicon_name = $self->$amplicon_name_for_read_name($all_read_names[$pos]);
-                unless ( $read_amplicon_name ) {
-                    confess sprintf(
-                        'Could not determine amplicon name for %s read name (%s) for build (%s)',
-                        $all_read_names[$pos],
-                        $self->build->sequencing_center,
-                        $self->build->id,
-                    );
-                }
-                unless ( $read_amplicon_name eq $amplicon_name ) { 
-                    # go on to filtering
-                    last READS; 
-                }
-                push @read_names, $all_read_names[$pos]; # add read
-            }
-
-            # Create amplicon object
-            my $amplicon = {
-                name => $amplicon_name,
-                reads => \@read_names,
-            };
-
-            # Processed oseq
-            $self->load_seq_for_amplicon($amplicon); # dies on error
-
-            return $amplicon if not $classification_line;
-
-            my @classification = split(';', $classification_line); # 0 => id | 1 => ori
-            if ( not defined $classification[0] ) {
-                Carp::confess('Malformed classification line: '.$classification_line);
-            }
-            if ( $amplicon->{name} ne $classification[0] ) {
-                return $amplicon;
-            }
-
-            $classification_line = $classification_io->getline;
-            chomp $classification_line if $classification_line;
-
-            $amplicon->{classification} = \@classification;
-            return $amplicon;
-        }
-    };
-}
-
-sub _get_amplicon_name_for_gsc_read_name {
-    my ($self, $read_name) = @_;
-
-    $read_name =~ /^(.+)\.[bg]\d+$/
-        or return;
-
-    return $1;
-}
-
 sub load_seq_for_amplicon {
     my ($self, $amplicon) = @_;
 
     die "No amplicon to load seq." unless $amplicon;
 
     # get contig from acefile
-    my $acefile = $self->ace_file_for_amplicon($amplicon);
+    my $acefile = $self->edit_dir.'/'.$amplicon->{name}.'.fasta.ace';
     return unless -s $acefile; # ok
+
     my $ace = Genome::Model::Tools::Consed::AceReader->create(file => $acefile);
     my $contig;
     my $amplicon_size = ( $self->amplicon_size ) ? $self->amplicon_size : 0;
@@ -511,18 +439,5 @@ sub load_seq_for_amplicon {
     return $seq;
 }
 
-sub amplicon_size {
-    my $self = shift;
-    my $string = $self->build->processing_profile->amplicon_processor;
-    return unless $string; #ok
-
-    my ($amplicon_size) = $string =~ /filter\s+by-min-length\s+--?length\s+(\d+)/;
-    return return $amplicon_size;
-}
-
-sub ace_file_for_amplicon { #moved to build base .. remove
-    my ($self, $amplicon) = @_;
-    return $self->edit_dir.'/'.$amplicon->{name}.'.fasta.ace';
-}
-
 1;
+
