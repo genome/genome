@@ -154,7 +154,6 @@ sub create_subdirectories {
     my $self = shift;
     my @methods = (qw| classification_dir fasta_dir reports_dir |);
     push @methods, (qw/ chimera_dir /) if $self->processing_profile->chimera_detector;
-    push @methods, (qw/ chromat_dir edit_dir /) if $self->sequencing_platform eq 'sanger';
     for my $method ( @methods ) {
         my $directory =  $self->$method;
         my $create_directory = eval{ Genome::Sys->create_directory($directory); };
@@ -181,14 +180,6 @@ sub fasta_dir {
 
 sub reports_dir {
     return $_[0]->data_directory.'/reports';
-}
-
-sub edit_dir {
-    return $_[0]->data_directory.'/edit_dir';
-}
-
-sub chromat_dir {
-    return $_[0]->data_directory.'/chromat_dir';
 }
 #<>#
 
