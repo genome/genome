@@ -630,7 +630,8 @@ sub all_allocations {
     push @allocations, $self->disk_allocation if $self->disk_allocation;
 
     for my $input ($self->inputs) {
-        if ($input->value->isa('Genome::Model::Build')) {
+        my $value = $input->value;
+        if ($value and $value->isa('Genome::Model::Build')) {
             push @allocations, $input->value->all_allocations();
         }
         else {
