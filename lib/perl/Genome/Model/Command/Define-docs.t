@@ -56,7 +56,7 @@ if (@ARGV and $ARGV[0] eq 'REBUILD') {
     $actual_dir = $expected_dir;
 }
 elsif ($ARGV[0]) {
-    die "unexpected cmdline options @ARGV: expected nothing or 'REBUILD'";
+    die "unexpected cmdline options @ARGV: expected nothing or 'REBUILD', got " . $ARGV[0];
 }
 else {
     $actual_dir = Genome::Sys->create_temp_directory;
