@@ -139,6 +139,7 @@ sub _execute_build {
     $self->status_message("Configuration file created at $config_file_path, creating hap command object");
 
     Genome::Sys->create_symlink('/gscmnt/278/analysis/HGMI/Acedb', $build->data_directory . '/Acedb'); #FIXME Replace this hardcoded path
+    Genome::Sys->create_symlink('/gscmnt/278/analysis/HGMI/' . $build->org_dirname, $build->data_directory . '/' . $build->org_dirname); #FIXME Replace this hardcoded path
 
     my $hap_object = Genome::Model::Tools::Hgmi::Hap->create(
         config => $config_file_path,
