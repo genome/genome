@@ -12,3 +12,5 @@ BEGIN {
     use_ok('Genome::Model::Tools::Bacterial::TagOverlaps');
     use_ok('Genome::Model::Tools::Bacterial::AceDumpGenes');
 }
+
+1;

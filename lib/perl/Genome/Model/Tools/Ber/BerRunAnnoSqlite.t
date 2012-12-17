@@ -24,3 +24,5 @@ SKIP: {
     skip "writes to annotation dir",1; # should check if in gscana
     ok($tool_db->execute,'execute berrunannosqlite');
 };
+
+1;

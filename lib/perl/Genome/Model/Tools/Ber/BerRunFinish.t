@@ -34,3 +34,5 @@ SKIP: {
     skip "writes to annotation dir", 1;
     ok($tool_db->execute,'execute berrunfinish');
 };
+
+1;

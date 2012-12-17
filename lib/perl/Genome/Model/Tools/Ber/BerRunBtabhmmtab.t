@@ -28,3 +28,5 @@ SKIP: {
     skip "sends a couple thousand jobs to the blades.  needs a smaller data set for testing.", 1;
     ok($tool_db->execute,'execute berrunbtabhmmtab');
 };
+
+1;

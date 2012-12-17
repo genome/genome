@@ -147,3 +147,5 @@ SKIP: {
     ok(!$readcount_diff3, 'readcount file matches expected result')
         or diag("diff:\n" . $readcount_diff3);
 }
+
+1;

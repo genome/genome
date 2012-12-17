@@ -10,3 +10,5 @@ use File::Path;
 BEGIN {
         use_ok ('Genome::Model::Tools::Fasta::Dust');
 }
+
+1;

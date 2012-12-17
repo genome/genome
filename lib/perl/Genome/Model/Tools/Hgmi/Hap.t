@@ -35,3 +35,5 @@ BEGIN {
 #
 #ok($h3->execute());
 ##
+
+1;

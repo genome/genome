@@ -33,3 +33,5 @@ ok(%{$intermediate_gene_name_reports}, 'Intermediate_gene_name_reports for P5185
 ok(%{$entrez_gene_name_reports}, "Found: HOR5'BETA6");
 ok(!$intermediate_gene_name_reports, "No intermediate_gene_name_reports for HOR5'BETA6");
 }
+
+1;

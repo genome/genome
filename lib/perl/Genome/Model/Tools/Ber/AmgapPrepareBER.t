@@ -36,3 +36,5 @@ SKIP: {
     skip "this craps a ton of files into your current directory:(",1;
     ok($tool_db->execute,'execute amgapprepareber');
 };
+
+1;

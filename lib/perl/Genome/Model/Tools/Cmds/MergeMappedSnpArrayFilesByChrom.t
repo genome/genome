@@ -12,3 +12,5 @@ BEGIN {
 
     use_ok('Genome::Model::Tools::Cmds::MergeMappedSnpArrayFilesByChrom');
 }
+
+1;

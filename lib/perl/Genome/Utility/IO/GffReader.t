@@ -31,3 +31,5 @@ while (my $gtf_data = $gtf_reader->next_with_attributes_hash_ref) {
     my $attributes = $gtf_data->{attributes_hash_ref};
     #print Data::Dumper::Dumper($attributes) ."\n";
 }
+
+1;

@@ -48,3 +48,5 @@ SKIP: {
 #print join(" ",@$res),"\n";
 
 # remove \1, $removepath;
+
+1;

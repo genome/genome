@@ -56,3 +56,5 @@ ok(-e "$tmp/$name/report.txt", 'text report is present');
 ok(-e "$tmp/$name/report.html", 'html report is present');
 
 rmtree();
+
+1;

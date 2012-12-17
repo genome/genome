@@ -7,3 +7,5 @@ use Test::More tests => 1;
 BEGIN {
     use_ok("Genome::Model::Build::GenePrediction::Bacterial");
 }
+
+1;
