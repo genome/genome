@@ -212,20 +212,6 @@ sub processed_qual_files {
     return map { $_->processed_qual_file } $self->amplicon_sets;
 }
 
-sub combined_original_fasta_file {
-    my $self = shift;
-    return sprintf(
-        '%s/%s.%s.fasta',
-        $self->fasta_dir,
-        $self->file_base_name,
-        'original',
-    );
-}
-
-sub combined_original_qual_file {
-    return $_[0]->combined_original_fasta_file.'.qual';
-}
-
 sub combined_original_fastq_file {
     my $self = shift;
     return sprintf(
