@@ -6,8 +6,9 @@ use warnings;
 use Genome;
 
 require Carp;
-require Mail::Sendmail;
 require File::Basename;
+require Mail::Sendmail;
+use Switch;
 
 class Genome::Model::Build::MetagenomicComposition16s {
     is => 'Genome::Model::Build',
@@ -85,8 +86,7 @@ sub description {
     my $self = shift;
 
     return sprintf(
-        'metagenomic composition 16s %s build (%s) for model (%s %s)',
-        $self->sequencing_platform,
+        'metagenomic composition 16s build (%s) for model (%s %s)',
         $self->id,
         $self->model->name,
         $self->model->id,
@@ -97,8 +97,9 @@ sub description {
 sub amplicon_sets {
     my $self = shift;
 
-    my $sequencing_platform = $self->processing_profile->sequencing_platform;
-    my %amplicon_set_names_and_primers = Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($sequencing_platform);
+    my %amplicon_set_names = map { $_->sequencing_platform => 1 } $self->instrument_data;
+    my $amplicon_set_name = (keys %amplicon_set_names)[0];
+    my %amplicon_set_names_and_primers = Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($amplicon_set_name);
     my @amplicon_sets;
     for my $set_name ( sort { $a cmp $b } keys %amplicon_set_names_and_primers ) {
         push @amplicon_sets, Genome::Model::Build::MetagenomicComposition16s::AmpliconSet->create(
@@ -135,7 +136,6 @@ sub amplicon_sets_for_processing {
 
     return @amplicon_sets;
 }
-
 #<>#
 
 #< Dirs >#
@@ -1027,60 +1027,24 @@ sub perform_post_success_actions {
 sub calculate_estimated_kb_usage {
     my $self = shift;
 
-    #could also derive seq platform from inst data
-    my $method = 'calculate_estimated_kb_usage_'.$self->processing_profile->sequencing_platform;
-    unless ( $self->can( $method ) ) {
-         $self->error_message( "Failed to find method to estimate kb usage for sequencing platform: ".$self->processing_profile->sequencing_platform );
-         return;
-    }
-    return $self->$method;
-}
-
-sub calculate_estimated_kb_usage_solexa {
-    my $self = shift;
-
-    my $instrument_data_count = $self->instrument_data_count;
-    if ( not $instrument_data_count > 0 ) {
+    my @instrument_data = $self->instrument_data;
+    if ( not @instrument_data ) {
         Carp::confess( "No instrument data found for ".$self->description );
     }
 
-    my $kb = $instrument_data_count * 500_000; #TODO .. not sure what best value is
-
-    return ( $kb );
-}
-
-sub calculate_estimated_kb_usage_454 {
-    # Based on the total reads in the instrument data. The build needs about 3 kb (use 3.5) per read.
-    #  So request 5 per read or at least a MiB
-    #  If we don't keep the classifications around, then we will have to lower this number.
-    my $self = shift;
-
-    my @instrument_data = $self->instrument_data;
-    unless ( @instrument_data ) { # very bad; should be checked when the build is create
-        Carp::confess("No instrument data found for ".$self->description);
-    }
-
-    my $total_reads = 0;
+    my $est_kb_usage = 0;
     for my $instrument_data ( @instrument_data ) {
-        $total_reads += $instrument_data->total_reads;
+        my $sequencing_platform = $instrument_data->sequencing_platform;
+        switch ($sequencing_platform) {
+               case '454'    { $est_kb_usage += $instrument_data->read_count * 5 * 1024 }
+               case 'sanger' { $est_kb_usage += 30_000 }
+               case 'solexa' { $est_kb_usage += 500_000 } # FIXME update once implemented
+               else          { Carp::confess('Unknown sequencing platform! '.$sequencing_platform) }
+           }
     }
 
-    my $kb = $total_reads * 5;
-    return ( $kb >= 1024 ? $kb : 1024 );
+    return ( $est_kb_usage >= 1024 ? $est_kb_usage : 1024 );
 }
-
-sub calculate_estimated_kb_usage_sanger {
-    # Each piece of instrument data uses about 30Mb of space. Adjust if more files are removed
-    my $self = shift;
-
-    my $instrument_data_count = $self->instrument_data_count;
-    unless ( $instrument_data_count ) { # very bad; should be checked when the build is created
-        Carp::confess("No instrument data found for build ".$self->description);
-    }
-
-    return $instrument_data_count * 30000;
-}
-
 
 #< Diff >#
 sub dirs_ignored_by_diff {

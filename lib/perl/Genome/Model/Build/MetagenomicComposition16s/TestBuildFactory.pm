@@ -52,53 +52,54 @@ sub sample {
 sub build_with_example_build {
     my ($sequencing_platform) = @_;
 
-    return ( $entities{build}, $entities{example_build} ) if $entities{build};
+    return ( $entities{'build_'.$sequencing_platform}, $entities{'example_build_'.$sequencing_platform} ) if $entities{'build_'.$sequencing_platform};
 
-    $entities{pp} = Genome::ProcessingProfile->__define__(
+    my $pp = Genome::ProcessingProfile->__define__(
         id => --$id,
         type_name => 'metagenomic composition 16s',
         sequencing_platform => $sequencing_platform,
         %{$pp_params{$sequencing_platform}},
-    ) if not $entities{pp};
+    );
+    die 'Failed to create MC16s processing profile!' if not $pp;
 
     my $sample = sample();
-    $entities{model} = Genome::Model::MetagenomicComposition16s->__define__(
+    my $model = Genome::Model::MetagenomicComposition16s->__define__(
         id => --$id,
         name => '__TEST_MC16S_MODEL__',
-        processing_profile => $entities{pp},
+        processing_profile => $pp,
         subject_name => $sample->name,
         subject_type => 'sample_name'
-    ) if not $entities{model};
-    die 'Failed to create MC16s model!' if not $entities{model};
+    );
+    die 'Failed to create MC16s model!' if not $model;
 
-    $entities{build} = Genome::Model::Build::MetagenomicComposition16s->create(
+    $entities{'build_'.$sequencing_platform} = Genome::Model::Build::MetagenomicComposition16s->create(
         id => --$id,
-        model => $entities{model},
+        model => $model,
         data_directory => File::Temp::tempdir(CLEANUP => 1),
     );
-    die 'Failed to create MC16s model!' if not $entities{build};
-    $entities{build}->create_subdirectories;
+    die 'Failed to create MC16s model!' if not $entities{'build_'.$sequencing_platform};
+    $entities{'build_'.$sequencing_platform}->create_subdirectories;
 
-    $entities{example_build} = Genome::Model::Build->create(
-        model=> $entities{model},
+    $entities{'example_build_'.$sequencing_platform} = Genome::Model::Build->create(
+        model=> $model,
         id => --$id,
-    ) if not $entities{example_build};
-    die 'Failed to create MC16s model!' if not $entities{example_build};
+    );
+    die 'Failed to create MC16s model!' if not $entities{'example_build_'.$sequencing_platform};
 
     my %example_data_directories = (
         454 => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/build_v5.2chimeras', # start w/ 2 chimeras
         sanger => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16sSanger/build_v3',
     );
-    $entities{example_build}->data_directory( $example_data_directories{$sequencing_platform} ) or die 'Failed to get example data directory!';
-    $entities{example_build}->the_master_event->event_status('Succeeded');
+    $entities{'example_build_'.$sequencing_platform}->data_directory( $example_data_directories{$sequencing_platform} ) or die 'Failed to get example data directory!';
+    $entities{'example_build_'.$sequencing_platform}->the_master_event->event_status('Succeeded');
 
     my $instrument_data_method = 'instrument_data_'.$sequencing_platform;
     my $instrument_data = __PACKAGE__->$instrument_data_method;
-    $entities{model}->add_instrument_data($instrument_data) or die 'Failed to add instrument data to model!';
-    $entities{build}->add_instrument_data($instrument_data) or die 'Failed to add instrument data to build!';
-    $entities{example_build}->add_instrument_data($instrument_data) or die 'Failed to add instrument data to example build!';
+    $model->add_instrument_data($instrument_data) or die 'Failed to add instrument data to model!';
+    $entities{'build_'.$sequencing_platform}->add_instrument_data($instrument_data) or die 'Failed to add instrument data to build!';
+    $entities{'example_build_'.$sequencing_platform}->add_instrument_data($instrument_data) or die 'Failed to add instrument data to example build!';
 
-    return ($entities{build}, $entities{example_build});
+    return ($entities{'build_'.$sequencing_platform}, $entities{'example_build_'.$sequencing_platform});
 }
 
 sub build_with_example_build_for_454 {
@@ -115,6 +116,7 @@ sub instrument_data_454 {
         run_name => 'R_2010_01_09_11_08_12_FLX08080418_Administrator_100737113',
         region_number => 3,
         total_reads => 20,
+        read_count => 20,
         library => $library,
         sequencing_platform => '454',
         archive_path =>  $inst_data_dir.'/archive.tgz',
