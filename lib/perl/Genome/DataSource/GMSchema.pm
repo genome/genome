@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 use Carp;
 use File::lockf;
+use DBD::Pg;
 
 
 class Genome::DataSource::GMSchema {
@@ -48,6 +49,22 @@ sub _sync_database {
     my %params = @_;
 
     local $THIS_COMMIT_ID = UR::Object::Type->autogenerate_new_object_id_uuid();
+    
+    my $required_pg_version = '2.19.3';
+
+    my $pg_version = $DBD::Pg::VERSION;
+    if ($pg_version ne $required_pg_version) {
+        $self->error_message("**** INCORRECT POSTGRES DRIVER VERSION ****\n" .
+                             "You are using a Perl version that includes an incorrect DBD::Pg driver.\n" .
+                             "You are running $pg_version and need to be running $required_pg_version.\n" .
+                             "Your sync has been aborted to protect data integrity in the Postgres database.\n" .
+                             "Please be sure you are using 'genome-perl' and not /gsc/bin/perl.\n\n\n" .
+                             "This event has been logged with apipe; if you are unsure of why you received this message\n" .
+                             "open an apipe-support ticket with the date/time of occurrence and we will assist you.\n");
+        log_error($self->error_message);
+        die $self->error_message;
+    }
+
 
     # Not disconnecting/forking with no commit on to prevent transactions from being
     # closed, which can cause failures in tests that have multiple commits.
@@ -173,18 +190,7 @@ sub _sync_database {
                 $error .= "EXCEPTION:" . $@ if $@;
                 $error .= "STDERR: " . $stderr if $stderr;
 				print $error, "\n";
-                my $log_string = create_log_message($error);
-                my $log_fh = open_error_log();
-                # If we can't get a file handle to the log file, no worries. Just continue without making a peep.
-                if ($log_fh) {
-                    my $lock_status = File::lockf::lock($log_fh);
-                    # this returns 0 on success
-                    unless ($lock_status != 0) {
-                        $log_fh->print("$log_string\n");
-                        File::lockf::ulock($log_fh);
-                    }
-                    $log_fh->close;
-                }
+                log_error($error);
             }
             log_commit_time('pg',$sync_time_duration);
         };
@@ -197,19 +203,26 @@ sub _sync_database {
     return 1;
 }
 
+sub log_error {
+    my $error = shift;
+    my $log_string = create_log_message($error);
+    my $log_fh = open_error_log();
+    # If we can't get a file handle to the log file, no worries. Just continue without making a peep.
+    if ($log_fh) {
+        my $lock_status = File::lockf::lock($log_fh);
+        # this returns 0 on success
+        unless ($lock_status != 0) {
+            $log_fh->print("$log_string\n");
+            File::lockf::ulock($log_fh);
+        }
+        $log_fh->close;
+    }
+}
+
 sub log_commit_time {
     my($db_name, $time) = @_;
 
-    # See if this process was started from the commandline
-    my @commands;
-    if ($INC{'Command/V2.pm'}) {
-        push @commands, Command::V2->get('original_command_line true' => 1);
-    }
-    if ($INC{'Command/V1.pm'}) {
-        push @commands, Command::V1->get('original_command_line true' => 1);
-    }
-    @commands = sort { $a->id cmp $b->id } @commands;
-    my $original_cmdline = $commands[0] ? $commands[0]->original_command_line : $0;
+    my $original_cmdline = get_command_line();
     my $execution_id = $ENV{'GENOME_EXECUTION_ID'} || '';
 
     my $path = _determine_base_log_pathname();
@@ -230,6 +243,21 @@ sub log_commit_time {
 }
 
 
+sub get_command_line {
+    my @commands;
+    if ($INC{'Command/V2.pm'}) {
+        push @commands, Command::V2->get('original_command_line true' => 1);
+    }
+    if ($INC{'Command/V1.pm'}) {
+        push @commands, Command::V1->get('original_command_line true' => 1);
+    }
+    @commands = sort { $a->id cmp $b->id } @commands;
+    my $original_cmdline = $commands[0] ? $commands[0]->original_command_line : $0;
+
+    return $original_cmdline;
+}
+
+
 sub create_log_message {
     my $error = shift;
 
@@ -239,11 +267,17 @@ sub create_log_message {
     my $date = $dt->ymd;
     my $time = $dt->hms;
     my $user = Genome::Sys->username;
+    my $acting_user = getlogin();
+    my $perl_path = $^X;
+
+    my $original_cmdline = get_command_line();
+
+    my $path = _determine_base_log_pathname();
 
     require Sys::Hostname;
     my $host = Sys::Hostname::hostname();
 
-    my $string = join("\n", join(',', $date, $time, $host, $user, $THIS_COMMIT_ID), $error);
+    my $string = join("\n", join(',', $date, $time, $host, $user, $acting_user, $perl_path, $original_cmdline, $THIS_COMMIT_ID), $error);
     return $string;
 }
 
