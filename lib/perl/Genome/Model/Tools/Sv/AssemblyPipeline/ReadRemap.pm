@@ -1,33 +1,19 @@
 package Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap;
 
-class Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap {
-        is => 'Genome::Model::Tools::Sv::AssemblyPipeline'
-};
-
-#
-#   Run on 64-bit machine
-#
-#
-#
-#
-#
-
 use strict;
 use warnings;
 
+use Genome;
 use Carp;
-use FindBin qw($Bin);
-use lib "$FindBin::Bin";
-use PostData;
-#use lib "/gscuser/jwallis/svn/perl_modules/test_project/jwallis";
-#use Genome::Model::Tools::Sv::AssemblyPipeline::Hits;
+
+class Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap {
+    is => 'Genome::Model::Tools::Sv::AssemblyPipeline',
+};
 
 # This is used to parse the cross_match hits
-my $number = "\\d+\\.?\\d*";
-my $deleted = "\\(\\s*\\d+\\s*\\)";
-my $AlignmentLine = "($number)\\s+($number)\\s+($number)\\s+($number)\\s+(\\S+)\\s+(\\d+)\\s+(\\d+)\\s+($deleted)\\s+(C\\s+)?(\\S+)\\s+($deleted)?\\s*(\\d+)\\s+(\\d+)\\s*($deleted)?";
-
-
+my $number = '\d+\.?\d*';
+my $deleted = '\(\s*\d+\s*\)';
+my $alignment_line_regex = qr{($number)\s+($number)\s+($number)\s+($number)\s+(\S+)\s+(\d+)\s+(\d+)\s+($deleted)\s+(C\s+)?(\S+)\s+($deleted)?\s*(\d+)\s+(\d+)\s*($deleted)?};
 
 sub getReads {
     # Input: '$chr' (fasta header used to create *.bam file)
@@ -76,124 +62,57 @@ sub getAssemblySequences {
     return $idRef;
 }
 
-sub getBuild36ReferenceSequences {
-    # Input: ref to hash with key = "$chrA.$bpA.$chrB.$bpB", output file, $buffer
-    # Use 'expiece' to write region +/- $buffer of each position
-    # Chromosome-specific reference sequences are at:
-    # /gscmnt/sata180/info/medseq/biodb/shared/Hs_build36/Homo_sapiens.NCBI36.45.dna.chromosome.$chr.fa
+sub get_reference_sequences {
+    my $class = shift;
+    my ($reference_fa, $position_ref, $output_file, $buffer) = @_;
 
-    my ($positionRef, $outputFile, $buffer) = @_;
-    my ( $position, $remove, $chrA, $bpA, $chrB, $bpB, $start, $stop, @output, $seq, );
-    if (!defined $buffer) { $buffer = 500; }
+    $buffer //= 500; #default
+    my $output_fh = Genome::Sys->open_file_for_writing($output_file);
 
-    open(OUT, "> $outputFile") || confess "Could not open '$outputFile' for output: $!";
-
-    # This is what the fasta header looks like when using 'expiece'.
-    # Want to remove the full path to the chromosome
-    $remove = "\/gscmnt\/sata180\/info\/medseq\/biodb\/shared\/Hs_build36\/Homo_sapiens.NCBI36.45.dna.chromosome.";
-
-    foreach $position ( sort keys %{$positionRef} ) {
-        if ( $position =~ /(\w+)\.(\d+)\.(\w+)\.(\d+)/ ) {
-            $chrA = $1; $bpA = $2; $chrB = $3; $bpB = $4;
-        } else {
+    for my $position (sort keys %$position_ref) {
+        my ($chr_a, $pos_a, $chr_b, $pos_b) = split("\t", $position);
+        unless($chr_a && $pos_a && $chr_b && $pos_b) {
             confess "Unexpected format for position: '$position'";
         }
 
-        # Do first coordinate
-        $start = $bpA - $buffer;
-        $stop = $bpA + $buffer;
-        my $chrFile = "/gscmnt/sata180/info/medseq/biodb/shared/Hs_build36/Homo_sapiens.NCBI36.45.dna.chromosome.$chrA.fa";
-        open(EXP, "expiece $start $stop $chrFile |") || confess "Could not open pipe for 'expiece $start $stop $chrFile'";
-        @output = <EXP>;
-        close EXP;
-        foreach my $seq (@output) {
-            chomp $seq;
-            if ( $seq =~ />/ ) { 
-                $seq =~ s/$remove//;
-                $seq =~ s/fa from $start to $stop/$start.$stop/;
+        for my $coordinate ([$chr_a, $pos_a], [$chr_b, $pos_b]) {
+            my ($chr, $pos) = @$coordinate;
+            my $start = $pos - $buffer;
+            my $stop = $pos + $buffer;
+
+            open my $seq_fh, '-|', 'samtools', 'faidx', $reference_fa, "$chr:$start-$stop"
+                or confess "Failed to open samtools command for reference $reference_fa";
+
+            while(my $line = <$seq_fh>) {
+                if($line =~ />/) {
+                    $line = ">$start.$stop\n";
+                }
+
+                $output_fh->print($line);
             }
-            print OUT "$seq\n";
+            close $seq_fh;
+            $output_fh->print("\n");
         }
 
-        # Do second coordinate
-        $start = $bpB - $buffer;
-        $stop = $bpB + $buffer;
-        $chrFile = "/gscmnt/sata180/info/medseq/biodb/shared/Hs_build36/Homo_sapiens.NCBI36.45.dna.chromosome.$chrB.fa";
-        open(EXP, "expiece $start $stop $chrFile |") || confess "Could not open pipe for 'expiece $start $stop $chrFile'";
-        @output = <EXP>;
-        close EXP;
-        foreach my $seq (@output) {
-            chomp $seq;
-            if ( $seq =~ />/ ) { 
-                $seq =~ s/$remove//;
-                $seq =~ s/fa from $start to $stop/$start.$stop/;
-            }
-            print OUT "$seq\n";
-        }
+    }
 
+    close($output_fh);
 
-    } # matches 'foreach $position'
-    close OUT;
+    return 1;
+}
+
+#legacy hardcoded functions for the above
+sub getBuild36ReferenceSequences {
+    my $class = shift;
+    my ($positionRef, $outputFile, $buffer) = @_;
+
+    return $class->get_reference_sequences('/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa', $positionRef, $outputFile, $buffer);
 }
 sub getBuild37ReferenceSequences {
-    # Input: ref to hash with key = "$chrA.$bpA.$chrB.$bpB", output file, $buffer
-    # Use 'expiece' to write region +/- $buffer of each position
-    # Chromosome-specific reference sequences are at:
-    # /gscmnt/ams1102/info/model_data/2869585698/build106942997/$chr.fa
-
+    my $class = shift;
     my ($positionRef, $outputFile, $buffer) = @_;
-    my ( $position, $remove, $chrA, $bpA, $chrB, $bpB, $start, $stop, @output, $seq, );
-    if (!defined $buffer) { $buffer = 500; }
 
-    open(OUT, "> $outputFile") || confess "Could not open '$outputFile' for output: $!";
-
-    # This is what the fasta header looks like when using 'expiece'.
-    # Want to remove the full path to the chromosome
-    $remove = "\/gscmnt\/ams1102\/info\/model_data\/2869585698\/build106942997\/";
-    #$remove = "\/gscmnt\/sata180\/info\/medseq\/biodb\/shared\/Hs_build36\/Homo_sapiens.NCBI36.45.dna.chromosome.";
-
-    foreach $position ( sort keys %{$positionRef} ) {
-        if ( $position =~ /(\w+)\.(\d+)\.(\w+)\.(\d+)/ ) {
-            $chrA = $1; $bpA = $2; $chrB = $3; $bpB = $4;
-        } else {
-            confess "Unexpected format for position: '$position'";
-        }
-
-        # Do first coordinate
-        $start = $bpA - $buffer;
-        $stop = $bpA + $buffer;
-        my $chrFile = "/gscmnt/ams1102/info/model_data/2869585698/build106942997/$chrA.fa";
-        open(EXP, "expiece $start $stop $chrFile |") || confess "Could not open pipe for 'expiece $start $stop $chrFile'";
-        @output = <EXP>;
-        close EXP;
-        foreach my $seq (@output) {
-            chomp $seq;
-            if ( $seq =~ />/ ) { 
-                $seq =~ s/$remove//;
-                $seq =~ s/fa from $start to $stop/$start.$stop/;
-            }
-            print OUT "$seq\n";
-        }
-
-        # Do second coordinate
-        $start = $bpB - $buffer;
-        $stop = $bpB + $buffer;
-        $chrFile = "/gscmnt/ams1102/info/model_data/2869585698/build106942997/$chrB.fa";
-        open(EXP, "expiece $start $stop $chrFile |") || confess "Could not open pipe for 'expiece $start $stop $chrFile'";
-        @output = <EXP>;
-        close EXP;
-        foreach my $seq (@output) {
-            chomp $seq;
-            if ( $seq =~ />/ ) { 
-                $seq =~ s/$remove//;
-                $seq =~ s/fa from $start to $stop/$start.$stop/;
-            }
-            print OUT "$seq\n";
-        }
-
-
-    } # matches 'foreach $position'
-    close OUT;
+    return $class->get_reference_sequences('/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa', $positionRef, $outputFile, $buffer);
 }
 
 
@@ -328,7 +247,7 @@ sub createHitObjects {
 
     foreach $line ( @allCrossMatch ) {
         chomp $line;
-        if ( $line =~ /$AlignmentLine/ ) {
+        if ( $line =~ $alignment_line_regex ) {
             $hit = Genome::Model::Tools::Sv::AssemblyPipeline::Hits->new;
             $hit->addCrossMatchLine($line);
             $query = $hit->queryName();
@@ -358,7 +277,7 @@ sub createHitObjects {
 
     return \%hitList;
 }
- 
+
 sub crossMatchHitPassesFilter {
     # Input: Hits.pm object
     # Return: 1 if passes criteria
@@ -488,7 +407,7 @@ sub uniqueCrossMatchAlignments {
     # Now make a new hash of Hits objects
     foreach my $id ( keys %uniqueAlignments ) {
         $line = $uniqueAlignments{$id};
-        ($line =~ /$AlignmentLine/ ) || confess "'$line' is not an alignment line";
+        ($line =~ $alignment_line_regex ) || confess "'$line' is not an alignment line";
         $hit = Genome::Model::Tools::Sv::AssemblyPipeline::Hits->new;
         $hit->addCrossMatchLine($line);
         my $query = $hit->queryName();
@@ -523,7 +442,7 @@ sub isCrossMatchAlignmentLine {
     # Returns 0 or 1 depending on whether line matches expected cross_match ouput line
     my $line = $_[0];
     if ( !defined $line || $line !~ /\w+/ ) { return 0; }
-    return ( $line =~ /$AlignmentLine/ );
+    return ( $line =~ $alignment_line_regex );
 }
 
 
@@ -818,7 +737,7 @@ sub alleleCount  {
     foreach my $line ( @{$crossMatchResults} ) {
         chomp $line;
 
-        if ( $line !~ /$AlignmentLine/ ) { next; }
+        if ( $line !~ $alignment_line_regex ) { next; }
 
 
         my $hit = new Hits;

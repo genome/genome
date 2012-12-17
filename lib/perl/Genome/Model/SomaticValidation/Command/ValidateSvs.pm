@@ -70,11 +70,6 @@ sub execute {
 
     my ($merged_output_file, $merged_fasta_file) = $self->_generate_merged_callset();
 
-    unless($ref_seq_build->subject->name eq 'human' and $ref_seq_build->version eq '36' or $ref_seq_build->version eq '37') {
-        #FIXME This is horrible--why not pass the FASTA or something?
-        die $self->error_message("The 'RemapReads' tool is hardcoded to only support human build 36/37");
-    }
-
     my $readcount_output = "$merged_output_file.readcounts";
     my $validation_remap_cmd = Genome::Model::Tools::Sv::AssemblyPipeline::RemapReads->create(
         assembly_file => $merged_fasta_file,
@@ -83,7 +78,7 @@ sub execute {
         normal_bam => $normal_val_bam,
         patient_id => "VAL.$patient_id",
         output_file => $readcount_output,
-        build => $ref_seq_build->version,
+        reference_fasta => $ref_seq_build->full_consensus_path('fa'),
     );
     unless($validation_remap_cmd->execute) {
         die $self->error_message('Failed to run remap-reads on validation data');
