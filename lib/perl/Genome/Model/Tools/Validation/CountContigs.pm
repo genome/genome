@@ -134,7 +134,8 @@ sub _count_across_range {
     my ($self, $alignment_file, $chr, $pos1, $pos2) = @_;
 
     my $samtools_exec = $self->_samtools_exec;
-    unless(open(SAMTOOLS, "$samtools_exec view -F 0x404 $alignment_file $chr:$pos1-$pos2 |")) { #this requires that they be unique
+    my $cmd = "$samtools_exec view -F 0x404 \"$alignment_file\" \'$chr\':$pos1-$pos2 |";
+    unless(open(SAMTOOLS, $cmd)) { #this requires that they be unique
         $self->error_message("Unable to open pipe to samtools view");
         return;
     }
