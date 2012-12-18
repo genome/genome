@@ -103,7 +103,7 @@ sub execute {
             normal_bam => $normal_wgs_bam,
             patient_id => "WGS.$patient_id",
             output_file => "$readcount_output.somatic.wgs_readcounts",
-            build => $ref_seq_build->version,
+            reference_fasta => $ref_seq_build->full_consensus_path('fa'),
         );
         unless($wgs_remap_cmd->execute) {
             die $self->error_message('Failed to run remap-reads on wgs data');
