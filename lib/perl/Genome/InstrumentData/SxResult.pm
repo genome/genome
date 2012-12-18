@@ -21,13 +21,21 @@ class Genome::InstrumentData::SxResult {
         },
         output_file_count => {
             is => 'Number',
+            is_optional => 1,
             valid_values => [1,2],
             doc => 'The number of output files to write to',
         },
         output_file_type => {
             is => 'Text',
+            is_optional => 1,
             valid_values => ['sanger','illumina','phred','fasta','bed'],
             doc => 'The type of output file to produce',
+        },
+        output_file_config => {
+            is => 'Text',
+            is_many => 1,
+            is_optional => 1,
+            doc => 'The SX output file config. See "gmt sx --h" for help.',
         },
     ],
     has => [
@@ -55,31 +63,32 @@ sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
 
-    my $instrument_data = $self->instrument_data;
-
-
     $self->_prepare_staging_directory;
 
-    $self->status_message('Process instrument data '.$instrument_data->__display_name__ );
-
+    $self->status_message('Process instrument data '.$self->instrument_data->__display_name__ );
     my $process_ok = $self->_process_instrument_data;
     if(not $process_ok) {
         $self->delete;
         return;
     }
-
     $self->status_message('Process instrument data...OK');
 
-    $self->status_message('Verify assembler input files');
+    $self->status_message('Verify output files...');
     my @output_files = $self->read_processor_output_files;
+    my $existing_cnt = 0;
     foreach my $output_file (@output_files) {
-        if ( not -s $self->temp_staging_directory.'/'.
-                $output_file) {
-            $self->error_message('Output file '.$output_file.
-                ' was not created');
-            $self->delete;
-            return;
+        my $temp_staging_output_file = $self->temp_staging_directory.'/'.$output_file;
+        if ( not -s $temp_staging_output_file ) {
+            unlink $temp_staging_output_file;
         }
+        else { 
+            $existing_cnt++;
+        }
+    }
+    if ( not $existing_cnt ) {
+        $self->error_message('No output files were created!');
+        $self->delete;
+        return;
     }
     if (not -s $self->temp_staging_directory.'/'.
             $self->read_processor_output_metric_file) {
@@ -93,7 +102,7 @@ sub create {
         $self->delete;
         return;
     }
-    $self->status_message('Verify assembler input files...OK');
+    $self->status_message('Verify output files...OK');
 
     $self->status_message('Process instrument data...OK');
 
@@ -131,27 +140,19 @@ sub read_processor_input_metric_file {
 sub read_processor_output_files {
     my $self = shift;
 
-    my $output_file_count = $self->output_file_count;
+    my @output_config_params = $self->_output_config_params;
+    return if not @output_config_params;
 
-    if ($output_file_count == 1) {
-        my $file_name = 
-            $self->instrument_data_id.'.'.
-            $self->output_file_suffix;
-        return ($file_name);
-    }
-    elsif ($output_file_count == 2) {
-        my $file_name_1 = 
-            $self->instrument_data_id.'.1.'.
-            $self->output_file_suffix;
-        my $file_name_2 = 
-            $self->instrument_data_id.'.2.'.
-            $self->output_file_suffix;
-        return ($file_name_1,$file_name_2);
-    }
-    else {
-        $self->error_message('Can only handle 1 or 2 output files');
-        die $self->error_message();
-    }
+    return ( map { $_->{basename} } @output_config_params );
+}
+
+sub read_processor_output_file_paths {
+    my $self = shift;
+
+    my @read_processor_output_files = $self->read_processor_output_files;
+    return if not @read_processor_output_files;
+
+    return ( map { $self->output_dir.'/'.$_ } @read_processor_output_files );
 }
 
 sub _process_instrument_data {
@@ -159,31 +160,9 @@ sub _process_instrument_data {
     my $instrument_data = $self->instrument_data;
     $self->status_message('Process: '.join(' ', map { $instrument_data->$_ } (qw/ class id/)));
 
-    # Output files
-    my $output;
-    my $output_file_count = $self->output_file_count;
-    my $output_file_type = $self->output_file_type;
-    my $output_file_mode = 'w';
-
-    my @output_files = $self->read_processor_output_files;
-
-    if ( $output_file_count == 1 ) {
-        $output = $self->temp_staging_directory.'/'.
-        $output_files[0].':type='.$output_file_type.':mode='.$output_file_mode;
-    }
-    elsif ( $output_file_count == 2 ) {
-        $output = $self->temp_staging_directory.'/'.
-        $output_files[0].':name=fwd:type='.
-            $output_file_type.':mode='.$output_file_mode.','
-            .$self->temp_staging_directory.'/'.
-            $output_files[1].
-            ':name=rev:type='.$output_file_type.':mode='.
-            $output_file_mode;
-    }
-    else {
-        $self->error_message('Cannot handle more than 2 output files');
-        return;
-    }
+    # Output
+    my $output = $self->_output_config;
+    return if not $output;
 
     # Input files
     my $is_paired_end = eval{ $instrument_data->is_paired_end; };
@@ -195,8 +174,9 @@ sub _process_instrument_data {
     elsif ( my $sff = eval{ $instrument_data->sff_file } ) {
         @inputs = ( $sff.':type=sff:cnt='.$input_cnt );
     }
-    elsif ( my $archive = eval{ $instrument_data->archive_path; } ){
-        my $qual_type = $instrument_data->native_qual_format;
+    elsif ( my $archive = eval{ $instrument_data->attributes(attribute_label => 'archive_path')->attribute_value; } ){
+        my $qual_type = eval{ $instrument_data->native_qual_format; };
+        $qual_type // 'sanger';
         
         if ( $instrument_data->can('resolve_quality_converter') ) {
             my $converter = eval{ $instrument_data->resolve_quality_converter };
@@ -253,6 +233,77 @@ sub _process_instrument_data {
     }
 
     return 1;
+}
+
+sub _output_config {
+    my $self = shift;
+
+    my @output_config_params = $self->_output_config_params;
+    return if not @output_config_params;
+
+    for my $params ( @output_config_params ) {
+        $params->{file} = $self->temp_staging_directory.'/'.delete($params->{basename});
+        for my $key ( keys %$params ) {
+            next if $key !~ /_file$/;
+            $params->{$key} = $self->temp_staging_directory.'/'.$params->{$key};
+        }
+    }
+
+    return join(',', map { Genome::Model::Tools::Sx::Functions->hash_to_config(%$_) } @output_config_params);
+}
+
+sub _output_config_params {
+    my $self = shift;
+
+    my @params;
+    if ( my @output_file_config = $self->output_file_config ) {
+        for my $config ( @output_file_config ) {
+            my %params = Genome::Model::Tools::Sx::Functions->config_to_hash($config);
+            if ( not $params{basename} ) {
+                $self->error_message('No basename for SX output config params! '.Data::Dumper::Dumper(\%params));
+                return;
+            }
+            elsif ( $params{basename} !~ /^[\w\d\.\-_]+$/ ) {
+                $self->error_message('Malformed basename for SX output config params! '.Data::Dumper::Dumper(\%params));
+                return;
+            }
+            if ( not $params{type} ) {
+                $self->error_message('No type for SX output config params! '.Data::Dumper::Dumper(\%params));
+                return;
+            }
+            push @params, \%params;
+        }
+    }
+    elsif ( $self->output_file_count ) {
+        if ( $self->output_file_count == 1 ) {
+            @params = ({
+                    basename => $self->instrument_data_id.'.'.$self->output_file_suffix,
+                    type => $self->output_file_type,
+                });
+        }
+        elsif ( $self->output_file_count == 2 ) {
+            @params = ({
+                    basename => $self->instrument_data_id.'.1.'.$self->output_file_suffix,
+                    name => 'fwd',
+                    type => $self->output_file_type,
+                },
+                {
+                    basename => $self->instrument_data_id.'.2.'.  $self->output_file_suffix,
+                    name => 'rev',
+                    type => $self->output_file_type,
+                });
+        }
+    }
+    else {
+        $self->error_message('No output config or output file count set!');
+        return;
+    }
+
+    for my $params ( @params ) {
+        $params->{mode} = 'w';
+    }
+
+    return @params;
 }
 
 1;

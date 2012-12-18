@@ -19,7 +19,6 @@ my $pp = Genome::ProcessingProfile->create(
     type_name => 'metagenomic composition 16s',
     name => '16S Test Sanger',
     amplicon_processor => 'filter by-min-length --length 1150',
-    sequencing_center => 'gsc',
     sequencing_platform => 'sanger',
     assembler => 'phred_phrap',
     assembler_params => '-vector_bound 1000 -trim_qual 1000',
@@ -59,15 +58,29 @@ is_deeply(
     \@stage_one_classes, 
     [qw/
     Genome::Model::Event::Build::MetagenomicComposition16s::PrepareInstrumentData
-    Genome::Model::Event::Build::MetagenomicComposition16s::DetectAndRemoveChimeras
     Genome::Model::Event::Build::MetagenomicComposition16s::Classify
     Genome::Model::Event::Build::MetagenomicComposition16s::Orient
+    Genome::Model::Event::Build::MetagenomicComposition16s::DetectAndRemoveChimeras
     Genome::Model::Event::Build::MetagenomicComposition16s::Reports
     /], 
     'Stage one classes'
 );
 
-# chimera detector validation fails
+# Classes w/o chimera detection and removal
+$pp->chimera_detector(undef);
+@stage_one_classes = $pp->classes_for_stage($stages[0]);
+is_deeply(
+    \@stage_one_classes, 
+    [qw/
+    Genome::Model::Event::Build::MetagenomicComposition16s::PrepareInstrumentData
+    Genome::Model::Event::Build::MetagenomicComposition16s::Classify
+    Genome::Model::Event::Build::MetagenomicComposition16s::Orient
+    Genome::Model::Event::Build::MetagenomicComposition16s::Reports
+    /], 
+    'Stage one classes w/o chimera detection and removal'
+);
+
+# Chimera detector validation fails
 $pp->chimera_detector('unknown');
 my $rv = $pp->validate_chimera_detector;
 ok(!$rv, 'unknown chimera detector fails to validate');

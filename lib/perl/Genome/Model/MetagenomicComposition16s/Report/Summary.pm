@@ -5,15 +5,10 @@ use warnings;
 
 use Genome;
 
-use Carp 'confess';
-use Data::Dumper 'Dumper';
-use Regexp::Common;
-
 class Genome::Model::MetagenomicComposition16s::Report::Summary {
-    is => 'Genome::Model::MetagenomicComposition16s::Report',
+    is => 'Genome::Model::Report',
 };
 
-#< Generator >#
 sub description {
     return 'Summary Report for '.
     Genome::Utility::Text::capitalize_words( $_[0]->build->description );
