@@ -17,7 +17,7 @@ sub execute {
     my $self = shift;
 
     my $process_ok;
-    if ( $self->sequencing_platform eq 'sanger' ) {
+    if ( $self->model->sequencing_platform eq 'sanger' ) {
         my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData->create(
             build => $self->build,
         );
