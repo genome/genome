@@ -61,7 +61,10 @@
     <link fromOperation="merge_rna_prediction_ace" fromProperty="result"                             toOperation="wait_merging"             toProperty="rna_prediction_ace_merge_result" />
     <link fromOperation="merge_excluded_sequences" fromProperty="result"                             toOperation="wait_merging"             toProperty="merge_excluded_sequences_result" />
 
-    <link fromOperation="wait_merging"             fromProperty="prediction_directory"               toOperation="cleanup_prediction_dirs"  toProperty="directory" />
+    <link fromOperation="input connector"          fromProperty="gff_file"                       toOperation="coding_genes_to_gff"      toProperty="output_file" />
+    <link fromOperation="wait_merging"             fromProperty="prediction_directory"               toOperation="coding_genes_to_gff"      toProperty="prediction_directory" />
+
+    <link fromOperation="coding_genes_to_gff"             fromProperty="prediction_directory"               toOperation="cleanup_prediction_dirs"  toProperty="directory" />
 
     <link fromOperation="cleanup_prediction_dirs"  fromProperty="result"                             toOperation="output connector"         toProperty="result" />
 
@@ -98,6 +101,9 @@
             <property>repeat_masker_gff_merge_result</property>
             <property>merge_excluded_sequences_result</property>
         </operationtype>
+    </operation>
+    <operation name="coding_genes_to_gff">
+        <operationtype commandClass="Genome::Model::GenePrediction::Command::Eukaryotic::CodingGenesToGff" typeClass="Workflow::OperationType::Command" />
     </operation>
     <operation name="cleanup_prediction_dirs">
         <operationtype commandClass="Genome::Model::GenePrediction::Command::Eukaryotic::CleanupTempPredictionDirs" typeClass="Workflow::OperationType::Command" />
@@ -292,6 +298,7 @@
         <inputproperty>skip_snap</inputproperty>
         <inputproperty>skip_fgenesh</inputproperty>
         <inputproperty>overly_masked_sequence_fasta</inputproperty>
+        <inputproperty>gff_file</inputproperty>
         <outputproperty>result</outputproperty>
     </operationtype>
 </workflow>
