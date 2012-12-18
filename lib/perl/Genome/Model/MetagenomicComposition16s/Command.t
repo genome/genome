@@ -31,14 +31,6 @@ ok($cmd, 'create');
 $cmd->dump_status_messages(1);
 ok(!$cmd->execute, 'execute failed w/o builds');
 
-# fail - model doesn't have a succeeded build
-$cmd = Genome::Model::MetagenomicComposition16s::Command::Tester->create(
-    models => [$model],
-);
-ok($cmd, 'create');
-$cmd->dump_status_messages(1);
-ok(!$cmd->execute, 'execute failed w/ model w/o builds');
-
 is($build->the_master_event->event_status('Succeeded'), 'Succeeded', 'build is succeeded');
 
 # execute ok - models and builds
