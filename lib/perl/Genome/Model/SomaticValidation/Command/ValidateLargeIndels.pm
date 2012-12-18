@@ -154,12 +154,14 @@ sub _wait_for_builds {
 sub _run_indel_step_2 {
     my ($self, $output_directory, $tumor_model, $normal_model) = @_;
 
+    my $annotation_build = Genome::Model::Build::ImportedAnnotation->get(name => $self->reference_transcripts);
+    
     return Genome::Model::Tools::Validation::LongIndelsPartTwo->execute(
         output_dir => $output_directory,
         tumor_val_model_copy_id => $tumor_model->id,
         normal_val_model_copy_id => $normal_model->id,
         contigs_file => "$output_directory/contigs.fa",
-  #tier_file_location => , # doc => 'tiering file location to be used by gmt fast-tier fast-tier. Defaults to build36 location.', #FIXME defaults to build 36 location...
+        tier_file_location => $annotation_build->tiering_bed_files_by_version(3), 
     );
 }
 
