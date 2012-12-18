@@ -193,6 +193,7 @@ foreach my $m (@models){
     my $coord = $line[$columns{'coord'}{pos}];
     my $gene_name = $line[$columns{'gene_name'}{pos}];
     my $mapped_gene_name = $line[$columns{'mapped_gene_name'}{pos}];
+    my $ensembl_gene_id = $line[$columns{'ensembl_gene_id'}{pos}];
     my $aa_changes = $line[$columns{'aa_changes'}{pos}];
     my $ref_base = $line[$columns{'ref_base'}{pos}];
     my $var_base = $line[$columns{'var_base'}{pos}];
@@ -205,6 +206,7 @@ foreach my $m (@models){
     }else{
       $snvs{$coord}{gene_name} = $gene_name;
       $snvs{$coord}{mapped_gene_name} = $mapped_gene_name;
+      $snvs{$coord}{ensembl_gene_id} = $ensembl_gene_id;
       $snvs{$coord}{aa_changes} = $aa_changes;
       $snvs{$coord}{ref_base} = $ref_base;
       $snvs{$coord}{var_base} = $var_base;
@@ -290,11 +292,11 @@ close(OUT2);
 #First build a consolidated SNV positions file of the format:
 #5:112176318-112176318   APC     APC     p.R1676T	    G	    C
 open (POS, ">$positions_list") || die "\n\nCould not open master positions list for output: $positions_list\n\n";
-print POS "coord\tgene_name\tmapped_gene_name\taa_changes\tref_base\tvar_base\n";
+print POS "coord\tgene_name\tmapped_gene_name\tensembl_gene_id\taa_changes\tref_base\tvar_base\n";
 my $c = 0;
 foreach my $coord (sort keys %snvs){
   $c++;
-  print POS "$coord\t$snvs{$coord}{gene_name}\t$snvs{$coord}{mapped_gene_name}\t$snvs{$coord}{aa_changes}\t$snvs{$coord}{ref_base}\t$snvs{$coord}{var_base}\n";
+  print POS "$coord\t$snvs{$coord}{gene_name}\t$snvs{$coord}{mapped_gene_name}\t$snvs{$coord}{ensembl_gene_id}\t$snvs{$coord}{aa_changes}\t$snvs{$coord}{ref_base}\t$snvs{$coord}{var_base}\n";
   if ($test){
     if ($c >= 10){
       last();

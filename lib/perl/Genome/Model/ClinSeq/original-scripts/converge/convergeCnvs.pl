@@ -165,14 +165,23 @@ sub getCnvFiles{
     my $cnvs_hq_file = `$find_cmd1`;
     chomp($cnvs_hq_file);
 
+    my $cnvs_gene_file;
     my $find_cmd2 = "find $data_directory -name cnv.AllGenes_Ensembl*.tsv";
     if ($verbose){print YELLOW, "\n\t\t$find_cmd2", RESET;}
-    my @tmp = `$find_cmd2`;
-    chomp(@tmp);
-    my $cnvs_gene_file;
-
-    foreach my $path (@tmp){
+    my @tmp1 = `$find_cmd2`;
+    chomp(@tmp1);
+    foreach my $path (@tmp1){
       if ($path =~ /cnv\.AllGenes\_Ensembl\d{2}\.tsv/){
+        $cnvs_gene_file = $path;
+      }
+    }
+
+    my $find_cmd3 = "find $data_directory -name cnv.All_genes.tsv";
+    if ($verbose){print YELLOW, "\n\t\t$find_cmd3", RESET;}
+    my @tmp2 = `$find_cmd3`;
+    chomp(@tmp2);
+    foreach my $path (@tmp2){
+      if ($path =~ /cnv\.All\_genes\.tsv/){
         $cnvs_gene_file = $path;
       }
     }
@@ -184,7 +193,7 @@ sub getCnvFiles{
       $files{$build_id}{subject_name} = $subject_name;
       $files{$build_id}{model_name} = $model_name;
     }else{
-      if ($verbose){print RED, "\n\tCould not find cnvs.hq and  cnv.AllGenes_Ensembl*.tsv in build: $build_id ($data_directory)", RESET;}
+      if ($verbose){print RED, "\n\tCould not find cnvs.hq and  cnv.AllGenes_Ensembl*.tsv in build: $build_id ($data_directory)\n\n", RESET;}
       exit(1);
     }
   }
@@ -366,19 +375,28 @@ sub parseGenes{
         $header = 0;
         next();
       }
-      unless ($columns{'Symbol'} && $columns{'mapped_gene_name'} && $columns{'Chr'} && $columns{'Start'} && $columns{'End'} && $columns{'Mean CNV Diff'} && $columns{'Cytoband'}){
+      unless (($columns{'Symbol'} || $columns{'gene_name'}) && $columns{'mapped_gene_name'} && ($columns{'Chr'} || $columns{'chr'}) && ($columns{'Start'} || $columns{'start'}) && ($columns{'End'} || $columns{'end'}) && ($columns{'Mean CNV Diff'} || $columns{'mean_cnv_diff'}) && ($columns{'Cytoband'} || $columns{'cytoband'})){
         print RED, "\n\nCould not find a neccessary column in file: $cnvs_gene_file\n\n", RESET;
         exit(1);
       }
 
       #Grab data columns
-      my $symbol = $line[$columns{'Symbol'}{pos}];
-      my $mapped_gene_name = $line[$columns{'mapped_gene_name'}{pos}];
-      my $chr = $line[$columns{'Chr'}{pos}];
-      my $start = $line[$columns{'Start'}{pos}];
-      my $end = $line[$columns{'End'}{pos}];
-      my $cytoband = $line[$columns{'Cytoband'}{pos}];
-      my $mean_cnv_diff = $line[$columns{'Mean CNV Diff'}{pos}];
+      my ($symbol, $mapped_gene_name, $chr, $start, $end, $cytoband, $mean_cnv_diff);
+      
+      $symbol = $line[$columns{'Symbol'}{pos}] if ($columns{'Symbol'});
+      $symbol = $line[$columns{'gene_name'}{pos}] if ($columns{'gene_name'});
+      $mapped_gene_name = $line[$columns{'mapped_gene_name'}{pos}];
+      $chr = $line[$columns{'Chr'}{pos}] if ($columns{'Chr'});
+      $chr = $line[$columns{'chr'}{pos}] if ($columns{'chr'});
+      $start = $line[$columns{'Start'}{pos}] if ($columns{'Start'});
+      $start = $line[$columns{'start'}{pos}] if ($columns{'start'});
+      $end = $line[$columns{'End'}{pos}] if ($columns{'End'});
+      $end = $line[$columns{'end'}{pos}] if ($columns{'end'});
+      $cytoband = $line[$columns{'Cytoband'}{pos}] if ($columns{'Cytoband'});
+      $cytoband = $line[$columns{'cytoband'}{pos}] if ($columns{'cytoband'});
+      $mean_cnv_diff = $line[$columns{'Mean CNV Diff'}{pos}] if ($columns{'Mean CNV Diff'});
+      $mean_cnv_diff = $line[$columns{'mean_cnv_diff'}{pos}] if ($columns{'mean_cnv_diff'});
+
 
       #If this is the first file processed, add this gene to the list.  If it is not, make sure the gene is already in the list and add the data only
       if ($first_file){

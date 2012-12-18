@@ -535,9 +535,17 @@ sub get_ref_align_builds{
       my $patient = $subject->patient;
       if ($patient){
         if ($patient->can("common_name")){
-          $common_name = $patient->common_name;
-          $normal_label = $common_name . "_" . $normal_label;
-          $tumor_label = $common_name . "_" . $tumor_label;
+          if ($patient->common_name){
+            $common_name = $patient->common_name;
+            $normal_label = $common_name . "_" . $normal_label;
+            $tumor_label = $common_name . "_" . $tumor_label;
+          }
+        }
+        unless ($common_name){
+          my $normal_subject_name = $normal_build->model->subject->name;
+          my $tumor_subject_name = $tumor_build->model->subject->name;
+          $normal_label = $normal_subject_name . "_" . $normal_label;
+          $tumor_label = $tumor_subject_name . "_" . $tumor_label;
         }
       }
       $builds{$normal_build_id}{build} = $normal_build;

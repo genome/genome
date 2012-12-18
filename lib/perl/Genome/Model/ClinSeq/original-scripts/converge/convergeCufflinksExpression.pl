@@ -182,6 +182,10 @@ sub getCufflinksFiles{
     my $subject_common_name = $b->subject->common_name;
     my $build_id = $b->id;
 
+    my ($normal_rnaseq_subject, $tumor_rnaseq_subject); 
+    $normal_rnaseq_subject = $m->normal_rnaseq_model->subject->name || "NULL";
+    $tumor_rnaseq_subject = $m->tumor_rnaseq_model->subject->name || "NULL";
+
     #If the subject name is not defined, die
     unless ($subject_name){
       print RED, "\n\nCould not determine subject name for build: $build_id\n\n", RESET;
@@ -214,6 +218,13 @@ sub getCufflinksFiles{
         $files{$fc}{final_name} = $final_name;
         $files{$fc}{subject_name} = $subject_name;
         $files{$fc}{build_id} = $build_id;
+        if ($file =~ /normal/){
+          $files{$fc}{subject_name2} = $normal_rnaseq_subject;
+        }
+        if ($file =~ /tumor/){
+          $files{$fc}{subject_name2} = $tumor_rnaseq_subject;
+        }
+
       }else{
         print RED, "\n\nCould not obtain subtype from file path:\n$file\n\n", RESET;
         exit(1);
@@ -234,24 +245,29 @@ sub getCufflinksFiles{
   my %finalnames;
   my %finalnames_subtypes;
   my %finalnames_subtypes_subjectnames;
-  my %finalnames_subtypes_subjectnames_buildids;
+  my %finalnames_subtypes_subjectnames_subjectnames2;
+  my %finalnames_subtypes_subjectnames_subjectnames2_buildids;
   foreach my $fc (keys %files){
     my $final_name = $files{$fc}{final_name};
     my $subtype = $files{$fc}{subtype};
     my $subject_name = $files{$fc}{subject_name};
+    my $subject_name2 = $files{$fc}{subject_name2};
     my $build_id = $files{$fc}{build_id};
     my $id1 = $final_name;
-    my $id2 = "$final_name"."_"."$subtype";
-    my $id3 = "$final_name"."_"."$subtype"."_"."$subject_name";
-    my $id4 = "$final_name"."_"."$subtype"."_"."$subject_name"."_"."$build_id";
+    my $id2 = $id1 . "_"."$subtype";
+    my $id3 = $id2 . "_"."$subject_name";
+    my $id4 = $id3 . "_"."$subject_name2";
+    my $id5 = $id4 . "_"."$build_id";
     $finalnames{$id1}=1;
     $finalnames_subtypes{$id2}=1;
     $finalnames_subtypes_subjectnames{$id3}=1;
-    $finalnames_subtypes_subjectnames_buildids{$id4}=1;
+    $finalnames_subtypes_subjectnames_subjectnames2{$id4}=1;
+    $finalnames_subtypes_subjectnames_subjectnames2_buildids{$id5}=1;
     $files{$fc}{id1} = $id1;
     $files{$fc}{id2} = $id2;
     $files{$fc}{id3} = $id3;
     $files{$fc}{id4} = $id4;
+    $files{$fc}{id5} = $id5;
   }
 
   my $id_choice;
@@ -261,8 +277,10 @@ sub getCufflinksFiles{
     $id_choice = "id2";
   }elsif($file_count == keys %finalnames_subtypes_subjectnames){
     $id_choice = "id3";
-  }elsif($file_count == keys %finalnames_subtypes_subjectnames_buildids){
+  }elsif($file_count == keys %finalnames_subtypes_subjectnames_subjectnames2){
     $id_choice = "id4";
+  }elsif($file_count == keys %finalnames_subtypes_subjectnames_subjectnames2_buildids){
+    $id_choice = "id5";
   }else{
     print RED, "\n\nCould not generate a suitable set of distinct labels for the data files to be joined...\n\n", RESET;
     exit();

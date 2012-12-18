@@ -287,7 +287,7 @@ sub parseMetrics{
 
         #A metric must not be duplicated within a metrics file!
         if (defined($local_metrics{$metric_key})){
-          print RED, "\n\nMetric on this line appears to be a duplicate:\n@line\n\n", RESET;
+          print RED, "\n\nMetric on this line appears to be a duplicate:\n@line\n\n$file\n\n", RESET;
           exit(1);
         }else{
           $local_metrics{$metric_key} = 1;
