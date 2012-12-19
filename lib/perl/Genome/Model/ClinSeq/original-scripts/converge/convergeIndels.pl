@@ -59,9 +59,6 @@ my $positions_outfile = "$outdir"."$label"."_INDELs_Merged_PositionLevel.tsv";
 my $genes_outfile = "$outdir"."$label"."_INDELs_Merged_GeneLevel.tsv";
 my $positions_outfile_categorical = "$outdir"."$label"."_INDELs_Merged_PositionLevel_Categorical.tsv";
 my $genes_outfile_categorical = "$outdir"."$label"."_INDELs_Merged_GeneLevel_Categorical.tsv";
-my $positions_list = "$outdir"."$label"."_Master_INDEL_List.tsv";
-my $mutation_status_file_matrix_wgs = "$outdir"."$label"."_WGS_INDEL_MutationStatus_Matrix.tsv";
-my $mutation_status_file_matrix_exome = "$outdir"."$label"."_Exome_INDEL_MutationStatus_Matrix.tsv";
 
 #Get the models/builds
 my $models_builds;
@@ -92,8 +89,6 @@ my %genes;
 #Cycle through the models and get their builds
 my $header_line;
 my %model_list;
-my %wgs_sample_list;
-my %exome_sample_list;
 foreach my $m (@models){
   my $model_name = $m->name;
   my $model_id = $m->genome_model_id;
@@ -129,12 +124,6 @@ foreach my $m (@models){
   unless ($final_name){
     print RED, "\n\nCould not determine a common or subject name from model: $model_name ($model_id)\n\n", RESET;
     exit();
-  }
-  if ($wgs_build){
-    $wgs_sample_list{$final_name} = 1;
-  }
-  if ($exome_build){
-    $exome_sample_list{$final_name} = 1;
   }
 
   #Store model objects and values for later
