@@ -39,6 +39,8 @@ class Genome::Model::SomaticValidation::Command::ValidateLargeIndels {
     ],
 };
 
+sub sub_command_category { 'pipeline steps' }
+
 sub execute {
     my $self = shift;
 

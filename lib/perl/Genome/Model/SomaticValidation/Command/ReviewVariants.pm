@@ -148,6 +148,7 @@ class Genome::Model::SomaticValidation::Command::ReviewVariants {
     ],
 };
 
+sub sub_command_category { 'pipeline steps' }
 
 sub help_detail {
     return <<HELP;
