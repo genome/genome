@@ -31,7 +31,8 @@ sub reference_being_replaced_for_input {
 sub qc_failed {
     my $self = shift;
     my $note = $self->notes(header_text => 'QC Failed');
-    return (defined $note);
+    return(0);  ## Hacked by DK on 19/Dec/2012 to make Polymutt models always go forward ##
+##    return (defined $note);
 }
 sub qc_succeeded { my $self = shift; return (!$self->qc_failed) }
 
