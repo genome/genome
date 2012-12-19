@@ -27,7 +27,8 @@ my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Snv-V
 # V9 - VCF header change
 # V10- VCF header change: center and tcgaversion
 # v11- VCF header change
-my $expected_base = "expected.v11";
+# v12- Varscan outputs a BQ and an AD for the ref base. Additional fixes.
+my $expected_base = "expected.v12";
 my $expected_dir = "$test_dir/$expected_base";
 my $expected_file = "$expected_dir/output.vcf";
 
