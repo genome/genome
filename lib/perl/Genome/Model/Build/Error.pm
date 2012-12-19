@@ -179,7 +179,7 @@ sub _parse_error {
     @error{qw/ step step_event_id /} = split(/\s/, $tokens[2]);
     $error{error} = $error->error;
 
-    unless($error{step_event_id} =~ /\d+/ and $error->{stage_event_id} =~ /\d+/) {
+    unless($error{step_event_id} =~ /\d+/ and $error{stage_event_id} =~ /\d+/) {
         return; #even though there are three parts, this isn't what we're expecting
     }
 
