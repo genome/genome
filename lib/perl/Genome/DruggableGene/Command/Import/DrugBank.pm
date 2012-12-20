@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Term::ANSIColor qw(:constants);
 use XML::Simple;
+use YAML::Syck;
 
 binmode(STDOUT, ":utf8");
 
@@ -56,6 +57,12 @@ class Genome::DruggableGene::Command::Import::DrugBank {
             is_input => 1,
             default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_INTERACTIONS.tsv',
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
+        },
+        uniprot_mapping_outfile => {
+            is => 'Path',
+            is_input => 1,
+            default => '/tmp/DrugBank_WashU_UNIPROT_MAPPING',
+            doc => 'PATH.  Path to the .yaml file for uniprot mapping',
         },
         citation_base_url => {
             default => 'http://drugbank.ca/',
@@ -131,10 +138,10 @@ sub execute {
     my $self = shift;
     %UniProtMapping=%{$self->_get_uniprot_entrez_mapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
     $self->input_to_tsv();
-    $self->import_tsv();
-    unless ($self->skip_pubchem){
-        $self->_destroy_and_rebuild_pubchem_and_drug_groups();
-    }
+    #$self->import_tsv();
+    #unless ($self->skip_pubchem){
+    #    $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    #}
     return 1;
 }
 
@@ -476,6 +483,9 @@ sub input_to_tsv {
     close(DRUGS);
     close(TARGETS);
     close(INTERACTIONS);
+
+    $YAML::Syck::ImplicitTyping = 1;
+    DumpFile($self->uniprot_mapping_outfile, \%UniProtMapping);
 
     print "\n\n";
     return 1;
