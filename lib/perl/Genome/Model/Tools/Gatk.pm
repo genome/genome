@@ -13,16 +13,21 @@ my $GATK_COMMAND = 'GenomeAnalysisTK.jar';
 class Genome::Model::Tools::Gatk {
     is => ['Command'],
     has_optional => [
-                     version => {
-                                 is    => 'string',
-                                 doc   => 'version of Gatk application to use',
-                                 default => $DEFAULT_VERSION,
-                             },
-                     _tmp_dir => {
-                                  is => 'string',
-                                  doc => 'a temporary directory for storing files',
-                              },
-                 ]
+        version => {
+            is    => 'string',
+            doc   => 'version of Gatk application to use',
+            default => $DEFAULT_VERSION,
+        },
+        _tmp_dir => {
+            is => 'string',
+            doc => 'a temporary directory for storing files',
+        },
+        max_memory => {
+            is => 'Text',
+            doc => 'Parameter to provide to the Java -Xmx argument for maximum memory. Should be something like "3000m" or "16g".',
+            is_optional => 1,
+        },
+    ]
 };
 
 sub help_brief {
@@ -56,7 +61,7 @@ sub create {
         $self->error_message('We recommend running GATK from 64-bit architecture');
         return;
     }
-    my $tempdir = File::Temp::tempdir(CLEANUP => 1);
+    my $tempdir = Genome::Sys->create_temp_directory;
     $self->_tmp_dir($tempdir);
 
     return $self;
@@ -97,6 +102,23 @@ sub has_version {
         return 1;
     }
     return 0;
+}
+
+sub base_java_command {
+    my $self = shift;
+
+    my $gatk_path = $self->gatk_path;
+    my $java_cmd = "java";
+    if (defined $self->max_memory) {
+        $java_cmd .= " -Xmx".$self->max_memory;
+    }
+    if (defined $self->_tmp_dir) {
+        $java_cmd .= " -Djava.io.tmpdir=" . $self->_tmp_dir;
+    }
+
+    $java_cmd .= " -jar $gatk_path -et NO_ET";
+
+    return $java_cmd;
 }
 
 1;
