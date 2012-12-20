@@ -414,34 +414,19 @@ sub execute {
     else{
         # This was added so things are testable for now
         if ($self->run_inline) {
-            my $rv = system("java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_normal_bam_file -I $normal_bam -R $reference  --targetIntervalsAreNotSorted");
-            die $self->error_message("Failed to run gatk") unless $rv == 0;
-            $rv = system("java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_tumor_bam_file -I $tumor_bam -R $reference --targetIntervalsAreNotSorted");
-            die $self->error_message("Failed to run gatk") unless $rv == 0;
-
-            $rv = Genome::Model::Tools::Sam::IndexBam->execute(bam_file => $realigned_normal_bam_file);
-            die $self->error_message("Failed to run gmt sam index-bam on $realigned_normal_bam_file") unless $rv->result == 1;
-            $rv = Genome::Model::Tools::Sam::IndexBam->execute(bam_file => $realigned_tumor_bam_file);
-            die $self->error_message("Failed to run gmt sam index-bam on $realigned_tumor_bam_file") unless $rv->result == 1;
-
-            $rv = Genome::Model::Tools::Varscan::Validation->execute(
-                normal_bam => $realigned_normal_bam_file,
-                tumor_bam => $realigned_tumor_bam_file,
-                output_indel => $output_indel,
-                output_snp => $output_snp,
-                reference => $reference,
-                varscan_params => $varscan_params,
+            my $cmd = Genome::Model::SomaticValidation::Command::ValidateSmallIndels->create(
+                final_output_file => $self->final_output_file,
+                realigned_bam_file_directory => $self->realigned_bam_file_directory,
+                small_indel_output_bed => $small_indel_list,
+                varscan_indel_output => $self->varscan_indel_output,
+                varscan_snp_output => $self->varscan_snp_output,
+                tumor_bam => $self->tumor_bam,
+                normal_bam => $self->normal_bam,
+                reference_fasta => $self->reference_fasta,
             );
-            die $self->error_message("Failed to run gmt varscan validation") unless $rv->result == 1;
-
-            $rv = Genome::Model::Tools::Varscan::ProcessValidationIndels->execute(
-                validation_indel_file => $output_indel,
-                validation_snp_file => $output_snp,
-                variants_file => $small_indel_list_nobed,
-                output_file => $final_output_file,
-            );
-            die $self->error_message("Failed to run gmt varscan process-validation-indels") unless $rv->result == 1;
-
+            unless ($cmd->execute) {
+                die $self->error_message("Failed to execute Genome::Model::SomaticValidation::Command::ValidateSmallIndels");
+            }
         } else {
             my $bsub_normal_output = "$realigned_bam_file_directory/realignment_normal.out";
             my $bsub_normal_error = "$realigned_bam_file_directory/realignment_normal.err";

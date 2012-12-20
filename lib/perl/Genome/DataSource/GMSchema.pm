@@ -53,7 +53,7 @@ sub _sync_database {
     my $required_pg_version = '2.19.3';
 
     my $pg_version = $DBD::Pg::VERSION;
-    if ($pg_version ne $required_pg_version) {
+    if (($pg_version ne $required_pg_version) && !defined $ENV{'LIMS_PERL'}) {
         $self->error_message("**** INCORRECT POSTGRES DRIVER VERSION ****\n" .
                              "You are using a Perl version that includes an incorrect DBD::Pg driver.\n" .
                              "You are running $pg_version and need to be running $required_pg_version.\n" .
@@ -189,7 +189,10 @@ sub _sync_database {
                 my $error = '';
                 $error .= "EXCEPTION:" . $@ if $@;
                 $error .= "STDERR: " . $stderr if $stderr;
-				print $error, "\n";
+                print "***** POSTGRES SYNC ERROR *****\n";
+                print "The postgres write failed, for the following reason.  However, the Oracle sync succeeded.\n\n";
+                print "This is a non-fatal error and only affects Postgres testing. Your task completed successfully.\n";
+                print $error, "\n";
                 log_error($error);
             }
             log_commit_time('pg',$sync_time_duration);

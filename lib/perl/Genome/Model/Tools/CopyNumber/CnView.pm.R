@@ -274,6 +274,10 @@ plotChrCNV_Compact = function(target_chr, type){
     ylim_lower = min(yl); if (ylim_lower > -2){ylim_lower = -2}
     ylim_upper = 1
     plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
+  }else if (type == "BOTH"){
+    ylim_lower = -2
+    ylim_upper = 5
+    plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
   }
   if (length(gain_j)>0){
     segx1g = segments_chr[gain_j,"START"]
@@ -487,7 +491,7 @@ for (chr_name in chr_list){
 #Adjust margins -> c(bottom, left, top, right)
 margins=c(2, 3.75, 1.75, 1.75)+0.1
 
-#Generate a figure for all chromosome gains on a single page - only when processing all chromosomes though...
+#Set up the legend
 legend_text=c(paste("Copy number gain > ", cut6, sep=""),
               paste("Copy number gain > ", cut5, sep=""),
               paste("Copy number gain > ", cut4, sep=""),
@@ -498,6 +502,7 @@ legend_text=c(paste("Copy number gain > ", cut6, sep=""),
               "HMM Loss Seg")
 legend_cex=1
 
+#Generate a figure for all chromosome gains on a single page - only when processing all chromosomes though...
 if (length(chr_list) > 1){
   if (image_type != "none"){
     openImageFile("Gains_AllChrs", image_type, image_width_2, image_height_2)
@@ -532,6 +537,33 @@ if (length(chr_list) > 1){
     dev.off()
   }
 }
+
+#Apply a new hard cap and generate a figure that displays both gains and losses together on a reasonable scale...
+if (length(which(cnvs[,"DIFF"] < -2)) > 0){
+  cnvs[which(cnvs[,"DIFF"] < -2),"DIFF"] = -2
+}
+
+#Reset values larger than 20 to be 20 (arbitrary - for display purposes).  Single outliers, usually false positives near the centromeres obscure the data by jacking up the scale...
+if (length(which(cnvs[,"DIFF"] > 5.5)) > 0){
+  cnvs[which(cnvs[,"DIFF"] > 5.5),"DIFF"] = 5.5
+}
+if (length(chr_list) > 1){
+  if (image_type != "none"){
+    openImageFile("Both_AllChrs", image_type, image_width_2, image_height_2)
+  }
+  par(mfrow=c(6,4), mar=margins)
+  print("All chromosomes - Gains and Losses")
+  for (chr_name in chr_list){
+    plotChrCNV_Compact(chr_name, "BOTH")
+  }
+  plot.new()
+  par(mar=c(0,0,0,0))
+  legend("center", col=c(gaincolor3, gaincolor2, gaincolor1,losscolor1, losscolor2, losscolor3, gaincolor4, losscolor4), pch=c(16,16,16,16,16,16,NA,NA), lty=c(2,2,2,2,2,2,1,1), lwd=c(1,1,1,1,1,1,2,2), legend=legend_text, title="Cutoffs", cex=legend_cex)
+  if (image_type != "none"){
+    dev.off()
+  }
+}
+
 
 
 

@@ -53,7 +53,33 @@
   </operation>
 
   <operation name="Validate SVs">
-      <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateSvs" typeClass="Workflow::OperationType::Command"/>
+      <link fromOperation="input connector" fromProperty="build_id" toOperation="generate merged assemblies" toProperty="build_id" />
+
+      <link fromOperation="generate merged assemblies" fromProperty="build_id" toOperation="create assembled contig reference" toProperty="build_id" />
+      <link fromOperation="generate merged assemblies" fromProperty="skip" toOperation="create assembled contig reference" toProperty="skip" />
+      <link fromOperation="generate merged assemblies" fromProperty="skip" toOperation="align to contig reference" toProperty="skip" />
+
+      <link fromOperation="create assembled contig reference" fromProperty="build_id" toOperation="align to contig reference" toProperty="build_id" />
+      <link fromOperation="create assembled contig reference" fromProperty="reference_build_id" toOperation="align to contig reference" toProperty="reference_build_id" />
+
+      <link fromOperation="align to contig reference" fromProperty="output_dir" toOperation="output connector" toProperty="output_dir" />
+
+      <operation name="generate merged assemblies">
+        <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateSvs::GenerateMergedAssemblies" typeClass="Workflow::OperationType::Command"/>
+      </operation>
+
+      <operation name="create assembled contig reference">
+        <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference" typeClass="Workflow::OperationType::Command"/>
+      </operation>
+
+      <operation name="align to contig reference">
+        <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateSvs::AlignReads" typeClass="Workflow::OperationType::Command"/>
+      </operation>
+
+      <operationtype typeClass="Workflow::OperationType::Model">
+          <inputproperty>build_id</inputproperty>
+          <outputproperty>output_dir</outputproperty>
+      </operationtype>
   </operation>
 
   <operation name="Detect Variants">

@@ -942,7 +942,7 @@ sub _execute_system_command {
         my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
         my $perl5opt = join(' ', @_execute_system_command_perl5opt);
         my $cmd_template = '%s %s %s -e "%s->%s(%s); UR::Context->commit;"';
-        my $cmd = sprintf($cmd_template, $^X, $includes, $perl5opt, $class, $method, $param_string);
+        my $cmd = sprintf($cmd_template, "genome-perl", $includes, $perl5opt, $class, $method, $param_string);
 
         unless (eval { system($cmd) } == 0) {
             my $msg = "Could not perform allocation action!";
