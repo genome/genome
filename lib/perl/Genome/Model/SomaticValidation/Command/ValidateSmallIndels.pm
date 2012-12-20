@@ -118,14 +118,33 @@ sub _run_gatk {
     my $realigned_normal_bam_file = $self->_realigned_normal_bam_file;
     my $reference = $self->reference_fasta;
 
-    my $gatk_tumor_cmd = "java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_normal_bam_file -I $normal_bam -R $reference  --targetIntervalsAreNotSorted";
-    my $gatk_normal_cmd = "java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_tumor_bam_file -I $tumor_bam -R $reference --targetIntervalsAreNotSorted";
+    my $gatk_tumor_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
+        max_memory => "16g",
+        version => 5777,
+        target_intervals => $small_indel_list,
+        output_realigned_bam => $realigned_tumor_bam_file,
+        input_bam => $tumor_bam,
+        reference_fasta => $reference,
+        target_intervals_are_sorted => 0,
+    );
 
-    my $rv = system($gatk_tumor_cmd);
-    die $self->error_message("Failed to run gatk") unless $rv == 0;
+    my $gatk_normal_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
+        max_memory => "16g",
+        version => 5777,
+        target_intervals => $small_indel_list,
+        output_realigned_bam => $realigned_normal_bam_file,
+        input_bam => $normal_bam,
+        reference_fasta => $reference,
+        target_intervals_are_sorted => 0,
+    );
 
-    $rv = system($gatk_normal_cmd);
-    die $self->error_message("Failed to run gatk") unless $rv == 0;
+    unless ($gatk_tumor_cmd->execute) {
+        die $self->error_message("Failed to run gatk IndelRealigner on tumor");
+    }
+
+    unless ($gatk_normal_cmd->execute) {
+        die $self->error_message("Failed to run gatk IndelRealigner on normal");
+    }
 
     return 1;
 }
