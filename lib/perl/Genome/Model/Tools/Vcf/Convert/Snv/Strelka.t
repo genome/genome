@@ -16,7 +16,7 @@ use_ok('Genome::Model::Tools::Vcf::Convert::Snv::Strelka') or die;
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Snv-Strelka";
 my $input_file    = $test_dir . '/snvs.hq';
-my $expected_file = $test_dir . '/expected.v3/snvs.vcf.gz';
+my $expected_file = $test_dir . '/expected.v4/snvs.vcf.gz';
 my $output_file   = Genome::Sys->create_temp_file_path;
 
 my %params = (
@@ -35,7 +35,7 @@ ok(-s $output_file, "output file created");
 compare_file($expected_file, $output_file);
 
 #test TCGA vcf
-my $expected_file2 = $test_dir . '/expected.v3/TCGA_snvs.vcf.gz';
+my $expected_file2 = $test_dir . '/expected.v4/TCGA_snvs.vcf.gz';
 my $output_file2 = Genome::Sys->create_temp_file_path;
 
 $params{output_file} = $output_file2;
