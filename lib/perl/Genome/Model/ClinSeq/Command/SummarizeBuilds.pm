@@ -135,12 +135,15 @@ sub execute {
     my @builds = ($wgs_normal_refalign_build, $wgs_tumor_refalign_build, $wgs_somvar_build, $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $clinseq_build);
 
     #Get a list of sample names for samples associated with this clinseq build
-    my %model_subject_ids;
+    my %model_samples;
+    my @model_samples;
     for my $build (@builds){
       next unless $build;
-      my $model = $build->model;
-      my $subject_id = $model->subject->id;
-      $model_subject_ids{$subject_id}=1;
+      next unless ($build->model->subject->class eq "Genome::Sample");
+      $model_samples{$build->model->subject->id}{sample} = $build->model->subject;
+    }
+    foreach my $sample_id (keys %model_samples){
+      push (@model_samples, $model_samples{$sample_id}{sample});
     }
 
     #Summarize Individual (id, name, gender, etc.). Check if all models hit the same individual and warn if not
@@ -169,10 +172,9 @@ sub execute {
     #Display instrument data counts for each sample/build actually associated with the clinseq model
     $self->status_message("\n\nSamples and instrument data counts (for samples associated with this clinseq model only - not all samples of the individual)");
     my ($tumor_dna_id_count, $normal_dna_id_count, $tumor_rna_id_count, $normal_rna_id_count) = ("n/a", "n/a", "n/a", "n/a");
-    my @samples = $individual->samples;
-    for my $sample (@samples) {
+
+    for my $sample (@model_samples) {
       my $sample_id = $sample->id;
-      next unless $model_subject_ids{$sample_id};
       my @instdata = $sample->instrument_data;
       my $scn = $sample->common_name || "[UNDEF sample common_name]";
       my $tissue_desc = $sample->tissue_desc || "[UNDEF sample tissue_desc]";
