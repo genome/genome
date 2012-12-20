@@ -16,6 +16,7 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::AlignReads {
         reference_build_id => {
             is => 'Text',
             doc => 'id of the reference build against which to run alignments',
+            is_optional => 1,
         },
         skip => {
             is => 'Boolean',
@@ -32,6 +33,7 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::AlignReads {
         reference_build => {
             is => 'Genome::Model::Build',
             id_by => 'reference_build_id',
+            is_optional => 1,
         },
         output_dir => {
             is_output => 1,
@@ -78,7 +80,11 @@ sub execute {
     if($self->skip) {
         $self->status_message("skip signal received. not running.");
         return 1;
+    } elsif(not $self->reference_build) {
+        die $self->error_message("A reference is required when not skipping this step, but one was not found.");
     }
+
+
 
     my @instrument_data = $build->instrument_data;
     my $result = Genome::InstrumentData::Composite->get_or_create(
