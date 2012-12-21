@@ -29,6 +29,11 @@ class Genome::Model::Tools::Gatk::RealignIndels {
             is => 'Text',
             doc => "Reference Fasta" ,
         },
+        index_bam => {
+            is => 'Boolean',
+            default => 1,
+            doc => 'Index the bam after alignment.'
+        }
     ],
 };
 
@@ -50,6 +55,14 @@ sub execute {
 
     unless (Genome::Sys->shellcmd(cmd => $command)) {
         die $self->error_message("Failed to execute $command");
+    }
+
+    if ($self->index_bam) {
+        my $aligned_bam = $self->output_realigned_bam;
+        die $self->error_message("Couldn't find realigned bam at $aligned_bam!") unless -f $aligned_bam;
+
+        my $rv = Genome::Model::Tools::Sam::IndexBam->execute(bam_file => $aligned_bam);
+        die $self->error_message("Failed to run gmt sam index-bam on $aligned_bam") unless $rv->result == 1;
     }
 
     return 1;

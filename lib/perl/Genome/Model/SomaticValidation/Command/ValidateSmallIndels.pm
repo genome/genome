@@ -89,8 +89,6 @@ sub execute {
 
     $self->_run_gatk;
 
-    $self->_index_bams;
-
     $self->_run_varscan;
 
     return 1;
@@ -145,20 +143,6 @@ sub _run_gatk {
     unless ($gatk_normal_cmd->execute) {
         die $self->error_message("Failed to run gatk IndelRealigner on normal");
     }
-
-    return 1;
-}
-
-sub _index_bams {
-    my $self = shift;
-
-    my $realigned_tumor_bam_file = $self->_realigned_tumor_bam_file;
-    my $realigned_normal_bam_file = $self->_realigned_normal_bam_file;
-
-    my $rv = Genome::Model::Tools::Sam::IndexBam->execute(bam_file => $realigned_normal_bam_file);
-    die $self->error_message("Failed to run gmt sam index-bam on $realigned_normal_bam_file") unless $rv->result == 1;
-    $rv = Genome::Model::Tools::Sam::IndexBam->execute(bam_file => $realigned_tumor_bam_file);
-    die $self->error_message("Failed to run gmt sam index-bam on $realigned_tumor_bam_file") unless $rv->result == 1;
 
     return 1;
 }
