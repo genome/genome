@@ -20,7 +20,7 @@ require IO::File;
 require File::Basename;
 require File::Path;
 require File::Copy;
-require Genome::Utility::Text;
+require Genome::Utility::Text; #TODO remove, unused
 use Sys::Hostname;
 use File::Find;
 #use Archive::Extract;
