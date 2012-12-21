@@ -67,6 +67,10 @@ class Genome::Model::RnaSeq {
             doc => 'the version of Picard to use when manipulating SAM/BAM files',
             is_optional => 1,
         },
+        deduplication_handler => {
+            doc => 'the software used to deduplicate or mark duplicates in the aligned BAM file',
+            is_optional => 1,
+        },
         samstat_version => {
             doc => 'the version of Samstat to use for BamQc',
             is_optional => 1,
