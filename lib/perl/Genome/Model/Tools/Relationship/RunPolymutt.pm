@@ -184,14 +184,24 @@ sub execute {
 # Fix the various problems with the polymutt header to bring it up to vcf spec
 sub write_fixed_vcf {
     my ($self, $input_vcf, $output_vcf) = @_;
-    my @info_lines_to_add = (qq|##INFO=<ID=DQ,Number=1,Type=Float,Description="De Novo Mutation Quality">|);
-    push @info_lines_to_add, qq|##INFO=<ID=DA,Number=1,Type=Integer,Description="De Novo Mutation Allele">|;
+    my @info_lines_to_add = (qq|##INFO=<ID=DA,Number=1,Type=Integer,Description="De Novo Mutation Allele">|);
     my @format_lines_to_add = (qq|##FORMAT=<ID=DNGL,Number=10,Type=Integer,Description="Denovo Genotype Likelihoods">|);
     push @format_lines_to_add, qq|##FORMAT=<ID=DNGT,Number=1,Type=String,Description="Genotype">|;
     push @format_lines_to_add, qq|##FORMAT=<ID=DNGQ,Number=1,Type=Integer,Description="Genotype Quality">|;
     ####hack to add in header for bingshan's tag that he hasn't added himself
-    my @missing_info_lines = $self->missing_info_lines($input_vcf);
-    push @info_lines_to_add, @missing_info_lines if (@missing_info_lines);
+    my @missing_header_lines = $self->missing_header_lines($input_vcf);
+
+    # Put missing lines in the right places
+    for my $missing_line (@missing_header_lines) {
+        if ($missing_line =~ m/^##FORMAT/) {
+            push @format_lines_to_add, $missing_line;
+        } elsif ($missing_line =~ m/^##INFO/) {
+            push @info_lines_to_add, $missing_line;
+        } else {
+            die $self->error_message("Could not figure out if this missing line is header or format: $missing_line");
+        }
+    }
+
     ######
 
     my $ifh = Genome::Sys->open_file_for_reading($input_vcf);
@@ -262,32 +272,34 @@ sub fix_variant_line {
 }
 
 # FIXME copied... call this in Genome::Model::Tools::Relationship::MergeAndFixVcfs or move to a base class
-sub missing_info_lines {
+sub missing_header_lines {
     my ($self, $input_vcf) = @_;
 
     my %possible_tags = (
         AB => qq|##INFO=<ID=AB,Number=1,Type=Float,Description="Allelic Balance">|,
         BA => qq|##INFO=<ID=BA,Number=1,Type=String,Description="Best Alternative Allele">|,
+        DQ => qq|##INFO=<ID=DQ,Number=1,Type=Float,Description="De Novo Mutation Quality">|,
+        DS => qq|##FORMAT=<ID=DS,Number=1,Type=Float,Description="Dosage: Defined As the Expected Alternative Allele Count">|,
     );
 
-    my @info_lines_to_add;
+    my @header_lines_to_add;
     for my $tag (keys %possible_tags) {
         $DB::single=1;
         chomp(my @number_of_tags = `cat $input_vcf | grep $tag`);
         if(@number_of_tags) {
             my $has_header=0;
             for my $line (@number_of_tags) {
-                if($line=~m/^##INFO=<ID=$tag,/) {
+                if($line=~m/<ID=$tag,/) {
                     $has_header=1;
                 }
             }
             unless($has_header) {
-                push @info_lines_to_add, $possible_tags{$tag};
+                push @header_lines_to_add, $possible_tags{$tag};
             }
         }
     }
 
-    return @info_lines_to_add;
+    return @header_lines_to_add;
 }
 
 1;
