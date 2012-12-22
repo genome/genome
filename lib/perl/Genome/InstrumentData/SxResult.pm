@@ -176,7 +176,7 @@ sub _process_instrument_data {
     }
     elsif ( my $archive = eval{ $instrument_data->attributes(attribute_label => 'archive_path')->attribute_value; } ){
         my $qual_type = eval{ $instrument_data->native_qual_format; };
-        $qual_type // 'sanger';
+        $qual_type //= 'sanger';
         
         if ( $instrument_data->can('resolve_quality_converter') ) {
             my $converter = eval{ $instrument_data->resolve_quality_converter };
