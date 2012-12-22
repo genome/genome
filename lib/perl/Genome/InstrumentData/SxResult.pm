@@ -47,7 +47,7 @@ class Genome::InstrumentData::SxResult {
             is => 'Text',
             is_calculated => 1,
             calculate_from => ['output_file_type'],
-            calculate => q { 
+            calculate => q {
                 if ($output_file_type eq 'sanger' or $output_file_type eq 'illumina' or $output_file_type eq 'phred'){
                     return 'fastq'}
                 elsif ($output_file_type eq 'fasta') {
@@ -81,7 +81,7 @@ sub create {
         if ( not -s $temp_staging_output_file ) {
             unlink $temp_staging_output_file;
         }
-        else { 
+        else {
             $existing_cnt++;
         }
     }
@@ -177,7 +177,7 @@ sub _process_instrument_data {
     elsif ( my $archive = eval{ $instrument_data->attributes(attribute_label => 'archive_path')->attribute_value; } ){
         my $qual_type = eval{ $instrument_data->native_qual_format; };
         $qual_type //= 'sanger';
-        
+
         if ( $instrument_data->can('resolve_quality_converter') ) {
             my $converter = eval{ $instrument_data->resolve_quality_converter };
             if ( not $converter ) {
