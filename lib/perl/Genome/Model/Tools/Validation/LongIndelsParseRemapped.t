@@ -15,8 +15,7 @@ use_ok("Genome::Model::Tools::Validation::LongIndelsParseRemapped");
 
 my $version = 1;
 my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Validation-LongIndelsParseRemapped/v$version";
-#my $temp_dir = Genome::Sys->create_temp_directory;
-my $temp_dir = "/gscuser/aregier/scratch/test-long-indels-val";
+my $temp_dir = Genome::Sys->create_temp_directory;
 
 my $cmd = Genome::Model::Tools::Validation::LongIndelsParseRemapped->create(
     contigs_file => $base_dir."/contigs.fa",
