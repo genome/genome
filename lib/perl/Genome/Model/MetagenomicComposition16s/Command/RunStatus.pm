@@ -60,10 +60,9 @@ sub execute {
     }
     my $processing_profile_id = $self->processing_profile->id;
 
-    my @subjects_to_skip = map { qr/$_/ } (qw/ ^nctrl$ ^n\-cntrl$ /);
+    my @subjects_to_skip = map { qr/$_/ } (qw/ ^nctrl$ ^n\-cntrl$ ^Pool /);
     my @rows;
     for my $instrument_data ( @instrument_data ) {
-        next if $instrument_data->ignored;
         my $library = $instrument_data->library;
         my $sample = $library->sample;
         next if grep { $sample->name =~ $_ } @subjects_to_skip;
@@ -71,6 +70,10 @@ sub execute {
         push @rows, \@row;
         push @row, $sample->name;
         push @row, $instrument_data->id;
+        if ( $instrument_data->ignored ) {
+            push @row, 'SKIPPED', '', '', ''. '', '';
+            next;
+        }
         my ($model) = sort { $b->id <=> $a->id } grep { $_->subject_id eq $instrument_data->sample_id } grep {$_->processing_profile_id eq $processing_profile_id } map { $_->model } Genome::Model::Input->get(name => 'instrument_data', value_id => $instrument_data->id,);
         if ( not $model ) {
             push @row, '', '', '', ''. '', '';
