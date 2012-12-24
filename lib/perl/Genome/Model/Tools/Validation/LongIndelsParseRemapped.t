@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use File::Compare;
 
 use_ok("Genome::Model::Tools::Validation::LongIndelsParseRemapped");
 
@@ -27,5 +28,9 @@ my $cmd = Genome::Model::Tools::Validation::LongIndelsParseRemapped->create(
 
 ok($cmd, "Command created successfully");
 ok($cmd->execute, "Command executed successfully");
+
+foreach my $file (qw/combined_counts.csv combined_counts.csv.somatic combined_counts.csv.somatic.adapted normal_counts.mm80.csv tumor_counts.mm80.csv/) {
+    is(compare($temp_dir."/$file", $base_dir."/$file"), 0, "Output file $file matched expected output");
+}
 
 done_testing;
