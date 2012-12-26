@@ -20,6 +20,8 @@ class Genome::Model::Tools::Validation::LongIndelsParseRemapped {
             doc => 'Path to input normal bam file',
         },
         output_dir => {
+            is_output => 1,
+            is_input => 1,
             is => 'String',
             doc => 'Location to place output files',
         },
@@ -27,11 +29,21 @@ class Genome::Model::Tools::Validation::LongIndelsParseRemapped {
             is => 'String',
             doc => 'Path to tier file',
         },
+        skip => {
+            is => 'Boolean',
+            default => 0,
+        },
     ],
 };
 
 sub execute {
     my $self = shift;
+
+    if ($self->skip) {
+        $self->warning_message("skip signal received, skipping");
+        return 1;
+    }
+
     my $output_dir = $self->output_dir;
 
     #get readcounts from the tumor sample
