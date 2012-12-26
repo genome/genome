@@ -44,6 +44,8 @@ sub sub_command_category { 'pipeline steps' }
 sub execute {
     my $self = shift;
 
+    return 1 unless $self->build->normal_sample;
+
     my $long_indel_bed_file = $self->_resolve_long_indel_bed_file;
     unless ($long_indel_bed_file) {
         $self->warning_message("No long indel bed file exists with size. Skipping validation.");

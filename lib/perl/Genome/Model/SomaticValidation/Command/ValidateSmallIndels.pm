@@ -83,6 +83,8 @@ class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
 sub execute {
     my $self = shift;
 
+    return 1 unless $self->build->normal_sample;
+
     $self->_resolve_inputs;
 
     $self->_create_output_directory();
