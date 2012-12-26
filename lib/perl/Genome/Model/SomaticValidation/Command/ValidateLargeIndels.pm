@@ -99,7 +99,7 @@ sub _run_indel_step_1 {
     #TODO the instructions say to "be sure to save the STDOUT from this tool
 
     my $command = Genome::Model::Tools::Validation::LongIndelsPartOne->create(
-        somatic_validation_model_id => $self->build->model->id,
+        somatic_validation_build_id => $self->build->id,
         long_indel_bed_file => $self->_long_indel_bed_file,
         sample_identifier => $sample_identifier,
         output_dir => $output_directory,

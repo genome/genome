@@ -39,6 +39,10 @@ class Genome::Model::Tools::Validation::LongIndelsPartOne {
             is => 'Number',
             doc => 'somatic-validation model ID (contains both tumor and normal)',
         },
+        somatic_validation_build_id => {
+            is => 'Number',
+            doc => 'somatic-validation build ID (better than using the "model_id" version of this option)'
+        },
         reference_sequence_build_id => {
             is => 'Integer',
             doc => 'Optional reference sequence path (default is to grab it from the input models)',
@@ -97,7 +101,7 @@ sub execute {
     my @normal_instrument_data_ids;
 
     #make sure we have either a somatic-validation build or a pair of tumor/normal refalign builds
-    if(!(defined($self->somatic_validation_model_id))){
+    if(!(defined($self->somatic_validation_model_id || $self->somatic_validation_build_id))){
         if(!(defined($self->tumor_val_model_id)) || !(defined($self->normal_val_model_id))){
             die("ERROR: must provide either\n --somatic-validation-build-id  OR\n --tumor-val-model-id and --normal-val-model-id");
         } else {
@@ -182,14 +186,20 @@ sub execute {
 
     #from somatic-validation model
     if($input_model_type eq "somval"){        
-        $model = Genome::Model->get($self->somatic_validation_model_id) or
+        my $build;
+        if($self->somatic_validation_build_id) {
+            $build = Genome::Model::Build->get($self->somatic_validation_build_id);
+            die "Could not find build" unless $build;
+        } else {
+            my $model = Genome::Model->get($self->somatic_validation_model_id) or
             die "Could not find model ($self->somatic_validation_model_id\n";
 
-        my $build = $model->last_succeeded_build or
-            die "Could not find last succeeded build from somatic model $self->somatic_validation_model_id.\n";
+            $build = $model->last_succeeded_build or
+                die "Could not find last succeeded build from somatic model $self->somatic_validation_model_id.\n";
+        }
 
         #get refseq build id from model unless already defined
-        $ref_seq_build_id = $model->reference_sequence_build->build_id;
+        $ref_seq_build_id = $build->reference_sequence_build->build_id;
 
         if(defined($self->reference_sequence_build_id)){
             $ref_seq_build = Genome::Model::Build->get($self->reference_sequence_build_id);
