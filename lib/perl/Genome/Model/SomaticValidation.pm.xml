@@ -52,12 +52,43 @@
       <operationtype commandClass="Genome::Model::SomaticValidation::Command::CoverageStats" typeClass="Workflow::OperationType::Command"/>
   </operation>
 
+  <operation name="Validate Large Indels">
+      <link fromOperation="input connector" fromProperty="build_id" toOperation="create assembled contig reference" toProperty="build_id" />
+      <link fromOperation="create assembled contig reference" fromProperty="build_id" toOperation="align to contig reference" toProperty="build_id" />
+      <link fromOperation="create assembled contig reference" fromProperty="output_dir" toOperation="align to contig reference" toProperty="output_dir" />
+      <link fromOperation="create assembled contig reference" fromProperty="reference_build_id" toOperation="align to contig reference" toProperty="reference_build_id" />
+      <link fromOperation="process re-aligned reads" fromProperty="output_dir" toOperation="output connector" toProperty="output_dir" />
+      <link fromOperation="create assembled contig reference" fromProperty="skip" toOperation="align to contig reference" toProperty="skip" />
+      <link fromOperation="create assembled contig reference" fromProperty="skip" toOperation="process re-aligned reads" toProperty="skip" />
+      <link fromOperation="align to contig reference" fromProperty="merged_bam_path" toOperation="process re-aligned reads" toProperty="tumor_bam" />
+      <link fromOperation="align to contig reference" fromProperty="control_merged_bam_path" toOperation="process re-aligned reads" toProperty="normal_bam" />
+      <link fromOperation="align to contig reference" fromProperty="output_dir" toOperation="process re-aligned reads" toProperty="output_dir" />
+      <link fromOperation="create assembled contig reference" fromProperty="contigs_fasta" toOperation="process re-aligned reads" toProperty="contigs_file" />
+      <link fromOperation="create assembled contig reference" fromProperty="tier_files" toOperation="process re-aligned reads" toProperty="tier_file_location" />
+
+      <operation name="create assembled contig reference">
+        <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateLargeIndels::CreateAssembledContigReference" typeClass="Workflow::OperationType::Command"/>
+      </operation>
+      <operation name="align to contig reference">
+        <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateSvs::AlignReads" typeClass="Workflow::OperationType::Command"/>
+      </operation>
+      <operation name="process re-aligned reads">
+        <operationtype commandClass="Genome::Model::Tools::Validation::LongIndelsParseRemapped" typeClass="Workflow::OperationType::Command"/>
+      </operation>
+
+      <operationtype typeClass="Workflow::OperationType::Model">
+          <inputproperty>build_id</inputproperty>
+          <outputproperty>output_dir</outputproperty>
+      </operationtype>
+  </operation>
+
   <operation name="Validate SVs">
       <link fromOperation="input connector" fromProperty="build_id" toOperation="generate merged assemblies" toProperty="build_id" />
 
       <link fromOperation="generate merged assemblies" fromProperty="build_id" toOperation="create assembled contig reference" toProperty="build_id" />
       <link fromOperation="generate merged assemblies" fromProperty="skip" toOperation="create assembled contig reference" toProperty="skip" />
       <link fromOperation="generate merged assemblies" fromProperty="skip" toOperation="align to contig reference" toProperty="skip" />
+      <link fromOperation="generate merged assemblies" fromProperty="output_dir" toOperation="align to contig reference" toProperty="output_dir" />
 
       <link fromOperation="create assembled contig reference" fromProperty="build_id" toOperation="align to contig reference" toProperty="build_id" />
       <link fromOperation="create assembled contig reference" fromProperty="reference_build_id" toOperation="align to contig reference" toProperty="reference_build_id" />
@@ -88,10 +119,6 @@
 
   <operation name="Validate Small Indels">
     <operationtype commandClass="Genome::Model::Tools::Varscan::PullOneTwoBpIndels" typeClass="Workflow::OperationType::Command" />
-  </operation>
-
-  <operation name="Validate Large Indels">
-    <operationtype commandClass="Genome::Model::SomaticValidation::Command::ValidateLargeIndels" typeClass="Workflow::OperationType::Command"/>
   </operation>
 
   <operation name="Identify DNPs">

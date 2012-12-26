@@ -37,11 +37,9 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::AlignReads {
         },
         output_dir => {
             is_output => 1,
+            is_input => 1,
             is => 'Text',
             doc => 'Place where the output goes',
-            is_calculated => 1,
-            calculate_from => 'build',
-            calculate => q{ return join("/", $build->data_directory, "sv"); }
         },
 
     ],
