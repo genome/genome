@@ -167,6 +167,12 @@ sub execute {
     if ($self->somatic_validation_build) {
         my $build = Genome::Model::Build->get($self->somatic_validation_build);
         die $self->error_message("Could not get a build for id " . $self->somatic_validation_build) unless ($build);
+
+        unless($build->normal_sample) {
+            $self->status_message('No normal sample found.  Skipping.');
+            return 1;
+        }
+
         my $base_dir = $build->data_directory . "/indel_validation";
         Genome::Sys->create_directory($base_dir);
         unless ($self->final_output_file) {
