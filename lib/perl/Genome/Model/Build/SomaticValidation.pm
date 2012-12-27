@@ -237,6 +237,8 @@ sub files_ignored_by_diff {
         control_variants_for_loh/dispatcher.cmd
         validation/review/newcalls.xml
         indel_validation/indel_files_to_validate
+        large_indel_validation/tumor.csv
+        large_indel_validation/normal.csv
     );
 }
 sub dirs_ignored_by_diff {
