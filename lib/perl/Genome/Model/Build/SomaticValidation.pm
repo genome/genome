@@ -195,8 +195,8 @@ sub calculate_estimated_kb_usage {
 
 sub regex_files_for_diff {
     return qw(
-        (?<!sv/)alignments/normal/\d+\.(bam.*)$
-        (?<!sv/)alignments/tumor/\d+\.(bam.*)$
+        ^alignments/normal/\d+\.(bam.*)$
+        ^alignments/tumor/\d+\.(bam.*)$
         sv/alignments/tumor/\d+\.(bam.*)$
         sv/alignments/normal/\d+\.(bam.*)$
         coverage/(tumor|normal)/wingspan_(\d+)/\d+_(\w+)_STATS.t(sv|xt)
@@ -248,7 +248,7 @@ sub dirs_ignored_by_diff {
         variants/sv/squaredancer
         variants/sv/union
         indel_validation/realigned_bams
-        indel_validation
+        /indel_validation
     );
 }
 
