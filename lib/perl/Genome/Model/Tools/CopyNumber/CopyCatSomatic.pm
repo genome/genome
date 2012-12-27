@@ -1,4 +1,4 @@
-package Genome::Model::Tools::CopyNumber::CopyCat;
+package Genome::Model::Tools::CopyNumber::CopyCatSomatic;
 
 use strict;
 use Genome;
@@ -10,7 +10,7 @@ use FileHandle;
 use File::Spec;
 
 
-class Genome::Model::Tools::CopyNumber::CopyCat{
+class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
     is => 'Command',
     has => [        
 
