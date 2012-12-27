@@ -72,6 +72,10 @@ sub execute {
 
     my $output_directory = $self->_create_output_directory;
 
+    $self->reference_build_id(1);
+    $self->contigs_fasta(1);
+    $self->tier_files(1);
+
     my $long_indel_bed_file = $self->_resolve_long_indel_bed_file;
     unless ($long_indel_bed_file) {
         $self->warning_message("No long indel bed file exists with size.  Skipping validation.");
