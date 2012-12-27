@@ -70,6 +70,8 @@ sub sub_command_category {'pipeline steps'}
 sub execute {
     my $self = shift;
 
+    my $output_directory = $self->_create_output_directory;
+
     my $long_indel_bed_file = $self->_resolve_long_indel_bed_file;
     unless ($long_indel_bed_file) {
         $self->warning_message("No long indel bed file exists with size.  Skipping validation.");
@@ -83,8 +85,6 @@ sub execute {
     }
     $self->skip(0);
     $self->_long_indel_bed_file($long_indel_bed_file);
-
-    my $output_directory = $self->_create_output_directory;
 
     my $sample_id = Data::UUID->new->create_str();
     #TODO the instructions say to "be sure to save the STDOUT from this tool
