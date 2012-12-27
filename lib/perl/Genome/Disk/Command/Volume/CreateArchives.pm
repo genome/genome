@@ -14,16 +14,8 @@ sub help_detail { return 'creates archive volumes for regular volumes, if necess
 sub help_brief { return help_detail() };
 sub help_synopsis { return help_detail() };
 
-sub _is_hidden_in_docs {
-    return !Genome::Sys->current_user_has_role('archive');
-}
-
 sub execute {
     my $self = shift;
-
-    unless (Genome::Sys->current_user_has_role('archive')) {
-        Carp::croak "Only users with the archive role can execute this command!";
-    }
 
     $self->status_message("Creating archive volumes for any volumes that lack one!");
 

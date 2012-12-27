@@ -30,10 +30,6 @@ sub help_brief {
     return 'unarchives the given allocations';
 }
 
-sub _is_hidden_in_docs {
-    return !Genome::Sys->current_user_has_role('archive');
-}
-
 sub execute {
     my $self = shift;
 

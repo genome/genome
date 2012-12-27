@@ -26,10 +26,6 @@ sub help_brief {
     return 'archives the given allocations';
 }
 
-sub _is_hidden_in_docs {
-    return !Genome::Sys->current_user_has_role('archive');
-}
-
 sub execute {
     my $self = shift;
     $self->status_message("Starting archive command...");

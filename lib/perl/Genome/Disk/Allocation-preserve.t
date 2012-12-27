@@ -19,10 +19,6 @@ $DB::stopper = 0;
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
 
-no warnings 'redefine';
-*Genome::Sys::current_user_has_role = sub { return 1 };
-use warnings;
-
 my $volume = create_test_volume();
 
 # Make test allocation

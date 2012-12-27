@@ -198,9 +198,6 @@ sub move {
 
 sub archive {
     my ($class, %params) = @_;
-    unless (Genome::Sys->current_user_has_role('archive')) {
-        confess "Only users with role 'archive' can archive allocations!";
-    }
 
     Genome::Utility::Instrumentation::inc('disk.allocation.archive');
 
@@ -209,9 +206,6 @@ sub archive {
 
 sub unarchive {
     my ($class, %params) = @_;
-    unless (Genome::Sys->current_user_has_role('archive')) {
-        confess "Only users with role 'archive' can unarchive allocations!";
-    }
 
     Genome::Utility::Instrumentation::inc('disk.allocation.unarchive');
 

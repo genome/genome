@@ -93,7 +93,6 @@ Genome::Sys->create_directory(join('/', $archive_volume->mount_path, $group->sub
 no warnings 'redefine';
 *Genome::Disk::Volume::archive_volume_prefix = sub { return $archive_volume->mount_path };
 *Genome::Disk::Volume::active_volume_prefix = sub { return $volume->mount_path };
-*Genome::Sys::current_user_has_role = sub { return 1 };
 use warnings;
 
 # Make test allocation

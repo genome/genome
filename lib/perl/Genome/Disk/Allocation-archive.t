@@ -18,10 +18,6 @@ use Filesys::Df qw();
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
 
-no warnings 'redefine';
-*Genome::Sys::current_user_has_role = sub { return 1 };
-use warnings;
-
 use Genome::Disk::Allocation;
 $Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
