@@ -46,7 +46,7 @@ ok($b1, "made test build 1");
 # to test that we parse correctly
 $ENV{GENOME_NO_REQUIRE_USER_VERIFY} = 1;
 my $exit_code1 = eval { 
-    Genome::Model::Build::Command::AbandonAndQueue->_execute_with_shell_params_and_return_exit_code('--', $b1->id);
+    Genome::Model::Build::Command::AbandonAndQueue->_execute_with_shell_params_and_return_exit_code('--reason', 'to test the abandon-and-queue command', '--', $b1->id);
 };
 $ENV{GENOME_NO_REQUIRE_USER_VERIFY} = 0;
 
