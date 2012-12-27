@@ -145,26 +145,6 @@ sub create {
         }
     }
 
-    # these needs to be present for legacy data sets before we add the property to the class --ssmith
-
-    my $c1 = $self->add_param(
-        name => 'alignment_results_count',
-        value_class_name => 'UR::Value::Number',
-        value_id => 0,
-    );
-    unless ($c1) {
-        warn "error backfilling param alignment_results_count";
-    }
-
-    my $c2 = $self->add_param(
-        name => 'control_alignment_results_count',
-        value_class_name => 'UR::Value::Number',
-        value_id => 0,
-    );
-    unless ($c2) {
-        warn "error backfilling param control_alignment_results_count";
-    }
-
     return $self;
 }
 
