@@ -62,7 +62,7 @@
       <link fromOperation="create assembled contig reference" fromProperty="skip" toOperation="process re-aligned reads" toProperty="skip" />
       <link fromOperation="align to contig reference" fromProperty="merged_bam_path" toOperation="process re-aligned reads" toProperty="tumor_bam" />
       <link fromOperation="align to contig reference" fromProperty="control_merged_bam_path" toOperation="process re-aligned reads" toProperty="normal_bam" />
-      <link fromOperation="align to contig reference" fromProperty="output_dir" toOperation="process re-aligned reads" toProperty="output_dir" />
+      <link fromOperation="create assembled contig reference" fromProperty="output_dir" toOperation="process re-aligned reads" toProperty="output_dir" />
       <link fromOperation="create assembled contig reference" fromProperty="contigs_fasta" toOperation="process re-aligned reads" toProperty="contigs_file" />
       <link fromOperation="create assembled contig reference" fromProperty="tier_files" toOperation="process re-aligned reads" toProperty="tier_file_location" />
 

@@ -14,10 +14,12 @@ class Genome::Model::Tools::Validation::LongIndelsParseRemapped {
         tumor_bam => {
             is => 'String',
             doc => 'Path to input tumor bam file',
+            is_optional => 1,
         },
         normal_bam => {
             is => 'String',
             doc => 'Path to input normal bam file',
+            is_optional => 1,
         },
         output_dir => {
             is_output => 1,
@@ -42,6 +44,11 @@ sub execute {
     if ($self->skip) {
         $self->warning_message("skip signal received, skipping");
         return 1;
+    }
+
+    unless($self->tumor_bam and $self->normal_bam) {
+        $self->error_message("Tumor and normal bams must both be provided");
+        return;
     }
 
     my $output_dir = $self->output_dir;
