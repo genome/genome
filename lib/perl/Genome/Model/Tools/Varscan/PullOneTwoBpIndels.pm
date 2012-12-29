@@ -114,12 +114,6 @@ class Genome::Model::Tools::Varscan::PullOneTwoBpIndels {
         is_input => 1,
         is_output => 1,
     },
-    run_inline => {
-        is => 'Boolean',
-        default => 0,
-        doc => 'If set to true, run everything inline instead of in bsubs'
-    },
-
     ],    
 };
 
@@ -373,9 +367,6 @@ sub execute {
     my @cmds;
     my $user = $ENV{USER};
     if ($skip_if_output_present && -e $realigned_normal_bam_file && -e $realigned_tumor_bam_file) {
-        if ($self->run_inline) {
-            die $self->error_message("run_inline currently only works when there is no relapse bam and the bams have not already been realigned");
-        }
         if ($self->relapse_bam){
             push(@cmds,"$bsub -J varscan_validation_tumnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel.tumnor --output-snp $output_snp.tumnor --reference $reference --varscan-params \"$varscan_params\"\'");
             push(@cmds, "$bsub -J varscan_validation_relnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.relnor --output-snp $output_snp.relnor --reference $reference --varscan-params \"$varscan_params\"\'");
@@ -391,9 +382,6 @@ sub execute {
         }
     }
     elsif ($self->relapse_bam) {
-        if ($self->run_inline) {
-            die $self->error_message("run_inline currently only works when there is no relapse bam and the bams have not already been realigned");
-        }
         my $bsub_normal_output = "$realigned_bam_file_directory/realignment_normal.out";
         my $bsub_normal_error = "$realigned_bam_file_directory/realignment_normal.err";
         push(@cmds,"$bsub -J $realigned_normal_bam_file -o $bsub_normal_output -e $bsub_normal_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_normal_bam_file -I $normal_bam -R $reference  --targetIntervalsAreNotSorted\'");
@@ -419,38 +407,22 @@ sub execute {
     }
     else{
         # This was added so things are testable for now
-        if ($self->run_inline) {
-            my $cmd = Genome::Model::SomaticValidation::Command::ValidateSmallIndels->create(
-                final_output_file => $self->final_output_file,
-                realigned_bam_file_directory => $self->realigned_bam_file_directory,
-                small_indel_output_bed => $small_indel_list,
-                varscan_indel_output => $self->varscan_indel_output,
-                varscan_snp_output => $self->varscan_snp_output,
-                tumor_bam => $self->tumor_bam,
-                normal_bam => $self->normal_bam,
-                reference_fasta => $self->reference_fasta,
-            );
-            unless ($cmd->execute) {
-                die $self->error_message("Failed to execute Genome::Model::SomaticValidation::Command::ValidateSmallIndels");
-            }
-        } else {
-            my $bsub_normal_output = "$realigned_bam_file_directory/realignment_normal.out";
-            my $bsub_normal_error = "$realigned_bam_file_directory/realignment_normal.err";
-            push(@cmds,"$bsub -J $realigned_normal_bam_file -o $bsub_normal_output -e $bsub_normal_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_normal_bam_file -I $normal_bam -R $reference  --targetIntervalsAreNotSorted\'");
-
-            my $bsub_tumor_output = "$realigned_bam_file_directory/realignment_tumor.out";
-            my $bsub_tumor_error = "$realigned_bam_file_directory/realignment_tumor.err";
-            push(@cmds,"$bsub -J $realigned_tumor_bam_file -o $bsub_tumor_output -e $bsub_tumor_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_tumor_bam_file -I $tumor_bam -R $reference --targetIntervalsAreNotSorted\'");
-
-            push(@cmds, "$bsub -J bamindex_normal -w \'ended(JOB0)\' \'samtools index $realigned_normal_bam_file\'");
-            push(@cmds, "$bsub -J bamindex_tumor -w \'ended(JOB1)\' \'samtools index $realigned_tumor_bam_file\'");
-            push(@cmds, "$bsub -J varscan_validation -w \'ended(JOB2) && ended(JOB3)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel --output-snp $output_snp --reference $reference --varscan-params \"$varscan_params\"\'");
-
-            push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation -w \'ended(JOB4)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel --validation-snp-file $output_snp --variants-file $small_indel_list_nobed --output-file $final_output_file\'");
+        my $cmd = Genome::Model::SomaticValidation::Command::ValidateSmallIndels->create(
+            final_output_file => $self->final_output_file,
+            realigned_bam_file_directory => $self->realigned_bam_file_directory,
+            small_indel_output_bed => $small_indel_list,
+            varscan_indel_output => $self->varscan_indel_output,
+            varscan_snp_output => $self->varscan_snp_output,
+            tumor_bam => $tumor_bam,
+            normal_bam => $normal_bam,
+            reference_fasta => $reference,
+        );
+        unless ($cmd->execute) {
+            die $self->error_message("Failed to execute Genome::Model::SomaticValidation::Command::ValidateSmallIndels");
         }
     }
 
-    unless ($self->run_inline) {
+    if (@cmds) {
         # run jobs in @cmds #
         my @jobids;
         foreach my $cmd (@cmds){        

@@ -9,27 +9,33 @@ class Genome::Model::Tools::Gatk::RealignIndels {
     is => 'Genome::Model::Tools::Gatk',
     has => [
         target_intervals => {
+            is_input => 1,
             is => 'Text',
             doc => 'The file of indels around which you wish to do realignment',
         },
         output_realigned_bam => {
+            is_input => 1,
             is => 'Text',
             doc => 'The path to where you would like the realigned output bam',
         },
         input_bam => {
+            is_input => 1,
             is => 'Text',
             doc => 'The path to the original bam you would like to be realigned',
         },
         target_intervals_are_sorted => {
+            is_input => 1,
             is => 'Boolean',
             doc => 'If set to false, pass along --targetIntervalsAreNotSorted',
             default => 0,
         },
         reference_fasta => {
+            is_input => 1,
             is => 'Text',
             doc => "Reference Fasta" ,
         },
         index_bam => {
+            is_input => 1,
             is => 'Boolean',
             default => 1,
             doc => 'Index the bam after alignment.'
