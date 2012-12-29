@@ -7,6 +7,7 @@ use Genome;
 
 use File::Spec qw();
 use File::Basename;
+use Workflow::Simple;
 
 class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
     is => 'Genome::Command::Base',
@@ -89,9 +90,62 @@ sub execute {
 
     $self->_create_output_directory();
 
-    $self->_run_gatk;
+    $self->_run_workflow;
 
-    $self->_run_varscan;
+    return 1;
+}
+
+sub _run_workflow {
+    my $self = shift;
+
+    # Define a workflow from the static XML at the bottom of this module
+    my $workflow = Workflow::Operation->create_from_xml(\*DATA);
+    # Validate the workflow
+    my @errors = $workflow->validate;
+    if (@errors) {
+        $self->error_message(@errors);
+        die "Errors validating workflow\n";
+    }
+
+    # Collect and set input parameters
+    # TODO stop hardcoding stuff
+    my %input;
+
+    # Params for gatk 
+    $input{gatk_memory} = "16g";
+    $input{gatk_version} = 5777;
+    $input{index_bam} = 1,
+    $input{target_intervals_are_sorted} = 0;
+    $input{small_indel_list} = $self->small_indel_output_bed;
+    $input{normal_bam} = $self->normal_bam;
+    $input{tumor_bam} = $self->tumor_bam;
+    $input{realigned_tumor_bam} = $self->_realigned_tumor_bam_file;
+    $input{realigned_normal_bam} = $self->_realigned_normal_bam_file;
+    $input{reference} = $self->reference_fasta;
+
+    # Params for varscan
+    $input{varscan_indel_output} = $self->varscan_indel_output;
+    $input{varscan_snp_output}= $self->varscan_snp_output;
+    $input{varscan_params} = $self->varscan_params;
+    my $bed = $self->small_indel_output_bed;
+    ($input{small_indel_list_nobed} = $bed) =~ s/\.padded1bp\.bed$/\.annotation_format/;
+    $input{final_output_file} = $self->final_output_file;
+
+    my $log_dir = $self->output_dir;
+    if(Workflow::Model->parent_workflow_log_dir) {
+        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    }
+
+    $workflow->log_dir($log_dir);
+
+    # Launch workflow
+    $self->status_message("Launching workflow now.");
+    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %input);
+
+    # Collect and analyze results
+    unless($result){
+        die $self->error_message("Workflow did not return correctly.");
+    }
 
     return 1;
 }
@@ -106,81 +160,6 @@ sub _realigned_tumor_bam_file {
     my $self = shift;
     my $realigned_tumor_bam_file = basename($self->tumor_bam,qr{\.bam});
     return $self->realigned_bam_file_directory . "/$realigned_tumor_bam_file.realigned.bam";
-}
-
-sub _run_gatk {
-    my $self = shift;
-
-    my $small_indel_list = $self->small_indel_output_bed;
-    my $normal_bam = $self->normal_bam;
-    my $tumor_bam = $self->tumor_bam;
-    my $realigned_tumor_bam_file = $self->_realigned_tumor_bam_file;
-    my $realigned_normal_bam_file = $self->_realigned_normal_bam_file;
-    my $reference = $self->reference_fasta;
-
-    my $gatk_tumor_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
-        max_memory => "16g",
-        version => 5777,
-        target_intervals => $small_indel_list,
-        output_realigned_bam => $realigned_tumor_bam_file,
-        input_bam => $tumor_bam,
-        reference_fasta => $reference,
-        target_intervals_are_sorted => 0,
-    );
-
-    my $gatk_normal_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
-        max_memory => "16g",
-        version => 5777,
-        target_intervals => $small_indel_list,
-        output_realigned_bam => $realigned_normal_bam_file,
-        input_bam => $normal_bam,
-        reference_fasta => $reference,
-        target_intervals_are_sorted => 0,
-    );
-
-    unless ($gatk_tumor_cmd->execute) {
-        die $self->error_message("Failed to run gatk IndelRealigner on tumor");
-    }
-
-    unless ($gatk_normal_cmd->execute) {
-        die $self->error_message("Failed to run gatk IndelRealigner on normal");
-    }
-
-    return 1;
-}
-
-sub _run_varscan {
-    my $self = shift;
-
-    my $realigned_tumor_bam_file = $self->_realigned_tumor_bam_file;
-    my $realigned_normal_bam_file = $self->_realigned_normal_bam_file;
-    my $reference = $self->reference_fasta;
-    my $output_indel = $self->varscan_indel_output;
-    my $output_snp = $self->varscan_snp_output;
-    my $varscan_params = $self->varscan_params;
-    my $small_indel_list = $self->small_indel_output_bed;
-    (my $small_indel_list_nobed = $small_indel_list) =~ s/\.padded1bp\.bed$/\.annotation_format/;
-    my $final_output_file = $self->final_output_file;
-
-    my $rv = Genome::Model::Tools::Varscan::Validation->execute(
-        normal_bam => $realigned_normal_bam_file,
-        tumor_bam => $realigned_tumor_bam_file,
-        output_indel => $output_indel,
-        output_snp => $output_snp,
-        reference => $reference,
-        varscan_params => $varscan_params,
-    );
-    die $self->error_message("Failed to run gmt varscan validation") unless $rv->result == 1;
-
-    $rv = Genome::Model::Tools::Varscan::ProcessValidationIndels->execute(
-        validation_indel_file => $output_indel,
-        validation_snp_file => $output_snp,
-        variants_file => $small_indel_list_nobed,
-        output_file => $final_output_file,
-    );
-    die $self->error_message("Failed to run gmt varscan process-validation-indels") unless $rv->result == 1;
-
-    return 1;
 }
 
 sub _resolve_output_directory {
@@ -235,3 +214,77 @@ sub _resolve_inputs {
 }
 
 1;
+
+__DATA__
+<?xml version='1.0' standalone='yes'?>
+
+<workflow name="Validate Small Indels Subworkflow">
+
+  <link fromOperation="input connector" fromProperty="gatk_memory" toOperation="Realign Indels Tumor" toProperty="max_memory" />
+  <link fromOperation="input connector" fromProperty="gatk_version" toOperation="Realign Indels Tumor" toProperty="version" />
+  <link fromOperation="input connector" fromProperty="small_indel_list" toOperation="Realign Indels Tumor" toProperty="target_intervals" />
+  <link fromOperation="input connector" fromProperty="realigned_tumor_bam" toOperation="Realign Indels Tumor" toProperty="output_realigned_bam" />
+  <link fromOperation="input connector" fromProperty="tumor_bam" toOperation="Realign Indels Tumor" toProperty="input_bam" />
+  <link fromOperation="input connector" fromProperty="reference" toOperation="Realign Indels Tumor" toProperty="reference_fasta" />
+  <link fromOperation="input connector" fromProperty="target_intervals_are_sorted" toOperation="Realign Indels Tumor" toProperty="target_intervals_are_sorted" />
+  <link fromOperation="input connector" fromProperty="index_bam" toOperation="Realign Indels Tumor" toProperty="index_bam" />
+
+  <link fromOperation="input connector" fromProperty="gatk_memory" toOperation="Realign Indels Normal" toProperty="max_memory" />
+  <link fromOperation="input connector" fromProperty="gatk_version" toOperation="Realign Indels Normal" toProperty="version" />
+  <link fromOperation="input connector" fromProperty="small_indel_list" toOperation="Realign Indels Normal" toProperty="target_intervals" />
+  <link fromOperation="input connector" fromProperty="realigned_normal_bam" toOperation="Realign Indels Normal" toProperty="output_realigned_bam" />
+  <link fromOperation="input connector" fromProperty="normal_bam" toOperation="Realign Indels Normal" toProperty="input_bam" />
+  <link fromOperation="input connector" fromProperty="reference" toOperation="Realign Indels Normal" toProperty="reference_fasta" />
+  <link fromOperation="input connector" fromProperty="target_intervals_are_sorted" toOperation="Realign Indels Normal" toProperty="target_intervals_are_sorted" />
+  <link fromOperation="input connector" fromProperty="index_bam" toOperation="Realign Indels Normal" toProperty="index_bam" />
+
+  <link fromOperation="input connector" fromProperty="reference" toOperation="Varscan Validation" toProperty="reference" />
+  <link fromOperation="input connector" fromProperty="reference" toOperation="Varscan Validation" toProperty="reference" />
+  <link fromOperation="input connector" fromProperty="varscan_indel_output" toOperation="Varscan Validation" toProperty="output_indel" />
+  <link fromOperation="input connector" fromProperty="varscan_snp_output" toOperation="Varscan Validation" toProperty="output_snp" />
+  <link fromOperation="input connector" fromProperty="varscan_params" toOperation="Varscan Validation" toProperty="varscan_params" />
+  <link fromOperation="Realign Indels Tumor" fromProperty="output_realigned_bam" toOperation="Varscan Validation" toProperty="tumor_bam" />
+  <link fromOperation="Realign Indels Normal" fromProperty="output_realigned_bam" toOperation="Varscan Validation" toProperty="normal_bam" />
+
+  <link fromOperation="input connector" fromProperty="final_output_file" toOperation="Process Validation Indels" toProperty="output_file" />
+  <link fromOperation="input connector" fromProperty="small_indel_list_nobed" toOperation="Process Validation Indels" toProperty="variants_file" />
+  <link fromOperation="Varscan Validation" fromProperty="output_indel" toOperation="Process Validation Indels" toProperty="validation_indel_file" />
+  <link fromOperation="Varscan Validation" fromProperty="output_snp" toOperation="Process Validation Indels" toProperty="validation_snp_file" />
+
+  <link fromOperation="Process Validation Indels" fromProperty="output_file" toOperation="output connector" toProperty="output_file" />
+
+  <operation name="Realign Indels Tumor">
+    <operationtype commandClass="Genome::Model::Tools::Gatk::RealignIndels" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Realign Indels Normal">
+    <operationtype commandClass="Genome::Model::Tools::Gatk::RealignIndels" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Varscan Validation">
+    <operationtype commandClass="Genome::Model::Tools::Varscan::Validation" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Process Validation Indels">
+    <operationtype commandClass="Genome::Model::Tools::Varscan::ProcessValidationIndels" typeClass="Workflow::OperationType::Command" />
+  </operation>
+
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>normal_bam</inputproperty>
+    <inputproperty>gatk_memory</inputproperty>
+    <inputproperty>gatk_version</inputproperty>
+    <inputproperty>index_bam</inputproperty>
+    <inputproperty>target_intervals_are_sorted</inputproperty>
+    <inputproperty>small_indel_list</inputproperty>
+    <inputproperty>normal_bam</inputproperty>
+    <inputproperty>tumor_bam</inputproperty>
+    <inputproperty>realigned_tumor_bam</inputproperty>
+    <inputproperty>realigned_normal_bam</inputproperty>
+    <inputproperty>reference</inputproperty>
+    <inputproperty>varscan_indel_output</inputproperty>
+    <inputproperty>varscan_snp_output</inputproperty>
+    <inputproperty>varscan_params</inputproperty>
+    <inputproperty>small_indel_list_nobed</inputproperty>
+    <inputproperty>final_output_file</inputproperty>
+
+    <outputproperty>output_file</outputproperty>
+  </operationtype>
+
+</workflow>

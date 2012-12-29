@@ -14,6 +14,7 @@ class Genome::Model::Tools::Gatk {
     is => ['Command'],
     has_optional => [
         version => {
+            is_input => 1,
             is    => 'string',
             doc   => 'version of Gatk application to use',
             default => $DEFAULT_VERSION,
@@ -24,6 +25,7 @@ class Genome::Model::Tools::Gatk {
         },
         max_memory => {
             is => 'Text',
+            is_input => 1,
             doc => 'Parameter to provide to the Java -Xmx argument for maximum memory. Should be something like "3000m" or "16g".',
             is_optional => 1,
         },
