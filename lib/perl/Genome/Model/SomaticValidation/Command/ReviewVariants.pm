@@ -352,8 +352,8 @@ sub execute {
     # in the case of extension experiments, with no previous build, this will be all variants
     $self->status_message("Gathering new sites...");
 
-    if ( -s $current_snv_file){
-        $self->gather_new_sites($current_snv_file);
+    if (-s $current_snv_file){
+        return 1 unless $self->gather_new_sites($current_snv_file);
     } else {
         $self->status_message("No variants found that were called in the validation, but not found in original genomes");
     }
@@ -950,7 +950,10 @@ sub gather_new_sites {
         die $self->error_message('Failed to convert review file to BED format.');
     }
 
-    my $tier1_bed_file = $self->tier_variant_file($newcalls_bed_file);
+    my $tier1_bed_file;
+    eval{$tier1_bed_file = $self->tier_variant_file($newcalls_bed_file)};
+    return if $@;
+
     my $tier1_review_bed_file = "$output_dir/review/newcalls.bed";
     Genome::Sys->copy_file($tier1_bed_file, $tier1_review_bed_file);
 
