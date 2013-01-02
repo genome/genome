@@ -51,21 +51,41 @@ sub execute {
             " ($current_build_num of $total_builds)");
 
         my @allocations = grep { $_->is_archived } $build->all_allocations;
-        my $num_allocations = scalar @allocations;
-        if ($num_allocations == 0) {
-            $self->status_message("All data related to this build is unarchived, skipping.");
-            next BUILD;
+        my $num_allocations = @allocations;
+        my (%job_statuses, %job_to_allocation_mapping);
+        if ( @allocations ) {
+            $self->status_message("Found $num_allocations archived allocations related to this build, " .
+                "starting unarchive process now.");
+            # Schedule unarchive of all allocations related to build via LSF
+            my %jobs_to_allocations = $self->_bsub_unarchives($dir, @allocations);
+            %job_to_allocation_mapping = %jobs_to_allocations;
+            my @job_ids = keys %job_to_allocation_mapping;
+            $self->debug_message("Unarchives scheduled, waiting for completion");
+            # Wait for all jobs to finish and gather status
+            my %statuses = Genome::Sys->wait_for_lsf_jobs(@job_ids);
+            %job_statuses = (%job_statuses, %statuses);
         }
-        $self->status_message("Found $num_allocations archived allocations related to this build, " .
-            "starting unarchive process now.");
 
-        # Schedule unarchive of all allocations related to build via LSF
-        my %job_to_allocation_mapping = $self->_bsub_unarchives($dir, @allocations);
-        my @job_ids = keys %job_to_allocation_mapping;
-        $self->debug_message("All unarchives scheduled, waiting for completion");
+        # Old builds may have allocations symlinked to the data dir, and they may are archived, or the link is broken
+        my @symlinked_allocations_that_need_unarchiving = grep { not $_->is_archived } $build->symlinked_allocations;
+        if ( @symlinked_allocations_that_need_unarchiving ) {
+            $num_allocations += @symlinked_allocations_that_need_unarchiving;
+            $self->status_message("Found ".@symlinked_allocations_that_need_unarchiving." archived symlinked allocations. Unarchiving...");
+            my %jobs_to_allocations = $self->_bsub_unarchives($dir, @symlinked_allocations_that_need_unarchiving);
+            %job_to_allocation_mapping = %jobs_to_allocations;
+            my @symlinked_allocation_job_ids = keys %jobs_to_allocations;
+            $self->debug_message("Unarchives for symlinked allocations scheduled, waiting for completion");
+            my %symlinked_allocation_job_statuses = Genome::Sys->wait_for_lsf_jobs(@symlinked_allocation_job_ids);
+            %job_statuses = (%job_statuses, %symlinked_allocation_job_statuses);
+        }
 
-        # Wait for all jobs to finish and gather status
-        my %job_statuses = Genome::Sys->wait_for_lsf_jobs(@job_ids);
+        # Relink broken symlinked allocations
+        $build->relink_symlinked_allocations;
+
+        if ( $num_allocations == 0 ) {
+            $self->status_message('No unarchived allocations found!');
+            next;
+        }
 
         # Find failures and report them (now and once all builds have completed)
         $self->debug_message("Unarchived finished, combing over return statuses and gathering up any failures");
@@ -77,7 +97,7 @@ sub execute {
         my $msg = "Finished build " . $build->id;
         if ($fail_count > 0) {
             $msg .= ", $fail_count of $num_allocations failed. All failures will be printed in a " .
-                "summary report before this command exits.";
+            "summary report before this command exits.";
         }
         else {
             $msg .= ", all $num_allocations unarchives finished successfully.";
