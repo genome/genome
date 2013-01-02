@@ -657,7 +657,8 @@ sub all_allocations {
         push @allocations, @event_allocations if @event_allocations;
     }
 
-    return @allocations;
+    my %allocations = map { $_->id => $_ } reverse @allocations;
+    return values %allocations;
 }
 
 sub all_results {
