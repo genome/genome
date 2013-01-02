@@ -23,7 +23,7 @@ class Genome::Model::Tools::DetectVariants2::BamWindow{
 };
 
 my %BAMWINDOW_VERSIONS = (
-    '0.4'   => "/gscuser/bniu/gc6143/cnv/code/bamwindow-v0.4/bam-window"
+    '0.4'   => "/gsc/bin/bam-window",
     );
 
 #---------------------------------------

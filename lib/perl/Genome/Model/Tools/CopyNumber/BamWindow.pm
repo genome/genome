@@ -81,7 +81,7 @@ sub execute {
 
     #create the bam-window command
     # TODO change this path once it is installed system-wide
-    my $cmd = "/gscuser/bniu/gc6143/cnv/code/bamwindow-v0.4/bam-window"; 
+    my $cmd = "/gsc/bin/bam-window"; 
     $cmd .= " -q " . $self->minimum_mapping_quality;
     $cmd .= " -w " . $self->window_size;
 
