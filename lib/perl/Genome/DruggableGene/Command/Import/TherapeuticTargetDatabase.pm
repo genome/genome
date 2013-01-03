@@ -5,9 +5,6 @@ use warnings;
 
 use Genome;
 
-my $high = 750000;
-UR::Context->object_cache_size_highwater($high);
-
 class Genome::DruggableGene::Command::Import::TherapeuticTargetDatabase {
     is => 'Genome::DruggableGene::Command::Import::Base',
     has => [
@@ -77,6 +74,8 @@ my %UniProtMapping;
 
 sub execute {
     my $self = shift;
+    my $high = 750000;
+    UR::Context->object_cache_size_highwater($high);
     %UniProtMapping=%{$self->_get_uniprot_entrez_mapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
     $self->input_to_tsv();
     $self->import_tsv();

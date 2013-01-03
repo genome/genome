@@ -5,9 +5,6 @@ use warnings;
 
 use Genome;
 
-my $high = 750000; #Number of UR objects allowed in Cache before attempting to prune them down
-UR::Context->object_cache_size_highwater($high);
-
 class Genome::DruggableGene::Command::Import::Ensembl {
     is => 'Genome::DruggableGene::Command::Import::Base',
     has => [
@@ -91,6 +88,8 @@ HELP
 
 sub execute {
     my $self = shift;
+    my $high = 750000; #Number of UR objects allowed in Cache before attempting to prune them down
+    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv(); #Get the data from source files and write to a temp file
     $self->import_tsv();   #Dump the contents of the temp file to the database
     return 1;

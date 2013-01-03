@@ -5,8 +5,6 @@ use warnings;
 use Genome;
 use Text::ParseWords;
 
-binmode(STDOUT, ":utf8");
-
 class Genome::DruggableGene::Command::Import::Pharmgkb {
   is => 'Genome::DruggableGene::Command::Import::Base',
   has => [
@@ -111,6 +109,7 @@ HELP
 
 sub execute {
     my $self = shift;
+    binmode(STDOUT, ":utf8");
     $self->input_to_tsv();
     $self->import_tsv();
     unless ($self->skip_pubchem){

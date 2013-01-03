@@ -8,10 +8,6 @@ use Term::ANSIColor qw(:constants);
 use XML::Simple;
 use YAML::Syck;
 
-binmode(STDOUT, ":utf8");
-
-my $high = 750000;
-UR::Context->object_cache_size_highwater($high);
 
 class Genome::DruggableGene::Command::Import::DrugBank {
     is => 'Genome::DruggableGene::Command::Import::Base',
@@ -136,6 +132,9 @@ my %UniProtMapping;
 
 sub execute {
     my $self = shift;
+    binmode(STDOUT, ":utf8");
+    my $high = 750000;
+    UR::Context->object_cache_size_highwater($high);
     %UniProtMapping=%{$self->_get_uniprot_entrez_mapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
     $self->input_to_tsv();
     #$self->import_tsv();

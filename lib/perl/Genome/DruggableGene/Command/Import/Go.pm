@@ -7,9 +7,6 @@ use Genome;
 use IO::File;
 use XML::Simple;
 
-my $high = 750000;
-UR::Context->object_cache_size_highwater($high);
-
 class Genome::DruggableGene::Command::Import::Go {
     is => 'Genome::DruggableGene::Command::Import::Base',
     has => {
@@ -91,6 +88,8 @@ HELP
 
 sub execute {
     my $self = shift;
+    my $high = 750000;
+    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv();
     $self->import_tsv();
     return 1;

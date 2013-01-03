@@ -55,7 +55,7 @@ sub import {
             warn $@ if $@;
         }
         $r;
-    } @classes;
+    } sort @classes;
 
     warn "The following classes loaded with errors:\n  " .
         join ("\n  ",@error_classes)

@@ -6,9 +6,6 @@ use warnings;
 use Genome;
 use IO::File;
 
-my $high = 750000;
-UR::Context->object_cache_size_highwater($high);
-
 class Genome::DruggableGene::Command::Import::HopkinsGroom {
     is => 'Genome::DruggableGene::Command::Import::Base',
     has => {
@@ -101,6 +98,8 @@ HELP
 
 sub execute {
     my $self = shift;
+    my $high = 750000;
+    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv();
     $self->import_tsv();
     return 1;

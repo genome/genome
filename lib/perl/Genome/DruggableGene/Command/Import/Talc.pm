@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use Genome;
 
-binmode(STDOUT, ":utf8");
-
 class Genome::DruggableGene::Command::Import::Talc {
   is => 'Genome::DruggableGene::Command::Import::Base',
   has => [
@@ -110,6 +108,7 @@ HELP
 
 sub execute {
     my $self = shift;
+    binmode(STDOUT, ":utf8");
     $self->input_to_tsv();
     $self->import_tsv();
     unless ($self->skip_pubchem){
