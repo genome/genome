@@ -161,7 +161,7 @@ sub _read_count_for_bam {
         use_version => $self->samtools_version,
     );
     if ( not $gmt ) {
-        $self->error_message('Failed to create gmt same flagstat!');
+        $self->error_message('Failed to create gmt sam flagstat!');
         return;
     }
     $gmt->dump_status_messages(1);
