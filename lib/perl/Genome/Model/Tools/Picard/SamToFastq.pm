@@ -16,11 +16,11 @@ class Genome::Model::Tools::Picard::SamToFastq {
         },
         fastq => {
             is          => 'String',
-            doc         => 'Output fastq file (single-end fastq or, if paired, first end of the pair fastq). Required.',
+            doc         => 'Output fastq file (single-end fastq or, if paired, first end of the pair fastq).',
         },
         fastq2 => {
             is          => 'String',
-            doc         => 'Output fastq file (if paired, second end of the pair fastq). Default value: null.',
+            doc         => 'Output fastq file (if paired, second end of the pair fastq).',
             is_optional => 1,
         },
         fragment_fastq => {
