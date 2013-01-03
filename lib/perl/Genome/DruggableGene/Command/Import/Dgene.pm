@@ -301,8 +301,8 @@ sub import_genes {
         my $human_readable_name = $dgene_input->{'human_readable_name'};
         $human_readable_name =~ s/-/ /g;
         my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
-        my $symbol = $self->_create_gene_alternate_name_report($gene_name, $dgene_input->{'Symbol'}, 'Gene Symbol', '');
-        my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $dgene_input->{'GeneID'}, 'Entrez Gene Id', '');
+        my $symbol = $self->_create_gene_alternate_name_report($gene_name, $dgene_input->{'Symbol'}, 'Gene Symbol', '', 'upper');
+        my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $dgene_input->{'GeneID'}, 'Entrez Gene Id', '', 'upper');
         push @genes, $gene_name;
     }
     return @genes;

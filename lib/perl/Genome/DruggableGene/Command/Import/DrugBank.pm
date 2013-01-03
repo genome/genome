@@ -225,18 +225,18 @@ sub _import_gene {
         }     
     }
     my $gene_name = $self->_create_gene_name_report($gene_partner_id, $citation, 'Drugbank Partner Id', '');
-    #my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '');
+    #my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '', 'upper');
     unless ($gene_symbol eq 'N/A'){
-        my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Drugbank Gene Name', '');
+        my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Drugbank Gene Name', '', 'upper');
     }
     unless ($uniprot_id eq 'N/A'){
-        my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Accession', '');
+        my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Accession', '', 'upper');
     }
     unless ($entrez_id eq 'N/A'){
-        my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $entrez_id, 'Entrez Gene Id', '');
+        my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $entrez_id, 'Entrez Gene Id', '', 'upper');
     }
     unless ($ensembl_id eq 'N/A'){
-        my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '');
+        my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '', 'upper');
     }
     return $gene_name;
 }

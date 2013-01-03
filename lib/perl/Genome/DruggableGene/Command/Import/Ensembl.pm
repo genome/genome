@@ -202,10 +202,10 @@ sub import_genes {
     while(my $gene = $parser->next){
         my $gene_name_report = $self->_create_gene_name_report($gene->{ensembl_id}, $citation, 'Ensembl Gene Id', ''); #Description left undefined for now
         push @gene_name_reports, $gene_name_report;
-        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_id}, 'Ensembl Gene Id', '');
+        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_id}, 'Ensembl Gene Id', '', 'upper');
 
         unless($gene->{ensembl_gene_symbol} eq 'N/A'){
-            my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'Ensembl Gene Name', '');
+            my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'Ensembl Gene Name', '', 'upper');
         }
         unless ($gene->{ensembl_gene_biotype} eq 'N/A'){
           my $biotype_category = $self->_create_gene_category_report($gene_name_report, 'Gene Biotype', $gene->{ensembl_gene_biotype}, '');

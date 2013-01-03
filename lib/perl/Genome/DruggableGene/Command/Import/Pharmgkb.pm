@@ -458,29 +458,29 @@ sub _import_gene {
     my $interaction = shift;
     my $citation = shift;
     my $gene_accession = $self->_create_gene_name_report($interaction->{Entity2_id}, $citation, 'PharmGKB Gene Accession', '');
-    #my $gene_accession_alt = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entity2_id}, 'PharmGKB Gene Accession', '');
+    #my $gene_accession_alt = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entity2_id}, 'PharmGKB Gene Accession', '', 'upper');
 
     unless ($interaction->{Entrez_Id} eq 'N/A'){
-        my $Entrez_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entrez_Id}, 'Entrez Gene Id', '');
+        my $Entrez_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Entrez_Id}, 'Entrez Gene Id', '', 'upper');
     }
     unless ($interaction->{Ensembl_Id} eq 'N/A'){
-        my $Ensembl_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Ensembl_Id}, 'Ensembl Gene Id', '');
+        my $Ensembl_Id_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Ensembl_Id}, 'Ensembl Gene Id', '', 'upper');
     }
     unless ($interaction->{Gene_Name} eq 'N/A'){
-        my $Gene_Name_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Gene_Name}, 'Gene Name', '');
+        my $Gene_Name_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Gene_Name}, 'Gene Name', '', 'lower');
     }
     unless ($interaction->{Symbol} eq 'N/A'){
-        my $Gene_Symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Symbol}, 'Gene Symbol', '');
+        my $Gene_Symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $interaction->{Symbol}, 'Gene Symbol', '', 'upper');
     }
     my @Alternate_Names = quotewords(',', 0, $interaction->{Alternate_Names});
     for my $Alternate_Name (@Alternate_Names){
         next if $Alternate_Name eq 'N/A';
-        my $alt_name_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Name, 'Alternate Gene Name','');
+        my $alt_name_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Name, 'Alternate Gene Name','', 'upper');
     }
     my @Alternate_Symbols = quotewords(',', 0, $interaction->{Alternate_Symbols});
         for my $Alternate_Symbol (@Alternate_Symbols){      
         next if $Alternate_Symbol eq 'N/A';
-        my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'Gene Synonym','');
+        my $alt_symbol_association = $self->_create_gene_alternate_name_report($gene_accession, $Alternate_Symbol, 'Gene Synonym','', 'upper');
     }
 #   my @gene_cross_references = split(",", $interaction->{Gene_Cross_References});
 #    for my $gene_cross_reference (@gene_cross_references){
@@ -488,7 +488,7 @@ sub _import_gene {
 #        my @data_pair = split(":", $gene_cross_reference);
 #        my $cross_ref_type=join("_", "PharmGKB", $data_pair[0]);
 #        my $cross_ref_value=$data_pair[1];
-#        my $cross_reference_association = $self->_create_gene_alternate_name_report($gene_accession, $cross_ref_value, $cross_ref_type, '');
+#        my $cross_reference_association = $self->_create_gene_alternate_name_report($gene_accession, $cross_ref_value, $cross_ref_type, '', 'upper');
 #    }
     unless($interaction->{Is_VIP} eq 'N/A'){
     my $is_vip_association = $self->_create_gene_category_report($gene_accession, 'Is VIP', $interaction->{Is_VIP},'');

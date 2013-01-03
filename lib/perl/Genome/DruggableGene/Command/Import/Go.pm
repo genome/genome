@@ -157,7 +157,7 @@ sub import_genes {
     $parser->next; #eat the headers
     while(my $go_input = $parser->next){
         my $gene_name = $self->_create_gene_name_report($go_input->{'go_name'}, $citation, 'GO Gene Name', '');
-        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $go_input->{'go_name'}, 'GO Gene Name', '');
+        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $go_input->{'go_name'}, 'GO Gene Name', '', 'upper');
         my $human_readable_name = $go_input->{'human_readable_name'};
         $human_readable_name =~ s/-/ /g;
         my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
@@ -167,7 +167,7 @@ sub import_genes {
             my ($nomenclature, $identifier, $evidence_code) = split('/', $alternate);
             next unless $nomenclature;
             if($nomenclature =~ m/^uniprotkb$/i){
-                my $alternate_name_association = $self->_create_gene_alternate_name_report($gene_name, $identifier, $nomenclature, $evidence_code); #TODO: is pushing evidence_code into description the right thing to do
+                my $alternate_name_association = $self->_create_gene_alternate_name_report($gene_name, $identifier, $nomenclature, $evidence_code, 'upper'); #TODO: is pushing evidence_code into description the right thing to do
             }else{
                 my $category_association = $self->_create_gene_category_report($gene_name, $nomenclature, $identifier, $evidence_code) #TODO: still don't know if this is the right thing to do
             }
