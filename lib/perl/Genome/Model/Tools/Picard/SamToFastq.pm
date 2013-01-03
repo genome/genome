@@ -42,13 +42,12 @@ class Genome::Model::Tools::Picard::SamToFastq {
 };
 
 sub help_brief {
-    'Tool to create FASTQ file from SAM/BAM using Picard';
+    'Tool to create FASTQ file from SAM/BAM using Picard with added support for mixed paired/fragment BAMs';
 }
 
 sub help_detail {
     return <<EOS
-    Tool to create FASTQ file from SAM/BAM using Picard.  For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#SamToFastq
+    Tool to create FASTQ file from SAM/BAM using Picard.  Based on Picard's "SamToFastq" (see `gmt picard standard-sam-to-fastq`)
 EOS
 }
 
