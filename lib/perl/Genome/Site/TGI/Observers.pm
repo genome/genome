@@ -3,7 +3,7 @@ package Genome::Site::TGI::Observers;
 use strict;
 use warnings;
 
-use Log::Log4perl qw(:easy);
+use Log::Log4perl qw(get_logger :levels);
 
 UR::Object::Type->add_observer(
     aspect => 'load',
@@ -28,18 +28,18 @@ UR::Object->add_observer(
         my($self, $type, $message) = @_;
 
         unless ($log4perl) {
-            Log::Log4perl->easy_init($ERROR);
             $log4perl = get_logger();
             $log4perl->level($ERROR);
 
             my $appender = Log::Log4perl::Appender->new(
                 "Log::Dispatch::Syslog",
-                ident => 'GMS',
+                ident => "GMS $0",
                 facility => 'syslog',
             );
             $log4perl->add_appender($appender);
         }
-        $log4perl->error($message);
+        my $a = ref($self) ? $self->class . ' id('. $self->__display_name__.')' : $self;
+        $log4perl->error($a . ': ' . $message);
     }
 );
 
