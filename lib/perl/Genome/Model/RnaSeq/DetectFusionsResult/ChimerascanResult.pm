@@ -146,66 +146,17 @@ sub _create_unaligned_fastqs {
     my $stage            = $self->temp_staging_directory;
     my $alignment_result = $self->alignment_result;
     my $bam_file         = $alignment_result->bam_file;
-    my $output_directory = join("/", $stage, "unaligned_fastqs");
+    my $read1_fastq      = join("/", $stage, 'tmp', 'unaligned_1.fq');
+    my $read2_fastq      = join("/", $stage, 'tmp', 'unaligned_2.fq');
 
-    my $cmd = Genome::Model::Tools::Sam::BamToUnalignedFastq->create(
+    my $cmd = Genome::Model::Tools::Picard::StandardSamToFastq->create(
         bam_file         => $bam_file,
-        output_directory => $output_directory,
+        fastq            => $read1_fastq,
+        second_end_fastq => $read2_fastq,
+        re_reverse       => 1,
     );
+
     $cmd->execute();
-
-    for my $i (1..2) {
-        my @pair_fqs = $self->_get_pair_fqs($output_directory, $i);
-        unless (scalar(@pair_fqs)) {
-            die "Couldn't find any pair $i fastqs in $output_directory!";
-        }
-        my $destination = join("/", $stage, "tmp", "unaligned_$i.fq");
-        $self->status_message(sprintf("Found %d lanes of data for pair %d",
-                scalar(@pair_fqs), $i));
-        if (scalar(@pair_fqs) == 1) {
-            # just move the file
-            my $source = join("/", $output_directory, $pair_fqs[0]);
-            Genome::Sys->shellcmd("mv $source $destination",
-                    input_files  => [$source],
-                    output_files => [$destination],
-            );
-        } else {
-            # cat the files (different lanes) together
-            my $cmd = "cat";
-            my @sources;
-            for my $pair_fq (@pair_fqs) {
-                my $source = join("/", $output_directory, $pair_fq);
-                push(@sources, $source);
-                $cmd = $cmd . " $source";
-            }
-            $cmd = $cmd . " > $destination";
-            Genome::Sys->shellcmd($cmd,
-                    input_files  => \@sources,
-                    output_files => [$destination],
-            );
-        }
-        unless (-s $destination) {
-            die "Failed to create unaligned_fastq at \"$destination\"";
-        }
-        Genome::Sys->remove_directory_tree($output_directory);
-    }
-}
-
-sub _get_pair_fqs {
-    my ($self, $dir, $num) = @_;
-
-    my @filenames = split(/\n/, `ls $dir`);
-    my @results;
-    for my $filename (@filenames) {
-        if ($filename =~ m/s_._([12])_sequence\.txt/) {
-            my $pair_num = $1;
-            push(@results, $filename) if $pair_num eq $num;
-        } else {
-            die "Couldn't determine the pair number based " .
-                    "on filename: $filename";
-        }
-    }
-    return @results;
 }
 
 sub _run_chimerascan {
