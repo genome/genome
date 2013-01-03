@@ -122,7 +122,7 @@ class Genome::Model::MetagenomicShotgun {
     ],
 };
 
-sub sub_model_names {
+sub sub_model_labels {
     return (qw/ contamination_screen metagenomic_nucleotide metagenomic_protein viral_nucleotide viral_protein /);
 }
 
@@ -139,16 +139,13 @@ sub delete {
 }
 
 sub create{
-    my $class = shift;
+    my ($class, %params) = @_;
 
-    $DB::single=1;
-
-    my %params = @_;
     my $self = $class->SUPER::create(%params);
     return unless $self;
 
     my $processing_profile = $self->processing_profile;
-    for ( $self->sub_model_names ){
+    for ( $self->sub_model_labels ){
         my $pp_method = "_".$_."_pp";
         if($self->processing_profile->$pp_method) {
             my $model = $self->_create_model_for_type($_);
