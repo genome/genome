@@ -69,7 +69,7 @@ my $frag_library = Genome::Library->__define__(
     id => -1235,
     name => $sample->name.'-testlibs1',
     sample_id => $sample->id,
-    fragment_size_range => 180,
+    library_insert_size => 180,
 );
 ok($frag_library, 'define frag library') or die;
 my $frag_inst_data = Genome::InstrumentData::Solexa->__define__(
@@ -102,7 +102,7 @@ my $jump_library = Genome::Library->__define__(
     id => -1236,
     name => $sample->name.'-testlibs2',
     sample_id => $sample->id,
-    fragment_size_range => 180,
+    library_insert_size => 180,
 );
 ok($jump_library, 'define jump library') or die;
 my $jump_inst_data = Genome::InstrumentData::Solexa->__define__(

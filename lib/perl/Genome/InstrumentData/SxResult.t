@@ -134,7 +134,7 @@ sub setup_data {
         id => -1235,
         name => $sample->name.'-testlibs1',
         sample_id => $sample->id,
-        fragment_size_range => 180,
+        library_insert_size => 180,
     );
 
     ok($lib, 'define library') or die;

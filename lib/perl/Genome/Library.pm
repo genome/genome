@@ -42,10 +42,6 @@ class Genome::Library {
             column_name => 'LIBRARY_INSERT_SIZE',
             doc => 'The relative insert size of fragments. This may be a number or a range.'
         },
-        fragment_size_range => {
-            is => 'Text',
-            column_name => 'LIBRARY_INSERT_SIZE',
-        },
         protocol => {
             is => 'Text',
             column_name => 'PROTOCOL',
