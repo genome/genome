@@ -49,14 +49,14 @@ sub required_rusage {
     #check to see if our resource requests are feasible (This uses "maxmem" to check theoretical availability)
     #factor of four is based on current six jobs per host policy this should be revisited later
     my $select_check = "select[ncpus >= $cpus && maxmem >= " . ($mem_mb * 4) . " && maxgtmp >= $tmp_gb] span[hosts=1]";
-    my $select_cmd = "bhosts -R '$select_check' $host_groups | grep ^blade";
+    my $select_cmd = "bhosts -R '$select_check' $host_groups";
 
     my @selected_blades = qx($select_cmd);
 
     if (@selected_blades) {
         return $required_usage;
     } else {
-        die $class->error_message("Failed to find hosts that meet resource requirements ($required_usage). [Looked with `$select_cmd`]");
+        #die $class->error_message("Failed to find hosts that meet resource requirements ($required_usage). [Looked with `$select_cmd`]");
     }
 }
 
@@ -77,7 +77,7 @@ sub tmp_megabytes_estimated {
 
         my $bam_bytes = -s $bam_path;
         unless ($bam_bytes) {
-            die $class->error_message("Instrument Data " . $instrument_data->id  . " has BAM ($bam_path) but has no size!");
+            #die $class->error_message("Instrument Data " . $instrument_data->id  . " has BAM ($bam_path) but has no size!");
         }
 
         if ($instrument_data->can('get_segments')) {
