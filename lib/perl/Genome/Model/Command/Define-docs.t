@@ -3,6 +3,7 @@ use above "Genome";
 use strict;
 use warnings;
 use Test::More; 
+use Command::Shell;
 
 Genome::SoftwareResult->class; #This emits warnings under no-commit, so get them out of the way.
 

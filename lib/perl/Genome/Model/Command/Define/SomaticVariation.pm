@@ -48,6 +48,9 @@ class Genome::Model::Command::Define::SomaticVariation {
     ],
 };
 
+# This input is temporarily given two names on the model, but only one name here.
+sub _suppress_inputs { qw(previously_discovered_variations) }
+
 sub help_synopsis {
     return <<"EOS"
 genome model define somatic-variation --tumor-model aml3-tumor1-v2 --normal-model aml3-normal1-v2  --annotation-build 102550711 --previously-discovered-variations-build 106227442 --processing-profile-id 2573882 --model-name adukes_test_somatic_model 
@@ -82,7 +85,7 @@ sub _resolve_param {
 
 sub type_specific_parameters_for_create {
     my $self   = shift;
-    my @params = ();
+    my @params = $self->SUPER::type_specific_parameters_for_create;
 
     my %param = (
         tumor_model      => $self->tumor_model,
@@ -95,7 +98,10 @@ sub type_specific_parameters_for_create {
         if $self->previously_discovered_variations_build;
 
     push @params, %param;
-    return @params;
+
+    my %p = @params;
+    delete $p{previously_discovered_variations_build};
+    return %p;
 }
 
 sub execute {

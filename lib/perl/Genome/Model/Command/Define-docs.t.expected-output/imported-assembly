@@ -1,20 +1,22 @@
 
 [4mUSAGE[0m
  [1mgenome model define imported-assembly[0m [--auto-assign-inst-data] [--auto-build-alignments]
-    --processing-profile=? [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
-    [--model-name=?] [--projects=?[,?]]
+    --processing-profile=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
+    [--groups=?[,?]] [--model-name=?]
 
 [4mSYNOPSIS[0m
-genome model define reference-alignment 
-  --model-name test5
-  --subject ley_aml_patient1_tumor
-  --processing-profile nature_aml_08
+  genome model define imported-assembly \
+    --model-name test1 \
+    --subject TEST-patient1-sample1 \
+    --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
   [1mprocessing-profile[0m
-    Processing profile to be used by model, can provide either a name or an id 
+    the collection of parameters to be used during the build process 
 
 [4mOPTIONAL INPUTS[0m
+  [1madd-to-projects[0m
+    add the new model to these projects (model groups) 
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -24,8 +26,6 @@ genome model define reference-alignment
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
-  [1mprojects[0m
-    Projects for the model. 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
@@ -38,8 +38,6 @@ genome model define reference-alignment
 [4mDESCRIPTION[0m
     This defines a new genome model for the specified subject, using the specified processing
     profile.
-
-    The first build of a model must be explicitly requested after the model is defined.
 
 
 

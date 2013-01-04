@@ -2,11 +2,10 @@
 [4mUSAGE[0m
  [1mgenome model define imported-reference-sequence[0m --processing-profile-name=?
     [--auto-assign-inst-data] [--auto-build-alignments] --fasta-file=? --processing-profile=?
-    --processing-profile-id=? [--append-to=?] [--instrument-data=?[,?]] [--subject=?]
+    [--add-to-projects=?[,?]] [--append-to=?] [--instrument-data=?[,?]] [--subject=?]
     [--groups=?[,?]] [--sequence-uri=?] [--skip-bases-files] [--on-warning=?] [--job-dispatch=?]
-    [--server-dispatch=?] [--projects=?[,?]] [--use-default-sequence-uri] [--assembly-name=?]
-    [--derived-from=?] [--prefix=?] [--species-name=?] [--version=?] [--model-name=?]
-    [--subject-name=?]
+    [--server-dispatch=?] [--use-default-sequence-uri] [--assembly-name=?] [--derived-from=?]
+    [--prefix=?] [--species-name=?] [--version=?] [--model-name=?] [--subject-name=?]
 
 [4mSYNOPSIS[0m
 genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta
@@ -15,16 +14,15 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1mfasta-file[0m
     The full path and filename of the reference sequence fasta file to import. 
   [1mprocessing-profile[0m
-    Processing profile to be used by model, can provide either a name or an id 
-  [1mprocessing-profile-id[0m
-    (undocumented) 
-    Default value '1990904' if not specified
+    the collection of parameters to be used during the build process 
 
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m
     (undocumented) 
 
 [4mOPTIONAL INPUTS[0m
+  [1madd-to-projects[0m
+    add the new model to these projects (model groups) 
   [1mappend-to[0m
     When specified, the newly created build will contain all sequences from the "append_to" build,
     followed by those from the fasta file specified. 
@@ -53,8 +51,6 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1mserver-dispatch[0m
     dispatch specification: an LSF queue or "inline" 
     Default value 'inline' if not specified
-  [1mprojects[0m
-    Projects for the model. 
   [1muse-default-sequence-uri[0m
     Use a default generated URI for the BAM header. 
     Default value 'false' (--nouse-default-sequence-uri) if not specified
