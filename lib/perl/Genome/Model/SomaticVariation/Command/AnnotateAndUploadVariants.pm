@@ -350,7 +350,8 @@ sub execute{
                      "/gscuser/aregier/scratch/dhs_promoters/wgEncodeBroadHmmK562HMM.bed",
                      "/gscuser/aregier/scratch/dhs_promoters/wgEncodeBroadHmmNhekHMM.bed",
                      "/gscuser/aregier/scratch/dhs_promoters/wgEncodeBroadHmmNhlfHMM.bed",
-                     "/gscuser/aregier/scratch/dhs_promoters/DRM_transcript_pairs.bed",],
+                     "/gscuser/aregier/scratch/dhs_promoters/DRM_transcript_pairs.bed",
+                     "/gscuser/aregier/scratch/dhs_promoters/Open_Chromatin_Supp_Table_4.bed"],
     );
     unless ($annovar) {
         $self->error_message("Annovar failed");
@@ -360,7 +361,7 @@ sub execute{
         my $temp = Genome::Sys->create_temp_file_path;
         my $counter = 0;
         my $in_file = $build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.header");
-        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed_gene_names2", "bed_segway", "bed_wgEncodeBroadHmmGm12878HMM", "bed_wgEncodeBroadHmmH1hescHMM", "bed_wgEncodeBroadHmmHepg2HMM", "bed_wgEncodeBroadHmmHmecHMM", "bed_wgEncodeBroadHmmHsmmHMM", "bed_wgEncodeBroadHmmHuvecHMM", "bed_wgEncodeBroadHmmK562HMM", "bed_wgEncodeBroadHmmNhekHMM", "bed_wgEncodeBroadHmmNhlfHMM", "bed_DRM_transcript_pairs")) {
+        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed_gene_names2", "bed_segway", "bed_wgEncodeBroadHmmGm12878HMM", "bed_wgEncodeBroadHmmH1hescHMM", "bed_wgEncodeBroadHmmHepg2HMM", "bed_wgEncodeBroadHmmHmecHMM", "bed_wgEncodeBroadHmmHsmmHMM", "bed_wgEncodeBroadHmmHuvecHMM", "bed_wgEncodeBroadHmmK562HMM", "bed_wgEncodeBroadHmmNhekHMM", "bed_wgEncodeBroadHmmNhlfHMM", "bed_DRM_transcript_pairs", "bed_Open_Chromatin_Supp_Table_4")) {
             $counter++;
             my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
                 additional_columns_file => $build->data_directory."/effects/snvs.annovar.hg19_".$table_name,
