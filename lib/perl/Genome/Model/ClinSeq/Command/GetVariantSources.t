@@ -61,5 +61,3 @@ or do {
   Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-get-variant-sources-result/");
   Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-get-variant-sources-result");
 };
-
-

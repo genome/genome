@@ -8,3 +8,4 @@ BEGIN {
     use_ok("Genome::Model::Build::GenePrediction::Bacterial");
 }
 
+1;

@@ -27,5 +27,3 @@ ok($c, "Created blast-x inner check event") or die;
 ok($c->execute, "Successfully executed event");
 
 done_testing;
-
-exit;

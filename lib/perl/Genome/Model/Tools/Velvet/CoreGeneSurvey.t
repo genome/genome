@@ -11,5 +11,3 @@ use_ok ('Genome::Model::Tools::Velvet::CoreGeneSurvey') or die;
 use_ok ('Genome::Model::Tools::Bacterial::CoreGeneCoverage') or die;
 
 done_testing();
-
-exit;

@@ -44,6 +44,8 @@ class Genome::Model::SomaticValidation::Command::AnnotateVariants {
     ],
 };
 
+sub sub_command_category { 'pipeline steps' }
+
 sub execute {
     my $self = shift;
     my $build = $self->build;
@@ -84,8 +86,14 @@ sub annotate_snvs {
 
             my $temp_output_path = Genome::Sys->create_temp_file_path();
 
-            my $tiering_result = $self->build->result_user(
-                label => sprintf('snv_tiered_%s', $type))->software_result;
+            my $tiering_user = $self->build->result_user(label => sprintf('snv_tiered_%s', $type));
+            my $tiering_result;
+            eval{$tiering_result = $tiering_user->software_result};
+            if($@){
+                $self->status_message(sprintf('No tiering result found for %s... skipping', $type));
+                next TYPE;
+            }
+
             my $input_path = $self->get_input_path_for_tier($tiering_result, $tier, $type);
             $self->status_message(sprintf('Preparing to annotate file: %s',
                     $input_path));

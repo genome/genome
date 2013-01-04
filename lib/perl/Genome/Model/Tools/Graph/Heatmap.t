@@ -41,6 +41,3 @@ my $ret;
 eval { $ret = $hm_noheader->execute(); };
 is($ret, undef, 'bad header');
 unlink $outfile;
-
-exit;
-

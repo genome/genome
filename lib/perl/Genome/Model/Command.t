@@ -14,5 +14,3 @@ diag($@);
 ok($rv, 'genome model -h');
 
 done_testing();
-exit;
-

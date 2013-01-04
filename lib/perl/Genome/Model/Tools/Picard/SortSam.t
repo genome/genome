@@ -38,6 +38,3 @@ my $cmd_2 = Genome::Model::Tools::Picard::SortSam->create(
 isa_ok($cmd_2,'Genome::Model::Tools::Picard::SortSam');
 ok($cmd_2->execute, 'execute');
 ok(-s $out_2_file->filename, 'output file is non-zero');
-
-
-

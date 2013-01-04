@@ -258,4 +258,3 @@ foreach my $metric_name (keys %expected_metrics) {
 }
 
 done_testing();
-exit;

@@ -50,5 +50,3 @@ sub create_test_fixture {
 sub destroy_test_fixture {
     rmtree $path;    
 }
-
-

@@ -70,7 +70,3 @@ ok($rv, 'deletion of role returned success');
 ok($role->isa('UR::DeletedRef'), 'role is a UR::DeletedRef, as expected');
 
 done_testing();
-
-
-
-

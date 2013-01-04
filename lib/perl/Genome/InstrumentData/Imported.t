@@ -134,5 +134,3 @@ ok($ok, "saves to the database!");
 #call $instrument_data->delete to delete
 
 done_testing();
-exit;
-

@@ -34,6 +34,3 @@ ok(-e $job2_stdout, "Second jobs standard output exists!");
 ok(-e $job1_stderr, "First jobs error output exists!");
 ok(-e $job1_stdout, "First jobs standard output exists!");
 `rm -f $job2_stderr $job2_stdout $job1_stdout $job1_stderr`;
-
-
-

@@ -30,3 +30,5 @@ SKIP: {
     
     is("@diff","","XML has no differences from expected value");
 }
+
+1;

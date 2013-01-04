@@ -166,7 +166,7 @@ is( # ignored 2
 );
 
 done_testing();
-exit;
+
 
 my $source;
 my $sample_cnt = 0;
@@ -224,4 +224,3 @@ sub _model_hash {
         }
     } @_;
 }
-

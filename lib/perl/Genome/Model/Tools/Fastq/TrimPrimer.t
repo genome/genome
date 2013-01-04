@@ -14,5 +14,4 @@ BEGIN {
 my $trim = Genome::Model::Tools::Fastq::TrimPrimer->create(fastq_file=>'/gscmnt/sata413/research/kwylie/2010_03_08_virome_pipeline_test_runs/Illumina_4/s_4_1_sequence.txt', 
                                                            output=>'/gscmnt/sata413/research/kwylie/2010_03_08_virome_pipeline_test_runs/Illumina_4/FOO.txt');
 
-exit;
-
+1;

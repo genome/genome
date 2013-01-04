@@ -77,6 +77,7 @@ for my $model (create_direct_and_cmdline(%params)) {
     processing_profile_name => $pp->name,
     reference_sequence_build => $rbuild->id,
 );
+$DB::single = 1;
 for my $model (create_direct_and_cmdline(%params)) {
     is($model->reference_sequence_build->id, $rbuild->id, 'reference sequence id correct');
     ok(!$model->annotation_reference_build, 'annotation build is not defined');
@@ -299,5 +300,3 @@ sub create_reference_builds {
 
     return ($rbuild, $rbuild2, $abuild);
 }
-
-

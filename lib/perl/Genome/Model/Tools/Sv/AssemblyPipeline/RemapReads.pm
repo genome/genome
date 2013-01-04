@@ -9,22 +9,24 @@ use Genome;
 class Genome::Model::Tools::Sv::AssemblyPipeline::RemapReads {
     is => 'Command',
     has => [
-    assembly_file => { is => 'Text', doc => "Assembled FASTA sequences of the SVs to validate" },
-    sv_file => { is => 'Text', doc => "Describes an SV per line. Use BreakDancer output format" },
-    normal_bam => { is => 'Text', doc => "Path to the Normal BAM (either capture or WGS" },
-    tumor_bam => { is => 'Text', doc => "Path to the Tumor BAM (either capture or WGS" },
-    output_file => { is => 'Text', doc => "Path to the resulting annotated SV output" },
-    patient_id => { is => 'Text', doc => "Unique identifier for patient"},
-    dump_read_alignments => { is => 'Boolean', doc => "Enable to see the read alignments for SV-specific reads", is_optional => 1, default => 0 },
-    no_duplicate_read_sequence => { is => 'Boolean', doc => "Enable to skip printing duplicate sequences", is_optional => 1, default => 1 },
-    extend => { is => 'Integer', doc => "Number of bases beyond breakpoint that the read has to span", is_optional => 1, default => 10 },
-    max_unaligned_end_bps => { is => 'Integer', doc => "Max allowed unaligned bases at end of a read", is_optional => 1, default => 1 },
-    buffer => { is => 'Integer', doc => "Flank (bps) around breakpoints to fetch reads from; 2*buffer fetched for refseq", is_optional => 1, default => 500 },
-    min_fraction_diff => { is => 'Number', doc => "Min fraction of difference between alignments to SV contig vs refseq", is_optional => 1, default => 0.34 },
-    max_percent_subs => { is => 'Number', doc => "", is_optional => 1, default => 1 },
-    max_percent_indels => { is => 'Number', doc => "", is_optional => 1, default => 1 },
-    min_score => { is => 'Integer', doc => "", is_optional => 1, default => 50 },
-	build => { is => 'Integer', doc => "Build number (36 or 37)", is_optional => 1, default => 37 },
+        assembly_file => { is => 'Text', doc => "Assembled FASTA sequences of the SVs to validate" },
+        sv_file => { is => 'Text', doc => "Describes an SV per line. Use BreakDancer output format" },
+        normal_bam => { is => 'Text', doc => "Path to the Normal BAM (either capture or WGS" },
+        tumor_bam => { is => 'Text', doc => "Path to the Tumor BAM (either capture or WGS" },
+        output_file => { is => 'Text', doc => "Path to the resulting annotated SV output" },
+        patient_id => { is => 'Text', doc => "Unique identifier for patient"},
+        dump_read_alignments => { is => 'Boolean', doc => "Enable to see the read alignments for SV-specific reads", is_optional => 1, default => 0 },
+        no_duplicate_read_sequence => { is => 'Boolean', doc => "Enable to skip printing duplicate sequences", is_optional => 1, default => 1 },
+        extend => { is => 'Integer', doc => "Number of bases beyond breakpoint that the read has to span", is_optional => 1, default => 10 },
+        max_unaligned_end_bps => { is => 'Integer', doc => "Max allowed unaligned bases at end of a read", is_optional => 1, default => 1 },
+        buffer => { is => 'Integer', doc => "Flank (bps) around breakpoints to fetch reads from; 2*buffer fetched for refseq", is_optional => 1, default => 500 },
+        min_fraction_diff => { is => 'Number', doc => "Min fraction of difference between alignments to SV contig vs refseq", is_optional => 1, default => 0.34 },
+        max_percent_subs => { is => 'Number', doc => "", is_optional => 1, default => 1 },
+        max_percent_indels => { is => 'Number', doc => "", is_optional => 1, default => 1 },
+        min_score => { is => 'Integer', doc => "", is_optional => 1, default => 50 },
+        build => { is => 'Integer', doc => "Build number (36 or 37)", is_optional => 1, default => 37, valid_values => [36, 37] },
+        reference_fasta => { is => 'Text', doc => 'Instead of using the "build" parameter, specify a FASTA directly in order to run with any reference', is_optional => 1,
+        },
     ],
 };
 
@@ -110,7 +112,7 @@ sub execute {
         ( defined $bpA && $bpA =~ /^\d+$/ && defined $bpB && $bpB =~ /^\d+$/ ) or
         confess "Did not get chr and breakpoints from '$line'";
         #$id = $bdRef->Id();
-        $regions{"$chrA.$bpA.$chrB.$bpB"} = 1;
+        $regions{"$chrA\t$bpA\t$chrB\t$bpB"} = 1;
         $ids{$id} = 0;
     }
     my ( $regionsRef, $idRef ) = ( \%regions, \%ids );
@@ -126,10 +128,12 @@ sub execute {
     $idRef = Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap::getAssemblySequences( $idRef, $assemblyFastaFile, $contigSequenceFile );
 
     # Get regions surrounding each SV breakpoint and put into a fasta file
-    if ( $build == 36 ) {
-	Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap::getBuild36ReferenceSequences( $regionsRef, $refSequenceFile, 2*$buffer );
+    if ( $self->reference_fasta ) {
+        Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap->get_reference_sequences( $self->reference_fasta, $regionsRef, $refSequenceFile, 2*$buffer );
+    } elsif ( $build == 36 ) {
+        Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap->getBuild36ReferenceSequences( $regionsRef, $refSequenceFile, 2*$buffer );
     } elsif ( $build == 37 ) {
-	Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap::getBuild37ReferenceSequences( $regionsRef, $refSequenceFile, 2*$buffer );
+        Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap->getBuild37ReferenceSequences( $regionsRef, $refSequenceFile, 2*$buffer );
     }
 
     # Make sure the sequences files exist with non-zero size

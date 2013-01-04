@@ -49,5 +49,3 @@ $renamer = Genome::Model::Command::Rename->create(from => $model, to => $old_nam
 ok(!$renamer->execute, 'Failed - execute w/ same name');
 
 done_testing();
-exit;
-

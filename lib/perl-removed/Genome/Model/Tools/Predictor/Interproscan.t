@@ -57,6 +57,3 @@ my $ace_file = $interpro->ace_file_path;
 ok(-e $ace_file, "interpro produced an ace file at $ace_file");
 
 done_testing();
-
-
-

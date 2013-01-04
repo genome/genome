@@ -112,8 +112,8 @@ class Genome::Model::Tools::Varscan::PullOneTwoBpIndels {
         doc => "Somatic validation build to use. If this is set, defaults will be set inside that build directory for final_output_file,realigned_bam_file_directory,small_indel_output_bed,large_indel_output_bed.",
         is_optional => 1,
         is_input => 1,
-    }
-
+        is_output => 1,
+    },
     ],    
 };
 
@@ -161,6 +161,12 @@ sub execute {
     if ($self->somatic_validation_build) {
         my $build = Genome::Model::Build->get($self->somatic_validation_build);
         die $self->error_message("Could not get a build for id " . $self->somatic_validation_build) unless ($build);
+
+        unless($build->normal_sample) {
+            $self->status_message('No normal sample found.  Skipping.');
+            return 1;
+        }
+
         my $base_dir = $build->data_directory . "/indel_validation";
         Genome::Sys->create_directory($base_dir);
         unless ($self->final_output_file) {
@@ -168,7 +174,6 @@ sub execute {
         }
         unless ($self->realigned_bam_file_directory) {
             my $realigned_dir = "$base_dir/realigned_bams";
-            Genome::Sys->create_directory($realigned_dir);
             $self->realigned_bam_file_directory($realigned_dir);
         }
         unless ($self->small_indel_output_bed) {
@@ -187,11 +192,11 @@ sub execute {
             $self->varscan_snp_output("$base_dir/varscan_snps");
         }
     } else {
-        my @required_properties = qw(final_output_file realigned_bam_file_directory small_indel_output_bed list_of_indel_files_to_validate varscan_indel_output varscan_snp_output);
+        my @required_properties = qw(final_output_file realigned_bam_file_directory small_indel_output_bed list_of_indel_files_to_validate varscan_indel_output varscan_snp_output tumor_bam normal_bam reference_fasta);
         my $fail = 0;
         for my $property (@required_properties) {
-            $fail = 1;
             unless (defined $self->$property) {
+                $fail = 1;
                 $self->error_message("$property is not set and must be if somatic_validation_build is not set");
             }
         }
@@ -210,6 +215,7 @@ sub execute {
     my $final_output_file = $self->final_output_file;
     my $skip_if_output_present = $self->skip_if_output_present;
     my $somatic_validation_build = $self->somatic_validation_build;
+    Genome::Sys->create_directory($self->realigned_bam_file_directory);
 
     # check small/large indel list filename for bed nomenclature (to eliminate future confusion) #
     unless ($small_indel_list =~ m/\.bed$/i && $large_indel_list =~ m/\.bed$/i) {
@@ -400,51 +406,54 @@ sub execute {
         push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation_reltum -w \'ended(JOB8)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
     }
     else{
-#/gscuser/dkoboldt/Software/GATK/GenomeAnalysisTK-1.0.4418/GenomeAnalysisTK.jar /gsc/scripts/pkg/bio/gatk/GenomeAnalysisTK-1.0.5336/GenomeAnalysisTK.jar
-        my $bsub_normal_output = "$realigned_bam_file_directory/realignment_normal.out";
-        my $bsub_normal_error = "$realigned_bam_file_directory/realignment_normal.err";
-        push(@cmds,"$bsub -J $realigned_normal_bam_file -o $bsub_normal_output -e $bsub_normal_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_normal_bam_file -I $normal_bam -R $reference  --targetIntervalsAreNotSorted\'");
-
-        my $bsub_tumor_output = "$realigned_bam_file_directory/realignment_tumor.out";
-        my $bsub_tumor_error = "$realigned_bam_file_directory/realignment_tumor.err";
-        push(@cmds,"$bsub -J $realigned_tumor_bam_file -o $bsub_tumor_output -e $bsub_tumor_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_tumor_bam_file -I $tumor_bam -R $reference --targetIntervalsAreNotSorted\'");
-
-        push(@cmds, "$bsub -J bamindex_normal -w \'ended(JOB0)\' \'samtools index $realigned_normal_bam_file\'");
-        push(@cmds, "$bsub -J bamindex_tumor -w \'ended(JOB1)\' \'samtools index $realigned_tumor_bam_file\'");
-        push(@cmds, "$bsub -J varscan_validation -w \'ended(JOB2) && ended(JOB3)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel --output-snp $output_snp --reference $reference --varscan-params \"$varscan_params\"\'");
-
-        push(@cmds,"$bsub -N -u $user\@genome.wustl.edu -J varscan_process_validation -w \'ended(JOB4)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel --validation-snp-file $output_snp --variants-file $small_indel_list_nobed --output-file $final_output_file\'");
+        # This was added so things are testable for now
+        my $cmd = Genome::Model::SomaticValidation::Command::ValidateSmallIndels->create(
+            final_output_file => $self->final_output_file,
+            realigned_bam_file_directory => $self->realigned_bam_file_directory,
+            small_indel_output_bed => $small_indel_list,
+            varscan_indel_output => $self->varscan_indel_output,
+            varscan_snp_output => $self->varscan_snp_output,
+            tumor_bam => $tumor_bam,
+            normal_bam => $normal_bam,
+            reference_fasta => $reference,
+        );
+        unless ($cmd->execute) {
+            die $self->error_message("Failed to execute Genome::Model::SomaticValidation::Command::ValidateSmallIndels");
+        }
     }
 
-    # run jobs in @cmds #
-    my @jobids;
-    foreach my $cmd (@cmds){        
-        # waiting on two jobs #
-        if($cmd =~ /JOB(\d).+JOB(\d)/){
-            my $j1 = $1;
-            my $j2 = $2;
-            my $jobid1 = $jobids[$j1];
-            my $jobid2 = $jobids[$j2];
-            $cmd =~ s/JOB$j1/$jobid1/g;
-            $cmd =~ s/JOB$j2/$jobid2/g;            
+    if (@cmds) {
+        # run jobs in @cmds #
+        my @jobids;
+        foreach my $cmd (@cmds){        
+            # waiting on two jobs #
+            if($cmd =~ /JOB(\d).+JOB(\d)/){
+                my $j1 = $1;
+                my $j2 = $2;
+                my $jobid1 = $jobids[$j1];
+                my $jobid2 = $jobids[$j2];
+                $cmd =~ s/JOB$j1/$jobid1/g;
+                $cmd =~ s/JOB$j2/$jobid2/g;            
 
-            # waiting on one job #
-        } elsif($cmd =~ /JOB(\d)/){
-            my $job = $1;
-            my $jobid = $jobids[$job];
-            $cmd =~ s/JOB$job/$jobid/g;
-        }           
+                # waiting on one job #
+            } elsif($cmd =~ /JOB(\d)/){
+                my $job = $1;
+                my $jobid = $jobids[$job];
+                $cmd =~ s/JOB$job/$jobid/g;
+            }           
 
-        print STDERR "\nRunning command:  $cmd\n";
-        my $id = `$cmd`;
-        if($id =~ /<(\d+)>/){
-            $id = $1;
-        } else {
-            die "job not submitted correctly\n";
-        }
-        push(@jobids,$id);
-    }    
+            print STDERR "\nRunning command:  $cmd\n";
+            my $id = `$cmd`;
+            if($id =~ /<(\d+)>/){
+                $id = $1;
+            } else {
+                die "job not submitted correctly\n";
+            }
+            push(@jobids,$id);
+        }    
 
-    print STDERR "\njob ids: " . join(" ",@jobids) . "\n";
+        print STDERR "\njob ids: " . join(" ",@jobids) . "\n";
+    }
+
     return 1;
 }

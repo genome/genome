@@ -32,5 +32,3 @@ is(File::Compare::compare($out_fastq, $example_fastq), 0, 'ACGT file mathces');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
-exit;
-

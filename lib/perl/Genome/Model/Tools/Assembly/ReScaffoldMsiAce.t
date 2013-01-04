@@ -49,5 +49,3 @@ is(scalar (@diff2), 0, "New msi.gap.txt file matches test msi.gap.txt file");
 #<STDIN>;
 
 done_testing();
-
-exit;

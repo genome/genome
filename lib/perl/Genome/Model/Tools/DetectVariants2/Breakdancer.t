@@ -78,4 +78,3 @@ ok(!$command->_validate_ctx_fastqs, 'validate ctx fastqs failed b/c of bad fastq
 #print $command->_sv_staging_output."\n";<STDIN>;
 
 done_testing();
-exit;

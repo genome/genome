@@ -16,5 +16,3 @@ my $m = $event->add_metric(
 ok($m, "made a metric");
 is($m->name, 'myname', 'name is correct');
 is($m->value, 'myvalue', 'value is correct');
-
-

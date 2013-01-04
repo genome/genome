@@ -26,5 +26,3 @@ ok($iterative_mrkdup->execute,'execute command '. $iterative_mrkdup->command_nam
 ok(!compare($expected_metrics,$iterative_mrkdup->output_file),'Expected BAM '. $expected_metrics
        .' is identical to IterativeMarkDuplicates metrics '. $iterative_mrkdup->output_file);
 #ok(unlink($iterative_mrkdup->output_file),'Removed temporary output file : '. $iterative_mrkdup->output_file);
-
-exit;

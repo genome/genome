@@ -44,4 +44,3 @@ my @rna = Genome::Prediction::RNAGene->get(
 );
 my $num_rna = scalar @rna;
 ok($num_rna > 0, "able to retrieve $num_rna RNAGene objects");
-

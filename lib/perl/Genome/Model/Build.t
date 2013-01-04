@@ -177,7 +177,7 @@ test_reallocate();
 test_diff_vcf();
 
 done_testing();
-exit;
+
 
 
 sub test_reallocate {
@@ -288,4 +288,3 @@ sub _test_expected_report_params {
     );
     return 1;
 }
-

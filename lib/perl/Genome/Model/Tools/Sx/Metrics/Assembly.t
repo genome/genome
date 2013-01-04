@@ -42,5 +42,3 @@ is(File::Compare::compare($metrics_file, $example_metrics), 0, "files match");
 
 #print "gvimdiff $metrics_file $example_metrics\n"; system "gvimdiff $metrics_file $example_metrics\n"; <STDIN>;
 done_testing();
-exit;
-

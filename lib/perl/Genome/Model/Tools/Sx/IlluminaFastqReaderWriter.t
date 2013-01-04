@@ -51,5 +51,3 @@ is(File::Compare::compare($out_fastq, $example_fastq), 0, 'files match');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

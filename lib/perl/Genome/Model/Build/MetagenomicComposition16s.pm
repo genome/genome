@@ -5,9 +5,10 @@ use warnings;
 
 use Genome;
 
-use Carp 'confess';
-use Data::Dumper 'Dumper';
+require Carp;
+require File::Basename;
 require Mail::Sendmail;
+use Switch;
 
 class Genome::Model::Build::MetagenomicComposition16s {
     is => 'Genome::Model::Build',
@@ -85,8 +86,7 @@ sub description {
     my $self = shift;
 
     return sprintf(
-        'metagenomic composition 16s %s build (%s) for model (%s %s)',
-        $self->sequencing_platform,
+        'metagenomic composition 16s build (%s) for model (%s %s)',
         $self->id,
         $self->model->name,
         $self->model->id,
@@ -94,22 +94,12 @@ sub description {
 }
 
 #< Amplicon Sets >#
-sub amplicon_set_names {
-    my $self = shift;
-    my %set_names_and_primers = $self->amplicon_set_names_and_primers;
-    return sort keys %set_names_and_primers;
-}
-
-sub amplicon_set_names_and_primers {
-    my $self = shift;
-    my $sequencing_platform = $self->processing_profile->sequencing_platform;
-    return Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($sequencing_platform);
-}
-
 sub amplicon_sets {
     my $self = shift;
 
-    my %amplicon_set_names_and_primers = $self->amplicon_set_names_and_primers;
+    my %amplicon_set_names = map { $_->sequencing_platform => 1 } $self->instrument_data;
+    my $amplicon_set_name = (keys %amplicon_set_names)[0];
+    my %amplicon_set_names_and_primers = Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($amplicon_set_name);
     my @amplicon_sets;
     for my $set_name ( sort { $a cmp $b } keys %amplicon_set_names_and_primers ) {
         push @amplicon_sets, Genome::Model::Build::MetagenomicComposition16s::AmpliconSet->create(
@@ -128,6 +118,24 @@ sub amplicon_sets {
 
     return @amplicon_sets;
 }
+
+sub amplicon_sets_for_processing {
+    my $self = shift;
+
+    my @amplicon_sets = $self->amplicon_sets;
+    return if not @amplicon_sets;
+
+    if ( @amplicon_sets > 1 ) {
+        push @amplicon_sets, Genome::Model::Build::MetagenomicComposition16s::AmpliconSet->create(
+            name => 'none',
+            directory => $self->data_directory,
+            file_base_name => $self->file_base_name,
+            classifier => $self->classifier,
+        );
+    }
+
+    return @amplicon_sets;
+}
 #<>#
 
 #< Dirs >#
@@ -135,7 +143,6 @@ sub create_subdirectories {
     my $self = shift;
     my @methods = (qw| classification_dir fasta_dir reports_dir |);
     push @methods, (qw/ chimera_dir /) if $self->processing_profile->chimera_detector;
-    push @methods, (qw/ chromat_dir edit_dir /) if $self->sequencing_platform eq 'sanger';
     for my $method ( @methods ) {
         my $directory =  $self->$method;
         my $create_directory = eval{ Genome::Sys->create_directory($directory); };
@@ -162,14 +169,6 @@ sub fasta_dir {
 
 sub reports_dir {
     return $_[0]->data_directory.'/reports';
-}
-
-sub edit_dir {
-    return $_[0]->data_directory.'/edit_dir';
-}
-
-sub chromat_dir {
-    return $_[0]->data_directory.'/chromat_dir';
 }
 #<>#
 
@@ -200,20 +199,6 @@ sub processed_qual_file { # returns them as a string (legacy)
 sub processed_qual_files {
     my $self = shift;
     return map { $_->processed_qual_file } $self->amplicon_sets;
-}
-
-sub combined_original_fasta_file {
-    my $self = shift;
-    return sprintf(
-        '%s/%s.%s.fasta',
-        $self->fasta_dir,
-        $self->file_base_name,
-        'original',
-    );
-}
-
-sub combined_original_qual_file {
-    return $_[0]->combined_original_fasta_file.'.qual';
 }
 
 sub combined_original_fastq_file {
@@ -254,22 +239,177 @@ sub classification_files {
 }
 #<>#
 
-#< Prepare instrument data >#
+#< Process instrument data >#
+sub sx_result_params_for_instrument_data {
+    my ($self, @instrument_data) = @_;
+
+    Carp::confess('No instrument data to get sx result params!') if not @instrument_data;
+
+    my @amplicon_sets = $self->amplicon_sets_for_processing;
+    return if not @amplicon_sets;
+
+    my (@primers, @output_configs);
+    for my $amplicon_set ( @amplicon_sets ) {
+        my @set_primers = $amplicon_set->primers;
+        for my $primer ( @set_primers ) {
+            push @primers, $amplicon_set->name.'='.$primer;
+        }
+        push @output_configs, {
+            basename => $amplicon_set->base_name_for('processed_fastq'),
+            type => 'sanger',
+        };
+        my $writer_name = $amplicon_set->name;
+        if ( $writer_name ) {
+            if ( $writer_name eq 'none' ) {
+                $writer_name = 'discard';
+            }
+            else {
+                #strip off .F/.R for paired sets
+                $writer_name =~ s/\.[FR]$//;
+            }
+        }
+        $output_configs[$#output_configs]->{name} = $writer_name;
+    }
+
+    my @read_processor = ( 'rm-desc' );
+    if ( @amplicon_sets > 1 ) {
+        push @read_processor, 'bin by-primer --remove --primers '.join(',', @primers);
+    }
+
+    my @output_file_configs = map { Genome::Model::Tools::Sx::Functions->hash_to_config(%$_) } @output_configs;
+    if ( @output_configs and ( not @output_file_configs or @output_file_configs != @output_configs ) ) {
+        $self->error_message('Failed to get output file config as strings!');
+        return;
+    }
+
+    if ( $self->processing_profile->amplicon_processor ) {
+        push @read_processor, $self->processing_profile->amplicon_processor;
+    }
+
+    return (
+        instrument_data_id => ( @instrument_data > 1 ? [ map { $_->id } @instrument_data ] : $instrument_data[0]->id ),
+        read_processor => join(' | ', @read_processor),
+        output_file_config => \@output_file_configs,
+    );
+}
+
+sub process_instrument_data {
+    my ($self, $instrument_data) = @_;
+    $self->status_message('Process instrument data...');
+
+    Carp::confess('No instrument data given to process!') if not $instrument_data;
+
+    my %sx_result_params = $self->sx_result_params_for_instrument_data($instrument_data);
+    return if not %sx_result_params;
+
+    my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
+    if ( not $sx_result ) {
+        $self->error_message('Failed to create SX result!');
+        return;
+    }
+
+    $sx_result->add_user(user => $self, label => 'sx_result');
+
+    $self->status_message('Process instrument data...OK');
+    return 1;
+}
+
+sub merge_processed_instrument_data {
+    my $self = shift;
+    $self->status_message('Merge processed instrument data...');
+
+    my @amplicon_sets = $self->amplicon_sets_for_processing;
+    return if not @amplicon_sets;
+
+    my @instrument_data = $self->instrument_data;
+    my %sx_result_params = $self->sx_result_params_for_instrument_data(@instrument_data);
+    return if not %sx_result_params;
+
+    my @sx_results = Genome::InstrumentData::SxResult->get(%sx_result_params);
+    if ( not @sx_results or @sx_results != @instrument_data ) {
+        $self->error_message('Failed to find sx results for instrument data!');
+        return;
+    }
+
+    $self->status_message('Merge SX results...');
+    for my $amplicon_set ( @amplicon_sets ) {
+        my @sx_processed_fastq_files;
+        for my $sx_result ( @sx_results ) {
+            my $sx_processed_fastq_file = $sx_result->output_dir.'/'.$amplicon_set->base_name_for('processed_fastq');
+            next if not -s $sx_processed_fastq_file; # ok
+            push @sx_processed_fastq_files, $sx_processed_fastq_file;
+        }
+
+        my $reader = Genome::Model::Tools::Sx::Reader->create(config => \@sx_processed_fastq_files);
+        Carp::confess('Failed to open fastq reader for processed sx result fastqs! '.join(', ', @sx_processed_fastq_files)) if not $reader;
+
+        my $processed_fasta_file = $amplicon_set->processed_fasta_file;
+        my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
+            file => $processed_fasta_file,
+            qual_file => $amplicon_set->processed_qual_file,
+            mode => 'a',
+        );
+        Carp::confess("Failed to open phred writer for file! ".$amplicon_set->processed_fasta_file) if not $writer;
+        while ( my $seqs = $reader->read ) { 
+            for my $seq ( @$seqs ) { 
+                $writer->write($seq); 
+            }
+        }
+    }
+    $self->status_message('Merge SX results...OK');
+
+    $self->status_message('Instrument data processed metrics...');
+    my $inst_data_metrics_fh = Genome::Sys->open_file_for_writing( $self->fasta_dir.'/metrics.processed' );
+    my %metrics;
+    for my $sx_result ( @sx_results ) {
+        my $instrument_data = $sx_result->instrument_data;
+        # link original data path
+        my $original_data_path = 'NA';
+        ORIGINAL_DATA_PATH: for my $attribute_label (qw/ bam_path sff_file archive_path /) {
+            my $attribute = $instrument_data->attributes(attribute_label => $attribute_label);
+            next if not $attribute;
+            my $attribute_value = $attribute->attribute_value;
+            next if not -e $attribute_value;
+            last ORIGINAL_DATA_PATH;
+            $original_data_path = $attribute_value;
+        }
+
+        # metrics: link files and get attempted and processed
+        my %sx_metrics;
+        for my $type (qw/ input output /) {
+            my $file_method = 'read_processor_'.$type.'_metric_file';
+            my $metrics_file_name = $sx_result->$file_method;
+            my $metrics_file = $sx_result->output_dir.'/'.$metrics_file_name;
+            my $metrics = Genome::Model::Tools::Sx::Metrics->from_file($metrics_file);
+            Carp::confess("Failed to get $type metrics for SX result! ".$sx_result->id) if not $metrics;
+            $sx_metrics{$type.'_bases'} += $metrics->bases;
+            $sx_metrics{$type.'_count'} += $metrics->count;
+        }
+        $metrics{amplicons_attempted} += $sx_metrics{input_count};
+        $metrics{amplicons_processed} += $sx_metrics{output_count};
+        $inst_data_metrics_fh->print(
+            join(' ', $metrics{input_count}, $sx_metrics{output_count}, $original_data_path)."\n"
+        );
+    }
+    $inst_data_metrics_fh->close;
+    $self->status_message('Instrument data processed metrics...OK');
+
+    $self->amplicons_attempted( $metrics{amplicons_attempted} );
+    $self->amplicons_processed( $metrics{amplicons_processed} );
+    $self->amplicons_processed_success( 
+        $metrics{amplicons_attempted} > 0 ?  sprintf('%.2f', $metrics{amplicons_processed} / $metrics{amplicons_attempted}) : 0
+    );
+    $self->status_message('Attempted: '.$self->amplicons_attempted);
+    $self->status_message('Processed: '.$self->amplicons_processed);
+    $self->status_message('Success:   '.($self->amplicons_processed_success * 100).'%');
+
+    $self->status_message('Merge processed instrument data...');
+    return 1;
+}
+
 sub prepare_instrument_data {
     my $self = shift;
     $self->status_message('Prepare instrument data...');
-
-    #call a separate command for sanger
-    if ( $self->sequencing_platform eq 'sanger' ) {
-        my $cmd = Genome::Model::MetagenomicComposition16s::Command::ProcessSangerInstrumentData->create(
-            build => $self,
-            );
-        unless ( $cmd->prepare_instrument_data ) {
-            $self->error_message("Failed to execute mc16s process sanger");
-            return;
-        }
-        return 1;
-    }
 
     my @instrument_data = $self->instrument_data;
     $self->status_message('Instrument data count: '.@instrument_data);
@@ -285,7 +425,7 @@ sub prepare_instrument_data {
     #read in orig fastq file
     my $orig_fastq = $self->combined_original_fastq_file;
     if ( not -s $orig_fastq ) {
-      Carp::confess( "Original fasta file did not get created or is blank" );
+        Carp::confess( "Original fasta file did not get created or is blank" );
     }
 
     my @cmd_parts = ( 'gmt sx rm-desc' );
@@ -482,10 +622,20 @@ sub detect_and_remove_chimeras {
     my $self = shift;
     $self->status_message('Detect and remove chimeras...');
 
-    my $attempted = $self->amplicons_attempted;
-    if ( not defined $attempted ) {
-        $self->error_message('No value for amplicons attempted set. Cannot remove chimeras!');
+    if ( not $self->processing_profile->chimera_detector ) {
+        $self->error_message('Tried to detect and remove chimeras, but there is not a chimera detector on the processing profile!');
         return;
+    }
+
+    my $amplicons_classified = $self->amplicons_classified;
+    if ( not defined $amplicons_classified ) {
+        $self->error_message('Cannot deteect and remove chimeras because "amplicons classified" metric is not set!');
+        return;
+    }
+
+    if ( $amplicons_classified == 0 ) {
+        $self->status_message("No amplicons were successfully classified, skipping detect and remove chimeras.");
+        return 1;
     }
 
     my @amplicon_sets = $self->amplicon_sets;
@@ -510,17 +660,17 @@ sub detect_and_remove_chimeras {
 
     my %metrics = ( input => 0, output => 0, );
     for my $amplicon_set ( @amplicon_sets ) {
-        my $processed_fasta = $amplicon_set->processed_fasta_file;
-        next if not -s $processed_fasta;
+        my $fasta_file = $amplicon_set->oriented_fasta_file;
+        next if not -s $fasta_file;
         $self->status_message('Amplicon set'.($amplicon_set->name ? ' '.$amplicon_set->name : ''));
 
         # DETECT
         $self->status_message('Detect chimeras...');
-        my $processed_fasta_base_name = File::Basename::basename($processed_fasta);
-        my $sequences = $amplicon_set->chimera_dir.'/'.$processed_fasta_base_name;
-        symlink($processed_fasta, $sequences);
+        my $fasta_base_name = File::Basename::basename($fasta_file);
+        my $sequences = $amplicon_set->chimera_dir.'/'.$fasta_base_name;
+        symlink($fasta_file, $sequences);
         if ( not -s $sequences ) {
-            $self->error_message("Failed to link processed fasta ($processed_fasta) to chimera dir!");
+            $self->error_message("Failed to link oriented fasta ($fasta_file) to chimera dir!");
             return;
         }
         my $chimera_file = $amplicon_set->chimera_file;
@@ -535,9 +685,9 @@ sub detect_and_remove_chimeras {
         $self->status_message('Detect chimeras...OK');
 
         $self->status_message('Remove chimeras...');
-        my $reader = $amplicon_set->seq_reader_for('processed');
+        my $reader = $amplicon_set->seq_reader_for('oriented');
         if ( not $reader ) {
-            $self->error_message('Failed to get processed seq reader!');
+            $self->error_message('Failed to get oriented seq reader!');
             return;
         }
 
@@ -567,18 +717,18 @@ sub detect_and_remove_chimeras {
         $self->status_message('Remove chimeras...OK');
     }
 
-    if ( $amplicons_processed != $metrics{input} ) {
-        $self->error_message("Amplicons processed ($amplicons_processed) and amplicons put through chimera detection ($metrics{input}) do not match!");
+    if ( $amplicons_classified != $metrics{input} ) {
+        $self->error_message("Amplicons oriented ($amplicons_classified) and amplicons put through chimera detection ($metrics{input}) do not match!");
         return;
     }
 
     my $amplicons_chimeric = $metrics{input} - $metrics{output};
     $self->amplicons_chimeric($amplicons_chimeric);
-    $self->amplicons_chimeric_percent( sprintf('%.2f', $amplicons_chimeric / $amplicons_processed) );
+    $self->amplicons_chimeric_percent( sprintf('%.2f', $amplicons_chimeric / $amplicons_classified) );
 
-    $self->status_message('Processed:        '.$self->amplicons_processed);
-    $self->status_message('Chimeric:         '.$self->amplicons_chimeric);
-    $self->status_message('Chimeric percent: '.($self->amplicons_chimeric_percent * 100).'%');
+    $self->status_message('Classifed and oriented: '.$self->amplicons_classified);
+    $self->status_message('Chimeric:               '.$self->amplicons_chimeric);
+    $self->status_message('Chimeric percent:       '.($self->amplicons_chimeric_percent * 100).'%');
 
     $self->status_message('Detect and remove chimeras...OK');
     return 1;
@@ -592,7 +742,7 @@ sub orient_amplicons {
 
     my $amplicons_classified = $self->amplicons_classified;
     if ( not defined $amplicons_classified ) {
-        $self->error_message('Cannot orient apmplicons because "amplicons classified" metric is not set for '.$self->description);
+        $self->error_message('Cannot orient amplicons because "amplicons classified" metric is not set!');
         return;
     }
 
@@ -637,7 +787,6 @@ sub orient_amplicons {
     }
 
     $self->status_message('Orient amplicons...OK');
-
     return 1;
 }
 
@@ -665,8 +814,7 @@ sub classify_amplicons {
     my %metrics;
     @metrics{qw/ attempted success error total /} = (qw/ 0 0 0 0 /);
     for my $amplicon_set ( @amplicon_sets ) {
-        my %inputs = $amplicon_set->amplicon_iterator_input_fasta_and_qual;
-        my $fasta_file = $inputs{file};
+        my $fasta_file = $amplicon_set->processed_fasta_file;
         next if not $fasta_file or not -s $fasta_file;
 
         my $classification_file = $amplicon_set->classification_file;
@@ -713,6 +861,98 @@ sub classify_amplicons {
 
     return 1;
 }
+
+#< Reports >#
+sub generate_reports {
+    my $self = shift;
+    
+    my @report_names = (qw/ summary /);
+    push @report_names, 'composition' if not $self->model->is_for_qc;
+
+    for my $report_name ( @report_names ) {
+        $self->_generate_and_save_report($report_name);
+    }
+
+    return 1;
+}
+
+sub _generate_and_save_report {
+    my ($self, $name) = @_;
+
+    $self->status_message(ucfirst($name).' report...');
+
+    my $class = 'Genome::Model::MetagenomicComposition16s::Report::'.Genome::Utility::Text::string_to_camel_case($name);
+    my $generator = $class->create(
+        build_id => $self->id,
+    );
+    unless ( $generator ) {
+        $self->error_message("Could not create $name report generator for ".$self->description);
+        return;
+    }
+    my $report = $generator->generate_report;
+    unless ( $report ) {
+        $self->error_message("Could not generate $name report for ".$self->description);
+        return;
+    }
+
+    unless ( $self->add_report($report) ) {
+        $self->error_message("Could not save $name report for ".$self->description);
+    }
+
+    my @datasets = $report->get_datasets;
+    unless ( @datasets ) { # not ok
+        $self->error_message("No datasets in $name report for ".$self->description);
+        return;
+    }
+    my $file_base = sprintf(
+        '%s/%s',
+        $self->reports_directory,
+        $report->name_to_subdirectory($report->name),
+    );
+
+    for my $dataset ( @datasets ) {
+        my $dataset_name = $dataset->name;
+        my $file = sprintf(
+            '%s/%s.%s.tsv',
+            $file_base,
+            $self->model->subject_name,
+            $dataset_name,
+        );
+        unlink $file if -e $file;
+        my $fh = Genome::Sys->open_file_for_writing($file)
+            or return; # not ok
+        my ($svs) = $dataset->to_separated_value_string(separator => "\t");
+        unless ( $svs ) { # not ok
+            $self->error_message("Could not get dataset ($dataset) for $name report for ".$self->description);
+            return;
+        }
+        $fh->print($svs);
+        $fh->close;
+    }
+
+    my $xsl_file = $generator->get_xsl_file_for_html;
+    if ( -e $xsl_file ) {
+        my $xslt = Genome::Report::XSLT->transform_report(
+            report => $report,
+            xslt_file => $xsl_file,
+        );
+        unless ( $xslt ) {
+            $self->error_message("Can't transform report to html.");
+            return;
+        }
+        # Save
+        my $html_file = $report->directory.'/report.html';
+        my $fh = Genome::Sys->open_file_for_writing($html_file);
+        unless ( $fh ) {
+        }
+        $fh->print( $xslt->{content} );
+    }
+
+    $self->status_message(ucfirst($name).' report...OK');
+    
+    return $report;
+}
+#<>#
 
 #< QC Email >#
 sub perform_post_success_actions {
@@ -796,60 +1036,24 @@ sub perform_post_success_actions {
 sub calculate_estimated_kb_usage {
     my $self = shift;
 
-    #could also derive seq platform from inst data
-    my $method = 'calculate_estimated_kb_usage_'.$self->processing_profile->sequencing_platform;
-    unless ( $self->can( $method ) ) {
-         $self->error_message( "Failed to find method to estimate kb usage for sequencing platform: ".$self->processing_profile->sequencing_platform );
-         return;
-    }
-    return $self->$method;
-}
-
-sub calculate_estimated_kb_usage_solexa {
-    my $self = shift;
-
-    my $instrument_data_count = $self->instrument_data_count;
-    if ( not $instrument_data_count > 0 ) {
+    my @instrument_data = $self->instrument_data;
+    if ( not @instrument_data ) {
         Carp::confess( "No instrument data found for ".$self->description );
     }
 
-    my $kb = $instrument_data_count * 500_000; #TODO .. not sure what best value is
-
-    return ( $kb );
-}
-
-sub calculate_estimated_kb_usage_454 {
-    # Based on the total reads in the instrument data. The build needs about 3 kb (use 3.5) per read.
-    #  So request 5 per read or at least a MiB
-    #  If we don't keep the classifications around, then we will have to lower this number.
-    my $self = shift;
-
-    my @instrument_data = $self->instrument_data;
-    unless ( @instrument_data ) { # very bad; should be checked when the build is create
-        Carp::confess("No instrument data found for ".$self->description);
-    }
-
-    my $total_reads = 0;
+    my $est_kb_usage = 0;
     for my $instrument_data ( @instrument_data ) {
-        $total_reads += $instrument_data->total_reads;
+        my $sequencing_platform = $instrument_data->sequencing_platform;
+        switch ($sequencing_platform) {
+               case '454'    { $est_kb_usage += $instrument_data->read_count * 5 * 1024 }
+               case 'sanger' { $est_kb_usage += 30_000 }
+               case 'solexa' { $est_kb_usage += 500_000 } # FIXME update once implemented
+               else          { Carp::confess('Unknown sequencing platform! '.$sequencing_platform) }
+           }
     }
 
-    my $kb = $total_reads * 5;
-    return ( $kb >= 1024 ? $kb : 1024 );
+    return ( $est_kb_usage >= 1024 ? $est_kb_usage : 1024 );
 }
-
-sub calculate_estimated_kb_usage_sanger {
-    # Each piece of instrument data uses about 30Mb of space. Adjust if more files are removed
-    my $self = shift;
-
-    my $instrument_data_count = $self->instrument_data_count;
-    unless ( $instrument_data_count ) { # very bad; should be checked when the build is created
-        confess("No instrument data found for build ".$self->description);
-    }
-
-    return $instrument_data_count * 30000;
-}
-
 
 #< Diff >#
 sub dirs_ignored_by_diff {

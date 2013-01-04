@@ -2,12 +2,13 @@
 [4mUSAGE[0m
  [1mgenome model define mutational-significance[0m [--auto-assign-inst-data]
     [--auto-build-alignments] --processing-profile=? --somatic-variation-models=?[,?]
-    --annotation-build=? [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--model-name=?]
-    [--categorical-clinical-data-file=?] [--numeric-clinical-data-file=?]
-    [--glm-clinical-data-file=?] [--glm-model-file=?] [--omimaa-dir=?] [--cosmic-dir=?]
-    [--bmr-modifier-file=?] [--projects=?[,?]] [--review-file-dir=?] [--regions-of-interest=?[,?]]
-    [--gene-black-lists=?[,?]] [--variant-black-lists=?[,?]] [--additional-snv-lists=?[,?]]
-    [--additional-indel-lists=?[,?]] [--additional-sv-lists=?[,?]] [--pathway-file=?]
+    --annotation-build=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
+    [--groups=?[,?]] [--model-name=?] [--categorical-clinical-data-file=?]
+    [--numeric-clinical-data-file=?] [--glm-clinical-data-file=?] [--glm-model-file=?]
+    [--omimaa-dir=?] [--cosmic-dir=?] [--bmr-modifier-file=?] [--review-file-dir=?]
+    [--regions-of-interest=?[,?]] [--gene-black-lists=?[,?]] [--variant-black-lists=?[,?]]
+    [--additional-snv-lists=?[,?]] [--additional-indel-lists=?[,?]] [--additional-sv-lists=?[,?]]
+    [--pathway-file=?]
 
 [4mSYNOPSIS[0m
 First, determine what group of somatic variation models you want to work on.  This might be all models in a model group, for example.
@@ -18,13 +19,15 @@ genome model define mutational-significance --model-name "Example Mutational Sig
 
 [4mREQUIRED INPUTS[0m
   [1mprocessing-profile[0m
-    Processing profile to be used by model, can provide either a name or an id 
+    the collection of parameters to be used during the build process 
   [1msomatic-variation-models[0m
     somatic variation models to evaluate 
   [1mannotation-build[0m
     annotation to use for roi file 
 
 [4mOPTIONAL INPUTS[0m
+  [1madd-to-projects[0m
+    add the new model to these projects (model groups) 
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -50,8 +53,6 @@ genome model define mutational-significance --model-name "Example Mutational Sig
     Default value '/gsc/scripts/opt/genome/db/cosmic/54' if not specified
   [1mbmr-modifier-file[0m
     Tab delimited multipliers per gene that modify BMR before testing 
-  [1mprojects[0m
-    Projects for the model. 
   [1mreview-file-dir[0m
     Path to directory of variant files with reviews.  Any variant with a review status other than S
     or V will be  ignored. 

@@ -30,5 +30,3 @@ isa_ok($generate_backbone,'Genome::Model::Tools::Fasta::GenerateBackbone');
 ok($generate_backbone->execute,'execute command '. $generate_backbone->command_name);
 
 ok(!compare($backbone_file,$expected_backbone),'Backbone files are identical');
-
-exit;

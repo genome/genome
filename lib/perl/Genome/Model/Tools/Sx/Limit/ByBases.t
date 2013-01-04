@@ -55,5 +55,3 @@ is_deeply([$metrics->bases, $metrics->count], [qw/ 92550 1234 /], 'randomly limi
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
-exit;
-

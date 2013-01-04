@@ -37,5 +37,3 @@ is(File::Compare::compare($ace_out, $ace_file), 0, 'ace file matches');
 
 #print "gvimdiff $ace_out $ace_file\n"; <STDIN>;
 done_testing();
-exit;
-

@@ -280,7 +280,3 @@ sub do_race_lock {
     $fh->close;
     return;
 }
-
-
-
-

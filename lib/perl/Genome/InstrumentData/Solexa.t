@@ -108,5 +108,3 @@ is(Genome::Sys->md5sum($trimmed_fastq_pathnames[1]), 'd46046c148dcf8437d023904c8
 for ( @trimmed_fastq_pathnames ) { unlink; }
 
 done_testing();
-exit;
-

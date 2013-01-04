@@ -41,4 +41,3 @@ ok($out_str, 'executed CrossMatchForIndel object OK');
 
 my $ori_out_str = read_file($out_file);
 cmp_ok($out_str, 'eq', $ori_out_str, 'output string is generated as expected');
-

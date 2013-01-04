@@ -103,6 +103,3 @@ ok($result, 'successfuly executed two tool workflow');
 ok(UR::Context->commit, 'successfully committed');
 
 done_testing();
-
-
-

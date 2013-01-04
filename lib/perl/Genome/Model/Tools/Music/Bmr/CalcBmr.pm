@@ -321,7 +321,7 @@ sub execute {
     $mafFh->close;
     $mafBedFh->close;
     my $refstats_file = Genome::Sys->create_temp_file_path();
-    Genome::Sys->shellcmd( cmd => "joinx1.6 ref-stats --ref-bases --bed $maf_bed --fasta $ref_seq --output $refstats_file" );
+    Genome::Sys->shellcmd( cmd => "joinx1.7 ref-stats --ref-bases --bed $maf_bed --fasta $ref_seq --output $refstats_file" );
 
     # Parse through the ref-stats output and load it into hashes for quick lookup later
     my ( %ref_base, %cpg_site );
@@ -332,7 +332,7 @@ sub execute {
         my ( $chr, undef, $pos, undef, undef, undef, $ref ) = split( /\t/, $line );
         my $locus = "$chr\t" . ( $pos - 1 );
         $ref_base{$locus} = substr( $ref, 1, 1 );
-        $cpg_site{$locus} = 1 if( $ref =~ m/CG/ );
+        $cpg_site{$locus} = 1 if( $ref =~ m/CG/i );
     }
     $refStatsFh->close;
 
@@ -352,7 +352,6 @@ sub execute {
         chomp $line;
         my @cols = split( /\t/, $line );
         my ( $gene, $chr, $start, $stop, $mutation_class, $mutation_type, $ref, $var1, $var2, $sample ) = @cols[0,4..6,8..12,15];
-
         # Skip mutations in samples that are not in the provided bam list
         unless( defined $sample_idx{$sample} ) {
             $skip_cnts{"belong to unrecognized samples"}++;

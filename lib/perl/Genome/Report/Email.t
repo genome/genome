@@ -34,5 +34,3 @@ for my $attr (qw/ to report xsl_files /) {
 }
 
 done_testing();
-exit;
-

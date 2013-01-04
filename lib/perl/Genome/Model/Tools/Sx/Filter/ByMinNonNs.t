@@ -41,5 +41,3 @@ is(File::Compare::compare($expected_out_fastq, $out_fastq), 0, "fastq filtered a
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
-exit;
-

@@ -7,10 +7,11 @@ use Carp 'confess';
 
 class Genome::Model::GenePrediction::Command::Eukaryotic::CodingGenesToGff {
     is => 'Genome::Command::Base',
-    has => [
+    has_input => [
         prediction_directory => {
             is => 'DirectoryPath',
             doc => 'Directory containing gene predictions',
+            is_output => 1,
         },
         output_file => {
             is => 'FilePath',

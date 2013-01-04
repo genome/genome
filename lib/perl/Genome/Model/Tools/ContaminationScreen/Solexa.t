@@ -7,9 +7,7 @@ use above 'Genome';
 use Test::More tests => 3;
 use File::Copy;
 
-use FindBin qw($Bin);
-
-my $datadir = $Bin . '/Solexa.t.d';
+my $datadir = __FILE__ . '.d';
 
 BEGIN {use_ok('Genome::Model::Tools::ContaminationScreen::Solexa');}
 
@@ -36,6 +34,3 @@ my $solexa = Genome::Model::Tools::ContaminationScreen::Solexa->create(%params);
 isa_ok($solexa, 'Genome::Model::Tools::ContaminationScreen::Solexa');
 
 ok($solexa->execute, "solexa executing");
-
-
-

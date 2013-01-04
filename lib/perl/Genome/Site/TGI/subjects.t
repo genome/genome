@@ -28,4 +28,3 @@ for my $class (@classes) {
     ok($o->id, "got id " . $o->id);
     ok($o->name, "got name " . $o->name);
 }
-

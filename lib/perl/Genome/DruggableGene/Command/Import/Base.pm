@@ -119,10 +119,11 @@ sub _create_gene_name_report {
 
 sub _create_gene_alternate_name_report {
     my $self = shift;
-    my ($gene_name_report, $alternate_name, $nomenclature, $description) = @_;
+    my ($gene_name_report, $alternate_name, $nomenclature, $description, $case) = @_;
+    if ($case eq 'upper'){$alternate_name = uc $alternate_name}
     my %params = (
         gene_id => $gene_name_report->id,
-        alternate_name => uc $alternate_name,
+        alternate_name => $alternate_name,
         nomenclature => $nomenclature,
         description => $description,
     );

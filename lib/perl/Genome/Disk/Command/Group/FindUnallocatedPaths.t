@@ -13,5 +13,3 @@ use Test::More;
 
 use_ok('Genome::Disk::Command::Group::FindUnallocatedPaths') or die;
 done_testing();
-
-

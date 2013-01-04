@@ -34,7 +34,7 @@ unlink($in->[1]);
 ok(! cat(1), 'no input files (allow_zero_size_input_files = 1)');
 
 
-exit;
+
 
 
 
@@ -57,5 +57,3 @@ sub cat {
     };
     return $@ eq '' ? 1 : undef;
 }
-
-

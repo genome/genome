@@ -39,5 +39,3 @@ is(File::Compare::compare($example_fastq, $out_fastq), 0, "fastq filtered as exp
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
-exit;
-

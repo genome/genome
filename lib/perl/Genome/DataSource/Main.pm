@@ -71,8 +71,10 @@ sub _sync_database {
     my $meta_ds = Genome::DataSource::Meta->_singleton_object;
     $meta_ds->get_default_handle->disconnect;
     $meta_ds->server($temp_file);
+
+    $params{changed_objects} = \@changed_objects;
     
-    return $self->SUPER::_sync_database(@_);
+    return $self->SUPER::_sync_database(%params);
 }
 
 # called whenever we generate an ID

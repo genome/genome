@@ -45,5 +45,3 @@ is(File::Compare::compare($expected_out_rev_fastq, $out_rev_fastq), 0, "rev fast
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
-exit;
-

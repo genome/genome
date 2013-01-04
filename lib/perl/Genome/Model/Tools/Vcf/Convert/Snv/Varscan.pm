@@ -47,16 +47,20 @@ sub parse_line {
         return 0;
     }
     my $alt_alleles = join(",", @var_alleles);
-    #no genotype quality, hardcode .
-    my $GQ='.'; 
-    #total depth
+    # We infer a Phred-like quality from the VarScan P-value
+    my $GQ= 0 - (10 * log($fields[11]) / log(10)) if($fields[11] && $fields[11] != 0);
+    $GQ = sprintf("%d", $GQ);
+    $GQ = 255 if($GQ > 255);
+    #total depth = "reads1 + reads2"
     my $DP= $fields[4]+$fields[5];
-    #avg base quality
-    my $BQ = $fields[10];
-    #avg mapping quality
-    my $MQ = $fields[13];
-    #allele_depth
-    my $AD = $fields[5];
+    #avg base quality for var = avg_qual2. For Ref it would be $fields[9] which is avg_qual1
+    my $refBQ = $fields[9];
+    my $BQ = join(",",($refBQ, $fields[10]));
+    #avg mapping quality. Previously this next line read my MQ = $fields[13]; This is not output by VarScan so we should hardcode to '.'
+    my $MQ = ".";
+    #allele_depth = "reads2"
+    my $refAD = $fields[4];
+    my $AD = join(",",($refAD, $fields[5]));
     #
     my $FA = $fields[6];
     $FA =~ s/\%//;

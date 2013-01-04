@@ -43,7 +43,7 @@ for(my $i = 1; $i < scalar @relevant_new_annotation; $i++){ #the first line is h
 }
 
 done_testing();
-exit;
+
 
 sub variant_headers {
     return Genome::Model::Tools::Annotate->variant_attributes;

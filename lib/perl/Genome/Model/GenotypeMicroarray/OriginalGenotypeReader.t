@@ -33,7 +33,7 @@ is($reader->filtered, 3, 'genotypes filtered');
 is($reader->passed, 6, 'genotypes pass');
 
 done_testing();
-exit;
+
 
 sub _expected_genotypes {
     return (

@@ -47,5 +47,3 @@ ok( $c->execute, "Successfully executed event" ) or die;
 ok( -s $temp_dir."/$run/$sample_name/$curr_blast_dir/$sample_name".'.TBXNTFiltered.fa_file0.fa', "Created pooled file" );
 
 done_testing();
-
-exit;

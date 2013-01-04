@@ -37,7 +37,7 @@ my $log = IO::File->new(">$temp_dir/status_messages.txt");
 ok($log, "created a file to hold the status messages") or die;
 $log->print(join("\n", @output));
 
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2012-11-27';
+my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2012-12-19';
 ok(-d $expected_data_directory, "found expected data directory: $expected_data_directory");
 my @diff = `diff -r $expected_data_directory $temp_dir`;
 is(@diff, 5, "no differences from expected results and actual other than the 5 lines corresponding to the random temp dir statement")
@@ -54,4 +54,3 @@ is(@diff, 5, "no differences from expected results and actual other than the 5 l
 #The summarize-builds tool changes the current working directory because the LIMS illumina_info tool writes output there and has no option to control this behavior
 #We need to change to somewhere else so that the testing harness can clean up the temp file created
 chdir("/");
-

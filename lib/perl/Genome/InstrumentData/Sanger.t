@@ -29,5 +29,3 @@ ok($sanger->full_path, 'full path');
 is($sanger->read_count, 96, 'read count');
 
 done_testing();
-exit;
-

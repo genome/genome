@@ -121,4 +121,3 @@ EOFILE
 my $novel_file2 = $result2->path('snvs.hq.novel.v2.bed');
 ok(!Genome::Sys->diff_file_vs_file($expected_novel_file2, $novel_file2), 'novel file is as expected')
     or diag("diff:\n" . Genome::Sys->diff_file_vs_file($expected_novel_file2, $novel_file2));
-

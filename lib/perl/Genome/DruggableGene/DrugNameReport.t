@@ -40,3 +40,5 @@ my $not_approved = Genome::DruggableGene::DrugNameReport->get('0007e481-49af-4a1
 ok($not_approved, 'got a non approved drug');
 ok(!$not_approved->is_approved, 'drug is not nutraceutical');
 }
+
+1;

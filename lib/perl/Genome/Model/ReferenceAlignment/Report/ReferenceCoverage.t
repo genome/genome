@@ -29,6 +29,3 @@ $name =~ s/ /_/g;
 
 ok(-d "$tmp/$name", "report directory $tmp/$name is present");
 ok(-e "$tmp/$name/report.xml", 'xml report is present');
-
-
-

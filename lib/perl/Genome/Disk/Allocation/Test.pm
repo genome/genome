@@ -8,6 +8,7 @@ use warnings;
 use Carp qw(croak);
 use Test::More;
 use Time::HiRes qw(usleep);
+use Sys::Hostname qw(hostname);
 use above 'Genome';
 
 require Genome::DataSource::LocalDataSource;
@@ -90,7 +91,8 @@ sub create_tmpfs {
     system("dd if=/dev/zero of=${fs_path} bs=1k count=${size}") && die "dd failed: $!";
     system("/sbin/mkfs.ext2 -F ${fs_path}") && die "mkfs failed: $!";
 
-    system("fuseext2 -o rw+ ${fs_path} ${mount_path}") && die "fuseext2 failed: $!";
+    my $hostname = hostname();
+    system("fuseext2 -o rw+ ${fs_path} ${mount_path}") && die sprintf('%s: fuseext2 failed: %s', $hostname, $!);
 
     push @{$tmpfs_mnt_pts{$$}}, [$fs_path, $mount_path];
 

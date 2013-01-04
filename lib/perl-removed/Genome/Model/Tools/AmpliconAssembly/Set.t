@@ -54,5 +54,3 @@ my @reads = $amplicon_assembly->get_all_amplicons_reads_for_read_name(
 is_deeply(\@reads, $amplicons->[0]->get_reads, 'Got all amplicons reads for read name');
 
 done_testing();
-exit;
-

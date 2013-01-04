@@ -104,5 +104,3 @@ ok(exists $rule3_params{'sample_source_id'}, 'sample source id in rule parameter
 ok($rule3_params{'sample_source_id'} eq $inst_data3->sample_source_id, 'sample source id in rule matches that in instrument data');
 
 done_testing();
-
-

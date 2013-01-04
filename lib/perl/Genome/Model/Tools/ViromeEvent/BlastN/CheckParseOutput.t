@@ -19,5 +19,3 @@ my $c = Genome::Model::Tools::ViromeEvent::BlastN::CheckParseOutput->create(
 ok($c, "Created virome event blast-n check-parse-output event");
 
 done_testing();
-
-exit;

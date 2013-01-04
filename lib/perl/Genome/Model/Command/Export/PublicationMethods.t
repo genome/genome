@@ -23,4 +23,3 @@ select STDOUT;
 
 my $expected_out = "\nMy methods!\n\n";
 is($out, $expected_out, "got expected outputs");
-

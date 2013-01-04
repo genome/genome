@@ -29,7 +29,7 @@ ok($nav2acenav, 'Created list to nav');
 ok($nav2acenav->execute, 'execute');
 is(compare($acenav, $expected_acenav), 0, 'Expected and generated acenav files match');
 
-exit;
+
 
 =pod
 
@@ -52,4 +52,3 @@ exit;
 
 #$HeadURL$
 #$Id$
-

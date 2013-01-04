@@ -27,6 +27,7 @@ class Genome::Model::Command::Define::DeNovoAssembly {
 sub type_specific_parameters_for_create {
     my $self = shift;
     my %p = (
+        $self->SUPER::type_specific_parameters_for_create,
         center_name => $self->center_name,
     );
     $p{import_location} = $self->import_location if

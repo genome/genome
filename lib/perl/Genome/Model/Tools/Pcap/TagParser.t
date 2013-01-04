@@ -67,5 +67,3 @@ foreach my $type (qw/ comment oligo autoFinExp autoFinExp /)
 }
 
 done_testing();
-exit;
-

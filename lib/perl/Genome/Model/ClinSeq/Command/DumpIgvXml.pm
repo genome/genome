@@ -174,8 +174,7 @@ sub execute {
     }
     my @rb_names = keys %rb_names;
     if (scalar(@rb_names) > 1 || scalar(@rb_names) == 0){
-      $self->error_message("Did not find a single distinct Reference alignment build for ClinSeq build: $clinseq_build_id");
-      exit(1);
+      die $self->error_message("Did not find a single distinct Reference alignment build for ClinSeq build: $clinseq_build_id");
     }
     my $reference_genome_name = $rb_names[0];
     
@@ -187,8 +186,7 @@ sub execute {
       $genome_build = "b37";
       $starting_locus = "12:25398182-25398361";
     }else{
-      $self->error_message("Unrecognized reference genome name ($reference_genome_name) supplied to DumpIgvXml.pm");
-      exit(1);
+      die $self->error_message("Unrecognized reference genome name ($reference_genome_name) supplied to DumpIgvXml.pm");
     }
     $gene_track_name = $genome_build . "_genes";
     
@@ -433,8 +431,7 @@ sub generate_track_xml {
   }elsif($pp_type eq "rna seq"){
     $data_type = "RNA-Seq";
   }else{
-    self->error_message("Processing profile type not recognized: $pp_type");
-    exit(1);
+    die $self->error_message("Processing profile type not recognized: $pp_type");
   }
 
   #Determine the tissue description: ('normal', 'tumor', 'somatic')
@@ -456,15 +453,14 @@ sub generate_track_xml {
         $bam_file = $alignment_result->bam_file;
       }
     }else{
-      self->error_message("Could not find BAM file for build: $build_id\tmodel: $model_id - did you specify the correct resource type?");
+      $self->error_message("Could not find BAM file for build: $build_id\tmodel: $model_id - did you specify the correct resource type?");
     }
     $resource_file = $bam_file;
 
   }elsif ($resource_type eq 'bed' && $pp_type eq 'somatic variation'){
     #User specifies actual file name - will be used to find file in a somatic variation result
     unless ($bed_file){
-      $self->error_message("A bed file name must be defined in dump-igv-xml to generate a track of type 'bed'");
-      exit(1);
+      die $self->error_message("A bed file name must be defined in dump-igv-xml to generate a track of type 'bed'");
     }
     $resource_file = $build_dir . "/$bed_file";
 
@@ -480,12 +476,10 @@ sub generate_track_xml {
       $resource_file = $build_dir . "/junctions/junctions.bed";
     }
     unless (-e $resource_file){
-      self->error_message("junctions.bed file not found for rna seq build: $build_dir");
-      exit(1);
+      die $self->error_message("junctions.bed file not found for rna seq build: $build_dir");
     }
   }else{
-    self->error_message("Resource type and PP type combination not recognized: $resource_type (must be one of 'bam', 'junctions' (rna-seq models only), or 'bed')");
-    exit(1);
+    die $self->error_message("Resource type and PP type combination not recognized: $resource_type (must be one of 'bam', 'junctions' (rna-seq models only), or 'bed')");
   }
 
 
@@ -548,8 +542,7 @@ XML
     if ($bed_file =~ /^\w+\/(.*)/){
       $bed_file_name = $1;
     }else{
-      self->error_message("Could not determine bed file name from bed file parameter: $bed_file");
-      exit(1);    
+      die $self->error_message("Could not determine bed file name from bed file parameter: $bed_file");
     }
 
     my $bed_track_name = "$bed_data_type $bed_file_name";
@@ -583,8 +576,7 @@ sub generate_resource_xml {
   my @resource_list = @{$args{'-resources'}};
 
   unless (scalar(@resource_list) > 0){
-    $self->error_message("\n\nNo resources found for creation of a resource XML section for IGV in DumpIgvXml.pm\n\n");
-    exit(1);
+    die $self->error_message("\n\nNo resources found for creation of a resource XML section for IGV in DumpIgvXml.pm\n\n");
   }
 
   #Create an XML block like this:
@@ -665,8 +657,7 @@ sub generate_panel_layout_xml{
   #Every session should have at least 2 panels (the feature panel + at least one data panel) otherwise there may be an input problem and/or the igv session would 
   #If for some reason only the feature panel was present, simply return and empty string for the panel layout as a layout would be uneccessary
   if ($panel_count == 0){
-    $self->error_message("\n\nNo panels defined for creation panel layout XML in DumpIgvXml.pm\n\n");
-    exit(1);
+    die $self->error_message("\n\nNo panels defined for creation panel layout XML in DumpIgvXml.pm\n\n");
   }elsif($panel_count == 1){
     $xml = '';
   }else{

@@ -37,5 +37,3 @@ ok(File::Compare::compare($data_dir.'/supercontigs.fasta', $temp_dir.'/edit_dir/
 #<STDIN>;
 
 done_testing();
-
-exit;

@@ -28,6 +28,3 @@ my $rand_revert_sam = Genome::Model::Tools::Picard::RandomRevertSam->create(
 isa_ok($rand_revert_sam,'Genome::Model::Tools::Picard::RandomRevertSam');
 ok($rand_revert_sam->execute,'execute command '. $rand_revert_sam->command_name);
 ok(!compare($expected_bam,$tmp_bam),'Expected BAM '. $expected_bam .' is identical to the RandomRevertSam BAM file '. $tmp_bam);
-
-
-exit;

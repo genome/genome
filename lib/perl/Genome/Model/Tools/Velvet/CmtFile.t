@@ -44,5 +44,3 @@ ok( File::Compare::compare( $data_dir.'/edit_dir/contigs.cmt', $test_dir.'/edit_
 #<STDIN>;
 
 done_testing();
-
-exit;

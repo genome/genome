@@ -195,8 +195,12 @@ sub calculate_estimated_kb_usage {
 
 sub regex_files_for_diff {
     return qw(
-        alignments/normal/\d+\.(bam.*)$
-        alignments/tumor/\d+\.(bam.*)$
+        ^alignments/normal/\d+\.(bam.*)$
+        ^alignments/tumor/\d+\.(bam.*)$
+        sv/alignments/tumor/\d+\.(bam.*)$
+        sv/alignments/normal/\d+\.(bam.*)$
+        large_indel_validation/alignments/tumor/\d+\.(bam.*)$
+        large_indel_validation/alignments/normal/\d+\.(bam.*)$
         coverage/(tumor|normal)/wingspan_(\d+)/\d+_(\w+)_STATS.t(sv|xt)
         coverage/(tumor|normal)/\d+-(\w+)-wingspan_(\d+)-alignment_summary.tsv
         coverage/(tumor|normal)/\d+-(\w+)-wingspan_(\d+)-alignment_summary-v2.tsv
@@ -235,6 +239,8 @@ sub files_ignored_by_diff {
         control_variants_for_loh/dispatcher.cmd
         validation/review/newcalls.xml
         indel_validation/indel_files_to_validate
+        large_indel_validation/tumor.csv
+        large_indel_validation/normal.csv
     );
 }
 sub dirs_ignored_by_diff {
@@ -246,7 +252,7 @@ sub dirs_ignored_by_diff {
         variants/sv/squaredancer
         variants/sv/union
         indel_validation/realigned_bams
-        indel_validation
+        /indel_validation
     );
 }
 

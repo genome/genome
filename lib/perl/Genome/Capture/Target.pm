@@ -31,5 +31,4 @@ class Genome::Capture::Target {
     data_source => 'Genome::DataSource::GMSchema',
 };
 
-
 1;

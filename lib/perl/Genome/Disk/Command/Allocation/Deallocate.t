@@ -32,5 +32,3 @@ my $rv = $cmd->execute;
 ok($rv, 'Successfully executed deallocate command');
 
 done_testing();
-
-

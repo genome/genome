@@ -50,5 +50,3 @@ $bad_cmd = 'gmt sx tester -param A';
 ok(!Genome::Model::Tools::Sx::Validate->validate_command($bad_cmd), 'bad command does not validate');
 
 done_testing();
-exit;
-

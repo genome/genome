@@ -62,4 +62,3 @@ isa_ok($snvs_result, 'Genome::Model::Tools::DetectVariants2::Result::Vcf::Detect
 $DB::single=1;
 
 done_testing();
-exit;

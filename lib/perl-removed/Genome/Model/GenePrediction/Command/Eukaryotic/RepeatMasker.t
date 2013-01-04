@@ -101,4 +101,3 @@ for my $input_seq_name (sort keys %input_seqs) {
 }
 
 done_testing();
-

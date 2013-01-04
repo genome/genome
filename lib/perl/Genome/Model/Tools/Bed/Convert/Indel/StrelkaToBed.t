@@ -54,6 +54,3 @@ ok(!$diff, 'output matched expected result')
 #print $tmpdir, "\n";
 #mkdir ("/tmp/last-strelka-to-bed-result/");
 #system ("cp -r $tmpdir/* /tmp/last-strelka-to-bed-result/");
-
-
-

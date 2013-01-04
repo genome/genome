@@ -332,7 +332,7 @@ sub cpu_instance_size {
 }
 
 sub memory_instance_size {
-    return 4294967296; # 4 GB
+    return 4194000; # 4 GB
 }
 
 sub cpu_instances_used {

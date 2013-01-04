@@ -56,4 +56,3 @@ my $rs_100bp = Genome::Model::Tools::Fastq::RandomSubset->create(
 isa_ok($rs_100bp,'Genome::Model::Tools::Fastq::RandomSubset');
 ok($rs_100bp->execute,'execute command '. $rs_100bp->command_name);
 ok(!compare($rs_100bp->output_read_1_fastq_file,$expected_100bp_file),'expected 100bp file equal');
-exit;

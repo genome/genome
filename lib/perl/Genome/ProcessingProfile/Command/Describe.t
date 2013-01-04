@@ -27,5 +27,3 @@ isa_ok($describer, 'Genome::ProcessingProfile::Command::Describe');
 ok($describer->execute, 'Executed the describer');
 
 done_testing();
-exit;
-

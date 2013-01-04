@@ -21,5 +21,3 @@ my $suffixerator = Genome::Model::Tools::Kmer::Suffixerator->create(
 );
 isa_ok($suffixerator,'Genome::Model::Tools::Kmer::Suffixerator');
 ok($suffixerator->execute,'execute command '. $suffixerator->command_name);
-
-exit;

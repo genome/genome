@@ -69,7 +69,7 @@ for my $input_type ( qw/ bam_path archive_path / ) {
 
 done_testing();
 
-exit;
+
 
 sub inst_data_params {
     return (
@@ -85,4 +85,3 @@ sub inst_data_params {
         is_paired_end => 1,
     );
 }
-

@@ -6,9 +6,6 @@ use warnings;
 use Genome;
 use IO::File;
 
-my $high = 750000;
-UR::Context->object_cache_size_highwater($high);
-
 class Genome::DruggableGene::Command::Import::RussLampel {
     is => 'Genome::DruggableGene::Command::Import::Base',
     has => {
@@ -96,6 +93,8 @@ HELP
 
 sub execute {
     my $self = shift;
+    my $high = 750000;
+    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv();
     $self->import_tsv();
     return 1;
@@ -190,13 +189,13 @@ sub import_genes {
         if ($human_readable_name eq 'RussLampel'){$human_readable_name="Druggable Genome";} #Create new generic category for such lists
         my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
         unless ($input->{'gene_stable_id'} eq 'N/A'){
-            my $ensembl_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'gene_stable_id'}, 'Ensembl Gene Id', '');
+            my $ensembl_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'gene_stable_id'}, 'Ensembl Gene Id', '', 'upper');
         }
         unless ($input->{'display_id'} eq 'N/A'){
-            my $display_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'display_id'}, 'Display Id', '');
+            my $display_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'display_id'}, 'Display Id', '', 'upper');
         }
         unless ($input->{'description'} eq 'N/A'){ 
-            my $description = $self->_create_gene_alternate_name_report($gene_name, $input->{'description'}, 'Description', '');
+            my $description = $self->_create_gene_alternate_name_report($gene_name, $input->{'description'}, 'Description', '', 'lower');
         }
         push @genes, $gene_name;
     }

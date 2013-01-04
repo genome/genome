@@ -75,5 +75,3 @@ my $rv = system(qq(genome model copy 2887424886 name=__COPY_TEST2__ subject=name
 is($rv, 0, 'command line');
 
 done_testing();
-exit;
-

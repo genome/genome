@@ -35,5 +35,3 @@ isa_ok($sol2phred,'Genome::Model::Tools::Fastq::Sol2phred');
 
 ok($sol2phred->execute,'execute command '. $sol2phred->command_name);
 ok(compare($sol2phred->phred_fastq_file,$expected_phred_fastq_file) == 0,'files are the same');
-
-exit;

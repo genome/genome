@@ -94,4 +94,3 @@ isa($b3,"UR::DeletedRef");
 is($m->last_succeeded_build, $b1, "last_succeeded_build is now build 1");
 
 =cut
-

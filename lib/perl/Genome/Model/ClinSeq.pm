@@ -22,13 +22,15 @@ class Genome::Model::ClinSeq {
     doc => 'clinial sequencing data convergence of RNASeq, WGS and exome capture data',
 };
 
+sub define_by { 'Genome::Model::Command::Define::BaseMinimal' }
+
 sub _help_synopsis {
     my $self = shift;
     return <<"EOS"
 
     genome processing-profile create clin-seq  --name 'November 2011 Clinical Sequencing' 
 
-    genome model define clin-seq  --processing-profile='November 2011 Clinical Sequencing'  --wgs-model='2882504846'  --exome-model='2882505032'  --tumor-rnaseq-model='2880794613'
+    genome model define clin-seq  --processing-profile='November 2011 Clinical Sequencing'  --wgs-model=2882504846 --exome-model=2882505032 --tumor-rnaseq-model=2880794613
     
     # Automatically builds if/when the models have a complete underlying build
 EOS
@@ -406,10 +408,10 @@ sub _resolve_workflow_for_build {
             $add_link->($input_connector,['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
         }
         elsif ($build->wgs_build) {
-            $add_link->($input_connector,'wgs_build',$mutation_diagram_op);
+            $add_link->($input_connector,'wgs_build',$mutation_diagram_op,'builds');
         }
         elsif ($build->exome_build) {
-            $add_link->($input_connector,'exome_build',$mutation_diagram_op);
+            $add_link->($input_connector,'exome_build',$mutation_diagram_op,'builds');
         }
         else {
             die "impossible!";

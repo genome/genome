@@ -22,7 +22,3 @@ my $blast1 = Genome::Model::Tools::WuBlast::Blastx->create(
 );
 
 ok($blast1->execute, 'Blast1 finished ok');
-
-
-exit;
-

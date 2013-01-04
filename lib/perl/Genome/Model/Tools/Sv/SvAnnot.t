@@ -37,5 +37,3 @@ for my $type qw(36_standard 37_merged) {
     ok($annot_valid->execute(), "executed SvAnnot object OK for $type");
     is(compare($out_file, $expect_out), 0, "output matched expected result for $type");
 }
-
-

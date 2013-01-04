@@ -50,4 +50,3 @@ is($feature_list->format, 'true-BED', "Successfully updated format");
 is($feature_list->source, 'test-data-makers', "Successfully updated source");
 is($feature_list->content_type, 'exome', "Successfully updated content_type");
 is($feature_list->description, 'updated description for the update command test', );
-

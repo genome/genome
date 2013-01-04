@@ -1,18 +1,18 @@
 
 [4mUSAGE[0m
  [1mgenome model define imported-annotation[0m [--auto-assign-inst-data]
-    [--auto-build-alignments] --processing-profile=? --species-name=? --version=?
+    [--auto-build-alignments] --species-name=? --processing-profile=? --version=?
     --reference-sequence-build=? --build-name=? --annotation-import-version=?
-    [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--model-name=?] [--projects=?[,?]]
-    [--gtf-file=?]
+    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
+    [--model-name=?] [--gtf-file=?]
 
 [4mSYNOPSIS[0m
 genome model define imported-annotation --species-name=human --version=58_37c --reference-sequence-build=GRCh37-lite-build37 --build_name=NCBI-human.ensembl/58_37c --processing-profile=imported-annotation.ensembl --model_name=NCBI-human.ensembl
 [4mREQUIRED INPUTS[0m
-  [1mprocessing-profile[0m
-    Processing profile to be used by model, can provide either a name or an id 
   [1mspecies-name[0m
     species name for annotation build (mouse, human) 
+  [1mprocessing-profile[0m
+    the collection of parameters to be used during the build process 
   [1mversion[0m
     Annotation version.  Generally in the form
     <ensembl_release_number>_<reference_number><letter_designator> (ex: 58_37c) 
@@ -24,6 +24,8 @@ genome model define imported-annotation --species-name=human --version=58_37c --
     (undocumented) 
 
 [4mOPTIONAL INPUTS[0m
+  [1madd-to-projects[0m
+    add the new model to these projects (model groups) 
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -33,8 +35,6 @@ genome model define imported-annotation --species-name=human --version=58_37c --
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
-  [1mprojects[0m
-    Projects for the model. 
   [1mgtf-file[0m
     gtf file for rnaSeq annotation.  ONLY use for models that are rna_seq_only 
 

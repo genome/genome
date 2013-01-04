@@ -6,4 +6,4 @@ BEGIN {
     use_ok('Genome::Model::GenePrediction::Command::Bacterial::Merge');
 }
 
-
+1;

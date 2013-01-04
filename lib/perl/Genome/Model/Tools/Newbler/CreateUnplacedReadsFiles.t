@@ -48,5 +48,3 @@ for my $file ( qw/ reads.unplaced reads.unplaced.fasta / ) {
 #<STDIN>;
 
 done_testing();
-
-exit;

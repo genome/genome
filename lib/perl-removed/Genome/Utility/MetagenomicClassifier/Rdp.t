@@ -16,7 +16,7 @@ use_ok('Genome::Utility::MetagenomicClassifier::Rdp::Version2x2');
 #each Version has to be run separately to avoid running the same JVM instance
 
 done_testing();
-exit;
+
 
 #$HeadURL$
 #$Id$

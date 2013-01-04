@@ -44,5 +44,3 @@ ok ( ! -s $temp_test_dir.'/edit_dir/phd.ball.1', "Did not create phdball file" )
 #<STDIN>;
 
 done_testing();
-
-exit;

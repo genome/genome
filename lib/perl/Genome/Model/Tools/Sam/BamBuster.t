@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use above "Genome";  # forces a 'use lib' when run directly from the cmdline
 use Test::More;
-use FindBin qw($Bin);
 use File::Path;
 use File::Basename;
 
@@ -15,7 +14,7 @@ else {
     plan tests => 10;
 }
 
-my $datadir = $Bin . '/BamBuster.t.d';
+my $datadir = __FILE__ . '.d';
 
 
 my $tmp_dir = Genome::Sys->base_temp_directory;
@@ -51,4 +50,3 @@ for my $rg_id ('-123456','-123457','-123458') {
     Genome::Sys->md5sum($expected_file_sam), "sam content matches what is expected")
                                     
 }
-

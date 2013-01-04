@@ -40,6 +40,3 @@ $reader->close;
 
 my $diff = diff($file,$out_file);
 is($diff,'','Files are the same');
-
-
-exit;

@@ -26,5 +26,3 @@ ok( $c, "Created blastx viral inner check output event" ) or die;
 ok( $c->execute, "Successfully executed event" );
 
 done_testing();;
-
-exit;

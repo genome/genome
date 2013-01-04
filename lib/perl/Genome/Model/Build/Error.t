@@ -51,7 +51,7 @@ my @errors = Genome::Model::Build::Error->create_from_workflow_errors(@wf_errors
 is(scalar(@errors), 1, 'Converted 1 wf errors to build errors');
 
 done_testing();
-exit;
+
 
 sub _create_wf_errors  {
     my @wf_errors;
@@ -108,4 +108,3 @@ EOS
 
     return @wf_errors;
 }
-

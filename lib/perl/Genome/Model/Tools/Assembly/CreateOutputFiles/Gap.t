@@ -33,5 +33,3 @@ my @diffs = `sdiff -s $data_dir/edit_dir/gap.txt $temp_dir/edit_dir/gap.txt`;
 is(scalar (@diffs), 0, "New gap file matches test gap file");
 
 done_testing();
-
-exit;

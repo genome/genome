@@ -3,6 +3,7 @@ use above "Genome";
 use strict;
 use warnings;
 use Test::More; 
+use Command::Shell;
 
 Genome::SoftwareResult->class; #This emits warnings under no-commit, so get them out of the way.
 
@@ -56,7 +57,7 @@ if (@ARGV and $ARGV[0] eq 'REBUILD') {
     $actual_dir = $expected_dir;
 }
 elsif ($ARGV[0]) {
-    die "unexpected cmdline options @ARGV: expected nothing or 'REBUILD'";
+    die "unexpected cmdline options @ARGV: expected nothing or 'REBUILD', got " . $ARGV[0];
 }
 else {
     $actual_dir = Genome::Sys->create_temp_directory;
@@ -103,4 +104,3 @@ for my $sub_command (@sub_commands) {
         }
 
 }
-

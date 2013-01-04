@@ -10,9 +10,6 @@ use Genome::Utility::Parser;
 use Test::More tests => 5;
 use Test::Differences;
 
-# Use FindBin to provie a proper full path to the test files
-# so we can run this test from anywhere
-use FindBin qw($Bin);
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-Parser';
 my $tsv_file = "$test_dir/test.tsv";
 my $csv_file = "$test_dir/test.csv";
@@ -49,7 +46,3 @@ $csv_parser->close;
 
 # Test equality of tab versus comma delimited
 eq_or_diff(\%tsv_data,\%csv_data,'data produced by tab and comma delimited files');
-
-
-
-exit;

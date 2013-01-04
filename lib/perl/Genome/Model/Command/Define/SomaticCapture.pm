@@ -69,7 +69,7 @@ sub create {
 sub type_specific_parameters_for_create {
     my $self = shift;
 
-    my @params = ();
+    my @params = $self->SUPER::type_specific_parameters_for_create;
 
     push @params,
         tumor_model => $self->tumor_model,

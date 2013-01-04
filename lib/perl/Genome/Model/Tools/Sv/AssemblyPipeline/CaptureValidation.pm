@@ -106,7 +106,7 @@ sub execute {
     ( defined $bpA && $bpA =~ /^\d+$/ && defined $bpB && $bpB =~ /^\d+$/ ) or
       confess "Did not get chr and breakpoints from '$line'";
 #    $id = $bdRef->Id();
-    $regions{"$chrA.$bpA.$chrB.$bpB"} = 1;
+    $regions{"$chrA\t$bpA\t$chrB\t$bpB"} = 1;
     $ids{$id} = 0;
   }
   my ( $regionsRef, $idRef ) = ( \%regions, \%ids );
@@ -122,7 +122,7 @@ sub execute {
   $idRef = Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap::getAssemblySequences( $idRef, $assemblyFastaFile, $contigSequenceFile );
 
   # Get regions surrounding each SV breakpoint from Build36 reference and put into a fasta file
-  Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap::getBuild36ReferenceSequences( $regionsRef, $refSequenceFile, 2*$buffer );
+  Genome::Model::Tools::Sv::AssemblyPipeline::ReadRemap->getBuild36ReferenceSequences( $regionsRef, $refSequenceFile, 2*$buffer );
 
   # Make sure the sequences files exist with non-zero size
   ( -s $contigSequenceFile && -s $refSequenceFile ) or die "Did not get contig sequence and/or reference sequence file";

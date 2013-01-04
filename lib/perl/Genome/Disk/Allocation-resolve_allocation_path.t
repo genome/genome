@@ -98,4 +98,3 @@ ok(@allocations, 'found some child allocations');
 ok(@allocations == 1, 'found expected number of child allocations');
 ok($allocations[0]->id eq $allocation->id, 'found expected child allocation');
 done_testing();
-

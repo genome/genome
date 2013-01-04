@@ -18,5 +18,3 @@ my $c = Genome::Model::Tools::ViromeEvent::SequenceQualityControl->create(
 ok( $c, "Created sequence-quality-control event" );
 
 done_testing();
-
-exit;

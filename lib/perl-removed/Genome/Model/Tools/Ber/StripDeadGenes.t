@@ -6,4 +6,4 @@ BEGIN {
     use_ok("Genome::Model::Tools::Ber::StripDeadGenes");
 }
 
-
+1;

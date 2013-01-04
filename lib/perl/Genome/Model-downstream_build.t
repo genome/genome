@@ -94,6 +94,3 @@ is($build->status, 'Succeeded', 'changed build status to Succeeded');
 is($downstream_model->build_requested, 1, 'downstream model has build requested');
 
 done_testing();
-
-
-

@@ -6,7 +6,7 @@ use warnings;
 use above 'Genome';
 
 use Data::Dumper;
-use Genome::Model::MetagenomicComposition16s::Test;
+use Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory;
 use Test::More;
 
 use_ok('Genome::Model::MetagenomicComposition16s::Command');
@@ -21,28 +21,15 @@ sub Genome::Model::MetagenomicComposition16s::Command::Tester::execute {
 }
 
 # model
-my $model = Genome::Model::MetagenomicComposition16s::Test->model_for_sanger;
-ok($model, 'Got mock MC16s sanger model');
-my $build = Genome::Model::Build::MetagenomicComposition16s->create(
-    model => $model,
-);
-ok($build, 'Added build to model');
-ok($build->the_master_event->date_completed(UR::Context->current->now), 'build has date completed');
+my ($build, $example_build) = Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory->build_with_example_build_for_454;
+my $model = $build->model;
 
 #< FAIL >#
-# fail - no builds
+# fail - no models or builds
 my $cmd = Genome::Model::MetagenomicComposition16s::Command::Tester->create();
 ok($cmd, 'create');
 $cmd->dump_status_messages(1);
 ok(!$cmd->execute, 'execute failed w/o builds');
-
-# fail - model doesn't have a build
-$cmd = Genome::Model::MetagenomicComposition16s::Command::Tester->create(
-    models => [$model],
-);
-ok($cmd, 'create');
-$cmd->dump_status_messages(1);
-ok(!$cmd->execute, 'execute failed w/ model w/o builds');
 
 is($build->the_master_event->event_status('Succeeded'), 'Succeeded', 'build is succeeded');
 
@@ -64,5 +51,3 @@ ok($cmd->execute, 'execute');
 is_deeply([$cmd->_builds], [$build], 'builds from cmd');
 
 done_testing();
-exit;
-

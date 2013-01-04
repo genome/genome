@@ -8,3 +8,4 @@ BEGIN {
     use_ok("Genome::Model::Tools::ImportAnnotation::Venter");
 };
 
+1;

@@ -47,5 +47,3 @@ $individual = Genome::Individual->get($id);
 ok($individual, 're-get individual');
 
 done_testing();
-exit();
-

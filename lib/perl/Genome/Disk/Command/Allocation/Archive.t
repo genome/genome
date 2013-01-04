@@ -111,7 +111,6 @@ system("touch " . $allocation->absolute_path . "/a.out");
 no warnings 'redefine';
 *Genome::Disk::Volume::archive_volume_prefix = sub { return $archive_volume->mount_path };
 *Genome::Disk::Volume::active_volume_prefix = sub { return $volume->mount_path };
-*Genome::Sys::current_user_has_role = sub { return 1 };
 use warnings;
 
 # Create command object and execute it
@@ -147,6 +146,6 @@ ok($rv == 0, 'successfully executed command using simulated command line argumen
 is($allocation->volume->id, $archive_volume->id, 'allocation updated as expected after archive');
 
 done_testing();
-exit 0;
+
 
 1;

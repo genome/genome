@@ -32,5 +32,3 @@ ok (-s $progression_instance->stats_file,'stats file has size');
 for my $size (qw/LARGE/) {
     ok(-s $progression_instance->bias_basename .'_'. $size,'size fraction '. $size .' bias has size');
 }
-
-exit;

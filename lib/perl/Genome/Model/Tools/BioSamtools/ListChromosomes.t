@@ -37,6 +37,3 @@ isa_ok($list,'Genome::Model::Tools::BioSamtools::ListChromosomes');
 ok($list->execute,'execute command '. $list->command_name);
 is(scalar(@{$list->chromosome_array_ref}),84,'Found all 84 chromosomes');
 ok(!(compare($list->output_file,$expected_output_file)),'Output matches expected file');
-
-
-exit;

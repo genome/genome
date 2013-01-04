@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use Genome;
 
-binmode(STDOUT, ":utf8");
-
 class Genome::DruggableGene::Command::Import::Talc {
   is => 'Genome::DruggableGene::Command::Import::Base',
   has => [
@@ -110,6 +108,7 @@ HELP
 
 sub execute {
     my $self = shift;
+    binmode(STDOUT, ":utf8");
     $self->input_to_tsv();
     $self->import_tsv();
     unless ($self->skip_pubchem){
@@ -202,8 +201,8 @@ sub _import_gene {
     my $interaction = shift;
     my $citation = shift;
     my $gene_name = $self->_create_gene_name_report($interaction->{entrez_id}, $citation, 'Entrez Gene Id', '');
-    my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{entrez_id}, 'Entrez Gene Id', '');
-    my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{gene_target}, 'Gene Symbol', '');
+    my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{entrez_id}, 'Entrez Gene Id', '', 'upper');
+    my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{gene_target}, 'Gene Symbol', '', 'upper');
     return $gene_name;
 }
 

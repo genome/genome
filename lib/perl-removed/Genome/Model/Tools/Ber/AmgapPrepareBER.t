@@ -37,4 +37,4 @@ SKIP: {
     ok($tool_db->execute,'execute amgapprepareber');
 };
 
-
+1;

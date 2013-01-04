@@ -16,11 +16,11 @@ class Genome::Model::Tools::Picard::SamToFastq {
         },
         fastq => {
             is          => 'String',
-            doc         => 'Output fastq file (single-end fastq or, if paired, first end of the pair fastq). Required.',
+            doc         => 'Output fastq file (single-end fastq or, if paired, first end of the pair fastq).',
         },
         fastq2 => {
             is          => 'String',
-            doc         => 'Output fastq file (if paired, second end of the pair fastq). Default value: null.',
+            doc         => 'Output fastq file (if paired, second end of the pair fastq).',
             is_optional => 1,
         },
         fragment_fastq => {
@@ -42,13 +42,12 @@ class Genome::Model::Tools::Picard::SamToFastq {
 };
 
 sub help_brief {
-    'Tool to create FASTQ file from SAM/BAM using Picard';
+    'Tool to create FASTQ file from SAM/BAM using Picard with added support for mixed paired/fragment BAMs';
 }
 
 sub help_detail {
     return <<EOS
-    Tool to create FASTQ file from SAM/BAM using Picard.  For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#SamToFastq
+    Tool to create FASTQ file from SAM/BAM using Picard.  Based on Picard's "SamToFastq" (see `gmt picard standard-sam-to-fastq`)
 EOS
 }
 
@@ -161,7 +160,7 @@ sub _read_count_for_bam {
         use_version => $self->samtools_version,
     );
     if ( not $gmt ) {
-        $self->error_message('Failed to create gmt same flagstat!');
+        $self->error_message('Failed to create gmt sam flagstat!');
         return;
     }
     $gmt->dump_status_messages(1);

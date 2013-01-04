@@ -37,7 +37,7 @@ sub help_detail {
 
 sub type_specific_parameters_for_create {
     my $self = shift;
-    return (reference_sequence_build => $self->reference);
+    return ($self->SUPER::type_specific_parameters_for_create, reference_sequence_build => $self->reference);
 }
 
 sub execute {

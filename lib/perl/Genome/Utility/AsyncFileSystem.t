@@ -55,4 +55,3 @@ sub on_each_line_checker {
         pass( $prefix . ' expected array exhausted' );
     }
 }
-

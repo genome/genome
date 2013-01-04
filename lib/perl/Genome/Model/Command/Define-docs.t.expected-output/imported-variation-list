@@ -3,20 +3,22 @@
  [1mgenome model define imported-variation-list[0m [--auto-assign-inst-data] [--source-name=?]
     [--auto-build-alignments] [--snv-result=?] [--indel-result=?] [--sv-result=?] [--cnv-result=?]
     [--job-dispatch=?] [--server-dispatch=?] [--processing-profile=?] --version=?
-    [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--prefix=?] [--model-name=?]
-    [--projects=?[,?]]
+    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--prefix=?]
+    [--model-name=?]
 
 [4mSYNOPSIS[0m
-genome model define reference-alignment 
-  --model-name test5
-  --subject ley_aml_patient1_tumor
-  --processing-profile nature_aml_08
+  genome model define imported-variation-list \
+    --model-name test1 \
+    --subject TEST-patient1-sample1 \
+    --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
   [1mversion[0m
     The version of the build to create or update 
 
 [4mOPTIONAL INPUTS[0m
+  [1madd-to-projects[0m
+    add the new model to these projects (model groups) 
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -28,8 +30,6 @@ genome model define reference-alignment
     The prefix for the name of the model to create or update (no spaces) 
   [1mmodel-name[0m
     Override the default model name ({prefix}-{reference sequence model} by default) 
-  [1mprojects[0m
-    Projects for the model. 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
@@ -60,8 +60,6 @@ genome model define reference-alignment
 [4mDESCRIPTION[0m
     This defines a new genome model for the specified subject, using the specified processing
     profile.
-
-    The first build of a model must be explicitly requested after the model is defined.
 
 
 

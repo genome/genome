@@ -7,10 +7,6 @@ use Genome;
 use Term::ANSIColor qw(:constants);
 use XML::Simple;
 
-binmode(STDOUT, ":utf8");
-
-my $high = 750000;
-UR::Context->object_cache_size_highwater($high);
 
 class Genome::DruggableGene::Command::Import::Entrez {
     is => 'Genome::DruggableGene::Command::Import::Base',
@@ -97,6 +93,9 @@ HELP
 
 sub execute {
     my $self = shift;
+    binmode(STDOUT, ":utf8");
+    my $high = 750000;
+    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv();
     $self->import_tsv();
     return 1;
@@ -130,19 +129,19 @@ sub import_genes {
         my $gene_name_report = $self->_create_gene_name_report($gene_name, $citation, 'Entrez Gene Id', '');
         push @gene_name_reports, $gene_name_report;
         my $description = $gene->{description};
-        my $desc_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{description}, 'Gene Description', '');
-        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_id}, 'Entrez Gene Id', '');
-        my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_gene_symbol}, 'Gene Symbol', '');
+        my $desc_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{description}, 'Gene Description', '', 'lower');
+        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_id}, 'Entrez Gene Id', '', 'upper');
+        my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{entrez_gene_symbol}, 'Gene Symbol', '', 'upper');
         my @entrez_gene_synonyms = split(',', $gene->{entrez_gene_synonyms});
         for my $entrez_gene_synonym (@entrez_gene_synonyms){
             if ($entrez_gene_synonym and $entrez_gene_synonym ne 'N/A'){
-                my $gene_alternate_name_report = $self->_create_gene_alternate_name_report($gene_name_report, $entrez_gene_synonym, 'Gene Synonym', '');
+                my $gene_alternate_name_report = $self->_create_gene_alternate_name_report($gene_name_report, $entrez_gene_synonym, 'Gene Synonym', '', 'upper');
             }
         }
         my @ensembl_gene_ids = split(',', $gene->{ensembl_ids});
         for my $ensembl_gene_id (@ensembl_gene_ids){
             if ($ensembl_gene_id and $ensembl_gene_id ne 'N/A'){
-                my $ensembl_alternate_name_report = $self->_create_gene_alternate_name_report($gene_name_report, $ensembl_gene_id, 'Ensembl Gene Id', '');
+                my $ensembl_alternate_name_report = $self->_create_gene_alternate_name_report($gene_name_report, $ensembl_gene_id, 'Ensembl Gene Id', '', 'upper');
             }
         }
     }

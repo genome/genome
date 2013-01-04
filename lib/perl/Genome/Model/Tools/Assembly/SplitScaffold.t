@@ -33,5 +33,3 @@ ok ($create->execute, "Successfully executed split-scaffold tool") or die;
 #ok (File::Compare::compare( $test_dir.'/split_out.ace', $temp_dir.'/split_out.ace') == 0, "Test output files match");
 
 done_testing();
-
-exit;

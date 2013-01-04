@@ -98,4 +98,3 @@ sub Genome::Model::ReferenceAlignment::add_input {
     is($build->genotype_microarray_build_id, '1', 'genotype_microarray_build_id is set');
     is($build->gold_snp_path, 'file 1', 'got file 1');
 }
-

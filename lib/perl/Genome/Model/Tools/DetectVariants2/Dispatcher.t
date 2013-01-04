@@ -118,4 +118,3 @@ ok($combine_test, "Object to test a combine case created");
 ok($combine_test->execute, "Test executed successfully");
 
 done_testing();
-exit;

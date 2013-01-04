@@ -396,7 +396,7 @@ for(1..27) {
 
 
 done_testing();
-exit;
+
 
 sub test_locking {
     my %params = @_;
@@ -429,4 +429,3 @@ sub print_event {
     print $fh $tp, "\n";
     print $tp, "\n";
 }
-

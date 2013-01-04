@@ -52,4 +52,3 @@ ok(!$dump_diff, "no differences found between generated dump file " . $command->
 ok(-e $command->ace_file_path, 'ace file exists at ' . $command->ace_file_path);
 
 done_testing();
-

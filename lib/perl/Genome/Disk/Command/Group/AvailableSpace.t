@@ -23,6 +23,3 @@ my $rv = $cmd->execute;
 ok($rv, 'Successfully executed command');
 
 done_testing();
-
-
-

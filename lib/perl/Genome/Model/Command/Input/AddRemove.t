@@ -285,5 +285,3 @@ $rm->dump_status_messages(1);
 ok(!$rm->execute, 'execute failed b/c single is not many');
 
 done_testing();
-exit;
-

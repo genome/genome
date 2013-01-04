@@ -11,6 +11,18 @@ use File::Basename;
 use Test::More;
 
 BEGIN {
+    local $/ = undef;
+    my $fh = IO::File->new('gmhmmp 2>&1 |');
+    my $message = <$fh>;
+    close($fh);
+
+    if($message =~ /license period has ended/) {
+        plan skip_all => 'license has expired';
+    }
+};
+
+
+BEGIN {
     use_ok('Genome::Model::Tools::GenePredictor');
     use_ok('Genome::Model::Tools::GenePredictor::Genemark');
 }

@@ -24,5 +24,3 @@ is(File::Compare::compare($phd_out, $phd_file), 0, 'phd file matches');
 
 #print "gvimdiff $phd_out $phd_file\n"; <STDIN>;
 done_testing();
-exit;
-

@@ -23,5 +23,3 @@ isa_ok($generator->generator, 'TestGenerator');
 ok($generator->date, 'date');
 
 done_testing();
-exit;
-

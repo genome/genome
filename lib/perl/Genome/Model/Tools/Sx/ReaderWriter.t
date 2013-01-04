@@ -278,5 +278,3 @@ is(File::Compare::compare($out_bed, $example_bed), 0, 'bed output file matches')
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
-

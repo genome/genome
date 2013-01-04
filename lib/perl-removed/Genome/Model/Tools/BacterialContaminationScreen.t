@@ -31,5 +31,3 @@ is($diff, '', "output from $output_file matches expected from $output_expected_f
     or diag($diff);
 
 ok( ! Genome::Model::Tools::BacterialContaminationScreen->create(), "Create w/o type - failed as expected");
-
-exit;

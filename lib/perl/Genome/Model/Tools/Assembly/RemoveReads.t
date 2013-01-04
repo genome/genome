@@ -20,4 +20,3 @@ my $out_file_name = 'remove_reads_out.ace';
 chdir($path);
 system "/bin/rm -f *.db";
 ok(Genome::Model::Tools::Assembly::RemoveReads->execute(ace_file => $ace_file, contig => $contig, read_list => $read_list, out_file_name => $out_file_name), "RemoveReads executed successfully");
-

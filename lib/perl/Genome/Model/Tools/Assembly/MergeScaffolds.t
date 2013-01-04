@@ -33,5 +33,3 @@ ok ($create->execute, "Successfully executed merge-scaffold tool");
 ok (File::Compare::compare( $test_dir.'/out.ace', $temp_dir.'/out.ace') == 0, "Test outout files match");
 
 done_testing();
-
-exit;

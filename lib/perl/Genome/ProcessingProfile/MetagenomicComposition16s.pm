@@ -14,11 +14,6 @@ class Genome::ProcessingProfile::MetagenomicComposition16s {
             is_optional => 1,
             doc => 'A string of paramters to process amplicons by',
         },
-        sequencing_center => {
-            is => 'Text',
-            doc => 'Place from whence the reads have come.',
-            valid_values => [qw/ gsc broad /],
-        },
         sequencing_platform => {
             is => 'Text',
             doc => 'Platform (machine) from whence the reads where created.',
@@ -104,22 +99,9 @@ sub stages {
 
 sub one_job_classes {
     my $self = shift;
-
-    my @subclasses;
-
-    my $sequencing_platform_cc = Genome::Utility::Text::string_to_camel_case(
-        $self->sequencing_platform
-    );
-
-    # Prepare
-    push @subclasses, 'PrepareInstrumentData';
-
-    # Detect chrimra
-    push @subclasses, 'DetectAndRemoveChimeras' if $self->chimera_detector;
-
-    # Classify, Orient, Reports and work w/ all mc16s builds
-    push @subclasses, (qw/ Classify Orient Reports /);
-
+    my @subclasses = (qw/ PrepareInstrumentData Classify Orient /);
+    push @subclasses, (qw/ DetectAndRemoveChimeras /) if $self->chimera_detector;
+    push @subclasses, (qw/ Reports /);
     return map { 'Genome::Model::Event::Build::MetagenomicComposition16s::'.$_ } @subclasses;
 }
 

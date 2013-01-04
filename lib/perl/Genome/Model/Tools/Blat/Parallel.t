@@ -47,5 +47,3 @@ my $blat = Genome::Model::Tools::Blat::Parallel->create(
 isa_ok($blat,'Genome::Model::Tools::Blat::Parallel');
 ok($blat->execute,'execute '. $blat->command_name);
 ok(!compare($psl_path,$expected_psl),'psl files are the same');
-
-exit;

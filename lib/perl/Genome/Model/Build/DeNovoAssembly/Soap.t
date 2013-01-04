@@ -291,4 +291,3 @@ for my $metric_name (@build_metric_names) {
 }
 
 done_testing();
-exit;

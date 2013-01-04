@@ -61,4 +61,3 @@ for my $file (@files){
 }
 
 done_testing();
-exit;

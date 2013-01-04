@@ -32,5 +32,3 @@ ok( -s $temp_dir.'/edit_dir/reads.placed', "New reads.placed file created" );
 ok( File::Compare::compare( $data_dir.'/edit_dir/reads.placed', $temp_dir.'/edit_dir/reads.placed' ) == 0, "Files match" );
 
 done_testing();
-
-exit;

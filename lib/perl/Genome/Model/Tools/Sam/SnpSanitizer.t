@@ -35,6 +35,3 @@ isa_ok($sani,'Genome::Model::Tools::Sam::SnpSanitizer');
 ok($sani->execute,'executed ok');
 
 cmp_ok(compare($out_file, $ori_file), '==', 0, 'Sam SnpSanitizer file was created ok');
-
-exit;
-

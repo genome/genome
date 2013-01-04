@@ -38,6 +38,7 @@ sub common_format_meta {
         {MetaType => "FORMAT", ID => "DP50",    Number => 1, Type => "Float",   Description => "Average tier1 read depth within 50 bases"},
         {MetaType => "FORMAT", ID => "FDP50",   Number => 1, Type => "Float",   Description => "Average tier1 number of basecalls filtered from original read depth within 50 bases"},
         {MetaType => "FORMAT", ID => "SUBDP50", Number => 1, Type => "Float",   Description => "Average number of reads below tier1 mapping quality threshold aligned across sites within 50 bases"},
+        {MetaType => "FORMAT", ID => "FT",      Number => 1, Type => "String",  Description => "Sample genotype filter"},
     );
 }
 
@@ -76,7 +77,7 @@ sub parse_line {
     return if $line =~ /^#/; # no vcf header here
     my @columns = split /\t/, $line;
 
-    my ($info, $n_sample, $t_sample) = map{$columns[$_]}(7, 9, 10);
+    my ($filter, $info, $n_sample, $t_sample) = map{$columns[$_]}(6, 7, 9, 10);
     my ($n_gt_info, $t_gt_info) = $info =~ /;NT=(\S+?);.*SGT.*\->(\S+?);/;
 
     my %gt_info = (
@@ -93,9 +94,9 @@ sub parse_line {
     my ($t_ad) = $t_sample =~ /^\d+:\d+:(\d+),/;
 
     $columns[7]  =~ s/SOMATIC;//;  #remove the meaningless SOMATIC, it is contained in every line
-    $columns[8]  = 'GT:AD:BQ:SS:'. $columns[8];
-    $columns[9]  = $n_gt . ':' . $n_ad . ':.:.:' . $n_sample;
-    $columns[10] = $t_gt . ':' . $t_ad . ':.:2:' . $t_sample;
+    $columns[8]  = 'GT:AD:BQ:SS:'. $columns[8] . ':FT';
+    $columns[9]  = $n_gt . ':' . $n_ad . ':.:.:' . $n_sample . ':' . $filter;
+    $columns[10] = $t_gt . ':' . $t_ad . ':.:2:' . $t_sample . ':' . $filter;
 
     return join "\t", @columns;
 }

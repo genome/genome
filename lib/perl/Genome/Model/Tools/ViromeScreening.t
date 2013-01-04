@@ -26,5 +26,3 @@ my $vs = Genome::Model::Tools::ViromeScreening->create(
 ok( $vs, "Created virome screening" );
 
 done_testing();
-
-exit;

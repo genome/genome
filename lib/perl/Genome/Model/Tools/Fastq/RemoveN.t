@@ -28,5 +28,3 @@ is(compare($n_removed_file,$n_static),0, "file content from converting $fastq_fi
     or do {
     diag("diff $n_static $n_removed_file | head:\n" . `diff $n_static $n_removed_file | head`);
     };
-
-

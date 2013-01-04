@@ -22,4 +22,3 @@ for my $io (qw/input output/) {
     is($i->value, "fval$io", "$io value is correct");
     is($i->event, $e, "$io event is correct");
 }
-

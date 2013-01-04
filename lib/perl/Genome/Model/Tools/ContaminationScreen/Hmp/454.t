@@ -22,7 +22,3 @@ my $hcs_454 = Genome::Model::Tools::ContaminationScreen::Hmp::454->create(%param
 isa_ok($hcs_454, 'Genome::Model::Tools::ContaminationScreen::Hmp::454');
 
 ok($hcs_454->execute,"454 executing");
-
-
-
-

@@ -30,6 +30,3 @@ isa_ok($cov,'Genome::Model::Tools::BedTools::Coverage');
 ok($cov->execute,'execute Coverage command '. $cov->command_name);
 
 ok(!compare($expected_output_file,$cov->output_file),'expected coverage file '. $expected_output_file .' is identical to '. $cov->output_file);
-
-
-exit;

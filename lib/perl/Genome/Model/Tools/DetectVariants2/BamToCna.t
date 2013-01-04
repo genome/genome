@@ -125,4 +125,3 @@ is(compare($output_file_4, $expected_output_file_4), 0, 'output for ratio of 0.2
 ok(-s $output_file_4 . ".png", 'generated copy number graphs for ratio of 0.25 and whole genome normalization');
 
 done_testing();
-exit;

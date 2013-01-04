@@ -219,7 +219,7 @@ sub map_workflow_inputs {
         snap_version =>  $self->snap_version,
         skip_masking_if_no_rna => $self->skip_masking_if_no_rna,
         repeat_library => (defined $model->repeat_library ? $model->repeat_library : '' ),
-        snap_models => $model->snap_models,
+        snap_models => $model->snap_models, #FIXME using the model here is bad--use the build inputs
         fgenesh_model => $model->fgenesh_model,
         contig_fasta => $model->assembly_contigs_file,
         split_fastas_output_directory => $build->split_fastas_output_directory,
@@ -248,7 +248,8 @@ sub map_workflow_inputs {
         skip_trnascan => (defined $self->skip_trnascan ? $self->skip_trnascan : 0),
         skip_rfamscan => (defined $self->skip_rfamscan ? $self->skip_rfamscan : 0),
         skip_snap => (defined $self->skip_snap ? $self->skip_snap : 0),
-        skip_fgenesh => (defined $self->skip_fgenesh ? $self->skip_fgenesh : 0);
+        skip_fgenesh => (defined $self->skip_fgenesh ? $self->skip_fgenesh : 0),
+        gff_file => join('/', $build->data_directory, 'pred_gff');
 
     my $params;
     for (my $i = 0; $i < (scalar @inputs); $i += 2) {

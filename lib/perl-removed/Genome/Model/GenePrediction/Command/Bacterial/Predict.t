@@ -9,3 +9,5 @@ BEGIN {
 
 # this should be filled out to the point where we can test how
 # well this works...
+
+1;

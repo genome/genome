@@ -32,4 +32,3 @@ isa_ok($cb,'Genome::Model::Tools::BioSamtools::CleanBam');
 ok($cb->execute,'execute CleanBam command '. $cb->command_name);
 ok(!compare($expected_bam_file,$output_bam_file),'expected output BAM file '. $expected_bam_file .' is identical to '. $output_bam_file);
 ok(!compare($expected_summary_output_file,$summary_output_file),'expected output BAM file '. $expected_summary_output_file .' is identical to '. $summary_output_file);
-exit;

@@ -52,7 +52,8 @@ class Genome::Model {
         },
         processing_profile => {
             is => 'Genome::ProcessingProfile',
-            id_by => 'processing_profile_id'
+            id_by => 'processing_profile_id',
+            doc => 'the collection of parameters to be used during the build process'
         },
     ],
     has_optional => [
@@ -140,6 +141,12 @@ class Genome::Model {
     table_name => 'GENOME_MODEL',
     doc => 'a versioned data model describing one the sequence and features of a genome'
 };
+
+sub define_by {
+  # this determines the base class for auto-generated "genome model define XXXX" commands
+  # various base classes are available which make different presumptions about presence of instrument-data, etc.
+  'Genome::Model::Command::Define::Helper' 
+}
 
 # override to do additonal error checking for new profiles
 sub __profile_errors__ {
@@ -810,7 +817,7 @@ sub _preprocess_subclass_description {
         $pp_data->{id_by} = ['processing_profile_id'];
 
         $pp_data = $desc->{has}{processing_profile_id} = {};
-        $pp_data->{data_type} = 'Number';
+        $pp_data->{data_type} ||= 'Text';
     }
 
     return $desc;

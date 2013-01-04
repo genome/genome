@@ -31,7 +31,7 @@ ok($list2nav, 'Created list to nav');
 ok($list2nav->execute, 'execute');
 is(compare($nav, $expected_nav), 0, 'Expected and generated nav file matches');
 
-exit;
+
 
 =pod
 
@@ -54,4 +54,3 @@ exit;
 
 #$HeadURL$
 #$Id$
-

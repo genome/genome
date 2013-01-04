@@ -71,5 +71,3 @@ ok($file_attr, 'super seq file attr');
 is($file_attr->attribute_value, $inst_data->file, 'super seq file attr matches accessor');
 
 done_testing();
-exit;
-

@@ -46,5 +46,3 @@ for my $diff ( @ace_diffs ) {
 #<STDIN>;
 
 done_testing();
-
-exit;

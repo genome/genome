@@ -8,7 +8,6 @@ use above "Genome";
 use YAML;
 use Test::More;
 use File::Compare;
-use FindBin qw($Bin);
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -19,7 +18,7 @@ else {
 
 use_ok('Genome::Model::Tools::Sam::InferPairedStatus');
 
-my $data_dir = $Bin . '/InferPairedStatus.t.d';
+my $data_dir = __FILE__ . '.d';
 
 my $paired_cmd = Genome::Model::Tools::Sam::InferPairedStatus->create(input=>$data_dir . "/paired.bam");
 ok($paired_cmd->execute(), "executed cmd on data we expect to be paired");

@@ -35,3 +35,5 @@ SKIP: {
     
     is("@diff","","HTML has no differences from expected value");
 }
+
+1;

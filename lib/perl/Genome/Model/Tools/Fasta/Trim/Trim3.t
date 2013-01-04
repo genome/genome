@@ -82,7 +82,7 @@ is(compare($qual, $result_qual), 0, 'Qual matches');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
-exit;
+
 
 #$HeadURL$
 #$Id$

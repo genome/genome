@@ -32,4 +32,3 @@ for my $model_id ($m1->id, $m2->id) {
     my @err = grep { /ERROR|WARNING/ } @out;
     is(scalar(@err),0, "no errors or warnings") or diag(@out);
 }
-

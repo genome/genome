@@ -18,4 +18,3 @@ my $v2 = \&UNIVERSAL::isa;
 is($v2,$v1,"the UNIVERSAL::isa method has the same value after using GSCApp");
 
 is($ENV{APP_DBI_NO_COMMIT},1, "no-commit transfers UR-to-App");
-

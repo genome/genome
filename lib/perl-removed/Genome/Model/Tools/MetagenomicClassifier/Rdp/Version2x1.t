@@ -48,5 +48,3 @@ $fail = Genome::Model::Tools::MetagenomicClassifier::Rdp::Version2x1->create( tr
 ok(!$fail, 'fail w/ invalid training set');
 
 done_testing();
-exit;
-

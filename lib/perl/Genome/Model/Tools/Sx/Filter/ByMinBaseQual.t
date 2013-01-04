@@ -39,5 +39,3 @@ is(File::Compare::compare($example_fastq, $out_fastq), 0, "filtered as expected"
 
 #print "gvimdiff $out_fastq $example_fastq\n"; <STDIN>;
 done_testing();
-exit;
-

@@ -25,4 +25,3 @@ my $tool_db = Genome::Model::Tools::Hgmi::DirBuilder->create(
                     'cell_type' => "BACTERIA");
 isa_ok($tool_db,'Genome::Model::Tools::Hgmi::DirBuilder');
 ok($tool_db->execute,'execute dir builder');
-

@@ -74,7 +74,7 @@ my $blast3 = Genome::Model::Tools::WuBlast::Blastn->create(
 
 ok($blast3->execute, 'Blast3 finished ok, other blast parameters tested fine');
 
-exit;
+
 
 #$HeadURL$
 #$Id$

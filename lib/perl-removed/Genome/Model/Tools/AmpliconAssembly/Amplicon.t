@@ -54,5 +54,3 @@ is(
 );
 
 done_testing();
-exit;
-

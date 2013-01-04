@@ -53,5 +53,3 @@ is(scalar @lines, 2, 'Ace file converted from velvet output is OK');
 #<STDIN>;
 
 done_testing();
-
-exit;

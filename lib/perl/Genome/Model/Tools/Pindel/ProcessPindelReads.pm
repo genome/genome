@@ -535,7 +535,7 @@ sub vaf_filter {
     }
 
     my $bed = $self->get_bed_line(\@event);
-    chomp $bed;
+    chomp $bed if $bed;
 
     if($self->create_hq_raw_reads && ($vaf_cutoff_met)){
         $self->print_raw_read(\@event,$hq_raw);

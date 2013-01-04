@@ -472,7 +472,7 @@ sub _cpu_slot_usage_breakdown {
                 next;
             }
 
-            if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue) and $op_type->lsf_queue eq 'workflow') {
+            if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue) and ($op_type->lsf_queue eq 'workflow' or $op_type->lsf_queue eq $ENV{WF_SERVER_QUEUE})) {
                 # skip jobs which run in workflow because they internally run another workflow
                 #print "\tskipping workflow queue job...\n";
                 next;
@@ -628,9 +628,11 @@ sub all_allocations {
 
     my @allocations;
     push @allocations, $self->disk_allocation if $self->disk_allocation;
+    push @allocations, $self->symlinked_allocations; # adds if the data dir exists, if not we can't find them
 
     for my $input ($self->inputs) {
-        if ($input->value->isa('Genome::Model::Build')) {
+        my $value = $input->value;
+        if ($value and $value->isa('Genome::Model::Build')) {
             push @allocations, $input->value->all_allocations();
         }
         else {
@@ -655,7 +657,8 @@ sub all_allocations {
         push @allocations, @event_allocations if @event_allocations;
     }
 
-    return @allocations;
+    my %allocations = map { $_->id => $_ } reverse @allocations;
+    return values %allocations;
 }
 
 sub all_results {
@@ -675,6 +678,83 @@ sub all_results {
     }
 
     return @results;
+}
+
+sub symlinked_allocations {
+    my $self = shift;
+
+    my $data_directory = $self->data_directory;
+    return if not $data_directory or not -d $data_directory;
+
+    my %symlinks;
+    File::Find::find(
+        {
+            wanted => sub{
+                return if not -l $File::Find::name;
+                return if -d $File::Find::name;
+                $symlinks{$File::Find::name} = readlink($File::Find::name);
+            },
+            follow_fast => 1,
+            follow_skip => 2,
+        },
+        $data_directory,
+    );
+
+    my %allocations;
+    for my $symlink ( keys %symlinks ) {
+        my $target = $symlinks{$symlink};
+        my @tokens = split(m#/+#, $target);
+        my $allocation_path = join('/', @tokens[4..$#tokens]);
+        my @allocations = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
+        next if not @allocations or @allocations > 1;
+        my $allocation = $allocations[0];
+        next if $allocations{$allocation->id};
+        UR::Context->reload($allocation); # this may have been loaded and unarchived earlier
+        $allocations{$allocation->id} = $allocation;
+        $allocation->{_symlink_name} = $symlink;
+        $allocation->{_target_name} = $target;
+        $allocation->{_target_exists} = ( -e $target ? 1 : 0 );
+    }
+
+    return values %allocations;
+}
+
+sub relink_symlinked_allocations {
+    my $self = shift;
+    $self->status_message('Relink symlinked allocations...');
+
+    my @symlinked_allocations = $self->symlinked_allocations;
+    $self->status_message('Found '.@symlinked_allocations.' symlinked allocations');
+    return 1 if not @symlinked_allocations;
+
+    for my $symlinked_allocation ( @symlinked_allocations ) {
+        $self->status_message('Allocation: '.$symlinked_allocation->id);
+        my $symlink_name = $symlinked_allocation->{_symlink_name};
+        $self->status_message("Symlink name: $symlink_name");
+        my $target_name = $symlinked_allocation->{_target_name};
+        $self->status_message("Target name: $target_name");
+        if ( $symlinked_allocation->{_target_exists} ) {
+            $self->status_message('Target exists! Skipping...');
+            next;
+        }
+        if ( $symlinked_allocation->absolute_path eq $symlinked_allocation->{_target_name} ) {
+            $self->status_message('Target name matches absolute path! Skipping...');
+            next;
+        }
+        my $new_target = $symlinked_allocation->absolute_path;
+        if ( $new_target =~ m#^/gscarchive# ) {# preserve link if still archived
+            $self->error_message('Allocation failed to reload or is still archived. Please correct. Skipping...');
+            next;
+        }
+        $self->status_message("Remove broken link: $symlink_name TO $target_name");
+        unlink($symlink_name);
+        $self->status_message("Add link: $symlink_name TO $new_target");
+        symlink($new_target, $symlink_name);
+        $self->error_message('Failed to relink allocation!') if not -l $symlink_name;
+    }
+
+    $self->status_message('Relink symlinked allocations...Done');
+    return 1;
 }
 
 sub log_directory {
@@ -790,7 +870,7 @@ sub start {
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
-        unless ($self->_initialize_workflow($params{job_dispatch} || 'apipe')) {
+        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{WF_JOB_QUEUE})) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
 
@@ -1149,7 +1229,7 @@ sub _launch {
     } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
         $server_dispatch = $model->server_dispatch;
     } else {
-        $server_dispatch = 'workflow';
+        $server_dispatch = $ENV{WF_SERVER_QUEUE};
     }
 
     # resolve job_dispatch
@@ -1217,7 +1297,7 @@ sub _launch {
             'bsub -N -H',
             '-P', $lsf_project,
             '-q', $server_dispatch,
-            $job_group_spec,
+            ($ENV{WF_EXCLUDE_JOB_GROUP} ? '' : $job_group_spec),
             '-u', $user . '@genome.wustl.edu',
             '-o', $build_event->output_log_file,
             '-e', $build_event->error_log_file,

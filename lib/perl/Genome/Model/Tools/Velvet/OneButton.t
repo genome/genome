@@ -116,7 +116,3 @@ foreach my $param (@params) {
 }
 
 done_testing();
-
-exit;
-
-

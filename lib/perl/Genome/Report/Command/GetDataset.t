@@ -22,5 +22,3 @@ for my $output_type ( @output_types ) {
 }
 
 done_testing();
-exit;
-

@@ -11,5 +11,4 @@ BEGIN {
         use_ok ('Genome::Model::Tools::Fasta::Dust');
 }
 
-exit;
-
+1;

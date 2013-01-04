@@ -27,5 +27,3 @@ my $trim_5_25 = Genome::Model::Tools::Fastq::Trimmer->create(
 isa_ok($trim_5_25,'Genome::Model::Tools::Fastq::Trimmer');
 ok($trim_5_25->execute,'execute command '. $trim_5_25->command_name);
 ok(!compare($trim_5_25->output_fastq,$expected_fastq),'expected fastq');
-
-exit;

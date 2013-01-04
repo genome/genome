@@ -113,5 +113,3 @@ is($cmd->genotypes_output, 0, $cmd->genotypes_output.' genotypes output');
 
 #print "gvimdiff $output $expected_output\n"; <STDIN>;
 done_testing();
-exit;
-

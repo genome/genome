@@ -21,5 +21,3 @@ my $plot_dup_rate = Genome::Model::Tools::Kmer::PlotDuplicationRate->create(
 isa_ok($plot_dup_rate,'Genome::Model::Tools::Kmer::PlotDuplicationRate');
 ok($plot_dup_rate->execute,'execute command '. $plot_dup_rate->command_name);
 ok(-s $plot_dup_rate->plot_file,'Found plot file '. $plot_dup_rate->plot_file);
-exit;
-

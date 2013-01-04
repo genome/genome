@@ -143,4 +143,3 @@ sub write_test_data {
     $fh->close;
     return;
 }
-

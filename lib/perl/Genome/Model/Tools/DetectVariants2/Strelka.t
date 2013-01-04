@@ -95,6 +95,3 @@ or do {
   print "\n\nFound $diff_line_count differing lines but expected 72, 74, or 98\n\n";
   Genome::Sys->shellcmd(cmd => "cp -L -r $actual_output_dir /tmp/last-strelka-test-result");
 };
-
-
-exit;

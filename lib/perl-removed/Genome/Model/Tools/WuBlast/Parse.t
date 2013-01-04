@@ -55,7 +55,7 @@ my $hsps4 = $parse4->execute;
 cmp_ok(scalar@$hsps4,'==',34, 'Parse4 finished ok, threshold filters are tested');
 #isa_ok($hsps4->[0],'Bio::Search::HSP::GenericHSP','Got right Bio Perl HSP obj');
 
-exit;
+
 
 #$HeadURL$
 #$Id$

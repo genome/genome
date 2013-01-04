@@ -55,7 +55,7 @@ my $build_test = Genome::Model::Event::Build::ReferenceAlignment::Test->new(
 isa_ok($build_test,'Genome::Model::Event::Build::ReferenceAlignment::Test');
 $build_test->create_test_pp(%pp_params);
 $build_test->runtests;
-exit;
+
 
 
 sub setup_test_data {
@@ -140,6 +140,3 @@ my $allocation_path = sprintf('alignment_data/%s/%s/%s/%s_%s',
     chdir $cwd || die("Failed to change directory to '$cwd'");
     return @instrument_data;
 }
-
-exit 0;
-

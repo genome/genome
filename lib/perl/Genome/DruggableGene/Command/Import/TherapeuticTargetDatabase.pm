@@ -5,9 +5,6 @@ use warnings;
 
 use Genome;
 
-my $high = 750000;
-UR::Context->object_cache_size_highwater($high);
-
 class Genome::DruggableGene::Command::Import::TherapeuticTargetDatabase {
     is => 'Genome::DruggableGene::Command::Import::Base',
     has => [
@@ -77,6 +74,8 @@ my %UniProtMapping;
 
 sub execute {
     my $self = shift;
+    my $high = 750000;
+    UR::Context->object_cache_size_highwater($high);
     %UniProtMapping=%{$self->_get_uniprot_entrez_mapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
     $self->input_to_tsv();
     $self->import_tsv();
@@ -167,23 +166,23 @@ sub _import_gene {
         }     
     }
     my $gene_name = $self->_create_gene_name_report($interaction->{target_id}, $citation, 'TTD Partner Id', '');
-    #my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_id}, 'TTD Gene Id', '');
+    #my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_id}, 'TTD Gene Id', '', 'upper');
     unless ($interaction->{target_name} eq 'N/A'){
-        my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_name}, 'Gene Name', '');
+        my $gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_name}, 'Gene Name', '', 'lower');
     }
     my @target_synonyms = split(";", $interaction->{target_synonyms});
     for my $target_synonym (@target_synonyms){
         next if $target_synonym eq 'N/A';
-        my $gene_synonym = $self->_create_gene_alternate_name_report($gene_name, $target_synonym, 'Gene Synonym', '');
+        my $gene_synonym = $self->_create_gene_alternate_name_report($gene_name, $target_synonym, 'Gene Synonym', '', 'upper');
     }
     unless ($interaction->{target_uniprot_id} eq 'N/A'){
-        my $uniprot_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_uniprot_id}, 'Uniprot Accession', '');
+        my $uniprot_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{target_uniprot_id}, 'Uniprot Accession', '', 'upper');
     }
     unless ($interaction->{target_entrez_id} eq 'N/A'){
-        my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $interaction->{target_entrez_id}, 'Entrez Gene Id', '');
+        my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $interaction->{target_entrez_id}, 'Entrez Gene Id', '', 'upper');
     }
     unless ($interaction->{target_ensembl_id} eq 'N/A'){
-        my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $interaction->{target_ensembl_id}, 'Ensembl Gene Id', '');
+        my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $interaction->{target_ensembl_id}, 'Ensembl Gene Id', '', 'upper');
     }
     return $gene_name;
 }

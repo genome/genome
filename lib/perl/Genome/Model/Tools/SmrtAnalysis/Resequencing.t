@@ -34,5 +34,3 @@ my $reseq = Genome::Model::Tools::SmrtAnalysis::Resequencing->create(
 );
 isa_ok($reseq,'Genome::Model::Tools::SmrtAnalysis::Resequencing');
 ok($reseq->execute,'Execute command '. $reseq->command_name);
-
-exit;

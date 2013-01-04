@@ -5,9 +5,8 @@ use warnings;
 
 use above 'Genome';
 use Test::More tests => 2;
-use FindBin qw($Bin);
 
-my $datadir = $Bin . '/454.t.d';
+my $datadir = __FILE__ . '.d';
 
 BEGIN {use_ok('Genome::Model::Tools::ContaminationScreen::454');}
 
@@ -17,7 +16,3 @@ $params{database} = '/gscmnt/sata156/research/mmitreva/databases/human_build36/H
 my $hcs_454 = Genome::Model::Tools::ContaminationScreen::454->create(%params);
 
 isa_ok($hcs_454, 'Genome::Model::Tools::ContaminationScreen::454');
-
-
-
-

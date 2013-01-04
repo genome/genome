@@ -346,4 +346,3 @@ is_deeply(
     },
     'parsed merge strategy as expected'
 ) or diag Data::Dumper::Dumper($strategy6->tree);
-

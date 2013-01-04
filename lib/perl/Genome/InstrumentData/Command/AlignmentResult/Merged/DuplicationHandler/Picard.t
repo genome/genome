@@ -37,4 +37,3 @@ sub test_default_max_jvm_heap_size {
         ok($default_max_jvm_heap_size == $max_gb, '(case 3) default_max_jvm_heap_size equals max_gb');
     }
 }
-

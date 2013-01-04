@@ -6,9 +6,6 @@ use warnings;
 use Genome;
 use IO::File;
 
-my $high = 750000;
-UR::Context->object_cache_size_highwater($high);
-
 class Genome::DruggableGene::Command::Import::HopkinsGroom {
     is => 'Genome::DruggableGene::Command::Import::Base',
     has => {
@@ -101,6 +98,8 @@ HELP
 
 sub execute {
     my $self = shift;
+    my $high = 750000;
+    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv();
     $self->import_tsv();
     return 1;
@@ -266,23 +265,23 @@ sub import_genes {
     while(my $hopkins_input = $parser->next){
         #Create gene record with all alternate names
         my $gene_name = $self->_create_gene_name_report($hopkins_input->{'Uniprot_Acc'}, $citation, 'HopkinsGroom Gene Name', '');
-        my $uniprot_acc = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Acc'}, 'Uniprot Accession', '');
-        my $uniprot_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Id'}, 'Uniprot Id', '');
+        my $uniprot_acc = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Acc'}, 'Uniprot Accession', '', 'upper');
+        my $uniprot_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Id'}, 'Uniprot Id', '', 'upper');
         unless ($hopkins_input->{'Uniprot_Protein_Name'} eq 'N/A'){
-            my $uniprot_protein_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Protein_Name'}, 'Uniprot Protein Name', '');
+            my $uniprot_protein_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Protein_Name'}, 'Uniprot Protein Name', '', 'lower');
         }
         unless ($hopkins_input->{'Uniprot_Gene_Name'} eq 'N/A'){
-          my $uniprot_gene_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Gene_Name'}, 'Uniprot Gene Name', '');
+          my $uniprot_gene_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Gene_Name'}, 'Uniprot Gene Name', '', 'upper');
         }
         unless ($hopkins_input->{'Entrez_Id'} eq 'N/A'){
-          my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Entrez_Id'}, 'Entrez Gene Id', '');
+          my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Entrez_Id'}, 'Entrez Gene Id', '', 'upper');
         }
         unless ($hopkins_input->{'Ensembl_Id'} eq 'N/A'){
           my $ensembl_string=$hopkins_input->{'Ensembl_Id'};
           $ensembl_string=~s/\s//;
           my @ensembl_ids=split(";", $ensembl_string);
           foreach my $ensembl_id (@ensembl_ids){
-            my $ensembl_id_entry = $self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '');
+            my $ensembl_id_entry = $self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '', 'upper');
           }
         }
         #Put all genes in HopkinsGroom category as well as any others

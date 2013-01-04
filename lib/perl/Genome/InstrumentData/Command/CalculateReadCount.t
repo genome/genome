@@ -21,7 +21,7 @@ my $test_path2 = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Calc
 test_with_path($test_path2);
 
 done_testing();
-exit;
+
 
 #   This instrument_data has no genotype_file attribute
 # should copy new one fine and make new genotype_file attribute
@@ -48,5 +48,3 @@ sub test_with_path {
             'shortcutted due to existing read_count attribute');
 
 }
-
-

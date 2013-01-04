@@ -44,4 +44,3 @@ ok($split_cmd_2->execute,'execute command '. $split_cmd_2->command_name);
 my $fasta_file_ref_2 = $split_cmd_2->_split_fasta_files;
 my @fasta_files_2 = @{$fasta_file_ref_2};
 is(scalar(@fasta_files_2),$number_of_files,'The number of files matches');
-exit;

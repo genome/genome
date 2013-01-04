@@ -60,5 +60,3 @@ my $vg3 = Genome::Model::Tools::Velvet::Graph->create(
 );
 
 ok($vg3->execute, 'velvetg runs ok, but contigs.fa is empty');
-
-exit;

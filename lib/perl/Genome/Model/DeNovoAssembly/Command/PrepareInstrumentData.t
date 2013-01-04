@@ -10,5 +10,3 @@ use Test::More;
 use_ok('Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData') or die;
 
 done_testing();
-exit;
-

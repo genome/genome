@@ -4,7 +4,9 @@ use strict;
 use warnings;
 use Genome;
 use Carp;
-    
+use File::lockf;
+use DBD::Pg;
+
 class Genome::DataSource::GMSchema {
     is => 'UR::DataSource::Pg',
     has_constant => [
@@ -85,19 +87,26 @@ sub _sync_database {
     return $self->SUPER::_sync_database(@_);
 }
 
+sub log_error {
+    my $error = shift;
+    my $log_string = create_log_message($error);
+    my $log_fh = open_error_log();
+    # If we can't get a file handle to the log file, no worries. Just continue without making a peep.
+    if ($log_fh) {
+        my $lock_status = File::lockf::lock($log_fh);
+        # this returns 0 on success
+        unless ($lock_status != 0) {
+            $log_fh->print("$log_string\n");
+            File::lockf::ulock($log_fh);
+        }
+        $log_fh->close;
+    }
+}
+
 sub log_commit_time {
     my($db_name, $time) = @_;
 
-    # See if this process was started from the commandline
-    my @commands;
-    if ($INC{'Command/V2.pm'}) {
-        push @commands, Command::V2->get('original_command_line true' => 1);
-    }
-    if ($INC{'Command/V1.pm'}) {
-        push @commands, Command::V1->get('original_command_line true' => 1);
-    }
-    @commands = sort { $a->id cmp $b->id } @commands;
-    my $original_cmdline = $commands[0] ? $commands[0]->original_command_line : $0;
+    my $original_cmdline = get_command_line();
     my $execution_id = $ENV{'GENOME_EXECUTION_ID'} || '';
 
     my $path = _determine_base_log_pathname();

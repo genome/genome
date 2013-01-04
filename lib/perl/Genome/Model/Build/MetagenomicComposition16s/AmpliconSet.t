@@ -39,31 +39,10 @@ is($amplicon_set->file_base_name, 'H_GV-933124G-S.MOCK', 'file base name');
 is($amplicon_set->fasta_dir, $tempdir.'/fasta', 'fasta dir base name');
 is($amplicon_set->processed_fasta_file, $tempdir.'/fasta/'.$file_base_name.'.V1_V3.processed.fasta', 'processed fasta file');
 is($amplicon_set->processed_qual_file, $tempdir.'/fasta/'.$file_base_name.'.V1_V3.processed.fasta.qual', 'processed qual file');
-is($amplicon_set->chimera_free_fasta_file, $tempdir.'/fasta/'.$file_base_name.'.V1_V3.chimera_free.fasta', 'chimera free fasta file');
-is($amplicon_set->chimera_free_qual_file, $tempdir.'/fasta/'.$file_base_name.'.V1_V3.chimera_free.fasta.qual', 'chimera free qual file');
 is($amplicon_set->oriented_fasta_file, $tempdir.'/fasta/'.$file_base_name.'.V1_V3.oriented.fasta', 'oriented fasta file');
 is($amplicon_set->oriented_qual_file, $tempdir.'/fasta/'.$file_base_name.'.V1_V3.oriented.fasta.qual', 'oriented qual file');
-
-my %input = $amplicon_set->amplicon_iterator_input_fasta_and_qual;
-is_deeply(
-    {file => $amplicon_set->processed_fasta_file, qual_file => $amplicon_set->processed_qual_file,},
-    \%input,
-    'amplicon iterator input fasta is processed',
-);
-ok(
-    Genome::Sys->copy_file($amplicon_set->processed_fasta_file, $amplicon_set->chimera_free_fasta_file),
-    'copy processed fasta to chimera free',
-);
-ok(
-    Genome::Sys->copy_file($amplicon_set->processed_qual_file, $amplicon_set->chimera_free_qual_file),
-    'copy processed qual to chimera free',
-);
-%input = $amplicon_set->amplicon_iterator_input_fasta_and_qual;
-is_deeply(
-    {file => $amplicon_set->chimera_free_fasta_file, qual_file => $amplicon_set->chimera_free_qual_file,},
-    \%input,
-    'amplicon iterator input fasta is chimera free',
-);
+is($amplicon_set->chimera_free_fasta_file, $tempdir.'/fasta/'.$file_base_name.'.V1_V3.oriented.chimera_free.fasta', 'chimera free fasta file');
+is($amplicon_set->chimera_free_qual_file, $tempdir.'/fasta/'.$file_base_name.'.V1_V3.oriented.chimera_free.fasta.qual', 'chimera free qual file');
 
 is($amplicon_set->chimera_dir, $tempdir.'/chimera', 'chimera dir');
 is($amplicon_set->chimera_file, $tempdir.'/chimera/'.$file_base_name.'.V1_V3.chimera', 'chimera file');
@@ -82,5 +61,3 @@ ok($amplicon->{classification}, 'amplicon classification');
 
 #print "$tempdir\n"; <STDIN>;
 done_testing();
-exit;
-

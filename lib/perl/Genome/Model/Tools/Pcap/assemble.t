@@ -64,5 +64,3 @@ ok($obj->add_wa_tags_to_ace, "test add WA tags to ace");
 chdir $pre_test_dir;
 
 done_testing();
-
-exit;

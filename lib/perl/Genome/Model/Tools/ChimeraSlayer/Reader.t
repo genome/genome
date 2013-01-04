@@ -61,7 +61,7 @@ ok(!$rv, 'failed to read line where verdict was not YES/NO');
 like($@, qr/Malformed chimera slayer line! Verdict is expected to be YES, NO or UNKNOWN but is 10./, 'error message matches');
 
 done_testing();
-exit;
+
 
 ###
 
@@ -111,4 +111,3 @@ sub _expected_chimeras {
         },
     );
 }
-

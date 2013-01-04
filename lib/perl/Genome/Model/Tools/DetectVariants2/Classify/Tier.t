@@ -62,5 +62,3 @@ Genome::Sys->write_file("$expected_dir/snvs.hq.previously_detected.tier4.v2.bed"
 my $diff = `diff -rq $expected_dir $result_dir`;
 ok(!$diff, 'output matches expected output')
     or diag($diff);
-
-

@@ -48,4 +48,3 @@ ok($filter_test->_workflow_result->{snv_result_class}, 'snv_result_class defined
 ok($filter_test->snv_result, 'snv_result defined on command');
 
 done_testing();
-exit;

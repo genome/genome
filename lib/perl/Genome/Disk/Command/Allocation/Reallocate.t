@@ -36,6 +36,3 @@ ok($rv, 'Successfully created command');
 is($allocation->kilobytes_requested, 200, 'allocation correctly resized');
 
 done_testing();
-
-
-

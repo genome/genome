@@ -114,5 +114,3 @@ ok(!@entities, 'remove project');
 #ok(UR::Context->commit, 'commit');
 
 done_testing();
-exit;
-

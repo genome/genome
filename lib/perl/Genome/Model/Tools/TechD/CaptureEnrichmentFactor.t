@@ -31,4 +31,3 @@ my $total_on_target_enrichment_factor  = $myEF->total_on_target_enrichment_facto
 ok($total_on_target_enrichment_factor eq 35.4) or die "total_on_target_enrichment_factor should equal 35.4, but $total_on_target_enrichment_factor is returned";
 
 __END__
-

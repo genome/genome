@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use Genome;
 
-binmode(STDOUT, ":utf8");
-
 class Genome::DruggableGene::Command::Import::Tend {
   is => 'Genome::DruggableGene::Command::Import::Base',
   has => [
@@ -110,6 +108,7 @@ HELP
 
 sub execute {
     my $self = shift;
+    binmode(STDOUT, ":utf8");
     $self->input_to_tsv();
     $self->import_tsv();
     unless ($self->skip_pubchem){
@@ -180,19 +179,19 @@ sub _import_gene {
     my $interaction = shift;
     my $citation = shift;
     my $gene_name = $self->_create_gene_name_report($interaction->{uniprot_id}, $citation, 'Uniprot Accession', ''); 
-    my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{uniprot_id}, 'Uniprot Accession', '');
+    my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{uniprot_id}, 'Uniprot Accession', '', 'upper');
 
     unless($interaction->{gene_symbol} eq 'N/A'){
-      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{gene_symbol}, 'Gene Symbol', '');
+      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{gene_symbol}, 'Gene Symbol', '', 'upper');
     }
     unless($interaction->{entrez_id} eq 'N/A'){
-      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{entrez_id}, 'Entrez Gene Id', '');
+      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{entrez_id}, 'Entrez Gene Id', '', 'upper');
     }
     unless($interaction->{ensembl_id} eq 'N/A'){
-      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{ensembl_id}, 'Ensembl Gene Id', '');
+      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{ensembl_id}, 'Ensembl Gene Id', '', 'upper');
     }
     unless($interaction->{uniprot_accession_number} eq 'N/A'){
-      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{uniprot_accession_number}, 'Uniprot Id', '');
+      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{uniprot_accession_number}, 'Uniprot Id', '', 'upper');
     }
 
     #gene_description? Too ugly, don't bother storing for now...

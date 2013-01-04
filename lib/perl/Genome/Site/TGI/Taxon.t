@@ -37,5 +37,3 @@ $taxon = Genome::Site::TGI::Taxon->get(name => 'Wookiee');
 ok($taxon, 'got new taxon');
 
 done_testing();
-exit();
-

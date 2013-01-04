@@ -119,6 +119,7 @@ sub _execute_build {
     my ($self, $build) = @_;
 
     $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+    $ENV{PATH} = join(':', $ENV{PATH}, '/gsc/scripts/gsc/annotation');
 
     my($auto_suffix) = $build->input(name => 'auto_suffix');
     if($auto_suffix and $auto_suffix->value_id eq 1 and not $build->locus_suffix) {
@@ -139,6 +140,7 @@ sub _execute_build {
     $self->status_message("Configuration file created at $config_file_path, creating hap command object");
 
     Genome::Sys->create_symlink('/gscmnt/278/analysis/HGMI/Acedb', $build->data_directory . '/Acedb'); #FIXME Replace this hardcoded path
+    Genome::Sys->create_symlink('/gscmnt/278/analysis/HGMI/' . $build->org_dirname, $build->data_directory . '/' . $build->org_dirname); #FIXME Replace this hardcoded path
 
     my $hap_object = Genome::Model::Tools::Hgmi::Hap->create(
         config => $config_file_path,

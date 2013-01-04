@@ -18,5 +18,3 @@ my $c = Genome::Model::Tools::ViromeEvent::BlastHumanGenome::ParseOutput->create
 ok( $c, "Created blast human genome parse-output event" );
 
 done_testing();
-
-exit;

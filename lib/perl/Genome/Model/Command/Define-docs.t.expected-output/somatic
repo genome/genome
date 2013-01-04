@@ -1,9 +1,9 @@
 
 [4mUSAGE[0m
  [1mgenome model define somatic[0m --processing-profile-name=? [--auto-assign-inst-data]
-    [--auto-build-alignments] --processing-profile=? --tumor-model=? --normal-model=?
-    [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--model-name=?] [--projects=?[,?]]
-    [--subject-name=?]
+    [--auto-build-alignments] --tumor-model=? --processing-profile=? --normal-model=?
+    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
+    [--model-name=?] [--subject-name=?]
 
 [4mSYNOPSIS[0m
 genome model define 
@@ -12,10 +12,10 @@ genome model define
   --data-directory /gscmnt/somedisk/somedir/model_dir
 
 [4mREQUIRED INPUTS[0m
-  [1mprocessing-profile[0m
-    Processing profile to be used by model, can provide either a name or an id 
   [1mtumor-model[0m
     The tumor model id being analyzed 
+  [1mprocessing-profile[0m
+    the collection of parameters to be used during the build process 
   [1mnormal-model[0m
     The normal model id being analyzed 
 
@@ -24,6 +24,8 @@ genome model define
     (undocumented) 
 
 [4mOPTIONAL INPUTS[0m
+  [1madd-to-projects[0m
+    add the new model to these projects (model groups) 
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m
@@ -33,8 +35,6 @@ genome model define
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
-  [1mprojects[0m
-    Projects for the model. 
   [1msubject-name[0m
     Subject name is derived from normal and tumor models and is not necessary as input to somatic
     models 

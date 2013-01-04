@@ -64,5 +64,3 @@ for my $file ( @report_files ) {
 #<STDIN>;
 
 done_testing();
-
-exit;

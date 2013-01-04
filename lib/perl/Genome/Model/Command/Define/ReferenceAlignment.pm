@@ -102,7 +102,9 @@ sub type_specific_parameters_for_create {
             " which does not match the specified reference " . $rsb->__display_name__);
     }
     
-    my @params;
+    my %params = $self->SUPER::type_specific_parameters_for_create();
+    delete $params{dbsnp_model};
+    my @params = %params;
     push(@params, reference_sequence_build => $rsb) if $rsb;
     push(@params, annotation_reference_build => $arb) if $arb;
     push(@params, dbsnp_build => $dbsnp) if $dbsnp;

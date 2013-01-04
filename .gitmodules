@@ -229,3 +229,6 @@
 [submodule "vendor/VEP_plugins"]
 	path = vendor/VEP_plugins
 	url = https://github.com/genome-vendor/VEP_plugins.git
+[submodule "bam-window"]
+	path = bam-window
+	url = ssh://git//srv/git/bam-window.git

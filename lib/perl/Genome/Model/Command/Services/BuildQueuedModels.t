@@ -109,4 +109,3 @@ is_deeply([ map { $_->build_requested } @models ], [qw/ 0 0 0 /], 'builds no lon
 is(scalar(@b1), 1, 'created build for the model that had build requested');
 
 done_testing();
-exit;

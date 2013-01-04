@@ -37,6 +37,7 @@ sub extra_format_meta {
         {MetaType => "FORMAT", ID => "CU",    Number => 2, Type => "Integer", Description => "Number of 'C' alleles used in tiers 1,2"},
         {MetaType => "FORMAT", ID => "GU",    Number => 2, Type => "Integer", Description => "Number of 'G' alleles used in tiers 1,2"},
         {MetaType => "FORMAT", ID => "TU",    Number => 2, Type => "Integer", Description => "Number of 'T' alleles used in tiers 1,2"},
+        {MetaType => "FORMAT", ID => "FT",    Number => 1, Type => "String",  Description => "Sample genotype filter"},
     );
 }
 
@@ -91,24 +92,11 @@ sub parse_line {
     my $n_gt = $n_gt_info eq 'ref' ? '0/0' : parse_gt($n_gt_str, \%ids);
     my $t_gt = parse_gt($t_gt_str, \%ids);
 
-=cut    
-    if ($filter =~ /;/) { #odd lines contain things like: QSS_ref;DP   Hacky fix for now
-        my @filter_list = map{$_->{ID}}$self->get_filter_meta;
-        my @filters = split /;/, $filter;
-        my @valid_filters;
-        for my $filter (@filters) {
-            push @valid_filters, $filter if grep{$filter eq $_}@filter_list;
-        }
-
-        $columns[6] = join ';', @valid_filters;
-    }
-=cut    
-
     $columns[4]  = 'N' if $alt eq '.';
     $columns[7]  =~ s/SOMATIC;//;  #remove the meaningless SOMATIC, it is contained in every line
-    $columns[8]  = 'GT:AD:BQ:SS:'. $columns[8];
-    $columns[9]  = $n_gt . ':' . $n_ad . ':.:.:' . $n_sample;
-    $columns[10] = $t_gt . ':' . $t_ad . ':.:2:' . $t_sample;
+    $columns[8]  = 'GT:AD:BQ:SS:'. $columns[8] . ':FT';
+    $columns[9]  = $n_gt . ':' . $n_ad . ':.:.:' . $n_sample . ':' . $filter;
+    $columns[10] = $t_gt . ':' . $t_ad . ':.:2:' . $t_sample . ':' . $filter;
 
     return join "\t", @columns;
 }

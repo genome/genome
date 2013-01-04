@@ -76,4 +76,3 @@ for my $file_name (@file_names){
 }
 
 done_testing();
-exit;

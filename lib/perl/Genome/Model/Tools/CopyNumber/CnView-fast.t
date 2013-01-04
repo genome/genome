@@ -48,4 +48,3 @@ if (@ARGV == 1 and $ARGV[0] eq 'KEEP') {
   note("temp results moved to $stash");
   system "mv $actual_results $stash";
 }
-

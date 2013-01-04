@@ -135,12 +135,15 @@ sub execute {
     my @builds = ($wgs_normal_refalign_build, $wgs_tumor_refalign_build, $wgs_somvar_build, $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $clinseq_build);
 
     #Get a list of sample names for samples associated with this clinseq build
-    my %model_subject_ids;
+    my %model_samples;
+    my @model_samples;
     for my $build (@builds){
       next unless $build;
-      my $model = $build->model;
-      my $subject_id = $model->subject->id;
-      $model_subject_ids{$subject_id}=1;
+      next unless ($build->model->subject->class eq "Genome::Sample");
+      $model_samples{$build->model->subject->id}{sample} = $build->model->subject;
+    }
+    foreach my $sample_id (keys %model_samples){
+      push (@model_samples, $model_samples{$sample_id}{sample});
     }
 
     #Summarize Individual (id, name, gender, etc.). Check if all models hit the same individual and warn if not
@@ -169,10 +172,9 @@ sub execute {
     #Display instrument data counts for each sample/build actually associated with the clinseq model
     $self->status_message("\n\nSamples and instrument data counts (for samples associated with this clinseq model only - not all samples of the individual)");
     my ($tumor_dna_id_count, $normal_dna_id_count, $tumor_rna_id_count, $normal_rna_id_count) = ("n/a", "n/a", "n/a", "n/a");
-    my @samples = $individual->samples;
-    for my $sample (@samples) {
+
+    for my $sample (@model_samples) {
       my $sample_id = $sample->id;
-      next unless $model_subject_ids{$sample_id};
       my @instdata = $sample->instrument_data;
       my $scn = $sample->common_name || "[UNDEF sample common_name]";
       my $tissue_desc = $sample->tissue_desc || "[UNDEF sample tissue_desc]";
@@ -346,19 +348,25 @@ sub execute {
         next();
       }
       my $build_dir = $build->data_directory;
-      my $common_name = "[UNDEF common_name]";
+      my $common_name = "[UNDEF sample common_name]";
       my $tissue_desc = "[UNDEF tissue_desc]";
       my $extraction_type = "[UNDEF extraction_type]";
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        $common_name = $build->subject->common_name;
+        if ($build->subject->common_name){
+          $common_name = $build->subject->common_name;
+        }
       }
       if ($subject->can("tissue_desc")){
-        $tissue_desc = $build->subject->tissue_desc;
+        if ($build->subject->tissue_desc){
+          $tissue_desc = $build->subject->tissue_desc;
+        }
       }
       if ($subject->can("extraction_type")){
-        $extraction_type = $build->subject->extraction_type;
+        if ($build->subject->extraction_type){
+          $extraction_type = $build->subject->extraction_type;
+        }
       }
       #grab metrics and build a hash from them
       my %metrics = map {$_->name => $_->value} $build->metrics;
@@ -458,8 +466,19 @@ sub execute {
 
       #Display gathered info for both Exome and WGS reference alignment models
       $self->status_message("$subject_name\t$pp_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$gold_filtered_het_snp_count\t$gold_filtered_het_snp_depth\t$gold_filtered_het_snp_percent_concordance\t$total_snp_positions_found_unfiltered\t$total_snp_positions_found_filtered\t$snp_positions_in_dbsnp\t$snp_positions_not_in_dbsnp\t$overall_dbsnp_concordance\t$build_id");
+      
+      #Resolve data type
+      my $data_type;
+      if ($subject->can("common_name")){
+        if ($build->subject->common_name){
+          $data_type = $sequence_type . "_" . $common_name;
+        }else{
+          $data_type = $sequence_type . "_" . $subject_name;
+        }
+      }else{
+        $data_type = $sequence_type . "_" . $subject_name;
+      }
 
-      my $data_type = $sequence_type . "_" . $common_name;
       print STATS "Data amount (Gbp)\t$gbp\t$data_type\tClinseq Build Summary\tFloat\tData amount (Gbp) for $sequence_type $common_name data\n";
       print STATS "Haploid coverage\t$haploid_coverage\t$data_type\tClinseq Build Summary\tFloat\tHaploid coverage for $sequence_type $common_name data\n";
       print STATS "Gold SNP Concordance\t$gold_filtered_het_snp_percent_concordance\t$data_type\tClinseq Build Summary\tPercent\tSNP array vs. sequencing SNP concordance (gold, filtered, het, snps) for $sequence_type $common_name data\n";
@@ -491,13 +510,19 @@ sub execute {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        $common_name = $build->subject->common_name;
+        if ($build->subject->common_name){
+          $common_name = $build->subject->common_name;
+        }
       }
       if ($subject->can("tissue_desc")){
-        $tissue_desc = $build->subject->tissue_desc;
+        if ($build->subject->tissue_desc){
+          $tissue_desc = $build->subject->tissue_desc;
+        }
       }
       if ($subject->can("extraction_type")){
-        $extraction_type = $build->subject->extraction_type;
+        if ($build->subject->extraction_type){
+          $extraction_type = $build->subject->extraction_type;
+        }
       }
       #grab metrics and build a hash from them
       my %metrics = map {$_->name => $_->value} $build->metrics;
@@ -581,7 +606,18 @@ sub execute {
       
       $self->status_message("$subject_name\t$pp_type\t$sequence_type\t$lane_count\t$common_name\t$tissue_desc\t$extraction_type\t$gbp\t$haploid_coverage\t$sample_total_single_read_count\t$sample_mapped_read_percent\t$sample_properly_paired_read_percent\t$sample_duplicate_read_percent");
 
-      my $data_type = $sequence_type . "_" . $common_name;
+      #Resolve data type
+      my $data_type;
+      if ($subject->can("common_name")){
+        if ($build->subject->common_name){
+          $data_type = $sequence_type . "_" . $common_name;
+        }else{
+          $data_type = $sequence_type . "_" . $subject_name;
+        }
+      }else{
+        $data_type = $sequence_type . "_" . $subject_name;
+      }
+
       print STATS "Total Single Read Count\t$sample_total_single_read_count\t$data_type\tClinseq Build Summary\tCount\tTotal single read count for $sequence_type $common_name data\n";
       print STATS "Percent Reads Mapped\t$sample_mapped_read_percent\t$data_type\tClinseq Build Summary\tPercent\tRead mapping percent for $sequence_type $common_name data\n";
       print STATS "Percent Reads Properly Paired\t$sample_properly_paired_read_percent\t$data_type\tClinseq Build Summary\tPercent\tPercent of reads that are properly paired for $sequence_type $common_name data\n";
@@ -629,13 +665,19 @@ sub execute {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        $common_name = $build->subject->common_name;
+        if ($build->subject->common_name){
+          $common_name = $build->subject->common_name;
+        }
       }
       if ($subject->can("tissue_desc")){
-        $tissue_desc = $build->subject->tissue_desc;
+        if ($build->subject->tissue_desc){
+          $tissue_desc = $build->subject->tissue_desc;
+        }
       }
       if ($subject->can("extraction_type")){
-        $extraction_type = $build->subject->extraction_type;
+        if ($build->subject->extraction_type){
+          $extraction_type = $build->subject->extraction_type;
+        }
       }
 
       #Only process each sample once
@@ -1146,13 +1188,19 @@ sub execute {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        $common_name = $build->subject->common_name;
+        if ($build->subject->common_name){
+          $common_name = $build->subject->common_name;
+        }
       }
       if ($subject->can("tissue_desc")){
-        $tissue_desc = $build->subject->tissue_desc;
+        if ($build->subject->tissue_desc){
+          $tissue_desc = $build->subject->tissue_desc;
+        }
       }
       if ($subject->can("extraction_type")){
-        $extraction_type = $build->subject->extraction_type;
+        if ($build->subject->extraction_type){
+          $extraction_type = $build->subject->extraction_type;
+        }
       }
       #grab metrics and build a hash from them
       my %metrics = map {$_->name => $_->value} $build->metrics;
@@ -1361,13 +1409,19 @@ sub execute {
       my $subject = $build->subject;
       my $subject_name = $subject->name;
       if ($subject->can("common_name")){
-        $common_name = $build->subject->common_name;
+        if ($build->subject->common_name){
+          $common_name = $build->subject->common_name;
+        }
       }
       if ($subject->can("tissue_desc")){
-        $tissue_desc = $build->subject->tissue_desc;
+        if ($build->subject->tissue_desc){
+          $tissue_desc = $build->subject->tissue_desc;
+        }
       }
       if ($subject->can("extraction_type")){
-        $extraction_type = $build->subject->extraction_type;
+        if ($build->subject->extraction_type){
+          $extraction_type = $build->subject->extraction_type;
+        }
       }
 
       my $bam_file = "NOT FOUND";

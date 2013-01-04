@@ -49,5 +49,3 @@ is(Genome::Sys->md5sum($output[0]), '0bc803457a4343eaa555b99916d226c3', "Output 
 
 #print "gvimdiff $output[0] /gsc/var/cache/testsuite/data/Genome-Model-Tools-Sx/TrimFlexbar/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
 done_testing();
-exit;
-

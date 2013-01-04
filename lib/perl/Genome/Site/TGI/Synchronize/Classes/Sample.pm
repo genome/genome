@@ -59,7 +59,7 @@ class Genome::Site::TGI::Synchronize::Classes::Sample {
 };
 
 sub properties_to_copy {# 15
-    return ( 'id', 'name', 'default_genotype_seq_id', properties_to_copy() );
+    return ( 'id', 'name', 'default_genotype_seq_id', properties_to_keep_updated() );
 }
 
 sub properties_to_keep_updated {# 12

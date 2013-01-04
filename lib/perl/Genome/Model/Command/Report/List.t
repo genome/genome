@@ -20,5 +20,3 @@ ok($list, 'create w/ more than one list method');
 ok(!$list->execute, 'execute failed w/ more than one list method');
 
 done_testing();
-exit;
-

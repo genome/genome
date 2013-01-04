@@ -10,7 +10,7 @@ require Genome::Utility::MetagenomicClassifier::PopulationComposition;
 require Genome::Utility::MetagenomicClassifier::SequenceClassification;
 
 class Genome::Model::MetagenomicComposition16s::Report::Composition {
-    is => 'Genome::Model::MetagenomicComposition16s::Report',
+    is => 'Genome::Model::Report',
     has => [
     confidence_threshold => {
         is => 'Number',
@@ -93,5 +93,3 @@ sub _add_to_report_xml {
 
 1;
 
-#$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/trunk/Genome/Model/AmpliconAssembly/Report/Composition.pm $
-#$Id: Composition.pm 53403 2009-11-30 19:08:28Z ebelter $

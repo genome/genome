@@ -10,4 +10,3 @@ ok($ENV{UR_DBI_NO_COMMIT}, "no-commit transfers from App to UR");
 
 my $o = eval { GSC::Clone->get(10001) };
 ok($o, "loading objects works if Genome is loaded after GSCApp");
-

@@ -13,3 +13,4 @@ BEGIN {
     use_ok('Genome::Model::Tools::Cmds::CreateOutputTable');
 }
 
+1;

@@ -59,4 +59,3 @@ my $s = Genome::Model::Tools::BioDbFasta::Subquality->create(
 
 
 ok($s->execute());
-

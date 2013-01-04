@@ -51,5 +51,53 @@ sub minimum_quality {
 }
 #<>#
 
+#<>#
+sub config_to_hash {
+    my ($self, $config) = @_;
+
+    if ( not $config ) {
+        $self->error_message('No config to convert to hash!');
+        return;
+    }
+
+    my %hash;
+    for my $part ( split(':', $config) ) {
+        my ($key, $value) = split('=', $part);
+        if ( not defined $value ) {
+            $value = $key;
+            $key = 'file';
+        }
+        if ( exists $hash{$key} ) { # could support...
+            $self->error_message("Duplicate key ($key) in config! $config");
+            return;
+        }
+        $hash{$key} = $value;
+    }
+
+    return %hash;
+}
+
+
+sub hash_to_config {
+    my ($self, %hash) = @_;
+
+    if ( not %hash ) {
+        $self->error_message('No hash to convert to config!');
+        return;
+    }
+
+    my @configs;
+    for my $key ( sort { $a cmp $b } keys %hash ) {
+        if ( my $ref = ref $hash{$key} ) { # could support...
+            $self->error_message("Unsupported data type ($ref) in hash! ".Data::Dumper::Dumper(\%hash));
+            return;
+        }
+        push @configs, join('=', $key, $hash{$key});
+    }
+
+    return join(':', @configs);
+}
+#<>#
+
 1;
 

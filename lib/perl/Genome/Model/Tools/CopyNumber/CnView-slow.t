@@ -47,4 +47,3 @@ if (@ARGV == 1 and $ARGV[0] eq 'KEEP') {
   }
   system "mv $actual_results $stash";
 }
-

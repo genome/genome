@@ -25,4 +25,3 @@ is(UR::Context->object_cache_size_lowwater, undef, 'lowwater cache size unset');
 is(UR::Context->object_cache_size_highwater, undef, 'highwater cache size unset');
 
 done_testing();
-

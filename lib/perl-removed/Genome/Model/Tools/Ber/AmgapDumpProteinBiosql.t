@@ -25,3 +25,4 @@ SKIP: {
     ok($tool_db->execute,'execute amgapdumpproteinbiosql');
 };
 
+1;

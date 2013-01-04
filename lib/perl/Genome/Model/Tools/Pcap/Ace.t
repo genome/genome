@@ -72,5 +72,3 @@ foreach my $assembly (@assemblies) {
 
 
 done_testing();
-exit;
-

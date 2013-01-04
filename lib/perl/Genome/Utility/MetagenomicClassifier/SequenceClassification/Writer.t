@@ -65,7 +65,7 @@ $writer = Genome::Utility::MetagenomicClassifier::SequenceClassification::Writer
 ok(!$writer, 'Failed as expected - create w/ invalid format');
 
 done_testing();
-exit;
+
 
 #$HeadURL$
 #$Id$

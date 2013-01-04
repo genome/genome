@@ -6,11 +6,8 @@ use warnings;
 use Genome;
 use Term::ANSIColor qw(:constants);
 use XML::Simple;
+use YAML::Syck;
 
-binmode(STDOUT, ":utf8");
-
-my $high = 750000;
-UR::Context->object_cache_size_highwater($high);
 
 class Genome::DruggableGene::Command::Import::DrugBank {
     is => 'Genome::DruggableGene::Command::Import::Base',
@@ -56,6 +53,12 @@ class Genome::DruggableGene::Command::Import::DrugBank {
             is_input => 1,
             default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_INTERACTIONS.tsv',
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
+        },
+        uniprot_mapping_outfile => {
+            is => 'Path',
+            is_input => 1,
+            default => '/tmp/DrugBank_WashU_UNIPROT_MAPPING',
+            doc => 'PATH.  Path to the .yaml file for uniprot mapping',
         },
         citation_base_url => {
             default => 'http://drugbank.ca/',
@@ -129,12 +132,15 @@ my %UniProtMapping;
 
 sub execute {
     my $self = shift;
+    binmode(STDOUT, ":utf8");
+    my $high = 750000;
+    UR::Context->object_cache_size_highwater($high);
     %UniProtMapping=%{$self->_get_uniprot_entrez_mapping()}; #Load UniProt to Entrez mapping information from file (For Uniprot -> Entrez mapping)
     $self->input_to_tsv();
-    $self->import_tsv();
-    unless ($self->skip_pubchem){
-        $self->_destroy_and_rebuild_pubchem_and_drug_groups();
-    }
+    #$self->import_tsv();
+    #unless ($self->skip_pubchem){
+    #    $self->_destroy_and_rebuild_pubchem_and_drug_groups();
+    #}
     return 1;
 }
 
@@ -218,18 +224,18 @@ sub _import_gene {
         }     
     }
     my $gene_name = $self->_create_gene_name_report($gene_partner_id, $citation, 'Drugbank Partner Id', '');
-    #my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '');
+    #my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name, $gene_partner_id, 'Drugbank Gene Id', '', 'upper');
     unless ($gene_symbol eq 'N/A'){
-        my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Drugbank Gene Name', '');
+        my $gene_symbol_gene_name_association = $self->_create_gene_alternate_name_report($gene_name, $gene_symbol, 'Drugbank Gene Name', '', 'upper');
     }
     unless ($uniprot_id eq 'N/A'){
-        my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Accession', '');
+        my $uniprot_gene_name_association=$self->_create_gene_alternate_name_report($gene_name, $uniprot_id, 'Uniprot Accession', '', 'upper');
     }
     unless ($entrez_id eq 'N/A'){
-        my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $entrez_id, 'Entrez Gene Id', '');
+        my $entrez_id_association=$self->_create_gene_alternate_name_report($gene_name, $entrez_id, 'Entrez Gene Id', '', 'upper');
     }
     unless ($ensembl_id eq 'N/A'){
-        my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '');
+        my $ensembl_id_association=$self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '', 'upper');
     }
     return $gene_name;
 }
@@ -476,6 +482,9 @@ sub input_to_tsv {
     close(DRUGS);
     close(TARGETS);
     close(INTERACTIONS);
+
+    $YAML::Syck::ImplicitTyping = 1;
+    DumpFile($self->uniprot_mapping_outfile, \%UniProtMapping);
 
     print "\n\n";
     return 1;

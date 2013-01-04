@@ -66,5 +66,3 @@ ok($cmd->execute, 'execute');
 ok(-e $cmd->output_file, 'Output file exists');
 
 done_testing();
-exit;
-

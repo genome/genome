@@ -10,5 +10,3 @@ use Test::More;
 use_ok('Genome::Model::DeNovoAssembly::Command::PostAssemble') or die;
 
 done_testing();
-exit;
-

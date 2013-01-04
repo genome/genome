@@ -28,7 +28,7 @@ my $test_file2 = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/t
 test_with_file($instrument_data, $test_file2);
 
 done_testing();
-exit;
+
 
 #   This instrument_data has no genotype_file attribute
 # should copy new one fine and make new genotype_file attribute
@@ -45,5 +45,3 @@ sub test_with_file {
     is($genotype_file_attribute->attribute_value, $new_genotype_file, 'attribute points to new genotype_file'); 
     isnt($genotype_file_attribute->attribute_value, $test_file, 'attribute does not point to old genotype_file');
 }
-
-

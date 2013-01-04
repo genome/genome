@@ -88,7 +88,7 @@ $dl->dump_status_messages(1);
 ok($dl->execute, 'execute');
 
 done_testing();
-exit;
+
 
 =pod
 
@@ -108,4 +108,3 @@ exit;
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-

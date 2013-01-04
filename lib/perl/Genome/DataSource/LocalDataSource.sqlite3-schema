@@ -17,6 +17,7 @@ CREATE TABLE DISK_VOLUME (
     disk_status TEXT NOT NULL,
     can_allocate INTEGER NOT NULL,
     total_kb INTEGER NOT NULL,
+    creation_event_id INTEGER,
     unallocated_kb INTEGER NOT NULL
 );
 CREATE TABLE DISK_VOLUME_GROUP (

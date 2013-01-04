@@ -134,4 +134,3 @@ for my $str (@expected_failures) {
         ok($obj->__errors__, 'object has errors as expected');
     };
 }
-
