@@ -150,7 +150,7 @@ sub _create_unaligned_fastqs {
     my $read2_fastq      = join("/", $stage, 'tmp', 'unaligned_2.fq');
 
     my $cmd = Genome::Model::Tools::Picard::StandardSamToFastq->create(
-        bam_file         => $bam_file,
+        input            => $bam_file,
         fastq            => $read1_fastq,
         second_end_fastq => $read2_fastq,
         re_reverse       => 1,
