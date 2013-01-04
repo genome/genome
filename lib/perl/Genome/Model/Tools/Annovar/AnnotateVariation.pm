@@ -30,8 +30,9 @@ class Genome::Model::Tools::Annovar::AnnotateVariation {
         scorecolumn => {
             is => 'Number',
         },
-        bedfile => {
+        bedfiles => {
             is => 'Text',
+            is_many => 1,
         },
     ],
 };
@@ -63,13 +64,16 @@ sub execute {
         }
     }
 
-
     foreach my $table_name ($self->table_names) {
         my $db;
-        my $bedname;
-        my $bedpath;
+        my %beds;
         if ($table_name eq "bed") {
-            ($bedname, $bedpath) = fileparse($self->bedfile);
+            foreach my $bedfile ($self->bedfiles) {
+                my $bedname;
+                my $bedpath;
+                ($bedname, $bedpath) = fileparse($bedfile);
+                $beds{$bedname} = $bedpath;
+            }
         }
         else {
 
@@ -87,81 +91,59 @@ sub execute {
             $self->status_message("Annotating with ".$table_name." in ".$db->output_dir);
         }
 
-        my $cmd = $self->script_path."annotate_variation.pl --outfile ".$self->outfile." --buildver ".$self->buildver;
-        if ($self->annotation_type eq "geneanno") {
-            $cmd .= " --geneanno ";
-        }
-        elsif ($self->annotation_type eq "regionanno") {
-            if (defined $self->scorecolumn) {
-                $cmd .= " -scorecolumn ".$self->scorecolumn." ";
-            }
-            $cmd .= " -regionanno -dbtype ".$table_name;
-            if ($table_name eq "bed") {
-                $cmd .= " -bedfile $bedname";
-            }
-        }
-        $cmd .= " ".$input_file;
         if ($table_name eq "bed") {
-            $cmd .= " $bedpath --colswanted 4";
+            foreach my $bedname (keys %beds) {
+                my $bedpath = $beds{$bedname};
+                my $cmd = $self->script_path."annotate_variation.pl --outfile ".$self->outfile." --buildver ".$self->buildver;
+                if ($self->annotation_type eq "geneanno") {
+                    $cmd .= " --geneanno ";
+                }
+                elsif ($self->annotation_type eq "regionanno") {
+                    if (defined $self->scorecolumn) {
+                        $cmd .= " -scorecolumn ".$self->scorecolumn." ";
+                    }
+                    $cmd .= " -regionanno -dbtype ".$table_name;
+                    $cmd .= " -bedfile $bedname";
+                }
+                $cmd .= " ".$input_file;
+                $cmd .= " $bedpath --colswanted 4";
+
+                $self->status_message("Executing command $cmd");
+                my $rv = Genome::Sys->shellcmd(cmd => $cmd);
+                unless ($rv) {
+                    $self->error_message("Failed to annotate with table $table_name $bedname");
+                    return;
+                }
+                my $short_bed_name = $bedname;
+                $short_bed_name =~ s/\.bed$//;
+                my $mv_cmd = "mv ".$self->outfile.".".$self->buildver."_bed ".$self->outfile.".".$self->buildver."_bed_".$short_bed_name;
+                print "Running mv cmd: $mv_cmd\n";
+                `$mv_cmd`;
+            }
         }
         else {
+            my $cmd = $self->script_path."annotate_variation.pl --outfile ".$self->outfile." --buildver ".$self->buildver;
+            if ($self->annotation_type eq "geneanno") {
+                $cmd .= " --geneanno ";
+            }
+            elsif ($self->annotation_type eq "regionanno") {
+                if (defined $self->scorecolumn) {
+                    $cmd .= " -scorecolumn ".$self->scorecolumn." ";
+                }
+                $cmd .= " -regionanno -dbtype ".$table_name;
+            }
+            $cmd .= " ".$input_file;
             $cmd .= " ".$db->output_dir;
-        }
 
-        $self->status_message("Executing command $cmd");
-        my $rv = Genome::Sys->shellcmd(cmd => $cmd);
-        unless ($rv) {
-            $self->error_message("Failed to annotate with table $table_name");
-            return;
+            $self->status_message("Executing command $cmd");
+            my $rv = Genome::Sys->shellcmd(cmd => $cmd);
+            unless ($rv) {
+                $self->error_message("Failed to annotate with table $table_name");
+                return;
+            }
         }
     }
-=cut
-    my %variants;
 
-    $self->status_message("Creating summary of all tables");
-    foreach my $table_name ($self->table_names) {
-        my $annotated_file = $self->outfile.".".$self->buildver."_".$table_name;
-        my $in = Genome::Sys->open_file_for_reading($annotated_file);
-        while (my $line = <$in>) {
-            chomp $line;
-            my @fields = split(/\t/, $line);
-            if (defined $variants{$fields[2]}{$fields[3]}{$fields[4]}){
-                $variants{$fields[2]}{$fields[3]}{$fields[4]}{$fields[0]} = $fields[1];
-            }
-            else {
-                $variants{$fields[2]}{$fields[3]}{$fields[4]} = {$fields[0] => $fields[1]};
-            }
-        }
-        $in->close;
-    }
-    
-
-    my $in = Genome::Sys->open_file_for_reading($input_file);
-    my $in_header = <$in>;
-    my $out = Genome::Sys->open_file_for_writing($self->outfile.".summary");
-    #print header
-    $out->print(join("\t", "#Chr", "Start", "Stop", "RefAllele", "VarAllele", $self->table_names)."\n");
-    
-    $self->status_message("Writing annotation summary");
-    while (my $line = <$in>) {
-        chomp $line;
-        my @fields = split(/\t/, $line);
-        $out->print(join("\t", $fields[0], $fields[1], $fields[2], $fields[3], $fields[4]));
-        foreach my $table_name ($self->table_names) {
-            $out->print("\t");
-            if (defined ($variants{$fields[0]}{$fields[1]}{$fields[2]}{$table_name})){
-                $out->print($variants{$fields[0]}{$fields[1]}{$fields[2]}{$table_name});
-            }
-            else {
-                $out->print(".");
-            }
-        }
-        $out->print("\n");
-    }
-    $self->status_message("Done writing annotation summary");
-    $in->close;
-    $out->close;
-=cut
     return 1;
 }
 

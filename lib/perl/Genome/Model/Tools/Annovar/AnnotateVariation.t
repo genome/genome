@@ -24,14 +24,14 @@ my $cmd = Genome::Model::Tools::Annovar::AnnotateVariation->create(
     outfile => $temp_dir."/expected_output",
     annotation_type => "regionanno",
     scorecolumn => 5,
-    bedfile => $test_dir."/sample.bed",
+    bedfiles => [$test_dir."/sample.bed", $test_dir."/sample2.bed"],
 );
 ok($cmd, "Created command");
 my $rv = $cmd->execute;
 ok($rv, "Executed command successfully");
 
 my $expected_output_prefix = $test_dir."/expected_output";
-foreach my $expected_file (("hg19_wgEncodeRegDnaseClustered", "hg19_bed")) {
+foreach my $expected_file (("hg19_wgEncodeRegDnaseClustered", "hg19_bed_sample", "hg19_bed_sample2")) {
     ok(-e "$temp_dir/expected_output.$expected_file", "$expected_file exists");
     my $diff_output = `diff $temp_dir/expected_output.$expected_file $test_dir/expected_output.$expected_file`;
     ok(!$diff_output, "No diffs for expected_output.$expected_file") or diag("diff results\n". $diff_output);
