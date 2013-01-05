@@ -20,6 +20,27 @@ our $VERSION = $Genome::VERSION;
 
 class Genome::Sys {};
 
+sub disk_usage_for_path {
+    my $self = shift;
+    my $path = shift;
+
+    unless (-d $path) {
+        $self->error_message("Path $path does not exist!");
+        return;
+    }
+
+    return unless -d $path;
+    my $cmd = "du -sk $path 2>&1";
+    my $du_output = qx{$cmd};
+    my $kb_used = ( split( ' ', $du_output, 2 ) )[0];
+    unless (Scalar::Util::looks_like_number($kb_used)) {
+        $self->error_message("du output is not a number: $kb_used");
+        return;
+    }
+
+    return $kb_used;
+}
+
 # locking has been moved into its own module
 
 sub lock_resource {
