@@ -1064,7 +1064,37 @@ sub create_mock {
         $self->mock($method,$ref);
     }
 
+	if (not defined $self->subset_name) {
+		if ($self->index_sequence) {
+			$self->subset_name($self->lane . '-' . $self->index_sequence);
+		}
+		else {
+			$self->subset_name($self->lane);
+		}
+	}
+
     return $self;
+}
+
+sub __errors__ {
+	my $self = shift;
+	my @errors = $self->SUPER::__errors__(@_);
+	my $expected;
+	if (defined($self->lane) and defined($self->index_sequence)) {
+		$expected = $self->lane . '-' . $self->index_sequence;
+	}
+	elsif (defined($self->lane)) {
+		$expected = $self->lane;
+	}
+	if ($self->subset_name ne $expected) {
+		push @errors, UR::Object::Tag->create(
+			type => 'error',
+			properties => ['subset_name'],
+			desc => 'Subset name for Illumina NGS instrument data should be "lane-indexsequence" or just "lane" for unindexed data. ' 
+					. 'Expected "' . $expected . '" got "' . $self->subset_name . '".'
+		);
+	}
+	return @errors;
 }
 
 sub run_start_date_formatted {
