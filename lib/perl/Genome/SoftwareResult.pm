@@ -21,7 +21,7 @@ class Genome::SoftwareResult {
     subclass_description_preprocessor => 'Genome::SoftwareResult::_expand_param_and_input_properties',
     subclassify_by => 'subclass_name',
     id_by => [
-        id => { is => 'Number', len => 20 },
+        id => { is => 'Number', len => 32 },
     ],
     attributes_have => [
         is_param => { is => 'Boolean', is_optional=>'1' },
