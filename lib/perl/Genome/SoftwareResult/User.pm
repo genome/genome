@@ -7,7 +7,7 @@ use Genome;
 class Genome::SoftwareResult::User {
     table_name => 'SOFTWARE_RESULT_USER',
     id_by => [
-        id => { is => 'NUMBER', len => 10 },
+        id => { is => 'Text', len => 32 },
     ],
     has => [
         software_result     => { is => 'Genome::SoftwareResult', id_by => 'software_result_id' },
