@@ -88,7 +88,9 @@ class Genome::Site::TGI::Synchronize::Classes::MiscUpdate {
             calculate => sub {
                 my $subject_class_name = shift;
                 my $lims_table_name = schema_and_lims_table_name_from_subject_class_name($subject_class_name);
-                return __PACKAGE__.'::'.Genome::Utility::Text::string_to_camel_case($lims_table_name);
+                my $class = __PACKAGE__.'::'.Genome::Utility::Text::string_to_camel_case($lims_table_name);
+                return $class if eval{ $class->__meta__; };
+                return __PACKAGE__.'::Unsupported';
             },
         },
     ],
