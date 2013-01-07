@@ -73,6 +73,7 @@ my %lims_table_names_to_site_tgi_class_names = (
     "organism_individual" => 'Genome::Site::TGI::Synchronize::Classes::Individual',
     "population_group" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroup',
     "organism_sample" => 'Genome::Site::TGI::Synchronize::Classes::Sample',
+    "library_summary" => 'Genome::Site::TGI::Synchronize::Classes::LibrarySummary',
     #"sample_attribute" => 'Genome::Site::TGI::Synchronize::Classes::SubjectAttribute',
     #"population_group_member" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember',
 );
