@@ -14,6 +14,7 @@ SAMPLE_ID            NUMBER   (20)                    {null} NOT NULL ok
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::LibrarySummary {
+    is => 'UR::Object',
     table_name => 'GSC.LIBRARY_SUMMARY',
     id_by => [
         id                      => { is => 'Number', column_name => 'LIBRARY_ID', },
