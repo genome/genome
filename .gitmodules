@@ -232,3 +232,6 @@
 [submodule "bam-window"]
 	path = bam-window
 	url = ssh://git//srv/git/bam-window.git
+[submodule "vendor/strelka"]
+	path = vendor/strelka
+	url = git@github.com:genome-vendor/strelka.git
