@@ -331,16 +331,8 @@ sub _execute_build {
         if($multisample_vcf && -e $multisample_vcf) {
             $self->multisample_vcf($multisample_vcf);
 
-        } elsif ($multisample_vcf) {
+        } else ($multisample_vcf) {
             die $self->error_message("$multisample_vcf returned by DV2 but does not exist");
-        }
-        else {
-            # No vcf returned. The QC must have failed.
-            # FIXME maybe return a more specific error code here?
-            $build->add_note(
-                header_text => 'QC Failed',
-            );
-            return 1;
         }
     }
     #notify which VCF
@@ -530,7 +522,10 @@ sub _find_or_generate_multisample_vcf {
         my $ped_is_good_for_polymutt = $self->check_ped_file($build->pedigree_file_path->path);
         if(!$ped_is_good_for_polymutt) {
             $self->error_message("this ped has a missing parent for a person. Unable to proceed with processing, polymutt will crash");
-            return 0;
+            $self->error_message("Continuing with analysis despite QC failure...");
+            $build->add_note(
+                header_text => 'QC Failed',
+            );
         }
         my $ref_fasta = $reference_build->full_consensus_path("fa");
         my $ped_file = $build->pedigree_file_path->path;
@@ -552,7 +547,10 @@ sub _find_or_generate_multisample_vcf {
         $sqc_obj->software_result->add_user(label => 'uses', user => $build);
         if($IBD_STATUS eq 'Fail') {
             $self->error_message("Sequencing QC module returned fail code, this ped/model-group has a relationship problem");
-            return 0;
+            $self->error_message("Continuing with analysis despite QC failure...");
+            $build->add_note(
+                header_text => 'QC Failed',
+            );
         }
         if($IBD_STATUS eq 'Pass') {
             $self->status_message("Sequencing-Qc module reports pass, these individuals seem to be related as the ped has described");
