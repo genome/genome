@@ -13,7 +13,10 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::OrganismTaxon') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::OrganismIndividual') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::PopulationGroup') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::OrganismSample') or die;
 
 my $cnt = 0;
 
