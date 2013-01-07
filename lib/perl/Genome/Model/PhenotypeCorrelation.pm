@@ -331,7 +331,7 @@ sub _execute_build {
         if($multisample_vcf && -e $multisample_vcf) {
             $self->multisample_vcf($multisample_vcf);
 
-        } else ($multisample_vcf) {
+        } else {
             die $self->error_message("$multisample_vcf returned by DV2 but does not exist");
         }
     }
