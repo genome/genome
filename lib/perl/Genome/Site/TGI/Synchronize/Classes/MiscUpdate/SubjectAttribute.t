@@ -13,7 +13,7 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute') or die;
 
 my $cnt = 0;
 
@@ -49,7 +49,7 @@ my %multi_misc_update_params = (
     description => 'INSERT',
     edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
 );
-my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->create(%multi_misc_update_params);
+my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute->create(%multi_misc_update_params);
 ok(!$multi_misc_update->perform_update, 'Failed to perform update w/o misc updates');
 is($multi_misc_update->error_message, 'No misc updates set to get genome entity params!', 'Correct error');
 is($multi_misc_update->result, 'FAILED', 'Correct result');
@@ -61,7 +61,6 @@ is($multi_misc_update->error_message, 'Missing required key (attribute_value) in
 is($multi_misc_update->result, 'FAILED', 'Correct result');
 
 done_testing();
-
 
 sub _define_multiple_misc_updates {
     my %subject_class_names_to_properties= (
@@ -80,7 +79,7 @@ sub _define_multiple_misc_updates {
                 description => $description,
                 edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
             );
-            my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->create(%multi_misc_update_params);
+            my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute->create(%multi_misc_update_params);
             push @multi_misc_updates, $multi_misc_update;
             my $subject_property_names = $subject_class_names_to_properties{$subject_class_name};
             for ( my $i = 0; $i < @{$subject_class_names_to_properties{$subject_class_name}}; $i++ ) {

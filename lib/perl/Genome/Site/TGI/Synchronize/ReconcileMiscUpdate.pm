@@ -92,7 +92,7 @@ sub _execute_indels {
 
     my (%multi_misc_updates, @order);
     foreach my $misc_update ( @misc_updates ) {
-        my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->get_or_create_from_misc_updates($misc_update);
+        my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Multi->get_or_create_from_misc_updates($misc_update);
         if ( not $multi_misc_updates{ $multi_misc_update->id } ) {
             $multi_misc_updates{ $multi_misc_update->id } = $multi_misc_update;
             push @order, $multi_misc_update->id;
