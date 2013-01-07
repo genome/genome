@@ -1,9 +1,9 @@
-package Genome::Site::TGI::Synchronize::Classes::MiscUpdateLibrarySummary; 
+package Genome::Site::TGI::Synchronize::Classes::MiscUpdate::LibrarySummary; 
 
 use strict;
 use warnings;
 
-class Genome::Site::TGI::Synchronize::Classes::MiscUpdateLibrarySummary {
+class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::LibrarySummary {
     is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate',
 };
 
@@ -42,18 +42,7 @@ sub perform_update {
     # Get values
     my $new_value = $self->new_value;
     my $old_value = $self->old_value;
-    my ($current_attr, $current_value);
-    if ( $genome_property_name eq 'name' ) {
-        $current_value = $genome_entity->name;
-    }
-    else {
-        $current_attr = Genome::SubjectAttribute->get(
-            subject_id => $genome_entity->id,
-            attribute_label => $genome_property_name,
-            nomenclature => 'WUGC',
-        );
-        $current_value = $current_attr->attribute_value if $current_attr;
-    }
+    my $current_value = $genome_entity->$genome_property_name;
     $self->{_current_value} = $current_value;
 
     # NEW and CURRENT are NULL
@@ -75,21 +64,7 @@ sub perform_update {
     }
 
     # Update
-    my $updated_value;
-    if ( $genome_property_name eq 'name' ) {
-        $updated_value = $genome_entity->name($new_value);
-    }
-    else {
-        $current_attr->delete if $current_attr;
-        my $new_attr = Genome::SubjectAttribute->create(
-            subject_id => $genome_entity->id,
-            attribute_label => $genome_property_name,
-            attribute_value => $new_value,
-            nomenclature => 'WUGC',
-        );
-        $updated_value = $new_attr->attribute_value
-    }
-
+    my $updated_value = $genome_entity->$genome_property_name($new_value);
     if ( not $updated_value or $updated_value ne $new_value ) {
         $self->error_message('Failed to set new value!');
         return $self->failure;
