@@ -38,10 +38,8 @@ UR::Object->add_observer(
             );
             $log4perl->add_appender($appender);
         }
-        if (defined $self) {
-            my $a = ref($self) ? $self->class . ' id('. $self->__display_name__.')' : $self;
-            $log4perl->error($a . ': ' . $message);
-        }
+        my $a = ref($self) ? $self->class . ' id('. $self->__display_name__.')' : $self;
+        $log4perl->error($a . ': ' . $message);
     }
 );
 
