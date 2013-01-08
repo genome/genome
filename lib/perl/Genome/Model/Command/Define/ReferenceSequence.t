@@ -57,8 +57,7 @@ my $first_data_directory = $first_builds[0]->data_directory;
 my $first_build_fasta = $first_data_directory . '/all_sequences.fa';
 
 my $first_fasta_diff = Genome::Sys->diff_file_vs_file($first_fasta, $first_build_fasta);
-ok(!$first_fasta_diff, 'FASTA copied to build')
-    or diag("  diff:\n" . $first_fasta_diff);
+ok(!$first_fasta_diff, 'FASTA copied to build');
 
 my $first_build_1_bases = $first_data_directory . '/bases/1.bases';
 my $first_1_bases = $first_test_dir . '/1.bases';
