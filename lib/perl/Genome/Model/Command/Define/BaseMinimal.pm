@@ -151,9 +151,11 @@ sub help_synopsis {
     elsif ($target_class_name->can("_help_synopsis")) {
         return $target_class_name->_help_synopsis;
     }
-    my $model_type = $target_class_name->__meta__->property('processing_profile')->data_type->_resolve_type_name_for_class;
-    $model_type =~ s/[_ ]/-/g;
-    my @show = "  genome model define $model_type";
+    #my $model_type = $target_class_name->__meta__->property('processing_profile')->data_type->_resolve_type_name_for_class;
+    #$model_type =~ s/[_ ]/-/g;
+    #my @show = "  genome model define $model_type";
+    my $command_name = $self->command_name;
+    my @show = "  $command_name";
     if ($self->can("model_name")) {
         push @show, "    --model-name test1";
     }
@@ -242,6 +244,10 @@ sub execute {
     # something odd is happening when passing in the object...
     if (my $p = delete $params{processing_profile}) {
         $params{processing_profile_id} = $p->id
+    }
+
+    if (my @projects = $self->add_to_projects) {
+        $params{projects} = \@projects;
     }
 
     #print Data::Dumper::Dumper(\%params);
