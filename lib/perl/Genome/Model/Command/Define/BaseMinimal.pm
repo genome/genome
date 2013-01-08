@@ -126,9 +126,9 @@ sub _preprocess_subclass_description {
 sub help_brief {
     my $self = shift;
     my $msg;
-    my $model_subclass = eval {$self->_target_class_name };
+    my $model_subclass = $self->_target_class_name;
     if ($model_subclass) {
-        my $model_type = $model_subclass->__meta__->property('processing_profile')->data_type->_resolve_type_name_for_class;
+        my $model_type = eval { $model_subclass->__meta__->property('processing_profile')->data_type->_resolve_type_name_for_class };
         if ($model_type) {
             $msg = "define a new $model_type genome model";
         }
