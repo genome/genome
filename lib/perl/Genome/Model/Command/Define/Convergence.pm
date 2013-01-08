@@ -99,4 +99,9 @@ sub execute {
     return 1;
 }
 
+sub _suppress_inputs {
+    my $self = shift;
+    return qw/processing_profile processing_profile_id/;
+}
+
 1;
