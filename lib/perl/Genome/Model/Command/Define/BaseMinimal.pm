@@ -245,7 +245,8 @@ sub execute {
     }
 
     #print Data::Dumper::Dumper(\%params);
-    my $model = Genome::Model->create(%params);
+    my $target_class = $self->_target_class_name;
+    my $model = $target_class->create(%params);
     unless ($model) {
         confess "Could not create a model!";
     }
