@@ -49,22 +49,6 @@ ok($misc_update->is_reconciled, 'Is reconciled');
 ok(!$misc_update->error_message, 'No error after update');
 is($taxon->estimated_genome_size, 1000, 'Set estimated_genome_size on taxon');
 
-# Invalid genome class
-$misc_update = eval{
-    Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
-        subject_class_name => 'test.blah',
-        subject_id => -100,
-        subject_property_name => 'name',
-        editor_id => 'lims',
-        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
-        old_value => undef,
-        new_value => undef,
-        description => 'UPDATE',
-        is_reconciled => 0,
-    );
-};
-ok(!$misc_update, 'Failed to get genome class name for invalid subject class name');
-
 # No obj for subject id
 $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.organism_taxon',
@@ -116,22 +100,27 @@ ok(!$misc_update, 'Failed to get lims table name from invalid subject class name
 like($@, qr/^Failed to get lims table name from subject class name => schema\./, 'Correct error msg');
 
 # PERFORM UPDATE FAILS
-# Invalid subject class name
-$misc_update = eval{ 
-    Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
-        subject_class_name => 'schema.org',
-        subject_id => $taxon->id,
-        subject_property_name => 'name',
-        editor_id => 'lims',
-        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
-        old_value => '__TEST_TAXON__',
-        new_value => '__NEW_NAME__',
-        description => 'UPDATE',
-        is_reconciled => 0,
-    );
-};
-ok(!$misc_update, 'Failed to perform update for invalid subject class name');
-like($@, qr/Class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Org is not a subclass of Genome::Site::TGI::Synchronize::Classes::MiscUpdate/, 'Correct error msg');
+# Unsupported subject class name
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    subject_class_name => 'test.blah',
+    subject_id => $taxon->id,
+    subject_property_name => 'full_name',
+    editor_id => 'lims',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+    old_value => '__TEST_TAXON__',
+    new_value => '__NEW_NAME__',
+    description => 'UPDATE',
+    is_reconciled => 0,
+);
+ok($misc_update, 'Create misc update for unsupported subject class name');
+isa_ok($misc_update, 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Unsupported');
+ok(!$misc_update->perform_update, 'Perform update');
+is($misc_update->result, 'FAIL', 'Correct result after update');
+is($misc_update->status, "FAIL	UPDATE	test.blah	-100	full_name	'NA'	'__TEST_TAXON__'	'__NEW_NAME__'", 'Correct status after update');
+ok(!$misc_update->is_reconciled, 'Is reconciled');
+$error_message = $misc_update->error_message;
+is($error_message, 'Unsupported subject class name! test.blah', 'Correct error');
+is($taxon->name, '__TEST_TAXON__', 'Did not set name on taxon');
 
 # Old value not the same as current value
 $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
@@ -145,7 +134,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     description => 'UPDATE',
     is_reconciled => 0,
 );
-ok($misc_update, 'Define misc update');
+ok($misc_update, 'Create misc update for old value not the same as new value');
 ok(!$misc_update->perform_update, 'Failed to perform update');
 is($misc_update->result, 'FAIL', 'Correct result (FAIL) after update');
 ok($misc_update->has_failed, 'Misc update "has_failed"');
@@ -167,7 +156,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     description => 'UPDATE',
     is_reconciled => 0,
 );
-ok($misc_update, 'Define misc update');
+ok($misc_update, 'Create misc update with unsupported lims attr');
 ok($misc_update->perform_update, 'Failed to perform update');
 is($misc_update->result, 'SKIP', 'Correct result (SKIP) after update');
 is($misc_update->status, "SKIP	UPDATE	test.organism_taxon	-100	next_amplicon_iteration	'NA'	'not the same as the current value'	'10000'", 'Correct status after update');
