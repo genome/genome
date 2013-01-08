@@ -24,7 +24,10 @@ sub _create_and_get_library {
     my $sample = Genome::Sample->get(2376482668);
     my $library = Genome::Library->create(
         sample => $sample,
-        name => $sample->name . "-extlibs"
+        name => $sample->name . "-extlibs",
+        original_insert_size => '1kb',
+        library_insert_size => '300-500',
+        protocol => 'karate chop',
     );
     ok($library, 'created library');
     isa_ok($library, 'Genome::Library');
