@@ -313,7 +313,11 @@ sub create {
     if ($class eq __PACKAGE__ or $class->__meta__->is_abstract) {
         return $class->SUPER::create(@_);
     }
+    
     my $self = $class->SUPER::create(@_);
+    unless ($self) {
+        return;
+    }
 
     $self->user_name(Genome::Sys->username) unless $self->user_name;
     $self->creation_date(UR::Context->now);
