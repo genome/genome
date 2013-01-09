@@ -70,6 +70,8 @@ sub execute {
 sub type_specific_parameters_for_create {
     my $self = shift;
     my %params = (
+        name => $self->model_name,
+        processing_profile => $self->processing_profile,
         assembly_contigs_file => $self->assembly_contigs_file,
         create_assembly_model => $self->create_assembly_model, 
         start_assembly_build => $self->start_assembly_build,
