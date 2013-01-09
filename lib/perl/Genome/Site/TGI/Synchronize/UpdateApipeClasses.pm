@@ -310,16 +310,20 @@ sub _load_successful_pidfas {
         order by p1.param_value desc
 SQL
 
+    print STDERR "PIDFA SQL:\n$sql\n";
+    print STDERR "PIDFA Prepare SQL\n";
     my $sth = $dbh->prepare($sql);
     if ( not $sth ) {
         $self->error_message('Failed to prepare successful pidfa sql');
         return;
     }
+    print STDERR "PIDFA Execute SQL\n";
     my $execute = $sth->execute;
     if ( not $execute ) {
         $self->error_message('Failed to execute successful pidfa sql');
         return;
     }
+    print STDERR "PIDFA Fetch Results\n";
     while ( my ($instrument_data_id, $pidfa_output) = $sth->fetchrow_array ) {
         # Going in reverse id order...use the most recent pidfa output for duplicate pidfas
         # pidfa output is defined for genotype microarray (genotype file) and 454 (sff file)
@@ -363,12 +367,11 @@ sub _create_genotyping {
     confess "Could not create new object of type $new_object_class based on object of type " .
         $original_object->class . " with id " . $original_object->id . ":\n$@" if not $object;
 
-    my $new_genotype_file = Genome::InstrumentData::Microarray->update_genotype_file($object, $genotype_file);
-    confess "Failed to update genotype_file: $genotype_file on instrument data: ".$object->id if not $new_genotype_file;
+    my $new_genotype_file = eval{ Genome::InstrumentData::Microarray->update_genotype_file($object, $genotype_file); };
+    confess "$@\nFailed to update genotype_file: $genotype_file on instrument data: ".$object->id if not $new_genotype_file;
 
     return 1;
 }
-
 
 sub _create_instrumentdata_solexa {
     my ($self, $original_object, $new_object_class) = @_;
