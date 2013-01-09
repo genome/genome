@@ -82,6 +82,13 @@ sub execute {
         # Relink broken symlinked allocations
         $build->relink_symlinked_allocations;
 
+        # Set the data directory to the absolute path of the main alloc
+        my $main_allocation = $build->disk_allocation;
+        UR::Context->reload($main_allocation); # this may have been loaded and unarchived earlier
+        if ( $build->data_directory ne $main_allocation->absolute_path ) {
+            $build->data_directory($main_allocation->absolute_path);
+        }
+
         if ( $num_allocations == 0 ) {
             $self->status_message('No unarchived allocations found!');
             next;
