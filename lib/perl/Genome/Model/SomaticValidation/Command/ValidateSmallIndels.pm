@@ -111,8 +111,8 @@ sub _run_workflow {
     # TODO stop hardcoding stuff
     my %input;
 
-    # Params for gatk 
-    $input{gatk_memory} = "16g";
+    # Params for gatk
+    $input{gatk_memory} = '16';
     $input{gatk_version} = 5777;
     $input{index_bam} = 1,
     $input{target_intervals_are_sorted} = 0;
