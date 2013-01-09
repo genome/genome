@@ -19,7 +19,7 @@ genome model define mutational-significance --model-name "Example Mutational Sig
 
 [4mREQUIRED INPUTS[0m
   [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
+    Processing profile to be used by model, can provide either a name or an ID 
   [1msomatic-variation-models[0m
     somatic variation models to evaluate 
   [1mannotation-build[0m

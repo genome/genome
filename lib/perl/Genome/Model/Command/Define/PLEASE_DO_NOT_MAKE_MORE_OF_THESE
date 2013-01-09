@@ -1,0 +1,3 @@
+If a Genome::Model::* module is written correctly, Genome::Model::Command::Define will auto-generate a command for you.
+
+

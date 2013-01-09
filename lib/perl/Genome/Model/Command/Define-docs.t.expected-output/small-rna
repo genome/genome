@@ -1,7 +1,7 @@
 
 [4mUSAGE[0m
  [1mgenome model define small-rna[0m [--auto-assign-inst-data] [--auto-build-alignments]
-    --ref-model=? --processing-profile=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]]
+    --processing-profile=? --ref-model=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]]
     [--subject=?] [--groups=?[,?]] [--model-name=?] [--ref-model-coverage=?]
 
 [4mSYNOPSIS[0m
@@ -11,10 +11,10 @@
     --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an ID 
   [1mref-model[0m
     Ref model with/without Coverage ROI for downstream smallrna analysis 
-  [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m

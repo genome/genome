@@ -1,9 +1,10 @@
 
 [4mUSAGE[0m
  [1mgenome model define differential-expression[0m [--auto-assign-inst-data]
-    [--auto-build-alignments] --condition-labels-string=? --condition-model-ids-string=?
-    --processing-profile=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
-    [--groups=?[,?]] [--model-name=?] [--reference-sequence-build=?] [--annotation-build=?]
+    [--auto-build-alignments] --condition-labels-string=? --processing-profile=?
+    --condition-model-ids-string=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]]
+    [--subject=?] [--groups=?[,?]] [--model-name=?] [--reference-sequence-build=?]
+    [--annotation-build=?]
 
 [4mSYNOPSIS[0m
   genome model define differential-expression \
@@ -14,11 +15,11 @@
 [4mREQUIRED INPUTS[0m
   [1mcondition-labels-string[0m
     A comma-delimmited list of labels used to represent each group or condition. ex: "A,B,C,D" 
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an ID 
   [1mcondition-model-ids-string[0m
     Each group is a comma-delimited list of model ids corresponding to a defined label(order
     matters).  Each group (A, B, C & D) is separated by white space. ex: "1,2 3,4 5,6 7,8" 
-  [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m

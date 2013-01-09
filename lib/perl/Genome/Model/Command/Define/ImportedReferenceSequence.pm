@@ -12,6 +12,7 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             doc => "The full path and filename of the reference sequence fasta file to import."
         },
         processing_profile_id => {
+            doc => 'The ID of the procesing profile to use.  There is really only one so it is typically not specified.',
             default_value => '1990904',
         },
     ],

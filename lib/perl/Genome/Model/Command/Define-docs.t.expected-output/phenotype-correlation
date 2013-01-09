@@ -1,7 +1,7 @@
 
 [4mUSAGE[0m
  [1mgenome model define phenotype-correlation[0m [--auto-assign-inst-data]
-    [--auto-build-alignments] --reference-sequence-build=? --processing-profile=?
+    [--auto-build-alignments] --processing-profile=? --reference-sequence-build=?
     [--add-to-projects=?[,?]] [--dbsnp-build=?] [--instrument-data=?[,?]] [--subject=?]
     [--groups=?[,?]] [--model-name=?] [--thousand-genomes-build=?] [--glm-config-file=?]
     [--nhlbi-esp-build=?] [--previous-variant-detection-results=?] [--nomenclature=?]
@@ -15,10 +15,10 @@
     --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an ID 
   [1mreference-sequence-build[0m
     the reference sequence against which alignment and variant detection are done 
-  [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m
