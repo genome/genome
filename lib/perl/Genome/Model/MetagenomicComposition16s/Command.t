@@ -40,7 +40,10 @@ $cmd = Genome::Model::MetagenomicComposition16s::Command::Tester->create(
 ok($cmd, 'create');
 $cmd->dump_status_messages(1);
 ok($cmd->execute, 'execute');
-is_deeply([$cmd->_builds], [$build], 'builds from cmd');
+is_deeply([$cmd->_builds], [$build], 'builds from cmd') 
+    or diag(
+        Data::Dumper::Dumper([$cmd->_builds],[$build])
+    );
 
 $cmd = Genome::Model::MetagenomicComposition16s::Command::Tester->create(
     builds => [$build],

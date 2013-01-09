@@ -18,7 +18,9 @@ use above qw(Genome);
 ok(-f '../Genome.pm', 'currently at top of namespace') or die;
 
 my $sr_classname = 'Genome::SoftwareResult';
-my @classnames = qx(UR_DBI_NO_COMMIT=0 ur show subclasses --superclass $sr_classname --flat --recalculate);
+my $cmd = qq(UR_DBI_NO_COMMIT=0 ur show subclasses --superclass $sr_classname --flat --recalculate);
+note($cmd);
+my @classnames = qx($cmd); 
 is($?, 0, 'ur show subclasses command exited 0') or die;
 chomp @classnames;
 @classnames = grep { defined $_ && $_ && $_ =~ /^[\w:]+$/ } @classnames;
