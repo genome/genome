@@ -26,7 +26,7 @@ my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Command-Define-Imp
 
 #First test--a 42MB FASTA with 2 chromosomes
 #The test on a larger file is useful to test the chunking algorithm used in producing the bases files
-my $first_test_dir = $test_data_dir . '1/';
+my $first_test_dir = $test_data_dir . '1.06/';
 my $first_fasta = $first_test_dir . 'all_sequences.fa';
 
 ok(Genome::Sys->check_for_path_existence($first_fasta), 'First test FASTA exists');
@@ -57,8 +57,7 @@ my $first_data_directory = $first_builds[0]->data_directory;
 my $first_build_fasta = $first_data_directory . '/all_sequences.fa';
 
 my $first_fasta_diff = Genome::Sys->diff_file_vs_file($first_fasta, $first_build_fasta);
-ok(!$first_fasta_diff, 'FASTA copied to build')
-    or diag("  diff:\n" . $first_fasta_diff);
+ok(!$first_fasta_diff, 'FASTA copied to build');
 
 my $first_build_1_bases = $first_data_directory . '/bases/1.bases';
 my $first_1_bases = $first_test_dir . '/1.bases';
@@ -80,7 +79,7 @@ my %expected_file_sizes = (
     '1.bases' => 20971520,
     '2.bases' => 20971520,
     'all_sequences.bfa' => 20971548,
-    'all_sequences.fa' => 42467426,
+    'all_sequences.fa' => 42642190,
     'all_sequences.fa.amb' => 13,
     'all_sequences.fa.ann' => 147,
     'all_sequences.fa.bwt' => 15728676,
@@ -111,7 +110,7 @@ for my $file (@files_to_test) {
 
 #Second test--a tiny FASTA with 3 chromosomes
 #updated from 2.02 to 2.03 to create manifest.tsv
-my $second_test_dir = $test_data_dir . '2.05/';
+my $second_test_dir = $test_data_dir . '2.06/';
 my $second_fasta = $second_test_dir . 'all_sequences.fa';
 
 ok(Genome::Sys->check_for_path_existence($second_fasta), 'Second test FASTA exists');

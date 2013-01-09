@@ -14,7 +14,7 @@
   [1minput-fasta-file[0m
     (undocumented) 
   [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
+    Processing profile to be used by model, can provide either a name or an ID 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m

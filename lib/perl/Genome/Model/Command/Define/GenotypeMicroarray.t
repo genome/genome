@@ -65,7 +65,7 @@ $gm = Genome::Model::Command::Define::GenotypeMicroarray->create(
     subject_name            => $sample->name,
     model_name              => $test_model_name .".test",
     reference               => $rbuild,
-    projects                => [$project],
+    add_to_projects         => [$project],
 );
 $gm->dump_status_messages(1);
 ok($gm->execute(),'define model');

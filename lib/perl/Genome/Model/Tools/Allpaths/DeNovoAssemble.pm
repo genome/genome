@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 use File::Path qw(make_path);
 
-my $PICARD_TOOLS_DIR="/gsc/scripts/lib/java/samtools/picard-tools-1.52";
+my $PICARD_TOOLS_DIR="$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.52";
 
 class Genome::Model::Tools::Allpaths::DeNovoAssemble {
     is => 'Genome::Model::Tools::Allpaths::Base',

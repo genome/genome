@@ -16,22 +16,24 @@ use Genome::Model::ClinSeq::Converge qw(:all);
 my $build_ids = '';
 my $model_ids = '';
 my $model_group_id = '';
+my $ensembl_version = '';
 my $outdir = '';
 my $label = '';
 my $verbose = 0;
 my $test = 0;
 
-GetOptions ('build_ids=s'=>\$build_ids, 'model_ids=s'=>\$model_ids, 'model_group_id=s'=>\$model_group_id, 'outdir=s'=>\$outdir, 'label=s'=>\$label, 'verbose=i'=>\$verbose, 'test=i'=>\$test);
+GetOptions ('build_ids=s'=>\$build_ids, 'model_ids=s'=>\$model_ids, 'model_group_id=s'=>\$model_group_id, 'ensembl_version=i'=>\$ensembl_version, 'outdir=s'=>\$outdir, 'label=s'=>\$label, 'verbose=i'=>\$verbose, 'test=i'=>\$test);
 
 my $usage=<<INFO;
   Example usage: 
   
-  convergeSnvs.pl  --model_group_id='25307'  --outdir=/gscmnt/sata132/techd/mgriffit/braf_resistance/recurrence_snv_results/  --label='BRAF'  --verbose=1
+  convergeSnvs.pl  --model_group_id='50714'  --outdir=/gscmnt/sata132/techd/mgriffit/braf_resistance/report2/snvs_all8_converged/  --ensembl_version=67  --label='BRAF'  --verbose=1
 
   Specify *one* of the following as input (each model/build should be a ClinSeq model)
   --build_ids            Comma separated list of specific build IDs
   --model_ids            Comma separated list of specific model IDs
   --model_group_id       A single genome model group ID
+  --ensembl_version      Version of Ensembl used in the analysis
 
   Combines SNV results from a group of Clinseq models into a single report:
   --outdir               Path to directory for output files
@@ -41,7 +43,7 @@ my $usage=<<INFO;
 
 INFO
 
-unless (($build_ids || $model_ids || $model_group_id) && $outdir && $label){
+unless (($build_ids || $model_ids || $model_group_id) && $ensembl_version && $outdir && $label){
   print RED, "\n\nRequired parameter missing", RESET;
   print GREEN, "\n\n$usage", RESET;
   exit(1);
@@ -54,9 +56,6 @@ unless (-e $outdir && -d $outdir){
   exit(1);
 }
 
-#Hardcode Ensembl version parameter (should not matter since we are not using RNA-seq data here) - but must be defined for bam read counts code I'm using
-my $ensembl_version = 58;
-
 #Create a sub-directory for BAM read count results
 my $bam_rc_subdir = $outdir . "bam_rc/";
 mkdir($bam_rc_subdir);
@@ -67,10 +66,12 @@ my $genes_outfile = "$outdir"."$label"."_SNVs_Merged_GeneLevel.tsv";
 my $positions_outfile_categorical = "$outdir"."$label"."_SNVs_Merged_PositionLevel_Categorical.tsv";
 my $genes_outfile_categorical = "$outdir"."$label"."_SNVs_Merged_GeneLevel_Categorical.tsv";
 my $positions_list = "$outdir"."$label"."_Master_SNV_List.tsv";
-my $vaf_file_matrix_wgs = "$outdir"."$label"."_WGS_SNV_VAFs_Matrix.tsv";
+my $vaf_file_matrix_wgs = "$outdir"."$label"."_WGS_SNV_Tumor_VAFs_Matrix.tsv";
 my $mutation_status_file_matrix_wgs = "$outdir"."$label"."_WGS_SNV_MutationStatus_Matrix.tsv";
-my $vaf_file_matrix_exome = "$outdir"."$label"."_Exome_SNV_VAFs_Matrix.tsv";
+my $vaf_file_matrix_exome = "$outdir"."$label"."_Exome_SNV_Tumor_VAFs_Matrix.tsv";
 my $mutation_status_file_matrix_exome = "$outdir"."$label"."_Exome_SNV_MutationStatus_Matrix.tsv";
+my $vaf_file_matrix_rnaseq_tumor = "$outdir"."$label"."_RNAseq_SNV_Tumor_VAFs_Matrix.tsv";
+my $mutation_status_file_matrix_rnaseq_tumor = "$outdir"."$label"."_RNAseq_SNV_MutationStatus_Matrix.tsv";
 
 #Get the models/builds
 my $models_builds;
@@ -103,6 +104,7 @@ my $header_line;
 my %model_list;
 my %wgs_sample_list;
 my %exome_sample_list;
+my %tumor_rnaseq_sample_list;
 foreach my $m (@models){
   my $model_name = $m->name;
   my $model_id = $m->genome_model_id;
@@ -115,6 +117,8 @@ foreach my $m (@models){
   my $patient = $m->subject;
   my $wgs_build = $b->wgs_build;
   my $exome_build = $b->exome_build;
+  my $normal_rnaseq_build = $b->normal_rnaseq_build;
+  my $tumor_rnaseq_build = $b->tumor_rnaseq_build;
 
   my ($wgs_common_name, $wgs_name, $exome_common_name, $exome_name);
   if ($wgs_build){
@@ -145,6 +149,9 @@ foreach my $m (@models){
   if ($exome_build){
     $exome_sample_list{$final_name} = 1;
   }
+  if ($tumor_rnaseq_build){
+    $tumor_rnaseq_sample_list{$final_name} = 1;
+  }
 
   #Store model objects and values for later
   $model_list{$model_id}{model_name} = $model_name;
@@ -152,6 +159,8 @@ foreach my $m (@models){
   $model_list{$model_id}{patient} = $patient;
   $model_list{$model_id}{wgs_build} = $wgs_build;
   $model_list{$model_id}{exome_build} = $exome_build;
+  $model_list{$model_id}{normal_rnaseq_build} = $normal_rnaseq_build;
+  $model_list{$model_id}{tumor_rnaseq_build} = $tumor_rnaseq_build;
   $model_list{$model_id}{final_name} = $final_name;
 
   #Find the appropriate SNV file
@@ -314,14 +323,19 @@ foreach my $model_id (sort keys %model_list){
   my $patient = $model_list{$model_id}{patient};
   my $wgs_build = $model_list{$model_id}{wgs_build};
   my $exome_build = $model_list{$model_id}{exome_build};
+  my $normal_rnaseq_build = $model_list{$model_id}{normal_rnaseq_build};
+  my $tumor_rnaseq_build = $model_list{$model_id}{tumor_rnaseq_build};
   my $final_name = $model_list{$model_id}{final_name};
   my $output_file = $bam_rc_subdir . "$final_name"."_BamReadCounts.tsv";
-  $model_list{$model_id}{read_counts_file} = $output_file; 
+  $model_list{$model_id}{read_counts_file} = $output_file;
 
   my $read_counts_script = "genome-perl `which genome` model clin-seq get-bam-read-counts";
   my $bam_rc_cmd = "$read_counts_script  --positions-file=$positions_list  --ensembl-version=$ensembl_version  --output-file=$output_file  --verbose=$verbose";
   $bam_rc_cmd .= "  --wgs-som-var-build=" . $wgs_build->id if $wgs_build;
   $bam_rc_cmd .= "  --exome-som-var-build=" . $exome_build->id if $exome_build;
+  $bam_rc_cmd .= "  --rna-seq-normal-build=" . $normal_rnaseq_build->id if $normal_rnaseq_build;
+  $bam_rc_cmd .= "  --rna-seq-tumor-build=" . $tumor_rnaseq_build->id if $tumor_rnaseq_build;
+
   unless ($verbose){
     $bam_rc_cmd .= "  1>/dev/null 2>/dev/null";
   }
@@ -329,12 +343,14 @@ foreach my $model_id (sort keys %model_list){
   Genome::Sys->shellcmd(cmd => $bam_rc_cmd);
 }
 
-#Now parse the read counts files and build a hash of SNVs and their variant allele frequencies (tumor and exome) for each subject
+#Now parse the read counts files and build a hash of SNVs and their variant allele frequencies (wgs, exome, and rnaseq) for each subject
 my %rc;
 foreach my $model_id (sort keys %model_list){
   my $rc_file = $model_list{$model_id}{read_counts_file}; 
   my $wgs_build = $model_list{$model_id}{wgs_build};
   my $exome_build = $model_list{$model_id}{exome_build};
+  my $normal_rnaseq_build = $model_list{$model_id}{normal_rnaseq_build};
+  my $tumor_rnaseq_build = $model_list{$model_id}{tumor_rnaseq_build};
   my $final_name = $model_list{$model_id}{final_name};
   my $header = 1;
   my %columns;
@@ -353,17 +369,25 @@ foreach my $model_id (sort keys %model_list){
     }
     my $coord = $line[$columns{'coord'}{position}];
     if ($wgs_build){
+      $rc{$coord}{$final_name}{wgs_normal_vaf} = $line[$columns{'WGS_Normal_VAF'}{position}];
       $rc{$coord}{$final_name}{wgs_tumor_vaf} = $line[$columns{'WGS_Tumor_VAF'}{position}];
     }
     if ($exome_build){
+      $rc{$coord}{$final_name}{exome_normal_vaf} = $line[$columns{'Exome_Normal_VAF'}{position}];
       $rc{$coord}{$final_name}{exome_tumor_vaf} = $line[$columns{'Exome_Tumor_VAF'}{position}];
+    }
+    if ($tumor_rnaseq_build){
+      $rc{$coord}{$final_name}{rnaseq_tumor_vaf} = $line[$columns{'RNAseq_Tumor_VAF'}{position}];
+    }
+    if ($normal_rnaseq_build){
+      $rc{$coord}{$final_name}{rnaseq_normal_vaf} = $line[$columns{'RNAseq_Normal_VAF'}{position}];
     }
   }
   close(RC);
 }
 
 #Write out the matrix files for both VAFs and mutation status (VAF > 0) in each subject at each position
-#WGS VAFs
+#WGS VAFs & Status
 my @wgs_sample_list = sort keys %wgs_sample_list;
 my $wgs_sample_count = scalar(@wgs_sample_list);
 if ($wgs_sample_count > 0){
@@ -394,7 +418,7 @@ if ($wgs_sample_count > 0){
   close(OUT2);
 }
 
-#Exome VAFs
+#Exome VAFs and Status
 my @exome_sample_list = sort keys %exome_sample_list;
 my $exome_sample_count = scalar(@exome_sample_list);
 if ($exome_sample_count > 0){
@@ -420,6 +444,38 @@ if ($exome_sample_count > 0){
     my $exome_status_string = join("\t", @statuses);
     print OUT1 "$coord\t$exome_val_string\n";
     print OUT2 "$coord\t$exome_status_string\n";
+  }
+  close(OUT1);
+  close(OUT2);
+}
+
+
+#Tumor RNAseq VAFs and Status
+my @tumor_rnaseq_sample_list = sort keys %tumor_rnaseq_sample_list;
+my $tumor_rnaseq_sample_count = scalar(@tumor_rnaseq_sample_list);
+if ($tumor_rnaseq_sample_count > 0){
+  open (OUT1, ">$vaf_file_matrix_rnaseq_tumor") || die "\n\nCould not open file: $vaf_file_matrix_rnaseq_tumor\n\n";
+  open (OUT2, ">$mutation_status_file_matrix_rnaseq_tumor") || die "\n\nCould not open file: $mutation_status_file_matrix_rnaseq_tumor\n\n";
+  my $tumor_rnaseq_sample_list_string = join("\t", @tumor_rnaseq_sample_list);
+  my $tumor_rnaseq_header = "coord\t$tumor_rnaseq_sample_list_string";
+  print OUT1 "$tumor_rnaseq_header\n";
+  print OUT2 "$tumor_rnaseq_header\n";
+  foreach my $coord (sort keys %rc){
+    my @vafs;
+    my @statuses;
+    foreach my $sample (@tumor_rnaseq_sample_list){
+      my $vaf = $rc{$coord}{$sample}{rnaseq_tumor_vaf};
+      my $status = 0;
+      if ($vaf > 0){
+        $status = 1;
+      }
+      push(@vafs, $vaf);
+      push(@statuses, $status);
+    }
+    my $rnaseq_tumor_val_string = join("\t", @vafs);
+    my $rnaseq_tumor_status_string = join("\t", @statuses);
+    print OUT1 "$coord\t$rnaseq_tumor_val_string\n";
+    print OUT2 "$coord\t$rnaseq_tumor_status_string\n";
   }
   close(OUT1);
   close(OUT2);

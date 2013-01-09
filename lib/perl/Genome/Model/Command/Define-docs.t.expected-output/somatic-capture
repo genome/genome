@@ -14,7 +14,7 @@ genome model define
 
 [4mREQUIRED INPUTS[0m
   [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
+    Processing profile to be used by model, can provide either a name or an ID 
 
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m

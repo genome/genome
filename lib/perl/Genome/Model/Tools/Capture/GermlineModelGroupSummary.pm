@@ -167,7 +167,7 @@ sub summarize_variants
 
 		close($tfh);
 		
-		my $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $variants_file --regions-file " . $self->roi_file . " --output-file $temp_path";
+		my $cmd = "java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $variants_file --regions-file " . $self->roi_file . " --output-file $temp_path";
 		system($cmd);
 		
 		$variants_file = $temp_path;
@@ -243,7 +243,7 @@ sub summarize_variants
 			}
 			close($dbsnpfh);
 			
-			my $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $snp_path --regions-file " . $self->dbsnp_file . " --output-file $dbsnp_path";
+			my $cmd = "java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $snp_path --regions-file " . $self->dbsnp_file . " --output-file $dbsnp_path";
 			system($cmd);
 	
 			## Calculate dbSNP concordance ##

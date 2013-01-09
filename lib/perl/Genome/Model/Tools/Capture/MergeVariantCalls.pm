@@ -77,7 +77,7 @@ sub execute {                               # replace with real execution logic.
 
 	## Run the merge using Varscan ##
 	
-	my $cmd = "java -Xms3000m -Xmx3000m -jar /gsc/scripts/lib/java/VarScan/VarScan.jar compare $varscan_file $glf_file merge $output_file.unsorted";
+	my $cmd = "java -Xms3000m -Xmx3000m -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar compare $varscan_file $glf_file merge $output_file.unsorted";
 	system($cmd);
 
 	$cmd = "gmt capture sort-by-chr-pos --input-file $output_file.unsorted --output-file $output_file";

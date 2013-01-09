@@ -108,7 +108,7 @@ sub create {
 
     #find the location of the required jar files based on path of the class            
     my $base_dir = $class->base_dir; 
-    my $cp = "/gsc/scripts/lib/java/samtools/sam-current.jar".":".$base_dir."/"."GCSam.jar";
+    my $cp = "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/sam-current.jar".":".$base_dir."/"."GCSam.jar";
             
     #eval the 'use inline' command to inject the correct classpath
     #note:  the "PACKAGE=>'main'" entry allows you to replace "Genome::Model::Tools::Sam::SamHeaderEditor" with "main" when subsequently calling the Java class.  See in execute. 

@@ -164,7 +164,7 @@ sub execute {
     $self->status_message("Completed cat.");
  
     $self->status_message("Converting from sam to bam file: $filtered_alignment_file to $filtered_alignment_file_unsorted_bam");
-    my $picard_path = "/gsc/scripts/lib/java/samtools/picard-tools-1.07/";
+    my $picard_path = "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.07/";
     my $cmd_convert = "java -Xmx2g -cp $picard_path/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter VALIDATION_STRINGENCY=SILENT I=$filtered_alignment_file O=$filtered_alignment_file_unsorted_bam";  
     #my $cmd_convert = "samtools view -bS $ > $merged_alignment_files_per_refseq_sam";
     my $rv_convert = Genome::Sys->shellcmd(cmd=>$cmd_convert);											 

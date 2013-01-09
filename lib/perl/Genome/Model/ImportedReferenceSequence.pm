@@ -108,7 +108,14 @@ sub _copy_fasta_file {
 
     #If an error occurs here about refusing to write to an existing file, that was most likely on a re-run of the build
     #and the original error can be found earlier in the logs.  To restart, clear files out of the build directory.
-    unless (Genome::Sys->copy_file($build->fasta_file, $primary_fasta_path)) {
+    my $in = Bio::SeqIO->new(-file => $build->fasta_file, -format => 'Fasta');
+    my $out = Bio::SeqIO->new(-file => ">$primary_fasta_path", -format => 'Fasta');
+    while(my $seq = $in->next_seq) {
+        $out->write_seq($seq);
+    }
+    $in->close;
+    $out->close;
+    unless (-s $primary_fasta_path) {
         $self->error_message('Failed to copy "' . $build->fasta_file . '" to "' . $primary_fasta_path. '.');
         return;
     }

@@ -109,28 +109,28 @@ EOS
 # NOTE: These are in order.
 # Please put the most recent first.
 my @PICARD_VERSIONS = (
-    '1.82' => '/gsc/scripts/lib/java/samtools/picard-tools-1.82',
-    '1.77' => '/gsc/scripts/lib/java/samtools/picard-tools-1.77',
-    '1.52' => '/gsc/scripts/lib/java/samtools/picard-tools-1.52',
-    '1.46' => '/gsc/scripts/lib/java/samtools/picard-tools-1.46',
-    '1.42' => '/gsc/scripts/lib/java/samtools/picard-tools-1.42',
-    '1.40' => '/gsc/scripts/lib/java/samtools/picard-tools-1.40',
-    '1.36' => '/gsc/scripts/lib/java/samtools/picard-tools-1.36',
-    '1.31' => '/gsc/scripts/lib/java/samtools/picard-tools-1.31',
-    '1.29' => '/gsc/scripts/lib/java/samtools/picard-tools-1.29',
-    '1.25' => '/gsc/scripts/lib/java/samtools/picard-tools-1.25',
-    '1.24' => '/gsc/scripts/lib/java/samtools/picard-tools-1.24',
-    '1.23' => '/gsc/scripts/lib/java/samtools/picard-tools-1.23',
-    'r436' => '/gsc/scripts/lib/java/samtools/picard-tools-r436', #contains a fix for when a whole library is unmapped
-    '1.22' => '/gsc/scripts/lib/java/samtools/picard-tools-1.22',
-    '1.21' => '/gsc/scripts/lib/java/samtools/picard-tools-1.21',
-    '1.17' => '/gsc/scripts/lib/java/samtools/picard-tools-1.17',
+    '1.82' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.82',
+    '1.77' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.77',
+    '1.52' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.52',
+    '1.46' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.46',
+    '1.42' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.42',
+    '1.40' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.40',
+    '1.36' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.36',
+    '1.31' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.31',
+    '1.29' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.29',
+    '1.25' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.25',
+    '1.24' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.24',
+    '1.23' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.23',
+    'r436' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-r436', #contains a fix for when a whole library is unmapped
+    '1.22' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.22',
+    '1.21' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.21',
+    '1.17' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.17',
     # old processing profiles used a different standard
     # this was supposed to be ONLY for things where we work directly from svn instead of released versions, like samtools :(
-    'r116' => '/gsc/scripts/lib/java/samtools/picard-tools-1.16',
-    'r107' => '/gsc/scripts/lib/java/samtools/picard-tools-1.07/',
-    'r104' => '/gsc/scripts/lib/java/samtools/picard-tools-1.04/',
-    'r103wu0' => '/gsc/scripts/lib/java/samtools/picard-tools-1.03/',
+    'r116' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.16',
+    'r107' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.07/',
+    'r104' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.04/',
+    'r103wu0' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.03/',
 );
 
 my %PICARD_VERSIONS = @PICARD_VERSIONS;

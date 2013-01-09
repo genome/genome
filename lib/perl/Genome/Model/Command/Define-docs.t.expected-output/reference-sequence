@@ -1,5 +1,3 @@
-Use of uninitialized value $model_type in substitution (s///) at /gscmnt/sata845/info/ibwa-test/ssmith/g/lib/perl/Genome/Model/Command/Define/BaseMinimal.pm line 155.
-Use of uninitialized value $model_type in concatenation (.) or string at /gscmnt/sata845/info/ibwa-test/ssmith/g/lib/perl/Genome/Model/Command/Define/BaseMinimal.pm line 156.
 
 [4mUSAGE[0m
  [1mgenome model define reference-sequence[0m [--auto-assign-inst-data] [--auto-build-alignments]
@@ -7,14 +5,14 @@ Use of uninitialized value $model_type in concatenation (.) or string at /gscmnt
     [--groups=?[,?]] [--model-name=?]
 
 [4mSYNOPSIS[0m
-  genome model define  \
+  genome model define reference-sequence \
     --model-name test1 \
     --subject TEST-patient1-sample1 \
     --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
   [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
+    Processing profile to be used by model, can provide either a name or an ID 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m
