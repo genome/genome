@@ -88,7 +88,7 @@ is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 2000, 'read_count correctly set');
 my $allocation = $instrument_data->allocations;
 ok($allocation, 'got allocation');
-is($allocation->kilobytes_requested, 100, 'allocation kb requested is correct');
+ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 my $archive_path = $instrument_data->attributes(attribute_label => 'archive_path')->attribute_value;
 ok($archive_path, 'got archive path');
 ok(-s $archive_path, 'archive path exists');
