@@ -82,13 +82,15 @@ sub _preprocess_subclass_description {
             %suppress = map { $_ => 1 } $cmd_subclass_name->_suppress_inputs();
         }
         
-        my @p = $model_subclass_meta->properties();
-        my $has = $desc->{has};
-        for my $p (@p) {
+        # go through the model properties and make them command properties where appropriate
+        my @model_properties = $model_subclass_meta->properties();
+        my $command_has = $desc->{has};
+        for my $p (@model_properties) {
             my $name = $p->property_name;
-            next if $has->{$name};
             next if $suppress{$name};
-            if (($p->can("is_input") and $p->is_input) or $name =~ /^(processing_profile|processing_profile_id|name)$/) {
+            next if $command_has->{$name};
+            next if grep { $_->can($name) } @inheritance;
+            if (($p->can("is_input") and $p->is_input) or $name =~ /^(processing_profile|processing_profile_id|name)$/) {                
                 my %data = %{ UR::Util::deep_copy($p) };
                 for my $key (keys %data) {
                     delete $data{$key} if $key =~ /^_/;
@@ -104,18 +106,16 @@ sub _preprocess_subclass_description {
                         # a base class specifies model_name or name
                         next;
                     }
-                    if ($has->{model_name} or $has->{name}) {
+                    if ($command_has->{model_name} or $command_has->{name}) {
                         # this desc specifies model_name or name
                         next;
                     }
                     $data{doc} = 'a friendly name for the new model (changeable)';
                     $data{is_optional} = 1;
                 }
-                $has->{$name} = \%data;
+                $command_has->{$name} = \%data;
             }
         }
-
-        # add an input for model_name if it is not present
 
         # add an input for subject unless it is a calculated property (TODO)
     }
@@ -151,9 +151,6 @@ sub help_synopsis {
     elsif ($target_class_name->can("_help_synopsis")) {
         return $target_class_name->_help_synopsis;
     }
-    #my $model_type = $target_class_name->__meta__->property('processing_profile')->data_type->_resolve_type_name_for_class;
-    #$model_type =~ s/[_ ]/-/g;
-    #my @show = "  genome model define $model_type";
     my $command_name = $self->command_name;
     my @show = "  $command_name";
     if ($self->can("model_name")) {
@@ -185,7 +182,10 @@ specified processing profile.
 EOS
 }
 
-# Should be overridden in subclasses
+# This is overridden in legacy subclasses but
+# ideally parameters should be mirrored 1:1 unless they are
+# explicitly supressed because the constructor does some 
+# automatic expansion.
 sub type_specific_parameters_for_create {
     my $self = shift;
     my $model_class = $self->class;

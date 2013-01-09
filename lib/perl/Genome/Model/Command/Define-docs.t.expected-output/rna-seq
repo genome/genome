@@ -1,7 +1,7 @@
 
 [4mUSAGE[0m
  [1mgenome model define rna-seq[0m [--auto-assign-inst-data] [--auto-build-alignments]
-    --reference-sequence-build=? --annotation-build=? --processing-profile=?
+    --processing-profile=? --reference-sequence-build=? --annotation-build=?
     [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
     [--model-name=?]
 
@@ -12,12 +12,12 @@
     --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an ID 
   [1mreference-sequence-build[0m
     (undocumented) 
   [1mannotation-build[0m
     (undocumented) 
-  [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m

@@ -4,7 +4,7 @@
     [--auto-assign-inst-data] [--subject-name=?] [--auto-build-alignments]
     [--genotype-microarray-model=?] [--target-region-set-names=?[,?]]
     [--region-of-interest-set-name=?] [--merge-roi-set] [--short-roi-names] [--roi-track-name=?]
-    --reference-sequence-build=? --processing-profile=? [--add-to-projects=?[,?]]
+    --processing-profile=? --reference-sequence-build=? [--add-to-projects=?[,?]]
     [--annotation-reference-build=?] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
     [--model-name=?] [--dbsnp-model=?] [--dbsnp-build=?]
 
@@ -15,11 +15,11 @@
     --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an ID 
   [1mreference-sequence-build[0m
     ID or name of the reference sequence to align against 
     Default value 'NCBI-human-build36' if not specified
-  [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
 
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m

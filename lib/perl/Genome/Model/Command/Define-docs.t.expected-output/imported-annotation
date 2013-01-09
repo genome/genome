@@ -1,7 +1,7 @@
 
 [4mUSAGE[0m
  [1mgenome model define imported-annotation[0m [--auto-assign-inst-data]
-    [--auto-build-alignments] --species-name=? --processing-profile=? --version=?
+    [--auto-build-alignments] --processing-profile=? --species-name=? --version=?
     --reference-sequence-build=? --build-name=? --annotation-import-version=?
     [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
     [--model-name=?] [--gtf-file=?]
@@ -9,10 +9,10 @@
 [4mSYNOPSIS[0m
 genome model define imported-annotation --species-name=human --version=58_37c --reference-sequence-build=GRCh37-lite-build37 --build_name=NCBI-human.ensembl/58_37c --processing-profile=imported-annotation.ensembl --model_name=NCBI-human.ensembl
 [4mREQUIRED INPUTS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an ID 
   [1mspecies-name[0m
     species name for annotation build (mouse, human) 
-  [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
   [1mversion[0m
     Annotation version.  Generally in the form
     <ensembl_release_number>_<reference_number><letter_designator> (ex: 58_37c) 
