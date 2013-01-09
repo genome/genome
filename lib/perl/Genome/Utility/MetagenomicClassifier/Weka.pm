@@ -214,7 +214,7 @@ public class WekaClassifier {
 END
 
     AUTOSTUDY => 1,
-    CLASSPATH => '/gsc/scripts/lib/java/weka.jar',
+    CLASSPATH => $ENV{GENOME_SW_LEGACY_JAVA} . '/weka.jar',
     STUDY => [
     'java.lang.Double',
     'java.util.ArrayList',

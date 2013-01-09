@@ -3,7 +3,7 @@
 
 set srr_ids = $argv[1]      #This is a FILE containing a list of 'subset_names' for vervet (subset_name == lane/index specification)
 set sra_samples = $argv[2]  #This is a FILE containing a 2-column list showing '<subset_name>	 <full_sample_name>'
-set picard_dir = $argv[3]   #This should point to the version of picard to use...due to some custom modifications made for us by the author, this needs to be: /gsc/scripts/lib/java/samtools/picard-tools-1.27
+set picard_dir = $argv[3]   #This should point to the version of picard to use...due to some custom modifications made for us by the author, this needs to be: $ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.27
 set tmp_dir = $argv[4]      #This points to a temporary working directory created by: Genome::Sys->create_temp_directory
 set pwd = `pwd`
 

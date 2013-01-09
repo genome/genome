@@ -112,7 +112,7 @@ foreach my $sample_name (sort {$a cmp $b} keys(%{$index})) { #This example shoul
 	$subset_name_space_delimited_list .= "$subset_name ";
     }
     $subset_name_space_delimited_list =~ s/\s+$//;
-    my $cmd = VervetHmpSraProcess->create(srs_sample_id => "$sample_name",srr_accessions => "$subset_name_space_delimited_list",picard_dir => "/gsc/scripts/lib/java/samtools/picard-tools-1.27");
+    my $cmd = VervetHmpSraProcess->create(srs_sample_id => "$sample_name",srr_accessions => "$subset_name_space_delimited_list",picard_dir => "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.27");
     ok($cmd, 'created VervetHmpSraProcess object');
     ok($cmd->execute, 'executed VervetHmpSraProcess object');
 }

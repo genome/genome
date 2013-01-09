@@ -24,7 +24,7 @@ class Genome::InstrumentData::Command::Import::HmpSraProcessNew {
 	ascp_pw => { is_optional => 0, doc => 'DACC FTP password for aspera transfer', },
 	srs_sample_id => { is_optional => 0, doc => 'SRS sample id to extract ... ', },
 	srr_accessions => { is_optional => 0, doc => 'space separated list of SRR accession ids for the raw SRA data downloads to use.', },
-	picard_dir => { is_optional => 1, default_value => "/gsc/scripts/lib/java/samtools/picard-tools-1.27", doc => 'full path to directory containing Picard jar files (note: This path must include the updated EstimateLibraryComplexity that handles redundancy removal)', },
+	picard_dir => { is_optional => 1, default_value => "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.27", doc => 'full path to directory containing Picard jar files (note: This path must include the updated EstimateLibraryComplexity that handles redundancy removal)', },
 	species_name => { is_optional => 0, doc => 'species name to include in various imports.',},
 	_working_dir => { is_optional=>1, is_transient=>1, }
     ],

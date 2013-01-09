@@ -110,6 +110,7 @@ BEGIN { $INC{ "UR/Time.pm"} = "no" };
 # set our internal paths for data and software
 $ENV{GENOME_DB} ||= '/gsc/scripts/opt/genome/db';
 $ENV{GENOME_SW} ||= '/gsc/pkg/bio';
+$ENV{GENOME_SW_LEGACY_JAVA} ||= '/gsc/scripts/lib/java';
 $ENV{GENOME_LOCK_DIR} ||= '/gsc/var/lock';
 $ENV{GENOME_SYS_GROUP} ||= 'info';
 

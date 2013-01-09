@@ -31,7 +31,7 @@ class Genome::InstrumentData::Command::Import::HmpSraProcess {
 	    is_optional => 1,
 	    doc => 'full path to directory containing Picard jar files (note: This path must include the updated EstimateLibraryComplexity that handles redundancy removal)',
             ####default_value => Genome::Model::Tools::Picard->path_for_picard_version,
-	    default_value => "/gsc/scripts/lib/java/samtools/picard-tools-1.27",
+	    default_value => "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.27",
 	},
         container_dir => {
             is_optional => 1,

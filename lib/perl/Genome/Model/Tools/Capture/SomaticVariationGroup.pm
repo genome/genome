@@ -265,7 +265,7 @@ sub output_germline_files
    if($self->germline_roi_file){
     warn "Limiting SNPs to ROI...\n";
     # Limit SNPs to Germline ROI BED
-    system("java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $outfile_normal_snp --regions-file " . $self->germline_roi_file . " --output-file $outfile_normal_snp.roi");
+    system("java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $outfile_normal_snp --regions-file " . $self->germline_roi_file . " --output-file $outfile_normal_snp.roi");
     $outfile_normal_snp .= ".roi";
   }
 
@@ -277,17 +277,17 @@ sub output_germline_files
   if($self->germline_roi_file) {
     warn "Limiting SNPs to ROI...\n";
     # Limit SNPs to Germline ROI BED
-    system("java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $outfile_tumor_snp --regions-file " . $self->germline_roi_file . " --output-file $outfile_tumor_snp.roi");
+    system("java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $outfile_tumor_snp --regions-file " . $self->germline_roi_file . " --output-file $outfile_tumor_snp.roi");
     $outfile_tumor_snp .= ".roi";
   }
 
   # Remove somatic SNPs
   warn "Removing Somatic SNVs from normal list...\n";
-  system("java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $outfile_normal_snp --regions-file " . $somatic_snvs . " --not-file $outfile_normal_snp.germline");
+  system("java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $outfile_normal_snp --regions-file " . $somatic_snvs . " --not-file $outfile_normal_snp.germline");
   $outfile_normal_snp .= ".germline";
 
   warn "Removing Somatic SNVs from tumor list...\n";
-  system("java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $outfile_tumor_snp --regions-file " . $somatic_snvs . " --not-file $outfile_tumor_snp.germline");
+  system("java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $outfile_tumor_snp --regions-file " . $somatic_snvs . " --not-file $outfile_tumor_snp.germline");
   $outfile_tumor_snp .= ".germline";
 
   # Apply FP-filter to SNPs, and also annotate them
@@ -324,7 +324,7 @@ sub output_germline_files
 
     if($self->germline_roi_file) {
       warn "Limiting SNPs to ROI...\n";
-      system("java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $output_snp_varscan --regions-file " . $self->germline_roi_file . " --output-file $output_snp_varscan.roi");
+      system("java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $output_snp_varscan --regions-file " . $self->germline_roi_file . " --output-file $output_snp_varscan.roi");
       $output_snp_varscan .= ".roi";
     }
 
@@ -355,7 +355,7 @@ sub output_germline_files
     # If ROIs are defined, select only the indels within
     if($self->germline_roi_file) {
       warn "Limiting Indels to ROI...\n";
-      system("java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $output_indel_gatk --regions-file " . $self->germline_roi_file . " --output-file $output_indel_gatk.roi");
+      system("java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $output_indel_gatk --regions-file " . $self->germline_roi_file . " --output-file $output_indel_gatk.roi");
       $output_indel_gatk .= ".roi";
     }
 
@@ -395,7 +395,7 @@ sub output_germline_files
     if($self->germline_roi_file)
     {
       warn "Limiting Indels to ROI...\n";
-      system("java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $output_indel_varscan --regions-file " . $self->germline_roi_file . " --output-file $output_indel_varscan.roi");
+      system("java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $output_indel_varscan --regions-file " . $self->germline_roi_file . " --output-file $output_indel_varscan.roi");
       $output_indel_varscan .= ".roi";
     }
 

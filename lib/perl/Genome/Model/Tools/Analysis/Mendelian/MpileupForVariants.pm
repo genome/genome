@@ -187,7 +187,7 @@ sub execute {                               # replace with real execution logic.
 
 sub varscan_cmd
 {
-#	return("java -jar /gsc/scripts/lib/java/VarScan/VarScan.jar ");
+#	return("java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar ");
 	return("java -cp /gscuser/dkoboldt/Software/VarScan net.sf.varscan.VarScan ");
 }
 

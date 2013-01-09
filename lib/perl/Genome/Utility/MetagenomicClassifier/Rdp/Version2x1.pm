@@ -45,7 +45,7 @@ use Inline(
 END
 
     AUTOSTUDY => 1,
-    CLASSPATH => '/gsc/scripts/lib/java/rdp_classifier-2.1.jar',
+    CLASSPATH => $ENV{GENOME_SW_LEGACY_JAVA} . '/rdp_classifier-2.1.jar',
     STUDY => [
         'edu.msu.cme.rdp.classifier.rrnaclassifier.ClassifierFactory',
         'edu.msu.cme.rdp.classifier.rrnaclassifier.Classifier',

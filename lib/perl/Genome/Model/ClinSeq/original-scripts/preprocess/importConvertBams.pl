@@ -155,7 +155,7 @@ foreach my $name (sort keys %bams){
     print BLUE, "\n\nConverting BAM to FASTQ using picard:", RESET;
     #gmt picard sam-to-fastq --input=$bampath --fastq=$r1_fastq --fastq2=$r2_fastq --fragment-fastq=/dev/null --maximum-memory=12  --maximum-permgen-memory=256
     #OR
-    #java -Xmx12g -XX:MaxPermSize=256m  -cp /gsc/scripts/lib/java/samtools/picard-tools-1.22/sam-1.22.jar:/gsc/scripts/lib/java/samtools/picard-tools-1.22/picard-1.22.jar:/gsc/scripts/opt/genome/snapshots/stable/genome-1035/lib/perl/Genome/Model/Tools/Picard/SamToFastq/GCSamToFastq.jar edu.wustl.genome.samtools.GCSamToFastq  INPUT='$bampath' FASTQ='$r1_fastq' SECOND_END_FASTQ='$r2_fastq' FRAGMENT_FASTQ='/dev/null'
+    #java -Xmx12g -XX:MaxPermSize=256m  -cp $ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.22/sam-1.22.jar:$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.22/picard-1.22.jar:/gsc/scripts/opt/genome/snapshots/stable/genome-1035/lib/perl/Genome/Model/Tools/Picard/SamToFastq/GCSamToFastq.jar edu.wustl.genome.samtools.GCSamToFastq  INPUT='$bampath' FASTQ='$r1_fastq' SECOND_END_FASTQ='$r2_fastq' FRAGMENT_FASTQ='/dev/null'
     my $rm_cmd = "rm -f $r1_fastq $r2_fastq $r1_fastq_bz $r2_fastq_bz $r1_fastq_temp $r2_fastq_temp";
     my $cmd_picard = "gmt picard sam-to-fastq --input=$bampath --fastq=$r1_fastq --fastq2=$r2_fastq --fragment-fastq=/dev/null --maximum-memory=12  --maximum-permgen-memory=256";
     print BLUE, "\n$cmd_picard\n\n", RESET;
