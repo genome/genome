@@ -27,6 +27,16 @@ UR::Object->add_observer(
     callback => sub {
         my($self, $type, $message) = @_;
 
+        # this should never happen given recent UR updates
+        if (not defined $self) {
+            no warnings;
+            Carp::confess("self is undef, are you using the latest UR?: @_");
+        }
+        if (not defined $message) {
+            no warnings;
+            Carp::confess("message is undef, are you using the latest UR?: @_");
+        }
+
         unless ($log4perl) {
             $log4perl = get_logger();
             $log4perl->level($ERROR);
