@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use Date::Format;
 use File::Temp;
 use Test::More;
 
@@ -79,6 +80,10 @@ sub build_with_example_build {
     );
     die 'Failed to create MC16s model!' if not $entities{'build_'.$sequencing_platform};
     $entities{'build_'.$sequencing_platform}->create_subdirectories;
+    $entities{'build_'.$sequencing_platform}->the_master_event->event_status('Succeeded');
+    my $time = time();
+    my $timestamp = Date::Format::time2str(q(%Y-%m-%d %H:%M:%S), $time);
+    $entities{'build_'.$sequencing_platform}->the_master_event->date_completed($timestamp);
 
     $entities{'example_build_'.$sequencing_platform} = Genome::Model::Build->create(
         model=> $model,
@@ -92,6 +97,8 @@ sub build_with_example_build {
     );
     $entities{'example_build_'.$sequencing_platform}->data_directory( $example_data_directories{$sequencing_platform} ) or die 'Failed to get example data directory!';
     $entities{'example_build_'.$sequencing_platform}->the_master_event->event_status('Succeeded');
+    my $past_timestamp = Date::Format::time2str(q(%Y-%m-%d %H:%M:%S), $time - 60);
+    $entities{'example_build_'.$sequencing_platform}->the_master_event->date_completed($past_timestamp);
 
     my $instrument_data_method = 'instrument_data_'.$sequencing_platform;
     my $instrument_data = __PACKAGE__->$instrument_data_method;
