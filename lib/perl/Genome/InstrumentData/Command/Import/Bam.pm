@@ -276,7 +276,9 @@ sub execute {
         die "Import Failed.";
     }
 
-    $self->status_message("Importation of BAM completed successfully.");
+    $self->status_message("Importation of BAM completed successfully. Resizing allocation to actual usage.");
+    eval { $disk_alloc->reallocate; }; #don't want to fail just for this
+    if($@) { $self->warning_message($@); }
     $self->status_message("Your instrument-data id is ".$instrument_data_id);
 
     return $instrument_data_id;
