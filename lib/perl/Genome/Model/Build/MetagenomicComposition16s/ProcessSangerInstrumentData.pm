@@ -113,13 +113,9 @@ sub _amplicon_iterator {
         return;
     }
 
-    # collect the read names
-    for (1..2) {  # . and ..
-        my $dot_dir = $dh->read;
-        Carp::confess("Expecting one of the dot directories, but got $dot_dir for ".$self->build->description) unless $dot_dir =~ /^\.{1,2}$/;
-    }
     my @all_read_names;
     while ( my $read_name = $dh->read ) {
+        next if ($read_name eq '.' || $read_name eq '..');
         $read_name =~ s/\.gz$//;
         push @all_read_names, $read_name;
     }
@@ -243,12 +239,9 @@ sub _dump_and_link_instrument_data {
         my $dh = Genome::Sys->open_directory($instrument_data_dir);
         return if not $dh;
 
-        for (1..2) {  # . and ..
-            my $dot_dir = $dh->read;
-            Carp::confess("Expecting one of the dot directories, but got $dot_dir for ".$self->build->description) unless $dot_dir =~ /^\.{1,2}$/;
-        }
         my $cnt = 0;
         while ( my $trace = $dh->read ) {
+            next if ($trace eq '.' || $trace eq '..');
             $cnt++;
             my $target = sprintf('%s/%s', $instrument_data_dir, $trace);
             my $link = sprintf('%s/%s', $chromat_dir, $trace);
