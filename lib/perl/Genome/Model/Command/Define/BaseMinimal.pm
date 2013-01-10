@@ -91,7 +91,7 @@ sub _preprocess_subclass_description {
             next if $command_has->{$name};
             next if grep { $_->can($name) } @inheritance;
             if (($p->can("is_input") and $p->is_input) or $name =~ /^(processing_profile|processing_profile_id|name)$/) {                
-                my %data = %{ UR::Util::deep_copy($p) };
+                my %data = %{$p};
                 for my $key (keys %data) {
                     delete $data{$key} if $key =~ /^_/;
                 }
