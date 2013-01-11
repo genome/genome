@@ -19,8 +19,9 @@ is(        $build->the_master_event->event_status('Succeeded'), 'Succeeded', 'bu
 is($example_build->the_master_event->event_status('Succeeded'), 'Succeeded', 'example_build is succeeded');
 
 my $time = time();
-my $older_date = Date::Format::time2str(q(%Y-%m-%d %H:%M:%S), $time - 60);
-my $newer_date = Date::Format::time2str(q(%Y-%m-%d %H:%M:%S), $time + 60);
+my $date_template = UR::Context->date_template;
+my $older_date = Date::Format::time2str($date_template, $time - 60);
+my $newer_date = Date::Format::time2str($date_template, $time + 60);
 ok(        $build->the_master_event->date_completed($older_date), 'set build date_completed');
 ok($example_build->the_master_event->date_completed($newer_date), 'set example_build date_completed');
 
