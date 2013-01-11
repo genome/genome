@@ -118,19 +118,21 @@ sub execute {
 
     local $SIG{'INT'} = sub { $count = $max_read + 1; };
 
+    my %this_formats = %formats;
+
     while($count++ < $max_read and my $read = $iter->next()) {
         print "read $count\r" unless ($self->quiet);
         my $qual = $read->quality_string;
         my @raw_qual = map { ord } split(//,$qual);
 
-        foreach my $format (keys %formats) {
-            unless ($formats{$format}->(\@raw_qual)) {
-                delete $formats{$format};
+        foreach my $format (keys %this_formats) {
+            unless ($this_formats{$format}->(\@raw_qual)) {
+                delete $this_formats{$format};
             }
         }
     }
 
-    $self->encoding([ keys %formats ]);
+    $self->encoding([ keys %this_formats ]);
     unless ($self->quiet) {
         print "\nPossible format(s): ", join(', ', keys %formats),"\n";
     }
@@ -151,7 +153,7 @@ sub getline {
         no warnings 'uninitialized';
         $string .= <$self>;
     }
-    return $string;
+    return length($string) ? $string : undef;
 }
 
 1;
