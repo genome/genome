@@ -23,7 +23,7 @@ class VervetHmpSraProcess {
     has => [
 	srs_sample_id => { is_optional => 0, doc => 'SRS sample id to extract ... for Vervet this is the sample_name, such as WFAA-1088-0104014095', },
 	srr_accessions => { is_optional => 0, doc => 'space separated list of SRR accession ids for the raw SRA data downloads to use.', },
-	picard_dir => { is_optional => 1, default_value => "/gsc/scripts/lib/java/samtools/picard-tools-1.27", doc => 'full path to directory containing Picard jar files (note: This path must include the updated EstimateLibraryComplexity that handles redundancy removal)', },
+	picard_dir => { is_optional => 1, default_value => "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.27", doc => 'full path to directory containing Picard jar files (note: This path must include the updated EstimateLibraryComplexity that handles redundancy removal)', },
 	_working_dir => { is_optional=>1, is_transient=>1, },
 	organism => { is_optional => 1, default_value => "Chlorocebus aethiops", }
     ],

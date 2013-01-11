@@ -220,6 +220,9 @@ sub files_ignored_by_diff {
         variants/snvs_tcga.tar.gz
         variants/snvs_tcga.tar.gz.md5
         variants/snvs_tcga/MANIFEST.txt
+        variants/indels_tcga.tar.gz
+        variants/indels_tcga.tar.gz.md5
+        variants/indels_tcga/MANIFEST.txt
         gatk_output_file.vcf
         \.vcf.idx$
         workflow\.xml$

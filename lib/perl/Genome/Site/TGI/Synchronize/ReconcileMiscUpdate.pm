@@ -90,17 +90,17 @@ sub _execute_indels {
     );
     push @{$self->_misc_updates}, @misc_updates;
 
-    my (%multi_misc_updates, @order);
+    my (%subject_attr_misc_updates, @order);
     foreach my $misc_update ( @misc_updates ) {
-        my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate->get_or_create_from_misc_updates($misc_update);
-        if ( not $multi_misc_updates{ $multi_misc_update->id } ) {
-            $multi_misc_updates{ $multi_misc_update->id } = $multi_misc_update;
-            push @order, $multi_misc_update->id;
+        my $subject_attr_misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute->get_or_create_from_misc_updates($misc_update);
+        if ( not $subject_attr_misc_updates{ $subject_attr_misc_update->id } ) {
+            $subject_attr_misc_updates{ $subject_attr_misc_update->id } = $subject_attr_misc_update;
+            push @order, $subject_attr_misc_update->id;
         }
     }
 
     for my $id ( @order ) {
-        $multi_misc_updates{$id}->perform_update;
+        $subject_attr_misc_updates{$id}->perform_update;
     }
 
     return 1;

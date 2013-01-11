@@ -115,8 +115,8 @@ sub resolve_average_insert_size_for_instrument_data {
     elsif ($instrument_data->original_est_fragment_size) {
         $insert_size = $instrument_data->original_est_fragment_size;
     }
-    elsif ($instrument_data->library->fragment_size_range) {
-        $insert_size = $instrument_data->library->fragment_size_range;
+    elsif ($instrument_data->library->library_insert_size) {
+        $insert_size = $instrument_data->library->library_insert_size;
     }
     unless ($insert_size and $insert_size =~ /^\d+$/ or $insert_size =~ /^\d+\s+\d+$/ or $insert_size =~ /^\d+-\d+$/ or $insert_size =~ /^\d+\.\d+$/ ) {
         return;

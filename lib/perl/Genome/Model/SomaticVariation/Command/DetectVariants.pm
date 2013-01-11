@@ -110,21 +110,8 @@ sub execute{
             symlink($unexpected_filename_output, $lq_result);
         }
 
-        # Create a TCGA compliant vcf
-        my $snv_vcf = $build->data_directory . "/variants/snvs.vcf.gz";
-        my $tcga_vcf = $build->data_directory . "/variants/snvs_tcga.tar.gz";
-        if (-s $snv_vcf) {
-            my $tcga_command = Genome::Model::Tools::Vcf::TcgaSanitize->create(
-                input_file => $snv_vcf,
-                output_file => $tcga_vcf,
-                package_for_tcga => 1,
-            );
-            unless ($tcga_command->execute) {
-                die $self->error_message("Failed to TcgaSanitize the final snvs vcf file");
-            }
-        }
     }
-            
+
     if ($build->indel_detection_strategy){
         my $result = $build->data_set_path("variants/indels.hq",$version,'bed'); 
         unless (-e $result){
@@ -169,7 +156,33 @@ sub execute{
         }
     }
 
+    $self->_create_tcga_vcfs;
+
     $self->status_message("detect variants step completed");
+
+    return 1;
+}
+
+sub _create_tcga_vcfs {
+    my $self = shift;
+    my $build = $self->build;
+
+    for my $type ("snv", "indel") {
+        # Create a TCGA compliant vcf
+        my $original_vcf = $build->data_directory . "/variants/" . $type . "s.vcf.gz";
+        my $tcga_vcf = $build->data_directory . "/variants/" . $type . "s_tcga.tar.gz";
+        my $strategy_accessor = $type . "_detection_strategy";
+        if ($build->$strategy_accessor and -s $original_vcf) {
+            my $tcga_command = Genome::Model::Tools::Vcf::TcgaSanitize->create(
+                input_file => $original_vcf,
+                output_file => $tcga_vcf,
+                package_for_tcga => 1,
+            );
+            unless ($tcga_command->execute) {
+                die $self->error_message("Failed to TcgaSanitize the final snvs vcf file");
+            }
+        }
+    }
 
     return 1;
 }

@@ -128,7 +128,7 @@ sub execute {
     if (!-s $fixmated_file) {
         my @bam_files = <$bam_file_dir/*.bam>;
         my $bam_file_list = join(" I=",@bam_files);
-        my $merge_cmd = "java -Xmx2g -cp /gsc/scripts/lib/java/samtools/picard-tools-1.04/MergeSamFiles.jar net.sf.picard.sam.MergeSamFiles MSD=true SO=coordinate AS=true VALIDATION_STRINGENCY=SILENT O=$fixmated_file I=$bam_file_list";
+        my $merge_cmd = "java -Xmx2g -cp $ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.04/MergeSamFiles.jar net.sf.picard.sam.MergeSamFiles MSD=true SO=coordinate AS=true VALIDATION_STRINGENCY=SILENT O=$fixmated_file I=$bam_file_list";
 
         $self->status_message("Merging per lane bams into a single, large fixmated file with: $merge_cmd");
         my $merge_rv = Genome::Sys->shellcmd(cmd=>$merge_cmd,input_files=>\@bam_files,output_files=>[$fixmated_file]);

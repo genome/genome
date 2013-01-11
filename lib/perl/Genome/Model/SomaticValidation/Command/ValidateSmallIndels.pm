@@ -111,8 +111,8 @@ sub _run_workflow {
     # TODO stop hardcoding stuff
     my %input;
 
-    # Params for gatk 
-    $input{gatk_memory} = "16g";
+    # Params for gatk
+    $input{gatk_memory} = '16';
     $input{gatk_version} = 5777;
     $input{index_bam} = 1,
     $input{target_intervals_are_sorted} = 0;
@@ -187,7 +187,7 @@ sub _resolve_inputs {
     # Make sure that if output paths arent set that the somatic variation build is, and set good defaults
     if ($self->build) {
         if ($self->final_output_file || $self->realigned_bam_file_directory || $self->small_indel_output_bed
-            || $self->large_indel_output_bed || $self->varscan_indel_output || $self->varscan_snp_output) {
+            || $self->varscan_indel_output || $self->varscan_snp_output) {
             die $self->error_message("If a build is provided, you should not provide other params");
         }
 
@@ -195,7 +195,6 @@ sub _resolve_inputs {
         $self->final_output_file("$base_dir/final_output");
         $self->realigned_bam_file_directory("$base_dir/realigned_bams");
         $self->small_indel_output_bed("$base_dir/small_indels.bed");
-        $self->large_indel_output_bed("$base_dir/large_indels.bed");
         $self->varscan_indel_output("$base_dir/varscan_indels");
         $self->varscan_snp_output("$base_dir/varscan_snps");
     } else {

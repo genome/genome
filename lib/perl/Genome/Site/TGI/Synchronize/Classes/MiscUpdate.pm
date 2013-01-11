@@ -16,8 +16,10 @@ IS_RECONCILED         NUMBER   (1)                     0      NOT NULL
 =cut
 
 class Genome::Site::TGI::Synchronize::Classes::MiscUpdate {
-    is => 'UR::Object',
     table_name => 'GSC.misc_update',
+    is => 'UR::Object',
+    is_abstract => 1,
+    subclassify_by => 'subclass_name',
     id_by => [
         subject_class_name => {
             is => 'Text', 
@@ -65,14 +67,55 @@ class Genome::Site::TGI::Synchronize::Classes::MiscUpdate {
         result => { is => 'Text', },
         status => { is => 'Text', },
     ],
+    has_optional_calculated_constant => [
+        schema => {
+            calculate_from => 'subject_class_name',
+            calculate => sub {
+                my $subject_class_name = shift;
+                return (schema_and_lims_table_name($subject_class_name))[0];
+            },
+        },
+        lims_table_name => {
+            calculate_from => 'schema_and_lims_table_name',
+            calculate => sub {
+                my $subject_class_name = shift;
+                return (schema_and_lims_table_name($subject_class_name))[1];
+            },
+        },
+        subclass_name => {
+            is => 'Text',
+            calculate_from => 'subject_class_name',
+            calculate => sub {
+                my $subject_class_name = shift;
+                my $lims_table_name = schema_and_lims_table_name_from_subject_class_name($subject_class_name);
+                my $class = __PACKAGE__.'::'.Genome::Utility::Text::string_to_camel_case($lims_table_name);
+                return $class if eval{ $class->__meta__; };
+                return __PACKAGE__.'::Unsupported';
+            },
+        },
+    ],
     data_source => 'Genome::DataSource::GMSchema',
 };
+
+sub schema_and_lims_table_name_from_subject_class_name {
+    my $subject_class_name = shift;
+    Carp::confess('No subject class name to get schema and lims table name') if not $subject_class_name;
+    my ($schema, $lims_table_name) = split(/\./, $subject_class_name);
+    if ( not $schema ) {
+        Carp::confess('Failed to get schema from subject class name => '.$subject_class_name);
+    }
+    if ( not $lims_table_name ) {
+        Carp::confess('Failed to get lims table name from subject class name => '.$subject_class_name);
+    }
+    return ( $schema, $lims_table_name );
+}
 
 my %lims_table_names_to_site_tgi_class_names = (
     "organism_taxon" => 'Genome::Site::TGI::Synchronize::Classes::Taxon',
     "organism_individual" => 'Genome::Site::TGI::Synchronize::Classes::Individual',
     "population_group" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroup',
     "organism_sample" => 'Genome::Site::TGI::Synchronize::Classes::Sample',
+    "library_summary" => 'Genome::Site::TGI::Synchronize::Classes::LibrarySummary',
     #"sample_attribute" => 'Genome::Site::TGI::Synchronize::Classes::SubjectAttribute',
     #"population_group_member" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember',
 );
@@ -113,6 +156,7 @@ my %subject_class_names_to_genome_class_names = (
     "organism_sample" => 'Genome::Sample',
     "sample_attribute" => 'Genome::SubjectAttribute',
     "population_group_member" => 'Genome::SubjectAttribute',
+    "library_summary" => 'Genome::Library',
 );
 sub genome_class_name {
     my $self = shift;
@@ -149,97 +193,6 @@ sub genome_entity {
     }
 
     return $genome_entity;
-}
-
-sub perform_update {
-    my $self = shift;
-
-    my $lims_table_name = $self->lims_table_name;
-    return if not $lims_table_name;
-
-    my $site_tgi_class_name = $self->site_tgi_class_name;
-    if ( not $site_tgi_class_name ) {
-        return $self->failure;
-    }
-
-    my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($self->subject_property_name);
-    if ( not $genome_property_name ) {
-        $self->error_message('No genome property name for lims property name => '.$self->subject_property_name);
-        return $self->failure;
-    }
-
-    if ( not grep { $genome_property_name eq $_ } $site_tgi_class_name->properties_to_keep_updated ) {
-        $self->status_message('Update for genome property name not supported => '.$genome_property_name);
-        return $self->skip;
-    }
-
-    my $genome_class_name = $self->genome_class_name;
-    if ( not $genome_class_name ) {
-        return $self->failure; 
-    }
-
-    my $genome_entity = $self->genome_entity;
-    if ( not $genome_entity ) {
-        return $self->failure;
-    }
-
-    # Get values
-    my $new_value = $self->new_value;
-    my $old_value = $self->old_value;
-    my ($current_attr, $current_value);
-    if ( $genome_property_name eq 'name' ) {
-        $current_value = $genome_entity->name;
-    }
-    else {
-        $current_attr = Genome::SubjectAttribute->get(
-            subject_id => $genome_entity->id,
-            attribute_label => $genome_property_name,
-            nomenclature => 'WUGC',
-        );
-        $current_value = $current_attr->attribute_value if $current_attr;
-    }
-    $self->{_current_value} = $current_value;
-
-    # NEW and CURRENT are NULL
-    if ( not defined $new_value and not defined $current_value ) {
-        $self->is_reconciled(1);
-        return $self->success;
-    }
-
-    # NEW and CURRENT are NOT NULL and the same
-    if ( defined $current_value and defined $new_value and $current_value eq $new_value ) {
-        $self->is_reconciled(1);
-        return $self->success;
-    }
-
-    # OLD and CURRENT value do not match
-    if ( defined $old_value and defined $current_value and $old_value ne $current_value ) {
-        $self->error_message("Current APipe value ($current_value) does not match the LIMS old value ($old_value)!");
-        return $self->failure;
-    }
-
-    # Update
-    my $updated_value;
-    if ( $genome_property_name eq 'name' ) {
-        $updated_value = $genome_entity->name($new_value);
-    }
-    else {
-        $current_attr->delete if $current_attr;
-        my $new_attr = Genome::SubjectAttribute->create(
-            subject_id => $genome_entity->id,
-            attribute_label => $genome_property_name,
-            attribute_value => $new_value,
-            nomenclature => 'WUGC',
-        );
-        $updated_value = $new_attr->attribute_value
-    }
-
-    if ( not $updated_value or $updated_value ne $new_value ) {
-        $self->error_message('Failed to set new value!');
-        return $self->failure;
-    }
-
-    return $self->success;
 }
 
 sub _set_result {

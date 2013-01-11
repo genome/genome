@@ -39,7 +39,7 @@ use Inline(
 END
 
     AUTOSTUDY => 1,
-    CLASSPATH => join(':', map { '/gsc/scripts/lib/java/rdp-classifier/rdp-classifier-2.5/'.$_ } (qw/ rdp_classifier-2.5.jar ReadSeq.jar commons-cli.jar junit.jar /)),
+    CLASSPATH => join(':', map { $ENV{GENOME_SW_LEGACY_JAVA} . '/rdp-classifier/rdp-classifier-2.5/'.$_ } (qw/ rdp_classifier-2.5.jar ReadSeq.jar commons-cli.jar junit.jar /)),
     STUDY => [
         'edu.msu.cme.rdp.classifier.utils.ClassifierFactory',
         'edu.msu.cme.rdp.classifier.utils.ClassifierSequence',

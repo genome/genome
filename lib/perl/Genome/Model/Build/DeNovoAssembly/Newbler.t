@@ -57,7 +57,7 @@ my $library = Genome::Library->create(
     id => -12345,
     name => $sample->name.'-testlibs',
     sample_id => $sample->id,
-    fragment_size_range => 260,
+    library_insert_size => 260,
 );
 ok($library, 'library') or die;
 

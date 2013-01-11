@@ -446,6 +446,8 @@ sub execute {
         return;
     }
     $self->status_message("The md5sum for the copied tar file is: ".$copy_md5);
+    eval { $disk_alloc->reallocate; }; #don't want to fail just for this
+    if($@) { $self->warning_message($@); }
     $self->status_message("The instrument-data id of your new record is ".$instrument_data_id);
     return 1;
 

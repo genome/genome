@@ -13,13 +13,16 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::OrganismTaxon') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::OrganismIndividual') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::PopulationGroup') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::OrganismSample') or die;
 
 my $cnt = 0;
 
 # Valid
-my $taxon = Genome::Taxon->__define__(id => -100, name => '__TEST_TAXON__');
-my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+my $taxon = Genome::Taxon->create(id => -100, name => '__TEST_TAXON__');
+my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.organism_taxon',
     subject_id => $taxon->id,
     subject_property_name => 'estimated_organism_genome_size',
@@ -31,6 +34,7 @@ my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define_
     is_reconciled => 0,
 );
 ok($misc_update, 'Define misc update');
+isa_ok($misc_update, 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::OrganismTaxon');
 is($misc_update->lims_table_name, 'organism_taxon', 'Correct lims table name');
 my $genome_class_name = $misc_update->genome_class_name;
 is($genome_class_name, 'Genome::Taxon', 'Correct genome class name');
@@ -45,24 +49,8 @@ ok($misc_update->is_reconciled, 'Is reconciled');
 ok(!$misc_update->error_message, 'No error after update');
 is($taxon->estimated_genome_size, 1000, 'Set estimated_genome_size on taxon');
 
-# Invalid genome class
-$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
-    subject_class_name => 'test.blah',
-    subject_id => -100,
-    subject_property_name => 'name',
-    editor_id => 'lims',
-    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
-    old_value => undef,
-    new_value => undef,
-    description => 'UPDATE',
-    is_reconciled => 0,
-);
-ok(!$misc_update->genome_class_name, 'Failed to get genome class name for invalid subject class name');
-my $error_message = $misc_update->error_message;
-is($error_message, 'No genome class name for lims table name => blah', 'Correct error msg');
-
 # No obj for subject id
-$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.organism_taxon',
     subject_id => -10000,
     subject_property_name => 'name',
@@ -74,47 +62,49 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     is_reconciled => 0,
 );
 ok(!$misc_update->genome_entity, 'Failed to get genome entity for invalid id');
-$error_message = $misc_update->error_message;
+my $error_message = $misc_update->error_message;
 is($error_message, 'Failed to get Genome::Taxon for id => -10000', 'Correct error msg');
 
 # Invalid subject class name
-$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
-    subject_class_name => '.',
-    subject_id => $taxon->id,
-    subject_property_name => 'name',
-    editor_id => 'lims',
-    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
-    old_value => undef,
-    new_value => undef,
-    description => 'UPDATE',
-    is_reconciled => 0,
-);
-ok(!$misc_update->lims_table_name, 'Failed to get lims table name invalid subject class name');
-$error_message = $misc_update->error_message;
-is($error_message, 'Failed to get schema from subject class name => .', 'Correct error msg');
+$misc_update = eval {
+    Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+        subject_class_name => '.',
+        subject_id => $taxon->id,
+        subject_property_name => 'name',
+        editor_id => 'lims',
+        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        old_value => undef,
+        new_value => undef,
+        description => 'UPDATE',
+        is_reconciled => 0,
+    );
+};
+ok(!$misc_update, 'Failed to get lims table name invalid subject class name');
+like($@, qr/^Failed to get schema from subject class name => \./, 'Correct error msg');
 
 # Invalid subject class name
-$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
-    subject_class_name => 'schema.',
-    subject_id => $taxon->id,
-    subject_property_name => 'name',
-    editor_id => 'lims',
-    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
-    old_value => undef,
-    new_value => undef,
-    description => 'UPDATE',
-    is_reconciled => 0,
-);
-ok(!$misc_update->lims_table_name, 'Failed to get lims table name from invalid subject class name.');
-$error_message = $misc_update->error_message;
-is($error_message, 'Failed to get lims table name from subject class name => schema.', 'Correct error msg');
+$misc_update = eval{ 
+    Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+        subject_class_name => 'schema.',
+        subject_id => $taxon->id,
+        subject_property_name => 'name',
+        editor_id => 'lims',
+        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        old_value => undef,
+        new_value => undef,
+        description => 'UPDATE',
+        is_reconciled => 0,
+    );
+};
+ok(!$misc_update, 'Failed to get lims table name from invalid subject class name.');
+like($@, qr/^Failed to get lims table name from subject class name => schema\./, 'Correct error msg');
 
 # PERFORM UPDATE FAILS
-# Invalid subject class name
-$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
-    subject_class_name => 'schema.org',
+# Unsupported subject class name
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    subject_class_name => 'test.blah',
     subject_id => $taxon->id,
-    subject_property_name => 'name',
+    subject_property_name => 'full_name',
     editor_id => 'lims',
     edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => '__TEST_TAXON__',
@@ -122,16 +112,18 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     description => 'UPDATE',
     is_reconciled => 0,
 );
-ok(!$misc_update->perform_update, 'Failed to perform update for invalid subject class name');
+ok($misc_update, 'Create misc update for unsupported subject class name');
+isa_ok($misc_update, 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Unsupported');
+ok(!$misc_update->perform_update, 'Perform update');
+is($misc_update->result, 'FAIL', 'Correct result after update');
+is($misc_update->status, "FAIL	UPDATE	test.blah	-100	full_name	'NA'	'__TEST_TAXON__'	'__NEW_NAME__'", 'Correct status after update');
+ok(!$misc_update->is_reconciled, 'Is reconciled');
 $error_message = $misc_update->error_message;
-is($misc_update->result, 'FAIL', 'Correct result (FAIL) after update');
-ok($misc_update->has_failed, 'Misc update "has_failed"');
-is($misc_update->status, "FAIL	UPDATE	schema.org	-100	name	'NA'	'__TEST_TAXON__'	'__NEW_NAME__'", 'Correct status after update');
-is($error_message, 'Unsupported LIMS table name => org', 'Correct error msg');
-ok(!$misc_update->is_reconciled, 'Is not reconciled');
+is($error_message, 'Unsupported subject class name! test.blah', 'Correct error');
+is($taxon->name, '__TEST_TAXON__', 'Did not set name on taxon');
 
 # Old value not the same as current value
-$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.organism_taxon',
     subject_id => $taxon->id,
     subject_property_name => 'estimated_organism_genome_size',
@@ -142,7 +134,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     description => 'UPDATE',
     is_reconciled => 0,
 );
-ok($misc_update, 'Define misc update');
+ok($misc_update, 'Create misc update for old value not the same as new value');
 ok(!$misc_update->perform_update, 'Failed to perform update');
 is($misc_update->result, 'FAIL', 'Correct result (FAIL) after update');
 ok($misc_update->has_failed, 'Misc update "has_failed"');
@@ -153,7 +145,7 @@ is($taxon->estimated_genome_size, 1000, 'Did not alter estimated_genome_size on 
 
 # PERFORM UPDATE SKIP
 # Unsupported lims attr
-$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.organism_taxon',
     subject_id => $taxon->id,
     subject_property_name => 'next_amplicon_iteration',
@@ -164,7 +156,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
     description => 'UPDATE',
     is_reconciled => 0,
 );
-ok($misc_update, 'Define misc update');
+ok($misc_update, 'Create misc update with unsupported lims attr');
 ok($misc_update->perform_update, 'Failed to perform update');
 is($misc_update->result, 'SKIP', 'Correct result (SKIP) after update');
 is($misc_update->status, "SKIP	UPDATE	test.organism_taxon	-100	next_amplicon_iteration	'NA'	'not the same as the current value'	'10000'", 'Correct status after update');

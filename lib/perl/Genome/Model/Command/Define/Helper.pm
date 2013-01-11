@@ -16,7 +16,7 @@ class Genome::Model::Command::Define::Helper {
         processing_profile => {
             is => 'Genome::ProcessingProfile',
             id_by => 'processing_profile_id',
-            doc => 'Processing profile to be used by model, can provide either a name or an id',
+            doc => 'Processing profile to be used by model, can provide either a name or an ID',
         },
     ],
     has_optional_input => [

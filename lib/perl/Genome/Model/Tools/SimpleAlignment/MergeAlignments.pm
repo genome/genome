@@ -65,7 +65,7 @@ sub execute {
                 $self->status_message("Destination file: ".$merged_file);
          
                 #get from pp eventually
-                #my $picard_path = "/gsc/scripts/lib/java/samtools/picard-tools-1.07/";
+                #my $picard_path = "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.07/";
                 #my $merge_tool = "java -Xmx3g -cp $picard_path/MergeSamFiles.jar net.sf.picard.sam.MergeSamFiles MSD=true SO=coordinate AS=true tmp_dir=$working_directory VALIDATION_STRINGENCY=SILENT O=$merged_file ";
                 #my $list_of_files = join(' I=',@alignment_files);
                 #my $cmd_merge = $merge_tool." I=".$list_of_files;		

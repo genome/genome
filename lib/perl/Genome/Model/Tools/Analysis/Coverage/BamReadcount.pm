@@ -473,7 +473,7 @@ sub execute {
         }
 
         #run varscan to parse the samtools file
-        $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual 0 --output-file $tempdir/indels.varscan";
+        $cmd = "java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual 0 --output-file $tempdir/indels.varscan";
         $self->status_message("Running command: $cmd");
         
         $return = Genome::Sys->shellcmd(

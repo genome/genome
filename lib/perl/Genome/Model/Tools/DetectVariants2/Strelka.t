@@ -10,7 +10,7 @@ BEGIN {
 
 use File::Path;
 use File::Temp;
-use Test::More tests=>13;
+use Test::More tests=>36;
 use above 'Genome';
 use Genome::SoftwareResult;
 
@@ -30,7 +30,7 @@ my $test_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-Tools-DetectVariants-
 ok(-e $test_dir, "Found test dir: $test_dir") or die;
 
 #Define the expected output dir where the expected Strelka results files are stored
-my $expected_output_dir = $test_dir . "expected_outputs/2012-10-10";
+my $expected_output_dir = $test_dir . "expected_outputs/2013-01-08";
 ok(-e $expected_output_dir, "Created or found expected output dir: $expected_output_dir") or die;
 
 #Define paths to a test tumor and normal BAM file
@@ -86,12 +86,49 @@ is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
 
 #Found 74 differing lines in the first test run against the expected result.  
 #These all seem to correspond to lines containing dates or randomly generated temp dir paths
-my @diff = `diff -r -x '*chromosomes*' $expected_output_dir $actual_output_dir`;
-ok(@diff == 72 || @diff == 74 || @diff == 98, "Only 72, 74, or 98 differences from expected results and actual were found (the number expected for same and different day testing respectively)")
-or do { 
-  my $diff_line_count = scalar(@diff);
-  diag("$diff_line_count differences are:");
-  diag(@diff);
-  print "\n\nFound $diff_line_count differing lines but expected 72, 74, or 98\n\n";
-  Genome::Sys->shellcmd(cmd => "cp -L -r $actual_output_dir /tmp/last-strelka-test-result");
-};
+foreach my $vcf_result (qw/snvs.hq indels.hq all.somatic.indels.vcf all.somatic.snvs.vcf passed.somatic.indels.vcf passed.somatic.snvs.vcf/) {
+    my $expected = `cat $expected_output_dir/output/results/$vcf_result | grep -v "^##fileDate" | grep -v "^##startTime" | grep -v "^##cmdline"`;
+    my $actual = `cat $actual_output_dir/output/results/$vcf_result | grep -v "^##fileDate" | grep -v "^##startTime" | grep -v "^##cmdline"`;
+    my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
+    ok(!$diff, "output matched expected result for $vcf_result")
+    or do {
+        diag("Diff: $diff\n");
+    }
+}
+
+foreach my $gz_vcf_result (qw/indels.vcf.gz snvs.vcf.gz/) {
+    my $expected = `zcat $expected_output_dir/$gz_vcf_result | grep -v "^##fileDate" | grep -v "^##startTime" | grep -v       "^##cmdline"`;
+    my $actual = `zcat $actual_output_dir/$gz_vcf_result | grep -v "^##fileDate" | grep -v "^##startTime" | grep -v       "^##cmdline"`;
+    my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
+    ok(!$diff, "output matched expected result for $gz_vcf_result") 
+    or diag("Diff: $diff\n");
+}
+
+foreach my $file (qw|output/task.complete indels.hq.bed indels.hq.v1.bed indels.hq.v2.bed indels.lq.bed indels.lq.v1.bed indels.lq.v2.bed snvs.hq.bed snvs.hq.v1.bed snvs.hq.v2.bed snvs.lq.bed snvs.lq.v1.bed snvs.lq.v2.bed strelka_config.ini|) { 
+    my $diff = Genome::Sys->diff_file_vs_file("$expected_output_dir/$file", "$actual_output_dir/$file");
+    ok(!$diff, "output matched expected result for $file")
+    or diag("Diff: $diff\n");
+}
+
+my $expected = `cat $expected_output_dir/output/config/run.config.ini | grep -v "^configurationCmdline" | grep -v "^outDir"`;
+my $actual = `cat $actual_output_dir/output/config/run.config.ini | grep -v "^configurationCmdline" | grep -v "^outDir"`;
+my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
+ok(!$diff, "output matched expected result for output/config/run.config.ini")
+or  diag("Diff: $diff\n");
+
+
+$expected = `cat $expected_output_dir/output/Makefile | grep -v "^script_dir" | grep -v "^analysis_dir" | grep -v "^config_file"`;
+$actual = `cat $actual_output_dir/output/Makefile | grep -v "^script_dir" | grep -v "^analysis_dir" | grep -v "^config_file"`;
+$diff = Genome::Sys->diff_text_vs_text($actual, $expected);
+ok(!$diff, "output matched expected result for output/Makefile")
+or diag("Diff: $diff\n");
+
+#my @diff = `diff -r -x '*chromosomes*' $expected_output_dir $actual_output_dir`;
+#ok(@diff == 72 || @diff == 74 || @diff == 98, "Only 72, 74, or 98 differences from expected results and actual were found (the number expected for same and different day testing respectively)")
+#or do { 
+#  my $diff_line_count = scalar(@diff);
+#  diag("$diff_line_count differences are:");
+#  diag(@diff);
+#  print "\n\nFound $diff_line_count differing lines but expected 72, 74, or 98\n\n";
+#  Genome::Sys->shellcmd(cmd => "cp -L -r $actual_output_dir /tmp/last-strelka-test-result");
+#};

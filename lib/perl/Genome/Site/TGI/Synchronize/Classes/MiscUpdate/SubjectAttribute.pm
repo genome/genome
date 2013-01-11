@@ -1,11 +1,11 @@
-package Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate;
+package Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Site::TGI::Synchronize::Classes::MultiMiscUpdate {
+class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute {
     is => 'UR::Object',
     id_by => [
         subject_class_name => { is => 'Text', },

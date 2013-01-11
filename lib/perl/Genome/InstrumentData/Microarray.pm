@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+require File::Path;
+
 class Genome::InstrumentData::Microarray {
 };
 
@@ -109,6 +111,12 @@ sub _copy_genotype_file {
     }
     else {
         $disk_allocation->kilobytes_requested($kilobytes_requested);
+        File::Path::mkpath($disk_allocation->absolute_path) if not -d $disk_allocation->absolute_path;
+    }
+
+    # check that the dest dir exists
+    if ( not -d $disk_allocation->absolute_path ) {
+        Carp::confess('Microarray ('.$self->id.') disk allocation ('.$disk_allocation->id.') absolute path does not exist! '.$disk_allocation->absolute_path);
     }
 
     # remove existing genotype_file (if exists)

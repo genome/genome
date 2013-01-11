@@ -1,7 +1,7 @@
 
 [4mUSAGE[0m
  [1mgenome model define somatic[0m --processing-profile-name=? [--auto-assign-inst-data]
-    [--auto-build-alignments] --tumor-model=? --processing-profile=? --normal-model=?
+    [--auto-build-alignments] --processing-profile=? --tumor-model=? --normal-model=?
     [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
     [--model-name=?] [--subject-name=?]
 
@@ -12,10 +12,10 @@ genome model define
   --data-directory /gscmnt/somedisk/somedir/model_dir
 
 [4mREQUIRED INPUTS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an ID 
   [1mtumor-model[0m
     The tumor model id being analyzed 
-  [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
   [1mnormal-model[0m
     The normal model id being analyzed 
 

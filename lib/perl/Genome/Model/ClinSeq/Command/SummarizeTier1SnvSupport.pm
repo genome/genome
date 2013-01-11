@@ -104,9 +104,8 @@ sub execute {
     }else{
       $rc_summary_cmd = "$read_counts_summary_script $output_stats_dir $output_file";
     }
-    unless ($verbose){
-      $rc_summary_cmd .= " 1>$rc_summary_stdout 2>$rc_summary_stderr";
-    }
+    $rc_summary_cmd .= " 1>$rc_summary_stdout 2>$rc_summary_stderr";
+
     #Summarize the BAM readcounts results for candidate variants - produce descriptive statistics, figures etc.
     if ($verbose){print YELLOW, "\n\n$rc_summary_cmd", RESET;}
     mkdir($output_stats_dir);

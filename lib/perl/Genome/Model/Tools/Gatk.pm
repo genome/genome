@@ -6,30 +6,37 @@ use warnings;
 use Genome;
 use Data::Dumper;
 use File::Temp;
+use POSIX qw(floor);
 
 my $DEFAULT_VERSION = '5336';
 my $GATK_COMMAND = 'GenomeAnalysisTK.jar';
 
 class Genome::Model::Tools::Gatk {
     is => ['Command'],
-    has_optional => [
+    has_input => [
         version => {
-            is_input => 1,
             is    => 'string',
             doc   => 'version of Gatk application to use',
             default => $DEFAULT_VERSION,
         },
+        max_memory => {
+            # Accessor is overridden so that it can be limited based on available memory or LSF limit.
+            is => 'Text',
+            doc => 'The maximum memory (GB) to use when running Java VM. Limited to environmental constraints.',
+            default => '4',
+        },
+    ],
+    has_optional => [
         _tmp_dir => {
             is => 'string',
             doc => 'a temporary directory for storing files',
         },
-        max_memory => {
-            is => 'Text',
-            is_input => 1,
-            doc => 'Parameter to provide to the Java -Xmx argument for maximum memory. Should be something like "3000m" or "16g".',
-            is_optional => 1,
+    ],
+    has_param => [
+        lsf_resource => {
+            default => '-M 16777216 rusage[mem=16384] select[type==LINUX64 & mem > 16384] span[hosts=1]',
         },
-    ]
+    ],
 };
 
 sub help_brief {
@@ -106,13 +113,33 @@ sub has_version {
     return 0;
 }
 
+sub max_memory {
+    my $self = shift;
+    my $max_memory = $self->__max_memory(@_);
+    my $max_memory_kb = $max_memory * 1_048_576;
+    my $mem_limit_kb = Genome::Sys->mem_limit_kb;
+    if ($mem_limit_kb) {
+        my $safe_mem_limit_kb = int(0.8 * $mem_limit_kb);
+        if ($max_memory_kb > $safe_mem_limit_kb) {
+            my $safe_mem_limit_gb = floor($safe_mem_limit_kb / 1_048_576);
+            if ($safe_mem_limit_gb == 0) {
+                die "Does not work on systems with less than 1GB of memory.\n";
+            }
+            $max_memory = $safe_mem_limit_gb;
+            $self->__max_memory($max_memory);
+            warn "Overriding max_memory due to environmental limitations.";
+        }
+    }
+    return $max_memory;
+}
+
 sub base_java_command {
     my $self = shift;
 
     my $gatk_path = $self->gatk_path;
     my $java_cmd = "java";
     if (defined $self->max_memory) {
-        $java_cmd .= " -Xmx".$self->max_memory;
+        $java_cmd .= sprintf(" -Xmx%dg", $self->max_memory);
     }
     if (defined $self->_tmp_dir) {
         $java_cmd .= " -Djava.io.tmpdir=" . $self->_tmp_dir;

@@ -313,7 +313,11 @@ sub create {
     if ($class eq __PACKAGE__ or $class->__meta__->is_abstract) {
         return $class->SUPER::create(@_);
     }
+    
     my $self = $class->SUPER::create(@_);
+    unless ($self) {
+        return;
+    }
 
     $self->user_name(Genome::Sys->username) unless $self->user_name;
     $self->creation_date(UR::Context->now);
@@ -383,7 +387,7 @@ sub sorted_builds {
 # Returns a list of succeeded builds sorted from oldest to newest
 sub succeeded_builds { return $_[0]->completed_builds; }
 sub completed_builds {
-    return shift->builds(status => 'Succeeded', -order_by => 'date_scheduled');
+    return shift->builds(status => 'Succeeded', -order_by => 'date_completed');
 }
 
 # Returns the latest build of the model, regardless of status
@@ -400,7 +404,7 @@ sub last_succeeded_build { return $_[0]->resolve_last_complete_build; }
 sub last_complete_build { return $_[0]->resolve_last_complete_build; }
 sub resolve_last_complete_build {
     my $self = shift;
-    my $build_event_iterator = Genome::Model::Event->create_iterator(model_id => $self->id, event_type => 'genome model build', event_status => 'Succeeded', -order_by => '-date_scheduled');
+    my $build_event_iterator = Genome::Model::Event->create_iterator(model_id => $self->id, event_type => 'genome model build', event_status => 'Succeeded', -order_by => '-date_completed');
     my $event = $build_event_iterator->next;
     return unless $event;
     return $event->build

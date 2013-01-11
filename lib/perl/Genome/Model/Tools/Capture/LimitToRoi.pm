@@ -76,12 +76,12 @@ sub execute {                               # replace with real execution logic.
 	elsif(-e $input_file && -e $regions_file && $self->not_file)
 	{
 		my $not_file = $self->not_file;
-		my $cmd = "java -Xms3000m -Xmx3000m -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $input_file --regions-file $regions_file --output-file $output_file --not-file $not_file";
+		my $cmd = "java -Xms3000m -Xmx3000m -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $input_file --regions-file $regions_file --output-file $output_file --not-file $not_file";
 		system($cmd);
 	}
 	elsif(-e $input_file && -e $regions_file)
 	{
-		my $cmd = "java -Xms3000m -Xmx3000m -jar /gsc/scripts/lib/java/VarScan/VarScan.jar limit $input_file --regions-file $regions_file --output-file $output_file";
+		my $cmd = "java -Xms3000m -Xmx3000m -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $input_file --regions-file $regions_file --output-file $output_file";
 		system($cmd);
 	}
 	else

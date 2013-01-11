@@ -36,7 +36,7 @@ my $expected_tumor = "$expected_dir/tumor.realigned.bam";
 my $expected_normal = "$expected_dir/normal.realigned.bam";
 
 my $gatk_tumor_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
-        max_memory => "4g",
+        max_memory => "4",
         version => 5777,
         target_intervals => $small_indel_list,
         output_realigned_bam => $output_tumor,
@@ -51,7 +51,7 @@ ok($gatk_tumor_cmd->execute, "Executed the tumor command");
 ok(-s $output_tumor, "Realigned tumor bam exists");
 
 my $gatk_normal_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
-        max_memory => "4g",
+        max_memory => "4",
         version => 5777,
         target_intervals => $small_indel_list,
         output_realigned_bam => $output_normal,

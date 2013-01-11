@@ -32,10 +32,20 @@ class Genome::Library {
         },
     ],
     has_optional => [
-        fragment_size_range => {
+        original_insert_size => {
+            is => 'Text',
+            column_name => 'ORIGINAL_INSERT_SIZE',
+            doc => 'The original insert size of the fragments. This may be a number or a range.'
+        },
+        library_insert_size => {
             is => 'Text',
             column_name => 'LIBRARY_INSERT_SIZE',
-            doc => 'intended size range of fragments from library construction'
+            doc => 'The relative insert size of fragments. This may be a number or a range.'
+        },
+        protocol => {
+            is => 'Text',
+            column_name => 'PROTOCOL',
+            doc => 'Protocol used to generate the library.'
         },
         taxon_id => {
             is => 'Number',
@@ -48,10 +58,6 @@ class Genome::Library {
         species_name => {
             is => 'Text',
             via => 'taxon',
-        },
-        protocol_name => {
-            is_transient => 1,
-            is => 'Text',
         },
         sample_source => {
             via => 'sample',
@@ -79,8 +85,6 @@ class Genome::Library {
             reverse_as => 'library',
             is_many => 1,
         },
-        # what is this??? -ss
-        protocol_name           => { is_transient => 1, is => 'Text', },
     ],
     table_name => 'FRAGMENT_LIBRARY',
     schema_name => 'GMSchema',

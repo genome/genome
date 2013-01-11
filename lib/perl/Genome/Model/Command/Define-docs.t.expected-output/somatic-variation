@@ -1,8 +1,8 @@
 
 [4mUSAGE[0m
  [1mgenome model define somatic-variation[0m --processing-profile-name=?
-    [--auto-assign-inst-data] [--auto-build-alignments] --tumor-model=? --normal-model=?
-    --annotation-build=? --processing-profile=? [--add-to-projects=?[,?]] [--force]
+    [--auto-assign-inst-data] [--auto-build-alignments] --processing-profile=? --tumor-model=?
+    --normal-model=? --annotation-build=? [--add-to-projects=?[,?]] [--force]
     [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--model-name=?]
     [--previously-discovered-variations-build=?] [--subject-name=?]
 
@@ -10,14 +10,14 @@
 genome model define somatic-variation --tumor-model aml3-tumor1-v2 --normal-model aml3-normal1-v2  --annotation-build 102550711 --previously-discovered-variations-build 106227442 --processing-profile-id 2573882 --model-name adukes_test_somatic_model 
 
 [4mREQUIRED INPUTS[0m
+  [1mprocessing-profile[0m
+    Processing profile to be used by model, can provide either a name or an ID 
   [1mtumor-model[0m
     Name or id of tumor model being analyzed 
   [1mnormal-model[0m
     Name or id of normal model being analyzed 
   [1mannotation-build[0m
     Id of annotation build to use for fast tiering of variants 
-  [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
 
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m

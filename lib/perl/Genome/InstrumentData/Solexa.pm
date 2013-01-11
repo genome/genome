@@ -1148,7 +1148,7 @@ sub resolve_median_insert_size {
     else {
         #try bwa metrics second    
         return $self->get_default_alignment_metrics('median_insert_size');
-        #Need try fragment_size_range, aka, library_insert_size last ?
+        #Need try library_insert_size last ?
     }
 }
 

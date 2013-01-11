@@ -5,14 +5,14 @@
     [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--model-name=?]
 
 [4mSYNOPSIS[0m
-  genome model define metagenomic-composition-16s \
+  genome model define metagenomic-composition16s \
     --model-name test1 \
     --subject TEST-patient1-sample1 \
     --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
   [1mprocessing-profile[0m
-    the collection of parameters to be used during the build process 
+    Processing profile to be used by model, can provide either a name or an ID 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m

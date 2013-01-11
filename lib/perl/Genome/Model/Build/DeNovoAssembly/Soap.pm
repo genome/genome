@@ -149,8 +149,8 @@ sub libraries_with_existing_assembler_input_files {
         if ( exists $params{insert_size} ) {
             $insert_size = $params{insert_size};
         }
-        elsif ( $library and $library->fragment_size_range ) {
-            $insert_size = $library->fragment_size_range;
+        elsif ( $library and $library->library_insert_size ) {
+            $insert_size = $library->library_insert_size;
         }
         elsif ( $instrument_data->resolve_median_insert_size ) {
             $insert_size = $instrument_data->resolve_median_insert_size;
