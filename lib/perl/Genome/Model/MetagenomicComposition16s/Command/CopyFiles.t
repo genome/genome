@@ -14,8 +14,15 @@ my ($build, $example_build) = Genome::Model::Build::MetagenomicComposition16s::T
 ok($example_build, 'example build') or die;
 my $model = $example_build->model;
 ok($example_build->get_or_create_data_directory, 'resolved data dir');
-is($example_build->the_master_event->event_status('Succeeded'), 'Succeeded', 'build is succeeded');
-ok($example_build->the_master_event->date_completed( UR::Context->current->now ), 'build has date completed');
+
+is(        $build->the_master_event->event_status('Succeeded'), 'Succeeded', 'build is succeeded');
+is($example_build->the_master_event->event_status('Succeeded'), 'Succeeded', 'example_build is succeeded');
+
+my $time = time();
+my $older_date = Date::Format::time2str(q(%Y-%m-%d %H:%M:%S), $time - 60);
+my $newer_date = Date::Format::time2str(q(%Y-%m-%d %H:%M:%S), $time + 60);
+ok(        $build->the_master_event->date_completed($older_date), 'set build date_completed');
+ok($example_build->the_master_event->date_completed($newer_date), 'set example_build date_completed');
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 
