@@ -97,6 +97,7 @@ EOS
 sub execute {
     my ($self) = @_;
 
+    Genome::Sys->create_directory($self->output_directory);
     my @builds = $self->_resolve_builds();
     my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcfResult->get_or_create(
             builds => \@builds,

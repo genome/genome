@@ -224,7 +224,7 @@ sub create_vcf_line_from_pileup {
         $alt_string = join ",", @previous_alts;
     }
 
-    my ($ad_string, $bq_string) = $self->calculate_stats_for_alts($alt_string, $read_bases, $base_qualities);
+    my ($ad_string, $bq_string) = $self->calculate_stats_for_alts($ref, $alt_string, $read_bases, $base_qualities);
 
     $sample{'GQ'}= $gq;
     $sample{'BQ'}= $bq_string;
@@ -284,6 +284,11 @@ sub add_alt_information_to_vcf_line {
 
     # Find a unique list of GT values... but exclude 0. If the original GT is null we have no pre-existing information to consider
     my (%ad_per_alt, %bq_per_alt);
+
+    # Shift the first ad and bq value off. These are for the reference.
+    my $ref_ad = shift @ad_values;
+    my $ref_bq = shift @bq_values;
+
     unless ($sample_values{"GT"} eq ".") {
         my @gt_values = sort (split "/", $sample_values{"GT"});
 
@@ -302,7 +307,10 @@ sub add_alt_information_to_vcf_line {
 
         # Make sure the number of values we have for everything checks out
         unless ( (scalar(@ad_values) == scalar (@bq_values)) && (scalar(@ad_values) == scalar (@gt_values)) ){
-            die $self->error_message("Have differing numbers of values for AD " . $sample_values{"AD"} . " and BQ " . $sample_values{"BQ"}. " and GT" . $sample_values{"GT"});
+            my $error_message = "For this vcf line: $vcf_line\n" . 
+                "Have differing numbers of values for AD " . $sample_values{"AD"} . " and BQ " . $sample_values{"BQ"}. " and GT " . $sample_values{"GT"} . "\n" . 
+                "There should be one AD and BQ value for each alt PLUS the reference. If this is not true, rebuilding your model group will fix this.";
+            die $self->error_message($error_message);
         }
 
         # If we have information for all alts present, return the line as is
@@ -324,7 +332,7 @@ sub add_alt_information_to_vcf_line {
     }
 
     # Generate AD and BQ information for all alts for which we have no information
-    my ($ad_string, $bq_string) = $self->calculate_stats_for_alts($new_alt, $read_bases, $base_qualities);
+    my ($ad_string, $bq_string) = $self->calculate_stats_for_alts($ref, $new_alt, $read_bases, $base_qualities);
     my @backfilled_ad_values = split ",", $ad_string;
     my @backfilled_bq_values = split ",", $bq_string;
 
@@ -340,6 +348,9 @@ sub add_alt_information_to_vcf_line {
     }
     # Join BQ and AD in the new alt order
     my (@new_ad_values, @new_bq_values);
+    # Refs first...
+    push @new_ad_values, $ref_ad;
+    push @new_bq_values, $ref_bq;
     for my $alt (@new_alt_values) {
         push @new_ad_values, $ad_per_alt{$alt};
         push @new_bq_values, $bq_per_alt{$alt};
@@ -364,8 +375,10 @@ sub add_alt_information_to_vcf_line {
 
 # Given a comma separated list of alts and the read_bases and base_quality strings from pileup
 # Generate and return comma separated strings for allele depth and base quality for the vcf
+# Now we also include the reference base AD and BQ values.
 sub calculate_stats_for_alts {
     my $self = shift;
+    my $ref = shift;
     my $alt_string = shift;
     my $read_bases = shift;
     my $base_qualities = shift;
@@ -387,32 +400,32 @@ sub calculate_stats_for_alts {
     my @alts = split ",", $alt_string;
     my %ad;
     # Iinitialize values
-    for my $alt (@alts) {
-        $ad{$alt} = 0;
+    for my $base ($ref, @alts) {
+        $ad{$base} = 0;
     }
     my %bq_total;
     my %bq;
     my (@bq_values, @ad_values);
-    for my $alt (@alts) {
+    for my $base ($ref, @alts) {
         my @bases = split("", $read_bases);
         my @qualities = split("", $base_qualities);
         for (my $index = 0; $index < scalar(@bases); $index++) {
             my $base = $bases[$index];
-            if (lc $base eq lc $alt) { 
+            if (lc $base eq lc $base) { 
                 #http://samtools.sourceforge.net/pileup.shtml base quality is the same as mapping quality
-                $ad{$alt}++;
-                $bq_total{$alt} += ord($qualities[$index]) - 33;
+                $ad{$base}++;
+                $bq_total{$base} += ord($qualities[$index]) - 33;
             }
         }
 
         # Get an average of the quality for BQ
-        if ($ad{$alt} == 0) {
-            $bq{$alt} = 0;
+        if ($ad{$base} == 0) {
+            $bq{$base} = 0;
         } else {
-            $bq{$alt} = int($bq_total{$alt} / $ad{$alt});
+            $bq{$base} = int($bq_total{$base} / $ad{$base});
         }
-        push @ad_values, $ad{$alt};
-        push @bq_values, $bq{$alt};
+        push @ad_values, $ad{$base};
+        push @bq_values, $bq{$base};
     }
 
     my $ad_string = join(",", @ad_values );
