@@ -24,7 +24,7 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::GenerateMergedAsse
             doc => 'Place where the output goes',
             is_calculated => 1,
             calculate_from => 'build',
-            calculate => q{ return join("/", $build->data_directory, "sv"); }
+            calculate => q{ return join("/", $build->data_directory, "validation/sv"); }
         },
         skip => {
             is_output => 1,

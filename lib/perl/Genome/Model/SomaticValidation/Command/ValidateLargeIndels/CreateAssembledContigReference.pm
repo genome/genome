@@ -146,7 +146,7 @@ sub execute {
 
 sub _resolve_long_indel_bed_file {
     my $self = shift;
-    my $long_indel_bed_file = $self->build->data_directory . "/indel_validation/large_indels.bed";
+    my $long_indel_bed_file = $self->build->data_directory . "/validation/small_indel/large_indels.bed";
     unless (-s $long_indel_bed_file) {
         $self->warning_message("Long indel bed file $long_indel_bed_file does not exist or has no size");
         return;
@@ -156,7 +156,7 @@ sub _resolve_long_indel_bed_file {
 
 sub _resolve_output_directory {
     my $self = shift;
-    my $output_dir = File::Spec->join($self->build->data_directory, 'large_indel_validation');
+    my $output_dir = File::Spec->join($self->build->data_directory, '/validation/large_indel');
     $self->output_dir($output_dir);
     return $output_dir;
 }

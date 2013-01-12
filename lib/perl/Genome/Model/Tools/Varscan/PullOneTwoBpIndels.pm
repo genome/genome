@@ -167,7 +167,7 @@ sub execute {
             return 1;
         }
 
-        my $base_dir = $build->data_directory . "/indel_validation";
+        my $base_dir = $build->data_directory . "/validation/small_indel";
         Genome::Sys->create_directory($base_dir);
         unless ($self->final_output_file) {
             $self->final_output_file($base_dir."/final_output");
