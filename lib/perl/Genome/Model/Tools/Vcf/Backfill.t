@@ -9,8 +9,8 @@ use Test::More tests => 5;
 use_ok('Genome::Model::Tools::Vcf::Backfill');
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Backfill";
-my $input_dir = "$test_dir/input.v2";
-my $expected_base = "expected.v3";
+my $input_dir = "$test_dir/input.v3";
+my $expected_base = "expected.v4";
 my $expected_dir = "$test_dir/$expected_base";
 my $expected_file = "$expected_dir/output.vcf";
 
@@ -35,3 +35,4 @@ my $diff = Genome::Sys->diff_file_vs_file($output_file, $expected_file);
 #print "$output_file $expected_file\n"; sleep 10000;
 ok(!$diff, 'output matched expected result')
     or diag("diff results:\n" . $diff);
+

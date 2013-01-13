@@ -166,7 +166,7 @@ sub _resolve_output_directory {
     my $self = shift;
     my $output_dir;
     if ($self->build) {
-        $output_dir = File::Spec->join($self->build->data_directory, 'indel_validation');
+        $output_dir = File::Spec->join($self->build->data_directory, 'validation/small_indel');
     }
     return $output_dir;
 }

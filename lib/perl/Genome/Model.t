@@ -209,7 +209,7 @@ is_deeply(\@model_builds, \@builds, 'model builds');
 
 # Fix the date_scheduled on the builds because completed_builds sorts by it
 my $time = time();
-my @timestamps = map { Date::Format::time2str(q(%Y-%m-%d %H:%M:%S), $time + $_) } (3, 5, 7, 9);
+my @timestamps = map { Date::Format::time2str(UR::Context->date_template, $time + $_) } (3, 5, 7, 9);
 $builds[0]->the_master_event->date_scheduled($timestamps[0]);
 $builds[1]->the_master_event->date_scheduled($timestamps[1]);
 

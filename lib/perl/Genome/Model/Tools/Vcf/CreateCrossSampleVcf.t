@@ -26,12 +26,12 @@ diag("Test data located at: $test_data_directory");
 my $region_file = join("/", $test_data_directory, "input",
         "2477F2D7AC5111E1874EF15E46F0A7A3_short.bed");
 my $region_file_content_hash = Genome::Sys->md5sum($region_file);
-my $expected_result = join("/", $test_data_directory, "expected_5",
+my $expected_result = join("/", $test_data_directory, "expected_6",
         "snvs.merged.vcf.gz");
 
 my $joinx_version = "1.6";
 my @input_builds = map{ Genome::Model::Build->get($_)}
-        (126835818, 126835841, 126835851);
+        (132916834, 132916881, 132916907);
 my $output_directory = File::Temp::tempdir(
         'Genome-Model-Tools-Vcf-CreateCrossSampleVcf-XXXXX',
         DIR => "$ENV{GENOME_TEST_TEMP}",

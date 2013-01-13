@@ -36,7 +36,12 @@ $ipr_tmp_path =~ s!/bin/iprscan!/tmp/!;
 
 my ($used_kb) = qx(df -Pk $ipr_tmp_path | tail -n 1 | awk '{print \$4}') =~ /(\d+)/;
 cmp_ok($used_kb, ">", (1024*1024), ">1GB free space in iprscan tmp directory")
-    or diag("disk containing iprscan tmp at $ipr_tmp_path is almost full! Try removing old runs to free space.");
+    or die("disk containing iprscan tmp at $ipr_tmp_path is almost full! Try removing old runs to free space.");
+
+# Had to use touch instead of -w since -w must only check permissions.
+my $exit = system("touch $ipr_tmp_path");
+ok($exit == 0, 'iprscan tmp directory is writable')
+    or die 'iprscan tmp directory is not writable';
 
 ok($interpro->execute, 'successfully executed interpro');
 ok(-e $interpro->raw_output_path, "raw output file exists at expected location " . $interpro->raw_output_path);

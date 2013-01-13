@@ -819,9 +819,15 @@ sub _preprocess_subclass_description {
         my $pp_data = $desc->{has}{processing_profile} = {};
         $pp_data->{data_type} = $pp_subclass_name;
         $pp_data->{id_by} = ['processing_profile_id'];
+        $pp_data->{doc} = Genome::Model->__meta__->property('processing_profile')->doc;
 
-        $pp_data = $desc->{has}{processing_profile_id} = {};
-        $pp_data->{data_type} ||= 'Text';
+        my $pp_id_data = $desc->{has}{processing_profile_id};
+        unless ($desc->{has}{processing_profile_id}) {
+            $pp_id_data = $desc->{has}{processing_profile_id} = {};
+            $pp_id_data->{implied_by} = 'processing_profile';
+            $pp_id_data->{doc} = Genome::Model->__meta__->property('processing_profile_id')->doc;
+        }
+        $pp_id_data->{data_type} ||= 'Text';
     }
 
     return $desc;

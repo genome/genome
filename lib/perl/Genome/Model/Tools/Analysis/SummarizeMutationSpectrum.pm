@@ -212,6 +212,9 @@ sub make_input_file_from_model {
 
     my $sample_label = $build->tumor_build->model->subject->source_common_name;
     $sample_label = $somatic_model->id if(!$sample_label); #label defaults to model ID if common name cannot be found.
+    my $type = $build->tumor_build->model->subject->common_name;
+    $sample_label = uc("${sample_label}_${type}");
+
 
     #find the tier 1,2,3 SNV bed file
     my $dir = $build->data_directory . "/effects";
@@ -257,7 +260,7 @@ sub parse_bed_file {
 	my ($ref,$var) = split(/\//,$ref_var);
 	my @variants = Genome::Info::IUB::variant_alleles_for_iub($ref,$var);
 	if(@variants>1) {
-	    warn "more than 1 variant allele detected for '$_'\n";
+	    #warn "more than 1 variant allele detected for '$_'\n";
 	    next;
 	}
 	my $key = join("->",($ref,$variants[0]));

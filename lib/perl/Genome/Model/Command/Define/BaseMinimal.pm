@@ -91,15 +91,31 @@ sub _preprocess_subclass_description {
             next if $command_has->{$name};
             next if grep { $_->can($name) } @inheritance;
             if (($p->can("is_input") and $p->is_input) or $name =~ /^(processing_profile|processing_profile_id|name)$/) {                
-                my %data = %{$p};
-                for my $key (keys %data) {
-                    delete $data{$key} if $key =~ /^_/;
-                }
-                delete $data{id};
+                my %data = %{ UR::Util::deep_copy($p) };
+                delete $data{class_name};
+                delete $data{column_name};
                 delete $data{db_committed};
+                delete $data{id};
                 delete $data{via};
                 delete $data{to};
+                for my $key (keys %data) {
+                    if ($key =~ /^_/) {
+                        delete $data{$key} if $key =~ /^_/;
+                        next;
+                    }
+                    my $value = $data{$key};
+                    if (ref($value)) {
+                        if (ref($value) eq 'ARRAY') {
+                            $data{$key} = [@$value]
+                        }
+                        else {
+                            warn "remove $key on $name for $cmd_subclass_name\n";
+                            delete $data{$key};
+                        }
+                    }
+                } 
                 $data{is_input} = 1;
+               
                 if ($name eq 'name') {
                     # support --name and --model-name, giving prefernece to the former
                     if (grep { $_->can("model_name") or $_->can("name") } @inheritance) {
@@ -215,33 +231,32 @@ sub type_specific_parameters_for_create {
 
 sub execute {
     my $self = shift;
-    
-    unless ($self->_validate_inputs) {
-        confess "Could not validate inputs!";
-    }
+   
+    my %params = $self->type_specific_parameters_for_create;
 
-    unless ($self->subject) {
-        my $subject = $self->_resolve_subject_from_inputs;
-        if ($subject) {
-            $self->subject($subject);
+    # TODO: this should be really handled inside of the
+    # model constructor instead of in the command wrapper.
+    if ($self->can("subject")) {
+        unless ($self->subject) {
+            my $subject = $self->_resolve_subject_from_inputs;
+            if ($subject) {
+                $self->subject($subject);
+            }
         }
-        # if this fails we still try to let the constructor do it...
-    }
-
-    my %params = (
-        (   
-            $self->subject ? 
-            (
+        if ($self->subject) {
+            %params = (
                 subject_id => $self->subject->id,
                 subject_class_name => $self->subject->class,
-            )
-            :
-            ()
-        ),
-        $self->type_specific_parameters_for_create,
-    );
+                %params
+            );
+        }
+    }
 
-    # something odd is happening when passing in the object...
+    # Something odd is happening when passing in the object...
+    # in conjunction with the old Helper methods in some cases.
+    # These may be related to naive code which takes @_ 
+    # and makes a hash with limited expectations instead of
+    # just constructing the object and interrogating it.
     if (my $p = delete $params{processing_profile}) {
         $params{processing_profile_id} = $p->id
     }
@@ -255,6 +270,15 @@ sub execute {
     my $model = $target_class->create(%params);
     unless ($model) {
         confess "Could not create a model!";
+    }
+
+    unless ($model->isa($target_class)) {
+        # This replaces a check which was above which ensured that the 
+        # model constructed is of the correct type to go with this command.
+        # It is hopefully something the constructor would check and is
+        # therefore unnecessary.  When verified remove this.
+        $model->delete;
+        Carp::confess("Created a model of type " . $model->class . " but expected an instance of $target_class");
     }
 
     unless ($model->subject) {
@@ -282,44 +306,6 @@ sub display_model_information {
 
 sub listed_params {
     return qw/ id name subject.name subject.subject_type processing_profile_id processing_profile.name /;
-}
-
-sub validate_processing_profile {
-    my $self = shift;
-    unless ($self->compare_pp_and_model_type) {
-        confess 'Model and processing profile types do not match!';
-    }
-    return 1;
-}
-
-# TODO This may not be necessary. Even if it is, there's probably a better way to do it.
-sub compare_pp_and_model_type {
-    my $self = shift;
-
-    # Determine the subclass of model being defined
-    my $model_subclass = $self->class;
-    my $package = "Genome::Model::Command::Define::";
-    $model_subclass =~ s/$package//;
-    
-    # Determine the subclass of the processing profile
-    my $pp = Genome::ProcessingProfile->get(id => $self->processing_profile->id);
-    unless($pp){
-        $self->error_message("Couldn't find the processing profile identified by the #: " . $self->processing_profile->id);
-        die $self->error_message;
-    }
-    my $pp_subclass = $pp->subclass_name;
-    $pp_subclass =~ s/Genome::ProcessingProfile:://;
-    
-    unless ($model_subclass eq $pp_subclass) {
-        my ($shortest, $longest) = ($model_subclass, $pp_subclass);
-        ($shortest, $longest) = ($longest, $shortest) if length $pp_subclass < length $model_subclass;
-        unless ($longest =~ /$shortest/) {
-            $self->error_message("Model subclass $model_subclass and ProcessingProfile subclass $pp_subclass do not match!");
-            confess;
-        }
-    }
-
-    return 1;
 }
 
 1;

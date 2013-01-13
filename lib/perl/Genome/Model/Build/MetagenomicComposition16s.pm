@@ -93,7 +93,6 @@ sub description {
     );
 }
 
-#< Amplicon Sets >#
 sub amplicon_sets {
     my $self = shift;
 
