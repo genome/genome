@@ -308,35 +308,5 @@ sub listed_params {
     return qw/ id name subject.name subject.subject_type processing_profile_id processing_profile.name /;
 }
 
-# TODO This may not be necessary. Even if it is, there's probably a better way to do it.
-sub compare_pp_and_model_type {
-    my $self = shift;
-
-    # Determine the subclass of model being defined
-    my $model_subclass = $self->class;
-    my $package = "Genome::Model::Command::Define::";
-    $model_subclass =~ s/$package//;
-    
-    # Determine the subclass of the processing profile
-    my $pp = Genome::ProcessingProfile->get(id => $self->processing_profile->id);
-    unless($pp){
-        $self->error_message("Couldn't find the processing profile identified by the #: " . $self->processing_profile->id);
-        die $self->error_message;
-    }
-    my $pp_subclass = $pp->subclass_name;
-    $pp_subclass =~ s/Genome::ProcessingProfile:://;
-    
-    unless ($model_subclass eq $pp_subclass) {
-        my ($shortest, $longest) = ($model_subclass, $pp_subclass);
-        ($shortest, $longest) = ($longest, $shortest) if length $pp_subclass < length $model_subclass;
-        unless ($longest =~ /$shortest/) {
-            $self->error_message("Model subclass $model_subclass and ProcessingProfile subclass $pp_subclass do not match!");
-            confess;
-        }
-    }
-
-    return 1;
-}
-
 1;
 
