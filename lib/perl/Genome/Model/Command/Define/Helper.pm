@@ -60,15 +60,6 @@ class Genome::Model::Command::Define::Helper {
     ],
 };
 
-sub _validate_inputs {
-    my $self = shift;
-    my $processing_profile = $self->validate_processing_profile;
-    unless ($processing_profile) {
-        $self->error_message("Could not validate processing profile!");
-    }
-    return 1 
-}
-
 sub _resolve_subject_from_inputs {
     my $self = shift;
     my $subject = $self->_resolve_subject_from_instrument_data;
