@@ -708,7 +708,7 @@ sub cached_full_consensus_path {
 }
 
 sub local_cache_basedir {
-    return "/var/cache/tgisan";
+    return $ENV{GENOME_FS_LOCAL_NETWORK_CACHE};
 }
 
 sub local_cache_dir {
