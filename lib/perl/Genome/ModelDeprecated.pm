@@ -52,17 +52,20 @@ class Genome::ModelDeprecated {
 #            calculate_from => ['_auto_build_alignments'],
 #            calculate => q{ $_auto_build_alignments; }
 #        }, # TODO: rename to auto_build
-        apipe_cron_status => {
-            via => 'notes',
-            to => 'body_text',
-            where => [ header_text => 'apipe_cron_status' ],
-            is_mutable => 0,
-        },
+#        apipe_cron_status => {
+#            via => 'notes',
+#            to => 'body_text',
+#            where => [ header_text => 'apipe_cron_status' ],
+#            is_mutable => 0,
+#        },
     ],
     has_optional_many => [
         group_ids => { via => 'model_groups', to => 'id' },
         group_names => { via => 'model_groups', to => 'name' },
         project_names => { is => 'Text', via => 'projects', to => 'name', },
+
+        # model links are now deprecated in favor of making the from_model an
+        # input on the to_model
         from_model_links => { 
             is => 'Genome::Model::Link', reverse_as => 'to_model',
             doc => 'bridge table entries where this is the "to" model (used to retrieve models this model is "from"' 
@@ -97,9 +100,18 @@ class Genome::ModelDeprecated {
         },
     ],
     has_optional_deprecated => [
-        # this is all junk but things really use them right now 
-        events                  => { is => 'Genome::Model::Event', reverse_as => 'model', is_many => 1,
-            doc => 'all events which have occurred for this model' },
+        events => { 
+            # TODO: events are used in old-style processing profiles for workflow steps, 
+            # which is deprecated, but also have a non-deprecated uses like logging
+            # model creation, addition of instrument data or other input changes, etc.,
+            # abandon dates, and other things we don't want to give special fields to.
+            is => 'Genome::Model::Event', 
+            reverse_as => 'model', 
+            is_many => 1,
+            doc => 'all events which have occurred for this model' 
+        },
+
+        # this is all old junk but things really use them right now 
         reports                 => { via => 'last_succeeded_build' },
         reports_directory       => { via => 'last_succeeded_build' },
 
@@ -164,10 +176,14 @@ class Genome::ModelDeprecated {
 
 sub create {
     my $class = shift;
-    my $self = $class->SUPER::create(@_);
-    if ($self->subject) {
-        $self->subject_class_name($self->subject->subclass_name);
+    my $bx = $class->define_boolexpr(@_);
+    if ($bx->specifies_value_for("subject_class_name")) {
+        $bx = $bx->remove_filter("subject_class_name");
     }
+    my $self = $class->SUPER::create($bx);
+    #if (my $subject = $self->subject) {
+    #    $self->subject_class_name($subject->class);
+    #}
     return $self;
 }
 

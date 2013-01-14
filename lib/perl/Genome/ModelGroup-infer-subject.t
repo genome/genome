@@ -72,8 +72,7 @@ isa_ok($group_subject, 'Genome::PopulationGroup', 'model group subject is a popu
 my $indiv_hash = Genome::PopulationGroup->generate_hash_for_individuals($indiv_1, $indiv_2);
 ok($indiv_hash eq $group_subject->member_hash, "population group has both samples' individuals in it");
 
-$model_1->subject_class_name($taxon->class);
-$model_1->subject_id($taxon->id);
+$model_1->subject($taxon);
 
 $group_subject = $model_group->infer_group_subject;
 isa_ok($group_subject, 'Genome::Taxon', "model group subject is now a taxon after changing one model's subject to be a taxon");
@@ -85,8 +84,7 @@ my $taxon_2 = Genome::Taxon->create(
     domain => 'eukaryota',
 );
 
-$model_1->subject_class_name($taxon_2->class);
-$model_1->subject_id($taxon_2->id);
+$model_1->subject($taxon_2);
 
 $group_subject = $model_group->infer_group_subject;
 isa_ok($group_subject, 'Genome::Taxon', "model group subject is now a taxon after changing one model's subject to be a taxon");

@@ -144,7 +144,6 @@ is_deeply($new_model, $old_model, 'the model created is the one reused');
 ok($new_model->build_requested, 'the cron set the new model to be built');
 
 my @models_for_sample = Genome::Model->get(
-    subject_class_name => 'Genome::Sample',
     subject_id => $sample->id,
 );
 is(scalar(@models_for_sample), 1, 'found one model created for the subject');

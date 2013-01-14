@@ -172,7 +172,6 @@ sub _resolve_subject {
         return;
     }
     my $subject = $subjects[0];
-    $self->subject_class_name($subject->class);
     return $subject;
 }
 
