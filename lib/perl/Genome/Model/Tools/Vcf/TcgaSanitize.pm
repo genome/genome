@@ -111,18 +111,28 @@ sub fix_reference_and_add_assembly {
 # In the header, aggregate all "##source=" lines in into one line
 sub fix_header_source {
     my ($self, $header) = @_;
-    $header = $self->aggregate_header_lines($header, 'source');
-    return $header;
+    my $new_header = $self->aggregate_header_lines($header, 'source');
+    # If nothing was changed, return the header as is
+    unless ($new_header) {
+        return $header;
+    }
+    return $new_header;
 }
 
 # In the header, aggregate all "##vcfProcessLog=" lines in into one line
 sub fix_header_vcf_process_log {
     my ($self, $header) = @_;
-    $header = $self->aggregate_header_lines($header, 'vcfProcessLog');
+
+    my $new_header = $self->aggregate_header_lines($header, 'vcfProcessLog');
+
+    # If nothing was changed, return the header as is
+    unless ($new_header) {
+        return $header;
+    }
 
     #At this point a line like this exists: <InputVCFSource=<Samtools>>-<InputVCFSource=<Sniper>>-<InputVCFSource=<VarscanSomatic>
     # What we want so we pass validation  : <InputVCFSource=<Samtools-Sniper-VarscanSomatic>> 
-    my @lines = split("\n", $header);
+    my @lines = split("\n", $new_header);
     my @index_to_fix;
     for my $i (0..$#lines) {
         # Find the vcf process log line and make the repair
@@ -139,12 +149,13 @@ sub fix_header_vcf_process_log {
         splice(@lines, $i, 0, $new_line);
     }
 
-    $header = join("\n", @lines);
+    $new_header = join("\n", @lines);
 
-    return $header;
+    return $new_header;
 }
 
 # Given the header and a header line type, aggregate all of the lines of that type onto one line
+# Return the header, unless nothing was done, in which case a 0 is returned
 sub aggregate_header_lines {
     my ($self, $header, $type) = @_;
 
@@ -158,6 +169,10 @@ sub aggregate_header_lines {
         if ($line =~ m/^$header_base/) {
             push @index_to_fix, $i;
         }
+    }
+
+    unless (@index_to_fix) {
+        return 0;
     }
 
     my @values;
