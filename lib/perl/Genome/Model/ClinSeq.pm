@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::ClinSeq {
-    is => 'Genome::ModelDeprecated',
+    is => 'Genome::Model',
     has_optional_input => [
         wgs_model           => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for wgs data' },
         exome_model         => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
