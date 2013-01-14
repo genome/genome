@@ -31,8 +31,9 @@ ok($pp, 'get genotype microarray pp') or return;
 my $model = Genome::Model::GenotypeMicroarray->__define__(
     name => 'Test Genotype Microarray',
     processing_profile => $pp,
-    subject_id => $sample->id,
-    subject_class_name => $sample->class,
+    subject => $sample,
+    #subject_id => $sample->id,
+    #subject_class_name => $sample->class,
 );
 ok($model, 'create genotype microarray model') or return;
 

@@ -91,7 +91,7 @@ sub _preprocess_subclass_description {
             next if $command_has->{$name};
             next if grep { $_->can($name) } @inheritance;
             if (($p->can("is_input") and $p->is_input) or $name =~ /^(processing_profile|processing_profile_id|name)$/) {                
-                my %data = %{ UR::Util::deep_copy($p) };
+                my %data = %$p;
                 delete $data{class_name};
                 delete $data{column_name};
                 delete $data{db_committed};
@@ -305,7 +305,7 @@ sub display_model_information {
 }
 
 sub listed_params {
-    return qw/ id name subject.name subject.subject_type processing_profile_id processing_profile.name /;
+    return qw/ id name subject processing_profile /;
 }
 
 1;

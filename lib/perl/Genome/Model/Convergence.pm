@@ -48,8 +48,7 @@ sub check_for_updates {
         return 1;
     }
 
-    $self->subject_id($group_subject->id);
-    $self->subject_class_name($group_subject->class);
+    $self->subject($group_subject);
     return 1;
 }
 

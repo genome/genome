@@ -12,17 +12,50 @@ class Genome::Model {
     subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
-        genome_model_id => { is => 'Text', },
+        genome_model_id => { 
+            # TODO: change to just "id"
+            # And make the data type Text in preparation for UUIDs
+            is => 'Text', 
+            doc => 'the unique immutable system identifier for a model',
+        },
     ],
     attributes_have => [
-        is_input    => { is => 'Boolean', is_optional => 1, },
-        is_param    => { is => 'Boolean', is_optional => 1, },
-        is_output   => { is => 'Boolean', is_optional => 1, },
-        _profile_default_value => { is => 'Text', is_optional => 1, },
+        is_param    => { 
+            is => 'Boolean', 
+            is_optional => 1, 
+            doc => 'indicates a value which is part of the processing profile, constant for the model',
+        },
+        is_input    => { 
+            is => 'Boolean', 
+            is_optional => 1,
+            doc => 'indicates a value which is an input data set for the model: constant per build',
+        },
+        is_output   => { 
+            is => 'Boolean', 
+            is_optional => 1,
+            doc => 'indicates a value which is produced during the build process',
+        },
+        _profile_default_value => { 
+            is => 'Text', 
+            is_optional => 1,
+            doc => 'on is_param attribute, the default value is stored here, since it is used when making profiles, not making models',
+        },
     ],
     has => [
-        name => { is => 'Text' },
-        type_name => { is => 'Text', via => 'processing_profile' },
+        name => { 
+            is => 'Text', 
+            doc => 'the name of the model (changeable)'
+        },
+        subject => {
+            is => 'Genome::Subject',
+            id_by => 'subject_id',
+            doc => 'the sample/individual/cohort which is being modelled',
+        },
+        processing_profile => {
+            is => 'Genome::ProcessingProfile',
+            id_by => 'processing_profile_id',
+            doc => 'the collection of parameters to be used during the build process'
+        },
         subclass_name => {
             is => 'Text',is_mutable => 0, column_name => 'SUBCLASS_NAME',
             calculate_from => 'processing_profile_id',
@@ -35,56 +68,15 @@ class Genome::Model {
                 }
                 return __PACKAGE__ . '::' . Genome::Utility::Text::string_to_camel_case($pp->type_name);
             },
+            doc => 'the software subclass for the model in question',
         },
-        _last_complete_build_id => {
-            is => 'Number',
-            column_name => 'last_complete_build_id',
-            doc => 'The last complete build id',
-        },
-        subject => {
-            is => 'Genome::Subject',
-            id_by => 'subject_id',
-        },
-        # FIXME This can be removed once the subject_class_name column is dropped.
-        subject_class_name => {
-            is => 'Text',
-            is_optional => 1,
-        },
-        processing_profile => {
-            is => 'Genome::ProcessingProfile',
-            id_by => 'processing_profile_id',
-            doc => 'the collection of parameters to be used during the build process'
+        type_name => { 
+            is => 'Text', 
+            via => 'processing_profile',
+            doc => 'the name of the type of model (pipeline name)',
         },
     ],
-    has_optional => [
-        limit_inputs_id => {
-            is => 'Text',
-            column_name => 'LIMIT_INPUTS_TO_ID',
-        },
-        limit_inputs_rule => {
-            is => 'UR::BoolExpr',
-            id_by => 'limit_inputs_id',
-        },
-        user_name => { is => 'Text' },
-        creation_date  => { is => 'Timestamp' },
-        build_requested => { is => 'Boolean'},
-        keep_n_most_recent_builds => { 
-            via => 'attributes', to => 'value', is_mutable => 1, 
-            where => [ property_name => 'keep_n_most_recent_builds', entity_class_name => 'Genome::Model' ] 
-        },
-        _last_complete_build_id => { 
-            is => 'Number', 
-            column_name => 'LAST_COMPLETE_BUILD_ID', 
-            doc => 'The last complete build id' ,
-        },
-        apipe_cron_status => {
-            via => 'notes',
-            to => 'body_text',
-            where => [ header_text => 'apipe_cron_status' ],
-            is_mutable => 0,
-        },
-    ],
-    has_optional_many => [
+    has_many_optional => [
         builds  => {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
@@ -95,14 +87,6 @@ class Genome::Model {
             reverse_as => 'model',
             doc => 'links to data currently assigned to the model for processing'
         },
-        instrument_data => {
-            is => 'Genome::InstrumentData',
-            via => 'inputs',
-            to => 'value',
-            is_mutable => 1,
-            where => [ name => 'instrument_data' ],
-            doc => 'Instrument data currently assigned to the model.'
-        },
         projects => {
             is => 'Genome::Project',
             via => 'project_parts',
@@ -112,39 +96,132 @@ class Genome::Model {
             doc => 'Projects that include this model',
         },
         project_parts => {
+            # TODO: the new naming convention was project_associations to prevent confusion
+            # between the bridge and the referenced value
             is => 'Genome::ProjectPart',
             reverse_as => 'entity',
             is_many => 1,
             is_mutable => 1,
         },
-        model_groups => {
-            is => 'Genome::ModelGroup',
-            via => 'model_bridges',
-            to => 'model_group',
-            is_mutable => 1
+    ],
+    has_optional => [
+        user_name => { 
+            # TODO: we use created_by in other places to be specific as-to role of the user
+            # This is redundant with the model creation event data.
+            is => 'Text', 
+            doc => 'the user who created the model',
         },
-        model_bridges => {
-            is => 'Genome::ModelGroupBridge',
-            reverse_as => 'model'
+        creation_date  => { 
+            # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
+            # TODO: this is redundant with the model creation event.
+            is => 'Timestamp', 
+            doc => 'the time at which the model was defined',
+        },
+        build_requested => { 
+            # TODO: this has limited tracking as to who/why the build was requested
+            is => 'Boolean',
+            doc => 'when set to true the system will queue the model for building ASAP'
+        },
+        keep_n_most_recent_builds => {
+            # TODO: check to see where this is used
+            via => 'attributes', to => 'value', is_mutable => 1, 
+            where => [ property_name => 'keep_n_most_recent_builds', entity_class_name => 'Genome::Model' ],
+            doc => 'used by the automated build system',
+        },
+        _last_complete_build_id => {
+            # TODO: change the method with this name to use this property since it is faster
+            is => 'Number',
+            column_name => 'LAST_COMPLETE_BUILD_ID', 
+            doc => 'the last complete build id',
+        },
+        apipe_cron_status => {
+            via => 'notes',
+            to => 'body_text',
+            where => [ header_text => 'apipe_cron_status' ],
+            is_mutable => 0,
         },
     ],
     has_optional_deprecated => [
+        _subject_class_name => {
+            # TODO: This can be removed once the unused but non-nullable subject_class_name
+            # column is dropped.  Subjects all now have a common base class for efficiency.
+            # The subject_class_name method is on ::ModelDeprecated and is obsolete.
+            is => 'Text',
+            is_optional => 1,
+            column_name => 'SUBJECT_CLASS_NAME',
+            #calculate_from => ['subject'],
+            #calculate => q| $subject->class |,
+            #is_mutable => 0,
+        },
+        subject_class_name => {
+            # TODO: this is now read-only, but should go away entirely
+            via => 'subject',
+            to => 'subclass_name',
+        },
+        limit_inputs_id => {
+            # TODO: this was intended to be a boolexpr ID, but was possibly never used
+            is => 'Text',
+            column_name => 'LIMIT_INPUTS_TO_ID',
+            is_deprecated => 1,
+            implied_by => 'limit_inputs_rule',
+        },
+        limit_inputs_rule => {
+            # TODO: this was intended to be a boolexpr, but was possibly never used
+            is => 'UR::BoolExpr',
+            id_by => 'limit_inputs_id',
+            is_deprecated => 1,
+        },
         auto_assign_inst_data => {
+            # this must be here instead of in ::ModelDeprecated becuase it has a db column
             is => 'Boolean',
         },
         auto_build_alignments => {
+            # this must be here instead of in ::ModelDeprecated becuase it has a db column
             is => 'Boolean',
+        },
+        _id => {
+            # this is the accessor for the column which should become the new primary key
+            column_name => 'ID',
+            is_deprecated => 1,
+        }
+    ],
+    has_many_optional_deprecated => [
+        instrument_data => {
+            # TODO: the few model types which use instruent data directly should just have:
+            #  instrument_data => { is => 'Genome::InstruentData", is_input => 1, is_many => 1 },
+            is => 'Genome::InstrumentData',
+            via => 'inputs',
+            to => 'value',
+            is_mutable => 1,
+            where => [ name => 'instrument_data' ],
+            doc => 'Instrument data currently assigned to the model.'
+        },
+        model_groups => {
+            # TODO: redundant with projects
+            is => 'Genome::ModelGroup',
+            via => 'model_bridges',
+            to => 'model_group',
+            is_mutable => 1,
+            is_many => 1,
+        },
+        model_bridges => {
+            # TODO: redundant with project_parts
+            is => 'Genome::ModelGroupBridge',
+            reverse_as => 'model',
+            is_many => 1,
         },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
     table_name => 'GENOME_MODEL',
-    doc => 'a versioned data model describing one the sequence and features of a genome'
+    doc => 'a data model describing the sequence and/or features of a genome'
 };
 
 sub define_by {
   # this determines the base class for auto-generated "genome model define XXXX" commands
   # various base classes are available which make different presumptions about presence of instrument-data, etc.
+  # TODO: switch to BaseMinimal after making all old models which need ::Helper override this method, 
+  # including those which are completely auto-generated.
   'Genome::Model::Command::Define::Helper' 
 }
 
@@ -313,7 +390,22 @@ sub create {
     if ($class eq __PACKAGE__ or $class->__meta__->is_abstract) {
         return $class->SUPER::create(@_);
     }
-    
+
+    my ($bx,%extra) = $class->define_boolexpr(@_);
+    if (%extra) {
+        # Allow subject_class_name to be specified, though it is
+        # no longer used during construction and is a read-only
+        # indirect property.
+        # TODO: eliminate places which pass this in..
+        delete $extra{subject_class_name};
+        if (%extra) {
+            # If there are still more unknown parameters re-call
+            # so this will throw the typical exception minus
+            # subject_class_name
+            $bx = $class->define_boolexpr($bx->params_list, %extra);
+        }
+    }
+
     my $self = $class->SUPER::create(@_);
     unless ($self) {
         return;
@@ -334,6 +426,14 @@ sub create {
         $self->build_requested($self->build_requested, 'model created with build requested set');
     }
 
+    if ($self->subject) {
+        # TODO: get rid of this as soon as we drop the old database column
+        $self->_subject_class_name($self->subject->class);
+    }
+
+    # TODO: the column behind this should become the new primary key when we are fully in sync
+    $self->_id($self->id);
+    
     return $self;
 }
 
@@ -529,8 +629,6 @@ sub copy {
         $self->error_message('Unrecognized overrides sent to model copy: '.Data::Dumper::Dumper(\%overrides));
         return;
     }
-
-    $params{subject_class_name} = $params{subject}->class; # set here in case subject is overridden
 
     my $copy = eval{ $self->class->create(%params) };
     if ( not $copy ) {
