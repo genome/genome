@@ -130,6 +130,9 @@ class Genome::Model {
         },
         _last_complete_build_id => {
             # TODO: change the method with this name to use this property since it is faster
+            # nnutter: I disagree, the column should be removed
+            # because it was too often out of sync. The method is fairly fast
+            # now that it uses an iterator instead of fetching all builds.
             is => 'Number',
             column_name => 'LAST_COMPLETE_BUILD_ID', 
             doc => 'the last complete build id',
