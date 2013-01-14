@@ -173,9 +173,11 @@ foreach my $m (@models){
     my $coord = $line[$columns{'coord'}{pos}];
     my $gene_name = $line[$columns{'gene_name'}{pos}];
     my $mapped_gene_name = $line[$columns{'mapped_gene_name'}{pos}];
+    my $ensembl_gene_id = $line[$columns{'ensembl_gene_id'}{pos}];
     my $aa_changes = $line[$columns{'aa_changes'}{pos}];
     my $ref_base = $line[$columns{'ref_base'}{pos}];
     my $var_base = $line[$columns{'var_base'}{pos}];
+    my $gid = $ensembl_gene_id;
 
     #Merge to the level of distinct positions...
     if ($indels{$coord}){
@@ -186,6 +188,7 @@ foreach my $m (@models){
       $indels{$coord}{gene_name} = $gene_name;
       $indels{$coord}{mapped_gene_name} = $mapped_gene_name;
       $indels{$coord}{aa_changes} = $aa_changes;
+      $indels{$coord}{ensembl_gene_id} = $ensembl_gene_id;
       $indels{$coord}{ref_base} = $ref_base;
       $indels{$coord}{var_base} = $var_base;
       $indels{$coord}{recurrence} = 1;
@@ -196,21 +199,23 @@ foreach my $m (@models){
     }
 
     #Merge to the level of distinct gene names
-    if ($genes{$gene_name}){
-      $genes{$gene_name}{total_mutation_count}++;
-      my $positions_ref = $genes{$gene_name}{positions};
+    if ($genes{$gid}){
+      $genes{$gid}{total_mutation_count}++;
+      my $positions_ref = $genes{$gid}{positions};
       $positions_ref->{$coord}=1;
-      my $cases_ref = $genes{$gene_name}{cases};
+      my $cases_ref = $genes{$gid}{cases};
       $cases_ref->{$final_name}=1;
     }else{
-      $genes{$gene_name}{mapped_gene_name} = $mapped_gene_name;
-      $genes{$gene_name}{total_mutation_count} = 1;
+      $genes{$gid}{gene_name} = $gene_name;
+      $genes{$gid}{mapped_gene_name} = $mapped_gene_name;
+      $genes{$gid}{ensembl_gene_id} = $ensembl_gene_id;
+      $genes{$gid}{total_mutation_count} = 1;
       my %positions;
       $positions{$coord} = 1;
-      $genes{$gene_name}{positions} = \%positions;
+      $genes{$gid}{positions} = \%positions;
       my %cases;
       $cases{$final_name} = 1;
-      $genes{$gene_name}{cases} = \%cases;
+      $genes{$gid}{cases} = \%cases;
     }
   }
   close(INDEL);
@@ -243,22 +248,22 @@ close(OUT2);
 #Print the gene level recurrence summary
 open (OUT1, ">$genes_outfile") || die "\n\nCould not open output file for writing: $genes_outfile\n\n";
 open (OUT2, ">$genes_outfile_categorical") || die "\n\nCould not open output file for writing: $genes_outfile_categorical\n\n";
-print OUT1 "gene_name\tmapped_gene_name\ttotal_mutation_count\tmutated_sample_count\tmutated_position_count\tmutated_samples\tmutated_positions\n";
-print OUT2 "gene_name\tsample\n";
-foreach my $gene_name (sort keys %genes){
-  my $positions_ref = $genes{$gene_name}{positions};
+print OUT1 "ensembl_gene_id\tgene_name\tmapped_gene_name\ttotal_mutation_count\tmutated_sample_count\tmutated_position_count\tmutated_samples\tmutated_positions\n";
+print OUT2 "ensembl_gene_id\tgene_name\tmapped_gene_name\tsample\n";
+foreach my $gid (sort keys %genes){
+  my $positions_ref = $genes{$gid}{positions};
   my @positions = keys %{$positions_ref};
   my $positions_count = scalar(@positions);
   my @sort_positions = sort @positions;
   my $sort_positions_string = join (",", @sort_positions);
-  my $cases_ref = $genes{$gene_name}{cases};
+  my $cases_ref = $genes{$gid}{cases};
   my @cases = keys %{$cases_ref};
   my @sort_cases = sort @cases;
   my $sort_cases_string = join(",", @sort_cases);
   my $cases_count = scalar(@cases);
-  print OUT1 "$gene_name\t$genes{$gene_name}{mapped_gene_name}\t$genes{$gene_name}{total_mutation_count}\t$cases_count\t$positions_count\t$sort_cases_string\t$sort_positions_string\n";
+  print OUT1 "$genes{$gid}{ensembl_gene_id}\t$genes{$gid}{gene_name}\t$genes{$gid}{mapped_gene_name}\t$genes{$gid}{total_mutation_count}\t$cases_count\t$positions_count\t$sort_cases_string\t$sort_positions_string\n";
   foreach my $case (@sort_cases){
-    print OUT2 "$gene_name\t$case\n";
+    print OUT2 "$genes{$gid}{ensembl_gene_id}\t$genes{$gid}{gene_name}\t$genes{$gid}{mapped_gene_name}\t$case\n";
   }
 }
 close(OUT1);

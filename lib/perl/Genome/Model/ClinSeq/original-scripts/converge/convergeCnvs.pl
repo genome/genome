@@ -134,26 +134,42 @@ sub getCnvFiles{
 
   my %files;
   my $fc = 0;
-  if ($verbose){print BLUE, "\n\nGet all Stats files within these builds that match 'cnvs.hq' AND 'cnv.AllGenes_Ensembl*.amp.tsv'", RESET;}
+  if ($verbose){print BLUE, "\n\nGet all Stats files within these builds that match 'cnvs.hq' AND 'cnv.AllGenes.tsv'", RESET;}
   my %mb = %{$models_builds->{cases}};
   foreach my $c (keys %mb){
     my $b = $mb{$c}{build};
     my $m = $mb{$c}{model};
     my $model_name = $m->name;
+    my $model_id = $m->id;
     my $data_directory = $b->data_directory;
     my $subject_name = $b->subject->name;
     my $subject_common_name = $b->subject->common_name;
     my $build_id = $b->id;
+    my $wgs_build = $b->wgs_build;
+    my $exome_build = $b->exome_build;
 
-    #If the subject name is not defined, die
-    unless ($subject_name){
-      print RED, "\n\nCould not determine subject name for build: $build_id\n\n", RESET;
-      exit(1);
+    my ($wgs_common_name, $wgs_name, $exome_common_name, $exome_name);
+    if ($wgs_build){
+      $wgs_common_name = $wgs_build->subject->patient->common_name;
+      $wgs_name = $wgs_build->subject->patient->name;
     }
-
+    if ($exome_build){
+      $exome_common_name = $exome_build->subject->patient->common_name;
+      $exome_name = $exome_build->subject->patient->name;
+    }
+    #Get the patient common name from one of the builds, if none can be found, use the individual name instead, if that can't be found either set the name to 'UnknownName'
+    my @names = ($wgs_common_name, $exome_common_name, $wgs_name, $exome_name);
     my $final_name = "Unknown";
-    if ($subject_name){$final_name = $subject_name;}
-    if ($subject_common_name){$final_name = $subject_common_name;}
+    foreach my $name (@names){
+      if ($name){
+        $final_name = $name;
+        last();
+      }
+    }
+    unless ($final_name){
+      print RED, "\n\nCould not determine a common or subject name from model: $model_name ($model_id)\n\n", RESET;
+      exit();
+    }
 
     if ($verbose){print BLUE, "\n\t$final_name\t$build_id\t$data_directory", RESET;}
 
@@ -166,19 +182,10 @@ sub getCnvFiles{
     chomp($cnvs_hq_file);
 
     my $cnvs_gene_file;
-    my $find_cmd2 = "find $data_directory -name cnv.AllGenes_Ensembl*.tsv";
-    if ($verbose){print YELLOW, "\n\t\t$find_cmd2", RESET;}
-    my @tmp1 = `$find_cmd2`;
-    chomp(@tmp1);
-    foreach my $path (@tmp1){
-      if ($path =~ /cnv\.AllGenes\_Ensembl\d{2}\.tsv/){
-        $cnvs_gene_file = $path;
-      }
-    }
 
-    my $find_cmd3 = "find $data_directory -name cnv.All_genes.tsv";
-    if ($verbose){print YELLOW, "\n\t\t$find_cmd3", RESET;}
-    my @tmp2 = `$find_cmd3`;
+    my $find_cmd2 = "find $data_directory -name cnv.All_genes.tsv";
+    if ($verbose){print YELLOW, "\n\t\t$find_cmd2", RESET;}
+    my @tmp2 = `$find_cmd2`;
     chomp(@tmp2);
     foreach my $path (@tmp2){
       if ($path =~ /cnv\.All\_genes\.tsv/){
@@ -375,48 +382,49 @@ sub parseGenes{
         $header = 0;
         next();
       }
-      unless (($columns{'Symbol'} || $columns{'gene_name'}) && $columns{'mapped_gene_name'} && ($columns{'Chr'} || $columns{'chr'}) && ($columns{'Start'} || $columns{'start'}) && ($columns{'End'} || $columns{'end'}) && ($columns{'Mean CNV Diff'} || $columns{'mean_cnv_diff'}) && ($columns{'Cytoband'} || $columns{'cytoband'})){
+      unless ($columns{'gene_id'} && $columns{'gene_name'} && $columns{'mapped_gene_name'} && $columns{'chr'} && $columns{'start'} && $columns{'end'} && $columns{'cytoband'} && $columns{'mean_cnv_diff'} && $columns{'cnvhmm_status'}){
         print RED, "\n\nCould not find a neccessary column in file: $cnvs_gene_file\n\n", RESET;
         exit(1);
       }
 
       #Grab data columns
-      my ($symbol, $mapped_gene_name, $chr, $start, $end, $cytoband, $mean_cnv_diff);
-      
-      $symbol = $line[$columns{'Symbol'}{pos}] if ($columns{'Symbol'});
-      $symbol = $line[$columns{'gene_name'}{pos}] if ($columns{'gene_name'});
-      $mapped_gene_name = $line[$columns{'mapped_gene_name'}{pos}];
-      $chr = $line[$columns{'Chr'}{pos}] if ($columns{'Chr'});
-      $chr = $line[$columns{'chr'}{pos}] if ($columns{'chr'});
-      $start = $line[$columns{'Start'}{pos}] if ($columns{'Start'});
-      $start = $line[$columns{'start'}{pos}] if ($columns{'start'});
-      $end = $line[$columns{'End'}{pos}] if ($columns{'End'});
-      $end = $line[$columns{'end'}{pos}] if ($columns{'end'});
-      $cytoband = $line[$columns{'Cytoband'}{pos}] if ($columns{'Cytoband'});
-      $cytoband = $line[$columns{'cytoband'}{pos}] if ($columns{'cytoband'});
-      $mean_cnv_diff = $line[$columns{'Mean CNV Diff'}{pos}] if ($columns{'Mean CNV Diff'});
-      $mean_cnv_diff = $line[$columns{'mean_cnv_diff'}{pos}] if ($columns{'mean_cnv_diff'});
-
+      my $gid = $line[$columns{'gene_id'}{pos}];
+      my $gene_name = $line[$columns{'gene_name'}{pos}];
+      my $mapped_gene_name = $line[$columns{'mapped_gene_name'}{pos}];
+      my $chr = $line[$columns{'chr'}{pos}];
+      my $start = $line[$columns{'start'}{pos}];
+      my $end = $line[$columns{'end'}{pos}];
+      my $cytoband = $line[$columns{'cytoband'}{pos}];
+      my $mean_cnv_diff = $line[$columns{'mean_cnv_diff'}{pos}];
+      my $cnvhmm_status = $line[$columns{'cnvhmm_status'}{pos}];
 
       #If this is the first file processed, add this gene to the list.  If it is not, make sure the gene is already in the list and add the data only
       if ($first_file){
         $o++;
-        $genes{$symbol}{mapped_gene_name} = $mapped_gene_name;
-        $genes{$symbol}{chr} = $chr;
-        $genes{$symbol}{start} = $start;
-        $genes{$symbol}{end} = $end;
-        $genes{$symbol}{cytoband} = $cytoband;
-        $genes{$symbol}{order} = $o;
+        $genes{$gid}{gene_name} = $gene_name;
+        $genes{$gid}{mapped_gene_name} = $mapped_gene_name;
+        $genes{$gid}{chr} = $chr;
+        $genes{$gid}{start} = $start;
+        $genes{$gid}{end} = $end;
+        $genes{$gid}{cytoband} = $cytoband;
+        $genes{$gid}{order} = $o;
         my %mean_cnv_diffs;
         $mean_cnv_diffs{$column_name}{mean_cnv_diff} = $mean_cnv_diff;
-        $genes{$symbol}{mean_cnv_diffs} = \%mean_cnv_diffs;
+        $genes{$gid}{mean_cnv_diffs} = \%mean_cnv_diffs;
+
+        my %cnvhmm_statuses;
+        $cnvhmm_statuses{$column_name}{cnvhmm_status} = $cnvhmm_status;
+        $genes{$gid}{cnvhmm_statuses} = \%cnvhmm_statuses;
+
       }else{
-        unless (defined($genes{$symbol})){
-          print RED, "\n\nFound a gene symbol ($symbol) in this file that was not in the first file of this set\n\n", RESET;
+        unless (defined($genes{$gid})){
+          print RED, "\n\nFound a gene gid ($gid) in this file that was not in the first file of this set\n\n", RESET;
           exit(1);
         }
-        my $mean_cnv_diffs = $genes{$symbol}{mean_cnv_diffs};
+        my $mean_cnv_diffs = $genes{$gid}{mean_cnv_diffs};
         $mean_cnv_diffs->{$column_name}->{mean_cnv_diff} = $mean_cnv_diff;
+        my $cnvhmm_statuses = $genes{$gid}{cnvhmm_statuses};
+        $cnvhmm_statuses->{$column_name}->{cnvhmm_status} = $cnvhmm_status;
       }
     }
     close (CNV);
@@ -529,13 +537,13 @@ sub writeCnvGeneOutputFiles{
   my @columns = sort keys %column_names;
   my $columns_s = join("\t", @columns);
 
-  foreach my $symbol (sort {$genes->{$a}->{order} <=> $genes->{$b}->{order}} keys %{$genes}){
+  foreach my $gid (sort {$genes->{$a}->{order} <=> $genes->{$b}->{order}} keys %{$genes}){
 
-    my $mapped_gene_name = $genes->{$symbol}->{mapped_gene_name};
-    my $chr = $genes->{$symbol}->{chr};
-    my $start = $genes->{$symbol}->{start};
-    my $end = $genes->{$symbol}->{end};
-    my $cytoband = $genes->{$symbol}->{cytoband};
+    my $mapped_gene_name = $genes->{$gid}->{mapped_gene_name};
+    my $chr = $genes->{$gid}->{chr};
+    my $start = $genes->{$gid}->{start};
+    my $end = $genes->{$gid}->{end};
+    my $cytoband = $genes->{$gid}->{cytoband};
     
     my @mean_cnv_diffs;
     my @amp_subjects;
@@ -543,45 +551,48 @@ sub writeCnvGeneOutputFiles{
     my @ampdel_subjects;
 
     foreach my $column_name (sort keys %column_names){
-      my $mean_cnv_diffs = $genes->{$symbol}->{mean_cnv_diffs};
+      my $mean_cnv_diffs = $genes->{$gid}->{mean_cnv_diffs};
       my $mean_cnv_diff = $mean_cnv_diffs->{$column_name}->{mean_cnv_diff};
+      my $cnvhmm_statuses = $genes->{$gid}->{cnvhmm_statuses};
+      my $cnvhmm_status = $cnvhmm_statuses->{$column_name}->{cnvhmm_status};
+
       push (@mean_cnv_diffs, $mean_cnv_diff);
 
-      if ($mean_cnv_diff >= $amp_cutoff){
+      if ($mean_cnv_diff >= $amp_cutoff || $cnvhmm_status =~ /gain/i){
         push(@amp_subjects, $column_name);
         push(@ampdel_subjects, $column_name);
       }
-      if ($mean_cnv_diff <= $del_cutoff){
+      if ($mean_cnv_diff <= $del_cutoff || $cnvhmm_status =~ /loss/i){
         push(@del_subjects, $column_name);
         push(@ampdel_subjects, $column_name);
       }
     }
     my $mean_cnv_diffs_s = join("\t", @mean_cnv_diffs);
-    $genes->{$symbol}->{mean_cnv_diffs_s} = $mean_cnv_diffs_s;
+    $genes->{$gid}->{mean_cnv_diffs_s} = $mean_cnv_diffs_s;
 
     my $amp_subject_count = scalar(@amp_subjects);
     my $amp_subjects_s = "NA";
     if ($amp_subject_count > 0){
       $amp_subjects_s = join(",", @amp_subjects);
     }
-    $genes->{$symbol}->{amp_subject_count} = $amp_subject_count;
-    $genes->{$symbol}->{amp_subject_list} = $amp_subjects_s;
+    $genes->{$gid}->{amp_subject_count} = $amp_subject_count;
+    $genes->{$gid}->{amp_subject_list} = $amp_subjects_s;
 
     my $del_subject_count = scalar(@del_subjects);
     my $del_subjects_s = "NA";
     if ($del_subject_count > 0){
       $del_subjects_s = join(",", @del_subjects);
     }
-    $genes->{$symbol}->{del_subject_count} = $del_subject_count;
-    $genes->{$symbol}->{del_subject_list} = $del_subjects_s;
+    $genes->{$gid}->{del_subject_count} = $del_subject_count;
+    $genes->{$gid}->{del_subject_list} = $del_subjects_s;
 
     my $ampdel_subject_count = scalar(@ampdel_subjects);
     my $ampdel_subjects_s = "NA";
     if ($ampdel_subject_count > 0){
       $ampdel_subjects_s = join(",", @ampdel_subjects);
     }
-    $genes->{$symbol}->{ampdel_subject_count} = $ampdel_subject_count;
-    $genes->{$symbol}->{ampdel_subject_list} = $ampdel_subjects_s;
+    $genes->{$gid}->{ampdel_subject_count} = $ampdel_subject_count;
+    $genes->{$gid}->{ampdel_subject_list} = $ampdel_subjects_s;
   }
 
   open (CNV1, ">$cnv_genes_matrix_file") || die "\n\nCould not open CNV gene diff file for output: $cnv_genes_matrix_file\n\n";
@@ -589,32 +600,28 @@ sub writeCnvGeneOutputFiles{
   open (CNV3, ">$cnv_genes_del_file")    || die "\n\nCould not open CNV gene diff file for output: $cnv_genes_del_file\n\n";
   open (CNV4, ">$cnv_genes_ampdel_file") || die "\n\nCould not open CNV gene diff file for output: $cnv_genes_ampdel_file\n\n";
   
-  my $header = "Symbol\tmapped_gene_name\tChr\tStart\tEnd\tCytoband";
-
+  my $header = "ensembl_gene_id\tgene_name\tmapped_gene_name\tchr\tstart\tend\tcytoband";
   print CNV1 "$header\t$columns_s\n";
   print CNV2 "$header\tAmplificationSubjectCount\tAmplificationSubjectList\t$columns_s\n";
   print CNV3 "$header\tDeletionSubjectCount\tDeletionSubjectList\t$columns_s\n";
-  print CNV4 "$header\tAmpDelSubjectCount\tAmpDelSubjectCount\t$columns_s\n";
+  print CNV4 "$header\tAmpDelSubjectCount\tAmpDelSubjectList\t$columns_s\n";
 
-  foreach my $symbol (sort {$genes->{$a}->{order} <=> $genes->{$b}->{order}} keys %{$genes}){
-    print CNV1 "$symbol\t$genes->{$symbol}->{mapped_gene_name}\t$genes->{$symbol}->{chr}\t$genes->{$symbol}->{start}\t$genes->{$symbol}->{end}\t$genes->{$symbol}->{cytoband}\t$genes->{$symbol}->{mean_cnv_diffs_s}\n";
+  foreach my $gid (sort {$genes->{$a}->{order} <=> $genes->{$b}->{order}} keys %{$genes}){
+    print CNV1 "$gid\t$genes->{$gid}->{gene_name}\t$genes->{$gid}->{mapped_gene_name}\t$genes->{$gid}->{chr}\t$genes->{$gid}->{start}\t$genes->{$gid}->{end}\t$genes->{$gid}->{cytoband}\t$genes->{$gid}->{mean_cnv_diffs_s}\n";
   }
-
-  foreach my $symbol (sort {$genes->{$b}->{amp_subject_count} <=> $genes->{$a}->{amp_subject_count}} keys %{$genes}){
-    if ($genes->{$symbol}->{amp_subject_count} > 0){
-    print CNV2 "$symbol\t$genes->{$symbol}->{mapped_gene_name}\t$genes->{$symbol}->{chr}\t$genes->{$symbol}->{start}\t$genes->{$symbol}->{end}\t$genes->{$symbol}->{cytoband}\t$genes->{$symbol}->{amp_subject_count}\t$genes->{$symbol}->{amp_subject_list}\t$genes->{$symbol}->{mean_cnv_diffs_s}\n";
+  foreach my $gid (sort {$genes->{$b}->{amp_subject_count} <=> $genes->{$a}->{amp_subject_count}} keys %{$genes}){
+    if ($genes->{$gid}->{amp_subject_count} > 0){
+    print CNV2 "$gid\t$genes->{$gid}->{gene_name}\t$genes->{$gid}->{mapped_gene_name}\t$genes->{$gid}->{chr}\t$genes->{$gid}->{start}\t$genes->{$gid}->{end}\t$genes->{$gid}->{cytoband}\t$genes->{$gid}->{amp_subject_count}\t$genes->{$gid}->{amp_subject_list}\t$genes->{$gid}->{mean_cnv_diffs_s}\n";
     }
   }
-
-  foreach my $symbol (sort {$genes->{$b}->{del_subject_count} <=> $genes->{$a}->{del_subject_count}} keys %{$genes}){
-    if ($genes->{$symbol}->{del_subject_count} > 0){
-    print CNV3 "$symbol\t$genes->{$symbol}->{mapped_gene_name}\t$genes->{$symbol}->{chr}\t$genes->{$symbol}->{start}\t$genes->{$symbol}->{end}\t$genes->{$symbol}->{cytoband}\t$genes->{$symbol}->{del_subject_count}\t$genes->{$symbol}->{del_subject_list}\t$genes->{$symbol}->{mean_cnv_diffs_s}\n";
+  foreach my $gid (sort {$genes->{$b}->{del_subject_count} <=> $genes->{$a}->{del_subject_count}} keys %{$genes}){
+    if ($genes->{$gid}->{del_subject_count} > 0){
+    print CNV3 "$gid\t$genes->{$gid}->{gene_name}\t$genes->{$gid}->{mapped_gene_name}\t$genes->{$gid}->{chr}\t$genes->{$gid}->{start}\t$genes->{$gid}->{end}\t$genes->{$gid}->{cytoband}\t$genes->{$gid}->{del_subject_count}\t$genes->{$gid}->{del_subject_list}\t$genes->{$gid}->{mean_cnv_diffs_s}\n";
     }
   }
-
-  foreach my $symbol (sort {$genes->{$b}->{ampdel_subject_count} <=> $genes->{$a}->{ampdel_subject_count}} keys %{$genes}){
-    if ($genes->{$symbol}->{ampdel_subject_count} > 0){
-    print CNV4 "$symbol\t$genes->{$symbol}->{mapped_gene_name}\t$genes->{$symbol}->{chr}\t$genes->{$symbol}->{start}\t$genes->{$symbol}->{end}\t$genes->{$symbol}->{cytoband}\t$genes->{$symbol}->{ampdel_subject_count}\t$genes->{$symbol}->{ampdel_subject_list}\t$genes->{$symbol}->{mean_cnv_diffs_s}\n";
+  foreach my $gid (sort {$genes->{$b}->{ampdel_subject_count} <=> $genes->{$a}->{ampdel_subject_count}} keys %{$genes}){
+    if ($genes->{$gid}->{ampdel_subject_count} > 0){
+    print CNV4 "$gid\t$genes->{$gid}->{gene_name}\t$genes->{$gid}->{mapped_gene_name}\t$genes->{$gid}->{chr}\t$genes->{$gid}->{start}\t$genes->{$gid}->{end}\t$genes->{$gid}->{cytoband}\t$genes->{$gid}->{ampdel_subject_count}\t$genes->{$gid}->{ampdel_subject_list}\t$genes->{$gid}->{mean_cnv_diffs_s}\n";
     }
   }
 
