@@ -99,10 +99,8 @@ HELP
 
 sub execute {
     my $self = shift;
-    my $high = 750000;
-    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv();
-    $self->import_tsv();
+    $self->status_message(".tsv file created for use in 'rake dgidb:import:dgene <.tsv_file_path> <source_db_version>'");
     return 1;
 }
 
@@ -271,41 +269,6 @@ sub _parse_terms_file {
     }
     $fh->close;
     return ($terms);
-}
-
-sub import_tsv {
-    my $self = shift;
-    my $genes_outfile = $self->genes_outfile;
-    my $citation = $self->_create_citation('dGene', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'dGENE - The Druggable Gene List');
-    my @genes = $self->import_genes($genes_outfile, $citation);
-    return 1;
-}
-
-sub import_genes {
-    my $self = shift;
-    my $version = $self->version;
-    my $genes_outfile = shift;
-    my $citation = shift;
-    my @genes;
-    my @headers = qw/dgene_class dgene_short_name dgene_full_name human_readable_name dGeneID tax_id GeneID Symbol LocusTag Synonyms dbXrefs chromosome map_location description gene_type symbol_from_authority full_name nomenclature_status other_designations modification_date/;
-    my $parser = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $genes_outfile,
-        headers => \@headers,
-        separator => "\t",
-        is_regex => 1,
-    );
-    
-    $parser->next; #eat the headers
-    while(my $dgene_input = $parser->next){
-        my $gene_name = $self->_create_gene_name_report($dgene_input->{'GeneID'}, $citation, 'dGene Gene Id', '');
-        my $human_readable_name = $dgene_input->{'human_readable_name'};
-        $human_readable_name =~ s/-/ /g;
-        my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
-        my $symbol = $self->_create_gene_alternate_name_report($gene_name, $dgene_input->{'Symbol'}, 'Gene Symbol', '', 'upper');
-        my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $dgene_input->{'GeneID'}, 'Entrez Gene Id', '', 'upper');
-        push @genes, $gene_name;
-    }
-    return @genes;
 }
 
 1;
