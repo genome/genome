@@ -88,10 +88,8 @@ HELP
 
 sub execute {
     my $self = shift;
-    my $high = 750000; #Number of UR objects allowed in Cache before attempting to prune them down
-    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv(); #Get the data from source files and write to a temp file
-    $self->import_tsv();   #Dump the contents of the temp file to the database
+    $self->status_message(".tsv file created for use in 'rake dgidb:import:ensembl <.tsv_file_path> <source_db_version>'");
     return 1;
 }
 
@@ -159,58 +157,11 @@ sub input_to_tsv {
 sub import_tsv {
     my $self = shift;
     my $genes_outfile_path = $self->genes_outfile;
-    #TODO: Take in the $genes_outfile_path, parse it, make the db objects;
-    $self->preload_objects;
     my $citation = $self->_create_citation('Ensembl', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'Ensembl');
     my @gene_name_reports = $self->import_genes($genes_outfile_path, $citation); #Imports gene names and related info to Dgidb and returns gene_name_report objects
     #We don't actually need to do anything with these objects, the data is ready to be commited to the database but will not be committed until after the execute finishes
 
     return 1;
-}
-
-#A UR related optimization...
-sub preload_objects {
-    my $self = shift;
-    my $source_db_name = 'Ensembl';
-    my $source_db_version = $self->version;
-
-    #Let's preload anything for this database name and version so that we can avoid death by 1000 queries
-    my @gene_name_reports = Genome::DruggableGene::GeneNameReport->get(source_db_name => $source_db_name, source_db_version => $source_db_version);
-    for my $gene_name_report (@gene_name_reports){
-        $gene_name_report->gene_alt_names;
-        $gene_name_report->gene_categories;
-    }
-    return 1;
-}
-
-#Pull gene records out of a temp file created previously
-sub import_genes {
-    my $self = shift;
-    my $gene_outfile = shift;
-    my $citation = shift;
-    my @gene_name_reports;
-    my @headers = qw/ ensembl_id ensembl_gene_symbol ensembl_gene_biotype /;
-    my $parser = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $gene_outfile,
-        headers => \@headers,
-        separator => "\t",
-        is_regex=> 1,
-    );
-
-    $parser->next; #eat the headers
-    while(my $gene = $parser->next){
-        my $gene_name_report = $self->_create_gene_name_report($gene->{ensembl_id}, $citation, 'Ensembl Gene Id', ''); #Description left undefined for now
-        push @gene_name_reports, $gene_name_report;
-        my $gene_name_alt = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_id}, 'Ensembl Gene Id', '', 'upper');
-
-        unless($gene->{ensembl_gene_symbol} eq 'N/A'){
-            my $gene_symbol_association = $self->_create_gene_alternate_name_report($gene_name_report, $gene->{ensembl_gene_symbol}, 'Ensembl Gene Name', '', 'upper');
-        }
-        unless ($gene->{ensembl_gene_biotype} eq 'N/A'){
-          my $biotype_category = $self->_create_gene_category_report($gene_name_report, 'Gene Biotype', $gene->{ensembl_gene_biotype}, '');
-        }
-    }
-    return @gene_name_reports;
 }
 
 1;
