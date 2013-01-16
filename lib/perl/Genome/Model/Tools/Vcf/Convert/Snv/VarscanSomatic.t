@@ -9,7 +9,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 9;
+    plan tests => 13;
 }
 
 use above 'Genome';
@@ -63,7 +63,23 @@ ok($rv, 'Command completed successfully');
 ok(-s $output_file2, "TCGA output file created");
 
 compare_file($expected_file2, $output_file2);
+
+my $expected_file3 = $expected_dir . '/TCGA_output2.vcf';
+my $output_file3 = Genome::Sys->create_temp_file_path;
+
+$params{output_file} = $output_file3;
+$params{aligned_reads_sample} = 'H_LS-BH-A0HQ-01A-11X-A049-09-1';
+$params{control_aligned_reads_sample} = 'H_LS-AN-A046-10A-01X-A054-09-1';
+
+$command = Genome::Model::Tools::Vcf::Convert::Snv::VarscanSomatic->create(%params);
+ok($command, 'Command created');
+$rv = $command->execute;
+ok($rv, 'Command completed successfully');
+ok(-s $output_file3, "TCGA output file created");
+compare_file($expected_file3, $output_file3);
+
 done_testing();
+
 
 # The files will have a timestamp that will differ. Ignore this but check the rest.
 sub compare_file {
