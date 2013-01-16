@@ -227,10 +227,21 @@ sub prepare_readcount_files {
         my $readcount_out = Genome::Sys->create_temp_file_path($sample_name . ".readcount.output");
         my $bam = $alignment_result->merged_alignment_bam_path;
         push @readcount_files, $readcount_out;
-        my $readcount_cmd = "bam-readcount -q $qual -f $ref_fasta -l $sites_file $bam > $readcount_out";
+
+        #my $readcount_cmd = "bam-readcount -q $qual -f $ref_fasta -l $sites_file $bam > $readcount_out";
         unless(-s $readcount_out) {
-            print STDERR "running $readcount_cmd";
-            print `$readcount_cmd`;
+            print STDERR "running bam-readcount";
+            my $rv = Genome::Model::Tools::Sam::Readcount->execute(
+                bam_file => $bam,
+                minimum_mapping_quality => $qual,
+                output_file => $readcount_out,
+                reference_fasta => $ref_fasta,
+                region_list => $sites_file,
+            );
+            unless($rv) {
+                $self->error_message("bam-readcount failed");
+                return;
+            }
         }
     }
     return \@readcount_files;
