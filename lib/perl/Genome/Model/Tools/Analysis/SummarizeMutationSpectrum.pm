@@ -89,6 +89,12 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         is => 'String',
         doc => 'Plot the user defined mutation spectrum file and exit.  ',
     },
+    exclude_gl_contigs => {
+        is_input => 1,
+        is_optional => 1,
+        is => 'Boolean',
+        doc => 'whether or not to exclude contigs beginning with the prefix GL.',
+    },
 
     ],
 };
@@ -164,7 +170,7 @@ sub execute {
 
     foreach my $model(@models) {
         my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
-        my $raw_count = parse_bed_file($input_file);
+        my $raw_count = $self->parse_bed_file($input_file);
         unlink($input_file);
         if($manual_label) { #user specified a sample label
             make_output($raw_count,$manual_label,$plot_input_file);  
@@ -236,7 +242,7 @@ sub make_input_file_from_model {
 
 sub parse_bed_file {
 
-    my $file = shift;
+    my ($self, $file) = @_;
 
     my $count = { 'A->C' => 0,
         'A->G' => 0,
@@ -256,15 +262,13 @@ sub parse_bed_file {
     while(<BED>) {
         chomp;
         my ($chr,$start,$stop,$ref_var,@rest) = split(/\t/,$_);
-        next if($chr =~ /GL/);	
+        next if($chr =~ /^GL/ and $self->exclude_gl_contigs);
         my ($ref,$var) = split(/\//,$ref_var);
         my @variants = Genome::Info::IUB::variant_alleles_for_iub($ref,$var);
-        if(@variants>1) {
-            #warn "more than 1 variant allele detected for '$_'\n";
-            next;
+        for my $variant (@variants) {
+            my $key = join("->",($ref,$variant));
+            $count->{$key}++;
         }
-        my $key = join("->",($ref,$variants[0]));
-        $count->{$key}++;
     }
     close BED;
 
