@@ -17,7 +17,7 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
               is_many => 1,
               shell_args_position => 1,
               require_user_verify => 0,
-              doc => 'somatic variation build(s) to summarize SVs from',
+              doc => 'somatic variation build(s) to create mutation diagrams from',
         },
         outdir => { 
               is => 'FilesystemPath',

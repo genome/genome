@@ -193,6 +193,16 @@ sub map_workflow_inputs {
         Genome::Sys->create_directory($dir);
     }
 
+    #Create mutation-spectrum results from WGS and exome results
+    if ($build->wgs_build) {
+        push @inputs, 'wgs_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
+        push @inputs, 'wgs_mutation_spectrum_datatype' => 'wgs';
+    }
+    if ($build->exome_build) {
+        push @inputs, 'exome_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
+        push @inputs, 'exome_mutation_spectrum_datatype' => 'exome';
+    }
+
     return @inputs;
 }
 
@@ -230,11 +240,15 @@ sub _resolve_workflow_for_build {
             summarize_wgs_tier1_snv_support_result
             summarize_svs_result
             summarize_cnvs_result
+            wgs_mutation_spectrum_result
         );
     }
 
     if ($build->exome_build) {
-        push @output_properties, 'summarize_exome_tier1_snv_support_result';
+        push @output_properties, qw(
+            summarize_exome_tier1_snv_support_result
+            exome_mutation_spectrum_result
+        );
     }
 
     if ($build->wgs_build and $build->exome_build) {
@@ -390,6 +404,7 @@ sub _resolve_workflow_for_build {
     # This will ensure testing goes more quickly because these will happen first.
     #
     
+
     #Summarize build inputs using SummarizeBuilds.pm
     my $msg = "Creating a summary of input builds using summarize-builds";
     my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
@@ -398,6 +413,26 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'summarize_builds_skip_lims_reports', $summarize_builds_op, 'skip_lims_reports');
     $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
     $add_link->($summarize_builds_op, 'result', $output_connector, 'summarize_builds_result');
+
+    #Create mutation spectrum results for wgs data
+    if ($build->wgs_build) {
+        $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum";
+        my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+        $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'build');
+        $add_link->($input_connector, 'wgs_mutation_spectrum_outdir', $create_mutation_spectrum_wgs_op, 'outdir');
+        $add_link->($input_connector, 'wgs_mutation_spectrum_datatype', $create_mutation_spectrum_wgs_op, 'datatype');
+        $add_link->($create_mutation_spectrum_wgs_op, 'result', $output_connector, 'wgs_mutation_spectrum_result')
+    }
+
+    #Create mutation spectrum results for exome data
+    if ($build->exome_build) {
+        $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum";
+        my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+        $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'build');
+        $add_link->($input_connector, 'exome_mutation_spectrum_outdir', $create_mutation_spectrum_exome_op, 'outdir');
+        $add_link->($input_connector, 'exome_mutation_spectrum_datatype', $create_mutation_spectrum_exome_op, 'datatype');
+        $add_link->($create_mutation_spectrum_exome_op, 'result', $output_connector, 'exome_mutation_spectrum_result')
+    }
 
     #Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
     if ($build->wgs_build or $build->exome_build) {
