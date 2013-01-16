@@ -35,7 +35,7 @@ class Genome::Model::Tools::Relationship::PolymuttDenovoFilter {
         is_optional=>1,
         doc=>"the minimum binomial test result from unaffected members to pass through the filter",
         default=>"1.0e-4",
-    }
+    },
     ],
 
 
@@ -147,10 +147,19 @@ sub prepare_readcount_files {
         my $readcount_out = Genome::Sys->create_temp_file_path($model->subject->name . ".readcount.output");
         my $bam = $model->last_succeeded_build->whole_rmdup_bam_file;
         push @readcount_files, $readcount_out;
-        my $readcount_cmd = "bam-readcount -q $qual -f $ref_fasta -l $sites_file $bam > $readcount_out";
         unless(-s $readcount_out) {
-            print STDERR "running $readcount_cmd";
-            print `$readcount_cmd`;
+            print STDERR "running bam-readcount";
+            my $rv = Genome::Model::Tools::Sam::Readcount->execute(
+                bam_file => $bam,
+                minimum_mapping_quality => $qual,
+                output_file => $readcount_out,
+                reference_fasta => $ref_fasta,
+                region_list => $sites_file,
+            );
+            unless ($rv) {
+                $self->error_message("Failed to run readcount");
+                return;
+            }
         }
     }
     return \@readcount_files;

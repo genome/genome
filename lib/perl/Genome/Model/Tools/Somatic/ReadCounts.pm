@@ -86,10 +86,29 @@ sub execute {
     }
     $readcount_regions_fh->close;
     my $min_mapping_quality = $self->minimum_mapping_quality;
-    my $normal_bam_command =  "bam-readcount -q $min_mapping_quality -f " .  $self->reference_sequence . " -l $readcount_regions_file " . $self->normal_bam;
-    my $tumor_bam_command =  "bam-readcount -q $min_mapping_quality -f " .  $self->reference_sequence . " -l $readcount_regions_file " . $self->tumor_bam;
-    my @normal_lines = `$normal_bam_command`;
-    my @tumor_lines  = `$tumor_bam_command`;
+    my $normal_temp = Genome::Sys->create_temp_file_path;
+    my $tumor_temp = Genome::Sys->create_temp_file_path;
+    my $normal_rv = Genome::Model::Tools::Sam::Readcount->execute(
+        bam_file => $self->normal_bam,
+        minimum_mapping_quality => $min_mapping_quality,
+        output_file => $normal_temp,
+        reference_fasta => $self->reference_sequence,
+        region_list => $readcount_regions_file,
+    );
+    my $tumor_rv = Genome::Model::Tools::Sam::Readcount->execute(
+        bam_file => $self->tumor_bam,
+        minimum_mapping_quality => $min_mapping_quality,
+        output_file => $tumor_temp,
+        reference_fasta => $self->reference_sequence,
+        region_list => $readcount_regions_file,
+    );
+    unless ($normal_rv and $tumor_rv) {
+        $self->error_message("readcount failed\n");
+        return;
+    }
+
+    my @normal_lines = `cat $normal_temp`;
+    my @tumor_lines  = `cat $tumor_temp`;
     my %hash_of_arrays;
     $hash_of_arrays{'Normal'}=\@normal_lines;
     $hash_of_arrays{'Tumor'}=\@tumor_lines;
