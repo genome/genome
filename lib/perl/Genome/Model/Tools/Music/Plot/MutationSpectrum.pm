@@ -3,7 +3,6 @@ package Genome::Model::Tools::Music::Plot::MutationSpectrum;
 use warnings;
 use strict;
 use Genome;
-use Workflow;
 use FileHandle;
 use IO::File;
 use Carp;
