@@ -13,7 +13,7 @@ use above 'Genome';
 use Genome::SoftwareResult;
 
 use Test::More;
-use File::Compare qw(compare compare_text);
+use File::Compare qw(compare);
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -62,7 +62,7 @@ my $diff = sub {
     $line2 =~ s/^#Command:.*//;
     return $line1 ne $line2;
 };
-is(compare_text($expected_output, $test_out, $diff), 0, "svs.hq output as expected");
+is(compare($expected_output, $test_out, $diff), 0, "svs.hq output as expected");
 
 # Test fastq QC
 my $good_fastq_dir = $command->_temp_staging_directory($test_base_dir.'/good');
