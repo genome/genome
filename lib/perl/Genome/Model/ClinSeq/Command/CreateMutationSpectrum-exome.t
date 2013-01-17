@@ -14,14 +14,14 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>10; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>8; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::CreateMutationSpectrum;
 use Data::Dumper;
 
 use_ok('Genome::Model::ClinSeq::Command::CreateMutationSpectrum') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationSpectrum/exome/2013-01-15/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationSpectrum/exome/2013-01-16/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -56,12 +56,6 @@ ok(-e $log_file, "Wrote message file from update-analysis to a log file: $log_fi
 #Genome::Sys->shellcmd(cmd => "cp -r -L $temp_dir/* $expected_output_dir");
 
 #Check for non-zero presence of expected PDFs
-my $pdf1 = $temp_dir . "/exome/mutation_spectrum/"."$final_name"."_mutation-spectrum-absolute.pdf";
-ok(-s $pdf1, "Found non-zero PDF file mutation-spectrum-absolute.pdf");
-
-my $pdf2 = $temp_dir . "/exome/mutation_spectrum/"."$final_name"."_mutation-spectrum-relative.pdf";
-ok(-s $pdf2, "Found non-zero PDF file mutation-spectrum-relative.pdf");
-
 my $pdf3 = $temp_dir . "/exome/mutation_spectrum_sequence_context/"."$final_name"."_mutation-spectrum-sequence-context.pdf";
 ok(-s $pdf3, "Found non-zero PDF file mutation-spectrum-sequence-context.pdf");
 
