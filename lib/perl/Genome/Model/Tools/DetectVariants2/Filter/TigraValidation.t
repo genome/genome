@@ -61,7 +61,13 @@ ok($sv_valid->execute(), 'executed TigraValidation object OK');
 my @test_file_names = qw(svs.out svs.out.normal svs.out.tumor breakpoint_seq.normal.fa breakpoint_seq.tumor.fa cm_aln.out.normal cm_aln.out.tumor);
 for my $file_name (@test_file_names) {
     ok(-s $tmp_dir."/$file_name", "output file $file_name generated ok"); 
-    is(compare($tmp_dir."/$file_name", $test_input_dir."/$file_name"), 0, "output $file_name matches as expected");
+    my $diff = sub {
+        my ($line1, $line2) = @_;
+        $line1 =~ s/^#Bams: .*//;
+        $line2 =~ s/^#Bams: .*//;
+        return $line1 ne $line2;
+    };
+    is(compare("$tmp_dir/$file_name", "$test_input_dir/$file_name", $diff), 0, "output $file_name matches as expected");
 }
 
 done_testing();

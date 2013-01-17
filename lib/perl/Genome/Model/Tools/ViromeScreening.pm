@@ -77,8 +77,26 @@ sub help_detail {
 sub execute {
     my $self = shift;
     unlink($self->logfile) if (-e $self->logfile);
+
     $self->_log_dbs_used;
-    my $output = run_workflow_lsf(
+    
+    my $rv = $self->_run_workflow;
+
+    if ( $rv ) {
+        $self->_send_succeeded_mail;
+        return 1;
+    } else {
+        $self->_send_failed_mail;
+        return;
+    }
+
+    return 1;
+}
+
+sub _run_workflow {
+    my $self = shift;
+
+    my $rv = run_workflow_lsf(
 	$ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/virome-screening6.xml',
 	'fasta_file'  => $self->fasta_file,
 	'barcode_file'=> $self->barcode_file,
@@ -88,7 +106,48 @@ sub execute {
         'nt_db'       => $self->nt_db,
         'virus_db'    => $self->virus_db,
         'taxonomy_db' => $self->taxonomy_db,
-	);
+    );
+
+    return if not $rv;
+
+    return 1;
+}
+
+sub _send_failed_mail {
+    my $self = shift;
+
+    my $log_file = $self->logfile;
+    my $reason = `tail -5 $log_file`;
+
+    my $msg = "Virome screening completed for run:\n".
+              "\tfasta file: ".$self->fasta_file."\n".
+              "\tbarcode file: ".$self->barcode_file."\n".
+              "\tlog file: ".$self->logfile."\n".
+              "\tdir: ".$self->dir."\n\n".
+              "Reason from logfile:\n\n$reason\n";
+                  
+    my $mail_dest = Genome::Config->user_email;
+    my $sender = Mail::Sender->new({
+        smtp => 'gscsmtp.wustl.edu',
+        from => 'virome-screen@genome.wustl.edu',
+        replyto => 'virome-screen@genome.wustl.edu',
+    });
+    $sender->MailMsg({
+        to => $mail_dest,
+        subject => "Virome Screening Failed",
+        msg     => $msg,
+    });
+}
+
+sub _send_succeeded_mail {
+    my $self = shift;
+
+    my $msg = "Virome screening completed for run:\n".
+              "\tfasta file: ".$self->fasta_file."\n".
+              "\tbarcode file: ".$self->barcode_file."\n".
+              "\tlog file: ".$self->logfile."\n".
+              "\tdir: ".$self->dir."\n";
+
     my $mail_dest = Genome::Config->user_email;
     my $sender = Mail::Sender->new({
         smtp => 'gscsmtp.wustl.edu',
@@ -98,10 +157,8 @@ sub execute {
     $sender->MailMsg({
         to => $mail_dest,
         subject => "Virome Screen completed",
-        msg     => "Virome Screen completed for gmt virome-screening\n" .
-                   "\t--barcode-file=" . $self->barcode_file . " --fasta-file=" . $self->fasta_file . " --dir=" . $self->dir . " --logfile=" . $self->logfile,
+        msg     => $msg,
     });
-    return 1;
 }
 
 sub _log_dbs_used {
@@ -116,4 +173,3 @@ sub _log_dbs_used {
 }
 
 1;
-

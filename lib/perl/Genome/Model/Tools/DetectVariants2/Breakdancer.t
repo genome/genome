@@ -13,7 +13,7 @@ use above 'Genome';
 use Genome::SoftwareResult;
 
 use Test::More;
-use File::Compare;
+use File::Compare qw(compare);
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -55,7 +55,14 @@ $command->dump_status_messages(1);
 ok($command->execute, 'Executed `gmt detect-variants2 breakdancer` command');
 
 my $expected_output = join "/", ($test_dir, "svs.hq.$chromosome".'_current');
-is(compare($expected_output, $test_out), 0, "svs.hq output as expected");
+system("diff -u $expected_output $test_out");
+my $diff = sub {
+    my ($line1, $line2) = @_;
+    $line1 =~ s/^#Command:.*//;
+    $line2 =~ s/^#Command:.*//;
+    return $line1 ne $line2;
+};
+is(compare($expected_output, $test_out, $diff), 0, "svs.hq output as expected");
 
 # Test fastq QC
 my $good_fastq_dir = $command->_temp_staging_directory($test_base_dir.'/good');
