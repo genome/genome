@@ -12,6 +12,9 @@ if ($] < 5.010) {
 }
 plan tests => 6;
 
+# run_workflow_lsf uses this environment variable to allow it to run inline.
+$ENV{NO_LSF} = 1;
+
 map { print STDERR $_ . " => " . $ENV{$_} . "\n" } keys %ENV;
 
 use_ok('Genome::Model::Tools::BioSamtools::CoverageStats');
