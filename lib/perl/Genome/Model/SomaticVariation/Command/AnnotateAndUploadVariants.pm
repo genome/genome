@@ -30,6 +30,9 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         lsf_queue => {
             default => 'apipe',
         },
+        lsf_resource => {
+            default => "-M 20000000 -R 'select[mem>20000] rusage[mem=20000]'",
+        },
         joinx_version => {
             is => "Text",
             doc => "Version of joinx to use",
@@ -340,7 +343,7 @@ sub execute{
         annotation_type => "regionanno",
         scorecolumn => 5,
         bedfiles => ["/gscuser/aregier/scratch/dhs_promoters/gene_names2.bed",
-                     "/gscuser/aregier/scratch/dhs_promoters/segway.bed",
+                     "/gscuser/aregier/scratch/dhs_promoters/segway.hg19.bed",
                      "/gscuser/aregier/scratch/dhs_promoters/wgEncodeBroadHmmGm12878HMM.bed",
                      "/gscuser/aregier/scratch/dhs_promoters/wgEncodeBroadHmmH1hescHMM.bed",
                      "/gscuser/aregier/scratch/dhs_promoters/wgEncodeBroadHmmHepg2HMM.bed",
@@ -361,7 +364,7 @@ sub execute{
         my $temp = Genome::Sys->create_temp_file_path;
         my $counter = 0;
         my $in_file = $build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.header");
-        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed_gene_names2", "bed_segway", "bed_wgEncodeBroadHmmGm12878HMM", "bed_wgEncodeBroadHmmH1hescHMM", "bed_wgEncodeBroadHmmHepg2HMM", "bed_wgEncodeBroadHmmHmecHMM", "bed_wgEncodeBroadHmmHsmmHMM", "bed_wgEncodeBroadHmmHuvecHMM", "bed_wgEncodeBroadHmmK562HMM", "bed_wgEncodeBroadHmmNhekHMM", "bed_wgEncodeBroadHmmNhlfHMM", "bed_DRM_transcript_pairs", "bed_Open_Chromatin_Supp_Table_4")) {
+        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed_gene_names2", "bed_segway.hg19", "bed_wgEncodeBroadHmmGm12878HMM", "bed_wgEncodeBroadHmmH1hescHMM", "bed_wgEncodeBroadHmmHepg2HMM", "bed_wgEncodeBroadHmmHmecHMM", "bed_wgEncodeBroadHmmHsmmHMM", "bed_wgEncodeBroadHmmHuvecHMM", "bed_wgEncodeBroadHmmK562HMM", "bed_wgEncodeBroadHmmNhekHMM", "bed_wgEncodeBroadHmmNhlfHMM", "bed_DRM_transcript_pairs", "bed_Open_Chromatin_Supp_Table_4")) {
             $counter++;
             my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
                 additional_columns_file => $build->data_directory."/effects/snvs.annovar.hg19_".$table_name,
@@ -406,7 +409,7 @@ sub execute{
         my $temp = Genome::Sys->create_temp_file_path;
         my $in_file = $build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno");
         my $counter = 0;
-        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed")) {
+        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed_gene_names2", "bed_segway.hg19", "bed_wgEncodeBroadHmmGm12878HMM", "bed_wgEncodeBroadHmmH1hescHMM", "bed_wgEncodeBroadHmmHepg2HMM", "bed_wgEncodeBroadHmmHmecHMM", "bed_wgEncodeBroadHmmHsmmHMM", "bed_wgEncodeBroadHmmHuvecHMM", "bed_wgEncodeBroadHmmK562HMM", "bed_wgEncodeBroadHmmNhekHMM", "bed_wgEncodeBroadHmmNhlfHMM", "bed_DRM_transcript_pairs", "bed_Open_Chromatin_Supp_Table_4")) {
             $counter++;
             my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
                 additional_columns_file => $build->data_directory."/effects/snvs.annovar.hg19_".$table_name,
@@ -422,6 +425,7 @@ sub execute{
                 $self->error_message("Append columns failed for tier3 snvs");
                 return;
             }
+            $in_file = "$temp.$counter";
         }
         my $cmd = "mv $temp.$counter ".$build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno.annovar");
         `$cmd`;
