@@ -116,9 +116,11 @@ $ENV{GENOME_SYS_GROUP} ||= 'info';
 $ENV{GENOME_FS_LOCAL_NETWORK_CACHE} = '/var/cache/tgisan';
 
 # testsuite data
-$ENV{GENOME_TEST_INPUTS} ||= '/gsc/var/cache/testsuite/data';
-$ENV{GENOME_TEST_TEMP} ||= '/gsc/var/cache/testsuite/running_testsuites';
-$ENV{GENOME_TEST_URL} ||= 'https://gscweb.gsc.wustl.edu/gscmnt/gc4096/info/test_suite_data/';
+my $inputs_directory = '/gsc/var/cache/testsuite/data';
+my $temp_directory = '/gsc/var/cache/testsuite/running_testsuites';
+$ENV{GENOME_TEST_INPUTS} ||= -l $inputs_directory ? readlink($inputs_directory) : $inputs_directory;
+$ENV{GENOME_TEST_TEMP} ||= -l $temp_directory ? readlink($temp_directory) : $temp_directory;
+$ENV{GENOME_TEST_URL} ||= sprintf('https://gscweb.gsc.wustl.edu/%s', $ENV{GENOME_TEST_INPUTS});
 
 # configure file that signals that database updates should be paused
 if (!$ENV{UR_DBI_NO_COMMIT}) {
