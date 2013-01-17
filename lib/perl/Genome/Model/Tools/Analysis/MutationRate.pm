@@ -58,6 +58,10 @@ EOS
 sub help_detail {                           # this is what the user will see with the longer version of help. <---
     return <<EOS 
 
+OUTPUT format is TSV (SampleName then Mutation counts then Mutation rates per megabase).
+Depends on which tiers are specified but in general of the form:
+SampleName Tier1_Count ... Tier3_Count NonTier1_Count Overall_Count Tier1_Rate ... Tier3_Rate NonTier1_Rate Overall_Rate
+
 EOS
 }
 

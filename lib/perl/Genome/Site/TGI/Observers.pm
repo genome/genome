@@ -26,6 +26,7 @@ UR::Object->add_observer(
     aspect => 'error_message',
     callback => sub {
         my($self, $type, $message) = @_;
+        return if $ENV{UR_DBI_NO_COMMIT};
 
         # this should never happen given recent UR updates
         if (not defined $self) {

@@ -80,9 +80,16 @@ $sitesfh->close;
 for my $bam (@bams) {
   my $temp_readcount_file = Genome::Sys->create_temp_file_path();
   my ($type,$bam) = split /:/,$bam;
-   
-  my $cmd = "bam-readcount -q 1 -l $site_list_for_readcount -f $reference_fasta $bam > $temp_readcount_file";
-  Genome::Sys->shellcmd(cmd => $cmd);
+  
+  my $rv = Genome::Model::Tools::Sam::Readcount->execute(
+    bam_file => $bam,
+    minimum_mapping_quality => 1,
+    output_file => $temp_readcount_file,
+    reference_fasta => $reference_fasta,
+    region_list => $site_list_for_readcount,
+  );
+  #my $cmd = "bam-readcount -q 1 -l $site_list_for_readcount -f $reference_fasta $bam > $temp_readcount_file";
+  #Genome::Sys->shellcmd(cmd => $cmd);
 
   my $statscmd = "$script_dir/miller-bam-readcount-to-stats.noheader.pl $sites $temp_readcount_file |";
   open(STATS,$statscmd) or die "Couldn't open stats command: $!";

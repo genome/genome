@@ -351,10 +351,13 @@ sub execute {
     #------------------------------------------
     #now run the readcounting on snvs
     if( -s "$tempdir/snvpos"){
-        my $cmd = "bam-readcount -q $min_quality_score -f $fasta -l $tempdir/snvpos $bam_file >$tempdir/readcounts";
-        my $return = Genome::Sys->shellcmd(
-            cmd => "$cmd",
-            );
+        my $return = Genome::Model::Tools::Sam::Readcount->execute(
+            bam_file => $bam_file,
+            minimum_mapping_quality => $min_quality_score,
+            output_file => "$tempdir/readcounts",
+            reference_fasta => $fasta,
+            region_list => "$tempdir/snvpos",
+        );
         unless($return) {
             $self->error_message("Failed to execute: Returned $return");
             die $self->error_message;

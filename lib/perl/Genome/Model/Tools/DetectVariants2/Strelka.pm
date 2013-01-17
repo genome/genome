@@ -26,7 +26,8 @@ class Genome::Model::Tools::DetectVariants2::Strelka {
 };
 
 my %STRELKA_VERSIONS = (
-    '0.4.6.2' => '/gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/',
+    '0.4.6.2' => '/usr/lib/strelka0.4.6.2/',
+    '0.4.10.1' => '/usr/lib/strelka0.4.10.1/',
 );
 
 sub help_synopsis {

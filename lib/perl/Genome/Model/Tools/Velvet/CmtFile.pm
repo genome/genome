@@ -69,14 +69,15 @@ sub execute {
     unlink $self->contigs_cmt_file;
     my $out_fh = Genome::Sys->open_file_for_writing( $self->contigs_cmt_file );
 
-    my $output = "StructuredCommentPrefix ##Genome-Assembly-Data-START##\n".
+    my $output = "StructuredCommentPrefix\t##Genome-Assembly-Data-START##\n".
                  "Finishing Goal\t".$self->finishing_goal."\n".
                  "Current Finishing Status\t".$self->current_finishing_status."\n".
-                 "Assembly Method Velvet v ".$assembler_version."\n".
-                 "Genome Coverage ".$coverage."x\n".
+                 "Assembly Method\tVelvet v. ".$assembler_version."\n".
+                 "Genome Coverage\t".$coverage."x\n".
                  "Sequencing Technology\t". $sequencing_technology."\n".
-                 "StructuredCommentSuffix ##Genome-Assembly-Data-END##\n";
+                 "StructuredCommentSuffix\t##Genome-Assembly-Data-END##\n";
     $out_fh->print( $output );
+    $out_fh->close;
 
     return 1;
 }

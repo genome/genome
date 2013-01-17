@@ -98,10 +98,9 @@ HELP
 
 sub execute {
     my $self = shift;
-    my $high = 750000;
-    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv();
-    $self->import_tsv();
+    $self->status_message(".tsv file created for use in 'rake dgidb:import:hopkins_groom <.tsv_file_path> <source_db_version>'");
+
     return 1;
 }
 
@@ -237,72 +236,6 @@ sub _parse_terms_file {
     }
     $fh->close;
     return ($terms);
-}
-
-sub import_tsv {
-    my $self = shift;
-    my $genes_outfile = $self->genes_outfile;
-    my $citation = $self->_create_citation('HopkinsGroom', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'The druggable genome (Hopkins & Groom, 2002)');
-    my @genes = $self->import_genes($genes_outfile, $citation);
-    return 1;
-}
-
-sub import_genes {
-    my $self = shift;
-    my $version = $self->version;
-    my $genes_outfile = shift;
-    my $citation = shift;
-    my @genes;
-    my @headers = qw/relationship_id Interpro_Acc Interpro_Name Interpro_Short_Name Interpro_Type DGIDB_Human_Readable Uniprot_Acc Uniprot_Id Uniprot_Protein_Name Uniprot_Gene_Name Uniprot_Evidence Uniprot_Status Entrez_Id Ensembl_Id/;
-    my $parser = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $genes_outfile,
-        headers => \@headers,
-        separator => "\t",
-        is_regex => 1,
-    );
-    
-    $parser->next; #eat the headers
-    while(my $hopkins_input = $parser->next){
-        #Create gene record with all alternate names
-        my $gene_name = $self->_create_gene_name_report($hopkins_input->{'Uniprot_Acc'}, $citation, 'HopkinsGroom Gene Name', '');
-        my $uniprot_acc = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Acc'}, 'Uniprot Accession', '', 'upper');
-        my $uniprot_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Id'}, 'Uniprot Id', '', 'upper');
-        unless ($hopkins_input->{'Uniprot_Protein_Name'} eq 'N/A'){
-            my $uniprot_protein_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Protein_Name'}, 'Uniprot Protein Name', '', 'lower');
-        }
-        unless ($hopkins_input->{'Uniprot_Gene_Name'} eq 'N/A'){
-          my $uniprot_gene_name = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Uniprot_Gene_Name'}, 'Uniprot Gene Name', '', 'upper');
-        }
-        unless ($hopkins_input->{'Entrez_Id'} eq 'N/A'){
-          my $entrez_id = $self->_create_gene_alternate_name_report($gene_name, $hopkins_input->{'Entrez_Id'}, 'Entrez Gene Id', '', 'upper');
-        }
-        unless ($hopkins_input->{'Ensembl_Id'} eq 'N/A'){
-          my $ensembl_string=$hopkins_input->{'Ensembl_Id'};
-          $ensembl_string=~s/\s//;
-          my @ensembl_ids=split(";", $ensembl_string);
-          foreach my $ensembl_id (@ensembl_ids){
-            my $ensembl_id_entry = $self->_create_gene_alternate_name_report($gene_name, $ensembl_id, 'Ensembl Gene Id', '', 'upper');
-          }
-        }
-        #Put all genes in HopkinsGroom category as well as any others
-        my $human_readable_all = $self->_create_gene_category_report($gene_name, 'Human Readable Name', 'DRUGGABLE GENOME', ''); 
-        my $human_readable_name = $hopkins_input->{'DGIDB_Human_Readable'};
-        unless ($human_readable_name eq 'N/A'){
-          $human_readable_name =~ s/-/ /g;
-          $human_readable_name =~ s/\// /g;
-          $human_readable_name =~ s/\./_/g;
-          my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
-        }
-        #Add additional category details
-        my $Interpro_Acc = $self->_create_gene_category_report($gene_name, 'Interpro Acc', $hopkins_input->{'Interpro_Acc'}, '');
-        my $Uniprot_Evidence = $self->_create_gene_category_report($gene_name, 'Uniprot Evidence', $hopkins_input->{'Uniprot_Evidence'}, '');
-        my $Uniprot_Status = $self->_create_gene_category_report($gene_name, 'Uniprot Status', $hopkins_input->{'Uniprot_Status'}, '');
-        my $Interpro_Name = $self->_create_gene_category_report($gene_name, 'Interpro Name', $hopkins_input->{'Interpro_Name'}, '');
-        my $Interpro_Short_Name = $self->_create_gene_category_report($gene_name, 'Interpro Short Name', $hopkins_input->{'Interpro_Short_Name'}, '');
-        my $Interpro_Type = $self->_create_gene_category_report($gene_name, 'Interpro Type', $hopkins_input->{'Interpro_Type'}, '');
-        push @genes, $gene_name;
-    }
-    return @genes;
 }
 
 1;

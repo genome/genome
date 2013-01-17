@@ -2,7 +2,7 @@ package Genome::Model::Tools::CopyNumber::CnvSeg;
 
 use strict;
 use warnings;
-use Getopt::Std;
+use Genome;
 use Statistics::Descriptive;
 #use FindBin qw($Bin);
 #use lib "$FindBin::Bin";
@@ -118,7 +118,7 @@ sub execute {
 
     my %Centromere;
     if($opts{a}){
-        open(CEN,"<$f_centromere") || die "unable to find centromere coordinates file\n";
+        open(CEN,"<$f_centromere") || die "unable to find centromere coordinates file: $f_centromere\n";
         while(<CEN>){
             chomp;
             my ($bin,$chr,$start,$end,$ix,$n,$size,$type,$bridge)=split;
@@ -131,7 +131,7 @@ sub execute {
 
     my %GapStart;
     my %GapEnd;
-    open(GAP,"<$f_gaps") || die "unable to find sequencing gap coordinates file\n";
+    open(GAP,"<$f_gaps") || die "unable to find sequencing gap coordinates file: $f_gaps\n";
     while(<GAP>){
         chomp;
         my ($bin,$chr,$start,$end,$ix,$n,$size,$type,$bridge)=split;

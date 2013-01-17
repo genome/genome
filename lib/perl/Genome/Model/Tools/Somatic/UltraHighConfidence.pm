@@ -303,20 +303,29 @@ sub run_filter {
     $readcount_file_normal = Genome::Sys->create_temp_file_path;
 
     print "Running bam-readcounts on tumor BAM...\n";
-    my $cmd = $self->readcount_program() . " -b 15 " . $self->tumor_bam_file . " -l $temp_path";
-    Genome::Sys->shellcmd(
-        cmd => "$cmd > $readcount_file_tumor 2> /dev/null",
-        input_files => [$self->tumor_bam_file],
-        output_files => [$readcount_file_tumor],
+    
+    my $tumor_rv = Genome::Model::Tools::Sam::Readcount->execute(
+        reference_fasta => $self->reference,
+        bam_file => $self->tumor_bam_file,
+        minimum_base_quality => 15,
+        output_file => $readcount_file_tumor,
+        region_list => $temp_path,
     );
 
     print "Running bam-readcounts on normal BAM...\n";
-    $cmd = $self->readcount_program() . " -b 15 " . $self->normal_bam_file . " -l $temp_path";
-    Genome::Sys->shellcmd(
-        cmd => "$cmd > $readcount_file_normal 2> /dev/null",
-        input_files => [$self->normal_bam_file],
-        output_files => [$readcount_file_normal],
+
+    my $normal_rv = Genome::Model::Tools::Sam::Readcount->execute(
+        reference_fasta => $self->reference,
+        bam_file => $self->normal_bam_file,
+        minimum_base_quality => 15,
+        output_file => $readcount_file_normal,
+        region_list => $temp_path,
     );
+
+    unless($tumor_rv and $normal_rv) {
+        $self->error_message("bam-readcounts failed");
+        return;
+    }
 
     print "Loading bam-readcounts from both BAMs...\n";
 
@@ -637,20 +646,6 @@ sub fails_homopolymer_check {
 sub wgs_filter {
 
 }
-
-
-#############################################################
-# Readcount_Program - the path to BAM-readcounts
-#
-#############################################################
-
-sub readcount_program {
-    my $self = shift;
-    my $reference = $self->reference;
-#    return "bam-readcount0.3 -f $reference";
-    return "bam-readcount -f $reference";
-}
-
 
 #############################################################
 # Read_Counts_By_Allele - parse out readcount info for an allele

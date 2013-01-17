@@ -706,11 +706,20 @@ sub _check_bam {
 sub _validate_bam {
     my ($self, $type, $bam) = @_;
 
-    unless (-s $bam) {
-        die $self->error_message("$type bam file: $bam is not valid");
+    my $bai = $bam . '.bai';
+    my $noexist = '%s %s file: %s does not exist';
+    my  $nosize = '%s %s file: %s has no size';
+    unless (-e $bam) {
+        die $self->error_message(sprintf($noexist, $type, 'bam', $bam));
     }
-    unless (-s $bam.'.bai') {
-        die $self->error_message("$type bam index file: $bam.bai is not valid");
+    unless (-s $bam) {
+        die $self->error_message(sprintf( $nosize, $type, 'bam', $bam));
+    }
+    unless (-e $bai) {
+        die $self->error_message(sprintf($noexist, $type, 'bam index', $bai));
+    }
+    unless (-s $bai) {
+        die $self->error_message(sprintf( $nosize, $type, 'bam index', $bai));
     }
     return 1;
 }
