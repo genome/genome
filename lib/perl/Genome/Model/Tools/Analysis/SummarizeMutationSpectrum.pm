@@ -22,19 +22,19 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
     somatic_id => { 
         is  => 'String',
         is_input=>1, 
-	is_optional => 1,
+        is_optional => 1,
         doc => 'somatic variation id. If >1 id, comma-separate; ',
     },
     labels => { 
         is  => 'String',
         is_input=>1, 
-	is_optional => 1,
+        is_optional => 1,
         doc => 'explicit specifify sample label (normally ONLY used if user supplying a input file instead of using model id)',
     },
     group_id => {
-	is  => 'String',
+        is  => 'String',
         is_input=>1, 
-	is_optional => 1,
+        is_optional => 1,
         doc => 'model group id containing many somatic variation id.  Will supercede --somatic-id ',
     },
     plot_title => { 
@@ -47,7 +47,7 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
     number_row => {
         is_input => 1,
         is_optional => 1,
-	is => 'String',
+        is => 'String',
         default => 'NULL',
         doc => 'for model_group/multiple samples, controls the number of rows the final plot will have (only valid if --make1plot is false)',
     },
@@ -59,35 +59,42 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         doc => 'The name of pdf file to save the plot to',
     },
     mut_spec_file => {
-	is_input => 1,
+        is_input => 1,
         is_optional => 1,
-	is => 'String',
-	doc => 'The name of the file to save the mutation spectrum data to be plotted.  If not specified, file will be deleted after use',
+        is => 'String',
+        doc => 'The name of the file to save the mutation spectrum data to be plotted.  If not specified, file will be deleted after use',
     },
     make1plot => {
-	is => 'Boolean',
-	is_optional => 1,
-	doc => 'set this flag if you want multi-sample to be all plotted in 1 graph, default: samples are individually plotted',
-	default => 0,
+        is => 'Boolean',
+        is_optional => 1,
+        doc => 'set this flag if you want multi-sample to be all plotted in 1 graph, default: samples are individually plotted',
+        default => 0,
     },
     ymax => {
-	is => 'float',
-	is_optional => 1,
-	default => 1.0,
+        is => 'float',
+        is_optional => 1,
+        default => 1.0,
         doc => 'Set the maximum Y axis: between 0 and 1',
 
     },
     plot_graph => {
-	is => 'Boolean',
-	is_optional => 1,
-	doc => 'set this flag if you want the results to be plotted, if set to false, be sure to specify --mut-spec-file',
-	default => 1,
+        is => 'Boolean',
+        is_optional => 1,
+        doc => 'set this flag if you want the results to be plotted, if set to false, be sure to specify --mut-spec-file',
+        default => 1,
     },
     plot_this => {
-	is_input => 1,
+        is_input => 1,
         is_optional => 1,
-	is => 'String',
-	doc => 'Plot the user defined mutation spectrum file and exit.  ',
+        is => 'String',
+        doc => 'Plot the user defined mutation spectrum file and exit.  ',
+    },
+    exclude_gl_contigs => {
+        is_input => 1,
+        is_optional => 1,
+        is => 'Boolean',
+        default => 1,
+        doc => 'whether or not to exclude contigs beginning with the prefix GL.',
     },
 
     ],
@@ -110,7 +117,7 @@ sub help_detail {
     return <<EOS 
     This tool summarizes the mutation spectrum for a single/multiple models.  It produces a barplot for each mutation cateogry for each sample.  If user inputs multiple samples (i.e. via comma-separated somatic variation id or a model-group), the plot will contain miniplots for each sample.
 EOS
-    }
+}
 
 sub execute {
     my $self = shift;
@@ -127,26 +134,26 @@ sub execute {
     my $manual_label = $self->labels;
     my $plot_graph = $self->plot_graph;
     if($self->mut_spec_file) {
-	$plot_input_file = abs_path($self->mut_spec_file);
-	unlink($plot_input_file) if(-e $plot_input_file); #remove existing file first
+        $plot_input_file = abs_path($self->mut_spec_file);
+        unlink($plot_input_file) if(-e $plot_input_file); #remove existing file first
     }else {
-	my ($fh, $tempfile) = Genome::Sys->create_temp_file;
-	$plot_input_file = abs_path($tempfile);
+        my ($fh, $tempfile) = Genome::Sys->create_temp_file;
+        $plot_input_file = abs_path($tempfile);
     }
     my $plot_output_file = abs_path($self->output_file);
 
     if($self->plot_this) {
-	my $user_mut_spec_file = abs_path($self->plot_this);
-	my $plot_cmd;
-	if(!$make1plot) {
-	    $plot_cmd = qq{ make_dodge_barplot_facet_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",num_row=$numberRow,y_lim=c(0,$ymax)) };
-	}
-	else {
-	    $plot_cmd = qq{ make_dodge_barplot_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };
-	}
-	my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
-	$call->execute;
-	return 1;
+        my $user_mut_spec_file = abs_path($self->plot_this);
+        my $plot_cmd;
+        if(!$make1plot) {
+            $plot_cmd = qq{ make_dodge_barplot_facet_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",num_row=$numberRow,y_lim=c(0,$ymax)) };
+        }
+        else {
+            $plot_cmd = qq{ make_dodge_barplot_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };
+        }
+        my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
+        $call->execute;
+        return 1;
 
     }
 
@@ -154,39 +161,39 @@ sub execute {
 
     my @models=();
     if($group_id) {
-	my $model_group = Genome::ModelGroup->get($group_id);
-	@models = $model_group->models;
+        my $model_group = Genome::ModelGroup->get($group_id);
+        @models = $model_group->models;
     }elsif($somatic_id) {
-	my @modelIDs = split(/,/,$somatic_id);
-	#@models = map{ Genome::Model->get($_) } @modelIDs;
-	@models = Genome::Model->get(\@modelIDs);
+        my @modelIDs = split(/,/,$somatic_id);
+        #@models = map{ Genome::Model->get($_) } @modelIDs;
+        @models = Genome::Model->get(\@modelIDs);
     }
 
     foreach my $model(@models) {
-	my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
-	my $raw_count = parse_bed_file($input_file);
-	unlink($input_file);
-	if($manual_label) { #user specified a sample label
-	    make_output($raw_count,$manual_label,$plot_input_file);  
-	}
-	else {
-	    make_output($raw_count,$automatic_label,$plot_input_file); #use automatically generated label for a sample  
-	}
+        my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
+        my $raw_count = $self->parse_bed_file($input_file);
+        unlink($input_file);
+        if($manual_label) { #user specified a sample label
+            make_output($raw_count,$manual_label,$plot_input_file);  
+        }
+        else {
+            make_output($raw_count,$automatic_label,$plot_input_file); #use automatically generated label for a sample  
+        }
     }
-    
+
 
     #my $input_plot_file = $out1;
 
     if($plot_graph) {
-	my $plot_cmd;
-	if(!$make1plot) {
-	    $plot_cmd = qq{ make_dodge_barplot_facet_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",num_row=$numberRow,y_lim=c(0,$ymax)) };
-	}
-	else {
-	    $plot_cmd = qq{ make_dodge_barplot_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };
-	}
-	my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
-	$call->execute;
+        my $plot_cmd;
+        if(!$make1plot) {
+            $plot_cmd = qq{ make_dodge_barplot_facet_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",num_row=$numberRow,y_lim=c(0,$ymax)) };
+        }
+        else {
+            $plot_cmd = qq{ make_dodge_barplot_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };
+        }
+        my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
+        $call->execute;
     }
 
     return 1;                               
@@ -229,42 +236,40 @@ sub make_input_file_from_model {
 
     my ($fh,$temp_file) = Genome::Sys->create_temp_file;
     `cat $tier1 $tier2 $tier3 > $temp_file`; 
-    
+
     return ($temp_file,$sample_label);
 
 }
 
 sub parse_bed_file {
 
-    my $file = shift;
+    my ($self, $file) = @_;
 
     my $count = { 'A->C' => 0,
-		  'A->G' => 0,
-		  'A->T' => 0,
-		  'C->A' => 0,
-		  'C->G' => 0,
-		  'C->T' => 0,
-		  'G->A' => 0,
-		  'G->C' => 0,
-		  'G->T' => 0,
-		  'T->A' => 0,
-		  'T->C' => 0,
-		  'T->G' => 0
+        'A->G' => 0,
+        'A->T' => 0,
+        'C->A' => 0,
+        'C->G' => 0,
+        'C->T' => 0,
+        'G->A' => 0,
+        'G->C' => 0,
+        'G->T' => 0,
+        'T->A' => 0,
+        'T->C' => 0,
+        'T->G' => 0
     };
 
     open(BED,$file) or die "Unable to open the file $file due to $!";
     while(<BED>) {
-	chomp;
-	my ($chr,$start,$stop,$ref_var,@rest) = split(/\t/,$_);
-	next if($chr =~ /GL/);	
-	my ($ref,$var) = split(/\//,$ref_var);
-	my @variants = Genome::Info::IUB::variant_alleles_for_iub($ref,$var);
-	if(@variants>1) {
-	    #warn "more than 1 variant allele detected for '$_'\n";
-	    next;
-	}
-	my $key = join("->",($ref,$variants[0]));
-	$count->{$key}++;
+        chomp;
+        my ($chr,$start,$stop,$ref_var,@rest) = split(/\t/,$_);
+        next if($chr =~ /^GL/ and $self->exclude_gl_contigs);
+        my ($ref,$var) = split(/\//,$ref_var);
+        my @variants = Genome::Info::IUB::variant_alleles_for_iub($ref,$var);
+        for my $variant (@variants) {
+            my $key = join("->",($ref,$variant));
+            $count->{$key}++;
+        }
     }
     close BED;
 
@@ -287,7 +292,7 @@ sub make_output {
     my $transversion_percent=0;
     my $total_SNV=0;
     my $total={};
- 
+
     $total->{'A->C'}[0] = $raw_count->{'A->C'}+$raw_count->{'T->G'};
     $total->{'A->G'}[0] = $raw_count->{'A->G'}+$raw_count->{'T->C'};
     $total->{'A->T'}[0] = $raw_count->{'A->T'}+$raw_count->{'T->A'};
@@ -304,8 +309,8 @@ sub make_output {
 
     #print OUT "BaseChg\tcount\tpercent\tlabel\n" if($print_header);
     foreach my $k (keys %$total) {
-	$total->{$k}[1] = nearest(0.001,$total->{$k}[0]/$total_SNV);
-	print OUT "$k\t$total->{$k}[0]\t$total->{$k}[1]\t$label\n";
+        $total->{$k}[1] = nearest(0.001,$total->{$k}[0]/$total_SNV);
+        print OUT "$k\t$total->{$k}[0]\t$total->{$k}[1]\t$label\n";
     }
     print OUT "Transitions\t$transition\t$transition_percent\t$label\n";
     print OUT "Transversion\t$transversion\t$transversion_percent\t$label\n";
@@ -320,19 +325,19 @@ sub parse_grouping_file {
     my $file = shift;
 
     open(FILE, $file) or die "Can't open the file $file due to $!";
-    
+
     my @files=();
     my @labels=();
     while(<FILE>) {
-	chomp;
-	next if(/^\s+$/); #remove empty lines
-	my ($mut_spec_file,$label) = split(/\t/,$_);
-	next if(!$mut_spec_file or !$label);
-	$mut_spec_file = rem_white_space($mut_spec_file);
-	$label =  rem_white_space($label);
+        chomp;
+        next if(/^\s+$/); #remove empty lines
+        my ($mut_spec_file,$label) = split(/\t/,$_);
+        next if(!$mut_spec_file or !$label);
+        $mut_spec_file = rem_white_space($mut_spec_file);
+        $label =  rem_white_space($label);
 
-	push(@files,$mut_spec_file);
-	push(@labels,$label);
+        push(@files,$mut_spec_file);
+        push(@labels,$label);
     }
     close FILE;
 

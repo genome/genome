@@ -143,20 +143,28 @@ sub close_filehandles {
 
 sub check_tcga_vcf {
     my $self = shift;
-    
-    if ($self->aligned_reads_sample) {
-        if ($self->aligned_reads_sample =~ /^TCGA\-/) {
-            $self->_tcga_vcf(1);
-            return 1;
+    my $flag = 0;
+   
+    for my $sample_type qw(aligned_reads_sample control_aligned_reads_sample) {
+        my $sample_name = $self->$sample_type;
+        if ($sample_name) {
+            if ($sample_name =~ /^TCGA\-/) {
+                $flag++;
+            }
+            else {
+                my $sample = Genome::Sample->get(name => $sample_name);
+                if ($sample) {
+                    my $sample_tcga_name = $sample->extraction_label;
+                    if ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
+                        $self->status_message("Found TCGA name: $sample_tcga_name for sample: $sample_name");
+                        $self->$sample_type($sample_tcga_name);
+                        $flag++;
+                    }
+                }
+            }
         }
     }
-
-    if ($self->control_aligned_reads_sample) {
-        if ($self->control_aligned_reads_sample =~ /^TCGA\-/) {
-            $self->_tcga_vcf(1);
-        }
-    }
-
+    $self->_tcga_vcf(1) if $flag;
     return 1;
 }
 

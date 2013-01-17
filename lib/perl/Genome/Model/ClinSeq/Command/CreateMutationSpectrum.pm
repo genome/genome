@@ -83,12 +83,10 @@ sub execute {
   if ($datatype =~ /exome/i){
     $sub_outdir = $outdir . "exome/";
   }
-  my $sub_outdir1 = $sub_outdir . "mutation_spectrum/";
   my $sub_outdir2 = $sub_outdir . "mutation_spectrum_sequence_context/";
   my $sub_outdir3 = $sub_outdir . "summarize_mutation_spectrum/";
   my $sub_outdir4 = $sub_outdir . "mutation_rate/";
   mkdir $sub_outdir unless (-e $sub_outdir && -d $sub_outdir);
-  mkdir $sub_outdir1 unless (-e $sub_outdir1 && -d $sub_outdir1);
   mkdir $sub_outdir2 unless (-e $sub_outdir2 && -d $sub_outdir2);
   mkdir $sub_outdir3 unless (-e $sub_outdir3 && -d $sub_outdir3);
   mkdir $sub_outdir4 unless (-e $sub_outdir4 && -d $sub_outdir4);
@@ -122,13 +120,13 @@ sub execute {
   #1.) Get variants from somatic variation build (tier1-3 for wgs and tier1 for exome?)
   my $variant_file;
   if ($datatype =~ /wgs/i){
-    $variant_file = $sub_outdir1 . "snvs.hq.novel.tier123.v2.bed";
+    $variant_file = $sub_outdir2 . "snvs.hq.novel.tier123.v2.bed";
     my $snv_cat_cmd = "cat $tier1_snvs $tier2_snvs $tier3_snvs > $variant_file";
     $self->status_message($snv_cat_cmd);
     Genome::Sys->shellcmd(cmd => $snv_cat_cmd, output_files=>["$variant_file"]);  
   }
   if ($datatype =~ /exome/i){
-    $variant_file = $sub_outdir1 . "snvs.hq.novel.tier1.v2.bed";
+    $variant_file = $sub_outdir2 . "snvs.hq.novel.tier1.v2.bed";
     my $snv_cat_cmd = "cat $tier1_snvs > $variant_file";
     $self->status_message($snv_cat_cmd);
     Genome::Sys->shellcmd(cmd => $snv_cat_cmd, output_files=>["$variant_file"]);
@@ -145,34 +143,12 @@ sub execute {
   #2.) Run annotator on all Tier1-3 variants
   #gmt annotate transcript-variants --variant-bed-file='' --output-file='' --no-headers? --annotation-filter=top  --use-version=3 --reference-transcripts=''
   my $annotated_file = $variant_file . ".annotated";
-  my $annotate_stdout = $sub_outdir1 . "gmt-annotate.stdout";
-  my $annotate_stderr = $sub_outdir1 . "gmt-annotate.stderr";   
+  my $annotate_stdout = $sub_outdir2 . "gmt-annotate.stdout";
+  my $annotate_stderr = $sub_outdir2 . "gmt-annotate.stderr";   
   my $annotate_cmd = "gmt annotate transcript-variants --variant-bed-file=$variant_file --output-file=$annotated_file --no-headers --annotation-filter=top  --use-version=3 --reference-transcripts=$reference_annotation_name --skip-if-output-present 1>$annotate_stdout 2>$annotate_stderr";
   $self->status_message($annotate_cmd);
   Genome::Sys->shellcmd(cmd => $annotate_cmd, output_files=>["$annotated_file"]);
   
-  #TODO: At the time of initial creation of this module 'gmt analysis mutation-spectrum' hits a mysql database (bad) that is for build36 only (also bad)...
-
-
-  #3.) Generate mutation-spectrum result with relative axis
-  #gmt analysis mutation-spectrum --no-absolute-axis
-  my $ms_file1 = $sub_outdir1 . $final_name . "_mutation-spectrum-relative.pdf";
-  my $cpg_finder_file = $sub_outdir1 . "cpg_finder.csv";
-  my $trans_file = $sub_outdir1 . "transition_transversion.csv";
-  my $island_file = $sub_outdir1 . "cpg_island.csv";
-  my $ms_stdout = $sub_outdir1 . "gmt-mutation-spectrum.stdout";
-  my $ms_stderr = $sub_outdir1 . "gmt-mutation-spectrum.stderr";
-  my $mutation_spectrum_cmd1 = "gmt analysis mutation-spectrum --fasta-file $reference_fasta_path --mutation-file $annotated_file --output-trans-file $trans_file --output-CpGFinder-file $cpg_finder_file --output-CpGSites-file $island_file --plot-spectrum-genome-name=$final_name --plot-spectrum-file-name=$ms_file1 --no-absolute-axis 1>$ms_stdout 2>$ms_stderr";
-  $self->status_message($mutation_spectrum_cmd1);
-  Genome::Sys->shellcmd(cmd => $mutation_spectrum_cmd1);
-
-  #4.) Generate mutation-spectrum result with absolute axis
-  #gmt analysis mutation-spectrum --absolute-axis
-  my $ms_file2 = $sub_outdir1 . $final_name . "_mutation-spectrum-absolute.pdf";
-  my $mutation_spectrum_cmd2 = "gmt analysis mutation-spectrum --fasta-file $reference_fasta_path --mutation-file $annotated_file --output-trans-file $trans_file --output-CpGFinder-file $cpg_finder_file --output-CpGSites-file $island_file --plot-spectrum-genome-name=$final_name --plot-spectrum-file-name=$ms_file2 --absolute-axis 1>$ms_stdout 2>$ms_stderr";
-  $self->status_message($mutation_spectrum_cmd2);
-  Genome::Sys->shellcmd(cmd => $mutation_spectrum_cmd2);
-
   #5.) Generate mutation-spectrum-sequence-context result
   #gmt analysis mutation-spectrum-sequence-context
   my $variant_file2 = $sub_outdir2 . "variants.tsv";
@@ -195,7 +171,7 @@ sub execute {
   my $sms_file = $sub_outdir3 . $final_name . "_summarize-mutation-spectrum.pdf";
   my $sms_stdout = $sub_outdir3 . "summarize-mutation-spectrum.stdout";
   my $sms_stderr = $sub_outdir3 . "summarize-mutation-spectrum.stderr";
-  my $sms_cmd = "gmt analysis summarize-mutation-spectrum --somatic-id=$somatic_id --mut-spec-file=$mut_spec_file --output-file=$sms_file 1>$sms_stdout 2>$sms_stderr";
+  my $sms_cmd = "gmt analysis summarize-mutation-spectrum --exclude-gl-contigs --somatic-id=$somatic_id --mut-spec-file=$mut_spec_file --output-file=$sms_file 1>$sms_stdout 2>$sms_stderr";
   $self->status_message($sms_cmd);
   Genome::Sys->shellcmd(cmd => $sms_cmd);
 

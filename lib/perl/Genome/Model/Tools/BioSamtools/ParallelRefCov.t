@@ -13,6 +13,9 @@ if ($] < 5.010) {
 }
 plan tests => 6;
 
+# run_workflow_lsf uses this environment variable to allow it to run inline.
+$ENV{NO_LSF} = 1;
+
 use_ok('Genome::Model::Tools::BioSamtools');
 use_ok('Genome::Model::Tools::BioSamtools::RefCov');
 use_ok('Genome::Model::Tools::BioSamtools::ParallelRefCov');

@@ -182,7 +182,7 @@ sub write_full_summary {
         print $fh join("\t",
             $model->id,
             $build->id,
-            $build->region_of_interest_set_name,
+            ($build->region_of_interest_set_name || '-'),
             $model->subject->name,
             $lane,
             $libraries,
