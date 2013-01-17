@@ -70,6 +70,12 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         doc => 'set this flag if you want multi-sample to be all plotted in 1 graph, default: samples are individually plotted',
         default => 0,
     },
+    stackbarplot => {
+	is => 'Boolean',
+        is_optional => 1,
+        doc => 'set this flag if you want multi-sample to be all plotted in 1 graph in a stacked (top of each other) fashion; default: barplots are dodged',
+        default => 0,
+	},
     ymax => {
         is => 'float',
         is_optional => 1,
@@ -128,6 +134,7 @@ sub execute {
     my $group_id = $self->group_id;
     my $plot_input_file;
     my $make1plot = $self->make1plot;
+    my $stackplot = $self->stackbarplot;
     my $ymax = $self->ymax;
     my $plot_title = $self->plot_title;
     my $numberRow = $self->number_row;
@@ -149,11 +156,16 @@ sub execute {
             $plot_cmd = qq{ make_dodge_barplot_facet_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",num_row=$numberRow,y_lim=c(0,$ymax)) };
         }
         else {
-            $plot_cmd = qq{ make_dodge_barplot_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };
-        }
-        my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
-        $call->execute;
-        return 1;
+            if($stackplot) {
+		$plot_cmd = qq{ make_barplot_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",plot_type="stack",y_lim=c(0,$ymax)) };
+	    }else {
+		$plot_cmd = qq{ make_barplot_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };	
+	    }
+	}
+	my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
+	$call->execute;
+        
+	return 1;
 
     }
 
@@ -190,7 +202,11 @@ sub execute {
             $plot_cmd = qq{ make_dodge_barplot_facet_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",num_row=$numberRow,y_lim=c(0,$ymax)) };
         }
         else {
-            $plot_cmd = qq{ make_dodge_barplot_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };
+            if($stackplot) {
+		$plot_cmd = qq{ make_barplot_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",plot_type="stack",y_lim=c(0,$ymax)) };
+	    }else {
+		$plot_cmd = qq{ make_barplot_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };	
+	    }
         }
         my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
         $call->execute;
