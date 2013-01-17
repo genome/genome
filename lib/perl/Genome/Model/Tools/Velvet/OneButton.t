@@ -8,6 +8,8 @@ BEGIN {
 
 use above "Genome";
 use Test::More;
+use File::Basename qw(dirname basename);
+use File::Compare qw(compare);
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -84,35 +86,59 @@ foreach my $param (@params) {
     ok($rv == 0, "command runs successfully");
 
     for my $old_file (glob("$actual_dir/*input.fastq*")) {
-        use File::Basename;
-        my $dirname = File::Basename::dirname($old_file);
-        my $basename = File::Basename::basename($old_file);
-        $basename =~ s/^.*input.fastq/SOMEDATE-input.fastq/;
-        my $new_file = "$dirname/$basename";
-        rename $old_file, $new_file;
-        ok(-e $new_file, "renamed $old_file to $new_file");
     }
 
-    my @dir_diff = `diff -r --brief $expected_dir $actual_dir | grep -v Log | grep -v timing`;
+    for my $test_file (glob("$actual_dir/*")) {
+        if ($test_file =~ /input\.fastq/) {
+            $test_file = replace_date($test_file);
+        }
+        diff_test($test_file, $actual_dir, $expected_dir, $temp_dir);
+    }
 
-    is(scalar(@dir_diff), 0, "directory contents match")
-        or diag(@dir_diff);
-
-    print "@dir_diff\n";
-
-    my @stdout_diff = `sdiff -s $expected_stdout $actual_stdout | grep -v -- '$temp_dir'`;
+    my @stdout_diff = `sdiff -s $expected_stdout $actual_stdout | grep -v -- '$temp_dir' | grep -vP '^Reading FastQ file'`;
     is(scalar(@stdout_diff), 0, "stdout matches")
         or diag(@stdout_diff);
 
     my @stderr_diff = `sdiff -s $expected_stderr $actual_stderr | grep -v -- '$temp_dir' | grep -v GENOME_DEV_MODE`;
     is(scalar(@stderr_diff), 0, "stderr matches except for the line with a date and DEV_MODE notice")
         or diag(@stderr_diff);
-
-    # we skipped looking at the velvet log when diffing the whole dir b/c we know it has differences
-    # now look at it specifically
-    my @velvetlog_diff = `sdiff -s $expected_dir/*Log $actual_dir/*Log | grep -v -- '$temp_dir'`;
-    is(scalar(@velvetlog_diff), 2, "the velvet log matches except the line with a date")
-        or diag(@velvetlog_diff);
 }
 
 done_testing();
+
+sub replace_date {
+    my $old_file = shift;
+    my $dirname = dirname($old_file);
+    my $basename = basename($old_file);
+    $basename =~ s/^.*input.fastq/SOMEDATE-input.fastq/;
+    my $new_file = "$dirname/$basename";
+    rename $old_file, $new_file;
+    ok(-e $new_file, "renamed $old_file to $new_file");
+    return $new_file;
+}
+
+sub diff_test {
+    my ($test_file, $actual_dir, $expected_dir, $temp_dir) = @_;
+
+    (my $common_path = $test_file) =~ s/$actual_dir//;
+    my $expected_file = join '/', $expected_dir, $common_path;
+
+    if ($common_path =~ /Log$/) {
+        my @velvetlog_diff = `sdiff -s $test_file $expected_file | grep -v -- '$temp_dir' | grep -v output-dir`;
+        is(scalar(@velvetlog_diff), 2, "log diffed as expected: $common_path")
+            or diag(@velvetlog_diff);
+    } else {
+        my $diff = sub {
+            map { $_ =~ s/^#Bams: .*// } @_;
+            map { $_ =~ s/^#input file: .*// } @_;
+            map { $_ =~ s/.*velvet. output-dir .*// } @_;
+            map { $_ =~ s/^\w{3} \w{3} \d\d \d\d:\d\d:\d\d \d{4}$// } @_;
+            my $c = $_[0] ne $_[1];
+            if ($c == 1) {
+                diag("First diff:\n--- " . $_[0] . "+++ " . $_[1]);
+            }
+            return $c;
+        };
+        is(compare($test_file, $expected_file, $diff), 0, "output diffed as expected: $common_path") or diag qx(diff -u $test_file $expected_file);
+    }
+}
