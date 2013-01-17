@@ -15,7 +15,7 @@ BEGIN {
         plan skip_all => "Must run from 64-bit machine";
     } 
     else {
-        plan tests => 20;
+        plan tests => 17;
     }
 };
 
@@ -51,9 +51,15 @@ my $sv_valid = Genome::Model::Tools::Sv::AssemblyValidation->create(
 ok($sv_valid, 'created AssemblyValidation object');
 ok($sv_valid->execute(), 'executed AssemblyValidation object OK');
 
+my $diff = sub {
+    my ($line1, $line2) = @_;
+    $line1 =~ s/^#Bams: .*//;
+    $line2 =~ s/^#Bams: .*//;
+    return $line1 ne $line2;
+};
 for my $i (0..2) {
     ok(-s $test_out_files[$i], 'generated output file: '.$file_names[$i].' ok');
-    is(compare($test_out_files[$i], $expected_files[$i]), 0, 'output matched expected results: '.$file_names[$i]);
+    is(compare($test_out_files[$i], $expected_files[$i], $diff), 0, 'output matched expected results: '.$file_names[$i]);
 }
 
 $test_input_dir = $test_input_dir."chromosomeBeginTest.v1/";
@@ -79,9 +85,6 @@ ok($sv_valid, 'created AssemblyValidation object');
 ok($sv_valid->execute(), 'executed AssemblyValidation object');
 
 for my $i (0..2) {
-    ok(-s $test_out_files[$i], 'generated output file: '.$file_names[$i].' ok');
-    is(compare($test_out_files[$i], $expected_files[$i]), 0, 'output_matched expected results: '.$file_names[$i]);
-    my $output_diff = Genome::Sys->diff_file_vs_file($expected_files[$i], $test_out_files[$i]);
-    ok(!$output_diff, 'output file matches expected result')
-        or diag("diff:\n" . $output_diff);
+    ok(-s $test_out_files[$i], 'generated output file: ' . $file_names[$i]);
+    is(compare($test_out_files[$i], $expected_files[$i], $diff), 0, 'output_matched expected results: ' . $file_names[$i]);
 }
