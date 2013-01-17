@@ -152,12 +152,11 @@ class Genome::Model::Tools::Pindel::RunPindel {
 
 # FIXME make this the real deployed path
 my %PINDEL_VERSIONS = (
-    '0.1' => '/gscmnt/sata921/info/medseq/Pindel_test/' . $PINDEL_COMMAND,
-    '0.2' => '/gscmnt/sata921/info/medseq/Pindel_test/maq/'.$PINDEL_COMMAND,     # This version and up works with MAQ aligned bams
-    '0.3' => '/gscmnt/sata921/info/medseq/Pindel_test/merged_with_kai/'.$PINDEL_COMMAND,    #this version is merged with changes from KAI
-    '0.4' => '/gscmnt/sata921/info/medseq/Pindel_test/version_4/'.$PINDEL_COMMAND,
-    '0.5' => '/gsc/bin/'.$PINDEL_COMMAND,#/gscmnt/sata921/info/medseq/Pindel_test/r19/'.$PINDEL_COMMAND,
-    '0.2.4d' => '/gscmnt/ams1158/info/pindel/0.2.4d/'.$PINDEL_COMMAND,
+    '0.2' => '/gsc/pkg/bio/pindel/0.2/pindel'
+    '0.2.4d' => '/gsc/pkg/bio/pindel/0.2.4d/pindel'
+    '0.3' => '/gsc/pkg/bio/pindel/0.3/pindel'
+    '0.4' => '/gsc/pkg/bio/pindel/0.4/pindel'
+    '0.5' => '/gsc/pkg/bio/pindel/0.5/pindel'
 );
 
 sub help_synopsis {
