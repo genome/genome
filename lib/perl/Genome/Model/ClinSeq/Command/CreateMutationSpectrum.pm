@@ -154,9 +154,9 @@ sub execute {
   #TODO: At the time of initial creation of this module 'gmt analysis mutation-spectrum' hits a mysql database (bad) that is for build36 only (also bad)...
 
 
-  #3.) Generate mutation-spectrum result with absolute axis
-  #gmt analysis mutation-spectrum --absolute-axis
-  my $ms_file1 = $sub_outdir1 . $final_name . "_mutation-spectrum-absolute.pdf";
+  #3.) Generate mutation-spectrum result with relative axis
+  #gmt analysis mutation-spectrum --no-absolute-axis
+  my $ms_file1 = $sub_outdir1 . $final_name . "_mutation-spectrum-relative.pdf";
   my $cpg_finder_file = $sub_outdir1 . "cpg_finder.csv";
   my $trans_file = $sub_outdir1 . "transition_transversion.csv";
   my $island_file = $sub_outdir1 . "cpg_island.csv";
@@ -166,9 +166,9 @@ sub execute {
   $self->status_message($mutation_spectrum_cmd1);
   Genome::Sys->shellcmd(cmd => $mutation_spectrum_cmd1);
 
-  #4.) Generate mutation-spectrum result with relative axis
-  #gmt analysis mutation-spectrum --no-absolute-axis
-  my $ms_file2 = $sub_outdir1 . $final_name . "_mutation-spectrum-relative.pdf";
+  #4.) Generate mutation-spectrum result with absolute axis
+  #gmt analysis mutation-spectrum --absolute-axis
+  my $ms_file2 = $sub_outdir1 . $final_name . "_mutation-spectrum-absolute.pdf";
   my $mutation_spectrum_cmd2 = "gmt analysis mutation-spectrum --fasta-file $reference_fasta_path --mutation-file $annotated_file --output-trans-file $trans_file --output-CpGFinder-file $cpg_finder_file --output-CpGSites-file $island_file --plot-spectrum-genome-name=$final_name --plot-spectrum-file-name=$ms_file2 --absolute-axis 1>$ms_stdout 2>$ms_stderr";
   $self->status_message($mutation_spectrum_cmd2);
   Genome::Sys->shellcmd(cmd => $mutation_spectrum_cmd2);
