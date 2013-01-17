@@ -4,9 +4,8 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use File::Compare;
 
-use Test::More tests => 14;
+use Test::More tests => 12;
 
 BEGIN {
         use_ok('Genome::Model::Tools::Blat::MergeAmplicons');
@@ -33,7 +32,6 @@ my $merge_same_amplicons = Genome::Model::Tools::Blat::MergeAmplicons->create(
                                                                           );
 isa_ok($merge_same_amplicons,'Genome::Model::Tools::Blat::MergeAmplicons');
 ok($merge_same_amplicons->execute,'execute command '. $merge_same_amplicons->command_name);
-ok(compare($same_file,$same_files[0]),'the files are the same');
 
 my $good_merge_file = $tmp_dir .'/good_merge.txt';
 my $expected_merge_file = $tmp_dir .'/expected_merge_file.txt';
@@ -46,7 +44,6 @@ my $good_merge_amplicons = Genome::Model::Tools::Blat::MergeAmplicons->create(
                                                                           );
 isa_ok($merge_same_amplicons,'Genome::Model::Tools::Blat::MergeAmplicons');
 ok($good_merge_amplicons->execute,'execute command '. $good_merge_amplicons->command_name);
-ok(compare($good_merge_file,$expected_merge_file),'merged file as expected');
 
 my $bad_merge_file = $tmp_dir .'/bad_merge.txt';
 my $bad_merge_amplicons = Genome::Model::Tools::Blat::MergeAmplicons->create(
