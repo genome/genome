@@ -72,3 +72,48 @@ sub diff_ok($$;%) {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Genome::Utility::Test
+
+=head1 SYNOPSIS
+
+    use Genome::Utiltiy::Test qw(diff_ok sub_test);
+
+    sub_test('this diffs something' => sub {
+        diff_ok($file_1, $file_1);
+    });
+
+=head1 METHODS
+
+=item sub_test
+
+Mimics Test::More's subtest since Ubuntu 10.04, which we run, does not have a
+Test::More recent enough to have subtest support.
+
+=item diff_ok
+
+diff_ok use File::Compare with a few conveiences.
+
+diff_ok($file_1, $file_2, name => '', diag => 0, test => 0);
+
+=over4
+
+=head2 OPTIONS
+
+=item name
+
+Specify a name for a test but requires 'name' key.
+
+=item diag
+
+Disable diag output when a diff is encountered. Added this in case people want to surpress any output.
+
+=item test
+
+Disable test usage, just return status. Added this so I could test diff_ok.
