@@ -93,6 +93,7 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         is_input => 1,
         is_optional => 1,
         is => 'Boolean',
+        default => 1,
         doc => 'whether or not to exclude contigs beginning with the prefix GL.',
     },
 
