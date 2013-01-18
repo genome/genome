@@ -160,7 +160,7 @@ sub resolve_vcf_filename{
   push(@names, $patient_common_name) if ($patient_common_name);
   push(@names, $subject_name) if ($subject_name);
   push(@names, $build_id);
-  push(@names, "passing.somatic." . $type . ".s.vcf");
+  push(@names, "passing.somatic." . $type . "s.vcf");
   my $filename = join("_", @names);
 
   $self->status_message("Writing simplified VCF to file: $filename");

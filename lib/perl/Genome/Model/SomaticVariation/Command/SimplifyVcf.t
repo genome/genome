@@ -9,7 +9,7 @@ BEGIN {
 };
 
 use above 'Genome';
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Genome::Utility::Test qw(diff_ok);
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-SomaticVariation-Command-SimplifyVcf';
@@ -22,7 +22,8 @@ my $indel_vcf = "$build_variants_dir/indels.vcf.gz";
 my $snv_vcf = "$build_variants_dir/snvs.vcf.gz";
 
 my $expected_dir = "$test_dir/expected.v1";
-my $expected_vcf = "$expected_dir/expected.snvs.vcf";
+my $expected_snv_vcf = "$expected_dir/expected.snvs.vcf";
+my $expected_indel_vcf = "$expected_dir/expected.indels.vcf";
 
 # Create the result for the indel variant list
 
@@ -48,11 +49,14 @@ my $build = Genome::Model::Build::SomaticVariation->__define__( data_directory =
 my $command = $class->create(
     builds => [$build],
     outdir => $output_dir,
+    include_and_merge_indels => 1, 
 );
 isa_ok($command, $class);
 
 ok($command->execute, "Executed the $class command");
-my $output_vcf = "$output_dir/" . $command->resolve_vcf_filename($build, "snv");
+my $output_snv_vcf = "$output_dir/" . $command->resolve_vcf_filename($build, "snv");
+my $output_indel_vcf = "$output_dir/" . $command->resolve_vcf_filename($build, "indel");
 
 # Diff files vs expected
-diff_ok($expected_vcf, $output_vcf, filter => [qr(^##fileDate=.*)]);
+diff_ok($expected_snv_vcf, $output_snv_vcf, filter => [qr(^##fileDate=.*)]);
+diff_ok($expected_indel_vcf, $output_indel_vcf, filter => [qr(^##fileDate=.*)]);
