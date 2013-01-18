@@ -52,7 +52,6 @@ The ClinSeq pipeline takes four models, each of which is optional, and produces 
 EOS
 }
 
-#TODO:  Is the following test actually performed?  I don't see it being called anywhere?
 sub _resolve_subject {
     my $self = shift;
     my @subjects = $self->_infer_candidate_subjects_from_input_models();
@@ -615,6 +614,9 @@ sub files_ignored_by_build_diff {
         .*.DumpIgvXml.log.txt
         .*/mutation_diagrams/cosmic.mutation-diagram.stderr
         .*/mutation_diagrams/somatic.mutation-diagram.stderr
+        .*.sequence-context.stderr
+        .*.annotate.stderr
+        .*LIMS_Sample_Sequence_QC_library.tsv
     );
 };
 
