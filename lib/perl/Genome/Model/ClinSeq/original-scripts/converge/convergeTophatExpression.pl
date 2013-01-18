@@ -60,6 +60,10 @@ my $usage=<<INFO;
   Exon-junction level (use data_column_name: 'JPM' or 'Read_Count')
   convergeTophatExpression.pl  --model_group_id='25134'  --target_file_name='observed.junctions.anno.Ensembl.tsv'  --expression_subdir='tophat_junctions_absolute'  --join_column_name='JID'  --data_column_name='JPM'  --annotation_column_names='Intron_Size,Splice_Site,Anchored,Exons_Skipped,Gene_Name'  --outfile=Tophat_JunctionLevel_JPM_Malat1Mutants.tsv  --verbose=1
 
+  NOTE: The junction level join will not work if there is no JID (chr:start-end) column in your files.  In that case try:  --join_column_name='chr:start-stop'
+  convergeTophatExpression.pl  --model_group_id='52514'  --target_file_name='observed.junctions.anno.NCBI-human.ensembl-67_37l_v2.tsv'  --expression_subdir='na'  --join_column_name='chr:start-stop'  --data_column_name='score'  --annotation_column_names='intron_size,splice_site,anchored,exons_skipped,transcript_ids,gene_ids,gene_names'  --outfile=Tophat_JunctionLevel_ReadCounts_U2AF1.tsv  --verbose=1
+
+
   Specify *one* of the following as input (each model/build should be a ClinSeq model/build)
   --build_ids                Comma separated list of specific build IDs
   --model_ids                Comma separated list of specific model IDs
@@ -201,30 +205,45 @@ sub getTophatFiles{
 
     if ($verbose){print BLUE, "\n\t$final_name\t$build_id\t$data_directory", RESET;}
 
-    #/gscmnt/gc8002/info/model_data/2881869913/build120828540/BRC18/rnaseq/tumor/cufflinks_absolute/isoforms_merged
-    my $ls_cmd = "ls $data_directory/*/rnaseq/*/$expression_subdir/*";
-    my @result = `$ls_cmd`;
-    chomp(@result);
+    #/gscmnt/gc8002/info/model_data/2881869913/build120828540/BRC18/rnaseq/tumor/cufflinks_absolute/isoforms_merged/
+    #/gscmnt/ams1183/info/model_data/2889144949/build130107187/junctions/
+    my $ls_cmd1 = "ls $data_directory/*/rnaseq/*/$expression_subdir/*";
+    my @result1 = `$ls_cmd1 2>/dev/null`;
+
+    my $ls_cmd2 = "ls $data_directory/junctions/*";
+    my @result2 = `$ls_cmd2 2>/dev/null`;
+
+    chomp(@result1);
+    chomp(@result2);
+    my @result = (@result1, @result2);
+
     my @files;
     foreach my $result (@result){
       if ($result =~ /$target_file_name$/){
         push(@files, $result);
       }
     }
+    unless (scalar(@files)){
+      print RED, "\n\nCould not find and files ...\n\n", RESET;
+      exit 1;
+    }
 
     #Get the common name and subtype (e.g. tumor/normal) from the path
     foreach my $file (@files){
-      if ($file =~ /$data_directory\/(.*)\/rnaseq\/(.*)\/tophat.*/){
-        $fc++;
-        $files{$fc}{path} = $file;
-        $files{$fc}{subtype} = $2;
-        $files{$fc}{final_name} = $final_name;
-        $files{$fc}{subject_name} = $subject_name;
-        $files{$fc}{build_id} = $build_id;
+      my $scn;
+      if ($file =~ /$data_directory\/(.*)\/rnaseq\/(.*)\/tophat.*/){ 
+        $scn = $2;
+      }elsif($subject_common_name){
+        $scn = $subject_common_name;
       }else{
-        print RED, "\n\nCould not obtain subtype from file path:\n$file\n\n", RESET;
-        exit(1);
+	$scn = "unknown";
       }
+      $fc++;
+      $files{$fc}{path} = $file;
+      $files{$fc}{subtype} = $scn;
+      $files{$fc}{final_name} = $final_name;
+      $files{$fc}{subject_name} = $subject_name;
+      $files{$fc}{build_id} = $build_id;
     }
   }
 
@@ -312,13 +331,21 @@ sub parseTophatFiles{
           $p++;
         }
         #Check for requested columns
-        unless(defined ($columns{$join_column_name})){print RED, "\n\nCould not find required join column: $join_column_name\n\n", RESET; exit(1);}
+        unless($join_column_name eq "chr:start-stop"){
+          unless(defined ($columns{$join_column_name})){print RED, "\n\nCould not find required join column: $join_column_name\n\n", RESET; exit(1);}
+        }
         unless(defined ($columns{$data_column_name})){print RED, "\n\nCould not find required data column: $data_column_name\n\n", RESET; exit(1);}
         foreach my $annotation_column (@annotation_columns){unless(defined ($columns{$annotation_column})){print RED, "\n\nCould not find required annotation column: $annotation_column\n\n", RESET; exit(1);}}
         $header = 0;
         next();
       }
-      my $id = $line[$columns{$join_column_name}{p}];
+      my $id;
+      if ($join_column_name eq "chr:start-stop"){
+        $id = "$line[0]:$line[1]-$line[2]($line[5])";
+      }else{
+        $id = $line[$columns{$join_column_name}{p}];
+      }
+
       my $data = $line[$columns{$data_column_name}{p}];
 
       #Unless this is the first file parsed, the id-column_name value must not be defined already
