@@ -9,7 +9,7 @@ BEGIN {
 };
 
 use above 'Genome';
-use Test::More tests => 7;
+use Test::More tests => 4;
 use Genome::Utility::Test qw(diff_ok);
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-SomaticVariation-Command-SimplifyVcf';
@@ -52,7 +52,7 @@ my $command = $class->create(
 isa_ok($command, $class);
 
 ok($command->execute, "Executed the $class command");
-my $output_vcf = "$output_dir/" . $command->resolve_vcf_filename('-build'=>$build);
+my $output_vcf = "$output_dir/" . $command->resolve_vcf_filename($build, "snv");
 
 # Diff files vs expected
 diff_ok($expected_vcf, $output_vcf, filter => [qr(^##fileDate=.*)]);
