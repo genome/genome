@@ -90,12 +90,12 @@ sub execute {
     my $tumor_sample = $somvar_build->tumor_model->subject->name;
     unless($tumor_sample){
       $self->error_message("Unable to resolve tumor sample name from build");
-      exit 1;
+      return;
     }
     my $normal_sample = $somvar_build->normal_model->subject->name;
     unless($normal_sample){
       $self->error_message("Unable to resolve normal sample name from build");
-      exit 1;
+      return;
     }
 
     #Find the VCF SNV file in the build dir
@@ -151,10 +151,10 @@ sub find_vcf_file{
   if (-e $data_dir . "/variants/snvs.annotated.vcf.gz"){
     $vcf_file = $data_dir . "/variants/snvs.annotated.vcf.gz";
   }elsif(-e $data_dir . "/variants/snvs.vcf.gz"){
-    
+    $vcf_file = $data_dir . "/variants/snvs.vcf.gz";
   }else{
     $self->error_message("Could not find VCF file in $data_dir");
-    exit 1;
+    return;
   }
   $self->status_message("Found VCF file: $vcf_file");
   return $vcf_file;  
@@ -191,15 +191,15 @@ sub simplify_vcf{
         }
         unless ($header{$tumor_sample_name}){
           $self->error_message("Could not find tumor column for sample: $tumor_sample_name");
-          exit 1;
+          return;
         }
         unless ($header{$normal_sample_name}){
           $self->error_message("Could not find normal column for sample: $normal_sample_name");
-          exit 1;
+          return;
         }
         unless ($header{'FORMAT'}){
           $self->error_message("Could not find FORMAT column in header line");
-          exit 1;
+          return;
         }
         #Print a header with only one column for normal and tumor
         print VCF2 "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$line[8]\t$line[$header{$normal_sample_name}{pos}]\t$line[$header{$tumor_sample_name}{pos}]\n";
@@ -227,7 +227,7 @@ sub simplify_vcf{
       #TODO: If 'FT' is not defined lq/hq status of a variant can not be determined.  This should be fatal, but for now just warn
       #$self->error_message("Could not determine position of FT tag in FORMAT column");
       #print Dumper @line;
-      #exit 1;
+      #return;
       $self->warning_message("Could not determine position of FT tag in FORMAT column:\n@line");
       next;
     }
@@ -248,7 +248,7 @@ sub simplify_vcf{
 
   unless ($header_found){
     $self->error_message("Could not find VCF header line in file $infile");
-    exit 1;
+    return;
   }
 
   return;
