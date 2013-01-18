@@ -72,7 +72,7 @@ sub _prepare_output_directory {
     
     my $allocation = Genome::Disk::Allocation->allocate(%allocation_create_parameters);
     unless ($allocation) {
-        $self->error_message("Failed to get disk allocation with params:\n". Dumper(%allocation_create_parameters));
+        $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%allocation_create_parameters));
         die($self->error_message);
     }
 
