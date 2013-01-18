@@ -6,7 +6,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use File::Basename;
-use File::Compare qw(compare compare_text);
+use File::Compare qw(compare);
 use File::Temp qw();
 
 my $archos = `uname -a`;
@@ -52,7 +52,6 @@ my $config_diff = sub {
     my ($line1, $line2) = @_;
     $line1 =~ s/\tmap:[^\t]+\t//;
     $line2 =~ s/\tmap:[^\t]+\t//;
-    print(($line1 ne $line2 ? 1 : 0), " $line1 <=> $line2\n");
     return $line1 ne $line2;
 };
-is(compare_text($orig_config_file, $out_file, $config_diff), 0, "config diffed as expected");
+is(compare($orig_config_file, $out_file, $config_diff), 0, "config diffed as expected");
