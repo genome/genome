@@ -114,8 +114,7 @@ sub execute {
             #Name the output file in a human readable way ($patient_common_name . $subject_name . $somatic_variation_build_id . passing.somatic.snvs.vcf
             my $resolve_method = "resolve_" . $type . "_vcf_filename";
             $DB::single=1;
-            my $new_vcf_name = $self->$resolve_method($somvar_build);
-            my $new_vcf_path = $outdir . $new_vcf_name;
+            my $new_vcf_path = $self->$resolve_method($somvar_build);
 
             #Parse the VCF file and dump simplified version
             $self->simplify_vcf('-infile'=>$original_vcf_path, '-outfile'=>$new_vcf_path, '-tumor_sample'=>$tumor_sample, '-normal_sample'=>$normal_sample);
@@ -132,17 +131,39 @@ sub execute {
 sub merge_simplified_vcfs {
     my ($self, $build) = @_;
 
+    my $snv_vcf = $self->resolve_snv_vcf_filename($build);
+    my $indel_vcf = $self->resolve_indel_vcf_filename($build);
+    my $output_vcf = $self->resolve_combined_vcf_filename($build);
+
+    my $joinx_command = Genome::Model::Tools::Joinx::VcfMerge->create(
+        input_files => [$snv_vcf, $indel_vcf],
+        output_file => $output_vcf,
+        merge_samples => 1,
+        use_bgzip => 0,
+    );
+
+    unless ($joinx_command->execute) {
+        die $self->error_message("Failed to run joinx vcf merge");
+    }
+
+    $self->status_message("$snv_vcf and $indel_vcf merged into $output_vcf");
+
     return 1;
 }
 
 sub resolve_indel_vcf_filename {
     my ($self, $build) = @_;
-    return $self->resolve_vcf_filename($build, 'indel');
+    return $self->resolve_vcf_filename($build, 'indels');
 }
 
 sub resolve_snv_vcf_filename {
     my ($self, $build) = @_;
-    return $self->resolve_vcf_filename($build,'snv');
+    return $self->resolve_vcf_filename($build, 'snvs');
+}
+
+sub resolve_combined_vcf_filename {
+    my ($self, $build) = @_;
+    return $self->resolve_vcf_filename($build, 'combined');
 }
 
 sub resolve_vcf_filename{
@@ -160,11 +181,11 @@ sub resolve_vcf_filename{
   push(@names, $patient_common_name) if ($patient_common_name);
   push(@names, $subject_name) if ($subject_name);
   push(@names, $build_id);
-  push(@names, "passing.somatic." . $type . "s.vcf");
+  push(@names, "passing.somatic." . $type . ".vcf");
   my $filename = join("_", @names);
 
   $self->status_message("Writing simplified VCF to file: $filename");
-  return $filename;
+  return $self->outdir . "/$filename";
 }
 
 sub find_snv_vcf_file {
