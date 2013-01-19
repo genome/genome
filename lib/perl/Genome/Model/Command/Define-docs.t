@@ -9,6 +9,7 @@ Genome::SoftwareResult->class; #This emits warnings under no-commit, so get them
 
 
 # run with REBUILD on the cmdline to re-generate the reference docs
+# run with REBUILD $typename on the cmdline to re-generate for just one pipeline
 
 my @sub_commands = `genome model define 2>&1 | grep '^ ' | awk '{ print \$1 }'`;
 for (@sub_commands) { s/[^\w\-]//g; s/\b31m//; s/0m\b//; }
@@ -56,6 +57,11 @@ my $actual_dir;
 if (@ARGV and $ARGV[0] eq 'REBUILD') {
     note("******** regenerating test data in $expected_dir to reset this test case! ***********");
     $actual_dir = $expected_dir;
+    if ($ARGV[1]) {
+        shift @ARGV;
+        @sub_commands = @ARGV;
+        note("******* regenerationg just for pipelines: @sub_commands ***********");
+    }
 }
 elsif ($ARGV[0]) {
     die "unexpected cmdline options @ARGV: expected nothing or 'REBUILD', got " . $ARGV[0];

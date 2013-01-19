@@ -1,24 +1,28 @@
 package Genome::Model::Comparison;
-
 use strict;
 use warnings;
-
 use Genome;
 
 class Genome::Model::Comparison {
     is => 'Genome::Model',
-    has => [
+    has_input => [
         from_models => {
             is => 'Genome::Model',
-            is_input => 1,
             is_many => 1,
-            doc => 'the models built in a prior way which are the subject of testing',
+            doc => 'the models built in a prior way for which a new model will be made and tested (i.e. "groups.name=cancer-test1")',
         },
         changes => {
+            is => 'Text', #'UR::BoolExpr' with extensions 
             is_many => 1,
-            is_input => 1, # is_param => 1,
-            is => 'Text', #'UR::BoolExpr' 
-            doc => 'changes to the "from" models which are being tested',
+            doc => 'changes to the "from" models which are being tested (param=value or input=value)',
+        },
+    ],
+    has_param => [
+        aspects => {
+            is => 'Text', # used to find a module to perform the comparison
+            is_many => 1,
+            is_optional => 1,
+            doc => 'the aspects of each build pair to compare (i.e. "variants", "alignments")',
         },
     ],
     doc => "pipeline to compare models across processing changes (IN DEVELOPMENT)",
@@ -29,10 +33,32 @@ sub define_by { return 'Genome::Model::Command::Define::BaseMinimal'; }
 sub _help_synopsis {
     return <<EOS;
  genome model define comparison \
+    --name test-bwasw1-on-somatic \
+    --from test-cancer-aml31 \ 
+    --changes "tumor_model.read_aligner_name=bwa-sw 
+                and normal_model.read_aligner_name=bwa-sw 
+                and tumor_model.read_aligner_version=0.6.1  
+                and normal_model.read_aligner_version=0.6.1 " \ 
+    --aspects alignments,variants,metrics 
+ 
+ genome model define comparison \
+    --name test-clinseq-noexome-dgidb \
     --from id:2890260793/2890224790 \
     --changes "exome_model=''" \
-    --processing-profile name="compare nothing" \
-    --name my-comparison1 
+    #--aspects drug-gene-interactions,metrics,run-time 
+    --processing-profile "compare clinseq default" 
+EOS
+}
+
+sub _help_detail {
+    return <<EOS
+Compare a set of models (specifiable by expression) to a newlly built set with a specific set of changes to test.
+
+The changes are in the form key=value, where a key is a processing-profile parameter on the "from" model.
+
+The aspects to be compared are determined by the processing profile used by *this* model.
+
+WARNING: This is in development and currently does no work.
 EOS
 }
 
@@ -46,6 +72,10 @@ sub create {
 sub _execute_build {
     my $self = shift;
     my $build = shift;
+
+    #
+    # put the "from" models into a group owned by this model
+    #
 
     my $from_group_name = $self->name . '.from';
     my @from_models = sort $build->from_models;
@@ -65,13 +95,26 @@ sub _execute_build {
         }
     }
 
-    my @changes = $build->changes;
+    #
+    # make a set of "to" models with the changes and build them
+    #
 
-    # TODO:
-    # pull the logic from this copy command and call it on each $from_model
+    my @changes = $build->changes;
+    
+    # TODO: # pull the logic from this copy command and call it on each $from_model
     # then make an entity representing a pair (UR::Value::Pair?)
     # and set these on the build in some way.
     # Right now we rely on a call to ->members to always sort the same.
+
+    # TODO: when <changes> is ambiguous (in-clause instead of single value),
+    # break each down into N model group copies.  If multiple are ambiguous
+    # (M) there will be a matrix of model groups created of M dimensions
+    # for all combinations.
+    
+    # TODO: when changes has a field name which is indirect through an input model,
+    # make a copy of the input model and use it as an input so the change is "true"
+    # for the new model
+    
     my $to_group_name = $self->name . '.to.' . $self->id;
     my $copy_result = Genome::ModelGroup::Command::Copy->execute(
         from => $from_group,
@@ -84,12 +127,22 @@ sub _execute_build {
     }
     my @to_models = $to_group->members;
 
+    #
+    # go through each of the build pairs and compare aspects
+    #
+    
+    my @aspects = $build->aspects;
+
     for (my $n = 0; $n < $#to_models; $n++) {
         my $from_model = $from_models[$n];
         my $to_model = $to_models[$n];
         my $from_build = $from_model->last_complete_build;
         my $to_build = $to_model->last_complete_build;
         $self->status_message("Compare build " . $from_build->__display_name__ . " to " . $to_build->__display_name__);
+        for my $aspect (@aspects) {
+            # each ::Compare::X module should produce a software result for the build pair
+            # each comparison should have an output directory linked under the build directory
+        }
     }
 
     return 1;
@@ -97,7 +150,54 @@ sub _execute_build {
 
 sub _rename_model_group {
     my ($self, $group) = @_;
-    Carp::confess("TODO: implement me!");
+    Carp::confess("TODO: implement me to get stale subordinate models out-of-the-way!");
+}
+
+sub _doc_examples {
+    return <<EOS
+ More examples.  Edit these.
+
+ # this takes two clinseq models and performs a null comparison 
+ # that profile is mostly for testing, or to make it easy to build things 
+ # and decide later what to compare when you copy the model
+ # (this runs now)
+ genome model define comparison \
+    --from id:2890260793/2890224790 \
+    --changes "exome_model=''" \
+    --processing-profile name="compare nothing" \
+    --name my-comparison1 
+ 
+ # see how drug-gene-interactions change when exome data is not used
+ # (presumes Genome::Model::ClinSeq::Comparison::DrugGeneInteractions exists and is put into a processing profile)
+ genome model define comparison \
+    --from id:2890260793/2890224790 \
+    --changes "exome_model=''" \
+    --processing-profile name="compare dgidb results" \
+    --name my-comparison2
+ 
+ # see how switching breakdancer version and subsampling to 1/2 depth affects metrics
+ # (presumes Genome::Model::Comparison::Metrics exists)
+ # (presumes we hae a subsample_reads parameter which can take N% or Nx)
+ genome model define comparison \
+    --from groups.name=testdata-aml31-somatic-variation \
+    --changes "sv_detection_strategy=~s/breakdancer 1.3/breakdancer 1.3.7/g" \
+    --changes "subsample_reads=50%" \
+    --processing-profile name="compare metrics" \
+    --name my-comparison3
+ 
+ # see how varying bwa -q from nothing to 0, 2, 5, and 10 compares
+ # because the changes has an in-clause, we will do multiple output model groups
+ # because aspects are listed explicitly it will dynamically will get/create a processing profile to compare those things
+ # presumes Genome::Model::SomaticVariation::Comparison::Variants exists
+ # presumes Genome::Model::SomaticVariation::Comparison::Alignments (probably delegates to refalign comparison)
+ # presumes Genome::Model::Comparison::Metrics (on the base class: usable across model types)
+ genome model define comparison \
+    --from groups.name=testdata-cancer-aml31 \
+    --changes "aligner_params in ['', '-q 0', '-q 2', '-q 5', '-q 10']"
+    --aspects metrics,alignments,variants
+    --name my-comparison4
+
+EOS
 }
 
 1;
