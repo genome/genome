@@ -83,10 +83,21 @@ class Genome::Model {
             doc => 'Versions of a model over time, with varying quantities of evidence'
         },
         inputs => {
+            # TODO: this should be something like input_associations,
+            # so the objects on the other side of the associations.
             is => 'Genome::Model::Input',
             reverse_as => 'model',
             doc => 'links to data currently assigned to the model for processing'
         },
+        # TODO: For these to work efficiently we would need last_complete_build to not suck.
+        #output_associations => {
+        #    via => 'last_complete_build',
+        #    to => 'result_users', # rename it in that class to result_associations
+        #},
+        #outputs => {
+        #    via => 'output_associations',
+        #    to => 'software_result'
+        #},       
         projects => {
             is => 'Genome::Project',
             via => 'project_parts',
@@ -108,17 +119,21 @@ class Genome::Model {
         user_name => { 
             # TODO: we use created_by in other places to be specific as-to role of the user
             # This is redundant with the model creation event data.
+            # Adam was going for a rails standard?
             is => 'Text', 
             doc => 'the user who created the model',
         },
         creation_date  => { 
             # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
             # TODO: this is redundant with the model creation event.
+            # Rails standard is created_at and updated_at.
+            # Switching from timestamp in Oracle simplifies querying.  Not sure about postgres.
             is => 'Timestamp', 
             doc => 'the time at which the model was defined',
         },
         build_requested => { 
             # TODO: this has limited tracking as to who/why the build was requested
+            # Is it better as a Note than a column since it is TGI specific?
             is => 'Boolean',
             doc => 'when set to true the system will queue the model for building ASAP'
         },
@@ -133,6 +148,9 @@ class Genome::Model {
             # nnutter: I disagree, the column should be removed
             # because it was too often out of sync. The method is fairly fast
             # now that it uses an iterator instead of fetching all builds.
+            # ssmith: I agree it is more work to write code to get this set correctly.
+            # The only issue with that is that having to figure this dynamically is slow.
+            # If we do it once when it changes, instead of every time someone wants to check, it could be more DRY.
             is => 'Number',
             column_name => 'LAST_COMPLETE_BUILD_ID', 
             doc => 'the last complete build id',
@@ -176,10 +194,12 @@ class Genome::Model {
         },
         auto_assign_inst_data => {
             # this must be here instead of in ::ModelDeprecated becuase it has a db column
+            # jeldred noted we set this to false when an apipe-builder model is replaced with a new one
             is => 'Boolean',
         },
         auto_build_alignments => {
             # this must be here instead of in ::ModelDeprecated becuase it has a db column
+            # this really means "auto build when instrument data is added"
             is => 'Boolean',
         },
         _id => {

@@ -113,10 +113,13 @@ class Genome::Model::Build {
             where => [ name => 'region_of_interest_set_name', value_class_name => 'UR::Value' ],
         },
         result_users => {
+            # TODO rename to maybe result_associations or output_associations?
+            # This implies that we are bridging to something using the build.
             is => 'Genome::SoftwareResult::User',
             reverse_as => 'user',
         },
         results => {
+            # TODO rename to maybe outputs?
             is => 'Genome::SoftwareResult',
             via => 'result_users',
             to => 'software_result',
