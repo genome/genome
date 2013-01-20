@@ -10,7 +10,7 @@ BEGIN {
 
 use above 'Genome';
 use Test::More tests => 6;
-use Genome::Utility::Test qw(diff_ok);
+use Genome::Utility::Test qw(compare_ok);
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-SomaticVariation-Command-SimplifyVcf';
 my $test_input_dir = "$test_dir/input.v1";
@@ -60,6 +60,6 @@ my $output_indel_vcf = $command->resolve_indel_vcf_filename($build);
 my $output_combined_vcf = $command->resolve_combined_vcf_filename($build);
 
 # Diff files vs expected
-diff_ok($expected_snv_vcf, $output_snv_vcf, filter => [qr(^##fileDate=.*)]);
-diff_ok($expected_indel_vcf, $output_indel_vcf, filter => [qr(^##fileDate=.*)]);
-diff_ok($expected_combined_vcf, $output_combined_vcf, filter => [qr(^##fileDate=.*)]);
+compare_ok($expected_snv_vcf, $output_snv_vcf, filter => [qr(^##fileDate=.*)]);
+compare_ok($expected_indel_vcf, $output_indel_vcf, filter => [qr(^##fileDate=.*)]);
+compare_ok($expected_combined_vcf, $output_combined_vcf, filter => [qr(^##fileDate=.*)]);

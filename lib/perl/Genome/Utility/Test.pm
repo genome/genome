@@ -5,7 +5,7 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(diff_ok sub_test);
+our @EXPORT_OK = qw(compare_ok sub_test);
 
 use Carp qw(croak);
 use File::Compare qw(compare);
@@ -18,7 +18,8 @@ sub sub_test($$) {
     $tb->ok($code->(), $desc);
 }
 
-sub diff_ok($$;%) {
+sub diff_ok($$;%) { compare_ok(@_) }
+sub compare_ok($$;%) {
     my ($file_1, $file_2, %o) = @_;
     use Data::Dumper;
 
@@ -29,7 +30,7 @@ sub diff_ok($$;%) {
 
     my @k = keys %o;
     if (@k) {
-        croak 'unexpected options passed to diff_ok: ' . join(', ', @k);
+        croak 'unexpected options passed to compare_ok: ' . join(', ', @k);
     }
 
 
@@ -83,10 +84,10 @@ Genome::Utility::Test
 
 =head1 SYNOPSIS
 
-    use Genome::Utiltiy::Test qw(diff_ok sub_test);
+    use Genome::Utiltiy::Test qw(compare_ok sub_test);
 
     sub_test('this diffs something' => sub {
-        diff_ok($file_1, $file_1);
+        compare_ok($file_1, $file_1);
     });
 
 =head1 METHODS
@@ -96,11 +97,11 @@ Genome::Utility::Test
 Mimics Test::More's subtest since Ubuntu 10.04, which we run, does not have a
 Test::More recent enough to have subtest support.
 
-=item diff_ok
+=item compare_ok
 
-diff_ok use File::Compare with a few conveiences.
+compare_ok use File::Compare with a few conveniences.
 
-diff_ok($file_1, $file_2, name => '', diag => 0, test => 0);
+compare_ok($file_1, $file_2, name => '', diag => 0, test => 0);
 
 =over4
 
@@ -116,4 +117,4 @@ Disable diag output when a diff is encountered. Added this in case people want t
 
 =item test
 
-Disable test usage, just return status. Added this so I could test diff_ok.
+Disable test usage, just return status. Added this so I could test compare_ok.

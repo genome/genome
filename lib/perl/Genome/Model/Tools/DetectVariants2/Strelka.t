@@ -13,7 +13,7 @@ use File::Temp;
 use Test::More tests=>36;
 use above 'Genome';
 use Genome::SoftwareResult;
-use Genome::Utility::Test qw(diff_ok);
+use Genome::Utility::Test qw(compare_ok);
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -113,7 +113,7 @@ foreach my $file (qw|output/task.complete indels.hq.bed indels.hq.v1.bed indels.
 
 my $expected = "$expected_output_dir/output/config/run.config.ini";
 my $actual = "$actual_output_dir/output/config/run.config.ini";
-diff_ok($expected, $actual,
+compare_ok($expected, $actual,
     name => "output matched expected result for output/config/run.config.ini",
     filter => [qr(^refFile = .*), qr(^configurationCmdline.*), qr(^outDir.*)]);
 
