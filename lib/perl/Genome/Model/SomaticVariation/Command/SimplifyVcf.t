@@ -60,6 +60,6 @@ my $output_indel_vcf = $command->resolve_indel_vcf_filename($build);
 my $output_combined_vcf = $command->resolve_combined_vcf_filename($build);
 
 # Diff files vs expected
-compare_ok($expected_snv_vcf, $output_snv_vcf, filter => [qr(^##fileDate=.*)]);
-compare_ok($expected_indel_vcf, $output_indel_vcf, filter => [qr(^##fileDate=.*)]);
-compare_ok($expected_combined_vcf, $output_combined_vcf, filter => [qr(^##fileDate=.*)]);
+compare_ok($expected_snv_vcf, $output_snv_vcf, filters => qr(^##fileDate=.*));
+compare_ok($expected_indel_vcf, $output_indel_vcf, filters => qr(^##fileDate=.*));
+compare_ok($expected_combined_vcf, $output_combined_vcf, filters => qr(^##fileDate=.*));

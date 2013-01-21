@@ -115,7 +115,7 @@ my $expected = "$expected_output_dir/output/config/run.config.ini";
 my $actual = "$actual_output_dir/output/config/run.config.ini";
 compare_ok($expected, $actual,
     name => "output matched expected result for output/config/run.config.ini",
-    filter => [qr(^refFile = .*), qr(^configurationCmdline.*), qr(^outDir.*)]);
+    filters => [qr(^refFile = .*), qr(^configurationCmdline.*), qr(^outDir.*)]);
 
 $expected = `cat $expected_output_dir/output/Makefile | grep -v "^script_dir" | grep -v "^analysis_dir" | grep -v "^config_file"`;
 $actual = `cat $actual_output_dir/output/Makefile | grep -v "^script_dir" | grep -v "^analysis_dir" | grep -v "^config_file"`;
