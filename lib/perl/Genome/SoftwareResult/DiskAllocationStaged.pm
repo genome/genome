@@ -103,6 +103,7 @@ sub _acquire_disk_allocation {
 
     my $allocation_path = $allocation->absolute_path;
     unless (-d $allocation_path) {
+        $allocation->delete;
         Carp::croak($self->error_message(
                 "Allocation path $allocation_path doesn't exist!"));
     }
