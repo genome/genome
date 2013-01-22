@@ -65,7 +65,7 @@ sub compare_ok($$;%) {
         $file_2,
         sub {
             for my $filter (@{$o{filters}}) {
-                map { $_ =~ s/$filter// } @_;
+                map { $_ =~ s/$filter//g } @_;
             }
             my $c = ($_[0] ne $_[1]);
             if ($c == 1 && $o{diag} && $o{test}) {
