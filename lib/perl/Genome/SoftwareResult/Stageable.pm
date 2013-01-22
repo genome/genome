@@ -132,6 +132,10 @@ sub _promote_data {
         unless ($rsync_exit_code == 0) {
             $self->error_message("Did not get a valid return from rsync, exit code was $rsync_exit_code for call $rsync_cmd.  Cleaning up and bailing out");
             rmtree($output_dir);
+            my @a = $self->disk_allocations;
+            for my $a (@a) {
+                $a->delete;
+            }
             die $self->error_message;
         }
     }
