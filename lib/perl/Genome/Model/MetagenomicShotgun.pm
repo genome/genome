@@ -138,7 +138,7 @@ sub delete {
     return $self->SUPER::delete(@_);
 }
 
-sub create{
+sub create {
     my ($class, %params) = @_;
 
     my $self = $class->SUPER::create(%params);
@@ -146,7 +146,7 @@ sub create{
 
     my $processing_profile = $self->processing_profile;
     for ( $self->sub_model_labels ){
-        my $pp_method = "_".$_."_pp";
+        my $pp_method = $_."_pp_id";
         if($self->processing_profile->$pp_method) {
             my $model = $self->_create_model_for_type($_);
             unless ($model) {
@@ -164,15 +164,16 @@ sub sequencing_platform{
     return 'solexa';
 }
 
+# TODO make this get or create
 sub _create_model_for_type {
     my $self = shift;
     my $type = shift;
 
     #CREATE UNDERLYING REFERENCE ALIGNMENT MODELS
-    my $pp_accessor = "_".$type."_pp";
+    my $pp_accessor = $type."_pp_id";
     my $reference_accessor = $type."_reference";
     my %model_params = (
-        processing_profile => $self->processing_profile->$pp_accessor,
+        processing_profile_id => $self->processing_profile->$pp_accessor,
         subject_name => $self->subject_name,
         name => $self->name.".$type model",
         reference_sequence_build=>$self->$reference_accessor,
@@ -181,13 +182,6 @@ sub _create_model_for_type {
 
     unless ($model){
         die $self->error_message("Couldn't create contamination screen model with params ".join(", ", map {$_ ."=>". $model_params{$_}} keys %model_params) );
-    }
-
-    if ($model->reference_sequence_build($self->$reference_accessor)){
-        $self->status_message("updated reference sequence build on $type model ".$model->name);
-    }
-    else{
-        die $self->error_message("failed to update reference sequence build on $type model ".$model->name);
     }
 
     $self->add_from_model(from_model=> $model, role=>$type.'_model');
