@@ -6,6 +6,7 @@ use warnings;
 use above "Genome";
 use File::Temp;
 use Test::More;# tests => 4;
+use Genome::Utility::Test qw(compare_ok);
 
 use_ok('Genome::Model::Tools::Velvet::ToAce');
 
@@ -41,14 +42,8 @@ ok( -s $out_ace, "Created ace file" );
 my $ori_ace = $root_dir.'/velvet_asm.ace';
 ok( -s $ori_ace, "Test ace file exists" );
 
-my @diff = `diff $out_ace $ori_ace`;
-my @lines = ();
-for my $diff (@diff) {
-    next if $diff =~ /comment\sVelvetToAce|Run\sby/;
-    push @lines, $diff;
-}
-
-is(scalar @lines, 2, 'Ace file converted from velvet output is OK');
+compare_ok($ori_ace, $out_ace, 'Ace file converted from velvet output is OK',
+    filters => [qr(^comment VelvetToAce.*), qr(^Run by .*)]);
 
 #<STDIN>;
 
