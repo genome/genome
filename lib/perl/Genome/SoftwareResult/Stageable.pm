@@ -111,6 +111,14 @@ sub _promote_data {
     my $staging_dir = $self->temp_staging_directory;
     my $output_dir  = $self->output_dir;
 
+    unless ($output_dir) {
+        die $self->error_message("output_dir not set");
+    }
+
+    unless ($staging_dir) {
+        die $self->error_message("staging_dir not set");
+    }
+
     $self->status_message("Now de-staging data from $staging_dir into $output_dir"); 
 
     my $cp_params = 'r';
