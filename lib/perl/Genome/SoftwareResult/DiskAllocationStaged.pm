@@ -37,8 +37,11 @@ sub create {
     my $allocation_path = $disk_allocation->absolute_path;
     $self->output_dir($allocation_path);
 
-    my $staging_directory = $self->_setup_staging_directory($allocation_path);
-    eval {$self->_generate_result($staging_directory)};
+    my $staging_directory;
+    eval {
+        $staging_directory = $self->_setup_staging_directory($allocation_path);
+        $self->_generate_result($staging_directory);
+    };
     if($@) {
         my $error_message = $@;
         my $self_error_message = $self->error_message("Result generation failed...\n$error_message");
