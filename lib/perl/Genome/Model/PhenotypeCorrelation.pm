@@ -592,7 +592,7 @@ sub get_snp_list_for_something_close_to_this_result {
         $self->status_message("Widening the search space....");
     }
     my @more_alignment_results = Genome::InstrumentData::AlignmentResult::Merged->get(
-        instrument_data_id => $alignment_result->instrument_data_id, 
+        instrument_data_id => [$alignment_result->instrument_data_id], 
         reference_build_id => $reference_build_id,
     );
     for my $alignment_result (@more_alignment_results) {
