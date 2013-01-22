@@ -21,8 +21,8 @@ class Genome::Model::Tools::Sv::SvAnnot2 {
         annotation_build_id => {
             is => 'Text',
             doc => 'Annotation build you want to use',
-            default => '102549985',
-            #default => '131184146',
+            #default => '102549985',
+            default => '131184146',
         },
         annotation_build => {
             is => "Genome::Model::Build::ImportedAnnotation",
