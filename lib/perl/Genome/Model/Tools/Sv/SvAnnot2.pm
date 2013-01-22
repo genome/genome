@@ -9,10 +9,17 @@ use Genome;
 class Genome::Model::Tools::Sv::SvAnnot2 {
     is => 'Genome::Model::Tools::Sv',
     has => [
-        input_files => {
+        breakdancer_files => {
             type => 'String',
-            doc => 'input sv file',
+            doc => 'Input files in breakdancer format',
             is_many => 1,
+            is_optional => 1,
+        },
+        squaredancer_files => {
+            type => 'String',
+            doc => 'Input files in squaredancer format',
+            is_many => 1,
+            is_optional => 1,
         },
         output_file => {
             type => 'String',
@@ -66,10 +73,13 @@ sub execute {
     open(OUT, "> $outfile") || die "Could not open output file: $!";
     print OUT "chrA\tbpA\tchrB\tbpB\tevent\tsize\tscore\tsource\tgeneA\ttranscriptA\torientationA\tsubStructureA\tgeneB\ttranscriptB\torientationB\tsubStructureB\tdeletedGenes\n";
 
-    my @infiles = $self->input_files;
-    for my $file (@infiles) {
-        my ($type, $filename) = split /:/,$file;
-        processFile($type, $filename, $build);
+    my @infiles = $self->breakdancer_files;
+    for my $filename (@infiles) {
+        processFile("bd", $filename, $build);
+    }
+    @infiles = $self->squaredancer_files;
+    for my $filename (@infiles) {
+        processFile("sd", $filename, $build);
     }
 
     close OUT;

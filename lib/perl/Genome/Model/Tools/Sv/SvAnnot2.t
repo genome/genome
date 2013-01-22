@@ -19,7 +19,7 @@ my $data_dir = "$base_dir/v$version";
 
 my $temp_file = Genome::Sys->create_temp_file_path;
 my $cmd = Genome::Model::Tools::Sv::SvAnnot2->create(
-    input_files => ["bd:$data_dir/in.svs",],
+    breakdancer_files => ["$data_dir/in.svs",],
     output_file => $temp_file,
 );
 
