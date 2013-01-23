@@ -102,7 +102,6 @@ sub execute {
     my $per_read_length = $self->per_read_length;
     my $genome_build = $self->genome_build;
     # my $sex = $self->sex;
-    my $normal_samtools_file = $self->normal_samtools_file;
     my $tumor_samtools_file = $self->tumor_samtools_file;
     my $processors = $self->processors;
 
@@ -133,9 +132,6 @@ sub execute {
     }
     $annotation_directory = File::Spec->rel2abs($annotation_directory);
 
-    if(defined($normal_samtools_file)){
-        $normal_samtools_file = File::Spec->rel2abs($normal_samtools_file);
-    }
     if(defined($tumor_samtools_file)){
         $tumor_samtools_file = File::Spec->rel2abs($tumor_samtools_file);
     }
@@ -161,13 +157,6 @@ sub execute {
     unless(-e $tumor_window_file){
         die("file not found $tumor_window_file");
     }
-    if(defined($normal_samtools_file)){
-        unless(-e $normal_samtools_file){
-            die("file not found $normal_samtools_file");
-        }
-    } else {
-        $normal_samtools_file = "NULL";
-    }
     if(defined($tumor_samtools_file)){
         unless(-e $tumor_samtools_file){
             die("file not found $tumor_samtools_file");
@@ -190,7 +179,6 @@ sub execute {
     print $RFILE "                        perLibrary=$per_lib,\n";
     print $RFILE "                        perReadLength=$per_read_length,\n";
     print $RFILE "                        verbose=TRUE,\n";
-    print $RFILE "                        nrmSamtoolsFile=\"$normal_samtools_file\",\n";
     print $RFILE "                        tumorSamtoolsFile=\"$tumor_samtools_file\")\n";
 
 
