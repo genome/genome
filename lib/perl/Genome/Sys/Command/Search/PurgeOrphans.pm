@@ -80,7 +80,7 @@ sub execute {
                 if ($response->ok) {
                     print("Removed " . @docs_to_purge . "documents in " . (time - $start_time) . " seconds.\n");
                 } else {
-                    print("Failed to remove " . @docs_to_purge . " documents.\n");
+                    $self->status_message("Failed to remove " . @docs_to_purge . " documents.");
                 }
             }
 
