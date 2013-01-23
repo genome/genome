@@ -72,7 +72,7 @@ sub execute {
             $start_time = time;
             my %docs = $self->batch_docs_by_class(@docs);
             my @docs_to_purge = $self->find_orphaned_docs(%docs);
-            $self->status_message("Processed " . @docs . " search documents in " . (time - $start_time) . " seconds and found " . @docs_to_purge . " to remove.");
+            $self->debug_message("Processed " . @docs . " search documents in " . (time - $start_time) . " seconds and found " . @docs_to_purge . " to remove.");
 
             if (@docs_to_purge) {
                 $start_time = time;
