@@ -28,9 +28,10 @@ ok($cmd, "Created command");
 ok($cmd->execute, "Command executed successfully");
 
 my $expected_file = "$data_dir/expected.out";
-my $diff = Genome::Sys->diff_file_vs_file($temp_file, $expected_file);
 ok(-s $temp_file, "Output file created");
 ok(-s $expected_file, "Expected file exists");
+my $expected = `cat $expected_file | sort`;
+my $actual = `cat $temp_file | sort`;
+my $diff = Genome::Sys->diff_text_vs_text($expected, $actual);
 ok(!$diff, "No diffs with expected output");
-
 done_testing;
