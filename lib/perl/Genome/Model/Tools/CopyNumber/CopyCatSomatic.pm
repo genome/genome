@@ -59,12 +59,6 @@ class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
             doc =>'genome build - one of "36", "37", or "mm9"'
         },
 
-        normal_samtools_file => {
-            is => 'String',
-            is_optional => 1,
-            doc =>'samtools file which will be used to find het snp sites and id copy-number neutral regions',
-        },
-
         tumor_samtools_file => {
             is => 'String',
             is_optional => 1,
@@ -76,6 +70,12 @@ class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
             is_optional => 1,
             default => 1,
             doc => "set the number of processors that the parallel steps will use",
+        },
+        dump_bins => {
+            is => 'Boolean',
+            is_optional => 1,
+            default => 0,
+            doc => "write out the corrected bins to a file (pre-segmentation)"
         },
         
         ]
@@ -104,6 +104,7 @@ sub execute {
     # my $sex = $self->sex;
     my $tumor_samtools_file = $self->tumor_samtools_file;
     my $processors = $self->processors;
+    my $dump_bins = $self->dump_bins;
 
     # #shorthand for sex designation
     # if (lc($sex) eq "m"){
@@ -141,7 +142,6 @@ sub execute {
     if(defined($tumor_window_file)){
         $tumor_window_file = File::Spec->rel2abs($tumor_window_file);
     }
-
     
     #add the genome build to the anno dir
     $annotation_directory = $annotation_directory . "/" . $genome_build;
@@ -165,6 +165,12 @@ sub execute {
         $tumor_samtools_file = "NULL";
     }
 
+    if($dump_bins){
+        $dump_bins="TRUE";
+    } else {
+        $dump_bins="FALSE";
+    }
+
     #open the r file
     my $rf = open(my $RFILE, ">$output_directory/run.R") || die "Can't open R file for writing.\n";
     print $RFILE "library(copyCat)\n";
@@ -179,6 +185,7 @@ sub execute {
     print $RFILE "                        perLibrary=$per_lib,\n";
     print $RFILE "                        perReadLength=$per_read_length,\n";
     print $RFILE "                        verbose=TRUE,\n";
+    print $RFILE "                        dumpBins=$dump_bins,\n";
     print $RFILE "                        tumorSamtoolsFile=\"$tumor_samtools_file\")\n";
 
 
