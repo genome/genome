@@ -9,10 +9,17 @@ use Genome;
 class Genome::Model::Tools::Sv::SvAnnot2 {
     is => 'Genome::Model::Tools::Sv',
     has => [
-        input_files => {
+        breakdancer_files => {
             type => 'String',
-            doc => 'input sv file',
+            doc => 'Input files in breakdancer format',
             is_many => 1,
+            is_optional => 1,
+        },
+        squaredancer_files => {
+            type => 'String',
+            doc => 'Input files in squaredancer format',
+            is_many => 1,
+            is_optional => 1,
         },
         output_file => {
             type => 'String',
@@ -21,8 +28,8 @@ class Genome::Model::Tools::Sv::SvAnnot2 {
         annotation_build_id => {
             is => 'Text',
             doc => 'Annotation build you want to use',
-            default => '102549985',
-            #default => '131184146',
+            #default => '102549985',
+            default => '131184146',
         },
         annotation_build => {
             is => "Genome::Model::Build::ImportedAnnotation",
@@ -66,17 +73,20 @@ sub execute {
     open(OUT, "> $outfile") || die "Could not open output file: $!";
     print OUT "chrA\tbpA\tchrB\tbpB\tevent\tsize\tscore\tsource\tgeneA\ttranscriptA\torientationA\tsubStructureA\tgeneB\ttranscriptB\torientationB\tsubStructureB\tdeletedGenes\n";
 
-    my @infiles = $self->input_files;
-    for my $file (@infiles) {
-        my ($type, $filename) = split /:/,$file;
-        processFile($type, $filename, $build);
+    my @infiles = $self->breakdancer_files;
+    for my $filename (@infiles) {
+        $self->processFile("bd", $filename, $build);
+    }
+    @infiles = $self->squaredancer_files;
+    for my $filename (@infiles) {
+        $self->processFile("sd", $filename, $build);
     }
 
     close OUT;
 }
 
 sub processFile {
-    my ($source,$infile, $build) = @_;
+    my ($self, $source, $infile, $build) = @_;
 
     my ( @entireFile, $line, $bdRef, $chrA, $bpA, $chrB, $bpB, $event, $patient, $aTranscriptRef, $bTranscriptRef, $transcriptRef,
         $eventId, $geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB,
@@ -85,6 +95,9 @@ sub processFile {
 
     open(IN, "< $infile" ) || die "Could not open input file $infile: $!";
     @entireFile = <IN>;
+    close IN;
+
+    my $breakpoints_list;
 
     foreach my $line ( @entireFile ) {
         chomp $line;
@@ -101,92 +114,126 @@ sub processFile {
             ($chrA,$bpA,undef,$chrB,$bpB,undef,$event,$size,$score) = split /\t/,$line;
         }
 
-        my $index = 0;
-        foreach my $var ($chrA,$bpA,$chrB,$bpB,$event,$size,$score) {
-            unless (defined $var) { die "DID not define necessary variables for call:\n$line\n"; }
-            $index++;
+        $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $source, $chrA, $bpA, $chrB, $bpB, $event, $size, $score, $breakpoints_list);
+    }
+    $self->fill_in_transcripts($breakpoints_list, $build);
+    foreach my $chr (keys %{$breakpoints_list}) {
+        foreach my $item (@{$breakpoints_list->{$chr}}) {
+            $self->process_item($item);
         }
+    }
+}
 
-        #$bdRef = BreakDancerLine->new($line);
-        #($chrA, $bpA, $chrB, $bpB) = $bdRef->chromosomesAndBreakpoints();
-        #$event = $bdRef->eventType(); 
-        #$eventId = $bdRef->Id();
-        $geneA = $transcriptA = $orientationA = $subStructureA = $geneB = $transcriptB = $orientationB = $subStructureB = $deletedGenes = "N/A";
-        $inCommonRef = $deletedGeneHashRef = undef;
+sub add_breakpoints_to_chromosome {
+    my $self = shift;
+    my ($line, $source, $chrA, $bpA, $chrB, $bpB, $event, $size, $score, $breakpoints_list) = @_;
+    foreach my $var ($chrA,$bpA,$chrB,$bpB,$event,$size,$score,$source) {
+        unless (defined $var) { die "DID not define necessary variables for call:\n$line\n"; }
+    }
+    my $hash = {source => $source, chrA => $chrA, bpA => $bpA, chrB => $chrB, bpB => 
+    $bpB, event => $event, size => $size, score => $score};
+    push (@{$breakpoints_list->{$chrA}}, $hash);
+    unless ($chrA eq $chrB) {
+        push (@{$breakpoints_list->{$chrB}}, {source => $source, chrA => $chrA, bpA => $bpA, chrB => $chrB, bpB => $bpB, event => $event, size => $size, score => $score, breakpoint_link => $hash});
+    }
+    return $breakpoints_list;
+}
 
-        #grab Ken's annotation
-        #my @cols = split /\t/, $line;
-        #my $kenAnnotation = $cols[14];
-
-        # Get list of any deleted genes
-        if ( $event eq "DEL" ) { 
-            $transcriptRef = transcriptsBetweenBreakpoints($chrA, $bpA, $bpB, $build);
-            $deletedGeneHashRef = geneNames($transcriptRef);
-            if ( defined $deletedGeneHashRef && scalar(keys %{$deletedGeneHashRef}) > 1 ) {
-                $deletedGenes = "";
-                foreach (keys %{$deletedGeneHashRef}) { $deletedGenes .= "$_ "; }
+sub fill_in_transcripts {
+    my $self = shift;
+    my $breakpoints_list = shift;
+    my $build = shift;
+    foreach my $chr (keys %$breakpoints_list) {
+        my $chr_breakpoint_list = $breakpoints_list->{$chr};
+        my $transcript_iterator = $build->transcript_iterator(chrom_name => $chr);
+        die "transcript iterator not defined for chr $chr" unless ($transcript_iterator);
+        while (my $transcript = $transcript_iterator->next) {
+            foreach my $item (@$chr_breakpoint_list) {
+                if ($item->{event} eq "DEL" and $self->is_between_breakpoints($item->{bpA}, $item->{bpB}, $transcript)) {
+                    push (@{$item->{transcripts_between_breakpoints}}, $transcript);
+                }
+                if ($item->{chrA} eq $chr and $self->crosses_breakpoint($transcript, $item->{bpA})) {
+                    push (@{$item->{transcripts_crossing_breakpoint_a}}, $transcript);
+                }
+                if ($item->{chrB} eq $chr and $self->crosses_breakpoint($transcript, $item->{bpB})) {
+                    if (defined $item->{breakpoint_link}) {
+                        $DB::single=1;
+                        my $hash = $item->{breakpoint_link};
+                        push (@{$hash->{transcripts_crossing_breakpoint_b}}, $transcript);
+                    }
+                    else {
+                        push (@{$item->{transcripts_crossing_breakpoint_b}}, $transcript);
+                    }
+                }
             }
         }
+    }
+    return $breakpoints_list;
+}
 
-        # All transcripts crossing each breakpoint
-        $aTranscriptRef = allTranscripts($chrA, $bpA, $build);
-        $bTranscriptRef = allTranscripts($chrB, $bpB, $build);
+sub process_item {
+    my $self = shift;
+    my $item = shift;
 
-        # If there are no transcripts crossing the breakpoint, then you are done
-        if ( (!defined $aTranscriptRef || scalar(@{$aTranscriptRef}) == 0) &&
-            (!defined $bTranscriptRef || scalar(@{$bTranscriptRef}) == 0) ) {
-            #print OUT "chrA\tbpA\tchrB\tbpB\tevent\tsize\tscore\tsource\tgeneA\ttranscriptA\torientationA\tsubStructureA\tgeneB\ttranscriptB\torientationB\tsubStructureB\tdeletedGenes\n";
-            print OUT "$chrA\t$bpA\t$chrB\t$bpB\t$event\t$size\t$score\t$source\t$geneA\t$transcriptA\t$orientationA\t$subStructureA\t$geneB\t$transcriptB\t$orientationB\t$subStructureB\t$deletedGenes\n"; 
-            next;
+    #only need to process each set of breakpoints once.
+    if ($item->{breakpoint_link}) {
+        return 1;
+    }
+
+    my ($geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes, $aTranscriptRef, $bTranscriptRef, $inCommonRef, $deletedGeneHashRef);
+    $geneA = $transcriptA = $orientationA = $subStructureA = $geneB = $transcriptB = $orientationB = $subStructureB = $deletedGenes = "N/A";
+    $inCommonRef = $deletedGeneHashRef = undef;
+
+    # Get list of any deleted genes
+    if ( $item->{event} eq "DEL" ) { 
+        my $transcriptRef = $item->{transcripts_between_breakpoints};
+        $deletedGeneHashRef = geneNames($transcriptRef);
+        if ( defined $deletedGeneHashRef and scalar(keys %{$deletedGeneHashRef}) > 1 ) {
+            $deletedGenes = "";
+            foreach (keys %{$deletedGeneHashRef}) { $deletedGenes .= "$_ "; }
         }
+    }
+    # All transcripts crossing each breakpoint
+    $aTranscriptRef = $item->{transcripts_crossing_breakpoint_a};
+    $bTranscriptRef = $item->{transcripts_crossing_breakpoint_b};
 
-        # If there are transcripts crossing both breakpoints see if there are transcripts in common
-        if ( defined $aTranscriptRef && scalar(@{$aTranscriptRef}) >= 1 &&  defined $bTranscriptRef && scalar(@{$bTranscriptRef}) >= 1 ) {
-            $inCommonRef = allTranscriptsInCommon($aTranscriptRef, $bTranscriptRef);
-        }
+    # If there are transcripts crossing both breakpoints see if there are transcripts in common
+    if ( defined $aTranscriptRef and scalar(@{$aTranscriptRef}) >= 1 and  defined $bTranscriptRef and scalar(@{$bTranscriptRef}) >= 1 ) {
+        $inCommonRef = allTranscriptsInCommon($aTranscriptRef, $bTranscriptRef);
 
         # If there are transcripts in common, pick one to annotate
         # Preferentially choose one that affects protein product
-        if ( defined $inCommonRef && scalar(@{$inCommonRef}) >= 1 ) {
-            $transcript = bestTranscriptInCommon($inCommonRef, $bpA, $bpB );
-            (defined $transcript) || die "did not get transcript in common for \n'$line'";
-            ($geneA, $transcriptA, $orientationA, $subStructureA) = transcriptFeatures($transcript, $bpA);
-            ($geneB, $transcriptB, $orientationB, $subStructureB) = transcriptFeatures($transcript, $bpB);	    
-            print OUT "$chrA\t$bpA\t$chrB\t$bpB\t$event\t$size\t$score\t$source\t$geneA\t$transcriptA\t$orientationA\t$subStructureA\t$geneB\t$transcriptB\t$orientationB\t$subStructureB\t$deletedGenes\n"; 
-            next;	    
-        }
-
-        # There are no transcripts in common.  Pick a different transcript for each breakpoint 
-        if ( defined $aTranscriptRef && scalar(@{$aTranscriptRef}) >= 1 ) { 
-            $transcript = chooseBestTranscript($aTranscriptRef, $bpA);
-            ($geneA, $transcriptA, $orientationA, $subStructureA) = transcriptFeatures($transcript, $bpA);
-        }
-        if ( defined $bTranscriptRef && scalar(@{$bTranscriptRef}) >= 1 ) { 
-            $transcript = chooseBestTranscript($bTranscriptRef, $bpB);
-            ($geneB, $transcriptB, $orientationB, $subStructureB) = transcriptFeatures($transcript, $bpB);
-        }	    
-        print OUT "$chrA\t$bpA\t$chrB\t$bpB\t$event\t$size\t$score\t$source\t$geneA\t$transcriptA\t$orientationA\t$subStructureA\t$geneB\t$transcriptB\t$orientationB\t$subStructureB\t$deletedGenes\n"; 
-
-    } # match foreach $line
-
-    close IN;
-
-} # end of sub
-
-sub allTranscripts {
-    # Return all transcripts spanning the given position
-    my ( $chr, $position, $build ) = @_;
-
-    my ( $transcriptIterator, $transcript, @transcripts, );
-    $transcriptIterator = $build->transcript_iterator(chrom_name => $chr); 
-    (defined $transcriptIterator) || die "transcriptIterator not defined";
-    while ( $transcript = $transcriptIterator->next ) {
-        if ( $position >= $transcript->transcript_start() && $position <= $transcript->transcript_stop() ) {
-            push @transcripts, $transcript;
+        if ( defined $inCommonRef and scalar(@{$inCommonRef}) >= 1 ) {
+            my $transcript = bestTranscriptInCommon($inCommonRef, $item->{bpA}, $item->{bpB} );
+            (defined $transcript) || die "did not get transcript in common";
+            ($geneA, $transcriptA, $orientationA, $subStructureA) = transcriptFeatures($transcript, $item->{bpA});
+            ($geneB, $transcriptB, $orientationB, $subStructureB) = transcriptFeatures($transcript, $item->{bpB});	    
         }
     }
 
-    return \@transcripts;
+    # There are no transcripts in common.  Pick a different transcript for each breakpoint 
+    if ( defined $aTranscriptRef and scalar(@{$aTranscriptRef}) >= 1 and not scalar(@$inCommonRef)) { 
+        my $transcript = chooseBestTranscript($aTranscriptRef, $item->{bpA});
+        ($geneA, $transcriptA, $orientationA, $subStructureA) = transcriptFeatures($transcript, $item->{bpA});
+    }
+    if ( defined $bTranscriptRef and scalar(@{$bTranscriptRef}) >= 1 and not scalar(@$inCommonRef)) { 
+        my $transcript = chooseBestTranscript($bTranscriptRef, $item->{bpB});
+        ($geneB, $transcriptB, $orientationB, $subStructureB) = transcriptFeatures($transcript, $item->{bpB});
+    }
+    print OUT join("\t", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event}, $item->{size}, $item->{score}, $item->{source}, $geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes)."\n"; 
+
+    return 1;
+}
+
+sub crosses_breakpoint {
+    # Return all transcripts spanning the given position
+    my ( $self, $transcript, $position ) = @_;
+
+    if ( $position >= $transcript->transcript_start() and $position <= $transcript->transcript_stop() ) {
+        return 1;
+    }
+
+    return 0;
 }
 
 sub allTranscriptsInCommon {
@@ -197,18 +244,17 @@ sub allTranscriptsInCommon {
     # Get a hash of names in first list
     foreach $transcript ( @{$aTranscriptRef} ) {
         $transcriptName = $transcript->transcript_name();
-        if ( defined $transcriptName && $transcriptName ne "" ) {  $aNames{$transcriptName} = 1; }
+        if ( defined $transcriptName and $transcriptName ne "" ) {  $aNames{$transcriptName} = 1; }
     }
 
     # See which names in second list are also in first    
     foreach $transcript ( @{$bTranscriptRef} ) {
         $transcriptName = $transcript->transcript_name();
-        if ( defined $transcriptName && $transcriptName ne "" &&  defined $aNames{$transcriptName} ) { push @inCommon, $transcript; }
+        if ( defined $transcriptName and $transcriptName ne "" and  defined $aNames{$transcriptName} ) { push @inCommon, $transcript; }
     }
 
     return \@inCommon;
 }
-
 
 sub geneNames {
     # Return ref to hash of gene names for the list of transcripts
@@ -221,13 +267,12 @@ sub geneNames {
     return \%geneNames;
 }
 
-
 sub breakpointsInSameIntron {
     # Return 1 if the two breakpoints are in the same intron of the given transcript
     my ( $transcript, $bpA, $bpB ) = @_;
     my $substructureA = substructureWithBreakpoint($transcript, $bpA);
     my $substructureB = substructureWithBreakpoint($transcript, $bpB);
-    return ( $substructureA eq $substructureB && $substructureA =~ /(flank)|(intron)/i );
+    return ( $substructureA eq $substructureB and $substructureA =~ /(flank)|(intron)/i );
 }
 
 sub substructureWithBreakpoint {
@@ -240,7 +285,7 @@ sub substructureWithBreakpoint {
     my ( @subStructures, $structure, $subStructureDescription  );
     @subStructures = $transcript->ordered_sub_structures();
     foreach $structure ( @subStructures ) {
-        if ( $position >= $$structure{structure_start} && $position <= $$structure{structure_stop} ) {
+        if ( $position >= $$structure{structure_start} and $position <= $$structure{structure_stop} ) {
             return $$structure{structure_type}.$$structure{cds_exons_before};
         }
     }
@@ -274,16 +319,16 @@ sub bestTranscriptInCommon {
     foreach $transcript ( @{$inCommonRef} ) {
         $geneName = $transcript->gene_name();
         if ( !breakpointsInSameIntron($transcript, $bpA, $bpB) ) {
-            if ( defined $geneName && $geneName ne "" ) { return $transcript; } # This is # 1. 
+            if ( defined $geneName and $geneName ne "" ) { return $transcript; } # This is # 1. 
             push @notInSameIntron, $transcript; # This is # 2.
-        } elsif ( defined $geneName && $geneName ne "" ) {
+        } elsif ( defined $geneName and $geneName ne "" ) {
             push @sameIntronWithGeneName, $transcript; # This is # 3.
         }
     }
 
     # If we are here, there is no # 1.
-    if ( @notInSameIntron && scalar(@notInSameIntron) >= 1 ) { return $notInSameIntron[0]; }  # This is # 2.
-    if ( @sameIntronWithGeneName && scalar(@sameIntronWithGeneName) >= 1 ) { return $sameIntronWithGeneName[0]; }  # This is # 3.
+    if ( @notInSameIntron and scalar(@notInSameIntron) >= 1 ) { return $notInSameIntron[0]; }  # This is # 2.
+    if ( @sameIntronWithGeneName and scalar(@sameIntronWithGeneName) >= 1 ) { return $sameIntronWithGeneName[0]; }  # This is # 3.
     return $$inCommonRef[0];
 }
 
@@ -300,23 +345,23 @@ sub chooseBestTranscript {
     foreach $transcript ( @{$transcriptRef} ) { 
         $substructure = substructureWithBreakpoint($transcript, $position);
         $geneName = $transcript->gene_name();
-        if ( $substructure =~ /exon/i && defined $geneName && $geneName ne "" ) {
+        if ( $substructure =~ /exon/i and defined $geneName and $geneName ne "" ) {
             # 1. This one has breakpoint in exon and has defined gene
             #    This is all we need
             return $transcript;
         } elsif ( $substructure =~ /exon/i ) {
             push @hasExon, $transcript;
-        } elsif ( defined $geneName && $geneName ne "" ) {
+        } elsif ( defined $geneName and $geneName ne "" ) {
             push @hasGeneName, $transcript;
         }
     }
 
     # If we are here, there is no transcript with both breakpoint in exon
     # and gene name.  Send transcript based on following priority
-    if ( @hasExon && scalar(@hasExon) >= 1 ) {
+    if ( @hasExon and scalar(@hasExon) >= 1 ) {
         # 2. Want breakpoint in an exon
         return $hasExon[0];
-    } elsif ( @hasGeneName && scalar(@hasGeneName) >= 1 ) {
+    } elsif ( @hasGeneName and scalar(@hasGeneName) >= 1 ) {
         # 3. Want transcript with gene name
         return $hasGeneName[0];
     } else {
@@ -327,31 +372,18 @@ sub chooseBestTranscript {
     die "Should not be here";
 }
 
-
-sub transcriptsBetweenBreakpoints {
+sub is_between_breakpoints {
     # Used to get genes that are flanked by deletion breakpoints
     # The entire transcript has to be within the two breakpoints
     # Annotation of the individual breakpoints will give the transcripts interrupted by breakpoints
-    my ($chr, $start, $stop, $build) = @_;
+    my ($self, $start, $stop, $transcript) = @_;
     if ( $start > $stop ) { ($start, $stop) = ($stop, $start); }
-    my ( $transcriptIterator, $transcript, @transcripts, );
 
-    $transcriptIterator = $build->transcript_iterator(chrom_name => $chr); 
-    (defined $transcriptIterator) || die "transcriptIterator not defined";
 
-    while ( $transcript = $transcriptIterator->next ) {
-        #if ( $transcript->transcript_start() <= $stop && $transcript->transcript_stop() >= $start ) {
-
-        if ( $transcript->transcript_start() >= $start && $transcript->transcript_start() <= $stop &&
-            $transcript->transcript_stop()  >= $start && $transcript->transcript_stop() <= $stop ) {
-            push @transcripts, $transcript;
-        }
+    if ( $transcript->transcript_start() >= $start and $transcript->transcript_start() <= $stop and
+            $transcript->transcript_stop()  >= $start and $transcript->transcript_stop() <= $stop ) {
+            return 1;
     }
-    return \@transcripts;
+    return 0;
 }
 
-
-sub processedMessage {
-    # Return message up to given position
-    my ( $transcript, $position ) = @_;
-}
