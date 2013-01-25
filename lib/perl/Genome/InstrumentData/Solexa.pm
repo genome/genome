@@ -456,20 +456,16 @@ sub dump_trimmed_fastq_files {
     }
 
     $self->status_message('Trimmer name: '.$trimmer_name);
-    my @sx_cmd_parts = $self->_convert_trimmer_name_to_sx_command_parts($trimmer_name);
+    $self->status_message('Trimmer version: '.($trimmer_version // 'NULL'));
+    $self->status_message('Trimmer params: '.($trimmer_params // 'NULL'));
+    my @sx_cmd_parts = $self->_convert_trimmer_to_sx_commands(
+        trimmer_name => $params{trimmer_name},
+        trimmer_version => $params{trimmer_version},
+        trimmer_params => $params{trimmer_params},
+
+    );
     if ( @sx_cmd_parts ) {
         $self->status_message('SX processing detected!');
-        # OLD: Convert trimmer params if given.
-        if ( defined $trimmer_params ) {
-            $self->status_message('Old SX trimmer params: '.$trimmer_params);
-            my $cmd_line_params = $self->_convert_trimmer_params_to_command_line_params(
-                trimmer_name => $trimmer_name,
-                trimmer_params => $trimmer_params,
-                trimmer_version => $trimmer_version,
-            );
-            return if not $cmd_line_params;
-            $sx_cmd_parts[0] .= ' '.$cmd_line_params;
-        }
 
         # Inputs
         my @fastq_pathnames = $self->dump_sanger_fastq_files(%$segment_params); # dies on error
@@ -705,17 +701,28 @@ sub dump_trimmed_fastq_files {
     return @trimmed_fastq_pathnames;
 }
 
-sub _convert_trimmer_name_to_sx_command_parts {
-    my ($self, $trimmer_name) = @_;
+sub _convert_trimmer_to_sx_commands {
+    # return array of sx cmds
+    # return undef if not sx
+    # confess on error
+    my ($self, %trimmer) = @_;
 
-    Carp::confess('No trimmer name provided to convert trimmer name to SX command parts!') if not $trimmer_name;
+    my $trimmer_name = delete $trimmer{trimmer_name};
+    Carp::confess('No trimmer name provided to convert trimmer to SX command parts!') if not $trimmer_name;
+    my $trimmer_version = delete $trimmer{trimmer_version};
+    my $trimmer_params = delete $trimmer{trimmer_params};
+    Carp::confess('Unknown params sent to convert trimmer to sx commands! '.Data::Dumper::Dumper(\%trimmer)) if %trimmer;
 
     # New SX! Support running multiple SX functons as a command.
     my $is_sx_cmd = $trimmer_name =~ s/^gmt sx //;
-    return split(/\s*\|\s*/, $trimmer_name) if $is_sx_cmd;
+    if ( $is_sx_cmd ) {
+        Carp::confess('Cannot have trimmer version w/ SX processing. Include the version in the sx command inside the trimmer name.') if $trimmer_version;
+        Carp::confess('Cannot have trimmer params w/ SX processing. Include the params in the sx command inside the trimmer name.') if $trimmer_params;
+        return split(/\s*\|\s*/, $trimmer_name) 
+    }
 
     # Old SX way. Only supports one trimmer.
-    my $is_sx_trimmer_class = eval{
+    my $sx_class_meta = eval{
         return if not $trimmer_name;
         my $class_name = 'Genome::Model::Tools::Sx::Trim';
         my @words = split(' ', $trimmer_name);
@@ -723,59 +730,60 @@ sub _convert_trimmer_name_to_sx_command_parts {
             my @parts = map { ucfirst($_) } split('-',$word);
             $class_name .= "::" . join('',@parts);
         }
-        $class_name->class;
+        $class_name->__meta__;
     };
 
-    return ( 'trim '.$trimmer_name ) if $is_sx_trimmer_class;
-    return;
-}
+    # Not SX - OK
+    return if not $sx_class_meta;
 
-sub _convert_trimmer_params_to_command_line_params {
-    my ($self, %params) = @_;
-
-    my $trimmer_name = $params{trimmer_name};
-    Carp::confess('No trimmer name provided to convert trimmer params to comand line params!') if not $trimmer_name;
-    my $trimmer_params = $params{trimmer_params};
-    Carp::confess('No trimmer params provided to convert trimmer params to command line params!') if not $trimmer_params;
-    my $trimmer_version = $params{trimmer_version};
-
+    # Convert the trimmer params to strings params
     my @params;
-    if($trimmer_params =~ '=>') {
-        @params = eval("no strict; no warnings; $trimmer_params");
-        if ( not @params ) {
-            $self->error_message("Invalid params ($trimmer_params) to convert to command line params! $@");
-            return;
-        }
-    } elsif ( $trimmer_params =~ /--\S+?[= ]\S+/ ) {
-        my @trimmer_params = split(/--/,$trimmer_params);
-        for my $trimmer_param (@trimmer_params) {
-            if ($trimmer_param =~ /^\s*$/) { next; }
-            my ($key,$value) = split(/[= ]/,$trimmer_param);
-            #for compatibility with pre-SX far processing profiles
-            if($trimmer_name eq 'far') {
-                next if $key eq 'format';
+    if ( $trimmer_params ) {
+        if($trimmer_params =~ '=>') {
+            @params = eval("no strict; no warnings; $trimmer_params");
+            if ( not @params ) {
+                $self->error_message("Invalid params ($trimmer_params) to convert to command line params! $@");
+                return;
             }
-            push @params, $key => $value;
+        } elsif ( $trimmer_params =~ /--\S+?[= ]\S+/ ) {
+            while($trimmer_params =~ /--(\S+)?[= ](\S+)/g) {
+                my ($key, $value) = ($1, $2);
+                #for compatibility with pre-SX far processing profiles
+                if($trimmer_name eq 'far') {
+                    next if $key eq 'format';
+                }
+
+                push @params, $key => $value;
+            }
+            #for compatibility with pre-SX far processing profiles
+            if($trimmer_version and $trimmer_name eq 'far') {
+                push @params, 'version' => $trimmer_version;
+            }
+        } else {
+            Carp::confess("Unknown params ($trimmer_params) to convert trimmer to sx command!");
         }
-        #for compatibility with pre-SX far processing profiles
-        if( $trimmer_version and (  ($trimmer_name eq 'far') || ($trimmer_name eq 'flexbar') ) ) {
-            push @params, 'version' => $trimmer_version;
-        }
-    } else {
-        $self->error_message("Invalid params ($trimmer_params) to convert to command line params! $@");
-        return;
     }
 
-    # Add -- to the odd, and quotes to the even
+    # Add -- to the odd, and quotes to the even, handle logicals
+    my $sx_cmd = 'trim '.$trimmer_name;
     for ( my $i = 0; $i < @params; $i += 2 ) {
-        $params[$i] =~ s/_/\-/g;
-        $params[$i] = '--'.$params[$i];
-        if ( defined($params[$i + 1]) && ($params[$i + 1] =~ /\S+/) ) {
-            $params[$i + 1] = "'".$params[$i + 1]."'";
+        my $property_name = $params[$i];
+        $property_name =~ s/\-/_/g;
+        my $property_meta = $sx_class_meta->property_meta_for_name($property_name);
+        Carp::confess("Failed to get property '$property_name' from sx class ".$sx_class_meta->class_name) if not $property_meta;
+        my $param_name = $params[$i];
+        $param_name =~ s/_/-/g;
+        my $value = $params[$i + 1];
+        if ( $property_meta->data_type eq 'Boolean' ) {
+            $sx_cmd .= ' --'.$param_name if $value;
+        }
+        else {
+            $sx_cmd .= ' --'.$param_name." '".$value."'";
         }
     }
 
-    return join(' ', @params);
+    # Return the sx cmd
+    return $sx_cmd;
 }
 
 sub _get_trimq2_params {
@@ -839,11 +847,11 @@ sub resolve_fastq_filenames {
 
     my @illumina_output_paths;
     my @errors;
-    
+
     # First check the archive directory and second get the gerald directory
     for my $dir_type (qw(archive_path gerald_directory)) {
         $self->status_message("Now trying to get fastq from $dir_type for $desc");
-        
+
         my $directory = $self->$dir_type;
         $directory = $self->validate_fastq_directory($directory, $dir_type);
         next unless $directory;
@@ -892,7 +900,7 @@ sub resolve_fastq_filenames {
                 }
             }
         };
-            
+
         push @errors, $@ if $@;
         last if @illumina_output_paths;
     }
@@ -914,7 +922,7 @@ sub dump_illumina_fastq_archive {
     #Prevent unarchiving multiple times during execution
     #Hopefully nobody passes in a $dir expecting to overwrite another set of FASTQs coincidentally from the same lane number
     my $already_dumped = 0;
-    
+
     if($self->is_paired_end) {
         if (-s $dir . '/' . $self->read1_fastq_name and -s $dir . '/' . $self->read2_fastq_name) {
             $already_dumped = 1;
@@ -928,9 +936,9 @@ sub dump_illumina_fastq_archive {
     unless($already_dumped) {
         my $cmd = "tar -xzf $archive --directory=$dir";
         unless (Genome::Sys->shellcmd(
-            cmd => $cmd,
-            input_files => [$archive],
-        )) {
+                cmd => $cmd,
+                input_files => [$archive],
+            )) {
             $self->error_message('Failed to run tar command '. $cmd);
             return;
             #die($self->error_message); Should try to get fastq from gerald_directory instead of dying
@@ -941,9 +949,9 @@ sub dump_illumina_fastq_archive {
 
 sub validate_fastq_directory {
     my ($self, $dir, $dir_type) = @_;
-    
+
     my $msg_base = "$dir_type : $dir";
-    
+
     unless ($dir) {
         $self->error_message("$msg_base is null");
         return;
@@ -965,7 +973,7 @@ sub validate_fastq_directory {
     return $dir;
 }
 
-    
+
 sub resolve_external_fastq_filenames {
     my $self = shift;
 
@@ -1001,17 +1009,17 @@ sub native_qual_type {
     my $self = shift;
 
     my %analysis_software_versions = (
-                                     'GAPipeline-0.3.0'       => 'illumina',
-                                     'GAPipeline-0.3.0b1'     => 'illumina',
-                                     'GAPipeline-0.3.0b2'     => 'illumina',
-                                     'GAPipeline-0.3.0b3'     => 'illumina',
-                                     'GAPipeline-1.0'         => 'illumina',
-                                     'GAPipeline-1.0-64'      => 'illumina',
-                                     'GAPipeline-1.0rc4'      => 'illumina',
-                                     'GAPipeline-1.1rc1p4'    => 'illumina',
-                                     'SolexaPipeline-0.2.2.5' => 'illumina',
-                                     'SolexaPipeline-0.2.2.6' => 'illumina',
-                                 );
+        'GAPipeline-0.3.0'       => 'illumina',
+        'GAPipeline-0.3.0b1'     => 'illumina',
+        'GAPipeline-0.3.0b2'     => 'illumina',
+        'GAPipeline-0.3.0b3'     => 'illumina',
+        'GAPipeline-1.0'         => 'illumina',
+        'GAPipeline-1.0-64'      => 'illumina',
+        'GAPipeline-1.0rc4'      => 'illumina',
+        'GAPipeline-1.1rc1p4'    => 'illumina',
+        'SolexaPipeline-0.2.2.5' => 'illumina',
+        'SolexaPipeline-0.2.2.6' => 'illumina',
+    );
 
     my $analysis_software_version = $self->analysis_software_version;
     unless ($analysis_software_version) {
