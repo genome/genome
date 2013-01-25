@@ -45,43 +45,99 @@ is(
 is($instrument_data->read_count, 600, 'read count');
 
 # Trimmer conversion to SX
-ok(!$instrument_data->_convert_trimmer_name_to_sx_command_parts('far-gone'), '"far-gone" is not an SX trimmer!');
-is_deeply([$instrument_data->_convert_trimmer_name_to_sx_command_parts('far')], ['trim far'], '"far" is an SX trimmer and the command parts are ok!');
+#  class for testing
+class Genome::Model::Tools::Sx::Trim::Foo {
+    has => [
+        num => { is => 'Number' },
+        words => { is => 'Text' },
+        bool => { is => 'Boolean' },
+    ],
+};
+#  new style - fails
+ok(
+    !eval{$instrument_data->_convert_trimmer_to_sx_commands()},
+    'Failed to convert trimmer to sx cmd w/ trimmer version!',
+);
+ok(
+    !eval{$instrument_data->_convert_trimmer_to_sx_commands(unknown_params => 1)},
+    'Failed to convert trimmer to sx cmd w/ trimmer version!',
+);
+ok(
+    !eval{$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'gmt sx trim foo', trimmer_version => 'bar',)},
+    'Failed to convert trimmer to sx cmd w/ trimmer version!',
+);
+ok(
+    !eval{$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'gmt sx trim foo', trimmer_params => 'bar',)},
+    'Failed to convert trimmer to sx cmd w/ trimmer params!',
+);
+#  new style - success
+#   one cmd
+is_deeply(
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'gmt sx trim foo')],
+    ['trim foo'],
+    '"test" is an SX trimmer and the command parts are ok!',
+);
+#   multi cmd
 my @sx_cmd_parts = (
-    'trim bwa-style --trim-qual-level 20',
-    'filter by-min-length --length 45',
+    'trim foo --num 20',
+    'trim foo --words hi',
+    'trim foo --bool --num 40',
 );
 is_deeply(
-    [$instrument_data->_convert_trimmer_name_to_sx_command_parts('gmt sx '.join('  |   ', @sx_cmd_parts))], 
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'gmt sx '.join('  |   ', @sx_cmd_parts))], 
     \@sx_cmd_parts,
-    '"gmt sx '.join('  |   ', @sx_cmd_parts).'"  an SX trimmer and the command parts are ok!',
+    '"gmt sx '.join(' | ', @sx_cmd_parts).'"  an SX trimmer and the command parts are ok!',
+);
+
+#  old style - success
+is_deeply(
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo')],
+    ['trim foo'],
+    'Old style SX trimmer "foo" commands are ok!',
+);
+is_deeply( # w/ params as --
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => '--num 20 --words hello --bool 1')],
+    ["trim foo --num '20' --words 'hello' --bool"],
+    'Old style SX trimmer "foo" w/ params \'-num 20 --words hello -bool 1\' commands are ok!',
+);
+is_deeply( # w/ params as -- tests boolean false
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => '--num 20 --words hello --bool 0')],
+    ["trim foo --num '20' --words 'hello'"],
+    'Old style SX trimmer "foo" w/ params \'-num 20 --words hello\' [boolean is false] commands are ok!',
+);
+is_deeply( # w/ params as name => val
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => 'num => 20, words => "hello world", bool => 1')],
+    ["trim foo --num '20' --words 'hello world' --bool"],
+    'Old style SX trimmer "foo" w/ params [=>] "-num 20 --words hello" -bool 1" commands are ok!',
+);
+is_deeply( # w/ params as -- tests boolean false
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => 'num => 20, words => "hello world", bool => 0,')],
+    ["trim foo --num '20' --words 'hello world'"],
+    'Old style SX trimmer "foo" w/ params [=> and boolean is false] "-num 20 --words "hello world"" commands are ok!',
+);
+
+#  old style - fails
+ok(
+    !eval{$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => '--nm 20')},
+    'Old style SX trimmer "foo" w/ INVALID params "-nm 20" fails!',
 );
 ok(
-    !$instrument_data->_convert_trimmer_name_to_sx_command_parts(trimmer_name => '', trimmer_params => 'bar',),
-    'Failed to convert trimmer params w/o trimmer name!',
+    !eval{$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => 'num')},
+    'Old style SX trimmer "foo" w/ INVALID params "num" fails!',
 );
-ok(
-    !$instrument_data->_convert_trimmer_name_to_sx_command_parts(trimmer_name => 'foo', trimmer_params => '',),
-    'Failed to convert trimmer params w/o trimmer params!',
-);
-is(
-    $instrument_data->_convert_trimmer_params_to_command_line_params(
-        trimmer_name => 'dust-and-n-remove',
-        trimmer_params => 'dust => 1, non_n_base_threshold => 50',
-        trimmer_version => 2.0, # LEGACY: version is not passed through
-    ),
-    "--dust '1' --non-n-base-threshold '50'",
-    'converted DUST AND N REMOVE trimmer params: "dust => 1, non_n_base_threshold => 50"',
-);
-is(
-    $instrument_data->_convert_trimmer_params_to_command_line_params(
+
+is_deeply( # this has a special case that needs to be supported using the real far class
+    [$instrument_data->_convert_trimmer_to_sx_commands(
         trimmer_name => 'far',
-        trimmer_params => '--fixed-pre-trim 150 --adapters /gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --format blah', 
+        trimmer_params => '--adapters /gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --format blah', 
         trimmer_version => '2.17',
-    ),
-    "--fixed-pre-trim '150' --adapters '/gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa' --trim-end 'right' --min-readlength '17' --nr-threads '4' --algorithm 'needlemanQuality' --adaptive-overlap 'yes' --version '2.17'",
+    )],
+    ["trim far --adapters '/gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa' --trim-end 'right' --min-readlength '17' --nr-threads '4' --algorithm 'needlemanQuality' --adaptive-overlap 'yes' --version '2.17'"],
     'converted trimmer FAR params: "--fixed-pre-trim 150 --adapters /gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --format blah"',
 );
+
+# Not SX - return undef
+ok(!eval{$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'far-gone')}, '"far-gone" is not an SX trimmer! '.$@);
 
 # Dump/Trim
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
