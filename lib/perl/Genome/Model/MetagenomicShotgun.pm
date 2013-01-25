@@ -199,6 +199,7 @@ sub _resolve_resource_requirements_for_build {
 
 sub _execute_build {
     my ($self, $build) = @_;
+    $DB::single=1;
 
     my $model = $build->model;
     $self->status_message('Build '.$model->__display_name__);
@@ -420,12 +421,17 @@ sub _find_scheduled_or_running_build_for_model {
 
     Carp::confess('No model sent to find running or scheduled build') if not $model;
 
-    $self->status_message('Find running or scheduled build for model: '.$model->__display_name__);
+    $self->status_message('Looking for running or scheduled build for model: '.$model->__display_name__);
 
+    UR::Context->reload('Genome::Model', id => $model->id);
     UR::Context->reload('Genome::Model::Build', model_id => $model->id);
+    UR::Context->reload('Genome::Model::Event', model_id => $model->id);
 
     my $build = $model->latest_build;
-    if ( $build and grep { $build->status eq $_ } (qw/ Scheduled Running /) ) {
+    return if not $build;
+
+    $self->status_message( sprintf('Build: %s %s', $build->id, $build->status) );
+    if ( grep { $build->status eq $_ } (qw/ Scheduled Running /) ) {
         return $build;
     }
 
