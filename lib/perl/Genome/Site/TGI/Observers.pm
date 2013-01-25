@@ -44,7 +44,7 @@ UR::Object->add_observer(
 
             my $appender = Log::Log4perl::Appender->new(
                 "Log::Dispatch::Syslog",
-                ident => "GMS $0",
+                ident => "$0 GMS",
                 facility => 'syslog',
             );
             $log4perl->add_appender($appender);
