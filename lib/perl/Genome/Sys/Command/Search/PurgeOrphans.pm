@@ -78,7 +78,7 @@ sub execute {
                 $start_time = time;
                 my $response = Genome::Search->delete_by_doc(@docs_to_purge);
                 if ($response->ok) {
-                    $self->status_message("Removed " . @docs_to_purge . "documents in " . (time - $start_time) . " seconds:");
+                    $self->status_message("Removed " . @docs_to_purge . " documents in " . (time - $start_time) . " seconds:");
                     $self->status_message("\t" . join("\n\t", map { $_->value_for('id') } @docs_to_purge) . "\n");
                 } else {
                     $self->status_message("Failed to remove " . @docs_to_purge . " documents.");
