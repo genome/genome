@@ -173,6 +173,7 @@ sub resolve_vcf_filename{
   my $subject = $build->subject;
   my $subject_name = $subject->name;
   my $subject_common_name = $subject->common_name;
+  $subject_name=~s/\(/_/g; $subject_name=~s/\)/_/g;
   my $subject_tissue_desc = $subject->tissue_desc;
   my $patient_common_name = $subject->individual_common_name;
 
@@ -284,12 +285,9 @@ sub simplify_vcf{
       $p++;
     }
     unless (defined($ft_pos)){
-      #TODO: If 'FT' is not defined lq/hq status of a variant can not be determined.  This should be fatal, but for now just warn
-      #$self->error_message("Could not determine position of FT tag in FORMAT column");
-      #print Dumper @line;
-      #return;
-      $self->warning_message("Could not determine position of FT tag in FORMAT column:\n@line");
-      next;
+      #TODO: If 'FT' is not defined lq/hq status of a variant can not be determined.  
+      $self->error_message("Could not determine position of FT tag in FORMAT column:\n@line");
+      die($self->error_message);
     }
     my $tumor_filter_value = $tumor[$ft_pos];
     $variant_count++;
