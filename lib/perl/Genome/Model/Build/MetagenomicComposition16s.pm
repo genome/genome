@@ -12,21 +12,11 @@ use Switch;
 
 class Genome::Model::Build::MetagenomicComposition16s {
     is => 'Genome::Model::Build',
-    is_abstract => 1,
     subclassify_by => 'subclass_name',
     has => [
         subclass_name => { 
             is => 'String', len => 255, is_mutable => 0,
-            calculate_from => ['model_id'],
-            calculate => sub {
-                my($model_id) = @_;
-                return unless $model_id;
-                my $model = Genome::Model->get($model_id);
-                Carp::croak("Can't find Genome::Model with ID $model_id while resolving subclass for Build") unless $model;
-                my $seq_platform = $model->sequencing_platform;
-                Carp::croak("Can't subclass Build: Genome::Model id $model_id has no sequencing_platform") unless $seq_platform;
-                return return __PACKAGE__ . '::' . Genome::Utility::Text::string_to_camel_case($seq_platform);
-            },
+            calculate => sub { return __PACKAGE__; },
         },
         map( { 
                 $_ => { via => 'processing_profile' } 
@@ -96,9 +86,8 @@ sub description {
 sub amplicon_sets {
     my $self = shift;
 
-    my %amplicon_set_names = map { $_->sequencing_platform => 1 } $self->instrument_data;
-    my $amplicon_set_name = (keys %amplicon_set_names)[0];
-    my %amplicon_set_names_and_primers = Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($amplicon_set_name);
+    my $sequencing_platform = $self->model->sequencing_platform;
+    my %amplicon_set_names_and_primers = Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($sequencing_platform);
     my @amplicon_sets;
     for my $set_name ( sort { $a cmp $b } keys %amplicon_set_names_and_primers ) {
         push @amplicon_sets, Genome::Model::Build::MetagenomicComposition16s::AmpliconSet->create(

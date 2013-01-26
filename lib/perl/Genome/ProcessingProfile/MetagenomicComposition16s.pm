@@ -14,11 +14,6 @@ class Genome::ProcessingProfile::MetagenomicComposition16s {
             is_optional => 1,
             doc => 'A string of paramters to process amplicons by',
         },
-        sequencing_platform => {
-            is => 'Text',
-            doc => 'Platform (machine) from whence the reads where created.',
-            valid_values => [qw/ sanger 454 solexa /],
-        },
         #< Assembler >#
         assembler => {
             is => 'Text',
