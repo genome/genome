@@ -6,7 +6,7 @@ use Genome;
 use Carp;
 
 class Genome::Sys::Command::User::List {
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     has => [
         subject_class_name => {
             is_constant => 1,

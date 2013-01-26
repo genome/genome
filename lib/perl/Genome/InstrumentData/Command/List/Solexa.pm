@@ -14,7 +14,7 @@ use Command;
 use Data::Dumper;
 
 class Genome::InstrumentData::Command::List::Solexa {
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     has => [
         subject_class_name  => {
             is_constant => 1, 

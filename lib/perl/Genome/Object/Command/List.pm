@@ -60,9 +60,9 @@ sub _reformat_doc_line_for_term_width {
     my $indent = shift;
     my $doc_line = shift;
 
-    my $doc_width = $term_width - $indent - 1;
+    my $doc_width = $term_width - $indent - 2;
 
-    my ($left, $right) = _split_width($term_width - 1, $doc_line);
+    my ($left, $right) = _split_width($term_width - 2, $doc_line);
     my @lines = ($left);
     while (defined $right) {
         ($left, $right) = _split_width($doc_width, $right);
