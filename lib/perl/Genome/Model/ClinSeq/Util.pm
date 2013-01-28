@@ -287,7 +287,7 @@ sub loadEntrezEnsemblData{
       $entrez_dir = $clinseq_annotations_dir . "EntrezGene/";
       $ensembl_dir = $clinseq_annotations_dir . "/EnsemblGene/";
       $ucsc_dir = $clinseq_annotations_dir . "/UcscGene/";
-      @files = qw (Ensembl_Genes_Human_v67.txt Ensembl_Genes_Human_v66.txt Ensembl_Genes_Human_v65.txt Ensembl_Genes_Human_v64.txt Ensembl_Genes_Human_v63.txt Ensembl_Genes_Human_v62.txt Ensembl_Genes_Human_v61.txt Ensembl_Genes_Human_v60.txt Ensembl_Genes_Human_v59.txt Ensembl_Genes_Human_v58.txt Ensembl_Genes_Human_v56.txt Ensembl_Genes_Human_v55.txt Ensembl_Genes_Human_v54.txt Ensembl_Genes_Human_v53.txt Ensembl_Genes_Human_v52.txt Ensembl_Genes_Human_v51.txt);
+      @files = qw (Ensembl_Genes_Human_v69.txt Ensembl_Genes_Human_v68.txt Ensembl_Genes_Human_v67.txt Ensembl_Genes_Human_v66.txt Ensembl_Genes_Human_v65.txt Ensembl_Genes_Human_v64.txt Ensembl_Genes_Human_v63.txt Ensembl_Genes_Human_v62.txt Ensembl_Genes_Human_v61.txt Ensembl_Genes_Human_v60.txt Ensembl_Genes_Human_v59.txt Ensembl_Genes_Human_v58.txt Ensembl_Genes_Human_v56.txt Ensembl_Genes_Human_v55.txt Ensembl_Genes_Human_v54.txt Ensembl_Genes_Human_v53.txt Ensembl_Genes_Human_v52.txt Ensembl_Genes_Human_v51.txt);
   } elsif ($species eq 'mouse') {
       $taxon_id = '10090';
       my $clinseq_annotations_dir = "/gscmnt/sata132/techd/solexa/jwalker/RNAseq/annotation/mm9/";

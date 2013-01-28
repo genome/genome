@@ -73,7 +73,7 @@ sub parseFpkmFile{
       $FPKM_status = $line[$columns{'status'}{position}];
     }else{
       print RED, "\n\nRequired column not found: 'FPKM_status' or 'status'", RESET;
-      exit(1);
+      exit 1;
     }
 
     #Fix gene name and create a new column for this name
@@ -99,7 +99,7 @@ sub parseFpkmFile{
   my $gc = keys %fpkm;
   unless ($gc == $rc){
     print RED, "\n\nFound $gc distinct gene|coord entries but $rc data lines - not good...\n\n", RESET;
-    exit();
+    exit 1;
   }
 
   #Print an outfile sorted on the key
@@ -160,7 +160,7 @@ sub mergeIsoformsFile{
     #Get the gene ID from the transcript ID
     unless (defined($ensembl_map->{$tracking_id})){
       print RED, "\n\nCould not map tracking id: $tracking_id to an ensembl gene via ensembl transcript ID!\n\n", RESET;
-      exit(1);
+      exit 1;
     }
     my $ensg_id = $ensembl_map->{$tracking_id}->{ensg_id};
     my $ensg_name = $ensembl_map->{$tracking_id}->{ensg_name};
@@ -178,7 +178,7 @@ sub mergeIsoformsFile{
       $FPKM_status = $line[$columns{'status'}{position}];
     }else{
       print RED, "\n\nRequired column not found: 'FPKM_status' or 'status'", RESET;
-      exit(1);
+      exit 1;
     }
  
     #Fix gene name and create a new column for this name
@@ -196,7 +196,7 @@ sub mergeIsoformsFile{
       $chr_end = $3;
     }else{
       print RED, "\n\nlocus format not understood: $locus\n\n", RESET;
-      exit(1);
+      exit 1;
     }
   
     #Merge down to genes, combining the coverage and FPKM values (cumulatively), coordinates (outer coords), and calculating a new length
@@ -229,7 +229,7 @@ sub mergeIsoformsFile{
   my $tc = keys %trans;
   unless ($tc == $rc){
     print RED, "\n\nFound $tc distinct transcript entries but $rc data lines - not good...\n\n", RESET;
-    exit(1);
+    exit 1;
   }
 
   #Print an outfile sorted on the key
@@ -261,7 +261,7 @@ sub calculateCufflinksStats{
 
   unless (-e $infile){
     print RED, "\n\nInput file to &calculateCufflinksStats() could not be found\n\n", RESET;
-    exit(1);
+    exit 1;
   }
 
   #Import FPKM data
