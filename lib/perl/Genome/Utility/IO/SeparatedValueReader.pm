@@ -75,13 +75,14 @@ sub create {
         or return;
 
     my $sep = $self->separator;
+
     if ($self->is_regex){ 
         # Adding -1 as the LIMIT argument to split ensures that the correct # of values on the line 
         #  are returned, regardless of empty trailing results
-        $self->{_split} = sub{ return split(/$sep/, $_[0], -1) };
+        $self->{_split} = sub{ return _strip_quotes(split(/$sep/, $_[0], -1)) };
     }
     else {
-        $self->{_split} = sub{ return split(/\Q$sep\E/, $_[0], -1) };
+        $self->{_split} = sub{ return _strip_quotes(split(/\Q$sep\E/, $_[0], -1)) };
     }
 
     if (defined($self->ignore_lines_starting_with)) {
@@ -116,10 +117,6 @@ sub next {
     my $line = $self->getline or return;
     my @values = $self->_splitline($line)
         or return;
-    foreach (@values) { # FIXME param this replacing quotes and spaces?
-        $_ =~ s/^\s*['"]?//;
-        $_ =~ s/['"]?\s*$//;
-    }
 
     unless ( @{$self->headers} == @values ) {
 
@@ -157,13 +154,16 @@ sub _increment_line_number {
     return $_[0]->{_line_number}++;
 }
 
-sub _split { 
-    return $_[0]->{_split};
-}
-
 sub _headers_were_in_input {
     return $_[0]->{_headers_were_in_input};
 }
+
+my $strip_leading_quotes_regex = qr/^\s*['"]?/;
+my $strip_trailing_quotes_regex = qr/['"]?\s*$/;
+sub _strip_quotes {
+    map { $_ =~ s/$strip_leading_quotes_regex//; $_ =~ s/$strip_trailing_quotes_regex//; $_ } @_;
+}
+
 
 1;
 
