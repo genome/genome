@@ -7,7 +7,7 @@ use JSON::XS;
 use File::Path;
 
 class Genome::Task::Command::List {
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     has => [
         subject_class_name  => {
             is_constant => 1, 

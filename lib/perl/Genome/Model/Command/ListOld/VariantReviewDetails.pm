@@ -9,7 +9,7 @@ use Genome;
 
 UR::Object::Type->define(
     class_name => __PACKAGE__, 
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     has => [
         subject_class_name  => { is_constant => 1, value => 'Genome::VariantReviewDetail' },
         model               => { is_optional => 1 },

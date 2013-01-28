@@ -250,7 +250,7 @@ sub _build_list_command {
     my $list_command_class_name = $config{namespace}.'::List';
     UR::Object::Type->define(
         class_name => $list_command_class_name,
-        is => 'UR::Object::Command::List',
+        is => 'Genome::Object::Command::List',
         has => \@has,
     );
 

@@ -28,7 +28,18 @@ class Genome::Sys::Command::Search::PurgeOrphans {
 };
 
 sub help_detail {
-    'Scans the Search engine index for documents which no longer have corresponding objects in the database and removes them.';
+
+return <<EOS
+Scans the search engine index for documents which no longer have corresponding
+objects in the database.
+
+Theoretically this should never catch any to remove but in practive we have
+seen it trigger in small amounts.  The current belief is that those are due to
+somebody removing the object after the initial Solr query but before that
+object is checked in this process. This also means that there orphan state is a
+false positive.
+EOS
+
 }
 
 sub execute {
@@ -78,7 +89,7 @@ sub execute {
                 $start_time = time;
                 my $response = Genome::Search->delete_by_doc(@docs_to_purge);
                 if ($response->ok) {
-                    $self->status_message("Removed " . @docs_to_purge . "documents in " . (time - $start_time) . " seconds:");
+                    $self->status_message("Removed " . @docs_to_purge . " documents in " . (time - $start_time) . " seconds:");
                     $self->status_message("\t" . join("\n\t", map { $_->value_for('id') } @docs_to_purge) . "\n");
                 } else {
                     $self->status_message("Failed to remove " . @docs_to_purge . " documents.");

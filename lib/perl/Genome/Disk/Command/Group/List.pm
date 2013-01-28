@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Disk::Command::Group::List {
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     has => [
         subject_class_name  => {
             is_constant => 1,
