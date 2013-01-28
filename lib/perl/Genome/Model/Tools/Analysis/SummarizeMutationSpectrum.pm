@@ -25,7 +25,7 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         is_optional => 1,
         doc => 'somatic variation id. If >1 id, comma-separate; ',
     },
-    labels => { 
+    label => { 
         is  => 'String',
         is_input=>1, 
         is_optional => 1,
@@ -95,7 +95,13 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         is => 'String',
         doc => 'Plot the user defined mutation spectrum file and exit.  ',
     },
-    exclude_gl_contigs => {
+    input_SNV_file => {
+	is_input => 1,
+        is_optional => 1,
+        is => 'String',
+        doc => 'Name of the 5 column (chr start stop ref var) SNV file; override --somatic-id and --group-id ',
+   },
+   exclude_gl_contigs => {
         is_input => 1,
         is_optional => 1,
         is => 'Boolean',
@@ -138,8 +144,9 @@ sub execute {
     my $ymax = $self->ymax;
     my $plot_title = $self->plot_title;
     my $numberRow = $self->number_row;
-    my $manual_label = $self->labels;
+    my $manual_label = $self->label;
     my $plot_graph = $self->plot_graph;
+    my $input_SNV_file = $self->input_SNV_file;
     if($self->mut_spec_file) {
         $plot_input_file = abs_path($self->mut_spec_file);
         unlink($plot_input_file) if(-e $plot_input_file); #remove existing file first
@@ -181,17 +188,27 @@ sub execute {
         @models = Genome::Model->get(\@modelIDs);
     }
 
-    foreach my $model(@models) {
-        my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
-        my $raw_count = $self->parse_bed_file($input_file);
-        unlink($input_file);
-        if($manual_label) { #user specified a sample label
-            make_output($raw_count,$manual_label,$plot_input_file);  
-        }
-        else {
-            make_output($raw_count,$automatic_label,$plot_input_file); #use automatically generated label for a sample  
-        }
+    if(-s $input_SNV_file) {
+	 my $raw_count = $self->parse_anno_file($input_SNV_file);
+	 my $sample_label = $manual_label || 'LABEL';
+	 make_output($raw_count,$sample_label,$plot_input_file);  
     }
+    else {
+	foreach my $model(@models) {
+	    my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
+	    my $raw_count = $self->parse_bed_file($input_file);
+	    unlink($input_file);
+	    if($manual_label) { #user specified a sample label
+		make_output($raw_count,$manual_label,$plot_input_file);  
+	    }
+	    else {
+		make_output($raw_count,$automatic_label,$plot_input_file); #use automatically generated label for a sample  
+	    }
+	}
+    }
+
+
+
 
 
     #my $input_plot_file = $out1;
@@ -236,8 +253,8 @@ sub make_input_file_from_model {
     my $sample_label = $build->tumor_build->model->subject->source_common_name;
     $sample_label = $somatic_model->id if(!$sample_label); #label defaults to model ID if common name cannot be found.
     my $type = $build->tumor_build->model->subject->common_name;
-    $sample_label = uc("${sample_label}_${type}");
-
+    #$sample_label = uc("${sample_label}_${type}");
+    $sample_label = $build->subject->name;
 
     #find the tier 1,2,3 SNV bed file
     my $dir = $build->data_directory . "/effects";
@@ -256,6 +273,41 @@ sub make_input_file_from_model {
     return ($temp_file,$sample_label);
 
 }
+
+
+sub parse_anno_file {
+
+    my ($self, $file) = @_;
+
+    my $count = { 'A->C' => 0,
+                  'A->G' => 0,
+                  'A->T' => 0,
+                  'C->A' => 0,
+                  'C->G' => 0,
+                  'C->T' => 0,
+                  'G->A' => 0,
+                  'G->C' => 0,
+                  'G->T' => 0,
+                  'T->A' => 0,
+                  'T->C' => 0,
+                  'T->G' => 0
+    };
+
+
+    open(ANNO,$file) or die "Can't open the file $file due to $!";
+    while(<ANNO>) {
+        chomp;
+        my ($chr,$start,$stop,$ref,$var) = split(/\t/,$_);
+        next if($chr =~ /^GL/ and $self->exclude_gl_contigs);
+	my $key = join("->",($ref,$var));
+	$count->{$key}++;
+    }
+    close ANNO;
+
+    return $count;
+
+}
+
 
 sub parse_bed_file {
 
