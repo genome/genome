@@ -11,7 +11,7 @@ use LWP::Simple;
 use Genome;
 use Genome::Utility::HugoGene::HugoGene;
 
-my $HugoUrl = "http://www.genenames.org/cgi-bin/hgnc_downloads.cgi?".
+my $HugoUrl = "http://www.genenames.org/cgi-bin/hgnc_downloads?".
     "title=HGNC+output+data&hgnc_dbtag=on&".
     "col=gd_hgnc_id&".
     "col=gd_app_sym&".
