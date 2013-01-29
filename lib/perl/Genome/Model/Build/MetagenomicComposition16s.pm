@@ -758,7 +758,6 @@ sub orient_amplicons {
 
     my $no_classification = 0;
     for my $amplicon_set ( @amplicon_sets ) {
-        next if not $amplicon_set->amplicon_iterator;
         my $writer = $amplicon_set->seq_writer_for('oriented');
         return if not $writer;
 
