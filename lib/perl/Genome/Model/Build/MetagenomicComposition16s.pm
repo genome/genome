@@ -703,7 +703,8 @@ sub detect_and_remove_chimeras {
             return;
         }
 
-        while ( my $amplicon = $amplicon_set->next_amplicon ) {
+        my $amplicons = $amplicon_set->amplicon_iterator;
+        while ( my $amplicon = $amplicons->() ) {
             $metrics{input}++;
             next if not $amplicon->{chimera_result} or not defined $amplicon->{chimera_result};
             next if $amplicon->{chimera_result}->{verdict} eq 'YES';
@@ -758,10 +759,13 @@ sub orient_amplicons {
 
     my $no_classification = 0;
     for my $amplicon_set ( @amplicon_sets ) {
+        my $amplicons = $amplicon_set->amplicon_iterator;
+        next if not $amplicons;
+
         my $writer = $amplicon_set->seq_writer_for('oriented');
         return if not $writer;
 
-        while ( my $amplicon = $amplicon_set->next_amplicon ) {
+        while ( my $amplicon = $amplicons->() ) {
             my $seq = $amplicon->{seq};
             next if not $seq; #OK - for now...
 

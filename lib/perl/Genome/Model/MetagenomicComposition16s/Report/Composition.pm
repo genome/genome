@@ -47,8 +47,10 @@ sub _add_to_report_xml {
     pop @ranks; # remove species
 
     for my $amplicon_set ( @amplicon_sets ) {
-        next if not $amplicon_set->amplicon_iterator; # ok
-        while ( my $amplicon = $amplicon_set->next_amplicon ) {
+        my $amplicons = $amplicon_set->amplicon_iterator;
+        next if not $amplicons; # ok
+
+        while ( my $amplicon = $amplicons->() ) {
             next if not $amplicon->{classification}; # ok
             my $classification = Genome::Utility::MetagenomicClassifier::SequenceClassification->new_from_classification_array(
                 name => $amplicon->{name},

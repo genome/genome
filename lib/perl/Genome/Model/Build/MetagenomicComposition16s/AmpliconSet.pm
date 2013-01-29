@@ -35,19 +35,10 @@ class Genome::Model::Build::MetagenomicComposition16s::AmpliconSet {
     ],
     has_optional => [
         oriented_qual_file => { is => 'Text', },
-        _amplicon_iterator => { is => 'Code', },
     ],
 };
 
 #< Amplicons >#
-sub next_amplicon {
-    my $self = shift;
-    if ( not $self->_amplicon_iterator ) {
-        $self->_amplicon_iterator( $self->amplicon_iterator );
-    }
-    return $self->_amplicon_iterator->();
-}
-
 sub amplicon_iterator {
     # This iterator will ALWAYS include chimeric amplicons!
     my $self = shift;

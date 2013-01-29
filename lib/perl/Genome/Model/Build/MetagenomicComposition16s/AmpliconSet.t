@@ -59,12 +59,13 @@ is($amplicon_set->chimera_detector_reader_class, 'Genome::Model::Tools::ChimeraS
 
 # Amplicon
 my @amplicons = _amplicons();
-my $first_amplicon = $amplicon_set->next_amplicon;
+my $amplicon_iterator = $amplicon_set->amplicon_iterator;
+my $first_amplicon = $amplicon_iterator->();
 is_deeply($first_amplicon, $amplicons[0], 'first amplicon matches');
-my $second_amplicon = $amplicon_set->next_amplicon;
+my $second_amplicon = $amplicon_iterator->();
 is_deeply($second_amplicon, $amplicons[1], 'second amplicon matches');
 my $cnt = 0;
-while ( $amplicon_set->next_amplicon ) { $cnt++; }
+while ( $amplicon_iterator->() ) { $cnt++; }
 is($cnt, 3, 'got 3 more amplicons');
 
 done_testing();
