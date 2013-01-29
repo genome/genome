@@ -87,7 +87,7 @@ sub execute {
   my $case_build = $self->case_build;
   my $control_build = $self->control_build;
   my $outdir = $self->outdir;
-
+    
   #Find the cufflinks fpkm files for both builds
   my $case_build_dir = $case_build->data_directory;
   my $case_fpkm_file = $case_build_dir . "/expression/isoforms.fpkm_tracking";
@@ -99,12 +99,6 @@ sub execute {
   }
 
   #Build a map of ensembl transcript ids to gene ids and gene names from the gene annotation object associated with the rna-seq builds
-  #TODO: Specfically get from the GTF file of the build which the format:
-  #1  ensembl_67_37l  exon  11869 12227 . + .  gene_name "DDX11L1"; gene_id "ENSG00000223972"; transcript_id "ENST00000456328"; exon_number "1";
-  #TODO: From this file, rebuild the object that would be created by loadEnsemblMap
-  #TODO: $ensembl_map{$enst_id}{ensg_id} = $ensg_id;
-  #TODO: $ensembl_map{$enst_id}{ensg_name} = $ensg_name;
-
   my $reference_build = $self->case_build->reference_sequence_build;
   my $reference_build_id = $reference_build->id;
   my $reference_build_name = $reference_build->name;
@@ -162,8 +156,33 @@ sub execute {
   my $control_isoforms_merged_file_sorted = "$outdir"."control.genes.fpkm.namesort.tsv";
   $fpkm = &mergeIsoformsFile('-infile'=>$control_fpkm_file, '-outfile'=>$control_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>\%ensembl_map, '-verbose'=>0);
 
+  #Create a file containing basic gene ids, names, etc. along with FPKM values for case and control
+  $fpkm = ();
+  $self->create_de('-type'=>'transcript', '-case_file'=>$case_isoforms_file_sorted, '-control_file'=>$control_isoforms_file_sorted, '-fpkm'=>$fpkm);
+  $fpkm = ();
+  $self->create_de('-type'=>'gene', '-case_file'=>$case_isoforms_merged_file_sorted, '-control_file'=>$control_isoforms_merged_file_sorted, '-fpkm'=>$fpkm);
+ 
+  #Determine path to R script to process the DE files
+  my $r_de_script = __FILE__ . '.R';
+  unless (-e $r_de_script){
+    $self->error_message("Could not find companion R script");
+    die $self->error_message;
+  }
 
-  #Feed this file into an R script that performs the actual differential expression analysis
+  #Feed this file into an R script that performs the actual differential expression analysis:
+  #- produce de file for all genes with fold change and de status (de hq, de lq, no change)
+  #- determine fold change as log2 difference?
+  #- hq will be those diffs where the conf intervals do not overlap and if available, both have status of 'OK'
+  #- produce .hq and .lq differential expression files for both gains, losses, and gains+losses
+  #- 'de' will be those that exceed fold-change cutoff
+  #- files:
+  #- case_vs_control.tsv
+  #- case_vs_control.hq.de.tsv, case_vs_control.hq.up.tsv, case_vs_control.hq.down.tsv
+  #- case_vs_control.lq.de.tsv, case_vs_control.lq.up.tsv, case_vs_control.lq.down.tsv
+  #- Create a plot showing the distribution of FPKM values for both samples
+  #- Create a plot of FPKM case vs. FPKM control.  Color plot with hq de genes/transcripts
+
+
 
   #Perform basic some checking on the results files
 
@@ -171,5 +190,88 @@ sub execute {
   return 1;
 }
 
-1;
+sub create_de{
+  my $self = shift;
+  my %args = @_;
+  my $type = $args{'-type'};
+  my $case_file = $args{'-case_file'};
+  my $control_file = $args{'-control_file'};
+  my $fpkm = $args{'-fpkm'};
 
+  my $header = 1;
+  my $header_line;
+  open (CASE, "$case_file") || die "\n\nCould not open case file\n\n";
+  while(<CASE>){
+    chomp($_);
+    my @line = split("\t", $_);
+    if ($header){
+      $header_line = "$line[0]\t$line[1]\t$line[2]\t$line[3]";
+      $header = 0;
+      next;
+    }
+    my $id = $line[0];
+    $fpkm->{$id}->{info} = "$line[1]\t$line[2]\t$line[3]";
+    $fpkm->{$id}->{case_fpkm} = $line[6];
+    $fpkm->{$id}->{case_fpkm_conf_lo} = $line[7];
+    $fpkm->{$id}->{case_fpkm_conf_hi} = $line[8];
+    $fpkm->{$id}->{case_fpkm_status} = $line[9];
+  }
+  close (CASE);
+
+  $header = 1;
+  open (CTRL, "$control_file") || die "\n\nCould not open control file\n\n";
+  while(<CTRL>){
+    chomp($_);
+    my @line = split("\t", $_);
+    if ($header){
+      $header = 0;
+      next;
+    }
+    my $id = $line[0];
+    $fpkm->{$id}->{info} = "$line[1]\t$line[2]\t$line[3]";
+    $fpkm->{$id}->{control_fpkm} = $line[6];
+    $fpkm->{$id}->{control_fpkm_conf_lo} = $line[7];
+    $fpkm->{$id}->{control_fpkm_conf_hi} = $line[8];
+    $fpkm->{$id}->{control_fpkm_status} = $line[9];
+  }
+  close (CASE);
+
+  my $de_file = $self->outdir."$type".".de.input.tsv";
+
+  open (DE, ">$de_file") || die "\n\nCould not open outfile: $de_file\n\n";
+  print DE "$header_line\tcase_fpkm\tcase_fpkm_conf_hi\tcase_fpkm_conf_lo\tcase_fpkm_status\tcontrol_fpkm\tcontrol_fpkm_conf_hi\tcontrol_fpkm_conf_lo\tcontrol_fpkm_status\n";
+  foreach my $id (sort keys %{$fpkm}){
+    my $info = $fpkm->{$id}->{info};
+    my ($case_fpkm, $case_fpkm_conf_hi, $case_fpkm_conf_lo, $case_fpkm_status);
+    my ($control_fpkm, $control_fpkm_conf_hi, $control_fpkm_conf_lo, $control_fpkm_status);
+    if (defined($fpkm->{$id}->{case_fpkm})){
+      $case_fpkm = $fpkm->{$id}->{case_fpkm};
+      $case_fpkm_conf_hi = $fpkm->{$id}->{case_fpkm_conf_hi};
+      $case_fpkm_conf_lo = $fpkm->{$id}->{case_fpkm_conf_lo};
+      $case_fpkm_status = $fpkm->{$id}->{case_fpkm_status};
+    }else{
+      $case_fpkm = "na";
+      $case_fpkm_conf_hi = "na";
+      $case_fpkm_conf_lo = "na";
+      $case_fpkm_status = "na";
+    }
+    if (defined($fpkm->{$id}->{control_fpkm})){
+      $control_fpkm = $fpkm->{$id}->{control_fpkm};
+      $control_fpkm_conf_hi = $fpkm->{$id}->{control_fpkm_conf_hi};
+      $control_fpkm_conf_lo = $fpkm->{$id}->{control_fpkm_conf_lo};
+      $control_fpkm_status = $fpkm->{$id}->{control_fpkm_status};
+    }else{
+      $control_fpkm = "na";
+      $control_fpkm_conf_hi = "na";
+      $control_fpkm_conf_lo = "na";
+      $control_fpkm_status = "na";
+    }
+    print DE "$id\t$info\t$case_fpkm\t$case_fpkm_conf_hi\t$case_fpkm_conf_lo\t$case_fpkm_status\t$control_fpkm\t$control_fpkm_conf_hi\t$control_fpkm_conf_lo\t$control_fpkm_status\n";
+  }
+  close (DE);
+
+  return;
+}
+
+
+1;
