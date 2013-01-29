@@ -49,7 +49,7 @@ sub next_amplicon {
 }
 
 sub amplicon_iterator {
-    # Could add options to indicate which versioon of the iterator desired. Eg: pre orient or included chimeric reads
+    # This iterator will ALWAYS include chimeric amplicons!
     my $self = shift;
 
     # Sequence
@@ -74,8 +74,7 @@ sub amplicon_iterator {
 
     # Classifcation
     #  Try chimera free classification first, then classification file
-    my $classification_file = $self->chimera_free_classification_file;
-    $classification_file = $self->classification_file if not -s $classification_file;
+    my $classification_file = $self->classification_file;
     my ($classification_io, $classification_line);
     if ( -s $classification_file ) {
         $classification_io = eval{ Genome::Sys->open_file_for_reading($classification_file); };
