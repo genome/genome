@@ -107,6 +107,7 @@ sub amplicon_sets {
             file_base_name => $self->file_base_name,
             directory => $self->data_directory,
             classifier => $self->classifier,
+            chimera_detector => $self->chimera_detector,
         );
     }
 
@@ -660,8 +661,8 @@ sub detect_and_remove_chimeras {
     my %metrics = ( input => 0, output => 0, );
     for my $amplicon_set ( @amplicon_sets ) {
         my $fasta_file = $amplicon_set->oriented_fasta_file;
-        next if not -s $fasta_file;
-        $self->status_message('Amplicon set'.($amplicon_set->name ? ' '.$amplicon_set->name : ''));
+        next if not -s $fasta_file; # ok, not error
+        $self->status_message('Amplicon set'.$amplicon_set->name) if $amplicon_set->name;
 
         # DETECT
         $self->status_message('Detect chimeras...');
@@ -683,36 +684,35 @@ sub detect_and_remove_chimeras {
         }
         $self->status_message('Detect chimeras...OK');
 
+        # REMOVE
         $self->status_message('Remove chimeras...');
-        my $reader = $amplicon_set->seq_reader_for('oriented');
-        if ( not $reader ) {
-            $self->error_message('Failed to get oriented seq reader!');
-            return;
-        }
 
-        my $chimera_reader = $chimera_reader_class->create(input => $chimera_file);
-        if ( not $chimera_reader ) {
-            $self->error_message('Failed to get chimera reader!');
-            return;
-        }
-
+        # chimera free seq writer
         my $writer = $amplicon_set->seq_writer_for('chimera_free');
         if ( not $writer ) {
             $self->error_message('Failed to get chimera free seq writer!');
             return;
         }
 
-        my $chimera = $chimera_reader->read;
-        while ( my $seq = $reader->read ) {
-            $metrics{input}++;
-            if ( $chimera and $seq->{id} eq $chimera->{id} ) {
-                my $verdict = $chimera->{verdict}; # store verdict
-                $chimera = $chimera_reader->read; # get next chimera
-                next if $verdict eq 'YES'; # do not write seq if it is a chimera
-            }
-            $metrics{output}++;
-            $writer->write($seq);
+        # chimera free classification writer
+        my $classification_file = $amplicon_set->chimera_free_classification_file;
+        my $classification_fh = eval{ Genome::Sys->open_file_for_writing($classification_file); };
+        if ( not $classification_fh ) {
+            $self->error_message($@) if $@;
+            $self->error_message("Failed to open chimera free classifcation file! $classification_file");
+            return;
         }
+
+        while ( my $amplicon = $amplicon_set->next_amplicon ) {
+            $metrics{input}++;
+            next if not $amplicon->{chimera_result} or not defined $amplicon->{chimera_result};
+            next if $amplicon->{chimera_result}->{verdict} eq 'YES';
+            $metrics{output}++;
+            $writer->write($amplicon->{seq});
+            $classification_fh->print( $amplicon->{classification_line}."\n" );
+        }
+        $classification_fh->close;
+
         $self->status_message('Remove chimeras...OK');
     }
 
