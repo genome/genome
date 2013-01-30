@@ -13,29 +13,37 @@
 #- Create a plot showing the distribution of FPKM values for both samples
 #- Create a plot of FPKM case vs. FPKM control.  Color plot with hq de genes/transcripts
 
-#load libraries
-library(preprocessCore)
-library(ggplot2)
-
 args = (commandArgs(TRUE))
-
 outdir = args[1];        #working directory -> used to load input files and dump results files
 infile = args[2];        #gene.de.input.tsv or transcript.de.input.tsv -> input file containing case and control FPKM values
 type = args[3];          #'gene' or 'transcript' -> used for naming output files
 case_label = args[4];    #e.g. 'tumor'
 control_label = args[5]; #e.g. 'normal'
 
-outdir = "/tmp/rnaseq_de";
-infile = "gene.de.input.tsv";
-type = "gene"
-case_label = "tumor"
-control_label = "normal"
+if (length(args) < 2){
+  message_text1 = "Required arguments missing: ./CufflinksDifferentialExpression.pm.R /tmp/rnaseq_de gene.de.input.tsv gene tumor normal"
+  stop(message_text1)
+}
+#outdir = "/tmp/rnaseq_de";
+#infile = "gene.de.input.tsv";
+#type = "gene"
+#case_label = "tumor"
+#control_label = "normal"
 
+#load libraries
+library(preprocessCore)
+library(ggplot2)
+
+
+#Set global parameters that determine genes/transcripts that will be considered DE
 variance_stabilization = 0.1
 min_diff = 1
 
 setwd(outdir)
 data = read.table(file=infile, sep="\t", header=TRUE, as.is=c(1:4), na.strings = c("NA", "na"))
+
+#TODO: Fix the following plots to only use data with status of 'OK' for both samples?
+ok_data = which(data[,"case_fpkm_status"] == "OK" & data[,"control_fpkm_status"] == "OK")
 
 #Create some plots to summarize the data pre normalization
 
@@ -194,31 +202,32 @@ o = order(abs(x[,"case_vs_control_log2_de"]), decreasing=TRUE)
 write.table(x[o,], file = "case_vs_control.hq.de.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
 #- case_vs_control.hq.up.tsv
-i = 
+i = which(data[,"case_vs_control_de_hq"] == 1 & data[,"case_vs_control_log2_de"] > 0)
 x = data[i,]
+o = order(x[,"case_vs_control_log2_de"], decreasing=TRUE)
 write.table(x[o,], file = "case_vs_control.hq.up.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
 #- case_vs_control.hq.down.tsv
-i = 
+i = which(data[,"case_vs_control_de_hq"] == 1 & data[,"case_vs_control_log2_de"] < 0)
 x = data[i,]
+o = order(x[,"case_vs_control_log2_de"], decreasing=FALSE)
 write.table(x[o,], file = "case_vs_control.hq.down.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
 #- case_vs_control.lq.de.tsv
-i = 
+i = which(data[,"case_vs_control_de_lq"] == 1)
 x = data[i,]
+o = order(abs(x[,"case_vs_control_log2_de"]), decreasing=TRUE)
 write.table(x[o,], file = "case_vs_control.lq.de.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
 #- case_vs_control.lq.up.tsv
-i = 
+i = which(data[,"case_vs_control_de_lq"] == 1 & data[,"case_vs_control_log2_de"] > 0)
 x = data[i,]
+o = order(x[,"case_vs_control_log2_de"], decreasing=TRUE)
 write.table(x[o,], file = "case_vs_control.lq.up.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
 #- case_vs_control.lq.down.tsv
-i = 
+i = which(data[,"case_vs_control_de_lq"] == 1 & data[,"case_vs_control_log2_de"] < 0)
 x = data[i,]
+o = order(x[,"case_vs_control_log2_de"], decreasing=FALSE)
 write.table(x[o,], file = "case_vs_control.lq.down.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
-
-
-
-
 
