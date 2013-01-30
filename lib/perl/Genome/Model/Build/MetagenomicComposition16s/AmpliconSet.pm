@@ -46,12 +46,14 @@ sub amplicon_iterator {
     # Sequence
     my $fasta_file = $self->oriented_fasta_file;
     my $qual_file = $self->oriented_qual_file;
+    my $source = 'oriented';
     if ( not -s $fasta_file or not -s $qual_file ) {
         $fasta_file = $self->processed_fasta_file;
         $qual_file = $self->processed_qual_file;
         if ( not -s $fasta_file or not -s $qual_file ) {
             return;
         }
+        $source = 'processed';
     }
 
     my $reader =  Genome::Model::Tools::Sx::PhredReader->create( 
@@ -98,6 +100,7 @@ sub amplicon_iterator {
             id => $seq->{id},
             name => $seq->{id},
             seq => $seq,
+            source => $source,
         );
 
         if ( $classification_line ) {
