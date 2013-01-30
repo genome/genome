@@ -95,7 +95,7 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         is => 'String',
         doc => 'Plot the user defined mutation spectrum file and exit.  ',
     },
-    input_SNV_file => {
+    input_snv_file => {
 	is_input => 1,
         is_optional => 1,
         is => 'String',
@@ -146,7 +146,9 @@ sub execute {
     my $numberRow = $self->number_row;
     my $manual_label = $self->label;
     my $plot_graph = $self->plot_graph;
-    my $input_SNV_file = $self->input_SNV_file;
+    my $input_snv_file = '';
+    $input_snv_file = $self->input_snv_file if ($self->input_snv_file);
+
     if($self->mut_spec_file) {
         $plot_input_file = abs_path($self->mut_spec_file);
         unlink($plot_input_file) if(-e $plot_input_file); #remove existing file first
@@ -188,8 +190,8 @@ sub execute {
         @models = Genome::Model->get(\@modelIDs);
     }
 
-    if(-s $input_SNV_file) {
-	 my $raw_count = $self->parse_anno_file($input_SNV_file);
+    if(-s $input_snv_file) {
+	 my $raw_count = $self->parse_anno_file($input_snv_file);
 	 my $sample_label = $manual_label || 'LABEL';
 	 make_output($raw_count,$sample_label,$plot_input_file);  
     }
