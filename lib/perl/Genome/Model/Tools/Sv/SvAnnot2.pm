@@ -35,6 +35,16 @@ class Genome::Model::Tools::Sv::SvAnnot2 {
             is => "Genome::Model::Build::ImportedAnnotation",
             id_by => 'annotation_build_id',
         },
+        breakpoint_wiggle_room => {
+            is => 'Number',
+            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
+            default => 200,
+        },
+        dbsnp_annotation_file => {
+            is => 'Text',
+            doc => 'File containing UCSC dbsnp table',
+            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
+        },
     ],
 };
 
@@ -71,7 +81,7 @@ sub execute {
 #           Genes between breakpoints
     my $outfile = $self->output_file;
     open(OUT, "> $outfile") || die "Could not open output file: $!";
-    print OUT "chrA\tbpA\tchrB\tbpB\tevent\tsize\tscore\tsource\tgeneA\ttranscriptA\torientationA\tsubStructureA\tgeneB\ttranscriptB\torientationB\tsubStructureB\tdeletedGenes\n";
+    print OUT "chrA\tbpA\tchrB\tbpB\tevent\tsize\tscore\tsource\tgeneA\ttranscriptA\torientationA\tsubStructureA\tgeneB\ttranscriptB\torientationB\tsubStructureB\tdeletedGenes\tdbsnp_annotation\n";
 
     my @infiles = $self->breakdancer_files;
     for my $filename (@infiles) {
@@ -117,6 +127,11 @@ sub processFile {
         $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $source, $chrA, $bpA, $chrB, $bpB, $event, $size, $score, $breakpoints_list);
     }
     $self->fill_in_transcripts($breakpoints_list, $build);
+
+    my $dbsnp_annotation = $self->read_ucsc_annotation($self->dbsnp_annotation_file);
+
+    $self->find_annotated_positions($breakpoints_list, $dbsnp_annotation, $self->breakpoint_wiggle_room, "dbsnp_annotation");    
+    
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             $self->process_item($item);
@@ -220,7 +235,14 @@ sub process_item {
         my $transcript = chooseBestTranscript($bTranscriptRef, $item->{bpB});
         ($geneB, $transcriptB, $orientationB, $subStructureB) = transcriptFeatures($transcript, $item->{bpB});
     }
-    print OUT join("\t", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event}, $item->{size}, $item->{score}, $item->{source}, $geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes)."\n"; 
+
+    my $dbsnp_ref = $item->{dbsnp_annotation};
+    my $dbsnp_string = "-";
+    if ($dbsnp_ref) {
+        my @dbsnp = map {$_->{name}} @{$dbsnp_ref};
+        $dbsnp_string = join(",", @dbsnp);
+    }
+    print OUT join("\t", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event}, $item->{size}, $item->{score}, $item->{source}, $geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes, $dbsnp_string)."\n"; 
 
     return 1;
 }
@@ -387,3 +409,54 @@ sub is_between_breakpoints {
     return 0;
 }
 
+sub find_annotated_positions {
+    my $self = shift;
+    my $positions = shift;
+    my $annotation = shift;
+    my $annot_length = shift;
+    my $tag = shift;
+
+    foreach my $chr (keys %$positions) {
+        my @sorted_items = sort {$a->{bpB}<=>$b->{bpB}} (@{$positions->{$chr}});
+        my @sorted_positions = map{$_->{bpB}} @sorted_items;
+        my %annotated_output;
+
+        my @chromEnds = sort {$a<=>$b} keys %{$annotation->{$chr}};
+        for my $pos (@sorted_positions) {
+            while (@chromEnds>0 && $pos>$chromEnds[0]+$annot_length) {
+                shift @chromEnds;
+            }
+            next unless @chromEnds>0;
+            for my $start (keys %{$$annotation{$chr}{$chromEnds[0]}}) {
+                if ($pos>=$start-$annot_length) {
+                    for my $var (@{$$annotation{$chr}{$chromEnds[0]}{$start}}){
+                        foreach my $position_item (@{$positions->{$chr}}) {
+                            if ($position_item->{bpB} eq $pos) {
+                                push @{$position_item->{$tag}}, $var;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+sub read_ucsc_annotation{
+    my ($self, $file) = @_;
+    my %annotation;
+    open (ANNOTATION, "<$file") || die "Unable to open annotation: $file\n";
+    while (<ANNOTATION>) {
+        chomp;
+        next if /^\#/;
+        my $p;
+        my @extra;
+        ($p->{bin},$p->{chrom},$p->{chromStart},$p->{chromEnd},$p->{name},@extra) = split /\t+/;
+        $p->{chrom} =~ s/chr//;
+        $p->{extra} = \@extra;
+        push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
+    }
+    close ANNOTATION;
+    return \%annotation;
+}
