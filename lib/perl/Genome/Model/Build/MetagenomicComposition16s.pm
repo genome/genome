@@ -32,6 +32,16 @@ class Genome::Model::Build::MetagenomicComposition16s {
                 /)
         ),
     ],
+    has_calculated => [
+        amplicons_oriented => {
+            calculate_from => [qw/ amplicons_classified /],
+            calculate => q| return $amplicons_classified; |,
+        },
+        amplicons_oriented_success => {
+            calculate_from => [qw/ amplicons_classified_success /],
+            calculate => q| return $amplicons_classified_success; |,
+        },
+    ],
 };
 
 sub length_of_16s_region {
@@ -718,6 +728,8 @@ sub detect_and_remove_chimeras {
     $self->status_message('Classifed and oriented: '.$self->amplicons_classified);
     $self->status_message('Chimeric:               '.$self->amplicons_chimeric);
     $self->status_message('Chimeric percent:       '.($self->amplicons_chimeric_percent * 100).'%');
+    #$self->status_message('Total passed:           '.$self->amplicons_passed);
+    #$self->status_message('Total passed:           '.$self->amplicons_passed);
 
     $self->status_message('Detect and remove chimeras...OK');
     return 1;
@@ -776,6 +788,13 @@ sub orient_amplicons {
     if ( $no_classification != $classification_error ) {
         $self->error_message("Found $no_classification amplicons without classifications, but $classification_error amplicons failed to classify.");
     }
+
+    $self->status_message('Summary of metrics:');
+    $self->status_message('Attempted:         '.$self->amplicons_attempted);
+    $self->status_message('Processed:         '.$self->amplicons_processed);
+    $self->status_message('Processed success: '.sprintf('%.2f', $self->amplicons_processed_success));
+    $self->status_message('Oriented:          '.$self->amplicons_oriented);
+    $self->status_message('Oriented success:  '.sprintf('%.2f', $self->amplicons_oriented_success));
 
     $self->status_message('Orient amplicons...OK');
     return 1;
