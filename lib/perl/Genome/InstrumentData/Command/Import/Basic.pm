@@ -5,8 +5,6 @@ use warnings;
 
 use Genome;
 
-require File::Copy;
-
 class Genome::InstrumentData::Command::Import::Basic { 
     is => 'Command::V2',
     has => [
@@ -65,7 +63,7 @@ class Genome::InstrumentData::Command::Import::Basic {
 };
 
 sub help_detail {
-    return 'Import intrument data. Can be in the format of fastqs [gzipped ok] or bam [soon!]. Files will br transferred and correctly named.';
+    return 'Import intrument data. Can be in the format of fastqs [gzipped ok] or bam. Format is guessed from file suffix. Recognized suffixes include fastq, fq, txt and bam. Files will be transferred and correctly named. Read count and paired endness will also be determined.';
 }
 
 sub execute {
@@ -169,6 +167,7 @@ sub _resolve_format {
     my %suffixes_to_format = (
         txt => 'sanger fastq',
         fastq => 'sanger fastq',
+        fq => 'sanger fastq',
         #fasta => 'fasta',
         bam => 'bam',
     );
@@ -349,6 +348,7 @@ sub _transfer_bam_source_file {
 
 #<TransferFastq>#
 sub _transfer_fastq_source_files {
+    # TODO determine quality type
     my $self = shift;
     $self->status_message('Transfer source files...');
 
