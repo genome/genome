@@ -62,8 +62,12 @@ sub headings {
 
 sub table_names {
     my $self = shift;
-    my $reference_name = shift;
-    return $_DB_TABLES_NAMES{$reference_name};
+    if ($self->reference_name eq "hg18") {
+        return $_DB_TABLES_NAMES{$self->reference_name};
+    }
+    else {
+        return "gap";
+    }
 }
 
 1;
