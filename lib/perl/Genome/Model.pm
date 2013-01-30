@@ -137,12 +137,6 @@ class Genome::Model {
             is => 'Boolean',
             doc => 'when set to true the system will queue the model for building ASAP'
         },
-        keep_n_most_recent_builds => {
-            # TODO: check to see where this is used
-            via => 'attributes', to => 'value', is_mutable => 1, 
-            where => [ property_name => 'keep_n_most_recent_builds', entity_class_name => 'Genome::Model' ],
-            doc => 'used by the automated build system',
-        },
         _last_complete_build_id => {
             # TODO: change the method with this name to use this property since it is faster
             # nnutter: I disagree, the column should be removed
@@ -156,6 +150,8 @@ class Genome::Model {
             doc => 'the last complete build id',
         },
         apipe_cron_status => {
+            # This is set in the "genome model build start" command.
+            # It is odd for it only to be in the command and not the method, and for it to have a name with apipe in it.
             via => 'notes',
             to => 'body_text',
             where => [ header_text => 'apipe_cron_status' ],
@@ -257,7 +253,6 @@ sub __profile_errors__ {
 }
 
 # Override in subclasses to have additional stuff appended to the model's default name
-# FIXME This will probably go away when the default_name method is overhauled
 sub _additional_parts_for_default_name { return; }
 
 # Override in subclasses. Given a list of model inputs missing from a build and a list of build
@@ -279,36 +274,27 @@ sub _input_counts_are_ok {
     return ($input_count == $build_input_count);
 }
 
-# Override in subclasses for custom behavior. Updates the model as necessary prior to starting a
-# build. Useful for ensuring that the build is incorporating all of the latest information.
-# TODO Make sure this is necessary, could be removed
-sub check_for_updates {
-    return 1;
-}
-
-# Override in subclasses, should figure out an appropriate subject for the model and return it
+# Override in subclasses. Should figure out an appropriate subject for the model and return it.
+# TODO: relocate logic in the model define comands from there to here (in subclasses)
 sub _resolve_subject {
-    return;
-}
-
-# Override in subclasses, should figure out an appropriate processing profile for the model and return it
-sub _resolve_processing_profile {
     return;
 }
 
 # Override in subclasses
 sub _resolve_disk_group_name_for_build {
     # This gets called during the build start process when attempting to create a disk allocation.
+    # TODO: move into the config to have two disk groups, one for "built" things and one for "imported" things
     my ($build) = @_;
     return 'info_genome_models';
 }
 
 # Override in subclasses
 sub _resolve_workflow_for_build {
-    # Create a one-step workflow if '_execute_build' is defined.
     my ($self, $build, $optional_lsf_queue) = @_;
 
-    if ($self->can('_execute_build') or $self->processing_profile->can('_execute_build')) { #TODO remove pp._execute_builds
+    if ($self->can('_execute_build') or $self->processing_profile->can('_execute_build')) { 
+        #TODO remove pp._execute_builds
+        # Create a one-step workflow if '_execute_build' is defined.
         my $operation_type = Workflow::OperationType::Command->get('Genome::Model::Build::ExecuteBuildWrapper');
         my $resource_requirements = $self->_resolve_resource_requirements_for_build($build);
         $operation_type->lsf_resource($resource_requirements);
@@ -351,6 +337,8 @@ sub _resolve_workflow_for_build {
         return $workflow;
     }
     elsif ($self->processing_profile->can("_resolve_workflow_for_build")) {
+        # legacy processing profiles had this logic there
+        # TODO: move it to the model subclass instead and remove the PP module
         return $self->processing_profile->_resolve_workflow_for_build($build);
     }
 
@@ -393,11 +381,6 @@ sub _initialize_build {
     return 1;
 }
 
-# Set to true in subclasses if downstream triggering of builds should be enabled
-sub _should_trigger_downstream_builds {
-    return 0;
-}
-
 # Default string to be displayed, can be overridden in subclasses
 sub __display_name__ {
     my $self = shift;
@@ -434,13 +417,36 @@ sub create {
         return;
     }
 
+    unless ($self->subject) {
+        my $subject = $self->_resolve_subject;
+        if ($subject and $subject->isa('Genome::Subject')) {
+            $self->subject($subject);
+        }
+        else {
+            $self->delete;
+            Carp::confess "Could not resolve subject for model";
+        }
+    }
+
+    unless ($self->processing_profile) {
+        $self->delete;
+        Carp::confess "Could not resolve processing profile for model";
+    }
+
+    unless ($self->name) {
+        my $name = $self->default_model_name;
+        if ($name) {
+            $self->name($name);
+        }
+        else {
+            $self->delete;
+            Carp::confess "Could not resolve default name for model!";
+        }
+    }
+
     $self->user_name(Genome::Sys->username) unless $self->user_name;
     $self->creation_date(UR::Context->now);
-
-    $self->_validate_processing_profile;
-    $self->_validate_subject;
-    $self->_validate_name;
-
+    
     $self->_verify_no_other_models_with_same_name_and_type_exist;
 
     # If build requested was set as part of model creation, it didn't use the mutator method that's been
@@ -503,12 +509,14 @@ sub from_models {
 }
 
 # Returns a list of builds (all statuses) sorted from oldest to newest
+# TODO: see why this is needed as builds are already sorted by default with get()
 sub sorted_builds {
     return shift->builds(-order_by => 'date_scheduled');
 }
 
 # Returns a list of succeeded builds sorted from oldest to newest
 sub succeeded_builds { return $_[0]->completed_builds; }
+
 sub completed_builds {
     return shift->builds(status => 'Succeeded', -order_by => 'date_completed');
 }
@@ -534,6 +542,7 @@ sub resolve_last_complete_build {
 }
 
 # Returns a list of builds with the specified status sorted from oldest to newest
+# TODO: replace this with $model->builds(status => $whatever), since sorting is implicit
 sub builds_with_status {
     my ($self, $status) = @_;
     return grep {
@@ -571,7 +580,9 @@ sub current_build {
     }
     return;
 }
-# Just so current_build_id can be "easily" shown in listers.
+
+# This is no longer needed since the dot syntax is in place.
+# It was made so that current_build.id can be easily shown in listers.
 sub current_build_id { shift->current_build->id }
 
 # Returns true if no non-abandoned build is found that has inputs that match the current state of the model
@@ -580,6 +591,7 @@ sub build_needed {
 }
 
 # Returns the current status of the model with the corresponding build (if available)
+# Is used only by the "genome model status" command, and underlies the status() property.
 sub status_with_build {
     my $self = shift;
     my ($status, $build);
@@ -662,7 +674,9 @@ sub copy {
     return $copy;
 }
 
-#used for copy above and commands like `genome model input update`
+# used for copy above and commands like `genome model input update`
+# TODO: get all models to use the is_input flag instead of having code which is "via" inputs
+# and then all of this gets much less complicated.
 sub real_input_properties {
     my $self = shift;
 
@@ -700,99 +714,14 @@ sub real_input_properties {
     return @properties;
 }
 
-sub params_for_class {
-    my $meta = shift->class->__meta__;
-
-    my @param_names = map {
-        $_->property_name
-    } sort {
-        $a->{position_in_module_header} <=> $b->{position_in_module_header}
-    } grep {
-        defined $_->{is_param} && $_->{is_param}
-    } $meta->property_metas;
-
-    return @param_names;
-}
-
 # Called when a build of this model succeeds, requests builds for "downstream" models
 # (eg, models that have this model as an input)
 sub _trigger_downstream_builds {
     my ($self, $build) = @_;
-    return 1 unless $self->_should_trigger_downstream_builds;
-
-    # TODO The observer has to go on build events because that's where build status is 
-    # currently stored. Once the status is stored directly on the build itself, the
-    # subject_class_name below should be changed to Genome::Model::Build, which should
-    # simplify any callbacks as well (since they wouldn't have to check if they are
-    # the master event of the build prior to doing anything).
-    my @observers = UR::Observer->get(
-        subject_class_name => 'Genome::Model::Event::Build',
-        aspect => 'event_status',
-        note => 'build_success',
-    );
-
-    # Only perform this default behavior if no observers for build_success exist for this type
-    unless (@observers) {
-        my @to_models = $self->to_models;
-        for my $model (@to_models) {
-            $model->build_requested(
-                1,
-                'build requested due to successful build ' . $build->id .
-                    ' of input model ' . $self->__display_name__
-            );
-        }
-    }
-
     return 1;
 }
 
-# Ensures that processing profile is set. If not, an attempt is made to resolve one before exiting
-sub _validate_processing_profile {
-    my $self = shift;
-    unless ($self->processing_profile) {
-        my $pp = $self->_resolve_processing_profile;
-        if ($pp and $pp->isa('Genome::ProcessingProfile')) {
-            $self->processing_profile($pp);
-        }
-        else {
-            $self->delete;
-            Carp::confess "Could not resolve processing profile for model";
-        }
-    }
-    return 1;
-}
 
-# Ensures that subject is set. If not, an attempt is made to resolve one before exiting
-sub _validate_subject {
-    my $self = shift;
-    unless ($self->subject) {
-        my $subject = $self->_resolve_subject;
-        if ($subject and $subject->isa('Genome::Subject')) {
-            $self->subject($subject);
-        }
-        else {
-            $self->delete;
-            Carp::confess "Could not resolve subject for model";
-        }
-    }
-    return 1;
-}
-
-# Ensures that a name is set. If not, a default is used if possible.
-sub _validate_name {
-    my $self = shift;
-    unless ($self->name) {
-        my $name = $self->default_model_name;
-        if ($name) {
-            $self->name($name);
-        }
-        else {
-            $self->delete;
-            Carp::confess "Could not resolve default name for model!";
-        }
-    }
-    return 1;
-}
 
 # TODO This method should return a generic default model name and be overridden in subclasses.
 sub default_model_name {
@@ -912,7 +841,7 @@ sub _preprocess_subclass_description {
                     push @where_class,
                         value_class_name => $prop_class;
                 }
-           }
+            }
 
             $desc->{has}{$assoc} = {
                 property_name => $assoc,
@@ -993,7 +922,7 @@ sub __extend_namespace__ {
 
     # If the command class for the model sub type cannot be found, this will create it
     if ( $ext eq 'Command' ) {
-        my $create_command_tree = $self->_create_command_tree;
+        my $create_command_tree = $self->_extend_namespace_with_command_tree;
         Carp::confess('Failed to create command tree for '.$self->class.'!') if not $create_command_tree;
     }
 
@@ -1020,7 +949,7 @@ sub __extend_namespace__ {
     return;
 }
 
-sub _create_command_tree {
+sub _extend_namespace_with_command_tree {
     my $self = shift;
 
     return 1 if $self->__meta__->is_abstract;
@@ -1048,8 +977,6 @@ sub _create_command_tree {
 # The build diff methods delegate here so that a pipeline definition doesn't require a hand-written build subclass.
 # Only the methods actually used from Build.pm have been migrated.
 
-sub files_ignored_by_build_diff {
-    ()
-}
+sub files_ignored_by_build_diff { () }
 
 1;

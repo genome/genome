@@ -243,8 +243,14 @@ sub create {
 
     eval {
         # Give the model a chance to update itself prior to copying inputs from it
-        unless ($self->model->check_for_updates) {
-            Carp::confess "Could not update model!";
+        # TODO: the model can have an observer on it's private subclass of build for
+        # the one general case which uses this (Convergence).
+        # The other case which uses this is ReferenceAlignment but just for TGI-specific
+        # policies, which should really be observers in ::Site::TGI.
+        if ($self->model->can("check_for_updates")) {
+            unless ($self->model->check_for_updates) {
+                Carp::confess "Could not update model!";
+            }
         }
 
         # Now copy (updated) inputs to build

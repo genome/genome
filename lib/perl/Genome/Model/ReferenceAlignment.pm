@@ -366,6 +366,7 @@ sub default_genotype_model {
 }
 
 sub build_subclass_name {
+    # TODO: remove, seemingly ununsed
     return 'reference alignment';
 }
 
@@ -376,6 +377,8 @@ sub dependent_properties {
 }
 
 sub check_for_updates {
+    # TODO: make an observer in ::Site::TGI and move the method below and its kin there.
+    # It should watch the "create" signal for Genome::Model::Build::ReferenceAlignment.
     my $self = shift;
     $self->check_and_update_genotype_input;
     return 1;
