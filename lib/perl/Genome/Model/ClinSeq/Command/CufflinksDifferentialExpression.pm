@@ -170,19 +170,8 @@ sub execute {
   }
 
   #Feed this file into an R script that performs the actual differential expression analysis:
-  #- produce de file for all genes with fold change and de status (de hq, de lq, no change)
-  #- determine fold change as log2 difference?
-  #- hq will be those diffs where the conf intervals do not overlap and if available, both have status of 'OK'
-  #- produce .hq and .lq differential expression files for both gains, losses, and gains+losses
-  #- 'de' will be those that exceed fold-change cutoff
-  #- files:
-  #- case_vs_control.tsv
-  #- case_vs_control.hq.de.tsv, case_vs_control.hq.up.tsv, case_vs_control.hq.down.tsv
-  #- case_vs_control.lq.de.tsv, case_vs_control.lq.up.tsv, case_vs_control.lq.down.tsv
-  #- Create a plot showing the distribution of FPKM values for both samples
-  #- Create a plot of FPKM case vs. FPKM control.  Color plot with hq de genes/transcripts
-
-
+  #WARNING - GENES WITH HIGH DATA IN CUFFLINKS GET RESET TO 0, THIS CAN LEAD TO FALSE CASES OF APPARENT DIFFERENTIAL EXPRESSION
+  
 
   #Perform basic some checking on the results files
 
