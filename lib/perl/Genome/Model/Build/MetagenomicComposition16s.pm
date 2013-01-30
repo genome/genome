@@ -862,7 +862,10 @@ sub classify_amplicons {
     );
     $self->amplicons_classification_error($metrics{error});
 
+    $self->status_message('Summary of metrics:');
+    $self->status_message('Attempted:  '.$self->amplicons_attempted);
     $self->status_message('Processed:  '.$self->amplicons_processed);
+    $self->status_message('Success:    '.sprintf('%.2f', $self->amplicons_processed_success));
     $self->status_message('Classified: '.$self->amplicons_classified);
     $self->status_message('Error:      '.$self->amplicons_classification_error);
     $self->status_message('Success:    '.($self->amplicons_classified_success * 100).'%');
