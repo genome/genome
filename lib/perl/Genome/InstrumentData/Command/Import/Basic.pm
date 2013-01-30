@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+require File::Copy;
+
 class Genome::InstrumentData::Command::Import::Basic { 
     is => 'Command::V2',
     has => [
@@ -146,26 +148,8 @@ sub _validate_source_files {
     $self->kilobytes_requested($kilobytes_requested);
     $self->status_message('Kilobytes requested: '.$self->kilobytes_requested);
 
-    # Check/set paired endness
-    my $is_paired_end = $self->_resolve_is_paired_end(@source_files);
-    return if not defined $is_paired_end;
-    $self->is_paired_end($is_paired_end);
-    $self->status_message('Is paired end: '.$self->is_paired_end);
-
-
     $self->status_message('Validate source files...done');
     return 1;
-}
-
-sub _resolve_is_paired_end {
-    my ($self, @source_files) = @_;
-
-    if ( $self->format eq 'sanger fastq' ) {
-        return ( @source_files == 2 ? 1 : 0 );
-    }
-    else {
-        Carp::confess('Implement resolving paired endness!');
-    }
 }
 
 sub _resolve_format {
@@ -182,24 +166,28 @@ sub _resolve_format {
         $suffixes{$suffix}++;
     }
 
-    my @suffixes = keys %suffixes;
-    if ( @suffixes > 1 ) {
-        $self->error_message('Got more than one suffix when trying to determine format!');
-        return;
-    }
-
     my %suffixes_to_format = (
         txt => 'sanger fastq',
         fastq => 'sanger fastq',
         #fasta => 'fasta',
-        #bam => 'bam',
+        bam => 'bam',
     );
-    if ( not exists $suffixes_to_format{$suffixes[0]} ) {
-        $self->error_message('Unrecognized suffix! '.$suffixes[0]);
+    my %formats;
+    for my $suffix ( keys %suffixes ) {
+        if ( not exists $suffixes_to_format{$suffix} ) {
+            $self->error_message('Unrecognized suffix! '.$suffix);
+            return;
+        }
+        $formats{ $suffixes_to_format{$suffix} } = 1;
+    }
+
+    my @formats = keys %formats;
+    if ( @formats > 1 ) {
+        $self->error_message('Got more than one format when trying to determine format!');
         return;
     }
 
-    return $suffixes_to_format{$suffixes[0]};
+    return $formats[0];
 }
 
 sub _resolve_kilobytes_requested {
@@ -241,7 +229,6 @@ sub _create_instrument_data {
     $self->status_message('Create instrument data...');
     $properties{import_format} = $self->format;
     $properties{sequencing_platform} = $self->sequencing_platform;
-    $properties{is_paired_end} = $self->is_paired_end;
     $properties{import_source_name} = $self->import_source_name;
     $properties{description} = $self->description;
     for my $name_value ( $self->instrument_data_properties ) {
@@ -297,8 +284,7 @@ sub _transfer_source_files {
         return $self->_transfer_fastq_source_files;
     }
     elsif ( $format eq 'bam' ) {
-        Carp::confess('Implement bam file transferring!');
-        return $self->_transfer_bam_source_files;
+        return $self->_transfer_bam_source_file;
     }
     else {
         Carp::confess("Unsupported format! $format");
@@ -307,10 +293,56 @@ sub _transfer_source_files {
 #<>#
 
 #<TransferBam>#
-sub _transfer_bam_source_files {
+sub _transfer_bam_source_file {
+    # TODO add md5 cp
     my $self = shift;
-    $self->status_message('Transfer bam file...');
-    $self->status_message('Transfer bam file...done');
+    $self->status_message('Transfer bam file and run flagstat...');
+
+    my ($source_file) = $self->source_files;
+    $self->status_message("Source file: $source_file");
+    my $bam_base_name = 'all_sequences.bam';
+    my $tmp_bam_file = $self->_tmp_dir.'/'.$bam_base_name;
+    $self->status_message("Temp bam file: $tmp_bam_file");
+    $self->status_message("Copy...");
+    my $copy_ok = eval{ Genome::Sys->copy_file($source_file, $tmp_bam_file); };
+    if ( not $copy_ok or -s $tmp_bam_file != -s $tmp_bam_file ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to copy bam to temp file!');
+        return;
+    }
+    $self->status_message('Copy...done');
+
+    $self->status_message('Run flagstat...');
+    my $flagstat_file = $self->instrument_data->allocation->absolute_path.'/'.$bam_base_name.'.flagstat';
+    $self->status_message("Flagstat file: $flagstat_file");
+    my $cmd = "samtools flagstat $tmp_bam_file > $flagstat_file";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $flagstat_file ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run flagstat!');
+        return;
+    }
+    my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
+    $self->read_count($flagstat->{total_reads});
+    $self->is_paired_end( $flagstat->{reads_paired_in_sequencing} ? 1 : 0 );
+    $self->status_message('Run flagstat...done');
+
+    $self->status_message('Move tmp bam file to permenant file...');
+    my $bam_file = $self->instrument_data->allocation->absolute_path.'/'.$bam_base_name;
+    $self->status_message("Bam file: $bam_file");
+    my $move_ok = File::Copy::move($tmp_bam_file, $bam_file);
+    if ( not $move_ok ) {
+        $self->error_message('Failed to move the tmp bam file!');
+        return;
+    }
+    if ( not -s $bam_file ) {
+        $self->error_message('Move of the tmp bam file succeeded, but bam file does not exist!');
+        return;
+    }
+    $self->status_message('Move tmp bam file to permenant file...done');
+    $self->final_data_file($bam_file);
+
+    $self->status_message('Transfer bam file and run flagstat...done');
     return 1;
 }
 #</TransferBam>#
@@ -366,6 +398,7 @@ sub _transfer_fastq_source_files {
         return;
     }
     $self->read_count( $read_counts[0] * @source_files );
+    $self->is_paired_end( @source_files == 2 ? 1 : 0 );
 
     # Tar
     $self->status_message('Tar fastqs to tmp tar file...');
@@ -436,12 +469,15 @@ sub _finish {
     my $self = shift;
 
     $self->status_message('Update properties on instrument data...');
+    # File attribute
     my $instrument_data = $self->instrument_data;
     my $file_attribute_label = $self->file_attribute_label;
     my $file_attribute_value = $self->final_data_file; # support more than one?
     $self->status_message(ucfirst(join(' ', split('_', $file_attribute_label))).': '.$file_attribute_value);
     $instrument_data->add_attribute(attribute_label => $file_attribute_label, attribute_value => $file_attribute_value);
-    for my $attribute_label (qw/ read_count /) { # more?
+
+    # Set attributes
+    for my $attribute_label (qw/ read_count is_paired_end /) { # more?
         my $attribute_value = $self->$attribute_label;
         next if not defined $attribute_value; # error?
         $self->status_message(ucfirst(join(' ', split('_', $attribute_label))).': '.$attribute_value);
