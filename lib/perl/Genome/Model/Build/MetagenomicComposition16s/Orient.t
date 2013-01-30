@@ -55,6 +55,3 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
 
 #print $build->data_directory."\n"; <STDIN>;
 done_testing();
-exit;
-
-

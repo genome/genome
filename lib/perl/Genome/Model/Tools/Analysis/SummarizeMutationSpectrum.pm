@@ -250,11 +250,16 @@ sub make_input_file_from_model {
     my $build=$somatic_model->last_succeeded_build;
     die "No successful build for model $model_id found! Aborting...\n"if(!defined($build));
 
-    my $sample_label = $build->tumor_build->model->subject->source_common_name;
-    $sample_label = $somatic_model->id if(!$sample_label); #label defaults to model ID if common name cannot be found.
-    my $type = $build->tumor_build->model->subject->common_name;
-    #$sample_label = uc("${sample_label}_${type}");
-    $sample_label = $build->subject->name;
+    #Assign label in this order of preference if available: source common name -> sample name -> model id
+    my $sample_label = $somatic_model->id;
+    my $source_common_name = $build->tumor_build->model->subject->source_common_name;
+    my $subject_name = $build->subject->name;
+    $sample_label = $subject_name if ($subject_name);
+    $sample_label = $source_common_name if ($source_common_name);
+
+    #If available append the sample common name (e.g. tumor to the label)
+    my $type = "_". $build->tumor_build->model->subject->common_name;
+    $sample_label .= uc($type) if ($type);
 
     #find the tier 1,2,3 SNV bed file
     my $dir = $build->data_directory . "/effects";
