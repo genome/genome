@@ -19,6 +19,12 @@ use Cwd ('getcwd','abs_path');
 class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
     is => ['Command'],
     has => [
+        input_file => {
+            is => 'String',
+            is_input => 1,
+            is_optional => 1,
+            doc => '.tsv file consiting of 2 entries per line: label and input file path',
+        },
         somatic_id => {
             is  => 'String',
             is_input=>1,
@@ -115,6 +121,7 @@ sub execute {
     $DB::single = 1;
 
 
+    my $input_file = $self->input_file;
     my $somatic_id = $self->somatic_id;
     my $group_id = $self->group_id;
     my $plot_input_file;
@@ -152,25 +159,36 @@ sub execute {
     }
 
 
-
-    my @models=();
-    if($group_id) {
-        my $model_group = Genome::ModelGroup->get($group_id);
-        @models = $model_group->models;
-    } elsif($somatic_id) {
-        my @modelIDs = split(/,/,$somatic_id);
-        #@models = map{ Genome::Model->get($_) } @modelIDs;
-        @models = Genome::Model->get(\@modelIDs);
-    }
-    foreach my $model(@models) {
-        my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
-        my $raw_count = parse_bed_file($input_file);
-        unlink($input_file);
-        if($manual_label) { #user specified a sample label
-            make_output($raw_count,$manual_label,$plot_input_file);
+    if ($input_file){
+        my $fh = IO::File->new($input_file, 'r');
+        for my $line (<$fh>){
+            chomp $line;
+            my ($label, $input_file) = split("\t", $line);
+            my $raw_count = parse_bed_file($input_file);
+            make_output($raw_count, $label, $plot_input_file);
         }
-        else {
-            make_output($raw_count,$automatic_label,$plot_input_file); #use automatically generated label for a sample
+    }
+    else{
+        my @models=();
+        if($group_id) {
+            my $model_group = Genome::ModelGroup->get($group_id);
+            @models = $model_group->models;
+        } elsif($somatic_id) {
+            my @modelIDs = split(/,/,$somatic_id);
+            #@models = map{ Genome::Model->get($_) } @modelIDs;
+            @models = Genome::Model->get(\@modelIDs);
+        }
+
+        foreach my $model(@models) {
+            my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
+            my $raw_count = parse_bed_file($input_file);
+            unlink($input_file);
+            if($manual_label) { #user specified a sample label
+                make_output($raw_count,$manual_label,$plot_input_file);
+            }
+            else {
+                make_output($raw_count,$automatic_label,$plot_input_file); #use automatically generated label for a sample
+            }
         }
     }
 
