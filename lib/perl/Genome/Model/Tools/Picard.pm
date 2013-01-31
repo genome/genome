@@ -12,6 +12,7 @@ my $PICARD_DEFAULT = '1.46';
 my $DEFAULT_MEMORY = 4;
 my $DEFAULT_PERMGEN_SIZE = 64; #Mbytes
 my $DEFAULT_VALIDATION_STRINGENCY = 'SILENT';
+my $DEFAULT_MAX_RECORDS_IN_RAM = 500000;
 
 class Genome::Model::Tools::Picard {
     is  => 'Command',
@@ -21,6 +22,11 @@ class Genome::Model::Tools::Picard {
             doc => 'Picard version to be used.',
             is_optional   => 1, 
             default_value => $PICARD_DEFAULT,
+        },
+        max_records_in_ram => {
+            doc => 'When writing SAM files that need to be sorted, this will specify the number of records stored in RAM before spilling to disk. Increasing this number reduces the number of file handles needed to sort a SAM file, and increases the amount of RAM needed.',
+            is_optional => 1,
+            default_value => $DEFAULT_MAX_RECORDS_IN_RAM,
         },
         maximum_memory => {
             is => 'Integer',
