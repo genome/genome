@@ -27,8 +27,6 @@ my $log4perl;
 my $callback = sub {
     my($self, $type, $message) = @_;
 
-    $DB::single = 1;
-
     # this should never happen given recent UR updates
     if (not defined $self) {
         no warnings;
