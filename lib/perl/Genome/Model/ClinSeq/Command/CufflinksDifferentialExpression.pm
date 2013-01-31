@@ -88,6 +88,10 @@ sub execute {
   my $control_build = $self->control_build;
   my $outdir = $self->outdir;
 
+  #Set some human readable case and control labels
+  my $case_label = "case";
+  my $control_label = "control";
+
   #Set up directories for output
   $outdir .= "/" unless ($outdir =~ /\/$/);
   $outdir .= "cufflinks_de/";

@@ -126,7 +126,7 @@ sub mergeIsoformsFile{
   my $verbose = $args{'-verbose'};
   
   my $status_file;
-  $status_file = $args{'-status_file'} if ($defined($args{'-status_file'}));
+  $status_file = $args{'-status_file'} if (defined($args{'-status_file'}));
   
   my $outfile;
   $outfile = $args{'-outfile'} if (defined($args{'-outfile'}));
