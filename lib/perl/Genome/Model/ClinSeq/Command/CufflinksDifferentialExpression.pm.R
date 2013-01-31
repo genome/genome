@@ -42,9 +42,6 @@ min_diff = 1
 setwd(outdir)
 data = read.table(file=infile, sep="\t", header=TRUE, as.is=c(1:4), na.strings = c("NA", "na"))
 
-#TODO: Fix the following plots to only use data with status of 'OK' for both samples?
-ok_data = which(data[,"case_fpkm_status"] == "OK" & data[,"control_fpkm_status"] == "OK")
-
 #Create some plots to summarize the data pre normalization
 
 #Scatter plot of case vs. control FPKM values before normalization

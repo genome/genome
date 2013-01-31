@@ -124,11 +124,13 @@ sub mergeIsoformsFile{
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $ensembl_map = $args{'-ensembl_map'};
   my $verbose = $args{'-verbose'};
+  
+  my $status_file;
+  $status_file = $args{'-status_file'} if (defined($args{'-status_file'}));
+  
   my $outfile;
+  $outfile = $args{'-outfile'} if (defined($args{'-outfile'}));
 
-  if (defined($args{'-outfile'})){
-    $outfile = $args{'-outfile'};
-  }
   if ($verbose){
     print BLUE, "\n\nParsing and merging to gene level: $infile", RESET;
   }
@@ -230,6 +232,35 @@ sub mergeIsoformsFile{
   unless ($tc == $rc){
     print RED, "\n\nFound $tc distinct transcript entries but $rc data lines - not good...\n\n", RESET;
     exit 1;
+  }
+
+  #If an FPKM status file was defined, use it to add FPKM status value to each gene where possible
+  if ($status_file){
+    my %columns;
+    open (STATUS, "$infile") || die "\n\nCould not open gene file: $infile\n\n";
+    while(<STATUS>){
+      chomp($_);
+      my @line = split("\t", $_);
+      if ($header == 1){
+        $header = 0;
+        my $p = 0;
+        foreach my $head (@line){
+          $columns{$head}{position} = $p;
+          $p++;
+        }
+        next();
+      }
+      my $tracking_id = $line[$columns{'tracking_id'}{position}];
+      my $fpkm_status = $line[$columns{'FPKM_status'}{position}];     
+
+      #Update the FPKM status in the %genes hash
+      if ($genes{$tracking_id}){
+        if (($genes{$tracking_id}{FPKM_status} eq "na" || $genes{$tracking_id}{FPKM_status} eq "OK") && $fpkm_status){
+          $genes{$tracking_id}{FPKM_status} = $fpkm_status;
+        }
+      }
+    }
+    close (STATUS);
   }
 
   #Print an outfile sorted on the key

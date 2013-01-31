@@ -82,13 +82,19 @@ class Genome::Model {
             reverse_as => 'model',
             doc => 'Versions of a model over time, with varying quantities of evidence'
         },
-        inputs => {
-            # TODO: this should be something like input_associations,
-            # so the objects on the other side of the associations.
+        input_associations => {
             is => 'Genome::Model::Input',
             reverse_as => 'model',
             doc => 'links to data currently assigned to the model for processing'
         },
+
+        # TODO: there is currently a deprecated inputs() which is like input_associations which must go away
+        #inputs => {
+        #    via => 'input_associations',
+        #    to => 'value',
+        #    doc => 'data currently assigned to the model for processing',
+        #},
+
         # TODO: For these to work efficiently we would need last_complete_build to not suck.
         #output_associations => {
         #    via => 'last_complete_build',
@@ -97,22 +103,21 @@ class Genome::Model {
         #outputs => {
         #    via => 'output_associations',
         #    to => 'software_result'
-        #},       
+        #},
+
+        project_associations => {
+            is => 'Genome::ProjectPart',
+            reverse_as => 'part',
+            is_many => 1,
+            is_mutable => 1,
+        },
         projects => {
             is => 'Genome::Project',
-            via => 'project_parts',
+            via => 'project_associations',
             to => 'project',
             is_many => 1,
             is_mutable => 1,
             doc => 'Projects that include this model',
-        },
-        project_parts => {
-            # TODO: the new naming convention was project_associations to prevent confusion
-            # between the bridge and the referenced value
-            is => 'Genome::ProjectPart',
-            reverse_as => 'entity',
-            is_many => 1,
-            is_mutable => 1,
         },
     ],
     has_optional => [
@@ -197,6 +202,23 @@ class Genome::Model {
             # this must be here instead of in ::ModelDeprecated becuase it has a db column
             # this really means "auto build when instrument data is added"
             is => 'Boolean',
+        },
+        inputs => {
+            # replaced by input_associations above, which distinguishes between
+            # the association and the actual input
+            is => 'Genome::Model::Input',
+            reverse_as => '_model',
+            is_deprecated => 1,
+            is_many => 1,
+            doc => 'links to data currently assigned to the model for processing'
+        },
+        project_parts => {
+            # TODO: the new naming convention was project_associations to prevent confusion
+            # between the bridge and the referenced value
+            is => 'Genome::ProjectPart',
+            reverse_as => 'entity',
+            is_many => 1,
+            is_mutable => 1,
         },
         _id => {
             # this is the accessor for the column which should become the new primary key
