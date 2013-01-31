@@ -85,8 +85,8 @@ sub execute {
 
             my $exon_desc = join(';', "ID=" . $gene->{gene_name} . ":cds:$exon_count", "Parent=" . $gene->{gene_name}, "Name=" . $gene->{gene_name}, 
                 "Target=" . join(' ', $gene->{gene_name}, $exon_start, $exon_end, substr($exon->{strand}, 0, 1)));
-            $output_fh->print(join("\t", $exon->{sequence_name}, $gene->{source}, 'match_part', $exon->{start},
-                    $exon->{end}, $exon->{score}, substr($exon->{strand}, 0, 1), '.', $exon_desc) . "\n");
+            $output_fh->print(join("\t", $exon->{sequence_name}, $gene->{source}, 'match_part', $exon->{end},
+                    $exon->{start}, $exon->{score}, substr($exon->{strand}, 0, 1), '.', $exon_desc) . "\n");
             $exon_count++;
         }
     }
