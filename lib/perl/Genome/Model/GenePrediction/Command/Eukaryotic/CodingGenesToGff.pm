@@ -5,7 +5,6 @@ use warnings;
 use Genome;
 use Carp 'confess';
 
-
 class Genome::Model::GenePrediction::Command::Eukaryotic::CodingGenesToGff {
     is => 'Genome::Command::Base',
     has_input => [
@@ -72,21 +71,40 @@ sub execute {
             die ('Coding Gene, Transcript and Exon files are out of order!');
         }
         my ($start, $end) = (1, $self->spliced_length(\@exons));
+        my $gene_strand = substr($gene->{strand}, 0, 1);
+        unless ($gene_strand =~ /^[\+\-]$/) {
+            if ($gene_strand == 1) {
+                $gene_strand = '+';
+            } else {
+                die('Unrecognized strand '. $gene_strand .' for gene '. $gene->{gene_name});
+            }
+        }
         my $desc = join(';', "ID=" . $gene->{gene_name}, "Name=" . $gene->{gene_name}, "Target=" . 
-            join(' ', $gene->{gene_name}, $start, $end, substr($gene->{strand}, 0, 1)));
+            join(' ', $gene->{gene_name}, $start, $end, $gene_strand));
         $output_fh->print(join("\t", $gene->{sequence_name}, $gene->{source}, 'match', $gene->{start}, 
-                $gene->{end}, '.', substr($gene->{strand}, 0, 1), '.', $desc) . "\n");
+                $gene->{end}, '.', $gene_strand, '.', $desc) . "\n");
 
         my $exon_count = 0;
         my $exon_length = 0;
-        for my $exon (@exons) {
+        my $sort_order = 'sort_ascending';
+        if ($gene_strand eq '-') {
+            $sort_order = 'sort_descending';
+        }
+        for my $exon (sort $sort_order @exons) {
             my ($exon_start, $exon_end) = ($exon_length + 1, $exon_length + $self->exon_length($exon));
             $exon_length += $self->exon_length($exon);
-
+            my $exon_strand = substr($exon->{strand}, 0, 1);
+            unless ($exon_strand =~ /^[\+\-]$/) {
+                if ($exon_strand == 1) {
+                    $exon_strand = '+';
+                } else {
+                    die('Unrecognized strand '. $exon_strand .' for exon '. $exon->{exon_name});
+                }
+            }
             my $exon_desc = join(';', "ID=" . $gene->{gene_name} . ":cds:$exon_count", "Parent=" . $gene->{gene_name}, "Name=" . $gene->{gene_name}, 
-                "Target=" . join(' ', $gene->{gene_name}, $exon_start, $exon_end, substr($exon->{strand}, 0, 1)));
+                "Target=" . join(' ', $gene->{gene_name}, $exon_start, $exon_end, $exon_strand));
             $output_fh->print(join("\t", $exon->{sequence_name}, $gene->{source}, 'match_part', $exon->{start},
-                    $exon->{end}, $exon->{score}, substr($exon->{strand}, 0, 1), '.', $exon_desc) . "\n");
+                    $exon->{end}, $exon->{score}, $exon_strand, '.', $exon_desc) . "\n");
             $exon_count++;
         }
     }
@@ -108,6 +126,14 @@ sub spliced_length {
         $sum += $self->exon_length($exon);
     }
     return $sum;
+}
+
+sub sort_ascending {
+    $a->{start} <=> $b->{start};
+}
+
+sub sort_descending {
+    $b->{start} <=> $a->{start};
 }
 
 1;
