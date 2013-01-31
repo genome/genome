@@ -3,7 +3,7 @@ package Genome::Site::TGI::Observers;
 use strict;
 use warnings;
 
-use Log::Log4perl qw(get_logger :levels);
+# NOTE: the global syslog observers are in Genome::Sys::Log module.
 
 UR::Object::Type->add_observer(
     aspect => 'load',
@@ -19,39 +19,6 @@ UR::Object::Type->add_observer(
         }
         die $@ if $@;
     },
-);
-
-my $log4perl;
-UR::Object->add_observer(
-    aspect => 'error_message',
-    callback => sub {
-        my($self, $type, $message) = @_;
-        return if $ENV{UR_DBI_NO_COMMIT};
-
-        # this should never happen given recent UR updates
-        if (not defined $self) {
-            no warnings;
-            Carp::confess("self is undef, are you using the latest UR?: @_");
-        }
-        if (not defined $message) {
-            no warnings;
-            Carp::confess("message is undef, are you using the latest UR?: @_");
-        }
-
-        unless ($log4perl) {
-            $log4perl = get_logger();
-            $log4perl->level($ERROR);
-
-            my $appender = Log::Log4perl::Appender->new(
-                "Log::Dispatch::Syslog",
-                ident => "$0 GMS",
-                facility => 'syslog',
-            );
-            $log4perl->add_appender($appender);
-        }
-        my $a = ref($self) ? $self->class . ' id('. $self->__display_name__.')' : $self;
-        $log4perl->error($a . ': ' . $message);
-    }
 );
 
 1;

@@ -16,6 +16,7 @@ use Set::Scalar;
 use Digest::MD5;
 use Genome::Sys::Lock;
 use JSON;
+use Genome::Sys::Log;
 
 our $VERSION = $Genome::VERSION;
 
