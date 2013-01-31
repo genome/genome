@@ -87,12 +87,25 @@ sub execute {
   my $case_build = $self->case_build;
   my $control_build = $self->control_build;
   my $outdir = $self->outdir;
-    
+
+  #Set up directories for output
+  $outdir .= "/" unless ($outdir =~ /\/$/);
+  $outdir .= "cufflinks_de/";
+  mkdir($outdir);
+  my $genes_outdir = $outdir . "genes/";
+  mkdir($genes_outdir);
+  my $transcripts_outdir = $outdir . "transcripts/";
+  mkdir($transcripts_outdir);
+
   #Find the cufflinks fpkm files for both builds
   my $case_build_dir = $case_build->data_directory;
   my $case_fpkm_file = $case_build_dir . "/expression/isoforms.fpkm_tracking";
+  my $case_status_file = $case_build_dir . "/expression/genes.fpkm_tracking";
+
   my $control_build_dir = $control_build->data_directory;
   my $control_fpkm_file = $control_build_dir . "/expression/isoforms.fpkm_tracking";
+  my $control_status_file = $control_build_dir . "/expression/genes.fpkm_tracking";
+
   unless (-e $case_fpkm_file && -e $control_fpkm_file) {
     $self->error_message("Could not find neccesary case/control fpkm files:\n$case_fpkm_file\n$control_fpkm_file\n");
     die $self->error_message;
@@ -145,22 +158,22 @@ sub execute {
 
   #Parse the isoform fpkm files, create cleaner transcript level versions of these files and store them in the output dir
   my $fpkm;
-  my $case_isoforms_file_sorted = "$outdir"."case.transcripts.fpkm.namesort.tsv";
+  my $case_isoforms_file_sorted = "$transcripts_outdir"."case.transcripts.fpkm.namesort.tsv";
   $fpkm = &parseFpkmFile('-infile'=>$case_fpkm_file, '-outfile'=>$case_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
-  my $control_isoforms_file_sorted = "$outdir"."control.transcripts.fpkm.namesort.tsv";
+  my $control_isoforms_file_sorted = "$transcripts_outdir"."control.transcripts.fpkm.namesort.tsv";
   $fpkm = &parseFpkmFile('-infile'=>$control_fpkm_file, '-outfile'=>$control_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
 
   #Create gene-level files where the transcript level values are merged
-  my $case_isoforms_merged_file_sorted = "$outdir"."case.genes.fpkm.namesort.tsv";
-  $fpkm = &mergeIsoformsFile('-infile'=>$case_fpkm_file, '-outfile'=>$case_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>\%ensembl_map, '-verbose'=>0);
-  my $control_isoforms_merged_file_sorted = "$outdir"."control.genes.fpkm.namesort.tsv";
-  $fpkm = &mergeIsoformsFile('-infile'=>$control_fpkm_file, '-outfile'=>$control_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>\%ensembl_map, '-verbose'=>0);
+  my $case_isoforms_merged_file_sorted = "$genes_outdir"."case.genes.fpkm.namesort.tsv";
+  $fpkm = &mergeIsoformsFile('-infile'=>$case_fpkm_file, '-status_file'=>$case_status_file, '-outfile'=>$case_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>\%ensembl_map, '-verbose'=>0);
+  my $control_isoforms_merged_file_sorted = "$genes_outdir"."control.genes.fpkm.namesort.tsv";
+  $fpkm = &mergeIsoformsFile('-infile'=>$control_fpkm_file, '-status_file'=>$control_status_file, '-outfile'=>$control_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>\%ensembl_map, '-verbose'=>0);
 
   #Create a file containing basic gene ids, names, etc. along with FPKM values for case and control
   $fpkm = ();
-  $self->create_de('-type'=>'transcript', '-case_file'=>$case_isoforms_file_sorted, '-control_file'=>$control_isoforms_file_sorted, '-fpkm'=>$fpkm);
+  my $transcript_de_file = $self->create_de('-type'=>'transcript', '-case_file'=>$case_isoforms_file_sorted, '-control_file'=>$control_isoforms_file_sorted, '-fpkm'=>$fpkm);
   $fpkm = ();
-  $self->create_de('-type'=>'gene', '-case_file'=>$case_isoforms_merged_file_sorted, '-control_file'=>$control_isoforms_merged_file_sorted, '-fpkm'=>$fpkm);
+  my $gene_de_file = $self->create_de('-type'=>'gene', '-case_file'=>$case_isoforms_merged_file_sorted, '-control_file'=>$control_isoforms_merged_file_sorted, '-fpkm'=>$fpkm);
  
   #Determine path to R script to process the DE files
   my $r_de_script = __FILE__ . '.R';
@@ -170,14 +183,22 @@ sub execute {
   }
 
   #Feed this file into an R script that performs the actual differential expression analysis:
-  #WARNING - GENES WITH HIGH DATA IN CUFFLINKS GET RESET TO 0, THIS CAN LEAD TO FALSE CASES OF APPARENT DIFFERENTIAL EXPRESSION
-  
+
+  #genes
+  my $r_cmd_gene = "$r_de_script $genes_outdir $gene_de_file 'gene' '$case_label' '$control_label'";
+  $self->status_message($r_cmd_gene);
+
+
+  #transcripts
+  my $r_cmd_transcript = "$r_de_script $genes_outdir $transcript_de_file 'transcript' '$case_label' '$control_label'";
+  $self->status_message($r_cmd_transcript);
 
   #Perform basic some checking on the results files
 
 
   return 1;
 }
+
 
 sub create_de{
   my $self = shift;
@@ -259,7 +280,7 @@ sub create_de{
   }
   close (DE);
 
-  return;
+  return($de_file);
 }
 
 
