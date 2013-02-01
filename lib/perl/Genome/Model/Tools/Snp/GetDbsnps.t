@@ -11,14 +11,12 @@ my $start = 126008345;
 my $stop = 126010576;
 my $organism = "human"; # or mouse
 
-my $out_fh = File::Temp->new(
+my $tmpdir = File::Temp::tempdir(
     TEMPLATE => 'Genome-Model-Tools-Snp-GetDbsnps-XXXXXX',
-    DIR => "$ENV{GENOME_TEST_TEMP}/",
+    DIR => $ENV{GENOME_TEST_TEMP},
     CLEANUP => 1,
-    UNLINK => 1,
 );
-my $out = $out_fh->filename;
-$out_fh->close;
+my $out = join('/', 'output');
 
 my $dbsnpout = $out . ".dbsnp.gff";
 

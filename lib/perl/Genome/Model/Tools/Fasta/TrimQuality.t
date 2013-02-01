@@ -22,7 +22,7 @@ ok(-f $qual, "Qual ($qual) exists");
 
 my $tmp_dir  = File::Temp::tempdir(
     "Fasta_TrimQuality_XXXXXX", 
-    DIR     => "$ENV{GENOME_TEST_TEMP}",
+    DIR     => $ENV{GENOME_TEST_TEMP},
     CLEANUP => 1,
 );
 
@@ -84,3 +84,8 @@ my $trim5 = Genome::Model::Tools::Fasta::TrimQuality->create(
 #eval(my $rv = $trim5->execute);
 #print $rv;
 ok(!$trim5->execute, "This supposed to fail because trim5 uses non-integer as min_trim_length");
+
+# since something moved the cwd (failed execute perhaps?)
+# we need this chdir to let tmpdir clean up
+chdir;
+1;
