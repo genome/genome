@@ -12,15 +12,15 @@ use Bio::Seq;
 class Genome::Transcript {
     table_name => 'TRANSCRIPT',
     id_by => [
-        chrom_name => { 
-            is => 'Text', 
+        chrom_name => {
+            is => 'Text',
         },
-        transcript_start => { 
-            is => 'NUMBER', 
-            is_optional => 1 
+        transcript_start => {
+            is => 'NUMBER',
+            is_optional => 1
         },
-        transcript_stop => { 
-            is => 'NUMBER', 
+        transcript_stop => {
+            is => 'NUMBER',
             is_optional => 1,
         },
         species => { is => 'varchar',
@@ -32,8 +32,8 @@ class Genome::Transcript {
         version => { is => 'VARCHAR',
             is_optional => 1,
         },
-        transcript_id => { 
-            is => 'NUMBER', 
+        transcript_id => {
+            is => 'NUMBER',
         },
     ],
     has => [
@@ -44,15 +44,15 @@ class Genome::Transcript {
             is => 'Genome::Model::Build::ReferenceSequence',
             id_by => 'reference_build_id',
         },
-        gene_id => { 
-            is => 'Text', 
+        gene_id => {
+            is => 'Text',
         },
         gene_name => {
             is => 'Text',
             is_optional => 1,
         },
-        transcript_name => { 
-            is => 'VARCHAR', 
+        transcript_name => {
+            is => 'VARCHAR',
             is_optional => 1,
         },
         transcript_status => { is => 'VARCHAR',
@@ -63,14 +63,14 @@ class Genome::Transcript {
             is_optional => 1,
             valid_values => ['+1', '-1', 'UNDEF'],
         },
-        sub_structures => { 
+        sub_structures => {
             #is_constant => 1,
             calculate_from => [qw/ id  data_directory chrom_name/],
             calculate => q|
             Genome::TranscriptStructure->get(chrom_name => $chrom_name, transcript_id => $id, data_directory => $data_directory);
             |,
         },
-        protein => { 
+        protein => {
             calculate_from => [qw/ id data_directory reference_build_id/],
             calculate => q|
             Genome::Protein->get(transcript_id => $id, data_directory => $data_directory, reference_build_id => $reference_build_id);
@@ -211,7 +211,7 @@ sub distance_to_coding_region {
     return $distance;
 }
 
-# Returns 1 if first position is 5' of the second position  
+# Returns 1 if first position is 5' of the second position
 sub is_before {
     my ($self, $p1, $p2) = @_;
     return 0 unless $self->within_transcript_with_flanks($p1) and $self->within_transcript_with_flanks($p2);
@@ -278,10 +278,10 @@ sub structures_in_range {
     for my $structure (@structures){
         my $ss_start = $structure->structure_start;
         my $ss_stop = $structure->structure_stop;
-        
-        if (($ss_start >= $start and $ss_start <= $stop ) or 
+
+        if (($ss_start >= $start and $ss_start <= $stop ) or
             ( $ss_stop >= $start and $ss_stop <= $stop ) or
-            ( $ss_start <= $start and $ss_stop >=$stop )) 
+            ( $ss_start <= $start and $ss_stop >=$stop ))
         {
             push @structures_in_range, $structure;
         }
@@ -341,7 +341,7 @@ sub translate_to_aa {
     return $translation;
 }
 
-# Returns codon table object 
+# Returns codon table object
 sub get_codon_translator {
     my $self = shift;
     my $translator;
@@ -371,7 +371,7 @@ sub get_codon_translator {
 # Performs a few checks on the transcript to determine if its valid
 # All errors are joined by a : and set to the transcript_error field
 # TODO Look into just returning the string here instead of setting the
-# transcript error field, which can result in loss of information (for 
+# transcript error field, which can result in loss of information (for
 # example, pseudogene is set during import using information that is only
 # available during import, so the internal_stop_codon call wouldn't catch
 # it. This change needs to be coupled with changing how the importer
@@ -424,7 +424,7 @@ sub rna_with_no_coding_region {
     return 1 unless $self->is_rna;
 
     if (defined $self->cds_full_nucleotide_sequence) {
-        $self->warning_message("Transcript " . $self->transcript_name . 
+        $self->warning_message("Transcript " . $self->transcript_name .
             " is RNA with coding regions!");
         return 0;
     }
@@ -504,8 +504,8 @@ sub check_intron_size {
     my $self = shift;
     my @introns = $self->introns;
     foreach my $intron (@introns) {
-        return 0 if $intron->length > 900000 
-    } 
+        return 0 if $intron->length > 900000
+    }
     return 1;
 }
 
@@ -521,13 +521,13 @@ sub exon_seq_matches_genome_seq {
         );
 
         unless ($ref_seq) {
-            # Some of the imported reference sequences don't have mitochondrial data, which isn't the 
+            # Some of the imported reference sequences don't have mitochondrial data, which isn't the
             # transcript's fault, so don't mark it as having an error
             if ($self->chrom_name =~ /^[MN]T*/i) {
                 return 1;
             }
             else {
-                $self->warning_message("Could not get sequence from chromosome " . $self->chrom_name . 
+                $self->warning_message("Could not get sequence from chromosome " . $self->chrom_name .
                     " between positions " . $exon->structure_start . " and " . $exon->structure_stop .
                     " for transcript " . $self->transcript_name . " and structure " . $exon->transcript_structure_id);
                 return 0;
@@ -586,7 +586,7 @@ sub correct_bp_length_for_exons {
     my $self = shift;
     return 1 unless $self->has_coding_region;
     return 1 if $self->is_rna;
-    
+
     my $seq = $self->cds_full_nucleotide_sequence;
     return 1 unless defined $seq and length $seq > 1;
     if ($self->chrom_name =~ /^MT/) {
@@ -692,7 +692,7 @@ sub flank_after_coding_sequence{
         if($self->strand eq '+1'){
             push(@flanks_after_cds, $flank) if $flank->structure_start >= $self->transcript_stop;
         }else{
-            push(@flanks_after_cds, $flank) if $flank->structure_stop <= $self->transcript_start; 
+            push(@flanks_after_cds, $flank) if $flank->structure_stop <= $self->transcript_start;
         }
     }
     return @flanks_after_cds; #this coming out in the proper order depends on utr_exons calling ordered_sub_structures
@@ -719,7 +719,7 @@ sub length_of_cds_exons_after_structure_at_position {
     my ($self, $position) = @_;
     return $self->_length_of_cds_exons_before_or_after_position($position, 0);
 }
-    
+
 sub _length_of_cds_exons_before_or_after_position {
     my ($self, $position, $look_before) = @_;
     return unless defined $position and defined $look_before;
@@ -729,7 +729,7 @@ sub _length_of_cds_exons_before_or_after_position {
         $self->warning_message("No structure at position $position for length_of_cds_exons_after_structure_at_position!");
         return;
     }
-    
+
     my $length = 0;
     for my $e (@cds_exons) {
         if ($look_before and $self->is_before($e->{structure_start}, $structure->{structure_start})) {

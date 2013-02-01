@@ -47,6 +47,12 @@ class Genome::ProjectPart {
             id_class_by => 'entity_class_name',
             doc => 'Actual object this project part represents',
         },
+        part => {
+            is => 'UR::Object',
+            id_by => 'entity_id',
+            id_class_by => 'entity_class_name',
+            doc => 'Actual object this project part represents',
+        },
         project_id => { is => 'varchar2', len => 64, column_name => 'PROJECT_ID'},
         project => {
             is => 'Genome::Project',

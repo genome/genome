@@ -10,7 +10,7 @@ use Genome;
 use Regexp::Common;
 
 class Genome::Model::Command::InstrumentData::List {
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     has => [
         model => { is => 'Genome::Model', id_by => 'model_id' },
         model_id => { is => 'Integer', doc => 'ID of the genome model' },

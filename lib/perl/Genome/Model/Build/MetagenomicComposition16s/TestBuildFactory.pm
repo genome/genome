@@ -58,7 +58,6 @@ sub build_with_example_build {
     my $pp = Genome::ProcessingProfile->__define__(
         id => --$id,
         type_name => 'metagenomic composition 16s',
-        sequencing_platform => $sequencing_platform,
         %{$pp_params{$sequencing_platform}},
     );
     die 'Failed to create MC16s processing profile!' if not $pp;

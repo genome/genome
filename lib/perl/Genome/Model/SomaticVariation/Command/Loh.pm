@@ -134,8 +134,11 @@ sub get_temp_bed_snvs {
     my $self = shift;
     my $normal_build = shift;
     my $normal_snvs = $normal_build->snv_file;
-    my $temp_bed_file = Genome::Sys->create_temp_file_path;
+    unless (-e $normal_snvs) {
+        return;
+    }
 
+    my $temp_bed_file = Genome::Sys->create_temp_file_path;
     my $convert = Genome::Model::Tools::Bed::Convert::Snv::SamtoolsToBed->create( 
                         source => $normal_snvs, 
                         output => $temp_bed_file);

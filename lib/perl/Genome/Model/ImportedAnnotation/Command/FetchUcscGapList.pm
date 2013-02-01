@@ -28,7 +28,7 @@ sub execute {
 
     my $gap_filename = Genome::Sys->create_temp_file_path();
     Genome::Db::Ucsc::GapList->execute(
-        gap_filename => $gap_filename,
+        filename => $gap_filename,
         reference_name => $reference_name,
     );
     my $file_md5 = Genome::Sys->md5sum($gap_filename);
@@ -65,6 +65,12 @@ sub _resolve_reference {
                 "No reference name associated with reference %s for annoation build %s",
                 $reference_sequence->id, $self->annoation_build->id));
         die $self->error_message;
+    }
+    if ($reference_name eq "GRCh37-lite-build37" or $reference_name eq "g1k-human-build37") {
+        $reference_name = "hg19";
+    }
+    elsif ($reference_name eq "NCBI-human-build36") {
+        $reference_name = "hg18";
     }
 
     return ($reference_sequence, $reference_name)

@@ -15,6 +15,8 @@ use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
 use Genome::Sys::Lock;
+use JSON;
+use Genome::Sys::Log;
 
 our $VERSION = $Genome::VERSION;
 
@@ -1014,8 +1016,11 @@ sub shellcmd {
     # TODO: add IPC::Run's w/ timeout but w/o the io redirection...
 
     my ($self,%params) = @_;
+
+    my %orig_params = %params;
+
     my $cmd                          = delete $params{cmd};
-    my $output_files                 = delete $params{output_files} ;
+    my $output_files                 = delete $params{output_files};
     my $input_files                  = delete $params{input_files};
     my $output_directories           = delete $params{output_directories} ;
     my $input_directories            = delete $params{input_directories};
@@ -1033,6 +1038,9 @@ sub shellcmd {
         my @crap = %params;
         Carp::confess("Unknown params passed to shellcmd: @crap");
     }
+
+    my ($t1,$t2,$elapsed);
+
     # Go ahead and print the status message if the cmd is shortcutting
     if ($output_files and @$output_files) {
         my @found_outputs = grep { -e $_ } grep { not -p $_ } @$output_files;
@@ -1046,6 +1054,7 @@ sub shellcmd {
             return 1;
         }
     }
+
     my $old_status_cb = undef;
     unless  ($print_status_to_stderr) {
         $old_status_cb = Genome::Sys->message_callback('status');
@@ -1094,8 +1103,11 @@ sub shellcmd {
 
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
+        $t1 = time();
         my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
         my $child_exit_code = $exit_code >> 8;
+        $t2 = time();
+        $elapsed = $t2-$t1;
 
         if ( $exit_code == -1 ) {
             Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd\n\tError was: $!");
@@ -1173,6 +1185,12 @@ sub shellcmd {
         # Setting to the original behaviour (or default)
         Genome::Sys->message_callback('status',$old_status_cb);
     }
+
+    if ($ENV{GENOME_LOG_DETAIL}) {
+        my $msg = encode_json({%orig_params, t1 => $t1, t2 => $t2, elapsed => $elapsed });
+        Genome::Sys->debug_message(qq|$msg|)
+    }
+
     return 1;
 
 }

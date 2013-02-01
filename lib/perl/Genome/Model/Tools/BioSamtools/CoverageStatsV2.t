@@ -19,7 +19,7 @@ map { print STDERR $_ . " => " . $ENV{$_} . "\n" } keys %ENV;
 
 use_ok('Genome::Model::Tools::BioSamtools::CoverageStatsV2');
 
-my $tmp_dir = File::Temp::tempdir('BioSamtools-CoverageStatsV2-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 0);
+my $tmp_dir = File::Temp::tempdir('BioSamtools-CoverageStatsV2-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 1);
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools/RefCov';
 

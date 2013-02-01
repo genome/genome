@@ -154,6 +154,7 @@ class Genome::Model::Tools::Pindel::RunPindel {
 my %PINDEL_VERSIONS = (
     '0.2'    => '/gsc/pkg/bio/pindel/0.2/pindel',
     '0.2.4d' => '/gsc/pkg/bio/pindel/0.2.4d/pindel',
+    '0.2.4t' => '/usr/bin/pindel0.2.4t',
     '0.3'    => '/gsc/pkg/bio/pindel/0.3/pindel',
     '0.4'    => '/gsc/pkg/bio/pindel/0.4/pindel',
     '0.5'    => '/gsc/pkg/bio/pindel/0.5/pindel',

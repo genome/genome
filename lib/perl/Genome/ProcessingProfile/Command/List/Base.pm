@@ -4,7 +4,7 @@ use warnings;
 use Genome;
 
 class Genome::ProcessingProfile::Command::List::Base {
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     is_abstract => 1,
     has => [
         subject_class_name  => {

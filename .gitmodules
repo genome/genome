@@ -238,3 +238,6 @@
 [submodule "cloneCaller"]
 	path = cloneCaller
 	url = ssh://git//srv/git/cloneCaller.git
+[submodule "copyCat"]
+	path = copyCat
+	url = ssh://git//srv/git/copyCat.git
