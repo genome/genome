@@ -1186,7 +1186,7 @@ sub shellcmd {
         Genome::Sys->message_callback('status',$old_status_cb);
     }
 
-    if ($ENV{GENOME_LOG_DETAIL}) {
+    if ($ENV{GENOME_SYS_LOG_DETAIL}) {
         my $msg = encode_json({%orig_params, t1 => $t1, t2 => $t2, elapsed => $elapsed });
         Genome::Sys->debug_message(qq|$msg|)
     }

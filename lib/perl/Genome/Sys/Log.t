@@ -7,7 +7,7 @@ use JSON;
 
 #
 # NOTE: this tests only the experimental/optional JSON logging 
-# which occurs when GENOME_LOG_DETAIL is set
+# which occurs when GENOME_SYS_LOG_DETAIL is set
 #
 
 # this will cause us to cut out just before sending into the syslogger
@@ -15,7 +15,7 @@ use JSON;
 $Genome::Sys::Log::test_syslog = 1;
 
 # this turns on JSON logging
-$ENV{GENOME_LOG_DETAIL} = 1;
+$ENV{GENOME_SYS_LOG_DETAIL} = 1;
 
 # the code which logs is in F2::f2, called by F1::f1, called below in namespace F0
 require __FILE__ . ".d/F1.pm";
