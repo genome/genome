@@ -73,7 +73,10 @@ for my $type (qw/debug status warning error/) {
                 ok($data->{f} =~ /\/F2.pm$/, "message $n has correct filename $data->{f}");
                 is($data->{l}, 7, "message $n has expected line 7");
                 is($data->{m}, "F2::f2", "message $n has expected method F2::f2");
-                is($data->{c}, "$call_line|F1::f1,5|F2::f2,7", "call stack string has expected value '$call_line|F1::f1,5|F2::f2,7'");
+
+                my $e1 = "$call_line|F1::f1,5|F2::f2,7";
+                my $e2 = '22|(eval),' . $e1;
+                ok(($data->{c} eq $e1 or $data->{c}), "call stack string has expected value '$e1'");
                
                 if ($form eq 'json') {
                     is($data->{n}, $n, "message $n has test field n with the correct value");
