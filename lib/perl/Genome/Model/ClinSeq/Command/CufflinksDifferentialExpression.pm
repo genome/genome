@@ -91,11 +91,17 @@ sub execute {
   #Set some human readable case and control labels
   my $case_label = "case";
   my $control_label = "control";
+  $case_label = $case_build->subject->common_name if ($case_build->subject->common_name);
+  $case_label =~ s/ /\_/g;
+  $control_label = $control_build->subject->common_name if ($control_build->subject->common_name);
+  $control_label =~ s/ /\_/g;
+  if ($case_label eq $control_label){
+    $case_label = "case";
+    $control_label = "control";
+  }
 
   #Set up directories for output
   $outdir .= "/" unless ($outdir =~ /\/$/);
-  $outdir .= "cufflinks_de/";
-  mkdir($outdir);
   my $genes_outdir = $outdir . "genes/";
   mkdir($genes_outdir);
   my $transcripts_outdir = $outdir . "transcripts/";
@@ -124,60 +130,47 @@ sub execute {
   my $annotation_build = $self->case_build->model->annotation_build;
   my $annotation_build_name = $annotation_build->name;
   my $annotation_data_dir = $annotation_build->data_directory;
-  $self->status_message("Getting transcript to gene and gene name mappings from annotation build: $annotation_build_name");
-
+  my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
   my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
+  $self->status_message("Getting transcript to gene and gene name mappings from annotation build: $annotation_build_name");
   unless (defined($gtf_path)) {
     $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
     die $self->error_message;
   }
-
-  my %ensembl_map;
-  open (GTF, "$gtf_path") || die "\n\nCould not open GTF file: $gtf_path";
-  while(<GTF>){
-    chomp($_);
-    my @line = split("\t", $_);
-    my @anno = split(";", $line[8]);
-    my ($gene_name, $gene_id, $transcript_id);
-    if ($anno[0] =~ /gene_name\s+\"(.*)\"/){
-      $gene_name = $1;
-    }
-    if ($anno[1] =~ /gene_id\s+\"(.*)\"/){
-      $gene_id = $1;
-    }
-    if ($anno[2] =~ /transcript_id\s+\"(.*)\"/){
-      $transcript_id = $1;
-    }
-    unless ($gene_name && $gene_id && $transcript_id){
-      $self->error_message("Could not parse gene_name, gene_id, transcript_id from GTF in line:\n$_\n");
-      die $self->error_message;
-    }
-    $ensembl_map{$transcript_id}{ensg_id} = $gene_id;
-    $ensembl_map{$transcript_id}{ensg_name} = $gene_name;
+  unless (-e $transcript_info_path) {
+    $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
+    die $self->error_message;
   }
-  close(GTF);
+  $self->status_message("\t$transcript_info_path");
+
+  my $ensembl_map = &loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
 
   #Get Entrez and Ensembl data for gene name mappings
+  $self->status_message("Load entrez and ensembl gene data");
   my $entrez_ensembl_data = &loadEntrezEnsemblData();
 
   #Parse the isoform fpkm files, create cleaner transcript level versions of these files and store them in the output dir
+  $self->status_message("Parse transcript FPKM files from Cufflinks");
   my $fpkm;
   my $case_isoforms_file_sorted = "$transcripts_outdir"."case.transcripts.fpkm.namesort.tsv";
-  $fpkm = &parseFpkmFile('-infile'=>$case_fpkm_file, '-outfile'=>$case_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+  $fpkm = &parseFpkmFile('-infile'=>$case_fpkm_file, '-outfile'=>$case_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
   my $control_isoforms_file_sorted = "$transcripts_outdir"."control.transcripts.fpkm.namesort.tsv";
-  $fpkm = &parseFpkmFile('-infile'=>$control_fpkm_file, '-outfile'=>$control_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
+  $fpkm = &parseFpkmFile('-infile'=>$control_fpkm_file, '-outfile'=>$control_isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
 
   #Create gene-level files where the transcript level values are merged
+  $self->status_message("Assemble gene estimates by merging Cufflinks transcript results");
   my $case_isoforms_merged_file_sorted = "$genes_outdir"."case.genes.fpkm.namesort.tsv";
-  $fpkm = &mergeIsoformsFile('-infile'=>$case_fpkm_file, '-status_file'=>$case_status_file, '-outfile'=>$case_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>\%ensembl_map, '-verbose'=>0);
+  $fpkm = &mergeIsoformsFile('-infile'=>$case_fpkm_file, '-status_file'=>$case_status_file, '-outfile'=>$case_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
   my $control_isoforms_merged_file_sorted = "$genes_outdir"."control.genes.fpkm.namesort.tsv";
-  $fpkm = &mergeIsoformsFile('-infile'=>$control_fpkm_file, '-status_file'=>$control_status_file, '-outfile'=>$control_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>\%ensembl_map, '-verbose'=>0);
+  $fpkm = &mergeIsoformsFile('-infile'=>$control_fpkm_file, '-status_file'=>$control_status_file, '-outfile'=>$control_isoforms_merged_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>0);
 
   #Create a file containing basic gene ids, names, etc. along with FPKM values for case and control
+  $self->status_message("Create transcript DE file");
   $fpkm = ();
-  my $transcript_de_file = $self->create_de('-type'=>'transcript', '-case_file'=>$case_isoforms_file_sorted, '-control_file'=>$control_isoforms_file_sorted, '-fpkm'=>$fpkm);
+  my $transcript_de_file = $self->create_de('-outdir'=>$transcripts_outdir, '-type'=>'transcript', '-case_file'=>$case_isoforms_file_sorted, '-control_file'=>$control_isoforms_file_sorted, '-fpkm'=>$fpkm);
+  $self->status_message("Create gene DE file");
   $fpkm = ();
-  my $gene_de_file = $self->create_de('-type'=>'gene', '-case_file'=>$case_isoforms_merged_file_sorted, '-control_file'=>$control_isoforms_merged_file_sorted, '-fpkm'=>$fpkm);
+  my $gene_de_file = $self->create_de('-outdir'=>$genes_outdir, '-type'=>'gene', '-case_file'=>$case_isoforms_merged_file_sorted, '-control_file'=>$control_isoforms_merged_file_sorted, '-fpkm'=>$fpkm);
  
   #Determine path to R script to process the DE files
   my $r_de_script = __FILE__ . '.R';
@@ -189,13 +182,20 @@ sub execute {
   #Feed this file into an R script that performs the actual differential expression analysis:
 
   #genes
-  my $r_cmd_gene = "$r_de_script $genes_outdir $gene_de_file 'gene' '$case_label' '$control_label'";
+  $self->status_message("\nPerforming gene-level DE analysis in R"); 
+  my $gene_r_stderr = $genes_outdir . "CufflinksDifferentialExpression.pm.R.stderr";
+  my $gene_r_stdout = $genes_outdir . "CufflinksDifferentialExpression.pm.R.stdout";
+  my $r_cmd_gene = "$r_de_script $genes_outdir $gene_de_file 'gene' '$case_label' '$control_label' 2>$gene_r_stderr 1>$gene_r_stdout";
   $self->status_message($r_cmd_gene);
-
+  Genome::Sys->shellcmd(cmd => $r_cmd_gene);
 
   #transcripts
-  my $r_cmd_transcript = "$r_de_script $genes_outdir $transcript_de_file 'transcript' '$case_label' '$control_label'";
+  $self->status_message("\nPerforming transcript-level DE analysis in R"); 
+  my $transcript_r_stderr = $transcripts_outdir . "CufflinksDifferentialExpression.pm.R.stderr";
+  my $transcript_r_stdout = $transcripts_outdir . "CufflinksDifferentialExpression.pm.R.stdout";
+  my $r_cmd_transcript = "$r_de_script $transcripts_outdir $transcript_de_file 'transcript' '$case_label' '$control_label' 2>$transcript_r_stderr 1>$transcript_r_stdout";
   $self->status_message($r_cmd_transcript);
+  Genome::Sys->shellcmd(cmd => $r_cmd_transcript);
 
   #Perform basic some checking on the results files
 
@@ -211,46 +211,59 @@ sub create_de{
   my $case_file = $args{'-case_file'};
   my $control_file = $args{'-control_file'};
   my $fpkm = $args{'-fpkm'};
+  my $outdir = $args{'-outdir'};
 
   my $header = 1;
   my $header_line;
   open (CASE, "$case_file") || die "\n\nCould not open case file\n\n";
+  my %columns1;
   while(<CASE>){
     chomp($_);
     my @line = split("\t", $_);
     if ($header){
-      $header_line = "$line[0]\t$line[1]\t$line[2]\t$line[3]";
+      my $p = 0;
+      foreach my $column (@line){
+        $columns1{$column}{pos} = $p;
+        $p++;
+      }
+      $header_line = "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]";
       $header = 0;
       next;
     }
     my $id = $line[0];
-    $fpkm->{$id}->{info} = "$line[1]\t$line[2]\t$line[3]";
-    $fpkm->{$id}->{case_fpkm} = $line[6];
-    $fpkm->{$id}->{case_fpkm_conf_lo} = $line[7];
-    $fpkm->{$id}->{case_fpkm_conf_hi} = $line[8];
-    $fpkm->{$id}->{case_fpkm_status} = $line[9];
+    $fpkm->{$id}->{info} = "$line[1]\t$line[2]\t$line[3]\t$line[4]";
+    $fpkm->{$id}->{case_fpkm} = $line[$columns1{'FPKM'}{pos}];
+    $fpkm->{$id}->{case_fpkm_conf_lo} = $line[$columns1{'FPKM_conf_lo'}{pos}];
+    $fpkm->{$id}->{case_fpkm_conf_hi} = $line[$columns1{'FPKM_conf_hi'}{pos}];
+    $fpkm->{$id}->{case_fpkm_status} = $line[$columns1{'FPKM_status'}{pos}];
   }
   close (CASE);
 
   $header = 1;
   open (CTRL, "$control_file") || die "\n\nCould not open control file\n\n";
+  my %columns2;
   while(<CTRL>){
     chomp($_);
     my @line = split("\t", $_);
     if ($header){
+      my $p = 0;
+      foreach my $column (@line){
+        $columns2{$column}{pos} = $p;
+        $p++;
+      }
       $header = 0;
       next;
     }
     my $id = $line[0];
-    $fpkm->{$id}->{info} = "$line[1]\t$line[2]\t$line[3]";
-    $fpkm->{$id}->{control_fpkm} = $line[6];
-    $fpkm->{$id}->{control_fpkm_conf_lo} = $line[7];
-    $fpkm->{$id}->{control_fpkm_conf_hi} = $line[8];
-    $fpkm->{$id}->{control_fpkm_status} = $line[9];
+    $fpkm->{$id}->{info} = "$line[1]\t$line[2]\t$line[3]\t$line[4]";
+    $fpkm->{$id}->{control_fpkm} = $line[$columns2{'FPKM'}{pos}];
+    $fpkm->{$id}->{control_fpkm_conf_lo} = $line[$columns2{'FPKM_conf_lo'}{pos}];
+    $fpkm->{$id}->{control_fpkm_conf_hi} = $line[$columns2{'FPKM_conf_hi'}{pos}];
+    $fpkm->{$id}->{control_fpkm_status} = $line[$columns2{'FPKM_status'}{pos}];
   }
   close (CASE);
 
-  my $de_file = $self->outdir."$type".".de.input.tsv";
+  my $de_file = $outdir."$type".".de.input.tsv";
 
   open (DE, ">$de_file") || die "\n\nCould not open outfile: $de_file\n\n";
   print DE "$header_line\tcase_fpkm\tcase_fpkm_conf_hi\tcase_fpkm_conf_lo\tcase_fpkm_status\tcontrol_fpkm\tcontrol_fpkm_conf_hi\tcontrol_fpkm_conf_lo\tcontrol_fpkm_status\n";
