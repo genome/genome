@@ -19,7 +19,7 @@ class Genome::Model::ClinSeq {
         #someparam2 => { is => 'Boolean', doc => 'blah' },
         #someparam2 => { is => 'Text', valid_values => ['a','b','c'], doc => 'blah' },
     ],
-    doc => 'clinial sequencing data convergence of RNASeq, WGS and exome capture data',
+    doc => 'clinical and discovery sequencing data analysis and convergence of RNASeq, WGS and exome capture data',
 };
 
 sub define_by { 'Genome::Model::Command::Define::BaseMinimal' }
@@ -571,8 +571,9 @@ sub _resolve_workflow_for_build {
 
     #Run clonality analysis and produce clonality plots
     $msg = "Run clonality analysis and produce clonality plots";
+    my $clonality_op;
     if ($build->wgs_build){
-      my $clonality_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateClonalityPlots");
+      $clonality_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateClonalityPlots");
       $add_link->($input_connector, 'wgs_build', $clonality_op, 'somatic_var_build');
       $add_link->($input_connector, 'clonality_dir', $clonality_op, 'output_dir');
       $add_link->($input_connector, 'common_name', $clonality_op, 'common_name');
