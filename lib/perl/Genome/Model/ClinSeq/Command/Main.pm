@@ -205,9 +205,6 @@ sub _execute {
       $self->importSNVs('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-patient_dir'=>$patient_dir, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>$verbose, '-filter_mt'=>$filter_mt);
   }
 
-  #Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
-  # ** this has been moved into the workflow
-
   #TODO: More comprehensive processing of SNVs and InDels
   #Import SNVs and Indels in a more complete form
   #Make copies of Tier1,2,3 files
@@ -215,38 +212,6 @@ sub _execute {
   #For the master list of SNVs (also for INDELS) get the BAM read counts for all positions in tumor and normal
   #Add dbSNP annotations to the SNVs/InDELs
   #Add 1000 genomes annotations to the SNVs/InDELs
-
-  #This is now being run earlier so that the cna-seg output can be used by cn-view
-  #Generate a clonality plot for this patient (if WGS data is available)
-#  my $clonality_dir = $patient_dir . "/clonality/";
-#  if ($wgs){
-#    $step++; print MAGENTA, "\n\nStep $step. Creating clonality plot for $common_name", RESET;
-#
-#    my $clonality_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'clonality', '-silent'=>1);
-#    my $wgs_somatic_build = $builds->{wgs};
-#    my $wgs_somatic_build_id = $wgs_somatic_build->id;
-#      
-#    my $master_clonality_cmd = "genome model clin-seq generate-clonality-plots --somatic-var-build=$wgs_somatic_build_id  --output-dir=$clonality_dir  --common-name='$common_name'" . ($verbose ? " --verbose" : "");
-#    if ($verbose){
-#      print YELLOW, "\n\n$master_clonality_cmd", RESET;
-#    }
-#    Genome::Sys->shellcmd(cmd=>$master_clonality_cmd, output_files=>["$clonality_dir$common_name.clonality.pdf"]);  
-#  }
-
-
-  #Run CNView analyses on the CNV data to identify amplified/deleted genes
-  #TODO: Currently CNV loci are calculated using combined annotations and then summarized for a hard coded list of Ensembl gene names.  Clean this up to use Ensembl data only...
-  #TODO: Gene annotation information should come from the annotation build!  Not a hard-coded custom path.  Produce a summary for a single gene of interest list, not three of them
-  #TODO: Make a clinseq tool of the following step. This step relies on clonality already being run (for the cnvhmm file).  
-  #TODO: Once this is pulled out, main will no longer have to specify this file as an output.  And main will no longer be a dependency of clonality!
-#  $step++; print MAGENTA, "\n\nStep $step. Identifying CNV altered genes", RESET;
-#  my $clonality_dir = $patient_dir . "clonality/";
-#  if ($wgs){
-#      my @cnv_symbol_lists = qw (All Kinase_dGene CancerGeneCensusPlus_Sanger AntineoplasticTargets_DrugBank);
-#      &identifyCnvGenes('-data_paths'=>$data_paths, '-out_paths'=>$out_paths, '-patient_dir'=>$patient_dir, '-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-cnv_symbol_lists'=>\@cnv_symbol_lists, '-annotation_build_id'=>$annotation_build_id, '-segments_file'=>$clonality_dir.'/cnaseq.cnvhmm');
-#  }
-
-
 
   #Run RNA-seq analysis on the RNA-seq data (if available)
   my $rnaseq_dir = $patient_dir . 'rnaseq/';
@@ -705,67 +670,6 @@ sub importSNVs{
 
   return();
 }
-
-
-###################################################################################################################################
-#Run CNView analyses on the CNV data to identify amplified/deleted genes                                                          #
-###################################################################################################################################
-#sub identifyCnvGenes{
-#  my %args = @_;
-#  my $data_paths = $args{'-data_paths'}; #variants dir in somatic-variation data directory. get from somatic build
-#  my $out_paths = $args{'-out_paths'};   #Used to store cnv out files for annotation, etc.
-#  my $patient_dir = $args{'-patient_dir'}; #Top dir use to set output dirs
-#  my $gene_symbol_lists_dir = $args{'-gene_symbol_lists_dir'}; #Directory of gene symbol lists, hard coded right now
-#  my @cnv_symbol_lists = @{$args{'-cnv_symbol_lists'}}; #list of symbols to use for CnView runs
-#  my $annotation_build_id = $args{'-annotation_build_id'}; #annotation build.  get from somatic build
-#  my $segments_file = $args{'-segments_file'}; #cnvhmm segments files. get from clonality operation
-#
-#  unless ($segments_file) {
-#    die "no segments_file passed to identifyCnvGenes!"
-#  }
-#  unless (-e $segments_file) {
-#    die "segments file $segments_file does not exist!";
-#  }
-#  unless ($annotation_build_id) {
-#    die "no annotation build id supplied to identifyCnvGenes!";
-#  }
-#  
-#  my $variants_dir = $data_paths->{'wgs'}->{'variants'};
-#  my $cnv_data_file = $variants_dir."cnvs.hq";
-#
-#  #Create main CNV dir: 'cnv'
-#  my $cnv_dir = &createNewDir('-path'=>$patient_dir, '-new_dir_name'=>'cnv', '-silent'=>1);
-#  my $cnview_dir = &createNewDir('-path'=>$cnv_dir, '-new_dir_name'=>'cnview', '-silent'=>1);
-#
-#  #Create a copy of the cnvs.hq file for later convenience
-#  my $cnv_cp_cmd = "cp $cnv_data_file $cnv_dir";
-#  Genome::Sys->shellcmd(cmd => $cnv_cp_cmd);
-#
-#  #For each list of gene symbols, run the CNView analysis
-#  foreach my $symbol_list_name (@cnv_symbol_lists){
-#    if ($symbol_list_name eq "All"){
-#      my $cnview_cmd = "gmt copy-number cn-view --annotation-build=$annotation_build_id  --cnv-file=$cnv_data_file  --segments-file=$segments_file  --output-dir=$cnview_dir  --name='$symbol_list_name'";
-#      Genome::Sys->shellcmd(cmd => $cnview_cmd);
-#
-#      #Copy these files to the top CNV dir
-#      my $new_dir = "$cnview_dir"."CNView_"."$symbol_list_name/";
-#
-#      my @suffixes = qw (_genes _genes.amp _genes.del _genes.ampdel _transcripts _transcripts.amp _transcripts.del _transcripts.ampdel);
-#      foreach my $suffix (@suffixes){
-#        my $path1 = "$new_dir"."CNView_"."$symbol_list_name"."$suffix".".tsv";
-#        my $path2 = "$cnview_dir"."cnv."."$symbol_list_name"."$suffix".".tsv";
-#        Genome::Sys->shellcmd(cmd => "cp $path1 $path2");
-#        my $dataname = "cnv".$suffix;
-#        $out_paths->{'wgs'}->{$dataname}->{'path'} = $path2;
-#      }
-#    }else{
-#      my $gene_targets_file = "$gene_symbol_lists_dir"."$symbol_list_name".".txt";
-#      my $cnview_cmd = "gmt copy-number cn-view --annotation-build=$annotation_build_id  --cnv-file=$cnv_data_file  --segments-file=$segments_file  --output-dir=$cnview_dir  --gene-targets-file=$gene_targets_file  --name='$symbol_list_name'";
-#      Genome::Sys->shellcmd(cmd => $cnview_cmd);
-#    }
-#  }
-#  return();
-#}
 
 
 ###################################################################################################################################
