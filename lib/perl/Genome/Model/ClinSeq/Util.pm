@@ -225,43 +225,76 @@ sub checkDir{
 
 #######################################################################################################################################################################
 #Load Ensembl Transcript ID - Gene ID - Gene Name mappings from flatfiles                                                                                             #
+#The GTF file seems to be the best for obtaining ensg -> enst -> gene name mappings.  But it does not contain biotypes so an extra file need to be parse for those    #
 #######################################################################################################################################################################
 sub loadEnsemblMap{
   my %args = @_;
-  my $ensembl_version = $args{'-ensembl_version'};
-  my $species = $args{-species} || 'human';
+  my $transcript_info_path = $args{'-transcript_info_path'}; #e.g. /gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/rna_annotation/106942997-transcript_info.tsv
+  my $gtf_path = $args{'-gtf_path'};                         #e.g. /gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/rna_annotation/106942997-all_sequences.gtf
 
-  my $clinseq_annotations_dir;
-  if ($species eq 'human') {
-    $clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
-  }
-  my $ensembl_map_file = $clinseq_annotations_dir . "EnsemblGene/Ensembl_Genes_Human_v"."$ensembl_version".".txt";
-  unless (-e $ensembl_map_file){
-    print RED, "\n\nCould not file Ensembl ID map file with the specified reference annotations dir and ensembl version:\n$ensembl_map_file\n\n", RESET;
-    exit(1);
-  }
   my %ensembl_map;
+
+  #Get gene name, gene id and transcript ids from GTF file
+  open (GTF, "$gtf_path") || die "\n\nCould not open GTF file: $gtf_path";
+  while(<GTF>){
+    chomp($_);
+    my @line = split("\t", $_);
+    my @anno = split(";", $line[8]);
+    my ($gene_name, $gene_id, $transcript_id);
+    if ($anno[0] =~ /gene_name\s+\"(.*)\"/){
+      $gene_name = $1;
+    }
+    if ($anno[1] =~ /gene_id\s+\"(.*)\"/){
+      $gene_id = $1;
+    }
+    if ($anno[2] =~ /transcript_id\s+\"(.*)\"/){
+      $transcript_id = $1;
+    }
+    unless ($gene_name && $gene_id && $transcript_id){
+      print RED, "Could not parse gene_name, gene_id, transcript_id from GTF in line:\n$_\n", RESET;
+      exit 1;
+    }
+    $ensembl_map{$transcript_id}{ensg_id} = $gene_id;
+    $ensembl_map{$transcript_id}{ensg_name} = $gene_name;
+    $ensembl_map{$transcript_id}{gene_biotype} = "na";
+    $ensembl_map{$transcript_id}{transcript_biotype} = "na";
+  }
+  close(GTF);
+
+  #Now get biotypes from the transcript info file
+  open (INFO, "$transcript_info_path") || die "\n\nCould not open INFO file: $transcript_info_path";
   my $header = 1;
-  open (ENSG, "$ensembl_map_file") || die "\n\nCould not open ensembl map file: $ensembl_map_file\n\n";
-  while (<ENSG>){
+  my %columns;
+  while(<INFO>){
     chomp($_);
     my @line = split("\t", $_);
     if ($header){
       $header = 0;
-      next();
+      my $p = 0;
+      foreach my $column (@line){
+        $columns{$column}{pos} = $p;
+        $p++;
+      }
+      next;
     }
-    my $ensg_id = $line[0];
-    my $enst_id = $line[1];
-    my $ensg_name = $line[2];
-    $ensembl_map{$enst_id}{ensg_id} = $ensg_id;
-    $ensembl_map{$enst_id}{ensg_name} = $ensg_name;
+    my $gene_id = $line[$columns{'ensembl_gene_id'}{pos}];
+    my $gene_biotype = $line[$columns{'gene_biotype'}{pos}];
+    my $transcript_id = $line[$columns{'ensembl_transcript_id'}{pos}];
+    my $transcript_biotype = $line[$columns{'transcript_biotype'}{pos}];
+    my $gene_name = $line[$columns{'gene_name'}{pos}];
+    unless ($gene_name && $gene_id && $transcript_id && $gene_biotype && $transcript_biotype){
+      print RED, "Could not parse gene_name, gene_id, transcript_id, gene_biotype, and transcript_biotype from INFO in line:\n$_\n", RESET;
+      exit 1;
+    }
+    if ($ensembl_map{$transcript_id}){
+      $ensembl_map{$transcript_id}{gene_biotype} = $gene_biotype;
+      $ensembl_map{$transcript_id}{transcript_biotype} = $transcript_biotype;
+    }
   }
-  close(ENSG);
+  close(INFO);
 
   return(\%ensembl_map);
 }
-
-
 
 
 #######################################################################################################################################################################

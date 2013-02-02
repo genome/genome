@@ -33,6 +33,12 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
                                 doc => 'Limit the number of SNVs to the first N (mostly for testing).' }
 
     ],
+    has_output => [
+        cnv_hmm_file => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+        },
+    ],
     doc => "This script attempts to automate the process of creating a 'clonality' plot"
 };
 
@@ -226,7 +232,9 @@ sub execute {
     Genome::Sys->shellcmd(cmd => $clonality_cmd2, allow_failed_exit_code => 1);
 
     #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters 
-    #Delete intermediate files though?
+
+    #Define the output parameter for the cnvhmm so that it can be fed into downstream steps in a workflow
+    $self->cnv_hmm_file($cnvhmm_file);
 
     if ($verbose){print "\n\n";}
 

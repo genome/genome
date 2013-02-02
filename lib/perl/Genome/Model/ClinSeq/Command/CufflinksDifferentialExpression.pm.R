@@ -45,10 +45,10 @@ data = read.table(file=infile, sep="\t", header=TRUE, as.is=c(1:4), na.strings =
 #Create some plots to summarize the data pre normalization
 
 #Scatter plot of case vs. control FPKM values before normalization
-main_label = paste(case_label, " vs. ", control_label, " Expression (", type, ")", sep="")
+main_label = paste(control_label, " vs. ", case_label, " expression (", type, ")", sep="")
 x_label = paste(case_label, " - Cufflinks FPKM (log2)", sep="")
 y_label = paste(control_label, " - Cufflinks FPKM (log2)", sep="")
-png(filename = "case_vs_control_fpkm_scatter_prenorm.png", width = 600, height = 600, bg = "white")
+png(filename = "case_vs_control_fpkm_scatter_prenorm.png", width = 800, height = 800, bg = "white")
 plot(x=log2(data[,"case_fpkm"]+variance_stabilization), y=log2(data[,"control_fpkm"]+variance_stabilization), pch=16, cex=0.75, col="blue", xlab=x_label, ylab=y_label, main=main_label)
 abline(a=0, b=1, lwd=2, lty=2, col="black")
 abline(a=min_diff, b=1, lwd=1, lty=2, col="black")
@@ -96,10 +96,10 @@ data[,"case_fpkm_conf_lo"] = x3[,1]
 data[,"control_fpkm_conf_lo"] = x3[,2]
 
 #Scatter plot of case vs. control FPKM values after normalization
-main_label = paste(case_label, " vs. ", control_label, " Expression (", type, ")", sep="")
+main_label = paste(control_label, " vs. ", case_label, " expression (", type, ")", sep="")
 x_label = paste(case_label, " - Cufflinks FPKM (log2)", sep="")
 y_label = paste(control_label, " - Cufflinks FPKM (log2)", sep="")
-png(filename = "case_vs_control_fpkm_scatter_postnorm.png", width = 600, height = 600, bg = "white")
+png(filename = "case_vs_control_fpkm_scatter_postnorm.png", width = 800, height = 800, bg = "white")
 plot(x=log2(data[,"case_fpkm"]+variance_stabilization), y=log2(data[,"control_fpkm"]+variance_stabilization), pch=16, cex=0.75, col="blue", xlab=x_label, ylab=y_label, main=main_label)
 abline(a=0, b=1, lwd=2, lty=2, col="black")
 abline(a=min_diff, b=1, lwd=1, lty=2, col="black")
@@ -130,15 +130,11 @@ data[,"case_vs_control_de_hq"] = 0
 de_lq_i = which(abs(data[,"case_vs_control_log2_de"]) > min_diff)
 data[de_lq_i,"case_vs_control_de_lq"] = 1
 
-if (type == "gene"){
-  de_hq_i = which((abs(data[,"case_vs_control_log2_de"]) > min_diff) & ((data[,"case_fpkm_conf_hi"] <= data[,"control_fpkm_conf_lo"]) | (data[,"case_fpkm_conf_lo"] >= data[,"control_fpkm_conf_hi"])))
-  data[de_hq_i,"case_vs_control_de_hq"] = 1
-}
 
-if (type == "transcript"){
-  de_hq_i = which((abs(data[,"case_vs_control_log2_de"]) > min_diff) & (data[,"case_fpkm_status"] == "OK") & (data[,"control_fpkm_status"] == "OK") & ((data[,"case_fpkm_conf_hi"] <= data[,"control_fpkm_conf_lo"]) | (data[,"case_fpkm_conf_lo"] >= data[,"control_fpkm_conf_hi"])))
-  data[de_hq_i,"case_vs_control_de_hq"] = 1
-}
+#de_hq_i = which((abs(data[,"case_vs_control_log2_de"]) > min_diff) & (data[,"case_fpkm_status"] == "OK") & (data[,"control_fpkm_status"] == "OK") & ((data[,"case_fpkm_conf_hi"] <= data[,"control_fpkm_conf_lo"]) | (data[,"case_fpkm_conf_lo"] >= data[,"control_fpkm_conf_hi"])))
+de_hq_i = which((abs(data[,"case_vs_control_log2_de"]) > min_diff) & (data[,"case_fpkm_status"] == "OK") & (data[,"control_fpkm_status"] == "OK") & ((data[,"case_fpkm_conf_hi"] < data[,"control_fpkm_conf_lo"]) | (data[,"case_fpkm_conf_lo"] > data[,"control_fpkm_conf_hi"])))
+
+data[de_hq_i,"case_vs_control_de_hq"] = 1
 
 
 #Create some plots to summarize the final differential expression results
@@ -168,22 +164,43 @@ print({
 })
 dev.off();
 
-#Scatter plot of case vs. control FPKM values after normalization
-main_label = paste(case_label, " vs. ", control_label, " Expression (", type, ")", sep="")
+#Scatter plot of case vs. control FPKM values after normalization with hq and lq features indicated
+main_label = paste(case_label, " vs. ", control_label, " expression (", type, ")", sep="")
 x_label = paste(case_label, " - Cufflinks FPKM (log2)", sep="")
 y_label = paste(control_label, " - Cufflinks FPKM (log2)", sep="")
-png(filename = "case_vs_control_fpkm_scatter_postnorm.png", width = 600, height = 600, bg = "white")
+png(filename = "case_vs_control_fpkm_scatter_postnorm_de.png", width = 800, height = 800, bg = "white")
 plot(x=log2(data[,"case_fpkm"]+variance_stabilization), y=log2(data[,"control_fpkm"]+variance_stabilization), pch=16, cex=0.75, col="blue", xlab=x_label, ylab=y_label, main=main_label)
 
-lq_i = which(data[,"case_vs_control_de_lq"] == 1)
+lq_i = which(data[,"case_vs_control_de_lq"] == 1 & data[,"case_vs_control_de_hq"] == 0)
 hq_i = which(data[,"case_vs_control_de_hq"] == 1)
 
-points(x=log2(data[lq_i,"case_fpkm"]+variance_stabilization), y=log2(data[lq_i,"control_fpkm"]+variance_stabilization), pch=16, cex=0.5, col="orange")
-points(x=log2(data[hq_i,"case_fpkm"]+variance_stabilization), y=log2(data[hq_i,"control_fpkm"]+variance_stabilization), pch=16, cex=0.35, col="red")
-
+points(x=log2(data[lq_i,"case_fpkm"]+variance_stabilization), y=log2(data[lq_i,"control_fpkm"]+variance_stabilization), pch=16, cex=0.75, col="orange")
+points(x=log2(data[hq_i,"case_fpkm"]+variance_stabilization), y=log2(data[hq_i,"control_fpkm"]+variance_stabilization), pch=16, cex=0.75, col="red")
 abline(a=0, b=1, lwd=2, lty=2, col="black")
 abline(a=min_diff, b=1, lwd=1, lty=2, col="black")
 abline(a=min_diff*-1, b=1, lwd=1, lty=2, col="black")
+legend_text = c("no diff", "lq diff", "hq diff")
+legend("topleft", legend_text, pch=16, bg="white", col=c("blue","orange","red"))
+dev.off()
+
+#Scatter plot of case vs. control FPKM values after normalization with hq and lq features indicated - protein_coding only
+main_label = paste(case_label, " vs. ", control_label, " expression (protein coding ", type, ")", sep="")
+x_label = paste(case_label, " - Cufflinks FPKM (log2)", sep="")
+y_label = paste(control_label, " - Cufflinks FPKM (log2)", sep="")
+png(filename = "case_vs_control_fpkm_scatter_postnorm_coding_de.png", width = 800, height = 800, bg = "white")
+pc = which(data[,"biotype"] == "protein_coding")
+plot(x=log2(data[pc,"case_fpkm"]+variance_stabilization), y=log2(data[pc,"control_fpkm"]+variance_stabilization), pch=16, cex=0.75, col="blue", xlab=x_label, ylab=y_label, main=main_label)
+
+lq_i = which(data[,"case_vs_control_de_lq"] == 1 & data[,"case_vs_control_de_hq"] == 0 & data[,"biotype"] == "protein_coding")
+hq_i = which(data[,"case_vs_control_de_hq"] == 1 & data[,"biotype"] == "protein_coding")
+
+points(x=log2(data[lq_i,"case_fpkm"]+variance_stabilization), y=log2(data[lq_i,"control_fpkm"]+variance_stabilization), pch=16, cex=0.75, col="orange")
+points(x=log2(data[hq_i,"case_fpkm"]+variance_stabilization), y=log2(data[hq_i,"control_fpkm"]+variance_stabilization), pch=16, cex=0.75, col="red")
+abline(a=0, b=1, lwd=2, lty=2, col="black")
+abline(a=min_diff, b=1, lwd=1, lty=2, col="black")
+abline(a=min_diff*-1, b=1, lwd=1, lty=2, col="black")
+legend_text = c("no diff", "lq diff", "hq diff")
+legend("topleft", legend_text, pch=16, bg="white", col=c("blue","orange","red"))
 dev.off()
 
 
@@ -191,6 +208,24 @@ dev.off()
 
 #- case_vs_control.tsv
 write.table(data, file = "case_vs_control.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
+
+#- case_vs_control.lq.de.tsv
+i = which(data[,"case_vs_control_de_lq"] == 1)
+x = data[i,]
+o = order(abs(x[,"case_vs_control_log2_de"]), decreasing=TRUE)
+write.table(x[o,], file = "case_vs_control.lq.de.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
+
+#- case_vs_control.lq.up.tsv
+i = which(data[,"case_vs_control_de_lq"] == 1 & data[,"case_vs_control_log2_de"] > 0)
+x = data[i,]
+o = order(x[,"case_vs_control_log2_de"], decreasing=TRUE)
+write.table(x[o,], file = "case_vs_control.lq.up.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
+
+#- case_vs_control.lq.down.tsv
+i = which(data[,"case_vs_control_de_lq"] == 1 & data[,"case_vs_control_log2_de"] < 0)
+x = data[i,]
+o = order(x[,"case_vs_control_log2_de"], decreasing=FALSE)
+write.table(x[o,], file = "case_vs_control.lq.down.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
 #- case_vs_control.hq.de.tsv
 i = which(data[,"case_vs_control_de_hq"] == 1)
@@ -210,21 +245,21 @@ x = data[i,]
 o = order(x[,"case_vs_control_log2_de"], decreasing=FALSE)
 write.table(x[o,], file = "case_vs_control.hq.down.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
-#- case_vs_control.lq.de.tsv
-i = which(data[,"case_vs_control_de_lq"] == 1)
+#- case_vs_control.coding.hq.de.tsv
+i = which(data[,"case_vs_control_de_hq"] == 1 & data[,"biotype"] == "protein_coding")
 x = data[i,]
 o = order(abs(x[,"case_vs_control_log2_de"]), decreasing=TRUE)
-write.table(x[o,], file = "case_vs_control.lq.de.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
+write.table(x[o,], file = "case_vs_control.coding.hq.de.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
-#- case_vs_control.lq.up.tsv
-i = which(data[,"case_vs_control_de_lq"] == 1 & data[,"case_vs_control_log2_de"] > 0)
+#- case_vs_control.coding.hq.up.tsv
+i = which(data[,"case_vs_control_de_hq"] == 1 & data[,"case_vs_control_log2_de"] > 0 & data[,"biotype"] == "protein_coding")
 x = data[i,]
 o = order(x[,"case_vs_control_log2_de"], decreasing=TRUE)
-write.table(x[o,], file = "case_vs_control.lq.up.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
+write.table(x[o,], file = "case_vs_control.coding.hq.up.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
-#- case_vs_control.lq.down.tsv
-i = which(data[,"case_vs_control_de_lq"] == 1 & data[,"case_vs_control_log2_de"] < 0)
+#- case_vs_control.coding.hq.down.tsv
+i = which(data[,"case_vs_control_de_hq"] == 1 & data[,"case_vs_control_log2_de"] < 0 & data[,"biotype"] == "protein_coding")
 x = data[i,]
 o = order(x[,"case_vs_control_log2_de"], decreasing=FALSE)
-write.table(x[o,], file = "case_vs_control.lq.down.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
+write.table(x[o,], file = "case_vs_control.coding.hq.down.tsv", append = FALSE, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
