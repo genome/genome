@@ -111,6 +111,7 @@ BEGIN { $INC{ "UR/Time.pm"} = "no" };
 $ENV{GENOME_DB} ||= '/gsc/scripts/opt/genome/db';
 $ENV{GENOME_SW} ||= '/gsc/pkg/bio';
 $ENV{GENOME_SW_LEGACY_JAVA} ||= '/gsc/scripts/lib/java';
+$ENV{GENOME_SW_IGNORE} ||= '/gsc/bin:/gsc/scripts/bin';
 $ENV{GENOME_LOCK_DIR} ||= '/gsc/var/lock';
 $ENV{GENOME_SYS_GROUP} ||= 'info';
 $ENV{GENOME_FS_LOCAL_NETWORK_CACHE} = '/var/cache/tgisan';
