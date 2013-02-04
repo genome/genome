@@ -1666,7 +1666,11 @@ sub _unregister_software_results {
 sub _abandon_events { # does not realloc
     my $self = shift;
 
-    my @events = sort { $b->id <=> $a->id } $self->events;
+    my @events = do {
+        no warnings;
+        sort { $b->id <=> $a->id || $b->id cmp $a->id } $self->events;
+    };
+
     for my $event ( @events ) {
         unless ( $event->abandon ) {
             $self->error_message(
