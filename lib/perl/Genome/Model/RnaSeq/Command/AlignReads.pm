@@ -86,8 +86,15 @@ sub _generate_alignment_strategy {
     my $aligner = 'per-lane-tophat';
     my $aligner_version = $pp->read_aligner_version;
     my $aligner_params = $pp->read_aligner_params;
-    my $strategy = "instrument_data aligned to reference_sequence_build and annotation_build using $aligner $aligner_version [$aligner_params] then merged using picard $picard_version api v2";
-    return $strategy
+    my $strategy = "instrument_data aligned to reference_sequence_build and annotation_build using $aligner $aligner_version [$aligner_params] then merged using picard $picard_version";
+    if (defined($pp->deduplication_handler)) {
+        if ($pp->deduplication_handler eq 'picard') {
+            $strategy .= ' then deduplicated using '. $pp->deduplication_handler .' '. $picard_version;
+        } else {
+            die('Failed to recognize the deduplication_handler '. $pp->deduplication_handler);
+        }
+    }
+    return $strategy .' api v2';
 }
 
 1;

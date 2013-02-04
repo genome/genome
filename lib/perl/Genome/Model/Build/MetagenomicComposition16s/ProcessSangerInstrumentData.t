@@ -44,7 +44,8 @@ is(
 );
 
 my @amplicon_names;
-while ( my $amplicon = $amplicon_sets[0]->next_amplicon ) {
+my $amplicons = $amplicon_sets[0]->amplicon_iterator;
+while ( my $amplicon = $amplicons->() ) {
     push @amplicon_names, $amplicon->{name};
 }
 is_deeply(

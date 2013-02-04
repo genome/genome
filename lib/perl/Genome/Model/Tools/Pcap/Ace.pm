@@ -401,6 +401,11 @@ sub get_contig
     {
 		if($load)
 		{
+            # It was a pain in the butt to find where this file_name was
+            # "hard-coded" so I am hoping this log message will help someone in
+            # the future.
+            print STDERR "Loading ${contig_file}'s index from " . $contig_index->{file_name} . "...\n";
+
 			return $self->get_contig_old($contig_index);		
 		}
 		else

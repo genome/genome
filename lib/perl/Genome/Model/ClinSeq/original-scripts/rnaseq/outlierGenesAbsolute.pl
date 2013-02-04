@@ -48,17 +48,16 @@ BEGIN{
 #Input parameters
 my $cufflinks_dir = '';
 my $working_dir = '';
-my $ensembl_version = '';
 my $percent_cutoff = '';
 my $verbose = 0;
 
-GetOptions ('cufflinks_dir=s'=>\$cufflinks_dir, 'working_dir=s'=>\$working_dir, 'ensembl_version=i'=>\$ensembl_version, 'percent_cutoff=f'=>\$percent_cutoff, 'verbose=i'=>\$verbose);
+GetOptions ('cufflinks_dir=s'=>\$cufflinks_dir, 'working_dir=s'=>\$working_dir, 'percent_cutoff=f'=>\$percent_cutoff, 'verbose=i'=>\$verbose);
 
 my $usage=<<INFO;
 
   Example usage: 
   
-  outlierGenesAbsolute.pl  --cufflinks_dir=/gscmnt/gc2016/info/model_data/2880794613/build115909698/expression/  --working_dir=/gscmnt/sata132/techd/mgriffit/hgs/all1/rnaseq/absolute/  --ensembl_version=58
+  outlierGenesAbsolute.pl  --cufflinks_dir=/gscmnt/gc2016/info/model_data/2880794613/build115909698/expression/  --working_dir=/gscmnt/sata132/techd/mgriffit/hgs/all1/rnaseq/absolute/
   
   Intro:
   This script attempts to automate the process of running the 'clinseq' pipeline
@@ -66,13 +65,12 @@ my $usage=<<INFO;
   Details:
   --cufflinks_dir                 PATH.  'expression' directory containing Cufflinks output
   --working_dir                   PATH.  Directory where all output will be written
-  --ensembl_version               INT.   The version of Ensembl used to create the GTF file supplied to Tophat Cufflinks
   --percent_cutoff                FLOAT. The top N% of genes will be printed to a filtered file based on this cutoff (e.g. 1 for top 1%) [default 1]
   --verbose                       To display more output, set to 1
 
 INFO
 
-unless ($cufflinks_dir && $working_dir && $ensembl_version){
+unless ($cufflinks_dir && $working_dir){
   print GREEN, "$usage", RESET;
   exit();
 }
@@ -105,7 +103,9 @@ unless (-e $genes_infile && -e $isoforms_infile){
 my $entrez_ensembl_data = &loadEntrezEnsemblData();
 
 #Build a map of ensembl transcript ids to gene ids and gene names
-my $ensembl_map = &loadEnsemblMap('-ensembl_version'=>$ensembl_version);
+
+
+my $ensembl_map = &loadEnsemblMap('-transcript_info_path'=>$transcript_info_path);
 
 
 #Import a set of gene symbol lists (these files must be gene symbols in the first column, .txt extension, tab-delimited if multiple columns, one symbol per field, no header)
@@ -123,8 +123,8 @@ close(GOI);
 
 
 #Parse the genes.fpkm_tracking and isoforms.fpkm_tracking files
-my $fpkm = &parseFpkmFile('-infile'=>$genes_infile, '-outfile'=>$genes_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>$verbose);
-$fpkm = &parseFpkmFile('-infile'=>$isoforms_infile, '-outfile'=>$isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>$verbose);
+my $fpkm = &parseFpkmFile('-infile'=>$genes_infile, '-outfile'=>$genes_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
+$fpkm = &parseFpkmFile('-infile'=>$isoforms_infile, '-outfile'=>$isoforms_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
 
 #Merge the isoforms.fpkm_tracking file to the gene level
 my $merged_fpkm = &mergeIsoformsFile('-infile'=>$isoforms_infile, '-outfile'=>$isoforms_merge_file_sorted, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);

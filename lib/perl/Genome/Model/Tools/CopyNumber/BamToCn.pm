@@ -43,6 +43,11 @@ class Genome::Model::Tools::CopyNumber::BamToCn {
             is => 'String',
             doc => 'Chromosome to operate on',
         },
+        haploid_chromosomes => {
+            is => 'String',
+            doc => 'list of chromosomes that are potentially haploid (sex chrs, etc)',
+            default => 'X,Y'
+        },
         properly_matched_reads => {
             is => 'Boolean',
             doc => "use only properly matched reads",
@@ -140,8 +145,19 @@ sub execute {
 
     my $median=Statistics::Descriptive::Full->new();
     foreach my $chr(@chrs){
-      my $tmpchr=$chr; $tmpchr=~s/chr//i;
-      next unless($tmpchr=~/^\d+/);  #skip non-autosome
+
+      #skip non-diploid chromosomes
+      my $tmpchr=$chr; $tmpchr=~s/chr//i;      
+      my @sexchrs=split(",",$self->haploid_chromosomes);
+      my $skip=0;
+      foreach my $chr (@sexchrs){
+          if($tmpchr eq $chr){
+              $skip=1;
+          }
+      }
+      next if $skip;
+
+
       next unless defined($data{$chr});
       my $chr_median=&Get_Median($data{$chr});
       #print $output "#Chr${chr}_Median:$chr_median\n";

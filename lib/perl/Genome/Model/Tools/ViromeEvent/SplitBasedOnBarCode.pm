@@ -53,6 +53,21 @@ EOS
 sub execute {
     my $self = shift;
     $self->log_event("Spliting based on barcode ".basename($self->fasta_file));
+
+    if( not -s $self->barcode_file ) {
+        $self->log_event("Failed to find barcode file or file is zero size: ".$self->barcode_file);
+        return;
+    }
+    if( not -s $self->fasta_file ) {
+        $self->log_event("Failed to find fasta file or file is zero size: ".$self->fasta_file);
+        return;
+    }
+    if( not -d $self->dir ) {
+        mkdir $self->dir;
+        $self->log_event("Failed to find or create dir: ".$self->dir) and return if not
+            -d $self->dir;
+    }
+
     #CREATE A HASH LINKING SAMPLE NAME TO BARCODE SEQUENCE
     my $barcodes;
     unless ($barcodes = $self->_parse_barcode_file()) {

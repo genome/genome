@@ -24,7 +24,7 @@ my @amplicon_sets = $build->amplicon_sets;
 my @example_amplicon_sets = $example_build->amplicon_sets;
 ok(@amplicon_sets && @example_amplicon_sets, 'Got amplicon sets');
 for ( my $i = 0; $i < @example_amplicon_sets; $i++ ) {
-    for my $file_name (qw/ oriented_fasta_file oriented_qual_file /) {
+    for my $file_name (qw/ oriented_fasta_file oriented_qual_file classification_file /) {
         my $file = $example_amplicon_sets[$i]->$file_name;
         die "File ($file_name: $file) does not exist!" if not -s $file;
         Genome::Sys->create_symlink($file, $amplicon_sets[$i]->$file_name);
@@ -58,7 +58,7 @@ is($build->amplicons_chimeric_percent, sprintf('%.2f', $build->amplicons_chimeri
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
     my $set_name = $amplicon_sets[$i]->name;
     is($set_name, $example_amplicon_sets[$i]->name, "set name: $set_name");
-    for my $file_name (qw/ chimera_free_fasta_file chimera_free_qual_file /) {
+    for my $file_name (qw/ chimera_free_fasta_file chimera_free_qual_file chimera_free_classification_file /) {
         my $file = $amplicon_sets[$i]->$file_name;
         ok(-s $file, "$file_name exists for set $set_name");
         my $example_file = $example_amplicon_sets[$i]->$file_name;
@@ -69,6 +69,3 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
 
 #print $build->data_directory."\n"; <STDIN>;
 done_testing();
-exit;
-
-

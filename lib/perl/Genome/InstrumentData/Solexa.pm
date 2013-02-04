@@ -746,20 +746,20 @@ sub _convert_trimmer_params_to_command_line_params {
             return;
         }
     } elsif ( $trimmer_params =~ /--\S+?[= ]\S+/ ) {
-        while($trimmer_params =~ /--(\S+)?[= ](\S+)/g) {
-            my ($key, $value) = ($1, $2);
+        my @trimmer_params = split(/--/,$trimmer_params);
+        for my $trimmer_param (@trimmer_params) {
+            if ($trimmer_param =~ /^\s*$/) { next; }
+            my ($key,$value) = split(/[= ]/,$trimmer_param);
             #for compatibility with pre-SX far processing profiles
             if($trimmer_name eq 'far') {
                 next if $key eq 'format';
             }
-
             push @params, $key => $value;
         }
         #for compatibility with pre-SX far processing profiles
-        if($trimmer_version and $trimmer_name eq 'far') {
+        if( $trimmer_version and (  ($trimmer_name eq 'far') || ($trimmer_name eq 'flexbar') ) ) {
             push @params, 'version' => $trimmer_version;
         }
-
     } else {
         $self->error_message("Invalid params ($trimmer_params) to convert to command line params! $@");
         return;
@@ -769,7 +769,9 @@ sub _convert_trimmer_params_to_command_line_params {
     for ( my $i = 0; $i < @params; $i += 2 ) {
         $params[$i] =~ s/_/\-/g;
         $params[$i] = '--'.$params[$i];
-        $params[$i + 1] = "'".$params[$i + 1]."'";
+        if ( defined($params[$i + 1]) && ($params[$i + 1] =~ /\S+/) ) {
+            $params[$i + 1] = "'".$params[$i + 1]."'";
+        }
     }
 
     return join(' ', @params);

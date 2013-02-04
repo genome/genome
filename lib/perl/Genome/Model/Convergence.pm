@@ -39,6 +39,8 @@ EODOC
 
 # Updates the convergence model immediately prior to a build starting. In this case, makes sure
 # that the convergence model's subject is correct.
+# TODO: make this a callback for an observer on Genome::Model::Build::Convergence create()
+# so we can get rid of this method.  It is only used for Convergence and refalign.
 sub check_for_updates {
     my $self = shift;
     my $subject = $self->subject;

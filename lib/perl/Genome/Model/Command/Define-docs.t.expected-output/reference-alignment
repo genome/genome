@@ -5,8 +5,8 @@
     [--genotype-microarray-model=?] [--target-region-set-names=?[,?]]
     [--region-of-interest-set-name=?] [--merge-roi-set] [--short-roi-names] [--roi-track-name=?]
     --processing-profile=? --reference-sequence-build=? [--add-to-projects=?[,?]]
-    [--annotation-reference-build=?] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
-    [--model-name=?] [--dbsnp-model=?] [--dbsnp-build=?]
+    [--annotation-reference-build=?] [--genotype-microarray=?] [--instrument-data=?[,?]]
+    [--subject=?] [--groups=?[,?]] [--model-name=?] [--dbsnp-model=?] [--dbsnp-build=?]
 
 [4mSYNOPSIS[0m
   genome model define reference-alignment \
@@ -30,6 +30,8 @@
     add the new model to these projects (model groups) 
   [1mannotation-reference-build[0m
     ID or name of the the build containing the reference transcript set used for variant annotation 
+  [1mgenotype-microarray[0m
+    Genotype Microarray model used for QC and Gold SNP Concordance report 
   [1minstrument-data[0m
     Instrument data to be assigned to the model, can provide a query to resolve, a list of ids, etc 
   [1msubject[0m

@@ -1,3 +1,5 @@
+
+
 #This file contains code to graph a small region of interest from BamToCna data
 plot_spectrum=function(spectrum_file="",output_file="",genome="",absolute_axis=T) {
     read.table(spectrum_file,fill=T,header=T,row.names=1)->spectrum;
@@ -262,7 +264,8 @@ calc_pvalue <- function(inputDF,pattern="->") {
 
 
 make_dodge_barplot_facet_sample <- function (inputFile,plot_title="",num_row=NULL,outputFile=NULL,y_lim=c(0,1))  {
-
+#takes the output of gmt analysis summarize mutation-spectrum
+  
   library("ggplot2");
   
   mutation_spectrum <- read.table(inputFile,sep="\t",header=F);
@@ -314,7 +317,7 @@ make_dodge_barplot_facet_sample <- function (inputFile,plot_title="",num_row=NUL
 }
 
 
-make_dodge_barplot_sample <- function (inputFile,plot_title="",label_angle=90,outputFile=NULL,y_lim=c(0,1),legend_bottom=FALSE)  {
+make_barplot_sample <- function (inputFile,plot_title="",label_angle=0,outputFile=NULL,y_lim=c(0,1),legend_bottom=FALSE,plot_type='dodge')  {
 
   library("ggplot2");
   
@@ -332,11 +335,16 @@ make_dodge_barplot_sample <- function (inputFile,plot_title="",label_angle=90,ou
   p <- ggplot(mut_spec1,aes(x=label,y=percent,fill=Category));
   p <- p + geom_bar(position='dodge',stat="identity",width=0.9);
   p <- p + geom_bar(position='dodge',stat="identity",width=0.9,colour='black',legend=FALSE);
+  if(plot_type == 'stack') { #switch to stack barplot
+    p <- p + geom_bar(position='fill',stat="identity",width=0.9);
+    p <- p + geom_bar(position='fill',stat="identity",width=0.9,colour='black',legend=FALSE);
+    label_angle=90;  #if user specify stackbar graph, label should be turned 90 degrees
+  }
   p <- p + theme_bw();
-  p <- p + scale_y_continuous(name='% Total Mutations',limits=c(0,1),formatter="percent");
+  p <- p + scale_y_continuous(name='% Total Mutations',limits=c(0,1),formatter="percent",expand=c(0,0));
   p <- p + scale_fill_brewer(pal="Dark2");
-  p <- p + scale_x_discrete(name="");
-  p <- p + coord_cartesian(ylim=y_lim);
+  p <- p + scale_x_discrete(name="",expand=c(0,0));
+  #p <- p + coord_cartesian(ylim=y_lim);
   p <- p + opts(title=plot_title,plot.title=theme_text(face="bold",size=16),axis.text.x=theme_text(angle=label_angle));
   if(legend_bottom) {
     p <- p + opts(legend.position='bottom',legend.direction='horizontal',legend.title=theme_blank());
@@ -347,6 +355,11 @@ make_dodge_barplot_sample <- function (inputFile,plot_title="",label_angle=90,ou
   
   p2 <- ggplot(mut_spec2,aes(x=label,y=percent,fill=Category));
   p2 <- p2 + geom_bar(position='dodge',stat="identity",width=0.9);
+  if(plot_type == 'stack') { #switch to stack barplot
+    p2 <- p2 + geom_bar(position='fill',stat="identity",width=0.9);
+    p2 <- p2 + geom_bar(position='fill',stat="identity",width=0.9,colour='black',legend=FALSE);
+    label_angle=90;  #if user specify stackbar graph, label should be turned 90 degrees 
+  }
   p2 <- p2 + theme_bw();
   p2 <- p2 + scale_y_continuous(name='% Total Mutations',limits=c(0,1),formatter="percent");
   p2 <- p2 + scale_fill_manual(value=c("red3","mediumblue"));
@@ -406,6 +419,84 @@ plot_mutation_spectrum_seq_context <- function(input_file,plot_title=" ",output_
 
   
 }
+
+plot_mutation_spectrum_seq_contextV2 <- function(input4type,input2type,plot_title=" ",output_file=NULL) {
+  #this version plots seq context for A/T/C/G and another plot for purine/pyrimidine
+
+  library('ggplot2');
+  
+  data.in=read.table(input4type,header=F,sep="\t");
+  data.in$V1 = factor(data.in$V1,levels=c('A','C','A->C','C->A','A->G','C->G','A->T','C->T'));
+
+  #stack barplot with mutation category in different colors
+  p1 <- ggplot(data.in,aes(x=factor(V2),y=V4,fill=V3));
+  p1 <- p1 + geom_bar(position='stack',stat="identity");
+  p1 <- p1 + geom_bar(position='stack',stat="identity", colour='black',legend=FALSE);
+  p1 <- p1 + facet_wrap( ~ V1, scales='free_y',nrow=4);
+  #p1 <- p1 + scale_fill_brewer(pal="Set1",breaks=levels(data.in$V3));
+  p1 <- p1 + scale_fill_manual(name="Base",value=c('A'=colors()[448],'T'=colors()[554],'G'=colors()[195],'C'=colors()[566]));
+  p1 <- p1 + scale_x_discrete('Relative Position',expand=c(0,0));
+  p1 <- p1 + scale_y_continuous("Number of Mutations",expand=c(0,0));
+  p1 <- p1 + opts(title=plot_title,plot.title = theme_text(size=14, lineheight=.8, face="bold"),axis.text.y=theme_text(colour='black'),axis.text.x=theme_text(colour='black'),panel.grid.major=theme_blank(),panel.grid.minor=theme_blank(),panel.background=theme_rect(fill=colors()[141]),strip.text.x=theme_text(face="bold"),strip.background=theme_rect(fill=colors()[15]));
+
+  data.in2<-read.table(input2type,header=F,sep="\t");
+  data.in2$V1 = factor(data.in2$V1,levels=c('A','C','A->C','C->A','A->G','C->G','A->T','C->T'));
+  #stack barplot with mutation category in different colors
+  p2 <- ggplot(data.in2,aes(x=factor(V2),y=V4,fill=V3));
+  p2 <- p2 + geom_bar(position='stack',stat="identity");
+  p2 <- p2 + geom_bar(position='stack',stat="identity", colour='black',legend=FALSE);
+  p2 <- p2 + facet_wrap( ~ V1, scales='free_y',nrow=4);
+  #p2 <- p2 + scale_fill_brewer(pal="Set1",breaks=levels(data.in2$V3));
+  p2 <- p2 + scale_fill_manual(name="Base",value=c('purine'=colors()[81],'pyrimidine'=colors()[93]));
+  p2 <- p2 + scale_x_discrete('Relative Position',expand=c(0,0));
+  p2 <- p2 + scale_y_continuous("Number of Mutations",expand=c(0,0));
+  p2 <- p2 + opts(title=plot_title,plot.title = theme_text(size=14, lineheight=.8, face="bold"),axis.text.y=theme_text(colour='black'),axis.text.x=theme_text(colour='black'),panel.grid.major=theme_blank(),panel.grid.minor=theme_blank(),panel.background=theme_rect(fill=colors()[141]),strip.text.x=theme_text(face="bold"),strip.background=theme_rect(fill=colors()[15]));
+  
+  #if output pdf file is not defined, return ggplot object
+  #otherwise print the plot to the pdf file.
+  if(!is.null(output_file)) {
+    pdf(file=output_file,width=12,height=8);
+    print(p1);
+    print(p2);
+    dev.off();
+  }
+  else {
+    return(list(type4=p1,type2=p2));
+    #return(p);
+  }
+
+
+  
+}
+
+compare_prop2populations <- function(input_file,output_file) {
+
+  input.df <- read.table(input_file,header=F,sep="\t");
+
+  count_data <- input.df[,4:7];  #save the 4th-7th column into a separate dataframe
+  p.values <- apply(count_data,1,do_proportion_test);
+  p.values.adjusted <- p.adjust(p.values,method='fdr');
+
+  input.df <- cbind(input.df,p.values,p.values.adjusted);
+  
+  write.table(input.df,file=output_file,quote=F,row.names=F,col.names=F,sep="\t");
+
+}
+
+
+do_proportion_test <- function(input_vector) {
+
+  x <- input_vector[1:2];
+  n <- input_vector[3:4];
+
+  prop.test.obj <- prop.test(x,n);
+
+  return(prop.test.obj$p.value);
+
+}
+
+
+
 
 plot_mutation_spectrum_bystrand <- function(inputFile,plot_title=NULL,outputFile=NULL,num_row=2,file_width=6,file_height=6 ) {
 

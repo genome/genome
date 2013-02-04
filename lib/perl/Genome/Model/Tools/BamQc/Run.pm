@@ -32,9 +32,10 @@ class Genome::Model::Tools::BamQc::Run {
         },
         reference_sequence => {
             is => 'Text',
+            is_optional => 1,
             doc => 'The reference sequence for which the BAM file was aligned to.',
             # GRCh37-lite-build37
-            default_value => '/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fasta',
+            #default_value => '/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fasta',
         },
         # TODO: Add option for aligner, bwasw would require some additional tools to determine unique alignments
     ],
@@ -123,6 +124,10 @@ sub execute {
     unless (-e $self->bam_file) {
         die('Failed to find BAM file: '. $self->bam_file);
     }
+
+    #TODO: Validate BAM sort order or at least throw a warning if not found
+    #BAM header tag under @HD SO, valid values: unknown (default), unsorted, queryname and coordinate
+    
     my ($bam_basename,$bam_dirname,$bam_suffix) = File::Basename::fileparse($self->bam_file,qw/\.bam/);
     my $file_basename = $output_directory .'/'. $bam_basename;
 
@@ -148,6 +153,7 @@ sub execute {
                 maximum_permgen_memory => $self->picard_maximum_permgen_memory,
                 maximum_memory => $self->picard_maximum_memory,
                 input_file => $bam_path,
+                output_file => $bai_path,
             )) {
                 die('Failed to index BAM file: '. $bam_path);
             }
@@ -185,7 +191,6 @@ sub execute {
     
     my %workflow_params = (
         picard_version => $self->picard_version,
-        reference_sequence => $self->reference_sequence,
         output_directory => $output_directory,
         bam_file => $bam_path,
         clean_bam => 'none',
@@ -202,9 +207,9 @@ sub execute {
         read_length_histogram => $read_length_histo,
         alignment_length_histogram => $alignment_length_histo,
     );
+    
     my @output_properties = qw/
                                   picard_metrics_result
-                                  picard_gc_bias_result
                                   samstat_result
                                   fastqc_result
                                   read_length_result
@@ -223,7 +228,11 @@ sub execute {
             push @output_properties, 'flagstat_result';
         }
     }
-    if ($self->error_rate) {
+    if ($self->reference_sequence) {
+        $workflow_params{reference_sequence} = $self->reference_sequence;
+        push @output_properties, 'picard_gc_bias_result';
+    }
+    if ($self->error_rate && $self->reference_sequence) {
         my $error_rate_file = $file_basename .'-ErrorRate.tsv';
         if (-e $error_rate_file) {
             die('Error rate file already exists at: '. $error_rate_file);
@@ -232,7 +241,7 @@ sub execute {
         $workflow_params{error_rate_pileup} = $self->error_rate_pileup;
         push @output_properties, 'error_rate_result';
     }
-    if ($self->roi_file_path) {
+    if ($self->roi_file_path && $self->reference_sequence) {
         my $refcov_stats_file = $file_basename .'-RefCov_STATS.tsv';
         $workflow_params{roi_file_path} = $self->roi_file_path;
         $workflow_params{roi_file_format} = $self->roi_file_format;
@@ -279,7 +288,6 @@ sub execute {
         class_name => 'Genome::Model::Tools::Picard::CollectMultipleMetrics',
         input_properties => {
             'bam_file' => 'input_file',
-            'reference_sequence' => 'reference_sequence',
             'picard_metrics_output_basename' => 'output_basename',
             'picard_version' => 'use_version',
             'picard_maximum_memory' => 'maximum_memory',
@@ -289,33 +297,38 @@ sub execute {
             'result' => 'picard_metrics_result',
         },
     );
+    if ($self->reference_sequence) {
+        $picard_metrics_operation_params{input_properties}{'reference_sequence'} = 'reference_sequence';
+    }
     my $picard_metrics_operation = $self->setup_workflow_operation(%picard_metrics_operation_params);
     my $max_memory = $self->picard_maximum_memory + 2;
     $picard_metrics_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
     
     # PicardGcBias
-    my %picard_gc_bias_operation_params = (
-        workflow => $workflow,
-        name => $self->id .' Collect Picard G+C Bias '. $self->bam_file,
-        class_name => 'Genome::Model::Tools::Picard::CollectGcBiasMetrics',
-        input_properties => {
-            'bam_file' => 'input_file',
-            'reference_sequence' => 'refseq_file',
-            'clean_bam' => 'clean_bam',
-            'picard_version' => 'use_version',
-            'picard_maximum_memory' => 'maximum_memory',
-            'picard_maximum_permgen_memory' => 'maximum_permgen_memory',
-            'picard_max_records_in_ram' => 'max_records_in_ram',
-            'picard_gc_metrics_file' => 'output_file',
-            'picard_gc_chart_file' => 'chart_output',
-            'picard_gc_summary_file' => 'summary_output',
-        },
-        output_properties => {
-            'result' => 'picard_gc_bias_result',
-        },
-    );
-    my $picard_gc_bias_operation = $self->setup_workflow_operation(%picard_gc_bias_operation_params);
-    $picard_gc_bias_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
+    if ($workflow_params{reference_sequence}) {
+        my %picard_gc_bias_operation_params = (
+            workflow => $workflow,
+            name => $self->id .' Collect Picard G+C Bias '. $self->bam_file,
+            class_name => 'Genome::Model::Tools::Picard::CollectGcBiasMetrics',
+            input_properties => {
+                'bam_file' => 'input_file',
+                'reference_sequence' => 'refseq_file',
+                'clean_bam' => 'clean_bam',
+                'picard_version' => 'use_version',
+                'picard_maximum_memory' => 'maximum_memory',
+                'picard_maximum_permgen_memory' => 'maximum_permgen_memory',
+                'picard_max_records_in_ram' => 'max_records_in_ram',
+                'picard_gc_metrics_file' => 'output_file',
+                'picard_gc_chart_file' => 'chart_output',
+                'picard_gc_summary_file' => 'summary_output',
+            },
+            output_properties => {
+                'result' => 'picard_gc_bias_result',
+            },
+        );
+        my $picard_gc_bias_operation = $self->setup_workflow_operation(%picard_gc_bias_operation_params);
+        $picard_gc_bias_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
+    }
     
     # SamStat
     my %samstat_operation_params = (
@@ -349,7 +362,7 @@ sub execute {
     $self->setup_workflow_operation(%fastqc_operation_params);
 
     # ErrorRate
-    if ($self->error_rate) {
+    if ($workflow_params{reference_sequence} && $self->error_rate) {
         my %error_rate_operation_params = (
             workflow => $workflow,
             name => $self->id .' BioSamtools Error Rate '. $self->bam_file,
@@ -387,7 +400,8 @@ sub execute {
 
     # RefCov
     # WARNING: MUST USE PERL 5.10.1
-    if ($self->roi_file_path) {
+    # TODO: The reference_sequence is not a required output
+    if ($workflow_params{reference_sequence} && $self->roi_file_path) {
         my %refcov_operation_params = (
             workflow => $workflow,
             name => $self->id .' RefCov '. $self->bam_file,

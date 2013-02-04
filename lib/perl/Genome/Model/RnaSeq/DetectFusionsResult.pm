@@ -20,6 +20,12 @@ class Genome::Model::RnaSeq::DetectFusionsResult {
             is_optional => 1,
             doc => 'parameters for the chosen fusion detector'
         },
+        picard_version => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'the version of picard used to manipulate BAM files',
+            default_value => '1.82',
+        },
     ],
     has_input => [
         alignment_result => {
@@ -82,29 +88,26 @@ sub _get_fastq_files {
 
     $alignment_result->add_user(label => 'uses' , user => $self);
 
+    
     my $fastq1 = $self->temp_staging_directory . "/fastq1";
     my $fastq2 = $self->temp_staging_directory . "/fastq2";
-
-    my $conversion_cmd_first_read = Genome::Model::Tools::Sam::BamToFastq->create(
-        bam_file  => $alignment_result->bam_file,
-        fastq_file  => $fastq1,
-        include_flag => 0x0040,
+    
+    my $cmd = Genome::Model::Tools::Picard::StandardSamToFastq->create(
+        input            => $alignment_result->bam_file,
+        fastq            => $fastq1,
+        second_end_fastq => $fastq2,
+        re_reverse       => 1,
+        include_non_pf_reads => 1,
+        include_non_primary_alignments => 0,
+        use_version      => $self->picard_version,
+        maximum_memory => 30,
+        maximum_permgen_memory => 256,
+        max_records_in_ram => 5_000_000,
+        additional_jvm_options => '-XX:-UseGCOverheadLimit',
     );
-
-    unless($conversion_cmd_first_read->execute){
-        die("Could not convert the bam file to fastq! (first reads)");
+    unless ($cmd->execute){
+        die("Could not convert the bam file to fastq!");
     }
-
-    my $conversion_cmd_second_read = Genome::Model::Tools::Sam::BamToFastq->create(
-        bam_file  => $alignment_result->bam_file,
-        fastq_file  => $fastq2,
-        include_flag => 0x0080,
-    );
-
-    unless($conversion_cmd_second_read->execute){
-        die("Could not convert the bam file to fastq! (second reads)");
-    }
-
     my @result = ($fastq1, $fastq2);
     return \@result;
 }

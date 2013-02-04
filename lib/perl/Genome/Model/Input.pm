@@ -18,7 +18,6 @@ class Genome::Model::Input {
     ],
     has => [
         model        => { is => 'Genome::Model', id_by => 'model_id', constraint_name => 'GMI_GM_FK' },
-        model_name   => { via => 'model', to => 'name' },
         value        => { is => 'UR::Object', id_by => 'value_id', id_class_by => 'value_class_name' },
         filter_desc => { 
             is => 'Text',
@@ -27,13 +26,24 @@ class Genome::Model::Input {
             doc => 'Filter to apply on the input value.'
         },
     ],
+    has_deprecated => [
+        # this is the mate to model "inputs" intead of "input_associations"
+        # the former is ambiguous, the later distinguishes between input_associations and input_values
+        _model      => { is => 'Genome::Model', id_by => 'model_id', },
+
+        # this sort of thing only existed for listers and is no longer needed with the dot syntax
+        # remove when possible
+        model_name   => { via => 'model', to => 'name' },
+    ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
 };
 
 sub __display_name__ {
     my $self = shift;
-    return $self->value_class_name . ': ' . $self->value_id;
+    my $model = $self->model;
+    my $value = $self->value;
+    return (($model ? $model->__display_name__ : "") . " " . $self->name . ": " . ($value ? $value->__display_name__ : ""));
 }
 
 sub delete {

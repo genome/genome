@@ -27,51 +27,33 @@ class Genome::Model::Build::MetagenomicComposition16s::AmpliconSet {
         classifier => { is => 'Text', },
         classification_dir => { calculate => q| return $self->directory.'/classification'; |, },
         classification_file => { calculate => q| return $self->_file_for('classification'); |, },
+        chimera_free_classification_file => { calculate => q| return $self->_file_for('chimera_free_classification'); |, },
         # chimera
+        chimera_detector => { is => 'Text', is_optional => 1, },
         chimera_dir => {  calculate => q| return $self->directory.'/chimera'; |, }, 
         chimera_file => {  calculate => q| return $self->_file_for('chimera'); |, }, 
     ],
     has_optional => [
         oriented_qual_file => { is => 'Text', },
-        _amplicon_iterator => { is => 'Code', },
     ],
 };
 
 #< Amplicons >#
-sub has_amplicons {
-    my $self = shift;
-
-    # Does the iterator exist?
-    return 1 if $self->{_amplicon_iterator};
-
-    # Do the fasta/qual files exist?
-    my $fasta_file = $self->processed_fasta_file;
-    my $qual_file = $self->processed_qual_file;
-    return 1 if -e $fasta_file and -e $qual_file;
-
-    return;
-}
-
-sub next_amplicon {
-    my $self = shift;
-    my $amplicon_iterator = $self->amplicon_iterator;
-    return if not $amplicon_iterator;
-    return $amplicon_iterator->();
-}
-
 sub amplicon_iterator {
+    # This iterator will ALWAYS include chimeric amplicons!
     my $self = shift;
 
-    return $self->{_amplicon_iterator} if $self->{_amplicon_iterator};
-
+    # Sequence
     my $fasta_file = $self->oriented_fasta_file;
     my $qual_file = $self->oriented_qual_file;
-    if ( not -e $fasta_file or not -e $qual_file ) {
+    my $source = 'oriented';
+    if ( not -s $fasta_file or not -s $qual_file ) {
         $fasta_file = $self->processed_fasta_file;
         $qual_file = $self->processed_qual_file;
-        if ( not -e $fasta_file or not -e $qual_file ) {
+        if ( not -s $fasta_file or not -s $qual_file ) {
             return;
         }
+        $source = 'processed';
     }
 
     my $reader =  Genome::Model::Tools::Sx::PhredReader->create( 
@@ -83,6 +65,8 @@ sub amplicon_iterator {
         return;
     }
 
+    # Classifcation
+    #  Try chimera free classification first, then classification file
     my $classification_file = $self->classification_file;
     my ($classification_io, $classification_line);
     if ( -s $classification_file ) {
@@ -95,35 +79,53 @@ sub amplicon_iterator {
         chomp $classification_line;
     }
 
+    # Chimera
+    my $chimera_file = $self->chimera_file;
+    my ($chimera_reader, $chimera);
+    if ( -s $chimera_file ) {
+        $chimera_reader = $self->chimera_detector_reader_class->create(input => $chimera_file);
+        if ( not $chimera_reader ) {
+            $self->error_message('Failed to get chimera reader!');
+            return;
+        }
+        $chimera = $chimera_reader->read;
+    }
+
+    # Iterator
     my $amplicon_iterator = sub{
         my $seq = $reader->read;
         return unless $seq;
 
         my %amplicon = (
+            id => $seq->{id},
             name => $seq->{id},
-            reads => [ $seq->{id} ],
-            reads_processed => 1,
             seq => $seq,
+            source => $source,
         );
 
-        return \%amplicon if not $classification_line;
+        if ( $classification_line ) {
+            my @classification = split(';', $classification_line); # 0 => id | 1 => ori
+            if ( not defined $classification[0] ) {
+                Carp::confess('Malformed classification line: '.$classification_line);
+            }
+            if ( $seq->{id} eq $classification[0] ) {
+                $amplicon{classification_line} = $classification_line;
+                $amplicon{classification} = \@classification;
 
-        my @classification = split(';', $classification_line); # 0 => id | 1 => ori
-        if ( not defined $classification[0] ) {
-            Carp::confess('Malformed classification line: '.$classification_line);
+                $classification_line = $classification_io->getline;
+                chomp $classification_line if $classification_line;
+            }
         }
-        if ( $seq->{id} ne $classification[0] ) {
-            return \%amplicon;
+
+        if ( $chimera and $amplicon{id} eq $chimera->{id} ) {
+            $amplicon{chimera_result} = $chimera;
+            $chimera = $chimera_reader->read;
         }
 
-        $classification_line = $classification_io->getline;
-        chomp $classification_line if $classification_line;
-
-        $amplicon{classification} = \@classification;
         return \%amplicon;
     };
 
-    return $self->{_amplicon_iterator} = $amplicon_iterator;
+    return $amplicon_iterator;
 }
 #<>#
 
@@ -152,6 +154,7 @@ sub _file_for {
         oriented_qual => [qw/ fasta_dir oriented.fasta.qual /],
         chimera => [qw/ chimera_dir chimera /],
         classification => [ 'classification_dir', $self->classifier ],
+        chimera_free_classification => [ 'classification_dir', 'chimera_free.'.$self->classifier ],
     );
     Carp::confess("Invalid type ($type) given to get file") unless $types_and_props{$type};
     my ($method, $ext) = @{$types_and_props{$type}};
@@ -206,6 +209,12 @@ sub seq_writer_for {
     }
 
     return $writer;
+}
+
+sub chimera_detector_reader_class {
+    my $self = shift;
+    return 'Genome::Model::Tools::'.Genome::Utility::Text::string_to_camel_case(join(' ', split('-', $self->chimera_detector))).'::Reader';
+
 }
 #<>#
 

@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Command::BuildRelatedList {
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     is_abstract => 1,
     has_optional => [
         filter => {

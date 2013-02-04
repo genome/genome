@@ -13,6 +13,7 @@ use File::Temp;
 use Test::More tests=>36;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Utility::Test qw(compare_ok);
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -110,16 +111,15 @@ foreach my $file (qw|output/task.complete indels.hq.bed indels.hq.v1.bed indels.
     or diag("Diff: $diff\n");
 }
 
-my $expected = `cat $expected_output_dir/output/config/run.config.ini | grep -v "^configurationCmdline" | grep -v "^outDir"`;
-my $actual = `cat $actual_output_dir/output/config/run.config.ini | grep -v "^configurationCmdline" | grep -v "^outDir"`;
-my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
-ok(!$diff, "output matched expected result for output/config/run.config.ini")
-or  diag("Diff: $diff\n");
-
+my $expected = "$expected_output_dir/output/config/run.config.ini";
+my $actual = "$actual_output_dir/output/config/run.config.ini";
+compare_ok($expected, $actual,
+    name => "output matched expected result for output/config/run.config.ini",
+    filters => [qr(^refFile = .*), qr(^configurationCmdline.*), qr(^outDir.*)]);
 
 $expected = `cat $expected_output_dir/output/Makefile | grep -v "^script_dir" | grep -v "^analysis_dir" | grep -v "^config_file"`;
 $actual = `cat $actual_output_dir/output/Makefile | grep -v "^script_dir" | grep -v "^analysis_dir" | grep -v "^config_file"`;
-$diff = Genome::Sys->diff_text_vs_text($actual, $expected);
+my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
 ok(!$diff, "output matched expected result for output/Makefile")
 or diag("Diff: $diff\n");
 

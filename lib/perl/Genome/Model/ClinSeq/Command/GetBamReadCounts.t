@@ -35,7 +35,7 @@ my $code_dir = abs_path(File::Basename::dirname(__FILE__));
 ok(-e $code_dir, "Found current code dir: $code_dir");
 
 #Define the path to test input and expected results files
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-GetBamReadCounts/2012-11-29';
+my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-GetBamReadCounts/2013-01-31';
 ok(-e $expected_data_directory, "Found expected data directory: $expected_data_directory");
 
 #Check for input positions file
@@ -50,17 +50,17 @@ ok(-e $expected_result_file, "Found expected results file: GetBamReadCounts.t.ex
 #Use the input Somatic Variation and RNA-seq builds from that ClinSeq build for testing here
 
 #WGS somatic variation build
-my $wgs_som_var_build_id = '119390903';
+my $wgs_som_var_build_id = '129396794';
 my $wgs_som_var_build = Genome::Model::Build->get($wgs_som_var_build_id);
 ok($wgs_som_var_build, "Obtained a wgs somatic variation build from id: $wgs_som_var_build_id");
 
 #Exome somatic variation build
-my $exome_som_var_build_id = '119391641';
+my $exome_som_var_build_id = '129396799';
 my $exome_som_var_build = Genome::Model::Build->get($exome_som_var_build_id);
 ok($exome_som_var_build, "Obtained an exome somatic variation build from id: $exome_som_var_build_id");
 
 #RNA-seq tumor build
-my $rna_seq_tumor_build_id = '115909698';
+my $rna_seq_tumor_build_id = '129396808';
 my $rna_seq_tumor_build = Genome::Model::Build->get($rna_seq_tumor_build_id);
 ok($rna_seq_tumor_build, "Obtained an rna seq tumor build from id: $rna_seq_tumor_build_id");
 
@@ -73,7 +73,6 @@ my @params = ('positions_file' => $input_positions_file);
 push (@params, ('wgs_som_var_build' => $wgs_som_var_build));
 push (@params, ('exome_som_var_build' => $exome_som_var_build));
 push (@params, ('rna_seq_tumor_build' => $rna_seq_tumor_build));
-push (@params, ('ensembl_version' => 58));
 push (@params, ('output_file' => $output_file));
 push (@params, ('verbose' => $verbose));
 my $bam_rc_cmd = Genome::Model::ClinSeq::Command::GetBamReadCounts->create(@params);
