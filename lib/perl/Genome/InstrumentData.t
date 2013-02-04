@@ -41,7 +41,7 @@ for my $platform (keys %seq_plats_and_ids) {
         
         if ( $platform eq 'solexa' ) {
             is($instrument_data->sample_type,'rna','got expected sample type');
-            is($instrument_data->resolve_quality_converter,'sol2sanger','got expected quality converter');
+            is($instrument_data->resolve_quality_converter,'sol2phred','got expected quality converter for ' . $instrument_data->native_qual_type);
         }
     }
 }
