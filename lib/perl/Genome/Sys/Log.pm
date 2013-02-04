@@ -32,9 +32,9 @@ my $callback = sub {
         no warnings;
         Carp::confess("self is undef, are you using the latest UR?: @_");
     }
-    if (not defined $message) {
+    if (not defined $type) {
         no warnings;
-        Carp::confess("message is undef, are you using the latest UR?: @_");
+        Carp::confess("type is undef, are you using the latest UR?: @_");
     }
 
     # make the logger on the first call
