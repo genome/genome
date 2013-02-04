@@ -32,10 +32,6 @@ my $callback = sub {
         no warnings;
         Carp::confess("self is undef, are you using the latest UR?: @_");
     }
-    if (not defined $type) {
-        no warnings;
-        Carp::confess("type is undef, are you using the latest UR?: @_");
-    }
 
     # make the logger on the first call
     unless ($log4perl) {
