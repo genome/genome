@@ -68,8 +68,10 @@ sub execute {
     }
 
     my $report = $self->_create_report(\%under_allocated_volumes);
-    $self->status_message($report);
-    $self->_send_report(\%under_allocated_volumes, $report);
+    if ($report) {
+        $self->status_message($report);
+        $self->_send_report(\%under_allocated_volumes, $report);
+    }
 
     return 1;
 }
