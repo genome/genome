@@ -80,6 +80,10 @@ if ($] < 5.01) {
 
 require Genome::Sys;
 
+# this is only on the publicly-released GMS to handle things we must ship for functionality
+# but will not be part of individual package releases.
+require Genome::Site::Deprecated;
+
 # DB::single is set to this value in many places, creating a source-embedded break-point
 # set it to zero in the debugger to turn off the constant stopping...
 $DB::stopper = 1;

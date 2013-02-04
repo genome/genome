@@ -18,6 +18,7 @@ sub __patched_errors__ {
 };
 
 no warnings;
+delete $UR::Object::{__errors__};
 Sub::Install::install_sub({
     code => \&Genome::UrPatch::__patched_errors__,
     into => "UR::Object",
