@@ -227,11 +227,11 @@ sub process_item {
     }
 
     # There are no transcripts in common.  Pick a different transcript for each breakpoint 
-    if ( defined $aTranscriptRef and scalar(@{$aTranscriptRef}) >= 1 and not scalar(@$inCommonRef)) { 
+    if ( defined $aTranscriptRef and scalar(@{$aTranscriptRef}) >= 1 and (not defined $inCommonRef or not scalar(@$inCommonRef))) { 
         my $transcript = chooseBestTranscript($aTranscriptRef, $item->{bpA});
         ($geneA, $transcriptA, $orientationA, $subStructureA) = transcriptFeatures($transcript, $item->{bpA});
     }
-    if ( defined $bTranscriptRef and scalar(@{$bTranscriptRef}) >= 1 and not scalar(@$inCommonRef)) { 
+    if ( defined $bTranscriptRef and scalar(@{$bTranscriptRef}) >= 1 and (not defined $inCommonRef or not scalar(@$inCommonRef))) { 
         my $transcript = chooseBestTranscript($bTranscriptRef, $item->{bpB});
         ($geneB, $transcriptB, $orientationB, $subStructureB) = transcriptFeatures($transcript, $item->{bpB});
     }
