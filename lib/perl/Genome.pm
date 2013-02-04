@@ -7,7 +7,6 @@ $DB::deep = 10000;
 
 use UR;
 use UR::ObjectV001removed;
-use Genome::UrPatch; # override __errors__ on UR::Object
 use File::Temp;
 use IO::String;
 use File::Basename;
@@ -83,6 +82,9 @@ require Genome::Sys;
 # this is only on the publicly-released GMS to handle things we must ship for functionality
 # but will not be part of individual package releases.
 require Genome::Site::Deprecated;
+
+# fixes which have not yet gone into the main-line master branch
+require Genome::Patch; 
 
 # DB::single is set to this value in many places, creating a source-embedded break-point
 # set it to zero in the debugger to turn off the constant stopping...

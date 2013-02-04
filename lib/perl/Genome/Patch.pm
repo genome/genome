@@ -1,0 +1,39 @@
+# this module patches some parts of the source tree to it functional for release 
+package Genome::Patch;
+use strict;
+use warnings;
+use Sub::Install;
+
+# the formula for handling Illumina fastqs is wrong and needs to be fixed
+# on the master branch, compensate for now:
+require Genome::InstrumentData::Solexa;
+my $rqc_old = \&Genome::InstrumentData::Solexa::resolve_quality_converter;
+my $rqc_new = \&Genome::InstrumentData::Solexa::NEW_resolve_quality_converter;
+delete $Genome::InstrumentData::Solexa::{resolve_quality_converter};
+delete $Genome::InstrumentData::Solexa::{NEW_resolve_quality_converter};
+Sub::Install::install_sub({
+    code => $rqc_new, 
+    into => "Genome::InstrumentData::Solexa",
+    as   => 'resolve_quality_converter',
+});
+
+
+# Errors in the base class are redundant with db constraints
+# and cause issues because some data types need to be updated
+# with the pg transition.  Supress for now.
+require UR;
+my $orig_errors = \&UR::Object::__errors__;
+sub __patched_errors__ {
+    $orig_errors->(@_);
+    return();
+};
+
+delete $UR::Object::{__errors__};
+Sub::Install::install_sub({
+    code => \&Genome::UrPatch::__patched_errors__,
+    into => "UR::Object",
+    as   => '__errors__',
+});
+
+1;
+
