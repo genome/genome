@@ -14,9 +14,8 @@ use Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
 *Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::_staging_disk_usage
     = sub { return 40 * 1024 };
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult";
-my $tophat_data = $data_dir . "/tophat_data/";
-
+my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/0.4.5";
+my $tophat_dir = $data_dir . "/tophat_data";
 
 my $t = Genome::Taxon->__define__(name => 'human');
 my $p = Genome::Individual->create(name => "test-human-patient", common_name => 'testpatient', taxon => $t);
@@ -58,24 +57,24 @@ my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
 
 my $alignment_result = Genome::InstrumentData::AlignmentResult::Tophat->__define__(
     aligner_name => 'tophat',
-    output_dir => $tophat_data,
+    output_dir => $tophat_dir,
     reference_build_id => $reference_build->id,
     bowtie_version => '0.12.7'
 );
 $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
 
 my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index->__define__(
-    version => "0.4.3",
+    version => "0.4.5",
     bowtie_version => "0.12.7",
     reference_build => $reference_build,
-    output_dir => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/IndexResult/',
+    output_dir => $data_dir.'/IndexResult/',
     annotation_build => $annotation_build,
 );
 $index->lookup_hash($index->calculate_lookup_hash());
 
 my %params = (
     alignment_result => $alignment_result,
-    version => '0.4.3',
+    version => '0.4.5',
     detector_params => "--reuse-bam 0 --bowtie-version=",
     annotation_build => $annotation_build,
 );
@@ -93,13 +92,13 @@ test_for_error($class, \%params, "Chimerascan currently only supports");
 $params{'detector_params'} = "--bowtie-version 0.12.7 --reuse-bam bad";
 test_for_error($class, \%params, "You must specify either");
 
-#my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
-    #alignment_result => $alignment_result,
-    #version => '0.4.3',
-    #detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
-    #annotation_build => $annotation_build,
-#);
-#isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
+my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
+    alignment_result => $alignment_result,
+    version => '0.4.5',
+    detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
+    annotation_build => $annotation_build,
+);
+isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
 
 done_testing();
 
