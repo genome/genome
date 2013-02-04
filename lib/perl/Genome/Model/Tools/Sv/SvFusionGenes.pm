@@ -25,6 +25,8 @@ package Genome::Model::Tools::Sv::SvFusionGenes;
 use strict;
 use warnings;
 use Carp;
+
+use Bio::Perl;
 use Genome;
 
 class Genome::Model::Tools::Sv::SvFusionGenes {
@@ -98,6 +100,8 @@ ITX +-,+-
 
 
 sub processFile {
+    my $self = shift;
+
     my ( @entireFile, $line, $bdRef, $chrA, $bpA, $chrB, $bpB, $event, $patient, $aTranscriptRef, $bTranscriptRef, $transcriptRef,
 	 $eventId, $geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB,
 	 $deletedGeneHashRef, $deletedGenes, $inCommonRef, $transcript, $junctionOrientation,
@@ -122,8 +126,8 @@ sub processFile {
 	    my @cols = split /\t/, $line;
        	
 	    # get all transcripts crossing each breakpoint
-	    $aTranscriptRef = allTranscripts($chrA, $bpA, $build);
-	    $bTranscriptRef = allTranscripts($chrB, $bpB, $build);
+	    $aTranscriptRef = allTranscripts($chrA, $bpA, $self->annotation_build);
+	    $bTranscriptRef = allTranscripts($chrB, $bpB, $self->annotation_build);
 	
 	    # If there are no transcripts crossing either breakpoint, then you are done
 	    next if !defined $aTranscriptRef || scalar @{$aTranscriptRef} == 0 || !defined $bTranscriptRef || scalar @{$bTranscriptRef} == 0;
@@ -132,7 +136,7 @@ sub processFile {
 	    if ( fusionGenes($aTranscriptRef, $bTranscriptRef) ) {
 	        my $aGeneNameRef = geneNames($aTranscriptRef);
 	        my $bGeneNameRef = geneNames($bTranscriptRef);
-	        my $fusionProteinRef = getAllInFrameFusions($aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation);
+	        my $fusionProteinRef = getAllInFrameFusions($aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation, $out_fh);
 	        if ( defined $fusionProteinRef && scalar(keys%{$fusionProteinRef}) >= 1 ) {
 		        $out_fh->print("\n$line\t[");
                 map{$out_fh->print("$_ ")}sort keys %{$aGeneNameRef};
@@ -162,7 +166,7 @@ sub getAllInFrameFusions {
     # Check to see if relative orientation of sequences and genes make a fusion on one strand
     # Only include the fusions that are still in frame after putting the exons together
 
-    my ($aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation) = @_;
+    my ($aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation, $out_fh) = @_;
     my ( %allFusions, $mRNA_a, $mRNA_b, $substructureA,  $substructureB, $firstSecond, $fusionMessage, $seqObj, 
 	 $protObj, $protSeq,  $fivePrimeMessage, $threePrimeMessage, $rnaWithCoordinates_a, $rnaWithCoordinates_b,
 	 $fivePrimeMessageWithCoordinates, $threePrimeMessageWithCoordinates, 
