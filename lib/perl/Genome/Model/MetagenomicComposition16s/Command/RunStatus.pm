@@ -87,12 +87,12 @@ sub execute {
         push @row, map { $build->$_ } (qw/ model_id id status /);
         if ( $build->status eq 'Succeeded' ) {
             push @row, (($build->amplicons_processed_success * 100).'%');
+            my $files_string = join ( ' ', grep { -s $_ } $build->oriented_fasta_files );
+            push @row, $files_string;
         }
         else {
             push @row, 'NA';
         }
-        my $files_string = join ( ' ', grep { -s $_ } $build->oriented_fasta_files );
-        push @row, $files_string;
     }
 
     my $sep = ( $self->separator =~ /^tab$/i ? "\t" : $self->separator );

@@ -30,6 +30,7 @@ sub parseFpkmFile{
   my %args = @_;
   my $infile = $args{'-infile'};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
+  my $ensembl_tmap = $args{'-ensembl_map'};
   my $verbose = $args{'-verbose'};
   my $outfile;
   if (defined($args{'-outfile'})){
@@ -39,11 +40,22 @@ sub parseFpkmFile{
   if ($verbose){
     print BLUE, "\n\nParsing: $infile", RESET;
   }
+
+  #Note that we could be parsing genes or transcripts here
+  #Will therefore need ensembl maps keyed on both genes and transcripts
+  my %ensembl_gmap;
+  my $ensembl_gmap = \%ensembl_gmap;
+  foreach my $tid (keys %{$ensembl_tmap}){
+    my $gid = $ensembl_tmap->{$tid}->{ensg_id};
+    my $gene_biotype = $ensembl_tmap->{$tid}->{gene_biotype};
+    $ensembl_gmap->{$gid}->{gene_biotype} = $gene_biotype;
+  }
+  
   my %fpkm;
   my $header = 1;
   my $rc = 0;     #record count
   my %columns;
-  open (FPKM, "$infile") || die "\n\nCould not open gene file: $infile\n\n";
+  open (FPKM, "$infile") || die "\n\nCould not open gene/isoform file: $infile\n\n";
   while(<FPKM>){
     chomp($_);
     my @line = split("\t", $_);
@@ -73,7 +85,7 @@ sub parseFpkmFile{
       $FPKM_status = $line[$columns{'status'}{position}];
     }else{
       print RED, "\n\nRequired column not found: 'FPKM_status' or 'status'", RESET;
-      exit(1);
+      exit 1;
     }
 
     #Fix gene name and create a new column for this name
@@ -82,10 +94,15 @@ sub parseFpkmFile{
     #Key on tracking id AND locus coordinates
     my $key = "$tracking_id"."|"."$locus";
 
+    #Get biotype.  Check for a match at gene or transcript level
+    my $biotype = "na";
+    if ($ensembl_gmap->{$tracking_id}){$biotype = $ensembl_gmap->{$tracking_id}->{gene_biotype};}
+    if ($ensembl_tmap->{$tracking_id}){$biotype = $ensembl_tmap->{$tracking_id}->{transcript_biotype};}
     $fpkm{$key}{record_count} = $rc;
     $fpkm{$key}{tracking_id} = $tracking_id;
     $fpkm{$key}{mapped_gene_name} = $fixed_gene_name;
     $fpkm{$key}{gene_id} = $gene_id;
+    $fpkm{$key}{biotype} = $biotype;
     $fpkm{$key}{locus} = $locus;
     $fpkm{$key}{length} = $length;
     $fpkm{$key}{coverage} = $coverage;
@@ -99,15 +116,15 @@ sub parseFpkmFile{
   my $gc = keys %fpkm;
   unless ($gc == $rc){
     print RED, "\n\nFound $gc distinct gene|coord entries but $rc data lines - not good...\n\n", RESET;
-    exit();
+    exit 1;
   }
 
   #Print an outfile sorted on the key
   if ($outfile){
     open (OUT, ">$outfile") || die "\n\nCould not open gene file: $infile\n\n";
-    print OUT "tracking_id\tmapped_gene_name\tgene_id\tlocus\tlength\tcoverage\tFPKM\tFPKM_conf_lo\tFPKM_conf_hi\tFPKM_status\n";
+    print OUT "tracking_id\tmapped_gene_name\tgene_id\tbiotype\tlocus\tlength\tcoverage\tFPKM\tFPKM_conf_lo\tFPKM_conf_hi\tFPKM_status\n";
     foreach my $key (sort {$a cmp $b} keys %fpkm){
-      print OUT "$fpkm{$key}{tracking_id}\t$fpkm{$key}{mapped_gene_name}\t$fpkm{$key}{gene_id}\t$fpkm{$key}{locus}\t$fpkm{$key}{length}\t$fpkm{$key}{coverage}\t$fpkm{$key}{FPKM}\t$fpkm{$key}{FPKM_conf_lo}\t$fpkm{$key}{FPKM_conf_hi}\t$fpkm{$key}{FPKM_status}\n";
+      print OUT "$fpkm{$key}{tracking_id}\t$fpkm{$key}{mapped_gene_name}\t$fpkm{$key}{gene_id}\t$fpkm{$key}{biotype}\t$fpkm{$key}{locus}\t$fpkm{$key}{length}\t$fpkm{$key}{coverage}\t$fpkm{$key}{FPKM}\t$fpkm{$key}{FPKM_conf_lo}\t$fpkm{$key}{FPKM_conf_hi}\t$fpkm{$key}{FPKM_status}\n";
     }
     close(OUT);
   }
@@ -124,11 +141,13 @@ sub mergeIsoformsFile{
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $ensembl_map = $args{'-ensembl_map'};
   my $verbose = $args{'-verbose'};
-  my $outfile;
 
-  if (defined($args{'-outfile'})){
-    $outfile = $args{'-outfile'};
-  }
+  my $status_file;
+  $status_file = $args{'-status_file'} if (defined($args{'-status_file'}));
+  
+  my $outfile;
+  $outfile = $args{'-outfile'} if (defined($args{'-outfile'}));
+
   if ($verbose){
     print BLUE, "\n\nParsing and merging to gene level: $infile", RESET;
   }
@@ -157,13 +176,22 @@ sub mergeIsoformsFile{
     my $tracking_id = $line[$columns{'tracking_id'}{position}];
     my $original_gene_id = $line[$columns{'gene_id'}{position}];
 
+    unless($tracking_id){
+      print RED, "\n\nTracking ID not defined\n\n", RESET;
+      exit 1;
+    }
+
     #Get the gene ID from the transcript ID
     unless (defined($ensembl_map->{$tracking_id})){
       print RED, "\n\nCould not map tracking id: $tracking_id to an ensembl gene via ensembl transcript ID!\n\n", RESET;
-      exit(1);
+      exit 1;
     }
     my $ensg_id = $ensembl_map->{$tracking_id}->{ensg_id};
     my $ensg_name = $ensembl_map->{$tracking_id}->{ensg_name};
+    my $gene_biotype = $ensembl_map->{$tracking_id}->{gene_biotype};
+    my $transcript_biotype = $ensembl_map->{$tracking_id}->{transcript_biotype};
+
+    #print "\n$rc\t$ensg_id\t$ensg_name\t$gene_biotype\t$transcript_biotype";
 
     my $locus = $line[$columns{'locus'}{position}];
     my $length = $line[$columns{'length'}{position}];
@@ -178,7 +206,7 @@ sub mergeIsoformsFile{
       $FPKM_status = $line[$columns{'status'}{position}];
     }else{
       print RED, "\n\nRequired column not found: 'FPKM_status' or 'status'", RESET;
-      exit(1);
+      exit 1;
     }
  
     #Fix gene name and create a new column for this name
@@ -196,7 +224,7 @@ sub mergeIsoformsFile{
       $chr_end = $3;
     }else{
       print RED, "\n\nlocus format not understood: $locus\n\n", RESET;
-      exit(1);
+      exit 1;
     }
   
     #Merge down to genes, combining the coverage and FPKM values (cumulatively), coordinates (outer coords), and calculating a new length
@@ -216,6 +244,7 @@ sub mergeIsoformsFile{
       $genes{$ensg_id}{chr} = $chr;
       $genes{$ensg_id}{chr_start} = $chr_start;
       $genes{$ensg_id}{chr_end} = $chr_end;
+      $genes{$ensg_id}{gene_biotype} = $gene_biotype;
       $genes{$ensg_id}{coverage} = $coverage;
       $genes{$ensg_id}{FPKM} = $FPKM;
       $genes{$ensg_id}{FPKM_conf_lo} = $FPKM_conf_lo;
@@ -229,17 +258,47 @@ sub mergeIsoformsFile{
   my $tc = keys %trans;
   unless ($tc == $rc){
     print RED, "\n\nFound $tc distinct transcript entries but $rc data lines - not good...\n\n", RESET;
-    exit(1);
+    exit 1;
+  }
+
+  #If an FPKM status file was defined, use it to add FPKM status value to each gene where possible
+  if ($status_file){
+    my %columns;
+    $header = 1;
+    open (STATUS, "$status_file") || die "\n\nCould not open gene file: $status_file\n\n";
+    while(<STATUS>){
+      chomp($_);
+      my @line = split("\t", $_);
+      if ($header == 1){
+        $header = 0;
+        my $p = 0;
+        foreach my $head (@line){
+          $columns{$head}{position} = $p;
+          $p++;
+        }
+        next();
+      }
+      my $tracking_id = $line[$columns{'tracking_id'}{position}];
+      my $fpkm_status = $line[$columns{'FPKM_status'}{position}];     
+
+      #Update the FPKM status in the %genes hash
+      if ($genes{$tracking_id}){
+        if (($genes{$tracking_id}{FPKM_status} eq "na" || $genes{$tracking_id}{FPKM_status} eq "OK") && $fpkm_status){
+          $genes{$tracking_id}{FPKM_status} = $fpkm_status;
+        }
+      }
+    }
+    close (STATUS);
   }
 
   #Print an outfile sorted on the key
   if ($outfile){
     open (OUT, ">$outfile") || die "\n\nCould not open gene file: $infile\n\n";
-    print OUT "tracking_id\tmapped_gene_name\tensg_name\tlocus\tlength\tcoverage\tFPKM\tFPKM_conf_lo\tFPKM_conf_hi\tFPKM_status\n";
+    print OUT "tracking_id\tmapped_gene_name\tensg_name\tbiotype\tlocus\tlength\tcoverage\tFPKM\tFPKM_conf_lo\tFPKM_conf_hi\tFPKM_status\n";
     foreach my $gene_id (sort {$genes{$a}{ensg_name} cmp $genes{$b}{ensg_name}} keys %genes){
       my $locus = "$genes{$gene_id}{chr}:$genes{$gene_id}{chr_start}-$genes{$gene_id}{chr_end}";
       my $length = "-";
-      print OUT "$gene_id\t$genes{$gene_id}{mapped_gene_name}\t$genes{$gene_id}{ensg_name}\t$locus\t$length\t$genes{$gene_id}{coverage}\t$genes{$gene_id}{FPKM}\t$genes{$gene_id}{FPKM_conf_lo}\t$genes{$gene_id}{FPKM_conf_hi}\t$genes{$gene_id}{FPKM_status}\n";
+      print OUT "$gene_id\t$genes{$gene_id}{mapped_gene_name}\t$genes{$gene_id}{ensg_name}\t$genes{$gene_id}{gene_biotype}\t$locus\t$length\t$genes{$gene_id}{coverage}\t$genes{$gene_id}{FPKM}\t$genes{$gene_id}{FPKM_conf_lo}\t$genes{$gene_id}{FPKM_conf_hi}\t$genes{$gene_id}{FPKM_status}\n";
     }
     close(OUT);
   }
@@ -261,7 +320,7 @@ sub calculateCufflinksStats{
 
   unless (-e $infile){
     print RED, "\n\nInput file to &calculateCufflinksStats() could not be found\n\n", RESET;
-    exit(1);
+    exit 1;
   }
 
   #Import FPKM data

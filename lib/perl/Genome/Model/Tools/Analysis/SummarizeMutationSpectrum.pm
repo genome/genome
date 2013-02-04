@@ -25,7 +25,7 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         is_optional => 1,
         doc => 'somatic variation id. If >1 id, comma-separate; ',
     },
-    labels => { 
+    label => { 
         is  => 'String',
         is_input=>1, 
         is_optional => 1,
@@ -70,6 +70,12 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         doc => 'set this flag if you want multi-sample to be all plotted in 1 graph, default: samples are individually plotted',
         default => 0,
     },
+    stackbarplot => {
+	is => 'Boolean',
+        is_optional => 1,
+        doc => 'set this flag if you want multi-sample to be all plotted in 1 graph in a stacked (top of each other) fashion; default: barplots are dodged',
+        default => 0,
+	},
     ymax => {
         is => 'float',
         is_optional => 1,
@@ -89,7 +95,13 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
         is => 'String',
         doc => 'Plot the user defined mutation spectrum file and exit.  ',
     },
-    exclude_gl_contigs => {
+    input_snv_file => {
+	is_input => 1,
+        is_optional => 1,
+        is => 'String',
+        doc => 'Name of the 5 column (chr start stop ref var) SNV file; override --somatic-id and --group-id ',
+   },
+   exclude_gl_contigs => {
         is_input => 1,
         is_optional => 1,
         is => 'Boolean',
@@ -128,11 +140,15 @@ sub execute {
     my $group_id = $self->group_id;
     my $plot_input_file;
     my $make1plot = $self->make1plot;
+    my $stackplot = $self->stackbarplot;
     my $ymax = $self->ymax;
     my $plot_title = $self->plot_title;
     my $numberRow = $self->number_row;
-    my $manual_label = $self->labels;
+    my $manual_label = $self->label;
     my $plot_graph = $self->plot_graph;
+    my $input_snv_file = '';
+    $input_snv_file = $self->input_snv_file if ($self->input_snv_file);
+
     if($self->mut_spec_file) {
         $plot_input_file = abs_path($self->mut_spec_file);
         unlink($plot_input_file) if(-e $plot_input_file); #remove existing file first
@@ -149,11 +165,16 @@ sub execute {
             $plot_cmd = qq{ make_dodge_barplot_facet_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",num_row=$numberRow,y_lim=c(0,$ymax)) };
         }
         else {
-            $plot_cmd = qq{ make_dodge_barplot_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };
-        }
-        my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
-        $call->execute;
-        return 1;
+            if($stackplot) {
+		$plot_cmd = qq{ make_barplot_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",plot_type="stack",y_lim=c(0,$ymax)) };
+	    }else {
+		$plot_cmd = qq{ make_barplot_sample(inputFile="$user_mut_spec_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };	
+	    }
+	}
+	my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
+	$call->execute;
+        
+	return 1;
 
     }
 
@@ -169,17 +190,27 @@ sub execute {
         @models = Genome::Model->get(\@modelIDs);
     }
 
-    foreach my $model(@models) {
-        my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
-        my $raw_count = $self->parse_bed_file($input_file);
-        unlink($input_file);
-        if($manual_label) { #user specified a sample label
-            make_output($raw_count,$manual_label,$plot_input_file);  
-        }
-        else {
-            make_output($raw_count,$automatic_label,$plot_input_file); #use automatically generated label for a sample  
-        }
+    if(-s $input_snv_file) {
+	 my $raw_count = $self->parse_anno_file($input_snv_file);
+	 my $sample_label = $manual_label || 'LABEL';
+	 make_output($raw_count,$sample_label,$plot_input_file);  
     }
+    else {
+	foreach my $model(@models) {
+	    my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
+	    my $raw_count = $self->parse_bed_file($input_file);
+	    unlink($input_file);
+	    if($manual_label) { #user specified a sample label
+		make_output($raw_count,$manual_label,$plot_input_file);  
+	    }
+	    else {
+		make_output($raw_count,$automatic_label,$plot_input_file); #use automatically generated label for a sample  
+	    }
+	}
+    }
+
+
+
 
 
     #my $input_plot_file = $out1;
@@ -190,7 +221,11 @@ sub execute {
             $plot_cmd = qq{ make_dodge_barplot_facet_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",num_row=$numberRow,y_lim=c(0,$ymax)) };
         }
         else {
-            $plot_cmd = qq{ make_dodge_barplot_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };
+            if($stackplot) {
+		$plot_cmd = qq{ make_barplot_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",plot_type="stack",y_lim=c(0,$ymax)) };
+	    }else {
+		$plot_cmd = qq{ make_barplot_sample(inputFile="$plot_input_file",outputFile="$plot_output_file",plot_title="$plot_title",y_lim=c(0,$ymax)) };	
+	    }
         }
         my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "MutationSpectrum.R");
         $call->execute;
@@ -217,11 +252,16 @@ sub make_input_file_from_model {
     my $build=$somatic_model->last_succeeded_build;
     die "No successful build for model $model_id found! Aborting...\n"if(!defined($build));
 
-    my $sample_label = $build->tumor_build->model->subject->source_common_name;
-    $sample_label = $somatic_model->id if(!$sample_label); #label defaults to model ID if common name cannot be found.
-    my $type = $build->tumor_build->model->subject->common_name;
-    $sample_label = uc("${sample_label}_${type}");
+    #Assign label in this order of preference if available: source common name -> sample name -> model id
+    my $sample_label = $somatic_model->id;
+    my $source_common_name = $build->tumor_build->model->subject->source_common_name;
+    my $subject_name = $build->subject->name;
+    $sample_label = $subject_name if ($subject_name);
+    $sample_label = $source_common_name if ($source_common_name);
 
+    #If available append the sample common name (e.g. tumor to the label)
+    my $type = "_". $build->tumor_build->model->subject->common_name;
+    $sample_label .= uc($type) if ($type);
 
     #find the tier 1,2,3 SNV bed file
     my $dir = $build->data_directory . "/effects";
@@ -240,6 +280,41 @@ sub make_input_file_from_model {
     return ($temp_file,$sample_label);
 
 }
+
+
+sub parse_anno_file {
+
+    my ($self, $file) = @_;
+
+    my $count = { 'A->C' => 0,
+                  'A->G' => 0,
+                  'A->T' => 0,
+                  'C->A' => 0,
+                  'C->G' => 0,
+                  'C->T' => 0,
+                  'G->A' => 0,
+                  'G->C' => 0,
+                  'G->T' => 0,
+                  'T->A' => 0,
+                  'T->C' => 0,
+                  'T->G' => 0
+    };
+
+
+    open(ANNO,$file) or die "Can't open the file $file due to $!";
+    while(<ANNO>) {
+        chomp;
+        my ($chr,$start,$stop,$ref,$var) = split(/\t/,$_);
+        next if($chr =~ /^GL/ and $self->exclude_gl_contigs);
+	my $key = join("->",($ref,$var));
+	$count->{$key}++;
+    }
+    close ANNO;
+
+    return $count;
+
+}
+
 
 sub parse_bed_file {
 

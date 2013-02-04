@@ -15,17 +15,29 @@ class Genome::Model::Build::Command::DiffBlessed {
         },
         blessed_build => {
             is_optional => 1,
-            calculate_from => ['new_build', 'perl_version'],
+            calculate_from => ['new_build', 'perl_version', 'db_file'],
             calculate => q{
                 $DB::single = 1;
-                my $model_id = $new_build->model->id;
-                my $blessed_build_raw = qx(/gsc/scripts/opt/genome/bin/list-blessed-builds -m $model_id -p $perl_version);
-                my $commit = (split(/\s+/, $blessed_build_raw))[2];
+                my $model_name = $new_build->model->name;
+                my ($blessed_ids) = YAML::LoadFile($db_file);
+                my $blessed_id = $blessed_ids->{$model_name};
                 my $blessed_build = Genome::Model::Build->get(
-                    model_id => $model_id,
-                    software_revision => "$perl_version-$commit");
+                    id => $blessed_id,);
                 return $blessed_build;
             },
         },
+        db_file => {
+            is_optional => 1,
+            default_value => __FILE__.".YAML",
+        },
     ],
 };
+
+sub diffs_message {
+    my $self = shift;
+    my $diff_string = $self->SUPER::diffs_message(@_);
+    
+    $diff_string = join("\n", $diff_string, sprintf('If you want to bless this build, update the file %s.', $self->db_file));
+
+    return $diff_string;
+}

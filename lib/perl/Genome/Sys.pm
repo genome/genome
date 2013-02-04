@@ -14,7 +14,13 @@ use LWP::Simple qw(getstore RC_OK);
 use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
-use Genome::Sys::Lock;
+use JSON;
+
+# these are optional but should load immediately when present
+# until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
+for my $opt (qw/Genome::Sys::Lock Genome::Sys::Log/) {
+    eval "use $opt";
+}
 
 our $VERSION = $Genome::VERSION;
 
@@ -23,6 +29,16 @@ class Genome::Sys {};
 sub disk_usage_for_path {
     my $self = shift;
     my $path = shift;
+    my %params = @_;
+
+    # Normally disk_usage_for_path returns nothing if it encounters an error;
+    # this allows the caller to override the default behavior, returning a
+    # number even if du emits errors (for instance, because the user does not
+    # have read permissions for a single subfolder out of many).
+    my $allow_errors = delete $params{allow_errors};
+    if (keys %params) {
+        die $self->error_message("Unknown parameters for disk_usage_for_path(): " . join(', ', keys %params));
+    }
 
     unless (-d $path) {
         $self->error_message("Path $path does not exist!");
@@ -31,11 +47,24 @@ sub disk_usage_for_path {
 
     return unless -d $path;
     my $cmd = "du -sk $path 2>&1";
-    my $du_output = qx{$cmd};
-    my $kb_used = ( split( ' ', $du_output, 2 ) )[0];
+    my @du_output = split( /\n/, qx{$cmd} );
+    my $last_line = pop @du_output;
+    my $kb_used = ( split( ' ', $last_line, 2 ) )[0];
+
+    # if we couldn't parse the size count, print all output and return nothing
     unless (Scalar::Util::looks_like_number($kb_used)) {
-        $self->error_message("du output is not a number: $kb_used");
+        push @du_output, $last_line;
+        $self->error_message("du output is not a number:\n" . join("\n", @du_output));
         return;
+    }
+
+    # if there were lines besides the size count, emit warnings and (potentially) return nothing
+    if (@du_output) {
+        $self->warning_message($_) for (@du_output);
+        unless ($allow_errors) {
+            $self->error_message("du encountered errors");
+            return;
+        }
     }
 
     return $kb_used;
@@ -1014,8 +1043,11 @@ sub shellcmd {
     # TODO: add IPC::Run's w/ timeout but w/o the io redirection...
 
     my ($self,%params) = @_;
+
+    my %orig_params = %params;
+
     my $cmd                          = delete $params{cmd};
-    my $output_files                 = delete $params{output_files} ;
+    my $output_files                 = delete $params{output_files};
     my $input_files                  = delete $params{input_files};
     my $output_directories           = delete $params{output_directories} ;
     my $input_directories            = delete $params{input_directories};
@@ -1033,6 +1065,9 @@ sub shellcmd {
         my @crap = %params;
         Carp::confess("Unknown params passed to shellcmd: @crap");
     }
+
+    my ($t1,$t2,$elapsed);
+
     # Go ahead and print the status message if the cmd is shortcutting
     if ($output_files and @$output_files) {
         my @found_outputs = grep { -e $_ } grep { not -p $_ } @$output_files;
@@ -1046,6 +1081,7 @@ sub shellcmd {
             return 1;
         }
     }
+
     my $old_status_cb = undef;
     unless  ($print_status_to_stderr) {
         $old_status_cb = Genome::Sys->message_callback('status');
@@ -1094,8 +1130,11 @@ sub shellcmd {
 
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
+        $t1 = time();
         my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
         my $child_exit_code = $exit_code >> 8;
+        $t2 = time();
+        $elapsed = $t2-$t1;
 
         if ( $exit_code == -1 ) {
             Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd\n\tError was: $!");
@@ -1173,6 +1212,12 @@ sub shellcmd {
         # Setting to the original behaviour (or default)
         Genome::Sys->message_callback('status',$old_status_cb);
     }
+
+    if ($ENV{GENOME_SYS_LOG_DETAIL}) {
+        my $msg = encode_json({%orig_params, t1 => $t1, t2 => $t2, elapsed => $elapsed });
+        Genome::Sys->debug_message(qq|$msg|)
+    }
+
     return 1;
 
 }

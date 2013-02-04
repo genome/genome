@@ -113,10 +113,13 @@ class Genome::Model::Build {
             where => [ name => 'region_of_interest_set_name', value_class_name => 'UR::Value' ],
         },
         result_users => {
+            # TODO rename to maybe result_associations or output_associations?
+            # This implies that we are bridging to something using the build.
             is => 'Genome::SoftwareResult::User',
             reverse_as => 'user',
         },
         results => {
+            # TODO rename to maybe outputs?
             is => 'Genome::SoftwareResult',
             via => 'result_users',
             to => 'software_result',
@@ -240,8 +243,14 @@ sub create {
 
     eval {
         # Give the model a chance to update itself prior to copying inputs from it
-        unless ($self->model->check_for_updates) {
-            Carp::confess "Could not update model!";
+        # TODO: the model can have an observer on it's private subclass of build for
+        # the one general case which uses this (Convergence).
+        # The other case which uses this is ReferenceAlignment but just for TGI-specific
+        # policies, which should really be observers in ::Site::TGI.
+        if ($self->model->can("check_for_updates")) {
+            unless ($self->model->check_for_updates) {
+                Carp::confess "Could not update model!";
+            }
         }
 
         # Now copy (updated) inputs to build
@@ -1212,6 +1221,7 @@ sub _launch {
     my %params = @_;
 
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+    local $ENV{GENOME_BUILD_ID} = $self->id;
 
     # right now it is "inline" or the name of an LSF queue.
     # ultimately, it will be the specification for parallelization
@@ -1656,7 +1666,11 @@ sub _unregister_software_results {
 sub _abandon_events { # does not realloc
     my $self = shift;
 
-    my @events = sort { $b->id <=> $a->id } $self->events;
+    my @events = do {
+        no warnings;
+        sort { $b->id <=> $a->id || $b->id cmp $a->id } $self->events;
+    };
+
     for my $event ( @events ) {
         unless ( $event->abandon ) {
             $self->error_message(

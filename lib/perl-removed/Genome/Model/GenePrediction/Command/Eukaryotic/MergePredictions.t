@@ -21,10 +21,12 @@ ok(-d $test_output_dir, "test output dir exists at $test_output_dir") or die;
 my $temp_dir_1 = File::Temp->tempdir(
     'egap_merge_predictions_XXXXXX',
     DIR => $test_output_dir,
+    CLEANUP => 1,
 );
 my $temp_dir_2 = File::Temp->tempdir(
     'egap_merge_predictions_XXXXXX',
     DIR => $test_output_dir,
+    CLEANUP => 1,
 );
 
 my @test_coding_genes;
@@ -37,6 +39,7 @@ for my $dir ($temp_dir_1, $temp_dir_2) {
 my $temp_merge_dir = File::Temp->tempdir(
     'egap_merge_predictions_XXXXXX',
     DIR => $test_output_dir,
+    CLEANUP => 1,
 );
 
 my $merger = Genome::Model::GenePrediction::Command::Eukaryotic::MergePredictions->create(

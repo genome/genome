@@ -33,7 +33,20 @@
 
 [4mDESCRIPTION[0m
     The ClinSeq pipeline takes four models, each of which is optional, and produces data sets
-    potentially useful in a clinical setting.
+    potentially useful in a clinical or discovery project.
+
+    There are several primary goals:
+
+    1. Generate results that help to identify clinically actionable events (gain of function
+    mutations, amplifications, etc.)
+
+    2. Converge results across data types for a single case (e.g. variant read counts from wgs +
+    exome + rnaseq)
+
+    3. Automatically generate statistics, tables and figures to be used in manuscripts
+
+    4. Test novel analysis methods in a pipeline that runs faster and is more agile than say
+    somatic-variation
 
 
 

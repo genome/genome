@@ -90,6 +90,7 @@ sub _prepare_to_run_chimerascan {
     }
 }
 
+# TODO: It seems like the name of this method should be _link_in_unaligned_reads_bam, but not sure.
 sub _link_in_aligned_reads_bam {
     my ($self) = @_;
 
@@ -99,10 +100,13 @@ sub _link_in_aligned_reads_bam {
     my $output_file = join("/", $self->temp_staging_directory,
             "aligned_reads.bam");
 
+    # TODO: The includeAligned and the error messaging describing unaligned reads in contradictory here
+    # What is the intent of this method, aligned or unaligned reads?
     my $cmd = Genome::Model::Tools::Picard::FilterSamReads->create(
         input_file  => $input_file,
         output_file => $output_file,
         filter      => 'includeAligned',
+        use_version => $self->picard_version,
     );
 
     $cmd->execute();
@@ -144,6 +148,9 @@ sub _create_unaligned_fastqs {
     $self->status_message("Generating the unaligned fastqs from the " .
             "alignment results BAM");
     my $stage            = $self->temp_staging_directory;
+
+    # TODO: Should this be the linked BAM file returned from _link_in_aligned_reads_bam, more appropriately it should be named _link_in_unaligned_reads_bam
+    
     my $alignment_result = $self->alignment_result;
     my $bam_file         = $alignment_result->bam_file;
     my $read1_fastq      = join("/", $stage, 'tmp', 'unaligned_1.fq');
@@ -154,6 +161,11 @@ sub _create_unaligned_fastqs {
         fastq            => $read1_fastq,
         second_end_fastq => $read2_fastq,
         re_reverse       => 1,
+        include_non_pf_reads => 1,
+        include_non_primary_alignments => 0,
+        use_version      => $self->picard_version,
+        maximum_memory => 30,
+        maximum_permgen_memory => 256,
     );
 
     $cmd->execute();

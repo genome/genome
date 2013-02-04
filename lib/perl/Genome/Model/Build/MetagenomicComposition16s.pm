@@ -12,21 +12,11 @@ use Switch;
 
 class Genome::Model::Build::MetagenomicComposition16s {
     is => 'Genome::Model::Build',
-    is_abstract => 1,
     subclassify_by => 'subclass_name',
     has => [
         subclass_name => { 
             is => 'String', len => 255, is_mutable => 0,
-            calculate_from => ['model_id'],
-            calculate => sub {
-                my($model_id) = @_;
-                return unless $model_id;
-                my $model = Genome::Model->get($model_id);
-                Carp::croak("Can't find Genome::Model with ID $model_id while resolving subclass for Build") unless $model;
-                my $seq_platform = $model->sequencing_platform;
-                Carp::croak("Can't subclass Build: Genome::Model id $model_id has no sequencing_platform") unless $seq_platform;
-                return return __PACKAGE__ . '::' . Genome::Utility::Text::string_to_camel_case($seq_platform);
-            },
+            calculate => sub { return __PACKAGE__; },
         },
         map( { 
                 $_ => { via => 'processing_profile' } 
@@ -41,6 +31,16 @@ class Genome::Model::Build::MetagenomicComposition16s {
                 reads_attempted reads_processed reads_processed_success 
                 /)
         ),
+    ],
+    has_calculated => [
+        amplicons_oriented => {
+            calculate_from => [qw/ amplicons_classified /],
+            calculate => q| return $amplicons_classified; |,
+        },
+        amplicons_oriented_success => {
+            calculate_from => [qw/ amplicons_classified_success /],
+            calculate => q| return $amplicons_classified_success; |,
+        },
     ],
 };
 
@@ -96,9 +96,8 @@ sub description {
 sub amplicon_sets {
     my $self = shift;
 
-    my %amplicon_set_names = map { $_->sequencing_platform => 1 } $self->instrument_data;
-    my $amplicon_set_name = (keys %amplicon_set_names)[0];
-    my %amplicon_set_names_and_primers = Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($amplicon_set_name);
+    my $sequencing_platform = $self->model->sequencing_platform;
+    my %amplicon_set_names_and_primers = Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers->set_names_and_primers_for($sequencing_platform);
     my @amplicon_sets;
     for my $set_name ( sort { $a cmp $b } keys %amplicon_set_names_and_primers ) {
         push @amplicon_sets, Genome::Model::Build::MetagenomicComposition16s::AmpliconSet->create(
@@ -107,6 +106,7 @@ sub amplicon_sets {
             file_base_name => $self->file_base_name,
             directory => $self->data_directory,
             classifier => $self->classifier,
+            chimera_detector => $self->chimera_detector,
         );
     }
 
@@ -660,8 +660,8 @@ sub detect_and_remove_chimeras {
     my %metrics = ( input => 0, output => 0, );
     for my $amplicon_set ( @amplicon_sets ) {
         my $fasta_file = $amplicon_set->oriented_fasta_file;
-        next if not -s $fasta_file;
-        $self->status_message('Amplicon set'.($amplicon_set->name ? ' '.$amplicon_set->name : ''));
+        next if not -s $fasta_file; # ok, not error
+        $self->status_message('Amplicon set'.$amplicon_set->name) if $amplicon_set->name;
 
         # DETECT
         $self->status_message('Detect chimeras...');
@@ -683,36 +683,36 @@ sub detect_and_remove_chimeras {
         }
         $self->status_message('Detect chimeras...OK');
 
+        # REMOVE
         $self->status_message('Remove chimeras...');
-        my $reader = $amplicon_set->seq_reader_for('oriented');
-        if ( not $reader ) {
-            $self->error_message('Failed to get oriented seq reader!');
-            return;
-        }
 
-        my $chimera_reader = $chimera_reader_class->create(input => $chimera_file);
-        if ( not $chimera_reader ) {
-            $self->error_message('Failed to get chimera reader!');
-            return;
-        }
-
+        # chimera free seq writer
         my $writer = $amplicon_set->seq_writer_for('chimera_free');
         if ( not $writer ) {
             $self->error_message('Failed to get chimera free seq writer!');
             return;
         }
 
-        my $chimera = $chimera_reader->read;
-        while ( my $seq = $reader->read ) {
-            $metrics{input}++;
-            if ( $chimera and $seq->{id} eq $chimera->{id} ) {
-                my $verdict = $chimera->{verdict}; # store verdict
-                $chimera = $chimera_reader->read; # get next chimera
-                next if $verdict eq 'YES'; # do not write seq if it is a chimera
-            }
-            $metrics{output}++;
-            $writer->write($seq);
+        # chimera free classification writer
+        my $classification_file = $amplicon_set->chimera_free_classification_file;
+        my $classification_fh = eval{ Genome::Sys->open_file_for_writing($classification_file); };
+        if ( not $classification_fh ) {
+            $self->error_message($@) if $@;
+            $self->error_message("Failed to open chimera free classifcation file! $classification_file");
+            return;
         }
+
+        my $amplicons = $amplicon_set->amplicon_iterator;
+        while ( my $amplicon = $amplicons->() ) {
+            $metrics{input}++;
+            next if not $amplicon->{chimera_result} or not defined $amplicon->{chimera_result};
+            next if $amplicon->{chimera_result}->{verdict} eq 'YES';
+            $metrics{output}++;
+            $writer->write($amplicon->{seq});
+            $classification_fh->print( $amplicon->{classification_line}."\n" );
+        }
+        $classification_fh->close;
+
         $self->status_message('Remove chimeras...OK');
     }
 
@@ -728,6 +728,8 @@ sub detect_and_remove_chimeras {
     $self->status_message('Classifed and oriented: '.$self->amplicons_classified);
     $self->status_message('Chimeric:               '.$self->amplicons_chimeric);
     $self->status_message('Chimeric percent:       '.($self->amplicons_chimeric_percent * 100).'%');
+    #$self->status_message('Total passed:           '.$self->amplicons_passed);
+    #$self->status_message('Total passed:           '.$self->amplicons_passed);
 
     $self->status_message('Detect and remove chimeras...OK');
     return 1;
@@ -758,11 +760,13 @@ sub orient_amplicons {
 
     my $no_classification = 0;
     for my $amplicon_set ( @amplicon_sets ) {
-        next if not $amplicon_set->amplicon_iterator;
+        my $amplicons = $amplicon_set->amplicon_iterator;
+        next if not $amplicons;
+
         my $writer = $amplicon_set->seq_writer_for('oriented');
         return if not $writer;
 
-        while ( my $amplicon = $amplicon_set->next_amplicon ) {
+        while ( my $amplicon = $amplicons->() ) {
             my $seq = $amplicon->{seq};
             next if not $seq; #OK - for now...
 
@@ -784,6 +788,13 @@ sub orient_amplicons {
     if ( $no_classification != $classification_error ) {
         $self->error_message("Found $no_classification amplicons without classifications, but $classification_error amplicons failed to classify.");
     }
+
+    $self->status_message('Summary of metrics:');
+    $self->status_message('Attempted:         '.$self->amplicons_attempted);
+    $self->status_message('Processed:         '.$self->amplicons_processed);
+    $self->status_message('Processed success: '.sprintf('%.2f', $self->amplicons_processed_success));
+    $self->status_message('Oriented:          '.$self->amplicons_oriented);
+    $self->status_message('Oriented success:  '.sprintf('%.2f', $self->amplicons_oriented_success));
 
     $self->status_message('Orient amplicons...OK');
     return 1;
@@ -851,7 +862,10 @@ sub classify_amplicons {
     );
     $self->amplicons_classification_error($metrics{error});
 
+    $self->status_message('Summary of metrics:');
+    $self->status_message('Attempted:  '.$self->amplicons_attempted);
     $self->status_message('Processed:  '.$self->amplicons_processed);
+    $self->status_message('Success:    '.sprintf('%.2f', $self->amplicons_processed_success));
     $self->status_message('Classified: '.$self->amplicons_classified);
     $self->status_message('Error:      '.$self->amplicons_classification_error);
     $self->status_message('Success:    '.($self->amplicons_classified_success * 100).'%');

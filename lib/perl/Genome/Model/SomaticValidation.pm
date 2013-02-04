@@ -256,7 +256,7 @@ sub default_filenames{
 
 sub default_profile {
     return Genome::ProcessingProfile::SomaticValidation->get(
-        name => 'Jun 2012 default Somatic Validation Extension and Targeted Discovery');
+        name => 'Feb 2013 default Somatic Validation Extension and Targeted Discovery');
 }
 
 sub default_single_bam_profile {

@@ -6,14 +6,14 @@ use warnings;
 use above "Genome";
 use Test::More;
 use File::Basename;
-use File::Compare;
-use File::Temp;
+use File::Compare qw(compare);
+use File::Temp qw();
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
     plan skip_all => "Must run from 64-bit machine";
 } else {
-    plan tests => 8;
+    plan tests => 6;
 }
 
 use_ok( 'Genome::Model::Tools::Breakdancer::BamToConfig');
@@ -41,8 +41,17 @@ $bd->dump_status_messages(1);
 ok($bd, 'BamToConfig created ok');
 ok($bd->execute(), 'BamToConfig executed ok');
 
-for my $file (glob($tmp_dir."/*insertsize_histogram*"), $out_file) {
+for my $file (glob($tmp_dir."/*insertsize_histogram")) {
     my $base_name = basename $file;
     my $test_file = $test_input_dir . "/$base_name";
     is(compare($file, $test_file), 0, "$base_name output as expected");
 }
+
+my $orig_config_file = join('/', $test_input_dir, basename $out_file);
+my $config_diff = sub {
+    my ($line1, $line2) = @_;
+    $line1 =~ s/\tmap:[^\t]+\t//;
+    $line2 =~ s/\tmap:[^\t]+\t//;
+    return $line1 ne $line2;
+};
+is(compare($orig_config_file, $out_file, $config_diff), 0, "config diffed as expected");

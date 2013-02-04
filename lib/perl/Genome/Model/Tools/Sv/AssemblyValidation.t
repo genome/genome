@@ -5,7 +5,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use File::Compare;
+use Genome::Utility::Test qw(compare_ok);
 use File::Temp qw(tempfile);
 use File::Path qw(rmtree);
 
@@ -15,7 +15,7 @@ BEGIN {
         plan skip_all => "Must run from 64-bit machine";
     } 
     else {
-        plan tests => 20;
+        plan tests => 17;
     }
 };
 
@@ -53,7 +53,8 @@ ok($sv_valid->execute(), 'executed AssemblyValidation object OK');
 
 for my $i (0..2) {
     ok(-s $test_out_files[$i], 'generated output file: '.$file_names[$i].' ok');
-    is(compare($test_out_files[$i], $expected_files[$i]), 0, 'output matched expected results: '.$file_names[$i]);
+    compare_ok($expected_files[$i], $test_out_files[$i], 'output matched expected results: ' . $file_names[$i],
+        filters => qr(^#Bams: .*));
 }
 
 $test_input_dir = $test_input_dir."chromosomeBeginTest.v1/";
@@ -79,9 +80,7 @@ ok($sv_valid, 'created AssemblyValidation object');
 ok($sv_valid->execute(), 'executed AssemblyValidation object');
 
 for my $i (0..2) {
-    ok(-s $test_out_files[$i], 'generated output file: '.$file_names[$i].' ok');
-    is(compare($test_out_files[$i], $expected_files[$i]), 0, 'output_matched expected results: '.$file_names[$i]);
-    my $output_diff = Genome::Sys->diff_file_vs_file($expected_files[$i], $test_out_files[$i]);
-    ok(!$output_diff, 'output file matches expected result')
-        or diag("diff:\n" . $output_diff);
+    ok(-s $test_out_files[$i], 'generated output file: ' . $file_names[$i]);
+    compare_ok($expected_files[$i], $test_out_files[$i], 'output matched expected results: ' . $file_names[$i],
+        filters => qr(^#Bams: .*));
 }

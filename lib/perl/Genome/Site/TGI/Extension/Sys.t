@@ -1,5 +1,8 @@
 #!/usr/bin/env genome-perl
 
+# Testing a theory about LSF state latency.
+sleep 5;
+
 use strict;
 use warnings;
 

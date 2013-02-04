@@ -36,6 +36,16 @@ class Genome::Model::Tools::Picard::StandardSamToFastq {
             is          => 'String',
             doc         => 'Directory to write per-readgroup FASTQs if "output_per_rg" is set',
         },
+        include_non_pf_reads => {
+            is => 'Booelan',
+            doc => '',
+            default_value => 0,
+        },
+        include_non_primary_alignments => {
+            is => 'Booelan',
+            doc => '',
+            default_value => 0,
+        },
     ],
     doc => 'uses the standard picard "SamToFastq" command to convert a compliant BAM file to FASTQ(s).'
 };
@@ -80,7 +90,7 @@ sub execute {
     push @args,
         map { $make_arg->($self, $_, 0) } ('input', 'fastq', 'second_end_fastq', 'output_dir');
     push @args,
-        map { $make_arg->($self, $_, 1) } ('re_reverse', 'output_per_rg');
+        map { $make_arg->($self, $_, 1) } ('re_reverse', 'output_per_rg', 'include_non_pf_reads', 'include_non_primary_alignments');
 
     my $convert_cmd = $jar_path .' net.sf.picard.sam.SamToFastq ' . join(' ', @args);
     $self->run_java_vm(

@@ -6,13 +6,13 @@ use warnings;
 use Genome;
 
 class Genome::FeatureList::Command::List {
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     has => [
         subject_class_name => {
             is_constant => 1,
             value => 'Genome::FeatureList'
         },
-        show => { default_value => 'id,name,source,format'},
+        show => { default_value => 'id,name,source,format,content_type,reference'},
     ],
     doc => 'list feature-lists',
 };

@@ -850,7 +850,8 @@ sub run_aligner {
 
     for (@inputs) {
        if ($_ =~ m/^\/tmp\/.*\.fastq$/) {
-        $self->status_message("Unlinking fastq file to save space now that we've aligned: $_");
+           $self->status_message("Unlinking fastq file to save space now that we've aligned: $_");
+           unlink($_);
        }
     }
 

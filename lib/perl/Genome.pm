@@ -2,7 +2,7 @@ package Genome;
 use warnings;
 use strict;
 
-our $VERSION = '0.080001';
+our $VERSION = '0.080100';
 $DB::deep = 10000;
 
 use UR;
@@ -97,6 +97,10 @@ Genome - pipelines, tools, and data managment for genomics
 
  @i = Genome::InstrumentData::Illumina->get(...);
  $m = Genome::Model::SomaticVariation->create(...);
+
+=head1 VERSION
+
+This document describes Genome 0.8.1.0
 
 =head1 DESCRIPTION
 

@@ -50,8 +50,10 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
         $amplicon_sets[$i]->classification_file,
     );
     ok($diff_ok, 'diff classification files');
-    while ( my $amplicon = $amplicon_sets[$i]->next_amplicon ) {
-        my $example_amplicon = $example_amplicon_sets[$i]->next_amplicon;
+    my $amplicons = $amplicon_sets[$i]->amplicon_iterator;
+    my $example_amplicons = $example_amplicon_sets[$i]->amplicon_iterator;
+    while ( my $amplicon = $amplicons->() ) {
+        my $example_amplicon = $example_amplicons->();
         is($amplicon->{name}, $example_amplicon->{name}, 'matches example amplicon');
         ok($amplicon->{classification}, $amplicon->{name}.' has a classification');
         is_deeply([@{$amplicon->{classification}}[0..3]], [@{$example_amplicon->{classification}}[0..3]], 'classification matches');

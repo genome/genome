@@ -22,6 +22,11 @@ class Genome::Model::SomaticVariation::Command::SimplifyVcf {
               is => 'FilesystemPath',
               doc => 'Directory where output files will be written', 
         },
+        include_and_merge_indels => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'If set to true, simplify the indel file as well and merge the indels with snvs',
+        },
     ],
     doc => 'Create a simplified VCF that contains only column for tumor/normal and only passing somatic SNVs',
 };
@@ -65,65 +70,110 @@ sub __errors__ {
 }
 
 sub execute {
-  my $self = shift;
-  my @somvar_builds = $self->builds;
-  my $outdir = $self->outdir;
+    my $self = shift;
+    my @somvar_builds = $self->builds;
+    my $outdir = $self->outdir;
 
-  unless ($outdir =~ /\/$/){
-    $outdir .= "/";
-  }
-
-  #Go through each somatic build and create XML session files
-  my $somvar_build_count = scalar(@somvar_builds);
-
-  foreach my $somvar_build (@somvar_builds){
-    my $somvar_build_id = $somvar_build->id;
-    my $subject = $somvar_build->subject;
-    my $subject_name = $subject->name;
-    my $subject_common_name = $subject->common_name;
-    my $subject_tissue_desc = $subject->tissue_desc || "NULL";
-    my $patient_common_name = $subject->individual_common_name || "NULL";
-
-    $self->status_message("\nProcessing somatic-variation build: $somvar_build_id ($patient_common_name, $subject_name, $subject_tissue_desc, $subject_common_name)");
-
-    #Get the tumor and normal sample names
-    my $tumor_sample = $somvar_build->tumor_model->subject->name;
-    unless($tumor_sample){
-      $self->error_message("Unable to resolve tumor sample name from build");
-      exit 1;
-    }
-    my $normal_sample = $somvar_build->normal_model->subject->name;
-    unless($normal_sample){
-      $self->error_message("Unable to resolve normal sample name from build");
-      exit 1;
+    unless ($outdir =~ /\/$/){
+        $outdir .= "/";
     }
 
-    #Find the VCF SNV file in the build dir
-    my $original_vcf_path = $self->find_vcf_file('-build'=>$somvar_build);
+    #Go through each somatic build and create XML session files
+    my $somvar_build_count = scalar(@somvar_builds);
 
-    #Name the output file in a human readable way ($patient_common_name . $subject_name . $somatic_variation_build_id . passing.somatic.snvs.vcf
-    my $new_vcf_name = $self->resolve_vcf_filename('-build'=>$somvar_build);
-    my $new_vcf_path = $outdir . $new_vcf_name;
+    foreach my $somvar_build (@somvar_builds){
+        my $somvar_build_id = $somvar_build->id;
+        my $subject = $somvar_build->subject;
+        my $subject_name = $subject->name;
+        my $subject_common_name = $subject->common_name;
+        my $subject_tissue_desc = $subject->tissue_desc || "NULL";
+        my $patient_common_name = $subject->individual_common_name || "NULL";
 
-    #Parse the VCF file and dump simplified version
-    $self->simplify_vcf('-infile'=>$original_vcf_path, '-outfile'=>$new_vcf_path, '-tumor_sample'=>$tumor_sample, '-normal_sample'=>$normal_sample);
+        $self->status_message("\nProcessing somatic-variation build: $somvar_build_id ($patient_common_name, $subject_name, $subject_tissue_desc, $subject_common_name)");
 
-  }
+        #Get the tumor and normal sample names
+        my $tumor_sample = $somvar_build->tumor_model->subject->name;
+        unless($tumor_sample){
+            $self->error_message("Unable to resolve tumor sample name from build");
+            return;
+        }
+        my $normal_sample = $somvar_build->normal_model->subject->name;
+        unless($normal_sample){
+            $self->error_message("Unable to resolve normal sample name from build");
+            return;
+        }
 
+        for my $type ("snv", "indel") {
+            if (!$self->include_and_merge_indels and $type eq "indel") {
+                next;
+            }
+            #Find the VCF SNV file in the build dir
+            my $find_method = "find_" . $type . "_vcf_file";
+            my $original_vcf_path = $self->$find_method('-build'=>$somvar_build);
 
-  return 1;
+            #Name the output file in a human readable way ($patient_common_name . $subject_name . $somatic_variation_build_id . passing.somatic.snvs.vcf
+            my $resolve_method = "resolve_" . $type . "_vcf_filename";
+            $DB::single=1;
+            my $new_vcf_path = $self->$resolve_method($somvar_build);
+
+            #Parse the VCF file and dump simplified version
+            $self->simplify_vcf('-infile'=>$original_vcf_path, '-outfile'=>$new_vcf_path, '-tumor_sample'=>$tumor_sample, '-normal_sample'=>$normal_sample);
+        }
+
+        if ($self->include_and_merge_indels) {
+            $self->merge_simplified_vcfs($somvar_build);
+        }
+    }
+
+    return 1;
 }
 
+sub merge_simplified_vcfs {
+    my ($self, $build) = @_;
+
+    my $snv_vcf = $self->resolve_snv_vcf_filename($build);
+    my $indel_vcf = $self->resolve_indel_vcf_filename($build);
+    my $output_vcf = $self->resolve_combined_vcf_filename($build);
+
+    my $joinx_command = Genome::Model::Tools::Joinx::VcfMerge->create(
+        input_files => [$snv_vcf, $indel_vcf],
+        output_file => $output_vcf,
+        merge_samples => 1,
+        use_bgzip => 0,
+    );
+
+    unless ($joinx_command->execute) {
+        die $self->error_message("Failed to run joinx vcf merge");
+    }
+
+    $self->status_message("$snv_vcf and $indel_vcf merged into $output_vcf");
+
+    return 1;
+}
+
+sub resolve_indel_vcf_filename {
+    my ($self, $build) = @_;
+    return $self->resolve_vcf_filename($build, 'indels');
+}
+
+sub resolve_snv_vcf_filename {
+    my ($self, $build) = @_;
+    return $self->resolve_vcf_filename($build, 'snvs');
+}
+
+sub resolve_combined_vcf_filename {
+    my ($self, $build) = @_;
+    return $self->resolve_vcf_filename($build, 'combined');
+}
 
 sub resolve_vcf_filename{
-  my $self = shift;
-  my %args = @_;
-  my $build = $args{'-build'};
+  my ($self, $build, $type) = @_;
 
   my $build_id = $build->id;
   my $subject = $build->subject;
   my $subject_name = $subject->name;
   my $subject_common_name = $subject->common_name;
+  $subject_name=~s/\(/_/g; $subject_name=~s/\)/_/g;
   my $subject_tissue_desc = $subject->tissue_desc;
   my $patient_common_name = $subject->individual_common_name;
 
@@ -132,32 +182,43 @@ sub resolve_vcf_filename{
   push(@names, $patient_common_name) if ($patient_common_name);
   push(@names, $subject_name) if ($subject_name);
   push(@names, $build_id);
-  push(@names, "passing.somatic.snvs.vcf");
+  push(@names, "passing.somatic." . $type . ".vcf");
   my $filename = join("_", @names);
 
   $self->status_message("Writing simplified VCF to file: $filename");
-  return $filename;
+  return $self->outdir . "/$filename";
 }
 
+sub find_snv_vcf_file {
+    my ($self, %args) = @_;
+    my $build = $args{'-build'};
+    return $self->find_vcf_file('-build'=>$build,'-type'=>'snv');
+}
 
-sub find_vcf_file{
-  my $self = shift;
-  my %args = @_;
-  my $build = $args{'-build'};
+sub find_indel_vcf_file {
+    my ($self, %args) = @_;
+    my $build = $args{'-build'};
+    return $self->find_vcf_file('-build'=>$build,'-type'=>'indel');
+}
 
-  my $data_dir = $build->data_directory;
-  my $vcf_file;
+sub find_vcf_file {
+    my ($self, %args) = @_;
+    my $build = $args{'-build'};
+    my $type = $args{'-type'};
 
-  if (-e $data_dir . "/variants/snvs.annotated.vcf.gz"){
-    $vcf_file = $data_dir . "/variants/snvs.annotated.vcf.gz";
-  }elsif(-e $data_dir . "/variants/snvs.vcf.gz"){
-    
-  }else{
-    $self->error_message("Could not find VCF file in $data_dir");
-    exit 1;
-  }
-  $self->status_message("Found VCF file: $vcf_file");
-  return $vcf_file;  
+    my $data_dir = $build->data_directory;
+    my $vcf_file;
+
+    if (-e $data_dir . "/variants/" . $type . "s.annotated.vcf.gz"){
+        $vcf_file = $data_dir . "/variants/" . $type . "s.annotated.vcf.gz";
+    }elsif(-e $data_dir . "/variants/" . $type . "s.vcf.gz"){
+        $vcf_file = $data_dir . "/variants/" . $type ."s.vcf.gz";
+    }else{
+        $self->error_message("Could not find VCF file in $data_dir");
+        return;
+    }
+    $self->status_message("Found VCF file: $vcf_file");
+    return $vcf_file;  
 }
 
 sub simplify_vcf{
@@ -191,15 +252,15 @@ sub simplify_vcf{
         }
         unless ($header{$tumor_sample_name}){
           $self->error_message("Could not find tumor column for sample: $tumor_sample_name");
-          exit 1;
+          return;
         }
         unless ($header{$normal_sample_name}){
           $self->error_message("Could not find normal column for sample: $normal_sample_name");
-          exit 1;
+          return;
         }
         unless ($header{'FORMAT'}){
           $self->error_message("Could not find FORMAT column in header line");
-          exit 1;
+          return;
         }
         #Print a header with only one column for normal and tumor
         print VCF2 "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$line[8]\t$line[$header{$normal_sample_name}{pos}]\t$line[$header{$tumor_sample_name}{pos}]\n";
@@ -224,12 +285,9 @@ sub simplify_vcf{
       $p++;
     }
     unless (defined($ft_pos)){
-      #TODO: If 'FT' is not defined lq/hq status of a variant can not be determined.  This should be fatal, but for now just warn
-      #$self->error_message("Could not determine position of FT tag in FORMAT column");
-      #print Dumper @line;
-      #exit 1;
-      $self->warning_message("Could not determine position of FT tag in FORMAT column:\n@line");
-      next;
+      #TODO: If 'FT' is not defined lq/hq status of a variant can not be determined.  
+      $self->error_message("Could not determine position of FT tag in FORMAT column:\n@line");
+      die($self->error_message);
     }
     my $tumor_filter_value = $tumor[$ft_pos];
     $variant_count++;
@@ -248,7 +306,7 @@ sub simplify_vcf{
 
   unless ($header_found){
     $self->error_message("Could not find VCF header line in file $infile");
-    exit 1;
+    return;
   }
 
   return;

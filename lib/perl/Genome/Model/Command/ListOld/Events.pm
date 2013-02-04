@@ -12,7 +12,7 @@ use Command;
 use Data::Dumper;
 
 class Genome::Model::Command::List::Events {
-    is => 'UR::Object::Command::List',
+    is => 'Genome::Object::Command::List',
     has => [
     subject_class_name  => {
          is_constant => 1, 

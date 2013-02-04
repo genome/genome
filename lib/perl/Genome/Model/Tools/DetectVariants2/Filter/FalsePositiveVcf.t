@@ -35,7 +35,8 @@ my $expected_header_with_filter = join('/', $expected_dir, 'header_plus_filters.
 my $expected_regions = join('/', $expected_dir, 'regions');
 ok(-s $expected_vcf_file, "expected output $expected_vcf_file exists");
 
-my $output_dir = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveVcfXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $outter_output_dir = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveVcfXXXXX', DIR => $ENV{GENOME_TEST_TEMP}, CLEANUP => 1);
+my $output_dir = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveVcfXXXXX', DIR => $outter_output_dir, CLEANUP => 1);
 #my $output_dir = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveVcfXXXXX', DIR => '/tmp/', CLEANUP => 0);
 
 my $output_vcf = join('/', $output_dir, 'snvs.vcf.gz');

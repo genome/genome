@@ -149,8 +149,6 @@ sub execute {
   $self->status_message($annotate_cmd);
   Genome::Sys->shellcmd(cmd => $annotate_cmd, output_files=>["$annotated_file"]);
   
-  #TODO: At the time of initial creation of this module 'gmt analysis mutation-spectrum' hits a mysql database (bad) that is for build36 only (also bad)...
-
   #5.) Generate mutation-spectrum-sequence-context result
   #gmt analysis mutation-spectrum-sequence-context
   my $variant_file2 = $sub_outdir2 . "variants.tsv";

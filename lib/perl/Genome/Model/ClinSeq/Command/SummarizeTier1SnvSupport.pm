@@ -23,13 +23,10 @@ class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
         tumor_fpkm_file             => { is => 'FilesystemPath', is_optional => 1 },
     ],
     has_param => [
-        annotation_version => { is => 'Text', },
         verbose => { is => 'Boolean', default_value => 0 },
     ],
     doc => 'Get BAM red counts for SNV positions from WGS, Exome and RNAseq BAMS',     
 };
-
-#&runSnvBamReadCounts('-builds'=>$builds, '-positions_files'=>\@positions_files, '-ensembl_version'=>$ensembl_version, '-out_paths'=>$out_paths, '-verbose'=>0);
 
 sub positions_files {
     my $self = shift;
@@ -45,7 +42,6 @@ sub execute {
   my $normal_rnaseq_build = $self->normal_rnaseq_build;
   my @positions_files = $self->positions_files;
   my $tumor_fpkm_file = $self->tumor_fpkm_file;
-  my $ensembl_version = $self->annotation_version;
   my $verbose = $self->verbose;
 
   my $read_counts_summary_script = __FILE__ . '.R'; #"$script_dir"."snv/WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R";
@@ -62,7 +58,6 @@ sub execute {
     push (@params, ('exome_som_var_build' => $exome_build)) if $exome_build;
     push (@params, ('rna_seq_tumor_build' => $tumor_rnaseq_build)) if $tumor_rnaseq_build;
     push (@params, ('rna_seq_normal_build' => $normal_rnaseq_build)) if $normal_rnaseq_build;
-    push (@params, ('ensembl_version' => $ensembl_version));
     push (@params, ('output_file' => $output_file));
     push (@params, ('verbose' => $verbose));
 
