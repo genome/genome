@@ -132,7 +132,7 @@ sub diff_test {
             map { $_ =~ s/^#Bams: .*// } @_;
             map { $_ =~ s/^#input file: .*// } @_;
             map { $_ =~ s/.*velvet. output-dir .*// } @_;
-            map { $_ =~ s/^\w{3} \w{3} \d\d \d\d:\d\d:\d\d \d{4}$// } @_;
+            map { $_ =~ s/^\w{3} \w{3} [ \d]\d \d\d:\d\d:\d\d \d{4}$// } @_;
             my $c = $_[0] ne $_[1];
             if ($c == 1) {
                 diag("First diff:\n--- " . $_[0] . "+++ " . $_[1]);
