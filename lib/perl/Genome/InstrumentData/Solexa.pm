@@ -1021,10 +1021,18 @@ sub native_qual_type {
 
 sub resolve_quality_converter {
     my $self = shift;
-    if ($self->native_qual_type eq 'illumina') {
+    if ($self->native_qual_type eq 'solexa') {
         return "sol2sanger";
     }
-    return "sol2phred";
+    elsif ($self->native_qual_type eq 'illumina') {
+        return "sol2phred";
+    }
+    elsif($self->native_qual_type eq 'sanger') {
+        return 'none';
+    }
+    else {
+        Carp::confess("unresolved errors with handling non-sanger fastq files: FIXME");
+    }
 }
 
 sub resolve_adaptor_file {
