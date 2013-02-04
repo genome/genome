@@ -29,7 +29,7 @@ sub __patched_errors__ {
 
 delete $UR::Object::{__errors__};
 Sub::Install::install_sub({
-    code => \&Genome::UrPatch::__patched_errors__,
+    code => \&__patched_errors__,
     into => "UR::Object",
     as   => '__errors__',
 });
