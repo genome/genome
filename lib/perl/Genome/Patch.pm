@@ -17,7 +17,6 @@ Sub::Install::install_sub({
     as   => 'resolve_quality_converter',
 });
 
-
 # Errors in the base class are redundant with db constraints
 # and cause issues because some data types need to be updated
 # with the pg transition.  Supress for now.
@@ -37,8 +36,12 @@ Sub::Install::install_sub({
 
 # the alignment summary executable is an ancient C++ hack not compiled for release yet
 require Genome::InstrumentData::AlignmentResult;
-no warnings;
-Genome::InstrumentData::AlignmentResult::_use_alignment_summary_cpp { return 0; };
+delete $Genome::InstrumentData::AlignmentResult::{_use_alignment_summary_cpp};
+Sub::Install::install_sub({
+    code => sub { 0 },
+    into => 'Genome::InstrumentData::AlignmentResult',
+    as   => '_use_alignment_summary_cpp',
+});
 
 1;
 
