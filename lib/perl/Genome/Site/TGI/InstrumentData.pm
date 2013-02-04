@@ -14,7 +14,7 @@ class Genome::Site::TGI::InstrumentData {
     (
          SELECT to_char(solexa.analysis_id) id,
                fc.run_name,
-               'Genome::Site::TGI::InstrumentData::Solexa' subclass_name,
+               'Genome::Site::TGI::Synchronize::Classes::IndexIllumina' subclass_name,
                'solexa' sequencing_platform,
                (
                     case 

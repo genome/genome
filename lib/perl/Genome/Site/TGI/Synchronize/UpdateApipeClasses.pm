@@ -30,8 +30,7 @@ class Genome::Site::TGI::Synchronize::UpdateApipeClasses {
 sub objects_to_sync {
     return (
         'Genome::Site::TGI::Synchronize::Classes::RegionIndex454' => 'Genome::InstrumentData::454',
-        'Genome::Site::TGI::InstrumentData::Sanger' => 'Genome::InstrumentData::Sanger',
-        'Genome::Site::TGI::InstrumentData::Solexa' => 'Genome::InstrumentData::Solexa',
+        'Genome::Site::TGI::Synchronize::Classes::IndexIllumina' => 'Genome::InstrumentData::Solexa',
         'Genome::Site::TGI::Synchronize::Classes::Genotyping' => 'Genome::InstrumentData::Imported',
         'Genome::Site::TGI::Individual' => 'Genome::Individual',
         'Genome::Site::TGI::PopulationGroup' => 'Genome::PopulationGroup',
@@ -55,7 +54,7 @@ sub sync_order {
         Genome::Site::TGI::Individual
         Genome::Site::TGI::PopulationGroup
         Genome::Site::TGI::Library
-        Genome::Site::TGI::InstrumentData::Solexa
+        Genome::Site::TGI::Synchronize::Classes::IndexIllumina
         Genome::Site::TGI::Synchronize::Classes::RegionIndex454
         Genome::Site::TGI::Synchronize::Classes::Genotyping
     /;
@@ -373,7 +372,7 @@ sub _create_genotyping {
     return 1;
 }
 
-sub _create_instrumentdata_solexa {
+sub _create_indexillumina {
     my ($self, $original_object, $new_object_class) = @_;
 
     # Successful PIDFA required!
@@ -403,50 +402,6 @@ sub _create_instrumentdata_solexa {
     return 1;
 }
 
-sub _create_instrumentdata_sanger {
-    my ($self, $original_object, $new_object_class) = @_;
-
-    # Successful PIDFA required!
-    return 0 unless exists $instrument_data_with_successful_pidfas{$original_object->id};
-    # Some sanger instrument don't have a library. If that's the case here, just don't create the object
-    return 0 unless defined $original_object->library_id or defined $original_object->library_name
-        or defined $original_object->library_summary_id;
-
-    my %library_params;
-    if (defined $original_object->library_id) {
-        $library_params{id} = $original_object->library_id;
-    }
-    elsif (defined $original_object->library_name) {
-        $library_params{name} = $original_object->library_name;
-    }
-    else {
-        $library_params{id} = $original_object->library_summary_id;
-    }
-    my $library = Genome::Library->get(%library_params);
-    return 0 unless $library;
-
-    my ($direct_properties, $indirect_properties) = $self->_get_direct_and_indirect_properties_for_object(
-        $original_object,
-        $new_object_class, 
-        qw/ sample_name sample_id /
-    );
-
-    my $object = eval {
-        $new_object_class->create(
-            %{$direct_properties},
-            library_id => $library->id,
-            id => $original_object->id,
-            subclass_name => $new_object_class,
-        )
-    };
-    confess "Could not create new object of type $new_object_class based on object of type " .
-        $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
-
-    my $add_attrs = $self->_add_attributes_to_instrument_data($object, $indirect_properties);
-    Carp::confess('Failed to add attributes to instrument data: '.$object->__display_name__) if not $add_attrs;
-
-    return 1;
-}
 
 sub _create_regionindex454 {
     my ($self, $original_object, $new_object_class) = @_;
