@@ -35,5 +35,10 @@ Sub::Install::install_sub({
     as   => '__errors__',
 });
 
+# the alignment summary executable is an ancient C++ hack not compiled for release yet
+require Genome::InstrumentData::AlignmentResult;
+no warnings;
+Genome::InstrumentData::AlignmentResult::_use_alignment_summary_cpp { return 0; };
+
 1;
 
