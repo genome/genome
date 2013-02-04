@@ -14,9 +14,13 @@ use LWP::Simple qw(getstore RC_OK);
 use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
-use Genome::Sys::Lock;
 use JSON;
-use Genome::Sys::Log;
+
+# these are optional but should load immediately when present
+# until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
+for my $opt (qw/Genome::Sys::Lock Genome::Sys::Log/) {
+    eval "use $opt";
+}
 
 our $VERSION = $Genome::VERSION;
 
