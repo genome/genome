@@ -74,6 +74,8 @@ if ($] < 5.01) {
     use warnings;
 }
 
+require Genome::Sys;
+
 # DB::single is set to this value in many places, creating a source-embedded break-point
 # set it to zero in the debugger to turn off the constant stopping...
 $DB::stopper = 1;
