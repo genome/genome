@@ -14,6 +14,7 @@ use LWP::Simple qw(getstore RC_OK);
 use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
+use Genome::Sys::Lock;
 use JSON;
 use Genome::Sys::Log;
 
