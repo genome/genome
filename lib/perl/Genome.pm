@@ -2,11 +2,12 @@ package Genome;
 use warnings;
 use strict;
 
-our $VERSION = '0.080100';
+our $VERSION = '0.080001';
 $DB::deep = 10000;
 
 use UR;
 use UR::ObjectV001removed;
+use Genome::UrPatch; # override __errors__ on UR::Object
 use File::Temp;
 use IO::String;
 use File::Basename;
@@ -97,10 +98,6 @@ Genome - pipelines, tools, and data managment for genomics
 
  @i = Genome::InstrumentData::Illumina->get(...);
  $m = Genome::Model::SomaticVariation->create(...);
-
-=head1 VERSION
-
-This document describes Genome 0.8.1.0
 
 =head1 DESCRIPTION
 
