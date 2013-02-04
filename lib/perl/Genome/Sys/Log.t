@@ -75,9 +75,8 @@ for my $type (qw/debug status warning error/) {
                 is($data->{m}, "F2::f2", "message $n has expected method F2::f2");
 
                 my $e1 = "$call_line|F1::f1,5|F2::f2,7";
-                my $e2 = '22|(eval),' . $e1; # apipe-ci for some reason prepends this
 
-                ok(($data->{c} eq $e1 or $data->{c}), "call stack string has expected value '$e1'");
+                is(index($data->{c}, $e1)+length($e1),length($data->{c}), "call stack string has expected value '$e1' (possibly with some prefix)");
                
                 if ($form eq 'json') {
                     is($data->{n}, $n, "message $n has test field n with the correct value");
