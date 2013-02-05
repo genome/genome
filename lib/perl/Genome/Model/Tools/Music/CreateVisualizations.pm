@@ -17,7 +17,6 @@ class Genome::Model::Tools::Music::CreateVisualizations {
         output_dir => {is => 'Text', doc => 'Output directory path'},
         maf_file => {is => 'Text', doc => 'List of mutations using TCGA MAF specifications v2.3'},
         bam_list => {is => 'Text', doc => 'Tab delimited list of BAM files [sample_name normal_bam tumor_bam]'},
-        bed_list => {is => 'Text', doc => 'Tab delimited list of BED files [label bed_file]'},
     ],
     
 };
@@ -26,26 +25,11 @@ class Genome::Model::Tools::Music::CreateVisualizations {
 
 sub execute {
     my $self = shift;
-    $self->create_mutation_spectrum_plots;
     $self->create_mutation_relation_plots;
     $self->create_survival_plots;
     return 1;
 }
 
-sub create_mutation_spectrum_plots {
-    my $self = shift;
-    my $cmd = Genome::Model::Tools::Music::CreateVisualizations::CreateMutationSpectrumPlots->create(
-        output_dir => $self->output_dir,
-        bed_list => $self->bed_list,
-    );
-    my $rv = eval{$cmd->execute()};
-    if($@){
-        my $error = $@;
-        $self->error_message('Error running ' . $cmd->command_name . ': ' . $error);
-        return;
-    }
-    return 1;
-}
 
 sub create_mutation_relation_plots {
     my $self = shift;
