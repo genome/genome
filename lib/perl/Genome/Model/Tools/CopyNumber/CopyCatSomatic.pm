@@ -120,7 +120,7 @@ sub execute {
     } elsif($genome_build eq "37"){
         $genome_build = "hg19";
     } else {
-        unless ($genome_build eq "mm9" || $genome_build eq "hg18" || $genome_build eq "hg19"){
+        unless ($genome_build eq "mm9" || $genome_build eq "hg18" || $genome_build eq "hg19" || $genome_build eq "hg19.chr1only"){
             die("ERROR: genome build not recognized\nMust be one of [hg18,36,hg19,37,mm9]");
         }
     }
