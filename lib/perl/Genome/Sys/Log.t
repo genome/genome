@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 294;
+use Test::More tests => 293;
 use JSON;
 
 #
