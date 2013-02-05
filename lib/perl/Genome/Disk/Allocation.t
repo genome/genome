@@ -23,10 +23,9 @@ use_ok('Genome::Disk::Group') or die;
 
 *Genome::Sys::current_user_is_admin = sub { return 1 };
 
-my $test_dir_base = "$ENV{GENOME_TEST_TEMP}/";
 my $test_dir = tempdir(
     'allocation_testing_XXXXXX',
-    DIR => $test_dir_base,
+    TMPDIR => 1,
     UNLINK => 1,
     CLEANUP => 1,
 );
@@ -90,7 +89,7 @@ my $allocation_path = tempdir(
 my $user = Genome::Sys::User->create(email => 'fakeguy@genome.wustl.edu', name => 'Fake McFakerton', username => 'fakeguy');
 ok($user, 'created user');
 
-my %params = ( 
+my %params = (
     disk_group_name => 'testing_group',
     mount_path => $volumes[0]->mount_path,
     allocation_path => $allocation_path,
@@ -199,7 +198,7 @@ for my $child (1..$children) {
 
 done_testing();
 
-# 
+#
 # Methods
 #
 sub do_race_lock {
@@ -211,13 +210,13 @@ sub do_race_lock {
 
     my $path = tempdir(
         'allocation_lock_testing_' . $child_id . '_XXXXXXX',
-        DIR => $volume->mount_path, 
+        DIR => $volume->mount_path,
         CLEANUP => 1,
         UNLINK => 1,
     );
 
-    # The volume/group objects still exist (they were created in the parent process), but they aren't in the 
-    # UR cache for the child process, which means that gets/loads will not find them. Overriding the 
+    # The volume/group objects still exist (they were created in the parent process), but they aren't in the
+    # UR cache for the child process, which means that gets/loads will not find them. Overriding the
     # get/load methods as needed on these classes to just return the objects gets around this.
     local *Genome::Disk::Group::get = sub { return $group };
     local *Genome::Disk::Volume::get = sub { return $volume };
