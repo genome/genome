@@ -1027,6 +1027,27 @@ sub resolve_quality_converter {
     return "sol2phred";
 }
 
+sub NEW_resolve_quality_converter {
+    # TODO: this is the correct logic but it breaks tests,
+    # implying our tests are wrong.  Investigate and fix.
+    # This mirrors the ::Imported module which does the work correctly.
+    # We almost never use this method in production because we use BAMs
+    # for reads which were always sanger format.
+    my $self = shift;
+    if ($self->native_qual_type eq 'solexa') {
+        return "sol2sanger";
+    }
+    elsif ($self->native_qual_type eq 'illumina') {
+        return "sol2phred";
+    }
+    elsif($self->native_qual_type eq 'sanger') {
+        return 'none';
+    }
+    else {
+        Carp::confess("unresolved errors with handling non-sanger fastq files: FIXME");
+    }
+}
+
 sub resolve_adaptor_file {
     my $self = shift;
 
@@ -1235,4 +1256,5 @@ sub get_default_alignment_metrics_hash {
 
 
 1;
+
 

@@ -200,7 +200,7 @@ sub getCnvFiles{
       $files{$build_id}{subject_name} = $subject_name;
       $files{$build_id}{model_name} = $model_name;
     }else{
-      if ($verbose){print RED, "\n\tCould not find cnvs.hq and  cnv.AllGenes_Ensembl*.tsv in build: $build_id ($data_directory)\n\n", RESET;}
+      if ($verbose){print RED, "\n\tCould not find cnvs.hq and  cnv.All_genes.tsv in build: $build_id ($data_directory)\n\n", RESET;}
       exit(1);
     }
   }

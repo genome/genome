@@ -36,6 +36,10 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
             is_optional => 0,
             default => 1.6,
         },
+        lsf_resource => { 
+            is => 'Text',
+            default => "-R 'rusage[mem=8000]' -M 8000000",
+        },
     ],
 };
 

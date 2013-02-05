@@ -32,10 +32,6 @@ my $callback = sub {
         no warnings;
         Carp::confess("self is undef, are you using the latest UR?: @_");
     }
-    if (not defined $message) {
-        no warnings;
-        Carp::confess("message is undef, are you using the latest UR?: @_");
-    }
 
     # make the logger on the first call
     unless ($log4perl) {
@@ -57,9 +53,9 @@ my $callback = sub {
     my $level = $MESSAGE_TYPE_TO_LOG_LEVEL{$type};
     my $retval;
 
-    # original logic runs only if the GENOME_LOG_DETAIL variable is not set
+    # original logic runs only if the GENOME_SYS_LOG_DETAIL variable is not set
 
-    unless ($ENV{GENOME_LOG_DETAIL}) {
+    unless ($ENV{GENOME_SYS_LOG_DETAIL}) {
         # by default we just log errors, and do so as text
         if ($level eq 'error') {
             if (substr($message,0,1) ne '{') {
@@ -78,7 +74,7 @@ my $callback = sub {
         return 1;
     }
 
-    # detailed JSON logging occurs only when the GENOME_LOG_DETAIL variable is set for now
+    # detailed JSON logging occurs only when the GENOME_SYS_LOG_DETAIL variable is set for now
    
     # should we just standardize on JSON log entries?
 

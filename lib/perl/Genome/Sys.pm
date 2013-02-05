@@ -14,9 +14,13 @@ use LWP::Simple qw(getstore RC_OK);
 use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
-use Genome::Sys::Lock;
 use JSON;
-use Genome::Sys::Log;
+
+# these are optional but should load immediately when present
+# until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
+for my $opt (qw/Genome::Sys::Lock Genome::Sys::Log/) {
+    eval "use $opt";
+}
 
 our $VERSION = $Genome::VERSION;
 
@@ -25,6 +29,16 @@ class Genome::Sys {};
 sub disk_usage_for_path {
     my $self = shift;
     my $path = shift;
+    my %params = @_;
+
+    # Normally disk_usage_for_path returns nothing if it encounters an error;
+    # this allows the caller to override the default behavior, returning a
+    # number even if du emits errors (for instance, because the user does not
+    # have read permissions for a single subfolder out of many).
+    my $allow_errors = delete $params{allow_errors};
+    if (keys %params) {
+        die $self->error_message("Unknown parameters for disk_usage_for_path(): " . join(', ', keys %params));
+    }
 
     unless (-d $path) {
         $self->error_message("Path $path does not exist!");
@@ -33,11 +47,24 @@ sub disk_usage_for_path {
 
     return unless -d $path;
     my $cmd = "du -sk $path 2>&1";
-    my $du_output = qx{$cmd};
-    my $kb_used = ( split( ' ', $du_output, 2 ) )[0];
+    my @du_output = split( /\n/, qx{$cmd} );
+    my $last_line = pop @du_output;
+    my $kb_used = ( split( ' ', $last_line, 2 ) )[0];
+
+    # if we couldn't parse the size count, print all output and return nothing
     unless (Scalar::Util::looks_like_number($kb_used)) {
-        $self->error_message("du output is not a number: $kb_used");
+        push @du_output, $last_line;
+        $self->error_message("du output is not a number:\n" . join("\n", @du_output));
         return;
+    }
+
+    # if there were lines besides the size count, emit warnings and (potentially) return nothing
+    if (@du_output) {
+        $self->warning_message($_) for (@du_output);
+        unless ($allow_errors) {
+            $self->error_message("du encountered errors");
+            return;
+        }
     }
 
     return $kb_used;
@@ -1186,7 +1213,7 @@ sub shellcmd {
         Genome::Sys->message_callback('status',$old_status_cb);
     }
 
-    if ($ENV{GENOME_LOG_DETAIL}) {
+    if ($ENV{GENOME_SYS_LOG_DETAIL}) {
         my $msg = encode_json({%orig_params, t1 => $t1, t2 => $t2, elapsed => $elapsed });
         Genome::Sys->debug_message(qq|$msg|)
     }

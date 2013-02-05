@@ -12,7 +12,7 @@ class Genome::FeatureList::Command::List {
             is_constant => 1,
             value => 'Genome::FeatureList'
         },
-        show => { default_value => 'id,name,source,format'},
+        show => { default_value => 'id,name,source,format,content_type,reference'},
     ],
     doc => 'list feature-lists',
 };

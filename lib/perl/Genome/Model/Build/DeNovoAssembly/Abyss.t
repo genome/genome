@@ -129,6 +129,9 @@ SKIP: {
     skip("Abyss refactor passes old tests, but workflow does not succeed.", 1, 0);
     ok($success, 'workflow completed');
 };
+# since the run_workflow changes the cwd when it fails we have to chdir back
+# in order for File::Temp::tempdir to be able to clean up when we're done.
+chdir;
 
 
 my @assembler_input_files = $build->existing_assembler_input_files;

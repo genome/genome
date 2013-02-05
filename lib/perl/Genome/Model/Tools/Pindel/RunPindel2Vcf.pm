@@ -64,7 +64,8 @@ class Genome::Model::Tools::Pindel::RunPindel2Vcf {
     ],
 };
 
-my $pindel2vcf_path = "/gscmnt/ams1158/info/pindel/pindel2vcf/pindel2vcf";
+my $pindel2vcf_path = $ENV{GENOME_SW} . "/pindel2vcf/0.1.9/pindel2vcf-0.1.9"; # 0.1.9
+#my $pindel2vcf_path = '/usr/lib/pindel0.2.4o/bin/pindel2vcf'; # 0.2.8
 
 sub help_synopsis {
     my $self = shift;

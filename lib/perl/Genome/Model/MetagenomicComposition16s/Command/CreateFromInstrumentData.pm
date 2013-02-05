@@ -80,9 +80,15 @@ sub execute {
         already_assigned => 0,
     );
     INST_DATA: for my $instrument_data ( @instrument_data ) {
+        if ( $instrument_data->read_count == 0 ) {
+            $self->status_message('Skipping '.$instrument_data->id.' because it does not have any reads.');
+            $metrics{skipped}++;
+            next INST_DATA;
+        }
         my $sample = $instrument_data->sample;
         for my $subject_regexp_to_skip ( @subject_regexp_to_skip ) {
             if ( $sample->name =~ $subject_regexp_to_skip ) {
+                $self->status_message('Skipping '.$instrument_data->id.' because its sample is a control or pool: '.$sample->name);
                 $metrics{skipped}++;
                 next INST_DATA;
             }

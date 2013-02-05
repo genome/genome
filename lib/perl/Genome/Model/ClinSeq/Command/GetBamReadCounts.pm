@@ -19,9 +19,6 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
                                      doc => "File containing SNV positions of interest and ref/var bases\n"
                                             . "  (e.g. 5:112176318-112176318	APC	APC	p.R1676T	G	C)" },
 
-        ensembl_version         => { is => 'Number',
-                                     doc => 'Ensembl version used in RNAseq run (e.g. 58)' },
-
         wgs_som_var_build       => { is => 'Genome::Model::Build::SomaticVariation', is_optional => 1,
                                      doc => 'Whole genome sequence (WGS) somatic variation build' },
 
@@ -36,10 +33,6 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
 
         output_file             => { is => 'FilesystemPath',
                                      doc => 'File where output will be written (input file values with read counts appended)', },
-
-        data_paths_file         => { is => 'FilesystemPath', is_optional => 1,
-                                     doc => "Instead of supplying models/builds supply a tab delimited list of files to handle old builds that are not well tracked or custom situations\n".
-                                            " Format: patient  sample_type  data_type  bam_path  build_dir  ref_fasta  ref_name", },
 
         verbose                 => { is => 'Number', is_optional => 1,
                                      doc => 'To display more output, set this to 1.' },
@@ -67,7 +60,6 @@ sub help_synopsis {
   return <<EOS
   genome model clin-seq get-bam-read-counts \
     --positions-file=snvs.hq.tier1.v1.annotated.compact.tsv \
-    --ensembl-version=58 \
     --wgs-som-var-build='2880644349' \
     --exome-som-var-build='2880732183' \
     --rna-seq-tumor-build='2880693923' \
@@ -79,11 +71,11 @@ sub __errors__ {
   my $self = shift;
   my @errors = $self->SUPER::__errors__(@_);
 
-  unless (($self->wgs_som_var_build || $self->exome_som_var_build || $self->rna_seq_normal_build || $self->rna_seq_tumor_build) || ($self->data_paths_file)) {
+  unless (($self->wgs_som_var_build || $self->exome_som_var_build || $self->rna_seq_normal_build || $self->rna_seq_tumor_build)) {
       push @errors, UR::Object::Tag->create(
 	                                          type => 'error',
 	                                          properties => [qw/wgs_som_var_build exome_som_var_build rna_seq_normal_build rna_seq_tumor_build/],
-	                                          desc => 'at least one of the four build types (or --data_paths_file) must be specified!'
+	                                          desc => 'at least one of the four build types must be specified!'
                                           );
   }
   unless (-e $self->positions_file) {
@@ -115,14 +107,46 @@ sub execute {
   my $exome_som_var_build = $self->exome_som_var_build;
   my $rna_seq_normal_build = $self->rna_seq_normal_build;
   my $rna_seq_tumor_build = $self->rna_seq_tumor_build;
-  my $data_paths_file = $self->data_paths_file;
   my $no_fasta_check = $self->no_fasta_check;
   my $output_file = $self->output_file;
-  my $ensembl_version = $self->ensembl_version;
   my $verbose = $self->verbose;
 
   #Build a map of ensembl transcript ids to gene ids and gene names
-  my $ensembl_map = &loadEnsemblMap('-ensembl_version'=>$ensembl_version);
+  my $annotation_build;
+  my $reference_build;
+  my @builds = ($wgs_som_var_build, $exome_som_var_build, $rna_seq_normal_build, $rna_seq_tumor_build);
+  foreach my $build (@builds){
+    if ($build){
+      $reference_build = $build->reference_sequence_build;
+      my $model = $build->model;
+      if ($model->can("annotation_reference_build")){
+        $annotation_build = $model->annotation_reference_build;
+      }
+      if ($model->can("annotation_build")){
+        $annotation_build = $model->annotation_build;
+      }
+    }
+  }
+  $self->error_message("Could not resolve annotation build from input builds") unless $annotation_build;
+  die $self->error_message unless $annotation_build;
+  $self->error_message("Could not resolve reference sequence build from input builds") unless $reference_build;
+  die $self->error_message unless $reference_build;
+
+  my $reference_build_id = $reference_build->id;
+  my $annotation_build_name = $annotation_build->name;
+  my $annotation_data_dir = $annotation_build->data_directory;
+  my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
+  my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
+  unless (defined($gtf_path)) {
+    $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
+    die $self->error_message;
+  }
+  unless (-e $transcript_info_path) {
+    $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
+    die $self->error_message;
+  }
+
+  my $ensembl_map = &loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
 
   #Get Entrez and Ensembl data for gene name mappings
   my $entrez_ensembl_data = &loadEntrezEnsemblData();
@@ -135,16 +159,12 @@ sub execute {
 
   #Get BAM file paths from build IDs.  Perform sanity checks
   my $data;
-  if ($data_paths_file){
-    $data = &getFilePaths_Manual('-data_paths_file'=>$data_paths_file);
-  }else{
-    $data = &getFilePaths_Genome(
-      '-wgs_som_var_model_id'     => ($wgs_som_var_build      ? $wgs_som_var_build->model_id : undef), 
-      '-exome_som_var_model_id'   => ($exome_som_var_build    ? $exome_som_var_build->model_id : undef), 
-      '-rna_seq_normal_model_id'  => ($rna_seq_normal_build   ? $rna_seq_normal_build->model_id : undef), 
-      '-rna_seq_tumor_model_id'   => ($rna_seq_tumor_build    ? $rna_seq_tumor_build->model_id : undef)
-     );
-  }
+  $data = &getFilePaths_Genome(
+    '-wgs_som_var_model_id'     => ($wgs_som_var_build      ? $wgs_som_var_build->model_id : undef), 
+    '-exome_som_var_model_id'   => ($exome_som_var_build    ? $exome_som_var_build->model_id : undef), 
+    '-rna_seq_normal_model_id'  => ($rna_seq_normal_build   ? $rna_seq_normal_build->model_id : undef), 
+    '-rna_seq_tumor_model_id'   => ($rna_seq_tumor_build    ? $rna_seq_tumor_build->model_id : undef)
+   );
 
   #For each mutation get BAM read counts for a tumor/normal pair of BAM files
   foreach my $bam (sort {$a <=> $b} keys %{$data}){
@@ -289,56 +309,6 @@ sub importPositions{
   $result{'snvs'} = \%s;
   $result{'header'} = $header_line;
   return(\%result);
-}
-
-
-#########################################################################################################################################
-#getFilePaths_Manual - Get file paths from an input file                                                                                #
-#########################################################################################################################################
-sub getFilePaths_Manual{
-  my %args = @_;
-  my $data_paths_file = $args{'-data_paths_file'};
-
-  my %d;
-  my $b = 0;
-
-  open(BAMS, "$data_paths_file") || die "\n\nCould not open data paths file: $data_paths_file\n\n";
-  my $header = 1;
-  my %columns;
-  while(<BAMS>){
-    chomp($_);
-    my @line = split("\t", $_);
-    if ($header){
-      my $p = 0;
-      foreach my $col (@line){
-        $columns{$col}{position} = $p;
-        $p++;
-      }
-      $header = 0;
-      next();
-    }
-    $b++;
-    $d{$b}{build_dir} = $line[$columns{'build_dir'}{position}];
-    $d{$b}{data_type} = $line[$columns{'data_type'}{position}];
-    $d{$b}{sample_type} = $line[$columns{'sample_type'}{position}];
-    $d{$b}{bam_path} = $line[$columns{'bam_path'}{position}];
-    $d{$b}{ref_fasta} = $line[$columns{'ref_fasta'}{position}];
-    $d{$b}{ref_name} = $line[$columns{'ref_name'}{position}];
-  }
-  close(BAMS);
-
-  #Make sure the same reference build was used to create all BAM files!
-  my $test_ref_name = $d{1}{ref_name};
-  foreach my $b (keys %d){
-    my $ref_name = $d{$b}{ref_name};
-    unless ($ref_name eq $test_ref_name){
-      print RED, "\n\nOne or more of the reference build names used to generate BAMs did not match\n\n", RESET;
-      print Dumper %d;
-      exit(1);
-    }
-  }
-
-  return(\%d)
 }
 
 
