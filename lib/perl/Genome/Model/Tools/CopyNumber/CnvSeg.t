@@ -35,7 +35,10 @@ my $min_markers = 3;
 my $cnv_seg = Genome::Model::Tools::CopyNumber::CnvSeg->create(
                     copy_number_file => $cn_file,
                     output_file => $output_file,
-                    min_markers => $min_markers, );
+                    min_markers => $min_markers,
+                    gap_file => Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/gaps.csv",
+                    centromere_file => Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/centromere.csv",
+                );
 
 
 ok($cnv_seg, 'gmt copy-number bam-to-cn command created');

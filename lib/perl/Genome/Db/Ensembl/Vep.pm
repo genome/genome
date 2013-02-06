@@ -135,6 +135,7 @@ class Genome::Db::Ensembl::Vep {
         },
         ensembl_annotation_build_id => {
             is => 'String',
+            default => "$ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD}",
             doc => "ID of ImportedAnnotation build with the desired ensembl version. \n  Current default build is: $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD}, \n  Ensembl 67_37l_v2 is: 124434505)",
         },
         reference_build_id => {

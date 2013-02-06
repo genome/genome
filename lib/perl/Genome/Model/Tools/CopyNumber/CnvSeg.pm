@@ -21,6 +21,10 @@ class Genome::Model::Tools::CopyNumber::CnvSeg {
             doc => 'output file path',
             is_output => 1,
         },
+        gap_file => {
+            is => 'String',
+            doc => 'Path to a UCSC gap table (replace hg18 w/ hg19 for build 37)',
+        },
     ],
     has_optional_input => [
         max_copy_number => {
@@ -45,15 +49,7 @@ class Genome::Model::Tools::CopyNumber::CnvSeg {
         },
         centromere_file => {
             is => 'String',
-            doc => 'Path to a UCSC centromere table (replace hg18 w/ hg19 for build 37)',
-            # TODO switch to build 37 default, but more importantly don't let the pipeline run w/o specifying
-            default => Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/centromere.csv",
-        },
-        gap_file => {
-            is => 'String',
-            doc => 'Path to a UCSC gap table (replace hg18 w/ hg19 for build 37)',
-            # TODO switch to build 37 default, but more importantly don't let the pipeline run w/o specifying
-            default => Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/gaps.csv",
+            doc => 'Path to a UCSC centromere table (replace hg18 w/ hg19 for build 37). Required if estimate_ploidy is set.',
         },
         purity => {
             is => 'String',

@@ -1294,8 +1294,8 @@ sub _resolve_processing_for_instrument_data {
 
             my $reference_sequence_build_id = delete $processing->{reference_sequence_build_id};
             if ( $reference_sequence_build_id ) {
-                my $reference_sequence_build = Genome::Model::Build::ImportedReferenceSequence->get($reference_sequence_build_id);
-                if ( not $reference_sequence_build ) { 
+                my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get($reference_sequence_build_id);
+                if ( not $reference_sequence_build ) {
                     die $self->error_message('Failed to get reference sequence build for id! '.$reference_sequence_build_id);
                 }
                 $processing->{reference_sequence_build} = $reference_sequence_build;

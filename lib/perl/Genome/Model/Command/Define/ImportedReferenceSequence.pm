@@ -15,6 +15,11 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             doc => 'The ID of the procesing profile to use.  There is really only one so it is typically not specified.',
             default_value => '1990904',
         },
+        species_name => {
+            is => 'Text',
+            len => 64,
+            doc => 'The species name of the reference.  This value must correspond to a species name found in the gsc.organism_taxon table.'
+        },
     ],
     has_optional_input => [
         append_to => {
@@ -42,11 +47,6 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
         prefix => {
             is => 'Text',
             doc => 'The source of the sequence, such as "NCBI".  May not have spaces.'
-        },
-        species_name => {
-            is => 'Text',
-            len => 64,
-            doc => 'The species name of the reference.  This value must correspond to a species name found in the gsc.organism_taxon table.'
         },
         version => {
             is => 'Text',

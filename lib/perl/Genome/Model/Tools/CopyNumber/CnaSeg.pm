@@ -70,14 +70,10 @@ class Genome::Model::Tools::CopyNumber::CnaSeg {
         centromere_file => {
             is => 'String',
             doc => 'Path to a UCSC centromere table (replace hg18 w/ hg19 for build 37)',
-            # TODO: switch to build 37, but more importantly don't let the pipeline run without specifying
-            default => Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/centromere.csv",
         },
         gap_file => {
             is => 'String',
             doc => 'Path to a UCSC gap table (replace hg18 w/ hg19 for build 37)',
-            # TODO: switch to build 37, but more importantly don't let the pipeline run without specifying
-            default => Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/gaps.csv",
         },
     ],
     has_transient_optional => [

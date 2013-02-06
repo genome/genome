@@ -78,6 +78,76 @@ if ($] < 5.01) {
 # set it to zero in the debugger to turn off the constant stopping...
 $DB::stopper = 1;
 
+# This is tested by Genome/SoftwareResult/Default-autogen.t
+# It is only used by the full GMS install.
+sub __extend_namespace__ {
+    my ($self,$ext) = @_;
+
+    # Auto-generate a Genome::SoftwareResult::Default class for any Command::V2.
+    # The class will have the name ${COMMAND_CLASS_NAME}::Result
+
+    my $meta = $self->SUPER::__extend_namespace__($ext);
+    if ($meta) {
+        return $meta;
+    }
+
+    my $result_class = $self . '::' . $ext;
+    my ($command_class) = ($result_class  =~ /^(.*)::Result$/);
+    unless ($command_class) {
+        # not a result class
+        return;
+    }
+    unless ($command_class->isa("Command")) {
+        # the prefix of the class name is not a command class
+        return;
+    }
+    unless ($command_class->isa("Command::V2")) {
+        $self->warning_message("cannot autogenerate results for $command_class since it is not ::V2");
+        return;
+    }
+
+    unless (UR::Object::Type->get("Genome::SoftwareResult::Default")) {
+        $self->warnings_message("Cannot find a working Genome::SoftwareResult::Default.  Autogenerating $result_class only works with a full GMS install.");
+        return;
+    }
+
+    my $command_meta = $command_class->__meta__;
+    my @properties = $command_meta->properties();
+    
+    my %has;
+    for my $property (@properties) {
+        my %desc;
+        next unless $property->can("is_param") and $property->can("is_input") and $property->can("is_output");
+
+        if ($property->is_param) {
+            $desc{is_param} = 1;
+        }
+        elsif ($property->is_input) {
+            $desc{is_input} = 1;
+        }
+        #elsif ($property->is_metric) {
+        #    $desc{is_metric} = 1;
+        #}
+        #elsif ($property->is_output) {
+        #    $desc{is_output} = 1;
+        #}
+        else {
+            next;
+        }
+        $has{$property->property_name} = \%desc;
+        $desc{is} = $property->data_type;
+        $desc{doc} = $property->doc;
+        $desc{is_many} = $property->is_many;
+        $desc{is_optional} = $property->is_optional;
+    }
+
+    class {$result_class} {
+        is => 'Genome::SoftwareResult::Default',
+        has => [ %has ],
+        doc => "results for $command_class",
+    };
+}
+
 1;
 
 =pod
