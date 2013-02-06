@@ -3,7 +3,7 @@ package Genome::Model::MutationalSignificance::Command::RunReports;
 use strict;
 use warnings;
 use Genome;
-use IO::File;
+use List::MoreUtils qw/ uniq /;
 
 class Genome::Model::MutationalSignificance::Command::RunReports {
     is => 'Command::V2',
@@ -18,22 +18,21 @@ class Genome::Model::MutationalSignificance::Command::RunReports {
             doc => 'final maf output file',
             is_input => 1,
         },
-        model_list => {
-            is => 'Text',
-            doc => '', #TODO: write me
+        somatic_variation_builds => {
+            is => 'Genome::Model::Build::SomaticVariation',
+            is_many => 1,
             is_input => 1,
         },
-        annotation_build_id => {
-            type => 'Text',
-            doc => 'The id of the annotation build to use',
-            is_optional => 1,
+        annotation_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+            is_input => 1,
         },
     ],
 };
 
 sub execute {
     my $self = shift;
-    # $self->create_mutation_diagrams;
+    $self->create_mutation_diagrams;
     $self->create_mutation_spectrum_plots;
     return 1;
 }
@@ -47,7 +46,7 @@ sub create_mutation_diagrams {
         output_directory => $output_dir,
         annotation_format => 'tgi',
         annotation => $annotation_file,
-        annotation_build_id => $self->annotation_build_id,
+        annotation_build_id => $self->annotation_build->id,
     );
     my $rv = eval{$cmd->execute()};
     if($@){
@@ -102,7 +101,7 @@ sub create_mutation_spectrum_plots {
 sub create_mutation_spectrum_plots_input_file {
     my $self = shift;
     my $output_dir = shift;
-    my $model_list = $self->model_list;
+    my $model_list = $self->create_model_list;
     my %bed_label_mapping;
     my @model_ids = split(',', $model_list);
     my $bed_dir = join('/', $output_dir, 'input_bed_files');
@@ -119,6 +118,12 @@ sub create_mutation_spectrum_plots_input_file {
     }
     $fh->close;
     return $input_file;
+}
+
+sub create_model_list {
+    my $self = shift;
+    my @somatic_variation_builds = $self->somatic_variation_builds;
+    return join(',', uniq map($_->model_id, @somatic_variation_builds));
 }
 
 sub make_input_file_from_model {
