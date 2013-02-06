@@ -56,6 +56,12 @@ BEGIN {
             clinical_correlation_matrix_file => ['input connector', 'clinical_correlation_matrix_file'],
             reference_build => ['input connector', 'reference_build'],
         },
+        'Genome::Model::MutationSignificance::Command::RunReports' => {
+            maf_file => ["Genome::Model::MutationalSignificance::Command::MergeMafFiles", "maf_path"],
+            output_dir => ['input connector', 'output_dir'],
+            annotation_build => ['input connector', 'annotation_build'],
+            somatic_variation_builds => ['input connector', 'somatic_variation_builds'],
+        },
         'Genome::Model::MutationalSignificance::Command::CompileValidationList' => {
             significantly_mutated_gene_list => $DONT_USE,
             use_tier_1 => ['input connector', "use_tier_1"],
@@ -330,7 +336,7 @@ sub _resolve_workflow_for_build {
  
     my $output_connector = $workflow->get_output_connector;
 
-    my @commands = ('Genome::Model::MutationalSignificance::Command::CreateMafFile','Genome::Model::MutationalSignificance::Command::MergeMafFiles','Genome::Model::MutationalSignificance::Command::CreateROI','Genome::Model::MutationalSignificance::Command::CreateBamList','Genome::Model::MutationalSignificance::Command::CompileValidationList');
+    my @commands = ('Genome::Model::MutationalSignificance::Command::CreateMafFile','Genome::Model::MutationalSignificance::Command::MergeMafFiles','Genome::Model::MutationalSignificance::Command::CreateROI','Genome::Model::MutationalSignificance::Command::CreateBamList','Genome::Model::MutationalSignificance::Command::CompileValidationList','Genome::Model::MutationalSignificance::Command::RunReports');
 
     for my $command_name (@commands) {
         $workflow = $self->_append_command_to_workflow($command_name,
@@ -412,6 +418,14 @@ sub _resolve_workflow_for_build {
                 right_operation => $self->_get_operation_for_module_name("Genome::Model::MutationalSignificance::Command::CompileValidationList",
                     $workflow),
                 right_property => "significantly_mutated_gene_list",
+            );
+        }
+        if ($self->run_reports) {
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic', $workflow),
+                left_property => 'output_dir',
+                right_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::RunReports', $workflow),
+                right_property => 'output_dir',
             );
         }
     }
