@@ -28,11 +28,20 @@ class Genome::Model::Tools::CopyNumber::PlotSegmentsFromBamsWorkflow {
         },
     ],
     has_optional => [
+        gaps_file => {
+            is => 'String',
+            doc => 'The gaps file to pass along to CnvSeg. If this is not provided, it will be looked up via the genome build.',
+        },
+        centromere_file => {
+            is => 'String',
+            doc => 'The centromere file to pass along to CnvSeg. If this is not provided, it will be looked up via the genome build.',
+        },
         genome_build => {
             is => 'String',
             is_input => 1,
             is_output => 1,
-            doc => "choose from ['36','37','mm9']",
+            valid_values => ['36', '37', 'mm9'],
+            doc => "Reference sequence to use",
         },
         output_pdf => {
             is => 'String',
@@ -115,6 +124,8 @@ sub execute {
     my $normal_bam_name = basename($self->normal_bam);
     my $tumor_bam_name = basename($self->tumor_bam);
 
+    $self->_resolve_gaps_and_centromere_files;
+
     my $workflow = Workflow::Operation->create_from_xml(\*DATA);
 
     # Validate the workflow
@@ -158,6 +169,25 @@ sub execute {
     # Collect and analyze results
     unless($result){
         die $self->error_message("Workflow did not return correctly.");
+    }
+
+    return 1;
+}
+
+# Set the gaps_file and centromere_file based upon the genome_build, if needed and applicable
+sub _resolve_gaps_and_centromere_files {
+    my $self = shift;
+    my $refseq_version = $self->genome_build;
+
+    for my $file_type ("gaps", "centromere") {
+        my $accessor = $file_type . "_file";
+        unless ($self->$accessor) {
+            my $file = Genome::Sys->dbpath("tgi-misc-annotation","human-build$refseq_version-20130113") . "/$file_type.csv",
+            unless (-e $file) {
+                die $self->error_message("Could not find the $file_type file located at $file");
+            }
+            $self->$accessor($file);
+        }
     }
 
     return 1;

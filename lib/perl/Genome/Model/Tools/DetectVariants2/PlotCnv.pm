@@ -106,6 +106,9 @@ sub _sort_detector_output {
 sub genome_build {
     my $self = shift;
     my $refbuild = Genome::Model::Build->get($self->reference_build_id);
+    unless ($refbuild->subject->name eq "human") {
+        die $self->error_message("This does not currently work unless the subject is human");
+    }
     return $refbuild->version;
 }
 
