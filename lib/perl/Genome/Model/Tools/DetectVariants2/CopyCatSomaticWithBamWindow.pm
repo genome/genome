@@ -1,9 +1,11 @@
 package Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow;
 
-use strict;
 use warnings;
+use strict;
+
 use Cwd;
 use Genome;
+use Workflow::Simple;
 
 my $DEFAULT_VERSION = '0.1';
 

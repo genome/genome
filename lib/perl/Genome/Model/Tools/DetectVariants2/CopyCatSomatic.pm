@@ -5,6 +5,7 @@ use warnings;
 
 use Cwd;
 use Genome;
+use Workflow::Simple;
 
 class Genome::Model::Tools::DetectVariants2::CopyCatSomatic{
     is => ['Genome::Model::Tools::DetectVariants2::Detector'],
