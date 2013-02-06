@@ -57,6 +57,15 @@ class Genome::Model::Tools::Allpaths::DeNovoAssemble {
             doc => 'Maximum memory that allpaths should use',
             default_value => 0,
         },
+        min_contig => {
+            is => 'Number',
+            doc => 'Minimum length of contigs to report',
+            is_optional => 1,
+        },
+        ca_min_unique => {
+            is => 'Number',
+            is_optional => 1,
+        },
     ],
 };
 
@@ -117,6 +126,14 @@ sub execute {
         $haploidify="False";
     }
     my $cmd = 'ulimit -s 100000 && '.$self->executable_for_version("RunAllPathsLG").' PRE='.$self->pre.' REFERENCE_NAME='.$self->reference_name.' DATA_SUBDIR=data RUN='.$self->run.' SUBDIR='.$self->sub_dir.' TARGETS=standard OVERWRITE='.$overwrite.' HAPLOIDIFY='.$haploidify.' MAX_MEMORY_GB='.$self->max_memory_gb;
+
+    if ($self->min_contig) {
+        $cmd = "$cmd MIN_CONTIG=".$self->min_contig;
+    }
+
+    if ($self->ca_min_unique) {
+        $cmd = "$cmd CA_MIN_UNIQUE=".$self->ca_min_unique;
+    }
 
     $self->status_message("Run ALLPATHS de novo");
     Genome::Sys->shellcmd(cmd => $cmd);
