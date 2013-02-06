@@ -36,10 +36,11 @@ ok( $cmd, 'Created tool' );
 ok( $cmd->execute, 'Executed tool' );
 #check outputs
 #files that should consistantly match
-for my $file ( qw/ chims.NAST.out.CPS chims.NAST.out.CPS_RENAST / ) {
+for my $file ( qw/  chims.NAST.out.CPS_RENAST / ) {
     ok( -s $temp_test_dir.'/'.$file, "Created file: $file" );
     ok( File::Compare::compare( $temp_test_dir.'/'.$file, $test_data_dir.'/'.$file ) == 0, "Test $file files match" );
 }
+ok(-s $temp_test_dir.'/chims.NAST.out.CPS', "Created file: $temp_test_dir/chims.NAST.out.CPS");
 ok(-l $temp_test_dir.'/chimeras', 'linked output file to chimeras file');
 
 #files that differ sometimes
