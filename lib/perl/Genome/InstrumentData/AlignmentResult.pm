@@ -308,7 +308,8 @@ sub __display_name__ {
         . ' on ' . $instrument_data->__display_name__
         . ($instrument_data_segment_id ? " ($instrument_data_segment_id)" : '')
         . ($reference_build ? ' against ' . $reference_build->__display_name__ : '')
-        . ($annotation_build ? ' annotated by ' . $annotation_build->__display_name__ : '');
+        . ($annotation_build ? ' annotated by ' . $annotation_build->__display_name__ : '')
+        . " (" . $self->id . ")";
 
     return $name; 
 }
