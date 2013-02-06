@@ -77,6 +77,12 @@ class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
             default => 0,
             doc => "write out the corrected bins to a file (pre-segmentation)"
         },
+        do_gc_correction => {
+            is => 'Boolean',
+            is_optional => 1,
+            default => 1,
+            doc => "use loess correction to account for gc-bias",
+        }
         
         ]
 };
@@ -121,7 +127,7 @@ sub execute {
         $genome_build = "hg19";
     } else {
         unless ($genome_build eq "mm9" || $genome_build eq "hg18" || $genome_build eq "hg19" || $genome_build eq "hg19.chr1only"){
-            die("ERROR: genome build not recognized\nMust be one of [hg18,36,hg19,37,mm9]");
+            die("ERROR: genome build not recognized\nMust be one of [hg18,36,hg19,37,mm9,hg19.chr1only]");
         }
     }
 
@@ -171,6 +177,12 @@ sub execute {
         $dump_bins="FALSE";
     }
 
+    my $gcCorr="TRUE";
+    if(!($self->do_gc_correction)){
+        $gcCorr="FALSE";
+    }
+
+
     #open the r file
     my $rf = open(my $RFILE, ">$output_directory/run.R") || die "Can't open R file for writing.\n";
     print $RFILE "library(copyCat)\n";
@@ -186,6 +198,7 @@ sub execute {
     print $RFILE "                        perReadLength=$per_read_length,\n";
     print $RFILE "                        verbose=TRUE,\n";
     print $RFILE "                        dumpBins=$dump_bins,\n";
+    print $RFILE "                        doGcCorrection=$gcCorr,\n";
     print $RFILE "                        tumorSamtoolsFile=\"$tumor_samtools_file\")\n";
 
 
