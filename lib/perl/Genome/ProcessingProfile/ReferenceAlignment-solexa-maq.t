@@ -19,10 +19,13 @@ BEGIN {
 }
 
 use Test::More;
-plan skip_all => "broken with new API";
+BEGIN {
+    plan skip_all => 'broken with new API';
+};
 
 use above 'Genome';
-use Genome::Model::Event::Build::ReferenceAlignment::Test;
+use_ok('Genome::Model::Event::Build::ReferenceAlignment::Test');
+
 $ENV{UR_DBI_NO_COMMIT} = 1;
 
 # NOTE: run from 32-bit first to compile correct inline libraries

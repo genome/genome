@@ -21,10 +21,12 @@ BEGIN {
 }
 
 use Test::More;
-plan skip_all => "broken with new API";
+BEGIN {
+    plan skip_all => 'broken with new API';
+};
 
 use above 'Genome';
-use Genome::Model::Event::Build::ReferenceAlignment::Test;
+use_ok('Genome::Model::Event::Build::ReferenceAlignment::Test');
 
 # NOTE: run from 32-bit first to compile correct inline libraries
 # Then this should run from 64-bit to actually execute.
