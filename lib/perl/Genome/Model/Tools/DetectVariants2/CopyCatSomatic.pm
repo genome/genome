@@ -48,14 +48,10 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomatic{
             is_optional => 0,
             doc => 'reference build id',
         },
-
-        has_param => [
-            lsf_resource => {
-                default_value => "-R 'rusage[mem=4000] select[type==LINUX64 && maxtmp>10000] span[hosts=1]' -M 4000000 -n 4",
-            },
-        ],
-        
-        ],
+        lsf_resource => {
+            default_value => "-R 'rusage[mem=4000] select[type==LINUX64 && maxtmp>10000] span[hosts=1]' -M 4000000 -n 4",
+        },
+     ],
 };
 
 

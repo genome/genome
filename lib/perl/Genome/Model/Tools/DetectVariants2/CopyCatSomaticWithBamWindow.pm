@@ -11,14 +11,12 @@ my $DEFAULT_VERSION = '0.1';
 
 class Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow{
     is => ['Genome::Model::Tools::DetectVariants2::Detector'],
-    has => [
-        has_param => [
-            lsf_resource => {
-                default_value => 'rusage[mem=4000] select[type==LINUX64 && maxtmp>10000] span[hosts=1]',
-            },
-        ],
-        
-        ],
+    doc => "Produces somatic copy-number calls from paired samples",
+    has_param => [
+        lsf_resource => {
+            default_value => 'rusage[mem=4000] select[type==LINUX64 && maxtmp>10000] span[hosts=1]',
+        },
+    ],
 };
 
 
@@ -36,7 +34,7 @@ sub _detect_variants {
         $bamwindow_params =~ m/--bamwindow-params\s*\{([^\}]+)\}/;
     }
 
-    my $copycat_params;   
+    my $copycat_params;
     #--copycat-params [--per-read-length --per-library]
     if ($params =~ m/--copycat-params/) {
         $bamwindow_params =~ m/--bamwindow-params\s*\{([^\}]+)\}/;
@@ -50,13 +48,13 @@ sub _detect_variants {
         $per_read_length = 1;
     }
 
-    
+
 
     my %input;
 
     # Define a workflow from the static XML at the bottom of this module
     my $workflow = Workflow::Operation->create_from_xml(\*DATA);
-    
+
     # Validate the workflow
     my @errors = $workflow->validate;
     if (@errors) {
@@ -116,7 +114,7 @@ sub get_samtools_results{
     my $return_snp_file;
     my $bam_path = $self->aligned_reads_input;
     my @results = Genome::Model::Tools::DetectVariants2::Result::Detector->get(
-        detector_name => "Genome::Model::Tools::DetectVariants2::Samtools", 
+        detector_name => "Genome::Model::Tools::DetectVariants2::Samtools",
         aligned_reads =>$bam_path );
     if(@results) {
         return $results[0]->path("snvs.hq");
@@ -153,7 +151,7 @@ __DATA__
     <link fromOperation="input connector" fromProperty="tumor_samtools_file" toOperation="CopyCat Somatic" toProperty="tumor_samtools_file" />
     <link fromOperation="input connector" fromProperty="reference_build_id" toOperation="CopyCat Somatic" toProperty="reference_build_id" />
     <link fromOperation="input connector" fromProperty="copycat_params" toOperation="CopyCat Somatic" toProperty="params" />
-   
+
 
     <link fromOperation="BamWindow Normal" fromProperty="output_directory" toOperation="output connector" toProperty="bam_window_normal_output_directory" />
     <link fromOperation="BamWindow Tumor" fromProperty="output_directory" toOperation="output connector" toProperty="bam_window_tumor_output_directory" />
