@@ -3,13 +3,9 @@ use strict;
 use warnings;
 use Genome;
 
-# Genome::SomeCommand::Result is auto-generated
-# with this as its base class for any command 
-# in this namespace.
-# To get it to automatically use it set this in 
-# any command class definition:
-#
-#   shortcut_execute => 1
+# This is the base class for auto-generated software result subclasses
+# The Genome.pm __extend_namespace__ creates these with a class name
+# like ${COMMANDCLASS}::Result for any Command::V2 in a consistent way.
 
 class Genome::SoftwareResult::Default {
     is => 'Genome::SoftwareResult::Stageable',
@@ -105,5 +101,5 @@ sub _staging_disk_usage {
     return $usage;
 }
 
-
 1;
+
