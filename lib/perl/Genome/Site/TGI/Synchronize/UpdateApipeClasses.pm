@@ -37,7 +37,7 @@ sub objects_to_sync {
         'Genome::Site::TGI::PopulationGroup' => 'Genome::PopulationGroup',
         'Genome::Site::TGI::Taxon' => 'Genome::Taxon',
         'Genome::Site::TGI::Sample' => 'Genome::Sample',
-        'Genome::Site::TGI::Library' => 'Genome::Library',
+        'Genome::Site::TGI::Synchronize::Classes::LibrarySummary' => 'Genome::Library',
         'Genome::Site::TGI::Synchronize::Classes::SetupProject' => 'Genome::Project',
         'Genome::Site::TGI::Synchronize::Classes::SetupProjectSample' => 'Genome::Site::TGI::Synchronize::Classes::ProjectSample',
         'Genome::Site::TGI::Synchronize::Classes::SetupProjectSequenceProduct' => 'Genome::Site::TGI::Synchronize::Classes::ProjectInstrumentData',
@@ -567,21 +567,17 @@ sub _create_populationgroup {
     return 1;
 }
 
-sub _create_library {
+sub _create_librarysummary {
     my ($self, $original_object, $new_object_class) = @_;
 
     my %params;
-    for my $property ($new_object_class->__meta__->_legacy_properties) {
-        my $property_name = $property->property_name;
-        $params{$property_name} = $original_object->{$property_name} if defined $original_object->{$property_name};
+    for my $name ( $original_object->properties_to_copy ) {
+        my $value = $original_object->$name;
+        next if not defined $value;
+        $params{$name} = $value;
     }
 
-    my $object = eval { 
-        $new_object_class->create(
-            %params, 
-            id => $original_object->id, 
-        ) 
-    };
+    my $object = eval { $new_object_class->create(%params); };
     confess "Could not create new object of type $new_object_class based on object of type " .
         $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
 
