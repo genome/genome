@@ -90,7 +90,7 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
         --prefix=GRClite \
         --species-name=human \
         --version=37 \
-        --use-default-sequence-uri 
+        --use-default-sequence-uri
         --fasta-file=complete.fa \
     
       # for a reference which extends another
@@ -99,9 +99,9 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
         --prefix=GRC \
         --species-name=human \
         --version=37-p8-test7 \
-        --use-default-sequence-uri 
+        --use-default-sequence-uri
         --fasta-file=additions.fa \
-        --append-to 106942997 
+        --append-to 106942997
 
 
 
