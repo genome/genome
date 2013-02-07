@@ -2,7 +2,7 @@
 use above "Genome";
 use strict;
 use warnings;
-use Test::More; 
+use Test::More;
 use Command::Shell;
 
 Genome::SoftwareResult->class; #This emits warnings under no-commit, so get them out of the way.
@@ -47,7 +47,7 @@ my @sub_commands_expected = qw/
   test-pipeline
 /;
 
-plan tests => ((scalar(@sub_commands_expected)*3)+1);
+plan tests => ((scalar(@sub_commands_expected)*4)+1);
 
 is("@sub_commands", "@sub_commands_expected", "sub-command list is as expected");
 
@@ -71,6 +71,9 @@ else {
 }
 
 for my $sub_command (@sub_commands) {
+    my $module = module_from_sub_command($sub_command);
+    use_ok($module, "Can use $module");
+
     my $actual_out = $actual_dir . '/' . $sub_command;
     my $expected_out = $expected_dir . '/' . $sub_command;
 
@@ -110,4 +113,14 @@ for my $sub_command (@sub_commands) {
             for(@diff) { diag($_) };
         }
 
+}
+
+sub module_from_sub_command {
+    my $sub_command = shift;
+
+    (my $module = $sub_command) =~ s/-([a-z])/uc($1)/ge;
+    $module =~ s/^([a-z])/uc($1)/ge;
+    $module = "Genome::Model::$module";
+
+    return $module;
 }
