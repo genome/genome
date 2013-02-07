@@ -15,6 +15,7 @@ use Data::Dumper 'Dumper';
 use Test::More;
 
 use_ok('Genome::Site::TGI::Synchronize::UpdateApipeClasses') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::IndexIllumina') or die;
 
 my $uac = Genome::Site::TGI::Synchronize::UpdateApipeClasses->create;
 ok($uac, 'create update apipe classes');
@@ -26,6 +27,7 @@ for my $test ( @tests ) {
     my $gsc_obj = $gsc_class->create(%$params);
     my $genome_class = $test->{genome_class};
     my $genome_obj = $genome_class->get(id => $gsc_obj->id);
+    $uac->instrument_data_with_successful_pidfas->{$gsc_obj->id} = 1;
     ok(!$genome_obj, "$genome_class data does not exist for $gsc_class for id ".$gsc_obj->id);
     my $method = $test->{method};
     ok($uac->$method($gsc_obj, $genome_class), $method);
@@ -61,6 +63,50 @@ sub tests {
                 protocol => 'Ovation SP Ultralow DR',
                 original_insert_size => '300-500',
                 library_insert_size => '325',
+            },
+        },
+        {
+            gsc_class => 'Genome::Site::TGI::Synchronize::Classes::IndexIllumina',
+            genome_class => 'Genome::InstrumentData::Solexa',
+            method => '_create_indexillumina',
+            params => {
+                id => -2889838607,
+                analysis_software_version => 'CASAVA-1.8.2',
+                fwd_read_length => '150',
+                fwd_seq_id => undef,
+                library_id => '2889531422',
+                gc_bias_path => undef,
+                clusters => '2057469',
+                lane => '1',
+                target_region_set_name => undef,
+                adaptor_path => '/gscmnt/sata114/info/medseq/adaptor_sequences/solexa_adaptor_pcr_primer',
+                fwd_run_type => 'Paired End Read 1',
+                run_type => 'Paired',
+                fwd_kilobases_read => '308620350',
+                fwd_clusters => '2057469',
+                rev_clusters => '2057469',
+                fwd_filt_aligned_clusters_pct => '0',
+                gerald_directory => '/gscmnt/gc1500/production/Unaligned_lane_1_131628932/Project_Dummy/Sample_lane1_TTCAGC',
+                archive_path => undef,
+                read_length => '150',
+                rev_filt_error_rate_avg => undef,
+                rev_read_length => '150',
+                run_name => '121130_HWI-M00678_131575527_A23R6',
+                rev_seq_id => undef,
+                rev_filt_aligned_clusters_pct => '0',
+                subset_name => '1-TTCAGC',
+                flow_cell_id => 'A23R6',
+                fastqc_path => '/gscmnt/sata162/production/A23R6/L001/TTCAGC/fastqc',
+                index_sequence => 'TTCAGC',
+                bam_path => '/gscmnt/gc6001/production/csf_131629071/gerald_A23R6_1_TTCAGC.bam',
+                is_external => '0',
+                median_insert_size => undef,
+                filt_error_rate_avg => undef,
+                rev_kilobases_read => '308620350',
+                sd_above_insert_size => undef,
+                sd_below_insert_size => undef,
+                fwd_filt_error_rate_avg => undef,
+                rev_run_type => 'Paired End Read 2',
             },
         },
     );
