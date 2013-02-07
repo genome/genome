@@ -212,11 +212,15 @@ __DATA__
   <link fromOperation="input connector" fromProperty="normal_cnv_seg" toOperation="normal cnv-seg" toProperty="output_file" />
   <link fromOperation="input connector" fromProperty="min_markers" toOperation="normal cnv-seg" toProperty="min_markers" />
   <link fromOperation="input connector" fromProperty="max_copy_number" toOperation="normal cnv-seg" toProperty="max_copy_number" />
+  <link fromOperation="input connector" fromProperty="gaps_file" toOperation="normal cnv-seg" toProperty="gap_file" />
+  <link fromOperation="input connector" fromProperty="centromere_file" toOperation="normal cnv-seg" toProperty="centromere_file" />
 
   <link fromOperation="tumor bam-to-cn" fromProperty="output_file" toOperation="tumor cnv-seg" toProperty="copy_number_file" />
   <link fromOperation="input connector" fromProperty="tumor_cnv_seg" toOperation="tumor cnv-seg" toProperty="output_file" />
   <link fromOperation="input connector" fromProperty="min_markers" toOperation="tumor cnv-seg" toProperty="min_markers" />
   <link fromOperation="input connector" fromProperty="max_copy_number" toOperation="tumor cnv-seg" toProperty="max_copy_number" />
+  <link fromOperation="input connector" fromProperty="gaps_file" toOperation="tumor cnv-seg" toProperty="gap_file" />
+  <link fromOperation="input connector" fromProperty="centromere_file" toOperation="tumor cnv-seg" toProperty="centromere_file" />
 
   <link fromOperation="tumor cnv-seg" fromProperty="output_file" toOperation="plot segments" toProperty="tumor_segment_file" />
   <link fromOperation="normal cnv-seg" fromProperty="output_file" toOperation="plot segments" toProperty="normal_segment_file" />
@@ -268,6 +272,8 @@ __DATA__
     <inputproperty isOptional="Y">genome_build</inputproperty>
     <inputproperty isOptional="Y">sex</inputproperty>
     <inputproperty isOptional="Y">y_max</inputproperty>
+    <inputproperty isOptional="Y">gaps_file</inputproperty>
+    <inputproperty isOptional="Y">centromere_file</inputproperty>
     <outputproperty>output</outputproperty>
   </operationtype>
 
