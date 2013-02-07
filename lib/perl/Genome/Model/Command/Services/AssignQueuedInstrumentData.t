@@ -303,71 +303,7 @@ for my $mouse_model_id (keys %mouse_new_models){
 }
 is($mouse_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on mouse inst data');
 
-#Test rna
-my $rna_sample = Genome::Sample->create(
-    id => '-1001',
-    name => 'AQID-rna-test-sample',
-    common_name => 'normal',
-    source_id => $individual->id,
-    extraction_type => 'rna',
-);
-
-my $rna_library = Genome::Library->create(
-    id => '-2002',
-    name => 'rna library',
-    sample_id => $rna_sample->id,
-);
-
-isa_ok($rna_library, 'Genome::Library');
-isa_ok($rna_sample, 'Genome::Sample');
-
-my $rna_instrument_data = Genome::InstrumentData::Solexa->create(
-    id => '-100001',
-    library_id => $rna_library->id,
-    flow_cell_id => 'TM-021',
-    lane => '1',
-    run_type => 'Paired',
-    fwd_read_length => 100,
-    rev_read_length => 100,
-    fwd_clusters => 65535,
-    rev_clusters => 65536,
-);
-ok($rna_instrument_data, 'Created an instrument data');
-$rna_instrument_data->add_attribute(
-    attribute_label => 'tgi_lims_status',
-    attribute_value => 'new',
-);
-push @instrument_data, $rna_instrument_data;
-_add_instrument_data_to_projects($rna_instrument_data);
-
-my $rna_454_instrument_data = Genome::InstrumentData::454->create(
-    id => '-14',
-    library => $rna_library,
-    region_number => 3,
-    total_reads => 20,
-    run_name => 'R_2010_01_09_11_08_12_FLX08080418_Administrator_100737113',
-    sequencing_platform => '454',
-);
-isa_ok($rna_454_instrument_data, 'Genome::InstrumentData::454');
-$rna_454_instrument_data->add_attribute(
-    attribute_label => 'tgi_lims_status',
-    attribute_value => 'new',
-);
-push @instrument_data, $rna_454_instrument_data;
-
-my $rna_command = Genome::Model::Command::Services::AssignQueuedInstrumentData->create;
-ok($rna_command->execute(), 'assign-queued-instrument-data executed successfully.');
-
-my $rna_new_models = $rna_command->_newly_created_models;
-is(scalar(keys %$rna_new_models), 1, 'the cron created 1 rna model');
-my ($rna_model) = values %$rna_new_models;
-ok($rna_model->annotation_build, 'the cron set the annotation_build input on the rna model');
-is($rna_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'processed', 'Set tgi lims status to processed on rna solexa inst data');
-is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_status')->attribute_value, 'failed', 'Set tgi_lims_status to failed on rna 454 inst data (no ref)');
-is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_fail_message')->attribute_value, 'Failed to set reference sequence build during processing instrument data! -14', 'Set tgi_lims_fail_message on rna 454 inst data (no ref)');
-is($rna_454_instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value, 1, 'Set tgi_lims_fail_count to 1 on rna 454 inst data (no ref)');
-
-# Test ?
+# What does this test ?
 my $instrument_data_3 = Genome::InstrumentData::Solexa->create(
     id => '-102',
     library_id => $library->id,
