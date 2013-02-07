@@ -16,6 +16,7 @@ use Test::More;
 
 use_ok('Genome::Site::TGI::Synchronize::UpdateApipeClasses') or die;
 use_ok('Genome::Site::TGI::Synchronize::Classes::IndexIllumina') or die;
+use_ok('Genome::Site::TGI::Synchronize::Classes::LibrarySummary') or die;
 
 my $uac = Genome::Site::TGI::Synchronize::UpdateApipeClasses->create;
 ok($uac, 'create update apipe classes');
@@ -27,7 +28,7 @@ for my $test ( @tests ) {
     my $gsc_obj = $gsc_class->create(%$params);
     my $genome_class = $test->{genome_class};
     my $genome_obj = $genome_class->get(id => $gsc_obj->id);
-    $uac->instrument_data_with_successful_pidfas->{$gsc_obj->id} = 1;
+    $uac->instrument_data_with_successful_pidfas->{$gsc_obj->id} = 1 if $genome_class =~ /Solexa$/;
     ok(!$genome_obj, "$genome_class data does not exist for $gsc_class for id ".$gsc_obj->id);
     my $method = $test->{method};
     ok($uac->$method($gsc_obj, $genome_class), $method);
