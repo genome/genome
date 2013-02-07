@@ -11,6 +11,7 @@ class Genome::Model::ClinSeq {
         exome_model         => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
         tumor_rnaseq_model  => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
         normal_rnaseq_model => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
+        de_model            => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
         force               => { is => 'Boolean', doc => 'skip sanity checks on input models' }, 
     ],
     has_optional_param => [
@@ -39,7 +40,7 @@ EOS
 sub _help_detail_for_profile_create {
     return <<EOS
 
-The initial ClinSeq pipeline has no parameters.  Just use the default profile to run it.
+The ClinSeq pipeline has no parameters.  Just use the default profile to run it.
 
 EOS
 }
@@ -580,18 +581,33 @@ sub _resolve_workflow_for_build {
       $add_link->($clonality_op, 'result', $output_connector, 'clonality_result'); 
     }
 
-    #Produce copy number results with run-cn-view
+    #Produce copy number results with run-cn-view.  Relies on clonality step already having been run
+    my $run_cn_view_op;
     if ($build->wgs_build){
       $msg = "Use gmt copy-number cn-view to produce copy number tables and images";
-      my $run_cn_view_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::RunCnView");
+      $run_cn_view_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::RunCnView");
       $add_link->($input_connector, 'wgs_build', $run_cn_view_op, 'build');
       $add_link->($input_connector, 'cnv_dir', $run_cn_view_op, 'outdir');
       $add_link->($clonality_op, 'cnv_hmm_file', $run_cn_view_op);
       $add_link->($run_cn_view_op, 'result', $output_connector, 'run_cn_view_result');
     }
+   
+    #Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
+    #This step relies on the generate-clonality-plots step already having been run 
+    #It also relies on run-cn-view step having been run already
+    if ($build->wgs_build){
+        my $msg = "Summarize CNV results from WGS somatic variation";
+        my $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
+        $add_link->($input_connector, 'cnv_dir', $summarize_cnvs_op, 'outdir');
+        $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
+        $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
+        $add_link->($run_cn_view_op, 'gene_amp_file', $summarize_cnvs_op);
+        $add_link->($run_cn_view_op, 'gene_del_file', $summarize_cnvs_op);
+        $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
+    }
 
     #Generate a summary of SV results from the WGS SV results
-    if ($build->wgs_build) {
+    if ($build->wgs_build){
         my $msg = "Summarize SV results from WGS somatic variation";
         my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
         $add_link->($input_connector, 'wgs_build', $summarize_svs_op, 'builds');
@@ -657,15 +673,6 @@ sub _resolve_workflow_for_build {
         }
         $add_link->($main_op, 'verbose', $summarize_tier1_snv_support_op);
         $add_link->($summarize_tier1_snv_support_op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
-    }
-
-    #Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
-    if ($build->wgs_build) {
-        my $msg = "Summarize CNV results from WGS somatic variation";
-        my $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
-        $add_link->($main_op, 'build', $summarize_cnvs_op, 'builds');
-        $add_link->($input_connector, 'cnv_dir', $summarize_cnvs_op, 'outdir');
-        $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
     }
 
     # REMINDER:

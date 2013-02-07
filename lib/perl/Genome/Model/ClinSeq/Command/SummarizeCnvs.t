@@ -14,14 +14,14 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>6; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>9; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::SummarizeCnvs;
 use Data::Dumper;
 
 use_ok('Genome::Model::ClinSeq::Command::SummarizeCnvs') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-SummarizeCnvs/2012-11-23/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-SummarizeCnvs/2013-02-07/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -29,13 +29,23 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Get a clin-seq build
-my $clinseq_build_id1 = 126680687;
-my $clinseq_build1 = Genome::Model::Build->get($clinseq_build_id1);
+my $clinseq_build_id = 126680687;
+my $clinseq_build = Genome::Model::Build->get($clinseq_build_id);
+my $clinseq_dir = $clinseq_build->data_directory;
+my $cnv_hmm_file = $clinseq_dir . "/AML103/clonality/cnaseq.cnvhmm";
+my $gene_amp_file = $clinseq_dir . "/AML103/cnv/cnv.AllGenes_Ensembl58.amp.tsv";
+my $gene_del_file = $clinseq_dir . "/AML103/cnv/cnv.AllGenes_Ensembl58.del.tsv";
+
+ok (-e $cnv_hmm_file, "Found cnv hmm file: $cnv_hmm_file") or die;
+ok (-e $gene_amp_file, "Found gene amp file: $gene_amp_file") or die;
+ok (-e $gene_del_file, "Found gene del file: $gene_del_file") or die;
+
+#Get a wgs somatic-variation build from this clinseq build
+my $wgs_build = $clinseq_build->wgs_build;
 
 #Create summarize-cnvs command and execute
-#genome model clin-seq summarize-cnvs --outdir=/tmp/summarize_cnvs/ 126680687
-
-my $summarize_cnvs_cmd = Genome::Model::ClinSeq::Command::SummarizeCnvs->create(outdir=>$temp_dir, builds=>[$clinseq_build1]);
+#genome model clin-seq summarize-cnvs --outdir=/tmp/  --cnv-hmm-file=? --gene-amp-file=? --gene-del-file=? 119390903 
+my $summarize_cnvs_cmd = Genome::Model::ClinSeq::Command::SummarizeCnvs->create(outdir=>$temp_dir, cnv_hmm_file=>$cnv_hmm_file, gene_amp_file=>$gene_amp_file, gene_del_file=>$gene_del_file, build=>$wgs_build);
 $summarize_cnvs_cmd->queue_status_messages(1);
 my $r1 = $summarize_cnvs_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
