@@ -17,7 +17,11 @@ class Genome::Model::PhenotypeCorrelation::Command::ParallelVep {
     has_input => [
         input_vcf => {
             is => "File",
-            doc => "The vcf file of variants to annotate",
+            doc => "The tabix indexed vcf file of variants to annotate",
+        },
+        ensembl_annotation_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+            doc => 'ID of ImportedAnnotation build with the desired ensembl version.',
         },
         log_dir => {
             is => "File",
@@ -62,11 +66,12 @@ sub execute {
         );
     $cmd->execute;
     my @chromosomes = $cmd->chromosomes;
-    
+
     print "Got " . @chromosomes . " chromosomes\n";
     my @intermediate_files;
     my %inputs = (
         input_vcf => $vcf,
+        ensembl_annotation_build_id => $self->ensembl_annotation_build->id,
     );
 
     my @outputs = map {"job_${_}_result"} 0..$#chromosomes;
@@ -76,7 +81,7 @@ sub execute {
         my $output_file_var = "output_file_$i";
         my $region_var = "region_$i";
         my $region = $chromosomes[$i];
-        
+
         push(@intermediate_files, $output_file);
         $inputs{$output_file_var} = $output_file;
         $inputs{$region_var} = $region;
@@ -106,6 +111,12 @@ sub execute {
         );
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
+            left_property => "ensembl_annotation_build_id",
+            right_operation => $op,
+            right_property => "ensembl_annotation_build_id",
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
             left_property => $output_file_var,
             right_operation => $op,
             right_property => "output_file",
@@ -130,7 +141,7 @@ sub execute {
     if (@errors) {
         confess $self->error_message(join("\n", @errors));
     }
-        
+
     $self->status_message("Executing workflow...");
     my $output = Workflow::Simple::run_workflow_lsf($workflow, %inputs);
     unless (defined $output) {

@@ -89,19 +89,29 @@ class Genome::Model::PhenotypeCorrelation {
             is => 'Genome::Model::Build::ReferenceSequence',
             doc => 'the reference sequence against which alignment and variant detection are done',
         },
+        ensembl_annotation_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+            id_by => 'ensembl_annotation_build_id',
+            is_optional => 1,
+        },
+        ensembl_annotation_build_id => {
+            is => 'Text',
+            doc => 'ID of ImportedAnnotation build with the desired ensembl version.',
+            default => $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD},
+        },
     ],
     has_optional_input => [
         dbsnp_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            doc => 'the dbSNP build by which to determine which variants are novel etc',            
+            doc => 'the dbSNP build by which to determine which variants are novel etc',
         },
         thousand_genomes_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            doc => 'the 1kg build by which to annotate allele frequencies',            
+            doc => 'the 1kg build by which to annotate allele frequencies',
         },
         nhlbi_esp_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            doc => 'the nhlbi esp build by which to annotate allele frequencies',            
+            doc => 'the nhlbi esp build by which to annotate allele frequencies',
         },
         previous_variant_detection_results => {
             is => 'Genome::File::Vcf',
@@ -116,25 +126,25 @@ class Genome::Model::PhenotypeCorrelation {
             doc => 'only variants in these regions will be included in the final VCF',
         },
         pedigree_file_path => {
-            is => 'Genome::File::Tsv', 
+            is => 'Genome::File::Tsv',
             doc => 'when supplied overrides the automatic lookup of familial relationships'
         },
         clinical_data_file_path => {
             is => 'Genome::File::Tsv',
             doc => 'when supplied overrides the dumping of clinical data from the nomenclature'
         },
-        identify_cases_by => { 
-            is => 'Text', 
-            doc => 'the expression which matches "case" samples, typically by their attributes' 
+        identify_cases_by => {
+            is => 'Text',
+            doc => 'the expression which matches "case" samples, typically by their attributes'
         },
-        identify_controls_by => { 
-            is => 'Text', 
-            doc => 'the expression which matches "control" samples, typically by their attributes' 
+        identify_controls_by => {
+            is => 'Text',
+            doc => 'the expression which matches "control" samples, typically by their attributes'
         },
         #FIXME does this name make sense
-        glm_config_file => { 
-            is => 'Genome::File::Tsv', 
-            doc => 'the model file for the glm', 
+        glm_config_file => {
+            is => 'Genome::File::Tsv',
+            doc => 'the model file for the glm',
         },
     ],
     has_output => [
@@ -302,6 +312,16 @@ sub _execute_build {
     my $reference_build = $build->reference_sequence_build;
     $build->status_message("reference sequence build: " . $reference_build->__display_name__);
 
+    my $annotation_build = $self->ensembl_annotation_build;
+    if (!defined $annotation_build) {
+        die "No ensembl_annotation_build specified for this model, abort.";
+    }
+    $build->status_message("ensembl annotation build: " . $annotation_build->__display_name__);
+
+    if (!$annotation_build->is_compatible_with_reference_sequence_build($reference_build)) {
+        die "Reference sequence and annotation builds are incompatible!";
+    }
+
     #my $reference_fasta = $reference_build->full_consensus_path('fa');
     #unless(-e $reference_fasta){
     #    die $self->error_message("fasta file for reference build doesn't exist!");
@@ -337,11 +357,12 @@ sub _execute_build {
     }
     #notify which VCF
     $self->status_message("Input VCF: " . $self->multisample_vcf);
+    $self->status_message("Ensembl annotation build: " . $self->ensembl_annotation_build->name);
 
     #Do annotation based on available inputs
     my $annotated_vcf = $self->_annotate_multisample_vcf($self->output_directory);
     if($annotated_vcf) {
-        $self->status_message("Finished annotating the VCF. The following VCF will be used for further analysis: $annotated_vcf"); #the annotate method updates that 
+        $self->status_message("Finished annotating the VCF. The following VCF will be used for further analysis: $annotated_vcf"); #the annotate method updates that
         $self->multisample_vcf($annotated_vcf);
         my $cmd = Genome::Model::Tools::Tabix::Index->create(
             input_file => $annotated_vcf,
@@ -351,7 +372,7 @@ sub _execute_build {
             confess "Failed to create tabix index for file $annotated_vcf";
         }
     }
-    
+
     # Continue with analysis of the multisample_vcf
     #
 
@@ -440,7 +461,7 @@ sub _find_or_generate_multisample_vcf {
         );
     }
     else {
-        $self->status_message('Gathering alignments...');    
+        $self->status_message('Gathering alignments...');
         my $overall_alignment_result = Genome::InstrumentData::Composite->get_or_create(
             inputs => {
                 instrument_data => \@instdata,
@@ -466,12 +487,12 @@ sub _find_or_generate_multisample_vcf {
             }
         }
 
-        # this is used by the old, non-DV2 code, but is also used by vcf2maf, 
+        # this is used by the old, non-DV2 code, but is also used by vcf2maf,
         # which reliese on annotation having been run on the original samples
 #        @builds = $self->_get_builds(\@per_sample_alignment_results);
 
 #        my @ar_ids = map { $_->id } @per_sample_alignment_results;
-#        my @build_ids = map { $_->id } @builds; 
+#        my @build_ids = map { $_->id } @builds;
 #        print Data::Dumper::Dumper(\@ar_ids, \@build_ids, \@bams);
     }
 
@@ -486,7 +507,7 @@ sub _find_or_generate_multisample_vcf {
     #  run bamreadcount to fill-in the blanks
     #
 
-    $self->status_message("Executing detect variants step");        
+    $self->status_message("Executing detect variants step");
 
     my %params;
     $params{snv_detection_strategy} = $self->snv_detection_strategy if $self->snv_detection_strategy;
@@ -505,7 +526,7 @@ sub _find_or_generate_multisample_vcf {
     my @snp_files;
     for my $alignment_result (@per_sample_alignment_results) {
         my $snp_file = $self->get_snp_list_for_something_close_to_this_result($alignment_result);
-        unless($snp_file && -e $snp_file) { 
+        unless($snp_file && -e $snp_file) {
             $self->error_message("Couldn't locate a variant list from a previous model to speed up QC with, (either we no longer make them or the code to find them is broken). exiting....");
             die;
         }
@@ -533,7 +554,7 @@ sub _find_or_generate_multisample_vcf {
         $self->status_message("Parameters:");
         $self->status_message("Bams: @bams");
         $self->status_message("Ped file: $ped_file");
-        $self->status_message("reference fasta: $ref_fasta"); 
+        $self->status_message("reference fasta: $ref_fasta");
         $self->status_message("Snp Files: @snp_files");
         $self->status_message("directory: $output_dir/IBD_QC/");
         my $sqc_obj = Genome::Model::Tools::Relationship::SequencingQc->create(
@@ -582,8 +603,8 @@ sub get_snp_list_for_something_close_to_this_result {
     my $bam_path = $alignment_result->merged_alignment_bam_path;
     my $reference_build_id = $alignment_result->reference_build->id;
     my @results = Genome::Model::Tools::DetectVariants2::Result::Filter->get(
-        filter_name => "Genome::Model::Tools::DetectVariants2::Filter::SnpFilter", 
-        reference_build_id => $reference_build_id, 
+        filter_name => "Genome::Model::Tools::DetectVariants2::Filter::SnpFilter",
+        reference_build_id => $reference_build_id,
         aligned_reads =>$bam_path );
     if(@results) {
         return $results[0]->path("snvs.hq.bed");
@@ -592,14 +613,14 @@ sub get_snp_list_for_something_close_to_this_result {
         $self->status_message("Widening the search space....");
     }
     my @more_alignment_results = Genome::InstrumentData::AlignmentResult::Merged->get(
-        instrument_data_id => [$alignment_result->instrument_data_id], 
+        instrument_data_id => [$alignment_result->instrument_data_id],
         reference_build_id => $reference_build_id,
     );
     for my $alignment_result (@more_alignment_results) {
         $bam_path = $alignment_result->merged_alignment_bam_path;
         my @results = Genome::Model::Tools::DetectVariants2::Result::Filter->get(
-            filter_name => "Genome::Model::Tools::DetectVariants2::Filter::SnpFilter", 
-            reference_build_id => $reference_build_id, 
+            filter_name => "Genome::Model::Tools::DetectVariants2::Filter::SnpFilter",
+            reference_build_id => $reference_build_id,
             aligned_reads =>$bam_path );
         if(@results) {
             return $results[0]->path("snvs.hq.bed");
@@ -613,7 +634,7 @@ sub _vcf_annotate {
     my ($self, $input_vcf, $annotation_vcf, $info_string) = @_;
 
     my $output_file = Genome::Sys->create_temp_file_path();
-    my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create( 
+    my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create(
         input_file=> $input_vcf,
         annotation_file=>$annotation_vcf,
         output_file=>$output_file,
@@ -954,14 +975,14 @@ sub check_ped_file {
         my ($family_id, $ind_id, $dad, $mom, $sex, $glf, $affect)  = split "\t", $line;
         if($dad && !$mom) {
             return 0;
-        }   
+        }
         if(!$dad && $mom) {
             return 0;
-        }   
+        }
         if($dad && $mom) {
             $complete_trio=1;
-        }   
-    }   
+        }
+    }
     return $complete_trio;
 }
 

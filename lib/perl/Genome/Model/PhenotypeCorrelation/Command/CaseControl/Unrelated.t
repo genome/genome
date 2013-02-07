@@ -36,6 +36,9 @@ my $new_dir = "$tmpdir/new";
 mkdir($old_dir);
 mkdir($new_dir);
 
+my $ensembl_annotation_build_id = $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD};
+my $annotation_build = Genome::Model::Build->get($ensembl_annotation_build_id);
+
 test_with_clinical_data($old_dir, $old_clinical_data_file,
     case_label => "Invasive (high)",
     control_label => "Cutaneous (low)"
@@ -70,6 +73,7 @@ sub test_with_clinical_data {
 
     my $cmd = $pkg->create(
             multisample_vcf => $vcf_file,
+            ensembl_annotation_build => $annotation_build,
             output_directory => $tmpdir,
             sample_list_file => $sample_list_file,
             clinical_data_file => $clinical_data_file,
