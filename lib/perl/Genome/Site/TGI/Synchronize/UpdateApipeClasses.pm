@@ -52,21 +52,8 @@ sub objects_to_sync {
 
 # Specifies the order in which classes should be synced
 sub sync_order {
-    return qw/
-        Genome::Site::TGI::Sample
-        Genome::Site::TGI::Synchronize::Classes::SetupProject
-        Genome::Site::TGI::Synchronize::Classes::SetupProjectSample
-        Genome::Site::TGI::Synchronize::Classes::SetupProjectSequenceProduct
-        Genome::Site::TGI::Taxon
-        Genome::Site::TGI::Individual
-        Genome::Site::TGI::PopulationGroup
-        Genome::Site::TGI::Library
-        Genome::Site::TGI::Synchronize::Classes::IndexIllumina
-        Genome::Site::TGI::Synchronize::Classes::RegionIndex454
-        Genome::Site::TGI::Synchronize::Classes::Genotyping
-    /;
-    # FIXME Currently not syncing sanger data due to a bug, needs to be fixed
-    #Genome::Site::TGI::InstrumentData::Sanger
+    my %objs = objects_to_sync();
+    return sort keys %objs;
 }
 
 sub _suppress_status_messages {
@@ -536,7 +523,7 @@ sub _create_librarysummary {
         next if not defined $value;
         $params{$name} = $value;
     }
-
+    
     my $object = eval { $new_object_class->create(%params); };
     confess "Could not create new object of type $new_object_class based on object of type " .
         $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
