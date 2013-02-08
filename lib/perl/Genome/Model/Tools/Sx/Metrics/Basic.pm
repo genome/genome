@@ -10,7 +10,7 @@ class Genome::Model::Tools::Sx::Metrics::Basic {
     has => [
         (map { 
             $_ => {
-                is => 'UR::Value',
+                #is => 'UR::Value',
                 default_value => 0,
             }
         } __PACKAGE__->metric_names()),
