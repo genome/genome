@@ -229,6 +229,12 @@ sub _resolve_param {
 
     my $value = $self->$param;
     return unless $value; # not specified
+    if (ref($value) eq 'HASH') {
+        # the declaration works with the new UR
+        # but this will allow the class to work with the old one also
+        # since it did things which are now automatic
+        $value = $value->{name};
+    }
     return $value if ref($value); # already an object
 
     my @objs = $self->resolve_param_value_from_text($value, $param_class);
