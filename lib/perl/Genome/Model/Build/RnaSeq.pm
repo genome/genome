@@ -142,12 +142,41 @@ sub accumulated_fastq_directory {
 
 sub expression_directory {
     my $self = shift;
-    return $self->accumulated_expression_directory;
+    my $mode = shift;
+
+    $mode = 'expression' unless $mode;
+
+    if ($mode eq 'expression') {
+        return $self->accumulated_expression_directory;
+    } elsif ($mode eq 'de novo' or $mode eq 'de_novo') {
+        return $self->de_novo_directory;
+    } elsif ($mode eq 'reference guided' or $mode eq 'reference_guided') {
+        return $self->reference_guided_directory;
+    } elsif ($mode eq 'reference only' or $mode eq 'reference_only') {
+        return $self->reference_only_directory;
+    } else {
+        die $self->error_message("'$mode' is not a valid mode for annotation_reference_transcripts_mode.");
+    }
 }
 
 sub accumulated_expression_directory {
     my $self = shift;
     return $self->data_directory . '/expression';
+}
+
+sub de_novo_directory {
+    my $self = shift;
+    return $self->data_directory . '/de_novo';
+}
+
+sub reference_guided_directory {
+    my $self = shift;
+    return $self->data_directory . '/reference_guided';
+}
+
+sub reference_only_directory {
+    my $self = shift;
+    return $self->data_directory . '/reference_only';
 }
 
 sub merged_alignment_result {
@@ -200,7 +229,13 @@ sub delete {
     my $self = shift;
     
     # if we have an alignments directory, nuke it first since it has its own allocation
-    if (-e $self->accumulated_alignments_directory || -e $self->accumulated_fastq_directory || -e $self->accumulated_expression_directory) {
+    if (-e $self->accumulated_alignments_directory ||
+        -e $self->accumulated_fastq_directory ||
+        -e $self->accumulated_expression_directory ||
+        -e $self->de_novo_directory ||
+        -e $self->reference_guided_directory ||
+        -e $self->reference_only_directory
+    ) {
         unless($self->eviscerate()) {
             my $eviscerate_error = $self->error_message();
             $self->error_message("Eviscerate failed: $eviscerate_error");
@@ -265,24 +300,29 @@ sub eviscerate {
         }
     }
 
-    my $fastq_directory = $self->accumulated_fastq_directory;
-    my $expression_directory = $self->accumulated_expression_directory;
+    my $fastq_directory            = $self->accumulated_fastq_directory;
+    my $expression_directory       = $self->accumulated_expression_directory;
+    my $de_novo_directory          = $self->de_novo_directory;
+    my $reference_guided_directory = $self->reference_guided_directory;
+    my $reference_only_directory   = $self->reference_only_directory;
 
-    if (-d $fastq_directory) {
-        $self->status_message('removing fastq directory');
-        rmtree($fastq_directory);
-        if (-d $fastq_directory) {
-            $self->error_message("fastq path $fastq_directory still exists after evisceration attempt, something went wrong.");
-            return;
-        }
-    }
+    my %directories = (
+        fastq            => $fastq_directory,
+        expression       => $expression_directory,
+        de_novo          => $de_novo_directory,
+        reference_guided => $reference_guided_directory,
+        reference_only   => $reference_only_directory,
+    );
 
-    if (-d $expression_directory) {
-        $self->status_message('removing expression directory');
-        rmtree($expression_directory);
-        if (-d $expression_directory) {
-            $self->error_message("expression path $expression_directory still exists after evisceration attempt, something went wrong.");
-            return;
+    for my $item (keys %directories) {
+        my $directory = $directories{$item};
+        if (-d $directory) {
+            $self->status_message("removing $item directory");
+            rmtree($directory);
+            if (-d $directory) {
+                $self->error_message("$item path $directory still exists after evisceration attempt, something went wrong.");
+                return;
+            }
         }
     }
 
