@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Sv::SvAnnot2;
+package Genome::Model::Tools::Annotate::Sv::Transcripts;
 
 use strict;
 use warnings;
@@ -6,184 +6,37 @@ use Carp;
 use Bio::Perl;
 use Genome;
 
-class Genome::Model::Tools::Sv::SvAnnot2 {
-    is => 'Genome::Model::Tools::Sv',
+class Genome::Model::Tools::Annotate::Sv::Transcripts {
+    is => 'Genome::Model::Tools::Annotate::Sv::Base',
     has => [
-        breakdancer_files => {
-            type => 'String',
-            doc => 'Input files in breakdancer format',
-            is_many => 1,
-            is_optional => 1,
-        },
-        squaredancer_files => {
-            type => 'String',
-            doc => 'Input files in squaredancer format',
-            is_many => 1,
-            is_optional => 1,
-        },
-        output_file => {
-            type => 'String',
-            doc => 'output sv annotation file',
-        },
-        annotation_build_id => {
-            is => 'Text',
-            doc => 'Annotation build you want to use',
-            #default => '102549985',
-            default => '131184146',
-        },
-        annotation_build => {
-            is => "Genome::Model::Build::ImportedAnnotation",
-            id_by => 'annotation_build_id',
-        },
         breakpoint_wiggle_room => {
             is => 'Number',
             doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
             default => 200,
         },
-        dbsnp_annotation_file => {
-            is => 'Text',
-            doc => 'File containing UCSC dbsnp table',
-            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
-        },
+#        dbsnp_annotation_file => {
+#            is => 'Text',
+#            doc => 'File containing UCSC dbsnp table',
+#            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
+#        },
     ],
 };
 
-sub execute {
-    my $self = shift;
-    my $build = $self->annotation_build;
-    unless ($build){
-        die "build not defined";
-    }
+sub process_breakpoint_list{
+    my ($self, $breakpoints_list) = @_;
 
-
-# Get BreakDancer line, get first and second breakpoint
-# Send each breakpoint to a sub that returns transcript and substructure containing the breakpoint
-# What to do about using only one transcript for a given event.  Need to process them at same time (?)
-# Just pick one transcript for a given gene.  And pick the same transcript for a given event.
-# Get list of transcripts that cross a given breakpoint (in a sub)
-# Then send both lists to another sub that picks one gene and one transcript in common if possible
-# If not and both have gene, then it is fusion (?)
-# But if DEL, then need everything between the transcripts
-
-# Need to get affected trancript(s) for each bp
-
-# 8.14    8       35255524        35255524        8       54284949        54284949        "DEL"
-
-
-# all transcripts crossing each breakpoint
-# transcripts in common
-# foreach transcriptInCommon ==> substructure crossing breakpoint
-#    if both substructures are same intron ==> no effect; otherwise ==> effect
-#    choose any affected transcript with a gene name
-    #
-
-# affected: Both breakpoints NOT in same intron of a given transcript
-#           Genes between breakpoints
-    my $outfile = $self->output_file;
-    open(OUT, "> $outfile") || die "Could not open output file: $!";
-    print OUT "chrA\tbpA\tchrB\tbpB\tevent\tsize\tscore\tsource\tgeneA\ttranscriptA\torientationA\tsubStructureA\tgeneB\ttranscriptB\torientationB\tsubStructureB\tdeletedGenes\tdbsnp_annotation\n";
-
-    my @infiles = $self->breakdancer_files;
-    for my $filename (@infiles) {
-        $self->processFile("bd", $filename, $build);
-    }
-    @infiles = $self->squaredancer_files;
-    for my $filename (@infiles) {
-        $self->processFile("sd", $filename, $build);
-    }
-
-    close OUT;
-}
-
-sub processFile {
-    my ($self, $source, $infile, $build) = @_;
-
-    my ( @entireFile, $line, $bdRef, $chrA, $bpA, $chrB, $bpB, $event, $patient, $aTranscriptRef, $bTranscriptRef, $transcriptRef,
-        $eventId, $geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB,
-        $deletedGeneHashRef, $deletedGenes, $inCommonRef, $transcript, 
-    );
-
-    open(IN, "< $infile" ) || die "Could not open input file $infile: $!";
-    @entireFile = <IN>;
-    close IN;
-
-    my $breakpoints_list;
-
-    foreach my $line ( @entireFile ) {
-        chomp $line;
-        if ( $line =~ /^\s*$/ || $line =~ /^#/ ) { next; }
-        if ( $line =~ /-------------------/) { last; } #to accomodate some of our squaredancer files with LSF output in them
-
-        #parse either sd or bd file
-        my ($id,$chrA,$bpA,$chrB,$bpB,$event,$oriA,$oriB,$size,$samples,$score);
-        if ($source eq "bd") {
-            ($id,$chrA,$bpA,undef,$chrB,$bpB,undef,$event,$oriA,undef,$size,$samples,$score) = split /\t/,$line;
-            next if ($samples =~ /normal/);
-        }
-        elsif ($source eq "sd") {
-            ($chrA,$bpA,undef,$chrB,$bpB,undef,$event,$size,$score) = split /\t/,$line;
-        }
-
-        $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $source, $chrA, $bpA, $chrB, $bpB, $event, $size, $score, $breakpoints_list);
-    }
-    $self->fill_in_transcripts($breakpoints_list, $build);
-
-    my $dbsnp_annotation = $self->read_ucsc_annotation($self->dbsnp_annotation_file);
-
-    $self->find_annotated_positions($breakpoints_list, $dbsnp_annotation, $self->breakpoint_wiggle_room, "dbsnp_annotation");    
-    
+    my %output;
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
-            $self->process_item($item);
+            my ($key, $value) = $self->process_item($item);
+            $output{$key} = $value;
         }
     }
-}
+    return \%output;
+    #my $dbsnp_annotation = $self->read_ucsc_annotation($self->dbsnp_annotation_file);
 
-sub add_breakpoints_to_chromosome {
-    my $self = shift;
-    my ($line, $source, $chrA, $bpA, $chrB, $bpB, $event, $size, $score, $breakpoints_list) = @_;
-    foreach my $var ($chrA,$bpA,$chrB,$bpB,$event,$size,$score,$source) {
-        unless (defined $var) { die "DID not define necessary variables for call:\n$line\n"; }
-    }
-    my $hash = {source => $source, chrA => $chrA, bpA => $bpA, chrB => $chrB, bpB => 
-    $bpB, event => $event, size => $size, score => $score};
-    push (@{$breakpoints_list->{$chrA}}, $hash);
-    unless ($chrA eq $chrB) {
-        push (@{$breakpoints_list->{$chrB}}, {source => $source, chrA => $chrA, bpA => $bpA, chrB => $chrB, bpB => $bpB, event => $event, size => $size, score => $score, breakpoint_link => $hash});
-    }
-    return $breakpoints_list;
-}
-
-sub fill_in_transcripts {
-    my $self = shift;
-    my $breakpoints_list = shift;
-    my $build = shift;
-    foreach my $chr (keys %$breakpoints_list) {
-        my $chr_breakpoint_list = $breakpoints_list->{$chr};
-        my $transcript_iterator = $build->transcript_iterator(chrom_name => $chr);
-        die "transcript iterator not defined for chr $chr" unless ($transcript_iterator);
-        while (my $transcript = $transcript_iterator->next) {
-            foreach my $item (@$chr_breakpoint_list) {
-                if ($item->{event} eq "DEL" and $self->is_between_breakpoints($item->{bpA}, $item->{bpB}, $transcript)) {
-                    push (@{$item->{transcripts_between_breakpoints}}, $transcript);
-                }
-                if ($item->{chrA} eq $chr and $self->crosses_breakpoint($transcript, $item->{bpA})) {
-                    push (@{$item->{transcripts_crossing_breakpoint_a}}, $transcript);
-                }
-                if ($item->{chrB} eq $chr and $self->crosses_breakpoint($transcript, $item->{bpB})) {
-                    if (defined $item->{breakpoint_link}) {
-                        $DB::single=1;
-                        my $hash = $item->{breakpoint_link};
-                        push (@{$hash->{transcripts_crossing_breakpoint_b}}, $transcript);
-                    }
-                    else {
-                        push (@{$item->{transcripts_crossing_breakpoint_b}}, $transcript);
-                    }
-                }
-            }
-        }
-    }
-    return $breakpoints_list;
+    #$self->find_annotated_positions($breakpoints_list, $dbsnp_annotation, $self->breakpoint_wiggle_room, "dbsnp_annotation");    
+    
 }
 
 sub process_item {
@@ -242,20 +95,11 @@ sub process_item {
         my @dbsnp = map {$_->{name}} @{$dbsnp_ref};
         $dbsnp_string = join(",", @dbsnp);
     }
-    print OUT join("\t", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event}, $item->{size}, $item->{score}, $item->{source}, $geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes, $dbsnp_string)."\n"; 
+    my $key = join("--", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event});
+    my $value = [$geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes];
+    return ($key, $value);
 
     return 1;
-}
-
-sub crosses_breakpoint {
-    # Return all transcripts spanning the given position
-    my ( $self, $transcript, $position ) = @_;
-
-    if ( $position >= $transcript->transcript_start() and $position <= $transcript->transcript_stop() ) {
-        return 1;
-    }
-
-    return 0;
 }
 
 sub allTranscriptsInCommon {
@@ -392,21 +236,6 @@ sub chooseBestTranscript {
     }
 
     die "Should not be here";
-}
-
-sub is_between_breakpoints {
-    # Used to get genes that are flanked by deletion breakpoints
-    # The entire transcript has to be within the two breakpoints
-    # Annotation of the individual breakpoints will give the transcripts interrupted by breakpoints
-    my ($self, $start, $stop, $transcript) = @_;
-    if ( $start > $stop ) { ($start, $stop) = ($stop, $start); }
-
-
-    if ( $transcript->transcript_start() >= $start and $transcript->transcript_start() <= $stop and
-            $transcript->transcript_stop()  >= $start and $transcript->transcript_stop() <= $stop ) {
-            return 1;
-    }
-    return 0;
 }
 
 sub find_annotated_positions {
