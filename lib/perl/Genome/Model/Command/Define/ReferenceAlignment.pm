@@ -14,7 +14,7 @@ class Genome::Model::Command::Define::ReferenceAlignment {
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             doc => 'ID or name of the reference sequence to align against',
-            default_value => {name=>'NCBI-human-build36'},
+            default_value => 101947881,
             is_input => 1,
         },
     ],
