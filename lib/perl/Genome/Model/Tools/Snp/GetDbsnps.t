@@ -16,7 +16,7 @@ my $tmpdir = File::Temp::tempdir(
     DIR => $ENV{GENOME_TEST_TEMP},
     CLEANUP => 1,
 );
-my $out = join('/', 'output');
+my $out = join('/', $tmpdir, 'output');
 
 my $dbsnpout = $out . ".dbsnp.gff";
 
