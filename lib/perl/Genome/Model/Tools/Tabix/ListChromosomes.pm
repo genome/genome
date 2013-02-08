@@ -6,10 +6,6 @@ use warnings;
 use Genome;
 use List::Util qw/min/;
 
-# Tabix can't read regions from a file, so we break up regions into
-# batches to avoid exessively long command lines
-my $REGION_BATCH_SIZE=1000;
-
 class Genome::Model::Tools::Tabix::ListChromosomes {
     is => 'Genome::Model::Tools::Tabix',
     has_input => [
@@ -61,7 +57,7 @@ sub execute {
 
     chomp @result;
     $self->chromosomes(\@result);
-    
+
     return 1;
 }
 
