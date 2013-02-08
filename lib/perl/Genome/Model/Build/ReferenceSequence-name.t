@@ -10,7 +10,7 @@ use Test::More tests => 6;
 use_ok('Genome::Model::Build::ReferenceSequence');
 
 # create a test annotation build and a few reference sequence builds to test compatibility with
-my $data_dir = File::Temp::tempdir('ImportedAnnotationTest-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $data_dir = File::Temp::tempdir('ImportedAnnotationTest-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $taxon = Genome::Taxon->__define__(name => 'human');
 my $individual = Genome::Individual->create(name => "test-patient", common_name => 'testpatient', taxon => $taxon);
 my $sample = Genome::Sample->create(name => "test-patient", common_name => 'tumor', source => $individual);

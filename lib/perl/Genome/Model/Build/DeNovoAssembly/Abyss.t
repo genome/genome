@@ -29,9 +29,8 @@ my $example_version = '1';
 my $example_dir = $base_dir.'/abyss_v'.$example_version;
 ok(-d $example_dir, 'example dir') or die;
 
-my $tmpdir_template = $ENV{'GENOME_TEST_TEMP'}
-    . "/DeNovoAssembly-Abyss.t-XXXXXXXX";
-my $tmpdir = File::Temp::tempdir($tmpdir_template, CLEANUP => 1);
+my $tmpdir_template = "/DeNovoAssembly-Abyss.t-XXXXXXXX";
+my $tmpdir = File::Temp::tempdir($tmpdir_template, TMPDIR=>1, CLEANUP => 1);
 ok(-d $tmpdir, 'temp dir: '.$tmpdir);
 
 my $taxon = Genome::Taxon->create(

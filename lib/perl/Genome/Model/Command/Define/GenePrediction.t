@@ -37,7 +37,11 @@ ok($test_taxon, 'created test taxon successfully') or die;
 
 # ====== Make temporary files ======
 my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '';
-my $test_output_dir = "$ENV{GENOME_TEST_TEMP}";
+my $test_output_dir = File::Temp->tempdir(
+    'Genome-Model-GenePrediction-Eukaryotic-XXXXX',
+    TMPDIR => 1,
+    CLEANUP => 1,
+);
 
 my $assembly_contigs_file = $test_data_dir . '/Genome-Model-GenePrediction-Eukaryotic/shorter_ctg.dna';
 
