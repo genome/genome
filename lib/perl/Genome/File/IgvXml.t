@@ -6,7 +6,7 @@ use Test::More tests => 10;
 
 #test class creation
 my $path = Genome::Sys->create_temp_file_path;
-my $igv_file = Genome::File::IgvXml->create(id => $path, font_size => 10);
+my $igv_file = Genome::File::IgvXml->create(id => $path, font_size => 10, genome => 'b37');
 ok($igv_file, "created a IgvXml object");
 is($igv_file->path,$path,"path assigned correctly");
 is($igv_file->font_size,10, "class variable set ok on create");
@@ -38,7 +38,7 @@ XML
 is($expected_panel2, $igv_file->make_panel($bam, "Test Panel"), "panel created with custom name");
 
 my $path2 = Genome::Sys->create_temp_file_path;
-my $igv_file2 = Genome::File::IgvXml->create(id => $path2, font_size => 10);
+my $igv_file2 = Genome::File::IgvXml->create(id => $path2, font_size => 10, genome => 'b37');
 my $fake_bam = "/some/fake.bam";
 my $fake_bed = "/some/fake.bed";
 my $fake_junctions = "/some/junctions.txt"; #no idea what a junction file is
@@ -73,7 +73,7 @@ XML
 is($expected_xml, $igv_file2->xml,"XML with Bam file, junction file and bed file as expected.");
 
 my $path3 = Genome::Sys->create_temp_file_path;
-my $igv_file3 = Genome::File::IgvXml->create(id => $path3, font_size => 10);
+my $igv_file3 = Genome::File::IgvXml->create(id => $path3, font_size => 10, genome => 'b37');
 $igv_file3->add_bam_track(file => $fake_bam);
 $igv_file3->add_bed_track(file => $fake_bed);
 $igv_file3->add_junction_track(file => $fake_junctions);
