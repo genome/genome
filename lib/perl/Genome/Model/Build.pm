@@ -33,6 +33,12 @@ class Genome::Model::Build {
         is_metric => { is => 'Boolean', is_optional => 1 },
     ],
     has => [
+        is_last_complete => {
+            is => 'Boolean',
+            calculate_from => ['id','model'],
+            calculate => q|my $build = $model->last_complete_build; return $build && $build->id eq $id|,
+            doc => 'true for any build which is the last complete bulid for a model',
+        },
         subclass_name           => {
             is => 'VARCHAR2',
             len => 255,
