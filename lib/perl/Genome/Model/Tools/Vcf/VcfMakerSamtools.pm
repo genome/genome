@@ -38,9 +38,8 @@ class Genome::Model::Tools::Vcf::VcfMakerSamtools {
         
         genome_build => {
             is => 'Text',
-            doc => "Reference genome build" ,
-            is_optional => 1,
-            default => "36",
+            doc => "Reference genome build - currently only supports human 36 and 37",
+            is_optional => 0,
         },
         
         samtools_file => {

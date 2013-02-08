@@ -38,9 +38,8 @@ class Genome::Model::Tools::Vcf::VcfMakerStrelkaSomatic {
 
     genome_build => {
         is => 'Text',
-        doc => "Reference genome build" ,
-        is_optional => 1,
-        default => "36",
+        doc => "Reference genome build - only supports b36 currently" ,
+        is_optional => 0,
     },
 
     input_file => {
@@ -197,6 +196,10 @@ sub execute {                               # replace with real execution logic.
 
         open(OUTFILE, ">$output_file") or die "Can't open output file: $!\n";
         my $file_date = localtime();
+
+        unless($genome_build eq "36"){
+            die("reference paths only provided for b36 for broad and wustl. Update the tool with the appropriate paths for other builds");
+        }
 
         my $reference;
         if ($seq_center eq "WUSTL"){

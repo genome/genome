@@ -39,9 +39,8 @@ class Genome::Model::Tools::Vcf::VcfMakerVarscanSomatic {
 
         genome_build => {
             is => 'Text',
-            doc => "Reference genome build" ,
-            is_optional => 1,
-            default => "36",
+            doc => "Reference genome build - only supports human b36 currently" ,
+            is_optional => 0
         },
 
         seq_center => {
@@ -220,6 +219,11 @@ sub getPrecedingBase{
         open(OUTFILE, ">$output_file") or die "Can't open output file: $!\n";
         my $file_date = localtime();
         my $reference;
+
+        unless($genome_build eq "36"){
+            die("reference paths only provided for b36 for broad and wustl. Update the tool with the appropriate paths for other builds");
+        }
+
         if ($seq_center eq "WUSTL"){
             $reference = "ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/ARCHIVE/BUILD.36.3/special_requests/assembly_variants/NCBI36_BCCAGSC_variant.fa.gz";
         } elsif ($seq_center eq "BROAD"){

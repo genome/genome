@@ -100,9 +100,8 @@ class Genome::Model::Tools::Vcf::VcfMakerSniperOldPipelineChunked {
 
     genome_build => {
         is => 'Text',
-        doc => "Reference genome build" ,
-        is_optional => 1,
-        default => "36",
+        doc => "Reference genome build - currently only supports \"36\"" ,
+        is_optional => 0,
         is_input => 1},
 
     ],
