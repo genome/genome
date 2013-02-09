@@ -105,6 +105,10 @@ sub __extend_namespace__ {
         $self->warning_message("cannot autogenerate results for $command_class since it is not ::V2");
         return;
     }
+    if ($command_class->isa("Command::Tree")) {
+        # no results for "trees" :)
+        return;
+    }
 
     unless (UR::Object::Type->get("Genome::SoftwareResult::Default")) {
         $self->warnings_message("Cannot find a working Genome::SoftwareResult::Default.  Autogenerating $result_class only works with a full GMS install.");
