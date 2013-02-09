@@ -34,7 +34,7 @@ class Genome::Model::Build::ReferenceSequence {
             is_optional => 1,
         },
         species_name => {
-            via => 'build',
+            via => '__self__',
             to => 'subject_name',
         },
         desc => {
