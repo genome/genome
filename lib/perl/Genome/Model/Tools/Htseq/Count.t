@@ -5,7 +5,7 @@ use above "Genome";
 use Test::More tests => 8;
 use Genome::Model::Tools::Htseq::Count;
 
-#$ENV{UR_DBI_NO_COMMIT} = 1;
+$ENV{UR_DBI_NO_COMMIT} = 1;
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Htseq-Count';
 
@@ -42,16 +42,23 @@ my $expected_out2 = $test_dir . '/expected-outputs/transcript-counts.tsv';
 ok(-e $expected_out2, "found comparison output file 2: $expected_out2");
 
 # run in /tmp
+#my $test_outdir = Genome::Sys->create_temp_directory();
+#ok(-d $test_outdir, "created test output directory");
 
-my $test_outdir = Genome::Sys->create_temp_directory();
-ok(-d $test_outdir, "created test output directory");
+# before running, ensure results do not exist previously
+my $test_name = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ||= "testsuite " . UR::Context->now . " " . Sys::Hostname::hostname() . "-$$.";
+my $result_exists = Genome::Model::Tools::Htseq::Result->get(
+    alignment_result => $a,
+    test_name => $test_name
+);
+ok(!$result_exists, "no result already in the system for this test") or die "contact informatics!";
 
 my $new_result = Genome::Model::Tools::Htseq::Count->execute(
-    alignment_result => $a,
-    is_stranded => 0,           # remove when instdata has tracking for this
-    output_dir => $test_outdir, # remove when automatic SR generateion is in place
+    alignment_results => [$a],
+    #output_dir => $test_outdir, # remove when automatic SR generateion is in place
     app_version => '0.5.3p9',
     results_version => 1,
+    limit => 2000,
 );
 
 # diff results
@@ -63,34 +70,25 @@ for my $pair(
     my ($actual,$expected) = @$pair;
     my @diff = `diff $actual $expected`;
     ok(scalar(@diff)==0, "no differences for $actual vs $expected")
-        or 1; #diag(@diff);
+        or do {
+            if ($ENV{USER} ne 'apipe-tester') {
+                my $dir = '/tmp/last-htseq-failed-test-' . $$;
+                diag("moving failed results to $dir");
+                rename $new_result->output_dir, $dir;
+            }
+        };
 }
 
-__END__
-
-# This should be added after we have the tool results saving as a Genome::SoftwareResult
-
-# before running, ensure results do not exist previously
-my $test_name = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ||= "testsuite " . UR::Context->now . " " . Sys::Hostname::hostname() . "-$$.";
-my $result_exists = Genome::Model::Tools::Htseq::Result->get(
+my $found_result_after = Genome::Model::Tools::Htseq::Result->get(
     alignment_result => $a,
     test_name => $test_name
 );
-ok(!$result_exists, "no result already in the system for this test") or die "contact informatics!";
-
-# after running, ensure attempts to get the result from the db work and return the same thing 
-my $new_result_again = Genome::Model::Tools::Htseq::Result->get(
-    alignment_result => $a,
-    output_dir => $test_outdir,
-    test_name => $test_name,
-);
-ok($new_result_again, "found test result");
-is($new_result_again, $new_result, "it matches what was just created");
+ok($found_result_after, "found a result after running the command");
+is($found_result_after, $new_result, "it matches the result returned from the tool");
 
 # remove the new result to make sure removal works
 # because we have no-commit turned on it will be removed at test exit regardless.
-$new_result_again->delete;
-ok($new_result_again->isa("UR::DeletedRef"), "deletion worked");
-
+$found_result_after->delete;
+ok($found_result_after->isa("UR::DeletedRef"), "deletion worked");
 
 

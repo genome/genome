@@ -5,8 +5,6 @@ use Genome;
 
 class Genome::Model::Tools::Htseq::Count {
     is => 'Command::V2',
-    #shortcut_execute => 1,
-    #save_results_as => 'Genome::Model::Tools::Htseq::Count::Result',
     has_input => [
         alignment_result => { 
             is => 'Genome::InstrumentData::AlignmentResult',
@@ -19,19 +17,20 @@ class Genome::Model::Tools::Htseq::Count {
         },
     ],
     has_param => [
-        is_stranded => {
-            is => 'Boolean',
-            doc => 'indicate whether reads are only in the direction of transcription'
-        },
         app_version => {
             is => 'SoftwareVersion',
             valid_values => [ Genome::Sys->sw_versions('htseq','htseq-count') ],
             doc => 'the version of htseq-count to use',
         },
-        results_version => {
+        result_version => {
             is => 'Integer',
             default_value => '0.01',
             doc => 'the version of results, which may iterate as this logic iterates'
+        },
+        limit => {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'limit the number of alignments to the first N (for testing)'
         },
         #sort_strategy => { 
         #    is => 'Text',
@@ -58,7 +57,6 @@ class Genome::Model::Tools::Htseq::Count {
     ],
     doc => 'generate htseq results for an (annotation-based) alignment result',
 };
-Genome::Model::Tools::Htseq::Count::Result->class;
 
 sub execute {
     my $self = shift;
@@ -75,13 +73,45 @@ sub execute {
 
 sub _execute_v1 {
     my $self = shift;
+    $self->status_message("tool version " . $self->app_version . ', result version ' . $self->result_version);
 
-    my $alignment_result = $self->alignment_result;
+    my @alignment_results = $self->alignment_results;
+    if (@alignment_results > 1) {
+        die "support for multiple alignment result inputs in the same excution is not implemented yet!";
+    }
+    my $alignment_result = $alignment_results[0];
     $self->status_message("using alignment result " . $alignment_result->__display_name__);
 
+    my $transcript_strand = $alignment_result->transcript_strand;
+    $self->status_message("transcript strand is $transcript_strand");
+
+    my $stranded;
+    if ($transcript_strand eq 'unstranded') {
+        $stranded = 'no';
+    }
+    elsif ($transcript_strand eq 'firstread') {
+        $stranded = 'yes';
+    }
+    elsif ($transcript_strand eq 'secondread') {
+        $stranded = 'reverse';
+    }
+    else {
+        die "unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread";
+    }
+    $self->status_message("reads go only in the same direction as transcription: " . $stranded);
+    
     my $annotation_build = $alignment_result->annotation_build;
     $self->status_message("annotation build is " . $annotation_build->__display_name__);
+
+    my $gff_file = $annotation_build->rna_features_gff_path;
+    $self->status_message("using annotation features from " . $gff_file);
    
+    my $htseq_count_path = Genome::Sys->sw_path("htseq", $self->app_version, "htseq-count");
+    $self->status_message("htseq-count version " . $self->app_version . " running from $htseq_count_path");
+    
+    my $output_dir = $self->output_dir;
+    $self->status_message("output dir: $output_dir");
+
     # The samtools version is not part of the params because it is not yet required for it to vary.
     # If it does need to vary in the future a param should be addeed and backfilled
     # to represent samtools 0.18.1 (current at the time of this writing).  Because
@@ -102,7 +132,7 @@ sub _execute_v1 {
     }
     else {
         # a completed alignment result will need to have a sorted bam created
-        $self->status_message("No temp_scratch_directory found, presumably doing this post alignment.  Name sort the BAM in temp space.");
+        $self->status_message("no temp_scratch_directory found, presumably doing this post alignment.  Name sort the BAM in temp space.");
         my $unsorted_bam = $alignment_result->output_dir . '/all_sequences.bam';
         my $tmp = Genome::Sys->create_temp_directory();
         my $sorted_bam_noprefix = "$tmp/all_sequences.namesorted";
@@ -114,24 +144,18 @@ sub _execute_v1 {
         );
     }
 
-    my $htseq_count_path = Genome::Sys->sw_path("htseq", $self->app_version, "htseq-count");
-    $self->status_message("htseq-count version " . $self->app_version . " running from $htseq_count_path");
-
-    my $stranded = ($self->is_stranded ? 'yes' : 'no');
-    $self->status_message("reads go only in the same direction as transcription: " . $stranded);
-
-    my $gff_file = $annotation_build->rna_features_gff_path;
-    $self->status_message("using annotation features from " . $gff_file);
-    
-    my $output_dir = $self->output_dir;
-    $self->status_message("output dir: $output_dir");
+    my $limit = $self->limit;
+    if ($limit) {
+        $self->warning_message("SUBSAMPLING ALIGNMENTS because the limit parameter is set to $limit:");
+    }
 
     for my $type (qw/transcript gene/) {
         $self->status_message("produce per-$type results...");
         
         # from Malachi's notes in JIRA issue TD-490
         # samtools view -h chr22_tumor_nonstranded_sorted.bam | htseq-count --mode intersection-strict --stranded no --minaqual 1 --type exon --idattr transcript_id - chr22.gff > transcript_tumor_read_counts_table.tsv 
-        my $cmd = "$samtools_path view -h '$sorted_bam' |"
+        my $cmd = "$samtools_path view -h '$sorted_bam' | "
+            . ($limit ? " head -n $limit | " : '')
             . $htseq_count_path
             . " --mode intersection-strict"
             . " --stranded $stranded"
@@ -142,7 +166,6 @@ sub _execute_v1 {
             . " '$gff_file'"
             . " 1>'$output_dir/${type}-counts.tsv'"
             . " 2>'$output_dir/${type}.err'";
-   
         
         Genome::Sys->shellcmd(
             cmd => $cmd, # "touch $output_dir/${type}-counts.tsv", #$cmd,

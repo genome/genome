@@ -8,12 +8,23 @@ use Genome;
 class Genome::Model::ReferenceSequence {
     is => 'Genome::ModelDeprecated',
     has => [
-        prefix => {
+        source => {
             is => 'UR::Value',
             via => 'inputs',
             to => 'value_id',
             where => [ name => 'prefix', value_class_name => 'UR::Value' ],
-            doc => 'The source of the sequence (such as NCBI).  May not contain spaces.',
+            doc => 'The source of the sequence (such as GRC).  May not contain spaces.',
+            is_mutable => 1,
+            is_many => 0,
+            is_optional => 1,
+        },
+        prefix => {
+            is_deprecated => 1,
+            is => 'UR::Value',
+            via => 'inputs',
+            to => 'value_id',
+            where => [ name => 'prefix', value_class_name => 'UR::Value' ],
+            doc => 'The source of the sequence (such as GRC).  May not contain spaces.',
             is_mutable => 1,
             is_many => 0,
             is_optional => 1,

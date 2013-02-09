@@ -12,6 +12,16 @@ use POSIX;
 class Genome::Model::Build::ReferenceSequence {
     is => 'Genome::Model::Build',
     has => [
+        source => {
+            is => 'UR::Value',
+            via => 'inputs',
+            to => 'value_id',
+            where => [ name => 'prefix', value_class_name => 'UR::Value' ],
+            doc => 'The source of the sequence (such as GRC).  May not contain spaces.',
+            is_mutable => 1,
+            is_many => 0,
+            is_optional => 1,
+        },
         # these come from the model, and do not change (and compose its name)
         prefix => {
             is => 'UR::Value',
@@ -24,7 +34,7 @@ class Genome::Model::Build::ReferenceSequence {
             is_optional => 1,
         },
         species_name => {
-            via => 'model',
+            via => 'build',
             to => 'subject_name',
         },
         desc => {

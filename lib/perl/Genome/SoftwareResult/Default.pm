@@ -101,5 +101,81 @@ sub _staging_disk_usage {
     return $usage;
 }
 
+#
+# Add this to a Command to get automatic default software results
+#
+# use Moose;
+# around 'execute' => Genome::SoftwareResult::Default::execute_wrapper;
+#
+
+sub execute_wrapper {
+    # This is a wrapper for real execute() calls.
+    # All execute() methods are turned into _execute_body at class init, 
+    # so this will get direct control when execute() is called. 
+    my $orig = shift;
+    my $self = shift;
+
+    # handle calls as a class method
+    my $was_called_as_class_method = 0;
+    if (ref($self)) {
+        if ($self->is_executed) {
+            Carp::confess("Attempt to re-execute an already executed command.");
+        }
+    }
+    else {
+        # called as class method
+        # auto-create an instance and execute it
+        $self = $self->create(@_);
+        return unless $self;
+        $was_called_as_class_method = 1;
+    }
+
+    # handle __errors__ objects before execute
+    if (my @problems = $self->__errors__) {
+        for my $problem (@problems) {
+            my @properties = $problem->properties;
+            $self->error_message("Property " .
+                                 join(',', map { "'$_'" } @properties) .
+                                 ': ' . $problem->desc);
+        }
+        $self->delete() if $was_called_as_class_method;
+        return;
+    }
+
+    my $result;
+    my $meta = $self->__meta__;
+    if ($meta->shortcut_execute) {
+        my $results_class = $meta->save_results_as;
+        unless ($results_class) {
+            die "cannot shortcut for " . $self->class . " without a setting for save_result_as!";
+        }
+        #unless ($results_class->can('get_or_create_for_command')) {
+        #    die "class $results_class does not implement get_or_create_for_command()";
+        #}
+        #$result = $self->shortcut;
+        unless ($result) {
+            my %props = $self->_copyable_properties_for($results_class);
+            $result = $results_class->get_or_create(%props, command => $self);
+        }
+
+        # copy properties from the result to the command outputs/changes
+        my %props = $self->_copyable_properties_for($results_class);
+        for my $name (keys %props) {
+            $result->$name($props{$name});
+        }
+    }
+    else {
+        if (my $results_class = $meta->save_results_as) {
+            die "save_results_as without shortcut_execute is not currently implemented!";
+        }
+        $result = $self->_execute_body(@_); # default/normal unsaved execute
+        $self->is_executed(1);
+    }
+    $self->result($result);
+
+
+    return $self if $was_called_as_class_method;
+    return $result;
+}
 1;
 
