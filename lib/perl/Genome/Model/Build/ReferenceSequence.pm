@@ -599,6 +599,13 @@ sub get_by_name {
         Carp::confess('No build name given to get imported reference sequence build');
     }
 
+    # we now record the build name explicitly so we can do faster lookups, so this method should not be needed
+    # try to get the build by name, and only continue through heuristic logic if it fails
+    my $new = $class->get(name => $name);
+    if ($new) {
+        return $new;
+    }
+
     # This method is not adequate as spaces are substitued in the model anme and version
     #  when creating the build name. But we'll try.
     my ($model_name, $build_version) = $name =~ /^(.+)-build(.*?)$/;
