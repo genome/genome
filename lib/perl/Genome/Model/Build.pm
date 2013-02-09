@@ -61,7 +61,7 @@ class Genome::Model::Build {
         type_name               => { via => 'model' },
         subject                 => { via => 'model' },
         subject_id              => { via => 'model' },
-        subject_name            => { via => 'model', to => 'name' },
+        subject_name            => { via => 'subject', to => 'name' },
         processing_profile      => { via => 'model' },
         processing_profile_id   => { via => 'model' },
         processing_profile_name => { via => 'model' },
