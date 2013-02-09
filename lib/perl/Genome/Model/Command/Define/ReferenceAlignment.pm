@@ -14,7 +14,12 @@ class Genome::Model::Command::Define::ReferenceAlignment {
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             doc => 'ID or name of the reference sequence to align against',
-            default_value => 101947881, #{ name => 'NCBI-human-build36' },
+            default_value => 101947881, 
+                # switch the above to this when the docs are smart enough to not dump out a stringified hash:
+                #   { name => 'NCBI-human-build36' }
+                #
+                # and switch to this when test logic is updated to tolerate the default you would actually use:
+                #   { source => 'GRC', 'subject.name' => 'human', version => '37-lite' }
             is_input => 1,
         },
     ],
