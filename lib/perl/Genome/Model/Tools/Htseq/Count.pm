@@ -60,11 +60,11 @@ class Genome::Model::Tools::Htseq::Count {
 
 sub execute {
     my $self = shift;
-    my $results_version = $self->results_version;
-    my $method = "_execute_v$results_version";
+    my $result_version = $self->result_version;
+    my $method = "_execute_v$result_version";
     $method =~ s/\./_/g;
     unless ($self->can($method)) {
-        die "no implementation ($method) for version $results_version!";
+        die "no implementation ($method) for version $result_version!";
     }
     $self->$method(@_);
 }
@@ -75,14 +75,27 @@ sub _execute_v1 {
     my $self = shift;
     $self->status_message("tool version " . $self->app_version . ', result version ' . $self->result_version);
 
-    my @alignment_results = $self->alignment_results;
-    if (@alignment_results > 1) {
+    my @alignment_result = $self->alignment_result;
+    if (@alignment_result > 1) {
         die "support for multiple alignment result inputs in the same excution is not implemented yet!";
     }
-    my $alignment_result = $alignment_results[0];
+    my $alignment_result = $alignment_result[0];
     $self->status_message("using alignment result " . $alignment_result->__display_name__);
 
-    my $transcript_strand = $alignment_result->transcript_strand;
+    my $instrument_data = $alignment_result->instrument_data;
+    unless ($instrument_data->sample->extraction_type =~ /rna/i) {
+        die $self->error_message(
+            "this step can only run on alignments of RNA, but sample " 
+            . $instrument_data->sample->__display_name__ 
+            . " is " . $instrument_data->sample->extraction_type
+        );
+    }
+    $self->status_message("sample is " . $instrument_data->sample->extraction_type);
+
+    my $transcript_strand = $instrument_data->transcript_strand;
+    unless ($transcript_strand) {
+        die $self->error_message("transcript strand is not set for instrument data " . $instrument_data->__display_name__); 
+    }
     $self->status_message("transcript strand is $transcript_strand");
 
     my $stranded;
@@ -98,7 +111,7 @@ sub _execute_v1 {
     else {
         die "unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread";
     }
-    $self->status_message("reads go only in the same direction as transcription: " . $stranded);
+    $self->status_message("reads go only in the same direction as transcription: $transcript_strand, using htseq-count strandedness value '$stranded'");
     
     my $annotation_build = $alignment_result->annotation_build;
     $self->status_message("annotation build is " . $annotation_build->__display_name__);
