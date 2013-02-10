@@ -20,7 +20,54 @@ class Genome::Model::ClinSeq {
         #someparam2 => { is => 'Boolean', doc => 'blah' },
         #someparam2 => { is => 'Text', valid_values => ['a','b','c'], doc => 'blah' },
     ],
+    has_calculated => [
+        expected_common_name => {
+            is => 'Text',
+            calculate_from => [qw /wgs_model exome_model tumor_rnaseq_model normal_rnaseq_model/],
+            calculate => q|
+              my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
+              if ($wgs_model) {
+                  $wgs_common_name = $wgs_model->subject->patient->common_name;
+                  $wgs_name = $wgs_model->subject->patient->name;
+              }
+              if ($exome_model) {
+                  $exome_common_name = $exome_model->subject->patient->common_name;
+                  $exome_name = $exome_model->subject->patient->name;
+              }
+              if ($tumor_rnaseq_model) {
+                  $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->patient->common_name;
+                  $tumor_rnaseq_name = $tumor_rnaseq_model->subject->patient->name;
+              }
+              if ($normal_rnaseq_model) {
+                  $normal_rnaseq_common_name = $normal_rnaseq_model->subject->patient->common_name;
+                  $normal_rnaseq_name = $normal_rnaseq_model->subject->patient->name;
+              }
+              my @names = ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
+              my $final_name = "UnknownName";
+              foreach my $name (@names){
+                if ($name){
+                  $final_name = $name;
+                  last();
+                }
+              }
+              return $final_name;
+            |
+        }
+    ],
     doc => 'clinical and discovery sequencing data analysis and convergence of RNASeq, WGS and exome capture data',
+};
+
+#TODO: Fix this...
+# temp fix until the output table is in place and we can readily 
+# persist this per-build outside of the workflow
+Genome::Model::Build::ClinSeq->class;
+*Genome::Model::Build::ClinSeq::common_name = sub {
+    my $self = shift;
+    return $self->model->expected_common_name;
+};
+*Genome::Model::ClinSeq::common_name = sub {
+    my $self = shift;
+    return $self->expected_common_name;
 };
 
 sub define_by { 'Genome::Model::Command::Define::BaseMinimal' }
@@ -116,33 +163,8 @@ sub map_workflow_inputs {
     my $exome_build         = $build->exome_build;
     my $tumor_rnaseq_build  = $build->tumor_rnaseq_build;
     my $normal_rnaseq_build = $build->normal_rnaseq_build;
-    
-    #Get the patient common name from one of the builds, if none can be found, use the individual name instead, if that can't be found either set the name to 'UnknownName'
-    my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
-    if ($wgs_build) {
-        $wgs_common_name = $wgs_build->subject->patient->common_name;
-        $wgs_name = $wgs_build->subject->patient->name;
-    }
-    if ($exome_build) {
-        $exome_common_name = $exome_build->subject->patient->common_name;
-        $exome_name = $exome_build->subject->patient->name;
-    }
-    if ($tumor_rnaseq_build) {
-        $tumor_rnaseq_common_name = $tumor_rnaseq_build->subject->patient->common_name;
-        $tumor_rnaseq_name = $tumor_rnaseq_build->subject->patient->name;
-    }
-    if ($normal_rnaseq_build) {
-        $normal_rnaseq_common_name = $normal_rnaseq_build->subject->patient->common_name;
-        $normal_rnaseq_name = $normal_rnaseq_build->subject->patient->name;
-    }
-    my @names = ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
-    my $final_name = "UnknownName";
-    foreach my $name (@names){
-      if ($name){
-        $final_name = $name;
-        last();
-      }
-    }
+
+    my $final_name = $self->common_name;
 
     # initial inputs are for the "Main" component which does all of the legacy/non-parellel tasks
     my @inputs = (
@@ -743,6 +765,7 @@ sub files_ignored_by_build_diff {
         .*.R$
         .*.pdf$
         .*.jpg$
+        .*.jpeg$
         .*._COSMIC.svg$
         .*.clustered.data.tsv$
         .*.SummarizeBuilds.log.tsv$
