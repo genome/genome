@@ -60,7 +60,6 @@ class Genome::Model::ClinSeq {
 #TODO: Fix this...
 # temp fix until the output table is in place and we can readily 
 # persist this per-build outside of the workflow
-Genome::Model::Build::ClinSeq->class;
 *Genome::Model::Build::ClinSeq::common_name = sub {
     my $self = shift;
     return $self->model->expected_common_name;
