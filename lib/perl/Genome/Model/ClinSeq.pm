@@ -767,6 +767,7 @@ sub files_ignored_by_build_diff {
         .*.jpg$
         .*.jpeg$
         .*.png$
+        .*/summary/rc_summary.stderr$
         .*._COSMIC.svg$
         .*.clustered.data.tsv$
         .*.SummarizeBuilds.log.tsv$
