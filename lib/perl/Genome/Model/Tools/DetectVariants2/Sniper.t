@@ -28,7 +28,7 @@ ok($ref_seq_build, 'human36 reference sequence build') or die;
 my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants-Somatic-Sniper/tumor.tiny.bam";
 my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants-Somatic-Sniper/normal.tiny.bam";
 
-my $test_base_dir = File::Temp::tempdir('SomaticSniperXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $test_base_dir = File::Temp::tempdir('SomaticSniperXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_working_dir = "$test_base_dir/output";
 
 my $sniper = Genome::Model::Tools::DetectVariants2::Sniper->create(aligned_reads_input=>$tumor, 

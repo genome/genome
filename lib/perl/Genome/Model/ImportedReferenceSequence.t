@@ -15,7 +15,7 @@ BEGIN {
 my $model = Genome::Model::ImportedReferenceSequence->get(name => 'NCBI-human');
 isa_ok( $model, 'Genome::Model::ImportedReferenceSequence' );
 
-my $build = $model->build_by_version(36);
+my $build = $model->build_by_version("36-lite");
 my $expected_dir = '/gscmnt/gc4096/info/model_data/2741951221/build101947881';
 
 is( $build->data_directory(), $expected_dir, 'got the right data directory' );

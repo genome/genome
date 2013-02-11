@@ -21,7 +21,7 @@ my $expected_intersect_output = $test_input_dir . 'intersect.expected';
 my $expected_f1_only_output = $test_input_dir . 'f1_only.expected';
 my $expected_f2_only_output = $test_input_dir . 'f2_only.expected';
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Snp-IntersectChromPos-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Snp-IntersectChromPos-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 
 my $intersect_output = $test_output_dir . 'intersect.out';

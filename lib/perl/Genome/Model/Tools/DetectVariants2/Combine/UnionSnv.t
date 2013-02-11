@@ -89,7 +89,7 @@ $detector_b->add_user(user => $detector_b_vcf_result, label => 'uses');
 
 isa_ok($detector_b, 'Genome::Model::Tools::DetectVariants2::Result', 'detector_b');
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Combine-UnionSnv-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Combine-UnionSnv-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_symlink  = join('/', $test_output_dir, 'union-snv');
 my $union_snv_object = Genome::Model::Tools::DetectVariants2::Combine::UnionSnv->create(
     input_a_id       => $detector_a->id,

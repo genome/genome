@@ -15,11 +15,9 @@ BEGIN {
     use_ok('Genome::Model::Tools::GenePredictor::Fgenesh');
 }
 
-my $test_dir = "$ENV{GENOME_TEST_TEMP}/";
 my $test_output_dir = tempdir('Genome-Model-Tools-GenePredictor-Fgenesh-XXXXXX',
-    DIR => $test_dir,
+    TEMPDIR => 1,
     CLEANUP => 1,
-    UNLINK => 1,
 );
 chmod(0755, $test_output_dir);
 

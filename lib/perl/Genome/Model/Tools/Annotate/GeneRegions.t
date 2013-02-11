@@ -9,14 +9,12 @@ use Test::More tests => 6;
 my $list = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Annotate-GeneRegions/coordinates_list";
 ok(-f $list, "coordinates list file found at $list");
 
-my $output_fh = File::Temp->new(
+my $tmp_dir = File::Temp::tempdir(
     TEMPLATE => 'Genome-Model-Tools-Annotate-GeneRegions-XXXXXX',
-    DIR => "$ENV{GENOME_TEST_TEMP}/",
     CLEANUP => 1,
-    UNLINK => 1,
+    TEMPDIR => 1,
 );
-my $output = $output_fh->filename;
-$output_fh->close;
+my $output = File::Spec->join($tmp_dir, 'output');
 
 my $regions = Genome::Model::Tools::Annotate::GeneRegions->create(list=>$list, mode => 'coordinates', output => $output);
 ok($regions, "GeneRegions object successfully created");

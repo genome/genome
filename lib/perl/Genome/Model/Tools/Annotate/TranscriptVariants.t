@@ -24,7 +24,7 @@ ok(-e $iub_input, 'iub input exists');
 
 my $output_base = File::Temp::tempdir(
                 'TranscripVariantOutput-XXXXXX',
-                DIR => "$ENV{GENOME_TEST_TEMP}",
+                TEMPDIR => 1,
                 CLEANUP => 1);
 my $transcript = "$output_base/transcript";
 

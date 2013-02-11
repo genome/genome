@@ -16,7 +16,7 @@ BEGIN {
     use_ok ('Genome::Model::Tools::Blat::Parallel');
 }
 
-my $tmp_dir = File::Temp::tempdir('Genome-Model-Tools-Blat-Parallel-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Genome-Model-Tools-Blat-Parallel-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Blat-Parallel';
 
 my @query_files = (

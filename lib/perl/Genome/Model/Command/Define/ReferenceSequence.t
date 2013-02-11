@@ -14,7 +14,7 @@ use Test::More;
 use File::Spec;
 
 if(Genome::Config->arch_os() =~ '64') {
-    plan tests => 26;
+    plan tests => 27;
 } else {
     plan skip_all => 'Must be run on a 64-bit machine',
 }
@@ -72,7 +72,7 @@ ok(!$first_2_bases_diff, '2.bases generated as expected')
     or diag("  diff\n" . $first_2_bases_diff);
 
 my @files = glob($first_data_directory . '/*');
-is(scalar(@files), 8, 'Produced 8 files/directories');
+is(scalar(@files), 9, 'Produced 9 files/directories');
 
 #Later tests on a smaller dataset will actually compare all the files
 my %expected_file_sizes = (
@@ -89,6 +89,7 @@ my %expected_file_sizes = (
     'all_sequences.fa.rpac' => 10485762,
     'all_sequences.fa.rsa' => 5242908,
     'all_sequences.fa.sa' => 5242908,
+    'all_sequences.dict' => 291,
     'all_sequences.bowtie' => 42467426,
     'all_sequences.bowtie.1.ebwt' => 16178321,
     'all_sequences.bowtie.2.ebwt' => 5242888,

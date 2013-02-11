@@ -1,14 +1,14 @@
 ---
 apipe-test-amplicon-assembly: 133133151
 apipe-test-clinseq-v1: 133114501
-apipe-test-clinseq-wer: 133417592
+apipe-test-clinseq-wer: 133734379
 apipe-test-convergence: 133133143
 apipe-test-de-novo-soap: 133133147
 apipe-test-de-novo-velvet: 133133150
 apipe-test-gene-prediction-bacterial: 132740932
 apipe-test-gene-prediction-eukaryotic: 133114500
-apipe-test-mc16s-454: 133133157
-apipe-test-mc16s-sanger: 133133156
+apipe-test-mc16s-454: 133668183
+apipe-test-mc16s-sanger: 133668184
 apipe-test-refalign-germline-short: 133133154
 apipe-test-reference-alignment: 133133153
 apipe-test-somatic-short: 133133148

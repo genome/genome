@@ -13,9 +13,10 @@ use above "Genome";
 
 # Check test directory
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Annotate-TranscriptVariantsParallel';
-my $output_dir = "$ENV{GENOME_TEST_TEMP}";
-my $test_output_dir = tempdir('/Genome-Model-Tools-Annotate-TranscriptVariantsParallel-XXXXX',
-    DIR => $output_dir, CLEANUP => 1);
+my $test_output_dir = tempdir(
+    '/Genome-Model-Tools-Annotate-TranscriptVariantsParallel-XXXXX',
+    TEMPDIR => 1,
+    CLEANUP => 1);
 chmod(0775,$test_output_dir);
 
 ok (-d $test_dir, "Test data directory exists");

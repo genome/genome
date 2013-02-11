@@ -166,6 +166,10 @@ sub _promote_data {
 sub _reallocate_disk_allocation {
     my $self = shift;
     my $allocation = $self->disk_allocations;
+    unless ($allocation) {
+        $self->status_message("no allocations to reallocated");
+        return 1;
+    }
     $self->status_message('Resizing the disk allocation...');
     my $rv = eval { $allocation->reallocate };
     my $error = $@;

@@ -24,7 +24,7 @@ if ($archos !~ /64/) {
 
 my $test_data =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-BamWindow";
 
-my $tmpbase = File::Temp::tempdir('BamWindowXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpbase = File::Temp::tempdir('BamWindowXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = "$tmpbase/output.bamwindow";
 my $refbuild_id = 101947881;
 my $bam = $test_data."/tumor.bam";

@@ -14,7 +14,6 @@ class Genome::Model::Tools::RefSeq::ModifyFromVcf {
     reference_fasta => {
         type => 'String',
         is_optional => 0,
-        default=>"/gscmnt/sata839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa",
         doc=>'reference seqeunce fasta. Will be used with samtools to create a new reference',
     },
     mutation_list => {

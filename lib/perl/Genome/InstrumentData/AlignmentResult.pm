@@ -297,17 +297,21 @@ class Genome::InstrumentData::AlignmentResult {
 sub __display_name__ {
     my $self = shift;
 
-    my @parts;
     my $instrument_data = $self->instrument_data;
-    my $subset_name = $instrument_data->subset_name;
-    my $run_name_method = $instrument_data->can('flow_cell_id') ? 'flow_cell_id' : 'run_name';
-    my $run_name = $instrument_data->$run_name_method;
     my $instrument_data_segment_id = $self->instrument_data_segment_id;
+    my $reference_build = $self->reference_build;
+    my $annotation_build = ($self->can('annotation_build') ? $self->annotation_build : ()); # TODO: pull up and normalize
 
-    push @parts, $run_name if $run_name;
-    push @parts, $subset_name if $subset_name;
-    push @parts, $instrument_data_segment_id if defined $instrument_data_segment_id;
-    return join '-', @parts;
+    my $name = $self->aligner_name 
+        . ' ' . $self->aligner_version 
+        . ' [' . $self->aligner_params . ']'
+        . ' on ' . $instrument_data->__display_name__
+        . ($instrument_data_segment_id ? " ($instrument_data_segment_id)" : '')
+        . ($reference_build ? ' against ' . $reference_build->__display_name__ : '')
+        . ($annotation_build ? ' annotated by ' . $annotation_build->__display_name__ : '')
+        . " (" . $self->id . ")";
+
+    return $name; 
 }
 
 sub required_arch_os {
@@ -910,6 +914,9 @@ sub close_out_streamed_bam_file {
     $self->error_message("Sort by name failed") and return if $rv or !-s $tmp_file.'.bam';
     $self->status_message("unlinking original bam file $bam_file.");
     unlink $bam_file;
+
+    # TODO: run htseq here
+    # We need a way to have down-stream steps run before their predecessor cleans-up.
 
     $self->status_message("Now running fixmate");
     $rv = system "$samtools fixmate $tmp_file.bam $tmp_file.fixmate";

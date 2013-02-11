@@ -166,6 +166,7 @@ sub getCnvFiles{
         last();
       }
     }
+    
     unless ($final_name){
       print RED, "\n\nCould not determine a common or subject name from model: $model_name ($model_id)\n\n", RESET;
       exit();

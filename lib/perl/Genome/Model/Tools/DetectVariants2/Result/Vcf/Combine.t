@@ -215,7 +215,7 @@ sub run_combine_test {
     my $expected_file = shift;
     my $operation = shift;
 
-    my $test_working_dir = File::Temp::tempdir('DetectVariants2-Result-Vcf-CombineXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+    my $test_working_dir = File::Temp::tempdir('DetectVariants2-Result-Vcf-CombineXXXXX', CLEANUP => 1, TMPDIR => 1);
 
     my %command_params = (
         input_a_id => $result_a->id,

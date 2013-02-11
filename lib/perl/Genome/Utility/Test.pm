@@ -26,10 +26,6 @@ sub _compare_ok_parse_args {
     my $file_1 = shift;
     my $file_2 = shift;
 
-    unless (@_) {
-        return ($file_1, $file_2);
-    }
-
     my $name = (@_ % 2 == 1) ? shift : undef;
     my %o = @_;
 

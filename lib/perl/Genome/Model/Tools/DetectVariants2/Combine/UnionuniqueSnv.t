@@ -62,7 +62,7 @@ my $detector_b = Genome::Model::Tools::DetectVariants2::Result->__define__(
 $detector_b->lookup_hash($detector_b->calculate_lookup_hash());
 isa_ok($detector_b, 'Genome::Model::Tools::DetectVariants2::Result', 'detector_b');
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Combine-UnionuniqueSnv-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Combine-UnionuniqueSnv-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_symlink  = join('/', $test_output_dir, 'union-snv');
 my $union_snv_object = Genome::Model::Tools::DetectVariants2::Combine::UnionuniqueSnv->create(
     input_a_id       => $detector_a->id,

@@ -16,7 +16,7 @@ my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-SomaticVariation-Comman
 my $test_input_dir = "$test_dir/input.v1";
 my $build_variants_dir = "$test_input_dir/variants";
 Genome::Sys->create_directory($build_variants_dir);
-my $output_dir = File::Temp::tempdir('Genome-Model-SomaticVariation-Command-SimplifyVcf-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $output_dir = File::Temp::tempdir('Genome-Model-SomaticVariation-Command-SimplifyVcf-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $indel_vcf = "$build_variants_dir/indels.vcf.gz";
 my $snv_vcf = "$build_variants_dir/snvs.vcf.gz";

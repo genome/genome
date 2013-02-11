@@ -14,7 +14,7 @@ my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Picard-IterativeM
 my $test_bam = $data_dir .'/test.bam';
 my $expected_metrics = $data_dir .'/expected_metrics.tsv';
 
-my $tmp_dir = File::Temp::tempdir('Picard-IterativeMarkDuplicates-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Picard-IterativeMarkDuplicates-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 
 my $iterative_mrkdup = Genome::Model::Tools::Picard::IterativeMarkDuplicates->create(
     input_file => $test_bam,

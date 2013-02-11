@@ -40,7 +40,6 @@ class Genome::Model::Tools::Vcf::VcfMakerSniperSomatic {
         is => 'Text',
         doc => "Reference genome build" ,
         is_optional => 1,
-        default => "36",
     },
 
     input_file => {
@@ -55,14 +54,14 @@ class Genome::Model::Tools::Vcf::VcfMakerSniperSomatic {
         doc => "type of variant calls - one of \"snv\" or \"indel\"" ,
         is_optional => 0,
         is_input => 1,
-    },        
+    },
 
     sample_id => {
         is => 'Text',
         doc => "unique sample id",
         is_optional => 0,
         is_input => 1,
-    },        
+    },
     standard_chroms => {
         default=>0,
         doc=> "set to 1 if you only want 1..2,X,Y,MT"
@@ -198,6 +197,10 @@ sub execute {                               # replace with real execution logic.
         open(OUTFILE, ">$output_file") or die "Can't open output file: $!\n";
         my $file_date = localtime();
 
+        unless($genome_build eq "36"){
+            die("reference paths only provided for b36 for broad and wustl. Update the tool with the appropriate paths for other builds");
+        }
+
         my $reference;
         if ($seq_center eq "WUSTL"){
             $reference = "ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/ARCHIVE/BUILD.36.3/special_requests/assembly_variants/NCBI36_BCCAGSC_variant.fa.gz";
@@ -272,7 +275,7 @@ sub execute {                               # replace with real execution logic.
             } else {
                 if ($cp_score_to_qual){
                     push(@outline,$snvhash{$key}{"tumor"}{"VAQ"});
-                } else {               
+                } else {
                     push(@outline, ".");
                 }
             }
@@ -351,7 +354,7 @@ sub execute {                               # replace with real execution logic.
 
             #skip non-normal chrs
             #next if $col[0] =~ /^NT/;
-            
+
             next if ($standard_chroms && !($col[0] =~/^[1]?([0-9]|^2[012]|X|Y|MT)$/));
 
             $allSnvs{$id}{"chrom"} = $col[0];
@@ -359,7 +362,7 @@ sub execute {                               # replace with real execution logic.
 
 
             #handle snv genotype calls
-            if ($type eq "snv"){        
+            if ($type eq "snv"){
                 #get all the alleles together (necessary for the GT field)
                 my @allAlleles = $col[2];
                 my @varAlleles;
@@ -549,7 +552,7 @@ sub order_chroms {
     my $self = shift;
     my @chroms = @_;
     my @default_chroms = ( 1..22, "X", "Y", "MT");
-    my @duplicates; 
+    my @duplicates;
     for (my $i=@chroms-1; $i >= 0; $i--) {
         my $chr = $chroms[$i];
         if (grep {$chr eq $_} @default_chroms) {

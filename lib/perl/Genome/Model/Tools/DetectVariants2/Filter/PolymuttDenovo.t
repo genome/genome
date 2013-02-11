@@ -36,7 +36,7 @@ my $input_directory = join('/', $test_data_dir, "input");
 my $expected_vcf_file = join('/', $expected_dir, 'snvs.vcf.gz');
 ok(-s $expected_vcf_file, "expected vcf file output $expected_vcf_file exists");
 
-my $output_base = File::Temp::tempdir('DetectVariants2-Filter-PolymuttDenovoXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $output_base = File::Temp::tempdir('DetectVariants2-Filter-PolymuttDenovoXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_dir = $output_base . '/filter';
 my $output_vcf = join('/', $output_dir, 'snvs.vcf.gz');
 

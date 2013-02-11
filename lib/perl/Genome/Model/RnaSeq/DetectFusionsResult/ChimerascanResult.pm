@@ -27,6 +27,9 @@ sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
 
+    # TODO If process crashes before calling _reallocate_disk_allocation then
+    # the output directory will remain at initially allocated size
+    # indefinitely.
     $self->_prepare_output_directory();
     $self->_prepare_staging_directory();
 

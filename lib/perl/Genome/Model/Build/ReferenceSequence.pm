@@ -12,6 +12,16 @@ use POSIX;
 class Genome::Model::Build::ReferenceSequence {
     is => 'Genome::Model::Build',
     has => [
+        source => {
+            is => 'UR::Value',
+            via => 'inputs',
+            to => 'value_id',
+            where => [ name => 'prefix', value_class_name => 'UR::Value' ],
+            doc => 'The source of the sequence (such as GRC).  May not contain spaces.',
+            is_mutable => 1,
+            is_many => 0,
+            is_optional => 1,
+        },
         # these come from the model, and do not change (and compose its name)
         prefix => {
             is => 'UR::Value',
@@ -24,7 +34,7 @@ class Genome::Model::Build::ReferenceSequence {
             is_optional => 1,
         },
         species_name => {
-            via => 'model',
+            via => '__self__',
             to => 'subject_name',
         },
         desc => {
@@ -587,6 +597,13 @@ sub get_by_name {
 
     unless ( $name ) {
         Carp::confess('No build name given to get imported reference sequence build');
+    }
+
+    # we now record the build name explicitly so we can do faster lookups, so this method should not be needed
+    # try to get the build by name, and only continue through heuristic logic if it fails
+    my $new = $class->get(name => $name);
+    if ($new) {
+        return $new;
     }
 
     # This method is not adequate as spaces are substitued in the model anme and version

@@ -14,7 +14,7 @@ ok (-e $expected, "expected output file exists at $expected");
 
 my $tmpdir = File::Temp::tempdir(
     TEMPLATE => 'Genome-Model-Tools-Annotate-AminoAcidSubstitution-XXXXXX',
-    DIR => $ENV{GENOME_TEST_TEMP},
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 my $output = join('/', $tmpdir, 'output.txt');

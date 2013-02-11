@@ -26,7 +26,7 @@ my $reference_fasta = "/gscmnt/ams1102/info/model_data/2869585698/build106942997
 my $small_indel_list = "$test_data_dir/small_indels.padded1bp.bed";
 
 # Outputs
-my $output_dir = File::Temp::tempdir('VarscanValidationXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $output_dir = File::Temp::tempdir('VarscanValidationXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_tumor = "$output_dir/tumor.bam";
 my $output_normal = "$output_dir/normal.bam";
 

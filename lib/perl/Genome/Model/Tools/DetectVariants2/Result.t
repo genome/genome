@@ -23,7 +23,7 @@ ok($ref_seq_build, 'human36 reference sequence build') or die;
 
 #TODO this could really use its own very tiny dataset--we don't care about the results in this test so much as the process
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Samtools/';
-my $test_working_dir = File::Temp::tempdir('DetectVariants2-ResultXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $test_working_dir = File::Temp::tempdir('DetectVariants2-ResultXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $bam_input = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 
 my $expected_dir = $test_dir . '/expected.v4/';

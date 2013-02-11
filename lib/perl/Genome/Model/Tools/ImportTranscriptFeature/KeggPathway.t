@@ -34,9 +34,11 @@ my @mock_genes = qw/ hsa:00 hsa:01 /;
 $server->set_always('get_genes_by_pathway', \@mock_genes);
 
 # Create and execute kegg pathway import tool
-my $output_dir = "$ENV{GENOME_TEST_TEMP}";
-my $temp_dir = tempdir('/Genome-Model-Tools-ImportTranscriptFeature-KeggPathway-XXXXXX',
-    DIR => $output_dir, CLEANUP => 1);
+my $temp_dir = tempdir(
+    '/Genome-Model-Tools-ImportTranscriptFeature-KeggPathway-XXXXXX',
+    TMPDIR => 1,
+    CLEANUP => 1
+);
 my $gene_output = $temp_dir . '/gene_path.tsv';
 my $path_output = $temp_dir . '/path_desc.tsv';
 

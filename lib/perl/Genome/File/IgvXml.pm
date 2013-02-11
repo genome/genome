@@ -47,8 +47,8 @@ class Genome::File::IgvXml {
         },
         genome => {
             is => 'String',
-            default => "b37",
             valid_values => [ qw( b37 ) ],
+            is_optional => 0,
             doc => 'The name of the reference sequence in IGV',
         },
         ],

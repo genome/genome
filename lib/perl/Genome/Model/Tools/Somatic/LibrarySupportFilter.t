@@ -17,7 +17,7 @@ BEGIN {
 
 my $indel_file = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Somatic-LibrarySupportFilter/sniper.indels.txt";
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-LibrarySupportFilter-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-LibrarySupportFilter-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 
 my $multi_lib_output_file = $test_output_dir . "multi_lib.output.txt";

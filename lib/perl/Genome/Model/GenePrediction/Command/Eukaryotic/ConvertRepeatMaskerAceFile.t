@@ -16,7 +16,7 @@ use_ok('Genome::Model::GenePrediction::Command::Eukaryotic::ConvertRepeatMaskerA
 my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-GenePrediction-Eukaryotic/repeat_masker/';
 ok(-d $test_data_dir, "test data dir exists at $test_data_dir") or die;
 
-my $test_output_dir = "$ENV{GENOME_TEST_TEMP}/";
+my $test_output_dir = File::Temp::tempdir('Genome-Model-GenePrediction-Eukaryotic-XXXXX', TMPDIR => 1, CLEANUP => 1);
 ok(-d $test_output_dir, "test output dir exists at $test_output_dir") or die;
 
 my $fasta = $test_data_dir . 'fasta_0';

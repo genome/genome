@@ -14,7 +14,12 @@ class Genome::Model::Command::Define::ReferenceAlignment {
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             doc => 'ID or name of the reference sequence to align against',
-            default_value => 'NCBI-human-build36',
+            default_value => 101947881, 
+                # switch the above to this when the docs are smart enough to not dump out a stringified hash:
+                #   { name => 'NCBI-human-build36' }
+                #
+                # and switch to this when test logic is updated to tolerate the default you would actually use:
+                #   { source => 'GRC', 'subject.name' => 'human', version => '37-lite' }
             is_input => 1,
         },
     ],
@@ -229,6 +234,12 @@ sub _resolve_param {
 
     my $value = $self->$param;
     return unless $value; # not specified
+    if (ref($value) eq 'HASH') {
+        # the declaration works with the new UR
+        # but this will allow the class to work with the old one also
+        # since it did things which are now automatic
+        $value = $value->{name};
+    }
     return $value if ref($value); # already an object
 
     my @objs = $self->resolve_param_value_from_text($value, $param_class);

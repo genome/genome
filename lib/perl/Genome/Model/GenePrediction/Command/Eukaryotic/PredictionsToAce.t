@@ -20,7 +20,7 @@ ok(-e $seq_file, "test sequence file exists at $seq_file");
 my $expected_ace_output = $test_data_dir . '/example_output.ace';
 ok(-e $expected_ace_output, "expected ace output exists at $expected_ace_output");
 
-my $test_output_base_dir = "$ENV{GENOME_TEST_TEMP}/";
+my $test_output_base_dir = File::Temp::tempdir('Genome-Model-GenePrediction-Eukaryotic-XXXXX', TMPDIR => 1, CLEANUP => 1);
 ok(-d $test_output_base_dir, "base output dir exists at $test_output_base_dir");
 
 my $temp_dir = tempdir(

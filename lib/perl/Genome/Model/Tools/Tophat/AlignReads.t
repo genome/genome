@@ -26,7 +26,7 @@ my $expected_deletions_file = $expected_data_dir .'/deletions.bed';
 my $expected_left_kept_reads_info = $expected_data_dir .'/left_kept_reads.info';
 my $expected_right_kept_reads_info = $expected_data_dir .'/right_kept_reads.info';
 
-my $tmp_dir = File::Temp::tempdir('Tophat-AlignReads-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Tophat-AlignReads-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 
 my $read_1_fastq_file = $input_data_dir .'/random_1_1.fq';
 my $read_2_fastq_file = $input_data_dir .'/random_1_2.fq';

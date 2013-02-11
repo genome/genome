@@ -32,7 +32,7 @@ my $expected_version = "expected.v2";
 my $expected_data = $base_expected_dir . $expected_version;
 my $tumor =  $test_data."/flank_tumor_sorted.bam";
 
-my $tmpbase = File::Temp::tempdir('GatkGermlineIndelXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpbase = File::Temp::tempdir('GatkGermlineIndelXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
 my $gatk_somatic_indel = Genome::Model::Tools::DetectVariants2::GatkGermlineIndel->create(

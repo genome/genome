@@ -14,7 +14,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>6; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>7; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute;
 use Data::Dumper;
 
@@ -26,11 +26,12 @@ ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
-ok($temp_dir, "created temp directory: $temp_dir");
+ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Get an rna-seq build
 my $build_id = 129396808;
 my $build = Genome::Model::Build->get($build_id);
+ok ($build_id, "got an rna-seq build from the database using build id: $build_id") or die;
 
 #Create outlier-genes-absolute command and execute
 #genome model clin-seq outlier-genes-absolute --outdir=/tmp/rnaseq_outlier/ --percent-cutoff=1 129396808

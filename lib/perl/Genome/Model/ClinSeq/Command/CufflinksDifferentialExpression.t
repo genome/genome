@@ -14,7 +14,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>22; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>24; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression;
 use Data::Dumper;
 
@@ -26,13 +26,15 @@ ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
-ok($temp_dir, "created temp directory: $temp_dir");
+ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Get a pair of rna-seq builds
 my $case_build_id = 129767889;
 my $case_build = Genome::Model::Build->get($case_build_id);
+ok($case_build, "got rna-seq build from the database using build id: $case_build_id") or die;
 my $control_build_id = 129767952;
 my $control_build = Genome::Model::Build->get($control_build_id);
+ok($control_build, "got rna-seq build from the database using build id: $control_build_id") or die;
 
 #Create cufflinks-differential-expression command and execute
 #genome model clin-seq cufflinks-differential-expression --outdir=/tmp/ --case-build=129767889 --control-build=129767952

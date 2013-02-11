@@ -16,7 +16,7 @@ my $test_bed = $data_dir .'/22.bed';
 my $test_bam = $data_dir .'/22.bam';
 my $expected_as = $data_dir .'/expected_as.yaml';
 
-my $tmp_dir = File::Temp::tempdir('AlignmentSummary-GenerateMetrics-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('AlignmentSummary-GenerateMetrics-'.Genome::Sys->username.'-XXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_as = $tmp_dir .'/as.yaml';
 
 my $as_cmd = Genome::Model::Tools::AlignmentSummary::GenerateMetrics->create(

@@ -24,7 +24,7 @@ use MIME::Base64;
 
 require_ok('Genome::Sys::Lock');
 
-my $tmp_dir = File::Temp::tempdir('Genome-Utility-FileSystem-writetest-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Genome-Utility-FileSystem-writetest-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $bogus_id = '-55555';
 $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
@@ -96,7 +96,7 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
 }
 
 # RACE CONDITION
-my $base_dir = File::Temp::tempdir("Genome-Utility-FileSystem-RaceCondition-XXXX", DIR=>"$ENV{GENOME_TEST_TEMP}/", CLEANUP=>1);
+my $base_dir = File::Temp::tempdir("Genome-Utility-FileSystem-RaceCondition-XXXX", CLEANUP=>1, TMPDIR => 1);
 
 my $resource = "/tmp/Genome-Utility-Filesystem.test.resource.$$";
 

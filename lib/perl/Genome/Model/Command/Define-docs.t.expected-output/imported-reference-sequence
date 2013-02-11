@@ -2,11 +2,11 @@
 [4mUSAGE[0m
  [1mgenome model define imported-reference-sequence[0m --processing-profile-name=?
     [--auto-assign-inst-data] [--auto-build-alignments] --fasta-file=? --processing-profile=?
-    --processing-profile-id=? [--add-to-projects=?[,?]] [--append-to=?] [--instrument-data=?[,?]]
-    [--subject=?] [--groups=?[,?]] [--sequence-uri=?] [--skip-bases-files] [--on-warning=?]
+    --processing-profile-id=? --species-name=? [--add-to-projects=?[,?]] [--append-to=?]
+    [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--sequence-uri=?] [--on-warning=?]
     [--job-dispatch=?] [--server-dispatch=?] [--use-default-sequence-uri] [--assembly-name=?]
-    [--derived-from=?] [--prefix=?] [--species-name=?] [--version=?] [--model-name=?]
-    [--subject-name=?]
+    [--derived-from=?] [--prefix=?] [--version=?] [--model-name=?] [--subject-name=?]
+    [--skip-bases-files]
 
 [4mSYNOPSIS[0m
 genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta
@@ -20,6 +20,9 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     The ID of the procesing profile to use.  There is really only one so it is typically not
     specified. 
     Default value '1990904' if not specified
+  [1mspecies-name[0m
+    The species name of the reference.	This value must correspond to a species name found in the
+    gsc.organism_taxon table. 
 
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m
@@ -40,9 +43,6 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     Model groups to put the newly created model into 
   [1msequence-uri[0m
     URI to the sequence gzip file to write into BAM headers for alignments against this reference. 
-  [1mskip-bases-files[0m
-    If set, bases files for quick sequence/position look up will not be created.  Useful for
-    importing files with a large number of sequences 
   [1mon-warning[0m
     The action to take when emitting a warning.
     valid values:
@@ -65,9 +65,6 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     The reference sequence build from which this one is derived (if any). 
   [1mprefix[0m
     The source of the sequence, such as "NCBI".  May not have spaces. 
-  [1mspecies-name[0m
-    The species name of the reference.	This value must correspond to a species name found in the
-    gsc.organism_taxon table. 
   [1mversion[0m
     The version number and/or description of the reference.  May not have spaces.  This may be, for
     example "37" or "37_human_contamination". 
@@ -75,6 +72,9 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     $PREFIX-$SPECIES_NAME unless otherwise specified. 
   [1msubject-name[0m
     Copied from species_name. 
+  [1mskip-bases-files[0m
+    If set, bases files for quick sequence/position look up will not be created.  Useful for
+    importing files with a large number of sequences 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
@@ -90,7 +90,7 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
         --prefix=GRClite \
         --species-name=human \
         --version=37 \
-        --use-default-sequence-uri 
+        --use-default-sequence-uri
         --fasta-file=complete.fa \
     
       # for a reference which extends another
@@ -99,9 +99,9 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
         --prefix=GRC \
         --species-name=human \
         --version=37-p8-test7 \
-        --use-default-sequence-uri 
+        --use-default-sequence-uri
         --fasta-file=additions.fa \
-        --append-to 106942997 
+        --append-to 106942997
 
 
 

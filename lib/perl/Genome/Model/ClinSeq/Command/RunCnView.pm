@@ -28,6 +28,16 @@ class Genome::Model::ClinSeq::Command::RunCnView {
             doc => 'Use for shorter tests',
         }
     ],
+    has_output => [
+        gene_amp_file => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+        },
+        gene_del_file => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+        },
+    ],
     doc => 'run gmt copy-number cn-view in various ways and summarize results',
 };
 
@@ -102,7 +112,9 @@ sub execute {
     }
   }
 
-
+  #Set the output values that will be needed for downstream steps
+  $self->gene_amp_file($cnview_dir . "cnv.All_genes.amp.tsv");
+  $self->gene_del_file($cnview_dir . "cnv.All_genes.del.tsv");
 
   return 1;
 }

@@ -9,7 +9,7 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::Bed::Convert::Snv::StrelkaToBed');
 
-my $tmpdir = File::Temp::tempdir('Bed-Convert-Snv-StrelkaToBedXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('Bed-Convert-Snv-StrelkaToBedXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $input_file = __FILE__ . '.input';
 my $expected_file = __FILE__ . '.expected';

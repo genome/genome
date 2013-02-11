@@ -32,7 +32,7 @@ my $expected_output_file = join('/', $expected_result_dir, 'varscan.snp.Somatic.
 my $expected_filtered_file = join('/', $expected_result_dir, 'varscan.snp.Somatic.failed_strandfilter');
 my $expected_readcount_file = join('/', $expected_result_dir, 'varscan.snp.Somatic.strandfilter.readcounts');
 
-my $tmpdir = File::Temp::tempdir('Somatic-FilterFalsePositivesXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('Somatic-FilterFalsePositivesXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = join('/', $tmpdir, 'varscan.snp.Somatic.strandfilter');
 my $filtered_file = join('/', $tmpdir, 'varscan.snp.Somatic.failed_strandfilter');
 my $readcount_file = $output_file . '.readcounts';

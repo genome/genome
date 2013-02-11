@@ -81,7 +81,7 @@ sub _select_model {
     
 
     ##FIXME: This should probably not be hardcoded, at least not here
-    my $model_dir = $ENV{GENOME_SW} . '/genemark.hmm/installed/modeldir';
+    my $model_dir = $ENV{GENOME_SW} . '/genemark.hmm/installed/heuristic_mod';
 
     ##FIXME: These thresholds should not be hardcoded, either
     if ($gc_percent < 30) {

@@ -28,11 +28,20 @@ class Genome::Model::Tools::CopyNumber::PlotSegmentsFromBamsWorkflow {
         },
     ],
     has_optional => [
+        gaps_file => {
+            is => 'String',
+            doc => 'The gaps file to pass along to CnvSeg. If this is not provided, it will be looked up via the genome build.',
+        },
+        centromere_file => {
+            is => 'String',
+            doc => 'The centromere file to pass along to CnvSeg. If this is not provided, it will be looked up via the genome build.',
+        },
         genome_build => {
             is => 'String',
             is_input => 1,
             is_output => 1,
-            doc => "choose from ['36','37','mm9']",
+            valid_values => ['36', '37', 'mm9'],
+            doc => "Reference sequence to use",
         },
         output_pdf => {
             is => 'String',
@@ -115,6 +124,8 @@ sub execute {
     my $normal_bam_name = basename($self->normal_bam);
     my $tumor_bam_name = basename($self->tumor_bam);
 
+    $self->_resolve_gaps_and_centromere_files;
+
     my $workflow = Workflow::Operation->create_from_xml(\*DATA);
 
     # Validate the workflow
@@ -163,6 +174,25 @@ sub execute {
     return 1;
 }
 
+# Set the gaps_file and centromere_file based upon the genome_build, if needed and applicable
+sub _resolve_gaps_and_centromere_files {
+    my $self = shift;
+    my $refseq_version = $self->genome_build;
+
+    for my $file_type ("gaps", "centromere") {
+        my $accessor = $file_type . "_file";
+        unless ($self->$accessor) {
+            my $file = Genome::Sys->dbpath("tgi-misc-annotation","human-build$refseq_version-20130113") . "/$file_type.csv";
+            unless (-e $file) {
+                die $self->error_message("Could not find the $file_type file located at $file");
+            }
+            $self->$accessor($file);
+        }
+    }
+
+    return 1;
+}
+
 1;
 
 __DATA__
@@ -182,11 +212,15 @@ __DATA__
   <link fromOperation="input connector" fromProperty="normal_cnv_seg" toOperation="normal cnv-seg" toProperty="output_file" />
   <link fromOperation="input connector" fromProperty="min_markers" toOperation="normal cnv-seg" toProperty="min_markers" />
   <link fromOperation="input connector" fromProperty="max_copy_number" toOperation="normal cnv-seg" toProperty="max_copy_number" />
+  <link fromOperation="input connector" fromProperty="gaps_file" toOperation="normal cnv-seg" toProperty="gap_file" />
+  <link fromOperation="input connector" fromProperty="centromere_file" toOperation="normal cnv-seg" toProperty="centromere_file" />
 
   <link fromOperation="tumor bam-to-cn" fromProperty="output_file" toOperation="tumor cnv-seg" toProperty="copy_number_file" />
   <link fromOperation="input connector" fromProperty="tumor_cnv_seg" toOperation="tumor cnv-seg" toProperty="output_file" />
   <link fromOperation="input connector" fromProperty="min_markers" toOperation="tumor cnv-seg" toProperty="min_markers" />
   <link fromOperation="input connector" fromProperty="max_copy_number" toOperation="tumor cnv-seg" toProperty="max_copy_number" />
+  <link fromOperation="input connector" fromProperty="gaps_file" toOperation="tumor cnv-seg" toProperty="gap_file" />
+  <link fromOperation="input connector" fromProperty="centromere_file" toOperation="tumor cnv-seg" toProperty="centromere_file" />
 
   <link fromOperation="tumor cnv-seg" fromProperty="output_file" toOperation="plot segments" toProperty="tumor_segment_file" />
   <link fromOperation="normal cnv-seg" fromProperty="output_file" toOperation="plot segments" toProperty="normal_segment_file" />
@@ -238,6 +272,8 @@ __DATA__
     <inputproperty isOptional="Y">genome_build</inputproperty>
     <inputproperty isOptional="Y">sex</inputproperty>
     <inputproperty isOptional="Y">y_max</inputproperty>
+    <inputproperty isOptional="Y">gaps_file</inputproperty>
+    <inputproperty isOptional="Y">centromere_file</inputproperty>
     <outputproperty>output</outputproperty>
   </operationtype>
 

@@ -103,7 +103,7 @@ my $tumor_bam = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-
 my $normal_bam = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_normal_sorted.bam";
 my @multiple_bam = ($tumor_bam,"thing");
 # Test dispatcher for running a complex case -- the intersect is nonsensical, but tests intersections while still keeping the test short
-my $test_working_dir = File::Temp::tempdir('DetectVariants2-Dispatcher-combineXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $test_working_dir = File::Temp::tempdir('DetectVariants2-Dispatcher-combineXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $combine_test = $dispatcher_class->create(
     snv_detection_strategy => 'samtools r599 filtered by snp-filter v1 union samtools r599',
     output_directory => $test_working_dir,
