@@ -123,22 +123,26 @@ sub __extend_namespace__ {
         my %desc;
         next unless $property->can("is_param") and $property->can("is_input") and $property->can("is_output");
 
+        my $name = $property->property_name;
+
+        next if Genome::SoftwareResult::Default->can($name);
+
         if ($property->is_param) {
             $desc{is_param} = 1;
         }
         elsif ($property->is_input) {
             $desc{is_input} = 1;
         }
-        #elsif ($property->is_metric) {
+        #elsif ($property->can("is_metric") and $property->is_metric) {
         #    $desc{is_metric} = 1;
         #}
-        #elsif ($property->is_output) {
+        #elsif ($property->can("is_output") and $property->is_output) {
         #    $desc{is_output} = 1;
         #}
         else {
             next;
         }
-        $has{$property->property_name} = \%desc;
+        $has{$name} = \%desc;
         $desc{is} = $property->data_type;
         $desc{doc} = $property->doc;
         $desc{is_many} = $property->is_many;
