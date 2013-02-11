@@ -168,7 +168,7 @@ sub add_breakpoints_to_chromosome {
     push (@{$breakpoints_list->{$chrA}}, \%hash);
 
     unless ($chrA eq $chrB) {
-        push (@{$breakpoints_list->{$chrB}}, {%hash, breakpoint_link => $hash});
+        push (@{$breakpoints_list->{$chrB}}, {%hash, breakpoint_link => \%hash});
     }
     return $breakpoints_list;
 }
