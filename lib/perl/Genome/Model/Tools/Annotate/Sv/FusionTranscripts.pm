@@ -77,28 +77,37 @@ sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
 
     my $out_fh = Genome::Sys->open_file_for_writing($self->fusion_output_file) or die "Failed to open fusion output file\n";
+    my @contents = map{'N/A'}$self->column_names;
     my %output;
 
     for my $chr (keys %$breakpoints_list) {
         for my $item (@{$breakpoints_list->{$chr}}) {
             next if exists $item->{breakpoint_link};  
-            $aTranscriptRef = $item->{transcripts_crossing_breakpoint_a};
-            $bTranscriptRef = $item->{transcripts_crossing_breakpoint_b};
-	
+            my $aTranscriptRef = $item->{transcripts_crossing_breakpoint_a};
+            my $bTranscriptRef = $item->{transcripts_crossing_breakpoint_b};
+
+            my @item_types = qw(chrA bpA chrB bpB event);
+            my $item_key   = join "--", map{$item->{$_}}@item_types;
+            $output{$item_key} = \@contents;
+
+            push @item_types, qw(orient size score);
+            
 	        # If there are no transcripts crossing either breakpoint, then you are done
-	        next if !defined $aTranscriptRef || scalar @{$aTranscriptRef} == 0 || !defined $bTranscriptRef || scalar @{$bTranscriptRef} == 0;
+	        next unless $aTranscriptRef and @$aTranscriptRef > 0 and $bTranscriptRef and @$bTranscriptRef > 0;
 	    
 	        # See if there are different genes crossing the breakpoints
 	        if (fusionGenes($aTranscriptRef, $bTranscriptRef)) {
 	            my $aGeneNameRef = geneNames($aTranscriptRef);
 	            my $bGeneNameRef = geneNames($bTranscriptRef);
-	            my $fusionProteinRef = getAllInFrameFusions($aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation, $out_fh);
+	            my $fusionProteinRef = getAllInFrameFusions($aTranscriptRef, $item->{bpA}, $bTranscriptRef, $item->{bpB}, $item->{orient}, $out_fh);
 	            if ( defined $fusionProteinRef && scalar(keys%{$fusionProteinRef}) >= 1 ) {
-		            $out_fh->print("\n$line\t[");
-                    map{$out_fh->print("$_ ")}sort keys %{$aGeneNameRef};
-		            $out_fh->print("]\t[");
-		            map{$out_fh->print("$_ ")}sort keys %{$bGeneNameRef};
-                    $out_fh->print("] \n");
+                    my $aGenes = join ' ', sort keys %$aGeneNameRef;
+                    my $bGenes = join ' ', sort keys %$bGeneNameRef;
+                    my $fusion = '['.$aGenes.']|['.$bGenes.']';
+
+                    my $line = join "\t", map{$item->{$_}}@item_types; 
+                    $out_fh->print("\n$line\t$fusion\n");
+                    $output{$item_key} = [$fusion];
 
 		            for my $seq (keys %$fusionProteinRef) { 
 		                for my $mRNA ( keys %{$fusionProteinRef->{$seq}} ) {
@@ -357,23 +366,6 @@ sub firstSecond {
 }
 
 
-sub allTranscripts {
-    # Return all transcripts spanning the given position
-    my ( $chr, $position, $build ) = @_;
-    
-    my ( $transcriptIterator, $transcript, @transcripts, );
-    $transcriptIterator = $build->transcript_iterator(chrom_name => $chr); 
-    die "transcriptIterator not defined" unless defined $transcriptIterator;
-    while ( $transcript = $transcriptIterator->next ) {
-	    if ( $position >= $transcript->transcript_start and $position <= $transcript->transcript_stop ) {
-	        push @transcripts, $transcript;
-	    }
-    }
-    
-    return \@transcripts;
-}
-
-
 sub fusionGenes {
     # Input: ref to transcripts crossing each breakpoint
     # Return: 1 if there are different genes crossing the breakpoints
@@ -420,7 +412,7 @@ sub substructureWithBreakpoint {
 
 
 sub column_names {
-    return qw(fusionGene);
+    return qw(fusion_genes);
 }
 
 

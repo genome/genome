@@ -22,6 +22,7 @@ my $cmd = Genome::Model::Tools::Annotate::Sv->create(
     input_file => "$data_dir/in.svs",
     output_file => $temp_file,
     annotation_build_id => 131184146,
+    annotators_to_run   => ['Transcripts'],
 );
 
 ok($cmd, "Created command");

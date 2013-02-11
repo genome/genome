@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Annotate::Sv {
+    is => 'Command::V2',
     has => [
         input_file => {
             is => 'String',
@@ -22,7 +23,7 @@ class Genome::Model::Tools::Annotate::Sv {
         annotators_to_run => {
             is => 'String',
             is_many => 1,
-            default => ['Transcripts'],
+            default => ['Transcripts', 'FusionTranscripts'],
         },
     ],
 };
