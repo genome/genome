@@ -167,12 +167,6 @@ sub getCnvFiles{
       }
     }
     
-    #TODO: Implement a method that gets nice labels for a series of model, 
-    #resolve_distinguishing_label(
-    #  things => \@builds,
-    #  names => ['wgs_build.subject.patient.common_name','exome_build.subjet...']
-    #)
-
     unless ($final_name){
       print RED, "\n\nCould not determine a common or subject name from model: $model_name ($model_id)\n\n", RESET;
       exit();
