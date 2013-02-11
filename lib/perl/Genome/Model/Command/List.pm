@@ -10,7 +10,7 @@ class Genome::Model::Command::List {
             is_constant => 1, 
             value => 'Genome::Model' 
         },
-        show => { default_value => 'id,name,subject,processing_profile.' },
+        show => { default_value => 'id,name,subject,processing_profile' },
     ],
     doc => 'list genome models',
 };
