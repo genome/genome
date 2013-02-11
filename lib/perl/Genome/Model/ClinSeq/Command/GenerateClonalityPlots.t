@@ -19,7 +19,7 @@ else {
     $actual_out = Genome::Sys->create_temp_directory;
 }
 
-ok(-d $expected_out, "directory of expected output exists: $expected_out");
+ok(-d $expected_out, "directory of expected output exists: $expected_out") or die;
 
 # Run the tool as described in the synopsis.
 my $cmd = "genome model clin-seq generate-clonality-plots --somatic-var-build=129396826  --output-dir=$actual_out  --common-name='AML54'  --verbose";
@@ -51,3 +51,5 @@ is(scalar(@diff), 0, "no differences")
         for (@diff) { diag($_) }
         warn "*** if the above differences are not in error, rebuild the test data by running this test with REBUILD on the command-line ***";
     }
+
+
