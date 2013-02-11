@@ -15,7 +15,7 @@ use Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
     = sub { return 40 * 1024 };
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/0.4.5";
-my $tophat_dir = $data_dir . "/tophat_data";
+my $tophat_dir = $data_dir . "/tophat_data4";
 
 my $t = Genome::Taxon->__define__(name => 'human');
 my $p = Genome::Individual->create(name => "test-human-patient", common_name => 'testpatient', taxon => $t);
@@ -92,13 +92,21 @@ test_for_error($class, \%params, "Chimerascan currently only supports");
 $params{'detector_params'} = "--bowtie-version 0.12.7 --reuse-bam bad";
 test_for_error($class, \%params, "You must specify either");
 
-my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
+my $no_bam_result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
     alignment_result => $alignment_result,
     version => '0.4.5',
     detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
     annotation_build => $annotation_build,
 );
-isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
+isa_ok($no_bam_result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
+
+my $reuse_bam_result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
+    alignment_result => $alignment_result,
+    version => '0.4.5',
+    detector_params => "--bowtie-version=0.12.7 --reuse-bam 1",
+    annotation_build => $annotation_build,
+);
+isa_ok($reuse_bam_result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
 
 done_testing();
 
