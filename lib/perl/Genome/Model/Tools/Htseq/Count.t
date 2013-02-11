@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 9;
+use Test::More tests => 14;
 use Genome::Model::Tools::Htseq::Count;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -53,13 +53,18 @@ my $result_exists = Genome::Model::Tools::Htseq::Count::Result->get(
 );
 ok(!$result_exists, "no result already in the system for this test") or die "contact informatics!";
 
-my $new_result = Genome::Model::Tools::Htseq::Count->execute(
+my $command = Genome::Model::Tools::Htseq::Count->execute(
     alignment_result => $a,
-    output_dir => $test_outdir, # remove when automatic SR generateion is in place
+    #output_dir => $test_outdir, # remove when automatic SR generateion is in place
     app_version => '0.5.3p9',
     result_version => 1,
     limit => 2000,
 );
+ok($command, "got command");
+#UR::Context->commit;
+
+my $new_result = $command->result;
+ok($new_result and $new_result->isa("Genome::SoftwareResult"), "got a result");
 
 # diff results
 
@@ -79,7 +84,6 @@ for my $pair(
         };
 }
 
-__END__
 my $found_result_after = Genome::Model::Tools::Htseq::Count::Result->get(
     alignment_result => $a,
     test_name => $test_name
