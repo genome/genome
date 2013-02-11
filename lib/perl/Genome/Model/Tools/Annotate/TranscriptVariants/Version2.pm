@@ -826,7 +826,11 @@ sub get_reference_build_for_transcript {
 
         my $model = Genome::Model::ImportedReferenceSequence->get(name => "NCBI-$species");
         confess "Could not get imported reference sequence model for $species!" unless $model;
-        my $build = $model->build_by_version($version);
+        
+        my $build = $model->build_by_version($version . '-lite');
+        unless ($build) {
+            warn "no $version-lite reference, trying the full reference...";
+        }
         confess "Could not get build version $version from $species imported reference sequence model!" unless $build;
 
         $self->{'_reference_build'}->{$version}->{$species} = $build;
