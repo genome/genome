@@ -20,11 +20,10 @@ else {
 use_ok('Genome::Model::Tools::Sam::Coverage');
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Coverage';
-my $temp_path = "$ENV{GENOME_TEST_TEMP}/";
 
 my $tmp_dir  = File::Temp::tempdir(
     "Coverage_XXXXXX", 
-    DIR     => $temp_path,
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

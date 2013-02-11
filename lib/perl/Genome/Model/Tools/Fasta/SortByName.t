@@ -14,7 +14,11 @@ use_ok('Genome::Model::Tools::Fasta::SortByName') or die;
 my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta/';
 ok(-d $test_data_dir, "test data dir existst at $test_data_dir");
 
-my $test_output_dir = "$ENV{GENOME_TEST_TEMP}/";
+my $test_output_dir = File::Temp::tempdir(
+    "Genome-Model-Tools-Fasta-XXXXX",
+    TMPDIR => 1,
+    CLEANUP => 1,
+);
 ok(-d $test_output_dir, "test output dir exists at $test_output_dir");
 
 my $unsorted = $test_data_dir . 'file_two_seq.fasta';

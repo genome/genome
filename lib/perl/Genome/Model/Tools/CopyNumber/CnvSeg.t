@@ -25,7 +25,7 @@ use_ok('Genome::Model::Tools::CopyNumber::CnvSeg');
 
 my $test_data =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-CnvSeg";
 
-my $tmpbase = File::Temp::tempdir('CnvSegXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpbase = File::Temp::tempdir('CnvSegXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = "$tmpbase/cnv-seg-output.cnvseg";
 my $refbuild_id = 101947881;
 my $expected_output = $test_data."/expected_v1/chr22.luc1t.bam.bam2cn.cnvseg";

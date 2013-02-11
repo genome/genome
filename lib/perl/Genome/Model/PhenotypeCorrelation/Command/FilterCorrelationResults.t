@@ -104,7 +104,7 @@ FILTEREDCORR
 
 my $tmpdir = tempdir(
     't-FilterCorrelationResults-XXXXX',
-    DIR => "$ENV{GENOME_TEST_TEMP}",
+    TEMPDIR => 1,
     CLEANUP => 1
 );
 my $original_corr = "$tmpdir/orig.txt";

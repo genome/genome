@@ -20,7 +20,7 @@ my $expected_fastq = $dir .'/test.fastq.ori';
 
 my $tmp_dir = File::Temp::tempdir(
     "FastaTo_XXXXXX", 
-    DIR     => "$ENV{GENOME_TEST_TEMP}",
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

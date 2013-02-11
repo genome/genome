@@ -28,7 +28,7 @@ my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelati
 
 my $tmpdir = tempdir(
     't-ParallelVep-XXXXX',
-    DIR => "$ENV{GENOME_TEST_TEMP}",
+    TEMPDIR => 1,
     CLEANUP => 1
 );
 my $logdir = "$tmpdir/logs";

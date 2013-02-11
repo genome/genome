@@ -43,7 +43,7 @@ my $detector_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectV
 # Updated to .v2 for correcting an error with newlines
 my $expected_dir = $input_directory . "/expected_5/";
 my $tumor_bam_file  = $input_directory. '/true_positive_tumor_validation.bam';
-my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-PindelSomaticCalls-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-PindelSomaticCalls-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_output_dir = $test_output_base . '/filter';
 
 my $hq_output_bed = "$test_output_dir/indels.hq.bed";

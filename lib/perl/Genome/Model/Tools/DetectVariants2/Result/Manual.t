@@ -13,7 +13,7 @@ use Test::More tests => 13;
 
 use_ok('Genome::Model::Tools::DetectVariants2::Result::Manual');
 
-my $test_base_dir = File::Temp::tempdir('DetectVariants2-Result-ManualXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $test_base_dir = File::Temp::tempdir('DetectVariants2-Result-ManualXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $test_bed_file = &setup_test_bed_file($test_base_dir);
 my $test_samtools_file = &setup_test_samtools_file($test_base_dir);

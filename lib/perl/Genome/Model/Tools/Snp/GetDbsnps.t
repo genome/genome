@@ -13,7 +13,7 @@ my $organism = "human"; # or mouse
 
 my $tmpdir = File::Temp::tempdir(
     TEMPLATE => 'Genome-Model-Tools-Snp-GetDbsnps-XXXXXX',
-    DIR => $ENV{GENOME_TEST_TEMP},
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 my $out = join('/', $tmpdir, 'output');

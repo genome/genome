@@ -48,7 +48,7 @@ ok(-s $expected_dat_file, "expected dat file output $expected_dat_file exists");
 ok(-s $expected_glfindex_file, "expected glfindex file output $expected_glfindex_file exists");
 ok(-s $expected_merged_vcf, "expected merged vcf file output $expected_merged_vcf exists");
 
-my $output_dir = File::Temp::tempdir('DetectVariants2-PolymuttXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $output_dir = File::Temp::tempdir('DetectVariants2-PolymuttXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_denovo_vcf = join('/', $output_dir, 'snvs.denovo.vcf.gz');
 my $output_standard_vcf = join('/', $output_dir, 'snvs.standard.vcf.gz');
 my $output_dat = join('/', $output_dir, 'polymutt.dat');

@@ -29,7 +29,7 @@ use_ok($sr_class);
 
 my $test_data_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Relationship-SequencingQc";
 my $expected_directory = $test_data_directory . "/expected.v1";
-my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-Relationship-SequencingQc-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-Relationship-SequencingQc-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 # TODO less hardcody test params
 my @bams = qw(

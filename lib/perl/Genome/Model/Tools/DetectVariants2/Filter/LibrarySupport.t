@@ -23,7 +23,7 @@ my $input_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVari
 # Updated to .v3 for an insertion bed bug fix
 my $expected_dir = $input_directory . "/expected.v3/";
 my $tumor_bam_file  = $input_directory. '/tumor.tiny.bam';
-my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-LibrarySupport-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-LibrarySupport-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_output_dir = $test_output_base . '/filter';
 
 my $hq_output = "$test_output_dir/indels.hq";

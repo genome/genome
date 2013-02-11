@@ -21,7 +21,7 @@ my $transcript_file = $test_input_dir . 'transcript.in';
 
 my $expected_tier1_file = $test_input_dir . 'tier_1.expected';
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-TierVariants-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-TierVariants-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 my $tier1_file      = $test_output_dir . 'tier_1.out';
 my $tier2_file      = $test_output_dir . 'tier_2.out';

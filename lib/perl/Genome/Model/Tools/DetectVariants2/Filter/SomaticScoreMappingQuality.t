@@ -29,7 +29,7 @@ my $detector_directory = $test_data_dir."/sniper-0.7.3-";
 my $detector_vcf_directory = $test_data_dir."/detector_vcf_result";
 my $expected_output = $test_data_dir."/expected";
 
-my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-SomaticScoreMappingQuality-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-SomaticScoreMappingQuality-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_output_dir = $test_output_base . '/filter';
 
 my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;

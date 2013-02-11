@@ -23,7 +23,7 @@ BEGIN {
 #or just
 #  $fastq = chr(ord($solq) - 31);
 
-my $tmp_dir = File::Temp::tempdir('Fastq-SolToPhred-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Fastq-SolToPhred-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $fastq_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/SolToPhred/test.fq';
 my $expected_phred_fastq_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/SolToPhred/test.fq.utf8.phred';
 

@@ -16,7 +16,7 @@ my $infile_nonexist = "/blah/not/exists";
 
 my $tmp_dir = File::Temp::tempdir(
     "BioDbFasta_convert_XXXXXX", 
-    DIR     => "$ENV{GENOME_TEST_TEMP}",
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

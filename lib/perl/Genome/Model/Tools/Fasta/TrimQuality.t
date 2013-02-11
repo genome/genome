@@ -22,7 +22,7 @@ ok(-f $qual, "Qual ($qual) exists");
 
 my $tmp_dir  = File::Temp::tempdir(
     "Fasta_TrimQuality_XXXXXX", 
-    DIR     => $ENV{GENOME_TEST_TEMP},
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

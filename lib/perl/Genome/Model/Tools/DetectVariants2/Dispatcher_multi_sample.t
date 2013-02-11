@@ -54,7 +54,7 @@ my @test_alignment_results = Genome::InstrumentData::AlignmentResult::Merged->ge
 is(scalar(@test_alignment_results), 3, "Got 3 test alignment results");
 
 # Test dispatcher for running a complex case -- the intersect is nonsensical, but tests intersections while still keeping the test short
-my $test_working_dir = File::Temp::tempdir('DetectVariants2-Dispatcher-multisampleXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $test_working_dir = File::Temp::tempdir('DetectVariants2-Dispatcher-multisampleXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $combine_test = $dispatcher_class->create(
     snv_detection_strategy => 'polymutt 0.02 filtered by polymutt-denovo v1',
     output_directory => $test_working_dir,

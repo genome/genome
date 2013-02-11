@@ -28,7 +28,7 @@ my $tier_file_location = $ab->tiering_bed_files_by_version(3);
 my $vcf_name = "test_out_tiered.vcf.gz";
 my $vcf_input = $test_data_dir."/test_out.vcf.gz";
 my $expected_file = $test_data_dir . "/expected_v1/".$vcf_name;
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-FastTier-TierVcf-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-FastTier-TierVcf-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $vcf_output_file = $test_output_dir . "/". $vcf_name;
 
 my $tier_vcf = Genome::Model::Tools::FastTier::TierVcf->create(

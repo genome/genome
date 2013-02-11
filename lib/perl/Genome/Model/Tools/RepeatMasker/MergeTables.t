@@ -20,7 +20,7 @@ for my $lane (@lanes) {
 my $expected_file = $root_dir .'/all.tsv';
 
 
-my $tmp_dir = File::Temp::tempdir('RepeatMasker-MergeTables-'. Genome::Sys->username .'-XXXX',DIR=>"$ENV{GENOME_TEST_TEMP}",CLEANUP=>1);
+my $tmp_dir = File::Temp::tempdir('RepeatMasker-MergeTables-'. Genome::Sys->username .'-XXXX',CLEANUP=>1, TMPDIR => 1);
 my $merged_file = $tmp_dir .'/merged.tsv';
 my $merge = Genome::Model::Tools::RepeatMasker::MergeTables->create(
     input_tables => \@tables,

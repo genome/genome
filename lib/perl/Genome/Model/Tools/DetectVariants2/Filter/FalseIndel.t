@@ -33,7 +33,7 @@ my $expected_result_dir = join('/', $test_base_dir, '5');
 my $expected_output_file = join('/', $expected_result_dir, 'indels.hq.bed');
 my $expected_filtered_file = join('/', $expected_result_dir, 'indels.lq.bed');
 
-my $tmpdir = File::Temp::tempdir('DetectVariants2-Filter-FalseIndelXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('DetectVariants2-Filter-FalseIndelXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_directory = $tmpdir . "/filter";
 my $output_file = join('/', $output_directory, 'indels.hq.bed');
 my $filtered_file = join('/', $output_directory, 'indels.lq.bed');

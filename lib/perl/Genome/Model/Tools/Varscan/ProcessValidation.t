@@ -22,7 +22,7 @@ my $filtered_validation_file = join('/', $test_data_dir, 'varscan.snp.Somatic.st
 my $expected_result_dir = join('/', $test_data_dir, '1');
 my $expected_output_file = join('/', $expected_result_dir, 'targeted_snvs.validation');
 
-my $tmpdir = File::Temp::tempdir('Varscan-ProcessValidationXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('Varscan-ProcessValidationXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = join('/', $tmpdir, 'targeted_snvs.validation');
 my $output_plot = join('/', $tmpdir, 'targeted_snvs.validation.plot');
 

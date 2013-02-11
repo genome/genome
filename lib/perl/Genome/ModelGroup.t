@@ -11,7 +11,7 @@ use Data::Dumper;
 use Test::More;
 
 #It is intended that nothing actually writes to it--this should just be to prevent allocations
-my $test_data_dir = File::Temp::tempdir('Genome-ModelGroup-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_data_dir = File::Temp::tempdir('Genome-ModelGroup-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 # overload username to test name update
 no warnings;

@@ -32,7 +32,7 @@ my $expected_snp_file = join('/', $expected_result_dir, 'varscan.snp');
 my $expected_indel_file = join('/', $expected_result_dir, 'varscan.indel');
 my $expected_validation_file = join('/', $expected_result_dir, 'varscan.snp.validation');
 
-my $tmpdir = File::Temp::tempdir('VarscanValidationXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('VarscanValidationXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $output_snp = join('/', $tmpdir, 'varscan.snp');
 my $output_indel = join('/', $tmpdir, 'varscan.indel');

@@ -32,7 +32,7 @@ no warnings;
 };
 use warnings;
 
-my $tmpdir = File::Temp::tempdir('GMT-Pindel-RunPindel-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('GMT-Pindel-RunPindel-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_data = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Pindel-RunPindel";
 my $tumor_bam = $test_data."/true_positive_tumor_validation.bam";
 my $normal_bam = $test_data."/true_positive_normal_validation.bam";

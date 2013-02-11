@@ -26,7 +26,7 @@ my $expected_tracking_path = $expected_base .'.tracking';
 my $expected_refmap_path = $expected_base .'.'. $gtf_basename .'.refmap';
 my $expected_tmap_path = $expected_base .'.'. $gtf_basename .'.tmap';
 
-my $tmp_dir = File::Temp::tempdir('Cufflinks-Cuffcompare-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Cufflinks-Cuffcompare-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 my $prefix = $tmp_dir .'/cuffcompare_test';
 
 my $compare = Genome::Model::Tools::Cufflinks::Cuffcompare->create(

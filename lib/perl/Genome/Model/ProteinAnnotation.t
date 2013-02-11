@@ -17,10 +17,8 @@ my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '';
 my $fasta_file = join('/', $test_data_dir, 'Genome-Model-Tools-Predictor/medium.fasta');
 ok(-e $fasta_file, "test fasta file exists at $fasta_file");
 
-my $test_output_dir = "$ENV{GENOME_TEST_TEMP}/";
-ok(-d $test_output_dir, "test output directory exists at $test_output_dir");
-$ENV{TMPDIR} = $test_output_dir;
-my $temp_output_dir = Genome::Sys->create_temp_directory;
+my $temp_output_dir = File::Temp::tempdir('Genome-Model-Protein-Annotation-XXXXX', TMPDIR => 1, CLEANUP => 1);
+ok(-d $temp_output_dir, "test output directory exists at $temp_output_dir");
 ok(-d $temp_output_dir, "create temp output directory at $temp_output_dir");
 
 my $taxon = Genome::Taxon->create(

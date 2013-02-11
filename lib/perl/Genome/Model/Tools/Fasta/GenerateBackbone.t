@@ -14,7 +14,7 @@ BEGIN {
 }
 my $file_name = 'GENES.tsv';
 
-my $tmp_dir = File::Temp::tempdir('Genome-Model-Tools-Fasta-GenerateBackbone-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Genome-Model-Tools-Fasta-GenerateBackbone-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $backbone_file = $tmp_dir .'/'. $file_name;
 
 my $existing_data_dir = Genome::Config::reference_sequence_directory() . '/new_masked_ccds_ensembl_genbank_utr_nosv_all_transcriptome_quickfix';

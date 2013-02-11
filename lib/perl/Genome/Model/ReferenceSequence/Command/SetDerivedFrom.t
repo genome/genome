@@ -18,7 +18,7 @@ use_ok($cmd_class);
 # create a test annotation build and a few reference sequence builds to test compatibility with
 my @species_names = ('human');
 my @versions = (1, 2, 3);
-my $data_dir = File::Temp::tempdir('SetDerivedFrom-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $data_dir = File::Temp::tempdir('SetDerivedFrom-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my %samples;
 for my $sn (@species_names) {

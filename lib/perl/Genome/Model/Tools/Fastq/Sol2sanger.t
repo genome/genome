@@ -12,7 +12,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Fastq::Sol2sanger');
 };
 
-my $tmp_dir = File::Temp::tempdir('Fastq-SolToSanger-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Fastq-SolToSanger-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $fastq_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/SolToSanger/test.fq';
 my $expected_sanger_fastq_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/SolToSanger/test.fq.sanger';
 

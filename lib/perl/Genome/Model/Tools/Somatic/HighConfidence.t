@@ -30,7 +30,7 @@ my $map50_somatic50_expected = $test_input_dir . 'map50_somatic50.expected';
 my $map10_somatic50_expected = $test_input_dir . 'map10_somatic50.expected';
 my $map10_somatic80_expected = $test_input_dir . 'map10_somatic80.expected';
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-HighConfidence-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-HighConfidence-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 
 my $output_file_default     = $test_output_dir . 'high_confidence-default.out';

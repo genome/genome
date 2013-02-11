@@ -11,7 +11,7 @@ my $input = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-Alignment/test.sa
 
 # step 1: test 1 
 my $tmp_dir = File::Temp->newdir( "AddReadGroupTag_XXXXX",
-                                  DIR => "$ENV{GENOME_TEST_TEMP}/", 
+                                  TEMPDIR => 1,
                                   CLEANUP => 1 );
 
 

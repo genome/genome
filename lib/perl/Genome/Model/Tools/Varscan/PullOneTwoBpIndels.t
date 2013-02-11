@@ -27,7 +27,7 @@ my $normal_bam = "$test_data_dir/normal.bam";
 my $reference_fasta = "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa";
 
 # Outputs
-my $output_dir = File::Temp::tempdir('VarscanValidationXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $output_dir = File::Temp::tempdir('VarscanValidationXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $small_indel_output_bed = "$output_dir/small_indel_output.bed";
 my $large_indel_output_bed = "$output_dir/large_indel_output.bed";
 my $varscan_snp_output = "$output_dir/varscan_snp_output";

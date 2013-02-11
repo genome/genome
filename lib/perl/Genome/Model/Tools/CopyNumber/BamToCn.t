@@ -25,7 +25,7 @@ use_ok('Genome::Model::Tools::CopyNumber::BamToCn');
 
 my $test_data =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-BamToCn";
 
-my $tmpbase = File::Temp::tempdir('BamToCnXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpbase = File::Temp::tempdir('BamToCnXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = "$tmpbase/bam-to-cn.bam2cn";
 my $refbuild_id = 101947881;
 my $bam = $test_data."/tumor.bam";

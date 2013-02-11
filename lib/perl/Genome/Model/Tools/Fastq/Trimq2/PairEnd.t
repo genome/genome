@@ -16,7 +16,7 @@ my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/Trimq2/Pair
 
 my $tmp_dir = File::Temp::tempdir(
     'Fastq-Trimq2-XXXXX', 
-    DIR => "$ENV{GENOME_TEST_TEMP}", 
+    TEMPDIR => 1,
     CLEANUP => 1
 );
 

@@ -10,7 +10,7 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::Bed::Convert::Indel::VarscanSomaticToBed');
 
-my $tmpdir = File::Temp::tempdir('Bed-Convert-Indel-VarscanSomaticToBedXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('Bed-Convert-Indel-VarscanSomaticToBedXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = join('/', $tmpdir, 'output');
 
 my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Bed-Convert-Indel-VarscanSomatic';
