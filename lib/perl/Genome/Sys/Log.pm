@@ -116,7 +116,7 @@ my $callback = sub {
     my $package = $stack_data[$offset][0];
     my $filename = $stack_data[$offset][1];
     my $line = $stack_data[$offset][2];
-    my $subroutine = $stack_data[$offset-1][3];
+    my $subroutine = ($stack_data[$offset-1] ? $stack_data[$offset-1][3] : '');
 
     # if the message is json simply extend it
     my $incoming_json_data;
