@@ -12,13 +12,16 @@ class Genome::Model::ClinSeq {
         tumor_rnaseq_model  => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
         normal_rnaseq_model => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
         de_model            => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
-        force               => { is => 'Boolean', doc => 'skip sanity checks on input models' }, 
+        force               => { is => 'Boolean', doc => 'skip sanity checks on input models' },
     ],
     has_optional_param => [
         #Processing profile parameters would go in here
         #someparam1 => { is => 'Number', doc => 'blah' },
         #someparam2 => { is => 'Boolean', doc => 'blah' },
         #someparam2 => { is => 'Text', valid_values => ['a','b','c'], doc => 'blah' },
+    ],
+    has_optional_metric => [
+        common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
     ],
     has_calculated => [
         expected_common_name => {
@@ -55,18 +58,6 @@ class Genome::Model::ClinSeq {
         }
     ],
     doc => 'clinical and discovery sequencing data analysis and convergence of RNASeq, WGS and exome capture data',
-};
-
-#TODO: Fix this...
-# temp fix until the output table is in place and we can readily 
-# persist this per-build outside of the workflow
-*Genome::Model::Build::ClinSeq::common_name = sub {
-    my $self = shift;
-    return $self->model->expected_common_name;
-};
-*Genome::Model::ClinSeq::common_name = sub {
-    my $self = shift;
-    return $self->expected_common_name;
 };
 
 sub define_by { 'Genome::Model::Command::Define::BaseMinimal' }
@@ -163,7 +154,10 @@ sub map_workflow_inputs {
     my $tumor_rnaseq_build  = $build->tumor_rnaseq_build;
     my $normal_rnaseq_build = $build->normal_rnaseq_build;
 
-    my $final_name = $self->common_name;
+    # this is currently tracked as an input on the build
+    # it should really be an output/metric
+    my $common_name = $self->expected_common_name;
+    $build->common_name($common_name);
 
     # initial inputs are for the "Main" component which does all of the legacy/non-parellel tasks
     my @inputs = (
@@ -173,11 +167,11 @@ sub map_workflow_inputs {
         tumor_rnaseq_build => $tumor_rnaseq_build,
         normal_rnaseq_build => $normal_rnaseq_build,
         working_dir => $data_directory,
-        common_name => $final_name,
+        common_name => $common_name,
         verbose => 1,
     );
 
-    my $patient_dir = $data_directory . "/" . $final_name;
+    my $patient_dir = $data_directory . "/" . $common_name;
     my @dirs = ($patient_dir);
 
     # summarize builds

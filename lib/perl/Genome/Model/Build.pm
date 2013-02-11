@@ -208,21 +208,24 @@ sub __extend_namespace__ {
         my @p = $model_subclass_meta->properties();
         my @has;
         for my $p (@p) {
-            if ($p->can("is_input") and $p->is_input) {
-                my $name = $p->property_name;
-                my %data = %{$p};
-                my $type = $data{data_type};
-                for my $key (keys %data) {
-                    delete $data{$key} unless $key =~ /^is_/;
+            for my $type (qw/input metric/) {
+                my $method = "is_$type";
+                if ($p->can($method) and $p->$method) {
+                    my $name = $p->property_name;
+                    my %data = %{$p};
+                    my $type = $data{data_type};
+                    for my $key (keys %data) {
+                        delete $data{$key} unless $key =~ /^is_/;
+                    }
+                    delete $data{is_specified_in_module_header};
+                    if ($type->isa("Genome::Model")) {
+                        $type =~ s/^Genome::Model/Genome::Model::Build/;
+                        $name =~ s/_model(?=($|s$))/_build/;
+                    }
+                    $data{property_name} = $name;
+                    $data{data_type} = $type;
+                    push @has, $name, \%data;
                 }
-                delete $data{is_specified_in_module_header};
-                if ($type->isa("Genome::Model")) {
-                    $type =~ s/^Genome::Model/Genome::Model::Build/;
-                    $name =~ s/_model(?=($|s$))/_build/;
-                }
-                $data{property_name} = $name;
-                $data{data_type} = $type;
-                push @has, $name, \%data;
             }
         }
         #print Data::Dumper::Dumper($build_subclass_name, \@has);
