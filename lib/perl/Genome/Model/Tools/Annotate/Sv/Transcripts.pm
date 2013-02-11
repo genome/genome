@@ -289,3 +289,12 @@ sub read_ucsc_annotation{
     close ANNOTATION;
     return \%annotation;
 }
+
+
+sub column_names {
+    return qw(
+        geneA transcriptA orientationA subStructureA 
+        geneB transcriptB orientationB subStructureB	
+        deletedGenes
+    );
+}

@@ -111,11 +111,6 @@ sub execute {
     my $self = shift;
     binmode(STDOUT, ":utf8");
     $self->input_to_tsv();
-    $self->import_tsv();
-    unless ($self->skip_pubchem){
-        $self->_destroy_and_rebuild_pubchem_and_drug_groups();
-    }
-    return 1;
 }
 
 sub input_to_tsv {
@@ -352,32 +347,7 @@ sub _parse_genes_file {
 sub import_tsv {
     my $self = shift;
     my $interactions_outfile = $self->interactions_outfile;
-    $self->preload_objects;
     my @interactions = $self->import_interactions($interactions_outfile);
-    return 1;
-}
-
-sub preload_objects {
-    my $self = shift;
-    my $source_db_name = 'PharmGKB';
-    my $source_db_version = $self->version;
-
-    #Let's preload anything for this database name and version so that we can avoid death by 1000 queries
-    my @gene_names = Genome::DruggableGene::GeneNameReport->get(source_db_name => $source_db_name, source_db_version => $source_db_version);
-    for my $gene_name (@gene_names){
-        $gene_name->gene_alt_names;
-        $gene_name->gene_categories;
-    }
-    my @drug_names = Genome::DruggableGene::DrugNameReport->get(source_db_name => $source_db_name, source_db_version => $source_db_version);
-    for my $drug_name (@drug_names){
-        $drug_name->drug_alt_names;
-        $drug_name->drug_categories;
-    }
-    my @gene_ids = map($_->id, @gene_names);
-    my @interactions = Genome::DruggableGene::DrugGeneInteractionReport->get(gene_id => \@gene_ids);
-    for my $interaction (@interactions){
-        $interaction->interaction_attributes;
-    }
     return 1;
 }
 

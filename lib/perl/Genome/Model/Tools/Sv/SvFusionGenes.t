@@ -11,18 +11,17 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-use_ok("Genome::Model::Tools::Annotate::Sv");
+use_ok("Genome::Model::Tools::Sv::SvFusionGenes");
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Annotate-Sv";
+my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Sv-SvFusionGenes";
 my $version = 1;
 my $data_dir = "$base_dir/v$version";
 
 my $temp_file = Genome::Sys->create_temp_file_path;
-my $cmd = Genome::Model::Tools::Annotate::Sv->create(
-    input_file => "$data_dir/in.svs",
+my $cmd = Genome::Model::Tools::Sv::SvFusionGenes->create(
+    input_file  => "$base_dir/in.svs",
     output_file => $temp_file,
-    annotation_build_id => 131184146,
-    annotators_to_run   => ['Transcripts'],
+    annotation_build_id => 102549985,  #54_36p_v2, human Build36
 );
 
 ok($cmd, "Created command");

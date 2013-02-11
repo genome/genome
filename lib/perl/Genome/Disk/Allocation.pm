@@ -493,7 +493,11 @@ sub _reallocate {
     my $old_kb_requested = $self->kilobytes_requested;
     # allow_errors will allow disk_usage_for_path to return a number even if du
     # emits errors (for instance, no read permissions for a subfolder)
-    my $kb_used = Genome::Sys->disk_usage_for_path($self->absolute_path, allow_errors => 1) || 0;
+    my $absolute_path = $self->absolute_path;
+    my $kb_used = 0;
+    if ( -d $absolute_path ) {
+        $kb_used = Genome::Sys->disk_usage_for_path($absolute_path, allow_errors => 1) || 0;
+    }
 
     my $actual_kb_requested = List::Util::max($kb_used, $kilobytes_requested);
     if ($grow_only && ($actual_kb_requested <= $old_kb_requested)) {

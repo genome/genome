@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Annotate::Sv {
+    is => 'Command::V2',
     has => [
         input_file => {
             is => 'String',
@@ -22,7 +23,7 @@ class Genome::Model::Tools::Annotate::Sv {
         annotators_to_run => {
             is => 'String',
             is_many => 1,
-            default => ["Transcripts"],
+            default => ['Transcripts', 'FusionTranscripts'],
         },
     ],
 };
@@ -30,17 +31,23 @@ class Genome::Model::Tools::Annotate::Sv {
 sub execute {
     my $self = shift;
 
-    my ( @entireFile, $line, $bdRef, $chrA, $bpA, $chrB, $bpB, $event, $patient, $aTranscriptRef, $bTranscriptRef, $transcriptRef,
-        $eventId, $geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB,
-        $deletedGeneHashRef, $deletedGenes, $inCommonRef, $transcript, 
-    );
-
     my $out = Genome::Sys->open_file_for_writing($self->output_file);
-    #TODO get the right headers for the content
-    $out->print( "chrA\tbpA\tchrB\tbpB\tevent\tsize\tscore\tgeneA\ttranscriptA\torientationA\tsubStructureA\tgeneB\ttranscriptB\torientationB\tsubStructureB\n");
+
+    my @column_names = qw(chrA bpA chrB bpB event size score);
+    for my $analysis_name ($self->annotators_to_run) {
+        my $class_name = 'Genome::Model::Tools::Annotate::Sv::'.$analysis_name;
+        my @analyais_column_names = $class_name->column_names;
+        unless (@analyais_column_names) {
+            die $self->error_message("There is no valid column names for $class_name");
+        }
+        push @column_names, @analyais_column_names;
+    }
+
+    $out->print(join "\t", @column_names);
+    $out->print("\n");
 
     my $infile = $self->input_file;
-    my $build = $self->annotation_build;
+    my $build  = $self->annotation_build;
 
     my $in = Genome::Sys->open_file_for_reading($infile);
 
@@ -48,20 +55,22 @@ sub execute {
 
     while (my $line = $in->getline) {
         chomp $line;
-        if ( $line =~ /^\s*$/ || $line =~ /^#/ ) { next; }
-        if ( $line =~ /-------------------/) { last; } #to accomodate some of our squaredancer files with LSF output in them
+        next if $line =~ /^\s*$/ || $line =~ /^#/;
+        last if $line =~ /-------------------/; #to accomodate some of our squaredancer files with LSF output in them
 
         #parse either sd or bd file
-        my ($id,$chrA,$bpA,$chrB,$bpB,$event,$oriA,$oriB,$size,$samples,$score);
-        ($id,$chrA,$bpA,undef,$chrB,$bpB,undef,$event,$oriA,undef,$size,$samples,$score) = split /\t/,$line;
+        my ($id,$chrA,$bpA,undef,$chrB,$bpB,undef,$event,$orient,undef,$size,$samples,$score) = split /\t/,$line;
+        $orient = $1 if $line =~ /([\+\-]*)\,Ins\:/;
         next if ($samples =~ /normal/);
 
-        $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $chrA, $bpA, $chrB, $bpB, $event, $size, $score, $breakpoints_list);
+        $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $chrA, $bpA, $chrB, $bpB, $event, $orient, $size, $score, $breakpoints_list);
     }
     
-    $breakpoints_list = $self->fill_in_transcripts($breakpoints_list, $build);
+    $in->close;
 
+    $breakpoints_list = $self->fill_in_transcripts($breakpoints_list, $build);
     my %annotation_content;
+
     foreach my $analysis ($self->annotators_to_run) {
         my $class_name = "Genome::Model::Tools::Annotate::Sv::$analysis";
         my $content = $class_name->process_breakpoint_list($breakpoints_list);
@@ -146,16 +155,21 @@ sub fill_in_transcripts {
 }
 
 sub add_breakpoints_to_chromosome {
-    my $self = shift;
-    my ($line, $chrA, $bpA, $chrB, $bpB, $event, $size, $score, $breakpoints_list) = @_;
-    foreach my $var ($chrA,$bpA,$chrB,$bpB,$event,$size,$score) {
+    my ($self, $line, $chrA, $bpA, $chrB, $bpB, $event, $orient, $size, $score, $breakpoints_list) = @_;
+
+    for my $var ($chrA,$bpA,$chrB,$bpB,$event,$orient,$size,$score) {
         unless (defined $var) { die "DID not define necessary variables for call:\n$line\n"; }
     }
-    my $hash = {chrA => $chrA, bpA => $bpA, chrB => $chrB, bpB => 
-    $bpB, event => $event, size => $size, score => $score};
-    push (@{$breakpoints_list->{$chrA}}, $hash);
+    my %hash = (
+        chrA  => $chrA,  bpA    => $bpA, 
+        chrB  => $chrB,  bpB    => $bpB, 
+        event => $event, orient => $orient,
+        size  => $size,  score  => $score
+    );
+    push (@{$breakpoints_list->{$chrA}}, \%hash);
+
     unless ($chrA eq $chrB) {
-        push (@{$breakpoints_list->{$chrB}}, {chrA => $chrA, bpA => $bpA, chrB => $chrB, bpB => $bpB, event => $event, size => $size, score => $score, breakpoint_link => $hash});
+        push (@{$breakpoints_list->{$chrB}}, {%hash, breakpoint_link => \%hash});
     }
     return $breakpoints_list;
 }
