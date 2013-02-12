@@ -163,7 +163,7 @@ sub get_sequence_dictionary {
         die('Failed to sort sam file!');
     }
     # TODO:
-    die('Validate the order of the chromosome SQ lines with the reference build!');
+    #die('Validate the order of the chromosome SQ lines with the reference build!');
     unlink($sam_file);
     return $seqdict_file;
 }
