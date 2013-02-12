@@ -691,6 +691,13 @@ sub filter_one_sample {
     my $sample_name = shift;
 
     my $readcount_searcher = $readcount_searcher_by_sample->{$sample_name};
+
+    # This is a special case for when we are not considering two parents. #FIXME This is super hacky and should be improved somehow.
+    if ((not defined $readcount_searcher) and (uc($sample_name) eq "fake_parent")) {
+        $self->set_format_field($parsed_vcf_line, $sample_name,"FT",".");
+        return;
+    }
+
     unless ($readcount_searcher) {
         die $self->error_message("Could not get readcount searcher for sample $sample_name " . Data::Dumper::Dumper $readcount_searcher_by_sample);
     }
