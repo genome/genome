@@ -11,9 +11,11 @@ my $input = $ENV{GENOME_TEST_INPUTS} . '/Genome-Tools-Sam-MarkDuplicates/sample.
 
 # step 1: test 1 
 
-my $tmp_dir = File::Temp->newdir( "MarkDuplicates_XXXXX",
-                                  DIR => "$ENV{GENOME_TEST_TEMP}/", 
-                                  CLEANUP => 1 );
+my $tmp_dir = File::Temp->newdir(
+    "MarkDuplicates_XXXXX",
+    TEMPDIR => 1,
+    CLEANUP => 1
+);
 
 
 my $output_file = File::Temp->new(SUFFIX => ".bam", DIR => $tmp_dir);

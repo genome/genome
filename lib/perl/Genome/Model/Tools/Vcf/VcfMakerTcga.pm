@@ -84,8 +84,7 @@ class Genome::Model::Tools::Vcf::VcfMakerTcga {
 	genome_build => {
 	    is => 'Text',
 	    doc => "Reference genome build" ,
-	    is_optional => 1,
-	    default => "36",
+	    is_optional => 0,
 	    is_input => 1},
 
 	skip_header => {
@@ -221,7 +220,7 @@ sub execute {                               # replace with real execution logic.
 
 	#fix this to support build 37 when necessary
 	if ($genome_build ne "36"){
-	    die("reference paths need to be added for other builds before using")
+	    die("only human 36 currently supported - add additional reference paths in the code")
 	}
 
 

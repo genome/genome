@@ -12,11 +12,9 @@ BEGIN {
     use_ok('Genome::Model::Tools::GenePredictor::Trnascan');
 }
 
-my $test_dir = "$ENV{GENOME_TEST_TEMP}/";
 my $test_output_dir = tempdir('Genome-Model-Tools-GenePredictor-Trnascan-XXXXXX',
-    DIR => $test_dir,
+    TEMPDIR => 1,
     CLEANUP => 1,
-    UNLINK => 1,
 );
 chmod(0755, $test_output_dir);
 ok(-d $test_output_dir, "test output dir exists");

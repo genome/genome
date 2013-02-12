@@ -5,7 +5,7 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(diff_ok sub_test);
+our @EXPORT_OK = qw(compare_ok sub_test);
 
 use Carp qw(croak);
 use File::Compare qw(compare);
@@ -18,54 +18,61 @@ sub sub_test($$) {
     $tb->ok($code->(), $desc);
 }
 
-sub diff_ok($$;%) {
-    my ($file_1, $file_2, %o) = @_;
-    use Data::Dumper;
+sub _compare_ok_parse_args {
+    # First two args are always the files.
+    # Then accept one scalar argument, the name.
+    # And one HASH ref, the options.
+    # Then validate the option names.
+    my $file_1 = shift;
+    my $file_2 = shift;
 
-    my $name = delete $o{name};
-    my $filter = delete $o{filter};
-    my $diag = delete $o{diag} // 1;
-    my $test = delete $o{test} // 1;
+    my $name = (@_ % 2 == 1) ? shift : undef;
+    my %o = @_;
 
+    if ($name && $o{name}) {
+        die 'duplicate name argument not expected';
+    } elsif ($name && !$o{name}) {
+        $o{name} = $name;
+    }
+
+    my %vo; # validated_o
+    $vo{name}    = delete $o{name};
+    $vo{filters} = delete $o{filters};
+    $vo{diag}    = delete $o{diag} // 1;
+    $vo{test}    = delete $o{test} // 1;
     my @k = keys %o;
     if (@k) {
-        croak 'unexpected options passed to diff_ok: ' . join(', ', @k);
+        croak 'unexpected options passed to compare_ok: ' . join(', ', @k);
     }
 
-
-    my @filters;
-    if (defined $filter) {
-        if (ref($filter) eq 'ARRAY') {
-            @filters = @$filter;
-        } else {
-            @filters = ($filter);
-        }
+    my $filters_ref = ref($vo{filters});
+    if (defined $vo{filters} && (!$filters_ref || $filters_ref ne 'ARRAY')) {
+        $vo{filters} = [$vo{filters}];
     }
 
-    my @compare_args = ($file_1, $file_2);
-    if (@filters) {
-        push @compare_args, sub {
-            for my $filter (@filters) {
-                map { $_ =~ s/$filter// } @_;
+    return ($file_1, $file_2, %vo);
+}
+
+sub compare_ok($$;%) {
+    my ($file_1, $file_2, %o) = _compare_ok_parse_args(@_);
+
+    my @compare_args = (
+        $file_1,
+        $file_2,
+        sub {
+            for my $filter (@{$o{filters}}) {
+                map { $_ =~ s/$filter//g } @_;
             }
             my $c = ($_[0] ne $_[1]);
-            if ($c == 1 && $diag && $test) {
-                $tb->diag("First diff:\n--- " . $file_1 . "\n+++ " . $file_2 . "\n- " . $_[0] . "+ " . $_[1]);
-            }
-            return $c;
-        };
-    } else {
-        push @compare_args, sub {
-            my $c = ($_[0] ne $_[1]);
-            if ($c == 1 && $diag && $test) {
+            if ($c == 1 && $o{diag} && $o{test}) {
                 $tb->diag("First diff:\n--- " . $file_1 . "\n+++ " . $file_2 . "\n- " . $_[0] . "+ " . $_[1]);
             }
             return $c;
         }
-    }
+    );
 
-    if ($test) {
-        return $tb->ok(compare(@compare_args) == 0, $name);
+    if ($o{test}) {
+        return $tb->ok(compare(@compare_args) == 0, $o{name});
     } else {
         return (compare(@compare_args) == 0 ? 1 : 0);
     }
@@ -83,10 +90,10 @@ Genome::Utility::Test
 
 =head1 SYNOPSIS
 
-    use Genome::Utiltiy::Test qw(diff_ok sub_test);
+    use Genome::Utiltiy::Test qw(compare_ok sub_test);
 
     sub_test('this diffs something' => sub {
-        diff_ok($file_1, $file_1);
+        compare_ok($file_1, $file_1);
     });
 
 =head1 METHODS
@@ -96,11 +103,11 @@ Genome::Utility::Test
 Mimics Test::More's subtest since Ubuntu 10.04, which we run, does not have a
 Test::More recent enough to have subtest support.
 
-=item diff_ok
+=item compare_ok
 
-diff_ok use File::Compare with a few conveiences.
+compare_ok use File::Compare with a few conveniences.
 
-diff_ok($file_1, $file_2, name => '', diag => 0, test => 0);
+compare_ok($file_1, $file_2, name => '', diag => 0, test => 0);
 
 =over4
 
@@ -116,4 +123,4 @@ Disable diag output when a diff is encountered. Added this in case people want t
 
 =item test
 
-Disable test usage, just return status. Added this so I could test diff_ok.
+Disable test usage, just return status. Added this so I could test compare_ok.

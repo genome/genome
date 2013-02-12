@@ -27,6 +27,9 @@ sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
 
+    # TODO If process crashes before calling _reallocate_disk_allocation then
+    # the output directory will remain at initially allocated size
+    # indefinitely.
     $self->_prepare_output_directory();
     $self->_prepare_staging_directory();
 
@@ -73,15 +76,19 @@ sub _prepare_to_run_chimerascan {
     my ($self, $options, $arguments) = @_;
 
     my @can_reuse_bam_in_versions = qw(0.4.3 0.4.5);
+    my $bowtie_version = $options->{indirect}->{'--bowtie-version'};
     my $should_reuse_bam = $options->{indirect}->{'--reuse-bam'};
 
     if ($should_reuse_bam) {
         $self->status_message("Attempting to reuse BAMs from pipeline");
         if (in($self->version, @can_reuse_bam_in_versions)) {
+            # These are intermediate files required for downstream conversion and filtering
+            $self->_create_reheadered_queryname_sorted_primary_bam_file($bowtie_version);
+            # simply create symlinks for the original FASTQ files
+            $self->_link_in_converted_fastqs($arguments);
             # includes sorted_aligned_reads and .bai
             $self->_link_in_aligned_reads_bam();
-
-            $self->_link_in_converted_fastqs($arguments);
+            # convert unaligned read pairs, one end unaligned, from BAM to FASTQ
             $self->_create_unaligned_fastqs();
         } else {
             die(sprintf("This version of chimerascan (%s) doesn't " .
@@ -90,37 +97,79 @@ sub _prepare_to_run_chimerascan {
     }
 }
 
+sub _create_reheadered_queryname_sorted_primary_bam_file {
+    my ($self,$bowtie_version) = @_;
+
+    $self->status_message("Generating queryname sorted BAM with primary alignments only");
+    my $alignment_result = $self->alignment_result;
+
+    # Use the alignment_result BAM as the input, the chimerascan index seqdict .sam as the header, and output as the aligned_reads
+    my $index = $self->_get_index($bowtie_version);
+    my $seqdict_file = $index->get_sequence_dictionary;
+    my $input_bam_file = $alignment_result->bam_file;
+    my $reheadered_bam_file = $self->temp_staging_directory .'/reheadered_aligned_reads.bam';
+    unless (Genome::Model::Tools::Picard::ReplaceSamHeader->execute(
+        input_file => $input_bam_file,
+        output_file => $reheadered_bam_file,
+        header_file => $seqdict_file,
+    )) {
+        die('Failed to reheader alignment result BAM file!');
+    }
+
+    my $primary_bam_file = join("/", $self->temp_staging_directory,'reheadered_primary_aligned_reads.bam');
+    # Run samtools to filter, include primary alignments only.
+    my $view_cmd = 'samtools view -F 256 -b '. $reheadered_bam_file .' > '. $primary_bam_file;
+    Genome::Sys->shellcmd(
+        cmd => $view_cmd,
+        input_files => [$reheadered_bam_file],
+        output_files => [$primary_bam_file],
+    );
+    unlink($reheadered_bam_file);
+
+    my $queryname_sorted_file = join("/", $self->temp_staging_directory,'reheadered_primary_aligned_reads_queryname_sorted.bam');
+    # Queryname sort the BAM for later FilterSamReads to get aligned/unaligned
+    unless (Genome::Model::Tools::Picard::SortSam->execute(
+        input_file => $primary_bam_file,
+        output_file => $queryname_sorted_file,
+        sort_order => 'queryname',
+        use_version => $self->picard_version,
+    )) {
+        die('Failed to sort by queryname!');
+    }
+}
+
 sub _link_in_aligned_reads_bam {
     my ($self) = @_;
 
-    $self->status_message("Generating aligned-reads BAM from merged BAM");
-    my $alignment_result = $self->alignment_result;
-    my $input_file = $alignment_result->bam_file;
-    my $output_file = join("/", $self->temp_staging_directory,
-            "aligned_reads.bam");
+    $self->status_message("Generating aligned-reads BAM from primary queryname sorted BAM");
+    my $queryname_sorted_file = join("/", $self->temp_staging_directory,'reheadered_primary_aligned_reads_queryname_sorted.bam');
+    my $output_file = join("/", $self->temp_staging_directory,'aligned_reads.bam');
 
     my $cmd = Genome::Model::Tools::Picard::FilterSamReads->create(
-        input_file  => $input_file,
+        input_file  => $queryname_sorted_file,
         output_file => $output_file,
         filter      => 'includeAligned',
+        sort_order  => 'coordinate',
+        use_version => $self->picard_version,
     );
 
     $cmd->execute();
     unless (-e $output_file) {
-        die "Error generating BAM of unaligned reads from alignment_result.";
+        die "Error generating BAM of aligned reads from alignment_result.";
     }
 
     my $sorted_bam = join("/", $self->temp_staging_directory,
             "sorted_aligned_reads.bam");
-    $self->status_message("Creating symlink to aligned-reads BAM (pretending " .
+    $self->status_message("Creating symlink to alignment result BAM (pretending " .
             "also to be the sorted-aligned-reads BAM.");
     Genome::Sys->create_symlink($output_file, $sorted_bam);
-
-    $cmd = Genome::Model::Tools::Sam::IndexBam->create(
-        bam_file => $sorted_bam,
+    my $index_cmd = Genome::Model::Tools::Picard::BuildBamIndex->create(
+        input_file => $sorted_bam,
+        output_file => $sorted_bam .'.bai',
+        use_version => $self->picard_version,
     );
 
-    $cmd->execute();
+    $index_cmd->execute();
     unless (-e "$sorted_bam.bai") {
         die "Failed to create BAM index of \"$sorted_bam\".";
     }
@@ -130,12 +179,15 @@ sub _link_in_converted_fastqs {
     my ($self) = @_;
 
     my ($fastq1, $fastq2) = @{$self->_fastq_files};
-    my $converted_fastq_prefix = join("/", $self->temp_staging_directory,
-            "tmp", "reads_");
+    my $chimerascan_tmp_dir = $self->temp_staging_directory .'/tmp';
+    unless (-d $chimerascan_tmp_dir) {
+        Genome::Sys->create_directory($chimerascan_tmp_dir);
+    }
+    my $converted_fastq_prefix = join('/', $chimerascan_tmp_dir, 'reads_');
     $self->status_message("Creating symlink to fastq files (pretending " .
             "to be the converted-fastq files");
-    Genome::Sys->create_symlink($fastq1, "$converted_fastq_prefix" . "1");
-    Genome::Sys->create_symlink($fastq2, "$converted_fastq_prefix" . "2");
+    Genome::Sys->create_symlink($fastq1,$converted_fastq_prefix .'1.fq');
+    Genome::Sys->create_symlink($fastq2,$converted_fastq_prefix .'2.fq');
 }
 
 sub _create_unaligned_fastqs {
@@ -144,19 +196,42 @@ sub _create_unaligned_fastqs {
     $self->status_message("Generating the unaligned fastqs from the " .
             "alignment results BAM");
     my $stage            = $self->temp_staging_directory;
-    my $alignment_result = $self->alignment_result;
-    my $bam_file         = $alignment_result->bam_file;
+
+    my $queryname_sorted_file = join("/", $stage,'reheadered_primary_aligned_reads_queryname_sorted.bam');
+    unless (-s $queryname_sorted_file) {
+        die('Failed to find the primary queryname sorted BAM!');
+    }
+
+    my $output_file = $stage .'/unaligned_reads.bam';
+
+    my $filter_cmd = Genome::Model::Tools::Picard::FilterSamReads->create(
+        input_file  => $queryname_sorted_file,
+        output_file => $output_file,
+        filter      => 'excludeAligned',
+        use_version => $self->picard_version,
+    );
+
+    $filter_cmd->execute();
+    unless (-e $output_file) {
+        die "Error generating BAM of unaligned reads from the primary queryname sorted BAM.";
+    }
+    unlink($queryname_sorted_file);
     my $read1_fastq      = join("/", $stage, 'tmp', 'unaligned_1.fq');
     my $read2_fastq      = join("/", $stage, 'tmp', 'unaligned_2.fq');
 
     my $cmd = Genome::Model::Tools::Picard::StandardSamToFastq->create(
-        input            => $bam_file,
+        input            => $output_file,
         fastq            => $read1_fastq,
         second_end_fastq => $read2_fastq,
         re_reverse       => 1,
+        include_non_pf_reads => 1,
+        include_non_primary_alignments => 0,
+        use_version      => $self->picard_version,
+        maximum_memory => 16,
+        maximum_permgen_memory => 256,
     );
 
-    $cmd->execute();
+    unless ($cmd->execute()) { die ('Failed to convert unaligned BAM to FASTQ!'); }
 }
 
 sub _run_chimerascan {

@@ -17,7 +17,7 @@ my $model_name = "test-define-convergence-model-$$";
 use_ok($model_class);
 
 # set up required test data
-my $data_dir = File::Temp::tempdir('DefineConvergenceModelTest-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $data_dir = File::Temp::tempdir('DefineConvergenceModelTest-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $pp = Genome::ProcessingProfile::Convergence->create(name => 'test-convergence-pp');
 ok($pp, 'created processing profile');
 my $model_group = Genome::ModelGroup->create(

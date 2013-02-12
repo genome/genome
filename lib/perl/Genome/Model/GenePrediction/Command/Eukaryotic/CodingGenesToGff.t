@@ -16,10 +16,10 @@ use_ok('Genome::Model::GenePrediction::Command::Eukaryotic::CodingGenesToGff') o
 my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-GenePrediction-Eukaryotic/';
 ok(-d $test_data_dir, "test data dir exists at $test_data_dir") or die;
 
-my $test_output_dir = "$ENV{GENOME_TEST_TEMP}/";
+my $test_output_dir = File::Temp::tempdir('Genome-Model-GenePrediction-Eukaryotic-XXXXX', TMPDIR => 1, CLEANUP => 1);
 ok(-d $test_output_dir, "test output dir exists at $test_output_dir") or die;
 
-my $expected_output_file = $test_data_dir . "/expected_output.gff";
+my $expected_output_file = $test_data_dir . "/expected_output2.gff";
 ok(-e $expected_output_file, "expected output file $expected_output_file exists") or die;
 
 my $output_file_fh = File::Temp->new(

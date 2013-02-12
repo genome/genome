@@ -116,5 +116,20 @@ sub supports_multiple_reference {
     return exists $ok_versions{$version};
 }
 
+sub supports_bwasw {
+    my $class = shift;
+    my $version = shift;
+
+    # Although bwa 0.5.9 technically "supports" bwasw we don't want to use it
+    # because it doesn't correctly set the flags and mate information in the
+    # SAM output.
+    my %ok_versions = (
+        '0.6.1' => 1,
+        '0.6.2' => 1,
+    );
+
+    return exists $ok_versions{$version};
+}
+
 1;
 

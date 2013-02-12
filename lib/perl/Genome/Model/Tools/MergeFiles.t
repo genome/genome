@@ -29,7 +29,11 @@ my $fasta_1_size = get_line_count_for_file($fasta_1);
 my $fasta_2_size = get_line_count_for_file($fasta_2);
 my $total_size = $fasta_1_size + $fasta_2_size;
 
-my $test_output_dir = "$ENV{GENOME_TEST_TEMP}/";
+my $test_output_dir = File::Temp::tempdir(
+    TEMPLATE => 'Model-Tools-MergeFiles-XXXXX',
+    TEMPDIR => 1,
+    CLEANUP => 1,
+);
 ok(-d $test_output_dir, "test output dir exists at $test_output_dir") or die;
 
 ######

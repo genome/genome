@@ -12,7 +12,7 @@ use_ok( 'Genome::Model::Tools::Breakdancer::MergeFiles');
 
 my $tmp_dir = File::Temp::tempdir(
     'Genome-Model-Tools-Breakdancer-MergeFiles-XXXXX', 
-    DIR     => "$ENV{GENOME_TEST_TEMP}", 
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

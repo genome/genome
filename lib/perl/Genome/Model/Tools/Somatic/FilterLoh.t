@@ -18,7 +18,7 @@ my $test_input_dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somati
 my $tumor_snp_file      = $test_input_dir . 'tumor.snp'; #In SVN rev.54367, changed input format
 my $normal_snp_file     = $test_input_dir . 'normal.snp';
 
-my $test_output_dir     = File::Temp::tempdir('Genome-Model-Tools-Somatic-FilterLoh-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir     = File::Temp::tempdir('Genome-Model-Tools-Somatic-FilterLoh-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 my $output_file         = $test_output_dir . 'filtered.snp.out';
 my $loh_output_file     = $test_output_dir . 'loh.snp.out';

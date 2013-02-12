@@ -644,7 +644,7 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
         auto_assign_inst_data   => 1,
     );
 
-    if ($processing_profile->isa('Genome::ProcessingProfile::GenotypeMicroarray') ) {
+    if ( grep { my $class = 'Genome::ProcessingProfile::'.$_; $processing_profile->isa($class); } (qw/ GenotypeMicroarray RnaSeq /) ) {
         $model_params{auto_assign_inst_data} = 0;
     }
 
@@ -780,7 +780,7 @@ sub create_default_models_and_assign_all_applicable_instrument_data {
             return;
         }
 
-        unless($m->isa('Genome::Model::RnaSeq') or $m->isa('Genome::Model::GenotypeMicroarray')){
+        unless($m->isa('Genome::Model::GenotypeMicroarray')){
             $self->add_model_to_default_projects($m, $genome_instrument_data);
         }
 
@@ -1197,9 +1197,6 @@ sub _resolve_processing_for_instrument_data {
             if ( $instrument_data->sample->name =~ /^n\-cn?trl$/i ) { # Do not process 454 negative control (n-ctrl, n-cntrl)
                 $instrument_data->ignored(1);
             }
-            elsif ( $instrument_data->sample->is_rna ) { # RNA
-                push @processing, { processing_profile_id => $self->_default_rna_seq_processing_profile_id($instrument_data), };
-            }
             elsif ( $self->_is_mc16s($instrument_data) ) { # MC16s
                 $self->_find_or_create_mc16s_454_qc_model($instrument_data); # always add this inst data to the QC model.
                 if ( $instrument_data->read_count > 0 ) { # skip inst data w/ 0 reads
@@ -1212,7 +1209,7 @@ sub _resolve_processing_for_instrument_data {
                 }
             }
             else { # skip
-                $self->status_message('Skipping 454 instrument data because it is not RNA or MC16s! '.$instrument_data->id);
+                $self->status_message('Skipping 454 instrument data because it is not MC16s! '.$instrument_data->id);
             }
         }
         elsif ($sequencing_platform eq 'sanger') {
@@ -1294,8 +1291,8 @@ sub _resolve_processing_for_instrument_data {
 
             my $reference_sequence_build_id = delete $processing->{reference_sequence_build_id};
             if ( $reference_sequence_build_id ) {
-                my $reference_sequence_build = Genome::Model::Build::ImportedReferenceSequence->get($reference_sequence_build_id);
-                if ( not $reference_sequence_build ) { 
+                my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get($reference_sequence_build_id);
+                if ( not $reference_sequence_build ) {
                     die $self->error_message('Failed to get reference sequence build for id! '.$reference_sequence_build_id);
                 }
                 $processing->{reference_sequence_build} = $reference_sequence_build;

@@ -25,6 +25,9 @@ class Genome::InstrumentData::AlignmentResult::PerLaneTophat {
 
 sub required_arch_os { 'x86_64' }
 
+#WARNING: THIS RESOURCE REQUEST IS ONLY VALID FOR EVENT-BASED WORKFLOWS.
+#IF YOU WANT TO CHANGE THE RESOURCE REQUEST FOR NORMAL WORKFLOWS, EDIT
+#THE FILE Genome::InstrumentData::Command::AlignReads::PerLaneTophat INSTEAD!!!
 sub required_rusage {
     my $class = shift;
     
@@ -56,6 +59,12 @@ sub _run_aligner {
     my $staging_directory = $self->temp_staging_directory;
 
     my $tophat_cmd = $self->_get_tophat_cmd(\@input_pathnames);
+
+    # disconnect the db handle before this long-running event
+    if (Genome::DataSource::GMSchema->has_default_handle) {
+        $self->status_message("Disconnecting GMSchema default handle.");
+        Genome::DataSource::GMSchema->disconnect_default_dbh();
+    }
 
     Genome::Sys->shellcmd(
         cmd => $tophat_cmd,

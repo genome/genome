@@ -14,14 +14,18 @@ use Test::More;
 use_ok('Genome::Sys') or die;
 
 # Set up test data
-
-my $test_base_dir = "$ENV{GENOME_TEST_TEMP}";
-$ENV{TMPDIR} = $test_base_dir;
-
-my $test_dir = Genome::Sys->create_temp_directory;
+my $test_dir = File::Temp::tempdir(
+    'Sys-copy-directory-XXXXX',
+    TMPDIR => 1,
+    CLEANUP => 1,
+);
 ok(-d $test_dir, "created test directory at $test_dir");
 
-my $other_test_dir = Genome::Sys->create_temp_directory;
+my $other_test_dir = File::Temp::tempdir(
+    'Sys-copy-directory-XXXXX',
+    TMPDIR => 1,
+    CLEANUP => 1,
+);
 ok(-d $other_test_dir, "created another test directory at $other_test_dir");
 
 my @files = qw/ a.out b.out c.out d.blah e.blah /;

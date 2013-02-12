@@ -30,7 +30,7 @@ my $normal_bam_file     = $test_input_dir. '/normal.tiny.bam';
 my $detector_directory  = $test_input_dir. '/varscan-somatic-2.2.4-';
 my $detector_vcf_directory  = $test_input_dir. '/detector_vcf_result';
 
-my $test_output_base     = File::Temp::tempdir('Genome-Model-Tools-Somatic-FilterLoh-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_base     = File::Temp::tempdir('Genome-Model-Tools-Somatic-FilterLoh-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_output_dir = $test_output_base . '/filter';
 my $hq_output_file      = $test_output_dir . '/snvs.hq.bed';
 my $lq_output_file      = $test_output_dir . '/snvs.lq.bed';

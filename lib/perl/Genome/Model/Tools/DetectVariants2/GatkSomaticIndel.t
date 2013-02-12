@@ -31,7 +31,7 @@ my $expected_data = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVarian
 my $tumor =  $test_data.'/true_positive_tumor_validation.bam';
 my $normal = $test_data.'/true_positive_normal_validation.bam';
 
-my $tmpbase = File::Temp::tempdir('GatkSomaticIndelXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpbase = File::Temp::tempdir('GatkSomaticIndelXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
 my $gatk_somatic_indel = Genome::Model::Tools::DetectVariants2::GatkSomaticIndel->create(

@@ -13,7 +13,7 @@ use File::Temp;
 use Test::More tests=>36;
 use above 'Genome';
 use Genome::SoftwareResult;
-use Genome::Utility::Test qw(diff_ok);
+use Genome::Utility::Test qw(compare_ok);
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -41,7 +41,7 @@ my $normal_bam = $test_dir . "normal.tiny.bam";
 ok(-e $normal_bam, "Found normal test BAM: $normal_bam") or die;
 
 #Define the output directory for temporary results produced during the test run
-my $temp_base_dir = File::Temp::tempdir('Strelka_0.4.6.2_XXXX', DIR => $ENV{GENOME_TEST_TEMP}, CLEANUP => 1);
+my $temp_base_dir = File::Temp::tempdir('Strelka_0.4.6.2_XXXX', CLEANUP => 1, TMPDIR => 1);
 ok(-e $temp_base_dir, "Created a temp dir for output file from this test run: $temp_base_dir") or die;
 my $actual_output_dir = "$temp_base_dir/output";
 
@@ -113,9 +113,9 @@ foreach my $file (qw|output/task.complete indels.hq.bed indels.hq.v1.bed indels.
 
 my $expected = "$expected_output_dir/output/config/run.config.ini";
 my $actual = "$actual_output_dir/output/config/run.config.ini";
-diff_ok($expected, $actual,
+compare_ok($expected, $actual,
     name => "output matched expected result for output/config/run.config.ini",
-    filter => [qr(^refFile = .*), qr(^configurationCmdline.*), qr(^outDir.*)]);
+    filters => [qr(^refFile = .*), qr(^configurationCmdline.*), qr(^outDir.*)]);
 
 $expected = `cat $expected_output_dir/output/Makefile | grep -v "^script_dir" | grep -v "^analysis_dir" | grep -v "^config_file"`;
 $actual = `cat $actual_output_dir/output/Makefile | grep -v "^script_dir" | grep -v "^analysis_dir" | grep -v "^config_file"`;

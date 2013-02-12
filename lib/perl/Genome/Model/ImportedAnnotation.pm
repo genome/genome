@@ -56,6 +56,19 @@ class Genome::Model::ImportedAnnotation{
     ],
 };
 
+sub rna_features_gff_path_for_build {
+    # TODO: this is the delegate of a similar method in the build class
+    # normalize all file access for this beast
+    my $self = shift;
+    my $build = shift;
+    my $dir = join('/',$build->data_directory,'annotation_data','rna_annotation');
+    my @files = glob("$dir/*.gff");
+    if (@files > 1) {
+        die "nultiple gff files found!: @files";
+    }
+    return $files[0];
+}
+
 sub build_by_version {
     my $self = shift;
     my $version = shift;
@@ -70,7 +83,7 @@ sub build_by_version {
     return $builds[0];
 }
 
-sub annotation_data_directory{
+sub annotation_data_directory {
     my $self = shift;
     my $build = $self->last_complete_build;
     return $build->determine_data_directory;
@@ -98,7 +111,7 @@ sub _resolve_resource_requirements_for_build {
     return "-R 'rusage[mem=32000]' -M 32000000";
 }
 
-sub _execute_build{
+sub _execute_build {
     my $self = shift;
     my $build = shift;
 

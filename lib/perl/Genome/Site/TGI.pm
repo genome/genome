@@ -111,15 +111,14 @@ BEGIN { $INC{ "UR/Time.pm"} = "no" };
 $ENV{GENOME_DB} ||= '/gsc/scripts/opt/genome/db';
 $ENV{GENOME_SW} ||= '/gsc/pkg/bio';
 $ENV{GENOME_SW_LEGACY_JAVA} ||= '/gsc/scripts/lib/java';
+$ENV{GENOME_SW_IGNORE} ||= '/gsc/bin:/gsc/scripts/bin';
 $ENV{GENOME_LOCK_DIR} ||= '/gsc/var/lock';
 $ENV{GENOME_SYS_GROUP} ||= 'info';
 $ENV{GENOME_FS_LOCAL_NETWORK_CACHE} = '/var/cache/tgisan';
 
 # testsuite data
 my $inputs_directory = '/gsc/var/cache/testsuite/data';
-my $temp_directory = '/gsc/var/cache/testsuite/running_testsuites';
 $ENV{GENOME_TEST_INPUTS} ||= -l $inputs_directory ? readlink($inputs_directory) : $inputs_directory;
-$ENV{GENOME_TEST_TEMP} ||= -l $temp_directory ? readlink($temp_directory) : $temp_directory;
 $ENV{GENOME_TEST_URL} ||= sprintf('https://gscweb.gsc.wustl.edu/%s', $ENV{GENOME_TEST_INPUTS});
 
 # configure file that signals that database updates should be paused

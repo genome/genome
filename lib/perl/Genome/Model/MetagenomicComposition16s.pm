@@ -17,6 +17,15 @@ class Genome::Model::MetagenomicComposition16s {
     ],
 };
 
+sub sequencing_platform {
+    my $self = shift;
+    my @instrument_data = $self->instrument_data;
+    return if not @instrument_data;
+    my %sequencing_platforms = map { $_->sequencing_platform => 1 } @instrument_data;
+    # TODO error for multiple?
+    return (keys %sequencing_platforms)[0];
+}
+
 #< Default Processing Profile >#
 sub default_processing_profile_ids {
     # RT66900 from 2278045 to 2571784 

@@ -1,5 +1,8 @@
 #!/usr/bin/env genome-perl
 
+# Testing a theory about LSF state latency.
+sleep 5;
+
 use strict;
 use warnings;
 
@@ -25,7 +28,6 @@ require_ok('Genome::Sys');
 # BZIP
 my $input_file = $ENV{GENOME_TEST_INPUTS} . "/Genome-Utility-Filesystem/pileup.cns";
 my $source_file = Genome::Sys->create_temp_file_path();
-#my $source_file = "{GENOME_TEST_TEMP}/t1/pup.cns"; 
 ok(Genome::Sys->copy_file($input_file, $source_file),"Copied test file to temp."); 
 
 my $bzip_file = Genome::Sys->bzip($source_file);
@@ -207,7 +209,7 @@ ok(!$worked, 'Failed as expected - can\'t read from dir');
 like($@, qr/Directory .* is not readable/, 'Exception message is correct');
 
 #test data directory is now read-only so make a temporary directory we know will have write access for testing
-my $tmp_dir = File::Temp::tempdir('Genome-Utility-FileSystem-writetest-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Genome-Utility-FileSystem-writetest-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 # Write access
 ok( # good
@@ -279,7 +281,7 @@ ok(!$worked, 'Failed as expected - create_symlink w/o target');
 like($@, qr/Can't create_symlink: no target given/, 'exception message is correct');
 
 # DIRECTORY SIZE RECURSIVE
-my $dir = File::Temp->tempdir("Genome-Utility-Filesystem-t-directory-size-recursive-XXXX", CLEANUP=>1);
+my $dir = File::Temp::tempdir("Genome-Utility-Filesystem-t-directory-size-recursive-XXXX", CLEANUP=>1);
 mkdir($dir."/testing",0777);
 mkdir($dir."/testing2",0777);
 open (F, ">$dir/testing/file1");

@@ -15,16 +15,18 @@ use_ok('Genome::Model::GenePrediction::Command::Eukaryotic::MergePredictions') o
 
 my $gene_count = 0;
 
-my $test_output_dir = "$ENV{GENOME_TEST_TEMP}/";
+my $test_output_dir = File::Temp::tempdir('Genome-Model-GenePrediction-Eukaryotic-XXXXX', TMPDIR => 1, CLEANUP => 1);
 ok(-d $test_output_dir, "test output dir exists at $test_output_dir") or die;
 
-my $temp_dir_1 = File::Temp->tempdir(
+my $temp_dir_1 = File::Temp::tempdir(
     'egap_merge_predictions_XXXXXX',
     DIR => $test_output_dir,
+    CLEANUP => 1,
 );
-my $temp_dir_2 = File::Temp->tempdir(
+my $temp_dir_2 = File::Temp::tempdir(
     'egap_merge_predictions_XXXXXX',
     DIR => $test_output_dir,
+    CLEANUP => 1,
 );
 
 my @test_coding_genes;
@@ -34,9 +36,10 @@ for my $dir ($temp_dir_1, $temp_dir_2) {
     push @test_coding_genes, $gene;
 }
 
-my $temp_merge_dir = File::Temp->tempdir(
+my $temp_merge_dir = File::Temp::tempdir(
     'egap_merge_predictions_XXXXXX',
     DIR => $test_output_dir,
+    CLEANUP => 1,
 );
 
 my $merger = Genome::Model::GenePrediction::Command::Eukaryotic::MergePredictions->create(

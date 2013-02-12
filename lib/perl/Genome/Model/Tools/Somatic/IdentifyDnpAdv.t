@@ -46,7 +46,7 @@ my $bed_hc_file_default_expected = $test_input_dir . 'bed_hc_file_default.expect
 my $anno_lc_file_default_expected = $test_input_dir . 'anno_lc_file_default.expected';
 my $anno_hc_file_default_expected = $test_input_dir . 'anno_hc_file_default.expected';
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-IdentifyDnpAdv-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-IdentifyDnpAdv-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 
 my $bed_lc_file_default    = $test_output_dir . 'bed_lc_file_default.out';

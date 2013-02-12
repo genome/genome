@@ -18,7 +18,7 @@ my $test_output_file = __FILE__ . '.d/output.tsv';
 ok(-e $test_input_file, 'test file ' . $test_input_file . ' exists');
 ok(-e $test_output_file, 'test file ' . $test_output_file . ' exists');
 
-my $test_output_dir = File::Temp::tempdir('Genome-GeneNameReport-Command-LookupInteractions-XXXXX', "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-GeneNameReport-Command-LookupInteractions-XXXXX', TMPDIR=>1, CLEANUP => 1);
 my $output_file = join("/", $test_output_dir, 'test_output');
 my $command = Genome::DruggableGene::Command::GeneNameReport::LookupInteractions->create(gene_file => $test_input_file, output_file => $output_file);
 isa_ok($command, 'Genome::DruggableGene::Command::GeneNameReport::LookupInteractions', 'created a LookupInteractions command');

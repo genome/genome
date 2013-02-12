@@ -5,11 +5,9 @@ use warnings;
 
 use above "Genome";
 
-use Data::Dumper;
-
-use Test::More tests => 6;
-use Text::Diff;
 use File::Temp;
+use Genome::Utility::Test qw(compare_ok);
+use Test::More tests => 6;
 
 use Genome::Utility::PSL::Reader;
 use Genome::Utility::PSL::Writer;
@@ -38,5 +36,4 @@ while (my $record = $reader->next) {
 $writer->close;
 $reader->close;
 
-my $diff = diff($file,$out_file);
-is($diff,'','Files are the same');
+compare_ok($file, $out_file, 'Files are the same');

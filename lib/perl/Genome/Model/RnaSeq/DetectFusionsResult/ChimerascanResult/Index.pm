@@ -43,6 +43,7 @@ sub create {
 
     $self->prepare_gene_file;
     $self->run_indexer;
+    $self->get_sequence_dictionary;
 
     $self->_prepare_output_directory;
     $self->_promote_data;
@@ -57,6 +58,7 @@ sub resolve_allocation_subdirectory {
 }
 
 #rumour has it future versions of chimerascan will support different formats for this
+# TODO: Can we just convert the GTF file that exists for all annotation builds using gtf_to_genepred.py that ships with chimerascan?
 sub prepare_gene_file {
     my $self = shift;
 
@@ -119,6 +121,51 @@ sub run_indexer {
 
     );
 
+}
+
+sub get_sequence_dictionary {
+    my $self = shift;
+
+    my $working_dir;
+    if ($self->output_dir && -d $self->output_dir) {
+        $working_dir = $self->output_dir;
+    } else {
+        $working_dir = $self->temp_staging_directory;
+    }
+    my $fasta_file = $working_dir .'/align_index.fa';
+    my $sam_file = $working_dir .'/align_index_tmp.sam';
+    my $seqdict_file = $working_dir .'/align_index.sam';
+
+    if (-s $seqdict_file) {
+        return $seqdict_file;
+    }
+
+    my $species_name = $self->reference_build->species_name;
+    my $assembly_name = $self->reference_build->assembly_name;
+    unless ($assembly_name) {
+        $assembly_name = $self->reference_build->name;
+    }
+    # gmt picard create-sequence-dictionary
+    unless (Genome::Model::Tools::Picard::CreateSequenceDictionary->execute(
+        output_file => $sam_file,
+        reference_fasta => $fasta_file,
+        species => $species_name,
+        genome_assembly => $assembly_name,
+    )) {
+        die('Failed to create sequence dictionary!');
+    }
+
+    # gmt picard sort-sam
+    unless (Genome::Model::Tools::Picard::SortSam->execute(
+        input_file => $sam_file,
+        output_file => $seqdict_file,
+    )) {
+        die('Failed to sort sam file!');
+    }
+    # TODO:
+    #die('Validate the order of the chromosome SQ lines with the reference build!');
+    unlink($sam_file);
+    return $seqdict_file;
 }
 
 1;

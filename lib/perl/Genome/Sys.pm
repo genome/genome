@@ -14,7 +14,13 @@ use LWP::Simple qw(getstore RC_OK);
 use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
-use Genome::Sys::Lock;
+use JSON;
+
+# these are optional but should load immediately when present
+# until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
+for my $opt (qw/Genome::Sys::Lock Genome::Sys::Log/) {
+    eval "use $opt";
+}
 
 our $VERSION = $Genome::VERSION;
 
@@ -23,6 +29,16 @@ class Genome::Sys {};
 sub disk_usage_for_path {
     my $self = shift;
     my $path = shift;
+    my %params = @_;
+
+    # Normally disk_usage_for_path returns nothing if it encounters an error;
+    # this allows the caller to override the default behavior, returning a
+    # number even if du emits errors (for instance, because the user does not
+    # have read permissions for a single subfolder out of many).
+    my $allow_errors = delete $params{allow_errors};
+    if (keys %params) {
+        die $self->error_message("Unknown parameters for disk_usage_for_path(): " . join(', ', keys %params));
+    }
 
     unless (-d $path) {
         $self->error_message("Path $path does not exist!");
@@ -31,11 +47,24 @@ sub disk_usage_for_path {
 
     return unless -d $path;
     my $cmd = "du -sk $path 2>&1";
-    my $du_output = qx{$cmd};
-    my $kb_used = ( split( ' ', $du_output, 2 ) )[0];
+    my @du_output = split( /\n/, qx{$cmd} );
+    my $last_line = pop @du_output;
+    my $kb_used = ( split( ' ', $last_line, 2 ) )[0];
+
+    # if we couldn't parse the size count, print all output and return nothing
     unless (Scalar::Util::looks_like_number($kb_used)) {
-        $self->error_message("du output is not a number: $kb_used");
+        push @du_output, $last_line;
+        $self->error_message("du output is not a number:\n" . join("\n", @du_output));
         return;
+    }
+
+    # if there were lines besides the size count, emit warnings and (potentially) return nothing
+    if (@du_output) {
+        $self->warning_message($_) for (@du_output);
+        unless ($allow_errors) {
+            $self->error_message("du encountered errors");
+            return;
+        }
     }
 
     return $kb_used;
@@ -268,37 +297,177 @@ sub _find_in_genome_db_paths {
     return $dirs[0];
 }
 
-sub swpath {
-    my ($class, $name, $version) = @_;
+# renamed for consistency with a variety of sw_ methods.
+*swpath = \&sw_path;
+
+sub sw_path {
+    my ($class, $pkg_name, $version, $app_name) = @_;
+    $app_name ||= $pkg_name;
+
     unless ($version) {
-        die "Genome::Sys swpath must be called with a database name and a version. " .
-            "Use 'latest' for the latest installed version.";
+        die "Genome::Sys swpath must be called with a pkg name and a version. The optional executable name defaults to the pkg_name. " .
+            "Use the version 'latest' for the latest installed version.";
     }
-    my $base = $ENV{"GENOME_SW"} ||= '/var/lib/genome/sw';
-    my $path = join("/",$base,$name,$version);
-    if (-e $path) {
+
+    # check the default path for the app
+    my %map = $class->sw_version_path_map($pkg_name, $app_name);
+    my $path = $map{$version};
+    if ($path) {
         return $path;
     }
-    if ($path = `which $name$version`) {
-        chomp $path;
-        return $path;
-    }
-    if ($path = `which $name`) {
+
+    # older legacy software has an unversioned executable
+    # this is only supported if the version passed in is "latest"
+    $path = `which $app_name`;
+    if ($path = `which $app_name`) {
+        # unversioned install
+        # see if it's a symlink to something in a versioned tree
         chomp $path;
         $path = readlink($path) while -l $path;
         if ($version eq 'latest') {
             return $path;
         }
         else {
-            die $class->error_message("Failed to find $name at version $version. " .
+            die $class->error_message("Failed to find $pkg_name at version $version. " .
                 "The default version is at $path.");
         }
     }
-    else {
-        die $class->error_message("Failed to find $name at version $version!");
-    }
-    return;
+
+    die $class->error_message("Failed to find app $app_name (package $pkg_name) at version $version!");
 }
+
+sub sw_version_path_map {
+    my ($class, $pkg_name, $app_name) = @_;
+    $app_name ||= $pkg_name;
+
+    # find software installed as .debs with versioned packages
+    # packaged software should have a versioned executable like /usr/bin/myapp1.2.3 or /usr/bin/mypackage-myapp1.2.3 in the bin.
+    my %versions1;
+    my @dirs1 = split(':',$ENV{PATH});
+    my @sw_ignore = split(':',$ENV{GENOME_SW_IGNORE} || '');
+    for my $dir1 (@dirs1) {
+        if (grep { index($dir1,$_) == 0 } @sw_ignore) {
+            # skip directories starting with something in @sw_ignore
+            next;
+        }
+        for my $prefix ("$dir1/$pkg_name-$app_name-", "$dir1/$app_name-", "$dir1/$pkg_name-$app_name", "$dir1/$app_name") {
+            my @version_paths = grep { -e $_ } glob("$prefix*");
+            next unless @version_paths;
+            my $prefix_len = length($prefix);
+            for my $version_path (@version_paths) {
+                my $version = substr($version_path,$prefix_len);
+                if (substr($version,0,1) eq '-') {
+                    $version = substr($version,1);
+                }
+                next unless $version =~ /[0-9\.]/;
+                next if -l $version_path;
+                if (grep { index($version_path,$_) == 0 } @sw_ignore) {
+                    next;
+                }
+                $versions1{$version} = $version_path;
+            }
+        }
+    }
+    
+    # find software installed under $GENOME_SW
+    # The pattern for these has varied over time.  They will be like will be like:
+    #   $GENOME_SW/$pkg_name/{$pkg_name-,,*}$version/{.,bin,scripts}/{$pkg_name,}{-,}$app_name{-,}{$version,}
+    sub _common_prefix_length {
+        my ($first,@rest) = @_;
+        my $len;
+        for ($len = 1; $len <= length($first); $len++) {
+            for my $other (@rest) {
+                if (substr($first,0,$len) ne substr($other,0,$len)) {
+                    return $len-1;
+                }
+            }
+        }
+        return $len-1;
+    }
+
+    my %pkgdirs;
+    my @dirs2 = split(':',$ENV{GENOME_SW});  #most of the system expects this to be one value not-colon separated currently
+    for my $dir2 (@dirs2) {
+        # one subdir will exist per application 
+        my @app_subdirs = glob("$dir2/$pkg_name");
+        for my $app_subdir (@app_subdirs) {
+            # one subdir under that will exist per version
+            my @version_subdirs = grep { -e $_ and not -l $_ and $_ !~ /README/ and /\d/ } glob("$app_subdir/*");
+            next unless @version_subdirs;
+
+            # if some subdirectories repeat the pkg name, all of those we consider must
+            my @some = grep { index(File::Basename::basename($_),$pkg_name) == 0 } @version_subdirs;
+            @version_subdirs = @some if @some;
+
+            my $len = _common_prefix_length(@version_subdirs);
+            my $prefix = substr($version_subdirs[0],0,$len);
+            if ($prefix =~ /(-|)(v|)([\d\.pa]+)$/) {
+                $len = $len - length($3);
+            }
+            for my $version_subdir (@version_subdirs) {
+                if (grep { index($version_subdir,$_) == 0 } @sw_ignore) {
+                    next;
+                }
+                my $version = substr($version_subdir,$len);
+                if (substr($version,0,1) =~ /[0-9]/) {
+                    $pkgdirs{$version} = $version_subdir;
+                }
+            }
+        }
+    }
+
+    # When a version number ends in -64, we are just saying it is 64-bit,
+    # which is default for everything now.  We don't want to even return
+    # the 32-bit only versions.
+    # Trim the version number down, and have that key point to the path of the 64-bit version.
+    # This will sometimes stomp on a 32-bit version directory if it exists (hopefully).
+    # If 32-bit directories exist and there is no 64-bit version to stomp on them,
+    # we never know for sure they are not just new installs which presume to be 64-bit.
+    my @v64 = grep { /[-_]64$/ } keys %pkgdirs;
+    for my $version_64 (@v64) {
+        my ($version_no64) = ($version_64 =~ /^(.*?)([\.-_][^\.]+)64$/); 
+        $pkgdirs{$version_no64} = delete $pkgdirs{$version_64};
+    }
+
+    # now resolve the actual path to the executable $app_name
+    my %versions2;
+    for my $version (keys %pkgdirs) {
+        my $dir = $pkgdirs{$version};
+        my @subdirs = qw/. bin scripts/;
+        my @basenames = ("$app_name-$version","$app_name$version",$app_name);
+        if ($pkg_name ne $app_name) {
+            @basenames = map { ("$pkg_name-$_", "$pkg_name$_", $_) } @basenames; 
+        }
+        for my $basename (@basenames) {
+            for my $subdir (@subdirs) {
+                my $path = "$dir/$subdir/$basename";
+                if (-e $path) {
+                    $path =~ s|/\./|/|m;
+                    $versions2{$version} = $path;
+                    last;
+                }
+            }
+            last if $versions2{$version};
+        }
+        unless ($versions2{$version}) {
+            $class->debug_message("Found $pkg_name at version $version at $dir, but no executable (named any of: @basenames) in subdirs: @subdirs!");
+        }
+    }
+
+    # prefer packaged versions over unpackaged
+    my %all_versions = (%versions2,%versions1);
+
+    # return sorted
+    return map { $_ => $all_versions{$_} } sort keys %all_versions;
+}
+
+sub sw_versions {
+    my ($self,$pkg_name,$app_name) = @_;
+    my @map = ($self->sw_version_path_map($pkg_name,$app_name));
+    my $n = 0;
+    return map { $n++; ($n % 2 ? $_ : ()) } @map;
+}
+
 
 #####
 # Temp file management
@@ -1014,8 +1183,11 @@ sub shellcmd {
     # TODO: add IPC::Run's w/ timeout but w/o the io redirection...
 
     my ($self,%params) = @_;
+
+    my %orig_params = %params;
+
     my $cmd                          = delete $params{cmd};
-    my $output_files                 = delete $params{output_files} ;
+    my $output_files                 = delete $params{output_files};
     my $input_files                  = delete $params{input_files};
     my $output_directories           = delete $params{output_directories} ;
     my $input_directories            = delete $params{input_directories};
@@ -1033,6 +1205,9 @@ sub shellcmd {
         my @crap = %params;
         Carp::confess("Unknown params passed to shellcmd: @crap");
     }
+
+    my ($t1,$t2,$elapsed);
+
     # Go ahead and print the status message if the cmd is shortcutting
     if ($output_files and @$output_files) {
         my @found_outputs = grep { -e $_ } grep { not -p $_ } @$output_files;
@@ -1046,6 +1221,7 @@ sub shellcmd {
             return 1;
         }
     }
+
     my $old_status_cb = undef;
     unless  ($print_status_to_stderr) {
         $old_status_cb = Genome::Sys->message_callback('status');
@@ -1094,8 +1270,11 @@ sub shellcmd {
 
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
+        $t1 = time();
         my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
         my $child_exit_code = $exit_code >> 8;
+        $t2 = time();
+        $elapsed = $t2-$t1;
 
         if ( $exit_code == -1 ) {
             Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd\n\tError was: $!");
@@ -1173,6 +1352,12 @@ sub shellcmd {
         # Setting to the original behaviour (or default)
         Genome::Sys->message_callback('status',$old_status_cb);
     }
+
+    if ($ENV{GENOME_SYS_LOG_DETAIL}) {
+        my $msg = encode_json({%orig_params, t1 => $t1, t2 => $t2, elapsed => $elapsed });
+        Genome::Sys->debug_message(qq|$msg|)
+    }
+
     return 1;
 
 }
@@ -1206,13 +1391,13 @@ Genome::Sys
 
 =head1 VERSION
 
-This document describes Genome::Sys version 0.05.
+This document describes Genome::Sys version 0.9.0.1.
 
 =head1 SYNOPSIS
 
-use Genome;
-
-my $dir = Genome::Sys->dbpath('cosmic', 'latest');
+ use Genome;
+ my $dir = Genome::Sys->db_path('cosmic', 'latest');
+ my $path = Genome::Sys->sw_path('htseq','0.5.3p9','htseq-count');
 
 =head1 DESCRIPTION
 
@@ -1220,11 +1405,12 @@ Genome::Sys is a simple layer on top of OS-level concerns,
 including those automatically handled by the analysis system,
 like database cache locations.
 
-=head1 METHODS
+=head1 METHODS 
 
-=head2 swpath($name,$version)
+=head2 sw_path($pkg_name,$version) or sw_path($pkg_name,$version,$executable_basename) 
 
 Return the path to a given executable, library, or package.
+The 3-parameter variation is only for packages which have multiple executables.
 
 This is a wrapper for the OS-specific strategy for managing multiple versions of software packages,
 (i.e. /etc/alternatives for Debian/Ubuntu)
@@ -1232,13 +1418,43 @@ This is a wrapper for the OS-specific strategy for managing multiple versions of
 The GENOME_SW environment variable contains a colon-separated lists of paths which this falls back to.
 The default value is /var/lib/genome/sw/.
 
+=head3 ex:
 
-=head2 dbpath($name,$version)
+    $path = Genome::Sys->sw_path("tophat","2.0.7");
+
+    $path = Genome::Sys->sw_path("htseq","0.5.3p9","htseq-count");
+
+=head2 sw_versions($pkg_name) or sw_versions($pkg_name,$executable_basename);
+
+Return a list of all installed versions of a given executable in order.
+
+=head3 ex:
+
+    @versions = Genome::Sys->sw_versions("tophat");
+    
+    @versions = Genome::Sys->sw_versions("htseq","htseq-count");
+
+=head2 sw_version_path_map($pkg_name) or sw_version_path_map($pkg_name,$executable_basename)
+
+Return a map of version numbers to executable paths.
+
+=head3 ex:
+
+    %map = Genome::Sys->sw_version_path_map("tophat");
+    
+    %map = Genome::Sys->sw_version_path_map("htseq","htseq-count");
+
+
+=head2 db_path($name,$version)
 
 Return the path to the preprocessed copy of the specified database.
 (This is in lieu of a consistent API for the database in question.)
 
 The GENOME_DB environment variable contains a colon-separated lists of paths which this falls back to.
 The default value is /var/lib/genome/db/.
+
+=head3 ex:
+
+    my $dir1 = Genome::Sys->db_path('cosmic', 'latest');
 
 =cut

@@ -26,7 +26,7 @@ my $tumor_bam               = $test_input_dir . 'tumor.tiny.bam';
 my $normal_bam              = $test_input_dir . 'normal.tiny.bam';
 my $sites_file              = $test_input_dir . 'sites.in';
 
-my $test_output_dir         = File::Temp::tempdir('Genome-Model-Tools-Somatic-ReadCounts-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir         = File::Temp::tempdir('Genome-Model-Tools-Somatic-ReadCounts-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 my $output_file             = $test_output_dir . 'readcounts.out';
 

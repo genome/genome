@@ -26,7 +26,7 @@ my $sample_name = $sample->name;
 ok($sample, "found sample $sample_name")
     or die "exiting because the sample does not exist";
 
-my $tmp_dir = File::Temp::tempdir('Genome-InstrumentData-Commnd-Import-Fastq-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Genome-InstrumentData-Commnd-Import-Fastq-XXXXX', TMPDIR =>1, CLEANUP => 1);
 my $tmp_allocation = Genome::Disk::Allocation->__define__(
                                                            id => '-123459',
                                                            disk_group_name => 'info_alignments',

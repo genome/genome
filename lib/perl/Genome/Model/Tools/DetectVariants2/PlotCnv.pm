@@ -106,7 +106,18 @@ sub _sort_detector_output {
 sub genome_build {
     my $self = shift;
     my $refbuild = Genome::Model::Build->get($self->reference_build_id);
-    return $refbuild->version;
+    unless ($refbuild->subject->name eq "human") {
+        die $self->error_message("This does not currently work unless the subject is human");
+    }
+
+    if($refbuild->is_compatible_with(Genome::Model::Build::ReferenceSequence->get_by_name('GRCh37-lite-build37'))) {
+        return 37;
+    } elsif($refbuild->is_compatible_with(Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36'))) {
+        return 36;
+    } else {
+        die $self->error_message("This currently only works with references compatible with builds 36 and 37");
+    }
+
 }
 
 sub _generate_standard_files {

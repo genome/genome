@@ -17,7 +17,7 @@ sub _help_detail_for_model_define {
     --prefix=GRClite \\
     --species-name=human \\
     --version=37 \\
-    --use-default-sequence-uri 
+    --use-default-sequence-uri
     --fasta-file=complete.fa \\
 
   # for a reference which extends another
@@ -26,9 +26,9 @@ sub _help_detail_for_model_define {
     --prefix=GRC \\
     --species-name=human \\
     --version=37-p8-test7 \\
-    --use-default-sequence-uri 
+    --use-default-sequence-uri
     --fasta-file=additions.fa \\
-    --append-to 106942997 
+    --append-to 106942997
 
 EOS
 }
@@ -72,7 +72,7 @@ sub _execute_build {
     }
 
     $self->status_message('Creating sequence dictionaries');
-    $build->get_sequence_dictionary('sam', $build->species_name, '1.46');
+    return unless $self->_create_sequence_dictionary($build);
 
     # Reallocate to amount of space actually consumed if the build has an associated allocation and that allocation
     # has an absolute path the same as this build's data_path
@@ -185,8 +185,23 @@ sub _copy_fasta_file {
     return 1;
 }
 
+sub _create_sequence_dictionary {
+    my ($self, $build) = @_;
 
-# This is a simplified version of the previous code for 
+    my $abs_seqdict_path = $build->get_sequence_dictionary('sam', $build->species_name, '1.46');
+    unless (-e $abs_seqdict_path) {
+        $self->error_message(sprintf('Failed to create sequence dictionary (with $build->species_name=%s)',
+                $build->species_name));
+        return;
+    }
+    my $build_data_directory = $build->data_directory;
+    (my $seqdict_path = $abs_seqdict_path) =~ s/$build_data_directory\/*//;
+
+    my $dict_path = File::Spec->join($build->data_directory, 'all_sequences.dict');
+    Genome::Sys->create_symlink($seqdict_path, $dict_path);
+}
+
+# This is a simplified version of the previous code for
 # finding chromosome names in fasta files, and splitting the content out into .bases files
 # It is assumed that the sequence names are indicated via the ">" character rather than the ";" character
 
@@ -277,9 +292,9 @@ sub _list_bases_files {
     my $build = shift;
 
     my $data_dir = $build->data_directory;
-    my $fa = $build->fasta_file; 
+    my $fa = $build->fasta_file;
     my $bases_dir = join('/', $data_dir, 'bases');
-    $bases_dir = $data_dir unless -e $bases_dir; #some builds lack a bases directory 
+    $bases_dir = $data_dir unless -e $bases_dir; #some builds lack a bases directory
 
     my @bases_files;
 

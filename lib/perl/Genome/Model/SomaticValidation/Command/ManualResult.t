@@ -13,8 +13,8 @@ use Test::More tests => 8;
 
 use_ok('Genome::Model::SomaticValidation::Command::ManualResult');
 
-my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
-my $temp_dir = File::Temp::tempdir('Model-Command-Define-SomaticValidation-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', CLEANUP => 1, TMPDIR => 1);
+my $temp_dir = File::Temp::tempdir('Model-Command-Define-SomaticValidation-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 
 my $somatic_variation_build = &setup_somatic_variation_build;

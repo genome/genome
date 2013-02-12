@@ -250,7 +250,7 @@ sub create_direct_and_cmdline {
 
 sub create_reference_builds {
     my $annotation_version = '12_34x';
-    my $data_dir = File::Temp::tempdir('DefineReferenceAlignmentTest-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+    my $data_dir = File::Temp::tempdir('DefineReferenceAlignmentTest-XXXXX', CLEANUP => 1, TMPDIR =>1);
 
     my $ref_pp = Genome::ProcessingProfile::ImportedReferenceSequence->create(name => 'test_ref_pp');
     my $ref_model = Genome::Model::ImportedReferenceSequence->create(

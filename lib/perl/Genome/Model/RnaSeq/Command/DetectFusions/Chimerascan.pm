@@ -61,6 +61,7 @@ sub _fetch_result {
             alignment_result => $self->build->alignment_result,
             detector_params => $self->detector_params,
             annotation_build => $self->build->annotation_build,
+            picard_version => $self->build->model->picard_version,
     );
 
     if ($result){

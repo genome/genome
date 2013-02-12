@@ -15,6 +15,10 @@ class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
             is => "String",
             doc => 'File of variants to analyze',
         },
+        ensembl_annotation_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+            doc => 'ID of ImportedAnnotation build with the desired ensembl version.',
+        },
         sample_list_file => {
             is => "String",
             doc => 'File containing samples names, 1 per line, for input into MuSiC',
@@ -81,6 +85,7 @@ sub _create_workflow {
     my $self = shift;
 
     my $multisample_vcf = $self->multisample_vcf;
+    my $ensembl_annotation_build = $self->ensembl_annotation_build;
     my $clinical_data = $self->clinical_data_file;
     my $glm_model_file = $self->glm_model_file;
     my $sample_list = $self->sample_list_file;
@@ -288,6 +293,7 @@ sub _create_workflow {
                 input_vcf => $multisample_vcf,
                 output_file => $vep_annotation_file_path,
                 work_dir => $vep_work_directory,
+                ensembl_annotation_build => $ensembl_annotation_build,
                 log_dir => $log_dir,
 
                 #input_file => $multisample_vcf,

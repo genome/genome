@@ -201,7 +201,7 @@ sub generate_fake_instrument_data {
     my $fastq_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-RtgMapx';
     my $tmp_fastq_dir = File::Temp::tempdir(
         'AlignmentResult-RtgMapx-XXXXXX',
-        DIR => "$ENV{GENOME_TEST_TEMP}/",
+        TMPDIR => 1,
         UNLINK => 1,
         CLEANUP => 1,
     );

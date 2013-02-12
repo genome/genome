@@ -15,7 +15,7 @@ use_ok('Genome::Model::Build::ImportedAnnotation');
 my @species_names = ('human', 'mouse');
 my @versions = ('12_34', '56_78');
 my $ann_pp = Genome::ProcessingProfile::ImportedAnnotation->create(name => 'test_ann_pp', annotation_source => 'test_source');
-my $data_dir = File::Temp::tempdir('ImportedAnnotationTest-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $data_dir = File::Temp::tempdir('ImportedAnnotationTest-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my %samples;
 for my $sn (@species_names) {

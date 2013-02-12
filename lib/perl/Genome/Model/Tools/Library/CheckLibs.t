@@ -21,7 +21,7 @@ my $test_build_id = 106410700;
 
 my $expected_output_file = $test_input_dir . "build$test_build_id.expected";
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Library-CheckLibs-XXXXX', "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Library-CheckLibs-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 
 my $output_file = $test_output_dir . "build$test_build_id.out";

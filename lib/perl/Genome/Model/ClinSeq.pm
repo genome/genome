@@ -11,7 +11,8 @@ class Genome::Model::ClinSeq {
         exome_model         => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
         tumor_rnaseq_model  => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
         normal_rnaseq_model => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
-        force               => { is => 'Boolean', doc => 'skip sanity checks on input models' }, 
+        de_model            => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
+        force               => { is => 'Boolean', doc => 'skip sanity checks on input models' },
     ],
     has_optional_param => [
         #Processing profile parameters would go in here
@@ -19,7 +20,44 @@ class Genome::Model::ClinSeq {
         #someparam2 => { is => 'Boolean', doc => 'blah' },
         #someparam2 => { is => 'Text', valid_values => ['a','b','c'], doc => 'blah' },
     ],
-    doc => 'clinial sequencing data convergence of RNASeq, WGS and exome capture data',
+    has_optional_metric => [
+        common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
+    ],
+    has_calculated => [
+        expected_common_name => {
+            is => 'Text',
+            calculate_from => [qw /wgs_model exome_model tumor_rnaseq_model normal_rnaseq_model/],
+            calculate => q|
+              my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
+              if ($wgs_model) {
+                  $wgs_common_name = $wgs_model->subject->patient->common_name;
+                  $wgs_name = $wgs_model->subject->patient->name;
+              }
+              if ($exome_model) {
+                  $exome_common_name = $exome_model->subject->patient->common_name;
+                  $exome_name = $exome_model->subject->patient->name;
+              }
+              if ($tumor_rnaseq_model) {
+                  $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->patient->common_name;
+                  $tumor_rnaseq_name = $tumor_rnaseq_model->subject->patient->name;
+              }
+              if ($normal_rnaseq_model) {
+                  $normal_rnaseq_common_name = $normal_rnaseq_model->subject->patient->common_name;
+                  $normal_rnaseq_name = $normal_rnaseq_model->subject->patient->name;
+              }
+              my @names = ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
+              my $final_name = "UnknownName";
+              foreach my $name (@names){
+                if ($name){
+                  $final_name = $name;
+                  last();
+                }
+              }
+              return $final_name;
+            |
+        }
+    ],
+    doc => 'clinical and discovery sequencing data analysis and convergence of RNASeq, WGS and exome capture data',
 };
 
 sub define_by { 'Genome::Model::Command::Define::BaseMinimal' }
@@ -39,7 +77,7 @@ EOS
 sub _help_detail_for_profile_create {
     return <<EOS
 
-The initial ClinSeq pipeline has no parameters.  Just use the default profile to run it.
+The ClinSeq pipeline has no parameters.  Just use the default profile to run it.
 
 EOS
 }
@@ -47,12 +85,21 @@ EOS
 sub _help_detail_for_model_define {
     return <<EOS
 
-The ClinSeq pipeline takes four models, each of which is optional, and produces data sets potentially useful in a clinical setting.
+The ClinSeq pipeline takes four models, each of which is optional, and produces data sets potentially useful in a clinical or discovery project.
+
+There are several primary goals:
+
+1. Generate results that help to identify clinically actionable events (gain of function mutations, amplifications, etc.)
+
+2. Converge results across data types for a single case (e.g. variant read counts from wgs + exome + rnaseq)
+
+3. Automatically generate statistics, tables and figures to be used in manuscripts
+
+4. Test novel analysis methods in a pipeline that runs faster and is more agile than say somatic-variation
 
 EOS
 }
 
-#TODO:  Is the following test actually performed?  I don't see it being called anywhere?
 sub _resolve_subject {
     my $self = shift;
     my @subjects = $self->_infer_candidate_subjects_from_input_models();
@@ -106,38 +153,13 @@ sub map_workflow_inputs {
     my $exome_build         = $build->exome_build;
     my $tumor_rnaseq_build  = $build->tumor_rnaseq_build;
     my $normal_rnaseq_build = $build->normal_rnaseq_build;
-    
-    #Note that the option names are being truncated below here deliberately.  Getopt will allow the names to be arbitrarily shorter as long as they are still unique/unambiguous
-    my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
-    if ($wgs_build) {
-        $wgs_common_name = $wgs_build->subject->patient->common_name;
-        $wgs_name = $wgs_build->subject->patient->name;
-    }
-    if ($exome_build) {
-        $exome_common_name = $exome_build->subject->patient->common_name;
-        $exome_name = $exome_build->subject->patient->name;
-    }
-    if ($tumor_rnaseq_build) {
-        $tumor_rnaseq_common_name = $tumor_rnaseq_build->subject->patient->common_name;
-        $tumor_rnaseq_name = $tumor_rnaseq_build->subject->patient->name;
-    }
-    if ($normal_rnaseq_build) {
-        $normal_rnaseq_common_name = $normal_rnaseq_build->subject->patient->common_name;
-        $normal_rnaseq_name = $normal_rnaseq_build->subject->patient->name;
-    }
 
-    #Get the patient common name from one of the builds, if none can be found, use the individual name instead, if that can't be found either set the name to 'UnknownName'
-    my @names = ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
-    my $final_name = "UnknownName";
-    foreach my $name (@names){
-      if ($name){
-        $final_name = $name;
-        last();
-      }
-    }
+    # this is currently tracked as an input on the build
+    # it should really be an output/metric
+    my $common_name = $self->expected_common_name;
+    $build->common_name($common_name);
 
-    # initial inputs are for the "Main" component which does 
-    # all of the legacy/non-parellel tasks
+    # initial inputs are for the "Main" component which does all of the legacy/non-parellel tasks
     my @inputs = (
         build => $build,
         wgs_build => $wgs_build,
@@ -145,12 +167,11 @@ sub map_workflow_inputs {
         tumor_rnaseq_build => $tumor_rnaseq_build,
         normal_rnaseq_build => $normal_rnaseq_build,
         working_dir => $data_directory,
-        common_name => $final_name,
+        common_name => $common_name,
         verbose => 1,
-        clean => 0, # unfriendly to parallelization ..dir is new and will be clean
     );
 
-    my $patient_dir = $data_directory . "/" . $final_name;
+    my $patient_dir = $data_directory . "/" . $common_name;
     my @dirs = ($patient_dir);
 
     # summarize builds
@@ -160,37 +181,79 @@ sub map_workflow_inputs {
     push @inputs, summarize_builds_log_file => $input_summary_dir . "/SummarizeBuilds.log.tsv";
 
     if ($build->id > 0) {
-        push @inputs, summarize_builds_skip_lims_reports => 0;
-    }
-    else {
-        #Watch out for -ve build IDs which will occur when the ClinSeq.t test is run.  In that case, do not run the LIMS reports
-        push @inputs, summarize_builds_skip_lims_reports => 1;
+      push @inputs, summarize_builds_skip_lims_reports => 0;
+    }else {
+      #Watch out for -ve build IDs which will occur when the ClinSeq.t test is run.  In that case, do not run the LIMS reports
+      push @inputs, summarize_builds_skip_lims_reports => 1;
     }
 
     # dump igv xml
     my $igv_session_dir = $patient_dir . '/igv';
     push @dirs, $igv_session_dir;
-    $igv_session_dir .= '/';
-    push @inputs, 'igv_session_dir', $igv_session_dir;
+    push @inputs, igv_session_dir => $igv_session_dir;
 
     # Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
     if ($build->wgs_build or $build->exome_build) {
-        my $mutation_diagram_dir = $patient_dir . '/mutation_diagrams';
-        push @dirs, $mutation_diagram_dir;
-        $mutation_diagram_dir .= '/';
-        push @inputs, (
-            mutation_diagram_outdir => $mutation_diagram_dir,
-            mutation_diagram_collapse_variants=>1, 
-            mutation_diagram_max_snvs_per_file=>750, 
-            mutation_diagram_max_indels_per_file=>750
-        );
+      my $mutation_diagram_dir = $patient_dir . '/mutation_diagrams';
+      push @dirs, $mutation_diagram_dir;
+      push @inputs, (
+          mutation_diagram_outdir => $mutation_diagram_dir,
+          mutation_diagram_collapse_variants=>1, 
+          mutation_diagram_max_snvs_per_file=>750, 
+          mutation_diagram_max_indels_per_file=>750
+      );
     }
 
-    # For now it works to create directories here because the data_directory
-    # has been allocated.  It is possible that this would not happen until
-    # later, which would mess up assigning inputs to many of the commands.
-    for my $dir (@dirs) {
-        Genome::Sys->create_directory($dir);
+    #rnaseq analysis steps according to what rna-seq builds are defined as inputs
+    if ($build->normal_rnaseq_build or $build->tumor_rnaseq_build){
+      my $rnaseq_dir = $patient_dir . '/rnaseq';
+      push @dirs, $rnaseq_dir;
+      
+      push @inputs, cufflinks_percent_cutoff => 1;
+      
+      #cufflinks expression absolute
+      if ($build->normal_rnaseq_build){
+        my $normal_rnaseq_dir = $rnaseq_dir . '/normal';
+        push @dirs, $normal_rnaseq_dir;
+        my $normal_cufflinks_expression_absolute_dir = $normal_rnaseq_dir . '/cufflinks_expression_absolute';
+        push @dirs, $normal_cufflinks_expression_absolute_dir;
+        push @inputs, normal_cufflinks_expression_absolute_dir => $normal_cufflinks_expression_absolute_dir;
+      }
+      if ($build->tumor_rnaseq_build){
+        my $tumor_rnaseq_dir = $rnaseq_dir . '/tumor';
+        push @dirs, $tumor_rnaseq_dir;
+        my $tumor_cufflinks_expression_absolute_dir = $tumor_rnaseq_dir . '/cufflinks_expression_absolute';
+        push @dirs, $tumor_cufflinks_expression_absolute_dir;
+        push @inputs, tumor_cufflinks_expression_absolute_dir => $tumor_cufflinks_expression_absolute_dir;
+      }
+
+      #cufflink differential expression
+      if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
+        my $cufflinks_differential_expression_dir = $rnaseq_dir . '/cufflinks_differential_expression';
+        push @dirs, $cufflinks_differential_expression_dir;
+        push @inputs, cufflinks_differential_expression_dir => $cufflinks_differential_expression_dir;
+      }
+    }
+
+    #Perform clonality analysis and generate clonality plots
+    if ($build->wgs_build){
+      my $clonality_dir = $patient_dir . "/clonality/";
+      push @dirs, $clonality_dir;
+      push @inputs, clonality_dir => $clonality_dir;      
+    }
+
+    #Run cn-vew analysis
+    if ($build->wgs_build){
+      my $cnv_dir = $patient_dir . "/cnv/";
+      push @dirs, $cnv_dir;
+      push @inputs, cnv_dir => $cnv_dir;
+    }
+
+    #Summarize SV results
+    if ($build->wgs_build){
+      my $sv_dir = $patient_dir . "/sv/";
+      push @dirs, $sv_dir;
+      push @inputs, sv_dir => $sv_dir;
     }
 
     #Create mutation-spectrum results from WGS and exome results
@@ -203,6 +266,13 @@ sub map_workflow_inputs {
         push @inputs, 'exome_mutation_spectrum_datatype' => 'exome';
     }
 
+    # For now it works to create directories here because the data_directory
+    # has been allocated.  It is possible that this would not happen until
+    # later, which would mess up assigning inputs to many of the commands.
+    for my $dir (@dirs) {
+        Genome::Sys->create_directory($dir);
+    }
+
     return @inputs;
 }
 
@@ -211,7 +281,7 @@ sub _resolve_workflow_for_build {
     # Returns a Workflow::Operation
     my $self = shift;
     my $build = shift;
-    my $lsf_queue = shift; # TODO: the workflow shouldn't need this yet
+    my $lsf_queue = shift;   # TODO: the workflow shouldn't need this yet
     my $lsf_project = shift;
 
     if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
@@ -241,6 +311,8 @@ sub _resolve_workflow_for_build {
             summarize_svs_result
             summarize_cnvs_result
             wgs_mutation_spectrum_result
+            clonality_result
+            run_cn_view_result
         );
     }
 
@@ -258,6 +330,19 @@ sub _resolve_workflow_for_build {
     if ($build->wgs_build or $build->exome_build) {
         push @output_properties, 'mutation_diagram_result';
     }
+
+    if ($build->normal_rnaseq_build){
+        push @output_properties, 'normal_cufflinks_expression_absolute_result';
+    }
+
+    if ($build->tumor_rnaseq_build){
+        push @output_properties, 'tumor_cufflinks_expression_absolute_result';
+    }
+
+    if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
+        push @output_properties, 'cufflinks_differential_expression_result';
+    }
+
 
     # Make the workflow and some convenience wrappers for adding steps and links
 
@@ -459,6 +544,39 @@ sub _resolve_workflow_for_build {
         }
     }
 
+
+    #Run cufflinks expression absolute analysis on normal
+    my $normal_cufflinks_expression_absolute_op;
+    if ($build->normal_rnaseq_build){
+      my $msg = "Performing cufflinks expression absolute analysis for normal sample";
+      $normal_cufflinks_expression_absolute_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute');
+      $add_link->($input_connector, 'normal_rnaseq_build', $normal_cufflinks_expression_absolute_op, 'build');
+      $add_link->($input_connector, 'normal_cufflinks_expression_absolute_dir', $normal_cufflinks_expression_absolute_op, 'outdir');
+      $add_link->($input_connector, 'cufflinks_percent_cutoff', $normal_cufflinks_expression_absolute_op, 'percent_cutoff');
+      $add_link->($normal_cufflinks_expression_absolute_op, 'result', $output_connector, 'normal_cufflinks_expression_absolute_result'); 
+    }
+
+    #Run cufflinks expression absolute analysis on tumor
+    my $tumor_cufflinks_expression_absolute_op;
+    if ($build->tumor_rnaseq_build){
+      my $msg = "Performing cufflinks expression absolute analysis for tumor sample";
+      $tumor_cufflinks_expression_absolute_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute');
+      $add_link->($input_connector, 'tumor_rnaseq_build', $tumor_cufflinks_expression_absolute_op, 'build');
+      $add_link->($input_connector, 'tumor_cufflinks_expression_absolute_dir', $tumor_cufflinks_expression_absolute_op, 'outdir');
+      $add_link->($input_connector, 'cufflinks_percent_cutoff', $tumor_cufflinks_expression_absolute_op, 'percent_cutoff');
+      $add_link->($tumor_cufflinks_expression_absolute_op, 'result', $output_connector, 'tumor_cufflinks_expression_absolute_result');
+    }
+
+    #Run cufflinks differential expression
+    if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
+      my $msg = "Performing cufflinks differential expression analysis for case vs. control (e.g. tumor vs. normal)";
+      my $cufflinks_differential_expression_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression');
+      $add_link->($input_connector, 'normal_rnaseq_build', $cufflinks_differential_expression_op, 'control_build');
+      $add_link->($input_connector, 'tumor_rnaseq_build', $cufflinks_differential_expression_op, 'case_build');
+      $add_link->($input_connector, 'cufflinks_differential_expression_dir', $cufflinks_differential_expression_op, 'outdir');
+      $add_link->($cufflinks_differential_expression_op, 'result', $output_connector, 'cufflinks_differential_expression_result');
+    }
+
     #Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
     #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
     $msg = "Create IGV XML session files for varying levels of detail using the input builds";
@@ -466,6 +584,52 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'build', $igv_session_op, 'builds');
     $add_link->($input_connector, 'igv_session_dir', $igv_session_op, 'outdir');
     $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result'); 
+
+    #Run clonality analysis and produce clonality plots
+    $msg = "Run clonality analysis and produce clonality plots";
+    my $clonality_op;
+    if ($build->wgs_build){
+      $clonality_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateClonalityPlots");
+      $add_link->($input_connector, 'wgs_build', $clonality_op, 'somatic_var_build');
+      $add_link->($input_connector, 'clonality_dir', $clonality_op, 'output_dir');
+      $add_link->($input_connector, 'common_name', $clonality_op, 'common_name');
+      $add_link->($clonality_op, 'result', $output_connector, 'clonality_result'); 
+    }
+
+    #Produce copy number results with run-cn-view.  Relies on clonality step already having been run
+    my $run_cn_view_op;
+    if ($build->wgs_build){
+      $msg = "Use gmt copy-number cn-view to produce copy number tables and images";
+      $run_cn_view_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::RunCnView");
+      $add_link->($input_connector, 'wgs_build', $run_cn_view_op, 'build');
+      $add_link->($input_connector, 'cnv_dir', $run_cn_view_op, 'outdir');
+      $add_link->($clonality_op, 'cnv_hmm_file', $run_cn_view_op);
+      $add_link->($run_cn_view_op, 'result', $output_connector, 'run_cn_view_result');
+    }
+   
+    #Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
+    #This step relies on the generate-clonality-plots step already having been run 
+    #It also relies on run-cn-view step having been run already
+    if ($build->wgs_build){
+        my $msg = "Summarize CNV results from WGS somatic variation";
+        my $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
+        $add_link->($input_connector, 'cnv_dir', $summarize_cnvs_op, 'outdir');
+        $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
+        $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
+        $add_link->($run_cn_view_op, 'gene_amp_file', $summarize_cnvs_op);
+        $add_link->($run_cn_view_op, 'gene_del_file', $summarize_cnvs_op);
+        $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
+    }
+
+    #Generate a summary of SV results from the WGS SV results
+    if ($build->wgs_build){
+        my $msg = "Summarize SV results from WGS somatic variation";
+        my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
+        $add_link->($input_connector, 'wgs_build', $summarize_svs_op, 'builds');
+        $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
+        $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
+    }
+
 
     #
     # Main contains all of the original clinseq non-parallel code.
@@ -482,11 +646,12 @@ sub _resolve_workflow_for_build {
         working_dir
         common_name
         verbose
-        clean
     /) {
         $add_link->($input_connector, $in, $main_op, $in);
     }
     $add_link->($main_op, 'result', $output_connector, 'main_result');
+
+
 
     #
     # Add steps which follow the main step...
@@ -512,34 +677,17 @@ sub _resolve_workflow_for_build {
         $txt_name =~ s/wgs/WGS/;
         $txt_name =~ s/exome/Exome/;
         $msg = "$txt_name Summarize Tier 1 SNV Support (BAM read counts)";
-        my $op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
-        $add_link->($main_op, $run . "_positions_file", $op);
-        $add_link->($main_op, 'wgs_build', $op);
-        $add_link->($main_op, 'exome_build', $op);
-        $add_link->($main_op, 'tumor_rnaseq_build', $op);
-        $add_link->($main_op, 'normal_rnaseq_build', $op);
-        $add_link->($main_op, 'tumor_fpkm_file', $op);
-        $add_link->($main_op, 'annotation_version', $op);
-        $add_link->($main_op, 'verbose', $op);
-        $add_link->($op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
-    }
-    
-    #Generate a summary of SV results from the WGS SV results
-    if ($build->wgs_build) {
-        my $msg = "Summarize SV results from WGS somatic variation";
-        my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-        $add_link->($main_op, 'wgs_build', $summarize_svs_op, 'builds');
-        $add_link->($main_op, 'sv_summary_dir', $summarize_svs_op, 'outdir');
-        $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
-    }
-
-    #Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
-    if ($build->wgs_build) {
-        my $msg = "Summarize CNV results from WGS somatic variation";
-        my $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
-        $add_link->($main_op, 'build', $summarize_cnvs_op, 'builds');
-        $add_link->($main_op, 'cnv_summary_dir', $summarize_cnvs_op, 'outdir');
-        $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
+        my $summarize_tier1_snv_support_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
+        $add_link->($main_op, $run . "_positions_file", $summarize_tier1_snv_support_op);
+        $add_link->($main_op, 'wgs_build', $summarize_tier1_snv_support_op);
+        $add_link->($main_op, 'exome_build', $summarize_tier1_snv_support_op);
+        $add_link->($main_op, 'tumor_rnaseq_build', $summarize_tier1_snv_support_op);
+        $add_link->($main_op, 'normal_rnaseq_build', $summarize_tier1_snv_support_op);
+        if ($build->tumor_rnaseq_build){
+          $add_link->($tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_file', $summarize_tier1_snv_support_op);
+        }
+        $add_link->($main_op, 'verbose', $summarize_tier1_snv_support_op);
+        $add_link->($summarize_tier1_snv_support_op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
     }
 
     # REMINDER:
@@ -609,12 +757,21 @@ sub files_ignored_by_build_diff {
         logs/.*
         .*.R$
         .*.pdf$
+        .*.jpg$
+        .*.jpeg$
+        .*.png$
+        .*/summary/rc_summary.stderr$
         .*._COSMIC.svg$
         .*.clustered.data.tsv$
         .*.SummarizeBuilds.log.tsv$
         .*.DumpIgvXml.log.txt
         .*/mutation_diagrams/cosmic.mutation-diagram.stderr
         .*/mutation_diagrams/somatic.mutation-diagram.stderr
+        .*.sequence-context.stderr
+        .*.annotate.stderr
+        .*/mutation-spectrum/exome/summarize_mutation_spectrum/summarize-mutation-spectrum.stderr
+        .*/mutation-spectrum/wgs/summarize_mutation_spectrum/summarize-mutation-spectrum.stderr
+        .*LIMS_Sample_Sequence_QC_library.tsv
     );
 };
 

@@ -72,7 +72,7 @@ sub _prepare_output_directory {
     
     my $allocation = Genome::Disk::Allocation->allocate(%allocation_create_parameters);
     unless ($allocation) {
-        $self->error_message("Failed to get disk allocation with params:\n". Dumper(%allocation_create_parameters));
+        $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%allocation_create_parameters));
         die($self->error_message);
     }
 
@@ -111,6 +111,14 @@ sub _promote_data {
     my $staging_dir = $self->temp_staging_directory;
     my $output_dir  = $self->output_dir;
 
+    unless ($output_dir) {
+        die $self->error_message("output_dir not set");
+    }
+
+    unless ($staging_dir) {
+        die $self->error_message("staging_dir not set");
+    }
+
     $self->status_message("Now de-staging data from $staging_dir into $output_dir"); 
 
     my $cp_params = 'r';
@@ -132,6 +140,10 @@ sub _promote_data {
         unless ($rsync_exit_code == 0) {
             $self->error_message("Did not get a valid return from rsync, exit code was $rsync_exit_code for call $rsync_cmd.  Cleaning up and bailing out");
             rmtree($output_dir);
+            my @a = $self->disk_allocations;
+            for my $a (@a) {
+                $a->delete;
+            }
             die $self->error_message;
         }
     }
@@ -154,6 +166,10 @@ sub _promote_data {
 sub _reallocate_disk_allocation {
     my $self = shift;
     my $allocation = $self->disk_allocations;
+    unless ($allocation) {
+        $self->status_message("no allocations to reallocated");
+        return 1;
+    }
     $self->status_message('Resizing the disk allocation...');
     my $rv = eval { $allocation->reallocate };
     my $error = $@;

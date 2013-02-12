@@ -86,7 +86,7 @@ is(scalar(@model_inputs), 1, 'Correct number of model inputs');
 
 # Create test build
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
-my $build = Genome::Model::Build::Test->create(
+my $build = Genome::Model::Build->create(
     model_id => $model->id,
     data_directory => $tmpdir,
 );

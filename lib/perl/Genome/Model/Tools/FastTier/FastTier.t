@@ -32,7 +32,7 @@ my $annotation_build_id = 102550711;
 my $ab = Genome::Model::Build->get($annotation_build_id);
 my $tier_file_location = $ab->tiering_bed_files_by_version(3);
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-FastTier-FastTier-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-FastTier-FastTier-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my @snv_file_names = qw|    snvs.hq.novel.tier1.v2.bed
                             snvs.hq.novel.tier2.v2.bed
@@ -103,7 +103,7 @@ for my $expected (@indel_file_names) {
 $test_expected_data_dir = $test_data_dir."/expected_v3";
 $tier_file_location = $ab->tiering_bed_files_by_version(2);
 
-$test_output_dir = File::Temp::tempdir('Genome-Model-Tools-FastTier-FastTier-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+$test_output_dir = File::Temp::tempdir('Genome-Model-Tools-FastTier-FastTier-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 %snv_output_files = (
     tier1_output => $test_output_dir."/".$snv_file_names[0],    

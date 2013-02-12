@@ -33,7 +33,7 @@ ok($ref_seq_build, 'human36 reference sequence build') or die;
 my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Pindel/flank_tumor_sorted.bam";
 my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Pindel/flank_normal_sorted.bam";
 
-my $tmpbase = File::Temp::tempdir('PindelSingleGenomeXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpbase = File::Temp::tempdir('PindelSingleGenomeXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
 my $pindel_sg = Genome::Model::Tools::DetectVariants2::PindelSingleGenome->create(aligned_reads_input=>$tumor, 

@@ -23,7 +23,7 @@ if ($archos !~ /64/) {
 
 my $test_data_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation/2012-09-10/";
 
-my $tmp_dir = File::Temp::tempdir('Genome-Model-Build-PhenotypeCorrelation-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Genome-Model-Build-PhenotypeCorrelation-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 # un-comment these lines to generate test data in a directory which will not be deleted!
 # $tmp_dir = "/home/archive/pcbuild-$$/";

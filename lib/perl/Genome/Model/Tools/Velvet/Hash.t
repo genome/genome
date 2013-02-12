@@ -21,7 +21,7 @@ my $test_file = 'test1.fa';
 
 my $tmp_dir   = File::Temp::tempdir(
     "VelvetHash_XXXXXX", 
-    DIR     => "$ENV{GENOME_TEST_TEMP}",
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

@@ -25,7 +25,7 @@ my $tumor_bam   = $test_input_dir . 'tumor.bam';
 
 my $tmp_dir = File::Temp::tempdir(
     'Genome-Model-Tools-Breakdancer-BamToConfig-XXXXX', 
-    DIR     => "$ENV{GENOME_TEST_TEMP}", 
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

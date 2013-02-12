@@ -231,7 +231,6 @@ sub type_specific_parameters_for_create {
 
 sub execute {
     my $self = shift;
-   
     my %params = $self->type_specific_parameters_for_create;
 
     # TODO: this should be really handled inside of the
@@ -242,11 +241,14 @@ sub execute {
             if ($subject) {
                 $self->subject($subject);
             }
+            else {
+                $self->error_message("Failed to resolve subject and no subject provided");
+                return;
+            }
         }
         if ($self->subject) {
             %params = (
                 subject_id => $self->subject->id,
-                subject_class_name => $self->subject->class,
                 %params
             );
         }

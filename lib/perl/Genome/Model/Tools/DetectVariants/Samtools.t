@@ -15,7 +15,7 @@ if ($archos !~ /64/) {
 }
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants-Samtools/';
-my $test_working_dir = File::Temp::tempdir('DetectVariants-SamtoolsXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $test_working_dir = File::Temp::tempdir('DetectVariants-SamtoolsXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $bam_input = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 

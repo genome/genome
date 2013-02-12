@@ -19,7 +19,7 @@ my $datasource_file = $test_input_dir . 'datasource.in';
 #The filtered.position.expected list assumes that filtering is based only on position.  If genotype must match, use filtered.genotype.expected
 my $expected_output_file    = $test_input_dir . 'filtered.position.expected';
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-FilterCeuYri-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-FilterCeuYri-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 my $output_file     = $test_output_dir . 'filtered.out';
 

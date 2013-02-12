@@ -31,6 +31,15 @@ my %DEPENDENT_PROPERTIES = (
 
 class Genome::Model::ReferenceAlignment {
     is => 'Genome::ModelDeprecated',
+    has_input => [
+        # TODO: move things up from below and delete where possible
+        genotype_microarray         => { is => 'Genome::Model::GenotypeMicroarray',
+                                        is_optional => 1,
+                                        doc => 'Genotype Microarray model used for QC and Gold SNP Concordance report', 
+                                        # this is redundant with genotype_microarray_model, which has the correct
+                                        # method name, but uses "genotype_microarray" in the db layer (fix that)
+                                    },
+    ],
     has => [
         align_dist_threshold         => { via => 'processing_profile'},
         dna_type                     => { via => 'processing_profile'},
@@ -101,6 +110,9 @@ class Genome::Model::ReferenceAlignment {
             via => 'dbsnp_build',
             to => 'model',
         },
+
+        # TODO: these are the right accessors, but the underlying input name is wrong :(
+        # fix the db, rename the above genotype_microarray to have _model, and get rid of these
         genotype_microarray_model_id => {
             is => 'Text',
             via => 'inputs',
@@ -114,6 +126,8 @@ class Genome::Model::ReferenceAlignment {
             is => 'Genome::Model::GenotypeMicroarray',
             id_by => 'genotype_microarray_model_id',
         },
+
+
         annotation_reference_build_id => {
             is => 'Text',
             via => 'inputs',
@@ -352,6 +366,7 @@ sub default_genotype_model {
 }
 
 sub build_subclass_name {
+    # TODO: remove, seemingly ununsed
     return 'reference alignment';
 }
 
@@ -362,6 +377,8 @@ sub dependent_properties {
 }
 
 sub check_for_updates {
+    # TODO: make an observer in ::Site::TGI and move the method below and its kin there.
+    # It should watch the "create" signal for Genome::Model::Build::ReferenceAlignment.
     my $self = shift;
     $self->check_and_update_genotype_input;
     return 1;

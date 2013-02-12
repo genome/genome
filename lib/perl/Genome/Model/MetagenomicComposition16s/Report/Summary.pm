@@ -23,8 +23,10 @@ sub _add_to_report_xml {
     Carp::confess('No amplicon sets for '.$self->build) if not @amplicon_sets;
 
     for my $amplicon_set ( @amplicon_sets ) {
-        next if not $amplicon_set->amplicon_iterator;
-        while ( my $amplicon = $amplicon_set->next_amplicon ) {
+        my $amplicons = $amplicon_set->amplicon_iterator;
+        next if not $amplicons;
+
+        while ( my $amplicon = $amplicons->() ) {
             $self->_add_amplicon($amplicon);
         }
     }

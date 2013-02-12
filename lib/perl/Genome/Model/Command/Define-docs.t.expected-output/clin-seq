@@ -1,7 +1,8 @@
 
 [4mUSAGE[0m
  [1mgenome model define clin-seq[0m --processing-profile=? [--add-to-projects=?[,?]] [--name=?]
-    [--wgs-model=?] [--exome-model=?] [--tumor-rnaseq-model=?] [--normal-rnaseq-model=?] [--force]
+    [--wgs-model=?] [--exome-model=?] [--tumor-rnaseq-model=?] [--normal-rnaseq-model=?]
+    [--de-model=?] [--force]
 
 [4mSYNOPSIS[0m
 
@@ -28,12 +29,27 @@
     rnaseq model for tumor rna-seq data 
   [1mnormal-rnaseq-model[0m
     rnaseq model for normal rna-seq data 
+  [1mde-model[0m
+    differential-expression for tumor vs normal rna-seq data 
   [1mforce[0m
     skip sanity checks on input models 
 
 [4mDESCRIPTION[0m
     The ClinSeq pipeline takes four models, each of which is optional, and produces data sets
-    potentially useful in a clinical setting.
+    potentially useful in a clinical or discovery project.
+
+    There are several primary goals:
+
+    1. Generate results that help to identify clinically actionable events (gain of function
+    mutations, amplifications, etc.)
+
+    2. Converge results across data types for a single case (e.g. variant read counts from wgs +
+    exome + rnaseq)
+
+    3. Automatically generate statistics, tables and figures to be used in manuscripts
+
+    4. Test novel analysis methods in a pipeline that runs faster and is more agile than say
+    somatic-variation
 
 
 

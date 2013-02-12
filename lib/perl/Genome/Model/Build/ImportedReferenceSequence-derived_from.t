@@ -13,7 +13,7 @@ use_ok('Genome::Model::Build::ImportedReferenceSequence');
 # create a test annotation build and a few reference sequence builds to test compatibility with
 my @species_names = ('human', 'mouse');
 my @versions = (1, 2, 3);
-my $data_dir = File::Temp::tempdir('ImportedAnnotationTest-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $data_dir = File::Temp::tempdir('ImportedAnnotationTest-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my %samples;
 for my $sn (@species_names) {

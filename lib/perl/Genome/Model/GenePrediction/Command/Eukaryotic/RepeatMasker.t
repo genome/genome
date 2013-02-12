@@ -31,8 +31,9 @@ my $repeat_library = '/gsc/var/lib/repeat/Trichinella_spiralis-3.7.1_070320.rep'
 ok(-e $repeat_library, "found repeat library at $repeat_library");
 
 my $temp_dir = tempdir(
-    "$ENV{GENOME_TEST_TEMP}/Genome-Model-GenePrediction-Eukaryotic-RepeatMasker-XXXXXX",
+    "Genome-Model-GenePrediction-Eukaryotic-RepeatMasker-XXXXXX",
     CLEANUP => 1,
+    TMPDIR => 1,
     UNLINK => 1,
 );
 my $masked_fasta = File::Temp->new(

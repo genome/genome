@@ -21,11 +21,11 @@ use_ok('Genome::Model::Tools::Predictor::Interproscan') or die;
 use_ok('Genome::Model::Tools::Predictor::Psortb') or die;
 use_ok('Genome::Model::Tools::Predictor::Keggscan') or die;
 
-my $test_output_dir = "$ENV{GENOME_TEST_TEMP}/";
-ok(-d $test_output_dir, "test output directory exists at $test_output_dir");
-$ENV{TMPDIR} = $test_output_dir;
-
-my $temp_output_dir = Genome::Sys->create_temp_directory;
+my $temp_output_dir = File::Temp::tempdir(
+    'Genome-Model-Tools-Predictor-XXXXX',
+    TMPDIR => 1,
+    CLEANUP => 1,
+);
 ok(-d $temp_output_dir, 'created temp output directory');
 
 my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/';

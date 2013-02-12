@@ -29,9 +29,8 @@ my $example_version = '1';
 my $example_dir = $base_dir.'/abyss_v'.$example_version;
 ok(-d $example_dir, 'example dir') or die;
 
-my $tmpdir_template = $ENV{'GENOME_TEST_TEMP'}
-    . "/DeNovoAssembly-Abyss.t-XXXXXXXX";
-my $tmpdir = File::Temp::tempdir($tmpdir_template, CLEANUP => 1);
+my $tmpdir_template = "/DeNovoAssembly-Abyss.t-XXXXXXXX";
+my $tmpdir = File::Temp::tempdir($tmpdir_template, TMPDIR=>1, CLEANUP => 1);
 ok(-d $tmpdir, 'temp dir: '.$tmpdir);
 
 my $taxon = Genome::Taxon->create(
@@ -129,6 +128,9 @@ SKIP: {
     skip("Abyss refactor passes old tests, but workflow does not succeed.", 1, 0);
     ok($success, 'workflow completed');
 };
+# since the run_workflow changes the cwd when it fails we have to chdir back
+# in order for File::Temp::tempdir to be able to clean up when we're done.
+chdir;
 
 
 my @assembler_input_files = $build->existing_assembler_input_files;

@@ -14,7 +14,7 @@ my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Picard-RandomReve
 my $test_bam = $data_dir .'/test.bam';
 my $expected_bam = $data_dir .'/expected.bam';
 
-my $tmp_dir = File::Temp::tempdir('Picard-RandomRevertSam-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Picard-RandomRevertSam-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 my $tmp_bam = $tmp_dir .'/tmp.bam';
 
 my $rand_revert_sam = Genome::Model::Tools::Picard::RandomRevertSam->create(

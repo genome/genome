@@ -24,7 +24,7 @@ my $expected_directory = $test_data_directory . "/expected.v3";
 my $detector_directory = $test_data_directory . "/varscan-somatic-2.2.4-";
 my $tumor_bam_file  = $test_data_directory. "/alignments/102922275_merged_rmdup.bam"; #'/flank_tumor_sorted.bam';
 my $normal_bam_file  = $tumor_bam_file;
-my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-VarscanHighConfidence-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Filter-VarscanHighConfidence-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_output_dir = $test_output_base . '/filter';
 
 my $hq_output_bed = "$test_output_dir/indels.hq.bed";

@@ -19,7 +19,7 @@ if ($archos !~ /64/) {
 my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants-Somatic-Sniper/tumor.tiny.bam";
 my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants-Somatic-Sniper/normal.tiny.bam";
 
-my $tmpdir = File::Temp::tempdir('SomaticSniperXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('SomaticSniperXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $sniper = Genome::Model::Tools::DetectVariants::Somatic::Sniper->create(aligned_reads_input=>$tumor, control_aligned_reads_input=>$normal, output_directory => $tmpdir, version => '0.7.2');
 ok($sniper, 'sniper command created');

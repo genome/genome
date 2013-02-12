@@ -41,6 +41,9 @@ my $cmd = Genome::Model::Build::MetagenomicComposition16s::Orient->create(build 
 ok($cmd, 'create orient cmd');
 ok($cmd->execute, 'execute orient cmd');
 
+is($build->amplicons_oriented, $build->amplicons_classified, 'amplicons oriented matches classified: '.$build->amplicons_oriented);
+is($build->amplicons_oriented_success, $build->amplicons_classified_success, 'amplicons oriented matches classified success: '.$build->amplicons_oriented_success);
+
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
     my $set_name = $amplicon_sets[$i]->name;
     is($set_name, $example_amplicon_sets[$i]->name, "set name: $set_name");
@@ -55,6 +58,3 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
 
 #print $build->data_directory."\n"; <STDIN>;
 done_testing();
-exit;
-
-

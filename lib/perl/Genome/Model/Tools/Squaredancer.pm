@@ -21,9 +21,8 @@ class Genome::Model::Tools::Squaredancer{
 };
 
 my %SQUAREDANCER_VERSIONS = (
-    '0.1' => '/gsc/scripts/opt/genome-stable/lib/perl/Genome/Model/Tools/Sv/SquareDancer.pl',
+    '0.1' => File::Basename::dirname(__FILE__) . '/Sv/SquareDancer.pl' 
 );
-
 
 sub help_brief {
     "discovers structural variation using squaredancer",

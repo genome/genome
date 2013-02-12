@@ -257,7 +257,8 @@ class Genome::InstrumentData::Solexa {
 
 sub __display_name__ {
     my $self = $_[0];
-    return $self->flow_cell_id . '/' . $self->subset_name . " (" . $self->id . ")";
+    my $sample = $self->sample;
+    return $self->flow_cell_id . '/' . $self->subset_name . " (" . $self->id . ") for " . $sample->__display_name__;
 }
 
 sub _calculate_paired_end_kb_usage {
@@ -746,20 +747,20 @@ sub _convert_trimmer_params_to_command_line_params {
             return;
         }
     } elsif ( $trimmer_params =~ /--\S+?[= ]\S+/ ) {
-        while($trimmer_params =~ /--(\S+)?[= ](\S+)/g) {
-            my ($key, $value) = ($1, $2);
+        my @trimmer_params = split(/--/,$trimmer_params);
+        for my $trimmer_param (@trimmer_params) {
+            if ($trimmer_param =~ /^\s*$/) { next; }
+            my ($key,$value) = split(/[= ]/,$trimmer_param);
             #for compatibility with pre-SX far processing profiles
             if($trimmer_name eq 'far') {
                 next if $key eq 'format';
             }
-
             push @params, $key => $value;
         }
         #for compatibility with pre-SX far processing profiles
-        if($trimmer_version and $trimmer_name eq 'far') {
+        if( $trimmer_version and (  ($trimmer_name eq 'far') || ($trimmer_name eq 'flexbar') ) ) {
             push @params, 'version' => $trimmer_version;
         }
-
     } else {
         $self->error_message("Invalid params ($trimmer_params) to convert to command line params! $@");
         return;
@@ -769,7 +770,9 @@ sub _convert_trimmer_params_to_command_line_params {
     for ( my $i = 0; $i < @params; $i += 2 ) {
         $params[$i] =~ s/_/\-/g;
         $params[$i] = '--'.$params[$i];
-        $params[$i + 1] = "'".$params[$i + 1]."'";
+        if ( defined($params[$i + 1]) && ($params[$i + 1] =~ /\S+/) ) {
+            $params[$i + 1] = "'".$params[$i + 1]."'";
+        }
     }
 
     return join(' ', @params);
@@ -1025,6 +1028,27 @@ sub resolve_quality_converter {
     return "sol2phred";
 }
 
+sub NEW_resolve_quality_converter {
+    # TODO: this is the correct logic but it breaks tests,
+    # implying our tests are wrong.  Investigate and fix.
+    # This mirrors the ::Imported module which does the work correctly.
+    # We almost never use this method in production because we use BAMs
+    # for reads which were always sanger format.
+    my $self = shift;
+    if ($self->native_qual_type eq 'solexa') {
+        return "sol2sanger";
+    }
+    elsif ($self->native_qual_type eq 'illumina') {
+        return "sol2phred";
+    }
+    elsif($self->native_qual_type eq 'sanger') {
+        return 'none';
+    }
+    else {
+        Carp::confess("unresolved errors with handling non-sanger fastq files: FIXME");
+    }
+}
+
 sub resolve_adaptor_file {
     my $self = shift;
 
@@ -1233,4 +1257,5 @@ sub get_default_alignment_metrics_hash {
 
 
 1;
+
 

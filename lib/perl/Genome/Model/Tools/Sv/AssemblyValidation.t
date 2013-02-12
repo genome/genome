@@ -5,7 +5,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use File::Compare;
+use Genome::Utility::Test qw(compare_ok);
 use File::Temp qw(tempfile);
 use File::Path qw(rmtree);
 
@@ -30,7 +30,7 @@ my @expected_files = map{$test_input_dir . $_}@file_names;
 
 my $tmp_dir = File::Temp::tempdir(
     'Genome-Model-Tools-Sv-AssemblyValidation-XXXXX', 
-    DIR     => "$ENV{GENOME_TEST_TEMP}", 
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 
@@ -51,15 +51,10 @@ my $sv_valid = Genome::Model::Tools::Sv::AssemblyValidation->create(
 ok($sv_valid, 'created AssemblyValidation object');
 ok($sv_valid->execute(), 'executed AssemblyValidation object OK');
 
-my $diff = sub {
-    my ($line1, $line2) = @_;
-    $line1 =~ s/^#Bams: .*//;
-    $line2 =~ s/^#Bams: .*//;
-    return $line1 ne $line2;
-};
 for my $i (0..2) {
     ok(-s $test_out_files[$i], 'generated output file: '.$file_names[$i].' ok');
-    is(compare($test_out_files[$i], $expected_files[$i], $diff), 0, 'output matched expected results: '.$file_names[$i]);
+    compare_ok($expected_files[$i], $test_out_files[$i], 'output matched expected results: ' . $file_names[$i],
+        filters => qr(^#Bams: .*));
 }
 
 $test_input_dir = $test_input_dir."chromosomeBeginTest.v1/";
@@ -86,5 +81,6 @@ ok($sv_valid->execute(), 'executed AssemblyValidation object');
 
 for my $i (0..2) {
     ok(-s $test_out_files[$i], 'generated output file: ' . $file_names[$i]);
-    is(compare($test_out_files[$i], $expected_files[$i], $diff), 0, 'output_matched expected results: ' . $file_names[$i]);
+    compare_ok($expected_files[$i], $test_out_files[$i], 'output matched expected results: ' . $file_names[$i],
+        filters => qr(^#Bams: .*));
 }
