@@ -101,6 +101,9 @@ sub get_with_lock {
             die "Failed to get a lock for " . Dumper(\%is_input,\%is_param);
         }
 
+        UR::Context->current->reload($class,
+            lookup_hash => $class->calculate_lookup_hash_from_arguments(@_));
+
         eval {
             @objects = $class->_faster_get(@_);
         };
