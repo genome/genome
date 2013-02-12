@@ -227,7 +227,7 @@ sub _create_unaligned_fastqs {
         include_non_pf_reads => 1,
         include_non_primary_alignments => 0,
         use_version      => $self->picard_version,
-        maximum_memory => 30,
+        maximum_memory => 16,
         maximum_permgen_memory => 256,
     );
 
