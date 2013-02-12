@@ -495,11 +495,13 @@ sub getEntrypointsFile{
         }
     }
 
-    if (($entrypoints_file eq "") && (-e $genome_build)){
-        print STDERR "Using custom annotation build: $genome_build\n";
-        $entrypoints_file = $genome_build;
-    } else {
-        die "Specify a valid genome build and sex. Only genome builds 36/37 and male/female are currently supported";
+    if ($entrypoints_file eq "") {
+        if(-e $genome_build){
+            print STDERR "Using custom annotation build: $genome_build\n";
+            $entrypoints_file = $genome_build;
+        } else {
+            die "Specify a valid genome build and sex. Only genome builds 36/37 and male/female are currently supported";
+        }
     }
 
     return $entrypoints_file;
