@@ -29,8 +29,8 @@ package Genome::Model::Tools::Sv::AssemblyPipeline::ClassifyEvents;
 use strict;
 use warnings;
 use Carp;
-use FindBin qw($Bin);
-use lib "$FindBin::Bin";
+#use FindBin qw($Bin);
+#use lib "$FindBin::Bin";
 use Genome;    
 
 # can also include optional parameters is 'has => [ ]'
