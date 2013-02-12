@@ -163,6 +163,8 @@ sub execute {
     $input{genome_build} = $self->genome_build;
     $input{sex} = $self->sex;
     $input{y_max} = $self->plot_ymax;
+    $input{centromere_file} = $self->centromere_file;
+    $input{gaps_file} = $self->gaps_file;
 
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %input);
 
