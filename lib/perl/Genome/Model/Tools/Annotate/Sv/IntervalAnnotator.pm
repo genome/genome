@@ -1,23 +1,25 @@
-package Genome::Model::Tools::Annotate::Sv::Base;
+package Genome::Model::Tools::Annotate::Sv::IntervalAnnotator;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::Tools::Annotate::Sv::Base{
-    is => "UR::Object",
-};
+class Genome::Model::Tools::Annotate::Sv::IntervalAnnotator {
+    is => "Genome::Model::Tools::Annotate::Sv::Base",
+    has => [
+        annotation_file => {
+            is => 'Text',
+            doc => 'File containing UCSC table',
+            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
+        },
+        breakpoint_wiggle_room => {
+            is => 'Number',
+            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
+            default => 200,
+        },
 
-sub process_breakpoint_list {
-    #override in subclass;
-    #interface for sv annotators
+    ],
 };
-
-sub get_key_from_item {
-    my $class = shift;
-    my $item = shift;
-    return join("--", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event});
-}
 
 sub annotate_interval_matches {
     #both breakpoints need to match within some wiggle room
@@ -73,3 +75,4 @@ sub read_ucsc_annotation{
 }
 
 1;
+

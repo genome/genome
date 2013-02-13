@@ -87,7 +87,7 @@ sub process_breakpoint_list {
             my $bTranscriptRef = $item->{transcripts_crossing_breakpoint_b};
 
             my @item_types = qw(chrA bpA chrB bpB event);
-            my $item_key   = join "--", map{$item->{$_}}@item_types;
+            my $item_key   = $self->get_key_from_item($item);
             $output{$item_key} = \@contents;
 
             push @item_types, qw(orient size score);
