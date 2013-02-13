@@ -26,17 +26,12 @@ use strict;
 use warnings;
 use Carp;
 
+use File::Basename;
 use Bio::Perl;
 use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
-    has => [
-        fusion_output_file => {
-            type => 'String',
-            doc  => 'output fusion annotation file',
-        },
-    ],
 };
 
 
@@ -74,10 +69,10 @@ ITX +-,+-
 
 
 sub process_breakpoint_list {
-    my ($self, $breakpoints_list) = @_;
-
-    my $out_fh = Genome::Sys->open_file_for_writing($self->fusion_output_file) or die "Failed to open fusion output file\n";
-    my @contents = map{'N/A'}$self->column_names;
+    my ($self, $breakpoints_list, $out_fh) = @_;
+    die $self->error_message("fusion out file handle is missing") unless $out_fh;
+    
+    my @contents = map{'N/A'}column_names();
     my %output;
 
     for my $chr (keys %$breakpoints_list) {

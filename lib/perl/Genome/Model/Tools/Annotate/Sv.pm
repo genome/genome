@@ -2,7 +2,9 @@ package Genome::Model::Tools::Annotate::Sv;
 
 use strict;
 use warnings;
+
 use Genome;
+use File::Basename;
 
 class Genome::Model::Tools::Annotate::Sv {
     is => 'Command::V2',
@@ -20,21 +22,39 @@ class Genome::Model::Tools::Annotate::Sv {
             is => 'Genome::Model::Build::ImportedAnnotation',
             id_by => 'annotation_build_id',
         },
-        annotators_to_run => {
+        annotator_list  => {
             is => 'String',
             is_many => 1,
             default => ['Transcripts', 'FusionTranscripts', 'Dbsnp'],
         },
+        fusion_output_file => {
+            is  => 'String',
+            doc => 'output fusion annotation file',
+            is_optional => 1,
+        },
+
     ],
 };
 
 sub execute {
     my $self = shift;
+    my $output_file    = $self->output_file;
+    my @annotator_list = $self->annotator_list;
 
-    my $out = Genome::Sys->open_file_for_writing($self->output_file);
+    my $out = Genome::Sys->open_file_for_writing($output_file) 
+        or die "failed to open $output_file for writing\n";
+
+    my $fusion_output_file = $self->fusion_output_file;
+    $fusion_output_file = dirname($output_file) . '/fusion_transcripts.out' unless $fusion_output_file;
+    my $fusion_out_fh;
+
+    if (grep{$_ eq 'FusionTranscripts'}@annotator_list) {  #ugly hack
+        $fusion_out_fh = Genome::Sys->open_file_for_writing($fusion_output_file) 
+            or die "Failed to open $fusion_output_file\n";
+    }
 
     my @column_names = qw(chrA bpA chrB bpB event size score);
-    for my $analysis_name ($self->annotators_to_run) {
+    for my $analysis_name (@annotator_list) {
         my $class_name = 'Genome::Model::Tools::Annotate::Sv::'.$analysis_name;
         my @analysis_column_names = $class_name->column_names;
         unless (@analysis_column_names) {
@@ -49,7 +69,7 @@ sub execute {
     my $infile = $self->input_file;
     my $build  = $self->annotation_build;
 
-    my $in = Genome::Sys->open_file_for_reading($infile);
+    my $in = Genome::Sys->open_file_for_reading($infile) or die "failed to open $infile for reading\n";
 
     my $breakpoints_list;
 
@@ -71,21 +91,25 @@ sub execute {
     $breakpoints_list = $self->fill_in_transcripts($breakpoints_list, $build);
     my %annotation_content;
 
-    foreach my $analysis ($self->annotators_to_run) {
-        my $class_name = "Genome::Model::Tools::Annotate::Sv::$analysis";
+    for my $type (@annotator_list) {
+        my $class_name = "Genome::Model::Tools::Annotate::Sv::$type";
+        my @args = ($breakpoints_list);
+        push @args, $fusion_out_fh if $type eq 'FusionTranscripts';  #hack for FusionTranscripts
         my $instance = $class_name->create;
-        my $content = $instance->process_breakpoint_list($breakpoints_list);
-        $annotation_content{$analysis} = $content;
+        my $content  = $instance->process_breakpoint_list(@args);
+        $annotation_content{$type} = $content;
     }
-    
-    foreach my $chr (sort {$a<=>$b} keys %{$breakpoints_list}) {
-        foreach my $item (@{$breakpoints_list->{$chr}}) {
+   
+    $fusion_out_fh->close if $fusion_out_fh;
+
+    for my $chr (sort {$a<=>$b} keys %{$breakpoints_list}) {
+        for my $item (@{$breakpoints_list->{$chr}}) {
             my @all_content;
             if ($item->{breakpoint_link}) {
                 next;
             }
             my $key = Genome::Model::Tools::Annotate::Sv::Base->get_key_from_item($item);
-            foreach my $analysis ($self->annotators_to_run) {
+            for my $analysis (@annotator_list) {
                 my $content = $annotation_content{$analysis}->{$key};
                 @all_content = (@all_content, @$content);
             }
@@ -128,12 +152,12 @@ sub fill_in_transcripts {
     my $self = shift;
     my $breakpoints_list = shift;
     my $build = shift;
-    foreach my $chr (keys %$breakpoints_list) {
+    for my $chr (keys %$breakpoints_list) {
         my $chr_breakpoint_list = $breakpoints_list->{$chr};
         my $transcript_iterator = $build->transcript_iterator(chrom_name => $chr);
         die "transcript iterator not defined for chr $chr" unless ($transcript_iterator);
         while (my $transcript = $transcript_iterator->next) {
-            foreach my $item (@$chr_breakpoint_list) {
+            for my $item (@$chr_breakpoint_list) {
                 if ($item->{event} eq "DEL" and $self->is_between_breakpoints($item->{bpA}, $item->{bpB}, $transcript)) {
                     push (@{$item->{transcripts_between_breakpoints}}, $transcript);
                 }
@@ -142,7 +166,6 @@ sub fill_in_transcripts {
                 }
                 if ($item->{chrB} eq $chr and $self->crosses_breakpoint($transcript, $item->{bpB})) {
                     if (defined $item->{breakpoint_link}) {
-                        $DB::single=1;
                         my $hash = $item->{breakpoint_link};
                         push (@{$hash->{transcripts_crossing_breakpoint_b}}, $transcript);
                     }

@@ -13,6 +13,11 @@ sub process_breakpoint_list {
     #interface for sv annotators
 };
 
+sub column_names {
+    #override in subclass;
+    #interface for sv annotator
+};
+
 sub get_key_from_item {
     my $class = shift;
     my $item = shift;
