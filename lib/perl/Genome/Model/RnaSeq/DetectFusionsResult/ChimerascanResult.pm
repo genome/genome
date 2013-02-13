@@ -97,6 +97,29 @@ sub _prepare_to_run_chimerascan {
     }
 }
 
+# Add all the @SQ lines from <suppliment_header_file> to the header of the <source_bam>
+# Returns: the filename of the newly created header
+sub _get_new_bam_header {
+    my ($self, $source_bam, $suppliment_header_file) = @_;
+
+    die "Source bam doesn't exist at ($source_bam)" unless -e $source_bam;
+    die "suppliment_header not supplied" unless -e $suppliment_header_file;
+
+    my $new_bam_header = File::Spec->join($self->temp_staging_directory, 'new_bam_header.seqdict');
+    # awk '!x[$1 $2]++' prints uniq lines (based on first two columns) in order they originally appeared
+    my $sq_lines_only = q($1 == "@SQ");
+    my $cmd = "cat <(samtools view -H $source_bam) " .
+              "<(awk '$sq_lines_only' $suppliment_header_file) " .
+              "| awk '!x[\$1 \$2]++' > $new_bam_header";
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        input_files => [$source_bam, $suppliment_header_file],
+        output_files => [$new_bam_header],
+    );
+
+    return $new_bam_header
+}
+
 sub _create_reheadered_queryname_sorted_primary_bam_file {
     my ($self,$bowtie_version) = @_;
 
@@ -107,11 +130,12 @@ sub _create_reheadered_queryname_sorted_primary_bam_file {
     my $index = $self->_get_index($bowtie_version);
     my $seqdict_file = $index->get_sequence_dictionary;
     my $input_bam_file = $alignment_result->bam_file;
+    my $new_bam_header = $self->_get_new_bam_header($input_bam_file, $seqdict_file);
     my $reheadered_bam_file = $self->temp_staging_directory .'/reheadered_aligned_reads.bam';
     unless (Genome::Model::Tools::Picard::ReplaceSamHeader->execute(
         input_file => $input_bam_file,
         output_file => $reheadered_bam_file,
-        header_file => $seqdict_file,
+        header_file => $new_bam_header,
     )) {
         die('Failed to reheader alignment result BAM file!');
     }
