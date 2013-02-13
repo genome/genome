@@ -8,18 +8,6 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Transcripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
-    has => [
-        breakpoint_wiggle_room => {
-            is => 'Number',
-            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
-            default => 200,
-        },
-#        dbsnp_annotation_file => {
-#            is => 'Text',
-#            doc => 'File containing UCSC dbsnp table',
-#            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
-#        },
-    ],
 };
 
 sub process_breakpoint_list{
@@ -33,10 +21,6 @@ sub process_breakpoint_list{
         }
     }
     return \%output;
-    #my $dbsnp_annotation = $self->read_ucsc_annotation($self->dbsnp_annotation_file);
-
-    #$self->find_annotated_positions($breakpoints_list, $dbsnp_annotation, $self->breakpoint_wiggle_room, "dbsnp_annotation");    
-    
 }
 
 sub process_item {
@@ -95,7 +79,7 @@ sub process_item {
         my @dbsnp = map {$_->{name}} @{$dbsnp_ref};
         $dbsnp_string = join(",", @dbsnp);
     }
-    my $key = join("--", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event});
+    my $key = $self->get_key_from_item($item);
     my $value = [$geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes];
     return ($key, $value);
 
@@ -270,24 +254,6 @@ sub find_annotated_positions {
         }
     }
     return 1;
-}
-
-sub read_ucsc_annotation{
-    my ($self, $file) = @_;
-    my %annotation;
-    open (ANNOTATION, "<$file") || die "Unable to open annotation: $file\n";
-    while (<ANNOTATION>) {
-        chomp;
-        next if /^\#/;
-        my $p;
-        my @extra;
-        ($p->{bin},$p->{chrom},$p->{chromStart},$p->{chromEnd},$p->{name},@extra) = split /\t+/;
-        $p->{chrom} =~ s/chr//;
-        $p->{extra} = \@extra;
-        push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
-    }
-    close ANNOTATION;
-    return \%annotation;
 }
 
 

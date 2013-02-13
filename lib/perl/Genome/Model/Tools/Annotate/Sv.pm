@@ -23,7 +23,7 @@ class Genome::Model::Tools::Annotate::Sv {
         annotators_to_run => {
             is => 'String',
             is_many => 1,
-            default => ['Transcripts', 'FusionTranscripts'],
+            default => ['Transcripts', 'FusionTranscripts', 'Dbsnp'],
         },
     ],
 };
@@ -36,11 +36,11 @@ sub execute {
     my @column_names = qw(chrA bpA chrB bpB event size score);
     for my $analysis_name ($self->annotators_to_run) {
         my $class_name = 'Genome::Model::Tools::Annotate::Sv::'.$analysis_name;
-        my @analyais_column_names = $class_name->column_names;
-        unless (@analyais_column_names) {
+        my @analysis_column_names = $class_name->column_names;
+        unless (@analysis_column_names) {
             die $self->error_message("There is no valid column names for $class_name");
         }
-        push @column_names, @analyais_column_names;
+        @column_names = (@column_names, @analysis_column_names);
     }
 
     $out->print(join "\t", @column_names);
@@ -73,7 +73,8 @@ sub execute {
 
     foreach my $analysis ($self->annotators_to_run) {
         my $class_name = "Genome::Model::Tools::Annotate::Sv::$analysis";
-        my $content = $class_name->process_breakpoint_list($breakpoints_list);
+        my $instance = $class_name->create;
+        my $content = $instance->process_breakpoint_list($breakpoints_list);
         $annotation_content{$analysis} = $content;
     }
     
@@ -83,8 +84,9 @@ sub execute {
             if ($item->{breakpoint_link}) {
                 next;
             }
-            foreach my $analysis (keys %annotation_content) {
-                my $content = $annotation_content{$analysis}->{join("--", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event})};
+            my $key = Genome::Model::Tools::Annotate::Sv::Base->get_key_from_item($item);
+            foreach my $analysis ($self->annotators_to_run) {
+                my $content = $annotation_content{$analysis}->{$key};
                 @all_content = (@all_content, @$content);
             }
             $out->print(join("\t", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event}, $item->{size}, $item->{score}, @all_content)."\n"); 
