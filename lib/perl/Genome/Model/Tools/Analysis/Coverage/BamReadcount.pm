@@ -8,80 +8,94 @@ use warnings;
 class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
     is => 'Command',
     has => [
-	bam_file => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'path to the bam file to get readcounts from',
-	},
+    bam_file => {
+        is => 'String',
+        is_optional => 0,
+        doc => 'path to the bam file to get readcounts from',
+    },
 
-	variant_file => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'File containing snvs in 1-based, 5-col format (chr, st, sp, ref, var)',
-	},
+    variant_file => {
+        is => 'String',
+        is_optional => 0,
+        doc => 'File containing snvs in 1-based, 5-col format (chr, st, sp, ref, var)',
+    },
 
-        output_file => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'output file (chr, position, ref_count, var_count, var_freq)',
-        },
+    output_file => {
+        is => 'String',
+        is_optional => 0,
+        doc => 'output file (chr, position, ref_count, var_count, var_freq)',
+    },
 
-        genome_build => {
-            is => 'String',
-            is_optional => 0,
-	    doc => 'takes either a string describing the genome build (one of 36, 37, mm9, mus37, mus37wOSK) or a path to the genome fasta file',
-        },
+    genome_build => {
+        is => 'String',
+        is_optional => 0,
+        doc => 'takes either a string describing the genome build (one of 36, 37, mm9, mus37, mus37wOSK) or a path to the genome fasta file',
+    },
 
-        min_quality_score => {
-            is => 'Integer',
-            is_optional => 1,
-	    doc => 'minimum mapping quality of reads to be considered',
-            default => '1',
-        },
+    min_mapping_quality => {
+        is => 'Integer',
+        is_optional => 1,
+        doc => 'minimum mapping quality of reads to be considered',
+        default => '1',
+    },
 
-        chrom => {
-            is => 'String',
-            is_optional => 1,
-	    doc => 'only process this chromosome.  Useful for enormous files',
-        },
+    min_base_quality => {
+        is => 'Integer',
+        is_optional => 1,
+        doc => 'minimum base quality of bases in reads to be considered',
+        default => '0',
+    },
 
-        min_depth  => {
-            is => 'String',
-            is_optional => 1,
-	    doc => 'minimum depth required for a site to be reported',
-        },
+    chrom => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'only process this chromosome.  Useful for enormous files',
+    },
 
-        max_depth => {
-            is => 'String',
-            is_optional => 1,
-	    doc => 'maximum depth allowed for a site to be reported',
-        },
+    min_depth  => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'minimum depth required for a site to be reported',
+    },
 
-        min_vaf => {
-            is => 'String',
-            is_optional => 1,
-	    doc => 'minimum variant allele frequency required for a site to be reported (0-100)',
-        },
+    max_depth => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'maximum depth allowed for a site to be reported',
+    },
 
-        max_vaf => {
-            is => 'String',
-            is_optional => 1,
-	    doc => 'maximum variant allele frequency allowed for a site to be reported (0-100)',
-        },
+    min_vaf => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'minimum variant allele frequency required for a site to be reported (0-100)',
+    },
 
-        indel_size_limit => {
-            is => 'Integer',
-            is_optional => 1,
-	    doc => 'maximum indel size to grab readcounts for. (The larger the indel, the more skewed the readcounts due to mapping problems)',
-            default => 2,
-        },
+    max_vaf => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'maximum variant allele frequency allowed for a site to be reported (0-100)',
+    },
 
-        count_non_reference_reads => {
-            is => 'Boolean',
-            is_optional => 1,
-	    doc => 'if this flag is set, the tool will return the count and frequency of all non-reference reads, not just the frequency of the variant listed. Currently only works on SNVs, will skip indels'
-        },
-        ]
+    indel_size_limit => {
+        is => 'Integer',
+        is_optional => 1,
+        doc => 'maximum indel size to grab readcounts for. (The larger the indel, the more skewed the readcounts due to mapping problems)',
+        default => 2,
+    },
+
+    count_non_reference_reads => {
+        is => 'Boolean',
+        is_optional => 1,
+        doc => 'if this flag is set, the tool will return the count and frequency of all non-reference reads, not just the frequency of the variant listed. Currently only works on SNVs, will skip indels'
+    },
+
+    use_varscan => {
+        is => 'Boolean',
+        is_optional => 1,
+        default => 0,
+        doc => 'use samtools mpilup and varscan readcounts for snv readcounts'
+    },
+    ]
 };
 
 sub help_brief {
@@ -101,7 +115,8 @@ sub execute {
     my $variant_file = $self->variant_file;
     my $output_file = $self->output_file;
     my $genome_build = $self->genome_build;
-    my $min_quality_score = $self->min_quality_score;
+    my $min_base_quality = $self->min_base_quality;
+    my $min_mapping_quality = $self->min_mapping_quality;
     my $indel_size_limit = $self->indel_size_limit;
     my $count_non_reference_reads = $self->count_non_reference_reads;
     if($count_non_reference_reads){
@@ -112,8 +127,8 @@ sub execute {
     my $max_vaf = $self->max_vaf;
     my $min_depth = $self->min_depth;
     my $max_depth = $self->max_depth;
-
     my $chrom = $self->chrom;
+    my $use_varscan = $self->use_varscan;
 
     #grab the appropriate fasta file
     my $fasta;
@@ -145,7 +160,7 @@ sub execute {
     #convert iub bases to lists
     sub convertIub{
         my ($base) = @_;
-        
+
         #deal with cases like "A/T" or "C/W"
         if ($base =~/\//){
             my @bases=split(/\//,$base);
@@ -198,11 +213,11 @@ sub execute {
         }
         return 0;
     }
-    
-    
+
+
     sub filterAndPrint{
         my ($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq, 
-         $min_depth,$max_depth,$min_vaf,$max_vaf,$OUTFILE) = @_;
+            $min_depth,$max_depth,$min_vaf,$max_vaf,$OUTFILE) = @_;
         #filters on the output
         my $do_print=1;
 
@@ -226,7 +241,7 @@ sub execute {
                 }
             }
         }                
- 
+
         if(defined($min_vaf)){            
             unless($min_vaf eq "NA"){
                 if($var_freq eq "NA"){
@@ -246,7 +261,7 @@ sub execute {
             }
         }
 
-        
+
         if($do_print){
             print $OUTFILE "$chr\t$pos\t$knownRef\t$knownVar\t$ref_count\t$var_count\t";
             if ($var_freq eq "NA"){
@@ -258,7 +273,7 @@ sub execute {
         }
     }
 
-    
+
     #---------------------------
 
     #create temp directory for munging
@@ -273,7 +288,7 @@ sub execute {
         my $cmd = "grep \"^" . $chrom . "[[:space:]]\" $variant_file>$tempdir/varfile";
         my $return = Genome::Sys->shellcmd(
             cmd => "$cmd",
-            );
+        );
         unless($return) {
             $self->error_message("Failed to execute: Returned $return");
             die $self->error_message;
@@ -297,7 +312,7 @@ sub execute {
     {
         chomp($sline);
         my @fields = split("\t",$sline);
-        
+
         $fields[3] =~ s/0/\-/;
         $fields[4] =~ s/0/\-/;
         $fields[3] =~ s/\*/\-/;
@@ -305,13 +320,13 @@ sub execute {
         $fields[3] = uc($fields[3]);
         $fields[4] = uc($fields[4]);
 
-        
+
         my $key = join("\t",(@fields[0..1]));
 
         #is it an indel?
         if (($fields[3] =~ /\-/) || ($fields[4] =~ /\-/) || 
             (length($fields[3]) > 1) || (length($fields[4]) > 1)){
-            
+
             #is it longer than the max length?
             if((length($fields[3]) > $indel_size_limit) || (length($fields[4]) > $indel_size_limit)){
                 $tooLongIndels{join("\t",($fields[0],$fields[1],$fields[3],$fields[4]))} = 0;
@@ -340,101 +355,217 @@ sub execute {
     close(INDELFILE);
     close(SNVFILE);
     close($inFh);
-    
+
 
 
     #open the output file
     my $OUTFILE;
     open($OUTFILE,">$output_file") || die "can't open $output_file for writing\n";
-    
-  
+
+
     #------------------------------------------
     #now run the readcounting on snvs
     if( -s "$tempdir/snvpos"){
-        my $return = Genome::Model::Tools::Sam::Readcount->execute(
-            bam_file => $bam_file,
-            minimum_mapping_quality => $min_quality_score,
-            output_file => "$tempdir/readcounts",
-            reference_fasta => $fasta,
-            region_list => "$tempdir/snvpos",
-        );
-        unless($return) {
-            $self->error_message("Failed to execute: Returned $return");
-            die $self->error_message;
-        }
 
-        #parse the results
-        my $inFh2 = IO::File->new( "$tempdir/readcounts" ) || die "can't open file\n";
-        while( my $line = $inFh2->getline )
-        {
-            chomp($line);
-            my ($chr, $pos, $ref, $depth, @counts) = split("\t",$line);
-            
-            my $ref_count = 0;
-            my $var_count = 0;
-            my $var_freq = 0;
-            my $knownRef;
-            my $knownVar;
-            
-            if(!(defined($snvVariantHash{join("\t",($chr, $pos))}))){
-                print STDERR "WARNING: position $chr : $pos not found in input\n";
-                next;
-            }                
+        # use samtools, then varscan for gathering readcounts #
+        if ($use_varscan) {
 
-            my @snvs = split(",",$snvVariantHash{join("\t",($chr, $pos))});
+            open(SNVMOD,">$tempdir/snvpos.bed");
+            $inFh = IO::File->new( "$tempdir/snvpos" ) || die "can't open file\n";
 
-            foreach my $pair (@snvs){
-                my @as = split("\t",$pair);
-                $knownRef = $as[0];
-                $knownVar = $as[1];
+            #convert the snv file to bed 
+            while( my $line = $inFh->getline )
+            {
+                chomp($line);
+                my @F = split("\t",$line);
+                $F[1]--;
+                print SNVMOD join("\t",@F) . "\n";
+            }
+            close(SNVMOD);
+
+            #run samtools view, then mpileup to get the readcounts for each snv:
+            my $cmd = "samtools view -ub -L $tempdir/snvpos.bed $bam_file | samtools mpileup -f $fasta -q $min_mapping_quality - > $tempdir/snv_mpileup";
+            $self->status_message("Running command: $cmd");
+
+            my $return = Genome::Sys->shellcmd(
+                cmd => "$cmd",
+            );
+            unless($return) {
+                $self->error_message("Failed to execute: Returned $return");
+                die $self->error_message;
+            }
+
+            #run varscan to parse the samtools file
+            $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/snv_mpileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/snvs.varscan";
+            $self->status_message("Running command: $cmd");
+
+            $return = Genome::Sys->shellcmd(
+                cmd => "$cmd",
+            );
+            unless($return) {
+                $self->error_message("Failed to execute: Returned $return");
+                die $self->error_message;
+            }       
+
+            #read, clean up and print snvs
+            $inFh = IO::File->new( "$tempdir/snvs.varscan" ) || die "can't open varscan snv file\n";
+            while( my $line = $inFh->getline )
+            {
+                chomp($line);
+                next if $line =~ /^chrom/;
+                my ($chr, $pos, $ref, $depth, $q0_depth, @counts) = split("\t",$line); #counts format: base:reads:strands:avg_qual:map_qual:plus_reads:minus_reads
+
                 my $ref_count = 0;
                 my $var_count = 0;
                 my $var_freq = 0;
-                
-                #go through each base at that position, grab the correct one
-                foreach my $count_stats (@counts) {
-                    my ($allele, $count, $mq, $bq) = split /:/, $count_stats;
+                my $knownRef;
+                my $knownVar;
 
-                    # assume that the ref call is ACTG, not iub 
-                    # (assumption looks valid in my files)
-                    if ($allele eq $knownRef){
-                        $ref_count += $count;
-                        next;
-                    }
+                if(!(defined($snvVariantHash{join("\t",($chr, $pos))}))){
+                    #print STDERR "WARNING: position $chr : $pos not found in input\n";
+                    next;
+                }                
 
-                    # if we're counting all non-reference reads, not just the specified allele
-                    if($count_non_reference_reads){
-                        unless($allele eq $knownRef){
+                my @snvs = split(",",$snvVariantHash{join("\t",($chr, $pos))});
+
+                foreach my $pair (@snvs){
+                    my @as = split("\t",$pair);
+                    $knownRef = $as[0];
+                    $knownVar = $as[1];
+                    my $ref_count = 0;
+                    my $var_count = 0;
+                    my $var_freq = 0;
+
+                    #go through each base at that position, grab the correct one
+                    foreach my $count_stats (@counts) {
+                        my ($allele, $count, $strands, $bq, $mq, $plus_reads, $minus_reads) = split /:/, $count_stats;
+
+                        # assume that the ref call is ACTG, not iub 
+                        # (assumption looks valid in my files)
+                        if ($allele eq $knownRef){
+                            $ref_count += $count;
+                            next;
+                        }
+
+                        # if we're counting all non-reference reads, not just the specified allele
+                        if($count_non_reference_reads){
+                            unless($allele eq $knownRef){
+                                $var_count += $count;
+                            }
+                            next;
+                        }
+
+                        # if this base is included in the IUB code for
+                        # for the variant, (but doesn't match the ref)
+                        if (matchIub($allele,$knownRef,$knownVar)){
                             $var_count += $count;
                         }
-                        next;
+
                     }
-                                        
-                    # if this base is included in the IUB code for
-                    # for the variant, (but doesn't match the ref)
-                    if (matchIub($allele,$knownRef,$knownVar)){
-                        $var_count += $count;
+                    if ($depth ne '0') {
+                        $var_freq = $var_count/$depth * 100;
+                    }            
+
+                    $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
+
+                    if($count_non_reference_reads){
+                        $knownVar = "NonRef";
                     }
-                        
+
+                    filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
+                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+
                 }
-                if ($depth ne '0') {
-                    $var_freq = $var_count/$depth * 100;
+            }
+        }
+
+        # else use bam-readcount #
+        else {
+            my $cmd = "bam-readcount -q $min_mapping_quality -f $fasta -l $tempdir/snvpos $bam_file >$tempdir/readcounts";
+            my $return = Genome::Sys->shellcmd(
+                cmd => "$cmd",
+            );
+            unless($return) {
+                $self->error_message("Failed to execute: Returned $return");
+                die $self->error_message;
+            }
+
+            ## TEST
+            $DB::single = 1;
+
+            #parse the results
+            my $inFh2 = IO::File->new( "$tempdir/readcounts" ) || die "can't open file\n";
+            while( my $line = $inFh2->getline )
+            {
+                chomp($line);
+                my ($chr, $pos, $ref, $depth, @counts) = split("\t",$line);
+
+                my $ref_count = 0;
+                my $var_count = 0;
+                my $var_freq = 0;
+                my $knownRef;
+                my $knownVar;
+
+                if(!(defined($snvVariantHash{join("\t",($chr, $pos))}))){
+                    print STDERR "WARNING: position $chr : $pos not found in input\n";
+                    next;
+                }                
+
+                my @snvs = split(",",$snvVariantHash{join("\t",($chr, $pos))});
+
+                foreach my $pair (@snvs){
+                    my @as = split("\t",$pair);
+                    $knownRef = $as[0];
+                    $knownVar = $as[1];
+                    my $ref_count = 0;
+                    my $var_count = 0;
+                    my $var_freq = 0;
+
+                    #go through each base at that position, grab the correct one
+                    foreach my $count_stats (@counts) {
+                        my ($allele, $count, $mq, $bq) = split /:/, $count_stats;
+
+                        # assume that the ref call is ACTG, not iub 
+                        # (assumption looks valid in my files)
+                        if ($allele eq $knownRef){
+                            $ref_count += $count;
+                            next;
+                        }
+
+                        # if we're counting all non-reference reads, not just the specified allele
+                        if($count_non_reference_reads){
+                            unless($allele eq $knownRef){
+                                $var_count += $count;
+                            }
+                            next;
+                        }
+
+                        # if this base is included in the IUB code for
+                        # for the variant, (but doesn't match the ref)
+                        if (matchIub($allele,$knownRef,$knownVar)){
+                            $var_count += $count;
+                        }
+
+                    }
+                    if ($depth ne '0') {
+                        $var_freq = $var_count/$depth * 100;
+                    }            
+
+                    $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
+
+                    if($count_non_reference_reads){
+                        $knownVar = "NonRef";
+                    }
+
+                    filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
+                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+
+
                 }            
-
-                $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
-
-                if($count_non_reference_reads){
-                    $knownVar = "NonRef";
-                }
-                     
-                filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
-                               $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
-                
-
-            }            
+            }
         }
     }    
-    
+
     #--------------------------------------------
     #now indels, which gets tricky
     #the way pileup places the coordinates gets weird, so output the appropriate bases to look at:
@@ -469,24 +600,24 @@ sub execute {
 
         my $return = Genome::Sys->shellcmd(
             cmd => "$cmd",
-            );
+        );
         unless($return) {
             $self->error_message("Failed to execute: Returned $return");
             die $self->error_message;
         }
 
         #run varscan to parse the samtools file
-        $cmd = "java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual 0 --output-file $tempdir/indels.varscan";
+        $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/indels.varscan";
         $self->status_message("Running command: $cmd");
-        
+
         $return = Genome::Sys->shellcmd(
             cmd => "$cmd",
-            );
+        );
         unless($return) {
             $self->error_message("Failed to execute: Returned $return");
             die $self->error_message;
         }       
-        
+
         #read, clean up and print indels
         $inFh = IO::File->new( "$tempdir/indels.varscan" ) || die "can't open varscan file\n";
         while( my $line = $inFh->getline )
@@ -494,7 +625,7 @@ sub execute {
             chomp($line);
             next if $line =~ /^chrom/;
             my @F =  split("\t",$line);
-            
+
             my $ref_count = 0;
             my $var_count = 0;
             my $var_freq = 0;
@@ -523,14 +654,14 @@ sub execute {
 
                 my @refdetails = split(":",$F[5]);
                 $ref_count = $refdetails[1];
-                
+
                 #can be more than one variant output in trailing columns of varscan format
                 my $found = 0;
                 my $i;
                 for($i=6;$i<@F;$i++){
                     my @varResults = split(":",$F[$i]);
                     my $varReads = $varResults[1];
-                    
+
                     if ($varResults[0] =~ /INS/){
                         my @varInfo = split("-",$varResults[0]);
                         my $varbase = $varInfo[2];
@@ -539,8 +670,8 @@ sub execute {
                                 $var_freq = ($varResults[1]/$F[3])*100;
                             }
                             filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $varResults[1], $var_freq,
-                                           $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
-                            
+                                $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
+
                             $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
                             $found = 1;
                         }                    
@@ -557,7 +688,7 @@ sub execute {
                                 $var_freq = ($varResults[1]/($F[3]+$varResults[1]))*100;
                             }
                             filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $varResults[1], $var_freq,
-                                           $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
+                                $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
                             $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
                             $found = 1;
                         }
@@ -566,7 +697,7 @@ sub execute {
                 #if the site is in the output, but the indel isn't there, we output zero for the var count
                 unless($found){
                     filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, 0, 0,
-                                   $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
+                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
                     $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
                 }
             }
@@ -579,7 +710,7 @@ sub execute {
             #site not called, gets a zero count
             my ($chr, $pos, $knownRef, $knownVar) = split("\t",$k);
             filterAndPrint($chr, $pos, $knownRef, $knownVar, 0, 0, 0,
-                           $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
+                $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
         }        
     }
 
@@ -587,7 +718,7 @@ sub execute {
         #site too long, gets an NA value
         my ($chr, $pos, $knownRef, $knownVar) = split("\t",$k);
         filterAndPrint($chr, $pos, $knownRef, $knownVar, "NA", "NA", "NA",
-                       $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
+            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
     }           
     close($OUTFILE);
 }
