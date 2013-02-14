@@ -6,6 +6,13 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Segdup {
     is => "Genome::Model::Tools::Annotate::Sv::IntervalAnnotator",
+    has_input => [
+        annotation_file => {
+            is => 'String',
+            doc => 'File containing UCSC table',
+            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/Human.Feb2009.SegDups.tab",
+        }
+    ],
 };
 
 sub process_breakpoint_list {
@@ -22,7 +29,7 @@ sub process_breakpoint_list {
                 $output{$key} = [join(",", @segdup)];
             }
             else {
-                $output{$key} = ["-"];
+                $output{$key} = ["N/A"];
             }
         }
     }
