@@ -88,21 +88,33 @@ sub _get_fastq_files {
 
     $alignment_result->add_user(label => 'uses' , user => $self);
 
+    my $queryname_sorted_bam = $self->temp_staging_directory . '/alignment_result_queryname_sorted.bam';
+    unless (Genome::Model::Tools::Picard::SortSam->execute(
+        input_file => $alignment_result->bam_file,
+        output_file => $queryname_sorted_bam,
+        sort_order => 'queryname',
+        max_records_in_ram => 2_500_000,
+        maximum_permgen_memory => 256,
+        maximum_memory => 16,
+        use_version => $self->picard_version,
+    )) {
+        die ('Failed to querynam sort BAM file!'); 
+    }
     
     my $fastq1 = $self->temp_staging_directory . "/fastq1";
     my $fastq2 = $self->temp_staging_directory . "/fastq2";
     
     my $cmd = Genome::Model::Tools::Picard::StandardSamToFastq->create(
-        input            => $alignment_result->bam_file,
+        input            => $queryname_sorted_bam,
         fastq            => $fastq1,
         second_end_fastq => $fastq2,
         re_reverse       => 1,
         include_non_pf_reads => 1,
         include_non_primary_alignments => 0,
         use_version      => $self->picard_version,
-        maximum_memory => 30,
+        maximum_memory => 16,
         maximum_permgen_memory => 256,
-        max_records_in_ram => 5_000_000,
+        max_records_in_ram => 2_500_000,
         additional_jvm_options => '-XX:-UseGCOverheadLimit',
     );
     unless ($cmd->execute){
