@@ -238,3 +238,6 @@
 [submodule "copyCat"]
 	path = copyCat
 	url = ssh://git//srv/git/copyCat.git
+[submodule "sciClone"]
+	path = sciClone
+	url = ssh://git//srv/git/sciClone.git
