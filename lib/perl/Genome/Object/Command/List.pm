@@ -42,6 +42,7 @@ sub _split_width {
     my ($left, $right);
     while (@w) {
         my $w = shift @w;
+        $w = '' unless defined $w;
         if ( ! defined $left) {
             $left = $w
         } elsif ((length($left) + length($w)) >= $width) {
