@@ -84,18 +84,21 @@ sub _prepare_to_run_chimerascan {
             my $reusable_dir = File::Spec->join($self->temp_staging_directory, 'reusable');
             Genome::Sys->create_directory($reusable_dir);
 
+            $self->status_message("Creating the reheadered bam.");
+            my $reheadered_bam = $self->_create_reheadered_bam($reusable_dir, $bowtie_version);
+
             $self->status_message("Creating the 'both mates mapped' bam.");
-            my ($both_mates_bam, $both_mates_index, $sorted_reheadered_bam) =
-                    $self->_create_both_mates_bam($reusable_dir, $bowtie_version);
+            my ($both_mates_bam, $sorted_both_mates_bam, $sorted_both_mates_index) =
+                    $self->_create_both_mates_bam($reusable_dir, $reheadered_bam);
 
             $self->status_message("Creating the unmapped fastqs.");
             my ($unmapped_1, $unmapped_2) =
-                    $self->_create_unmapped_fastqs($reusable_dir, $sorted_reheadered_bam);
-            unlink($sorted_reheadered_bam);
+                    $self->_create_unmapped_fastqs($reusable_dir, $reheadered_bam);
+            unlink($reheadered_bam);
 
             $self->status_message("Symlinking reusable parts into Chimerascan working dir.");
             $self->_symlink_in_files($tmp_dir, $both_mates_bam, $unmapped_1, $unmapped_2,
-                        $both_mates_index);
+                        $sorted_both_mates_bam, $sorted_both_mates_index);
         } else {
             die(sprintf("This version of chimerascan (%s) doesn't " .
                         "support reusing the alignment BAM.", $self->version));
@@ -116,11 +119,50 @@ sub _symlink_in_fastqs {
 }
 
 sub _create_both_mates_bam {
+    my ($self, $reusable_dir, $reheadered_bam) = @_;
+
+    $self->status_message("Filtering to only reads where both mates map (for aligned_reads.bam)");
+    my $both_mates_bam = File::Spec->join($reusable_dir, 'both_mates.bam');
+    my $view_cmd = "samtools view -F 12 -b -h $reheadered_bam > $both_mates_bam";
+    Genome::Sys->shellcmd(
+        cmd => $view_cmd,
+        input_files => [$reheadered_bam],
+        output_files => [$both_mates_bam],
+    );
+
+    $self->status_message("Sorting both_mates_bam by position");
+    my $sorted_both_mates_bam = File::Spec->join($reusable_dir, 'sorted_both_mates.bam');
+    my $rv = Genome::Model::Tools::Picard::SortSam->execute(
+        input_file => $both_mates_bam,
+        output_file => $sorted_both_mates_bam,
+        sort_order => 'coordinate',
+        use_version => $self->picard_version,
+    );
+    unless ($rv) {
+        die('Failed to sort by position!');
+    }
+
+    # create index
+    $self->status_message("Indexing BAM: $sorted_both_mates_bam");
+    my $sorted_both_mates_index = $sorted_both_mates_bam . '.bai';
+    my $index_cmd = Genome::Model::Tools::Picard::BuildBamIndex->create(
+        input_file => $sorted_both_mates_bam,
+        output_file => $sorted_both_mates_index,
+        use_version => $self->picard_version,
+    );
+
+
+    $index_cmd->execute();
+    unless (-e $sorted_both_mates_index) {
+        die "Failed to create BAM index of \"$sorted_both_mates_bam\".";
+    }
+    return ($both_mates_bam, $sorted_both_mates_bam, $sorted_both_mates_index);
+}
+
+sub _create_reheadered_bam {
     my ($self, $reusable_dir, $bowtie_version) = @_;
 
     $self->status_message("Creating bam re-headered with transcripts from the chimerascan-index");
-    my $alignment_result = $self->alignment_result;
-
     my $index = $self->_get_index($bowtie_version);
     my $seqdict_file = $index->get_sequence_dictionary;
     my $input_bam_file = $self->_qname_sorted_bam;
@@ -136,44 +178,7 @@ sub _create_both_mates_bam {
     }
     unlink($new_bam_header);
 
-
-    $self->status_message("Sorting reheadered BAM by position");
-    my $sorted_reheadered_bam = File::Spec->join($reusable_dir, 'sorted_reheadered.bam');
-    $rv = Genome::Model::Tools::Picard::SortSam->execute(
-        input_file => $reheadered_bam,
-        output_file => $sorted_reheadered_bam,
-        sort_order => 'coordinate',
-        use_version => $self->picard_version,
-    );
-    unless ($rv) {
-        die('Failed to sort by position!');
-    }
-    unlink($reheadered_bam);
-
-
-    $self->status_message("Filtering to only reads where both mates map (for aligned_reads.bam)");
-    my $both_mates_bam = File::Spec->join($reusable_dir, 'both_mates_mapped_sorted_aligned_reads.bam');
-    my $view_cmd = "samtools view -F 12 -b -h $sorted_reheadered_bam > $both_mates_bam";
-    Genome::Sys->shellcmd(
-        cmd => $view_cmd,
-        input_files => [$sorted_reheadered_bam],
-        output_files => [$both_mates_bam],
-    );
-
-    # create index
-    $self->status_message("Indexing BAM: $both_mates_bam");
-    my $both_mates_index = $both_mates_bam . '.bai';
-    my $index_cmd = Genome::Model::Tools::Picard::BuildBamIndex->create(
-        input_file => $both_mates_bam,
-        output_file => $both_mates_index,
-        use_version => $self->picard_version,
-    );
-
-    $index_cmd->execute();
-    unless (-e $both_mates_index) {
-        die "Failed to create BAM index of \"$both_mates_bam\".";
-    }
-    return ($both_mates_bam, $both_mates_index, $sorted_reheadered_bam);
+    return $reheadered_bam;
 }
 
 
@@ -202,18 +207,18 @@ sub _get_new_bam_header {
 
 
 sub _create_unmapped_fastqs {
-    my ($self, $reusable_dir, $sorted_reheadered_bam) = @_;
+    my ($self, $reusable_dir, $reheadered_bam) = @_;
 
     # Run samtools to filter, include only reads where one or both mates didn't map (primary and non-primary).
     $self->status_message("Filtering to get all the other reads.");
-    my $not_both_mates_bam = File::Spec->join($reusable_dir, 'unmapped_sorted_aligned_reads.bam');
+    my $not_both_mates_bam = File::Spec->join($reusable_dir, 'not_both_mates.bam');
     # sam format specifies bitmask 4 = read itself unmapped and 8 = read's mate is unmapped (we want either of them)
     my $gawk_cmd = q{substr($1, 0, 1) == "@" || and($2, 4) || and($2, 8)};
-    my $view_cmd = "samtools view -h $sorted_reheadered_bam | gawk '$gawk_cmd' | " .
+    my $view_cmd = "samtools view -h $reheadered_bam | gawk '$gawk_cmd' | " .
             "samtools view -S -b - > $not_both_mates_bam";
     Genome::Sys->shellcmd(
         cmd => $view_cmd,
-        input_files => [$sorted_reheadered_bam],
+        input_files => [$reheadered_bam],
         output_files => [$not_both_mates_bam],
     );
 
@@ -238,7 +243,8 @@ sub _create_unmapped_fastqs {
 }
 
 sub _symlink_in_files {
-    my ($self, $tmp_dir, $both_mates_bam, $unmapped_1, $unmapped_2, $both_mates_index) = @_;
+    my ($self, $tmp_dir, $both_mates_bam, $unmapped_1, $unmapped_2,
+            $sorted_both_mates_bam, $sorted_both_mates_index) = @_;
 
     Genome::Sys->create_symlink($both_mates_bam,
             File::Spec->join($self->temp_staging_directory, 'aligned_reads.bam'));
@@ -246,9 +252,9 @@ sub _symlink_in_files {
     Genome::Sys->create_symlink($unmapped_1, File::Spec->join($tmp_dir, 'unaligned_1.fq'));
     Genome::Sys->create_symlink($unmapped_2, File::Spec->join($tmp_dir, 'unaligned_2.fq'));
 
-    Genome::Sys->create_symlink($both_mates_bam,
+    Genome::Sys->create_symlink($sorted_both_mates_bam,
             File::Spec->join($self->temp_staging_directory, 'sorted_aligned_reads.bam'));
-    Genome::Sys->create_symlink($both_mates_index,
+    Genome::Sys->create_symlink($sorted_both_mates_index,
             File::Spec->join($self->temp_staging_directory, 'sorted_aligned_reads.bam.bai'));
 }
 

@@ -508,7 +508,7 @@ sub base_temp_directory {
 
     # See if we're running under LSF and LSF gave us a directory that will be
     # auto-cleaned up when the job terminates
-    my $tmp_location = $ENV{'TMPDIR'} || "/tmp";
+    my $tmp_location = $ENV{'TMPDIR'} || File::Spec->tmpdir();
     if ($ENV{'LSB_JOBID'}) {
         my $lsf_possible_tempdir = sprintf("%s/%s.tmpdir", $tmp_location, $ENV{'LSB_JOBID'});
         $tmp_location = $lsf_possible_tempdir if (-d $lsf_possible_tempdir);
