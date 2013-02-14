@@ -19,8 +19,10 @@ my $version = 1;
 my $data_dir = "$base_dir/v$version";
 
 my $temp_file = Genome::Sys->create_temp_file_path;
+my $fusion_temp_file = dirname($temp_file).'/fusion_transcripts.out';
 my $cmd = Genome::Model::Tools::Annotate::Sv->create(
     input_file  => "$base_dir/in.svs",
+    fusion_transcripts_output_file => $fusion_temp_file,
     output_file => $temp_file,
     annotation_build_id => 102549985,  #54_36p_v2, human Build36
     annotator_list      => ['FusionTranscripts'],
@@ -34,7 +36,6 @@ ok(-s $temp_file, "Output file created");
 my $diff = Genome::Sys->diff_file_vs_file($temp_file, $expected_file);
 ok(!$diff, 'output matched expected result') or diag("diff results:\n" . $diff);
 
-my $fusion_temp_file = dirname($temp_file).'/fusion_transcripts.out';
 
 my $fusion_expected_file = "$data_dir/fusion_expected.out";
 ok(-s $fusion_temp_file, 'fusion output file created');
