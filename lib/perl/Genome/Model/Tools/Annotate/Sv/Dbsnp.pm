@@ -29,7 +29,7 @@ sub process_breakpoint_list {
                 $output{$key} = [join(",", @dbsnp)];
             }
             else {
-                $output{$key} = ["-"];
+                $output{$key} = ["N/A"];
             }
         }
     }
