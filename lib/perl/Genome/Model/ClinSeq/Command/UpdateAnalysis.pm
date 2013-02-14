@@ -1173,7 +1173,7 @@ sub check_somatic_variation_models{
     next unless ($model->class eq "Genome::Model::SomaticVariation");
     next unless ($model->processing_profile_id == $somatic_variation_pp_id);
     next unless ($model->annotation_build->id == $self->annotation_build->id);
-    if ($ignore_models_bx and not $ignore_models_bx->evaluate($model)) {
+    if ($ignore_models_bx and $ignore_models_bx->evaluate($model)) {
         $self->status_message("\t\tIgnore: " . $model->__display_name__);
         next;
     }
@@ -1204,7 +1204,7 @@ sub check_somatic_variation_models{
     }
     next unless ($tumor_model_match && $normal_model_match);
 
-    $self->status_message("\t\tName: " . $model->__display_name__);
+    $self->status_message("\t\tUse: " . $model->__display_name__);
     push (@final_models, $model);
   }
   my $final_model_count = scalar(@final_models);
