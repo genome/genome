@@ -481,17 +481,18 @@ sub execute {
 
         # else use bam-readcount #
         else {
-            my $cmd = "bam-readcount -q $min_mapping_quality -f $fasta -l $tempdir/snvpos $bam_file >$tempdir/readcounts";
-            my $return = Genome::Sys->shellcmd(
-                cmd => "$cmd",
+            my $return = Genome::Model::Tools::Sam::Readcount->execute(
+                bam_file => $bam_file,
+                minimum_mapping_quality => $min_mapping_quality,
+                minimum_base_quality => $min_base_quality,
+                output_file => "$tempdir/readcounts",
+                reference_fasta => $fasta,
+                region_list => "$tempdir/snvpos",
             );
             unless($return) {
                 $self->error_message("Failed to execute: Returned $return");
                 die $self->error_message;
             }
-
-            ## TEST
-            $DB::single = 1;
 
             #parse the results
             my $inFh2 = IO::File->new( "$tempdir/readcounts" ) || die "can't open file\n";
@@ -565,6 +566,8 @@ sub execute {
             }
         }
     }    
+
+    `cp $tempdir/* temp/`; ##TEST
 
     #--------------------------------------------
     #now indels, which gets tricky
