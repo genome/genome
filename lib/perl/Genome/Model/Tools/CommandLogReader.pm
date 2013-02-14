@@ -32,9 +32,9 @@ class Genome::Model::Tools::CommandLogReader{
         },
         group_by => {
             is => 'Text',
-            valid_values => ["user","command"],
+            valid_values => ["user","command_class"],
             default => "user",
-            doc => "Groups output by user name or command name, defaults to user.",
+            doc => "Groups output by user name or command class, defaults to user.",
         },
         print_headers => {
             is => 'Boolean',
@@ -59,65 +59,34 @@ This module generates a report on command line usage of genome scripts, grouping
 EOS
 }
 
-sub log_attributes {
-    my $self = shift;
-    return (qw/ date time user command params/);
-}
-
-sub log_directory_base {
-    my $self = shift;
-    return "/gsc/var/log/genome/command_line_usage";
-}
-
 sub output_attributes {
     my $self = shift;
     if ($self->group_by eq "user") {
         if ($self->report_type eq "full") {
-            return (qw/ user command params times_called/);
+            return (qw/ user command_class command_with_args times_called/);
         }
         elsif ($self->report_type eq "abbreviated") {
-            return (qw/ user command times_called/);
+            return (qw/ user command_class times_called/);
         }
         elsif ($self->report_type eq "summary") {
             return (qw/ user num_commands/);
         }
     }
-    elsif ($self->group_by eq "command") {
+    elsif ($self->group_by eq "command_class") {
         if ($self->report_type eq "full") {
-            return (qw/ command user params times_called/);
+            return (qw/ command_class user times_called command_with_args/);
         }
         elsif ($self->report_type eq "abbreviated") {
-            return (qw/ command user times_called/);
+            return (qw/ command_class user times_called/);
         }
         elsif ($self->report_type eq "summary") {
-            return (qw/ command times_called/);
+            return (qw/ command_class times_called/);
         }
     }
     else {
         $self->error_message("Unknown group by attribute or report type, unable to provide column headers");
         return;
     }
-}
-
-sub _sort_params {
-    my $self = shift;
-    my $params = shift;
-
-    my @params = sort(split('--', $params));
-    @params = sort(split('/', $params)) unless @params;
-    return unless @params;
-
-    my $str;
-    for my $p (@params) {
-        next if length $p == 0;
-        $p =~ s/^\s+|\s+$//g; # Remove leading and trailing spaces
-        unless ($p =~ /=/) {  # Replace first space with = unless there's already an =
-            $p =~ s/\s+/=/;
-        }
-        $str .= $p . " ";
-    }
-    chop $str;
-    return $str;
 }
 
 sub _create_file {
@@ -142,8 +111,9 @@ sub _create_file {
 sub execute {
     my $self = shift;
 
-    unless (-e $self->log_directory_base and -d $self->log_directory_base) {
-        $self->error_message("Log directory $self->log_directory_base does not exist, exiting");
+    my $base_log_dir = Genome::Site::TGI::Security->base_log_dir();
+    unless (-e $base_log_dir and -d $base_log_dir) {
+        $self->error_message("Log directory $base_log_dir does not exist, exiting");
         return;
     }
 
@@ -160,54 +130,43 @@ sub execute {
     my ($start_year, $start_month, $start_day) = split(/-/, $self->start_date);
     my $start_date = DateTime->new(year => $start_year, month => $start_month, day => $start_day);
 
-    my $end_date = DateTime->now;
+    my $end_date = DateTime->now(time_zone => 'America/Chicago');
     if (defined $self->end_date) {
         my ($end_year, $end_month, $end_day) = split(/-/, $self->end_date);
         $end_date = DateTime->new(year => $end_year, month => $end_month, day => $end_day);
     }
 
     my %info;
-    my @log_columns = $self->log_attributes();
-    until (DateTime->compare($start_date, $end_date) == 1) {
-        my $log_dir = $self->log_directory_base . "/" . $start_date->year . "/";
+    my @log_columns = Genome::Site::TGI::Security->log_columns();;
+    until (DateTime->compare($start_date, $end_date) >= 0) {
+        my $log_dir = $base_log_dir . "/" . $start_date->year . "/";
         my $log_file = $log_dir . $start_date->month . "-" . $start_date->day . ".log";
 
-        $start_date->add(days => 1);
+        if (-e $log_file) {
+            my $log_svr = Genome::Utility::IO::SeparatedValueReader->create(
+                input => $log_file,
+                headers => \@log_columns,
+                separator => "\t",
+                is_regex => 1,
+                ignore_extra_columns => 1,
+            );
 
-        unless (-e $log_file) {
+            while (my $line = $log_svr->next) {
+                my $user = $line->{user} || '-';
+                my $command_class = $line->{command_class} || '-';
+                my $command_with_args = $line->{command_with_args} || '-';
+                if ($self->group_by eq "command_class") {
+                    $info{$command_class}->{$user}->{$command_with_args}++;
+                }
+                elsif ($self->group_by eq "user") {
+                    $info{$user}->{$command_class}->{$command_with_args}++;
+                }
+            }
+        } else{
             $self->warning_message("Could not find $log_file, continuing.");
-            next;
         }
 
-        my $log_svr = Genome::Utility::IO::SeparatedValueReader->create(
-            input => $log_file,
-            headers => \@log_columns,
-            separator => "\t",
-            is_regex => 1,
-            ignore_extra_columns => 1,
-        );
-
-        while (my $line = $log_svr->next) {
-            my $user = $line->{user};
-            my $command = $line->{command};
-            my $params = $self->_sort_params($line->{params});
-            if ($params) {
-                if ($self->group_by eq "command"){
-                    $info{$command}->{$user}->{$params}++;
-                }
-                elsif ($self->group_by eq "user") {
-                    $info{$user}->{$command}->{$params}++;
-                }
-            }
-            else {
-                if ($self->group_by eq "command") {
-                    $info{$command}->{$user}->{'none'}++;
-                }
-                elsif ($self->group_by eq "user") {
-                    $info{$user}->{$command}->{'none'}++;
-                }
-            }
-        }
+        $start_date->add(days => 1);
     }
 
     # Print to output file, tab delimited

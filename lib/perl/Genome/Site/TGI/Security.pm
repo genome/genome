@@ -1,10 +1,40 @@
+use strict;
+use warnings;
 
 package Genome::Site::TGI::Security;
 
+use File::Spec qw();
 use File::Basename;
 use DateTime;
 use IO::File;
 use Sys::Hostname;
+
+sub command_class {
+    my @argv = @ARGV;
+
+    my $command = basename($0);
+    my %command_class = (
+        genome => 'Genome::Command',
+        gmt    => 'Genome::Model::Tools',
+    );
+    my $command_class = $command_class{$command};
+
+    while ($command_class && @argv) {
+        last unless ($command_class->is_sub_command_delegator);
+        last if ($argv[0] && index($argv[0], '-') >= 0);
+        $command_class = $command_class->class_for_sub_command(shift @argv) || $command_class;
+    }
+
+    return $command_class;
+}
+
+sub base_log_dir {
+    return File::Spec->join($ENV{GENOME_LOG_DIR}, 'command_line_usage');
+}
+
+sub log_columns {
+    return qw(date time user command_class command command_with_args);
+}
 
 # Get info about command and write to log file.
 # Send error information if log file isn't found or can't be accessed, which is usually
@@ -17,12 +47,10 @@ sub log_command {
     if ($pid) {
         return 1;
     }
-    
-    my $command = basename($0) . " ";
-    while (@argv) {
-        last unless defined $argv[0] and $argv[0] !~ /^-/;
-        $command .= (shift @argv) . " ";
-    }
+
+    my $command_class = command_class() || '-';
+    my $command = $0;
+    my $command_with_args = join(' ', basename($command), @argv);
 
     my $params = join(" ", @argv);
     my $dt = DateTime->now;
@@ -31,10 +59,23 @@ sub log_command {
     my $time = $dt->hms;
     my $host = hostname;
 
-    my $base_log_dir = $ENV{GENOME_LOG_DIR};
-    my $log_dir = join('/', $base_log_dir, 'command_line_usage', $dt->year);
+    my $log_dir = join('/', base_log_dir(), $dt->year);
     my $log_file = $dt->month . "-" . $dt->day . ".log";
-    my $log_msg = join("\t", $date, $time, Genome::Sys->username, $command, $params);
+    my %log_data = (
+        date => $date,
+        time => $time,
+        user => Genome::Sys->username,
+        command_class => $command_class,
+        command => $command,
+        command_with_args => $command_with_args,
+    );
+    my $log_msg;
+    for my $column (log_columns()) {
+        unless ($log_data{$column}) {
+            warn "missing $column!";
+        }
+        $log_msg = (defined($log_msg) ? join("\t", $log_msg, $log_data{$column}) : $log_data{$column});
+    }
 
     unless (-e $log_dir and -d $log_dir) {
         mkdir $log_dir;

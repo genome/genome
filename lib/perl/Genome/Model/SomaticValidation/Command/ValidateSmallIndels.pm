@@ -191,12 +191,20 @@ sub _resolve_inputs {
             die $self->error_message("If a build is provided, you should not provide other params");
         }
 
+        my $build = $self->build;
+        my $model= $build->model;
         my $base_dir = $self->_resolve_output_directory();
         $self->final_output_file("$base_dir/final_output");
         $self->realigned_bam_file_directory("$base_dir/realigned_bams");
         $self->small_indel_output_bed("$base_dir/small_indels.bed");
         $self->varscan_indel_output("$base_dir/varscan_indels");
         $self->varscan_snp_output("$base_dir/varscan_snps");
+        $self->tumor_bam($build->tumor_bam);
+        $self->normal_bam($build->normal_bam);
+        my $ref_seq_build_id = $model->reference_sequence_build->build_id;
+        my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
+        my $reference = $ref_seq_build->full_consensus_path('fa');
+        $self->reference_fasta($reference);
     } else {
         my @required_properties = qw(final_output_file realigned_bam_file_directory small_indel_output_bed varscan_indel_output varscan_snp_output tumor_bam normal_bam reference_fasta);
         my $fail = 0;

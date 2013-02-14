@@ -6,8 +6,46 @@ use warnings;
 use Genome;
 use File::Basename;
 
+my @has_param;
+
+BEGIN{
+    my @annotators = (
+        'Genome::Model::Tools::Annotate::Sv::Transcripts',
+        'Genome::Model::Tools::Annotate::Sv::FusionTranscripts',
+        'Genome::Model::Tools::Annotate::Sv::Dbsnp',
+        'Genome::Model::Tools::Annotate::Sv::Segdup',
+    );
+    foreach my $module (@annotators) {
+        my $module_meta = UR::Object::Type->get($module);
+        my @module_path = split /::/, $module;
+        my $module_short_name = Genome::Utility::Text::camel_case_to_string($module_path[-1]);
+        $module_short_name =~ s/\s+/_/g;
+        my @p = $module_meta->properties;
+        foreach my $p (@p) {
+            if ($p->can("is_input") and $p->is_input) {
+                my $name = $p->property_name;
+                $name = $module_short_name."_".$name;
+                my %data = %{$p};
+                for my $key (keys %data) {
+                    delete $data{$key} if $key =~ /^_/;
+                }
+                delete $data{id};
+                delete $data{db_committed};
+                delete $data{class_name};
+                delete $data{is_input};
+                $data{is_optional} = 1;
+                $data{is_param} = 1;
+                $data{doc} .= " -- for the $module_short_name annotator";
+                $data{property_name} = $name;
+                push @has_param, $name, \%data;
+            }
+        }
+    }
+}
+
 class Genome::Model::Tools::Annotate::Sv {
     is => 'Command::V2',
+    has_param => \@has_param,
     has => [
         input_file => {
             is => 'String',
@@ -27,12 +65,6 @@ class Genome::Model::Tools::Annotate::Sv {
             is_many => 1,
             default => ['Transcripts', 'FusionTranscripts', 'Dbsnp'],
         },
-        fusion_output_file => {
-            is  => 'String',
-            doc => 'output fusion annotation file',
-            is_optional => 1,
-        },
-
     ],
 };
 
@@ -43,15 +75,6 @@ sub execute {
 
     my $out = Genome::Sys->open_file_for_writing($output_file) 
         or die "failed to open $output_file for writing\n";
-
-    my $fusion_output_file = $self->fusion_output_file;
-    $fusion_output_file = dirname($output_file) . '/fusion_transcripts.out' unless $fusion_output_file;
-    my $fusion_out_fh;
-
-    if (grep{$_ eq 'FusionTranscripts'}@annotator_list) {  #ugly hack
-        $fusion_out_fh = Genome::Sys->open_file_for_writing($fusion_output_file) 
-            or die "Failed to open $fusion_output_file\n";
-    }
 
     my @column_names = qw(chrA bpA chrB bpB event size score);
     for my $analysis_name (@annotator_list) {
@@ -93,15 +116,24 @@ sub execute {
 
     for my $type (@annotator_list) {
         my $class_name = "Genome::Model::Tools::Annotate::Sv::$type";
-        my @args = ($breakpoints_list);
-        push @args, $fusion_out_fh if $type eq 'FusionTranscripts';  #hack for FusionTranscripts
-        my $instance = $class_name->create;
-        my $content  = $instance->process_breakpoint_list(@args);
+        my $module_meta = UR::Object::Type->get($class_name);
+        my $module_short_name = Genome::Utility::Text::camel_case_to_string($type);
+        $module_short_name =~ s/\s+/_/g;
+        my @p = $module_meta->properties;
+        my %params;
+        foreach my $property (@p) {
+            if ($property->can("is_input") and $property->is_input) {
+                my $property_name = $module_short_name."_".$property->property_name;
+                if ($self->$property_name) {
+                    $params{$property->property_name} = $self->$property_name;
+                }
+            }
+        }
+        my $instance = $class_name->create(%params);
+        my $content = $instance->process_breakpoint_list($breakpoints_list);
         $annotation_content{$type} = $content;
     }
    
-    $fusion_out_fh->close if $fusion_out_fh;
-
     for my $chr (sort {$a<=>$b} keys %{$breakpoints_list}) {
         for my $item (@{$breakpoints_list->{$chr}}) {
             my @all_content;
