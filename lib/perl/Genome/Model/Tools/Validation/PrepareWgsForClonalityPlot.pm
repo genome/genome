@@ -130,7 +130,7 @@ sub execute {
         `cp $readcounts_file $tempdir/readcounts`;
     } else {
         #now run the readcounting
-        my $cmd = "gmt analysis coverage bam-readcount --bam-file $bam_file --output-file $tempdir/readcounts --min-quality-score $min_mapping_quality --variant-file $tempdir/snvs --genome-build $fasta";
+        my $cmd = "gmt analysis coverage bam-readcount --bam-file $bam_file --output-file $tempdir/readcounts --min-mapping-quality $min_mapping_quality --variant-file $tempdir/snvs --genome-build $fasta";
         my $return = Genome::Sys->shellcmd(
             cmd => "$cmd",
             );
