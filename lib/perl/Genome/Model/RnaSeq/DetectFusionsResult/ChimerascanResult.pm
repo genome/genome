@@ -123,7 +123,7 @@ sub _create_both_mates_bam {
 
     my $index = $self->_get_index($bowtie_version);
     my $seqdict_file = $index->get_sequence_dictionary;
-    my $input_bam_file = $alignment_result->bam_file;
+    my $input_bam_file = $self->_qname_sorted_bam;
     my $new_bam_header = $self->_get_new_bam_header($reusable_dir, $input_bam_file, $seqdict_file);
     my $reheadered_bam = File::Spec->join($reusable_dir, 'reheadered.bam');
     my $rv = Genome::Model::Tools::Picard::ReplaceSamHeader->execute(
@@ -204,11 +204,11 @@ sub _get_new_bam_header {
 sub _create_unmapped_fastqs {
     my ($self, $reusable_dir, $sorted_reheadered_bam) = @_;
 
-    # Run samtools to filter, include only alignments where both mates map (primary and non-primary).
+    # Run samtools to filter, include only reads where one or both mates didn't map (primary and non-primary).
     $self->status_message("Filtering to get all the other reads.");
     my $not_both_mates_bam = File::Spec->join($reusable_dir, 'unmapped_sorted_aligned_reads.bam');
     # sam format specifies bitmask 4 = read itself unmapped and 8 = read's mate is unmapped (we want either of them)
-    my $gawk_cmd = q{and($2, 4) || and($2, 8) || substr($1, 0, 1) == "@"};
+    my $gawk_cmd = q{substr($1, 0, 1) == "@" || and($2, 4) || and($2, 8)};
     my $view_cmd = "samtools view -h $sorted_reheadered_bam | gawk '$gawk_cmd' | " .
             "samtools view -S -b - > $not_both_mates_bam";
     Genome::Sys->shellcmd(
