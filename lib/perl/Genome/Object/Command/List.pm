@@ -18,6 +18,34 @@ class Genome::Object::Command::List {
     is => 'UR::Object::Command::List',
 };
 
+# this is a copy of what Tom has put into UR::Object::Command::List
+# remove it after that goes stable (redundant)
+sub _properties_for_class_to_document {
+    my $self = shift;
+    my $target_class_name = shift;
+
+    my $target_class_meta = $target_class_name->__meta__;
+    my @id_by = $target_class_meta->id_properties;
+
+    my @props = $target_class_meta->properties;
+
+    no warnings;
+    # These final maps are to get around a bug in perl 5.8 sort
+    # involving method calls inside the sort sub that may
+    # do sorts of their own
+    return 
+        map { $_->[1] }
+        sort { $a->[1]->position_in_module_header <=> $b->[1]->position_in_module_header or $a->[0] cmp $b->[0] }
+        map { [ $_->property_name, $_ ] }
+        grep {
+            substr($_->property_name, 0, 1) ne '_'
+            and not $_->implied_by
+            and not $_->is_transient
+            and not $_->is_deprecated
+        }
+        @props;
+}
+
 sub _format_property_doc_data {
     my ($class, @data) = @_;
 
