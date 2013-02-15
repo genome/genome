@@ -46,6 +46,17 @@ sub _properties_for_class_to_document {
         @props;
 }
 
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+    return unless $self;
+    if ($self->show =~ /\bdelete\b/) {
+        $self->delete;
+        die "please don't use this to delete things\n";
+    }
+    return $self;
+}
+
 sub _format_property_doc_data {
     my ($class, @data) = @_;
 
