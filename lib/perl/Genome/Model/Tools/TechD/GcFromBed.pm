@@ -4,9 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-
-#can't use this until on Perl 5.10
-#use Bio::DB::Sam;
+use Bio::DB::Sam;
 
 class Genome::Model::Tools::TechD::GcFromBed {
     is => 'Command',
@@ -18,8 +16,7 @@ class Genome::Model::Tools::TechD::GcFromBed {
         fasta_file => {
             is => 'String',
             doc => 'The FASTA file that has been indexed with faidx and cooresponds to the bed file',
-            is_optional => 1,
-            default_value => '/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa',
+            example_values => ['/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa',],
         },
         output_file => {
             is => 'String',
@@ -35,10 +32,6 @@ class Genome::Model::Tools::TechD::GcFromBed {
 
 sub execute {
     my $self = shift;
-    unless ($] > 5.010) {
-        die "Bio::DB::Sam requires perl 5.10 or greater!";
-    }
-    require Bio::DB::Sam;
     unless (-f $self->fasta_file .'.fai') {
         die('FASTA file '. $self->fasta_file .' has not beed indexed by faidx.');
     }
