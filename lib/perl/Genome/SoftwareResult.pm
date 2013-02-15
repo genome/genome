@@ -66,7 +66,8 @@ sub _faster_get {
 
     my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
 
-    my @objects = $class->get(lookup_hash => $lookup_hash);
+    # NOTE we do this so that get can be noisy when called directly.
+    my @objects = $class->SUPER::get(lookup_hash => $lookup_hash);
 
     my $final_time = Time::HiRes::time();
     my $full_time = 1000 * ($final_time - $start_time);
@@ -76,6 +77,41 @@ sub _faster_get {
         $statsd_prefix . "full_time." . $statsd_class_suffix, $full_time);
 
     return @objects;
+}
+
+# Override get to be noisy.  This should generally not be called.
+sub get {
+    my $class = shift;
+
+    # UR::Context::query has special logic for when it is called on an object
+    unless (ref $class) {
+        if (not $class->_is_id_only_query(@_)) {
+            # XXX This should be a warning, but warnings are not yet sent to logstash
+            $class->error_message(
+                "Calling get on SoftwareResult (unless getting by id) is slow and possibly incorrect.\n"
+                . Carp::longmess);
+        }
+    }
+
+    return $class->SUPER::get(@_);
+}
+
+sub _is_id_only_query {
+    my $class = shift;
+
+    return if (@_ > 1);
+
+    if (@_ == 1) {
+        if (Scalar::Util::blessed($_[0])) {
+            if ($_[0]->isa('UR::BoolExpr') && $_[0]->is_id_only) {
+                return 1;
+            }
+            return;
+        }
+
+        return 1;
+    }
+    return;
 }
 
 # You must specify enough parameters to uniquely identify an object to get a result.
