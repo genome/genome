@@ -35,7 +35,7 @@ class Genome::Model::Tools::BamQc::Run {
             is_optional => 1,
             doc => 'The reference sequence for which the BAM file was aligned to.',
             # GRCh37-lite-build37
-            example_values => ['/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fasta',]
+            example_values => ['/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fasta',],
         },
         # TODO: Add option for aligner, bwasw would require some additional tools to determine unique alignments
     ],
