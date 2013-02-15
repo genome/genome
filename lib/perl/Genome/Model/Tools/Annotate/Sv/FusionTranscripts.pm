@@ -32,6 +32,13 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
+    has_input => [
+        #fusion_output_file => {
+        output_file => {
+            type => 'String',
+            doc  => 'output fusion annotation file',
+        },
+    ],
 };
 
 
@@ -69,7 +76,8 @@ ITX +-,+-
 
 
 sub process_breakpoint_list {
-    my ($self, $breakpoints_list, $out_fh) = @_;
+    my ($self, $breakpoints_list) = @_;
+    my $out_fh = Genome::Sys->open_file_for_writing($self->output_file);
     die $self->error_message("fusion out file handle is missing") unless $out_fh;
     
     my @contents = map{'N/A'}column_names();

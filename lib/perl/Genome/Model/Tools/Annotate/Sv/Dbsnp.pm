@@ -6,19 +6,19 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Dbsnp {
     is => "Genome::Model::Tools::Annotate::Sv::IntervalAnnotator",
+    has_input => [
+        annotation_file => {
+            is => 'Text',
+            doc => 'File containing UCSC table',
+            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
+        },
+    ],
 };
-
-sub parameter_list {
-    my $self = shift;
-    return ['dbsnp_file', 'breakpoint_wiggle_room'];
-}
 
 sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
-#    my $dbsnp_annotation = $self->read_ucsc_annotation("/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv");
     my $dbsnp_annotation = $self->read_ucsc_annotation($self->annotation_file);
-#    $self->annotate_interval_matches($breakpoints_list, $dbsnp_annotation, 200, "dbsnp_annotation");
     $self->annotate_interval_matches($breakpoints_list, $dbsnp_annotation, $self->breakpoint_wiggle_room, "dbsnp_annotation");
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
@@ -29,7 +29,7 @@ sub process_breakpoint_list {
                 $output{$key} = [join(",", @dbsnp)];
             }
             else {
-                $output{$key} = ["-"];
+                $output{$key} = ["N/A"];
             }
         }
     }

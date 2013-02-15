@@ -226,6 +226,9 @@ sub prepare_readcount_files {
         my $sample_name = $self->find_sample_name_for_alignment_result($alignment_result);
         my $readcount_out = Genome::Sys->create_temp_file_path($sample_name . ".readcount.output");
         my $bam = $alignment_result->merged_alignment_bam_path;
+        unless (-f $bam) {
+            die "merged_alignment_bam_path does not exist: $bam";
+        }
         push @readcount_files, $readcount_out;
 
         #my $readcount_cmd = "bam-readcount -q $qual -f $ref_fasta -l $sites_file $bam > $readcount_out";
