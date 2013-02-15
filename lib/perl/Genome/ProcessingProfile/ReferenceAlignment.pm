@@ -210,7 +210,7 @@ sub results_for_instrument_data_input {
     my $self = shift;
     my $input = shift;
     my %segment_info = @_;
-    return $self->_fetch_alignment_sets($input,\%segment_info,'get');
+    return $self->_fetch_alignment_sets($input,\%segment_info,'get_with_lock');
 }
 
 sub results_for_instrument_data_input_with_lock {
