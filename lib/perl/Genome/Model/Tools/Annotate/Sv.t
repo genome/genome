@@ -14,7 +14,7 @@ use Test::More;
 use_ok("Genome::Model::Tools::Annotate::Sv");
 
 my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Annotate-Sv";
-my $version = 2;
+my $version = 3;
 my $data_dir = "$base_dir/v$version";
 
 my $temp_file = Genome::Sys->create_temp_file_path;
@@ -22,7 +22,7 @@ my $cmd = Genome::Model::Tools::Annotate::Sv->create(
     input_file => "$data_dir/in.svs",
     output_file => $temp_file,
     annotation_build_id => 131184146,
-    annotator_list      => ['Transcripts', 'Dbsnp'],
+    annotator_list      => ['Transcripts', 'Dbsnp', 'Segdup'],
 );
 
 ok($cmd, "Created command");
