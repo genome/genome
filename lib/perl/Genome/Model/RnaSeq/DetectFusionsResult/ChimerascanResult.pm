@@ -72,7 +72,7 @@ sub _resolve_chimerascan_arguments {
 sub _prepare_to_run_chimerascan {
     my ($self, $options, $arguments) = @_;
 
-    my @can_reuse_bam_in_versions = qw(0.4.3 0.4.5);
+    my @can_reuse_bam_in_versions = qw(0.4.3 0.4.5 0.4.5-vrl);
     my $bowtie_version = $options->{indirect}->{'--bowtie-version'};
     my $should_reuse_bam = $options->{indirect}->{'--reuse-bam'};
 
@@ -371,6 +371,18 @@ sub _python_path_for_version {
 
 sub _get_chimerascan_path_for_version {
     my ($version) = @_;
+
+    #TODO obviously temporary!
+    if ($version eq '0.4.5-vrl') {
+        my $path = "/gscuser/dmorton/chimerascan-0.4.5-vrl";
+        if (-d $path) {
+            my $bin_sub = 'build/lib.linux-x86_64-2.6/chimerascan';
+            my $python_sub = 'build/lib.linux-x86_64-2.6';
+            return $path, $bin_sub, $python_sub;
+        } else {
+            die "Couldn't find installation of chimerascan for version '$version'.";
+        }
+    }
 
     my $path = sprintf("/usr/lib/chimerascan%s", $version);
     if (-e $path) {
