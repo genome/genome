@@ -91,6 +91,11 @@ class Genome::Model::Tools::Annotate::Sv {
             default => 8,
             doc => '1-based index of column that contains the event type',
         },
+        orient_column => {
+            is => 'Integer',
+            default => 9,
+            doc => '1-based index of column that contains the orientation',
+        },
     ],
 };
 
@@ -134,8 +139,9 @@ sub execute {
         my $chrB = $fields[$self->chrB_column -1];
         my $bpB = $fields[$self->bpB_column -1];
         my $event = $fields[$self->event_type_column -1];
+        my $orient = $fields[$self->orient_column -1 ];
 
-        $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $chrA, $bpA, $chrB, $bpB, $event, $breakpoints_list);
+        $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $chrA, $bpA, $chrB, $bpB, $event, $orient, $breakpoints_list);
     }
     
     $in->close;
@@ -185,11 +191,7 @@ sub crosses_breakpoint {
     # Return all transcripts spanning the given position
     my ( $self, $transcript, $position ) = @_;
 
-    if ( $position >= $transcript->transcript_start() and $position <= $transcript->transcript_stop() ) {
-        return 1;
-    }
-
-    return 0;
+    return $transcript->within_transcript($position);
 }
 
 sub is_between_breakpoints {
@@ -241,15 +243,15 @@ sub fill_in_transcripts {
 }
 
 sub add_breakpoints_to_chromosome {
-    my ($self, $line, $chrA, $bpA, $chrB, $bpB, $event, $breakpoints_list) = @_;
+    my ($self, $line, $chrA, $bpA, $chrB, $bpB, $event, $orient, $breakpoints_list) = @_;
 
-    for my $var ($chrA,$bpA,$chrB,$bpB,$event) {
+    for my $var ($chrA,$bpA,$chrB,$bpB,$event,$orient) {
         unless (defined $var) { die "DID not define necessary variables for call:\n$line\n"; }
     }
     my %hash = (
         chrA  => $chrA,  bpA    => $bpA, 
         chrB  => $chrB,  bpB    => $bpB, 
-        event => $event, 
+        event => $event, orient => $orient,
     );
     push (@{$breakpoints_list->{$chrA}}, \%hash);
 

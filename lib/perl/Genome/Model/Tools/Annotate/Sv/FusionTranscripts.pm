@@ -93,8 +93,6 @@ sub process_breakpoint_list {
             my $item_key   = $self->get_key_from_item($item);
             $output{$item_key} = \@contents;
 
-            push @item_types, qw(orient size score);
-            
 	        # If there are no transcripts crossing either breakpoint, then you are done
 	        next unless $aTranscriptRef and @$aTranscriptRef > 0 and $bTranscriptRef and @$bTranscriptRef > 0;
 	    
