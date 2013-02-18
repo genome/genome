@@ -18,11 +18,12 @@ my $version = 3;
 my $data_dir = "$base_dir/v$version";
 
 my $temp_file = Genome::Sys->create_temp_file_path;
+$temp_file = "/gscuser/aregier/temp.annotated";
 my $cmd = Genome::Model::Tools::Annotate::Sv->create(
     input_file => "$data_dir/in.svs",
     output_file => $temp_file,
     annotation_build_id => 131184146,
-    annotator_list      => ['Transcripts', 'Dbsnp', 'Segdup'],
+    annotator_list      => ['Transcripts', 'Dbsnp', 'Segdup', 'RepeatMasker'],
 );
 
 ok($cmd, "Created command");

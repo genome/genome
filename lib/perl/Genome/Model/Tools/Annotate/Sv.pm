@@ -14,6 +14,7 @@ BEGIN{
         'Genome::Model::Tools::Annotate::Sv::FusionTranscripts',
         'Genome::Model::Tools::Annotate::Sv::Dbsnp',
         'Genome::Model::Tools::Annotate::Sv::Segdup',
+        'Genome::Model::Tools::Annotate::Sv::RepeatMasker',
     );
     foreach my $module (@annotators) {
         my $module_meta = UR::Object::Type->get($module);
