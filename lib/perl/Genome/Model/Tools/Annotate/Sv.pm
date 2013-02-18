@@ -185,11 +185,7 @@ sub crosses_breakpoint {
     # Return all transcripts spanning the given position
     my ( $self, $transcript, $position ) = @_;
 
-    if ( $position >= $transcript->transcript_start() and $position <= $transcript->transcript_stop() ) {
-        return 1;
-    }
-
-    return 0;
+    return $transcript->within_transcript($position);
 }
 
 sub is_between_breakpoints {
