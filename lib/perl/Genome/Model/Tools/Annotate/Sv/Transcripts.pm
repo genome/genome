@@ -73,12 +73,6 @@ sub process_item {
         ($geneB, $transcriptB, $orientationB, $subStructureB) = transcriptFeatures($transcript, $item->{bpB});
     }
 
-    my $dbsnp_ref = $item->{dbsnp_annotation};
-    my $dbsnp_string = "-";
-    if ($dbsnp_ref) {
-        my @dbsnp = map {$_->{name}} @{$dbsnp_ref};
-        $dbsnp_string = join(",", @dbsnp);
-    }
     my $key = $self->get_key_from_item($item);
     my $value = [$geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes];
     return ($key, $value);

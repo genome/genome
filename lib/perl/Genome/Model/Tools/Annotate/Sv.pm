@@ -66,6 +66,31 @@ class Genome::Model::Tools::Annotate::Sv {
             is_many => 1,
             default => ['Transcripts', 'FusionTranscripts', 'Dbsnp'],
         },
+        chrA_column => {
+            is => 'Integer',
+            default => 2,
+            doc => "1-based index of column that contains the chromosome of breakpoint A",
+        },
+        bpA_column => {
+            is => 'Integer',
+            default => 3,
+            doc => "1-based index of column that contains the position of breakpoint A",
+        },
+        chrB_column => {
+            is => 'Integer',
+            default => 5,
+            doc => "1-based index of column that contains the chromosome of breakpoint B",
+        },
+        bpB_column => {
+            is => 'Integer',
+            default => 6,
+            doc => "1-based index of column that contains the position of breakpoint B",
+        },
+        event_type_column => {
+            is => 'Integer',
+            default => 8,
+            doc => '1-based index of column that contains the event type',
+        },
     ],
 };
 
@@ -77,7 +102,7 @@ sub execute {
     my $out = Genome::Sys->open_file_for_writing($output_file) 
         or die "failed to open $output_file for writing\n";
 
-    my @column_names = qw(chrA bpA chrB bpB event size score);
+    my @column_names = qw(chrA bpA chrB bpB event);
     for my $analysis_name (@annotator_list) {
         my $class_name = 'Genome::Model::Tools::Annotate::Sv::'.$analysis_name;
         my @analysis_column_names = $class_name->column_names;
@@ -103,11 +128,14 @@ sub execute {
         last if $line =~ /-------------------/; #to accomodate some of our squaredancer files with LSF output in them
 
         #parse either sd or bd file
-        my ($id,$chrA,$bpA,undef,$chrB,$bpB,undef,$event,$orient,undef,$size,$samples,$score) = split /\t/,$line;
-        $orient = $1 if $line =~ /([\+\-]*)\,Ins\:/;
-        next if ($samples =~ /normal/);
+        my @fields = split /\t/, $line;
+        my $chrA = $fields[$self->chrA_column -1];
+        my $bpA = $fields[$self->bpA_column -1];
+        my $chrB = $fields[$self->chrB_column -1];
+        my $bpB = $fields[$self->bpB_column -1];
+        my $event = $fields[$self->event_type_column -1];
 
-        $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $chrA, $bpA, $chrB, $bpB, $event, $orient, $size, $score, $breakpoints_list);
+        $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $chrA, $bpA, $chrB, $bpB, $event, $breakpoints_list);
     }
     
     $in->close;
@@ -146,7 +174,7 @@ sub execute {
                 my $content = $annotation_content{$analysis}->{$key};
                 @all_content = (@all_content, @$content);
             }
-            $out->print(join("\t", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event}, $item->{size}, $item->{score}, @all_content)."\n"); 
+            $out->print(join("\t", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event},  @all_content)."\n"); 
         }
     }
     $out->close;
@@ -213,16 +241,15 @@ sub fill_in_transcripts {
 }
 
 sub add_breakpoints_to_chromosome {
-    my ($self, $line, $chrA, $bpA, $chrB, $bpB, $event, $orient, $size, $score, $breakpoints_list) = @_;
+    my ($self, $line, $chrA, $bpA, $chrB, $bpB, $event, $breakpoints_list) = @_;
 
-    for my $var ($chrA,$bpA,$chrB,$bpB,$event,$orient,$size,$score) {
+    for my $var ($chrA,$bpA,$chrB,$bpB,$event) {
         unless (defined $var) { die "DID not define necessary variables for call:\n$line\n"; }
     }
     my %hash = (
         chrA  => $chrA,  bpA    => $bpA, 
         chrB  => $chrB,  bpB    => $bpB, 
-        event => $event, orient => $orient,
-        size  => $size,  score  => $score
+        event => $event, 
     );
     push (@{$breakpoints_list->{$chrA}}, \%hash);
 
