@@ -102,7 +102,7 @@ class Genome::InstrumentData {
             where => [attribute_label => 'ignored'],
             default => '0',
         },
-        sample_source => { via => 'sample', is => 'Genome::Subject', to => 'source' },
+        sample_source => { via => 'sample', is => 'Genome::SampleSource', to => 'source' },
         sample_source_id => { via => 'sample_source', to => 'id' },
         sample_source_name => { via => 'sample_source', to => 'name' },
         taxon => { is => 'Genome::Taxon', via => 'sample' },
