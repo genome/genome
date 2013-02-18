@@ -13,7 +13,9 @@ use Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
 use lib File::Basename::dirname(File::Spec->rel2abs(__FILE__));
 use chimerascan_test_setup "setup";
 
-my ($alignment_result, $annotation_build) = setup();
+my $chimerascan_version = '0.4.5';
+my ($alignment_result, $annotation_build) = setup(test_data_version => 4,
+        chimerascan_version => $chimerascan_version);
 
 *Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::_staging_disk_usage
     = sub { return 40 * 1024 };
@@ -21,7 +23,7 @@ my ($alignment_result, $annotation_build) = setup();
 
 my $no_bam_result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
     alignment_result => $alignment_result,
-    version => '0.4.5',
+    version => $chimerascan_version,
     detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
     annotation_build => $annotation_build,
 );

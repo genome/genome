@@ -14,8 +14,13 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(setup);
 
 sub setup {
-    my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/0.4.5";
-    my $tophat_dir = $data_dir . "/tophat_data4";
+    my %parameters = @_;
+    my $test_data_version = $parameters{test_data_version};
+    my $chimerascan_version = $parameters{chimerascan_version};
+
+    my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/$chimerascan_version";
+    my $tophat_dir = $data_dir . "/tophat_data$test_data_version";
+    die "Couldn't find tophat_dir at '$tophat_dir'" unless -d $tophat_dir;
 
     my $t = Genome::Taxon->__define__(name => 'human');
     my $p = Genome::Individual->create(name => "test-human-patient", common_name => 'testpatient', taxon => $t);
@@ -62,7 +67,7 @@ sub setup {
     $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
 
     my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index->__define__(
-        version => "0.4.5",
+        version => $chimerascan_version,
         bowtie_version => "0.12.7",
         reference_build => $reference_build,
         output_dir => $data_dir.'/IndexResult/',
