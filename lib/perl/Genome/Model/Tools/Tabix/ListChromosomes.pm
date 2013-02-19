@@ -23,7 +23,7 @@ class Genome::Model::Tools::Tabix::ListChromosomes {
     has_output => [
 
         chromosomes => {
-            is => "Text",
+            is => "ARRAY",
             doc => "Return value, a list of chromosomes",
             is_many => 1,
             is_optional => 1,
@@ -50,7 +50,12 @@ sub execute {
     my $tabix = $self->tabix_path;
     my $input = $self->input_file;
     my $cmd = "$tabix -l $input";
-    my @result = qx($cmd);
+    my @result = qx{$cmd};
+    my $ret = $?;
+    if ($ret != 0) {
+        $self->error_message("Failed to fetch chromosome list (via tabix) for $input");
+        return 0;
+    }
     if (!$self->suppress_output) {
         print join("", @result);
     }
