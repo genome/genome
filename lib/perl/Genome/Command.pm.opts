@@ -578,6 +578,24 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>repeat-masker',
+      [
+        'db-user=s',
+        'files',
+        'db-password=s',
+        'files',
+        'db-host=s',
+        'files',
+        'filename=s',
+        'files',
+        'reference-name=s',
+        [
+          'hg18',
+          'hg19'
+        ],
+        'help!',
+        undef
+      ],
       'help!',
       undef
     ],
