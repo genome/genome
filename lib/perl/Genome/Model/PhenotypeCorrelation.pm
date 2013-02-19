@@ -804,8 +804,10 @@ sub _map_properties_to_delegate_inputs {
         else {
             #input is either undefined OR not listed
             if($self->can($expected_input)) {
-                #assume this is either needing to be run or already set as an output variable
-                $delegate_input_hash{$expected_input} = $self->$expected_input;
+                # Assume this is either needing to be run or already set as an output variable
+                # only assign it if defined
+                my $value = $self->$expected_input;
+                $delegate_input_hash{$expected_input} = $value if defined $value;
             }
             else {
                 die "Expected input $expected_input of delegate class $class_name not available. Check that this is specified as a model input to your model."
