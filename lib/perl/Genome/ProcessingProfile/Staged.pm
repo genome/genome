@@ -431,6 +431,7 @@ sub _merge_stage_workflows {
 
     my $w = Workflow::Model->create(
         name => $build->id . ' all stages',
+        log_dir => sprintf("%s/logs/", $build->data_directory),
         input_properties => [
             'prior_result'
         ],
