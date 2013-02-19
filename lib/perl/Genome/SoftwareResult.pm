@@ -83,13 +83,16 @@ sub _faster_get {
 sub get {
     my $class = shift;
 
-    # UR::Context::query has special logic for when it is called on an object
-    unless (ref $class) {
-        if (not $class->_is_id_only_query(@_)) {
-            # XXX This should be a warning, but warnings are not yet sent to logstash
-            $class->error_message(
-                "Calling get on SoftwareResult (unless getting by id) is slow and possibly incorrect.\n"
-                . Carp::longmess);
+    # We only want to apply this restriction if we're asking for a scalar.
+    if (defined wantarray && not wantarray) {
+        # UR::Context::query has special logic for when it is called on an object
+        unless (ref $class) {
+            if (not $class->_is_id_only_query(@_)) {
+                # XXX This should be a warning, but warnings are not yet sent to logstash
+                $class->error_message(
+                    "Calling get on SoftwareResult (unless getting by id) is slow and possibly incorrect.\n"
+                    . Carp::longmess);
+            }
         }
     }
 
