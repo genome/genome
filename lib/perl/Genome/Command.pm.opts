@@ -343,7 +343,40 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>db',
   [
-    '>drugbank',
+    '>omim',
+    [
+      'help!',
+      undef
+    ],
+    '>db-var',
+    [
+      '>import',
+      [
+        'filename=s',
+        'files',
+        'species=s',
+        [
+          'Bos_taurus',
+          'Canis_lupus',
+          'Danio_rerio',
+          'Drosophila_melanogaster',
+          'Equus_caballus',
+          'Homo_sapiens',
+          'Macaca_mulatta',
+          'Mus_musculus',
+          'Pan_troglodytes',
+          'Sorghum_bicolor',
+          'Sus_scrofa'
+        ],
+        'assembly-name=s',
+        'files',
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
+    '>uniprot',
     [
       'help!',
       undef
@@ -353,22 +386,22 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>drugbank',
+    [
+      'help!',
+      undef
+    ],
     '>pfam',
     [
       'help!',
       undef
     ],
-    '>omim',
-    [
-      'help!',
-      undef
-    ],
-    '>uniprot',
-    [
-      'help!',
-      undef
-    ],
     '>genbank',
+    [
+      'help!',
+      undef
+    ],
+    '>cosmic',
     [
       'help!',
       undef
@@ -495,11 +528,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>cosmic',
-    [
       'help!',
       undef
     ],
