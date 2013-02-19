@@ -3,6 +3,7 @@ package Genome::Model::Tools::Annotate::Sv::IntervalAnnotator;
 use strict;
 use warnings;
 use Genome;
+use List::Util qw(min max);
 
 class Genome::Model::Tools::Annotate::Sv::IntervalAnnotator {
     is => "Genome::Model::Tools::Annotate::Sv::Base",
@@ -16,7 +17,11 @@ class Genome::Model::Tools::Annotate::Sv::IntervalAnnotator {
             doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
             default => 200,
         },
-
+        overlap_fraction => {
+            is => 'Number',
+            doc => 'Fraction of overlap (reciprocal) required to hit',
+            default => 0.5,
+        },
     ],
 };
 
@@ -53,6 +58,35 @@ sub annotate_interval_matches {
         }
     }
     return 1;
+}
+
+sub get_var_annotation {
+    my ($self, $item, $annotation_ref) = @_;
+    
+    my $varreport = "N/A";
+    my $bestvar;
+    my ($maxratio1, $maxratio2) = (0,0);
+    my $frac = $self->overlap_fraction;
+    
+    if (defined $annotation_ref) {
+        foreach my $var (@$annotation_ref) {
+            my $pos1 = min($item->{bpB}, $var->{chromEnd});
+            my $pos2 = max($item->{bpA}, $var->{chromStart});
+            my $overlap = $pos1-$pos2+1;
+            my $ratio1 = $overlap/(abs($item->{bpB}-$item->{bpA})+1);
+            my $ratio2 = $overlap/(abs($var->{chromEnd}-$var->{chromStart})+1);
+            if ($ratio1 >= $frac && $ratio2 >= $frac && ($ratio1 >= $maxratio1 || $ratio2 >= $maxratio2)) {
+                $bestvar = $var;
+                $maxratio1 = $ratio1;
+                $maxratio2 = $ratio2;
+            }
+        }
+
+        if (defined $bestvar) {
+            $varreport = $bestvar->{name};
+        }
+    }
+    return $varreport;
 }
 
 sub read_ucsc_annotation{
