@@ -8,6 +8,13 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Transcripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
+    has_input => [
+        print_flanking_genes => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'Print columns that describe what genes fall within the flanking regions of the sv breakpoints',
+        },
+    ],
 };
 
 sub process_breakpoint_list{
@@ -75,9 +82,43 @@ sub process_item {
 
     my $key = $self->get_key_from_item($item);
     my $value = [$geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes];
-    return ($key, $value);
 
-    return 1;
+    if ($self->print_flanking_genes) {
+        my $flankingARef = $item->{transcripts_flanking_breakpoint_a};
+        my $flankingBRef = $item->{transcripts_flanking_breakpoint_b};
+
+        my $flankingListA;
+        my $flankingListB;
+        my %geneDedup;
+
+        if ($flankingARef) {
+            my @flankingA = @{$flankingARef};
+            foreach my $t (@flankingA) {
+                my $gene = $t->gene_name;
+                $geneDedup{$gene} = 1;
+            }
+            $flankingListA = join(",", keys %geneDedup);
+        }
+        else {
+            $flankingListA = "N/A";
+        }
+        %geneDedup = ();
+        if ($flankingBRef) {
+            my @flankingB = @{$flankingBRef};
+            foreach my $t (@flankingB) {
+                my $gene = $t->gene_name;
+                $geneDedup{$gene} = 1;
+            }
+            $flankingListB = join(",", keys %geneDedup);
+        }
+        else {
+            $flankingListB = "N/A";
+        }
+        push @$value, $flankingListA;
+        push @$value, $flankingListB;
+    }
+
+    return ($key, $value);
 }
 
 sub allTranscriptsInCommon {
@@ -252,9 +293,15 @@ sub find_annotated_positions {
 
 
 sub column_names {
-    return qw(
+    my $self = shift;
+    my @names =  qw(
         geneA transcriptA orientationA subStructureA 
         geneB transcriptB orientationB subStructureB	
         deletedGenes
     );
+    if ($self->print_flanking_genes) {
+        push @names, "flankingGenesA";
+        push @names, "flankingGenesB";
+    }
+    return @names;
 }

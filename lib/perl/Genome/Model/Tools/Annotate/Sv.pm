@@ -66,6 +66,11 @@ class Genome::Model::Tools::Annotate::Sv {
             is_many => 1,
             default => ['Transcripts', 'FusionTranscripts', 'Dbsnp'],
         },
+        flanking_distance => {
+            is => 'Integer',
+            default => 50000,
+            doc => 'Distance, in bp, for genes to be considered "flanking"',
+        },
         chrA_column => {
             is => 'Integer',
             default => 2,
@@ -107,19 +112,6 @@ sub execute {
     my $out = Genome::Sys->open_file_for_writing($output_file) 
         or die "failed to open $output_file for writing\n";
 
-    my @column_names = qw(chrA bpA chrB bpB event);
-    for my $analysis_name (@annotator_list) {
-        my $class_name = 'Genome::Model::Tools::Annotate::Sv::'.$analysis_name;
-        my @analysis_column_names = $class_name->column_names;
-        unless (@analysis_column_names) {
-            die $self->error_message("There is no valid column names for $class_name");
-        }
-        @column_names = (@column_names, @analysis_column_names);
-    }
-
-    $out->print(join "\t", @column_names);
-    $out->print("\n");
-
     my $infile = $self->input_file;
     my $build  = $self->annotation_build;
 
@@ -148,7 +140,8 @@ sub execute {
 
     $breakpoints_list = $self->fill_in_transcripts($breakpoints_list, $build);
     my %annotation_content;
-
+    my @column_names = qw(chrA bpA chrB bpB event);
+    
     for my $type (@annotator_list) {
         my $class_name = "Genome::Model::Tools::Annotate::Sv::$type";
         my $module_meta = UR::Object::Type->get($class_name);
@@ -166,9 +159,18 @@ sub execute {
         }
         my $instance = $class_name->create(%params);
         my $content = $instance->process_breakpoint_list($breakpoints_list);
+        my @analysis_column_names = $instance->column_names;
+        unless (@analysis_column_names) {
+            die $self->error_message("There is no valid column names for $class_name");
+        }
+        @column_names = (@column_names, @analysis_column_names);
         $annotation_content{$type} = $content;
     }
-   
+
+    $out->print(join "\t", @column_names);
+    $out->print("\n");
+
+
     for my $chr (sort {$a<=>$b} keys %{$breakpoints_list}) {
         for my $item (@{$breakpoints_list->{$chr}}) {
             my @all_content;
@@ -185,13 +187,6 @@ sub execute {
     }
     $out->close;
     return 1;
-}
-
-sub crosses_breakpoint {
-    # Return all transcripts spanning the given position
-    my ( $self, $transcript, $position ) = @_;
-
-    return $transcript->within_transcript($position);
 }
 
 sub is_between_breakpoints {
@@ -224,16 +219,32 @@ sub fill_in_transcripts {
                 if ($item->{event} eq "DEL" and $self->is_between_breakpoints($item->{bpA}, $item->{bpB}, $transcript)) {
                     push (@{$item->{transcripts_between_breakpoints}}, $transcript);
                 }
-                if ($item->{chrA} eq $chr and $self->crosses_breakpoint($transcript, $item->{bpA})) {
-                    push (@{$item->{transcripts_crossing_breakpoint_a}}, $transcript);
-                }
-                if ($item->{chrB} eq $chr and $self->crosses_breakpoint($transcript, $item->{bpB})) {
-                    if (defined $item->{breakpoint_link}) {
-                        my $hash = $item->{breakpoint_link};
-                        push (@{$hash->{transcripts_crossing_breakpoint_b}}, $transcript);
+                if ($item->{chrA} eq $chr){
+                    if ($transcript->within_transcript($item->{bpA})) {
+                        push (@{$item->{transcripts_crossing_breakpoint_a}}, $transcript);
                     }
-                    else {
-                        push (@{$item->{transcripts_crossing_breakpoint_b}}, $transcript);
+                    elsif ($transcript->within_transcript_with_flanks($item->{bpA}, $self->flanking_distance)) {
+                        push (@{$item->{transcripts_flanking_breakpoint_a}}, $transcript);
+                    }
+                }
+                if ($item->{chrB} eq $chr) {
+                    if ($transcript->within_transcript($item->{bpB})) {
+                        if (defined $item->{breakpoint_link}) {
+                            my $hash = $item->{breakpoint_link};
+                            push (@{$hash->{transcripts_crossing_breakpoint_b}}, $transcript);
+                        }
+                        else {
+                            push (@{$item->{transcripts_crossing_breakpoint_b}}, $transcript);
+                        }
+                    }
+                    elsif ($transcript->within_transcript_with_flanks($item->{bpB}, $self->flanking_distance)) {
+                        if (defined $item->{breakpoint_link}) {
+                            my $hash = $item->{breakpoint_link};
+                            push (@{$hash->{transcripts_flanking_breakpoint_b}}, $transcript);
+                        }
+                        else {
+                            push (@{$item->{transcripts_flanking_breakpoint_b}}, $transcript);
+                        }
                     }
                 }
             }
