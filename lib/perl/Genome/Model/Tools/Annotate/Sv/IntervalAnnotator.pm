@@ -32,10 +32,11 @@ sub annotate_interval_matches {
     my $annotation = shift;
     my $annot_length = shift;
     my $tag = shift;
+    my $breakpoint_key = shift;
 
     foreach my $chr (keys %$positions) {
-        my @sorted_items = sort {$a->{bpB}<=>$b->{bpB}} (@{$positions->{$chr}});
-        my @sorted_positions = map{$_->{bpB}} @sorted_items;
+        my @sorted_items = sort {$a->{$breakpoint_key}<=>$b->{$breakpoint_key}} (@{$positions->{$chr}});
+        my @sorted_positions = map{$_->{$breakpoint_key}} @sorted_items;
         my %annotated_output;
 
         my @chromEnds = sort {$a<=>$b} keys %{$annotation->{$chr}};
@@ -48,8 +49,8 @@ sub annotate_interval_matches {
                 if ($pos>=$start-$annot_length) {
                     for my $var (@{$$annotation{$chr}{$chromEnds[0]}{$start}}){
                         foreach my $position_item (@{$positions->{$chr}}) {
-                            if ($position_item->{bpB} eq $pos) {
-                                push @{$position_item->{$tag}}, $var;
+                            if ($position_item->{$breakpoint_key} eq $pos) {
+                                push @{$position_item->{$tag}->{$breakpoint_key}}, $var;
                             }
                         }
                     }
@@ -64,8 +65,7 @@ sub get_var_annotation {
     my ($self, $item, $annotation_ref) = @_;
     
     my $varreport = "N/A";
-    my $bestvar;
-    my ($maxratio1, $maxratio2) = (0,0);
+    my @vars;
     my $frac = $self->overlap_fraction;
     
     if (defined $annotation_ref) {
@@ -75,15 +75,13 @@ sub get_var_annotation {
             my $overlap = $pos1-$pos2+1;
             my $ratio1 = $overlap/(abs($item->{bpB}-$item->{bpA})+1);
             my $ratio2 = $overlap/(abs($var->{chromEnd}-$var->{chromStart})+1);
-            if ($ratio1 >= $frac && $ratio2 >= $frac && ($ratio1 >= $maxratio1 || $ratio2 >= $maxratio2)) {
-                $bestvar = $var;
-                $maxratio1 = $ratio1;
-                $maxratio2 = $ratio2;
+            if ($ratio1 >= $frac && $ratio2 >= $frac ) {
+                push @vars, $var;
             }
         }
 
-        if (defined $bestvar) {
-            $varreport = $bestvar->{name};
+        if (@vars) {
+            $varreport = join(",",map{$_->{name}} @vars);
         }
     }
     return $varreport;

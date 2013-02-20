@@ -19,11 +19,11 @@ sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
     my $dbsnp_annotation = $self->read_ucsc_annotation($self->annotation_file);
-    $self->annotate_interval_matches($breakpoints_list, $dbsnp_annotation, $self->breakpoint_wiggle_room, "dbsnp_annotation");
+    $self->annotate_interval_matches($breakpoints_list, $dbsnp_annotation, $self->breakpoint_wiggle_room, "dbsnp_annotation", "bpB");
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);
-            $output{$key} = [$self->get_var_annotation($item, $item->{dbsnp_annotation})];
+            $output{$key} = [$self->get_var_annotation($item, $item->{dbsnp_annotation}->{bpB})];
         }
     }
     return \%output;
