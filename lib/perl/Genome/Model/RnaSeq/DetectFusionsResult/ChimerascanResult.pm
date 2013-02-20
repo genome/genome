@@ -27,15 +27,12 @@ sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
 
-    # TODO If process crashes before calling _reallocate_disk_allocation then
-    # the output directory will remain at initially allocated size
-    # indefinitely.
     $self->_prepare_output_directory();
     $self->_prepare_staging_directory();
-
     my $options = $self->_resolve_chimerascan_options();
     my $arguments = $self->_resolve_chimerascan_arguments($options->{indirect});
     $self->_prepare_to_run_chimerascan($options, $arguments);
+
     $self->_run_chimerascan($options, $arguments);
 
     $self->_promote_data();
@@ -79,17 +76,29 @@ sub _prepare_to_run_chimerascan {
     my $bowtie_version = $options->{indirect}->{'--bowtie-version'};
     my $should_reuse_bam = $options->{indirect}->{'--reuse-bam'};
 
+    my $tmp_dir = $self->_symlink_in_fastqs();
     if ($should_reuse_bam) {
         $self->status_message("Attempting to reuse BAMs from pipeline");
+
         if (in($self->version, @can_reuse_bam_in_versions)) {
-            # These are intermediate files required for downstream conversion and filtering
-            $self->_create_reheadered_queryname_sorted_primary_bam_file($bowtie_version);
-            # simply create symlinks for the original FASTQ files
-            $self->_link_in_converted_fastqs($arguments);
-            # includes sorted_aligned_reads and .bai
-            $self->_link_in_aligned_reads_bam();
-            # convert unaligned read pairs, one end unaligned, from BAM to FASTQ
-            $self->_create_unaligned_fastqs();
+            my $reusable_dir = File::Spec->join($self->temp_staging_directory, 'reusable');
+            Genome::Sys->create_directory($reusable_dir);
+
+            $self->status_message("Creating the reheadered bam.");
+            my $reheadered_bam = $self->_create_reheadered_bam($reusable_dir, $bowtie_version);
+
+            $self->status_message("Creating the 'both mates mapped' bam.");
+            my ($both_mates_bam, $sorted_both_mates_bam, $sorted_both_mates_index) =
+                    $self->_create_both_mates_bam($reusable_dir, $reheadered_bam);
+
+            $self->status_message("Creating the unmapped fastqs.");
+            my ($unmapped_1, $unmapped_2) =
+                    $self->_create_unmapped_fastqs($reusable_dir, $reheadered_bam);
+            unlink($reheadered_bam);
+
+            $self->status_message("Symlinking reusable parts into Chimerascan working dir.");
+            $self->_symlink_in_files($tmp_dir, $both_mates_bam, $unmapped_1, $unmapped_2,
+                        $sorted_both_mates_bam, $sorted_both_mates_index);
         } else {
             die(sprintf("This version of chimerascan (%s) doesn't " .
                         "support reusing the alignment BAM.", $self->version));
@@ -97,141 +106,156 @@ sub _prepare_to_run_chimerascan {
     }
 }
 
-sub _create_reheadered_queryname_sorted_primary_bam_file {
-    my ($self,$bowtie_version) = @_;
+sub _symlink_in_fastqs {
+    my ($self) = @_;
 
-    $self->status_message("Generating queryname sorted BAM with primary alignments only");
-    my $alignment_result = $self->alignment_result;
+    my ($fq1, $fq2) = @{$self->_fastq_files};
+    my $tmp_dir = File::Spec->join($self->temp_staging_directory, 'tmp');
+    Genome::Sys->create_directory($tmp_dir);
+    Genome::Sys->create_symlink($fq1, File::Spec->join($tmp_dir, 'reads_1.fq'));
+    Genome::Sys->create_symlink($fq2, File::Spec->join($tmp_dir, 'reads_2.fq'));
 
-    # Use the alignment_result BAM as the input, the chimerascan index seqdict .sam as the header, and output as the aligned_reads
-    my $index = $self->_get_index($bowtie_version);
-    my $seqdict_file = $index->get_sequence_dictionary;
-    my $input_bam_file = $alignment_result->bam_file;
-    my $reheadered_bam_file = $self->temp_staging_directory .'/reheadered_aligned_reads.bam';
-    unless (Genome::Model::Tools::Picard::ReplaceSamHeader->execute(
-        input_file => $input_bam_file,
-        output_file => $reheadered_bam_file,
-        header_file => $seqdict_file,
-    )) {
-        die('Failed to reheader alignment result BAM file!');
-    }
+    return $tmp_dir;
+}
 
-    my $primary_bam_file = join("/", $self->temp_staging_directory,'reheadered_primary_aligned_reads.bam');
-    # Run samtools to filter, include primary alignments only.
-    my $view_cmd = 'samtools view -F 256 -b '. $reheadered_bam_file .' > '. $primary_bam_file;
+sub _create_both_mates_bam {
+    my ($self, $reusable_dir, $reheadered_bam) = @_;
+
+    $self->status_message("Filtering to only reads where both mates map (for aligned_reads.bam)");
+    my $both_mates_bam = File::Spec->join($reusable_dir, 'both_mates.bam');
+    my $view_cmd = "samtools view -F 12 -b -h $reheadered_bam > $both_mates_bam";
     Genome::Sys->shellcmd(
         cmd => $view_cmd,
-        input_files => [$reheadered_bam_file],
-        output_files => [$primary_bam_file],
-    );
-    unlink($reheadered_bam_file);
-
-    my $queryname_sorted_file = join("/", $self->temp_staging_directory,'reheadered_primary_aligned_reads_queryname_sorted.bam');
-    # Queryname sort the BAM for later FilterSamReads to get aligned/unaligned
-    unless (Genome::Model::Tools::Picard::SortSam->execute(
-        input_file => $primary_bam_file,
-        output_file => $queryname_sorted_file,
-        sort_order => 'queryname',
-        use_version => $self->picard_version,
-    )) {
-        die('Failed to sort by queryname!');
-    }
-}
-
-sub _link_in_aligned_reads_bam {
-    my ($self) = @_;
-
-    $self->status_message("Generating aligned-reads BAM from primary queryname sorted BAM");
-    my $queryname_sorted_file = join("/", $self->temp_staging_directory,'reheadered_primary_aligned_reads_queryname_sorted.bam');
-    my $output_file = join("/", $self->temp_staging_directory,'aligned_reads.bam');
-
-    my $cmd = Genome::Model::Tools::Picard::FilterSamReads->create(
-        input_file  => $queryname_sorted_file,
-        output_file => $output_file,
-        filter      => 'includeAligned',
-        sort_order  => 'coordinate',
-        use_version => $self->picard_version,
+        input_files => [$reheadered_bam],
+        output_files => [$both_mates_bam],
     );
 
-    $cmd->execute();
-    unless (-e $output_file) {
-        die "Error generating BAM of aligned reads from alignment_result.";
+    $self->status_message("Sorting both_mates_bam by position");
+    my $sorted_both_mates_bam = File::Spec->join($reusable_dir, 'sorted_both_mates.bam');
+    my $rv = Genome::Model::Tools::Picard::SortSam->execute(
+        input_file => $both_mates_bam,
+        output_file => $sorted_both_mates_bam,
+        sort_order => 'coordinate',
+        use_version => $self->picard_version,
+    );
+    unless ($rv) {
+        die('Failed to sort by position!');
     }
 
-    my $sorted_bam = join("/", $self->temp_staging_directory,
-            "sorted_aligned_reads.bam");
-    $self->status_message("Creating symlink to alignment result BAM (pretending " .
-            "also to be the sorted-aligned-reads BAM.");
-    Genome::Sys->create_symlink($output_file, $sorted_bam);
+    # create index
+    $self->status_message("Indexing BAM: $sorted_both_mates_bam");
+    my $sorted_both_mates_index = $sorted_both_mates_bam . '.bai';
     my $index_cmd = Genome::Model::Tools::Picard::BuildBamIndex->create(
-        input_file => $sorted_bam,
-        output_file => $sorted_bam .'.bai',
+        input_file => $sorted_both_mates_bam,
+        output_file => $sorted_both_mates_index,
         use_version => $self->picard_version,
     );
+
 
     $index_cmd->execute();
-    unless (-e "$sorted_bam.bai") {
-        die "Failed to create BAM index of \"$sorted_bam\".";
+    unless (-e $sorted_both_mates_index) {
+        die "Failed to create BAM index of \"$sorted_both_mates_bam\".";
     }
+    return ($both_mates_bam, $sorted_both_mates_bam, $sorted_both_mates_index);
 }
 
-sub _link_in_converted_fastqs {
-    my ($self) = @_;
+sub _create_reheadered_bam {
+    my ($self, $reusable_dir, $bowtie_version) = @_;
 
-    my ($fastq1, $fastq2) = @{$self->_fastq_files};
-    my $chimerascan_tmp_dir = $self->temp_staging_directory .'/tmp';
-    unless (-d $chimerascan_tmp_dir) {
-        Genome::Sys->create_directory($chimerascan_tmp_dir);
+    $self->status_message("Creating bam re-headered with transcripts from the chimerascan-index");
+    my $index = $self->_get_index($bowtie_version);
+    my $seqdict_file = $index->get_sequence_dictionary;
+    my $input_bam_file = $self->_qname_sorted_bam;
+    my $new_bam_header = $self->_get_new_bam_header($reusable_dir, $input_bam_file, $seqdict_file);
+    my $reheadered_bam = File::Spec->join($reusable_dir, 'reheadered.bam');
+    my $rv = Genome::Model::Tools::Picard::ReplaceSamHeader->execute(
+        input_file => $input_bam_file,
+        output_file => $reheadered_bam,
+        header_file => $new_bam_header,
+    );
+    unless ($rv) {
+        die('Failed to reheader alignment result BAM file!');
     }
-    my $converted_fastq_prefix = join('/', $chimerascan_tmp_dir, 'reads_');
-    $self->status_message("Creating symlink to fastq files (pretending " .
-            "to be the converted-fastq files");
-    Genome::Sys->create_symlink($fastq1,$converted_fastq_prefix .'1.fq');
-    Genome::Sys->create_symlink($fastq2,$converted_fastq_prefix .'2.fq');
+    unlink($new_bam_header);
+
+    return $reheadered_bam;
 }
 
-sub _create_unaligned_fastqs {
-    my ($self) = @_;
 
-    $self->status_message("Generating the unaligned fastqs from the " .
-            "alignment results BAM");
-    my $stage            = $self->temp_staging_directory;
+# Add all the @SQ lines from <suppliment_header_file> to the header of the <source_bam>
+# Returns: the filename of the newly created header
+sub _get_new_bam_header {
+    my ($self, $reusable_dir, $source_bam, $suppliment_header_file) = @_;
 
-    my $queryname_sorted_file = join("/", $stage,'reheadered_primary_aligned_reads_queryname_sorted.bam');
-    unless (-s $queryname_sorted_file) {
-        die('Failed to find the primary queryname sorted BAM!');
-    }
+    die "Source bam doesn't exist at ($source_bam)" unless -e $source_bam;
+    die "suppliment_header not supplied" unless -e $suppliment_header_file;
 
-    my $output_file = $stage .'/unaligned_reads.bam';
-
-    my $filter_cmd = Genome::Model::Tools::Picard::FilterSamReads->create(
-        input_file  => $queryname_sorted_file,
-        output_file => $output_file,
-        filter      => 'excludeAligned',
-        use_version => $self->picard_version,
+    my $new_bam_header = File::Spec->join($reusable_dir, 'new_bam_header.seqdict');
+    # awk '!x[$1 $2]++' prints uniq lines (based on first two columns) in order they originally appeared
+    my $sq_lines_only = q($1 == "@SQ");
+    my $cmd = "cat <(samtools view -H $source_bam) " .
+              "<(awk '$sq_lines_only' $suppliment_header_file) " .
+              "| awk '!x[\$1 \$2]++' > $new_bam_header";
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        input_files => [$source_bam, $suppliment_header_file],
+        output_files => [$new_bam_header],
     );
 
-    $filter_cmd->execute();
-    unless (-e $output_file) {
-        die "Error generating BAM of unaligned reads from the primary queryname sorted BAM.";
-    }
-    unlink($queryname_sorted_file);
-    my $read1_fastq      = join("/", $stage, 'tmp', 'unaligned_1.fq');
-    my $read2_fastq      = join("/", $stage, 'tmp', 'unaligned_2.fq');
+    return $new_bam_header
+}
+
+
+sub _create_unmapped_fastqs {
+    my ($self, $reusable_dir, $reheadered_bam) = @_;
+
+    # Run samtools to filter, include only reads where one or both mates didn't map (primary and non-primary).
+    $self->status_message("Filtering to get all the other reads.");
+    my $not_both_mates_bam = File::Spec->join($reusable_dir, 'not_both_mates.bam');
+    # sam format specifies bitmask 4 = read itself unmapped and 8 = read's mate is unmapped (we want either of them)
+    my $gawk_cmd = q{substr($1, 0, 1) == "@" || and($2, 4) || and($2, 8)};
+    my $view_cmd = "samtools view -h $reheadered_bam | gawk '$gawk_cmd' | " .
+            "samtools view -S -b - > $not_both_mates_bam";
+    Genome::Sys->shellcmd(
+        cmd => $view_cmd,
+        input_files => [$reheadered_bam],
+        output_files => [$not_both_mates_bam],
+    );
+
+    $self->status_message("Generating the unaligned fastqs from $not_both_mates_bam");
+    my $unmapped_1 = File::Spec->join($reusable_dir, 'unmapped_1');
+    my $unmapped_2 = File::Spec->join($reusable_dir, 'unmapped_2');
 
     my $cmd = Genome::Model::Tools::Picard::StandardSamToFastq->create(
-        input            => $output_file,
-        fastq            => $read1_fastq,
-        second_end_fastq => $read2_fastq,
-        re_reverse       => 1,
-        include_non_pf_reads => 1,
+        input                          => $not_both_mates_bam,
+        fastq                          => $unmapped_1,
+        second_end_fastq               => $unmapped_2,
+        re_reverse                     => 1,
+        include_non_pf_reads           => 1,
         include_non_primary_alignments => 0,
-        use_version      => $self->picard_version,
-        maximum_memory => 16,
-        maximum_permgen_memory => 256,
+        use_version                    => $self->picard_version,
+        maximum_memory                 => 16,
+        maximum_permgen_memory         => 256,
     );
-
     unless ($cmd->execute()) { die ('Failed to convert unaligned BAM to FASTQ!'); }
+
+    return ($unmapped_1, $unmapped_2);
+}
+
+sub _symlink_in_files {
+    my ($self, $tmp_dir, $both_mates_bam, $unmapped_1, $unmapped_2,
+            $sorted_both_mates_bam, $sorted_both_mates_index) = @_;
+
+    Genome::Sys->create_symlink($both_mates_bam,
+            File::Spec->join($self->temp_staging_directory, 'aligned_reads.bam'));
+
+    Genome::Sys->create_symlink($unmapped_1, File::Spec->join($tmp_dir, 'unaligned_1.fq'));
+    Genome::Sys->create_symlink($unmapped_2, File::Spec->join($tmp_dir, 'unaligned_2.fq'));
+
+    Genome::Sys->create_symlink($sorted_both_mates_bam,
+            File::Spec->join($self->temp_staging_directory, 'sorted_aligned_reads.bam'));
+    Genome::Sys->create_symlink($sorted_both_mates_index,
+            File::Spec->join($self->temp_staging_directory, 'sorted_aligned_reads.bam.bai'));
 }
 
 sub _run_chimerascan {
@@ -240,7 +264,6 @@ sub _run_chimerascan {
     local $ENV{PYTHONPATH} = ($ENV{PYTHONPATH} ? $ENV{PYTHONPATH} . ":" : "") .
             $self->_python_path_for_version($self->version);
 
-    warn Data::Dumper::Dumper(($options, $arguments));
     my $cmd_path = $self->_path_for_version($self->version);
     unless ($cmd_path) {
         die $self->error_message("Failed to find a path for chimerascan for " .

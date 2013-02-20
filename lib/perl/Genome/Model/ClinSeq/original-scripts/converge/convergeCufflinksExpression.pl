@@ -199,7 +199,7 @@ sub getCufflinksFiles{
     if ($verbose){print BLUE, "\n\t$final_name\t$build_id\t$data_directory", RESET;}
 
     #/gscmnt/gc8002/info/model_data/2881869913/build120828540/BRC18/rnaseq/tumor/cufflinks_absolute/isoforms_merged
-    my $ls_cmd = "ls $data_directory/*/rnaseq/*/cufflinks_absolute/$expression_subdir/* 2>/dev/null";
+    my $ls_cmd = "ls $data_directory/*/rnaseq/*/cufflinks_expression_absolute/$expression_subdir/* 2>/dev/null";
     my @result = `$ls_cmd`;
     chomp(@result);
     my @files;

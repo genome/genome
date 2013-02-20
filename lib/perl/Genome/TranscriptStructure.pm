@@ -575,7 +575,8 @@ sub transcript_distance_to_transcript {
 # Returns 1 if first position is 5' of the second position
 sub transcript_is_before {
     my ($self, $p1, $p2) = @_;
-    return 0 unless $self->transcript_within_transcript_with_flanks($p1) and $self->transcript_within_transcript_with_flanks($p2);
+    my $flank_size = 50000;
+    return 0 unless $self->transcript_within_transcript_with_flanks($p1, $flank_size) and $self->transcript_within_transcript_with_flanks($p2, $flank_size);
 
     my $strand = $self->transcript_strand;
     if ($strand eq '+1') {
@@ -594,7 +595,8 @@ sub transcript_is_before {
 # Returns 1 if the first position is 3' of the second position
 sub transcript_is_after {
     my ($self, $p1, $p2) = @_;
-    return 0 unless $self->transcript_within_transcript_with_flanks($p1) and $self->transcript_within_transcript_with_flanks($p2);
+    my $flank_size = 50000;
+    return 0 unless $self->transcript_within_transcript_with_flanks($p1, $flank_size) and $self->transcript_within_transcript_with_flanks($p2, $flank_size);
 
     my $strand = $self->transcript_strand;
     if ($strand eq '+1') {

@@ -24,12 +24,12 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-genome-model tools bwa ...    
+genome-model tools bwa ...
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 More information about the BWA suite of tools can be found at http://bwa.sourceforege.net.
 EOS
 }
@@ -55,7 +55,7 @@ my %BWA_VERSIONS = (
     '0.5.9-i0.3'   => '/usr/bin/ibwa-0.5.9-0.3',
     '0.5.9-i0.4'   => '/gscuser/tabbott/bin/ibwa-0.5.9-0.4',
     '0.5.9-i0.5'   => '/gscuser/tabbott/bin/ibwa-0.5',
-    '0.6.2'        => '/gscuser/iferguso/bin/bwa-0.6.2',
+    '0.6.2'        => '/usr/bin/bwa0.6.2',
     'bwa'          => 'bwa',
 );
 
@@ -84,7 +84,7 @@ sub default_bwa_version {
     die "default samtools version: $DEFAULT is not valid" unless $BWA_VERSIONS{$DEFAULT};
     return $DEFAULT;
 }
-        
+
 sub default_version { return default_bwa_version; }
 
 sub supports_bam_input {

@@ -235,9 +235,9 @@
 [submodule "vendor/strelka"]
 	path = vendor/strelka
 	url = git@github.com:genome-vendor/strelka.git
-[submodule "cloneCaller"]
-	path = cloneCaller
-	url = ssh://git//srv/git/cloneCaller.git
 [submodule "copyCat"]
 	path = copyCat
 	url = ssh://git//srv/git/copyCat.git
+[submodule "sciClone"]
+	path = sciClone
+	url = ssh://git//srv/git/sciClone.git

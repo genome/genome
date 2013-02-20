@@ -238,6 +238,11 @@ sub execute {
     #    $normal_bam = $build->normal_bam;
     #}
 
+    unless ($build->snv_detection_strategy) {
+        $self->warning_message("snv_detection_strategy undefined, skipping Review Variants. This tool could be rewritten to allow for no snv_detection_strategy if a variant list is provided.");
+        return 1;
+    }
+
     # Ensure the necessary files exist in this build
     my $snv_file = "$build_dir/variants/snvs.hq.bed";
     unless( -e $snv_file ){

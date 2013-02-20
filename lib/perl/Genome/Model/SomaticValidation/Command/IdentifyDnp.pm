@@ -117,6 +117,11 @@ sub shortcut {
 sub execute {
     my $self = shift;
 
+    unless ($self->build->snv_detection_strategy) {
+        $self->warning_message("Snv detection strategy not defined. Skipping IdentifyDnp");
+        return 1;
+    }
+
     my $params = $self->params_for_result;
     my $result = Genome::Model::Build::SomaticValidation::IdentifyDnpResult->get_or_create(%$params);
 

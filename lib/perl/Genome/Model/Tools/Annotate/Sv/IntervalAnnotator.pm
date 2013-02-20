@@ -1,28 +1,24 @@
-package Genome::Model::Tools::Annotate::Sv::Base;
+package Genome::Model::Tools::Annotate::Sv::IntervalAnnotator;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::Tools::Annotate::Sv::Base{
-    is => "Command::V2",
-};
+class Genome::Model::Tools::Annotate::Sv::IntervalAnnotator {
+    is => "Genome::Model::Tools::Annotate::Sv::Base",
+    has_input => [
+        annotation_file => {
+            is => 'Text',
+            doc => 'File containing UCSC table',
+        },
+        breakpoint_wiggle_room => {
+            is => 'Number',
+            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
+            default => 200,
+        },
 
-sub process_breakpoint_list {
-    #override in subclass;
-    #interface for sv annotators
+    ],
 };
-
-sub column_names {
-    #override in subclass;
-    #interface for sv annotator
-};
-
-sub get_key_from_item {
-    my $class = shift;
-    my $item = shift;
-    return join("--", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event});
-}
 
 sub annotate_interval_matches {
     #both breakpoints need to match within some wiggle room
@@ -78,3 +74,4 @@ sub read_ucsc_annotation{
 }
 
 1;
+

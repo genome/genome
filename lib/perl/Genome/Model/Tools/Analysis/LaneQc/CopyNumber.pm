@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Command;
 use IO::File;
+use Genome::Utility::Text qw(sanitize_string_for_filesystem);
 
 class Genome::Model::Tools::Analysis::LaneQc::CopyNumber {
     is => 'Command',
@@ -104,7 +105,8 @@ sub execute {
 
             my $user = Genome::Sys->username;
 
-            my $lane_outfile = $outfile_prefix . $lane_name . ".cnqc";
+            my $filesafe_lane_name = sanitize_string_for_filesystem($lane_name);
+            my $lane_outfile = $outfile_prefix . $filesafe_lane_name . ".cnqc";
 
             my $job1_name = $lane_outfile . "-cn-qc";
             my $job2_name = $job1_name . "-plot";
@@ -114,7 +116,7 @@ sub execute {
 
             my $bam2cn_pl = "$module_dir/BAM2CN.pl";
             die $self->error_message("Missing Perl script ($bam2cn_pl)") unless (-s "$bam2cn_pl");
-            my $cmd1 = "perl $bam2cn_pl -w $window $alignment_file > $lane_outfile";
+            my $cmd1 = $^X . " $bam2cn_pl -w $window $alignment_file > $lane_outfile";
 
             my $plot_wholegenome_cn_R = "$module_dir/plot_wholegenome_cn.R";
             die $self->error_message("Missing R script ($plot_wholegenome_cn_R)") unless (-s "$plot_wholegenome_cn_R");

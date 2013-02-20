@@ -8,7 +8,7 @@ class Genome::SoftwareResult::Metric {
     type_name => 'software result metric',
     table_name => 'SOFTWARE_RESULT_METRIC',
     id_by => [
-        metric_name        => { is => 'VARCHAR2', len => 100 },
+        metric_name        => { is => 'VARCHAR2', len => 1000 },
         software_result_id => { is => 'NUMBER', len => 20 },
     ],
     has => [

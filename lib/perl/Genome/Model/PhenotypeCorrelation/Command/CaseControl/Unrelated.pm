@@ -145,6 +145,7 @@ sub _create_workflow {
         svm => {
             name => "Create variant matrix for single variant test",
             class => "Genome::Model::Tools::Vcf::VcfToVariantMatrix",
+            lsf_resource => "-R 'select[mem>32000] rusage[mem=32000]' -M 32000000",
             inputs => {
                 vcf_file => $multisample_vcf,
                 output_file => $single_mutation_matrix,
@@ -421,9 +422,14 @@ sub _create_workflow {
     my %ops;
     for my $opname (keys %workflow_data) {
         my $node = $workflow_data{$opname};
+        my $operation_type = Workflow::OperationType::Command->create(
+            command_class_name => $node->{class},
+        );
+        $operation_type->lsf_resource( $node->{lsf_resource} ) if $node->{lsf_resource};
         $ops{$opname} = $workflow->add_operation(
             name => $node->{name},
-            operation_type => Workflow::OperationType::Command->get($node->{class}),
+            operation_type => $operation_type,
+            #operation_type => Workflow::OperationType::Command->get($node->{class}),
         );
     }
 

@@ -8,17 +8,12 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Transcripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
-    has => [
-        breakpoint_wiggle_room => {
-            is => 'Number',
-            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
-            default => 200,
+    has_input => [
+        print_flanking_genes => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'Print columns that describe what genes fall within the flanking regions of the sv breakpoints',
         },
-#        dbsnp_annotation_file => {
-#            is => 'Text',
-#            doc => 'File containing UCSC dbsnp table',
-#            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
-#        },
     ],
 };
 
@@ -33,10 +28,6 @@ sub process_breakpoint_list{
         }
     }
     return \%output;
-    #my $dbsnp_annotation = $self->read_ucsc_annotation($self->dbsnp_annotation_file);
-
-    #$self->find_annotated_positions($breakpoints_list, $dbsnp_annotation, $self->breakpoint_wiggle_room, "dbsnp_annotation");    
-    
 }
 
 sub process_item {
@@ -89,17 +80,45 @@ sub process_item {
         ($geneB, $transcriptB, $orientationB, $subStructureB) = transcriptFeatures($transcript, $item->{bpB});
     }
 
-    my $dbsnp_ref = $item->{dbsnp_annotation};
-    my $dbsnp_string = "-";
-    if ($dbsnp_ref) {
-        my @dbsnp = map {$_->{name}} @{$dbsnp_ref};
-        $dbsnp_string = join(",", @dbsnp);
-    }
-    my $key = join("--", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event});
+    my $key = $self->get_key_from_item($item);
     my $value = [$geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes];
-    return ($key, $value);
 
-    return 1;
+    if ($self->print_flanking_genes) {
+        my $flankingARef = $item->{transcripts_flanking_breakpoint_a};
+        my $flankingBRef = $item->{transcripts_flanking_breakpoint_b};
+
+        my $flankingListA;
+        my $flankingListB;
+        my %geneDedup;
+
+        if ($flankingARef) {
+            my @flankingA = @{$flankingARef};
+            foreach my $t (@flankingA) {
+                my $gene = $t->gene_name;
+                $geneDedup{$gene} = 1;
+            }
+            $flankingListA = join(",", keys %geneDedup);
+        }
+        else {
+            $flankingListA = "N/A";
+        }
+        %geneDedup = ();
+        if ($flankingBRef) {
+            my @flankingB = @{$flankingBRef};
+            foreach my $t (@flankingB) {
+                my $gene = $t->gene_name;
+                $geneDedup{$gene} = 1;
+            }
+            $flankingListB = join(",", keys %geneDedup);
+        }
+        else {
+            $flankingListB = "N/A";
+        }
+        push @$value, $flankingListA;
+        push @$value, $flankingListB;
+    }
+
+    return ($key, $value);
 }
 
 sub allTranscriptsInCommon {
@@ -272,29 +291,17 @@ sub find_annotated_positions {
     return 1;
 }
 
-sub read_ucsc_annotation{
-    my ($self, $file) = @_;
-    my %annotation;
-    open (ANNOTATION, "<$file") || die "Unable to open annotation: $file\n";
-    while (<ANNOTATION>) {
-        chomp;
-        next if /^\#/;
-        my $p;
-        my @extra;
-        ($p->{bin},$p->{chrom},$p->{chromStart},$p->{chromEnd},$p->{name},@extra) = split /\t+/;
-        $p->{chrom} =~ s/chr//;
-        $p->{extra} = \@extra;
-        push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
-    }
-    close ANNOTATION;
-    return \%annotation;
-}
-
 
 sub column_names {
-    return qw(
+    my $self = shift;
+    my @names =  qw(
         geneA transcriptA orientationA subStructureA 
         geneB transcriptB orientationB subStructureB	
         deletedGenes
     );
+    if ($self->print_flanking_genes) {
+        push @names, "flankingGenesA";
+        push @names, "flankingGenesB";
+    }
+    return @names;
 }

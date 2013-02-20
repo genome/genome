@@ -146,6 +146,11 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Boolean',
               doc => 'Allow certain warnings/errors to be by-passed',
         },
+        ignore_models_matching => {
+              is => 'Text',
+              is_optional => 1,
+              doc => "expression matching models which should be ignored",
+        },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
 };
@@ -1157,11 +1162,21 @@ sub check_somatic_variation_models{
   my $existing_model_count = scalar(@existing_models);
   $self->status_message("\tStarting with " . $existing_model_count . " models for this pair of DNA samples. Candidates that meet criteria:");
 
+  my $ignore_models_bx;
+  if (my $ignore_models_matching = $self->ignore_models_matching) {
+    $ignore_models_bx = UR::BoolExpr->resolve_for_string('Genome::Model::SomaticVariation',$ignore_models_matching);
+    $self->status_message("\tIgnoring models matching: $ignore_models_bx");
+  }
+
   #Test for correct processing profile, annotation build
   foreach my $model (@existing_models){
     next unless ($model->class eq "Genome::Model::SomaticVariation");
     next unless ($model->processing_profile_id == $somatic_variation_pp_id);
     next unless ($model->annotation_build->id == $self->annotation_build->id);
+    if ($ignore_models_bx and $ignore_models_bx->evaluate($model)) {
+        $self->status_message("\t\tIgnore: " . $model->__display_name__);
+        next;
+    }
 
     #If previously discovered variants was defined as an input to the somatic-variation model, disallow it...
     #-> Don't do this now that previously discovered variations build is only used to annotate variants with dbSNP ids
@@ -1189,7 +1204,7 @@ sub check_somatic_variation_models{
     }
     next unless ($tumor_model_match && $normal_model_match);
 
-    $self->status_message("\t\tName: " . $model->name);
+    $self->status_message("\t\tUse: " . $model->__display_name__);
     push (@final_models, $model);
   }
   my $final_model_count = scalar(@final_models);
