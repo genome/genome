@@ -28,6 +28,13 @@ class Genome::InstrumentData {
         models => { is => 'Genome::Model', reverse_as => 'instrument_data', is_many => 1, },
     ],
     has_optional => [
+        tgi_lims_status => { # TODO rename!
+            is => 'Text',
+            via => 'attributes',
+            to => 'attribute_value',
+            where => [ attribute_label => 'tgi_lims_status' ],
+            is_mutable => 1,
+        },
         #TODO: may want to make these immutable, but needed them for
         #backfilling purposes
         transcript_strand => {
