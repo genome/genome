@@ -25,6 +25,10 @@ class Genome::Model::Tools::Annotate::Sv::IntervalAnnotator {
     ],
 };
 
+#TODO NEEDS to be rewritten - I don't think it is right.
+#First of all, it stops at one end position rather than getting all intervals that cross the breakpoint.
+#Second of all, it only considers the 2nd breakpoint of the SV, not the first breakpoint.  I think
+#annotations crossing either breakpoint should probably be considered.
 sub annotate_interval_matches {
     #both breakpoints need to match within some wiggle room
     my $self = shift;
@@ -90,8 +94,8 @@ sub get_var_annotation {
 sub read_ucsc_annotation{
     my ($self, $file) = @_;
     my %annotation;
-    open (ANNOTATION, "<$file") || die "Unable to open annotation: $file\n";
-    while (<ANNOTATION>) {
+    my $in = Genome::Sys->open_file_for_reading($file) || die "Unable to open annotation: $file\n";
+    while (<$in>) {
         chomp;
         next if /^\#/;
         my $p;
@@ -101,7 +105,7 @@ sub read_ucsc_annotation{
         $p->{extra} = \@extra;
         push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
     }
-    close ANNOTATION;
+    $in->close;
     return \%annotation;
 }
 
