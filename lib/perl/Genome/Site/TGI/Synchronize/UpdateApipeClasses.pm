@@ -386,6 +386,7 @@ sub _create_indexillumina {
             subclass_name => $new_object_class,
             %{$direct_properties},
             %{$indirect_properties},
+            tgi_lims_status => 'new',
         );
     };
     confess "Could not create new object of type $new_object_class based on object of type " .
