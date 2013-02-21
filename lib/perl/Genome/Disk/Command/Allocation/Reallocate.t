@@ -24,8 +24,24 @@ my $allocation = Genome::Disk::Allocation->create(
 ok($allocation->volume);
 ok($allocation, 'Successfully created test allocation') or die;
 
+my $archived_allocation = Genome::Disk::Allocation->create(
+    disk_group_name => 'info_apipe',
+    allocation_path => 'command/allocation/deallocate/test_archived',
+    kilobytes_requested => 100,
+    owner_class_name => 'UR::Value',
+    owner_id => 'test',
+);
+my $arch_vol = $archived_allocation->volume;
+my $prefix = $arch_vol->archive_volume_prefix . "/foo";
+$arch_vol->mount_path($prefix);
+$archived_allocation->mount_path($prefix);
+ok($archived_allocation->volume);
+ok($archived_allocation, 'Successfully created archived test allocation') or die;
+print $archived_allocation->volume->mount_path . "\n";
+ok($archived_allocation->is_archived, 'Archived allocation is archived') or die;
+
 my $cmd = Genome::Disk::Command::Allocation::Reallocate->create(
-    allocations => [$allocation],
+    allocations => [$allocation, $archived_allocation],
     kilobytes_requested => 200,
 );
 ok($cmd, 'Successfully created reallocate command object') or die;
@@ -34,5 +50,6 @@ my $rv = $cmd->execute;
 ok($rv, 'Successfully created command');
 
 is($allocation->kilobytes_requested, 200, 'allocation correctly resized');
+is($archived_allocation->kilobytes_requested, 100, 'archived allocation not resized');
 
 done_testing();
