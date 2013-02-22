@@ -1313,7 +1313,8 @@ sub _get_candidate_volumes {
     $volume_params{'mount_path not in'} = [$exclude] if $exclude;
     # XXX Shouldn't need this, 'archive' should obviously be a status.
     #       This might be a performance issue.
-    my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(%volume_params);
+    my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(
+        %volume_params, '-order_by' => ['-cached_unallocated_kb']);
     unless (@volumes) {
         confess "Did not get any allocatable and active volumes belonging to group $disk_group_name.";
     }
