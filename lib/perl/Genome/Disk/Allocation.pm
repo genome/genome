@@ -410,8 +410,9 @@ sub _get_allocation_without_lock {
     my ($class, $candidate_volumes, $parameters) = @_;
     my $kilobytes_requested = $parameters->{'kilobytes_requested'};
 
-    my @randomized_candidate_volumes = shuffle(
-        @$candidate_volumes, @$candidate_volumes, @$candidate_volumes);
+    # We randomize to avoid the rare repeated contention case
+    my @randomized_candidate_volumes = (@$candidate_volumes,
+        shuffle(@$candidate_volumes));
 
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
