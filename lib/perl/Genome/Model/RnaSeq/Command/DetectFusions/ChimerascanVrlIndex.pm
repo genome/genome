@@ -1,21 +1,25 @@
-package Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanIndex;
+package Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanVrlIndex;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanIndex {
+class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanVrlIndex {
     is => 'Command::V2',
-    doc => 'create the annotation index used inside chimerascan',
+    doc => 'create the annotation index used inside chimerascan-vrl',
     has_param => [
         version => {
             is => 'Text',
-            doc => 'the version of chimerascan to use',
+            doc => 'the version of chimerascan-vrl to use',
         },
         bowtie_version => {
             is => 'Text',
             doc => 'the version of bowtie chimerscan will use',
+        },
+        picard_version => {
+            is => 'Text',
+            doc => 'the version of picard used to manipulate BAM files',
         },
     ],
     has_input => [
@@ -35,27 +39,28 @@ class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanIndex {
 
 sub help_synopsis {
     return <<EOS
- genome model rna-seq detect-fusions chimerascan-index --version=1.2.3 --bowtie-version=1.2.3 --reference-build=1234 --annotation-build=1234
+ genome model rna-seq detect-fusions chimerascan-vrl-index --version=0.4.6 --bowtie-version=0.12.7 --picard-version 1.2.3 --reference-build=1234 --annotation-build=1234
 
 EOS
 }
 
 sub help_detail {
     return <<EOS
-Create the annotation index used inside chimerascan
+Create the annotation index used inside chimerascan-vrl
 EOS
 }
 
 sub execute {
     my $self = shift;
 
-    $self->status_message( 'Starting to create index!' );
-    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index->get_or_create(
+    $self->status_message( 'Starting to create chimerascan-vrl index!' );
+    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index->get_or_create(
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
             version => $self->version,
             bowtie_version => $self->bowtie_version,
             reference_build => $self->reference_build,
-            annotation_build => $self->annotation_build
+            annotation_build => $self->annotation_build,
+            picard_version => $self->picard_version,
     );
 
     die( 'Failed to generate result!' ) unless $result;

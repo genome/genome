@@ -9,6 +9,7 @@ BEGIN {
 };
 
 use above 'Genome';
+use Test::More;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(setup);
@@ -17,8 +18,12 @@ sub setup {
     my %parameters = @_;
     my $test_data_version = $parameters{test_data_version};
     my $chimerascan_version = $parameters{chimerascan_version};
+    my $picard_version = $parameters{picard_version};
+    diag "Setting up with \n\ttest_data_version:$test_data_version\n\t" .
+            "chimerascan_version:$chimerascan_version\n\t" .
+            "picard_version:$picard_version\n\t";
 
-    my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/$chimerascan_version";
+    my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanVrlResult/$chimerascan_version";
     my $tophat_dir = $data_dir . "/tophat_data$test_data_version";
     die "Couldn't find tophat_dir at '$tophat_dir'" unless -d $tophat_dir;
 
@@ -66,14 +71,23 @@ sub setup {
     );
     $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
 
-    my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index->__define__(
+    my $index_dir = File::Spec->join($data_dir, 'IndexResult');
+    my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index->__define__(
         version => $chimerascan_version,
         bowtie_version => "0.12.7",
         reference_build => $reference_build,
-        output_dir => $data_dir.'/IndexResult/',
+        output_dir => $index_dir,
         annotation_build => $annotation_build,
+        picard_version => $picard_version,
     );
     $index->lookup_hash($index->calculate_lookup_hash());
+
+    *Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::_staging_disk_usage
+        = sub { return 40 * 1024 };
+
+    *Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::_resolve_index_dir
+        = sub { return $index_dir };
+
 
     return $alignment_result, $annotation_build;
 }

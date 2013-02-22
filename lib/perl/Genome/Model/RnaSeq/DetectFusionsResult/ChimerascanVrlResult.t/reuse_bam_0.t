@@ -9,25 +9,25 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
+use Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult;
 use lib File::Basename::dirname(File::Spec->rel2abs(__FILE__));
 use chimerascan_test_setup "setup";
 
-my $chimerascan_version = '0.4.5-vrl';
+my $chimerascan_version = '0.4.6';
+my $picard_version = 1.82;
 my ($alignment_result, $annotation_build) = setup(test_data_version => 3,
+        picard_version => $picard_version,
         chimerascan_version => $chimerascan_version);
 
-*Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::_staging_disk_usage
-    = sub { return 40 * 1024 };
 
-
-my $no_bam_result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->get_or_create(
+my $r = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult->get_or_create(
     alignment_result => $alignment_result,
     version => $chimerascan_version,
     detector_params => "--bowtie-version=0.12.7 --reuse-bam 0",
     annotation_build => $annotation_build,
+    picard_version => $picard_version,
 );
-isa_ok($no_bam_result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult");
+isa_ok($r, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult");
 
 done_testing();
 

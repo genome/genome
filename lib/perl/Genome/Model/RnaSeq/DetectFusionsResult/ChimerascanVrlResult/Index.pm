@@ -1,20 +1,24 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index;
+package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index {
+class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index {
     is => 'Genome::Model::RnaSeq::DetectFusionsResult::Index::Base',
     has_param => [
         version => {
             is => 'Text',
-            doc => 'the version of chimerascan to use to make the index',
+            doc => 'the version of chimerascan-vrl to use to make the index',
         },
         bowtie_version => {
             is => 'Text',
             doc => 'the version of bowtie to use to make the index',
+        },
+        picard_version => {
+            is => 'Text',
+            doc => 'the version of picard used to manipulate BAM files',
         },
     ],
     has_input => [
@@ -32,7 +36,7 @@ class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index {
         },
     ],
 
-    doc => 'This holds the bowtie indices and modified FASTA required to run chimerascan',
+    doc => 'This holds the bowtie indices and modified FASTA required to run chimerascan-vrl',
 };
 
 sub create {
@@ -54,7 +58,7 @@ sub create {
 
 sub resolve_allocation_subdirectory {
     my $self = shift;
-    return 'build_merged_alignments/chimerascan-index/' . $self->id;
+    return 'build_merged_alignments/chimerascan-vrl-index/' . $self->id;
 }
 
 #rumour has it future versions of chimerascan will support different formats for this
@@ -108,19 +112,14 @@ sub run_indexer {
     my $output_dir = $self->temp_staging_directory;
 
     my $bowtie_dir =  Genome::Model::Tools::Bowtie->base_path($self->bowtie_version);
-    my $cmd_path = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->_path_for_version($self->version);
+    my $executable = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult->get_executable_path($self->version);
 
-    my $cmd = "python $cmd_path/chimerascan_index.py --bowtie-dir=$bowtie_dir $fasta $gene_file $output_dir";
-
-    local $ENV{PYTHONPATH} =  ($ENV{PYTHONPATH} ? $ENV{PYTHONPATH} . ":" : "")  .
-        Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->_python_path_for_version($self->version);
+    my $cmd = "$executable chimerascan_index.py --bowtie-dir=$bowtie_dir $fasta $gene_file $output_dir";
 
     Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files => [$fasta, $gene_file],
-
     );
-
 }
 
 sub get_sequence_dictionary {
@@ -147,6 +146,7 @@ sub get_sequence_dictionary {
     }
     # gmt picard create-sequence-dictionary
     unless (Genome::Model::Tools::Picard::CreateSequenceDictionary->execute(
+        use_version => $self->picard_version,
         output_file => $sam_file,
         reference_fasta => $fasta_file,
         species => $species_name,
@@ -157,6 +157,7 @@ sub get_sequence_dictionary {
 
     # gmt picard sort-sam
     unless (Genome::Model::Tools::Picard::SortSam->execute(
+        use_version => $self->picard_version,
         input_file => $sam_file,
         output_file => $seqdict_file,
     )) {
