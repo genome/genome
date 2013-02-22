@@ -18,7 +18,6 @@ class Genome::Model::Tools::Relationship::MergeAndFixVcfs {
     has_optional_input => [
     denovo_vcf => {
         is=>'Text',
-        default=>0,
     },
     output_vcf => {
         is=>'Text',
@@ -53,22 +52,26 @@ sub help_detail {
 sub execute {
     my $self=shift;
     my ($denovo_vcf, $standard_vcf) = ($self->denovo_vcf, $self->standard_vcf);
-    unless(-s $denovo_vcf) {
+    if (defined $denovo_vcf and not -s $denovo_vcf) {
         $self->error_message("Denovo VCF $denovo_vcf has no size or is not found. Exiting");
         die;
+    } elsif (not defined $denovo_vcf) {
+        $self->status_message("Denovo vcf is not defined... no merging will be done in this step.")
     }
     unless(-s $standard_vcf) {
         $self->error_message("Standard VCF $standard_vcf has no size or is not found. Exiting");
         die;
     }
-    my $temp_output_vcf = $self->merge_vcfs($denovo_vcf, $standard_vcf);
+
+    my $vcf_to_sort = $self->merge_vcfs($denovo_vcf, $standard_vcf);
+
     my $sorted_vcf = Genome::Sys->create_temp_file_path();
     my $sort_cmd = Genome::Model::Tools::Joinx::Sort->create(
-        input_files => [$temp_output_vcf],
+        input_files => [$vcf_to_sort],
         output_file => $sorted_vcf
     );
     unless ($sort_cmd->execute()) {
-        die $self->error_message("Failed to sort vcf file $temp_output_vcf and write to $sorted_vcf!");
+        die $self->error_message("Failed to sort vcf file $vcf_to_sort and write to $sorted_vcf!");
     }
     my $output_vcf = $self->output_vcf;
     if($self->bgzip) {
@@ -82,16 +85,19 @@ sub execute {
     return 1;
 }
 
+# If the denovo vcf is defined, merge the files. If not just go through the motions (and remove any error lines)
 sub merge_vcfs {
     my ($self, $denovo_vcf, $standard_vcf) = @_;
     my ($temp_ofh, $temp_output_filename) = Genome::Sys->create_temp_file();
-    $self->write_merged_header($temp_ofh, $denovo_vcf, $standard_vcf);
-    my $denovo_sites = $self->objectify_denovo_vcf($denovo_vcf);
     my $standard_fh = open_vcf_file($standard_vcf);
     my ($last_chr, $last_pos) = 0;
     my @denovo_positions;
     my $merged=0;
     my $denovo_idx = 0;
+    $self->write_merged_header($temp_ofh, $denovo_vcf, $standard_vcf);
+
+    my $denovo_sites = $self->objectify_denovo_vcf($denovo_vcf) if defined $denovo_vcf;
+
     while(my $line = $standard_fh->getline) {
         if($line =~m/^#/) { next;}
         if($line =~m/ERROR/) { 
@@ -99,43 +105,49 @@ sub merge_vcfs {
             next;
         }
         chomp($line);
-        my ($chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples) = split "\t", $line;
-        if($chr ne $last_chr) {
-            while ($denovo_idx <= $#denovo_positions) {
+
+        if (!defined $denovo_vcf) {
+            $temp_ofh->print($line . "\n");
+        } else {
+            my ($chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, @samples) = split "\t", $line;
+            if($chr ne $last_chr) {
+                while ($denovo_idx <= $#denovo_positions) {
+                    my $denovo_position = $denovo_positions[$denovo_idx];
+                    $temp_ofh->print($self->fix_denovo_vcf_line($denovo_sites->{$last_chr}->{$denovo_position}));
+                    delete $denovo_sites->{$last_chr}->{$denovo_position};
+                    ++$denovo_idx;
+                }
+
+                @denovo_positions = sort {$a <=> $b} keys %{$denovo_sites->{$chr}};
+                $denovo_idx = 0;
+                $last_pos = 0;
+            }
+            POS: while ($denovo_idx <= $#denovo_positions) {
                 my $denovo_position = $denovo_positions[$denovo_idx];
-                $temp_ofh->print($self->fix_denovo_vcf_line($denovo_sites->{$last_chr}->{$denovo_position}));
-                delete $denovo_sites->{$last_chr}->{$denovo_position};
-                ++$denovo_idx;
+                if($denovo_position eq $pos) {
+                    $temp_ofh->print($self->merge_line($line, $denovo_sites->{$chr}->{$pos}));
+                    delete $denovo_sites->{$chr}->{$pos};
+                    $merged=1;
+                    ++$denovo_idx;
+                }
+                elsif(($denovo_position < $pos) && ($denovo_position > $last_pos)) {
+                    $temp_ofh->print($self->fix_denovo_vcf_line($denovo_sites->{$chr}->{$denovo_position}));
+                    delete $denovo_sites->{$chr}->{$denovo_position};
+                    ++$denovo_idx;
+                } else {
+                    last POS;
+                }
+            }
+            if($merged) {
+                $merged=0;
+            }
+            else {
+                $temp_ofh->print($line . "\n");
             }
 
-            @denovo_positions = sort {$a <=> $b} keys %{$denovo_sites->{$chr}};
-            $denovo_idx = 0;
-            $last_pos = 0;
+            $last_chr = $chr;
+            $last_pos = $pos;
         }
-        POS: while ($denovo_idx <= $#denovo_positions) {
-            my $denovo_position = $denovo_positions[$denovo_idx];
-            if($denovo_position eq $pos) {
-                $temp_ofh->print($self->merge_line($line, $denovo_sites->{$chr}->{$pos}));
-                delete $denovo_sites->{$chr}->{$pos};
-                $merged=1;
-                ++$denovo_idx;
-            }
-            elsif(($denovo_position < $pos) && ($denovo_position > $last_pos)) {
-                $temp_ofh->print($self->fix_denovo_vcf_line($denovo_sites->{$chr}->{$denovo_position}));
-                delete $denovo_sites->{$chr}->{$denovo_position};
-                ++$denovo_idx;
-            } else {
-                last POS;
-            }
-        }
-        if($merged) {
-            $merged=0;
-        }
-        else {
-            $temp_ofh->print($line . "\n");
-        }
-        $last_chr = $chr;
-        $last_pos = $pos;
     }
     for my $chr (keys %{$denovo_sites}) { #did we fail to use any-- i.e. was standard missing a whole chromosome
         for my $pos (sort {$a <=> $b} keys %{$denovo_sites->{$chr}}) {
@@ -151,7 +163,7 @@ sub merge_vcfs {
 
 # FIXME since the header fixing is no longer done here, this is as simple as a grep "^#" $standard_vcf > $fh 
 sub write_merged_header {
-    my ($self, $fh, $standard_vcf) = @_;
+    my ($self, $fh, $denovo_vcf, $standard_vcf) = @_;
 
     my $ifh = open_vcf_file($standard_vcf);
     my ($info_printed, $format_printed)=(0,0);

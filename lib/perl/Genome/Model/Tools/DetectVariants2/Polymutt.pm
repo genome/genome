@@ -88,6 +88,15 @@ sub chr2process {
     return $chrom_string;
 }
 
+# Parse the skip_denovo parameter out of the params string
+sub skip_denovo {
+    my $self = shift;
+    my $params = $self->params;
+    my ($skip_denovo) = $params =~ m/skip_denovo/;
+
+    return defined $skip_denovo; # Treat skip_denovo as a boolean. If it was mentioned, it is set.
+}
+
 sub run_polymutt {
     my($self, $dat_file, $glf_index) = @_;
     my $ped_file = $self->pedigree_file_path;
@@ -122,15 +131,24 @@ sub run_polymutt {
         'output',
         ],
     );
-    my $denovo_op = $workflow->add_operation(
-        name=>"denovo polymutt",
-        operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Relationship::RunPolymutt"),
-    );
+
+    my $denovo_op;
+    my @polymutt_operations;
+    if (!$self->skip_denovo) {
+        $denovo_op = $workflow->add_operation(
+            name=>"denovo polymutt",
+            operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Relationship::RunPolymutt"),
+        );
+        push @polymutt_operations, $denovo_op;
+    }
+
     my $standard_op = $workflow->add_operation(
         name=>"standard polymutt",
         operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Relationship::RunPolymutt"),
     );
-    for my $op ($denovo_op, $standard_op) {
+    push @polymutt_operations, $standard_op;
+
+    for my $op (@polymutt_operations) {
         $workflow->add_link(
             left_operation=>$workflow->get_input_connector,
             left_property=>"dat_file",
@@ -163,35 +181,18 @@ sub run_polymutt {
         );
 
     }
-    $workflow->add_link(
-        left_operation=>$workflow->get_input_connector,
-        left_property=>"output_denovo",
-        right_operation=>$denovo_op,
-        right_property=>"output_vcf",
-    );
+
     $workflow->add_link(
         left_operation=>$workflow->get_input_connector,
         left_property=>"output_standard",
         right_operation=>$standard_op,
         right_property=>"output_vcf",
     );
-    $workflow->add_link(
-        left_operation=>$workflow->get_input_connector,
-        left_property=>"denovo",
-        right_operation=>$denovo_op,
-        right_property=>"denovo",
-    );
     my $merge_op = $workflow->add_operation(
         name=>"merge standard and denovo vcfs",
         operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Relationship::MergeAndFixVcfs"),
     );
 
-    $workflow->add_link(
-        left_operation=>$denovo_op,
-        left_property=>"output_vcf",
-        right_operation=>$merge_op,
-        right_property=>"denovo_vcf",
-    );
     $workflow->add_link(
         left_operation=>$standard_op,
         left_property=>"output_vcf",
@@ -210,6 +211,27 @@ sub run_polymutt {
         right_operation=>$workflow->get_output_connector,
         right_property=>'output',
     );
+
+    if (!$self->skip_denovo) {
+        $workflow->add_link(
+            left_operation=>$workflow->get_input_connector,
+            left_property=>"output_denovo",
+            right_operation=>$denovo_op,
+            right_property=>"output_vcf",
+        );
+        $workflow->add_link(
+            left_operation=>$workflow->get_input_connector,
+            left_property=>"denovo",
+            right_operation=>$denovo_op,
+            right_property=>"denovo",
+        );
+        $workflow->add_link(
+            left_operation=>$denovo_op,
+            left_property=>"output_vcf",
+            right_operation=>$merge_op,
+            right_property=>"denovo_vcf",
+        );
+    }
    
 
     my $log_dir = $self->output_directory;
