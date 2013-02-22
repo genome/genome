@@ -100,8 +100,9 @@ sub execute {
     if ($self->use_tier_4) {
         push @tiers_to_use, 4;
     }
+    my $version = 1;
     foreach my $tier (@tiers_to_use){
-        my $snv_anno = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$tier,"annotated.top");
+        my $snv_anno = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top");
         my @snv_lines = `cat $snv_anno`;
         chomp @snv_lines;
 
