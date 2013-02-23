@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::Utility::Text 'justify';
+use Genome::Utility::Text qw(justify find_diff_pos);
 
 use DateTime::Format::Strptime;
 use Date::Calc "Delta_DHMS";
@@ -307,17 +307,19 @@ sub _display_workflow_children {
         $failed_workflow_steps) = @_;
 
     print $handle $self->_color_dim($self->_format_workflow_child_line(
-            "ID", "Status", "LSF ID", "Start Time", "Time Elapsed", "Name"));
+            "ID", "Status", "LSF ID", "Start Time", "Time Elapsed", "Name", "Start Time"));
 
+    my $ie = $workflow->current;
+    my $start_time = $self->_clean_up_timestamp($ie->start_time);
     $self->_display_workflow_child($handle, $workflow, $datetime_parser, 0,
-            $failed_workflow_steps);
+            $failed_workflow_steps, $start_time);
 
     1;
 }
 
 sub _display_workflow_child {
     my ($self, $handle, $child, $datetime_parser, $nesting_level,
-            $failed_workflow_steps) = @_;
+            $failed_workflow_steps, $prev_start_time) = @_;
 
     my $status = $child->status;
 
@@ -331,7 +333,7 @@ sub _display_workflow_child {
         }
         print $handle $self->_format_workflow_child_line($child->id, $status,
             $child->current->dispatch_identifier, $start_time, $elapsed_time,
-            ('  'x$nesting_level) . $child->name);
+            ('  'x$nesting_level) . $child->name, $prev_start_time);
     }
 
     if ($self->depth < 0 || $nesting_level < $self->depth) {
@@ -339,7 +341,7 @@ sub _display_workflow_child {
             for my $subchild ($child->related_instances) {
                 $self->_display_workflow_child($handle, $subchild,
                         $datetime_parser, $nesting_level + 1,
-                        $failed_workflow_steps);
+                        $failed_workflow_steps, $start_time);
             }
         }
     }
@@ -404,16 +406,34 @@ sub _resolve_running_child_end_time {
 }
 
 sub _format_workflow_child_line {
-    my ($self, $id, $status, $dispatch_id, $start_time, $elapsed_time, $name) = @_;
+    my ($self, $id, $status, $dispatch_id, $start_time, $elapsed_time, $name, $prev_start_time) = @_;
     $dispatch_id = $self->_format_dispatch_id($dispatch_id);
     return sprintf("%s %s %s %s %s  %s\n",
         $self->_pad_right($id, 9),
         $self->_status_color($self->_pad_right($status, 9)),
         $dispatch_id,
-        $self->_pad_right($start_time, 19),
+        $self->_color_time_since_prev_start_time($start_time, $prev_start_time, 19),
         $self->_workflow_elapsed_color(
             $self->_pad_left($elapsed_time, 13), $name, $dispatch_id),
         $self->_workflow_name_color($name));
+}
+
+sub _color_time_since_prev_start_time {
+    my ($self, $start_time, $prev_start_time, $width) = @_;
+
+    my $prev_str = $self->_pad_right($prev_start_time, $width);
+    my $start_str = $self->_pad_right($start_time, $width);
+
+    my @diff_pos = find_diff_pos($prev_str, $start_str);
+    my $result;
+    if (scalar(@diff_pos)) {
+        my $first_diff = $diff_pos[0];
+        $result = $self->_color_dim(substr($start_str, 0, $first_diff));
+        $result .= substr($start_str, $first_diff);
+    } else {
+        $result = $start_str;
+    }
+    return $result;
 }
 
 sub _format_dispatch_id {
