@@ -1,4 +1,4 @@
-package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
+package Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult;
 
 use strict;
 use warnings;
@@ -6,22 +6,16 @@ use warnings;
 use above 'Genome';
 use Genome::Utility::List 'in';
 
-# Notes from Chris Miller:
-# bsub -oo err.log -q long
-# -M 16000000 -R 'select[type==LINUX64 && mem>16000] span[hosts=1]
-#   rusage[mem=16000]' -n 8 -J chimera -oo outputdir/chimera.err
-# "python /gsc/bin/chimerascan_run.py -v -p 8
-#   /gscmnt/sata921/info/medseq/cmiller/annotations/chimeraScanIndex/
-#   $fastq1 $fastq2 $outputdir"
-
-class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult {
-    is => "Genome::Model::RnaSeq::DetectFusionsResult",
-};
-
-our %INDIRECT_PARAMETER_VALIDATORS = (
+# these are the options which you must specify to us in the
+# fusion-detection-strategy part of the processing-profile
+our %OUR_OPTIONS_VALIDATORS = (
         '--bowtie-version' => '_validate_bowtie_version',
         '--reuse-bam' => '_validate_reuse_bam',
 );
+
+class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult {
+    is => "Genome::Model::RnaSeq::DetectFusionsResult",
+};
 
 sub create {
     my $class = shift;
@@ -29,11 +23,15 @@ sub create {
 
     $self->_prepare_output_directory();
     $self->_prepare_staging_directory();
-    my $options = $self->_resolve_chimerascan_options();
-    my $arguments = $self->_resolve_chimerascan_arguments($options->{indirect});
-    $self->_prepare_to_run_chimerascan($options, $arguments);
 
-    $self->_run_chimerascan($options, $arguments);
+    my ($bowtie_version, $reuse_bam, $c_opts) = $self->_reolve_options($self->detector_params);
+
+    my $index_dir = $self->_resolve_index_dir($bowtie_version);
+    my $c_pargs = $self->_resolve_chimerascan_positional_arguments($index_dir);
+
+    $self->_prepare_to_run_chimerascan($bowtie_version, $reuse_bam);
+
+    $self->_run_chimerascan($bowtie_version, $c_pargs, $c_opts);
 
     $self->_promote_data();
     $self->_remove_staging_directory();
@@ -42,67 +40,87 @@ sub create {
     return $self;
 }
 
-sub _resolve_chimerascan_options {
-    my ($self) = @_;
+sub get_executable_path {
+    my ($self, $version) = @_;
 
-    my $detector_params = $self->detector_params;
-    my %options;
-    my ($direct_params, $indirect_params) =
-            $self->_preprocess_detector_params($detector_params);
-    $options{direct} = $direct_params;
-    $options{indirect} = $indirect_params;
+    my $executable = File::Which::which("chimerascan-vrl$version");
 
-    return \%options;
+    unless (-e $executable) {
+        die $self->error_message("Failed to find a path to installed " .
+                "chimerascan-vrl for version '" . $self->version . "'!");
+    }
+    return $executable;
 }
 
-sub _resolve_chimerascan_arguments {
-    my ($self, $indirect_params) = @_;
+sub resolve_allocation_subdirectory {
+    my $self = shift;
+    return 'build_merged_alignments/chimerascan/' . $self->id;
+}
 
-    my $bowtie_version = $indirect_params->{'--bowtie-version'};
-    my $index_dir = $self->_resolve_index_dir($bowtie_version);
-    my $bowtie_path = Genome::Model::Tools::Bowtie->base_path($bowtie_version);
+
+# return our options (hash) and the options for chimerascan (string)
+sub _reolve_options {
+    my ($self, $params) = @_;
+
+    my %our_opts;
+    # go through and remove our options from the params
+    for my $name (keys %OUR_OPTIONS_VALIDATORS) {
+        # \Q$foo\E ensures that regex symbols are 'quoted'
+        if($params and $params =~ m/(\s*\Q$name\E[=\s]([^\s]*)\s*)/) {
+            my $str = $1;
+            my $val = $2;
+            $params =~ s/\Q$str\E/ /;
+
+            my $validation_method_name = $OUR_OPTIONS_VALIDATORS{$name};
+            $self->$validation_method_name($val, $params); # dies if invalid
+
+            $our_opts{$name} = $val;
+        } else {
+            die(sprintf("Couldn't find parameter named \"%s\" in \"%s\"",
+                    $name, $params || ''));
+        }
+    }
+    return ($our_opts{'--bowtie-version'}, $our_opts{'--reuse-bam'}, $params);
+}
+
+
+sub _resolve_chimerascan_positional_arguments {
+    my ($self, $index_dir) = @_;
 
     my ($fastq1, $fastq2) = @{$self->_fastq_files};
     my $output_directory = $self->temp_staging_directory;
 
-    my @arguments = ($index_dir, $fastq1, $fastq2, $output_directory);
-    return \@arguments;
+    my @c_pargs = ($index_dir, $fastq1, $fastq2, $output_directory);
+    return \@c_pargs;
 }
 
 sub _prepare_to_run_chimerascan {
-    my ($self, $options, $arguments) = @_;
-
-    my @can_reuse_bam_in_versions = qw(0.4.3 0.4.5);
-    my $bowtie_version = $options->{indirect}->{'--bowtie-version'};
-    my $should_reuse_bam = $options->{indirect}->{'--reuse-bam'};
+    my ($self, $bowtie_version, $reuse_bam) = @_;
 
     my $tmp_dir = $self->_symlink_in_fastqs();
-    if ($should_reuse_bam) {
+    if ($reuse_bam) {
         $self->status_message("Attempting to reuse BAMs from pipeline");
 
-        if (in($self->version, @can_reuse_bam_in_versions)) {
-            my $reusable_dir = File::Spec->join($self->temp_staging_directory, 'reusable');
-            Genome::Sys->create_directory($reusable_dir);
+        my $reusable_dir = File::Spec->join($self->temp_staging_directory,
+                'reusable');
+        Genome::Sys->create_directory($reusable_dir);
 
-            $self->status_message("Creating the reheadered bam.");
-            my $reheadered_bam = $self->_create_reheadered_bam($reusable_dir, $bowtie_version);
+        $self->status_message("Creating the reheadered bam.");
+        my $reheadered_bam = $self->_create_reheadered_bam($reusable_dir,
+                $bowtie_version);
 
-            $self->status_message("Creating the 'both mates mapped' bam.");
-            my ($both_mates_bam, $sorted_both_mates_bam, $sorted_both_mates_index) =
-                    $self->_create_both_mates_bam($reusable_dir, $reheadered_bam);
+        $self->status_message("Creating the 'both mates mapped' bam.");
+        my ($both_mates_bam, $sorted_both_mates_bam, $sorted_both_mates_index) =
+                $self->_create_both_mates_bam($reusable_dir, $reheadered_bam);
 
-            $self->status_message("Creating the unmapped fastqs.");
-            my ($unmapped_1, $unmapped_2) =
-                    $self->_create_unmapped_fastqs($reusable_dir, $reheadered_bam);
-            unlink($reheadered_bam);
+        $self->status_message("Creating the unmapped fastqs.");
+        my ($unmapped_1, $unmapped_2) =
+                $self->_create_unmapped_fastqs($reusable_dir, $reheadered_bam);
+        unlink($reheadered_bam);
 
-            $self->status_message("Symlinking reusable parts into Chimerascan working dir.");
-            $self->_symlink_in_files($tmp_dir, $both_mates_bam, $unmapped_1, $unmapped_2,
-                        $sorted_both_mates_bam, $sorted_both_mates_index);
-        } else {
-            die(sprintf("This version of chimerascan (%s) doesn't " .
-                        "support reusing the alignment BAM.", $self->version));
-        }
+        $self->status_message("Symlinking reusable parts into Chimerascan working dir.");
+        $self->_symlink_in_files($tmp_dir, $both_mates_bam, $unmapped_1,
+                $unmapped_2, $sorted_both_mates_bam, $sorted_both_mates_index);
     }
 }
 
@@ -259,30 +277,20 @@ sub _symlink_in_files {
 }
 
 sub _run_chimerascan {
-    my ($self, $options, $arguments) = @_;
+    my ($self, $bowtie_version, $c_pargs, $c_opts) = @_;
 
-    local $ENV{PYTHONPATH} = ($ENV{PYTHONPATH} ? $ENV{PYTHONPATH} . ":" : "") .
-            $self->_python_path_for_version($self->version);
-
-    my $cmd_path = $self->_path_for_version($self->version);
-    unless ($cmd_path) {
-        die $self->error_message("Failed to find a path for chimerascan for " .
-                "version " . $self->version . "!");
-    }
-    my $direct = $options->{direct};
-    my $indirect = $options->{indirect};
-    my $bowtie_version = $indirect->{'--bowtie-version'};
+    my $executable = $self->get_executable_path($self->version);
     my $bowtie_path = Genome::Model::Tools::Bowtie->base_path($bowtie_version);
 
-    my $arguments_str = join(" ", @{$arguments});
-    my $output_directory = $arguments->[-1];
-    my $cmd = "python $cmd_path/chimerascan_run.py -v $direct " .
+    my $arguments_str = join(" ", @{$c_pargs});
+    my $output_directory = $c_pargs->[-1];
+    my $cmd = "$executable chimerascan_run.py -v $c_opts " .
               "--bowtie-path=" . $bowtie_path .
               " $arguments_str > $output_directory/chimera_result.out";
 
     Genome::Sys->shellcmd(
         cmd => $cmd,
-        input_files => $arguments,
+        input_files => $c_pargs,
     );
 }
 
@@ -292,14 +300,14 @@ sub _preprocess_detector_params {
     my ($self, $params) = @_;
 
     my %indirect_parameters;
-    for my $name (keys %INDIRECT_PARAMETER_VALIDATORS) {
+    for my $name (keys %OUR_OPTIONS_VALIDATORS) {
         # \Q$foo\E ensures that regex symbols are 'quoted'
         if($params and $params =~ m/(\s*\Q$name\E[=\s]([^\s]*)\s*)/) {
             my $str = $1;
             my $val = $2;
             $params =~ s/\Q$str\E/ /;
 
-            my $validation_method_name = $INDIRECT_PARAMETER_VALIDATORS{$name};
+            my $validation_method_name = $OUR_OPTIONS_VALIDATORS{$name};
             $self->$validation_method_name($val, $params); # dies if invalid
 
             $indirect_parameters{$name} = $val;
@@ -320,7 +328,7 @@ sub _validate_bowtie_version {
                 "parameters: [\"$params\"]");
     my ($major_version) = split(/\./, $bowtie_version);
     if ($major_version ne 0) {
-        die("Chimerascan currently only supports bowtie major version 0, " .
+        die("Currently chimerascan-vrl only supports bowtie major version 0, " .
             "not $major_version");
     }
 }
@@ -339,59 +347,6 @@ sub _staging_disk_usage {
     return 60 * 1024 * 1024;
 }
 
-sub _path_for_version {
-    my ($class, $version) = @_;
-
-    my ($base_path, $bin_sub, $python_sub) =
-            _get_chimerascan_path_for_version($version);
-    my $result = join('/', $base_path, $bin_sub);
-
-    if (-e $result) {
-        return $result;
-    } else {
-        die("Binary path ($bin_sub) does not exist under chimerascan path " .
-                "($base_path)!");
-    }
-}
-
-sub _python_path_for_version {
-    my ($class, $version) = @_;
-
-    my ($base_path, $bin_sub, $python_sub) =
-            _get_chimerascan_path_for_version($version);
-    my $result = join('/', $base_path, $python_sub);
-
-    if (-e $result) {
-        return $result;
-    } else {
-        die("Python path ($python_sub) does not exist under chimerascan " .
-            "path ($base_path)!");
-    }
-}
-
-sub _get_chimerascan_path_for_version {
-    my ($version) = @_;
-
-    my $path = sprintf("/usr/lib/chimerascan%s", $version);
-    if (-e $path) {
-        # installed via deb-package method
-        my $bin_sub = 'bin';
-        my $python_sub = join('/', 'lib', 'python2.6', 'site-packages');
-        return $path, $bin_sub, $python_sub;
-    } else {
-        # fall back to old installation method
-        $path = $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version";
-        if (-e $path) {
-            my $bin_sub = 'chimerascan';
-            my $python_sub = join('/', 'build', 'lib.linux-x86_64-2.6');
-            return $path, $bin_sub, $python_sub;
-        } else {
-            die("You requested an unavailable version of Chimerascan. " .
-                "Requested: $version");
-        }
-    }
-}
-
 sub _resolve_index_dir {
     my ($self, $bowtie_version) = @_;
 
@@ -401,11 +356,12 @@ sub _resolve_index_dir {
         #We want to shell out and create the chimerscan index in a different UR context.
         #That way it is committed, even if we fail and other builds don't need to wait on
         #the overall chimerscan run just to get their index results.
-        my $cmd = 'genome model rna-seq detect-fusions chimerascan-index';
+        my $cmd = 'genome model rna-seq detect-fusions chimerascan-vrl-index';
         $cmd .= ' --version=' . $self->version;
         $cmd .= ' --bowtie-version=' . $bowtie_version;
         $cmd .= ' --reference-build=' . $self->alignment_result->reference_build->id;
         $cmd .= ' --annotation-build=' . $self->annotation_build->id;
+        $cmd .= ' --picard-version=' . $self->picard_version;
 
         Genome::Sys->shellcmd(cmd => $cmd);
 
@@ -431,21 +387,17 @@ sub _get_index {
     my ($self, $bowtie_version) = @_;
 
     my $index_class = 'Genome::Model::RnaSeq::DetectFusionsResult' .
-                      '::ChimerascanResult::Index';
+                      '::ChimerascanVrlResult::Index';
     my $index = $index_class->get_with_lock(
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         version => $self->version,
         bowtie_version => $bowtie_version,
         reference_build => $self->alignment_result->reference_build,
         annotation_build => $self->annotation_build,
+        picard_version => $self->picard_version,
     );
 
     return $index;
-}
-
-sub resolve_allocation_subdirectory {
-    my $self = shift;
-    return 'build_merged_alignments/chimerascan/' . $self->id;
 }
 
 1;

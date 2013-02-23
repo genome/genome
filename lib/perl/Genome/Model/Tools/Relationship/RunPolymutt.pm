@@ -94,6 +94,7 @@ my %VERSIONS = (
     '0.02' => '/usr/bin/polymutt0.02',
     '0.10' => '/gscmnt/gc6126/info/medseq/launch_cleft_lip_phenotype_correlation/polymutt_binary/polymutt0.10',
     '0.11' => '/gscmnt/gc6126/info/medseq/launch_cleft_lip_phenotype_correlation/polymutt_binary/polymutt0.11',
+    '0.13' => '/usr/bin/polymutt0.13',
     # New, experimental version that optionally runs on vcf and can force-genotype sites
     'vcf.0.01' => '/gscmnt/gc6126/info/medseq/launch_cleft_lip_phenotype_correlation/polymutt_binary/polymuttvcf.0.01',
 );
@@ -125,7 +126,6 @@ sub available_versions {
     return keys(%VERSIONS);
 }
 
-#/gscuser/dlarson/src/polymutt.0.01/bin/polymutt -p 20000492.ped -d 20000492.dat -g 20000492.glfindex --minMapQuality 1 --nthreads 4 --vcf 20000492.standard.vcf
 sub execute {
     $DB::single=1;
     my $self=shift;
@@ -142,23 +142,23 @@ sub execute {
     }
 
     my $cmd = $polymutt_cmd;
-     $cmd .= " -p $ped_file";
-     $cmd .= " -d $dat_file";
-     $cmd .= " -g $glf_index";
-     $cmd .= " --minMapQuality 1";
-     $cmd .= " --nthreads $threads";
+    $cmd .= " -p $ped_file";
+    $cmd .= " -d $dat_file";
+    $cmd .= " -g $glf_index";
+    $cmd .= " --minMapQuality 1";
+    $cmd .= " --nthreads $threads";
 
-     # The output param name changed in the latest version
-     if ($self->version eq "vcf.0.01") {
-         $cmd .= " --out_vcf $temp_output";
-     } else {
-         $cmd .= " --vcf $temp_output";
-     }
+    # The output param name changed in the latest version
+    if ($self->version eq "0.02" or $self->version eq "0.10" or $self->version eq "0.11") {
+        $cmd .= " --vcf $temp_output";
+    } else {
+        $cmd .= " --out_vcf $temp_output";
+    }
 
-     if ($self->chr2process) {
-         my $chrs = $self->chr2process;
-         $cmd .= " --chr2process $chrs";
-     }
+    if ($self->chr2process) {
+        my $chrs = $self->chr2process;
+        $cmd .= " --chr2process $chrs";
+    }
     if($self->denovo) {
         $cmd .= " --denovo";
     }

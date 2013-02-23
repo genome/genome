@@ -6,25 +6,23 @@ use warnings;
 use Genome;
 use File::Which;
 
+
+
 class Genome::Model::RnaSeq::DetectFusionsResult {
     is => "Genome::SoftwareResult::Stageable",
     is_abstract => 1,
     has_param => [
         version => {
             is => 'Text',
-            is_optional => 1,
             doc => 'the version of the fusion detector to run'
         },
         detector_params => {
             is => 'Text',
-            is_optional => 1,
             doc => 'parameters for the chosen fusion detector'
         },
         picard_version => {
             is => 'Text',
-            is_optional => 1,
             doc => 'the version of picard used to manipulate BAM files',
-            default_value => '1.82',
         },
     ],
     has_input => [

@@ -1,13 +1,13 @@
-package Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan;
+package Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanVrl;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan {
+class Genome::Model::RnaSeq::Command::DetectFusions::ChimerascanVrl {
     is => 'Genome::Model::RnaSeq::Command::DetectFusions::Base',
-    doc => 'run the chimerascan transcript fusion detector',
+    doc => 'run the chimerascan-vrl transcript fusion detector',
     has => [
         lsf_resource => {
             default_value => "-R 'select[type==LINUX64 && mem>32000] span[hosts=1] rusage[mem=32000]' -M 32000000 -n 2",
@@ -20,18 +20,16 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan {
 
 sub help_synopsis {
     return <<EOS
- genome model rna-seq detect-fusions chimerascan index_dir/ f1.fastq f2.fast2 output_dir/
-
- genome model rna-seq detect-fusions chimerascan index_dir/ f1.fastq f2.fast2 output_dir/ --use-version 1.2.3 --params "-a -b -c"
+ genome model rna-seq detect-fusions chimerascan-vrl build-id=1234
 EOS
 }
 
 sub help_detail {
     return <<EOS
-Run the chimerascan gene fusion detector.
+Run the chimerascan-vrl gene fusion detector.
 
 It is used by the RNASeq pipeline to perform fusion detection when the fusion detection strategy is set to something like:
- 'chimerascan 1.2.3'
+ 'chimerascan-vrl 0.4.6 [-p 2 --reuse-bam=1 --bowtie-version=0.12.7]'
 
 EOS
 }
@@ -40,7 +38,7 @@ sub execute {
     my $self = shift;
 
     unless($self->_fetch_result('get_or_create')){
-        die("Unable to create a software result for Chimerascan");
+        die("Unable to create a software result for ChimerascanVrl");
     }
 
     return 1;
@@ -55,7 +53,7 @@ sub _fetch_result {
     my $self = shift;
     my $method = shift;
 
-    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->$method(
+    my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResultVrl->$method(
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
             version => $self->version,
             alignment_result => $self->build->alignment_result,
