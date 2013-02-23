@@ -156,8 +156,8 @@ INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG'
 INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','GENOME_MODEL_EVENT_INPUT','PARAM_NAME',2);
 INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','PROCESSING_PROFILE_PARAM','PROCESSING_PROFILE_ID',1);
 INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','GENOME_MODEL_EVENT_OUTPUT','EVENT_ID',1);
-INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','PROCESSING_PROFILE_PARAM','PARAM_VALUE',4);
-INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','PROCESSING_PROFILE_PARAM','PARAM_NAME',2);
+INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','PROCESSING_PROFILE_PARAM','VALUE_ID',4);
+INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','PROCESSING_PROFILE_PARAM','NAME',2);
 INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','PROCESSING_PROFILE_PARAM','VALUE_CLASS_NAME',3);
 INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','MISC_ATTRIBUTE','PROPERTY_NAME',3);
 INSERT INTO "dd_pk_constraint_column" VALUES('Genome::DataSource::GMSchema','MG','GENOME_MODEL_EVENT','GENOME_MODEL_EVENT_ID',1);
