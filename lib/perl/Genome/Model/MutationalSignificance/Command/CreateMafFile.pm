@@ -257,8 +257,8 @@ sub sort_and_write_to_temp_file {
     my %review_lines = ();
     for my $line ( @snv_lines )
     {
-        my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
-        $review_lines{snvs}{$chr}{$start}{$stop} = $line;
+        my ( $chr, $start, $stop, $ref, $var, $type, $call ) = split( /\t/, $line );
+        $review_lines{snvs}{$chr}{$start}{$stop}{$call} = $line;
     }
     my ($snv_anno_fh, $snv_anno_file) = Genome::Sys->create_temp_file;
     for my $chr ( nsort keys %{$review_lines{snvs}} )
@@ -267,7 +267,9 @@ sub sort_and_write_to_temp_file {
         {
             for my $stop ( sort {$a <=> $b} keys %{$review_lines{snvs}{$chr}{$start}} )
             {
-                $snv_anno_fh->print( $review_lines{snvs}{$chr}{$start}{$stop}, "\n" );
+                for my $call (keys %{$review_lines{snvs}{$chr}{$start}{$stop}}) {
+                    $snv_anno_fh->print( $review_lines{snvs}{$chr}{$start}{$stop}{$call}, "\n" );
+                }
             }
         }
     }
