@@ -41,7 +41,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         },
         lsf_resource => { 
             is => 'Text',
-            default => "-R 'rusage[mem=8000]' -M 8000000",
+            default => "-R 'rusage[mem=16000]' -M 16000000",
         },
     ],
 };
@@ -61,7 +61,7 @@ sub execute{
     my %files;
     my %vcf_files;
 
-    my ($tier1_snvs, $tier2_snvs, $tier1_indels, $tier2_indels);
+    my ($tier1_snvs, $tier2_snvs, $tier3_snvs, $tier4_snvs, $tier1_indels, $tier2_indels, $tier3_indels, $tier4_indels);
     
     if ($build->snv_detection_strategy){
         $tier1_snvs = $build->data_set_path("effects/snvs.hq.novel.tier1",$version,'bed');
@@ -75,6 +75,16 @@ sub execute{
             die $self->error_message("No tier 2 snvs file for build!");
         }
         $files{'snvs.hq.tier2'} = $tier2_snvs;
+        $tier3_snvs = $build->data_set_path("effects/snvs.hq.novel.tier3", $version, "bed");
+        unless(-e $tier3_snvs) {
+            die $self->error_message("No tier 3 snvs file for build!");
+        }
+        $files{'snvs.hq.tier3'} = $tier3_snvs;
+        $tier4_snvs = $build->data_set_path("effects/snvs.hq.novel.tier4", $version, "bed");
+        unless(-e $tier4_snvs) {
+            die $self->error_message("No tier 4 snvs file for build!");
+        }
+        $files{'snvs.hq.tier4'} = $tier4_snvs;
         my $snvs_vcf = $build->data_directory."/variants/snvs.vcf.gz";
         unless(-e $snvs_vcf) {
             die $self->error_message("No snvs vcf");
@@ -94,6 +104,16 @@ sub execute{
             die $self->error_message("No tier 2 indels file for build!");
         }
         $files{'indels.hq.tier2'} = $tier2_indels;
+        $tier3_indels = $build->data_set_path("effects/indels.hq.novel.tier3",$version,'bed');
+        unless(-e $tier3_indels) {
+            die $self->error_message("No tier 3 indels file for build!");
+        }
+        $files{'indels.hq.tier3'} = $tier3_indels;
+        $tier4_indels = $build->data_set_path("effects/indels.hq.novel.tier4",$version,'bed');
+        unless(-e $tier4_indels) {
+            die $self->error_message("No tier 4 indels file for build!");
+        }
+        $files{'indels.hq.tier4'} = $tier4_indels;
     }
 
     #annotate variants
@@ -360,6 +380,56 @@ sub execute{
         $self->error_message("Annovar failed");
         return;
     }
+    if ($build->data_set_path("effects/snvs.hq.tier3", $annotation_output_version, "annotated.top.header")){
+        my $temp = Genome::Sys->create_temp_file_path;
+        my $counter = 0;
+        my $in_file = $build->data_set_path("effects/snvs.hq.tier3", $annotation_output_version, "annotated.top.header");
+        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed_gene_names2", "bed_segway.hg19", "bed_wgEncodeBroadHmmGm12878HMM", "bed_wgEncodeBroadHmmH1hescHMM", "bed_wgEncodeBroadHmmHepg2HMM", "bed_wgEncodeBroadHmmHmecHMM", "bed_wgEncodeBroadHmmHsmmHMM", "bed_wgEncodeBroadHmmHuvecHMM", "bed_wgEncodeBroadHmmK562HMM", "bed_wgEncodeBroadHmmNhekHMM", "bed_wgEncodeBroadHmmNhlfHMM", "bed_DRM_transcript_pairs", "bed_Open_Chromatin_Supp_Table_4")) {
+            $counter++;
+            my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
+                additional_columns_file => $build->data_directory."/effects/snvs.annovar.hg19_".$table_name,
+                input_variants => $in_file,
+                output_file => "$temp.$counter",
+                column_to_append => 2,
+                header => $table_name,
+                chrom_column => 3,
+                start_column => 4,
+                stop_column => 5,
+            );
+            unless ($append) {
+                $self->error_message("Append columns failed for tier4 snvs");
+                return;
+            }
+            $in_file = "$temp.$counter";
+        }
+        my $cmd = "mv $temp.$counter ".$build->data_set_path("effects/snvs.hq.tier3", $annotation_output_version, "annotated.top.annovar");
+        `$cmd`;
+    }
+    if ($build->data_set_path("effects/snvs.hq.tier4", $annotation_output_version, "annotated.top.header")){
+        my $temp = Genome::Sys->create_temp_file_path;
+        my $counter = 0;
+        my $in_file = $build->data_set_path("effects/snvs.hq.tier4", $annotation_output_version, "annotated.top.header");
+        foreach my $table_name (("wgEncodeRegDnaseClustered", "wgEncodeRegTfbsClustered", "bed_gene_names2", "bed_segway.hg19", "bed_wgEncodeBroadHmmGm12878HMM", "bed_wgEncodeBroadHmmH1hescHMM", "bed_wgEncodeBroadHmmHepg2HMM", "bed_wgEncodeBroadHmmHmecHMM", "bed_wgEncodeBroadHmmHsmmHMM", "bed_wgEncodeBroadHmmHuvecHMM", "bed_wgEncodeBroadHmmK562HMM", "bed_wgEncodeBroadHmmNhekHMM", "bed_wgEncodeBroadHmmNhlfHMM", "bed_DRM_transcript_pairs", "bed_Open_Chromatin_Supp_Table_4")) {
+            $counter++;
+            my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
+                additional_columns_file => $build->data_directory."/effects/snvs.annovar.hg19_".$table_name,
+                input_variants => $in_file,
+                output_file => "$temp.$counter",
+                column_to_append => 2,
+                header => $table_name,
+                chrom_column => 3,
+                start_column => 4,
+                stop_column => 5,
+            );
+            unless ($append) {
+                $self->error_message("Append columns failed for tier4 snvs");
+                return;
+            }
+            $in_file = "$temp.$counter";
+        }
+        my $cmd = "mv $temp.$counter ".$build->data_set_path("effects/snvs.hq.tier4", $annotation_output_version, "annotated.top.annovar");
+        `$cmd`;
+    }
     if ($build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.header")){
         my $temp = Genome::Sys->create_temp_file_path;
         my $counter = 0;
@@ -385,6 +455,7 @@ sub execute{
         my $cmd = "mv $temp.$counter ".$build->data_set_path("effects/snvs.hq.tier2", $annotation_output_version, "annotated.top.annovar");
         `$cmd`;
     }
+=cut
     if ($build->data_set_path("effects/snvs.hq.novel.tier3", $version, "bed")) {
         my $temp_file = Genome::Sys->create_temp_file_path;
         my $convert = Genome::Model::Tools::Bed::Convert::BedToAnnotation->execute(
@@ -430,6 +501,7 @@ sub execute{
         my $cmd = "mv $temp.$counter ".$build->data_set_path("effects/snvs.hq.novel.tier3", $annotation_output_version, "converted-anno.annovar");
         `$cmd`;
     }
+=cut
 
     #upload variants
 
