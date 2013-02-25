@@ -567,7 +567,6 @@ sub execute {
         }
     }    
 
-    `cp $tempdir/* temp/`; ##TEST
 
     #--------------------------------------------
     #now indels, which gets tricky
