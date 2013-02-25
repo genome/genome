@@ -283,7 +283,7 @@ sub _add_svs {
         my $sub_rate=$n_sub/$flanksize;
         my $subindel_rate=$n_indel/$flanksize;
 
-        if(defined $self->use_hq_alignment_filter &&  ($n_seg>2
+        if($self->use_hq_alignment_filter &&  ($n_seg>2
                 || $n_seg==2 && (($sub_rate>0.006 && $n_sub>2) || ($subindel_rate> 0.002 && $n_indel>1)|| $nbp_indel>20)
                 || $n_seg==1 && ($sub_rate>0.006 || $subindel_rate>0.001 || $nbp_indel>5)
                 #|| $n_seg==2 && (($sub_rate>0.006 && $n_sub>2) || ($subindel_rate> 0.002 && $n_indel>1)|| $nbp_indel>20) && ($size<=99999) && (abs($f_cna)<$self->cna_threshold)
