@@ -151,16 +151,8 @@ class Genome::Model::ReferenceAlignment {
             reverse_id_by => 'model',
             doc => 'each case of a read set being aligned to the model\'s reference sequence(s), possibly including multiple actual aligner executions',
         },
-        #this is to get the SNP statistics...
-        filter_variation_events => {
-            is => 'Genome::Model::Event::Build::ReferenceAlignment::FilterVariations',
-            is_many => 1,
-            reverse_id_by => 'model',
-            doc => 'each case of variations filtered per chromosome',
-        },
         alignment_file_paths => { via => 'alignment_events' },
         has_all_alignment_metrics => { via => 'alignment_events', to => 'has_all_metrics' },
-        has_all_filter_variation_metrics => { via => 'filter_variation_events', to => 'has_all_metrics' },
         build_events  => {
             is => 'Genome::Model::Event::Build',
             reverse_id_by => 'model',
