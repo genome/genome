@@ -2,8 +2,9 @@ package Genome::Model::Tools::Music::Smg;
 
 use warnings;
 use strict;
-use Genome;
 use IO::File;
+use File::Temp;
+use Statistics::Descriptive;
 use Carp;
 use POSIX qw( WIFEXITED );
 
@@ -18,8 +19,9 @@ class Genome::Model::Tools::Music::Smg {
     has_optional_input => [
         max_fdr => { is => 'Number', default => 0.20, doc => "The maximum allowed false discovery rate for a gene to be considered an SMG" },
         skip_low_mr_genes => { is => 'Boolean', default => 1, doc => "Skip testing genes with MRs lower than the background MR" },
+        downsample_large_genes => { is => 'Boolean', default => 0, doc => "Downscale #bps in large genes, and the #muts proportionally" },
         bmr_modifier_file => { is => 'Text', doc => "Tab delimited multipliers per gene that modify BMR before testing [gene_name bmr_modifier]" },
-        processors => { is => 'Integer', default => 1, doc => "Number of processors to use (requires 'foreach' and 'doMC' R packages)" },
+        processors => { is => 'Integer', default => 1, doc => "Number of cores to use (requires 'foreach' and 'doMC' R packages)" },
     ],
     doc => "Identify significantly mutated genes."
 };
@@ -54,6 +56,31 @@ sub _additional_help_sections {
 
 =over 4
 
+=item --skip-low-mr-genes
+
+=over 8
+
+=item Genes with consistently lower MRs than the BMRs across mutation categories, may show up in
+  the results as an SMG (by CT or LRT). If such genes are not of interest, they may be assigned a
+  p-value of 1. This should also speed things up. Genes with higher Indel or Truncation rates than
+  the background will not be skipped even if the gene's overall MR is lower than the BMR. If
+  bmr-modifiers are applied, this step uses the modified BMRs instead.
+
+=back
+
+=item --downsample-large-genes
+
+=over 8
+
+=item Large genes have a higher power for detecting mutational significance than smaller genes. So
+  a workaround is to downsample their covd bps and mutation count, keeing MR unchanged. A gene with
+  more covd bps than Q3+(Q3-Q1)*1.5 is considered an outlier, where Q1 & Q3 are the lower and upper
+  quartiles respectively, of #covd_bps in the gene-mr-file. For each outlier, the #covd bps in each
+  mutation category is brought closer to Q3+(Q3-Q1)*1.5, and the #muts reduced proportionally, to
+  keep the gene's MR mostly unchanged.
+
+=back
+
 =item --bmr-modifier-file
 
 =over 8
@@ -70,22 +97,9 @@ sub _additional_help_sections {
 
 =back
 
-=item --skip-low-mr-genes
-
-=over 8
-
-=item Genes with consistently lower MRs than the BMRs across mutation categories, may show up in
-  the results as an SMG (by CT or LRT). If such genes are not of interest, they may be assigned a
-  p-value of 1. This should also speed things up. Genes with higher Indel or Truncation rates than
-  the background will not be skipped even if the gene's overall MR is lower than the BMR. If
-  bmr-modifiers are applied, this step uses the modified BMRs instead.
-
-=back
-
 =back
 
 =cut
-
 
 EOS
   );
@@ -106,6 +120,7 @@ sub execute {
     my $output_file_detailed = $output_file . "_detailed";
     my $max_fdr = $self->max_fdr;
     my $skip_low_mr_genes = $self->skip_low_mr_genes;
+    my $downsample_large_genes = $self->downsample_large_genes;
     my $bmr_modifier_file = $self->bmr_modifier_file;
     my $processors = $self->processors;
 
@@ -114,7 +129,121 @@ sub execute {
     print STDERR "BMR modifier file not found or is empty: $bmr_modifier_file\n" unless( !defined $bmr_modifier_file || -s $bmr_modifier_file );
     return undef unless( -s $gene_mr_file && ( !defined $bmr_modifier_file || -s $bmr_modifier_file ));
 
-    # If BMR modifiers were provided, then load them, and create another gene_mr_file with modified BMRs
+    # Collect per-gene mutation rates for reporting in results later
+    my ( %gene_muts, %gene_bps, %mut_categ_hash );
+    my $inMrFh = IO::File->new( $gene_mr_file ) or die "Couldn't open $gene_mr_file. $!\n";
+    while( my $line = $inMrFh->getline ) {
+        next if( $line =~ m/^#/ );
+        my ( $gene, $type, $covd_bps, $mut_cnt, undef ) = split( /\t/, $line );
+
+        # Warn user about cases where there could be fewer covered bps than mutations detected
+        if( $type ne "Overall" and $covd_bps < $mut_cnt ) {
+            warn "#More $type seen in $gene than there are bps with sufficient coverage!\n";
+        }
+
+        if( $type eq "Overall" ) {
+            $gene_muts{$gene}{Overall} = $mut_cnt;
+            $gene_bps{$gene} = $covd_bps;
+        }
+        elsif( $type =~ m/^Truncations/ ) {
+            $gene_muts{$gene}{Truncations} += $mut_cnt;
+            $mut_categ_hash{Truncations} = 1;
+        }
+        elsif( $type =~ m/^Indels/ ) {
+            $gene_muts{$gene}{Indels} += $mut_cnt;
+            $mut_categ_hash{Indels} = 1;
+        }
+        elsif( $type =~ m/^(AT_|CG_|CpG_)(Transitions|Transversions)/ ) {
+            $gene_muts{$gene}{SNVs} += $mut_cnt;
+            $mut_categ_hash{SNVs} = 1;
+        }
+        else {
+            die "Unrecognized mutation category in gene-mr-file. $!\n";
+        }
+    }
+    $inMrFh->close;
+    my @mut_categs = sort keys %mut_categ_hash;
+
+    # If requested, downsample large genes and create another gene_mr_file
+    if( $downsample_large_genes ) {
+
+        # Collect covd_bps across genes per mutation category
+        my ( %gene_categ_bps );
+        my $inMrFh = IO::File->new( $gene_mr_file ) or die "Couldn't open $gene_mr_file. $!\n";
+        while( my $line = $inMrFh->getline ) {
+            next if( $line =~ m/^#/ );
+            my ( $gene, $type, $covd_bps, undef, undef ) = split( /\t/, $line );
+            push( @{$gene_categ_bps{$type}}, $covd_bps );
+        }
+        $inMrFh->close;
+
+        # For each mutation category, find the Q1 and Q3 quartiles, and the median
+        my ( %q1, %q2, %q3 );
+        foreach my $type ( keys %gene_categ_bps ) {
+            my $stat = Statistics::Descriptive::Full->new();
+            $stat->add_data( @{$gene_categ_bps{$type}} );
+            $q1{$type} = $stat->quantile( 1 );
+            $q2{$type} = $stat->quantile( 2 );
+            $q3{$type} = $stat->quantile( 3 );
+        }
+
+        # For each mutation category, calculate the outlier cutoff
+        my %cutoff;
+        print "#Selecting large genes to downsample based on these cutoffs...\n";
+        print "#Mutation_Type\tMedian\tIQR\tCutoff\n";
+        foreach my $type ( sort keys %gene_categ_bps ) {
+            unless( $type eq "Overall" ) {
+                my $IQR = $q3{$type} - $q1{$type}; # Interquartile range
+                $cutoff{$type} = sprintf( "%.0f", $q3{$type} + ( $IQR * 1.5 ));
+                print "$type\t" . $q2{$type} . "\t$IQR\t" . $cutoff{$type} . "\n";
+            }
+        }
+
+        # Create a new gene_mr_file with large genes downsampled in #covd_bps and #muts
+        print "\n#Changed lines in $gene_mr_file as follows...\n";
+        my $new_gene_mr_file = $gene_mr_file . "_downsampled_large_genes";
+        my $outMrFh = IO::File->new( $new_gene_mr_file, ">" ) or die "Couldn't create $new_gene_mr_file. $!\n";
+        $inMrFh = IO::File->new( $gene_mr_file ) or die "Couldn't open $gene_mr_file. $!\n";
+        while( my $line = $inMrFh->getline ) {
+            if( $line =~ m/^#/ ) {
+                $outMrFh->print( $line );
+                next;
+            }
+            my ( $gene, $type, $covd_bps, $mut_cnt, $bmr ) = split( /\t/, $line );
+
+            #If the #covd bps in this line is an outlier for its category, then downsample it
+            #The category "Overall" is only for reporting purposes, so we can leave it unchanged
+            if( $covd_bps > $cutoff{$type} and $type ne "Overall" ) {
+                # If this line has zero mutations, then simply set $covd_bps to the cutoff
+                if( $mut_cnt == 0 ) {
+                    $covd_bps = $cutoff{$type};
+                }
+                # Otherwise, iteratively reduce $mut_cnt, no lower than 1 mutation, bringing
+                # $covd_bps as close to the cutoff as possible, but keeping the MR unchanged
+                else {
+                    for( my $i = $mut_cnt - 1; $i >= 0; --$i ) {
+                        if(( $covd_bps * $i / $mut_cnt ) <= $cutoff{$type} || $i == 0 ) {
+                            ++$i;
+                            $covd_bps = sprintf( "%.0f", $covd_bps * $i / $mut_cnt );
+                            $mut_cnt = $i;
+                            last;
+                        }
+                    }
+                }
+                # Print out the changed #bps and #muts, for users' benefit
+                print "< $line";
+                print "> $gene\t$type\t$covd_bps\t$mut_cnt\t$bmr";
+            }
+
+            $outMrFh->print( "$gene\t$type\t$covd_bps\t$mut_cnt\t$bmr" );
+        }
+        $outMrFh->close;
+        $inMrFh->close;
+
+        $gene_mr_file = $new_gene_mr_file;
+    }
+
+    # If BMR modifiers were provided, then create another gene_mr_file with modified BMRs
     if( defined $bmr_modifier_file ) {
         my $inBmrModFh = IO::File->new( $bmr_modifier_file ) or die "Couldn't open $bmr_modifier_file. $!\n";
         my %bmr_modifier = ();
@@ -127,64 +256,27 @@ sub execute {
         }
         $inBmrModFh->close;
 
-        my $new_gene_mr_file = Genome::Sys->create_temp_file_path;
-        ( $new_gene_mr_file ) or die "Couldn't create a temp file. $!";
+        my $tmpFh = File::Temp->new() or die "Couldn't create a temp file. $!\n";
         my $inMrFh = IO::File->new( $gene_mr_file ) or die "Couldn't open $gene_mr_file. $!\n";
-        my $outMrFh = IO::File->new( $new_gene_mr_file, ">" ) or die "Couldn't open $new_gene_mr_file. $!\n";
         while( my $line = $inMrFh->getline ) {
             if( $line =~ m/^#/ ) {
-                $outMrFh->print( $line );
+                $tmpFh->print( $line );
                 next;
             }
             chomp( $line );
             my ( $gene, $type, $covd_bps, $mut_cnt, $bmr ) = split( /\t/, $line );
             $bmr = $bmr * $bmr_modifier{$gene} if( defined $bmr_modifier{$gene} );
-            $outMrFh->print( "$gene\t$type\t$covd_bps\t$mut_cnt\t$bmr\n" );
+            $tmpFh->print( "$gene\t$type\t$covd_bps\t$mut_cnt\t$bmr\n" );
         }
-        $outMrFh->close;
+        $tmpFh->close;
         $inMrFh->close;
 
-        $gene_mr_file = $new_gene_mr_file;
+        $gene_mr_file = $tmpFh->filename;
     }
-
-    # Collect per-gene mutation rates for reporting in results later
-    my ( %gene_muts, %gene_bps, %mut_classes_hash );
-    my $inMrFh = IO::File->new( $gene_mr_file ) or die "Couldn't open $gene_mr_file. $!\n";
-    while( my $line = $inMrFh->getline ) {
-        next if( $line =~ m/^#/ );
-        my ( $gene, $type, $covd_bps, $mut_cnt, undef ) = split( /\t/, $line );
-
-        # Warn user about cases where there could be fewer covered bps than mutations detected
-        if( $type ne "Overall" and $covd_bps < $mut_cnt ) {
-            warn "More $type seen in $gene than there are bps with sufficient coverage!\n";
-        }
-
-        if( $type eq "Overall" ) {
-            $gene_muts{$gene}{Overall} = $mut_cnt;
-            $gene_bps{$gene} = $covd_bps;
-        }
-        elsif( $type =~ m/^Truncations/ ) {
-            $gene_muts{$gene}{Truncations} += $mut_cnt;
-            $mut_classes_hash{Truncations} = 1;
-        }
-        elsif( $type =~ m/^Indels/ ) {
-            $gene_muts{$gene}{Indels} += $mut_cnt;
-            $mut_classes_hash{Indels} = 1;
-        }
-        elsif( $type =~ m/^(AT_|CG_|CpG_)(Transitions|Transversions)/ ) {
-            $gene_muts{$gene}{SNVs} += $mut_cnt;
-            $mut_classes_hash{SNVs} = 1;
-        }
-        else {
-            die "Unrecognized mutation class in gene-mr-file. $!\n";
-        }
-    }
-    $inMrFh->close;
-    my @mut_classes = sort keys %mut_classes_hash;
 
     # Create a temporary intermediate file to hold the p-values
-    my $pval_file = Genome::Sys->create_temp_file_path;
-    ( $pval_file ) or die "Couldn't create a temp file. $!";
+    my $pvalFh = File::Temp->new() or die "Couldn't create a temp file. $!";
+    my $pval_file = $pvalFh->filename;
 
     # Call R for Fisher combined test, Likelihood ratio test, and convolution test on each gene
     my $smg_cmd = "R --slave --args < " . __FILE__ . ".R $gene_mr_file $pval_file smg_test $processors $skip_low_mr_genes";
@@ -197,7 +289,7 @@ sub execute {
     # Parse the R output to identify the SMGs (significant by at least 2 of 3 tests)
     my $smgFh = IO::File->new( $output_file_detailed ) or die "Couldn't open $output_file_detailed. $!\n";
     my ( @newLines, @smgLines );
-    my $header = "#Gene\t" . join( "\t", @mut_classes );
+    my $header = "#Gene\t" . join( "\t", @mut_categs );
     $header .= "\tTot Muts\tCovd Bps\tMuts pMbp\tP-value FCPT\tP-value LRT\tP-value CT\tFDR FCPT\tFDR LRT\tFDR CT\n";
     while( my $line = $smgFh->getline ) {
         chomp( $line );
@@ -209,7 +301,7 @@ sub execute {
             my ( $gene, @pq_vals ) = split( /\t/, $line );
             my ( $p_fcpt, $p_lrt, $p_ct, $q_fcpt, $q_lrt, $q_ct ) = @pq_vals;
             my @mut_cnts;
-            foreach( @mut_classes ) {
+            foreach( @mut_categs ) {
                 # If a mutation count is a fraction, round down the digits after the decimal point
                 push( @mut_cnts, (( $gene_muts{$gene}{$_} =~ m/\./ ) ? sprintf( "%.2f", $gene_muts{$gene}{$_} ) : $gene_muts{$gene}{$_} ));
             }
