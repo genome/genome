@@ -19,8 +19,14 @@ class Genome::Disk::Volume {
         hostname => { is => 'Text' },
         physical_path => { is => 'Text' },
         mount_path => { is => 'Text' },
-        disk_status => { is => 'Text' },
-        can_allocate => { is => 'Number' },
+        disk_status => {
+            is => 'Text',
+            valid_values => ['inactive', 'active'],
+        },
+        can_allocate => {
+            is => 'Number',
+            valid_values => [0, 1],
+        },
 
         # TODO remove this field when we switch to postgres
         _placeholder_creation_event_id => {
