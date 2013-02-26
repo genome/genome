@@ -118,6 +118,11 @@ class Genome::Model::Tools::Music::Play {
             is => 'Text',
             doc => 'Tab delimited list of values per gene that modify BMR before testing [gene_name bmr_modifier]',
         },
+        downsample_large_genes => {
+            is => 'Boolean',
+            default => 0,
+            doc => "Downscale #bps in large genes, and the #muts proportionally"
+        },
         skip_low_mr_genes => {
             is => 'Boolean', default => 1,
             doc => "Skip testing genes with MRs lower than the background MR"
