@@ -1,4 +1,4 @@
-package Genome::Disk::Allocation::Test;
+package GenomeDiskAllocationTest;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(create_group create_tmpfs_volume create_barrier spawn_child waitpids);
 
@@ -6,12 +6,11 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use File::Basename qw(dirname);
 use Test::More;
 use Time::HiRes qw(usleep);
 use Sys::Hostname qw(hostname);
 use above 'Genome';
-
-require Genome::DataSource::LocalDataSource;
 
 BEGIN {
     if ( $ENV{UR_DBI_NO_COMMIT} ) {
@@ -25,6 +24,7 @@ sub import {
 
     protect_real_data_sources();
 
+    require Genome::DataSource::LocalDataSource;
     Genome::DataSource::LocalDataSource->import(qw(
         Genome::Disk::Allocation
         Genome::Disk::Assignment
@@ -33,9 +33,11 @@ sub import {
     ));
 
     # ensure test environment is loaded for _execute_system_command
-    my $option = '-MGenome::Disk::Allocation::Test';
-    unless (grep { $_ eq $option } @Genome::Disk::Allocation::_execute_system_command_perl5opt) {
-        push @Genome::Disk::Allocation::_execute_system_command_perl5opt, $option;
+    my $lib_dir = dirname(__FILE__);
+    for my $option ("-I$lib_dir", '-MGenomeDiskAllocationTest') {
+        unless (grep { $_ eq $option } @Genome::Disk::Allocation::_execute_system_command_perl5opt) {
+            push @Genome::Disk::Allocation::_execute_system_command_perl5opt, $option;
+        }
     }
 
     $class->export_to_level(1, @_);
