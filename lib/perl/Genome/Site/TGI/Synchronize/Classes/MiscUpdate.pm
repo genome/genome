@@ -116,6 +116,7 @@ my %lims_table_names_to_site_tgi_class_names = (
     "population_group" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroup',
     "organism_sample" => 'Genome::Site::TGI::Synchronize::Classes::Sample',
     "library_summary" => 'Genome::Site::TGI::Synchronize::Classes::LibrarySummary',
+    "index_illumina" => 'Genome::Site::TGI::Synchronize::Classes::IndexIllumina',
     #"sample_attribute" => 'Genome::Site::TGI::Synchronize::Classes::SubjectAttribute',
     #"population_group_member" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember',
 );
@@ -157,6 +158,7 @@ my %subject_class_names_to_genome_class_names = (
     "sample_attribute" => 'Genome::SubjectAttribute',
     "population_group_member" => 'Genome::SubjectAttribute',
     "library_summary" => 'Genome::Library',
+    "index_illumina" => 'Genome::InstrumentData::Solexa',
 );
 sub genome_class_name {
     my $self = shift;
@@ -176,8 +178,10 @@ sub genome_class_name {
 sub genome_entity {
     my $self = shift;
 
+    return $self->{_genome_entity} if $self->{_genome_entity};
+
     my $genome_class_name = $self->genome_class_name;
-    return if not $genome_class_name;
+    return $self->failure if not $genome_class_name;
 
     my $subject_id = $self->subject_id;
     if($genome_class_name eq 'Genome::SubjectAttribute') {
@@ -191,8 +195,24 @@ sub genome_entity {
         $self->error_message("Failed to get $genome_class_name for id => $subject_id");
         return;
     }
+    $self->{_genome_entity} = $genome_entity;
 
     return $genome_entity;
+}
+
+sub genome_property_name {
+    my $self = shift;
+
+    my $site_tgi_class_name = $self->site_tgi_class_name;
+    return if not $site_tgi_class_name;
+
+    my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($self->subject_property_name);
+    if ( not $genome_property_name ) {
+        $self->error_message("Failed to get genome property name! $site_tgi_class_name => ".$self->subject_property_name);
+        return;
+    }
+
+    return $genome_property_name;
 }
 
 sub _set_result {
