@@ -67,52 +67,52 @@ class Genome::Model::Tools::Analysis::DetectRecurrence {
     ]
 };
 
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group /gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno --second-group /gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1 --third-group TCGA-LAML-Exomes-Somatic
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group /gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno --second-group /gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1 --third-group TCGA-LAML-Exomes-Somatic
 
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group TCGA-LAML-Exomes-Somatic --second-group TCGA-AML-Exome-Imported-Somatic,TCGA-AML-WashU-SomaticCapture
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,TCGA-LAML-Exomes-Somatic --second-group TCGA-AML-Exome-Imported-Somatic,TCGA-AML-WashU-SomaticCapture
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-files /gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1 --major-files-project TCGA-AML --second-files /gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno --second-files-project AML-M1M3
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group TCGA-LAML-Exomes-Somatic --second-group TCGA-AML-Exome-Imported-Somatic,TCGA-AML-WashU-SomaticCapture
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,TCGA-LAML-Exomes-Somatic --second-group TCGA-AML-Exome-Imported-Somatic,TCGA-AML-WashU-SomaticCapture
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-files /gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1 --major-files-project TCGA-AML --second-files /gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno --second-files-project AML-M1M3
 
-#perl -d:ptkdb -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno"
+#perl -d:ptkdb -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno"
 
 ########################
 #test cases
 ########################
 
 #major & second files
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno"
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno"
 #passed
 
 #major file only
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" 
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" 
 #passed
 
 #one major groups only
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture
 #passed
 
 #major groups
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,TCGA-AML-Exome-Imported-Somatic
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,TCGA-AML-Exome-Imported-Somatic
 
 #major groups & one second group
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,TCGA-AML-Exome-Imported-Somatic --second-group TCGA-LAML-Exomes-Somatic-all
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,TCGA-AML-Exome-Imported-Somatic --second-group TCGA-LAML-Exomes-Somatic-all
 #passed
 
 #major groups & second groups
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,TCGA-AML-Exome-Imported-Somatic --second-group TCGA-LAML-Exomes-Somatic-all,Ley-AML-50-somatic
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,TCGA-AML-Exome-Imported-Somatic --second-group TCGA-LAML-Exomes-Somatic-all,Ley-AML-50-somatic
 
 #major groups, second groups, major files and second files
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,Ley-AML-50-somatic --second-group TCGA-LAML-Exomes-Somatic-all,TCGA-AML-Exome-Imported-Somatic --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno"
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,Ley-AML-50-somatic --second-group TCGA-LAML-Exomes-Somatic-all,TCGA-AML-Exome-Imported-Somatic --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno"
 #passed
 
 #major file only
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --major-files-regex "ank\d+"
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --major-files-regex "ank\d+"
 
 #major/second files/groups
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,Ley-AML-50-somatic --second-group TCGA-LAML-Exomes-Somatic-all,TCGA-AML-Exome-Imported-Somatic --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --major-files-regex "AML\d+" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno" --second-files-regex "AML\d+" 
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,Ley-AML-50-somatic --second-group TCGA-LAML-Exomes-Somatic-all,TCGA-AML-Exome-Imported-Somatic --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --major-files-regex "AML\d+" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno" --second-files-regex "AML\d+" 
 
 #testing the merger-major-groups function
-#perl -I /gscuser/llin/git/Genome/lib/perl/ `which gmt` analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,Ley-AML-50-somatic --second-group TCGA-LAML-Exomes-Somatic-all,TCGA-AML-Exome-Imported-Somatic --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --major-files-regex "AML\d+" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno" --second-files-regex "AML\d+"  --merge-major-groups
+#perl -I /gscuser/llin/git/Genome/lib/perl/ -S gmt analysis detect-recurrence --major-group TCGA-AML-WashU-SomaticCapture,Ley-AML-50-somatic --second-group TCGA-LAML-Exomes-Somatic-all,TCGA-AML-Exome-Imported-Somatic --major-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated_validation_results/varScan.output.snp.targeted.pass_filter.pvalue_filtered.post_reviewed.curated.anno.sorted.tier1" --major-files-regex "AML\d+" --second-files "/gscmnt/sata423/info/medseq/analysis/AML*/curated*/varScan.output.snp.targeted.tier1.snvs.pass_strand.post_filter.curated.anno" --second-files-regex "AML\d+"  --merge-major-groups
 #################
 #model groups
 

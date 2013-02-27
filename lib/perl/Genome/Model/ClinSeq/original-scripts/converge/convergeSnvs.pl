@@ -353,7 +353,7 @@ foreach my $model_id (sort keys %model_list){
   #gmt analysis coverage bam-readcount --bam-file=? --genome-build=? --output-file=? --variant-file=?
   #my $cmd = "gmt analysis coverage bam-readcount --bam-file=? --genome-build=$genome_build --output-file=$output_file --variant-file=$positions_list2";
 
-  my $read_counts_script = "genome-perl `which genome` model clin-seq get-bam-read-counts";
+  my $read_counts_script = "genome-perl -S genome model clin-seq get-bam-read-counts";
   #my $bam_rc_cmd = "$read_counts_script  --positions-file=$positions_list  --ensembl-version=$ensembl_version  --output-file=$output_file  --verbose=$verbose";
   my $bam_rc_cmd = "$read_counts_script  --positions-file=$positions_list  --output-file=$output_file  --verbose=$verbose";
   $bam_rc_cmd .= "  --wgs-som-var-build=" . $wgs_build->id if $wgs_build;

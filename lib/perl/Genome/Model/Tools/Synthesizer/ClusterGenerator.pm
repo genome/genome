@@ -53,7 +53,7 @@ sub execute {
     my $self = shift;
     
     
-    my $cmd = 'genome-perl5.10 `which gmt` bio-samtools cluster-coverage --bam-file='. $self->sized_bam_file .' --minimum-zenith='. $self->zenith_depth .' --minimum-depth='. $self->minimum_depth .' --stats-file='. $self->stats_file .' --bed-file='. $self->bed_file ;
+    my $cmd = 'genome-perl5.10 -S gmt bio-samtools cluster-coverage --bam-file='. $self->sized_bam_file .' --minimum-zenith='. $self->zenith_depth .' --minimum-depth='. $self->minimum_depth .' --stats-file='. $self->stats_file .' --bed-file='. $self->bed_file ;
    # needs to be changed to G::M::T::RefCov::ClusterCoverage and released with RefCov 
     Genome::Sys->shellcmd(
         cmd => $cmd,
