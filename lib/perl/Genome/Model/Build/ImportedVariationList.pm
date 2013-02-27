@@ -93,13 +93,33 @@ sub snvs_vcf {
 
 sub snvs_file {
     my ($self, $version,$format) = @_;
+   
+    if (not defined($self->version)) {
+        $self->error_message("No version set on build?: " . $self->__display_name__);
+        # continue for backward compatibility ...should this really work? -sssmith
+    }
+
     # TODO: get a real api for this
     my $name = $self->model->name . "-" . $self->version;
     if (defined $version and $version ne "v1") {
         die "No version of snvs .bed file version $version available for $name";
     }
-    my $snvs_file_path = join('/', $self->snv_result->output_dir, "snvs.hq.$format") if $self->snv_result;
-    return $snvs_file_path if -e $snvs_file_path;
+    
+    my $snv_result = $self->snv_result;
+    unless ($snv_result) {
+        $self->warning_message("No snv result for " . $self->__display_name__);
+        return;
+    }
+    $self->status_message("Found SNV result: " . $snv_result->__display_name__);
+
+    my $snvs_file_path = join('/', $snv_result->output_dir, "snvs.hq.$format");
+    unless (-e $snvs_file_path) {
+        $self->errors_message("SNVs file not found: $snvs_file_path");
+        return;
+    }
+    $self->status_message("Found SNV file path: " . $snvs_file_path);
+
+    return $snvs_file_path;
 }
 
 1;
