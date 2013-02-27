@@ -25,7 +25,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         sample_type_filter => {
               is => 'Text',
-              default => 'pcr product,pooled library,pooled dna',
+              default => 'pcr product,pooled library,pooled dna,ipr product',
               doc => 'When displaying samples, filter out those with certain sample types. [comma separate list]',
         },
         _ref_align_pp_id => {
@@ -131,7 +131,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         tumor_sample_common_names => {
               #TODO: Is there a better way to determine which samples are 'tumor'?
               is => 'Text',
-              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion',
+              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse',
               doc => 'The possible sample common names used in the database to specify a Tumor sample',
         },
         instrument_data_to_exclude => {
