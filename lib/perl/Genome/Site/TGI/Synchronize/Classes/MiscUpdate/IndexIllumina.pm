@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::IndexIllumina {
-    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Base',
+    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::BaseForAttributes',
 };
 
 sub _get_attribute {
