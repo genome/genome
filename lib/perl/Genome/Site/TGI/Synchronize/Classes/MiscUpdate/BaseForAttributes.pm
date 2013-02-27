@@ -1,9 +1,9 @@
-package Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Subject; 
+package Genome::Site::TGI::Synchronize::Classes::MiscUpdate::BaseForAttributes; 
 
 use strict;
 use warnings;
 
-class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Subject {
+class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::BaseForAttributes {
     is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Base',
 };
 
