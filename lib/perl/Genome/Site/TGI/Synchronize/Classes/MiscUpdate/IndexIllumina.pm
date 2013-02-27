@@ -7,18 +7,6 @@ class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::IndexIllumina {
     is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Base',
 };
 
-sub _get_current_value {
-    my $self = shift;
-
-    my $genome_property_name = $self->genome_property_name;
-    return if not $genome_property_name;
-
-    my $current_attr = $self->_get_attribute($genome_property_name);
-    return $current_attr->attribute_value if $current_attr;
-
-    return;
-}
-
 sub _get_attribute {
     my ($self, $attribute_label) = @_;
 
@@ -46,39 +34,16 @@ sub _create_attribute {
     return $new_attr;
 }
 
-sub _update_value {
+sub _after_update_value {
     my $self = shift;
 
     my $genome_property_name = $self->genome_property_name;
-    return if not $genome_property_name;
-
-    my $current_attr = $self->_get_attribute($genome_property_name);
-    $current_attr->delete if $current_attr;
-
-    my $new_attr = $self->_update_attribute($genome_property_name, $self->new_value);
-    return if not $new_attr;
-
     if ( $genome_property_name eq 'lane' or $genome_property_name eq 'index_sequence' ) {
         my $update_subset_name = $self->_update_subset_name;
         return if not $update_subset_name;
     }
 
-    return $new_attr->attribute_value;
-}
-
-sub _update_attribute {
-    my ($self, $attribute_label, $new_value) = @_;
-
-    my $current_attr = $self->_get_attribute($attribute_label);
-    if ( $current_attr ) {
-        if ( $current_attr->attribute_value eq $new_value ) {
-            return $current_attr;
-        }
-        $current_attr->delete;
-    }
-
-    my $new_attr = $self->_create_attribute($attribute_label, $new_value);
-    return $new_attr;
+    return 1;
 }
 
 sub _update_subset_name {
