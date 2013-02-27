@@ -373,8 +373,8 @@ sub _resolve_index_dir {
     }
 
     if ($index) {
-        $self->status_message('Registering software result ' . $self->id . ' (self) as a user " .
-                "of the generated index');
+        $self->status_message(sprintf('Registering software result %s as a user ' .
+                'of the generated index (%s)', $self->id, $index->id));
         $index->add_user(user => $self, label => 'uses');
     } else {
         die("Unable to get a chimerascan index result");
