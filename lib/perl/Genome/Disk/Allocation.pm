@@ -1286,7 +1286,7 @@ sub _verify_no_child_allocations {
     my $query_string;
 
     #POSTGRES TODO:  remove this little ugly hack when we go 100% postgres.
-    $data_source = Genome::DataSource::PGTest->get() if ($ENV{'GENOME_QUERY_POSTGRES'}); 
+    $data_source = Genome::DataSource::PGTest->get() if ($ENV{'GENOME_QUERY_POSTGRES'});
 
     if ($data_source->isa('UR::DataSource::Oracle')) {
         my $fq_table_name = join('.', $owner, $table_name);

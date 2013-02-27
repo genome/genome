@@ -71,9 +71,9 @@ class Genome::Project {
             is => 'Genome::ProjectPart::Set',
             is_calculated => 1,
         },
-        parts_count => { 
-            is => 'Number', 
-            via => 'part_set', 
+        parts_count => {
+            is => 'Number',
+            via => 'part_set',
             to => 'count',
             doc => 'The number of parts associated with this project',
         },
@@ -195,7 +195,7 @@ sub delete {
 
     for my $part ($self->parts) {
         $part->delete();
-    }    
+    }
 
     return $self->SUPER::delete();
 }

@@ -12,13 +12,13 @@ class Genome::Sys::User {
     data_source => 'Genome::DataSource::GMSchema',
     table_name => 'GENOME_SYS_USER',
     id_by => [
-        email => { 
+        email => {
             is => 'Text',
             doc => 'Email of the user, must be unique',
         },
     ],
     has_optional => [
-        name => { 
+        name => {
             is => 'Text',
             doc => 'Full name of the user (eg, Ronald McDonald)',
         },
@@ -101,7 +101,7 @@ sub fix_params_and_get {
         %p = @p;
     }
 
-    if (defined($p{'email'}) 
+    if (defined($p{'email'})
         && $p{'email'} !~ /\@/) {
         my $old = $p{'email'};
         my $new = join('@',$p{'email'},Genome::Config::domain());

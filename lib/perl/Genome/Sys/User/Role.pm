@@ -67,7 +67,7 @@ sub create {
             Carp::confess "Somehow there are " . scalar @roles . " roles with name $name. Cannot create another role, please contact informatics about this...";
         }
     }
-    
+
     return $class->SUPER::create(@_);
 }
 

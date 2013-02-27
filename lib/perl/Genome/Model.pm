@@ -12,43 +12,43 @@ class Genome::Model {
     subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
-        genome_model_id => { 
+        genome_model_id => {
             # TODO: change to just "id"
             # And make the data type Text in preparation for UUIDs
-            is => 'Number', 
+            is => 'Number',
             doc => 'the unique immutable system identifier for a model',
         },
     ],
     attributes_have => [
-        is_param    => { 
-            is => 'Boolean', 
-            is_optional => 1, 
+        is_param    => {
+            is => 'Boolean',
+            is_optional => 1,
             doc => 'indicates a value which is part of the processing profile, constant for the model',
         },
-        is_input    => { 
-            is => 'Boolean', 
+        is_input    => {
+            is => 'Boolean',
             is_optional => 1,
             doc => 'indicates a value which is an input data set for the model: constant per build',
         },
-        is_output   => { 
-            is => 'Boolean', 
+        is_output   => {
+            is => 'Boolean',
             is_optional => 1,
             doc => 'indicates a value which is produced during the build process',
         },
-        is_metric => { 
-            is => 'Boolean', 
+        is_metric => {
+            is => 'Boolean',
             is_optional => 1,
             doc => 'indicates a value which is an interpretation of outputs on the build (can be added post-build)',
         },
-        _profile_default_value => { 
-            is => 'Text', 
+        _profile_default_value => {
+            is => 'Text',
             is_optional => 1,
             doc => 'on is_param attribute, the default value is stored here, since it is used when making profiles, not making models',
         },
     ],
     has => [
-        name => { 
-            is => 'Text', 
+        name => {
+            is => 'Text',
             doc => 'the name of the model (changeable)'
         },
         subject => {
@@ -75,8 +75,8 @@ class Genome::Model {
             },
             doc => 'the software subclass for the model in question',
         },
-        type_name => { 
-            is => 'Text', 
+        type_name => {
+            is => 'Text',
             via => 'processing_profile',
             doc => 'the name of the type of model (pipeline name)',
         },
@@ -126,22 +126,22 @@ class Genome::Model {
         },
     ],
     has_optional => [
-        user_name => { 
+        user_name => {
             # TODO: we use created_by in other places to be specific as-to role of the user
             # This is redundant with the model creation event data.
             # Adam was going for a rails standard?
-            is => 'Text', 
+            is => 'Text',
             doc => 'the user who created the model',
         },
-        creation_date  => { 
+        creation_date  => {
             # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
             # TODO: this is redundant with the model creation event.
             # Rails standard is created_at and updated_at.
             # Switching from timestamp in Oracle simplifies querying.  Not sure about postgres.
-            is => 'Timestamp', 
+            is => 'Timestamp',
             doc => 'the time at which the model was defined',
         },
-        build_requested => { 
+        build_requested => {
             # TODO: this has limited tracking as to who/why the build was requested
             # Is it better as a Note than a column since it is TGI specific?
             is => 'Boolean',
@@ -156,7 +156,7 @@ class Genome::Model {
             # The only issue with that is that having to figure this dynamically is slow.
             # If we do it once when it changes, instead of every time someone wants to check, it could be more DRY.
             is => 'Number',
-            column_name => 'LAST_COMPLETE_BUILD_ID', 
+            column_name => 'LAST_COMPLETE_BUILD_ID',
             doc => 'the last complete build id',
         },
         apipe_cron_status => {
@@ -266,9 +266,9 @@ class Genome::Model {
 sub define_by {
   # this determines the base class for auto-generated "genome model define XXXX" commands
   # various base classes are available which make different presumptions about presence of instrument-data, etc.
-  # TODO: switch to BaseMinimal after making all old models which need ::Helper override this method, 
+  # TODO: switch to BaseMinimal after making all old models which need ::Helper override this method,
   # including those which are completely auto-generated.
-  'Genome::Model::Command::Define::Helper' 
+  'Genome::Model::Command::Define::Helper'
 }
 
 # override to do additonal error checking for new profiles
@@ -319,7 +319,7 @@ sub _resolve_disk_group_name_for_build {
 sub _resolve_workflow_for_build {
     my ($self, $build, $optional_lsf_queue) = @_;
 
-    if ($self->can('_execute_build') or $self->processing_profile->can('_execute_build')) { 
+    if ($self->can('_execute_build') or $self->processing_profile->can('_execute_build')) {
         #TODO remove pp._execute_builds
         # Create a one-step workflow if '_execute_build' is defined.
         my $operation_type = Workflow::OperationType::Command->get('Genome::Model::Build::ExecuteBuildWrapper');
@@ -336,12 +336,12 @@ sub _resolve_workflow_for_build {
         if ($logdir =~ /^\/gscmnt/) {
             $opts{log_dir} = $logdir;
         }
- 
+
         my $workflow = Workflow::Model->create(%opts);
 
         my $operation = $workflow->add_operation(
             name => '_execute_build (' . $self->type_name . ')',
-            operation_type => $operation_type, 
+            operation_type => $operation_type,
         );
 
         $workflow->add_link(
@@ -473,7 +473,7 @@ sub create {
 
     $self->user_name(Genome::Sys->username) unless $self->user_name;
     $self->creation_date(UR::Context->now);
-    
+
     $self->_verify_no_other_models_with_same_name_and_type_exist;
 
     # If build requested was set as part of model creation, it didn't use the mutator method that's been
@@ -489,7 +489,7 @@ sub create {
 
     # TODO: the column behind this should become the new primary key when we are fully in sync
     $self->_id($self->id);
-    
+
     return $self;
 }
 
@@ -886,7 +886,7 @@ sub _preprocess_subclass_description {
                 to => $class->_resolve_to_for_prop_desc($prop_desc),
             );
         }
-    
+
     }
 
     my ($ext) = ($desc->{class_name} =~ /Genome::Model::(.*)/);
@@ -912,7 +912,7 @@ sub _preprocess_subclass_description {
 }
 
 sub _resolve_to_for_prop_desc {
-    # TODO This logic was borrowed from the SoftwareResult.pm's _expand_param_input_properties so 
+    # TODO This logic was borrowed from the SoftwareResult.pm's _expand_param_input_properties so
     # when that is refactored, this should also be updated.
     my ($class, $prop_desc) = @_;
 
@@ -926,7 +926,7 @@ sub _resolve_to_for_prop_desc {
         } else {
             return 'value';
         }
-    } 
+    }
     else {
         return 'value_id';
     }

@@ -37,14 +37,14 @@ class Genome::Subject {
             is => 'Text',
             doc => 'Official name of the subject',
         },
-        common_name => { 
+        common_name => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'common_name' ],
             is_mutable => 1,
         },
-        description => { 
+        description => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
@@ -90,9 +90,9 @@ sub attributes_for_nomenclature {
     my ($self, $nom) = @_;
     die "must supply nomenclature" if !$nom;
     my @fields = $nom->fields();
-    my @attr = Genome::SubjectAttribute->get( 
-        nomenclature => [ map {$_->id} @fields ], 
-        subject_id => $self->id 
+    my @attr = Genome::SubjectAttribute->get(
+        nomenclature => [ map {$_->id} @fields ],
+        subject_id => $self->id
     );
     return @attr;
 }
@@ -104,7 +104,7 @@ sub __display_name__ {
     $name .= '(' . ($common_name ? $common_name . ' ' : '') . $self->id . ')';
     return $name;
 }
-    
+
 sub create {
     my ($class, %params) = @_;
 

@@ -14,7 +14,7 @@ class Genome::Sys::User::RoleMember {
         role_id => { is => 'Text' },
     ],
     has => [
-        user => { 
+        user => {
             is => 'Genome::Sys::User',
             id_by => 'user_email',
         },

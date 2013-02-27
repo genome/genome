@@ -167,9 +167,9 @@ sub _resolve_class_name_for_table_name_fixups {
 sub _lookup_class_for_table_name {
     my $self = shift;
     my $table_name = shift;
-    
+
     my $class = $self->SUPER::_lookup_class_for_table_name($table_name);
-    
+
     if (!$class && $ENV{GENOME_QUERY_POSTGRES}) {
         my %ora_map = Genome::DataSource::Main->oracle_to_postgres_table_mapping;
         my $mapped = $ora_map{lc($table_name)};

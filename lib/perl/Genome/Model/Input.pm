@@ -19,9 +19,9 @@ class Genome::Model::Input {
     has => [
         model        => { is => 'Genome::Model', id_by => 'model_id', constraint_name => 'GMI_GM_FK' },
         value        => { is => 'UR::Object', id_by => 'value_id', id_class_by => 'value_class_name' },
-        filter_desc => { 
+        filter_desc => {
             is => 'Text',
-            is_optional => 1, 
+            is_optional => 1,
             valid_values => [ 'forward-only', 'reverse-only', undef ],
             doc => 'Filter to apply on the input value.'
         },
@@ -49,7 +49,7 @@ sub __display_name__ {
 sub delete {
     my $self = shift;
     my $input_name = $self->__display_name__;
-    
+
     # TODO I don't care for the instrument data special case. I think that inputs should be completely modifiable
     # without triggering builds being abandoned
     unless ($self->name eq 'instrument_data') {
@@ -77,7 +77,7 @@ sub builds_with_input {
 
     my @builds;
     for my $build ($self->model->builds) {
-        next unless grep { 
+        next unless grep {
             $_->name eq $self->name and
             $_->value_id eq $self->value_id and
             $_->value_class_name eq $self->value_class_name
@@ -87,6 +87,6 @@ sub builds_with_input {
 
     return @builds;
 }
-    
+
 1;
 

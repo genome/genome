@@ -61,7 +61,7 @@ sub create {
     return $self;
 }
 
-# this has the functionality of the old "value" accessor 
+# this has the functionality of the old "value" accessor
 # we wanted to ensure we were no longer dependent on it
 # ..but the HTML view needs something generic which will work
 sub _value_scalar_or_object {

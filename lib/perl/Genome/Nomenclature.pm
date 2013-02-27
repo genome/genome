@@ -17,13 +17,13 @@ class Genome::Nomenclature {
     },
     has => [
         name => {
-            is=>'Text', 
-            len=>255, 
+            is=>'Text',
+            len=>255,
             doc => 'Nomenclature name'
         },
         empty_equivalent => {
-            is=>'Text', 
-            len=>255, 
+            is=>'Text',
+            len=>255,
             doc => 'Empty-equivalent string (NA, n/a, etc)'
         },
         accepts_any_field => {
@@ -47,10 +47,10 @@ sub create {
     my %p = @_;
 
     if (exists $p{json}) {
-        return $class->create_from_json($p{json});    
-    } 
+        return $class->create_from_json($p{json});
+    }
 
-    $class->SUPER::create(@_);    
+    $class->SUPER::create(@_);
 }
 
 sub create_from_json {
@@ -60,9 +60,9 @@ sub create_from_json {
     my $nomenclature_raw = decode_json($json);
 
     my $nom = $class->create(
-        name => $nomenclature_raw->{name}, 
+        name => $nomenclature_raw->{name},
         empty_equivalent => $nomenclature_raw->{'empty_equivalent'}
-    );    
+    );
 
     for my $rf (@{$nomenclature_raw->{fields}}) {
         my $f = Genome::Nomenclature::Field->create(name=>$rf->{name}, type=>$rf->{type}, nomenclature=>$nom);
@@ -70,7 +70,7 @@ sub create_from_json {
             for my $e (@{$rf->{enumerated_values}}) {
                 my $enum = Genome::Nomenclature::Field::EnumValue->create(nomenclature_field=>$f, value=>$e);
             }
-        } 
+        }
     }
     return $nom;
 }
@@ -85,7 +85,7 @@ sub json {
     my $nomenclature_raw = decode_json($json);
     if (!$nomenclature_raw) {
         die "no decodable JSON";
-    } 
+    }
 
     # step 1: update the name and empty_equivalent if necessary
 
@@ -121,7 +121,7 @@ sub json {
         }
 
 
-        # Is this an enumerated field?  Update the values for the field and remove unused ones. 
+        # Is this an enumerated field?  Update the values for the field and remove unused ones.
 
         my %enum_records;
         warn $nom_field->type;
@@ -129,13 +129,13 @@ sub json {
 
             # as we scan the existing value ids we remove them, what's left in here needs to be deleted.
             my %enum_values_to_delete = map {$_->id,1} Genome::Nomenclature::Field::EnumValue->get(nomenclature_field=>$nom_field);
-           
-            my @value_ids = @{$rf->{enumerated_value_ids}}; 
-            my @values = @{$rf->{enumerated_values}}; 
+
+            my @value_ids = @{$rf->{enumerated_value_ids}};
+            my @values = @{$rf->{enumerated_values}};
             for my $i (0...$#value_ids) {
 
                 if ($value_ids[$i] == -1) {
-                    Genome::Nomenclature::Field::EnumValue->create(nomenclature_field=>$nom_field, value=>$values[$i]); 
+                    Genome::Nomenclature::Field::EnumValue->create(nomenclature_field=>$nom_field, value=>$values[$i]);
                 } else {
                     delete $enum_values_to_delete{$value_ids[$i]};
                     my $e = Genome::Nomenclature::Field::EnumValue->get($value_ids[$i]);
@@ -143,7 +143,7 @@ sub json {
                     $e->value($values[$i]);
                 }
             }
-    
+
             for(Genome::Nomenclature::Field::EnumValue->get(id=>[keys %enum_values_to_delete])) {
                 $_->delete;
             }
@@ -162,11 +162,11 @@ sub json {
                 }
             }
             $nom_field->type($rf->{type})
-        } 
+        }
 
         delete $fields_to_delete{$nom_field->id};
     }
-    
+
     for (Genome::Nomenclature::Field->get(id=>[keys %fields_to_delete])) {
         $_->delete;
     }

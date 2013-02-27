@@ -16,11 +16,11 @@ class Genome::Task::Params {
     },
     has => [
         task => {
-            is=>'Genome::Task', 
+            is=>'Genome::Task',
             id_by => 'genome_task_id'
         },
         params => {
-            is=>'Text', 
+            is=>'Text',
             doc => 'JSON encoded param hash'
         },
     ],

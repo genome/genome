@@ -50,7 +50,7 @@ sub _sync_database {
     my %params = @_;
 
     local $THIS_COMMIT_ID = UR::Object::Type->autogenerate_new_object_id_uuid();
-    
+
     my $required_pg_version = '2.19.3';
 
     my $pg_version = $DBD::Pg::VERSION;
@@ -81,7 +81,7 @@ sub _sync_database {
 
 
     # fork if we don't skip.
-    my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES}); 
+    my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES});
     my $use_postgres = !$skip_postgres;
 
     # Attempt to get a meta db handle first.  This way, if the meta db doesn't exist,
@@ -116,7 +116,7 @@ sub _sync_database {
   my ($parent_oracle_control_sock, $child_pg_control_sock);
   
 	my $pid;
-	
+
 	if ($use_postgres) {
     ($parent_oracle_control_sock, $child_pg_control_sock) = IO::Socket->socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC);
     unless ($parent_oracle_control_sock && $child_pg_control_sock) {
@@ -128,7 +128,7 @@ sub _sync_database {
 	} else {
     $pid = $$;
 	}
-	
+
     if ($pid) {
       
         my $sync_time_start = Time::HiRes::time();
@@ -188,15 +188,15 @@ sub _sync_database {
         eval {
                 POE::Kernel->has_forked();
         };
-    
+
         # Turtles all the way down... the logging logic can potentially bomb and emit warnings that the user
         # shouldn't see, so eval everything!
-        eval { 
+        eval {
             my $stderr = '';;
             local *STDERR;
             open STDERR, '>', \$stderr;
             my $sync_time_start = Time::HiRes::time();
-			
+
             eval {
                 $DB::single = 1;
                 my $pg_commit_rv;

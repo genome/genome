@@ -24,7 +24,7 @@ class Genome::SubjectAttribute {
             is => 'Text',
         },
     ],
-    has => [        
+    has => [
         nomenclature_field => {
             is => 'Genome::Nomenclature::Field',
             id_by => 'nomenclature',
@@ -60,7 +60,7 @@ class Genome::SubjectAttribute {
         },
         all_nomenclature_fields => {
             via => 'nomenclature_obj',
-             to => 'fields' 
+             to => 'fields'
         }
     ],
     has_optional => [
@@ -77,7 +77,7 @@ class Genome::SubjectAttribute {
 
 sub create {
     my $class = shift;
-    my $bx = $class->define_boolexpr(@_);    
+    my $bx = $class->define_boolexpr(@_);
     # TODO This is a workaround that allows nomenclature to be in the id_by block
     # and have a default value. Doing so in the class definition doesn't work due
     # to some sort of UR bug that Tony is aware of.
