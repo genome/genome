@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use File::Basename;
+use Sort::Naturally;
 
 my @has_param;
 
@@ -172,7 +173,7 @@ sub execute {
     $out->print("\n");
 
 
-    for my $chr (sort {$a<=>$b} keys %{$breakpoints_list}) {
+    for my $chr (nsort keys %{$breakpoints_list}) {
         for my $item (@{$breakpoints_list->{$chr}}) {
             my @all_content;
             if ($item->{breakpoint_link}) {
