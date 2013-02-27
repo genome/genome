@@ -290,6 +290,7 @@ class Genome::InstrumentData::AlignmentResult {
         _sam_output_fh         => { is => 'IO::File',is_optional => 1 },
         _is_inferred_paired_end => { is => 'Boolean', is_optional=>1},
         _extracted_bam_path    => { is => 'String', is_optional=>1},
+        _flagstat_file         => { is => 'Text', is_optional=>1},
     ],
 };
 
@@ -870,6 +871,7 @@ sub determine_input_read_count_from_bam {
 
     die unless $self->_create_bam_flagstat($bam_file, $output_file);
 
+    $self->_flagstat_file($output_file);
     my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
     unless ($stats) {
         $self->status_message('Failed to get flagstat data  on input sequences from '.$output_file);
