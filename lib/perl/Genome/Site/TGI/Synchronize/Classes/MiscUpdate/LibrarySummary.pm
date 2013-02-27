@@ -4,74 +4,8 @@ use strict;
 use warnings;
 
 class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::LibrarySummary {
-    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate',
+    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Base',
 };
-
-sub perform_update {
-    my $self = shift;
-
-    my $lims_table_name = $self->lims_table_name;
-    return if not $lims_table_name;
-
-    my $site_tgi_class_name = $self->site_tgi_class_name;
-    if ( not $site_tgi_class_name ) {
-        return $self->failure;
-    }
-
-    my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($self->subject_property_name);
-    if ( not $genome_property_name ) {
-        $self->error_message('No genome property name for lims property name => '.$self->subject_property_name);
-        return $self->failure;
-    }
-
-    if ( not grep { $genome_property_name eq $_ } $site_tgi_class_name->properties_to_keep_updated ) {
-        $self->status_message('Update for genome property name not supported => '.$genome_property_name);
-        return $self->skip;
-    }
-
-    my $genome_class_name = $self->genome_class_name;
-    if ( not $genome_class_name ) {
-        return $self->failure; 
-    }
-
-    my $genome_entity = $self->genome_entity;
-    if ( not $genome_entity ) {
-        return $self->failure;
-    }
-
-    # Get values
-    my $new_value = $self->new_value;
-    my $old_value = $self->old_value;
-    my $current_value = $genome_entity->$genome_property_name;
-    $self->{_current_value} = $current_value;
-
-    # NEW and CURRENT are NULL
-    if ( not defined $new_value and not defined $current_value ) {
-        $self->is_reconciled(1);
-        return $self->success;
-    }
-
-    # NEW and CURRENT are NOT NULL and the same
-    if ( defined $current_value and defined $new_value and $current_value eq $new_value ) {
-        $self->is_reconciled(1);
-        return $self->success;
-    }
-
-    # OLD and CURRENT value do not match
-    if ( defined $old_value and defined $current_value and $old_value ne $current_value ) {
-        $self->error_message("Current APipe value ($current_value) does not match the LIMS old value ($old_value)!");
-        return $self->failure;
-    }
-
-    # Update
-    my $updated_value = $genome_entity->$genome_property_name($new_value);
-    if ( not $updated_value or $updated_value ne $new_value ) {
-        $self->error_message('Failed to set new value!');
-        return $self->failure;
-    }
-
-    return $self->success;
-}
 
 1;
 
