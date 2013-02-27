@@ -52,15 +52,4 @@ sub _sync_database {
     return $sync_rv;
 }
 
-# UR::DBI wants to rollback when we disconnect.  Open a transaction
-# so it doesn't barf when we disconnect.
-sub prepare_for_fork {
-    my $self = shift;
-    if ($self->has_default_handle) {
-        my $dbh = $self->get_default_handle();
-        $dbh->begin_work();
-    }
-    $self->SUPER::prepare_for_fork(@_);
-}
-
 1;
