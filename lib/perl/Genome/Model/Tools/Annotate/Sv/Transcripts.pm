@@ -23,6 +23,7 @@ sub process_breakpoint_list{
     my %output;
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
+            next if $item->{breakpoint_link};
             my ($key, $value) = $self->process_item($item);
             $output{$key} = $value;
         }
@@ -33,11 +34,6 @@ sub process_breakpoint_list{
 sub process_item {
     my $self = shift;
     my $item = shift;
-
-    #only need to process each set of breakpoints once.
-    if ($item->{breakpoint_link}) {
-        return 1;
-    }
 
     my ($geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes, $aTranscriptRef, $bTranscriptRef, $inCommonRef, $deletedGeneHashRef);
     $geneA = $transcriptA = $orientationA = $subStructureA = $geneB = $transcriptB = $orientationB = $subStructureB = $deletedGenes = "N/A";

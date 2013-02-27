@@ -5,13 +5,24 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Segdup {
-    is => "Genome::Model::Tools::Annotate::Sv::IntervalAnnotator",
+    is => "Genome::Model::Tools::Annotate::Sv::Base",
     has_input => [
         annotation_file => {
             is => 'String',
             doc => 'File containing UCSC table',
             default => "/gsc/scripts/share/BreakAnnot_file/human_build37/Human.Feb2009.SegDups.tab",
-        }
+        },
+        breakpoint_wiggle_room => {
+            is => 'Number',
+            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
+            default => 200,
+        },
+        overlap_fraction => {
+            is => 'Number',
+            doc => 'Fraction of overlap (reciprocal) required to hit',
+            default => 0.5,
+        },
+
     ],
 };
 

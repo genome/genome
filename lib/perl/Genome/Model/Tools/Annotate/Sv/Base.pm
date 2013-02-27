@@ -5,11 +5,14 @@ use warnings;
 use Genome;
 use File::Basename;
 use Sort::Naturally;
+use List::Util qw(min max);
 
 
 class Genome::Model::Tools::Annotate::Sv::Base{
     is => "Command::V2",
-    has_input => [
+    has => [
+        
+        
         input_file => {
             is => 'String',
         },
@@ -70,7 +73,8 @@ sub execute {
         or die "failed to open $output_file for writing\n";
 
     my $infile = $self->input_file;
-    my $build  = $self->annotation_build;
+    my $build  = $self->annotation_build
+        or die "failed to get annotation build ".$self->annotation_build_id;
 
     my $in = Genome::Sys->open_file_for_reading($infile) or die "failed to open $infile for reading\n";
 
@@ -96,59 +100,115 @@ sub execute {
     $in->close;
 
     $breakpoints_list = $self->fill_in_transcripts($breakpoints_list, $build);
-    my %annotation_content;
     my @column_names = qw(chrA bpA chrB bpB event);
 
-    for my $type (@annotator_list) {
-        =cut
-        my $class_name = "Genome::Model::Tools::Annotate::Sv::$type";
-        my $module_meta = UR::Object::Type->get($class_name);
-        my $module_short_name = Genome::Utility::Text::camel_case_to_string($type);
-        $module_short_name =~ s/\s+/_/g;
-        my @p = $module_meta->properties;
-        my %params;
-        foreach my $property (@p) {
-            if ($property->can("is_input") and $property->is_input) {
-                #my $property_name = $module_short_name."_".$property->property_name;
-                my $property_name = $property->property_name;
-                if ($self->$property_name) {
-                    $params{$property->property_name} = $self->$property_name;
-                }
-            }
-        }
-        my $instance = $class_name->create(%params);
-        my $content = $instance->process_breakpoint_list($breakpoints_list);
-        =cut
-        my $content = $self->process_breakpoint_list($breakpoints_list);
+    my $content = $self->process_breakpoint_list($breakpoints_list);
         #my @analysis_column_names = $instance->column_names;
-        my @analysis_column_names = $self->column_names;
-        unless (@analysis_column_names) {
-            die $self->error_message("There is no valid column names for $class_name");
-        }
-        @column_names = (@column_names, @analysis_column_names);
-        $annotation_content{$type} = $content;
+    my @analysis_column_names = $self->column_names;
+    unless (@analysis_column_names) {
+        die $self->error_message("There is no valid column names for ".__PACKAGE__);
     }
+    @column_names = (@column_names, @analysis_column_names);
 
     $out->print(join "\t", @column_names);
     $out->print("\n");
     
     for my $chr (nsort keys %{$breakpoints_list}) {
         for my $item (@{$breakpoints_list->{$chr}}) {
-            my @all_content;
             if ($item->{breakpoint_link}) {
                 next;
             }
-            my $key = Genome::Model::Tools::Annotate::Sv::Base->get_key_from_item($item);
-            for my $analysis (@annotator_list) {
-                my $content = $annotation_content{$analysis}->{$key};
-                @all_content = (@all_content, @$content);
-            }
-            $out->print(join("\t", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event},  @all_content)."\n"); 
+            my $key = $self->get_key_from_item($item);
+            $out->print(join("\t", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event},  @{$content->{$key}})."\n"); 
         }
     }
     $out->close;
     return 1;
 
+}
+
+#TODO NEEDS to be rewritten - I don't think it is right.
+#First of all, it stops at one end position rather than getting all intervals that cross the breakpoint.
+#Second of all, it only considers the 2nd breakpoint of the SV, not the first breakpoint.  I think
+#annotations crossing either breakpoint should probably be considered.
+sub annotate_interval_matches {
+    #both breakpoints need to match within some wiggle room
+    my $self = shift;
+    my $positions = shift;
+    my $annotation = shift;
+    my $annot_length = shift;
+    my $tag = shift;
+    my $breakpoint_key = shift;
+
+    foreach my $chr (keys %$positions) {
+        my @sorted_items = sort {$a->{$breakpoint_key}<=>$b->{$breakpoint_key}} (@{$positions->{$chr}});
+        my @sorted_positions = map{$_->{$breakpoint_key}} @sorted_items;
+        my %annotated_output;
+
+        my @chromEnds = sort {$a<=>$b} keys %{$annotation->{$chr}};
+        for my $pos (@sorted_positions) {
+            while (@chromEnds>0 && $pos>$chromEnds[0]+$annot_length) {
+                shift @chromEnds;
+            }
+            next unless @chromEnds>0;
+            for my $start (keys %{$$annotation{$chr}{$chromEnds[0]}}) {
+                if ($pos>=$start-$annot_length) {
+                    for my $var (@{$$annotation{$chr}{$chromEnds[0]}{$start}}){
+                        foreach my $position_item (@{$positions->{$chr}}) {
+                            if ($position_item->{$breakpoint_key} eq $pos) {
+                                push @{$position_item->{$tag}->{$breakpoint_key}}, $var;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+sub get_var_annotation {
+    my ($self, $item, $annotation_ref) = @_;
+    
+    my $varreport = "N/A";
+    my @vars;
+    my $frac = $self->overlap_fraction;
+    
+    if (defined $annotation_ref) {
+        foreach my $var (@$annotation_ref) {
+            my $pos1 = min($item->{bpB}, $var->{chromEnd});
+            my $pos2 = max($item->{bpA}, $var->{chromStart});
+            my $overlap = $pos1-$pos2+1;
+            my $ratio1 = $overlap/(abs($item->{bpB}-$item->{bpA})+1);
+            my $ratio2 = $overlap/(abs($var->{chromEnd}-$var->{chromStart})+1);
+            if ($ratio1 >= $frac && $ratio2 >= $frac ) {
+                push @vars, $var;
+            }
+        }
+
+        if (@vars) {
+            $varreport = join(",",map{$_->{name}} @vars);
+        }
+    }
+    return $varreport;
+}
+
+sub read_ucsc_annotation{
+    my ($self, $file) = @_;
+    my %annotation;
+    my $in = Genome::Sys->open_file_for_reading($file) || die "Unable to open annotation: $file\n";
+    while (<$in>) {
+        chomp;
+        next if /^\#/;
+        my $p;
+        my @extra;
+        ($p->{bin},$p->{chrom},$p->{chromStart},$p->{chromEnd},$p->{name},@extra) = split /\t+/;
+        $p->{chrom} =~ s/chr//;
+        $p->{extra} = \@extra;
+        push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
+    }
+    $in->close;
+    return \%annotation;
 }
 
 sub is_between_breakpoints {
@@ -252,6 +312,7 @@ sub get_key_from_item {
     return join("--", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event});
 }
 
+=cut
 sub annotate_interval_matches {
     #both breakpoints need to match within some wiggle room
     my $self = shift;
@@ -304,5 +365,6 @@ sub read_ucsc_annotation{
     close ANNOTATION;
     return \%annotation;
 }
+=cut
 
 1;

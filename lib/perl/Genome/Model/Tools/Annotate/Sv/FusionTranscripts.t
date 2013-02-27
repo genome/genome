@@ -20,12 +20,11 @@ my $data_dir = "$base_dir/v$version";
 
 my $temp_file = Genome::Sys->create_temp_file_path;
 my $fusion_temp_file = dirname($temp_file).'/fusion_transcripts.out';
-my $cmd = Genome::Model::Tools::Annotate::Sv->create(
+my $cmd = Genome::Model::Tools::Annotate::Sv::FusionTranscripts->create(
     input_file  => "$base_dir/in.svs",
-    fusion_transcripts_output_file => $fusion_temp_file,
+    fusion_output_file => $fusion_temp_file,
     output_file => $temp_file,
     annotation_build_id => 102549985,  #54_36p_v2, human Build36
-    annotator_list      => ['FusionTranscripts'],
 );
 
 ok($cmd, "Created command");

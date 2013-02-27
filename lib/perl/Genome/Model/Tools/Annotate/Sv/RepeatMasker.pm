@@ -6,7 +6,7 @@ use Genome;
 use List::Util qw(max min);
 
 class Genome::Model::Tools::Annotate::Sv::RepeatMasker {
-    is => 'Genome::Model::Tools::Annotate::Sv::IntervalAnnotator',
+    is => 'Genome::Model::Tools::Annotate::Sv::Base',
     has_input => [
         annotation_file => {
             is => 'String',

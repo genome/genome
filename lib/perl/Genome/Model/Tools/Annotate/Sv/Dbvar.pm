@@ -5,12 +5,22 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Dbvar {
-    is => "Genome::Model::Tools::Annotate::Sv::IntervalAnnotator",
+    is => "Genome::Model::Tools::Annotate::Sv::Base",
     has_input => [
         annotation_file => {
             is => 'Text',
             doc => 'File containing UCSC table',
             default => "/gsc/scripts/share/BreakAnnot_file/human_build37/GRCh37.remap.all.germline.ucsc.gff",
+        },
+        breakpoint_wiggle_room => {
+            is => 'Number',
+            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
+            default => 200,
+        },
+        overlap_fraction => {
+            is => 'Number',
+            doc => 'Fraction of overlap (reciprocal) required to hit',
+            default => 0.5,
         },
     ],
 };

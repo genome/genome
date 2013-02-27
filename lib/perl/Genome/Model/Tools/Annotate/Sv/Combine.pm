@@ -55,5 +55,53 @@ class Genome::Model::Tools::Annotate::Sv::Combine {
     ],
 };
 
+sub process_breakpoint_list {
+    my $self = shift;
+    my $breakpoints_list = shift;
+    my %all_content;
+
+    for my $type ($self->annotator_list) {
+        my $instance = $self->_create_instance_of_type($type);
+        $DB::single=1;
+        my $content = $instance->process_breakpoint_list($breakpoints_list);
+        foreach my $key (keys %$content) {
+            push @{$all_content{$key}}, @{$content->{$key}};
+        }
+    }
+    return \%all_content;
+}
+
+sub column_names {
+    my $self = shift;
+    my @all_column_names;
+    foreach my $type ($self->annotator_list) {
+        my $instance = $self->_create_instance_of_type($type);
+        @all_column_names = (@all_column_names, $instance->column_names);
+    }
+    return @all_column_names;
+}
+
+sub _create_instance_of_type {
+    my $self = shift;
+    my $type = shift;
+    my $class_name = "Genome::Model::Tools::Annotate::Sv::$type";
+    my $module_meta = UR::Object::Type->get($class_name);
+    my $module_short_name = Genome::Utility::Text::camel_case_to_string($type);
+    $module_short_name =~ s/\s+/_/g;
+    my @p = $module_meta->properties;
+    my %params;
+    foreach my $property (@p) {
+        if ($property->can("is_input") and $property->is_input) {
+            my $property_name = $module_short_name."_".$property->property_name;
+            if ($self->$property_name) {
+                $params{$property->property_name} = $self->$property_name;
+            }
+        }
+    }
+    my $instance = $class_name->create(%params);
+    return $instance;
+}
+
+
 1;
 
