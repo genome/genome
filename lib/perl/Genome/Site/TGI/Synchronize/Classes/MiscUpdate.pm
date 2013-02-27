@@ -117,6 +117,7 @@ my %lims_table_names_to_site_tgi_class_names = (
     "organism_sample" => 'Genome::Site::TGI::Synchronize::Classes::Sample',
     "library_summary" => 'Genome::Site::TGI::Synchronize::Classes::LibrarySummary',
     "index_illumina" => 'Genome::Site::TGI::Synchronize::Classes::IndexIllumina',
+    "region_index_454" => 'Genome::Site::TGI::Synchronize::Classes::RegionIndex454',
     #"sample_attribute" => 'Genome::Site::TGI::Synchronize::Classes::SubjectAttribute',
     #"population_group_member" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember',
 );
@@ -159,6 +160,7 @@ my %subject_class_names_to_genome_class_names = (
     "population_group_member" => 'Genome::SubjectAttribute',
     "library_summary" => 'Genome::Library',
     "index_illumina" => 'Genome::InstrumentData::Solexa',
+    "region_index_454" => 'Genome::InstrumentData::454',
 );
 sub genome_class_name {
     my $self = shift;
