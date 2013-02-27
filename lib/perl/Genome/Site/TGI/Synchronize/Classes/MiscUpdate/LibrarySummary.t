@@ -75,7 +75,7 @@ is($misc_update->result, 'SKIP', 'Correct result after update');
 is($misc_update->status, "SKIP	UPDATE	test.library_summary	-101	full_name	'__TEST_LIBRARY__'	'__TEST_LIBRARY__'	'__NEW_NAME__'", 'Correct status after update');
 ok(!$misc_update->is_reconciled, 'Is reconciled');
 my $status_message = $misc_update->status_message;
-is($status_message, 'Update for genome property name not supported => name');
+is($status_message, 'Update for genome property name not supported => name', 'Correct status message');
 is($library->name, '__TEST_LIBRARY__', 'Did not set name on library');
 
 done_testing();
