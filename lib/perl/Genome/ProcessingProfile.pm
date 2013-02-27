@@ -53,13 +53,15 @@ sub __display_name__ {
 
 sub get {
     my $class = shift;
-    my %params = @_;
+    if(@_ % 2 == 0) { #don't catch bare ID queries
+        my %params = @_;
 
-    # Avoid creating huge sets of joins against processing_profile_param that can choke Postgres.
-    # If we're looking for a lot of params, just get all the processing profiles
-    # for that class and sort it out in memory.
-    if (keys %params > 10) {
-        $class->get();
+        # Avoid creating huge sets of joins against processing_profile_param that can choke Postgres.
+        # If we're looking for a lot of params, just get all the processing profiles
+        # for that class and sort it out in memory.
+        if (keys %params > 10) {
+            $class->get();
+        }
     }
     return $class->SUPER::get(@_);
 }
