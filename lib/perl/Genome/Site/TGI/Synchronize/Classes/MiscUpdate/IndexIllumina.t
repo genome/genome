@@ -29,7 +29,7 @@ my $solexa = Genome::InstrumentData::Solexa->create(
 my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.index_illumina',
     subject_id => $solexa->id,
-    subject_property_name => 'flow_cell_id',
+    subject_property_name => 'FLOW_CELL_ID',
     editor_id => 'lims',
     edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => undef,
@@ -57,7 +57,7 @@ is($solexa->flow_cell_id, 'YYYYYY', 'Set flow_cell_id on solexa');
 $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.index_illumina',
     subject_id => $solexa->id,
-    subject_property_name => 'index_sequence',
+    subject_property_name => 'INDEX_SEQUENCE',
     editor_id => 'lims',
     edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => $solexa->index_sequence,
@@ -86,7 +86,7 @@ is($solexa->subset_name, '2-TGGGGGT', 'Also updated subset_name on solexa');
 $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.index_illumina',
     subject_id => $solexa->id,
-    subject_property_name => 'lane',
+    subject_property_name => 'LANE',
     editor_id => 'lims',
     edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => $solexa->lane,
@@ -115,7 +115,7 @@ is($solexa->subset_name, '3-TGGGGGT', 'Also updated subset_name on solexa');
 $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.index_illumina',
     subject_id => $solexa->id,
-    subject_property_name => 'library_id',
+    subject_property_name => 'LIBRARY_ID',
     editor_id => 'lims',
     edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
     old_value => $solexa->library_id,

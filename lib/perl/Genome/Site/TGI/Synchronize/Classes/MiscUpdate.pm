@@ -206,7 +206,8 @@ sub genome_property_name {
     my $site_tgi_class_name = $self->site_tgi_class_name;
     return if not $site_tgi_class_name;
 
-    my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($self->subject_property_name);
+    my $subject_property_name = lc( $self->subject_property_name );
+    my $genome_property_name = $site_tgi_class_name->lims_property_name_to_genome_property_name($subject_property_name);
     if ( not $genome_property_name ) {
         $self->error_message("Failed to get genome property name! $site_tgi_class_name => ".$self->subject_property_name);
         return;
@@ -222,7 +223,8 @@ sub _set_result {
     $self->status(
         join("\t", 
             $result, 
-            map({ $self->$_; } (qw/ description subject_class_name subject_id subject_property_name /)),
+            map({ $self->$_; } (qw/ description subject_class_name subject_id /)),
+            lc( $self->subject_property_name ),
             "'".( $self->{_current_value} // 'NA' )."'",
             map({ defined $_ ? "'".$_."'" : "'NULL'"; }  $self->old_value, $self->new_value,),
         )
