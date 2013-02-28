@@ -182,6 +182,10 @@ sub getCufflinksFiles{
     my $subject_common_name = $b->subject->common_name;
     my $build_id = $b->id;
 
+    unless ($m->normal_rnaseq_model) {
+        die "model " . $m->__display_name__ . " does not have a normal rnaseq model!";
+    }
+
     my ($normal_rnaseq_subject, $tumor_rnaseq_subject); 
     $normal_rnaseq_subject = $m->normal_rnaseq_model->subject->name || "NULL";
     $tumor_rnaseq_subject = $m->tumor_rnaseq_model->subject->name || "NULL";
