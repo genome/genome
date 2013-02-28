@@ -25,6 +25,15 @@ sub _get_current_attr {
 sub _get_current_value {
     my $self = shift;
 
+    my $genome_entity = $self->genome_entity;
+    return if not $genome_entity;
+
+    my $genome_property_name = $self->genome_property_name;
+    return if not $genome_property_name;
+
+    my $current_value = eval{ $genome_entity->$genome_property_name; };
+    return $current_value if defined $current_value;
+
     my $current_attr = $self->_get_current_attr;
     return if not $current_attr;
     
