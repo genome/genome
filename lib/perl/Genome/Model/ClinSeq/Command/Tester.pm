@@ -67,7 +67,7 @@ sub run_and_diff {
         fail "failed to translate $command.  Use \$script_dir, \$output_dir, \$annotation_dir: $@";
     }
 
-    my $cmd = "PERL5LIB=$prefix:\$PERL5LIB perl " . $command_translated;
+    my $cmd = "PERL5LIB=$prefix:\$PERL5LIB perl " . $command_translated . " 2>/dev/null 1>/dev/null";
 
     Genome::Sys->shellcmd(cmd => $cmd);
     ok(-d $output_dir, "output dir exists: $output_dir") or die "quitting...";

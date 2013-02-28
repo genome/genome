@@ -80,9 +80,10 @@ sub resolve_param_value_from_cmdline_text {
     }
     undef($param_class);
     #this splits a bool_expr if multiples of the same field are listed, e.g. name=foo,name=bar
+    #in that case, assume they're separate queries
     if (@param_args > 1) {
         my %bool_expr_type_count;
-        my @bool_expr_type = map {split(/[=~]/, $_)} @param_args;
+        my @bool_expr_type = map {split(/[=~:]/, $_)} grep { /[=~:]/ } @param_args;
         for my $type (@bool_expr_type) {
             $bool_expr_type_count{$type}++;
         }
@@ -90,7 +91,9 @@ sub resolve_param_value_from_cmdline_text {
         for my $type (keys %bool_expr_type_count) {
             $duplicate_bool_expr_type++ if ($bool_expr_type_count{$type} > 1);
         }
-        unshift @param_args, $param_str unless($duplicate_bool_expr_type);
+
+        #If it's a good boolean expression, just try to find what matches entirely
+        @param_args = ($param_str) if (scalar(@bool_expr_type) and not $duplicate_bool_expr_type);
     }
 
     my $pmeta = $self->__meta__->property($param_name);
