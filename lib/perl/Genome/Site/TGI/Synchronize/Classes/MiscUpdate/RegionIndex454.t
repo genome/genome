@@ -17,15 +17,17 @@ use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::RegionIndex454') or
 
 my $cnt = 0;
 
-# update flow_cell_id
 my $id454 = Genome::InstrumentData::454->create(
     id => -100,
     library_id => -101,
+    region_id => -301,
     region_number => 2,
     index_sequence => 'GATCGA',
     subset_name => '2-GATCGA',
     total_reads => 1000,
 );
+
+# update num_reads
 my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.region_index_454',
     subject_id => $id454->id,
@@ -53,7 +55,35 @@ ok($misc_update->is_reconciled, 'Is reconciled');
 ok(!$misc_update->error_message, 'No error after update');
 is($id454->total_reads, '1001', 'Set total_reads on id454');
 
-# update index sequence -> updates subset_name
+# update num_bases
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    subject_class_name => 'test.region_index_454',
+    subject_id => $id454->id,
+    subject_property_name => 'num_bases',
+    editor_id => 'lims',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+    old_value => undef,
+    new_value => '10001',
+    description => 'UPDATE',
+    is_reconciled => 0,
+);
+ok($misc_update, 'Define misc update');
+isa_ok($misc_update, 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::RegionIndex454');
+is($misc_update->lims_table_name, 'region_index_454', 'Correct lims table name');
+$genome_class_name = $misc_update->genome_class_name;
+is($genome_class_name, 'Genome::InstrumentData::454', 'Correct genome class name');
+$genome_entity = $misc_update->genome_entity;
+ok($genome_entity, 'Got genome entity');
+is($genome_entity->class, $genome_class_name, 'Correct genome entity class name');
+is($genome_entity->id, $id454->id, 'Correct genome entity id');
+ok($misc_update->perform_update, 'Perform update');
+is($misc_update->result, 'PASS', 'Correct result after update');
+is($misc_update->status, "PASS	UPDATE	test.region_index_454	-100	num_bases	'NA'	'NULL'	'10001'", 'Correct status after update');
+ok($misc_update->is_reconciled, 'Is reconciled');
+ok(!$misc_update->error_message, 'No error after update');
+is($id454->total_bases_read, '10001', 'Set total_bases_read on id454');
+
+# index sequence -> updates subset_name
 $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.region_index_454',
     subject_id => $id454->id,
@@ -108,8 +138,36 @@ is($misc_update->result, 'PASS', 'Correct result after update');
 is($misc_update->status, "PASS	UPDATE	test.region_index_454	-100	region_number	'2'	'2'	'3'", 'Correct status after update');
 ok($misc_update->is_reconciled, 'Is reconciled');
 ok(!$misc_update->error_message, 'No error after update');
-is($id454->region_number, 3, 'Update lane on id454');
+is($id454->region_number, 3, 'Update region_number on id454');
 is($id454->subset_name, '3-TGGGGGT', 'Also updated subset_name on id454');
+
+# update region_id -> updates subset_name
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    subject_class_name => 'test.region_index_454',
+    subject_id => $id454->id,
+    subject_property_name => 'region_id',
+    editor_id => 'lims',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+    old_value => $id454->region_id,
+    new_value => -302,
+    description => 'UPDATE',
+    is_reconciled => 0,
+);
+ok($misc_update, 'Define misc update');
+isa_ok($misc_update, 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::RegionIndex454');
+is($misc_update->lims_table_name, 'region_index_454', 'Correct lims table name');
+$genome_class_name = $misc_update->genome_class_name;
+is($genome_class_name, 'Genome::InstrumentData::454', 'Correct genome class name');
+$genome_entity = $misc_update->genome_entity;
+ok($genome_entity, 'Got genome entity');
+is($genome_entity->class, $genome_class_name, 'Correct genome entity class name');
+is($genome_entity->id, $id454->id, 'Correct genome entity id');
+ok($misc_update->perform_update, 'Perform update');
+is($misc_update->result, 'PASS', 'Correct result after update');
+is($misc_update->status, "PASS	UPDATE	test.region_index_454	-100	region_id	'-301'	'-301'	'-302'", 'Correct status after update');
+ok($misc_update->is_reconciled, 'Is reconciled');
+ok(!$misc_update->error_message, 'No error after update');
+is($id454->region_id, -302, 'Update region_number on id454');
 
 # library_id -> skip
 $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
@@ -132,7 +190,6 @@ $genome_entity = $misc_update->genome_entity;
 ok($genome_entity, 'Got genome entity');
 is($genome_entity->class, $genome_class_name, 'Correct genome entity class name');
 is($genome_entity->id, $id454->id, 'Correct genome entity id');
-$DB::single=1;
 ok($misc_update->perform_update, 'Perform update');
 is($misc_update->result, 'SKIP', 'Correct result after update');
 is($misc_update->status, "SKIP	UPDATE	test.region_index_454	-100	library_id	'NA'	'-101'	'3'", 'Correct status after update');
