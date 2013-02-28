@@ -7,9 +7,9 @@ use Genome;
 
 =comment
 # RUN_REGION_454
-REGION_ID                NUMBER   (12)                    {null} NOT NULL ok [synced from region index]
+REGION_ID                NUMBER   (12)                    {null} NOT NULL NOT_SYNCED [from ri454]
 ANALYSIS_NAME            VARCHAR2 (255)                   {null} NOT NULL NOT_SYNCED
-REGION_NUMBER            NUMBER   (12)                    {null} NOT NULL ok [from ri454]
+REGION_NUMBER            NUMBER   (12)                    {null} NOT NULL ok
 TOTAL_RAW_WELLS          NUMBER   (12)                    {null} NOT NULL NOT_SYNCED
 TOTAL_KEY_PASS           NUMBER   (12)                    {null} NOT NULL NOT_SYNCED
 INCOMING_DNA_NAME        VARCHAR2 (64)                    {null} NOT NULL NOT_SYNCED
@@ -27,7 +27,7 @@ BEADS_LOADED             NUMBER   (12)                    {null} {null}   NOT_SY
 SS_ID                    NUMBER   (15)                    {null} {null}   NOT_SYNCED
 SUPERNATANT_BEADS        NUMBER   (8)                     {null} {null}   NOT_SYNCED
 SAMPLE_ID                NUMBER   (20)                    {null} {null}   NOT_SYNCED
-LIBRARY_ID               NUMBER   (20)                    {null} {null}   ok [from ri454]
+LIBRARY_ID               NUMBER   (20)                    {null} {null}   NOT_SYNCED [from ri454]
 # REGION_INDEX_454
 SEQ_ID             NUMBER   (15)                    {null} NOT NULL ok [id]
 REGION_ID          NUMBER   (12)                    {null} NOT NULL ok
