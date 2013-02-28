@@ -13,7 +13,7 @@ use_ok('Genome::Model::Tools::Sv::SvAnnot');
 my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sv-SvAnnot/';
 my $tmp_dir = File::Temp::tempdir(
     'Genome-Model-Tools-Sv-SvAnnot-XXXXX', 
-    DIR     => "$ENV{GENOME_TEST_TEMP}", 
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

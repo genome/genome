@@ -60,6 +60,11 @@ sub execute{
         die $self->error_message("no build provided!");
     }
 
+    unless ($build->snv_detection_strategy or $build->indel_detection_strategy or $build->sv_detection_strategy or $build->cnv_detection_strategy) {
+        $self->warning_message("No detection strategies provided. Skipping detect variants step");
+        return 1;
+    }
+
     my %params;
     $params{snv_detection_strategy} = $build->snv_detection_strategy if $build->snv_detection_strategy;
     $params{indel_detection_strategy} = $build->indel_detection_strategy if $build->indel_detection_strategy;

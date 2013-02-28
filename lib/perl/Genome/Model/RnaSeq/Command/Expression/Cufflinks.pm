@@ -17,6 +17,11 @@ class Genome::Model::RnaSeq::Command::Expression::Cufflinks {
     has_param => [
         lsf_resource => { default_value => $DEFAULT_LSF_RESOURCE },
     ],
+    has_input => [
+        annotation_reference_transcripts_mode => {
+            default_value => 'de novo',
+        },
+    ],
     has => [
         build => {
             is => 'Genome::Model::Build::RnaSeq',
@@ -68,15 +73,15 @@ sub execute {
             $self->params_for_result,
             log_directory => $build->log_directory,
         );
-        
+
         my $result = Genome::InstrumentData::AlignmentResult::Merged::CufflinksExpression->get_or_create(%params);
-    
+
         $self->link_result_to_build($result);
     } else {
         # Run the old way
         my %params = (
             $self->params_for_result,
-            expression_directory => $build->expression_directory,
+            expression_directory => $build->expression_directory($self->annotation_reference_transcripts_mode),
             annotation_build => $build->annotation_build,
             reference_build => $build->reference_sequence_build,
         );
@@ -90,7 +95,6 @@ sub execute {
 
 sub params_for_result {
     my $self = shift;
-    
     my $build = $self->build;
     my $pp = $build->processing_profile;
 
@@ -105,7 +109,7 @@ sub params_for_result {
         cufflinks_version => $pp->expression_version,
         cufflinks_params => $pp->expression_params,
         mask_reference_transcripts => $pp->mask_reference_transcripts,
-        annotation_reference_transcripts_mode  => $pp->annotation_reference_transcripts_mode,
+        annotation_reference_transcripts_mode  => $self->annotation_reference_transcripts_mode,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
     );
 }
@@ -116,7 +120,12 @@ sub link_result_to_build {
 
     my $build = $self->build;
     my $label = join('_', 'cufflinks_expression');
-    Genome::Sys->create_symlink($result->output_dir, $build->expression_directory);
+    my $mode = $self->annotation_reference_transcripts_mode;
+    Genome::Sys->create_symlink($result->output_dir, $build->expression_directory($mode));
+    if ($mode eq 'reference only') {
+        # create the old expression directory for compatibility
+        Genome::Sys->create_symlink($build->expression_directory($mode), $build->expression_directory);
+    }
     $result->add_user(label => $label, user => $build);
 
     $self->cufflinks_expression_result($result);

@@ -14,9 +14,9 @@ class Genome::ProcessingProfile::Param {
             id_by => 'processing_profile_id',
             constraint_name=> 'PPP_PP_FK',
         },
-        name                            => { is => 'Text', len => 255, column_name => 'PARAM_NAME' },
+        name                            => { is => 'Text', len => 255, column_name => 'NAME' },
         value_class_name                => { is => 'Text', len => 255 },
-        value_id                        => { is => 'Text', len => 1000, column_name => 'PARAM_VALUE' },
+        value_id                        => { is => 'Text', len => 1000, column_name => 'VALUE_ID' },
     ],
     has => [
         value_obj => {
@@ -26,8 +26,8 @@ class Genome::ProcessingProfile::Param {
         },
 
         # after the new API is released and old snapshots go away, invert the column assingments with those above
-        _new_name                       => { is => 'Text', len => 255, column_name => 'NAME' },
-        _new_value                      => { is => 'Text', len => 1000, column_name => 'VALUE_ID' },
+        _new_name                       => { is => 'Text', len => 255, column_name => 'PARAM_NAME' },
+        _new_value                      => { is => 'Text', len => 1000, column_name => 'PARAM_VALUE' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

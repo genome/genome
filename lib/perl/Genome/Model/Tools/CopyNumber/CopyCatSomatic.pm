@@ -19,64 +19,73 @@ class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
 	    is_optional => 0,
 	    doc => 'normal window file to get reads from (output of gmt copy-number bam-window)',
 	},
-
 	tumor_window_file => {
 	    is => 'String',
 	    is_optional => 0,
 	    doc => 'tumor window file to get reads from (output of gmt copy-number bam-window)',
 	},
-
         output_directory => {
             is => 'String',
             is_optional => 0,
             doc =>'path to the output directory',
         },
-
         annotation_directory => {
             is => 'String',
             is_optional => 0,
             default=> '/gscmnt/gc6122/info/medseq/annotations/copyCat/',
             doc =>'path to the cn annotation directory',
         },
-
         per_library => {
             is => 'Boolean',
             is_optional => 1,
             default => 1,
             doc =>'do normalization on a per-library basis',
         },
-
         per_read_length => {
             is => 'Boolean',
             is_optional => 1,
             default => 1,
             doc =>'do normalization on a per-read-length basis',
         },
-
         genome_build => {
             is => 'String',
             is_optional => 0,
             doc =>'genome build - one of "36", "37", or "mm9"'
         },
-
-        normal_samtools_file => {
-            is => 'String',
-            is_optional => 1,
-            doc =>'samtools file which will be used to find het snp sites and id copy-number neutral regions',
-        },
-
         tumor_samtools_file => {
             is => 'String',
             is_optional => 1,
-            doc =>'samtools file which will be used to find het snp sites and id copy-number neutral regions',
+            doc =>'samtools file which will be used to find het snp sites and id copy-number neutral regions in tumor',
         },
-
+        normal_samtools_file => {
+            is => 'String',
+            is_optional => 1,
+            doc =>'samtools file which will be used to find het snp sites and id copy-number neutral regions in normal',
+        },
         processors => {
             is => 'Integer',
             is_optional => 1,
             default => 1,
             doc => "set the number of processors that the parallel steps will use",
         },
+        dump_bins => {
+            is => 'Boolean',
+            is_optional => 1,
+            default => 0,
+            doc => "write out the corrected bins to a file (pre-segmentation)"
+        },
+        do_gc_correction => {
+            is => 'Boolean',
+            is_optional => 1,
+            default => 1,
+            doc => "use loess correction to account for gc-bias",
+        }
+        # output_single_sample => {
+        #     is => 'Boolean',
+        #     is_optional => 1,
+        #     default => 0,
+        #     doc => "also output single-sample cn calls for each of tumor and normal",
+        # }
         
         ]
 };
@@ -102,9 +111,10 @@ sub execute {
     my $per_read_length = $self->per_read_length;
     my $genome_build = $self->genome_build;
     # my $sex = $self->sex;
-    my $normal_samtools_file = $self->normal_samtools_file;
     my $tumor_samtools_file = $self->tumor_samtools_file;
+    my $normal_samtools_file = $self->normal_samtools_file;
     my $processors = $self->processors;
+    my $dump_bins = $self->dump_bins;
 
     # #shorthand for sex designation
     # if (lc($sex) eq "m"){
@@ -120,8 +130,8 @@ sub execute {
     } elsif($genome_build eq "37"){
         $genome_build = "hg19";
     } else {
-        unless ($genome_build eq "mm9" || $genome_build eq "hg18" || $genome_build eq "hg19"){
-            die("ERROR: genome build not recognized\nMust be one of [hg18,36,hg19,37,mm9]");
+        unless ($genome_build eq "mm9" || $genome_build eq "hg18" || $genome_build eq "hg19" || $genome_build eq "hg19.chr1only" || $genome_build eq "hg19.chr14only"){
+            die("ERROR: genome build not recognized\nMust be one of [hg18,36,hg19,37,mm9,hg19.chr1only,hg19.chr14only]");
         }
     }
 
@@ -133,19 +143,19 @@ sub execute {
     }
     $annotation_directory = File::Spec->rel2abs($annotation_directory);
 
-    if(defined($normal_samtools_file)){
-        $normal_samtools_file = File::Spec->rel2abs($normal_samtools_file);
-    }
     if(defined($tumor_samtools_file)){
         $tumor_samtools_file = File::Spec->rel2abs($tumor_samtools_file);
     }
+    if(defined($normal_samtools_file)){
+        $normal_samtools_file = File::Spec->rel2abs($normal_samtools_file);
+    }
+
     if(defined($normal_window_file)){
         $normal_window_file = File::Spec->rel2abs($normal_window_file);
     }
     if(defined($tumor_window_file)){
         $tumor_window_file = File::Spec->rel2abs($tumor_window_file);
     }
-
     
     #add the genome build to the anno dir
     $annotation_directory = $annotation_directory . "/" . $genome_build;
@@ -161,20 +171,40 @@ sub execute {
     unless(-e $tumor_window_file){
         die("file not found $tumor_window_file");
     }
-    if(defined($normal_samtools_file)){
-        unless(-e $normal_samtools_file){
-            die("file not found $normal_samtools_file");
-        }
-    } else {
-        $normal_samtools_file = "NULL";
-    }
     if(defined($tumor_samtools_file)){
-        unless(-e $tumor_samtools_file){
+        if(-e $tumor_samtools_file){
+            $tumor_samtools_file = "\"$tumor_samtools_file\"";
+        } else {
             die("file not found $tumor_samtools_file");
         }
     } else {
         $tumor_samtools_file = "NULL";
     }
+    if(defined($normal_samtools_file)){
+        if(-e $normal_samtools_file){
+            $normal_samtools_file = "\"$normal_samtools_file\"";
+        } else {
+            die("file not found $normal_samtools_file");
+        }
+    } else {
+        $normal_samtools_file = "NULL";
+    }
+
+    if($dump_bins){
+        $dump_bins="TRUE";
+    } else {
+        $dump_bins="FALSE";
+    }
+
+    my $gcCorr="TRUE";
+    if(!($self->do_gc_correction)){
+        $gcCorr="FALSE";
+    }
+    # my $output_single_sample="FALSE";
+    # if($self->output_single_sample){
+    #     $output_single_sample="TRUE";
+    # }
+
 
     #open the r file
     my $rf = open(my $RFILE, ">$output_directory/run.R") || die "Can't open R file for writing.\n";
@@ -190,8 +220,11 @@ sub execute {
     print $RFILE "                        perLibrary=$per_lib,\n";
     print $RFILE "                        perReadLength=$per_read_length,\n";
     print $RFILE "                        verbose=TRUE,\n";
-    print $RFILE "                        nrmSamtoolsFile=\"$normal_samtools_file\",\n";
-    print $RFILE "                        tumorSamtoolsFile=\"$tumor_samtools_file\")\n";
+    print $RFILE "                        dumpBins=$dump_bins,\n";
+    print $RFILE "                        doGcCorrection=$gcCorr,\n";
+#    print $RFILE "                        outputSingleSample=$output_single_sample,\n";
+    print $RFILE "                        normalSamtoolsFile=$normal_samtools_file,\n";
+    print $RFILE "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
 
 
     #drop into the output directory to make running the R script easier

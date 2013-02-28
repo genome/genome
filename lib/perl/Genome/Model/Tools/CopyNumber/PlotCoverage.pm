@@ -9,78 +9,75 @@ use Cwd ('getcwd','abs_path');
 class Genome::Model::Tools::CopyNumber::PlotCoverage{
     is => 'Command',
     has => [
-	ROI  => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'string that describe region of interest to graph chr:start-stop e.g. (9:10000-10001)',
-	},
-
-	somatic_id => {
-	    is => 'String',
-	    is_optional => 1,
-	    doc => 'somatic variation model ID.  If not specified, must specify normal and tumor bam',
-	},
-
+        ROI  => {
+            is => 'String',
+            is_optional => 0,
+            doc => 'string that describe region of interest to graph chr:start-stop e.g. (9:10000-10001)',
+        },
+        somatic_id => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'somatic variation model ID.  If not specified, must specify normal and tumor bam',
+        },
         window_size => {
             is => 'String',
-	    is_optional => 1,
-	    doc => 'window size to average the coverage',
-	    default => '100'
+            is_optional => 1,
+            doc => 'window size to average the coverage',
+            default => '100'
         },
         output_file => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'output file in PDF format',
+            is => 'String',
+            is_optional => 0,
+            doc => 'output file in PDF format',
         },
-	sample_label => {
-	    is => 'String',
-	    is_optional => 1,
-	    doc => 'name of the sample (usually common name)',
-	},
+        sample_label => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'name of the sample (usually common name)',
+        },
         plot_title => {
             is => 'String',
             is_optional => 1,
-	    doc => 'Title of the plot (appended by string "normal" or "tumor")',
+            doc => 'Title of the plot (appended by string "normal" or "tumor")',
         },
         transcript_file => {
             is => 'String',
             is_optional => 1,
-	    doc => '',
+            doc => '',
         },
-	coverage_file => {
-	    is => 'String',
-	    is_optional => 1,
-	    doc => 'Name of the file to save coverage file in.  Default: chr_start_stop_win-size.depth',
-	},
+        coverage_file => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Name of the file to save coverage file in.  Default: chr_start_stop_win-size.depth',
+        },
         normal_bam => {
             is => 'String',
             is_optional => 1,
-	    doc => 'full path to the BAM file designated as normal. Must specify if omit somatic_id',
+            doc => 'full path to the BAM file designated as normal. Must specify if omit somatic_id',
         },
         tumor_bam => {
             is => 'String',
             is_optional => 1,
-	    doc => 'full path to the BAM file designated as tumor Must specify if omit somatic_id',
+            doc => 'full path to the BAM file designated as tumor Must specify if omit somatic_id',
         },
         ylim_max => {
             is => 'String',
             is_optional => 1,
-	    default => 80,
-	    doc => 'manually set the maxium limit of Y axis (depth).',
+            default => 80,
+            doc => 'manually set the maxium limit of Y axis (depth).',
         },
         arrow_length => {
             is => 'String',
             is_optional => 1,
-	    default => '0.0001',
-	    doc => 'determines length of arrow.  Accepts a value between 0 and 1. Bigger = longer arrow',
+            default => '0.0001',
+            doc => 'determines length of arrow.  Accepts a value between 0 and 1. Bigger = longer arrow',
         },
-	scale_tumor => {
-	    is => 'Boolean',
-	    is_optional => 1,
-	    doc => 'Set this flag to scale the depth of tumor reads with respect to the matching normal coverage ',
-	}
-
-        ]
+        scale_tumor => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'Set this flag to scale the depth of tumor reads with respect to the matching normal coverage ',
+        }
+    ],
 };
 
 sub help_brief {

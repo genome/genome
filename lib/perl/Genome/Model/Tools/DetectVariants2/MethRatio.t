@@ -29,7 +29,7 @@ ok($ref_seq_build, 'human37 reference sequence build') or die;
 
 my $testbam =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-MethRatio/test.bam";
 
-my $tmpbase = File::Temp::tempdir('MethRatioXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpbase = File::Temp::tempdir('MethRatioXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
 my $methratio = Genome::Model::Tools::DetectVariants2::MethRatio->create(

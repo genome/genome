@@ -19,7 +19,7 @@ my $fail_file   = $test_input_dir . 'fail.out';
 
 my $tmp_dir = File::Temp::tempdir(
     'Genome-Model-Tools-Breakdancer-TigraToBreakdancer-XXXXX', 
-    DIR     => "$ENV{GENOME_TEST_TEMP}", 
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

@@ -137,6 +137,7 @@ sub _intermediate_result {
             aligner_version              => $self->aligner_version,
             aligner_params               => $params,
             aligner_index_id             => $index->id,
+            flagstat_file                => $self->_flagstat_file,
             input_file                   => $path,
             input_pass                   => $input_pass,
             instrument_data_segment_type => $self->instrument_data_segment_type,
@@ -167,7 +168,6 @@ sub _intermediate_result {
             }
         }
 
-        Genome::InstrumentData::IntermediateAlignmentResult::Bwa->load(Genome::InstrumentData::IntermediateAlignmentResult->_process_params(%intermediate_params)); #make sure we check the db and don't rely on a cached negative result
         my $intermediate_result = Genome::InstrumentData::IntermediateAlignmentResult::Bwa->get_with_lock(%intermediate_params);
         unless ($intermediate_result) {
             confess "Failed to generate IntermediateAlignmentResult for $path, params were: " . Dumper(\%intermediate_params);

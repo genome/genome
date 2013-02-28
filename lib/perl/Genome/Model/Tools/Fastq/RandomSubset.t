@@ -10,7 +10,7 @@ use File::Compare;
 
 use_ok('Genome::Model::Tools::Fastq::RandomSubset');
 
-my $tmp_dir = File::Temp::tempdir('Fastq-RandomSubset-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Fastq-RandomSubset-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/RandomSubset';
 #my $tmp_dir = $data_dir;

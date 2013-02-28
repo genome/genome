@@ -26,7 +26,7 @@ use_ok('Genome::Model::Tools::DetectVariants2::BamWindow');
 my $testbam =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-BamWindow/tumor.bam";
 my $expected_output = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-BamWindow/expected_v0.4/readcounts.wind";
 
-my $tmpbase = File::Temp::tempdir('BamWindowXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpbase = File::Temp::tempdir('BamWindowXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
 my $bamwindow = Genome::Model::Tools::DetectVariants2::BamWindow->create(

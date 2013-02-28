@@ -34,7 +34,7 @@ my %expected_files = (
     output_germline_lc => $expected_basename . '.Germline.lc',
 );
 
-my $tmpdir = File::Temp::tempdir('Varscan-ProcessSomaticXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('Varscan-ProcessSomaticXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $output_basename = join('/', $tmpdir, 'varscan.snp');
 

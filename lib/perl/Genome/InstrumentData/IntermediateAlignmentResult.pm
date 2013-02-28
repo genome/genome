@@ -108,6 +108,11 @@ class Genome::InstrumentData::IntermediateAlignmentResult {
                                     doc=>'Temp scratch directory',
                                     is_optional=>1,
                                 },
+        flagstat_file           => {
+                                    is =>'Text',
+                                    doc => 'Precalculated flagstat file for the BAM (if any)',
+                                    is_optional=>1,
+                                },
     ],
 };
 

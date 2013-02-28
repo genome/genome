@@ -36,9 +36,8 @@ my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/DeNovoAssembly';
 my $example_dir = $base_dir.'/allpaths_v2';
 ok(-d $example_dir, 'example dir') or die;
 
-my $tmpdir_template = $ENV{'GENOME_TEST_TEMP'}
-    . "/DeNovoAssembly-Allpaths.t-XXXXXXXX";
-my $tmpdir = File::Temp::tempdir($tmpdir_template, CLEANUP => 1);
+my $tmpdir_template = "/DeNovoAssembly-Allpaths.t-XXXXXXXX";
+my $tmpdir = File::Temp::tempdir($tmpdir_template, CLEANUP => 1, TMPDIR => 1);
 ok(-d $tmpdir, 'temp dir: '.$tmpdir);
 
 #taxon

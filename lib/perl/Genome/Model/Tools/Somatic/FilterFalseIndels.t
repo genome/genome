@@ -31,7 +31,7 @@ my $expected_result_dir = join('/', $test_data_dir, '1');
 my $expected_output_file = join('/', $expected_result_dir, 'varscan.indel.passed_strandfilter');
 my $expected_filtered_file = join('/', $expected_result_dir, 'varscan.indel.failed_strandfilter');
 
-my $tmpdir = File::Temp::tempdir('Somatic-FilterFalseIndelsXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('Somatic-FilterFalseIndelsXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = join('/', $tmpdir, 'varscan.indel.passed_strandfilter');
 my $filtered_file = join('/', $tmpdir, 'varscan.indel.failed_strandfilter');
 my $readcount_file = $output_file . '.readcounts';

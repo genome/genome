@@ -15,7 +15,7 @@ use_ok($pkg);
 
 my $input = __FILE__ . ".input";
 my $expected = __FILE__ . ".expected";
-my $tmpdir = File::Temp::tempdir('create-gold-snp-bed-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpdir = File::Temp::tempdir('create-gold-snp-bed-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output = join('/', $tmpdir, 'output');
 
 my $ref = Genome::Model::Build::ImportedReferenceSequence->get(

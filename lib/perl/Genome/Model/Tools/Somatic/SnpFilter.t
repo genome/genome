@@ -27,7 +27,7 @@ my $sniper_snp_file = $test_input_dir . 'sniper.in';
 
 my $expected_output_file = $test_input_dir . 'merged.expected';
 
-my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-FilterCeuYri-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-FilterCeuYri-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 my $output_file     = $test_output_dir . 'merged.out';
 

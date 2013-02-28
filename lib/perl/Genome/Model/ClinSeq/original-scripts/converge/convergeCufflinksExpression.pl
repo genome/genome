@@ -182,6 +182,10 @@ sub getCufflinksFiles{
     my $subject_common_name = $b->subject->common_name;
     my $build_id = $b->id;
 
+    unless ($m->normal_rnaseq_model) {
+        die "model " . $m->__display_name__ . " does not have a normal rnaseq model!";
+    }
+
     my ($normal_rnaseq_subject, $tumor_rnaseq_subject); 
     $normal_rnaseq_subject = $m->normal_rnaseq_model->subject->name || "NULL";
     $tumor_rnaseq_subject = $m->tumor_rnaseq_model->subject->name || "NULL";
@@ -199,7 +203,7 @@ sub getCufflinksFiles{
     if ($verbose){print BLUE, "\n\t$final_name\t$build_id\t$data_directory", RESET;}
 
     #/gscmnt/gc8002/info/model_data/2881869913/build120828540/BRC18/rnaseq/tumor/cufflinks_absolute/isoforms_merged
-    my $ls_cmd = "ls $data_directory/*/rnaseq/*/cufflinks_absolute/$expression_subdir/* 2>/dev/null";
+    my $ls_cmd = "ls $data_directory/*/rnaseq/*/cufflinks_expression_absolute/$expression_subdir/* 2>/dev/null";
     my @result = `$ls_cmd`;
     chomp(@result);
     my @files;

@@ -18,8 +18,7 @@ ok(-e $fasta, "fasta file exists at $fasta");
 
 my $test_dir = tempdir(
     'Genome-Model-Tools-Hgmi-MkPredictionModels-XXXXXX',
-    DIR => "$ENV{GENOME_TEST_TEMP}/",
-    UNLINK => 1,
+    TMPDIR => 1,
     CLEANUP => 1,
 );
 

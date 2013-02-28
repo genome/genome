@@ -21,7 +21,7 @@ my $output_directory = tempdir(
     'Genome-Model-Tools-Blat-XXXXXX',
     CLEANUP => 1,
     UNLINK => 1,
-    DIR => "$ENV{GENOME_TEST_TEMP}/",
+    TEMPDIR => 1,
 );
 
 print $output_directory . "\n";

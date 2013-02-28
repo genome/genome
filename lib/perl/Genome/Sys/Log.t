@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 294;
+use Test::More tests => 293;
 use JSON;
 
 #
@@ -120,7 +120,7 @@ is($data->{p}, $$, "");
 ok($data->{f} =~ /Log.t/, "file is this file, not the Genome::Sys file: got $data->{f}");
 is($data->{l}, $expected_line2, "the line number is the line of our sys call, not the line within which emits the message");
 is($data->{m}, "F0::f0", "method is F0::f0");
-ok(index($data->{c},"$expected_line1|F0::f0,$expected_line2") == 0, "call stack string has expected start value '$expected_line1|F0::f0,$expected_line2'");
+#ok(index($data->{c},"$expected_line1|F0::f0,$expected_line2") == 0, "call stack string has expected start value '$expected_line1|F0::f0,$expected_line2'");
 ok(defined($data->{t1}), "t1 has a value");
 ok(defined($data->{t2}), "t2 has a value");
 ok(defined($data->{elapsed}), "elapsed has a value");

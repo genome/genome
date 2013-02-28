@@ -156,11 +156,12 @@ sub execute {
   $self->status_message($cut_cmd);
   Genome::Sys->shellcmd(cmd => $cut_cmd);
 
-  my $mssc_file4plot = $sub_outdir2 . "data.tsv";
-  my $mssc_outfile = $sub_outdir2 . $final_name ."_mutation-spectrum-sequence-context.pdf";
+  my $mssc_file4plot = $sub_outdir2 . $final_name . ".data.tsv";
+  my $mssc_outfile = $sub_outdir2 . $final_name .".mutation-spectrum-sequence-context.pdf";
+  my $mssc_proportiontest_outfile =  $sub_outdir2 . $final_name . ".prop.test";
   my $mssc_stdout = $sub_outdir2 . "gmt-mutation-spectrum-sequence-context.stdout";
   my $mssc_stderr = $sub_outdir2 . "gmt-mutation-spectrum-sequence-context.stderr";
-  my $mssc_cmd = "gmt analysis mutation-spectrum-sequence-context --output-file=$mssc_outfile --roi-file=$variant_file2 --file4plot=$mssc_file4plot --plot-title='Mutation Spectrum Sequence Context for $final_name' --ref-seq=$reference_fasta_path --window-size=10 1>$mssc_stdout 2>$mssc_stderr";
+  my $mssc_cmd = "gmt analysis mutation-spectrum-sequence-context --output-file=$mssc_outfile --roi-file=$variant_file2 --file4plot=$mssc_file4plot --plot-title='Mutation Spectrum Sequence Context for $final_name' --ref-seq=$reference_fasta_path --proportiontest $mssc_proportiontest_outfile  --random-trials=100 --random-seed=2013 --window-size=10 1>$mssc_stdout 2>$mssc_stderr";
   $self->status_message($mssc_cmd);
   Genome::Sys->shellcmd(cmd => $mssc_cmd);
 

@@ -37,7 +37,7 @@ ok(-s $expected_hq_file, "expected hq file output $expected_hq_file exists");
 ok(-s $expected_lq_file, "expected lq file output $expected_lq_file exists");
 ok(-s $expected_readcount_file, "expected readcount file output $expected_readcount_file exists");
 
-my $output_base = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $output_base = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_dir = $output_base . '/filter';
 my $hq_output = join('/', $output_dir, 'snvs.hq');
 my $lq_output = join('/', $output_dir, 'snvs.lq');
@@ -108,7 +108,7 @@ my $filtered_diff = Genome::Sys->diff_file_vs_file($expected_lq_file, $lq_output
 ok(!$filtered_diff, 'filtered file matches expected result')
     or diag("diff:\n" . $filtered_diff);
 
-$output_base = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+$output_base = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveXXXXX', CLEANUP => 1, TMPDIR => 1);
 $output_dir = $output_base . '/filter';
 $hq_output = join('/', $output_dir, 'snvs.hq');
 $lq_output = join('/', $output_dir, 'snvs.lq');
@@ -145,7 +145,7 @@ ok(!$filtered_diff2, 'filtered file matches expected result')
     or diag("diff:\n" . $filtered_diff2);
 
 #for this test readcount file was supplied, so nothing to compare to.
-$output_base = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+$output_base = File::Temp::tempdir('DetectVariants2-Filter-FalsePositiveXXXXX', CLEANUP => 1, TMPDIR => 1);
 $output_dir = $output_base . '/filter';
 $hq_output = join('/', $output_dir, 'snvs.hq');
 $lq_output = join('/', $output_dir, 'snvs.lq');

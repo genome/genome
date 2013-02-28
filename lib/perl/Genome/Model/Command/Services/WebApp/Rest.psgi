@@ -7,7 +7,7 @@ package Genome::Model::Command::Services::WebApp::Rest;
 #my $res_path = Genome::Model::Command::Services::WebApp->res_path;
 
 our $loaded = 0;
-sub load_modules {
+sub initialize {
     return if $loaded;
     eval "
         use above 'Genome';
@@ -18,9 +18,27 @@ sub load_modules {
         use HTTP::Date;
         use JSON;
         use UR::Object::View::Default::Xsl qw/type_to_url url_to_type/;
+        use BSD::Resource;
     ";
     if ($@) {
         die "failed to load required modules: $@";
+    }
+
+    # Don't use =>.
+    my %resource_limit = (
+        RLIMIT_CPU(), $ENV{GENOME_REST_RLIMIT_CPU},
+        RLIMIT_AS(), $ENV{GENOME_REST_RLIMIT_AS},
+    );
+    for my $resource (keys %resource_limit) {
+        my $new_soft = $resource_limit{$resource};
+        next unless defined $new_soft;
+
+        my ($soft, $hard) = getrlimit($resource);
+        if ($hard == RLIM_INFINITY() || $new_soft <= $hard) {
+            unless (setrlimit($resource, $new_soft, $hard)) {
+                die "failed to setrlimit($resource, $new_soft, $hard): $!";
+            }
+        }
     }
 
     # search's callbacks are expensive, web server can't change anything anyway so don't waste the time
@@ -49,7 +67,7 @@ sub dispatch_request {
 
     sub (DELETE + /** + %@*) {
 
-        load_modules();
+        initialize();
         my ($self, $url, $params) = @_;
         my $class = url_to_type($url);
         my @ids = $params->{'ids[]'};
@@ -89,7 +107,7 @@ sub dispatch_request {
     }, 
     sub (PUT + /** + %*) {
 
-        load_modules();
+        initialize();
 
         my ($self, $url, $params) = @_;
         my ($code, $obj);
@@ -137,7 +155,7 @@ sub dispatch_request {
     },
 
     sub (POST + /** + %*) {
-        load_modules();
+        initialize();
         my ($self, $url, $params) = @_;
         my ($code, $obj, $body);
         my $class = url_to_type($url); # UR::Object::View::Default::Xsl
@@ -197,7 +215,7 @@ sub dispatch_request {
 
         $filename = $filename . "." . $extension;
 
-        load_modules();
+        initialize();
 
         if ( $class =~ /\./ ) {
 
@@ -289,9 +307,7 @@ sub dispatch_request {
       sub (GET + /**/* + .* + ?@*) {
         my ( $self, $class, $perspective, $toolkit, $args ) = @_;
 
-        $DB::single = 1;
-
-        load_modules();
+        initialize();
 
         $class = url_to_type($class);
         $perspective =~ s/\.$toolkit$//g;

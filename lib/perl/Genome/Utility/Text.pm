@@ -14,6 +14,7 @@ our @EXPORT_OK = qw(camel_case_to_string
                     justify
                     param_string_to_hash
                     sanitize_string_for_filesystem
+                    find_diff_pos
                     side_by_side
                     string_to_camel_case
                     strip_color
@@ -116,6 +117,20 @@ sub capitalize_words {
     my $regexp = qr/[$seps]+/;
 
     return join(' ', map { ucfirst } split($regexp, $string));
+}
+
+sub find_diff_pos {
+    my ($s1, $s2) = @_;
+
+    die "You must supply two strings to 'find_diff_pos" unless defined($s1) and defined($s2);
+
+    my $mask = $s1 ^ $s2;
+
+    my @diff_pos;
+    while ($mask =~ /[^\0]/g) {
+        push @diff_pos, $-[0];
+    }
+    return @diff_pos;
 }
 
 # put text side_by_side

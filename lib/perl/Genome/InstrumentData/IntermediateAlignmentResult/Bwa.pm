@@ -140,17 +140,23 @@ sub _verify_bwa_aln_did_happen {
     my $expected_count;
     my $input_file = $self->temp_scratch_directory . "/" . $self->input_file;
     if($input_file =~ /\.bam/) {
-        my $output_file = $self->temp_scratch_directory . "/input_bam.flagstat";
-        my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
-            bam_file       => $input_file,
-            output_file    => $output_file,
-            use_version    => $self->samtools_version,
-            include_stderr => 1,
-        );
-        unless ($cmd and $cmd->execute) {
-            $self->error_message('Failed to create or execute flagstat command.');
-            return;
+        my $output_file;
+        if(-s $self->flagstat_file) {
+            $output_file = $self->flagstat_file;
+        } else {
+            $output_file = $self->temp_scratch_directory . "/input_bam.flagstat";
+            my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
+                bam_file       => $input_file,
+                output_file    => $output_file,
+                use_version    => $self->samtools_version,
+                include_stderr => 1,
+            );
+            unless ($cmd and $cmd->execute) {
+                $self->error_message('Failed to create or execute flagstat command.');
+                return;
+            }
         }
+
         my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
         unless($stats) {
             $self->status_message('Failed to get flagstat data  on input sequences from '.$output_file);

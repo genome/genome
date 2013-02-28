@@ -27,9 +27,11 @@ ok(-e $fasta, "test fasta file found at $fasta") or die;
 my $expected_dump_file = join('/', $test_data_base_dir, 'Genome-Model-Tools-Predictor/kegg.medium_fasta.dump.expected');
 ok(-e $expected_dump_file, "expected dump file exists at $expected_dump_file") or die;
 
-my $test_output_base_dir = "$ENV{GENOME_TEST_TEMP}/";
-$ENV{TMPDIR} = $test_output_base_dir;
-my $test_output_dir = Genome::Sys->create_temp_directory;
+my $test_output_dir = File::Temp::tempdir(
+    'Genome-Model-Tools-Predictor-XXXXX',
+    TMPDIR => 1,
+    CLEANUP => 1,
+);
 ok(-d $test_output_dir, "created output directory at $test_output_dir");
 
 my $command = Genome::Model::Tools::Predictor::Keggscan->create(

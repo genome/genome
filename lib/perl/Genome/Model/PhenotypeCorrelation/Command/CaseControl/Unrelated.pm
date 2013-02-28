@@ -15,6 +15,10 @@ class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
             is => "String",
             doc => 'File of variants to analyze',
         },
+        ensembl_annotation_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+            doc => 'ID of ImportedAnnotation build with the desired ensembl version.',
+        },
         sample_list_file => {
             is => "String",
             doc => 'File containing samples names, 1 per line, for input into MuSiC',
@@ -81,6 +85,7 @@ sub _create_workflow {
     my $self = shift;
 
     my $multisample_vcf = $self->multisample_vcf;
+    my $ensembl_annotation_build = $self->ensembl_annotation_build;
     my $clinical_data = $self->clinical_data_file;
     my $glm_model_file = $self->glm_model_file;
     my $sample_list = $self->sample_list_file;
@@ -140,6 +145,7 @@ sub _create_workflow {
         svm => {
             name => "Create variant matrix for single variant test",
             class => "Genome::Model::Tools::Vcf::VcfToVariantMatrix",
+            lsf_resource => "-R 'select[mem>32000] rusage[mem=32000]' -M 32000000",
             inputs => {
                 vcf_file => $multisample_vcf,
                 output_file => $single_mutation_matrix,
@@ -288,6 +294,7 @@ sub _create_workflow {
                 input_vcf => $multisample_vcf,
                 output_file => $vep_annotation_file_path,
                 work_dir => $vep_work_directory,
+                ensembl_annotation_build => $ensembl_annotation_build,
                 log_dir => $log_dir,
 
                 #input_file => $multisample_vcf,
@@ -415,9 +422,14 @@ sub _create_workflow {
     my %ops;
     for my $opname (keys %workflow_data) {
         my $node = $workflow_data{$opname};
+        my $operation_type = Workflow::OperationType::Command->create(
+            command_class_name => $node->{class},
+        );
+        $operation_type->lsf_resource( $node->{lsf_resource} ) if $node->{lsf_resource};
         $ops{$opname} = $workflow->add_operation(
             name => $node->{name},
-            operation_type => Workflow::OperationType::Command->get($node->{class}),
+            operation_type => $operation_type,
+            #operation_type => Workflow::OperationType::Command->get($node->{class}),
         );
     }
 

@@ -182,7 +182,7 @@ sub execute {
                     my $revcom = reverse $read_2_dna;
                     $revcom =~ tr/ACGTacgt/TGCAtgca/;
 
-                    print $fastq_2_fh '@'. $transcript .':'. $length .':'. $fragment_start .':'. $insert_size . ':'. $strand_symbol .'/2' ."\n";
+                    print $fastq_2_fh '@'. $transcript .':'. $i .':'. $length .':'. $fragment_start .':'. $insert_size . ':'. $strand_symbol .'/2' ."\n";
                     print $fastq_2_fh $revcom ."\n";
                     print $fastq_2_fh '+' ."\n";
                     print $fastq_2_fh $quality_string ."\n";
@@ -190,7 +190,7 @@ sub execute {
                 # TODO: potentially resolve genomic coordinate start stop and use in read name....
                 # This might require using each exon fragment rather than a squashed transcript sequence
                 # That would make things much more difficult... I think...
-                print $fastq_1_fh '@'. $transcript .':'. $length .':'. $fragment_start .':'. $insert_size .':'. $strand_symbol .'/1' ."\n";
+                print $fastq_1_fh '@'. $transcript .':'. $i .':'. $length .':'. $fragment_start .':'. $insert_size .':'. $strand_symbol .'/1' ."\n";
                 print $fastq_1_fh $read_1_dna ."\n";
                 print $fastq_1_fh '+' ."\n";
                 print $fastq_1_fh $quality_string ."\n";

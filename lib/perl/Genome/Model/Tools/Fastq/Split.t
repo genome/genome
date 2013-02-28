@@ -14,10 +14,9 @@ BEGIN {
 }
 
 my $dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/Split';
-my $run_dir  = "$ENV{GENOME_TEST_TEMP}";
 my $temp_dir = File::Temp::tempdir(
     "FastqSplit_XXXXXX",
-    DIR     => $run_dir,
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

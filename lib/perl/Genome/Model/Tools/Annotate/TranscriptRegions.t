@@ -12,14 +12,12 @@ my $stop = 10000;
 my $organism = "human";
 my $version = "54_36p_v2";
 
-my $output_fh = File::Temp->new(
-    TEMPLATE => 'Genome-Model-Tools-Annotate-TranscriptRegions-XXXXXX',
-    DIR => "$ENV{GENOME_TEST_TEMP}",
+my $tmp_dir = File::Temp::tempdir(
+    TEMPLATE => 'Genome-Model-Tools-Annotate-GeneRegions-XXXXXX',
     CLEANUP => 1,
-    UNLINK => 1,
+    TEMPDIR => 1,
 );
-my $output = $output_fh->filename;
-$output_fh->close;
+my $output = File::Spec->join($tmp_dir, 'output');
 
 my $expected_output = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Annotate-TranscriptRegions/TranscriptRegions.t.expected.output.txt.new";
 ok(-e $expected_output, "expected output file exists at $expected_output");

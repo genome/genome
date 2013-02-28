@@ -167,8 +167,8 @@ sub within_transcript {
 
 # Returns 1 if the provided position is within the transcript with flanking structures included
 sub within_transcript_with_flanks {
-    my ($self, $position) = @_;
-    if ($position >= ($self->{transcript_start} - 50000) and $position <= ($self->{transcript_stop} + 50000)) {
+    my ($self, $position, $flanking_distance) = @_;
+    if ($position >= ($self->{transcript_start} - $flanking_distance) and $position <= ($self->{transcript_stop} + $flanking_distance)) {
         return 1;
     }
     return 0;
@@ -214,7 +214,8 @@ sub distance_to_coding_region {
 # Returns 1 if first position is 5' of the second position
 sub is_before {
     my ($self, $p1, $p2) = @_;
-    return 0 unless $self->within_transcript_with_flanks($p1) and $self->within_transcript_with_flanks($p2);
+    my $flanking_distance = 50000;
+    return 0 unless $self->within_transcript_with_flanks($p1, $flanking_distance) and $self->within_transcript_with_flanks($p2, $flanking_distance);
     if ($self->strand eq '+1') {
         return 1 if $p1 < $p2;
         return 0;
@@ -231,7 +232,8 @@ sub is_before {
 # Returns 1 if the first position is 3' of the second position
 sub is_after {
     my ($self, $p1, $p2) = @_;
-    return 0 unless $self->within_transcript_with_flanks($p1) and $self->within_transcript_with_flanks($p2);
+    my $flanking_distance = 50000;
+    return 0 unless $self->within_transcript_with_flanks($p1, $flanking_distance) and $self->within_transcript_with_flanks($p2, $flanking_distance);
     if ($self->strand eq '+1') {
         return 1 if $p1 > $p2;
         return 0;
@@ -247,7 +249,8 @@ sub is_after {
 
 sub structure_at_position {
     my ($self, $position) = @_;
-    return unless $self->within_transcript_with_flanks($position);
+    my $flanking_distance = 50000;
+    return unless $self->within_transcript_with_flanks($position, $flanking_distance);
 
     my @structures = $self->ordered_sub_structures;
     unless (@structures) {

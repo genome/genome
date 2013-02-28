@@ -410,8 +410,9 @@ sub _get_allocation_without_lock {
     my ($class, $candidate_volumes, $parameters) = @_;
     my $kilobytes_requested = $parameters->{'kilobytes_requested'};
 
-    my @randomized_candidate_volumes = shuffle(
-        @$candidate_volumes, @$candidate_volumes, @$candidate_volumes);
+    # We randomize to avoid the rare repeated contention case
+    my @randomized_candidate_volumes = (@$candidate_volumes,
+        shuffle(@$candidate_volumes));
 
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
@@ -493,7 +494,11 @@ sub _reallocate {
     my $old_kb_requested = $self->kilobytes_requested;
     # allow_errors will allow disk_usage_for_path to return a number even if du
     # emits errors (for instance, no read permissions for a subfolder)
-    my $kb_used = Genome::Sys->disk_usage_for_path($self->absolute_path, allow_errors => 1) || 0;
+    my $absolute_path = $self->absolute_path;
+    my $kb_used = 0;
+    if ( -d $absolute_path ) {
+        $kb_used = Genome::Sys->disk_usage_for_path($absolute_path, allow_errors => 1) || 0;
+    }
 
     my $actual_kb_requested = List::Util::max($kb_used, $kilobytes_requested);
     if ($grow_only && ($actual_kb_requested <= $old_kb_requested)) {
@@ -1309,7 +1314,8 @@ sub _get_candidate_volumes {
     $volume_params{'mount_path not in'} = [$exclude] if $exclude;
     # XXX Shouldn't need this, 'archive' should obviously be a status.
     #       This might be a performance issue.
-    my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(%volume_params);
+    my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(
+        %volume_params, '-order_by' => ['-cached_unallocated_kb']);
     unless (@volumes) {
         confess "Did not get any allocatable and active volumes belonging to group $disk_group_name.";
     }

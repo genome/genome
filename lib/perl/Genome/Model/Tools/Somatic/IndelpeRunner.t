@@ -25,7 +25,7 @@ my $test_input_dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somati
 my $bam_file            = $test_input_dir . 'tumor.tiny.bam';
 my $ref_seq_file        = Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa'; #The real one
 
-my $test_output_dir     = File::Temp::tempdir('Genome-Model-Tools-Somatic-IndelpeRunner-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir     = File::Temp::tempdir('Genome-Model-Tools-Somatic-IndelpeRunner-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';
 
 my $output_dir          = $test_output_dir . 'output';

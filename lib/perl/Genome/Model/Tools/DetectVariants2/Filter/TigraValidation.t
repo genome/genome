@@ -29,7 +29,7 @@ my $sv_file     = $test_input_dir . 'svs.hq';
 
 my $tmp_base = File::Temp::tempdir(
     'Genome-Model-Tools-DetectVariants2-Filter-TigraValidation-XXXXX', 
-    DIR     => "$ENV{GENOME_TEST_TEMP}", 
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

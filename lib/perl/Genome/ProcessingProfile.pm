@@ -51,6 +51,21 @@ sub __display_name__ {
     return $self->name . ' (' . $self->id . ')';
 }
 
+sub get {
+    my $class = shift;
+    if(@_ % 2 == 0) { #don't catch bare ID queries
+        my %params = @_;
+
+        # Avoid creating huge sets of joins against processing_profile_param that can choke Postgres.
+        # If we're looking for a lot of params, just get all the processing profiles
+        # for that class and sort it out in memory.
+        if (keys %params > 10) {
+            $class->get();
+        }
+    }
+    return $class->SUPER::get(@_);
+}
+
 sub create {
     my $class = shift;
     if ($class eq __PACKAGE__ or $class->__meta__->is_abstract) {

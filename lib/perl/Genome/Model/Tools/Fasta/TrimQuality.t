@@ -20,11 +20,8 @@ ok(-f $fasta, "Fasta ($fasta) exists");
 my $qual = $fasta .'.qual';
 ok(-f $qual, "Qual ($qual) exists");
 
-my $tmp_dir  = File::Temp::tempdir(
-    "Fasta_TrimQuality_XXXXXX", 
-    DIR     => $ENV{GENOME_TEST_TEMP},
-    CLEANUP => 1,
-);
+
+my $tmp_dir  = Genome::Sys->create_temp_directory();
 
 my @test_tmp_dirs = map{$tmp_dir.'/test'.$_}qw(1 4 5);
 map{mkdir $_}@test_tmp_dirs;

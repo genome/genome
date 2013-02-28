@@ -16,26 +16,31 @@ use Genome::Model::ClinSeq::Converge qw(:all);
 my $build_ids = '';
 my $model_ids = '';
 my $model_group_id = '';
-my $ensembl_version = '';
-my $genome_build = '';
+#my $ensembl_version = '';
+#my $genome_build = '';
 my $outdir = '';
 my $label = '';
 my $verbose = 0;
 my $test = 0;
 
-GetOptions ('build_ids=s'=>\$build_ids, 'model_ids=s'=>\$model_ids, 'model_group_id=s'=>\$model_group_id, 
-            'ensembl_version=i'=>\$ensembl_version, 'genome_build=s'=>\$genome_build,
+#GetOptions ('build_ids=s'=>\$build_ids, 'model_ids=s'=>\$model_ids, 'model_group_id=s'=>\$model_group_id, 
+#            'ensembl_version=i'=>\$ensembl_version, 'genome_build=s'=>\$genome_build,
+#            'outdir=s'=>\$outdir, 'label=s'=>\$label, 'verbose=i'=>\$verbose, 'test=i'=>\$test);
+GetOptions ('build_ids=s'=>\$build_ids, 'model_ids=s'=>\$model_ids, 'model_group_id=s'=>\$model_group_id,
             'outdir=s'=>\$outdir, 'label=s'=>\$label, 'verbose=i'=>\$verbose, 'test=i'=>\$test);
+
 
 my $usage=<<INFO;
   Example usage: 
   
-  convergeSnvs.pl  --model_group_id='50714'  --outdir=/gscmnt/sata132/techd/mgriffit/braf_resistance/report2/snvs_all8_converged/  --ensembl_version=67  --genome_build=37  --label='BRAF'  --verbose=1
+  convergeSnvs.pl  --model_group_id='50714'  --outdir=/gscmnt/sata132/techd/mgriffit/braf_resistance/report2/snvs_all8_converged/  --label='BRAF'  --verbose=1
 
   Specify *one* of the following as input (each model/build should be a ClinSeq model)
   --build_ids            Comma separated list of specific build IDs
   --model_ids            Comma separated list of specific model IDs
   --model_group_id       A single genome model group ID
+
+  Include genome build and Ensembl version (both deprecated)
   --ensembl_version      Version of Ensembl used in the analysis
   --genome_build         Takes either a string describing the genome build (one of 36, 37, mm9, mus37, mus37wOSK) or a path to the genome fasta file 
 
@@ -47,7 +52,8 @@ my $usage=<<INFO;
 
 INFO
 
-unless (($build_ids || $model_ids || $model_group_id) && $genome_build && $ensembl_version && $outdir && $label){
+#unless (($build_ids || $model_ids || $model_group_id) && $genome_build && $ensembl_version && $outdir && $label){
+unless (($build_ids || $model_ids || $model_group_id) && $outdir && $label){
   print RED, "\n\nRequired parameter missing", RESET;
   print GREEN, "\n\n$usage", RESET;
   exit(1);
@@ -348,7 +354,8 @@ foreach my $model_id (sort keys %model_list){
   #my $cmd = "gmt analysis coverage bam-readcount --bam-file=? --genome-build=$genome_build --output-file=$output_file --variant-file=$positions_list2";
 
   my $read_counts_script = "genome-perl `which genome` model clin-seq get-bam-read-counts";
-  my $bam_rc_cmd = "$read_counts_script  --positions-file=$positions_list  --ensembl-version=$ensembl_version  --output-file=$output_file  --verbose=$verbose";
+  #my $bam_rc_cmd = "$read_counts_script  --positions-file=$positions_list  --ensembl-version=$ensembl_version  --output-file=$output_file  --verbose=$verbose";
+  my $bam_rc_cmd = "$read_counts_script  --positions-file=$positions_list  --output-file=$output_file  --verbose=$verbose";
   $bam_rc_cmd .= "  --wgs-som-var-build=" . $wgs_build->id if $wgs_build;
   $bam_rc_cmd .= "  --exome-som-var-build=" . $exome_build->id if $exome_build;
   $bam_rc_cmd .= "  --rna-seq-normal-build=" . $normal_rnaseq_build->id if $normal_rnaseq_build;

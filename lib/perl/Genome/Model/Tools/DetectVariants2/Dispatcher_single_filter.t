@@ -31,7 +31,7 @@ my $tumor_bam = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-
 my $normal_bam = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_normal_sorted.bam";
 
 # Test dispatcher for running a single detector followed by a single filter case
-my $test_working_dir = File::Temp::tempdir('DetectVariants2-Dispatcher-filterXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $test_working_dir = File::Temp::tempdir('DetectVariants2-Dispatcher-filterXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $filter_test = $dispatcher_class->create(
     snv_detection_strategy => 'samtools r599 filtered by snp-filter v1',
     output_directory => $test_working_dir,

@@ -20,11 +20,10 @@ BEGIN {
 }
 
 my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam/VarFilter';
-my $run_dir  = "$ENV{GENOME_TEST_TEMP}";
 
 my $tmp_dir  = File::Temp::tempdir(
     "VarFilter_XXXXXX", 
-    DIR     => $run_dir,
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

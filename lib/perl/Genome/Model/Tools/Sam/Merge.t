@@ -16,7 +16,6 @@ if (`uname -a` =~ /x86_64/){
 }
 
 my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Tools-Sam-Merge';
-my $tmp_dir = "$ENV{GENOME_TEST_TEMP}";
 
 my $input_normal = $dir. '/normal.tiny.bam';
 my $input_tumor  = $dir. '/tumor.tiny.bam';
@@ -26,7 +25,7 @@ my $bam_index    = $dir. '/normal_tumor.tiny.bam.bai';
 
 my $out_1_dir = File::Temp::tempdir(
     "SamMerge1_XXXXXX",
-    DIR     => $tmp_dir,
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 
@@ -50,7 +49,7 @@ ok(!-s $merged_file1.'.bai', 'Turn off .bai bam index generation');
 
 my $out_2_dir = File::Temp::tempdir(
     "SamMerge2_XXXXXX",
-    DIR     => $tmp_dir,
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 my $merged_file2 = $out_2_dir.'/merged_2.bam';

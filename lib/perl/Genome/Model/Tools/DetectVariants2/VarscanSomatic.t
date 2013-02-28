@@ -25,7 +25,7 @@ my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbui
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-VarscanSomatic/';
-my $test_base_dir = File::Temp::tempdir('DetectVariants2-VarscanSomaticXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $test_base_dir = File::Temp::tempdir('DetectVariants2-VarscanSomaticXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_working_dir = "$test_base_dir/output";
 
 my $bam_input = $test_dir . '/alignments/102922275_merged_rmdup.bam';

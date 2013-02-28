@@ -71,4 +71,10 @@ my ($file_attr) = grep { $_->attribute_label eq 'file' } @attrs;
 ok($file_attr, 'super seq file attr');
 is($file_attr->attribute_value, $inst_data->file, 'super seq file attr matches accessor');
 
+# tgi_lims_status
+can_ok($inst_data, 'tgi_lims_status');
+ok(!$inst_data->tgi_lims_status, 'tgi_lims_status is NULL');
+$inst_data->tgi_lims_status('new');
+is($inst_data->tgi_lims_status, 'new', 'No tgi_lims_status is new');
+
 done_testing();

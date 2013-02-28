@@ -10,7 +10,7 @@ use above 'Genome';
 use_ok('Genome::Model::Tools::BedTools');
 use_ok('Genome::Model::Tools::BedTools::Intersect');
 
-my $tmp_dir = File::Temp::tempdir('BedTools-Intersect-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('BedTools-Intersect-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BedTools-Intersect';
 

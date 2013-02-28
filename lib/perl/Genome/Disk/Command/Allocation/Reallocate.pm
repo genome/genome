@@ -58,7 +58,12 @@ sub execute {
     
     my @errors;
     for my $allocation (@allocations) {
+        my $dname = $allocation->__display_name__;
         my %params;
+        if ($allocation->is_archived) {
+            $self->status_message("Skipping archived allocation $dname");
+            next;
+        }
         $params{allocation_id} = $allocation->id;
         $params{kilobytes_requested} = $self->kilobytes_requested if defined $self->kilobytes_requested;
         $params{allow_reallocate_with_move} = $self->allow_reallocate_with_move;
@@ -68,10 +73,10 @@ sub execute {
         my $successful = eval {Genome::Disk::Allocation->reallocate(%params) };
         
         if ($successful and $transaction->commit) {
-            $self->status_message("Successfully reallocated (" . $allocation->__display_name__ . ").");
+            $self->status_message("Successfully reallocated ($dname).");
         }
         else {
-            $self->error_message('Failed to reallocate ' . $allocation->__display_name__ . " : $@");
+            $self->error_message("Failed to reallocate $dname: $@");
             push @errors, $allocation->__display_name__;
             $transaction->rollback();
         }

@@ -290,6 +290,7 @@ class Genome::InstrumentData::AlignmentResult {
         _sam_output_fh         => { is => 'IO::File',is_optional => 1 },
         _is_inferred_paired_end => { is => 'Boolean', is_optional=>1},
         _extracted_bam_path    => { is => 'String', is_optional=>1},
+        _flagstat_file         => { is => 'Text', is_optional=>1},
     ],
 };
 
@@ -297,17 +298,21 @@ class Genome::InstrumentData::AlignmentResult {
 sub __display_name__ {
     my $self = shift;
 
-    my @parts;
     my $instrument_data = $self->instrument_data;
-    my $subset_name = $instrument_data->subset_name;
-    my $run_name_method = $instrument_data->can('flow_cell_id') ? 'flow_cell_id' : 'run_name';
-    my $run_name = $instrument_data->$run_name_method;
     my $instrument_data_segment_id = $self->instrument_data_segment_id;
+    my $reference_build = $self->reference_build;
+    my $annotation_build = ($self->can('annotation_build') ? $self->annotation_build : ()); # TODO: pull up and normalize
 
-    push @parts, $run_name if $run_name;
-    push @parts, $subset_name if $subset_name;
-    push @parts, $instrument_data_segment_id if defined $instrument_data_segment_id;
-    return join '-', @parts;
+    my $name = $self->aligner_name 
+        . ' ' . $self->aligner_version 
+        . ' [' . $self->aligner_params . ']'
+        . ' on ' . $instrument_data->__display_name__
+        . ($instrument_data_segment_id ? " ($instrument_data_segment_id)" : '')
+        . ($reference_build ? ' against ' . $reference_build->__display_name__ : '')
+        . ($annotation_build ? ' annotated by ' . $annotation_build->__display_name__ : '')
+        . " (" . $self->id . ")";
+
+    return $name; 
 }
 
 sub required_arch_os {
@@ -866,6 +871,7 @@ sub determine_input_read_count_from_bam {
 
     die unless $self->_create_bam_flagstat($bam_file, $output_file);
 
+    $self->_flagstat_file($output_file);
     my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
     unless ($stats) {
         $self->status_message('Failed to get flagstat data  on input sequences from '.$output_file);
@@ -910,6 +916,9 @@ sub close_out_streamed_bam_file {
     $self->error_message("Sort by name failed") and return if $rv or !-s $tmp_file.'.bam';
     $self->status_message("unlinking original bam file $bam_file.");
     unlink $bam_file;
+
+    # TODO: run htseq here
+    # We need a way to have down-stream steps run before their predecessor cleans-up.
 
     $self->status_message("Now running fixmate");
     $rv = system "$samtools fixmate $tmp_file.bam $tmp_file.fixmate";

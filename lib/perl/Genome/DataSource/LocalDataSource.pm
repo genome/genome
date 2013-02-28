@@ -40,7 +40,6 @@ sub server {
         $PID = $$;
         (undef, $ENV{DS_LDS_FILE}) = File::Temp::tempfile(
             'genome_disk_localdatasource_XXXXXX',
-            DIR    => $ENV{GENOME_TEST_TEMP},
             OPEN   => 0,
             UNKINK => 0, # UNLINK Fix in UR too!?
             TMPDIR => 1,

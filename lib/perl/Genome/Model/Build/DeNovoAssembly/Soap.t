@@ -29,9 +29,8 @@ ok(-s $archive_path, 'inst data archive path') or die;
 my $example_dir = $base_dir.'/soap_v17';
 ok(-d $example_dir, 'example dir') or die;
 
-my $tmpdir_template = $ENV{'GENOME_TEST_TEMP'}
-    . "/DeNovoAssembly-Soap.t-XXXXXXXX";
-my $tmpdir = File::Temp::tempdir($tmpdir_template, CLEANUP => 1);
+my $tmpdir_template = "/DeNovoAssembly-Soap.t-XXXXXXXX";
+my $tmpdir = File::Temp::tempdir($tmpdir_template, CLEANUP => 1, TMPDIR => 1);
 ok(-d $tmpdir, 'temp dir: '.$tmpdir);
 
 

@@ -20,7 +20,7 @@ class Genome::Model::Tools::Sx::Metrics::Assembly {
         },
         ( map { 
                 $_ => {
-                    is => 'UR::Value', 
+                    #is => 'UR::Value', 
                     is_optional => 1,
                     default_value => ( ( /_percent$/ or /_success$/ or /^coverage_/ or /^core_/ ) ? 'NA' : 0 ), 
                 },

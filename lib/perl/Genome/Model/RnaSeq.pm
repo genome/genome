@@ -104,8 +104,8 @@ class Genome::Model::RnaSeq {
         },
         annotation_reference_transcripts_mode => {
             doc => 'The mode to use annotation_reference_transcripts for expression analysis',
+            is => 'Text',
             is_optional => 1,
-            valid_values => ['de novo','reference guided','reference only',],
         },
         mask_reference_transcripts => {
             doc => 'The mask level to ignore transcripts located in these annotation features',
@@ -139,7 +139,6 @@ class Genome::Model::RnaSeq {
     doc => 'A genome model produced by aligning cDNA reads to a reference sequence.',
 };
 
-
 sub compatible_instrument_data {
     my $self = shift;
     my @compatible_instrument_data = $self->SUPER::compatible_instrument_data(@_);
@@ -150,9 +149,17 @@ sub map_workflow_inputs {
     my $self = shift;
     my $build = shift;
 
-    my @inputs = ();
+    # modes are validated later in Genome::Model::Build::RnaSeq and
+    # Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression
+    my @modes = split /\s*,\s*/, $self->processing_profile->annotation_reference_transcripts_mode;
 
-    push @inputs, build_id => $build->id;
+    # remove any extra whitespace
+    for (@modes) {s/\s+/ /g; s/^\s+//; s/\s+$//}
+
+    my @inputs = (
+        build_id => $build->id,
+        annotation_reference_transcripts_mode => \@modes,
+    );
 
     return @inputs;
 }
@@ -201,7 +208,7 @@ sub _resolve_workflow_for_build {
 
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
-        input_properties => ['build_id',],
+        input_properties => ['build_id','annotation_reference_transcripts_mode'],
         output_properties => $output_properties,
     );
 
@@ -360,6 +367,14 @@ sub _resolve_workflow_for_build {
         right_operation => $cufflinks_operation,
         right_property => 'build_id'
     );
+    $workflow->add_link(
+        left_operation => $input_connector,
+        left_property => 'annotation_reference_transcripts_mode',
+        right_operation => $cufflinks_operation,
+        right_property => 'annotation_reference_transcripts_mode'
+    );
+
+    $cufflinks_operation->parallel_by('annotation_reference_transcripts_mode');
 
     #Fusion Detection
     if($self->fusion_detection_strategy){

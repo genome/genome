@@ -28,7 +28,7 @@ ok(-s $input_standard,
 ok(-s $expected, "expected merged vcf file $expected exists");
 
 my $output_dir = File::Temp::tempdir('Relationship-MergeAndFixVcfsXXXXX',
-        DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+        CLEANUP => 1, TMPDIR => 1);
 my $output_vcf = join('/', $output_dir, 'merged.output.vcf');
 
 my $cmd = Genome::Model::Tools::Relationship::MergeAndFixVcfs->create(

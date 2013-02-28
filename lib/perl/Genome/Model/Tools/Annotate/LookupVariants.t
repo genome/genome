@@ -12,7 +12,7 @@ ok (-e $variant_file);
 
 my $tmpdir = File::Temp::tempdir(
     TEMPLATE => 'Model-Tools-Annotate-LookupVariants-XXXXX',
-    DIR => $ENV{GENOME_TEST_TEMP},
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

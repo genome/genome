@@ -20,6 +20,10 @@ class Genome::Model::PhenotypeCorrelation::Command::VepWrapper {
             is => "File",
             doc => "The vcf file of variants to annotate",
         },
+        ensembl_annotation_build_id => {
+            is => 'String',
+            doc => 'ID of ImportedAnnotation build with the desired ensembl version.',
+        },
         region => {
             is => "String",
             doc => "The region to annotate",
@@ -57,6 +61,7 @@ sub execute {
     my $vep_command = Genome::Db::Ensembl::Vep->create(
         input_file => "-",
         output_file => $output_file,
+        ensembl_annotation_build_id => $self->ensembl_annotation_build_id,
         format => "vcf",
         condel => "b",
         polyphen => "b",

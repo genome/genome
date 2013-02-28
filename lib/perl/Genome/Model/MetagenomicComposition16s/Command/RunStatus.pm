@@ -65,13 +65,16 @@ sub execute {
     for my $instrument_data ( @instrument_data ) {
         my $library = $instrument_data->library;
         my $sample = $library->sample;
-        next if grep { $sample->name =~ $_ } @subjects_to_skip;
         my @row;
         push @rows, \@row;
         push @row, $sample->name;
         push @row, $instrument_data->id;
+        if ( grep { $sample->name =~ $_ } @subjects_to_skip ) {
+            push @row, 'SKIPPED-POOL-CNTRL', '', '', ''. '', '';
+            next;
+        }
         if ( $instrument_data->ignored ) {
-            push @row, 'SKIPPED', '', '', ''. '', '';
+            push @row, 'SKIPPED-NO-READS', '', '', ''. '', '';
             next;
         }
         my ($model) = sort { $b->id <=> $a->id } grep { $_->subject_id eq $instrument_data->sample_id } grep {$_->processing_profile_id eq $processing_profile_id } map { $_->model } Genome::Model::Input->get(name => 'instrument_data', value_id => $instrument_data->id,);

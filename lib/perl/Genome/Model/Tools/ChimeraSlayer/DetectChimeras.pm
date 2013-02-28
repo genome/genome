@@ -5,8 +5,7 @@ use warnings;
 
 use Genome;
 
-use Data::Dumper 'Dumper';
-use File::Basename;
+require File::Basename;
 
 class Genome::Model::Tools::ChimeraSlayer::DetectChimeras {
     is => 'Command::V2',
@@ -51,7 +50,8 @@ sub execute {
         $self->error_message("Failed to find sequences file or file is zero size: ".$self->sequences );
         return;
     }
-    #build nastier/chimeraSlayer params
+
+    # Build nastier/chimeraSlayer params
     my %nastier_params;
     if ( not %nastier_params = $self->build_nastier_params ) {
         $self->error_message("Failed to build nastier params");
@@ -63,38 +63,49 @@ sub execute {
         return;
     }
 
-    #validate/create params/class
-    my $n_class = Genome::Model::Tools::Nastier->create( %nastier_params );
-    if ( not $n_class ) {
+    # Validate/create params/class
+    my $nastier = Genome::Model::Tools::Nastier->create( %nastier_params );
+    if ( not $nastier ) {
         $self->error_message("Failed to create Nastier class using param: ".$self->nastier_params);
         return;
     }
-    my $cs_class = Genome::Model::Tools::ChimeraSlayer->create( %chimera_slayer_params );
-    if ( not $cs_class ) {
+    my $chimera_slayer = Genome::Model::Tools::ChimeraSlayer->create( %chimera_slayer_params );
+    if ( not $chimera_slayer ) {
         $self->error_message("Failed to create ChimeraSlayer class using param: ".$self->chimera_slayer_params);
         return;
     }
 
-    #execute
-    if ( not $n_class->execute ) {
+    # Nastier
+    $self->status_message("Run nastier...");
+    if ( not $nastier->execute ) {
         $self->error_message("Failed to execute Nastier using params: ".$self->nastier_params);
         return;
     }
-    $self->status_message("Finished running nastier");
-    if ( not $cs_class->execute ) {
+    $self->status_message("Run nastier...Done");
+
+    # Check nastier output...
+    if ( not $nastier_params{output_file} ) {
+        # maybe this should be an error instead?
+        $self->status_message('Nastier ran successfully, but no alignments found. Cannot run chimera slayer. Exitting.');
+        return 1;
+    }
+
+    # Chimera slayer
+    $self->status_message("Run chimera slayer...");
+    if ( not $chimera_slayer->execute ) {
         $self->error_message("Failed to execute ChimeraSlayer using param: ".$self->chimera_slayer_params);
         return;
     }
-    $self->status_message("Finished running chimera slayer");
+    $self->status_message("Run chimera slayer...Done");
 
-    #check output
+    # Check output
     my $chimeras = $self->sequences.'.out.CPS.CPC';
     if ( not -s $chimeras ) {
         $self->error_message("Failed to find chimera slayer output file or file is empty: ".$self->chimeras);
         return;
     }
 
-    # link chiumera file to requested output
+    # Link chimera file to requested output
     if ( $self->chimeras ) {
         Genome::Sys->create_symlink($chimeras, $self->chimeras);
     }
@@ -120,7 +131,7 @@ sub build_nastier_params {
 
     $params{query_FASTA} = $self->sequences;
     $params{output_file} = $self->sequences.'.out';
-    #print Dumper \%params;
+    #print Data::Dumper::Dumper \%params;
 
     return %params;
 }
@@ -142,9 +153,9 @@ sub build_chimera_slayer_params {
     }
 
     $params{query_NAST} = $self->sequences.'.out';
-    $params{exec_dir} = dirname( $self->sequences );
-    #print Dumper \%params;
-
+    $params{exec_dir} = File::Basename::dirname( $self->sequences );
+    #print Data::Dumper::Dumper \%params;
+    
     return %params;
 }
 

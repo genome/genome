@@ -16,7 +16,7 @@ BEGIN {
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-WuBlast';
 my $tmp_dir  = File::Temp::tempdir(
     "WuBlast_Blastn_XXXXXX", 
-    DIR     => "$ENV{GENOME_TEST_TEMP}",
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

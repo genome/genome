@@ -10,7 +10,7 @@ use Test::More tests => 23;
 
 #All models and builds in this test use the same data directory
 #It is intended that nothing actually writes to it--this should just be to prevent allocations
-my $test_data_dir = File::Temp::tempdir('Genome-Model-Convergence-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_data_dir = File::Temp::tempdir('Genome-Model-Convergence-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 use_ok('Genome::Model::Convergence');
 

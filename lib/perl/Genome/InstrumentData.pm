@@ -28,8 +28,25 @@ class Genome::InstrumentData {
         models => { is => 'Genome::Model', reverse_as => 'instrument_data', is_many => 1, },
     ],
     has_optional => [
+        tgi_lims_status => { # TODO rename!
+            is => 'Text',
+            via => 'attributes',
+            to => 'attribute_value',
+            where => [ attribute_label => 'tgi_lims_status' ],
+            is_mutable => 1,
+        },
         #TODO: may want to make these immutable, but needed them for
         #backfilling purposes
+        transcript_strand => {
+            is => 'Text',
+            valid_values => ['unstranded','firststrand','secondstrand'],
+            is_mutable => 1,
+            is_optional => 1,
+            via => 'attributes',
+            to => 'attribute_value',
+            where => [attribute_label => 'transcript_strand'],
+            doc => 'for some RNA protocols (encore complete rna-seq) reads will match transcript direction (firststrand), or match the opoosite strand (secondstrand), or be a mix (unstranded)'
+        },
         original_est_fragment_size => {
             is => 'Number',
             is_mutable => 1,
@@ -92,7 +109,7 @@ class Genome::InstrumentData {
             where => [attribute_label => 'ignored'],
             default => '0',
         },
-        sample_source => { via => 'sample', is => 'Genome::Subject', to => 'source' },
+        sample_source => { via => 'sample', is => 'Genome::SampleSource', to => 'source' },
         sample_source_id => { via => 'sample_source', to => 'id' },
         sample_source_name => { via => 'sample_source', to => 'name' },
         taxon => { is => 'Genome::Taxon', via => 'sample' },

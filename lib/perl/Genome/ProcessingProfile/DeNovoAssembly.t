@@ -162,6 +162,12 @@ EOS
 
 );
 
+my $tmp_dir = File::Temp::tempdir(
+    'ProcessingProfile-DeNovoAssembly-XXXXX',
+    TMPDIR => 1,
+    CLEANUP => 1,
+);
+
 # all this model needs to do is return something for inst data
 my %inst_data_params = ( run_name => 'XXXXXX', subset_name => 1 );
 my @instrument_data = (
@@ -176,7 +182,7 @@ for my $params_and_xml (@params_and_xml_list) {
         name => "__TEST_MODEL__%s", , processing_profile => $pp,
         instrument_data => \@instrument_data);
     my $build = Genome::Model::Build::DeNovoAssembly->__define__(
-        model => $model, data_directory => $ENV{GENOME_TEST_TEMP});
+        model => $model, data_directory => $tmp_dir);
 
     my $workflow = $pp->_resolve_workflow_for_build($build);
     my $validation_results = $workflow->validate;

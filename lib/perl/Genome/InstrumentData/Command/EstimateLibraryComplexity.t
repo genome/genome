@@ -9,7 +9,7 @@ use above 'Genome';
 
 use_ok('Genome::InstrumentData::Command::EstimateLibraryComplexity');
 
-my $test_output_dir = File::Temp::tempdir('Genome-InstrumentData-Command-EstimateLibraryComplexity-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+my $test_output_dir = File::Temp::tempdir('Genome-InstrumentData-Command-EstimateLibraryComplexity-XXXXX', TMPDIR => 1, CLEANUP => 1);
 
 my $output_file = join('/', $test_output_dir, 'result.txt');
 

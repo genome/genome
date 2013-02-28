@@ -25,7 +25,7 @@ use_ok('Genome::Model::Tools::CopyNumber::CnvSeg');
 
 my $test_data =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-CnvSeg";
 
-my $tmpbase = File::Temp::tempdir('CnvSegXXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $tmpbase = File::Temp::tempdir('CnvSegXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = "$tmpbase/cnv-seg-output.cnvseg";
 my $refbuild_id = 101947881;
 my $expected_output = $test_data."/expected_v1/chr22.luc1t.bam.bam2cn.cnvseg";
@@ -35,7 +35,10 @@ my $min_markers = 3;
 my $cnv_seg = Genome::Model::Tools::CopyNumber::CnvSeg->create(
                     copy_number_file => $cn_file,
                     output_file => $output_file,
-                    min_markers => $min_markers, );
+                    min_markers => $min_markers,
+                    gap_file => Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/gaps.csv",
+                    centromere_file => Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/centromere.csv",
+                );
 
 
 ok($cnv_seg, 'gmt copy-number bam-to-cn command created');

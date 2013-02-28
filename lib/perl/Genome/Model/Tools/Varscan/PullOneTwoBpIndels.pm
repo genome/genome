@@ -255,7 +255,15 @@ sub execute {
             }
         } else {
             my $file_list_append_fh = new IO::File $file_list_file,">>";
-            print $file_list_append_fh $val_build_indels_file . "\n";
+            if (-s $val_build_indels_file) {
+                print $file_list_append_fh $val_build_indels_file . "\n";
+            }
+            if ($build->indel_variant_list) {
+                my $indel_variant_list = $build->indel_variant_list->output_dir . "/indels.hq.bed";
+                if (-s $indel_variant_list) {
+                    print $file_list_append_fh $indel_variant_list . "\n";
+                }
+            }
             $file_list_append_fh->close;
         }
     }

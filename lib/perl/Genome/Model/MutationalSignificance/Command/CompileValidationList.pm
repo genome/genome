@@ -123,6 +123,11 @@ class Genome::Model::MutationalSignificance::Command::CompileValidationList {
             doc => 'File containing list of compiled variants',
         },
     ],
+    has_param => [
+        lsf_resource => {
+            default => "-M 14000000 -R 'select[mem>14000] rusage[mem=14000]'",
+        },
+    ],
 };
 
 sub execute {

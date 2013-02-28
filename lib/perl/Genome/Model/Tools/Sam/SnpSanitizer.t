@@ -14,11 +14,10 @@ BEGIN {
 }
 
 my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam/SnpSanitizer';
-my $run_dir  = "$ENV{GENOME_TEST_TEMP}";
 
 my $tmp_dir  = File::Temp::tempdir(
     "SnpSanitizer_XXXXXX", 
-    DIR     => $run_dir,
+    TEMPDIR => 1,
     CLEANUP => 1,
 );
 

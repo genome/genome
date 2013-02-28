@@ -167,7 +167,9 @@ sub tumor_bam {
         $tumor_bam = $tumor_build->whole_rmdup_bam_file;
     }
     unless ($tumor_bam){
-        die $self->error_message("No BAM file found for tumor build!");
+        my $msg = "Somatic build " . $self->__display_name__ . " has no BAM file found for tumor build " . $tumor_build->__display_name__ . "!";
+        $msg .= "\nSomatic build status is " . $self->status . " and tumor build status is " . $tumor_build->status;
+        die $self->error_message($msg);
     }
     return $tumor_bam;
 }
@@ -182,7 +184,9 @@ sub normal_bam {
         $normal_bam = $normal_build->whole_rmdup_bam_file;
     }
     unless ($normal_bam){
-        die $self->error_message("No BAM file found for normal build!");
+        my $msg = "Somatic build " . $self->__display_name__ . " has no BAM file found for normal build " . $normal_build->__display_name__ . "!";
+        $msg .= "\nSomatic build status is " . $self->status . " and normal build status is " . $normal_build->status;
+        die $self->error_message($msg);
     }
     return $normal_bam;
 }

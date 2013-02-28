@@ -14,28 +14,30 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>8; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>10; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::CreateMutationSpectrum;
 use Data::Dumper;
 
 use_ok('Genome::Model::ClinSeq::Command::CreateMutationSpectrum') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationSpectrum/wgs/2013-01-16/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationSpectrum/wgs/2013-02-14/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
-ok($temp_dir, "created temp directory: $temp_dir");
+ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Get a wgs somatic variation build
 my $build_id = 129399487;
 my $build = Genome::Model::Build->get($build_id);
+ok ($build, "obtained somatic variation build from db") or die;
 
 #Get a 'final' name for the sample
 my $final_name = $build->model->id;
 $final_name = $build->model->subject->name if ($build->model->subject->name);
 $final_name = $build->model->subject->patient->common_name if ($build->model->subject->patient->common_name);
+ok ($final_name, "found final name from build object") or die;
 
 #Create create-mutation-spectrum command and execute
 #genome model clin-seq create-mutation-spectrum --outdir=/tmp/create_mutation_spectrum/ --datatype=wgs --max-snvs=100 129855269
@@ -56,7 +58,7 @@ ok(-e $log_file, "Wrote message file from update-analysis to a log file: $log_fi
 #Genome::Sys->shellcmd(cmd => "cp -r -L $temp_dir/* $expected_output_dir");
 
 #Check for non-zero presence of expected PDFs
-my $pdf3 = $temp_dir . "/wgs/mutation_spectrum_sequence_context/"."$final_name"."_mutation-spectrum-sequence-context.pdf";
+my $pdf3 = $temp_dir . "/wgs/mutation_spectrum_sequence_context/"."$final_name".".mutation-spectrum-sequence-context.pdf";
 ok(-s $pdf3, "Found non-zero PDF file mutation-spectrum-sequence-context.pdf");
 
 my $pdf4 = $temp_dir . "/wgs/summarize_mutation_spectrum/"."$final_name"."_summarize-mutation-spectrum.pdf";

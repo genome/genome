@@ -15,7 +15,7 @@ plan tests => 5;
 
 use_ok('Genome::Model::Tools::RefCov::WholeGenome');
 
-my $tmp_dir = File::Temp::tempdir('BioSamtools-RefCov-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('BioSamtools-RefCov-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-RefCov-WholeGenome';
 my $expected_data_dir = $data_dir;
 

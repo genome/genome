@@ -48,7 +48,7 @@ $detector_vcf_result->lookup_hash($detector_vcf_result->calculate_lookup_hash())
 
 $detector_result->add_user(user => $detector_vcf_result, label => 'uses');
 
-my $output_base = File::Temp::tempdir('DetectVariants2-Filter-Depth-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}/", CLEANUP => 1);
+my $output_base = File::Temp::tempdir('DetectVariants2-Filter-Depth-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my %minimum_only_params = (
     previous_result_id => $detector_result->id,

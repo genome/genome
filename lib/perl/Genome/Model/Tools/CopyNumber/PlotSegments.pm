@@ -188,10 +188,9 @@ class Genome::Model::Tools::CopyNumber::PlotSegments {
 
         genome_build => {
 	    is => 'String',
-	    is_optional => 1,
+	    is_optional => 0,
             is_input => 1,
-	    doc => 'genome build - [36, 37, mm9]',
-            default => '36',
+	    doc => 'genome build - [36, 37, mm9, /path/to/custom_entrypoints]',
 	},
 
         sex => {
@@ -496,8 +495,13 @@ sub getEntrypointsFile{
         }
     }
 
-    if ($entrypoints_file eq ""){
-        die "Specify a valid genome build and sex. Only genome builds 36/37 and male/female are currently supported";
+    if ($entrypoints_file eq "") {
+        if(-e $genome_build){
+            print STDERR "Using custom annotation build: $genome_build\n";
+            $entrypoints_file = $genome_build;
+        } else {
+            die "Specify a valid genome build and sex. Only genome builds 36/37 and male/female are currently supported";
+        }
     }
 
     return $entrypoints_file;

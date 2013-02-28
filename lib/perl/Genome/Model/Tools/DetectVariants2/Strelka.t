@@ -41,7 +41,7 @@ my $normal_bam = $test_dir . "normal.tiny.bam";
 ok(-e $normal_bam, "Found normal test BAM: $normal_bam") or die;
 
 #Define the output directory for temporary results produced during the test run
-my $temp_base_dir = File::Temp::tempdir('Strelka_0.4.6.2_XXXX', DIR => $ENV{GENOME_TEST_TEMP}, CLEANUP => 1);
+my $temp_base_dir = File::Temp::tempdir('Strelka_0.4.6.2_XXXX', CLEANUP => 1, TMPDIR => 1);
 ok(-e $temp_base_dir, "Created a temp dir for output file from this test run: $temp_base_dir") or die;
 my $actual_output_dir = "$temp_base_dir/output";
 

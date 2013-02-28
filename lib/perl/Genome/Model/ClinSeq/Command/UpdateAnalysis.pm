@@ -25,7 +25,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         sample_type_filter => {
               is => 'Text',
-              default => 'pcr product,pooled library,pooled dna',
+              default => 'pcr product,pooled library,pooled dna,ipr product',
               doc => 'When displaying samples, filter out those with certain sample types. [comma separate list]',
         },
         _ref_align_pp_id => {
@@ -63,6 +63,15 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Genome::ProcessingProfile',
               id_by => '_rnaseq_pp_id',
               doc => 'Desired rna-seq processing profile',
+        },
+        _differential_expression_pp => {
+              is => 'Number',
+              default => '2760181',
+        },
+        differential_expression_pp => {
+              is => 'Genome::ProcessingProfile',
+              id_by => '_differential_expression_pp',
+              doc => 'Desired differential-expression processing profile',
         },
         _clinseq_pp_id => {
               is => 'Number',
@@ -122,17 +131,25 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         tumor_sample_common_names => {
               #TODO: Is there a better way to determine which samples are 'tumor'?
               is => 'Text',
-              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion',
+              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse',
               doc => 'The possible sample common names used in the database to specify a Tumor sample',
         },
         instrument_data_to_exclude => {
               is => 'Text',
               doc => 'Instrument data to exclude from all consideration. Supply as a comma separated list of instrument data IDs. Supply a mix of dna and rna data if required.',
         },
+        check_archivable_status => {
+              is => 'Boolean',
+              doc => 'Warn if builds are currently set to be archivable.  Even if false you will still be warned if something is already archived',
+        },
         force => {
-              is => 'Number',
-              default => 0,
+              is => 'Boolean',
               doc => 'Allow certain warnings/errors to be by-passed',
+        },
+        ignore_models_matching => {
+              is => 'Text',
+              is_optional => 1,
+              doc => "expression matching models which should be ignored",
         },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
@@ -217,7 +234,6 @@ sub execute {
     return 1;
   }
 
-
   #Get the subset of samples that are of the type DNA or RNA
   $self->status_message("\nGET SAMPLES BY TYPE");
   my @dna_samples = $self->dna_samples('-samples'=>\@samples);
@@ -289,24 +305,40 @@ sub execute {
   }
 
   #Gather the 'best' suitable WGS somatic-variation, Exome somatic-variation, tumor RNA-seq, and normal RNA-seq models
-  $self->status_message("\nCLIN-SEQ MODELS");
   my $best_wgs_somatic_variation_model = $self->select_best_model('-models'=>\@wgs_somatic_variation_models);
   my $best_exome_somatic_variation_model = $self->select_best_model('-models'=>\@exome_somatic_variation_models);
   my $best_normal_rnaseq_model = $self->select_best_model('-models'=>\@normal_rnaseq_models);
   my $best_tumor_rnaseq_model = $self->select_best_model('-models'=>\@tumor_rnaseq_models);
 
+  #If there is a 'best' tumor AND normal rna-seq model, check if there is a differential-expression model with these two
+  my @de_models;
+  if ($best_normal_rnaseq_model && $best_tumor_rnaseq_model){
+    $self->status_message("\nDIFFERENTIAL-EXPRESSION MODELS");
+    @de_models = $self->check_de_models('-normal_rnaseq_model'=>$best_normal_rnaseq_model, '-tumor_rnaseq_model'=>$best_tumor_rnaseq_model);
+  }
+  my $best_de_model = $self->select_best_model('-models'=>\@de_models);
+
   #Is there a suitable clin-seq model in existence that uses these models (If not, create it)?  
   #If there is a matching clin-seq model, what is the status?  Remind the user whether this clinseq model is currently set as do-not-archive...
+  $self->status_message("\nCLIN-SEQ MODELS");
   my $clinseq_model = $self->check_clinseq_models('-wgs_somatic_variation_model'=>$best_wgs_somatic_variation_model,
                                                   '-exome_somatic_variation_model'=>$best_exome_somatic_variation_model,
                                                   '-normal_rnaseq_model'=>$best_normal_rnaseq_model,
                                                   '-tumor_rnaseq_model'=>$best_tumor_rnaseq_model,
+                                                  '-de_model'=>$best_de_model,
                                                   '-samples'=>\@samples);
 
   if ($clinseq_model){
     my $clinseq_model_id = $clinseq_model->id;
     my $clinseq_model_name = $clinseq_model->name;
-    $self->status_message("\nRequested clin-seq model exists and is complete:\n\t$clinseq_model_name <$clinseq_model_id>\n\n");
+    my @inputs;
+    push (@inputs, 'wgs') if $clinseq_model->wgs_model;
+    push (@inputs, 'exome') if $clinseq_model->exome_model;
+    push (@inputs, 'tumor_rnaseq') if $clinseq_model->tumor_rnaseq_model;
+    push (@inputs, 'normal_rnaseq') if $clinseq_model->normal_rnaseq_model;
+    push (@inputs, 'differential_expression') if $clinseq_model->de_model;
+    my $input_string = join (", ", @inputs);
+    $self->status_message("\nRequested clin-seq model exists and is complete:\n\tWith inputs: $input_string\n\t$clinseq_model_name <$clinseq_model_id>\n\n");
   }else{
     $self->status_message("\nRequested clin-seq model is NOT ready - see above for instructions\n\n");
   }
@@ -442,6 +474,7 @@ sub display_processing_profiles{
   $self->status_message("wgs somatic-variation: " . $self->wgs_somatic_variation_pp->name . " <" . $self->wgs_somatic_variation_pp->id . ">");
   $self->status_message("exome somatic-variation: " . $self->exome_somatic_variation_pp->name . " <" . $self->exome_somatic_variation_pp->id . ">");
   $self->status_message("rna-seq: " . $self->rnaseq_pp->name . " <" . $self->rnaseq_pp->id . ">");
+  $self->status_message("differential-expression: " . $self->differential_expression_pp->name . " <" . $self->differential_expression_pp->id . ">");
   $self->status_message("clin-seq: " . $self->clinseq_pp->name . " <" . $self->clinseq_pp->id . ">");
   return;
 }
@@ -1001,7 +1034,7 @@ sub check_rnaseq_models{
     $self->status_message("\nFound an RNA sample " . $sample->name . " ($scn) matching tissue type: $tissue_type");
   }
 
-  #Is there actually any RNA?
+  #Is there actually any RNA-seq data?
   #- return if there is no data of the desired type
   my @sample_instrument_data = $sample->instrument_data;
   @sample_instrument_data = @{$self->exclude_instrument_data('-instrument_data'=>\@sample_instrument_data)};
@@ -1048,6 +1081,56 @@ sub check_rnaseq_models{
 }
 
 
+#Check for existence of a differential expression model meeting desired criteria and create one if it does not exist
+sub check_de_models{
+  my $self = shift;
+  my %args = @_;
+  my $normal_rnaseq_model = $args{'-normal_rnaseq_model'};
+  my $tumor_rnaseq_model = $args{'-tumor_rnaseq_model'};
+
+  my @final_models;
+  my @tmp;
+
+  my @models = $self->differential_expression_pp->models;
+
+  #Test for correct processing profile and input models
+  foreach my $model (@models){
+    next unless ($model->class eq "Genome::Model::DifferentialExpression");
+    next unless ($model->processing_profile_id == $self->differential_expression_pp->id);
+    my $condition_model_ids_string = $model->condition_model_ids_string;
+    my @groups = split(" ", $condition_model_ids_string);
+    next unless (scalar(@groups) == 2);
+    my @group1_members = split(",", $groups[0]);
+    my @group2_members = split(",", $groups[1]);
+    next unless (scalar(@group1_members == 1) && scalar(@group2_members));
+
+    next unless ($group1_members[0] == $normal_rnaseq_model->id);
+    next unless ($group2_members[0] == $tumor_rnaseq_model->id);
+
+    $self->status_message("\t\tName: " . $model->name);
+    push (@final_models, $model);
+  }
+
+  my $final_model_count = scalar(@final_models);
+  $self->status_message("\tFound " . $final_model_count . " suitable differential expression models (matching default or user specified criteria)");
+
+  #If there are no suitable models, one will need to be created
+  unless ($final_model_count > 0){
+    $self->create_de_model('-normal_rnaseq_model'=>$normal_rnaseq_model, '-tumor_rnaseq_model'=>$tumor_rnaseq_model);
+    return @tmp;
+  }
+
+  my $models_status = $self->check_models_status('-models'=>\@final_models);
+
+  #If there is one or more suitable successful models, return the models objects.  Must return all suitable models to allow checking against available clinseq models
+  if ($models_status){
+    return @final_models;
+  }else{
+    return @tmp;
+  }
+}
+
+
 #Check for existence of a somatic variation model meeting desired criteria and create one if it does not exist
 sub check_somatic_variation_models{
   my $self = shift;
@@ -1079,11 +1162,21 @@ sub check_somatic_variation_models{
   my $existing_model_count = scalar(@existing_models);
   $self->status_message("\tStarting with " . $existing_model_count . " models for this pair of DNA samples. Candidates that meet criteria:");
 
+  my $ignore_models_bx;
+  if (my $ignore_models_matching = $self->ignore_models_matching) {
+    $ignore_models_bx = UR::BoolExpr->resolve_for_string('Genome::Model::SomaticVariation',$ignore_models_matching);
+    $self->status_message("\tIgnoring models matching: $ignore_models_bx");
+  }
+
   #Test for correct processing profile, annotation build
   foreach my $model (@existing_models){
     next unless ($model->class eq "Genome::Model::SomaticVariation");
     next unless ($model->processing_profile_id == $somatic_variation_pp_id);
     next unless ($model->annotation_build->id == $self->annotation_build->id);
+    if ($ignore_models_bx and $ignore_models_bx->evaluate($model)) {
+        $self->status_message("\t\tIgnore: " . $model->__display_name__);
+        next;
+    }
 
     #If previously discovered variants was defined as an input to the somatic-variation model, disallow it...
     #-> Don't do this now that previously discovered variations build is only used to annotate variants with dbSNP ids
@@ -1111,7 +1204,7 @@ sub check_somatic_variation_models{
     }
     next unless ($tumor_model_match && $normal_model_match);
 
-    $self->status_message("\t\tName: " . $model->name);
+    $self->status_message("\t\tUse: " . $model->__display_name__);
     push (@final_models, $model);
   }
   my $final_model_count = scalar(@final_models);
@@ -1219,7 +1312,6 @@ sub create_rnaseq_model{
   }
   my $iids_list = join(",", @iids);
 
-  #Come up with a descriptive model name.  May be more trouble than it is worth, perhaps it should be autogenerated?
   my $sample_name = $sample->name;
   my $annotation_id = $self->annotation_build->id;
   my $reference_build_id = $self->reference_sequence_build->id;
@@ -1229,6 +1321,56 @@ sub create_rnaseq_model{
 
   push(@commands, "\n#Create an RNA-seq model as follows:");
   push(@commands, "genome model define rna-seq  --reference-sequence-build='$reference_build_id'  --annotation-build='$annotation_id'  --subject='$sample_name'  --processing-profile='$rnaseq_pp_id'  --instrument-data='$iids_list'");
+  push(@commands, "genome model build start ''");
+
+  foreach my $line (@commands){
+    $self->status_message($line);
+  }
+
+  return;
+}
+
+
+#Create a differential-expression model for a singel tumor/normal rna-seq pair
+sub create_de_model{
+  my $self = shift;
+  my %args = @_;
+  my $normal_rnaseq_model = $args{'-normal_rnaseq_model'};
+  my $tumor_rnaseq_model = $args{'-tumor_rnaseq_model'};
+
+  my $individual_id = $self->individual->id;
+  my $individual_name = $self->individual->name;
+  my $normal_rnaseq_model_id = $normal_rnaseq_model->id;
+  my $normal_subject_name = $normal_rnaseq_model->subject->name;
+  my $normal_individual_common_name = $normal_rnaseq_model->subject->patient_common_name;
+  my $normal_sample_common_name = $normal_rnaseq_model->subject->common_name;
+  my $tumor_rnaseq_model_id = $tumor_rnaseq_model->id;
+  my $tumor_subject_name = $tumor_rnaseq_model->subject->name;
+  my $tumor_individual_common_name = $tumor_rnaseq_model->subject->patient_common_name;
+  my $tumor_sample_common_name = $tumor_rnaseq_model->subject->common_name;
+  my $differential_expression_pp_id = $self->differential_expression_pp->id;
+
+  my $final_normal_name = $normal_subject_name;
+  my $final_tumor_name = $tumor_subject_name;
+
+  if ($normal_sample_common_name && $tumor_sample_common_name){
+    unless ($normal_sample_common_name eq $tumor_sample_common_name){
+      $final_normal_name = $normal_sample_common_name;
+      $final_tumor_name = $tumor_sample_common_name;
+    }
+  }
+
+  #Remove trailing and leading spaces
+  $final_normal_name =~ s/^\s+//; 
+  $final_normal_name =~ s/\s+$//;
+  $final_tumor_name =~ s/^\s+//; 
+  $final_tumor_name =~ s/\s+$//;
+
+  my @commands;
+
+  #genome model define differential-expression --processing-profile=? --condition-model-ids-string=? --condition-labels-string=? 
+  push(@commands, "\n#Create a differential-expression model as follows:");
+  push(@commands, "genome model define differential-expression --processing-profile='$differential_expression_pp_id' --condition-model-ids-string='$normal_rnaseq_model_id $tumor_rnaseq_model_id' --condition-labels-string='$final_normal_name,$final_tumor_name' --subject='$individual_name'");
   push(@commands, "genome model build start ''");
 
   foreach my $line (@commands){
@@ -1384,7 +1526,9 @@ sub check_models_status{
         if ($build->is_archived){
           $self->status_message("\tWARNING -> Successful build $build_id of model $model_id that meets desired criteria is currently archived! Consider running: bsub genome model build unarchive $build_id") unless $silent;
         }elsif ($build->archivable){
-          $self->status_message("\tSuccessful build $build_id of model $model_id that meets desired criteria is currently archivable. Consider running: genome model build set-do-not-archive --reason='build needed for clin-seq model' $build_id") unless $silent;
+          if ($self->check_archivable_status){
+            $self->status_message("\tSuccessful build $build_id of model $model_id that meets desired criteria is currently archivable. Consider running: genome model build set-do-not-archive --reason='build needed for clin-seq model' $build_id") unless $silent;
+          }
         }
       }
     }
@@ -1421,6 +1565,8 @@ sub check_clinseq_models{
   my $exome_model = $args{'-exome_somatic_variation_model'};
   my $normal_rnaseq_model = $args{'-normal_rnaseq_model'};
   my $tumor_rnaseq_model = $args{'-tumor_rnaseq_model'};
+  my $de_model = $args{'-de_model'};
+
   my @samples = @{$args{'-samples'}};
 
   my @final_models;
@@ -1437,7 +1583,6 @@ sub check_clinseq_models{
   my $normal_rnaseq_data = $self->check_instrument_data('-data_type'=>'normal_rnaseq', '-samples'=>\@samples);
   my $tumor_rnaseq_data = $self->check_instrument_data('-data_type'=>'tumor_rnaseq', '-samples'=>\@samples);
 
-
   if ($wgs_data == 2 && !$wgs_model){
     $self->warning_message("WGS data exists but no suitable, complete WGS somatic-variation model was found")
   }
@@ -1450,6 +1595,9 @@ sub check_clinseq_models{
   if ($tumor_rnaseq_data && !$tumor_rnaseq_model){
     $self->warning_message("Tumor RNAseq data exists but no suitable, complete tumor RNAseq model was found");
   }
+  if (($normal_rnaseq_model && $tumor_rnaseq_model) && !$de_model){
+    $self->warning_message("Normal and Tumor RNAseq models exist, but no suitable, complete differential-expression model was found");
+  }
 
   my @existing_models = Genome::Model->get(processing_profile_id => $self->clinseq_pp->id, subject_id => $self->individual->id);
   my $existing_model_count = scalar(@existing_models);
@@ -1460,6 +1608,7 @@ sub check_clinseq_models{
     my $current_exome_model = $model->exome_model;
     my $current_normal_rnaseq_model = $model->normal_rnaseq_model;
     my $current_tumor_rnaseq_model = $model->tumor_rnaseq_model;
+    my $current_de_model = $model->de_model;
 
     #If a 'best' wgs model is defined, only compare against clinseq models that have a wgs model defined and skip if the actual model does not match
     if ($wgs_model){
@@ -1478,6 +1627,10 @@ sub check_clinseq_models{
       next unless $current_tumor_rnaseq_model;
       next unless ($tumor_rnaseq_model->id == $current_tumor_rnaseq_model->id);
     }
+    if ($de_model){
+      next unless $current_de_model;
+      next unless ($de_model->id == $current_de_model->id);
+    }
     push(@final_models, $model);
   }
 
@@ -1489,7 +1642,8 @@ sub check_clinseq_models{
     $self->create_clinseq_model('-wgs_somatic_variation_model'=>$wgs_model,
                                 '-exome_somatic_variation_model'=>$exome_model,
                                 '-normal_rnaseq_model'=>$normal_rnaseq_model,
-                                '-tumor_rnaseq_model'=>$tumor_rnaseq_model);
+                                '-tumor_rnaseq_model'=>$tumor_rnaseq_model,
+                                '-de_model'=>$de_model);
     return @tmp;
   }
 
@@ -1521,6 +1675,7 @@ sub create_clinseq_model{
   my $exome_model = $args{'-exome_somatic_variation_model'};
   my $normal_rnaseq_model = $args{'-normal_rnaseq_model'};
   my $tumor_rnaseq_model = $args{'-tumor_rnaseq_model'};
+  my $de_model = $args{'-de_model'};
   my $final_individual_name = $self->get_final_individual_name;
 
   my $clinseq_pp_id = $self->clinseq_pp->id;
@@ -1528,10 +1683,11 @@ sub create_clinseq_model{
   my $exome_model_id = $exome_model->id if $exome_model;
   my $normal_rnaseq_model_id = $normal_rnaseq_model->id if $normal_rnaseq_model;
   my $tumor_rnaseq_model_id = $tumor_rnaseq_model->id if $tumor_rnaseq_model;
+  my $de_model_id = $de_model->id if $de_model;
 
   #Make sure a last_succeeded_build is defined for all input models
   #Make sure none of the input models/builds have been archived before proceeding...
-  my @test_models = ($wgs_model, $exome_model, $normal_rnaseq_model, $tumor_rnaseq_model);
+  my @test_models = ($wgs_model, $exome_model, $normal_rnaseq_model, $tumor_rnaseq_model, $de_model);
   my $ready = 1;
   foreach my $model (@test_models){
     next unless $model;
@@ -1560,6 +1716,7 @@ sub create_clinseq_model{
   $clinseq_cmd .= "  --exome-model='$exome_model_id'" if $exome_model;
   $clinseq_cmd .= "  --normal-rnaseq-model='$normal_rnaseq_model_id'" if $normal_rnaseq_model;
   $clinseq_cmd .= "  --tumor-rnaseq-model='$tumor_rnaseq_model_id'" if $tumor_rnaseq_model;
+  $clinseq_cmd .= "  --de-model='$de_model_id'" if $de_model;
 
   push(@commands, "\n#Create a Clin-Seq model for $final_individual_name as follows:");
   push(@commands, $clinseq_cmd);

@@ -60,6 +60,12 @@ sub _run_aligner {
 
     my $tophat_cmd = $self->_get_tophat_cmd(\@input_pathnames);
 
+    # disconnect the db handle before this long-running event
+    if (Genome::DataSource::GMSchema->has_default_handle) {
+        $self->status_message("Disconnecting GMSchema default handle.");
+        Genome::DataSource::GMSchema->disconnect_default_dbh();
+    }
+
     Genome::Sys->shellcmd(
         cmd => $tophat_cmd,
         input_files => \@input_pathnames,

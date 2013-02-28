@@ -26,12 +26,12 @@ ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
-ok($temp_dir, "created temp directory: $temp_dir");
+ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Get an existing ClinSeq build to use as a test
 my $clinseq_build_id = 119971814;
 my $clinseq_build = Genome::Model::Build->get($clinseq_build_id);
-ok($clinseq_build, "Obtained a clinseq build from id: $clinseq_build_id");
+ok($clinseq_build, "Obtained a clinseq build from id: $clinseq_build_id") or die;
 
 #Create the dump-igv-xml command
 my $igv_xml_cmd = Genome::Model::ClinSeq::Command::DumpIgvXml->create(builds=>[$clinseq_build], outdir=>$temp_dir);

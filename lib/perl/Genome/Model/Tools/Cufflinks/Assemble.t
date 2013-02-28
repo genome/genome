@@ -28,7 +28,7 @@ my $bam_file = $input_data_dir .'/accepted_hits.bam';
 #my $expected_gene_fpkm_file = $expected_data_dir .'/genes.fpkm_tracking';
 #my $expected_isoform_fpkm_file = $expected_data_dir .'/isoforms.fpkm_tracking';
 
-my $tmp_dir = File::Temp::tempdir('Cufflinks-Assemble-'.Genome::Sys->username.'-XXXX',DIR => "$ENV{GENOME_TEST_TEMP}",CLEANUP => 1);
+my $tmp_dir = File::Temp::tempdir('Cufflinks-Assemble-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 
 my $expression = Genome::Model::Tools::Cufflinks::Assemble->create(
    input_file => $bam_file,

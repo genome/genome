@@ -35,6 +35,11 @@ class Genome::Model {
             is_optional => 1,
             doc => 'indicates a value which is produced during the build process',
         },
+        is_metric => { 
+            is => 'Boolean', 
+            is_optional => 1,
+            doc => 'indicates a value which is an interpretation of outputs on the build (can be added post-build)',
+        },
         _profile_default_value => { 
             is => 'Text', 
             is_optional => 1,
@@ -881,6 +886,7 @@ sub _preprocess_subclass_description {
                 to => $class->_resolve_to_for_prop_desc($prop_desc),
             );
         }
+    
     }
 
     my ($ext) = ($desc->{class_name} =~ /Genome::Model::(.*)/);

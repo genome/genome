@@ -30,6 +30,11 @@ class Genome::InstrumentData::IntermediateAlignmentResult::Command::Bwa {
             is => 'Text',
             doc => 'The index for the reference',
         },
+        flagstat_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'The pre-computed flagstat for the input file',
+        },
         input_file => {
             is => 'Text',
             doc => 'The file to align',
@@ -88,6 +93,7 @@ sub execute {
         aligner_version => $self->aligner_version,
         aligner_params => $self->aligner_params,
         aligner_index_id => $self->aligner_index_id,
+        flagstat_file => $self->flagstat_file,
         input_file => $self->input_file,
         input_pass => $self->input_pass,
         instrument_data_segment_type => $self->instrument_data_segment_type,

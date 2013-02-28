@@ -376,7 +376,7 @@ sub resolve_reference_sequence_build {
             $rsb = $potential_indicator->reference;
             last;
         } elsif($potential_indicator->can('reference_build')) {
-            $rsb = $potential_indicator->reference;
+            $rsb = $potential_indicator->reference_build;
         }
     }
 
