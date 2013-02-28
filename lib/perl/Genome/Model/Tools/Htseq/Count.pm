@@ -5,9 +5,11 @@ use Genome;
 
 class Genome::Model::Tools::Htseq::Count {
     is => 'Genome::Command::WithSavedResults',
+    parallelize_by => ['alignment_results'],
     has_input => [
-        alignment_result => { 
+        alignment_results => { 
             is => 'Genome::InstrumentData::AlignmentResult',
+            is_many => 1,
             doc => 'alignment results, typically from an RNA aligner',
         },
         output_dir => { 
@@ -77,7 +79,7 @@ sub _execute_v1 {
     my $self = shift;
     $self->status_message("tool version " . $self->app_version . ', result version ' . $self->result_version);
 
-    my @alignment_result = $self->alignment_result;
+    my @alignment_result = $self->alignment_results;
     if (@alignment_result > 1) {
         die "support for multiple alignment result inputs in the same excution is not implemented yet!";
     }

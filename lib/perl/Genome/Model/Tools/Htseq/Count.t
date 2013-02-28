@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 14;
+use Test::More tests => 18;
 use Genome::Model::Tools::Htseq::Count;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -48,13 +48,13 @@ ok(-d $test_outdir, "created test output directory");
 # before running, ensure results do not exist previously
 my $test_name = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ||= "testsuite " . UR::Context->now . " " . Sys::Hostname::hostname() . "-$$.";
 my $result_exists = Genome::Model::Tools::Htseq::Count::Result->get(
-    alignment_result => $a,
+    alignment_results => [$a],
     test_name => $test_name
 );
 ok(!$result_exists, "no result already in the system for this test") or die "contact informatics!";
 
 my $command = Genome::Model::Tools::Htseq::Count->execute(
-    alignment_result => $a,
+    alignment_results => [$a],
     #output_dir => $test_outdir, # remove when automatic SR generateion is in place
     app_version => '0.5.3p9',
     result_version => 1,
@@ -73,6 +73,8 @@ for my $pair(
     [$new_result->output_dir . '/transcript-counts.tsv',    $test_dir . '/expected-outputs/transcript-counts.tsv'],
 ) {
     my ($actual,$expected) = @$pair;
+    ok(-e $actual, "found output file $actual");
+    ok(-e $expected, "found expected comparison file $expected");
     my @diff = `diff $actual $expected`;
     ok(scalar(@diff)==0, "no differences for $actual vs $expected")
         or do {
@@ -85,7 +87,7 @@ for my $pair(
 }
 
 my $found_result_after = Genome::Model::Tools::Htseq::Count::Result->get(
-    alignment_result => $a,
+    alignment_results => $a,
     test_name => $test_name
 );
 ok($found_result_after, "found a result after running the command");
