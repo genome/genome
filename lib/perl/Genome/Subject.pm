@@ -18,7 +18,7 @@ class Genome::Subject {
             is => 'Text',
         },
         subject_type => {
-            column_name => '',
+            is_transient => 1,
             is_abstract => 1,
             doc => 'Plain text description of the type of subject, defined in subclasses',
         },
