@@ -6,8 +6,6 @@ use Cwd;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(run_and_diff);
-our @EXPORT_OK = qw(run_and_diff);
-
 
 sub run_and_diff {
     my %params = @_;
@@ -85,5 +83,4 @@ sub run_and_diff {
         };
 }
 
-print "in package " . __PACKAGE__ . "\n";
 1;
