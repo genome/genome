@@ -3,6 +3,10 @@ use Genome::SoftwareResult::Default;
 
 class Genome::Command::WithSavedResults {
     is => 'Command::V2',
+    type_has => [
+        parallelize_by => { is => 'ARRAY', is_optional => 1,
+                            doc => 'produce intermediate results and merge, grouping by this/these attributes' },     
+    ],
     is_abstract => 1,
 };
 
