@@ -175,7 +175,17 @@ sub execute_wrapper {
     # re-check the command so that output values and metrics are copied
     %props = _copyable_properties($command, $result_class);
     for my $name (keys %props) {
-        $result->$name($props{$name});
+        my $meta = $result->__meta__->property($name);
+        if ($meta->is_many) {
+            my @old_values = sort $result->$name;
+            my @new_values = sort @{$props{$name}};
+            if ("@old_values" ne "@new_values") {
+                Carp::confess("has-many properties which change during execute are not currently supported until the accessor is smarter!");
+            }
+        }
+        else {
+            $result->$name($props{$name});
+        }
     }
     $command->result($result);
 
