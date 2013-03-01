@@ -23,6 +23,20 @@ class Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression {
             doc => 'Directory where output files will be written', 
         },
     ],
+    has_output => [
+        coding_hq_up_file => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+        },
+        coding_hq_down_file => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+        },
+        coding_hq_de_file => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+        },
+    ],
     doc => 'perform simple differential expression comparison between two samples using FPKM values from Cufflinks',
 };
 
@@ -197,8 +211,18 @@ sub execute {
   $self->status_message($r_cmd_transcript);
   Genome::Sys->shellcmd(cmd => $r_cmd_transcript);
 
-  #Perform basic some checking on the results files
+  #Set outputs
+  my $coding_hq_up_file = $genes_outdir . "case_vs_control.coding.hq.up.tsv";
+  die $self->error_message("Trying to set a file as output but the file does not exist: $coding_hq_up_file") unless (-e $coding_hq_up_file);
+  $self->coding_hq_up_file($coding_hq_up_file);
 
+  my $coding_hq_down_file = $genes_outdir . "case_vs_control.coding.hq.down.tsv";
+  die $self->error_message("Trying to set a file as output but the file does not exist: $coding_hq_down_file") unless (-e $coding_hq_down_file);
+  $self->coding_hq_down_file($coding_hq_down_file);
+
+  my $coding_hq_de_file = $genes_outdir . "case_vs_control.coding.hq.de.tsv";
+  die $self->error_message("Trying to set a file as output but the file does not exist: $coding_hq_de_file") unless (-e $coding_hq_de_file);
+  $self->coding_hq_de_file($coding_hq_de_file);
 
   return 1;
 }

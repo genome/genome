@@ -196,9 +196,6 @@ sub execute {
       }
     }
 
-
-
-
     #TODO: Use the coordinates of each fusion to produce pairoscope plots showing the support for each rearrangement
     #Relevant pairoscope option:
     #Usage:   pairoscope [options] <align.bam> <chr> <start> <end> <align2.bam> <chr2> <start2> <end2> 

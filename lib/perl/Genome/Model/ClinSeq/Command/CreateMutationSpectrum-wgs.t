@@ -28,6 +28,7 @@ ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
 
+
 #Get a wgs somatic variation build
 my $build_id = 129399487;
 my $build = Genome::Model::Build->get($build_id);
