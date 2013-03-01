@@ -10,6 +10,10 @@ class Genome::Model::Tools::Htseq::Count {
         alignment_results => { 
             is => 'Genome::InstrumentData::AlignmentResult',
             is_many => 1,
+            example_values => [
+                { 'instrument_data.sample.patient.common_name like' => 'HCC%' }
+            ],
+            where => [ 'instrument_data.sample.extraction_type in' => ['rna','cdna','total rna'] ], 
             doc => 'alignment results, typically from an RNA aligner',
         },
         output_dir => { 
