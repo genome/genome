@@ -77,12 +77,13 @@ sub _execute_build {
     # put the "from" models into a group owned by this model
     #
 
+    my @from_builds = sort $build->from_builds;
+    
+    my @from_models = map { $_->model } @from_builds;
     my $from_group_name = $self->name . '.from';
-    my @from_models = sort $build->from_models;
-
     my $from_group = Genome::ModelGroup->get(name => $from_group_name);
     if ($from_group) {
-        my @members = sort $from_group->members;
+        my @members = sort $from_group->models;
         unless ("@members" eq "@from_models") {
             $self->_rename_model_group($from_group);
             $from_group = undef;
@@ -91,7 +92,7 @@ sub _execute_build {
     unless ($from_group) {
         $from_group = Genome::ModelGroup->create(name => $from_group_name);
         for my $from_model (@from_models) {
-            $from_group->add_member($from_model);
+            $from_group->assign_models($from_model);
         }
     }
 
@@ -125,21 +126,95 @@ sub _execute_build {
     unless ($to_group) {
         die $self->error_message("Failed to create model group $to_group_name!");
     }
-    my @to_models = $to_group->members;
+    my @to_models = $to_group->models;
 
     #
     # go through each of the build pairs and compare aspects
     #
     
-    my @aspects = $build->aspects;
+    my @aspects = $build->processing_profile->aspects;
+    for my $aspect (@aspects) {
+        my $aspect_dir = $build->data_directory .'/'. $aspect;
+        Genome::Sys->create_directory($aspect_dir);
+    }
 
     for (my $n = 0; $n < $#to_models; $n++) {
-        my $from_model = $from_models[$n];
         my $to_model = $to_models[$n];
-        my $from_build = $from_model->last_complete_build;
         my $to_build = $to_model->last_complete_build;
+
+        unless ($to_build) {
+            my $existing_build = $to_model->current_build;
+            if ($existing_build && $existing_build->status eq 'Running') {
+                $self->status_message('Please wait for existing current build '. $existing_build->__display_name .' to complete running.');
+            } elsif ( $existing_build && $existing_build->status eq 'Unstartable') {
+                $self->status_message('Existing current build '. $existing_build->__display_name__ .' is '. $existing_build->status );
+            } else {
+                if ($existing_build) {
+                    $self->status_message('Existing current build '. $existing_build->__display_name__ .' is '. $existing_build->status );
+                }
+                $self->status_message('Starting a build for model '. $to_model->__display_name__);
+                Genome::Sys->shellcmd->( cmd => 'genome model build start '. $to_model );
+            }
+            next;
+        }
+        
+        my $from_build = $from_builds[$n];
+        my $from_model = $from_build->model;
+
         $self->status_message("Compare build " . $from_build->__display_name__ . " to " . $to_build->__display_name__);
         for my $aspect (@aspects) {
+            my $aspect_camel_case = join('', map { ucfirst(lc($_)) } split('-',$aspect)); # TODO: switch to UR::Util method
+            my $aspect_dir = $build->data_directory .'/'. $aspect;
+            my $compare_aspect_dir = $aspect_dir .'/'. $n;
+
+            Genome::Sys->create_directory($compare_aspect_dir);
+
+            $self->status_message('Comparing '. $n .' : '. $from_build->model->name .' to '. $to_build->model->name);
+            Genome::Sys->shellcmd( cmd => 'touch '.$compare_aspect_dir .'/from_'. $from_build->id );
+            Genome::Sys->shellcmd( cmd => 'touch '. $compare_aspect_dir .'/to_'. $to_build->id );
+            
+            my $from_model = $from_build->model;
+            my $from_model_class = $from_model->class;
+            my @classes_to_check = ($from_model_class,$from_model_class->inheritance);
+            my @comparison_classes;
+            for my $model_class (@classes_to_check) {
+                my $comp_class = $model_class . '::Command::Compare::' .$aspect_camel_case;
+                my $comp_class_meta = UR::Object::Type->get($comp_class);
+                if ($comp_class_meta) {
+                    push @comparison_classes, $comp_class;
+                    $build->status_message("doing comparison for $comp_class on pair $n");
+                    Genome::Sys->shellcmd(cmd => 'touch '. $compare_aspect_dir .'/'. $comp_class);
+                    last;
+                }
+            }
+
+            unless (@comparison_classes) {
+                die "No comparisons defined for $aspect!";
+            }
+
+            for my $comparison_class (@comparison_classes) {
+                unless ($comparison_class->execute(
+                    from_build => $from_build,
+                    to_build => $to_build,
+                    output_dir => $compare_aspect_dir,
+                )) {
+                    die('Failed to execute '. $comparison_class);
+                }
+            }
+            
+            # TODO: figure out how to pair @from_sr and @to_sr
+            #my %comparisons;
+            #my @from_sr = $from_build->software_results;
+            #my @to_sr = $to_build->software_results;
+            #for my $from_sr (@from_sr) {
+            #    my $sr_class = $from_sr->class;
+            #    my $compare_class = $sr_class . "::Command::Compare::" . ucfirst(lc($aspect));
+            #    if (UR::Object::Type->get($sr_class)) {
+            #        my $a = $comparisons{$compare_class} ||= [];
+            #        push @$a, $from_sr;
+            #    }
+            #}
+            
             # each ::Compare::X module should produce a software result for the build pair
             # each comparison should have an output directory linked under the build directory
         }
