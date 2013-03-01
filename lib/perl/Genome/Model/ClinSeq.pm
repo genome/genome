@@ -128,21 +128,12 @@ sub _resolve_subject {
 #Implement specific error checking here, any error that is added to the @errors array will prevent the model from being commited to the database
 #Could also implement a --force input above to allow over-riding of errors
 sub __errors__ {
-    my $self = shift;
-
-    my @errors = $self->SUPER::__errors__;
-
-#    unless(-e $self->input_fasta_file && -f $self->input_fasta_file) {
-#        push @errors,UR::Object::Tag->create(
-#            type => 'error',
-#            properties => ['input_fasta_file'],
-#            desc => 'input_fasta_file does not exist or is not a file'
-#        );
-#    }
-
-    return @errors;
+  my $self = shift;
+  my @errors = $self->SUPER::__errors__;
+  return @errors;
 }
 
+#MAP WORKFLOW INPUTS
 sub map_workflow_inputs {
     my $self = shift;
     my $build = shift;
@@ -154,8 +145,7 @@ sub map_workflow_inputs {
     my $tumor_rnaseq_build  = $build->tumor_rnaseq_build;
     my $normal_rnaseq_build = $build->normal_rnaseq_build;
 
-    # this is currently tracked as an input on the build
-    # it should really be an output/metric
+    # this is currently tracked as an input on the build but it should really be an output/metric
     my $common_name = $self->expected_common_name;
     $build->common_name($common_name);
 
@@ -174,7 +164,7 @@ sub map_workflow_inputs {
     my $patient_dir = $data_directory . "/" . $common_name;
     my @dirs = ($patient_dir);
 
-    # summarize builds
+    #SummarizeBuilds
     my $input_summary_dir = $patient_dir . "/input";
     push @dirs, $input_summary_dir;
     push @inputs, summarize_builds_outdir => $input_summary_dir;
@@ -187,12 +177,16 @@ sub map_workflow_inputs {
       push @inputs, summarize_builds_skip_lims_reports => 1;
     }
 
-    # dump igv xml
+    #DumpIgvXml
     my $igv_session_dir = $patient_dir . '/igv';
     push @dirs, $igv_session_dir;
     push @inputs, igv_session_dir => $igv_session_dir;
 
-    # Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
+    #ImportSnvsIndels
+    push @inputs, import_snvs_indels_filter_mt => 1;
+    push @inputs, import_snvs_indels_outdir => $patient_dir;
+
+    #CreateMutationDiagrams
     if ($build->wgs_build or $build->exome_build) {
       my $mutation_diagram_dir = $patient_dir . '/mutation_diagrams';
       push @dirs, $mutation_diagram_dir;
@@ -210,24 +204,32 @@ sub map_workflow_inputs {
       push @dirs, $rnaseq_dir;
       
       push @inputs, cufflinks_percent_cutoff => 1;
-      
-      #cufflinks expression absolute
+
+      #TophatJunctionsAbsolute and CufflinksExpressionAbsolute for 'normal' sample
       if ($build->normal_rnaseq_build){
         my $normal_rnaseq_dir = $rnaseq_dir . '/normal';
         push @dirs, $normal_rnaseq_dir;
+        my $normal_tophat_junctions_absolute_dir = $normal_rnaseq_dir . '/tophat_junctions_absolute';
+        push @dirs, $normal_tophat_junctions_absolute_dir;
+        push @inputs, normal_tophat_junctions_absolute_dir => $normal_tophat_junctions_absolute_dir;
         my $normal_cufflinks_expression_absolute_dir = $normal_rnaseq_dir . '/cufflinks_expression_absolute';
         push @dirs, $normal_cufflinks_expression_absolute_dir;
         push @inputs, normal_cufflinks_expression_absolute_dir => $normal_cufflinks_expression_absolute_dir;
       }
+
+      #TophatJunctionsAbsolute and CufflinksExpressionAbsolute for 'tumor' sample
       if ($build->tumor_rnaseq_build){
         my $tumor_rnaseq_dir = $rnaseq_dir . '/tumor';
         push @dirs, $tumor_rnaseq_dir;
+        my $tumor_tophat_junctions_absolute_dir = $tumor_rnaseq_dir . '/tophat_junctions_absolute';
+        push @dirs, $tumor_tophat_junctions_absolute_dir;
+        push @inputs, tumor_tophat_junctions_absolute_dir => $tumor_tophat_junctions_absolute_dir;
         my $tumor_cufflinks_expression_absolute_dir = $tumor_rnaseq_dir . '/cufflinks_expression_absolute';
         push @dirs, $tumor_cufflinks_expression_absolute_dir;
         push @inputs, tumor_cufflinks_expression_absolute_dir => $tumor_cufflinks_expression_absolute_dir;
       }
 
-      #cufflink differential expression
+      #CufflinksDifferentialExpression
       if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
         my $cufflinks_differential_expression_dir = $rnaseq_dir . '/cufflinks_differential_expression';
         push @dirs, $cufflinks_differential_expression_dir;
@@ -235,28 +237,28 @@ sub map_workflow_inputs {
       }
     }
 
-    #Perform clonality analysis and generate clonality plots
+    #GenerateClonalityPlots
     if ($build->wgs_build){
       my $clonality_dir = $patient_dir . "/clonality/";
       push @dirs, $clonality_dir;
       push @inputs, clonality_dir => $clonality_dir;      
     }
 
-    #Run cn-vew analysis
+    #RunCnView
     if ($build->wgs_build){
       my $cnv_dir = $patient_dir . "/cnv/";
       push @dirs, $cnv_dir;
       push @inputs, cnv_dir => $cnv_dir;
     }
 
-    #Summarize SV results
+    #SummarizeSvs
     if ($build->wgs_build){
       my $sv_dir = $patient_dir . "/sv/";
       push @dirs, $sv_dir;
       push @inputs, sv_dir => $sv_dir;
     }
 
-    #Create mutation-spectrum results from WGS and exome results
+    #CreateMutationSpectrum
     if ($build->wgs_build) {
         push @inputs, 'wgs_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
         push @inputs, 'wgs_mutation_spectrum_datatype' => 'wgs';
@@ -266,9 +268,13 @@ sub map_workflow_inputs {
         push @inputs, 'exome_mutation_spectrum_datatype' => 'exome';
     }
 
-    # For now it works to create directories here because the data_directory
-    # has been allocated.  It is possible that this would not happen until
-    # later, which would mess up assigning inputs to many of the commands.
+    #AnnotateGenesByCategory
+    my $gene_symbol_lists_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/";    
+    push @inputs, 'gene_symbol_lists_dir' => $gene_symbol_lists_dir;
+    push @inputs, 'gene_name_column' => 'mapped_gene_name';
+
+    # For now it works to create directories here because the data_directory has been allocated.  
+    #It is possible that this would not happen until later, which would mess up assigning inputs to many of the commands.
     for my $dir (@dirs) {
         Genome::Sys->create_directory($dir);
     }
@@ -313,6 +319,11 @@ sub _resolve_workflow_for_build {
             wgs_mutation_spectrum_result
             clonality_result
             run_cn_view_result
+            gene_category_cnv_amp_result
+            gene_category_cnv_del_result
+            gene_category_cnv_ampdel_result
+            gene_category_wgs_snv_result
+            gene_category_wgs_indel_result
         );
     }
 
@@ -320,29 +331,40 @@ sub _resolve_workflow_for_build {
         push @output_properties, qw(
             summarize_exome_tier1_snv_support_result
             exome_mutation_spectrum_result
+            gene_category_exome_snv_result
+            gene_category_exome_indel_result
         );
     }
 
     if ($build->wgs_build and $build->exome_build) {
         push @output_properties, 'summarize_wgs_exome_tier1_snv_support_result';
+        push @output_properties, 'gene_category_wgs_exome_indel_result';
+        push @output_properties, 'gene_category_wgs_exome_snv_result';
     }
 
     if ($build->wgs_build or $build->exome_build) {
         push @output_properties, 'mutation_diagram_result';
+        push @output_properties, 'import_snvs_indels_result';
     }
 
     if ($build->normal_rnaseq_build){
+        push @output_properties, 'normal_tophat_junctions_absolute_result';
         push @output_properties, 'normal_cufflinks_expression_absolute_result';
     }
 
     if ($build->tumor_rnaseq_build){
+        push @output_properties, 'tumor_tophat_junctions_absolute_result';
         push @output_properties, 'tumor_cufflinks_expression_absolute_result';
+        push @output_properties, 'gene_category_cufflinks_result';
+        push @output_properties, 'gene_category_tophat_result';
     }
 
     if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
         push @output_properties, 'cufflinks_differential_expression_result';
+        push @output_properties, 'gene_category_coding_de_up_result';
+        push @output_properties, 'gene_category_coding_de_down_result';
+        push @output_properties, 'gene_category_coding_de_result';
     }
-
 
     # Make the workflow and some convenience wrappers for adding steps and links
 
@@ -488,9 +510,8 @@ sub _resolve_workflow_for_build {
     # Add steps which go in parallel with the Main step before setting up Main.
     # This will ensure testing goes more quickly because these will happen first.
     #
-    
 
-    #Summarize build inputs using SummarizeBuilds.pm
+    #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
     my $msg = "Creating a summary of input builds using summarize-builds";
     my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
     $add_link->($input_connector, 'build', $summarize_builds_op, 'builds');
@@ -499,53 +520,86 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
     $add_link->($summarize_builds_op, 'result', $output_connector, 'summarize_builds_result');
 
-    #Create mutation spectrum results for wgs data
+    #ImportSnvsIndels - Import SNVs and Indels
+    my $import_snvs_indels_op;
+    if ($build->wgs_build or $build->exome_build){
+      $msg = "Importing SNVs and Indels from somatic results, parsing, and merging exome/wgs if possible";
+      $import_snvs_indels_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::ImportSnvsIndels");
+      $add_link->($input_connector, 'import_snvs_indels_outdir', $import_snvs_indels_op, 'outdir');
+      $add_link->($input_connector, 'import_snvs_indels_filter_mt', $import_snvs_indels_op, 'filter_mt');
+      if ($build->wgs_build){
+        $add_link->($input_connector, 'wgs_build', $import_snvs_indels_op, 'wgs_build');
+      }
+      if ($build->exome_build){
+        $add_link->($input_connector, 'exome_build', $import_snvs_indels_op, 'exome_build');
+      }
+      $add_link->($import_snvs_indels_op, 'result', $output_connector, 'import_snvs_indels_result');
+    }
+
+    #CreateMutationDiagrams - Create mutation spectrum results for wgs data
     if ($build->wgs_build) {
-        $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum";
-        my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-        $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'build');
-        $add_link->($input_connector, 'wgs_mutation_spectrum_outdir', $create_mutation_spectrum_wgs_op, 'outdir');
-        $add_link->($input_connector, 'wgs_mutation_spectrum_datatype', $create_mutation_spectrum_wgs_op, 'datatype');
-        $add_link->($create_mutation_spectrum_wgs_op, 'result', $output_connector, 'wgs_mutation_spectrum_result')
+      $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum";
+      my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+      $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'build');
+      $add_link->($input_connector, 'wgs_mutation_spectrum_outdir', $create_mutation_spectrum_wgs_op, 'outdir');
+      $add_link->($input_connector, 'wgs_mutation_spectrum_datatype', $create_mutation_spectrum_wgs_op, 'datatype');
+      $add_link->($create_mutation_spectrum_wgs_op, 'result', $output_connector, 'wgs_mutation_spectrum_result')
     }
 
-    #Create mutation spectrum results for exome data
+    #CreateMutationDiagrams - Create mutation spectrum results for exome data
     if ($build->exome_build) {
-        $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum";
-        my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-        $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'build');
-        $add_link->($input_connector, 'exome_mutation_spectrum_outdir', $create_mutation_spectrum_exome_op, 'outdir');
-        $add_link->($input_connector, 'exome_mutation_spectrum_datatype', $create_mutation_spectrum_exome_op, 'datatype');
-        $add_link->($create_mutation_spectrum_exome_op, 'result', $output_connector, 'exome_mutation_spectrum_result')
+      $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum";
+      my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+      $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'build');
+      $add_link->($input_connector, 'exome_mutation_spectrum_outdir', $create_mutation_spectrum_exome_op, 'outdir');
+      $add_link->($input_connector, 'exome_mutation_spectrum_datatype', $create_mutation_spectrum_exome_op, 'datatype');
+      $add_link->($create_mutation_spectrum_exome_op, 'result', $output_connector, 'exome_mutation_spectrum_result')
     }
 
-    #Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
+    #CreateMutationDiagrams - Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
     if ($build->wgs_build or $build->exome_build) {
-        my $msg = "Creating mutation-diagram plots";
-        my $mutation_diagram_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::CreateMutationDiagrams");
-        $DB::single = 1;
-        if ($build->wgs_build and $build->exome_build) {
-            $add_link->($input_connector,['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
-        }
-        elsif ($build->wgs_build) {
-            $add_link->($input_connector,'wgs_build',$mutation_diagram_op,'builds');
-        }
-        elsif ($build->exome_build) {
-            $add_link->($input_connector,'exome_build',$mutation_diagram_op,'builds');
-        }
-        else {
-            die "impossible!";
-        }
-        $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
-        
-        for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
-            my $input_name = 'mutation_diagram_' . $p;
-            $add_link->($input_connector,$input_name,$mutation_diagram_op,$p);
-        }
+      my $msg = "Creating mutation-diagram plots";
+      my $mutation_diagram_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::CreateMutationDiagrams");
+      if ($build->wgs_build and $build->exome_build) {
+          $add_link->($input_connector,['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
+      }
+      elsif ($build->wgs_build) {
+          $add_link->($input_connector,'wgs_build',$mutation_diagram_op,'builds');
+      }
+      elsif ($build->exome_build) {
+          $add_link->($input_connector,'exome_build',$mutation_diagram_op,'builds');
+      }
+      else {
+          die "impossible!";
+      }
+      $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
+      
+      for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
+          my $input_name = 'mutation_diagram_' . $p;
+          $add_link->($input_connector,$input_name,$mutation_diagram_op,$p);
+      }
     }
 
+    #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on normal
+    my $normal_tophat_junctions_absolute_op;
+    if ($build->normal_rnaseq_build){
+      my $msg = "Performing tophat junction expression absolute analysis for normal sample";
+      $normal_tophat_junctions_absolute_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute');
+      $add_link->($input_connector, 'normal_rnaseq_build', $normal_tophat_junctions_absolute_op, 'build');
+      $add_link->($input_connector, 'normal_tophat_junctions_absolute_dir', $normal_tophat_junctions_absolute_op, 'outdir');
+      $add_link->($normal_tophat_junctions_absolute_op, 'result', $output_connector, 'normal_tophat_junctions_absolute_result'); 
+    }
+    #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on tumor
+    my $tumor_tophat_junctions_absolute_op;
+    if ($build->tumor_rnaseq_build){
+      my $msg = "Performing tophat junction expression absolute analysis for tumor sample";
+      $tumor_tophat_junctions_absolute_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute');
+      $add_link->($input_connector, 'tumor_rnaseq_build', $tumor_tophat_junctions_absolute_op, 'build');
+      $add_link->($input_connector, 'tumor_tophat_junctions_absolute_dir', $tumor_tophat_junctions_absolute_op, 'outdir');
+      $add_link->($tumor_tophat_junctions_absolute_op, 'result', $output_connector, 'tumor_tophat_junctions_absolute_result'); 
+    }
 
-    #Run cufflinks expression absolute analysis on normal
+    #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
     my $normal_cufflinks_expression_absolute_op;
     if ($build->normal_rnaseq_build){
       my $msg = "Performing cufflinks expression absolute analysis for normal sample";
@@ -555,8 +609,7 @@ sub _resolve_workflow_for_build {
       $add_link->($input_connector, 'cufflinks_percent_cutoff', $normal_cufflinks_expression_absolute_op, 'percent_cutoff');
       $add_link->($normal_cufflinks_expression_absolute_op, 'result', $output_connector, 'normal_cufflinks_expression_absolute_result'); 
     }
-
-    #Run cufflinks expression absolute analysis on tumor
+    #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on tumor
     my $tumor_cufflinks_expression_absolute_op;
     if ($build->tumor_rnaseq_build){
       my $msg = "Performing cufflinks expression absolute analysis for tumor sample";
@@ -567,17 +620,18 @@ sub _resolve_workflow_for_build {
       $add_link->($tumor_cufflinks_expression_absolute_op, 'result', $output_connector, 'tumor_cufflinks_expression_absolute_result');
     }
 
-    #Run cufflinks differential expression
+    #CufflinksDifferentialExpression - Run cufflinks differential expression
+    my $cufflinks_differential_expression_op;
     if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
       my $msg = "Performing cufflinks differential expression analysis for case vs. control (e.g. tumor vs. normal)";
-      my $cufflinks_differential_expression_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression');
+      $cufflinks_differential_expression_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression');
       $add_link->($input_connector, 'normal_rnaseq_build', $cufflinks_differential_expression_op, 'control_build');
       $add_link->($input_connector, 'tumor_rnaseq_build', $cufflinks_differential_expression_op, 'case_build');
       $add_link->($input_connector, 'cufflinks_differential_expression_dir', $cufflinks_differential_expression_op, 'outdir');
       $add_link->($cufflinks_differential_expression_op, 'result', $output_connector, 'cufflinks_differential_expression_result');
     }
 
-    #Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
+    #DumpIgvXml - Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
     #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
     $msg = "Create IGV XML session files for varying levels of detail using the input builds";
     my $igv_session_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::DumpIgvXml");
@@ -585,7 +639,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'igv_session_dir', $igv_session_op, 'outdir');
     $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result'); 
 
-    #Run clonality analysis and produce clonality plots
+    #GenerateClonalityPlots - Run clonality analysis and produce clonality plots
     $msg = "Run clonality analysis and produce clonality plots";
     my $clonality_op;
     if ($build->wgs_build){
@@ -596,7 +650,7 @@ sub _resolve_workflow_for_build {
       $add_link->($clonality_op, 'result', $output_connector, 'clonality_result'); 
     }
 
-    #Produce copy number results with run-cn-view.  Relies on clonality step already having been run
+    #RunCnView - Produce copy number results with run-cn-view.  Relies on clonality step already having been run
     my $run_cn_view_op;
     if ($build->wgs_build){
       $msg = "Use gmt copy-number cn-view to produce copy number tables and images";
@@ -607,7 +661,7 @@ sub _resolve_workflow_for_build {
       $add_link->($run_cn_view_op, 'result', $output_connector, 'run_cn_view_result');
     }
    
-    #Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
+    #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
     #This step relies on the generate-clonality-plots step already having been run 
     #It also relies on run-cn-view step having been run already
     if ($build->wgs_build){
@@ -621,13 +675,157 @@ sub _resolve_workflow_for_build {
         $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
     }
 
-    #Generate a summary of SV results from the WGS SV results
+    #SummarizeSvs - Generate a summary of SV results from the WGS SV results
     if ($build->wgs_build){
         my $msg = "Summarize SV results from WGS somatic variation";
         my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
         $add_link->($input_connector, 'wgs_build', $summarize_svs_op, 'builds');
         $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
         $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
+    }
+
+    #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
+    #Example files to annotate in this way: 
+    # AML103/snv/exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv -> gene_category_exome_snv_result
+    # AML103/snv/wgs/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv -> gene_category_wgs_snv_result
+    # AML103/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv -> gene_category_wgs_exome_snv_result
+    # AML103/indel/exome/indels.hq.tier1.v1.annotated.compact.tsv	-> gene_category_exome_indel_result
+    # AML103/indel/wgs/indels.hq.tier1.v1.annotated.compact.tsv	-> gene_category_wgs_indel_result
+    # AML103/indel/wgs_exome/indels.hq.tier1.v1.annotated.compact.tsv	-> gene_category_wgs_exome_indel_result
+    # AML103/cnv/cnview/cnv.All_genes.amp.tsv -> gene_category_cnv_amp_result
+    # AML103/cnv/cnview/cnv.All_genes.del.tsv -> gene_category_cnv_del_result
+    # AML103/cnv/cnview/cnv.All_genes.ampdel.tsv -> gene_category_cnv_ampdel_result
+    # AML103/rnaseq/tumor/cufflinks_expression_absolute/isoforms_merged/isoforms.merged.fpkm.expsort.top1percent.tsv -> gene_category_cufflinks_result
+    # AML103/rnaseq/tumor/tophat_junctions_absolute/NCBI-human.ensembl-67_37l_v2.Junction.GeneExpression.top1percent.tsv -> gene_category_tophat_result
+    # H_MF-F6-8-R12/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.up.tsv -> gene_category_coding_de_up_result
+    # H_MF-F6-8-R12/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.down.tsv -> gene_category_coding_de_down_result
+    # H_MF-F6-8-R12/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.de.tsv -> gene_category_coding_de_result
+
+    #AnnotateGenesByCategory - gene_category_exome_snv_result
+    if ($build->exome_build){
+      my $msg = "Add gene category annotations to SNVs identified by exome";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($import_snvs_indels_op, 'exome_snv_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_exome_snv_result');
+    }
+    #AnnotateGenesByCategory - gene_category_wgs_snv_result
+    if ($build->wgs_build){
+      my $msg = "Add gene category annotations to SNVs identified by wgs";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($import_snvs_indels_op, 'wgs_snv_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_snv_result');
+    }
+    #AnnotateGenesByCategory - gene_category_wgs_exome_snv_result
+    if ($build->wgs_build and $build->exome_build){
+      my $msg = "Add gene category annotations to SNVs identified by wgs OR exome";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($import_snvs_indels_op, 'wgs_exome_snv_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_exome_snv_result');
+    }
+    #AnnotateGenesByCategory - gene_category_exome_indel_result
+    if ($build->exome_build){
+      my $msg = "Add gene category annotations to InDels identified by exome";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($import_snvs_indels_op, 'exome_indel_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_exome_indel_result');
+    }
+    #AnnotateGenesByCategory - gene_category_wgs_indel_result
+    if ($build->wgs_build){
+      my $msg = "Add gene category annotations to InDels identified by wgs";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($import_snvs_indels_op, 'wgs_indel_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_indel_result');
+    }
+    #AnnotateGenesByCategory - gene_category_wgs_exome_indel_result
+    if ($build->wgs_build and $build->exome_build){
+      my $msg = "Add gene category annotations to InDels identified by wgs OR exome";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($import_snvs_indels_op, 'wgs_exome_indel_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_exome_indel_result');
+    }
+    #AnnotateGenesByCategory - gene_category_cnv_amp_result
+    if ($build->wgs_build){
+      my $msg = "Add gene category annotations to CNV amp genes";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($run_cn_view_op, 'gene_amp_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_amp_result');
+    }
+    #AnnotateGenesByCategory - gene_category_cnv_del_result
+    if ($build->wgs_build){
+      my $msg = "Add gene category annotations to CNV del genes";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($run_cn_view_op, 'gene_del_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_del_result');
+    }
+    #AnnotateGenesByCategory - gene_category_cnv_ampdel_result
+    if ($build->wgs_build){
+      my $msg = "Add gene category annotations to CNV amp OR del genes";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($run_cn_view_op, 'gene_ampdel_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_ampdel_result');
+    }
+    #AnnotateGenesByCategory - gene_category_cufflinks_result
+    if ($build->tumor_rnaseq_build){
+      my $msg = "Add gene category annotations to cufflinks top1 percent genes";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_topnpercent_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cufflinks_result');
+    }
+    #AnnotateGenesByCategory - gene_category_tophat_result
+    if ($build->tumor_rnaseq_build){
+      my $msg = "Add gene category annotations to tophat junctions top1 percent genes";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($tumor_tophat_junctions_absolute_op, 'junction_topnpercent_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_tophat_result');
+    }
+    #AnnotateGenesByCategory - gene_category_coding_de_up_result
+    if ($build->normal_rnaseq_build && $build->tumor_rnaseq_build){
+      my $msg = "Add gene category annotations to up-regulated coding genes";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($cufflinks_differential_expression_op, 'coding_hq_up_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_up_result');
+    }
+    #AnnotateGenesByCategory - gene_category_coding_de_down_result
+    if ($build->normal_rnaseq_build && $build->tumor_rnaseq_build){
+      my $msg = "Add gene category annotations to down-regulated coding genes";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($cufflinks_differential_expression_op, 'coding_hq_down_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_down_result');
+    }
+    #AnnotateGenesByCategory - gene_category_coding_de_result
+    if ($build->normal_rnaseq_build && $build->tumor_rnaseq_build){
+      my $msg = "Add gene category annotations to DE coding genes";
+      my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
+      $add_link->($cufflinks_differential_expression_op, 'coding_hq_de_file', $annotate_genes_by_category_op, 'infile');
+      $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
+      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
+      $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_result');
     }
 
 
@@ -659,7 +857,7 @@ sub _resolve_workflow_for_build {
     # or which only feed into things which have already been broken-out.
     #
 
-    #For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
+    #SummarizeTier1SnvSupport - For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
     #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
     #TODO: Break this down to do direct calls to GetBamReadCounts instead of wrapping it.
     for my $run (qw/wgs exome wgs_exome/) {
