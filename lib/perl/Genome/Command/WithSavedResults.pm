@@ -23,5 +23,11 @@ EOS
     return 1;
 }
 
+sub _copyable_properties {
+    # TODO: move this into a more central place.
+    # The ::Default class needs it even for things which are not of this subclass.
+    return Genome::SoftwareResult::Default::_copyable_properties(@_);
+}
+
 1;
 
