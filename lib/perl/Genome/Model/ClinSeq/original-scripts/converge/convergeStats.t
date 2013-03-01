@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 5;
+use Test::More tests => 4;
 use Genome::Model::ClinSeq::Command::Tester qw(run_and_diff);
 
 run_and_diff(
