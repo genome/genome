@@ -182,6 +182,20 @@ sub map_workflow_inputs {
     push @dirs, $igv_session_dir;
     push @inputs, igv_session_dir => $igv_session_dir;
 
+    #GetVariantSources
+    if ($build->wgs_build or $build->exome_build) {
+      my $variant_sources_dir = $patient_dir . '/variant_source_callers';
+      push @dirs, $variant_sources_dir;
+      if ($build->wgs_build){
+        my $wgs_variant_sources_dir = $variant_sources_dir . '/wgs';
+        push @inputs, wgs_variant_sources_dir => $wgs_variant_sources_dir;
+      }
+      if ($build->exome_build){
+        my $exome_variant_sources_dir = $variant_sources_dir . '/exome';
+        push @inputs, exome_variant_sources_dir => $exome_variant_sources_dir;
+      }
+    }
+
     #ImportSnvsIndels
     push @inputs, import_snvs_indels_filter_mt => 1;
     push @inputs, import_snvs_indels_outdir => $patient_dir;
@@ -324,6 +338,7 @@ sub _resolve_workflow_for_build {
             gene_category_cnv_ampdel_result
             gene_category_wgs_snv_result
             gene_category_wgs_indel_result
+            wgs_variant_sources_result
         );
     }
 
@@ -333,6 +348,7 @@ sub _resolve_workflow_for_build {
             exome_mutation_spectrum_result
             gene_category_exome_snv_result
             gene_category_exome_indel_result
+            exome_variant_sources_result
         );
     }
 
@@ -523,7 +539,7 @@ sub _resolve_workflow_for_build {
     #ImportSnvsIndels - Import SNVs and Indels
     my $import_snvs_indels_op;
     if ($build->wgs_build or $build->exome_build){
-      $msg = "Importing SNVs and Indels from somatic results, parsing, and merging exome/wgs if possible";
+      my $msg = "Importing SNVs and Indels from somatic results, parsing, and merging exome/wgs if possible";
       $import_snvs_indels_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::ImportSnvsIndels");
       $add_link->($input_connector, 'import_snvs_indels_outdir', $import_snvs_indels_op, 'outdir');
       $add_link->($input_connector, 'import_snvs_indels_filter_mt', $import_snvs_indels_op, 'filter_mt');
@@ -536,9 +552,26 @@ sub _resolve_workflow_for_build {
       $add_link->($import_snvs_indels_op, 'result', $output_connector, 'import_snvs_indels_result');
     }
 
+    #GetVariantSources - Determine source variant caller for SNVs and InDels for wgs data
+    if ($build->wgs_build) {
+      my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for wgs data";
+      my $wgs_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
+      $add_link->($input_connector, 'wgs_build', $wgs_variant_sources_op, 'builds');
+      $add_link->($input_connector, 'wgs_variant_sources_dir', $wgs_variant_sources_op, 'outdir');
+      $add_link->($wgs_variant_sources_op, 'result', $output_connector, 'wgs_variant_sources_result');
+    }
+    #GetVariantSources - Determine source variant caller for SNVs and InDels for exome data
+    if ($build->exome_build) {
+      my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for exome data";
+      my $exome_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
+      $add_link->($input_connector, 'exome_build', $exome_variant_sources_op, 'builds');
+      $add_link->($input_connector, 'exome_variant_sources_dir', $exome_variant_sources_op, 'outdir');
+      $add_link->($exome_variant_sources_op, 'result', $output_connector, 'exome_variant_sources_result');
+    }
+
     #CreateMutationDiagrams - Create mutation spectrum results for wgs data
     if ($build->wgs_build) {
-      $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum";
+      my $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum";
       my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
       $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'build');
       $add_link->($input_connector, 'wgs_mutation_spectrum_outdir', $create_mutation_spectrum_wgs_op, 'outdir');
@@ -548,7 +581,7 @@ sub _resolve_workflow_for_build {
 
     #CreateMutationDiagrams - Create mutation spectrum results for exome data
     if ($build->exome_build) {
-      $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum";
+      my $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum";
       my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
       $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'build');
       $add_link->($input_connector, 'exome_mutation_spectrum_outdir', $create_mutation_spectrum_exome_op, 'outdir');
