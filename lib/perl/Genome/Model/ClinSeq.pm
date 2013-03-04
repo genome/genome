@@ -189,10 +189,12 @@ sub map_workflow_inputs {
       if ($build->wgs_build){
         my $wgs_variant_sources_dir = $variant_sources_dir . '/wgs';
         push @inputs, wgs_variant_sources_dir => $wgs_variant_sources_dir;
+        push @dirs, $wgs_variant_sources_dir;
       }
       if ($build->exome_build){
         my $exome_variant_sources_dir = $variant_sources_dir . '/exome';
         push @inputs, exome_variant_sources_dir => $exome_variant_sources_dir;
+        push @dirs, $exome_variant_sources_dir;
       }
     }
 
@@ -435,7 +437,7 @@ sub _resolve_workflow_for_build {
 
         my $link;
         if (ref($from_p) eq 'ARRAY') {
-            my $cname = "(combine @$from_p for \"" . $to_op->name . "$to_p\")";
+            my $cname = "Combine: (@$from_p) for \"" . $to_op->name . "\" parameter \'$to_p\'";
             my $converge_op = $converge->($cname,$from_op,$from_p);
             $link = $workflow->add_link(
                 left_operation => $converge_op,
@@ -594,16 +596,13 @@ sub _resolve_workflow_for_build {
       my $msg = "Creating mutation-diagram plots";
       my $mutation_diagram_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::CreateMutationDiagrams");
       if ($build->wgs_build and $build->exome_build) {
-          $add_link->($input_connector,['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
+          $add_link->($input_connector, ['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
       }
       elsif ($build->wgs_build) {
-          $add_link->($input_connector,'wgs_build',$mutation_diagram_op,'builds');
+          $add_link->($input_connector, 'wgs_build', $mutation_diagram_op, 'builds');
       }
       elsif ($build->exome_build) {
-          $add_link->($input_connector,'exome_build',$mutation_diagram_op,'builds');
-      }
-      else {
-          die "impossible!";
+          $add_link->($input_connector, 'exome_build', $mutation_diagram_op, 'builds');
       }
       $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
       
