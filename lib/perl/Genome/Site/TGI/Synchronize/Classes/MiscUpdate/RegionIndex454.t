@@ -192,7 +192,7 @@ is($genome_entity->class, $genome_class_name, 'Correct genome entity class name'
 is($genome_entity->id, $id454->id, 'Correct genome entity id');
 ok($misc_update->perform_update, 'Perform update');
 is($misc_update->result, 'SKIP', 'Correct result after update');
-is($misc_update->status, "SKIP	UPDATE	test.region_index_454	-100	library_id	'NA'	'-101'	'3'", 'Correct status after update');
+is($misc_update->status, "SKIP	UPDATE	test.region_index_454	-100	library_id	'-101'	'-101'	'3'", 'Correct status after update');
 ok(!$misc_update->is_reconciled, 'Is NOT reconciled');
 is($misc_update->status_message, 'Update for genome property name not supported => library_id', 'Correct status message after update');
 is($id454->library_id, -101, 'Did NOT update library_id on id454');
