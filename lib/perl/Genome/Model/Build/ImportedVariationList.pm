@@ -114,7 +114,7 @@ sub snvs_file {
 
     my $snvs_file_path = join('/', $snv_result->output_dir, "snvs.hq.$format");
     unless (-e $snvs_file_path) {
-        $self->errors_message("SNVs file not found: $snvs_file_path");
+        $self->error_message("SNVs file not found: $snvs_file_path");
         return;
     }
     $self->status_message("Found SNV file path: " . $snvs_file_path);
