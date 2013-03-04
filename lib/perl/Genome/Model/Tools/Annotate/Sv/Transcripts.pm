@@ -87,7 +87,7 @@ sub process_item {
         my $flankingListB;
         my %geneDedup;
 
-        if ($flankingARef) {
+        if ($flankingARef and scalar @{$flankingARef}) {
             my @flankingA = @{$flankingARef};
             foreach my $t (@flankingA) {
                 my $gene = $t->gene_name;
@@ -99,7 +99,7 @@ sub process_item {
             $flankingListA = "N/A";
         }
         %geneDedup = ();
-        if ($flankingBRef) {
+        if ($flankingBRef and scalar @{$flankingBRef}) {
             my @flankingB = @{$flankingBRef};
             foreach my $t (@flankingB) {
                 my $gene = $t->gene_name;

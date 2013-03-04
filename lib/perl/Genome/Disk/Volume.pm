@@ -19,8 +19,14 @@ class Genome::Disk::Volume {
         hostname => { is => 'Text' },
         physical_path => { is => 'Text' },
         mount_path => { is => 'Text' },
-        disk_status => { is => 'Text' },
-        can_allocate => { is => 'Number' },
+        disk_status => {
+            is => 'Text',
+            valid_values => ['inactive', 'active'],
+        },
+        can_allocate => {
+            is => 'Number',
+            valid_values => [0, 1],
+        },
 
         # TODO remove this field when we switch to postgres
         _placeholder_creation_event_id => {
@@ -321,29 +327,34 @@ sub sync_unallocated_kb {
     }
 }
 
+sub is_allocated_over_soft_limit {
+    my $self = shift;
+    return ($self->allocated_kb > $self->soft_limit_kb);
+}
+
+sub is_used_over_soft_limit {
+    my $self = shift;
+    return ($self->used_kb > $self->soft_limit_kb);
+}
+
 sub is_over_soft_limit {
     my $self = shift;
+    return ($self->is_allocated_over_soft_limit || $self->is_used_over_soft_limit);
+}
 
-    my $allocated_kb = $self->allocated_kb; # "cache" value
-    if ($allocated_kb > $self->soft_limit_kb) {
-        $self->status_message(sprintf("%s's allocated_kb exceeded soft limit (%d > %d), rolling back allocation.", $self->mount_path, $allocated_kb, $self->soft_limit_kb));
-        return 1;
-    }
+sub is_allocated_over_hard_limit {
+    my $self = shift;
+    return ($self->allocated_kb > $self->hard_limit_kb);
+}
 
-    my $used_kb = $self->used_kb; # "cache" value
-    if ($self->used_kb > $self->soft_limit_kb) {
-        $self->status_message(sprintf("%s's used_kb exceeded soft limit (%d > %d), rolling back allocation.", $self->mount_path, $used_kb, $self->soft_limit_kb));
-        return 1;
-    }
-    return 0;
+sub is_used_over_hard_limit {
+    my $self = shift;
+    return ($self->used_kb > $self->hard_limit_kb);
 }
 
 sub is_over_hard_limit {
     my $self = shift;
-    return (
-        $self->allocated_kb > $self->hard_limit_kb
-        || $self->used_kb > $self->hard_limit_kb
-    );
+    return ($self->is_allocated_over_hard_limit || $self->is_used_over_hard_limit);
 }
 
 1;

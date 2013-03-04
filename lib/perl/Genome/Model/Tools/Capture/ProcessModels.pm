@@ -184,7 +184,7 @@ sub execute {                               # replace with real execution logic.
 				}
 				my $cmd;
 				if ($stable) {
-					$cmd = "perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ `which gmt` germline capture-bams --build-id $build_id --germline-bam-file $bam_file --filtered-indelpe-snps $snp_file --indels-all-sequences-filtered $indel_file --data-directory $sample_output_dir --skip-roi $skip_roi --only-tier-1 $only_tier_1 --only-tier-1-indel $only_tier_1 --regions-file $regions_file";
+					$cmd = "perl -I /gsc/scripts/opt/genome/current/pipeline/lib/perl/ -S gmt germline capture-bams --build-id $build_id --germline-bam-file $bam_file --filtered-indelpe-snps $snp_file --indels-all-sequences-filtered $indel_file --data-directory $sample_output_dir --skip-roi $skip_roi --only-tier-1 $only_tier_1 --only-tier-1-indel $only_tier_1 --regions-file $regions_file";
 
 				}
 				else {

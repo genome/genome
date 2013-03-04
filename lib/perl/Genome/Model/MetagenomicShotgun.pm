@@ -585,9 +585,9 @@ sub _extract_data_from_alignment_result{
 
     my $cmd;
     if ($aligner_name eq 'rtg mapx'){
-        $cmd = "genome-perl `which genome` model metagenomic-shotgun mapx-alignment-to-aligned-fastq --mapx-alignment $alignment_output --output-directory $working_dir --instrument-data $instrument_data_id";
+        $cmd = "genome-perl -S genome model metagenomic-shotgun mapx-alignment-to-aligned-fastq --mapx-alignment $alignment_output --output-directory $working_dir --instrument-data $instrument_data_id";
     }else{
-        $cmd = "genome-perl `which gmt` sam bam-to-unaligned-fastq --bam-file $alignment_output --output-directory $working_dir --ignore-bitflags"; #add ignore bitflags here because some of the aligners used in this pipeline produce untrustworthy flag information
+        $cmd = "genome-perl -S gmt sam bam-to-unaligned-fastq --bam-file $alignment_output --output-directory $working_dir --ignore-bitflags"; #add ignore bitflags here because some of the aligners used in this pipeline produce untrustworthy flag information
         if ($extraction_type eq 'aligned'){
             $cmd.=" --print-aligned";
         }

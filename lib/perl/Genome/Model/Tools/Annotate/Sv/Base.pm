@@ -11,8 +11,6 @@ use List::Util qw(min max);
 class Genome::Model::Tools::Annotate::Sv::Base{
     is => "Command::V2",
     has => [
-        
-        
         input_file => {
             is => 'String',
         },
@@ -28,6 +26,7 @@ class Genome::Model::Tools::Annotate::Sv::Base{
         },
         flanking_distance => {
             is => 'Integer',
+            is_input => 1,
             default => 50000,
             doc => 'Distance, in bp, for genes to be considered "flanking"',
         },
@@ -100,6 +99,31 @@ sub execute {
     $in->close;
 
     $breakpoints_list = $self->fill_in_transcripts($breakpoints_list, $build);
+    
+    my @transcripts_to_cache;
+    foreach my $chr (nsort keys %{$breakpoints_list}) {
+        my @transcripts;
+        foreach my $item (@{$breakpoints_list->{$chr}}) {
+            if ($item->{breakpoint_link}) {
+                next;
+            }
+            #push @transcripts, map{$_->id} @{$item->{transcripts_between_breakpoints}};
+            if ($item->{chrA} eq $chr) {
+                push @transcripts, map{$_->id} @{$item->{transcripts_crossing_breakpoint_a}};
+                #push @transcripts, map{$_->id} @{$item->{transcripts_flanking_breakpoint_a}};
+            }
+            if ($item->{chrB} eq $chr) {
+                push @transcripts, map{$_->id} @{$item->{transcripts_crossing_breakpoint_b}};
+                #push @transcripts, map{$_->id} @{$item->{transcripts_flanking_breakpoint_b}};
+            }
+        }
+        my @cached = Genome::TranscriptStructure->get(
+            chrom_name => $chr,
+            data_directory => $build->data_directory."/annotation_data",
+            transcript_id => \@transcripts,
+        );
+    }
+
     my @column_names = qw(chrA bpA chrB bpB event);
 
     my $content = $self->process_breakpoint_list($breakpoints_list);
