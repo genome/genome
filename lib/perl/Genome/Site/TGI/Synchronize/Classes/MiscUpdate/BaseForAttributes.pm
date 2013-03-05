@@ -40,7 +40,7 @@ sub _get_current_value {
     return $current_attr->attribute_value;
 }
 
-sub _update_value {
+sub X_update_value {
     my $self = shift;
 
     my $genome_entity = $self->genome_entity;
@@ -58,6 +58,7 @@ sub _update_value {
 
     my $new_value;
     if ( $genome_entity->can($genome_property_name) ) {
+        $new_value = $self->SUPER::_update_value();
         $new_value = $genome_entity->$genome_property_name($self->new_value);
     }
     else {
