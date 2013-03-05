@@ -107,15 +107,16 @@ for my $misc_update ( @misc_updates_that_skip_or_fail ) {
     $error_cnt++ if defined $misc_update->error_message;
     if ( $misc_update->result eq 'SKIP' ) {
         $skip_cnt++;
+        ok(!defined $misc_update->error_message, "SKIP misc update does not have an error");
+        print "error message: ".$misc_update->error_message."\n";
     }
     else {#FAILED
         $fail_cnt++;
+        ok(defined $misc_update->error_message, "FAILED misc update has an error");
     }
 }
 is($skip_cnt, @misc_updates_that_skip_or_fail - $fail_cnt, 'SKIP expected number misc updates');
-is($skip_cnt, @misc_updates_that_skip_or_fail - $error_cnt, 'SKIP misc updates do not have errors');
 is($fail_cnt, @misc_updates_that_skip_or_fail - $skip_cnt, 'FAILED expected number of misc updates');
-is($error_cnt, $fail_cnt, 'FAILED misc updates have errors');
 is($not_reconciled, @misc_updates_that_skip_or_fail, 'SKIP/FAILED misc updates are not reconciled');
 
 done_testing();
