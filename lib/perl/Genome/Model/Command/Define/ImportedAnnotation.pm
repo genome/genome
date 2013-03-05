@@ -154,6 +154,24 @@ sub _create_build {
                 Genome::Sys->create_directory($dirname);
             }
             Genome::Sys->copy_file($self->gtf_file, $annotation_file_path);
+            my $bed_file_path = $build->_resolve_annotation_file_name("all_sequences", "bed", $build->reference_sequence_id, 0, 0);
+            my $rv = Genome::Model::Tools::RefCov::GtfToBed->execute(
+                bed_file => $bed_file_path,
+                gff_file => $annotation_file_path,
+            );
+            unless($rv) {
+                $self->error_message("Failed to create bed file from gff file");
+                return;
+            }
+            my $squashed_bed_file_path = $build->_resolve_annotation_file_name("all_sequences-squashed", "bed", $build->reference_sequence_id, 0, 0);
+            $rv = Genome::Model::Tools::BedTools::MergeByGene->execute(
+                input_file => $bed_file_path,
+                output_file => $squashed_bed_file_path,
+            );
+            unless($rv) {
+                $self->error_message("Failed to create squashed bed file");
+                return;
+            }
         }
         $self->status_message('Started build (build is complete if it was run inline).');
     } else {
