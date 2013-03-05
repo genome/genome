@@ -21,6 +21,7 @@ sub perform_update {
     return $self->failure if not $site_tgi_class_name;
 
     my $current_value = $self->_get_current_value; # get and set for errors
+    return $self->failure if $self->error_message;
     $self->{_current_value} = $current_value;
 
     if ( not grep { $genome_property_name eq $_ } $site_tgi_class_name->properties_to_keep_updated ) {

@@ -244,6 +244,9 @@
 [submodule "vendor/htseq"]
 	path = vendor/htseq
 	url = git@github.com:genome-vendor/htseq.git
+[submodule "vendor/rna-star"]
+	path = vendor/rna-star
+	url = git@github.com:sakoht/rna-star.git
 [submodule "configuration-manager"]
 	path = configuration-manager
 	url = https://github.com/genome/configuration-manager.git
