@@ -33,7 +33,6 @@ use Genome;
 class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
     has_input => [
-        #fusion_output_file => {
         fusion_output_file => {
             type => 'String',
             doc  => 'output fusion annotation file',
@@ -48,31 +47,7 @@ NEED TO USE THE FASTA HEADER
 always before ,Ins:
 14.13,tumor14,Var:14.67672785.14.67673511.DEL.700.+-,Ins:560-586,Length:1341,KmerCoverage:29.01,Strand:+,Assembly_Score:1257.67,PercNonRefKmerUtil:0,TIGRA
 
-CTX ++
-CTX ++,++
-CTX ++,--
-CTX +-
-CTX +-,+-
-CTX +-,-+
-CTX +-,--
-CTX -+
-CTX -+,+-
-CTX -+,-+
-CTX -+,--
-CTX --
-CTX --,++
-CTX --,--
-DEL +-
-DEL +-,+-
-INS +-
-INS +-,+-
-INV ++
-INV --
-INV --,--
-ITX +-
-ITX +-,+-
 =cut
-
 
 
 sub process_breakpoint_list {

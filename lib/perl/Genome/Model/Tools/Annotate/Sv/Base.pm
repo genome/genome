@@ -66,7 +66,6 @@ class Genome::Model::Tools::Annotate::Sv::Base{
 sub execute {
     my $self = shift;
     my $output_file    = $self->output_file;
-    my @annotator_list = $self->annotator_list;
 
     my $out = Genome::Sys->open_file_for_writing($output_file) 
         or die "failed to open $output_file for writing\n";
