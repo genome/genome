@@ -40,7 +40,7 @@ sub _get_current_value {
     return $current_attr->attribute_value;
 }
 
-sub X_update_value {
+sub _update_value {
     my $self = shift;
 
     my $genome_entity = $self->genome_entity;
@@ -48,10 +48,6 @@ sub X_update_value {
 
     my $genome_property_name = $self->genome_property_name;
     return if not $genome_property_name;
-    my $pmeta = $genome_entity->__meta__->property($genome_property_name);
-    unless (defined $pmeta->{via} and $pmeta->{via} eq "attributes") {
-        return $self->SUPER::_update_value();
-    }
 
     my $current_attr = $self->_get_current_attr;
     $current_attr->delete if $current_attr;
