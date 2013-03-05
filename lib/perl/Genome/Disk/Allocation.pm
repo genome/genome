@@ -122,7 +122,7 @@ our @APIPE_DISK_GROUPS = qw/
     systems_benchmarking
 /;
 our $CREATE_DUMMY_VOLUMES_FOR_TESTING = 1;
-my @PATHS_TO_REMOVE; # Keeps track of paths created when no commit is on
+our @PATHS_TO_REMOVE; # Keeps track of paths created when no commit is on
 
 sub _absolute_path {
     my $class = shift;
@@ -1387,9 +1387,6 @@ sub _cleanup_archive_directory {
 
 # Cleans up directories, useful when no commit is on and the test doesn't clean up its allocation directories
 # or in the case of reallocate with move when a copy fails and temp data needs to be removed
-END {
-    remove_test_paths();
-}
 sub remove_test_paths {
     for my $path (@PATHS_TO_REMOVE) {
         next unless -d $path;
@@ -1400,6 +1397,11 @@ sub remove_test_paths {
         else {
             print STDERR "Cleaning up allocation path $path\n";
         }
+    }
+}
+END {
+    if (@PATHS_TO_REMOVE) {
+        remove_test_paths();
     }
 }
 
