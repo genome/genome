@@ -20,8 +20,8 @@ class Genome::Model::Tools::Validation::GetGeneTargets {
     },   
     exon_file => {
     type => 'String',
-    is_optional => 1,
-    doc => "exon bed file with chromosome, start, stop, and gene name, separated by tab.  Default is build37: /gscmnt/gc2108/info/medseq/ckandoth/bed_maker/NCBI-human.combined-annotation_58_37c_v2/all_CDS_and_ncRNA_24Chroms_Contigs_1BasedStart_2bpFlanks_MergedExons",
+    is_optional => 0,
+    doc => "exon bed file with chromosome, start, stop, and gene name, separated by tab.  build37: /gscmnt/gc2108/info/medseq/ckandoth/bed_maker/NCBI-human.combined-annotation_58_37c_v2/all_CDS_and_ncRNA_24Chroms_Contigs_1BasedStart_2bpFlanks_MergedExons",
     },
     ] 
 };
