@@ -69,7 +69,8 @@ sub execute
                         my $line=$_;
                         my ($chr,$start,$stop,$gene)=split/\t/;
                         my $pos=$chr."_".$start."_".$stop;
-                        if (defined $exon_hash{$gene}){
+#                        if (defined $exon_hash{$gene}){  
+                        if (defined $genelist_hash{$gene}){  
                                 print OUT "$line\n";
                                 push @{$exon_hash{$gene}}, $pos;
                         }
