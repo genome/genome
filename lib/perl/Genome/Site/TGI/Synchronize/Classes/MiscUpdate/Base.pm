@@ -20,13 +20,13 @@ sub perform_update {
     my $site_tgi_class_name = $self->site_tgi_class_name;
     return $self->failure if not $site_tgi_class_name;
 
+    my $current_value = $self->_get_current_value; # get and set for errors
+    $self->{_current_value} = $current_value;
+
     if ( not grep { $genome_property_name eq $_ } $site_tgi_class_name->properties_to_keep_updated ) {
         $self->status_message('Update for genome property name not supported => '.$genome_property_name);
         return $self->skip;
     }
-
-    my $current_value = $self->_get_current_value; # get and set for errors
-    $self->{_current_value} = $current_value;
 
     # Get values
     my $new_value = $self->new_value;
