@@ -54,7 +54,6 @@ sub check_prioritization {
     my ($variants, $annotations) = @_;
     for my $filter (qw/ none top gene /) {
         my $temp = Genome::Sys->create_temp_file_path($filter);
-        $temp = "/gscuser/aregier/temp.version3.$filter";
         my $annotator = Genome::Model::Tools::Annotate::TranscriptVariants->create(
             output_file => $temp,
             annotation_filter => $filter,
