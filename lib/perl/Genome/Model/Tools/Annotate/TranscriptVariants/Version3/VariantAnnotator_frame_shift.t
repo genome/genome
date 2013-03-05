@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More 'skip_all';
+use Test::More;
 use above "Genome";
 use File::Temp;
 
@@ -23,7 +23,7 @@ ok($temp, "temp file successfully created");
 
 Genome::Model::Tools::Annotate::TranscriptVariants->execute(
     variant_file => $test_variants_file,
-    reference_transcripts => "NCBI-human.ensembl/67_37l",
+    reference_transcripts => "NCBI-human.ensembl/67_37l_v8",
     get_frame_shift_sequence => 1,
     output_file => $temp, 
     annotation_filter => "none",
