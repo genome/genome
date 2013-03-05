@@ -771,7 +771,7 @@ sub _transcript_annotation_for_cds_exon {
     }
     elsif ($variant->{type} eq 'DNP' or $variant->{type} eq 'SNP') {
         if (!defined $mutated_aa or !defined $original_aa) {
-            $trv_type = '3_prime_untranslated_region';
+            $trv_type = 'silent';
             $protein_string = "NULL";
         }
         elsif ($mutated_aa eq $original_aa) {
