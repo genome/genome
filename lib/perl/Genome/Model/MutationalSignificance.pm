@@ -56,7 +56,7 @@ BEGIN {
             clinical_correlation_matrix_file => ['input connector', 'clinical_correlation_matrix_file'],
             reference_build => ['input connector', 'reference_build'],
         },
-        'Genome::Model::MutationSignificance::Command::RunReports' => {
+        'Genome::Model::MutationalSignificance::Command::RunReports' => {
             maf_file => ["Genome::Model::MutationalSignificance::Command::MergeMafFiles", "maf_path"],
             output_dir => ['input connector', 'output_dir'],
             annotation_build => ['input connector', 'annotation_build'],
@@ -293,6 +293,8 @@ sub _resolve_workflow_for_build {
     push @input_properties, "log_directory";
     push @input_properties, "significant_variant_list";
     push @input_properties, "mutation_matrix_file";
+    push @input_properties, "categorical_clinical_data_file";
+    push @input_properties, "numeric_clinical_data_file";
     push @input_properties, "clinical_correlation_matrix_file";
     push @input_properties, "reference_build";
 
@@ -318,6 +320,9 @@ sub _resolve_workflow_for_build {
         }
         if ($self->run_clinical_correlation) {
             push @output_properties, 'cct_result';
+        }
+        if ($self->run_reports) {
+            push @output_properties, 'output_dir';
         }
     }
     else {
@@ -425,6 +430,12 @@ sub _resolve_workflow_for_build {
                 left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::PlayMusic', $workflow),
                 left_property => 'output_dir',
                 right_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::RunReports', $workflow),
+                right_property => 'output_dir',
+            );
+            $link = $workflow->add_link(
+                left_operation => $self->_get_operation_for_module_name('Genome::Model::MutationalSignificance::Command::RunReports', $workflow),
+                left_property => 'output_dir',
+                right_operation => $output_connector,
                 right_property => 'output_dir',
             );
         }
@@ -604,6 +615,10 @@ sub map_workflow_inputs {
     $inputs{significant_variant_list} = $base_dir."/significant_variant_list";
     $inputs{mutation_matrix_file} = $base_dir."/mutation_matrix_file";
     $inputs{clinical_correlation_matrix_file} = $base_dir."/clinical_correlation_matrix_file";
+    # $inputs{categorical_clinical_data_file} = $base_dir."/categorical_clinical_data_file";
+    # $inputs{numeric_clinical_data_file} = $base_dir."/numeric_clinical_data_file";
+    $inputs{categorical_clinical_data_file} = $build->categorical_clinical_data_file;
+    $inputs{numeric_clinical_data_file} = $build->numeric_clinical_data_file;
 
     my $reference_build_name = $builds[0]->reference_sequence_build->name;
     my $calculated_reference_build = "37";
