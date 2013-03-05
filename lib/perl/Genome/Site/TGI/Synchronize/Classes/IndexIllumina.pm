@@ -83,7 +83,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 to_char(i.analysis_id) id,
                 i.library_id library_id,
                 i.index_sequence index_sequence,
-                i.flow_cell_id
+                i.flow_cell_id,
                 i.lane lane,
                 i.target_region_set_name,
                 i.gerald_directory,
