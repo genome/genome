@@ -52,4 +52,12 @@ sub _sync_database {
     return $sync_rv;
 }
 
+# This is a no-op because commit is controlled by the filehandle trigger
+# from our Oracle parent process.
+sub commit {
+    my $self = shift;
+    return 1;
+}
+
 1;
+

@@ -376,7 +376,7 @@ sub codons_in_range {
     }
 
     # Add sequence from next exon
-    if ($extra_stop == ($seq_length - 1)) {
+    if ($extra_stop >= ($seq_length - 1)) {
         my $next_structure_seq = $self->first_codons_of_next_exon($extra);
         if (defined $next_structure_seq) {
             my $next_seq_length = CORE::length $next_structure_seq;

@@ -106,16 +106,18 @@ for my $misc_update ( @misc_updates_that_skip_or_fail ) {
     $not_reconciled++ if $misc_update->is_reconciled eq 0;
     $error_cnt++ if defined $misc_update->error_message;
     if ( $misc_update->result eq 'SKIP' ) {
+        print $misc_update->error_message;
         $skip_cnt++;
+        ok(!defined $misc_update->error_message, "SKIP misc update does not have an error");
+        print "error message: ".$misc_update->error_message."\n";
     }
     else {#FAILED
         $fail_cnt++;
+        ok(defined $misc_update->error_message, "FAILED misc update has an error");
     }
 }
 is($skip_cnt, @misc_updates_that_skip_or_fail - $fail_cnt, 'SKIP expected number misc updates');
-is($skip_cnt, @misc_updates_that_skip_or_fail - $error_cnt, 'SKIP misc updates do not have errors');
 is($fail_cnt, @misc_updates_that_skip_or_fail - $skip_cnt, 'FAILED expected number of misc updates');
-is($error_cnt, $fail_cnt, 'FAILED misc updates have errors');
 is($not_reconciled, @misc_updates_that_skip_or_fail, 'SKIP/FAILED misc updates are not reconciled');
 
 done_testing();
@@ -344,7 +346,7 @@ sub _define_misc_updates_that_skpip_or_fail {
     # Unsupported attr
     $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
         subject_class_name => 'test.organism_sample',
-        subject_id => -100,
+        subject_id => -400,
         subject_property_name => 'name',
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),

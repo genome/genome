@@ -247,3 +247,9 @@
 [submodule "vendor/rna-star"]
 	path = vendor/rna-star
 	url = git@github.com:sakoht/rna-star.git
+[submodule "configuration-manager"]
+	path = configuration-manager
+	url = https://github.com/genome/configuration-manager.git
+[submodule "gms-config"]
+	path = gms-config
+	url = ssh://git/srv/git/gms-config.git

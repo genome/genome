@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More 'skip_all';
+use Test::More;# 'skip_all';
 use Storable 'retrieve';
 use above "Genome";
 use Genome::Info::UCSCConservation;
@@ -14,7 +14,7 @@ our $THIS_VERSION_ANNOTATOR_SUBCLASS = 'Genome::Model::Tools::Annotate::Transcri
 # These annotations are held in three files, one for each type of filter (top, gene, none)
 # Annotations in each file are sorted according to respective filter
 my ($variants, $annotations) = get_test_data();
-my $ensembl_version = "67_37l";
+my $ensembl_version = "67_37l_v8";
 my $annotator_version = 3;
 # Test annotation output for all provided variants
 
@@ -54,6 +54,7 @@ sub check_prioritization {
     my ($variants, $annotations) = @_;
     for my $filter (qw/ none top gene /) {
         my $temp = Genome::Sys->create_temp_file_path($filter);
+        $temp = "/gscuser/aregier/temp.version3.$filter";
         my $annotator = Genome::Model::Tools::Annotate::TranscriptVariants->create(
             output_file => $temp,
             annotation_filter => $filter,
