@@ -181,7 +181,7 @@ sub _sync_database {
 												
                 my $pg_signal = <$pg_signal_reader>;
                 if (defined $pg_signal) {
-                    $pg_commit_rv = Genome::DataSource::PGTest->commit;
+                    $pg_commit_rv = Genome::DataSource::PGTest->SUPER::commit;
                 }
             };
             my $sync_time_duration = Time::HiRes::time() - $sync_time_start;

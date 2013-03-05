@@ -69,7 +69,7 @@ sub execute {
         my $transcript_stats_file = $coverage_directory .'/'. $annotation_basename .'_transcript_STATS.tsv';
         my @output_files = ($stats_file,$transcript_stats_file);
 
-        my $cmd = 'genome-perl5.10 `which gmt` ref-cov rna-seq --alignment-file-path='. $bam_file .' --roi-file-path='. $bed_file .' --reference-fasta='. $reference_path .' --stats-file='. $stats_file .' --merged-stats-file='. $transcript_stats_file;
+        my $cmd = 'genome-perl5.10 -S gmt ref-cov rna-seq --alignment-file-path='. $bam_file .' --roi-file-path='. $bed_file .' --reference-fasta='. $reference_path .' --stats-file='. $stats_file .' --merged-stats-file='. $transcript_stats_file;
         Genome::Sys->shellcmd(
            cmd => $cmd,
             input_files => [$bam_file,$bed_file,$reference_path],
@@ -85,7 +85,7 @@ sub execute {
         my $squashed_stats_file = $coverage_directory .'/'. $annotation_basename .'_squashed_by_gene_STATS.tsv';
         my $genes_stats_file = $coverage_directory .'/'. $annotation_basename .'_gene_STATS.tsv';
 
-        my $gene_cmd = 'genome-perl5.10 `which gmt` ref-cov rna-seq --alignment-file-path='. $bam_file .' --roi-file-path='. $squashed_bed_file .' --reference-fasta='. $reference_path .' --stats-file='. $squashed_stats_file .' --merged-stats-file='. $genes_stats_file;
+        my $gene_cmd = 'genome-perl5.10 -S gmt ref-cov rna-seq --alignment-file-path='. $bam_file .' --roi-file-path='. $squashed_bed_file .' --reference-fasta='. $reference_path .' --stats-file='. $squashed_stats_file .' --merged-stats-file='. $genes_stats_file;
 
         my @squashed_output_files = ($squashed_stats_file, $genes_stats_file);
         Genome::Sys->shellcmd(

@@ -15,7 +15,7 @@ system("dd if=/dev/zero of=${filename} bs=1k count=${file_kb}") && die "dd faile
 is(-s $filename, $file_kb * 1024, "created ${file_kb} kB file") or die;
 diag "used_kb = " . $volume->used_kb . "\n";
 diag "soft_limit_kb = " . $volume->soft_limit_kb . "\n";
-ok($volume->is_over_soft_limit, 'volume should now be over soft limit') or die;
+ok($volume->is_used_over_soft_limit, 'volume should now be over soft limit') or die;
 
 my $allocation_path = 'test/create_allocation/some_allocation'; # this has to be three deep?
 {

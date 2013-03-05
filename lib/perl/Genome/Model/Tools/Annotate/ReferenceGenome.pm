@@ -71,7 +71,7 @@ sub execute {
     my $tmp_file = Genome::Sys->create_temp_file_path;
     # This is only required to run perl5.10.1 or greater required by Bio-SamTools
 
-    my $cmd = sprintf('genome-perl5.10 `which gmt` bio-samtools list-chromosomes --input-file "%s" --output-file "%s"', $seq_dict, $tmp_file);
+    my $cmd = sprintf('genome-perl5.10 -S gmt bio-samtools list-chromosomes --input-file "%s" --output-file "%s"', $seq_dict, $tmp_file);
     Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files => [$seq_dict],

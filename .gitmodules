@@ -241,3 +241,12 @@
 [submodule "sciClone"]
 	path = sciClone
 	url = ssh://git//srv/git/sciClone.git
+[submodule "vendor/htseq"]
+	path = vendor/htseq
+	url = git@github.com:genome-vendor/htseq.git
+[submodule "configuration-manager"]
+	path = configuration-manager
+	url = https://github.com/genome/configuration-manager.git
+[submodule "gms-config"]
+	path = gms-config
+	url = ssh://git/srv/git/gms-config.git

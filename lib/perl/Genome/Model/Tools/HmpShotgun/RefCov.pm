@@ -92,7 +92,7 @@ sub execute {
     	$self->status_message("Expected output files exist.  Skipping generation of ref cov stats file.");
     } else {
   
-    	my $cmd = "genome-perl5.10 `which gmt` ref-cov standard ".$self->aligned_bam_file." ".$self->regions_file." ".$stats_file;    
+    	my $cmd = "genome-perl5.10 -S gmt ref-cov standard ".$self->aligned_bam_file." ".$self->regions_file." ".$stats_file;    
      														
     	$self->status_message("Running ref cov report at ".UR::Context->current->now);
     	my $rv = Genome::Sys->shellcmd(cmd=>$cmd);

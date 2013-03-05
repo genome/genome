@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Unsupported {
-    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Subject',
+    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate',
 };
 
 sub perform_update {

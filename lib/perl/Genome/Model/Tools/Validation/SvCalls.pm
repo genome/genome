@@ -275,7 +275,7 @@ sub execute {
     }
 
     #run JW's RemapReads on validation .bam files to obtain readcounts for tumor and normal
-    #perl -I ~/git/genome/lib/perl/ `which gmt` sv assembly-pipeline remap-reads --assembly-file TEST.assembly_output.fasta.merged --normal-bam mel2n.9.bam --tumor-bam mel2t.9.bam --sv-file TEST.assembly_output.merged --output-file new.tool.test.REMAP --patient-id TEST
+    #perl -I ~/git/genome/lib/perl/ -S gmt sv assembly-pipeline remap-reads --assembly-file TEST.assembly_output.fasta.merged --normal-bam mel2n.9.bam --tumor-bam mel2t.9.bam --sv-file TEST.assembly_output.merged --output-file new.tool.test.REMAP --patient-id TEST
     my $val_patient_id = "VAL." . $patient_id;
     my $rc_output = $merged_output_csv . ".readcounts";
     my $val_remap_cmd = Genome::Model::Tools::Sv::AssemblyPipeline::RemapReads->create(
@@ -291,7 +291,7 @@ sub execute {
     $val_remap_cmd->delete;
 
     #run JW's ClassifyEvents to make calls for events using the readcounts output
-    #perl -I ~/git/genome/lib/perl/ `which gmt` sv assembly-pipeline classify-events --readcount-file new.tool.test.RE
+    #perl -I ~/git/genome/lib/perl/ -S gmt sv assembly-pipeline classify-events --readcount-file new.tool.test.RE
     my $classify_cmd = Genome::Model::Tools::Sv::AssemblyPipeline::ClassifyEvents->create(
         readcount_file => $rc_output,
         tumor_purity_file => $self->tumor_purity_file,
