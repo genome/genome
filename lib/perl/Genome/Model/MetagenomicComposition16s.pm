@@ -57,6 +57,26 @@ sub sequencing_platform {
     return (keys %sequencing_platforms)[0];
 }
 
+sub _additional_parts_for_default_name {
+    my $self = shift;
+
+    my @parts;
+    my $subject = $self->subject;
+    if ( $subject->isa('Genome::Sample') and defined $subject->tissue_desc ) {
+        push @parts, $subject->tissue_desc;
+    }
+
+    push @parts, $self->processing_profile->classifier;
+
+    return @parts;
+}
+
+sub is_for_qc {
+    my $self = shift;
+    return 1 if $self->name =~ /\-qc$/;
+    return 0;
+}
+
 #< Processing Profile >#
 sub default_processing_profile_ids {
     # RT66900 from 2278045 to 2571784 
@@ -180,25 +200,128 @@ sub validate_classifier {
 }
 #<>#
 
-sub _additional_parts_for_default_name {
-    my $self = shift;
+#< Work Flow >#
+sub map_workflow_inputs {
+    my ($self, $build) = @_;
+    my @instrument_data = $build->instrument_data;
+    return (
+        build => $build,
+        instrument_data => \@instrument_data,
+    );
+}
 
-    my @parts;
-    my $subject = $self->subject;
-    if ( $subject->isa('Genome::Sample') and defined $subject->tissue_desc ) {
-        push @parts, $subject->tissue_desc;
+sub _resolve_workflow_for_build {
+    my ($self, $build, $lsf_queue, $lsf_project) = @_;
+
+    # SOLEXA/454: process inst data [parallel by inst data] then merge inst data 
+    # OR
+    # SANGER: # process sanger inst data
+    # classify
+    # detect and remove chimeras [optional]
+    # orient
+    # report
+
+    $lsf_queue //= 'apipe';
+    $lsf_project //= 'build' . $build->id;
+
+    my $workflow = Workflow::Model->create(
+        name => $build->workflow_name,
+        input_properties => [qw/ build instrument_data /],
+        output_properties => [qw/ report_directory /],
+        log_dir => $build->log_directory,
+    );
+
+    my $add_operation = sub{
+        my ($name) = @_;
+        my $command_class_name = 'Genome::Model::Build::MetagenomicComposition16s::' . $name;
+        my $operation_type = Workflow::OperationType::Command->create(command_class_name => $command_class_name);
+        if ( not $operation_type ) {
+            $self->error_message("Failed to create work flow operation for $name");
+            return;
+        }
+        $operation_type->lsf_queue($lsf_queue);
+        $operation_type->lsf_project($lsf_project);
+        return $workflow->add_operation(
+            name => $name,
+            operation_type => $operation_type,
+        );
+    };
+
+    my $previous_op;
+    if ( $self->sequencing_platform ne 'sanger' ) {
+        my $process_instdata_op = $add_operation->('ProcessInstrumentData');
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'instrument_data',
+            right_operation => $process_instdata_op,
+            right_property => 'instrument_data',
+        );
+        $process_instdata_op->parallel_by('instrument_data');
+
+        my $merge_instdata_op = $add_operation->('MergeProcessedInstrumentData');
+        $workflow->add_link(
+            left_operation => $process_instdata_op,
+            left_property => 'build',
+            right_operation => $merge_instdata_op,
+            right_property => 'input_builds',
+        );
+        $previous_op = $merge_instdata_op;
+    } else {
+        my $process_sanger_instdata_op = $add_operation->('ProcessSangerInstrumentData');
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => 'build',
+            right_operation => $process_sanger_instdata_op,
+            right_property => 'build',
+        );
+        $previous_op = $process_sanger_instdata_op;
     }
 
-    push @parts, $self->processing_profile->classifier;
+    my $classify_op = $add_operation->('Classify');
+    $workflow->add_link(
+        left_operation => $previous_op,
+        left_property => 'build',
+        right_operation => $classify_op,
+        right_property => 'build',
+    );
 
-    return @parts;
-}
+    my $orient_op = $add_operation->('Orient');
+    $workflow->add_link(
+        left_operation => $classify_op,
+        left_property => 'build',
+        right_operation => $orient_op,
+        right_property => 'build',
+    );
+    $previous_op = $orient_op;
 
-sub is_for_qc {
-    my $self = shift;
-    return 1 if $self->name =~ /\-qc$/;
-    return 0;
+    if ( $build->processing_profile->chimera_detector ) {
+        my $detect_chimeras_op = $add_operation->('DetectAndRemoveChimeras');
+        $workflow->add_link(
+            left_operation => $orient_op,
+            left_property => 'build',
+            right_operation => $detect_chimeras_op,
+            right_property => 'build',
+        );
+        $previous_op = $detect_chimeras_op;
+    }
+
+    my $report_op = $add_operation->('Report');
+    $workflow->add_link(
+        left_operation => $previous_op,
+        left_property => 'report_directory',
+        right_operation => $report_op,
+        right_property => 'report_directory',
+    );
+    $workflow->add_link(
+        left_operation => $report_op,
+        left_property => 'report_directory',
+        right_operation => $workflow->get_output_connector,
+        right_property => 'report_directory',
+    );
+
+    return $workflow;
 }
+#<>#
 
 1;
 
