@@ -64,10 +64,41 @@ class Genome::Model::Tools::Picard::FastqToSam {
             doc => 'Read group name Default value: A.',
             is_optional => 1,
         },
-        max_records_in_ram => {
-            doc => 'When writing SAM files that need to be sorted, this will specify the number of records stored in RAM before spilling to disk. Increasing this number reduces the number of file handles needed to sort a SAM file, and increases the amount of RAM needed.',
-            is_optional   => 1,
-            default_value => $DEFAULT_MAX_RECORDS_IN_RAM,
+        sequencing_center => {
+            is  => 'String',
+            doc => 'The sequencing center from which the data originated.',
+            is_optional => 1,
+        },
+        predicted_insert_size => {
+            is  => 'Integer',
+            doc => 'Predicted median insert size, to insert into the read group header.',
+            is_optional => 1,
+        },
+        comment => {
+            is  => 'String',
+            #is_many => 1,
+            doc => 'Comment(s) to inlcude in the merged output file\'s header.',
+            is_optional => 1,
+        },
+        description => {
+            is  => 'String',
+            doc => 'Inserted into the read group header',
+            is_optional => 1,
+        },
+        run_date => {
+            is  => 'iso8601Date',
+            doc => 'Date the run was produced, to insert into the read group header.',
+            is_optional => 1,
+        },
+        min_q => {
+            is  => 'Integer',
+            doc => 'Minimum quality allowed in the input fastq.  An exception will be thrown if a quality is less than this value.',
+            is_optional => 1,
+        },
+        max_q => {
+            is  => 'Integer',
+            doc => 'Maximum quality allowed in the input fastq.  An exception will be thrown if a quality is greater than this value.',
+            is_optional => 1,
         },
     ],
 };
