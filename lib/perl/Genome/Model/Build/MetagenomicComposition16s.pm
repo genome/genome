@@ -330,37 +330,60 @@ sub merge_processed_instrument_data {
         return;
     }
 
+    my %metrics = (
+        input => Genome::Model::Tools::Sx::Metrics::Basic->create(),
+        output => Genome::Model::Tools::Sx::Metrics::Basic->create(),
+    );
+    if ( not $metrics{input} or not $metrics{output} ) {
+        $self->error_message('Failed to create input/output metrics!');
+        return;
+    }
+
     $self->status_message('Merge SX results...');
-    for my $amplicon_set ( @amplicon_sets ) {
-        my @sx_processed_fastq_files;
-        for my $sx_result ( @sx_results ) {
+    for my $sx_result ( @sx_results ) {
+        for my $amplicon_set ( @amplicon_sets ) {
             my $sx_processed_fastq_file = $sx_result->output_dir.'/'.$amplicon_set->base_name_for('processed_fastq');
             next if not -s $sx_processed_fastq_file; # ok
-            push @sx_processed_fastq_files, $sx_processed_fastq_file;
-        }
 
-        my $reader = Genome::Model::Tools::Sx::Reader->create(config => \@sx_processed_fastq_files);
-        Carp::confess('Failed to open fastq reader for processed sx result fastqs! '.join(', ', @sx_processed_fastq_files)) if not $reader;
+            $self->status_message('Amplicon set: '.$amplicon_set->name);
+            $self->status_message('SX result:    '.$sx_result->id.' '.$sx_result->output_dir);
 
-        my $processed_fasta_file = $amplicon_set->processed_fasta_file;
-        my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
-            file => $processed_fasta_file,
-            qual_file => $amplicon_set->processed_qual_file,
-            mode => 'a',
-        );
-        Carp::confess("Failed to open phred writer for file! ".$amplicon_set->processed_fasta_file) if not $writer;
-        while ( my $seqs = $reader->read ) { 
-            for my $seq ( @$seqs ) { 
-                $writer->write($seq); 
+            my $reader = Genome::Model::Tools::Sx::Reader->create(config => [ $sx_processed_fastq_file ]);
+            Carp::confess('Failed to open fastq reader for processed sx result fastq! '.$sx_processed_fastq_file) if not $reader;
+
+            $self->status_message('Merge sequences...');
+            my $processed_fasta_file = $amplicon_set->processed_fasta_file;
+            $self->status_message('Processed fasta:    '.$processed_fasta_file);
+            my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
+                file => $processed_fasta_file,
+                qual_file => $amplicon_set->processed_qual_file,
+                mode => 'a',
+            );
+            Carp::confess("Failed to open phred writer for file! ".$amplicon_set->processed_fasta_file) if not $writer;
+
+            while ( my $seqs = $reader->read ) { 
+                for my $seq ( @$seqs ) { 
+                    $writer->write($seq); 
+                }
             }
+            $self->status_message('Merge sequences...OK');
         }
-    }
-    $self->status_message('Merge SX results...OK');
 
-    $self->status_message('Instrument data processed metrics...');
-    my $inst_data_metrics_fh = Genome::Sys->open_file_for_writing( $self->fasta_dir.'/metrics.processed' );
-    my %metrics;
-    for my $sx_result ( @sx_results ) {
+        $self->status_message('Merge metrics...');
+        for my $type (qw/ input output /) {
+            my $metrics_file_method = 'read_processor_'.$type.'_metric_file';
+            my $metrics_file = $sx_result->output_dir.'/'.$sx_result->$metrics_file_method;
+            if ( not -s $metrics_file ) {
+                $self->error_message("No $type metrics file for SX result! ".$sx_result->output_dir);
+                return;
+            }
+            my $metrics = Genome::Model::Tools::Sx::Metrics->from_file($metrics_file);
+            $metrics{$type}->bases( $metrics{$type}->bases + $metrics->bases );
+            $metrics{$type}->count( $metrics{$type}->count + $metrics->count );
+        }
+        $self->status_message('Merge metrics...OK');
+        # Link
+        next;
         my $instrument_data = $sx_result->instrument_data;
         # link original data path
         my $original_data_path = 'NA';
@@ -374,32 +397,27 @@ sub merge_processed_instrument_data {
         }
 
         # metrics: link files and get attempted and processed
-        my %sx_metrics;
-        for my $type (qw/ input output /) {
-            my $file_method = 'read_processor_'.$type.'_metric_file';
-            my $metrics_file_name = $sx_result->$file_method;
-            my $metrics_file = $sx_result->output_dir.'/'.$metrics_file_name;
-            my $metrics = Genome::Model::Tools::Sx::Metrics->from_file($metrics_file);
-            Carp::confess("Failed to get $type metrics for SX result! ".$sx_result->id) if not $metrics;
-            $sx_metrics{$type.'_bases'} += $metrics->bases;
-            $sx_metrics{$type.'_count'} += $metrics->count;
-        }
-        $metrics{amplicons_attempted} += $sx_metrics{input_count};
-        $metrics{amplicons_processed} += $sx_metrics{output_count};
-        $inst_data_metrics_fh->print(
-            join(' ', $metrics{input_count}, $sx_metrics{output_count}, $original_data_path)."\n"
-        );
-    }
-    $inst_data_metrics_fh->close;
-    $self->status_message('Instrument data processed metrics...OK');
+        # $inst_data_metrics_fh->print(
+        #    join(' ', $metrics{input_count}, $sx_metrics{output_count}, $original_data_path)."\n"
+        #);
 
-    $self->amplicons_attempted( $metrics{amplicons_attempted} );
-    $self->amplicons_processed( $metrics{amplicons_processed} );
+    }
+    $self->status_message('Merge SX results...OK');
+
+    for my $type (qw/ in out /) {
+        my $metrics_file = $self->fasta_dir.'/metrics.processed.'.$type.'.txt';
+        $metrics{$type.'put'}->to_file($metrics_file);
+    }
+
+    my $amplicons_attempted = $metrics{input}->count;
+    my $amplicons_processed = $metrics{output}->count;
+    $self->amplicons_attempted($amplicons_attempted);
+    $self->amplicons_processed($amplicons_processed);
     $self->amplicons_processed_success( 
-        $metrics{amplicons_attempted} > 0 ?  sprintf('%.2f', $metrics{amplicons_processed} / $metrics{amplicons_attempted}) : 0
+        $amplicons_attempted > 0 ?  sprintf('%.2f', $amplicons_processed / $amplicons_attempted) : 0
     );
-    $self->status_message('Attempted: '.$self->amplicons_attempted);
-    $self->status_message('Processed: '.$self->amplicons_processed);
+    $self->status_message('Attempted: '.$amplicons_attempted);
+    $self->status_message('Processed: '.$amplicons_processed);
     $self->status_message('Success:   '.($self->amplicons_processed_success * 100).'%');
 
     $self->status_message('Merge processed instrument data...');
@@ -817,7 +835,10 @@ sub classify_amplicons {
         return;
     }
 
-    $self->status_message('Classifier: '.$self->classifier);
+    my $classifier = $self->processing_profile->classifier;
+    $classifier =~ s/_/\-/g;
+    $classifier =~ s/\d\-\d$//; # rm version from classifier
+    $self->status_message('Classifier: '.$classifier);
     my $classifier_params = $self->processing_profile->classifier_params;
     $self->status_message('Classifier params: '.$classifier_params);
 
@@ -830,8 +851,6 @@ sub classify_amplicons {
         my $classification_file = $amplicon_set->classification_file;
         unlink $classification_file if -e $classification_file;
 
-        my $classifier = $self->processing_profile->classifier;
-        $classifier =~ s/_/\-/g;
         my $cmd = "gmt metagenomic-classifier $classifier --input-file $fasta_file --output-file $classification_file $classifier_params --metrics"; 
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
@@ -872,28 +891,29 @@ sub classify_amplicons {
     $self->status_message('Success:    '.($self->amplicons_classified_success * 100).'%');
 
     $self->status_message('Classify amplicons...OK');
-
     return 1;
 }
 
 #< Reports >#
 sub generate_reports {
     my $self = shift;
+    $self->status_message('Generate reports...');
     
     my @report_names = (qw/ summary /);
     push @report_names, 'composition' if not $self->model->is_for_qc;
 
     for my $report_name ( @report_names ) {
+        $self->status_message(ucfirst($report_name).' report...');
         $self->_generate_and_save_report($report_name);
+        $self->status_message(ucfirst($report_name).' report...OK');
     }
 
+    $self->status_message('Generate reports...OK');
     return 1;
 }
 
 sub _generate_and_save_report {
     my ($self, $name) = @_;
-
-    $self->status_message(ucfirst($name).' report...');
 
     my $class = 'Genome::Model::MetagenomicComposition16s::Report::'.Genome::Utility::Text::string_to_camel_case($name);
     my $generator = $class->create(
@@ -962,8 +982,6 @@ sub _generate_and_save_report {
         $fh->print( $xslt->{content} );
     }
 
-    $self->status_message(ucfirst($name).' report...OK');
-    
     return $report;
 }
 #<>#
