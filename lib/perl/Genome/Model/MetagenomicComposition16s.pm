@@ -180,10 +180,6 @@ sub validate_classifier {
 }
 #<>#
 
-sub build_subclass_name {
-    return 'metagenomic-16s-composition';
-}
-
 sub _additional_parts_for_default_name {
     my $self = shift;
 
