@@ -13,6 +13,7 @@ class Genome::SoftwareResult::Default {
         command => {
             is => 'Command::V2',
             is_transient => 1,
+            is_optional => 1,
             doc => 'the command from which this result was generated (transient)'
         },
     ],
@@ -70,6 +71,9 @@ sub create {
     if ($command->output_dir) {
         if ($self->temp_staging_directory) {
             if ($saved_output_dir) {
+                my $actual_output_dir = $self->output_dir;
+                #$command->status_message("SYMLINK $actual_output_dir $saved_output_dir");
+                #Genome::Sys->create_symlink($actual_output_dir, $saved_output_dir);
                 $self->output_dir($saved_output_dir);
             }
             else {
@@ -168,7 +172,7 @@ sub execute_wrapper {
         $command->status_message("new software result produce");
     }
     else {
-        $command->status_message("existing results found");
+        $command->status_message("existing results found: " . $result->__display_name__);
     }
 
     # copy properties from the result to the command outputs/changes
@@ -176,11 +180,13 @@ sub execute_wrapper {
     %props = _copyable_properties($command, $result_class);
     for my $name (keys %props) {
         my $meta = $result->__meta__->property($name);
+        next if (not defined $props{$name});
+        next if $meta->is_input or $meta->is_param;
         if ($meta->is_many) {
             my @old_values = sort $result->$name;
             my @new_values = sort @{$props{$name}};
             if ("@old_values" ne "@new_values") {
-                Carp::confess("has-many properties which change during execute are not currently supported until the accessor is smarter!");
+                Carp::confess("has-many properties which change during execute ($name) are not currently supported until the accessor is smarter! Change from [@old_values] to [@new_values]")
             }
         }
         else {
@@ -188,6 +194,10 @@ sub execute_wrapper {
         }
     }
     $command->result($result);
+    if ($command->can('output_dir')) {
+        $command->output_dir($result->output_dir);
+        $command->status_message("output dir: " . $result->output_dir);
+    }
 
     return $command if $was_called_as_class_method;
     return 1;

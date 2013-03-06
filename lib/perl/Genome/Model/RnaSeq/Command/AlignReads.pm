@@ -32,6 +32,11 @@ class Genome::Model::RnaSeq::Command::AlignReads {
             is => 'Text',
             doc => 'Path to the merged instrument data bam',
         },
+        individual_alignment_results => {
+            is => 'Genome::InstrumentData::AlignmentResult',
+            is_many => 1,
+            doc => 'original alignment results per-instrument-data',
+        },
     ],
     doc => 'align reads',
 };
@@ -74,6 +79,12 @@ sub execute {
         $self->merged_bam_path($r->merged_alignment_bam_path);
         $r->add_user(label => 'merged_alignment', user => $build);
         Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir);
+
+        my @individual_alignment_results = $r->collect_individual_alignments;
+        for my $i (@individual_alignment_results) {
+            $r->add_user(label => 'individual_alignment', user => $build);
+        }
+        $self->individual_alignment_results(\@individual_alignment_results);
     }
 
     return 1;

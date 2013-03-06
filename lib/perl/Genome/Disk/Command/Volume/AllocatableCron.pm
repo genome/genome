@@ -53,8 +53,9 @@ sub execute {
 
 sub print_message {
     my $self = shift;
-    chomp $_[-1];
-    print @_, "\n";
+    my $message = join('', @_);
+    chomp $message;
+    print $message, "\n";
 }
 
 sub select_volumes_to_disable {

@@ -29,7 +29,14 @@ class Genome::Model::RnaSeq {
             valid_values => ['454', 'solexa'],
             is_optional => 1,
         },
+        digital_expression_detection_strategy => {
+            is => 'Text',
+            is_optional => 1,
+            default_value => 'htseq-count 0.5.4p1 [--mode intersect-strict --minaqual 1 --blacklist-alignments-flags 0x0104 --results-version 1]',
+            doc => 'measure expression level using exact read counts (non-normalized)'
+        },
         dna_type => {
+            # TODO: most of the samples are now flagged as 'rna' ...so this field probably isn't doing anything -ssmith
             doc => 'the type of dna used in the reads for this model',
             valid_values => ['cdna'],
             is_optional => 1,
@@ -145,6 +152,42 @@ sub compatible_instrument_data {
     return grep{!($_->can('is_paired_end')) or $_->is_paired_end} @compatible_instrument_data;
 }
 
+sub _parse_strategy {
+    my ($self,$strategy,$build) = @_;
+
+    # TODO: replace this with a real parser, and pull up into the general model class.
+    # This will not handle boolean logic or many odd characters
+    # It will let us make forward-compatible specs for tool/version/params much like DV2 for now.
+
+    my ($tool, $version, $x, $params);
+    unless ( ($tool, $version, $x, $params) = ($strategy =~ /^(.+?)\s+(\S+)\s*(|\[(.*)\])\s*$/) ) {
+        die "failed to parse strategy: $strategy!";
+    }
+   
+    #Genome::Utility::Text::string_to_camel_case($detector,"-")
+    my $cmd_class = 'Genome::Model::Tools::' . join('::', map { ucfirst(lc($_)) } split('-',$tool));
+    
+    my %params;
+    my %params1 = ($params ? split(/\s+/,$params) : ());
+    for my $param (keys %params1) {
+        my $value = $params1{$param};
+        unless ($param =~ s/^--//) {
+            die "unexpected param $param in strategy: expected -- prefix";
+        }
+        $param =~ s/-/_/g;
+        $params{$param} = $value;
+    }
+
+    if ($cmd_class->can('app_version')) {
+        $params{app_version} = $version;
+    }
+    elsif ($cmd_class->can('use_version')) {
+        $params{use_version} = $version;
+    }
+
+    return $cmd_class, \%params;
+}
+
 sub map_workflow_inputs {
     my $self = shift;
     my $build = shift;
@@ -157,9 +200,28 @@ sub map_workflow_inputs {
     for (@modes) {s/\s+/ /g; s/^\s+//; s/\s+$//}
 
     my @inputs = (
-        build_id => $build->id,
+        ($build ? (build_id => $build->id) : ()),
         annotation_reference_transcripts_mode => \@modes,
     );
+
+    # add any new strategies to the list below, or make this more fully dynamic
+    for my $strategy_name (qw/digital_expression/) {
+        my $strategy_value_method = $strategy_name . '_detection_strategy';
+        if (my $strategy = $self->$strategy_value_method) {
+            my $strategy_parser_method = '_parse_' . $strategy_value_method;
+            unless ($self->can($strategy_parser_method)) {
+                # no _parse_BLAH_detection_strategy method
+                # fall back to the default
+                $strategy_parser_method = '_parse_strategy';
+            }
+            my ($class,$params) = $self->$strategy_parser_method($strategy, $build);
+            for my $key (keys %$params) {
+                my $input_name = $strategy_name . '_' . $key;
+                my $value = $params->{$key};
+                push @inputs, $input_name => $value;
+            }
+        }
+    }
 
     return @inputs;
 }
@@ -182,6 +244,8 @@ sub _resolve_workflow_for_build {
 
     my ($version_number) = $self->read_aligner_version =~ /^([\d+])/;
 
+    my $processing_profile = $self->processing_profile;
+
     my $run_splice_junction_summary;
 
     if ($self->bedtools_version && $self->annotation_build) {
@@ -198,6 +262,7 @@ sub _resolve_workflow_for_build {
     }
     my $output_properties = ['coverage_result','expression_result','metrics_result'];
     push(@$output_properties, 'fusion_result') if $self->fusion_detection_strategy;
+    push(@$output_properties, 'digital_expression_detection_result') if $self->digital_expression_detection_strategy;
     if ($version_number >= 2) {
         push(@$output_properties, 'bam_qc_result');
         push(@$output_properties, 'alignment_stats_result');
@@ -206,9 +271,11 @@ sub _resolve_workflow_for_build {
         }
     }
 
+    my %inputs = $self->map_workflow_inputs($build);
+
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
-        input_properties => ['build_id','annotation_reference_transcripts_mode'],
+        input_properties => [keys %inputs],
         output_properties => $output_properties,
     );
 
@@ -246,7 +313,47 @@ sub _resolve_workflow_for_build {
         right_operation => $alignment_operation,
         right_property => 'build_id'
     );
-    
+   
+    # Digital expression
+    my $digital_expression_detection_operation = undef;
+    if (my $strategy = $processing_profile->digital_expression_detection_strategy) {
+        my ($class,$params) = $self->_parse_strategy($strategy, $build);
+
+        $digital_expression_detection_operation = $workflow->add_operation(
+            name => 'RnaSeq Digital Expression Detection',
+            operation_type => Workflow::OperationType::Command->create(
+                command_class_name => $class,
+            )
+        );
+
+        $digital_expression_detection_operation->operation_type->lsf_queue($lsf_queue);
+        $digital_expression_detection_operation->operation_type->lsf_project($lsf_project);
+
+        for my $key (keys %$params) {
+            my $link = $workflow->add_link(
+                left_operation => $input_connector,
+                left_property => 'digital_expression_' . $key,
+                right_operation => $digital_expression_detection_operation,
+                right_property => $key,
+            );
+        }
+        
+        my $link = $workflow->add_link(
+            left_operation => $alignment_operation,
+            left_property => 'individual_alignment_results',
+            right_operation => $digital_expression_detection_operation,
+            right_property => 'alignment_results',
+        );
+        
+        $link = $workflow->add_link(
+            left_operation => $digital_expression_detection_operation,
+            left_property => 'result',
+            right_operation => $output_connector,
+            right_property => 'digital_expression_detection_result'
+        );
+    }
+
+
     # TopHat2 Specific Pipeline Steps
     if ($version_number >= 2) {
         my $alignment_metrics_operation = $workflow->add_operation(
