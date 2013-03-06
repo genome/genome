@@ -191,7 +191,6 @@ sub execute_wrapper {
         }
     }
     $command->result($result);
-    $DB::single = 1;
     $command->output_dir($result->output_dir) if $command->can('output_dir');
 
     return $command if $was_called_as_class_method;
