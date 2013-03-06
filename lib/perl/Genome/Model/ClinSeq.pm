@@ -149,7 +149,7 @@ sub map_workflow_inputs {
     my $common_name = $self->expected_common_name;
     $build->common_name($common_name);
 
-    # initial inputs are for the "Main" component which does all of the legacy/non-parellel tasks
+    # initial inputs used for various steps
     my @inputs = (
         build => $build,
         wgs_build => $wgs_build,
@@ -322,7 +322,6 @@ sub _resolve_workflow_for_build {
     # This must be updated for each new tool added which is "terminal" in the workflow!
     # (too bad it can't just be inferred from a dynamically expanding output connector)
     my @output_properties = qw(
-        main_result
         summarize_builds_result
         igv_session_result
     );
@@ -524,11 +523,6 @@ sub _resolve_workflow_for_build {
         return $op;
     };
   
-    #
-    # Add steps which go in parallel with the Main step before setting up Main.
-    # This will ensure testing goes more quickly because these will happen first.
-    #
-
     #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
     my $msg = "Creating a summary of input builds using summarize-builds";
     my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
@@ -860,64 +854,35 @@ sub _resolve_workflow_for_build {
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_result');
     }
 
-
-    #
-    # Main contains all of the original clinseq non-parallel code.
-    # Re-factor out pieces which are completely independent, or which are at the end first.
-    #
-
-    my $main_op = $add_step->("ClinSeq Main", "Genome::Model::ClinSeq::Command::Main");
-    for my $in (qw/ 
-        build
-        wgs_build
-        exome_build
-        tumor_rnaseq_build
-        normal_rnaseq_build
-        working_dir
-        common_name
-        verbose
-    /) {
-        $add_link->($input_connector, $in, $main_op, $in);
-    }
-    $add_link->($main_op, 'result', $output_connector, 'main_result');
-
-
-
-    #
-    # Add steps which follow the main step...
-    # As we refactor start with things which do not feed into anything else down-stream,
-    # or which only feed into things which have already been broken-out.
-    #
-
     #SummarizeTier1SnvSupport - For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
     #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
     #TODO: Break this down to do direct calls to GetBamReadCounts instead of wrapping it.
     for my $run (qw/wgs exome wgs_exome/) {
-        if ($run eq 'wgs' and not $build->wgs_build) {
-            next;
-        }
-        if ($run eq 'exome' and not $build->exome_build) {
-            next;
-        }
-        if ($run eq 'wgs_exome' and not ($build->wgs_build and $build->exome_build)) {
-            next;
-        }
-        my $txt_name = $run;
-        $txt_name =~ s/_/ plus /g;
-        $txt_name =~ s/wgs/WGS/;
-        $txt_name =~ s/exome/Exome/;
-        $msg = "$txt_name Summarize Tier 1 SNV Support (BAM read counts)";
-        my $summarize_tier1_snv_support_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
-        $add_link->($main_op, $run . "_positions_file", $summarize_tier1_snv_support_op);
-        $add_link->($main_op, 'wgs_build', $summarize_tier1_snv_support_op);
-        $add_link->($main_op, 'exome_build', $summarize_tier1_snv_support_op);
-        $add_link->($main_op, 'tumor_rnaseq_build', $summarize_tier1_snv_support_op);
-        $add_link->($main_op, 'normal_rnaseq_build', $summarize_tier1_snv_support_op);
-        if ($build->tumor_rnaseq_build){
-          $add_link->($tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_file', $summarize_tier1_snv_support_op);
-        }
-        $add_link->($main_op, 'verbose', $summarize_tier1_snv_support_op);
-        $add_link->($summarize_tier1_snv_support_op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
+      if ($run eq 'wgs' and not $build->wgs_build) {
+        next;
+      }
+      if ($run eq 'exome' and not $build->exome_build) {
+        next;
+      }
+      if ($run eq 'wgs_exome' and not ($build->wgs_build and $build->exome_build)) {
+        next;
+      }
+      my $txt_name = $run;
+      $txt_name =~ s/_/ plus /g;
+      $txt_name =~ s/wgs/WGS/;
+      $txt_name =~ s/exome/Exome/;
+      $msg = "$txt_name Summarize Tier 1 SNV Support (BAM read counts)";
+      my $summarize_tier1_snv_support_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
+      $add_link->($import_snvs_indels_op, $run . "_snv_file", $summarize_tier1_snv_support_op, $run . "_positions_file");
+      $add_link->($input_connector, 'wgs_build', $summarize_tier1_snv_support_op);
+      $add_link->($input_connector, 'exome_build', $summarize_tier1_snv_support_op);
+      $add_link->($input_connector, 'tumor_rnaseq_build', $summarize_tier1_snv_support_op);
+      $add_link->($input_connector, 'normal_rnaseq_build', $summarize_tier1_snv_support_op);
+      if ($build->tumor_rnaseq_build){
+        $add_link->($tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_file', $summarize_tier1_snv_support_op);
+      }
+      $add_link->($input_connector, 'verbose', $summarize_tier1_snv_support_op);
+      $add_link->($summarize_tier1_snv_support_op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
     }
 
     # REMINDER:

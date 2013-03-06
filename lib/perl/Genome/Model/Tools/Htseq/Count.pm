@@ -19,7 +19,7 @@ class Genome::Model::Tools::Htseq::Count {
         output_dir => { 
             is => 'FilesystemPath',
             is_optional => 1,
-            doc => 'the results directory',
+            doc => 'the results directory will be symlinked here',
         },
     ],
     has_param => [
@@ -33,15 +33,26 @@ class Genome::Model::Tools::Htseq::Count {
             default_value => '1',
             doc => 'the version of results, which may iterate as this logic iterates'
         },
+        mode => {
+            is => 'Text',
+            valid_values => ['intersection-strict'],
+            default_value => 'intersection-strict',
+            doc => 'mode',
+        },
+        minaqual => {
+            is => 'Integer',
+            default_value => 1,
+            doc => 'minaqual'
+        },
         whitelist_alignments_flags => {
             is => 'Text',
-            default_value => '0x0002',
+            is_optional => 1,
             doc => 'require alignments to match the specified flags (-f): 0x0002 limits to only properly-paired alignments',
         },
         blacklist_alignments_flags => {
             is => 'Text',
-            default_value => '0x0100',
-            doc => 'exclude alignments which match the specified flags (-F): 0x0100 excludes non-primary alignments',
+            default_value => '0x0104',
+            doc => 'exclude alignments which match the specified flags (-F): 0x0104 excludes non-primary alignments and unaligned reads',
         },
         limit => {
             is => 'Number',
@@ -74,51 +85,6 @@ class Genome::Model::Tools::Htseq::Count {
     doc => 'generate htseq results for an (annotation-based) alignment result',
 };
 
-# TODO: pull up this execute into the base class
-
-sub execute {
-    my $self = shift;
-    
-    my $result_version = $self->result_version;
-    my $method = "_execute_v$result_version";
-    $method =~ s/\./_/g;
-    unless ($self->can($method)) {
-        die "no implementation ($method) for version $result_version!";
-    }
-    
-    my @run_commands;
-    my $parallelize_by = $self->__meta__->parallelize_by;
-    if ($parallelize_by and @$parallelize_by) {
-        if (@$parallelize_by > 1) {
-            die "support for multiplexed paralleized_by not implimented!: @$parallelize_by";
-        }
-        my $prop = $parallelize_by->[0];
-        my @values = $self->$prop;
-        if (@values > 1) {
-            my %props = $self->_copyable_properties($self->class);
-            for my $value (@values) {
-                print "breakdown for value " . $value->__display_name__ . "\n";
-                $props{$prop} = [$value];
-                my $partial = $self->class->create(%props);
-                unless ($partial) {
-                    die "failed to create partial for $prop " . $value->__display_name__;
-                }
-                push @run_commands, $partial;
-            }
-            
-            print "run commands: @run_commands\n";
-            for my $cmd (@run_commands) {
-                $cmd->$method(@_);
-            } 
-            die "no merge logic yet!";
-        }
-    }
-    
-    $self->$method(@_);   
-}
-
-# if output changes iterate the results_version and implement a new _execute_vX method
-
 sub _execute_v1 {
     my $self = shift;
     $self->status_message("tool version " . $self->app_version . ', result version ' . $self->result_version);
@@ -131,7 +97,7 @@ sub _execute_v1 {
     $self->status_message("using alignment result " . $alignment_result->__display_name__);
 
     my $instrument_data = $alignment_result->instrument_data;
-    unless ($instrument_data->sample->extraction_type =~ /rna/i) {
+    unless ($instrument_data->sample->extraction_type =~ /rna|cdna/i) {
         die $self->error_message(
             "this step can only run on alignments of RNA, but sample " 
             . $instrument_data->sample->__display_name__ 
@@ -181,6 +147,8 @@ sub _execute_v1 {
     my $samtools_path = Genome::Sys->sw_path("samtools", $samtools_version);
     $self->status_message("samtools version: $samtools_version (running from $samtools_path)");
    
+    my $tmp = Genome::Sys->create_temp_directory();
+
     my $sorted_bam;
     if ($alignment_result->temp_scratch_directory) {
         # if the AR is in the middle of being built it will have a sorted bam already present in scratch space
@@ -194,7 +162,6 @@ sub _execute_v1 {
         # a completed alignment result will need to have a sorted bam created
         $self->status_message("no temp_scratch_directory found: name sort the BAM in temp space");
         my $unsorted_bam = $alignment_result->output_dir . '/all_sequences.bam';
-        my $tmp = Genome::Sys->create_temp_directory();
         my $sorted_bam_noprefix = "$tmp/all_sequences.namesorted";
         $sorted_bam = $sorted_bam_noprefix . '.bam';
 
@@ -205,17 +172,44 @@ sub _execute_v1 {
         );
     }
 
+    my @header = `$samtools_path view -H $sorted_bam`; 
+    my $header_size = scalar(@header);
+    unless ($header_size > 0) {
+        die "Unexpected missing header on $sorted_bam!!!";
+    }
+
     my $limit = $self->limit;
     if ($limit) {
         $self->warning_message("SUBSAMPLING ALIGNMENTS because the limit parameter is set to $limit:");
     }
 
-    my $filter = '';
-    if (my $whitelist = $self->whitelist_alignments_flags) {
-        $filter .= ' -f ' . $whitelist;
-    }
-    if (my $blacklist = $self->blacklist_alignments_flags) {
-        $filter .= ' -F ' . $blacklist;
+    my $whitelist_alignments_flags = $self->whitelist_alignments_flags;
+    my $blacklist_alignments_flags = $self->blacklist_alignments_flags;
+    my $minaqual = $self->minaqual;
+    my $mode = $self->mode;
+
+    my $final_bam = $sorted_bam;
+    if (0) { 
+        # This logic is only needed if we are not filtering out unaligned reads,
+        # and we are using alignments from tophat before version < 2.0.7.
+        # TODO: determine if we should keep this
+        $self->status_message("older tophat bams require cleanup of query names and mate information");
+
+        $self->status_message("cleaning up bam for fixmate");
+        my $sorted_cleaned_bam = "$tmp/all_sequences.namesorted.cleaned.bam";
+        my $clean_cmd = "$samtools_path view -h $sorted_bam | "
+            . ($whitelist_alignments_flags ? " -f $whitelist_alignments_flags " : '')
+            . ($blacklist_alignments_flags ? " -F $blacklist_alignments_flags " : '')
+            . ' | '
+            . ($limit ? "head -n " . ($limit + $header_size) . " | " : '')
+            . q| perl -ne 'if (substr($_,0,1) eq q{@}) { print } else { @F = split(qq{\\t}, $_); $F[0] =~ s/\/[12]$//; $F[6] = "*"; $F[7] = "0";  print join(qq{\\t},@F) }' |
+            . ' | '
+            . " samtools view -S - -b > $sorted_cleaned_bam";
+        Genome::Sys->shellcmd(cmd => $clean_cmd);
+
+        $self->status_message("re-running fixmate with cleaned-up queries and fixmate information");
+        $final_bam = "$tmp/all_sequences.namesorted.cleaned.fixed.bam";
+        Genome::Sys->shellcmd(cmd => "$samtools_path fixmate $sorted_cleaned_bam $final_bam");
     }
 
     for my $type (qw/transcript gene/) {
@@ -224,20 +218,17 @@ sub _execute_v1 {
         # from Malachi's notes in JIRA issue TD-490
         # samtools view -h chr22_tumor_nonstranded_sorted.bam | htseq-count --mode intersection-strict --stranded no --minaqual 1 --type exon --idattr transcript_id - chr22.gff > transcript_tumor_read_counts_table.tsv 
    
-        # additionally: omit non-primary alignmetns (-F 0x0100), 
-        # and include only properly paired reads (from the primary which are left) (-f 0x0002)
-
-        my $cmd = "$samtools_path view -h '$sorted_bam' $filter | "
-            # this filter lets us look at a single troublesome read...
-            #. " grep -m 4 'HWI-ST495_132993521:3:1101:1143:51868' | "
-            . ($limit ? " head -n $limit | " : '')
-            # scrub the fixmate columns (this doesn't work sadly, as htseq expects those value to be set).
-            #. q/ perl -ne 'if (substr($_,0,1) eq q{@}) { print } else { @F = split(qq{\\t}, $_); $F[6] = "*"; $F[7] = "0";  print join(qq{\\t},@F) }' | /
+        my $cmd = $samtools_path 
+            . " view -h '$final_bam' "
+            . ($whitelist_alignments_flags ? " -f $whitelist_alignments_flags " : '')
+            . ($blacklist_alignments_flags ? " -F $blacklist_alignments_flags " : '')
+            . ' | '
+            . ($limit ? "head -n " . ($limit + $header_size) . " | " : '')
             . $htseq_count_path
-            . " --mode intersection-strict"
+            . " --mode $mode "
+            . " --minaqual $minaqual "
             . " --stranded $htseq_stranded_param"
-            . " --minaqual 1"
-            . " --type exon "
+            . " --type exon " # used for both gene and transcript iterations
             . " --idattr ${type}_id"
             . " -"
             . " '$gff_file'"
@@ -259,3 +250,14 @@ sub _execute_v1 {
 
 1;
 
+__END__
+
+    if (wantarray) {
+        my @result = $self->$method(@_);
+    }
+    elsif (not defined wantarray) {
+        $self->$method;
+    }
+    else {
+        my $result = $self->method;
+    }

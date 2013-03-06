@@ -37,6 +37,7 @@ sub default_processing_profile_ids {
 }
 
 sub default_processing_profile_id {
+    # In addition to AQID, the run status command uses this. Please update it if this functionality is moved. -ebelter
     my @default_processing_profile_ids = default_processing_profile_ids();
     return $default_processing_profile_ids[0];
 }

@@ -7,7 +7,7 @@ use Genome::Model::Tools::Htseq::Count;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Htseq-Count/2013-03-03';
+my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Htseq-Count/2013-03-05';
 my $rebuilding = (@ARGV and $ARGV[0] eq 'REBUILD');
 
 my $test_outdir;
@@ -66,12 +66,13 @@ my $result_exists = Genome::Model::Tools::Htseq::Count::Result->get(
 );
 ok(!$result_exists, "no result already in the system for this test") or die "contact informatics!";
 
+$DB::single = 1;
 my $command = Genome::Model::Tools::Htseq::Count->execute(
     alignment_results => [$a],
     ($rebuilding ? (output_dir => $test_outdir) : ()), # use when overriding output_dir for testing 
     app_version => '0.5.4p1',
     result_version => 1,
-    limit => 2000,
+    #limit => 2000,
 );
 ok($command, "got command");
 #UR::Context->commit;

@@ -70,6 +70,9 @@ sub create {
     if ($command->output_dir) {
         if ($self->temp_staging_directory) {
             if ($saved_output_dir) {
+                my $actual_output_dir = $self->output_dir;
+                #$command->status_message("SYMLINK $actual_output_dir $saved_output_dir");
+                #Genome::Sys->create_symlink($actual_output_dir, $saved_output_dir);
                 $self->output_dir($saved_output_dir);
             }
             else {
@@ -188,6 +191,8 @@ sub execute_wrapper {
         }
     }
     $command->result($result);
+    $DB::single = 1;
+    $command->output_dir($result->output_dir) if $command->can('output_dir');
 
     return $command if $was_called_as_class_method;
     return 1;

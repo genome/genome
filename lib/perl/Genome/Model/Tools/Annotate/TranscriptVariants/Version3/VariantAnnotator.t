@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More 'skip_all';
+use Test::More;# 'skip_all';
 use Storable 'retrieve';
 use above "Genome";
 use Genome::Info::UCSCConservation;
@@ -14,7 +14,7 @@ our $THIS_VERSION_ANNOTATOR_SUBCLASS = 'Genome::Model::Tools::Annotate::Transcri
 # These annotations are held in three files, one for each type of filter (top, gene, none)
 # Annotations in each file are sorted according to respective filter
 my ($variants, $annotations) = get_test_data();
-my $ensembl_version = "67_37l";
+my $ensembl_version = "67_37l_v8";
 my $annotator_version = 3;
 # Test annotation output for all provided variants
 
