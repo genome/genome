@@ -219,7 +219,6 @@ sub map_workflow_inputs {
                 my $input_name = $strategy_name . '_' . $key;
                 my $value = $params->{$key};
                 push @inputs, $input_name => $value;
-                print STDERR "added $input_name => $value\n";
             }
         }
     }
