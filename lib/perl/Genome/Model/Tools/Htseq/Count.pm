@@ -131,7 +131,7 @@ sub _execute_v1 {
     $self->status_message("using alignment result " . $alignment_result->__display_name__);
 
     my $instrument_data = $alignment_result->instrument_data;
-    unless ($instrument_data->sample->extraction_type =~ /rna/i) {
+    unless ($instrument_data->sample->extraction_type =~ /rna|cdna/i) {
         die $self->error_message(
             "this step can only run on alignments of RNA, but sample " 
             . $instrument_data->sample->__display_name__ 
