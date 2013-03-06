@@ -263,7 +263,7 @@ sub execute {
                 }
             }
             else {
-                $new_name = $to_name . ".$n." . $from_model->subject_name;
+                $new_name = $to_name . ".$n." . $from_model->subject->name;
             }
             
             # This should work but there is too much information in the constructor commands.
