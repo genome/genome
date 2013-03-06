@@ -830,8 +830,9 @@ sub classify_amplicons {
         my $classification_file = $amplicon_set->classification_file;
         unlink $classification_file if -e $classification_file;
 
-        # FIXME use $classifier
-        my $cmd = "gmt metagenomic-classifier rdp --input-file $fasta_file --output-file $classification_file $classifier_params --metrics"; 
+        my $classifier = $self->processing_profile->classifier;
+        $classifier =~ s/_/\-/g;
+        my $cmd = "gmt metagenomic-classifier $classifier --input-file $fasta_file --output-file $classification_file $classifier_params --metrics"; 
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
             $self->error_message('Failed to execute classifier command');

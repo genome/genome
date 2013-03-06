@@ -152,7 +152,6 @@ sub validate_chimera_detector {
 }
 
 sub validate_classifier {
-    # TODO
     my ($self, $classifier, $params) = @_;
 
     return if not $classifier and not $params;
@@ -162,6 +161,19 @@ sub validate_classifier {
         return ( 'Cannot give chimera detector without params or vice versa!' );
     }
     $classifier =~ s/_/\-/g;
+
+    my $class = 'Genome::Model::Tools::MetagenomicClassifier'.Genome::Utility::Text::string_to_camel_case(join(' ', split('-', $classifier)));
+    my $meta = eval{ $class->__meta__; };
+    if ( not $meta ) {
+        return ( "Invalid classifier detector: $classifier" );
+    }
+
+    my $cmd = "gmt metagenomic-classifier $classifier $params -h"; 
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv ) {
+        $self->error_message('Failed to execute classifier command');
+        return;
+    }
 
     $self->status_message('Validate classifier...DONE');
     return 1;
