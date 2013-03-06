@@ -249,6 +249,95 @@ sub get_dna_subject_name{
 }
 
 
+sub resolve_input_builds{
+  my $self = shift;
+  my %args = @_;
+  
+  #Get all underlying builds that could make up a single clinseq model/build 
+  my $clinseq_build = $args{'-clinseq_build'};
+  my $wgs_build = $clinseq_build->wgs_build;
+  my $exome_build = $clinseq_build->exome_build;
+  my $tumor_rnaseq_build = $clinseq_build->tumor_rnaseq_build;
+  my $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
+  my $wgs_normal_refalign_build = $wgs_build->normal_build if ($wgs_build);
+  my $wgs_tumor_refalign_build = $wgs_build->tumor_build if ($wgs_build);
+  my $exome_normal_refalign_build = $exome_build->normal_build if ($exome_build);
+  my $exome_tumor_refalign_build = $exome_build->tumor_build if ($exome_build);
+  my @builds = ($wgs_build, $exome_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build, $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
+  my @defined_builds;
+  foreach my $build (@builds){
+    next unless $build;
+    push (@defined_builds, $build);
+  }
+  return(\@defined_builds);
+}
+
+
+sub resolve_clinseq_reference_build{
+  my $self = shift;
+  my @clinseq_builds = $self->builds;
+
+  $self->status_message("Attempting to resolve a distinct reference sequence build from the input models of all clinseq builds");
+  my $reference_build;
+  my %reference_builds;
+
+  foreach my $clinseq_build (@clinseq_builds){
+    my @builds = @{$self->resolve_input_builds('-clinseq_build'=>$clinseq_build)};
+    foreach my $build (@builds){
+      my $m = $build->model;
+      if ($m->can("reference_sequence_build")){
+        $reference_build = $m->reference_sequence_build;
+        my $rb_id = $reference_build->id;
+        $reference_builds{$rb_id}=1;
+      }
+    }
+  }
+  my $rb_count = keys %reference_builds;
+  unless ($rb_count == 1){
+    print Dumper %reference_builds;
+    die $self->error_message("Found $rb_count reference builds for this group of input builds - must be only one");
+  }
+  $self->status_message("\tFound 1: " . $reference_build->__display_name__);
+
+  return ($reference_build);
+}
+
+
+sub resolve_clinseq_annotation_build{
+  my $self = shift;
+  my @clinseq_builds = $self->builds;
+
+  $self->status_message("Attempting to resolve a distinct reference annotation build from the input models of all clinseq builds");
+  my $annotation_build;
+  my %annotation_builds;
+
+  foreach my $clinseq_build (@clinseq_builds){
+    my @builds = @{$self->resolve_input_builds('-clinseq_build'=>$clinseq_build)};
+    foreach my $build (@builds){
+      my $m = $build->model;
+      if ($m->can("annotation_build")){
+        $annotation_build = $m->annotation_build;
+        my $ab_id = $annotation_build->id;
+        $annotation_builds{$ab_id}=1;
+      }
+      if ($m->can("annotation_reference_build")){
+        $annotation_build = $m->annotation_reference_build;
+        my $ab_id = $annotation_build->id;
+        $annotation_builds{$ab_id}=1;
+      }
+    }
+  }
+  my $ab_count = keys %annotation_builds;
+  unless ($ab_count == 1){
+    print Dumper %annotation_builds;
+    die $self->error_message("Found $ab_count annotation builds for this group of input builds - must be only one");
+  }
+  $self->status_message("\tFound 1: " . $annotation_build->__display_name__ . " (" . $annotation_build->name . ")");
+
+  return ($annotation_build);
+}
+
+
 sub get_clinseq_files{
   my $self = shift;
   my @builds = $self->builds;
@@ -263,9 +352,48 @@ sub get_clinseq_files{
     my $path = $build_dir . "/" . $common_name . "/" . $target;
     die $self->error_message("Could not find expected file: $path") unless (-e $path);
     $files{$build_id}{path} = $path;
+
+    #Get column positions from the header line of this file
   }
   return(\%files);
 }
+
+sub get_clinseq_file{
+  my $self = shift;
+  my %args = @_;
+  my $build = $args{'-clinseq_build'};
+  my $target = $args{'-target'};
+
+  my %file;
+  my $build_dir = $build->data_directory;
+  my $common_name = $build->common_name;
+  my $path = $build_dir . "/" . $common_name . "/" . $target;
+  die $self->error_message("Could not find expected file: $path") unless (-e $path);
+  $file{path} = $path;
+
+  #Get column positions from the header line of this file
+  my $header = 1;
+  my %cols;
+  open (IN, $path) || die $self->error_message("Could not open file: $path");
+  while(<IN>){
+    chomp($_);
+    my @line = split("\t", $_);
+    if ($header){
+      $header = 0;
+      my $p = 0;
+      foreach my $col (@line){
+        $cols{$col}{p} = $p;
+        $p++;
+      }
+      last;
+    }
+  }
+  close(IN);
+  $file{columns} = \%cols;
+
+  return(\%file);
+}
+
 
 1;
 
