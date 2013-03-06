@@ -217,8 +217,8 @@ sub _resolve_workflow_for_build {
     # OR
     # SANGER: # process sanger inst data
     # classify
-    # detect and remove chimeras [optional]
     # orient
+    # detect and remove chimeras [optional]
     # report
 
     $lsf_queue //= 'apipe';
@@ -227,7 +227,7 @@ sub _resolve_workflow_for_build {
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
         input_properties => [qw/ build instrument_data /],
-        output_properties => [qw/ report_directory /],
+        output_properties => [qw/ build /],
         log_dir => $build->log_directory,
     );
 
@@ -252,6 +252,12 @@ sub _resolve_workflow_for_build {
         my $process_instdata_op = $add_operation->('ProcessInstrumentData');
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
+            left_property => 'build',
+            right_operation => $process_instdata_op,
+            right_property => 'build',
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
             left_property => 'instrument_data',
             right_operation => $process_instdata_op,
             right_property => 'instrument_data',
@@ -263,7 +269,7 @@ sub _resolve_workflow_for_build {
             left_operation => $process_instdata_op,
             left_property => 'build',
             right_operation => $merge_instdata_op,
-            right_property => 'input_builds',
+            right_property => 'build',
         );
         $previous_op = $merge_instdata_op;
     } else {
@@ -305,18 +311,18 @@ sub _resolve_workflow_for_build {
         $previous_op = $detect_chimeras_op;
     }
 
-    my $report_op = $add_operation->('Report');
+    my $report_op = $add_operation->('Reports');
     $workflow->add_link(
         left_operation => $previous_op,
-        left_property => 'report_directory',
+        left_property => 'build',
         right_operation => $report_op,
-        right_property => 'report_directory',
+        right_property => 'build',
     );
     $workflow->add_link(
         left_operation => $report_op,
-        left_property => 'report_directory',
+        left_property => 'build',
         right_operation => $workflow->get_output_connector,
-        right_property => 'report_directory',
+        right_property => 'build',
     );
 
     return $workflow;
