@@ -3,9 +3,17 @@ use Genome::SoftwareResult::Default;
 
 class Genome::Command::WithSavedResults {
     is => 'Command::V2',
+    is_abstract => 1,
     type_has => [
-        parallelize_by => { is => 'ARRAY', is_optional => 1,
-                            doc => 'produce intermediate results and merge, grouping by this/these attributes' },     
+        parallelize_by => { 
+            is => 'ARRAY', is_optional => 1,
+            doc => 'produce intermediate results and merge, grouping by this/these attributes' },     
+    ],
+    has_optional_input => [
+        #output_dir  => { 
+        #    is => 'FilesystemPath', 
+        #    doc => 'override the output directory' 
+        #},
     ],
     is_abstract => 1,
 };
@@ -20,6 +28,12 @@ EOS
     if ($@) {
         die "error initializing $subclass_name from " . __PACKAGE_ . ": $@";
     }
+
+    my $meta = $subclass_name->__meta__;
+    unless ($meta->property("result_version")) {
+        die "$subclass_name should implement result_version, typically with a default_value of '1'";
+    }
+
     return 1;
 }
 
