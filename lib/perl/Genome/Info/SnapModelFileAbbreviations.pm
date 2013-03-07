@@ -31,7 +31,10 @@ my %model_files = (
     'T_circumcincta.v14.mk2.hmm' => 'sn_tc14mkv2',
     'A_duodenale.v2.2.cg.mk2.hmm' => 'sn_ad22cgmkv2',
     'A_duodenale.v2.2.mk2.hmm' => 'sn_ad22mkv2',
+    'T_suis.v1.cgmk2.hmm' => 'n_ts1cgmk2',
+    'T_suis.v1.mk1.hmm' => 'sn_ts1mk1',
 );
+
 
 sub abbreviation_for_model_file {
     my $model_file = shift;
