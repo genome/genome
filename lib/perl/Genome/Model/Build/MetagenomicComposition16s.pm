@@ -18,10 +18,6 @@ class Genome::Model::Build::MetagenomicComposition16s {
             is => 'String', len => 255, is_mutable => 0,
             calculate => sub { return __PACKAGE__; },
         },
-        map( { 
-                $_ => { via => 'processing_profile' } 
-            } Genome::ProcessingProfile::MetagenomicComposition16s->params_for_class 
-        ),
         map ( {
                 $_ => { is => 'Number', is_metric => 1, }
             } (qw/
@@ -105,8 +101,8 @@ sub amplicon_sets {
             primers => $amplicon_set_names_and_primers{$set_name},
             file_base_name => $self->file_base_name,
             directory => $self->data_directory,
-            classifier => $self->classifier,
-            chimera_detector => $self->chimera_detector,
+            classifier => $self->processing_profile->classifier,
+            chimera_detector => $self->processing_profile->chimera_detector,
         );
     }
 
@@ -129,7 +125,7 @@ sub amplicon_sets_for_processing {
             name => 'none',
             directory => $self->data_directory,
             file_base_name => $self->file_base_name,
-            classifier => $self->classifier,
+            classifier => $self->processing_profile->classifier,
         );
     }
 
@@ -198,16 +194,6 @@ sub processed_qual_file { # returns them as a string (legacy)
 sub processed_qual_files {
     my $self = shift;
     return map { $_->processed_qual_file } $self->amplicon_sets;
-}
-
-sub combined_original_fastq_file {
-    my $self = shift;
-    return sprintf(
-        '%s/%s.%s.fastq',
-        $self->fasta_dir,
-        $self->file_base_name,
-        'original',
-    );
 }
 
 sub oriented_fasta_file { # returns them as a string
@@ -339,8 +325,8 @@ sub merge_processed_instrument_data {
         return;
     }
 
-    $self->status_message('Merge SX results...');
     for my $sx_result ( @sx_results ) {
+        $self->status_message('Merge sequences for SX result: '.$sx_result->id);
         for my $amplicon_set ( @amplicon_sets ) {
             my $sx_processed_fastq_file = $sx_result->output_dir.'/'.$amplicon_set->base_name_for('processed_fastq');
             next if not -s $sx_processed_fastq_file; # ok
@@ -351,7 +337,6 @@ sub merge_processed_instrument_data {
             my $reader = Genome::Model::Tools::Sx::Reader->create(config => [ $sx_processed_fastq_file ]);
             Carp::confess('Failed to open fastq reader for processed sx result fastq! '.$sx_processed_fastq_file) if not $reader;
 
-            $self->status_message('Merge sequences...');
             my $processed_fasta_file = $amplicon_set->processed_fasta_file;
             $self->status_message('Processed fasta:    '.$processed_fasta_file);
             my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
@@ -366,10 +351,9 @@ sub merge_processed_instrument_data {
                     $writer->write($seq); 
                 }
             }
-            $self->status_message('Merge sequences...OK');
         }
 
-        $self->status_message('Merge metrics...');
+        $self->status_message('Merge metrics for SX result: '.$sx_result->id);
         for my $type (qw/ input output /) {
             my $metrics_file_method = 'read_processor_'.$type.'_metric_file';
             my $metrics_file = $sx_result->output_dir.'/'.$sx_result->$metrics_file_method;
@@ -381,28 +365,7 @@ sub merge_processed_instrument_data {
             $metrics{$type}->bases( $metrics{$type}->bases + $metrics->bases );
             $metrics{$type}->count( $metrics{$type}->count + $metrics->count );
         }
-        $self->status_message('Merge metrics...OK');
-        # Link
-        next;
-        my $instrument_data = $sx_result->instrument_data;
-        # link original data path
-        my $original_data_path = 'NA';
-        ORIGINAL_DATA_PATH: for my $attribute_label (qw/ bam_path sff_file archive_path /) {
-            my $attribute = $instrument_data->attributes(attribute_label => $attribute_label);
-            next if not $attribute;
-            my $attribute_value = $attribute->attribute_value;
-            next if not -e $attribute_value;
-            last ORIGINAL_DATA_PATH;
-            $original_data_path = $attribute_value;
-        }
-
-        # metrics: link files and get attempted and processed
-        # $inst_data_metrics_fh->print(
-        #    join(' ', $metrics{input_count}, $sx_metrics{output_count}, $original_data_path)."\n"
-        #);
-
     }
-    $self->status_message('Merge SX results...OK');
 
     for my $type (qw/ in out /) {
         my $metrics_file = $self->fasta_dir.'/metrics.processed.'.$type.'.txt';
@@ -423,216 +386,7 @@ sub merge_processed_instrument_data {
     $self->status_message('Merge processed instrument data...');
     return 1;
 }
-
-sub prepare_instrument_data {
-    my $self = shift;
-    $self->status_message('Prepare instrument data...');
-
-    my @instrument_data = $self->instrument_data;
-    $self->status_message('Instrument data count: '.@instrument_data);
-    unless ( @instrument_data ) {
-        $self->error_message("No instrument data found for ".$self->description);
-        return;
-    }
-
-    #writer original/unprocessed/combined fastq file
-    if ( not $self->fastq_from_instrument_data ) {
-        Carp::confess( "Failed to get fasta from instrument data" );
-    }
-    #read in orig fastq file
-    my $orig_fastq = $self->combined_original_fastq_file;
-    if ( not -s $orig_fastq ) {
-        Carp::confess( "Original fasta file did not get created or is blank" );
-    }
-
-    my @cmd_parts = ( 'gmt sx rm-desc' );
-    my @amplicon_sets = $self->amplicon_sets;
-    my (@output, @primers);
-    for my $amplicon_set ( @amplicon_sets ) {
-        my @set_primers = $amplicon_set->primers;
-        for my $primer ( @set_primers ) {
-            push @primers, $amplicon_set->name.'='.$primer;
-        }
-        my $root_set_name = $amplicon_set->name;
-        $root_set_name =~ s/\.[FR]$//; #strip off .F/.R for paired sets
-        my $fasta_file = $amplicon_set->processed_fasta_file;
-        my $qual_file = $amplicon_set->processed_qual_file;
-        unlink $fasta_file, $fasta_file;
-        my $output = 'file='.$fasta_file.':qual_file='.$qual_file.':type=phred';
-        $output .= ':name='.$root_set_name if @set_primers;
-        push @output, $output;
-    }
-
-    if ( @primers ) {
-        my $none_amplicon_set = Genome::Model::Build::MetagenomicComposition16s::AmpliconSet->create(
-            name => 'none',
-            directory => $self->data_directory,
-            file_base_name => $self->file_base_name,
-            classifier => $self->classifier,
-        );
-        my $none_fasta_file = $none_amplicon_set->processed_fasta_file;
-        my $none_qual_file = $none_amplicon_set->processed_qual_file;
-        unlink $none_fasta_file, $none_qual_file;
-        push @output, 'name=discard:file='.$none_fasta_file.':qual_file='.$none_qual_file.':type=phred';
-        push @cmd_parts, 'gmt sx bin by-primer --remove --primers '.join(',', @primers);
-    }
-
-    #add amplicon processing sx commands
-    if ( $self->processing_profile->amplicon_processor ) {
-        push @cmd_parts, $self->processing_profile->amplicon_processor_commands;
-    }
-
-    # Add input and metrics to first cmd
-    $cmd_parts[0] .= ' --input file='.$orig_fastq.':type=sanger';
-    my $input_metrics_file = $self->fasta_dir.'/metrics.processed.in.txt';
-    $cmd_parts[0] .= ' --input-metrics '.$input_metrics_file;
-
-    # Add output and metrics to last cmd
-    $cmd_parts[$#cmd_parts] .= ' --output '.join(',', @output);
-    my $output_metrics_file = $self->fasta_dir.'/metrics.processed.out.txt';
-    $cmd_parts[$#cmd_parts] .= ' --output-metrics '.$output_metrics_file;
-
-    # Create, execute, check return
-    my $cmd = join(' | ', @cmd_parts);
-    $self->status_message('Run SX...');
-    $self->status_message("SX comand: $cmd");
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv ) {
-        $self->error_message('Failed to run sx command to create amplicon files.');
-        return;
-    }
-    $self->status_message('Run SX...OK');
-
-    # Rm empty output files
-    $self->status_message('Remove empty otuput files...');
-    for my $amplicon_set ( @amplicon_sets ) {
-        for my $file_method (qw/ processed_fasta_file processed_qual_file /) {
-            my $file = $amplicon_set->$file_method;
-            my $sz = -s $file;
-            unlink $file if not $sz or $sz == 0;
-        }
-    }
-    $self->status_message('Remove empty otuput files...OK');
-
-    # Set metrics
-    $self->status_message('Get metrics...');
-    my $input_metrics = Genome::Model::Tools::Sx::Metrics->from_file($input_metrics_file);
-    if ( not $input_metrics ) {
-        $self->error_message('Failed to get metrcis from file: '.$input_metrics_file);
-        return;
-    }
-    my $attempted = $input_metrics->count;
-    $attempted = 0 if not defined $attempted;
-    my $reads_attempted = $attempted;
-
-    my $output_metrics = Genome::Model::Tools::Sx::Metrics->from_file($output_metrics_file);
-    if ( not $output_metrics ) {
-        $self->error_message('Failed to get metrcis from file: '.$output_metrics_file);
-        return;
-    }
-    my $processed = $output_metrics->count;
-    $processed = 0 if not defined $processed;
-    $self->status_message('Get metrics...OK');
-
-    $self->amplicons_attempted($attempted);
-    $self->amplicons_processed($processed);
-    my $processed_success =  $attempted > 0 ?  sprintf('%.2f', $processed / $attempted) : 0;
-    $self->amplicons_processed_success($processed_success);
-    $self->reads_attempted($reads_attempted);
-    $self->reads_processed($processed);
-    $self->reads_processed_success( $reads_attempted > 0 ?  sprintf('%.2f', $processed / $reads_attempted) : 0 );
-
-    $self->status_message('Attempted:  '.$self->amplicons_attempted);
-    $self->status_message('Processed:  '.$self->amplicons_processed);
-    $self->status_message('Success:    '.($self->amplicons_processed_success * 100).'%');
-
-    $self->status_message('Prepare instrument data...OK');
-    return 1;
-}
-
-sub original_fastq_writer {
-   my $self = shift;
-
-   return $self->{_fastq_writer} if $self->{_fastq_writer};
-   
-   my $fastq_file = $self->combined_original_fastq_file;
-   unlink $fastq_file if -e $fastq_file;
-
-   my $writer = Genome::Model::Tools::Sx::Writer->create( config => [$fastq_file.':type=sanger'] );
-   Carp::confess("Failed to create fastq writer to write original fastq file") if not $writer;
-   
-   $self->{_fastq_writer} = $writer;
-   
-   return $self->{_fastq_writer};
-}
-
-#< Fasta/Qual Readers/Writers >#
-sub fastq_from_instrument_data {
-    my $self = shift;
-    
-    for my $inst_data ( $self->instrument_data ) {
-
-        my $temp_dir = Genome::Sys->create_temp_directory;
-        my @fastq_files;
-        if ( @fastq_files = eval {$inst_data->dump_fastqs_from_bam( directory => $temp_dir );} ) {
-            #solexa bam
-            if ( not @fastq_files ) {
-                Carp::confess( "Did not get any fastq files from instrument data bam path" );
-            }
-            $self->status_message( "Got fastqs from bam" );
-            #write fastq to original.fastq.file
-            if ( not $self->append_fastq_to_orig_fastq_file( @fastq_files ) ) {
-                Carp::confess( "Attempt to get fastq from fastq via bam failed" );
-            }
-        }
-        elsif (  my $rv = eval {Genome::Sys->shellcmd( cmd => "tar zxf " . $inst_data->archive_path ." -C $temp_dir" );} ) {
-            #solexa archive
-            my @fastq_files = glob $temp_dir.'/*';
-            if ( not @fastq_files ) {
-                Carp::confess( "Did not get any fastq files from instrument data archive path" );
-            }
-            $self->status_message( "Untarred fastqs from archive path" );
-            if ( not $self->append_fastq_to_orig_fastq_file( @fastq_files ) ) {
-                Carp::confess( "Attempt to get fastq from fastq via archive path failed" );
-            }
-        }
-        elsif ( @fastq_files = eval{$inst_data->dump_sanger_fastq_files;} ) {
-            #fastq from sff files .. 454
-            if ( not @fastq_files ) {
-                Carp::confess( "Did not get fastq files from inst data dump_sanger_fastq_file method" );
-            }
-            $self->status_message( "Got fastq from sff files" ); #better message?
-            if ( not $self->append_fastq_to_orig_fastq_file( @fastq_files ) ) {
-                Carp::confess( "Attempt to append to original fastq with with new fastq failed" );
-            }
-        }
-        else {
-            $self->status_message($inst_data->__display_name__.' does not have any sequences! Skipping!');
-        }
-    }
-    return 1;
-}
-
-sub append_fastq_to_orig_fastq_file {
-    my ( $self, @fastq_files ) = @_;
-
-    my $writer = $self->original_fastq_writer;
-    unless ( $writer ) {
-        Carp::confess( "Failed to get fastq writer to write original fastq file" );
-    }
-    my $reader = Genome::Model::Tools::Sx::Reader->create(config => [ map { $_.':type=sanger' } @fastq_files ]);
-    if ( not $reader ) {
-        Carp::confess( "Did not get fastq reader for files: ".join(' ', @fastq_files) );
-    }
-    while ( my $fastqs = $reader->read ) {
-        for my $fastq( @$fastqs ) {
-            $writer->write( [$fastq] );
-        }
-    }
-    $self->status_message( "Finished writing to original fastq file, files: ".join(' ', @fastq_files) );
-
-    return 1;
-}
+#<>#
 
 #< Remove Chimeras >#
 sub detect_and_remove_chimeras {
