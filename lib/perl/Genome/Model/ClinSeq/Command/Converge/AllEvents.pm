@@ -58,6 +58,19 @@ class Genome::Model::ClinSeq::Command::Converge::AllEvents {
                 is => 'FilesystemPath',
                 doc => 'Regardless of anything else do not allow any genes in this list (Ensembl Gene IDs)',
         },
+        subject_labels_file => {
+                is => 'FilesystemPath',
+                doc => 'Use a custom subjects_legend file.  First run without this option, then copy the legend created, modify and then specify with this option. (use to change order, sample names, etc.)',
+        },
+        event_labels_file => {
+                is => 'FilesystemPath',
+                doc => 'Use a custom events_legend file.  First run without this option, then copy the legend created, modify and then specify with this option. (use to change event labels, colors, etc.)',
+        },
+        max_genes => {
+                is => 'Number',
+                default => 50,
+                doc => 'Maximum number of genes that will be displayed (rows in the heatmap)',
+        },
     ],   
     doc => 'converge SNV, InDel, CNV, Exp, and DE results from mutiple clinseq builds into a single table',
 };
@@ -129,11 +142,24 @@ sub execute {
   my $outdir = $self->outdir;
   $outdir .= "/" unless ($outdir =~ /\/$/);
 
+  #Get human readable names hash, keyed on build id
+  my $subject_labels = $self->resolve_clinseq_subject_labels;
+
+  #Print out a table of subject names for later use
+  $self->print_subject_table('-subject_labels'=>$subject_labels);
+
+  #If the user specified an alternative subject table file, override the $subject_labels object here
+  if ($self->subject_labels_file){
+    $subject_labels = $self->override_clinseq_subject_labels;
+  }
+
   #Check event labels to make sure they are all unique (no duplicates)
   my $event_labels = $self->check_event_labels;
 
-  #Get human readable names hash, keyed on build id
-  my $subject_labels = $self->resolve_clinseq_subject_labels;
+  #If the user specied an alternative event label file, overwrite the events legend file that will be fed into R
+  if ($self->event_labels_file){
+    $self->override_event_labels;
+  }
 
   #Get the reference sequence build common to all underlying models of all clinseq builds
   my $reference_build = $self->resolve_clinseq_reference_build;
@@ -175,7 +201,7 @@ sub execute {
 
   foreach my $clinseq_build (@builds){
     my $clinseq_build_id = $clinseq_build->id;
-    my $label = $subject_labels->{$clinseq_build_id};
+    my $label = $subject_labels->{$clinseq_build_id}->{name_abr};
     $self->status_message("Gathering events for clinseq build: $clinseq_build_id (" . $label . ")");
 
     #SNVs
@@ -286,10 +312,79 @@ sub execute {
   #print Dumper \%targets;
   $self->print_final_table('-genes'=>\%targets, '-gmap'=>$gmap, '-subject_labels'=>$subject_labels, '-event_labels'=>$event_labels);
 
+  #Warn the user if the number of targets imported is more than can be displaye according to $max_genes
+  my $target_count = keys %targets;
+  my $max_genes = $self->max_genes;
+  $self->warning_message("Imported $target_count genes with events but only $max_genes (--max-genes) will be displayed in the heatmap") if ($target_count > $max_genes);
 
+  #Run the paired R tool to create the final heatmap visualizations from the results tables created
+  my $sample_count = keys %{$subject_labels};
+  my $all_events_r_script = __FILE__ . '.R';
+  my $r_cmd = "$all_events_r_script " . $self->outdir . " $sample_count $max_genes";
+  Genome::Sys->shellcmd(cmd => $r_cmd);
 
   return 1;
 };
+
+
+sub print_subject_table{
+  my $self = shift;
+  my %args = @_;
+  my $subject_labels = $args{'-subject_labels'};
+
+  my $outfile = $self->outdir . "/subjects_legend.txt";
+  open (OUT, ">$outfile") || die $self->error_message("Could not open output file: $outfile for writing");
+  print OUT "build_id\tname\tname_abr\torder\n";
+  foreach my $bid (sort {$subject_labels->{$a}->{order} <=> $subject_labels->{$b}->{order}} keys %{$subject_labels}){
+    my $name = $subject_labels->{$bid}->{name};
+    my $name_abr = $subject_labels->{$bid}->{name_abr};
+    my $order = $subject_labels->{$bid}->{order};
+    print OUT "$bid\t$name\t$name_abr\t$order\n";
+  }
+
+  close(OUT);
+
+  return;
+}
+
+
+sub override_clinseq_subject_labels{
+  my $self = shift;
+  my $subject_labels_file = $self->subject_labels_file;
+  die $self->error_message("Could not find subject legends table file: $subject_labels_file") unless (-e $subject_labels_file);
+
+  my %subject_labels;
+
+  my $header = 1;
+  open (IN, $subject_labels_file) || die $self->error_message("Could not open subject legends table file: $subject_labels_file");
+  my %columns;
+  while(<IN>){
+    chomp($_);
+    my @line = split("\t", $_);
+    if ($header){
+      my $p = 0;
+      foreach my $col (@line){
+        $columns{$col}{p} = $p;
+        $p++;
+      }
+      $header = 0;
+      unless (defined($columns{'build_id'}) && defined($columns{'name'}) && defined($columns{'name_abr'}) && defined($columns{'order'})){
+        die $self->error_message("Subject legends table file must be a TSV with the following columns/headers: build_id, name, name_abr, order");
+      }
+      next;
+    }
+    my $bid = $line[$columns{'build_id'}{p}];
+    my $name = $line[$columns{'name'}{p}];
+    my $name_abr = $line[$columns{'name_abr'}{p}];
+    my $order = $line[$columns{'order'}{p}];
+    $subject_labels{$bid}{name} = $name;
+    $subject_labels{$bid}{name_abr} = $name_abr;
+    $subject_labels{$bid}{order} = $order;
+  }
+  close (IN);
+
+  return(\%subject_labels);
+}
 
 
 sub check_event_labels{
@@ -358,13 +453,25 @@ sub check_event_labels{
     $c++;
     my $color = $event_labs{$label}{color};
     print LEG "$name\t$label\t$c\t$color\n";
-    $event_labs{$label}{num} = $c;
+    $event_labs{$label}{index} = $c;
   }
   $c++;
   print LEG "multi\tvariable\t$c\t#000000\n"; #Black for multiple hits
   close(LEG);
 
   return \%event_labs;
+}
+
+
+sub override_event_labels{
+  my $self = shift;
+  my $event_labels_file = $self->event_labels_file; 
+  die $self->error_message("Could not find event labels file: $event_labels_file") unless (-e $event_labels_file);
+  my %event_labs;
+  my $legend_file = $self->outdir . "/events_legend.txt";
+  Genome::Sys->shellcmd(cmd => "cp $event_labels_file $legend_file");
+    
+  return;
 }
 
 
@@ -541,8 +648,8 @@ sub print_final_table{
 
   #Get a string of column names for the subjects
   my @subject_list;
-  foreach my $bid (sort {$subject_labels->{$a} cmp $subject_labels->{$b}} keys %{$subject_labels}){
-    push(@subject_list, $subject_labels->{$bid});
+  foreach my $bid (sort {$subject_labels->{$a}->{order} <=> $subject_labels->{$b}->{order}} keys %{$subject_labels}){
+    push(@subject_list, $subject_labels->{$bid}->{name_abr});
   }
   my $subject_list_string = join("\t", @subject_list);
 
@@ -569,7 +676,7 @@ sub print_final_table{
   open (OUT3, ">$outfile_numerical") || die $self->error_message("Could not open outfile: $outfile_numerical for writing");
   open (OUT4, ">$outfile_labels") || die $self->error_message("Could not open outfile: $outfile_labels for writing");
 
-  print "ensg_id\tensg_name\t$subject_list_string\n";
+  #print "ensg_id\tensg_name\t$subject_list_string\n";
   print OUT1 "ensg_id\tensg_name\t$subject_list_string\t$event_counter_names_string\tgrand_subject_count\n";
   print OUT2 "ensg_id\tensg_name\tsubject\tevents\n";
   print OUT3 "ensg_id\tensg_name\t$subject_list_string\n";
@@ -580,8 +687,8 @@ sub print_final_table{
     my $gene_name = $gmap->{$gid}->{ensg_name};
     my @subject_events;
     my %gene_event_counter = %event_counter;
-    foreach my $bid (sort {$subject_labels->{$a} cmp $subject_labels->{$b}} keys %{$subject_labels}){
-      my $subject = $subject_labels->{$bid};
+    foreach my $bid (sort {$subject_labels->{$a}->{order} <=> $subject_labels->{$b}->{order}} keys %{$subject_labels}){
+      my $subject = $subject_labels->{$bid}->{name_abr};
       my @events;
       if (defined($genes->{$gid}->{$subject})){
         foreach my $event (keys %{$event_labels}){
@@ -607,7 +714,7 @@ sub print_final_table{
 
     my $grand_subject_count = keys %grand_subject_list;
     my $subject_events_string = join("\t", @subject_events);
-    print "$gid\t$gene_name\t$subject_events_string\n";
+    #print "$gid\t$gene_name\t$subject_events_string\n";
     print OUT1 "$gid\t$gene_name\t$subject_events_string\t$gene_event_counts_string\t$grand_subject_count\n";
     print OUT4 "$gid\t$gene_name\t$subject_events_string\n";
 
@@ -620,7 +727,7 @@ sub print_final_table{
       if ($subject_event eq "-"){
         $class = 0;
       }elsif($event_labels->{$subject_event}){
-        $class = $event_labels->{$subject_event}->{num};
+        $class = $event_labels->{$subject_event}->{index};
       }else{
         $class = $multi_event_class;
       }
@@ -628,8 +735,6 @@ sub print_final_table{
     }
     my $subject_events_string2 = join("\t", @subject_events2);
     print OUT3 "$gid\t$gene_name\t$subject_events_string2\n";
-
-    #Generate a color classification of each event class and print as a table?
 
   }
   close(OUT1);

@@ -1,16 +1,19 @@
 #!/usr/bin/env Rscript
 #Written by Malachi Griffith
 
-#args = (commandArgs(TRUE))
-#datadir = args[1];        #used to load input files and dump results files
-#sample_count = args[2]    #number of samples considered
+args = (commandArgs(TRUE))
+datadir = args[1];                    #used to load input files and dump results files
+sample_count = as.numeric(args[2])    #number of samples considered
+max_genes = as.numeric(args[3])       #max number of genes/rows that will be allowed in the heat map
 
-#if (length(args) < 2){
-#  message_text1 = "Required arguments missing: ./AllEvents.pm.R /tmp/converge_all_events 8"
-#  stop(message_text1)
-#}
+if (length(args) < 3){
+  message_text1 = "Required arguments missing: ./AllEvents.pm.R /tmp/converge_all_events 8 50"
+  stop(message_text1)
+}
+
 #datadir = "/tmp/converge_all_events"
 #sample_count = 8
+#max_genes = 50
 
 #Load required libraries
 library(plotrix)
@@ -22,8 +25,21 @@ sample_data_all = read.table("events_final.tsv", header=TRUE, sep="\t", as.is=c(
 sample_data_labels = read.table("events_final_labels.tsv", header=TRUE, sep="\t", as.is=c(1:(sample_count+2)), na.strings=c("-"))
 sample_data_numerical = read.table("events_final_numerical.tsv", header=TRUE, sep="\t", as.is=c(1:2))
 
+#Reorder all data objects according the total number of samples affected
+o = order(sample_data_all[,"grand_subject_count"], decreasing=TRUE)
+sample_data_all = sample_data_all[o,]
+sample_data_labels = sample_data_labels[o,]
+sample_data_numerical = sample_data_numerical[o,]
+
+#If there are more than $max_genes row present, limit to only the top $max_genes
+if (dim(sample_data_all)[1] > max_genes){
+  sample_data_all = sample_data_all[1:max_genes,]
+  sample_data_labels = sample_data_labels[1:max_genes,]
+  sample_data_numerical = sample_data_numerical[1:max_genes,]
+}
+
 #Get the sample names
-sample_names = names(sample_data)[3:((3+sample_count)-1)]
+sample_names = names(sample_data_all)[3:((3+sample_count)-1)]
 
 #Get the events matrix
 events = sample_data_numerical[,sample_names]
@@ -39,16 +55,16 @@ for (i in 1:length(events[1,])){
   }
 }
 
-#color2D.matplot(events, cellcolors=color_array, axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, nslices=nmax, show.values=TRUE, vcex=0.4, main=title)
-
+#Create the heatmap and legend as a two page PDF
+pdf(file="heatmap_v1.pdf")
 main_title = "Events by sample by gene"
 color2D.matplot(events, cellcolors=as.matrix(events_color_matrix), axes=FALSE, xlab=NA, ylab=NA, show.legend=FALSE, show.values=FALSE, vcex=0.4, main=main_title)
-axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.5)
+axis(side=1, at=c(0.5:(dim(events)[2]-0.5)), labels=sample_names, las=2, cex.axis=0.75)
 axis(side=2, at=c((dim(events)[1]-0.5):0.5), labels=sample_data_all[,"ensg_name"], las=2, cex.axis=0.65, font=3)
 
 plot(x=1:10, y=1:10, type="n", xaxt="n", yaxt="n", ylab=NA, xlab=NA)
 color.legend(5,2,6,8, legend_data[,"event_type"], rect.col=legend_data[,"color"], align="rb", gradient="y")
-
+dev.off()
 
 
 

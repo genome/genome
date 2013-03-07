@@ -136,9 +136,13 @@ sub resolve_clinseq_subject_labels{
 
   #reverse the key value so that labels are keyed on build id before returning
   my %labels2;
-  foreach my $label (keys %{$labels1}){
+  my $o = 0;
+  foreach my $label (sort keys %{$labels1}){
+    $o++;
     my $build_id = $labels1->{$label};
-    $labels2{$build_id} = $label;
+    $labels2{$build_id}{name} = $label;
+    $labels2{$build_id}{name_abr} = $label;
+    $labels2{$build_id}{order} = $o;
   }
 
   return(\%labels2);
