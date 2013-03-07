@@ -23,16 +23,16 @@ $params_expected = {
 };
 is_deeply($params, $params_expected, "got expected params with no []");
 
-my $rnaseq_model = Genome::Model->get(2891321109);
+my $rnaseq_model = Genome::Model->get(2891321785);
 my %inputs = $rnaseq_model->map_workflow_inputs();
 my $expected_inputs = {
     'digital_expression_minaqual' => '1',
     'annotation_reference_transcripts_mode' => [
                                                 'reference only'
                                                 ],
-    'digital_expression_mode' => 'intersect-strict',
+    'digital_expression_mode' => 'intersection-strict',
     'digital_expression_app_version' => '0.5.4p1',
-    'digital_expression_results_version' => '1',
+    'digital_expression_result_version' => '1',
     'digital_expression_blacklist_alignments_flags' => '0x0104'
 };
 is_deeply(\%inputs, $expected_inputs, "inputs match");
