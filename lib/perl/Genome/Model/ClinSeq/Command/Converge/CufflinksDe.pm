@@ -90,7 +90,7 @@ sub get_de_matrix{
 
   my $gene_col;
   foreach my $build_id (keys %{$files}){
-    my $label = $labels->{$build_id};
+    my $label = $labels->{$build_id}->{name};
     my $path = $files->{$build_id}->{path};
 
     open (DATA, $path) || die $self->error_message("Could not open file: $path");
@@ -138,8 +138,8 @@ sub get_de_matrix{
   }
 
   my @labels_list;
-  foreach my $build_id (sort {$labels->{$a} cmp $labels->{$b}} keys %{$labels}){
-    push(@labels_list, $labels->{$build_id});
+  foreach my $build_id (sort {$labels->{$a}->{name} cmp $labels->{$b}->{name}} keys %{$labels}){
+    push(@labels_list, $labels->{$build_id}->{name});
   }
   my $labels_list_string = join("\t", @labels_list);
 
@@ -179,7 +179,7 @@ sub converge_de_data{
     
   my $gene_col;
   foreach my $build_id (keys %{$files}){
-    my $label = $labels->{$build_id};
+    my $label = $labels->{$build_id}->{name};
     my $path = $files->{$build_id}->{path};
 
     open (DATA, $path) || die $self->error_message("Could not open file: $path");
@@ -232,8 +232,8 @@ sub converge_de_data{
   }
 
   my @labels_list;
-  foreach my $build_id (sort {$labels->{$a} cmp $labels->{$b}} keys %{$labels}){
-    push(@labels_list, $labels->{$build_id});
+  foreach my $build_id (sort {$labels->{$a}->{name} cmp $labels->{$b}->{name}} keys %{$labels}){
+    push(@labels_list, $labels->{$build_id}->{name});
   }
   my $labels_list_string = join("\t", @labels_list);
 
