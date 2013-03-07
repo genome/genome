@@ -13,7 +13,7 @@ use above 'Genome';
 use Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory;
 use Test::More;
 
-use_ok('Genome::Model::Event::Build::MetagenomicComposition16s::Reports');
+use_ok('Genome::Model::Build::MetagenomicComposition16s::Reports') or die;
 
 my ($build, $example_build) = Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory->build_with_example_build_for_sanger;
 my @amplicon_sets = $build->amplicon_sets;
@@ -41,7 +41,7 @@ $build->amplicons_classified_success(4);
 is($build->amplicons_classified_success, 4, 'amplicons classified success set');
 
 # run
-my $reports = Genome::Model::Event::Build::MetagenomicComposition16s::Reports->create(build => $build, model => $build->model);
+my $reports = Genome::Model::Build::MetagenomicComposition16s::Reports->create(build => $build);
 ok($reports, 'create');
 $reports->dump_status_messages(1);
 ok($reports->execute, 'execute');
@@ -55,4 +55,3 @@ ok(-s $build->reports_directory.'/Composition/report.xml', 'Created composition 
 
 #print Data::Dumper::Dumper(map { $_->xml_string } $build->reports);<STDIN>;
 done_testing();
-

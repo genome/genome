@@ -74,10 +74,19 @@ for ( my $i = 0; $i < @amplicon_sets; $i++ ) {
         is(File::Compare::compare($file, $example_file), 0, "generated $type matches example");
     }
 }
-is(File::Compare::compare($build->fasta_dir.'/metrics.processed', $example_build->fasta_dir.'/metrics.processed'), 0, 'processed metrics file');
+
+my $expected_metrics = {
+    in => { bases => 9810, count => 20, },
+    out => { bases => 6794, count => 14, },
+};
+for my $type (qw/ in out /) {
+    my $metrics_file = $build->fasta_dir.'/metrics.processed.'.$type.'.txt';
+    ok(-s $metrics_file, $type.' metrics files');
+    my $metrics = Genome::Model::Tools::Sx::Metrics->from_file($metrics_file);
+    for my $name (qw/ bases count /) {
+        is($metrics->$name, $expected_metrics->{$type}->{$name}, "$type $name");
+    }
+}
 
 #print join("\n", $sx_results[0]->output_dir, $build->data_directory, $example_build->data_directory)."\n"; <STDIN>;
 done_testing();
-exit;
-
-

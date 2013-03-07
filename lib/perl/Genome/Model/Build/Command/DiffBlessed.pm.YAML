@@ -7,13 +7,13 @@ apipe-test-de-novo-soap: 133133147
 apipe-test-de-novo-velvet: 133133150
 apipe-test-gene-prediction-bacterial: 132740932
 apipe-test-gene-prediction-eukaryotic: 133114500
-apipe-test-mc16s-454: 133668183
+apipe-test-mc16s-454: 135304826
 apipe-test-mc16s-sanger: 133668184
 apipe-test-refalign-germline-short: 133133154
 apipe-test-reference-alignment: 133133153
 apipe-test-somatic-short: 133133148
 apipe-test-somatic-validation: 133133141
 apipe-test-somatic-validation-sv: 135030541
-apipe-test-somatic-variation: 133972091
+apipe-test-somatic-variation: 135324803
 apipe-test-somatic-variation-short: 133133144
 apipe-test-somatic-variation-sv-detection: 133133142
