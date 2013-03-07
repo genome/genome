@@ -59,8 +59,12 @@ sub execute {
     my $processed_reads_writer = $self->_create_processed_reads_writer;
     return if not $processed_reads_writer;
 
-    $DB::single = 1;
-    my %assembler_params = $self->build->processing_profile->assembler_params_as_hash;
+    my $assembler_params_string = $self->build->processing_profile->assembler_params;
+    my %assembler_params = Genome::Utility::Text::param_string_to_hash($assembler_params_string);
+    unless ( %assembler_params ) {
+        $self->error_message("Malformed assembler params: $assembler_params_string");
+        return;
+    }
 
     my $writer = $amplicon_sets[0]->seq_writer_for('processed');
     return if not $writer;
