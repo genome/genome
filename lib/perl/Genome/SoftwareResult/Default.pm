@@ -169,7 +169,7 @@ sub execute_wrapper {
         );
     }
     if ($command->is_executed) {
-        $command->status_message("new software result produce");
+        $command->status_message("new software result saved: " . $result->__display_name__);
     }
     else {
         $command->status_message("existing results found: " . $result->__display_name__);

@@ -78,8 +78,11 @@ if ($] < 5.01) {
 # set it to zero in the debugger to turn off the constant stopping...
 $DB::stopper = 1;
 
-# This is tested by Genome/SoftwareResult/Default-autogen.t
+# This is tested by Genome/SoftwareResult/Default.t
+# And also by Genome/Command/WithSavedResult-buildwrapper.t
 # It is only used by the full GMS install.
+# They probably needs a better home than the base module.
+
 sub __extend_namespace__ {
     my ($self,$ext) = @_;
 
@@ -91,12 +94,99 @@ sub __extend_namespace__ {
         return $meta;
     }
 
-    my $result_class = $self . '::' . $ext;
-    my ($command_class) = ($result_class  =~ /^(.*)::Result$/);
-    unless ($command_class) {
-        # not a result class
-        return;
+    my $new_class = $self . '::' . $ext;
+    
+    if ($new_class  =~ /^(.*)::Result$/) {
+        my $command_class = $1;
+        return $self->_generate_result_class($new_class, $command_class);
     }
+
+    if ($new_class  =~ /^(.*)::BuildStepWrapper$/) {
+        my $command_class = $1;
+        return $self->_generate_build_extender_class($new_class, $command_class);
+    }
+    
+    return;
+}
+
+sub _generate_build_extender_class {
+    my ($self, $new_class, $command_class) = @_;
+
+    my $new_class_base = 'Command::V2';
+    my %has = $self->_wrap_command_class($command_class,$new_class_base);
+    
+    Sub::Install::install_sub({
+        into => $new_class,
+        as => 'execute',
+        code => sub {
+            my $self = shift;
+
+            my $build;
+            my $label;
+
+            my $command;
+            my $result;
+            my $called_as_class_method;
+            if (ref($self)) {
+                $called_as_class_method = 0;
+                $build = $self->wrapper_build;
+                $label = $self->wrapper_build_label;
+                unless ($build) {
+                    die "no build on $self!";
+                }
+                my %params = map { 
+                        if ($has{$_}{is_many}) {
+                            $_ => [$self->$_]
+                        }
+                        else {
+                            my $value = $self->$_;
+                            $_ => $value
+                        }
+                    } keys %has;
+                $command = $command_class->create(%params);
+                $result = $command->execute(@_);
+                $result = $command->result();
+            }
+            else {
+                $called_as_class_method = 1;
+                my $bx = $command_class->define_boolexpr(@_);
+                $build = $bx->value_for("wrapper_build");
+                $label = $bx->value_for("wrapper_build_label");
+                unless ($build) {
+                    die "no add_to_build in $bx!";
+                }
+                unless ($label) {
+                    die "no add_to_label in $bx!";
+                }
+                $bx = $bx->remove_filter('wrapper_build')->remove_filter('wrapper_build_label');
+                $command = $command_class->execute($bx);
+                $result = $command->result;
+            }
+
+            $result->add_user(label => $label, user => $build);
+
+            if ($called_as_class_method) {
+                return $command;
+            }
+            else {
+                return $result;
+            }
+        }
+    });
+
+    class {$new_class} {
+        is => $new_class_base,
+        has => [ 
+            %has,
+            wrapper_build => { is => 'Genome::Model::Build' },
+            wrapper_build_label => { is => 'Text' },
+        ],
+        doc => "wrap $command_class in build workflows",
+    };
+}
+
+sub _generate_result_class {
+    my ($self, $result_class, $command_class) = @_;
     unless ($command_class->isa("Command")) {
         # the prefix of the class name is not a command class
         return;
@@ -115,6 +205,20 @@ sub __extend_namespace__ {
         return;
     }
 
+    my $new_class_base = 'Genome::SoftwareResult::Default';
+    my %has = $self->_wrap_command_class($command_class,$new_class_base);
+
+    class {$result_class} {
+        is => $new_class_base,
+        has => [ %has ],
+        doc => "results for $command_class",
+    };
+}
+
+
+sub _wrap_command_class {
+    my ($self, $command_class, $new_class_base) = @_;
+
     my $command_meta = $command_class->__meta__;
     my @properties = $command_meta->properties();
     
@@ -125,7 +229,7 @@ sub __extend_namespace__ {
 
         my $name = $property->property_name;
 
-        next if Genome::SoftwareResult::Default->can($name);
+        next if $new_class_base->can($name);
 
         if ($property->is_param) {
             $desc{is_param} = 1;
@@ -142,6 +246,7 @@ sub __extend_namespace__ {
         else {
             next;
         }
+
         $has{$name} = \%desc;
         $desc{is} = $property->data_type;
         $desc{doc} = $property->doc;
@@ -149,11 +254,7 @@ sub __extend_namespace__ {
         $desc{is_optional} = $property->is_optional;
     }
 
-    class {$result_class} {
-        is => 'Genome::SoftwareResult::Default',
-        has => [ %has ],
-        doc => "results for $command_class",
-    };
+    return %has;
 }
 
 1;
