@@ -39,7 +39,6 @@ sub _compare_ok_parse_args {
     $vo{name}    = delete $o{name};
     $vo{filters} = delete $o{filters};
     $vo{diag}    = delete $o{diag} // 1;
-    $vo{test}    = delete $o{test} // 1;
     my @k = keys %o;
     if (@k) {
         croak 'unexpected options passed to compare_ok: ' . join(', ', @k);
@@ -53,7 +52,7 @@ sub _compare_ok_parse_args {
     return ($file_1, $file_2, %vo);
 }
 
-sub compare_ok($$;%) {
+sub compare_ok {
     my ($file_1, $file_2, %o) = _compare_ok_parse_args(@_);
 
     my @compare_args = (
@@ -64,18 +63,14 @@ sub compare_ok($$;%) {
                 map { $_ =~ s/$filter//g } @_;
             }
             my $c = ($_[0] ne $_[1]);
-            if ($c == 1 && $o{diag} && $o{test}) {
+            if ($c == 1 && $o{diag}) {
                 $tb->diag("First diff:\n--- " . $file_1 . "\n+++ " . $file_2 . "\n- " . $_[0] . "+ " . $_[1]);
             }
             return $c;
         }
     );
 
-    if ($o{test}) {
-        return $tb->ok(compare(@compare_args) == 0, $o{name});
-    } else {
-        return (compare(@compare_args) == 0 ? 1 : 0);
-    }
+    return $tb->ok(compare(@compare_args) == 0, $o{name});
 }
 
 1;

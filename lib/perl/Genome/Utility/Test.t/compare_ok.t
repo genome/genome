@@ -1,8 +1,10 @@
 use strict;
 use warnings;
 
+use Test::Builder::Tester;
+use above "Genome";
+use Genome::Utility::Test qw(capture_ok);
 use Test::More;
-use above 'Genome';
 
 BEGIN {
     use_ok 'Genome::Utility::Test', qw(sub_test compare_ok);
@@ -71,14 +73,26 @@ sub_test('compare_ok matches diff command' => sub {
     $aa_fh->close();
 
     {
-        my $compare_ok = compare_ok($a_fn, $b_fn, test => 0);
+        # STDERR is:
+        # # # First diff:
+        # # # --- /tmp/akzszm45QF
+        # # # +++ /tmp/aM8X5Vj6pQ
+        # # # - a
+        # # # + b
+        # # #   Failed test at Utility/Test.t/compare_ok.t line 77.
+        test_out('not ok 1');
+        test_err(q(/# First diff:\n# --- .*\n# \+\+\+.*\n# - a\n# \+ b\n#\s+Failed test at .+ line \d+\./));
+        my $compare_ok = compare_ok($a_fn, $b_fn);
+        test_test('compare_ok ran on different files');
         my $diff    = (system(qq(diff -u "$a_fn" "$b_fn" > /dev/null)) == 0 ? 1 : 0);
         is($diff, 0, 'diff detected diff between different files');
         is($compare_ok, $diff, 'compare_ok detected diff between different files');
     }
 
     {
-        my $compare_ok = compare_ok($a_fn, $aa_fn, test => 0);
+        test_out('ok 1');
+        my $compare_ok = compare_ok($a_fn, $aa_fn);
+        test_test('compare_ok ran on similar files');
         my $diff    = (system(qq(diff -u "$a_fn" "$aa_fn" > /dev/null)) == 0 ? 1 : 0);
         is($diff, 1, 'diff did not detect diff between similar files');
         is($compare_ok, $diff, 'compare_ok did not detect diff between similar files');
