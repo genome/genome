@@ -32,7 +32,7 @@ class Genome::Model::RnaSeq {
         digital_expression_detection_strategy => {
             is => 'Text',
             is_optional => 1,
-            default_value => 'htseq-count 0.5.4p1 [--mode intersect-strict --minaqual 1 --blacklist-alignments-flags 0x0104 --results-version 1]',
+            example_values => ['htseq-count 0.5.4p1 [--mode intersect-strict --minaqual 1 --blacklist-alignments-flags 0x0104 --results-version 1]',],
             doc => 'measure expression level using exact read counts (non-normalized)'
         },
         dna_type => {
