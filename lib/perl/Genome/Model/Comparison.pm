@@ -79,7 +79,7 @@ sub _execute_build {
 
     my @from_builds = sort $build->from_builds;
     
-    my @from_models = map { $_->model } @from_builds;
+    my @from_models = sort {$a->id cmp $b->id } map { $_->model } @from_builds;
     my $from_group_name = $self->name . '.from';
     my $from_group = Genome::ModelGroup->get(name => $from_group_name);
     if ($from_group) {
@@ -91,7 +91,7 @@ sub _execute_build {
     }
     unless ($from_group) {
         $from_group = Genome::ModelGroup->create(name => $from_group_name);
-        for my $from_model (@from_models) {
+        for my $from_model (sort { $a cmp $b } @from_models) {
             $from_group->assign_models($from_model);
         }
     }
@@ -138,10 +138,11 @@ sub _execute_build {
         Genome::Sys->create_directory($aspect_dir);
     }
 
-    for (my $n = 0; $n < $#to_models; $n++) {
+    for (my $n = 0; $n < scalar(@to_models); $n++) {
         my $to_model = $to_models[$n];
         my $to_build = $to_model->last_complete_build;
 
+        $DB::single=1;
         unless ($to_build) {
             my $existing_build = $to_model->current_build;
             if ($existing_build && $existing_build->status eq 'Running') {
@@ -153,11 +154,11 @@ sub _execute_build {
                     $self->status_message('Existing current build '. $existing_build->__display_name__ .' is '. $existing_build->status );
                 }
                 $self->status_message('Starting a build for model '. $to_model->__display_name__);
-                Genome::Sys->shellcmd->( cmd => 'genome model build start '. $to_model );
+                my $build = $to_model->add_build;
+                $build->start;
             }
             next;
         }
-        
         my $from_build = $from_builds[$n];
         my $from_model = $from_build->model;
 
@@ -219,7 +220,7 @@ sub _execute_build {
             # each comparison should have an output directory linked under the build directory
         }
     }
-
+    $DB::single=1;
     return 1;
 }
 
