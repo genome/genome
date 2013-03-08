@@ -9,72 +9,26 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult;
-use lib File::Basename::dirname(File::Spec->rel2abs(__FILE__));
+use lib File::Spec->join(File::Basename::dirname(File::Basename::dirname(File::Spec->rel2abs(__FILE__))), "ChimerascanBase.t");
 use chimerascan_test_setup "setup";
+use chimerascan_test_create "test_create";
 
-my $chimerascan_version = '0.4.6';
 my $picard_version = 1.82;
-my ($alignment_result, $annotation_build) = setup(test_data_version => 3,
-        picard_version => $picard_version,
-        chimerascan_version => $chimerascan_version);
+my $chimerascan_version = '0.4.6';
+my $chimerascan_result_class = "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult";
+my ($alignment_result, $annotation_build, @bam_files) = setup(test_data_version => 3,
+        chimerascan_version => $chimerascan_version,
+        chimerascan_result_class => $chimerascan_result_class,
+        picard_version => $picard_version);
 
-my %params = (
-    alignment_result => $alignment_result,
-    version => $chimerascan_version,
-    detector_params => "--reuse-bam 0 --bowtie-version=",
-    annotation_build => $annotation_build,
-    picard_version => $picard_version,
+test_create(
+        alignment_result => $alignment_result,
+        annotation_build => $annotation_build,
+        chimerascan_version => $chimerascan_version,
+        chimerascan_result_class => $chimerascan_result_class,
+        picard_version => $picard_version
 );
-my $class = 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult';
-
-test_for_error($class, \%params, "You must supply a bowtie version");
-
-# needs --bowtie-version
-$params{'detector_params'} = "--reuse-bam 0";
-test_for_error($class, \%params, "Couldn't find parameter");
-
-# invalid bowtie version for chimerascan-vrl
-$params{'detector_params'} = "--bowtie-version 2.0.0 --reuse-bam 0", # --bowtie-version=2.0.0
-          # space or = are both valid syntax  ^ here    or here ^              or here ^
-test_for_error($class, \%params, "Currently chimerascan-vrl only supports");
-
-# invalid value for --reuse-bam
-$params{'detector_params'} = "--bowtie-version 0.12.7 --reuse-bam bad";
-test_for_error($class, \%params, "You must specify either 1 (true) or 0 (false) for parameter");
-
-# should fail since -n must be an integer
-#   chimerascan_run.py: error: option -n: invalid integer value: 'a'
-$params{'detector_params'} = "--bowtie-version 0.12.7 --reuse-bam 0 -n a";
-test_for_error($class, \%params, "ERROR RUNNING COMMAND");
-
-# should fail because trimmed reads are shorter than segment length
-#   min_read_length after trimming: -74
-#   max_read_length after trimming: 1
-#   seed length (25) cannot be longer than read length (-74)
-#   Checking for 'bowtie-build' binary... found
-#   Checking for 'bowtie' binary... found
-#   Checking for chimerascan index directory... found
-#   Checking for bowtie index file... found
-#   Invalid run configuration, aborting.
-$params{'detector_params'} = "--bowtie-version 0.12.7 --reuse-bam 0 --trim5 100";
-test_for_error($class, \%params, "ERROR RUNNING COMMAND");
 
 done_testing();
-
-sub test_for_error {
-    my ($class, $params, $expected_error) = @_;
-
-    eval {
-        my $result = $class->get_or_create(%{$params});
-        die "failed test";
-    };
-    if ($@) {
-        my $error_str = $@;
-        chomp $error_str;
-        diag "Got: \"$error_str\"";
-        ok($error_str =~ m/\Q$expected_error\E/, "Crashed as expected with \"$expected_error\"");
-    }
-}
 
 1;
