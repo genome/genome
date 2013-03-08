@@ -5,10 +5,11 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test run_ok);
+our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok);
 
 use Carp qw(croak);
 use File::Compare qw(compare);
+use IPC::System::Simple qw(capture);
 use Test::More;
 
 my $tb = __PACKAGE__->builder;
@@ -71,6 +72,26 @@ sub compare_ok {
     );
 
     return $tb->ok(compare(@compare_args) == 0, $o{name});
+}
+
+sub capture_ok {
+    my ($command, $test_name) = @_;
+
+    my $tb = __PACKAGE__->builder;
+
+    my @command = ref $command ? @$command : $command;
+    $test_name //= @command > 1 ? join(' ', @command) : $command[0];
+
+    my @output = eval { capture(@command) };
+    my $error = $@;
+    my $exit_zero = ($? == 0);
+    $tb->ok($exit_zero, $test_name) or diag $error, @output;
+
+    if (wantarray) {
+        return ($exit_zero, @output);
+    } else {
+        return $exit_zero;
+    }
 }
 
 sub run_ok {
