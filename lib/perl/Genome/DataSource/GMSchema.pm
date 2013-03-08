@@ -83,6 +83,11 @@ sub _sync_database {
     my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES}); 
     my $use_postgres = !$skip_postgres;
 
+    # Attempt to get a meta db handle first.  This way, if the meta db doesn't exist,
+    # then we'll create it before forking.  Otherwise, it'll attempt to create in the fork,
+    # fail, and then we'll lose the synced data.
+    my $meta_dbh = Genome::DataSource::Meta->get_default_handle();
+
     if ($ENV{GENOME_QUERY_POSTGRES}) {
         Genome::Site::TGI->undo_table_name_patch;
         my %classes = map { $_->class => 1 } @{$params{changed_objects}};
