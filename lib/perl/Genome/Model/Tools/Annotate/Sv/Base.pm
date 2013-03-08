@@ -60,6 +60,12 @@ class Genome::Model::Tools::Annotate::Sv::Base{
             default => 9,
             doc => '1-based index of column that contains the orientation',
         },
+        score_column => {
+            is => 'Integer',
+            default => 13,
+            doc => '1-based index of column that contains the assembly score',
+        },
+
     ],
 };
 
@@ -85,12 +91,22 @@ sub execute {
 
         #parse either sd or bd file
         my @fields = split /\t/, $line;
+
         my $chrA = $fields[$self->chrA_column -1];
-        my $bpA = $fields[$self->bpA_column -1];
+        my $bpA  = $fields[$self->bpA_column -1];
         my $chrB = $fields[$self->chrB_column -1];
-        my $bpB = $fields[$self->bpB_column -1];
-        my $event = $fields[$self->event_type_column -1];
+        my $bpB  = $fields[$self->bpB_column -1];
+        my $event  = $fields[$self->event_type_column -1];
         my $orient = $fields[$self->orient_column -1 ];
+        my $score  = $fields[$self->score_column -1 ];
+
+        #FusionTranscript is picky on orientation
+        if ($orient =~ /,/) {
+            unless ($score =~ /,/) {
+                die $self->error_message("Orientation does not match score in line: $line");
+            }
+            $orient = $self->pick_orient($orient, $score);
+        }
 
         $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $chrA, $bpA, $chrB, $bpB, $event, $orient, $breakpoints_list);
     }
@@ -100,9 +116,9 @@ sub execute {
     $breakpoints_list = $self->fill_in_transcripts($breakpoints_list, $build);
     
     my @transcripts_to_cache;
-    foreach my $chr (nsort keys %{$breakpoints_list}) {
+    for my $chr (nsort keys %{$breakpoints_list}) {
         my @transcripts;
-        foreach my $item (@{$breakpoints_list->{$chr}}) {
+        for my $item (@{$breakpoints_list->{$chr}}) {
             if ($item->{breakpoint_link}) {
                 next;
             }
@@ -150,6 +166,27 @@ sub execute {
 
 }
 
+#assume only two items in each array for now
+sub pick_orient {
+    my ($self, $orient, $score) = @_;
+
+    my @orients = split /,/, $orient;
+    my @scores  = split /,/, $score;
+
+    if (@orients > 2 or @scores > 2) {
+        die $self->error_message("Assume only two items in the array for now");
+    }
+
+    #How to handle conflict orietnation like +-,-+ ?
+    if ($scores[1] > $scores[0]) {
+        return $orients[1];
+    }
+    else {
+        return $orients[0];
+    }
+}
+
+
 #TODO NEEDS to be rewritten - I don't think it is right.
 #First of all, it stops at one end position rather than getting all intervals that cross the breakpoint.
 #Second of all, it only considers the 2nd breakpoint of the SV, not the first breakpoint.  I think
@@ -163,7 +200,7 @@ sub annotate_interval_matches {
     my $tag = shift;
     my $breakpoint_key = shift;
 
-    foreach my $chr (keys %$positions) {
+    for my $chr (keys %$positions) {
         my @sorted_items = sort {$a->{$breakpoint_key}<=>$b->{$breakpoint_key}} (@{$positions->{$chr}});
         my @sorted_positions = map{$_->{$breakpoint_key}} @sorted_items;
         my %annotated_output;
@@ -177,7 +214,7 @@ sub annotate_interval_matches {
             for my $start (keys %{$$annotation{$chr}{$chromEnds[0]}}) {
                 if ($pos>=$start-$annot_length) {
                     for my $var (@{$$annotation{$chr}{$chromEnds[0]}{$start}}){
-                        foreach my $position_item (@{$positions->{$chr}}) {
+                        for my $position_item (@{$positions->{$chr}}) {
                             if ($position_item->{$breakpoint_key} eq $pos) {
                                 push @{$position_item->{$tag}->{$breakpoint_key}}, $var;
                             }
@@ -198,7 +235,7 @@ sub get_var_annotation {
     my $frac = $self->overlap_fraction;
     
     if (defined $annotation_ref) {
-        foreach my $var (@$annotation_ref) {
+        for my $var (@$annotation_ref) {
             my $pos1 = min($item->{bpB}, $var->{chromEnd});
             my $pos2 = max($item->{bpA}, $var->{chromStart});
             my $overlap = $pos1-$pos2+1;
