@@ -239,38 +239,14 @@ sub execute {
     my $snv_sniper_outfile = $build_outdir . "snv_sniper.bed";
     my $snv_varscan_outfile = $build_outdir . "snv_varscan.bed";
 
-    $self->status_message("Looking for overlapping indel results between:\n$indel_results_file\n$indel_strelka_results_file\n\n");
-    $self->status_message("Looking for overlapping indel results between:\n$indel_results_file\n$indel_gatk_results_file\n\n");
-    $self->status_message("Looking for overlapping indel results between:\n$indel_results_file\n$indel_pindel_results_file\n\n");
-    $self->status_message("Looking for overlapping indel results between:\n$indel_results_file\n$indel_varscan_results_file\n\n");
-    $self->status_message("Looking for overlapping snv results between:\n$snv_results_file\n$snv_strelka_results_file\n\n");
-    $self->status_message("Looking for overlapping snv results between:\n$snv_results_file\n$snv_sniper_results_file\n\n");
-    $self->status_message("Looking for overlapping snv results between:\n$snv_results_file\n$snv_varscan_results_file\n\n");
+    $self->determineCaller("indel","strelka", $indel_results_file, $indel_strelka_results_file, $indel_strelka_outfile);
+    $self->determineCaller("indel","gatk", $indel_results_file, $indel_gatk_results_file, $indel_gatk_outfile);
+    $self->determineCaller("indel","pindel", $indel_results_file, $indel_pindel_results_file, $indel_pindel_outfile);
+    $self->determineCaller("indel","varscan", $indel_results_file, $indel_varscan_results_file, $indel_varscan_outfile);
 
-    my $joinx_indel_strelka_cmd = "gmt joinx intersect $indel_results_file $indel_strelka_results_file $params_string --output-file $indel_strelka_outfile";
-    my $joinx_indel_gatk_cmd = "gmt joinx intersect $indel_results_file $indel_gatk_results_file $params_string --output-file $indel_gatk_outfile";
-    my $joinx_indel_pindel_cmd = "gmt joinx intersect $indel_results_file $indel_pindel_results_file $params_string --output-file $indel_pindel_outfile";
-    my $joinx_indel_varscan_cmd = "gmt joinx intersect $indel_results_file $indel_varscan_results_file $params_string --output-file $indel_varscan_outfile";
-    my $joinx_snv_strelka_cmd = "gmt joinx intersect $snv_results_file $snv_strelka_results_file $params_string --output-file $snv_strelka_outfile";
-    my $joinx_snv_sniper_cmd = "gmt joinx intersect $snv_results_file $snv_sniper_results_file $params_string --output-file $snv_sniper_outfile";
-    my $joinx_snv_varscan_cmd = "gmt joinx intersect $snv_results_file $snv_varscan_results_file $params_string --output-file $snv_varscan_outfile";
-
-    Genome::Sys->shellcmd(cmd => $joinx_indel_strelka_cmd);
-    Genome::Sys->shellcmd(cmd => $joinx_indel_gatk_cmd);
-    Genome::Sys->shellcmd(cmd => $joinx_indel_pindel_cmd);
-    Genome::Sys->shellcmd(cmd => $joinx_indel_varscan_cmd);
-    Genome::Sys->shellcmd(cmd => $joinx_snv_strelka_cmd);
-    Genome::Sys->shellcmd(cmd => $joinx_snv_sniper_cmd);
-    Genome::Sys->shellcmd(cmd => $joinx_snv_varscan_cmd);
-
-    #Go through original indels and note all files from different callers where that indel was called
-    $self->noteCaller($indel_strelka_outfile, "strelka", "indel");
-    $self->noteCaller($indel_gatk_outfile, "gatk", "indel");
-    $self->noteCaller($indel_pindel_outfile, "pindel", "indel");
-    $self->noteCaller($indel_varscan_outfile, "varscan", "indel");
-    $self->noteCaller($snv_strelka_outfile, "strelka", "snv");
-    $self->noteCaller($snv_sniper_outfile, "sniper", "snv");
-    $self->noteCaller($snv_varscan_outfile, "varscan", "snv");
+    $self->determineCaller("snv","strelka", $snv_results_file, $snv_strelka_results_file, $snv_strelka_outfile);
+    $self->determineCaller("snv","sniper", $snv_results_file, $snv_sniper_results_file, $snv_sniper_outfile);
+    $self->determineCaller("snv","varscan", $snv_results_file, $snv_varscan_results_file, $snv_varscan_outfile);
 
     #Print out a new file containing the extra source columns
     open (INDEL_OUT, ">$indel_outfile") || die "\n\nCould not open $indel_outfile\n\n";
@@ -357,10 +333,28 @@ sub checkResultFile{
   unless (-e $result_file){
     my $path_list = join("\n", @paths);
     $self->error_message("$caller result not found in the following list of paths\n\n$path_list\n");
-    exit;
+    return undef;
   }
   return($result_file);
 }
+
+sub determineCaller {
+    my ($self, $variant_type, $caller_name, $results_file, $caller_file, $outfile) = @_;
+
+    if(defined $caller_file) {
+        my $joinx_params_string = "--exact-pos --exact-allele";
+
+        $self->status_message("Looking for overlapping $variant_type results between:\n$results_file\n$caller_file\n\n");
+
+        my $cmd = "gmt joinx intersect $results_file $caller_file $joinx_params_string --output-file $outfile";
+
+        Genome::Sys->shellcmd(cmd => $cmd);
+
+        #Go through original indels and note all files from different callers where that indel was called
+        $self->noteCaller($outfile, $caller_name, $variant_type);
+    }
+}
+
 
 1;
 
