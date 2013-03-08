@@ -59,8 +59,8 @@ sub execute {
             version => $self->version,
             bowtie_version => $self->bowtie_version,
             reference_build => $self->reference_build,
-            annotation_build => $self->annotation_build
-            picard_version => $self->picard_version
+            annotation_build => $self->annotation_build,
+            picard_version => $self->picard_version,
     );
 
     die( 'Failed to generate result!' ) unless $result;

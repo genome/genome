@@ -9,55 +9,26 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult;
-use lib File::Basename::dirname(File::Spec->rel2abs(__FILE__));
+use lib File::Spec->join(File::Basename::dirname(File::Basename::dirname(File::Spec->rel2abs(__FILE__))), "ChimerascanBase.t");
 use chimerascan_test_setup "setup";
+use chimerascan_test_create "test_create";
 
 my $picard_version = 1.82;
 my $chimerascan_version = '0.4.5';
-my ($alignment_result, $annotation_build) = setup(test_data_version => 4,
+my $chimerascan_result_class = "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult";
+my ($alignment_result, $annotation_build, @bam_files) = setup(test_data_version => 4,
         chimerascan_version => $chimerascan_version,
+        chimerascan_result_class => $chimerascan_result_class,
         picard_version => $picard_version);
 
-*Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::_staging_disk_usage
-    = sub { return 40 * 1024 };
-
-my %params = (
-    alignment_result => $alignment_result,
-    version => '0.4.5',
-    detector_params => "--reuse-bam 0 --bowtie-version=",
-    annotation_build => $annotation_build,
-    picard_version => $picard_version,
+test_create(
+        alignment_result => $alignment_result,
+        annotation_build => $annotation_build,
+        chimerascan_version => $chimerascan_version,
+        chimerascan_result_class => $chimerascan_result_class,
+        picard_version => $picard_version
 );
-my $class = 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult';
-
-test_for_error($class, \%params, "You must supply a bowtie version");
-
-$params{'detector_params'} = "--reuse-bam 0";
-test_for_error($class, \%params, "Couldn't find parameter");
-
-$params{'detector_params'} = "--bowtie-version 2.0.0 --reuse-bam 0", # --bowtie-version=2.0.0
-          # space or = are both valid syntax  ^ here             or here ^
-test_for_error($class, \%params, "Chimerascan currently only supports");
-
-$params{'detector_params'} = "--bowtie-version 0.12.7 --reuse-bam bad";
-test_for_error($class, \%params, "You must specify either");
 
 done_testing();
-
-sub test_for_error {
-    my ($class, $params, $expected_error) = @_;
-
-    eval {
-        my $result = $class->get_or_create(%{$params});
-        die "failed test";
-    };
-    if ($@) {
-        my $error_str = $@;
-        chomp $error_str;
-        diag "Got: \"$error_str\"";
-        ok($error_str =~ m/\Q$expected_error\E/, "Crashed as expected with \"$expected_error\"");
-    }
-}
 
 1;

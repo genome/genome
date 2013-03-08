@@ -55,6 +55,7 @@ my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Inde
     bowtie_version => "0.12.5",
     reference_build => $reference_build,
     annotation_build => $annotation_build,
+    picard_version => 1.82,
 );
 
 isa_ok($result, "Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index");
