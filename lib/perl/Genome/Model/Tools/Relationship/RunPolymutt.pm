@@ -286,16 +286,14 @@ sub missing_header_lines {
     for my $tag (keys %possible_tags) {
         $DB::single=1;
         chomp(my @number_of_tags = `cat $input_vcf | grep $tag`);
-        if(@number_of_tags) {
-            my $has_header=0;
-            for my $line (@number_of_tags) {
-                if($line=~m/<ID=$tag,/) {
-                    $has_header=1;
-                }
+        my $has_header=0;
+        for my $line (@number_of_tags) {
+            if($line=~m/<ID=$tag,/) {
+                $has_header=1;
             }
-            unless($has_header) {
-                push @header_lines_to_add, $possible_tags{$tag};
-            }
+        }
+        unless($has_header) {
+            push @header_lines_to_add, $possible_tags{$tag};
         }
     }
 

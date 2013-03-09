@@ -161,7 +161,8 @@ sub merge_vcfs {
     return $temp_output_filename;
 }
 
-# FIXME since the header fixing is no longer done here, this is as simple as a grep "^#" $standard_vcf > $fh 
+# since the header fixing is no longer done here, this is as simple as a grep "^#" $standard_vcf > $fh 
+# FIXME this is a bad assumption, since the denovo file can have tags that the standard file does not
 sub write_merged_header {
     my ($self, $fh, $denovo_vcf, $standard_vcf) = @_;
 
