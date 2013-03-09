@@ -199,7 +199,6 @@ sub _resolve_resource_requirements_for_build {
 
 sub _execute_build {
     my ($self, $build) = @_;
-    $DB::single=1;
 
     my $model = $build->model;
     $self->status_message('Build '.$model->__display_name__);
@@ -214,134 +213,86 @@ sub _execute_build {
     my $viral_protein_model = $model->viral_protein_model;
     $self->status_message("Got viral_protein_model ".$viral_protein_model->__display_name__) if $viral_protein_model;
 
-    my $start_build = sub {
-        my ($model, @instrument_data) = @_;
-        my %existing;
-
-        for my $inst_data($model->instrument_data){
-            $existing{$inst_data->id} = $inst_data;
-        }
-        my @to_add;
-        for my $inst_data(@instrument_data){
-            if ($existing{$inst_data->id}) {
-                delete $existing{$inst_data->id};
-            }
-            else {
-                push @to_add, $inst_data;
-            }
-        }
-        for my $inst_data (values %existing){
-            $self->status_message("Removing Instrument Data " . $inst_data->id . " from model " . $model->__display_name__);
-            $model->remove_instrument_data($inst_data)
-        }
-        for my $inst_data(@to_add){
-            $self->status_message("Adding Instrument Data " . $inst_data->id . " to model " . $model->__display_name__);
-            $model->add_instrument_data($inst_data);
-        }
-        if (@instrument_data == 0){
-            $self->status_message("No instrument data for model ".$model->__display_name__.", skipping build");
-            return;
-        }
-
-        my $build = $self->_build_if_necessary($model);
-        return $build;
-    };
-
-    my $wait_build = sub {
-        my $watched_build = shift;
-        if ( not $watched_build ) {
-            $self->status_message("No build to wait!");
-            return;
-        }
-        $self->status_message('Watching build: '.$watched_build->__display_name__);
-        $self->_wait_for_build($watched_build);
-        my $status = $watched_build->status;
-        if ( $status eq 'Succeeded' ) {
-            $self->status_message($status.'! '.$watched_build->__display_name__);
-        }
-        else {
-            $self->error_message($status.'! '.$watched_build->__display_name__);
-        }
-    };
-
-    my $extract_data = sub {
-        my ($from_build, $extraction_type) = @_;
-        if ( not defined $from_build ){
-            $self->status_message("No previous build provided, skipping $extraction_type data extraction");
-            return;
-        }
-        $self->status_message("Extracting $extraction_type reads from ".$from_build->__display_name__);
-        my @assignments = $from_build->instrument_data_inputs;
-        my @extracted_instrument_data;
-        for my $assignment (@assignments) {
-            my @alignment_results = $from_build->alignment_results_for_instrument_data($assignment->value);
-            if (@alignment_results > 1) {
-                die $self->error_message( "multiple alignment_results found for instrument data assignment: " . $assignment->__display_name__);
-            }
-            if (@alignment_results == 0) {
-                die $self->error_message( "no alignment_results found for instrument data assignment: " . $assignment->__display_name__);
-            }
-            $self->status_message("processing instrument data assignment ".$assignment->__display_name__." for unaligned reads import");
-
-            my $alignment_result = $alignment_results[0];
-            my @extracted_instrument_data_for_alignment_result = $self->_extract_data_from_alignment_result($alignment_result, $extraction_type,$self->filter_duplicates);
-
-            push @extracted_instrument_data, \@extracted_instrument_data_for_alignment_result
-        }
-
-        unless (@extracted_instrument_data == @assignments) {
-            die $self->error_message("The count of extracted instrument data sets does not match screened instrument data assignments.");
-        }
-        return map {@$_} @extracted_instrument_data;
-    };
-
     my @original_instdata = $build->instrument_data;
 
-    my $cs_build = $start_build->($contamination_screen_model, @original_instdata);
-    my $cs_build_ok = $wait_build->($cs_build);
+    my $cs_build = $self->_start_build($contamination_screen_model, @original_instdata);
+    my $cs_build_ok = $self->_wait_for_build($cs_build);
     return if not $cs_build_ok;
     my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $cs_build, sub_model_name => 'contamination_screen');
     return if not $link_alignments;
 
     my @cs_unaligned;
     if ($self->filter_contaminant_fragments){
-        @cs_unaligned = $extract_data->($cs_build, "unaligned paired");
+        @cs_unaligned = $self->_extract_data($cs_build, "unaligned paired");
     }
     else{
-        @cs_unaligned = $extract_data->($cs_build, "unaligned");
+        @cs_unaligned = $self->_extract_data($cs_build, "unaligned");
     }
 
-    my $mg_nucleotide_build = $start_build->($metagenomic_nucleotide_model, @cs_unaligned);
-    my $mg_nt_build_ok = $wait_build->($mg_nucleotide_build);
+    my $mg_nucleotide_build = $self->_start_build($metagenomic_nucleotide_model, @cs_unaligned);
+    my $mg_nt_build_ok = $self->_wait_for_build($mg_nucleotide_build);
     return if not $mg_nt_build_ok;
     $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $mg_nucleotide_build, sub_model_name => 'metagenomic_nucleotide');
     return if not $link_alignments;
 
-    my @mg_nucleotide_unaligned = $extract_data->($mg_nucleotide_build, "unaligned");
-    my @mg_nucleotide_aligned = $extract_data->($mg_nucleotide_build, "aligned");
+    my @mg_nucleotide_unaligned = $self->_extract_data($mg_nucleotide_build, "unaligned");
+    my @mg_nucleotide_aligned = $self->extract_data($mg_nucleotide_build, "aligned");
 
-    my $mg_protein_build = $start_build->($metagenomic_protein_model, @mg_nucleotide_unaligned);
-    my $mg_nr_build_ok = $wait_build->($mg_protein_build);
+    my $mg_protein_build = $self->_start_build($metagenomic_protein_model, @mg_nucleotide_unaligned);
+    my $mg_nr_build_ok = $self->_wait_for_build($mg_protein_build);
     return if not $mg_nr_build_ok;
     $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $mg_protein_build, sub_model_name => 'metagenomic_protein');
     return if not $link_alignments;
 
-    my @mg_protein_aligned = $extract_data->($mg_protein_build, "aligned");
+    my @mg_protein_aligned = $self->_extract_data->($mg_protein_build, "aligned");
 
-    my $viral_nucleotide_build = $start_build->($viral_nucleotide_model, @mg_nucleotide_aligned, @mg_protein_aligned);
-    my $viral_protein_build = $start_build->($viral_protein_model, @mg_nucleotide_aligned, @mg_protein_aligned);
+    my $viral_nucleotide_build = $self->_start_build($viral_nucleotide_model, @mg_nucleotide_aligned, @mg_protein_aligned);
+    my $viral_protein_build = $self->_start_build($viral_protein_model, @mg_nucleotide_aligned, @mg_protein_aligned);
 
-    my $viral_nr_build_ok = $wait_build->($viral_protein_build);
+    my $viral_nr_build_ok = $self->_wait_for_build($viral_protein_build);
     return if not $viral_nr_build_ok;
     $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $viral_protein_build, sub_model_name => 'viral_protein');
     return if not $link_alignments;
 
-    my $viral_nt_build_ok = $wait_build->($viral_nucleotide_build);
+    my $viral_nt_build_ok = $self->_wait_for_build($viral_nucleotide_build);
     return if not $viral_nt_build_ok;
     $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $viral_nucleotide_build, sub_model_name => 'viral_nucleotide');
     return if not $link_alignments;
 
     return 1;
+}
+
+sub _start_build  {
+    my ($self, $model, @instrument_data) = @_;
+
+    my %existing;
+    for my $inst_data($model->instrument_data){
+        $existing{$inst_data->id} = $inst_data;
+    }
+    my @to_add;
+    for my $inst_data(@instrument_data){
+        if ($existing{$inst_data->id}) {
+            delete $existing{$inst_data->id};
+        }
+        else {
+            push @to_add, $inst_data;
+        }
+    }
+    for my $inst_data (values %existing){
+        $self->status_message("Removing Instrument Data " . $inst_data->id . " from model " . $model->__display_name__);
+        $model->remove_instrument_data($inst_data)
+    }
+    for my $inst_data(@to_add){
+        $self->status_message("Adding Instrument Data " . $inst_data->id . " to model " . $model->__display_name__);
+        $model->add_instrument_data($inst_data);
+    }
+    if (@instrument_data == 0){
+        $self->status_message("No instrument data for model ".$model->__display_name__.", skipping build");
+        return;
+    }
+
+    my $build = $self->_build_if_necessary($model);
+    return $build;
 }
 
 sub _build_if_necessary {
@@ -462,6 +413,13 @@ sub _start_build_for_model {
 
 sub _wait_for_build {
     my ($self, $build) = @_;
+
+    if ( not $build ) {
+        $self->status_message("No build to wait!");
+        return;
+    }
+    $self->status_message('Watching build: '.$build->__display_name__);
+
     my $last_status = '';
     my $time = 0;
     my $inc = 30;
@@ -479,6 +437,48 @@ sub _wait_for_build {
         $time += $inc;
         $last_status = $status;
     }
+
+    my $status = $build->status;
+    if ( $status eq 'Succeeded' ) {
+        $self->status_message($status.'! '.$build->__display_name__);
+        return 1;
+    }
+    else {
+        $self->error_message($status.'! '.$build->__display_name__);
+        return;
+    }
+}
+
+sub _extract_data {
+    my ($self, $from_build, $extraction_type) = @_;
+
+    if ( not defined $from_build ){
+        $self->status_message("No previous build provided, skipping $extraction_type data extraction");
+        return;
+    }
+    $self->status_message("Extracting $extraction_type reads from ".$from_build->__display_name__);
+    my @assignments = $from_build->instrument_data_inputs;
+    my @extracted_instrument_data;
+    for my $assignment (@assignments) {
+        my @alignment_results = $from_build->alignment_results_for_instrument_data($assignment->value);
+        if (@alignment_results > 1) {
+            die $self->error_message( "multiple alignment_results found for instrument data assignment: " . $assignment->__display_name__);
+        }
+        if (@alignment_results == 0) {
+            die $self->error_message( "no alignment_results found for instrument data assignment: " . $assignment->__display_name__);
+        }
+        $self->status_message("processing instrument data assignment ".$assignment->__display_name__." for unaligned reads import");
+
+        my $alignment_result = $alignment_results[0];
+        my @extracted_instrument_data_for_alignment_result = $self->_extract_data_from_alignment_result($alignment_result, $extraction_type,$self->filter_duplicates);
+
+        push @extracted_instrument_data, \@extracted_instrument_data_for_alignment_result
+    }
+
+    unless (@extracted_instrument_data == @assignments) {
+        die $self->error_message("The count of extracted instrument data sets does not match screened instrument data assignments.");
+    }
+    return map {@$_} @extracted_instrument_data;
 }
 
 sub _extract_data_from_alignment_result{
