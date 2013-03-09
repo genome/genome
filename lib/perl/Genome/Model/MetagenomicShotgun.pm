@@ -216,19 +216,16 @@ sub _execute_build {
     my @cs_unaligned = $self->_screen_contaminants($build);
     return if not @cs_unaligned;
 
-    my $mg_nucleotide_build = $self->_start_build($metagenomic_nucleotide_model, @cs_unaligned);
-    my $mg_nt_build_ok = $self->_wait_for_build($mg_nucleotide_build);
-    return if not $mg_nt_build_ok;
-    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $mg_nucleotide_build, sub_model_name => 'metagenomic_nucleotide');
-    return if not $link_alignments;
+    my %mg_nucleotide_results = $self->_run_meta_nt($build, @cs_unaligned);
+    return if not %mg_nucleotide_results;
 
-    my @mg_nucleotide_unaligned = $self->_extract_data($mg_nucleotide_build, "unaligned");
-    my @mg_nucleotide_aligned = $self->extract_data($mg_nucleotide_build, "aligned");
+    my @mg_nucleotide_aligned = $mg_nucleotide_results{aligned};
+    my @mg_nucleotide_unaligned = $mg_nucleotide_results{unaligned};
 
     my $mg_protein_build = $self->_start_build($metagenomic_protein_model, @mg_nucleotide_unaligned);
     my $mg_nr_build_ok = $self->_wait_for_build($mg_protein_build);
     return if not $mg_nr_build_ok;
-    $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $mg_protein_build, sub_model_name => 'metagenomic_protein');
+    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $mg_protein_build, sub_model_name => 'metagenomic_protein');
     return if not $link_alignments;
 
     my @mg_protein_aligned = $self->_extract_data->($mg_protein_build, "aligned");
@@ -269,6 +266,25 @@ sub _screen_contaminants {
     }
 
     return @cs_unaligned;
+}
+
+sub _run_meta_nt {
+    my ($self, $build, @cs_unaligned) = @_;
+
+    my $metagenomic_nucleotide_model = $self->metagenomic_nucleotide_model;
+    my $mg_nucleotide_build = $self->_start_build($metagenomic_nucleotide_model, @cs_unaligned);
+    my $mg_nt_build_ok = $self->_wait_for_build($mg_nucleotide_build);
+    return if not $mg_nt_build_ok;
+    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $mg_nucleotide_build, sub_model_name => 'metagenomic_nucleotide');
+    return if not $link_alignments;
+
+    my @mg_nucleotide_aligned = $self->extract_data($mg_nucleotide_build, "aligned");
+    my @mg_nucleotide_unaligned = $self->_extract_data($mg_nucleotide_build, "unaligned");
+
+    return ( 
+        aligned => \@mg_nucleotide_aligned,
+        unaligned => \@mg_nucleotide_unaligned
+    );
 }
 
 sub _start_build  {
