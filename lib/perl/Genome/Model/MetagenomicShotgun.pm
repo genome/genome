@@ -209,10 +209,13 @@ sub _execute_build {
     my $viral_protein_model = $model->viral_protein_model;
     $self->status_message("Got viral_protein_model ".$viral_protein_model->__display_name__) if $viral_protein_model;
 
-    my @cs_unaligned = $self->_screen_contaminants($build);
-    return if not @cs_unaligned;
+    my $screen_contamination = Genome::Model::MetagenomicShotgun::Build::ScreenContamination->create(
+        build => $build,
+    );
+    return if not $screen_contamination;
+    return if not $screen_contamination->execute;
 
-    my %mg_nucleotide_results = $self->_run_meta_nt($build, @cs_unaligned);
+    my %mg_nucleotide_results = $self->_run_meta_nt($build, $screen_contamination->unaligned);
     return if not %mg_nucleotide_results;
 
     my @mg_nucleotide_unaligned = @{$mg_nucleotide_results{unaligned}};
@@ -227,28 +230,6 @@ sub _execute_build {
     return if not $viral_nt_ok;
 
     return 1;
-}
-
-sub _screen_contaminants {
-    my ($self, $build) = @_;
-
-    my $contamination_screen_model = $self->contamination_screen_model;
-    my @original_instdata = $build->instrument_data;
-    my $cs_build = $self->_start_build($contamination_screen_model, @original_instdata);
-    my $cs_build_ok = $self->_wait_for_build($cs_build);
-    return if not $cs_build_ok;
-    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $cs_build, sub_model_name => 'contamination_screen');
-    return if not $link_alignments;
-
-    my @cs_unaligned;
-    if ($self->filter_contaminant_fragments){
-        @cs_unaligned = $self->_extract_data($cs_build, "unaligned paired");
-    }
-    else{
-        @cs_unaligned = $self->_extract_data($cs_build, "unaligned");
-    }
-
-    return @cs_unaligned;
 }
 
 sub _run_meta_nt {
