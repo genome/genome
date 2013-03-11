@@ -160,28 +160,17 @@ sub resolve_param_value_from_text {
     }
 
     $SEEN_FROM_CLASS{$param_class} = 1;
-    my @results;
-    # try getting BoolExpr, otherwise fallback on '_resolve_param_value_from_text_by_name_or_id' parser
-    eval { @results = $self->_resolve_param_value_from_text_by_bool_expr($param_class, $param_arg); };
-    Carp::croak($@) if ($@ and $@ !~ m/Not a valid BoolExpr/);
-    if (!@results && !$@) {
-        # no result and was valid BoolExpr then we don't want to break it apart because we
-        # could query enormous amounts of info
-        die $@;
+
+    my @results_by_string;
+    if ($param_class->can('_resolve_param_value_from_text_by_name_or_id')) {
+        @results_by_string = $param_class->_resolve_param_value_from_text_by_name_or_id($param_arg);
     }
-    # the first param_arg is all param_args to try BoolExpr so skip if it has commas
-    if (!@results && $param_arg !~ /,/) {
-        my @results_by_string;
-        if ($param_class->can('_resolve_param_value_from_text_by_name_or_id')) {
-            @results_by_string = $param_class->_resolve_param_value_from_text_by_name_or_id($param_arg);
-        }
-        else {
-            @results_by_string = $self->_resolve_param_value_from_text_by_name_or_id($param_class, $param_arg);
-        }
-        push @results, @results_by_string;
+    else {
+        @results_by_string = $self->_resolve_param_value_from_text_by_name_or_id($param_class, $param_arg);
     }
-    # if we still don't have any values then try via alternate class
-    if (!@results) {
+
+    my @results = @results_by_string;
+    unless (@results) {
         @results = $self->_resolve_param_value_via_related_class_method($param_class, $param_arg, $via_method);
     }
 
