@@ -330,7 +330,7 @@ sub _detect_variants {
                 die;
             }
 
-            rename($chunk_file,$target_file) or die $!;
+            File::Copy::move($chunk_file,$target_file) or die $!;
         }
 
         # Put the insertions and deletions where the rest of the pipe expects them 

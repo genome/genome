@@ -51,7 +51,7 @@ is(@misc_updates, $update_cnt, "Defined $update_cnt defined misc updates");
 my @sub_attr_misc_updates = _define_subject_attr_misc_updates();
 ok(@sub_attr_misc_updates, 'Define subject attr misc updates');
 is(@sub_attr_misc_updates, 24, 'Defined 24 misc indels');
-my @misc_updates_that_skip_or_fail = _define_misc_updates_that_skpip_or_fail();
+my @misc_updates_that_skip_or_fail = _define_misc_updates_that_skip_or_fail();
 ok(@misc_updates_that_skip_or_fail, 'Define misc updates that fail');
 
 # Reconcile
@@ -100,23 +100,24 @@ for my $multi_misc_update (values %multi_misc_updates_to_check) {
     is(scalar(grep {defined} map {$_->error_message} $multi_misc_update->misc_updates), 0, 'No errors set on misc updates!');
 }
 
-diag('Checking SKIP/FAILED updates...');
+diag('Checking SKIP/FAIL updates...');
 my ($skip_cnt, $fail_cnt, $error_cnt, $not_reconciled) = (qw/ 0 0 0 0 /);
 for my $misc_update ( @misc_updates_that_skip_or_fail ) {
     $not_reconciled++ if $misc_update->is_reconciled eq 0;
     $error_cnt++ if defined $misc_update->error_message;
     if ( $misc_update->result eq 'SKIP' ) {
         $skip_cnt++;
+        ok(!defined $misc_update->error_message, "SKIP misc update does not have an error");
+        is($misc_update->status_message,  $misc_update->{_expected_msg}, 'Correct SKIP status message');
     }
-    else {#FAILED
+    else {#FAIL
         $fail_cnt++;
+        is($misc_update->error_message,  $misc_update->{_expected_msg}, 'Correct FAIL error message');
     }
 }
 is($skip_cnt, @misc_updates_that_skip_or_fail - $fail_cnt, 'SKIP expected number misc updates');
-is($skip_cnt, @misc_updates_that_skip_or_fail - $error_cnt, 'SKIP misc updates do not have errors');
-is($fail_cnt, @misc_updates_that_skip_or_fail - $skip_cnt, 'FAILED expected number of misc updates');
-is($error_cnt, $fail_cnt, 'FAILED misc updates have errors');
-is($not_reconciled, @misc_updates_that_skip_or_fail, 'SKIP/FAILED misc updates are not reconciled');
+is($fail_cnt, @misc_updates_that_skip_or_fail - $skip_cnt, 'FAIL expected number of misc updates');
+is($not_reconciled, @misc_updates_that_skip_or_fail, 'SKIP/FAIL misc updates are not reconciled');
 
 done_testing();
 
@@ -268,7 +269,7 @@ sub _define_subject_attr_misc_updates {
     return @sub_attr_misc_updates;
 }
 
-sub _define_misc_updates_that_skpip_or_fail {
+sub _define_misc_updates_that_skip_or_fail {
     my @skip_or_fail;
 
     # Invalid genome class
@@ -279,10 +280,11 @@ sub _define_misc_updates_that_skpip_or_fail {
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON__',
-        new_value => 'FAILED',
+        new_value => 'FAIL',
         description => 'UPDATE',
         is_reconciled => 0,
     );
+    $misc_update->{_expected_msg} = 'Unsupported subject class name! test.blah';
     push @skip_or_fail, $misc_update;
 
     # No obj for subject id
@@ -293,10 +295,11 @@ sub _define_misc_updates_that_skpip_or_fail {
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON__',
-        new_value => 'FAILED',
+        new_value => 'FAIL',
         description => 'UPDATE',
         is_reconciled => 0,
     );
+    $misc_update->{_expected_msg} = 'Failed to get Genome::Taxon for id => -10000';
     push @skip_or_fail, $misc_update;
 
     # Can not update sample attr
@@ -307,10 +310,11 @@ sub _define_misc_updates_that_skpip_or_fail {
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_SAMPLE_ATTR__',
-        new_value => 'FAILED',
+        new_value => 'FAIL',
         description => 'UPDATE',
         is_reconciled => 0,
     );
+    $misc_update->{_expected_msg} = 'Cannot UPDATE sample attribute! It must be deleted and then inserted!';
     push @skip_or_fail, $misc_update;
 
     # Can not update pop group member
@@ -321,10 +325,11 @@ sub _define_misc_updates_that_skpip_or_fail {
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_POP_GROUP_MEMBER__',
-        new_value => 'FAILED',
+        new_value => 'FAIL',
         description => 'UPDATE',
         is_reconciled => 0,
     );
+    $misc_update->{_expected_msg} = 'Cannot UPDATE population group member attribute! It must be deleted and then inserted!';
     push @skip_or_fail, $misc_update;
 
     # Old value ne to current
@@ -335,16 +340,32 @@ sub _define_misc_updates_that_skpip_or_fail {
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON2__',
-        new_value => 'FAILED',
+        new_value => 'FAIL',
         description => 'UPDATE',
         is_reconciled => 0,
     );
+    $misc_update->{_expected_msg} = 'Current APipe value (__TEST_TAXON__) does not match the LIMS old value (__TEST_TAXON2__)!';
+    push @skip_or_fail, $misc_update;
+
+    # No genome entity for id
+    $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+        subject_class_name => 'test.organism_sample',
+        subject_id => -100,
+        subject_property_name => 'name',
+        editor_id => 'lims',
+        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        old_value => '__TEST_SAMPLE__',
+        new_value => 'FAIL',
+        description => 'UPDATE',
+        is_reconciled => 0,
+    );
+    $misc_update->{_expected_msg} = 'Failed to get Genome::Sample for id => -100';
     push @skip_or_fail, $misc_update;
 
     # Unsupported attr
     $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
         subject_class_name => 'test.organism_sample',
-        subject_id => -100,
+        subject_id => -400,
         subject_property_name => 'name',
         editor_id => 'lims',
         edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
@@ -353,6 +374,7 @@ sub _define_misc_updates_that_skpip_or_fail {
         description => 'UPDATE',
         is_reconciled => 0,
     );
+    $misc_update->{_expected_msg} = 'Update for genome property name not supported => name';
     push @skip_or_fail, $misc_update;
 
     return @skip_or_fail;

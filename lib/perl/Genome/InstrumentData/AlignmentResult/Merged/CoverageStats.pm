@@ -153,7 +153,7 @@ sub create {
 
     unless($] > 5.010) {
         #need to shell out to a newer perl #TODO remove this once 5.10 transition complete
-        my $cmd = 'genome-perl5.10 `which gmt` bio-samtools coverage-stats ';
+        my $cmd = 'genome-perl5.10 -S gmt bio-samtools coverage-stats ';
         while (my ($key, $value) = (each %coverage_params)) {
             $key =~ s/_/-/g;
             $cmd .= " --$key=$value";

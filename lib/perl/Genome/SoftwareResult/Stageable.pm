@@ -69,7 +69,7 @@ sub _prepare_output_directory {
         owner_class_name => $self->class,
         owner_id => $self->id
     );
-    
+   
     my $allocation = Genome::Disk::Allocation->allocate(%allocation_create_parameters);
     unless ($allocation) {
         $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%allocation_create_parameters));
@@ -167,7 +167,7 @@ sub _reallocate_disk_allocation {
     my $self = shift;
     my $allocation = $self->disk_allocations;
     unless ($allocation) {
-        $self->status_message("no allocations to reallocated");
+        $self->status_message("no allocations to resize/reallocate");
         return 1;
     }
     $self->status_message('Resizing the disk allocation...');

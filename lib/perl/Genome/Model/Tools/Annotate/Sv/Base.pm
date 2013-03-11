@@ -11,8 +11,6 @@ use List::Util qw(min max);
 class Genome::Model::Tools::Annotate::Sv::Base{
     is => "Command::V2",
     has => [
-        
-        
         input_file => {
             is => 'String',
         },
@@ -28,6 +26,7 @@ class Genome::Model::Tools::Annotate::Sv::Base{
         },
         flanking_distance => {
             is => 'Integer',
+            is_input => 1,
             default => 50000,
             doc => 'Distance, in bp, for genes to be considered "flanking"',
         },
@@ -61,13 +60,18 @@ class Genome::Model::Tools::Annotate::Sv::Base{
             default => 9,
             doc => '1-based index of column that contains the orientation',
         },
+        score_column => {
+            is => 'Integer',
+            default => 13,
+            doc => '1-based index of column that contains the assembly score',
+        },
+
     ],
 };
 
 sub execute {
     my $self = shift;
     my $output_file    = $self->output_file;
-    my @annotator_list = $self->annotator_list;
 
     my $out = Genome::Sys->open_file_for_writing($output_file) 
         or die "failed to open $output_file for writing\n";
@@ -87,12 +91,22 @@ sub execute {
 
         #parse either sd or bd file
         my @fields = split /\t/, $line;
+
         my $chrA = $fields[$self->chrA_column -1];
-        my $bpA = $fields[$self->bpA_column -1];
+        my $bpA  = $fields[$self->bpA_column -1];
         my $chrB = $fields[$self->chrB_column -1];
-        my $bpB = $fields[$self->bpB_column -1];
-        my $event = $fields[$self->event_type_column -1];
+        my $bpB  = $fields[$self->bpB_column -1];
+        my $event  = $fields[$self->event_type_column -1];
         my $orient = $fields[$self->orient_column -1 ];
+        my $score  = $fields[$self->score_column -1 ];
+
+        #FusionTranscript is picky on orientation
+        if ($orient =~ /,/) {
+            unless ($score =~ /,/) {
+                die $self->error_message("Orientation does not match score in line: $line");
+            }
+            $orient = $self->pick_orient($orient, $score);
+        }
 
         $breakpoints_list = $self->add_breakpoints_to_chromosome($line, $chrA, $bpA, $chrB, $bpB, $event, $orient, $breakpoints_list);
     }
@@ -100,6 +114,31 @@ sub execute {
     $in->close;
 
     $breakpoints_list = $self->fill_in_transcripts($breakpoints_list, $build);
+    
+    my @transcripts_to_cache;
+    for my $chr (nsort keys %{$breakpoints_list}) {
+        my @transcripts;
+        for my $item (@{$breakpoints_list->{$chr}}) {
+            if ($item->{breakpoint_link}) {
+                next;
+            }
+            #push @transcripts, map{$_->id} @{$item->{transcripts_between_breakpoints}};
+            if ($item->{chrA} eq $chr) {
+                push @transcripts, map{$_->id} @{$item->{transcripts_crossing_breakpoint_a}};
+                #push @transcripts, map{$_->id} @{$item->{transcripts_flanking_breakpoint_a}};
+            }
+            if ($item->{chrB} eq $chr) {
+                push @transcripts, map{$_->id} @{$item->{transcripts_crossing_breakpoint_b}};
+                #push @transcripts, map{$_->id} @{$item->{transcripts_flanking_breakpoint_b}};
+            }
+        }
+        my @cached = Genome::TranscriptStructure->get(
+            chrom_name => $chr,
+            data_directory => $build->data_directory."/annotation_data",
+            transcript_id => \@transcripts,
+        );
+    }
+
     my @column_names = qw(chrA bpA chrB bpB event);
 
     my $content = $self->process_breakpoint_list($breakpoints_list);
@@ -127,6 +166,27 @@ sub execute {
 
 }
 
+#assume only two items in each array for now
+sub pick_orient {
+    my ($self, $orient, $score) = @_;
+
+    my @orients = split /,/, $orient;
+    my @scores  = split /,/, $score;
+
+    if (@orients > 2 or @scores > 2) {
+        die $self->error_message("Assume only two items in the array for now");
+    }
+
+    #How to handle conflict orietnation like +-,-+ ?
+    if ($scores[1] > $scores[0]) {
+        return $orients[1];
+    }
+    else {
+        return $orients[0];
+    }
+}
+
+
 #TODO NEEDS to be rewritten - I don't think it is right.
 #First of all, it stops at one end position rather than getting all intervals that cross the breakpoint.
 #Second of all, it only considers the 2nd breakpoint of the SV, not the first breakpoint.  I think
@@ -140,7 +200,7 @@ sub annotate_interval_matches {
     my $tag = shift;
     my $breakpoint_key = shift;
 
-    foreach my $chr (keys %$positions) {
+    for my $chr (keys %$positions) {
         my @sorted_items = sort {$a->{$breakpoint_key}<=>$b->{$breakpoint_key}} (@{$positions->{$chr}});
         my @sorted_positions = map{$_->{$breakpoint_key}} @sorted_items;
         my %annotated_output;
@@ -154,7 +214,7 @@ sub annotate_interval_matches {
             for my $start (keys %{$$annotation{$chr}{$chromEnds[0]}}) {
                 if ($pos>=$start-$annot_length) {
                     for my $var (@{$$annotation{$chr}{$chromEnds[0]}{$start}}){
-                        foreach my $position_item (@{$positions->{$chr}}) {
+                        for my $position_item (@{$positions->{$chr}}) {
                             if ($position_item->{$breakpoint_key} eq $pos) {
                                 push @{$position_item->{$tag}->{$breakpoint_key}}, $var;
                             }
@@ -175,7 +235,7 @@ sub get_var_annotation {
     my $frac = $self->overlap_fraction;
     
     if (defined $annotation_ref) {
-        foreach my $var (@$annotation_ref) {
+        for my $var (@$annotation_ref) {
             my $pos1 = min($item->{bpB}, $var->{chromEnd});
             my $pos2 = max($item->{bpA}, $var->{chromStart});
             my $overlap = $pos1-$pos2+1;
@@ -292,10 +352,6 @@ sub add_breakpoints_to_chromosome {
     return $breakpoints_list;
 }
 
-sub annotator_list {
-    #override in subclass;
-};
-
 sub process_breakpoint_list {
     #override in subclass;
     #interface for sv annotators
@@ -312,59 +368,5 @@ sub get_key_from_item {
     return join("--", $item->{chrA}, $item->{bpA}, $item->{chrB}, $item->{bpB}, $item->{event});
 }
 
-=cut
-sub annotate_interval_matches {
-    #both breakpoints need to match within some wiggle room
-    my $self = shift;
-    my $positions = shift;
-    my $annotation = shift;
-    my $annot_length = shift;
-    my $tag = shift;
-
-    foreach my $chr (keys %$positions) {
-        my @sorted_items = sort {$a->{bpB}<=>$b->{bpB}} (@{$positions->{$chr}});
-        my @sorted_positions = map{$_->{bpB}} @sorted_items;
-        my %annotated_output;
-
-        my @chromEnds = sort {$a<=>$b} keys %{$annotation->{$chr}};
-        for my $pos (@sorted_positions) {
-            while (@chromEnds>0 && $pos>$chromEnds[0]+$annot_length) {
-                shift @chromEnds;
-            }
-            next unless @chromEnds>0;
-            for my $start (keys %{$$annotation{$chr}{$chromEnds[0]}}) {
-                if ($pos>=$start-$annot_length) {
-                    for my $var (@{$$annotation{$chr}{$chromEnds[0]}{$start}}){
-                        foreach my $position_item (@{$positions->{$chr}}) {
-                            if ($position_item->{bpB} eq $pos) {
-                                push @{$position_item->{$tag}}, $var;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return 1;
-}
-
-sub read_ucsc_annotation{
-    my ($self, $file) = @_;
-    my %annotation;
-    open (ANNOTATION, "<$file") || die "Unable to open annotation: $file\n";
-    while (<ANNOTATION>) {
-        chomp;
-        next if /^\#/;
-        my $p;
-        my @extra;
-        ($p->{bin},$p->{chrom},$p->{chromStart},$p->{chromEnd},$p->{name},@extra) = split /\t+/;
-        $p->{chrom} =~ s/chr//;
-        $p->{extra} = \@extra;
-        push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
-    }
-    close ANNOTATION;
-    return \%annotation;
-}
-=cut
 
 1;

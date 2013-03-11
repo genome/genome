@@ -74,9 +74,9 @@ sub _additional_help_sections {
 
 =item Large genes have a higher power for detecting mutational significance than smaller genes. So
   a workaround is to downsample their covd bps and mutation count, keeing MR unchanged. A gene with
-  more covd bps than Q3+(Q3-Q1)*1.5 is considered an outlier, where Q1 & Q3 are the lower and upper
+  more covd bps than Q3+(Q3-Q1)*4.5 is considered an outlier, where Q1 & Q3 are the lower and upper
   quartiles respectively, of #covd_bps in the gene-mr-file. For each outlier, the #covd bps in each
-  mutation category is brought closer to Q3+(Q3-Q1)*1.5, and the #muts reduced proportionally, to
+  mutation category is brought closer to Q3+(Q3-Q1)*4.5, and the #muts reduced proportionally, to
   keep the gene's MR mostly unchanged.
 
 =back
@@ -194,7 +194,7 @@ sub execute {
         foreach my $type ( sort keys %gene_categ_bps ) {
             unless( $type eq "Overall" ) {
                 my $IQR = $q3{$type} - $q1{$type}; # Interquartile range
-                $cutoff{$type} = sprintf( "%.0f", $q3{$type} + ( $IQR * 1.5 ));
+                $cutoff{$type} = sprintf( "%.0f", $q3{$type} + ( $IQR * 4.5 ));
                 print "$type\t" . $q2{$type} . "\t$IQR\t" . $cutoff{$type} . "\n";
             }
         }
@@ -213,7 +213,7 @@ sub execute {
 
             #If the #covd bps in this line is an outlier for its category, then downsample it
             #The category "Overall" is only for reporting purposes, so we can leave it unchanged
-            if( $covd_bps > $cutoff{$type} and $type ne "Overall" ) {
+            if( $type ne "Overall" and $covd_bps > $cutoff{$type} ) {
                 # If this line has zero mutations, then simply set $covd_bps to the cutoff
                 if( $mut_cnt == 0 ) {
                     $covd_bps = $cutoff{$type};
@@ -231,8 +231,10 @@ sub execute {
                     }
                 }
                 # Print out the changed #bps and #muts, for users' benefit
-                print "< $line";
-                print "> $gene\t$type\t$covd_bps\t$mut_cnt\t$bmr";
+                if( $line ne "$gene\t$type\t$covd_bps\t$mut_cnt\t$bmr" ) {
+                    print "< $line";
+                    print "> $gene\t$type\t$covd_bps\t$mut_cnt\t$bmr";
+                }
             }
 
             $outMrFh->print( "$gene\t$type\t$covd_bps\t$mut_cnt\t$bmr" );

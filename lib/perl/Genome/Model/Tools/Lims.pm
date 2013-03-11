@@ -29,7 +29,7 @@ sub resolve_class_and_params_for_argv {
 sub execute {
     my $self = shift;
     my @args = $self->args;
-    my $cmd = "/gsc/bin/perl `which gmt` lims @args";
+    my $cmd = "/gsc/bin/perl -S gmt lims @args";
     #warn "on non-LIMS interpreter, shelling out to run this: $cmd\n";
     my $exit_code = system $cmd;
     $exit_code /= 256;

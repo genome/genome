@@ -698,7 +698,7 @@ sub _generate_callset_reports {
 
     #generate callset reports
     #
-    #perl -I ~/src/genome/lib/perl `which gmt` joinx vcf-report --info-fields-from-db dbSNPBuildID --input-file snvs.merged.dbSNP135.site_filtered.passing_sites_only.roistrict.vcf.gz --use-bgzip
+    #perl -I ~/src/genome/lib/perl -S gmt joinx vcf-report --info-fields-from-db dbSNPBuildID --input-file snvs.merged.dbSNP135.site_filtered.passing_sites_only.roistrict.vcf.gz --use-bgzip
     my $per_sample_file = "$output_dir/per_sample_callset_report.txt";
     my $per_site_file = "$output_dir/per_site_callset_report.txt";
 

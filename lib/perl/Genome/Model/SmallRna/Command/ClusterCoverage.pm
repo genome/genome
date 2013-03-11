@@ -57,7 +57,7 @@ sub execute {
     my $self = shift;
     
     
-    my $cmd = 'genome-perl5.10 `which gmt` ref-cov cluster-coverage --bam-file='. $self->bam_file .' --minimum-zenith='. $self->zenith_depth .' --minimum-depth='. $self->minimum_depth .' --stats-file='. $self->stats_file .' --bed-file='. $self->bed_file ;
+    my $cmd = 'genome-perl5.10 -S gmt ref-cov cluster-coverage --bam-file='. $self->bam_file .' --minimum-zenith='. $self->zenith_depth .' --minimum-depth='. $self->minimum_depth .' --stats-file='. $self->stats_file .' --bed-file='. $self->bed_file ;
     
     Genome::Sys->shellcmd(
         cmd => $cmd,
@@ -73,7 +73,7 @@ sub execute {
 
 __END__
 
-genome-perl5.10 `which gmt` bio-samtools cluster-coverage 
+genome-perl5.10 -S gmt bio-samtools cluster-coverage 
 --bam-file=/gscmnt/sata141/techd/jhundal/miRNA/64LY0AAXX_AML/NEW_FAR/Lane3_filtered.bam 
 --minimum-zenith=5 
 --bed-file=/gscmnt/sata141/techd/jhundal/miRNA/64LY0AAXX_AML/NEW_FAR/Lane3_zenith5.bed 

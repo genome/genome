@@ -34,8 +34,8 @@ class Genome::Model::Tools::Music::Play {
             is => 'Text',
             doc => 'Tab-delimited file of pathway information',
         },
-        ],
-        has_optional_input => [
+    ],
+    has_optional_input => [
         numeric_clinical_data_file => {
             is => 'Text',
             doc => 'Table of samples (y) vs. numeric clinical data category (x)',
@@ -183,8 +183,8 @@ class Genome::Model::Tools::Music::Play {
             is => 'Boolean', default => 1,
             doc => "When a finding is novel, show known AA in that gene",
         },
-        ],
-        has_calculated_optional => [
+    ],
+    has_calculated_optional => [
         gene_covg_dir => {
             calculate_from => ['output_dir'],
             calculate => q{ $output_dir . '/gene_covgs'; },
@@ -203,50 +203,56 @@ class Genome::Model::Tools::Music::Play {
             is => 'Text', is_optional => 1,
             doc => "Instead of calculating this from the MAF, input the sample-vs-gene matrix used internally during calculations.",
         },
-        ],
-        has_constant => [
+        mutation_relation_file => {
+            is => 'Text', is_optional => 1,
+            doc => 'Results of mutation-relation tool',
+            calculate_from => ['output_dir'],
+            calculate => q{ $output_dir . '/mutation_relation.csv'; },
+        },
+    ],
+    has_constant => [
         cmd_list_file => { #If a workflow version of this tool is written, these parameters might be more useful
             is => 'Text', default_value => undef, is_optional => 1,
         },
         cmd_prefix => {
             is => 'Text', default_value => undef, is_optional => 1,
         },
-        ],
-        doc => 'Run the full suite of MuSiC tools sequentially.',
-    };
+    ],
+    doc => 'Run the full suite of MuSiC tools sequentially.',
+};
 
-    sub help_synopsis {
-        return <<EOS
+sub help_synopsis {
+    return <<EOS
 This tool takes as parameters all the information required to run the individual tools. An example usage is:
 
- ... music play \\
-        --bam-list input/bams_to_analyze.txt \\
-        --numeric-clinical-data-file input/numeric_clinical_data.csv \\
-        --maf-file input/myMAF.tsv \\
-        --output-dir play_output_dir \\
-        --pathway-file input/pathway_db \\
-        --reference-sequence input/refseq/all_sequences.fa \\
-        --roi-file input/all_coding_regions.bed \\
-        --genetic-data-type gene
+... music play \\
+    --bam-list input/bams_to_analyze.txt \\
+    --numeric-clinical-data-file input/numeric_clinical_data.csv \\
+    --maf-file input/myMAF.tsv \\
+    --output-dir play_output_dir \\
+    --pathway-file input/pathway_db \\
+    --reference-sequence input/refseq/all_sequences.fa \\
+    --roi-file input/all_coding_regions.bed \\
+    --genetic-data-type gene
 EOS
-    }
+}
 
-    sub help_detail {
-        return <<EOS
+sub help_detail {
+    return <<EOS
 This command can be used to run all of the MuSiC analysis tools on a set of data. Please see the individual tools for further description of the parameters.
 EOS
-    }
+}
 
-    sub _doc_credits {
-        return "Please see the credits for B<genome-music>(1).";
-    }
+sub _doc_credits {
+    return "Please see the credits for B<genome-music>(1).";
+}
 
-    sub _doc_authors {
-        return " Thomas B. Mooney, M.S.";
-    }
+sub _doc_authors {
+    return " Thomas B. Mooney, M.S.";
+}
 
-    sub _doc_see_also {
-        return <<EOS
+sub _doc_see_also {
+    return <<EOS
 B<genome-music>(1),
 B<genome-music-path-scan>(1),
 B<genome-music-smg>(1),
@@ -265,7 +271,8 @@ sub execute {
     my @bmr = ('Bmr::CalcCovg', 'Bmr::CalcBmr');
     my @depend_on_bmr = ('PathScan', 'Smg');
     my @depend_on_smg = ('MutationRelation');
-    for my $command_name (@no_dependencies, @bmr, @depend_on_bmr, @depend_on_smg) {
+    my @depends_on_all_others = ('CreateVisualizations'); #TODO: if this requires new params, insert them above
+    for my $command_name (@no_dependencies, @bmr, @depend_on_bmr, @depend_on_smg, @depends_on_all_others) {
         my $command = $self->_create_command($command_name)
             or return;
 

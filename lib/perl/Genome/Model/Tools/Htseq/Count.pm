@@ -5,15 +5,21 @@ use Genome;
 
 class Genome::Model::Tools::Htseq::Count {
     is => 'Genome::Command::WithSavedResults',
+    parallelize_by => ['alignment_results'],
     has_input => [
-        alignment_result => { 
+        alignment_results => { 
             is => 'Genome::InstrumentData::AlignmentResult',
+            is_many => 1,
+            example_values => [
+                { 'instrument_data.sample.patient.common_name like' => 'HCC%' }
+            ],
+            where => [ 'instrument_data.sample.extraction_type in' => ['rna','cdna','total rna'] ], 
             doc => 'alignment results, typically from an RNA aligner',
         },
         output_dir => { 
             is => 'FilesystemPath',
             is_optional => 1,
-            doc => 'the results directory',
+            doc => 'the results directory will be symlinked here',
         },
     ],
     has_param => [
@@ -26,6 +32,27 @@ class Genome::Model::Tools::Htseq::Count {
             is => 'Integer',
             default_value => '1',
             doc => 'the version of results, which may iterate as this logic iterates'
+        },
+        mode => {
+            is => 'Text',
+            valid_values => ['intersection-strict'],
+            default_value => 'intersection-strict',
+            doc => 'mode',
+        },
+        minaqual => {
+            is => 'Integer',
+            default_value => 1,
+            doc => 'minaqual'
+        },
+        whitelist_alignments_flags => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'require alignments to match the specified flags (-f): 0x0002 limits to only properly-paired alignments',
+        },
+        blacklist_alignments_flags => {
+            is => 'Text',
+            default_value => '0x0104',
+            doc => 'exclude alignments which match the specified flags (-F): 0x0104 excludes non-primary alignments and unaligned reads',
         },
         limit => {
             is => 'Number',
@@ -58,26 +85,11 @@ class Genome::Model::Tools::Htseq::Count {
     doc => 'generate htseq results for an (annotation-based) alignment result',
 };
 
-# TODO: pull up this execute into the base class
-
-sub execute {
-    my $self = shift;
-    my $result_version = $self->result_version;
-    my $method = "_execute_v$result_version";
-    $method =~ s/\./_/g;
-    unless ($self->can($method)) {
-        die "no implementation ($method) for version $result_version!";
-    }
-    $self->$method(@_);
-}
-
-# if output changes iterate the results_version and implement a new _execute_vX method
-
 sub _execute_v1 {
     my $self = shift;
     $self->status_message("tool version " . $self->app_version . ', result version ' . $self->result_version);
 
-    my @alignment_result = $self->alignment_result;
+    my @alignment_result = $self->alignment_results;
     if (@alignment_result > 1) {
         die "support for multiple alignment result inputs in the same excution is not implemented yet!";
     }
@@ -85,44 +97,43 @@ sub _execute_v1 {
     $self->status_message("using alignment result " . $alignment_result->__display_name__);
 
     my $instrument_data = $alignment_result->instrument_data;
-    unless ($instrument_data->sample->extraction_type =~ /rna/i) {
+    unless ($instrument_data->sample->extraction_type =~ /rna|cdna/i) {
         die $self->error_message(
             "this step can only run on alignments of RNA, but sample " 
             . $instrument_data->sample->__display_name__ 
             . " is " . $instrument_data->sample->extraction_type
         );
     }
-    $self->status_message("sample is " . $instrument_data->sample->extraction_type);
+    $self->status_message("sample extraction type: " . $instrument_data->sample->extraction_type);
 
     my $transcript_strand = $instrument_data->transcript_strand;
     unless ($transcript_strand) {
         die $self->error_message("transcript strand is not set for instrument data " . $instrument_data->__display_name__); 
     }
-    $self->status_message("transcript strand is $transcript_strand");
 
-    my $stranded;
+    my $htseq_stranded_param;
     if ($transcript_strand eq 'unstranded') {
-        $stranded = 'no';
+        $htseq_stranded_param = 'no';
     }
     elsif ($transcript_strand eq 'firstread') {
-        $stranded = 'yes';
+        $htseq_stranded_param = 'yes';
     }
     elsif ($transcript_strand eq 'secondread') {
-        $stranded = 'reverse';
+        $htseq_stranded_param = 'reverse';
     }
     else {
         die "unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread";
     }
-    $self->status_message("reads go only in the same direction as transcription: $transcript_strand, using htseq-count strandedness value '$stranded'");
+    $self->status_message("strandedness: $transcript_strand (htseq-count strandedness: $htseq_stranded_param");
     
     my $annotation_build = $alignment_result->annotation_build;
-    $self->status_message("annotation build is " . $annotation_build->__display_name__);
+    $self->status_message("annotation build: " . $annotation_build->__display_name__);
 
     my $gff_file = $annotation_build->rna_features_gff_path;
-    $self->status_message("using annotation features from " . $gff_file);
+    $self->status_message("using annotation features from: " . $gff_file);
    
     my $htseq_count_path = Genome::Sys->sw_path("htseq", $self->app_version, "htseq-count");
-    $self->status_message("htseq-count version " . $self->app_version . " running from $htseq_count_path");
+    $self->status_message("htseq-count version: " . $self->app_version . " running from $htseq_count_path");
     
     my $output_dir = $self->output_dir;
     $self->status_message("output dir: $output_dir");
@@ -134,8 +145,10 @@ sub _execute_v1 {
     # to ever upgrade, and is unlikely to produce different results if it is upgraded.
     my $samtools_version = '0.1.18';
     my $samtools_path = Genome::Sys->sw_path("samtools", $samtools_version);
-    $self->status_message("samtools version $samtools_version running from $samtools_path");
+    $self->status_message("samtools version: $samtools_version (running from $samtools_path)");
    
+    my $tmp = Genome::Sys->create_temp_directory();
+
     my $sorted_bam;
     if ($alignment_result->temp_scratch_directory) {
         # if the AR is in the middle of being built it will have a sorted bam already present in scratch space
@@ -147,11 +160,11 @@ sub _execute_v1 {
     }
     else {
         # a completed alignment result will need to have a sorted bam created
-        $self->status_message("no temp_scratch_directory found, presumably doing this post alignment.  Name sort the BAM in temp space.");
+        $self->status_message("no temp_scratch_directory found: name sort the BAM in temp space");
         my $unsorted_bam = $alignment_result->output_dir . '/all_sequences.bam';
-        my $tmp = Genome::Sys->create_temp_directory();
         my $sorted_bam_noprefix = "$tmp/all_sequences.namesorted";
         $sorted_bam = $sorted_bam_noprefix . '.bam';
+
         Genome::Sys->shellcmd(
             cmd => "$samtools_path sort -n -m 402653184 $unsorted_bam $sorted_bam_noprefix",
             input_files => [$unsorted_bam],
@@ -159,9 +172,44 @@ sub _execute_v1 {
         );
     }
 
+    my @header = `$samtools_path view -H $sorted_bam`; 
+    my $header_size = scalar(@header);
+    unless ($header_size > 0) {
+        die "Unexpected missing header on $sorted_bam!!!";
+    }
+
     my $limit = $self->limit;
     if ($limit) {
         $self->warning_message("SUBSAMPLING ALIGNMENTS because the limit parameter is set to $limit:");
+    }
+
+    my $whitelist_alignments_flags = $self->whitelist_alignments_flags;
+    my $blacklist_alignments_flags = $self->blacklist_alignments_flags;
+    my $minaqual = $self->minaqual;
+    my $mode = $self->mode;
+
+    my $final_bam = $sorted_bam;
+    if (0) { 
+        # This logic is only needed if we are not filtering out unaligned reads,
+        # and we are using alignments from tophat before version < 2.0.7.
+        # TODO: determine if we should keep this
+        $self->status_message("older tophat bams require cleanup of query names and mate information");
+
+        $self->status_message("cleaning up bam for fixmate");
+        my $sorted_cleaned_bam = "$tmp/all_sequences.namesorted.cleaned.bam";
+        my $clean_cmd = "$samtools_path view -h $sorted_bam | "
+            . ($whitelist_alignments_flags ? " -f $whitelist_alignments_flags " : '')
+            . ($blacklist_alignments_flags ? " -F $blacklist_alignments_flags " : '')
+            . ' | '
+            . ($limit ? "head -n " . ($limit + $header_size) . " | " : '')
+            . q| perl -ne 'if (substr($_,0,1) eq q{@}) { print } else { @F = split(qq{\\t}, $_); $F[0] =~ s/\/[12]$//; $F[6] = "*"; $F[7] = "0";  print join(qq{\\t},@F) }' |
+            . ' | '
+            . " samtools view -S - -b > $sorted_cleaned_bam";
+        Genome::Sys->shellcmd(cmd => $clean_cmd);
+
+        $self->status_message("re-running fixmate with cleaned-up queries and fixmate information");
+        $final_bam = "$tmp/all_sequences.namesorted.cleaned.fixed.bam";
+        Genome::Sys->shellcmd(cmd => "$samtools_path fixmate $sorted_cleaned_bam $final_bam");
     }
 
     for my $type (qw/transcript gene/) {
@@ -169,13 +217,18 @@ sub _execute_v1 {
         
         # from Malachi's notes in JIRA issue TD-490
         # samtools view -h chr22_tumor_nonstranded_sorted.bam | htseq-count --mode intersection-strict --stranded no --minaqual 1 --type exon --idattr transcript_id - chr22.gff > transcript_tumor_read_counts_table.tsv 
-        my $cmd = "$samtools_path view -h '$sorted_bam' | "
-            . ($limit ? " head -n $limit | " : '')
+   
+        my $cmd = $samtools_path 
+            . " view -h '$final_bam' "
+            . ($whitelist_alignments_flags ? " -f $whitelist_alignments_flags " : '')
+            . ($blacklist_alignments_flags ? " -F $blacklist_alignments_flags " : '')
+            . ' | '
+            . ($limit ? "head -n " . ($limit + $header_size) . " | " : '')
             . $htseq_count_path
-            . " --mode intersection-strict"
-            . " --stranded $stranded"
-            . " --minaqual 1"
-            . " --type exon "
+            . " --mode $mode "
+            . " --minaqual $minaqual "
+            . " --stranded $htseq_stranded_param"
+            . " --type exon " # used for both gene and transcript iterations
             . " --idattr ${type}_id"
             . " -"
             . " '$gff_file'"
@@ -197,3 +250,14 @@ sub _execute_v1 {
 
 1;
 
+__END__
+
+    if (wantarray) {
+        my @result = $self->$method(@_);
+    }
+    elsif (not defined wantarray) {
+        $self->$method;
+    }
+    else {
+        my $result = $self->method;
+    }

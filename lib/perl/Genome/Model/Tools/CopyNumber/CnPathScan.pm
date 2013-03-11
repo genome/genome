@@ -145,7 +145,7 @@ sub execute {
         print STDERR "you can typically ignore these duplicate gene and cytoband errors\n";
         
         #now run Jistic on the matrix to get the recurrent peaks
-        my $cmd = "perl -I ~/gscCode/genome/lib/perl `which gmt` copy-number jistic --segment-file all.cbs.segs --gene-annotations-file /gscuser/cmiller/sata921/annotations/jistic/hg18_Gene_Info.txt --mirna-annotations-file /gscuser/cmiller/sata921/annotations/jistic/hg18_miRNA_Info.txt --histogram-bin-size 0.01 --by-chromosome --qval-threshold $qval_threshold --output-dir $output_directory --cytoband-file /gscuser/cmiller/sata921/annotations/jistic/Human_cytoBand.txt";
+        my $cmd = "perl -I ~/gscCode/genome/lib/perl -S gmt copy-number jistic --segment-file all.cbs.segs --gene-annotations-file /gscuser/cmiller/sata921/annotations/jistic/hg18_Gene_Info.txt --mirna-annotations-file /gscuser/cmiller/sata921/annotations/jistic/hg18_miRNA_Info.txt --histogram-bin-size 0.01 --by-chromosome --qval-threshold $qval_threshold --output-dir $output_directory --cytoband-file /gscuser/cmiller/sata921/annotations/jistic/Human_cytoBand.txt";
 
         $ret = Genome::Sys->shellcmd(
             cmd => "$cmd",
@@ -160,7 +160,7 @@ sub execute {
         # } else { #already have the input matrix
 
         #     #run Jistic on the matrix to get the recurrent peaks
-        #     my $cmd = "perl -I ~/gscCode/genome/lib/perl `which gmt` copy-number jistic --copy-number-matrix $copy_number_matrix --gene-annotations-file /gscuser/cmiller/sata921/annotations/jistic/hg18_Gene_Info.txt --mirna-annotations-file /gscuser/cmiller/sata921/annotations/jistic/hg18_miRNA_Info.txt --histogram-bin-size 0.01 --by-chromosome --qval-threshold $qval_threshold --output-dir $output_directory --cytoband-file /gscuser/cmiller/sata921/annotations/jistic/Human_cytoBand.txt";
+        #     my $cmd = "perl -I ~/gscCode/genome/lib/perl -S gmt copy-number jistic --copy-number-matrix $copy_number_matrix --gene-annotations-file /gscuser/cmiller/sata921/annotations/jistic/hg18_Gene_Info.txt --mirna-annotations-file /gscuser/cmiller/sata921/annotations/jistic/hg18_miRNA_Info.txt --histogram-bin-size 0.01 --by-chromosome --qval-threshold $qval_threshold --output-dir $output_directory --cytoband-file /gscuser/cmiller/sata921/annotations/jistic/Human_cytoBand.txt";
         #     my $ret = Genome::Sys->shellcmd(
         #         cmd => "$cmd",
         #         );

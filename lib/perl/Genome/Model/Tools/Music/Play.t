@@ -5,7 +5,7 @@ use warnings;
 
 use above "Genome";
 
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 BEGIN {
     #It's important this be loaded first before the sub is redefined.

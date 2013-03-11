@@ -147,7 +147,8 @@ sub execute {
 
         my $pmeta = $meta->property($name);
         die "no property $name found on model " . $from_models[0]->__display_name__ unless $pmeta;
-        if ($pmeta->can('is_param') and $pmeta->is_param) {
+
+        if ( ($pmeta->can('is_param') and $pmeta->is_param) or ($pmeta->via and $pmeta->via eq 'processing_profile') ) {
             push @param_changes, $change;
         }
         elsif ($pmeta->can('is_input') and $pmeta->is_input) {
@@ -161,7 +162,10 @@ sub execute {
     if ($changes_pp and @param_changes) {
         die "Cannot change the processing_profile_id explicitly and also make parameter changes, which imply changint the processing profile id"; 
     }
-
+    if (@model_changes) {
+        die ('Changes not recognized as parameters or inputs for model type '. $meta->class_name);
+    }
+    
     my %pp_mapping;
     if (@param_changes) {
         my @from_profiles = sort map { $_->processing_profile } @from_models;
@@ -170,8 +174,9 @@ sub execute {
             next if $last_profile and $last_profile == $from_profile;
             $self->status_message("previous processing profile: " . $from_profile->__display_name__ . ":");
             $last_profile = $from_profile;
-
-            my @prev = map { $_->name => $_->value } $last_profile->params();
+            
+            my @prev = map { $_ => $last_profile->$_ } map { $_->name } $last_profile->params();
+           
             my %prev = @prev;
             delete $prev{reference_sequence_name};
 
@@ -184,6 +189,14 @@ sub execute {
             for my $name (sort keys %changes) {
                 my $prev = $prev{$name};
                 my $new = $changes{$name};
+                if (ref($new) eq 'HASH') {
+                    my $op = $new->{operator};
+                    if ($op ne '=') {
+                        die('Change '. $name .' has unexpected operator '. $op);
+                    }
+                    $new = $new->{value};
+                    $changes{$name} = $new;
+                }
                 no warnings;
                 if ($prev ne $new) {
                     $self->status_message(" changing $name from '$prev' to '$new'");
@@ -195,7 +208,7 @@ sub execute {
 
             my $pp_class = $from_profile->class;
             my @new = (%prev,%changes);
-
+            
             $self->status_message(" checking for existing profiles...");
             my @replacements = $pp_class->_profiles_matching_subclass_and_params(@new, type_name => $from_profile->type_name);
             if (@replacements) {
@@ -248,7 +261,7 @@ sub execute {
     my $force_copy_models = $self->force_copy_models;
     my @new_models;
     my $n = 0;
-    for my $from_model (@from_models) {
+    for my $from_model (sort {$a->id cmp $b->id} @from_models) {
         my $from_profile = $from_model->processing_profile;
         my $to_profile = ($changes_pp or $pp_mapping{$from_profile});
         my $to_model;
@@ -263,7 +276,7 @@ sub execute {
                 }
             }
             else {
-                $new_name = $to_name . ".$n." . $from_model->subject_name;
+                $new_name = $to_name . ".$n." . $from_model->subject->name;
             }
             
             # This should work but there is too much information in the constructor commands.
@@ -274,7 +287,6 @@ sub execute {
             # );            
             
             # Until fixed, we need to call the command instead of the method:
-            $DB::single = 1;
             Genome::Model::Command::Copy->execute(
                 model => $from_model, 
                 overrides => ["processing_profile=" . $to_profile->id, "name=" . $new_name ]

@@ -844,7 +844,11 @@ sub _transcript_annotation_for_cds_exon {
         }
     }
     elsif ($variant->{type} eq 'DNP' or $variant->{type} eq 'SNP') {
-        if ($mutated_aa eq $original_aa) {
+        if (!defined $mutated_aa or !defined $original_aa) {
+            $trv_type = 'silent';
+            $protein_string = "NULL";
+        }
+        elsif ($mutated_aa eq $original_aa) {
             $trv_type = 'silent';
             $protein_string = "p." . $original_aa . $protein_position;
         }
@@ -873,7 +877,6 @@ sub _transcript_annotation_for_cds_exon {
     }
 
     # Need to create an amino acid change string for the protein domain method
-    my $amino_acid_change = "p." . substr($original_aa, 0, 1) . $protein_position;
     my ($protein_domain, $all_protein_domains) = $self->_protein_domain(
         $structure, $variant, $protein_position
     );
@@ -897,11 +900,8 @@ sub get_reference_build_for_transcript {
     my $species = $structure->transcript_species;
 
     unless ($self->{'_reference_builds'}->{$version}->{$species}) {
-
-        my $model = Genome::Model::ImportedReferenceSequence->get(name => "NCBI-$species");
-        confess "Could not get imported reference sequence model for $species!" unless $model;
-        my $build = $model->build_by_version($version);
-        confess "Could not get build version $version from $species imported reference sequence model!" unless $build;
+        my $build = Genome::Model::Build->get($self->reference_sequence_id);
+        confess "Could not get build version $version" unless $build;
 
         $self->{'_reference_build'}->{$version}->{$species} = $build;
     }
@@ -1263,6 +1263,12 @@ sub _get_affected_sequence {
         my $bases_before = $relative_start - $codon_position;
         my $codons_before = int($bases_before / 3);
         $protein_position -= $codons_before;
+
+        #it is possible that the variant goes off the end of the transcript.  In this case,
+        #we need to adjust the relative stop.
+        if ($relative_stop > length($orig_seq)) {
+            $relative_stop = length($orig_seq);
+        }
 
         if ($variant->{type} eq 'DEL') {
             $mutated_seq = substr($orig_seq, 0, $relative_start - 1) .

@@ -38,6 +38,10 @@ class Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute {
           is => 'FilesystemPath',
           is_optional => 1,
         },
+        tumor_fpkm_topnpercent_file => {
+          is => 'FilesystemPath',
+          is_optional =>1,
+        },
     ],
     doc => 'perform simple differential expression comparison between two samples using FPKM values from Cufflinks',
 };
@@ -223,6 +227,12 @@ sub execute {
     die $self->error_message("Trying to set a file as output but the file does not exist: $tumor_fpkm_file");
   }
   $self->tumor_fpkm_file($tumor_fpkm_file);
+
+  my $tumor_fpkm_topnpercent_file = "$isoforms_merged_sub_dir"."isoforms.merged.fpkm.expsort.top" . $self->percent_cutoff ."percent.tsv";
+  unless (-e $tumor_fpkm_topnpercent_file){
+    die $self->error_message("Trying to set a file as output but the file does not exist: $tumor_fpkm_topnpercent_file");
+  }
+  $self->tumor_fpkm_topnpercent_file($tumor_fpkm_topnpercent_file);
 
   return 1;
 }

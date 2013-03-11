@@ -46,7 +46,12 @@ sub execute {
     my $self = shift;
 
     unless($self->processing_profile){
-      $self->processing_profile(Genome::ProcessingProfile->get(2571784));
+        my $processing_profile = Genome::ProcessingProfile->get( Genome::Model::MetagenomicComposition16s->default_processing_profile_id );
+        if ( not $processing_profile ) {
+            $self->error_message('Failed to get default MC16s processing profile!');
+            return;
+        }
+        $self->processing_profile($processing_profile);
     }
 
     my @instrument_data = Genome::InstrumentData::454->get(
@@ -58,7 +63,6 @@ sub execute {
         $self->error_message('Cannot find 454 instrument_data for run name ('.$self->run_name.') and region ('.$self->region_number.')');
         return;
     }
-    my $processing_profile_id = $self->processing_profile->id;
 
     my @subjects_to_skip = map { qr/$_/ } (qw/ ^nctrl$ ^n\-cntrl$ ^Pool /);
     my @rows;
@@ -77,7 +81,7 @@ sub execute {
             push @row, 'SKIPPED-NO-READS', '', '', ''. '', '';
             next;
         }
-        my ($model) = sort { $b->id <=> $a->id } grep { $_->subject_id eq $instrument_data->sample_id } grep {$_->processing_profile_id eq $processing_profile_id } map { $_->model } Genome::Model::Input->get(name => 'instrument_data', value_id => $instrument_data->id,);
+        my ($model) = sort { $b->id <=> $a->id } grep { $_->subject_id eq $instrument_data->sample_id } grep {$_->processing_profile_id eq $self->processing_profile->id } map { $_->model } Genome::Model::Input->get(name => 'instrument_data', value_id => $instrument_data->id,);
         if ( not $model ) {
             push @row, '', '', '', ''. '', '';
             next;

@@ -21,12 +21,13 @@ use Data::Dumper;
 use_ok('Genome::Model::ClinSeq::Command::CreateMutationSpectrum') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationSpectrum/wgs/2013-02-14/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationSpectrum/wgs/2013-03-11/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
+
 
 #Get a wgs somatic variation build
 my $build_id = 129399487;

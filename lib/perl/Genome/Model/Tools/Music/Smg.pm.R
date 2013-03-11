@@ -46,11 +46,11 @@ convolute_b <- function( a, b ) {
 
 mut_class_test <- function( x, xmax = 100, hmax = 25, bin = 0.001 ) {
     x = as.data.frame( x );
-    colnames( x ) = c( "Class", "n", "x", "e" );
+    colnames( x ) = c( "Class", "Bps", "Muts", "BMR" );
     x$p = NA; x$lh0 = NA; x$lh1 = NA;
-    tot_muts = x[( x$Class == "Overall" ),]$x;
-    tot_bps = x[( x$Class == "Overall" ),]$n;
-    overall_bmr = x[( x$Class == "Overall" ),]$e;
+    tot_bps = x[( x$Class == "Overall" ),]$Bps;
+    tot_muts = x[( x$Class == "Overall" ),]$Muts;
+    overall_bmr = x[( x$Class == "Overall" ),]$BMR;
 
     # Remove the row containing overall MR and BMR because we don't want it to be a tested category
     x = x[( x$Class != "Overall" ),];
@@ -59,11 +59,11 @@ mut_class_test <- function( x, xmax = 100, hmax = 25, bin = 0.001 ) {
     gene_mr = 0; indel_mr = 0; indel_bmr = 0; trunc_mr = 0; trunc_bmr = 0;
     if( skip_low_mr_genes == 1 ) {
         if( tot_bps > 0 ) { gene_mr = tot_muts / tot_bps; }
-        if( x[( grep( "Indels", x$Class )),]$n > 0 ) { indel_mr = x[( grep( "Indels", x$Class )),]$x / x[( grep( "Indels", x$Class )),]$n; }
-        indel_bmr = x[( grep( "Indels", x$Class )),]$e;
+        if( x[( grep( "Indels", x$Class )),]$Bps > 0 ) { indel_mr = x[( grep( "Indels", x$Class )),]$Muts / x[( grep( "Indels", x$Class )),]$Bps; }
+        indel_bmr = x[( grep( "Indels", x$Class )),]$BMR;
         if( nrow( x[( grep( "Truncations", x$Class )),] ) > 0 ) {
-            if( x[( grep( "Truncations", x$Class )),]$n > 0 ) { trunc_mr = x[( grep( "Truncations", x$Class )),]$x / x[( grep( "Truncations", x$Class )),]$n; }
-            trunc_bmr = x[( grep( "Truncations", x$Class )),]$e;
+            if( x[( grep( "Truncations", x$Class )),]$Bps > 0 ) { trunc_mr = x[( grep( "Truncations", x$Class )),]$Muts / x[( grep( "Truncations", x$Class )),]$Bps; }
+            trunc_bmr = x[( grep( "Truncations", x$Class )),]$BMR;
         }
     }
 
@@ -76,15 +76,15 @@ mut_class_test <- function( x, xmax = 100, hmax = 25, bin = 0.001 ) {
         p.fisher = 1; p.lr = 1; p.convol = 1; qc = 1;
     }
     else {
-        # Skip testing mutation categories that have zero BMR, or if this gene has #muts >= #covd bps
-        x = x[( x$n > 0 & x$n > x$x & x$e > 0 ),];
-        rounded_mut_cnts = round(x$x);
+        # Skip testing mutation categories with 0 BMR, 0 #bps, or has #muts >= #bps
+        x = x[( x$BMR > 0 & x$Bps > 0 & x$Bps > x$Muts ),];
+        rounded_mut_cnts = round(x$Muts);
         for( i in 1:nrow(x) ) {
-            x$p[i] = binom.test( rounded_mut_cnts[i], x$n[i], x$e[i], alternative = "greater" )$p.value;
-            x$lh0[i] = dbinom( rounded_mut_cnts[i], x$n[i], x$e[i], log = T );
-            x$lh1[i] = dbinom( rounded_mut_cnts[i], x$n[i], x$x[i] / x$n[i], log = T );
-            ni = x$n[i]; ei = x$e[i];
-            gethist( xmax, ni, ei, ptype = "positive_log" ) -> bi;
+            x$p[i] = binom.test( rounded_mut_cnts[i], x$Bps[i], x$BMR[i], alternative = "greater" )$p.value;
+            x$lh0[i] = dbinom( rounded_mut_cnts[i], x$Bps[i], x$BMR[i], log = T );
+            x$lh1[i] = dbinom( rounded_mut_cnts[i], x$Bps[i], x$Muts[i] / x$Bps[i], log = T );
+            iBps = x$Bps[i]; iBMR = x$BMR[i];
+            gethist( xmax, iBps, iBMR, ptype = "positive_log" ) -> bi;
             binit( bi, hmax, bin ) -> bi;
             if( i == 1 ) { hist0 = bi; }
             if( i > 1 & i < nrow(x) ) { hist0 = convolute_b( hist0, bi ); binit( hist0, hmax, bin ) -> hist0; }

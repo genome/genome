@@ -65,7 +65,7 @@ my $rna_seq_tumor_build = Genome::Model::Build->get($rna_seq_tumor_build_id);
 ok($rna_seq_tumor_build, "Obtained an rna seq tumor build from id: $rna_seq_tumor_build_id");
 
 #Running a test of get-bam-read-counts at the command line looks something like this:
-#/usr/bin/perl `which genome` model clin-seq get-bam-read-counts --positions-file=/tmp/bam-read-counts-test/snvs.hq.tier1.v1.annotated.compact.tsv --ensembl-version=58 --output-file=/tmp/bam-read-counts-test/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --wgs-som-var-build=119390903  --exome-som-var-build='119391641' --rna-seq-tumor-build='115909698'
+#/usr/bin/perl -S genome model clin-seq get-bam-read-counts --positions-file=/tmp/bam-read-counts-test/snvs.hq.tier1.v1.annotated.compact.tsv --ensembl-version=58 --output-file=/tmp/bam-read-counts-test/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --wgs-som-var-build=119390903  --exome-som-var-build='119391641' --rna-seq-tumor-build='115909698'
 
 #Running a test of get-bam-read-counts by calling the code method looks something like this:
 my $verbose = 0;

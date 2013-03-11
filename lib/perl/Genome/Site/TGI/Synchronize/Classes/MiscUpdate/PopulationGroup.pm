@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::PopulationGroup {
-    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Subject',
+    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::BaseForAttributes',
 };
 
 1;

@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 
 my @has_param;
+my %instances;
 
 BEGIN{
     my @annotators = (
@@ -61,9 +62,10 @@ sub process_breakpoint_list {
     my %all_content;
 
     for my $type ($self->annotator_list) {
-        my $instance = $self->_create_instance_of_type($type);
-        $DB::single=1;
-        my $content = $instance->process_breakpoint_list($breakpoints_list);
+        unless ($instances{$type}) {
+            $instances{$type} = $self->_create_instance_of_type($type);
+        }
+        my $content = $instances{$type}->process_breakpoint_list($breakpoints_list);
         foreach my $key (keys %$content) {
             push @{$all_content{$key}}, @{$content->{$key}};
         }
@@ -75,8 +77,10 @@ sub column_names {
     my $self = shift;
     my @all_column_names;
     foreach my $type ($self->annotator_list) {
-        my $instance = $self->_create_instance_of_type($type);
-        @all_column_names = (@all_column_names, $instance->column_names);
+        unless ($instances{$type}) {
+            $instances{$type} = $self->_create_instance_of_type($type);
+        }
+        @all_column_names = (@all_column_names, $instances{$type}->column_names);
     }
     return @all_column_names;
 }
@@ -98,6 +102,9 @@ sub _create_instance_of_type {
             }
         }
     }
+    $params{input_file} = $self->input_file;
+    $params{output_file} = $self->output_file;
+    $params{annotation_build} = $self->annotation_build;
     my $instance = $class_name->create(%params);
     return $instance;
 }

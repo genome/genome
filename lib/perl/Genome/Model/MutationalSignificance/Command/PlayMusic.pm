@@ -77,6 +77,15 @@ BEGIN {
             output_dir => ['input connector', 'output_dir'],
             output_files => 1, #set source at runtime
         },
+        "Genome::Model::Tools::Music::CreateVisualizations" => {
+            output_dir => ['input connector', 'output_dir'],
+            maf_file => ['input connector', 'maf_file'],
+            bam_list => ['input connector', 'bam_list'],
+            mutation_matrix_file => ['input connector', 'mutation_matrix_file'],
+            categorical_clinical_data_file => ['input connector', 'categorical_clinical_data_file'],
+            numeric_clinical_data_file => ['input connector', 'numeric_clinical_data_file'],
+            mutation_relation_file => ["Genome::Model::Tools::Music::MutationRelation", 'output_file'],
+        },
     );
 
     my %seen; 
@@ -136,6 +145,10 @@ class Genome::Model::MutationalSignificance::Command::PlayMusic {
             default => 1,
         },
         run_survival => {
+            is => 'Boolean',
+            default => 1,
+        },
+        run_reports => {
             is => 'Boolean',
             default => 1,
         },
@@ -340,6 +353,9 @@ sub execute {
     if ($self->run_clinical_correlation) {
         $self->cct_result($output->{cct_result});
     }
+    if ($self->run_reports){
+        $self->output_dir($output->{output_dir});
+    }
 
     return 1;
 }
@@ -389,6 +405,10 @@ sub _create_workflow {
 
     if ($self->run_clinical_correlation) {
         push @output_properties, 'cct_result';
+    }
+
+    if ($self->run_reports) {
+        push @output_properties, 'output_dir';
     }
 
     my $workflow = Workflow::Model->create(
@@ -453,7 +473,11 @@ sub _create_workflow {
     if ($self->run_mutation_relation) {
         push @depend_on_smg, "Genome::Model::Tools::Music::MutationRelation";
     }
-    for my $command_name (@no_dependencies, @bmr, @depend_on_bmr, @depend_on_smg) {
+    my @depends_on_all_others;
+    if ($self->run_reports) {
+        push @depends_on_all_others, "Genome::Model::Tools::Music::CreateVisualizations";
+    }
+    for my $command_name (@no_dependencies, @bmr, @depend_on_bmr, @depend_on_smg, @depends_on_all_others) {
         $workflow = $self->_append_command_to_workflow($command_name, $workflow)
                     or return;
     }
@@ -519,6 +543,15 @@ sub _create_workflow {
             left_property => 'output_file',
             right_operation => $output_connector,
             right_property => 'cct_result',
+        );
+    }
+
+    if ($self->run_reports) {
+        $link = $workflow->add_link(
+            left_operation => $self->_get_operation_for_module_name('Genome::Model::Tools::Music::CreateVisualizations', $workflow),
+            left_property => 'output_dir',
+            right_operation => $output_connector,
+            right_property => 'output_dir',
         );
     }
 

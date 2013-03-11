@@ -55,6 +55,11 @@ class Genome::SoftwareResult {
 
 our %LOCKS;
 
+sub __display_name__ {
+    my $self = shift;
+    return $self->class . ' (' . $self->id . ')';
+}
+
 sub _faster_get {
     my $class = shift;
 
