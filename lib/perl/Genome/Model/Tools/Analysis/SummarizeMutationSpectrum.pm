@@ -94,6 +94,13 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
             is => 'String',
             doc => 'Plot the user defined mutation spectrum file and exit.  ',
         },
+        exclude_gl_contigs => {
+            is_input => 1,
+            is_optional => 1,
+            is => 'Boolean',
+            default => 1,
+            doc => 'whether or not to exclude contigs beginning with the prefix GL.',
+        },
     ],
 };
 
