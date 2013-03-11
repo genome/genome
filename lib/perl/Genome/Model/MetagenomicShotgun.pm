@@ -4,10 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use File::Basename;
-use File::Path 'make_path';
-use Sys::Hostname;
-use Data::Dumper;
 
 class Genome::Model::MetagenomicShotgun {
     is => 'Genome::ModelDeprecated',
@@ -219,25 +215,18 @@ sub _execute_build {
     my %mg_nucleotide_results = $self->_run_meta_nt($build, @cs_unaligned);
     return if not %mg_nucleotide_results;
 
-    my @mg_nucleotide_aligned = $mg_nucleotide_results{aligned};
-    my @mg_nucleotide_unaligned = $mg_nucleotide_results{unaligned};
+    my @mg_nucleotide_unaligned = @{$mg_nucleotide_results{unaligned}};
+    my @mg_protein_aligned = $self->_run_meta_nr($build,  @mg_nucleotide_unaligned);
+    return if not @mg_protein_aligned;
 
-    my $mg_protein_build = $self->_start_build($metagenomic_protein_model, @mg_nucleotide_unaligned);
-    my $mg_nr_build_ok = $self->_wait_for_build($mg_protein_build);
-    return if not $mg_nr_build_ok;
-    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $mg_protein_build, sub_model_name => 'metagenomic_protein');
-    return if not $link_alignments;
-
-    my @mg_protein_aligned = $self->_extract_data->($mg_protein_build, "aligned");
-
-    my $viral_nucleotide_build = $self->_start_build($viral_nucleotide_model, @mg_nucleotide_aligned, @mg_protein_aligned);
+    my @mg_nucleotide_aligned = @{$mg_nucleotide_results{aligned}};
     my $viral_protein_build = $self->_start_build($viral_protein_model, @mg_nucleotide_aligned, @mg_protein_aligned);
-
     my $viral_nr_build_ok = $self->_wait_for_build($viral_protein_build);
     return if not $viral_nr_build_ok;
-    $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $viral_protein_build, sub_model_name => 'viral_protein');
+    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $viral_protein_build, sub_model_name => 'viral_protein');
     return if not $link_alignments;
 
+    my $viral_nucleotide_build = $self->_start_build($viral_nucleotide_model, @mg_nucleotide_aligned, @mg_protein_aligned);
     my $viral_nt_build_ok = $self->_wait_for_build($viral_nucleotide_build);
     return if not $viral_nt_build_ok;
     $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $viral_nucleotide_build, sub_model_name => 'viral_nucleotide');
@@ -271,7 +260,7 @@ sub _screen_contaminants {
 sub _run_meta_nt {
     my ($self, $build, @cs_unaligned) = @_;
 
-    my $metagenomic_nucleotide_model = $self->metagenomic_nucleotide_model;
+    my $metagenomic_nucleotide_model = $build->model->metagenomic_nucleotide_model;
     my $mg_nucleotide_build = $self->_start_build($metagenomic_nucleotide_model, @cs_unaligned);
     my $mg_nt_build_ok = $self->_wait_for_build($mg_nucleotide_build);
     return if not $mg_nt_build_ok;
@@ -285,6 +274,22 @@ sub _run_meta_nt {
         aligned => \@mg_nucleotide_aligned,
         unaligned => \@mg_nucleotide_unaligned
     );
+}
+
+sub _run_meta_nr {
+    my ($self, $build, @mg_nucleotide_unaligned) = @_;
+
+    my $metagenomic_protein_model = $build->model->metagenomic_protein_model;
+    my $mg_protein_build = $self->_start_build($metagenomic_protein_model, @mg_nucleotide_unaligned);
+    my $mg_nr_build_ok = $self->_wait_for_build($mg_protein_build);
+    return if not $mg_nr_build_ok;
+
+    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $mg_protein_build, sub_model_name => 'metagenomic_protein');
+    return if not $link_alignments;
+
+    my @mg_protein_aligned = $self->_extract_data->($mg_protein_build, "aligned");
+
+    return @mg_protein_aligned;
 }
 
 sub _start_build  {
