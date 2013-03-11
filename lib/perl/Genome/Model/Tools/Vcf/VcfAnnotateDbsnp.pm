@@ -102,9 +102,9 @@ sub execute {
         
     my $dbsnp_file;
     if($genome_build eq "36"){
-        $dbsnp_file = Genome::Sys->dbpath('dbsnp','130') . "snp.noDupIds.noPolyAllelicSites.txt";
+        $dbsnp_file = Genome::Sys->dbpath('dbsnp/human','130') . "snp.noDupIds.noPolyAllelicSites.txt";
     } elsif ($genome_build eq "37"){
-        $dbsnp_file = Genome::Sys->dbpath('dbsnp','132') . "snp.noDupIds.noPolyAllelicSites.txt";
+        $dbsnp_file = Genome::Sys->dbpath('dbsnp/human','132') . "snp.noDupIds.noPolyAllelicSites.txt";
     } elsif ( -e $genome_build) {
         $dbsnp_file = $genome_build;
     } else {
