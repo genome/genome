@@ -66,7 +66,8 @@ class Genome::Model::Tools::Somatic::VcfMaker {
 
 	dbsnp_file => {
 	    is => 'Text',
-	     doc => "add dbsnp annotations from this file (build 130 can be found here: /gscmnt/sata921/info/medseq/cmiller/annotations/snp130.txt)" ,
+	     doc => "add dbsnp annotations from this file (build 130 can be found here: "
+            . Genome::Sys->dbpath("dbsnp/human","130") . "snp130.txt",
 	     is_optional => 1,
 	     is_input => 1,
 	    default => ""},

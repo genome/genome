@@ -90,7 +90,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::TigraValidation {
         # TODO Either point to a specific version of phrap or (even better) use the crossmatch tool
         crossmatch_path => {
             is => 'FilePath',
-            default => '/gsc/bin/cross_match',
+            default => Genome::Sys->sw_path('phrap','1.080721','cross_match'),
         },
         workflow_log_directory => {
             calculate_from => 'output_directory',
