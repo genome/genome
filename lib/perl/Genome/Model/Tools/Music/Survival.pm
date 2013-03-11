@@ -12,50 +12,64 @@ our $VERSION = $Genome::Model::Tools::Music::VERSION;
 class Genome::Model::Tools::Music::Survival {
     is => 'Genome::Model::Tools::Music::Base',
     has_input => [
-    bam_list => {
-        is => 'Text',
-        doc => "List of sample names to be included in the analysis. (See Description)",
-    },
-    maf_file => {
-        is => 'Text', is_optional => 1,
-        doc => "List of mutations in MAF format",
-    },
-    output_dir => {
-        is => 'Text', is_output => 1,
-        doc => "Directory where output files will be written",
-    },
-    genetic_data_type => {
-        is => 'Text', is_optional => 1, default => "gene",
-        doc => "Correlate clinical data to \"gene\" or \"variant\" level data",
-    },
-    numeric_clinical_data_file => {
-        is => 'Text', is_optional => 1,
-        doc => "Table of samples (y) vs. numeric clinical data category (x)",
-    },
-    categorical_clinical_data_file => {
-        is => 'Text', is_optional => 1,
-        doc => "Table of samples (y) vs. categorical clinical data category (x)",
-    },
-    glm_clinical_data_file => {
-        is => 'Text', is_optional => 1,
-        doc => "Clinical traits, mutational profiles, other mixed clinical data (See DESCRIPTION).",
-    },
-    phenotypes_to_include => {
-        is => 'Text', is_optional => 1,
-        doc => "Include only these genes and/or phenotypes in the anlaysis. (COMMA-DELIMITED)",
-    },
-    legend_placement => {
-        is => 'Text', is_optional => 1, default => 'bottomleft',
-        doc => "Choose one of 'bottomleft', 'topleft', 'topright', or 'bottomright'.",
-    },
-    skip_non_coding => {
-        is => 'Boolean', is_optional => 1, default => 1,
-        doc => "Skip non-coding mutations from the provided MAF file",
-    },
-    skip_silent => {
-        is => 'Boolean', is_optional => 1, default => 1,
-        doc => "Skip silent mutations from the provided MAF file",
-    },
+        bam_list => {
+            is => 'Text',
+            doc => "List of sample names to be included in the analysis. (See Description)",
+        },
+        maf_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "List of mutations in MAF format",
+        },
+        output_dir => {
+            is => 'Text',
+            is_output => 1,
+            doc => "Directory where output files will be written",
+        },
+        genetic_data_type => {
+            is => 'Text',
+            is_optional => 1,
+            default => "gene",
+            doc => "Correlate clinical data to \"gene\" or \"variant\" level data",
+        },
+        numeric_clinical_data_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "Table of samples (y) vs. numeric clinical data category (x)",
+        },
+        categorical_clinical_data_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "Table of samples (y) vs. categorical clinical data category (x)",
+        },
+        glm_clinical_data_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "Clinical traits, mutational profiles, other mixed clinical data (See DESCRIPTION).",
+        },
+        phenotypes_to_include => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "Include only these genes and/or phenotypes in the anlaysis. (COMMA-DELIMITED)",
+        },
+        legend_placement => {
+            is => 'Text',
+            is_optional => 1,
+            default => 'bottomleft',
+            doc => "Choose one of 'bottomleft', 'topleft', 'topright', or 'bottomright'.",
+        },
+        skip_non_coding => {
+            is => 'Boolean',
+            is_optional => 1,
+            default => 1,
+            doc => "Skip non-coding mutations from the provided MAF file",
+        },
+        skip_silent => {
+            is => 'Boolean',
+            is_optional => 1,
+            default => 1,
+            doc => "Skip silent mutations from the provided MAF file",
+        },
     ],
     doc => "Create survival plots and P-values for clinical and mutational phenotypes.",
 };
