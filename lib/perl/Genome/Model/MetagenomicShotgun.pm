@@ -215,8 +215,12 @@ sub _execute_build {
     return if not $screen_contamination;
     return if not $screen_contamination->execute;
 
-    my %mg_nucleotide_results = $self->_run_meta_nt($build, $screen_contamination->unaligned);
-    return if not %mg_nucleotide_results;
+    my $meta_nt = Genome::Model::MetagenomicShotgun::Build::ScreenContamination->create(
+        build => $build,
+        instrument_data => $screen_contamination->unaligned,
+    );
+    return if not $meta_nt;
+    return if not $meta_nt->execute;
 
     my @mg_nucleotide_unaligned = @{$mg_nucleotide_results{unaligned}};
     my @mg_protein_aligned = $self->_run_meta_nr($build,  @mg_nucleotide_unaligned);
@@ -230,25 +234,6 @@ sub _execute_build {
     return if not $viral_nt_ok;
 
     return 1;
-}
-
-sub _run_meta_nt {
-    my ($self, $build, @cs_unaligned) = @_;
-
-    my $metagenomic_nucleotide_model = $build->model->metagenomic_nucleotide_model;
-    my $mg_nucleotide_build = $self->_start_build($metagenomic_nucleotide_model, @cs_unaligned);
-    my $mg_nt_build_ok = $self->_wait_for_build($mg_nucleotide_build);
-    return if not $mg_nt_build_ok;
-    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $mg_nucleotide_build, sub_model_name => 'metagenomic_nucleotide');
-    return if not $link_alignments;
-
-    my @mg_nucleotide_aligned = $self->extract_data($mg_nucleotide_build, "aligned");
-    my @mg_nucleotide_unaligned = $self->_extract_data($mg_nucleotide_build, "unaligned");
-
-    return ( 
-        aligned => \@mg_nucleotide_aligned,
-        unaligned => \@mg_nucleotide_unaligned
-    );
 }
 
 sub _run_meta_nr {
