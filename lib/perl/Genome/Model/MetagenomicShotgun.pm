@@ -196,34 +196,25 @@ sub _resolve_resource_requirements_for_build {
 sub _execute_build {
     my ($self, $build) = @_;
 
-    my $model = $build->model;
-    $self->status_message('Build '.$model->__display_name__);
-    my $contamination_screen_model = $model->contamination_screen_model;
-    $self->status_message("Got contamination_screen_model ".$contamination_screen_model->__display_name__) if $contamination_screen_model;
-    my $metagenomic_nucleotide_model = $model->metagenomic_nucleotide_model;
-    $self->status_message("Got metagenomic_nucleotide_model ".$metagenomic_nucleotide_model->__display_name__) if $metagenomic_nucleotide_model;
-    my $metagenomic_protein_model = $model->metagenomic_protein_model;
-    $self->status_message("Got metagenomic_protein_model ".$metagenomic_protein_model->__display_name__) if $metagenomic_protein_model;
-    my $viral_nucleotide_model = $model->viral_nucleotide_model;
-    $self->status_message("Got viral_nucleotide_model ".$viral_nucleotide_model->__display_name__) if $viral_nucleotide_model;
-    my $viral_protein_model = $model->viral_protein_model;
-    $self->status_message("Got viral_protein_model ".$viral_protein_model->__display_name__) if $viral_protein_model;
-
-    my $screen_contamination = Genome::Model::MetagenomicShotgun::Build::ScreenContamination->create(
+    my @original_instrument_data = $build->instrument_data;
+    my $screen_contamination = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
+        sub_model_label => 'contamination_screen_model',
         build => $build,
-        instrument_data => [ $build->instrument_data ],
+        instrument_data => \@original_instrument_data,
     );
     return if not $screen_contamination;
     return if not $screen_contamination->execute;
 
-    my $meta_nt = Genome::Model::MetagenomicShotgun::Build::AlignToMetaNt->create(
+    my $meta_nt = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
+        sub_model_label => 'metagenomic_nucleotide_model',
         build => $build,
         instrument_data => [ $screen_contamination->unaligned ],
     );
     return if not $meta_nt;
     return if not $meta_nt->execute;
 
-    my $meta_nr = Genome::Model::MetagenomicShotgun::Build::AlignToMetaNr->create(
+    my $meta_nr = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
+        sub_model_label => 'metagenomic_protein_model',
         build => $build,
         instrument_data => [ $meta_nt->unaligned ],
     );
