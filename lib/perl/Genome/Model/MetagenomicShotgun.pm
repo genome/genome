@@ -220,16 +220,13 @@ sub _execute_build {
     return if not @mg_protein_aligned;
 
     my @mg_nucleotide_aligned = @{$mg_nucleotide_results{aligned}};
-    my $viral_protein_build = $self->_start_build($viral_protein_model, @mg_nucleotide_aligned, @mg_protein_aligned);
-    my $viral_nr_build_ok = $self->_wait_for_build($viral_protein_build);
-    return if not $viral_nr_build_ok;
-    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $viral_protein_build, sub_model_name => 'viral_protein');
-    return if not $link_alignments;
+    my $viral_nr_ok = $self->_run_viral_nr($build, @mg_nucleotide_aligned, @mg_protein_aligned);
+    return if not $viral_nr_ok;
 
     my $viral_nucleotide_build = $self->_start_build($viral_nucleotide_model, @mg_nucleotide_aligned, @mg_protein_aligned);
     my $viral_nt_build_ok = $self->_wait_for_build($viral_nucleotide_build);
     return if not $viral_nt_build_ok;
-    $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $viral_nucleotide_build, sub_model_name => 'viral_nucleotide');
+    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $viral_nucleotide_build, sub_model_name => 'viral_nucleotide');
     return if not $link_alignments;
 
     return 1;
@@ -290,6 +287,23 @@ sub _run_meta_nr {
     my @mg_protein_aligned = $self->_extract_data->($mg_protein_build, "aligned");
 
     return @mg_protein_aligned;
+}
+
+sub _run_viral_nt {
+}
+
+sub _run_viral_nr {
+    my ($self, $build, @instrument_data) = @_;
+
+    my $viral_protein_model = $build->model->viral_protein_model;
+    my $viral_protein_build = $self->_start_build($viral_protein_model, @instrument_data);
+    my $viral_nr_build_ok = $self->_wait_for_build($viral_protein_build);
+    return if not $viral_nr_build_ok;
+
+    my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $viral_protein_build, sub_model_name => 'viral_protein');
+    return if not $link_alignments;
+
+    return 1;
 }
 
 sub _start_build  {
