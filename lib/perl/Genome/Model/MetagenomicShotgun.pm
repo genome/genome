@@ -211,6 +211,7 @@ sub _execute_build {
 
     my $screen_contamination = Genome::Model::MetagenomicShotgun::Build::ScreenContamination->create(
         build => $build,
+        instrument_data => $build->instrument_data,
     );
     return if not $screen_contamination;
     return if not $screen_contamination->execute;

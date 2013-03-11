@@ -19,8 +19,7 @@ sub execute {
 
     my $build = $self->build;
     my $contamination_screen_model = $build->model->contamination_screen_model;
-    my @original_instdata = $build->instrument_data;
-    my $cs_build = $self->_start_build($contamination_screen_model, @original_instdata);
+    my $cs_build = $self->_start_build($contamination_screen_model, $self->instrument_data);
     my $cs_build_ok = $self->_wait_for_build($cs_build);
     return if not $cs_build_ok;
     my $link_alignments = $self->_link_sub_build_alignments_to_build(build => $build, sub_build => $cs_build, sub_model_name => 'contamination_screen');

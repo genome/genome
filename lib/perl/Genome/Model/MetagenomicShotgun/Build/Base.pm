@@ -12,6 +12,10 @@ class Genome::Model::MetagenomicShotgun {
             is => 'Genome::Model::Build::MetagenomicShotgun',
             doc => 'The meta shot build to work with.',
         },
+        instrument_data => {
+            is => 'Genome::InstrumentData',
+            doc => 'The instrument data to work with.',
+        },
     ],
 };
 
