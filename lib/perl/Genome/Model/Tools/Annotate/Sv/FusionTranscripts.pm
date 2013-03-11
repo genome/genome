@@ -33,7 +33,6 @@ use Genome;
 class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
     has_input => [
-        #fusion_output_file => {
         fusion_output_file => {
             type => 'String',
             doc  => 'output fusion annotation file',
@@ -42,36 +41,12 @@ class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
 };
 
 
-=head
-
-NEED TO USE THE FASTA HEADER
-always before ,Ins:
-14.13,tumor14,Var:14.67672785.14.67673511.DEL.700.+-,Ins:560-586,Length:1341,KmerCoverage:29.01,Strand:+,Assembly_Score:1257.67,PercNonRefKmerUtil:0,TIGRA
-
-CTX ++
-CTX ++,++
-CTX ++,--
-CTX +-
-CTX +-,+-
-CTX +-,-+
-CTX +-,--
-CTX -+
-CTX -+,+-
-CTX -+,-+
-CTX -+,--
-CTX --
-CTX --,++
-CTX --,--
-DEL +-
-DEL +-,+-
-INS +-
-INS +-,+-
-INV ++
-INV --
-INV --,--
-ITX +-
-ITX +-,+-
-=cut
+#The example output of MergeAssembledCallsets.pl, which is used as input file to this command
+#2.21    2       89461280        89461280        2       89495566        89495566        DEL     +-      34283   34283   tumor2  1215    NA      NA      NA
+#7.28    7       57808537        57808537        7       57808690        57808690        DEL     +-,+-   154     156     tumor7,normal7  1198,626        NA      NA      NA
+#If there are two in tumor/normal, xxxx.svs.merge.fasta will use the one with higher asmscore; if both get the same asmscore, it just 
+#uses the first one (before ,).  But how to deal with the conflict of orientation of two like (++,-+) ? This won't be a problem for
+#somatic event because there is only one orientation (for tumor).
 
 
 
@@ -96,25 +71,25 @@ sub process_breakpoint_list {
 	        # If there are no transcripts crossing either breakpoint, then you are done
 	        next unless $aTranscriptRef and @$aTranscriptRef > 0 and $bTranscriptRef and @$bTranscriptRef > 0;
 	    
-	        # See if there are different genes crossing the breakpoints
-	        if (fusionGenes($aTranscriptRef, $bTranscriptRef)) {
-	            my $aGeneNameRef = geneNames($aTranscriptRef);
-	            my $bGeneNameRef = geneNames($bTranscriptRef);
-	            my $fusionProteinRef = getAllInFrameFusions($aTranscriptRef, $item->{bpA}, $bTranscriptRef, $item->{bpB}, $item->{orient}, $out_fh);
-	            if ( defined $fusionProteinRef && scalar(keys%{$fusionProteinRef}) >= 1 ) {
-                    my $aGenes = join ' ', sort keys %$aGeneNameRef;
-                    my $bGenes = join ' ', sort keys %$bGeneNameRef;
-                    my $fusion = '['.$aGenes.']|['.$bGenes.']';
+	        # See if there are different or same genes crossing the breakpoints
+	        my $aGeneNameRef = geneNames($aTranscriptRef);
+	        my $bGeneNameRef = geneNames($bTranscriptRef);
+            my $fusionProteinRef = getAllInFrameFusions($aTranscriptRef, $item->{bpA}, $bTranscriptRef, $item->{bpB}, $item->{orient}, $out_fh);
 
-                    my $line = join "\t", map{$item->{$_}}@item_types; 
-                    $out_fh->print("\n$line\t$fusion\n");
-                    $output{$item_key} = [$fusion];
+	        if ( defined $fusionProteinRef && scalar(keys%{$fusionProteinRef}) >= 1 ) {
+                my $aGenes = join ' ', sort keys %$aGeneNameRef;
+                my $bGenes = join ' ', sort keys %$bGeneNameRef;
+                my $fusion = '['.$aGenes.']|['.$bGenes.']';
 
-		            for my $seq (keys %$fusionProteinRef) { 
-		                for my $mRNA ( keys %{$fusionProteinRef->{$seq}} ) {
-			                for my $mRNA_withCoordinates ( keys %{$fusionProteinRef->{$seq}->{$mRNA}} ) {
-			                    $out_fh->print("\t$seq\n\t$mRNA\n\t$mRNA_withCoordinates\n"); 
-                            }
+                my $line = join "\t", map{$item->{$_}}@item_types; 
+                $out_fh->print("\n$line\t$fusion\n");
+                $output{$item_key} = [$fusion];
+
+		        for my $seq (keys %$fusionProteinRef) { 
+		            for my $mRNA ( keys %{$fusionProteinRef->{$seq}} ) {
+			            for my $mRNA_withCoordinates ( keys %{$fusionProteinRef->{$seq}->{$mRNA}} ) {
+                            #$out_fh->print("\t$seq\n\t$mRNA\n\t$mRNA_withCoordinates\n"); 
+                            $out_fh->print("\t$seq\n\t$mRNA_withCoordinates\n");
                         }
                     }
                 }
@@ -133,24 +108,31 @@ sub getAllInFrameFusions {
     # Only include the fusions that are still in frame after putting the exons together
 
     my ($aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation, $out_fh) = @_;
-    my ( %allFusions, $mRNA_a, $mRNA_b, $substructureA,  $substructureB, $firstSecond, $fusionMessage, $seqObj, 
-	 $protObj, $protSeq,  $fivePrimeMessage, $threePrimeMessage, $rnaWithCoordinates_a, $rnaWithCoordinates_b,
-	 $fivePrimeMessageWithCoordinates, $threePrimeMessageWithCoordinates, 
-	);
-
+    my (%allFusions, %uniq); 
+	  
     for my $aTranscript ( @{$aTranscriptRef} ) {
 	    # Confirm breakpoint is in an intron
-	    $substructureA = substructureWithBreakpoint($aTranscript, $bpA);
-	    next if $substructureA !~ /intron/;
+	    my $substructureA = substructureWithBreakpoint($aTranscript, $bpA);
+        next if $substructureA !~ /intron/;
+
+        my $a_gene_name       = $aTranscript->gene_name;
+        my $a_transcript_name = $aTranscript->transcript_name;
 
 	    for my $bTranscript ( @{$bTranscriptRef} ) {
 	        # Confirm breakpoint is in an intron
-	        $substructureB = substructureWithBreakpoint($bTranscript, $bpB);
-	        next if $substructureB !~ /intron/;
+	        my $substructureB = substructureWithBreakpoint($bTranscript, $bpB);
+            next if $substructureB !~ /intron/;
+
+            my $b_gene_name       = $bTranscript->gene_name;
+            my $b_transcript_name = $bTranscript->transcript_name;
+	        
+            if ($a_gene_name eq $b_gene_name) {
+                next unless $b_transcript_name eq $a_transcript_name; #Make sure same gene fusion wthin the same transcipt.
+            }
 
 	        # Determine which transcript is 5' and which is 3' of fused message based on
 	        # relative orientation of sequences and strand that each gene is on
-	        $firstSecond = firstSecond($junctionOrientation, $aTranscript, $bTranscript);
+	        my $firstSecond = firstSecond($junctionOrientation, $aTranscript, $bTranscript);
 	        # If transcripts are not going in same direction, there is no in-frame fusion possible and '$firstSecond' is returned undef
 	        next unless defined $firstSecond;
 
@@ -159,29 +141,38 @@ sub getAllInFrameFusions {
 	        # (i.e. need both assembly files as input so this won't work if a lot of different patient samples
 	        #  are in file.  Will need to separate out patients or do file of files for assembly *fasta files.
 	        #  Will also need to code an identifier for each patient.  Gets too complicated.
-
+            my ($mRNA_a, $mRNA_b, $rnaWithCoordinates_a, $rnaWithCoordinates_b, $exon_ordinal_a, $exon_ordinal_b);
 
 	        if ( $firstSecond eq "AB" ) {
-		        ($mRNA_a, $rnaWithCoordinates_a) = processedMessage($aTranscript, $bpA, "start");
-		        ($mRNA_b, $rnaWithCoordinates_b) = processedMessage($bTranscript, $bpB, "end");
-		        $rnaWithCoordinates_a = "<".$aTranscript->gene_name."_". $aTranscript->transcript_name."> ".$rnaWithCoordinates_a;
-		        $rnaWithCoordinates_b = "<".$bTranscript->gene_name."_". $bTranscript->transcript_name."> ".$rnaWithCoordinates_b;
+		        ($mRNA_a, $rnaWithCoordinates_a, $exon_ordinal_a) = processedMessage($aTranscript, $bpA, "start");
+		        ($mRNA_b, $rnaWithCoordinates_b, $exon_ordinal_b) = processedMessage($bTranscript, $bpB, "end");
+		        $rnaWithCoordinates_a = "<".$a_gene_name."_". $aTranscript->transcript_name."> ".$rnaWithCoordinates_a;
+		        $rnaWithCoordinates_b = "<".$b_gene_name."_". $bTranscript->transcript_name."> ".$rnaWithCoordinates_b;
             } 
             elsif ( $firstSecond eq "BA" ) {
-		        ($mRNA_a, $rnaWithCoordinates_a) = processedMessage($bTranscript, $bpB, "start");
-		        ($mRNA_b, $rnaWithCoordinates_b) = processedMessage($aTranscript, $bpA, "end");
-		        $rnaWithCoordinates_a = "<".$bTranscript->gene_name."_". $bTranscript->transcript_name."> ".$rnaWithCoordinates_a;
-		        $rnaWithCoordinates_b = "<".$aTranscript->gene_name."_". $aTranscript->transcript_name."> ".$rnaWithCoordinates_b
+		        ($mRNA_a, $rnaWithCoordinates_a, $exon_ordinal_a) = processedMessage($bTranscript, $bpB, "start");
+		        ($mRNA_b, $rnaWithCoordinates_b, $exon_ordinal_b) = processedMessage($aTranscript, $bpA, "end");
+		        $rnaWithCoordinates_a = "<".$b_gene_name."_". $bTranscript->transcript_name."> ".$rnaWithCoordinates_a;
+		        $rnaWithCoordinates_b = "<".$a_gene_name."_". $aTranscript->transcript_name."> ".$rnaWithCoordinates_b;
             }
 	        else {
 		        confess "Unexpected \$firstSecond: '$firstSecond'";
             }
 
-	        $fusionMessage = $mRNA_a.$mRNA_b;
+            next unless $mRNA_a and $mRNA_b;  #Must have both to proceed
+
+            if ($a_gene_name eq $b_gene_name) {
+                unless ($exon_ordinal_a and $exon_ordinal_b and $exon_ordinal_a =~ /^\d+$/ and $exon_ordinal_b =~ /^\d+$/) {
+                    next;
+                }
+                next unless abs($exon_ordinal_a - $exon_ordinal_b) > 1; #so this works on same gene fusion (after deletion)
+            }
+
+	        my $fusionMessage = $mRNA_a.$mRNA_b;
 	        next if $fusionMessage eq "";
-	        $seqObj  = new_sequence($fusionMessage);
-	        $protObj = $seqObj->translate;
-	        $protSeq = $protObj->seq;
+	        my $seqObj  = new_sequence($fusionMessage);
+	        my $protObj = $seqObj->translate;
+	        my $protSeq = $protObj->seq;
 
 	        # See that the fusion protein is in frame
 	        if ( $protSeq !~ /\w\*\w/ && $protSeq =~ /\w\*$/ ) {
@@ -194,21 +185,25 @@ sub getAllInFrameFusions {
                 $message =~ s/\s*//g; 
                 $message =~ s/\<\w+\_\w+\>//g;
 		        $message =~ s/\|/ | /; 
-		        $allFusions{$protSeq}{$message}{$messageWithCoordinates} = 1;  # put both protein sequences here, separated by '|' or ....
 		
-		        #  need to get translation of each end, but a codon could be split... first half could have different frame than second half
-		        my ($halfSeq, $halfProtObj, $halfProtSeq);
-		        $halfProtSeq = "--";
-		        if ( $mRNA_a ne "" ) {
-		            $halfSeq = new_sequence($mRNA_a); $halfProtObj = $halfSeq->translate; $halfProtSeq = $halfProtObj->seq;
-                }
-		        $out_fh->print("\n\n\$mRNA_a \t $halfProtSeq \n");
+		        # need to get translation of each end, but a codon could be split... first half could have different frame than second half
+		        my $a_halfSeq = new_sequence($mRNA_a); 
+                my $a_halfProtObj = $a_halfSeq->translate; 
+                my $a_halfProtSeq = $a_halfProtObj->seq;
+                my $b_halfProtSeq = inFrameSequence($mRNA_b);
 
-		        $halfProtSeq = "--";
-		        if ( $mRNA_b ne "" ) {
-		            $halfProtSeq = inFrameSequence($mRNA_b);
-		        }
-		        $out_fh->print("\$mRNA_b \t $halfProtSeq \n\n");
+                my $id = $a_halfProtSeq.'-'.$b_halfProtSeq;
+                unless ($uniq{$id}) {
+                    $out_fh->print("\n\n\$mRNA_a \t $a_halfProtSeq \n");
+                    $out_fh->print("\$mRNA_b \t $b_halfProtSeq \n\n");
+                    $uniq{$id} = 1;
+                }
+
+                if ($protSeq =~ /$a_halfProtSeq/) {
+                    my $new_seq = $a_halfProtSeq . ' | ';
+                    $protSeq =~ s/$a_halfProtSeq/$new_seq/;
+                }
+                $allFusions{$protSeq}{$message}{$messageWithCoordinates} = 1;  # put both protein sequences here, separated by '|' or ....
             }
         }
     }
@@ -256,7 +251,9 @@ sub processedMessage {
 	    $includeUtrExons = 0;  # for 5'
 	    $reading = 1; 
     }
-    my ($left, $right);
+
+    my ($left, $right, $first_exon_ordinal, $last_exon_ordinal);
+
     for my $sub_structure ( @ss ) {
 	    # See if the position is between the substructure start and stop
 	    if ( $position >= $sub_structure->structure_start && $position <= $sub_structure->structure_stop ) { 
@@ -275,13 +272,16 @@ sub processedMessage {
 	    next unless $reading;
  
 	    # 'flank' does not have sequence in database and don't want 'intron'
-	    next if $sub_structure->structure_type eq "intron" or $sub_structure->structure_type eq 'flank';
+        #next if $sub_structure->structure_type eq "intron" or $sub_structure->structure_type eq 'flank';
+        next unless $sub_structure->structure_type =~ /^(cds|utr)_exon$/;  #set this for now fir in-frame fusion
 	
     	# The message to be translated has cds_exon and if part of the 5' has utr_exon that are beginning of that transcript
 	    if ( $sub_structure->structure_type eq "cds_exon" ) {	     
 	        $mRNA .= $sub_structure->nucleotide_seq; 
 	        # Only include utr_exons until the first cds_exon
 	        $includeUtrExons = 0; 
+            $first_exon_ordinal = $sub_structure->ordinal unless $first_exon_ordinal;
+            $last_exon_ordinal  = $sub_structure->ordinal;
 	    } 
         elsif ( $sub_structure->structure_type eq "utr_exon" and $includeUtrExons ) {	     
 	        $mRNA .= $sub_structure->nucleotide_seq; 
@@ -301,7 +301,9 @@ sub processedMessage {
 	        confess "Unexpected strand value";
         }		
     }
-    return ($mRNA, $rnaWithCoordinates);
+
+    my $exon_ordinal = $startOrEnd eq "start" ? $last_exon_ordinal : $first_exon_ordinal;
+    return ($mRNA, $rnaWithCoordinates, $exon_ordinal);
 }
 
 
@@ -366,21 +368,6 @@ sub firstSecond {
     return $firstSecond;
 }
 
-
-sub fusionGenes {
-    # Input: ref to transcripts crossing each breakpoint
-    # Return: 1 if there are different genes crossing the breakpoints
-    my ( $aTranscriptRef, $bTranscriptRef ) = @_;
-    my $aGeneNameRef = geneNames($aTranscriptRef);
-    my $bGeneNameRef = geneNames($bTranscriptRef);
-
-    for my $geneA (keys %$aGeneNameRef) {
-	    next if $geneA eq "";
-        return 1 unless defined $bGeneNameRef->{$geneA};
-    }
-    return 0;
-}
-    
 
 sub geneNames {
     # Return ref to hash of gene names for the list of transcripts

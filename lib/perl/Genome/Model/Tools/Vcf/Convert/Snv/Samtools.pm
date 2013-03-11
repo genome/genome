@@ -54,8 +54,8 @@ sub parse_line {
         $columns[4] = join ',', @alt;
         $columns[6] = 'PASS';
         $columns[7] = '.';
-        $columns[8] = 'GT:GQ:DP:MQ:AD:FA'; #no way to calculate BQ, VAQ(snp quality)
-        $columns[9] = join ':', $gt, $gq, $dp, $mq, $ad, $fa;
+        $columns[8] = 'GT:GQ:DP:MQ:AD:FA:BQ:SS'; #no way to calculate BQ, VAQ(snp quality)
+        $columns[9] = join ':', $gt, $gq, $dp, $mq, $ad, $fa, '.', '.';
 
         my $col_ct   = scalar $self->_get_header_columns;
         my $new_line = join "\t", splice(@columns, 0, $col_ct); #remove some unwanted columns in test

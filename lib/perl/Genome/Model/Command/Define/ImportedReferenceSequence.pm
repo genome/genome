@@ -345,7 +345,7 @@ sub _create_build {
 
     my $build = Genome::Model::Build->create(@build_parameters);
     if($build) {
-        $self->status_message('Created build of id ' . $build->build_id . ' with data directory "' . $build->data_directory . '".');
+        $self->status_message('Created build of id ' . $build->build_id);
     } else {
         $self->error_message("Failed to create build for model " . $model->genome_model_id . ".");
         return;
@@ -364,7 +364,11 @@ sub _create_build {
 
     $self->status_message('Starting build.');
     if($build->start(@dispatch_parameters)) {
-        $self->status_message('Started build (build is complete if it was run inline).');
+        if($self->server_dispatch eq 'inline') {
+            $self->status_message('Reference imported. ID: <' . $build->id . '>, data_directory: <' . $build->data_directory . '>.');
+        } else {
+            $self->status_message('Started build.');
+        }
     } else {
         $self->error_message("Failed to start build " . $build->build_id . " for model " . $model->genome_model_id . ".");
         return;
