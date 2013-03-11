@@ -126,14 +126,11 @@ sub execute {
     my $group_id = $self->group_id;
     my $plot_input_file;
     my $make1plot = $self->make1plot;
-    my $stackplot = $self->stackbarplot;
     my $ymax = $self->ymax;
     my $plot_title = $self->plot_title;
     my $numberRow = $self->number_row;
-    my $manual_label = $self->label;
+    my $manual_label = $self->labels;
     my $plot_graph = $self->plot_graph;
-    my $input_snv_file = '';
-    $input_snv_file = $self->input_snv_file if ($self->input_snv_file);
 
     if($self->mut_spec_file) {
         $plot_input_file = abs_path($self->mut_spec_file);
@@ -163,8 +160,8 @@ sub execute {
         my $fh = IO::File->new($input_file, 'r');
         for my $line (<$fh>){
             chomp $line;
-            my ($label, $input_file) = split("\t", $line);
-            my $raw_count = parse_bed_file($input_file);
+            my ($label, $file) = split("\t", $line);
+            my $raw_count = $self->parse_bed_file($file);
             make_output($raw_count, $label, $plot_input_file);
         }
     }
@@ -181,7 +178,7 @@ sub execute {
 
         foreach my $model(@models) {
             my ($input_file,$automatic_label) = make_input_file_from_model($model); #cat tier1,2,3 SNV bed file for each model
-            my $raw_count = parse_bed_file($input_file);
+            my $raw_count = $self->parse_bed_file($input_file);
             unlink($input_file);
             if($manual_label) { #user specified a sample label
                 make_output($raw_count,$manual_label,$plot_input_file);
@@ -310,8 +307,8 @@ sub parse_bed_file {
         'T->G' => 0
     };
 
-    open(BED,$file) or die "Unable to open the file $file due to $!";
-    while(<BED>) {
+    my $fh = IO::File->new($file, 'r') or die "Unable to open $file due to $!";
+    while(<$fh>) {
         chomp;
         my ($chr,$start,$stop,$ref_var,@rest) = split(/\t/,$_);
         next if($chr =~ /GL/);
@@ -324,7 +321,7 @@ sub parse_bed_file {
         my $key = join("->",($ref,$variants[0]));
         $count->{$key}++;
     }
-    close BED;
+    $fh->close;
 
     return $count;
 
