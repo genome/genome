@@ -50,6 +50,11 @@ class Genome::Model::Tools::Hgmi::Merge (
             doc => "specify different version of iprscan",
             default => '/gsc/scripts/bin/iprscan',
         },
+        ipr_version => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'version to pass along to G:M:GP:C:B::Merge',
+        },
         locus_id => {
             is => 'String',
 			doc => 'locus_tag with OUT DFT/FNL postpended',
@@ -245,6 +250,10 @@ sub gather_details
                    'debug_file' => $debug_file,
                    'nr_db' => $self->nr_db,
                    );
+
+    if($self->ipr_version) {
+        $params{ipr_version} = $self->ipr_version;
+    }
 
     if(($self->dev)) { $params{dev} = 1; }
     

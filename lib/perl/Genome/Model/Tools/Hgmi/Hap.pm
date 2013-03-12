@@ -101,6 +101,10 @@ sub execute {
     confess "No configuration file found at " . $self->config unless -f $self->config;
     my $config = LoadFile($self->config);
 
+    if($self->interpro_version and not exists $config->{iprpath}) {
+        $config->{iprpath} = '/gsc/scripts/pkg/bio/iprscan/iprscan-' . $self->interpro_version .'/bin/iprscan';
+    }
+
     # Core gene check only relevant to bacteria
     if($config->{cell_type} eq 'VIRAL') {
         $self->skip_core_check(1);
@@ -232,6 +236,7 @@ sub execute {
         dev           => $self->dev,
         nr_db         => $config->{nr_db},
         iprpath       => $config->{iprpath},
+        ipr_version   => $self->interpro_version,
     );
     confess "Could not create gene merging object!" unless $merge;
 

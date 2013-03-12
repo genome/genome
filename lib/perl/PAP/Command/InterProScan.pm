@@ -56,7 +56,7 @@ class PAP::Command::InterProScan {
                                 },
 				version => {
 									is => 'String',
-									valid_values => ['4.5', '4.7', '4.8'],
+									valid_values => ['4.5', '4.7', '4.8', '4.8-40'],
 									default => '4.8',
                                     is_input => 1,
                                     is_optional => 1,
