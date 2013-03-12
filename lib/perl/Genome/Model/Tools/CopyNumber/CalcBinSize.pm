@@ -25,12 +25,14 @@ class Genome::Model::Tools::CopyNumber::CalcBinSize {
 	entrypoints => {
 	    is => 'String',
 	    is_optional => 0,
-	    doc => 'path to an entrypoints file containing chr, length and ploidy. See (/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.hg18.[male|female])',
+	    doc => 'path to an entrypoints file containing chr, length and ploidy.'
+            . "  See " . Genome::Sys->dbpath("tgi-misc-annotation","human-build37-20130113") ."/entrypoints.[male|female])",
 	},
 	mapability => {
 	    is => 'String',
 	    is_optional => 0,
-	    doc => 'path to an entrypoints file containing the mapability of the genome for the read length that you are using. See (~cmiller/annotations/mapability.hg18.[readlength]bpReads.dat)',
+	    doc => 'path to an entrypoints file containing the mapability of the genome for the read length that you are using.'
+            . "  See " . Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/mapability.[readlength]bpReads.dat for exampls.  TODO: make build37 versions.",
 	},
 	matched_normal => {
 	    is => 'Boolean',

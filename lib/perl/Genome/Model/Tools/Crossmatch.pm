@@ -9,7 +9,13 @@ my $DEFAULT = '1.080721';
 class Genome::Model::Tools::Crossmatch {
     is => 'Command',
     has => [
-        use_version => { is => 'Version', is_optional => 1, default_value => $DEFAULT, doc => "Version of Crossmatch to use, default is $DEFAULT" },
+        use_version => { 
+            is => 'Version', 
+            is_optional => 1, 
+            default_value => $DEFAULT, 
+            valid_values => [ Genome::Sys->sw_versions("phrap") ], # cross_match is in the phrap package
+            doc => "Version of Crossmatch to use, default is $DEFAULT" 
+        },
         arch_os => {
                     calculate => q|
                             my $arch_os = `uname -m`;
@@ -38,10 +44,14 @@ sub help_detail {
 EOS
 }
 
+### this chunk of boilerplate is inconsistently present in a lot of modules
+### and can probably be tossed with the new Genome::Sys->sw* methods.
+
 my %CROSSMATCH_VERSIONS = (
-	'1.080721' => '/gsc/bin/cross_match',
-	'test' => '/gsc/bin/cross_match.test',
-    'crossmatch'   => 'cross_match',
+        Genome::Sys->sw_version_path_map('phrap','cross_match'),
+        #'1.080721' => '/gsc/bin/cross_match',
+        #'test' => '/gsc/bin/cross_match.test',
+        #'crossmatch'   => 'cross_match',
 );
 
 sub crossmatch_path {
@@ -70,6 +80,8 @@ sub default_crossmatch_version {
 }
 
 sub default_version { return default_crossmatch_version; }
+
+#### end chunk
 
 1;
 

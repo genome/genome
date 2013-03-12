@@ -23,7 +23,11 @@ class Genome::Model::Tools::Gtf::ToGenePred {
 sub execute {
     my $self = shift;
 
-    my $cmd = '/gscmnt/sata132/techd/solexa/jwalker/bin/gtfToGenePred';
+    # handle both names pending Sytems fixing name typo
+    # https://rt.gsc.wustl.edu/Ticket/Display.html?id=90937
+    my $cmd = eval { Genome::Sys->swpath("gtfToGenePred","0.1") };  # correct name
+    $cmd ||= Genome::Sys->swpath("gtfToGenePhred","0.1");        # bad name
+
     if ($self->extended) {
         $cmd .= ' -genePredExt';
     }

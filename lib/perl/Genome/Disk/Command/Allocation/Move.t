@@ -121,7 +121,7 @@ printf("alloc mount path: '%s', target mount path: '%s'\n",
 is($allocation->volume->id, $other_volume->id, 'allocation successfully moved to other volume');
 
 # Now simulate the command being run from the CLI
-my @args = ('genome', 'disk', 'allocation', 'move', '--target-volume', 'mount_path=' . $volume->mount_path, $allocation->id);
+my @args = ('--target-volume', 'mount_path=' . $volume->mount_path, $allocation->id);
 my $rv = Genome::Disk::Command::Allocation::Move->_execute_with_shell_params_and_return_exit_code(@args);
 ok($rv == 0, 'successfully executed command using simulated command line arguments');
 is($allocation->volume->id, $volume->id, 'allocation updated as expected after move');

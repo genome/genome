@@ -147,8 +147,9 @@ sub execute {
 
     }
 
+    # TODO: cleanup and normalize thies
+    my $genefile = Genome::Sys->dbpath('ensembl','67_37l_v2') . '/exonIntron.blocks.bed';
 
-    my $genefile = "/gscuser/cmiller/annotations/ensembl.genes/67_37l_v2/exonIntron.blocks.bed";
     my $SNVs = intersectSNV2genes($SNV_file,$genefile);
 
     my $x=1;

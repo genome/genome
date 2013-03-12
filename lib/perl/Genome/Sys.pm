@@ -343,7 +343,7 @@ sub sw_version_path_map {
     # find software installed as .debs with versioned packages
     # packaged software should have a versioned executable like /usr/bin/myapp1.2.3 or /usr/bin/mypackage-myapp1.2.3 in the bin.
     my %versions1;
-    my @dirs1 = split(':',$ENV{PATH});
+    my @dirs1 = (split(':',$ENV{PATH}), "~/gsc-pkg-bio/");
     my @sw_ignore = split(':',$ENV{GENOME_SW_IGNORE} || '');
     for my $dir1 (@dirs1) {
         if (grep { index($dir1,$_) == 0 } @sw_ignore) {

@@ -122,6 +122,10 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Boolean',
               doc => 'Display current default processing profiles and annotation/reference genome inputs',
         },
+        display_samples => {
+              is => 'Boolean',
+              doc => 'Display sample info and abort',
+        },
         normal_sample_common_names => {
               #TODO: Is there a better way to determine which samples are 'normal'?
               is => 'Text',
@@ -231,6 +235,12 @@ sub execute {
     #If the user did not display the samples to use for this individual, display those available and exit.
     $self->get_samples;
     $self->status_message("\nUser must select which samples with --samples in order to proceed\n\n");
+    return 1;
+  }
+
+  #If the user selected the --display-samples option, simply print out a summmary and exit
+  if ($self->display_samples){
+    $self->status_message("\nExiting...  --display-samples mode is used for summarizing purposes only\n\n");
     return 1;
   }
 
@@ -513,6 +523,8 @@ sub dna_samples{
   my %args = @_;
   my @samples = @{$args{'-samples'}};
     
+  my $normal_sample_common_names = $self->normal_sample_common_names;
+  my $tumor_sample_common_names = $self->tumor_sample_common_names;
   my @dna_samples;
   foreach my $sample (@samples){
     if ($sample->sample_type =~ /dna/i){
@@ -532,8 +544,8 @@ sub dna_samples{
 
   foreach my $s (@dna_samples){
     my $current_scn = $s->common_name || "NULL";
-    push (@normal_samples, $s) if ($current_scn =~ /$self->normal_sample_common_names/i);
-    push (@tumor_samples, $s) if ($current_scn =~ /$self->tumor_sample_common_names/i);
+    push (@normal_samples, $s) if ($current_scn =~ /$normal_sample_common_names/i);
+    push (@tumor_samples, $s) if ($current_scn =~ /$tumor_sample_common_names/i);
   }
   if (scalar(@normal_samples) > 1){
     $self->error_message("More than one normal DNA sample was specified for this individual - check samples or normal/tumor definitions");
@@ -552,6 +564,8 @@ sub rna_samples{
   my %args = @_;
   my @samples = @{$args{'-samples'}};
 
+  my $normal_sample_common_names = $self->normal_sample_common_names;
+  my $tumor_sample_common_names = $self->tumor_sample_common_names;
   my @rna_samples;
   foreach my $sample (@samples){
     if ($sample->sample_type =~ /rna/i){
@@ -573,8 +587,8 @@ sub rna_samples{
 
   foreach my $s (@rna_samples){
     my $current_scn = $s->common_name || "NULL";
-    push (@normal_samples, $s) if ($current_scn =~ /$self->normal_sample_common_names/i);
-    push (@tumor_samples, $s) if ($current_scn =~ /$self->tumor_sample_common_names/i);
+    push (@normal_samples, $s) if ($current_scn =~ /$normal_sample_common_names/i);
+    push (@tumor_samples, $s) if ($current_scn =~ /$tumor_sample_common_names/i);
   }
   if (scalar(@normal_samples) > 1){
     $self->error_message("More than one normal RNA sample was specified for this individual - check samples or normal/tumor definitions");
@@ -1742,6 +1756,9 @@ sub check_instrument_data{
   my $samples_with_normal_rnaseq = 0;
   my $samples_with_tumor_rnaseq = 0;
 
+  my $normal_sample_common_names = $self->normal_sample_common_names;
+  my $tumor_sample_common_names = $self->tumor_sample_common_names;
+
   foreach my $sample (@samples){
     my @normal_rnaseq;
     my @tumor_rnaseq;
@@ -1757,8 +1774,8 @@ sub check_instrument_data{
 
       if ($sample->is_rna){
         my $scn = $sample->common_name || "NULL";
-        push (@normal_rnaseq, $instrument_data) if ($scn =~ /$self->normal_sample_common_names/i);
-        push (@tumor_rnaseq, $instrument_data) if ($scn =~ /$self->tumor_sample_common_names/i);
+        push (@normal_rnaseq, $instrument_data) if ($scn =~ /$normal_sample_common_names/i);
+        push (@tumor_rnaseq, $instrument_data) if ($scn =~ /$tumor_sample_common_names/i);
       }elsif ($trsn){
         my $fl = Genome::FeatureList->get(name => $trsn);
         if (not $fl or not $fl->content_type) {
