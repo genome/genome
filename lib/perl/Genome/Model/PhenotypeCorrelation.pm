@@ -526,11 +526,16 @@ sub _find_or_generate_multisample_vcf {
     my @snp_files;
     for my $alignment_result (@per_sample_alignment_results) {
         my $snp_file = $self->get_snp_list_for_something_close_to_this_result($alignment_result);
-        unless($snp_file && -e $snp_file) {
-            $self->error_message("Couldn't locate a variant list from a previous model to speed up QC with, (either we no longer make them or the code to find them is broken). exiting....");
-            die;
+        if ($snp_file && -e $snp_file) {
+            push @snp_files, $snp_file;
+        } else {
+            $self->error_message("Couldn't locate a variant list from a previous model to speed up QC with for alignment result " . $alignment_result->id . 
+                " , (either we no longer make them or the code to find them is broken).");
         }
-        push @snp_files, $snp_file;
+    }
+
+    unless (scalar (@snp_files) == scalar (@per_sample_alignment_results)) {
+        die $self->error_message("Only got " . scalar(@snp_files) . " out of " . scalar(@per_sample_alignment_results) . " expected snplists. Exiting.");
     }
 
 
@@ -597,25 +602,35 @@ sub _find_or_generate_multisample_vcf {
     return $output_dir . '/snvs.vcf.gz';
 }
 
+# This method attempts to return a useable snp list (very specific right now, one that ran through samtools->snpfilter) that was previously run on this alignment result.
+# If this fails, it falls back to trying to find an alternate alignment result that has a useable snp list.
 sub get_snp_list_for_something_close_to_this_result {
     my ($self, $alignment_result) = @_;
     my $return_snp_file;
     my $bam_path = $alignment_result->merged_alignment_bam_path;
     my $reference_build_id = $alignment_result->reference_build->id;
+
+    # Try to find a snplist that was run with this bam
     my @results = Genome::Model::Tools::DetectVariants2::Result::Filter->get(
         filter_name => "Genome::Model::Tools::DetectVariants2::Filter::SnpFilter",
         reference_build_id => $reference_build_id,
         aligned_reads =>$bam_path );
     if(@results) {
-        return $results[0]->path("snvs.hq.bed");
+        # We are being pretty permissive here. Take ANY result we got.
+        my $snp_list = $results[0]->path("snvs.hq.bed");
+        $self->status_message("Found a snp list at $snp_list");
+        return $snp_list;
     } else {
-        $self->status_message("Could not find any DV2::Filter::SnpFilter result object for $bam_path");
-        $self->status_message("Widening the search space....");
+        $self->status_message("Could not find any DV2::Filter::SnpFilter result object for $bam_path. Widening the search space....");
     }
+
+    # Find a list of other bams that have this same set of instrument data and reference sequence
     my @more_alignment_results = Genome::InstrumentData::AlignmentResult::Merged->get(
         instrument_data_id => [$alignment_result->instrument_data_id],
         reference_build_id => $reference_build_id,
     );
+
+    # For every bam you found, look for an existing useable snp list
     for my $alignment_result (@more_alignment_results) {
         $bam_path = $alignment_result->merged_alignment_bam_path;
         my @results = Genome::Model::Tools::DetectVariants2::Result::Filter->get(
@@ -623,7 +638,10 @@ sub get_snp_list_for_something_close_to_this_result {
             reference_build_id => $reference_build_id,
             aligned_reads =>$bam_path );
         if(@results) {
-            return $results[0]->path("snvs.hq.bed");
+            # We are being pretty permissive here. Take ANY result we got.
+            my $snp_list = $results[0]->path("snvs.hq.bed");
+            $self->status_message("Found a snp list at $snp_list");
+            return $snp_list;
         }
     }
     return undef;
