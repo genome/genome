@@ -44,6 +44,9 @@ sub help_detail {
 EOS
 }
 
+### this chunk of boilerplate is inconsistently present in a lot of modules
+### and can probably be tossed with the new Genome::Sys->sw* methods.
+
 my %CROSSMATCH_VERSIONS = (
         Genome::Sys->sw_version_path_map('phrap','cross_match'),
         #'1.080721' => '/gsc/bin/cross_match',
@@ -77,6 +80,8 @@ sub default_crossmatch_version {
 }
 
 sub default_version { return default_crossmatch_version; }
+
+#### end chunk
 
 1;
 

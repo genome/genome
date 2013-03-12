@@ -688,10 +688,10 @@ sub screen_mp(@)
       close(F);
       
       #--- Screen with primer file first ---
-      system ("(/gsc/bin/cross_match __FASTA__/$fasta __AMP__/$primseq -minmatch 10 -minscore 30 -penalty -2 >__FASTA__/$amp.primscreen.cross) 2> /dev/null");
+      system ("(" . Genome::Sys->swpath('phrap','1.080721','cross_match') . " __FASTA__/$fasta __AMP__/$primseq -minmatch 10 -minscore 30 -penalty -2 >__FASTA__/$amp.primscreen.cross) 2> /dev/null");
       
       #--- Screen with amplicon ---
-      system ("(/gsc/bin/cross_match __FASTA__/$fasta __AMP__/$ampseq -minmatch 30 -minscore 60 -penalty -2 >__FASTA__/$amp.ampscreen.cross) 2>/dev/null");
+      system ("(" . Genome::Sys->swpath('phrap','1.080721','cross_match') . " __FASTA__/$fasta __AMP__/$ampseq -minmatch 30 -minscore 60 -penalty -2 >__FASTA__/$amp.ampscreen.cross) 2>/dev/null");
 
       #--- Deal with primer matches first ---
       open (P,"<__FASTA__/$amp.primscreen.cross");     
