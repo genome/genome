@@ -46,8 +46,9 @@ my $bam_input = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 # Updated to .v6 for TCGA-compliance vcf header
 # Updated to .v7 for more TCGA-compliance vcf header: add center and tcgaversion
 # Updated to .v8 for more TCGA-compliant VCf header
+# Updated to .v9 for mpileup TCGA compliant snv vcf output
 
-my $expected_dir = $test_dir . '/expected.v8/';
+my $expected_dir = $test_dir . '/expected.v9/';
 ok(-d $expected_dir, "expected results directory exists");
 
 my @versions = qw(r613 r963);

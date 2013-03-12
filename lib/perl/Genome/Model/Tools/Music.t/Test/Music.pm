@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Music::T;
+package Test::Music;
 use Exporter 'import';
 
 use strict;

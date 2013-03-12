@@ -32,6 +32,18 @@ class Genome::Model::ClinSeq::Command::SummarizeBuilds {
               is_optional => 1,
               doc => 'All status messages go to the specified log file',
         },
+        normal_sample_common_names => {
+              #TODO: Is there a better way to determine which samples are 'normal'?
+              is => 'Text',
+              default => 'normal',
+              doc => 'The possible sample common names used in the database to specify a Normal sample',
+        },
+        tumor_sample_common_names => {
+              #TODO: Is there a better way to determine which samples are 'tumor'?
+              is => 'Text',
+              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse',
+              doc => 'The possible sample common names used in the database to specify a Tumor sample',
+        },
     ],
     doc => 'summarize the inputs of a clinseq build (models/builds, processing profiles, etc.)',
 };
@@ -180,15 +192,18 @@ sub execute {
       my $tissue_desc = $sample->tissue_desc || "[UNDEF sample tissue_desc]";
       my $extraction_type = $sample->extraction_type || "[UNDEF sample extraction_type]";
       $self->status_message("sample " . $sample->__display_name__ . " ($tissue_desc - $extraction_type) has " . scalar(@instdata) . " instrument data");
-      if ($scn eq "tumor" && $extraction_type eq "genomic dna"){$tumor_dna_id_count = scalar(@instdata);}
-      if ($scn eq "normal" && $extraction_type eq "genomic dna"){$normal_dna_id_count = scalar(@instdata);}
-      if ($scn eq "tumor" && $extraction_type eq "rna"){$tumor_rna_id_count = scalar(@instdata);}
-      if ($scn eq "normal" && $extraction_type eq "rna"){$normal_rna_id_count = scalar(@instdata);}
+      my $normal_sample_common_names = $self->normal_sample_common_names;
+      my $tumor_sample_common_names = $self->tumor_sample_common_names;
+      if (($scn =~ /$tumor_sample_common_names/i) && ($extraction_type eq "genomic dna")){$tumor_dna_id_count = scalar(@instdata);}
+      if (($scn =~ /$normal_sample_common_names/i) && ($extraction_type eq "genomic dna")){$normal_dna_id_count = scalar(@instdata);}
+      if (($scn =~ /$tumor_sample_common_names/i) && ($extraction_type =~ /rna/)){$tumor_rna_id_count = scalar(@instdata);}
+      if (($scn =~ /$normal_sample_common_names/i) && ($extraction_type =~ /rna/)){$normal_rna_id_count = scalar(@instdata);}
     }
+
     print STATS "Tumor Genomic DNA Instrument Data Count\t$tumor_dna_id_count\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor genomic DNA\n";
     print STATS "Normal Genomic DNA Instrument Data Count\t$normal_dna_id_count\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal genomic DNA\n";
     print STATS "Tumor RNA Instrument Data Count\t$tumor_rna_id_count\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor RNA\n";
-    print STATS "Normal RNA Instrument Data Count\t$normal_rna_id_count\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for tumor RNA\n";
+    print STATS "Normal RNA Instrument Data Count\t$normal_rna_id_count\tlims\tClinseq Build Summary\tCount\tNumber of lanes of instrument data generated for normal RNA\n";
 
     #Locations of useful methods need to do the following:
     #... /Genome/lib/perl/Genome/IntrumentData.pm

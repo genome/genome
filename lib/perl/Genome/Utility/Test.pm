@@ -5,10 +5,11 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test);
+our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok);
 
 use Carp qw(croak);
 use File::Compare qw(compare);
+use IPC::System::Simple qw(capture);
 use Test::More;
 
 my $tb = __PACKAGE__->builder;
@@ -39,7 +40,6 @@ sub _compare_ok_parse_args {
     $vo{name}    = delete $o{name};
     $vo{filters} = delete $o{filters};
     $vo{diag}    = delete $o{diag} // 1;
-    $vo{test}    = delete $o{test} // 1;
     my @k = keys %o;
     if (@k) {
         croak 'unexpected options passed to compare_ok: ' . join(', ', @k);
@@ -53,7 +53,7 @@ sub _compare_ok_parse_args {
     return ($file_1, $file_2, %vo);
 }
 
-sub compare_ok($$;%) {
+sub compare_ok {
     my ($file_1, $file_2, %o) = _compare_ok_parse_args(@_);
 
     my @compare_args = (
@@ -64,18 +64,48 @@ sub compare_ok($$;%) {
                 map { $_ =~ s/$filter//g } @_;
             }
             my $c = ($_[0] ne $_[1]);
-            if ($c == 1 && $o{diag} && $o{test}) {
+            if ($c == 1 && $o{diag}) {
                 $tb->diag("First diff:\n--- " . $file_1 . "\n+++ " . $file_2 . "\n- " . $_[0] . "+ " . $_[1]);
             }
             return $c;
         }
     );
 
-    if ($o{test}) {
-        return $tb->ok(compare(@compare_args) == 0, $o{name});
+    return $tb->ok(compare(@compare_args) == 0, $o{name});
+}
+
+sub capture_ok {
+    my ($command, $test_name) = @_;
+
+    my $tb = __PACKAGE__->builder;
+
+    my @command = ref $command ? @$command : $command;
+    $test_name //= @command > 1 ? join(' ', @command) : $command[0];
+
+    my @output = eval { capture(@command) };
+    my $error = $@;
+    my $exit_zero = ($? == 0);
+    $tb->ok($exit_zero, $test_name) or diag $error, @output;
+
+    if (wantarray) {
+        return ($exit_zero, @output);
     } else {
-        return (compare(@compare_args) == 0 ? 1 : 0);
+        return $exit_zero;
     }
+}
+
+sub run_ok {
+    my ($command, $test_name) = @_;
+
+    my $tb = __PACKAGE__->builder;
+
+    my @command = ref $command ? @$command : $command;
+    $test_name //= @command > 1 ? join(' ', @command) : $command[0];
+
+    my $exit_zero = (system(@command) == 0);
+    $tb->ok($exit_zero, $test_name);
+
+    return $exit_zero;
 }
 
 1;
