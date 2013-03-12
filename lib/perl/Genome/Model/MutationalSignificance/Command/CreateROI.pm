@@ -68,6 +68,42 @@ sub execute {
     }
 
     $self->roi_path($feature_list->file_path);
+    
+    my $new_name = $feature_list->name."_aregier_test";
+
+    my $new_feature_list = Genome::FeatureList->get(name => $new_name);
+
+    unless ($new_feature_list) {
+        my $tmp = Genome::Sys->create_temp_file_path;
+        my $cmd = "cat ".$feature_list->file_path." /gscuser/aregier/scratch/dhs_promoters/gene_names2.bed /gscuser/aregier/scratch/dhs_promoters/DRM_transcript_pairs.clean.bed > $tmp";
+        `$cmd`;
+        my $sorted_out = Genome::Sys->create_temp_file_path;
+        my $rv = Genome::Model::Tools::Joinx::Sort->execute(
+            input_files => [$tmp],
+            unique => 1,
+            output_file => $sorted_out,
+        );
+        my $file_content_hash = Genome::Sys->md5sum($sorted_out);
+
+        my $format = $feature_list->format;
+
+        $new_feature_list = Genome::FeatureList->create(
+            name => $new_name,
+            format => $format,
+            file_content_hash => $file_content_hash,
+            subject => $feature_list->subject,
+            reference => $feature_list->reference,
+            file_path => $sorted_out,
+            content_type => "roi",
+            description => "Created by music createROI test 2/26/2013",
+            source => "WUTGI",
+        );
+        unless ($new_feature_list) {
+            $self->error_message("Failed to create hacked up ROI file");
+            return;
+        }
+        $self->roi_path($new_feature_list->file_path);
+    }
 
     $self->status_message('Using ROI file: '.$self->roi_path);
     return 1;
