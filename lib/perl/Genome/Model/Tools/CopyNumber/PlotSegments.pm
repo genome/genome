@@ -470,28 +470,28 @@ sub getEntrypointsFile{
     my $entrypoints_file = "";
     if($sex eq "male"){
         if($genome_build eq "36"){
-            $entrypoints_file = "/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.hg18.male";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/entrypoints.male";
         } elsif ($genome_build eq "37"){
-            $entrypoints_file = "/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.hg19.male";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","human-build37-20130113") . "/entrypoints.male";
         }elsif ($genome_build eq "mm9"){
-            $entrypoints_file = "/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.mm9.male";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","mouse-mm9-20130113") . "/entrypoints.male";
         }
  
     } elsif ($sex eq "female"){
         if($genome_build eq "36"){
-            $entrypoints_file = "/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.hg18.female";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/entrypoints.female";
         } elsif ($genome_build eq "37"){
-            $entrypoints_file = "/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.hg19.female";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","human-build37-20130113") . "/entrypoints.female";
         } elsif ($genome_build eq "mm9"){
-            $entrypoints_file = "/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.mm9.female";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","mouse-mm9-20130113") . "/entrypoints.female";
         }
     } elsif ($sex eq "autosomes"){
         if($genome_build eq "36"){
-            $entrypoints_file = "/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.hg18.autosomes";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/entrypoints.autosomes";
         } elsif ($genome_build eq "37"){
-            $entrypoints_file = "/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.hg19.autosomes";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","human-build37-20130113") . "/entrypoints.autosomes";
         } elsif ($genome_build eq "mm9"){
-            $entrypoints_file = "/gscmnt/sata921/info/medseq/cmiller/annotations/entrypoints.mm9.autosomes";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","mouse-mm9-20130113") . "/entrypoints.autosomes";
         }
     }
 
