@@ -390,6 +390,8 @@ sub _create {
     $self->status_message(sprintf("Allocation (%s) created at %s",
         $id, $self->absolute_path));
 
+    # a restrictive umask can break builds for other users; force it to be friendly
+    umask(0002);
     # If we cannot create the directory delete the new allocation
     my $dir = eval {
         Genome::Sys->create_directory($self->absolute_path);
