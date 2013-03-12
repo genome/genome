@@ -102,7 +102,28 @@ sub execute {
     }
     my $version = 1;
     foreach my $tier (@tiers_to_use){
-        my $snv_anno = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top");
+        my $snv_anno_top = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top");
+        my $snv_annovar = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version, "annotated.top.annovar");
+        my $snv_anno = $snv_anno_top;
+        if (-s $snv_annovar) {
+
+            $snv_anno = $self->output_dir."/".$self->somatic_variation_build->id."tier$tier.merged_anno";
+
+            my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
+                tgi_anno_file => $snv_anno_top,
+                regulome_db_file => "/gscuser/aregier/scratch/regulome_db/".$self->somatic_variation_build->model->id.".full",
+                annovar_file => $snv_annovar,
+                annovar_columns_to_check => ["bed_gene_names2","bed_DRM_transcript_pairs"],
+                output_file => $snv_anno,
+                annotation_build => $self->somatic_variation_build->annotation_build,
+            );
+
+            unless ($rv) {
+                $self->error_message("Failed to merge annotations for tier $tier");
+                return $rv;
+            }
+        }
+
         my @snv_lines = `cat $snv_anno`;
         chomp @snv_lines;
 
@@ -138,7 +159,7 @@ sub execute {
 
     my @indel_lines;
     foreach my $tier (@tiers_to_use){
-        my $indel_anno = $self->somatic_variation_build->data_set_path("effects/indels.hq.tier$tier", $tier, "annotated.top");
+        my $indel_anno = $self->somatic_variation_build->data_set_path("effects/indels.hq.tier$tier", $version, "annotated.top");
 
         my @tier_indel_lines = `cat $indel_anno`;
         chomp @tier_indel_lines;

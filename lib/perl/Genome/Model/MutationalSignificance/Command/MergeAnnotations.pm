@@ -55,8 +55,7 @@ sub execute {
         my $chr = $fields[0];
         my $start = $fields[1];
         if (defined $variants{$chr}{$start}->{tgi}) {
-            $self->error_message("Duplicate variant: $chr $start");
-            return;
+            $self->warning_message("Duplicate variant: $chr $start");
         }
         $variants{$chr}{$start}->{tgi} = $line;
     }
@@ -82,7 +81,7 @@ sub execute {
                 $err_out->print("$hit\n");
                     if ($hit =~ /eQTL/) {
                         $err_out->print("Hit something with an eQTL\n");
-                        my @parts = split /|/, $hit;
+                        my @parts = split /\|/, $hit;
                         my $gene_name = $parts[1];
                         my $entrez_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "EntrezGene", id_value => $gene_name);
                         if ($entrez_id_obj) {
@@ -138,8 +137,7 @@ sub execute {
         foreach my $start (keys %{$variants{$chr}}) {
             my %var = %{$variants{$chr}{$start}};
             unless ($var{regdb_score}) {
-                $self->error_message("No regulome db score for variant $chr:$start");
-                return;
+                $self->warning_message("No regulome db score for variant $chr:$start");
             }
 
             my $line = $var{tgi};
@@ -176,8 +174,7 @@ sub execute {
                     }
                     else {
                         unless ($annotations{$eQTL}->{ensembl_id} eq $ensembl_id) {
-                            $self->error_message("Ensembl id does not match: ".$annotations{$eQTL}->{ensembl_id}." and $ensembl_id");
-                            return;
+                            $self->warning_message("Ensembl id does not match: ".$annotations{$eQTL}->{ensembl_id}." and $ensembl_id");
                         }
                     }
                 }
@@ -187,8 +184,7 @@ sub execute {
                 foreach my $column_name ($self->annovar_columns_to_check) {
                     my $annot = $var{"annovar_$column_name"};
                     unless ($annot) {
-                        $self->error_message("No annovar_$column_name for variant $chr:$start");
-                        return;
+                        $self->warning_message("No annovar_$column_name for variant $chr:$start");
                     }
                     next if ($annot =~ "-");
                     $annot =~ s/^Name=//;
@@ -218,15 +214,24 @@ sub execute {
                             }
                         }
                         else {
-                            my $other_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl_default_external_name", id_value => $gene_name);
-                            if ($other_id_obj) {
-                                my $ensembl_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl", gene_id => $other_id_obj->gene_id);
-                                if ($ensembl_id_obj) {
-                                    $ensembl_id = $ensembl_id_obj->id_value;
+                            my @other_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl_default_external_name", id_value => $gene_name);
+                            if (@other_id_obj) {
+                                my $count = 0;
+                                my $str;
+                                foreach my $other_obj (@other_id_obj) { #TODO: one will be arbitrarily chosen
+                                    my $ensembl_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl", gene_id => $other_obj->gene_id);
+                                    if ($ensembl_id_obj) {
+                                        $ensembl_id = $ensembl_id_obj->id_value;
+                                        $count++;
+                                        $str .= $ensembl_id;
+                                    }
+                                    else {
+                                        $err_out->print("Could not translate $gene_name into ensembl id\n");
+                                        $ensembl_id = "-";
+                                    }
                                 }
-                                else {
-                                    $err_out->print("Could not translate $gene_name into ensembl id\n");
-                                    $ensembl_id = "-";
+                                if ($count > 1) {
+                                    $self->warning_message("More than one ensembl_id found for gene name $gene_name: $str.  Arbitrarily chose $ensembl_id");
                                 }
                             }
                             else {
@@ -242,8 +247,7 @@ sub execute {
                         }
                         else {
                             unless ($annotations{$gene_name}->{ensembl_id} eq $ensembl_id) {
-                                $self->error_message("Ensembl id does not match: ".$annotations{$gene_name}->{ensembl_id}." and $ensembl_id");
-                                return;
+                                $self->warning_message("Ensembl id does not match: ".$annotations{$gene_name}->{ensembl_id}." and $ensembl_id");
                             }
                         }
                     }
