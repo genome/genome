@@ -24,9 +24,16 @@ class Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment {
             doc => 'Type of reads to extract.',
         },
     ],
+    has_output => [
+        instrument_data => {
+            is => 'Genome::InstrumentData',
+            is_many => 1,
+            doc => 'Extracted instrument data.'
+        },
+    ],
 };
 
-sub execute { 
+sub execute {
     my $self = shift;
 
     my $from_build = $self->sub_build;
@@ -52,13 +59,15 @@ sub execute {
         my $alignment_result = $alignment_results[0];
         my @extracted_instrument_data_for_alignment_result = $self->_extract_data_from_alignment_result($alignment_result, $extraction_type,$self->filter_duplicates);
 
-        push @extracted_instrument_data, \@extracted_instrument_data_for_alignment_result
+        push @extracted_instrument_data, @extracted_instrument_data_for_alignment_result;
     }
 
     unless (@extracted_instrument_data == @assignments) {
         die $self->error_message("The count of extracted instrument data sets does not match screened instrument data assignments.");
     }
-    return map {@$_} @extracted_instrument_data;
+    $self->instrument_data(@extracted_instrument_data);
+
+    return 1;
 }
 
 sub _extract_data_from_alignment_result{

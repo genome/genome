@@ -193,9 +193,30 @@ sub _resolve_resource_requirements_for_build {
     return "-R 'rusage[gtmp=$gtmp:mem=16000]' -M 16000000";
 }
 
+sub last_complete_build_for_sub_model {
+    my ($self, $sub_model_label) = @_;
+
+    Carp::confess('No sub model label given to get succeeded build!') if not $sub_model_label;
+
+    my $sub_model = $self->$sub_model_label;
+    if ( not $sub_model ) {
+        $self->error_message("Failed to get sub model ($sub_model_label) for meta shot model ".$self->build->model->__display_name__);
+        return;
+    }
+
+    my $sub_build = $sub_model->last_complete_build;
+    if ( not $sub_build ) {
+        $self->error_message("Failed to get sub build for sub model ($sub_model_label) for meta shot model ".$self->build->model->__display_name__);
+        return;
+    }
+
+    return $sub_build;
+}
+
 sub _execute_build {
     my ($self, $build) = @_;
 
+    # Screen contaminants
     my @original_instrument_data = $build->instrument_data;
     my $screen_contamination = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
         sub_model_label => 'contamination_screen_model',
@@ -205,37 +226,84 @@ sub _execute_build {
     return if not $screen_contamination;
     return if not $screen_contamination->execute;
 
+    # Extract unaligned from contamination screen
+    my $extract_unaligned_from_contamination_screen = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
+        build => $build,
+        sub_build => $screen_contamination->sub_build,
+        type => 'unaligned',
+    );
+    return if not $extract_unaligned_from_contamination_screen;
+    return if not $extract_unaligned_from_contamination_screen->execute;
+
+    # Align unaligned reads from contamination screen against meta nt
     my $meta_nt = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
         sub_model_label => 'metagenomic_nucleotide_model',
         build => $build,
-        instrument_data => [ $screen_contamination->unaligned ],
+        instrument_data => [ $extract_unaligned_from_contamination_screen->instrument_data ],
     );
     return if not $meta_nt;
     return if not $meta_nt->execute;
 
+    # Extract aligned from meta nt
+    my $extract_aligned_from_meta_nt = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
+        build => $build,
+        sub_build => $meta_nt->sub_build,
+        type => 'aligned',
+    );
+    return if not $extract_aligned_from_meta_nt;
+    return if not $extract_aligned_from_meta_nt->execute;
+
+    # Extract unaligned from meta nt
+    my $extract_unaligned_from_meta_nt = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
+        build => $build,
+        sub_build => $meta_nt->sub_build,
+        type => 'unaligned',
+    );
+    return if not $extract_unaligned_from_meta_nt;
+    return if not $extract_unaligned_from_meta_nt->execute;
+
+    # Align unaligned reads from meta nt against meta nr
     my $meta_nr = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
         sub_model_label => 'metagenomic_protein_model',
         build => $build,
-        instrument_data => [ $meta_nt->unaligned ],
+        instrument_data => [ $extract_unaligned_from_meta_nt->instrument_data ],
     );
     return if not $meta_nr;
     return if not $meta_nr->execute;
 
+    # Extract aligned from meta nr
+    my $extract_aligned_from_meta_nr = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
+        build => $build,
+        sub_build => $meta_nr->sub_build,
+        type => 'aligned',
+    );
+    return if not $extract_aligned_from_meta_nr;
+    return if not $extract_aligned_from_meta_nr->execute;
+
+    # Align aligned reads from meta nt and meta nr to viral nt
+    my $viral_nt = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
+        sub_model_label => 'viral_nucleotide_model',
+        build => $build,
+        instrument_data => [ $extract_aligned_from_meta_nt->instrument_data, $extract_aligned_from_meta_nr->instrument_data ],
+    );
+    return if not $viral_nt;
+    return if not $viral_nt->execute;
+
+    # Align aligned reads from meta nt and meta nr to viral nr
     my $viral_nr = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
         sub_model_label => 'viral_protein_model',
         build => $build,
-        instrument_data => [ $meta_nt->aligned, $meta_nr->aligned ],
+        instrument_data => [ $extract_aligned_from_meta_nt->instrument_data, $extract_aligned_from_meta_nr->instrument_data ],
     );
     return if not $viral_nr;
     return if not $viral_nr->execute;
 
-    my $viral_nt = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'viral_nucleotide_model',
+    # Link alignments
+    my $link_alignments = Genome::Model::MetagenomicShotgun::Build::LinkAlignments->create(
         build => $build,
-        instrument_data => [ $meta_nt->aligned, $meta_nr->aligned ],
     );
-    return if not $viral_nt;
-    return if not $viral_nt->execute;
+    return if not $link_alignments;
+    return if not $link_alignments->execute;
 
     return 1;
 }

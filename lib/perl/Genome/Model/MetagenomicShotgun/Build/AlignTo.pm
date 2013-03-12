@@ -7,12 +7,6 @@ use Genome;
 
 class Genome::Model::MetagenomicShotgun::AlignTo{
     is => 'Command::V2',
-    has_param => [
-        sub_model_label => { 
-            is => 'Text',
-            valid_values => [ Genome::Model::MetagenomicShotgun->sub_model_labels ],
-        },
-    ],
     has_input => [
         build => {
             is => 'Genome::Model::Build::MetagenomicShotgun',
@@ -23,9 +17,14 @@ class Genome::Model::MetagenomicShotgun::AlignTo{
             doc => 'The instrument data to work with.',
         },
     ],
-    has_opitonal_ouput => [
-        aligned => { is_many => 1, },
-        unaligned => { is_many => 1, },
+    has_param => [
+        sub_model_label => { 
+            is => 'Text',
+            valid_values => [ Genome::Model::MetagenomicShotgun->sub_model_labels ],
+        },
+    ],
+    has_ouput => [
+        sub_build => { is => 'Genome::Model::Build', },
     ],
 };
 
@@ -41,12 +40,7 @@ sub execute {
     my $sub_build_ok = $self->_wait_for_build($sub_build);
     return if not $sub_build_ok;
 
-    my $link_alignments = $self->_link_sub_build_alignments_to_build(
-        build => $build,
-        sub_build => $sub_build,
-        sub_model_name => $sub_model_label,
-    );
-    return if not $link_alignments;
+    $self->sub_build($sub_build);
 
     return 1;
 }
@@ -236,67 +230,6 @@ sub _wait_for_build {
         $self->error_message($status.'! '.$build->__display_name__);
         return;
     }
-}
-
-sub _extract_data {
-    my ($self, $from_build, $extraction_type) = @_;
-
-
-    my $extract_from_alignment = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
-        build => $self,
-        sub_build => $from_build,
-        type => $extraction_type,
-    );
-    if ( not $extract_from_alignment ) {
-        $self->error_message("Failed to create extract from alignment! Tried to extract $extraction_type from ".$from_build->__display_name__);
-        return;
-    }
-
-    my $execute_ok = $extract_from_alignment->execute;
-    if ( not $execute_ok ) {
-        $self->error_message("Failed to execute extract from alignment! Tried to extract $extraction_type from ".$from_build->__display_name__);
-        return;
-    }
-
-    return 1;
-}
-
-sub _link_sub_build_alignments_to_build {
-    my ($self, %params) = @_;
-
-    my $build = delete $params{build};
-    Carp::confess('No build given to link alignments!') if not $build;
-    my $sub_build = delete $params{sub_build};
-    Carp::confess('No sub-build given to link alignments!') if not $sub_build;
-    my $sub_model_name = delete $params{sub_model_name};
-    Carp::confess('No sub model name given to link alignments!') if not $sub_model_name;
-    Carp::confess('Unknown params given to _link_sub_build_alignments_to_build! '.Data::Dumper::Dumper(\%params)) if %params;
-
-    my $dir = $build->data_directory;
-    my $sub_dir = $dir.'/'.$sub_model_name;
-    my $create_ok = eval{ Genome::Sys->create_directory($sub_dir); };
-    if ( not $create_ok ) {
-        $self->error_message($@) if $@;
-        $self->error_message("Failed to create $sub_model_name sub dir! ".$sub_dir);
-        return;
-    }
-
-    for my $instrument_data ( $sub_build->instrument_data ) {
-        my @alignments = $sub_build->alignment_results_for_instrument_data($instrument_data); # This should only be one.
-        for my $alignment ( @alignments ) {
-            my $target = $alignment->output_dir;
-            my $link = $sub_dir.'/'.$instrument_data->id.'-'.$alignment->id;
-            unlink $link;
-            my $link_ok = eval{ Genome::Sys->create_symlink($target, $link); };
-            if ( not $link_ok ) {
-                $self->error_message($@) if $@;
-                $self->error_message("Failed to create symlink! From $link to $target");
-                return;
-            }
-        }
-    }
-
-    return 1;
 }
 
 1;
