@@ -31,9 +31,7 @@ class Genome::Model::MetagenomicShotgun::AlignTo{
 sub execute {
     my $self = shift;
 
-    my $build = $self->build;
-    my $sub_model_label = $self->sub_model_label;
-    my $sub_model = $build->model->$sub_model_label;
+    my $sub_model = $self->build->model->sub_model_for_label($self->sub_model_label);
     my @instrument_data = $self->instrument_data;
 
     my $sub_build = $self->_start_build($sub_model, @instrument_data);

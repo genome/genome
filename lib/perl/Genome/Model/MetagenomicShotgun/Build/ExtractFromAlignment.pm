@@ -12,12 +12,12 @@ class Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment {
             is => 'Genome::Model::Build::MetagenomicShotgun',
             doc => 'The MetaShot build to work with.',
         },
-        sub_build => {
-            is => 'Genome::Model::Build',
-            doc => 'The sub build [contamination screen, meta nt, etc...] to work with.'
-        },
     ],
     has_param => [
+        sub_model_label => { 
+            is => 'Text',
+            valid_values => [ Genome::Model::MetagenomicShotgun->sub_model_labels ],
+        },
         type => {
             is => 'Text',
             value => [qw/ aligned unaligned /],
@@ -36,18 +36,20 @@ class Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment {
 sub execute {
     my $self = shift;
 
-    my $from_build = $self->sub_build;
+    my $sub_build = $self->build->model->last_complete_build_for_sub_model($self->sub_model_label);
+    return if not $sub_build;
+
     my $extraction_type = $self->type;
 
-    if ( not defined $from_build ){
+    if ( not defined $sub_build ){
         $self->status_message("No previous build provided, skipping $extraction_type data extraction");
         return;
     }
-    $self->status_message("Extracting $extraction_type reads from ".$from_build->__display_name__);
-    my @assignments = $from_build->instrument_data_inputs;
+    $self->status_message("Extracting $extraction_type reads from ".$sub_build->__display_name__);
+    my @assignments = $sub_build->instrument_data_inputs;
     my @extracted_instrument_data;
     for my $assignment (@assignments) {
-        my @alignment_results = $from_build->alignment_results_for_instrument_data($assignment->value);
+        my @alignment_results = $sub_build->alignment_results_for_instrument_data($assignment->value);
         if (@alignment_results > 1) {
             die $self->error_message( "multiple alignment_results found for instrument data assignment: " . $assignment->__display_name__);
         }

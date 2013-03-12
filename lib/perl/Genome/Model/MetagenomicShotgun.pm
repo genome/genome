@@ -193,24 +193,37 @@ sub _resolve_resource_requirements_for_build {
     return "-R 'rusage[gtmp=$gtmp:mem=16000]' -M 16000000";
 }
 
+sub sub_model_for_label {
+    my ($self, $sub_model_label) = @_;
+
+    if ( not $sub_model_label ) {
+        Carp::confess( $self->error_message('No sub model label given!') ) 
+    }
+
+    if ( not grep { $sub_model_label eq $_ } $self->sub_model_labels ) {
+        Carp::confess( $self->error_message('Invalid sub model label! '.$sub_model_label) );
+    }
+
+    my $sub_model_method = $sub_model_label.'_model';
+    my $sub_model = $self->$sub_model_method;
+    if ( not $sub_model ) {
+        Carp::confess( $self->error_message("Failed to get sub model ($sub_model_label) for meta shot model ".$self->__display_name__) );
+    }
+
+    return $sub_model;
+}
+
 sub last_complete_build_for_sub_model {
     my ($self, $sub_model_label) = @_;
 
-    Carp::confess('No sub model label given to get succeeded build!') if not $sub_model_label;
-
-    my $sub_model = $self->$sub_model_label;
-    if ( not $sub_model ) {
-        $self->error_message("Failed to get sub model ($sub_model_label) for meta shot model ".$self->build->model->__display_name__);
-        return;
-    }
-
+    my $sub_model = $self->sub_model_label($sub_model_label); # confess
     my $sub_build = $sub_model->last_complete_build;
     if ( not $sub_build ) {
-        $self->error_message("Failed to get sub build for sub model ($sub_model_label) for meta shot model ".$self->build->model->__display_name__);
+        $self->error_message("Failed to get sub build for sub model ($sub_model_label) for meta shot model ".$self->__display_name__);
         return;
     }
 
-    return $sub_build;
+    return $sub_model_label;
 }
 
 sub _execute_build {
@@ -219,7 +232,7 @@ sub _execute_build {
     # Screen contaminants
     my @original_instrument_data = $build->instrument_data;
     my $screen_contamination = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'contamination_screen_model',
+        sub_model_label => 'contamination_screen',
         build => $build,
         instrument_data => \@original_instrument_data,
     );
@@ -229,7 +242,7 @@ sub _execute_build {
     # Extract unaligned from contamination screen
     my $extract_unaligned_from_contamination_screen = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
         build => $build,
-        sub_build => $screen_contamination->sub_build,
+        sub_model_label => $screen_contamination->sub_model_label,
         type => 'unaligned',
     );
     return if not $extract_unaligned_from_contamination_screen;
@@ -237,7 +250,7 @@ sub _execute_build {
 
     # Align unaligned reads from contamination screen against meta nt
     my $meta_nt = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'metagenomic_nucleotide_model',
+        sub_model_label => 'metagenomic_nucleotide',
         build => $build,
         instrument_data => [ $extract_unaligned_from_contamination_screen->instrument_data ],
     );
@@ -247,7 +260,7 @@ sub _execute_build {
     # Extract aligned from meta nt
     my $extract_aligned_from_meta_nt = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
         build => $build,
-        sub_build => $meta_nt->sub_build,
+        sub_model_label => $meta_nt->sub_model_label,
         type => 'aligned',
     );
     return if not $extract_aligned_from_meta_nt;
@@ -256,7 +269,7 @@ sub _execute_build {
     # Extract unaligned from meta nt
     my $extract_unaligned_from_meta_nt = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
         build => $build,
-        sub_build => $meta_nt->sub_build,
+        sub_model_label => $meta_nt->sub_model_label,
         type => 'unaligned',
     );
     return if not $extract_unaligned_from_meta_nt;
@@ -264,7 +277,7 @@ sub _execute_build {
 
     # Align unaligned reads from meta nt against meta nr
     my $meta_nr = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'metagenomic_protein_model',
+        sub_model_label => 'metagenomic_protein',
         build => $build,
         instrument_data => [ $extract_unaligned_from_meta_nt->instrument_data ],
     );
@@ -274,7 +287,7 @@ sub _execute_build {
     # Extract aligned from meta nr
     my $extract_aligned_from_meta_nr = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
         build => $build,
-        sub_build => $meta_nr->sub_build,
+        sub_model_label => $meta_nr->sub_model_label,
         type => 'aligned',
     );
     return if not $extract_aligned_from_meta_nr;
@@ -282,7 +295,7 @@ sub _execute_build {
 
     # Align aligned reads from meta nt and meta nr to viral nt
     my $viral_nt = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'viral_nucleotide_model',
+        sub_model_label => 'viral_nucleotide',
         build => $build,
         instrument_data => [ $extract_aligned_from_meta_nt->instrument_data, $extract_aligned_from_meta_nr->instrument_data ],
     );
@@ -291,7 +304,7 @@ sub _execute_build {
 
     # Align aligned reads from meta nt and meta nr to viral nr
     my $viral_nr = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'viral_protein_model',
+        sub_model_label => 'viral_protein',
         build => $build,
         instrument_data => [ $extract_aligned_from_meta_nt->instrument_data, $extract_aligned_from_meta_nr->instrument_data ],
     );
