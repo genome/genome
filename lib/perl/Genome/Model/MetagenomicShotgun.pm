@@ -241,8 +241,8 @@ sub _execute_build {
 
     # Extract unaligned from contamination screen
     my $extract_unaligned_from_contamination_screen = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
-        build => $build,
         sub_model_label => $screen_contamination->sub_model_label,
+        build => $build,
         type => 'unaligned',
     );
     return if not $extract_unaligned_from_contamination_screen;
@@ -259,17 +259,18 @@ sub _execute_build {
 
     # Extract aligned from meta nt
     my $extract_aligned_from_meta_nt = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
-        build => $build,
         sub_model_label => $meta_nt->sub_model_label,
+        build => $build,
         type => 'aligned',
     );
     return if not $extract_aligned_from_meta_nt;
     return if not $extract_aligned_from_meta_nt->execute;
 
+    # Parallel these 2
     # Extract unaligned from meta nt
     my $extract_unaligned_from_meta_nt = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
-        build => $build,
         sub_model_label => $meta_nt->sub_model_label,
+        build => $build,
         type => 'unaligned',
     );
     return if not $extract_unaligned_from_meta_nt;
@@ -286,13 +287,14 @@ sub _execute_build {
 
     # Extract aligned from meta nr
     my $extract_aligned_from_meta_nr = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
-        build => $build,
         sub_model_label => $meta_nr->sub_model_label,
+        build => $build,
         type => 'aligned',
     );
     return if not $extract_aligned_from_meta_nr;
     return if not $extract_aligned_from_meta_nr->execute;
 
+    # Parallel these 2
     # Align aligned reads from meta nt and meta nr to viral nt
     my $viral_nt = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
         sub_model_label => 'viral_nucleotide',

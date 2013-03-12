@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-class Genome::Model::MetagenomicShotgun::AlignTo{
+class Genome::Model::MetagenomicShotgun::AlignTo {
     is => 'Command::V2',
     has_input => [
         build => {
@@ -23,9 +23,6 @@ class Genome::Model::MetagenomicShotgun::AlignTo{
             valid_values => [ Genome::Model::MetagenomicShotgun->sub_model_labels ],
         },
     ],
-    has_ouput => [
-        sub_build => { is => 'Genome::Model::Build', },
-    ],
 };
 
 sub execute {
@@ -37,8 +34,6 @@ sub execute {
     my $sub_build = $self->_start_build($sub_model, @instrument_data);
     my $sub_build_ok = $self->_wait_for_build($sub_build);
     return if not $sub_build_ok;
-
-    $self->sub_build($sub_build);
 
     return 1;
 }
