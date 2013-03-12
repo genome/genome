@@ -44,9 +44,18 @@ sub parse_line {
         my @alt = split /,/, $columns[4];
         pop @alt if $alt[$#alt] eq 'X';  #remove the silly X in ALT colum if it exists
 
-        my ($dp, $fa, $ad_str, $mq) = $columns[7] =~ /DP=(\d+);AF1=(\S+?);\S+DP4=(\S+?);MQ=(\d+);/;
-        my @ad = split /,/, $ad_str;
-        my $ad = $ad[2] + $ad[3];
+        #my ($dp, $fa, $dp4, $mq) = $columns[7] =~ /DP=(\d+);AF1=(\S+?);\S+DP4=(\S+?);MQ=(\d+);/;
+        my @info = split /;/, $columns[7];
+        my %info;
+        for my $info (@info) {
+            my ($key, $value) = split /=/, $info;
+            $info{$key} = $value;
+        }
+
+        my ($dp, $mq, $dp4, $af1) = ($info{DP}, $info{MQ}, $info{DP4}, $info{AF1});
+        unless ($dp and $mq and $dp4 and $af1) {
+            die $self->error_message("Fail to get valid info from line: $line");
+        }
 
         my @sample = split /:/, $columns[9];
         my ($gt, $gq) = ($sample[0], $sample[-1]);
@@ -54,8 +63,8 @@ sub parse_line {
         $columns[4] = join ',', @alt;
         $columns[6] = 'PASS';
         $columns[7] = '.';
-        $columns[8] = 'GT:GQ:DP:MQ:AD:FA:BQ:SS'; #no way to calculate BQ, VAQ(snp quality)
-        $columns[9] = join ':', $gt, $gq, $dp, $mq, $ad, $fa, '.', '.';
+        $columns[8] = 'GT:GQ:DP:MQ:DP4:FA:BQ:SS'; #no way to calculate BQ, VAQ(snp quality)
+        $columns[9] = join ':', $gt, $gq, $dp, $mq, $dp4, $af1, '.', '.';
 
         my $col_ct   = scalar $self->_get_header_columns;
         my $new_line = join "\t", splice(@columns, 0, $col_ct); #remove some unwanted columns in test
