@@ -622,10 +622,9 @@ sub remove_ignore_genes{
   open (GENES, $ignore_gene_list) || die $self->error_message("Could not open ignore gene list: $ignore_gene_list");
   while(<GENES>){
     chomp($_);
-    next unless ($_ =~ /ENSG/);
-    my @line = split("\t", $_);
-    my $gid = $line[0];
-    $ignore_genes{$gid}=1;
+    if ($_ =~ /(ENSG\d+)/){
+      $ignore_genes{$1}=1;    
+    }
   }
   close(GENES);
 
