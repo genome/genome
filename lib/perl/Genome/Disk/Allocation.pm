@@ -132,6 +132,11 @@ sub _absolute_path {
 
 sub du {
     my $self = shift;
+
+    if ($self->is_archived) {
+        die $self->error_message('Cannot `du` an archived allocation');
+    }
+
     my $kb_used = 0;
     my $absolute_path = $self->absolute_path;
     if ( -d $absolute_path ) {
