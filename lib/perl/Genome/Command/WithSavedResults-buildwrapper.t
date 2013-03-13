@@ -3,6 +3,10 @@ use strict;
 use warnings;
 use above 'Genome';
 
+# This tests Genome::Command::WithSavedResults
+# and also Genome::Command::BuildStepWrapper, which only
+# wraps the former.
+
 package Genome::TestCommand;
 
 class Genome::TestCommand {
@@ -34,14 +38,16 @@ class Genome::TestCommand {
     #],
 };
 
+my $count = 0;
 sub _execute_v1 {
     my $self = shift;
-    $self->status_message("running $self with p1 " . $self->p1);
+    $count++;
+    $self->status_message("*** run $count: $self with p1 " . $self->p1);
     return 1;
 }
 
 package main;
-use Test::More tests => 10;
+use Test::More tests => 13;
 
 my $result_meta = Genome::TestCommand::Result->__meta__;
 ok($result_meta, "got result meta for new class");
@@ -52,20 +58,25 @@ ok($wrap_meta, "successfully generated a wrapper for generating software results
 my $build = Genome::Model::Build->get(135315483);
 ok($build, "got test build");
 
+# temp change data dir to test location
+my $dir1 = Genome::Sys->create_temp_directory();
+$build->data_directory($dir1);
+
 my $meta1 = Genome::TestCommand::BuildStepWrapper->__meta__;
 ok($meta1, "got BuildStepWrapper for command class");
 
-my $dir = Genome::Sys->create_temp_directory();
+my $dir2 = Genome::Sys->create_temp_directory();
 
 my $wrapper_result1 = Genome::TestCommand::BuildStepWrapper->execute(
     p1 => "P1", 
     i1 => "I1", 
-    output_dir => $dir,
+    output_dir => $dir2,
     wrapper_build => $build, 
     wrapper_build_label => "test_label", 
     result_version => 1,
 );
 ok($wrapper_result1, "ran wrapper as class method call to execute");
+is($count, 1, "the underlying command has run one time");
 
 my $sr1 = Genome::TestCommand::Result->get(p1 => "P1", i1 => "I1", result_version => 1);
 ok($sr1, "got result for wrapper");
@@ -77,9 +88,22 @@ is($u1[0]->label, "test_label", "the label is correct linking the build to the S
 is($u1[0]->user, $build, "user of the result on that link is the build");
 is($u1[0]->software_result, $sr1, "the SR on the link is the one we created");
 
-#!/usr/bin/env perl
-use strict;
-use warnings;
-use Genome;
+my $dir3 = Genome::Sys->create_temp_directory();
+$build->data_directory($dir3);
+
+my $dir4 = Genome::Sys->create_temp_directory();
+
+my $wrapper_result2 = Genome::TestCommand::BuildStepWrapper->execute(
+    p1 => "P1", 
+    i1 => "I1", 
+    output_dir => $dir4,
+    wrapper_build => $build, 
+    wrapper_build_label => "test_label", 
+    result_version => 1,
+);
+ok($wrapper_result2, "ran wrapper as class method call to execute");
+is($count, 1, "the underlying command has still run just one time");
+
 
 1;
+

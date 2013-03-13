@@ -158,7 +158,7 @@ sub execute_wrapper {
     #  $command->is_executed(1);
     #  $command->result($command);
     
-    $command->status_message("execution preceded by check for existing software result...");
+    $command->status_message("Execution preceded by check for existing software result.");
     my $result_class = $command->class . '::Result';
     my %props = _copyable_properties($command, $result_class);
     unless ($result) {
@@ -169,10 +169,10 @@ sub execute_wrapper {
         );
     }
     if ($command->is_executed) {
-        $command->status_message("new software result saved: " . $result->__display_name__);
+        $command->status_message("New software result saved: " . $result->__display_name__);
     }
     else {
-        $command->status_message("existing results found: " . $result->__display_name__);
+        $command->status_message("Existing results found: " . $result->__display_name__);
     }
 
     # copy properties from the result to the command outputs/changes
@@ -196,7 +196,7 @@ sub execute_wrapper {
     $command->result($result);
     if ($command->can('output_dir')) {
         $command->output_dir($result->output_dir);
-        $command->status_message("output dir: " . $result->output_dir);
+        $command->status_message("Output directory: " . $result->output_dir);
     }
 
     return $command if $was_called_as_class_method;

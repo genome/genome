@@ -167,7 +167,7 @@ sub _reallocate_disk_allocation {
     my $self = shift;
     my $allocation = $self->disk_allocations;
     unless ($allocation) {
-        $self->status_message("no allocations to resize/reallocate");
+        $self->status_message("No allocations to resize/reallocate.");
         return 1;
     }
     $self->status_message('Resizing the disk allocation...');
