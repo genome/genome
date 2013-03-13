@@ -16,8 +16,6 @@ class Genome::Model::MetagenomicShotgun::Build::AlignTo {
             is => 'Genome::InstrumentData',
             doc => 'The instrument data to work with.',
         },
-    ],
-    has_param => [
         sub_model_label => { 
             is => 'Text',
             valid_values => [ Genome::Model::MetagenomicShotgun->sub_model_labels ],

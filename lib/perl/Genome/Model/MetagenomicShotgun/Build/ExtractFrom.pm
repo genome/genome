@@ -12,8 +12,6 @@ class Genome::Model::MetagenomicShotgun::Build::ExtractFrom {
             is => 'Genome::Model::Build::MetagenomicShotgun',
             doc => 'The MetaShot build to work with.',
         },
-    ],
-    has_param => [
         sub_model_label => { 
             is => 'Text',
             valid_values => [ Genome::Model::MetagenomicShotgun->sub_model_labels ],
