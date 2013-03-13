@@ -1,10 +1,10 @@
-package Genome::Model::ClinSeq::Command::CreateClonalityPlotByVariantSource;
+package Genome::Model::ClinSeq::Command::CreateWgsClonalityPlotByVariantSource;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::ClinSeq::Command::CreateClonalityPlotByVariantSource {
+class Genome::Model::ClinSeq::Command::CreateWgsClonalityPlotByVariantSource {
     is => 'Command::V2',
     has_input => [
         build => { 
