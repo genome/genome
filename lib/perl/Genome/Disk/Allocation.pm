@@ -598,6 +598,10 @@ sub _move {
         $creation_params{'mount_path'} = $new_mount_path;
     }
 
+    if ($group_name) {
+        $creation_params{disk_group_name} = $group_name;
+    }
+
     # The shadow allocation is just a way of keeping track of our temporary
     # additional disk usage during the move.
     my $shadow_allocation = $class->create(%creation_params);
