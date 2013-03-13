@@ -23,17 +23,22 @@ class Genome::Disk::Command::Allocation::CreateForExistingData {
             doc => 'The ID used to retrieve the owner (in conjunction with owner_class_name), ' .
                    'e.g. bdericks@genome.wustl.edu for Genome::Sys::User or build_id for Genome::Model::Build.',
         },
-        allocation => {
-            is => 'Genome::Disk::Allocation',
-            is_transient => 1,
-            doc => 'Transient argument, not settable via command line. Useful for programmatic access to created allocation',
-        },
     ],
     has_optional => [
         volume_prefix => {
             is => 'Text',
             default_value => '/gscmnt',
             doc => 'Volume prefix to expect at start of target_path',
+        },
+        allocation => {
+            is => 'Genome::Disk::Allocation',
+            is_transient => 1,
+            doc => 'Transient argument, not settable via command line. Useful for programmatic access to created allocation',
+        },
+        temp_allocation_path => {
+            is => 'DirectoryPath',
+            is_transient => 1,
+            doc => 'Transient argument, not settable via command line. Stores temporary location that allocation is original set to',
         },
     ],
     doc => 'Creates an allocation for data that already exists on disk',
@@ -63,6 +68,9 @@ sub execute {
     my ($mount_path, $group_subdir, $allocation_path) = $self->_parse_path;
     my $volume = $self->_get_and_validate_volume($mount_path);
     my $group = $self->_get_and_validate_group($group_subdir, $volume->groups);
+    $self->_verify_allocation_path($allocation_path);
+
+    $self->status_message("Parsed and verified target path " . $self->target_path . ", creating allocation.");
 
     my %params = (
         disk_group_name => $group->disk_group_name,
@@ -72,12 +80,13 @@ sub execute {
         owner_id => $self->owner_id,
         mount_path => $mount_path,
     );
-
     my $allocation = Genome::Disk::Allocation->create(%params);
     unless ($allocation) {
         require Data::Dumper;
         die "Could not create allocation with these params:\n" . Data::Dumper::Dumper(\%params);
     }
+    my $temp_location = $allocation->absolute_path;
+    $self->temp_allocation_path($temp_location);
 
     $self->status_message("Created allocation " . $allocation->id . ", moving to final location");
 
@@ -86,7 +95,26 @@ sub execute {
         die "Somehow, absolute path of new allocation does not match expected value " . $self->target_path;
     }
 
+    unless (Genome::Sys->remove_directory_tree($temp_location)) {
+        $self->warning_message("Could not remove temporary path $temp_location");
+    }
+
     $self->allocation($allocation);
+    return 1;
+}
+
+sub _verify_allocation_path {
+    my ($self, $allocation_path) = @_;
+    # I don't know why this method is private, I don't think it should be
+    if (my $parent_allocation = Genome::Disk::Allocation->_get_parent_allocation($allocation_path)) {
+        die "Parent allocation (" . $parent_allocation->id . ") found for $allocation_path!";
+    }
+
+    # Ditto... don't think this should be private
+    if (Genome::Disk::Allocation->_get_child_allocations($allocation_path)) {
+        die "Child allocation(s) found for $allocation_path!";
+    }
+
     return 1;
 }
 

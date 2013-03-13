@@ -7,6 +7,7 @@ use Test::More;
 use above 'Genome';
 use Genome::Disk::Allocation;
 use File::Temp;
+use File::Path;
 use Filesys::Df;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -20,6 +21,7 @@ test_path_is_gscmnt_but_does_not_exist();
 test_get_and_validate_group();
 test_get_and_validate_volume();
 
+test_nonunique_allocation_path();
 test_successful_allocation_create();
 
 done_testing();
@@ -81,9 +83,10 @@ sub create_test_volume_with_group {
 }
 
 sub create_test_dir {
-    my ($dir_name, $group_name) = @_;
+    my ($dir_name, $group_name, $create_paths) = @_;
     die 'create_test_path method requires a directory name be provided!' unless $dir_name;
     $group_name ||= 'testing_group';
+    $create_paths = 1 unless defined $create_paths;
 
     my $group = create_test_group($group_name, 'test');
     ok($group, "created test group $group_name");
@@ -100,14 +103,18 @@ sub create_test_dir {
     ok(-e $group_dir, "created group directory at $group_dir");
 
     my $dir = join('/', $volume->mount_path, $group->subdirectory, $dir_name);
-    mkdir($dir);
-    ok(-e $dir, "created test allocation path at $dir");
 
-    my @files = qw/ a b c /;
-    for my $file (@files) {
-        my $file_path = join('/', $dir, $file);
-        system("touch $file_path");
-        ok(-e $file_path, "file created at $file_path");
+    my @files;
+    if ($create_paths) {
+        File::Path::mkpath($dir);
+        ok(-e $dir, "created test allocation path at $dir");
+
+        @files = qw/ a b c /;
+        for my $file (@files) {
+            my $file_path = join('/', $dir, $file);
+            system("touch $file_path");
+            ok(-e $file_path, "file created at $file_path");
+        }
     }
 
     return ($dir, $volume, $group, \@files);
@@ -236,6 +243,50 @@ sub test_get_and_validate_volume {
     return 1;
 }
 
+sub test_nonunique_allocation_path {
+    my $allocation_path = 'allocation_test/nonunique_path';
+    my ($dir, $volume, $group, $files) = create_test_dir($allocation_path, 'nonunique_allocation_test', 0);
+    ok($dir, "have test path at $dir");
+    ok($volume, "test volume created");
+    ok($group, "test group created");
+    push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+
+    my $allocation = Genome::Disk::Allocation->create(
+        mount_path => $volume->mount_path,
+        disk_group_name => $group->disk_group_name,
+        kilobytes_requested => 4,
+        owner_id => $ENV{USER} . '@genome.wustl.edu',
+        owner_class_name => 'Genome::Sys::User',
+        allocation_path => 'allocation_test',
+    );
+    ok($allocation, 'created test allocation');
+    my $id = $allocation->id;
+
+    my $cmd = create_test_command($dir, '/tmp');
+    ok($cmd, "created test command with target path $dir");
+
+    my $rv = eval { $cmd->_verify_allocation_path($allocation_path) };
+    my $error = $@;
+    ok(!$rv, "allocation path verification failed (parent allocation), as expected");
+    ok(defined $error, "got an error, as expected");
+    ok($error =~ /Parent allocation \($id\) found for $allocation_path/, "error message matches expected pattern");
+
+    $allocation->allocation_path("$allocation_path/test");
+    $rv = eval { $cmd->_verify_allocation_path($allocation_path) };
+    $error = $@;
+    ok(!$rv, "allocation path verification failed (child allocation), as expected");
+    ok(defined $error, "got an error, as expected");
+    ok($error =~ /Child allocation\(s\) found for $allocation_path/, "error message matches expected pattern");
+
+    $allocation->delete;
+    $rv = eval { $cmd->_verify_allocation_path($allocation_path) };
+    $error = $@;
+    is($rv, 1, "allocation path verification succeeded");
+    ok(!$error, "no error from allocation path verification");
+
+    return 1;
+}
+
 sub test_successful_allocation_create {
     my ($dir, $volume, $group, $files) = create_test_dir('successful_allocation', 'success_test');
     ok($dir, "have test path at $dir");
@@ -255,6 +306,9 @@ sub test_successful_allocation_create {
     is($allocation->absolute_path, $dir, 'allocation absolute path matches target path');
 
     ok(contents_match($allocation->absolute_path, [ map { $allocation->absolute_path . '/' . $_ } @$files]), 'contents of allocation directory match expected');
+
+    ok(defined $cmd->temp_allocation_path, 'temp allocation path set by command');
+    ok(!-e $cmd->temp_allocation_path, 'temp allocation path does not exist, as expected');
 
     return 1;
 }
