@@ -226,102 +226,195 @@ sub last_complete_build_for_sub_model {
     return $sub_model_label;
 }
 
-sub _execute_build {
+#< Work Flow >#
+sub map_workflow_inputs {
     my ($self, $build) = @_;
-
-    # Screen contaminants
-    my @original_instrument_data = $build->instrument_data;
-    my $screen_contamination = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'contamination_screen',
+    my @instrument_data = $build->instrument_data;
+    return (
         build => $build,
-        instrument_data => \@original_instrument_data,
+        instrument_data => \@instrument_data,
+        # contamination screen
+        align_to_contamination_screen => 'contamination_screen',
+        extract_from_contamination_screen => 'unaligned',
+        # meta nt
+        align_to_meta_nt => 'metagenomic_nucleotide',
+        extract_from_meta_nt => [qw/ aligned unaligned /],
+        # meta nr
+        align_to_meta_nr => 'metagenomic_protein',
+        extract_from_meta_nr => 'aligned',
+        # viral
+        align_to_viral => [qw/ viral_nucleotide viral_protein /],
     );
-    return if not $screen_contamination;
-    return if not $screen_contamination->execute;
-
-    # Extract unaligned from contamination screen
-    my $extract_unaligned_from_contamination_screen = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
-        sub_model_label => $screen_contamination->sub_model_label,
-        build => $build,
-        type => 'unaligned',
-    );
-    return if not $extract_unaligned_from_contamination_screen;
-    return if not $extract_unaligned_from_contamination_screen->execute;
-
-    # Align unaligned reads from contamination screen against meta nt
-    my $meta_nt = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'metagenomic_nucleotide',
-        build => $build,
-        instrument_data => [ $extract_unaligned_from_contamination_screen->instrument_data ],
-    );
-    return if not $meta_nt;
-    return if not $meta_nt->execute;
-
-    # Extract aligned from meta nt
-    my $extract_aligned_from_meta_nt = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
-        sub_model_label => $meta_nt->sub_model_label,
-        build => $build,
-        type => 'aligned',
-    );
-    return if not $extract_aligned_from_meta_nt;
-    return if not $extract_aligned_from_meta_nt->execute;
-
-    # Parallel these 2
-    # Extract unaligned from meta nt
-    my $extract_unaligned_from_meta_nt = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
-        sub_model_label => $meta_nt->sub_model_label,
-        build => $build,
-        type => 'unaligned',
-    );
-    return if not $extract_unaligned_from_meta_nt;
-    return if not $extract_unaligned_from_meta_nt->execute;
-
-    # Align unaligned reads from meta nt against meta nr
-    my $meta_nr = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'metagenomic_protein',
-        build => $build,
-        instrument_data => [ $extract_unaligned_from_meta_nt->instrument_data ],
-    );
-    return if not $meta_nr;
-    return if not $meta_nr->execute;
-
-    # Extract aligned from meta nr
-    my $extract_aligned_from_meta_nr = Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment->create(
-        sub_model_label => $meta_nr->sub_model_label,
-        build => $build,
-        type => 'aligned',
-    );
-    return if not $extract_aligned_from_meta_nr;
-    return if not $extract_aligned_from_meta_nr->execute;
-
-    # Parallel these 2
-    # Align aligned reads from meta nt and meta nr to viral nt
-    my $viral_nt = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'viral_nucleotide',
-        build => $build,
-        instrument_data => [ $extract_aligned_from_meta_nt->instrument_data, $extract_aligned_from_meta_nr->instrument_data ],
-    );
-    return if not $viral_nt;
-    return if not $viral_nt->execute;
-
-    # Align aligned reads from meta nt and meta nr to viral nr
-    my $viral_nr = Genome::Model::MetagenomicShotgun::Build::AlignTo->create(
-        sub_model_label => 'viral_protein',
-        build => $build,
-        instrument_data => [ $extract_aligned_from_meta_nt->instrument_data, $extract_aligned_from_meta_nr->instrument_data ],
-    );
-    return if not $viral_nr;
-    return if not $viral_nr->execute;
-
-    # Link alignments
-    my $link_alignments = Genome::Model::MetagenomicShotgun::Build::LinkAlignments->create(
-        build => $build,
-    );
-    return if not $link_alignments;
-    return if not $link_alignments->execute;
-
-    return 1;
 }
+
+sub _resolve_workflow_for_build {
+    my ($self, $build, $lsf_queue, $lsf_project) = @_;
+
+    # Align original instrument data to contamination screen reference
+    # Extract unaligned reads from contamination screen alignment
+    # Align unaligned reads from contamination screen alignment to meta nt reference
+    # Extract aligned & unaligned reads from meta nt alignment
+    # Align unaligned reads from meta nt alignment to meta nr reference
+    # Extract aligned reads from meta nr
+    # Align aligned reads from meta nt and meta nr alignments to viral nt and nr references
+    # Link Alignments
+    # TODO
+    # Reports
+
+    # Create work flow and set queue and project
+    my $workflow = Workflow::Model->create(
+        name => $build->workflow_name,
+        input_properties => [qw/ 
+            build instrument_data 
+            align_to_contamination_screen extract_from_contamination_screen 
+            align_to_meta_nt extract_from_meta_nt
+            align_to_meta_nr extract_from_meta_nr
+            align_to_viral
+        /],
+        output_properties => [qw/ build /],
+        log_dir => $build->log_directory,
+    );
+    $lsf_queue //= 'apipe';
+    $lsf_project //= 'build' . $build->id;
+    my $left_operation = $workflow->get_input_connector;
+
+    # Generic add operation anon sub
+    my $add_operation = sub {
+        my (%params) = @_;
+
+        my $operation_name = delete $params{operation_name};
+        Carp::confess( $self->error_message(
+                'Required param "operation_name" missing! Cannot add operation to work flow!'
+            ) ) if not $operation_name;
+        my $sub_model_type = delete $params{sub_model_type};
+        Carp::confess( $self->error_message(
+                'Missing param "sub_model_type" to add align to operation to work flow!'
+            ) ) if not $sub_model_type;
+        my $links_from_left_op = delete $params{links_from_left_op};
+        $links_from_left_op ||= {};
+        $links_from_left_op->{build} = 'build';
+        my $links_from_input_connector = delete $params{links_from_input_connector};
+        $links_from_input_connector ||= {};
+        Carp::confess( $self->error_message(
+                'Unknown params to add operation to work flow! '.Data::Dumper::Dumper(\%params)
+            ) ) if %params;
+
+        my $command_sub_name = join('', map { ucfirst } split(' ', $operation_name));
+        my $command_class_name = 'Genome::Model::MetagenomicShotgun::Build::'.$command_sub_name;
+        my $operation_type = Workflow::OperationType::Command->create(command_class_name => $command_class_name);
+        Carp::confess( $self->error_message("Failed to create work flow operation for $command_class_name") ) if not $operation_type;
+        
+        $operation_type->lsf_queue($lsf_queue);
+        $operation_type->lsf_project($lsf_project);
+
+        my $operation = $workflow->add_operation(
+            name => $operation_name.' '.join(' ', split('_', $sub_model_type)),
+            operation_type => $operation_type,
+        );
+
+        for my $left_property ( keys %$links_from_left_op ) {
+            $workflow->add_link(
+                left_operation => $left_operation,
+                left_property => $left_property,
+                right_operation => $operation,
+                right_property => $links_from_left_op->{$left_property},
+            );
+        }
+
+        my $input_connector = $workflow->get_input_connector;
+        for my $left_property ( keys %$links_from_input_connector ) {
+            $workflow->add_link(
+                left_operation => $input_connector,
+                left_property => $left_property,
+                right_operation => $operation,
+                right_property => $links_from_input_connector->{$left_property},
+            );
+        }
+
+        return $operation;
+    };
+
+    # Align to operation builder
+    my $add_align_to_operation = sub {
+        my ($sub_model_type) = @_;
+
+        Carp::confess( $self->error_message('Missing param "sub_model_type" to add align to operation to work flow!') ) if not $sub_model_type;
+
+        my $operation = $add_operation->(
+            operation_name => 'align to',
+            sub_model_type => $sub_model_type,
+            links_from_left_op => { instrument_data => 'instrument_data', },
+            links_from_input_connector => { 'align_to_'.$sub_model_type => 'sub_model_label', },
+        ); # confesses
+        $operation->parallel_by('sub_model_label') if $sub_model_type eq 'viral';
+
+        return $operation;
+    };
+
+    # Extract from alignment operation builder
+    my $add_extract_from_operation = sub {
+        my ($sub_model_type) = @_;
+
+        Carp::confess( $self->error_message('Missing param "sub_model_type" to add align to operation to work flow!') ) if not $sub_model_type;
+
+        my $operation = $add_operation->(
+            operation_name => 'extract from',
+            sub_model_type => $sub_model_type,
+            links_from_left_op => {
+                'sub_model_label' => 'sub_model_label',
+            },
+            links_from_input_connector => {
+                'extract_from_'.$sub_model_type => 'type',
+            },
+        ); # confesses
+        $operation->parallel_by('type') if $sub_model_type eq 'meta_nt';
+
+        return $operation;
+    };
+
+    # Align original instrument data to contamination screen reference
+    my $align_to_contamination_screen_reference_op = $add_align_to_operation->('contamination_screen'); #confess
+    $left_operation = $align_to_contamination_screen_reference_op;
+
+    # Extract unaligned reads from contamination screen alignment
+    my $extract_unaligned_from_contamination_screen_op = $add_extract_from_operation->('contamination_screen'); #confess
+    $left_operation = $extract_unaligned_from_contamination_screen_op;
+
+    # Align unaligned reads from contamination screen alignment to meta nt reference
+    my $align_to_meta_nt_reference_op = $add_align_to_operation->('meta_nt'); #confess
+    $left_operation = $align_to_meta_nt_reference_op;
+
+    # Extract aligned & unaligned reads from meta nt alignment
+    my $extract_aligned_and_unaligned_from_meta_nr_op = $add_extract_from_operation->('meta_nt');
+    $left_operation = $extract_aligned_and_unaligned_from_meta_nr_op;
+
+    # Align unaligned reads from meta nt alignment to meta nr reference
+    my $align_to_meta_nr_op = $add_align_to_operation->('meta_nr');
+    $left_operation = $align_to_meta_nr_op;
+
+    # Extract aligned reads from meta nr
+    my $extract_aligned_from_contamination_screen_op = $add_extract_from_operation->('meta_nr'); #confess
+    $left_operation = $extract_aligned_from_contamination_screen_op;
+
+    # Align aligned reads from meta nt and meta nr alignments to viral nt and nr references
+    my $align_to_viral_op = $add_align_to_operation->('viral');
+    $left_operation = $align_to_viral_op;
+    
+    # Link Alignments
+    my $link_alignments_op = $add_operation->(operation_name => 'link alignments', sub_model_type => 'all');
+    $left_operation = $link_alignments_op;
+
+    # Output link
+    $workflow->add_link(
+        left_operation => $left_operation,
+        left_property => 'build',
+        right_operation => $workflow->get_output_connector,
+        right_property => 'build',
+    );
+
+    return $workflow;
+}
+#<>#
 
 1;
 
