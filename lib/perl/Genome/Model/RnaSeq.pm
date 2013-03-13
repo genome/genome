@@ -153,7 +153,7 @@ sub compatible_instrument_data {
 }
 
 sub _parse_strategy {
-    my ($self,$strategy,$build) = @_;
+    my ($self,$strategy,$build,$label) = @_;
 
     # TODO: replace this with a real parser, and pull up into the general model class.
     # This will not handle boolean logic or many odd characters
@@ -215,6 +215,8 @@ sub map_workflow_inputs {
                 $strategy_parser_method = '_parse_strategy';
             }
             my ($class,$params) = $self->$strategy_parser_method($strategy, $build);
+            $params->{wrapper_build} = $build;
+            $params->{wrapper_build_label} = $strategy_name . '_result';
             for my $key (keys %$params) {
                 my $input_name = $strategy_name . '_' . $key;
                 my $value = $params->{$key};
@@ -222,6 +224,8 @@ sub map_workflow_inputs {
             }
         }
     }
+
+    my %inputs = @inputs;
 
     return @inputs;
 }
@@ -322,14 +326,14 @@ sub _resolve_workflow_for_build {
         $digital_expression_detection_operation = $workflow->add_operation(
             name => 'RnaSeq Digital Expression Detection',
             operation_type => Workflow::OperationType::Command->create(
-                command_class_name => $class,
+                command_class_name => $class . '::BuildStepWrapper',
             )
         );
 
         $digital_expression_detection_operation->operation_type->lsf_queue($lsf_queue);
         $digital_expression_detection_operation->operation_type->lsf_project($lsf_project);
 
-        for my $key (keys %$params) {
+        for my $key (keys %$params, qw/wrapper_build wrapper_build_label/) {
             my $link = $workflow->add_link(
                 left_operation => $input_connector,
                 left_property => 'digital_expression_' . $key,
@@ -338,7 +342,7 @@ sub _resolve_workflow_for_build {
             );
         }
         
-        my $link = $workflow->add_link(
+        $link = $workflow->add_link(
             left_operation => $alignment_operation,
             left_property => 'individual_alignment_results',
             right_operation => $digital_expression_detection_operation,
