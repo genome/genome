@@ -517,6 +517,9 @@ sub _reallocate {
 
     my $kb_used = $self->du();
 
+    # Cache kilobytes used
+    $self->kilobytes_used($kb_used);
+
     my $actual_kb_requested = List::Util::max($kb_used, $kilobytes_requested);
     if ($grow_only && ($actual_kb_requested <= $old_kb_requested)) {
         $self->status_message(
