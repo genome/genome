@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-class Genome::Model::MetagenomicShotgun::AlignTo {
+class Genome::Model::MetagenomicShotgun::Build::AlignTo {
     is => 'Command::V2',
     has_input => [
         build => {
