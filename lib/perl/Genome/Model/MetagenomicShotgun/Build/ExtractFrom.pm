@@ -1,11 +1,11 @@
-package Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment;
+package Genome::Model::MetagenomicShotgun::Build::ExtractFrom;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::MetagenomicShotgun::Build::ExtractFromAlignment {
+class Genome::Model::MetagenomicShotgun::Build::ExtractFrom {
     is => 'Command::V2',
     has_input => [
         build => {
