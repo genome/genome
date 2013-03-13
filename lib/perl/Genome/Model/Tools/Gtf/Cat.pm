@@ -8,7 +8,9 @@ use Genome;
 class Genome::Model::Tools::Gtf::Cat {
     is => ['Command',],
     has_input => [
-        input_files => { },
+        input_files => { 
+            is_many => 1,
+        },
         output_file => {
             is_output => 1,
         },
@@ -21,12 +23,7 @@ class Genome::Model::Tools::Gtf::Cat {
 
 sub execute {
     my $self = shift;
-    my @input_files;
-    if (ref($self->input_files) eq 'ARRAY') {
-        @input_files = @{$self->input_files};
-    } else {
-        @input_files = split(',',$self->input_files);
-    }
+    my @input_files = $self->input_files;
     my @files_with_size;
     for my $file (@input_files) {
         if (-e $file) {

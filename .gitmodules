@@ -253,3 +253,6 @@
 [submodule "gms-config"]
 	path = gms-config
 	url = ssh://git/srv/git/gms-config.git
+[submodule "vendor/gatk-protected"]
+	path = vendor/gatk-protected
+	url = git@github.com:genome-vendor/gatk-protected.git
