@@ -226,14 +226,15 @@ sub _resolve_workflow_for_build {
 
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
-        input_properties => [qw/ build instrument_data /],
+        input_properties => [qw/ build input_build instrument_data /],
         output_properties => [qw/ build /],
         log_dir => $build->log_directory,
     );
 
+    my $previous_op = $workflow->get_input_connector;
     my $add_operation = sub{
         my ($name) = @_;
-        my $command_class_name = 'Genome::Model::Build::MetagenomicComposition16s::' . $name;
+        my $command_class_name = 'Genome::Model::Build::MetagenomicComposition16s::'.join('', map { ucfirst } split(' ', $name));
         my $operation_type = Workflow::OperationType::Command->create(command_class_name => $command_class_name);
         if ( not $operation_type ) {
             $self->error_message("Failed to create work flow operation for $name");
@@ -241,21 +242,24 @@ sub _resolve_workflow_for_build {
         }
         $operation_type->lsf_queue($lsf_queue);
         $operation_type->lsf_project($lsf_project);
-        return $workflow->add_operation(
+
+        my $operation = $workflow->add_operation(
             name => $name,
             operation_type => $operation_type,
         );
+
+        $workflow->add_link(
+            left_operation => $previous_op,
+            left_property => 'build',
+            right_operation => $operation,
+            right_property => 'input_build',
+        );
+
+        return $operation;
     };
 
-    my $previous_op;
     if ( $self->sequencing_platform ne 'sanger' ) {
-        my $process_instdata_op = $add_operation->('ProcessInstrumentData');
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'build',
-            right_operation => $process_instdata_op,
-            right_property => 'build',
-        );
+        my $process_instdata_op = $add_operation->('process instrument data');
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => 'instrument_data',
@@ -263,63 +267,31 @@ sub _resolve_workflow_for_build {
             right_property => 'instrument_data',
         );
         $process_instdata_op->parallel_by('instrument_data');
+        $previous_op = $process_instdata_op;
 
-        my $merge_instdata_op = $add_operation->('MergeProcessedInstrumentData');
-        $workflow->add_link(
-            left_operation => $process_instdata_op,
-            left_property => 'build',
-            right_operation => $merge_instdata_op,
-            right_property => 'build',
-        );
+        my $merge_instdata_op = $add_operation->('merge processed instrument data');
         $previous_op = $merge_instdata_op;
     } else {
-        my $process_sanger_instdata_op = $add_operation->('ProcessSangerInstrumentData');
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'build',
-            right_operation => $process_sanger_instdata_op,
-            right_property => 'build',
-        );
+        my $process_sanger_instdata_op = $add_operation->('process sanger instrument data');
         $previous_op = $process_sanger_instdata_op;
     }
 
-    my $classify_op = $add_operation->('Classify');
-    $workflow->add_link(
-        left_operation => $previous_op,
-        left_property => 'build',
-        right_operation => $classify_op,
-        right_property => 'build',
-    );
+    my $classify_op = $add_operation->('classify');
+    $previous_op = $classify_op;
 
-    my $orient_op = $add_operation->('Orient');
-    $workflow->add_link(
-        left_operation => $classify_op,
-        left_property => 'build',
-        right_operation => $orient_op,
-        right_property => 'build',
-    );
+    my $orient_op = $add_operation->('orient');
     $previous_op = $orient_op;
 
     if ( $build->processing_profile->chimera_detector ) {
-        my $detect_chimeras_op = $add_operation->('DetectAndRemoveChimeras');
-        $workflow->add_link(
-            left_operation => $orient_op,
-            left_property => 'build',
-            right_operation => $detect_chimeras_op,
-            right_property => 'build',
-        );
+        my $detect_chimeras_op = $add_operation->('detect and remove chimeras');
         $previous_op = $detect_chimeras_op;
     }
 
-    my $report_op = $add_operation->('Reports');
+    my $report_op = $add_operation->('reports');
+    $previous_op = $report_op;
+
     $workflow->add_link(
         left_operation => $previous_op,
-        left_property => 'build',
-        right_operation => $report_op,
-        right_property => 'build',
-    );
-    $workflow->add_link(
-        left_operation => $report_op,
         left_property => 'build',
         right_operation => $workflow->get_output_connector,
         right_property => 'build',

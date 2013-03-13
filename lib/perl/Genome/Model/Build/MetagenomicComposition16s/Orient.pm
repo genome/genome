@@ -8,9 +8,17 @@ use Genome;
 class Genome::Model::Build::MetagenomicComposition16s::Orient {
     is => 'Command::V2',
     has_input => [
+        input_build => {
+            is => 'Genome::Model::Build::MetagenomicComposition16s',
+            is_many => 1,
+        },
+    ],
+    has_output => [
         build => {
             is => 'Genome::Model::Build::MetagenomicComposition16s',
-            is_output => 1,
+            calculate_from => ['input_build'],
+            calculate => sub { return $_[0]; }
+
         },
     ],
 };

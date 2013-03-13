@@ -8,9 +8,17 @@ use Genome;
 class Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimeras {
     is => 'Command::V2',
     has_input => [
+        input_build => {
+            is => 'Genome::Model::Build::MetagenomicComposition16s',
+            is_many => 1,
+        },
+    ],
+    has_output => [
         build => {
             is => 'Genome::Model::Build::MetagenomicComposition16s',
-            is_output => 1,
+            calculate_from => ['input_build'],
+            calculate => sub { return $_[0]; }
+
         },
     ],
 };
@@ -18,7 +26,7 @@ class Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimeras {
 sub execute {
     my $self = shift;
 
-    unless ( $self->build->detect_and_remove_chimeras ) {
+    unless ( $self->_build->detect_and_remove_chimeras ) {
         $self->error_message("Failed to detect and remove chimeras for ".$self->build->description);
         return;
     }
