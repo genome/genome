@@ -110,9 +110,7 @@ sub __extend_namespace__ {
 
     return unless $command_class->isa("Command");
 
-    unless ($command_class->isa("Command::V2")) {
-        die "Cannot generate extensions for a Command::V1!: $command_class";
-    }
+    return unless $command_class->isa("Command::V2");
 
     my $spec = $NAMESPACE_EXTENSIONS{$final_ext};
     return unless $spec;
