@@ -26,7 +26,7 @@ class Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimeras {
 sub execute {
     my $self = shift;
 
-    unless ( $self->_build->detect_and_remove_chimeras ) {
+    unless ( $self->build->detect_and_remove_chimeras ) {
         $self->error_message("Failed to detect and remove chimeras for ".$self->build->description);
         return;
     }
