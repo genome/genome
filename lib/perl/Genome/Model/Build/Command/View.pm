@@ -380,11 +380,13 @@ sub _resolve_child_times {
     }
 
     my $end_datetime;
+    my $elapsed_time_color;
     if ($raw_end_time) {
         $end_datetime = $datetime_parser->parse_datetime(
             $self->_clean_up_timestamp($raw_end_time));
     } elsif ("running" eq $self->_strip_key($status)) {
         $end_datetime = $self->_resolve_running_child_end_time();
+        $elapsed_time_color = $self->_status_colors('running');
     } else {
         return ('', '');
     }
@@ -392,7 +394,7 @@ sub _resolve_child_times {
     if (defined $end_datetime) {
         my $elapsed_time = $self->_resolve_duration(
             $start_datetime, $end_datetime);
-        return $start_time, $elapsed_time;
+        return $start_time, $self->_color($elapsed_time, $elapsed_time_color);
     }
     return $start_time, '';
 }
