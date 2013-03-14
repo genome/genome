@@ -101,7 +101,7 @@ sub __extend_namespace__ {
     if ($meta) {
         return $meta;
     }
-   
+
     my $new_class = $self . '::' . $ext;
     my ($command_class,$final_ext) = ($new_class =~ /^(.*)::(.*)$/);
 
@@ -118,24 +118,24 @@ sub __extend_namespace__ {
     my $base_class = $spec->{base_class};
     my $doc = $spec->{doc};
     $doc =~ s/CLASS/$new_class/;
-    
+
     my %has = $self->_wrapper_has($command_class,$base_class);
 
     class {$new_class} {
         is => $base_class,
         has => [ %has ],
-        doc => $doc, 
+        doc => $doc,
     };
 }
 
 
-# TODO: switch to calling the static _wrapper_has method on Command::V2 
+# TODO: switch to calling the static _wrapper_has method on Command::V2
 sub _wrapper_has {
     my ($self, $command_class, $base) = @_;
 
     my $command_meta = $command_class->__meta__;
     my @properties = $command_meta->properties();
-    
+
     my %has;
     for my $property (@properties) {
         my %desc;
