@@ -191,7 +191,7 @@ my $fifth_define_command = Genome::Model::Command::Define::ImportedReferenceSequ
     on_warning => 'exit',
     job_dispatch => 'inline', #can't spawn off LSF jobs with UR_DBI_NO_COMMIT enabled
     server_dispatch => 'inline',
-    model_name => 'apipe-test-01-somatic',
+    model_name => 'apipe-test-somatic-variation',
     sequence_uri => 'http://foo.bar.com',
 );
 ok($fifth_define_command, 'created define command');

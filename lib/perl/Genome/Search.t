@@ -61,10 +61,6 @@ sub original_tests {
     my $iub_class = Genome::Search->is_indexable('Genome::Info::IUB');
     ok(!$iub_class, 'returned no search class for IUB info module');
 
-    #Class not being indexed though a class up the directory structure is
-    my $build_class = Genome::Search->is_indexable(Genome::Model::Somatic::Report::Variant->create( build_id => 97848505)); #Build ID mentioned in ReferenceAlignment.t
-    ok(! $build_class, 'returned no search class for a somatic model variant report');
-
     #Not a blessed reference
     my $hash_class = Genome::Search->is_indexable({ hashkey => 'hashvalue'});
     ok(!$hash_class, 'returned no search class for an unblessed hash');

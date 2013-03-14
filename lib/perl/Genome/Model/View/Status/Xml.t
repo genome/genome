@@ -10,7 +10,7 @@ use Test::More tests => 6;
 use_ok('Genome::Model::View::Status::Xml') or die "test cannot continue...";
 
 #2853834494 is apipe-test-01-somatic
-my $subject = Genome::Model->get(2853834494);
+my $subject = Genome::Model->get(2889144778);
 ok($subject, "found expected model subject") or die "test cannot continue...";
 
 my $view_obj = $subject->create_view(perspective => 'status', toolkit => 'xml'); 
