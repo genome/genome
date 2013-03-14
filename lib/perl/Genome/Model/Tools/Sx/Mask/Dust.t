@@ -17,12 +17,20 @@ use File::Temp;
 my $datadir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/MaskDust';
  
 my $temp_dir = Genome::Sys->create_temp_directory;
+my $temp_input_dir = Genome::Sys->create_temp_directory;
+
+my $temp_input1 = "$temp_input_dir/input.fastq";
+my $temp_input2 = "$temp_input_dir/input.qual";
+my $temp_input3 = "$temp_input_dir/input.fasta";
+Genome::Sys->create_symlink("$datadir/input.fastq", $temp_input1); 
+Genome::Sys->create_symlink("$datadir/input.fasta", $temp_input3); 
+Genome::Sys->create_symlink("$datadir/input.qual", $temp_input2);
 
 # Convert fastq to fasta to run dust
 my $expected_output = "$datadir/dusted.fastq";
 my $output1 = "$temp_dir/dusted_1.fastq";
 my $cmd = Genome::Model::Tools::Sx::Mask::Dust->create(
-    input => [ "$datadir/input.fastq" ],
+    input => [ $temp_input1 ],
     output => [ $output1 ],
 );
 ok($cmd, "create");
@@ -32,7 +40,7 @@ is(Genome::Sys->md5sum($output1), Genome::Sys->md5sum($expected_output), 'dust o
 # Test using fasta/qual directly
 my $output2 = "$temp_dir/dusted_2.fastq";
 my $cmd2 = Genome::Model::Tools::Sx::Mask::Dust->create(
-    input => [ "$datadir/input.fasta:qual_file=$datadir/input.qual" ],
+    input => [ "$temp_input3:qual_file=$temp_input2" ],
     output => [ $output2 ],
 );
 ok($cmd2, "create");
