@@ -216,14 +216,14 @@ sub sub_model_for_label {
 sub last_complete_build_for_sub_model {
     my ($self, $sub_model_label) = @_;
 
-    my $sub_model = $self->sub_model_label($sub_model_label); # confess
+    my $sub_model = $self->sub_model_for_label($sub_model_label); # confess
     my $sub_build = $sub_model->last_complete_build;
     if ( not $sub_build ) {
         $self->error_message("Failed to get sub build for sub model ($sub_model_label) for meta shot model ".$self->__display_name__);
         return;
     }
 
-    return $sub_model_label;
+    return $sub_build;
 }
 
 #< Work Flow >#
@@ -231,7 +231,7 @@ sub map_workflow_inputs {
     my ($self, $build) = @_;
     my @instrument_data = $build->instrument_data;
     return (
-        build => $build,
+        input_build => $build,
         instrument_data => \@instrument_data,
         # contamination screen
         align_to_contamination_screen => 'contamination_screen',
@@ -292,7 +292,7 @@ sub _resolve_workflow_for_build {
             ) ) if not $sub_model_type;
         my $links_from_left_op = delete $params{links_from_left_op};
         $links_from_left_op ||= {};
-        $links_from_left_op->{build} = 'build';
+        $links_from_left_op->{build} = 'input_build';
         my $links_from_input_connector = delete $params{links_from_input_connector};
         $links_from_input_connector ||= {};
         Carp::confess( $self->error_message(

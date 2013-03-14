@@ -8,8 +8,9 @@ use Genome;
 class Genome::Model::MetagenomicShotgun::Build::ExtractFrom {
     is => 'Command::V2',
     has_input => [
-        build => {
+        input_build => {
             is => 'Genome::Model::Build::MetagenomicShotgun',
+            is_many => 1,
             doc => 'The MetaShot build to work with.',
         },
         sub_model_label => { 
@@ -23,6 +24,11 @@ class Genome::Model::MetagenomicShotgun::Build::ExtractFrom {
         },
     ],
     has_output => [
+        build => {
+            is => 'Genome::Model::Build::MetagenomicShotgun',
+            calculate_from => ['input_build'],
+            calculate => sub{ return $_[0]; },
+        },
         instrument_data => {
             is => 'Genome::InstrumentData',
             is_many => 1,
@@ -45,7 +51,7 @@ sub execute {
     }
     $self->status_message("Extracting $extraction_type reads from ".$sub_build->__display_name__);
     my @assignments = $sub_build->instrument_data_inputs;
-    my @extracted_instrument_data;
+    my %assignments_and_extracted_instrument_data;
     for my $assignment (@assignments) {
         my @alignment_results = $sub_build->alignment_results_for_instrument_data($assignment->value);
         if (@alignment_results > 1) {
@@ -57,15 +63,19 @@ sub execute {
         $self->status_message("processing instrument data assignment ".$assignment->__display_name__." for unaligned reads import");
 
         my $alignment_result = $alignment_results[0];
-        my @extracted_instrument_data_for_alignment_result = $self->_extract_data_from_alignment_result($alignment_result, $extraction_type,$self->filter_duplicates);
+        my @extracted_instrument_data_for_alignment_result = $self->_extract_data_from_alignment_result(
+            $alignment_result, $extraction_type, $self->build->model->filter_duplicates,
+        );
 
-        push @extracted_instrument_data, @extracted_instrument_data_for_alignment_result;
+        $assignments_and_extracted_instrument_data{ $assignment->id } = \@extracted_instrument_data_for_alignment_result;
+        #push @extracted_instrument_data, @extracted_instrument_data_for_alignment_result;
     }
 
-    unless (@extracted_instrument_data == @assignments) {
+    unless (keys(%assignments_and_extracted_instrument_data) == @assignments) {
+        #unless (@extracted_instrument_data == @assignments) {
         die $self->error_message("The count of extracted instrument data sets does not match screened instrument data assignments.");
     }
-    $self->instrument_data(@extracted_instrument_data);
+    $self->instrument_data([map { @$_ } values %assignments_and_extracted_instrument_data]);
 
     return 1;
 }

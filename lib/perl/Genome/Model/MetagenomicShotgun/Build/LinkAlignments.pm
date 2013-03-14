@@ -8,9 +8,17 @@ use Genome;
 class Genome::Model::MetagenomicShotgun::Build::LinkAlignments {
     is => 'Command::V2',
     has_input => [
+        input_build => {
+            is => 'Genome::Model::Build::MetagenomicShotgun',
+            is_many => 1,
+            doc => 'The MetaShot build to work with.',
+        },
+    ],
+    has_output => [
         build => {
             is => 'Genome::Model::Build::MetagenomicShotgun',
-            doc => 'The MetaShot build to work with.',
+            calculate_from => ['input_build'],
+            calculate => sub{ return $_[0]; },
         },
     ],
 };

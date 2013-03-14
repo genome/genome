@@ -8,12 +8,14 @@ use Genome;
 class Genome::Model::MetagenomicShotgun::Build::AlignTo {
     is => 'Command::V2',
     has_input => [
-        build => {
+        input_build => {
             is => 'Genome::Model::Build::MetagenomicShotgun',
+            is_many => 1,
             doc => 'The meta shot build to work with.',
         },
         instrument_data => {
             is => 'Genome::InstrumentData',
+            is_many => 1,
             doc => 'The instrument data to work with.',
         },
         sub_model_label => { 
@@ -21,6 +23,13 @@ class Genome::Model::MetagenomicShotgun::Build::AlignTo {
             valid_values => [ Genome::Model::MetagenomicShotgun->sub_model_labels ],
         },
     ],
+    has_output => [
+        build => {
+            is => 'Genome::Model::Build::MetagenomicShotgun',
+            calculate_from => ['input_build'],
+            calculate => sub{ return $_[0]; },
+        },
+    ]
 };
 
 sub execute {
