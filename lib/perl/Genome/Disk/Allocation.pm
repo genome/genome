@@ -130,6 +130,25 @@ sub _absolute_path {
     return $mount_path .'/'. $group_subdirectory .'/'. $allocation_path;
 }
 
+sub du {
+    my $self = shift;
+
+    if ($self->is_archived) {
+        die $self->error_message('Cannot `du` an archived allocation');
+    }
+
+    my $kb_used = 0;
+    my $absolute_path = $self->absolute_path;
+    if ( -d $absolute_path ) {
+        # allow_errors will allow disk_usage_for_path to return a number even if
+        # du emits errors (for instance, no read permissions for a subfolder)
+        $kb_used = Genome::Sys->disk_usage_for_path(
+            $absolute_path, allow_errors => 1) || 0;
+    }
+
+    return $kb_used;
+}
+
 sub allocate { return shift->create(@_); }
 sub create {
     my ($class, %params) = @_;
@@ -500,13 +519,11 @@ sub _reallocate {
     my $mode = $class->_retrieve_mode();
     my $self = $class->$mode($id);
     my $old_kb_requested = $self->kilobytes_requested;
-    # allow_errors will allow disk_usage_for_path to return a number even if du
-    # emits errors (for instance, no read permissions for a subfolder)
-    my $absolute_path = $self->absolute_path;
-    my $kb_used = 0;
-    if ( -d $absolute_path ) {
-        $kb_used = Genome::Sys->disk_usage_for_path($absolute_path, allow_errors => 1) || 0;
-    }
+
+    my $kb_used = $self->du();
+
+    # Cache kilobytes used
+    $self->kilobytes_used($kb_used);
 
     my $actual_kb_requested = List::Util::max($kb_used, $kilobytes_requested);
     if ($grow_only && ($actual_kb_requested <= $old_kb_requested)) {
