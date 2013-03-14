@@ -17,19 +17,26 @@ class Genome::Model::Tools::Htseq::Count {
             doc => 'alignment results, typically from an RNA aligner',
         },
         output_dir => { 
+            # Required by all ::WithSavedResults
+            # TODO: ensure if someone sets this we actually put a symlink there
+            # and still let disk allocation decide where the data really goes
             is => 'FilesystemPath',
             is_optional => 1,
-            doc => 'the results directory will be symlinked here',
+            doc => 'the results directory is typically set automatically',
         },
     ],
     has_param => [
         app_version => {
+            # Required by all ::WithSavedResults
             is => 'SoftwareVersion',
+            default_value => '0.5.4p1',
             valid_values => [ Genome::Sys->sw_versions('htseq','htseq-count') ],
             doc => 'the version of htseq-count to use',
         },
         result_version => {
+            # Required by all ::WithSavedResults
             is => 'Integer',
+            valid_values => [1],
             default_value => '1',
             doc => 'the version of results, which may iterate as this logic iterates'
         },
@@ -51,6 +58,7 @@ class Genome::Model::Tools::Htseq::Count {
         },
         blacklist_alignments_flags => {
             is => 'Text',
+            is_optional => 1,
             default_value => '0x0104',
             doc => 'exclude alignments which match the specified flags (-F): 0x0104 excludes non-primary alignments and unaligned reads',
         },
@@ -62,12 +70,12 @@ class Genome::Model::Tools::Htseq::Count {
         #sort_strategy => { 
         #    is => 'Text',
         #    is_optional => 1,
-        #    doc => 'samtools $VERSION, etc,'
+        #    doc => 'samtools $VERSION [-p1 -p2]'
         #},
         #bam_view_strategy => { 
         #    is => 'Text',
         #    is_optional => 1,
-        #    doc => 'samtools $VERSION, etc,'
+        #    doc => 'samtools $VERSION [-p1 -p2]'
         #},
     ],
     has_optional_output => [
@@ -87,28 +95,31 @@ class Genome::Model::Tools::Htseq::Count {
 
 sub _execute_v1 {
     my $self = shift;
-    $self->status_message("tool version " . $self->app_version . ', result version ' . $self->result_version);
+    $self->status_message("Using HTSeq version " . $self->app_version . ', result version ' . $self->result_version . '.');
 
     my @alignment_result = $self->alignment_results;
     if (@alignment_result > 1) {
-        die "support for multiple alignment result inputs in the same excution is not implemented yet!";
+        # This should never happen with the current logic, since it will
+        # dividue executions up by alignment result, but we may later support
+        # batching.
+        die "Support for multiple alignment result inputs in the same excution is not implemented yet!";
     }
     my $alignment_result = $alignment_result[0];
-    $self->status_message("using alignment result " . $alignment_result->__display_name__);
+    $self->status_message("Using alignment result: " . $alignment_result->__display_name__);
 
     my $instrument_data = $alignment_result->instrument_data;
-    unless ($instrument_data->sample->extraction_type =~ /rna|cdna/i) {
+    unless ($instrument_data->sample->is_rna) {
         die $self->error_message(
-            "this step can only run on alignments of RNA, but sample " 
+            "This step can only run on alignments of RNA (cDNA), but sample " 
             . $instrument_data->sample->__display_name__ 
-            . " is " . $instrument_data->sample->extraction_type
+            . " is " . $instrument_data->sample->extraction_type . '!'
         );
     }
-    $self->status_message("sample extraction type: " . $instrument_data->sample->extraction_type);
+    $self->status_message("Sample extraction type: " . $instrument_data->sample->extraction_type);
 
     my $transcript_strand = $instrument_data->transcript_strand;
     unless ($transcript_strand) {
-        die $self->error_message("transcript strand is not set for instrument data " . $instrument_data->__display_name__); 
+        die $self->error_message("Rranscript strand is not set for instrument data " . $instrument_data->__display_name__ . "!"); 
     }
 
     my $htseq_stranded_param;
@@ -122,25 +133,25 @@ sub _execute_v1 {
         $htseq_stranded_param = 'reverse';
     }
     else {
-        die "unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread";
+        die $self->error_message("Unknown transcript_strand $transcript_strand!  expected unstranded, firstread or secondread.");
     }
-    $self->status_message("strandedness: $transcript_strand (htseq-count strandedness: $htseq_stranded_param");
+    $self->status_message("Strandedness: $transcript_strand (htseq-count stranded: $htseq_stranded_param)");
     
     my $annotation_build = $alignment_result->annotation_build;
-    $self->status_message("annotation build: " . $annotation_build->__display_name__);
+    $self->status_message("Annotation build: " . $annotation_build->__display_name__);
 
     my $gff_file = $annotation_build->rna_features_gff_path;
-    $self->status_message("using annotation features from: " . $gff_file);
+    $self->status_message("Using annotation features from: " . $gff_file);
    
     my $htseq_count_path = Genome::Sys->sw_path("htseq", $self->app_version, "htseq-count");
-    $self->status_message("htseq-count version: " . $self->app_version . " running from $htseq_count_path");
+    $self->status_message("Executable htseq-count " . $self->app_version . " running from $htseq_count_path");
     
     my $output_dir = $self->output_dir;
-    $self->status_message("output dir: $output_dir");
+    $self->status_message("Output destination directory: $output_dir");
 
     # The samtools version is not part of the params because it is not yet required for it to vary.
     # If it does need to vary in the future a param should be addeed and backfilled
-    # to represent samtools 0.18.1 (current at the time of this writing).  Because
+    # to represent samtools 0.1.18 (current at the time of this writing).  Because
     # we only use this do dump the bam contents and to sort it this may not be necessary
     # to ever upgrade, and is unlikely to produce different results if it is upgraded.
     my $samtools_version = '0.1.18';
@@ -160,7 +171,7 @@ sub _execute_v1 {
     }
     else {
         # a completed alignment result will need to have a sorted bam created
-        $self->status_message("no temp_scratch_directory found: name sort the BAM in temp space");
+        $self->status_message("No temp_scratch_directory found: name sort the BAM in temp space.");
         my $unsorted_bam = $alignment_result->output_dir . '/all_sequences.bam';
         my $sorted_bam_noprefix = "$tmp/all_sequences.namesorted";
         $sorted_bam = $sorted_bam_noprefix . '.bam';
@@ -213,7 +224,7 @@ sub _execute_v1 {
     }
 
     for my $type (qw/transcript gene/) {
-        $self->status_message("produce per-$type results...");
+        $self->status_message("Produce per-$type results...");
         
         # from Malachi's notes in JIRA issue TD-490
         # samtools view -h chr22_tumor_nonstranded_sorted.bam | htseq-count --mode intersection-strict --stranded no --minaqual 1 --type exon --idattr transcript_id - chr22.gff > transcript_tumor_read_counts_table.tsv 
@@ -248,16 +259,98 @@ sub _execute_v1 {
     return 1;
 }
 
+## the following three methods could be implemented, but the defaults are sufficient:
+## the values below are examples, not the defaults
+
+# sub resolve_resource_requirements { "select[ncpus>=1,mem=8000] -n 1 rusage[mem=5000]" }
+
+# sub resolve_allocation_subdirectory { 'my/sub/dir' }
+
+# sub resolve_allocation_disk_group_name { 'info_genome_models' }
+
+
+sub help_synopsis {
+    return <<EOS
+gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%' and test_name is null"
+
+gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%'" --app-version 0.5.4p1
+EOS
+}
+
+sub help_detail {
+    return <<EOS
+This tool runs "htseq-count" from the HTSeq package, developed by Simon Anders at EMBL Heidelberg (Genome Biology Unit).
+http://www-huber.embl.de/users/anders/HTSeq/doc/overview.html
+EOS
+}
+
+sub _additional_help_sections {
+    return (
+       "INPUTS",
+       <<EOS,
+It operates on "alignment results" from RNA/cDNA instrument data, such as those produced by tophat or rna-star.  These
+results have associated annotation used during alignment, and that annotation is fed into htseq.
+
+When run on more than one alignment result, each is processed individually, and the results are also aggregated into an additinal data product which is returned.
+EOS
+       "OUTPUTS",
+       <<EOS,
+The output is a list if "hit counts" per gene, and a second list of hit counts per transcript.
+EOS
+        "NOTE",
+        <<EOS,
+This tool saves software results with each execution, and shortcuts on subsequent runs to avoid duplicating effort.
+EOS
+  );
+}
+
+sub _doc_manual_body {
+    my $help = shift->help_detail;
+    $help =~ s/\n+$/\n/g;
+    return $help;
+    # expect to return POD
+}
+
+sub _doc_authors {
+    return <<EOS
+ Scott Smith
+ Malachi Griffith, Ph.D.
+ Obi Griffith, Ph.D.
+EOS
+}
+
+sub _doc_copyright_years {
+    (2013);
+}
+
+sub _doc_license {
+    my $self = shift;
+    my (@y) = $self->_doc_copyright_years;  
+    my $range;
+    if (@y == 1) {
+        $range = "$y[0]";
+    }
+    elsif (@y > 1) {
+        $range = "$y[0]-$y[-1]";
+    }
+    return <<EOS
+Copyright (C) $range Washington University in St. Louis.
+
+It is released under the Lesser GNU Public License (LGPL) version 3.  See the 
+associated LICENSE file in this distribution.
+EOS
+}
+
+sub _doc_credits {
+    return ('','Simon Anders at EMBL Heidelberg (Genome Biology Unit) is the author of HTSeq.');
+}
+
+sub _doc_see_also {
+    return <<EOS
+B<Genome::Model::RnaSeq>(3), B<Genome::InstrumentData::AlignmentResult::PerLaneTophat>(3)
+B<genome-model-rnaseq>(1), B<genome-instrument-data-align-per-lane-tophat>(1)
+EOS
+}
+
 1;
 
-__END__
-
-    if (wantarray) {
-        my @result = $self->$method(@_);
-    }
-    elsif (not defined wantarray) {
-        $self->$method;
-    }
-    else {
-        my $result = $self->method;
-    }

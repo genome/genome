@@ -22,11 +22,24 @@ class Genome::SoftwareResult::Default {
 
 sub resolve_allocation_subdirectory {
     my $self = shift;
-    return "model_data/result-" . $self->id;
+    my $command = $self->command;
+    if ($command->can("resolve_allocation_directory")) {
+        return $command->resolve_allocation_directory();
+    }
+    else {
+        return "model_data/result-" . $self->id;
+    }
 }
 
 sub resolve_allocation_disk_group_name {
-    "info_genome_models" 
+    my $self = shift;
+    my $command = $self->command;
+    if ($command->can("resolve_allocation_disk_group_name")) {
+        return $command->resolve_allocation_disk_group_name();
+    }
+    else {
+        "info_genome_models" 
+    }
 }
 
 sub create {
@@ -222,7 +235,6 @@ sub _copyable_properties {
     }
     return %props;
 }
-
 
 1;
 
