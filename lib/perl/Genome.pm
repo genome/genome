@@ -108,6 +108,12 @@ sub __extend_namespace__ {
     my $cmd_meta = UR::Object::Type->get($command_class);
     return unless $cmd_meta;
 
+    return unless $command_class->isa("Command");
+
+    unless ($command_class->isa("Command::V2")) {
+        die "Cannot generate extensions for a Command::V1!: $command_class";
+    }
+
     my $spec = $NAMESPACE_EXTENSIONS{$final_ext};
     return unless $spec;
 
