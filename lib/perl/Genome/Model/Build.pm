@@ -10,6 +10,7 @@ use Data::Dumper 'Dumper';
 use File::stat;
 use File::Path;
 use File::Find 'find';
+use File::Next;
 use File::Basename qw/ dirname fileparse /;
 use Regexp::Common;
 use Workflow;
@@ -2018,15 +2019,10 @@ sub get_metric {
 sub files_in_data_directory {
     my $self = shift;
     my @files;
-    find({
-        wanted => sub {
-            my $file = $File::Find::name;
-            push @files, $file;
-        },
-        follow => 1,
-        follow_skip => 2, },
-        $self->data_directory,
-    );
+    my $iter = File::Next::files($self->data_directory);
+    while(defined (my $file = $iter->())) {
+        push @files, $file;
+    }
     return \@files;
 }
 
