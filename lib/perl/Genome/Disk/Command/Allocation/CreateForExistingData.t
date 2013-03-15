@@ -17,6 +17,7 @@ use_ok('Genome::Disk::Command::Allocation::CreateForExistingData') or die;
 
 test_path_exists_but_not_gscmnt();
 test_path_is_gscmnt_but_does_not_exist();
+test_path_exists_but_is_link();
 
 test_get_and_validate_group();
 test_get_and_validate_volume();
@@ -163,12 +164,36 @@ sub test_path_is_gscmnt_but_does_not_exist {
 
     my $kb = eval { $cmd->_validate_and_get_size_of_path };
     my $error = $@;
-    ok($error =~ /Path does not exist/, "received expected error when dealing with nonexistant path");
+    ok($error =~ /Path does not exist/, "received expected error when dealing with non-existent path");
 
     my ($mount, $group_subdir, $allocation_path) = $cmd->_parse_path;
     ok($mount, "parsed mount $mount from " . $cmd->target_path);
     ok($group_subdir, "parsed group subdir $group_subdir from " . $cmd->target_path);
     ok($allocation_path, "parsed allocation path $allocation_path from " . $cmd->target_path);
+
+    return 1;
+}
+
+sub test_path_exists_but_is_link {
+    my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
+
+    my $path = "$tmpdir/test";
+    my $link = "$tmpdir/link";
+    mkdir($path);
+    symlink($path, $link);
+
+    ok((-d $path and not -l $path), "path $path is a directory and not a link");
+    ok((-d $link and -l $link), "path $link is a directory and a link");
+
+    my $cmd = create_test_command($link);
+    ok($cmd, "created test command for link $link");
+
+    my $kb = eval { $cmd->_validate_and_get_size_of_path };
+    my $error = $@;
+    ok($error =~ /Path is a link/, "received expected error when dealing with link");
+
+    unlink($link);
+    unlink($path);
 
     return 1;
 }

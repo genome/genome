@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Cwd 'realpath';
 
 class Genome::Disk::Command::Allocation::CreateForExistingData {
     is => 'Command::V2',
@@ -122,7 +123,7 @@ sub _parse_path {
     my $self = shift;
     my $volume_prefix = $self->volume_prefix;
     my ($mount_path, $group_subdir, $allocation_path) =
-        $self->target_path =~  /($volume_prefix\/\w+)\/(\w+)\/(.+)/;
+        $self->target_path =~  /^($volume_prefix\/\w+)\/(\w+)\/(.+)$/;
     unless ($mount_path and $group_subdir and $allocation_path) {
         die "Could not determine mount path, group subdirectory, or allocation path from given path!";
     }
@@ -159,8 +160,16 @@ sub _get_and_validate_group {
 
 sub _validate_and_get_size_of_path {
     my $self = shift;
-    unless (-d $self->target_path) {
-        die "Path does not exist: " . $self->target_path;
+    if (-l $self->target_path) {
+        die "Path is a link, you should try allocating " . realpath($self->target_path)
+            . " instead of " . $self->target_path;
+    }
+    if (not -d $self->target_path) {
+        die "Path does not exist or is not a directory: " . $self->target_path;
+    }
+    if (realpath($self->target_path) ne $self->target_path) {
+        die "Target path and absolute path differ; you should try allocating "
+            . realpath($self->target_path) . " instead of " . $self->target_path;
     }
     my $kb = Genome::Sys->disk_usage_for_path($self->target_path);
     unless (defined $kb) {
