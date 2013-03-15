@@ -558,14 +558,21 @@ sub _reallocate {
             }
         } else {
             $self->error_message(sprintf(
-                    "Failed to reallocate allocation %s on volume %s.",
+                    "Failed to reallocate allocation %s on volume %s because the volume is beyond its quota.",
                     $self->id, $volume->mount_path));
         }
     }
 
     unless ($succeeded) {
         # Rollback kilobytes_requested
-        $self->kilobytes_requested(List::Util::max($kb_used, $old_kb_requested));
+        my $max_kilobytes_requested = List::Util::max($kb_used, $old_kb_requested);
+        my $msg = $old_kb_requested == $max_kilobytes_requested ? 'Rolling back' : 'Setting';
+
+        $self->status_message(sprintf(
+                "%s kilobytes_requested to %d for allocation %s.",
+                $msg, $max_kilobytes_requested, $self->id));
+
+        $self->kilobytes_requested($max_kilobytes_requested);
         _commit_unless_testing();
     }
 
