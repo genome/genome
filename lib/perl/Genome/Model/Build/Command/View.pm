@@ -149,7 +149,7 @@ sub _display_build {
 %s       %s
 
 %s
-%s
+%s%s
 %s
 
 EOS
@@ -171,7 +171,30 @@ EOS
             $self->_clean_up_timestamp($build->date_completed)),
         $self->_color_pair('Build Class', $build->class),
         $self->_color_pair('Software Revision', $build->software_revision),
+        $self->_software_result_test_name,
         $self->_color_pair('Data Directory', $build->data_directory));
+}
+
+sub _software_result_test_name {
+    my ($self) = @_;
+    my $build = $self->build;
+
+    my $UNDEF = '***undef***';
+    my @test_names = map {$_->test_name ? $_->test_name : $UNDEF} $build->results;
+
+    my %counts;
+    $counts{$_}++ for @test_names;
+
+    my $most_frequent = (
+        sort { $b->[1] <=> $a->[1] }
+        map { [ $_, $counts{$_} ] } keys %counts
+    )[0]->[0];
+
+    if ($most_frequent eq $UNDEF) {
+        return '';
+    } else {
+        return "\n" . $self->_color_pair('SoftwareResult Test Name', $most_frequent);
+    }
 }
 
 sub _display_many {
@@ -265,7 +288,7 @@ sub _display_workflow {
                     $name = substr($name, 0, $length-3) . "...";
                 }
                 my $log_path = $error_log_paths[$i];
-                printf $handle "%s %s %s\n", 
+                printf $handle "%s %s %s\n",
                         $self->_status_color($status),
                         justify($name, 'left', $length),
                         $log_path;
