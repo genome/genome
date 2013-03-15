@@ -94,6 +94,9 @@ sub send_report {
     };
 
     if ( $@ ) {
+        if ($Mail::Sender::Error) {
+            $class->error_message("Mail::Sender::Error: $Mail::Sender::Error");
+        }
         $class->error_message("Error configuring email: $@");
         return;
     }
