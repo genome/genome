@@ -24,13 +24,13 @@ for my $file (@files_to_compile) {
         my $rel_path = File::Spec->abs2rel($file);
         ok($? == 0, qq(compiled '$rel_path'));
     } else {
-        my $exit = compile_file_ok($file);
+        my $exit = compile_file($file);
         exit($exit);
     }
 }
 
 
-sub compile_file_ok {
+sub compile_file {
     my $file = shift;
     my @output = qx(perl -c "$file" 2>&1);
     my $exit = $? >> 8;
