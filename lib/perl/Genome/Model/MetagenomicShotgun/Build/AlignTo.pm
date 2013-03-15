@@ -47,34 +47,70 @@ sub execute {
 
 sub _start_build  {
     my ($self, $model, @instrument_data) = @_;
+    $self->status_message('Ensure correct assigned to sub model...');
+    $self->status_message('Model: '.$model->__display_name__);
+    $self->status_message('Instrument data: '.join(' ', map { $_->id } @instrument_data));
 
-    my %existing;
-    for my $inst_data($model->instrument_data){
-        $existing{$inst_data->id} = $inst_data;
-    }
-    my @to_add;
-    for my $inst_data(@instrument_data){
-        if ($existing{$inst_data->id}) {
-            delete $existing{$inst_data->id};
+    # Ensure correct inst data on model
+    my %assigned_instrument_data = map { $_->id => $_ } $model->instrument_data;
+    my @instrument_data_ids_to_assign;
+    for my $instrument_data ( @instrument_data ) {
+        if ( $assigned_instrument_data{$instrument_data->id} ) {
+            delete $assigned_instrument_data{$instrument_data->id};
         }
         else {
-            push @to_add, $inst_data;
+            push @instrument_data_ids_to_assign, $instrument_data->id;
         }
     }
-    for my $inst_data (values %existing){
-        $self->status_message("Removing Instrument Data " . $inst_data->id . " from model " . $model->__display_name__);
-        $model->remove_instrument_data($inst_data)
-    }
-    for my $inst_data(@to_add){
-        $self->status_message("Adding Instrument Data " . $inst_data->id . " to model " . $model->__display_name__);
-        $model->add_instrument_data($inst_data);
-    }
-    if (@instrument_data == 0){
-        $self->status_message("No instrument data for model ".$model->__display_name__.", skipping build");
-        return;
+
+    # Unassign incorrect inst data
+    my $model_id = $model->id;
+    my @instrument_data_ids_to_unassign = keys %assigned_instrument_data;
+    if ( @instrument_data_ids_to_unassign ) {
+        $self->status_message("Unassign incorrect instrument data ".join(' ', @instrument_data_ids_to_unassign)." from model ".$model->__display_name__);
+        my $instrument_data_expression = 'id'.( @instrument_data_ids_to_unassign > 1 ) 
+        ? '='.$instrument_data_ids_to_unassign[0]
+        : ':'.join(@instrument_data_ids_to_unassign);
+        my $cmd = "genome model instrument-data unassign $model_id --instrument-data $instrument_data_expression --force";
+        my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+        if ( not $rv ) {
+            $self->error_message($@) if $@;
+            $self->error_message('Failed to unassign instrument data from model!');
+            return;
+        }
+        $self->status_message('Unassign incorrect instrument data...done');
     }
 
-    my $build = $self->_build_if_necessary($model);
+    # Add correct inst data
+    if ( @instrument_data_ids_to_assign ) {
+        $self->status_message("Assign correct instrument data ".join(' ', @instrument_data_ids_to_assign)." to model ".$model->__display_name__);
+        my $instrument_data_expression = 'id'.( @instrument_data_ids_to_assign > 1 ) 
+        ? '='.$instrument_data_ids_to_assign[0]
+        : ':'.join(@instrument_data_ids_to_assign);
+        my $cmd = "genome model instrument-data unassign $model_id --instrument-data $instrument_data_expression --force";
+        my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+        if ( not $rv ) {
+            $self->error_message($@) if $@;
+            $self->error_message('Failed to assign instrument data to model!');
+            return;
+        }
+        $self->status_message('Assign correct instrument data...done');
+    }
+
+    # Reload the model and inputs
+    UR::Context->reload('Genome::Model', id => $model->id);
+    UR::Context->reload('Genome::Model::Input', model_id => $model->id);
+
+    # Verify correct instrument data was added
+    %assigned_instrument_data = map { $_->id => $_ } $model->instrument_data;
+    for my $instrument_data ( @instrument_data ) {
+        next if delete $assigned_instrument_data{$instrument_data->id};
+        $self->error_message('Failed to assign correct instrument data!');
+        return;
+    }
+    $self->status_message('Ensure correct assigned to sub model...OK');
+
+    my $build = $self->_build_if_necessary($model); #FIXME move!
     return $build;
 }
 
