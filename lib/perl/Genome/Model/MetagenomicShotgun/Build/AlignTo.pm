@@ -38,14 +38,19 @@ sub execute {
     my $sub_model = $self->build->model->sub_model_for_label($self->sub_model_label);
     my @instrument_data = $self->instrument_data;
 
-    my $sub_build = $self->_start_build($sub_model, @instrument_data);
+    my $assign_instrument_data_ok = $self->_assign_instrument_data($sub_model, @instrument_data);
+    return if not $assign_instrument_data_ok;
+
+    my $sub_build = $self->_build_if_necessary($sub_model);
+    return if not $sub_build;
+
     my $sub_build_ok = $self->_wait_for_build($sub_build);
     return if not $sub_build_ok;
 
     return 1;
 }
 
-sub _start_build  {
+sub _assign_instrument_data  {
     my ($self, $model, @instrument_data) = @_;
     $self->status_message('Ensure correct assigned to sub model...');
     $self->status_message('Model: '.$model->__display_name__);
@@ -108,10 +113,9 @@ sub _start_build  {
         $self->error_message('Failed to assign correct instrument data!');
         return;
     }
-    $self->status_message('Ensure correct assigned to sub model...OK');
 
-    my $build = $self->_build_if_necessary($model); #FIXME move!
-    return $build;
+    $self->status_message('Ensure correct assigned to sub model...OK');
+    return 1;
 }
 
 sub _build_if_necessary {
