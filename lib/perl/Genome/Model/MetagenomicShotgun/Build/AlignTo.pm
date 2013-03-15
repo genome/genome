@@ -113,36 +113,38 @@ sub _assign_instrument_data  {
         $self->error_message('Failed to assign correct instrument data!');
         return;
     }
+    if ( %assigned_instrument_data ) {
+        $self->error_message('Found incorrect instrument data still assigned to model!');
+        return;
+    }
 
     $self->status_message('Ensure correct assigned to sub model...OK');
     return 1;
 }
 
 sub _build_if_necessary {
-    my ($self, @models) = @_;
+    my ($self, $model) = @_;
 
     my (@succeeded_builds, @watched_builds);
-    for my $model ( @models ) {
-        $self->status_message('Model: '. $model->__display_name__);
-        $self->status_message('Search for succeeded build');
-        my $succeeded_build = $model->last_succeeded_build;
-        if ( $succeeded_build and $self->_verify_model_and_build_instrument_data_match($model, $succeeded_build) ) {
-            $self->status_message('Found succeeded build: '.$succeeded_build->__display_name__);
-            push @succeeded_builds, $succeeded_build;
-            next;
-        }
-        $self->status_message('No succeeded build');
-        $self->status_message('Search for scheduled or running build');
-        my $watched_build = $self->_find_scheduled_or_running_build_for_model($model);
-        if ( not $watched_build ) {
-            $self->status_message('No scheduled or running build');
-            $self->status_message('Start build');
-            $watched_build = $self->_start_build_for_model($model);
-            return if not $watched_build;
-        }
-        $self->status_message('Watching build: '.$watched_build->__display_name__);
-        push @watched_builds, $watched_build;
+    $self->status_message('Model: '. $model->__display_name__);
+    $self->status_message('Search for succeeded build');
+    my $succeeded_build = $model->last_succeeded_build;
+    if ( $succeeded_build and $self->_verify_model_and_build_instrument_data_match($model, $succeeded_build) ) {
+        $self->status_message('Found succeeded build: '.$succeeded_build->__display_name__);
+        push @succeeded_builds, $succeeded_build;
+        next;
     }
+    $self->status_message('No succeeded build');
+    $self->status_message('Search for scheduled or running build');
+    my $watched_build = $self->_find_scheduled_or_running_build_for_model($model);
+    if ( not $watched_build ) {
+        $self->status_message('No scheduled or running build');
+        $self->status_message('Start build');
+        $watched_build = $self->_start_build_for_model($model);
+        return if not $watched_build;
+    }
+    $self->status_message('Watching build: '.$watched_build->__display_name__);
+    push @watched_builds, $watched_build;
 
     my @builds = (@succeeded_builds, @watched_builds);
     if ( not @builds ) {
@@ -220,7 +222,6 @@ sub _start_build_for_model {
     my $cmd = 'genome model build start '.$model->id.' --job-dispatch apipe --server-dispatch workflow'; # these are defaults
     $self->status_message('cmd: '.$cmd);
 
-    UR::Context->commit();
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv ) {
         die $self->error_message('failed to execute build start command');
