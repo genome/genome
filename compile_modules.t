@@ -32,11 +32,10 @@ for my $file (@files_to_compile) {
 
 sub compile_file_ok {
     my $file = shift;
-    my $done = do $file;
-    my $error = $@ || $!;
-    my $exit = defined $done ? 0 : 1; # undef = fail = 1
-    if ($exit == 1) {
-        diag $error;
+    my @output = qx(perl -c "$file" 2>&1);
+    my $exit = $? >> 8;
+    if ($exit != 0) {
+        diag @output;
     }
     return $exit;
 }
