@@ -71,8 +71,10 @@ sub _resolve_original_files {
 sub _run_chimerascan {
     my ($self, $bowtie_version, $c_pargs, $c_opts) = @_;
 
+    my $python_path = $self->_python_path_for_version($self->version);
     local $ENV{PYTHONPATH} = ($ENV{PYTHONPATH} ? $ENV{PYTHONPATH} . ":" : "") .
-            $self->_python_path_for_version($self->version);
+            $python_path;
+    $self.status_message("Added '$python_path' to PYTHONPATH");
 
     my $cmd_path = $self->_path_for_version($self->version);
     unless ($cmd_path) {
