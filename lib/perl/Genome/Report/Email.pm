@@ -50,56 +50,67 @@ sub send_report {
     $class->_validate_email_address_string('reply to', $reply_to)
         or return;
     
-    eval {
-        my $sender = Mail::Sender->new({
-                smtp => 'gscsmtp.wustl.edu',
-                to => $to, 
-                from => $from,
-                replyto => $reply_to,
-                subject => Genome::Utility::Text::capitalize_words( $report->description ),
-                multipart => 'related',
-                on_errors => 'die',
-            }) or die "Can't create Mail::Sender";
+    my $tries = 3;
+    my $count = 0;
+    my $success = 0;
+    while ($count++ < $tries and !$success)  {
+        eval {
+            my $sender = Mail::Sender->new({
+                    smtp => 'gscsmtp.wustl.edu',
+                    to => $to, 
+                    from => $from,
+                    replyto => $reply_to,
+                    subject => Genome::Utility::Text::capitalize_words( $report->description ),
+                    multipart => 'related',
+                    on_errors => 'die',
+                }) or die "Can't create Mail::Sender";
 
-        $sender->OpenMultipart;
+            $sender->OpenMultipart;
 
-        for my $xsl_file ( @{$params{xsl_files}} ) {
-            # Transform
-            my $xslt = Genome::Report::XSLT->transform_report(
-                report => $report,
-                xslt_file => $xsl_file,
-            );
-            unless ( $xslt ) {
-                $sender->Cancel;
-                die $class->error_message("Can't tranform report with xsl file ($xsl_file)");
+            for my $xsl_file ( @{$params{xsl_files}} ) {
+                # Transform
+                my $xslt = Genome::Report::XSLT->transform_report(
+                    report => $report,
+                    xslt_file => $xsl_file,
+                );
+                unless ( $xslt ) {
+                    $sender->Cancel;
+                    die $class->error_message("Can't tranform report with xsl file ($xsl_file)");
+                }
+                # Attach
+                $sender->Part({ctype => 'multipart/alternative'});
+                $sender->Part({
+                        ctype => $xslt->{media_type},
+                        disposition => 'NONE',
+                        msg => $xslt->{content},
+                    });
             }
-            # Attach
-            $sender->Part({ctype => 'multipart/alternative'});
-            $sender->Part({
-                    ctype => $xslt->{media_type},
-                    disposition => 'NONE',
-                    msg => $xslt->{content},
-                });
-        }
 
-        $sender->EndPart("multipart/alternative");
+            $sender->EndPart("multipart/alternative");
 
-        if ( $params{attachments} ) {
-            for my $attachment ( @{$params{attachments}} ) {
-                $sender->Attach($attachment);
+            if ( $params{attachments} ) {
+                for my $attachment ( @{$params{attachments}} ) {
+                    $sender->Attach($attachment);
+                }
+            }
+
+            $sender->Close;
+
+        };
+        if ( $@ ) {
+            if ($tries == $count) {
+                if ($Mail::Sender::Error) {
+                    $class->error_message("Mail::Sender::Error: $Mail::Sender::Error");
+                }
+                $class->error_message("Error configuring email: $@");
+                return;
             }
         }
-
-        $sender->Close;
-    };
-
-    if ( $@ ) {
-        if ($Mail::Sender::Error) {
-            $class->error_message("Mail::Sender::Error: $Mail::Sender::Error");
+        else {
+            $success = 1;
         }
-        $class->error_message("Error configuring email: $@");
-        return;
     }
+
 
     return 1;
 }
