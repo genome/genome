@@ -96,7 +96,7 @@ sub execute {
         die "Somehow, absolute path of new allocation does not match expected value " . $self->path;
     }
 
-    unless (Genome::Sys->remove_directory_tree($temp_location)) {
+    unless (rmdir($temp_location)) {
         $self->warning_message("Could not remove temporary path $temp_location");
     }
 
