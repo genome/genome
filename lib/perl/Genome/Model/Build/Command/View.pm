@@ -185,15 +185,20 @@ sub _software_result_test_name {
     my %counts;
     $counts{$_}++ for @test_names;
 
-    my $most_frequent = (
-        sort { $b->[1] <=> $a->[1] }
-        map { [ $_, $counts{$_} ] } keys %counts
-    )[0]->[0];
+    if (@test_names) {
+        my $most_frequent = (
+            sort { $b->[1] <=> $a->[1] }
+            map { [ $_, $counts{$_} ] } keys %counts
+        )[0]->[0];
 
-    if ($most_frequent eq $UNDEF) {
+        if ($most_frequent eq $UNDEF) {
+            return '';
+        } else {
+            return "\n" . $self->_color_pair('SoftwareResult Test Name', $most_frequent);
+        }
+    }
+    else {
         return '';
-    } else {
-        return "\n" . $self->_color_pair('SoftwareResult Test Name', $most_frequent);
     }
 }
 
