@@ -1,6 +1,5 @@
 package chimerascan_test_setup;
 
-use strict;
 use warnings;
 
 BEGIN {
@@ -18,14 +17,17 @@ sub setup {
     my %parameters = @_;
     my $test_data_version = $parameters{test_data_version};
     my $chimerascan_version = $parameters{chimerascan_version};
+    my $chimerascan_result_class = $parameters{chimerascan_result_class};
     my $picard_version = $parameters{picard_version};
-    diag "Setting up with \n\ttest_data_version:$test_data_version\n\t" .
-            "chimerascan_version:$chimerascan_version\n\t" .
-            "picard_version:$picard_version\n\t";
 
-    my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanVrlResult/$chimerascan_version";
+    my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/$chimerascan_version";
     my $tophat_dir = $data_dir . "/tophat_data$test_data_version";
     die "Couldn't find tophat_dir at '$tophat_dir'" unless -d $tophat_dir;
+    my @bam_files = glob(File::Spec->join($tophat_dir, "merged*.bam"));
+    diag "Setting up with \n\ttest_data_version:$test_data_version\n\t" .
+            "chimerascan_version:$chimerascan_version\n\t" .
+            "picard_version:$picard_version\n\t" .
+            "tophat_dir:$tophat_dir\n\t";
 
     my $t = Genome::Taxon->__define__(name => 'human');
     my $p = Genome::Individual->create(name => "test-human-patient", common_name => 'testpatient', taxon => $t);
@@ -72,7 +74,8 @@ sub setup {
     $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
 
     my $index_dir = File::Spec->join($data_dir, 'IndexResult');
-    my $index = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index->__define__(
+    my $index_class = $chimerascan_result_class . "::Index";
+    my $index = $index_class->__define__(
         version => $chimerascan_version,
         bowtie_version => "0.12.7",
         reference_build => $reference_build,
@@ -82,14 +85,13 @@ sub setup {
     );
     $index->lookup_hash($index->calculate_lookup_hash());
 
-    *Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::_staging_disk_usage
-        = sub { return 40 * 1024 };
+    my $sdu = $chimerascan_result_class . "::_staging_disk_usage";
+    *$sdu = sub { return 40 * 1024 };
 
-    *Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::_resolve_index_dir
-        = sub { return $index_dir };
+    my $rid = $chimerascan_result_class . "::_resolve_index_dir";
+    *$rid = sub { return $index_dir };
 
-
-    return $alignment_result, $annotation_build;
+    return $alignment_result, $annotation_build, @bam_files;
 }
 
 1;
