@@ -98,12 +98,18 @@ sub send_report {
 
         };
         if ( $@ ) {
+            if ($Mail::Sender::Error) {
+                $class->status_message("Got error ".$Mail::Sender::Error." on try $count");
+            }
             if ($tries == $count) {
                 if ($Mail::Sender::Error) {
                     $class->error_message("Mail::Sender::Error: $Mail::Sender::Error");
                 }
                 $class->error_message("Error configuring email: $@");
                 return;
+            }
+            else {
+                sleep 10;
             }
         }
         else {
