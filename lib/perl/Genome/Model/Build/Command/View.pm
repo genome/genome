@@ -178,28 +178,26 @@ EOS
 sub _software_result_test_name {
     my ($self) = @_;
     my $build = $self->build;
+    my @results = $build->results;
+
+    return '' unless scalar(@results);
 
     my $UNDEF = '***undef***';
-    my @test_names = map {$_->test_name ? $_->test_name : $UNDEF} $build->results;
+    my @test_names = map {$_->test_name ? $_->test_name : $UNDEF} @results;
 
     my %counts;
     $counts{$_}++ for @test_names;
 
-    if (@test_names) {
-        my $most_frequent = (
-            sort { $b->[1] <=> $a->[1] }
-            map { [ $_, $counts{$_} ] } keys %counts
-        )[0]->[0];
+    my $most_frequent = (
+        sort { $b->[1] <=> $a->[1] }
+        map { [ $_, $counts{$_} ] } keys %counts
+    )[0]->[0];
 
-        if ($most_frequent eq $UNDEF) {
-            return '';
-        } else {
-            return "\n" . $self->_color_pair('SoftwareResult Test Name', $most_frequent);
-        }
+    my $value = 'undef';
+    if ($most_frequent ne $UNDEF) {
+        $value = "'$most_frequent'";
     }
-    else {
-        return '';
-    }
+    return "\n" . $self->_color_pair('SoftwareResult Test Name', $value);
 }
 
 sub _display_many {
