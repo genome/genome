@@ -29,19 +29,27 @@ class Genome::Model::MetagenomicShotgun::Build::AlignTo {
             calculate_from => ['input_build'],
             calculate => sub{ return $_[0]; },
         },
-    ]
+    ],
+    has_optional_transient => [
+        sub_model => {
+            is => 'Genome::Model',
+            calculate_from => [qw/ build sub_model_label /],
+            calculate => sub{
+                my ($build, $sub_model_label) = @_;
+                my $sub_model = $build->model->sub_model_for_label($sub_model_label);
+                return $sub_model;
+            },
+        },
+    ],
 };
 
 sub execute {
     my $self = shift;
 
-    my $sub_model = $self->build->model->sub_model_for_label($self->sub_model_label);
-    my @instrument_data = $self->instrument_data;
-
-    my $assign_instrument_data_ok = $self->_assign_instrument_data($sub_model, @instrument_data);
+    my $assign_instrument_data_ok = $self->_assign_instrument_data;
     return if not $assign_instrument_data_ok;
 
-    my $sub_build = $self->_build_if_necessary($sub_model);
+    my $sub_build = $self->_build_if_necessary;
     return if not $sub_build;
 
     my $sub_build_ok = $self->_wait_for_build($sub_build);
@@ -51,9 +59,17 @@ sub execute {
 }
 
 sub _assign_instrument_data  {
-    my ($self, $model, @instrument_data) = @_;
+    my $self = shift;
     $self->status_message('Ensure correct assigned to sub model...');
+
+    my $model = $self->sub_model;
+    if ( not $model ) {
+        $self->error_message('Failed to get sub model!');
+        return;
+    }
     $self->status_message('Model: '.$model->__display_name__);
+
+    my @instrument_data = $self->instrument_data;
     $self->status_message('Instrument data: '.join(' ', map { $_->id } @instrument_data));
 
     # Ensure correct inst data on model
@@ -124,72 +140,56 @@ sub _assign_instrument_data  {
 
 sub _build_if_necessary {
     my ($self, $model) = @_;
+    $self->status_message('Build if necessary...');
 
-    my (@succeeded_builds, @watched_builds);
     $self->status_message('Model: '. $model->__display_name__);
-    $self->status_message('Search for succeeded build');
-    my $succeeded_build = $model->last_succeeded_build;
-    if ( $succeeded_build and $self->_verify_model_and_build_instrument_data_match($model, $succeeded_build) ) {
-        $self->status_message('Found succeeded build: '.$succeeded_build->__display_name__);
-        push @succeeded_builds, $succeeded_build;
-        next;
-    }
-    $self->status_message('No succeeded build');
-    $self->status_message('Search for scheduled or running build');
-    my $watched_build = $self->_find_scheduled_or_running_build_for_model($model);
-    if ( not $watched_build ) {
-        $self->status_message('No scheduled or running build');
-        $self->status_message('Start build');
-        $watched_build = $self->_start_build_for_model($model);
-        return if not $watched_build;
-    }
-    $self->status_message('Watching build: '.$watched_build->__display_name__);
-    push @watched_builds, $watched_build;
-
-    my @builds = (@succeeded_builds, @watched_builds);
-    if ( not @builds ) {
-        $self->error_message('Failed to find or start any builds');
+    $self->status_message('Search for succeeded build...');
+    my $sub_build = $model->build_needed;
+    if ( $sub_build ) {
+        $self->status_message('Found current build! '.$sub_build->__display_name__);
         return;
     }
 
-    if ( @models != @builds ) {
-        $self->error_message('Failed to find or start a build for each model');
-        return;
-    }
-
-    return ( @builds > 1 ? @builds : $builds[0] );
-}
-
-sub _verify_model_and_build_instrument_data_match {
-    my ($self, $model, $build) = @_;
-
-    Carp::confess('No model to verify instrument data') if not $model;
-    Carp::confess('No build to verify instrument data') if not $build;
-
-    my @build_instrument_data = sort {$a->id <=> $b->id} $build->instrument_data;
-    my @model_instrument_data = sort {$a->id <=> $b->id} $model->instrument_data;
-
-    $self->status_message('Model: '.$model->__display_name__);
-    $self->status_message('Model instrument data: '.join(' ', map { $_->id } @model_instrument_data));
-    $self->status_message('Build: '.$build->__display_name__);
-    $self->status_message('Build instrument data: '.join(' ', map { $_->id } @build_instrument_data));
-
-    if ( @build_instrument_data != @model_instrument_data ) {
-        $self->status_message('Model and build instrument data count does not match');
-        return;
-    }
-
-    for ( my $i = 0; $i < @model_instrument_data; $i++ ) {
-        my $build_instrument_data = $build_instrument_data[$i];
-        my $model_instrument_data = $model_instrument_data[$i];
-
-        if ($build_instrument_data->id ne $model_instrument_data->id) {
-            $self->status_message("Missing instrument data.");
+    $self->status_message('No succeeded build. Look for a build that is scheduled or running...');
+    $sub_build = $self->_find_scheduled_or_running_build_for_model($model);
+    if ( not $sub_build ) {
+        $self->status_message('None found. Creating a build...');
+        my $cmd = 'genome model build start '.$model->id.' --job-dispatch apipe --server-dispatch workflow'; # these are defaults
+        $self->status_message('cmd: '.$cmd);
+        my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+        if ( not $rv ) {
+            $self->error_message($@);
+            $self->error_message('Failed to execute build start command!');
+            return;
+        }
+        $sub_build = $self->_find_scheduled_or_running_build_for_model($model);
+        if ( not $sub_build ) {
+            $self->error_message('Executed the build start command, but cannot the build!');
             return;
         }
     }
+    else {
+        $self->status_message('Found scheduled/running build!');
+    }
+    $self->status_message('Build id: '.$sub_build->id);
+    $self->status_message('Build data directory '.$sub_build->data_directory);
+    $self->status_message('Watching build...');
+    my $time = 0;
+    my $inc = 30;
+    my $status = $sub_build->status;
+    while ( $status eq 'Running' or $status eq 'Scheduled' ) {
+        if ( $time % 150 ){ # Only report every 5 minutes
+            $self->status_message("Watching build. Time: $time Status: $status");
+        }
+        sleep $inc;
+        $time += $inc;
+        UR::Context->current->reload($sub_build->the_master_event);
+        $status = $sub_build->status;
+    }
 
-    return 1;
+    $self->status_message('Build has stopped running, checking status...');
+    $self->status_message('Status: '.$status);
+    return ( $status eq 'Succeeded' ? 1 : 0 );
 }
 
 sub _find_scheduled_or_running_build_for_model {
@@ -212,65 +212,6 @@ sub _find_scheduled_or_running_build_for_model {
     }
 
     return;
-}
-
-sub _start_build_for_model {
-    my ($self, $model) = @_;
-
-    Carp::confess('no model sent to start build') if not $model;
-
-    my $cmd = 'genome model build start '.$model->id.' --job-dispatch apipe --server-dispatch workflow'; # these are defaults
-    $self->status_message('cmd: '.$cmd);
-
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv ) {
-        die $self->error_message('failed to execute build start command');
-    }
-
-    my $build = $self->_find_scheduled_or_running_build_for_model($model);
-    if ( not $build ) {
-        die $self->error_message('executed build start command, but cannot find build.');
-    }
-
-    return $build;
-}
-
-sub _wait_for_build {
-    my ($self, $build) = @_;
-
-    if ( not $build ) {
-        $self->status_message("No build to wait!");
-        return;
-    }
-    $self->status_message('Watching build: '.$build->__display_name__);
-
-    my $last_status = '';
-    my $time = 0;
-    my $inc = 30;
-    while (1) {
-        UR::Context->current->reload($build->the_master_event);
-        my $status = $build->status;
-        if ($status and !($status eq 'Running' or $status eq 'Scheduled')){
-            return 1;
-        }
-
-        if ($last_status ne $status or !($time % 300)){
-            $self->status_message("Waiting for build(~$time sec) ".$build->id.", status: $status");
-        }
-        sleep $inc;
-        $time += $inc;
-        $last_status = $status;
-    }
-
-    my $status = $build->status;
-    if ( $status eq 'Succeeded' ) {
-        $self->status_message($status.'! '.$build->__display_name__);
-        return 1;
-    }
-    else {
-        $self->error_message($status.'! '.$build->__display_name__);
-        return;
-    }
 }
 
 1;
