@@ -367,7 +367,7 @@ sub _resolve_workflow_for_build {
                 'extract_from_'.$sub_model_type => 'type',
             },
         ); # confesses
-        $operation->parallel_by('type') if $sub_model_type eq 'meta_nt';
+        $operation->parallel_by('type') if $sub_model_type =~ /^meta/;
 
         return $operation;
     };
@@ -385,16 +385,16 @@ sub _resolve_workflow_for_build {
     $left_operation = $align_to_meta_nt_reference_op;
 
     # Extract aligned & unaligned reads from meta nt alignment
-    my $extract_aligned_and_unaligned_from_meta_nr_op = $add_extract_from_operation->('meta_nt');
-    $left_operation = $extract_aligned_and_unaligned_from_meta_nr_op;
+    my $extract_aligned_and_unaligned_from_meta_nt_op = $add_extract_from_operation->('meta_nt');
+    $left_operation = $extract_aligned_and_unaligned_from_meta_nt_op;
 
     # Align unaligned reads from meta nt alignment to meta nr reference
     my $align_to_meta_nr_op = $add_align_to_operation->('meta_nr');
     $left_operation = $align_to_meta_nr_op;
 
-    # Extract aligned reads from meta nr
-    my $extract_aligned_from_contamination_screen_op = $add_extract_from_operation->('meta_nr'); #confess
-    $left_operation = $extract_aligned_from_contamination_screen_op;
+    # Extract aligned & unaligned reads from meta nr
+    my $extract_aligned_and_unaligned_from_meta_nr_op = $add_extract_from_operation->('meta_nr'); #confess
+    $left_operation = $extract_aligned_and_unaligned_from_meta_nr_op;
 
     # Align aligned reads from meta nt and meta nr alignments to viral nt and nr references
     my $align_to_viral_op = $add_align_to_operation->('viral');
