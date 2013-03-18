@@ -74,7 +74,7 @@ sub _run_chimerascan {
     my $python_path = $self->_python_path_for_version($self->version);
     local $ENV{PYTHONPATH} = ($ENV{PYTHONPATH} ? $ENV{PYTHONPATH} . ":" : "") .
             $python_path;
-    $self.status_message("Added '$python_path' to PYTHONPATH");
+    $self->status_message("Added '$python_path' to PYTHONPATH");
 
     my $cmd_path = $self->_path_for_version($self->version);
     unless ($cmd_path) {
