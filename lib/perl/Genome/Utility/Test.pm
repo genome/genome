@@ -11,6 +11,7 @@ use Carp qw(croak);
 use File::Compare qw(compare);
 use IPC::System::Simple qw(capture);
 use Test::More;
+use File::Spec qw();
 
 
 my %ERRORS = (
@@ -126,6 +127,15 @@ sub run_ok {
     $tb->ok($exit_zero, $test_name);
 
     return $exit_zero;
+}
+
+sub data_dir_ok {
+    my ($class, $package) = @_;
+    (my $dirname = $package) =~ s/::/-/g;
+    my $dirpath = File::Spec->join($ENV{GENOME_TEST_INPUTS}, $dirname);
+    my $tb = __PACKAGE__->builder;
+    $tb->ok(-d $dirpath, "data_dir exists: $dirpath");
+    return $dirpath;
 }
 
 1;
