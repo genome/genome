@@ -73,13 +73,6 @@ sub_test('compare_ok matches diff command' => sub {
     $aa_fh->close();
 
     {
-        # STDERR is:
-        # # # First diff:
-        # # # --- /tmp/akzszm45QF
-        # # # +++ /tmp/aM8X5Vj6pQ
-        # # # - a
-        # # # + b
-        # # #   Failed test at Utility/Test.t/compare_ok.t line 77.
         test_out('not ok 1');
         test_err(q(/# First diff:\n# --- .*\n# \+\+\+.*\n# - a\n# \+ b\n#\s+Failed test at .+ line \d+\./));
         my $compare_ok = compare_ok($a_fn, $b_fn);
