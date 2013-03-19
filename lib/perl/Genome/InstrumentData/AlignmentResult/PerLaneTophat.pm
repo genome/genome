@@ -433,6 +433,17 @@ sub _get_modified_tophat_params {
         $params .= ' --transcriptome-index '. $transcriptome_index_prefix;
     }
 
+    #set number of threads automatically
+    my $cpu_count = $self->_available_cpu_count;
+    $self->status_message("CPU count is $cpu_count");
+    if($params =~ /--num-threads[ =]\d+/) {
+        $params =~ s/--num-threads[ =]\d+/--num-threads $cpu_count/;
+    } elsif ($params =~ /-p[ =]\d+/) {
+        $params =~ s/-p[ =]\d+/--num-threads $cpu_count/;
+    } else {
+        $params .= " --num-threads $cpu_count";
+    }
+
     my $instrument_data = $self->instrument_data;
     # This is hard-coded for paired-end reads
     # TODO: Add support for fragment alignments
