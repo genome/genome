@@ -190,80 +190,12 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>allocation',
     [
-      '>create',
-      [
-        'disk-group-name=s',
-        [
-          'info_apipe',
-          'info_apipe_ref',
-          'info_alignments',
-          'info_genome_models',
-          'research'
-        ],
-        'allocation-path=s',
-        'files',
-        'kilobytes-requested=s',
-        undef,
-        'owner-class-name=s',
-        'files',
-        'owner-id=s',
-        'files',
-        'mount-path=s',
-        'files',
-        'kilobytes-used=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>unarchive',
-      [
-        'paths=s@',
-        'files',
-        'allocations=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>to-be-archived-report',
-      [
-        'output-file=s',
-        'files',
-        'ids-file=s',
-        'files',
-        'error-file=s',
-        'files',
-        'allocation-filter=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>move',
       [
         'target-volume=s',
         undef,
         'target-group=s',
         undef,
-        'allocations=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>do-not-archive-report',
-      [
-        'help!',
-        undef
-      ],
-      '>archive',
-      [
-        'allocations=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>unpreserve',
-      [
-        'reason=s',
-        'files',
         'allocations=s@',
         undef,
         'help!',
@@ -290,28 +222,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'reason=s',
         'files',
-        'help!',
-        undef
-      ],
-      '>deallocate',
-      [
-        'allocations=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>compare-usage',
-      [
-        'output=s',
-        'files',
-        'du!',
-        undef,
-        'update-cache!',
-        undef,
-        'commit-chunk-size=s',
-        undef,
-        'allocations=s@',
-        undef,
         'help!',
         undef
       ],
@@ -375,6 +285,109 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'filter=s',
         'files',
+        'help!',
+        undef
+      ],
+      '>create',
+      [
+        'disk-group-name=s',
+        [
+          'info_apipe',
+          'info_apipe_ref',
+          'info_alignments',
+          'info_genome_models',
+          'research'
+        ],
+        'allocation-path=s',
+        'files',
+        'kilobytes-requested=s',
+        undef,
+        'owner-class-name=s',
+        'files',
+        'owner-id=s',
+        'files',
+        'mount-path=s',
+        'files',
+        'kilobytes-used=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>unarchive',
+      [
+        'paths=s@',
+        'files',
+        'allocations=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>archive',
+      [
+        'allocations=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>do-not-archive-report',
+      [
+        'help!',
+        undef
+      ],
+      '>to-be-archived-report',
+      [
+        'output-file=s',
+        'files',
+        'ids-file=s',
+        'files',
+        'error-file=s',
+        'files',
+        'allocation-filter=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>unpreserve',
+      [
+        'reason=s',
+        'files',
+        'allocations=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>import',
+      [
+        'path=s',
+        'directories',
+        'owner-class-name=s',
+        'files',
+        'owner-id=s',
+        'files',
+        'volume-prefix=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>deallocate',
+      [
+        'allocations=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>compare-usage',
+      [
+        'output=s',
+        'files',
+        'du!',
+        undef,
+        'update-cache!',
+        undef,
+        'commit-chunk-size=s',
+        undef,
+        'allocations=s@',
+        undef,
         'help!',
         undef
       ],
@@ -2546,6 +2559,32 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>detect-fusions',
       [
+        '>chimerascan-index',
+        [
+          'version=s',
+          'files',
+          'bowtie-version=s',
+          'files',
+          'picard-version=s',
+          'files',
+          'reference-build=s',
+          undef,
+          'annotation-build=s',
+          undef,
+          'build=s',
+          undef,
+          'help!',
+          undef
+        ],
+        '>chimerascan',
+        [
+          'build=s',
+          undef,
+          'lsf-resource=s',
+          'files',
+          'help!',
+          undef
+        ],
         '>chimerascan-vrl',
         [
           'build=s',
