@@ -62,6 +62,10 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless $self;
 
+    # set the result before execute, though the result will update
+    # this allows the command to link underlying results to it
+    $command->result($self);
+
     my $saved_output_dir;
     if ($command->can('output_dir')) {
         if ($command->__meta__->can('stage_output') and $command->__meta__->stage_output) {
@@ -174,6 +178,7 @@ sub execute_wrapper {
     $command->status_message("Execution preceded by check for existing software result.");
     my $result_class = $command->class . '::Result';
     my %props = _copyable_properties($command, $result_class);
+    delete $props{output_dir};
     unless ($result) {
         $result = $result_class->get_or_create(
             test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
