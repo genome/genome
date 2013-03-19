@@ -12,7 +12,6 @@ use File::Compare qw(compare);
 use IPC::System::Simple qw(capture);
 use Test::More;
 
-my $tb = __PACKAGE__->builder;
 
 my %ERRORS = (
     'REPLACE_ARRAY_REF' => q('replace' value should be an ARRAY ref),
@@ -24,6 +23,7 @@ sub ERRORS {
 
 sub sub_test($$) {
     my ($desc, $code) = @_;
+    my $tb = __PACKAGE__->builder;
     $tb->ok($code->(), $desc);
 }
 
@@ -69,6 +69,8 @@ sub _compare_ok_parse_args {
 
 sub compare_ok {
     my ($file_1, $file_2, %o) = _compare_ok_parse_args(@_);
+
+    my $tb = __PACKAGE__->builder;
 
     my @compare_args = (
         $file_1,
