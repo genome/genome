@@ -107,12 +107,12 @@ sub execute {
 sub _verify_allocation_path {
     my ($class, $allocation_path) = @_;
     # I don't know why this method is private, I don't think it should be
-    if (my $parent_allocation = Genome::Disk::Allocation->_get_parent_allocation($allocation_path)) {
+    if (my $parent_allocation = Genome::Disk::Allocation->get_parent_allocation($allocation_path)) {
         die "Parent allocation (" . $parent_allocation->id . ") found for $allocation_path!";
     }
 
     # Ditto... don't think this should be private
-    if (Genome::Disk::Allocation->_get_child_allocations($allocation_path)) {
+    if (Genome::Disk::Allocation->get_child_allocations($allocation_path)) {
         die "Child allocation(s) found for $allocation_path!";
     }
 

@@ -84,16 +84,26 @@ my $allocation = Genome::Disk::Allocation->create(
 );
 ok($allocation, 'created test allocation');
 
-my $retrieved_allocation = Genome::Disk::Allocation->_get_parent_allocation($allocation->allocation_path);
+my $retrieved_allocation = Genome::Disk::Allocation->get_parent_allocation($allocation->allocation_path);
 ok($retrieved_allocation, 'found parent allocation');
-is($retrieved_allocation->id, $allocation->id, 'retrieved correct allocation via _get_parent_allocation method');
+is($retrieved_allocation->id, $allocation->id, 'retrieved correct allocation via get_parent_allocation method');
 
-$retrieved_allocation = Genome::Disk::Allocation->_get_parent_allocation($allocation->allocation_path . '/foo/bar/baz');
+$retrieved_allocation = Genome::Disk::Allocation->get_parent_allocation($allocation->allocation_path . '/foo/bar/baz');
 ok($retrieved_allocation, 'found parent allocation');
-is($retrieved_allocation->id, $allocation->id, 'retrieved correct allocation via _get_parent_allocation method');
+is($retrieved_allocation->id, $allocation->id, 'retrieved correct allocation via get_parent_allocation method');
 
-my @allocations = Genome::Disk::Allocation->_get_child_allocations('testing123');
+my @allocations = Genome::Disk::Allocation->get_child_allocations('testing123');
 ok(@allocations, 'found some child allocations');
 ok(@allocations == 1, 'found expected number of child allocations');
 ok($allocations[0]->id eq $allocation->id, 'found expected child allocation');
+
+my @all_allocations = Genome::Disk::Allocation->get_all_allocations_for_path('testing123');
+ok(@all_allocations, 'found a child allocation');
+ok(@all_allocations == 1, 'found one child allocation');
+ok($all_allocations[0]->id eq $allocation->id, 'found the expected allocation');
+
+@all_allocations = Genome::Disk::Allocation->get_all_allocations_for_path('testing123/blah/something');
+ok(@all_allocations, 'found a parent allocation');
+ok(@all_allocations == 1, 'found one parent allocation');
+ok($all_allocations[0]->id eq $allocation->id, 'found the expected allocation');
 done_testing();
