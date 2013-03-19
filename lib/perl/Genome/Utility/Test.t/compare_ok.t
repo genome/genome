@@ -99,4 +99,31 @@ sub_test('compare_ok matches diff command' => sub {
     }
 });
 
+sub_test('compare_ok replace' => sub {
+    my $a_fh = File::Temp->new(TMPDIR => 1);
+    my $a_fn = $a_fh->filename;
+    $a_fh->print("a\n");
+    $a_fh->close();
+
+    my $b_fh = File::Temp->new(TMPDIR => 1);
+    my $b_fn = $b_fh->filename;
+    $b_fh->print("b\n");
+    $b_fh->close();
+
+    test_out('not ok 1');
+    test_err(q(/# First diff:\n# --- .*\n# \+\+\+.*\n# - a\n# \+ b\n#\s+Failed test at .+ line \d+\./));
+    compare_ok($a_fn, $b_fn);
+    test_test('compare_ok failed without replace');
+
+    my $error = Genome::Utility::Test->ERRORS('REPLACE_ARRAY_REF');
+    ok($error, 'got REPLACE_ARRAY_REF error string');
+    eval { compare_ok($a_fn, $b_fn, replace => 'a') };
+    like($@, qr/$error/,
+        'got REPLACE_ARRAY_REF error with a non-array-ref replace argument');
+
+    test_out('ok 1');
+    compare_ok($a_fn, $b_fn, replace => [['a' => 'b']]);
+    test_test('compare_ok passed with replace');
+});
+
 done_testing();

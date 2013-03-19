@@ -14,6 +14,14 @@ use Test::More;
 
 my $tb = __PACKAGE__->builder;
 
+my %ERRORS = (
+    'REPLACE_ARRAY_REF' => q('replace' value should be an ARRAY ref),
+);
+sub ERRORS {
+    my ($class, $key) = @_;
+    return $ERRORS{$key};
+}
+
 sub sub_test($$) {
     my ($desc, $code) = @_;
     $tb->ok($code->(), $desc);
@@ -39,6 +47,7 @@ sub _compare_ok_parse_args {
     my %vo; # validated_o
     $vo{name}    = delete $o{name};
     $vo{filters} = delete $o{filters};
+    $vo{replace} = delete $o{replace};
     $vo{diag}    = delete $o{diag} // 1;
     my @k = keys %o;
     if (@k) {
@@ -48,6 +57,11 @@ sub _compare_ok_parse_args {
     my $filters_ref = ref($vo{filters});
     if (defined $vo{filters} && (!$filters_ref || $filters_ref ne 'ARRAY')) {
         $vo{filters} = [$vo{filters}];
+    }
+
+    my $replace_ref = ref($vo{replace});
+    if (defined $vo{replace} && (!$replace_ref || $replace_ref ne 'ARRAY')) {
+        die sprintf(q(%s: %s\n), $ERRORS{REPLACE_ARRAY_REF}, $vo{replace});
     }
 
     return ($file_1, $file_2, %vo);
@@ -60,6 +74,10 @@ sub compare_ok {
         $file_1,
         $file_2,
         sub {
+            for my $pr (@{$o{replace}}) {
+                my ($pattern, $replacement) = @{$pr};
+                map { $_ =~ s/$pattern/$replacement/ } @_;
+            }
             for my $filter (@{$o{filters}}) {
                 map { $_ =~ s/$filter//g } @_;
             }
