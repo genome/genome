@@ -298,12 +298,21 @@ class Genome::InstrumentData::AlignmentResult {
 sub __display_name__ {
     my $self = shift;
 
+    my $test_name = $self->test_name;
     my $instrument_data = $self->instrument_data;
     my $instrument_data_segment_id = $self->instrument_data_segment_id;
     my $reference_build = $self->reference_build;
     my $annotation_build = ($self->can('annotation_build') ? $self->annotation_build : ()); # TODO: pull up and normalize
 
-    my $name = $self->aligner_name 
+    my $name;
+    if ($test_name) {
+        $name = 'TEST: >>' . $test_name . '<< ';
+    }
+    else {
+        $name = '';
+    }
+
+    $name .= $self->aligner_name 
         . ' ' . $self->aligner_version 
         . ' [' . $self->aligner_params . ']'
         . ' on ' . $instrument_data->__display_name__
