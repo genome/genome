@@ -359,4 +359,15 @@ sub default_genotype_models {
     return @models;
 }
 
+sub delete {
+    my $self = shift;
+
+    for my $library ( $self->libraries ) {
+        $library->delete;
+    }
+
+    return $self->SUPER::delete;
+}
+
 1;
+
