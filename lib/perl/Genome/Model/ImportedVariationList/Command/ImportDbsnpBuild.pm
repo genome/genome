@@ -17,6 +17,11 @@ class Genome::Model::ImportedVariationList::Command::ImportDbsnpBuild {
            is_optional => 1,
            doc => 'String representing the pattern that the flat file filenames follow with [X] substituted in for the chromosome number',
        },
+       vcf_file_pattern => {
+           is => 'Text',
+           is_optional => 1,
+           doc => 'String representing the pattern that the vcf filenames follow with [X] substituted for the chromosome number',
+       },
        version => {
            is => 'Text',
            doc => 'The version of the build to create',
@@ -73,10 +78,17 @@ class Genome::Model::ImportedVariationList::Command::ImportDbsnpBuild {
            is_optional => 1,
            is_calculated => 1,
            calculate => sub {
-               my @a = split('/', $_[0]); 
-               join('/', @a[0..(@a-3)], 'ASN1_flat');
+               my @a = split('/', $_[0]);
+               my $levels;
+               if ($_[1]) {
+                $levels = 2;
+               }
+               else {
+                $levels = 3;
+               }
+               join('/', @a[0..(@a-$levels)], 'ASN1_flat');
            },
-          calculate_from => ['vcf_file_url'],
+          calculate_from => ['vcf_file_url', 'vcf_file_pattern'],
        },
    ],
 };
@@ -104,6 +116,8 @@ sub execute {
         my $import_vcf = Genome::Model::Tools::Dbsnp::ImportVcf->create(
             vcf_file_url => $self->vcf_file_url,
             ($self->flat_file_pattern ? (flat_file_pattern => $self->flat_file_pattern) : ()),
+            ($self->vcf_file_pattern ? (vcf_file_pattern => $self->vcf_file_pattern) : ()),
+            ($self->chromosome_names ? (chromosome_names => [$self->chromosome_names]) : ()),
             output_file_path => $original_file_path,
             flat_url => $self->flat_url,
         );
