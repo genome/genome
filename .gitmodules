@@ -256,3 +256,6 @@
 [submodule "vendor/gatk-protected"]
 	path = vendor/gatk-protected
 	url = git@github.com:genome-vendor/gatk-protected.git
+[submodule "vendor/picard-tools"]
+	path = vendor/picard-tools
+	url = https://github.com/genome-vendor/picard-tools.git
