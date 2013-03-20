@@ -18,7 +18,7 @@ sub run_indexer {
     my $bowtie_dir =  Genome::Model::Tools::Bowtie->base_path($self->bowtie_version);
     my $executable = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult->get_executable_path($self->version);
 
-    my $cmd = "$executable chimerascan_index.py --bowtie-dir=$bowtie_dir $fasta $gene_file $output_dir";
+    my $cmd = "$executable chimerascan_index.py --bowtie-dir='$bowtie_dir' '$fasta' '$gene_file' '$output_dir'";
 
     Genome::Sys->shellcmd(
         cmd => $cmd,

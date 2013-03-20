@@ -17,13 +17,14 @@ our @EXPORT_OK = qw(test_create);
 
 sub test_create {
     my %parameters = @_;
-    my $chimerascan_result_class = $parameters{chimerascan_result_class};
-    my $chimerascan_version = $parameters{chimerascan_version};
-    my $picard_version = $parameters{picard_version};
-    my $alignment_result = $parameters{alignment_result};
-    my $annotation_build = $parameters{annotation_build};
+    my $chimerascan_result_class = delete $parameters{chimerascan_result_class};
+    my $chimerascan_version = delete $parameters{chimerascan_version};
+    my $picard_version = delete $parameters{picard_version};
+    my $alignment_result = delete $parameters{alignment_result};
+    my $annotation_build = delete $parameters{annotation_build};
 
-    use_ok($chimerascan_result_class, "Can use result class");
+    my $class = $chimerascan_result_class;
+    use_ok($class, "Can use result class");
 
     my %params = (
         alignment_result => $alignment_result,
@@ -31,8 +32,8 @@ sub test_create {
         detector_params => "--reuse-bam 0 --bowtie-version=",
         annotation_build => $annotation_build,
         picard_version => $picard_version,
+        %parameters,
     );
-    my $class = 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult';
 
     test_for_error($class, \%params, "You must supply a bowtie version");
 
