@@ -74,8 +74,8 @@ sub compare_ok {
     my $tb = __PACKAGE__->builder;
 
     my @compare_args = (
-        $file_1,
         $file_2,
+        $file_1,
         sub {
             for my $pr (@{$o{replace}}) {
                 my ($pattern, $replacement) = @{$pr};
@@ -86,7 +86,7 @@ sub compare_ok {
             }
             my $c = ($_[0] ne $_[1]);
             if ($c == 1 && $o{diag}) {
-                $tb->diag("First diff:\n--- " . $file_1 . "\n+++ " . $file_2 . "\n- " . $_[0] . "+ " . $_[1]);
+                $tb->diag("First diff:\n--- " . $file_2 . "\n+++ " . $file_1 . "\n- " . $_[0] . "+ " . $_[1]);
             }
             return $c;
         }
