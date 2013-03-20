@@ -130,11 +130,24 @@ sub run_ok {
 }
 
 sub data_dir_ok {
-    my ($class, $package) = @_;
-    (my $dirname = $package) =~ s/::/-/g;
-    my $dirpath = File::Spec->join($ENV{GENOME_TEST_INPUTS}, $dirname);
+    my $data_dir = data_dir(@_);
     my $tb = __PACKAGE__->builder;
-    $tb->ok(-d $dirpath, "data_dir exists: $dirpath");
+    $tb->ok(-d $data_dir, "data_dir exists: $data_dir");
+    return $data_dir;
+}
+
+sub data_dir {
+    my ($class, $package, $test_version) = @_;
+
+    # "validate" package
+    $package->class;
+
+    (my $dirname = $package) =~ s/::/-/g;
+    my @parts = ($ENV{GENOME_TEST_INPUTS}, $dirname);
+    if ($test_version) {
+        push @parts, $test_version;
+    }
+    my $dirpath = File::Spec->join(@parts);
     return $dirpath;
 }
 
