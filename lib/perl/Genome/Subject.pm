@@ -106,33 +106,26 @@ sub __display_name__ {
 }
 
 sub create {
-    my ($class, %params) = @_;
+    my $class = shift;
 
-    # This extra processing allows for someone to create a subject with properties that aren't listed in any of the
-    # class definitions. Instead of having UR catch these extras and die, they are captured here and later turned into
-    # subject attributes. Useful for clinical data that isn't expected but should nonetheless be recorded.
-    my %extra;
-    my @property_names = ('id', map { $_->property_name } ($class->__meta__->_legacy_properties, $class->__meta__->all_id_by_property_metas));
-    for my $param (sort keys %params) {
-        unless (grep { $param eq $_ } @property_names) {
-            $extra{$param} = delete $params{$param};
-        }
-    }
+    my ($bx, %extra) = $class->define_boolexpr(@_);
+    return if not $bx;
 
-    my $self = $class->SUPER::create(%params);
-    unless ($self) {
-        Carp::confess "Could not create subject with params: " . Data::Dumper::Dumper(\%params);
-    }
+    my $self = $class->SUPER::create($bx);
+    return if not $self;
 
+    my $nomenclature = $self->nomenclature // 'WUGC';
     for my $label (sort keys %extra) {
         my $attribute = Genome::SubjectAttribute->create(
             attribute_label => $label,
             attribute_value => $extra{$label},
-            subject_id => $self->subject_id,
+            subject_id => $self->id,
+            nomenclature => $nomenclature,
         );
         unless ($attribute) {
-            $self->error_message("Could not create attribute $label => " . $extra{$label} . " for subject " . $self->subect_id);
+            $self->error_message("Could not create attribute $label => ".$extra{$label}."!");
             $self->delete;
+            return;
         }
     }
 
