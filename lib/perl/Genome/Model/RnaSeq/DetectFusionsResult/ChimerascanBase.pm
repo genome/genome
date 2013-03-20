@@ -415,11 +415,11 @@ sub _resolve_index_dir {
         #That way it is committed, even if we fail and other builds don't need to wait on
         #the overall chimerscan run just to get their index results.
         my $cmd = "genome model rna-seq detect-fusions $index_cmd";
-        $cmd .= ' --version=' . $self->version;
-        $cmd .= ' --bowtie-version=' . $bowtie_version;
-        $cmd .= ' --reference-build=' . $self->alignment_result->reference_build->id;
-        $cmd .= ' --annotation-build=' . $self->annotation_build->id;
-        $cmd .= ' --picard-version=' . $self->picard_version;
+        $cmd .= ' --version="' . $self->version . '"';
+        $cmd .= ' --bowtie-version="' . $bowtie_version . '"';
+        $cmd .= ' --reference-build="' . $self->alignment_result->reference_build->id . '"';
+        $cmd .= ' --annotation-build="' . $self->annotation_build->id . '"';
+        $cmd .= ' --picard-version="' . $self->picard_version . '"';
 
         Genome::Sys->shellcmd(cmd => $cmd);
 
@@ -445,7 +445,7 @@ sub _get_index {
     my ($self, $bowtie_version) = @_;
 
     my $index_class = $self->_chimerascan_result_class . "::Index";
-    my $index = $index_class->get_with_lock(
+    my %params = (
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         version => $self->version,
         bowtie_version => $bowtie_version,
@@ -453,6 +453,8 @@ sub _get_index {
         annotation_build => $self->annotation_build,
         picard_version => $self->picard_version,
     );
+
+    my $index = $index_class->get_with_lock(%params);
 
     return $index;
 }
