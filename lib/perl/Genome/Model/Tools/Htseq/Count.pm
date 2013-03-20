@@ -298,9 +298,15 @@ sub _merge_v1 {
 
 sub help_synopsis {
     return <<EOS
-gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%' and test_name is null"
+
+gmt htseq count --alignment-results "instrument_data.id=2890686892" --app-version 0.5.4p1
+
+gmt htseq count --alignment-results "instrument_data.sample.name='H_MU-752713-1209062'" --app-version 0.5.4p1
 
 gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%'" --app-version 0.5.4p1
+
+# skip any data sets flagged as test data
+gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%' and test_name is null"
 EOS
 }
 
