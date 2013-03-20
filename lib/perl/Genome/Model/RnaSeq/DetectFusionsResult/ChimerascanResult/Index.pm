@@ -18,7 +18,7 @@ sub run_indexer {
     my $bowtie_dir =  Genome::Model::Tools::Bowtie->base_path($self->bowtie_version);
     my $cmd_path = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->_path_for_version($self->version);
 
-    my $cmd = "python $cmd_path/chimerascan_index.py --bowtie-dir='$bowtie_dir' '$fasta $gene_file' '$output_dir'";
+    my $cmd = "python $cmd_path/chimerascan_index.py --bowtie-dir='$bowtie_dir' '$fasta' '$gene_file' '$output_dir'";
 
     local $ENV{PYTHONPATH} =  ($ENV{PYTHONPATH} ? $ENV{PYTHONPATH} . ":" : "")  .
         Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult->_python_path_for_version($self->version);
