@@ -26,7 +26,8 @@ test_create(
         annotation_build => $annotation_build,
         chimerascan_version => $chimerascan_version,
         chimerascan_result_class => $chimerascan_result_class,
-        picard_version => $picard_version
+        picard_version => $picard_version,
+        original_bam_paths => \@bam_files,
 );
 
 done_testing();
