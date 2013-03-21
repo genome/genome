@@ -26,4 +26,24 @@ sub run_indexer {
     );
 }
 
+sub prepare_gene_file {
+    my $self = shift;
+
+    my $annotation_build = $self->annotation_build;
+    my $reference_sequence = $annotation_build->reference_sequence;
+
+    my $executable = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult->get_executable_path($self->version);
+    my $gtf_file = $annotation_build->annotation_file('gtf', $reference_sequence->id);
+    my $gene_file = $self->gene_file;
+
+    my $cmd = "$executable gtf_to_genepred.py '$gtf_file' '$gene_file'";
+
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        input_files => [$gtf_file],
+        output_files => [$gene_file],
+    );
+    return 1;
+}
+
 1;
