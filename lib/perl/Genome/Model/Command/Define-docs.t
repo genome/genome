@@ -38,6 +38,8 @@ my @sub_commands_expected = qw/
   rna-seq
   simple-alignment
   small-rna
+  somatic
+  somatic-capture
   somatic-validation
   somatic-variation
   test-pipeline
