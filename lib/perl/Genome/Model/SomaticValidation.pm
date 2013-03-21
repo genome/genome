@@ -57,6 +57,10 @@ class Genome::Model::SomaticValidation {
             is => 'Text',
             doc => 'version of tiering BED files to use (tiering is not performed if not specified)',
         },
+        varscan_validation_version => {
+            is => 'Text',
+            doc => 'version of varscan to use in the post-variant detection validation processes',
+        },
 
         #RefCov parameters
         refcov_wingspan_values => {
