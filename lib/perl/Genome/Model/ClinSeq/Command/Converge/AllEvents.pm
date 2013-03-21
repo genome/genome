@@ -405,15 +405,15 @@ sub check_event_labels{
   my $labs_given = scalar(@event_labs);
 
   my %event_labs;
-  $event_labs{$self->snv_label}{name} = 'snv_label' if $self->snv_label;
-  $event_labs{$self->indel_label}{name} = 'indel_label' if $self->indel_label;
-  $event_labs{$self->cnv_gain_label}{name} = 'cnv_gain_label' if $self->cnv_gain_label;
-  $event_labs{$self->cnv_loss_label}{name} = 'cnv_loss_label' if $self->cnv_loss_label;
-  $event_labs{$self->de_up_label}{name} = 'de_up_label' if $self->de_up_label;
-  $event_labs{$self->de_down_label}{name} = 'de_down_label' if $self->de_down_label;
-  $event_labs{$self->sv_fusion_label}{name} = 'sv_fusion_label' if $self->sv_fusion_label;
-  $event_labs{$self->tophat_outlier_label}{name} = 'tophat_outlier_label' if $self->tophat_outlier_label;
-  $event_labs{$self->cufflinks_outlier_label}{name} = 'cufflinks_outlier_label' if $self->cufflinks_outlier_label;
+  $event_labs{$self->snv_label}{name} = 'SNV' if $self->snv_label;
+  $event_labs{$self->indel_label}{name} = 'InDel' if $self->indel_label;
+  $event_labs{$self->cnv_gain_label}{name} = 'CNV Gain' if $self->cnv_gain_label;
+  $event_labs{$self->cnv_loss_label}{name} = 'CNV Loss' if $self->cnv_loss_label;
+  $event_labs{$self->de_up_label}{name} = 'DE Up' if $self->de_up_label;
+  $event_labs{$self->de_down_label}{name} = 'DE Down' if $self->de_down_label;
+  $event_labs{$self->sv_fusion_label}{name} = 'SV Fusion' if $self->sv_fusion_label;
+  $event_labs{$self->tophat_outlier_label}{name} = 'Tophat Outlier' if $self->tophat_outlier_label;
+  $event_labs{$self->cufflinks_outlier_label}{name} = 'Cufflinks Outlier' if $self->cufflinks_outlier_label;
   my $labs_found = keys %event_labs;
 
   unless ($labs_given == $labs_found){
@@ -445,18 +445,16 @@ sub check_event_labels{
   my $c = 0;
   open (LEG, ">$legend_file") || die $self->error_message("Could not open events legend file for writing: $legend_file");
   print LEG "event_type\tevent_label\tindex\tcolor\n";
-  print LEG "none\t"."-"."\t$c\t#FFFFFF\n"; #White for no hits
+  print LEG "None\t"."-"."\t$c\t#FFFFFF\n"; #White for no hits
   foreach my $label (sort {$event_labs{$a}->{name} cmp $event_labs{$b}->{name}} keys %event_labs){
     my $name = $event_labs{$label}{name};
-    $name =~ s/_label//;
-    $name =~ s/_/ /g;
     $c++;
     my $color = $event_labs{$label}{color};
     print LEG "$name\t$label\t$c\t$color\n";
     $event_labs{$label}{index} = $c;
   }
   $c++;
-  print LEG "multi\tvariable\t$c\t#000000\n"; #Black for multiple hits
+  print LEG "Multiple\tvariable\t$c\t#000000\n"; #Black for multiple hits
   close(LEG);
 
   return \%event_labs;
