@@ -48,7 +48,7 @@ sub execute {
         chomp( $line );
         my ( $chrom, $start, $refbase, $indel, @rest ) = split( /\t/, $line );
 
-        next if( $chrom =~ m/^(CHROM|REF)/ );
+        next if( $chrom =~ m/^(CHROM|REF)/i );
         # Fix unsupported chromosome names if necessary
         $chrom =~ s/^chr//;
         $chrom = "MT" if( $chrom eq "M" );
