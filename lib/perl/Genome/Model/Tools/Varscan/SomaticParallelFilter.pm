@@ -39,7 +39,7 @@ class Genome::Model::Tools::Varscan::SomaticParallelFilter {
 	],	
 
 	has_param => [
-		lsf_resource => { default_value => 'select[model!=Opteron250 && type==LINUX64] rusage[mem=4000]'},
+		lsf_resource => { default_value => 'select[rusage[mem=4000]'},
        ],
 };
 
@@ -310,7 +310,7 @@ sub run_filter
 			{
 				$cmd .= " --reference " . $self->reference;
 			}
-                        system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
+                        system("bsub -q long -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
                 }
         }        
 }
@@ -334,7 +334,7 @@ sub run_indel_filter
                 else
                 {
                         my $cmd = "gmt somatic filter-false-indels --variant-file $variant_file --bam-file $bam_file --output-file $variant_file.fpfilter --filtered-file $variant_file.fpfilter.removed";
-                        system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
+                        system("bsub -q long -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
                 }
         }        
 }
