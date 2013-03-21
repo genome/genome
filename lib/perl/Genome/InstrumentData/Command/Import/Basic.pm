@@ -204,6 +204,7 @@ sub _resolve_kilobytes_requested {
         $kilobytes_requested += $size;
     }
     $kilobytes_requested *= 2 if $self->format =~ /fast[aq]/;# extra for tar file
+    $kilobytes_requested *= 3 if $self->format =~ /bam/;# extra for sorting
 
     return $kilobytes_requested;
 }
