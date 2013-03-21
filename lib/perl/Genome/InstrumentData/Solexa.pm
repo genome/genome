@@ -770,6 +770,11 @@ sub _convert_trimmer_to_sx_commands {
         my $property_name = $params[$i];
         $property_name =~ s/\-/_/g;
         my $property_meta = $sx_class_meta->property_meta_for_name($property_name);
+        if ( not $property_meta ) {
+            my $starts_with_no_property_name = $property_name;
+            $starts_with_no_property_name =~ s/^no//;
+            $property_meta = $sx_class_meta->property_meta_for_name($starts_with_no_property_name);
+        }
         Carp::confess("Failed to get property '$property_name' from sx class ".$sx_class_meta->class_name) if not $property_meta;
         my $param_name = $params[$i];
         $param_name =~ s/_/-/g;
