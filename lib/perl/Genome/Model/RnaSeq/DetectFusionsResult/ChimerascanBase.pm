@@ -424,10 +424,7 @@ sub _resolve_index_dir {
         Genome::Sys->shellcmd(cmd => $cmd);
 
         # Force UR to query the datasource instead of using its cache for this lookup.
-        my $previous_value = UR::Context->query_underlying_context;
-        UR::Context->query_underlying_context(1);
-        $index = $self->_get_index($bowtie_version);
-        UR::Context->query_underlying_context($previous_value);
+        $index = $self->_get_index($bowtie_version, 1);
     }
 
     if ($index) {
@@ -442,7 +439,7 @@ sub _resolve_index_dir {
 }
 
 sub _get_index {
-    my ($self, $bowtie_version) = @_;
+    my ($self, $bowtie_version, $query_underlying_context) = @_;
 
     my $index_class = $self->_chimerascan_result_class . "::Index";
     my %params = (
@@ -454,7 +451,16 @@ sub _get_index {
         picard_version => $self->picard_version,
     );
 
-    my $index = $index_class->get_with_lock(%params);
+    my $index;
+    if ($query_underlying_context) {
+        # Force UR to query the datasource instead of using its cache for this lookup.
+        my $previous_value = UR::Context->query_underlying_context;
+        UR::Context->query_underlying_context(1);
+        $index = $index_class->get_with_lock(%params);
+        UR::Context->query_underlying_context($previous_value);
+    } else {
+        $index = $index_class->get_with_lock(%params);
+    }
 
     return $index;
 }
