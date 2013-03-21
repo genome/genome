@@ -1,127 +1,97 @@
-package Genome::Model::Tools::Varscan::PullOneTwoBpIndels;     # rename this when you give the module file a different name <--
-
-#####################################################################################################################################
-# PullOneTwoBpIndels - Generate lists of 1-2 bp and 3+ indels, run GATK recalibration, and then sort and index bams
-#
-#       AUTHOR:         Will Schierding (wschierd@genome.wustl.edu)
-#
-#       CREATED:        11/29/2010 by W.S.
-#       MODIFIED:       11/29/2010 by W.S.
-#       MODIFIED:       09/28/2012 by N.D.
-#
-#       NOTES:
-#
-#####################################################################################################################################
+package Genome::Model::Tools::Varscan::PullOneTwoBpIndels;
 
 use strict;
 use warnings;
 
 use FileHandle;
-use File::Basename; #for file name parsing
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use File::Basename;
+use Genome;
 use Genome::Info::IUB;
 
 class Genome::Model::Tools::Varscan::PullOneTwoBpIndels {
     is => 'Command',
-
-    has => [                               
-# specify the command's single-value properties (parameters) <---
-    project_name => { 
-        is => 'Text',
-        doc => "Name of the project i.e. ASMS" ,
-        is_optional => 1},
-
-    list_of_indel_files_to_validate => { 
-        is => 'Text',
-        doc => "A file listing indel files to include in the validation process, 1 filename per line, no headers. Files should either be named ending in '.bed' or be in annotation format: chr start stop ref var... If you specify a somatic validation build and the variants/indels.hq.bed file is not in your file list, those indels will be included in the validation process in addition to your file list. If any file on your list ends with '.bed', then it will be converted to annotation format for processing via Varscan, etc, which expect 1-based start positions (not bed)." ,
-        is_optional => 1},
-
-    small_indel_output_bed => {
-        is => 'Text',
-        doc => "File of small indels to be realigned. BED format - must be named *.bed! Note that the '.bed' output version of this file has padded start and stop to allow more robust local realignment. The '.annotation_format' output version has true coordinates." ,
-        is_optional => 1 },
-
-    large_indel_output_bed => {
-        is => 'Text',
-        doc => "File of large indels to be processed using other tools. BED format - must be named *.bed!" ,
-        is_optional => 1},
-
-    tumor_bam   => {
-        is => 'Text',
-        doc => "Tumor Bam File (Validation Bam)" ,
-        is_optional => 1},
-
-    normal_bam  => {
-        is => 'Text',
-        doc => "Normal Bam File (Validation Bam)" ,
-        is_optional => 1},
-
-    relapse_bam => {
-        is => 'Text',
-        doc => "(Optional) Relapse Bam File (Validation Bam)" ,
-        is_optional => 1},
-
-    reference_fasta => {
-        is => 'Text',
-        doc => "Reference Fasta" ,
-        is_optional => 1,
-        #default => "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa"},
-    },
-
-    varscan_indel_output => {
-        is => 'Text',
-        doc => "gmt varscan validation output run on realigned bams" ,
-        is_optional => 1},
-
-    varscan_snp_output  => {
-        is => 'Text',
-        doc => "gmt varscan validation output run on realigned bams" ,
-        is_optional => 1},
-
-    final_output_file   => {
-        is => 'Text',
-        doc => "gmt varscan process-validation-indels final output file labeling indels as Somatic or otherwise" ,
-        is_output => 1,
-        is_optional => 1},
-
-    skip_if_output_present      => {
-        is => 'Boolean',
-        doc => "Skip Creating new Bam Files if they exist" ,
-        is_optional => 1,
-        default => ""},
-
-    realigned_bam_file_directory => {
-        is => 'Text',
-        doc => "Where to dump the realigned bam file",
-        is_optional => 1},
-
-    normal_purity => {
-        is => 'Float',
-        doc => "Normal purity param to pass to varscan",
-        is_optional => 0,
-        default => 1},
-
-    min_var_frequency => {
-        is => 'Float',
-        doc => "Minimum variant frequency to pass to varscan",
-        is_optional => 0,
-        default => 0.08},
-
-    somatic_validation_build => {
-        is => 'Integer',
-        doc => "Somatic validation build to use. If this is set, defaults will be set inside that build directory for final_output_file,realigned_bam_file_directory,small_indel_output_bed,large_indel_output_bed.",
-        is_optional => 1,
-        is_input => 1,
-        is_output => 1,
-    },
-    ],    
+    doc => "Generate lists of 1-2 bp and 3+ indels, run GATK recalibration, and then sort and index bams",
+    has => [
+        varscan_version => {
+            is => 'Text',
+            doc => "Varscan version to use when running varscan validation" ,
+            is_input => 1,
+            is_optional => 1,
+        },
+        project_name => { 
+            is => 'Text',
+            doc => "Name of the project i.e. ASMS" ,
+            is_optional => 1},
+        list_of_indel_files_to_validate => { 
+            is => 'Text',
+            doc => "A file listing indel files to include in the validation process, 1 filename per line, no headers. Files should either be named ending in '.bed' or be in annotation format: chr start stop ref var... If you specify a somatic validation build and the variants/indels.hq.bed file is not in your file list, those indels will be included in the validation process in addition to your file list. If any file on your list ends with '.bed', then it will be converted to annotation format for processing via Varscan, etc, which expect 1-based start positions (not bed)." ,
+            is_optional => 1},
+        small_indel_output_bed => {
+            is => 'Text',
+            doc => "File of small indels to be realigned. BED format - must be named *.bed! Note that the '.bed' output version of this file has padded start and stop to allow more robust local realignment. The '.annotation_format' output version has true coordinates." ,
+            is_optional => 1 },
+        large_indel_output_bed => {
+            is => 'Text',
+            doc => "File of large indels to be processed using other tools. BED format - must be named *.bed!" ,
+            is_optional => 1},
+        tumor_bam   => {
+            is => 'Text',
+            doc => "Tumor Bam File (Validation Bam)" ,
+            is_optional => 1},
+        normal_bam  => {
+            is => 'Text',
+            doc => "Normal Bam File (Validation Bam)" ,
+            is_optional => 1},
+        relapse_bam => {
+            is => 'Text',
+            doc => "(Optional) Relapse Bam File (Validation Bam)" ,
+            is_optional => 1},
+        reference_fasta => {
+            is => 'Text',
+            doc => "Reference Fasta" ,
+            is_optional => 1,
+        },
+        varscan_indel_output => {
+            is => 'Text',
+            doc => "gmt varscan validation output run on realigned bams" ,
+            is_optional => 1},
+        varscan_snp_output  => {
+            is => 'Text',
+            doc => "gmt varscan validation output run on realigned bams" ,
+            is_optional => 1},
+        final_output_file   => {
+            is => 'Text',
+            doc => "gmt varscan process-validation-indels final output file labeling indels as Somatic or otherwise" ,
+            is_output => 1,
+            is_optional => 1},
+        skip_if_output_present      => {
+            is => 'Boolean',
+            doc => "Skip Creating new Bam Files if they exist" ,
+            is_optional => 1,
+            default => ""},
+        realigned_bam_file_directory => {
+            is => 'Text',
+            doc => "Where to dump the realigned bam file",
+            is_optional => 1},
+        normal_purity => {
+            is => 'Float',
+            doc => "Normal purity param to pass to varscan",
+            is_optional => 0,
+            default => 1},
+        min_var_frequency => {
+            is => 'Float',
+            doc => "Minimum variant frequency to pass to varscan",
+            is_optional => 0,
+            default => 0.08},
+        somatic_validation_build => {
+            is => 'Integer',
+            doc => "Somatic validation build to use. If this is set, defaults will be set inside that build directory for final_output_file,realigned_bam_file_directory,small_indel_output_bed,large_indel_output_bed.",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1,
+        },
+    ],
 };
-
-sub sub_command_sort_position { 12 }
-
-sub help_brief {                            # keep this to just a few words <---
-    "Generate lists of 1-2 bp and 3+ indels, run GATK recalibration, and then sort and index bams"
-}
 
 sub help_synopsis {
     return <<EOS
@@ -129,7 +99,7 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           # this is what the user will see with the longer version of help. <---
+sub help_detail {
     return <<EOS
                 Generate lists of 1-2 bp and 3+ indels, run GATK recalibration, and then sort and index bams. Run varscan validation on the realigned bams, and then run varscan process-validation-indels on the output.
 EOS
@@ -191,8 +161,20 @@ sub execute {
         unless ($self->varscan_snp_output) {
             $self->varscan_snp_output("$base_dir/varscan_snps");
         }
+
+        # Set the varscan version
+        if ($self->varscan_version) {
+            die $self->error_message("Please set varscan_version or somatic_variation_build but not both.");
+        } else {
+            my $pp = $build->processing_profile;
+            my $varscan_version = $pp->varscan_validation_version;
+            unless ($varscan_version) {
+                die $self->error_message("Could not get varscan version from processing profile " . $pp->id);
+            }
+            $self->varscan_version($varscan_version);
+        }
     } else {
-        my @required_properties = qw(final_output_file realigned_bam_file_directory small_indel_output_bed list_of_indel_files_to_validate varscan_indel_output varscan_snp_output tumor_bam normal_bam reference_fasta);
+        my @required_properties = qw(final_output_file realigned_bam_file_directory small_indel_output_bed list_of_indel_files_to_validate varscan_indel_output varscan_snp_output tumor_bam normal_bam reference_fasta varscan_version);
         my $fail = 0;
         for my $property (@required_properties) {
             unless (defined $self->$property) {
@@ -416,6 +398,7 @@ sub execute {
     else{
         # This was added so things are testable for now
         my $cmd = Genome::Model::SomaticValidation::Command::ValidateSmallIndels->create(
+            varscan_version => $self->varscan_version,
             final_output_file => $self->final_output_file,
             realigned_bam_file_directory => $self->realigned_bam_file_directory,
             small_indel_output_bed => $small_indel_list,

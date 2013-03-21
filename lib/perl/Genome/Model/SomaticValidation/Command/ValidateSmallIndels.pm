@@ -11,6 +11,12 @@ use Workflow::Simple;
 
 class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
     is => 'Genome::Command::Base',
+    has => [
+        varscan_version => {
+            is => 'Text',
+            doc => "Varscan version to use when running varscan validation" ,
+        },
+    ],
     has_optional => [
         build => {
             is => 'Genome::Model::Build::SomaticValidation',
@@ -124,6 +130,7 @@ sub _run_workflow {
     $input{reference} = $self->reference_fasta;
 
     # Params for varscan
+    $input{varscan_version} = $self->varscan_version;
     $input{varscan_indel_output} = $self->varscan_indel_output;
     $input{varscan_snp_output}= $self->varscan_snp_output;
     $input{varscan_params} = $self->varscan_params;
@@ -246,7 +253,7 @@ __DATA__
   <link fromOperation="input connector" fromProperty="index_bam" toOperation="Realign Indels Normal" toProperty="index_bam" />
 
   <link fromOperation="input connector" fromProperty="reference" toOperation="Varscan Validation" toProperty="reference" />
-  <link fromOperation="input connector" fromProperty="reference" toOperation="Varscan Validation" toProperty="reference" />
+  <link fromOperation="input connector" fromProperty="varscan_version" toOperation="Varscan Validation" toProperty="version" />
   <link fromOperation="input connector" fromProperty="varscan_indel_output" toOperation="Varscan Validation" toProperty="output_indel" />
   <link fromOperation="input connector" fromProperty="varscan_snp_output" toOperation="Varscan Validation" toProperty="output_snp" />
   <link fromOperation="input connector" fromProperty="varscan_params" toOperation="Varscan Validation" toProperty="varscan_params" />
@@ -285,6 +292,7 @@ __DATA__
     <inputproperty>realigned_tumor_bam</inputproperty>
     <inputproperty>realigned_normal_bam</inputproperty>
     <inputproperty>reference</inputproperty>
+    <inputproperty>varscan_version</inputproperty>
     <inputproperty>varscan_indel_output</inputproperty>
     <inputproperty>varscan_snp_output</inputproperty>
     <inputproperty>varscan_params</inputproperty>
