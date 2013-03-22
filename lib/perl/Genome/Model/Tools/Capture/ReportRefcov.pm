@@ -189,11 +189,14 @@ sub parse_stats_file
 
 	foreach my $depth (sort descending keys %coverage_by_depth)
 	{
-		$coverage_header .= "\t" if($coverage_header);
-		$coverage_header .= $depth . "x";
-		
-		$coverage_result .= "\t" if($coverage_result);
-		$coverage_result .= $coverage_by_depth{$depth};
+		if($depth <= 20)
+		{
+			$coverage_header .= "\t" if($coverage_header);
+			$coverage_header .= $depth . "x";
+			
+			$coverage_result .= "\t" if($coverage_result);
+			$coverage_result .= $coverage_by_depth{$depth};			
+		}
 	}
 	
 	sub descending
