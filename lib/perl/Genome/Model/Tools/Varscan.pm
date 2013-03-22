@@ -7,10 +7,27 @@ use Genome;
 use Data::Dumper;
 use File::Temp;
 
-my $DEFAULT_VERSION = '2.3.2';
+my $DEFAULT_VERSION = '2.3.5';
 
 class Genome::Model::Tools::Varscan {
     is => ['Command'],
+    has => [
+        samtools_version => {
+            is    => 'String',
+            doc => 'version of samtools to use when doing pileup or mpileup. Must be r963 or earlier if using samtools 2.2.4, which only supports pileup.',
+            default_value => "r963",
+        },
+        samtools_use_baq => {
+            is => 'Boolean',
+            doc => 'When doing pileup/mpileup, should we enable baq (-B) option',
+            default_value => 1,
+        },
+        samtools_params => {
+            is    => 'String',
+            doc => 'Additional parameters to pass to samtools when doing pileup/mpileup',
+            is_optional => 1,
+        },
+    ],
     has_optional_input => [
         version => {
             is    => 'String',
@@ -22,6 +39,7 @@ class Genome::Model::Tools::Varscan {
             doc => 'Stop varscan from putting headers on its output files',
             default_value => '0',
         },
+        
     ],
 };
 
@@ -36,6 +54,7 @@ EOS
 }
 
 my %VARSCAN_VERSIONS = (
+    '2.3.5' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.5.jar',
     '2.3.2' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.2.jar',
     '2.3.1' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.1.jar',
     '2.2.9' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.2.9.jar',
@@ -79,13 +98,17 @@ sub pileup_command_for_reference_and_bam {
     $mapqual = 10 if(!$mapqual);
 
     my $command;
-    # TODO this should be made a little cleaner, but it works for now.
+    my $samtools_version = $self->samtools_version;
+    my $samtools_params = $self->samtools_params || "";
+    my $samtools_use_baq = $self->samtools_use_baq;
+    unless ($samtools_use_baq) {
+        $samtools_params = join(" ", ($samtools_params, "-B")); #turn off baq
+    }
+    my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($samtools_version);
     if ($self->version eq "2.2.4") {
-        my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version("r963"); # The last version of samtools that supports pileup
-        $command = "$samtools_path view -b -u -q $mapqual $bam | $samtools_path pileup -f $reference -";
+        $command = "$samtools_path view -b -u -q $mapqual $bam | $samtools_path pileup $samtools_params -f $reference -";
     } else {
-        my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version("r963"); # The latest version of samtools installed should go here
-        $command = "$samtools_path mpileup -f $reference -q $mapqual $bam";
+        $command = "$samtools_path mpileup -f $reference -q $mapqual $samtools_params $bam";
     }
 
     return $command;
