@@ -5,7 +5,7 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok);
+our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort);
 
 use Carp qw(croak);
 use File::Compare qw(compare);
@@ -26,6 +26,11 @@ sub sub_test($$) {
     my ($desc, $code) = @_;
     my $tb = __PACKAGE__->builder;
     $tb->ok($code->(), $desc);
+}
+
+sub abort {
+    diag "  Aborted.";
+    die;
 }
 
 sub _compare_ok_parse_args {
