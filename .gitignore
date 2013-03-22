@@ -6,3 +6,4 @@ tags
 .DS_Store
 bin/perl
 bin/prove
+.*.swp

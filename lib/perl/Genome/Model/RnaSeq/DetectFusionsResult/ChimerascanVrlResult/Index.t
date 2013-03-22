@@ -1,5 +1,4 @@
 #!/usr/bin/env genome-perl
-use strict;
 use warnings;
 
 BEGIN {
@@ -9,11 +8,14 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
+use_ok('Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index');
 
 my $chimerascan_version = '0.4.6';
 my $picard_version = 1.82;
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanVrlResult-Index/v2";
+my $annotation_genepred = File::Spec->join($data_dir, '106942997-all_sequences.genepred');
+diag "Test data located at: $data_dir";
 
 my $reference_model = Genome::Model::ImportedReferenceSequence->create(
     name => '1 chr test model',
@@ -38,18 +40,28 @@ my $annotation_model = Genome::Model::ImportedAnnotation->create(
 my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
     version => 'v1',
     model => $annotation_model,
+    reference_sequence => $reference_build,
     data_directory => '/gscmnt/gc8002/info/model_data/2772828715/build125092315', #65_37j_v6
 );
+no warnings qw(redefine);
+*Genome::Model::Build::ImportedAnnotation::annotation_file= sub { return 'test_filename.gtf' };
 
 #hack to shorten results
 my $tx_sub = $annotation_build->can('transcript_iterator');
-no warnings qw(redefine);
 *Genome::Model::Build::ImportedAnnotation::transcript_iterator = sub {
     my $self = shift;
     my %p = @_;
     $p{chrom_name} = 'GL000191.1';
     $self->warning_message('Transcript Iterator hardcoded to chromosome ' . $p{chrom_name} . ' for test.');
     return $tx_sub->($self, %p);
+};
+*Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index::_convert_gtf_to_genepred = sub {
+    my $self = shift;
+    my $gene_file = $self->gene_file;
+    Genome::Sys->shellcmd(cmd => "cp $annotation_genepred $gene_file",
+        input_files => [$annotation_genepred],
+        output_files => [$gene_file],
+    );
 };
 use warnings qw(redefine);
 

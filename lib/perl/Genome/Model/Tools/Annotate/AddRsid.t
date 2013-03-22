@@ -3,7 +3,7 @@ use warnings;
 
 use above "Genome";
 use Genome::Utility::Test qw(compare_ok abort);
-use Test::More tests => 11;
+use Test::More tests => 14;
 
 my $class = 'Genome::Model::Tools::Annotate::AddRsid';
 use_ok($class);
@@ -39,6 +39,12 @@ eval {
         { in  => 'NT=ref;QSS=5;QSS_NT=5;SGT=TT->CT;TQSS=2;TQSS_NT=2',
           out => [],
         },
+        { in  => '',
+          out => [],
+        },
+        { in  => 'dbSNPBuildID=129,137;GMAF=0.1438',
+          out => [129, 137],
+        },
         { in  => 'dbSNPBuildID=129, 137;GMAF=0.1438',
           out => [129, 137],
         },
@@ -50,4 +56,7 @@ eval {
         my @out = $split_dbSNPBuildID->($case->{in});
         is_deeply(\@out, $case->{out}, $name);
     }
+
+    eval { $split_dbSNPBuildID->() };
+    ok($@, 'split_dbSNPBuildID without argument threw exception');
 };

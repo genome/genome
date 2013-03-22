@@ -21,6 +21,7 @@ sub setup {
     my $picard_version = $parameters{picard_version};
 
     my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/$chimerascan_version";
+
     my $tophat_dir = $data_dir . "/tophat_data$test_data_version";
     die "Couldn't find tophat_dir at '$tophat_dir'" unless -d $tophat_dir;
     my @bam_files = glob(File::Spec->join($tophat_dir, "merged*.bam"));
@@ -51,7 +52,6 @@ sub setup {
         version         => '37',
     );
 
-
     my $annotation_model = Genome::Model::ImportedAnnotation->create(
         name => '1 chr test annotation',
         subject => $ref_model->subject,
@@ -62,6 +62,7 @@ sub setup {
     my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
         version => 'v1',
         model => $annotation_model,
+        reference_sequence => $reference_build,
         data_directory => '/gscmnt/gc8002/info/model_data/2772828715/build125092315', #65_37j_v6
     );
 
