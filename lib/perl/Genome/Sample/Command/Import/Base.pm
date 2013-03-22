@@ -106,7 +106,7 @@ sub _import {
         $sample->source_id( $individual->id );
     }
     if ( $sample->source_id ne $individual->id ) {
-        $self->_bail('Sample ('.$sample->id.') source id ('.$sample->source_id.') does not match found individual ('.$individual->id.')');
+        $self->error_message('Sample ('.$sample->id.') source id ('.$sample->source_id.') does not match found individual ('.$individual->id.')');
         return;
     }
 
@@ -114,7 +114,7 @@ sub _import {
         $sample->source_type( $individual->subject_type );
     }
     if ( $sample->source_id ne $individual->id ) {
-        $self->_bail('Sample ('.$sample->id.') source type ('.$sample->source_type.') does not match individual ('.$individual->subject_type.')');
+        $self->error_message('Sample ('.$sample->id.') source type ('.$sample->source_type.') does not match individual ('.$individual->subject_type.')');
         return;
     }
 
@@ -154,7 +154,7 @@ sub _get_individual {
     if ( %individuals_from_similar_samples ) {
         my %individuals = map { $_->id => $_ } values %individuals_from_similar_samples;
         if ( keys %individuals > 1 ) {
-            $self->_bail("Found multiple individuals for similar samples: ".join(' ', keys %individuals));
+            $self->error_message("Found multiple individuals for similar samples: ".join(' ', keys %individuals));
             return;
         }
         my ($individual) = values %individuals;
@@ -186,7 +186,7 @@ sub _create_individual {
     my $transaction = UR::Context::Transaction->begin();
     my $individual = Genome::Individual->create(%params);
     if ( not defined $individual ) {
-        $self->_bail('Could not create individual');
+        $self->error_message('Could not create individual');
         return;
     }
 
@@ -213,7 +213,7 @@ sub _create_sample {
     $self->status_message('Sample params: '._display_string_for_params(\%params));
     my $sample = Genome::Sample->create(%params);
     if ( not defined $sample ) {
-        $self->_bail('Cannot create sample');
+        $self->error_message('Cannot create sample');
         return;
     }
 
@@ -271,7 +271,7 @@ sub _create_library_for_extension {
     $self->status_message('Library params: '._display_string_for_params(\%params));
     my $library = Genome::Library->create(%params);
     if ( not $library ) {
-        $self->_bail('Cannot not create library to import sample');
+        $self->error_message('Cannot not create library to import sample');
         return;
     }
 
@@ -282,24 +282,6 @@ sub _create_library_for_extension {
     $self->status_message('Create library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
     
     return $self->_library($library);
-}
-
-sub _bail {
-    my ($self, $msg) = @_;
-
-    $self->error_message($msg);
-
-    my $created_objects = $self->_created_objects;
-    return if not defined $created_objects;
-
-    $self->status_message('Encountered an error, removing newly created objects.');
-
-    for my $obj ( @$created_objects ) { 
-        my $transaction = UR::Context::Transaction->begin();
-        $obj->delete;
-    }
-
-    return 1;
 }
 
 sub _display_string_for_params {
