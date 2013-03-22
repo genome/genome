@@ -42,27 +42,6 @@ sub help_detail {
     return help_brief();
 }
 
-sub _update_object {
-    my ($self, $obj, %params) = @_;
-
-    $self->status_message('Update '.$obj->name.' ('.$obj->id.')');
-    my $force = delete $params{__force__};
-    $self->status_message('Force is '.($force ? 'on' : 'off'));
-    $self->status_message('Params: '._display_string_for_params(\%params));
-
-    for my $attr ( keys %params ) {
-        my $val = $obj->$attr;
-        if ( defined $val and not $force ) {
-            $self->status_message("Not updating '$attr' for ".$obj->id." because it already has a value ($val)");
-            next;
-        }
-        $obj->$attr( $params{$attr} );
-    }
-
-    $self->status_message('Update...OK');
-    return 1;
-}
-
 sub _import {
     my ($self, %params) = @_;
 
@@ -91,8 +70,8 @@ sub _import {
     if ( $sample ) {
         $self->_sample($sample);
         $self->status_message('Found sample: '.join(' ', map{ $sample->$_ } (qw/ id name/)));
-        if ( %$sample_params ) { # got additional params - try to update
-            my $update = $self->_update_object($sample, %$sample_params);
+        if ( %$sample_params ) { # got additional attributes - try to update
+            my $update = $self->_update_attributes($sample, %$sample_params);
             return if not $update;
         }
     }
@@ -341,6 +320,31 @@ sub _resolve_attributes {
     my $attributes_hash_method = '_'.$type.'_attributes';
     $self->$attributes_hash_method(\%attributes);
 
+    return 1;
+}
+
+sub _update_attributes {
+    my ($self, $obj, %attributes) = @_;
+
+    $self->status_message('Update '.$obj->name.' ('.$obj->id.')');
+    my $force = delete $attributes{__force__};
+    $self->status_message('Force is '.($force ? 'on' : 'off'));
+    $self->status_message('Params: '._display_string_for_params(\%attributes));
+
+    for my $label ( keys %attributes ) {
+        my $value = eval{ $obj->attributes(attribute_label => $label)->attribute_value; };
+        if ( defined $value ) {
+            $self->status_message("Not updating '$label' for ".$obj->id." because it already has a value ($value)");
+            next;
+        }
+        $obj->add_attribute(
+            attribute_label => $label,
+            attribute_value => $attributes{$label},
+            nomenclature => $self->nomenclature,
+        );
+    }
+
+    $self->status_message('Update...OK');
     return 1;
 }
 
