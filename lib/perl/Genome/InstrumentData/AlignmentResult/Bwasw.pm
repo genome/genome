@@ -26,7 +26,7 @@ sub required_rusage {
     my $instrument_data = delete $p{instrument_data};
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
-    my $mem_mb = 1024 * 8; 
+    my $mem_mb = 1024 * 16; 
     my $cpus = 4;
 
     my $mem_kb = $mem_mb*1024;
