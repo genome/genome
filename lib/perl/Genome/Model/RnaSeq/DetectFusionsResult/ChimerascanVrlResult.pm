@@ -21,12 +21,6 @@ sub get_executable_path {
     return $executable;
 }
 
-sub _resolve_original_files {
-    my ($self, $reuse_bam) = @_;
-
-    return $self->_resolve_original_files_reusing_bam();
-}
-
 sub _run_chimerascan {
     my ($self, $bowtie_version, $c_pargs, $c_opts) = @_;
 

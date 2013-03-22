@@ -15,17 +15,19 @@ our %OUR_OPTIONS_VALIDATORS = (
 
 class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase {
     is => "Genome::Model::RnaSeq::DetectFusionsResult",
+    has_input => [
+        original_bam_paths => {
+            is => "Text",
+            is_many => 1,
+            doc => "The path(s) to the original instrument_data BAM files."
+        }
+    ],
 };
 
 our %INDIRECT_PARAMETER_VALIDATORS = (
         '--bowtie-version' => '_validate_bowtie_version',
         '--reuse-bam' => '_validate_reuse_bam',
 );
-
-sub _resolve_original_files {
-    my ($self, $reuse_bam) = @_;
-    die("Must be defined in subclass");
-}
 
 sub _run_chimerascan {
     my ($bowtie_version, $c_pargs, $c_opts) = @_;
@@ -34,12 +36,10 @@ sub _run_chimerascan {
 
 sub _chimerascan_index_cmd {
     die("Must be defined in subclass");
-    return 'chimerascan-vrl-index';
 }
 
 sub _chimerascan_result_class {
     die("Must be defined in subclass");
-    return 'Genome::Model::RnaSeq::DetectFustionsResult::ChimerascanVrlResult';
 }
 
 
@@ -66,6 +66,63 @@ sub create {
     $self->_reallocate_disk_allocation();
 
     return $self;
+}
+
+sub _resolve_original_files {
+    my ($self, $reuse_bam) = @_;
+
+    my @fastq_files;
+    if ($reuse_bam) {
+        return $self->_resolve_original_files_reusing_bam();
+    } else {
+        return ($self->_resolve_original_fasta_files, undef);
+    }
+}
+
+sub _resolve_original_fasta_files {
+    my ($self) = @_;
+
+    unless ($self->original_bam_paths) {
+        die("Couldn't find 'original_bam_paths' to make fastq files!");
+    }
+    # get fastq1/2 from the BAMs
+    my (@fastq1_files, @fastq2_files);
+    for my $bam_path ($self->original_bam_paths) {
+        my $tmp_dir = File::Temp::tempdir('tempXXXXX',
+            DIR => $self->temp_staging_directory,
+            CLEANUP => 1
+        );
+        my $queryname_sorted_bam = File::Spec->join($tmp_dir,
+                'original_queryname_sorted.bam');
+        $self->_qname_sort_bam($bam_path, $queryname_sorted_bam);
+
+        # make fastqs from the qname sorted bam
+        my $fastq1 = File::Spec->join($tmp_dir, "original_fastq1");
+        my $fastq2 = File::Spec->join($tmp_dir, "original_fastq2");
+
+        $self->_convert_bam_to_fastqs($queryname_sorted_bam, $fastq1, $fastq2);
+
+        push @fastq1_files, $fastq1;
+        push @fastq2_files, $fastq2;
+    }
+
+    # concatinate forward/reverse fastqs together
+    my $fastq1 = File::Spec->join($self->temp_staging_directory, 'fastq1');
+    my $cmd = sprintf('cat %s > %s', join(" ", @fastq1_files), $fastq1);
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        input_files => [@fastq1_files],
+        output_files => [$fastq1],
+    );
+
+    my $fastq2 = File::Spec->join($self->temp_staging_directory, 'fastq2');
+    $cmd = sprintf('cat %s > %s', join(" ", @fastq2_files), $fastq2);
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        input_files => [@fastq2_files],
+        output_files => [$fastq2],
+    );
+    return ($fastq1, $fastq2);
 }
 
 # return our options (hash) and the options for chimerascan (string)
