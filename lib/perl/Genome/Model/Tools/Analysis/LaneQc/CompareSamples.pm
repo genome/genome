@@ -277,6 +277,7 @@ sub load_variant_calls
 		$lineCounter++;
 		
 		my @lineContents = split(/\t/, $line);
+		my $numContents = @lineContents;
 		my $chrom = $lineContents[0];
 		my $position = $lineContents[1];
 		my $ref_base = $lineContents[2];
@@ -298,9 +299,15 @@ sub load_variant_calls
 			## Ignore header ##
 			$file_type = "varscan";
 		}
+		
 
 		else
 		{
+			if($numContents == 3)
+			{
+				$file_type = "array";
+			}
+			
 			if($lineContents[6] && $lineContents[6] =~ '%')
 			{
 				$file_type = "varscan";
@@ -308,7 +315,7 @@ sub load_variant_calls
 
 			## Only check SNP calls ##
 	
-			if($ref_base ne "*" && length($ref_base) == 1 && length($cns_call) == 1) #$ref_base ne $cns_call
+			if($file_type eq "array" || ($ref_base ne "*" && length($ref_base) == 1 && length($cns_call) == 1)) #$ref_base ne $cns_call
 			{
 				## Get depth and consensus genotype ##
 	
@@ -343,6 +350,11 @@ sub load_variant_calls
 #					($ref_base, $cns_call) = split(/\//, $lineContents[3]);
 					$depth = $lineContents[5];
 					$cons_gt = code_to_genotype($cns_call);
+				}
+				elsif($file_type eq "array")
+				{
+					$cons_gt = $lineContents[2];
+					$depth = $min_depth_het;
 				}
 				
 				else
