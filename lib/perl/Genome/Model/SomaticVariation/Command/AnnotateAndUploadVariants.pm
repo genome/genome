@@ -261,6 +261,12 @@ sub execute{
                         my $fusion_out_file   = $build->data_directory . '/effects/svs.hq.fusion_transcripts.out';
                         my @annotator_list    = qw(Transcripts FusionTranscripts);
 
+                        my $base_dir = '/gsc/scripts/share/BreakAnnot_file';
+                        my %cancer_gene_list = (
+                            human => $base_dir . '/Cancer_genes.csv',
+                            mouse => $base_dir . '/mouse_build37/Mouse_Cancer_genes.csv',
+                        );
+
                         my %params = (
                             input_file  => $sv_file,
                             output_file => $sv_annot_out_file,
@@ -268,6 +274,7 @@ sub execute{
                             annotation_build_id => $annotation_build_id,
                             annotator_list      => \@annotator_list,
                             transcripts_print_flanking_genes => 1,
+                            transcripts_cancer_gene_list     => $cancer_gene_list{$species_name},
                             dbvar_breakpoint_wiggle_room     => 300,
                             chrA_column       => 1,
                             bpA_column        => 2,
@@ -280,10 +287,10 @@ sub execute{
                         
                         my $ref_seq_build = $build->reference_sequence_build;
                         if ($species_name eq 'human') {
-                            push @annotator_list, 'Dbsnp', 'Segdup', 'Dbvar';
                             my $annot_file = $self->_get_human_sv_annot_file($ref_seq_build);
 
                             if ($annot_file) {
+                                push @annotator_list, 'Dbsnp', 'Segdup', 'Dbvar';
                                 %params = (
                                     %params,
                                     annotator_list => \@annotator_list,

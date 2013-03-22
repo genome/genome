@@ -14,8 +14,10 @@ use Test::More;
 use_ok("Genome::Model::Tools::Annotate::Sv::Combine");
 
 my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Annotate-Sv-Combine";
-my $version = 1;
+my $version  = 2;
 my $data_dir = "$base_dir/v$version";
+
+#2 add cancer_gene_list to transcripts for human
 
 my $temp_file = Genome::Sys->create_temp_file_path;
 my $cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
@@ -24,6 +26,7 @@ my $cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
     annotation_build_id => 131184146,
     annotator_list      => ['Transcripts', 'Dbsnp', 'Segdup', 'Dbvar'],
     transcripts_print_flanking_genes => 1,
+    transcripts_cancer_gene_list     => '/gsc/scripts/share/BreakAnnot_file/Cancer_genes.csv',
     dbvar_breakpoint_wiggle_room => 300,
 );
 

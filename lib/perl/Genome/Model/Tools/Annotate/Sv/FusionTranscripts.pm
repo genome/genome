@@ -72,11 +72,11 @@ sub process_breakpoint_list {
 	        next unless $aTranscriptRef and @$aTranscriptRef > 0 and $bTranscriptRef and @$bTranscriptRef > 0;
 	    
 	        # See if there are different or same genes crossing the breakpoints
-	        my $aGeneNameRef = geneNames($aTranscriptRef);
-	        my $bGeneNameRef = geneNames($bTranscriptRef);
-            my $fusionProteinRef = getAllInFrameFusions($aTranscriptRef, $item->{bpA}, $bTranscriptRef, $item->{bpB}, $item->{orient}, $out_fh);
+            my $fusionProteinRef = $self->getAllInFrameFusions($aTranscriptRef, $item->{bpA}, $bTranscriptRef, $item->{bpB}, $item->{orient}, $out_fh);
 
 	        if ( defined $fusionProteinRef && scalar(keys%{$fusionProteinRef}) >= 1 ) {
+                my $aGeneNameRef = geneNames($aTranscriptRef);
+	            my $bGeneNameRef = geneNames($bTranscriptRef);
                 my $aGenes = join ' ', sort keys %$aGeneNameRef;
                 my $bGenes = join ' ', sort keys %$bGeneNameRef;
                 my $fusion = '['.$aGenes.']|['.$bGenes.']';
@@ -107,21 +107,21 @@ sub getAllInFrameFusions {
     # Check to see if relative orientation of sequences and genes make a fusion on one strand
     # Only include the fusions that are still in frame after putting the exons together
 
-    my ($aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation, $out_fh) = @_;
+    my ($self, $aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation, $out_fh) = @_;
     my (%allFusions, %uniq); 
 	  
-    for my $aTranscript ( @{$aTranscriptRef} ) {
+    for my $aTranscript ( @$aTranscriptRef ) {
 	    # Confirm breakpoint is in an intron
-	    my $substructureA = substructureWithBreakpoint($aTranscript, $bpA);
-        next if $substructureA !~ /intron/;
+	    my $substructureA = $self->substructureWithBreakpoint($aTranscript, $bpA);
+        next unless $substructureA and $substructureA =~ /intron/;
 
         my $a_gene_name       = $aTranscript->gene_name;
         my $a_transcript_name = $aTranscript->transcript_name;
 
-	    for my $bTranscript ( @{$bTranscriptRef} ) {
+	    for my $bTranscript ( @$bTranscriptRef ) {
 	        # Confirm breakpoint is in an intron
-	        my $substructureB = substructureWithBreakpoint($bTranscript, $bpB);
-            next if $substructureB !~ /intron/;
+	        my $substructureB = $self->substructureWithBreakpoint($bTranscript, $bpB);
+            next unless $substructureB and $substructureB =~ /intron/;
 
             my $b_gene_name       = $bTranscript->gene_name;
             my $b_transcript_name = $bTranscript->transcript_name;
@@ -240,8 +240,9 @@ sub processedMessage {
     # For 3' part of message, need to include utr_exon that occur after breakpoint and before first cds_exon
 
     my ( $transcript, $position, $startOrEnd ) = @_;
-    my $gene = $transcript->gene_name; my $transcriptName = $transcript->transcript_name;
-    my @ss   = $transcript->ordered_sub_structures;
+    my $gene           = $transcript->gene_name; 
+    my $transcriptName = $transcript->transcript_name;
+    my @ss             = $transcript->ordered_sub_structures;
 
     my $mRNA = "";
     my $rnaWithCoordinates = "";
@@ -387,7 +388,7 @@ sub substructureWithBreakpoint {
     # and the number of coding exons before the substructure (does not utr_exon as coding)
     # type.cds_exons_before
     
-    my ($transcript, $position) = @_;
+    my ($self, $transcript, $position) = @_;
     my @subStructures = $transcript->ordered_sub_structures;
 
     for my $structure (@subStructures) {
@@ -395,7 +396,8 @@ sub substructureWithBreakpoint {
 	        return $structure->{structure_type}.$structure->{cds_exons_before};
         }
     }
-    confess "'$position' is not in transcript";
+    $self->warning_message("$position is not found in gene: ".$transcript->gene_name.'  transcript: '.$transcript->transcript_name);
+    return;
 }
 
 
