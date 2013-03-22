@@ -100,6 +100,7 @@ sub store_RSid {
 sub split_dbSNPBuildID {
     my $INFO = shift;
     my $dbSNPinfo = ($INFO =~ /dbSNPBuildID=([0-9, .]+)/)[0];
+    return unless $dbSNPinfo;
     my @dbSNPids = split(/, /, $dbSNPinfo);
     return @dbSNPids;
 }
