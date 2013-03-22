@@ -1,5 +1,7 @@
 package Genome::Command::WithSavedResults;
 use Genome::SoftwareResult::Default;
+use strict;
+use warnings;
 
 class Genome::Command::WithSavedResults {
     is => 'Command::V2',
@@ -9,11 +11,19 @@ class Genome::Command::WithSavedResults {
             is => 'ARRAY', is_optional => 1,
             doc => 'produce intermediate results and merge, grouping by this/these attributes' },     
     ],
-    has_optional_input => [
-        #output_dir  => { 
-        #    is => 'FilesystemPath', 
-        #    doc => 'override the output directory' 
-        #},
+    has => [
+        result_version => {
+            is_param => 1,
+            is => 'Integer',
+            is_abstract => 1,
+            doc => 'the version of results, which may iterate as this logic iterates'
+        },
+        output_dir  => { 
+            is_output => 1,
+            is => 'FilesystemPath', 
+            is_optional => 1,
+            doc => 'override the output directory' 
+        },
     ],
     is_abstract => 1,
 };
@@ -26,12 +36,36 @@ sub _init_subclass {
 EOS
     eval $src;
     if ($@) {
-        die "error initializing $subclass_name from " . __PACKAGE_ . ": $@";
+        die "error initializing $subclass_name from " . __PACKAGE__ . ": $@";
     }
 
+    my @problems;
     my $meta = $subclass_name->__meta__;
-    unless ($meta->property("result_version")) {
-        die "$subclass_name should implement result_version, typically with a default_value of '1'";
+    my $parallelize_by = $meta->parallelize_by;
+
+    my $result_version_meta = $meta->property("result_version");
+    unless ($result_version_meta) {
+        push @problems, "$subclass_name should implement result_version, typically with a default_value of '1'";
+    }
+
+    my $versions = $result_version_meta->valid_values;
+    for my $version (@$versions) {
+        my $method1 = "_execute_v$version";
+        unless ($subclass_name->can($method1)) {
+            push @problems, "no method $method1 found, though a valid result_version includes '$version'";
+        }
+        # note this code doesn't work because the added parallelize_property isn't visible when this callback runs 
+        if ($parallelize_by and @$parallelize_by) {
+            my $method2 = "_merge_v$version";
+            unless ($subclass_name->can($method2)) {
+                push @problems, "no method $method2 found, though a valid result_version includes '$version'";
+            }
+        }
+    }
+
+    if (@problems) {
+        for (@problems) { $subclass_name->error_message($_)  }
+        die "error defining $subclass_name";
     }
 
     return 1;
@@ -45,7 +79,6 @@ sub _copyable_properties {
 
 sub execute {
     my $self = shift;
-    
     my $result_version = $self->result_version;
     my $method = "_execute_v$result_version";
     $method =~ s/\./_/g;
@@ -63,8 +96,14 @@ sub execute {
         my @values = $self->$prop;
         if (@values > 1) {
             my %props = $self->_copyable_properties($self->class);
+            delete $props{output_dir};
+            delete $props{result};
+
+            # TODO: compose a workflow here instead of a linear run
+            my $n = 0; 
             for my $value (@values) {
-                print "breakdown for value " . $value->__display_name__ . "\n";
+                $n++;
+                print "Breakdown $n: " . $value->__display_name__ . "\n";
                 $props{$prop} = [$value];
                 my $partial = $self->class->create(%props);
                 unless ($partial) {
@@ -72,16 +111,50 @@ sub execute {
                 }
                 push @run_commands, $partial;
             }
-            
-            print "run commands: @run_commands\n";
+            my @intermediate_results;
             for my $cmd (@run_commands) {
-                $cmd->$method(@_);
+                my $retval = $cmd->execute(@_);
+                my $result = $cmd->result();
+                push @intermediate_results, $result;
             } 
-            die "no merge logic yet!";
+
+            # TODO: this should be the final merging step in the workflow
+            my $merge_method = "_merge_v$result_version";
+            my $retval;
+            if ($self->can($merge_method)) {
+                $retval = $self->$merge_method(@intermediate_results);
+            }
+            else {
+                $retval = $self->_default_merge(@intermediate_results);
+            }
+            my $merge_result = $self->result;
+            for my $intermediate_result (@intermediate_results) {
+                $intermediate_result->add_user(
+                    label => 'composes',
+                    user => $merge_result,
+                );
+            }
+            return $retval;
         }
     }
    
     return $self->$method(@_);
+}
+
+sub _default_merge {
+    my $self = shift;
+    my @underlying = @_;
+    
+    my $subdir = $self->output_dir . '/underlying_results';
+    Genome::Sys->create_directory($subdir);
+
+    for my $r (@underlying) {
+        my $sub_subdir = $r->id;
+        my $path = $subdir . '/' . $sub_subdir;
+        Genome::Sys->create_symlink($r->output_dir, $path);
+    }
+
+    return 1;
 }
 
 1;

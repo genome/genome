@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Basename;
 
 class Genome::Model::Tools::Allpaths::Metrics {
     #is => 'Genome::Model::Tools::Allpaths::Base',
@@ -33,6 +34,11 @@ class Genome::Model::Tools::Allpaths::Metrics {
             is => 'Text',
             is_optional => 1,
             doc => 'Stats output file',
+        },
+        output_clean_assembly_fasta_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Clean scaffolds fasta file',
         },
     ],
     has_optional => [
@@ -67,6 +73,9 @@ sub __errors__ {
         }
         if ( not defined $self->output_file ) {
             $self->output_file( $self->assembly_directory."/metrics.out" );
+        }
+        if ( not defined $self->output_clean_assembly_fasta_file ) {
+            $self->output_clean_assembly_fasta_file( $self->assembly_directory.'/clean.final.assembly.fasta' );
         }
     }
     elsif ( not $self->output_file ) { 
@@ -167,15 +176,21 @@ sub execute {
         return if not $add_reads;
     }
 
+    # output enhanced seq to file
+    my $writer = Genome::Model::Tools::Sx::PhredWriter->create(
+        file => $self->output_clean_assembly_fasta_file,
+    );
+
     # add scaffolds
     $self->status_message('Add scaffolds file: '.$scaffolds_efasta);
     my $reader = Genome::Model::Tools::Sx::PhredEnhancedSeqReader->create(file => $scaffolds_efasta);
     return if not $reader;
     while ( my $seq = $reader->read ) {
+        $writer->write( $seq );
         my $add_scaffold = $metrics->add_scaffold($seq);
         return if not $add_scaffold;
     }
-        
+    
     # transform metrics
     $self->status_message('Transform metrics to text...');
     my $text = $metrics->transform_xml_to('txt');

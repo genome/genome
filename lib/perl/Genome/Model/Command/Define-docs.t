@@ -16,7 +16,6 @@ for (@sub_commands) { s/[^\w\-]//g; s/\b31m//; s/0m\b//; }
 chomp @sub_commands;
 
 my @sub_commands_expected = qw/
-  amplicon-assembly
   clin-seq
   comparison
   convergence
@@ -39,6 +38,8 @@ my @sub_commands_expected = qw/
   rna-seq
   simple-alignment
   small-rna
+  somatic
+  somatic-capture
   somatic-validation
   somatic-variation
   test-pipeline

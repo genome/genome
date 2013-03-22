@@ -35,17 +35,6 @@ class Genome::Model::RnaSeq::DetectFusionsResult {
             doc => 'annotation build (for gene models)',
         },
     ],
-    has => [
-        _qname_sorted_bam => {
-            is_constant => 1,
-            calculate => q($self->_get_qname_sorted_bam();),
-        },
-        _fastq_files => {
-            # returns an array ref of [fastq1, fastq2]
-            is_constant => 1,
-            calculate => q($self->_get_fastq_files();),
-        },
-    ],
 };
 
 sub _prepare_staging_directory {
@@ -94,67 +83,6 @@ sub _put_bowtie_version_in_path {
     $bowtie_path =~ s/bowtie$//;
     $ENV{PATH} = $bowtie_path . ":" . $ENV{PATH};
 }
-
-
-sub _get_qname_sorted_bam {
-    my $self = shift;
-
-    my $alignment_result = $self->alignment_result;
-
-    my $bam_file = $alignment_result->bam_file || die (
-            "Couldn't get BAM file from alignment result (" . $alignment_result->id . ")");
-    my $queryname_sorted_bam = File::Spec->join($self->temp_staging_directory,
-            'alignment_result_queryname_sorted.bam');
-
-    my $rv = Genome::Model::Tools::Picard::SortSam->execute(
-        input_file             => $alignment_result->bam_file,
-        output_file            => $queryname_sorted_bam,
-        sort_order             => 'queryname',
-        max_records_in_ram     => 2_500_000,
-        maximum_permgen_memory => 256,
-        maximum_memory         => 16,
-        use_version            => $self->picard_version,
-    );
-    unless ($rv) {
-        die ('Failed to querynam sort BAM file!');
-    }
-    return $queryname_sorted_bam;
-}
-
-
-sub _get_fastq_files {
-    my $self = shift;
-
-    my $alignment_result = $self->alignment_result;
-
-    #TODO where to put this? does it belong here?
-    $alignment_result->add_user(label => 'uses' , user => $self);
-
-    my $fastq1 = $self->temp_staging_directory . "/fastq1";
-    my $fastq2 = $self->temp_staging_directory . "/fastq2";
-
-    my $queryname_sorted_bam = $self->_get_qname_sorted_bam();
-
-    my $cmd = Genome::Model::Tools::Picard::StandardSamToFastq->create(
-        input                          => $queryname_sorted_bam,
-        fastq                          => $fastq1,
-        second_end_fastq               => $fastq2,
-        re_reverse                     => 1,
-        include_non_pf_reads           => 1,
-        include_non_primary_alignments => 0,
-        use_version                    => $self->picard_version,
-        maximum_memory                 => 16,
-        maximum_permgen_memory         => 256,
-        max_records_in_ram             => 2_500_000,
-        additional_jvm_options         => '-XX:-UseGCOverheadLimit',
-    );
-    unless ($cmd->execute){
-        die("Could not convert the bam file to fastq!");
-    }
-    my @result = ($fastq1, $fastq2);
-    return \@result;
-}
-
 
 sub _path_for_command {
     my ($self, $version, $command) = @_;

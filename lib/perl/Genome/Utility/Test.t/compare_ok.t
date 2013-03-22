@@ -57,46 +57,66 @@ sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_E) => sub {
 });
 
 sub_test('compare_ok matches diff command' => sub {
+    my $expected_fh = File::Temp->new(TMPDIR => 1);
+    my $expected_fn = $expected_fh->filename;
+    $expected_fh->print("a\n");
+    $expected_fh->close();
+
     my $a_fh = File::Temp->new(TMPDIR => 1);
     my $a_fn = $a_fh->filename;
-    $a_fh->print("a\n");
+    $a_fh->print("b\n");
     $a_fh->close();
 
     my $b_fh = File::Temp->new(TMPDIR => 1);
     my $b_fn = $b_fh->filename;
-    $b_fh->print("b\n");
+    $b_fh->print("a\n"); # like a, not aa!
     $b_fh->close();
 
-    my $aa_fh = File::Temp->new(TMPDIR => 1);
-    my $aa_fn = $aa_fh->filename;
-    $aa_fh->print("a\n"); # like a, not aa!
-    $aa_fh->close();
-
     {
-        # STDERR is:
-        # # # First diff:
-        # # # --- /tmp/akzszm45QF
-        # # # +++ /tmp/aM8X5Vj6pQ
-        # # # - a
-        # # # + b
-        # # #   Failed test at Utility/Test.t/compare_ok.t line 77.
         test_out('not ok 1');
         test_err(q(/# First diff:\n# --- .*\n# \+\+\+.*\n# - a\n# \+ b\n#\s+Failed test at .+ line \d+\./));
-        my $compare_ok = compare_ok($a_fn, $b_fn);
+        my $compare_ok = compare_ok($a_fn, $expected_fn);
         test_test('compare_ok ran on different files');
-        my $diff    = (system(qq(diff -u "$a_fn" "$b_fn" > /dev/null)) == 0 ? 1 : 0);
+        my $diff    = (system(qq(diff -u "$expected_fn" "$a_fn" > /dev/null)) == 0 ? 1 : 0);
         is($diff, 0, 'diff detected diff between different files');
         is($compare_ok, $diff, 'compare_ok detected diff between different files');
     }
 
     {
         test_out('ok 1');
-        my $compare_ok = compare_ok($a_fn, $aa_fn);
+        my $compare_ok = compare_ok($b_fn, $expected_fn);
         test_test('compare_ok ran on similar files');
-        my $diff    = (system(qq(diff -u "$a_fn" "$aa_fn" > /dev/null)) == 0 ? 1 : 0);
+        my $diff    = (system(qq(diff -u "$expected_fn" "$b_fn" > /dev/null)) == 0 ? 1 : 0);
         is($diff, 1, 'diff did not detect diff between similar files');
         is($compare_ok, $diff, 'compare_ok did not detect diff between similar files');
     }
+});
+
+sub_test('compare_ok replace' => sub {
+    my $expected_fh = File::Temp->new(TMPDIR => 1);
+    my $expected_fn = $expected_fh->filename;
+    $expected_fh->print("a\n");
+    $expected_fh->close();
+
+    my $a_fh = File::Temp->new(TMPDIR => 1);
+    my $a_fn = $a_fh->filename;
+    $a_fh->print("b\n");
+    $a_fh->close();
+
+    test_out('not ok 1');
+    test_err(q(/# First diff:\n# --- .*\n# \+\+\+.*\n# - a\n# \+ b\n#\s+Failed test at .+ line \d+\./));
+    compare_ok($a_fn, $expected_fn);
+    test_test('compare_ok failed without replace');
+
+    my $error = Genome::Utility::Test->ERRORS('REPLACE_ARRAY_REF');
+    ok($error, 'got REPLACE_ARRAY_REF error string');
+    eval { compare_ok($a_fn, $expected_fn, replace => 'a') };
+    like($@, qr/$error/,
+        'got REPLACE_ARRAY_REF error with a non-array-ref replace argument');
+
+    test_out('ok 1');
+    compare_ok($a_fn, $expected_fn, replace => [['a' => 'b']]);
+    test_test('compare_ok passed with replace');
 });
 
 done_testing();

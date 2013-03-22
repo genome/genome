@@ -204,6 +204,7 @@ sub _resolve_kilobytes_requested {
         $kilobytes_requested += $size;
     }
     $kilobytes_requested *= 2 if $self->format =~ /fast[aq]/;# extra for tar file
+    $kilobytes_requested *= 3 if $self->format =~ /bam/;# extra for sorting
 
     return $kilobytes_requested;
 }
@@ -293,42 +294,55 @@ sub _transfer_source_files {
 
 #<TransferBam>#
 sub _transfer_bam_source_file {
-    # TODO add md5 cp
+    # TODO add md5
     my $self = shift;
     $self->status_message('Transfer bam file and run flagstat...');
 
+    $self->status_message('Sort and copy...');
     my ($source_file) = $self->source_files;
-    $self->status_message("Source file: $source_file");
     my $bam_base_name = 'all_sequences.bam';
-    my $tmp_bam_file = $self->_tmp_dir.'/'.$bam_base_name;
+    my $tmp_bam_file_prefix = $self->_tmp_dir.'/all_sequences';
+    my $tmp_bam_file = $tmp_bam_file_prefix.'.bam';
+    $self->status_message("Source file: $source_file");
     $self->status_message("Temp bam file: $tmp_bam_file");
-    $self->status_message("Copy...");
-    my $copy_ok = eval{ Genome::Sys->copy_file($source_file, $tmp_bam_file); };
-    if ( not $copy_ok or -s $tmp_bam_file != -s $tmp_bam_file ) {
+    my $cmd = "samtools sort -m 3000000000 -n $source_file $tmp_bam_file_prefix";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $tmp_bam_file ) {
         $self->error_message($@) if $@;
-        $self->error_message('Failed to copy bam to temp file!');
+        $self->error_message('Failed to run samtools sort and copy to to temp bam!');
         return;
     }
-    $self->status_message('Copy...done');
+    $self->status_message('Sort and copy...done');
 
-    $self->status_message('Run flagstat...');
+    $self->status_message('Run and verify flagstat...');
     my $flagstat_file = $self->instrument_data->allocation->absolute_path.'/'.$bam_base_name.'.flagstat';
     $self->status_message("Flagstat file: $flagstat_file");
-    my $cmd = "samtools flagstat $tmp_bam_file > $flagstat_file";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    $cmd = "samtools flagstat $tmp_bam_file > $flagstat_file";
+    $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $flagstat_file ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run flagstat!');
         return;
     }
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
+    $self->status_message('Flagstat output:');
+    $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
+    if ( not $flagstat->{total_reads} > 0 ) {
+        $self->error_message('Flagstat determined that ther e are no reads in source bam! '.$source_file);
+        return;
+    }
+    my $is_paired_end = $flagstat->{reads_paired_in_sequencing} ? 1 : 0;
+    if ( $is_paired_end and $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
+        $self->error_message('Flagstat determined that there are not equal pairs in source bam!');
+        return;
+    }
     $self->read_count($flagstat->{total_reads});
-    $self->is_paired_end( $flagstat->{reads_paired_in_sequencing} ? 1 : 0 );
-    $self->status_message('Run flagstat...done');
+    $self->is_paired_end($is_paired_end);
+    $self->status_message('Run and verify flagstat...done');
 
     $self->status_message('Move tmp bam file to permenant file...');
     my $bam_file = $self->instrument_data->allocation->absolute_path.'/'.$bam_base_name;
-    $self->status_message("Bam file: $bam_file");
+    $self->status_message("Permanent bam file: $bam_file");
     my $move_ok = File::Copy::move($tmp_bam_file, $bam_file);
     if ( not $move_ok ) {
         $self->error_message('Failed to move the tmp bam file!');

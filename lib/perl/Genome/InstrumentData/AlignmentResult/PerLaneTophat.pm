@@ -232,15 +232,16 @@ sub prepare_annotation_index {
     my $bowtie_path = Genome::Model::Tools::Bowtie->path_variable_for_bowtie_version($bowtie_version);
 
     my $temp_directory = Genome::Sys->create_temp_directory();
+
+    #a few in silico reads for gene TTN
+    my $reference_fasta = $refindex->full_consensus_path('fa');
+    $class->status_message("Generating fake reads from $reference_fasta and $gtf_path");
+    my @fake_reads = $class->generate_fake_reads($reference_fasta, $gtf_path, 100, 50);
+    my $fake_read_index = 1;
+    @fake_reads = map { sprintf ">read%d\n%s\n", $fake_read_index++, $_ } @fake_reads;
+
     my ($fake_read) = Genome::Sys->create_temp_file_path('read.fasta');
-    Genome::Sys->write_file($fake_read, #a few in silico reads for gene TTN (from unit test)
-        ">read1\n",
-        "GATGTCTTTCAGCATGGAAGTAATCATGATTGGGGTGACTGTCAGGGTGGCACTGACTTGGTCATTGCCACAGACAAATGTGTATTCTGCCGAGTCCTCT\n",
-        ">read2\n",
-        "GCAGCTGGTGTGTCAAGCACTTTAACACTCACAGTTGAAGACTTAGGTTCACCAACTCCATTTTCTATTGTGAGAATATATTTTCCTGTATCATTGCGAG\n",
-        ">read3\n",
-        "TCCTTCTGTGCATGAGTGTTCTGAAGGGACTAGGGGCTCATAGTTTACCTGAGAGATCATGACATCAGGACTCTGGAGACTCTCCACGTGTCCCTCAGCT\n"
-    );
+    Genome::Sys->write_file($fake_read, @fake_reads);
 
     my $cmd = 'PATH=' . $bowtie_path . ':$PATH ' . $path .' '. $aligner_params .' --transcriptome-only --output-dir '. $temp_directory .' '. $reference_prefix .' '. $fake_read;
 
@@ -261,6 +262,73 @@ sub prepare_annotation_index {
         output_files => \@output_files,
     );
     return 1;
+}
+
+
+# This is used to generate fake reads given a reference fasta and a transcript gtf
+sub generate_fake_reads {
+    my ($class, $reference_fasta, $gtf_path, $read_length, $read_count) = @_;
+
+    unless (-s $reference_fasta) {
+        $class->error_message("The file $reference_fasta is empty or does not exist.");
+        return;
+    }
+
+    unless (-s $gtf_path) {
+        $class->error_message("The file $gtf_path is empty or does not exist.");
+        return;
+    }
+
+    my $fa_fh = new Bio::DB::Fasta($reference_fasta);
+    my @ids = $fa_fh->ids();
+
+    open my $gtf_fh, '<', $gtf_path;
+
+    my @reads;
+
+    my $buffer = 5;
+    my $seqid_limit = 5;
+
+    # keep track of which chromosomes we've made reads for
+    my %seqids_used;
+
+    while (my $line = <$gtf_fh>) {
+        last if @reads >= $read_count;
+
+        chomp $line;
+
+        my @fields = split /\t/, $line;
+
+        my $seqid = $fields[0];
+        my $kind  = $fields[2];
+        my $start = $fields[3];
+        my $stop  = $fields[4];
+
+        next if (exists $seqids_used{$seqid}) and ($seqids_used{$seqid} >= $seqid_limit);
+        next unless grep { $seqid eq $_ } @ids;
+        next unless $kind eq 'CDS' or $kind eq 'exon';
+        next if $stop - $start < $read_length + (3 * $buffer);
+
+        my $seq = $fa_fh->seq($seqid, $start + $buffer, $start + $read_length + $buffer - 1);
+
+        next if $seq =~ /[^ACTG]/;
+        next if grep { $seq eq $_ } @reads;
+
+        $seqids_used{$seqid}++;
+
+        push @reads, $seq;
+    }
+
+    close $gtf_fh;
+
+    # hard coded reads we were using before, in case our generated fake reads are no good
+    push @reads, (
+        "GATGTCTTTCAGCATGGAAGTAATCATGATTGGGGTGACTGTCAGGGTGGCACTGACTTGGTCATTGCCACAGACAAATGTGTATTCTGCCGAGTCCTCT",
+        "GCAGCTGGTGTGTCAAGCACTTTAACACTCACAGTTGAAGACTTAGGTTCACCAACTCCATTTTCTATTGTGAGAATATATTTTCCTGTATCATTGCGAG",
+        "TCCTTCTGTGCATGAGTGTTCTGAAGGGACTAGGGGCTCATAGTTTACCTGAGAGATCATGACATCAGGACTCTGGAGACTCTCCACGTGTCCCTCAGCT",
+    );
+
+    return @reads;
 }
 
 # Use this to prep the index.  Indexes are saved for each combo of aligner params & version, as runtime
@@ -363,6 +431,17 @@ sub _get_modified_tophat_params {
         #TODO: get ref index with annotation build
         my $transcriptome_index_prefix = $annotation_index->full_consensus_path();
         $params .= ' --transcriptome-index '. $transcriptome_index_prefix;
+    }
+
+    #set number of threads automatically
+    my $cpu_count = $self->_available_cpu_count;
+    $self->status_message("CPU count is $cpu_count");
+    if($params =~ /--num-threads[ =]\d+/) {
+        $params =~ s/--num-threads[ =]\d+/--num-threads $cpu_count/;
+    } elsif ($params =~ /-p[ =]\d+/) {
+        $params =~ s/-p[ =]\d+/--num-threads $cpu_count/;
+    } else {
+        $params .= " --num-threads $cpu_count";
     }
 
     my $instrument_data = $self->instrument_data;

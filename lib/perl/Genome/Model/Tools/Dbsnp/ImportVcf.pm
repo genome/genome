@@ -14,6 +14,16 @@ class Genome::Model::Tools::Dbsnp::ImportVcf {
             is => 'Text',
             doc => 'Path to the full VCF file on the ftp site'
         },
+        vcf_file_pattern => {
+            is => 'Text',
+            doc => 'String representing the pattern that the vcf filenames follow with [X] substituted for the chromosome number.  Only use if the vcf files are per-chromosome',
+            is_optional => 1,
+        },
+        chromosome_names => {
+            is => 'String',
+            is_many => 1,
+            is_optional => 1,
+        },
         flat_file_pattern => {
             is => 'Text',
             default => 'ds_flat_ch[X].flat.gz',
@@ -66,14 +76,41 @@ sub execute {
     my $start_info = 0;
     my $end_info = 0;
 
+    my $vcf_url = $self->vcf_file_url;
     my $vcf_download_location = Genome::Sys->create_temp_file_path();
+    
+    if ($self->vcf_file_pattern) {
+        unless ($self->chromosome_names) {
+            die ($self->error_message("If you specify a vcf_file_pattern, you must also specify chromosome_names"));
+        }
+        my $tempdir = Genome::Sys->create_temp_directory;
+        my @files_to_merge;
+        for my $chromosome ($self->chromosome_names) {
+            my $vcffile = $self->vcf_file_pattern;
+            $vcffile =~ s/X/$chromosome/;
+            my $vcf_file_url = join("/", $self->vcf_file_url, $vcffile);
+            my $download_location = join("/", $tempdir, $vcffile);
+            my $response = getstore($vcf_file_url, $download_location);
+            die($self->error_message("Unable to download the VCF file at: " . $vcf_file_url)) unless $response == RC_OK;
+            push @files_to_merge, $download_location;
+        }
+        my $sort = Genome::Model::Tools::Joinx::VcfMerge->execute (
+            output_file => $vcf_download_location,
+            input_files => \@files_to_merge,
+            use_bgzip => 1,
+        );
+        unless ($sort) {
+            $self->error_message("Unable to merge the vcf files");
+            return;
+        }
+    }
+    else {
+        my $response = getstore($vcf_url, $vcf_download_location);
 
-    #check for successful status, else die
-    my $response = getstore($self->vcf_file_url, $vcf_download_location);
-
-    die($self->error_message("Unable to download the VCF file at: " . $self->vcf_file_url)) unless $response == RC_OK;
-
-    my $vcf_input_fh  = Genome::Sys->open_gzip_file_for_reading($vcf_download_location);
+        #check for successful status, else die
+        die($self->error_message("Unable to download the VCF file at: " . $vcf_url)) unless $response == RC_OK;
+    }
+        my $vcf_input_fh  = Genome::Sys->open_gzip_file_for_reading($vcf_download_location);
     my ($vcf_output_fh, $vcf_temp_output) = Genome::Sys->create_temp_file();
 
     my @vcf_row = ();

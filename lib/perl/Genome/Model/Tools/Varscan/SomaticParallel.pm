@@ -38,7 +38,7 @@ class Genome::Model::Tools::Varscan::SomaticParallel {
 	],	
 
 	has_param => [
-		lsf_resource => { default_value => 'select[model!=Opteron250 && type==LINUX64] rusage[mem=4000]'},
+		lsf_resource => { default_value => 'rusage[mem=4000]'},
        ],
 };
 
@@ -150,7 +150,7 @@ sub execute {                               # replace with real execution logic.
 					my $cmd = $self->java_command_line(" somatic <\($normal_pileup\) <\($tumor_pileup\) --output-snp $output_snp --output-indel $output_indel $varscan_params");
 	
 					print "Running $cmd\n";                
-					system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
+					system("bsub -q long -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
 	 #                               system($cmd);					
 				}
 

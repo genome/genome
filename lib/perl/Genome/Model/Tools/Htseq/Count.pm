@@ -16,14 +16,6 @@ class Genome::Model::Tools::Htseq::Count {
             where => [ 'instrument_data.sample.extraction_type in' => ['rna','cdna','total rna'] ], 
             doc => 'alignment results, typically from an RNA aligner',
         },
-        output_dir => { 
-            # Required by all ::WithSavedResults
-            # TODO: ensure if someone sets this we actually put a symlink there
-            # and still let disk allocation decide where the data really goes
-            is => 'FilesystemPath',
-            is_optional => 1,
-            doc => 'the results directory is typically set automatically',
-        },
     ],
     has_param => [
         app_version => {
@@ -102,7 +94,7 @@ sub _execute_v1 {
         # This should never happen with the current logic, since it will
         # dividue executions up by alignment result, but we may later support
         # batching.
-        die "Support for multiple alignment result inputs in the same excution is not implemented yet!";
+        Carp::confess("Support for multiple alignment result inputs in the same excution is not implemented yet!");
     }
     my $alignment_result = $alignment_result[0];
     $self->status_message("Using alignment result: " . $alignment_result->__display_name__);
@@ -259,6 +251,41 @@ sub _execute_v1 {
     return 1;
 }
 
+sub _merge_v1 {
+    my $self = shift;
+    my @underlying = @_;
+   
+    $self->_default_merge(@underlying);
+
+    my $subdir = $self->output_dir . '/underlying_results';
+
+    my $cmd1 = '';
+    my $cmd2 = '';
+
+    for my $r (@underlying) {
+        my $sub_subdir = $r->id;
+        my $path = $subdir . '/' . $sub_subdir;
+    
+        if ($r == $underlying[0]) {
+            $cmd1 .= 'cat ' . $sub_subdir . '/gene-counts.tsv';
+            $cmd2 .= 'cat ' . $sub_subdir . '/transcript-counts.tsv';
+        }
+        else {
+            $cmd1 .= '| join -a 1 -a 2 - ' . $sub_subdir . '/gene-counts.tsv';
+            $cmd2 .= '| join -a 1 -a 2 - ' . $sub_subdir . '/transcript-counts.tsv';
+        }
+    }
+
+    my $sum = q/perl -nae '$sum = 0; for (@F[1..$#F]) { $sum += $_ }; print $F[0],"\t",$sum,"\n" '/;
+    $cmd1 .= " | $sum > ../gene-counts.tsv";
+    $cmd2 .= " | $sum > ../transcript-counts.tsv";
+
+    Genome::Sys->shellcmd(cmd => "cd $subdir; $cmd1");
+    Genome::Sys->shellcmd(cmd => "cd $subdir; $cmd2");
+
+    return 1;
+}
+
 ## the following three methods could be implemented, but the defaults are sufficient:
 ## the values below are examples, not the defaults
 
@@ -271,9 +298,15 @@ sub _execute_v1 {
 
 sub help_synopsis {
     return <<EOS
-gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%' and test_name is null"
+
+gmt htseq count --alignment-results "instrument_data.id=2890686892" --app-version 0.5.4p1
+
+gmt htseq count --alignment-results "instrument_data.sample.name='H_MU-752713-1209062'" --app-version 0.5.4p1
 
 gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%'" --app-version 0.5.4p1
+
+# skip any data sets flagged as test data
+gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%' and test_name is null"
 EOS
 }
 

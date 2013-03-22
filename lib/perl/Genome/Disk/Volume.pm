@@ -202,7 +202,7 @@ sub create_dummy_volume {
         );
     }
     else {
-        $volume = Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active', can_allocate => 1);
+        $volume = Genome::Disk::Volume->get_active_volume(mount_path => $mount_path);
     }
 
     return $volume;
@@ -355,6 +355,13 @@ sub is_used_over_hard_limit {
 sub is_over_hard_limit {
     my $self = shift;
     return ($self->is_allocated_over_hard_limit || $self->is_used_over_hard_limit);
+}
+
+sub get_active_volume {
+    my $class = shift;
+    my %defaults = (disk_status => 'active', can_allocate => 1);
+    my %params = (%defaults, @_);
+    return $class->get(%params);
 }
 
 1;

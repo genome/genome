@@ -544,8 +544,8 @@ if (length(which(cnvs[,"DIFF"] < -2)) > 0){
 }
 
 #Reset values larger than 20 to be 20 (arbitrary - for display purposes).  Single outliers, usually false positives near the centromeres obscure the data by jacking up the scale...
-if (length(which(cnvs[,"DIFF"] > 5.5)) > 0){
-  cnvs[which(cnvs[,"DIFF"] > 5.5),"DIFF"] = 5.5
+if (length(which(cnvs[,"DIFF"] > 4.5)) > 0){
+  cnvs[which(cnvs[,"DIFF"] > 4.5),"DIFF"] = 4.5
 }
 if (length(chr_list) > 1){
   if (image_type != "none"){

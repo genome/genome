@@ -91,7 +91,7 @@ sub _generate_cmd_string {
 
     #optional params
     if ( defined( $self->read_list_file ) ) {
-        $cmd .= " READ_LIST_FILES=" . $self->read_list_file;
+        $cmd .= " READ_LIST_FILE=" . $self->read_list_file;
     }
     if ( defined( $self->sort_order ) ) {
         $cmd .= " SORT_ORDER=" . $self->sort_order;

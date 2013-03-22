@@ -987,7 +987,7 @@ sub check_ref_align_models{
     #Make sure all the wgs or exome data is associated with the model
     #In both wgs and exome models, additional data will be allowed to handle weird situations.  
     #Eventually we will need the ability to exclude data as well...
-    $self->status_message("\t\tName: " . $model->name);
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
     next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
 
     push (@final_models, $model);
@@ -1068,7 +1068,7 @@ sub check_rnaseq_models{
     next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
     next unless ($model->annotation_build->id == $self->annotation_build->id);
     #Make sure all the rna-seq data is associated with the model
-    $self->status_message("\t\tName: " . $model->name);
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
     next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
 
     push (@final_models, $model);
@@ -1121,7 +1121,7 @@ sub check_de_models{
     next unless ($group1_members[0] == $normal_rnaseq_model->id);
     next unless ($group2_members[0] == $tumor_rnaseq_model->id);
 
-    $self->status_message("\t\tName: " . $model->name);
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
     push (@final_models, $model);
   }
 
@@ -1862,6 +1862,17 @@ sub exclude_instrument_data{
     push(@tmp2, $instrument_data);
   }
   @instrument_data = @tmp2;
+
+  #Now skip instrument data that has an index defined but where that index is defined as 'unknown'
+  my @tmp3;
+  foreach my $instrument_data (@instrument_data){
+    my $index = $instrument_data->index_sequence;
+    if ($index){
+      next if ($index =~ /unknown/i);
+    }
+    push(@tmp3, $instrument_data);
+  }
+  @instrument_data = @tmp3;
 
   #Return the amended array
   return (\@instrument_data);

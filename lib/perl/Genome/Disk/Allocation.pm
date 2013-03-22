@@ -310,7 +310,7 @@ sub _create {
     unless (defined $kilobytes_requested && $kilobytes_requested >= 0) {
         confess 'Kilobytes requested is not valid!';
     }
-    if (my $parent_alloc = $class->_get_parent_allocation($allocation_path)) {
+    if (my $parent_alloc = $class->get_parent_allocation($allocation_path)) {
         confess sprintf("Parent allocation (%s) found for %s", $parent_alloc->allocation_path, $allocation_path);
     }
     unless ($class->_verify_no_child_allocations($allocation_path)) {
@@ -558,14 +558,21 @@ sub _reallocate {
             }
         } else {
             $self->error_message(sprintf(
-                    "Failed to reallocate allocation %s on volume %s.",
+                    "Failed to reallocate allocation %s on volume %s because the volume is beyond its quota.",
                     $self->id, $volume->mount_path));
         }
     }
 
     unless ($succeeded) {
         # Rollback kilobytes_requested
-        $self->kilobytes_requested(List::Util::max($kb_used, $old_kb_requested));
+        my $max_kilobytes_requested = List::Util::max($kb_used, $old_kb_requested);
+        my $msg = $old_kb_requested == $max_kilobytes_requested ? 'Rolling back' : 'Setting';
+
+        $self->status_message(sprintf(
+                "%s kilobytes_requested to %d for allocation %s.",
+                $msg, $max_kilobytes_requested, $self->id));
+
+        $self->kilobytes_requested($max_kilobytes_requested);
         _commit_unless_testing();
     }
 
@@ -1207,12 +1214,12 @@ sub _verify_no_parent_allocation {
     unless (defined $path) {
         Carp::croak("no path for parent check");
     }
-    my $allocation = $class->_get_parent_allocation($path);
+    my $allocation = $class->get_parent_allocation($path);
     return !(defined $allocation);
 }
 
 # Returns parent allocation for the given path if one exists
-sub _get_parent_allocation {
+sub get_parent_allocation {
     my ($class, $path) = @_;
     Carp::confess("no path defined") unless defined $path;
     my ($allocation) = $class->get(allocation_path => $path);
@@ -1220,7 +1227,7 @@ sub _get_parent_allocation {
 
     my $dir = File::Basename::dirname($path);
     if ($dir ne '.' and $dir ne '/') {
-        return $class->_get_parent_allocation($dir);
+        return $class->get_parent_allocation($dir);
     }
     return;
 }
@@ -1288,7 +1295,7 @@ sub _verify_no_child_allocations {
         $query_string = sprintf(q(select * from %s where allocation_path like ? LIMIT 1), $table_name);
     } else {
         $class->error_message("Falling back on old child allocation detection behavior.");
-        return !($class->_get_child_allocations($path));
+        return !($class->et_child_allocations($path));
     }
 
     my $dbh = $data_source->get_default_handle();
@@ -1309,7 +1316,12 @@ sub _verify_no_child_allocations {
     return !defined $row_arrayref;
 }
 
-sub _get_child_allocations {
+sub get_all_allocations_for_path {
+    my ($class, $path) = @_;
+    return ($class->get_parent_allocation($path), $class->get_child_allocations($path))
+}
+
+sub get_child_allocations {
     my ($class, $path) = @_;
     $path =~ s/\/+$//;
     return $class->get('allocation_path like' => $path . '/%');

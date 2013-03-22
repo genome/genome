@@ -5,18 +5,32 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok);
+our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort);
 
 use Carp qw(croak);
 use File::Compare qw(compare);
 use IPC::System::Simple qw(capture);
 use Test::More;
+use File::Spec qw();
 
-my $tb = __PACKAGE__->builder;
+
+my %ERRORS = (
+    'REPLACE_ARRAY_REF' => q('replace' value should be an ARRAY ref),
+);
+sub ERRORS {
+    my ($class, $key) = @_;
+    return $ERRORS{$key};
+}
 
 sub sub_test($$) {
     my ($desc, $code) = @_;
+    my $tb = __PACKAGE__->builder;
     $tb->ok($code->(), $desc);
+}
+
+sub abort {
+    diag "  Aborted.";
+    die;
 }
 
 sub _compare_ok_parse_args {
@@ -39,6 +53,7 @@ sub _compare_ok_parse_args {
     my %vo; # validated_o
     $vo{name}    = delete $o{name};
     $vo{filters} = delete $o{filters};
+    $vo{replace} = delete $o{replace};
     $vo{diag}    = delete $o{diag} // 1;
     my @k = keys %o;
     if (@k) {
@@ -50,22 +65,33 @@ sub _compare_ok_parse_args {
         $vo{filters} = [$vo{filters}];
     }
 
+    my $replace_ref = ref($vo{replace});
+    if (defined $vo{replace} && (!$replace_ref || $replace_ref ne 'ARRAY')) {
+        die sprintf(q(%s: %s\n), $ERRORS{REPLACE_ARRAY_REF}, $vo{replace});
+    }
+
     return ($file_1, $file_2, %vo);
 }
 
 sub compare_ok {
     my ($file_1, $file_2, %o) = _compare_ok_parse_args(@_);
 
+    my $tb = __PACKAGE__->builder;
+
     my @compare_args = (
-        $file_1,
         $file_2,
+        $file_1,
         sub {
+            for my $pr (@{$o{replace}}) {
+                my ($pattern, $replacement) = @{$pr};
+                map { $_ =~ s/$pattern/$replacement/ } @_;
+            }
             for my $filter (@{$o{filters}}) {
                 map { $_ =~ s/$filter//g } @_;
             }
             my $c = ($_[0] ne $_[1]);
             if ($c == 1 && $o{diag}) {
-                $tb->diag("First diff:\n--- " . $file_1 . "\n+++ " . $file_2 . "\n- " . $_[0] . "+ " . $_[1]);
+                $tb->diag("First diff:\n--- " . $file_2 . "\n+++ " . $file_1 . "\n- " . $_[0] . "+ " . $_[1]);
             }
             return $c;
         }
@@ -106,6 +132,28 @@ sub run_ok {
     $tb->ok($exit_zero, $test_name);
 
     return $exit_zero;
+}
+
+sub data_dir_ok {
+    my $data_dir = data_dir(@_);
+    my $tb = __PACKAGE__->builder;
+    $tb->ok(-d $data_dir, "data_dir exists: $data_dir");
+    return $data_dir;
+}
+
+sub data_dir {
+    my ($class, $package, $test_version) = @_;
+
+    # "validate" package
+    $package->class;
+
+    (my $dirname = $package) =~ s/::/-/g;
+    my @parts = ($ENV{GENOME_TEST_INPUTS}, $dirname);
+    if ($test_version) {
+        push @parts, $test_version;
+    }
+    my $dirpath = File::Spec->join(@parts);
+    return $dirpath;
 }
 
 1;

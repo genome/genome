@@ -13,7 +13,8 @@ use IPC::System::Simple qw(capture);
 my $start_point = resolve_start_point();
 
 my @files_to_compile = files_to_compile($start_point);;
-plan tests => scalar(@files_to_compile);
+plan tests => scalar(@files_to_compile) + 1;
+ok(1); # need a test for when @files_to_compile == 0
 
 for my $file (@files_to_compile) {
     my $pid = fork();
@@ -72,9 +73,9 @@ sub files_to_compile {
     my @cmd = ('git', 'diff', '--name-only', $start_point);
     @files = capture(@cmd);
     chomp @files;
-    @files = map { File::Spec->join($git_dir, $_) } @files;
 
-    chomp @files;
+    @files = map { File::Spec->join($git_dir, $_) } @files;
     @files = grep { is_perl_file $_ } @files;
+
     return @files;
 }

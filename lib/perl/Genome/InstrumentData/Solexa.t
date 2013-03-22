@@ -115,6 +115,11 @@ is_deeply( # w/ params as -- tests boolean false
     ["trim foo --num '20' --words 'hello world'"],
     'Old style SX trimmer "foo" w/ params [=> and boolean is false] "-num 20 --words "hello world"" commands are ok!',
 );
+is_deeply( # 'no' property
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'gmt sx trim flexbar --adapter CTTTGTGTTTGA --adapter-trim-end LEFT --nono-length-dist --threads 12 --adapter-min-overlap 7 --max-uncalled 150 --min-readlength 25')],
+    ['trim flexbar --adapter CTTTGTGTTTGA --adapter-trim-end LEFT --nono-length-dist --threads 12 --adapter-min-overlap 7 --max-uncalled 150 --min-readlength 25'],
+    '"flexbar" w/ params w/ "no" property is an SX trimmer and the command parts are ok!',
+);
 
 #  old style - fails
 ok(

@@ -22,6 +22,7 @@ use POSIX ":sys_wait_h";
 use File::Slurp;
 use Time::HiRes qw(gettimeofday);
 use MIME::Base64;
+use Genome::Utility::Test qw(run_ok);
 
 require_ok('Genome::Sys');
 
@@ -61,12 +62,31 @@ $worked = eval { Genome::Sys->open_file_for_reading($new_file) };
 ok(!$worked, 'Tried to open a non existing file for reading');
 like($@, qr/File \($new_file\) does not exist/, 'exception message is correct');
 
-# No read access
-my $no_write_dir = sprintf('%s/no_write_dir', $base_test_dir);
+my $no_write_dir = Genome::Sys->create_temp_directory();
+ok(-d $no_write_dir, 'no_write_dir exists');
+
 my $no_read_file = sprintf('%s/no_read_file.txt', $no_write_dir);
-$worked = eval { Genome::Sys->open_file_for_reading($no_read_file) };
-ok(!$worked, 'Try to open a file that can\'t be read from');
+run_ok(['touch', $no_read_file]);
+chmod 0222, $no_read_file;
+
+my $no_write_file = sprintf('%s/no_write_file.txt', $no_write_dir);
+run_ok(['touch', $no_write_file]);
+chmod 0444, $no_write_file;
+
+chmod 0555, $no_write_dir;
+
+# No exist
+my $no_file = Genome::Sys->create_temp_file_path();
+$worked = eval { Genome::Sys->open_file_for_reading($no_file) };
+ok(!-e $no_file, 'file should not exist');
+ok(!$worked, 'Try to open a file that does not exist');
 like($@, qr/File .* does not exist/, 'exception message is correct');
+
+# No read access
+$worked = eval { Genome::Sys->open_file_for_reading($no_read_file) };
+ok(-e $no_read_file, 'file should exist');
+ok(!$worked, 'Try to open a file that can\'t be read from');
+like($@, qr/Do not have READ access to file/, 'exception message is correct');
 
 # File is a dir
 $worked = eval { Genome::Sys->open_file_for_reading($base_test_dir) };
@@ -92,7 +112,6 @@ ok(!$worked, 'Tried to open undef file for appending');
 like($@, qr/No append file given/, 'exception message is correct');
 
 # No write access
-my $no_write_file = sprintf('%s/no_write_file.txt', $no_write_dir);
 $worked = eval { Genome::Sys->open_file_for_appending($no_write_file) };
 ok(!$worked, 'Try to open a file for appending that can\'t be written to');
 like($@, qr/Do not have WRITE access to directory/, 'exception message is correct');
@@ -203,7 +222,9 @@ ok( # good
     Genome::Sys->validate_directory_for_read_access($base_test_dir),
     'validate_directory_for_read_access',
 );
-my $no_read_dir = sprintf('%s/no_read_dir', $base_test_dir);
+my $no_read_dir = Genome::Sys->create_temp_directory();
+ok(-d $no_read_dir, 'no_read_dir exists');
+chmod 0333, $no_read_dir;
 $worked = eval { Genome::Sys->validate_directory_for_read_access($no_read_dir) };
 ok(!$worked, 'Failed as expected - can\'t read from dir');
 like($@, qr/Directory .* is not readable/, 'Exception message is correct');
