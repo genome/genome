@@ -16,6 +16,22 @@ class Genome::Sample::Command::Import::Base {
         _library => { is => 'Genome::Library', is_optional => 1, },
         _created_objects => { is => 'ARRAY', is_optional => 1, },
     ],
+    has_optional => [
+        individual_attributes => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'Additional attributes to add to the individual. Give as key value pairs. Separate key and value with an equals (=) and pairs with a comma (,). Ex: attr1=val1,attr2=val2',
+        },
+        sample_attributes => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'Additional attributes to add to the sample. Give as key value pairs. Separate key and value with an equals (=) and pairs with a comma (,). Ex: attr1=val1,attr2=val2',
+        },
+    ],
+    has_optional_transient => [
+        _individual_attributes => { is => 'Hash', },
+        _sample_attributes => { is => 'Hash', },
+    ],
 };
 
 sub help_brief {
@@ -293,6 +309,39 @@ sub _display_string_for_params {
     }
 
     return $string;
+}
+
+sub _resolve_individual_attributes {
+    my $self = shift;
+    return $self->_resolve_attributes('individual');
+}
+
+sub _resolve_sample_attributes {
+    my $self = shift;
+    return $self->_resolve_attributes('sample');
+}
+
+sub _resolve_attributes {
+    my ($self, $type) = @_;
+
+    my $attributes_method = $type.'_attributes';
+    my @attributes = $self->$attributes_method;
+    return 1 if not @attributes; # ok
+
+    no warnings;
+    my %attributes = map { split('=') } @attributes;
+    use warnings;
+
+    for my $label ( keys %attributes ) {
+        next if defined $attributes{$label};
+        $self->error_message("Attribute label ($label) does not have a value!");
+        return;
+    }
+
+    my $attributes_hash_method = '_'.$type.'_attributes';
+    $self->$attributes_hash_method(\%attributes);
+
+    return 1;
 }
 
 1;
