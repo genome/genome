@@ -43,13 +43,7 @@ sub _update_object {
         $obj->$attr( $params{$attr} );
     }
 
-    if ( not UR::Context->commit ) {
-        $self->_bail('Cannot commit updates');
-        return;
-    }
-
     $self->status_message('Update...OK');
-
     return 1;
 }
 
@@ -196,12 +190,6 @@ sub _create_individual {
         return;
     }
 
-    #if ( not UR::Context->commit ) {
-    if ( not $transaction->commit ) {
-        $self->_bail('Cannot commit new individual to DB');
-        return;
-    }
-
     my $created_objects = $self->_created_objects;
     push @$created_objects, $individual;
     $self->_created_objects($created_objects);
@@ -226,11 +214,6 @@ sub _create_sample {
     my $sample = Genome::Sample->create(%params);
     if ( not defined $sample ) {
         $self->_bail('Cannot create sample');
-        return;
-    }
-
-    if ( not UR::Context->commit ) {
-        $self->_bail('Cannot commit new sample to DB');
         return;
     }
 
@@ -292,11 +275,6 @@ sub _create_library_for_extension {
         return;
     }
 
-    unless ( UR::Context->commit ) {
-        $self->_bail('Cannot commit new library to DB');
-        return;
-    }
-
     my $created_objects = $self->_created_objects;
     push @$created_objects, $library;
     $self->_created_objects($created_objects);
@@ -319,9 +297,6 @@ sub _bail {
     for my $obj ( @$created_objects ) { 
         my $transaction = UR::Context::Transaction->begin();
         $obj->delete;
-        if ( not $transaction->commit ) {
-            $self->status_message('Cannot commit removal of '.ref($obj).' '.$obj->id);
-        }
     }
 
     return 1;
