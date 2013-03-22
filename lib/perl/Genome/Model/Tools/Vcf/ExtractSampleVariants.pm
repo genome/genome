@@ -174,13 +174,14 @@ sub execute {                               # replace with real execution logic.
 						$varAlleleCounter++;
 						my $variant_type = "snp";
 						my $variant_key = "";
+						my $chr_start = my $chr_stop = 0;
+						my $allele1 = my $allele2 = "";
 						
 						## Check and adjust for indel ##
 						if(length($ref) > 1 || length($var) > 1)
 						{
 							$variant_type = "indel";
-							my $chr_start = my $chr_stop = 0;
-							my $allele1 = my $allele2 = "";
+
 							if(length($var) > length($ref))
 							{
 								$variant_type = "ins";
@@ -204,89 +205,99 @@ sub execute {                               # replace with real execution logic.
 							}
 							
 							$variant_key = join("\t", $chrom, $chr_start, $chr_stop, $allele1, $allele2);
-							$ref = $allele1;
-							$var = $allele2;
-							if($vep{$variant_key})
-							{
-								$stats{'num_variants_passed_annotated'}++;
-								my %allele_counts = ();
+						}
+						else
+						{
+							## We have a SNP ##
+							$chr_start = $chr_stop = $position;
+							$allele1 = $ref;
+							$allele2 = $var;
+							$variant_key = join("\t", $chrom, $position, $position, $ref, $var);
+						}
+							
 
-								for(my $colCounter = 9; $colCounter < $numContents; $colCounter++)
+						if($vep{$variant_key})
+						{
+							$stats{'num_variants_passed_annotated'}++;
+							my %allele_counts = ();
+							my $numSamples = 0;
+
+							for(my $colCounter = 9; $colCounter < $numContents; $colCounter++)
+							{
+								my $sample_name = $sample_names[$numSamples];
+								$numSamples++;
+								
+								if($sample_name && (!$self->sample_name || $self->sample_name eq $sample_name))
 								{
-									my $sample_name = $sample_names[$colCounter];
+									my @genotypeContents = split(/\:/, $lineContents[$colCounter]);
+									my $genotype = $genotypeContents[$genotype_column{'GT'}];
+									my $coverage = $genotypeContents[$genotype_column{'DP'}];
+									my $filter = $genotypeContents[$genotype_column{'FT'}];
+									my $var_depth = $genotypeContents[$genotype_column{'AD'}];
+									my $freq_alt = $genotypeContents[$genotype_column{'FA'}];
+			
+									## Get the highest var freq ##
+									my $var_freq = 0;
 									
-									if($sample_name && (!$self->sample_name || $self->sample_name eq $sample_name))
+									if($var_depth)
 									{
-										my @genotypeContents = split(/\:/, $lineContents[$colCounter]);
-										my $genotype = $genotypeContents[$genotype_column{'GT'}];
-										my $coverage = $genotypeContents[$genotype_column{'DP'}];
-										my $filter = $genotypeContents[$genotype_column{'FT'}];
-										my $var_depth = $genotypeContents[$genotype_column{'AD'}];
-										my $freq_alt = $genotypeContents[$genotype_column{'FA'}];
-				
-										## Get the highest var freq ##
-										my $var_freq = 0;
+										my @var_depths = split(/\,/, $var_depth);
+										@var_depths = sort numericallyDesc @var_depths;
+										$var_depth = $var_depths[0];
+										$var_depth = 0 if($var_depth && $var_depth eq ".");
+										$var_freq = $var_depth / $coverage if($coverage);				
+									}
+			
+									
+									## Only process the genotype if it has a value and is either unfiltered or for the control sample ##
+									if(length($genotype) > 2 && $genotype ne '.' && ($filter eq 'PASS' || $filter eq '.'))
+									{
+										$stats{'sample_variants'}++;
+										$genotype = convert_genotype($ref, $alt, $genotype) if($genotype ne '.');
 										
-										if($var_depth)
-										{
-											my @var_depths = split(/\,/, $var_depth);
-											@var_depths = sort numericallyDesc @var_depths;
-											$var_depth = $var_depths[0];
-											$var_depth = 0 if($var_depth && $var_depth eq ".");
-											$var_freq = $var_depth / $coverage if($coverage);				
-										}
-				
+										my $gt = "Missing";
 										
-										## Only process the genotype if it has a value and is either unfiltered or for the control sample ##
-										if(length($genotype) > 2 && $genotype ne '.' && ($filter eq 'PASS' || $filter eq '.'))
+										if(is_reference($allele1, $allele2, $genotype))
 										{
-											$stats{'sample_variants'}++;
-				#							warn "Trying to convert $genotype in column $colCounter at line $lineCounter\n";
-											$genotype = convert_genotype($ref, $alt, $genotype) if($genotype ne '.');
-				
-											my $allele1 = substr($genotype, 0, 1);
-											my $allele2 = substr($genotype, 1, 1);
-											$allele_counts{$allele1}++;
-											$allele_counts{$allele2}++;
-					
-											my $gt = "Missing";
-											
-											if($genotype eq $ref . $ref)
+											if($var_freq >= 0.05)
 											{
-												if($var_freq < 0.05)
-												{
-													$gt = "Ref";
-												}
-												else
-												{
-													$stats{'sample_variants_undercalled'}++;
-												}
-											}
-											elsif($genotype eq $ref . $var)
-											{
-												$gt = "Het";
-												$stats{'sample_variants_het'}++;
-											}
-											elsif($genotype eq $var . $var)
-											{
-												$gt = "Hom";
-												$stats{'sample_variants_hom'}++;
+												## Leave as missing, because we don't know ##
+												$stats{'sample_variants_undercalled'}++;
 											}
 											else
 											{
-												warn "Genotype $genotype didn't match "
+												$gt = "Ref";
 											}
-											
-											print OUTFILE join("\t", $variant_key, $id, $info, $vep{$variant_key}, $sample_name, $genotype) . "\n";
-										}										
-									}
-									
+										}
+										elsif(is_heterozygous($allele1, $allele2, $genotype))
+										{
+											$gt = "Het";
+											$stats{'sample_variants_het'}++;												
+										}
+										elsif(is_homozygous($allele1, $allele2, $genotype))
+										{
+											$gt = "Hom";
+											$stats{'sample_variants_hom'}++;												
+										}
+										else
+										{
+											warn "Unable to determine genotype ref=$ref var=$var gt=$genotype\n";
+										}
+										
+										if($gt eq "Het" || $gt eq "Hom")
+										{
+											print OUTFILE join("\t", $variant_key, $id, $info, $vep{$variant_key}, $sample_name, $genotype) . "\n";											
+										}
 
+									}										
 								}
-
 								
+
 							}
+
+							
 						}
+						
 						
 						## Determine if we have annotation for this variant ##
 						
@@ -316,7 +327,7 @@ sub execute {                               # replace with real execution logic.
 	print "$stats{'sample_variants'} sample variants\n";
 	print "$stats{'sample_variants_het'} were heterozygous\n";
 	print "$stats{'sample_variants_hom'} were homozygous\n";
-	print "$stats{'sample_variants_undercalled'} were reference but might be heterozygous\n";
+	print "$stats{'sample_variants_undercalled'} were reference but might be heterozygous\n" if($stats{'sample_variants_undercalled'});
 
 	close($input);
 
@@ -325,8 +336,88 @@ sub execute {                               # replace with real execution logic.
 	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }
 
+################################################################################################
+# LoadAnnotation - load the VEP annotation 
+#
+################################################################################################
+
+sub is_reference
+{
+	my ($ref, $var, $genotype) = @_;
+	
+	if(length($genotype) == 2)
+	{
+		if($genotype eq $ref . $ref)
+		{
+			return(1);
+		}
+	}
+	else
+	{
+		if($genotype eq $ref . '/' . $ref)
+		{
+			return(1);
+		}
+	}
+	
+	return(0);
+}
 
 
+################################################################################################
+# LoadAnnotation - load the VEP annotation 
+#
+################################################################################################
+
+sub is_heterozygous
+{
+	my ($ref, $var, $genotype) = @_;
+	
+	if(length($genotype) == 2)
+	{
+		if($genotype eq $ref . $var || $genotype eq $var . $ref)
+		{
+			return(1);
+		}
+	}
+	else
+	{
+		if($genotype eq $ref . '/' . $var || $genotype eq $var . '/' . $ref)
+		{
+			return(1);
+		}
+	}
+	
+	return(0);
+}
+
+
+################################################################################################
+# LoadAnnotation - load the VEP annotation 
+#
+################################################################################################
+
+sub is_homozygous
+{
+	my ($ref, $var, $genotype) = @_;
+	
+	if(length($genotype) == 2)
+	{
+		if($genotype eq $var . $var)
+		{
+			return(1);
+		}
+	}
+	else
+	{
+		if($genotype eq $var . '/' . $var)
+		{
+			return(1);
+		}
+	}
+	
+	return(0);
+}
 
 
 ################################################################################################
