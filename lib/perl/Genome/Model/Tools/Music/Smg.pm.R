@@ -18,6 +18,7 @@ if( processors > 1 & is.installed( 'doMC' ) & is.installed( 'foreach' )) {
     parallel = TRUE;
 }
 
+# Generates a binomial distribution
 gethist <- function( xmax, n, p, ptype = "positive_log" ) {
     dbinom( 0:xmax, n, p ) -> ps;
     ps = ps[ps > 0];
@@ -27,6 +28,7 @@ gethist <- function( xmax, n, p, ptype = "positive_log" ) {
     return( ps );
 }
 
+# Splits data into bins
 binit <- function( x, hmax, bin, dropbin = T ) {
     bs = as.integer( x / bin );
     bs[bs > hmax/bin] = hmax / bin;
@@ -38,12 +40,14 @@ binit <- function( x, hmax, bin, dropbin = T ) {
     return( bs );
 }
 
+# Convolutes two vectors into one
 convolute_b <- function( a, b ) {
     tt = NULL;
     for( j in b ) { tt = c( tt, ( a + j )); }
     return( tt );
 }
 
+# Runs SMG test on a given gene with categorized mutation counts, coverage, and BMR
 mut_class_test <- function( x, xmax = 100, hmax = 25, bin = 0.001 ) {
     x = as.data.frame( x );
     colnames( x ) = c( "Class", "Bps", "Muts", "BMR" );
