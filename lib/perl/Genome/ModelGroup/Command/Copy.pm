@@ -143,6 +143,7 @@ sub execute {
             unless ($changes_pp) {
                 die "failed to find processing profile $value!";
             }
+            next;
         }
 
         my $pmeta = $meta->property($name);
