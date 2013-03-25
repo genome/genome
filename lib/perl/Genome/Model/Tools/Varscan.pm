@@ -20,6 +20,7 @@ class Genome::Model::Tools::Varscan {
         samtools_use_baq => {
             is => 'Boolean',
             doc => 'When doing pileup/mpileup, should we enable baq (-B) option',
+            is_input => 1,
             default_value => 1,
         },
         samtools_params => {
@@ -89,10 +90,11 @@ sub path_for_version {
     return $VARSCAN_VERSIONS{$version};
 }
 
+# Bams are now passed in as an arrayref so we can formulate a mpileup command with multiple bams
 sub pileup_command_for_reference_and_bam {
     my $self = shift;
     my $reference = shift;
-    my $bam = shift;
+    my $bams = shift;
     my $mapqual = shift;
 
     $mapqual = 10 if(!$mapqual);
@@ -105,10 +107,17 @@ sub pileup_command_for_reference_and_bam {
         $samtools_params = join(" ", ($samtools_params, "-B")); #turn off baq
     }
     my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($samtools_version);
+
+    # Use pileup for legacy varscan v2.2.4, because it could not handle mpileup output
     if ($self->version eq "2.2.4") {
+        if (scalar(@$bams) > 1) {
+            die $self->error_message("Multiple bams not allowed in samtools pileup");
+        }
+        my $bam = shift @$bams;
         $command = "$samtools_path view -b -u -q $mapqual $bam | $samtools_path pileup $samtools_params -f $reference -";
     } else {
-        $command = "$samtools_path mpileup -f $reference -q $mapqual $samtools_params $bam";
+        my $bam_string = join(" ", @$bams);
+        $command = "$samtools_path mpileup -f $reference -q $mapqual $samtools_params $bam_string";
     }
 
     return $command;
@@ -138,6 +147,11 @@ sub default_version {
 
 sub available_varscan_versions {
     return keys(%VARSCAN_VERSIONS);
+}
+
+sub samtools_path {
+    my $self = shift;
+    return Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 }
 
 1;
