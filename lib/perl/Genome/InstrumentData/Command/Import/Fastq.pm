@@ -262,7 +262,7 @@ sub execute {
     }
     if(not defined($params{subset_name})){
         my $subset_name = $self->get_subset_name;
-        unless($subset_name =~ /[1-8]/){
+        unless(defined($subset_name) and $subset_name =~ /[1-8]/){
             $self->error_message("Subset_name must be between 1-8. Found subset_name of \"".$subset_name."\"");
             die $self->error_message;
         }
