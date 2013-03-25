@@ -14,16 +14,23 @@ use above "Genome";
 use Test::More;
 
 use_ok('Genome::Sample::Command::Import') or die;
-ok(Genome::Sample::Command::Import::Test->__meta__, 'class meta for commond to import test namespace sample');
+Genome::Sample::Command::Import::create_import_command_for_namespace({
+        namespace => 'Test',
+        nomenclature => 'TeSt',
+        sample_name_match => '\d+',
+        individual_name_match => '\d+',
+        individual_properties => [qw/ gender race /],
+    });
+ok(Genome::Sample::Command::Import::Test->__meta__, 'class meta for command to import test namespace sample');
 
 my $patient_name = 'TeSt-000000';
 my $name = $patient_name.'-000000';
 my $import = Genome::Sample::Command::Import::Test->create(
     name => $name,
-    #gender => 'female',
-    #race => 'caucasian',
-    #tissue => 'blood',
-    #extraction_type => 'genomic dna',
+    gender => 'female',
+    race => 'caucasian',
+    tissue => 'blood',
+    extraction_type => 'genomic dna',
     sample_attributes => [qw/ age_baseline=50 mi_baseline=11.45 /],
     #individual_attributes => [qw/ /],
 );
@@ -50,10 +57,10 @@ is(@{$import->_created_objects}, 3, 'created 3 objects');
 # Fail - invalid attrs
 $import = Genome::Sample::Command::Import::Test->create(
     name => $name,
-    #gender => 'female',
-    #race => 'caucasian',
-    #tissue => 'blood',
-    #extraction_type => 'genomic dna',
+    gender => 'female',
+    race => 'caucasian',
+    tissue => 'blood',
+    extraction_type => 'genomic dna',
     sample_attributes => [qw/ age_baseline= /],
 );
 ok($import, 'create');

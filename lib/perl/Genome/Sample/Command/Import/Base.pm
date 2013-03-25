@@ -10,11 +10,10 @@ class Genome::Sample::Command::Import::Base {
     is_abstract => 1,
     doc => 'Import samples from known sources',
     has => [
-        _taxon => { is => 'Genome::Taxon', is_optional => 1, },
-        _individual => { is => 'Genome::Individual', is_optional => 1, },
-        _sample => { is => 'Genome::Sample', is_optional => 1, },
-        _library => { is => 'Genome::Library', is_optional => 1, },
-        _created_objects => { is => 'ARRAY', is_optional => 1, },
+        name => {
+            is => 'Text',
+            doc => 'Sample name.',
+        },
     ],
     has_optional => [
         individual_attributes => {
@@ -28,9 +27,24 @@ class Genome::Sample::Command::Import::Base {
             doc => 'Additional attributes to add to the sample. Give as key value pairs. Separate key and value with an equals (=) and pairs with a comma (,). Ex: attr1=val1,attr2=val2',
         },
     ],
+    has_constant => [
+        nomenclature => { is_constant => 1, },
+    ],
     has_optional_transient => [
-        _individual_attributes => { is => 'Hash', },
-        _sample_attributes => { is => 'Hash', },
+        # taxon
+        _taxon => { is => 'Genome::Taxon', is_optional => 1, },
+        # source
+        _individual => { is => 'Genome::Individual', is_optional => 1, },
+        _individual_name => { is => 'Text', },
+        _individual_attributes => { is => 'Hash', default_value => {}, },
+        # sample
+        _sample => { is => 'Genome::Sample', is_optional => 1, },
+        _sample_attributes => { is => 'Hash', default_value => {}, },
+        # library
+        _library => { is => 'Genome::Library', is_optional => 1, },
+        # misc
+        _created_objects => { is => 'ARRAY', is_optional => 1, },
+        _minimum_unique_source_name_parts => { is => 'Number', default_value => 2, },
     ],
 };
 
@@ -40,6 +54,47 @@ sub help_brief {
 
 sub help_detail {
     return help_brief();
+}
+
+sub execute {
+    my $self = shift;
+    $self->status_message('Import '.$self->nomenclature.' sample...');
+
+    my $individual_name_ok = $self->_validate_name_and_set_individual_name;
+    return if not $individual_name_ok;
+
+    my $resolve_individual_attributes = $self->_resolve_individual_attributes;
+    return if not $resolve_individual_attributes;
+
+    my $resolve_sample_attributes_ok = $self->_resolve_sample_attributes;
+    return if not $resolve_sample_attributes_ok;
+
+    my $import = $self->_import(
+        taxon => 'human',
+        individual => {
+            name => $self->_individual_name,
+            upn => $self->_individual_name,
+            nomenclature => $self->nomenclature,
+            gender => $self->gender,
+            race => $self->race,
+            %{$self->_individual_attributes},
+        },
+        sample => {
+            name => $self->name,
+            extraction_label => $self->name,
+            extraction_type => $self->extraction_type,
+            tissue_desc => $self->tissue,
+            tissue_label => $self->tissue,
+            cell_type => 'unknown',
+            nomenclature => $self->nomenclature,
+            %{$self->_sample_attributes},
+        },
+        library => 'extlibs',
+    );
+    return if not $import;
+
+    $self->status_message('Import sample...OK');
+    return 1;
 }
 
 sub _import {
@@ -120,6 +175,35 @@ sub _import {
     return 1;
 }
 
+sub _validate_name_and_set_individual_name {
+    my $self = shift;
+    $self->status_message('Validate sample name and resolve individual name...');
+
+    my $individual_name_match = join('\-', $self->nomenclature, $self->_individual_name_match);
+    my $sample_name_match = join('\-', $individual_name_match, $self->_sample_name_match);
+    my $sample_name_regexp = qr|^$sample_name_match$|;
+    my $name = $self->name;
+    $self->status_message('Sample name: '.$name);
+    $self->status_message('Sample regexp: '.$sample_name_regexp);
+    if ( $name !~ /$sample_name_regexp/ ) {
+        $self->error_message("Sample name ($name) is invalid!");
+        return;
+    }
+
+    my $individual_name_regexp = qr|^($individual_name_match)|;
+    $self->status_message('Individual name regexp: '.$individual_name_regexp);
+    if ( $name !~ /$individual_name_regexp/ ) {
+        $self->error_message("Could not determine indidvidual name from sample name ($name)!");
+        return;
+    }
+    my $individual_name = $1;
+    $self->status_message('Individual name: '.$individual_name);
+    $self->_individual_name($individual_name);
+
+    $self->status_message('Validate sample name and resolve individual name...done');
+    return 1
+}
+
 sub _get_individual {
     my ($self, $upn) = @_;
 
@@ -133,7 +217,7 @@ sub _get_individual {
 
     my %individuals_from_similar_samples;
     my @tokens = split('-', $sample->name);
-    my $min_unique_name_parts = $self->_minimum_unique_name_parts - 1;
+    my $min_unique_name_parts = $self->_minimum_unique_source_name_parts - 1;
     for ( my $i = $#tokens - 1; $i > $min_unique_name_parts; $i--  ) { # go down to 2 levels
         my $extraction_label = join('-', @tokens[0..$i]);
         my @samples = Genome::Sample->get('extraction_label like' => $extraction_label.'%');
@@ -159,10 +243,6 @@ sub _get_individual {
     my $individual_for_given_upn = Genome::Individual->get(upn => $upn);
     return if not $individual_for_given_upn;
     return $self->_individual($individual_for_given_upn);
-}
-
-sub _minimum_unique_name_parts {
-    return 2;
 }
 
 sub _create_individual {
