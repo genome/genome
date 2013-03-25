@@ -1122,6 +1122,8 @@ sub __errors__ {
 	elsif (defined($self->lane)) {
 		$expected = $self->lane;
 	}
+    my $subset_name = $self->subset_name;
+    $subset_name = '' unless (defined $subset_name);
 	if ($self->subset_name ne $expected) {
 		push @errors, UR::Object::Tag->create(
 			type => 'error',
