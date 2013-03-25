@@ -258,7 +258,10 @@ class Genome::InstrumentData::Solexa {
 sub __display_name__ {
     my $self = $_[0];
     my $sample = $self->sample;
-    return $self->flow_cell_id . '/' . $self->subset_name . " (" . $self->id . ") for " . $sample->__display_name__;
+    my($flow_cell_id, $subset_name, $id, $sample_display_name)
+            = map { defined($_) ? $_ : '' }
+                    ( $self->flow_cell_id, $self->subset_name, $self->id, $sample->__display_name__);
+    return $flow_cell_id . '/' . $subset_name . " (" . $id . ") for " . $sample_display_name;
 }
 
 sub _calculate_paired_end_kb_usage {
@@ -1123,13 +1126,13 @@ sub __errors__ {
 		$expected = $self->lane;
 	}
     my $subset_name = $self->subset_name;
-    $subset_name = '' unless (defined $subset_name);
-	if ($self->subset_name ne $expected) {
+    $subset_name    = '' unless (defined $subset_name);
+	if ($subset_name ne $expected) {
 		push @errors, UR::Object::Tag->create(
 			type => 'error',
 			properties => ['subset_name'],
 			desc => 'Subset name for Illumina NGS instrument data should be "lane-indexsequence" or just "lane" for unindexed data. ' 
-					. 'Expected "' . $expected . '" got "' . $self->subset_name . '".'
+					. 'Expected "' . $expected . '" got "' . $subset_name . '".'
 		);
 	}
 	return @errors;
