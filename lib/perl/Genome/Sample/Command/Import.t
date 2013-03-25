@@ -18,7 +18,7 @@ Genome::Sample::Command::Import::create_import_command_for_namespace({
         namespace => 'Test',
         nomenclature => 'TeSt',
         sample_name_match => '\d+',
-        sample_attribute_names => [qw/ extraction_type tissue /],
+        sample_attribute_names => [qw/ extraction_type tissue_desc /],
         individual_name_match => '\d+',
         individual_attribute_names => [qw/ gender race /],
     });
@@ -30,7 +30,7 @@ my $import = Genome::Sample::Command::Import::Test->create(
     name => $name,
     gender => 'female',
     race => 'caucasian',
-    tissue => 'blood',
+    tissue_desc => 'blood',
     extraction_type => 'genomic dna',
     sample_attributes => [qw/ age_baseline=50 mi_baseline=11.45 /],
     individual_attributes => [qw/ common_name=first /],
@@ -42,7 +42,7 @@ is($import->_individual->name, $patient_name, 'patient name');
 is($import->_individual->nomenclature, 'TeSt', 'patient nomenclature');
 is($import->_individual->gender, 'female', 'patient gender');
 is($import->_individual->race, 'caucasian', 'patient race');
-is(eval{$import->_individual->attributes(attribute_label => 'common_name')->attribute_value}, 'first', 'patient common_name');
+is($import->_individual->common_name, 'first', 'patient common_name');
 is($import->_sample->name, $name, 'sample name');
 is($import->_sample->nomenclature, 'TeSt', 'sample nomenclature');
 is($import->_sample->extraction_label, $name, 'sample extraction label');
@@ -61,7 +61,7 @@ $import = Genome::Sample::Command::Import::Test->create(
     name => $name,
     gender => 'female',
     race => 'caucasian',
-    tissue => 'blood',
+    tissue_desc => 'blood',
     extraction_type => 'genomic dna',
     sample_attributes => [qw/ age_baseline= /],
 );

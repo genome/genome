@@ -14,6 +14,10 @@ class Genome::Sample::Command::Import::Base {
             is => 'Text',
             doc => 'Sample name.',
         },
+        extraction_type => {
+            is => 'Text',
+            doc => 'The extraction type of the samples. Usually "genomic dna" or "rna."',
+        },
     ],
     has_optional => [
         individual_attributes => {
@@ -36,10 +40,8 @@ class Genome::Sample::Command::Import::Base {
         # source
         _individual => { is => 'Genome::Individual', is_optional => 1, },
         _individual_name => { is => 'Text', },
-        _individual_attributes => { is => 'Hash', default_value => {}, },
         # sample
         _sample => { is => 'Genome::Sample', is_optional => 1, },
-        _sample_attributes => { is => 'Hash', default_value => {}, },
         # library
         _library => { is => 'Genome::Library', is_optional => 1, },
         # misc
@@ -63,32 +65,16 @@ sub execute {
     my $individual_name_ok = $self->_validate_name_and_set_individual_name;
     return if not $individual_name_ok;
 
-    my $resolve_individual_attributes = $self->_resolve_individual_attributes;
-    return if not $resolve_individual_attributes;
+    my %individual_attributes = $self->_resolve_individual_attributes;
+    return if not %individual_attributes;
 
-    my $resolve_sample_attributes_ok = $self->_resolve_sample_attributes;
-    return if not $resolve_sample_attributes_ok;
+    my %sample_attributes = $self->_resolve_sample_attributes;
+    return if not %sample_attributes;
 
     my $import = $self->_import(
         taxon => 'human',
-        individual => {
-            name => $self->_individual_name,
-            upn => $self->_individual_name,
-            nomenclature => $self->nomenclature,
-            gender => $self->gender,
-            race => $self->race,
-            %{$self->_individual_attributes},
-        },
-        sample => {
-            name => $self->name,
-            extraction_label => $self->name,
-            extraction_type => $self->extraction_type,
-            tissue_desc => $self->tissue,
-            tissue_label => $self->tissue,
-            cell_type => 'unknown',
-            nomenclature => $self->nomenclature,
-            %{$self->_sample_attributes},
-        },
+        individual => \%individual_attributes,
+        sample => \%sample_attributes,
         library => 'extlibs',
     );
     return if not $import;
@@ -372,33 +358,55 @@ sub _display_string_for_params {
 
 sub _resolve_individual_attributes {
     my $self = shift;
-    return $self->_resolve_attributes('individual');
+    my %attributes = (
+        nomenclature => $self->nomenclature,
+        name => $self->_individual_name,
+        upn => $self->_individual_name,
+    );
+    return if not $self->_resolve_attributes('individual', \%attributes);
+    return %attributes;
 }
 
 sub _resolve_sample_attributes {
     my $self = shift;
-    return $self->_resolve_attributes('sample');
+    my %attributes = (
+        nomenclature => $self->nomenclature,
+        name => $self->name,
+        extraction_label => $self->name,
+        cell_type => 'unknown',
+    );
+    return if not $self->_resolve_attributes('sample', \%attributes);
+    return %attributes;
 }
 
 sub _resolve_attributes {
-    my ($self, $type) = @_;
+    my ($self, $type, $attributes) = @_;
 
     my $attributes_method = $type.'_attributes';
-    my @attributes = $self->$attributes_method;
-    return 1 if not @attributes; # ok
+    my @additional_attributes = $self->$attributes_method;
+    if ( @additional_attributes ) {
+        no warnings;
+        my %additional_attributes = map { split('=') } @additional_attributes;
+        use warnings;
 
-    no warnings;
-    my %attributes = map { split('=') } @attributes;
-    use warnings;
-
-    for my $label ( keys %attributes ) {
-        next if defined $attributes{$label};
-        $self->error_message("Attribute label ($label) does not have a value!");
-        return;
+        for my $label ( keys %additional_attributes ) {
+            if ( defined $additional_attributes{$label} ) {
+                $attributes->{$label} = $additional_attributes{$label};
+            }
+            else {
+                $self->error_message("Attribute label ($label) does not have a value!");
+                return;
+            }
+        }
     }
 
-    my $attributes_hash_method = '_'.$type.'_attributes';
-    $self->$attributes_hash_method(\%attributes);
+    my $attribute_names_method = '_'.$type.'_attribute_names';
+    my $names = eval{ $self->$attribute_names_method; };
+    for my $name ( @$names ) {
+        my $value = $self->$name;
+        next if not defined $value;
+        $attributes->{$name} = $value;
+    }
 
     return 1;
 }

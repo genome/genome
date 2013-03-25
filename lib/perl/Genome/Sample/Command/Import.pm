@@ -39,6 +39,7 @@ sub create_import_command_for_namespace {
         next if not $config->{$key_name};
         my %type_properties = _get_properties_for_import_command_from_entity($type, @{$config->{$key_name}});
         %properties = ( %properties, %type_properties );
+        $properties{ '_'.$key_name } = { is => 'ARRAY', is_constant => 1, value => $config->{$key_name}, };
     }
 
     #my %sample_properties = %{$config->{sample_properties}} if $config->{sample_properties};
@@ -81,7 +82,7 @@ sub _get_properties_for_import_command_from_entity {
         my $property = $meta->property_meta_for_name($name);
         $properties{$name} = {
             is => 'Text',
-            doc => '',
+            doc => 'The '.join(' ', split('_', $name)).' for the sample.',
         };
         if ( $property ) {
             $properties{$name}->{is} = $property->{is} if $property->{is};
