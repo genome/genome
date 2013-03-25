@@ -15,9 +15,9 @@ my @configs = (
         namespace => 'DbGap',
         nomenclature => 'dbGaP',
         sample_name_match => '\d+',
-        sample_attributes => [qw/ extraction_type tissue /],
+        sample_attribute_names => [qw/ extraction_type tissue /],
         individual_name_match => '\d+',
-        individual_attributes => [qw/ race gender /],
+        individual_attribute_names => [qw/ race gender /],
     }
 );
 
@@ -35,7 +35,7 @@ sub create_import_command_for_namespace {
 
     my %properties;
     for my $type (qw/ sample individual /) {
-        my $key_name = $type.'_properties';
+        my $key_name = $type.'_attribute_names';
         next if not $config->{$key_name};
         my %type_properties = _get_properties_for_import_command_from_entity($type, @{$config->{$key_name}});
         %properties = ( %properties, %type_properties );

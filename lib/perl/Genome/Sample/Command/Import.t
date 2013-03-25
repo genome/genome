@@ -18,8 +18,9 @@ Genome::Sample::Command::Import::create_import_command_for_namespace({
         namespace => 'Test',
         nomenclature => 'TeSt',
         sample_name_match => '\d+',
+        sample_attribute_names => [qw/ extraction_type tissue /],
         individual_name_match => '\d+',
-        individual_properties => [qw/ gender race /],
+        individual_attribute_names => [qw/ gender race /],
     });
 ok(Genome::Sample::Command::Import::Test->__meta__, 'class meta for command to import test namespace sample');
 
@@ -32,7 +33,7 @@ my $import = Genome::Sample::Command::Import::Test->create(
     tissue => 'blood',
     extraction_type => 'genomic dna',
     sample_attributes => [qw/ age_baseline=50 mi_baseline=11.45 /],
-    #individual_attributes => [qw/ /],
+    individual_attributes => [qw/ common_name=first /],
 );
 ok($import, 'create');
 ok($import->execute, 'execute');
@@ -41,6 +42,7 @@ is($import->_individual->name, $patient_name, 'patient name');
 is($import->_individual->nomenclature, 'TeSt', 'patient nomenclature');
 is($import->_individual->gender, 'female', 'patient gender');
 is($import->_individual->race, 'caucasian', 'patient race');
+is(eval{$import->_individual->attributes(attribute_label => 'common_name')->attribute_value}, 'first', 'patient common_name');
 is($import->_sample->name, $name, 'sample name');
 is($import->_sample->nomenclature, 'TeSt', 'sample nomenclature');
 is($import->_sample->extraction_label, $name, 'sample extraction label');
