@@ -1193,12 +1193,14 @@ sub shellcmd {
     my $cmd                          = delete $params{cmd};
     my $output_files                 = delete $params{output_files};
     my $input_files                  = delete $params{input_files};
-    my $output_directories           = delete $params{output_directories} ;
+    my $output_directories           = delete $params{output_directories};
     my $input_directories            = delete $params{input_directories};
     my $allow_failed_exit_code       = delete $params{allow_failed_exit_code};
     my $allow_zero_size_output_files = delete $params{allow_zero_size_output_files};
     my $allow_zero_size_input_files  = delete $params{allow_zero_size_input_files};
     my $skip_if_output_is_present    = delete $params{skip_if_output_is_present};
+    my $redirect_stdout              = delete $params{redirect_stdout};
+    my $redirect_stderr              = delete $params{redirect_stderr};
     my $dont_create_zero_size_files_for_missing_output =
         delete $params{dont_create_zero_size_files_for_missing_output};
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
@@ -1275,7 +1277,27 @@ sub shellcmd {
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         $t1 = time();
-        my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+        my $exit_code;
+        eval {
+                open my $savedout, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
+                open my $savederr, '>&', \*STDERR || die "Can't dup STDERR: $!";
+                my $restore = UR::Util::on_destroy(sub {
+                    open(STDOUT, '>&', $savedout);
+                    open(STDERR, '>&', $savederr);
+                });
+
+                if ($redirect_stdout) {
+                    open(STDOUT, '>', $redirect_stdout) || die "Can't redirect stdout to $redirect_stdout: $!";
+                }
+                if ($redirect_stderr) {
+                    open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
+                }
+                $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+        };
+        my $exception = $@;
+        if ($exception) {
+            Carp::croak("EXCEPTION RUNNING COMMAND. Failed to execute: $cmd\n\tException was: $exception");
+        }
         my $child_exit_code = $exit_code >> 8;
         $t2 = time();
         $elapsed = $t2-$t1;
