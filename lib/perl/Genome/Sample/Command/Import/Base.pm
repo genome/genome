@@ -165,21 +165,13 @@ sub _validate_name_and_set_individual_name {
     my $self = shift;
     $self->status_message('Validate sample name and resolve individual name...');
 
-    my $individual_name_match = join('\-', $self->nomenclature, $self->_individual_name_match);
-    my $sample_name_match = join('\-', $individual_name_match, $self->_sample_name_match);
+    my $sample_name_match = join('\-', '('.$self->nomenclature, $self->_individual_name_match.')', $self->_sample_name_match);
     my $sample_name_regexp = qr|^$sample_name_match$|;
     my $name = $self->name;
     $self->status_message('Sample name: '.$name);
     $self->status_message('Sample regexp: '.$sample_name_regexp);
     if ( $name !~ /$sample_name_regexp/ ) {
-        $self->error_message("Sample name ($name) is invalid!");
-        return;
-    }
-
-    my $individual_name_regexp = qr|^($individual_name_match)|;
-    $self->status_message('Individual name regexp: '.$individual_name_regexp);
-    if ( $name !~ /$individual_name_regexp/ ) {
-        $self->error_message("Could not determine indidvidual name from sample name ($name)!");
+        $self->error_message("Name ($name) is invalid!");
         return;
     }
     my $individual_name = $1;
@@ -395,7 +387,7 @@ sub _resolve_attributes {
                 $attributes->{$label} = $additional_attributes{$label};
             }
             else {
-                $self->error_message("Attribute label ($label) does not have a value!");
+                $self->error_message(ucfirst($type)." attribute label ($label) does not have a value!");
                 return;
             }
         }
