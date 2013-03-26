@@ -9,21 +9,31 @@ class Genome::Sample::Command::Import {
     doc => 'commands for importing samples',
 };
 
-#TODO use the upcoming config API!
-my @configs = (
-    {
-        namespace => 'DbGap',
-        nomenclature => 'dbGaP',
-        sample_name_match => '\d+',
-        sample_attribute_names => [qw/ extraction_type tissue /],
-        individual_name_match => '\d+',
-        individual_attribute_names => [qw/ race gender /],
-    }
-);
-
-for my $config ( @configs ) { create_import_command_for_namespace($config); }
 my (%import_namespaces, %import_class_names);
-sub create_import_command_for_namespace {
+_create_import_commands();
+sub _create_import_commands {
+    my @configs = _load_import_configs();
+    for my $config ( @configs ) { 
+        _create_import_command_for_config($config); 
+    }
+    return 1;
+}
+
+sub _load_import_configs {
+    #TODO use the upcoming config API!
+    return (
+        {
+            namespace => 'DbGap',
+            nomenclature => 'dbGaP',
+            sample_name_match => '\d+',
+            sample_attribute_names => [qw/ extraction_type tissue /],
+            individual_name_match => '\d+',
+            individual_attribute_names => [qw/ race gender /],
+        }
+    );
+}
+
+sub _create_import_command_for_config {
     my $config = shift;
 
     my $nomenclature = $config->{nomenclature};

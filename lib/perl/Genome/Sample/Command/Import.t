@@ -14,7 +14,7 @@ use above "Genome";
 use Test::More;
 
 use_ok('Genome::Sample::Command::Import') or die;
-Genome::Sample::Command::Import::create_import_command_for_namespace({
+Genome::Sample::Command::Import::_create_import_command_for_config({
         namespace => 'Test',
         nomenclature => 'TeSt',
         sample_name_match => '\d+',
