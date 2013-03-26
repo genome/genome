@@ -26,7 +26,6 @@ class Genome::Model::Tools::Varscan::CopyNumber {
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		normal_bam	=> { is => 'Text', doc => "Path to Normal BAM file", is_optional => 0, is_input => 1 },
 		tumor_bam	=> { is => 'Text', doc => "Path to Tumor BAM file", is_optional => 0, is_input => 1 },
-		samtools_path	=> { is => 'Text', doc => "Path to SAMtools executable", is_optional => 0, is_input => 1, default => "samtools" },
 		output	=> { is => 'Text', doc => "Output file for copy number results", is_optional => 0, is_input => 1, is_output => 1 },
 		target_regions	=> { is => 'Text', doc => "Optional target region(s) for limiting the BAM (e.g 5:1 or 6:11134-11158)", is_optional => 1, is_input => 1 },
 		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs; defaults to build 37" , is_optional => 1, default_value => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'},
