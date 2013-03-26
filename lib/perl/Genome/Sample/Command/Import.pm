@@ -23,6 +23,18 @@ sub _load_import_configs {
     #TODO use the upcoming config API!
     return (
         {
+            nomenclature => 'ATCC',
+            sample_name_match => '([\w\d]+)?',
+            sample_attributes => {
+                age => {},
+                disease => { is_optional => 1, },
+                organ_name => {},
+            },
+            individual_name_match => '[\w\d]+\-[\w\d]+',
+            individual_attributes => [qw/ ethnicity gender /],
+            # gender => { valid_values => [qw/ male female /], }
+        },
+        {
             nomenclature => 'dbGaP',
             sample_name_match => '\d+',
             sample_attributes => [qw/ tissue /],
@@ -58,7 +70,7 @@ sub _create_import_command_for_config {
         }
         my %type_properties = _get_properties_for_import_command_from_entity($type, %attributes);
         %properties = ( %properties, %type_properties );
-        $properties{'_'.$type.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => $config->{$key_name}, };
+        $properties{'_'.$type.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ keys %attributes ], };
     }
 
     $import_class_names{$class_name} = UR::Object::Type->define(
