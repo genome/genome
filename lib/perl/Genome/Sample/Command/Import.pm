@@ -26,9 +26,12 @@ my (%import_namespaces, %import_class_names);
 sub create_import_command_for_namespace {
     my $config = shift;
 
-    my $namespace = $config->{namespace};
+    my $nomenclature = $config->{nomenclature};
+    die 'No nomenclautre!' if not $nomenclature;
+    my $namespace = $config->{namespace} // ucfirst(lc($nomenclature));
     my $class_name = 'Genome::Sample::Command::Import::'.$namespace;
     return $import_class_names{$class_name} if exists $import_class_names{$class_name};
+    $import_namespaces{$namespace} = 1;
 
     die 'No individual name match!' if not $config->{individual_name_match};
     die 'No sample name match!' if not $config->{sample_name_match};
@@ -44,8 +47,6 @@ sub create_import_command_for_namespace {
 
     #my %sample_properties = %{$config->{sample_properties}} if $config->{sample_properties};
     #my %individual_properties = %{$config->{individual_properties}} if $config->{individual_properties};
-    my $nomenclature = $config->{nomenclature} // $namespace;
-    $import_namespaces{$namespace} = 1;
     $import_class_names{$class_name} = UR::Object::Type->define(
         class_name => $class_name,
         is => 'Genome::Sample::Command::Import::Base',
