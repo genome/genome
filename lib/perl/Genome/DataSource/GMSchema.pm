@@ -6,6 +6,7 @@ use Genome;
 use Carp;
 use File::lockf;
 use DBD::Pg;
+use IO::Socket;
 
 
 class Genome::DataSource::GMSchema {
@@ -112,26 +113,24 @@ sub _sync_database {
     }
 	
 	
-
-	my ($pg_signal_reader, $pg_signal_writer);
-
+  my ($parent_oracle_control_sock, $child_pg_control_sock);
+  
 	my $pid;
 	
 	if ($use_postgres) {
-            pipe($pg_signal_reader, $pg_signal_writer);
-            $pid = UR::Context::Process->fork();
+    ($parent_oracle_control_sock, $child_pg_control_sock) = IO::Socket->socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC);
+    unless ($parent_oracle_control_sock && $child_pg_control_sock) {
+      $self->error_message("Uh-oh. Couldn't prepare oracle/postgres sync control socket pair.");
+      die $self->error_message;
+    }
+
+    $pid = UR::Context::Process->fork();
 	} else {
-            $pid = $$;
+    $pid = $$;
 	}
 	
     if ($pid) {
-        # we're in the parent, close the reader.
-        if ($use_postgres) {
-                close($pg_signal_reader);
-                $pg_signal_writer->autoflush(1);
-        }
-
-		
+      
         my $sync_time_start = Time::HiRes::time();
         my $oracle_sync_rv = Genome::DataSource::GMSchemaOracle->_sync_database(@_);
 
@@ -141,16 +140,37 @@ sub _sync_database {
         }
         if ($use_postgres) {
             log_commit_time('oracle',$sync_time_duration);
-            waitpid($pid, -1);
-			
-			print $pg_signal_writer("1\n");
-			close($pg_signal_writer);
-        }		
+            close $parent_oracle_control_sock;
+            
+            waitpid($pid, -1);           
+        		
+        
+            my $post_commit_hook;
+            $post_commit_hook = sub {
+              print $child_pg_control_sock "1\n";
+              $UR::Context::current->remove_observers(aspect=>'commit', callback=>$post_commit_hook);
+              eval {
+                local $SIG{'ALRM'} = sub {
+                  log_error("Timed out waiting for Postgres to sync!  Oracle successfully committed.  Databases have possibly diverged.");
+                  die "alarm\n";
+                };
+                alarm 30;
+                my $pg_signal = <$child_pg_control_sock>;
+              };          
+            };
+        
+        
+            $UR::Context::current->add_observer(aspect=>'commit', callback=>$post_commit_hook);
+        }
+        
+         
         if ($ENV{GENOME_QUERY_POSTGRES}) {
             Genome::Site::TGI->redo_table_name_patch;
         }
         return 1;
     } elsif (defined $pid) {
+        close $child_pg_control_sock;
+      
         # Fork twice so parent (process doing Oracle commit) doesn't wait for child
         # to finish.
         # Ignoring SIG_CHLD prevents "Child process #### reaped" from appearing in logs
@@ -163,7 +183,6 @@ sub _sync_database {
         }
 
         # close this to stop us from blocking on the read even when our parent exits.
-        close($pg_signal_writer);
 
         # builds will bomb out unless we tell POE that we forked.
         eval {
@@ -184,7 +203,11 @@ sub _sync_database {
                 my $pg_sync_rv = Genome::DataSource::PGTest->_sync_database(@_);
 				
 												
-                my $pg_signal = <$pg_signal_reader>;
+                my $pg_signal = <$parent_oracle_control_sock>;
+                #print "****** WAITING TO READ!!!!*****\n";
+                #my $rv = sysread($pg_control_sock, $pg_signal, 1, 0);
+                #print "****** READ, RV is $rv!!!!*****\n";
+                
                 if (defined $pg_signal) {
                     $pg_commit_rv = Genome::DataSource::PGTest->SUPER::commit;
                 }
@@ -202,6 +225,7 @@ sub _sync_database {
             }
             log_commit_time('pg',$sync_time_duration);
         };
+        print $parent_oracle_control_sock "1\n";
         POSIX::_exit(0);
     }
     else {
