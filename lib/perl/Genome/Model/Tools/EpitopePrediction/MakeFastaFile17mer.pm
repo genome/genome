@@ -50,11 +50,11 @@ sub execute {
 		chomp $line;
 		$line =~ s/[*]$//g;
 		my @prot_arr =  split(/\t/, $line);
-		if ($prot_arr[6] eq 'Myo18b')
-		{
-			print $prot_arr[15]."\t".$prot_arr[21]."\n";
-			print "length"."\t". length($prot_arr[21])."\n";
-		}
+#		if ($prot_arr[6] eq 'Myo18b')
+#		{
+#			print $prot_arr[15]."\t".$prot_arr[21]."\n";
+#			print "length"."\t". length($prot_arr[21])."\n";
+#		}
 		if ( $prot_arr[15] =~ /^p.([A-Z])(\d+)([A-Z])/ && $prot_arr[13] eq $self->trv_type )
 		{
 #			open(OUT, '>', $self->output_file) or die $!;
