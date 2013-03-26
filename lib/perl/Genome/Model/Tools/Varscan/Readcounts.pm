@@ -25,7 +25,6 @@ class Genome::Model::Tools::Varscan::Readcounts {
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		bam_file	=> { is => 'Text', doc => "Path to BAM file", is_optional => 0 },
-		samtools_path	=> { is => 'Text', doc => "Path to SAMtools executable", is_optional => 0, is_input => 1, default => "samtools" },
 		variants_file	=> { is => 'Text', doc => "Path to variant positions file", is_optional => 0 },
 		output_file	=> { is => 'Text', doc => "Path to output file" , is_optional => 0},
 		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs" , is_optional => 1, default_value => (Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')},

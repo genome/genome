@@ -99,9 +99,10 @@ sub store_RSid {
 
 sub split_dbSNPBuildID {
     my $INFO = shift;
+    die 'split_dbSNPBuildID without argument' unless defined $INFO;
     my $dbSNPinfo = ($INFO =~ /dbSNPBuildID=([0-9, .]+)/)[0];
-    return unless $dbSNPinfo;
-    my @dbSNPids = split(/, /, $dbSNPinfo);
+    return unless defined $dbSNPinfo;
+    my @dbSNPids = split(/,\s*/, $dbSNPinfo);
     return @dbSNPids;
 }
 

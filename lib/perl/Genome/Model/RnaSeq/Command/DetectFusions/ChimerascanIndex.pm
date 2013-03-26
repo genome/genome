@@ -55,7 +55,7 @@ sub execute {
 
     $self->status_message( 'Starting to create index!' );
     my $result = Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanResult::Index->get_or_create(
-            test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+            test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef,
             version => $self->version,
             bowtie_version => $self->bowtie_version,
             reference_build => $self->reference_build,

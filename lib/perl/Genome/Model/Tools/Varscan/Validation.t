@@ -39,7 +39,6 @@ my $output_indel = join('/', $tmpdir, 'varscan.indel');
 my $output_validation = join('/', $tmpdir, 'varscan.validation');
 
 my $samtools_version = 'r982';
-my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($samtools_version);
 
 my $varscan_command = Genome::Model::Tools::Varscan::Validation->create(
     output_snp => $output_snp,
@@ -48,7 +47,8 @@ my $varscan_command = Genome::Model::Tools::Varscan::Validation->create(
     tumor_bam => $tumor_bam,
     normal_bam => $normal_bam,
     reference => $ref_seq->fasta_file,
-    samtools_path => $samtools_path,
+    samtools_version => $samtools_version,
+    samtools_use_baq => 0,
     varscan_params => '--min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.01 --validation 1 --min-coverage 8',
     version => '2.3.2',
 );

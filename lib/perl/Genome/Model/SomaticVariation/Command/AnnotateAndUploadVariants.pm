@@ -135,7 +135,8 @@ sub execute{
                 if ($annotation_filter eq "none") {
                     $final_output_file = $annotated_file;
                     $annotation_params{output_file} = $final_output_file.".non-dedup";
-                } else {
+                } 
+                else {
                     $final_output_file = "$annotated_file.$annotation_filter";
                     $annotation_params{output_file} = "$final_output_file.non-dedup";
                 }
@@ -171,6 +172,7 @@ sub execute{
                 `$rm_cmd`;
             }
 
+            #upload variants
             my %upload_params = (
                 build_id => $self->build_id, 
             );
@@ -192,7 +194,8 @@ sub execute{
             unless(-s $upload_params{output_file} or 1){
                 die $self->error_message("No output from upload command for $key. Params:\n" . Data::Dumper::Dumper(\%upload_params));
             }
-        }else{
+        }
+        else{
             $self->status_message("No variants present for $key, skipping annotation and upload");
             File::Copy::copy($variant_file, $annotated_file);
             File::Copy::copy($variant_file, "$annotated_file.top");
@@ -201,6 +204,8 @@ sub execute{
     }
 
     #Annotate vcfs with dbsnp ids
+    $self->status_message("Adding dbsnp ids to vcf");
+    
     if ($build->previously_discovered_variations_build) {
         my $annotation_vcf = $build->previously_discovered_variations_build->snvs_vcf;
         if (-e $annotation_vcf) {
@@ -240,9 +245,96 @@ sub execute{
         }
     }
     
-    #upload variants
+    #Annotate SVs. Need to handle mouse vs human and human 36 vs 37
+    $self->status_message("Executing sv annotation");
+
+    if ($build->sv_detection_strategy) {
+        my $sv_sr  = $build->final_result_for_variant_type('sv');
+        if ($sv_sr) {
+            my $sv_dir = $sv_sr->output_dir;
+            if ($sv_dir and -d $sv_dir) {
+                my $sv_file = $sv_dir . '/svs.merge.file.somatic';
+                if ($sv_file and -s $sv_file) {
+                    my $species_name = $build->subject->species_name;
+                    if ($species_name and $species_name =~/^(human|mouse)$/) {
+                        my $sv_annot_out_file = $build->data_directory . '/effects/svs.hq.annotated';
+                        my $fusion_out_file   = $build->data_directory . '/effects/svs.hq.fusion_transcripts.out';
+                        my @annotator_list    = qw(Transcripts FusionTranscripts);
+
+                        my $base_dir = '/gsc/scripts/share/BreakAnnot_file';
+                        my %cancer_gene_list = (
+                            human => $base_dir . '/Cancer_genes.csv',
+                            mouse => $base_dir . '/mouse_build37/Mouse_Cancer_genes.csv',
+                        );
+
+                        my %params = (
+                            input_file  => $sv_file,
+                            output_file => $sv_annot_out_file,
+                            fusion_transcripts_fusion_output_file => $fusion_out_file,
+                            annotation_build_id => $annotation_build_id,
+                            annotator_list      => \@annotator_list,
+                            transcripts_print_flanking_genes => 1,
+                            transcripts_cancer_gene_list     => $cancer_gene_list{$species_name},
+                            dbvar_breakpoint_wiggle_room     => 300,
+                            chrA_column       => 1,
+                            bpA_column        => 2,
+                            chrB_column       => 4,
+                            bpB_column        => 5,
+                            event_type_column => 7,
+                            orient_column     => 8,
+                            score_column      => 12,  
+                        );
+                        
+                        my $ref_seq_build = $build->reference_sequence_build;
+                        if ($species_name eq 'human') {
+                            my $annot_file = $self->_get_human_sv_annot_file($ref_seq_build);
+
+                            if ($annot_file) {
+                                push @annotator_list, 'Dbsnp', 'Segdup', 'Dbvar';
+                                %params = (
+                                    %params,
+                                    annotator_list => \@annotator_list,
+                                    dbsnp_annotation_file  => $annot_file->{dbsnp},
+                                    segdup_annotation_file => $annot_file->{segdup},
+                                    dbvar_annotation_file  => $annot_file->{dbvar},
+                                );
+                            }
+                            else {
+                                $self->warning_message('Human annotation for dbsnp, dbvar and segdup is only set for build 36 and 37');
+                            }
+                        }
+                        elsif ($species_name eq 'mouse') {
+                            unless ($ref_seq_build->id == 107494762) {#UCSC-mouse build37, mouse ref seq used in production
+                                $self->warning_message('For now sv annotation only run on UCSC-mouse build37');
+                                %params = ();
+                            }
+                        }
+
+                        if (%params) {
+                            my $sv_annot = Genome::Model::Tools::Annotate::Sv::Combine->create(%params);
+                            my $rv = $sv_annot->execute;    
+                            $self->warning_message("sv annotation did not finish ok") unless $rv == 1;
+                        }
+                    }
+                    else {
+                        $self->warning_message('The build is not for human or mouse. Skip sv annotation');
+                    }
+                }
+                else {
+                    $self->warning_message("combine sv somatic file: $sv_file is not valid");
+                }
+            }
+            else {
+                $self->warning_message("sv dir: $sv_dir is not valid");
+            }
+        }
+        else {
+            $self->warning_message('No sv software result for this build');
+        }
+    }
 
     ##upload metrics
+    $self->status_message("Uploading metrics");
     eval{
         my ($tier3_snvs, $tier4_snvs, $tier3_indels, $tier4_indels, $svs);
         $tier3_snvs = $build->data_set_path("effects/snvs.hq.novel.tier3",$version,'bed');
@@ -283,8 +375,44 @@ sub execute{
     }; 
     $self->status_message("Metric setting problem: $@") if $@;
 
-     
     return 1;
+}
+
+#only run on human build 36 and 37 for now
+sub _get_human_sv_annot_file {
+    my ($self, $ref_seq_build) = @_;
+    my $version = $ref_seq_build->version;
+    my $type;
+
+    if ($version) {
+        if ($version =~ /36/) {
+            $type = 36;
+        }
+        elsif ($version =~ /37/) {
+            $type = 37;
+        }
+    }
+    
+    $type = 36 if $ref_seq_build->id == 109104543;  #fdu_human36_chr16_17_for_novo_test-build for Jenkins apipe test build
+    return unless $type;
+
+    my $base_dir  = '/gsc/scripts/share/BreakAnnot_file';
+    my $b36_dir   = "$base_dir/human_build36";
+    my $b37_dir   = "$base_dir/human_build37";
+
+    my %annot_file = (
+        36 => {
+            segdup => $b36_dir . '/Human.Mar2006.SegDups.tab',
+            dbsnp  => $b36_dir . '/dbsnp130.indel.named.csv',
+            dbvar  => $b36_dir . '/ncbi36_submitted.gff',
+        },
+        37 => {
+            segdup => $b37_dir . '/Human.Feb2009.SegDups.tab',
+            dbsnp  => $b37_dir . '/dbsnp132.indel.named.csv',
+            dbvar  => $b37_dir . '/GRCh37.remap.all.germline.ucsc.gff',
+        },
+    );
+    return $annot_file{$type};
 }
 
 1;

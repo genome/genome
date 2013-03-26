@@ -9,7 +9,7 @@ while (my $stdin = <>) {
     push @stdin, $stdin;
     $found_error = 1 if ($stdin =~ /ERROR:/);
 }
-$found_error = 1 if ($stdin[-1] !~ /^COMMITTED$/);
+$found_error = 1 if ($stdin[-1] !~ /^COMMITTED$/) and ($stdin[-2] !~ /^No queued models found to start\.$/);
 
 if ($found_error) {
     print @stdin;
