@@ -26,7 +26,7 @@ my $cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
     annotation_build_id => 131184146,
     annotator_list      => ['Transcripts', 'Dbsnp', 'Segdup', 'Dbvar'],
     transcripts_print_flanking_genes => 1,
-    transcripts_cancer_gene_list     => '/gsc/scripts/share/BreakAnnot_file/Cancer_genes.csv',
+    transcripts_cancer_gene_list     => join("/",Genome::Sys->dbpath("cancer-gene-list/human",1),"Cancer_genes.csv"),
     dbvar_breakpoint_wiggle_room => 300,
 );
 
