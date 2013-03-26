@@ -747,8 +747,12 @@ sub create_directory {
     return $directory if -d $directory;
 
     my $errors;
+    # have to set umask, make_path's mode/umask option is not sufficient
+    my $umask = umask;
+    umask 0002;
     # make_path may throw its own exceptions...
-    File::Path::make_path($directory, { mode => 02775, group => $ENV{GENOME_SYS_GROUP}, error => \$errors });
+    File::Path::make_path($directory, { group => $ENV{GENOME_SYS_GROUP}, error => \$errors });
+    umask $umask;
 
     if ($errors and @$errors) {
         my $message = "create_directory for path $directory failed:\n";
