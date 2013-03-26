@@ -77,13 +77,13 @@ sub _get_properties_for_import_command_from_entity {
     my ($entity, @names) = @_;
 
     my $class_name = 'Genome::'.ucfirst($entity);
-    my $meta = Genome::Individual->__meta__;
+    my $meta = $class_name->__meta__;
     my %properties;
     for my $name ( @names ) {
         my $property = $meta->property_meta_for_name($name);
         $properties{$name} = {
             is => 'Text',
-            doc => 'The '.join(' ', split('_', $name)).' for the sample.',
+            doc => "The value of '".join(' ', split('_', $name))."' for the $entity.",
         };
         if ( $property ) {
             $properties{$name}->{is} = $property->{is} if $property->{is};
