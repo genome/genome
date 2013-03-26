@@ -376,6 +376,7 @@ sub _resolve_sample_attributes {
         cell_type => 'unknown',
     );
     return if not $self->_resolve_attributes('sample', \%attributes);
+    $attributes{extraction_type} = 'genomic dna' if not defined $attributes{extraction_type};
     return %attributes;
 }
 
