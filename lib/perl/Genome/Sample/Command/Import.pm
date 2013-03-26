@@ -68,12 +68,10 @@ sub _create_import_command_for_config {
             %properties,
             _individual_name_match => { is_constant => 1, value => $config->{individual_name_match} },
             _sample_name_match => { is_constant => 1, value => $config->{sample_name_match} },
+            nomenclature => { is_constant => 1, },
         ],
         doc => "import $nomenclature samples",
     );
-
-    my $name_property = $import_class_names{$class_name}->property_meta_for_name('name');
-    #$name_property->doc();
 
     my $nomenclature_property = $import_class_names{$class_name}->property_meta_for_name('nomenclature');
     $nomenclature_property->default_value($nomenclature);

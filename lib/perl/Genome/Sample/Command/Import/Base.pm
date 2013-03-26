@@ -33,9 +33,6 @@ class Genome::Sample::Command::Import::Base {
             doc => 'Additional attributes to add to the sample. Give as key value pairs. Separate key and value with an equals (=) and pairs with a comma (,). Ex: attr1=val1,attr2=val2',
         },
     ],
-    has_constant => [
-        nomenclature => { is_constant => 1, },
-    ],
     has_optional_transient => [
         # taxon
         _taxon => { is => 'Genome::Taxon', is_optional => 1, },
