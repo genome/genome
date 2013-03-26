@@ -26,7 +26,7 @@ sub _load_import_configs {
             namespace => 'DbGap',
             nomenclature => 'dbGaP',
             sample_name_match => '\d+',
-            sample_attribute_names => [qw/ extraction_type tissue /],
+            sample_attribute_names => [qw/ tissue /],
             individual_name_match => '\d+',
             individual_attribute_names => [qw/ race gender /],
         }

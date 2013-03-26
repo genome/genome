@@ -16,7 +16,9 @@ class Genome::Sample::Command::Import::Base {
         },
         extraction_type => {
             is => 'Text',
-            doc => 'The extraction type of the samples. Usually "genomic dna" or "rna."',
+            default_value => 'genomic dna',
+            valid_values => [ 'cdna', 'genomic dna', 'ipr product', 'rna', 'total rna', ],
+            doc => 'The extraction type of the sample.',
         },
     ],
     has_optional => [
