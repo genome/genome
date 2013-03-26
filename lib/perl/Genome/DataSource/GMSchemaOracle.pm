@@ -66,7 +66,14 @@ sub _lookup_class_for_table_name {
     my $self = shift;
     my $table_name = shift;
 
+    # This currently depends on a bug in UR that will soon be fixed and will
+    # then need to fall back onto Workflow::DataSource::InstanceSchema as a
+    # consequence of our Postgres/Oracle syncing.
     my $class = $self->SUPER::_lookup_class_for_table_name($table_name);
+    unless ($class) {
+        my $gms = Genome::DataSource::GMSchema->get();
+        $class = $gms->_lookup_class_for_table_name($table_name);
+    }
 
     if (!$class && $ENV{GENOME_QUERY_POSTGRES}) {
         my %ora_map = Genome::DataSource::Main->oracle_to_postgres_table_mapping;
