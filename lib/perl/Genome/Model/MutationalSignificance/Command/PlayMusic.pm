@@ -629,20 +629,34 @@ sub _append_command_to_workflow {
                 die ("Non-optional property ".$property->property_name." is not provided\n");
             }
             my $from_op = $self->_get_operation_for_module_name($property_def->[0], $workflow);
+            if ($property_name =~ /clinical_data_file/) {
+                print "from_op: ".Data::Dumper::Dumper($from_op);
+            }
             if (!$from_op) {
+                if ($property->is_optional) {
+                    next;
+                }
                 print "looking for left operation ".$property_def->[0]."\n";
                 print "left property ".$property_def->[1]."\n";
                 print "right operation ".$operation->name."\n";
                 print "right property ".$property_name."\n";
                 die ("Didn't get a from operation for the link\n");
             }
+            #check that from_op has the required property
+            my $from_property = $property_def->[1];
+            my $from_name = $from_op->name;
+            unless (grep {/^$from_property$/} @{$from_op->operation_type->output_properties}) {
+                if ($property->is_optional) {
+                    next;
+                }
+                die ("From operation $from_name doesn't have $from_property\n");
+            }
             my $link = $workflow->add_link(
                 left_operation => $from_op,
-                left_property => $property_def->[1],
+                left_property => $from_property,
                 right_operation => $operation,
                 right_property => $property_name,
             );
-
         }
     }
     return $workflow;

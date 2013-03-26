@@ -293,8 +293,8 @@ sub _resolve_workflow_for_build {
     push @input_properties, "log_directory";
     push @input_properties, "significant_variant_list";
     push @input_properties, "mutation_matrix_file";
-    push @input_properties, "categorical_clinical_data_file";
-    push @input_properties, "numeric_clinical_data_file";
+    #push @input_properties, "categorical_clinical_data_file";
+    #push @input_properties, "numeric_clinical_data_file";
     push @input_properties, "clinical_correlation_matrix_file";
     push @input_properties, "reference_build";
 
@@ -615,10 +615,8 @@ sub map_workflow_inputs {
     $inputs{significant_variant_list} = $base_dir."/significant_variant_list";
     $inputs{mutation_matrix_file} = $base_dir."/mutation_matrix_file";
     $inputs{clinical_correlation_matrix_file} = $base_dir."/clinical_correlation_matrix_file";
-    # $inputs{categorical_clinical_data_file} = $base_dir."/categorical_clinical_data_file";
-    # $inputs{numeric_clinical_data_file} = $base_dir."/numeric_clinical_data_file";
-    $inputs{categorical_clinical_data_file} = $build->categorical_clinical_data_file;
-    $inputs{numeric_clinical_data_file} = $build->numeric_clinical_data_file;
+    #$inputs{categorical_clinical_data_file} = $build->categorical_clinical_data_file;
+    #$inputs{numeric_clinical_data_file} = $build->numeric_clinical_data_file;
 
     my $reference_build_name = $builds[0]->reference_sequence_build->name;
     my $calculated_reference_build = "37";
