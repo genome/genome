@@ -23,13 +23,12 @@ sub _load_import_configs {
     #TODO use the upcoming config API!
     return (
         {
-            namespace => 'DbGap',
             nomenclature => 'dbGaP',
             sample_name_match => '\d+',
-            sample_attribute_names => [qw/ tissue /],
+            sample_attributes => [qw/ tissue /],
             individual_name_match => '\d+',
-            individual_attribute_names => [qw/ race gender /],
-        }
+            individual_attributes => [qw/ race gender /],
+        },
     );
 }
 
@@ -48,15 +47,20 @@ sub _create_import_command_for_config {
 
     my %properties;
     for my $type (qw/ sample individual /) {
-        my $key_name = $type.'_attribute_names';
+        my $key_name = $type.'_attributes';
         next if not $config->{$key_name};
-        my %type_properties = _get_properties_for_import_command_from_entity($type, @{$config->{$key_name}});
+        my %attributes;
+        if ( ref $config->{$key_name} eq 'ARRAY' ) {
+            %attributes = map { $_ => {} } @{$config->{$key_name}};
+        }
+        else { # hash
+            %attributes = %{$config->{$key_name}};
+        }
+        my %type_properties = _get_properties_for_import_command_from_entity($type, %attributes);
         %properties = ( %properties, %type_properties );
-        $properties{ '_'.$key_name } = { is => 'ARRAY', is_constant => 1, value => $config->{$key_name}, };
+        $properties{'_'.$type.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => $config->{$key_name}, };
     }
 
-    #my %sample_properties = %{$config->{sample_properties}} if $config->{sample_properties};
-    #my %individual_properties = %{$config->{individual_properties}} if $config->{individual_properties};
     $import_class_names{$class_name} = UR::Object::Type->define(
         class_name => $class_name,
         is => 'Genome::Sample::Command::Import::Base',
@@ -84,17 +88,16 @@ sub _create_import_command_for_config {
 }
 
 sub _get_properties_for_import_command_from_entity {
-    my ($entity, @names) = @_;
+    my ($entity, %attributes) = @_;
 
     my $class_name = 'Genome::'.ucfirst($entity);
     my $meta = $class_name->__meta__;
     my %properties;
-    for my $name ( @names ) {
+    for my $name ( keys %attributes ) {
         my $property = $meta->property_meta_for_name($name);
-        $properties{$name} = {
-            is => 'Text',
-            doc => "The value of '".join(' ', split('_', $name))."' for the $entity.",
-        };
+        $properties{$name} = $attributes{$name};
+        $properties{$name}->{is} = 'Text' if not defined $properties{$name}->{is};
+        $properties{$name}->{doc} = "The value of '".join(' ', split('_', $name))."' for the $entity." if not defined $properties{$name}->{doc};
         if ( $property ) {
             $properties{$name}->{is} = $property->{is} if $property->{is};
             $properties{$name}->{doc} = $property->doc if $property->doc;

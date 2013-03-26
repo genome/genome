@@ -18,9 +18,9 @@ Genome::Sample::Command::Import::_create_import_command_for_config({
         namespace => 'Test',
         nomenclature => 'TeSt',
         sample_name_match => '[\w\d]+\-\d\w\-\d+',
-        sample_attribute_names => [qw/ extraction_type tissue_desc /],
+        sample_attributes => [qw/ extraction_type tissue_desc /],
         individual_name_match => '\d+',
-        individual_attribute_names => [qw/ gender race /],
+        individual_attributes => [qw/ gender race /],
     });
 ok(Genome::Sample::Command::Import::Test->__meta__, 'class meta for command to import test namespace sample');
 
