@@ -755,14 +755,13 @@ sub _convert_trimmer_to_sx_commands {
 
                 push @params, $key => $value;
             }
-            #for compatibility with pre-SX far processing profiles
-            if($trimmer_version and $trimmer_name eq 'far') {
-                push @params, 'version' => $trimmer_version;
-            }
         } else {
             Carp::confess("Unknown params ($trimmer_params) to convert trimmer to sx command!");
         }
     }
+
+    # Add version to the params
+    push @params, 'version', $trimmer_version if defined $trimmer_version;
 
     # Add -- to the odd, and quotes to the even, handle logicals
     my $sx_cmd = 'trim '.$trimmer_name;
