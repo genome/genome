@@ -7,6 +7,7 @@ use List::Util qw(max min);
 
 class Genome::Model::Tools::Annotate::Sv::RepeatMasker {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
+    doc => "Annotate SVs whose breakpoints fall in repeat-masked regions",
     has_input => [
         annotation_file => {
             is => 'String',
@@ -30,6 +31,10 @@ class Genome::Model::Tools::Annotate::Sv::RepeatMasker {
         },
     ],
 };
+
+sub help_detail {
+    return "Determine whether the SV breakpoints fall into any repeat-masked regions"
+}
 
 sub process_breakpoint_list {
     my $self = shift;

@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Dbvar {
     is => "Genome::Model::Tools::Annotate::Sv::Base",
+    doc => "Annotate overlaps with dbvar SVs",
     has_input => [
         annotation_file => {
             is => 'Text',
@@ -24,6 +25,10 @@ class Genome::Model::Tools::Annotate::Sv::Dbvar {
         },
     ],
 };
+
+sub help_detail {
+    return "Determines whether the SV breakpoints match a dbVar SV within some distance.  It also checks to see that the SV and the dbVar SV reciprocally overlap each other by a given fraction.";
+}
 
 sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;

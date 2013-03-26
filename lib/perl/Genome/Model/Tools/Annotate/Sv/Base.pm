@@ -10,6 +10,7 @@ use List::Util qw(min max);
 
 class Genome::Model::Tools::Annotate::Sv::Base{
     is => "Command::V2",
+    is_abstract => 1,
     has => [
         input_file => {
             is => 'String',

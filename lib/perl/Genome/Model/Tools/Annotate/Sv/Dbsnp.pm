@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Dbsnp {
     is => "Genome::Model::Tools::Annotate::Sv::Base",
+    doc => "Annotate overlaps with dbsnp SVs",
     has_input => [
         annotation_file => {
             is => 'Text',
@@ -25,6 +26,10 @@ class Genome::Model::Tools::Annotate::Sv::Dbsnp {
 
     ],
 };
+
+sub help_detail {
+    return "Determines whether the SV breakpoints match a dbSNP SV within some distance.  It also checks to see that the SV and the dbSNP SV reciprocally overlap each other by a given fraction.";
+}
 
 sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;

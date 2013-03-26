@@ -7,6 +7,7 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Transcripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
+    doc => "Annotate which transcripts the SV breakpoints match",
     has_input => [
         print_flanking_genes => {
             is => 'Boolean',
@@ -25,6 +26,13 @@ class Genome::Model::Tools::Annotate::Sv::Transcripts {
         },
     ],
 };
+
+sub help_detail {
+    return "Determine what transcripts the SV breakpoints fall into.  For deletions, it prints the
+    transcripts between the breakpoints in a separate column.  Optionally, it prints a column
+    with genes in the flanking region of the breakpoints.  It can also tag cancer genes from
+    a list.";
+}
 
 sub process_breakpoint_list{
     my ($self, $breakpoints_list) = @_;

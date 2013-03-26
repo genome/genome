@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Segdup {
     is => "Genome::Model::Tools::Annotate::Sv::Base",
+    doc => "Annotate SVs whose breakpoints fall in segmental duplications",
     has_input => [
         annotation_file => {
             is => 'String',
@@ -26,6 +27,11 @@ class Genome::Model::Tools::Annotate::Sv::Segdup {
     ],
 };
 
+sub help_detail {
+    return "Determine whether the SV breakpoints fall in or near segmental duplication regions.  If the two breakpoints fall near
+    regions that are duplicates of each other, it may indicate a false positive.";
+}
+
 sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
@@ -36,13 +42,6 @@ sub process_breakpoint_list {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);
             $output{$key} = [$self->get_segdup_annotation($item)];
-            #if (defined $item->{segdup_annotation}) {
-            #    my @segdup = map {$_->{name}} @{$item->{segdup_annotation}};
-            #    $output{$key} = [join(",", @segdup)];
-            #}
-            #else {
-            #    $output{$key} = ["N/A"];
-            #}
         }
     }
     return \%output;

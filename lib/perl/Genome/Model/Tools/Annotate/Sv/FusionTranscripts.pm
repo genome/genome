@@ -32,6 +32,7 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
+    doc => "Determine whether SV may cause transcript fusions",
     has_input => [
         fusion_output_file => {
             type => 'String',
@@ -48,7 +49,10 @@ class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
 #uses the first one (before ,).  But how to deal with the conflict of orientation of two like (++,-+) ? This won't be a problem for
 #somatic event because there is only one orientation (for tumor).
 
-
+sub help_detail {
+    return "Evaluates the potential of SVs to create a transcript fusion, either between different genes or the same gene.
+    It produces an additional output file containing more details about the fusion transcripts.";
+}
 
 sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
