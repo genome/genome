@@ -51,10 +51,12 @@ is("@sub_commands", "@sub_commands_expected", "sub-command list is as expected")
 
 my $expected_dir = __FILE__ . '.expected-output';
 my $actual_dir;
+my $rebuild = 0;
 
 if (@ARGV and $ARGV[0] eq 'REBUILD') {
     note("******** regenerating test data in $expected_dir to reset this test case! ***********");
     $actual_dir = $expected_dir;
+    $rebuild = 1;
     if ($ARGV[1]) {
         shift @ARGV;
         @sub_commands = @ARGV;
@@ -83,8 +85,9 @@ for my $sub_command (@sub_commands) {
         waitpid($pid,0);
     } else {
         eval {
-            if (@ARGV and $ARGV[0] eq 'REBUILD') {
+            if ($rebuild) {
                 # the previous results may already exist, which will fail the open below
+                note("Removing old entry $actual_out");
                 unlink $actual_out;
             }
             local *STDOUT = Genome::Sys->open_file_for_writing($actual_out);
