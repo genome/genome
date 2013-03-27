@@ -24,21 +24,19 @@ sub _load_import_configs {
     return (
         {
             nomenclature => 'ATCC',
-            sample_name_match => '([\w\d]+)?',
+            name_regexp => '(ATCC\-[\w\d]+\-[\w\d]+)(\-[\w\d]+)?',
             sample_attributes => {
                 age => {},
                 disease => { is_optional => 1, },
                 organ_name => {},
             },
-            individual_name_match => '[\w\d]+\-[\w\d]+',
             individual_attributes => [qw/ ethnicity gender /],
             # gender => { valid_values => [qw/ male female /], }
         },
         {
             nomenclature => 'dbGaP',
-            sample_name_match => '\d+',
+            name_regexp => '(dbGaP\-\d+)\-\d+',
             sample_attributes => [qw/ tissue /],
-            individual_name_match => '\d+',
             individual_attributes => [qw/ race gender /],
         },
     );
@@ -54,8 +52,10 @@ sub _create_import_command_for_config {
     return $import_class_names{$class_name} if exists $import_class_names{$class_name};
     $import_namespaces{$namespace} = 1;
 
-    die 'No individual name match!' if not $config->{individual_name_match};
-    die 'No sample name match!' if not $config->{sample_name_match};
+    my $name_regexp_string = $config->{name_regexp};
+    die 'No name regexp!' if not $name_regexp_string;
+    die 'Invalid name regexp! '.$name_regexp_string if $name_regexp_string !~ /^\($nomenclature/;
+    my $name_regexp =  qr|^$name_regexp_string$|; 
 
     my %properties;
     for my $type (qw/ sample individual /) {
@@ -78,8 +78,7 @@ sub _create_import_command_for_config {
         is => 'Genome::Sample::Command::Import::Base',
         has => [
             %properties,
-            _individual_name_match => { is_constant => 1, value => $config->{individual_name_match} },
-            _sample_name_match => { is_constant => 1, value => $config->{sample_name_match} },
+            name_regexp => { is_constant => 1, value => $name_regexp, },
             nomenclature => { is_constant => 1, },
         ],
         doc => "import $nomenclature samples",

@@ -164,12 +164,11 @@ sub _validate_name_and_set_individual_name {
     my $self = shift;
     $self->status_message('Validate sample name and resolve individual name...');
 
-    my $sample_name_match = join('\-', '('.$self->nomenclature, $self->_individual_name_match.')', $self->_sample_name_match);
-    my $sample_name_regexp = qr|^$sample_name_match$|;
+    my $name_regexp = $self->name_regexp;
     my $name = $self->name;
     $self->status_message('Sample name: '.$name);
-    $self->status_message('Sample regexp: '.$sample_name_regexp);
-    if ( $name !~ /$sample_name_regexp/ ) {
+    $self->status_message('Sample regexp: '.$name_regexp);
+    if ( $name !~ /$name_regexp/ ) {
         $self->error_message("Name ($name) is invalid!");
         return;
     }
