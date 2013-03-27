@@ -23,7 +23,7 @@ class Genome::Model::Build::Input {
         value_inst_data => { is => 'Genome::InstrumentData', id_by => 'value_id' },
     ],
     has_optional => [
-        filter_desc => { 
+        filter_desc => {
             is => 'Text',
             valid_values => [ 'forward-only', 'reverse-only', undef ],
             doc => 'Filter to apply on the input value.'

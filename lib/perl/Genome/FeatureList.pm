@@ -141,7 +141,7 @@ sub _cleanup_allocation_sub {
         print "Now deleting allocation with owner_id = $id\n";
         my $allocation = Genome::Disk::Allocation->get(owner_id => $id, owner_class_name => $class_name);
         if ($allocation) {
-            $allocation->deallocate; 
+            $allocation->deallocate;
         }
     };
 }

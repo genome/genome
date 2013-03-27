@@ -28,7 +28,7 @@ class Genome::InstrumentDataAttribute {
             is => 'Genome::InstrumentData',
             id_by => 'instrument_data_id',
         },
-        
+
         # TODO: we have been simplifying the name/value stuff for some time
         # Switch to these by default, and test the inversion.
         name => {

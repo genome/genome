@@ -7,7 +7,7 @@ use Genome;
 class Genome::ModelGroup {
     is => 'Genome::Searchable',
     table_name => 'MODEL_GROUP',
-    id_by      => [ 
+    id_by      => [
         id                  => { is => 'Text' },
     ],
     has => [
@@ -36,7 +36,7 @@ class Genome::ModelGroup {
                                     is_many     => 1, # We really should only have 1 here, however reverse_as requires this
                                     reverse_as  => 'group',
                                     doc         => 'The auto-generated Convergence Model summarizing knowledge about this model group',
-                                    is_optional => 1, 
+                                    is_optional => 1,
                                 },
         user_name           => {is => 'Text',
                                 is_optional => 1
@@ -45,7 +45,7 @@ class Genome::ModelGroup {
             is => 'Text',
             is_optional => 1,
         },
-        project => { 
+        project => {
             is => 'Genome::Project',
             is_optional => 1,
             id_by => 'uuid',
@@ -69,7 +69,7 @@ sub create {
     my %convergence_model_params = ();
     if(exists $params{convergence_model_params}) {
         %convergence_model_params = %{ delete $params{convergence_model_params} };
-    } 
+    }
 
     # Check for name uniqueness
     my $name = $bx->value_for('name');
@@ -182,12 +182,12 @@ sub unassign_models {
             model_group_id => $self->id,
             model_id       => $m->genome_model_id,
         );
-        
+
         unless($bridge){
             $self->warning_message("Model " . $m->id . " not found in group");
             next;
         }
-        
+
         $bridge->delete();
         $removed++;
     }
@@ -206,7 +206,7 @@ sub map_builds {
 
         my $build = $model->last_complete_build();
         my $value = $func->($model, $build); # even if $build is undef
-    
+
         push @result,
             {
             'model'    => $model,
@@ -220,9 +220,9 @@ sub map_builds {
 }
 
 sub reduce_builds {
-    # apply $reduce function on results of $map or list 
+    # apply $reduce function on results of $map or list
     # of builds for this model group
-    
+
     my ($self, $reduce, $map) = @_;
     my @b;
 
@@ -351,7 +351,7 @@ sub infer_group_subject {
 
     return $group_subject;
 }
-    
+
 sub default_population_group_name {
     my $self = shift;
     return 'population group for model group ' . $self->name;
@@ -366,7 +366,7 @@ sub tags_for_model {
     my $bridge = Genome::ModelGroupBridge->get(
             model_group_id => $self->id,
             model_id => $model_id
-    );    
+    );
 
     my @notes = Genome::MiscNote->get(
             subject_id  => $bridge->id()

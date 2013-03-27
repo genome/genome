@@ -50,7 +50,7 @@ sub _sync_database {
     my %params = @_;
 
     local $THIS_COMMIT_ID = UR::Object::Type->autogenerate_new_object_id_uuid();
-    
+
     my $required_pg_version = '2.19.3';
 
     my $pg_version = $DBD::Pg::VERSION;
@@ -81,7 +81,7 @@ sub _sync_database {
 
 
     # fork if we don't skip.
-    my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES}); 
+    my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES});
     my $use_postgres = !$skip_postgres;
 
     # Attempt to get a meta db handle first.  This way, if the meta db doesn't exist,
@@ -116,7 +116,7 @@ sub _sync_database {
   my ($parent_oracle_control_sock, $child_pg_control_sock);
   
 	my $pid;
-	
+
 	if ($use_postgres) {
     ($parent_oracle_control_sock, $child_pg_control_sock) = IO::Socket->socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC);
     unless ($parent_oracle_control_sock && $child_pg_control_sock) {
@@ -128,7 +128,7 @@ sub _sync_database {
 	} else {
     $pid = $$;
 	}
-	
+
     if ($pid) {
       
         my $sync_time_start = Time::HiRes::time();
@@ -188,15 +188,15 @@ sub _sync_database {
         eval {
                 POE::Kernel->has_forked();
         };
-    
+
         # Turtles all the way down... the logging logic can potentially bomb and emit warnings that the user
         # shouldn't see, so eval everything!
-        eval { 
+        eval {
             my $stderr = '';;
             local *STDERR;
             open STDERR, '>', \$stderr;
             my $sync_time_start = Time::HiRes::time();
-			
+
             eval {
                 $DB::single = 1;
                 my $pg_commit_rv;
@@ -429,6 +429,109 @@ sub sleep_length {
     return 30;
 }
 
+# A list of the old GM schema tables that Genome::Model should ignore
+my @OLD_GM_TABLES = qw(
+ALL_ALLELE_TYPE
+ANALYSIS_METHOD
+CHROMOSOME
+COLLABORATOR
+COLLABORATOR_SAMPLE
+CONSERVATION_SCORE
+EGI_TYPE
+EXTERNAL_GENE_ID
+GENE
+GENE_EXPRESSION
+GENE_GENE_EXPRESSION
+GENE_GENOMIC_FEATURE
+GENE_GENOTYPE
+GENOME_MODEL_1
+GENOME_UPDATE_HISTORY
+GENOMIC_FEATURE
+GENOTYPE
+GENOTYPE_VARIATION
+GE_DETECTION
+GE_TECH_TYPE
+GF_FEATURE_TYPE
+GO_XREF
+GROUP_INFO
+GROUP_TYPES
+HISTOLOGY
+IPRO_GENE_TRANSCRIPT_XREF
+IPRO_RESULTS
+MAF
+META_GROUP
+META_GROUP_STATUS
+PF_FEATURE_TYPE
+PP_DETECTION_SOFT
+PP_MAPPING_REFERENCE
+PP_TECH_TYPE
+PROCESS_PROFILE
+PROCESS_PROFILE_SOURCE
+PROTEIN
+PROTEIN_FEATURE
+PROTEIN_VARIATION
+PROTEIN_VARIATION_SCORE
+PVS_SCORE_TYPE
+PVS_SOFTWARE
+READ_GROUP
+READ_GROUP_GENOTYPE
+READ_GROUP_GENOTYPE_OLD
+READ_GROUP_INFO
+READ_INFO
+REPEAT_INFO
+RGGI_INFO_TYPE
+RGG_INFO
+RGG_INFO_OLD
+RI_REPEAT_TYPE
+SAMPLE
+SAMPLE_GENE
+SAMPLE_GENE_EXPRESSION
+SAMPLE_GENOTYPE
+SAMPLE_GROUP_INFO
+SAMPLE_HISTOLOGY
+SAMPLE_SUBTYPE
+SAMPLE_TISSUE
+SAMPLE_TYPE
+SEQUENCE_DIFF
+SEQUENCE_DIFF_EVAL
+SEQUENCE_DIFF_PART
+SGIAM_SCORE_TYPE
+SGI_ANALYSIS_METHOD
+SG_INFO_TYPE
+STRAND
+SUBMITTER
+SUBMITTER_METHOD
+TERM
+TISSUE
+TRANSCRIPT
+TRANSCRIPT_SOURCE
+TRANSCRIPT_STATUS
+TRANSCRIPT_SUB_STRUCTURE
+TRANSCRIPT_VARIATION
+TSS_STRUCTURE_TYPE
+TV_OLD
+TV_TYPE
+VARIANT_REVIEW_DETAIL_OLD
+VARIANT_REVIEW_LIST_FILTER
+VARIANT_REVIEW_LIST_MEMBER
+VARIATION
+VARIATION_FREQUENCY
+VARIATION_GROUP
+VARIATION_INSTANCE
+VARIATION_ORIG
+VARIATION_ORIG_VARIATION_TYPE
+VARIATION_SCORE
+VS_SCORE_TYPE
+VS_SOFTWARE
+);
+
+sub _ignore_table {
+    my($self,$table_name) = @_;
+
+    return 1 if $self->SUPER::_ignore_table($table_name);
+
+    return scalar(grep { $_ eq $table_name } @OLD_GM_TABLES);
+}
 
 1;
 

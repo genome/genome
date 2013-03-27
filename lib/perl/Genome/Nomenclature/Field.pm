@@ -17,20 +17,20 @@ class Genome::Nomenclature::Field {
     },
     has => [
         name => {
-            is=>'Text', 
-            len=>255, 
+            is=>'Text',
+            len=>255,
             doc => 'Nomenclature field name'
         },
         type => {
-            is=>'Text', 
-            len=>255, 
+            is=>'Text',
+            len=>255,
             doc => 'Nomenclature field type'
         },
         nomenclature_id => {
             is=>'Text',
         },
         nomenclature => {
-            is=>'Genome::Nomenclature', 
+            is=>'Genome::Nomenclature',
             id_by => 'nomenclature_id'
         },
         nomenclature_name => {
@@ -55,7 +55,7 @@ sub __display_name__ {
 
 sub delete {
     my $self = shift;
-    
+
     for ($self->enumerated_values) {
         $_->delete;
     }

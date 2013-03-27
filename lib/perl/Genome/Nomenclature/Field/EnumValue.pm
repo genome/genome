@@ -17,12 +17,12 @@ class Genome::Nomenclature::Field::EnumValue {
     },
     has => [
         nomenclature_field_id => {
-            is=>'Text', 
-            len=>255, 
+            is=>'Text',
+            len=>255,
             doc => 'Nomenclature field id'
         },
         nomenclature_field => {
-            is=>'Genome::Nomenclature::Field', 
+            is=>'Genome::Nomenclature::Field',
             doc => 'Genome::Nomenclature field',
             id_by => 'nomenclature_field_id'
         },

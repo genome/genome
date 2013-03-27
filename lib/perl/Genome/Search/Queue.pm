@@ -61,7 +61,7 @@ sub create {
         $bx = $bx->add_filter('timestamp' => UR::Context->now);
     }
 
-    $index_queue = $class->SUPER::create($bx);
+    my $index_queue = $class->SUPER::create($bx);
 
     return $index_queue;
 }

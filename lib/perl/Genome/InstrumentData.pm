@@ -73,7 +73,7 @@ class Genome::InstrumentData {
             is_calculated => 1,
             calculate_from => ['original_est_fragment_size_max', 'original_est_fragment_size_min','original_est_fragment_size'],
             calculate => q|
-                if ($original_est_fragment_size_max and 
+                if ($original_est_fragment_size_max and
                     $original_est_fragment_size_min) {
                 ($original_est_fragment_size_max - $original_est_fragment_size_min)/6; }
                 else {

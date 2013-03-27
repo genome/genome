@@ -12,8 +12,8 @@ class Genome::ProjectPart {
          },
     ],
     has => [
-        entity_class_name => { 
-            is => 'Text', 
+        entity_class_name => {
+            is => 'Text',
             column_name => 'PART_CLASS_NAME',
             doc => 'Class name of the object to which this part points',
         },
@@ -36,8 +36,8 @@ class Genome::ProjectPart {
                 }
             }
         },
-        entity_id => { 
-            is => 'Text', 
+        entity_id => {
+            is => 'Text',
             column_name => 'PART_ID',
             doc => 'ID of the object to which this part points',
         },
