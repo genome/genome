@@ -46,7 +46,7 @@ if (length(args) < 10){
 #############################################################################################################################################
 plotChrCNV = function(target_chr, direction){
   #Create plotting space
-  lay = layout(matrix(c(1,2,3,4), ncol=2, byrow=F), heights=c(0.5,2), widths=c(1,0.2), FALSE) #layout.show(lay)
+  lay = layout(matrix(c(1,2,3,4), ncol=2, byrow=F), heights=c(0.6,2), widths=c(1,0.2), FALSE) #layout.show(lay)
 
   #Plot 1 - Draw the ideogram at the top
   #Adjust margins -> c(bottom, left, top, right)
@@ -194,7 +194,7 @@ plotChrCNV = function(target_chr, direction){
   ideo_legend_text = c("gneg","gpos25","gpos50","gpos75","gpos100","gvar","stalk","acen")
   plot.new()
   par(mar=c(0,0,0,0))
-  legend("left", col=ideo_legend_cols, pch=15, legend=ideo_legend_text, title="Giemsa staining", cex=1)
+  legend("bottomleft", col=ideo_legend_cols, pch=15, legend=ideo_legend_text, title="Giemsa staining", cex=1)
 
   #Plot 5 - Plot the legend for the gains
   if (direction == "gains"){
@@ -276,7 +276,9 @@ plotChrCNV_Compact = function(target_chr, type){
     plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
   }else if (type == "BOTH"){
     ylim_lower = -2
-    ylim_upper = 5
+    ylim_upper = 6
+    yl[which(yl > 5.5)] = 5.5
+    yl[which(yl < -2)] = -2
     plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
   }
   if (length(gain_j)>0){
@@ -459,8 +461,11 @@ if (length(which(cnvs[,"DIFF"] > hard_cap_upper)) > 0){
   cnvs[which(cnvs[,"DIFF"] > hard_cap_upper),"DIFF"] = hard_cap_upper
 }
 
-#TODO: Apply a further more aggressive hardcapping near centromeres where outliers are common?
-
+#TODO: Apply a further more aggressive hard-capping near centromeres where outliers in the gain direction are common?
+#for (chr_name in chr_list){
+#
+#
+#}
 
 
 #Define some display cutoffs
@@ -551,15 +556,6 @@ if (length(chr_list) > 1){
   }
 }
 
-#Apply a new hard cap and generate a figure that displays both gains and losses together on a reasonable scale...
-if (length(which(cnvs[,"DIFF"] < -2)) > 0){
-  cnvs[which(cnvs[,"DIFF"] < -2),"DIFF"] = -2
-}
-
-#Reset values larger than 4.5 to be 4.5 (arbitrary - for display purposes).  Single outliers, usually false positives near the centromeres obscure the data by jacking up the scale...
-if (length(which(cnvs[,"DIFF"] > 4.5)) > 0){
-  cnvs[which(cnvs[,"DIFF"] > 4.5),"DIFF"] = 4.5
-}
 if (length(chr_list) > 1){
   if (image_type != "none"){
     openImageFile("Both_AllChrs", image_type, image_width_2, image_height_2)
