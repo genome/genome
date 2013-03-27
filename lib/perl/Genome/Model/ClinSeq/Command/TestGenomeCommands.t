@@ -8,7 +8,7 @@ use File::Basename;
 use Cwd 'abs_path';
 use File::Spec qw();
 use List::MoreUtils qw(uniq);
-use Genome::Utility::Test qw(compare_ok capture_ok);
+use Genome::Utility::Test qw(compare_ok capture_ok run_ok);
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -39,101 +39,75 @@ ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 #Test clin-seq update-analysis - make sure the following command correctly obtains three expected samples (this has been broken in the past)
 #genome model clin-seq update-analysis --individual='H_KA-306905' --samples='id in [2878747496,2878747497,2879495575]' --display-samples
 my $cmd = "genome model clin-seq update-analysis --individual='H_KA-306905' --samples='id in [2878747496,2878747497,2879495575]' --display-samples";
-print "\n$cmd\n";
 $cmd .= " 2>$temp_dir/genome-model-clinseq-update-analysis.out";
-my $r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model clin-seq update-analysis");
+run_ok($cmd, "tested genome model clin-seq update-analysis") or diag $cmd;
 
 #GENOME SAMPLE LIST
 #genome sample list --filter 'name like "H_NJ-HCC1395-HCC1395%"' --show id,name,common_name,tissue_desc,extraction_type,extraction_label
 $cmd = "genome sample list --filter \'name like \"H_NJ-HCC1395-HCC1395%\"\' --show id,name,common_name,tissue_desc,extraction_type,extraction_label";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-sample-list1.out 2>$temp_dir/genome-sample-list1.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome sample list1");
+run_ok($cmd, "tested genome sample list1") or diag $cmd;
 
 #GENOME MODEL CLIN-SEQ LIST
 #genome model clin-seq list --filter model_groups.id=66909 --show wgs_model.last_succeeded_build.id,wgs_model.last_succeeded_build.data_directory
 $cmd = "genome model clin-seq list --filter model_groups.id=66909 --show wgs_model.last_succeeded_build.id,wgs_model.last_succeeded_build.data_directory";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-model-clinseq-list1.out 2>$temp_dir/genome-model-clinseq-list1.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model clin-seq list1");
+run_ok($cmd, "tested genome model clin-seq list1") or diag $cmd;
 
 #genome model clin-seq list --filter model_groups.id=66909 --style=tsv --show id,name,wgs_model,tumor_rnaseq_model,subject.common_name
 $cmd = "genome model clin-seq list --filter model_groups.id=66909 --style=tsv --show id,name,wgs_model,tumor_rnaseq_model,subject.common_name";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-model-clinseq-list2.out 2>$temp_dir/genome-model-clinseq-list2.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model clin-seq list2");
+run_ok($cmd, "tested genome model clin-seq list2") or diag $cmd;
 
 #genome model clin-seq list --style csv --filter model_groups.id=66909 --show wgs_model.last_succeeded_build.normal_build.subject.name,wgs_model.last_succeeded_build.normal_build.whole_rmdup_bam_file
 $cmd = "genome model clin-seq list --style csv --filter model_groups.id=66909 --show wgs_model.last_succeeded_build.normal_build.subject.name,wgs_model.last_succeeded_build.normal_build.whole_rmdup_bam_file";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-model-clinseq-list3.out 2>$temp_dir/genome-model-clinseq-list3.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model clin-seq list3");
+run_ok($cmd, "tested genome model clin-seq list3") or diag $cmd;
 
 #GENOME MODEL SOMATIC-VARIATION LIST
 #genome model somatic-variation list --filter group_ids=50569 --show subject.patient_common_name,subject.name,id
 $cmd = "genome model somatic-variation list --filter group_ids=50569 --show subject.patient_common_name,subject.name,id";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-model-somatic-variation-list1.out 2>$temp_dir/genome-model-somatic-variation-list1.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model somatic-variation list1");
+run_ok($cmd, "tested genome model somatic-variation list1") or diag $cmd;
 
 #genome model somatic-variation list --filter group_ids=50569 --show subject.name,last_succeeded_build_directory  --noheaders
 $cmd = "genome model somatic-variation list --filter group_ids=50569 --show subject.name,last_succeeded_build_directory  --noheaders";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-model-somatic-variation-list2.out 2>$temp_dir/genome-model-somatic-variation-list2.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model somatic-variation list2");
+run_ok($cmd, "tested genome model somatic-variation list2") or diag $cmd;
 
 #genome model somatic-variation list 'model_groups.id=50569' --show 'tumor_model.subject.name,tumor_model.subject.common_name' --style=csv
 $cmd = "genome model somatic-variation list 'model_groups.id=50569' --show 'tumor_model.subject.name,tumor_model.subject.common_name' --style=csv";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-model-somatic-variation-list3.out 2>$temp_dir/genome-model-somatic-variation-list3.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model somatic-variation list3");
+run_ok($cmd, "tested genome model somatic-variation list3") or diag $cmd;
 
 #GENOME MODEL RNA-SEQ LIST
 #genome model rna-seq list --filter 'genome_model_id=2888673504'
 $cmd = "genome model rna-seq list --filter 'genome_model_id=2888673504'";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-model-rnaseq-list1.out 2>$temp_dir/genome-model-rnaseq-list1.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model rna-seq list1");
+run_ok($cmd, "tested genome model rna-seq list1") or diag $cmd;
 
 #genome model rna-seq list group_ids=50554 --show id,name,processing_profile,last_succeeded_build.id,last_succeeded_build.alignment_result.bam_file --style tsv
 $cmd = "genome model rna-seq list group_ids=50554 --show id,name,processing_profile,last_succeeded_build.id,last_succeeded_build.alignment_result.bam_file --style tsv";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-model-rnaseq-list2.out 2>$temp_dir/genome-model-rnaseq-list2.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model rna-seq list2");
+run_ok($cmd, "tested genome model rna-seq list2") or diag $cmd;
 
 
 #GENOME INSTRUMENT-DATA LIST SOLEXA
 #genome instrument-data list solexa --show id,flow_cell_id,lane,index_sequence,sample_name,library_name,clusters,read_length,bam_path --filter flow_cell_id=D1VCPACXX
 $cmd = "genome instrument-data list solexa --show id,flow_cell_id,lane,index_sequence,sample_name,library_name,clusters,read_length,bam_path --filter flow_cell_id=D1VCPACXX";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-instrument-data-list1.out 2>$temp_dir/genome-instrument-data-list1.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome instrument-data list1");
+run_ok($cmd, "tested genome instrument-data list1") or diag $cmd;
 
 #genome instrument-data list solexa --filter sample_name='H_NE-00264-264-03-A5-D1'
 $cmd = "genome instrument-data list solexa --filter sample_name=\'H_NE-00264-264-03-A5-D1\'";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-instrument-data-list2.out 2>$temp_dir/genome-instrument-data-list2.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome instrument-data list2");
+run_ok($cmd, "tested genome instrument-data list2") or diag $cmd;
 
 #GENOME MODEL-GROUP MEMBER LIST
 #genome model-group member list --filter 'model_group_id=66909' --show model.wgs_model.id,model.wgs_model.subject.patient_common_name,model.last_succeeded_build,model.last_succeeded_build.data_directory 
 $cmd = "genome model-group member list --filter 'model_group_id=66909' --show model.wgs_model.id,model.wgs_model.subject.patient_common_name,model.last_succeeded_build,model.last_succeeded_build.data_directory";
-print "\n$cmd\n";
 $cmd .= " 1>$temp_dir/genome-model-group-member-list1.out 2>$temp_dir/genome-model-group-member-list1.err";
-$r = Genome::Sys->shellcmd(cmd => $cmd);
-ok ($r, "tested genome model-group member list1");
+run_ok($cmd, "tested genome model-group member list1") or diag $cmd;
 
 my @expected_files = map { (/^$expected_output_dir\/?(.*)/)[0] } capture_ok(qq(find $expected_output_dir -type f ! -name '*.err'));
 my @temp_files = map { (/^$temp_dir\/?(.*)/)[0] } capture_ok(qq(find $temp_dir -type f ! -name '*.err'));
