@@ -34,9 +34,9 @@ class Genome::Model::Tools::Sv::SvAnnot {
             default_value => 'standard',
         },
         annot_build => {
-            type => 'Number',
+            type => 'String',
             doc  => 'human build number, 36, 37, mouse_37 ...',
-            default_value => 37,
+            valid_values => ["36","37","mouse_37"],
         },
         specify_chr => {
             type => 'String',
