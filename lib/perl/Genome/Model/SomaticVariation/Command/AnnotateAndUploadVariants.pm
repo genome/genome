@@ -261,7 +261,7 @@ sub execute{
                         my $fusion_out_file   = $build->data_directory . '/effects/svs.hq.fusion_transcripts.out';
                         my @annotator_list    = qw(Transcripts FusionTranscripts);
 
-                        my $cancer_gene_list = join("/",Genome::Sys->dbpath(join("/","cancer_gene_list",$species_name), 1),"Cancer_genes.csv");
+                        my $cancer_gene_list = join("/",Genome::Sys->dbpath(join("/","cancer-gene-list",$species_name), 1),"Cancer_genes.csv");
 
                         my %params = (
                             input_file  => $sv_file,
