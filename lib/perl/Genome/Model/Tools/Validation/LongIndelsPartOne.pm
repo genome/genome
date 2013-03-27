@@ -351,12 +351,7 @@ sub execute {
 
         #alert user to run LongIndelsPartTwo upon the completion of the new tumor and normal contig builds
         print "Upon the successful completion of these builds, please bsub the following command (saving STDOUT) to finish the rest of the steps for 3bp indel validation:\n\n";
-        if ($ref_seq_build_id eq '101947881') { #if you are using the default, build 36, for both tools
-            print "gmt validation long-indels-part-two --normal-val-model-copy-id $new_normal_model_id --tumor-val-model-copy-id $new_tumor_model_id --output-dir $output_dir\n\n";
-        }
-        else { #if you are using some other reference build (37)
-            print "gmt validation long-indels-part-two --normal-val-model-copy-id $new_normal_model_id --tumor-val-model-copy-id $new_tumor_model_id --output-dir $output_dir --tier-file-location <PUT YOUR TIERING FILES HERE>\n\n";
-        }
+        print "gmt validation long-indels-part-two --normal-val-model-copy-id $new_normal_model_id --tumor-val-model-copy-id $new_tumor_model_id --output-dir $output_dir --tier-file-location <PUT YOUR TIERING FILES HERE>\n\n";
 
         #print details for a manual review ticket
         my $new_ref_build_fa = $new_ref_build->full_consensus_path('fa');
