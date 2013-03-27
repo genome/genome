@@ -17,6 +17,7 @@ use_ok('Genome::Sample::Command::Import') or die;
 Genome::Sample::Command::Import::_create_import_command_for_config({
         nomenclature => 'TeSt',
         name_regexp => '(TeSt-\d+)\-[\w\d]+\-\d\w\-\d+',
+        taxon_name => 'human',
         sample_attributes => [qw/ tissue_desc /],# tests array
         individual_attributes => { # tests hash
             gender => { valid_values => [qw/ male female /], }, # tests getting meta from individual
@@ -61,6 +62,7 @@ my $import = Genome::Sample::Command::Import::Test->create(
 ok($import, 'create');
 ok($import->execute, 'execute');
 
+is($import->_individual->taxon->name, 'human', 'taxon name');
 is($import->_individual->name, $patient_name, 'patient name');
 is($import->_individual->nomenclature, 'TeSt', 'patient nomenclature');
 is($import->_individual->gender, 'female', 'patient gender');

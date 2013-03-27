@@ -25,6 +25,7 @@ sub _load_import_configs {
         {
             nomenclature => 'ATCC',
             name_regexp => '(ATCC\-[\w\d]+\-[\w\d]+)(\-[\w\d]+)?',
+            taxon_name => 'human',
             sample_attributes => {
                 age => {},
                 disease => { is_optional => 1, },
@@ -53,6 +54,7 @@ sub _load_import_configs {
         {
             nomenclature => 'dbGaP',
             name_regexp => '(dbGaP\-\d+)\-\d+',
+            taxon_name => 'human',
             sample_attributes => [qw/ tissue /],
             individual_attributes => [qw/ race gender /],
         },
@@ -63,15 +65,15 @@ sub _create_import_command_for_config {
     my $config = shift;
 
     my $nomenclature = $config->{nomenclature};
-    die 'No nomenclautre!' if not $nomenclature;
+    die 'No nomenclature in sample import command config!' if not $nomenclature;
     my $namespace = $config->{namespace} // ucfirst(lc($nomenclature));
     my $class_name = 'Genome::Sample::Command::Import::'.$namespace;
     return $import_class_names{$class_name} if exists $import_class_names{$class_name};
     $import_namespaces{$namespace} = 1;
 
     my $name_regexp_string = $config->{name_regexp};
-    die 'No name regexp!' if not $name_regexp_string;
-    die 'Invalid name regexp! '.$name_regexp_string if $name_regexp_string !~ /^\($nomenclature/;
+    die 'No name regexp in sample import command config!' if not $name_regexp_string;
+    die 'Invalid name regexp in sample import command config! '.$name_regexp_string if $name_regexp_string !~ /^\($nomenclature/;
     my $name_regexp =  qr|^$name_regexp_string$|; 
 
     my %properties;
@@ -90,6 +92,9 @@ sub _create_import_command_for_config {
         $properties{'_'.$type.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ sort keys %attributes ], };
     }
 
+    my $taxon_name = $config->{taxon_name};
+    die 'No taxon name in sample import command config!' if not defined $taxon_name; # TODO add a property?
+
     $import_class_names{$class_name} = UR::Object::Type->define(
         class_name => $class_name,
         is => 'Genome::Sample::Command::Import::Base',
@@ -97,6 +102,7 @@ sub _create_import_command_for_config {
             %properties,
             name_regexp => { is_constant => 1, value => $name_regexp, },
             nomenclature => { is_constant => 1, },
+            taxon_name => { is_constant => 1, value => $taxon_name, },
         ],
         doc => "import $nomenclature samples",
     );

@@ -12,7 +12,7 @@ class Genome::Sample::Command::Import::Base {
     has => [
         name => {
             is => 'Text',
-            doc => 'Sample name.',
+            doc => 'Sample name. Source name will be derived from the sample name.',
         },
         extraction_type => {
             is => 'Text',
@@ -71,7 +71,7 @@ sub execute {
     return if not %sample_attributes;
 
     my $import = $self->_import(
-        taxon => 'human',
+        taxon => $self->taxon_name,
         individual => \%individual_attributes,
         sample => \%sample_attributes,
         library => 'extlibs',
