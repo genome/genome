@@ -72,6 +72,13 @@ sub _load_import_configs {
                 gender => { valid_values => [qw/ male female unknown /], },
             },
         },
+        {
+            nomenclature => 'METAHIT',
+            name_regexp => '(METAHIT\-[\w\d]+)\-\d+',
+            taxon_name => 'human',
+            sample_attributes => [qw/ age bmi tissue_desc /],
+            individual_attributes => [qw/ gender /],
+        },
     );
 }
 
