@@ -78,7 +78,7 @@ sub _load_import_configs {
             nomenclature => 'METAHIT',
             name_regexp => '(METAHIT\-[\w\d]+)\-\d+',
             taxon_name => 'human',
-            sample_attributes => [qw/ age bmi tissue_desc /],
+            sample_attributes => [qw/ age body_mass_index tissue_label /],
             individual_attributes => [qw/ gender /],
         },
         {
