@@ -18,7 +18,7 @@ BEGIN {
 
 use Data::Dumper;
 use above "Genome";
-use Test::More tests => 30;
+use Test::More tests => 57;
 
 #Test with GENOME_QUERY_POSTGRES=1 to use postgres database instead of Oracle
 
@@ -139,11 +139,17 @@ my @expected_files = map { (/^$expected_output_dir\/?(.*)/)[0] } capture_ok(qq(f
 my @temp_files = map { (/^$temp_dir\/?(.*)/)[0] } capture_ok(qq(find $temp_dir -type f ! -name '*.err'));
 my @files = uniq (@expected_files, @temp_files);
 chomp @files;
+is(scalar(@files), 13, 'found expected number of files');
 for my $file (@files) {
     my $temp_file = File::Spec->join($temp_dir, $file);
+    ok(-f $temp_file, "file exists in temp_dir: $file");
     my $expected_file = File::Spec->join($expected_output_dir, $file);
-    compare_ok($temp_file, $expected_file, filters => [
-        '^\*\*\*\*\* GENOME_DEV_MODE.*',
-        '^Subroutine Genome::SoftwareResult::_resolve_lock_name redefined.*',
-    ])
+    ok(-f $expected_file, "file exists in expected_output_dir: $file");
+    compare_ok($temp_file, $expected_file,
+        filters => [
+            '^\*\*\*\*\* GENOME_DEV_MODE.*',
+            '^Subroutine Genome::SoftwareResult::_resolve_lock_name redefined.*',
+        ],
+        name => "compared $file",
+    );
 }
