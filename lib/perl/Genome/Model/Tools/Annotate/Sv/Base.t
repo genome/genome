@@ -32,7 +32,31 @@ my $expected_structure = {
                   extra => ["some","other","columns"],
                 },
             ],
+            20971170 => [
+                {
+                  bin => "11",
+                  chrom => "1",
+                  chromStart => "20971170",
+                  chromEnd => "20972052",
+                  name => "rs71646558",
+                  extra => ["some","other","columns"],
+                },
+            ],
         },
+    },
+    X => {
+        2097205 => {
+            2097117 => [
+                {
+                  bin => "11",
+                  chrom => "X",
+                  chromStart => "2097117",
+                  chromEnd => "2097205",
+                  name => "rs71646559",
+                  extra => ["some","other","columns"],
+                },
+            ],
+        }
     },
 };
 my $file = join("/", $base_dir, "example_ucsc");
