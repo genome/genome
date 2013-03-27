@@ -961,7 +961,12 @@ sub check_ref_align_models{
       next;
     }
     if ($model->can("dbsnp_build")){
-      next unless ($model->dbsnp_build->id == $self->dbsnp_build->id);
+      my $dbsnp_build = $model->dbsnp_build;
+      if ($dbsnp_build){
+        next unless ($dbsnp_build->id == $self->dbsnp_build->id);
+      }else{
+        next;
+      }
     }else{
       next;
     }
