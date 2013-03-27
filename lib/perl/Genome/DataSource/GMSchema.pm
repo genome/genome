@@ -156,6 +156,7 @@ sub _sync_database {
                 };
                 alarm 30;
                 my $pg_signal = <$child_pg_control_sock>;
+                alarm 0;
               };          
             };
         
