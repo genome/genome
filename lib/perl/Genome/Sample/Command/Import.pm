@@ -20,7 +20,9 @@ sub _create_import_commands {
 }
 
 sub _load_import_configs {
-    #TODO use the upcoming config API!
+    #TODO
+    # use the upcoming config API!
+    # mv tests to config
     return (
         {
             nomenclature => 'ATCC',
@@ -78,6 +80,61 @@ sub _load_import_configs {
             taxon_name => 'human',
             sample_attributes => [qw/ age bmi tissue_desc /],
             individual_attributes => [qw/ gender /],
+        },
+        {
+            nomenclature => 'TCGA',
+            name_regexp => '(TCGA\-[\w\d]+\-[\w\d]+)\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+',
+            taxon_name => 'human',
+            sample_attributes => {
+                extraction_type => {
+                    calculate_from => [qw/ name /],
+                    calculate => sub{
+                        my $name = shift;
+                        my %extraction_types = (
+                            D => 'genomic dna',
+                            G => 'ipr product',
+                            R => 'rna',
+                            T => 'total rna',
+                            W => 'ipr product',
+                            X => 'ipr product',
+                        );
+                        my @tokens = split('-', $name);
+                        my ($extraction_code) = $tokens[4] =~ /(\w)$/;
+                        if ( not $extraction_code ) {
+                            "Cannot get extraction code from name part: $tokens[4]";
+                            return;
+                        }
+                        if ( not $extraction_types{$extraction_code} ) {
+                            die "Invalid extraction code ($extraction_code) found in name ($name)";
+                            return;
+                        }
+                        return $extraction_types{$extraction_code};
+                    },
+                },
+                common_name => {
+                    calculate_from => [qw/ name /],
+                    calculate => sub{
+                        my $name = shift;
+                        my @tokens = split('-', $name);
+                        my ($sample_type) = $tokens[3] =~ /^(\d+)/;
+                        if ( not $sample_type ) {
+                            die "Cannot get extraction code from name part: $tokens[3]";
+                            return;
+                        }
+                        my $common_name;
+                        if ( $sample_type >= 1 and $sample_type <= 9 ) {
+                            $common_name = 'tumor';
+                        }
+                        elsif ( $sample_type >= 10 and $sample_type <= 19 ) {
+                            $common_name = 'normal';
+                        }
+                        else {
+                            $common_name = 'unknown';
+                        }
+                        return $common_name;
+                    },
+                },
+            },
         },
     );
 }

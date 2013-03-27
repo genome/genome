@@ -64,6 +64,7 @@ ok($import->execute, 'execute');
 
 is($import->_individual->taxon->name, 'human', 'taxon name');
 is($import->_individual->name, $patient_name, 'patient name');
+is($import->_individual->upn, $patient_name, 'patient name');
 is($import->_individual->nomenclature, 'TeSt', 'patient nomenclature');
 is($import->_individual->gender, 'female', 'patient gender');
 is($import->_individual->common_name, '1111', 'patient common_name');

@@ -394,7 +394,11 @@ sub _resolve_attributes {
     my $attribute_names_method = '_'.$type.'_attribute_names';
     my $names = eval{ $self->$attribute_names_method; };
     for my $name ( @$names ) {
-        my $value = $self->$name;
+        my $value = eval{ $self->$name; };
+        if ( $@ ) {
+            $self->error_message($@);
+            return;
+        }
         next if not defined $value;
         $name =~ s/^$type\_//; # attributes may have the same name, like common_name, so remove the type in front
         $attributes->{$name} = $value;
