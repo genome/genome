@@ -7,6 +7,7 @@ use Genome;
 
 use XML::Simple;
 
+use Genome::Sample::Command::Import;
 require File::Basename;
 
 class Genome::InstrumentData::Command::Import::TcgaBam {
