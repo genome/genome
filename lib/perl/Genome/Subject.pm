@@ -114,7 +114,8 @@ sub create {
     my $self = $class->SUPER::create($bx);
     return if not $self;
 
-    my $nomenclature = $self->nomenclature // 'WUGC';
+    my $nomenclature = $self->nomenclature;
+    $nomenclature = 'WUGC' if not defined $nomenclature;
     for my $label (sort keys %extra) {
         my $attribute = Genome::SubjectAttribute->create(
             attribute_label => $label,
