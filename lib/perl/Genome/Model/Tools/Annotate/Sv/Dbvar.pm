@@ -11,7 +11,7 @@ class Genome::Model::Tools::Annotate::Sv::Dbvar {
         annotation_file => {
             is => 'Text',
             doc => 'File containing UCSC table',
-            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/GRCh37.remap.all.germline.ucsc.gff",
+            example_values => ["/gsc/scripts/share/BreakAnnot_file/human_build37/GRCh37.remap.all.germline.ucsc.gff"],
         },
         breakpoint_wiggle_room => {
             is => 'Number',

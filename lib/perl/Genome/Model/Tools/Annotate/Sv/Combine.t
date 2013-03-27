@@ -1,4 +1,4 @@
-#!/gsc/bin/perl
+#!/usr/bin/env genome-perl
 
 BEGIN { 
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -28,6 +28,9 @@ my $cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
     transcripts_print_flanking_genes => 1,
     transcripts_cancer_gene_list     => join("/",Genome::Sys->dbpath("cancer-gene-list/human",1),"Cancer_genes.csv"),
     dbvar_breakpoint_wiggle_room => 300,
+    dbsnp_annotation_file => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
+    dbvar_annotation_file => "/gsc/scripts/share/BreakAnnot_file/human_build37/GRCh37.remap.all.germline.ucsc.gff",
+    segdup_annotation_file => "/gsc/scripts/share/BreakAnnot_file/human_build37/Human.Feb2009.SegDups.tab",
 );
 
 ok($cmd, "Created command");

@@ -11,7 +11,7 @@ class Genome::Model::Tools::Annotate::Sv::Segdup {
         annotation_file => {
             is => 'String',
             doc => 'File containing UCSC table',
-            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/Human.Feb2009.SegDups.tab",
+            example_values => ["/gsc/scripts/share/BreakAnnot_file/human_build37/Human.Feb2009.SegDups.tab"],
         },
         breakpoint_wiggle_room => {
             is => 'Number',
