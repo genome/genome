@@ -209,8 +209,8 @@ sub map_workflow_inputs {
       push @inputs, (
           mutation_diagram_outdir => $mutation_diagram_dir,
           mutation_diagram_collapse_variants=>1, 
-          mutation_diagram_max_snvs_per_file=>750, 
-          mutation_diagram_max_indels_per_file=>750
+          mutation_diagram_max_snvs_per_file=>1500, 
+          mutation_diagram_max_indels_per_file=>1500,
       );
     }
 
