@@ -12,7 +12,7 @@ class Genome::Sample::Command::Import::Base {
     has => [
         name => {
             is => 'Text',
-            doc => 'Sample name. Source name will be derived from the sample name.',
+            doc => 'Sample name. Source name will be derived from the sample name. The typical format is "NOMENCLATURE-SOURCE_ID/NAME-SAMPLE_ID/NAME, but may vary based on source.',
         },
         extraction_type => {
             is => 'Text',
