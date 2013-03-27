@@ -63,6 +63,11 @@ sub _detect_variants {
     my ($samtools_params, $varscan_params) = $self->_split_params($params);
     my ($samtools_version, $use_baq, $other_params) = $self->_process_samtools_params($samtools_params);
 
+    my %optional_samtools_params;
+    $optional_samtools_params{samtools_version} = $samtools_version if $samtools_version;
+    $optional_samtools_params{samtools_use_baq} = $use_baq if $use_baq;
+    $optional_samtools_params{samtools_params} = $other_params if $other_params;
+
     my $varscan = Genome::Model::Tools::Varscan::Germline->create(
         bam_file => $self->aligned_reads_input,
         reference => $self->reference_sequence_input,
@@ -72,9 +77,7 @@ sub _detect_variants {
         map_quality => $map_quality,
         no_headers => 1,
         version => $self->version,
-        samtools_version => $samtools_version,
-        samtools_use_baq => $use_baq,
-        samtools_params => $other_params,
+        %optional_samtools_params,
     );
 
     unless($varscan->execute()) {
