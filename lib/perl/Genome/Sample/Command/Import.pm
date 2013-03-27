@@ -29,9 +29,26 @@ sub _load_import_configs {
                 age => {},
                 disease => { is_optional => 1, },
                 organ_name => {},
+                sample_common_name => {
+                    calculate_from => [qw/ disease /],
+                    calculate => sub{
+                        my $disease = shift;
+                        return $disease ? 'tumor' : 'normal';
+                    },
+                },
             },
-            individual_attributes => [qw/ ethnicity gender /],
-            # gender => { valid_values => [qw/ male female /], }
+            individual_attributes => {
+                ethnicity => {},
+                gender => { valid_values => [qw/ male female /], },
+                individual_common_name => {
+                    calculate_from => [qw/ _individual_name /],
+                    calculate => sub{
+                        my $_individual_name = shift;
+                        $_individual_name =~ s/^ATCC\-//;
+                        return $_individual_name;
+                    },
+                },
+            },
         },
         {
             nomenclature => 'dbGaP',
@@ -70,7 +87,7 @@ sub _create_import_command_for_config {
         }
         my %type_properties = _get_properties_for_import_command_from_entity($type, %attributes);
         %properties = ( %properties, %type_properties );
-        $properties{'_'.$type.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ keys %attributes ], };
+        $properties{'_'.$type.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ sort keys %attributes ], };
     }
 
     $import_class_names{$class_name} = UR::Object::Type->define(

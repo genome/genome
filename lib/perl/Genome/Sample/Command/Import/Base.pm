@@ -396,6 +396,7 @@ sub _resolve_attributes {
     for my $name ( @$names ) {
         my $value = $self->$name;
         next if not defined $value;
+        $name =~ s/^$type\_//; # attributes may have the same name, like common_name, so remove the type in front
         $attributes->{$name} = $value;
     }
 
