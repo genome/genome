@@ -101,7 +101,7 @@ sub _load_import_configs {
                         my @tokens = split('-', $name);
                         my ($extraction_code) = $tokens[4] =~ /(\w)$/;
                         if ( not $extraction_code ) {
-                            "Cannot get extraction code from name part: $tokens[4]";
+                            die "Cannot get extraction code from name part: $tokens[4]";
                             return;
                         }
                         if ( not $extraction_types{$extraction_code} ) {

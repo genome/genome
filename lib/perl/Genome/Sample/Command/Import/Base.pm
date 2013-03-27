@@ -49,12 +49,8 @@ class Genome::Sample::Command::Import::Base {
     ],
 };
 
-sub help_brief {
-    return 'import samples from known sources';
-}
-
 sub help_detail {
-    return help_brief();
+    return;
 }
 
 sub execute {
