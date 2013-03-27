@@ -58,6 +58,20 @@ sub _load_import_configs {
             sample_attributes => [qw/ tissue /],
             individual_attributes => [qw/ race gender /],
         },
+        {
+            nomenclature => 'EMBL-EBI',
+            name_regexp => '(EMBL\-[\w\d]+)\-[\w\d]+',
+            taxon_name => 'human',
+            sample_attributes => {
+                age => {},
+                tissue_label => { doc => 'Tissue from where the sample was taken.', },
+                tissue_desc => { calculate_from => [qw/ tissue_label /], calculate => sub{ return $_[0]; }, },
+            },
+            individual_attributes => {
+                ethnicity => {},
+                gender => { valid_values => [qw/ male female unknown /], },
+            },
+        },
     );
 }
 
@@ -66,14 +80,15 @@ sub _create_import_command_for_config {
 
     my $nomenclature = $config->{nomenclature};
     die 'No nomenclature in sample import command config!' if not $nomenclature;
-    my $namespace = $config->{namespace} // ucfirst(lc($nomenclature));
+    my $namespace = $config->{namespace} // join('', map { ucfirst(lc($_)) } split('-', $nomenclature));
     my $class_name = 'Genome::Sample::Command::Import::'.$namespace;
     return $import_class_names{$class_name} if exists $import_class_names{$class_name};
     $import_namespaces{$namespace} = 1;
 
     my $name_regexp_string = $config->{name_regexp};
     die 'No name regexp in sample import command config!' if not $name_regexp_string;
-    die 'Invalid name regexp in sample import command config! '.$name_regexp_string if $name_regexp_string !~ /^\($nomenclature/;
+    #die 'Invalid name regexp in sample import command config! '.$name_regexp_string if $name_regexp_string !~ /^\($nomenclature/;
+    die 'Invalid name regexp (no parens to capture individual name) in sample import command config! '.$name_regexp_string if $name_regexp_string !~ /^\(.+\)/;
     my $name_regexp =  qr|^$name_regexp_string$|; 
 
     my %properties;
