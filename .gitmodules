@@ -259,3 +259,6 @@
 [submodule "vendor/picard-tools"]
 	path = vendor/picard-tools
 	url = https://github.com/genome-vendor/picard-tools.git
+[submodule "bmm"]
+	path = bmm
+	url = ssh://git//srv/git/bmm.git
