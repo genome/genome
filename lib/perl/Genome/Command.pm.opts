@@ -671,6 +671,31 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>list',
+    [
+      'show=s',
+      'files',
+      'style=s',
+      [
+        'text',
+        'csv',
+        'tsv',
+        'pretty',
+        'html',
+        'xml',
+        'newtext'
+      ],
+      'csv-delimiter=s',
+      'files',
+      'noheaders!',
+      undef,
+      'order-by=s',
+      'files',
+      'filter=s',
+      'files',
+      'help!',
+      undef
+    ],
     'help!',
     undef
   ],
