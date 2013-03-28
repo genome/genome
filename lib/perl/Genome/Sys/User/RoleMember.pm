@@ -8,21 +8,30 @@ use Carp;
 
 class Genome::Sys::User::RoleMember {
     table_name => 'GENOME_SYS_USER_ROLE_MEMBER',
-    data_source => 'Genome::DataSource::GMSchema',
     id_by => [
-        user_email => { is => 'Text' },
-        role_id => { is => 'Text' },
+        user_email => {
+            is => 'Text',
+            len => 255,
+        },
+        role_id => {
+            is => 'Text',
+            len => 32,
+        },
     ],
     has => [
         user => {
             is => 'Genome::Sys::User',
             id_by => 'user_email',
+            constraint_name => 'GSURM_UE_FK',
         },
         role => {
             is => 'Genome::Sys::User::Role',
             id_by => 'role_id',
+            constraint_name => 'GSURM_RI_FK',
         },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
 };
 
 Genome::Sys::User::RoleMember->add_observer(

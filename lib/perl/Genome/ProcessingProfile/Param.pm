@@ -6,8 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::ProcessingProfile::Param {
-    type_name => 'processing profile param',
     table_name => 'PROCESSING_PROFILE_PARAM',
+    type_name => 'processing profile param',
     id_by => [
         processing_profile_id => {
             is => 'Integer',
@@ -33,7 +33,7 @@ class Genome::ProcessingProfile::Param {
         value_obj => {
             is => 'UR::Object',
             id_by => 'value_id',
-            id_class_by => 'value_class_name'
+            id_class_by => 'value_class_name',
         },
         processing_profile => {
             is => 'Genome::ProcessingProfile',

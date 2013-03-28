@@ -3,35 +3,44 @@ package Genome::Search::Queue;
 use Carp;
 use Genome;
 
+use strict;
+use warnings;
 class Genome::Search::Queue {
-    id_generator => '-uuid',
+    table_name => 'SEARCH_INDEX_QUEUE',
     id_by => [
         id => {
             is => 'Text',
+            len => 32,
         },
     ],
     has => [
         subject_class => {
             is => 'Text',
+            len => 255,
             doc => 'Class of the subject to be indexed by search.',
         },
         subject_id => {
             is => 'Text',
+            len => 256,
             doc => 'ID of the subject to be indexed by search.',
         },
         timestamp => {
-            is => 'Time',
+            is => 'DateTime',
             default_value => UR::Context->now,
+            len => 11,
             doc => 'Timestamp of first request. Automatically added if not provided.',
         },
         priority => {
             is => 'Number',
-            doc => 'Priority describes the order to process. (0 = high, 1 = normal, 2-9 = low)',
+            len => 1,
             default_value => 1,
+            is_optional => 1,
+            doc => 'Priority describes the order to process. (0 = high, 1 = normal, 2-9 = low)',
         },
     ],
+    schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
-    table_name => 'SEARCH_INDEX_QUEUE',
+    id_generator => '-uuid',
 };
 
 sub __display_name__ {
