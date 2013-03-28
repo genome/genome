@@ -8,40 +8,56 @@ use Carp;
 
 class Genome::Sys::User {
     is => 'Genome::Searchable',
-    schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
     table_name => 'GENOME_SYS_USER',
     id_by => [
         email => {
             is => 'Text',
+            len => 255,
             doc => 'Email of the user, must be unique',
         },
     ],
     has_optional => [
         name => {
             is => 'Text',
+            len => 64,
             doc => 'Full name of the user (eg, Ronald McDonald)',
         },
         username => {
             is => 'Text',
+            len => 64,
             doc => 'System user name of the user (eg, rmcdonald)',
         },
     ],
     has_many_optional => [
-        project_parts => { is => 'Genome::ProjectPart', reverse_as => 'entity', is_mutable => 1, },
-        projects => { is => 'Genome::Project', via => 'project_parts', to => 'project', is_mutable => 1, },
-        project_names => { is => 'Text', via => 'projects', to => 'name', },
+        project_parts => {
+            is => 'Genome::ProjectPart',
+            reverse_as => 'entity',
+            is_mutable => 1,
+        },
+        projects => {
+            is => 'Genome::Project',
+            via => 'project_parts',
+            to => 'project',
+            is_mutable => 1,
+        },
+        project_names => {
+            is => 'Text',
+            via => 'projects',
+            to => 'name',
+        },
         user_role_bridges => {
             is => 'Genome::Sys::User::RoleMember',
             reverse_as => 'user',
         },
         user_roles => {
             is => 'Genome::Sys::User::Role',
-            is_mutable => 1,
             via => 'user_role_bridges',
             to => 'role',
+            is_mutable => 1,
         },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
 };
 
 Genome::Sys::User->add_observer(

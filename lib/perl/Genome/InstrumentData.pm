@@ -7,112 +7,180 @@ use Genome;
 
 class Genome::InstrumentData {
     is => 'Genome::Notable',
+    table_name => 'INSTRUMENT_DATA',
     is_abstract => 1,
-    subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     attributes_have => [
-        is_attribute => { is => 'Boolean', is_optional => 1, },
+        is_attribute => {
+            is => 'Boolean',
+            is_optional => 1,
+        },
     ],
+    subclassify_by => 'subclass_name',
     id_by => [
-        id => { is => 'Text' },
+        id => {
+            is => 'Text',
+            len => 64,
+        },
     ],
     has => [
-        seq_id => { calculate_from => [ 'id' ], calculate => q{ return $id }, },
-        subclass_name => { is => 'Text' },
-        sequencing_platform => { is => 'Text' },
-        library => { is => 'Genome::Library', id_by => 'library_id' },
-        library_name => { via => 'library', to => 'name' },
-        sample_id => { is => 'Number', is_delegated => 1, via => 'library', to => 'sample_id' },
-        sample => { is => 'Genome::Sample', id_by => 'sample_id' },
-        sample_name => { via => 'sample', to => 'name' },
-        models => { is => 'Genome::Model', reverse_as => 'instrument_data', is_many => 1, },
+        seq_id => {
+            calculate_from => 'id',
+            calculate => q( return $id ),
+        },
+        subclass_name => {
+            is => 'Text',
+            len => 64,
+        },
+        sequencing_platform => {
+            is => 'Text',
+            len => 64,
+        },
+        library => {
+            is => 'Genome::Library',
+            id_by => 'library_id',
+        },
+        library_name => {
+            via => 'library',
+            to => 'name',
+        },
+        sample_id => {
+            is => 'Number',
+            via => 'library',
+        },
+        sample => {
+            is => 'Genome::Sample',
+            id_by => 'sample_id',
+        },
+        sample_name => {
+            via => 'sample',
+            to => 'name',
+        },
+        models => {
+            is => 'Genome::Model',
+            reverse_as => 'instrument_data',
+            is_many => 1,
+        },
+        deprecated_source_name => {
+            is => 'Text',
+            len => 64,
+            is_optional => 1,
+            column_name => 'source_name',
+            doc => 'This column is deprectaed, do not use.',
+            is_mutable => 0,
+        },
     ],
     has_optional => [
         tgi_lims_status => { # TODO rename!
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'tgi_lims_status' ],
             is_mutable => 1,
+            is_many => 0,
+            where => [ attribute_label => 'tgi_lims_status' ],
         },
         #TODO: may want to make these immutable, but needed them for
         #backfilling purposes
         transcript_strand => {
             is => 'Text',
-            valid_values => ['unstranded','firststrand','secondstrand'],
-            is_mutable => 1,
-            is_optional => 1,
             via => 'attributes',
             to => 'attribute_value',
-            where => [attribute_label => 'transcript_strand'],
-            doc => 'for some RNA protocols (encore complete rna-seq) reads will match transcript direction (firststrand), or match the opoosite strand (secondstrand), or be a mix (unstranded)'
+            is_mutable => 1,
+            is_many => 0,
+            where => [ attribute_label => 'transcript_strand' ],
+            valid_values => [ "unstranded", "firststrand", "secondstrand" ],
+            doc => 'for some RNA protocols (encore complete rna-seq) reads will match transcript direction (firststrand), or match the opoosite strand (secondstrand), or be a mix (unstranded)',
         },
         original_est_fragment_size => {
             is => 'Number',
-            is_mutable => 1,
             via => 'attributes',
             to => 'attribute_value',
-            where => [attribute_label => 'original_est_fragment_size'],
+            is_mutable => 1,
+            is_many => 0,
+            where => [ attribute_label => 'original_est_fragment_size' ],
         },
         original_est_fragment_size_max => {
             is => 'Number',
-            is_mutable => 1,
             via => 'attributes',
             to => 'attribute_value',
-            where => [attribute_label => 'original_est_fragment_size_max'],
+            is_mutable => 1,
+            is_many => 0,
+            where => [ attribute_label => 'original_est_fragment_size_max' ],
         },
         original_est_fragment_size_min => {
             is => 'Number',
-            is_mutable => 1,
             via => 'attributes',
             to => 'attribute_value',
-            where => [attribute_label => 'original_est_fragment_size_min'],
+            is_mutable => 1,
+            is_many => 0,
+            where => [ attribute_label => 'original_est_fragment_size_min' ],
         },
         original_est_fragment_std_dev => {
             is => 'Number',
-            is_calculated => 1,
-            calculate_from => ['original_est_fragment_size_max', 'original_est_fragment_size_min','original_est_fragment_size'],
-            calculate => q|
+            calculate_from => [ 'original_est_fragment_size_max', 'original_est_fragment_size_min', 'original_est_fragment_size' ],
+            calculate => q(
                 if ($original_est_fragment_size_max and
                     $original_est_fragment_size_min) {
                 ($original_est_fragment_size_max - $original_est_fragment_size_min)/6; }
                 else {
                     $original_est_fragment_size*.1;
-                }|,
+                }),
         },
         read_orientation => {
             is => 'Text',
-            is_mutable => 1,
             via => 'attributes',
             to => 'attribute_value',
-            where => [attribute_label => 'read_orientation'],
-            valid_values => [qw(forward_reverse reverse_forward)],
+            is_mutable => 1,
+            is_many => 0,
+            where => [ attribute_label => 'read_orientation' ],
+            valid_values => [ "forward_reverse", "reverse_forward" ],
         },
-        run_name => { is => 'Text' },
-        subset_name => { is => 'Text' },
+        run_name => {
+            is => 'Text',
+            len => 64,
+        },
+        subset_name => {
+            is => 'Text',
+            len => 64,
+        },
         full_name => {
-            calculate_from => ['run_name','subset_name'],
-            calculate => q|"$run_name/$subset_name"|,
+            calculate_from => [ 'run_name', 'subset_name' ],
+            calculate => q("$run_name/$subset_name"),
         },
         full_path => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             is_mutable => 1,
+            is_many => 0,
             where => [ attribute_label => 'full_path' ],
         },
         ignored => {
             is => 'Number',
+            default_value => 0,
             via => 'attributes',
             to => 'attribute_value',
             is_mutable => 1,
-            where => [attribute_label => 'ignored'],
-            default => '0',
+            is_many => 0,
+            where => [ attribute_label => 'ignored' ],
         },
-        sample_source => { via => 'sample', is => 'Genome::SampleSource', to => 'source' },
-        sample_source_id => { via => 'sample_source', to => 'id' },
-        sample_source_name => { via => 'sample_source', to => 'name' },
-        taxon => { is => 'Genome::Taxon', via => 'sample' },
+        sample_source => {
+            is => 'Genome::SampleSource',
+            via => 'sample',
+            to => 'source',
+        },
+        sample_source_id => {
+            via => 'sample_source',
+            to => 'id',
+        },
+        sample_source_name => {
+            via => 'sample_source',
+            to => 'name',
+        },
+        taxon => {
+            is => 'Genome::Taxon',
+            via => 'sample',
+        },
         species_name => { via => 'taxon' },
     ],
     has_many_optional => [
@@ -122,14 +190,13 @@ class Genome::InstrumentData {
         },
         events => {
             is => 'Genome::Model::Event',
-            reverse_id_by => "instrument_data"
+            reverse_as => 'instrument_data',
         },
         allocations => {
             is => 'Genome::Disk::Allocation',
             reverse_as => 'owner',
         },
     ],
-    table_name => 'INSTRUMENT_DATA',
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
     doc => 'Contains information common to all types of instrument data',

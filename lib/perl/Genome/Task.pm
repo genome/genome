@@ -11,55 +11,61 @@ use JSON::XS;
 
 class Genome::Task {
     table_name => 'GENOME_TASK',
-    id_generator => '-uuid',
-    id_by => {
-        'id' => {is=>'Text', len=>64}
-    },
+    id_by => [
+        id => {
+            is => 'Text',
+            len => 255,
+        },
+    ],
     has => [
         command_class => {
-            is=>'Text',
-            len=>255,
-            doc => 'Command class name'
+            is => 'Text',
+            len => 255,
+            doc => 'Command class name',
         },
         status => {  # submitted, pending_execute, running, failed, succeeded
             is => 'Text',
-            default => 'submitted',
             len => 50,
-            doc => 'Task lifecycle status'
+            default_value => 'submitted',
+            doc => 'Task lifecycle status',
         },
         user_id => {
             is => 'Text',
             len => 255,
-            doc => 'Submitting user'
+            doc => 'Submitting user',
         },
         time_submitted => {
-            is => 'TIMESTAMP',
-            doc => 'Time task was submitted'
+            is => 'DateTime',
+            len => 11,
+            doc => 'Time task was submitted',
         },
     ],
     has_optional => [
         stdout_pathname => {
             is => 'Text',
             len => 255,
-            doc => 'Resulting standard out path'
+            doc => 'Resulting standard out path',
         },
         stderr_pathname => {
             is => 'Text',
             len => 255,
-            doc => 'Resulting standard error path'
+            doc => 'Resulting standard error path',
         },
         time_started => {
-            is => 'TIMESTAMP',
-            doc => 'Time execution started'
+            is => 'DateTime',
+            len => 11,
+            doc => 'Time execution started',
         },
         time_finished => {
-            is => 'TIMESTAMP',
-            doc => 'Time execution concluded'
+            is => 'DateTime',
+            len => 11,
+            doc => 'Time execution concluded',
         },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
-    doc => 'scheduled tasks'
+    id_generator => '-uuid',
+    doc => 'scheduled tasks',
 };
 
 sub create {

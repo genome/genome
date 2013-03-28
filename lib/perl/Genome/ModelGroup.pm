@@ -7,48 +7,53 @@ use Genome;
 class Genome::ModelGroup {
     is => 'Genome::Searchable',
     table_name => 'MODEL_GROUP',
-    id_by      => [
-        id                  => { is => 'Text' },
+    id_by => [
+        id => {
+            is => 'Text',
+            len => 64,
+        },
     ],
     has => [
-        name                => { is => 'Text' },
-        user_name           => { is => 'Text', },
-        uuid                => { is => 'Text', },
-        model_bridges       => { is => 'Genome::ModelGroupBridge',
-                                    reverse_as  => 'model_group',
-                                    is_many     => 1
-                                },
-        models              => { is => 'Genome::Model',
-                                    is_many => 1,
-                                    is_mutable => 1,
-                                    via     => 'model_bridges',
-                                    to      => 'model'
-                                },
-        model_count => {
-            calculate => q| my @models = $self->models; return scalar @models; |,
+        name => {
+            is => 'Text',
+            len => 255,
         },
-        instrument_data => {
-             via => 'models',
-             to => 'instrument_data',
-             doc => 'Instrument data assigned to models of this group.',
-         },
-        convergence_model   => { is => 'Genome::Model::Convergence',
-                                    is_many     => 1, # We really should only have 1 here, however reverse_as requires this
-                                    reverse_as  => 'group',
-                                    doc         => 'The auto-generated Convergence Model summarizing knowledge about this model group',
-                                    is_optional => 1,
-                                },
-        user_name           => {is => 'Text',
-                                is_optional => 1
-                               },
+        user_name => {
+            is => 'Text',
+            is_optional => 1,
+        },
         uuid => {
             is => 'Text',
             is_optional => 1,
         },
+        model_bridges => {
+            is => 'Genome::ModelGroupBridge',
+            reverse_as => 'model_group',
+            is_many => 1,
+        },
+        models => {
+            is => 'Genome::Model',
+            via => 'model_bridges',
+            to => 'model',
+            is_mutable => 1,
+            is_many => 1,
+        },
+        model_count => { calculate => q( my @models = $self->models; return scalar @models; ) },
+        instrument_data => {
+            via => 'models',
+            doc => 'Instrument data assigned to models of this group.',
+        },
+        convergence_model => {
+            is => 'Genome::Model::Convergence',
+            reverse_as => 'group',
+            is_optional => 1,
+            is_many => 1, # We really should only have 1 here, however reverse_as requires this
+            doc => 'The auto-generated Convergence Model summarizing knowledge about this model group',
+        },
         project => {
             is => 'Genome::Project',
-            is_optional => 1,
             id_by => 'uuid',
+            is_optional => 1,
         },
     ],
     schema_name => 'GMSchema',

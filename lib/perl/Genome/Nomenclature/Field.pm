@@ -11,41 +11,46 @@ use JSON::XS;
 
 class Genome::Nomenclature::Field {
     table_name => 'GENOME_NOMENCLATURE_FIELD',
-    id_generator => '-uuid',
-    id_by => {
-        'id' => {is=>'Text', len=>64}
-    },
+    id_by => [
+        id => {
+            is => 'Text',
+            len => 255,
+        },
+    ],
     has => [
         name => {
-            is=>'Text',
-            len=>255,
-            doc => 'Nomenclature field name'
+            is => 'Text',
+            len => 255,
+            doc => 'Nomenclature field name',
         },
         type => {
-            is=>'Text',
-            len=>255,
-            doc => 'Nomenclature field type'
+            is => 'Text',
+            len => 255,
+            doc => 'Nomenclature field type',
         },
         nomenclature_id => {
-            is=>'Text',
+            is => 'Text',
+            len => 255,
         },
         nomenclature => {
-            is=>'Genome::Nomenclature',
-            id_by => 'nomenclature_id'
+            is => 'Genome::Nomenclature',
+            id_by => 'nomenclature_id',
+            constraint_name => 'GNF_FK',
         },
         nomenclature_name => {
             via => 'nomenclature',
             to => 'name',
         },
         enumerated_values => {
-            is_many => 1,
-            is=>'Genome::Nomenclature::Field::EnumValue',
+            is => 'Genome::Nomenclature::Field::EnumValue',
             reverse_as => 'nomenclature_field',
-        }
+            is_many => 1,
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
-    doc => 'Nomenclature::Fields'
+    id_generator => '-uuid',
+    doc => 'Nomenclature::Fields',
 };
 
 sub __display_name__ {

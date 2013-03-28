@@ -6,29 +6,36 @@ use warnings;
 use Genome;
 
 class Genome::ModelGroupBridge {
-    type_name  => 'genome model group bridge',
     table_name => 'GENOME_MODEL_GROUP',
-    er_role    => 'bridge',
-    id_by      => [
-        model_group_id => { is => 'NUMBER', len => 11 },
-        model_id       => { is => 'NUMBER', len => 11 },
+    er_role => 'bridge',
+    type_name => 'genome model group bridge',
+    id_by => [
+        model_group_id => {
+            is => 'Text',
+            len => 64,
+            is_deprecated => 1,
+        },
+        model_id => {
+            is => 'NUMBER',
+            len => 11,
+        },
     ],
     has => [
         model => {
-            is              => 'Genome::Model',
-            id_by           => 'model_id',
-            constraint_name => 'GMG_GM_FK'
+            is => 'Genome::Model',
+            id_by => 'model_id',
+            constraint_name => 'GMG_GM_FK',
         },
         group => {
-            is              => 'Genome::ModelGroup',
-            id_by           => 'model_group_id',
-            constraint_name => 'GMG_MG_FK'
+            is => 'Genome::ModelGroup',
+            id_by => 'model_group_id',
+            constraint_name => 'GMG_MG_FK',
+            is_deprecated => 1,
         },
         model_group => {
-            is              => 'Genome::ModelGroup',
-            id_by           => 'model_group_id',
+            is => 'Genome::ModelGroup',
+            id_by => 'model_group_id',
             is_deprecated => 1,
-            # redundant/old version of "group"
         },
     ],
     schema_name => 'GMSchema',

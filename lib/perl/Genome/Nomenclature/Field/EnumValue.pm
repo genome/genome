@@ -11,28 +11,33 @@ use JSON::XS;
 
 class Genome::Nomenclature::Field::EnumValue {
     table_name => 'GENOME_NOMENCLATURE_ENUM_VALUE',
-    id_generator => '-uuid',
-    id_by => {
-        'id' => {is=>'Text', len=>64}
-    },
+    id_by => [
+        id => {
+            is => 'Text',
+            len => 255,
+        },
+    ],
     has => [
         nomenclature_field_id => {
-            is=>'Text',
-            len=>255,
-            doc => 'Nomenclature field id'
+            is => 'Text',
+            len => 255,
+            doc => 'Nomenclature field id',
         },
         nomenclature_field => {
-            is=>'Genome::Nomenclature::Field',
+            is => 'Genome::Nomenclature::Field',
+            id_by => 'nomenclature_field_id',
             doc => 'Genome::Nomenclature field',
-            id_by => 'nomenclature_field_id'
+            constraint_name => 'GNEV_FK',
         },
         value => {
-            is=>'Text',
+            is => 'Text',
+            len => 255,
         },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
-    doc => 'Nomenclature enumerated field definitions'
+    id_generator => '-uuid',
+    doc => 'Nomenclature enumerated field definitions',
 };
 
 

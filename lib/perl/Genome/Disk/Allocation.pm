@@ -15,101 +15,123 @@ our $TESTING_DISK_ALLOCATION = 0;
 
 class Genome::Disk::Allocation {
     is => 'Genome::Notable',
-    id_generator => '-uuid',
+    table_name => 'GENOME_DISK_ALLOCATION',
     id_by => [
         id => {
             is => 'Text',
+            len => 64,
             doc => 'The id for the allocator event',
         },
     ],
     has => [
         disk_group_name => {
             is => 'Text',
+            len => 40,
             doc => 'The name of the disk group',
         },
         mount_path => {
             is => 'Text',
+            len => 255,
             doc => 'The mount path of the disk volume',
         },
         allocation_path => {
             is => 'Text',
+            len => 4000,
             doc => 'The sub-dir of the disk volume for which space is allocated',
         },
         kilobytes_requested => {
             is => 'Number',
+            len => 20,
             doc => 'The disk space allocated in kilobytes',
         },
         owner_class_name => {
             is => 'Text',
+            len => 255,
+            is_optional => 1,
             doc => 'The class name for the owner of this allocation',
         },
         owner_id => {
             is => 'Text',
+            len => 255,
+            is_optional => 1,
             doc => 'The id for the owner of this allocation',
         },
         owner => {
-            id_by => 'owner_id',
             is => 'UR::Object',
-            id_class_by => 'owner_class_name'
+            id_by => 'owner_id',
+            id_class_by => 'owner_class_name',
         },
         group_subdirectory => {
             is => 'Text',
+            len => 255,
             doc => 'The group specific subdirectory where space is allocated',
         },
         absolute_path => {
-            calculate_from => ['mount_path','group_subdirectory','allocation_path'],
-            calculate => q{ $self->_absolute_path($mount_path, $group_subdirectory, $allocation_path); },
+            calculate_from => [ 'mount_path', 'group_subdirectory', 'allocation_path' ],
+            calculate => q( $self->_absolute_path($mount_path, $group_subdirectory, $allocation_path); ),
         },
         volume => {
             is => 'Genome::Disk::Volume',
             calculate_from => 'mount_path',
-            calculate => q| return Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active'); |
+            calculate => q( return Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active'); ),
         },
         group => {
             is => 'Genome::Disk::Group',
             calculate_from => 'disk_group_name',
-            calculate => q| return Genome::Disk::Group->get(disk_group_name => $disk_group_name); |,
+            calculate => q( return Genome::Disk::Group->get(disk_group_name => $disk_group_name); ),
+        },
+        kilobytes_used_time => {
+            is => 'DateTime',
+            len => 11,
+            is_optional => 1,
         },
     ],
     has_optional => [
         preserved => {
             is => 'Boolean',
-            default => 0,
+            len => 1,
+            default_value => 0,
             doc => 'If set, the allocation cannot be deallocated',
         },
         archivable => {
             is => 'Boolean',
-            default => 1,
+            len => 1,
+            default_value => 1,
             doc => 'If set, this allocation can be archived',
         },
         original_kilobytes_requested => {
             is => 'Number',
+            len => 20,
             doc => 'The disk space allocated in kilobytes',
         },
         kilobytes_used => {
             is => 'Number',
-            default => 0,
+            len => 20,
+            default_value => 0,
             doc => 'The actual disk space used by owner',
         },
         creation_time => {
             is => 'DateTime',
+            len => 11,
             doc => 'Time at which the allocation was created',
         },
         reallocation_time => {
             is => 'DateTime',
+            len => 11,
             doc => 'The last time at which the allocation was reallocated',
         },
         owner_exists => {
             is => 'Boolean',
-            calculate_from => ['owner_class_name', 'owner_id'],
-            calculate => q|
+            calculate_from => [ 'owner_class_name', 'owner_id' ],
+            calculate => q(
                 my $owner_exists = eval { $owner_class_name->get($owner_id) };
                 return $owner_exists ? 1 : 0;
-            |,
-        }
+            ),
+        },
     ],
-    table_name => 'GENOME_DISK_ALLOCATION',
+    schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 # TODO This needs to be removed, site-specific

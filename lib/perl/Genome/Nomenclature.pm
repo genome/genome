@@ -11,35 +11,41 @@ use JSON::XS;
 
 class Genome::Nomenclature {
     table_name => 'GENOME_NOMENCLATURE',
-    id_generator => '-uuid',
-    id_by => {
-        'id' => {is=>'Text', len=>64}
-    },
+    id_by => [
+        id => {
+            is => 'Text',
+            len => 255,
+        },
+    ],
     has => [
         name => {
-            is=>'Text',
-            len=>255,
-            doc => 'Nomenclature name'
+            is => 'Text',
+            len => 255,
+            doc => 'Nomenclature name',
         },
         empty_equivalent => {
-            is=>'Text',
-            len=>255,
-            doc => 'Empty-equivalent string (NA, n/a, etc)'
+            is => 'Text',
+            len => 25,
+            is_optional => 1,
+            doc => 'Empty-equivalent string (NA, n/a, etc)',
         },
         accepts_any_field => {
-            is => 'Text',
+            is => 'Number',
+            len => 1,
+            default_value => 0,
+            is_optional => 1,
             doc => 'Importer will create any field that doesnt exist in the nomenclature',
-            default => '0'
         },
         fields => {
             is => 'Genome::Nomenclature::Field',
+            reverse_as => 'nomenclature',
             is_many => 1,
-            reverse_as => 'nomenclature'
-        }
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
-    doc => 'Nomenclatures'
+    id_generator => '-uuid',
+    doc => 'Nomenclatures',
 };
 
 sub create {
