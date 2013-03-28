@@ -1,27 +1,5 @@
 package Genome::Model::Tools::Annotate::Sv::FusionTranscripts;
 
-# fusionGenes.pl
-#
-# Requires input file to be in BreakDancer format
-#
-#   Require both breakpoints to be in introns of different genes (for now)
-#   This should work for all events as long as we know relative orientations of the junction sequences
-# 
-# General Tactics:
-# Get BreakDancer line, get first and second breakpoint
-# Get every transcript that crosses breakpoint
-# Fusion is possible if there are different genes for transcripts
-# Require that both breakpoints are in introns
-# Need relative oriention of 'fused' sequences
-#     +- Both increasing (this will always be case for DEL)
-#     -+ Both decreasing
-#     ++ Increasing A, decreasing B
-#     -- Decreasing A, increasing B
-# Based on above, look at strands the genes are on and determine if a fusion transcript is possible
-# Look for fusion transcripts without frameshift
-
-
-
 use strict;
 use warnings;
 use Carp;
@@ -50,8 +28,44 @@ class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
 #somatic event because there is only one orientation (for tumor).
 
 sub help_detail {
-    return "Evaluates the potential of SVs to create a transcript fusion, either between different genes or the same gene.
-    It produces an additional output file containing more details about the fusion transcripts.";
+    return "This code predicts the potential transcript fusion between two breakpoints of the different 
+    genes and same genes. It is based on John Wallis's fusionGenes.pl with the addition of in-frame fusion for 
+    the same gene. Below is the general tactics commented in the original script:
+
+    1. Get sv line, get first and second beakpoint
+    2. Get every transcript that crosses breakpoint
+    3. Fusion is possible if there are different genes for transcripts
+    4. Require that both breakpoints are in introns
+    5. Need relative oriention of 'fused' sequences
+         +- Both increasing (this will always be case for DEL)
+         -+ Both decreasing
+         ++ Increasing A, decreasing B
+         -- Decreasing A, increasing B
+    6. Based on above, look at strands the genes are on and determine if a fusion transcript is possible
+    7. Look for fusion transcripts without frameshift
+    
+For the case of the same gene fusion, two fused transcripts must be the same and the number difference of two exon ordinals must be > 1 (like exon3 -> exon5).
+
+In the fusion-transcripts output, each fusion event has a set of results formatted as following mock example:
+
+    \$mRNA_a   PPSGLLTPLHLEGLVQFQDVSFAYPNRPDVLVLQ
+    \$mRNA_b   TTIMAVEF
+
+    6    32815568    6    32816364    INV    [PSMB9 TAP1]|[PSMB9 TAP1]
+    PPSGLLTPLHLEGLVQFQDVSFAYPNRPDVLVLQ \| TTIMAVEF
+    <TAP1_ENST00000354258> [32821755]GAGAAGG<utr_exon1> [32821594][32821593]ATGGCTGAGC<cds_exon1> 
+    [32820816][32820279]GCCAG <cds_exon2> [32820165] \| <PSMB9_ENST00000395330><cds_exon2> [32823924]
+    ATGGCAGTGGAGTTTGACGGGGGCGTTGTGATGGGTTCTGATTCCCGAGTGTCTGCAGG[32823982] <utr_exon6> [32827310]
+    AAACTCTCTAGGGCCAAAA[32827362]
+
+
+* \$mRNA_a shows the amino acid sequence by transcript on left side of fusion point, while \$mRNA_b shows the amino acid sequence by transcript on right side of fusion point.
+
+** The headers of '6    32815568    6    32816364    INV    [PSMB9 TAP1]|[PSMB9 TAP1]' are: chromosomeA  breakpointA  chromosomeB breakpointB  eventType  FusionGenes
+
+*** 'PPSGLLTPLHLEGLVQFQDVSFAYPNRPDVLVLQ | TTIMAVEF' is the fused amino acid sequence and '|' is the fusion point.
+
+**** The last part is the detailed sequence with coordinates of each substructure. It starts with <GeneName_TranscriptName> on left end , then coordinates and sequences and names of substructures (only list utr_exon and cds_exon) all the way to the fusion point '|', then <GeneName_TranscriptName> on right side of fusion point, then coordinates and sequences and names of substructures all the way to the right end utr_exon.";
 }
 
 sub process_breakpoint_list {
