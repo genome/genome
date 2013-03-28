@@ -353,7 +353,8 @@ sub execute {
       my $input_string = join (", ", @inputs);
       $self->status_message("\nRequested clin-seq model exists and is complete:\n\tWith inputs: $input_string\n\t$clinseq_model_name <$clinseq_model_id>");
       my $date_completed = $clinseq_model->last_complete_build->date_completed;
-      $self->status_message("\nThe last completed build finished running at " . $date_completed . ". If this was a while ago you might want to rebuild to take advantage of analysis improvements...\n\n"
+      $date_completed =~ s/\.\d+$//;
+      $self->status_message("\nThe last completed build finished running at " . $date_completed . ". If this was a while ago you might want to rebuild to take advantage of analysis improvements...\n\n");
     }
   }else{
     $self->status_message("\nRequested clin-seq model is NOT ready - see above for instructions\n\n");
