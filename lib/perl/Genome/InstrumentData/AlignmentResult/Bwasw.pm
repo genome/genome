@@ -816,6 +816,7 @@ sub get_aligner_params_hash {
     for my $key (keys %param_hash) {
         if (not defined $param_hash{$key}) {
             delete $param_hash{$key};
+            next;
         }
         if (grep { $key eq $_ } @switches) {
             if ($param_hash{$key} == 1) {
