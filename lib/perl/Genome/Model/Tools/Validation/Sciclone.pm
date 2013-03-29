@@ -251,7 +251,7 @@ sub execute {
     my $sampleNames = '"' . join('","',@sampleNames) . '"';
 
     #print out the clonecaller command, one piece at a time
-    my $cmd = "sciClone(outputPrefix=$output_prefix";
+    my $cmd = 'sciClone(outputPrefix="' . $output_prefix . '"';
     $cmd = $cmd . ", vafs=list(" . join(",",@variantVars) . ")";
     $cmd = $cmd . ", sampleNames=c(" . $sampleNames . ")";
 
