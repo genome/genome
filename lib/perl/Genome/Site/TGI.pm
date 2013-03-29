@@ -22,16 +22,30 @@ BEGIN {
 
 BEGIN {
 	if ($ENV{GENOME_QUERY_POSTGRES}) {
-		no warnings;
-		use UR::Context;
-		use UR::DataSource::Pg;
-		use Workflow;
-		*UR::Context::resolve_data_sources_for_class_meta_and_rule_genome_filtered = \&UR::Context::resolve_data_sources_for_class_meta_and_rule;;
-		*UR::Context::resolve_data_sources_for_class_meta_and_rule = \&Genome::Site::TGI::resolve_data_sources_for_class_meta_and_rule;
+		require UR::Context;
+		require UR::DataSource::Pg;
+		require Workflow;
+		Sub::Install::reinstall_sub({
+                    into => 'UR::Context',
+                    as => 'resolve_data_sources_for_class_meta_and_rule_genome_filtered',
+                    code => \&UR::Context::resolve_data_sources_for_class_meta_and_rule
+                });
+		Sub::Install::reinstall_sub({
+                    into => 'UR::Context',
+                    as => 'resolve_data_sources_for_class_meta_and_rule',
+                    code => \&Genome::Site::TGI::resolve_data_sources_for_class_meta_and_rule
+                });
+		Sub::Install::reinstall_sub({
+                    into => 'UR::Object::Type',
+                    as => 'table_name_filtered',
+                    code => \&UR::Context::table_name
+                });
+		Sub::Install::reinstall_sub({
+                    into => 'UR::Object::Type',
+                    as => 'table_name',
+                    code => \&Genome::Site::TGI::table_name_patch
+                });
 	
-		*UR::Object::Type::table_name_filtered = \&UR::Object::Type::table_name;
-		*UR::Object::Type::table_name = \&Genome::Site::TGI::table_name_patch;
-		use warnings;
 	}
 }
 
@@ -42,15 +56,19 @@ BEGIN {
 }
 
 sub undo_table_name_patch {
-    no warnings;
-    *UR::Object::Type::table_name = \&UR::Object::Type::table_name_filtered;
-    use warnings;
+    Sub::Install::reinstall_sub({
+        into => 'UR::Object::Type',
+        as => 'table_name',
+        code => \&UR::Object::Type::table_name_filtered
+    });
 }
 
 sub redo_table_name_patch {
-    no warnings;
-    *UR::Object::Type::table_name = \&Genome::Site::TGI::table_name_patch;
-    use warnings;
+    Sub::Install::reinstall_sub({
+        into => 'UR::Object::Type',
+        as => 'table_name',
+        code => \&Genome::Site::TGI::table_name_patch
+    });
 }
 
 sub table_name_patch {
