@@ -429,9 +429,8 @@ sub _merge_stage_workflows {
     my $build = shift;
     my @workflows = @_;
 
-    my $w = Workflow::Model->create(
+    my %create_params = (
         name => $build->id . ' all stages',
-        log_dir => sprintf("%s/logs/", $build->data_directory),
         input_properties => [
             'prior_result'
         ],
@@ -439,6 +438,11 @@ sub _merge_stage_workflows {
             'result'
         ]
     );
+    if ($ENV{WF_USE_FLOW}) {
+        $create_params{'log_dir'} = sprintf("%s/logs/", $build->data_directory)
+    }
+
+    my $w = Workflow::Model->create(%create_params);
 
     my $last_op = $w->get_input_connector;
     my $last_op_prop = 'prior_result';

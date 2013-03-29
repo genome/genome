@@ -6,49 +6,46 @@ use Genome;
 
 class Genome::Subject {
     is => 'Genome::Notable',
+    table_name => 'GENOME_SUBJECT',
     is_abstract => 1,
     subclassify_by => 'subclass_name',
     id_by => [
         subject_id => {
             is => 'Number',
+            len => 10,
         },
     ],
     has => [
         subclass_name => {
             is => 'Text',
+            len => 255,
         },
         subject_type => {
-            is_transient => 1,
             is_abstract => 1,
+            is_transient => 1,
             doc => 'Plain text description of the type of subject, defined in subclasses',
         },
-    ],
-    has_many_optional => [
-        attributes => {
-            is => 'Genome::SubjectAttribute',
-            reverse_as => 'subject',
-        },
-        project_parts => { is => 'Genome::ProjectPart', reverse_as => 'entity', is_mutable => 1, },
-        projects => { is => 'Genome::Project', via => 'project_parts', to => 'project', is_mutable => 1, doc => 'Projects that include this subject.' },
-        project_names => { is => 'Text', via => 'projects', to => 'name', },
     ],
     has_optional => [
         name => {
             is => 'Text',
+            len => 255,
             doc => 'Official name of the subject',
         },
         common_name => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
-            where => [ attribute_label => 'common_name' ],
             is_mutable => 1,
+            is_many => 0,
+            where => [ attribute_label => 'common_name' ],
         },
         description => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             is_mutable => 1,
+            is_many => 0,
             where => [ attribute_label => 'description' ],
             doc => 'Some plain-text description of the subject',
         },
@@ -57,11 +54,34 @@ class Genome::Subject {
             via => 'attributes',
             to => 'attribute_value',
             is_mutable => 1,
+            is_many => 0,
             where => [ attribute_label => 'nomenclature', nomenclature => 'WUGC' ],
             doc => 'The nomenclature that information about this subject follows (TCGA, WUGC, etc)',
         },
     ],
-    table_name => 'GENOME_SUBJECT',
+    has_many_optional => [
+        attributes => {
+            is => 'Genome::SubjectAttribute',
+            reverse_as => 'subject',
+        },
+        project_parts => {
+            is => 'Genome::ProjectPart',
+            reverse_as => 'entity',
+            is_mutable => 1,
+        },
+        projects => {
+            is => 'Genome::Project',
+            via => 'project_parts',
+            to => 'project',
+            is_mutable => 1,
+            doc => 'Projects that include this subject.',
+        },
+        project_names => {
+            is => 'Text',
+            via => 'projects',
+            to => 'name',
+        },
+    ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
     doc => 'Contains all information about a particular subject (sample, individual, etc)',
