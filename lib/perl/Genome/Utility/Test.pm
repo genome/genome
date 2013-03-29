@@ -8,7 +8,6 @@ use Exporter 'import';
 our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort);
 
 use Carp qw(croak);
-use File::Compare qw(compare);
 use IPC::System::Simple qw(capture);
 use Test::More;
 use File::Spec qw();
@@ -52,25 +51,112 @@ sub _compare_ok_parse_args {
 
     my %vo; # validated_o
     $vo{name}    = delete $o{name};
-    $vo{filters} = delete $o{filters};
-    $vo{replace} = delete $o{replace};
+    my $filters = delete($o{filters}) || [];
+    my $replace = delete($o{replace}) || [];
+    $vo{xform} = [];
     $vo{diag}    = delete $o{diag} // 1;
     my @k = keys %o;
     if (@k) {
         croak 'unexpected options passed to compare_ok: ' . join(', ', @k);
     }
 
-    my $filters_ref = ref($vo{filters});
-    if (defined $vo{filters} && (!$filters_ref || $filters_ref ne 'ARRAY')) {
-        $vo{filters} = [$vo{filters}];
+    my $replace_ref = ref($replace);
+    if (defined $replace && (!$replace_ref || $replace_ref ne 'ARRAY')) {
+        die sprintf(q(%s: %s\n), $ERRORS{REPLACE_ARRAY_REF}, $replace);
+
+    } else {
+        # inspect each thing in replace
+        for(my $i = 0; $i < @$replace; $i++) {
+            my $r = $replace->[$i];
+
+            my $coderef;
+            if (ref($r) eq 'CODE') {
+                # coderef - use it directly
+                $coderef = $r;
+            } elsif (ref($r) eq 'ARRAY' and (@$r >= 1) and (@$r <= 2)) {
+                # list of one or two somethings
+
+                my($regex, $replacement);
+                if (ref($r->[0]) eq 'Regexp') {
+                    # refered form
+                    $regex = $r->[0];
+                } elsif (! ref($r->[0])) {
+                    # string - convert to regex
+                    $regex = $r->[0];
+                    $regex = qr($regex);
+                } else {
+                     Carp::croak("Unexpected options passed to compare_ok's 'replace' item $i. "
+                                    . "Expected the first element to be a string or Regex, "
+                                    . "but got ".ref($r->[0]));
+                }
+                # now convert to a coderef
+                $replacement = defined($r->[1]) ? $r->[1] : '';  # Default replacement is empty string
+                $coderef = sub {
+                    my $orig = shift;
+                    (my $changed = $orig) =~ s/$regex/$replacement/;
+                    return $changed;
+                };
+
+            } else {
+                Carp::croak("Unexpected options passed to compare_ok's 'replace' item $i. "
+                            . "Expected either a coderef or an arrayref of 1 or 2 items, "
+                            . "but got ".ref($r));
+            }
+            push @{$vo{xform}}, $coderef;
+        }
     }
 
-    my $replace_ref = ref($vo{replace});
-    if (defined $vo{replace} && (!$replace_ref || $replace_ref ne 'ARRAY')) {
-        die sprintf(q(%s: %s\n), $ERRORS{REPLACE_ARRAY_REF}, $vo{replace});
+    my $filters_ref = ref($filters);
+    if (defined $filters && (!$filters_ref || $filters_ref ne 'ARRAY')) {
+        # it's a simple string
+        $filters = [ $filters ];
     }
+    for (my $i = 0; $i < @$filters; $i++) {
+        my $filter = $filters->[$i];
+
+        my $coderef;
+        if (ref($filter) eq 'CODE') {
+            $coderef = $filter;
+        } elsif (!ref($filter) or ref($filter) eq 'Regexp') {
+            # simple string or regex
+            $coderef = sub {
+                my $orig = shift;
+                (my $changed = $orig) =~ s/$filter//;
+                return $changed;
+            };
+        } else {
+            Carp::croak("Unexpected options passed to compare_ok's 'filter' item $i. "
+                        . "Expected a coderef, Regexp or string, but got ".ref($filter));
+        }
+        push @{$vo{xform}}, $coderef;
+    }
+
 
     return ($file_1, $file_2, %vo);
+}
+
+sub _compare_ok_iterator_for_file {
+    my $file = shift;
+
+    my $fh = IO::File->new($file, 'r') || die "Can't open $file for reading: $!";
+    return sub {
+        my $arg = shift;
+
+        if ($arg eq 'input_line_number') {
+            # Hack to get the line number
+            return $fh->input_line_number();
+        }
+
+        # $arg must be a listref of transform functions
+        NEXT_LINE:
+        while(my $line = $fh->getline()) {
+            foreach my $xform ( @$arg ) {
+                $line = $xform->($line);
+            }
+            return $line if(defined($line) and length($line));   # go again if the xforms eliminated this line
+        }
+        return;  # must be EOF
+    };
 }
 
 sub compare_ok {
@@ -78,26 +164,55 @@ sub compare_ok {
 
     my $tb = __PACKAGE__->builder;
 
-    my @compare_args = (
-        $file_2,
-        $file_1,
-        sub {
-            for my $pr (@{$o{replace}}) {
-                my ($pattern, $replacement) = @{$pr};
-                map { $_ =~ s/$pattern/$replacement/ } @_;
-            }
-            for my $filter (@{$o{filters}}) {
-                map { $_ =~ s/$filter//g } @_;
-            }
-            my $c = ($_[0] ne $_[1]);
-            if ($c == 1 && $o{diag}) {
-                $tb->diag("First diff:\n--- " . $file_2 . "\n+++ " . $file_1 . "\n- " . $_[0] . "+ " . $_[1]);
-            }
-            return $c;
-        }
-    );
+    my(@iters,@filename);
+    foreach my $file ( $file_1, $file_2 ) {
+        push @filename, $file;
+        push @iters, _compare_ok_iterator_for_file($file);
+    }
 
-    return $tb->ok(compare(@compare_args) == 0, $o{name});
+    my @xforms;
+    if ($o{xform}) {
+        # replace means apply this xform to all input files
+        # FIXME add options to apply a transform to either file1 or file2
+        for (my $i = 0; $i < @iters; $i++) {
+            $xforms[$i] ||= [];
+            push @{ $xforms[$i] }, @{$o{xform}};
+        }
+    }
+
+    my @lines = (1); # a dummy value to satisfy the grep below the first time through the loop
+    my $result = 1;
+    GET_LINE_FROM_FILES:
+    while (grep { defined($_) && length($_) } @lines) {
+
+        # fill in the next line for each
+        for (my $i = 0; $i < @iters; $i++) {
+            $lines[$i] = $iters[$i]->( $xforms[$i] );
+        }
+
+        # now compare them
+        COMPARISON:
+        for (my $i = 1; $i < @lines; $i++) {
+            {   no warnings 'uninitialized';
+                next COMPARISON if $lines[0] eq $lines[$i];
+            }
+
+            # different
+            if($o{diag}) {
+                my($line1,$line2) = @lines[0,$i];
+                chomp($line1, $line2);
+
+                $tb->diag(sprintf("First diff:\n--- %s line %d\n+++ %s line %d\n-%s\n+%s\n",
+                        $filename[0], $iters[0]->('input_line_number'),
+                        $filename[$i], $iters[$i]->('input_line_number'),
+                        $line1, $line2));
+            }
+            $result = 0;
+            last GET_LINE_FROM_FILES;
+        }
+    }
+
+    return $tb->ok($result, $o{name});
 }
 
 sub capture_ok {
