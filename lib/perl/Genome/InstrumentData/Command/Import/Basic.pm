@@ -332,34 +332,14 @@ sub _transfer_bam_source_file {
     }
     $self->status_message('Sort and copy...done');
 
-    $self->status_message('Run and verify flagstat...');
-    my $flagstat_file = $self->instrument_data->allocation->absolute_path.'/'.$bam_base_name.'.flagstat';
-    $self->status_message("Flagstat file: $flagstat_file");
-    $cmd = "samtools flagstat $tmp_bam_file > $flagstat_file";
-    $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $flagstat_file ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to run flagstat!');
-        return;
-    }
-    my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
-    $self->status_message('Flagstat output:');
-    $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
-    if ( not $flagstat->{total_reads} > 0 ) {
-        $self->error_message('Flagstat determined that ther e are no reads in source bam! '.$source_file);
-        return;
-    }
-    my $is_paired_end = $flagstat->{reads_paired_in_sequencing} ? 1 : 0;
-    if ( $is_paired_end and $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
-        $self->error_message('Flagstat determined that there are not equal pairs in source bam!');
-        return;
-    }
+    my $bam_file = $self->instrument_data->allocation->absolute_path.'/'.$bam_base_name;
+    my $flagstat_file = $bam_file.'.flagstat';
+    my $flagstat = $self->_run_flagstat($tmp_bam_file, $flagstat_file);
+    return if not $flagstat;
     $self->read_count($flagstat->{total_reads});
-    $self->is_paired_end($is_paired_end);
-    $self->status_message('Run and verify flagstat...done');
+    $self->is_paired_end($flagstat->{is_paired_end});
 
     $self->status_message('Move tmp bam file to permenant file...');
-    my $bam_file = $self->instrument_data->allocation->absolute_path.'/'.$bam_base_name;
     $self->status_message("Permanent bam file: $bam_file");
     my $move_ok = File::Copy::move($tmp_bam_file, $bam_file);
     if ( not $move_ok ) {
@@ -375,6 +355,36 @@ sub _transfer_bam_source_file {
 
     $self->status_message('Transfer bam file and run flagstat...done');
     return 1;
+}
+
+sub _run_flagstat {
+    my ($self, $bam_file, $flagstat_file) = @_;
+    $self->status_message('Run and verify flagstat...');
+
+    $flagstat_file ||= $bam_file.'.flagstat';
+    $self->status_message("Flagstat file: $flagstat_file");
+    my $cmd = "samtools flagstat $bam_file > $flagstat_file";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $flagstat_file ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run flagstat!');
+        return;
+    }
+    my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
+    $self->status_message('Flagstat output:');
+    $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
+    if ( not $flagstat->{total_reads} > 0 ) {
+        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_file);
+        return;
+    }
+    $flagstat->{is_paired_end} = $flagstat->{reads_paired_in_sequencing} ? 1 : 0;
+    if ( $flagstat->{is_paired_end} and $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
+        $self->error_message('Flagstat determined that there are not equal pairs in bam! '.$bam_file);
+        return;
+    }
+
+    $self->status_message('Run and verify flagstat...done');
+    return $flagstat;
 }
 #</TransferBam>#
 
