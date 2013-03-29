@@ -17,11 +17,12 @@ class Genome::Model::AmpliconAssembly {
     ],
 };
 
+sub create {
+    die __PACKAGE__ . ' is deprecated.';
+}
+
 sub build_subclass_name {
     return 'amplicon-assembly';
 }
 
 1;
-
-#$HeadURL$
-#$Id$
