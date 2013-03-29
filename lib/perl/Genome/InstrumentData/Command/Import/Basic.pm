@@ -36,7 +36,8 @@ class Genome::InstrumentData::Command::Import::Basic {
     has_transient_optional => [
         library => { is => 'Genome::Library', },
         instrument_data => { is => 'Genome::InstrumentData', },
-        format => { is => 'Text', },
+        original_format => { is => 'Text', },
+        import_format => { is => 'Text', },
         is_paired_end => { is => 'Boolean', },
         kilobytes_requested => { is => 'Number', },
         final_data_file => { is => 'Text', },
@@ -49,15 +50,16 @@ class Genome::InstrumentData::Command::Import::Basic {
     ],
     has_calculated_optional => [
         file_attribute_label => {
-            calculate_from => 'format',
-            calculate => q| 
+            calculate_from => 'import_format',
+            calculate => sub{
+                my ($import_format) = @_;
                 my %formats_to_labels = (
                     'bam' => 'bam_path',
                     'sanger fastq' => 'archive_path',
                 );
-                Carp::confess('Unsupported format! '.$format) if not $formats_to_labels{$format};
-                return $formats_to_labels{$format};
-            |,
+                Carp::confess('Unsupported format! '.$import_format) if not $formats_to_labels{$import_format};
+                return $formats_to_labels{$import_format};
+            },
         },
     ],
 };
@@ -129,12 +131,10 @@ sub _validate_source_files {
     for my $source_file ( @source_files ) { $self->status_message("Source file(s): $source_file"); }
     $self->status_message("Source file count: ".@source_files);
 
-    my $format = $self->_resolve_format(@source_files);
-    return if not $format;
-    $self->format($format);
-    $self->status_message('Format: '.$self->format);
+    my $resolve_formats_ok = $self->_resolve_start_and_import_format(@source_files);
+    return if not $resolve_formats_ok;
 
-    my $max_source_files = ( $self->format =~ /fast[aq]/ ? 2 : 1 );
+    my $max_source_files = ( $self->original_format =~ /fast[aq]/ ? 2 : 1 );
     if ( @source_files > $max_source_files ) {
         $self->error_message("Cannot handle more than $max_source_files source files!");
         return;
@@ -150,8 +150,9 @@ sub _validate_source_files {
     return 1;
 }
 
-sub _resolve_format {
+sub _resolve_start_and_import_format {
     my ($self, @source_files) = @_;
+    $self->status_message('Resolve start and import format...');
 
     my %suffixes;
     for my $source_file ( @source_files ) {
@@ -164,20 +165,21 @@ sub _resolve_format {
         $suffixes{$suffix}++;
     }
 
-    my %suffixes_to_format = (
-        txt => 'sanger fastq',
-        fastq => 'sanger fastq',
-        fq => 'sanger fastq',
+    my %suffixes_to_original_format = (
+        txt => 'fastq',
+        fastq => 'fastq',
+        fq => 'fastq',
         #fasta => 'fasta',
         bam => 'bam',
+        sra => 'sra',
     );
     my %formats;
     for my $suffix ( keys %suffixes ) {
-        if ( not exists $suffixes_to_format{$suffix} ) {
+        if ( not exists $suffixes_to_original_format{$suffix} ) {
             $self->error_message('Unrecognized suffix! '.$suffix);
             return;
         }
-        $formats{ $suffixes_to_format{$suffix} } = 1;
+        $formats{ $suffixes_to_original_format{$suffix} } = 1;
     }
 
     my @formats = keys %formats;
@@ -185,8 +187,21 @@ sub _resolve_format {
         $self->error_message('Got more than one format when trying to determine format!');
         return;
     }
+    my $original_format = $formats[0];
+    $self->original_format($original_format);
+    $self->status_message('Start format: '.$self->original_format);
 
-    return $formats[0];
+    my %original_format_to_import_format = ( # temp, as everything will soon be bam
+        fastq => 'sanger fastq',
+        #fastq => 'bam',
+        bam => 'bam',
+        sra => 'bam',
+    );
+    $self->import_format( $original_format_to_import_format{$original_format} );
+    $self->status_message('Import format: '.$self->import_format);
+
+    $self->status_message('Resolve start and import format...done');
+    return 1;
 }
 
 sub _resolve_kilobytes_requested {
@@ -203,8 +218,8 @@ sub _resolve_kilobytes_requested {
         $size *= 3 if $source_file =~ /\.gz$/; # assume ~30% compression rate for gzipped fasta/q
         $kilobytes_requested += $size;
     }
-    $kilobytes_requested *= 2 if $self->format =~ /fast[aq]/;# extra for tar file
-    $kilobytes_requested *= 3 if $self->format =~ /bam/;# extra for sorting
+    $kilobytes_requested *= 2 if $self->original_format =~ /fast[aq]/;# extra for tar file
+    $kilobytes_requested *= 3 if $self->original_format =~ /bam/;# extra for sorting
 
     return $kilobytes_requested;
 }
@@ -227,7 +242,7 @@ sub _create_instrument_data {
     $self->status_message('Source files were NOT previously imported!');
 
     $self->status_message('Create instrument data...');
-    $properties{import_format} = $self->format;
+    $properties{import_format} = $self->import_format;# will soon be 'bam'
     $properties{sequencing_platform} = $self->sequencing_platform;
     $properties{import_source_name} = $self->import_source_name;
     $properties{description} = $self->description;
@@ -279,15 +294,18 @@ sub _create_instrument_data {
 #<TransferSourceFiles>#
 sub _transfer_source_files {
     my $self = shift;
-    my $format = $self->format;
-    if ( $format eq 'sanger fastq' ) {
+    my $original_format = $self->original_format;
+    if ( $original_format eq 'fastq' ) {
         return $self->_transfer_fastq_source_files;
     }
-    elsif ( $format eq 'bam' ) {
+    elsif ( $original_format eq 'bam' ) {
         return $self->_transfer_bam_source_file;
     }
+    elsif ( $original_format eq 'sra' ) {
+        return $self->_transfer_sra_source_file;
+    }
     else {
-        Carp::confess("Unsupported format! $format");
+        Carp::confess("Unsupported start format! $original_format");
     }
 }
 #<>#
@@ -478,6 +496,16 @@ sub _get_read_count_from_line_count_file {
 }
 #</TransferFastq>#
 
+#<TransferSRA>#
+sub _transfer_sra_source_file {
+    my $self = shift;
+    $self->status_message('Transfer SRA file...');
+
+    $self->status_message('Transfer SRA file...done');
+    return 1;
+}
+#</TransferSRA>#
+
 #<Finish>#
 sub _finish {
     my $self = shift;
@@ -485,7 +513,8 @@ sub _finish {
     $self->status_message('Update properties on instrument data...');
     # File attribute
     my $instrument_data = $self->instrument_data;
-    my $file_attribute_label = $self->file_attribute_label;
+    my $file_attribute_label = $self->file_attribute_label;#'bam_path'
+    # TODO add original [start] format
     my $file_attribute_value = $self->final_data_file; # support more than one?
     $self->status_message(ucfirst(join(' ', split('_', $file_attribute_label))).': '.$file_attribute_value);
     $instrument_data->add_attribute(attribute_label => $file_attribute_label, attribute_value => $file_attribute_value);
