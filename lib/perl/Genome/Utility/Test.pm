@@ -291,20 +291,41 @@ Genome::Utility::Test
 
 =head1 METHODS
 
+=over
+
 =item sub_test
 
 Mimics Test::More's subtest since Ubuntu 10.04, which we run, does not have a
 Test::More recent enough to have subtest support.
 
-=item compare_ok
+=item compare_ok($file1, $file2, %options)
 
-compare_ok use File::Compare with a few conveniences.
+Compare two files line-by-line
 
-compare_ok($file_1, $file_2, name => '', diag => 0, test => 0);
+  compare_ok($file_1, $file_2)
 
-=over4
+With no options, it directly compares two files.  At the first difference, it
+will stop and print a diagnostic message about the difference (if diag => 1
+is passed as an option).
 
-=head2 OPTIONS
+Options include
+
+=over
+
+=item diag => 1 || 0
+
+Do or do not print a diag() message if the files are different
+
+=item filters => [ string1, string2, ..., regex1, regex2, ...]
+
+A list of string or regular expressions to remove from both files before
+comparing them.  Useful to strip out timestamps or usernames that may be
+different in normal operation.
+
+=item replace => [ [ string1 => replace_string1 ], [regex1 => replace_string2] ]
+
+Like filter, but allows the matching string or regex to be replaced with
+another string before the line comparison is done.
 
 =item name
 
@@ -316,4 +337,9 @@ Disable diag output when a diff is encountered. Added this in case people want t
 
 =item test
 
-Disable test usage, just return status. Added this so I could test compare_ok.
+Disable test usage, just return status. Added this so I could test compare_ok.=back
+
+=back
+
+=back
+
