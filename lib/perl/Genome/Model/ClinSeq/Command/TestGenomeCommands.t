@@ -104,6 +104,7 @@ my @files = uniq (@expected_files, @temp_files);
 chomp @files;
 is(scalar(@files), 13, 'found expected number of files');
 for my $file (@files) {
+    next if $file =~ m/^\..*\.swp$/;  # skip vim temp files
     my $temp_file = File::Spec->join($temp_dir, $file);
     ok(-f $temp_file, "file exists in temp_dir: $file");
     my $expected_file = File::Spec->join($expected_output_dir, $file);
