@@ -15,6 +15,7 @@ class Genome::Model::Tools::Gatk::RealignIndels {
         },
         output_realigned_bam => {
             is_input => 1,
+            is_output => 1,
             is => 'Text',
             doc => 'The path to where you would like the realigned output bam',
         },

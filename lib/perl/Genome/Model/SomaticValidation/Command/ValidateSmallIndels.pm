@@ -39,10 +39,12 @@ class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
         tumor_bam   => {
             is => 'Text',
             doc => "Tumor Bam File (Validation Bam)",
+            is_input => 1,
         },
         normal_bam  => {
             is => 'Text',
             doc => "Normal Bam File (Validation Bam)",
+            is_input => 1,
         },
         reference_fasta => {
             is => 'Text',
@@ -68,6 +70,7 @@ class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
         output_dir => {
             is => 'Text',
             doc => "Base output directory if the build is not set",
+            is_input => 1,
         },
         # FIXME fix up these three params
         varscan_params => {
