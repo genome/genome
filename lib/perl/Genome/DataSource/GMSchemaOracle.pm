@@ -80,8 +80,9 @@ sub _lookup_class_for_table_name {
         my $mapped = $ora_map{lc($table_name)};
         print STDERR "OK falling back to $mapped\n";
 
-        $class = $self->SUPER::_lookup_class_for_table_name($mapped);
+        $class = $self->_lookup_class_for_table_name($mapped);
     }
+
     return $class;
 }
 
