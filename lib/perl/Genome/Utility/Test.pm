@@ -5,7 +5,7 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort);
+our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort text_is text_like);
 
 use Carp qw(croak);
 use IPC::System::Simple qw(capture);
@@ -271,6 +271,23 @@ sub data_dir {
     return $dirpath;
 }
 
+sub text_is {
+    my($string, $expected, $message) = @_;
+
+    $string =~ s/\e\[\d+(?>(;\d+)*)m//g;
+    my $tb = __PACKAGE__->builder;
+    return $tb->is_eq($string, $expected, $message);
+}
+
+sub text_like {
+    my($string, $expected, $message) = @_;
+
+    $string =~ s/\e\[\d+(?>(;\d+)*)m//g;
+    my $tb = __PACKAGE__->builder;
+    return $tb->like($string, $expected, $message);
+}
+
+
 1;
 
 __END__
@@ -292,6 +309,16 @@ Genome::Utility::Test
 =head1 METHODS
 
 =over
+
+=item text_is($string, $expected, $message)
+
+Like Test::More::is(), except ANSI escape sequences are stripped out of
+$string before the comparison is made with $expected.
+
+=item text_like($string, $expected, $message)
+
+Like Test::More::like(), except ANSI escape sequences are stripped out of
+$string before the comparison is made with $expected.
 
 =item sub_test
 
@@ -340,6 +367,10 @@ Disable diag output when a diff is encountered. Added this in case people want t
 Disable test usage, just return status. Added this so I could test compare_ok.=back
 
 =back
+
+=head1 SEE ALSO
+
+Test::More
 
 =back
 
