@@ -271,7 +271,6 @@ sub execute{
                             annotator_list      => \@annotator_list,
                             transcripts_print_flanking_genes => 1,
                             transcripts_cancer_gene_list     => $cancer_gene_list,
-                            dbvar_breakpoint_wiggle_room     => 300,
                             chrA_column       => 1,
                             bpA_column        => 2,
                             chrB_column       => 4,
