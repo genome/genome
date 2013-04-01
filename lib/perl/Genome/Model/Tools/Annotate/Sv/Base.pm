@@ -235,14 +235,21 @@ sub annotate_interval_overlaps {
 }
 
 sub get_var_annotation {
-    my ($self, $item, $annotation_ref) = @_;
+    my ($self, $item, $annotation_refA, $annotation_refB) = @_;
     
     my $varreport = "N/A";
     my @vars;
     my $frac = $self->overlap_fraction;
     
-    if (defined $annotation_ref) {
-        for my $var (@$annotation_ref) {
+    my @both;
+    if ($annotation_refA) {
+        push @both, @$annotation_refA;
+    }
+    if ($annotation_refB) {
+        push @both, @$annotation_refB;
+    }
+    if (@both) {
+        for my $var (@both) {
             my $pos1 = min($item->{bpB}, $var->{bpB});
             my $pos2 = max($item->{bpA}, $var->{bpA});
             my $overlap = $pos1-$pos2+1;

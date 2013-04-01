@@ -34,7 +34,10 @@ sub process_breakpoint_list {
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);
-            $output{$key} = [$self->get_var_annotation($item, $item->{dbsnp_annotation}->{bpB})];
+            my $a = $item->{dbsnp_annotation}->{bpA};
+            my $b = $item->{dbsnp_annotation}->{bpB};
+            
+            $output{$key} = [$self->get_var_annotation($item, $a, $b)];
         }
     }
     return \%output;
