@@ -13,11 +13,6 @@ class Genome::Model::Tools::Annotate::Sv::Dbvar {
             doc => 'File containing UCSC table',
             example_values => ["/gsc/scripts/share/BreakAnnot_file/human_build37/GRCh37.remap.all.germline.ucsc.gff"],
         },
-        breakpoint_wiggle_room => {
-            is => 'Number',
-            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
-            default => 200,
-        },
         overlap_fraction => {
             is => 'Number',
             doc => 'Fraction of overlap (reciprocal) required to hit',
@@ -34,7 +29,7 @@ sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
     my $dbvar_annotation = $self->read_dbvar_annotation($self->annotation_file);
-    $self->annotate_interval_matches($breakpoints_list, $dbvar_annotation, $self->breakpoint_wiggle_room, "dbvar_annotation", "bpB");
+    $self->annotate_interval_overlaps($breakpoints_list, $dbvar_annotation, "dbvar_annotation");
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);
@@ -61,11 +56,11 @@ sub read_dbvar_annotation {
        my $p;
        my @fields = split /\t+/, $line;
        $p->{chrom} = $fields[0];
-       $p->{chromStart} = $fields[3];
-       $p->{chromEnd} = $fields[4];
+       $p->{bpA} = $fields[3];
+       $p->{bpB} = $fields[4];
        $p->{name} = $fields[8];
        $p->{chrom} =~ s/chr//;
-       push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
+       push @{$annotation{$p->{chrom}}}, $p;
     }
     return \%annotation;
 }

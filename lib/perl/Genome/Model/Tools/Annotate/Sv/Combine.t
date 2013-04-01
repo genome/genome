@@ -10,14 +10,17 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Genome::Utility::Test qw(compare_ok);
 
-use_ok("Genome::Model::Tools::Annotate::Sv::Combine");
+my $class = "Genome::Model::Tools::Annotate::Sv::Combine";
+use_ok($class);
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Annotate-Sv-Combine";
-my $version  = 2;
+my $base_dir = Genome::Utility::Test->data_dir($class);
+my $version  = 3;
 my $data_dir = "$base_dir/v$version";
 
 #2 add cancer_gene_list to transcripts for human
+#3 change algorithm for calling dbsnp,dbvar,segdup
 
 my $temp_file = Genome::Sys->create_temp_file_path;
 my $cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
@@ -27,10 +30,11 @@ my $cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
     annotator_list      => ['Transcripts', 'Dbsnp', 'Segdup', 'Dbvar'],
     transcripts_print_flanking_genes => 1,
     transcripts_cancer_gene_list     => join("/",Genome::Sys->dbpath("cancer-gene-list/human",1),"Cancer_genes.csv"),
-    dbvar_breakpoint_wiggle_room => 300,
     dbsnp_annotation_file => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
     dbvar_annotation_file => "/gsc/scripts/share/BreakAnnot_file/human_build37/GRCh37.remap.all.germline.ucsc.gff",
     segdup_annotation_file => "/gsc/scripts/share/BreakAnnot_file/human_build37/Human.Feb2009.SegDups.tab",
+    dbsnp_overlap_fraction => 0.8,
+    dbvar_overlap_fraction => 1,
 );
 
 ok($cmd, "Created command");
@@ -40,8 +44,5 @@ ok($cmd->execute, "Command executed successfully");
 my $expected_file = "$data_dir/expected.out";
 ok(-s $temp_file, "Output file created");
 ok(-s $expected_file, "Expected file exists");
-my $expected = `cat $expected_file | sort`;
-my $actual = `cat $temp_file | sort`;
-my $diff = Genome::Sys->diff_text_vs_text($expected, $actual);
-ok(!$diff, "No diffs with expected output");
+compare_ok($temp_file, $expected_file, "No diffs with expected output");
 done_testing;

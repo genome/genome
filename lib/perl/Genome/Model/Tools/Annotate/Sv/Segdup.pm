@@ -13,11 +13,6 @@ class Genome::Model::Tools::Annotate::Sv::Segdup {
             doc => 'File containing UCSC table',
             example_values => ["/gsc/scripts/share/BreakAnnot_file/human_build37/Human.Feb2009.SegDups.tab"],
         },
-        breakpoint_wiggle_room => {
-            is => 'Number',
-            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
-            default => 200,
-        },
         overlap_fraction => {
             is => 'Number',
             doc => 'Fraction of overlap (reciprocal) required to hit',
@@ -36,8 +31,7 @@ sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
     my $segdup_annotation = $self->read_segdup_annotation($self->annotation_file);
-    $self->annotate_interval_matches($breakpoints_list, $segdup_annotation, $self->breakpoint_wiggle_room, "segdup_annotation", "bpA");
-    $self->annotate_interval_matches($breakpoints_list, $segdup_annotation, $self->breakpoint_wiggle_room, "segdup_annotation", "bpB");
+    $self->annotate_interval_overlaps($breakpoints_list, $segdup_annotation, "segdup_annotation");
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);
@@ -61,11 +55,11 @@ sub read_segdup_annotation{
         my $p;
         my @fields = split /\t+/, $line;
         $p->{chrom} = $fields[1];
-        $p->{chromStart} = $fields[2];
-        $p->{chromEnd} = $fields[3];
+        $p->{bpA} = $fields[2];
+        $p->{bpB} = $fields[3];
         $p->{name} = $fields[17];
         $p->{chrom} =~ s/chr//;
-        push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
+        push @{$annotation{$p->{chrom}}}, $p;
     }
     $in->close;
     return \%annotation;
@@ -100,7 +94,7 @@ sub get_segdup_annotation {
 
     unless (defined $e1) {
         foreach my $end1 (@e1s) {
-            if ((!defined $e1) or abs($e1->{chromStart} - $e1->{chromEnd} + 1) < abs($end1->{chromStart} - $end1->{chromEnd} + 1)) {
+            if ((!defined $e1) or abs($e1->{bpA} - $e1->{bpB} + 1) < abs($end1->{bpA} - $end1->{bpB} + 1)) {
                 $e1 = $end1;
             }
         }
@@ -108,7 +102,7 @@ sub get_segdup_annotation {
 
     unless (defined $e2) {
         foreach my $end2 (@e2s) {
-            if ((!defined $e2) or abs($e2->{chromStart} - $e2->{chromEnd} + 1) < abs($end2->{chromStart} - $end2->{chromEnd} + 1)) {
+            if ((!defined $e2) or abs($e2->{bpA} - $e2->{bpB} + 1) < abs($end2->{bpA} - $end2->{bpB} + 1)) {
                 $e2 = $end2;
             }
         }

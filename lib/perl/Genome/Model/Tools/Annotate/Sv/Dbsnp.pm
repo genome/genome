@@ -13,11 +13,6 @@ class Genome::Model::Tools::Annotate::Sv::Dbsnp {
             doc => 'File containing UCSC table',
             example_values => ["/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv"],
         },
-        breakpoint_wiggle_room => {
-            is => 'Number',
-            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
-            default => 200,
-        },
         overlap_fraction => {
             is => 'Number',
             doc => 'Fraction of overlap (reciprocal) required to hit',
@@ -35,7 +30,7 @@ sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
     my $dbsnp_annotation = $self->read_ucsc_annotation($self->annotation_file);
-    $self->annotate_interval_matches($breakpoints_list, $dbsnp_annotation, $self->breakpoint_wiggle_room, "dbsnp_annotation", "bpB");
+    $self->annotate_interval_overlaps($breakpoints_list, $dbsnp_annotation, "dbsnp_annotation");
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);
