@@ -187,6 +187,53 @@ sub pick_orient {
     }
 }
 
+sub annotate_interval_overlaps {
+    my ($self, $positions, $annotation, $tag) = @_;
+    for my $chr (keys %$positions) {
+        #sort positions by bpB coordinates
+        my @sorted_positions = sort {$a->{bpB}<=>$b->{bpB}} (@{$positions->{$chr}});
+        #sort annotation intervals by bpB coordinates
+        my @sorted_annotation = sort {$a->{bpB}<=>$b->{bpB}} (@{$annotation->{$chr}});
+        while (@sorted_positions > 0) {
+            my $pos = shift @sorted_positions;
+            while (@sorted_annotation > 0) {
+                my $annot = $sorted_annotation[0];
+                if ($pos->{bpB} >= $annot->{bpB}) {
+                    if ($pos->{bpA} <= $annot->{bpB}) {#overlaps the bpB coordinate
+                        #match
+                        push @{$pos->{$tag}->{bpB}}, $annot;
+                    }
+                    shift @sorted_annotation
+                }
+                else {
+                    last; #keep the spot in @sorted_annotation, but move to the next position.
+                }
+            }
+        }
+        #sort positions by bpA coordinates
+        @sorted_positions = sort {$a->{bpB}<=>$b->{bpB}} (@{$positions->{$chr}});
+        #sort annotation intervals by bpB coordinates
+        @sorted_annotation = sort {$a->{bpA}<=>$b->{bpA}} (@{$annotation->{$chr}});
+        while (@sorted_positions > 0) {
+            my $pos = shift @sorted_positions;
+            while (@sorted_annotation > 0) {
+                my $annot = $sorted_annotation[0];
+                if ($pos->{bpB} >= $annot->{bpA}) {
+                    if ($pos->{bpA} <= $annot->{bpA}) {#overlaps the bpA coordinate
+                        #match
+                        push @{$pos->{$tag}->{bpA}}, $annot;
+                    }
+                    shift @sorted_annotation;
+                }
+                else {
+                    last;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
 
 #TODO NEEDS to be rewritten - I don't think it is right.
 #First of all, it stops at one end position rather than getting all intervals that cross the breakpoint.
@@ -237,11 +284,11 @@ sub get_var_annotation {
     
     if (defined $annotation_ref) {
         for my $var (@$annotation_ref) {
-            my $pos1 = min($item->{bpB}, $var->{chromEnd});
-            my $pos2 = max($item->{bpA}, $var->{chromStart});
+            my $pos1 = min($item->{bpB}, $var->{bpB});
+            my $pos2 = max($item->{bpA}, $var->{bpA});
             my $overlap = $pos1-$pos2+1;
             my $ratio1 = $overlap/(abs($item->{bpB}-$item->{bpA})+1);
-            my $ratio2 = $overlap/(abs($var->{chromEnd}-$var->{chromStart})+1);
+            my $ratio2 = $overlap/(abs($var->{bpB}-$var->{bpA})+1);
             if ($ratio1 >= $frac && $ratio2 >= $frac ) {
                 push @vars, $var;
             }
@@ -263,10 +310,10 @@ sub read_ucsc_annotation{
         next if /^\#/;
         my $p;
         my @extra;
-        ($p->{bin},$p->{chrom},$p->{chromStart},$p->{chromEnd},$p->{name},@extra) = split /\t+/;
+        ($p->{bin},$p->{chrom},$p->{bpA},$p->{bpB},$p->{name},@extra) = split /\t+/;
         $p->{chrom} =~ s/chr//;
         $p->{extra} = \@extra;
-        push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
+        push @{$annotation{$p->{chrom}}}, $p;
     }
     $in->close;
     return \%annotation;
