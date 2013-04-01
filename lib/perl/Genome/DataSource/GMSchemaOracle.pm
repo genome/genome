@@ -76,8 +76,7 @@ sub _lookup_class_for_table_name {
     }
 
     if (!$class && $ENV{GENOME_QUERY_POSTGRES}) {
-        my %ora_map = Genome::DataSource::Main->oracle_to_postgres_table_mapping;
-        my $mapped = $ora_map{lc($table_name)};
+        my $mapped = Genome::DataSource::Main->postgres_table_name_for_oracle_table($table_name);
         print STDERR "OK falling back to $mapped\n";
 
         $class = $self->_lookup_class_for_table_name($mapped);
