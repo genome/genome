@@ -334,27 +334,41 @@ sub _transfer_bam_source_file {
 
     my $bam_file = $self->instrument_data->allocation->absolute_path.'/'.$bam_base_name;
     my $flagstat_file = $bam_file.'.flagstat';
-    my $flagstat = $self->_run_flagstat($tmp_bam_file, $flagstat_file);
+    my $flagstat = $self->_verify_and_move_bam($tmp_bam_file, $bam_file);
     return if not $flagstat;
+
     $self->read_count($flagstat->{total_reads});
     $self->is_paired_end($flagstat->{is_paired_end});
-
-    $self->status_message('Move tmp bam file to permenant file...');
-    $self->status_message("Permanent bam file: $bam_file");
-    my $move_ok = File::Copy::move($tmp_bam_file, $bam_file);
-    if ( not $move_ok ) {
-        $self->error_message('Failed to move the tmp bam file!');
-        return;
-    }
-    if ( not -s $bam_file ) {
-        $self->error_message('Move of the tmp bam file succeeded, but bam file does not exist!');
-        return;
-    }
-    $self->status_message('Move tmp bam file to permenant file...done');
     $self->final_data_file($bam_file);
 
     $self->status_message('Transfer bam file and run flagstat...done');
     return 1;
+}
+
+sub _verify_and_move_bam {
+    my ($self, $bam_file, $new_bam_file) = @_;
+    $self->status_message('Verify and move bam to permanent location...');
+
+    my $flagstat_file = $new_bam_file.'.flagstat';
+    my $flagstat = $self->_run_flagstat($bam_file, $flagstat_file);
+    return if not $flagstat;
+    $self->read_count($flagstat->{total_reads});
+    $self->is_paired_end($flagstat->{is_paired_end});
+
+    $self->status_message('Move bam file to permenant location...');
+    $self->status_message("Permanent bam file: $new_bam_file");
+    my $move_ok = File::Copy::move($bam_file, $new_bam_file);
+    if ( not $move_ok ) {
+        $self->error_message('Failed to move the tmp bam file!');
+        return;
+    }
+    if ( not -s $new_bam_file ) {
+        $self->error_message('Move of the tmp bam file succeeded, but bam file does not exist!');
+        return;
+    }
+
+    $self->status_message('Verify and move bam to permanent location...done');
+    return $flagstat;
 }
 
 sub _run_flagstat {
@@ -510,6 +524,28 @@ sub _get_read_count_from_line_count_file {
 sub _transfer_sra_source_file {
     my $self = shift;
     $self->status_message('Transfer SRA file...');
+
+    #$self->status_message('');
+    
+    # copy sra to alloc
+    # dump sam to sorted tmp bam
+    # flagstat bam
+    # move tmp bam to bam
+    
+    my ($source_file) = $self->source_files;
+    my $bam_base_name = 'all_sequences.bam';
+    my $tmp_bam_file_prefix = $self->_tmp_dir.'/all_sequences';
+    my $tmp_bam_file = $tmp_bam_file_prefix.'.bam';
+    $self->status_message("Source file: $source_file");
+    $self->status_message("Temp bam file: $tmp_bam_file");
+    my $cmd = "samtools sort -m 3000000000 -n $source_file $tmp_bam_file_prefix";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $tmp_bam_file ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run samtools sort and copy to to temp bam!');
+        return;
+    }
+
 
     $self->status_message('Transfer SRA file...done');
     return 1;
