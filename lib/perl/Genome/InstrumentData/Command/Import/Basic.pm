@@ -316,21 +316,11 @@ sub _transfer_bam_source_file {
     my $self = shift;
     $self->status_message('Transfer bam file and run flagstat...');
 
-    $self->status_message('Sort and copy...');
     my ($source_file) = $self->source_files;
     my $bam_base_name = 'all_sequences.bam';
-    my $tmp_bam_file_prefix = $self->_tmp_dir.'/all_sequences';
-    my $tmp_bam_file = $tmp_bam_file_prefix.'.bam';
-    $self->status_message("Source file: $source_file");
-    $self->status_message("Temp bam file: $tmp_bam_file");
-    my $cmd = "samtools sort -m 3000000000 -n $source_file $tmp_bam_file_prefix";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $tmp_bam_file ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to run samtools sort and copy to to temp bam!');
-        return;
-    }
-    $self->status_message('Sort and copy...done');
+    my $tmp_bam_file = $self->_tmp_dir.'/all_sequences.bam';
+    my $sort_bam_ok = $self->_sort_bam($source_file, $tmp_bam_file);
+    return if not $sort_bam_ok;
 
     my $bam_file = $self->instrument_data->allocation->absolute_path.'/'.$bam_base_name;
     my $flagstat_file = $bam_file.'.flagstat';
@@ -342,6 +332,27 @@ sub _transfer_bam_source_file {
     $self->final_data_file($bam_file);
 
     $self->status_message('Transfer bam file and run flagstat...done');
+    return 1;
+}
+
+sub _sort_bam {
+    my ($self, $bam_file, $sorted_bam_file) = @_;
+    $self->status_message('Sort bam...');
+
+    $self->status_message("Source bam: $bam_file");
+    my $sorted_bam_prefix = $sorted_bam_file;
+    $sorted_bam_prefix =~ s/\.bam$//;
+    $self->status_message("Sorted bam prefix: $sorted_bam_prefix");
+    $self->status_message("Sorted bam file: $sorted_bam_file");
+    my $cmd = "samtools sort -m 3000000000 -n $bam_file $sorted_bam_prefix";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $sorted_bam_file ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run samtools sort!');
+        return;
+    }
+
+    $self->status_message('Sort bam...done');
     return 1;
 }
 
@@ -528,6 +539,7 @@ sub _transfer_sra_source_file {
     #$self->status_message('');
     
     # copy sra to alloc
+    # decrypt?
     # dump sam to sorted tmp bam
     # flagstat bam
     # move tmp bam to bam
