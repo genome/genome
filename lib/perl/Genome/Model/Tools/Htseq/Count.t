@@ -32,7 +32,7 @@ else {
 #my $b = Genome::Model::Build->get(133351985);
 #ok($b, "got test build " . $b->__display_name__);
 
-my $a = Genome::InstrumentData::AlignmentResult->get(133352072);
+my $a = Genome::InstrumentData::AlignmentResult->get(135770173);
 ok($a, "got alignment result " . $a->__display_name__);
 
 # The tool works with the alignment result output_dir by default
