@@ -38,7 +38,7 @@ BEGIN {
 		Sub::Install::reinstall_sub({
                     into => 'UR::Object::Type',
                     as => 'table_name_filtered',
-                    code => \&UR::Context::table_name
+                    code => \&UR::Object::Type::table_name
                 });
 		Sub::Install::reinstall_sub({
                     into => 'UR::Object::Type',
