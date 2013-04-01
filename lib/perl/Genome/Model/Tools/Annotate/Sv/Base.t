@@ -86,6 +86,22 @@ test_annotate_interval_overlaps($annotation_struct, 2097117, 2097203, 1, 0, "Int
 test_annotate_interval_overlaps($annotation_struct, 2107117, 2107203, 2, 0, "Interval matches 2nd annotation, bpA");
 test_annotate_interval_overlaps($annotation_struct, 2107120, 2107206, 0, 2, "Interval matches 2nd annotation, bpB");
 }
+
+{#test get_var_annotation
+my $position = load_positions(2097117, 2097205);
+my $annot1 = load_annotation(1);
+my $annot2 = load_annotation(2);
+my $annot3 = load_annotation(3);
+my $annot4 = load_annotation(4);
+
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot1], undef, 0), "TEST1", "get_var_annotation with 1 valid overlap");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], undef, [$annot1], 0), "TEST1", "get_var_annotation with 1 valid overlap");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot1], [$annot1], 0), "TEST1", "get_var_annotation with 1 valid overlap");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot1, $annot4], undef, 0), "TEST1,TEST4", "get_var_annotation with 2 valid overlaps");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], undef, undef, 0), "N/A", "get_var_annotation with no valid overlaps");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot2], undef, 0), "N/A", "get_var_annotation with 1 invalid overlap");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot3], undef, 0), "N/A", "get_var_annotation with annotation on the wrong chromosome");
+}
 done_testing;
 
 sub test_annotate_interval_overlaps {
@@ -156,7 +172,22 @@ sub load_annotation {
         bpB => "2107205",
         name => "TEST2",
 
-    }
+    },
+    3 => {    
+        bin => "11",
+        chrom => "9",
+        bpA => "2097117",
+        bpB => "2097205",
+        name => "TEST3",
+
+    },
+    4 => {
+        bin => "11",
+        chrom => "X",
+        bpA => "2097117",
+        bpB => "2097205",
+        name => "TEST4",
+    },
     );
     return $annotations{$index};
 }

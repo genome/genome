@@ -37,7 +37,7 @@ sub process_breakpoint_list {
             my $a = $item->{dbsnp_annotation}->{bpA};
             my $b = $item->{dbsnp_annotation}->{bpB};
             
-            $output{$key} = [$self->get_var_annotation($item, $a, $b)];
+            $output{$key} = [$self->get_var_annotation($item, $a, $b, $self->overlap_fraction)];
         }
     }
     return \%output;

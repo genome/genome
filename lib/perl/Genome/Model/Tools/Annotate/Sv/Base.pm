@@ -235,11 +235,11 @@ sub annotate_interval_overlaps {
 }
 
 sub get_var_annotation {
-    my ($self, $item, $annotation_refA, $annotation_refB) = @_;
+    my ($self, $item, $annotation_refA, $annotation_refB, $overlap_fraction) = @_;
     
     my $varreport = "N/A";
     my @vars;
-    my $frac = $self->overlap_fraction;
+    my $frac = $overlap_fraction;
     
     my @both;
     if ($annotation_refA) {
@@ -250,9 +250,15 @@ sub get_var_annotation {
     }
     if (@both) {
         for my $var (@both) {
+            unless ($var->{chrom} eq $item->{chrA} and $item->{chrA} eq $item->{chrB}) {
+                next;
+            }
             my $pos1 = min($item->{bpB}, $var->{bpB});
             my $pos2 = max($item->{bpA}, $var->{bpA});
             my $overlap = $pos1-$pos2+1;
+            if ($overlap < 0) {
+                next;
+            }
             my $ratio1 = $overlap/(abs($item->{bpB}-$item->{bpA})+1);
             my $ratio2 = $overlap/(abs($var->{bpB}-$var->{bpA})+1);
             if ($ratio1 >= $frac && $ratio2 >= $frac ) {
@@ -265,7 +271,7 @@ sub get_var_annotation {
             foreach my $var (@vars) {
                 $dedup{$var->{name}} = $var;
             }
-            $varreport = join(",",keys %dedup);
+            $varreport = join(",",sort keys %dedup);
         }
     }
     return $varreport;
