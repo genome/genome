@@ -21,6 +21,8 @@ use_ok('Genome::Disk::Volume') or die;
 
 my $volume = create_test_volume();
 
+Genome::Disk::Allocation->dump_status_messages(0);
+
 # Make test allocation
 my $allocation = Genome::Disk::Allocation->create(
     disk_group_name => $volume->disk_group_names,
@@ -67,7 +69,9 @@ sub create_test_volume {
         UNLINK => 1,
         CLEANUP => 1,
     );
-    $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+    { no warnings 'once';
+        $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+    }
 
     my $volume_path = tempdir(
         "test_volume__XXXXXXX",
@@ -94,7 +98,9 @@ sub create_test_volume {
         unix_gid => 0,
     );
     ok($group, 'successfully made testing group') or die;
-    push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+    { no warnings 'once';
+        push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+    }
 
     my $assignment = Genome::Disk::Assignment->create(
         dg_id => $group->id,
