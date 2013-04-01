@@ -1414,10 +1414,10 @@ sub remove_test_paths {
         next unless -d $path;
         Genome::Sys->remove_directory_tree($path);
         if ($ENV{UR_DBI_NO_COMMIT}) {
-            print STDERR "Removing allocation path $path because UR_DBI_NO_COMMIT is on\n";
+            __PACKAGE__->debug_message("Removing allocation path $path because UR_DBI_NO_COMMIT is on");
         }
         else {
-            print STDERR "Cleaning up allocation path $path\n";
+            __PACKAGE__->debug_message("Cleaning up allocation path $path");
         }
     }
 }
