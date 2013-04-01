@@ -254,7 +254,11 @@ sub get_var_annotation {
         }
 
         if (@vars) {
-            $varreport = join(",",map{$_->{name}} @vars);
+            my %dedup;
+            foreach my $var (@vars) {
+                $dedup{$var->{name}} = $var;
+            }
+            $varreport = join(",",keys %dedup);
         }
     }
     return $varreport;
