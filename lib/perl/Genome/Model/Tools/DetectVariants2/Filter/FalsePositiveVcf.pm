@@ -972,28 +972,43 @@ sub print_stats {
     return 1;
 }
 
-sub generate_and_run_readcounts_in_parallel {
+sub get_all_sample_names_and_bam_paths {
     my $self = shift;
-    my $region_path = shift;
-
-    my %inputs;
-    my (@outputs, @inputs);
-
-    #set up global readcount params
-    $inputs{reference_fasta} = $self->reference_sequence_input;
-    $inputs{region_list} = $region_path;
-    $inputs{minimum_base_quality} = $self->bam_readcount_min_base_quality;
-    $inputs{use_version} = $self->bam_readcount_version;
-
     my @sample_names;
-    for my $alignment_result ($self->alignment_results) {
-        my $sample_name = $self->find_sample_name_for_alignment_result($alignment_result);
-        push @sample_names, $sample_name;
-        $self->status_message("Running BAM Readcounts for sample $sample_name...");
+    my @bam_paths;
 
+    if (!$self->aligned_reads_input) {
+        for my $alignment_result ($self->alignment_results) {
+            my $sample_name = $self->find_sample_name_for_alignment_result($alignment_result);
+            push @sample_names, $sample_name;
+            push @bam_paths, $alignment_result->merged_alignment_bam_path;
+        }
+    } else {
+        push @bam_paths, $self->aligned_reads_input;
+        push @sample_names, $self->aligned_reads_sample;
+        if ($self->control_aligned_reads_input) {
+            push @bam_paths, $self->control_aligned_reads_input;
+            push @sample_names, $self->control_aligned_reads_sample;
+        }
+    }
+
+    unless (scalar(@sample_names) == scalar(@bam_paths)) {
+        die $self->error_message("Did not get the same number of sample names as bam paths.\n" . Data::Dumper::Dumper @sample_names . Data::Dumper::Dumper @bam_paths);
+    }
+
+    return (\@sample_names, \@bam_paths);
+}
+
+sub add_per_bam_params_to_input {
+    my ($self, %inputs) = @_;
+
+    my ($sample_names, $bam_paths) = $self->get_all_sample_names_and_bam_paths;
+
+    for my $sample_name (@$sample_names) {
+        my $bam_path = shift @$bam_paths;
+
+        $self->status_message("Running BAM Readcounts for sample $sample_name...");
         my $readcount_file = $self->_temp_staging_directory . "/$sample_name.readcounts";  #this is suboptimal, but I want to wait until someone tells me a better way...multiple options exist
-        push @outputs, $readcount_file;
-        my $bam_path = $alignment_result->merged_alignment_bam_path;
         if (-f $bam_path) {
             $inputs{"bam_${sample_name}"} = $bam_path;
         } else {
@@ -1001,6 +1016,24 @@ sub generate_and_run_readcounts_in_parallel {
         }
         $inputs{"readcounts_${sample_name}"} = $readcount_file;
     }
+
+    return %inputs;
+}
+
+sub generate_and_run_readcounts_in_parallel {
+    my $self = shift;
+    my $region_path = shift;
+
+    my %inputs;
+
+    #set up global readcount params
+    $inputs{reference_fasta} = $self->reference_sequence_input;
+    $inputs{region_list} = $region_path;
+    $inputs{minimum_base_quality} = $self->bam_readcount_min_base_quality;
+    $inputs{use_version} = $self->bam_readcount_version;
+
+    my ($sample_names) = $self->get_all_sample_names_and_bam_paths;
+    %inputs = $self->add_per_bam_params_to_input(%inputs);
 
     my $workflow = Workflow::Model->create(
         name=> "FalsePositiveVcf parallel readcount file creation",
@@ -1011,7 +1044,7 @@ sub generate_and_run_readcounts_in_parallel {
         'output',
         ],
     );
-    for my $sample (@sample_names) {
+    for my $sample (@$sample_names) {
         my $op = $workflow->add_operation(
             name=>"readcount creation for $sample",
             operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Sam::Readcount"),
@@ -1080,7 +1113,7 @@ sub generate_and_run_readcounts_in_parallel {
     
     #all succeeded so open files
     my $readcount_searcher_by_sample;
-    for my $sample (@sample_names) {
+    for my $sample (@$sample_names) {
         $readcount_searcher_by_sample->{$sample} = make_buffered_rc_searcher(Genome::Sys->open_file_for_reading($inputs{"readcounts_$sample"}));
     }
     return $readcount_searcher_by_sample;
