@@ -779,6 +779,8 @@ sub add_detectors_and_filters {
                 # add links for properties which every detector or filter has from input_connector
                 my @properties_to_each_filter = (
                     'pedigree_file_path',
+                    'aligned_reads_sample',
+                    'control_aligned_reads_sample',
                 );
 
                 # A superset of the above
@@ -788,8 +790,6 @@ sub add_detectors_and_filters {
                     'reference_build_id',
                     'aligned_reads_input',
                     'control_aligned_reads_input',
-                    'aligned_reads_sample',
-                    'control_aligned_reads_sample',
                     @properties_to_each_filter
                 );
                 for my $property ( @properties_to_each_detector) {
