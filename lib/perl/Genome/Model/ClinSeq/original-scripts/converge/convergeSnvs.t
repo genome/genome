@@ -2,7 +2,8 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 4;
+use Test::More skip_all => 'Test depends on live data that no longer exists.';
+#use Test::More tests => 4;
 use Genome::Model::ClinSeq::Command::Tester qw(run_and_diff);
 
 run_and_diff(
