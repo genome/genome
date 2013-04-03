@@ -21,17 +21,46 @@ use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 
 class Genome::Model::Tools::Varscan::Consensus {
-	is => 'Genome::Model::Tools::Varscan',
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		bam_file	=> { is => 'Text', doc => "Path to BAM file", is_optional => 0 },
-		positions_file	=> { is => 'Text', doc => "Path to variant positions file", is_optional => 0 },
-		output_file	=> { is => 'Text', doc => "Path to output file" , is_optional => 0},
-		min_coverage	=> { is => 'Text', doc => "Minimum base coverage to report readcounts [4]" , is_optional => 1},
-		min_avg_qual	=> { is => 'Text', doc => "Minimum base quality to count a read [20]" , is_optional => 1},
-		min_var_freq	=> { is => 'Text', doc => "Minimum variant allele frequency to call a variant [0.20]" , is_optional => 1},
-		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs; defaults to build 37" , is_optional => 1, default_value => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'},		
-	],
+    is => 'Genome::Model::Tools::Varscan',
+
+    has => [                                # specify the command's single-value properties (parameters) <---
+        bam_file => {
+            is => 'Text',
+            doc => "Path to BAM file",
+            is_optional => 0,
+        },
+        positions_file => {
+            is => 'Text',
+            doc => "Path to variant positions file",
+            is_optional => 0
+        },
+        output_file => {
+            is => 'Text',
+            doc => "Path to output file",
+            is_optional => 0,
+        },
+        min_coverage => {
+            is => 'Text',
+            doc => "Minimum base coverage to report readcounts [4]",
+            is_optional => 1,
+        },
+        min_avg_qual => {
+            is => 'Text',
+            doc => "Minimum base quality to count a read [20]",
+            is_optional => 1,
+        },
+        min_var_freq => {
+            is => 'Text',
+            doc => "Minimum variant allele frequency to call a variant [0.20]",
+            is_optional => 1,
+        },
+        reference => {
+            is => 'Text',
+            doc => "Reference FASTA file for BAMs",
+            is_optional => 1,
+            example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'],
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }
