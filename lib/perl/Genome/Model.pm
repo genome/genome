@@ -161,6 +161,17 @@ class Genome::Model {
             reverse_as => 'model',
             doc => 'links to data currently assigned to the model for processing',
         },
+        downstream_model_associations => {
+            is => 'Genome::Model::Input',
+            reverse_as => '_model_value',
+            doc => 'links to models which use this model as an input', 
+        },
+        downstream_models => {
+            is => 'Genome::Model',
+            via => 'downstream_model_associations',
+            to => 'model',
+            doc => 'models which use this model as an input',
+        },
 
         # TODO: there is currently a deprecated inputs() which is like input_associations which must go away
         #inputs => {

@@ -47,6 +47,12 @@ class Genome::Model::Input {
             doc => 'Filter to apply on the input value.',
         },
     ],
+    has_optional => [
+        _model_value => {
+            is => 'Genome::Model',
+            id_by => 'value_id',
+        },
+    ],
     has_deprecated => [
         # this is the mate to model "inputs" intead of "input_associations"
         # the former is ambiguous, the later distinguishes between input_associations and input_values
