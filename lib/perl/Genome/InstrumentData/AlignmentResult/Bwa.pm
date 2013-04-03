@@ -102,17 +102,26 @@ sub tmp_megabytes_estimated {
 
 sub _all_reference_indices {
     my $self = shift;
+    my @overrides = @_;
 
     my @indices;
+    my $b = $self->reference_build;
     if ($self->multiple_reference_mode) {
-        my $b = $self->reference_build;
         do {
             $self->status_message("Getting reference sequence index for build ".$b->__display_name__);
-            unshift(@indices, $self->get_reference_sequence_index($b));
+            $self->status_message("...using overrides @overrides\n") if @overrides;
+            my $index = $self->get_reference_sequence_index($b,@overrides);
+            $self->status_message("Index: " . $index->__display_name__);
+            unshift(@indices, $index);
             $b = $b->append_to;
         } while ($b);
     } else {
-        push(@indices, $self->get_reference_sequence_index);
+        # TODO: the above condition works for the single-layer reference too right? -ssmith
+        $self->status_message("Getting reference sequence index for build ".$b->__display_name__);
+        $self->status_message("...using overrides @overrides\n") if @overrides;
+        my $index = $self->get_reference_sequence_index($b,@overrides);
+        $self->status_message("Index: " . $index->__display_name__);
+        unshift(@indices, $index);
     }
     return @indices;
 }
@@ -131,10 +140,17 @@ sub _intermediate_result {
             $input_pass = $idx+1;
         }
 
+        my $aligner_version = $self->aligner_version;
+        if ($aligner_version =~ /^(.*)-i(.*)/) {
+            my $old = $aligner_version;
+            $aligner_version = $1;
+            $self->warning_message("FOR iBWA (BWA $old), USING (IDENTICAL) $aligner_version FOR INTERMEDIATE RESULTS"); 
+        }
+
         my %intermediate_params = (
             instrument_data_id           => $self->instrument_data->id,
             aligner_name                 => $self->aligner_name,
-            aligner_version              => $self->aligner_version,
+            aligner_version              => $aligner_version,
             aligner_params               => $params,
             aligner_index_id             => $index->id,
             flagstat_file                => $self->_flagstat_file,
@@ -250,7 +266,20 @@ sub _run_aligner {
     #### STEP 1: Use "bwa aln" to align each fastq independently to the reference sequence
 
     my $bwa_aln_params = (defined $aligner_params{'bwa_aln_params'} ? $aligner_params{'bwa_aln_params'} : "");
-    my @indices = $self->_all_reference_indices;
+
+    my $aligner_version = $self->aligner_version;
+    if ($aligner_version =~ /^(.*)-i(.*)/) {
+        my $old = $aligner_version;
+        $aligner_version = $1;
+        $self->warning_message("FOR iBWA (BWA $old), USING (IDENTICAL) $aligner_version FOR THE REFERENCE INDEX");
+    }
+
+    my @indices = $self->_all_reference_indices(aligner_version => $aligner_version);
+    for (@indices) {
+        if ($_->aligner_version =~ /i/) {
+            die "got an index for an ibwa aligner???" . Data::Dumper::Dumper($_);
+        }
+    }
     my @input_groups;
     my @aln_log_files;
     for my $index (@indices) {
