@@ -430,8 +430,9 @@ sub get_annotation_index {
 sub _get_modified_tophat_params {
     my $self = shift;
     my $params = $self->aligner_params;
-    $params =~ s/--bowtie-version(?:\s+|=)(.+?)(?:\s+|$)//i;
-    unless ($1 =~ /^2/) {
+    my $bowtie_version = $self->_get_bowtie_version($params);
+    $params = $self->_remove_bowtie_version($params);
+    unless ($bowtie_version =~ /^2/) {
         $params .= " --bowtie1";
     }
 
