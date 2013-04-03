@@ -14,7 +14,7 @@ use File::Compare;
 
 use_ok("Genome::Model::Tools::Validation::LongIndelsGenerateMergedAssemblies");
 
-my $version = 1;
+my $version = 2;
 my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Validation-LongIndelsGenerateMergedAssemblies/v$version";
 my $temp_dir = Genome::Sys->create_temp_directory;
 
