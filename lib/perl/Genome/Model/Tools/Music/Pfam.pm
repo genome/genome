@@ -20,7 +20,8 @@ class Genome::Model::Tools::Music::Pfam {
             doc => "Output MAF file with an extra column that reports Pfam annotation domains",
         },
         reference_build => {
-            is => 'Text', default => 'Build37',
+            is => 'Text',
+            example_values => ['Build37'],
             doc => "Options are 'Build36' or 'Build37'. This parameter ensures appropriate annotation of domains",
             valid_values => ['Build36', 'Build37'],
        },
