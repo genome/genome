@@ -995,7 +995,7 @@ sub validate_instrument_data{
 
 sub validate_inputs_have_values {
     my $self = shift;
-    my @inputs = $self->inputs;
+    my @inputs = grep { $self->can($_->name) } $self->inputs;
 
     # find inputs with undefined values
     my @inputs_without_values = grep { not defined $_->value } @inputs;
