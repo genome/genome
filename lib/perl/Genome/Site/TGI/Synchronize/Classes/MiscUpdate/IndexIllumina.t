@@ -100,9 +100,11 @@ sub _test {
 
     my $new_value = delete $params{new_value};
     my $subject_property_name = delete $params{subject_property_name};
+    $DB::single = 1 if $subject_property_name =~ /below/;
     my $genome_property_name = Genome::Site::TGI::Synchronize::Classes::IndexIllumina->lims_property_name_to_genome_property_name(
         $subject_property_name
     );
+    print "G: $genome_property_name\n";
     my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
         subject_class_name => 'test.index_illumina',
         subject_id => $solexa->id,

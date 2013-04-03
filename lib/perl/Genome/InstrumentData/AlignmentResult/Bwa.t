@@ -125,7 +125,6 @@ sub test_alignment {
        
         print "Comparing " . $dir . "/all_sequences.bam with $expected_shortcut_path/all_sequences.bam\n\n\n"; 
         is($generated_bam_md5, $to_validate_bam_md5, "generated md5 matches what we expect -- the bam file is the same!");
-        
     }
 
     # clear out the temp scratch/staging paths since these normally would be auto cleaned up at completion
@@ -225,7 +224,7 @@ sub generate_fake_instrument_data {
         library => $library,
         flow_cell_id => '12345',
         lane => '1',
-        median_insert_size => '22',
+        old_median_insert_size => '22',
         run_name => '110101_TEST',
         subset_name => 4,
         run_type => 'Paired',
