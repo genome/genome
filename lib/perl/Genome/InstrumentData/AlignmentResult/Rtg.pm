@@ -12,9 +12,6 @@ use Genome;
 #  2) set required_rusage
 #  3) Implement run_aligner
 #  4) Implement aligner_params_for_sam_header
-#
-#  You also will want to create a Genome::InstrumentData::Command::Align::YOURCLASSHERE
-#  so you can align from the command line too!
 
 class Genome::InstrumentData::AlignmentResult::Rtg {
     is => 'Genome::InstrumentData::AlignmentResult',
