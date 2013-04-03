@@ -300,7 +300,7 @@ sub create_log_message {
 
 sub _determine_base_log_pathname {
     require DateTime;
-    my $dt = DateTime->now;
+    my $dt = DateTime->now(time_zone => 'America/Chicago');
     my $date = $dt->ymd;
 
     my $base_dir = '/gsc/var/log/genome/postgres/';
