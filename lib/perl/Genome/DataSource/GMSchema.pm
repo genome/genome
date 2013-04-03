@@ -280,8 +280,7 @@ sub create_log_message {
     my $error = shift;
 
     require DateTime;
-    my $dt = DateTime->now;
-    $dt->set_time_zone('America/Chicago');
+    my $dt = DateTime->now(time_zone => 'America/Chicago');
     my $date = $dt->ymd;
     my $time = $dt->hms;
     my $user = Genome::Sys->username;
