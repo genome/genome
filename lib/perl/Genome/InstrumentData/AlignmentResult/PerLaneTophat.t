@@ -21,6 +21,23 @@ sub _join {
 my $class = 'Genome::InstrumentData::AlignmentResult::PerLaneTophat';
 use_ok($class);
 
+do { # _aliger_params_has_gtf tests
+    my $f = \&Genome::InstrumentData::AlignmentResult::PerLaneTophat::_aliger_params_has_gtf;
+    my @tests = (
+        ['-G foo',     1],
+        [' -G foo',    1],
+        ['--GTF foo',  1],
+        [' --GTF foo', 1],
+        ['foo-G',      0],
+        ['-Gfoo',      1], # Should this one match or not?
+    );
+    for my $test (@tests) {
+        my ($s, $e) = @$test;
+        my $n = '_aliger_params_has_gtf: ' . ($e ? "did match: $s" : "did not match: $s");
+        is($f->($s), $e, $n);
+    }
+};
+
 my $data_dir = Genome::Utility::Test->data_dir($class, 1);
 ok(-d $data_dir, "data_dir exists: $data_dir") or die;
 

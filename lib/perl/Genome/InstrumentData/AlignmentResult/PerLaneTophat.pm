@@ -301,6 +301,11 @@ sub _get_bowtie_path_to_generate_annotation_index {
     return $bowtie_path;
 }
 
+sub _aliger_params_has_gtf {
+    my $params = shift;
+    return ($params =~ /(^| )(-G|--GTF)/ ? 1 : 0);
+}
+
 sub _get_aligner_params_to_generate_annotation_index {
     my ($class, $annotation_index, $gtf_file, $index_prefix) = @_;
 
@@ -314,7 +319,7 @@ sub _get_aligner_params_to_generate_annotation_index {
     $aligner_params .= " --transcriptome-index '$index_prefix'";
 
     # add -G <gtf_file> option to tell TopHat what to make the index out of
-    if ($aligner_params =~ /-G/) {
+    if (_aliger_params_has_gtf($aligner_params)) {
         my $annotation_build = $annotation_index->annotation_build;
         $class->error_message('Annotation build \''. $annotation_build->__display_name__ .
             '\' is defined, but there seems to be a GTF file already in the read_aligner_params: ' .
@@ -433,7 +438,7 @@ sub _get_modified_tophat_params {
     if ($self->annotation_build) {
         #TODOthis method doesn't exist
         my $annotation_index = $self->get_annotation_index;
-        if ($params =~ /-G/) {
+        if (_aliger_params_has_gtf($params)) {
             die ('This processing_profile is requesting annotation_reference_transcripts \''. $self->annotation_build->__display_name__ .'\', but there seems to be a GTF file already defined in the read_aligner_params: '. $params);
         }
         #TODO: get ref index with annotation build
