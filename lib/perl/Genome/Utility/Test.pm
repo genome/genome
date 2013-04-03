@@ -5,7 +5,7 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort text_is text_like);
+our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort strip_ansi);
 
 use Carp qw(croak);
 use IPC::System::Simple qw(capture);
@@ -271,21 +271,12 @@ sub data_dir {
     return $dirpath;
 }
 
-sub text_is {
-    my($string, $expected, $message) = @_;
-
+sub strip_ansi {
+    my $string = shift;
     $string =~ s/\e\[\d+(?>(;\d+)*)m//g;
-    my $tb = __PACKAGE__->builder;
-    return $tb->is_eq($string, $expected, $message);
+    return $string;
 }
 
-sub text_like {
-    my($string, $expected, $message) = @_;
-
-    $string =~ s/\e\[\d+(?>(;\d+)*)m//g;
-    my $tb = __PACKAGE__->builder;
-    return $tb->like($string, $expected, $message);
-}
 
 
 1;
@@ -310,15 +301,9 @@ Genome::Utility::Test
 
 =over
 
-=item text_is($string, $expected, $message)
+=item strip_ansi($string)
 
-Like Test::More::is(), except ANSI escape sequences are stripped out of
-$string before the comparison is made with $expected.
-
-=item text_like($string, $expected, $message)
-
-Like Test::More::like(), except ANSI escape sequences are stripped out of
-$string before the comparison is made with $expected.
+Returns the given string after removing ANSI escape sequences.
 
 =item sub_test
 
