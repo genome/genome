@@ -14,7 +14,7 @@ class Genome::DruggableGene::Command::Import::Entrez {
         genes_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/Entrez_WashU_TARGETS.tsv',
+            example_values => ['/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/Entrez_WashU_TARGETS.tsv'],
             doc => 'PATH.  Path to .tsv file for genes (targets)',
         },
         gene_info_file => {
