@@ -18,6 +18,11 @@ class Genome::Model::Tools::Annotate::Sv::Dbvar {
             doc => 'Fraction of overlap (reciprocal) required to hit',
             default => 0.5,
         },
+        wiggle_room => {
+            is => 'Number',
+            doc => 'Window in which the breakpoint can match',
+            default => 200,
+        },
     ],
 };
 
@@ -29,7 +34,7 @@ sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
     my $dbvar_annotation = $self->read_dbvar_annotation($self->annotation_file);
-    $self->annotate_interval_overlaps($breakpoints_list, $dbvar_annotation, "dbvar_annotation");
+    $self->annotate_interval_overlaps($breakpoints_list, $dbvar_annotation, "dbvar_annotation", $self->wiggle_room);
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);

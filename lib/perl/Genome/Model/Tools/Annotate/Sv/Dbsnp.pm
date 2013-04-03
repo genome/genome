@@ -18,7 +18,11 @@ class Genome::Model::Tools::Annotate::Sv::Dbsnp {
             doc => 'Fraction of overlap (reciprocal) required to hit',
             default => 0.5,
         },
-
+        wiggle_room => {
+            is => 'Number',
+            doc => 'Window in which the breakpoint can match',
+            default => 200,
+        },
     ],
 };
 
@@ -30,7 +34,7 @@ sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
     my $dbsnp_annotation = $self->read_ucsc_annotation($self->annotation_file);
-    $self->annotate_interval_overlaps($breakpoints_list, $dbsnp_annotation, "dbsnp_annotation");
+    $self->annotate_interval_overlaps($breakpoints_list, $dbsnp_annotation, "dbsnp_annotation", $self->wiggle_room);
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);

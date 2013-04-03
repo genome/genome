@@ -12,6 +12,6 @@ apipe-test-refalign-germline-short: 133133154
 apipe-test-reference-alignment: 136534477
 apipe-test-somatic-validation: 136545394
 apipe-test-somatic-validation-sv: 135030541
-apipe-test-somatic-variation: 136043094
+apipe-test-somatic-variation: 136550148
 apipe-test-somatic-variation-short: 135968742
-apipe-test-somatic-variation-sv-detection: 136310498
+apipe-test-somatic-variation-sv-detection: 136495547

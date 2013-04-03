@@ -262,3 +262,6 @@
 [submodule "bmm"]
 	path = bmm
 	url = ssh://git//srv/git/bmm.git
+[submodule "vendor/libset-intervaltree-perl"]
+	path = vendor/libset-intervaltree-perl
+	url = https://github.com/genome-vendor/libset-intervaltree-perl.git

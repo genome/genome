@@ -60,52 +60,117 @@ is_deeply($annot, $expected_structure, "Ucsc annotation file was read as expecte
 #annotate_interval_matches
 my $annotation_struct = {
     X =>
-    [
-    load_annotation(1),
-    ],
+    load_annotation([1]),
 };
 
-test_annotate_interval_overlaps($annotation_struct, 2097117, 2097205, 1, 1, "Interval matches exactly");
-test_annotate_interval_overlaps($annotation_struct, 2097116, 2097205, 1, 1, "Interval starts before 1st breakpoint and ends at 2nd");
-test_annotate_interval_overlaps($annotation_struct, 2097116, 2097206, 1, 1, "Interval spans both breakpoints");
-test_annotate_interval_overlaps($annotation_struct, 2097117, 2097204, 1, 0, "Interval matches 1st breakpoint but not second");
-test_annotate_interval_overlaps($annotation_struct, 2097118, 2097206, 0, 1, "Interval matches 2nd breakpoint but not first");
-test_annotate_interval_overlaps($annotation_struct, 2097206, 2097220, 0, 0, "Interval falls after 2nd breakpoint");
-test_annotate_interval_overlaps($annotation_struct, 2097114, 2097207, 1, 1, "Interval spans both breakpoints");
-test_annotate_interval_overlaps($annotation_struct, 2097118, 2097203, 0, 0, "Interval falls entirely within");
+test_annotate_interval_overlaps($annotation_struct, 2097117, 2097205, 0, [1], [1], "Interval matches exactly");
+test_annotate_interval_overlaps($annotation_struct, 2097116, 2097205, 0, 0, [1], "2nd breakpoint overlapped");
+test_annotate_interval_overlaps($annotation_struct, 2097116, 2097206, 0, 0, 0, "Neither bp overlapped");
+test_annotate_interval_overlaps($annotation_struct, 2097117, 2097204, 0, [1], [1], "Both breakpoints overlapped");
+test_annotate_interval_overlaps($annotation_struct, 2097118, 2097206, 0, [1], 0, "1st breakpoint overlapped but not 2nd");
+test_annotate_interval_overlaps($annotation_struct, 2097206, 2097220, 0, 0, 0, "Interval falls after 2nd breakpoint");
+test_annotate_interval_overlaps($annotation_struct, 2097118, 2097203, 0, [1], [1], "Interval falls entirely within");
+test_annotate_interval_overlaps($annotation_struct, 2097117, 2097205, 1, [1], [1], "Interval matches exactly");
+test_annotate_interval_overlaps($annotation_struct, 2097116, 2097205, 1, [1], [1], "Interval with wiggle room on 1st bp matches exactly");
+test_annotate_interval_overlaps($annotation_struct, 2097117, 2097206, 1, [1], [1], "Interval with wiggle room on 2nd bp matches exactly");
 }
 {#more complicated annotation_struct
 my $annotation_struct = {
     X =>
-    [
-    load_annotation(1),
-    load_annotation(2),
-    ],
+    load_annotation([1,2]),
 };
-test_annotate_interval_overlaps($annotation_struct, 2097117, 2097203, 1, 0, "Interval matches 1st annotation");
-test_annotate_interval_overlaps($annotation_struct, 2107117, 2107203, 2, 0, "Interval matches 2nd annotation, bpA");
-test_annotate_interval_overlaps($annotation_struct, 2107120, 2107206, 0, 2, "Interval matches 2nd annotation, bpB");
+test_annotate_interval_overlaps($annotation_struct, 2097117, 2097208, 0, [1], 0, "Interval matches 1st annotation");
+test_annotate_interval_overlaps($annotation_struct, 2107117, 2107208, 0, [2], 0, "Interval matches 2nd annotation, bpA");
+test_annotate_interval_overlaps($annotation_struct, 2107116, 2107205, 0, 0, [2], "Interval matches 2nd annotation, bpB");
+}
+{#two annotation_structs overlap
+my $annotation_struct = {
+    X =>
+    load_annotation([1,5]),
+};
+test_annotate_interval_overlaps($annotation_struct, 2097117, 2097205, 0, [1,5], [1,5], "Interval matches both annotations");
+}
+{#Breakpoints on different chromosomes
+    my $annotation_struct = {
+        X =>
+        load_annotation([1]),
+    };
+    my $hash = {
+        chrA => "X",
+        bpA => 2097117,
+        chrB => "1",
+        bpB => 2097205,
+        event => "DEL",
+        orient => "+-",
+    };
+    my $pos = {
+        X => [
+            $hash
+        ],
+        1 => [
+        {
+           chrA => "X",
+           bpA => 2097117,
+           chrB => "1",
+           bpB => 2097205,
+           event => "DEL",
+           orient => "+=",
+           breakpoint_link => $hash,
+        }
+        ],
+    };
+    my $hash2 = {
+        chrA => "X",
+        bpA => 2097117,
+        chrB => "1",
+        bpB => 2097205,
+        event => "DEL",
+        orient => "+-",
+        TEST => {
+            bpA => load_annotation([1]),
+        },
+    };
+    my $answer = {
+        X => [
+            $hash2
+        ],
+        1 => [
+        {
+           chrA => "X",
+           bpA => 2097117,
+           chrB => "1",
+           bpB => 2097205,
+           event => "DEL",
+           orient => "+=",
+           breakpoint_link => $hash2,
+        }
+        ],
+    };
+    ok(Genome::Model::Tools::Annotate::Sv::Base->annotate_interval_overlaps(
+            $pos, $annotation_struct, "TEST", 0
+        ), "Successfully ran with bps on different chromosomes");
+    is_deeply($pos, $answer, "bps on different chromosomes diffed correctly") or diag explain [$pos, $answer];
 }
 
 {#test get_var_annotation
 my $position = load_positions(2097117, 2097205);
-my $annot1 = load_annotation(1);
-my $annot2 = load_annotation(2);
-my $annot3 = load_annotation(3);
-my $annot4 = load_annotation(4);
+my $annot1 = load_annotation([1]);
+my $annot2 = load_annotation([2]);
+my $annot3 = load_annotation([3]);
+my $annot4 = load_annotation([4]);
 
-is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot1], undef, 0), "TEST1", "get_var_annotation with 1 valid overlap");
-is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], undef, [$annot1], 0), "TEST1", "get_var_annotation with 1 valid overlap");
-is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot1], [$annot1], 0), "TEST1", "get_var_annotation with 1 valid overlap");
-is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot1, $annot4], undef, 0), "TEST1,TEST4", "get_var_annotation with 2 valid overlaps");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], $annot1, undef, 0), "TEST1", "get_var_annotation with 1 valid overlap");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], undef, $annot1, 0), "TEST1", "get_var_annotation with 1 valid overlap");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], $annot1, $annot1, 0), "TEST1", "get_var_annotation with 1 valid overlap");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot1->[0], $annot4->[0]], undef, 0), "TEST1,TEST4", "get_var_annotation with 2 valid overlaps");
 is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], undef, undef, 0), "N/A", "get_var_annotation with no valid overlaps");
-is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot2], undef, 0), "N/A", "get_var_annotation with 1 invalid overlap");
-is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], [$annot3], undef, 0), "N/A", "get_var_annotation with annotation on the wrong chromosome");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], $annot2, undef, 0), "N/A", "get_var_annotation with 1 invalid overlap");
+is(Genome::Model::Tools::Annotate::Sv::Base->get_var_annotation($position->{"X"}->[0], $annot3, undef, 0), "N/A", "get_var_annotation with annotation on the wrong chromosome");
 }
 done_testing;
 
 sub test_annotate_interval_overlaps {
-    my ($annotation_struct, $bpA, $bpB, $expected_to_match_a, $expected_to_match_b, $message) = @_;
+    my ($annotation_struct, $bpA, $bpB, $wiggle_room, $expected_to_match_a, $expected_to_match_b, $message) = @_;
     my $positions = load_positions($bpA, $bpB);
     my $post_positions;
     if ($expected_to_match_a or $expected_to_match_b) {
@@ -117,8 +182,8 @@ sub test_annotate_interval_overlaps {
     my $tag = "TEST";
 
     ok(Genome::Model::Tools::Annotate::Sv::Base->annotate_interval_overlaps(
-        $positions, $annotation_struct, $tag,
-    ), "Successfully ran with $bpA, $bpB");
+        $positions, $annotation_struct, $tag, $wiggle_room
+    ), "Successfully ran with $bpA, $bpB, wiggle_room: $wiggle_room");
     is_deeply($positions, $post_positions, $message);
 }
 
@@ -144,19 +209,20 @@ sub load_positions_with_match {
     my $load;
     if ($ea) {
         $load = load_annotation($ea);
-        die("Unknown expected annotation - should be 0,1, or 2") unless $load;
-        $pos->{"X"}->[0]->{"TEST"}->{"bpA"} = [$load];
+        die("Unknown expected annotation") unless $load;
+        $pos->{"X"}->[0]->{"TEST"}->{"bpA"} = $load;
     }
     if ($eb) {
         $load = load_annotation($eb);
-        die("Unknown expected annotation - should be 0,1, or 2") unless $load;
-        $pos->{"X"}->[0]->{"TEST"}->{"bpB"} = [$load];
+        die("Unknown expected annotation") unless $load;
+        $pos->{"X"}->[0]->{"TEST"}->{"bpB"} = $load;
     }
     return $pos;
 }
 
 sub load_annotation {
-    my $index = shift;
+    my $indices = shift;
+
     my %annotations = ( 
     1 => {
         bin => "11",
@@ -188,6 +254,17 @@ sub load_annotation {
         bpB => "2097205",
         name => "TEST4",
     },
+    5 => {
+        bin => "11",
+        chrom => "X",
+        bpA => "2097117",
+        bpB => "2097205",
+        name => "TEST5",
+    },
     );
-    return $annotations{$index};
+    my @annots;
+    foreach my $index (@$indices) {
+        push @annots, $annotations{$index};
+    }
+    return \@annots;
 }
