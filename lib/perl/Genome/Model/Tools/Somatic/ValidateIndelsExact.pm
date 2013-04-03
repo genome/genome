@@ -70,7 +70,7 @@ class Genome::Model::Tools::Somatic::ValidateIndelsExact {
             doc => "36 or 37",
             is_optional => 1,
             is_input => 1,
-            default => 36,
+            example_values => [36],
         },
     ],
     has_param => [
