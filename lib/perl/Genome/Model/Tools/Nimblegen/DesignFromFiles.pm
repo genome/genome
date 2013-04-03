@@ -37,7 +37,7 @@ class Genome::Model::Tools::Nimblegen::DesignFromFiles {
       doc => "Whether or not to include sites on the Y chromosome in the output (if cases are all female)",
     },
     reference => {
-      type => 'String', is_optional => 0, default => "NCBI-human-build36",
+      type => 'String', is_optional => 0, example_values => ["NCBI-human-build36"],
       doc => "Reference sequence in use, to check chromosomal bounds (E.g. GRCh37-lite-build37)",
     },
   ],
