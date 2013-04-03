@@ -120,8 +120,7 @@ sub _sync_database {
     if ($use_postgres) {
         ($parent_oracle_control_sock, $child_pg_control_sock) = IO::Socket->socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC);
         unless ($parent_oracle_control_sock && $child_pg_control_sock) {
-            $self->error_message("Uh-oh. Couldn't prepare oracle/postgres sync control socket pair.");
-            die $self->error_message;
+            die $self->error_message("Uh-oh. Couldn't prepare oracle/postgres sync control socket pair.");
         }
 
         $pid = UR::Context::Process->fork();
@@ -130,29 +129,25 @@ sub _sync_database {
     }
 
     if ($pid) {
-
         my $sync_time_start = Time::HiRes::time();
         my $oracle_sync_rv = Genome::DataSource::GMSchemaOracle->_sync_database(@_);
-
         my $sync_time_duration = Time::HiRes::time() - $sync_time_start;
         unless ($oracle_sync_rv) {
             Carp::confess "Could not sync to oracle!";
         }
+
         if ($use_postgres) {
-            log_commit_time('oracle',$sync_time_duration);
+            log_commit_time('oracle', $sync_time_duration);
             close $parent_oracle_control_sock;
-
-            waitpid($pid, -1);
-
 
             my $post_commit_hook;
             $post_commit_hook = sub {
                 print $child_pg_control_sock "1\n";
-                $UR::Context::current->remove_observers(aspect=>'commit', callback=>$post_commit_hook);
+                $UR::Context::current->remove_observers(aspect => 'commit', callback => $post_commit_hook);
                 eval {
                     local $SIG{'ALRM'} = sub {
-                        log_error("Timed out waiting for Postgres to sync!  Oracle successfully committed.  Databases have possibly diverged.");
-                        die "alarm\n";
+                        log_error('Timed out waiting for Postgres to sync!  Oracle successfully committed.  Databases have possibly diverged.');
+                        die; # to exit eval
                     };
                     alarm 30;
                     my $pg_signal = <$child_pg_control_sock>;
@@ -160,38 +155,34 @@ sub _sync_database {
                 };
             };
 
-
-            $UR::Context::current->add_observer(aspect=>'commit', callback=>$post_commit_hook);
+            $UR::Context::current->add_observer(aspect => 'commit', callback => $post_commit_hook);
         }
-
 
         if ($ENV{GENOME_QUERY_POSTGRES}) {
             Genome::Site::TGI->redo_table_name_patch;
         }
+
         return 1;
-    } elsif (defined $pid) {
+    }
+    elsif (defined $pid) {
+        # close this to stop us from blocking on the read even when our parent exits.
         close $child_pg_control_sock;
 
-        # Fork twice so parent (process doing Oracle commit) doesn't wait for child
-        # to finish.
-        # Ignoring SIG_CHLD prevents "Child process #### reaped" from appearing in logs
+        # Fork twice so parent (process doing Oracle commit) doesn't wait for
+        # child to finish.  Ignoring SIG_CHLD prevents "Child process ####
+        # reaped" from appearing in logs.
         $SIG{CHLD} = 'IGNORE';
         my $second_pid = fork();
         Carp::confess "Can't fork" unless defined $second_pid;
         if ($second_pid) {
-            # Using POSIX exit prevents END and DESTROY blocks from executing.
-            POSIX::_exit(0);
+            POSIX::_exit(0); # avoids END and DESTROY blocks
         }
 
-        # close this to stop us from blocking on the read even when our parent exits.
-
         # builds will bomb out unless we tell POE that we forked.
-        eval {
-            POE::Kernel->has_forked();
-        };
+        eval { POE::Kernel->has_forked() };
 
-        # Turtles all the way down... the logging logic can potentially bomb and emit warnings that the user
-        # shouldn't see, so eval everything!
+        # Turtles all the way down... the logging logic can potentially bomb
+        # and emit warnings that the user shouldn't see, so eval everything!
         eval {
             my $stderr = '';;
             local *STDERR;
@@ -199,16 +190,10 @@ sub _sync_database {
             my $sync_time_start = Time::HiRes::time();
 
             eval {
-                $DB::single = 1;
                 my $pg_commit_rv;
                 my $pg_sync_rv = Genome::DataSource::PGTest->_sync_database(@_);
 
-
                 my $pg_signal = <$parent_oracle_control_sock>;
-                #print "****** WAITING TO READ!!!!*****\n";
-                #my $rv = sysread($pg_control_sock, $pg_signal, 1, 0);
-                #print "****** READ, RV is $rv!!!!*****\n";
-
                 if (defined $pg_signal) {
                     $pg_commit_rv = Genome::DataSource::PGTest->SUPER::commit;
                 }
@@ -224,10 +209,10 @@ sub _sync_database {
                 print $error, "\n";
                 log_error($error);
             }
-            log_commit_time('pg',$sync_time_duration);
+            log_commit_time('pg', $sync_time_duration);
         };
         print $parent_oracle_control_sock "1\n";
-        POSIX::_exit(0);
+        POSIX::_exit(0); # avoids END and DESTROY blocks
     }
     else {
         Carp::confess "Problem forking for postgres commit!";
