@@ -51,9 +51,10 @@ class Genome::Model::Tools::LiftOver {
             doc => 'The liftOver "chain" file that maps from source to destination build. Required if --lift-direction is unspecified',
         },
         lift_direction => {
-            is => 'Text', default => 'hg18ToHg19',
+            is => 'Text',
             doc => 'Shorthand for commonly used lift operations.',
             valid_values => ['hg18ToHg19', 'hg19ToHg18'],
+            example_values => ['hg18ToHg19', 'hg19ToHg18'],
         },
     ],
     doc => "Wrapper for the UCSC liftOver with added conveniences",

@@ -451,9 +451,9 @@ sub _get_modified_tophat_params {
     my $cpu_count = $self->_available_cpu_count;
     $self->status_message("CPU count is $cpu_count");
     if($params =~ /(^| )--num-threads[ =]\d+/) {
-        $params =~ s/(^| )--num-threads[ =]\d+/\1--num-threads $cpu_count/;
+        $params =~ s/(^| )--num-threads[ =]\d+/$1--num-threads $cpu_count/;
     } elsif ($params =~ /(^| )-p[ =]\d+/) {
-        $params =~ s/(^| )-p[ =]\d+/\1--num-threads $cpu_count/;
+        $params =~ s/(^| )-p[ =]\d+/$1--num-threads $cpu_count/;
     } else {
         $params .= " --num-threads $cpu_count";
     }

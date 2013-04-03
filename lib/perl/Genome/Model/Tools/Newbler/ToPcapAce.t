@@ -15,8 +15,9 @@ unless ($archos =~ /64/) {
 use_ok( 'Genome::Model::Tools::Newbler::ToPcapAce' ) or die;
 
 #test suite dir
-my $version = 'v2';
+my $version = 'v4';
 my $test_suite = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Newbler/ToPcapAce-'.$version;
+
 ok( -d $test_suite, "Test suite dir exists" ) or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
@@ -66,15 +67,11 @@ for my $test_type ( qw/ scaffolded unscaffolded / ) {
         ok( -s $temp_type_dir."/$file", "Test created $file file" );
         ok( File::Compare::compare( $suite_type_dir."/$file",$temp_type_dir."/$file") == 0, "$file files match" );
     }
-
-
 }
 
 #<STDIN>;
 
 done_testing();
-
-
 
 sub scaffolded_input_files {
     return ( '454Scaffolds.txt', '/consed/edit_dir/454Contigs.ace.1' );
