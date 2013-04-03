@@ -7,7 +7,7 @@ use above 'Genome';
 
 use Data::Dumper 'Dumper';
 use Test::More;
-use Genome::Utility::Test qw(text_like);
+use Genome::Utility::Test qw(strip_ansi);
 
 use_ok('Genome::Command::Crud') or die;
 use_ok('Genome::Command::Create') or die;
@@ -124,20 +124,20 @@ my %config = (
 );
 ok(Genome::Command::Crud->init_sub_commands(%config), 'init crud commands') or die;
 is_deeply([sort Person::Command->sub_command_classes], [sort map { 'Person::Command::'.$_ } (qw/ Create List Update Delete /)], 'person command classes');
-my $help_text = Person::Command->help_usage_complete_text;
-text_like($help_text,
+my $help_text = strip_ansi(Person::Command->help_usage_complete_text);
+like($help_text,
     qr(^Sub-commands for person:),
     'help text header');
-text_like($help_text,
+like($help_text,
     qr(create\s+a person),
     'create help');
-text_like($help_text,
+like($help_text,
     qr(list\s+people),
     'list help');
-text_like($help_text,
+like($help_text,
     qr(update\s+\.\.\.\s+properties on people),
     'update help');
-text_like($help_text,
+like($help_text,
     qr(delete\s+people),
     'delete help');
 
@@ -150,17 +150,17 @@ ok($main_tree_meta, 'MAIN TREE meta');
 # meta 
 my $create_meta = Person::Command::Create->__meta__;
 ok($create_meta, 'CREATE meta');
-$help_text = Person::Command::Create->help_usage_complete_text;
-text_like($help_text,
+$help_text = strip_ansi( Person::Command::Create->help_usage_complete_text );
+like($help_text,
     qr(USAGE\s+person create),
     'Person Create help header');
-text_like($help_text,
+like($help_text,
     qr(REQUIRED PARAMS\s+name\s+Name of the person\s+title\s+Title),
     'Person Create help required params');
-text_like($help_text,
+like($help_text,
     qr(OPTIONAL PARAMS\s+mom\s+The person's Mom\s+friends\s+Friends of this person\s+best-friend\s+Best friend of this person\s+has-pets\s+Does this person have pets\?.*?job\s+The person's job)s,
     'Person Create help optional params');
-text_like($help_text,
+like($help_text,
     qr(DESCRIPTION\s+This command creates a person\.),
     'Person Create help description');
     
@@ -242,11 +242,11 @@ is_deeply($george->best_friend, $ronnie, 'George is best friends w/ Ronnie');
 my $list_meta = Person::Command::List->__meta__;
 ok($list_meta, 'LIST meta');
 #print Person::Command::List->help_usage_complete_text;
-$help_text = Person::Command::List->help_usage_complete_text;
-text_like($help_text,
+$help_text = strip_ansi( Person::Command::List->help_usage_complete_text );
+like($help_text,
     qr(USAGE\s+person list),
     'Person list help header');
-text_like($help_text,
+like($help_text,
     qr(OPTIONAL INPUTS\s+show.*?order-by.*?FILTER)s,
     'Person list optional inputs help');
 
@@ -255,7 +255,7 @@ text_like($help_text,
 my $update_tree_meta = Person::Command::Update->__meta__;
 ok($update_tree_meta, 'update tree meta');
 is_deeply([Person::Command::Update->sub_command_classes], [map { 'Person::Command::Update::'.$_ } (qw/ BestFriend Friends HasPets Job Mom Name Title /)], 'update sub command classes');
-$help_text = Person::Command::Update->help_usage_complete_text;
+$help_text = strip_ansi( Person::Command::Update->help_usage_complete_text );
 foreach my $re (    qr(^Sub-commands for person update:),
                     qr(best-friend\s+Best friend of this person),
                     qr(friends\s+\.\.\.\s+add/remove friends),
@@ -265,23 +265,23 @@ foreach my $re (    qr(^Sub-commands for person update:),
                     qr(name\s+Name of the person),
                     qr(title\s+Title),
 ) {
-    text_like($help_text, $re, "person update help text matched $re");
+    like($help_text, $re, "person update help text matched $re");
 }
 
-$help_text = Person::Command::Update::Title->help_usage_complete_text;
-text_like($help_text,
+$help_text = strip_ansi( Person::Command::Update::Title->help_usage_complete_text );
+like($help_text,
     qr(USAGE\s+person update title)s,
     'person update title help header');
-text_like($help_text,
+like($help_text,
     qr(REQUIRED ARGUMENTS\s+value\s+Text.*?PEOPLE\s+Person\s+People to update, resolved via string\.)s,
     'person update required args help');
 
 
-$help_text = Person::Command::Update::BestFriend->help_usage_complete_text;
-text_like($help_text,
+$help_text = strip_ansi( Person::Command::Update::BestFriend->help_usage_complete_text );
+like($help_text,
     qr(USAGE\s+person update best-friend),
     'person update best-friend help header');
-text_like($help_text,
+like($help_text,
     qr(REQUIRED ARGUMENTS\s+value\s+Person\s+Best friend of this person\s+PEOPLE\s+Person\s+People to update, resolved via string\.),
     'person update best-friend required args help');
 
@@ -457,24 +457,24 @@ my $friends_tree_meta = Person::Command::Update->__meta__;
 ok($friends_tree_meta, 'friends tree meta');
 is_deeply([Person::Command::Update::Friends->sub_command_classes], [map { 'Person::Command::Update::Friends::'.$_ } (qw/ Add Remove /)], 'friend sub command classes');
 
-$help_text = Person::Command::Update::Friends->help_usage_complete_text;
-text_like($help_text,
+$help_text = strip_ansi( Person::Command::Update::Friends->help_usage_complete_text );
+like($help_text,
     qr(^Sub-commands for person update friends:\s+add\s+friend to people\s+remove\s+friend from people),
     'person update friends help text');
 
-$help_text =  Person::Command::Update::Friends::Add->help_usage_complete_text;
-text_like($help_text,
+$help_text = strip_ansi( Person::Command::Update::Friends::Add->help_usage_complete_text );
+like($help_text,
     qr(USAGE\s+person update friends add),
     'person update friends add help header');
-text_like($help_text,
+like($help_text,
     qr(REQUIRED ARGUMENTS\s+values\s+Person\s+Friends of this person\s+PEOPLE\s+Person\s+People to update, resolved via string\.),
     'person update friends add required args help');
 
-$help_text = Person::Command::Update::Friends::Remove->help_usage_complete_text;
-text_like($help_text,
+$help_text = strip_ansi( Person::Command::Update::Friends::Remove->help_usage_complete_text );
+like($help_text,
     qr(USAGE\s+person update friends remove),
     'person update friends remove help header');
-text_like($help_text,
+like($help_text,
     qr(REQUIRED ARGUMENTS\s+values\s+Person\s+Friends of this person\s+PEOPLE\s+Person\s+People to update, resolved via string\.),
     'person update friends add required args help');
 
@@ -555,8 +555,8 @@ $update_add_fail_no_values->delete;
 my $delete_meta = Person::Command::Delete->__meta__;
 ok($delete_meta, 'DELETE meta');
 
-$help_text = Person::Command::Delete->help_usage_complete_text;
-text_like($help_text,
+$help_text = strip_ansi( Person::Command::Delete->help_usage_complete_text );
+like($help_text,
     qr(USAGE\s+person delete PEOPLE\s+REQUIRED PARAMS\s+PEOPLE\s+People to delete, resolved via text string\.),
     'person delete help text');
 
