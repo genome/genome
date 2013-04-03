@@ -28,7 +28,7 @@ class Genome::Model::Tools::Varscan::Validation {
         output_snp       => { is => 'Text', doc => "Basename for SNP output, eg. varscan_out/varscan.status.snp" , is_optional => 1, is_output => 1, is_input => 1, },
         output_indel     => { is => 'Text', doc => "Basename for indel output, eg. varscan_out/varscan.status.indel" , is_optional => 1, is_output => 1, is_input => 1,},
         output_validation=> { is => 'Text', doc => 'Basename for validation output, eg. varscan_out/varscan.status.validation', is_optional => 1, is_output => 1, },
-        reference        => { is => 'Text', doc => "Reference FASTA file for BAMs; defaults to build 37" , is_optional => 0, default => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa', is_input => 1,},
+        reference        => { is => 'Text', doc => "Reference FASTA file for BAMs" , is_optional => 0, example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'], is_input => 1,},
         skip_if_output_present => { is => 'Text', doc => "If set to 1, skip execution if output files exist", is_optional => 1, },
         varscan_params   => { is => 'Text', doc => "Parameters to pass to Varscan" , is_optional => 1, default_value => '--min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.01 --validation 1 --min-coverage 8', is_input => 1,},
     ],
