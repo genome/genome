@@ -5,7 +5,7 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort strip_ansi);
+our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort strip_ansi command_execute_ok);
 
 use Carp qw(croak);
 use IPC::System::Simple qw(capture);
@@ -277,6 +277,97 @@ sub strip_ansi {
     return $string;
 }
 
+my @command_message_types = qw(status warning error debug usage);
+sub _command_execute_ok_parse_args {
+    if (@_ < 1 or @_ > 3) {
+        Carp::croak("Expected 1, 2 or 3 args to command_execute_ok(), but got ".scalar(@_));
+    }
+
+    my $command = shift;
+    unless (ref($command) && $command->isa('Command')) {
+        Carp::croak('Arg 1 to command_execute_ok() must be an instance of a Command object');
+    }
+
+    my($message_config, $ok_msg);
+    if (! @_) {
+        # no more args
+        $message_config = {};
+        $ok_msg = "execute ".ref($command);
+
+    } elsif (@_ == 1) {
+        $ok_msg = shift;
+        $message_config = {};
+
+    } else { # @_ == 2
+        $message_config = shift;
+        $ok_msg = shift;
+    }
+
+    # validate $message_config contents
+    foreach my $type ( @command_message_types ) {
+        # ! exists means don't filter these messages at all
+        next unless exists $message_config->{$type.'_messages'};
+        # ! defined means don't print them to the terminal, and don't check them afterward
+        next unless defined $message_config->{$type.'_messages'};
+
+        if (ref($message_config->{$type.'_messages'}) ne 'ARRAY') {
+            Carp::croak("Expected an arrayref for ${type}_messages, but got "
+                            . ref($message_config->{$type.'_messages'}));
+        }
+        foreach my $check_msg ( @{ $message_config->{$type.'_messages'} }) {
+            if (ref($check_msg) && ref($check_msg) ne 'Regexp') {
+                Carp::croak("Values for ${type}_messages must be strings or Regexps");
+            }
+        }
+    }
+    return ($command, $message_config, $ok_msg);
+}
+
+my %format_numeral = qw( 1 st 2 nd 3 rd 4 th 5 th 6 th 7 th 8 th 9 th 0 th );
+
+sub command_execute_ok {
+    my($command, $message_config, $message) = _command_execute_ok_parse_args(@_);
+
+    foreach my $type (@command_message_types) {
+        if (exists $message_config->{$type.'_messages'}) {
+            my($dump, $queue) = map { "${_}_${type}_messages" } qw(dump queue);
+            $command->$dump(0);
+            $command->$queue(1) if (defined $message_config->{$type.'_messages'});
+        }
+    }
+
+    my $tb = __PACKAGE__->builder;
+    my $result = $command->execute();
+    $result || return $tb->ok(0, "$message (execute() returned false)");
+
+    foreach my $type (@command_message_types) {
+        my $method = $type.'_messages';
+        if (defined $message_config->{$method}) {
+            my @expected_messages = @{ $message_config->{$method} };
+            my @got_messages = $command->$method();
+            for (my $i = 0; @expected_messages || @got_messages; $i++) {
+                my($expected) = map { defined $_ ? $_ : '' } shift @expected_messages;
+                my($got) = map { defined $_ ? $_ : '' } shift @got_messages;
+
+                if (ref($expected) and $got !~ m/$expected/) {
+                    my $rv = $tb->ok(0, $message);
+                    $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
+                                . ' ' . substr($method, 0, -1) # remove the 's'
+                                . ", '$got' didn't match $expected");
+                    return $rv;
+
+                } elsif (!ref($expected) and $got ne $expected) {
+                    my $rv = $tb->ok(0, $message);
+                    $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
+                                . ' ' . substr($method, 0, -1) # remove the 's'
+                                . ", got '$got' but expected '$expected'");
+                    return $rv;
+                }
+            }
+        }
+    }
+    return $tb->ok(1, $message);
+}
 
 
 1;
@@ -349,13 +440,36 @@ Disable diag output when a diff is encountered. Added this in case people want t
 
 =item test
 
-Disable test usage, just return status. Added this so I could test compare_ok.=back
+Disable test usage, just return status. Added this so I could test compare_ok.
+
+=back
+
+=item command_execute_ok
+
+  command_execute_ok($cmd)
+  command_execute_ok($cmd, $test_name);
+  command_execute_ok($cmd, $expected_messages, $test_name)
+
+Executes an instance of a Command class, and optionally checks that it
+produced the expected error_messages, status_messages, etc.  $expected_messages
+is a hashref keyed by the message types (error_messages, status_messaegs,
+debug_messages, warning_messages and usage_messages) with values that are
+arrayrefs of strings or regexes, for example
+
+  command_execute_ok($cmd,
+                  { error_messages => ['error 1', qr(broken) ],
+                    status_messages => ['in progress'],
+                    warning_messages => [],
+                    debug_messages => undef },
+                  'Try command');
+
+An empty list means the test expects the command to generate none of that type
+of message.  undef means that type of message will not be printed to the
+terminal during the execution, but the message contents will not be checked.
 
 =back
 
 =head1 SEE ALSO
 
 Test::More
-
-=back
 
