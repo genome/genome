@@ -39,6 +39,7 @@ CREATE TABLE GENOME_DISK_ALLOCATION (
     original_kilobytes_requested INTEGER,
     kilobytes_used INTEGER,
     creation_time TEXT,
-    reallocation_time TEXT
+    reallocation_time TEXT,
+    kilobytes_used_time TEXT
 );
 COMMIT;
