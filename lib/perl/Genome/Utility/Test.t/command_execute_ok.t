@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use Test::Builder::Tester;
-use Test::More tests => 10;
+use Test::More tests => 20;
 use UR;
 use Sub::Install;
 
