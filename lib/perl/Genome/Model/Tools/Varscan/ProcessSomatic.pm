@@ -22,29 +22,120 @@ class Genome::Model::Tools::Varscan::ProcessSomatic {
     is => 'Command',
 
     has => [                                # specify the command's single-value properties (parameters) <---
-        status_file     => { is => 'Text', doc => "File containing varscan calls, e.g. status.varscan.snp" , is_optional => 0, is_input => 1},
-        p_value_for_hc  => { is => 'Number', doc => "P-value threshold for high confidence", is_optional => 1, is_input => 1, default_value => '0.07'},
-        max_normal_freq => { is => 'Number', doc => "Maximum normal frequency for HC Somatic", is_optional => 1, is_input => 1, default_value => '5'},
-        min_tumor_freq  => { is => 'Number', doc => "Minimum tumor freq for HC Somatic", is_optional => 1, is_input => 1, default_value => '10'},
-        report_only     => { is => 'Boolean', doc => "If set to 1, will not produce output files" , is_optional => 1, default_value => 0 },
-        skip_if_output_present => { is => 'Boolean', doc => "If set to 1, will not run if output is present" , is_optional => 1, is_input => 1, default_value => 0},
-        output_basename => { is => 'Text', doc => 'Base location for output files (e.g. /path/to/results/output.basename', is_optional => 1, is_input => 1 },
+        status_file => {
+            is => 'Text',
+            doc => "File containing varscan calls, e.g. status.varscan.snp" ,
+            is_optional => 0,
+            is_input => 1,
+        },
+        p_value_for_hc => {
+            is => 'Number',
+            doc => "P-value threshold for high confidence",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '0.07',
+        },
+        max_normal_freq => {
+            is => 'Number',
+            doc => "Maximum normal frequency for HC Somatic",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '5',
+        },
+        min_tumor_freq => {
+            is => 'Number',
+            doc => "Minimum tumor freq for HC Somatic",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '10',
+        },
+        report_only => {
+            is => 'Boolean',
+            doc => "If set to 1, will not produce output files" ,
+            is_optional => 1,
+            default_value => 0,
+        },
+        skip_if_output_present => {
+            is => 'Boolean',
+            doc => "If set to 1, will not run if output is present" ,
+            is_optional => 1,
+            is_input => 1,
+            default_value => 0,
+        },
+        output_basename => {
+            is => 'Text',
+            doc => 'Base location for output files (e.g. /path/to/results/output.basename',
+            is_optional => 1,
+            is_input => 1,
+        },
 
         #output filenames
-        output_germline       => { is => 'Text', calculate_from => 'output_basename', calculate => q{ $output_basename . '.Germline' }, is_output => 1, },
-        output_germline_hc    => { is => 'Text', calculate_from => 'output_germline', calculate => q{ $output_germline . '.hc' }, is_output => 1, },
-        output_germline_lc    => { is => 'Text', calculate_from => 'output_germline', calculate => q{ $output_germline . '.lc' }, is_output => 1, },
-        output_loh            => { is => 'Text', calculate_from => 'output_basename', calculate => q{ $output_basename . '.LOH' }, is_output => 1, },
-        output_loh_hc         => { is => 'Text', calculate_from => 'output_loh', calculate => q{ $output_loh . '.hc' }, is_output => 1, },
-        output_loh_lc         => { is => 'Text', calculate_from => 'output_loh', calculate => q{ $output_loh . '.lc' }, is_output => 1, },
-        output_somatic        => { is => 'Text', calculate_from => 'output_basename', calculate => q{ $output_basename . '.Somatic' }, is_output => 1, },
-        output_somatic_hc     => { is => 'Text', calculate_from => 'output_somatic', calculate => q{ $output_somatic . '.hc' }, is_output => 1, },
-        output_somatic_lc     => { is => 'Text', calculate_from => 'output_somatic', calculate => q{ $output_somatic . '.lc' }, is_output => 1, },
-        output_other          => { is => 'Text', calculate_from => 'output_basename', calculate => q{ $output_basename . '.other' }, is_output => 1, },
+        output_germline => {
+            is => 'Text',
+            calculate_from => 'output_basename',
+            calculate => q{ $output_basename . '.Germline' },
+            is_output => 1,
+        },
+        output_germline_hc => {
+            is => 'Text',
+            calculate_from => 'output_germline',
+            calculate => q{ $output_germline . '.hc' },
+            is_output => 1,
+        },
+        output_germline_lc => {
+            is => 'Text',
+            calculate_from => 'output_germline',
+            calculate => q{ $output_germline . '.lc' },
+            is_output => 1,
+        },
+        output_loh => {
+            is => 'Text',
+            calculate_from => 'output_basename',
+            calculate => q{ $output_basename . '.LOH' },
+            is_output => 1,
+        },
+        output_loh_hc => {
+            is => 'Text',
+            calculate_from => 'output_loh',
+            calculate => q{ $output_loh . '.hc' },
+            is_output => 1,
+        },
+        output_loh_lc => {
+            is => 'Text',
+            calculate_from => 'output_loh',
+            calculate => q{ $output_loh . '.lc' },
+            is_output => 1,
+        },
+        output_somatic => {
+            is => 'Text',
+            calculate_from => 'output_basename',
+            calculate => q{ $output_basename . '.Somatic' },
+            is_output => 1,
+        },
+        output_somatic_hc => {
+            is => 'Text',
+            calculate_from => 'output_somatic',
+            calculate => q{ $output_somatic . '.hc' },
+            is_output => 1,
+        },
+        output_somatic_lc => {
+            is => 'Text',
+            calculate_from => 'output_somatic',
+            calculate => q{ $output_somatic . '.lc' },
+            is_output => 1,
+        },
+        output_other => {
+            is => 'Text',
+            calculate_from => 'output_basename',
+            calculate => q{ $output_basename . '.other' },
+            is_output => 1,
+        },
     ],
     has_param => [
-        lsf_resource => { value => 'select[tmp>1000] rusage[tmp=1000]'},
-    ]
+        lsf_resource => {
+            value => 'select[tmp>1000] rusage[tmp=1000]'
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

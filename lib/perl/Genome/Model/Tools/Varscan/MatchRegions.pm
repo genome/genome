@@ -26,13 +26,24 @@ my $min_loh_snps = 3;
 
 
 class Genome::Model::Tools::Varscan::MatchRegions {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		loh_regions	=> { is => 'Text', doc => "File of LOH calls", is_optional => 0 },
-		gene_regions 	=> { is => 'Text', doc => "File of gene regions that could be affected", is_optional => 0 },
-		output_file 	=> { is => 'Text', doc => "Output file", is_optional => 1 },
-	],
+    is => 'Command',
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        loh_regions => {
+            is => 'Text',
+            doc => "File of LOH calls",
+            is_optional => 0,
+        },
+        gene_regions => {
+            is => 'Text',
+            doc => "File of gene regions that could be affected",
+            is_optional => 0,
+        },
+        output_file => {
+            is => 'Text',
+            doc => "Output file",
+            is_optional => 1,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }
