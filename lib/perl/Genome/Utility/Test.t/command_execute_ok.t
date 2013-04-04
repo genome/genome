@@ -121,7 +121,7 @@ $execute_cb = sub { shift->error_message('hi') };
 $cmd =  My::Test::Command->create( retval => 1 );
 test_out('not ok 1 - blah');
 test_fail(+2);
-test_err(q(# For the 0th error_message, got 'hi' but expected 'bye'));
+test_err(q(# For the 1st error_message, got 'hi' but expected 'bye'));
 command_execute_ok($cmd, { error_messages => ['bye'] }, 'blah');
 test_test('caught error_message that did not match');
 
@@ -131,7 +131,7 @@ $execute_cb = sub { shift->error_message('bye') };
 $cmd =  My::Test::Command->create( retval => 1 );
 test_out('not ok 1 - blah');
 test_fail(+2);
-test_err(q(# For the 1st error_message, got '' but expected 'another'));
+test_err(q(# For the 2nd error_message, got '' but expected 'another'));
 command_execute_ok($cmd, { error_messages => ['bye', 'another'] }, 'blah');
 test_test('expected error_message that did appear');
 
@@ -141,7 +141,7 @@ $execute_cb = sub { shift->error_message('bye') };
 $cmd =  My::Test::Command->create( retval => 1 );
 test_out('not ok 1 - blah');
 test_fail(+2);
-test_err(q(# For the 0th error_message, got 'bye' but expected ''));
+test_err(q(# For the 1st error_message, got 'bye' but expected ''));
 command_execute_ok($cmd, { error_messages => [] }, 'blah');
 test_test('got error message we did not expect');
 
