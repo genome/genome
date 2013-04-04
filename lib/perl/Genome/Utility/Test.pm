@@ -351,6 +351,7 @@ sub command_execute_ok {
 
                 if (ref($expected) and $got !~ m/$expected/) {
                     my $rv = $tb->ok(0, $message);
+                    $i++;
                     $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
                                 . ' ' . substr($method, 0, -1) # remove the 's'
                                 . ", '$got' didn't match $expected");
@@ -358,6 +359,7 @@ sub command_execute_ok {
 
                 } elsif (!ref($expected) and $got ne $expected) {
                     my $rv = $tb->ok(0, $message);
+                    $i++;
                     $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
                                 . ' ' . substr($method, 0, -1) # remove the 's'
                                 . ", got '$got' but expected '$expected'");
