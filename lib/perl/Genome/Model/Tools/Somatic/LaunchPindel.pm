@@ -37,9 +37,9 @@ class Genome::Model::Tools::Somatic::LaunchPindel{
         },
         reference_sequence_build => {
             is => 'Integer',
-            is_optional=>1,
-            default=>'101947881',
-            doc=>'default build NCBI human build36',
+            is_optional => 0,
+            example_values => ['101947881'],
+            doc => 'reference sequence build id, e.g. 101947881 for NCBI human build36',
         },
         output_dir => {
             is => 'Text',
