@@ -18,7 +18,7 @@ class Genome::Model::Tools::Germline::BurdenTest {
         base_R_commands => {
             is => 'Text',
             doc => 'The base R command library',
-            default => "/gscuser/qzhang/gstat/burdentest/burdentest.R",
+            example_values=> ["/gscuser/qzhang/gstat/burdentest/burdentest.R"],
         },
         analysis_data_type => {
             is => 'Text',

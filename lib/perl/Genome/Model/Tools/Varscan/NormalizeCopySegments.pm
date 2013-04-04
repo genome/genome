@@ -18,24 +18,56 @@ use warnings;
 
 use FileHandle;
 
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome;
 
 class Genome::Model::Tools::Varscan::NormalizeCopySegments {
-	is => 'Genome::Model::Tools::Varscan',
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		basename	=> { is => 'Text', doc => "Path and basename to varScan copynumber files e.g. dir/varScan.output", is_optional => 0, is_input => 1, is_output => 0 },
-		output	=> { is => 'Text', doc => "Output file for copy number results", is_optional => 0, is_input => 1, is_output => 1 },
-		chromosome	=> { is => 'Text', doc => "Optional chromosome to do one only", is_optional => 1, is_input => 1 },
-		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs" , is_optional => 1, default_value => (Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')},
-		skip_if_output_present	=> { is => 'Text', doc => "If set to 1, skip execution if output files exist", is_optional => 1, is_input => 1 },
-		min_depth 	=> { is => 'Text', doc => "Minimum depth in both samples to include for segmentation", is_optional => 0, default => 20 },
-		undo_sd 	=> { is => 'Text', doc => "Remove change-points of less than this number of standard deviations", is_optional => 0, default => 4 },
-	],	
+    is => 'Genome::Model::Tools::Varscan',
+    has => [
+        basename=> {
+            is => 'Text',
+            doc => "Path and basename to varScan copynumber files e.g. dir/varScan.output",
+            is_input => 1,
+        },
+        output=> {
+            is => 'Text',
+            doc => "Output file for copy number results",
+            is_input => 1, is_output => 1
+        },
+        chromosome => {
+            is => 'Text',
+            doc => "Optional chromosome to do one only",
+            is_optional => 1,
+            is_input => 1
+        },
+        reference => {
+            is => 'Text',
+            doc => "Reference FASTA file for BAMs" ,
+            is_optional => 1,
+            example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa']
+        },
+        skip_if_output_present => {
+            is => 'Text',
+            doc => "If set to 1, skip execution if output files exist",
+            is_optional => 1,
+            is_input => 1
+        },
+        min_depth => {
+            is => 'Text',
+            doc => "Minimum depth in both samples to include for segmentation",
+            default => 20
+        },
+        undo_sd => {
+            is => 'Text',
+            doc => "Remove change-points of less than this number of standard deviations",
+            default => 4
+        },
+    ],
 
-	has_param => [
-		lsf_resource => { default_value => 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] rusage[mem=4000]'},
-       ],
+    has_param => [
+        lsf_resource => {
+            default_value => 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] rusage[mem=4000]'
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }
