@@ -7,7 +7,6 @@ use warnings;
 
 use Carp qw(croak);
 use File::Basename qw(dirname);
-use Test::More skip_all => 'Test requires fuseext2 and leaves a mess that has to be cleaned up manually if correct permissions are not setup.';
 use Time::HiRes qw(usleep);
 use Sys::Hostname qw(hostname);
 use above 'Genome';
