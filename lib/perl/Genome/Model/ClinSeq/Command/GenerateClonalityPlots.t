@@ -2,8 +2,8 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More skip_all => "very slow";
-#use Test::More tests => 3; 
+#use Test::More skip_all => "very slow"; 
+use Test::More tests => 3; 
 
 my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-GenerateClonalityPlots/2012-11-21.full';
 

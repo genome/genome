@@ -36,6 +36,7 @@ class Genome::Model::Tools::Analysis::MutationRate {
 		tier2_space	=> { is => 'Text', doc => "BED file of tier 2 space" , is_optional => 0, default => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build36/tier2.bed'},
 		tier3_space	=> { is => 'Text', doc => "BED file of tier 3 space" , is_optional => 0, default => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build36/tier3.bed'},
 		coverage_factor	=> { is => 'Text', doc => "Fraction of space covered for mutation detection" , is_optional => 0, default => 1},
+    outfile => {is => 'FilesystemPath', doc => "Write output to this file instead of stdout", is_optional => 1},
 	],
 };
 
@@ -146,7 +147,14 @@ sub execute {                               # replace with real execution logic.
 
 
 #        print join("\t", "ALL", $total_mutations, commify($total_bases), $overall_rate)  . "\n";
-        print $self->sample_name . $mutation_string . $rate_string . "\n";
+        if ($self->outfile){
+          my $outfile = $self->outfile;
+          open (OUT, ">$outfile") || die $self->error_message("Could not open output file for writing: $outfile");
+          print OUT $self->sample_name . $mutation_string . $rate_string . "\n";
+          close OUT;
+        }else{
+          print $self->sample_name . $mutation_string . $rate_string . "\n";
+        }
 
 	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }

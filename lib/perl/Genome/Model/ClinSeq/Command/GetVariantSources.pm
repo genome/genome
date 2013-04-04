@@ -176,13 +176,13 @@ sub execute {
 
     #Sort the BED files using joinx
     my $indel_results_file_sorted = $indel_results_file . ".sort";
-    my $joinx_indel_sort_cmd = "gmt joinx sort --output-file $indel_results_file_sorted $indel_results_file";
-    Genome::Sys->shellcmd(cmd => $joinx_indel_sort_cmd);
+    my $joinx_indel_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$indel_results_file_sorted, input_files=>[$indel_results_file]);
+    $joinx_indel_sort_cmd->execute();
     Genome::Sys->shellcmd(cmd => "mv $indel_results_file_sorted $indel_results_file");
     
     my $snv_results_file_sorted = $snv_results_file . ".sort";
-    my $joinx_snv_sort_cmd = "gmt joinx sort --output-file $snv_results_file_sorted $snv_results_file";
-    Genome::Sys->shellcmd(cmd => $joinx_snv_sort_cmd);
+    my $joinx_snv_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$snv_results_file_sorted, input_files=>[$snv_results_file]);
+    $joinx_snv_sort_cmd->execute();
     Genome::Sys->shellcmd(cmd => "mv $snv_results_file_sorted $snv_results_file");
 
     my $indel_count = keys %indels;
@@ -281,7 +281,7 @@ sub execute {
 
     #Cleanup temp files
     Genome::Sys->shellcmd(cmd => "rm $indel_results_file");
-    Genome::Sys->shellcmd(cmd => "rm  $snv_results_file");
+    Genome::Sys->shellcmd(cmd => "rm $snv_results_file");
 
     #Set output files as output to this step
     die $self->error_message("Trying to set a file as output but the file does not exist: $indel_outfile") unless (-e $indel_outfile);
@@ -342,14 +342,11 @@ sub determineCaller {
     my ($self, $variant_type, $caller_name, $results_file, $caller_file, $outfile) = @_;
 
     if(defined $caller_file) {
-        my $joinx_params_string = "--exact-pos --exact-allele";
-
         $self->status_message("Looking for overlapping $variant_type results between:\n$results_file\n$caller_file\n\n");
 
-        my $cmd = "gmt joinx intersect $results_file $caller_file $joinx_params_string --output-file $outfile";
-
-        Genome::Sys->shellcmd(cmd => $cmd);
-
+        my $cmd = Genome::Model::Tools::Joinx::Intersect->create(exact_pos=>1, exact_allele=>1, output_file=>$outfile, input_file_a=>$results_file, input_file_b=>$caller_file);
+        $cmd->execute();
+        
         #Go through original indels and note all files from different callers where that indel was called
         $self->noteCaller($outfile, $caller_name, $variant_type);
     }

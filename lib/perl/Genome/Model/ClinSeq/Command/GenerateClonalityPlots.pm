@@ -88,6 +88,10 @@ sub execute {
 
     if ($verbose){print BLUE, "\n\nCreating clonality plot for $common_name", RESET;}
 
+    #TODO: Replace all of this with a new process that gets variants from a unified clin-seq BAM read counts result
+    #TODO: This step should just run the clonality tool in different ways on different input files.  All of this hacky file manipulation should be removed
+
+
     # This tool calls some scripts which have not been converted into tools
     my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../original-scripts/') . '/';
     unless (-d $script_dir) {
@@ -124,8 +128,8 @@ sub execute {
     my $snv_file = $output_dir . "allsnvs.hq.novel.tier123.v2.bed";
     my $cat_cmd;
     if (defined $limit) {
-        $self->warning_message("limiting SNVs to the first $limit from the combined list!");
-        $cat_cmd = "cat $output_dir"."snvs* | head -n $limit > $snv_file";
+        $self->warning_message("limiting SNVs to the first $limit from each list!");
+        $cat_cmd = "head -q -n $limit $output_dir"."snvs* > $snv_file";
     }
     else {
         $cat_cmd = "cat $output_dir"."snvs* > $snv_file";
@@ -173,9 +177,9 @@ sub execute {
     #Use the optional --bam-file input so that readcounts are generated for you.
     my $readcounts_clonality_outfile = "$output_dir"."readcounts.clonality";
     my $readcounts_formatted_outfile = "$output_dir"."readcounts.formatted";
-    my $prepare_cmd = "gmt validation prepare-wgs-for-clonality-plot --output-file=$readcounts_clonality_outfile --snv-file=$adapted_file --bam-file=$tumor_bam --genome-build=$data_paths{reference_fasta} --output-readcounts-file=$readcounts_formatted_outfile";
-    if ($verbose){print YELLOW, "\n\n$prepare_cmd", RESET;}
-    Genome::Sys->shellcmd(cmd => $prepare_cmd);
+
+    my $prepare_cmd = Genome::Model::Tools::Validation::PrepareWgsForClonalityPlot->create(output_file=>$readcounts_clonality_outfile, snv_file=>$adapted_file, bam_file=>$tumor_bam, genome_build=>$data_paths{reference_fasta}, output_readcounts_file=>$readcounts_formatted_outfile);
+    $prepare_cmd->execute();
 
     #Step 6 - Take the cnvs.hq file from the somatic-variation build, and run the cna-seg tool to create known regions of copy-number
     #Specify config file paths for hg19/build37
@@ -202,10 +206,8 @@ sub execute {
         return;
     }
     my $cnvhmm_file = "$output_dir"."cnaseq.cnvhmm";
-    my $cnaseg_cmd = "gmt copy-number cna-seg --copy-number-file=$data_paths{cnvs_hq}  --min-markers=4  --detect-somatic  --centromere-file=$centromere_file  --gap-file=$gap_file  --output-file=$cnvhmm_file";
-    if ($verbose){print YELLOW, "\n\n$cnaseg_cmd", RESET;}
-    Genome::Sys->shellcmd(cmd => $cnaseg_cmd);
-
+    my $cnaseg_cmd = Genome::Model::Tools::CopyNumber::CnaSeg->create(copy_number_file=>$data_paths{cnvs_hq}, min_markers=>4, detect_somatic=>1, centromere_file=>$centromere_file, gap_file=>$gap_file, output_file=>$cnvhmm_file);
+    $cnaseg_cmd->execute();
 
     my $varscan_file = $readcounts_varscan_file;
     #my $varscan_file = $readcounts_clonality_outfile;
@@ -218,9 +220,8 @@ sub execute {
     my $output_image_file1 = "$output_dir"."$common_name".".clonality.pdf";
     my $r_script_file = "$output_dir"."clonality.R";
     my $uc_common_name = uc($common_name);
-    my $clonality_cmd1 = "gmt validation clonality-plot  --cnvhmm-file=$cnvhmm_file  --output-image=$output_image_file1  --r-script-output-file=$r_script_file  --varscan-file=$varscan_file  --analysis-type=wgs  --sample-id='$uc_common_name'";
-    if ($verbose){print YELLOW, "\n\n$clonality_cmd1\n", RESET;}
-    Genome::Sys->shellcmd(cmd => $clonality_cmd1);
+    my $clonality_cmd1 = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file1, r_script_output_file=>$r_script_file, varscan_file=>$varscan_file, analysis_type=>'wgs', sample_id=>$uc_common_name);
+    $clonality_cmd1->execute();
 
     #With clusters
     my $clustered_data_output_file = $output_dir . $common_name . ".clustered.data.tsv";
