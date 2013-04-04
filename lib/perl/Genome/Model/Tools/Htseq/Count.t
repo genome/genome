@@ -7,7 +7,7 @@ use Genome::Model::Tools::Htseq::Count;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Htseq-Count/2013-03-05';
+my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Htseq-Count/2013-04-04';
 my $rebuilding = (@ARGV and $ARGV[0] eq 'REBUILD');
 
 my $test_outdir;
@@ -72,7 +72,7 @@ my $command = Genome::Model::Tools::Htseq::Count->execute(
     ($rebuilding ? (output_dir => $test_outdir) : ()), # use when overriding output_dir for testing 
     app_version => '0.5.4p1',
     result_version => 1,
-    #limit => 2000,
+    limit => 2000,
 );
 ok($command, "got command");
 #UR::Context->commit;
