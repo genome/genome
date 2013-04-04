@@ -218,10 +218,9 @@ sub _resolve_kilobytes_requested {
         $size *= 3 if $source_file =~ /\.gz$/; # assume ~30% compression rate for gzipped fasta/q
         $kilobytes_requested += $size;
     }
-    $kilobytes_requested *= 2 if $self->original_format =~ /fast[aq]/;# extra for tar file
-    $kilobytes_requested *= 3 if $self->original_format =~ /bam/;# extra for sorting
 
-    return $kilobytes_requested;
+    my $multiplier = ( $self->original_format =~ /bam/ ? 3 : 2 );
+    return $kilobytes_requested * $multiplier;
 }
 #<>#
 
@@ -402,10 +401,17 @@ sub _run_flagstat {
         $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_file);
         return;
     }
-    $flagstat->{is_paired_end} = $flagstat->{reads_paired_in_sequencing} ? 1 : 0;
-    if ( $flagstat->{is_paired_end} and $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
-        $self->error_message('Flagstat determined that there are not equal pairs in bam! '.$bam_file);
-        return;
+
+    if ( $flagstat->{reads_marked_as_read1} > 0 and $flagstat->{reads_marked_as_read2} > 0 ) {
+        # paired end but must be equal
+        if ( $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
+            $self->error_message('Flagstat indicates that there are not equal pairs in bam! '.$bam_file);
+            return;
+        }
+        $flagstat->{is_paired_end} = 1;
+    }
+    else {# read1 or read2 > 0 => not paired
+        $flagstat->{is_paired_end} = 0;
     }
 
     $self->status_message('Run and verify flagstat...done');
@@ -536,28 +542,47 @@ sub _transfer_sra_source_file {
     my $self = shift;
     $self->status_message('Transfer SRA file...');
 
-    #$self->status_message('');
-    
-    # copy sra to alloc
-    # decrypt?
-    # dump sam to sorted tmp bam
-    # flagstat bam
-    # move tmp bam to bam
-    
-    my ($source_file) = $self->source_files;
-    my $bam_base_name = 'all_sequences.bam';
-    my $tmp_bam_file_prefix = $self->_tmp_dir.'/all_sequences';
-    my $tmp_bam_file = $tmp_bam_file_prefix.'.bam';
-    $self->status_message("Source file: $source_file");
-    $self->status_message("Temp bam file: $tmp_bam_file");
-    my $cmd = "samtools sort -m 3000000000 -n $source_file $tmp_bam_file_prefix";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $tmp_bam_file ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to run samtools sort and copy to to temp bam!');
+    # TODO run sra config
+
+    $self->status_message('Copy SRA file...');
+    my ($source_sra_file) = $self->source_files;
+    my $source_sra_file_sz = -s $source_sra_file;
+    $self->status_message('Source SRA file: '.$source_sra_file);
+    $self->status_message('Source SRA file size: '.$source_sra_file_sz);
+    my $sra_file = $self->instrument_data->allocation->absolute_path.'/all_sequences.sra';
+    $self->status_message('SRA file: '.$source_sra_file);
+    my $copy_sra_ok = File::Copy::copy($source_sra_file, $sra_file);
+    my $sra_file_sz = -s $sra_file || 0;
+    $self->status_message('SRA file size: '.$source_sra_file_sz);
+    if ( not $copy_sra_ok or $source_sra_file_sz != $sra_file_sz) {
+        $self->error_message('Failed to copy SRA file!');
         return;
     }
+    $self->status_message('Copy SRA file...done');
 
+    # TODO decrypt
+    $self->status_message('Dump sorted bam...');
+    my $sorted_bam_prefix = $self->_tmp_dir.'/all_sequences';
+    $self->status_message("Sorted bam prefix: $sorted_bam_prefix");
+    my $sorted_bam_file = $sorted_bam_prefix.'.bam';
+    $self->status_message("Sorted bam file: $sorted_bam_file");
+    my $cmd = "/usr/bin/sam-dump --unaligned --header $source_sra_file | samtools view -h -b -S - | samtools sort -m 3000000000 -n - $sorted_bam_prefix";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $sorted_bam_file ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run sra sam dump and samtools sort!');
+        return;
+    }
+    $self->status_message('Dump sorted bam...done');
+
+    my $bam_file = $self->instrument_data->allocation->absolute_path.'/all_sequences.bam';
+    my $flagstat_file = $bam_file.'.flagstat';
+    my $flagstat = $self->_verify_and_move_bam($sorted_bam_file, $bam_file);
+    return if not $flagstat;
+
+    $self->read_count($flagstat->{total_reads});
+    $self->is_paired_end($flagstat->{is_paired_end});
+    $self->final_data_file($bam_file);
 
     $self->status_message('Transfer SRA file...done');
     return 1;
