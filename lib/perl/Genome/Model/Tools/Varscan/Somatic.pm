@@ -21,23 +21,72 @@ use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 
 class Genome::Model::Tools::Varscan::Somatic {
-	is => 'Genome::Model::Tools::Varscan',
+    is => 'Genome::Model::Tools::Varscan',
 
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		normal_bam	=> { is => 'Text', doc => "Path to Normal BAM file", is_optional => 0, is_input => 1 },
-		tumor_bam	=> { is => 'Text', doc => "Path to Tumor BAM file", is_optional => 0, is_input => 1 },
-		output	=> { is => 'Text', doc => "Path to Tumor BAM file", is_optional => 1, is_input => 1, is_output => 1 },
-		output_snp	=> { is => 'Text', doc => "Basename for SNP output, eg. varscan_out/varscan.status.snp" , is_optional => 1, is_input => 1, is_output => 1},
-		output_indel	=> { is => 'Text', doc => "Basename for indel output, eg. varscan_out/varscan.status.snp" , is_optional => 1, is_input => 1, is_output => 1},
-		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs; defaults to build 37" , is_optional => 1, default_value => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'},
-		heap_space	=> { is => 'Text', doc => "Megabytes to reserve for java heap [1000]" , is_optional => 1, is_input => 1},
-		skip_if_output_present	=> { is => 'Text', doc => "If set to 1, skip execution if output files exist", is_optional => 1, is_input => 1 },
-		varscan_params	=> { is => 'Text', doc => "Parameters to pass to Varscan [--min-coverage 3 --min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.05 --strand-filter 1]" , is_optional => 1, is_input => 1},
-	],
-
-	has_param => [
-		lsf_resource => { default_value => 'select[model!=Opteron250 && type==LINUX64 && mem>4000 && tmp>2000] rusage[mem=4000] span[hosts=1]'},
-       ],
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        normal_bam => {
+            is => 'Text',
+            doc => "Path to Normal BAM file",
+            is_optional => 0,
+            is_input => 1,
+        },
+        tumor_bam => {
+            is => 'Text',
+            doc => "Path to Tumor BAM file",
+            is_optional => 0,
+            is_input => 1,
+        },
+        output => {
+            is => 'Text',
+            doc => "Path to Tumor BAM file",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1,
+        },
+        output_snp => {
+            is => 'Text',
+            doc => "Basename for SNP output, eg. varscan_out/varscan.status.snp",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1,
+        },
+        output_indel => {
+            is => 'Text',
+            doc => "Basename for indel output, eg. varscan_out/varscan.status.snp",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1,
+        },
+        reference => {
+            is => 'Text',
+            doc => "Reference FASTA file for BAMs",
+            is_optional => 0,
+            example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'],
+        },
+        heap_space => {
+            is => 'Text',
+            doc => "Megabytes to reserve for java heap [1000]",
+            is_optional => 1,
+            is_input => 1,
+        },
+        skip_if_output_present => {
+            is => 'Text',
+            doc => "If set to 1, skip execution if output files exist",
+            is_optional => 1,
+            is_input => 1,
+        },
+        varscan_params => {
+            is => 'Text',
+            doc => "Parameters to pass to Varscan [--min-coverage 3 --min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.05 --strand-filter 1]",
+            is_optional => 1,
+            is_input => 1,
+        },
+    ],
+    has_param => [
+        lsf_resource => {
+            default_value => 'select[model!=Opteron250 && type==LINUX64 && mem>4000 && tmp>2000] rusage[mem=4000] span[hosts=1]'
+        },
+   ],
 };
 
 sub sub_command_sort_position { 12 }

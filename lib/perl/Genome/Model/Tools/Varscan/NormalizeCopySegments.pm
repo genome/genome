@@ -31,38 +31,38 @@ class Genome::Model::Tools::Varscan::NormalizeCopySegments {
         output=> {
             is => 'Text',
             doc => "Output file for copy number results",
-            is_input => 1, is_output => 1
+            is_input => 1,
+            is_output => 1,
         },
         chromosome => {
             is => 'Text',
             doc => "Optional chromosome to do one only",
             is_optional => 1,
-            is_input => 1
+            is_input => 1,
         },
         reference => {
             is => 'Text',
-            doc => "Reference FASTA file for BAMs" ,
-            is_optional => 1,
-            example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa']
+            doc => "Reference FASTA file for BAMs",
+            is_optional => 0,
+            example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa'],
         },
         skip_if_output_present => {
             is => 'Text',
             doc => "If set to 1, skip execution if output files exist",
             is_optional => 1,
-            is_input => 1
+            is_input => 1,
         },
         min_depth => {
             is => 'Text',
             doc => "Minimum depth in both samples to include for segmentation",
-            default => 20
+            default => 20,
         },
         undo_sd => {
             is => 'Text',
             doc => "Remove change-points of less than this number of standard deviations",
-            default => 4
+            default => 4,
         },
     ],
-
     has_param => [
         lsf_resource => {
             default_value => 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] rusage[mem=4000]'

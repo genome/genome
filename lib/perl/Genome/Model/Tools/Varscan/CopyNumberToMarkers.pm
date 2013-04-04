@@ -24,14 +24,31 @@ use Genome;                                 # using the namespace authorizes Cla
 my $undo_sd = 2;
 
 class Genome::Model::Tools::Varscan::CopyNumberToMarkers {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		sample_dir	=> { is => 'Text', doc => "Sample directory with VarScan output", is_optional => 0 },
-		basename	=> { is => 'Text', doc => "Base name for copy number files", is_optional => 0, default => 'varScan.*.copynumber.cbs' },
-		bed_file 	=> { is => 'Text', doc => "BED file of exon (or tier 1) definitions", is_optional => 0 },
-		output_file 	=> { is => 'Text', doc => "Output file for marker-based copynumber", is_optional => 0 },
-	],
+    is => 'Command',
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        sample_dir => {
+            is => 'Text',
+            doc => "Sample directory with VarScan output",
+            is_optional => 0,
+        },
+        basename => {
+            is => 'Text',
+            doc => "Base name for copy number files",
+            is_optional => 0,
+            default => 'varScan.*.copynumber.cbs',
+        },
+        bed_file => {
+            is => 'Text',
+            doc => "BED file of exon (or tier 1) definitions",
+            is_optional => 0,
+        },
+        output_file => {
+            is => 'Text',
+            doc => "Output file for marker-based copynumber",
+            is_optional => 0,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

@@ -22,77 +22,77 @@ use Genome;                                 # using the namespace authorizes Cla
 
 class Genome::Model::Tools::Varscan::Germline {
     is => 'Genome::Model::Tools::Varscan',
-    has => [                                
-        bam_file => { 
-            is => 'Text', 
-            doc => "Path to Normal BAM file", 
-            is_optional => 0, 
-            is_input => 1 
-            },
-        output_snp => { 
-            is => 'Text', 
-            doc => "Basename for SNP output, eg. varscan.snp" , 
-            is_optional => 0, 
-            is_input => 1, 
-            is_output => 1
-        },
-        output_snp_filtered => { 
-            is => 'Text', 
-            doc => "Name for filtered SNP output, (calculated based upon output_snp)", 
-            is_input => 1, 
-            is_output => 1, 
-            is_optional => 1
-        }, 
-        output_indel => { 
-            is => 'Text', 
-            doc => "Basename for indel output, eg. varscan.indel" , 
-            is_optional => 0, 
-            is_input => 1, 
-            is_output => 1
-        },
-        output_indel_filtered => { 
-            is => 'Text', 
-            doc => "Name for filtered indel output, (calculated based upon output_indel)", 
-            is_input => 1, 
-            is_output => 1, 
-            is_optional => 1
-        },
-        reference => { 
-            is => 'Text', 
-            doc => "Reference FASTA file for BAMs (default= genome model)" , 
-            is_optional => 1, 
-            is_input => 1
-        },
-        heap_space => { 
-            is => 'Text', 
-            doc => "Megabytes to reserve for java heap [1000]" , 
-            is_optional => 1, 
-            is_input => 1
-        },
-        map_quality => { 
-            is => 'Text', 
-            doc => "Minimum mapping quality to require for reads [30]" , 
-            is_optional => 1, 
+    has => [
+        bam_file => {
+            is => 'Text',
+            doc => "Path to Normal BAM file",
+            is_optional => 0,
             is_input => 1,
-            default => 30
         },
-        varscan_params => { 
-            is => 'Text', 
-            doc => "Parameters to pass to Varscan Previously: [--min-coverage 8 --min-var-freq 0.10 --p-value 0.05 --strand-filter 1]" , 
-            is_optional => 1, 
+        output_snp => {
+            is => 'Text',
+            doc => "Basename for SNP output, eg. varscan.snp" ,
+            is_optional => 0,
             is_input => 1,
-            default => '--min-coverage 3 --min-var-freq 0.20 --p-value 0.10 --strand-filter 1'
+            is_output => 1,
+        },
+        output_snp_filtered => {
+            is => 'Text',
+            doc => "Name for filtered SNP output, (calculated based upon output_snp)",
+            is_input => 1,
+            is_output => 1,
+            is_optional => 1,
+        },
+        output_indel => {
+            is => 'Text',
+            doc => "Basename for indel output, eg. varscan.indel" ,
+            is_optional => 0,
+            is_input => 1,
+            is_output => 1,
+        },
+        output_indel_filtered => {
+            is => 'Text',
+            doc => "Name for filtered indel output, (calculated based upon output_indel)",
+            is_input => 1,
+            is_output => 1,
+            is_optional => 1,
+        },
+        reference => {
+            is => 'Text',
+            doc => "Reference FASTA file for BAMs (default= genome model)" ,
+            is_optional => 1,
+            is_input => 1,
+        },
+        heap_space => {
+            is => 'Text',
+            doc => "Megabytes to reserve for java heap [1000]" ,
+            is_optional => 1,
+            is_input => 1,
+        },
+        map_quality => {
+            is => 'Text',
+            doc => "Minimum mapping quality to require for reads [30]" ,
+            is_optional => 1,
+            is_input => 1,
+            default => 30,
+        },
+        varscan_params => {
+            is => 'Text',
+            doc => "Parameters to pass to Varscan Previously: [--min-coverage 8 --min-var-freq 0.10 --p-value 0.05 --strand-filter 1]" ,
+            is_optional => 1,
+            is_input => 1,
+            default => '--min-coverage 3 --min-var-freq 0.20 --p-value 0.10 --strand-filter 1',
         },
         no_headers => {
             is => 'Boolean',
             doc => 'set this to suppress headers in varscan output files',
         },
-    ],	
+    ],
 
     has_param => [
-        lsf_resource => { 
-            default_value => 'select[model!=Opteron250 && type==LINUX64 && mem>4000] rusage[mem=4000]', 
-            doc => "LSF resource requirements [default: 64-bit, 4 GB RAM]", 
+        lsf_resource => {
+            default_value => 'select[model!=Opteron250 && type==LINUX64 && mem>4000] rusage[mem=4000]',
+            doc => "LSF resource requirements [default: 64-bit, 4 GB RAM]",
             is_optional => 1
         },
     ],

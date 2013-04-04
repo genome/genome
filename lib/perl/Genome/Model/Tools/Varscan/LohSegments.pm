@@ -20,18 +20,53 @@ use Genome;                                 # using the namespace authorizes Cla
 
 class Genome::Model::Tools::Varscan::LohSegments {
     is => 'Command',
-
     has => [                                # specify the command's single-value properties (parameters) <---
-        variant_file     => { is => 'Text', doc => "File containing LOH and Germline calls in VarScan-annotation format" , is_optional => 0, is_input => 1},
-        min_coverage     => { is => 'Text', doc => "Minimum coverage required to include a site" , is_optional => 0, is_input => 1, default => 20},        
-        min_freq_for_het     => { is => 'Text', doc => "Minimum variant allele frequency in normal to consider a heterozygote" , is_optional => 0, is_input => 1, default => 40},
-        max_freq_for_het     => { is => 'Text', doc => "Maximum variant allele frequency in normal to consider a heterozygote" , is_optional => 0, is_input => 1, default => 60},
-        output_basename  => { is => 'Number', doc => "Basename for creating output files", is_optional => 1, is_input => 1, default_value => '0.07'},
-        varscan_cn_basename  => { is => 'Number', doc => "Basename used for VarScan copy number calling, if plotting these is desired", is_optional => 1, is_input => 1},
+        variant_file => {
+            is => 'Text',
+            doc => "File containing LOH and Germline calls in VarScan-annotation format",
+            is_optional => 0,
+            is_input => 1,
+        },
+        min_coverage => {
+            is => 'Text',
+            doc => "Minimum coverage required to include a site",
+            is_optional => 0,
+            is_input => 1,
+            default => 20,
+        },
+        min_freq_for_het => {
+            is => 'Text',
+            doc => "Minimum variant allele frequency in normal to consider a heterozygote",
+            is_optional => 0,
+            is_input => 1,
+            default => 40,
+        },
+        max_freq_for_het => {
+            is => 'Text',
+            doc => "Maximum variant allele frequency in normal to consider a heterozygote",
+            is_optional => 0,
+            is_input => 1,
+            default => 60,
+        },
+        output_basename => {
+            is => 'Number',
+            doc => "Basename for creating output files",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '0.07',
+        },
+        varscan_cn_basename => {
+            is => 'Number',
+            doc => "Basename used for VarScan copy number calling, if plotting these is desired",
+            is_optional => 1,
+            is_input => 1,
+        },
     ],
     has_param => [
-        lsf_resource => { value => 'select[tmp>1000] rusage[tmp=1000]'},
-    ]
+        lsf_resource => {
+            value => 'select[tmp>1000] rusage[tmp=1000]',
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

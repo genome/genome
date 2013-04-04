@@ -21,14 +21,30 @@ use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 
 class Genome::Model::Tools::Varscan::CompileReadcounts {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		readcounts	=> { is => 'Text', doc => "A Varscan readcounts file or csv-separated list of one", is_optional => 0 },
-		variants_file	=> { is => 'Text', doc => "Variants in annotation format", is_optional => 0 },
-		output_file	=> { is => 'Text', doc => "Path to output file" , is_optional => 0},
-		other_alleles	=> { is => 'Text', doc => "If set to 1, output non-expected alleles" , is_optional => 1},
-	],
+    is => 'Command',
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        readcounts => {
+            is => 'Text',
+            doc => "A Varscan readcounts file or csv-separated list of one",
+            is_optional => 0,
+        },
+        variants_file => {
+            is => 'Text',
+            doc => "Variants in annotation format",
+            is_optional => 0,
+        },
+        output_file => {
+            is => 'Text',
+            doc => "Path to output file",
+            is_optional => 0,
+        },
+        other_alleles => {
+            is => 'Text',
+            doc => "If set to 1, output non-expected alleles",
+            is_optional => 1,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

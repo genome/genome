@@ -26,13 +26,26 @@ my $min_loh_snps = 3;
 my $num_loh_regions = 0;
 
 class Genome::Model::Tools::Varscan::CopyNumberPlots {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		regions_file		=> { is => 'Text', doc => "Path to copy number regions from Varscan copyCaller", is_optional => 0 },
-		output_basename 	=> { is => 'Text', doc => "Output file basename for cnv plots", is_optional => 0 },
-		min_points_to_plot 	=> { is => 'Text', doc => "Minimum number of points for a chromosome to plot it", is_optional => 0, default => 100 },
-	],
+    is => 'Command',
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        regions_file => {
+            is => 'Text',
+            doc => "Path to copy number regions from Varscan copyCaller",
+            is_optional => 0,
+        },
+        output_basename => {
+            is => 'Text',
+            doc => "Output file basename for cnv plots",
+            is_optional => 0,
+        },
+        min_points_to_plot => {
+            is => 'Text',
+            doc => "Minimum number of points for a chromosome to plot it",
+            is_optional => 0,
+            default => 100,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

@@ -81,7 +81,7 @@ class Genome::Model::Tools::Varscan::CopyNumber {
             is_input => 1,
             default => "--min-coverage 20 --min-segment-size 100"
         },
-        ],
+    ],
     has_param => [
         lsf_resource => { 
             default_value => 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] rusage[mem=4000]',
