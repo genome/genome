@@ -313,7 +313,7 @@ sub INT_cleanup {
 sub exit_cleanup {
     for my $sym_to_remove (keys %SYMLINKS_TO_REMOVE) {
         if (-l $sym_to_remove) {
-            warn("Removing remaining resource lock: '$sym_to_remove'");
+            warn("Removing remaining resource lock: '$sym_to_remove'") unless $ENV{'HARNESS_ACTIVE'};
             unlink($sym_to_remove) or warn "Can't unlink $sym_to_remove: $!";
         }
     }
