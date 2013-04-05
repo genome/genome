@@ -39,7 +39,7 @@ class Genome::Model::Tools::Validation::ClonalityPlot {
         doc => "R library containing critical functions",
         is_optional => 0,
         is_input => 1,
-        default => '/gscmnt/sata423/info/medseq/analysis/CaptureValidationGraphs/VarScanGraphLib.R'},
+        example_values => ['/gscmnt/sata423/info/medseq/analysis/CaptureValidationGraphs/VarScanGraphLib.R']},
 
     sample_id => {
         is => 'Text',
