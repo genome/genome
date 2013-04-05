@@ -29,7 +29,7 @@ class Genome::Model::Tools::Somatic::CalculatePindelReadSupport {
         refseq =>{
             type => 'String',
             is_optional => 1,
-            default => Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fasta',
+            example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fasta'],
             doc => "reference sequence to use for reference assembly",
         },
         use_old_pindel => {
@@ -49,13 +49,13 @@ class Genome::Model::Tools::Somatic::CalculatePindelReadSupport {
         _dbsnp_insertions => {
             type => 'String',
             is_optional => 1,
-            default => '/gscmnt/ams1102/info/info/dbsnp130_indels/insertions_start_stop_adjusted_dbsnp130',
+            example_values => ['/gscmnt/ams1102/info/info/dbsnp130_indels/insertions_start_stop_adjusted_dbsnp130'],
             doc => 'dbsnp insertion file',
         },
         _dbsnp_deletions => {
             type => 'String',
             is_optional => 1,
-            default => '/gscmnt/ams1102/info/info/dbsnp130_indels/deletions_adjusted_dbsnp130',
+            example_values => ['/gscmnt/ams1102/info/info/dbsnp130_indels/deletions_adjusted_dbsnp130'],
             doc => 'dbsnp deletion file',
         },
         _output_filename => {
