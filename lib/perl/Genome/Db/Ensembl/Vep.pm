@@ -153,6 +153,11 @@ class Genome::Db::Ensembl::Vep {
             default => "1",
             doc => 'Version of the vepplugins package to use',
         },
+        quiet => {
+            is => 'Boolean',
+            default => 0,
+            doc => "Don't print the potput of vep to the terminal",
+        },
     ],
 };
 
@@ -538,6 +543,7 @@ sub execute {
         skip_if_output_is_present => 0,
     );
     $params{input_files} = [$input_file] unless $input_file eq '-';
+    $params{redirect_stdout} = '/dev/null' if $self->quiet;
 
     $annotation_build->prepend_api_path_and_execute(
         %params

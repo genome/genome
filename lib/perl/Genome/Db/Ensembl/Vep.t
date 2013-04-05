@@ -9,6 +9,7 @@ use strict;
 use warnings;
 
 use above "Genome";
+use Genome::Utility::Test qw(command_execute_ok);
 use Test::More;
 
 use_ok("Genome::Db::Ensembl::Vep");
@@ -28,10 +29,15 @@ my $cmd_1 = Genome::Db::Ensembl::Vep->create(
     plugins => ["Condel,PLUGIN_DIR,b,2"],
     version => "2_5",
     ensembl_annotation_build_id => 124434505,
+    quiet => 1,
 );
 
 isa_ok($cmd_1, 'Genome::Db::Ensembl::Vep');
-ok($cmd_1->execute, 'execute');
+Genome::Sys->dump_status_messages(0);
+command_execute_ok($cmd_1,
+    { error_messages => [],
+      status_messages => undef, },
+    'execute');
 ok(-s $output_file, 'output file is non-zero');
 
 
