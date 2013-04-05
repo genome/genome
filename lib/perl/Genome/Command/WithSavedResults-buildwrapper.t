@@ -48,7 +48,7 @@ sub _execute_v1 {
 }
 
 package main;
-use Test::More tests => 15;
+use Test::More tests => 13;
 
 my $result_meta = Genome::TestCommand::Result->__meta__;
 ok($result_meta, "got result meta for new class");
@@ -56,7 +56,14 @@ ok($result_meta, "got result meta for new class");
 my $wrap_meta = Genome::TestCommand::BuildStepWrapper->__meta__;
 ok($wrap_meta, "successfully generated a wrapper for generating software results within builds");
 
-my $build = Genome::Model::Build->get(135315483);
+my $build;
+{
+    local $SIG{__WARN__} = sub {
+        my $msg = shift;
+        die "Unexpected warning message: $msg" unless($msg =~ m/^exists:/);
+    };
+    $build = Genome::Model::Build->get(135315483);
+}
 ok($build, "got test build");
 
 # temp change data dir to test location
@@ -68,7 +75,10 @@ ok($meta1, "got BuildStepWrapper for command class");
 
 my $dir2 = Genome::Sys->create_temp_directory();
 
-my $wrapper_result1 = Genome::TestCommand::BuildStepWrapper->create(
+Genome::TestCommand->dump_status_messages(0);
+Genome::TestCommand::BuildStepWrapper->dump_status_messages(0);
+Genome::SoftwareResult::Stageable->dump_status_messages(0);
+my $wrapper_result1 = Genome::TestCommand::BuildStepWrapper->execute(
     p1 => "P1", 
     i1 => "I1", 
     output_dir => $dir2,
@@ -76,10 +86,6 @@ my $wrapper_result1 = Genome::TestCommand::BuildStepWrapper->create(
     wrapper_build_label => "test_label", 
     result_version => 1,
 );
-$wrapper_result1->dump_status_messages(0);
-Genome::TestCommand->dump_status_messages(0);
-Genome::SoftwareResult::Stageable->dump_status_messages(0);
-command_execute_ok($wrapper_result1, 'ran wrapper');
 is($count, 1, "the underlying command has run one time");
 
 Genome::TestCommand::Result->dump_error_messages(0);
@@ -104,7 +110,7 @@ $build->data_directory($dir3);
 
 my $dir4 = Genome::Sys->create_temp_directory();
 
-my $wrapper_result2 = Genome::TestCommand::BuildStepWrapper->create(
+my $wrapper_result2 = Genome::TestCommand::BuildStepWrapper->execute(
     p1 => "P1", 
     i1 => "I1", 
     output_dir => $dir4,
@@ -112,11 +118,6 @@ my $wrapper_result2 = Genome::TestCommand::BuildStepWrapper->create(
     wrapper_build_label => "test_label", 
     result_version => 1,
 );
-command_execute_ok($wrapper_result2,
-    { status_messages => [  qr(Running Genome::TestCommand for build.  Linking results to $dir3),
-                            qr{linking to $dir3.*?: result Genome::TestCommand::Result \(\d+\) from $dir4} ],
-      error_messages => [] },
-    'ran wrapper');
 is($count, 1, "the underlying command has still run just one time");
 
 
