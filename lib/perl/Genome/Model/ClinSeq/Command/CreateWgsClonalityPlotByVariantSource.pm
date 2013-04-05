@@ -82,73 +82,7 @@ sub execute {
     return 1;
 }
 
-sub _clinseq_patient_dir {
-    my ($self, $clinseq_build) = @_;
-    my $patient_dir = $clinseq_build->data_directory . "/" . $clinseq_build->common_name;
-    unless(-d $patient_dir) {
-        die $self->error_message("ClinSeq patient directory not found. Expected: $patient_dir");
-    }
-    return $patient_dir;
-}
 
-sub _snv_variant_source_file {
-    my ($self, $clinseq_build, $data_type,) = @_;
-
-    my $patient_dir = $self->_clinseq_patient_dir($clinseq_build);
-    my $source = $patient_dir . "/variant_source_callers/";
-    my $exception;
-    if(-d $source) {
-       my $dir = $source . "/$data_type/";
-       if(-d $dir) {
-           my $file = $dir . "/snv_sources.tsv";
-           if(-e $file) {
-               return $file;
-           }
-           else {
-               $exception = $self->error_message("Expected $file inside $dir and it did not exist.");
-           }
-       }
-       else {
-           $exception = $self->error_message("$data_type sub-directory not found in $source."); 
-       }
-    }
-    else {
-        $exception = $self->error_message("$source directory not found");
-    }
-    die $exception;
-}
-
-sub _clinseq_clonality_dir {
-    my ($self, $clinseq_build) = @_;
-
-    my $patient_dir = $self->_clinseq_patient_dir($clinseq_build);
-    my $clonality_dir = $patient_dir . "/clonality/";
-    
-    unless(-d $clonality_dir) {
-        die $self->error_message("Clonality directory does not exist. Expected: $clonality_dir");
-    }
-    return $clonality_dir;
-}
-
-sub _varscan_formatted_readcount_file {
-    my ($self, $clinseq_build) = @_;
-    my $clonality_dir = $self->_clinseq_clonality_dir($clinseq_build);
-    my $readcount_file = $clonality_dir ."/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan";
-    unless(-e $readcount_file) {
-        die $self->error_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
-    }
-    return $readcount_file;
-}
-
-sub _cnaseq_hmm_file {
-    my ($self, $clinseq_build) = @_;
-    my $clonality_dir = $self->_clinseq_clonality_dir($clinseq_build);
-    my $hmm_file = $clonality_dir . "/cnaseq.cnvhmm";
-    unless(-e $hmm_file) {
-        die $self->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
-    }
-    return $hmm_file;
-}
 
 #most likely the number of calls is much smaller than we can fit in memory so just do that with a hash.
 sub _load_source_file_into_memory {
