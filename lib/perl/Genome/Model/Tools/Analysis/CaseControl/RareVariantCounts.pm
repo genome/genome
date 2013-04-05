@@ -29,7 +29,7 @@ class Genome::Model::Tools::Analysis::CaseControl::RareVariantCounts {
         vep_annotation_file => { is => 'Text', doc => "VEP top annotation file in native output", is_optional => 0, is_input => 1},
         sample_phenotype_file   => { is => 'Text', doc => "Tab-delimited file with sample ID and phenotype code", is_optional => 0, is_input => 1},
         dbsnp_positions_file    => { is => 'Text', doc => "1-based positions of dbSNP common SNPs to exclude", is_optional => 1, is_input => 1},
-        reference_build => { is => 'Text', doc => "reference build -- \"NCBI-human-build36\" or \"GRCh37-lite-build37\"", is_optional => 1, default => 'GRCh37-lite-build37', is_input => 1},
+        reference_build => { is => 'Text', doc => "reference build -- \"NCBI-human-build36\" or \"GRCh37-lite-build37\"", is_optional => 1, example_values => ['GRCh37-lite-build37'], is_input => 1},
         number_of_highlighted_genes => { is => 'Text', doc => "Number of gene names to list on the pdf (sorted by highest distance scores)", is_optional => 1, default => '10', is_input => 1},
         output_file => { is => 'Text', doc => "Output file for analysis results", is_optional => 1, is_input => 1},
     ],

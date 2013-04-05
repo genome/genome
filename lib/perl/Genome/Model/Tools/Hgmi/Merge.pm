@@ -28,23 +28,23 @@ class Genome::Model::Tools::Hgmi::Merge (
     has => [
         organism_name => {
             is => 'String',
-			doc => 'Organism\'s latin name',
-		},
+            doc => 'Organism\'s latin name',
+        },
         locus_tag => {
             is => 'String',
-			doc => 'Locus tag for project, containing DFT/FNL postpended',
+            doc => 'Locus tag for project, containing DFT/FNL postpended',
         },
         project_type => {
             is => 'String',
-			doc => 'Type of project',
-		},
+            doc => 'Type of project',
+        },
     ],
     has_optional => [
         nr_db => {
             is => 'String',
-			doc => 'Path to the default non-redundant sequence database, only used if local copy unavailable',
-			default => '/gscmnt/ams1102/info/annotation/blastdb/gsc_bacterial/bacterial_nr/bacterial_nr',
-		},
+            doc => 'Path to the default non-redundant sequence database, only used if local copy unavailable',
+            example_values=> ['/gscmnt/ams1102/info/annotation/blastdb/gsc_bacterial/bacterial_nr/bacterial_nr'],
+        },
         iprpath => {
             is => 'String',
             doc => "specify different version of iprscan",

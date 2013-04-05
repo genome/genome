@@ -29,11 +29,11 @@ class Genome::Model::PhenotypeCorrelation::Command::Mendelian::FamilyBased {
     },  
     dbsnp_vcf => {
         is_optional=>1,
-        default=>"/gscmnt/gc8001/info/build_merged_alignments/detect-variants--blade10-2-5.gsc.wustl.edu-acoffman-19352-120487229/snvs.hq.vcf"
+        example_values =>["/gscmnt/gc8001/info/build_merged_alignments/detect-variants--blade10-2-5.gsc.wustl.edu-acoffman-19352-120487229/snvs.hq.vcf"]
     },  
     thousand_genomes_vcf=> {
         is_optional=>1,
-        default=>"/gscmnt/gc6132/info/medseq/1000_genomes/downloads/2012-03-27/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.vcf",
+        example_values =>["/gscmnt/gc6132/info/medseq/1000_genomes/downloads/2012-03-27/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.vcf"],
           
     }
 ]
