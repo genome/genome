@@ -14,7 +14,7 @@ class Genome::DataSource::GMSchema {
 };
 
 my $POST_COMMIT_WRAPPED_ACTION = \&UR::Util::null_sub;
-$UR::Context::current->add_observer(aspect => 'commit', callback => $POST_COMMIT_WRAPPED_ACTION);
+$UR::Context::current->add_observer(aspect => 'commit', callback => sub {$POST_COMMIT_WRAPPED_ACTION->()} );
 
 sub table_and_column_names_are_upper_case { 1; }
 
