@@ -542,7 +542,12 @@ sub _transfer_sra_source_file {
     my $self = shift;
     $self->status_message('Transfer SRA file...');
 
-    # TODO run sra config
+    # TODO mv to start up validation
+    my $ncbi_config_file = $ENV{HOME}.'/.ncbi/user-settings.mkfg';
+    if ( not -s $ncbi_config_file ) {
+        $self->error_message("No NCBI config file ($ncbi_config_file) found. Please run 'perl /usr/bin/sra-configuration-assistant' to set it up. This file is required for most NCBI SRA operations.");
+        return
+    }
 
     $self->status_message('Copy SRA file...');
     my ($source_sra_file) = $self->source_files;
@@ -567,6 +572,7 @@ sub _transfer_sra_source_file {
     my $sorted_bam_file = $sorted_bam_prefix.'.bam';
     $self->status_message("Sorted bam file: $sorted_bam_file");
     my $cmd = "/usr/bin/sam-dump --unaligned --header $source_sra_file | samtools view -h -b -S - | samtools sort -m 3000000000 -n - $sorted_bam_prefix";
+    #my $cmd = "/usr/bin/sam-dump --unaligned --header $source_sra_file | samtools view -h -b -S - | samtools sort -m 3000000000 -n - $sorted_bam_prefix";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $sorted_bam_file ) {
         $self->error_message($@) if $@;

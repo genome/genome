@@ -29,7 +29,7 @@ my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
 );
 ok($cmd, "create import command");
-ok($cmd->execute, "excute import command");
+ok($cmd->execute, "excute import command") or die;
 
 my $instrument_data = $cmd->instrument_data;
 ok($instrument_data, 'got instrument data 2');
