@@ -19,7 +19,8 @@ class Genome::Model::Tools::Music::CosmicOmim {
            doc => 'Output file contains the input file with two columns appended to the end, corresponding to cosmic and omim mutation comparisons, respectively',
        },
        reference_build => {
-           is => 'Text', default => 'Build37',
+           is => 'Text',
+           example_values => ['Build36', 'Build37'],
            doc => 'Put either "Build36" or "Build37"',
        }
     ],
