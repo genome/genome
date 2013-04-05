@@ -22,6 +22,8 @@ use Test::More tests => 57;
 
 #Test with GENOME_QUERY_POSTGRES=1 to use postgres database instead of Oracle
 
+#The following tests are expressed as system calls of what you would actually type at the command-line because that is the output we specifically wish to test
+
 #This test performs a series of tests that cover common analysis use cases for command line usage of Genome listers, etc.
 #If this test breaks it will most likely be because of one of the following.  Figure out which is the case and update appropriately:
 #1.) If a code change is pushed that breaks one of these examples because of a desired improvement to the UI, please update the appropriate command below
