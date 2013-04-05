@@ -14,7 +14,7 @@ class Genome::Model::Tools::Capture::ManualReview {
     exclude_pindel => { is => 'Boolean', doc => "Keep aside indels unique to Pindel, since many cannot be reviewed on a BWA aligned BAM", is_optional => 1, default => 1 },
     exclude_uhf_snvs => { is => 'Boolean', doc => "Keep aside SNV calls that pass the ultra-high-confidence filter (UHF)", is_optional => 1, default => 1 },
     max_variants => { is => 'Number', doc => "Maximum allowed SNVs+Indels (after pindel/UHF exclusions) to consider a case for review", is_optional => 1, default => 250 },
-    refseq_version => { is => 'Text', doc => "Reference sequence to use with the UHF (GRCh37-lite-build37 or NCBI-human-build36)", is_optional => 1, default => "GRCh37-lite-build37" },
+    refseq_version => { is => 'Text', doc => "Reference sequence to use with the UHF (GRCh37-lite-build37 or NCBI-human-build36)", is_optional => 1, example_values => ["GRCh37-lite-build37"] },
     read_review => { is => 'Boolean', doc => "Read existing manual review files and create WU annotation files per case", is_optional => 1, default => 0 },
   ],
   doc => "Reads/creates manual review files, given a model-group of SomaticVariation models",
