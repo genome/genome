@@ -16,22 +16,28 @@ class Genome::Model::Build::Command::DiffBlessed {
         blessed_build => {
             is_optional => 1,
             calculate_from => ['new_build', 'perl_version', 'db_file'],
-            calculate => q{
-                $DB::single = 1;
-                my $model_name = $new_build->model->name;
-                my ($blessed_ids) = YAML::LoadFile($db_file);
-                my $blessed_id = $blessed_ids->{$model_name};
-                my $blessed_build = Genome::Model::Build->get(
-                    id => $blessed_id,);
-                return $blessed_build;
-            },
+            calculate => q{ blessed_build($new_build->model->name, $perl_version, $db_file) },
         },
         db_file => {
             is_optional => 1,
-            default_value => __FILE__.".YAML",
+            default_value => default_db_file(),
         },
     ],
 };
+
+sub default_db_file {
+    return __FILE__.".YAML";
+}
+
+sub blessed_build {
+    my ($model_name, $perl_version, $db_file) = @_;
+    $db_file ||= default_db_file();
+    my ($blessed_ids) = YAML::LoadFile($db_file);
+    my $blessed_id = $blessed_ids->{$model_name};
+    my $blessed_build = Genome::Model::Build->get(
+        id => $blessed_id,);
+    return $blessed_build;
+}
 
 sub diffs_message {
     my $self = shift;
