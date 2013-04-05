@@ -16,12 +16,13 @@ my $tmpdir = File::Temp::tempdir(
     CLEANUP => 1,
 );
 
+my $dbsnp_path = "/gscmnt/sata835/info/medseq/model_data/2857166586/ImportedVariations/tmp";
 my $known_out = "$tmpdir/Genome-Model-Tools-Annotate-LookupVariants-known-only.out";
 if ($known_out && -e $known_out) {`rm -f $known_out`;}
 my $exp_known_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Annotate-LookupVariants/expected.known-only.out";
 ok (-e $exp_known_out);
 
-my $known = Genome::Model::Tools::Annotate::LookupVariants->create(report_mode => "known-only", variant_file => "$variant_file", output_file => "$tmpdir/Genome-Model-Tools-Annotate-LookupVariants-known-only.out", filter_out_submitters => "SNP500CANCER,OMIMSNP,CANCER-GENOME,CGAP-GAI,LCEISEN,ICRCG", require_allele_match => 1);
+my $known = Genome::Model::Tools::Annotate::LookupVariants->create(report_mode => "known-only", variant_file => "$variant_file", output_file => "$tmpdir/Genome-Model-Tools-Annotate-LookupVariants-known-only.out", filter_out_submitters => "SNP500CANCER,OMIMSNP,CANCER-GENOME,CGAP-GAI,LCEISEN,ICRCG", require_allele_match => 1, dbSNP_path => $dbsnp_path);
 ok ($known);
 
 my $kv = $known->execute;
@@ -38,7 +39,7 @@ my $exp_novel_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Annotate-Loo
 ok (-e $exp_novel_out);
 
 
-my $novel = Genome::Model::Tools::Annotate::LookupVariants->create(report_mode => "novel-only", variant_file => "$variant_file", output_file => "$tmpdir/Genome-Model-Tools-Annotate-LookupVariants-novel-only.out", filter_out_submitters => "SNP500CANCER,OMIMSNP,CANCER-GENOME,CGAP-GAI,LCEISEN,ICRCG", require_allele_match => 1);
+my $novel = Genome::Model::Tools::Annotate::LookupVariants->create(report_mode => "novel-only", variant_file => "$variant_file", output_file => "$tmpdir/Genome-Model-Tools-Annotate-LookupVariants-novel-only.out", filter_out_submitters => "SNP500CANCER,OMIMSNP,CANCER-GENOME,CGAP-GAI,LCEISEN,ICRCG", require_allele_match => 1, dbSNP_path => $dbsnp_path);
 ok ($novel);
 
 my $nv = $novel->execute;
