@@ -24,7 +24,7 @@ class Genome::Model::Tools::Sv::AssemblyPipeline::RemapReads {
         max_percent_subs => { is => 'Number', doc => "", is_optional => 1, default => 1 },
         max_percent_indels => { is => 'Number', doc => "", is_optional => 1, default => 1 },
         min_score => { is => 'Integer', doc => "", is_optional => 1, default => 50 },
-        build => { is => 'Integer', doc => "Build number (36 or 37)", is_optional => 1, default => 37, valid_values => [36, 37] },
+        build => { is => 'Integer', doc => "Build number (36 or 37)", is_optional => 1, example_values => [37], valid_values => [36, 37] },
         reference_fasta => { is => 'Text', doc => 'Instead of using the "build" parameter, specify a FASTA directly in order to run with any reference', is_optional => 1,
         },
     ],
