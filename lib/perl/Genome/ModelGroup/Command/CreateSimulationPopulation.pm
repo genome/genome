@@ -26,7 +26,7 @@ class Genome::ModelGroup::Command::CreateSimulationPopulation {
         doc=>"chr:start-stop format",
     },
     ref_fasta => {
-        default=>"/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa",
+        example_values =>["/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa"],
         doc=>"build36 default",
     },
     num_cases => {
