@@ -28,7 +28,7 @@ class Genome::Model::SomaticValidation::Command::ValidateLargeIndels::CreateAsse
         },
         reference_transcripts => {
             is => 'Text',
-            default => "NCBI-human.ensembl/67_37l_v2", #TODO this should be a param from the somatic validation processing profile
+            example_values => ["NCBI-human.ensembl/67_37l_v2"], #TODO this should be a param from the somatic validation processing profile
             doc => 'The set of reference_transcripts to use, which get passed to the annotator',
         },
     ],

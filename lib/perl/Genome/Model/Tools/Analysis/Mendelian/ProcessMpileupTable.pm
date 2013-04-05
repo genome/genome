@@ -24,17 +24,17 @@ my $num_affected = my $affecteds_missing = my $unaffecteds_variant = my $affecte
 my %genotypes = ();
 
 class Genome::Model::Tools::Analysis::Mendelian::ProcessMpileupTable {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		sample_file	=> { is => 'Text', doc => "Tab-delimited file of family, sample, status, dir", is_optional => 0, is_input => 1},
-		variant_file	=> { is => 'Text', doc => "Variants in sorted annotation format to build mpileup for", is_optional => 0, is_input => 1},
-		family	=> { is => 'Text', doc => "Family for which to build mpileup", is_optional => 0, is_input => 1},
-		min_cov_for_ref	=> { is => 'Text', doc => "The minimum coverage required to agree that a site is reference", is_optional => 0, is_input => 1, default => 10},
-		reference	=> { is => 'Text', doc => "Path to the reference to use [defaults to build 37]", is_optional => 0, is_input => 1, default => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'},
-		cns_file	=> { is => 'Text', doc => "VarScan mpileup2cns results for mpileup file", is_optional => 1, is_input => 1},
-		output_basename	=> { is => 'Text', doc => "Output file basename for merged results", is_optional => 1, is_input => 1},
-	],
+    is => 'Command',                       
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        sample_file	=> { is => 'Text', doc => "Tab-delimited file of family, sample, status, dir", is_optional => 0, is_input => 1},
+        variant_file	=> { is => 'Text', doc => "Variants in sorted annotation format to build mpileup for", is_optional => 0, is_input => 1},
+        family	=> { is => 'Text', doc => "Family for which to build mpileup", is_optional => 0, is_input => 1},
+        min_cov_for_ref	=> { is => 'Text', doc => "The minimum coverage required to agree that a site is reference", is_optional => 0, is_input => 1, default => 10},
+        reference	=> { is => 'Text', doc => "Path to the reference to use [defaults to build 37]", is_optional => 0, is_input => 1, example_values=> ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa']},
+        cns_file	=> { is => 'Text', doc => "VarScan mpileup2cns results for mpileup file", is_optional => 1, is_input => 1},
+        output_basename	=> { is => 'Text', doc => "Output file basename for merged results", is_optional => 1, is_input => 1},
+        ],
 };
 
 sub sub_command_sort_position { 12 }

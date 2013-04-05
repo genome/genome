@@ -11,53 +11,53 @@ use Bio::DB::Fasta;
 class Genome::Model::Tools::Annotate::TranscriptSequence {
     is => 'Command',                       
     has => [ 
-	transcript => {
-	    type  =>  'String',
-	    doc   =>  "provide the transcript name",
-	},
-	organism => {
-	    type  =>  'String',
-	    doc   =>  "provide the organism either mouse or human; default is human",
-	    is_optional  => 1,
-	    default => 'human',
-	},
-	version => {
-	    type  =>  'String',
-	    doc   =>  "provide the imported annotation version; default for human is 54_36p_v2 and for mouse is 54_37g_v2",
-	    is_optional  => 1,
-	    default => '54_36p_v2',
-	},
-	trans_pos => {
-	    type  =>  'String',
-	    doc   =>  "provide a coordinate of interest",
-	    is_optional  => 1,
-	},
-	utr_seq => {
-	    is => 'Boolean',
-	    doc   =>  "use this flag if you would like to retriev the utr sequence for this transcript.",
-	    is_optional  => 1,
-	    default => 0,
-	},
-	masked => {
-	    is => 'Boolean',
-	    doc   =>  "use this option to mask_snps_and_repeats",
-	    is_optional  => 1,
-	},
-	   output => {
-	    type  =>  'String',
-	    doc   =>  "provide a file name to write you transcript information to .txt will be appended to it. Default is to print to stdout.",
-	    is_optional  => 1,
-	},
-	   fasta => {
-	    type  =>  'Boolean',
-	    doc   =>  "will write the nucleotide fasta to output.fasta. Default is to print to stdout.",
-	    is_optional  => 1,
-	},
-	no_stdout => {
-	    is => 'Boolean',
-	    doc   =>  "Use this option if you do not want the info to print to stdout. Default is to print to stdout.",
-	    is_optional  => 1,
-	},
+        transcript => {
+            type  =>  'String',
+            doc   =>  "provide the transcript name",
+        },
+        organism => {
+            type  =>  'String',
+            doc   =>  "provide the organism either mouse or human; default is human",
+            is_optional  => 1,
+            default => 'human',
+        },
+        version => {
+            type  =>  'String',
+            doc   =>  "provide the imported annotation version; default for human is 54_36p_v2 and for mouse is 54_37g_v2",
+            is_optional  => 1,
+            example_values => ['54_36p_v2'],
+        },
+        trans_pos => {
+            type  =>  'String',
+            doc   =>  "provide a coordinate of interest",
+            is_optional  => 1,
+        },
+        utr_seq => {
+            is => 'Boolean',
+            doc   =>  "use this flag if you would like to retriev the utr sequence for this transcript.",
+            is_optional  => 1,
+            default => 0,
+        },
+        masked => {
+            is => 'Boolean',
+            doc   =>  "use this option to mask_snps_and_repeats",
+            is_optional  => 1,
+        },
+        output => {
+            type  =>  'String',
+            doc   =>  "provide a file name to write you transcript information to .txt will be appended to it. Default is to print to stdout.",
+            is_optional  => 1,
+        },
+        fasta => {
+            type  =>  'Boolean',
+            doc   =>  "will write the nucleotide fasta to output.fasta. Default is to print to stdout.",
+            is_optional  => 1,
+        },
+        no_stdout => {
+            is => 'Boolean',
+            doc   =>  "Use this option if you do not want the info to print to stdout. Default is to print to stdout.",
+            is_optional  => 1,
+        },
 
 
     ], 
