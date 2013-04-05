@@ -62,7 +62,7 @@ class Genome::Model::Tools::Somatic::IntersectAssembledIndels {
         type => 'String',
         is_optional => 1,
         is_input => 1,
-        default => Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa',
+        example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa'],
         doc => 'the reference sequence the reads were aligned to. Used to generate deletion alleles',
     },
 

@@ -28,13 +28,13 @@ class Genome::Model::Tools::Somatic::DbsnpConcordance {
         _dbsnp_insertions => {
             type => 'String',
             is_optional => 1,
-            default => '/gscmnt/ams1102/info/info/dbsnp130_indels/insertions_start_stop_adjusted_dbsnp130',
+            example_values=> ['/gscmnt/ams1102/info/info/dbsnp130_indels/insertions_start_stop_adjusted_dbsnp130'],
             doc => 'dbsnp insertion file',
         },
         _dbsnp_deletions => {
             type => 'String',
             is_optional => 1,
-            default => '/gscmnt/ams1102/info/info/dbsnp130_indels/deletions_adjusted_dbsnp130',
+            example_values => ['/gscmnt/ams1102/info/info/dbsnp130_indels/deletions_adjusted_dbsnp130'],
             doc => 'dbsnp deletion file',
         },
         output_file => {
