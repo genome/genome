@@ -10,6 +10,7 @@ our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort
 
 use Carp qw(croak);
 use IPC::System::Simple qw(capture);
+use Sub::Install;
 use Test::More;
 use File::Spec qw();
 
