@@ -2,11 +2,11 @@ use strict;
 use warnings;
 
 use Test::Builder::Tester;
-use Test::More tests => 20;
+use Test::More tests => 21;
 use UR;
 use Sub::Install;
 
-use_ok('Genome::Utility::Test', qw(command_execute_ok));
+use_ok('Genome::Utility::Test', qw(command_execute_ok command_execute_fail_ok));
 
 class My::Test::Command {
     is => 'Command::V2',
@@ -144,4 +144,12 @@ test_fail(+2);
 test_err(q(# For the 1st error_message, got 'bye' but expected ''));
 command_execute_ok($cmd, { error_messages => [] }, 'blah');
 test_test('got error message we did not expect');
+
+
+# Test a failed execute with command_execute_fail_ok
+$execute_cb = sub { shift->error_message('bye') };
+$cmd =  My::Test::Command->create( retval => 0 );
+test_out('ok 1 - blah');
+command_execute_fail_ok($cmd, { error_messages => ['bye'] }, 'blah');
+test_test('failed command test is ok with command_execute_fail_ok()');
 

@@ -5,7 +5,8 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort strip_ansi command_execute_ok);
+our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort
+                    strip_ansi command_execute_ok command_execute_fail_ok );
 
 use Carp qw(croak);
 use IPC::System::Simple qw(capture);
@@ -325,50 +326,63 @@ sub _command_execute_ok_parse_args {
 
 my %format_numeral = qw( 1 st 2 nd 3 rd 4 th 5 th 6 th 7 th 8 th 9 th 0 th );
 
-sub command_execute_ok {
-    my($command, $message_config, $message) = _command_execute_ok_parse_args(@_);
+_command_execute_ok_builder('command_execute_ok', 1);
+_command_execute_ok_builder('command_execute_fail_ok', 0);
+sub _command_execute_ok_builder {
+    my($subname, $should_work) = @_;
 
-    foreach my $type (@command_message_types) {
-        if (exists $message_config->{$type.'_messages'}) {
-            my($dump, $queue) = map { "${_}_${type}_messages" } qw(dump queue);
-            $command->$dump(0);
-            $command->$queue(1) if (defined $message_config->{$type.'_messages'});
+    my $sub = sub {
+        my($command, $message_config, $message) = _command_execute_ok_parse_args(@_);
+
+        foreach my $type (@command_message_types) {
+            if (exists $message_config->{$type.'_messages'}) {
+                my($dump, $queue) = map { "${_}_${type}_messages" } qw(dump queue);
+                $command->$dump(0);
+                $command->$queue(1) if (defined $message_config->{$type.'_messages'});
+            }
         }
-    }
 
-    my $tb = __PACKAGE__->builder;
-    my $result = $command->execute();
-    $result || return $tb->ok(0, "$message (execute() returned false)");
+        my $tb = __PACKAGE__->builder;
+        my $result = $command->execute();
+        { no warnings 'uninitialized';
+            # result might be undef
+            ($result ^ $should_work) && return $tb->ok(0, "$message (execute() returned false)");
+        }
 
-    foreach my $type (@command_message_types) {
-        my $method = $type.'_messages';
-        if (defined $message_config->{$method}) {
-            my @expected_messages = @{ $message_config->{$method} };
-            my @got_messages = $command->$method();
-            for (my $i = 0; @expected_messages || @got_messages; $i++) {
-                my($expected) = map { defined $_ ? $_ : '' } shift @expected_messages;
-                my($got) = map { defined $_ ? $_ : '' } shift @got_messages;
+        foreach my $type (@command_message_types) {
+            my $method = $type.'_messages';
+            if (defined $message_config->{$method}) {
+                my @expected_messages = @{ $message_config->{$method} };
+                my @got_messages = $command->$method();
+                for (my $i = 0; @expected_messages || @got_messages; $i++) {
+                    my($expected) = map { defined $_ ? $_ : '' } shift @expected_messages;
+                    my($got) = map { defined $_ ? $_ : '' } shift @got_messages;
 
-                if (ref($expected) and $got !~ m/$expected/) {
-                    my $rv = $tb->ok(0, $message);
-                    $i++;
-                    $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
-                                . ' ' . substr($method, 0, -1) # remove the 's'
-                                . ", '$got' didn't match $expected");
-                    return $rv;
+                    if (ref($expected) and $got !~ m/$expected/) {
+                        my $rv = $tb->ok(0, $message);
+                        $i++;
+                        $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
+                                    . ' ' . substr($method, 0, -1) # remove the 's'
+                                    . ", '$got' didn't match $expected");
+                        return $rv;
 
-                } elsif (!ref($expected) and $got ne $expected) {
-                    my $rv = $tb->ok(0, $message);
-                    $i++;
-                    $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
-                                . ' ' . substr($method, 0, -1) # remove the 's'
-                                . ", got '$got' but expected '$expected'");
-                    return $rv;
+                    } elsif (!ref($expected) and $got ne $expected) {
+                        my $rv = $tb->ok(0, $message);
+                        $i++;
+                        $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
+                                    . ' ' . substr($method, 0, -1) # remove the 's'
+                                    . ", got '$got' but expected '$expected'");
+                        return $rv;
+                    }
                 }
             }
         }
-    }
-    return $tb->ok(1, $message);
+        return $tb->ok(1, $message);
+    };
+    Sub::Install::install_sub({
+        as => $subname,
+        code => $sub,
+    });
 }
 
 
@@ -468,6 +482,10 @@ arrayrefs of strings or regexes, for example
 An empty list means the test expects the command to generate none of that type
 of message.  undef means that type of message will not be printed to the
 terminal during the execution, but the message contents will not be checked.
+
+=item command_execute_fail_ok
+
+Like command_execute_ok(), but this test fails if the command's execution returns true.
 
 =back
 
