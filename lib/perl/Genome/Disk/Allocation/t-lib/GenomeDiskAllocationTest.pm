@@ -7,15 +7,16 @@ use warnings;
 
 use Carp qw(croak);
 use File::Basename qw(dirname);
+use Test::More skip_all => 'Test requires fuseext2 and leaves a mess that has to be cleaned up manually if correct permissions are not setup.';
 use Time::HiRes qw(usleep);
 use Sys::Hostname qw(hostname);
 use above 'Genome';
 
-#BEGIN {
-#    if ( $ENV{UR_DBI_NO_COMMIT} ) {
-#        plan skip_all => 'This test can not be run with UR_DBI_NO_COMMIT enabled!';
-#    }
-#};
+BEGIN {
+    if ( $ENV{UR_DBI_NO_COMMIT} ) {
+        plan skip_all => 'This test can not be run with UR_DBI_NO_COMMIT enabled!';
+    }
+};
 
 sub import {
     # Don't change @_!
