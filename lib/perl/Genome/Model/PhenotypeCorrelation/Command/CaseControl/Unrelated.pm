@@ -386,7 +386,7 @@ sub _create_workflow {
                 permutations => "1",
                 trv_types => "ALL",
                 p_value_permutations => 1,  #not a general case desirable
-                use_bsub => 1,
+                use_bsub => !$ENV{WF_USE_FLOW},
                 aggregate_only => 0,
             },
             inputs_from => {
