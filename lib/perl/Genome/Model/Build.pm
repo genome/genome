@@ -206,34 +206,13 @@ sub __extend_namespace__ {
     my $model_subclass_meta = eval { $model_subclass_name->__meta__ };
     if ($model_subclass_meta and $model_subclass_name->isa('Genome::Model')) {
         my $build_subclass_name = 'Genome::Model::Build::' . $ext;
-        my @p = $model_subclass_meta->properties();
-        my @has;
-        for my $p (@p) {
-            for my $type (qw/input metric/) {
-                my $method = "is_$type";
-                if ($p->can($method) and $p->$method) {
-                    my $name = $p->property_name;
-                    my %data = %{$p};
-                    my $type = $data{data_type};
-                    for my $key (keys %data) {
-                        delete $data{$key} unless $key =~ /^is_/;
-                    }
-                    delete $data{is_specified_in_module_header};
-                    if ($type->isa("Genome::Model")) {
-                        $type =~ s/^Genome::Model/Genome::Model::Build/;
-                        $name =~ s/_model(?=($|s$))/_build/;
-                    }
-                    $data{property_name} = $name;
-                    $data{data_type} = $type;
-                    push @has, $name, \%data;
-                }
-            }
-        }
-        #print Data::Dumper::Dumper($build_subclass_name, \@has);
+        # The actual inputs and metrics are added during subclass definition preprocessing.
+        # Then the whole set is expanded, allowing the developer to write less of 
+        # # the build class.
+        # See Genome/Model/Build.pm _preprocess_subclass_description.
         my $build_subclass_meta = UR::Object::Type->define(
             class_name => $build_subclass_name,
             is => 'Genome::Model::Build',
-            has => \@has,
         );
         die "Error defining $build_subclass_name for $model_subclass_name!" unless $model_subclass_meta;
         return $build_subclass_meta;
@@ -2411,9 +2390,50 @@ sub _get_workflow_instance_children {
 
 sub _preprocess_subclass_description {
     my ($class, $desc) = @_;
+    
     #print "PREPROC BUILD!\n";
     #print Data::Dumper::Dumper($desc);
     #print Carp::longmess();
+    
+    my $build_subclass_name = $desc->{class_name};
+    my $model_subclass_name = $build_subclass_name;
+    $model_subclass_name =~ s/::Build//;
+    my $model_subclass_meta = eval { $model_subclass_name->__meta__; };
+    if ($model_subclass_meta) {
+        my @model_properties = $model_subclass_meta->properties();
+        my $has = $desc->{has};
+        PROPERTY:
+        for my $p (@model_properties) {
+            next;
+            my $name = $p->property_name;
+            for my $type (qw/input metric/) {
+                my $method = "is_$type";
+                if ($p->can($method) and $p->$method) {
+                    if ($has->{$name}) {
+                        warn "exists: $name on $build_subclass_name\n";
+                        next PROPERTY;
+                    }
+                    my %data = %{$p};
+                    my $type = $data{data_type};
+                    if (!$type) {
+                        warn "no type on $name for $model_subclass_name\n";
+                    }
+                    for my $key (keys %data) {
+                        delete $data{$key} unless $key =~ /^is_/;
+                    }
+                    delete $data{is_specified_in_module_header};
+                    if ($type->isa("Genome::Model")) {
+                        $type =~ s/^Genome::Model/Genome::Model::Build/;
+                        $name =~ s/_model(?=($|s$))/_build/;
+                    }
+                    $data{property_name} = $name;
+                    $data{data_type} = $type;
+                    $has->{$name} = \%data;
+                }
+            }
+        }
+    }
+
     my @names = keys %{ $desc->{has} };
     for my $prop_name (@names) {
         my $prop_desc = $desc->{has}{$prop_name};
