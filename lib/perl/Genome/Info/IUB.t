@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 40;
+use Test::More tests => 45;
 use above "Genome";
 use Genome::Info::IUB;
 
@@ -11,17 +11,43 @@ is(Genome::Info::IUB::variant_alleles_for_iub(undef, undef),undef, "variant_alle
 is(Genome::Info::IUB::variant_alleles_for_iub(undef, 'A'), undef, "variant_alleles_for_iub: undefined ref returns undef");
 is(Genome::Info::IUB::variant_alleles_for_iub('A', undef),undef, "variant_alleles_for_iub: undefined iub returns undef");
 is(Genome::Info::IUB::variant_alleles_for_iub('N', 'A'), undef, "variant_alleles_for_iub: ambiguous ref returns undef");
-is(Genome::Info::IUB::variant_alleles_for_iub('Q', 'A'), undef, "variant_alleles_for_iub: invalid ref returns undef");
+cmp_warn(sub { is(Genome::Info::IUB::variant_alleles_for_iub('Q', 'A'),
+                undef, "variant_alleles_for_iub: invalid ref returns undef")
+        },
+        qr{Ambiguous reference bases \(Q\) not currently supported},
+        'expected warning');
 is(Genome::Info::IUB::variant_alleles_for_iub('G', 'Q'), undef, "variant_alleles_for_iub: invalid iub returns undef");
 my @alleles = Genome::Info::IUB::variant_alleles_for_iub('G','W');
 is_deeply(\@alleles, ['A','T'] , "variant_alleles_for_iub: returns values on proper input");
 
+#test to make sure it handles undefined values
+cmp_warn(sub {
+            is(Genome::Info::IUB::iub_for_alleles(undef),
+                undef, "iub_for_alleles: undefined inputs return undef")
+        },
+        qr{Conversion of more than 2 alleles to IUB code is currently unsupported \(1 passed\)},
+        'expected warning');
 
+cmp_warn(sub {
+            is(Genome::Info::IUB::iub_for_alleles('A'),
+                undef, "iub_for_alleles: invalid input returns undef");
+        },
+        qr{Conversion of more than 2 alleles to IUB code is currently unsupported \(1 passed\)},
+        'expected warning');
 
-is(Genome::Info::IUB::iub_for_alleles(undef),undef, "iub_for_alleles: undefined inputs return undef");  #test to make sure it handles undefined values
-is(Genome::Info::IUB::iub_for_alleles('A'), undef, "iub_for_alleles: invalid input returns undef");
-is(Genome::Info::IUB::iub_for_alleles('A','T','G'),undef, "iub_for_alleles: unsupported input return undef");
-is(Genome::Info::IUB::iub_for_alleles('A','N'), undef, "iub_for_alleles: invalid nucleotides return undef");
+cmp_warn(sub {
+            is(Genome::Info::IUB::iub_for_alleles('A','T','G'),
+                undef, "iub_for_alleles: unsupported input return undef");
+        },
+        qr{Conversion of more than 2 alleles to IUB code is currently unsupported \(3 passed\)},
+        'expected warning');
+
+cmp_warn(sub {
+            is(Genome::Info::IUB::iub_for_alleles('A','N'),
+                undef, "iub_for_alleles: invalid nucleotides return undef");
+        },
+        qr{Invalid alleles A N},
+        'expected warning');
 is(Genome::Info::IUB::iub_for_alleles('a','T'), 'W', "iub_for_alleles: case insensitivity and valid result");
 
 
@@ -63,3 +89,16 @@ is(Genome::Info::IUB::reference_iub_to_base('ACTGRYMKSWBDHVN'), 'ACTGACAGCACAAAA
 
 #$HeadURL$
 #$Id$
+
+sub cmp_warn {
+    my $do = shift;
+    my $warn = shift;
+    my $msg = shift;
+
+    my $got_warn;
+    local $SIG{__WARN__} = sub { $got_warn = shift };
+    $do->();
+
+    like($got_warn, $warn, $msg);
+}
+

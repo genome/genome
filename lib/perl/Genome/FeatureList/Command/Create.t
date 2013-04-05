@@ -28,7 +28,11 @@ my %params = (
 my $create_command = Genome::FeatureList::Command::Create->create(%params);
 ok($create_command, 'constructed create command');
 isa_ok($create_command, 'Genome::FeatureList::Command::Create');
-my $feature_list = $create_command->execute;
+my $feature_list;
+{
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0;
+    $feature_list = $create_command->execute;
+}
 ok($feature_list, 'command executed successfully');
 isa_ok($feature_list, 'Genome::FeatureList', 'command returned a Genome::FeatureList');
 

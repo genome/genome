@@ -19,17 +19,22 @@ my $test_bed_file = __FILE__ . '.bed';
 ok(-e $test_bed_file, 'test file ' . $test_bed_file . ' exists');
 my $test_bed_file_md5 = Genome::Sys->md5sum($test_bed_file);
 
-my $feature_list = Genome::FeatureList->create(
-    name                => 'GFL test feature-list for dump-merged-list',
-    format              => '1-based',
-    content_type        => 'target region set',
-    file_path           => $test_bed_file,
-    file_content_hash   => $test_bed_file_md5,
-);
+my $feature_list;
+{
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0;
+    $feature_list  = Genome::FeatureList->create(
+        name                => 'GFL test feature-list for dump-merged-list',
+        format              => '1-based',
+        content_type        => 'target region set',
+        file_path           => $test_bed_file,
+        file_content_hash   => $test_bed_file_md5,
+    );
+}
 ok($feature_list, 'got a feature list');
 
 my $test_output_path = Genome::Sys->create_temp_file_path;
 
+Genome::Sys->dump_status_messages(0);
 my $command = Genome::FeatureList::Command::DumpMergedList->create(
     feature_list => $feature_list,
     output_path => $test_output_path,
