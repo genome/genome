@@ -124,7 +124,9 @@ for (i in 1:length(events[1,])){
 sample_data_numerical2 = sample_data_numerical
 for (i in 3:length(sample_data_numerical2[1,])){
   j = which(sample_data_numerical2[,i] > 0)
-  sample_data_numerical2[j,i] = 1
+  if (length(j) > 0){
+    sample_data_numerical2[j,i] = 1
+  }
 }
 
 dd = sample_data_numerical2
