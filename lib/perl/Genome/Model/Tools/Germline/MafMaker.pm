@@ -24,28 +24,28 @@ use Genome;                                 # using the namespace authorizes Cla
 my %stats = ();
 
 class Genome::Model::Tools::Germline::MafMaker {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		bam_file	=> { is => 'Text', doc => "Bam File" , is_optional => 0, is_input => 1},
-		build_id	=> { is => 'Text', doc => "Build Id" , is_optional => 0, is_input => 1},
-		variant_file	=> { is => 'Text', doc => "Tier 1 SNV File" , is_optional => 0, is_input => 1},
-		dbsnp_file	=> { is => 'Text', doc => "dbsnp File" , is_optional => 0, is_input => 1},
-		snv_filtered_file	=> { is => 'Text', doc => "Strandfilter Output File" , is_optional => 0, is_input => 1},
-		snv_failfiltered_file	=> { is => 'Text', doc => "Strandfilter Failed Output File" , is_optional => 0, is_input => 1},
-		snv_annotation_file	=> { is => 'Text', doc => "Annotation File" , is_optional => 0, is_input => 1},
-		indel_file	=> { is => 'Text', doc => "Tier 1 Indel File" , is_optional => 0, is_input => 1},
-		indel_filtered_file	=> { is => 'Text', doc => "Strandfilter Output File" , is_optional => 0, is_input => 1},
-		indel_failfiltered_file	=> { is => 'Text', doc => "Strandfilter Failed Output File" , is_optional => 0, is_input => 1},
-		indel_annotation_file	=> { is => 'Text', doc => "Annotation File" , is_optional => 0, is_input => 1},
-		output_file	=> { is => 'Text', doc => "MAF File" , is_optional => 0, is_output => 1, is_input => 1},
-		project_name	=> { is => 'Text', doc => "Name of the project i.e. ASMS" , is_optional => 1, default => "Germline Project", is_input => 1},
-		center 		=> { is => 'Text', doc => "Genome center name" , is_optional => 1, default => "genome.wustl.edu", is_input => 1},
-		build 		=> { is => 'Text', doc => "Reference genome build" , is_optional => 1, default => "36", is_input => 1},
-		sequence_phase	=> { is => 'Text', doc => "Sequencing phase" , is_optional => 1, default => "4", is_input => 1},
-		sequence_source	=> { is => 'Text', doc => "Sequence source" , is_optional => 1, default => "Capture", is_input => 1},
-		sequencer	=> { is => 'Text', doc => "Sequencing platform name" , is_optional => 1, default => "Illumina_GAIIx_or_Hiseq", is_input => 1},
-	],
+    is => 'Command',                       
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        bam_file	=> { is => 'Text', doc => "Bam File" , is_optional => 0, is_input => 1},
+        build_id	=> { is => 'Text', doc => "Build Id" , is_optional => 0, is_input => 1},
+        variant_file	=> { is => 'Text', doc => "Tier 1 SNV File" , is_optional => 0, is_input => 1},
+        dbsnp_file	=> { is => 'Text', doc => "dbsnp File" , is_optional => 0, is_input => 1},
+        snv_filtered_file	=> { is => 'Text', doc => "Strandfilter Output File" , is_optional => 0, is_input => 1},
+        snv_failfiltered_file	=> { is => 'Text', doc => "Strandfilter Failed Output File" , is_optional => 0, is_input => 1},
+        snv_annotation_file	=> { is => 'Text', doc => "Annotation File" , is_optional => 0, is_input => 1},
+        indel_file	=> { is => 'Text', doc => "Tier 1 Indel File" , is_optional => 0, is_input => 1},
+        indel_filtered_file	=> { is => 'Text', doc => "Strandfilter Output File" , is_optional => 0, is_input => 1},
+        indel_failfiltered_file	=> { is => 'Text', doc => "Strandfilter Failed Output File" , is_optional => 0, is_input => 1},
+        indel_annotation_file	=> { is => 'Text', doc => "Annotation File" , is_optional => 0, is_input => 1},
+        output_file	=> { is => 'Text', doc => "MAF File" , is_optional => 0, is_output => 1, is_input => 1},
+        project_name	=> { is => 'Text', doc => "Name of the project i.e. ASMS" , is_optional => 1, default => "Germline Project", is_input => 1},
+        center 		=> { is => 'Text', doc => "Genome center name" , is_optional => 1, default => "genome.wustl.edu", is_input => 1},
+        build 		=> { is => 'Text', doc => "Reference genome build" , is_optional => 1, example_values => ["36"], is_input => 1},
+        sequence_phase	=> { is => 'Text', doc => "Sequencing phase" , is_optional => 1, default => "4", is_input => 1},
+        sequence_source	=> { is => 'Text', doc => "Sequence source" , is_optional => 1, default => "Capture", is_input => 1},
+        sequencer	=> { is => 'Text', doc => "Sequencing platform name" , is_optional => 1, default => "Illumina_GAIIx_or_Hiseq", is_input => 1},
+        ],
 };
 
 sub sub_command_sort_position { 12 }
