@@ -14,7 +14,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>6; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>7; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::CreateMutationDiagrams;
 use Data::Dumper;
 
@@ -31,6 +31,7 @@ ok($temp_dir, "created temp directory: $temp_dir");
 #Get a somatic variation build
 my $somvar_build_id = 129973671;
 my $somvar_build = Genome::Model::Build->get($somvar_build_id);
+ok ($somvar_build, "Got somatic variation build from id: $somvar_build_id") or die;
 
 #Create create-mutation-diagrams command and execute
 #genome model clin-seq create-mutation-diagrams --outdir=/tmp/create_mutation_diagrams/ --collapse-variants --max-transcripts=10 129973671
