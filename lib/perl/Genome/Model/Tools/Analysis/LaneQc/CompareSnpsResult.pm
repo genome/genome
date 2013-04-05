@@ -36,7 +36,7 @@ class Genome::Model::Tools::Analysis::LaneQc::CompareSnpsResult {
         variant_file    => { is => 'Text', doc => "Variant calls in SAMtools mpileup-consensus format", is_optional => 1 },
         bam_file        => { is => 'Text', doc => "Alternatively, provide a BAM file", is_optional => 1 },
         sample_name     => { is => 'Text', doc => "Sample Name Used in QC", is_optional => 1 },
-        reference_build => { is => 'Text', doc => "36 or 37", is_optional => 1, default => 36},
+        reference_build => { is => 'Text', doc => "36 or 37", is_optional => 1, example_values => [36,37]},
     ],
 };
 

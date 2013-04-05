@@ -41,7 +41,7 @@ class Genome::Model::Tools::Sequence{
             is => 'Text',
             is_optional => 1,
             doc => 'reference version to be used',
-            default => '36',
+            example_values => ['36'],
         },
         sequence =>{
             is => 'SCALAR',

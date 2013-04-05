@@ -22,7 +22,7 @@ class Genome::Model::Tools::Graph::MutationDiagram {
         reference_transcripts => {
             type => 'String',
             doc => 'name/version number of the reference transcripts set ("NCBI-human.combined-annotation/0") Defaults to "NCBI-human.combined-annotation/54_36p_v2"',
-            default => 'NCBI-human.combined-annotation/54_36p_v2',
+            example_values => ['NCBI-human.combined-annotation/54_36p_v2'],
         },
         annotation_build_id => {
             type => 'Text',

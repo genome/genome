@@ -23,20 +23,20 @@ use Genome;                                 # using the namespace authorizes Cla
 my %genotypes = ();
 
 class Genome::Model::Tools::Analysis::Mendelian::IdentityByDescent {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		variant_file	=> { is => 'Text', doc => "List of variants to consider (annotation format)", is_optional => 0, is_input => 1},
-		affected_files	=> { is => 'Text', doc => "Consensus files for affected individuals", is_optional => 0, is_input => 1},
-		unaffected_files	=> { is => 'Text', doc => "Consensus files for unaffected individuals", is_optional => 1, is_input => 1},
-		inheritance_model	=> { is => 'Text', doc => "Presumed model of mendelian inheritance [autosomal-dominant]", is_optional => 1, is_input => 1},
-		min_coverage_to_refute	=> { is => 'Text', doc => "Minimum coverage to refute a possible variant in an affected [10]", is_optional => 1, is_input => 1, default => 10},
-		max_frequency_to_refute	=> { is => 'Text', doc => "Maximum observed variant allele frequency to refute a possible variant in an affected [5]", is_optional => 1, is_input => 1, default => 10},
-		min_affected_variant	=> { is => 'Text', doc => "Minimum number of affecteds with variant to include", is_optional => 1, is_input => 1, default => 1},
-		max_unaffected_variant	=> { is => 'Text', doc => "Maximum number of affecteds with variant to include", is_optional => 1, is_input => 1, default => 0},
-		ucsc_cytoband	=> { is => 'Text', doc => "Path to the UCSC refGene.txt file", is_optional => 0, is_input => 1, default => '/gscuser/dkoboldt/SNPseek/SNPseek2/ucsc/cytoBand.txt'},
-		output_file	=> { is => 'Text', doc => "Output file for QC result", is_optional => 1, is_input => 1},
-	],
+    is => 'Command',                       
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        variant_file	=> { is => 'Text', doc => "List of variants to consider (annotation format)", is_optional => 0, is_input => 1},
+        affected_files	=> { is => 'Text', doc => "Consensus files for affected individuals", is_optional => 0, is_input => 1},
+        unaffected_files	=> { is => 'Text', doc => "Consensus files for unaffected individuals", is_optional => 1, is_input => 1},
+        inheritance_model	=> { is => 'Text', doc => "Presumed model of mendelian inheritance [autosomal-dominant]", is_optional => 1, is_input => 1},
+        min_coverage_to_refute	=> { is => 'Text', doc => "Minimum coverage to refute a possible variant in an affected [10]", is_optional => 1, is_input => 1, default => 10},
+        max_frequency_to_refute	=> { is => 'Text', doc => "Maximum observed variant allele frequency to refute a possible variant in an affected [5]", is_optional => 1, is_input => 1, default => 10},
+        min_affected_variant	=> { is => 'Text', doc => "Minimum number of affecteds with variant to include", is_optional => 1, is_input => 1, default => 1},
+        max_unaffected_variant	=> { is => 'Text', doc => "Maximum number of affecteds with variant to include", is_optional => 1, is_input => 1, default => 0},
+        ucsc_cytoband	=> { is => 'Text', doc => "Path to the UCSC refGene.txt file", is_optional => 0, is_input => 1, example_values=> ['/gscuser/dkoboldt/SNPseek/SNPseek2/ucsc/cytoBand.txt']},
+        output_file	=> { is => 'Text', doc => "Output file for QC result", is_optional => 1, is_input => 1},
+    ],
 };
 
 sub sub_command_sort_position { 12 }
