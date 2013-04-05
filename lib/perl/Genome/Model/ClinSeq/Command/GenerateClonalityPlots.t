@@ -46,8 +46,8 @@ is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
 #$fhout->close;
 
 # The differences test excludes files which always differ (embed dates, or are the subject of a masking as above).
-my @diff = `diff -x '*.pdf' -r $expected_out $actual_out`;
-is(scalar(@diff), 11, "only expected differences") 
+my @diff = `diff -x '*.pdf' -x '*.R' -r $expected_out $actual_out`;
+is(scalar(@diff), 0, "only expected differences") 
 or do {
   for (@diff) { diag($_) }
   warn "*** if the above differences are not in error, rebuild the test data by running this test with REBUILD on the command-line ***";
