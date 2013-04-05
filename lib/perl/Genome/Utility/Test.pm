@@ -5,10 +5,9 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort);
+our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort strip_ansi command_execute_ok);
 
 use Carp qw(croak);
-use File::Compare qw(compare);
 use IPC::System::Simple qw(capture);
 use Test::More;
 use File::Spec qw();
@@ -52,25 +51,112 @@ sub _compare_ok_parse_args {
 
     my %vo; # validated_o
     $vo{name}    = delete $o{name};
-    $vo{filters} = delete $o{filters};
-    $vo{replace} = delete $o{replace};
+    my $filters = delete($o{filters}) || [];
+    my $replace = delete($o{replace}) || [];
+    $vo{xform} = [];
     $vo{diag}    = delete $o{diag} // 1;
     my @k = keys %o;
     if (@k) {
         croak 'unexpected options passed to compare_ok: ' . join(', ', @k);
     }
 
-    my $filters_ref = ref($vo{filters});
-    if (defined $vo{filters} && (!$filters_ref || $filters_ref ne 'ARRAY')) {
-        $vo{filters} = [$vo{filters}];
+    my $replace_ref = ref($replace);
+    if (defined $replace && (!$replace_ref || $replace_ref ne 'ARRAY')) {
+        die sprintf(q(%s: %s\n), $ERRORS{REPLACE_ARRAY_REF}, $replace);
+
+    } else {
+        # inspect each thing in replace
+        for(my $i = 0; $i < @$replace; $i++) {
+            my $r = $replace->[$i];
+
+            my $coderef;
+            if (ref($r) eq 'CODE') {
+                # coderef - use it directly
+                $coderef = $r;
+            } elsif (ref($r) eq 'ARRAY' and (@$r >= 1) and (@$r <= 2)) {
+                # list of one or two somethings
+
+                my($regex, $replacement);
+                if (ref($r->[0]) eq 'Regexp') {
+                    # refered form
+                    $regex = $r->[0];
+                } elsif (! ref($r->[0])) {
+                    # string - convert to regex
+                    $regex = $r->[0];
+                    $regex = qr($regex);
+                } else {
+                     Carp::croak("Unexpected options passed to compare_ok's 'replace' item $i. "
+                                    . "Expected the first element to be a string or Regex, "
+                                    . "but got ".ref($r->[0]));
+                }
+                # now convert to a coderef
+                $replacement = defined($r->[1]) ? $r->[1] : '';  # Default replacement is empty string
+                $coderef = sub {
+                    my $orig = shift;
+                    (my $changed = $orig) =~ s/$regex/$replacement/;
+                    return $changed;
+                };
+
+            } else {
+                Carp::croak("Unexpected options passed to compare_ok's 'replace' item $i. "
+                            . "Expected either a coderef or an arrayref of 1 or 2 items, "
+                            . "but got ".ref($r));
+            }
+            push @{$vo{xform}}, $coderef;
+        }
     }
 
-    my $replace_ref = ref($vo{replace});
-    if (defined $vo{replace} && (!$replace_ref || $replace_ref ne 'ARRAY')) {
-        die sprintf(q(%s: %s\n), $ERRORS{REPLACE_ARRAY_REF}, $vo{replace});
+    my $filters_ref = ref($filters);
+    if (defined $filters && (!$filters_ref || $filters_ref ne 'ARRAY')) {
+        # it's a simple string
+        $filters = [ $filters ];
     }
+    for (my $i = 0; $i < @$filters; $i++) {
+        my $filter = $filters->[$i];
+
+        my $coderef;
+        if (ref($filter) eq 'CODE') {
+            $coderef = $filter;
+        } elsif (!ref($filter) or ref($filter) eq 'Regexp') {
+            # simple string or regex
+            $coderef = sub {
+                my $orig = shift;
+                (my $changed = $orig) =~ s/$filter//;
+                return $changed;
+            };
+        } else {
+            Carp::croak("Unexpected options passed to compare_ok's 'filter' item $i. "
+                        . "Expected a coderef, Regexp or string, but got ".ref($filter));
+        }
+        push @{$vo{xform}}, $coderef;
+    }
+
 
     return ($file_1, $file_2, %vo);
+}
+
+sub _compare_ok_iterator_for_file {
+    my $file = shift;
+
+    my $fh = IO::File->new($file, 'r') || die "Can't open $file for reading: $!";
+    return sub {
+        my $arg = shift;
+
+        if ($arg eq 'input_line_number') {
+            # Hack to get the line number
+            return $fh->input_line_number();
+        }
+
+        # $arg must be a listref of transform functions
+        NEXT_LINE:
+        while(my $line = $fh->getline()) {
+            foreach my $xform ( @$arg ) {
+                $line = $xform->($line);
+            }
+            return $line if(defined($line) and length($line));   # go again if the xforms eliminated this line
+        }
+        return;  # must be EOF
+    };
 }
 
 sub compare_ok {
@@ -78,26 +164,55 @@ sub compare_ok {
 
     my $tb = __PACKAGE__->builder;
 
-    my @compare_args = (
-        $file_2,
-        $file_1,
-        sub {
-            for my $pr (@{$o{replace}}) {
-                my ($pattern, $replacement) = @{$pr};
-                map { $_ =~ s/$pattern/$replacement/ } @_;
-            }
-            for my $filter (@{$o{filters}}) {
-                map { $_ =~ s/$filter//g } @_;
-            }
-            my $c = ($_[0] ne $_[1]);
-            if ($c == 1 && $o{diag}) {
-                $tb->diag("First diff:\n--- " . $file_2 . "\n+++ " . $file_1 . "\n- " . $_[0] . "+ " . $_[1]);
-            }
-            return $c;
-        }
-    );
+    my(@iters,@filename);
+    foreach my $file ( $file_1, $file_2 ) {
+        push @filename, $file;
+        push @iters, _compare_ok_iterator_for_file($file);
+    }
 
-    return $tb->ok(compare(@compare_args) == 0, $o{name});
+    my @xforms;
+    if ($o{xform}) {
+        # replace means apply this xform to all input files
+        # FIXME add options to apply a transform to either file1 or file2
+        for (my $i = 0; $i < @iters; $i++) {
+            $xforms[$i] ||= [];
+            push @{ $xforms[$i] }, @{$o{xform}};
+        }
+    }
+
+    my @lines = (1); # a dummy value to satisfy the grep below the first time through the loop
+    my $result = 1;
+    GET_LINE_FROM_FILES:
+    while (grep { defined($_) && length($_) } @lines) {
+
+        # fill in the next line for each
+        for (my $i = 0; $i < @iters; $i++) {
+            $lines[$i] = $iters[$i]->( $xforms[$i] );
+        }
+
+        # now compare them
+        COMPARISON:
+        for (my $i = 1; $i < @lines; $i++) {
+            {   no warnings 'uninitialized';
+                next COMPARISON if $lines[0] eq $lines[$i];
+            }
+
+            # different
+            if($o{diag}) {
+                my($line1,$line2) = @lines[0,$i];
+                chomp($line1, $line2);
+
+                $tb->diag(sprintf("First diff:\n--- %s line %d\n+++ %s line %d\n-%s\n+%s\n",
+                        $filename[0], $iters[0]->('input_line_number'),
+                        $filename[$i], $iters[$i]->('input_line_number'),
+                        $line1, $line2));
+            }
+            $result = 0;
+            last GET_LINE_FROM_FILES;
+        }
+    }
+
+    return $tb->ok($result, $o{name});
 }
 
 sub capture_ok {
@@ -156,6 +271,107 @@ sub data_dir {
     return $dirpath;
 }
 
+sub strip_ansi {
+    my $string = shift;
+    $string =~ s/\e\[\d+(?>(;\d+)*)m//g;
+    return $string;
+}
+
+my @command_message_types = qw(status warning error debug usage);
+sub _command_execute_ok_parse_args {
+    if (@_ < 1 or @_ > 3) {
+        Carp::croak("Expected 1, 2 or 3 args to command_execute_ok(), but got ".scalar(@_));
+    }
+
+    my $command = shift;
+    unless (ref($command) && $command->isa('Command')) {
+        Carp::croak('Arg 1 to command_execute_ok() must be an instance of a Command object');
+    }
+
+    my($message_config, $ok_msg);
+    if (! @_) {
+        # no more args
+        $message_config = {};
+        $ok_msg = "execute ".ref($command);
+
+    } elsif (@_ == 1) {
+        $ok_msg = shift;
+        $message_config = {};
+
+    } else { # @_ == 2
+        $message_config = shift;
+        $ok_msg = shift;
+    }
+
+    # validate $message_config contents
+    foreach my $type ( @command_message_types ) {
+        # ! exists means don't filter these messages at all
+        next unless exists $message_config->{$type.'_messages'};
+        # ! defined means don't print them to the terminal, and don't check them afterward
+        next unless defined $message_config->{$type.'_messages'};
+
+        if (ref($message_config->{$type.'_messages'}) ne 'ARRAY') {
+            Carp::croak("Expected an arrayref for ${type}_messages, but got "
+                            . ref($message_config->{$type.'_messages'}));
+        }
+        foreach my $check_msg ( @{ $message_config->{$type.'_messages'} }) {
+            if (ref($check_msg) && ref($check_msg) ne 'Regexp') {
+                Carp::croak("Values for ${type}_messages must be strings or Regexps");
+            }
+        }
+    }
+    return ($command, $message_config, $ok_msg);
+}
+
+my %format_numeral = qw( 1 st 2 nd 3 rd 4 th 5 th 6 th 7 th 8 th 9 th 0 th );
+
+sub command_execute_ok {
+    my($command, $message_config, $message) = _command_execute_ok_parse_args(@_);
+
+    foreach my $type (@command_message_types) {
+        if (exists $message_config->{$type.'_messages'}) {
+            my($dump, $queue) = map { "${_}_${type}_messages" } qw(dump queue);
+            $command->$dump(0);
+            $command->$queue(1) if (defined $message_config->{$type.'_messages'});
+        }
+    }
+
+    my $tb = __PACKAGE__->builder;
+    my $result = $command->execute();
+    $result || return $tb->ok(0, "$message (execute() returned false)");
+
+    foreach my $type (@command_message_types) {
+        my $method = $type.'_messages';
+        if (defined $message_config->{$method}) {
+            my @expected_messages = @{ $message_config->{$method} };
+            my @got_messages = $command->$method();
+            for (my $i = 0; @expected_messages || @got_messages; $i++) {
+                my($expected) = map { defined $_ ? $_ : '' } shift @expected_messages;
+                my($got) = map { defined $_ ? $_ : '' } shift @got_messages;
+
+                if (ref($expected) and $got !~ m/$expected/) {
+                    my $rv = $tb->ok(0, $message);
+                    $i++;
+                    $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
+                                . ' ' . substr($method, 0, -1) # remove the 's'
+                                . ", '$got' didn't match $expected");
+                    return $rv;
+
+                } elsif (!ref($expected) and $got ne $expected) {
+                    my $rv = $tb->ok(0, $message);
+                    $i++;
+                    $tb->diag("For the $i" .$format_numeral{substr($i, -1)}
+                                . ' ' . substr($method, 0, -1) # remove the 's'
+                                . ", got '$got' but expected '$expected'");
+                    return $rv;
+                }
+            }
+        }
+    }
+    return $tb->ok(1, $message);
+}
+
+
 1;
 
 __END__
@@ -176,20 +392,45 @@ Genome::Utility::Test
 
 =head1 METHODS
 
+=over
+
+=item strip_ansi($string)
+
+Returns the given string after removing ANSI escape sequences.
+
 =item sub_test
 
 Mimics Test::More's subtest since Ubuntu 10.04, which we run, does not have a
 Test::More recent enough to have subtest support.
 
-=item compare_ok
+=item compare_ok($file1, $file2, %options)
 
-compare_ok use File::Compare with a few conveniences.
+Compare two files line-by-line
 
-compare_ok($file_1, $file_2, name => '', diag => 0, test => 0);
+  compare_ok($file_1, $file_2)
 
-=over4
+With no options, it directly compares two files.  At the first difference, it
+will stop and print a diagnostic message about the difference (if diag => 1
+is passed as an option).
 
-=head2 OPTIONS
+Options include
+
+=over
+
+=item diag => 1 || 0
+
+Do or do not print a diag() message if the files are different
+
+=item filters => [ string1, string2, ..., regex1, regex2, ...]
+
+A list of string or regular expressions to remove from both files before
+comparing them.  Useful to strip out timestamps or usernames that may be
+different in normal operation.
+
+=item replace => [ [ string1 => replace_string1 ], [regex1 => replace_string2] ]
+
+Like filter, but allows the matching string or regex to be replaced with
+another string before the line comparison is done.
 
 =item name
 
@@ -202,3 +443,35 @@ Disable diag output when a diff is encountered. Added this in case people want t
 =item test
 
 Disable test usage, just return status. Added this so I could test compare_ok.
+
+=back
+
+=item command_execute_ok
+
+  command_execute_ok($cmd)
+  command_execute_ok($cmd, $test_name);
+  command_execute_ok($cmd, $expected_messages, $test_name)
+
+Executes an instance of a Command class, and optionally checks that it
+produced the expected error_messages, status_messages, etc.  $expected_messages
+is a hashref keyed by the message types (error_messages, status_messaegs,
+debug_messages, warning_messages and usage_messages) with values that are
+arrayrefs of strings or regexes, for example
+
+  command_execute_ok($cmd,
+                  { error_messages => ['error 1', qr(broken) ],
+                    status_messages => ['in progress'],
+                    warning_messages => [],
+                    debug_messages => undef },
+                  'Try command');
+
+An empty list means the test expects the command to generate none of that type
+of message.  undef means that type of message will not be printed to the
+terminal during the execution, but the message contents will not be checked.
+
+=back
+
+=head1 SEE ALSO
+
+Test::More
+

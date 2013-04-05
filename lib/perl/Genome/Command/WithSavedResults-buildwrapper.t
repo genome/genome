@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use above 'Genome';
+use Genome::Utility::Test qw(command_execute_ok);
 
 # This tests Genome::Command::WithSavedResults
 # and also Genome::Command::BuildStepWrapper, which only
@@ -47,7 +48,7 @@ sub _execute_v1 {
 }
 
 package main;
-use Test::More tests => 13;
+use Test::More tests => 15;
 
 my $result_meta = Genome::TestCommand::Result->__meta__;
 ok($result_meta, "got result meta for new class");
@@ -67,7 +68,7 @@ ok($meta1, "got BuildStepWrapper for command class");
 
 my $dir2 = Genome::Sys->create_temp_directory();
 
-my $wrapper_result1 = Genome::TestCommand::BuildStepWrapper->execute(
+my $wrapper_result1 = Genome::TestCommand::BuildStepWrapper->create(
     p1 => "P1", 
     i1 => "I1", 
     output_dir => $dir2,
@@ -75,11 +76,21 @@ my $wrapper_result1 = Genome::TestCommand::BuildStepWrapper->execute(
     wrapper_build_label => "test_label", 
     result_version => 1,
 );
-ok($wrapper_result1, "ran wrapper as class method call to execute");
+$wrapper_result1->dump_status_messages(0);
+Genome::TestCommand->dump_status_messages(0);
+Genome::SoftwareResult::Stageable->dump_status_messages(0);
+command_execute_ok($wrapper_result1, 'ran wrapper');
 is($count, 1, "the underlying command has run one time");
 
+Genome::TestCommand::Result->dump_error_messages(0);
+Genome::TestCommand::Result->queue_error_messages(1);
 my $sr1 = Genome::TestCommand::Result->get(p1 => "P1", i1 => "I1", result_version => 1);
 ok($sr1, "got result for wrapper");
+my @error_messages = Genome::TestCommand::Result->error_messages();
+is(scalar(@error_messages), 1, 'Expected 1 error messages');
+like($error_messages[0],
+    qr/^Calling get on SoftwareResult \(unless getting by id\) is slow and possibly incorrect\./,
+    'Expected error text');
 
 my @u1 = $sr1->users();
 is(scalar(@u1), 1, "got one 'user' of the result");
@@ -93,7 +104,7 @@ $build->data_directory($dir3);
 
 my $dir4 = Genome::Sys->create_temp_directory();
 
-my $wrapper_result2 = Genome::TestCommand::BuildStepWrapper->execute(
+my $wrapper_result2 = Genome::TestCommand::BuildStepWrapper->create(
     p1 => "P1", 
     i1 => "I1", 
     output_dir => $dir4,
@@ -101,7 +112,11 @@ my $wrapper_result2 = Genome::TestCommand::BuildStepWrapper->execute(
     wrapper_build_label => "test_label", 
     result_version => 1,
 );
-ok($wrapper_result2, "ran wrapper as class method call to execute");
+command_execute_ok($wrapper_result2,
+    { status_messages => [  qr(Running Genome::TestCommand for build.  Linking results to $dir3),
+                            qr{linking to $dir3.*?: result Genome::TestCommand::Result \(\d+\) from $dir4} ],
+      error_messages => [] },
+    'ran wrapper');
 is($count, 1, "the underlying command has still run just one time");
 
 

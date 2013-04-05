@@ -28,7 +28,7 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
           is => 'Text',
           is_optional => 1,
           doc => "name of the igv reference to use",
-          default => "reference_build36",
+          example_values => ["reference_build36"],
       },
 
       filter_sites =>{

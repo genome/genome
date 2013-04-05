@@ -96,8 +96,8 @@ sub execute {
   #For each list of gene symbols, run the CNView analysis
   foreach my $symbol_list_name (@cnv_symbol_lists){
     if ($symbol_list_name eq "All"){
-      my $cnview_cmd = "gmt copy-number cn-view --annotation-build=$annotation_build_id  --cnv-file=$cnv_data_file  --segments-file=$cnv_hmm_file  --output-dir=$cnview_dir  --name='$symbol_list_name'";
-      Genome::Sys->shellcmd(cmd => $cnview_cmd);
+      my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build=>$build, cnv_file=>$cnv_data_file, segments_file=>$cnv_hmm_file, output_dir=>$cnview_dir, name=>$symbol_list_name);
+      $cnview_cmd->execute();
 
       #Copy these files to the top CNV dir
       my $new_dir = "$cnview_dir"."CNView_"."$symbol_list_name/";
@@ -111,8 +111,8 @@ sub execute {
       }
     }else{
       my $gene_targets_file = "$gene_symbol_lists_dir"."$symbol_list_name".".txt";
-      my $cnview_cmd = "gmt copy-number cn-view --annotation-build=$annotation_build_id  --cnv-file=$cnv_data_file  --segments-file=$cnv_hmm_file  --output-dir=$cnview_dir  --gene-targets-file=$gene_targets_file  --name='$symbol_list_name'";
-      Genome::Sys->shellcmd(cmd => $cnview_cmd);
+      my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build=>$build, cnv_file=>$cnv_data_file, segments_file=>$cnv_hmm_file, output_dir=>$cnview_dir, gene_targets_file=>$gene_targets_file, name=>$symbol_list_name);
+      $cnview_cmd->execute();
     }
   }
 

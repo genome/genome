@@ -38,6 +38,7 @@ my $read_counts = Genome::Model::Tools::Somatic::ReadCounts->create(
     normal_bam  => $normal_bam,
     sites_file  => $sites_file,
     output_file => $output_file,
+    reference_sequence => Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa',
     minimum_mapping_quality => 30,
 );
 

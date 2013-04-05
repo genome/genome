@@ -48,6 +48,12 @@ sub _validate_output {
     my $input_b_file = $self->input_directory_b."/".$variant_type.".hq.bed";
     my $hq_output_file = $self->temp_staging_directory."/".$variant_type.".hq.bed";
     my $lq_output_file = $self->temp_staging_directory."/".$variant_type.".lq.bed";
+
+    unless (-e $input_a_file and -e $input_b_file and -e $hq_output_file and -e $lq_output_file) {
+        $self->status_message("Skipping _validate_output because not all bed files exist. This may be a vcf-only detector/filter strategy");
+        return 1;
+    }
+
     my $input_total = $self->line_count($input_a_file) + $self->line_count($input_b_file);
 
     # Count hq * 2 because every hq line for an intersection implies 2 lines from input combined into one

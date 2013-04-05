@@ -163,9 +163,10 @@ sub execute {
     if ($changes_pp and @param_changes) {
         die "Cannot change the processing_profile_id explicitly and also make parameter changes, which imply changint the processing profile id"; 
     }
-    if (@model_changes) {
-        die ('Changes not recognized as parameters or inputs for model type '. $meta->class_name);
-    }
+
+    #if (@model_changes) {
+    #    die ('Changes not recognized as parameters or inputs for model type '. $meta->class_name . ": @model_changes");
+    #}
     
     my %pp_mapping;
     if (@param_changes) {
@@ -290,7 +291,7 @@ sub execute {
             # Until fixed, we need to call the command instead of the method:
             Genome::Model::Command::Copy->execute(
                 model => $from_model, 
-                overrides => ["processing_profile=" . $to_profile->id, "name=" . $new_name ]
+                overrides => ["processing_profile=" . $to_profile->id, "name=" . $new_name, @input_changes, @model_changes ]
             );
 
             $to_model = Genome::Model->get(name => $new_name);

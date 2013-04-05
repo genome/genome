@@ -55,7 +55,7 @@ class Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper {
             is_optional => 1,
             is_input => 1,
             is_output => 1,
-            default => "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa",
+            example_values => ["/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa"],
         },
         mb_of_ram => {
             is => 'Text',

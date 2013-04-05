@@ -23,6 +23,7 @@ class Genome::Model::Tools::Htseq::Count {
             is => 'SoftwareVersion',
             default_value => '0.5.4p1',
             valid_values => [ Genome::Sys->sw_versions('htseq','htseq-count') ],
+            is_param => 1,
             doc => 'the version of htseq-count to use',
         },
         result_version => {
@@ -30,7 +31,7 @@ class Genome::Model::Tools::Htseq::Count {
             is => 'Integer',
             valid_values => [1],
             default_value => '1',
-            doc => 'the version of results, which may iterate as this logic iterates'
+            doc => 'the version of results, which may iterate as this logic iterates',
         },
         mode => {
             is => 'Text',
@@ -57,7 +58,8 @@ class Genome::Model::Tools::Htseq::Count {
         limit => {
             is => 'Number',
             is_optional => 1,
-            doc => 'limit the number of alignments to the first N (for testing)'
+            is_param => 1,
+            doc => 'limit the number of alignments to the first N (for testing)',
         },
         #sort_strategy => { 
         #    is => 'Text',
@@ -80,6 +82,12 @@ class Genome::Model::Tools::Htseq::Count {
         transcript_hits_file_path => {
             is => 'FilesystemPath',
             doc => 'the path to the file of hit counts by transcript',
+        },
+        output_dir => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+            is_input => 1,
+            doc => 'the results directory',
         },
     ],
     doc => 'generate htseq results for an (annotation-based) alignment result',

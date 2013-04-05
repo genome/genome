@@ -60,24 +60,13 @@ ok($pp, 'created ReferenceAlignment processing profile');
 my $cmd = Genome::Model::Command::Define::ReferenceAlignment->create();
 ok($cmd && $cmd->__errors__, 'insufficient parameters generate errors');
 
-# use default reference sequence
-my %params = (
-    subject_name => $sample->name,
-    processing_profile => $pp,
-);
-for my $model (create_direct_and_cmdline(%params)) {
-    ok($model->reference_sequence_build, 'some default exists for reference sequence');
-    ok(!$model->annotation_reference_build, 'annotation build is not defined');
-    $model->delete;
-}
-
 # specify reference sequence by id
-%params = (
+my %params = (
     subject_name => $sample->name,
     processing_profile_name => $pp->name,
     reference_sequence_build => $rbuild->id,
 );
-$DB::single = 1;
+
 for my $model (create_direct_and_cmdline(%params)) {
     is($model->reference_sequence_build->id, $rbuild->id, 'reference sequence id correct');
     ok(!$model->annotation_reference_build, 'annotation build is not defined');

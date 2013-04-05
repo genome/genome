@@ -756,11 +756,16 @@ if ($ENV{UR_DBI_NO_COMMIT}) {
     warn 'Overriding Genome::SoftwareResult::_resolve_lock_name since UR_DBI_NO_COMMIT is on.' . "\n";
     my $suffix = Genome::Sys->username . '_' . time;
     my $original_resolve_lock_name_sub = \&Genome::SoftwareResult::_resolve_lock_name;
-    *Genome::SoftwareResult::_resolve_lock_name = sub {
-        my $lock_name = &$original_resolve_lock_name_sub(@_);
-        $lock_name .= "_$suffix" unless $lock_name =~ /$suffix/;
-        return $lock_name;
-    };
+    require Sub::Install;
+    Sub::Install::reinstall_sub({
+        into => 'Genome::SoftwareResult',
+        as => '_resolve_lock_name',
+        code => sub {
+            my $lock_name = &$original_resolve_lock_name_sub(@_);
+            $lock_name .= "_$suffix" unless $lock_name =~ /$suffix/;
+            return $lock_name;
+        },
+    });
 }
 
 sub metric_names {

@@ -6,16 +6,12 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::Dbvar {
     is => "Genome::Model::Tools::Annotate::Sv::Base",
+    doc => "Annotate overlaps with dbvar SVs",
     has_input => [
         annotation_file => {
             is => 'Text',
             doc => 'File containing UCSC table',
-            default => "/gsc/scripts/share/BreakAnnot_file/human_build37/GRCh37.remap.all.germline.ucsc.gff",
-        },
-        breakpoint_wiggle_room => {
-            is => 'Number',
-            doc => 'Distance between breakpoint and annotated breakpoint within which they are considered the same, in bp',
-            default => 200,
+            example_values => ["/gsc/scripts/share/BreakAnnot_file/human_build37/GRCh37.remap.all.germline.ucsc.gff"],
         },
         overlap_fraction => {
             is => 'Number',
@@ -25,15 +21,21 @@ class Genome::Model::Tools::Annotate::Sv::Dbvar {
     ],
 };
 
+sub help_detail {
+    return "Determines whether the SV breakpoints match a dbVar SV within some distance.  It also checks to see that the SV and the dbVar SV reciprocally overlap each other by a given fraction.";
+}
+
 sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
     my $dbvar_annotation = $self->read_dbvar_annotation($self->annotation_file);
-    $self->annotate_interval_matches($breakpoints_list, $dbvar_annotation, $self->breakpoint_wiggle_room, "dbvar_annotation", "bpB");
+    $self->annotate_interval_overlaps($breakpoints_list, $dbvar_annotation, "dbvar_annotation");
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);
-            $output{$key} = [$self->get_var_annotation($item, $item->{dbvar_annotation}->{bpB})];
+            my $a = $item->{dbvar_annotation}->{bpA};
+            my $b = $item->{dbvar_annotation}->{bpB};
+            $output{$key} = [$self->get_var_annotation($item, $a, $b, $self->overlap_fraction)];
         }
     }
     return \%output;
@@ -56,11 +58,11 @@ sub read_dbvar_annotation {
        my $p;
        my @fields = split /\t+/, $line;
        $p->{chrom} = $fields[0];
-       $p->{chromStart} = $fields[3];
-       $p->{chromEnd} = $fields[4];
+       $p->{bpA} = $fields[3];
+       $p->{bpB} = $fields[4];
        $p->{name} = $fields[8];
        $p->{chrom} =~ s/chr//;
-       push @{$annotation{$p->{chrom}}{$p->{chromEnd}}{$p->{chromStart}}}, $p;
+       push @{$annotation{$p->{chrom}}}, $p;
     }
     return \%annotation;
 }

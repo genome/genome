@@ -65,13 +65,14 @@ sub execute {
 
 sub _write_gap_txt_file {
     my ( $self, $scaffolds ) = @_;
+
     my $gap_file = $self->gap_file;
     unlink $gap_file;
     my $fh = Genome::Sys->open_file_for_writing( $gap_file );
     for my $newb_contig_name ( sort keys %{$scaffolds} ) {
         my $pcap_contig_name = $scaffolds->{$newb_contig_name}->{pcap_name};
-        my $gap_size = ( $scaffolds->{$newb_contig_name}->{gap_size} ) ?
-            $scaffolds->{$newb_contig_name}->{gap_size} : $self->default_gap_size;
+        my $gap_size = ( $scaffolds->{$newb_contig_name}->{gap_length} ) ?
+            $scaffolds->{$newb_contig_name}->{gap_length} : $self->default_gap_size;
         $fh->print( $pcap_contig_name.' '.$gap_size."\n" );
     }
     $fh->close;
@@ -89,7 +90,7 @@ sub _validate_inputs {
     }
     #input newbler ace file
     if ( not -s $self->newb_ace_file ) {
-        $self->error_message( "Failed to find newbler ace file or file is zero size: ".$self->newbler_ace_file );
+        $self->error_message( "Failed to find newbler ace file or file is zero size: ".$self->newb_ace_file );
         return;
     }
     #output pcap style ace file
@@ -108,23 +109,30 @@ sub _write_pcap_style_ace {
     my $fh = Genome::Sys->open_file_for_reading( $self->newb_ace_file );
     unlink $self->pcap_scaffold_ace_file.'.int';
     my $fh_int = Genome::Sys->open_file_for_writing( $self->pcap_scaffold_ace_file.'.int' );
+
     my $print_setting = 0;
-    my $contig_count = 0;
-    my $read_count = 0;
+    my $contig_count  = 0;
+    my $read_count    = 0;
+    my $current_scaf  = 0;
+
     while ( my $line = $fh->getline ) {
         if ( $line =~ /^CO\s+/ ) {
             my ( $newb_ctg_name ) = $line =~ /^CO\s+(\S+)/;
             my $rest_of_line = "$'";
-            
             if ( exists $scaffolds->{$newb_ctg_name} ) {
                 my $pcap_name = $scaffolds->{$newb_ctg_name}->{pcap_name};
+                ($current_scaf) = $pcap_name =~ /Contig(\d+)\./;
                 $fh_int->print( "CO $pcap_name $rest_of_line" );
                 $contig_count++;
                 $print_setting = 1;
                 next;
             }
             else {
-                $print_setting = 0;
+                my $unscaf_contig_name = 'Contig'.++$current_scaf.'.1';
+                $contig_count++;
+                $fh_int->print( "CO $unscaf_contig_name $rest_of_line" );
+                $print_setting = 1;
+                next;
             }
         }
         $fh_int->print( $line ) if $print_setting == 1;

@@ -36,7 +36,7 @@ class Genome::Model::Tools::Analysis::MutationSpectrumSequenceContextPvalue {
 	is_input => 1,
 	is_optional => 1,
 	doc => 'full path to build36/37/n of reference sequence fasta file. Default: build37 fasta',
-	default => '/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa',
+	example_values => ['/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa'],
     },
     hypothesized_population_proportion => {
         is_input => 1,

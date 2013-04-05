@@ -17,6 +17,7 @@ class Genome::Model::SomaticValidation::Command::ValidateLargeIndels::CreateAsse
         build_id => {
             is => 'Integer',
             is_input => 1,
+            is_output => 1,
             doc => 'build id of SomaticValidation model',
         },
         _long_indel_bed_file => {

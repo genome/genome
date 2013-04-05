@@ -8,7 +8,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests => 7;
+use Test::More tests => 9;
 my $v;
 
 class Genome::ProcessingProfile::Foo { is => 'Genome::ProcessingProfile' };
@@ -34,6 +34,10 @@ class Genome::Model::Command::T1 {
         model => { is => 'Genome::Model' },
     ]
 };
+Genome::Model::Command::T1->dump_status_messages(0);
+Genome::Model::Command::T1->dump_error_messages(0);
+Genome::Model::Command::T1->queue_status_messages(1);
+Genome::Model::Command::T1->queue_error_messages(1);
 sub Genome::Model::Command::T1::execute {
     my $self = shift;
     $v = $self->model;
@@ -43,6 +47,13 @@ sub Genome::Model::Command::T1::execute {
 
 sh("genome model t1 --model model1");
 is($v, $m1, "got single model with full name");
+my @status_messages = Genome::Model::Command::T1->status_messages();
+is_deeply(\@status_messages,
+    [   q('model' may require verification...),
+        q(Resolving parameter 'model' from command argument 'model1'... found 1) ],
+    'Expected status messages');
+my @error_messages = Genome::Model::Command::T1->error_messages();
+is(scalar(@error_messages), 0, 'No error messages');
 
 sub sh {
     my $txt = shift;

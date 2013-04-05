@@ -55,6 +55,8 @@ sub _convert_gtf_to_genepred {
         cmd => $cmd,
         input_files => [$gtf_file],
         output_files => [$gene_file],
+        redirect_stdout => '/dev/null',
+        redirect_stderr => '/dev/null',
     );
     return 1;
 }

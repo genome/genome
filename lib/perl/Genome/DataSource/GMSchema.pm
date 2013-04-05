@@ -6,11 +6,15 @@ use Genome;
 use Carp;
 use File::lockf;
 use DBD::Pg;
+use IO::Socket;
 
 
 class Genome::DataSource::GMSchema {
     is => ['UR::DataSource::Oracle'],
 };
+
+my $POST_COMMIT_WRAPPED_ACTION = \&UR::Util::null_sub;
+$UR::Context::current->add_observer(aspect => 'commit', callback => $POST_COMMIT_WRAPPED_ACTION);
 
 sub table_and_column_names_are_upper_case { 1; }
 
@@ -49,18 +53,18 @@ sub _sync_database {
     my %params = @_;
 
     local $THIS_COMMIT_ID = UR::Object::Type->autogenerate_new_object_id_uuid();
-    
+
     my $required_pg_version = '2.19.3';
 
     my $pg_version = $DBD::Pg::VERSION;
     if (($pg_version ne $required_pg_version) && !defined $ENV{'LIMS_PERL'}) {
         $self->error_message("**** INCORRECT POSTGRES DRIVER VERSION ****\n" .
-                             "You are using a Perl version that includes an incorrect DBD::Pg driver.\n" .
-                             "You are running $pg_version and need to be running $required_pg_version.\n" .
-                             "Your sync has been aborted to protect data integrity in the Postgres database.\n" .
-                             "Please be sure you are using 'genome-perl' and not /gsc/bin/perl.\n\n\n" .
-                             "This event has been logged with apipe; if you are unsure of why you received this message\n" .
-                             "open an apipe-support ticket with the date/time of occurrence and we will assist you.\n");
+            "You are using a Perl version that includes an incorrect DBD::Pg driver.\n" .
+            "You are running $pg_version and need to be running $required_pg_version.\n" .
+            "Your sync has been aborted to protect data integrity in the Postgres database.\n" .
+            "Please be sure you are using 'genome-perl' and not /gsc/bin/perl.\n\n\n" .
+            "This event has been logged with apipe; if you are unsure of why you received this message\n" .
+            "open an apipe-support ticket with the date/time of occurrence and we will assist you.\n");
         log_error($self->error_message);
         die $self->error_message;
     }
@@ -80,7 +84,7 @@ sub _sync_database {
 
 
     # fork if we don't skip.
-    my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES}); 
+    my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES});
     my $use_postgres = !$skip_postgres;
 
     # Attempt to get a meta db handle first.  This way, if the meta db doesn't exist,
@@ -110,81 +114,86 @@ sub _sync_database {
             }
         }
     }
-	
-	
 
-	my ($pg_signal_reader, $pg_signal_writer);
 
-	my $pid;
-	
-	if ($use_postgres) {
-            pipe($pg_signal_reader, $pg_signal_writer);
-            $pid = UR::Context::Process->fork();
-	} else {
-            $pid = $$;
-	}
-	
-    if ($pid) {
-        # we're in the parent, close the reader.
-        if ($use_postgres) {
-                close($pg_signal_reader);
-                $pg_signal_writer->autoflush(1);
+    my ($parent_oracle_control_sock, $child_pg_control_sock);
+
+    my $pid;
+
+    if ($use_postgres) {
+        ($parent_oracle_control_sock, $child_pg_control_sock) = IO::Socket->socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC);
+        unless ($parent_oracle_control_sock && $child_pg_control_sock) {
+            die $self->error_message("Uh-oh. Couldn't prepare oracle/postgres sync control socket pair.");
         }
 
-		
+        $pid = UR::Context::Process->fork();
+    } else {
+        $pid = $$;
+    }
+
+    if ($pid) {
         my $sync_time_start = Time::HiRes::time();
         my $oracle_sync_rv = Genome::DataSource::GMSchemaOracle->_sync_database(@_);
-
         my $sync_time_duration = Time::HiRes::time() - $sync_time_start;
         unless ($oracle_sync_rv) {
             Carp::confess "Could not sync to oracle!";
         }
+
         if ($use_postgres) {
-            log_commit_time('oracle',$sync_time_duration);
-            waitpid($pid, -1);
-			
-			print $pg_signal_writer("1\n");
-			close($pg_signal_writer);
-        }		
+            log_commit_time('oracle', $sync_time_duration);
+            close $parent_oracle_control_sock;
+
+            $POST_COMMIT_WRAPPED_ACTION = sub {
+                print $child_pg_control_sock "1\n";
+                $POST_COMMIT_WRAPPED_ACTION = \&UR::Util::null_sub;
+                eval {
+                    local $SIG{'ALRM'} = sub {
+                        log_error('Timed out waiting for Postgres to sync!  Oracle successfully committed.  Databases have possibly diverged.');
+                        die; # to exit eval
+                    };
+                    alarm 30;
+                    my $pg_signal = <$child_pg_control_sock>;
+                    alarm 0;
+                };
+            };
+        }
+
         if ($ENV{GENOME_QUERY_POSTGRES}) {
             Genome::Site::TGI->redo_table_name_patch;
         }
+
         return 1;
-    } elsif (defined $pid) {
-        # Fork twice so parent (process doing Oracle commit) doesn't wait for child
-        # to finish.
-        # Ignoring SIG_CHLD prevents "Child process #### reaped" from appearing in logs
+    }
+    elsif (defined $pid) {
+        # close this to stop us from blocking on the read even when our parent exits.
+        close $child_pg_control_sock;
+
+        # Fork twice so parent (process doing Oracle commit) doesn't wait for
+        # child to finish.  Ignoring SIG_CHLD prevents "Child process ####
+        # reaped" from appearing in logs.
         $SIG{CHLD} = 'IGNORE';
         my $second_pid = fork();
         Carp::confess "Can't fork" unless defined $second_pid;
         if ($second_pid) {
-            # Using POSIX exit prevents END and DESTROY blocks from executing.
-            POSIX::_exit(0);
+            POSIX::_exit(0); # avoids END and DESTROY blocks
         }
 
-        # close this to stop us from blocking on the read even when our parent exits.
-        close($pg_signal_writer);
-
         # builds will bomb out unless we tell POE that we forked.
+        eval { POE::Kernel->has_forked() };
+
+        # Turtles all the way down... the logging logic can potentially bomb
+        # and emit warnings that the user shouldn't see, so eval everything!
         eval {
-                POE::Kernel->has_forked();
-        };
-    
-        # Turtles all the way down... the logging logic can potentially bomb and emit warnings that the user
-        # shouldn't see, so eval everything!
-        eval { 
             my $stderr = '';;
             local *STDERR;
             open STDERR, '>', \$stderr;
             my $sync_time_start = Time::HiRes::time();
-			
+
             eval {
-                $DB::single = 1;
                 my $pg_commit_rv;
                 my $pg_sync_rv = Genome::DataSource::PGTest->_sync_database(@_);
-				
-												
-                my $pg_signal = <$pg_signal_reader>;
+
+                my $pg_signal = <$parent_oracle_control_sock>;
                 if (defined $pg_signal) {
                     $pg_commit_rv = Genome::DataSource::PGTest->SUPER::commit;
                 }
@@ -200,9 +209,10 @@ sub _sync_database {
                 print $error, "\n";
                 log_error($error);
             }
-            log_commit_time('pg',$sync_time_duration);
+            log_commit_time('pg', $sync_time_duration);
         };
-        POSIX::_exit(0);
+        print $parent_oracle_control_sock "1\n";
+        POSIX::_exit(0); # avoids END and DESTROY blocks
     }
     else {
         Carp::confess "Problem forking for postgres commit!";
@@ -270,8 +280,7 @@ sub create_log_message {
     my $error = shift;
 
     require DateTime;
-    my $dt = DateTime->now;
-    $dt->set_time_zone('America/Chicago');
+    my $dt = DateTime->now(time_zone => 'America/Chicago');
     my $date = $dt->ymd;
     my $time = $dt->hms;
     my $user = Genome::Sys->username;
@@ -291,7 +300,7 @@ sub create_log_message {
 
 sub _determine_base_log_pathname {
     require DateTime;
-    my $dt = DateTime->now;
+    my $dt = DateTime->now(time_zone => 'America/Chicago');
     my $date = $dt->ymd;
 
     my $base_dir = '/gsc/var/log/genome/postgres/';
@@ -405,6 +414,109 @@ sub sleep_length {
     return 30;
 }
 
+# A list of the old GM schema tables that Genome::Model should ignore
+my @OLD_GM_TABLES = qw(
+ALL_ALLELE_TYPE
+ANALYSIS_METHOD
+CHROMOSOME
+COLLABORATOR
+COLLABORATOR_SAMPLE
+CONSERVATION_SCORE
+EGI_TYPE
+EXTERNAL_GENE_ID
+GENE
+GENE_EXPRESSION
+GENE_GENE_EXPRESSION
+GENE_GENOMIC_FEATURE
+GENE_GENOTYPE
+GENOME_MODEL_1
+GENOME_UPDATE_HISTORY
+GENOMIC_FEATURE
+GENOTYPE
+GENOTYPE_VARIATION
+GE_DETECTION
+GE_TECH_TYPE
+GF_FEATURE_TYPE
+GO_XREF
+GROUP_INFO
+GROUP_TYPES
+HISTOLOGY
+IPRO_GENE_TRANSCRIPT_XREF
+IPRO_RESULTS
+MAF
+META_GROUP
+META_GROUP_STATUS
+PF_FEATURE_TYPE
+PP_DETECTION_SOFT
+PP_MAPPING_REFERENCE
+PP_TECH_TYPE
+PROCESS_PROFILE
+PROCESS_PROFILE_SOURCE
+PROTEIN
+PROTEIN_FEATURE
+PROTEIN_VARIATION
+PROTEIN_VARIATION_SCORE
+PVS_SCORE_TYPE
+PVS_SOFTWARE
+READ_GROUP
+READ_GROUP_GENOTYPE
+READ_GROUP_GENOTYPE_OLD
+READ_GROUP_INFO
+READ_INFO
+REPEAT_INFO
+RGGI_INFO_TYPE
+RGG_INFO
+RGG_INFO_OLD
+RI_REPEAT_TYPE
+SAMPLE
+SAMPLE_GENE
+SAMPLE_GENE_EXPRESSION
+SAMPLE_GENOTYPE
+SAMPLE_GROUP_INFO
+SAMPLE_HISTOLOGY
+SAMPLE_SUBTYPE
+SAMPLE_TISSUE
+SAMPLE_TYPE
+SEQUENCE_DIFF
+SEQUENCE_DIFF_EVAL
+SEQUENCE_DIFF_PART
+SGIAM_SCORE_TYPE
+SGI_ANALYSIS_METHOD
+SG_INFO_TYPE
+STRAND
+SUBMITTER
+SUBMITTER_METHOD
+TERM
+TISSUE
+TRANSCRIPT
+TRANSCRIPT_SOURCE
+TRANSCRIPT_STATUS
+TRANSCRIPT_SUB_STRUCTURE
+TRANSCRIPT_VARIATION
+TSS_STRUCTURE_TYPE
+TV_OLD
+TV_TYPE
+VARIANT_REVIEW_DETAIL_OLD
+VARIANT_REVIEW_LIST_FILTER
+VARIANT_REVIEW_LIST_MEMBER
+VARIATION
+VARIATION_FREQUENCY
+VARIATION_GROUP
+VARIATION_INSTANCE
+VARIATION_ORIG
+VARIATION_ORIG_VARIATION_TYPE
+VARIATION_SCORE
+VS_SCORE_TYPE
+VS_SOFTWARE
+);
+
+sub _ignore_table {
+    my($self,$table_name) = @_;
+
+    return 1 if $self->SUPER::_ignore_table($table_name);
+
+    return scalar(grep { $_ eq $table_name } @OLD_GM_TABLES);
+}
 
 1;
 

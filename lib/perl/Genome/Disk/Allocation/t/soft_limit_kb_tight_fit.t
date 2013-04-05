@@ -3,9 +3,19 @@ use warnings;
 
 use Test::More;
 
+use File::Basename qw(dirname);
+our $lib_dir;
+BEGIN {
+    $lib_dir = dirname(__FILE__) . '-lib' ;
+};
+BEGIN {
+    # Untested. Site::TGI changes broke these tests.
+    use lib $lib_dir;
+};
+
 use Time::HiRes qw(usleep);
 use above 'Genome';
-use Genome::Disk::Allocation::Test qw(create_tmpfs_volume create_barrier spawn_child waitpids);
+use GenomeDiskAllocationTest qw(create_tmpfs_volume create_barrier spawn_child waitpids);
 
 # soft_limit_kb_tight_fit.t
 # The purpose of this test is ...

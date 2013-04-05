@@ -28,6 +28,8 @@ class Genome::Model::Command::Test {
 
 my $cmd = Genome::Model::Command::Test->create();
 $cmd->queue_error_messages(1);
+$cmd->dump_error_messages(0);
+$cmd->dump_status_messages(0);
 
 # bar is already the right class, it should not be resolved. bars should, however.
 my $bar = Foo::Bar->create(cake => "a lie");

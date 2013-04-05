@@ -51,7 +51,7 @@ $aligner_label =~ s/\./\_/g;
 
 #was the path for BSMAP2.1 - new path is in the more canonical location
 #my $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
-my $expected_shortcut_path = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-AlignmentResult-Bsmap/v2.6/results";
+my $expected_shortcut_path = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-AlignmentResult-Bsmap/v2.6/2013-04-03";
 print STDERR $expected_shortcut_path . "\n";
 
 my $FAKE_INSTRUMENT_DATA_ID=-123456;
@@ -129,7 +129,11 @@ sub test_alignment {
         my $to_validate_bam_md5 = Genome::Sys->md5sum($expected_shortcut_path  . "/all_sequences.bam");
        
         print "Comparing " . $dir . "/all_sequences.bam with $expected_shortcut_path/all_sequences.bam\n\n\n"; 
-        is($generated_bam_md5, $to_validate_bam_md5, "generated md5 matches what we expect -- the bam file is the same!");
+        is($generated_bam_md5, $to_validate_bam_md5, "generated md5 matches what we expect -- the bam file is the same!")
+            or do {
+                system("mv $dir/all_sequence.bam /tmp/last-failed-bsmap-test-result.bam");
+                diag("new /tmp/last-failed-bsmap-test-result does not match $expected_shortcut_path/all_sequences.bam");
+            };
         
     }
 
@@ -232,8 +236,7 @@ sub generate_fake_instrument_data {
         flow_cell_id => '12345',
         lane => '1',
         median_insert_size => '22',
-        sd_below_insert_size => '7',
-        sd_above_insert_size => '34',
+        sd_insert_size => '34',
         #median_insert_size => '195', # XXX huge datasets
         #sd_below_insert_size => '38',
         #sd_above_insert_size => '32',

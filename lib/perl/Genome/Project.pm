@@ -6,20 +6,23 @@ use Genome;
 use Class::ISA;
 
 class Genome::Project {
-    is => ['Genome::Notable','Genome::Searchable'],
-    id_generator => '-uuid',
+    is => [ "Genome::Notable", "Genome::Searchable" ],
+    table_name => 'GENOME_PROJECT',
     id_by => [
-        id => { is => 'Text', }
+        id => {
+            is => 'Text',
+            len => 64,
+        },
     ],
     has => [
         name => {
             is => 'Text',
+            len => 200,
             doc => 'Name of the project',
         },
         fixed_size_name => {
             is => 'Text',
-            is_calculated => 1,
-            calculate_from => ['name'],
+            calculate_from => 'name',
             calculate => sub {
                 my ($n) = @_;
                 return $n if (length($n) <= 20);
@@ -31,49 +34,45 @@ class Genome::Project {
             is => 'Genome::Sys::User',
             via => 'parts',
             to => 'entity_id',
-            where => [ 'entity_class_name' => 'Genome::Sys::User' ],
-            is_mutable => 0,
+            where => [ entity_class_name => 'Genome::Sys::User' ],
             is_many => 1,
         },
     ],
     has_many_optional => [
         parts => {
             is => 'Genome::ProjectPart',
-            is_mutable => 1,
             reverse_as => 'project',
+            is_mutable => 1,
             doc => 'All the parts that compose this project',
         },
         watcher_ids => {
             is => 'Genome::Sys::User',
             via => 'parts',
             to => 'entity_id',
-            where => [ 'entity_class_name' => 'Genome::Sys::User', 'role' => 'watcher' ],
-            is_mutable => 0,
             is_many => 0,
+            where => [ entity_class_name => 'Genome::Sys::User', role => 'watcher' ],
         },
         watchers => {
             is => 'Genome::Sys::User',
             via => 'parts',
             to => 'entity',
-            where => [ 'entity_class_name' => 'Genome::Sys::User', 'role' => 'watcher' ],
-            is_mutable => 0,
             is_many => 0,
+            where => [ entity_class_name => 'Genome::Sys::User', role => 'watcher' ],
         },
         creator => {
             is => 'Genome::Sys::User',
             via => 'parts',
             to => 'entity',
-            where => [ 'entity_class_name' => 'Genome::Sys::User', 'role' => 'creator' ],
-            is_mutable => 0,
             is_many => 0,
+            where => [ entity_class_name => 'Genome::Sys::User', role => 'creator' ],
         },
         part_set => {
             is => 'Genome::ProjectPart::Set',
             is_calculated => 1,
         },
-        parts_count => { 
-            is => 'Number', 
-            via => 'part_set', 
+        parts_count => {
+            is => 'Number',
+            via => 'part_set',
             to => 'count',
             doc => 'The number of parts associated with this project',
         },
@@ -83,9 +82,9 @@ class Genome::Project {
             doc => 'All the objects to which the parts point',
         },
     ],
-    table_name => 'GENOME_PROJECT',
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
     doc => 'A project, can contain any number of objects (of any type)!',
 };
 
@@ -195,7 +194,7 @@ sub delete {
 
     for my $part ($self->parts) {
         $part->delete();
-    }    
+    }
 
     return $self->SUPER::delete();
 }

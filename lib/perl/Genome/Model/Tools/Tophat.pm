@@ -82,7 +82,7 @@ sub path_for_tophat_version {
 }
 
 sub default_tophat_version {
-    die "default tophat version: $DEFAULT is not valid" unless $TOPHAT_VERSIONS{$DEFAULT};
+    die "default tophat version: $DEFAULT is not valid" unless __PACKAGE__->path_for_tophat_version($DEFAULT);
     return $DEFAULT;
 }
 

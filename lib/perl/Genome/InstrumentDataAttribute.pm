@@ -6,29 +6,30 @@ use Genome;
 
 class Genome::InstrumentDataAttribute {
     table_name => 'INSTRUMENT_DATA_ATTRIBUTE',
-    schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
-    doc => 'Represents a particular attribute of an instrument data object',
     id_by => [
         instrument_data_id => {
             is => 'Text',
+            len => 64,
         },
         attribute_label => {
             is => 'Text',
+            len => 64,
         },
         attribute_value => {
             is => 'Text',
+            len => 512,
         },
         nomenclature => {
             is => 'Text',
+            len => 64,
         },
     ],
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
             id_by => 'instrument_data_id',
+            constraint_name => 'IDA_ID_FK',
         },
-        
         # TODO: we have been simplifying the name/value stuff for some time
         # Switch to these by default, and test the inversion.
         name => {
@@ -40,6 +41,9 @@ class Genome::InstrumentDataAttribute {
             to => 'attribute_value',
         },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    doc => 'Represents a particular attribute of an instrument data object',
 };
 
 sub create {

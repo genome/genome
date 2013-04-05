@@ -6,43 +6,94 @@ use warnings;
 use Genome;
 
 class Genome::FeatureList {
-    is => 'UR::Object',
-    id_generator => '-uuid',
     table_name => 'FEATURE_LIST',
+    id_by => [
+        id => {
+            is => 'Text',
+            len => 64,
+        },
+    ],
     has => [
-        id => { is => 'Text', len => 64 },
-        name => { is => 'Text', len => 200 },
-        format => { is => 'Text', len => 64, doc => 'Indicates whether the file follows the BED spec.', valid_values => ['1-based', 'true-BED', 'multi-tracked', 'multi-tracked 1-based', 'unknown'], },
-        file_content_hash => { is => 'Text', len => 32, doc => 'MD5 of the BED file (to ensure integrity)' },
+        name => {
+            is => 'Text',
+            len => 200,
+        },
+        format => {
+            is => 'Text',
+            len => 64,
+            valid_values => [ "1-based", "true-BED", "multi-tracked", "multi-tracked 1-based", "unknown" ],
+            doc => 'Indicates whether the file follows the BED spec.',
+        },
+        file_content_hash => {
+            is => 'Text',
+            len => 32,
+            doc => 'MD5 of the BED file (to ensure integrity)',
+        },
         is_multitracked => {
-            is => 'Boolean', calculate_from => ['format'],
-            calculate => q{ return scalar ($format =~ /multi-tracked/); },
+            is => 'Boolean',
+            calculate_from => 'format',
+            calculate => q( return scalar ($format =~ /multi-tracked/); ),
         },
         is_1_based => {
-            is => 'Boolean', calculate_from => ['format'],
-            calculate => q{ return scalar ($format =~ /1-based/); },
-        }
+            is => 'Boolean',
+            calculate_from => 'format',
+            calculate => q( return scalar ($format =~ /1-based/); ),
+        },
     ],
     has_optional => [
-        source => { is => 'Text', len => 64, doc => 'Provenance of this feature list. (e.g. Agilent)', },
-        reference_id => { is => 'NUMBER', len => 10, doc => 'ID of the reference sequence build for which the features apply' },
-        reference => { is => 'Genome::Model::Build::ReferenceSequence', id_by => 'reference_id' },
-        reference_name => { via => 'reference', to => 'name', },
-        subject_id => { is => 'NUMBER', len => 10, doc => 'ID of the subject to which the features are relevant' },
-        subject => { is => 'Genome::Model::Build', id_by => 'subject_id' },
-        disk_allocation   => { is => 'Genome::Disk::Allocation', is_optional => 1, is_many => 1, reverse_as => 'owner', },
+        source => {
+            is => 'Text',
+            len => 64,
+            doc => 'Provenance of this feature list. (e.g. Agilent)',
+        },
+        reference_id => {
+            is => 'NUMBER',
+            len => 10,
+            doc => 'ID of the reference sequence build for which the features apply',
+        },
+        reference => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            id_by => 'reference_id',
+        },
+        reference_name => {
+            via => 'reference',
+            to => 'name',
+        },
+        subject_id => {
+            is => 'NUMBER',
+            len => 10,
+            doc => 'ID of the subject to which the features are relevant',
+        },
+        subject => {
+            is => 'Genome::Model::Build',
+            id_by => 'subject_id',
+        },
+        disk_allocation => {
+            is => 'Genome::Disk::Allocation',
+            reverse_as => 'owner',
+            is_many => 1,
+        },
         file_path => {
-               is => 'Text',
-               calculate_from => ['disk_allocation'],
-               calculate => q{
+            is => 'Text',
+            calculate_from => 'disk_allocation',
+            calculate => q(
                   if($disk_allocation) {
                     my $directory = $disk_allocation->absolute_path;
                        return join('/', $directory, $self->id . '.bed');
                   }
-               }
+               ),
         },
-        content_type => { is => 'VARCHAR2', len => 255, doc => 'The type of list (used for determining automated processing)', valid_values => ['exome', 'targeted', 'validation', 'roi', undef] },
-        description => { is => 'VARCHAR2', len => 255, doc => 'General description of the BED file'},
+        content_type => {
+            is => 'VARCHAR2',
+            len => 255,
+            valid_values => [ "exome", "targeted", "validation", "roi", undef ],
+            doc => 'The type of list (used for determining automated processing)',
+        },
+        description => {
+            is => 'VARCHAR2',
+            len => 255,
+            doc => 'General description of the BED file',
+        },
     ],
     has_optional_transient => [
         #TODO These could be pre-computed and stored in the allocation rather than re-generated every time
@@ -57,10 +108,12 @@ class Genome::FeatureList {
         _converted_bed_file_paths => {
             is => 'HASH',
             doc => 'The paths to the temporary dumped copies of merged post-processed BED files converted to other references',
-        }
+        },
     ],
-    doc => 'A feature-list is, generically, a set of coördinates for some reference',
+    schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
+    doc => 'A feature-list is, generically, a set of coördinates for some reference',
 };
 
 sub __display_name__ {
@@ -141,7 +194,7 @@ sub _cleanup_allocation_sub {
         print "Now deleting allocation with owner_id = $id\n";
         my $allocation = Genome::Disk::Allocation->get(owner_id => $id, owner_class_name => $class_name);
         if ($allocation) {
-            $allocation->deallocate; 
+            $allocation->deallocate;
         }
     };
 }

@@ -22,7 +22,9 @@ my $test_dir = tempdir(
     CLEANUP => 1,
 );
 ok(-d $test_dir, "created test dir at $test_dir");
-$Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+{ no warnings 'once';
+    $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+}
 
 my $volume_path = tempdir(
     "test_volume_" . "_XXXXXXX",
@@ -49,7 +51,9 @@ my $group = Genome::Disk::Group->create(
     unix_gid => 0,
 );
 ok($group, 'successfully made testing group') or die;
-push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+{ no warnings 'once';
+    push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+}
 
 my $assignment = Genome::Disk::Assignment->create(
     dg_id => $group->id,
@@ -75,6 +79,7 @@ $path = join('/', 'blah', $group->subdirectory, 'testing');
 $mount_path = Genome::Disk::Allocation->_get_mount_path_from_full_path($path);
 ok(!$mount_path, 'correctly failed to resolve mount path');
 
+Genome::Disk::Allocation->dump_status_messages(0);
 my $allocation = Genome::Disk::Allocation->create(
     disk_group_name => $group->disk_group_name,
     allocation_path => 'testing123/blah',

@@ -19,7 +19,6 @@
     Processing profile to be used by model, can provide either a name or an ID 
   [1mreference-sequence-build[0m
     ID or name of the reference sequence to align against 
-    Default value '101947881' if not specified
 
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m

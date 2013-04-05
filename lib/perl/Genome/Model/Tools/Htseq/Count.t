@@ -7,7 +7,7 @@ use Genome::Model::Tools::Htseq::Count;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Htseq-Count/2013-03-05';
+my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Htseq-Count/2013-04-04';
 my $rebuilding = (@ARGV and $ARGV[0] eq 'REBUILD');
 
 my $test_outdir;
@@ -32,7 +32,7 @@ else {
 #my $b = Genome::Model::Build->get(133351985);
 #ok($b, "got test build " . $b->__display_name__);
 
-my $a = Genome::InstrumentData::AlignmentResult->get(133352072);
+my $a = Genome::InstrumentData::AlignmentResult->get(135770173);
 ok($a, "got alignment result " . $a->__display_name__);
 
 # The tool works with the alignment result output_dir by default
@@ -72,7 +72,7 @@ my $command = Genome::Model::Tools::Htseq::Count->execute(
     ($rebuilding ? (output_dir => $test_outdir) : ()), # use when overriding output_dir for testing 
     app_version => '0.5.4p1',
     result_version => 1,
-    #limit => 2000,
+    limit => 2000,
 );
 ok($command, "got command");
 #UR::Context->commit;

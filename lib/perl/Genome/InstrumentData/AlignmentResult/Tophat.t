@@ -103,7 +103,7 @@ sub generate_fake_instrument_data {
             lane => 4 + $i,
             #seq_id => $FAKE_INSTRUMENT_DATA_ID + $i,
             median_insert_size => '22',
-            sd_above_insert_size => '100',
+            sd_insert_size => '100',
             clusters => '600',
             read_length => '50',
             #sample_name => 'test_sample_name',

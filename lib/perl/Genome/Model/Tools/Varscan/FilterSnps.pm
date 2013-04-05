@@ -25,14 +25,34 @@ my $report_only = 0;
 my %stats = ();
 
 class Genome::Model::Tools::Varscan::FilterSnps {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		snp_file		=> { is => 'Text', doc => "File containing varscan calls, e.g. status.varscan.snp" , is_optional => 0, is_input => 1},
-		indel_file	=> { is => 'Text', doc => "File containing varscan indel calls" , is_optional => 0, is_input => 1},
-		output_file		=> { is => 'Text', doc => "Output file for filtered SNPs" , is_optional => 0, is_input => 1, is_output => 1},
-		max_indel_proximity	=> { is => 'Text', doc => "If variant is this number of bp from an indel, filter it [3]" , is_optional => 1},
-	],
+    is => 'Command',
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        snp_file => {
+            is => 'Text',
+            doc => "File containing varscan calls, e.g. status.varscan.snp",
+            is_optional => 0,
+            is_input => 1,
+        },
+        indel_file => {
+            is => 'Text',
+            doc => "File containing varscan indel calls",
+            is_optional => 0,
+            is_input => 1,
+        },
+        output_file => {
+            is => 'Text',
+            doc => "Output file for filtered SNPs",
+            is_optional => 0,
+            is_input => 1,
+            is_output => 1,
+        },
+        max_indel_proximity => {
+            is => 'Text',
+            doc => "If variant is this number of bp from an indel, filter it [3]",
+            is_optional => 1,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

@@ -11,8 +11,8 @@ class Genome::Model::Tools::FastTier::AddTiers {
         build => {
             is => 'Integer',
             is_optional => 1,
-            doc => 'Genome build to use (accepts 36 or 37)',
-            default => '36',
+            doc => 'Genome build to use',
+            valid_values => ['36','37'],
         },
 
         input_file => {

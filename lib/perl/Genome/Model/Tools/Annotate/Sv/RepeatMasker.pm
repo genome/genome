@@ -7,11 +7,12 @@ use List::Util qw(max min);
 
 class Genome::Model::Tools::Annotate::Sv::RepeatMasker {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
+    doc => "Annotate SVs whose breakpoints fall in repeat-masked regions",
     has_input => [
         annotation_file => {
             is => 'String',
             doc => 'Path to annotation file',
-            default => "/gscuser/aregier/git/genome/vep/lib/perl/Genome/repeat_masker.tsv",
+            example_values => ["/gscuser/aregier/git/genome/vep/lib/perl/Genome/repeat_masker.tsv"],
         },
         length_to_repeat => {
             type => 'Integer',
@@ -30,6 +31,10 @@ class Genome::Model::Tools::Annotate::Sv::RepeatMasker {
         },
     ],
 };
+
+sub help_detail {
+    return "Determine whether the SV breakpoints fall into any repeat-masked regions"
+}
 
 sub process_breakpoint_list {
     my $self = shift;
@@ -116,7 +121,7 @@ sub annotate_breakpoint_overlap {
     #ensure that the tight interval is within rp_overlap of overlapping the actual position.
         if ($start_last - $rp_overlap <= $pos and $pos <= $stop_last + $rp_overlap) {
             my $overlap_length = $stop_last-$start_last+1;
-            my $name = %{$chr_annotations->{$ends{$sorted_by_start[0]}}->{$sorted_by_start[0]}->[0]}->{name};
+            my $name = $chr_annotations->{$ends{$sorted_by_start[0]}}->{$sorted_by_start[0]}->[0]->{name};
             if (defined($interval_records{$name}) and $interval_records{$name} > $overlap_length) {
                 next;
             }

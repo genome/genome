@@ -39,19 +39,19 @@ class Genome::DruggableGene::Command::Import::DrugBank {
         drugs_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_DRUGS.tsv',
+            example_values => ['/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_DRUGS.tsv'],
             doc => 'PATH.  Path to .tsv file for drugs',
         },
         genes_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_TARGETS.tsv',
+            example_values => ['/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_TARGETS.tsv'],
             doc => 'PATH.  Path to .tsv file for genes (targets)',
         },
         interactions_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_INTERACTIONS.tsv',
+            example_values => ['/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/DrugBank_WashU_INTERACTIONS.tsv'],
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
         },
         uniprot_mapping_outfile => {

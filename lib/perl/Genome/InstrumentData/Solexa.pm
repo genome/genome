@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use File::Basename;
 
+
 class Genome::InstrumentData::Solexa {
     is => ['Genome::InstrumentData', 'Genome::Searchable'],
     has_constant => [
@@ -47,19 +48,19 @@ class Genome::InstrumentData::Solexa {
             where => [ attribute_label => 'read_length' ],
             is_mutable => 1,
         },
-        filt_error_rate_avg => {
+        old_filt_error_rate_avg => {
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'filt_error_rate_avg' ],
             is_mutable => 1,
         },
-        rev_filt_error_rate_avg => {
+        old_rev_filt_error_rate_avg => {
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'rev_filt_error_rate_avg' ],
             is_mutable => 1,
         },
-        fwd_filt_error_rate_avg => {
+        old_fwd_filt_error_rate_avg => {
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'fwd_filt_error_rate_avg' ],
@@ -137,19 +138,19 @@ class Genome::InstrumentData::Solexa {
             where => [ attribute_label => 'gerald_directory' ],
             is_mutable => 1,
         },
-        median_insert_size => {
+        old_median_insert_size => {
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'median_insert_size' ],
             is_mutable => 1,
         },
-        sd_above_insert_size => { 
+        old_sd_above_insert_size => { 
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'sd_above_insert_size' ],
             is_mutable => 1,
         },
-        sd_below_insert_size => {
+        old_sd_below_insert_size => {
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'sd_below_insert_size' ],
@@ -252,13 +253,66 @@ class Genome::InstrumentData::Solexa {
             is => "Genome::Site::TGI::Project",
             calculate => q|Genome::Site::TGI::Project->get(name => $self->project_name)|
         },
+
+        # TODO: move into the base class (we want to eliminate this subclass and not have the separate Imported subclass 
+        median_insert_size => {
+            calculate_from => ['old_median_insert_size'],
+            calculate => q|$old_median_insert_size or $self->get_default_alignment_metrics("median_insert_size")|,  
+        },
+        sd_insert_size => {
+            calculate => q|$self->get_default_alignment_metrics("sd_insert_size")|,  
+        },
+        read_1_pct_mismatch => {
+            calculate => q|$self->get_default_alignment_metrics("read_1_pct_mismatch")|,  
+        },
+        read_2_pct_mismatch => {
+            calculate => q|$self->get_default_alignment_metrics("read_2_pct_mismatch")|,  
+        },
+
+        # for backward-compatibility    
+        sd_above_insert_size => {
+            calculate_from => ['old_sd_above_insert_size','sd_insert_size'],
+            calculate => q|$old_sd_above_insert_size or $sd_insert_size| 
+        },
+        sd_below_insert_size => {
+            calculate_from => ['old_sd_below_insert_size','sd_insert_size'],
+            calculate => q|$old_sd_below_insert_size or $sd_insert_size| 
+        },
+        fwd_filt_error_rate_avg => {
+            calculate_from => ['old_fwd_filt_error_rate_avg','read_1_pct_mismatch'],
+            calculate => q|$old_fwd_filt_error_rate_avg or $read_1_pct_mismatch| 
+        },
+        rev_filt_error_rate_avg => {
+            calculate_from => ['old_rev_filt_error_rate_avg','read_2_pct_mismatch'],
+            calculate => q|$old_rev_filt_error_rate_avg or $read_2_pct_mismatch| 
+        },
+        filt_error_rate_avg => {
+            calculate_from => ['old_filt_error_rate_avg','read_1_pct_mismatch','read_2_pct_mismatch'],
+            calculate => q|
+                if ($old_filt_error_rate_avg) {
+                    $old_filt_error_rate_avg;
+                }
+                elsif ($read_1_pct_mismatch and $read_2_pct_mismatch) {
+                    ($read_1_pct_mismatch + $read_2_pct_mismatch)/2;
+                }
+                elsif (not $read_1_pct_mismatch) {
+                    $read_2_pct_mismatch;
+                }
+                else {
+                    $read_1_pct_mismatch;
+                }
+            |
+        },
     ],
 };
 
 sub __display_name__ {
     my $self = $_[0];
     my $sample = $self->sample;
-    return $self->flow_cell_id . '/' . $self->subset_name . " (" . $self->id . ") for " . $sample->__display_name__;
+    my($flow_cell_id, $subset_name, $id, $sample_display_name)
+            = map { defined($_) ? $_ : '' }
+                    ( $self->flow_cell_id, $self->subset_name, $self->id, $sample->__display_name__);
+    return $flow_cell_id . '/' . $subset_name . " (" . $id . ") for " . $sample_display_name;
 }
 
 sub _calculate_paired_end_kb_usage {
@@ -755,14 +809,13 @@ sub _convert_trimmer_to_sx_commands {
 
                 push @params, $key => $value;
             }
-            #for compatibility with pre-SX far processing profiles
-            if($trimmer_version and $trimmer_name eq 'far') {
-                push @params, 'version' => $trimmer_version;
-            }
         } else {
             Carp::confess("Unknown params ($trimmer_params) to convert trimmer to sx command!");
         }
     }
+
+    # Add version to the params
+    push @params, 'version', $trimmer_version if defined $trimmer_version;
 
     # Add -- to the odd, and quotes to the even, handle logicals
     my $sx_cmd = 'trim '.$trimmer_name;
@@ -1123,12 +1176,14 @@ sub __errors__ {
 	elsif (defined($self->lane)) {
 		$expected = $self->lane;
 	}
-	if ($self->subset_name ne $expected) {
+    my $subset_name = $self->subset_name;
+    $subset_name    = '' unless (defined $subset_name);
+	if ($subset_name ne $expected) {
 		push @errors, UR::Object::Tag->create(
 			type => 'error',
 			properties => ['subset_name'],
 			desc => 'Subset name for Illumina NGS instrument data should be "lane-indexsequence" or just "lane" for unindexed data. ' 
-					. 'Expected "' . $expected . '" got "' . $self->subset_name . '".'
+					. 'Expected "' . $expected . '" got "' . $subset_name . '".'
 		);
 	}
 	return @errors;

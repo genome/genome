@@ -37,7 +37,7 @@ class Genome::Model::Tools::Validation::PrepareWgsForClonalityPlot{
             is => 'String',
             is_optional => 1,
 	    doc => 'genome build (36, 37, or path to fasta file for genome)',
-            default => '36',
+            example_values => ['36', '37'],
         },
         
         readcounts_file => {

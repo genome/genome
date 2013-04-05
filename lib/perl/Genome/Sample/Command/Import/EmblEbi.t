@@ -13,7 +13,8 @@ use above "Genome";
 
 use Test::More;
 
-use_ok('Genome::Sample::Command::Import::EmblEbi') or die;
+use_ok('Genome::Sample::Command::Import') or die;
+ok(Genome::Sample::Command::Import::EmblEbi->__meta__, 'class meta for import embl-ebi sample');
 
 my $patient_name = 'EMBL-HCT00000';
 my $name = $patient_name.'-ERS000000';
@@ -21,7 +22,7 @@ my $import = Genome::Sample::Command::Import::EmblEbi->create(
     name => $name,
     ethnicity => 'caucasian',
     gender => 'male',
-    tissue => 'heart',
+    tissue_label => 'heart',
     extraction_type => 'rna',
     age => 25,
 );

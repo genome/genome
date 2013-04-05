@@ -6,25 +6,26 @@ use Genome;
 
 class Genome::SubjectAttribute {
     table_name => 'GENOME_SUBJECT_ATTRIBUTE',
-    schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
-    doc => 'Represents a particular attribute of a subject',
     id_by => [
         attribute_label => {
             is => 'Text',
-            default => 'NONE',
+            len => 64,
+            default_value => 'NONE',
         },
         attribute_value => {
             is => 'Text',
+            len => 512,
         },
         subject_id => {
-            is => 'Text',
+            is => 'Number',
+            len => 10,
         },
         nomenclature => {
             is => 'Text',
+            len => 64,
         },
     ],
-    has => [        
+    has => [
         nomenclature_field => {
             is => 'Genome::Nomenclature::Field',
             id_by => 'nomenclature',
@@ -35,33 +36,27 @@ class Genome::SubjectAttribute {
         },
         subject_name => {
             via => 'subject',
-             to => 'name'
+            to => 'name',
         },
         nomenclature_field_name => {
             via => 'nomenclature_field',
-             to => 'name'
+            to => 'name',
         },
         nomenclature_field_type => {
             via => 'nomenclature_field',
-             to => 'type'
+            to => 'type',
         },
-        nomenclature_name => {
-            via => 'nomenclature_field',
-             to => 'nomenclature_name',
-        },
-        nomenclature_id => {
-            via => 'nomenclature_field',
-             to => 'nomenclature_id'
-        },
+        nomenclature_name => { via => 'nomenclature_field' },
+        nomenclature_id => { via => 'nomenclature_field' },
         nomenclature_obj => {
             is => 'Genome::Nomenclature',
             via => 'nomenclature_field',
-             to => 'nomenclature'
+            to => 'nomenclature',
         },
         all_nomenclature_fields => {
             via => 'nomenclature_obj',
-             to => 'fields' 
-        }
+            to => 'fields',
+        },
     ],
     has_optional => [
         _individual => {
@@ -71,13 +66,17 @@ class Genome::SubjectAttribute {
         sample => {
             is => 'Genome::Sample',
             id_by => 'subject_id',
+            constraint_name => 'GSA_GS_FKPK',
         },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    doc => 'Represents a particular attribute of a subject',
 };
 
 sub create {
     my $class = shift;
-    my $bx = $class->define_boolexpr(@_);    
+    my $bx = $class->define_boolexpr(@_);
     # TODO This is a workaround that allows nomenclature to be in the id_by block
     # and have a default value. Doing so in the class definition doesn't work due
     # to some sort of UR bug that Tony is aware of.

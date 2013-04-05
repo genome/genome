@@ -8,32 +8,65 @@ use Genome;
 require Carp;
 
 class Genome::Model::Input {
-    type_name => 'genome model input',
     table_name => 'GENOME_MODEL_INPUT',
+    type_name => 'genome model input',
     id_by => [
-        value_class_name => { is => 'VARCHAR2', len => 255 },
-        value_id         => { is => 'VARCHAR2', len => 1000, implied_by => 'value' },
-        model_id         => { is => 'NUMBER', len => 11, implied_by => 'model' },
-        name             => { is => 'VARCHAR2', len => 255 },
+        value_class_name => {
+            is => 'VARCHAR2',
+            len => 255,
+        },
+        value_id => {
+            is => 'VARCHAR2',
+            len => 1000,
+        },
+        model_id => {
+            is => 'NUMBER',
+            len => 11,
+            is_deprecated => 1,
+        },
+        name => {
+            is => 'VARCHAR2',
+            len => 255,
+        },
     ],
     has => [
-        model        => { is => 'Genome::Model', id_by => 'model_id', constraint_name => 'GMI_GM_FK' },
-        value        => { is => 'UR::Object', id_by => 'value_id', id_class_by => 'value_class_name' },
-        filter_desc => { 
+        model => {
+            is => 'Genome::Model',
+            id_by => 'model_id',
+            constraint_name => 'GMI_GM_FK',
+        },
+        value => {
+            is => 'UR::Object',
+            id_by => 'value_id',
+            id_class_by => 'value_class_name',
+        },
+        filter_desc => {
             is => 'Text',
-            is_optional => 1, 
-            valid_values => [ 'forward-only', 'reverse-only', undef ],
-            doc => 'Filter to apply on the input value.'
+            valid_values => [ "forward-only", "reverse-only", undef ],
+            is_optional => 1,
+            doc => 'Filter to apply on the input value.',
+        },
+    ],
+    has_optional => [
+        _model_value => {
+            is => 'Genome::Model',
+            id_by => 'value_id',
         },
     ],
     has_deprecated => [
         # this is the mate to model "inputs" intead of "input_associations"
         # the former is ambiguous, the later distinguishes between input_associations and input_values
-        _model      => { is => 'Genome::Model', id_by => 'model_id', },
+        _model => {
+            is => 'Genome::Model',
+            id_by => 'model_id',
+        },
 
         # this sort of thing only existed for listers and is no longer needed with the dot syntax
         # remove when possible
-        model_name   => { via => 'model', to => 'name' },
+        model_name => {
+            via => 'model',
+            to => 'name',
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -49,7 +82,7 @@ sub __display_name__ {
 sub delete {
     my $self = shift;
     my $input_name = $self->__display_name__;
-    
+
     # TODO I don't care for the instrument data special case. I think that inputs should be completely modifiable
     # without triggering builds being abandoned
     unless ($self->name eq 'instrument_data') {
@@ -77,7 +110,7 @@ sub builds_with_input {
 
     my @builds;
     for my $build ($self->model->builds) {
-        next unless grep { 
+        next unless grep {
             $_->name eq $self->name and
             $_->value_id eq $self->value_id and
             $_->value_class_name eq $self->value_class_name
@@ -87,6 +120,6 @@ sub builds_with_input {
 
     return @builds;
 }
-    
+
 1;
 

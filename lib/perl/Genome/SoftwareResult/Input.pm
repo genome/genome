@@ -5,27 +5,48 @@ use warnings;
 
 use Genome;
 class Genome::SoftwareResult::Input {
-    type_name => 'software result input',
     table_name => 'SOFTWARE_RESULT_INPUT',
+    type_name => 'software result input',
     id_by => [
         software_result => {
             is => 'Genome::SoftwareResult',
             id_by => 'software_result_id',
         },
-        name                            => { is => 'Text', len => 255, column_name => 'INPUT_NAME' },
+        name => {
+            is => 'Text',
+            len => 255,
+            column_name => 'INPUT_NAME',
+        },
     ],
     has => [
-        value_class_name                => { is => 'Text', len => 255 },
-        value_id                        => { is => 'Text', len => 1000, column_name => 'INPUT_VALUE' },
+        value_class_name => {
+            is => 'Text',
+            len => 255,
+            is_optional => 1,
+        },
+        value_id => {
+            is => 'Text',
+            len => 1000,
+            column_name => 'INPUT_VALUE',
+        },
         value_obj => {
             is => 'UR::Object',
             id_by => 'value_id',
-            id_class_by => 'value_class_name'
+            id_class_by => 'value_class_name',
         },
-
         # after the new API is released and old snapshots go away, invert the column assingments with those above
-        _new_name                       => { is => 'Text', len => 255, column_name => 'NAME' },
-        _new_value                      => { is => 'Text', len => 1000, column_name => 'VALUE_ID' },
+        _new_name => {
+            is => 'Text',
+            len => 255,
+            column_name => 'NAME',
+            is_optional => 1,
+        },
+        _new_value => {
+            is => 'Text',
+            len => 1000,
+            column_name => 'VALUE_ID',
+            is_optional => 1,
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -63,7 +84,7 @@ sub create {
     return $self;
 }
 
-# this has the functionality of the old "value" accessor 
+# this has the functionality of the old "value" accessor
 # we wanted to ensure we were no longer dependent on it
 # ..but the HTML view needs something generic which will work
 sub _value_scalar_or_object {

@@ -62,12 +62,12 @@ class Genome::Model::Tools::Bacterial::CoreGeneCoverage (
         bacterial_group_file => {
              is => 'FilePath',
              doc => 'File containing bacterial core group sets',
-             default => '/gscmnt/ams1102/info/core_genes/bacteria/CoreGroups_66.cgf',
+             example_values=> ['/gscmnt/ams1102/info/core_genes/bacteria/CoreGroups_66.cgf'],
         },
         archaea_query_file => {
              is => 'FilePath',
              doc => 'File containing archaeal core gene sequences',
-             default => '/gscmnt/ams1102/info/core_genes/archaea/Archaea_coreset_104.gi.faa'
+             example_values => ['/gscmnt/ams1102/info/core_genes/archaea/Archaea_coreset_104.gi.faa']
         },
         archaea_group_file => {
             is => 'FilePath',

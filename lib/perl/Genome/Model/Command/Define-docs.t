@@ -16,6 +16,7 @@ for (@sub_commands) { s/[^\w\-]//g; s/\b31m//; s/0m\b//; }
 chomp @sub_commands;
 
 my @sub_commands_expected = qw/
+  amplicon-assembly
   clin-seq
   comparison
   convergence
@@ -23,6 +24,7 @@ my @sub_commands_expected = qw/
   differential-expression
   gene-prediction
   genotype-microarray
+  germline
   imported-annotation
   imported-assembly
   imported-reference-sequence
@@ -45,16 +47,18 @@ my @sub_commands_expected = qw/
   test-pipeline
 /;
 
-plan tests => ((scalar(@sub_commands_expected)*4)+1);
+plan tests => ((scalar(@sub_commands_expected)*5)+1);
 
 is("@sub_commands", "@sub_commands_expected", "sub-command list is as expected");
 
 my $expected_dir = __FILE__ . '.expected-output';
 my $actual_dir;
+my $rebuild = 0;
 
 if (@ARGV and $ARGV[0] eq 'REBUILD') {
     note("******** regenerating test data in $expected_dir to reset this test case! ***********");
     $actual_dir = $expected_dir;
+    $rebuild = 1;
     if ($ARGV[1]) {
         shift @ARGV;
         @sub_commands = @ARGV;
@@ -75,28 +79,23 @@ for my $sub_command (@sub_commands) {
     my $actual_out = $actual_dir . '/' . $sub_command;
     my $expected_out = $expected_dir . '/' . $sub_command;
 
-    #my $cmd = "genome model define $sub_command -h >|$actual_out 2>&1";
-    #eval { Genome::Sys->shellcmd(cmd => $cmd, allow_failed_exit_code => 1) };
-    my $pid = UR::Context::Process->fork();
+    eval {
+        if ($rebuild) {
+            # the previous results may already exist, which will fail the open below
+            note("Removing old entry $actual_out");
+            unlink $actual_out;
+        }
+        local *STDOUT = Genome::Sys->open_file_for_writing($actual_out);
+        local *STDERR = *STDOUT;
+        my @argv = ("model", "define", $sub_command, "-h");
 
-    if($pid) {
-        waitpid($pid,0);
-    } else {
-        eval {
-            if (@ARGV and $ARGV[0] eq 'REBUILD') {
-                # the previous results may already exist, which will fail the open below
-                unlink $actual_out;
-            }
-            local *STDOUT = Genome::Sys->open_file_for_writing($actual_out);
-            local *STDERR = *STDOUT;
-            local @ARGV = ("model", "define", $sub_command, "-h");
-            Genome::Command->execute_with_shell_params_and_exit();
-        };
-
-        #the above should exit() so we only get here if it fails somehow
-        fail("successful execution of 'genome model define $sub_command -h'");
-        exit;
-    }
+        # using private method here because there isn't a public one that
+        # doesn't exit but it is best not to fork or subshell or most
+        # specifically to call exit because then we can't track test
+        # dependencies
+        my $exit = Genome::Command->_cmdline_run(@argv);
+        is($exit, 0, 'exited zero: `genome  ' . join(' ', @argv) . '`');
+    };
 
     ok(-s $actual_dir, "output data was generated for $sub_command");
 

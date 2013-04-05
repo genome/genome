@@ -12,7 +12,8 @@ my $actual_output_dir = Test::Music->output_dir;
 run_test_case(
     run => "music pfam\n"
          . " --maf-file $input_dir/ucec_test.maf\n"
-         . " --output-file $actual_output_dir/pfam.maf",
+         . " --output-file $actual_output_dir/pfam.maf"
+         . " --reference-build Build37",
     expect => [
         'pfam.maf'
     ],

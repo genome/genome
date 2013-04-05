@@ -30,9 +30,9 @@ class Genome::Model::Tools::Validation::LongIndelsPartTwo {
         },
         tier_file_location => {
             is => 'String',
-            doc => 'tiering file location to be used by gmt fast-tier fast-tier. Defaults to build36 location.',
+            doc => 'tiering file location to be used by gmt fast-tier fast-tier.',
             is_optional => 1,
-            default => '/gscmnt/ams1100/info/model_data/2771411739/build102550711/annotation_data/tiering_bed_files_v3',
+            example_values => ['/gscmnt/ams1100/info/model_data/2771411739/build102550711/annotation_data/tiering_bed_files_v3'],
         },
     ],
     doc => 'Final steps in the validation of 3bp indels.',

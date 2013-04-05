@@ -67,42 +67,46 @@ is_deeply([map {$_->{position}} @actual_entries], \@expected_pos, "Positions of 
 
 ###############################################################################
 # Now let us rewind and test filtering
-$vcf_fh->seek(0);
-$reader = $pkg->fhopen($vcf_fh, "Test Vcf");
+do {
+    $vcf_fh->seek(0);
+    $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
 
-# Returns true when an entry has an identifier (e.g., rsid)
-my $has_identifiers = sub { 
-    my $entry = shift;
-    return defined $entry->{identifiers};
+    # Returns true when an entry has an identifier (e.g., rsid)
+    my $has_identifiers = sub {
+        my $entry = shift;
+        return defined $entry->{identifiers};
+    };
+
+    $reader->add_filter($has_identifiers);
+    my @entries;
+    while (my $entry = $reader->next) {
+        push(@entries, $entry);
+    }
+
+    is_deeply([map {$_->{identifiers}} @entries],
+        [ ["rs6054257"], ["rs6040355"], ["microsat1","foo"] ],
+        "Correctly filtered out entries with no identifiers");
 };
 
-$reader->add_filter($has_identifiers);
-my @entries;
-while (my $entry = $reader->next) {
-    push(@entries, $entry);
-}
+do {
+    # another test, for unfiltered entries only
+    $vcf_fh->seek(0);
+    $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
 
-is_deeply([map {$_->{identifiers}} @entries],
-    [ ["rs6054257"], ["rs6040355"], ["microsat1","foo"] ],
-    "Correctly filtered out entries with no identifiers");
+    # Returns true when an entry has an identifier (e.g., rsid)
+    my $has_identifiers = sub {
+        my $entry = shift;
+        return !$entry->is_filtered;
+    };
+    $reader->add_filter($has_identifiers);
+    my @entries;
+    while (my $entry = $reader->next) {
+        push(@entries, $entry);
+    }
 
-# another test, for unfiltered entries only
-$vcf_fh->seek(0);
-$reader = $pkg->fhopen($vcf_fh, "Test Vcf");
-
-# Returns true when an entry has an identifier (e.g., rsid)
-my $has_identifiers = sub { 
-    my $entry = shift;
-    return !$entry->is_filtered;
+    is_deeply([map {$_->{position}} @entries],
+        [ 14370, 1110696, 1230237, 1234567 ],
+        "Correctly filtered out entries that failed filters");
 };
-$reader->add_filter($has_identifiers);
-my @entries;
-while (my $entry = $reader->next) {
-    push(@entries, $entry);
-}
-
-is_deeply([map {$_->{position}} @entries],
-    [ 14370, 1110696, 1230237, 1234567 ],
-    "Correctly filtered out entries that failed filters");
 
 done_testing();

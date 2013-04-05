@@ -19,7 +19,7 @@ class Genome::Model::Tools::Germline::Filtering {
     ],
     has_optional_input => [
     reference_transcripts => {
-        is => 'String', default => "NCBI-human.ensembl/67_37l_v2",
+        is => 'String', example_values => ["NCBI-human.ensembl/67_37l_v2"],
         doc => "The annotation build to use with the WU annotator, and to find transcript lengths",
     },
     problem_genes => {

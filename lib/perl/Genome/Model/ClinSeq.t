@@ -45,7 +45,7 @@ else {
     note("DRY RUN... put 'RUN' on the command line for this test to actually generate and compare results");
     $dry_run = 1;
 }
-plan tests => 15;
+plan tests => 16;
 
 my $patient = Genome::Individual->get(common_name => "PNC6");
 ok($patient, "got the PNC6 patient");
@@ -114,6 +114,10 @@ my $b = $m->add_build(
     data_directory => $temp_dir,
 );
 ok($b, "created a new build");
+
+my $common_name = $b->common_name;
+my $expected_common_name = $m->expected_common_name;
+is($common_name, $expected_common_name, "common name $common_name on build matches expected $expected_common_name");
 
 # we would normally do $build->start() but this is easier to debug minus workflow guts when you just call _execute_build
 if ($dry_run) {

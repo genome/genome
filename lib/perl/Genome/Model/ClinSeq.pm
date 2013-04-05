@@ -133,6 +133,17 @@ sub __errors__ {
   return @errors;
 }
 
+sub _initialize_build {
+    my $self = shift;
+    my $build = shift;
+
+    # this is currently tracked as a metric on the build but it should really be an output/metric
+    my $common_name = $self->expected_common_name;
+    $build->common_name($common_name);
+
+    return 1;
+}
+
 #MAP WORKFLOW INPUTS
 sub map_workflow_inputs {
     my $self = shift;
@@ -140,14 +151,17 @@ sub map_workflow_inputs {
 
     my $data_directory = $build->data_directory;
 
+    # inputs
     my $wgs_build           = $build->wgs_build;
     my $exome_build         = $build->exome_build;
     my $tumor_rnaseq_build  = $build->tumor_rnaseq_build;
     my $normal_rnaseq_build = $build->normal_rnaseq_build;
-
-    # this is currently tracked as an input on the build but it should really be an output/metric
-    my $common_name = $self->expected_common_name;
-    $build->common_name($common_name);
+    
+    # set during build initialization
+    my $common_name         = $build->common_name;
+    unless ($common_name) {
+        die "no common name set on build during initialization?";
+    }
 
     # initial inputs used for various steps
     my @inputs = (
@@ -209,8 +223,8 @@ sub map_workflow_inputs {
       push @inputs, (
           mutation_diagram_outdir => $mutation_diagram_dir,
           mutation_diagram_collapse_variants=>1, 
-          mutation_diagram_max_snvs_per_file=>750, 
-          mutation_diagram_max_indels_per_file=>750
+          mutation_diagram_max_snvs_per_file=>1500, 
+          mutation_diagram_max_indels_per_file=>1500,
       );
     }
 

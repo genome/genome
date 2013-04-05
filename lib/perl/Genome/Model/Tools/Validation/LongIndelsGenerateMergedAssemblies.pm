@@ -169,6 +169,7 @@ sub execute {
         output_file => $contigs_file,
         contig_size => '500',
         append_indel_alleles => 1,
+        reference_sequence => $ref_seq_fasta,
     );
     unless ($contig_cmd->execute) {
         die "Failed to build contigs for remapping.\n";

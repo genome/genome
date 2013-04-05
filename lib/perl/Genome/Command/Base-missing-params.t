@@ -22,6 +22,8 @@ class Genome::Model::Command::Test {
 };
 
 my $cmd = Genome::Model::Command::Test->create();
+$cmd->dump_error_messages(0);
+$cmd->dump_status_messages(0);
 
 my $missing = join(',', sort $cmd->_missing_parameters({}));
 is($missing, "--bucket,--stick", "missing parameters detected");

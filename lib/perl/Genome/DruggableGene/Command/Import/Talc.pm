@@ -29,7 +29,7 @@ class Genome::DruggableGene::Command::Import::Talc {
         interactions_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/TALC_WashU_INTERACTIONS.tsv',
+            example_values => ['/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/TALC_WashU_INTERACTIONS.tsv'],
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
         },
         version => {

@@ -11,6 +11,7 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::GenerateMergedAsse
         build_id => {
             is => 'Text',
             doc => 'ID of the somatic validation build upon which to run',
+            is_output => 1,
         },
     ],
     has => [

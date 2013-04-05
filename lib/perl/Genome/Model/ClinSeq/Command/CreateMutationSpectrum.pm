@@ -92,7 +92,6 @@ sub execute {
   mkdir $sub_outdir4 unless (-e $sub_outdir4 && -d $sub_outdir4);
 
   #Run various mutation-spectrum tools in various modes.  
-  #TODO: accommodate new features pushed by Charles Lu
 
   #Get data directory, reference annotation etc.
   my $data_directory = $build->data_directory;
@@ -141,16 +140,11 @@ sub execute {
   }
 
   #2.) Run annotator on all Tier1-3 variants
-  #gmt annotate transcript-variants --variant-bed-file='' --output-file='' --no-headers? --annotation-filter=top  --use-version=3 --reference-transcripts=''
   my $annotated_file = $variant_file . ".annotated";
-  my $annotate_stdout = $sub_outdir2 . "gmt-annotate.stdout";
-  my $annotate_stderr = $sub_outdir2 . "gmt-annotate.stderr";   
-  my $annotate_cmd = "gmt annotate transcript-variants --variant-bed-file=$variant_file --output-file=$annotated_file --no-headers --annotation-filter=top  --use-version=3 --reference-transcripts=$reference_annotation_name --skip-if-output-present 1>$annotate_stdout 2>$annotate_stderr";
-  $self->status_message($annotate_cmd);
-  Genome::Sys->shellcmd(cmd => $annotate_cmd, output_files=>["$annotated_file"]);
+  my $annotate_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(variant_bed_file=>$variant_file, output_file=>$annotated_file, no_headers=>1, annotation_filter=>'top', use_version=>3, reference_transcripts=>$reference_annotation_name, skip_if_output_present=>1);
+  $annotate_cmd->execute();
   
   #5.) Generate mutation-spectrum-sequence-context result
-  #gmt analysis mutation-spectrum-sequence-context
   my $variant_file2 = $sub_outdir2 . "variants.tsv";
   my $cut_cmd = "cut -f 1-5 $annotated_file > $variant_file2";
   $self->status_message($cut_cmd);
@@ -159,22 +153,16 @@ sub execute {
   my $mssc_file4plot = $sub_outdir2 . $final_name . ".data.tsv";
   my $mssc_outfile = $sub_outdir2 . $final_name .".mutation-spectrum-sequence-context.pdf";
   my $mssc_proportiontest_outfile =  $sub_outdir2 . $final_name . ".prop.test";
-  my $mssc_stdout = $sub_outdir2 . "gmt-mutation-spectrum-sequence-context.stdout";
-  my $mssc_stderr = $sub_outdir2 . "gmt-mutation-spectrum-sequence-context.stderr";
-  my $mssc_cmd = "gmt analysis mutation-spectrum-sequence-context --output-file=$mssc_outfile --roi-file=$variant_file2 --file4plot=$mssc_file4plot --plot-title='Mutation Spectrum Sequence Context for $final_name' --ref-seq=$reference_fasta_path --proportiontest $mssc_proportiontest_outfile  --random-trials=100 --random-seed=2013 --window-size=10 1>$mssc_stdout 2>$mssc_stderr";
-  $self->status_message($mssc_cmd);
-  Genome::Sys->shellcmd(cmd => $mssc_cmd);
+  my $plot_title = "Mutation Spectrum Sequence Context for " . $final_name;
+  my $mssc_cmd = Genome::Model::Tools::Analysis::MutationSpectrumSequenceContext->create(output_file=>$mssc_outfile, roi_file=>$variant_file2, file4plot=>$mssc_file4plot, plot_title=>$plot_title, ref_seq=>$reference_fasta_path, proportiontest=>$mssc_proportiontest_outfile, random_trials=>100, random_seed=>2013, window_size=>10);
+  $mssc_cmd->execute();
 
   #6.) Generate summarize-mutation-spectrum result
-  #gmt analysis summarize-mutation-spectrum
   my $somatic_id = $build->model->id;
   my $mut_spec_file = $sub_outdir3 . "mutation_spectrum.tsv";
   my $sms_file = $sub_outdir3 . $final_name . "_summarize-mutation-spectrum.pdf";
-  my $sms_stdout = $sub_outdir3 . "summarize-mutation-spectrum.stdout";
-  my $sms_stderr = $sub_outdir3 . "summarize-mutation-spectrum.stderr";
-  my $sms_cmd = "gmt analysis summarize-mutation-spectrum --exclude-gl-contigs --somatic-id=$somatic_id --mut-spec-file=$mut_spec_file --output-file=$sms_file 1>$sms_stdout 2>$sms_stderr";
-  $self->status_message($sms_cmd);
-  Genome::Sys->shellcmd(cmd => $sms_cmd);
+  my $sms_cmd = Genome::Model::Tools::Analysis::SummarizeMutationSpectrum->create(exclude_gl_contigs=>1, somatic_id=>$somatic_id, mut_spec_file=>$mut_spec_file, output_file=>$sms_file);
+  $sms_cmd->execute();
 
   #7.) Generate mutation-rate result
 
@@ -190,29 +178,24 @@ sub execute {
 
   my $mutation_rate_cmd;
   my $mutation_rate_outfile;
-  my $mr_stderr = $sub_outdir4 . "mutation-rate.stderr";
 
   if ($datatype =~ /wgs/i){
     #WGS Tier1 only
     $mutation_rate_outfile = $sub_outdir4 . "mutation-rate-tier1.tsv";
-    $mutation_rate_cmd = "gmt analysis mutation-rate --sample-name=$final_name --tier1-file=$tier1_snvs --tier1-space=$tier1_bed > $mutation_rate_outfile 2>>$mr_stderr";
-    $self->status_message($mutation_rate_cmd);
-    Genome::Sys->shellcmd(cmd => $mutation_rate_cmd);
+    $mutation_rate_cmd = Genome::Model::Tools::Analysis::MutationRate->create(sample_name=>$final_name, tier1_file=>$tier1_snvs, tier1_space=>$tier1_bed, outfile=>$mutation_rate_outfile);
+    $mutation_rate_cmd->execute();
 
     #WGS Tier1-3
     $mutation_rate_outfile = $sub_outdir4 . "mutation-rate-tier123.tsv";
-    $mutation_rate_cmd = "gmt analysis mutation-rate --sample-name=$final_name --tier1-file=$tier1_snvs --tier1-space=$tier1_bed --tier2-file=$tier2_snvs --tier2-space=$tier2_bed --tier3-file=$tier3_snvs --tier3-space=$tier3_bed > $mutation_rate_outfile 2>>$mr_stderr";
-    $self->status_message($mutation_rate_cmd);
-    Genome::Sys->shellcmd(cmd => $mutation_rate_cmd);
+    $mutation_rate_cmd = Genome::Model::Tools::Analysis::MutationRate->create(sample_name=>$final_name, tier1_file=>$tier1_snvs, tier1_space=>$tier1_bed, tier2_file=>$tier2_snvs, tier2_space=>$tier2_bed, tier3_file=>$tier3_snvs, tier3_space=>$tier3_bed, outfile=>$mutation_rate_outfile);
+    $mutation_rate_cmd->execute();
   }
 
   if ($datatype =~ /exome/i){
     #Exome Tier1 only
     $mutation_rate_outfile = $sub_outdir4 . "mutation-rate-tier1.tsv";
-    $mutation_rate_cmd = "gmt analysis mutation-rate --sample-name=$final_name --tier1-file=$tier1_snvs --tier1-space=$tier1_bed --tier2-space=$tier2_bed --tier3-space=$tier3_bed --coverage-factor=0.02 > $mutation_rate_outfile 2>>$mr_stderr";
-    $self->status_message($mutation_rate_cmd);
-    Genome::Sys->shellcmd(cmd => $mutation_rate_cmd);
-  
+    $mutation_rate_cmd = Genome::Model::Tools::Analysis::MutationRate->create(sample_name=>$final_name, tier1_file=>$tier1_snvs, tier1_space=>$tier1_bed, tier2_space=>$tier2_bed, tier3_space=>$tier3_bed, coverage_factor=>0.02, outfile=>$mutation_rate_outfile);
+    $mutation_rate_cmd->execute();
   }
 
   my $readme_file = $sub_outdir4 . "readme.txt";
