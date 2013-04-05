@@ -561,15 +561,17 @@ sub calculate {
         $self->reads_processed_success( sprintf('%0.3f', $self->reads_processed / $self->reads_attempted) );
     }
 
-    if ( $self->reads_assembled != 0 and $self->reads_processed != 0 ) {
+    my $reads_assembled = ($self->reads_assembled || 0);
+    my $reads_processed = ($self->reads_processed || 0);
+    if ( $reads_assembled != 0 and $reads_processed != 0 ) {
         #if ( $self->reads_assembled ne 'NA' and $self->reads_assembled != 0 and $self->reads_processed ne 'NA' and $self->reads_processed != 0 ) {
         $self->reads_assembled_success(
-            sprintf('%0.3f', $self->reads_assembled / $self->reads_processed)
+            sprintf('%0.3f', $reads_assembled / $reads_processed)
         );
         $self->reads_assembled_success_percent(
              sprintf('%.1f', $self->{reads_assembled_unique} / $self->{reads_processed} * 100)
         );
-        $self->reads_not_assembled( $self->reads_assembled - $self->reads_processed );
+        $self->reads_not_assembled( $reads_assembled - $reads_processed );
         $self->reads_not_assembled_percent(
             sprintf('%.1f', ( $self->{reads_processed} - $self->{reads_assembled_unique} ) / $self->{reads_processed} * 100)
         );
