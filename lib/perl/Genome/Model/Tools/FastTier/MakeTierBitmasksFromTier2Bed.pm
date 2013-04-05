@@ -20,7 +20,7 @@ class Genome::Model::Tools::FastTier::MakeTierBitmasksFromTier2Bed {
             type => 'Text',
             is_input => 1,
             doc => 'Reference sequence to use for tier mask creation, default is NCBI human build36',
-            default => '/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa',
+            example_values => ['/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa'],
         },
         transcript_version => {
             type => 'Text',
