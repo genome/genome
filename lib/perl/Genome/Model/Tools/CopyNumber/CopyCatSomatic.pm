@@ -32,7 +32,7 @@ class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
         annotation_directory => {
             is => 'String',
             is_optional => 0,
-            default=> '/gscmnt/gc6122/info/medseq/annotations/copyCat/',
+            example_values => ['/gscmnt/gc6122/info/medseq/annotations/copyCat/'],
             doc =>'path to the cn annotation directory',
         },
         per_library => {
