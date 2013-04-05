@@ -21,7 +21,7 @@ class Genome::Model::RnaSeq::DetectFusionsResult::TophatFusionResult{
         known_fusions_result_id => {
             is_transient => 1,
             is => "Integer",
-            default_value => 121542754,
+            example_values => [121542754],
             doc => "id of the known fusions software result"
         },
         detector_params => {

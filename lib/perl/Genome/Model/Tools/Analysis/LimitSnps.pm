@@ -25,7 +25,7 @@ class Genome::Model::Tools::Analysis::LimitSnps {
     has => [                                # specify the command's single-value properties (parameters) <--- 
     variants_file   => { is => 'Text', doc => "File containing SNPs" },
     regions_file   => { is => 'Text', doc => "File containing ROI chromosome positions (chr1\t939339)"},
-    reference_list => {is => 'String', doc => 'File containing the lengths of each reference sequence', is_optional => 1, default => Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa.fai'},
+    reference_list => {is => 'String', doc => 'File containing the lengths of each reference sequence', is_optional => 1, example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa.fai']},
     output_file   => { is => 'Text', doc => "Output file to receive limited SNPs", is_optional => 1 },
     not_file   => { is => 'Text', doc => "Output file to receive excluded SNPs", is_optional => 1 },
     verbose   => { is => 'Text', doc => "Print interim progress updates", is_optional => 1 },
