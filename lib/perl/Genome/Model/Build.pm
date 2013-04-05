@@ -2390,11 +2390,10 @@ sub _get_workflow_instance_children {
 
 sub _preprocess_subclass_description {
     my ($class, $desc) = @_;
-    
-    #print "PREPROC BUILD!\n";
+    #print "PREPROC BUILDi $desc->{class_name}!\n";
+    #$DB::single=1;
     #print Data::Dumper::Dumper($desc);
     #print Carp::longmess();
-    
     my $build_subclass_name = $desc->{class_name};
     my $model_subclass_name = $build_subclass_name;
     $model_subclass_name =~ s/::Build//;
@@ -2404,7 +2403,6 @@ sub _preprocess_subclass_description {
         my $has = $desc->{has};
         PROPERTY:
         for my $p (@model_properties) {
-            next;
             my $name = $p->property_name;
             for my $type (qw/input metric/) {
                 my $method = "is_$type";
