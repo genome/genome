@@ -26,6 +26,11 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             doc => 'When specified, the newly created build will contain all sequences from the "append_to" build, followed by those from the fasta file specified.',
         },
+        combine => {
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+            is_many => 1,
+            doc => 'When specified, this reference combines two or more other references',
+        },
         sequence_uri => {
             is => 'Text',
             doc => 'URI to the sequence gzip file to write into BAM headers for alignments against this reference.'
@@ -96,7 +101,7 @@ sub help_synopsis {
 }
 
 sub help_detail {
-    return Genome::Model::ImportedReferenceSequence->_help_detail_for_model_define;
+    #return Genome::Model::ImportedReferenceSequence->_help_detail_for_model_define;
 }
 
 sub _prompt_to_continue {
@@ -148,6 +153,14 @@ sub execute {
 
     if (defined $self->append_to and not defined $self->derived_from) {
         $self->derived_from($self->append_to);
+    }
+
+    my @combine = $self->combine();
+    if (@combine) {
+        if (@combine < 2) {
+            die $self->error_message("The 'combine' option expects two or more existing references.  Found " . scalar(@combine));
+        }
+        $self->derived_from($combine[0]);
     }
 
     # * Verify that species name matches a taxon
@@ -313,34 +326,11 @@ sub _create_build {
         push(@build_parameters, generate_sequence_uri => 1);
     }
 
-    if ($self->sequence_uri) {
-        push(@build_parameters, sequence_uri => $self->sequence_uri);
-    }
-    
-    if ($self->assembly_name) {
-        push(@build_parameters, assembly_name => $self->assembly_name);
-    }
-
-    if ($self->derived_from) {
-        push(@build_parameters, derived_from => $self->derived_from);
-    }
-
-    if ($self->append_to) {
-        push(@build_parameters, append_to => $self->append_to);
-    }
-
-    if($self->version) {
-        push @build_parameters,
-            version => $self->version;
-    }
-
-    if(defined $self->skip_bases_files) {
-        push @build_parameters, skip_bases_files => $self->skip_bases_files;
-    }
-
-    if($self->prefix) {
-        push @build_parameters,
-            prefix => $self->prefix;
+    # single-value
+    for my $build_arg (qw/sequence_uri assembly_name derived_from append_to version skip_bases_files prefix/) {
+        if (defined $self->$build_arg) {
+            push @build_parameters, $build_arg => $self->$build_arg;
+        }
     }
 
     my $build = Genome::Model::Build->create(@build_parameters);

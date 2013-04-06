@@ -3,10 +3,11 @@
  [1mgenome model define imported-reference-sequence[0m --processing-profile-name=?
     [--auto-assign-inst-data] [--auto-build-alignments] --fasta-file=? --processing-profile=?
     --processing-profile-id=? --species-name=? [--add-to-projects=?[,?]] [--append-to=?]
-    [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--sequence-uri=?] [--on-warning=?]
-    [--job-dispatch=?] [--server-dispatch=?] [--use-default-sequence-uri] [--assembly-name=?]
-    [--derived-from=?] [--prefix=?] [--version=?] [--model-name=?] [--subject-name=?]
-    [--skip-bases-files]
+    [--instrument-data=?[,?]] [--subject=?] [--combine=?[,?]] [--groups=?[,?]]
+    [--coordinates-from=?] [--skip-bases-files] [--on-warning=?] [--combines=?] [--job-dispatch=?]
+    [--server-dispatch=?] [--build-name=?] [--sequence-uri=?] [--use-default-sequence-uri]
+    [--assembly-name=?] [--desc=?] [--derived-from=?] [--prefix=?] [--generate-sequence-uri]
+    [--version=?] [--model-name=?] [--subject-name=?]
 
 [4mSYNOPSIS[0m
 genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta
@@ -39,10 +40,15 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1msubject[0m
     Subject for the model, can provide either a name or an id. If instrument data is provided and
     this is not, an attempt will be made to resolve it based on the provided instrument data 
+  [1mcombine[0m
+    When specified, this reference combines two or more other references 
   [1mgroups[0m
     Model groups to put the newly created model into 
-  [1msequence-uri[0m
-    URI to the sequence gzip file to write into BAM headers for alignments against this reference. 
+  [1mcoordinates-from[0m
+    Used to indicate that this build is on the same coordinate system as another. 
+  [1mskip-bases-files[0m
+    If set, bases files for quick sequence/position look up will not be created.  Useful for
+    importing files with a large number of sequences 
   [1mon-warning[0m
     The action to take when emitting a warning.
     valid values:
@@ -50,21 +56,31 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
      exit
      continue 
     Default value 'prompt' if not specified
+  [1mcombines[0m
+    If specified, merges several other references into one. 
   [1mjob-dispatch[0m
     dispatch specification: an LSF queue or "inline" 
     Default value 'inline' if not specified
   [1mserver-dispatch[0m
     dispatch specification: an LSF queue or "inline" 
     Default value 'inline' if not specified
+  [1mbuild-name[0m
+    human meaningful name of this build 
+  [1msequence-uri[0m
+    URI to the sequence gzip file to write into BAM headers for alignments against this reference. 
   [1muse-default-sequence-uri[0m
     Use a default generated URI for the BAM header. 
     Default value 'false' (--nouse-default-sequence-uri) if not specified
   [1massembly-name[0m
     Assembly name to store in the SAM header.  Autoderived if not specified. 
+  [1mdesc[0m
+    Optional additional qualifier, i.e. "lite" for the GRC-human-lite refseq model. 
   [1mderived-from[0m
     The reference sequence build from which this one is derived (if any). 
   [1mprefix[0m
     The source of the sequence, such as "NCBI".  May not have spaces. 
+  [1mgenerate-sequence-uri[0m
+    (undocumented) 
   [1mversion[0m
     The version number and/or description of the reference.  May not have spaces.  This may be, for
     example "37" or "37_human_contamination". 
@@ -72,9 +88,6 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     $PREFIX-$SPECIES_NAME unless otherwise specified. 
   [1msubject-name[0m
     Copied from species_name. 
-  [1mskip-bases-files[0m
-    If set, bases files for quick sequence/position look up will not be created.  Useful for
-    importing files with a large number of sequences 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
@@ -85,23 +98,5 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     Default value 'true' if not specified
 
 [4mDESCRIPTION[0m
-      # for a regular, complete fasta
-      genome model define imported-reference-sequence \
-        --prefix=GRClite \
-        --species-name=human \
-        --version=37 \
-        --use-default-sequence-uri
-        --fasta-file=complete.fa \
-    
-      # for a reference which extends another
-      # (a remap file can have the same name as the fasta and be next-to it)
-      genome model define imported-reference-sequence \
-        --prefix=GRC \
-        --species-name=human \
-        --version=37-p8-test7 \
-        --use-default-sequence-uri
-        --fasta-file=additions.fa \
-        --append-to 106942997
-
 
 

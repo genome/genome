@@ -47,6 +47,7 @@ ok($rbuilds{'human'}[0]->is_compatible_with($rbuilds{'human'}[2]), 'build is com
 is($rbuilds{'human'}[2]->derived_from_root(), $rbuilds{'human'}[0], 'build w/2 lvl of parent gets coordinates_from grandparent');
 
 # attempt to derive from another model's build
+$DB::single = 1;
 my @errs =$rbuilds{'human'}[0]->validate_for_start() ;
 ok(!@errs, "no errors so far...")
     or die "Unexpected errors:\n\t" . join("\n\t", map{$_->__display_name__} @errs);
@@ -59,6 +60,7 @@ ok(!@errs, "no errors so far...")
 #is($errs[0]->{properties}->[0], 'derived_from', 'error references derived_from property');
 
 # attempt to derive from self
+$DB::single = 1;
 @errs = $rbuilds{'human'}[1]->validate_for_start();
 ok(!@errs, "no errors so far...")
     or die "Unexpected errors:\n\t" . join("\n\t", map{$_->__display_name__} @errs);

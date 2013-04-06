@@ -977,10 +977,14 @@ sub validate_inputs_have_values {
     my @inputs = grep { $self->can($_->name) } $self->inputs;
 
     # find inputs with undefined values
+    $DB::single = 1;
     my @inputs_without_values = grep { not defined $_->value } @inputs;
     my %input_names_to_ids;
     for my $input (@inputs_without_values){
-        $input_names_to_ids{$input->name} .= $input->value_id . ',';
+        $DB::single = 1;
+        $input->value;
+        $input->value;
+        $input_names_to_ids{$input->name} .= $input->value_class_name . ":" . $input->value_id . ',';
     }
 
     # make tags for inputs with undefined values
@@ -2390,10 +2394,6 @@ sub _get_workflow_instance_children {
 
 sub _preprocess_subclass_description {
     my ($class, $desc) = @_;
-    #print "PREPROC BUILDi $desc->{class_name}!\n";
-    #$DB::single=1;
-    #print Data::Dumper::Dumper($desc);
-    #print Carp::longmess();
     my $build_subclass_name = $desc->{class_name};
     my $model_subclass_name = $build_subclass_name;
     $model_subclass_name =~ s/::Build//;
@@ -2401,40 +2401,64 @@ sub _preprocess_subclass_description {
     if ($model_subclass_meta) {
         my @model_properties = $model_subclass_meta->properties();
         my $has = $desc->{has};
-        PROPERTY:
         for my $p (@model_properties) {
             my $name = $p->property_name;
-            for my $type (qw/input metric/) {
-                my $method = "is_$type";
-                if ($p->can($method) and $p->$method) {
-                    if ($has->{$name}) {
-                        warn "exists: $name on $build_subclass_name\n";
-                        next PROPERTY;
-                    }
-                    my %data = %{$p};
-                    my $type = $data{data_type};
-                    if (!$type) {
-                        warn "no type on $name for $model_subclass_name\n";
-                    }
-                    for my $key (keys %data) {
-                        delete $data{$key} unless $key =~ /^is_/;
-                    }
-                    delete $data{is_specified_in_module_header};
-                    if ($type->isa("Genome::Model")) {
-                        $type =~ s/^Genome::Model/Genome::Model::Build/;
-                        $name =~ s/_model(?=($|s$))/_build/;
-                    }
-                    $data{property_name} = $name;
-                    $data{data_type} = $type;
-                    $has->{$name} = \%data;
-                }
+            if ($has->{$name}) {
+                #warn "exists: $name on $build_subclass_name\n";
+                next;
             }
+            if (grep { $_->can($name) } (qw/Genome::Model Genome::Model::Build /, @{$desc->{is}}) ) {
+                #warn "in parent: $name on $build_subclass_name\n";
+                next;
+            }
+            
+            my %data = %{$p};
+            my $type = $data{data_type};
+            if (!$type) {
+                #warn "no type on $name for $model_subclass_name, cannot infer build properties\n";
+                next;
+            }
+            for my $key (keys %data) {
+                delete $data{$key} unless $key =~ /^is_/;
+            }
+            delete $data{is_specified_in_module_header};
+            if ($type->isa("Genome::Model")) {
+                $type =~ s/^Genome::Model/Genome::Model::Build/;
+                $name =~ s/_model(?=($|s$))/_build/;
+            }
+            $data{data_type} = $type;
+            $data{property_name} = $name;
+            
+            if (($p->can("is_input") and $p->is_input) or ($p->can("is_metric") and $p->is_metric)) {
+                # code below will augment these with via/to/where
+                #warn "build gets input/metric $name ($build_subclass_name)\n";
+            }
+            elsif ($data{via} and $data{via} eq 'last_complete_build') {
+                # model properites which go through the last complete build exist directly on the build
+                #%data = $data{meta_for_build_attribute}; 
+                #warn "build gets direct $name ($build_subclass_name)\n";
+            }
+            #elsif (not $data{via} or ($data{via} ne 'inputs' and $data{via} ne 'metrics') ) {
+            elsif ($data{via} and $data{via} =~ /^(subject)$/) {
+                # all other model properties are accessible via the model
+                #warn "build gets indirect $name ($build_subclass_name)\n";
+                $data{via} = 'model';
+                $data{to} = $name;
+                $data{is_delegated} = 1;
+                $data{is_calculated} = 1;
+            }
+            else {
+                next;
+            }
+
+            $has->{$name} = \%data;
         }
     }
-
+    
     my @names = keys %{ $desc->{has} };
     for my $prop_name (@names) {
         my $prop_desc = $desc->{has}{$prop_name};
+       
         # skip old things for which the developer has explicitly set-up indirection
         next if $prop_desc->{id_by};
         next if $prop_desc->{via};
@@ -2453,16 +2477,34 @@ sub _preprocess_subclass_description {
         }
 
         if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
-
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
+
+            my @where_class;
+            if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
+                my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
+                    $prop_desc->{'data_type'},
+                    $class
+                );
+
+                if($prop_class->isa('UR::Value') and !$prop_class->isa('Genome::File::Base')) {
+                    if ($model_subclass_name->can('_has_legacy_input_types') and $model_subclass_name->_has_legacy_input_types) {
+                        # once old snapshots are gone we can backfill a second row per input with correct class names
+                        # then once those are gone we can delete this logic and delete the old rows
+                        push @where_class, value_class_name => 'UR::Value';
+                    }
+                    else {
+                        push @where_class, value_class_name => $prop_class;
+                    }
+                }
+            }
 
             $desc->{has}{$assoc} = {
                 property_name => $assoc,
                 implied_by => $prop_name,
                 is => 'Genome::Model::Build::Input',
                 reverse_as => 'build',
-                where => [ name => $prop_name ],
+                where => [ name => $prop_name, @where_class ],
                 is_mutable => $prop_desc->{is_mutable},
                 is_optional => $prop_desc->{is_optional},
                 is_many => 1, #$prop_desc->{is_many},
