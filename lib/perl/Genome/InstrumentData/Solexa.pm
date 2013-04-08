@@ -1273,39 +1273,54 @@ sub get_default_alignment_results {
 
     # Get alignment results for this inst data and the default aligner name, newest first
     my $pp = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
-    my @alignment_results = sort { $b->id <=> $a->id } Genome::InstrumentData::AlignmentResult->get(
+    my @alignment_results = sort {$b->id <=> $a->id} Genome::InstrumentData::AlignmentResult->get(
         instrument_data_id => $self->id,
         aligner_name       => $pp->read_aligner_name,
     );
-    return if not @alignment_results;
+    return unless @alignment_results;
 
-    # Filter out any results that are not part of an apipe-builder model
-    my @alignment_results_from_apipe_builder_models;
-    for my $alignment_results ( @alignment_results ) {
-        my @builds = grep { $_->isa('Genome::Model::Build') } map { $_->user } $alignment_results->users;
-        if(not @builds) {
-            my @sr = grep { $_->isa('Genome::SoftwareResult') } map { $_->user } $alignment_results->users;
-            if(@sr) {
+    #Prefer alignment results created by apipe-builder models (via AQID autocron)
+    my @ars_by_apipe_builder;
+    my @ars_by_others;
+
+    for my $alignment_result (@alignment_results) {
+        #filter out the bad results and get results only with the new picard bwa alignment metrics
+        next if $alignment_result->test_name;
+        next unless grep{$_->metric_name eq 'read_1_pct_mismatch'}$alignment_result->metrics;
+
+        my @builds = grep {$_->isa('Genome::Model::Build')} map{$_->user} $alignment_result->users;
+        unless (@builds) {
+            my @sr = grep {$_->isa('Genome::SoftwareResult')} map{$_->user} $alignment_result->users;
+            if (@sr) {
                 #look for build with one degree of indirection
-                @builds = grep { $_->isa('Genome::Model::Build') } map { $_->user } map { $_->users} @sr;
+                @builds = grep {$_->isa('Genome::Model::Build')} map{$_->user} map{$_->users} @sr;
             }
         }
-        next if not @builds;
-        my @models_by_apipe_builder = grep { $_->user_name =~ /^apipe-builder/ } map { $_->model } @builds;
-        push @alignment_results_from_apipe_builder_models, $alignment_results;
+
+        next unless @builds;
+        my @models_by_apipe_builder = grep {$_->user_name =~ /^apipe-builder/} map { $_->model } @builds;
+
+        if (@models_by_apipe_builder) {
+            push @ars_by_apipe_builder, $alignment_result;
+        }
+        else {
+            push @ars_by_others, $alignment_result;
+        }
     }
-    return if not @alignment_results_from_apipe_builder_models;
-
-    # Filter out results that were not created by apipe-builder
-    my @alignment_results_created_by_apipe_builder_from_apipe_builder_models = grep {
-        $_->output_dir =~ /\-apipe\-builder\-/
-    } @alignment_results_from_apipe_builder_models;
-
-    # Prefer to return apipe-builder run alignment results
-    return @alignment_results_created_by_apipe_builder_from_apipe_builder_models if @alignment_results_created_by_apipe_builder_from_apipe_builder_models;
-
-    # Return the alignment result linked to the model run by other users
-    return @alignment_results_from_apipe_builder_models;
+    
+    # Prefer alignment results run by apipe-builder
+    if (@ars_by_apipe_builder) {
+        my @ars_run_by_apipe_builder = grep {$_->output_dir =~ /\-apipe\-builder\-/} @ars_by_apipe_builder;
+        if (@ars_run_by_apipe_builder) {
+            return @ars_run_by_apipe_builder;
+        }
+        else {
+            return @ars_by_apipe_builder;
+        }
+    }
+    # lowest priority, in some rare cases, no LIMS eland metrics, no apipe-builder metrics.
+    # Maybe we should not allow this to be used as default result.
+    return @ars_by_others;  
 }
 
 #This method is used in GSC::IndexIllumina to get bwa alignment metrics to retire eland 
@@ -1316,7 +1331,6 @@ sub get_default_alignment_metrics_hash {
     my %metrics;
 
     for my $ar (@ar) {
-        next unless grep{$_->metric_name eq 'read_1_pct_aligned'}$ar->metrics;
         map{$metrics{$_->metric_name} = $_->metric_value}$ar->metrics;
         last;
     }
