@@ -15,9 +15,9 @@ class Genome::Model::Tools::Music::Data::ParseCosmic {
     ],
     has_optional_input => [
         hg18_fasta => { is => 'String', doc => "Reference FASTA file for HG18 (Build36)",
-                        example_values => ["/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa"] },
+                        default => "/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa" },
         hg19_fasta => { is => 'String', doc => "Reference FASTA file for HG19 (Build37)",
-                        example_values => ["/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa"] },
+                        default => "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa" },
         max_indel_length => { is => 'Integer', doc => "Skip indels longer than this many bps", default => 100 },
         genome_wide_only => { is => 'Boolean', doc => "Pull only variants from genome-wide or exome-wide screens", default => 0 },
     ],

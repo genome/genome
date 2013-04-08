@@ -23,7 +23,7 @@ class Genome::DruggableGene::Command::Import::Go {
         genes_outfile => {
             is => 'Path',
             is_input => 1,
-            example_values => ['/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/GO_WashU_TARGETS.tsv'],
+            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/GO_WashU_TARGETS.tsv',
             doc => 'PATH.  Path to .tsv file for genes (targets)',
         },
         citation_base_url => {

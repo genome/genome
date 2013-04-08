@@ -41,7 +41,7 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           is => 'Text',
           is_optional => 1,
           doc => "Name of the igv reference to use",
-          example_values => ["reference_build36"],
+          default => "reference_build36",
       },
 
       tumor_only => {

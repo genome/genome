@@ -84,7 +84,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _reference_sequence_build_id => {
               is => 'Number',
-              example_values => ['106942997'],
+              default => '106942997',
         },
         reference_sequence_build => {
               is => 'Genome::Model::Build',
@@ -93,7 +93,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _annotation_build_id => {
               is => 'Number',
-              example_values => ['124434505'],
+              default => '124434505',
         },
         annotation_build => {
               is => 'Genome::Model::Build',
@@ -102,7 +102,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _dbsnp_build_id => {
               is => 'Number',
-              example_values => ['127786607'],
+              default => '127786607',
         },
         dbsnp_build => {
               is => 'Genome::Model::Build',
@@ -111,7 +111,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _previously_discovered_variations_id => {
               is => 'Number',
-              example_values => ['127786607'],
+              default => '127786607',
         },
         previously_discovered_variations => {
               is => 'Genome::Model::Build',

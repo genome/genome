@@ -18,18 +18,6 @@ use Test::More tests=>12; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::UpdateAnalysis;
 use Data::Dumper;
 
-my $reference_sequence_build_id = 106942997;
-my $annotation_build_id = 124434505;
-my $dbsnp_build_id = 127786607;
-my $previously_discovered_variations_build_id = 127786607;
-
-my @defaults = (
-_reference_sequence_build_id => $reference_sequence_build_id,
-_annotation_build_id => $annotation_build_id,
-_dbsnp_build_id => $dbsnp_build_id,
-_previously_discovered_variations_id => $previously_discovered_variations_build_id,
-);
-
 use_ok('Genome::Model::ClinSeq::Command::UpdateAnalysis') or die;
 
 #Define the test where expected results are stored
@@ -63,19 +51,19 @@ my $tumor_rna_sample = Genome::Sample->get($tumor_rna_sample_id);
 ok($tumor_rna_sample, "Obtained a tumor rna sample from id: $tumor_rna_sample_id");
 
 #Create the update-analysis command for step 1
-my $update_analysis_cmd1 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(display_defaults=>1, @defaults);
+my $update_analysis_cmd1 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(display_defaults=>1);
 $update_analysis_cmd1->queue_status_messages(1);
 my $r1 = $update_analysis_cmd1->execute();
 is($r1, 1, 'Testing for successful execution of step 1.  Expecting 1.  Got: '.$r1);
 
 #Create the update-analysis command for step 2
-my $update_analysis_cmd2 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(individual=>$individual, @defaults);
+my $update_analysis_cmd2 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(individual=>$individual);
 $update_analysis_cmd2->queue_status_messages(1);
 my $r2 = $update_analysis_cmd2->execute();
 is($r2, 1, 'Testing for successful execution of step 2.  Expecting 1.  Got: '.$r2);
 
 #Create the update-analysis command for step 3
-my $update_analysis_cmd3 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(individual=>$individual, @defaults, samples=>[$normal_dna_sample,$tumor_dna_sample,$tumor_rna_sample]);
+my $update_analysis_cmd3 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(individual=>$individual, samples=>[$normal_dna_sample,$tumor_dna_sample,$tumor_rna_sample]);
 $update_analysis_cmd3->queue_status_messages(1);
 my $r3 = $update_analysis_cmd3->execute();
 is($r3, 1, 'Testing for successful execution of step 3.  Expecting 1.  Got: '.$r3);
