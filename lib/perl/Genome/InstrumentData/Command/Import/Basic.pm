@@ -571,8 +571,7 @@ sub _transfer_sra_source_file {
     $self->status_message("Sorted bam prefix: $sorted_bam_prefix");
     my $sorted_bam_file = $sorted_bam_prefix.'.bam';
     $self->status_message("Sorted bam file: $sorted_bam_file");
-    my $cmd = "/usr/bin/sam-dump --unaligned --header $source_sra_file | samtools view -h -b -S - | samtools sort -m 3000000000 -n - $sorted_bam_prefix";
-    #my $cmd = "/usr/bin/sam-dump --unaligned --header $source_sra_file | samtools view -h -b -S - | samtools sort -m 3000000000 -n - $sorted_bam_prefix";
+    my $cmd = "/usr/bin/sam-dump --unaligned --header --primary $source_sra_file | samtools view -h -b -S - | samtools sort -m 3000000000 -n - $sorted_bam_prefix";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $sorted_bam_file ) {
         $self->error_message($@) if $@;
