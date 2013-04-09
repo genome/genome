@@ -14,7 +14,7 @@ my $start_point = resolve_start_point();
 
 my @files_to_compile = files_to_compile($start_point);;
 plan tests => scalar(@files_to_compile) + 1;
-ok(1); # need a test for when @files_to_compile == 0
+ok(1, 'need at least one test to pass'); # need a test for when @files_to_compile == 0
 
 for my $file (@files_to_compile) {
     my $pid = fork();
