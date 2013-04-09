@@ -64,6 +64,7 @@ my $orig_cmd = Genome::Db::Ensembl::Vep->create(
     polyphen => "b",
     sift => "b",
     hgnc => 1,
+    quiet => 1,
 );
 
 my $orig_result = $orig_cmd->execute();

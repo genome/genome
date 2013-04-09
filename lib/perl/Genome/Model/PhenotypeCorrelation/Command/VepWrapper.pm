@@ -67,6 +67,7 @@ sub execute {
         polyphen => "b",
         sift => "b",
         hgnc => 1,
+        quiet => 1,
     );
 
     return $vep_command->execute;
