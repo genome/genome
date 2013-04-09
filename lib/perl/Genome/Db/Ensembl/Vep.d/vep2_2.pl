@@ -66,90 +66,90 @@ my $config = &configure(scalar @ARGV);
 # this is the main sub-routine - it needs the configured $config hash
 sub main {
     my $config = shift;
-    
+
     debug("Starting...") unless defined $config->{quiet};
-    
+
     my $tr_cache = {};
     my $rf_cache = {};
-    
+
     # create a hash to hold slices so we don't get the same one twice
     my %slice_cache = ();
-    
-    my @vfs;    
+
+    my @vfs;
     my ($vf_count, $total_vf_count);
     my $in_file_handle = $config->{in_file_handle};
-    
+
     # initialize line number in config
     $config->{line_number} = 0;
-    
+
     # read the file
     while(<$in_file_handle>) {
         chomp;
-        
+
         $config->{line_number}++;
-        
+
         # header line?
         next if /^\#/;
-        
+
         # some lines (pileup) may actually parse out into more than one variant
         foreach my $vf(@{&parse_line($config, $_)}) {
-            
+
             # validate the VF
             next unless validate_vf($config, $vf);
-            
+
             # now get the slice
             if(!defined($vf->{slice})) {
                 my $slice;
-                
+
                 # don't get slices if we're using cache
                 # we can steal them from transcript objects later
                 if((!defined($config->{cache}) && !defined($config->{whole_genome})) || defined($config->{check_ref}) || defined($config->{convert})) {
-                    
+
                     # check if we have fetched this slice already
                     if(defined $slice_cache{$vf->{chr}}) {
                         $slice = $slice_cache{$vf->{chr}};
                     }
-                    
+
                     # if not create a new one
                     else {
-                        
+
                         $slice = &get_slice($config, $vf->{chr});
-                        
+
                         # if failed, warn and skip this line
                         if(!defined($slice)) {
                             warn("WARNING: Could not fetch slice named ".$vf->{chr}." on line ".$config->{line_number}."\n") unless defined $config->{quiet};
                             next;
-                        }    
-                        
+                        }
+
                         # store the hash
                         $slice_cache{$vf->{chr}} = $slice;
                     }
                 }
-                
+
                 $vf->{slice} = $slice;
             }
-            
+
             # make a name if one doesn't exist
             $vf->{variation_name} ||= $vf->{chr}.'_'.$vf->{start}.'_'.$vf->{allele_string};
-            
+
             # jump out to convert here
             if(defined($config->{convert})) {
                 &convert_vf($config, $vf);
                 next;
             }
-            
+
             if(defined $config->{whole_genome}) {
                 push @vfs, $vf;
                 $vf_count++;
                 $total_vf_count++;
-                
+
                 if($vf_count == $config->{buffer_size}) {
                     debug("Read $vf_count variants into buffer") unless defined($config->{quiet});
-                    
+
                     print_line($config, $_) foreach @{get_all_consequences($config, \@vfs, $tr_cache, $rf_cache)};
-                    
+
                     debug("Processed $total_vf_count total variants") unless defined($config->{quiet});
-                    
+
                     @vfs = ();
                     $vf_count = 0;
                 }
@@ -162,36 +162,36 @@ sub main {
             }
         }
     }
-    
+
     # if in whole-genome mode, finish off the rest of the buffer
     if(defined $config->{whole_genome} && scalar @vfs) {
         debug("Read $vf_count variants into buffer") unless defined($config->{quiet});
-        
+
         print_line($config, $_) foreach @{get_all_consequences($config, \@vfs, $tr_cache, $rf_cache)};
-        
+
         debug("Processed $total_vf_count total variants") unless defined($config->{quiet});
     }
-    
+
     debug("Executed ", defined($Bio::EnsEMBL::DBSQL::StatementHandle::count_queries) ? $Bio::EnsEMBL::DBSQL::StatementHandle::count_queries : 'unknown number of', " SQL statements") if defined($config->{count_queries}) && !defined($config->{quiet});
-    
+
     debug("Finished!") unless defined $config->{quiet};
 }
 
 # sets up configuration hash that is used throughout the script
 sub configure {
     my $args = shift;
-    
+
     my $config = {};
-    
+
     GetOptions(
         $config,
         'help',                    # displays help message
-        
+
         # input options,
         'config=s',                # config file name
         'input_file=s',            # input file name
         'format=s',                # input file format
-        
+
         # DB options
         'species=s',               # species e.g. human, homo_sapiens
         'registry=s',              # registry file
@@ -203,7 +203,7 @@ sub configure {
         'genomes',                 # automatically sets DB params for e!Genomes
         'refseq',                  # use otherfeatures RefSeq DB instead of Ensembl
         #'no_disconnect',           # disables disconnect_when_inactive
-        
+
         # runtime options
         'most_severe',             # only return most severe consequence
         'summary',                 # only return one line per variation with all consquence types
@@ -223,12 +223,12 @@ sub configure {
         'freq_freq=f',             # frequency to filter on
         'freq_gt_lt=s',            # gt or lt (greater than or less than)
         'freq_pop=s',              # population to filter on
-        
+
         # verbosity options
         'verbose',                 # print out a bit more info while running
         'quiet',                   # print nothing to STDOUT (unless using -o stdout)
         'no_progress',             # don't display progress bars
-        
+
         # output options
         'output_file=s',           # output file name
         'force_overwrite',         # force overwrite of output file if already exists
@@ -245,7 +245,7 @@ sub configure {
         'regulatory',              # enable regulatory stuff
         'convert=s',               # convert input to another format (doesn't run VEP)
         'no_intergenic',           # don't print out INTERGENIC consequences
-        
+
         # cache stuff
         'cache',                   # use cache
         'write_cache',             # enables writing to the cache
@@ -259,71 +259,71 @@ sub configure {
         'standalone',              # standalone mode uses minimal set of modules installed in same dir, no DB connection
         'skip_db_check',           # don't compare DB parameters with cached
         'compress=s',              # by default we use zcat to decompress; user may want to specify gzcat or "gzip -dc"
-        
+
         # debug
         'cluck',                   # these two need some mods to Bio::EnsEMBL::DBSQL::StatementHandle to work. Clucks callback trace and SQL
         'count_queries',           # counts SQL queries executed
         'admin',                   # allows me to build off public hosts
         'debug',                   # print out debug info
     );
-    
+
     # print usage message if requested or no args supplied
     if(defined($config->{help}) || !$args) {
         &usage;
         exit(0);
     }
-    
+
     # config file?
     if(defined $config->{config}) {
-        
+
         open CONFIG, $config->{config} or die "ERROR: Could not open config file \"".$config->{config}."\"\n";
-        
+
         while(<CONFIG>) {
             next if /^\#/;
             my ($key, $value) = split /\s+|\=/;
             $key =~ s/^\-//g;
             $config->{$key} = $value unless defined $config->{$key};
         }
-        
+
         close CONFIG;
     }
 
     # can't be both quiet and verbose
     die "ERROR: Can't be both quiet and verbose!" if defined($config->{quiet}) && defined($config->{verbose});
-    
+
     # check file format
     if(defined $config->{format}) {
         die "ERROR: Unrecognised input format specified \"".$config->{format}."\"\n" unless $config->{format} =~ /pileup|vcf|guess|hgvs|ensembl|id/i;
     }
-    
+
     # check convert format
     if(defined $config->{convert}) {
         die "ERROR: Unrecognised output format for conversion specified \"".$config->{convert}."\"\n" unless $config->{convert} =~ /vcf|ensembl|pileup/i;
     }
-    
+
     # connection settings for Ensembl Genomes
     if($config->{genomes}) {
         $config->{host} ||= 'mysql.ebi.ac.uk';
         $config->{port} ||= 4157;
     }
-    
+
     # connection settings for main Ensembl
     else {
         $config->{species} ||= "homo_sapiens";
         $config->{host}    ||= 'ensembldb.ensembl.org';
         $config->{port}    ||= 5306;
     }
-    
+
     # refseq or core?
     if(defined($config->{refseq})) {
         die "ERROR: SIFT, PolyPhen and Condel predictions not available fore RefSeq transcripts" if defined $config->{sift} || defined $config->{polyphen} || defined $config->{condel};
-        
+
         $config->{core_type} = 'otherfeatures';
     }
     else {
         $config->{core_type} = 'core';
     }
-    
+
     # output term
     if(defined $config->{terms}) {
         die "ERROR: Unrecognised consequence term type specified \"".$config->{terms}."\" - must be one of ensembl, so, ncbi\n" unless $config->{terms} =~ /ensembl|display|so|ncbi/i;
@@ -334,27 +334,27 @@ sub configure {
             $config->{terms} = uc($config->{terms});
         }
     }
-    
+
     # check nsSNP tools
     foreach my $tool(grep {defined $config->{lc($_)}} qw(SIFT PolyPhen Condel)) {
         die "ERROR: Unrecognised option for $tool \"", $config->{lc($tool)}, "\" - must be one of p (prediction), s (score) or b (both)\n" unless $config->{lc($tool)} =~ /^(s|p|b)/;
-        
+
         die "ERROR: $tool not available for this species\n" unless $config->{species} =~ /human|homo/i;
-        
+
         die "ERROR: $tool not available in standalone mode\n" if defined($config->{standalone});
-        
+
         # use V2 of the Condel algorithm, possibly gives fewer false positives
         if($tool eq 'Condel' && $config->{lc($tool)} =~ /1$/) {
             $Bio::EnsEMBL::Variation::Utils::Condel::USE_V2 = 0;
         }
     }
-    
+
     # force quiet if outputting to STDOUT
     if(defined($config->{output_file}) && $config->{output_file} =~ /stdout/i) {
         delete $config->{verbose} if defined($config->{verbose});
         $config->{quiet} = 1;
     }
-    
+
     # summarise options if verbose
     if(defined $config->{verbose}) {
         my $header =<<INTRO;
@@ -370,16 +370,16 @@ Configuration options:
 
 INTRO
         print $header;
-        
+
         my $max_length = (sort {$a <=> $b} map {length($_)} keys %$config)[-1];
-        
+
         foreach my $key(sort keys %$config) {
             print $key.(' ' x (($max_length - length($key)) + 4)).$config->{$key}."\n";
         }
-        
+
         print "\n".("-" x 20)."\n\n";
     }
-    
+
     # set defaults
     $config->{user}              ||= 'anonymous';
     $config->{buffer_size}       ||= 5000;
@@ -392,47 +392,47 @@ INTRO
     $config->{cache_region_size} ||= 1000000;
     $config->{dir}               ||= join '/', ($ENV{'HOME'}, '.vep');
     $config->{compress}          ||= 'zcat';
-    
+
     # frequency filtering
     if(defined($config->{check_frequency})) {
         foreach my $flag(qw(freq_freq freq_filter freq_pop freq_gt_lt)) {
             die "ERROR: To use --check_frequency you must also specify flag --$flag" unless defined $config->{$flag};
         }
-        
+
         # need to set check_existing
         $config->{check_existing} = 1;
     }
-    
+
     $config->{check_existing} = 1 if defined $config->{check_alleles};
-    
+
     # warn users still using whole_genome flag
     if(defined($config->{whole_genome})) {
         debug("INFO: Whole-genome mode is now the default run-mode for the script. To disable it, use --no_whole_genome") unless defined($config->{quiet});
     }
-    
+
     $config->{whole_genome}      = 1 unless defined $config->{no_whole_genome};
     $config->{include_failed}    = 1 unless defined $config->{include_failed};
     $config->{chunk_size}        =~ s/mb?/000000/i;
     $config->{chunk_size}        =~ s/kb?/000/i;
     $config->{cache_region_size} =~ s/mb?/000000/i;
     $config->{cache_region_size} =~ s/kb?/000/i;
-    
+
     # cluck and display executed SQL?
     $Bio::EnsEMBL::DBSQL::StatementHandle::cluck = 1 if defined($config->{cluck});
-    
+
     # standalone needs cache, can't use HGVS
     if(defined($config->{standalone})) {
         $config->{cache} = 1;
-        
+
         die("ERROR: Cannot generate HGVS coordinates in standalone mode") if defined($config->{hgvs});
         die("ERROR: Cannot use HGVS as input in standalone mode") if $config->{format} eq 'hgvs';
         die("ERROR: Cannot use variant identifiers as input in standalone mode") if $config->{format} eq 'id';
         die("ERROR: Cannot do frequency filtering in standalone mode") if defined($config->{check_frequency});
     }
-    
+
     # write_cache needs cache
     $config->{cache} = 1 if defined $config->{write_cache};
-    
+
     # no_slice_cache, prefetch and whole_genome have to be on to use cache
     if(defined($config->{cache})) {
         $config->{prefetch} = 1;
@@ -440,9 +440,9 @@ INTRO
         $config->{whole_genome} = 1;
         $config->{strip} = 1;
     }
-    
+
     $config->{build} = $config->{rebuild} if defined($config->{rebuild});
-    
+
     # force options for full build
     if(defined($config->{build})) {
         $config->{prefetch} = 1;
@@ -453,10 +453,10 @@ INTRO
         $config->{strip} = 1;
         $config->{write_cache} = 1;
     }
-    
+
     # connect to databases
     $config->{reg} = &connect_to_dbs($config);
-    
+
     # complete dir with species name and db_version
     $config->{dir} .= '/'.(
         join '/', (
@@ -464,14 +464,14 @@ INTRO
             $config->{db_version} || $config->{reg}->software_version
         )
     );
-    
+
     if(defined($config->{cache})) {
         # read cache info
         if(read_cache_info($config)) {
             debug("Read existing cache info") unless defined $config->{quiet};
         }
     }
-    
+
     # include regulatory modules if requested
     if(defined($config->{regulatory})) {
         # do the use statements here so that users don't have to have the
@@ -482,41 +482,41 @@ INTRO
         use Bio::EnsEMBL::Funcgen::RegulatoryFeature;
         use Bio::EnsEMBL::Funcgen::BindingMatrix;
     }
-    
+
     # warn user cache directory doesn't exist
     if(!-e $config->{dir}) {
-        
+
         # if using write_cache
         if(defined($config->{write_cache})) {
             debug("INFO: Cache directory ", $config->{dir}, " not found - it will be created") unless defined($config->{quiet});
         }
-        
+
         # want to read cache, not found
         elsif(defined($config->{cache})) {
             die("ERROR: Cache directory ", $config->{dir}, " not found");
         }
     }
-    
+
     # suppress warnings that the FeatureAdpators spit if using no_slice_cache
     Bio::EnsEMBL::Utils::Exception::verbose(1999) if defined($config->{no_slice_cache});
-    
+
     # get adaptors
     if(defined($config->{cache}) && !defined($config->{write_cache})) {
-        
+
         # try and load adaptors from cache
         if(!&load_dumped_adaptor_cache($config)) {
             &get_adaptors($config);
             &dump_adaptor_cache($config) if defined($config->{write_cache});
         }
-        
+
         # check cached adaptors match DB params
         else {
             my $dbc = $config->{sa}->{dbc};
-        
+
             my $ok = 1;
-            
+
             if($dbc->{_host} ne $config->{host}) {
-                
+
                 # ens-livemirror, useastdb and ensembldb should all have identical DBs
                 unless(
                     (
@@ -531,13 +531,13 @@ INTRO
                 ) {
                     $ok = 0;
                 }
-                
+
                 # but we still need to reconnect
                 debug("INFO: Defined host ", $config->{host}, " is different from cached ", $dbc->{_host}, " - reconnecting to host") unless defined($config->{quiet});
-                
+
                 &get_adaptors($config);
             }
-            
+
             if(!$ok) {
                 if(defined($config->{skip_db_check})) {
                     debug("INFO: Defined host ", $config->{host}, " is different from cached ", $dbc->{_host}) unless defined($config->{quiet});
@@ -552,100 +552,100 @@ INTRO
         &get_adaptors($config);
         &dump_adaptor_cache($config) if defined($config->{write_cache})
     }
-    
+
     # reg adaptors (only fetches if not retrieved from cache already)
     &get_reg_adaptors($config) if defined($config->{regulatory});
-    
+
     # get terminal width for progress bars
     unless(defined($config->{quiet})) {
         my $width;
-        
+
         # module may not be installed
         eval {
             use Term::ReadKey;
         };
-        
+
         if(!$@) {
             my ($w, $h);
-            
+
             # module may be installed, but e.g.
             eval {
                 ($w, $h) = GetTerminalSize();
             };
-            
+
             $width = $w if defined $w;
         }
-        
+
         $width ||= 60;
         $width -= 12;
         $config->{terminal_width} = $width;
     }
-    
+
     # jump out to build cache if requested
     if(defined($config->{build})) {
-        
+
         if($config->{host} =~ /^(ensembl|useast)db\.ensembl\.org$/ && !defined($config->{admin})) {
             die("ERROR: Cannot build cache using public database server ", $config->{host}, "\n");
         }
-        
+
         # build the cache
         debug("Building cache for ".$config->{species}) unless defined($config->{quiet});
         build_full_cache($config);
-        
+
         # exit script
         debug("Finished building cache") unless defined($config->{quiet});
         exit(0);
     }
-    
+
     # warn user DB will be used for SIFT/PolyPhen/Condel/HGVS/frequency
     if(defined($config->{cache})) {
-        
+
         # these two def depend on DB
         foreach my $param(grep {defined $config->{$_}} qw(hgvs check_frequency)) {
             debug("INFO: Database will be accessed when using --$param") unless defined($config->{quiet});
         }
-        
+
         # as does using HGVS or IDs as input
         debug("INFO: Database will be accessed when using --format ", $config->{format}) if ($config->{format} eq 'id' || $config->{format} eq 'hgvs') && !defined($config->{quiet});
-        
+
         # the rest may be in the cache
         foreach my $param(grep {defined $config->{$_}} qw(sift polyphen condel regulatory)) {
             next if defined($config->{'cache_'.$param});
             debug("INFO: Database will be accessed when using --$param; consider using the complete cache containing $param data (see documentation for details)") unless defined($config->{quiet});
         }
     }
-    
+
     # get list of chrs if supplied
     if(defined($config->{chr})) {
         my %chrs;
-        
+
         foreach my $val(split /\,/, $config->{chr}) {
             my @nnn = split /\-/, $val;
-            
+
             foreach my $chr($nnn[0]..$nnn[-1]) {
                 $chrs{$chr} = 1;
             }
         }
-        
+
         $config->{chr} = \%chrs;
     }
-    
+
     # get input file handle
     $config->{in_file_handle} = &get_in_file_handle($config);
-    
+
     # configure output file
     $config->{out_file_handle} = &get_out_file_handle($config);
-    
+
     return $config;
 }
 
 # connects to DBs; in standalone mode this just loads registry module
 sub connect_to_dbs {
     my $config = shift;
-    
+
     # get registry
     my $reg = 'Bio::EnsEMBL::Registry';
-    
+
     unless(defined($config->{standalone})) {
         # load DB options from registry file if given
         if(defined($config->{registry})) {
@@ -657,7 +657,7 @@ sub connect_to_dbs {
                 $config->{no_slice_cache}
             );
         }
-        
+
         # otherwise manually connect to DB server
         else {
             $reg->load_registry_from_db(
@@ -671,14 +671,14 @@ sub connect_to_dbs {
                 -no_cache   => $config->{no_slice_cache},
             );
         }
-        
+
         eval { $reg->set_reconnect_when_lost() };
-        
+
         if(defined($config->{verbose})) {
             # get a meta container adaptors to check version
             my $core_mca = $reg->get_adaptor($config->{species}, 'core', 'metacontainer');
             my $var_mca = $reg->get_adaptor($config->{species}, 'variation', 'metacontainer');
-            
+
             if($core_mca && $var_mca) {
                 debug(
                     "Connected to core version ", $core_mca->get_schema_version, " database ",
@@ -687,21 +687,21 @@ sub connect_to_dbs {
             }
         }
     }
-    
+
     return $reg;
 }
 
 # get adaptors from DB
 sub get_adaptors {
     my $config = shift;
-    
+
     die "ERROR: No registry" unless defined $config->{reg};
-    
+
     $config->{vfa}   = $config->{reg}->get_adaptor($config->{species}, 'variation', 'variationfeature');
     $config->{tva}   = $config->{reg}->get_adaptor($config->{species}, 'variation', 'transcriptvariation');
     $config->{pfpma} = $config->{reg}->get_adaptor($config->{species}, 'variation', 'proteinfunctionpredictionmatrix');
     $config->{va}    = $config->{reg}->get_adaptor($config->{species}, 'variation', 'variation');
-    
+
     # get fake ones for species with no var DB
     if(!defined($config->{vfa})) {
         $config->{vfa} = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($config->{species});
@@ -710,16 +710,16 @@ sub get_adaptors {
     else {
         $config->{vfa}->db->include_failed_variations($config->{include_failed}) if defined($config->{vfa}->db) && $config->{vfa}->db->can('include_failed_variations');
     }
-    
+
     $config->{sa}  = $config->{reg}->get_adaptor($config->{species}, $config->{core_type}, 'slice');
     $config->{ga}  = $config->{reg}->get_adaptor($config->{species}, $config->{core_type}, 'gene');
     $config->{ta}  = $config->{reg}->get_adaptor($config->{species}, $config->{core_type}, 'transcript');
     $config->{mca} = $config->{reg}->get_adaptor($config->{species}, $config->{core_type}, 'metacontainer');
     $config->{csa} = $config->{reg}->get_adaptor($config->{species}, $config->{core_type}, 'coordsystem');
-    
+
     # cache schema version
     $config->{mca}->get_schema_version if defined $config->{mca};
-    
+
     # check we got slice adaptor - can't continue without a core DB
     die("ERROR: Could not connect to core database\n") unless defined $config->{sa};
 }
@@ -730,7 +730,7 @@ sub get_reg_adaptors {
 
     foreach my $type(@REG_FEAT_TYPES) {
         next if defined($config->{$type.'_adaptor'});
-        
+
         my $adaptor = $config->{reg}->get_adaptor($config->{species}, 'funcgen', $type);
         if(defined($adaptor)) {
             $config->{$type.'_adaptor'} = $adaptor;
@@ -748,12 +748,12 @@ sub get_in_file_handle {
 
     # define the filehandle to read input from
     my $in_file_handle = new FileHandle;
-    
+
     if(defined($config->{input_file})) {
-        
+
         # check defined input file exists
         die("ERROR: Could not find input file ", $config->{input_file}, "\n") unless -e $config->{input_file};
-        
+
         if($config->{input_file} =~ /\.gz$/){
             $in_file_handle->open($config->{compress}." ". $config->{input_file} . " | " ) or die("ERROR: Could not read from input file ", $config->{input_file}, "\n");
         }
@@ -761,35 +761,35 @@ sub get_in_file_handle {
             $in_file_handle->open( $config->{input_file} ) or die("ERROR: Could not read from input file ", $config->{input_file}, "\n");
         }
     }
-    
+
     # no file specified - try to read data off command line
     else {
         $in_file_handle = 'STDIN';
         debug("Reading input from STDIN (or maybe you forgot to specify an input file?)...") unless defined $config->{quiet};
     }
-    
+
     return $in_file_handle;
 }
 
 # gets file handle for output and adds header
 sub get_out_file_handle {
     my $config = shift;
-    
+
     # define filehandle to write to
     my $out_file_handle = new FileHandle;
-    
+
     # check if file exists
     if(-e $config->{output_file} && !defined($config->{force_overwrite})) {
         die("ERROR: Output file ", $config->{output_file}, " already exists. Specify a different output file with --output_file or overwrite existing file with --force_overwrite\n");
     }
-    
+
     if($config->{output_file} =~ /stdout/i) {
         $out_file_handle = *STDOUT;
     }
     else {
         $out_file_handle->open(">".$config->{output_file}) or die("ERROR: Could not write to output file ", $config->{output_file}, "\n");
     }
-    
+
     # file conversion, don't want to add normal headers
     if(defined($config->{convert})) {
         # header for VCF
@@ -806,10 +806,10 @@ sub get_out_file_handle {
             );
             print $out_file_handle "\n";
         }
-        
+
         return $out_file_handle;
     }
-    
+
     # make header
     my $time = &get_time;
     my $db_string = $config->{mca}->dbc->dbname." on ".$config->{mca}->dbc->host if defined $config->{mca};
@@ -817,7 +817,7 @@ sub get_out_file_handle {
     my $version_string =
         "Using API version ".$config->{reg}->software_version.
         ", DB version ".(defined $config->{mca} && $config->{mca}->get_schema_version ? $config->{mca}->get_schema_version : '?');
-    
+
     my $header =<<HEAD;
 ## ENSEMBL VARIANT EFFECT PREDICTOR v$VERSION
 ## Output produced at $time
@@ -835,14 +835,14 @@ sub get_out_file_handle {
 ## MATRIX       : The source and identifier of a transcription factor binding profile aligned at this position
 ## HIGH_INF_POS : A flag indicating if the variant falls in a high information position of a transcription factor binding profile
 HEAD
-    
+
     # add headers
     print $out_file_handle $header;
-    
+
     # add column headers
     print $out_file_handle '#', (join "\t", @OUTPUT_COLS);
     print $out_file_handle "\n";
-    
+
     return $out_file_handle;
 }
 
@@ -850,13 +850,13 @@ HEAD
 sub convert_vf {
     my $config = shift;
     my $vf = shift;
-    
+
     my $convert_method = 'convert_to_'.lc($config->{convert});
-    my $method_ref   = \&$convert_method; 
-    
+    my $method_ref   = \&$convert_method;
+
     my $line = &$method_ref($config, $vf);
     my $handle = $config->{out_file_handle};
-    
+
     if(scalar @$line) {
         print $handle join "\t", @$line;
         print $handle "\n";
@@ -867,7 +867,7 @@ sub convert_vf {
 sub convert_to_ensembl {
     my $config = shift;
     my $vf = shift;
-    
+
     return [
         $vf->{chr} || $vf->seq_region_name,
         $vf->start,
@@ -882,33 +882,33 @@ sub convert_to_ensembl {
 sub convert_to_vcf {
     my $config = shift;
     my $vf = shift;
-    
+
     # look for imbalance in the allele string
     my %allele_lengths;
     my @alleles = split /\//, $vf->allele_string;
-    
+
     foreach my $allele(@alleles) {
         $allele =~ s/\-//g;
         $allele_lengths{length($allele)} = 1;
     }
-    
+
     # in/del/unbalanced
     if(scalar keys %allele_lengths > 1) {
-        
+
         # we need the ref base before the variation
         # default to N in case we can't get it
         my $prev_base = 'N';
-        
+
         unless(defined($config->{cache})) {
             my $slice = $vf->slice->sub_Slice($vf->start - 1, $vf->start -1);
             $prev_base = $slice->seq if defined($slice);
         }
-        
+
         for my $i(0..$#alleles) {
             $alleles[$i] =~ s/\-//g;
             $alleles[$i] = $prev_base.$alleles[$i];
         }
-        
+
         return [
             $vf->{chr} || $vf->seq_region_name,
             $vf->start - 1,
@@ -917,9 +917,9 @@ sub convert_to_vcf {
             (join ",", @alleles),
             '.', '.', '.'
         ];
-        
+
     }
-    
+
     # balanced sub
     else {
         return [
@@ -938,42 +938,42 @@ sub convert_to_vcf {
 sub convert_to_pileup {
     my $config = shift;
     my $vf = shift;
-    
+
     # look for imbalance in the allele string
     my %allele_lengths;
     my @alleles = split /\//, $vf->allele_string;
-    
+
     foreach my $allele(@alleles) {
         $allele =~ s/\-//g;
         $allele_lengths{length($allele)} = 1;
     }
-    
+
     # in/del
     if(scalar keys %allele_lengths > 1) {
-        
+
         if($vf->allele_string =~ /\-/) {
-            
+
             # insertion?
             if($alleles[0] eq '-') {
                 shift @alleles;
-            
+
                 for my $i(0..$#alleles) {
                     $alleles[$i] =~ s/\-//g;
                     $alleles[$i] = '+'.$alleles[$i];
                 }
             }
-            
+
             else {
                 @alleles = grep {$_ ne '-'} @alleles;
-                
+
                 for my $i(0..$#alleles) {
                     $alleles[$i] =~ s/\-//g;
                     $alleles[$i] = '-'.$alleles[$i];
                 }
             }
-            
+
             @alleles = grep {$_ ne '-' && $_ ne '+'} @alleles;
-            
+
             return [
                 $vf->{chr} || $vf->seq_region_name,
                 $vf->start - 1,
@@ -981,14 +981,14 @@ sub convert_to_pileup {
                 (join "/", @alleles),
             ];
         }
-        
+
         else {
             warn "WARNING: Unable to convert variant to pileup format on line number ", $config->{line_number} unless defined($config->{quiet});
             return [];
         }
-        
+
     }
-    
+
     # balanced sub
     else {
         return [
@@ -1050,12 +1050,12 @@ Options
                        will force --quiet [default: "variant_effect_output.txt"]
 --force_overwrite      Force overwriting of output file [default: quit if file
                        exists]
-                       
+
 --species [species]    Species to use [default: "human"]
 
 -t | --terms           Type of consequence terms to output - one of "ensembl", "SO",
                        "NCBI" [default: ensembl]
- 
+
 --sift=[p|s|b]         Add SIFT [p]rediction, [s]core or [b]oth [default: off]
 --polyphen=[p|s|b]     Add PolyPhen [p]rediction, [s]core or [b]oth [default: off]
 --condel=[p|s|b]       Add Condel SIFT/PolyPhen consensus [p]rediction, [s]core or
@@ -1069,7 +1069,7 @@ NB: SIFT, PolyPhen and Condel predictions are currently available for human only
                        within a transcription factor binding site. Output lines have
                        a Feature type of RegulatoryFeature or MotifFeature
                        [default: off]
-                       
+
 NB: Regulatory consequences are currently available for human and mouse only
 
 --hgnc                 If specified, HGNC gene identifiers are output alongside the
@@ -1102,7 +1102,7 @@ NB: Regulatory consequences are currently available for human and mouse only
                        are compared to the input; an existing variation will only
                        be reported if no novel allele is in the input (strand is
                        accounted for) [default: off]
-                       
+
 --no_intergenic        Excludes intergenic consequences from the output [default: off]
 
 --check_frequency      Turns on frequency filtering. Use this to include or exclude
@@ -1125,7 +1125,7 @@ NB: Regulatory consequences are currently available for human and mouse only
 --gp                   If specified, tries to read GRCh37 position from GP field in the
                        INFO column of a VCF file. Only applies when VCF is the input
                        format and human is the species [default: off]
-                       
+
 --convert              Convert the input file to the output format specified.
   [ensembl|vcf|pileup] Converted output is written to the file specified in
                        --output_file. No consequence calculation is carried out when
@@ -1148,7 +1148,7 @@ NB: Regulatory consequences are currently available for human and mouse only
 --buffer_size          Sets the number of variants sent in each batch [default: 5000]
                        Increasing buffer size can retrieve results more quickly
                        but requires more memory. Only applies to whole genome mode.
-                       
+
 --cache                Enables read-only use of cache [default: off]
 --dir [directory]      Specify the base cache directory to use [default: "\$HOME/.vep/"]
 --write_cache          Enable writing to cache [default: off]
@@ -1156,10 +1156,10 @@ NB: Regulatory consequences are currently available for human and mouse only
                        chromosomes with --build all, or a list of chromosomes (see
                        --chr). DO NOT USE WHEN CONNECTED TO PUBLIC DB SERVERS AS THIS
                        VIOLATES OUR FAIR USAGE POLICY [default: off]
-                       
+
 --compress             Specify utility to decompress cache files - may be "gzcat" or
                        "gzip -dc" Only use if default does not work [default: zcat]
-                       
+
 --skip_db_check        ADVANCED! Force the script to use a cache built from a different
                        database than specified with --host. Only use this if you are
                        sure the hosts are compatible (e.g. ensembldb.ensembl.org and
