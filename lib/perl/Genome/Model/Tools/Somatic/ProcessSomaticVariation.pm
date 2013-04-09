@@ -205,6 +205,10 @@ sub execute {
   my $output_dir = $self->output_dir;
   $output_dir =~ s/(\/)+$//; # Remove trailing forward-slashes if any
 
+  if(!(-e $output_dir)){
+      mkdir($output_dir);
+  }
+
   # Check on the input data before starting work
   my $model = Genome::Model->get( $somatic_variation_model_id );
   print STDERR "ERROR: Could not find a model with ID: $somatic_variation_model_id\n" unless( defined $model );
