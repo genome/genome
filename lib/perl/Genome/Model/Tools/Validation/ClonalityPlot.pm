@@ -34,13 +34,6 @@ class Genome::Model::Tools::Validation::ClonalityPlot {
         is_optional => 1,
         is_input => 1 },        
 
-    varscan_r_library => {
-        is => 'Text',
-        doc => "R library containing critical functions",
-        is_optional => 0,
-        is_input => 1,
-        example_values => ['/gscmnt/sata423/info/medseq/analysis/CaptureValidationGraphs/VarScanGraphLib.R']},
-
     sample_id => {
         is => 'Text',
         doc => "Sample ID to be put on graphs",
@@ -180,7 +173,6 @@ sub execute {
     my $output_image = $self->output_image;
     my $clustered_data_output_file = $self->clustered_data_output_file;
     ##options##
-    my $r_library = $self->varscan_r_library;
     my $skip_if_output_is_present = $self->skip_if_output_is_present;
     my $analysis_type = $self->analysis_type;
     my $minimum_labelled_peak_height = $self->minimum_labelled_peak_height;
@@ -300,6 +292,8 @@ sub execute {
         $absmaxx = 5000;
     }
 
+    my $dir_name = dirname(__FILE__);
+    my $r_library = $dir_name . "/VarScanGraphLib.R";
 
     #create the R script that will be run to produce the plot
 #-------------------------------------------------
@@ -323,7 +317,6 @@ sub execute {
 _END_OF_R_
 #-------------------------------------------------
 
-    my $dir_name = dirname(__FILE__);
     print R_COMMANDS "source(\"" . $dir_name . "/ClonalityPlot.R\")\n";
 
 
