@@ -63,6 +63,15 @@ sub resolve_start_point {
 }
 
 
+sub is_blacklisted {
+    my $file = shift;
+    my @blacklist = (
+        'Db/Ensembl/Vep.d/vep2_2.pl',
+    );
+    return grep { $file =~ /$_/ } @blacklist;
+}
+
+
 sub files_to_compile {
     my $start_point = shift;
     my @files;
@@ -76,6 +85,7 @@ sub files_to_compile {
 
     @files = map { File::Spec->join($git_dir, $_) } @files;
     @files = grep { is_perl_file $_ } @files;
+    @files = grep { ! is_blacklisted $_ } @files;
 
     return @files;
 }
