@@ -13,9 +13,6 @@ class Genome::DataSource::GMSchema {
     is => ['UR::DataSource::Oracle'],
 };
 
-my $POST_COMMIT_WRAPPED_ACTION = \&UR::Util::null_sub;
-$UR::Context::current->add_observer(aspect => 'commit', callback => sub {$POST_COMMIT_WRAPPED_ACTION->()} );
-
 sub table_and_column_names_are_upper_case { 1; }
 
 sub server {
@@ -143,18 +140,15 @@ sub _sync_database {
             log_commit_time('oracle', $sync_time_duration);
             close $parent_oracle_control_sock;
 
-            $POST_COMMIT_WRAPPED_ACTION = sub {
-                print $child_pg_control_sock "1\n";
-                $POST_COMMIT_WRAPPED_ACTION = \&UR::Util::null_sub;
-                eval {
-                    local $SIG{'ALRM'} = sub {
-                        log_error('Timed out waiting for Postgres to sync!  Oracle successfully committed.  Databases have possibly diverged.');
-                        die; # to exit eval
-                    };
-                    alarm 30;
-                    my $pg_signal = <$child_pg_control_sock>;
-                    alarm 0;
+            print $child_pg_control_sock "1\n";
+            eval {
+                local $SIG{'ALRM'} = sub {
+                    log_error('Timed out waiting for Postgres to sync! Databases have possibly diverged.');
+                    die; # to exit eval
                 };
+                alarm 30;
+                my $pg_signal = <$child_pg_control_sock>;
+                alarm 0;
             };
         }
 
