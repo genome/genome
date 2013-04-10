@@ -36,7 +36,7 @@ EOS
 sub execute {
     my $self = shift;
 
-    my $blessed_build = $self->blessed_build;
+    my $blessed_build = $self->get_blessed_build;
     my $new_build = $self->new_build;
 
     $self->status_message(sprintf("Comparing new build %s to blessed build %s...", $new_build->id, $blessed_build->id));

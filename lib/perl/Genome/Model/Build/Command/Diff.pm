@@ -15,3 +15,8 @@ class Genome::Model::Build::Command::Diff {
         },
     ],
 };
+
+sub get_blessed_build {
+    my $self = shift;
+    return $self->blessed_build;
+}

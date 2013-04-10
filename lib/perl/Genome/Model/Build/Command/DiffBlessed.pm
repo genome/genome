@@ -14,11 +14,6 @@ class Genome::Model::Build::Command::DiffBlessed {
             valid_values => ['5.8', '5.10'],
             default_value => '5.10',
         },
-        blessed_build => {
-            is_optional => 1,
-            calculate_from => ['new_build', 'perl_version', 'db_file'],
-            calculate => q{ retrieve_blessed_build($new_build->model->name, $perl_version, $db_file) },
-        },
         db_file => {
             is_optional => 1,
             default_value => default_db_file(),
@@ -28,6 +23,14 @@ class Genome::Model::Build::Command::DiffBlessed {
 
 sub default_db_file {
     return __FILE__.".YAML";
+}
+
+sub get_blessed_build {
+    my $self = shift;
+    my $model_name = $self->new_build->model_name;
+    my $perl_version = $self->perl_version;
+    my $db_file = $self->db_file;
+    return retrieve_blessed_build($model_name, $perl_version, $db_file);
 }
 
 sub retrieve_blessed_build {
