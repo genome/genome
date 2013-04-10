@@ -5,6 +5,7 @@ use warnings;
 
 use Test::More;
 use File::Temp;
+use above 'Genome';
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -34,7 +35,7 @@ YAML
     my $retval = print $fh $yaml;
     ok($retval, "wrote test YAML file") or die;
     $fh->close;
-    is(Genome::Model::Build::Command::DiffBlessed::blessed_build($model_name, $perl_version, $fh->filename ), $build_id, "blessed build returned as expected");
+    is(Genome::Model::Build::Command::DiffBlessed::retrieve_blessed_build($model_name, $perl_version, $fh->filename ), $build_id, "blessed build returned as expected");
 }
 done_testing();
 
