@@ -25,7 +25,7 @@ sub default_db_file {
     return __FILE__.".YAML";
 }
 
-sub get_blessed_build {
+sub blessed_build {
     my $self = shift;
     my $model_name = $self->new_build->model_name;
     my $perl_version = $self->perl_version;
