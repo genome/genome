@@ -10,8 +10,40 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Genome::Utility::Test;
 
 my $class = "Genome::Model::Tools::Annotate::Sv::Segdup";
 use_ok($class);
+
+my $base_dir = Genome::Utility::Test->data_dir($class);
+my $version = "1";
+my $data_dir = join("/", $base_dir, "v$version");
+
+my $bp_list = {
+    1 => [
+    {
+        chrA => '1',
+        bpA => 142542267,
+        chrB => '1',
+        bpB => 142850801,
+        event => 'DEL',
+        orient => "+-",
+    },
+    ],
+};
+
+my $expected_output = {
+    '1--142542267--1--142850801--DEL' => [
+        'align_both/0013/both066919-align_both/0013/both066919',
+    ],
+};
+
+my $annotation_file = $data_dir."/segdup";
+
+my $cmd = Genome::Model::Tools::Annotate::Sv::Segdup->create(annotation_file => $annotation_file);
+ok($cmd, "Created command");
+my $output = $cmd->process_breakpoint_list($bp_list);
+ok($output, "Process breakpoint list created output");
+is_deeply($output, $expected_output, "Got segdup") or diag explain [$output, $expected_output];
 
 done_testing;
