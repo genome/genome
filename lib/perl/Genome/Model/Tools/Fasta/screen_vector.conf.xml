@@ -1,5 +1,5 @@
 <configuration>
-    <defaults name="directory">/home1/watson/seqmgr/vector</defaults>
+    <defaults name="directory">/gscuser/seqmgr/vector</defaults>
     <defaults name="vector_file">${directory}/vector.seq</defaults>
     <defaults name="linker_file">${directory}/linker.seq</defaults>
     <defaults name="params">-minmatch 12 -minscore 20 -penalty -2</defaults>
