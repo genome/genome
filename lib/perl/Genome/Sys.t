@@ -190,7 +190,8 @@ sub test_shellcmd_redirect_stdout_stderr {
             );
         ok($result, 'Run echo with stdout redirected');
         ok(! (-s $parentout), 'Found no output in stdout of parent');
-        is( $read_file->($childout), "test\n", 'redirected child stdout to a file');
+        # two newlines, as the shellcmd will emit an extra newline
+        is( $read_file->($childout), "test\n\n", 'redirected child stdout to a file');
         unlink($parentout, $childout);
     }
 
