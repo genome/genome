@@ -65,8 +65,8 @@ sub process_breakpoint_list{
 sub process_item {
     my ($self, $item) = @_;
 
-    my $geneA = my $transcriptA = my $orientationA = my $subStructureA = 'N/A';
-    my $geneB = my $transcriptB = my $orientationB = my $subStructureB = 'N/A';
+    my $geneA = my $geneAStable = my $transcriptA = my $orientationA = my $subStructureA = 'N/A';
+    my $geneB = my $geneBStable = my $transcriptB = my $orientationB = my $subStructureB = 'N/A';
     my $deletedGenes = "N/A";
     my ($inCommonRef, $deletedGeneHashRef);
 
@@ -91,23 +91,23 @@ sub process_item {
         if ( defined $inCommonRef and scalar(@$inCommonRef) >= 1 ) {
             my $transcript = $self->bestTranscriptInCommon($inCommonRef, $item->{bpA}, $item->{bpB});
             (defined $transcript) || die "did not get transcript in common";
-            ($geneA, $transcriptA, $orientationA, $subStructureA) = $self->transcriptFeatures($transcript, $item->{bpA});
-            ($geneB, $transcriptB, $orientationB, $subStructureB) = $self->transcriptFeatures($transcript, $item->{bpB});	    
+            ($geneA, $geneAStable, $transcriptA, $orientationA, $subStructureA) = $self->transcriptFeatures($transcript, $item->{bpA});
+            ($geneB, $geneBStable, $transcriptB, $orientationB, $subStructureB) = $self->transcriptFeatures($transcript, $item->{bpB});	    
         }
     }
 
     # There are no transcripts in common.  Pick a different transcript for each breakpoint 
     if (defined $aTranscriptRef and scalar(@$aTranscriptRef) >= 1 and (not defined $inCommonRef or not scalar(@$inCommonRef))) { 
         my $transcript = $self->chooseBestTranscript($aTranscriptRef, $item->{bpA});
-        ($geneA, $transcriptA, $orientationA, $subStructureA) = $self->transcriptFeatures($transcript, $item->{bpA});
+        ($geneA, $geneAStable, $transcriptA, $orientationA, $subStructureA) = $self->transcriptFeatures($transcript, $item->{bpA});
     }
     if (defined $bTranscriptRef and scalar(@$bTranscriptRef) >= 1 and (not defined $inCommonRef or not scalar(@$inCommonRef))) { 
         my $transcript = $self->chooseBestTranscript($bTranscriptRef, $item->{bpB});
-        ($geneB, $transcriptB, $orientationB, $subStructureB) = $self->transcriptFeatures($transcript, $item->{bpB});
+        ($geneB, $geneBStable, $transcriptB, $orientationB, $subStructureB) = $self->transcriptFeatures($transcript, $item->{bpB});
     }
 
     my $key = $self->get_key_from_item($item);
-    my $value = [$geneA, $transcriptA, $orientationA, $subStructureA, $geneB, $transcriptB, $orientationB, $subStructureB, $deletedGenes];
+    my $value = [$geneA, $geneAStable, $transcriptA, $orientationA, $subStructureA, $geneB, $geneBStable, $transcriptB, $orientationB, $subStructureB, $deletedGenes];
 
     if ($self->print_flanking_genes) {
         my $flankingARef  = $item->{transcripts_flanking_breakpoint_a};
@@ -206,6 +206,7 @@ sub transcriptFeatures {
     my ($self, $transcript, $position) = @_;
 
     my $geneName = $transcript->gene_name;
+    my $geneStable;
     if ($geneName) {
         my $cancer_gene_names = $self->_cancer_gene_names;
         if ($cancer_gene_names) {
@@ -214,11 +215,23 @@ sub transcriptFeatures {
     }
     $geneName = 'N/A' unless $geneName;
 
+    my @stable_ids = Genome::ExternalGeneId->get(data_directory => $transcript->data_directory,
+        gene_id => $transcript->gene_id,
+        reference_build_id => $transcript->reference_build_id,
+        id_type => "ensembl");
+    if (@stable_ids) {
+        $geneStable = $stable_ids[0]->id_value;
+    }
+    unless ($geneStable) {
+        $self->warning_message("Ensembl stable gene id missing for transcript ".$transcript->transcript_name);
+        $geneStable = "Unknown";
+    }
+
     my $transcriptName = $transcript->transcript_name || 'N/A';
     my $orientation    = $transcript->strand || 'N/A';
     my $subStructure   = $self->substructureWithBreakpoint($transcript, $position) || 'N/A';
     
-    return ($geneName, $transcriptName, $orientation, $subStructure);
+    return ($geneName, $geneStable, $transcriptName, $orientation, $subStructure);
 }
 
 sub bestTranscriptInCommon {
@@ -325,8 +338,8 @@ sub find_annotated_positions {
 sub column_names {
     my $self  = shift;
     my @names = qw(
-        geneA transcriptA orientationA subStructureA 
-        geneB transcriptB orientationB subStructureB	
+        geneA ensemblIdA transcriptA orientationA subStructureA 
+        geneB ensemblIdB transcriptB orientationB subStructureB	
         deletedGenes
     );
     if ($self->print_flanking_genes) {
