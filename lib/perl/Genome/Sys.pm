@@ -1293,6 +1293,7 @@ sub shellcmd {
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
                 }
                 $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+                print STDOUT "\n"; # add a new line so that bad programs don't break TAP, etc.
         };
         my $exception = $@;
         if ($exception) {
