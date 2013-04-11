@@ -1,10 +1,10 @@
-package Genome::Db::Ensembl::Import::Run;
+package Genome::Db::Ensembl::Command::Import::Run;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Db::Ensembl::Import::Run {
+class Genome::Db::Ensembl::Command::Import::Run {
     is => 'Command::V2',
     doc => 'Import a version of ensembl annotation',
     has => [

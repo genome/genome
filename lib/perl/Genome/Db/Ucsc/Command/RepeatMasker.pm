@@ -1,4 +1,4 @@
-package Genome::Db::Ucsc::RepeatMasker;
+package Genome::Db::Ucsc::Command::RepeatMasker;
 
 use strict;
 use warnings;
@@ -13,8 +13,8 @@ our @_HEADINGS = (
     "repClass",
 );
 
-class Genome::Db::Ucsc::RepeatMasker {
-    is => 'Genome::Db::Ucsc::Base',
+class Genome::Db::Ucsc::Command::RepeatMasker {
+    is => 'Genome::Db::Ucsc::Command::Base',
 
     doc => "Fetches gap data for a reference name",
 };

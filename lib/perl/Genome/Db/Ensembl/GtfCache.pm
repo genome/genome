@@ -6,7 +6,7 @@ use Genome;
 use Sys::Hostname;
 
 my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
-my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/gtf2vep";
+my $VEP_SCRIPT_PATH = $VEP_DIR . "/Command/Vep.d/gtf2vep";
 
 class Genome::Db::Ensembl::GtfCache {
     is => "Genome::SoftwareResult::Stageable",

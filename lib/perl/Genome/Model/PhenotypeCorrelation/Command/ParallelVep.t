@@ -55,7 +55,7 @@ ok($parallel_cmd, "Created command object");
 ok($parallel_cmd->execute, "Executed command");
 ok(-s $parallel_output_file, "Output file exists");
 
-my $orig_cmd = Genome::Db::Ensembl::Vep->create(
+my $orig_cmd = Genome::Db::Ensembl::Command::Vep->create(
     input_file => $vcf_file,
     output_file => $orig_output_file,
     ensembl_annotation_build_id => $ensembl_annotation_build_id,

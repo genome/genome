@@ -1,4 +1,4 @@
-package Genome::Db::Ucsc::Base;
+package Genome::Db::Ucsc::Command::Base;
 
 use strict;
 use warnings;
@@ -13,7 +13,7 @@ use Exception::Class (
     },
 );
 
-class Genome::Db::Ucsc::Base {
+class Genome::Db::Ucsc::Command::Base {
     is => 'Command::V2',
     has_input => [
         filename => {

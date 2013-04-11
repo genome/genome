@@ -1,4 +1,4 @@
-package Genome::Db::Ensembl::Vep;
+package Genome::Db::Ensembl::Command::Vep;
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use File::Basename;
 my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Vep.d/vep";
 
-class Genome::Db::Ensembl::Vep {
+class Genome::Db::Ensembl::Command::Vep {
     is => 'Command::V2',
     doc => 'Run VEP',
     has => [
@@ -484,7 +484,7 @@ sub execute {
     my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
     my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
     my $cache_param;
-    my $ensembl_version = Genome::Db::Ensembl::Import::Run->ensembl_version_string($annotation_build->version);
+    my $ensembl_version = Genome::Db::Ensembl::Command::Import::Run->ensembl_version_string($annotation_build->version);
 
     my $cache_result;
     my %cache_result_params;

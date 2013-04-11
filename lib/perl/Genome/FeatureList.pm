@@ -73,6 +73,11 @@ class Genome::FeatureList {
             reverse_as => 'owner',
             is_many => 1,
         },
+        output_dir => {
+            is => 'Text',
+            via => 'disk_allocation',
+            to => 'absolute_path',
+        },
         file_path => {
             is => 'Text',
             calculate_from => 'disk_allocation',

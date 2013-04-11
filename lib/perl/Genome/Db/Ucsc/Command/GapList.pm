@@ -1,4 +1,4 @@
-package Genome::Db::Ucsc::GapList;
+package Genome::Db::Ucsc::Command::GapList;
 
 use strict;
 use warnings;
@@ -49,8 +49,8 @@ our %_DB_TABLES_NAMES = (
 );
 
 
-class Genome::Db::Ucsc::GapList {
-    is => 'Genome::Db::Ucsc::Base',
+class Genome::Db::Ucsc::Command::GapList {
+    is => 'Genome::Db::Ucsc::Command::Base',
 
     doc => "Fetches gap data for a reference name",
 };

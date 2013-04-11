@@ -18,9 +18,7 @@
   [1mprocessing-profile[0m
     Processing profile to be used by model, can provide either a name or an ID 
   [1mreference-sequence-build[0m
-    ID or name of the reference sequence to align against
-    example:
-    101947881 
+    ID or name of the reference sequence to align against 
 
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m

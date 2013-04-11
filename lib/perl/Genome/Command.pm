@@ -12,7 +12,7 @@ class Genome::Command {
 # This map allows the top-level genome commands to be whatever
 # we wish, instead of having to match the directory structure.
 my %command_map = (
-    'db' => 'Genome::Db',
+    'db' => 'Genome::Db::Command',
     'disk' => 'Genome::Disk::Command',
     'druggable-gene' => 'Genome::DruggableGene::Command',
     'feature-list' => 'Genome::FeatureList::Command',

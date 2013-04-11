@@ -1,4 +1,4 @@
-package Genome::Db::Ucsc::SegDup;
+package Genome::Db::Ucsc::Command::SegDup;
 
 use strict;
 use warnings;
@@ -38,8 +38,8 @@ our @_HEADINGS = (
     "k2K",
 );
 
-class Genome::Db::Ucsc::SegDup {
-    is => 'Genome::Db::Ucsc::Base',
+class Genome::Db::Ucsc::Command::SegDup {
+    is => 'Genome::Db::Ucsc::Command::Base',
 
     doc => "Fetches gap data for a reference name",
 };

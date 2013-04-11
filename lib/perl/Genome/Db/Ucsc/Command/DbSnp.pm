@@ -1,4 +1,4 @@
-package Genome::Db::Ucsc::DbSnp;
+package Genome::Db::Ucsc::Command::DbSnp;
 
 use strict;
 use warnings;
@@ -31,8 +31,8 @@ our %_DB_TABLES_NAMES = (
 );
 
 
-class Genome::Db::Ucsc::DbSnp {
-    is => 'Genome::Db::Ucsc::Base',
+class Genome::Db::Ucsc::Command::DbSnp {
+    is => 'Genome::Db::Ucsc::Command::Base',
 
     doc => "Fetches gap data for a reference name",
     has_input => [

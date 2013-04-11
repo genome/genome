@@ -1,11 +1,11 @@
-package Genome::Db::Ensembl::Import::CreateAnnotationStructures;
+package Genome::Db::Ensembl::Command::Import::CreateAnnotationStructures;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Db::Ensembl::Import::CreateAnnotationStructures {
+class Genome::Db::Ensembl::Command::Import::CreateAnnotationStructures {
     is  => 'Command',
     has => [
         data_directory => {
@@ -77,7 +77,7 @@ EOS
 sub execute
 {
     my $self = shift;
-    my $result = Genome::Db::Ensembl::AnnotationStructures->get_or_create(
+    my $result = Genome::Db::Ensembl::Command::AnnotationStructures->get_or_create(
         reference_build_id => $self->reference_build_id,
         version => $self->version,
         species => $self->species,

@@ -27,7 +27,7 @@ sub execute {
     my ($reference_sequence, $reference_name) = $self->_resolve_reference();
 
     my $gap_filename = Genome::Sys->create_temp_file_path();
-    Genome::Db::Ucsc::GapList->execute(
+    Genome::Db::Ucsc::Command::GapList->execute(
         filename => $gap_filename,
         reference_name => $reference_name,
     );

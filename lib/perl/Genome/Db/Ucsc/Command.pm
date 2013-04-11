@@ -2,9 +2,9 @@ use strict;
 use warnings;
 use Genome;
 
-class Genome::Db::Ensembl {
+class Genome::Db::Ucsc::Command {
     is => 'Command::Tree',
-    doc => 'EnsEMBL database tools',
+    doc => 'UCSC database tools',
 };
 
 1;

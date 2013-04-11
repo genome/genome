@@ -1,11 +1,11 @@
-package Genome::Db::DbVar::Import;
+package Genome::Db::DbVar::Command::Import;
 
 use strict;
 use warnings;
 use Genome;
 use LWP::Simple;
 
-class Genome::Db::DbVar::Import {
+class Genome::Db::DbVar::Command::Import {
     is => "Command::V2",
     has_input => [
         filename => {

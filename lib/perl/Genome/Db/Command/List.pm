@@ -1,12 +1,11 @@
-package Genome::Db::List;
+package Genome::Db::Command::List;
 use strict;
 use warnings;
 
-class Genome::Db::List {
+class Genome::Db::Command::List {
     is => 'UR::Object::Command::List',
     has => [
-        subject_class_name => { is_constant => 1, value => 'Genome::Db::Base' }, 
-        show => { default => 'database_name,version,dataset_dir,source_dir,id' },
+        subject_class_name => { is_constant => 1, value => 'Genome::Db' }, 
     ],
     doc => 'list databases',
 };

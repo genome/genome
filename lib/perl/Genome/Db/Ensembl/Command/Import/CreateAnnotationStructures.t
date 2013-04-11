@@ -11,6 +11,6 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-use_ok("Genome::Db::Ensembl::Import::CreateAnnotationStructures");
+use_ok("Genome::Db::Ensembl::Command::Import::CreateAnnotationStructures");
 
 done_testing;

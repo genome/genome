@@ -12,7 +12,7 @@ use above "Genome";
 use Genome::Utility::Test qw(command_execute_ok);
 use Test::More;
 
-use_ok("Genome::Db::Ensembl::Vep");
+use_ok("Genome::Db::Ensembl::Command::Vep");
 
 my $VERSION = '2';
 my $input_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Db-Ensembl-Vep';
@@ -20,7 +20,7 @@ my $expected_data_dir = $input_data_dir . '/expected_output';
 my $expected_output_file = $expected_data_dir.'/output.'.$VERSION;
 
 my $output_file = Genome::Sys->create_temp_file_path;
-my $cmd_1 = Genome::Db::Ensembl::Vep->create(
+my $cmd_1 = Genome::Db::Ensembl::Command::Vep->create(
     input_file => $input_data_dir."/input.".$VERSION,
     format => "ensembl",
     output_file => $output_file,
@@ -32,7 +32,7 @@ my $cmd_1 = Genome::Db::Ensembl::Vep->create(
     quiet => 1,
 );
 
-isa_ok($cmd_1, 'Genome::Db::Ensembl::Vep');
+isa_ok($cmd_1, 'Genome::Db::Ensembl::Command::Vep');
 Genome::Sys->dump_status_messages(0);
 command_execute_ok($cmd_1,
     { error_messages => [],

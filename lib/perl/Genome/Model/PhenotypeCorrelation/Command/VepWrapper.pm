@@ -58,7 +58,7 @@ sub execute {
     my $tabix_cmd = "$tabix $vcf $region";
 
     open(STDIN, "-|", $tabix_cmd);
-    my $vep_command = Genome::Db::Ensembl::Vep->create(
+    my $vep_command = Genome::Db::Ensembl::Command::Vep->create(
         input_file => "-",
         output_file => $output_file,
         ensembl_annotation_build_id => $self->ensembl_annotation_build_id,
