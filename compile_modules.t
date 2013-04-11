@@ -66,7 +66,7 @@ sub resolve_start_point {
 sub is_blacklisted {
     my $file = shift;
     my @blacklist = (
-        'Db/Ensembl/Vep.d/vep2_2.pl',
+        'Db/Ensembl/Vep.d/',
     );
     return grep { $file =~ /$_/ } @blacklist;
 }
