@@ -981,6 +981,7 @@ sub files_ignored_by_build_diff {
         .*/mutation-spectrum/exome/summarize_mutation_spectrum/summarize-mutation-spectrum.stderr
         .*/mutation-spectrum/wgs/summarize_mutation_spectrum/summarize-mutation-spectrum.stderr
         .*LIMS_Sample_Sequence_QC_library.tsv
+        .*.R.stderr
     );
 };
 
