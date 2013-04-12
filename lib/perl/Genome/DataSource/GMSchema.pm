@@ -49,6 +49,14 @@ sub _sync_database {
     my $self = shift;
     my %params = @_;
 
+    # This @changed_objects "shortcut" is to avoid an issue with autocommit on
+    # the Pg driver where it would cause an unwanted lock.  This was previously
+    # in Command::Dispatch::Shell from UR commit 7fd973b.
+    my @changed_objects = @{$params{changed_objects}};
+    unless (@changed_objects) {
+        return 1;
+    }
+
     local $THIS_COMMIT_ID = UR::Object::Type->autogenerate_new_object_id_uuid();
 
     my $required_pg_version = '2.19.3';
@@ -91,7 +99,7 @@ sub _sync_database {
 
     if ($ENV{GENOME_QUERY_POSTGRES}) {
         Genome::Site::TGI->undo_table_name_patch;
-        my %classes = map { $_->class => 1 } @{$params{changed_objects}};
+        my %classes = map { $_->class => 1 } @changed_objects;
         for my $class (sort keys %classes) {
             my $meta = UR::Object::Type->get($class);
             next unless $meta;
