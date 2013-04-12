@@ -16,7 +16,6 @@ class Genome::Config::CopyStrategy::TreeCopy {
 
 sub copy_config {
     my ($class, $file, $source_root, $destination_root) = @_;
-    $DB::single=1;
     die('You must specify a file, a source, and a destination root!')
         unless $file && $source_root && $destination_root;
     die("$source_root or $destination_root is not a directory!")
