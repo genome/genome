@@ -1289,9 +1289,6 @@ sub _launch {
             $add_args .= ' --restart';
         }
 
-        my $lock = $self->_lock_model_for_start;
-        return unless $lock;
-
         # bsub into the queue specified by the dispatch spec
         my $lsf_project = "build" . $self->id;
         $ENV{'WF_LSF_PROJECT'} = $lsf_project;
@@ -1318,41 +1315,6 @@ sub _launch {
 
         return 1;
     }
-}
-
-
-sub _lock_model_for_start {
-    my $self = shift;
-
-    my $model_id = $self->model->id;
-    my $lock_path = $ENV{GENOME_LOCK_DIR} . '/build_start/' . $model_id;
-
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => $lock_path,
-        block_sleep => 3,
-        max_try => 3,
-    );
-    unless ($lock) {
-        print STDERR "Failed to get build start lock for model $model_id. This means someone|thing else is attempting to build this model. Please wait a moment, and try again. If you think that this model is incorrectly locked, please put a ticket into the apipe support queue.";
-        return;
-    }
-
-    # create a change record so that if it is "undone" it will kill the job
-    # create a commit observer to resume the job when build is committed to database
-    my $process = UR::Context->process;
-    my $commit_observer;
-    my $unlock_sub = sub {
-        Genome::Sys->unlock_resource(resource_lock => $lock);
-        $commit_observer->delete;
-    };
-    my $lock_change = UR::Context::Transaction->log_change($self, 'UR::Value', $lock, 'external_change', $unlock_sub);
-    $commit_observer = $process->add_observer(aspect => 'commit', callback => $unlock_sub);
-    unless ($commit_observer) {
-        $self->error_message("Failed to add commit observer to unlock $lock.");
-    }
-
-    $self->status_message("Locked model ($model_id) while launching " . $self->__display_name__ . ".");
-    return $lock;
 }
 
 
