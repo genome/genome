@@ -53,7 +53,7 @@ sub parse_line {
         }
 
         my ($dp, $mq, $dp4, $af1) = ($info{DP}, $info{MQ}, $info{DP4}, $info{AF1});
-        unless ($dp and $mq and $dp4 and $af1) {
+        unless (defined $dp and defined $mq and defined $dp4 and defined $af1) {
             die $self->error_message("Fail to get valid info from line: $line");
         }
 
