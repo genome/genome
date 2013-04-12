@@ -108,5 +108,7 @@ sub _generate_alignment_strategy {
     return $strategy .' api v2';
 }
 
+sub max_elapsed_log_time { 7 * 24 * 3600 };
+
 1;
 
