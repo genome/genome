@@ -444,11 +444,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>cosmic',
-    [
-      'help!',
-      undef
-    ],
     '>ensembl',
     [
       '>vep',
@@ -457,6 +452,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'plugins-version=s',
         'files',
+        'quiet!',
+        undef,
         'version=s',
         [
           '2_2',
@@ -673,8 +670,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>list',
     [
-      'show=s',
-      'files',
       'style=s',
       [
         'text',
@@ -689,6 +684,8 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'noheaders!',
       undef,
+      'show=s',
+      'files',
       'order-by=s',
       'files',
       'filter=s',
@@ -1704,6 +1701,15 @@ $Genome::Command::OPTS_SPEC = [
       'latest-build-status!',
       undef,
       'processing-profile=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>diff',
+    [
+      'from=s',
+      undef,
+      'to=s',
       undef,
       'help!',
       undef
