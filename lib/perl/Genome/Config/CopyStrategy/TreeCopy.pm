@@ -10,7 +10,7 @@ use File::Basename;
 use File::Copy;
 
 class Genome::Config::CopyStrategy::TreeCopy {
-    is => 'UR::Object',
+    is => 'Genome::Config::CopyStrategy',
     doc => 'This copy strategy will mirror a tree of directories with a config file at the bottom between two different roots'
 };
 

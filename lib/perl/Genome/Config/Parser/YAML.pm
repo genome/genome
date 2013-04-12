@@ -6,7 +6,7 @@ use strict;
 use YAML::Syck;
 
 class Genome::Config::Parser::YAML {
-    is => 'UR::Object',
+    is => 'Genome::Config::Parser',
     doc => 'handles the parsing of a YAML config file'
 };
 

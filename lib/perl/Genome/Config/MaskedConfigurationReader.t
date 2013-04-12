@@ -18,9 +18,9 @@ my $tmpdir = Genome::Sys->create_temp_directory();
 `cp -r $data_dir/config $tmpdir/`;
 
 my $config_reader = Genome::Config::MaskedConfigurationReader->create(
-    config_handler              => Genome::Config::TreeHandler->create(base_path => "$tmpdir/config"),
-    mask_handler                => Genome::Config::TreeHandler->create(base_path => "$data_dir/mask"),
-    default_handler             => Genome::Config::TreeHandler->create(base_path => "$data_dir/default"),
+    config_handler              => Genome::Config::Handler::TreeHandler->create(base_path => "$tmpdir/config"),
+    mask_handler                => Genome::Config::Handler::TreeHandler->create(base_path => "$data_dir/mask"),
+    default_handler             => Genome::Config::Handler::TreeHandler->create(base_path => "$data_dir/default"),
     configuration_parser        => Genome::Config::Parser::YAML->create(),
     configuration_copy_strategy => Genome::Config::CopyStrategy::TreeCopy->create(),
 );

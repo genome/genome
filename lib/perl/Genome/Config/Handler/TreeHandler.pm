@@ -1,12 +1,12 @@
-package Genome::Config::TreeHandler;
+package Genome::Config::Handler::TreeHandler;
 use warnings;
 use strict;
 
 use Genome;
 use File::Basename;
 
-class Genome::Config::TreeHandler {
-    is => 'UR::Object',
+class Genome::Config::Handler::TreeHandler {
+    is => 'Genome::Config::Handler',
     has => [
         base_path => {
             is => 'Text'
@@ -34,14 +34,14 @@ sub create {
     return $self;
 }
 
-sub get_leaf {
+sub get_config {
     my ($self, @args) = @_;
     my $path = _traverse_hash($self->directory_content_hash, @args);
     die('You have entered a query for non-existent configuration!') unless $path;
     return $path
 }
 
-sub parameters_exist {
+sub valid_params {
     my ($self, @args) = @_;
     return _traverse_hash($self->directory_content_hash, @args);
 }
