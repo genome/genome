@@ -11,7 +11,7 @@ class Genome::Config::Parser::YAML {
 };
 
 sub parse {
-    my ($class, $filename) = @_;
+    my ($self, $filename) = @_;
     die('Failed to provide filename!') unless $filename;
     die("$filename doesn't exist!") unless (-e $filename);
     die("$filename is empty!") unless (-s $filename);

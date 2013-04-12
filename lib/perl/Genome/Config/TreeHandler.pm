@@ -51,7 +51,7 @@ sub _traverse_hash {
 
     foreach my $i (0..$#args) {
         my $item = $hash_ref->{$args[$i]};
-        if (ref($item) eq 'HASH') {
+        if (ref($item) eq 'HASH' && %{$item}) {
             splice(@args, $i, 1);
             return _traverse_hash($item, @args);
         } elsif ($item) {
