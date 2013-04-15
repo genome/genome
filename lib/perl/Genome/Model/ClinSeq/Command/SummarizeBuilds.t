@@ -12,8 +12,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More skip_all => 'skipped for a few minutes to bypass';
-#use Test::More tests=>6; #One per 'ok' statement below
+use Test::More tests => 7;
 use Genome::Model::ClinSeq::Command::SummarizeBuilds;
 use Data::Dumper;
 
@@ -22,9 +21,11 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Pull an existing clinseq build for test purposes
-my $bid = 134369563;
-my $b = Genome::Model::Build->get($bid);
-ok($b, "obtained a clinseq build from the database for build id: $bid") or die;
+my $m_id = 2889445018;
+my $m = Genome::Model->get($m_id);
+ok($m, "obtained a clinseq model for " . $m_id) or die;
+my $b = $m->current_build();
+ok($b, "obtained a clinseq build from " . $m->__display_name__) or die;
 
 #Execute the tool code
 #To make the test run faster, use the 'skip_lims_report' option
@@ -39,7 +40,7 @@ my $log = IO::File->new(">$temp_dir/status_messages.txt");
 ok($log, "created a file to hold the status messages") or die;
 $log->print(join("\n", @output));
 
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2013-04-03';
+my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2013-04-15-08-14';
 ok(-d $expected_data_directory, "found expected data directory: $expected_data_directory") or die;
 my @diff = `diff -r $expected_data_directory $temp_dir`;
 is(@diff, 5, "no differences from expected results and actual other than the 5 lines corresponding to the random temp dir statement")
