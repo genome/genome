@@ -56,7 +56,8 @@ sub execute{
     }
     else {
         my @results = $command->results;
-        push @results, map { Genome::Model::Tools::DetectVariants2::Result::Vcf->get(input_id => $_->id ); } @results;
+        my $test_name = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || '';
+        push @results, map { Genome::Model::Tools::DetectVariants2::Result::Vcf->get(input_id => $_->id, test_name => $test_name); } @results;
         for my $result (@results) {
             $result->add_user(user => $build, label => 'uses');
         }
