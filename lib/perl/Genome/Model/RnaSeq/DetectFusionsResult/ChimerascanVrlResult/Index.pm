@@ -29,6 +29,7 @@ sub _run {
     Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files => [$executable, $fasta, $gene_file],
+        output_directories => [$output_dir],
     );
 }
 
