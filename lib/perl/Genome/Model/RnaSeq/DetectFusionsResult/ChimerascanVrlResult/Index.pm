@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Spec qw();
 
 class Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanVrlResult::Index {
     is => 'Genome::Model::RnaSeq::DetectFusionsResult::ChimerascanBase::Index',
@@ -30,6 +31,7 @@ sub _run {
         cmd => $cmd,
         input_files => [$executable, $fasta, $gene_file],
         output_directories => [$output_dir],
+        redirect_stderr => File::Spec->join($output_dir, 'chimerascan_index.stderr'),
     );
 }
 
