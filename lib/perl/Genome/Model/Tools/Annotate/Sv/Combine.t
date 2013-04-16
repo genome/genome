@@ -16,12 +16,14 @@ my $class = "Genome::Model::Tools::Annotate::Sv::Combine";
 use_ok($class);
 
 my $base_dir = Genome::Utility::Test->data_dir($class);
-my $version  = 4;
+my $version  = 6;
 my $data_dir = "$base_dir/v$version";
 
 #2 add cancer_gene_list to transcripts for human
 #3 change algorithm for calling dbsnp,dbvar,segdup
 #4 slightly different sort order for dbvar outputs
+#5 fix algorithm for calling dbsnp,dbvar,segdup
+#6 add ensembl stable gene id column
 
 my $temp_file = Genome::Sys->create_temp_file_path;
 my $cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(

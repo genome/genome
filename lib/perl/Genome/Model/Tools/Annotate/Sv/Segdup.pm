@@ -18,6 +18,11 @@ class Genome::Model::Tools::Annotate::Sv::Segdup {
             doc => 'Fraction of overlap (reciprocal) required to hit',
             default => 0.5,
         },
+        wiggle_room => {
+            is => 'Number',
+            doc => 'Window in which the breakpoint can match',
+            default => 200,
+        },
 
     ],
 };
@@ -31,7 +36,7 @@ sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
     my %output;
     my $segdup_annotation = $self->read_segdup_annotation($self->annotation_file);
-    $self->annotate_interval_overlaps($breakpoints_list, $segdup_annotation, "segdup_annotation");
+    $self->annotate_interval_overlaps($breakpoints_list, $segdup_annotation, "segdup_annotation", $self->wiggle_room);
     foreach my $chr (keys %{$breakpoints_list}) {
         foreach my $item (@{$breakpoints_list->{$chr}}) {
             my $key = $self->get_key_from_item($item);
