@@ -42,7 +42,7 @@ sub objects_to_sync {
         'Genome::Site::TGI::Individual' => 'Genome::Individual',
         'Genome::Site::TGI::PopulationGroup' => 'Genome::PopulationGroup',
         'Genome::Site::TGI::Taxon' => 'Genome::Taxon',
-        'Genome::Site::TGI::Classes::OrganismSample' => 'Genome::Sample',
+        'Genome::Site::TGI::Synchronize::Classes::OrganismSample' => 'Genome::Sample',
         'Genome::Site::TGI::Synchronize::Classes::LibrarySummary' => 'Genome::Library',
         'Genome::Site::TGI::Synchronize::Classes::SetupProject' => 'Genome::Project',
         'Genome::Site::TGI::Synchronize::Classes::SetupProjectSample' => 'Genome::Site::TGI::Synchronize::Classes::ProjectSample',
@@ -444,46 +444,25 @@ sub _add_attributes_to_instrument_data {
     return 1;
 }
 
-sub _create_sample {
+sub _create_organismsample {
     my ($self, $original_object, $new_object_class) = @_;
 
-    my ($direct_properties, $indirect_properties) = $self->_get_direct_and_indirect_properties_for_object(
-        $original_object,
-        $new_object_class, 
-    );
+    return $self->_create_object($original_object, $new_object_class);
+}
 
-    # Capture attributes that are attached to the object but aren't spelled out in class definition
-    for my $attribute ($original_object->attributes) {
-        $indirect_properties->{$attribute->name} = $attribute->value;
+sub _create_object {
+    my ($self, $original_object, $new_object_class) = @_;
+
+    my %params;
+    for my $name ( $original_object->properties_to_copy ) {
+        my $value = $original_object->$name;
+        next if not defined $value;
+        $params{$name} = $value;
     }
-
-    my $object = eval { 
-        $new_object_class->create(
-            %{$direct_properties},
-            id => $original_object->id, 
-            subclass_name => $new_object_class
-        ) 
-    };
+    
+    my $object = eval { $new_object_class->create(%params); };
     confess "Could not create new object of type $new_object_class based on object of type " .
         $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
-
-    # The genotype data link doesn't have the same name between LIMS/Apipe and it isn't set as mutable, so it
-    # can only be set expclitly as below.
-    my $genotype_id = delete $indirect_properties->{default_genotype_seq_id};
-    if (defined $genotype_id) {
-        # TODO If LIMS ever figures out how to set default genotype data to none, this logic will need to be revised.
-        # Currently, the organism_sample table's default_genotype_seq_id column is a foreign key, so it would be 
-        # diffiult to elegantly allow none to be set.
-        $object->set_default_genotype_data($genotype_id);
-    }
-
-    for my $property_name (sort keys %{$indirect_properties}) {
-        Genome::SubjectAttribute->create(
-            subject_id => $object->id,
-            attribute_label => $property_name,
-            attribute_value => $indirect_properties->{$property_name},
-        );
-    }
 
     return 1;
 }
