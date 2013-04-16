@@ -227,6 +227,8 @@ sub files_ignored_by_diff {
         variants/indels_tcga.tar.gz
         variants/indels_tcga.tar.gz.md5
         variants/indels_tcga/MANIFEST.txt
+        variants/.*\.err
+        variants/.*\.out
         gatk_output_file.vcf
         \.vcf.idx$
         workflow\.xml$

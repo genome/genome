@@ -1534,6 +1534,8 @@ sub files_ignored_by_diff {
         server_location.txt
         variants/workflow.xml
         variants/dispatcher.cmd
+        variants/(.*).err
+        variants/(.*).out
     );
 }
 
