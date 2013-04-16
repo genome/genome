@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Synchronize::Classes::Sample; 
+package Genome::Site::TGI::Synchronize::Classes::OrganismSample; 
 
 use strict;
 use warnings;
@@ -32,7 +32,7 @@ TISSUE_NAME                 VARCHAR2 (64)                    {null} {null}   ok 
 =cut
 #TODO SAMPLE_ATTRIBUTES
 
-class Genome::Site::TGI::Synchronize::Classes::Sample {
+class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
     is => 'UR::Object',
     table_name => 'GSC.ORGANISM_SAMPLE',
     id_by => [

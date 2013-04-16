@@ -42,7 +42,7 @@ sub objects_to_sync {
         'Genome::Site::TGI::Individual' => 'Genome::Individual',
         'Genome::Site::TGI::PopulationGroup' => 'Genome::PopulationGroup',
         'Genome::Site::TGI::Taxon' => 'Genome::Taxon',
-        'Genome::Site::TGI::Sample' => 'Genome::Sample',
+        'Genome::Site::TGI::Classes::OrganismSample' => 'Genome::Sample',
         'Genome::Site::TGI::Synchronize::Classes::LibrarySummary' => 'Genome::Library',
         'Genome::Site::TGI::Synchronize::Classes::SetupProject' => 'Genome::Project',
         'Genome::Site::TGI::Synchronize::Classes::SetupProjectSample' => 'Genome::Site::TGI::Synchronize::Classes::ProjectSample',
