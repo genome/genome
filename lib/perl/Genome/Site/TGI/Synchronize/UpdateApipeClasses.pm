@@ -444,9 +444,13 @@ sub _add_attributes_to_instrument_data {
     return 1;
 }
 
+sub _create_librarysummary {
+    my ($self, $original_object, $new_object_class) = @_;
+    return $self->_create_object($original_object, $new_object_class);
+}
+
 sub _create_organismsample {
     my ($self, $original_object, $new_object_class) = @_;
-
     return $self->_create_object($original_object, $new_object_class);
 }
 
@@ -488,23 +492,6 @@ sub _create_populationgroup {
             subclass_name => $new_object_class
         ) 
     };
-    confess "Could not create new object of type $new_object_class based on object of type " .
-        $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
-
-    return 1;
-}
-
-sub _create_librarysummary {
-    my ($self, $original_object, $new_object_class) = @_;
-
-    my %params;
-    for my $name ( $original_object->properties_to_copy ) {
-        my $value = $original_object->$name;
-        next if not defined $value;
-        $params{$name} = $value;
-    }
-    
-    my $object = eval { $new_object_class->create(%params); };
     confess "Could not create new object of type $new_object_class based on object of type " .
         $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
 
