@@ -14,7 +14,6 @@ DNA_PROVIDER_ID             NUMBER   (10)                    {null} {null}   NOT
 FULL_NAME                   VARCHAR2 (64)                    {null} {null}   ok [name]
 GENDER                      VARCHAR2 (16)                    {null} {null}   NOT_SYNCED
 GENERAL_RESEARCH_CONSENT    NUMBER   (1)                     {null} {null}   NOT_SYNCED
-IS_CONTROL                  NUMBER   (1)                     {null} NOT NULL ok
 IS_PROTECTED_ACCESS         NUMBER   (1)                     {null} {null}   NOT_SYNCED
 IS_READY_FOR_ANALYSIS       NUMBER   (1)                     {null} {null}   NOT_SYNCED
 NOMENCLATURE                VARCHAR2 (64)                    {null} NOT NULL NOT_SYNCED
@@ -40,7 +39,6 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
     ],
     has => [
         cell_type => { is => 'Text', },
-        is_control => { is => 'Number', },
         name => { is => 'Text', column_name => 'FULL_NAME', },
         nomenclature => { is => 'Text', }, 
     ],
@@ -69,7 +67,6 @@ sub properties_to_keep_updated {# 12
         extraction_desc
         extraction_label
         extraction_type
-        is_control
         organ_name
         source_id
         tissue_desc
