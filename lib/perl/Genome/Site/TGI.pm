@@ -156,6 +156,9 @@ $ENV{GENOME_NOMENCLATURE_DEFAULT} ||= 'WUGC';
 # Log directory
 $ENV{GENOME_LOG_DIR} ||= '/gsc/var/log/genome';
 
+#set default analysis project configuration path
+$ENV{GENOME_ANALYSIS_PROJECT_DEFAULTS} = '/gsc/scripts/opt/analysis_project_config/defaults';
+
 # a unique ID for each program execution.  Used got logging saves to the database
 $ENV{GENOME_EXECUTION_ID} = UR::Object::Type->autogenerate_new_object_id_uuid();
 
