@@ -46,4 +46,12 @@ my $output = $cmd->process_breakpoint_list($bp_list);
 ok($output, "Process breakpoint list created output");
 is_deeply($output, $expected_output, "Got segdup") or diag explain [$output, $expected_output];
 
+#do the example values for the annotation file exist and have size?
+my $p = $cmd->__meta__->property("annotation_file");
+my $examples = $p->example_values;
+ok($examples, "At least one database exists");
+for my $example (@$examples) {
+    ok(-s $example, "Database file $example exists and has size");
+}
+
 done_testing;

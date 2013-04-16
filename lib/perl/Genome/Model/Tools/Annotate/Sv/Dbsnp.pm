@@ -11,7 +11,7 @@ class Genome::Model::Tools::Annotate::Sv::Dbsnp {
         annotation_file => {
             is => 'Text',
             doc => 'File containing UCSC table',
-            example_values => ["/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv"],
+            example_values => [map {$_->data_directory."/dbsnp.csv"} Genome::Db->get(source_name => 'genome-db-dbsnp')],
         },
         overlap_fraction => {
             is => 'Number',

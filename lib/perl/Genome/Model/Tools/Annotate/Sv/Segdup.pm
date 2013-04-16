@@ -11,7 +11,7 @@ class Genome::Model::Tools::Annotate::Sv::Segdup {
         annotation_file => {
             is => 'String',
             doc => 'File containing UCSC table',
-            example_values => ["/gsc/scripts/share/BreakAnnot_file/human_build37/Human.Feb2009.SegDups.tab"],
+            example_values => [map {$_->data_directory."/segdup.tsv"} Genome::Db->get(source_name => "ucsc")],
         },
         overlap_fraction => {
             is => 'Number',

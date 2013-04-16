@@ -378,36 +378,28 @@ sub _get_human_sv_annot_file {
     my ($self, $ref_seq_build) = @_;
     my $version = $ref_seq_build->version;
     my $type;
+    my $dbsnp_version;
+    my $species = "human";
 
     if ($version) {
         if ($version =~ /36/) {
-            $type = 36;
+            $dbsnp_version = "130";
+            $type = "build36";
         }
         elsif ($version =~ /37/) {
-            $type = 37;
+            $dbsnp_version = "130";
+            $type = "build37";
         }
     }
     
-    $type = 36 if $ref_seq_build->id == 109104543;  #fdu_human36_chr16_17_for_novo_test-build for Jenkins apipe test build
+    $type = "build36" if $ref_seq_build->id == 109104543;  #fdu_human36_chr16_17_for_novo_test-build for Jenkins apipe test build
     return unless $type;
 
-    my $base_dir  = '/gsc/scripts/share/BreakAnnot_file';
-    my $b36_dir   = "$base_dir/human_build36";
-    my $b37_dir   = "$base_dir/human_build37";
-
-    my %annot_file = (
-        36 => {
-            segdup => $b36_dir . '/Human.Mar2006.SegDups.tab',
-            dbsnp  => $b36_dir . '/dbsnp130.indel.named.csv',
-            dbvar  => $b36_dir . '/ncbi36_submitted.gff',
-        },
-        37 => {
-            segdup => $b37_dir . '/Human.Feb2009.SegDups.tab',
-            dbsnp  => $b37_dir . '/dbsnp132.indel.named.csv',
-            dbvar  => $b37_dir . '/GRCh37.remap.all.germline.ucsc.gff',
-        },
-    );
-    return $annot_file{$type};
+    return {
+        segdup => Genome::Db->get(source_name => 'ucsc', database_name => $species, external_version => $type) . '/segdup.tsv',
+        dbsnp  => Genome::Db->get(source_name => 'genome-db-dbsnp', database_name => "$species/$type", external_version => "dbsnp_version") . '/dbsnp.csv',
+        dbvar  => Genome::Db->get(source_name => 'dbvar', database_name => $species, external_version => $type) . '/dbvar.tsv',
+        };
 }
 
 1;
