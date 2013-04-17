@@ -900,3 +900,5 @@ sub prepare_reference_sequence_index {
     return 1;
 }
 
+1;
+
