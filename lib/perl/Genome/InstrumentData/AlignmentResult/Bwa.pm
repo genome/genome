@@ -399,8 +399,13 @@ sub _verify_bwa_samxe_did_happen {
 
     @last_lines = grep {!/^\[bwtcache_destroy\] \d+ cache waits encountered/} @last_lines;
 
+    # XXX I am trying to avoid switching on $bwa_version in this module, but
+    # I'm not entirely sure that storing 'log_format' in GMT::Bwa and defining
+    # the logic for interpreting that property here is the correct separation
+    # of functionality between GMT::Bwa and this module.
     my $last_line;
-    if ($self->aligner_version eq '0.6.2') {
+    my $log_format = Genome::Model::Tools::Bwa->log_format($self->aligner_version);
+    if ($log_format eq 'new') {
         $last_line = $last_lines[-4];
     } else {
         $last_line = $last_lines[-1];
@@ -576,17 +581,21 @@ sub prepare_reference_sequence_index {
 
     $class->status_message(sprintf("Building a BWA index in %s using %s.  The file size is %s; selecting the %s algorithm to build it.", $staging_dir, $staged_fasta_file, $fasta_size, $bwa_index_algorithm));
 
-    # expected output files from bwa index
-    my @output_files = map {sprintf("%s.%s", $staged_fasta_file, $_)} qw(amb ann bwt pac sa);
-    my @reverse_output_files = map {sprintf("%s.%s", $staged_fasta_file, $_)} qw(rbwt rpac rsa);
-    unless ($bwa_version eq '0.6.2') {
-        push @output_files, @reverse_output_files;
-    }
+    # Expected output files from bwa index. Bwa index creates files with the
+    # following extensions: amb, ann, bwt, pac, and sa; older versions also
+    # create: rbwt, rpac, and rsa.
+
+    # XXX Rethink the separation of functionality between GMT::Bwa and this
+    # module. This module should not have flow control based on the value of
+    # $bwa_version, but how much functionality should be moved in to GMT::Bwa
+    # for other modules to use?
+    my @index_extensions = Genome::Model::Tools::Bwa->index_extensions($bwa_version);
+    my @output_files = map {sprintf("%s.%s", $staged_fasta_file, $_)} @index_extensions;
 
     my $bwa_cmd = sprintf('%s index -a %s %s', $bwa_path, $bwa_index_algorithm, $staged_fasta_file);
     my $rv = Genome::Sys->shellcmd(
-        cmd => $bwa_cmd,
-        input_files => [$staged_fasta_file],
+        cmd          => $bwa_cmd,
+        input_files  => [$staged_fasta_file],
         output_files => [@output_files]
     );
 
