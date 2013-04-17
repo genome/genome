@@ -396,9 +396,9 @@ sub _get_human_sv_annot_file {
     return unless $type;
 
     return {
-        segdup => Genome::Db->get(source_name => 'ucsc', database_name => $species, external_version => $type) . '/segdup.tsv',
-        dbsnp  => Genome::Db->get(source_name => 'genome-db-dbsnp', database_name => "$species/$type", external_version => "dbsnp_version") . '/dbsnp.csv',
-        dbvar  => Genome::Db->get(source_name => 'dbvar', database_name => $species, external_version => $type) . '/dbvar.tsv',
+        segdup => Genome::Db->get(source_name => 'ucsc', database_name => $species, external_version => $type)->data_directory . '/segdup.tsv',
+        dbsnp  => Genome::Db->get(source_name => 'genome-db-dbsnp', database_name => "$species/$type", external_version => $dbsnp_version)->data_directory . '/dbsnp.csv',
+        dbvar  => Genome::Db->get(source_name => 'dbvar', database_name => $species, external_version => $type)->data_directory . '/dbvar.tsv',
         };
 }
 
