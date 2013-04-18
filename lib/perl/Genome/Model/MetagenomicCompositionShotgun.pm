@@ -965,8 +965,12 @@ sub get_imported_instrument_data_or_upload_paths {  #TODO not finished, not curr
         }
         else {
             for my $sub_path (split(',', $path)) {
-                my $lock_path = $ENV{GENOME_LOCK_DIR} . '/' . $orig_inst_data->id . '/' . basename($sub_path);
-                my $lock = lock_or_die($lock_path);
+                my $lock = $self->lock($orig_inst_data->id, basename($sub_path));
+                if ($lock) {
+                    $self->status_message("Locked $sub_path successfully.");
+                } else {
+                    die $self->error_message("Failed to lock $sub_path.");
+                }
                 push @locks, $lock;
             }
             push @upload_paths, $path;
@@ -1074,20 +1078,17 @@ sub upload_instrument_data_and_unlock {
     return @instrument_data;
 }
 
-sub lock_or_die {
-    my ($self, $lock_path) = @_;
+sub lock {
+    my $self = shift;
+    my @parts = @_;
+    my $resource_lock = join('/', $ENV{GENOME_LOCK_DIR}, @parts);
+    $self->status_message("Creating lock on $resource_lock...");
     my $lock = Genome::Sys->lock_resource(
-        resource_lock => $lock_path,
+        resource_lock => $resource_lock,
         max_try => 2,
     );
-    if ($lock) {
-        $self->status_message("Locked $lock_path successfully.");
-        return $lock;
-    }
-    else {
-        die $self->error_message("Failed to lock $lock_path.");
-    }
-}
+    return $lock;
+};
 
 sub execute_or_die {
     my ($self, $command) = @_;
@@ -1397,14 +1398,7 @@ sub _process_unaligned_reads {
             $self->status_message("imported instrument data already found for path $expected_se_path, skipping");
         }
         else {
-            my $lock = basename($expected_se_path);
-            $lock = $ENV{GENOME_LOCK_DIR} . '/' . $instrument_data_id . '/' . $lock;
-
-            $self->status_message("Creating lock on $lock...");
-            $se_lock = Genome::Sys->lock_resource(
-                resource_lock => $lock,
-                max_try => 2,
-            );
+            $se_lock = $self->lock($instrument_data_id, basename($expected_se_path));
             unless ($se_lock) {
                 die $self->error_message("Failed to lock $expected_se_path.");
             }
@@ -1416,14 +1410,7 @@ sub _process_unaligned_reads {
             $self->status_message("imported instrument data already found for path $expected_pe_path, skipping");
         }
         elsif ( $instrument_data->is_paired_end ) {
-            my $lock = basename($expected_pe_path);
-            $lock = $ENV{GENOME_LOCK_DIR} . '/' . $instrument_data_id . '/' . $lock;
-
-            $self->status_message("Creating lock on $lock...");
-            $pe_lock = Genome::Sys->lock_resource(
-                resource_lock => "$lock",
-                max_try => 2,
-            );
+            $pe_lock = $self->lock($instrument_data_id, basename($expected_pe_path));
             unless ($pe_lock) {
                 die $self->error_message("Failed to lock $expected_pe_path.");
             }

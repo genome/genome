@@ -127,13 +127,7 @@ sub execute {
 	my $import_lock;
 
         # check for previous unaligned reads
-        my $lock = basename($expected_path);
-        $lock = $ENV{GENOME_LOCK_DIR} . '/' . $instrument_data_id . '/' . $lock;
-
-        $import_lock = Genome::Sys->lock_resource(
-            resource_lock => $lock,
-            max_try => 2,
-        );
+        $import_lock = $self->lock($instrument_data_id, basename($expected_path));
         unless ($import_lock) {
             die $self->error_message("Failed to lock $expected_path.");
         }
@@ -301,6 +295,17 @@ sub execute {
     return @instrument_data;
 }
 
+sub lock {
+    my $self = shift;
+    my @parts = @_;
+    my $resource_lock = join('/', $ENV{GENOME_LOCK_DIR}, @parts);
+    $self->status_message("Creating lock on $resource_lock...");
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock => $resource_lock,
+        max_try => 2,
+    );
+    return $lock;
+};
 
 sub _process_unaligned_fastq_pair {
     my $self = shift;

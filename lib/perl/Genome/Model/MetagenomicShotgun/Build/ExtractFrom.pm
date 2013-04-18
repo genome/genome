@@ -136,14 +136,7 @@ sub _extract_data_from_alignment_result{
         $self->status_message("imported instrument data already found for path $expected_se_path, skipping");
     }
     else {
-        my $lock = $fragment_basename;
-        $lock = $ENV{GENOME_LOCK_DIR} . '/' . $instrument_data_id . '/' . $lock;
-
-        $self->status_message("Creating lock on $lock...");
-        $se_lock = Genome::Sys->lock_resource(
-            resource_lock => $lock,
-            max_try => 2,
-        );
+        $se_lock = $self->lock($instrument_data_id, $fragment_basename);
         unless ($se_lock) {
             die $self->error_message("Failed to lock $expected_se_path.");
         }
@@ -156,14 +149,7 @@ sub _extract_data_from_alignment_result{
             $self->status_message("imported instrument data already found for path $expected_pe_path, skipping");
         }
         else  {
-            my $lock = "s_$lane"."_1-2_sequence.txt";
-            $lock = $ENV{GENOME_LOCK_DIR} . '/' . $instrument_data_id . '/' . $lock;
-
-            $self->status_message("Creating lock on $lock...");
-            $pe_lock = Genome::Sys->lock_resource(
-                resource_lock => "$lock",
-                max_try => 2,
-            );
+            $pe_lock = $self->lock($instrument_data_id, "s_${lane}_1-2_sequence.txt");
             unless ($pe_lock) {
                 die $self->error_message("Failed to lock $expected_pe_path.");
             }
@@ -305,6 +291,18 @@ sub _extract_data_from_alignment_result{
 
     return @instrument_data;
 }
+
+sub lock {
+    my $self = shift;
+    my @parts = @_;
+    my $resource_lock = join('/', $ENV{GENOME_LOCK_DIR}, @parts);
+    $self->status_message("Creating lock on $resource_lock...");
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock => $resource_lock,
+        max_try => 2,
+    );
+    return $lock;
+};
 
 1;
 
