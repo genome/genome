@@ -35,7 +35,6 @@ UR::Object::Type->define(
         'rrna_database' => {
             is          => 'String',
             doc         => "rrna database",
-            is_optional => 1,
             example_values => ['/gscmnt/278/analysis/HGMI/rRNA_testing/16s_23srnadb'],
         },
         'script_location' => {
