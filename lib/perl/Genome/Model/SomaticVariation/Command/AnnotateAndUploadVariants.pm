@@ -387,18 +387,24 @@ sub _get_human_sv_annot_file {
             $type = "build36";
         }
         elsif ($version =~ /37/) {
-            $dbsnp_version = "130";
+            $dbsnp_version = "132";
             $type = "build37";
         }
     }
     
-    $type = "build36" if $ref_seq_build->id == 109104543;  #fdu_human36_chr16_17_for_novo_test-build for Jenkins apipe test build
-    return unless $type;
-
+    if ($ref_seq_build->id == 109104543) {
+        $type = "build36";
+        $dbsnp_version = "130";
+    }
+    return unless $type and $dbsnp_version;
+    $self->status_message("Getting annotation files for species $species of version $type, dbsnp version $dbsnp_version");
+    my $segdup = Genome::Db->get(source_name => 'ucsc', database_name => $species, external_version => $type);
+    my $dbsnp = Genome::Db->get(source_name => 'genome-db-dbsnp', database_name => "$species/$type", external_version => $dbsnp_version);
+    my $dbvar = Genome::Db->get(source_name => 'dbvar', database_name => $species, external_version => $type);
     return {
-        segdup => Genome::Db->get(source_name => 'ucsc', database_name => $species, external_version => $type)->data_directory . '/segdup.tsv',
-        dbsnp  => Genome::Db->get(source_name => 'genome-db-dbsnp', database_name => "$species/$type", external_version => $dbsnp_version)->data_directory . '/dbsnp.csv',
-        dbvar  => Genome::Db->get(source_name => 'dbvar', database_name => $species, external_version => $type)->data_directory . '/dbvar.tsv',
+        segdup => $segdup->data_directory . '/segdup.tsv',
+        dbsnp  => $dbsnp->data_directory . '/dbsnp.csv',
+        dbvar  => $dbvar->data_directory . '/dbvar.tsv',
         };
 }
 
