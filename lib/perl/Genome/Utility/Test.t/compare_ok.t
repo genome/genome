@@ -7,7 +7,7 @@ use Genome::Utility::Test qw(capture_ok);
 use Test::More;
 
 BEGIN {
-    use_ok 'Genome::Utility::Test', qw(sub_test compare_ok);
+    use_ok 'Genome::Utility::Test', qw(compare_ok);
 }
 
 my $_compare_ok_parse_args = \&Genome::Utility::Test::_compare_ok_parse_args;

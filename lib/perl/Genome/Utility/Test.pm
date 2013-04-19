@@ -5,7 +5,7 @@ package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(compare_ok sub_test run_ok capture_ok abort
+our @EXPORT_OK = qw(compare_ok run_ok capture_ok abort
                     strip_ansi command_execute_ok command_execute_fail_ok );
 
 use Carp qw(croak);
@@ -21,12 +21,6 @@ my %ERRORS = (
 sub ERRORS {
     my ($class, $key) = @_;
     return $ERRORS{$key};
-}
-
-sub sub_test($$) {
-    my ($desc, $code) = @_;
-    my $tb = __PACKAGE__->builder;
-    $tb->ok($code->(), $desc);
 }
 
 sub abort {
@@ -399,11 +393,9 @@ Genome::Utility::Test
 
 =head1 SYNOPSIS
 
-    use Genome::Utiltiy::Test qw(compare_ok sub_test);
+    use Genome::Utiltiy::Test qw(compare_ok);
 
-    sub_test('this diffs something' => sub {
-        compare_ok($file_1, $file_1);
-    });
+    compare_ok($file_1, $file_1);
 
 =head1 METHODS
 
@@ -412,11 +404,6 @@ Genome::Utility::Test
 =item strip_ansi($string)
 
 Returns the given string after removing ANSI escape sequences.
-
-=item sub_test
-
-Mimics Test::More's subtest since Ubuntu 10.04, which we run, does not have a
-Test::More recent enough to have subtest support.
 
 =item compare_ok($file1, $file2, %options)
 
