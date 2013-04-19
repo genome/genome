@@ -13,14 +13,8 @@ BEGIN {
     use_ok('Genome::Model::MetagenomicComposition16s::Command::CopyFiles');
 };
 
-# Our Test::More doesn't have subtest yet but somehow it still compiles?
-sub _subtest($$) {
-    my ($desc, $code) = @_;
-    ok($code->(), $desc);
-}
-
 my ($build, $example_build);
-_subtest 'setup test builds' => sub {
+subtest 'setup test builds' => sub {
     ($build, $example_build) = Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory->build_with_example_build_for_sanger;
     ok($example_build, 'example build') or die;
     ok($example_build->get_or_create_data_directory, 'resolved data dir');
@@ -49,7 +43,7 @@ my %copy_files_params = (
     destination => $tmpdir,
 );
 
-_subtest 'run command with models and builds' => sub {
+subtest 'run command with models and builds' => sub {
     my $cmd = Genome::Model::MetagenomicComposition16s::Command::CopyFiles->create(%copy_files_params);
     ok($cmd, 'created command with common params');
     $cmd->dump_status_messages(1);
@@ -59,14 +53,14 @@ _subtest 'run command with models and builds' => sub {
     is(scalar @files, 1, 'Copied files');
 };
 
-_subtest 're-run command to verify it fails due to existing output' => sub {
+subtest 're-run command to verify it fails due to existing output' => sub {
     my $cmd = Genome::Model::MetagenomicComposition16s::Command::CopyFiles->create(%copy_files_params);
     ok($cmd, 'created command with common params');
     $cmd->dump_status_messages(1);
     ok(!$cmd->execute, 'execute failed as expected due to existing output');
 };
 
-_subtest 're-run command with --force to verify it overwrites existing output' => sub {
+subtest 're-run command with --force to verify it overwrites existing output' => sub {
     my $cmd = Genome::Model::MetagenomicComposition16s::Command::CopyFiles->create(
         %copy_files_params,
         force => 1,
@@ -76,7 +70,7 @@ _subtest 're-run command with --force to verify it overwrites existing output' =
     ok($cmd->execute, 'executed with --force option');
 };
 
-_subtest 'run command with duplicate models and no builds' => sub {
+subtest 'run command with duplicate models and no builds' => sub {
     my $tmpdir = tmpdir();
     my $cmd = Genome::Model::MetagenomicComposition16s::Command::CopyFiles->create(
         models => [$model, $model],
@@ -88,7 +82,7 @@ _subtest 'run command with duplicate models and no builds' => sub {
     ok($cmd->execute, 'executed command');
 };
 
-_subtest 'run command with builds instead of models' => sub {
+subtest 'run command with builds instead of models' => sub {
     my $tmpdir = tmpdir();
     my $cmd = Genome::Model::MetagenomicComposition16s::Command::CopyFiles->create(
         builds => [$example_build],
@@ -100,7 +94,7 @@ _subtest 'run command with builds instead of models' => sub {
     ok($cmd->execute, 'executed command');
 };
 
-_subtest 'run command with missing file_type to verify failure' => sub {
+subtest 'run command with missing file_type to verify failure' => sub {
     my $cmd = Genome::Model::MetagenomicComposition16s::Command::CopyFiles->create(
         builds => [$example_build],
     );
@@ -109,7 +103,7 @@ _subtest 'run command with missing file_type to verify failure' => sub {
     ok(!$cmd->execute, 'execute failed without file_type');
 };
 
-_subtest 'run command with invalid file_type to verify failure' => sub {
+subtest 'run command with invalid file_type to verify failure' => sub {
     my $cmd = Genome::Model::MetagenomicComposition16s::Command::CopyFiles->create(
         models => [$model],
         file_type => 'some_file_type_that_is_not_valid',
