@@ -179,6 +179,7 @@ sub test_shellcmd_redirect_stdout_stderr {
 
     my $do_dump_status_messages = Genome::Sys->dump_status_messages;
     Genome::Sys->dump_status_messages(0);
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0;
 
     {
         my $parentout = File::Temp::tmpnam();
