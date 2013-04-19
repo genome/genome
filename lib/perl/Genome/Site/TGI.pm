@@ -45,7 +45,7 @@ BEGIN {
                     as => 'table_name',
                     code => \&Genome::Site::TGI::table_name_patch
                 });
-	
+
 	}
 }
 
@@ -143,6 +143,9 @@ $ENV{GENOME_TEST_URL} ||= sprintf('https://gscweb.gsc.wustl.edu/%s', $ENV{GENOME
 if (!$ENV{UR_DBI_NO_COMMIT}) {
     $ENV{GENOME_DB_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_updates';
 }
+$ENV{GENOME_DB_QUERY_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_queries';
+
+
 
 # configure our local ensembl db
 $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD} ||= '122704720';
