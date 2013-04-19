@@ -17,7 +17,7 @@ use File::Basename;
 # Loads all observers in Genome/Observers/*
 my $base_path = __FILE__;
 $base_path =~ s/.pm$//;
-my @paths = glob("$base_path/*");
+my @paths = glob("$base_path/*.pm");
 
 for my $path (@paths) {
     my $file = basename($path);
