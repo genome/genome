@@ -144,7 +144,6 @@ sub execute {
         unless ($import_bed->execute()){
             die($self->error_message("Bed file import failed"));
         }
-    `cp $bed_file_path /gscuser/aregier/scratch/mousedbsnp`;
     }
 
     my $import_cmd;
