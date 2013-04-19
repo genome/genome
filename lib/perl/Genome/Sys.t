@@ -189,7 +189,8 @@ sub test_shellcmd_redirect_stdout_stderr {
                 redirect_stdout => $childout,
             );
         ok($result, 'Run echo with stdout redirected');
-        ok(! (-s $parentout), 'Found no output in stdout of parent');
+        ok(! (-s $parentout), 'Found no output in stdout of parent')
+            or diag $read_file->($parentout);
         # two newlines, as the shellcmd will emit an extra newline
         is( $read_file->($childout), "test\n\n", 'redirected child stdout to a file');
         unlink($parentout, $childout);
@@ -204,7 +205,8 @@ sub test_shellcmd_redirect_stdout_stderr {
                 redirect_stderr => $childerr,
             );
         ok($result, 'Run echo with stderr redirected');
-        ok(! (-s $parenterr), 'Found no output in stderr of parent');
+        ok(! (-s $parenterr), 'Found no output in stderr of parent')
+            or diag $read_file->($parenterr);
         is( $read_file->($childerr), "test\n", 'redirected child stderr to a file');
         unlink($parenterr, $childerr);
     }
