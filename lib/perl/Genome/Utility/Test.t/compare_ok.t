@@ -1,8 +1,8 @@
 use strict;
 use warnings;
 
-use Test::Builder::Tester;
 use above "Genome";
+use Test::Builder::Tester;
 use Genome::Utility::Test qw(capture_ok);
 use Test::More;
 
