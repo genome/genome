@@ -10,6 +10,10 @@ BEGIN {
     use_ok 'Genome::Utility::Test', qw(compare_ok);
 }
 
+for my $m ('Test/Builder/Tester.pm', 'Test/More.pm') {
+    diag "$m => $INC{$m}";
+}
+
 my $_compare_ok_parse_args = \&Genome::Utility::Test::_compare_ok_parse_args;
 
 my @args_A = ('file_1', 'file_2', 'args_A');
