@@ -23,10 +23,16 @@ sub required_rusage {
     my $class = shift;
     my %p = @_;
     my $instrument_data = delete $p{instrument_data};
+    my $reference_build = delete $p{reference_build};
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
     my $mem_mb = 1024 * 8; 
     my $cpus = 2;
+
+    if ($reference_build->id eq '107494762') {
+        $class->status_message(sprintf 'Doubling memory requirements for alignments against %s.', $reference_build->name);
+        $mem_mb *= 2;
+    }
 
     my $mem_kb = $mem_mb*1024;
     my $tmp_gb = $tmp_mb/1024;
