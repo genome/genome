@@ -13,15 +13,15 @@ BEGIN {
 my $_compare_ok_parse_args = \&Genome::Utility::Test::_compare_ok_parse_args;
 
 my @args_A = ('file_1', 'file_2', 'args_A');
-sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_A) => sub {
+subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_A) => sub {
     local $@ = '';
     my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_A) };
     ok(!$@, 'did not die');
     is($o{name}, $args_A[2], 'name matched expected value');
-});
+};
 
 my @args_B = ('file_1', 'file_2', 'args_B', filters => [qr(/foo/)]);
-sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_B) => sub {
+subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_B) => sub {
     local $@ = '';
     my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_B) };
     ok(!$@, 'did not die');
@@ -30,10 +30,10 @@ sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_B) => sub {
 
     my $filter = $o{xform}->[0];
     is($filter->('123/foo/456'), '123456', 'transform filters out "/foo/"');
-});
+};
 
 my @args_C = ('file_1', 'file_2', filters => [qr(/foo/)], name => 'args_C');
-sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_C) => sub {
+subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_C) => sub {
     local $@ = '';
     my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_C) };
     ok(!$@, 'did not die');
@@ -42,19 +42,19 @@ sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_C) => sub {
 
     my $filter = $o{xform}->[0];
     is($filter->('123/foo/456'), '123456', 'transform filters out "/foo/"');
-});
+};
 
 my @args_D = ('file_1', 'file_2', 'args_D', name => 'args_D');
-sub_test('_compare_ok_parse_args did fail to parse: ' . join(', ', @args_D) => sub {
+subtest '_compare_ok_parse_args did fail to parse: ' . join(', ', @args_D) => sub {
     local $@ = '';
     my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_D) };
     like($@,
         qr(^duplicate name argument not expected),
         'Got exception specifying the test name twice');
-});
+};
 
 my @args_E = ('file_1', 'file_2', 'args_E', filters => qr(/foo/));
-sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_E) => sub {
+subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_E) => sub {
     local $@ = '';
     my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_E) };
     ok(!$@, 'did not die');
@@ -63,10 +63,10 @@ sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_E) => sub {
 
     my $filter = $o{xform}->[0];
     is($filter->('123/foo/456'), '123456', 'transform filters out "/foo/"');
-});
+};
 
 my @args_F = ('file1', 'file2', 'args_F', replace => [[qr(/foo/) => 'bar'], ['abc' => 'xyz']]);
-sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_F) => sub {
+subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_F) => sub {
     local $@ = '';
     my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_F) };
     ok(!$@, 'did not die');
@@ -79,9 +79,9 @@ sub_test('_compare_ok_parse_args parsed: ' . join(', ', @args_F) => sub {
     $filter = $o{xform}->[1];
     is($filter->('123/foo/456'), '123/foo/456', "transform doesn't change output when string doesn't match");
     is($filter->('1abc23'), '1xyz23', 'transform changes out "abc" for "xyz"');
-});
+};
 
-sub_test('compare_ok matches diff command' => sub {
+subtest 'compare_ok matches diff command' => sub {
     my $expected_fh = File::Temp->new(TMPDIR => 1);
     my $expected_fn = $expected_fh->filename;
     $expected_fh->print("a\n");
@@ -99,8 +99,8 @@ sub_test('compare_ok matches diff command' => sub {
 
     {
         test_out('not ok 1');
-        test_err(q(/# First diff:\n# --- .*\n# \+\+\+.*\n# -b\n# \+a\n#\s+Failed test at .+ line \d+\./));
-        my $compare_ok = compare_ok($a_fn, $expected_fn);
+        test_fail(+1);
+        my $compare_ok = compare_ok($a_fn, $expected_fn, diag => 0);
         test_test('compare_ok ran on different files');
         my $diff    = (system(qq(diff -u "$expected_fn" "$a_fn" > /dev/null)) == 0 ? 1 : 0);
         is($diff, 0, 'diff detected diff between different files');
@@ -115,9 +115,9 @@ sub_test('compare_ok matches diff command' => sub {
         is($diff, 1, 'diff did not detect diff between similar files');
         is($compare_ok, $diff, 'compare_ok did not detect diff between similar files');
     }
-});
+};
 
-sub_test('compare_ok replace' => sub {
+subtest 'compare_ok replace' => sub {
     my $expected_fh = File::Temp->new(TMPDIR => 1);
     my $expected_fn = $expected_fh->filename;
     $expected_fh->print("a\n");
@@ -129,8 +129,8 @@ sub_test('compare_ok replace' => sub {
     $a_fh->close();
 
     test_out('not ok 1');
-    test_err(q(/# First diff:\n# --- .*\n# \+\+\+.*\n# -b\n# \+a\n#\s+Failed test at .+ line \d+\./));
-    compare_ok($a_fn, $expected_fn);
+    test_fail(+1);
+    compare_ok($a_fn, $expected_fn, diag => 0);
     test_test('compare_ok failed without replace');
 
     my $error = Genome::Utility::Test->ERRORS('REPLACE_ARRAY_REF');
@@ -142,6 +142,6 @@ sub_test('compare_ok replace' => sub {
     test_out('ok 1');
     compare_ok($a_fn, $expected_fn, replace => [['a' => 'b']]);
     test_test('compare_ok passed with replace');
-});
+};
 
 done_testing();
