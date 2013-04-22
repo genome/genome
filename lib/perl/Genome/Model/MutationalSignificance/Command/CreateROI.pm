@@ -75,29 +75,39 @@ sub execute {
 
     unless ($new_feature_list) {
         my $tmp = Genome::Sys->create_temp_file_path;
-        my $cmd = "cat ".$feature_list->file_path." /gscuser/aregier/scratch/dhs_promoters/gene_names2.bed /gscuser/aregier/scratch/dhs_promoters/DRM_transcript_pairs.clean.bed > $tmp";
-        `$cmd`;
-        my $sorted_out = Genome::Sys->create_temp_file_path;
-        my $rv = Genome::Model::Tools::Joinx::Sort->execute(
-            input_files => [$tmp],
-            unique => 1,
-            output_file => $sorted_out,
-        );
-        my $file_content_hash = Genome::Sys->md5sum($sorted_out);
+        my $db_version = "build37";
+        my $species_name = "human";
+        my $encode_version = "2013-04-19";
+        my $encode_path = Genome::Db->get(source_name => "encode", database_name => "$species_name/$db_version", external_version => $encode_version);
+        if ($encode_db) {
+            my $encode_dir = $encode_db->data_directory;
+            my $cmd = "cat ".$feature_list->file_path." $encode_dir/Thurman2012.bed $encode_dir/Yip2012_translated.bed | sed s/^chr//> $tmp";
+            `$cmd`;
+            my $sorted_out = Genome::Sys->create_temp_file_path;
+            my $rv = Genome::Model::Tools::Joinx::Sort->execute(
+                input_files => [$tmp],
+                unique => 1,
+                output_file => $sorted_out,
+            );
+            my $file_content_hash = Genome::Sys->md5sum($sorted_out);
 
-        my $format = $feature_list->format;
+            my $format = $feature_list->format;
 
-        $new_feature_list = Genome::FeatureList->create(
-            name => $new_name,
-            format => $format,
-            file_content_hash => $file_content_hash,
-            subject => $feature_list->subject,
-            reference => $feature_list->reference,
-            file_path => $sorted_out,
-            content_type => "roi",
-            description => "Created by music createROI test 2/26/2013",
-            source => "WUTGI",
-        );
+            $new_feature_list = Genome::FeatureList->create(
+                name => $new_name,
+                format => $format,
+                file_content_hash => $file_content_hash,
+                subject => $feature_list->subject,
+                reference => $feature_list->reference,
+                file_path => $sorted_out,
+                content_type => "roi",
+                description => "Created by music createROI test 2/26/2013",
+                source => "WUTGI",
+            );
+        }
+        else {
+            $new_feature_list = $feature_list;
+        }
         unless ($new_feature_list) {
             $self->error_message("Failed to create hacked up ROI file");
             return;
