@@ -15,7 +15,7 @@ use Test::More;
 use_ok('Genome::Model::Command::Input::Add') or die;
 use_ok('Genome::Model::Command::Input::Remove') or die;
 
-class Shape { is => 'UR::Object', id_by => 'name', has => [ name =>  { is => 'Text', }, ], };
+class Shape { is => 'UR::Object', id_by => 'name', has => [ name =>  { is => 'Text', }, __display_name__ => {is => 'Text', is_calculated => 1, calculate => q{return "Display $name"}, calculate_from => ['name']} ]};
 
 class Genome::Model::Tester {
     is => 'Genome::ModelDeprecated',
