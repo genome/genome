@@ -16,8 +16,6 @@ class Genome::Model::Command::Update::AutoAssignInstrumentData {
     ],
 };
 
-sub _is_hidden_in_docs { return !Genome::Sys->current_user_is_admin };
-
 sub help_detail {
     return 'Set auto_assign_inst_data to the value for the models.'
 }
