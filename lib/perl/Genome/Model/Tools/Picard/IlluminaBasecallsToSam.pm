@@ -101,10 +101,15 @@ sub execute {
         die('Failed to find '. $jar_path .'!  This command may not be available in version '. $self->use_version);
     }
 
+    my %map_args = qw(
+        basecalls_directory basecalls_dir
+    );
+
     my $args = join(' ',
         map {
             my $value = $self->$_;
-            defined($value) ? (uc($_) . "='$value'") : ()
+            my $arg = $map_args{$_} || $_;
+            defined($value) ? (uc($arg) . "='$value'") : ()
         } sort qw(
             basecalls_directory
             lane
@@ -124,7 +129,7 @@ sub execute {
         )
     );
 
-    my $cmd = $jar_path . " net.sf.picard.sam.IlluminaBasecallsToSam $args";
+    my $cmd = $jar_path . " net.sf.picard.illumina.IlluminaBasecallsToSam $args";
     $self->run_java_vm(
         cmd          => $cmd,
         input_files  => [ $self->basecalls_directory, $self->library_params, ],
