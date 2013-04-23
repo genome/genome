@@ -28,11 +28,11 @@ class Genome::Model::Tools::Relationship::BackfillPolymuttVcf {
        },
        polymutt_version=> {
            is => "Text",
-           default => 'vcf.0.01',
+           default => '0.11',
        },
        joinx_version=> {
            is => "Text",
-           default => '1.6',
+           default => '1.7',
        },
        # Roi limiting params
        roi_file => {
@@ -214,7 +214,13 @@ sub assemble_list_of_segregating_sites {
 #FIXME Pretty hacky... be less hacky
 sub polymutt_dir_for_build {
     my ($self, $build) = @_;
-    my $dir = $build->data_directory . "/variants/snv/polymutt-0.11-8b1c96ee44b70a5c936f48fd06d74d07";
+    my $glob_string = $build->data_directory . "/variants/snv/polymutt-*";
+    my @dirs = glob($glob_string);
+    unless (scalar(@dirs) == 1) {
+        die $self->error_message("Found " . scalar(@dirs) . " possible polymutt dirs in " . $build->data_directory . " and I expected to find one.");
+    }
+    my $dir = $dirs[0];
+
     unless (-d $dir) {
         die $self->error_message("Polymutt dir $dir does not exist or is not a directory");
     }
