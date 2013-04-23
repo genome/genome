@@ -32,9 +32,11 @@ ok($cmd, "create import command");
 ok($cmd->execute, "excute import command") or die;
 
 my $instrument_data = $cmd->instrument_data;
-ok($instrument_data, 'got instrument data 2');
+ok($instrument_data, 'got instrument data');
 is($instrument_data->original_data_path, $source_sra, 'original_data_path correctly set');
-is($instrument_data->import_format, 'bam', 'import_format correctly set');
+my $original_format = eval{ $instrument_data->attributes(attribute_label => 'original_format')->attribute_value; };
+is($original_format, 'sra', 'orginal_format is sra');
+is($instrument_data->import_format, 'bam', 'import_format is bam');
 is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 is($instrument_data->is_paired_end, 0, 'is_paired_end correctly set');
 is($instrument_data->read_count, 148, 'read_count correctly set');

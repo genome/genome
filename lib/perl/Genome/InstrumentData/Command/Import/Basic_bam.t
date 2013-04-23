@@ -29,31 +29,34 @@ my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
 ok($cmd, "create import command");
 ok($cmd->execute, "excute import command");
 
-my $instrument_data2 = $cmd->instrument_data;
-ok($instrument_data2, 'got instrument data 2');
-is($instrument_data2->original_data_path, $source_bam, 'original_data_path correctly set');
-is($instrument_data2->import_format, 'bam', 'import_format correctly set');
-is($instrument_data2->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
-is($instrument_data2->is_paired_end, 1, 'is_paired_end correctly set');
-is($instrument_data2->read_count, 600, 'read_count correctly set');
-my $allocation2 = $instrument_data2->allocations;
-ok($allocation2, 'got allocation');
-ok($allocation2->kilobytes_requested > 0, 'allocation kb was set');
+my $instrument_data = $cmd->instrument_data;
+ok($instrument_data, 'got instrument data');
+is($instrument_data->original_data_path, $source_bam, 'original_data_path correctly set');
+my $original_format = eval{ $instrument_data->attributes(attribute_label => 'original_format')->attribute_value; };
+is($original_format, 'bam', 'orginal_format is bam');
+is($instrument_data->import_format, 'bam', 'import_format is bam');
+is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
+is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
+is($instrument_data->read_count, 600, 'read_count correctly set');
+my $allocation = $instrument_data->allocations;
+ok($allocation, 'got allocation');
+ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 
-my $bam_via_bam_path = $instrument_data2->bam_path;
+my $bam_via_bam_path = $instrument_data->bam_path;
 ok($bam_via_bam_path, 'got bam via bam path');
 ok(-s $bam_via_bam_path, 'bam via bam path exists');
-is($bam_via_bam_path, $allocation2->absolute_path.'/all_sequences.bam', 'bam via bam path named correctly');
+is($bam_via_bam_path, $allocation->absolute_path.'/all_sequences.bam', 'bam via bam path named correctly');
 
-my $bam_via_attrs = eval{ $instrument_data2->attributes(attribute_label => 'bam_path')->attribute_value; };
+my $bam_via_attrs = eval{ $instrument_data->attributes(attribute_label => 'bam_path')->attribute_value; };
 ok($bam_via_attrs, 'got bam via attrs');
 ok(-s $bam_via_attrs, 'bam via attrs exists');
-is($bam_via_attrs, $allocation2->absolute_path.'/all_sequences.bam', 'bam via attrs named correctly');
+is($bam_via_attrs, $allocation->absolute_path.'/all_sequences.bam', 'bam via attrs named correctly');
 
-my $bam_via_archive_path = $instrument_data2->archive_path;
+my $bam_via_archive_path = $instrument_data->archive_path;
 ok($bam_via_archive_path, 'got bam via archive path');
 ok(-s $bam_via_archive_path, 'bam via archive path exists');
-is($bam_via_archive_path, $allocation2->absolute_path.'/all_sequences.bam', 'bam via archive path named correctly');
+is($bam_via_archive_path, $allocation->absolute_path.'/all_sequences.bam', 'bam via archive path named correctly');
 #print $cmd->instrument_data->allocations->absolute_path."\n"; <STDIN>;
+
 
 done_testing();
