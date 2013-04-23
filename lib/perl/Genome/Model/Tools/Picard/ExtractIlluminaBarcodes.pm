@@ -51,6 +51,7 @@ class Genome::Model::Tools::Picard::ExtractIlluminaBarcodes {
         minimum_base_quality => {
             is  => 'String',
             doc => 'Minimum base quality. Any barcode bases falling below this quality will be considered a mismatch even in the bases match.',
+            is_optional => 1,
         },
         compress_outputs => {
             is  => 'String',
@@ -114,7 +115,7 @@ sub execute {
     $self->run_java_vm(
         cmd          => $cmd,
         input_files  => [ $self->barcode_file, ],
-        output_files => [ $self->metrics_file ],
+#        output_files => [ $self->metrics_file ],
 #        skip_if_output_is_present => 0,
     );
     return 1;
