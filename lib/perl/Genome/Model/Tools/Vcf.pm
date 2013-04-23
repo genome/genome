@@ -19,7 +19,7 @@ use Genome;
 #14: We produce vcfs during indel combination operations now
 #15: 14 had undefined sample names in the Vcf software results
 
-my $VCF_VERSION = "15";
+my $VCF_VERSION = "16";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],
