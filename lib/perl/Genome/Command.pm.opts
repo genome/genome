@@ -16951,6 +16951,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>cleanup-vcf',
+      [
+        'input-file=s',
+        'files',
+        'output-file=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>compare-genotypes',
       [
         'output-file=s',
