@@ -20,6 +20,10 @@ class Genome::Model::Tools::Relationship::BackfillPolymuttVcf {
        chr2process=> {
            doc => "Chromsomes to process. Currently not optional since polymutt will rarely work without it (due to GL contig mismatching",
        },
+       use_qc_failed_builds => {
+            doc => "If set to true, ignore QC failed status in builds when gathering builds from models",
+            default => 1,
+       }
     ],
     has_optional_input => [
        segregating_sites_file => {
@@ -118,14 +122,25 @@ sub resolve_valid_builds {
     my $mg = $self->model_group;
     my @builds;
 
-    for my $model ($mg->models) {
-        my $build = $model->current_build;
-        if($build && $build->status eq 'Succeeded' && $build->qc_succeeded) {
-            push @builds, $build;
+    my ($no_builds, $bad_builds, $ok);
+    my @models = $mg->models;
+    for my $model (@models) {
+        my $build = $model->last_succeeded_build;
+        if($build) {
+            if ($build->qc_succeeded || $self->use_qc_failed_builds) {
+                push @builds, $build;
+                $ok++;
+            } else {
+                $self->status_message("Skipping " . $model->name . " (" . $model->id  . ") because builds failed QC and use_qc_failed_builds is not set");
+                $bad_builds++;
+            }
         } else {
-            $self->status_message("Skipping " . $model->name . "No successful builds that passed QC");
+            $self->status_message("Skipping " . $model->name . " (" . $model->id  . ") because there are no successful builds.");
+            $no_builds++;
         }
     }
+
+    $self->status_message("Out of " . scalar(@models) . ", $ok are fine, $bad_builds were skipped because of QC, and $no_builds were skipped due to lack of succeeded builds");
 
     $self->_builds(\@builds);
 
