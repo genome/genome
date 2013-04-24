@@ -126,10 +126,10 @@ sub _execute_v1 {
     if ($transcript_strand eq 'unstranded') {
         $htseq_stranded_param = 'no';
     }
-    elsif ($transcript_strand eq 'firstread') {
+    elsif ($transcript_strand eq 'firststrand') {
         $htseq_stranded_param = 'yes';
     }
-    elsif ($transcript_strand eq 'secondread') {
+    elsif ($transcript_strand eq 'secondstrand') {
         $htseq_stranded_param = 'reverse';
     }
     else {
