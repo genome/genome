@@ -5,12 +5,9 @@ use strict;
 use warnings;
 
 use FileHandle;
-
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-
-## Declare global statistics hash ##
-
-my %stats = ();
+use IO::File;
+use Genome::Sys;
 
 class Genome::Model::Tools::Plink::VcfToPlink {
     is => 'Command',                       
@@ -54,14 +51,14 @@ EOS
 ################################################################################################
 
 sub execute {                               # replace with real execution logic.
-    my $self = shift;
+    my ($self) = @_;
 
-    my $input_vcf = $self->input;
-    my $input_ped = $self->input;
-    my $output_pheno = $self->output;
-    my $output_plink = $self->output;
-    my $convert_cmd = Genome::Model::Tools::Vcftools->path_to_binary() . "--gzvcf $input_vcf --plink --out tmp";
-    Genome::Sys->exec($convert_cmd);
+    my $input_vcf = $self->vcf_file;
+    my $input_ped = $self->pedigree_file;
+    my $output_pheno = $self->phenotype_file;
+    my $output_plink = $self->plink_file;
+    my $convert_cmd = "/gscmnt/ams1161/info/model_data/kmeltzst/Software/vcftools_0.1.9/bin/vcftools --gzvcf $input_vcf --plink --out tmp";
+    Genome::Sys->shellcmd(cmd=>$convert_cmd);
     
     my $out_family_file = IO::File->new("family_file.txt", ">");
     my $out_sex_file = IO::File->new("sex_file.txt", ">");
@@ -77,17 +74,17 @@ sub execute {                               # replace with real execution logic.
         $out_pheno_file->print("$family_id\t$ind_id\t$pheno\n");
     }
 
-    my $update_id_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --file tmp --update-ids $out_family_file --make-bed --out tmp2";
-    Genome::Sys->exec($update_id_cmd);
+    my $update_id_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --file tmp --update-ids family_file.txt --make-bed --out tmp2";
+    Genome::Sys->shellcmd(cmd=>$update_id_cmd);
 
-    my $update_parents_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --bfile tmp2 --update-parents $out_parents_file --make-bed --out tmp3";
-    Genome::Sys->exec($update_parents_cmd);
+    my $update_parents_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --bfile tmp2 --update-parents parents_file.txt --make-bed --out tmp3";
+    Genome::Sys->shellcmd(cmd=>$update_parents_cmd);
 
-    my $update_sex_cmd = Genome::Model::Tools::Plink->path_to_binary() . "--bfile tmp3 --update-sex $out_sex_file --make-bed --out $output_plink";
-    Genome::Sys->exec($update_sex_cmd);
+    my $update_sex_cmd = Genome::Model::Tools::Plink->path_to_binary() . "--bfile tmp3 --update-sex sex_file.txt --make-bed --out $output_plink";
+    Genome::Sys->shellcmd(cmd=>$update_sex_cmd);
 
     my $cleanup_cmd = "rm -f tmp*";
-    Genome::Sys->exec($cleanup_cmd);
+    #Genome::Sys->shellcmd(cmd=>$cleanup_cmd);
 
     return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }
