@@ -21397,6 +21397,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>vcf-to-plink',
       [
+        'output-directory=s',
+        'files',
         'pedigree-file=s',
         'files',
         'phenotype-file=s',
