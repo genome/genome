@@ -1,16 +1,5 @@
 package Genome::Model::Tools::Plink::VcfToPlink;     # rename this when you give the module file a different name <--
 
-#####################################################################################################################################
-# MutationRate - Calculate the mutation rate (per megabase) given a list of mutations (e.g. tier1 SNVs) and a set of regions (e.g. coding space)
-#					
-#	AUTHOR:		Dan Koboldt (dkoboldt@genome.wustl.edu)
-#
-#	CREATED:	04/22/2011 by D.K.
-#	MODIFIED:	04/22/2011 by D.K.
-#
-#	NOTES:	
-#			
-#####################################################################################################################################
 
 use strict;
 use warnings;
@@ -24,14 +13,14 @@ use Genome;                                 # using the namespace authorizes Cla
 my %stats = ();
 
 class Genome::Model::Tools::Plink::VcfToPlink {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		vcf_file	=> { is => 'Text', doc => "Input VCF file to be converted" , is_optional => 0, is_input => '1'},
-		pedigree_file	=> { is => 'Text', doc => "A standard pedigree file with phenotype, gender, & relationships" , is_optional => 0, is_input => '1'},
-		phenotype_file	=> { is => 'Text', doc => "Name for output phenotype file for PLINK" , is_optional => 0, is_input => '1'},
-		plink_file	=> { is => 'Text', doc => "Name for output PLINK file" , is_optional => 0, is_input => '1'},
-	],
+    is => 'Command',                       
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+    vcf_file	=> { is => 'Text', doc => "Input VCF file to be converted" , is_optional => 0, is_input => '1'},
+    pedigree_file	=> { is => 'Text', doc => "A standard pedigree file with phenotype, gender, & relationships" , is_optional => 0, is_input => '1'},
+    phenotype_file	=> { is => 'Text', doc => "Name for output phenotype file for PLINK" , is_optional => 0, is_input => '1'},
+    plink_file	=> { is => 'Text', doc => "Name for output PLINK file" , is_optional => 0, is_input => '1'},
+    ],
 };
 
 sub sub_command_sort_position { 12 }
@@ -65,15 +54,42 @@ EOS
 ################################################################################################
 
 sub execute {                               # replace with real execution logic.
-	my $self = shift;
+    my $self = shift;
 
-	my $input = $self->input;
+    my $input_vcf = $self->input;
+    my $input_ped = $self->input;
+    my $output_pheno = $self->output;
+    my $output_plink = $self->output;
+    my $convert_cmd = Genome::Model::Tools::Vcftools->path_to_binary() . "--gzvcf $input_vcf --plink --out tmp";
+    Genome::Sys->exec($convert_cmd);
+    
+    my $out_family_file = IO::File->new("family_file.txt", ">");
+    my $out_sex_file = IO::File->new("sex_file.txt", ">");
+    my $out_parents_file = IO::File->new("parents_file.txt", ">");
+    my $out_pheno_file = IO::File->new($output_pheno, ">");
+    my $in_file = IO::File->new($input_ped);
+    while(my $line = $in_file->getline){
+        chomp($line);
+        my ($family_id,$ind_id,$father_id,$mother_id,$sex,$pheno)=(split/\t/,$line);
+        $out_family_file->print("$ind_id\t$ind_id\t$family_id\t$ind_id\n");
+        $out_sex_file->print("$family_id\t$ind_id\t$sex\n");
+        $out_parents_file->print("$family_id\t$ind_id\t$father_id\t$mother_id\n");
+        $out_pheno_file->print("$family_id\t$ind_id\t$pheno\n");
+    }
 
-#	my $cmd = Genome::Model::Tools::Plink->path_to_binary() . " --file $input --make-bed --out $output";
+    my $update_id_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --file tmp --update-ids $out_family_file --make-bed --out tmp2";
+    Genome::Sys->exec($update_id_cmd);
 
+    my $update_parents_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --bfile tmp2 --update-parents $out_parents_file --make-bed --out tmp3";
+    Genome::Sys->exec($update_parents_cmd);
 
+    my $update_sex_cmd = Genome::Model::Tools::Plink->path_to_binary() . "--bfile tmp3 --update-sex $out_sex_file --make-bed --out $output_plink";
+    Genome::Sys->exec($update_sex_cmd);
 
-	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
+    my $cleanup_cmd = "rm -f tmp*";
+    Genome::Sys->exec($cleanup_cmd);
+
+    return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }
 
 
