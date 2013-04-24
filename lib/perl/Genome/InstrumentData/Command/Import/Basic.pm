@@ -241,10 +241,11 @@ sub _create_instrument_data {
     $self->status_message('Source files were NOT previously imported!');
 
     $self->status_message('Create instrument data...');
+    $properties{original_format} = $self->original_format;
     $properties{import_format} = $self->import_format;# will soon be 'bam'
     $properties{sequencing_platform} = $self->sequencing_platform;
     $properties{import_source_name} = $self->import_source_name;
-    $properties{description} = $self->description;
+    $properties{description} = $self->description if defined $self->description;
     for my $name_value ( $self->instrument_data_properties ) {
         my ($name, $value) = split('=', $name_value);
         if ( not defined $value or $value eq '' ) {
@@ -571,7 +572,7 @@ sub _transfer_sra_source_file {
     $self->status_message("Sorted bam prefix: $sorted_bam_prefix");
     my $sorted_bam_file = $sorted_bam_prefix.'.bam';
     $self->status_message("Sorted bam file: $sorted_bam_file");
-    my $cmd = "/usr/bin/sam-dump --unaligned --header --primary $source_sra_file | samtools view -h -b -S - | samtools sort -m 3000000000 -n - $sorted_bam_prefix";
+    my $cmd = "/usr/bin/sam-dump --unaligned --header --primary $sra_file | samtools view -h -b -S - | samtools sort -m 3000000000 -n - $sorted_bam_prefix";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $sorted_bam_file ) {
         $self->error_message($@) if $@;
@@ -602,7 +603,6 @@ sub _finish {
     # File attribute
     my $instrument_data = $self->instrument_data;
     my $file_attribute_label = $self->file_attribute_label;#'bam_path'
-    # TODO add original [start] format
     my $file_attribute_value = $self->final_data_file; # support more than one?
     $self->status_message(ucfirst(join(' ', split('_', $file_attribute_label))).': '.$file_attribute_value);
     $instrument_data->add_attribute(attribute_label => $file_attribute_label, attribute_value => $file_attribute_value);

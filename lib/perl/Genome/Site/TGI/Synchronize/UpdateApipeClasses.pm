@@ -36,17 +36,17 @@ class Genome::Site::TGI::Synchronize::UpdateApipeClasses {
 # it can lead to some attributes not being copied over.
 sub objects_to_sync {
     return (
-        'Genome::Site::TGI::Synchronize::Classes::RegionIndex454' => 'Genome::InstrumentData::454',
-        'Genome::Site::TGI::Synchronize::Classes::IndexIllumina' => 'Genome::InstrumentData::Solexa',
-        'Genome::Site::TGI::Synchronize::Classes::Genotyping' => 'Genome::InstrumentData::Imported',
+        'Genome::Site::TGI::Taxon' => 'Genome::Taxon',
         'Genome::Site::TGI::Individual' => 'Genome::Individual',
         'Genome::Site::TGI::PopulationGroup' => 'Genome::PopulationGroup',
-        'Genome::Site::TGI::Taxon' => 'Genome::Taxon',
         'Genome::Site::TGI::Synchronize::Classes::OrganismSample' => 'Genome::Sample',
         'Genome::Site::TGI::Synchronize::Classes::LibrarySummary' => 'Genome::Library',
         'Genome::Site::TGI::Synchronize::Classes::SetupProject' => 'Genome::Project',
         'Genome::Site::TGI::Synchronize::Classes::SetupProjectSample' => 'Genome::Site::TGI::Synchronize::Classes::ProjectSample',
         'Genome::Site::TGI::Synchronize::Classes::SetupProjectSequenceProduct' => 'Genome::Site::TGI::Synchronize::Classes::ProjectInstrumentData',
+        'Genome::Site::TGI::Synchronize::Classes::RegionIndex454' => 'Genome::InstrumentData::454',
+        'Genome::Site::TGI::Synchronize::Classes::IndexIllumina' => 'Genome::InstrumentData::Solexa',
+        'Genome::Site::TGI::Synchronize::Classes::Genotyping' => 'Genome::InstrumentData::Imported',
     );
 }
 
@@ -118,11 +118,14 @@ sub execute {
     my %report;
 
     # Maps new classes with old classes
-    my %types = $self->objects_to_sync;
-
-    for my $old_type ($self->sync_order) {
-        confess "Type $old_type isn't mapped to an new class!" unless exists $types{$old_type};
-        my $new_type = $types{$old_type};
+    #my %types = $self->objects_to_sync;
+        #for my $old_type ($self->sync_order) {
+    my @classes_to_sync = $self->objects_to_sync;
+    for ( my $i = 0; $i < @classes_to_sync; $i += 2 ) {
+        my $old_type = $classes_to_sync[$i];
+        my $new_type = $classes_to_sync[$i + 1];
+        #confess "Type $old_type isn't mapped to an new class!" unless exists $types{$old_type};
+        #my $new_type = $types{$old_type};
 
         for my $type ($new_type, $old_type) {
             confess "Could not get meta object for $type!" unless $type->__meta__;

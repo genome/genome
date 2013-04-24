@@ -32,7 +32,7 @@ class Genome::ProcessingProfile::DeNovoAssembly {
                 'allpaths import',
                 'newbler import',
                 'soap dacc-download',
-                'sopa import',
+                'soap import',
                 'velvet import'],
         },
         assembler_version => {
