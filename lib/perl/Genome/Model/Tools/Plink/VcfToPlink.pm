@@ -17,6 +17,7 @@ class Genome::Model::Tools::Plink::VcfToPlink {
     pedigree_file	=> { is => 'Text', doc => "A standard pedigree file with phenotype, gender, & relationships" , is_optional => 0, is_input => '1'},
     phenotype_file	=> { is => 'Text', doc => "Name for output phenotype file for PLINK" , is_optional => 0, is_input => '1'},
     plink_file	=> { is => 'Text', doc => "Name for output PLINK file" , is_optional => 0, is_input => '1'},
+    output_directory	=> { is => 'Text', doc => "Name of output directory", is_optional => 0, is_input => '1'},
     ],
 };
 
@@ -29,7 +30,7 @@ sub help_brief {                            # keep this to just a few words <---
 sub help_synopsis {
     return <<EOS
 This command converts a VCF to PLINK format
-EXAMPLE:	gmt plink vcf-to-plink --vcf-file [file] --pedigree-file [file] --phenotype-file [name] --plink-file [name]...
+EXAMPLE:	gmt plink vcf-to-plink --vcf-file [file] --pedigree-file [file] --phenotype-file [name] --plink-file [name] --output-directory [name]...
 EOS
 }
 
@@ -57,13 +58,14 @@ sub execute {                               # replace with real execution logic.
     my $input_ped = $self->pedigree_file;
     my $output_pheno = $self->phenotype_file;
     my $output_plink = $self->plink_file;
-    my $convert_cmd = "/gscmnt/ams1161/info/model_data/kmeltzst/Software/vcftools_0.1.9/bin/vcftools --gzvcf $input_vcf --plink --out tmp";
+    my $output_dir = $self->output_directory;
+    my $convert_cmd = "/gscmnt/ams1161/info/model_data/kmeltzst/Software/vcftools_0.1.9/bin/vcftools --gzvcf $input_vcf --plink --out $output_dir/tmp";
     Genome::Sys->shellcmd(cmd=>$convert_cmd);
     
-    my $out_family_file = IO::File->new("family_file.txt", ">");
-    my $out_sex_file = IO::File->new("sex_file.txt", ">");
-    my $out_parents_file = IO::File->new("parents_file.txt", ">");
-    my $out_pheno_file = IO::File->new($output_pheno, ">");
+    my $out_family_file = IO::File->new("$output_dir/family_file.txt", ">");
+    my $out_sex_file = IO::File->new("$output_dir/sex_file.txt", ">");
+    my $out_parents_file = IO::File->new("$output_dir/parents_file.txt", ">");
+    my $out_pheno_file = IO::File->new($output_dir."/".$output_pheno, ">");
     my $in_file = IO::File->new($input_ped);
     while(my $line = $in_file->getline){
         chomp($line);
@@ -74,13 +76,13 @@ sub execute {                               # replace with real execution logic.
         $out_pheno_file->print("$family_id\t$ind_id\t$pheno\n");
     }
 
-    my $update_id_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --file tmp --update-ids family_file.txt --make-bed --out tmp2";
+    my $update_id_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --file $output_dir/tmp --update-ids $output_dir/family_file.txt --make-bed --out $output_dir/tmp2";
     Genome::Sys->shellcmd(cmd=>$update_id_cmd);
 
-    my $update_parents_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --bfile tmp2 --update-parents parents_file.txt --make-bed --out tmp3";
+    my $update_parents_cmd = Genome::Model::Tools::Plink->path_to_binary() . " --bfile $output_dir/tmp2 --update-parents $output_dir/parents_file.txt --make-bed --out $output_dir/tmp3";
     Genome::Sys->shellcmd(cmd=>$update_parents_cmd);
 
-    my $update_sex_cmd = Genome::Model::Tools::Plink->path_to_binary() . "--bfile tmp3 --update-sex sex_file.txt --make-bed --out $output_plink";
+    my $update_sex_cmd = Genome::Model::Tools::Plink->path_to_binary() . "--bfile $output_dir/tmp3 --update-sex $output_dir/sex_file.txt --make-bed --out $output_dir/$output_plink";
     Genome::Sys->shellcmd(cmd=>$update_sex_cmd);
 
     my $cleanup_cmd = "rm -f tmp*";
