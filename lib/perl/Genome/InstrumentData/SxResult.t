@@ -16,10 +16,11 @@ use Test::More;
 use above 'Genome';
 
 use_ok('Genome::InstrumentData::SxResult');
+use_ok('Genome::InstrumentData::InstrumentDataTestObjGenerator');
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-SxResult';
 
-my ($instrument_data) = &setup_data();
+my ($instrument_data) = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data($data_dir.'/inst_data/-6666/archive.bam');
 my $read_processor = '';
 my $output_file_count = 2;
 my $output_file_type = 'sanger';
