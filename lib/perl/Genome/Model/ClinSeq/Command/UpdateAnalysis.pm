@@ -986,7 +986,7 @@ sub check_ref_align_models{
   my $subject_id = $sample->patient->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
-  $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet criteria:");
+  $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
 
   #Test for correct processing profile, reference sequence build, annotation build, and dbsnp build
   #Also make sure that all the instrument data of wgs or exome type is being used (exome can be exome+wgs lanes)
@@ -1028,9 +1028,7 @@ sub check_ref_align_models{
 
     #If the desired $data_type is exome.  Check that the TRSN and ROI have been set correctly, exclude models that are not
     next unless ($self->check_model_trsn_and_roi('-model'=>$model, '-data_type'=>$data_type));
-    my $model_name = $model->name;
-    my $model_id = $model->id;
-    $self->status_message("\t\tName: $model_name ($model_id)");     
+    #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
 
     push (@final_models, $model);
   }
@@ -1040,7 +1038,10 @@ sub check_ref_align_models{
   @final_models = @{$self->check_for_missing_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
 
   my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable $data_type models (matching default or user specified criteria)");
+  $self->status_message("\tFound " . $final_model_count . " suitable $data_type models (matching default or user specified criteria):");
+  foreach my $model (@final_models){
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
+  }
 
   #If there are no suitable models, one will need to be created
   unless ($final_model_count > 0){
@@ -1105,7 +1106,7 @@ sub check_rnaseq_models{
   my $subject_id = $sample->patient->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
-  $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet criteria:");
+  $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
 
   #Test for correct processing profile, reference sequence build, annotation build
   foreach my $model (@models){
@@ -1114,16 +1115,17 @@ sub check_rnaseq_models{
     next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
     next unless ($model->annotation_build->id == $self->annotation_build->id);
     push (@final_models, $model);
-    my $model_name = $model->name;
-    my $model_id = $model->id;
-    $self->status_message("\t\tName: $model_name ($model_id)");     
+    #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
   }
 
   #Make sure all the rna-seq data is associated with the model
   @final_models = @{$self->check_for_missing_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
 
   my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable $tissue_type rna-seq models (matching default or user specified criteria)");
+  $self->status_message("\tFound " . $final_model_count . " suitable $tissue_type rna-seq models (matching default or user specified criteria):");
+  foreach my $model (@final_models){
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
+  }
 
   #If there are no suitable models, one will need to be created
   unless ($final_model_count > 0){
@@ -1169,12 +1171,15 @@ sub check_de_models{
     next unless ($group1_members[0] == $normal_rnaseq_model->id);
     next unless ($group2_members[0] == $tumor_rnaseq_model->id);
 
-    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
+    #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
     push (@final_models, $model);
   }
 
   my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable differential expression models (matching default or user specified criteria)");
+  $self->status_message("\tFound " . $final_model_count . " suitable differential expression models (matching default or user specified criteria):");
+  foreach my $model (@final_models){
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
+  }
 
   #If there are no suitable models, one will need to be created
   unless ($final_model_count > 0){
@@ -1222,7 +1227,7 @@ sub check_somatic_variation_models{
     push(@existing_models, @models);
   }
   my $existing_model_count = scalar(@existing_models);
-  $self->status_message("\tStarting with " . $existing_model_count . " models for this pair of DNA samples. Candidates that meet criteria:");
+  $self->status_message("\tStarting with " . $existing_model_count . " models for this pair of DNA samples. Candidates that meet basic criteria:");
 
   my $ignore_models_bx;
   if (my $ignore_models_matching = $self->ignore_models_matching) {
@@ -1266,12 +1271,15 @@ sub check_somatic_variation_models{
     }
     next unless ($tumor_model_match && $normal_model_match);
 
-    $self->status_message("\t\tUse: " . $model->__display_name__);
+    #$self->status_message("\t\tUse: " . $model->__display_name__);
     push (@final_models, $model);
   }
 
   my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable $data_type somatic-variation models (matching default or user specified criteria)");
+  $self->status_message("\tFound " . $final_model_count . " suitable $data_type somatic-variation models (matching default or user specified criteria):");
+  foreach my $model (@final_models){
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
+  }
 
   #If there are no suitable models, one will need to be created
   unless ($final_model_count > 0){
@@ -1700,7 +1708,7 @@ sub check_clinseq_models{
 
   my @existing_models = Genome::Model->get(processing_profile_id => $self->clinseq_pp->id, subject_id => $self->individual->id);
   my $existing_model_count = scalar(@existing_models);
-  $self->status_message("\tStarting with " . $existing_model_count . " clin-seq models for this individual. Candidates that meet criteria:");
+  $self->status_message("\tStarting with " . $existing_model_count . " clin-seq models for this individual. Candidates that meet basic criteria:");
 
   foreach my $model (@existing_models){
     my $current_wgs_model = $model->wgs_model;

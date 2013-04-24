@@ -112,6 +112,8 @@ sub execute {
     $indel_files{2}{tier} = "tier2";
     $indel_files{3}{file} = $build_dir . "/effects/indels.hq.novel.tier3.v2.bed";
     $indel_files{3}{tier} = "tier3";
+    $indel_files{4}{file} = $build_dir . "/effects/indels.hq.novel.tier4.v2.bed";
+    $indel_files{4}{tier} = "tier4";
 
     my %snv_files;
     $snv_files{1}{file} = $build_dir . "/effects/snvs.hq.novel.tier1.v2.bed";
@@ -120,6 +122,8 @@ sub execute {
     $snv_files{2}{tier} = "tier2";
     $snv_files{3}{file} = $build_dir . "/effects/snvs.hq.novel.tier3.v2.bed";
     $snv_files{3}{tier} = "tier3";
+    $snv_files{4}{file} = $build_dir . "/effects/snvs.hq.novel.tier4.v2.bed";
+    $snv_files{4}{tier} = "tier4";
 
     #Locate the final indel/snv results files and load into memory
     #For indels, use ~/effects/indels.hq.novel.tier1.v2.bed ?  (Or the annotated file?)
