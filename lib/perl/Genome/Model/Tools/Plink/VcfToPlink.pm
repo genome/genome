@@ -85,8 +85,8 @@ sub execute {                               # replace with real execution logic.
     my $update_sex_cmd = Genome::Model::Tools::Plink->path_to_binary() . "--bfile $output_dir/tmp3 --update-sex $output_dir/sex_file.txt --make-bed --out $output_dir/$output_plink";
     Genome::Sys->shellcmd(cmd=>$update_sex_cmd);
 
-    my $cleanup_cmd = "rm -f tmp*";
-    #Genome::Sys->shellcmd(cmd=>$cleanup_cmd);
+    my $cleanup_cmd = "rm -f $output_dir/tmp*";
+    Genome::Sys->shellcmd(cmd=>$cleanup_cmd);
 
     return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }
