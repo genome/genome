@@ -79,14 +79,20 @@ class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
             is_optional => 1,
             default => 1,
             doc => "use loess correction to account for gc-bias",
-        }
+
+        },
         # output_single_sample => {
         #     is => 'Boolean',
         #     is_optional => 1,
         #     default => 0,
         #     doc => "also output single-sample cn calls for each of tumor and normal",
         # }
-        
+        min_width => {
+            is => 'Integer',
+            is_optional => 1,
+            default => 3,
+            doc => "the minimum number of consecutive windows required in a segment",
+        },
         ]
 };
 
@@ -115,6 +121,7 @@ sub execute {
     my $normal_samtools_file = $self->normal_samtools_file;
     my $processors = $self->processors;
     my $dump_bins = $self->dump_bins;
+    my $min_width = $self->min_width;
 
     # #shorthand for sex designation
     # if (lc($sex) eq "m"){
@@ -220,6 +227,7 @@ sub execute {
     print $RFILE "                        perLibrary=$per_lib,\n";
     print $RFILE "                        perReadLength=$per_read_length,\n";
     print $RFILE "                        verbose=TRUE,\n";
+    print $RFILE "                        minWidth=$min_width,\n";
     print $RFILE "                        dumpBins=$dump_bins,\n";
     print $RFILE "                        doGcCorrection=$gcCorr,\n";
 #    print $RFILE "                        outputSingleSample=$output_single_sample,\n";
