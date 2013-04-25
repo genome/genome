@@ -131,14 +131,17 @@ sub before_assemble {
                 return;
             }
             my $lib = Genome::Library->get($instrument_data->library_id);
+            my $genomic_start = 0;
+            if ($lib->name =~ /CHORI/) {
+                $genomic_start = 2;
+            }
             if ($self->_instrument_data_is_sloptig($instrument_data)) {
                 my $fragment_std_dev = $instrument_data->original_est_fragment_std_dev;
-                $in_libs = $in_libs."\n".$lib->name.",\tproject_name,\t".$lib->species_name.",\tfragment,\t1,\t".$instrument_data->original_est_fragment_size.",\t".$fragment_std_dev.",\t,\t,\t".$orientation.",\t0,\t0";
+                $in_libs = $in_libs."\n".$lib->name.",\tproject_name,\t".$lib->species_name.",\tfragment,\t1,\t".$instrument_data->original_est_fragment_size.",\t".$fragment_std_dev.",\t,\t,\t".$orientation.",\t$genomic_start,\t0";
             }
             elsif ($self->_instrument_data_is_jumping($instrument_data)){
                 my $fragment_std_dev = $instrument_data->original_est_fragment_std_dev;
-                $in_libs = $in_libs."\n".$lib->name.",\tproject_name,\t".$lib->species_name.",\tjumping,\t1,\t,\t,\t".$instrument_data->original_est_fragment_size.",\t".$fragment_std_dev.",\t".$orientation.",\t0,\t0";
-            
+                $in_libs = $in_libs."\n".$lib->name.",\tproject_name,\t".$lib->species_name.",\tjumping,\t1,\t,\t,\t".$instrument_data->original_est_fragment_size.",\t".$fragment_std_dev.",\t".$orientation.",\t$genomic_start,\t0";
             }
         }
         $libs_seen{$instrument_data->library_id} = 1;
