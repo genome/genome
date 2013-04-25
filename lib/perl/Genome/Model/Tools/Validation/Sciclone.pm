@@ -6,12 +6,12 @@ use FileHandle;
 use Genome;
 use File::Basename;
 use FileHandle;
+#use Math::Combinatorics;
 
 class Genome::Model::Tools::Validation::Sciclone {
     is => 'Command',
 
     has => [
-
         variant_files => {
             is => 'Text',
             doc => "comma separated list - files of validated variants with readcounts. 7-column Bam-readcount format - columns: Chr, Start, Ref, Var, RefReads, VarReads, VAF",
@@ -33,14 +33,6 @@ class Genome::Model::Tools::Validation::Sciclone {
             is_input => 1,
         },
 
-        highlight_sex_chrs => {
-            is => 'Boolean',
-            doc => "Highlight the sex chromosomes (X|Y) on the plot",
-            is_optional => 1,
-            is_input => 1,
-            default => 0
-        },
-
         regions_to_exclude => {
             is => 'Text',
             doc => "comma separated list - regions to exclude (first 3 cols are chr,st,sp). Commonly used for LOH calls",
@@ -49,71 +41,21 @@ class Genome::Model::Tools::Validation::Sciclone {
             default => 1,
         },
 
-        # positions_to_highlight => {
-        #     is => 'Text',
-        #     doc => "A tab-delimited file listing variants highlight on the plot. First two columns must be Chr, St",
-        #     is_optional => 1,
-        #     is_input => 1
-        # },
-
-
-        output_prefix => {
+        clusters_file => {
             is => 'Text',
-            doc => "prefix for output files",
+            doc => "output file containing clustered data",
             is_optional => 0,
             is_input => 1,
             is_output => 1
         },
 
-        skip_if_output_is_present => {
+        r_script_file => {
             is => 'Text',
-            doc => "Skip if Output is Present",
-            is_optional => 1,
+            doc => "filename to dump R commands to",
+            is_optional => 0,
             is_input => 1,
-            default => 0,
+            is_output => 1
         },
-
-        # minimum_labelled_peak_height => {
-        #     is => 'Text',
-        #     doc => "only peaks that exceed this height get labelled",
-        #     is_optional => 1,
-        #     is_input => 1,
-        #     default => 0.001
-        # },
-
-        # only_label_highest_peak => {
-        #     is => 'Boolean',
-        #     doc => "only label the highest peak",
-        #     is_optional => 1,
-        #     default => 0
-        # },
-
-        # plot_only_cn2 => {
-        #     is => 'Boolean',
-        #     doc => "only plot the CN2 data",
-        #     is_optional => 1,
-        #     default => 0
-        # },
-
-        overlay_clusters => {
-            is => 'Boolean',
-            doc => "overlay information about how the points clustered onto the scatterplot",
-            is_optional => 1,
-            default => 1,
-        },
-
-        tumor_purities => {
-            is => 'Integer',
-            doc => "comma separated list of tumor purities (between 0 to 100). Will be estimated by the tool if not provided",
-            is_optional => 1,
-        },
-
-        # component_distribution => {
-        #     is => 'String',
-        #     doc => "If clustering data, this will be the distribution used for fitting components. Please choose between 'Binomial' or 'Normal'.",
-        #     is_optional => 1,
-        #     default => "Binomial"
-        # },
 
         minimum_depth => {
             is => 'Integer',
@@ -129,6 +71,15 @@ class Genome::Model::Tools::Validation::Sciclone {
             default => 0,
         },
 
+
+        skip_if_output_is_present => {
+            is => 'Text',
+            doc => "Skip if Output is Present",
+            is_optional => 1,
+            is_input => 1,
+            default => 0,
+        },
+
         do_clustering => {
             is => 'Boolean',
             doc => "if true, clusters the data. if false, just creates a plot (saving time)",
@@ -136,12 +87,109 @@ class Genome::Model::Tools::Validation::Sciclone {
             default => 1,
         },
 
-        # label_highlighted_points => {
-        #     is => 'Boolean',
-        #     doc => "if true, assumes that the positions-to-highlight file has a third column, containing names for the points to be highlighted. Sets plotOnlyCN2 to true and adds numbered labels and a legend for the highlighted points",
-        #     is_optional => 1,
-        #     default => 0,
-        # },
+        tumor_purities => {
+            is => 'Integer',
+            doc => "comma separated list of tumor purities (between 0 to 100). Will be estimated by the tool if not provided",
+            is_optional => 1,
+        },
+
+
+        ##-------plotting options------
+        plot1d_file => {
+            is => 'Text',
+            doc => "filename for 1d plots (pdf)",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1
+        },
+
+        plot2d_file => {
+            is => 'Text',
+            doc => "filename for 2d plots (pdf)",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1
+        },
+
+        plot3d_file => {
+            is => 'Text',
+            doc => "prefix filename for 3d plots - will create one plot for each trio of samples (gif)",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1
+        },
+
+        highlight_sex_chrs => {
+            is => 'Boolean',
+            doc => "Highlight the sex chromosomes (X|Y) on the plot (1d plot)",
+            is_optional => 1,
+            is_input => 1,
+            default => 1,
+        },
+
+        positions_to_highlight => {
+            is => 'Text',
+            doc => "A tab-delimited file listing variants highlight on the plot. First two columns must be Chr, St (1d plot & 2d plot)",
+            is_optional => 1,
+            is_input => 1,
+        },
+
+        label_highlighted_points => {
+            is => 'Boolean',
+            doc => "if true, assumes that the positions-to-highlight file has a third column, containing names for the points to be highlighted. Sets plotOnlyCN2 to true and adds numbered labels and a legend for the highlighted points (1d plot & 2d plot)",
+            is_optional => 1,
+            default => 0,
+        },
+
+        minimum_labelled_peak_height => {
+            is => 'Text',
+            doc => "only KDE peaks that exceed this height get labelled (1d plot)",
+            is_optional => 1,
+            is_input => 1,
+            default => 0.001
+        },
+
+        only_label_highest_peak => {
+            is => 'Boolean',
+            doc => "only label the highest peak (1d plot)",
+            is_optional => 1,
+            default => 0
+        },
+
+        overlay_error_bars => {
+            is => 'Boolean',
+            doc => "show error bars in the plot (2d plot)",
+            is_optional => 1,
+            default => 0,
+        },
+
+        plot_only_cn2 => {
+            is => 'Boolean',
+            doc => "only plot the CN2 data (1d plot)",
+            is_optional => 1,
+            default => 0,
+        },
+
+        overlay_clusters => {
+            is => 'Boolean',
+            doc => "overlay information about how the points clustered onto the scatterplot (1d plot & 2d plot)",
+            is_optional => 1,
+            default => 1,
+        },
+
+        show_title => {
+            is => 'Boolean',
+            doc => "show the sample name on the plot (1d plot)",
+            is_optional => 1,
+            default => 1,
+        },
+        
+        plot_size_3d => {
+            is => 'Integer',
+            doc => 'size in pixels of the square 3d plots',
+            is_optional => 1,
+            default => 700,
+        },
 
 
         ],
@@ -149,12 +197,12 @@ class Genome::Model::Tools::Validation::Sciclone {
 
 
 sub help_brief {
-    "Plot CN-separated SNV density plots with optional clustering"
+    "infer the subclonal architecture of tumors and create informative plots"
 }
 
 sub help_synopsis {
     return <<EOS
-        Inputs of variant readcounts and copy-number segmentation data, Output of pdf plots.
+        Inputs of variant readcounts and copy-number segmentation data, Output of cluster assignments and pdf plots.
 EXAMPLE:	gmt validation clonality-plot --variant-file snvs.txt,snvs2.txt --output-prefix clonality --sample-names 'Sample1,Sample2' --copy_number_files segs.paired.dat,segs2.paired.dat
 EOS
 }
@@ -172,47 +220,46 @@ sub execute {
     my $variant_files = $self->variant_files;
     my $cn_files = $self->copy_number_files;
     my $sample_names = $self->sample_names;
-    my $highlight_sex_chrs = $self->highlight_sex_chrs;
-    #my $positions_to_highlight_file = $self->positions_to_highlight;
     my $tumor_purities = $self->tumor_purities;
-    #my $component_distribution = $self->component_distribution;
-    #my $maximum_clusters_to_test = $self->max_clusters_to_test;
     my $cn_calls_are_log2 = $self->cn_calls_are_log2;
-    #my $use_sex_chrs = $self->use_sex_chrs;
     my $regions_to_exclude = $self->regions_to_exclude;
 
     ##outputs##
-    my $output_prefix = $self->output_prefix;
-    my $r_script_output_file = "$output_prefix.R";
+    my $clusters_file = $self->clusters_file;
+    my $plot1d_file = $self->plot1d_file;
+    my $plot2d_file = $self->plot2d_file;
+    my $plot3d_file = $self->plot3d_file;
+    my $r_script_file = $self->r_script_file;
+
 
     ##options##
     my $skip_if_output_is_present = $self->skip_if_output_is_present;
-    #my $minimum_labelled_peak_height = $self->minimum_labelled_peak_height;
-    #my $only_label_highest_peak = $self->only_label_highest_peak;
-    #my $plot_only_cn2 = $self->plot_only_cn2;
-    my $overlay_clusters = $self->overlay_clusters;
     my $minimum_depth = $self->minimum_depth;
     my $do_clustering = $self->do_clustering;
-    #my $label_highlighted_points = $self->label_highlighted_points;
-
-
-    # if(($label_highlighted_points) && !(defined($positions_to_highlight_file))){
-    #     die("ERROR: if label-highlighted-points is true, a positions-to-highlight file must be provided");
-    # }
+    my $highlight_sex_chrs = $self->highlight_sex_chrs;
+    my $positions_to_highlight = $self->positions_to_highlight;
+    my $label_highlighted_points  = $self->label_highlighted_points;
+    my $minimum_labelled_peak_height = $self->minimum_labelled_peak_height;
+    my $only_label_highest_peak = $self->only_label_highest_peak;
+    my $plot_only_cn2 = $self->plot_only_cn2;
+    my $overlay_clusters = $self->overlay_clusters;
+    my $show_title = $self->show_title;
+    my $plot_size_3d = $self->plot_size_3d;
+    my $overlay_error_bars = $self->overlay_error_bars;
 
     my $rfile;
-    open($rfile, ">$r_script_output_file") || die "Can't open R file for writing.\n";
+    open($rfile, ">$r_script_file") || die "Can't open R file for writing.\n";
 
     # write out the r commands
     print $rfile "library(sciClone)\n";
 
     ##TODO - handle headers
-    
+
     #read in the variant files
     my @variantFiles = split(",",$variant_files);
     my @variantVars;
     my $i=0;
-    for($i=0;$i<@variantFiles;$i++){        
+    for($i=0;$i<@variantFiles;$i++){
         my $var = "v$i";
         push(@variantVars,$var);
         # read in the file (and convert varscan, if necessary)
@@ -225,7 +272,7 @@ sub execute {
     if(defined($cn_files)){
         my @cnFiles = split(",",$cn_files);
         my $i=0;
-        for($i=0;$i<@cnFiles;$i++){        
+        for($i=0;$i<@cnFiles;$i++){
             my $var = "cn$i";
             push(@cnVars,$var);
             # read in the file (and convert varscan, if necessary)
@@ -238,21 +285,31 @@ sub execute {
     if(defined($regions_to_exclude)){
         my @regFiles =  split(",",$regions_to_exclude);
         my $i=0;
-        for($i=0;$i<@regFiles;$i++){        
-            my $var = "reg$i";
-            push(@regVars,$var);
-            # read in the file (and convert varscan, if necessary)
-            print $rfile "$var = " . 'read.table("' . $regFiles[$i] .  '")' . "\n";
-            print $rfile "$var = $var" . '[,c(1,2,3)]' . "\n";
-        }        
+        for($i=0;$i<@regFiles;$i++){
+            #skip empty files
+            if(-s $regFiles[$i]){
+                my $var = "reg$i";
+                push(@regVars,$var);
+                # read in the file (and convert varscan, if necessary)
+                print $rfile "$var = " . 'read.table("' . $regFiles[$i] .  '")' . "\n";
+                print $rfile "$var = $var" . '[,c(1,2,3)]' . "\n";
+            }
+        }
+    }
+
+    if(defined($positions_to_highlight)){
+        if(!(-s $positions_to_highlight)){
+            die("file specified in positions-to-highlight does not exist");
+        }
+        print $rfile "highlights = " . 'read.table("' . $positions_to_highlight .  '")' . "\n";
     }
 
     my @sampleNames = split(",",$sample_names);
     my $sampleNames = '"' . join('","',@sampleNames) . '"';
 
-    #print out the clonecaller command, one piece at a time
-    my $cmd = 'sciClone(outputPrefix="' . $output_prefix . '"';
-    $cmd = $cmd . ", vafs=list(" . join(",",@variantVars) . ")";
+
+    #--- clustering command ---
+    my $cmd = 'sc = sciClone(vafs=list(' . join(",",@variantVars) . ")";
     $cmd = $cmd . ", sampleNames=c(" . $sampleNames . ")";
 
     if(defined($cn_files)){
@@ -270,32 +327,145 @@ sub execute {
         $cmd = $cmd . ", purity=c($tumor_purities)";
     }
 
-    if($overlay_clusters){
-        $cmd = $cmd . ", overlayClusters=TRUE";
-    }
-
-    unless($highlight_sex_chrs){
-        $cmd = $cmd . ", highlightSexChrs=FALSE";
-    }
-
     if($cn_calls_are_log2){
         $cmd = $cmd . ", cnCallsAreLog2=TRUE";
     }
 
-    unless($do_clustering){
+    if($do_clustering){
+        $cmd = $cmd . ", doClustering=TRUE";
+    } else {
         $cmd = $cmd . ", doClustering=FALSE";
     }
-
     print $rfile $cmd . ")\n";
+
+
+    #write out the cluster table command:
+    print $rfile "writeClusterTable(sc, \"$clusters_file\")\n";
+
+
+    #--- 1d plotting ---
+    if(defined(($plot1d_file))){
+        print $rfile "sc.plot1d(sc,\"$plot1d_file\"";
+
+        if($highlight_sex_chrs){
+            print $rfile ", highlightSexChrs=TRUE"
+        }
+        if(defined($positions_to_highlight)){
+            if(!(-s $positions_to_highlight)){
+                die("file specified in positions-to-highlight does not exist");
+            }
+            print $rfile ", positionsToHighlight=highlights";
+        }
+
+        if($label_highlighted_points){
+            print $rfile ", highlightsHaveNames=TRUE";
+        } else {
+            print $rfile ", highlightsHaveNames=FALSE";
+        }
+
+        if(defined($minimum_labelled_peak_height)){
+            print $rfile ", minimumLabelledPeakHeight=$minimum_labelled_peak_height";
+        }
+
+        if($only_label_highest_peak){
+            print $rfile ", onlyLabelHighestPeak=TRUE";
+        } else {
+            print $rfile ", onlyLabelHighestPeak=FALSE";
+        }
+
+
+        if($plot_only_cn2){
+            print $rfile ", plotOnlyCN2=TRUE";
+        } else {
+            print $rfile ", plotOnlyCN2=FALSE";
+        }
+
+        if($overlay_clusters){
+            print $rfile ", overlayClusters=TRUE";
+        } else {
+            print $rfile ", overlayClusters=FALSE";
+        }
+
+        if($show_title){
+            print $rfile ", showTitle=TRUE";
+        } else {
+            print $rfile ", showTitle=FALSE";
+        }
+        print $rfile ")\n";
+
+        # not implemented:
+        # showCopyNumberScatterPlots
+        # overlayIndividualModels
+        # showHistogram
+        #
+
+
+    }
+
+
+    #--- 2d plotting ---
+    if(defined(($plot2d_file))){
+        if(@sampleNames < 2){
+            die("can't do 2d plotting without at least 2 samples")
+        }
+
+        print $rfile "sc.plot2d(sc,\"$plot2d_file\"";
+
+        if($overlay_clusters){
+            print $rfile ", overlayClusters=TRUE";
+        } else {
+            print $rfile ", overlayClusters=FALSE";
+        }
+
+        if(defined($positions_to_highlight)){
+            if(!(-s $positions_to_highlight)){
+                die("file specified in positions-to-highlight does not exist");
+            }
+            print $rfile ", positionsToHighlight=highlights";
+        }
+
+        if($label_highlighted_points){
+            print $rfile ", highlightsHaveNames=TRUE";
+        } else {
+            print $rfile ", highlightsHaveNames=FALSE";
+        }
+
+        # if($overlay_error_bars){
+        #     print $rfile ", overlayErrorBars=TRUE";
+        # } else {
+        #     print $rfile ", overlayErrorBars=FALSE";
+        # }
+
+        print $rfile ")\n";
+    }
+
+
+    #--- 3d plotting ---
+    if(defined(($plot3d_file))){
+        print "Warning: 3d plotting not implemented in gmt yet\n";
+        # if(@sampleNames < 3){
+        #     die("can't do 3d plotting without at least 3 samples")
+        # }
+        
+        # my @combs = combine(2,@sampleNames);
+        # my @lists = map { join ",", @$_ } @combs; 
+        # my $count = 1;
+        # foreach my $list (@lists){
+        #     print $rfile "sc.plot3d(sc, outputFile=\"$plot3d_file.$count\", samplesToPlot=$list";
+        #     print $rfile ", size=$plot_size_3d";
+        #     print $rfile ")\n";
+        #     $count++;
+        # }
+
+    }
+
     close $rfile;
 
     #now actually run the R script
     # my $rcmd = "R --vanilla --slave \< $r_script_output_file";
-    my $rcmd = "Rscript $r_script_output_file";
+    my $rcmd = "Rscript $r_script_file";
     my $return_value = Genome::Sys->shellcmd(
         cmd => "$rcmd",
-        output_files => ["$output_prefix.clusters"],
-        skip_if_output_is_present => $skip_if_output_is_present,
         );
     unless($return_value) {
         $self->error_message("Failed to execute: Returned $return_value");
