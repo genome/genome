@@ -9876,6 +9876,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'dump-bins!',
         undef,
+        'min-width=s',
+        undef,
         'normal-samtools-file=s',
         'files',
         'per-library!',
