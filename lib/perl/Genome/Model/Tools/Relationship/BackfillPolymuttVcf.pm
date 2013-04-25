@@ -32,7 +32,8 @@ class Genome::Model::Tools::Relationship::BackfillPolymuttVcf {
        },
        polymutt_version=> {
            is => "Text",
-           default => '0.11',
+           default => '0.13',
+           doc => "Polymutt version to use when force genotyping. Needs to have the --pos option available, which v0.11 does not",
        },
        joinx_version=> {
            is => "Text",
