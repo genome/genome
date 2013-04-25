@@ -207,8 +207,6 @@ sub _inspect_log_file {
         return;
     }
 
-    my $last_line;
-
     # XXX I am trying to avoid switching on $bwa_version in this module, but
     # I'm not entirely sure that storing 'log_format' in GMT::Bwa and defining
     # the logic for interpreting that property here is the correct separation
