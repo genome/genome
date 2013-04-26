@@ -30,6 +30,11 @@ my @inst_data_attrs = (
         read_count => 10000,
         read_length => 100,
     },
+    {
+        original_est_fragment_size => 100000,
+        read_count => 10000,
+        read_length => 777,
+    },
 );
 for my $inst_data_attr ( @inst_data_attrs ) {
     push @instrument_data, Genome::InstrumentData::Imported->create(
@@ -37,7 +42,7 @@ for my $inst_data_attr ( @inst_data_attrs ) {
         %$inst_data_attr,
     );
 }
-is(@instrument_data, 3, 'create inst data');
+is(@instrument_data, @inst_data_attrs, 'create inst data');
 
 diag('SUCCESS (OLD WAY)');
 my $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
@@ -46,6 +51,13 @@ my $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
 );
 ok($processor, 'failed to create sx read processor');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', }, 'got default processing');
+for my $instrument_data ( @instrument_data ) {
+    is_deeply( # all are default processing
+        $processor->determine_processing_for_instrument_data($instrument_data),
+        { condition => 'DEFAULT', processor => 'trim default --param 1', },
+        'got correct processing for inst data',
+    );
+}
 
 diag('SUCCESS (NEW WAY DEFAULT ONLY)');
 $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
@@ -54,25 +66,36 @@ $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
 );
 ok($processor, 'failed to create sx read processor');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, }, 'got default processing');
+for my $instrument_data ( @instrument_data ) {
+    is_deeply( # all are default processing
+        $processor->determine_processing_for_instrument_data($instrument_data),
+        { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, },
+        'got correct processing for inst data',
+    );
+}
 
 diag('SUCESS (NEW WAY, FULL TEST)');
 $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
     instrument_data => \@instrument_data,
-    read_processor => 'DEFAULT (trim default --param 1) original_est_fragment_size > 0 and original_est_fragment_size <= 1000 (DEFAULT, coverage 10X) original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 (trim insert-size --min 1001 --max 6000 then filter by-length --length 50, coverage 20X) original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 (trim insert-size --min 6001 --max 10000) original_est_fragment_size <= 2.5 * read_length (DEFAULT, coverage 30X) read_length == 100 (filter --param 1 --qual 30)',
+    read_processor => 'DEFAULT (trim default --param 1) original_est_fragment_size <= 2.5 * read_length (DEFAULT, coverage 30X) original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 (trim insert-size --min 1001 --max 6000 then filter by-length --length 50, coverage 20X) original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 (trim insert-size --min 6001 --max 10000) read_length == 777 (filter --param 1 --qual 30)',
 );
 ok($processor, 'create sx read processor');
 ok($processor->parser, 'got parser');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', }, 'got default processor');
-is_deeply(
-    $processor->_read_processings, [
-        { condition => [qw/ original_est_fragment_size > 0 and original_est_fragment_size <= 1000 /], processor => 'DEFAULT', coverage => 10, }, 
-        { condition => [qw/ original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 /], processor => 'trim insert-size --min 1001 --max 6000 then filter by-length --length 50', coverage => 20, },
-        { condition => [qw/ original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 /], processor => 'trim insert-size --min 6001 --max 10000', },
-        { condition => [qw/ original_est_fragment_size <= 2.5 * read_length /], processor => 'DEFAULT', coverage => 30, },
-        { condition => [qw/ read_length == 100 /], processor => 'filter --param 1 --qual 30', },
-    ],
-    'got read processors',
-);
+my $processings = [
+    { condition => [qw/ original_est_fragment_size <= 2.5 * read_length /], processor => 'DEFAULT', coverage => 30, },
+    { condition => [qw/ original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 /], processor => 'trim insert-size --min 1001 --max 6000 then filter by-length --length 50', coverage => 20, },
+    { condition => [qw/ original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 /], processor => 'trim insert-size --min 6001 --max 10000', },
+    { condition => [qw/ read_length == 777 /], processor => 'filter --param 1 --qual 30', },
+];
+is_deeply($processor->_read_processings, $processings, 'got read processors');
+for ( my $i = 0; $i < @instrument_data; $i++ ) {
+    is_deeply(
+        $processor->determine_processing_for_instrument_data($instrument_data[$i]),
+        $processings->[$i],
+        'got correct processing for inst data',
+    );
+}
 
 # FAILS
 # no default

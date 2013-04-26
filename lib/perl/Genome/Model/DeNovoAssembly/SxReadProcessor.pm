@@ -138,9 +138,50 @@ sub create {
 sub determine_processing_for_instrument_data {
     my ($self, $instrument_data) = @_;
 
-    my $processing;
+    Carp::confess('No instrument data given to determine_processing_for_instrument_data!') if not $instrument_data;
 
-    return $processing;
+    if ( not @{$self->_read_processings} ) {
+        return $self->_default_read_processing;
+    }
+
+    my @matched_processings;
+    for my $processing ( @{$self->_read_processings} ) {
+        push @matched_processings, $processing if $self->does_instrument_data_match_condition($instrument_data, @{$processing->{condition}});
+    }
+
+    # Found one only! YAY!
+    if ( @matched_processings == 1 ) {
+        return $matched_processings[0];
+    }
+    # None, use default
+    elsif ( not @matched_processings ) {
+        return $self->_default_read_processing;
+    }
+
+    # Found more than one
+    $self->error_message(
+        'Found multiple processings for instrument data! '.$instrument_data->id."\n".Data::Dumper::Dumper(\@matched_processings)
+    );
+    return;
+}
+
+sub does_instrument_data_match_condition {
+    my ($self, $instrument_data, @conditions) = @_;
+
+    Carp::confess('No instrument data given to does_instrument_data_match_condition!') if not $instrument_data;
+    Carp::confess('No condition given to does_instrument_data_match_condition!') if not @conditions;
+
+    my $processing;
+    for my $word ( @conditions ) {
+        for my $property (qw/ original_est_fragment_size read_length /) {
+            if ( $word eq $property ) {
+                $word = $instrument_data->$word;
+            }
+        }
+    }
+
+    my $full_condition = join(" ", @conditions);
+    return eval $full_condition;
 }
 
 1;
