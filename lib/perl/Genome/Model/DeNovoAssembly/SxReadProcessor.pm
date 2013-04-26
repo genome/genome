@@ -20,12 +20,6 @@ class Genome::Model::DeNovoAssembly::SxReadProcessor {
             doc => 'Instrument data to be processed with SX.',
         },
     ],
-    has_optional => [
-        genome_size => {
-            is => 'Number',
-            doc => 'Include genome size to determine coverage limits.',
-        },
-    ],
     has_transient_optional => [
         _default_read_processor => { is => 'HASH', },
         _read_processors => { is => 'ARRAY', },
