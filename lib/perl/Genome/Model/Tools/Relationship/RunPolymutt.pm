@@ -290,7 +290,10 @@ sub missing_header_lines {
         my $has_header=0;
         for my $line (@number_of_tags) {
             if($line=~m/<ID=$tag,/) {
-                $has_header=1;
+                # Make sure the tag is of the same type...
+                if ( ($line =~ m/FORMAT/ and $possible_tags{$tag} =~ m/FORMAT/ ) or ($line =~ m/INFO/ and $possible_tags{$tag} =~ m/INFO/ ) ) {
+                    $has_header=1;
+                }
             }
         }
         unless($has_header) {
