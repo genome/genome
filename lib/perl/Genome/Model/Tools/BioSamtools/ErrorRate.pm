@@ -66,10 +66,18 @@ sub non_pileup_error_rate {
     my @rg_lines = grep {$_ =~ /^\@RG/} @lines;
     my %rg_libraries;
     for my $rg_line (@rg_lines) {
-        unless ($rg_line =~ /ID\:(\S+)/) { die; }
+        unless ($rg_line =~ /ID\:(\S+)/) {
+            die;
+        }
         my $id = $1;
-        unless ($rg_line =~ /LB\:(\S+)/) { die; }
-        my $lib = $1;
+        my $lib;
+        if ($rg_line =~ /LB\:(\S+)/) {
+            $lib = $1;
+        } elsif ($rg_line =~ /PU\:(\S+)/) {
+            $lib = $1;
+        } else {
+            die;
+        }
         $rg_libraries{$id} = $lib;
     }
     my $default_rg_id = 0;
@@ -187,7 +195,7 @@ sub run_r_script {
 
     my $confirmed_header = 0;
 
-    for (my $line = <$tsv_fh>) {
+    while (my $line = <$tsv_fh>) {
         chomp $line;
         my @fields = split /\s+/, $line;
 
