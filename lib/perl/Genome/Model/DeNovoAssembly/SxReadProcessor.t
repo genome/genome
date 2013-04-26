@@ -46,7 +46,6 @@ is(@instrument_data, @inst_data_attrs, 'create inst data');
 
 diag('SUCCESS (OLD WAY)');
 my $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    instrument_data => \@instrument_data,
     read_processor => 'trim default --param 1',
 );
 ok($processor, 'failed to create sx read processor');
@@ -61,7 +60,6 @@ for my $instrument_data ( @instrument_data ) {
 
 diag('SUCCESS (NEW WAY DEFAULT ONLY)');
 $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    instrument_data => \@instrument_data,
     read_processor => 'DEFAULT (trim default --param 1, coverage 10X)',
 );
 ok($processor, 'failed to create sx read processor');
@@ -76,7 +74,6 @@ for my $instrument_data ( @instrument_data ) {
 
 diag('SUCESS (NEW WAY, FULL TEST)');
 $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    instrument_data => \@instrument_data,
     read_processor => 'DEFAULT (trim default --param 1) original_est_fragment_size <= 2.5 * read_length (DEFAULT, coverage 30X) original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 (trim insert-size --min 1001 --max 6000 then filter by-length --length 50, coverage 20X) original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 (trim insert-size --min 6001 --max 10000) read_length == 777 (filter --param 1 --qual 30)',
 );
 ok($processor, 'create sx read processor');
@@ -100,19 +97,15 @@ for ( my $i = 0; $i < @instrument_data; $i++ ) {
 # FAILS
 # no default
 my $failed_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    instrument_data => \@instrument_data,
     read_processor => 'DEFULT trim default --param 1',
 );
 ok(!$failed_processor, 'failed to create sx read processor');
 
 # more than one default
 $failed_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    instrument_data => \@instrument_data,
     read_processor => 'DEFAULT (trim default --param 1) DEFAULT (trim default2 --param 1)',
 );
 ok(!$failed_processor, 'failed to create sx read processor');
-
-
 
 done_testing();
 

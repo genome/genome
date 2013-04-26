@@ -14,11 +14,6 @@ class Genome::Model::DeNovoAssembly::SxReadProcessor {
             is => 'Text',
             doc => '',
         },
-        instrument_data => {
-            is => 'Genome::InstrumentData',
-            is_many => 1,
-            doc => 'Instrument data to be processed with SX.',
-        },
     ],
     has_transient_optional => [
         _default_read_processing => { is => 'HASH', },
