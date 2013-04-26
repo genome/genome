@@ -27,8 +27,8 @@ class Genome::Model::DeNovoAssembly::SxReadProcessor {
         },
     ],
     has_transient_optional => [
-        default_read_processor => { is => 'HASH', },
-        _parsed_read_processors => { is => 'ARRAY', },
+        _default_read_processor => { is => 'HASH', },
+        _read_processors => { is => 'ARRAY', },
     ],
 };
 
@@ -101,18 +101,25 @@ sub __errors__ {
                 processor => $read_processor,
             },];
     }
-    $self->_parsed_read_processors($parsed_read_processors);
-    print Dumper($parsed_read_processors);
+    #print Dumper($parsed_read_processors);
 
-    my @default_read_processors = grep { $_->{condition} eq 'DEFAULT' } @$parsed_read_processors;
-    if ( @default_read_processors != 1 ) {
+    my $default_processor_count = grep { $_->{condition} eq 'DEFAULT' } @$parsed_read_processors;
+    if ( $default_processor_count != 1 ) {
         return UR::Object::Tag->create(
             type => 'invalid',
             properties => [qw/ read_processor /],
-            desc => ( @default_read_processors ? 'Multiple' : 'No' ).' DEFAULT read processor(s) in specification!',
+            desc => ( $default_processor_count ? 'Multiple' : 'No' ).' DEFAULT read processor(s) in specification!',
         );
     }
-    $self->default_read_processor($default_read_processors[0]);
+    $self->_default_read_processor(shift @$parsed_read_processors); # always the first
+    if ( not $self->_default_read_processor->{condition} eq 'DEFAULT' ) {
+        return UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ read_processor /],
+            desc => 'Could not find DEFAULT read processor from specification!',
+        );
+    }
+    $self->_read_processors($parsed_read_processors);
 
     return;
 }
