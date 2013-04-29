@@ -22993,7 +22993,8 @@ $Genome::Command::OPTS_SPEC = [
         'version=s',
         [
           'mapasm454_source_03152011',
-          'mapasm454_source_04282011, mapasm454_source_10142011'
+          'mapasm454_source_04282011',
+          'mapasm454_source_10142011'
         ],
         'ace!',
         undef,
