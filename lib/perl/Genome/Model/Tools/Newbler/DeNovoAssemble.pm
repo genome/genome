@@ -12,7 +12,7 @@ class Genome::Model::Tools::Newbler::DeNovoAssemble {
         version => {
             is => 'Text',
             doc => 'Version of newbler to use',
-            valid_values => ['mapasm454_source_03152011', 'mapasm454_source_04282011, mapasm454_source_10142011'],
+            valid_values => ['mapasm454_source_03152011', 'mapasm454_source_04282011', 'mapasm454_source_10142011'],
             #version that allows assembling of fastq files only
         },
         output_directory => {
