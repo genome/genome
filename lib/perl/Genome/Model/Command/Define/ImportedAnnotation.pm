@@ -172,6 +172,8 @@ sub _create_build {
                 $self->error_message("Failed to create squashed bed file");
                 return;
             }
+            my $gff_file_path = $build->_resolve_annotation_file_name("all_sequences", "gff", $build->reference_sequence_id, 0, 0);
+            Genome::Sys->create_symlink($annotation_file_path, $gff_file_path);
         }
         $self->status_message('Started build (build is complete if it was run inline).');
     } else {
