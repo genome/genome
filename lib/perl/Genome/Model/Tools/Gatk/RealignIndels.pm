@@ -95,8 +95,7 @@ sub _check_inputs {
     my $self = shift;
 
     unless ($self->target_intervals_are_sorted) {
-        my @supported_versions = qw(2986 3362 3362P 3423 3471 4168 5336 5777);
-        unless (grep {$_ eq $self->version} @supported_versions) {
+        unless ($self->is_legacy_version($self->version)) {
             $self->error_message("Version ".$self->version." does not support non-sorted target intervals.");
             return;
         }

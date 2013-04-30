@@ -63,6 +63,14 @@ my %GATK_VERSIONS = (
     '2.4' => Genome::Sys->jar_path($GATK_BASE, "2.4"),
 );
 
+our @legacy_versions = qw(v1 2986 3362 3362P 3423 3471 4168 5336 5777);
+
+sub is_legacy_version {
+    my $self = shift;
+    my $version = shift;
+    return grep {$_ eq $version} @legacy_versions;
+}
+
 sub create {
     my $class = shift;
 
