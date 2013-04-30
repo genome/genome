@@ -218,6 +218,7 @@ sub write_fixed_vcf {
         if($line =~m/^#/) {
             if ($line =~ m/ID=GL.*Type=Unsigned Char/) {
                 $line =~ s/Unsigned Char/Integer/;
+                $line =~ s/Number=10/Number=3/;
             }
 
             # Fix incorrect data types
