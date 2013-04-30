@@ -182,7 +182,7 @@ sub execute {                               # replace with real execution logic.
 			
 			my ($chrom) = split(/\t/, $line);
 
-			if($chrom =~ 'NT_')
+			if($chrom =~ 'NT_' || $chrom =~ /GL/) #skipping nonassembled contigs (GL is for build37)
 			{
 #				print "Skipping $chrom\n";								
 			}
