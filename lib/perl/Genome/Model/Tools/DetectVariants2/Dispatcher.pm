@@ -987,7 +987,9 @@ sub _promote_staged_data {
                 } else {
                     $source = $vcf_link;
                 }
-                my $link_target = $output_dir."/$variant_type" . "s.vcf.gz";
+                my $link_target = $output_dir."/$variant_type" . "s.detailed.vcf.gz";
+                my $clipped_vcf = $output_dir."/$variant_type" . "s.vcf.gz";
+                Genome::Model::Tools::Vcf::CleanupVcf->execute(input_file => $source, output_file => $clipped_vcf);
                 Genome::Sys->create_symlink($source, $link_target);
             }
 
