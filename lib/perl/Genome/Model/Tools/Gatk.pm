@@ -9,7 +9,8 @@ use File::Temp;
 use POSIX qw(floor);
 
 my $DEFAULT_VERSION = '5336';
-my $GATK_COMMAND = 'GenomeAnalysisTK.jar';
+my $GATK_BASE = 'GenomeAnalysisTK';
+my $GATK_COMMAND = "$GATK_BASE.jar";
 
 class Genome::Model::Tools::Gatk {
     is => ['Command'],
@@ -59,6 +60,7 @@ my %GATK_VERSIONS = (
     '4168' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.4168/' . $GATK_COMMAND,
     '5336' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND,
     '5777' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5777/' . $GATK_COMMAND,
+    '2.4' => Genome::Sys->jar_path($GATK_BASE, "2.4"),
 );
 
 sub create {
