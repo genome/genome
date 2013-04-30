@@ -2,8 +2,8 @@
 use strict;
 use warnings;
 use above 'Genome';
-use Test::More tests => 10;
-
+use Test::More tests => 13;
+{
 #
 # find executable paths
 #
@@ -69,4 +69,29 @@ is_deeply(\%cufflinks_version_map, \%cufflinks_version_map_expected, "map for cu
 my @versions_actual = grep { $_ le '2.0.2' } Genome::Sys->sw_versions('cufflinks');
 my @versions_expected = sort keys %cufflinks_version_map_expected;
 is("@versions_actual", "@versions_expected", "version list has expected content and order");
+}
+{
+my $jar_path = Genome::Sys->jar_path('GenomeAnalysisTK','2.4');
+ok(-e $jar_path, "got path $jar_path for GenomeAnalysisTK version 2.4");
+ok($jar_path =~ /2.4/, "path contains the version number");
+
+my %gatk_version_map = Genome::Sys->jar_version_path_map('GenomeAnalysisTK');
+
+my %gatk_version_map_expected = (
+    '2.4' => '/usr/share/java/GenomeAnalysisTK-2.4.jar',
+);
+
+# remove any newer versions to keep the test running after new installs
+my @expected_keys = keys %gatk_version_map_expected;
+my %extra = %gatk_version_map_expected;
+delete @extra{@expected_keys};
+for my $key (keys %extra) {
+    if ($key gt '2.4') {
+        delete $gatk_version_map{$key};
+    }    
+}
+
+is_deeply(\%gatk_version_map, \%gatk_version_map_expected, "map for gatk tool matches");
+
+}
 
