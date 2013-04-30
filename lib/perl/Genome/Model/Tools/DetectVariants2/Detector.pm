@@ -375,8 +375,9 @@ sub _sort_detector_output {
     for my $detector_file (@detector_files){
         my $detector_unsorted_output = $self->_temp_scratch_directory . "/" . basename($detector_file) . ".unsorted";
 
-        unless(rename($detector_file,$detector_unsorted_output)) {
-            $self->error_message('Failed to move ' . $detector_file . ' to ' . $detector_unsorted_output . ' for sorting!');
+        unless(rename($detector_file, $detector_unsorted_output)) {
+            my $m = sprintf(q(Failed to move '%s' to '%s' for sorting: %s), $detector_file, $detector_unsorted_output, $!);
+            $self->error_message($m);
             return;
         }
 
