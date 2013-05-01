@@ -65,6 +65,10 @@ sub check_amino_acid_change_string{
         ($residue1, $res_start, $residue2, $new_residue) =
             ($1, $2, $3, $4);
         $res_stop = $res_start;
+    } elsif ($amino_acid_change_string =~ /^ (\D+) (\d+) (.*) $/x ) {
+        ($residue1, $res_start, $residue2, $new_residue) =
+            ($1, $2, "", $4);
+        $res_stop = $res_start;
     } elsif ($amino_acid_change_string =~ /^ (\d+) (.*) $/x ) {
         ($res_start, $residue2, $res_stop, $new_residue) =
             ($1, $2);
