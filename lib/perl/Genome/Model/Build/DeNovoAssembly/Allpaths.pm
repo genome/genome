@@ -218,11 +218,12 @@ sub read_processor_params_for_instrument_data {
     my $output_file_count = $self->read_processor_output_file_count_for_instrument_data(    $instrument_data);
 
     return (
-        instrument_data_id => $instrument_data->id,
+        instrument_data_id => [$instrument_data->id],
         read_processor => $read_processor,
         output_file_count => $output_file_count,
         output_file_type => 'sanger',
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        coverage => undef,
     );
 }
 

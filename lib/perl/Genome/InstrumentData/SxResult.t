@@ -25,11 +25,12 @@ my $output_file_count = 2;
 my $output_file_type = 'sanger';
 
 my %sx_result_params = (
-    instrument_data_id => $instrument_data->id,
+    instrument_data_id => [$instrument_data->id],
     read_processor => $read_processor,
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
     test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    coverage => undef,
 );
 
 my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
@@ -56,12 +57,13 @@ isnt($sx_result4, $sx_result, 'produced different result');
 
 # use output file config [should be same output as above]
 my %sx_result_params_with_config = (
-    instrument_data_id => $instrument_data->id,
+    instrument_data_id => [$instrument_data->id],
     read_processor => $read_processor,
     output_file_config => [ 
         'basename='.$instrument_data->id.'.1.fastq:type=sanger:name=fwd', 'basename='.$instrument_data->id.'.2.fastq:type=sanger:name=rev',
     ],
     test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    coverage => undef,
 );
 my $sx_result_with_config = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params_with_config);
 isa_ok($sx_result_with_config, 'Genome::InstrumentData::SxResult', 'successful run w/ config');
@@ -82,40 +84,45 @@ for ( my $i = 0; $i < @read_processor_output_files; $i++ ) {
 # fails
 ok( # no config or count
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => $instrument_data->id,
+        instrument_data_id => [$instrument_data->id],
         read_processor => $read_processor,
+        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );
 ok( # no basename in output file config
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => $instrument_data->id,
+        instrument_data_id => [$instrument_data->id],
         read_processor => $read_processor,
         output_file_config => [ 'type=sanger' ],
+        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );
 ok( # invalid basename in output file config
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => $instrument_data->id,
+        instrument_data_id => [$instrument_data->id],
         read_processor => $read_processor,
         output_file_config => [ 'basename=/carter:type=sanger' ],
+        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );
 ok( # invalid basename in output file config
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => $instrument_data->id,
+        instrument_data_id => [$instrument_data->id],
         read_processor => $read_processor,
         output_file_config => [ 'basename=johnny cash:type=sanger' ],
+        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );
 ok( # no type in output file config
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => $instrument_data->id,
+        instrument_data_id => [$instrument_data->id],
         read_processor => $read_processor,
         output_file_config => [ 'basename=carter' ],
+        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );

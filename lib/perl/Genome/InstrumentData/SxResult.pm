@@ -12,12 +12,17 @@ class Genome::InstrumentData::SxResult {
         instrument_data_id => {
             is => 'Text',
             doc => 'The local database id of the instrument data to operate on',
+            is_many => 1,
         },
     ],
     has_param => [
         read_processor => {
             is => 'Text',
             doc => 'The string describing the read processor operations',
+        },
+        coverage => {
+            is => 'Number',
+            doc => 'Desired amount of sequence in output, expressed as a multiple of the estimated genome size',
         },
         output_file_count => {
             is => 'Number',
@@ -42,6 +47,7 @@ class Genome::InstrumentData::SxResult {
         instrument_data => {
             is => 'Genome::InstrumentData',
             id_by => 'instrument_data_id',
+            is_many => 1,
         },
         output_file_suffix => {
             is => 'Text',
@@ -65,13 +71,24 @@ sub create {
 
     $self->_prepare_staging_directory;
 
-    $self->status_message('Process instrument data '.$self->instrument_data->__display_name__ );
-    my $process_ok = $self->_process_instrument_data;
-    if(not $process_ok) {
-        $self->delete;
-        return;
+    my @instrument_data = $self->instrument_data;
+    my $num_inst_data = scalar @instrument_data;
+    if ($num_inst_data == 1) {
+        my $id = $instrument_data[0];
+        $self->status_message('Process instrument data '.$id->__display_name__ );
+        my $process_ok = $self->_process_instrument_data($id);
+        if(not $process_ok) {
+            $self->delete;
+            return;
+        }
+        $self->status_message('Process instrument data...OK');
     }
-    $self->status_message('Process instrument data...OK');
+    else {
+        foreach my $id (@instrument_data) {
+            #do something;
+        }
+    }
+    
 
     $self->status_message('Verify output files...');
     my @output_files = $self->read_processor_output_files;
@@ -156,8 +173,7 @@ sub read_processor_output_file_paths {
 }
 
 sub _process_instrument_data {
-    my ($self) = @_;
-    my $instrument_data = $self->instrument_data;
+    my ($self, $instrument_data) = @_;
     $self->status_message('Process: '.join(' ', map { $instrument_data->$_ } (qw/ class id/)));
 
     # Output
