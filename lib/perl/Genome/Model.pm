@@ -438,7 +438,7 @@ sub create {
         }
     }
 
-    my $self = $class->SUPER::create(@_);
+    my $self = $class->SUPER::create($bx);
     unless ($self) {
         return;
     }
