@@ -41,41 +41,33 @@ sub execute {
 sub _load_samples {
     my $self = shift;
 
+    my $samples = $self->_load_samples_from_csv_file;
+    return if not $samples;
+
     my $fh = IO::File->new('bjobs -g/ebelter/whisp_imports -w 2> /dev/null |');
     $fh->getline;
-    my %jobs_status;
     while ( my $line = $fh->getline ) {
         my @tokens = split(/\s+/, $line);
-        $jobs_status{$tokens[6]} = lc $tokens[2];
+        next if not $samples->{$tokens[6]};
+        $samples->{$tokens[6]}->{job_status} = lc $tokens[2];
     }
 
-    my $samples_from_csv_file = $self->_load_samples_from_csv_file;
-    return if not $samples_from_csv_file;
-
-    my @samples;
     for my $sample ( 
         Genome::Sample->get(
-            'name in' => [ _sample_names() ],
+            'name in' => [ keys %$samples ],
             '-hint' => [qw/ models instrument_data /],
         )
     ) {
-        my $inst_data = ($sample->instrument_data)[-1];
-        my $bam_path = eval{ $inst_data->bam_path };
-        my $model = ($sample->models)[-1];
-        my $build = eval{ $model->latest_build };
-        push @samples, {
-            name => $sample->name,
-            id => $sample->id,
-            sample => $sample,
-            job_status => $jobs_status{$sample->name},
-            inst_data => $inst_data,
-            bam_path => $bam_path,
-            model => $model,
-            build => $build,
-        };
+        my $name = $sample->name;
+        $samples->{$name}->{sample} = $sample;
+        $samples->{$name}->{id} = $sample->id;
+        $samples->{$name}->{inst_data} = ($sample->instrument_data)[-1];
+        $samples->{$name}->{bam_path} = eval{ $sample->{inst_data}->bam_path };
+        $samples->{$name}->{model} = ($sample->models)[-1];
+        $samples->{$name}->{build} = eval{ $sample->{model}->latest_build };
     }
 
-    return sort { $a->{name} cmp $b->{name} } @samples;
+    return [ sort { $a->{name} cmp $b->{name} } values %$samples ];
 }
 
 sub _load_samples_from_csv_file {
