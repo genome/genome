@@ -14,4 +14,17 @@ use Test::More;
 
 use_ok('Genome::Sample::Command::Import::Manager') or die;
 
+my $manager = Genome::Sample::Command::Import::Manager->create(
+    working_directory => 'example/valid',
+);
+ok($manager, 'create manager');
+my $samples_from_csv_file = $manager->_load_samples_from_csv_file;
+is_deeply($samples_from_csv_file, { 'TEST-0000-00' => { name => 'TEST-0000-00', race => 'spaghetti', gender => 'female', religion => 'pastafarian', } }, 'samples from csv file');
+
+# fail - no name column in csv
+$manager->working_directory('example/invalid');
+$samples_from_csv_file = $manager->_load_samples_from_csv_file;
+ok(!$samples_from_csv_file, 'failed to load samples b/c no name column in sample csv');
+is($manager->error_message, 'No name column in sample csv! '.$manager->sample_csv_file, 'correct error');
+
 done_testing();

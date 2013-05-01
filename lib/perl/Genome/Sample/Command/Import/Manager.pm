@@ -11,7 +11,21 @@ use IO::File;
 class Genome::Sample::Command::Import::Manager {
     is => 'Command::V2',
     doc => 'Manage importing a group of samples including importing instrument data and creating and building models.',
-    has => [
+    has_optional => [
+        working_directory => {
+            doc => 'Directory to read and write.',
+        },
+    ],
+    has_calculated => [
+        sample_csv_file => {
+            calculate_from => 'working_directory',
+            calculate => sub{ my $working_directory = shift; return $working_directory.'/samples.csv'; },
+            doc => 'CSV file of samples and attributes. A column called "name" is required. The name should be dash (-) separated values of the nomenclature, indivdual id and sample id.',
+        },
+        job_dispatch_config => {
+            calculate_from => 'working_directory',
+            calculate => sub{ my $working_directory = shift; return $working_directory.'/job_dispatch.config'; },
+        },
     ],
 };
 
@@ -34,6 +48,9 @@ sub _load_samples {
         my @tokens = split(/\s+/, $line);
         $jobs_status{$tokens[6]} = lc $tokens[2];
     }
+
+    my $samples_from_csv_file = $self->_load_samples_from_csv_file;
+    return if not $samples_from_csv_file;
 
     my @samples;
     for my $sample ( 
@@ -61,6 +78,30 @@ sub _load_samples {
     return sort { $a->{name} cmp $b->{name} } @samples;
 }
 
+sub _load_samples_from_csv_file {
+    my $self = shift;
+    
+    my $sample_csv_reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $self->sample_csv_file,
+        separator => ',',
+    );
+    if ( not $sample_csv_reader ) {
+        $self->error_message('Failed to open sample csv! '.$self->sample_csv_file);
+        return;
+    }
+
+    if ( not grep { $_ eq 'name' } @{$sample_csv_reader->headers} ) {
+        $self->error_message('No name column in sample csv! '.$self->sample_csv_file);
+        return;
+    }
+
+    my %samples_from_csv_file;
+    while ( my $sample = $sample_csv_reader->next ) {
+        $samples_from_csv_file{ $sample->{name} } = $sample;
+    }
+
+    return \%samples_from_csv_file;
+}
 
 sub status {
     print STDERR "Status...\n";
