@@ -19,7 +19,13 @@ my $manager = Genome::Sample::Command::Import::Manager->create(
 );
 ok($manager, 'create manager');
 my $samples_from_csv_file = $manager->_load_samples_from_csv_file;
-is_deeply($samples_from_csv_file, { 'TEST-0000-00' => { name => 'TEST-0000-00', race => 'spaghetti', gender => 'female', religion => 'pastafarian', } }, 'samples from csv file');
+my $expected_samples_from_csv_file = { 
+    'TEST-0000-00' => { 
+        name => 'TEST-0000-00', 
+        from_csv => { race => 'spaghetti', gender => 'female', religion => 'pastafarian', },
+    },
+};
+is_deeply($samples_from_csv_file, $expected_samples_from_csv_file, 'samples from csv file');
 
 # fail - no name column in csv
 $manager->working_directory('example/invalid');

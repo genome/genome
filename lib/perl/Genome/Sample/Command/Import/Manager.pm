@@ -95,12 +95,15 @@ sub _load_samples_from_csv_file {
         return;
     }
 
-    my %samples_from_csv_file;
+
+    my %samples;
     while ( my $sample = $sample_csv_reader->next ) {
-        $samples_from_csv_file{ $sample->{name} } = $sample;
+        my $name = delete $sample->{name};
+        $samples{$name}->{name} = $name;
+        $samples{$name}->{from_csv} = $sample;
     }
 
-    return \%samples_from_csv_file;
+    return \%samples;
 }
 
 sub status {
