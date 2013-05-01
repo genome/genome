@@ -49,7 +49,7 @@ sub fail_job {
     
     my $job_id = $job->job_id();
     
-    if ($self->{_fail_count}->{$job_id} >= 3) {
+    if ($self->{_fail_count}->{$job_id} >= 10) {
         warn "job $job_id continues to fail after multiple retries: $error";
         push @{$self->{_failed_jobs}}, $job;
     }
