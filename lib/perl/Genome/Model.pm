@@ -455,8 +455,28 @@ sub create {
     }
 
     unless ($self->processing_profile) {
+        my $reason = eval {
+            my $pp_id = $bx->value_for('processing_profile_id');
+            unless ($pp_id) {
+                return 'No processing profile specified!';
+            }
+
+            my $pp = Genome::ProcessingProfile->get($pp_id);
+            unless ($pp) {
+                return "Specified processing profile ($pp_id) does not exist!";
+            }
+
+            my $pp_type = Genome::Utility::Text::string_to_camel_case($pp->type_name);
+            my $model_type = ($self->class =~ /^Genome::Model::(.*)/)[0];
+            if ($pp_type && $model_type ne $pp_type) {
+                return "Processing profile type ($pp_type) does not match model type ($model_type)!";
+            }
+
+            return "Missing processing profile; unknown error!";
+        };
+
         $self->delete;
-        Carp::confess "Could not resolve processing profile for model";
+        Carp::confess $reason || $@;
     }
 
     unless ($self->name) {
