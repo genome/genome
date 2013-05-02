@@ -128,46 +128,7 @@ ok( # no type in output file config
     'Did not create sx result w/ config w/o basename',
 );
 
+my ($instrument_data2) = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data($data_dir.'/inst_data/-6666/archive.bam');
+ok($instrument_data2, "Second instrument data was defined");
+
 done_testing;
-
-sub setup_data {
-    my $sample = Genome::Sample->__define__(
-        id => -1234,
-        name => 'TEST-000',
-    );
-
-    ok($sample,'define sample') or die;
-
-    my $lib = Genome::Library->__define__(
-        id => -1235,
-        name => $sample->name.'-testlibs1',
-        sample_id => $sample->id,
-        library_insert_size => 180,
-    );
-
-    ok($lib, 'define library') or die;
-
-    my $instrument_data = Genome::InstrumentData::Solexa->__define__(
-        id => -6666,
-        sequencing_platform => 'solexa',
-        read_length => 101,
-        subset_name => '1-AAAA',
-        index_sequence => 'AAAA',
-        run_name => 'XXXXXX/1-AAAAA',
-        run_type => 'Paired',
-        flow_cell_id => 'XXXXX',
-        lane => 1,
-        library => $lib,
-        bam_path => $data_dir.'/inst_data/-6666/archive.bam',
-        clusters => 44554,
-        fwd_clusters => 44554,
-        rev_clusters => 44554,
-        analysis_software_version => 'not_old_illumina',
-    );
-
-    ok($instrument_data, 'define instrument data');
-    ok($instrument_data->is_paired_end, 'inst data is paired');
-    ok(-s $instrument_data->bam_path, 'inst data bam path');
-
-    return ($instrument_data);
-}
