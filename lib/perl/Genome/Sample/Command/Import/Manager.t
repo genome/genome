@@ -19,23 +19,25 @@ my $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => 'example/valid',
 );
 ok($manager, 'create manager');
-my $_load_samples_from_csv_file = $manager->_load_samples_from_csv_file;
-my %expected_samples = ( 
-    'TEST-0000-00' => { 
-        name => 'TEST-0000-00', 
-        from_csv => { race => 'spaghetti', gender => 'female', religion => 'pastafarian', },
-    },
+my %expected_from_load_samples_from_csv = ( 
+    name => 'TEST-0000-00', 
+    from_csv => { race => 'spaghetti', gender => 'female', religion => 'pastafarian', },
 );
-is_deeply($_load_samples_from_csv_file, \%expected_samples, 'samples from _load_samples_from_csv_file');
-my $_load_samples = $manager->_load_samples;
-is_deeply($_load_samples, [values %expected_samples], 'samples from _load_samples');
-is($manager->get_sample_status($_load_samples->[0]), 'sample_needed', 'set corect sample status');
-is($manager->set_sample_status($_load_samples->[0]), 'sample_needed', 'set corect sample status');
+my $load_samples_from_csv_file = $manager->_load_samples_from_csv_file;
+is_deeply($load_samples_from_csv_file, {'TEST-0000-00' => \%expected_from_load_samples_from_csv}, 'samples from _load_samples_from_csv_file');
+my %expected_from_load_samples = (
+    %expected_from_load_samples_from_csv,
+    sample => undef, inst_data => undef, bam_path => undef, model => undef, build => undef,
+);
+my $load_samples = $manager->_load_samples;
+is_deeply($load_samples,  [\%expected_from_load_samples], 'samples from _load_samples');
+is($manager->get_sample_status($load_samples->[0]), 'sample_needed', 'set corect sample status');
+is($manager->set_sample_status($load_samples->[0]), 'sample_needed', 'set corect sample status');
 
 # fail - no name column in csv
 $manager->working_directory('example/invalid');
-$_load_samples_from_csv_file = $manager->_load_samples_from_csv_file;
-ok(!$_load_samples_from_csv_file, 'failed to load samples b/c no name column in sample csv');
+$load_samples_from_csv_file = $manager->_load_samples_from_csv_file;
+ok(!$load_samples_from_csv_file, 'failed to load samples b/c no name column in sample csv');
 is($manager->error_message, 'No name column in sample csv! '.$manager->sample_csv_file, 'correct error');
 
 done_testing();

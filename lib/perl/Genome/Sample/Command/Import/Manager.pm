@@ -17,7 +17,7 @@ class Genome::Sample::Command::Import::Manager {
             doc => 'Directory to read and write.',
         },
     ],
-    has_calculated => [
+    has_optional_calculated => [
         sample_csv_file => {
             calculate_from => 'working_directory',
             calculate => sub{ my $working_directory = shift; return $working_directory.'/samples.csv'; },
@@ -44,28 +44,31 @@ sub execute {
 sub _load_samples {
     my $self = shift;
 
-    my $samples = $self->_load_samples_from_csv_file;
-    return if not $samples;
+    my $sample_info = $self->_load_samples_from_csv_file;
+    return if not $sample_info;
 
-    my $load_job_status = $self->_load_job_status($samples);
+    my $load_job_status = $self->_load_job_status($sample_info);
     return if not $load_job_status;
 
-    for my $sample ( 
-        Genome::Sample->get(
-            'name in' => [ keys %$samples ],
-            '-hint' => [qw/ models instrument_data /],
-        )
-    ) {
-        my $name = $sample->name;
-        $samples->{$name}->{sample} = $sample;
-        $samples->{$name}->{id} = $sample->id;
-        $samples->{$name}->{inst_data} = ($sample->instrument_data)[-1];
-        $samples->{$name}->{bam_path} = eval{ $sample->{inst_data}->bam_path };
-        $samples->{$name}->{model} = ($sample->models)[-1];
-        $samples->{$name}->{build} = eval{ $sample->{model}->latest_build };
+    my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
+        original_data_path => [ map { $_->{original_data_path} } values %$sample_info ],
+        '-hint' => [qw/ sample bam_path /],
+    );
+
+    my %samples = map { $_->name, $_ } Genome::Sample->get(
+        'name in' => [ keys %$sample_info ],
+        '-hint' => [qw/ models instrument_data /],
+    );
+
+    for my $name ( keys %$sample_info ) {
+        $sample_info->{$name}->{sample} = $samples{$name};
+        $sample_info->{$name}->{inst_data} = $instrument_data{$name};
+        $sample_info->{$name}->{bam_path} = eval{ $sample_info->{inst_data}->bam_path };
+        $sample_info->{$name}->{model} = eval{ ($sample_info->{inst_data}->models)[-1]; }; #FIXME! needs to get only model for this situation
+        $sample_info->{$name}->{build} = eval{ $sample_info->{model}->latest_build };
     }
 
-    return [ sort { $a->{name} cmp $b->{name} } values %$samples ];
+    return [ sort { $a->{name} cmp $b->{name} } values %$sample_info ];
 }
 
 sub _load_samples_from_csv_file {
@@ -115,7 +118,7 @@ sub _load_job_status {
 sub get_sample_status {
     my ($self, $sample) = @_;
     Carp::confess('No sample to set status!') if not $sample;
-    return 'sample_needed' if not $sample->{id};
+    return 'sample_needed' if not $sample->{sample};
     return 'import_'.$sample->{job_status} if $sample->{job_status};
     return 'import_needed' if not $sample->{inst_data};
     return 'import_failed' if not defined $sample->{bam_path} or not -s $sample->{bam_path};
@@ -138,10 +141,10 @@ sub status {
 }
 
 sub _status {
-    my $self = shift;
+    my ($self, $samples) = @_;
     my %totals;
     my $status;
-    for my $sample ( sort { $a->{name} cmp $b->{name} } @_ ) {
+    for my $sample ( sort { $a->{name} cmp $b->{name} } @$samples ) {
         $totals{total}++;
         $self->set_sample_status($sample);
         $totals{ $sample->{status} }++;
