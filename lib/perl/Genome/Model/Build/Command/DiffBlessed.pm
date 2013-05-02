@@ -51,10 +51,17 @@ sub retrieve_blessed_build {
     return $blessed_build;
 }
 
+sub bless_message {
+    my $self = shift;
+    my $rel_db_file = $self->rel_db_file();
+    my $new_build_id = $self->new_build->id;
+    my $m = sprintf('If you want to bless this build (%s) update and commit the DB file (%s).', $new_build_id, $rel_db_file);
+}
+
 sub diffs_message {
     my $self = shift;
     my $diff_string = $self->SUPER::diffs_message(@_);
-    my $rel_db_file = $self->rel_db_file();
-    $diff_string = join("\n", $diff_string, sprintf('If you want to bless this build, update the file %s.', $rel_db_file));
+    my $bless_msg = $self->bless_message();
+    $diff_string = join("\n", $diff_string, $bless_msg);
     return $diff_string;
 }
