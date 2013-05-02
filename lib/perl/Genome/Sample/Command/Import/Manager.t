@@ -21,6 +21,7 @@ my $manager = Genome::Sample::Command::Import::Manager->create(
 ok($manager, 'create manager');
 my %expected_from_load_samples_from_csv = ( 
     name => 'TEST-0000-00', 
+    original_data_path => 'original.bam',
     from_csv => { race => 'spaghetti', gender => 'female', religion => 'pastafarian', },
 );
 my $load_samples_from_csv_file = $manager->_load_samples_from_csv_file;
@@ -38,6 +39,6 @@ is($manager->set_sample_status($load_samples->[0]), 'sample_needed', 'set corect
 $manager->working_directory('example/invalid');
 $load_samples_from_csv_file = $manager->_load_samples_from_csv_file;
 ok(!$load_samples_from_csv_file, 'failed to load samples b/c no name column in sample csv');
-is($manager->error_message, 'No name column in sample csv! '.$manager->sample_csv_file, 'correct error');
+is($manager->error_message, 'No "name" column in sample csv! '.$manager->sample_csv_file, 'correct error');
 
 done_testing();

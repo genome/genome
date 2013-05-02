@@ -84,15 +84,21 @@ sub _load_samples_from_csv_file {
     }
 
     if ( not grep { $_ eq 'name' } @{$sample_csv_reader->headers} ) {
-        $self->error_message('No name column in sample csv! '.$self->sample_csv_file);
+        $self->error_message('No "name" column in sample csv! '.$self->sample_csv_file);
         return;
     }
 
+    if ( not grep { $_ eq 'original_data_path' } @{$sample_csv_reader->headers} ) {
+        $self->error_message('No "original_data_path" column in sample csv! '.$self->sample_csv_file);
+        return;
+    }
 
     my %samples;
     while ( my $sample = $sample_csv_reader->next ) {
         my $name = delete $sample->{name};
         $samples{$name}->{name} = $name;
+        my $original_data_path = delete $sample->{original_data_path};
+        $samples{$name}->{original_data_path} = $original_data_path;
         $samples{$name}->{from_csv} = $sample;
     }
 
