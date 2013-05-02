@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Spec;
 use YAML;
 
 class Genome::Model::Build::Command::DiffBlessed {
@@ -19,6 +20,14 @@ class Genome::Model::Build::Command::DiffBlessed {
 
 sub db_file {
     return __FILE__.".YAML";
+}
+
+sub rel_db_file {
+    my $self = shift;
+    my $db_file = $self->db_file;
+    my $ns_base_dir = Genome->get_base_directory_name;
+    my $rel_db_file = File::Spec->abs2rel($db_file, $ns_base_dir);
+    return $rel_db_file;
 }
 
 sub blessed_build {
