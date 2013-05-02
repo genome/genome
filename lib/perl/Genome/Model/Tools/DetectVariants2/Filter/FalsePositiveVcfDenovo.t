@@ -10,6 +10,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
+use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line');
 
 use Test::More;
 
@@ -101,7 +102,7 @@ ok(!$header_diff, 'regions file matches expected result')
 
 # FIXME this should be moved to another test case entirely, testing the base vcf methods
 my $test_vcf_line = "1	121352388	.	T	C	77	PolymuttDenovo	NS=3;PS=100.0;TEST;DP=152;DQ=2.181	GT:GQ:DP:GL	C/C:41:38:221,83,130,215,42,0,80,115,130,226	C/C:21:52:255,149,173,228,83,0,101,86,124,225	C/G:22:62:255,162,203,243,105,0,95,80,132,237";
-my $parsed_line = $filter_command->parse_vcf_line($test_vcf_line, \@samples);
+my $parsed_line = parse_vcf_line($test_vcf_line, \@samples);
 #ok($parsed_line, "Got a parsed line from parse_vcf_line");
 
 # Set up the expected data structure
@@ -145,7 +146,7 @@ $expected_line->{info} = $expected_info;
 is_deeply($parsed_line, $expected_line, "Parsed vcf line data structure matches expectations");
 
 # reconstruct the line with deparse
-is($filter_command->deparse_vcf_line($parsed_line,\@expected_samples),"$test_vcf_line\n", "Deparsed vcf line data structure matches input line");
+is(deparse_vcf_line($parsed_line,\@expected_samples),"$test_vcf_line\n", "Deparsed vcf line data structure matches input line");
 
 
 my $variant1 = $filter_command->get_variant_for_sample($parsed_line->{"alt"}, $parsed_line->{sample}->{"H_ME-DS10239_1-DS10239_1"}->{GT}, $parsed_line->{"reference"}, );
