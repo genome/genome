@@ -166,17 +166,4 @@ ok(Genome::InstrumentData::SxResult->create(
    'Created merged sx result with coverage'
 );
 
-$sx_result_params_with_config{instrument_data_id} = [$instrument_data2->id];
-my $sx_result2_with_config = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params_with_config);
-isa_ok($sx_result_with_config, 'Genome::InstrumentData::SxResult', '2nd successful run w/ config');
-
-$sx_result_params_with_config{instrument_data_id} = [$instrument_data->id, $instrument_data2->id];
-$sx_result2_with_config = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params_with_config);
-isa_ok($sx_result_with_config, 'Genome::InstrumentData::SxResult', 'successful merged run w/ config');
-
-$sx_result_params_with_config{coverage} = 10;
-$sx_result2_with_config = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params_with_config);
-isa_ok($sx_result_with_config, 'Genome::InstrumentData::SxResult', 'successful merged run w/ config and coverage');
-
-
 done_testing;

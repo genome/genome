@@ -117,6 +117,11 @@ sub create {
                 $self->delete;
                 return;
             }
+            if ( $result->output_file_config or not defined $result->output_file_type or $result->output_file_type ne 'sanger' ) {
+                $self->error_message('Incompatible output type ('.($result->output_file_config or $result->output_file_type or 'NULL').') to merge results! Can only merge sanger fastq!');
+                $self->delete;
+                return;
+            }
             #cat the out file(s) onto the master input file(s)
             my @output_files = $result->read_processor_output_file_paths;
             for (my $input_number=0; $input_number < $output_file_count; $input_number++) {
