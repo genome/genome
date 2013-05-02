@@ -45,7 +45,7 @@ class Genome::InstrumentData {
             to => 'name',
         },
         sample_id => {
-            is => 'Number',
+            is => 'Integer',
             via => 'library',
         },
         sample => {
@@ -92,7 +92,7 @@ class Genome::InstrumentData {
             doc => 'for some RNA protocols (encore complete rna-seq) reads will match transcript direction (firststrand), or match the opoosite strand (secondstrand), or be a mix (unstranded)',
         },
         original_est_fragment_size => {
-            is => 'Number',
+            is => 'Integer',
             via => 'attributes',
             to => 'attribute_value',
             is_mutable => 1,
@@ -100,7 +100,7 @@ class Genome::InstrumentData {
             where => [ attribute_label => 'original_est_fragment_size' ],
         },
         original_est_fragment_size_max => {
-            is => 'Number',
+            is => 'Integer',
             via => 'attributes',
             to => 'attribute_value',
             is_mutable => 1,
@@ -108,7 +108,7 @@ class Genome::InstrumentData {
             where => [ attribute_label => 'original_est_fragment_size_max' ],
         },
         original_est_fragment_size_min => {
-            is => 'Number',
+            is => 'Integer',
             via => 'attributes',
             to => 'attribute_value',
             is_mutable => 1,
@@ -116,7 +116,7 @@ class Genome::InstrumentData {
             where => [ attribute_label => 'original_est_fragment_size_min' ],
         },
         original_est_fragment_std_dev => {
-            is => 'Number',
+            is => 'Float',
             calculate_from => [ 'original_est_fragment_size_max', 'original_est_fragment_size_min', 'original_est_fragment_size' ],
             calculate => q(
                 if ($original_est_fragment_size_max and

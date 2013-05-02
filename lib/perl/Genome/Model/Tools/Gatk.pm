@@ -50,18 +50,21 @@ sub help_detail {                           # This is what the user will see wit
 EOS
 }
 
-my %GATK_VERSIONS = (
-    'v1' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND, # This is temporary... "v1" is what is in the first set of somatic-variation processing profiles
-    '2986' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.2986/' . $GATK_COMMAND,
-    '3362' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3362/' . $GATK_COMMAND,
-    '3362P' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3362P/' . $GATK_COMMAND,
-    '3423' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3423/' . $GATK_COMMAND,
-    '3471' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3471/' . $GATK_COMMAND,
-    '4168' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.4168/' . $GATK_COMMAND,
-    '5336' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND,
-    '5777' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5777/' . $GATK_COMMAND,
-    '2.4' => Genome::Sys->jar_path($GATK_BASE, "2.4"),
-);
+sub gatk_versions {
+    my %GATK_VERSIONS = (
+        'v1' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND, # This is temporary... "v1" is what is in the first set of somatic-variation processing profiles
+        '2986' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.2986/' . $GATK_COMMAND,
+        '3362' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3362/' . $GATK_COMMAND,
+        '3362P' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3362P/' . $GATK_COMMAND,
+        '3423' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3423/' . $GATK_COMMAND,
+        '3471' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3471/' . $GATK_COMMAND,
+        '4168' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.4168/' . $GATK_COMMAND,
+        '5336' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND,
+        '5777' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5777/' . $GATK_COMMAND,
+        '2.4' => Genome::Sys->jar_path($GATK_BASE, "2.4"),
+    );
+    return %GATK_VERSIONS;
+}
 
 our @legacy_versions = qw(v1 2986 3362 3362P 3423 3471 4168 5336 5777);
 
@@ -93,21 +96,24 @@ sub gatk_path {
 
 sub available_gatk_versions {
     my $self = shift;
-    return keys %GATK_VERSIONS;
+    my %versions = $self->gatk_versions;
+    return keys %versions;
 }
 
 sub path_for_gatk_version {
     my $class = shift;
     my $version = shift;
-
-    if (defined $GATK_VERSIONS{$version}) {
-        return $GATK_VERSIONS{$version};
+    my %versions = $class->gatk_versions;
+    if (defined $versions{$version}) {
+        return $versions{$version};
     }
     die('No path for gatk version '. $version);
 }
 
 sub default_gatk_version {
-    die "default gatk version: $DEFAULT_VERSION is not valid" unless $GATK_VERSIONS{$DEFAULT_VERSION};
+    my $class = shift;
+    my %versions = $class->gatk_versions;
+    die "default gatk version: $DEFAULT_VERSION is not valid" unless $versions{$DEFAULT_VERSION};
     return $DEFAULT_VERSION;
 }
 
@@ -117,7 +123,8 @@ sub has_version {
     unless(defined($version)){
         $version = $self->version;
     }
-    if(exists($GATK_VERSIONS{$version})){
+    my %versions = $self->gatk_versions;
+    if(exists($versions{$version})){
         return 1;
     }
     return 0;
