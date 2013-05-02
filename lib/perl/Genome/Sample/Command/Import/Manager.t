@@ -29,6 +29,8 @@ my %expected_samples = (
 is_deeply($_load_samples_from_csv_file, \%expected_samples, 'samples from _load_samples_from_csv_file');
 my $_load_samples = $manager->_load_samples;
 is_deeply($_load_samples, [values %expected_samples], 'samples from _load_samples');
+is($manager->get_sample_status($_load_samples->[0]), 'sample_needed', 'set corect sample status');
+is($manager->set_sample_status($_load_samples->[0]), 'sample_needed', 'set corect sample status');
 
 # fail - no name column in csv
 $manager->working_directory('example/invalid');

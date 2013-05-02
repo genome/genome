@@ -7,6 +7,7 @@ use Genome;
 
 use Data::Dumper;
 use IO::File;
+use Switch;
 
 class Genome::Sample::Command::Import::Manager {
     is => 'Command::V2',
@@ -96,9 +97,9 @@ sub _load_samples_from_csv_file {
 }
 
 sub _load_job_status {
-    my ($self, $samples) = shift;
+    my ($self, $samples) = @_;
 
-    Carp::confess('Need samples to load job status!') if not S$samples;
+    Carp::confess('Need samples to load job status!') if not $samples;
 
     my $fh = IO::File->new('bjobs -g/ebelter/whisp_imports -w 2> /dev/null |');
     $fh->getline;
@@ -111,6 +112,25 @@ sub _load_job_status {
     return 1;
 }
 
+sub get_sample_status {
+    my ($self, $sample) = @_;
+    Carp::confess('No sample to set status!') if not $sample;
+    return 'sample_needed' if not $sample->{id};
+    return 'import_'.$sample->{job_status} if $sample->{job_status};
+    return 'import_needed' if not $sample->{inst_data};
+    return 'import_failed' if not defined $sample->{bam_path} or not -s $sample->{bam_path};
+    return 'model_needed' if $sample->{inst_data} and not $sample->{model};
+    return 'build_requested' if $sample->{model}->build_requested;
+    return 'build_needed' if not $sample->{build};
+    return 'build_'.lc($sample->{build}->status);
+}
+
+sub set_sample_status {
+    my ($self, $sample) = @_;
+    Carp::confess('No sample to set status!') if not $sample;
+    return $sample->{status} = $self->get_sample_status($sample);
+}
+
 sub status {
     my ($self, $samples) = @_;
     $self->status_message('Status');
@@ -118,11 +138,12 @@ sub status {
 }
 
 sub _status {
+    my $self = shift;
     my %totals;
     my $status;
     for my $sample ( sort { $a->{name} cmp $b->{name} } @_ ) {
         $totals{total}++;
-        $sample->{status} = _get_status($sample);
+        $self->set_sample_status($sample);
         $totals{ $sample->{status} }++;
         $totals{build}++ if $sample->{status} =~ /^build/;
         $status .= sprintf("%-20s %10s\n", $sample->{name}, $sample->{status});
@@ -132,9 +153,10 @@ sub _status {
 }
 
 sub cleanup_failed {
+    my $self = shift;
     my @samples = _load_samples();
     for my $sample ( @samples ) {
-        $sample->{status} = _get_status($sample);
+        $self->set_sample_status($sample);
         next if $sample->{status} ne 'import_failed' or ( defined $sample->{bam_path} and -s $sample->{bam_path} );
         print $sample->{name}.' '.$sample->{status}." REMOVE!\n";
         $sample->{inst_data}->delete;
@@ -144,10 +166,11 @@ sub cleanup_failed {
 }
 
 sub commands {
+    my $self = shift;
     print STDERR "Commands...\n";
     my @samples = _load_samples();
     for my $sample ( @samples ) {
-        $sample->{status} = _get_status($sample);
+        $self->set_sample_status($sample);
         next if not _needs_import($sample);
         my $cmd = 'grep '.$sample->{name}.' sra_import_commands';
         print `$cmd`;
@@ -195,15 +218,5 @@ sub _needs_import {
     return 1 if $sample->{status} eq 'import_failed' or $sample->{status} eq 'import_needed';
 }
 
-sub _get_status {
-    my $sample = shift;
-    return 'import_'.$sample->{job_status} if $sample->{job_status};
-    return 'import_needed' if not $sample->{inst_data};
-    return 'import_failed' if not defined $sample->{bam_path} or not -s $sample->{bam_path};
-    return 'model_needed' if $sample->{inst_data} and not $sample->{model};
-    return 'build_requested' if $sample->{model}->build_requested;
-    return 'build_needed' if not $sample->{build};
-    return 'build_'.lc($sample->{build}->status);
-}
+1;
 
-# Imported bam and SRA, successful build for bam: sample.name=dbGaP-295277-661565
