@@ -92,6 +92,7 @@ sub create {
             my $new_input_file = join("/", $self->temp_staging_directory, $input_number);
             push @input_files, $new_input_file;
         }
+        my $total_incoming_bases = 0;
         for my $id (@instrument_data) {
             my %params = (
                 instrument_data_id => [$id->id],
@@ -122,6 +123,9 @@ sub create {
                 my $cmd = "cat ".$output_files[$input_number]." >> ".$input_files[$input_number];
                 `$cmd`;
             }
+            my $metrics = Genome::Model::Tools::Sx::Metrics->from_file($result->output_dir."/".$result->read_processor_output_metric_file);
+            my $output_bases = $metrics->bases;
+            $total_incoming_bases += $output_bases;
         }
         #run the input files through sx for coverage
         #get the estimated genome size
@@ -149,10 +153,7 @@ sub create {
 
             #convert $self->coverage and estimated_genome_size to number of bp
             my $bp_count = $self->coverage * $estimated_genome_size;
-            #figure out total incoming bases
-            #my $incoming_bases = ?;
-            #$read_processor = "limit by-bases --select-random-sequences $incoming_bases --bases $bp_count";
-            $read_processor = "limit by-bases --bases $bp_count";
+            $read_processor = "limit by-bases --select-random-sequences $total_incoming_bases --bases $bp_count";
         }
 
         my $output = $self->_output_config;
