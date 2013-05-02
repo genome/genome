@@ -46,8 +46,10 @@ class Genome::InstrumentData::SxResult {
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
-            id_by => 'instrument_data_id',
             is_many => 1,
+            calculate => q{
+                return Genome::InstrumentData->get([$self->instrument_data_id]);
+            }
         },
         output_file_suffix => {
             is => 'Text',
@@ -84,11 +86,89 @@ sub create {
         $self->status_message('Process instrument data...OK');
     }
     else {
-        foreach my $id (@instrument_data) {
-            #do something;
+        my @input_files;
+        my $output_file_count = $self->get_output_file_count;
+        for (my $input_number=1; $input_number <= $output_file_count; $input_number++) {
+            my $new_input_file = join("/", $self->temp_staging_directory, $input_number);
+            push @input_files, $new_input_file;
+        }
+        for my $id (@instrument_data) {
+            my %params = (
+                instrument_data_id => [$id->id],
+                read_processor => $self->read_processor,
+                test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+                coverage => undef,
+            );
+            my @output_file_config = $self->output_file_config;
+            if (scalar @output_file_config > 0) {
+                $params{output_file_config} = \@output_file_config;
+            }
+            else {
+                $params{output_file_count} = $self->output_file_count;
+                $params{output_file_type} = $self->output_file_type;
+            }
+            my $result = Genome::InstrumentData::SxResult->get_with_lock(
+                %params
+            );
+            unless ($result) {
+                $self->error_message("Could not load SX Result for instrument data.  
+                    Please create it before using it in a merged result".$id->id);
+                $self->delete;
+                return;
+            }
+            #cat the out file(s) onto the master input file(s)
+            my @output_files = $result->read_processor_output_file_paths;
+            for (my $input_number=0; $input_number < $output_file_count; $input_number++) {
+                my $cmd = "cat ".$output_files[$input_number]." >> ".$input_files[$input_number];
+                `$cmd`;
+            }
+        }
+        #run the input files through sx for coverage
+        #get the estimated genome size
+        #be sure it is the same for all instrument data
+        my $read_processor = '';
+        if ($self->coverage) {
+            my $estimated_genome_size;
+            for my $id (@instrument_data) {
+                my $egs = $id->taxon->estimated_genome_size;
+                if ((not defined $estimated_genome_size) or (defined $estimated_genome_size and $egs == $estimated_genome_size)) {
+                    $estimated_genome_size = $egs;
+                }
+                elsif (defined $estimated_genome_size and $egs != $estimated_genome_size) {
+                    $self->error_message("Estimated genome size must be the same for all instrument data");
+                    $self->delete;
+                    return;
+                }
+            }
+
+            unless (defined $estimated_genome_size) {
+                $self->error_message("No estimated genome size found.  This must be specified on the instrument data if a coverage limit is needed for this result");
+                $self->delete;
+                return;
+            }
+
+            #convert $self->coverage and estimated_genome_size to number of bp
+            my $bp_count = $self->coverage * $estimated_genome_size;
+            #figure out total incoming bases
+            #my $incoming_bases = ?;
+            #$read_processor = "limit by-bases --select-random-sequences $incoming_bases --bases $bp_count";
+            $read_processor = "limit by-bases --bases $bp_count";
+        }
+
+        my $output = $self->_output_config;
+        unless (defined $output) {
+            $self->error_message("Failed to define output");
+            $self->delete;
+            return;
+        }
+        my $input_file_type = $self->resolve_merged_input_type;
+        my @inputs = map { $_.':type='.$input_file_type } @input_files;
+        unless ($self->_run_sx([$read_processor], \@inputs, $output)) {
+            $self->error_message("Failed to run sx");
+            $self->delete;
+            return;
         }
     }
-    
 
     $self->status_message('Verify output files...');
     my @output_files = $self->read_processor_output_files;
@@ -130,6 +210,24 @@ sub create {
     return $self;
 }
 
+sub resolve_merged_input_type {
+    my $self = shift;
+    if (defined $self->output_file_type) {
+        return $self->output_file_type;
+    }
+    my @output_configs = $self->output_file_config;
+    if (@output_configs) {
+       my @parts = split /:/, $output_configs[0];
+       for my $part (@parts) {
+           if ($part =~ /type=/) {
+               $part =~ s/type=//;
+               return $part;
+           }
+       }
+    }
+    return;
+}
+
 sub resolve_allocation_subdirectory {
     my $self = shift;
     my $hostname = hostname;
@@ -146,12 +244,14 @@ sub resolve_allocation_disk_group_name {
 
 sub read_processor_output_metric_file {
     my $self = shift;
-    return $self->instrument_data_id.'.output_metrics';
+    my $base = $self->resolve_base_name_from_instrument_data($self->instrument_data_id);
+    return "$base.output_metrics";
 }
 
 sub read_processor_input_metric_file {
     my $self = shift;
-    return $self->instrument_data_id.'.input_metrics';
+    my $base = $self->resolve_base_name_from_instrument_data($self->instrument_data_id);
+    return "$base.input_metrics";
 }
 
 sub read_processor_output_files {
@@ -230,13 +330,19 @@ sub _process_instrument_data {
         @read_processor_parts = ('');
     }
 
-    my @sx_cmd_parts = map { 'gmt sx '.$_ } @read_processor_parts;
-    $sx_cmd_parts[0] .= ' --input '.join(',', @inputs);
+    return $self->_run_sx(\@read_processor_parts, \@inputs, $output);
+}
+
+sub _run_sx {
+    my ($self, $read_processor_parts, $inputs, $output) = @_;
+    my @sx_cmd_parts = map { 'gmt sx '.$_ } @{$read_processor_parts};
+    $sx_cmd_parts[0] .= ' --input '.join(',', @{$inputs});
     $sx_cmd_parts[0] .= ' --input-metrics '.
     $self->temp_staging_directory.'/'.
     $self->read_processor_input_metric_file;
-    $sx_cmd_parts[$#read_processor_parts] .= ' --output '.$output;
-    $sx_cmd_parts[$#read_processor_parts] .= ' --output-metrics '.
+    my $num_parts = scalar @{$read_processor_parts};
+    $sx_cmd_parts[$num_parts-1] .= ' --output '.$output;
+    $sx_cmd_parts[$num_parts-1] .= ' --output-metrics '.
     $self->temp_staging_directory.'/'.
     $self->read_processor_output_metric_file;
 
@@ -247,7 +353,6 @@ sub _process_instrument_data {
         $self->error_message('Failed to execute gmt sx command: '.$@);
         return;
     }
-
     return 1;
 }
 
@@ -291,20 +396,22 @@ sub _output_config_params {
         }
     }
     elsif ( $self->output_file_count ) {
+        my $base = $self->resolve_base_name_from_instrument_data($self->instrument_data_id);
+
         if ( $self->output_file_count == 1 ) {
             @params = ({
-                    basename => $self->instrument_data_id.'.'.$self->output_file_suffix,
+                    basename => $base.'.'.$self->output_file_suffix,
                     type => $self->output_file_type,
                 });
         }
         elsif ( $self->output_file_count == 2 ) {
             @params = ({
-                    basename => $self->instrument_data_id.'.1.'.$self->output_file_suffix,
+                    basename => $base.'.1.'.$self->output_file_suffix,
                     name => 'fwd',
                     type => $self->output_file_type,
                 },
                 {
-                    basename => $self->instrument_data_id.'.2.'.  $self->output_file_suffix,
+                    basename => $base.'.2.'.  $self->output_file_suffix,
                     name => 'rev',
                     type => $self->output_file_type,
                 });
@@ -320,6 +427,38 @@ sub _output_config_params {
     }
 
     return @params;
+}
+
+sub get_output_file_count {
+    my $self = shift;
+    my @configs = $self->output_file_config;
+    if ($self->output_file_count) {
+        return $self->output_file_count;
+    }
+    elsif (scalar @configs >= 1) {
+        return scalar @configs;
+    }
+    else {
+        $self->error_message("Couldn't resolve output file count");
+        die $self->error_message;
+    }
+}
+
+sub resolve_base_name_from_instrument_data {
+    my $self = shift;
+    my @ids = @_;
+    my $base;
+    my $num_ids = scalar @ids;
+    if ($num_ids == 1) {
+        $base = $ids[0];
+    }
+    else {
+        $base = "merged";
+        for my $id (@ids) {
+            $base .= "-$id";
+        }
+    }
+    return $base;
 }
 
 1;

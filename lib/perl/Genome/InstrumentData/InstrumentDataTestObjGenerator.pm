@@ -7,15 +7,32 @@ use Genome;
 our $next_instrument_data_id = "-6666";
 our $sample;
 our $lib;
+our $taxon;
+our $individual;
 
 sub create_solexa_instrument_data {
     my $bam_path = shift;
     my $id = $next_instrument_data_id;
     $next_instrument_data_id++;
+
+    unless (defined $taxon) {
+        $taxon = Genome::Taxon->__define__(
+            id => -9964,
+        );
+    }
+
+    unless (defined $individual) {
+        $individual = Genome::Individual->__define__(
+            id => -5437,
+            taxon => $taxon,
+        );
+    }
+    
     unless (defined $sample) {
         $sample = Genome::Sample->__define__(
             id => -1234,
             name => 'TEST-000',
+            source => $individual,
         );
     }
 

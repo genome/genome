@@ -128,7 +128,55 @@ ok( # no type in output file config
     'Did not create sx result w/ config w/o basename',
 );
 
+#Results with multiple instrument data
 my ($instrument_data2) = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data($data_dir.'/inst_data/-6666/archive.bam');
 ok($instrument_data2, "Second instrument data was defined");
+
+ok(Genome::InstrumentData::SxResult->create(
+    instrument_data_id => [$instrument_data2->id],
+    read_processor => $read_processor,
+    output_file_count => $output_file_count,
+    output_file_type => $output_file_type,
+    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    coverage => undef,
+    ), "Created SxResult for second instrument data"
+);
+
+ok(Genome::InstrumentData::SxResult->create(
+    instrument_data_id => [$instrument_data->id, $instrument_data2->id],
+    read_processor => $read_processor,
+    output_file_count => $output_file_count,
+    output_file_type => $output_file_type,
+    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    coverage => undef,
+    ),
+   'Created sx result with multiple instrument data'
+);
+
+$instrument_data->taxon->estimated_genome_size(50);
+
+ok(Genome::InstrumentData::SxResult->create(
+    instrument_data_id => [$instrument_data->id, $instrument_data2->id],
+    read_processor => $read_processor,
+    output_file_count => $output_file_count,
+    output_file_type => $output_file_type,
+    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    coverage => 10,
+    ),
+   'Created merged sx result with coverage'
+);
+
+$sx_result_params_with_config{instrument_data_id} = [$instrument_data2->id];
+my $sx_result2_with_config = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params_with_config);
+isa_ok($sx_result_with_config, 'Genome::InstrumentData::SxResult', '2nd successful run w/ config');
+
+$sx_result_params_with_config{instrument_data_id} = [$instrument_data->id, $instrument_data2->id];
+$sx_result2_with_config = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params_with_config);
+isa_ok($sx_result_with_config, 'Genome::InstrumentData::SxResult', 'successful merged run w/ config');
+
+$sx_result_params_with_config{coverage} = 10;
+$sx_result2_with_config = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params_with_config);
+isa_ok($sx_result_with_config, 'Genome::InstrumentData::SxResult', 'successful merged run w/ config and coverage');
+
 
 done_testing;
