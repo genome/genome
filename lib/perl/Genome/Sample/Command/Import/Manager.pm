@@ -35,6 +35,8 @@ sub execute {
     my $samples = $self->_load_samples;
     return if not $samples;
 
+    $self->status($samples);
+
     return 1;
 }
 
@@ -44,13 +46,8 @@ sub _load_samples {
     my $samples = $self->_load_samples_from_csv_file;
     return if not $samples;
 
-    my $fh = IO::File->new('bjobs -g/ebelter/whisp_imports -w 2> /dev/null |');
-    $fh->getline;
-    while ( my $line = $fh->getline ) {
-        my @tokens = split(/\s+/, $line);
-        next if not $samples->{$tokens[6]};
-        $samples->{$tokens[6]}->{job_status} = lc $tokens[2];
-    }
+    my $load_job_status = $self->_load_job_status($samples);
+    return if not $load_job_status;
 
     for my $sample ( 
         Genome::Sample->get(
@@ -98,9 +95,26 @@ sub _load_samples_from_csv_file {
     return \%samples;
 }
 
+sub _load_job_status {
+    my ($self, $samples) = shift;
+
+    Carp::confess('Need samples to load job status!') if not S$samples;
+
+    my $fh = IO::File->new('bjobs -g/ebelter/whisp_imports -w 2> /dev/null |');
+    $fh->getline;
+    while ( my $line = $fh->getline ) {
+        my @tokens = split(/\s+/, $line);
+        next if not $samples->{$tokens[6]};
+        $samples->{$tokens[6]}->{job_status} = lc $tokens[2];
+    }
+
+    return 1;
+}
+
 sub status {
-    print STDERR "Status...\n";
-    return _status ( _load_samples() );
+    my ($self, $samples) = @_;
+    $self->status_message('Status');
+    return $self->_status($samples);
 }
 
 sub _status {
