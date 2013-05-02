@@ -14,14 +14,10 @@ class Genome::Model::Build::Command::DiffBlessed {
             valid_values => ['5.8', '5.10'],
             default_value => '5.10',
         },
-        db_file => {
-            is_optional => 1,
-            default_value => default_db_file(),
-        },
     ],
 };
 
-sub default_db_file {
+sub db_file {
     return __FILE__.".YAML";
 }
 
@@ -35,7 +31,7 @@ sub blessed_build {
 
 sub retrieve_blessed_build {
     my ($model_name, $perl_version, $db_file) = @_;
-    $db_file ||= default_db_file();
+    $db_file ||= db_file();
     my ($blessed_ids) = YAML::LoadFile($db_file);
     my $blessed_id = $blessed_ids->{$model_name};
     unless(defined $blessed_id) {
