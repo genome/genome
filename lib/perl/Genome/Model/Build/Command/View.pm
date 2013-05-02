@@ -332,6 +332,9 @@ sub _print_error_log_preview {
         $preview = $lines[-1];
     }
 
+    # terminate any unfinished color regions in preview
+    $preview .= $self->_color(' ', 'white');
+
     my $screen_width = $self->get_terminal_width();
     if (length($preview) > $screen_width - 20) {
         $preview = substr($preview, 0, $screen_width - 20) . "...";
