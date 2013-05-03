@@ -65,13 +65,11 @@ sub create {
 
     $self->_prepare_staging_directory;
 
-    $self->status_message('Process instrument data '.$self->instrument_data->__display_name__ );
-    my $process_ok = $self->_process_instrument_data;
-    if(not $process_ok) {
+    unless ($self->process_instrument_data) {
+        $self->error_message("Process instrument data failed");
         $self->delete;
         return;
     }
-    $self->status_message('Process instrument data...OK');
 
     $self->status_message('Verify output files...');
     my @output_files = $self->read_processor_output_files;
@@ -113,6 +111,37 @@ sub create {
     return $self;
 }
 
+sub process_instrument_data {
+    my $self = shift;
+    my $id = $self->instrument_data;
+    $self->status_message('Process instrument data '.$id->__display_name__ );
+    my $process_ok = $self->_process_instrument_data($id);
+    if(not $process_ok) {
+        return;
+    }
+    $self->status_message('Process instrument data...OK');
+    return 1;
+}
+
+
+sub resolve_merged_input_type {
+    my $self = shift;
+    if (defined $self->output_file_type) {
+        return $self->output_file_type;
+    }
+    my @output_configs = $self->output_file_config;
+    if (@output_configs) {
+       my @parts = split /:/, $output_configs[0];
+       for my $part (@parts) {
+           if ($part =~ /type=/) {
+               $part =~ s/type=//;
+               return $part;
+           }
+       }
+    }
+    return;
+}
+
 sub resolve_allocation_subdirectory {
     my $self = shift;
     my $hostname = hostname;
@@ -129,12 +158,14 @@ sub resolve_allocation_disk_group_name {
 
 sub read_processor_output_metric_file {
     my $self = shift;
-    return $self->instrument_data_id.'.output_metrics';
+    my $base = $self->resolve_base_name_from_instrument_data;
+    return "$base.output_metrics";
 }
 
 sub read_processor_input_metric_file {
     my $self = shift;
-    return $self->instrument_data_id.'.input_metrics';
+    my $base = $self->resolve_base_name_from_instrument_data;
+    return "$base.input_metrics";
 }
 
 sub read_processor_output_files {
@@ -156,8 +187,7 @@ sub read_processor_output_file_paths {
 }
 
 sub _process_instrument_data {
-    my ($self) = @_;
-    my $instrument_data = $self->instrument_data;
+    my ($self, $instrument_data) = @_;
     $self->status_message('Process: '.join(' ', map { $instrument_data->$_ } (qw/ class id/)));
 
     # Output
@@ -214,13 +244,19 @@ sub _process_instrument_data {
         @read_processor_parts = ('');
     }
 
-    my @sx_cmd_parts = map { 'gmt sx '.$_ } @read_processor_parts;
-    $sx_cmd_parts[0] .= ' --input '.join(',', @inputs);
+    return $self->_run_sx(\@read_processor_parts, \@inputs, $output);
+}
+
+sub _run_sx {
+    my ($self, $read_processor_parts, $inputs, $output) = @_;
+    my @sx_cmd_parts = map { 'gmt sx '.$_ } @{$read_processor_parts};
+    $sx_cmd_parts[0] .= ' --input '.join(',', @{$inputs});
     $sx_cmd_parts[0] .= ' --input-metrics '.
     $self->temp_staging_directory.'/'.
     $self->read_processor_input_metric_file;
-    $sx_cmd_parts[$#read_processor_parts] .= ' --output '.$output;
-    $sx_cmd_parts[$#read_processor_parts] .= ' --output-metrics '.
+    my $num_parts = scalar @{$read_processor_parts};
+    $sx_cmd_parts[$num_parts-1] .= ' --output '.$output;
+    $sx_cmd_parts[$num_parts-1] .= ' --output-metrics '.
     $self->temp_staging_directory.'/'.
     $self->read_processor_output_metric_file;
 
@@ -231,7 +267,6 @@ sub _process_instrument_data {
         $self->error_message('Failed to execute gmt sx command: '.$@);
         return;
     }
-
     return 1;
 }
 
@@ -275,20 +310,22 @@ sub _output_config_params {
         }
     }
     elsif ( $self->output_file_count ) {
+        my $base = $self->resolve_base_name_from_instrument_data($self->instrument_data_id);
+
         if ( $self->output_file_count == 1 ) {
             @params = ({
-                    basename => $self->instrument_data_id.'.'.$self->output_file_suffix,
+                    basename => $base.'.'.$self->output_file_suffix,
                     type => $self->output_file_type,
                 });
         }
         elsif ( $self->output_file_count == 2 ) {
             @params = ({
-                    basename => $self->instrument_data_id.'.1.'.$self->output_file_suffix,
+                    basename => $base.'.1.'.$self->output_file_suffix,
                     name => 'fwd',
                     type => $self->output_file_type,
                 },
                 {
-                    basename => $self->instrument_data_id.'.2.'.  $self->output_file_suffix,
+                    basename => $base.'.2.'.  $self->output_file_suffix,
                     name => 'rev',
                     type => $self->output_file_type,
                 });
@@ -304,6 +341,27 @@ sub _output_config_params {
     }
 
     return @params;
+}
+
+sub get_output_file_count {
+    my $self = shift;
+    my @configs = $self->output_file_config;
+    if ($self->output_file_count) {
+        return $self->output_file_count;
+    }
+    elsif (scalar @configs >= 1) {
+        return scalar @configs;
+    }
+    else {
+        $self->error_message("Couldn't resolve output file count");
+        die $self->error_message;
+    }
+}
+
+sub resolve_base_name_from_instrument_data {
+    my $self = shift;
+    
+    return $self->instrument_data_id;
 }
 
 1;
