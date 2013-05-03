@@ -7539,8 +7539,6 @@ $Genome::Command::OPTS_SPEC = [
           '5.8',
           '5.10'
         ],
-        'db-file=s',
-        'files',
         'new-build=s',
         undef,
         'help!',
