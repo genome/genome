@@ -205,19 +205,14 @@ sub _process_instrument_data {
         @inputs = ( $sff.':type=sff:cnt='.$input_cnt );
     }
     elsif ( my $archive = eval{ $instrument_data->attributes(attribute_label => 'archive_path')->attribute_value; } ){
-        my $qual_type = eval{ $instrument_data->native_qual_format; };
-        $qual_type //= 'sanger';
-
-        if ( $instrument_data->can('resolve_quality_converter') ) {
-            my $converter = eval{ $instrument_data->resolve_quality_converter };
-            if ( not $converter ) {
-                $self->error_message('No quality converter for instrument data '.$instrument_data->id);
-                return;
-            }
-            elsif ( $converter eq 'sol2sanger' ) {
-                $self->error_message('Cannot process old illumina data! Instrument data '.$instrument_data->id);
-                return;
-            }
+        my $qual_type = eval{ $instrument_data->native_qual_type };
+        if ( not $qual_type ) {
+            $self->error_message('Failed to get quality type for fastq archive path for instrument data! '.$instrument_data->id);
+            return;
+        }
+        if ( $qual_type eq 'solexa' ) {
+            $self->error_message('Cannot process old "solexa" quality type for fastq archive path for instrument data! '.$instrument_data->id);
+            return;
         }
         my $cmd = "tar -xzf $archive --directory=".$self->temp_staging_directory;
         my $tar = Genome::Sys->shellcmd(cmd => $cmd);
