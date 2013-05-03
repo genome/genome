@@ -16,22 +16,20 @@ use Test::More;
 use above 'Genome';
 
 use_ok('Genome::InstrumentData::SxResult');
-use_ok('Genome::InstrumentData::InstrumentDataTestObjGenerator');
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-SxResult';
 
-my ($instrument_data) = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data($data_dir.'/inst_data/-6666/archive.bam');
+my ($instrument_data) = &setup_data();
 my $read_processor = '';
 my $output_file_count = 2;
 my $output_file_type = 'sanger';
 
 my %sx_result_params = (
-    instrument_data_id => [$instrument_data->id],
+    instrument_data_id => $instrument_data->id,
     read_processor => $read_processor,
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
     test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
-    coverage => undef,
 );
 
 my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
@@ -58,13 +56,12 @@ isnt($sx_result4, $sx_result, 'produced different result');
 
 # use output file config [should be same output as above]
 my %sx_result_params_with_config = (
-    instrument_data_id => [$instrument_data->id],
+    instrument_data_id => $instrument_data->id,
     read_processor => $read_processor,
     output_file_config => [ 
         'basename='.$instrument_data->id.'.1.fastq:type=sanger:name=fwd', 'basename='.$instrument_data->id.'.2.fastq:type=sanger:name=rev',
     ],
     test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
-    coverage => undef,
 );
 my $sx_result_with_config = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params_with_config);
 isa_ok($sx_result_with_config, 'Genome::InstrumentData::SxResult', 'successful run w/ config');
@@ -85,85 +82,84 @@ for ( my $i = 0; $i < @read_processor_output_files; $i++ ) {
 # fails
 ok( # no config or count
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => [$instrument_data->id],
+        instrument_data_id => $instrument_data->id,
         read_processor => $read_processor,
-        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );
 ok( # no basename in output file config
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => [$instrument_data->id],
+        instrument_data_id => $instrument_data->id,
         read_processor => $read_processor,
         output_file_config => [ 'type=sanger' ],
-        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );
 ok( # invalid basename in output file config
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => [$instrument_data->id],
+        instrument_data_id => $instrument_data->id,
         read_processor => $read_processor,
         output_file_config => [ 'basename=/carter:type=sanger' ],
-        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );
 ok( # invalid basename in output file config
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => [$instrument_data->id],
+        instrument_data_id => $instrument_data->id,
         read_processor => $read_processor,
         output_file_config => [ 'basename=johnny cash:type=sanger' ],
-        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );
 ok( # no type in output file config
     !Genome::InstrumentData::SxResult->create(
-        instrument_data_id => [$instrument_data->id],
+        instrument_data_id => $instrument_data->id,
         read_processor => $read_processor,
         output_file_config => [ 'basename=carter' ],
-        coverage => undef,
     ),
     'Did not create sx result w/ config w/o basename',
 );
 
-#Results with multiple instrument data
-my ($instrument_data2) = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data($data_dir.'/inst_data/-6666/archive.bam');
-ok($instrument_data2, "Second instrument data was defined");
-
-ok(Genome::InstrumentData::SxResult->create(
-    instrument_data_id => [$instrument_data2->id],
-    read_processor => $read_processor,
-    output_file_count => $output_file_count,
-    output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
-    coverage => undef,
-    ), "Created SxResult for second instrument data"
-);
-
-ok(Genome::InstrumentData::SxResult->create(
-    instrument_data_id => [$instrument_data->id, $instrument_data2->id],
-    read_processor => $read_processor,
-    output_file_count => $output_file_count,
-    output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
-    coverage => undef,
-    ),
-   'Created sx result with multiple instrument data'
-);
-
-$instrument_data->taxon->estimated_genome_size(50);
-
-ok(Genome::InstrumentData::SxResult->create(
-    instrument_data_id => [$instrument_data->id, $instrument_data2->id],
-    read_processor => $read_processor,
-    output_file_count => $output_file_count,
-    output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
-    coverage => 10,
-    ),
-   'Created merged sx result with coverage'
-);
-
 done_testing;
+
+sub setup_data {
+    my $sample = Genome::Sample->__define__(
+        id => -1234,
+        name => 'TEST-000',
+    );
+
+    ok($sample,'define sample') or die;
+
+    my $lib = Genome::Library->__define__(
+        id => -1235,
+        name => $sample->name.'-testlibs1',
+        sample_id => $sample->id,
+        library_insert_size => 180,
+    );
+
+    ok($lib, 'define library') or die;
+
+    my $instrument_data = Genome::InstrumentData::Solexa->__define__(
+        id => -6666,
+        sequencing_platform => 'solexa',
+        read_length => 101,
+        subset_name => '1-AAAA',
+        index_sequence => 'AAAA',
+        run_name => 'XXXXXX/1-AAAAA',
+        run_type => 'Paired',
+        flow_cell_id => 'XXXXX',
+        lane => 1,
+        library => $lib,
+        bam_path => $data_dir.'/inst_data/-6666/archive.bam',
+        clusters => 44554,
+        fwd_clusters => 44554,
+        rev_clusters => 44554,
+        analysis_software_version => 'not_old_illumina',
+    );
+
+    ok($instrument_data, 'define instrument data');
+    ok($instrument_data->is_paired_end, 'inst data is paired');
+    ok(-s $instrument_data->bam_path, 'inst data bam path');
+
+    return ($instrument_data);
+}

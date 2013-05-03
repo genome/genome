@@ -272,10 +272,9 @@ sub sx_result_params_for_instrument_data {
     }
 
     return (
-        instrument_data_id => ( [@instrument_data > 1 ? [ map { $_->id } @instrument_data ] : $instrument_data[0]->id] ),
+        instrument_data_id => ( @instrument_data > 1 ? [ map { $_->id } @instrument_data ] : $instrument_data[0]->id ),
         read_processor => join(' | ', @read_processor),
         output_file_config => \@output_file_configs,
-        coverage => undef,
     );
 }
 
