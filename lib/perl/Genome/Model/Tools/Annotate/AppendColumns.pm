@@ -18,13 +18,10 @@ class Genome::Model::Tools::Annotate::AppendColumns {
             is => 'File',
             doc => "File with the columns to append",
         },
-        column_to_append => {
+        columns_to_append => {
             is => 'Number',
             doc => "1-based index of the column to append.",
-        },
-        header => {
-            is => 'Text',
-            doc => "String to use as header for new column",
+            is_many => 1,
         },
         chrom_column => {
             is => 'Number',
@@ -67,11 +64,22 @@ sub execute {
     my $start_column = $self->start_column - 1;
     my $stop_column = $self->stop_column - 1;
 
+    my $extra_header_line = <$in>;
+    my $extra_header;
+    my @headers = split(/\t/, $extra_header_line);
+    for my $column ($self->columns_to_append) {
+        $extra_header .= "\t$column";
+    }
+
     while(my $line = <$in>) {
         chomp $line;
         my @fields = split (/\t/, $line);
-        if (defined $additional_info2{$fields[$chrom_column]}{$fields[$start_column]}{$fields[$stop_column]} and $additional_info2{$fields[$chrom_column]}{$fields[$start_column]}{$fields[$stop_column]} == 1) {
-            $additional_info{$fields[$chrom_column]}{$fields[$start_column]}{$fields[$stop_column]} = $fields[$self->column_to_append - 1];
+        if (defined $additional_info2{$fields[$chrom_column]}{$fields[$start_column]+1}{$fields[$stop_column]} and $additional_info2{$fields[$chrom_column]}{$fields[$start_column]+1}{$fields[$stop_column]} == 1) {
+            my @added_columns;
+            for my $to_append ($self->columns_to_append) {
+                push @added_columns, $fields[$to_append - 1];
+            }
+            $additional_info{$fields[$chrom_column]}{$fields[$start_column]+1}{$fields[$stop_column]} = join("\t", @added_columns);
         }
     }
     $in->close;
@@ -80,7 +88,7 @@ sub execute {
     my $out = Genome::Sys->open_file_for_writing($self->output_file);
     my $header_line = <$in>;
     chomp $header_line;
-    $out->print(join("\t", $header_line, $self->header)."\n");
+    $out->print($header_line.$extra_header."\n");
 
     $self->status_message("Writing final output file");
     while(my $line = <$in>) {
