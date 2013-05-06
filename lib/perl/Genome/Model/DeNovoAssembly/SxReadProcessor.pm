@@ -135,17 +135,14 @@ sub determine_processing_for_instrument_data {
 
     Carp::confess('No instrument data given to determine_processing_for_instrument_data!') if not $instrument_data;
 
-    if ( not @{$self->_read_processings} ) {
-        return $self->_default_read_processing;
-    }
-
     my @matched_processings;
-    for my $processing ( @{$self->_read_processings} ) {
-        push @matched_processings, $processing if $self->does_instrument_data_match_condition($instrument_data, @{$processing->{condition}});
+    if ( @{$self->_read_processings} ) {
+        for my $processing ( @{$self->_read_processings} ) {
+            push @matched_processings, $processing if $self->does_instrument_data_match_condition($instrument_data, @{$processing->{condition}});
+        }
     }
 
-
-    # Found more than one
+    # Bad - found more than one
     if ( @matched_processings > 1 ) {
         $self->error_message(
             'Found multiple processings for instrument data! '.$instrument_data->id."\n".Data::Dumper::Dumper(\@matched_processings)
@@ -155,7 +152,6 @@ sub determine_processing_for_instrument_data {
 
     # Use the one we found, or if none, the default
     my %processing = ( @matched_processings == 1  ? %{$matched_processings[0]} : %{$self->_default_read_processing} );
-    # Add SX result params
     $processing{sx_result_params} = {
         instrument_data_id => $instrument_data->id,
         read_processor => $processing{processor},

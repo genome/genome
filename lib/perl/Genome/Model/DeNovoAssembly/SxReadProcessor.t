@@ -17,30 +17,42 @@ my @instrument_data;
 my @inst_data_attrs = (
     {
         original_est_fragment_size => 250,
+        is_paired_end => 1,
         read_count => 10000,
         read_length => 100,
     },
     {
         original_est_fragment_size => 3000,
+        is_paired_end => 1,
         read_count => 10000,
         read_length => 100,
     },
     {
         original_est_fragment_size => 8000,
+        is_paired_end => 1,
         read_count => 10000,
         read_length => 100,
     },
     {
         original_est_fragment_size => 100000,
+        is_paired_end => 2,
         read_count => 10000,
         read_length => 777,
     },
 );
+my $i = 0;
 for my $inst_data_attr ( @inst_data_attrs ) {
     push @instrument_data, Genome::InstrumentData::Imported->create(
         library => $library,
         %$inst_data_attr,
     );
+    $instrument_data[$i]->{sx_result_params} = {
+        instrument_data_id => $instrument_data[$i]->id,
+        output_file_count => ( $instrument_data[$i]->is_paired_end ? 2 : 1 ),
+        output_file_type => 'sanger',
+        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    };
+    $i++;
 }
 is(@instrument_data, @inst_data_attrs, 'create inst data');
 
@@ -50,10 +62,14 @@ my $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
 );
 ok($processor, 'failed to create sx read processor');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', }, 'got default processing');
+my $old_way_processing = { condition => 'DEFAULT', processor => 'trim default --param 1', };
 for my $instrument_data ( @instrument_data ) {
+    my $processing = $processor->determine_processing_for_instrument_data($instrument_data),
+    $old_way_processing->{sx_result_params} = $instrument_data->{sx_result_params};
+    $old_way_processing->{sx_result_params}->{read_processor} = $processing->{processor};
     is_deeply( # all are default processing
-        $processor->determine_processing_for_instrument_data($instrument_data),
-        { condition => 'DEFAULT', processor => 'trim default --param 1', },
+        $processing,
+        $old_way_processing,
         'got correct processing for inst data',
     );
 }
@@ -64,10 +80,14 @@ $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
 );
 ok($processor, 'failed to create sx read processor');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, }, 'got default processing');
+my $new_way_processing = { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, };
 for my $instrument_data ( @instrument_data ) {
+    my $processing = $processor->determine_processing_for_instrument_data($instrument_data),
+    $new_way_processing->{sx_result_params} = $instrument_data->{sx_result_params};
+    $new_way_processing->{sx_result_params}->{read_processor} = $processing->{processor};
     is_deeply( # all are default processing
-        $processor->determine_processing_for_instrument_data($instrument_data),
-        { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, },
+        $processing,
+        $new_way_processing,
         'got correct processing for inst data',
     );
 }
@@ -89,11 +109,8 @@ is_deeply($processor->_read_processings, $processings, 'got read processors');
 for ( my $i = 0; $i < @instrument_data; $i++ ) {
     my %processing = %{$processings->[$i]};
     $processing{sx_result_params} = {
-        instrument_data_id => $instrument_data[$i]->id,
+        %{$instrument_data[$i]->{sx_result_params}},
         read_processor => $processing{processor},
-        output_file_count => ( $instrument_data[$i]->is_paired_end ? 2 : 1 ),
-        output_file_type => 'sanger',
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
     };
     is_deeply(
         $processor->determine_processing_for_instrument_data($instrument_data[$i]),
