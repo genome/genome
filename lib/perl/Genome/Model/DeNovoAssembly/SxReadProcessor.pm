@@ -144,20 +144,27 @@ sub determine_processing_for_instrument_data {
         push @matched_processings, $processing if $self->does_instrument_data_match_condition($instrument_data, @{$processing->{condition}});
     }
 
-    # Found one only! YAY!
-    if ( @matched_processings == 1 ) {
-        return $matched_processings[0];
-    }
-    # None, use default
-    elsif ( not @matched_processings ) {
-        return $self->_default_read_processing;
-    }
 
     # Found more than one
-    $self->error_message(
-        'Found multiple processings for instrument data! '.$instrument_data->id."\n".Data::Dumper::Dumper(\@matched_processings)
-    );
-    return;
+    if ( @matched_processings > 1 ) {
+        $self->error_message(
+            'Found multiple processings for instrument data! '.$instrument_data->id."\n".Data::Dumper::Dumper(\@matched_processings)
+        );
+        return;
+    }
+
+    # Use the one we found, or if none, the default
+    my %processing = ( @matched_processings == 1  ? %{$matched_processings[0]} : %{$self->_default_read_processing} );
+    # Add SX result params
+    $processing{sx_result_params} = {
+        instrument_data_id => $instrument_data->id,
+        read_processor => $processing{processor},
+        output_file_count => ( $instrument_data->is_paired_end ? 2 : 1 ),
+        output_file_type => 'sanger',
+        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    };
+
+    return \%processing;
 }
 
 sub does_instrument_data_match_condition {

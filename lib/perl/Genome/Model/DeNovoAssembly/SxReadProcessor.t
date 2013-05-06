@@ -87,9 +87,17 @@ my $processings = [
 ];
 is_deeply($processor->_read_processings, $processings, 'got read processors');
 for ( my $i = 0; $i < @instrument_data; $i++ ) {
+    my %processing = %{$processings->[$i]};
+    $processing{sx_result_params} = {
+        instrument_data_id => $instrument_data[$i]->id,
+        read_processor => $processing{processor},
+        output_file_count => ( $instrument_data[$i]->is_paired_end ? 2 : 1 ),
+        output_file_type => 'sanger',
+        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    };
     is_deeply(
         $processor->determine_processing_for_instrument_data($instrument_data[$i]),
-        $processings->[$i],
+        \%processing,
         'got correct processing for inst data',
     );
 }
