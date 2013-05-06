@@ -716,7 +716,6 @@ sub execute {
         }
     }
     
-    `cp -r $tempdir ~/sata921/tmp/readcounts2/insertion`;
     
     #Check all the variants and output those with no output (had 0 reads)
     foreach my $k (keys(%foundHash)){
