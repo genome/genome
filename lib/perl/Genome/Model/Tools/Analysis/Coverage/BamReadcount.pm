@@ -574,12 +574,12 @@ sub execute {
 
     #if there are no indels, skip
     if( -s "$tempdir/indelpos"){
-        open(INDELMOD,">$tempdir/indelpos.mod");
-        $inFh = IO::File->new( "$tempdir/indelpos" ) || die "can't open file\n";
 
-        #convert the indel file to bed
+        #grab pileups for each indel
+        $inFh = IO::File->new( "$tempdir/indelpos" ) || die "can't open file\n";
         while( my $line = $inFh->getline )
         {
+            #convert coordinates to grab the appropriate bases:
             chomp($line);
             my @F = split("\t",$line);
             if($F[3] =~ /0|\-|\*/ ){ #INS
@@ -592,27 +592,25 @@ sub execute {
                 print STDERR "WARNING: bad indel format: $line \n";
             }
 
-            print INDELMOD join("\t",@F) . "\n";
-        }
-        close(INDELMOD);
+            #run mpileup to get the readcounts:
+            my $cmd = "samtools mpileup -f $fasta -q 1 -r $F[0]:$F[1]-$F[2]  $bam_file >>$tempdir/pileup";
+            #$self->status_message("Running command: $cmd");
 
-        #run mpileup to get the readcounts for each indel:
-        my $cmd = "samtools mpileup -f $fasta -q 1 -l $tempdir/indelpos.mod $bam_file >$tempdir/pileup";
-        $self->status_message("Running command: $cmd");
-
-        my $return = Genome::Sys->shellcmd(
-            cmd => "$cmd",
-        );
-        unless($return) {
-            $self->error_message("Failed to execute: Returned $return");
-            die $self->error_message;
+            my $return = Genome::Sys->shellcmd(
+                cmd => "$cmd",
+                );
+            unless($return) {
+                $self->error_message("mpileup failure. Tried to run:\n$cmd");
+                $self->error_message("Returned:\n$return");
+                die $self->error_message;
+            }
         }
 
         #run varscan to parse the samtools file
-        $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/indels.varscan";
+        my $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/indels.varscan";
         $self->status_message("Running command: $cmd");
 
-        $return = Genome::Sys->shellcmd(
+        my $return = Genome::Sys->shellcmd(
             cmd => "$cmd",
         );
         unless($return) {
@@ -715,7 +713,6 @@ sub execute {
             
         }
     }
-    
     
     #Check all the variants and output those with no output (had 0 reads)
     foreach my $k (keys(%foundHash)){
