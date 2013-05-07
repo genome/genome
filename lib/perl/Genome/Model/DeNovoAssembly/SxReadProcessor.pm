@@ -151,6 +151,7 @@ sub determine_sx_result_params_for_multiple_instrument_data {
     my %sx_result_params = (
         instrument_data_id => [ map { $_->id } @instrument_data ],
         read_processor => $processings[0]->{processor},
+        coverage => $processings[0]{coverage},
         output_file_count => 2,
         output_file_type => 'sanger',
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),

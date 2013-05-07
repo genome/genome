@@ -142,6 +142,7 @@ diag('SUCCESS (MULTIPLE INST DATA)');
 my $sx_result_params = $processor->determine_sx_result_params_for_multiple_instrument_data($instrument_data[1], $instrument_data[1]),
 my %expected_sx_result_params = %{$instrument_data[1]->{sx_result_params}};
 $expected_sx_result_params{read_processor} = $expected_processings[1]->{processor};
+$expected_sx_result_params{coverage} = $expected_processings[1]->{coverage};
 $expected_sx_result_params{instrument_data_id} = [ $instrument_data[1]->id, $instrument_data[1]->id, ];
 is_deeply(
     $sx_result_params,
