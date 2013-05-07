@@ -130,14 +130,14 @@ sub create {
     return $self;
 }
 
-sub determine_processing_for_multiple_instrument_data {
+sub determine_sx_result_params_for_multiple_instrument_data {
     my ($self, @instrument_data) = @_;
 
-    Carp::confess('No instrument data given to determine_processing_for_multiple_instrument_data!') if not @instrument_data;
+    Carp::confess('No instrument data given to determine_sx_result_params_for_multiple_instrument_data!') if not @instrument_data;
 
     my %matched_processings;
     for my $instrument_data ( @instrument_data ) { 
-        my $processing = $self->determine_processing_for_instrument_data($instrument_data);
+        my $processing = $self->determine_sx_result_params_for_instrument_data($instrument_data);
         return if not $processing;
         $matched_processings{ $processing->{condition} } = $processing;
     }
@@ -152,10 +152,10 @@ sub determine_processing_for_multiple_instrument_data {
     return $matched_processings[0];
 }
 
-sub determine_processing_for_instrument_data {
+sub determine_sx_result_params_for_instrument_data {
     my ($self, $instrument_data) = @_;
 
-    Carp::confess('No instrument data given to determine_processing_for_instrument_data!') if not $instrument_data;
+    Carp::confess('No instrument data given to determine_sx_result_params_for_instrument_data!') if not $instrument_data;
 
     my @matched_processings;
     if ( @{$self->_read_processings} ) {

@@ -64,7 +64,7 @@ ok($processor, 'failed to create sx read processor');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', }, 'got default processing');
 my $old_way_processing = { condition => 'DEFAULT', processor => 'trim default --param 1', };
 for my $instrument_data ( @instrument_data ) {
-    my $processing = $processor->determine_processing_for_instrument_data($instrument_data),
+    my $processing = $processor->determine_sx_result_params_for_instrument_data($instrument_data),
     $old_way_processing->{sx_result_params} = $instrument_data->{sx_result_params};
     $old_way_processing->{sx_result_params}->{read_processor} = $processing->{processor};
     is_deeply( # all are default processing
@@ -82,7 +82,7 @@ ok($processor, 'failed to create sx read processor');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, }, 'got default processing');
 my $new_way_processing = { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, };
 for my $instrument_data ( @instrument_data ) {
-    my $processing = $processor->determine_processing_for_instrument_data($instrument_data),
+    my $processing = $processor->determine_sx_result_params_for_instrument_data($instrument_data),
     $new_way_processing->{sx_result_params} = $instrument_data->{sx_result_params};
     $new_way_processing->{sx_result_params}->{read_processor} = $processing->{processor};
     is_deeply( # all are default processing
@@ -113,14 +113,14 @@ for ( my $i = 0; $i < @instrument_data; $i++ ) {
         read_processor => $processing{processor},
     };
     is_deeply(
-        $processor->determine_processing_for_instrument_data($instrument_data[$i]),
+        $processor->determine_sx_result_params_for_instrument_data($instrument_data[$i]),
         \%processing,
         'got correct processing for inst data',
     );
 }
 
 diag('SUCCESS (MULTIPLE INST DATA)');
-my $processing_for_multiple_inst_data = $processor->determine_processing_for_multiple_instrument_data($instrument_data[1], $instrument_data[1]), # send the same one twice
+my $processing_for_multiple_inst_data = $processor->determine_sx_result_params_for_multiple_instrument_data($instrument_data[1], $instrument_data[1]), # send the same one twice
 my %expected_processing_for_multiple_inst_data = %{$processings->[1]};
 $expected_processing_for_multiple_inst_data{sx_result_params} = {
     %{$instrument_data[1]->{sx_result_params}},
@@ -135,7 +135,7 @@ is_deeply(
 
 # FAILS
 # mulitple inst data returns multiple processings
-ok(!$processor->determine_processing_for_multiple_instrument_data(@instrument_data), 'failed to get processings for multiple inst data that did not match the same condition');
+ok(!$processor->determine_sx_result_params_for_multiple_instrument_data(@instrument_data), 'failed to get processings for multiple inst data that did not match the same condition');
 
 # no default
 my $failed_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(

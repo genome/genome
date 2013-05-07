@@ -50,7 +50,7 @@ sub shortcut {
         $self->error_message('Failed to create SX read processor! '.$read_processor);
         return;
     }
-    my $read_processing = $sx_read_processor->determine_processing_for_instrument_data($instrument_data);
+    my $read_processing = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
     return if not $read_processing;
     $self->status_message('Processing: '.Data::Dumper::Dumper($read_processing));
 
@@ -83,7 +83,7 @@ sub execute {
         $self->error_message('Failed to create SX read processor! '.$read_processor);
         return;
     }
-    my $read_processing = $sx_read_processor->determine_processing_for_instrument_data($instrument_data);
+    my $read_processing = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
     return if not $read_processing;
     $self->status_message('Processing: '.Data::Dumper::Dumper($read_processing));
 
