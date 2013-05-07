@@ -47,7 +47,7 @@ sub parser {
         condition: /([\w\d\.\=\<\>\*]+)/
         { $item[1]; }
 
-        processor: /([\w\d\-\.\/\_\:\= ]+)/
+        processor: /([\w\d\-\.\/\_\:\=| ]+)/
         { $item[1]; }
 
         coverage: /(\d+)X/
@@ -109,7 +109,29 @@ sub __errors__ {
     }
     $self->additional_processings($parsed_processings);
 
+    for my $processing ( $self->default_processing, @{$self->additional_processings} ) {
+        my $processor = $processing->{processor};
+        $processor = $self->default_processing->{processor} if $processor eq 'DEFAULT';
+        my @processor_parts = split(/\s+\|\s+/, $processor);
+        if ( not @processor_parts ) {
+            return UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ processor /],
+                desc => "Could not find read processors in string: $processor",
+            );
+        }
 
+        for my $processor_part ( @processor_parts ) {
+            my $processor_is_ok = Genome::Model::Tools::Sx::Validate->validate_command('gmt sx '.$processor_part);
+            if ( not $processor_is_ok ) {
+                return UR::Object::Tag->create(
+                    type => 'invalid',
+                    properties => [qw/ processor /],
+                    desc => "Cannot validate processor part ($processor_part)! See above error(s)",
+                );
+            }
+        }
+    }
 
     return;
 }

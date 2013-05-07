@@ -9,6 +9,15 @@ use Test::More;
 
 use_ok('Genome::Model::DeNovoAssembly::SxReadProcessor') or die;
 
+class Genome::Model::Tools::Sx::Test::Default {
+    is => 'Genome::Model::Tools::Sx::Base',
+    has => [ param => {}, ],
+};
+class Genome::Model::Tools::Sx::Test::InsertSize {
+    is => 'Genome::Model::Tools::Sx::Base',
+    has => [ min => {}, max => {}, ],
+};
+
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'create test sample');
 my $library = Genome::Library->create(name => '__TEST_LIBRARY__', sample => $sample);
@@ -58,10 +67,10 @@ is(@instrument_data, @inst_data_attrs, 'create inst data');
 
 diag('SUCCESS (OLD WAY)');
 my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    processor => 'trim default --param 1',
+    processor => 'test default --param 1',
 );
-ok($sx_processor, 'failed to create sx read processor');
-my $old_way_processing = { condition => 'DEFAULT', processor => 'trim default --param 1', };
+ok($sx_processor, 'create sx read processor');
+my $old_way_processing = { condition => 'DEFAULT', processor => 'test default --param 1', };
 is_deeply($sx_processor->default_processing, $old_way_processing, 'got default processing');
 is_deeply($sx_processor->additional_processings, [], 'no additional processings');
 for my $instrument_data ( @instrument_data ) {
@@ -83,10 +92,10 @@ for my $instrument_data ( @instrument_data ) {
 
 diag('SUCCESS (NEW WAY DEFAULT ONLY)');
 $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    processor => 'DEFAULT (trim default --param 1, coverage 10X)',
+    processor => 'DEFAULT (test default --param 1, coverage 10X)',
 );
-ok($sx_processor, 'failed to create sx read processor');
-my $new_way_processing = { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, };
+ok($sx_processor, 'create sx read processor');
+my $new_way_processing = { condition => 'DEFAULT', processor => 'test default --param 1', coverage => 10, };
 is_deeply($sx_processor->default_processing, $new_way_processing, 'got default processing');
 is_deeply($sx_processor->additional_processings, [], 'no additional processings');
 for my $instrument_data ( @instrument_data ) {
@@ -109,16 +118,16 @@ for my $instrument_data ( @instrument_data ) {
 
 diag('SUCESS (NEW WAY, FULL TEST)');
 $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    processor => 'DEFAULT (trim default --param 1) original_est_fragment_size <= 2.5 * read_length (DEFAULT, coverage 30X) original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 (trim insert-size --min 1001 --max 6000 then filter by-length --length 50, coverage 20X) original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 (trim insert-size --min 6001 --max 10000) read_length == 777 (filter --param 1 --qual 30)',
+    processor => 'DEFAULT (test default --param 1) original_est_fragment_size <= 2.5 * read_length (DEFAULT, coverage 30X) original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 (test insert-size --min 1001 --max 6000 | test default --param 0, coverage 20X) original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 (test insert-size --min 6001 --max 10000) read_length == 777 (test default --param 100)',
 );
 ok($sx_processor, 'create sx read processor');
 ok($sx_processor->parser, 'got parser');
-my $default_processing = { condition => 'DEFAULT', processor => 'trim default --param 1', };
+my $default_processing = { condition => 'DEFAULT', processor => 'test default --param 1', };
 my @expected_processings = (
     { condition => [qw/ original_est_fragment_size <= 2.5 * read_length /], processor => 'DEFAULT', coverage => 30, },
-    { condition => [qw/ original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 /], processor => 'trim insert-size --min 1001 --max 6000 then filter by-length --length 50', coverage => 20, },
-    { condition => [qw/ original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 /], processor => 'trim insert-size --min 6001 --max 10000', },
-    { condition => [qw/ read_length == 777 /], processor => 'filter --param 1 --qual 30', },
+    { condition => [qw/ original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 /], processor => 'test insert-size --min 1001 --max 6000 | test default --param 0', coverage => 20, },
+    { condition => [qw/ original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 /], processor => 'test insert-size --min 6001 --max 10000', },
+    { condition => [qw/ read_length == 777 /], processor => 'test default --param 100', },
 );
 is_deeply($sx_processor->default_processing, $default_processing, 'got default processor');
 is_deeply($sx_processor->additional_processings, \@expected_processings, 'got additional read processors');
@@ -157,17 +166,23 @@ is_deeply(
 # mulitple inst data returns multiple processings
 ok(!$sx_processor->determine_sx_result_params_for_multiple_instrument_data(@instrument_data), 'failed to get processings for multiple inst data that did not match the same condition');
 
-# no default
+# invalid sx command
 my $failed_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    processor => 'DEFULT trim default --param 1',
+    processor => 'DEFAULT test deefault --param 1',
 );
-ok(!$failed_processor, 'failed to create sx read processor');
+ok(!$failed_processor, 'failed to create sx read processor w/ invalid sx command');
+
+# no default
+$failed_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
+    processor => 'DEFULT test default --param 1',
+);
+ok(!$failed_processor, 'failed to create sx read processor w/ no default');
 
 # more than one default
 $failed_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    processor => 'DEFAULT (trim default --param 1) DEFAULT (trim default2 --param 1)',
+    processor => 'DEFAULT (test default --param 1) DEFAULT (test default2 --param 1)',
 );
-ok(!$failed_processor, 'failed to create sx read processor');
+ok(!$failed_processor, 'failed to create sx read processor w/ multiple defaults');
 
 done_testing();
 
