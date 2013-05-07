@@ -93,10 +93,7 @@ HELP
 
 sub execute {
     my $self = shift;
-    my $high = 750000;
-    UR::Context->object_cache_size_highwater($high);
     $self->input_to_tsv();
-    $self->import_tsv();
     return 1;
 }
 
@@ -157,49 +154,6 @@ sub _parse_targets_file {
     }
     $fh->close;
     return ($targets);
-}
-
-sub import_tsv {
-    my $self = shift;
-    my $genes_outfile = $self->genes_outfile;
-    my $citation = $self->_create_citation('RussLampel', $self->version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'The druggable genome: an update (Russ & Lampel, 2005)');
-    my @genes = $self->import_genes($genes_outfile, $citation);
-    return 1;
-}
-
-sub import_genes {
-    my $self = shift;
-    my $version = $self->version;
-    my $genes_outfile = shift;
-    my $citation = shift;
-    my @genes;
-    my @headers = qw/gene_stable_id display_id description HumanReadableName/;
-    my $parser = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $genes_outfile,
-        headers => \@headers,
-        separator => "\t",
-        is_regex => 1,
-    );
-    
-    $parser->next; #eat the headers
-    while(my $input = $parser->next){
-        my $gene_name = $self->_create_gene_name_report($input->{'gene_stable_id'}, $citation, 'RussLampel Gene Stable Id', '');
-        my $human_readable_name = $input->{'HumanReadableName'};
-        $human_readable_name =~ s/-/ /g;
-        if ($human_readable_name eq 'RussLampel'){$human_readable_name="Druggable Genome";} #Create new generic category for such lists
-        my $human_readable = $self->_create_gene_category_report($gene_name, 'Human Readable Name', uc($human_readable_name), '');
-        unless ($input->{'gene_stable_id'} eq 'N/A'){
-            my $ensembl_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'gene_stable_id'}, 'Ensembl Gene Id', '', 'upper');
-        }
-        unless ($input->{'display_id'} eq 'N/A'){
-            my $display_id = $self->_create_gene_alternate_name_report($gene_name, $input->{'display_id'}, 'Display Id', '', 'upper');
-        }
-        unless ($input->{'description'} eq 'N/A'){ 
-            my $description = $self->_create_gene_alternate_name_report($gene_name, $input->{'description'}, 'Description', '', 'lower');
-        }
-        push @genes, $gene_name;
-    }
-    return @genes;
 }
 
 1;
