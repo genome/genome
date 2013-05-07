@@ -26,7 +26,7 @@ sub instrument_data_for_assembler {
         my $taxon = Genome::Taxon->create(
             name => 'Escherichia coli TEST',
             domain => 'Bacteria',
-            estimated_genome_size => 4500000,
+            estimated_genome_size => 4_500_000,
             species_latin_name => 'Escherichia coli',
             strain_name => 'TEST',
         );
@@ -36,6 +36,7 @@ sub instrument_data_for_assembler {
         my $source = Genome::Individual->create(
             id => -123,
             name => 'TEST-000',
+            taxon_id => $taxon->id,
         );
         ok($source, 'source') or die;
 
@@ -77,6 +78,7 @@ sub instrument_data_for_assembler {
     );
     ok($entities{$key}, 'instrument data');
     ok($entities{$key}->is_paired_end, 'inst data is paired');
+    ok($entities{$key}->taxon, 'instrument data taxon');
     ok(-s $entities{$key}->archive_path, 'inst data archive path');
 
     return $entities{$key};
