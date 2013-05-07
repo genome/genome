@@ -79,16 +79,16 @@ sub _get_sx_result_params {
     my $read_processor = $self->build->processing_profile->read_processor;
     $self->status_message('Read processor: '.$read_processor);
 
-    my $sx_read_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
+    my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
         processor => $read_processor, # what if no processing is desired?
     );
-    if ( not $sx_read_processor ) {
+    if ( not $sx_processor ) {
         $self->error_message('Failed to create SX read processor!');
         return;
     }
-    my $sx_result_params = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
+    my $sx_result_params = $sx_processor->determine_sx_result_params_for_instrument_data($instrument_data);
     return if not $sx_result_params;
-    $self->status_message('Processing: '.Data::Dumper::Dumper($sx_result_params));
+    $self->status_message('SX reults params: '.Data::Dumper::Dumper($sx_result_params));
 
     return $sx_result_params;
 }
