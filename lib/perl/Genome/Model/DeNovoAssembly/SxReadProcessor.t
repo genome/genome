@@ -41,7 +41,7 @@ my @inst_data_attrs = (
     },
 );
 my $i = 0;
-for my $inst_data_attr ( @inst_data_attrs ) {
+for my $inst_data_attr ( @inst_data_attrs, ) {
     push @instrument_data, Genome::InstrumentData::Imported->create(
         library => $library,
         %$inst_data_attr,
@@ -119,7 +119,24 @@ for ( my $i = 0; $i < @instrument_data; $i++ ) {
     );
 }
 
+diag('SUCCESS (MULTIPLE INST DATA)');
+my $processing_for_multiple_inst_data = $processor->determine_processing_for_multiple_instrument_data($instrument_data[1], $instrument_data[1]), # send the same one twice
+my %expected_processing_for_multiple_inst_data = %{$processings->[1]};
+$expected_processing_for_multiple_inst_data{sx_result_params} = {
+    %{$instrument_data[1]->{sx_result_params}},
+    read_processor => $processing_for_multiple_inst_data->{processor},
+};
+$expected_processing_for_multiple_inst_data{sx_result_params}->{instrument_data_id} = [ $instrument_data[1]->id, $instrument_data[1]->id, ];
+is_deeply(
+    $processing_for_multiple_inst_data,
+    \%expected_processing_for_multiple_inst_data,
+    'got correct processing for multiple inst data',
+);
+
 # FAILS
+# mulitple inst data returns multiple processings
+ok(!$processor->determine_processing_for_multiple_instrument_data(@instrument_data), 'failed to get processings for multiple inst data that did not match the same condition');
+
 # no default
 my $failed_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
     read_processor => 'DEFULT trim default --param 1',

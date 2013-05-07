@@ -130,6 +130,28 @@ sub create {
     return $self;
 }
 
+sub determine_processing_for_multiple_instrument_data {
+    my ($self, @instrument_data) = @_;
+
+    Carp::confess('No instrument data given to determine_processing_for_multiple_instrument_data!') if not @instrument_data;
+
+    my %matched_processings;
+    for my $instrument_data ( @instrument_data ) { 
+        my $processing = $self->determine_processing_for_instrument_data($instrument_data);
+        return if not $processing;
+        $matched_processings{ $processing->{condition} } = $processing;
+    }
+
+    my @matched_processings = values %matched_processings;
+    if ( @matched_processings > 1 ) {
+        $self->error_message('Found multple processings when only one expected when trying to determine processing for multiple instrument data.');
+        return;
+    }
+    $matched_processings[0]->{sx_result_params}->{instrument_data_id} = [ map { $_->id } @instrument_data ];
+
+    return $matched_processings[0];
+}
+
 sub determine_processing_for_instrument_data {
     my ($self, $instrument_data) = @_;
 
