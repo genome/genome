@@ -96,7 +96,7 @@ sub processing_profile_for_assembler {
             assembler_name => 'soap de-novo-assemble',
             assembler_version => '1.04',
             assembler_params => '-kmer_size 31 -resolve_repeats -kmer_frequency_cutoff 1',
-            read_processor => 'trim bwa-style -trim-qual-level 10 | filter by-length -filter-length 35 | rename illumina-to-pcap',
+            read_processor => 'DEFAULT (trim bwa-style -trim-qual-level 10 | filter by-length -filter-length 35 | rename illumina-to-pcap, coverage 10X)' ,
             post_assemble => 'standard-outputs -min_contig_length 10',
         },
     );
