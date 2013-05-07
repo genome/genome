@@ -10,14 +10,14 @@ use Parse::RecDescent;
 
 class Genome::Model::DeNovoAssembly::SxReadProcessor { 
     has => [
-        read_processor => {
+        processor => {
             is => 'Text',
-            doc => '',
+            doc => 'An SX command or instrument data conditions and matching SX commnds.',
         },
     ],
     has_transient_optional => [
-        _default_read_processing => { is => 'HASH', },
-        _read_processings => { is => 'ARRAY', },
+        default_processing => { is => 'HASH', },
+        additional_processings => { is => 'ARRAY', },
     ],
 };
 
@@ -29,7 +29,7 @@ sub parser {
 
     my $grammar = q{
 
-        read_processor: specification(s)
+        evaluate_processor: specification(s)
         { $item[1]; }
 
         specification: default "(" processor ", coverage " coverage ")"
@@ -70,45 +70,46 @@ sub __errors__ {
     return @errors if @errors;
 
     my $parser = $self->parser;
-    my $read_processor = $self->read_processor;
-    my $parsed_read_processings;
-    if ( $read_processor =~ /^DEF/ ) {
-        $parsed_read_processings = $parser->read_processor($read_processor);
-        if ( not $parsed_read_processings ) {
+    my $processor = $self->processor;
+    my $parsed_processings;
+    if ( $processor =~ /^DEF/ ) {
+        $parsed_processings = $parser->evaluate_processor($processor);
+        if ( not $parsed_processings ) {
             return UR::Object::Tag->create(
                 type => 'invalid',
-                properties => [qw/ read_processor /],
+                properties => [qw/ processor /],
                 desc => 'Failed to parse read processor specification!',
             );
         }
-        $parsed_read_processings = [ $parsed_read_processings ] if not ref $parsed_read_processings eq 'ARRAY';
+        $parsed_processings = [ $parsed_processings ] if not ref $parsed_processings eq 'ARRAY';
     }
     else {
-        $read_processor =~ s/^gmt sx //;
-        $parsed_read_processings = [{
+        $processor =~ s/^gmt sx //;
+        $parsed_processings = [{
                 condition => 'DEFAULT',
-                processor => $read_processor,
+                processor => $processor,
             },];
     }
-    #print Dumper($parsed_read_processors);
 
-    my $default_processing_count = grep { $_->{condition} eq 'DEFAULT' } @$parsed_read_processings;
+    my $default_processing_count = grep { $_->{condition} eq 'DEFAULT' } @$parsed_processings;
     if ( $default_processing_count != 1 ) {
         return UR::Object::Tag->create(
             type => 'invalid',
-            properties => [qw/ read_processor /],
+            properties => [qw/ processor /],
             desc => ( $default_processing_count ? 'Multiple' : 'No' ).' DEFAULT read processor(s) in specification!',
         );
     }
-    $self->_default_read_processing(shift @$parsed_read_processings); # always the first
-    if ( not $self->_default_read_processing->{condition} eq 'DEFAULT' ) {
+    $self->default_processing(shift @$parsed_processings); # always the first
+    if ( not $self->default_processing->{condition} eq 'DEFAULT' ) {
         return UR::Object::Tag->create(
             type => 'invalid',
-            properties => [qw/ read_processor /],
+            properties => [qw/ processor /],
             desc => 'Could not find DEFAULT read processor from specification!',
         );
     }
-    $self->_read_processings($parsed_read_processings);
+    $self->additional_processings($parsed_processings);
+
+
 
     return;
 }
@@ -166,7 +167,7 @@ sub determine_sx_result_params_for_instrument_data {
     Carp::confess('No instrument data given to determine_sx_result_params_for_instrument_data!') if not $instrument_data;
 
     my @processings;
-    if ( @{$self->_read_processings} ) {
+    if ( @{$self->additional_processings} ) {
         @processings = $self->determine_processing_for_instrument_data($instrument_data);
     }
 
@@ -179,7 +180,7 @@ sub determine_sx_result_params_for_instrument_data {
     }
 
     # Use the one we found, or if none, the default
-    my %processing = ( @processings == 1  ? %{$processings[0]} : %{$self->_default_read_processing} );
+    my %processing = ( @processings == 1  ? %{$processings[0]} : %{$self->default_processing} );
     my %sx_result_params = (
         instrument_data_id => $instrument_data->id,
         read_processor => $processing{processor},
@@ -197,8 +198,8 @@ sub determine_processing_for_instrument_data {
     Carp::confess('No instrument data given to determine_processing_for_instrument_data!') if not $instrument_data;
 
     my @matched_processings;
-    if ( @{$self->_read_processings} ) {
-        for my $processing ( @{$self->_read_processings} ) {
+    if ( @{$self->additional_processings} ) {
+        for my $processing ( @{$self->additional_processings} ) {
             push @matched_processings, $processing if $self->does_instrument_data_match_condition($instrument_data, @{$processing->{condition}});
         }
     }
@@ -212,7 +213,7 @@ sub determine_processing_for_instrument_data {
     }
 
     # Use the one we found, or if none, the default
-    my %processing = ( @matched_processings == 1  ? %{$matched_processings[0]} : %{$self->_default_read_processing} );
+    my %processing = ( @matched_processings == 1  ? %{$matched_processings[0]} : %{$self->default_processing} );
     return \%processing;
 }
 
