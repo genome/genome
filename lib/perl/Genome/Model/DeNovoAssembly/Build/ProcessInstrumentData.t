@@ -30,8 +30,10 @@ ok($process, 'create process instrument data');
 
 ok(!$process->shortcut, 'failed to shortcut');
 ok($process->execute, 'execute succeeded');
-ok($process->sx_result, 'set sx result on process inst data');
+ok($process->sx_result, 'set sx result during execute on process inst data');
+ok(!$process->sx_result(undef), 'undef sx result to check if shortcut sets it');
 ok($process->shortcut, 'shortcut succeeded');
+ok($process->sx_result, 'set sx result during shortcut on process inst data');
 
 for (1..2) {
     compare_ok($process->sx_result->output_dir.'/-7777.'.$_.'.fastq', $ENV{GENOME_TEST_INPUTS}.'/Genome-Model/DeNovoAssembly/Build-ProcessInstrumentData-v1/-7777.'.$_.'.fastq', "fastq $_ matches");

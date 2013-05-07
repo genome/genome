@@ -37,25 +37,12 @@ sub shortcut {
     my $self = shift;
     $self->status_message('Process instrument data, attempting to shortcut...');
 
-    $self->status_message('Build: '.$self->build->__display_name__);
-    my $instrument_data = $self->instrument_data;
-    $self->status_message('Instrument data: '.$instrument_data->__display_name__);
-    my $read_processor = $self->build->processing_profile->read_processor;
-    $self->status_message('Read processor: '.$read_processor);
-
-    my $sx_read_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-        read_processor => $read_processor, # what if no processing is desired?
-    );
-    if ( not $sx_read_processor ) {
-        $self->error_message('Failed to create SX read processor! '.$read_processor);
-        return;
-    }
-    my $sx_result_params = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
+    my $sx_result_params = $self->_get_sx_result_params;
     return if not $sx_result_params;
-    $self->status_message('SX result params: '.Data::Dumper::Dumper($sx_result_params));
 
     my $result = Genome::InstrumentData::SxResult->get_with_lock(%$sx_result_params);
     if ( $result ) {
+        $self->sx_result($result);
         $self->status_message('SX result found! '.$result->__display_name__);
         $self->status_message('Shortcutting!');
         return 1;
@@ -70,22 +57,8 @@ sub execute {
     my $self = shift;
     $self->status_message('Process instrument data...');
 
-    $self->status_message('Build: '.$self->build->__display_name__);
-    my $instrument_data = $self->instrument_data;
-    $self->status_message('Instrument data: '.$instrument_data->__display_name__);
-    my $read_processor = $self->build->processing_profile->read_processor;
-    $self->status_message('Read processor: '.$read_processor);
-
-    my $sx_read_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-        read_processor => $read_processor, # what if no processing is desired?
-    );
-    if ( not $sx_read_processor ) {
-        $self->error_message('Failed to create SX read processor! '.$read_processor);
-        return;
-    }
-    my $sx_result_params = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
+    my $sx_result_params = $self->_get_sx_result_params;
     return if not $sx_result_params;
-    $self->status_message('Processing: '.Data::Dumper::Dumper($sx_result_params));
 
     my $result = Genome::InstrumentData::SxResult->get_or_create(%$sx_result_params);
     if ( not $result ) {
@@ -95,6 +68,29 @@ sub execute {
 
     $self->sx_result($result);
     return 1;
+}
+
+sub _get_sx_result_params {
+    my $self = shift;
+
+    $self->status_message('Build: '.$self->build->__display_name__);
+    my $instrument_data = $self->instrument_data;
+    $self->status_message('Instrument data: '.$instrument_data->__display_name__);
+    my $read_processor = $self->build->processing_profile->read_processor;
+    $self->status_message('Read processor: '.$read_processor);
+
+    my $sx_read_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
+        processor => $read_processor, # what if no processing is desired?
+    );
+    if ( not $sx_read_processor ) {
+        $self->error_message('Failed to create SX read processor!');
+        return;
+    }
+    my $sx_result_params = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
+    return if not $sx_result_params;
+    $self->status_message('Processing: '.Data::Dumper::Dumper($sx_result_params));
+
+    return $sx_result_params;
 }
 
 1;
