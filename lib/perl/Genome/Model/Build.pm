@@ -2616,9 +2616,9 @@ sub _heartbeat {
         my $error_file = $wf_instance_exec->stderr;
         my $error_stat = stat($error_file);
         my $elapsed_mtime_error_file = time - $error_stat->mtime;
-        my $operation = $wf_instance_exec->operation_instance->operation_type->id;
+        my $op_class = $wf_instance_exec->operation_instance->operation_type->command_class_name;
         my $hour = 3600;
-        my $max_elapsed_time = $operation->can('max_elapsed_log_time') ? $operation->max_elapsed_log_time : 48 * $hour;
+        my $max_elapsed_time = ($op_class->can('max_elapsed_log_time')) ? $op_class->max_elapsed_log_time : 48 * $hour;
         if (($elapsed_mtime_output_file > $max_elapsed_time) && ($elapsed_mtime_error_file > $max_elapsed_time)) {
             my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/$hour);
             my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/$hour);
