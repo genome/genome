@@ -212,23 +212,6 @@ sub _validate_assembler_and_params {
     return 1;
 }
 
-#< temp params updates needed for successful eval of assembler class >#
-
-#sub velvet_one_button_fake_params_for_eval {
-#    my $self = shift;
-#    my %params = (
-#   ins_length => '280',
-#    );
-#    return %params;
-#}
-#
-
-#sub soap_de_novo_assemble_clean_up_params_for_eval {
-#    my ($self, %params) = @_;
-#    delete $params{insert_size};
-#    return %params;
-#}
-
 #< Read Processor >#
 sub _validate_read_processor {
     my $self = shift;
