@@ -52,6 +52,7 @@ sub execute {
         merger_params  => $self->parameters,
         use_version => $self->samtools_version,
         max_jvm_heap_size => $self->max_jvm_heap_size,
+        include_comment => $self->include_comment,
     );
 
     if (Genome::DataSource::GMSchema->has_default_handle) {

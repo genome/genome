@@ -40,6 +40,11 @@ class Genome::InstrumentData::Command::AlignmentResult::Merged::DuplicationHandl
             is => 'Text',
             doc => 'path to location to output metrics file',
         },
+        include_comment => {
+            is => 'Text',
+            doc => 'comment to include as a @CO in the BAM header',
+            is_optional => 1,
+        },
     ],
 };
 

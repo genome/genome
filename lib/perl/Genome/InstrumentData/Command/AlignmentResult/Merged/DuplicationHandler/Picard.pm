@@ -54,6 +54,10 @@ sub execute {
         max_jvm_heap_size => $self->max_jvm_heap_size,
     );
 
+    if($self->include_comment) {
+        $mark_duplicates_params{include_comment} = $self->include_comment;
+    }
+
     if (Genome::DataSource::GMSchema->has_default_handle) {
         $self->status_message("Disconnecting GMSchema default handle.");
         Genome::DataSource::GMSchema->disconnect_default_dbh();
