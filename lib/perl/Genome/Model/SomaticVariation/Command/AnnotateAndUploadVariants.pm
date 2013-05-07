@@ -379,6 +379,7 @@ sub execute{
                 output_file => $build->data_directory."/effects/snvs.hq.".$count.".bed",
                 operation => "distinct",
                 column => 4,
+                use_version => "2.16.2",
             );
             unless ($rt) {
                 $self->error_message("Failed to annotate with bedtools map");
