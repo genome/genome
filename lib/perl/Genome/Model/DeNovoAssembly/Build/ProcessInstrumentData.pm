@@ -50,11 +50,11 @@ sub shortcut {
         $self->error_message('Failed to create SX read processor! '.$read_processor);
         return;
     }
-    my $read_processing = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
-    return if not $read_processing;
-    $self->status_message('Processing: '.Data::Dumper::Dumper($read_processing));
+    my $sx_result_params = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
+    return if not $sx_result_params;
+    $self->status_message('SX result params: '.Data::Dumper::Dumper($sx_result_params));
 
-    my $result = Genome::InstrumentData::SxResult->get_with_lock(%{$read_processing->{sx_result_params}});
+    my $result = Genome::InstrumentData::SxResult->get_with_lock(%$sx_result_params);
     if ( $result ) {
         $self->status_message('SX result found! '.$result->__display_name__);
         $self->status_message('Shortcutting!');
@@ -83,11 +83,11 @@ sub execute {
         $self->error_message('Failed to create SX read processor! '.$read_processor);
         return;
     }
-    my $read_processing = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
-    return if not $read_processing;
-    $self->status_message('Processing: '.Data::Dumper::Dumper($read_processing));
+    my $sx_result_params = $sx_read_processor->determine_sx_result_params_for_instrument_data($instrument_data);
+    return if not $sx_result_params;
+    $self->status_message('Processing: '.Data::Dumper::Dumper($sx_result_params));
 
-    my $result = Genome::InstrumentData::SxResult->get_or_create(%{$read_processing->{sx_result_params}});
+    my $result = Genome::InstrumentData::SxResult->get_or_create(%$sx_result_params);
     if ( not $result ) {
         $self->error_message('Failed to create SX result!');
         return;

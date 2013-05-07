@@ -135,27 +135,65 @@ sub determine_sx_result_params_for_multiple_instrument_data {
 
     Carp::confess('No instrument data given to determine_sx_result_params_for_multiple_instrument_data!') if not @instrument_data;
 
-    my %matched_processings;
+    my %processings;
     for my $instrument_data ( @instrument_data ) { 
-        my $processing = $self->determine_sx_result_params_for_instrument_data($instrument_data);
+        my $processing = $self->determine_processing_for_instrument_data($instrument_data);
         return if not $processing;
-        $matched_processings{ $processing->{condition} } = $processing;
+        $processings{ $processing->{condition} } = $processing;
     }
 
-    my @matched_processings = values %matched_processings;
-    if ( @matched_processings > 1 ) {
+    my @processings = values %processings;
+    if ( @processings > 1 ) {
         $self->error_message('Found multple processings when only one expected when trying to determine processing for multiple instrument data.');
         return;
     }
-    $matched_processings[0]->{sx_result_params}->{instrument_data_id} = [ map { $_->id } @instrument_data ];
 
-    return $matched_processings[0];
+    my %sx_result_params = (
+        instrument_data_id => [ map { $_->id } @instrument_data ],
+        read_processor => $processings[0]->{processor},
+        output_file_count => 2,
+        output_file_type => 'sanger',
+        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    );
+
+    return \%sx_result_params;
 }
 
 sub determine_sx_result_params_for_instrument_data {
     my ($self, $instrument_data) = @_;
 
     Carp::confess('No instrument data given to determine_sx_result_params_for_instrument_data!') if not $instrument_data;
+
+    my @processings;
+    if ( @{$self->_read_processings} ) {
+        @processings = $self->determine_processing_for_instrument_data($instrument_data);
+    }
+
+    # Bad - found more than one
+    if ( @processings > 1 ) {
+        $self->error_message(
+            'Found multiple processings for instrument data! '.$instrument_data->id."\n".Data::Dumper::Dumper(\@processings)
+        );
+        return;
+    }
+
+    # Use the one we found, or if none, the default
+    my %processing = ( @processings == 1  ? %{$processings[0]} : %{$self->_default_read_processing} );
+    my %sx_result_params = (
+        instrument_data_id => $instrument_data->id,
+        read_processor => $processing{processor},
+        output_file_count => ( $instrument_data->is_paired_end ? 2 : 1 ),
+        output_file_type => 'sanger',
+        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    );
+
+    return \%sx_result_params;
+}
+
+sub determine_processing_for_instrument_data {
+    my ($self, $instrument_data) = @_;
+
+    Carp::confess('No instrument data given to determine_processing_for_instrument_data!') if not $instrument_data;
 
     my @matched_processings;
     if ( @{$self->_read_processings} ) {
@@ -174,14 +212,6 @@ sub determine_sx_result_params_for_instrument_data {
 
     # Use the one we found, or if none, the default
     my %processing = ( @matched_processings == 1  ? %{$matched_processings[0]} : %{$self->_default_read_processing} );
-    $processing{sx_result_params} = {
-        instrument_data_id => $instrument_data->id,
-        read_processor => $processing{processor},
-        output_file_count => ( $instrument_data->is_paired_end ? 2 : 1 ),
-        output_file_type => 'sanger',
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
-    };
-
     return \%processing;
 }
 

@@ -64,13 +64,19 @@ ok($processor, 'failed to create sx read processor');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', }, 'got default processing');
 my $old_way_processing = { condition => 'DEFAULT', processor => 'trim default --param 1', };
 for my $instrument_data ( @instrument_data ) {
-    my $processing = $processor->determine_sx_result_params_for_instrument_data($instrument_data),
-    $old_way_processing->{sx_result_params} = $instrument_data->{sx_result_params};
-    $old_way_processing->{sx_result_params}->{read_processor} = $processing->{processor};
-    is_deeply( # all are default processing
+    my $processing = $processor->determine_processing_for_instrument_data($instrument_data);
+    is_deeply(
         $processing,
         $old_way_processing,
-        'got correct processing for inst data',
+        'got correct processing for instrument data ',
+    );
+    my $sx_result_params = $processor->determine_sx_result_params_for_instrument_data($instrument_data),
+    my %expected_sx_result_params = %{$instrument_data->{sx_result_params}};
+    $expected_sx_result_params{read_processor} = $old_way_processing->{processor};
+    is_deeply(
+        $sx_result_params,
+        \%expected_sx_result_params,
+        'got correct sx result params for instrument data ',
     );
 }
 
@@ -82,13 +88,20 @@ ok($processor, 'failed to create sx read processor');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, }, 'got default processing');
 my $new_way_processing = { condition => 'DEFAULT', processor => 'trim default --param 1', coverage => 10, };
 for my $instrument_data ( @instrument_data ) {
-    my $processing = $processor->determine_sx_result_params_for_instrument_data($instrument_data),
-    $new_way_processing->{sx_result_params} = $instrument_data->{sx_result_params};
-    $new_way_processing->{sx_result_params}->{read_processor} = $processing->{processor};
-    is_deeply( # all are default processing
+    diag($instrument_data->id);
+    my $processing = $processor->determine_processing_for_instrument_data($instrument_data);
+    is_deeply(
         $processing,
         $new_way_processing,
-        'got correct processing for inst data',
+        'got correct processing for instrument data ',
+    );
+    my $sx_result_params = $processor->determine_sx_result_params_for_instrument_data($instrument_data),
+    my %expected_sx_result_params = %{$instrument_data->{sx_result_params}};
+    $expected_sx_result_params{read_processor} = $new_way_processing->{processor};
+    is_deeply(
+        $sx_result_params,
+        \%expected_sx_result_params,
+        'got correct sx result params for instrument data ',
     );
 }
 
@@ -99,38 +112,41 @@ $processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
 ok($processor, 'create sx read processor');
 ok($processor->parser, 'got parser');
 is_deeply($processor->_default_read_processing, { condition => 'DEFAULT', processor => 'trim default --param 1', }, 'got default processor');
-my $processings = [
+my @expected_processings = (
     { condition => [qw/ original_est_fragment_size <= 2.5 * read_length /], processor => 'DEFAULT', coverage => 30, },
     { condition => [qw/ original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 /], processor => 'trim insert-size --min 1001 --max 6000 then filter by-length --length 50', coverage => 20, },
     { condition => [qw/ original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 /], processor => 'trim insert-size --min 6001 --max 10000', },
     { condition => [qw/ read_length == 777 /], processor => 'filter --param 1 --qual 30', },
-];
-is_deeply($processor->_read_processings, $processings, 'got read processors');
+);
+is_deeply($processor->_read_processings, \@expected_processings, 'got read processors');
 for ( my $i = 0; $i < @instrument_data; $i++ ) {
-    my %processing = %{$processings->[$i]};
-    $processing{sx_result_params} = {
-        %{$instrument_data[$i]->{sx_result_params}},
-        read_processor => $processing{processor},
-    };
+    my $instrument_data = $instrument_data[$i];
+    diag($instrument_data->id);
+    my $processing = $processor->determine_processing_for_instrument_data($instrument_data);
     is_deeply(
-        $processor->determine_sx_result_params_for_instrument_data($instrument_data[$i]),
-        \%processing,
-        'got correct processing for inst data',
+        $processing,
+        $expected_processings[$i],
+        'got correct processing for instrument data ',
+    );
+    my $sx_result_params = $processor->determine_sx_result_params_for_instrument_data($instrument_data),
+    my %expected_sx_result_params = %{$instrument_data->{sx_result_params}};
+    $expected_sx_result_params{read_processor} = $expected_processings[$i]->{processor};
+    is_deeply(
+        $sx_result_params,
+        \%expected_sx_result_params,
+        'got correct sx result params for instrument data ',
     );
 }
 
 diag('SUCCESS (MULTIPLE INST DATA)');
-my $processing_for_multiple_inst_data = $processor->determine_sx_result_params_for_multiple_instrument_data($instrument_data[1], $instrument_data[1]), # send the same one twice
-my %expected_processing_for_multiple_inst_data = %{$processings->[1]};
-$expected_processing_for_multiple_inst_data{sx_result_params} = {
-    %{$instrument_data[1]->{sx_result_params}},
-    read_processor => $processing_for_multiple_inst_data->{processor},
-};
-$expected_processing_for_multiple_inst_data{sx_result_params}->{instrument_data_id} = [ $instrument_data[1]->id, $instrument_data[1]->id, ];
+my $sx_result_params = $processor->determine_sx_result_params_for_multiple_instrument_data($instrument_data[1], $instrument_data[1]),
+my %expected_sx_result_params = %{$instrument_data[1]->{sx_result_params}};
+$expected_sx_result_params{read_processor} = $expected_processings[1]->{processor};
+$expected_sx_result_params{instrument_data_id} = [ $instrument_data[1]->id, $instrument_data[1]->id, ];
 is_deeply(
-    $processing_for_multiple_inst_data,
-    \%expected_processing_for_multiple_inst_data,
-    'got correct processing for multiple inst data',
+    $sx_result_params,
+    \%expected_sx_result_params,
+    'got correct sx result params for multiple instrument data ',
 );
 
 # FAILS
