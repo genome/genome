@@ -22019,6 +22019,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       [
         'bases=s',
         undef,
+        'incoming-sequences=s',
+        'files',
         'input=s@',
         'files',
         'input-metrics=s',
@@ -22026,8 +22028,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'output=s@',
         'files',
         'output-metrics=s',
-        'files',
-        'select-random-sequences=s',
         'files',
         'help!',
         undef
@@ -22036,6 +22036,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       [
         'count=s',
         undef,
+        'incoming-sequences=s',
+        'files',
         'input=s@',
         'files',
         'input-metrics=s',
@@ -22043,8 +22045,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'output=s@',
         'files',
         'output-metrics=s',
-        'files',
-        'select-random-sequences=s',
         'files',
         'help!',
         undef
