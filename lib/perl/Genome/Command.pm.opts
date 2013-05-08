@@ -11578,6 +11578,19 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        '>coverage-hist',
+        [
+          'output-pdf=s',
+          'files',
+          'coverage-file=s',
+          'files',
+          'refalign-model-id=s',
+          undef,
+          'somatic-validation-model-id=s',
+          undef,
+          'help!',
+          undef
+        ],
         '>format-readcounts',
         [
           'output-file=s',
