@@ -118,7 +118,7 @@ sub instrument_data_454 {
     my $library = library();
 
     my $inst_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/inst_data';
-    $entities{instrument_data_454} = Genome::InstrumentData::454->create(
+    $entities{instrument_data_454} = Genome::InstrumentData::Solexa->create(# don't look
         id => --$id,
         run_name => 'R_2010_01_09_11_08_12_FLX08080418_Administrator_100737113',
         region_number => 3,
@@ -127,6 +127,7 @@ sub instrument_data_454 {
         library => $library,
         sequencing_platform => '454',
         archive_path =>  $inst_data_dir.'/archive.tgz',
+        analysis_software_version => 'CASAVA-1.8',
     ) if not $entities{instrument_data_454};
     die 'Failed to create instrument data 454!' if not $entities{instrument_data_454};
 
