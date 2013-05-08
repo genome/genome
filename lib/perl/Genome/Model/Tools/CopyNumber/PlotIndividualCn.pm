@@ -183,9 +183,6 @@ sub execute {
     close($rfile);
 
 
-
-    `cp $newfile ~cmiller/tmp/plottest/`;
-
     my $cmd = "Rscript $newfile";
     my $return = Genome::Sys->shellcmd(
         cmd => "$cmd",
