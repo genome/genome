@@ -10,10 +10,10 @@ use Regexp::Common;
 class Genome::Model::Tools::Sx::Limit::Base {
     is  => 'Genome::Model::Tools::Sx::Base',
     is_abstract => 1,
-    has => [
-        select_random_sequences => {
-            is_optional => 1,
-            doc => 'Select random sequences when limiting. Give an SX metrics file or value. Depending on how the sequences are being limited (bases, count), the incoming value is required. The appropriate value (bases, count) can be loaded from a given metrics file. If no metrics file is available, give the incoming bases when limiting by bases. Or give the count if limiting by count.',
+    has_optional => [
+        incoming_sequences => {
+            is => 'Text',
+            doc => 'To select random sequences, the incoming value [depening on how sequences are being limited] needs to be known. This value can be given as an integer or SX metrics file.',
         },
     ],
 };
@@ -21,7 +21,7 @@ class Genome::Model::Tools::Sx::Limit::Base {
 sub execute {
     my $self = shift;
 
-    if ( $self->select_random_sequences ) {
+    if ( $self->incoming_sequences ) {
         return $self->_execute_selecting_random_sequences;
     }
     else {
@@ -54,7 +54,7 @@ sub _execute {
 sub _execute_selecting_random_sequences {
     my $self = shift;
 
-    my ($randomizier, $keep_pct) = $self->_init_randomizer;
+    my ($keep_pct, $randomizier) = $self->_init_randomizer;
     return if not $randomizier; # error
     return $self->_execute if $keep_pct >= 1; # randomizing not needed
 
@@ -83,33 +83,28 @@ sub _init_randomizer {
 
     my $metric_name = lc( $self->class );
     $metric_name =~ s/genome::model::tools::sx::limit::by//; # count or bases
+    my $limit = $self->$metric_name;
 
-    my $select_random_sequences = $self->select_random_sequences;
-    my $metric_value;
-    if ( -f $select_random_sequences ) {
-        my $metrics = Genome::Model::Tools::Sx::Metrics::Basic->from_file($select_random_sequences);
+    my $incoming_sequences = $self->incoming_sequences;
+    if ( -f $incoming_sequences ) {
+        my $metrics = Genome::Model::Tools::Sx::Metrics::Basic->from_file($incoming_sequences);
         return if not $metrics;
-        $metric_value = $metrics->$metric_name;
-        if ( not $metric_value ) {
-            $self->error_message("Failed to find metric ($metric_name) in metrics file: $select_random_sequences");
+        if ( not defined $metrics->$metric_name ) {
+            $self->error_message("Failed to find metric ($metric_name) in metrics file: $incoming_sequences");
             return;
         }
+        $incoming_sequences = $metrics->$metric_name;
     }
-    elsif ( $select_random_sequences =~ /^$RE{num}{int}$/ ) {
-        $metric_value = $select_random_sequences;
-    }
-    else {
-        $self->error_message('Unknown value to select random sequences. Expect a metrics file or an integer but was given: '.$select_random_sequences);
+
+    if ( $incoming_sequences !~ /^$RE{num}{int}$/ ) {
+        $self->error_message('Unknown value for incoming sequences. Expected an integer [as param or from metrics file], but was given: '.$incoming_sequences);
         return;
     }
 
-    my $keep_pct = sprintf('%0.2f', ( $metric_value / $self->$metric_name ));
+    my $keep_pct = sprintf('%0.2f', ( $limit / $incoming_sequences ));
     return (
-        sub{
-            my $rand = sprintf('%0.2f', rand());
-            return ( $rand <= $keep_pct ) ? 1 : 0;
-        },
         $keep_pct,
+        sub{ return ( sprintf('%0.2f', rand()) <= $keep_pct ) ? 1 : 0; },
     );
 }
 
