@@ -93,6 +93,18 @@ class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
             default => 3,
             doc => "the minimum number of consecutive windows required in a segment",
         },
+        min_mapability => {
+            is => 'Number',
+            is_optional => 1,
+            default => 0.60,
+            doc => "the minimum mapability needed to include a window",
+        },
+        # save_r_data => {
+        #     is => 'Boolean',
+        #     is_optional => 1,
+        #     default => 0,
+        #     doc => "save an r data file",
+        # },
         ]
 };
 
@@ -122,7 +134,7 @@ sub execute {
     my $processors = $self->processors;
     my $dump_bins = $self->dump_bins;
     my $min_width = $self->min_width;
-
+    my $min_mapability = $self->min_mapability;
     # #shorthand for sex designation
     # if (lc($sex) eq "m"){
     #     $sex="male";
@@ -228,6 +240,7 @@ sub execute {
     print $RFILE "                        perReadLength=$per_read_length,\n";
     print $RFILE "                        verbose=TRUE,\n";
     print $RFILE "                        minWidth=$min_width,\n";
+    print $RFILE "                        minMapability=$min_mapability,\n";
     print $RFILE "                        dumpBins=$dump_bins,\n";
     print $RFILE "                        doGcCorrection=$gcCorr,\n";
 #    print $RFILE "                        outputSingleSample=$output_single_sample,\n";
