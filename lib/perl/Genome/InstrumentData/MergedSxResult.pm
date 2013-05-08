@@ -100,7 +100,7 @@ sub process_instrument_data {
 
         #convert $self->coverage and estimated_genome_size to number of bp
         my $bp_count = $self->coverage * $estimated_genome_size;
-        $read_processor = "limit by-bases --select-random-sequences $total_incoming_bases --bases $bp_count";
+        $read_processor = "limit by-bases --incoming-sequences $total_incoming_bases --bases $bp_count";
     }
 
     my $output = $self->_output_config;
