@@ -124,6 +124,7 @@ sub instrument_data_454 {
         region_number => 3,
         total_reads => 20,
         read_count => 20,
+        clusters => 20,
         library => $library,
         sequencing_platform => '454',
         archive_path =>  $inst_data_dir.'/archive.tgz',
