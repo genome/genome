@@ -31425,6 +31425,8 @@ $Genome::Command::OPTS_SPEC = [
         [
           'bases=s',
           undef,
+          'incoming-sequences=s',
+          'files',
           'input=s@',
           'files',
           'input-metrics=s',
@@ -31432,8 +31434,6 @@ $Genome::Command::OPTS_SPEC = [
           'output=s@',
           'files',
           'output-metrics=s',
-          'files',
-          'select-random-sequences=s',
           'files',
           'help!',
           undef
@@ -31442,6 +31442,8 @@ $Genome::Command::OPTS_SPEC = [
         [
           'count=s',
           undef,
+          'incoming-sequences=s',
+          'files',
           'input=s@',
           'files',
           'input-metrics=s',
@@ -31449,8 +31451,6 @@ $Genome::Command::OPTS_SPEC = [
           'output=s@',
           'files',
           'output-metrics=s',
-          'files',
-          'select-random-sequences=s',
           'files',
           'help!',
           undef
