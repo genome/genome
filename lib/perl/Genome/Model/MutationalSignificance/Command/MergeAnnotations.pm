@@ -13,10 +13,10 @@ class Genome::Model::MutationalSignificance::Command::MergeAnnotations {
         regulome_db_file => {
             is => 'String',
         },
-        annovar_file => {
+        regulatory_file => {
             is => 'String',
         },
-        annovar_columns_to_check => {
+        regulatory_columns_to_check => {
             is => 'String',
             is_many => 1,
         },
@@ -39,7 +39,7 @@ sub execute {
 
     my $tgi = Genome::Sys->open_file_for_reading($self->tgi_anno_file);
     my $reg_db = Genome::Sys->open_file_for_reading($self->regulome_db_file);
-    my $annovar = Genome::Sys->open_file_for_reading($self->annovar_file);
+    my $regulatory = Genome::Sys->open_file_for_reading($self->regulatory_file);
 
     my $out = Genome::Sys->open_file_for_writing($self->output_file);
 
@@ -112,8 +112,8 @@ sub execute {
 
 
 
-    #read in the annovar and fill in further info in the tgi hash
-    my $header = <$annovar>;
+    #read in the regulatory and fill in further info in the tgi hash
+    my $header = <$regulatory>;
     chomp $header;
     my @header_fields = split /\t/, $header;
     my %header_hash;
@@ -122,17 +122,17 @@ sub execute {
         $header_hash{$header_field} = $count;
         $count++;
     }
-    while (my $line = <$annovar>) {
+    while (my $line = <$regulatory>) {
         chomp $line;
         my @fields = split /\t/, $line;
-        foreach my $column_name ($self->annovar_columns_to_check) {
-            $variants{$fields[0]}{$fields[1]}->{"annovar_$column_name"} = $fields[$header_hash{$column_name}];
+        foreach my $column_name ($self->regulatory_columns_to_check) {
+            $variants{$fields[0]}{$fields[1]}->{"regulatory_$column_name"} = $fields[$header_hash{$column_name}];
         }
     }
-    $annovar->close;
+    $regulatory->close;
 
     
-    #did we get a regulomedb score and annovar for every variant?
+    #did we get a regulomedb score and regulatory for every variant?
     foreach my $chr (keys %variants) {
         foreach my $start (keys %{$variants{$chr}}) {
             my %var = %{$variants{$chr}{$start}};
@@ -181,10 +181,10 @@ sub execute {
             }
 
             if ($var{regdb_score} =~ /1/ || $var{regdb_score} =~ /2/) {
-                foreach my $column_name ($self->annovar_columns_to_check) {
-                    my $annot = $var{"annovar_$column_name"};
+                foreach my $column_name ($self->regulatory_columns_to_check) {
+                    my $annot = $var{"regulatory_$column_name"};
                     unless ($annot) {
-                        $self->warning_message("No annovar_$column_name for variant $chr:$start");
+                        $self->warning_message("No regulatory_$column_name for variant $chr:$start");
                     }
                     next if ($annot =~ "-");
                     $annot =~ s/^Name=//;
@@ -239,7 +239,7 @@ sub execute {
                                 $ensembl_id = "-";
                             }
                         }
-                        push @{$annotations{$gene_name}->{sources}}, "annovar_$column_name";
+                        push @{$annotations{$gene_name}->{sources}}, "regulatory_$column_name";
                         push @{$annotations{$gene_name}->{trv_type}}, "regulatory";
                         if ((not defined $annotations{$gene_name}->{ensembl_id}) or $annotations{$gene_name}->{ensembl_id} eq "-") {
                             $annotations{$gene_name}->{ensembl_id} = $ensembl_id;
@@ -248,6 +248,28 @@ sub execute {
                         else {
                             unless ($annotations{$gene_name}->{ensembl_id} eq $ensembl_id) {
                                 $self->warning_message("Ensembl id does not match: ".$annotations{$gene_name}->{ensembl_id}." and $ensembl_id");
+                            }
+                        }
+                    }
+                }
+                #If we are within n bases of a TSS, annotate with that as well.
+                foreach my $annot (keys %annotations) {
+                    foreach my $type (@{$annotations{$annot}->{trv_type}}) {
+                        if ($type eq "5_prime_flanking_region") {
+                            my $promoter_size = 50000; 
+                            my $transcript = Genome::Transcript->get(transcript_name => $fields[7],
+                                             data_directory => $self->annotation_build->data_directory."/annotation_data",
+                                             reference_build_id => $self->annotation_build->reference_sequence_id);
+                            my $tss; 
+                            if ($transcript->strand =~ /\+/) {
+                                $tss = $transcript->transcript_start;
+                            }
+                            else {
+                                $tss = $transcript->transcript_stop;
+                            }
+                            if (abs($tss - $fields[1]) <= $promoter_size) {
+                                push @{$annotations{$annot}->{sources}}, "regulome_db_promoter";
+                                push @{$annotations{$annot}->{trv_type}}, "regulatory";
                             }
                         }
                     }

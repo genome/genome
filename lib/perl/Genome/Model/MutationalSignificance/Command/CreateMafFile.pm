@@ -103,17 +103,17 @@ sub execute {
     my $version = 1;
     foreach my $tier (@tiers_to_use){
         my $snv_anno_top = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top");
-        my $snv_annovar = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version, "annotated.top.annovar");
+        my $snv_regulatory = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version, "annotated.top.regulatory");
         my $snv_anno = $snv_anno_top;
-        if (-s $snv_annovar) {
+        if (-s $snv_regulatory) {
 
             $snv_anno = $self->output_dir."/".$self->somatic_variation_build->id."tier$tier.merged_anno";
 
             my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
                 tgi_anno_file => $snv_anno_top,
                 regulome_db_file => "/gscuser/aregier/scratch/regulome_db/".$self->somatic_variation_build->model->id.".full",
-                annovar_file => $snv_annovar,
-                annovar_columns_to_check => ["bed_Yip2012","bed_Thurman2012"],
+                regulatory_file => $snv_regulatory,
+                regulatory_columns_to_check => ["Yip2012","Thurman2012"],
                 output_file => $snv_anno,
                 annotation_build => $self->somatic_variation_build->annotation_build,
             );
