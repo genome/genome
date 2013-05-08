@@ -196,24 +196,6 @@ sub _verify_output_files {
     return 1;
 }
 
-sub resolve_merged_input_type {
-    my $self = shift;
-    if (defined $self->output_file_type) {
-        return $self->output_file_type;
-    }
-    my @output_configs = $self->output_file_config;
-    if (@output_configs) {
-       my @parts = split /:/, $output_configs[0];
-       for my $part (@parts) {
-           if ($part =~ /type=/) {
-               $part =~ s/type=//;
-               return $part;
-           }
-       }
-    }
-    return;
-}
-
 sub resolve_allocation_subdirectory {
     my $self = shift;
     my $hostname = hostname;

@@ -116,6 +116,24 @@ sub process_instrument_data {
     }
 }
 
+sub resolve_merged_input_type {
+    my $self = shift;
+    if (defined $self->output_file_type) {
+        return $self->output_file_type;
+    }
+    my @output_configs = $self->output_file_config;
+    if (@output_configs) {
+       my @parts = split /:/, $output_configs[0];
+       for my $part (@parts) {
+           if ($part =~ /type=/) {
+               $part =~ s/type=//;
+               return $part;
+           }
+       }
+    }
+    return;
+}
+
 sub resolve_base_name_from_instrument_data {
     my $self = shift;
     my $base = "merged";
