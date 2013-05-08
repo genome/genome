@@ -59,17 +59,108 @@ class Genome::InstrumentData::SxResult {
     ],
 };
 
+sub _error {
+    my ($self, $msg) = @_;
+    $self->error_message($msg);
+    $self->delete;
+    return;
+}
+
 sub create {
     my $class = shift;
+
     my $self = $class->SUPER::create(@_);
+    return if not $self;
 
-    $self->_prepare_staging_directory;
+    my $prepare_staging_directory = $self->_prepare_staging_directory;
+    return $self->_error('Failed to prepare tagin directory!') if not $prepare_staging_directory;
 
-    unless ($self->process_instrument_data) {
-        $self->error_message("Process instrument data failed");
-        $self->delete;
+    my $run_sx = $self->_run_sx;
+    return $self->_error('Failed to run SX!') if not $run_sx; 
+
+    my $verify_output_files = $self->_verify_output_files;
+    return $self->_error('Failed to verify SX output files!') if not $verify_output_files; 
+
+    $self->_prepare_output_directory;
+    $self->_promote_data;
+    $self->_reallocate_disk_allocation;
+
+    return $self;
+}
+
+sub _run_sx {
+    my $self = shift;
+
+    my $instrument_data = $self->instrument_data;
+    $self->status_message('Instrument data: '.$instrument_data->id);
+
+    # Output files
+    my $output = $self->_output_config;
+    return if not $output;
+
+    # Input files
+    my $is_paired_end = eval{ $instrument_data->is_paired_end; };
+    my $input_cnt = ( $is_paired_end ? 2 : 1 );
+    my @inputs;
+    if ( my $bam = eval{ $instrument_data->bam_path } ) {
+        @inputs = ( $bam.':type=bam:cnt='.$input_cnt );
+    }
+    elsif ( my $sff = eval{ $instrument_data->sff_file } ) {
+        @inputs = ( $sff.':type=sff:cnt='.$input_cnt );
+    }
+    elsif ( my $archive = eval{ $instrument_data->attributes(attribute_label => 'archive_path')->attribute_value; } ){
+        my $qual_type = eval{ $instrument_data->native_qual_type };
+        if ( not $qual_type ) {
+            $self->error_message('Failed to get quality type for fastq archive path for instrument data! '.$instrument_data->id);
+            return;
+        }
+        if ( $qual_type eq 'solexa' ) {
+            $self->error_message('Cannot process old "solexa" quality type for fastq archive path for instrument data! '.$instrument_data->id);
+            return;
+        }
+        my $cmd = "tar -xzf $archive --directory=".$self->temp_staging_directory;
+        my $tar = Genome::Sys->shellcmd(cmd => $cmd);
+        if ( not $tar ) {
+            $self->error_message('Failed extract archive for instrument data '.$instrument_data->id);
+            return;
+        }
+        my @input_files = grep { not -d } glob($self->temp_staging_directory."/*");
+        if ( not @input_files ) {
+            $self->error_message('No fastqs from archive from instrument data '.$instrument_data->id);
+            return;
+        }
+        @inputs = map { $_.':type='.$qual_type } @input_files;
+    }
+    else {
+        $self->error_message('Failed to get bam, sff or archived fastqs from instrument data: '.$instrument_data->id);
         return;
     }
+
+    # Construct SX command
+    my @read_processor_parts = ( $self->read_processor ? split(/\s+\|\s+/, $self->read_processor) : ('') );
+    my @sx_cmd_parts = map { 'gmt sx '.$_ } @read_processor_parts;
+    $sx_cmd_parts[0] .= ' --input '.join(',', @inputs);
+    $sx_cmd_parts[0] .= ' --input-metrics '.
+    $self->temp_staging_directory.'/'.
+    $self->read_processor_input_metric_file;
+    my $num_parts = scalar @read_processor_parts;
+    $sx_cmd_parts[$num_parts-1] .= ' --output '.$output;
+    $sx_cmd_parts[$num_parts-1] .= ' --output-metrics '.
+    $self->temp_staging_directory.'/'.
+    $self->read_processor_output_metric_file;
+
+    # Execute command
+    my $sx_cmd = join(' | ', @sx_cmd_parts);
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $sx_cmd); };
+    if ( not $rv ) {
+        $self->error_message('Failed to execute gmt sx command: '.$@);
+        return;
+    }
+    return 1;
+}
+
+sub _verify_output_files {
+    my $self = shift;
 
     $self->status_message('Verify output files...');
     my @output_files = $self->read_processor_output_files;
@@ -100,29 +191,10 @@ sub create {
         $self->delete;
         return;
     }
+
     $self->status_message('Verify output files...OK');
-
-    $self->status_message('Process instrument data...OK');
-
-    $self->_prepare_output_directory;
-    $self->_promote_data;
-    $self->_reallocate_disk_allocation;
-
-    return $self;
-}
-
-sub process_instrument_data {
-    my $self = shift;
-    my $id = $self->instrument_data;
-    $self->status_message('Process instrument data '.$id->__display_name__ );
-    my $process_ok = $self->_process_instrument_data($id);
-    if(not $process_ok) {
-        return;
-    }
-    $self->status_message('Process instrument data...OK');
     return 1;
 }
-
 
 sub resolve_merged_input_type {
     my $self = shift;
@@ -186,84 +258,6 @@ sub read_processor_output_file_paths {
     return ( map { $self->output_dir.'/'.$_ } @read_processor_output_files );
 }
 
-sub _process_instrument_data {
-    my ($self, $instrument_data) = @_;
-    $self->status_message('Process: '.join(' ', map { $instrument_data->$_ } (qw/ class id/)));
-
-    # Output
-    my $output = $self->_output_config;
-    return if not $output;
-
-    # Input files
-    my $is_paired_end = eval{ $instrument_data->is_paired_end; };
-    my $input_cnt = ( $is_paired_end ? 2 : 1 );
-    my @inputs;
-    if ( my $bam = eval{ $instrument_data->bam_path } ) {
-        @inputs = ( $bam.':type=bam:cnt='.$input_cnt );
-    }
-    elsif ( my $sff = eval{ $instrument_data->sff_file } ) {
-        @inputs = ( $sff.':type=sff:cnt='.$input_cnt );
-    }
-    elsif ( my $archive = eval{ $instrument_data->attributes(attribute_label => 'archive_path')->attribute_value; } ){
-        my $qual_type = eval{ $instrument_data->native_qual_type };
-        if ( not $qual_type ) {
-            $self->error_message('Failed to get quality type for fastq archive path for instrument data! '.$instrument_data->id);
-            return;
-        }
-        if ( $qual_type eq 'solexa' ) {
-            $self->error_message('Cannot process old "solexa" quality type for fastq archive path for instrument data! '.$instrument_data->id);
-            return;
-        }
-        my $cmd = "tar -xzf $archive --directory=".$self->temp_staging_directory;
-        my $tar = Genome::Sys->shellcmd(cmd => $cmd);
-        if ( not $tar ) {
-            $self->error_message('Failed extract archive for instrument data '.$instrument_data->id);
-            return;
-        }
-        my @input_files = grep { not -d } glob($self->temp_staging_directory."/*");
-        if ( not @input_files ) {
-            $self->error_message('No fastqs from archive from instrument data '.$instrument_data->id);
-            return;
-        }
-        @inputs = map { $_.':type='.$qual_type } @input_files;
-    }
-    else {
-        $self->error_message('Failed to get bam, sff or archived fastqs from instrument data: '.$instrument_data->id);
-        return;
-    }
-
-    # Sx read processor
-    my @read_processor_parts = split(/\s+\|\s+/, $self->read_processor);
-
-    if ( not @read_processor_parts ) { # essentially a copy, but w/ metrics
-        @read_processor_parts = ('');
-    }
-
-    return $self->_run_sx(\@read_processor_parts, \@inputs, $output);
-}
-
-sub _run_sx {
-    my ($self, $read_processor_parts, $inputs, $output) = @_;
-    my @sx_cmd_parts = map { 'gmt sx '.$_ } @{$read_processor_parts};
-    $sx_cmd_parts[0] .= ' --input '.join(',', @{$inputs});
-    $sx_cmd_parts[0] .= ' --input-metrics '.
-    $self->temp_staging_directory.'/'.
-    $self->read_processor_input_metric_file;
-    my $num_parts = scalar @{$read_processor_parts};
-    $sx_cmd_parts[$num_parts-1] .= ' --output '.$output;
-    $sx_cmd_parts[$num_parts-1] .= ' --output-metrics '.
-    $self->temp_staging_directory.'/'.
-    $self->read_processor_output_metric_file;
-
-    # Run
-    my $sx_cmd = join(' | ', @sx_cmd_parts);
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $sx_cmd); };
-    if ( not $rv ) {
-        $self->error_message('Failed to execute gmt sx command: '.$@);
-        return;
-    }
-    return 1;
-}
 
 sub _output_config {
     my $self = shift;
