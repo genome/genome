@@ -363,34 +363,36 @@ sub execute{
         my $encode_dir = $encode_db->data_directory;
 
         my @file_bases = qw(Open_Chromatin_Supp_Table_4 Thurman2012 Yip2012 segway.hg19 wgEncodeBroadHmmGm12878HMM wgEncodeBroadHmmH1hescHMM wgEncodeBroadHmmHepg2HMM wgEncodeBroadHmmHmecHMM wgEncodeBroadHmmHsmmHMM wgEncodeBroadHmmHuvecHMM wgEncodeBroadHmmK562HMM wgEncodeBroadHmmNhekHMM wgEncodeBroadHmmNhlfHMM);
-        my @bedfiles = map {join("/",$encode_dir, $_.".bed")} @file_bases;
 
         my $count = 0;
-        my $final_name = $build->data_directory."/effects/snvs.hq.annotated";
+        my $final_name = $build->data_directory."/effects/snvs.hq.annotated.bed";
         my $header = "#chr\tstart\tstop\talleles\tcount1\tcount2";
         my @added_columns;
-        foreach my $base_name (@file_bases) {
+        my $input_file = $build->data_directory."/variants/snvs.hq.bed";
+        for my $base_name (@file_bases) {
             $count++;
             push @added_columns, $count+6;
             my $bed_file = join("/", $encode_dir, $base_name.".bed");
+            my $output_file = $build->data_directory."/effects/snvs.hq.".$count.".bed";
             my $rt = Genome::Model::Tools::BedTools::Map->execute(
-                input_file_a => $build->data_directory."/variants/snvs.hq.bed",
+                input_file_a => $input_file,
                 input_file_b => $bed_file,
-                output_file => $build->data_directory."/effects/snvs.hq.".$count.".bed",
+                output_file => $output_file,
                 operation => "distinct",
                 column => 4,
                 use_version => "2.16.2",
+                null => '-',
             );
             unless ($rt) {
                 $self->error_message("Failed to annotate with bedtools map");
                 return;
             }
-            $final_name .= "_$base_name";
             $header .= "\t$base_name";
+            $input_file = $output_file;
         }
-        $final_name .= ".bed";
         
-        my $cmd = "echo $header > $final_name; cat ".$build->data_directory."/effects/snvs.hq.$count.bed >> $final_name";
+        my $cmd = "echo \"$header\" > $final_name; cat ".$build->data_directory."/effects/snvs.hq.$count.bed >> $final_name";
+        $self->status_message("Running command $cmd");
         `$cmd`;
 
         my @in_files;
@@ -405,7 +407,7 @@ sub execute{
             my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
                 additional_columns_file => $final_name,
                 input_variants => $in_file,
-                output_file => $build->data_set_path("effects/snvs.hq.tier3", $annotation_output_version,   "annotated.top.annovar"),
+                output_file => $in_file.".regulatory",
                 columns_to_append => \@added_columns,
                 chrom_column => 1,
                 start_column => 2,

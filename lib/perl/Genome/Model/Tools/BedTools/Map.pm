@@ -59,6 +59,11 @@ class Genome::Model::Tools::BedTools::Map {
             doc => 'Print the header from the A file prior to results',
             default => 0,
         },
+        null => {
+            is => 'String',
+            doc => 'The value to print if no overlaps are found for an A interval',
+            default => '.',
+        },
     ],
 };
 
@@ -102,7 +107,8 @@ sub execute {
     if ($self->column) {
         $options .= " -c ".$self->column;
     }
-    my $cmd = $self->bedtools_path .'/bin/mapBed '. $options .' '. $self->input_file_a .' -b '. $self->input_file_b .' > '. $self->output_file;
+    $options .= " -null ".$self->null;
+    my $cmd = $self->bedtools_path .'/bin/mapBed '. $options .' -a '. $self->input_file_a .' -b '. $self->input_file_b .' > '. $self->output_file;
     Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files => [$self->input_file_a,$self->input_file_b],

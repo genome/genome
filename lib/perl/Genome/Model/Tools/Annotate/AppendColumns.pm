@@ -68,7 +68,7 @@ sub execute {
     my $extra_header;
     my @headers = split(/\t/, $extra_header_line);
     for my $column ($self->columns_to_append) {
-        $extra_header .= "\t$column";
+        $extra_header .= "\t".$headers[$column-1];
     }
 
     while(my $line = <$in>) {
