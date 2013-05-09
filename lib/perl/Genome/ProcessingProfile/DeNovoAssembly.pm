@@ -521,15 +521,18 @@ sub _resolve_workflow_for_normal_assembly {
 
         $id_op->parallel_by('instrument_data');
 
-        my $merge_metrics_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults', {
+        my $merge_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
-
         $workflow->add_link(
             left_operation => $id_op, left_property => 'build',
-            right_operation => $merge_metrics_op, right_property => 'input_build');
+            right_operation => $merge_op, right_property => 'build');
+
         $workflow->add_link(
-            left_operation => $merge_metrics_op, left_property => 'output_build',
+            left_operation => $merge_op, left_property => 'output_build',
             right_operation => $assemble_op, right_property => 'build');
+        $workflow->add_link(
+            left_operation => $merge_op, left_property => 'sx_results',
+            right_operation => $assemble_op, right_property => 'sx_results');
     } else {
         $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
@@ -575,7 +578,11 @@ sub _add_assembler {
     my $lsf_resource = $build->resolve_assemble_lsf_resource();
     my $assemble_lsf_queue = $build->resolve_assemble_lsf_queue || $default_lsf_queue;
 
-    return _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::Assemble', {
+    my $assembler_class = 'Genome::Model::DeNovoAssembly::';
+    $assembler_class .= ( $self->process_instrument_data_can_parallelize ? 'Build' : 'Command' );
+    $assembler_class .= '::Assemble';
+
+    return _add_operation($workflow, $assembler_class, {
             lsf_queue => $assemble_lsf_queue,
             lsf_project => $lsf_project,
             lsf_resource => $lsf_resource});
