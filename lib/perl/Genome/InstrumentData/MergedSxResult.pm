@@ -111,7 +111,6 @@ sub _construct_sx_command_parts {
     my $input_file_type = $self->resolve_merged_input_type;
     my @inputs = map { $_.':type='.$input_file_type } @input_files;
 
-    print Data::Dumper::Dumper ( $read_processor, \@inputs, $output );
     return ( $read_processor, \@inputs, $output );
 }
 
