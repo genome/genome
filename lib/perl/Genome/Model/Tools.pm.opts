@@ -13343,6 +13343,20 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>parse-netmhc-mutant-stdout',
+    [
+      'netmhc-file=s',
+      'files',
+      'parsed-file=s',
+      'files',
+      'output-type=s',
+      [
+        'top',
+        'all'
+      ],
+      'help!',
+      undef
+    ],
     '>make-fasta-file',
     [
       'input-file=s',
