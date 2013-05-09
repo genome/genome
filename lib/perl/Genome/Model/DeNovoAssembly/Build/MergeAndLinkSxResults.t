@@ -38,8 +38,12 @@ my $merge_and_link = Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults
 ok($merge_and_link, 'create merge and link and link sx results');
 
 ok($merge_and_link->execute, 'execute succeeded');
+is($merge_and_link->output_build, $build, 'set output build');
 my @sx_results = $merge_and_link->sx_results;
 ok(@sx_results, 'set sx results during execute on merge and link inst data');
+is($build->reads_attempted, 28028, 'set reads attempted on build');
+is($build->reads_processed, 28028, 'set reads processed on build');
+is($build->reads_processed_success, '1.000', 'set reads processed success on build');
 
 for my $file_name ( $sx_results[0]->read_processor_output_files ) {
     compare_ok($sx_results[0]->output_dir.'/'.$file_name, $ENV{GENOME_TEST_INPUTS}.'/Genome-Model/DeNovoAssembly/Build-MergeAndLinkSxResults-v1/'.$file_name, "fastq $file_name matches");
