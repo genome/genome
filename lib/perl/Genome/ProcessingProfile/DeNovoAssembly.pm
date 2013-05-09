@@ -494,7 +494,7 @@ sub _resolve_workflow_for_normal_assembly {
             # if parallelize: use ProcessID
             # else: use PrepareID
         # assemble
-            # if parallelize: MergeInputMetrics
+            # if parallelize: MergeAndLinkSxResults
             # Assemble
             # if post_assemble: PostAssemble
             # Report
@@ -513,7 +513,7 @@ sub _resolve_workflow_for_normal_assembly {
 
     my $id_op;
     if ($self->process_instrument_data_can_parallelize) {
-        $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::ProcessInstrumentData', {
+        $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
         $workflow->add_link(
             left_operation => $input_connector, left_property => 'instrument_data',
@@ -521,12 +521,12 @@ sub _resolve_workflow_for_normal_assembly {
 
         $id_op->parallel_by('instrument_data');
 
-        my $merge_metrics_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::MergeInputMetrics', {
+        my $merge_metrics_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
         $workflow->add_link(
             left_operation => $id_op, left_property => 'build',
-            right_operation => $merge_metrics_op, right_property => 'input_builds');
+            right_operation => $merge_metrics_op, right_property => 'input_build');
         $workflow->add_link(
             left_operation => $merge_metrics_op, left_property => 'output_build',
             right_operation => $assemble_op, right_property => 'build');
@@ -585,7 +585,7 @@ sub _add_operation {
     my ($workflow, $command_class_name, $options) = @_;
 
     my $name = $command_class_name;
-    $name =~ s/Genome::Model::DeNovoAssembly::Command:://;
+    $name =~ s/Genome::Model::DeNovoAssembly::(Build|Command):://;
 
     my $operation_type = Workflow::OperationType::Command->create(
         command_class_name => $command_class_name);

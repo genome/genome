@@ -99,8 +99,8 @@ my @params_and_xml_list = (
 <?xml version='1.0' standalone='yes'?>
 <workflow name="%s all stages" executor="Workflow::Executor::SerialDeferred" logDir="%s">
   <link fromOperation="input connector" fromProperty="instrument_data" toOperation="ProcessInstrumentData" toProperty="instrument_data" />
-  <link fromOperation="ProcessInstrumentData" fromProperty="build" toOperation="MergeInputMetrics" toProperty="input_builds" />
-  <link fromOperation="MergeInputMetrics" fromProperty="output_build" toOperation="Assemble" toProperty="build" />
+  <link fromOperation="ProcessInstrumentData" fromProperty="build" toOperation="MergeAndLinkSxResults" toProperty="input_build" />
+  <link fromOperation="MergeAndLinkSxResults" fromProperty="output_build" toOperation="Assemble" toProperty="build" />
   <link fromOperation="input connector" fromProperty="build" toOperation="ProcessInstrumentData" toProperty="build" />
   <link fromOperation="Assemble" fromProperty="build" toOperation="Report" toProperty="build" />
   <link fromOperation="Report" fromProperty="report_directory" toOperation="output connector" toProperty="report_directory" />
@@ -108,10 +108,10 @@ my @params_and_xml_list = (
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Assemble" lsfProject="build%s" lsfQueue="alignment-pd" lsfResource="-n 4 -R 'span[hosts=1] select[type==LINUX64 &amp;&amp; mem&gt;61440] rusage[mem=61440]' -M 63963136" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="ProcessInstrumentData" parallelBy="instrument_data">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::ProcessInstrumentData" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[type==LINUX64 &amp;&amp; mem&gt;32000 &amp;&amp; tmp&gt;200000] rusage[mem=32000:tmp=200000] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[type==LINUX64 &amp;&amp; mem&gt;32000 &amp;&amp; tmp&gt;200000] rusage[mem=32000:tmp=200000] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
   </operation>
-  <operation name="MergeInputMetrics">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::MergeInputMetrics" lsfProject="build%s" lsfQueue="apipe" typeClass="Workflow::OperationType::Command" />
+  <operation name="MergeAndLinkSxResults">
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[type==LINUX64 &amp;&amp; tmp&gt;200000] rusage[tmp=200000] span[hosts=1]'" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="Report">
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s" lsfQueue="apipe" typeClass="Workflow::OperationType::Command" />
@@ -185,9 +185,10 @@ for my $params_and_xml (@params_and_xml_list) {
         model => $model, data_directory => $tmp_dir);
 
     my $workflow = $pp->_resolve_workflow_for_build($build);
-    my $validation_results = $workflow->validate;
+    my @validation_results = $workflow->validate;
     ok($workflow->is_valid, sprintf("validated workflow for '%s'",
             $params_and_xml->{'params'}->{'name'}));
+    print Data::Dumper::Dumper(\@validation_results) if not $workflow->is_valid;
 
     my @operations = $workflow->operations;
 
