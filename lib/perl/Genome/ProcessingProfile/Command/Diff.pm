@@ -47,13 +47,22 @@ sub execute {
     my %to = map { $_->name => $_->value_id } $to->params();
     my %both = (%from, %to);
 
-    for my $name (sort keys %both) {
+    $from{id} = $from->id;
+    $from{name} = $from->name;
+    $to{id} = $to->id;
+    $to{name} = $to->name;
+
+    for my $name ('id','name', sort keys %both) {
         my $before = $from{$name};
         my $after = $to{$name};
-        printf("%50s: %s\t%s", $name, $before, $after);
-        if ($before ne $after) {
-            print "\t******";
+        my $diff;
+        if ($before ne $after and $name ne 'id' and $name ne 'name') {
+            $diff = "***";
         }
+        else {
+            $diff = "   ";
+        }
+        printf("%50s:\t%s\t%s\t%s", $name, $diff, $before, $after);
         print "\n";
     }
 
