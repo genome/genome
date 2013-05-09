@@ -83,7 +83,6 @@ sub _wrap_perl_expr {
 
 sub execute {
     my $self = shift;
-
     my $from = $self->from;
     my $to_name = $self->to;
     my @changes = $self->changes;
@@ -268,7 +267,7 @@ sub execute {
         my $to_profile = ($changes_pp or $pp_mapping{$from_profile});
         my $to_model;
         $n++;
-        if ($to_profile or $force_copy_models) {
+        if ($to_profile or $force_copy_models or @input_changes or @model_changes) {
             $to_profile ||= $from_model->processing_profile;
             my $new_name;
             if ($model_namer) {
