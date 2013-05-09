@@ -72,14 +72,15 @@ my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
 ok($sx_processor, 'create sx read processor');
 ok($sx_processor->determine_processing(@instrument_data), 'determine processing');
 my $old_way_processing = { condition => 'DEFAULT', processor => 'test default --param 1', };
-is_deeply($sx_processor->default_processing, $old_way_processing, 'got default processing');
+is_deeply($sx_processor->default_processing, $old_way_processing, 'default processing');
 is_deeply($sx_processor->additional_processings, [], 'no additional processings');
+my @expected_final_sx_result_params;
 for my $instrument_data ( @instrument_data ) {
     my $processing = $sx_processor->determine_processing_for_instrument_data($instrument_data);
     is_deeply(
         $processing,
         $old_way_processing,
-        'got correct processing for instrument data ',
+        'correct processing for instrument data ',
     );
     my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data),
     my %expected_sx_result_params = %{$instrument_data->{sx_result_params}};
@@ -87,10 +88,16 @@ for my $instrument_data ( @instrument_data ) {
     is_deeply(
         $sx_result_params,
         \%expected_sx_result_params,
-        'got correct sx result params for instrument data ',
+        'correct sx result params for instrument data ',
     );
+    push @expected_final_sx_result_params, \%expected_sx_result_params;
     ok(!$sx_processor->merged_sx_result_params_for_instrument_data($instrument_data), 'no merged sx result params');
 }
+is_deeply(
+    [$sx_processor->final_sx_result_params],
+    \@expected_final_sx_result_params,
+    'final sx result params',
+);
 
 diag('SUCCESS (NEW WAY DEFAULT ONLY)');
 $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
@@ -99,7 +106,7 @@ $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
 ok($sx_processor->determine_processing(@instrument_data), 'determine processing');
 ok($sx_processor, 'create sx read processor');
 my $new_way_processing = { condition => 'DEFAULT', processor => 'test default --param 1', coverage => 10, };
-is_deeply($sx_processor->default_processing, $new_way_processing, 'got default processing');
+is_deeply($sx_processor->default_processing, $new_way_processing, 'default processing');
 is_deeply($sx_processor->additional_processings, [], 'no additional processings');
 my $merged_sx_result_params = $sx_processor->merged_sx_result_params_for_instrument_data($instrument_data[0]);
 for my $instrument_data ( @instrument_data ) {
@@ -108,7 +115,7 @@ for my $instrument_data ( @instrument_data ) {
     is_deeply(
         $processing,
         $new_way_processing,
-        'got correct processing for instrument data ',
+        'correct processing for instrument data ',
     );
     my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data),
     my %expected_sx_result_params = %{$instrument_data->{sx_result_params}};
@@ -116,30 +123,28 @@ for my $instrument_data ( @instrument_data ) {
     is_deeply(
         $sx_result_params,
         \%expected_sx_result_params,
-        'got correct sx result params for instrument data ',
+        'correct sx result params for instrument data ',
     );
     is_deeply(
         $sx_processor->merged_sx_result_params_for_instrument_data($instrument_data),
-        {
-            instrument_data_id => [ map { $_->id } @instrument_data ],
-            read_processor => $processing->{processor},
-            coverage => $processing->{coverage},
-            output_file_count => 2,
-            output_file_type => 'sanger',
-            test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
-        },
-        'no merged sx result params',
+        $merged_sx_result_params,
+        'merged sx result params',
     );
 }
+is_deeply(
+    [$sx_processor->final_sx_result_params],
+    [ $merged_sx_result_params ],
+    'final sx result params',
+);
 
 diag('SUCESS (NEW WAY, FULL TEST)');
 $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
     processor => 'DEFAULT (test default --param 1) original_est_fragment_size <= 2.5 * read_length (DEFAULT, coverage 30X) original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 (test insert-size --min 1001 --max 6000 | test default --param 0, coverage 20X) original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 (test insert-size --min 6001 --max 10000) read_length == 777 (test default --param 100)',
 );
 ok($sx_processor->determine_processing(@instrument_data), 'determine processing');
-is_deeply($sx_processor->default_processing, $old_way_processing, 'got default processing');
+is_deeply($sx_processor->default_processing, $old_way_processing, 'default processing');
 ok($sx_processor, 'create sx read processor');
-ok($sx_processor->parser, 'got parser');
+ok($sx_processor->parser, 'parser');
 my $default_processing = { condition => 'DEFAULT', processor => 'test default --param 1', };
 my @expected_processings = (
     { condition => [qw/ original_est_fragment_size <= 2.5 * read_length /], processor => 'DEFAULT', coverage => 30, },
@@ -147,8 +152,9 @@ my @expected_processings = (
     { condition => [qw/ original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 /], processor => 'test insert-size --min 6001 --max 10000', },
     { condition => [qw/ read_length == 777 /], processor => 'test default --param 100', },
 );
-is_deeply($sx_processor->default_processing, $default_processing, 'got default processor');
-is_deeply($sx_processor->additional_processings, \@expected_processings, 'got additional read processors');
+is_deeply($sx_processor->default_processing, $default_processing, 'default processor');
+is_deeply($sx_processor->additional_processings, \@expected_processings, 'additional read processors');
+@expected_final_sx_result_params = ();
 for ( my $i = 0; $i < @instrument_data; $i++ ) {
     my $instrument_data = $instrument_data[$i];
     diag($instrument_data->id);
@@ -156,7 +162,7 @@ for ( my $i = 0; $i < @instrument_data; $i++ ) {
     is_deeply(
         $processing,
         $expected_processings[$i],
-        'got correct processing for instrument data ',
+        'correct processing for instrument data ',
     );
     my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data),
     my %expected_sx_result_params = %{$instrument_data->{sx_result_params}};
@@ -164,26 +170,34 @@ for ( my $i = 0; $i < @instrument_data; $i++ ) {
     is_deeply(
         $sx_result_params,
         \%expected_sx_result_params,
-        'got correct sx result params for instrument data ',
+        'correct sx result params for instrument data ',
     );
     if ( $processing->{coverage} ) {
+        my $merged_sx_result_params = $sx_processor->merged_sx_result_params_for_instrument_data($instrument_data);
         is_deeply(
-            $sx_processor->merged_sx_result_params_for_instrument_data($instrument_data),
+            $merged_sx_result_params,
             {
-                instrument_data_id => [ map { $_->id } $instrument_data[$i] ],
+                instrument_data_id => [ $instrument_data->id ],
                 read_processor => $processing->{processor},
                 coverage => $processing->{coverage},
                 output_file_count => 2,
                 output_file_type => 'sanger',
                 test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
             },
-            'no merged sx result params',
-        );
+            'merged sx result params',
+        ); 
+        push @expected_final_sx_result_params, $merged_sx_result_params;
     }
     else {
         ok(!$sx_processor->merged_sx_result_params_for_instrument_data($instrument_data), 'no merged sx result params');
+        push @expected_final_sx_result_params, $sx_result_params;
     }
 }
+is_deeply(
+    [$sx_processor->final_sx_result_params],
+    \@expected_final_sx_result_params,
+    'final sx result params',
+);
 
 # FAILS
 # invalid sx command

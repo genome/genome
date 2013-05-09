@@ -175,7 +175,7 @@ sub determine_processing {
     }
 
     # Determine SX results and merged SX results
-    my (%sx_result_params, @merged_sx_result_params, @final_sx_result_params);
+    my (%sx_result_params, @merged_sx_result_params);
     for my $processing ( values %processings_and_instrument_data ) {
         for my $instrument_data ( @{$processing->{instrument_data}} ) {
             $sx_result_params{ $instrument_data->id } =  {
@@ -250,13 +250,16 @@ sub final_sx_result_params {
     Carp::confess('Need to call "determine_processing" with all instrument data before before calling sx_result_params_for_instrument_data.') if not $self->_instrument_data;
 
     my %final_sx_result_params;
-    for my $instrument_data ( $self->_instrument_data ) {
+    for my $instrument_data ( @{$self->_instrument_data} ) {
         my $sx_result_params = $self->merged_sx_result_params_for_instrument_data($instrument_data);
         $sx_result_params = $self->sx_result_params_for_instrument_data($instrument_data) if not $sx_result_params;
-        $final_sx_result_params{$sx_result_params->id} = $sx_result_params;
+        my $id = ( ref $sx_result_params->{instrument_data_id} ) 
+        ? join(' ', sort { $a <=> $b } @{$sx_result_params->{instrument_data_id}})
+        : $sx_result_params->{instrument_data_id};
+        $final_sx_result_params{$id} = $sx_result_params;
     }
 
-    return values %final_sx_result_params;
+    return map { $final_sx_result_params{$_} } sort keys %final_sx_result_params;
 }
 
 sub determine_processing_for_instrument_data {
@@ -274,7 +277,7 @@ sub determine_processing_for_instrument_data {
     # Bad - found more than one
     if ( @matched_processings > 1 ) {
         $self->error_message(
-            'Found multiple processings for instrument data! '.$instrument_data->id."\n".Data::Dumper::Dumper(\@matched_processings)
+            'Found multiple processings for instrument data! '.$instrument_data->id."\n".Dumper(\@matched_processings)
         );
         return;
     }
