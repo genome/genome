@@ -18,6 +18,9 @@ class Genome::Model::DeNovoAssembly::SxReadProcessor {
     has_transient_optional => [
         default_processing => { is => 'HASH', },
         additional_processings => { is => 'ARRAY', },
+        _instrument_data => { is => 'ARRAY', },
+        _sx_result_params => { is => 'ARRAY', },
+        _merged_sx_result_params => { is => 'ARRAY', },
     ],
 };
 
@@ -69,6 +72,7 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__(@_);
     return @errors if @errors;
 
+    # Parse processor
     my $parser = $self->parser;
     my $processor = $self->processor;
     my $parsed_processings;
@@ -78,7 +82,7 @@ sub __errors__ {
             return UR::Object::Tag->create(
                 type => 'invalid',
                 properties => [qw/ processor /],
-                desc => 'Failed to parse read processor specification!',
+                desc => 'Failed to parse read processor specification! '.$processor,
             );
         }
         $parsed_processings = [ $parsed_processings ] if not ref $parsed_processings eq 'ARRAY';
@@ -91,12 +95,13 @@ sub __errors__ {
             },];
     }
 
+    # Check default processor, set processors
     my $default_processing_count = grep { $_->{condition} eq 'DEFAULT' } @$parsed_processings;
     if ( $default_processing_count != 1 ) {
         return UR::Object::Tag->create(
             type => 'invalid',
             properties => [qw/ processor /],
-            desc => ( $default_processing_count ? 'Multiple' : 'No' ).' DEFAULT read processor(s) in specification!',
+            desc => ( $default_processing_count ? 'Multiple' : 'No' ).' DEFAULT read processor(s) in specification! '.$processor,
         );
     }
     $self->default_processing(shift @$parsed_processings); # always the first
@@ -104,11 +109,12 @@ sub __errors__ {
         return UR::Object::Tag->create(
             type => 'invalid',
             properties => [qw/ processor /],
-            desc => 'Could not find DEFAULT read processor from specification!',
+            desc => 'Could not find DEFAULT read processor from specification! '.$processor,
         );
     }
     $self->additional_processings($parsed_processings);
 
+    # Validate SX commands
     for my $processing ( $self->default_processing, @{$self->additional_processings} ) {
         my $processor = $processing->{processor};
         $processor = $self->default_processing->{processor} if $processor eq 'DEFAULT';
@@ -122,7 +128,7 @@ sub __errors__ {
         }
 
         for my $processor_part ( @processor_parts ) {
-            my $processor_is_ok = Genome::Model::Tools::Sx::Validate->validate_command('gmt sx '.$processor_part);
+            my $processor_is_ok = eval{ Genome::Model::Tools::Sx::Validate->validate_command('gmt sx '.$processor_part); };
             if ( not $processor_is_ok ) {
                 return UR::Object::Tag->create(
                     type => 'invalid',
@@ -153,65 +159,104 @@ sub create {
     return $self;
 }
 
-sub determine_sx_result_params_for_multiple_instrument_data {
+sub determine_processing {
     my ($self, @instrument_data) = @_;
 
-    Carp::confess('No instrument data given to determine_sx_result_params_for_multiple_instrument_data!') if not @instrument_data;
+    Carp::confess('No instrument data given to determine_processing!') if not @instrument_data;
 
-    my %processings;
-    for my $instrument_data ( @instrument_data ) { 
+    # Determine processing for instrument data
+    my %processings_and_instrument_data;
+    for my $instrument_data ( @instrument_data ) {
         my $processing = $self->determine_processing_for_instrument_data($instrument_data);
-        return if not $processing;
-        $processings{ $processing->{condition} } = $processing;
+        if ( not $processings_and_instrument_data{ $processing->{condition} } ) {
+            $processings_and_instrument_data{ $processing->{condition} } = $processing;
+        }
+        push @{$processings_and_instrument_data{ $processing->{condition} }->{instrument_data}}, $instrument_data;
     }
 
-    my @processings = values %processings;
-    if ( @processings > 1 ) {
-        $self->error_message('Found multple processings when only one expected when trying to determine processing for multiple instrument data.');
-        return;
+    # Determine SX results and merged SX results
+    my (%sx_result_params, @merged_sx_result_params, @final_sx_result_params);
+    for my $processing ( values %processings_and_instrument_data ) {
+        for my $instrument_data ( @{$processing->{instrument_data}} ) {
+            $sx_result_params{ $instrument_data->id } =  {
+                instrument_data_id => $instrument_data->id,
+                read_processor => $processing->{processor},
+                output_file_count => ( $instrument_data->is_paired_end ? 2 : 1 ),
+                output_file_type => 'sanger',
+                test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+            };
+        }
+
+        if ( not defined $processing->{coverage} ) {
+            next;
+        }
+
+        my %output_file_counts = map { my $count = $_->is_paired_end ? 2 : 1; $count => 1; } @{$processing->{instrument_data}};
+        my @output_file_counts = keys %output_file_counts;
+        if ( @output_file_counts > 2 ) {
+            $self->error_message("Instrument data for merged result must be all paired or all unpaired!");
+            return;
+        }
+
+        push @merged_sx_result_params, {
+            instrument_data_id => [ map { $_->id } @{$processing->{instrument_data}} ],
+            read_processor => $processing->{processor},
+            coverage => $processing->{coverage},
+            output_file_count => $output_file_counts[0],
+            output_file_type => 'sanger',
+            test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        };
     }
 
-    my %sx_result_params = (
-        instrument_data_id => [ map { $_->id } @instrument_data ],
-        read_processor => $processings[0]->{processor},
-        coverage => $processings[0]{coverage},
-        output_file_count => 2,
-        output_file_type => 'sanger',
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
-    );
+    $self->_instrument_data(\@instrument_data);
+    $self->_sx_result_params(\%sx_result_params);
+    $self->_merged_sx_result_params(\@merged_sx_result_params);
 
-    return \%sx_result_params;
+    return 1;
 }
 
-sub determine_sx_result_params_for_instrument_data {
+sub sx_result_params_for_instrument_data {
     my ($self, $instrument_data) = @_;
 
-    Carp::confess('No instrument data given to determine_sx_result_params_for_instrument_data!') if not $instrument_data;
+    Carp::confess('No instrument data given to sx_result_params_for_instrument_data!') if not $instrument_data;
+    Carp::confess('Need to call "determine_processing" with all instrument data before before calling sx_result_params_for_instrument_data.') if not $self->_instrument_data;
 
-    my @processings;
-    if ( @{$self->additional_processings} ) {
-        @processings = $self->determine_processing_for_instrument_data($instrument_data);
-    }
-
-    # Bad - found more than one
-    if ( @processings > 1 ) {
-        $self->error_message(
-            'Found multiple processings for instrument data! '.$instrument_data->id."\n".Data::Dumper::Dumper(\@processings)
-        );
+    my $sx_result_params = $self->_sx_result_params;
+    if ( not $sx_result_params ) {
+        $self->error_message('Need to set sx params with all instrument data by using set_sx_result_params_for_instrument_data" before getting sx result params for instrument data.');
         return;
     }
 
-    # Use the one we found, or if none, the default
-    my %processing = ( @processings == 1  ? %{$processings[0]} : %{$self->default_processing} );
-    my %sx_result_params = (
-        instrument_data_id => $instrument_data->id,
-        read_processor => $processing{processor},
-        output_file_count => ( $instrument_data->is_paired_end ? 2 : 1 ),
-        output_file_type => 'sanger',
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
-    );
+    return $sx_result_params->{ $instrument_data->id };
+}
 
-    return \%sx_result_params;
+sub merged_sx_result_params_for_instrument_data {
+    my ($self, $instrument_data) = @_;
+
+    Carp::confess('No instrument data given to merged_sx_result_params_for_instrument_data!') if not $instrument_data;
+    Carp::confess('Need to call "determine_processing" with all instrument data before before calling merged_sx_result_params_for_instrument_data.') if not $self->_instrument_data;
+
+    for my $merged_sx_result_params ( @{$self->_merged_sx_result_params} ) {
+        next if not grep { $instrument_data->id eq $_ } @{$merged_sx_result_params->{instrument_data_id}};
+        return $merged_sx_result_params;
+    }
+
+    return;
+}
+
+sub final_sx_result_params {
+    my $self = shift;
+
+    Carp::confess('Need to call "determine_processing" with all instrument data before before calling sx_result_params_for_instrument_data.') if not $self->_instrument_data;
+
+    my %final_sx_result_params;
+    for my $instrument_data ( $self->_instrument_data ) {
+        my $sx_result_params = $self->merged_sx_result_params_for_instrument_data($instrument_data);
+        $sx_result_params = $self->sx_result_params_for_instrument_data($instrument_data) if not $sx_result_params;
+        $final_sx_result_params{$sx_result_params->id} = $sx_result_params;
+    }
+
+    return values %final_sx_result_params;
 }
 
 sub determine_processing_for_instrument_data {
@@ -222,7 +267,7 @@ sub determine_processing_for_instrument_data {
     my @matched_processings;
     if ( @{$self->additional_processings} ) {
         for my $processing ( @{$self->additional_processings} ) {
-            push @matched_processings, $processing if $self->does_instrument_data_match_condition($instrument_data, @{$processing->{condition}});
+            push @matched_processings, $processing if $self->_does_instrument_data_match_condition($instrument_data, @{$processing->{condition}});
         }
     }
 
@@ -239,11 +284,11 @@ sub determine_processing_for_instrument_data {
     return \%processing;
 }
 
-sub does_instrument_data_match_condition {
+sub _does_instrument_data_match_condition {
     my ($self, $instrument_data, @conditions) = @_;
 
-    Carp::confess('No instrument data given to does_instrument_data_match_condition!') if not $instrument_data;
-    Carp::confess('No condition given to does_instrument_data_match_condition!') if not @conditions;
+    Carp::confess('No instrument data given to _does_instrument_data_match_condition!') if not $instrument_data;
+    Carp::confess('No condition given to _does_instrument_data_match_condition!') if not @conditions;
 
     my $processing;
     for my $word ( @conditions ) {
