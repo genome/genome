@@ -75,7 +75,10 @@ sub create {
     my $prepare_staging_directory = $self->_prepare_staging_directory;
     return $self->_error('Failed to prepare tagin directory!') if not $prepare_staging_directory;
 
-    my $run_sx = $self->_run_sx;
+    my @sx_command_parts = $self->_construct_sx_command_parts;
+    return $self->_error('Failed to run SX!') if not @sx_command_parts; 
+
+    my $run_sx = $self->_run_sx(@sx_command_parts);
     return $self->_error('Failed to run SX!') if not $run_sx; 
 
     my $verify_output_files = $self->_verify_output_files;
@@ -88,11 +91,15 @@ sub create {
     return $self;
 }
 
-sub _run_sx {
+sub _construct_sx_command_parts {
     my $self = shift;
 
     my $instrument_data = $self->instrument_data;
     $self->status_message('Instrument data: '.$instrument_data->id);
+
+    # Read processor
+    my $read_processor = $self->read_processor;
+    $read_processor = '' if not $read_processor;
 
     # Output files
     my $output = $self->_output_config;
@@ -136,10 +143,19 @@ sub _run_sx {
         return;
     }
 
-    # Construct SX command
-    my @read_processor_parts = ( $self->read_processor ? split(/\s+\|\s+/, $self->read_processor) : ('') );
+    return ( $read_processor, \@inputs, $output );
+}
+
+sub _run_sx {
+    my ($self, $read_processor, $inputs, $output) = @_;
+
+    Carp::confess('No read processor sent to run sx!') if not defined $read_processor;
+    Carp::confess('No inputs sent to run sx!') if not $inputs;
+    Carp::confess('No output sent to run sx!') if not $output;
+
+    my @read_processor_parts = ( $read_processor ? split(/\s+\|\s+/, $read_processor) : ('') );
     my @sx_cmd_parts = map { 'gmt sx '.$_ } @read_processor_parts;
-    $sx_cmd_parts[0] .= ' --input '.join(',', @inputs);
+    $sx_cmd_parts[0] .= ' --input '.join(',', @$inputs);
     $sx_cmd_parts[0] .= ' --input-metrics '.
     $self->temp_staging_directory.'/'.
     $self->read_processor_input_metric_file;
@@ -176,19 +192,16 @@ sub _verify_output_files {
     }
     if ( not $existing_cnt ) {
         $self->error_message('No output files were created!');
-        $self->delete;
         return;
     }
     if (not -s $self->temp_staging_directory.'/'.
             $self->read_processor_output_metric_file) {
         $self->error_message('Output metrics file not created');
-        $self->delete;
         return;
     }
     if (not -s $self->temp_staging_directory.'/'.
             $self->read_processor_input_metric_file) {
         $self->error_message('Input metrics file not created');
-        $self->delete;
         return;
     }
 
