@@ -79,7 +79,7 @@ sub execute {
     }
 
     $self->sx_results(\@sx_results);
-    $self->status_message('Merge and Link SX results...');
+    $self->status_message('Merge and Link SX results...OK');
     return 1;
 }
 
