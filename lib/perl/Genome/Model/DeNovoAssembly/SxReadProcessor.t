@@ -65,8 +65,40 @@ for my $inst_data_attr ( @inst_data_attrs, ) {
 }
 is(@instrument_data, @inst_data_attrs, 'create inst data');
 
+diag('SUCCESS (NO READ PROCESSOR)');
+my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create();
+ok($sx_processor, 'create sx read processor');
+ok($sx_processor->determine_processing(@instrument_data), 'determine processing');
+my $no_read_processor_processing = { condition => 'DEFAULT', processor => '', };
+is_deeply($sx_processor->default_processing, $no_read_processor_processing, 'default processing');
+is_deeply($sx_processor->additional_processings, [], 'no additional processings');
+my @expected_final_sx_result_params;
+for my $instrument_data ( @instrument_data ) {
+    my $processing = $sx_processor->determine_processing_for_instrument_data($instrument_data);
+    is_deeply(
+        $processing,
+        $no_read_processor_processing,
+        'correct processing for instrument data ',
+    );
+    my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data),
+    my %expected_sx_result_params = %{$instrument_data->{sx_result_params}};
+    $expected_sx_result_params{read_processor} = $no_read_processor_processing->{processor};
+    is_deeply(
+        $sx_result_params,
+        \%expected_sx_result_params,
+        'correct sx result params for instrument data ',
+    );
+    push @expected_final_sx_result_params, \%expected_sx_result_params;
+    ok(!$sx_processor->merged_sx_result_params_for_instrument_data($instrument_data), 'no merged sx result params');
+}
+is_deeply(
+    [$sx_processor->final_sx_result_params],
+    \@expected_final_sx_result_params,
+    'final sx result params',
+);
+
 diag('SUCCESS (OLD WAY)');
-my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
+$sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
     processor => 'test default --param 1',
 );
 ok($sx_processor, 'create sx read processor');
@@ -74,7 +106,7 @@ ok($sx_processor->determine_processing(@instrument_data), 'determine processing'
 my $old_way_processing = { condition => 'DEFAULT', processor => 'test default --param 1', };
 is_deeply($sx_processor->default_processing, $old_way_processing, 'default processing');
 is_deeply($sx_processor->additional_processings, [], 'no additional processings');
-my @expected_final_sx_result_params;
+@expected_final_sx_result_params = ();
 for my $instrument_data ( @instrument_data ) {
     my $processing = $sx_processor->determine_processing_for_instrument_data($instrument_data);
     is_deeply(

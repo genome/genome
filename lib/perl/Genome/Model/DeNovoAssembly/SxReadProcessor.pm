@@ -9,7 +9,7 @@ use Data::Dumper 'Dumper';
 use Parse::RecDescent;
 
 class Genome::Model::DeNovoAssembly::SxReadProcessor { 
-    has => [
+    has_optional => [
         processor => {
             is => 'Text',
             doc => 'An SX command or instrument data conditions and matching SX commnds.',
@@ -76,7 +76,13 @@ sub __errors__ {
     my $parser = $self->parser;
     my $processor = $self->processor;
     my $parsed_processings;
-    if ( $processor =~ /^DEF/ ) {
+    if ( not $processor ) {
+        $parsed_processings = [{
+                condition => 'DEFAULT',
+                processor => '',
+            },];
+    }
+    elsif ( $processor =~ /^DEF/ ) {
         $parsed_processings = $parser->evaluate_processor($processor);
         if ( not $parsed_processings ) {
             return UR::Object::Tag->create(
@@ -113,6 +119,8 @@ sub __errors__ {
         );
     }
     $self->additional_processings($parsed_processings);
+
+    return if not $processor; # do not validate SX command
 
     # Validate SX commands
     for my $processing ( $self->default_processing, @{$self->additional_processings} ) {
