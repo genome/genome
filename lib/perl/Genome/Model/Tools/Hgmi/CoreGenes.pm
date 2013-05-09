@@ -77,7 +77,9 @@ sub execute {
         percent_id => $CORE_GENE_PARAMS{$self->cell_type}{percent_id},
         fraction_of_length => $CORE_GENE_PARAMS{$self->cell_type}{fraction_of_length},
         cell_type => $self->cell_type,
-        output_file => $core_gene_output_file, 
+        output_file => $core_gene_output_file,
+        archaea_query_file => '/gscmnt/ams1102/info/core_genes/archaea/Archaea_coreset_104.gi.faa',
+        bacterial_group_file => '/gscmnt/ams1102/info/core_genes/bacteria/CoreGroups_66.cgf',
     );
     confess 'Could not create core gene command object!' unless $core_gene_cmd;
     confess 'Could not execute core gene check!' unless $core_gene_cmd->execute;
