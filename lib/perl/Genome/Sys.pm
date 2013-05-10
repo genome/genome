@@ -336,6 +336,42 @@ sub sw_path {
     die $class->error_message("Failed to find app $app_name (package $pkg_name) at version $version!");
 }
 
+sub jar_path {
+    my ($class, $jar_name, $version) = @_;
+    # check the default path
+    my %map = $class->jar_version_path_map($jar_name);
+    my $path = $map{$version};
+    if ($path) {
+        return $path;
+    }
+    die $class->error_message("Failed to find jar $jar_name at version $version");
+}
+
+sub jar_version_path_map {
+    my ($class, $pkg_name) = @_;
+
+    my %versions;
+    my @dirs = split(':', $ENV{GENOME_JAR_PATH});
+
+    for my $dir (@dirs) {
+        my $prefix = "$dir/$pkg_name-";
+        my @version_paths = grep { -e $_ } glob("$prefix*");
+        next unless @version_paths;
+        my $prefix_len = length($prefix);
+        for my $version_path (@version_paths) {
+            my $version = substr($version_path,$prefix_len);
+            $version =~ s/.jar$//;
+            if (substr($version,0,1) eq '-') {
+                $version = substr($version,1);
+            }
+            next unless $version =~ /[0-9\.]/;
+            next if -l $version_path;
+            $versions{$version} = $version_path;
+        }
+    }
+    return %versions;
+}
+
 sub sw_version_path_map {
     my ($class, $pkg_name, $app_name) = @_;
     $app_name ||= $pkg_name;

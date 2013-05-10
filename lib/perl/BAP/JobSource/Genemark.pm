@@ -74,24 +74,4 @@ sub feature_ref {
     
 }
 
-sub fail_job {
-    
-    my ($self, $job, $results, $error) = @_;
-
-    
-    my $job_id = $job->job_id();
-    
-    if ($self->{_fail_count}->{$job_id} >= 10) {
-        warn "job $job_id continues to fail after multiple retries: $error";
-        push @{$self->{_failed_jobs}}, $job;
-    }
-    else {
-        $self->{_fail_count}->{$job_id}++;
-        my $job_host = $job->execution_host();
-        warn "job $job_id failed on $job_host - retrying";
-        push @{$self->{_jobs}}, $job;
-    }
-    
-}
-
 1;

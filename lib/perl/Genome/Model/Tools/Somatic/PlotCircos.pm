@@ -19,7 +19,7 @@ class Genome::Model::Tools::Somatic::PlotCircos{
         cna_file => {
             is  => 'String',
             is_input  => 1,
-            doc => 'Windowed copy number from sequence data',
+            doc => 'Windowed copy number from sequence data (e.g., as output from gmt somatic bam-to-cna)',
         },
         tier1_lc_file => {
             is  => 'String',

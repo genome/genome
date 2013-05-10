@@ -5,9 +5,9 @@ use warnings;
 
 use Genome;
 
-use YAML;
-
+use Genome::Model::DeNovoAssembly::SxReadProcessor;
 use Regexp::Common;
+use YAML;
 
 class Genome::ProcessingProfile::DeNovoAssembly {
     is => 'Genome::ProcessingProfile',
@@ -212,51 +212,25 @@ sub _validate_assembler_and_params {
     return 1;
 }
 
-#< temp params updates needed for successful eval of assembler class >#
-
-#sub velvet_one_button_fake_params_for_eval {
-#    my $self = shift;
-#    my %params = (
-#   ins_length => '280',
-#    );
-#    return %params;
-#}
-#
-
-#sub soap_de_novo_assemble_clean_up_params_for_eval {
-#    my ($self, %params) = @_;
-#    delete $params{insert_size};
-#    return %params;
-#}
-
 #< Read Processor >#
 sub _validate_read_processor {
     my $self = shift;
+    $self->status_message("Validate read processor...");
 
     my $read_processor = $self->read_processor;
     unless ( defined $read_processor ) { # ok
+        $self->status_message("No read processor to validate, skipping...");
         return 1;
     }
 
-    $self->status_message("Validating read processor...");
-
-    my @read_processor_parts = split(/\s+\|\s+/, $read_processor);
-    unless ( @read_processor_parts ) {
-        $self->error_message("Could not find read processors in string: $read_processor");
+    $self->status_message('Read processor: '.$read_processor);
+    my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(processor => $read_processor);
+    if ( not $sx_processor ) {
+        $self->error_message('Failed to validate read processor!');
         return;
     }
 
-    for my $read_processor_part ( @read_processor_parts ) {
-        my $read_processor_is_ok = Genome::Model::Tools::Sx::Validate->validate_command('gmt sx '.$read_processor_part);
-        if ( not $read_processor_is_ok ) {
-            $self->error_message("Cannot validate read processor ($read_processor_part). See above error(s)");
-            return;
-        }
-        $self->status_message("Read processor part OK: $read_processor_part");
-    }
-
-    $self->status_message("Read processor OK");
-
+    $self->status_message("Read processor...OK");
     return 1;
 }
 

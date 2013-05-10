@@ -34,12 +34,14 @@ sub _detect_variants {
     $refseq =~ s/\/opt\/fscache//;
     my $gatk_cmd = Genome::Model::Tools::Gatk::GermlineSnv->create( 
         bam_file => $self->aligned_reads_input, 
-        verbose_output_file => $self->_temp_staging_directory."/gatk_output_file",
         vcf_output_file => $self->_temp_staging_directory."/snvs.hq",
         mb_of_ram => $self->mb_of_ram,
         reference_fasta => $refseq,
         version => $self->version,
     );
+    if (Genome::Model::Tools::Gatk->is_legacy_version($self->version)) {
+        $gatk_cmd->verbose_output_file($self->_temp_staging_directory."/gatk_output_file");
+    }
 
     unless($gatk_cmd->execute){
         $self->error_message("Failed to run GATK command.");

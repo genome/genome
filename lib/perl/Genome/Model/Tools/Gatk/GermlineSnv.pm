@@ -76,7 +76,6 @@ EOS
 sub execute {                               # replace with real execution logic.
 	my $self = shift;
 
-
         # note: this crashes when using v. 131, because the 'get' returns undef
 #        my $model = Genome::Model->get( name => "dbSNP-human-".$self->dbSNP_version);
 	my $dbsnp_rod;
@@ -94,6 +93,9 @@ sub execute {                               # replace with real execution logic.
 	## Run GATK ##
 	my $path_to_gatk = $self->gatk_path;
 	my $version = $self->version;
+    unless ($self->_check_params) {
+        return;
+    }
 	my $gatk_params;
 	if ($version le 5500) {
 		$gatk_params = $self->gatk_params;
@@ -147,6 +149,17 @@ sub execute {                               # replace with real execution logic.
 	}
 
 	return $return;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
+}
+
+sub _check_params {
+    my $self = shift;
+    if ($self->verbose_output_file) {
+        unless ($self->is_legacy_version($self->version)) {
+            $self->error_message("Version ".$self->version." is not compatible with the verbose_output_file param");
+            die $self->error_message;
+        }
+    }
+    return 1;
 }
 
 1;

@@ -7,6 +7,7 @@ use Genome;
 use Workflow;
 use Workflow::Simple;
 use Carp;
+use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line');
 
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcf {
     is => 'Genome::Model::Tools::DetectVariants2::Filter',
@@ -186,9 +187,9 @@ sub _filter_variants {
     ## Parse the variants file ##
     while(my $line = $input_fh->getline) {
         # FIXME should just pass in a single sample here instead of a whole line. Or a sample joined with a line to make a whole single sample vcf line?
-        my $parsed_line = $self->parse_vcf_line($line, \@sample_names);
+        my $parsed_line = parse_vcf_line($line, \@sample_names);
         $self->filter_one_line($parsed_line, $readcount_searcher_by_sample, $stats, \@sample_names);
-        $output_fh->print($self->deparse_vcf_line($parsed_line,\@sample_names));
+        $output_fh->print(deparse_vcf_line($parsed_line,\@sample_names));
     }
 
     $input_fh->close;
@@ -390,87 +391,6 @@ sub get_samples_from_header {
     return @fields;
 }
 
-# Given a vcf line, parse it. Return info as a hash, return samples as an arrayref of hashes.
-#FIXME probably move this to a base class
-sub parse_vcf_line {
-    my $self = shift;
-    my $line = shift;
-    my $smpl_names = shift;
-    my @sample_names = @$smpl_names;
-
-    chomp $line;
-    my ($chrom, $pos, $id, $ref, $alt, $qual, $filter, $info_string, $format, @sample_data) = split "\t", $line;
-
-    my $parsed_line;
-    $parsed_line->{"chromosome"} = $chrom;
-    $parsed_line->{"position"} = $pos;
-    $parsed_line->{"id"} = $id;
-    $parsed_line->{"reference"} = $ref;
-    $parsed_line->{"alt"} = $alt;
-    $parsed_line->{"qual"} = $qual;
-    $parsed_line->{"filter"} = $filter;
-
-    # Parse out the info field
-    # Example: NS=3;DP=14;AF=0.5;DB;H2 (H2 is a flag)
-    if ($info_string eq ".") {
-        $parsed_line->{"info"} = $info_string;
-    } else {
-        my $info;
-        my @info_values = split(";", $info_string);
-        my @info_keys = ();
-        for my $info_value (@info_values) {
-            if($info_value =~ /=/) {
-                my ($key, $value) = split("=", $info_value);
-                unless (defined($value)) {
-                    $self->error_message("Invalid info tag. Has equal sign but no value.");
-                    die;
-                }
-                $info->{$key} = $value;
-                push @info_keys, $key;
-            }
-            else {
-                # This must mean the value is a "flag" in the vcf header, we could check this to be extra careful
-                $info->{$info_value} = undef;
-                push @info_keys, $info_value;
-            }
-        }
-        $parsed_line->{"info"} = $info;
-        $parsed_line->{'_info_tags'} = \@info_keys;
-    }
-
-    # Check and parse out the format/sample fields
-    # FIXME do I want this to be an array or a hash?
-    #my @parsed_samples;
-    my $parsed_samples;
-    my @format_fields = split ":", $format;
-    $parsed_line->{'_format_fields'} = \@format_fields; #have to store this on each line since they can vary across each line
-    for my $sample (@sample_data) {
-        my $sample_name = shift @sample_names;
-        my @sample_fields = split ":", $sample;
-
-        unless (scalar(@format_fields) == scalar(@sample_fields) ) {
-            die $self->error_message("Format field ($format) and sample ($sample) field do not have the same number of values");
-        }
-        my $sample_values;
-        for my $format_tag (@format_fields) {
-            $sample_values->{$format_tag} = shift @sample_fields;
-        }
-
-        for my $required_field ($self->required_format_fields) {
-            unless (defined $sample_values->{$required_field}) {
-                die $self->error_message("Could not find a required field: $required_field in the sample data in line $line");
-            }
-        }
-        
-        #push @parsed_samples, $sample_values;
-        $parsed_samples->{$sample_name} = $sample_values;
-    }
-    #$parsed_line->{"sample"} = \@parsed_samples;
-    $parsed_line->{"sample"} = $parsed_samples;
-
-    return $parsed_line;
-}
-
 sub set_format_field {
     my ($self, $parsed_line, $sample, $format_tag, $format_value, %params) = @_;
     if(!exists($parsed_line->{sample}{$sample}{$format_tag})) {
@@ -489,42 +409,6 @@ sub set_format_field {
     else {
         $parsed_line->{sample}{$sample}{$format_tag} = $format_value;   #should really do type checking...
     }
-}
-
-sub deparse_vcf_line {
-    my $self = shift;
-    my $parsed_line = shift;
-    my $smpl_names = shift;
-    my %parsed = %$parsed_line;
-
-    #construct info fields
-    my $info_fields;
-    if($parsed_line->{info} eq '.') {
-        $info_fields = ".";
-    }
-    else {
-        for my $tag (@{$parsed_line->{'_info_tags'}}) {
-            if($info_fields) {
-                $info_fields .= ";";
-            }
-            $info_fields .= $tag;
-            if(defined($parsed_line->{info}->{$tag})) {
-                $info_fields .= '=' . $parsed_line->{info}->{$tag};
-            }
-            delete $parsed_line->{info}->{$tag}
-        }
-    }
-
-    #do the format fields
-    my $format_fields = join(":",@{$parsed_line->{'_format_fields'}});
-    my @sample_data;
-    for my $sample (@{$parsed_line->{sample}}{@$smpl_names}) {
-        #dlarson 4/18/2012 Normally I would just apologize, but eat a slice of my fine hash pie.
-        #This spits back the format fields in order and should be slightly more efficient by using the hash slice
-        push @sample_data, join(":",@{$sample}{@{$parsed_line->{'_format_fields'}}});
-    }
-    my $line = join("\t", (@parsed{qw( chromosome position id reference alt qual filter )}, $info_fields, $format_fields, @sample_data));
-    return $line . "\n";
 }
 
 #FIXME probably move this to a base class

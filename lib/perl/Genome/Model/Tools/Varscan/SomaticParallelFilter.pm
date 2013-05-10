@@ -196,7 +196,7 @@ sub execute {                               # replace with real execution logic.
 			
 			my ($chrom) = split(/\t/, $line);
 
-			if($chrom =~ 'NT_')
+			if($chrom =~ 'NT_' || $chrom =~ /GL/)
 			{
 #				print "Skipping $chrom\n";								
 			}

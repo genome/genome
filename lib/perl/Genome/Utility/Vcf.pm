@@ -9,6 +9,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(open_vcf_file
                     get_vcf_header
+                    get_vcf_header_arrayref
                     diff_vcf_file_vs_file
                     diff_vcf_text_vs_text
                     convert_string_to_hash
@@ -17,6 +18,8 @@ our @EXPORT_OK = qw(open_vcf_file
                     deparse_vcf_line
                     get_samples_from_header
                     parse_header_format
+                    convert_file_with_alpha_gt_values_to_numeric
+                    convert_line_with_alpha_gt_values_to_numeric
                     );
 
 # opens up either a .vcf file or a .vcf.gz file for reading.
@@ -62,6 +65,22 @@ sub get_vcf_header {
         return $header;
     }
 }
+
+# Return the header as an arrayref rather than a string
+sub get_vcf_header_arrayref {
+    my ($filename) = @_;
+
+    if(wantarray()) {
+        my ($header, $input_fh) = get_vcf_header($filename);
+        my @header_array = split("\n", $header);
+        return \@header_array, $input_fh;
+    } else {
+        my $header = get_vcf_header($filename);
+        my @header_array = split("\n", $header);
+        return \@header_array;
+    }
+}
+
 
 # diffs vcf files ignoring the fileDate header entry.
 sub diff_vcf_file_vs_file {
@@ -274,4 +293,81 @@ sub parse_header_format {
     }
 
     return $header_format;
+}
+
+# This method fixes all instances in a file where GT values are bases rather than numbers which refer to the alt
+# Input: Vcf with alpha A/C/G/T GT values
+# Output: Vcf with numberic GT values
+sub convert_file_with_alpha_gt_values_to_numeric {
+    my $input_file = shift;
+    my $output_file = shift;
+
+    unless (-s $input_file) {
+        print "$input_file does not exist\n";
+        return;
+    }
+
+    my $ofh = Genome::Sys->open_gzip_file_for_writing($output_file);
+    my ($header, $ifh) = get_vcf_header_arrayref($input_file);
+    my $header_string = join("\n", @$header);
+    $ofh->print($header_string."\n");
+    my @sample_names = get_samples_from_header($header);
+
+    while (my $line = $ifh->getline) {
+        my $parsed_line = parse_vcf_line($line, \@sample_names);
+        my $fixed_line = convert_line_with_alpha_gt_values_to_numeric($parsed_line, \@sample_names);
+        $ofh->print($fixed_line);
+    }
+
+    return 1;
+}
+
+sub convert_line_with_alpha_gt_values_to_numeric {
+    my $parsed_line = shift;
+    my $sample_names = shift;
+
+    $DB::single=1;
+    for my $sample_name (@$sample_names) {
+        my $old_gt = $parsed_line->{sample}{$sample_name}{"GT"};
+        die "No gt found?\n" unless $old_gt;
+
+        # Don't fix it if it is already numeric
+        unless ($old_gt =~ m/A|C|T|G/) {
+            next;
+        }
+
+        my @old_gt_alleles = split "/", $old_gt;
+        my @alt_alleles = split ",", $parsed_line->{alt};
+        my @new_alleles;
+
+        ALLELE: for my $allele (@old_gt_alleles) {
+            if ($parsed_line->{"ref"} and $allele eq $parsed_line->{"ref"}) {
+                push @new_alleles, 0;
+            } else {
+                for (my $index = 0; $index <= $#alt_alleles; $index++) {
+                    my $current_alt = $alt_alleles[$index];
+                    if ($current_alt eq $allele) {
+                        push @new_alleles, $index+1;
+                        next ALLELE;
+                    }
+                }
+
+                # New alt encountered
+                push @alt_alleles, $allele;
+                push @new_alleles, scalar(@alt_alleles);
+                $parsed_line->{alt} = join ",", @alt_alleles;
+            }
+        }
+
+        unless (scalar(@new_alleles) == 2) {
+            print "Could not get new alleles for line " . Data::Dumper::Dumper $parsed_line . "\n";
+            return;
+        }
+        my $new_gt = join("/", sort(@new_alleles));
+        $parsed_line->{sample}{$sample_name}{"GT"} = $new_gt;
+    }
+
+    my $deparsed_line = deparse_vcf_line($parsed_line, $sample_names);
+
+    return $deparsed_line;
 }

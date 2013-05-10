@@ -74,6 +74,11 @@ class Genome::Model::Tools::Sam::MarkDuplicates {
             doc => 'All parameters of picard to use for deduplication',
             is_optional => 1,
         },
+        include_comment => {
+            is => 'Text',
+            doc => 'comment to include as a @CO in the BAM header',
+            is_optional => 1,
+        },
     ],
     doc => 'This module is now just a wrapper for `gmt picard mark-duplicates` but preserves the interface and outputs of this tool, which provided duplicate functionality',
 };
@@ -120,6 +125,7 @@ sub execute {
         temp_directory         => $self->tmp_dir,
     );
 
+    $params{include_comment} = $self->include_comment if $self->include_comment;
     $params{use_version} = $self->dedup_version if $self->dedup_version;
 
     my %markdup_params = (

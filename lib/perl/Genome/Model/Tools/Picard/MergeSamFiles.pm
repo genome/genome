@@ -43,6 +43,11 @@ class Genome::Model::Tools::Picard::MergeSamFiles {
             default_value => $DEFAULT_MERGE_SEQUENCE_DICTIONARY,
             is_optional => 1,
         },
+        include_comment => {
+            is => 'Text',
+            doc => 'comment to include as a @CO tag in the BAM',
+            is_optional => 1,
+        },
     ],
 };
 
@@ -83,6 +88,9 @@ sub execute {
     $merge_cmd .= ' O='. $self->output_file;
     my $list_of_files = join(' I=',@input_files);
     $merge_cmd .= ' I='. $list_of_files;
+    if ($self->include_comment and not ($self->use_version =~ /1\.([0-9]+)/ and int($1) < 27)) {
+        $merge_cmd .= " COMMENT='" . $self->include_comment . "'";
+    }
     $self->run_java_vm(
         cmd => $merge_cmd,
         input_files => \@input_files,

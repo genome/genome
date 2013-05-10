@@ -19,7 +19,7 @@ sub _color {
     my $self = shift;
     my $string = shift;
 
-    if($self->color and @_) {
+    if(-t STDOUT and -t STDERR and $self->color and @_) {
         return Term::ANSIColor::colored($string, @_);
     } else {
         return $string;

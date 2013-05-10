@@ -468,6 +468,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'dump-bins!',
       undef,
+      'min-mapability=s',
+      undef,
       'min-width=s',
       undef,
       'normal-samtools-file=s',
@@ -651,6 +653,31 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'window-size=s',
       'files',
       'ylim-max=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>plot-individual-cn',
+    [
+      'annotation-directory=s',
+      'files',
+      'genome-build=s',
+      'files',
+      'output-pdf=s',
+      'files',
+      'segment-file=s',
+      'files',
+      'corrected-window-file=s',
+      'files',
+      'gain-threshold=s',
+      undef,
+      'gaps-file=s',
+      'files',
+      'loss-threshold=s',
+      undef,
+      'normal-window-file=s',
+      'files',
+      'tumor-window-file=s',
       'files',
       'help!',
       undef
@@ -2141,6 +2168,19 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'min-vaf=s',
         'files',
         'use-varscan!',
+        undef,
+        'help!',
+        undef
+      ],
+      '>coverage-hist',
+      [
+        'output-pdf=s',
+        'files',
+        'coverage-file=s',
+        'files',
+        'refalign-model-id=s',
+        undef,
+        'somatic-validation-model-id=s',
         undef,
         'help!',
         undef
@@ -13303,6 +13343,20 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>parse-netmhc-mutant-stdout',
+    [
+      'netmhc-file=s',
+      'files',
+      'parsed-file=s',
+      'files',
+      'output-type=s',
+      [
+        'top',
+        'all'
+      ],
+      'help!',
+      undef
+    ],
     '>make-fasta-file',
     [
       'input-file=s',
@@ -13585,7 +13639,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'version=s',
       [
         'mapasm454_source_03152011',
-        'mapasm454_source_04282011, mapasm454_source_10142011'
+        'mapasm454_source_04282011',
+        'mapasm454_source_10142011'
       ],
       'ace!',
       undef,
@@ -17504,6 +17559,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       ],
       'create-md5-file!',
       undef,
+      'include-comment=s',
+      'files',
       'log-file=s',
       'files',
       'max-records-in-ram=s',
@@ -17636,6 +17693,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       ],
       'create-md5-file!',
       undef,
+      'include-comment=s',
+      'files',
       'log-file=s',
       'files',
       'max-records-in-ram=s',
@@ -20944,6 +21003,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'dedup-version=s',
       'files',
+      'include-comment=s',
+      'files',
       'log-file=s',
       'files',
       'max-jvm-heap-size=s',
@@ -20982,6 +21043,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       ],
       'bam-index!',
       undef,
+      'include-comment=s',
+      'files',
       'is-sorted=s',
       undef,
       'max-jvm-heap-size=s',
@@ -22010,6 +22073,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       [
         'bases=s',
         undef,
+        'incoming-sequences=s',
+        'files',
         'input=s@',
         'files',
         'input-metrics=s',
@@ -22017,8 +22082,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'output=s@',
         'files',
         'output-metrics=s',
-        'files',
-        'select-random-sequences=s',
         'files',
         'help!',
         undef
@@ -22027,6 +22090,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       [
         'count=s',
         undef,
+        'incoming-sequences=s',
+        'files',
         'input=s@',
         'files',
         'input-metrics=s',
@@ -22034,8 +22099,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'output=s@',
         'files',
         'output-metrics=s',
-        'files',
-        'select-random-sequences=s',
         'files',
         'help!',
         undef

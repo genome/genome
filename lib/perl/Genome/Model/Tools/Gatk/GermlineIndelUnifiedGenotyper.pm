@@ -119,10 +119,10 @@ sub execute {
     my $path_to_gatk = $self->gatk_path;
     my $version = $self->version;
     my $gatk_params;
-    if ($version le 5500) {
+    if ($self->is_legacy_version($version) and $version le 5500) {
         $gatk_params = $self->gatk_params .  " -glm DINDEL";
     }
-    elsif ($version ge 5500) {
+    elsif ((not $self->is_legacy_version($version)) or $version ge 5500) {
         $gatk_params = $self->gatk_params .  " -glm INDEL";
     }
     else {

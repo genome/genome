@@ -36,7 +36,12 @@ class Genome::InstrumentData::Command::AlignmentResult::Merged::Merger {
         samtools_version => {
             is => 'Text',
             doc => 'version of samtools to use',
-        }
+        },
+        include_comment => {
+            is => 'Text',
+            doc => 'comment to include as a @CO in the BAM header',
+            is_optional => 1,
+        },
     ],
 };
 

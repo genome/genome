@@ -581,6 +581,8 @@ sub _run_merger {
     my $input_bams = shift;
     my $output_path = shift;
 
+    my $comment = $self->_resolve_comment;
+
     my $merger_module = $self->_resolve_merger_module;
     my $merger = $merger_module->create(
         input_bams => $input_bams,
@@ -589,6 +591,7 @@ sub _run_merger {
         version => $self->merger_version,
         scratch_directory => $self->temp_scratch_directory,
         samtools_version => $self->samtools_version,
+        ($comment? (include_comment => $comment) : ()),
     );
 
     unless($merger->execute()) {
@@ -597,6 +600,17 @@ sub _run_merger {
     }
 
     return 1;
+}
+
+sub _resolve_comment {
+    my $self = shift;
+
+    my @i = $self->instrument_data;
+    my $includes_imported = grep { $_->isa('Genome::InstrumentData::Imported') } @i;
+
+    return if $includes_imported;
+
+    return 'This sequence data was produced in Saint Louis, Missouri, USA.';
 }
 
 sub _resolve_merger_module {
@@ -617,6 +631,8 @@ sub _run_duplication_handler {
     my $input_bam = shift;
     my $output_path = shift;
 
+    my $comment = $self->_resolve_comment;
+
     my $duplication_handler_module = $self->_resolve_duplication_handler_module;
     my $duplication_handler = $duplication_handler_module->create(
         input_bam => $input_bam,
@@ -626,6 +642,7 @@ sub _run_duplication_handler {
         scratch_directory => $self->temp_scratch_directory,
         log_file => $self->_resolve_duplication_log_name($input_bam),
         metrics_file => $self->_resolve_duplication_metrics_name($input_bam),
+        ($comment? (include_comment => $comment) : ()),
     );
 
     unless($duplication_handler->execute()) {

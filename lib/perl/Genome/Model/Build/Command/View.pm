@@ -180,7 +180,11 @@ sub _software_result_test_name {
     my ($self) = @_;
     my $build = $self->build;
     my @results = $build->results;
+    my $label = 'SoftwareResult Test Name(s)';
 
+    unless (scalar(@results)) {
+        return "\n" . $self->_color_pair($label, "No results found for this build");
+    }
     return '' unless scalar(@results);
 
     my $UNDEF = '***undef***';
@@ -188,17 +192,25 @@ sub _software_result_test_name {
 
     my %counts;
     $counts{$_}++ for @test_names;
-
-    my $most_frequent = (
+    my @sorted_counts = (
         sort { $b->[1] <=> $a->[1] }
         map { [ $_, $counts{$_} ] } keys %counts
-    )[0]->[0];
+    );
 
-    my $value = 'undef';
-    if ($most_frequent ne $UNDEF) {
-        $value = "'$most_frequent'";
+    my @entries;
+    while (my $entry = shift(@sorted_counts)) {
+        my ($name, $count) = @{$entry};
+        if ($name eq $UNDEF) {
+            $name = "undef";
+        } else {
+            $name = '"' . $name . '"';
+        }
+
+        push @entries, sprintf("%s (%d)", $name, $count);
     }
-    return "\n" . $self->_color_pair('SoftwareResult Test Name', $value);
+    my $value = join(", ", @entries);
+
+    return "\n" . $self->_color_pair($label, $value);
 }
 
 sub _display_many {
@@ -319,6 +331,9 @@ sub _print_error_log_preview {
     } else {
         $preview = $lines[-1];
     }
+
+    # terminate any unfinished color regions in preview
+    $preview .= $self->_color(' ', 'white');
 
     my $screen_width = $self->get_terminal_width();
     if (length($preview) > $screen_width - 20) {

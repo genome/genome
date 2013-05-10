@@ -66,6 +66,11 @@ class Genome::Model::Tools::Sam::Merge {
             is_optional => 1,
             default_value => 256,
         },
+        include_comment => {
+            is => 'Text',
+            doc => 'comment to include as a @CO tag in the BAM',
+            is_optional => 1,
+        },
     ],
 };
 
@@ -102,6 +107,8 @@ sub merge_command {
             _monitor_stdout_interval => 900, #seconds
         );
 
+        $params{include_comment} = $self->include_comment if $self->include_comment;
+
         my %extra_params = (
             #If $self->is_sorted is false, we sort before merging
             assume_sorted => 1,
@@ -126,6 +133,9 @@ sub merge_command {
         $self->status_message('Files to merge: '. $list_of_files);
     } 
     elsif ($self->merger_name eq 'samtools') {
+        if($self->include_comment) {
+            die $self->error_message('Adding @CO is not supported with the samtools merger');
+        }
         #$self->use_version($self->merger_version);
         my $sam_path = $self->samtools_path;
         my $bam_merge_tool = "$sam_path merge";

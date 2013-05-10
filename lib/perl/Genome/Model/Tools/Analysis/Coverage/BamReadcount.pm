@@ -176,7 +176,7 @@ sub execute {
         }
 
         # use a lookup table to return the correct base
-        # there's a more efficient way than defining this, 
+        # there's a more efficient way than defining this,
         # every time, but meh.
         my %iub_codes;
         $iub_codes{"A"}="A";
@@ -216,7 +216,7 @@ sub execute {
 
 
     sub filterAndPrint{
-        my ($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq, 
+        my ($chr, $pos, $knownRef, $knownVar, $ref_count, $var_count, $var_freq,
             $min_depth,$max_depth,$min_vaf,$max_vaf,$OUTFILE) = @_;
         #filters on the output
         my $do_print=1;
@@ -231,7 +231,7 @@ sub execute {
                     $do_print = 0 if(($ref_count + $var_count) < $min_depth);
                 }
             }
-        }                
+        }
         if(defined($max_depth)){
             unless($max_depth eq "NA"){
                 if($var_freq eq "NA"){
@@ -240,9 +240,9 @@ sub execute {
                     $do_print = 0 if(($ref_count + $var_count) > $max_depth);
                 }
             }
-        }                
+        }
 
-        if(defined($min_vaf)){            
+        if(defined($min_vaf)){
             unless($min_vaf eq "NA"){
                 if($var_freq eq "NA"){
                     $do_print = 0;
@@ -251,7 +251,7 @@ sub execute {
                 }
             }
         }
-        if(defined($max_vaf)){            
+        if(defined($max_vaf)){
             unless($max_vaf eq "NA"){
                 if($var_freq eq "NA"){
                     $do_print = 0;
@@ -269,7 +269,7 @@ sub execute {
             } else {
                 print $OUTFILE sprintf("%.2f",$var_freq);
             }
-            print $OUTFILE "\n";            
+            print $OUTFILE "\n";
         }
     }
 
@@ -324,7 +324,7 @@ sub execute {
         my $key = join("\t",(@fields[0..1]));
 
         #is it an indel?
-        if (($fields[3] =~ /\-/) || ($fields[4] =~ /\-/) || 
+        if (($fields[3] =~ /\-/) || ($fields[4] =~ /\-/) ||
             (length($fields[3]) > 1) || (length($fields[4]) > 1)){
 
             #is it longer than the max length?
@@ -373,7 +373,7 @@ sub execute {
             open(SNVMOD,">$tempdir/snvpos.bed");
             $inFh = IO::File->new( "$tempdir/snvpos" ) || die "can't open file\n";
 
-            #convert the snv file to bed 
+            #convert the snv file to bed
             while( my $line = $inFh->getline )
             {
                 chomp($line);
@@ -405,7 +405,7 @@ sub execute {
             unless($return) {
                 $self->error_message("Failed to execute: Returned $return");
                 die $self->error_message;
-            }       
+            }
 
             #read, clean up and print snvs
             $inFh = IO::File->new( "$tempdir/snvs.varscan" ) || die "can't open varscan snv file\n";
@@ -424,7 +424,7 @@ sub execute {
                 if(!(defined($snvVariantHash{join("\t",($chr, $pos))}))){
                     #print STDERR "WARNING: position $chr : $pos not found in input\n";
                     next;
-                }                
+                }
 
                 my @snvs = split(",",$snvVariantHash{join("\t",($chr, $pos))});
 
@@ -440,7 +440,7 @@ sub execute {
                     foreach my $count_stats (@counts) {
                         my ($allele, $count, $strands, $bq, $mq, $plus_reads, $minus_reads) = split /:/, $count_stats;
 
-                        # assume that the ref call is ACTG, not iub 
+                        # assume that the ref call is ACTG, not iub
                         # (assumption looks valid in my files)
                         if ($allele eq $knownRef){
                             $ref_count += $count;
@@ -464,7 +464,7 @@ sub execute {
                     }
                     if ($depth ne '0') {
                         $var_freq = $var_count/$depth * 100;
-                    }            
+                    }
 
                     $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
 
@@ -510,7 +510,7 @@ sub execute {
                 if(!(defined($snvVariantHash{join("\t",($chr, $pos))}))){
                     print STDERR "WARNING: position $chr : $pos not found in input\n";
                     next;
-                }                
+                }
 
                 my @snvs = split(",",$snvVariantHash{join("\t",($chr, $pos))});
 
@@ -526,7 +526,7 @@ sub execute {
                     foreach my $count_stats (@counts) {
                         my ($allele, $count, $mq, $bq) = split /:/, $count_stats;
 
-                        # assume that the ref call is ACTG, not iub 
+                        # assume that the ref call is ACTG, not iub
                         # (assumption looks valid in my files)
                         if ($allele eq $knownRef){
                             $ref_count += $count;
@@ -550,7 +550,7 @@ sub execute {
                     }
                     if ($depth ne '0') {
                         $var_freq = $var_count/$depth * 100;
-                    }            
+                    }
 
                     $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
 
@@ -562,42 +562,52 @@ sub execute {
                         $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
 
 
-                }            
+                }
             }
         }
-    }    
+    }
 
 
     #--------------------------------------------
     #now indels, which gets tricky
     #the way pileup places the coordinates gets weird, so output the appropriate bases to look at:
 
-    #if there are no indels, this could happen
+    #if there are no indels, skip
     if( -s "$tempdir/indelpos"){
-        open(INDELMOD,">$tempdir/indelpos.mod");
-        $inFh = IO::File->new( "$tempdir/indelpos" ) || die "can't open file\n";
 
-        #convert the indel file to bed
+        #grab pileups for each indel
+        $inFh = IO::File->new( "$tempdir/indelpos" ) || die "can't open file\n";
         while( my $line = $inFh->getline )
         {
+            #convert coordinates to grab the appropriate bases:
             chomp($line);
             my @F = split("\t",$line);
             if($F[3] =~ /0|\-|\*/ ){ #INS
                 $F[1]--;
                 $F[2]--;
-            } elsif ($F[4] =~ /0|\-|\*/){ #DEL
+            } elsif ($F[4] =~ /0|\-|\*/){ #DEL - get two bases, since the del is placed on the previous base
                 $F[1] = $F[1] - 2;
-                $F[2] = $F[1] + 1;
+                $F[2] = $F[1] + 2;
             } else {
                 print STDERR "WARNING: bad indel format: $line \n";
             }
 
-            print INDELMOD join("\t",@F) . "\n";
-        }
-        close(INDELMOD);
+            #run mpileup to get the readcounts:
+            my $cmd = "samtools mpileup -f $fasta -q 1 -r $F[0]:$F[1]-$F[2]  $bam_file >>$tempdir/pileup";
+            #$self->status_message("Running command: $cmd");
 
-        #run mpileup to get the readcounts for each indel:
-        my $cmd = "samtools mpileup -f $fasta -q 1 -l $tempdir/indelpos.mod $bam_file >$tempdir/pileup";
+            my $return = Genome::Sys->shellcmd(
+                cmd => "$cmd",
+                );
+            unless($return) {
+                $self->error_message("mpileup failure. Tried to run:\n$cmd");
+                $self->error_message("Returned:\n$return");
+                die $self->error_message;
+            }
+        }
+
+        #run varscan to parse the samtools file
+        my $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/indels.varscan";
         $self->status_message("Running command: $cmd");
 
         my $return = Genome::Sys->shellcmd(
@@ -608,19 +618,10 @@ sub execute {
             die $self->error_message;
         }
 
-        #run varscan to parse the samtools file
-        $cmd = "java -jar /gsc/scripts/lib/java/VarScan/VarScan.v2.2.9.jar readcounts $tempdir/pileup --min-coverage 1 --min-base-qual $min_base_quality --output-file $tempdir/indels.varscan";
-        $self->status_message("Running command: $cmd");
+        my %readdepth;
+        my %reads;
 
-        $return = Genome::Sys->shellcmd(
-            cmd => "$cmd",
-        );
-        unless($return) {
-            $self->error_message("Failed to execute: Returned $return");
-            die $self->error_message;
-        }       
-
-        #read, clean up and print indels
+        #store indel counts
         $inFh = IO::File->new( "$tempdir/indels.varscan" ) || die "can't open varscan file\n";
         while( my $line = $inFh->getline )
         {
@@ -628,99 +629,107 @@ sub execute {
             next if $line =~ /^chrom/;
             my @F =  split("\t",$line);
 
-            my $ref_count = 0;
-            my $var_count = 0;
-            my $var_freq = 0;
-            my $knownRef;
-            my $knownVar;
             my $chr = $F[0];
             my $pos = $F[1];
-            my @indels;
+            my $key = join("\t",($chr,$pos));
 
-            if(defined($indelVariantHash{join("\t",($chr, $pos))})){
-                @indels = split(",",$indelVariantHash{join("\t",($chr, $pos))}); 
-            } elsif (defined($indelVariantHash{join("\t",($chr, $pos+1))})){
-                $pos++;
-                @indels = split(",",$indelVariantHash{join("\t",($chr, $pos))});
-            } else {
-                print STDERR "WARNING: position $chr : $pos not found in input\n";
-                next;
-            }
-
-            #can be more than one indel per position
-
-            foreach my $pair (@indels){
-                my @as = split("\t",$pair);
-                $knownRef = $as[0];
-                $knownVar = $as[1];                
-
-                my @refdetails = split(":",$F[5]);
-                $ref_count = $refdetails[1];
-
-                #can be more than one variant output in trailing columns of varscan format
-                my $found = 0;
-                my $i;
-                for($i=6;$i<@F;$i++){
-                    my @varResults = split(":",$F[$i]);
-                    my $varReads = $varResults[1];
-
-                    if ($varResults[0] =~ /INS/){
-                        my @varInfo = split("-",$varResults[0]);
-                        my $varbase = $varInfo[2];
-                        if($varbase eq $knownVar){
-                            unless ($varResults[1] == 0){
-                                $var_freq = ($varResults[1]/$F[3])*100;
-                            }
-                            filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $varResults[1], $var_freq,
-                                $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
-
-                            $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
-                            $found = 1;
-                        }                    
-                    } elsif ($varResults[0] =~ /DEL/){
-                        my @varInfo = split("-",$varResults[0]);
-                        my $varbase = $varInfo[2];
-                        if($varbase eq $knownRef){
-                            unless ($varResults[1] == 0){
-                                #this isn't entirely correct. To get the proper depth, we should also
-                                #query the following base, get the depth and use it (since 
-                                #samtools reports deletions on the previous base). For now, we're
-                                #using the depth at the prev base as a proxy. Should be accurate to
-                                #within a read or two.
-                                $var_freq = ($varResults[1]/($F[3]+$varResults[1]))*100;
-                            }
-                            filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, $varResults[1], $var_freq,
-                                $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
-                            $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
-                            $found = 1;
-                        }
-                    }
-                }
-                #if the site is in the output, but the indel isn't there, we output zero for the var count
-                unless($found){
-                    filterAndPrint($chr, $pos, $knownRef, $knownVar, $ref_count, 0, 0,
-                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
-                    $foundHash{join("\t",$chr,$pos,$knownRef,$knownVar)} = 1;
+            $readdepth{$key} = $F[3];
+            for my $i (5..$#F){
+                if($F[$i] =~ /\:/){ #skip blanks
+                    my @counts = split(":",$F[$i]);
+                    my $base = $counts[0];
+                    $reads{$key}{$base} = $counts[1];
                 }
             }
         }
-    }
 
+        #go through the indels we're looking for and grab their depths
+        foreach my $key (keys(%indelVariantHash)){
+            my ($chr, $pos) = split("\t",$key);
+            my ($refbase,$varbase) = split("\t",$indelVariantHash{$key});
+
+            if($refbase =~ /0|\-|\*/ ){ #INS
+                #insertion is easier, just take the insertion count divided by depth for vaf
+                my $depth = 0;
+                my $refcount = 0;
+                my $varcount = 0;
+
+                if(defined($readdepth{$key})){
+                    $depth = $readdepth{$key};
+
+                    foreach my $base (keys(%{$reads{$key}})){
+                        if($base =~ /INS-\d+-$varbase/){
+                            $varcount = $reads{$key}{$base};
+                        }
+                    }
+                    
+                    #all reads will include ref for an insertion in mpileup-land, so
+                    #we subtract the var from the ref
+                    $refcount = $refcount - $varcount;
+                    filterAndPrint($chr, $pos, $refbase, $varbase, $depth-$varcount, $varcount, ($varcount/$depth)*100,
+                                   $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+                } else {
+                    #if it wasn't in the pileup, it wasn't covered, so vals will remain zero.
+                    filterAndPrint($chr, $pos, $refbase, $varbase, $refcount, $varcount, 0,
+                                   $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+                }
+
+
+            } elsif ($varbase =~ /0|\-|\*/){ #DEL
+                #deletions are tricky. The deletion gets placed on the previous base, but the ref counts 
+                #and depth are on the correct base.
+                my $depth = 0;
+                my $refcount = 0;
+                my $varcount = 0;
+                if(defined($readdepth{$key})){
+                    my $depth = $readdepth{$key};
+                    
+                    #first check the correct base
+                    foreach my $base (keys(%{$reads{$key}})){
+                        if($base eq $refbase){
+                            $refcount = $reads{$key}{$base};
+                        }
+                    }
+                    #now check the preceding base
+                    my $pkey = join("\t",($chr,$pos-1));
+                    foreach my $base (keys(%{$reads{$pkey}})){
+                        if($base =~ /DEL-\d+-$refbase/){
+                            $varcount = $reads{$pkey}{$base};
+                        }
+                    }
+                    
+                    filterAndPrint($chr, $pos, $refbase, $varbase, $refcount, $varcount, ($varcount/$depth)*100,
+                                   $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
+                } else {
+                    #if it wasn't in the pileup, it wasn't covered, so vals will remain zero.
+                    filterAndPrint($chr, $pos, $refbase, $varbase, $refcount, $varcount, 0,
+                                   $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+                }                
+            } else {
+                print "WARNING - $refbase/$varbase isn't an indel, how did it get in the indel hash?\n";
+            }
+
+            $foundHash{join("\t",$chr,$pos,$refbase,$varbase)} = 1;
+            
+        }
+    }
+    
     #Check all the variants and output those with no output (had 0 reads)
     foreach my $k (keys(%foundHash)){
         unless($foundHash{$k}){
             #site not called, gets a zero count
             my ($chr, $pos, $knownRef, $knownVar) = split("\t",$k);
             filterAndPrint($chr, $pos, $knownRef, $knownVar, 0, 0, 0,
-                $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
-        }        
+                           $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+        }
     }
 
     foreach my $k (keys(%tooLongIndels)){
         #site too long, gets an NA value
         my ($chr, $pos, $knownRef, $knownVar) = split("\t",$k);
         filterAndPrint($chr, $pos, $knownRef, $knownVar, "NA", "NA", "NA",
-            $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE); 
-    }           
+                       $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
+    }
     close($OUTFILE);
 }
+

@@ -237,6 +237,10 @@ sub get_or_create_roi_bed {
             if ($params{print_reading_frame}) {
                 $name = $name."_with-reading-frame";
             }
+
+            if ($params{one_based}) {
+                $name = $name."_one_based";
+            }
     }
 
     # If the same params were requested before, retreive the existing feature list
