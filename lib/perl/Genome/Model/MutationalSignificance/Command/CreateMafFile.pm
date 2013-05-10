@@ -33,6 +33,11 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
             doc => 'Path to directory of variant files with reviews.  Any variant with a review status other than S or V will be ignored.',
             is_optional => 1,
         },
+        regulome_dir => {
+            is => 'UR::Value::DirectoryPath',
+            doc => 'Path to directory of regulomeDb annotations of variants.  Full format is expected.  Files should be named with somatic variation build ids',
+            is_optional => 1,
+        },
         use_tier_1 => {
             is => 'Boolean',
             doc => 'Include tier 1 in the analysis',
@@ -108,16 +113,22 @@ sub execute {
         if (-s $snv_regulatory) {
 
             $snv_anno = $self->output_dir."/".$self->somatic_variation_build->id."tier$tier.merged_anno";
-
-            my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
+            my %params = (
                 tgi_anno_file => $snv_anno_top,
-                regulome_db_file => "/gscuser/aregier/scratch/regulome_db/".$self->somatic_variation_build->model->id.".full",
                 regulatory_file => $snv_regulatory,
                 regulatory_columns_to_check => ["Yip2012_translated","Thurman2012"],
                 output_file => $snv_anno,
                 annotation_build => $self->somatic_variation_build->annotation_build,
             );
 
+            if ($self->regulome_dir) {
+                my $rdb_file = join("/", $self->regulome_dir, $self->somatic_variation_build->model->id.".full");
+                $params{regulome_db_file} = $rdb_file;
+            }
+            my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
+                %params
+            );
+           
             unless ($rv) {
                 $self->error_message("Failed to merge annotations for tier $tier");
                 return $rv;

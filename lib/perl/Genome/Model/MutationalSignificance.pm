@@ -26,6 +26,7 @@ BEGIN {
             output_dir => ['input connector', 'create_maf_output_dir'],
             cosmic_dir => ["input connector", 'cosmic_dir'],
             review_file_dir => ["input connector", 'review_file_dir'],
+            regulome_dir => ["input connector", 'regulome_dir'],
         },
         'Genome::Model::MutationalSignificance::Command::CreateROI' => {
             annotation_build => ['input connector', 'annotation_build'], #input to model, not param
@@ -132,9 +133,14 @@ class Genome::Model::MutationalSignificance {
             doc => 'annotation to use for roi file',
         },
         review_file_dir => {
-            is => 'UR::Value::DirectoryPath',
+            is => 'String',
             is_optional => 1,
             doc => 'Path to directory of variant files with reviews.  Any variant with a review status other than S or V will be  ignored.',
+        },
+        regulome_dir => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Path to directory of regulomeDb annotations of variants.  Full format is expected.  Files should be   named with somatic variation model ids',
         },
         regions_of_interest => {
             is => 'Genome::FeatureList',
@@ -602,6 +608,9 @@ sub map_workflow_inputs {
 
     if ($build->review_file_dir) {
         $inputs{review_file_dir} = $build->review_file_dir;
+    }
+    if ($build->regulome_dir) {
+        $inputs{regulome_dir} = $build->regulome_dir;
     }
     $inputs{music_build} = $build;
     $inputs{log_directory} = $build->log_directory;
