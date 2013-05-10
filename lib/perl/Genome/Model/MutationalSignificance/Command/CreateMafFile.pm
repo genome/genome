@@ -62,6 +62,11 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
             doc => 'Include tier 4 in the analysis',
             default_value => 0,
         },
+        regulatory_columns_to_check => {
+            is => 'String',
+            doc => 'Names of columns in the regulatory annotation file to check',
+            default_value => ['Yip2012_translated', 'Thurman2012'],
+        },
     ],
     has_output => [
         maf_file => {},
@@ -120,7 +125,7 @@ sub execute {
             my %params = (
                 tgi_anno_file => $snv_anno_top,
                 regulatory_file => $snv_regulatory,
-                regulatory_columns_to_check => ["Yip2012_translated","Thurman2012"],
+                regulatory_columns_to_check => [$self->regulatory_columns_to_check],
                 output_file => $snv_anno,
                 annotation_build => $self->somatic_variation_build->annotation_build,
             );
