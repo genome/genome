@@ -99,5 +99,19 @@ sub hash_to_config {
 }
 #<>#
 
+#< Complement >#
+sub complement_sequence {
+    my ($self, $seq) = @_;
+
+    Carp::confess('No sequence to complement.') if not $seq;
+
+    $seq->{seq} =~ tr/[ACGTacgt]/[TGCAtgca]/;
+    $seq->{seq} = reverse $seq->{seq};
+    $seq->{qual} = reverse $seq->{qual};
+
+    return $seq;
+}
+#<>#
+
 1;
 
