@@ -165,7 +165,7 @@ sub read {
     my $strategy = $_[0]->{_strategy};
     my $seqs = $_[0]->$strategy;
     return if not $seqs or not @$seqs;
-    my $seqs = [ sort { $a->{id} cmp $b->{id} } @$seqs ];
+    $seqs = [ sort { $a->{id} cmp $b->{id} } @$seqs ];
     $_[0]->metrics->add_sequences($seqs) if $_[0]->metrics;
     return $seqs;
 }

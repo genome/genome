@@ -23,7 +23,7 @@ ok(-s $sam, 'sam exists');
 my $example_fastq = $dir.'/example.fastq';
 ok(-s $example_fastq, 'example fastq exists');
 
-my $cmd = "gmt sx -input $sam -output file=$fastq";
+my $cmd = "gmt sx -input $sam:cnt=2 -output file=$fastq";
 my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
 
 is(File::Compare::compare($example_fastq, $fastq), 0, 'fastq files match');
@@ -35,5 +35,5 @@ ok($reader, 'create sam reader for bad file');
 ok(!eval{$reader->read;}, 'read bad sam failed');
 like($@, qr|^Length of sequence|, 'correct error for seq length diff');
 
-print "$tmpdir\n"; <STDIN>;
+#print "$tmpdir\n"; <STDIN>;
 done_testing();
