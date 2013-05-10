@@ -19,6 +19,10 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
             is => 'Boolean',
             default_value => 1,
         },
+        include_regulatory => {
+            is => 'Boolean',
+            default_value => 0,
+        },
         cosmic_dir => {
             is => 'Path',
             doc => 'cosmic amino acid mutation database folder',
@@ -110,7 +114,7 @@ sub execute {
         my $snv_anno_top = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top");
         my $snv_regulatory = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version, "annotated.top.regulatory");
         my $snv_anno = $snv_anno_top;
-        if (-s $snv_regulatory) {
+        if ($self->include_regulatory and -s $snv_regulatory) {
 
             $snv_anno = $self->output_dir."/".$self->somatic_variation_build->id."tier$tier.merged_anno";
             my %params = (
