@@ -43,6 +43,10 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
             is => 'Text',
             default => "-R 'rusage[mem=16000]' -M 16000000",
         },
+        encode_version => {
+            is => 'Text',
+            default => "2013-04-19",
+        },
     ],
 };
 
@@ -357,8 +361,11 @@ sub execute{
     }
 
     my $db_version = $self->_get_db_version;
-    my $encode_version = "2013-04-19";
-    my $encode_db = Genome::Db->get(source_name => "encode", database_name => "$species_name/$db_version", external_version => $encode_version);
+    my $encode_version = $self->encode_version;
+    my $encode_db;
+    if ($encode_version) {
+        $encode_db= Genome::Db->get(source_name => "encode", database_name => "$species_name/$db_version", external_version => $encode_version);
+    }
     if ($encode_db) {
         my $encode_dir = $encode_db->data_directory;
 
