@@ -238,7 +238,7 @@ sub process_instrument_data_can_parallelize {
     my $self = shift;
 
     my $assembler_name = $self->assembler_name;
-    for my $assember_can_parallelize ( 'allpaths de-novo-assemble' ) {
+    for my $assember_can_parallelize ( 'allpaths de-novo-assemble', 'soap de-novo-assemble' ) {
         return 1 if $self->assembler_name eq $assember_can_parallelize;
     }
 

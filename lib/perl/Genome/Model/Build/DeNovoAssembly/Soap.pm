@@ -285,11 +285,12 @@ sub _assembler_config_params_and_defaults {
 }
 
 sub before_assemble {
-    my $self = shift;
+    my ($self, @sx_results) = @_;
 
     $self->status_message("Soap config file");
 
     my %params = $self->processing_profile->assembler_params_as_hash;
+
     my %default_config_params = $self->_assembler_config_params_and_defaults;
     my %config_params;
     for my $param ( keys %default_config_params ) {
@@ -297,78 +298,62 @@ sub before_assemble {
         ? $params{$param} 
         : $default_config_params{$param};
     }
-
+    
     my $avg_ins = delete $config_params{insert_size};
     if ( defined $avg_ins ) {  
         $self->status_message("Using user defined insert size, will ignore calculated insert size defined in instrument data");
-    }
-
-    $self->status_message('Getting libraries with input files');
-    my @libraries = $self->libraries_with_existing_assembler_input_files;
-    if ( not @libraries ) {
-        $self->error_message("No assembler input files were found for libraries");
-        return;
     }
 
     my $config = "max_rd_len=".delete($config_params{max_rd_len})."\n";
     my $lib_config = join("\n", '[LIB]', map { $_.'='.$config_params{$_} } keys %config_params);
     $lib_config .= "\n";
 
-    #Check for reverse orientation libraries
-    my %jumping_libs;
-    my @instrument_data = $self->instrument_data;
-    foreach my $i_d(@instrument_data) {
-        my $read_orientation = $i_d->read_orientation;
-        if ($read_orientation and $read_orientation eq "reverse_forward") {
-            $jumping_libs{$i_d->library_id} = 1;
-        }
-    }
-    #Check for instrument data with original fragment length set
-    my %original_fragment_length_set;
-    foreach my $i_d(@instrument_data) {
-        my $original_est_fragment_length = $i_d->original_est_fragment_size;
-        if ($original_est_fragment_length) {
-            $original_fragment_length_set{$i_d->library_id} = $original_est_fragment_length;
-        }
-    }
-
-    $self->status_message('Add libraries to config');
-    for my $library ( @libraries ) {
-    $self->status_message('Library: '.$library->{library_id});
+    for my $sx_result ( @sx_results ) {
         $config .= $lib_config;
         $config .= 'reverse_seq=';
-        if ($jumping_libs{$library->{library_id}}) {
-            $config .="1\n";
-        }
-        else {
+        # jumping lib
+        my $orientation;
+        my $read_orientation = $self->resolve_attribute_for_instrument_data("read_orientation", 1, $sx_result->instrument_data);
+        if ( not $read_orientation or $read_orientation ne "forward_reverse" ) {
             $config .="0\n";
         }
-        $config .= 'avg_ins=';
-        my $insert_size .= ( defined $avg_ins ) ? $avg_ins : $library->{insert_size}; # use given avg_ins or from lib
-        if ($original_fragment_length_set{$library->{library_id}}) {
-            $insert_size = $original_fragment_length_set{$library->{library_id}};
-        }
-        elsif (defined $avg_ins) {
-            $insert_size = $avg_ins;
-        }
         else {
-            $insert_size = $library->{insert_size};
-        }
-        $config .= $insert_size;
-        $config .= "\n";
-        if ( exists $library->{paired_fastq_files} ) { 
-            $config .= 'q1='.$library->{paired_fastq_files}->[0]."\n";
-            $config .= 'q2='.$library->{paired_fastq_files}->[1]."\n";
+            $config .="1\n";
         }
 
-        if ( exists $library->{fragment_fastq_file} ) {
-            $config .= 'q='.$library->{fragment_fastq_file}."\n";
+        # average insert size
+        my $insert_size;
+        $insert_size = $avg_ins if defined $avg_ins;
+        if( not defined $insert_size ) {
+            $insert_size = $self->resolve_attribute_for_instrument_data('original_est_fragment_size', 1, $sx_result->instrument_data);
+        }
+        if( not defined $insert_size ) {
+            $insert_size = $self->resolve_attribute_for_instrument_data('library_insert_size', 1, map {$_->library} $sx_result->instrument_data);
+        }
+        if ( not defined $insert_size ) {
+            $self->error_message("Failed to get insert size, attempted to get it from processing profile param, instrument data original_est_fragment_size and library original_insert_size");
+            return;
+        }
+        $config .= "avg_ins=$insert_size\n";
+
+        # input files
+        my @input_files = $sx_result->read_processor_output_files;
+        if( @input_files == 2 ) {
+            $config .= 'q1='.$self->data_directory.'/'.$input_files[0]."\n";
+            $config .= 'q2='.$self->data_directory.'/'.$input_files[1]."\n";
+        }
+        elsif( @input_files == 1 ) {
+            $config .= 'q='.$self->data_directory.'/'.$input_files[0]."\n";
+        }
+        else {
+            $self->error_message("Expected to get 1 or 2 input files but got ".@input_files." files\n");
+            return;
         }
     }
+
     $self->status_message('Add libraries to config...OK');
 
     my $config_file = $self->soap_config_file;
-    unlink $config_file if -e $config_file;
     $self->status_message("Soap config file: ".$config_file);
     my $fh = eval { Genome::Sys->open_file_for_writing( $config_file ); };
     if ( not $fh ) {
@@ -379,7 +364,6 @@ sub before_assemble {
     $fh->close;
 
     $self->status_message("Soap config file...OK");
-
     return $config_file;
 }
 #</ASSEMBLE>#

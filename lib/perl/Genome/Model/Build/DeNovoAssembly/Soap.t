@@ -26,7 +26,7 @@ use_ok('Genome::Model::Build::DeNovoAssembly::Soap') or die;
 my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/DeNovoAssembly';
 my $archive_path = $base_dir.'/inst_data/-7777/archive.tgz';
 ok(-s $archive_path, 'inst data archive path') or die;
-my $example_dir = $base_dir.'/soap_v17';
+my $example_dir = $base_dir.'/soap_v18';
 ok(-d $example_dir, 'example dir') or die;
 
 my $tmpdir_template = "/DeNovoAssembly-Soap.t-XXXXXXXX";
@@ -138,45 +138,18 @@ my ($inst_data) = $build->instrument_data;
 ok($inst_data, 'instrument data for build');
 my $library_id = $inst_data->library_id;
 ok($library_id, 'library id for inst data');
-my $assembler_fwd_input_file_for_library_id = $build->assembler_forward_input_file_for_library_id($library_id);
-is($assembler_fwd_input_file_for_library_id,
-    $library_file_base . '.' . $library_id . '.forward.fastq',
-    'forward fastq file for library id');
-is(File::Compare::compare($assembler_fwd_input_file_for_library_id,
-        $example_build->assembler_forward_input_file_for_library_id(
-            $library_id)),
-    0, 'assembler fwd input file matches');
 
-my $assembler_rev_input_file_for_library_id = $build->assembler_reverse_input_file_for_library_id($library_id);
-is($assembler_rev_input_file_for_library_id,
-    $library_file_base . '.' . $library_id . '.reverse.fastq',
-    'reverse fastq file for library id');
-is(File::Compare::compare($assembler_rev_input_file_for_library_id,
-        $example_build->assembler_reverse_input_file_for_library_id(
-            $library_id)),
-    0, 'assembler rev input file matches');
-
-my $assembler_fragment_input_file_for_library_id = $build->assembler_fragment_input_file_for_library_id($library_id);
-is($assembler_fragment_input_file_for_library_id,
-    $library_file_base . '.' . $library_id . '.fragment.fastq',
-    'fragment fastq file for library id');
-my @libraries = $build->libraries_with_existing_assembler_input_files;
-is_deeply( # also tests existing_assembler_input_files_for_library_id
-    \@libraries,
-    [
-        {
-            library_id => -12345,
-            insert_size => 260,
-            paired_fastq_files => [ 
-                $assembler_fwd_input_file_for_library_id, $assembler_rev_input_file_for_library_id 
-            ],
-        },
-    ],
-    'libraries and existing assembler input files',
-);
-my @existing_assembler_input_files = $build->existing_assembler_input_files;
-is_deeply(\@existing_assembler_input_files, $libraries[0]->{paired_fastq_files},
-    'existing assembler input files');
+my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(processor => $pp->read_processor);
+$sx_processor->determine_processing($instrument_data);
+my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data);
+my $sx_result = Genome::InstrumentData::SxResult->get_with_lock(%$sx_result_params);
+for my $file_name ( $sx_result->read_processor_output_files ) {
+    my $file = $build->data_directory.'/'.$file_name;
+    ok(-l $build->data_directory.'/'.$file_name, 'processed file exists: '.$file);
+    my $example_file = $example_build->data_directory.'/'.$file_name;
+    is(File::Compare::compare($file, $example_file), 0, 'processed file matches');
+    print Data::Dumper::Dumper($file, $example_file);$DB::single;
+}
 
 # ASSEMBLE - IMPORT RUSAGE/PARAMS
 my %assembler_params = $build->assembler_params;
