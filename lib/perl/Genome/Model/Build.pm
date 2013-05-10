@@ -478,9 +478,6 @@ sub _cpu_slot_usage_breakdown {
 
             my $cpus = 1;
             my $rusage = ($op_type->can('lsf_resource') ? $op_type->lsf_resource : undef);
-            if ($op_name =~ /align/) {
-                $DB::single = 1;
-            }
             if (defined($rusage)) {
                 if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
                     $cpus = $1;
@@ -977,11 +974,9 @@ sub validate_inputs_have_values {
     my @inputs = grep { $self->can($_->name) } $self->inputs;
 
     # find inputs with undefined values
-    $DB::single = 1;
     my @inputs_without_values = grep { not defined $_->value } @inputs;
     my %input_names_to_ids;
     for my $input (@inputs_without_values){
-        $DB::single = 1;
         $input->value;
         $input->value;
         $input_names_to_ids{$input->name} .= $input->value_class_name . ":" . $input->value_id . ',';

@@ -24,9 +24,12 @@ if (Genome::Config->arch_os ne 'x86_64') {
 use_ok('Genome::Model::Build::DeNovoAssembly::Soap') or die;
 
 my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/DeNovoAssembly';
+
+print $base_dir."\n";
+
 my $archive_path = $base_dir.'/inst_data/-7777/archive.tgz';
 ok(-s $archive_path, 'inst data archive path') or die;
-my $example_dir = $base_dir.'/soap_v17';
+my $example_dir = $base_dir.'/soap_v18';
 ok(-d $example_dir, 'example dir') or die;
 
 my $tmpdir_template = "/DeNovoAssembly-Soap.t-XXXXXXXX";
@@ -74,7 +77,7 @@ my $instrument_data = Genome::InstrumentData::Solexa->create(
     clusters => 15000,
     fwd_clusters => 15000,
     rev_clusters => 15000,
-    analysis_software_version => 'not_old_iilumina',
+    analysis_software_version => 'GAPipeline-0.3.0',
 );
 ok($instrument_data, 'instrument data');
 ok($instrument_data->is_paired_end, 'inst data is paired');
@@ -138,45 +141,18 @@ my ($inst_data) = $build->instrument_data;
 ok($inst_data, 'instrument data for build');
 my $library_id = $inst_data->library_id;
 ok($library_id, 'library id for inst data');
-my $assembler_fwd_input_file_for_library_id = $build->assembler_forward_input_file_for_library_id($library_id);
-is($assembler_fwd_input_file_for_library_id,
-    $library_file_base . '.' . $library_id . '.forward.fastq',
-    'forward fastq file for library id');
-is(File::Compare::compare($assembler_fwd_input_file_for_library_id,
-        $example_build->assembler_forward_input_file_for_library_id(
-            $library_id)),
-    0, 'assembler fwd input file matches');
 
-my $assembler_rev_input_file_for_library_id = $build->assembler_reverse_input_file_for_library_id($library_id);
-is($assembler_rev_input_file_for_library_id,
-    $library_file_base . '.' . $library_id . '.reverse.fastq',
-    'reverse fastq file for library id');
-is(File::Compare::compare($assembler_rev_input_file_for_library_id,
-        $example_build->assembler_reverse_input_file_for_library_id(
-            $library_id)),
-    0, 'assembler rev input file matches');
-
-my $assembler_fragment_input_file_for_library_id = $build->assembler_fragment_input_file_for_library_id($library_id);
-is($assembler_fragment_input_file_for_library_id,
-    $library_file_base . '.' . $library_id . '.fragment.fastq',
-    'fragment fastq file for library id');
-my @libraries = $build->libraries_with_existing_assembler_input_files;
-is_deeply( # also tests existing_assembler_input_files_for_library_id
-    \@libraries,
-    [
-        {
-            library_id => -12345,
-            insert_size => 260,
-            paired_fastq_files => [ 
-                $assembler_fwd_input_file_for_library_id, $assembler_rev_input_file_for_library_id 
-            ],
-        },
-    ],
-    'libraries and existing assembler input files',
-);
-my @existing_assembler_input_files = $build->existing_assembler_input_files;
-is_deeply(\@existing_assembler_input_files, $libraries[0]->{paired_fastq_files},
-    'existing assembler input files');
+my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(processor => $pp->read_processor);
+$sx_processor->determine_processing($instrument_data);
+my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data);
+my $sx_result = Genome::InstrumentData::SxResult->get_with_lock(%$sx_result_params);
+for my $file_name ( $sx_result->read_processor_output_files ) {
+    my $file = $build->data_directory.'/'.$file_name;
+    ok(-l $build->data_directory.'/'.$file_name, 'processed file exists: '.$file);
+    my $example_file = $example_build->data_directory.'/'.$file_name;
+    is(File::Compare::compare($file, $example_file), 0, 'processed file matches');
+    print Data::Dumper::Dumper($file, $example_file);$DB::single;
+}
 
 # ASSEMBLE - IMPORT RUSAGE/PARAMS
 my %assembler_params = $build->assembler_params;
@@ -208,8 +184,8 @@ pair_num_cutoff=2
 reverse_seq=0
 avg_ins=260
 CONFIG
-$expected_config .= 'q1='.$build->data_directory.'/'.$build->file_prefix.".$library_id.forward.fastq\n";
-$expected_config .= 'q2='.$build->data_directory.'/'.$build->file_prefix.".$library_id.reverse.fastq\n";
+$expected_config .= 'q1='.$build->data_directory.'/'.$instrument_data->id.".1.fastq\n";
+$expected_config .= 'q2='.$build->data_directory.'/'.$instrument_data->id.".2.fastq\n";
 is($config, $expected_config, 'config matches');
 my @file_exts = qw/ contig         gapSeq        links     peGrads
                     preGraphBasic  readOnContig  scafSeq   updated.edge
@@ -259,9 +235,14 @@ my %expected_metrics = (
     'reads_assembled' => 0,
     'reads_assembled_duplicate' => 0,
     'reads_assembled_success' => 'NA',
-    'reads_attempted' => 30000,
-    'reads_processed' => 28028,
-    'reads_processed_success' => .934,
+
+    'reads attempted' => '30000',
+    'reads processed' => '28028',
+    'reads processed success', => '0.934',
+
+    'reads_attempted' => '30000',
+    'reads_processed' => '28028',
+    'reads_processed_success' => '0.934',
     'supercontigs_average_length' => 115,
     'supercontigs_count' => 1407,
     'supercontigs_length' => 162049,
@@ -275,6 +256,7 @@ my %expected_metrics = (
 );
 
 my @build_metric_names = sort(map {$_->name} $build->metrics);
+
 my @unique_build_metric_names = sort(List::MoreUtils::uniq(@build_metric_names));
 
 is_deeply(\@build_metric_names, \@unique_build_metric_names,

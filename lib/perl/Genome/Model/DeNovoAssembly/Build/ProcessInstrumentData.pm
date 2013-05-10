@@ -86,7 +86,9 @@ sub _get_sx_result_params {
         $self->error_message('Failed to create SX read processor!');
         return;
     }
-    my $sx_result_params = $sx_processor->determine_sx_result_params_for_instrument_data($instrument_data);
+    $sx_processor->determine_processing( $self->build->instrument_data );
+
+    my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data);
     return if not $sx_result_params;
     $self->status_message('SX reults params: '.Data::Dumper::Dumper($sx_result_params));
 

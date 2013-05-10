@@ -234,9 +234,9 @@ my $in_libs_diff = Genome::Sys->diff_text_vs_text($in_libs_string,
 
 ok (!$in_libs_diff, 'in_libs.csv content as expected')
     or diag('diff:\n'.$in_libs_diff);
-my $in_groups_string = `cat $in_groups_file | $sed_cmd`;
-$sed_cmd = "sed 's|TMPDIR|".$build->data_directory."|g'".
-            " | sed 's|[:space:]+|\t|g'";
+my $in_groups_string = `cat $in_groups_file | $sed_cmd | cut -f 1,2`;
+$sed_cmd = "sed 's#TMPDIR#".$build->data_directory."#g'".
+            " | sed 's#[:space:]+#\t#g' | cut -f 1,2";
 my $expected_in_groups_string = `cat $expected_in_groups_file | $sed_cmd`;
 chomp $in_groups_string;
 chomp $expected_in_groups_string;
@@ -256,4 +256,5 @@ foreach my $metric_name (keys %expected_metrics) {
         "metric ok: '$metric_name'" );
 }
 
+#print $build->data_directory."\n";<STDIN>;
 done_testing();

@@ -30,7 +30,7 @@ class Genome::InstrumentData::MergedSxResult {
     ],
 };
 
-sub process_instrument_data {
+sub _construct_sx_command_parts {
     my $self = shift;
     my @input_files;
     my $output_file_count = $self->get_output_file_count;
@@ -110,10 +110,26 @@ sub process_instrument_data {
     }
     my $input_file_type = $self->resolve_merged_input_type;
     my @inputs = map { $_.':type='.$input_file_type } @input_files;
-    unless ($self->_run_sx([$read_processor], \@inputs, $output)) {
-        $self->error_message("Failed to run sx");
-        return;
+
+    return ( $read_processor, \@inputs, $output );
+}
+
+sub resolve_merged_input_type {
+    my $self = shift;
+    if (defined $self->output_file_type) {
+        return $self->output_file_type;
     }
+    my @output_configs = $self->output_file_config;
+    if (@output_configs) {
+       my @parts = split /:/, $output_configs[0];
+       for my $part (@parts) {
+           if ($part =~ /type=/) {
+               $part =~ s/type=//;
+               return $part;
+           }
+       }
+    }
+    return;
 }
 
 sub resolve_base_name_from_instrument_data {

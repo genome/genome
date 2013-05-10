@@ -20,7 +20,7 @@ sub validate_sloptig_and_jump_instrument_data_assigned {
     my $self = shift;
 
     my ($jumping_count, $sloptig_count) = (qw/ 0 0 /);
-    foreach my $i_d ($self->instrument_data) {
+    for my $i_d ($self->instrument_data) {
         if ($self->_instrument_data_is_jumping($i_d)) {
             $jumping_count++;
         }
@@ -63,6 +63,27 @@ sub _instrument_data_is_sloptig {
     return;
 }
 
+sub _sx_result_is_x {
+    my ($self, $sx_result, $x) = @_;
+    my $answer;
+    my $count = 0;
+    my $func_name = "_instrument_data_is_".$x;
+    for my $id ($sx_result->instrument_data) {
+        my $temp = $self->$func_name($id);
+        if ($count == 0) {
+            $answer = $temp;
+        }
+        elsif ($answer == $temp) {
+            next;
+        }
+        else {
+            $self->error_message("Some instrument data in the sx result were sloptigs and some were not");
+            die $self->error_message;
+        }
+    }
+    return $answer;
+}
+
 sub _instrument_data_is_valid {
     my ($self, $instrument_data) = @_;
     unless($instrument_data->original_est_fragment_size and $instrument_data->read_length and
@@ -102,6 +123,7 @@ sub _allpaths_in_libs_file {
 
 sub before_assemble {
     my $self = shift;
+    my @sx_results = @_;
     $self->status_message("Allpaths config files");
 
     my %params = $self->processing_profile->assembler_params_as_hash;
@@ -109,42 +131,50 @@ sub before_assemble {
     $self->status_message("Generating Allpaths in_group.csv and in_libs.csv");
     my $in_group = "file_name,\tlibrary_name,\tgroup_name";
 
-    foreach my $instrument_data ($self->instrument_data) {
-            $in_group = $in_group."\n".$self->data_directory."/".$instrument_data->id.".*.fastq,\t".$instrument_data->library_name.",\t".$instrument_data->id;
-    }
-
     my $in_libs = "library_name,\tproject_name,\torganism_name,\ttype,\tpaired,\tfrag_size,\tfrag_stddev,\tinsert_size,\tinsert_stddev,\tread_orientation,\tgenomic_start,\tgenomic_end";
 
     my %libs_seen;
-    foreach my $instrument_data ($self->instrument_data) {
-        if (! $libs_seen{$instrument_data->library_id}){
+    for my $sx_result (@sx_results) {
+        my @lib_ids = $self->resolve_attribute_for_instrument_data("library_id", 0, $sx_result->instrument_data);
+        my $lib_id = join("-", @lib_ids);
+        my $genomic_start = 0;
+        my $lib_name = join("-", map{Genome::Library->get($_)->name} @lib_ids);
+        if ($lib_name =~ /CHORI/) {
+            $genomic_start = 2;
+        }
+
+        $in_group = $in_group."\n".$self->data_directory."/".$sx_result->resolve_base_name_from_instrument_data($sx_result->instrument_data).".*.".$sx_result->output_file_suffix.",\t".$lib_name.",\t".$sx_result->id;
+        
+        if (! $libs_seen{$lib_id}) {
             my $orientation;
-            if ($instrument_data->read_orientation eq "forward_reverse") {
+            my $read_orientation = $self->resolve_attribute_for_instrument_data("read_orientation", 1, $sx_result->instrument_data);
+            if ($read_orientation eq "forward_reverse") {
                 $orientation = "inward";
             }
-            elsif ($instrument_data->read_orientation eq "reverse_forward") {
+            elsif ($read_orientation eq "reverse_forward") {
                 $orientation = "outward";
             }
             else {
-                my $error = join(" ","Instrument data with id", $instrument_data->id, "has unrecognized read orientation", $instrument_data->read_orientation);
+                my @instrument_data_id_list = $self->resolve_attribute_for_instrument_data("id", 0, $sx_result->instrument_data);
+                my $instrument_data_ids = join(",", @instrument_data_id_list);
+                my $error = join(" ","Instrument data with ids", $instrument_data_ids, "has unrecognized read orientation", $read_orientation);
                 $self->error_message($error);
                 return;
             }
-            my $lib = Genome::Library->get($instrument_data->library_id);
-            my $genomic_start = 0;
-            if ($lib->name =~ /CHORI/) {
-                $genomic_start = 2;
+            
+            my $species_name = $self->resolve_attribute_for_instrument_data("species_name", 1, $sx_result->instrument_data);
+            my $original_est_fragment_std_dev = $self->resolve_average_for_attribute(attribute => "original_est_fragment_std_dev", objects => [$sx_result->instrument_data]);
+            my $original_est_fragment_size = $self->resolve_average_for_attribute(attribute => "original_est_fragment_size", objects => [$sx_result->instrument_data]);
+            if ($self->_sx_result_is_x($sx_result, "sloptig")) {
+                my $fragment_std_dev = $original_est_fragment_std_dev;
+                $in_libs = $in_libs."\n".$lib_name.",\tproject_name,\t".$species_name.",\tfragment,\t1,\t".$original_est_fragment_size.",\t".$fragment_std_dev.",\t,\t,\t".$orientation.",\t$genomic_start,\t0";
             }
-            if ($self->_instrument_data_is_sloptig($instrument_data)) {
-                my $fragment_std_dev = $instrument_data->original_est_fragment_std_dev;
-                $in_libs = $in_libs."\n".$lib->name.",\tproject_name,\t".$lib->species_name.",\tfragment,\t1,\t".$instrument_data->original_est_fragment_size.",\t".$fragment_std_dev.",\t,\t,\t".$orientation.",\t$genomic_start,\t0";
-            }
-            elsif ($self->_instrument_data_is_jumping($instrument_data)){
-                my $fragment_std_dev = $instrument_data->original_est_fragment_std_dev;
-                $in_libs = $in_libs."\n".$lib->name.",\tproject_name,\t".$lib->species_name.",\tjumping,\t1,\t,\t,\t".$instrument_data->original_est_fragment_size.",\t".$fragment_std_dev.",\t".$orientation.",\t$genomic_start,\t0";
+            elsif ($self->_sx_result_is_x($sx_result, "jumping")){
+                my $fragment_std_dev = $original_est_fragment_std_dev;
+                $in_libs = $in_libs."\n".$lib_name.",\tproject_name,\t".$species_name.",\tjumping,\t1,\t,\t,\t".$original_est_fragment_size.",\t".$fragment_std_dev.",\t".$orientation.",\t$genomic_start,\t0";
             }
         }
-        $libs_seen{$instrument_data->library_id} = 1;
+        $libs_seen{$lib_id} = 1;
     }
 
     my $in_group_file = $self->_allpaths_in_group_file;
@@ -182,7 +212,7 @@ sub assembler_params {
     );
     my %params = $self->processing_profile->assembler_params_as_hash;
 
-    foreach my $param (keys %default_params) {
+    for my $param (keys %default_params) {
         if (! defined $params{$param}) {
             $params{$param} = $default_params{$param};
         }
@@ -264,7 +294,7 @@ sub calculate_estimated_kb_usage {
 
     my $min_kb_reserved = 400_000_000;
     my $total_read_count = 0;
-    foreach my $id ($self->instrument_data) {
+    for my $id ($self->instrument_data) {
         $total_read_count += $id->read_count;
     }
     my $estimate = $total_read_count*$kb_per_read_count;
