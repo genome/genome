@@ -44,23 +44,18 @@ sub execute {
         return;
     }
 
-    my $assemble = $assembler_class->create(%assembler_params);
-    unless ($assemble) {
+    my $assembler = $assembler_class->create(%assembler_params);
+    unless ($assembler) {
         $self->error_message("Failed to create de-novo-assemble");
         return;
     }
     $self->status_message("Created assembler for '$assembler_class'.\n");
 
-    eval {
-        unless ($assemble->execute) {
-            $self->error_message("Failed to execute de-novo-assemble execute");
-            return;
-        }
-        $self->status_message('Assemble...OK');
-    };
-    if ($@) {
-        $self->error_message($@);
-        die $@;
+    my $assemble_ok = eval { $assembler->execute; };
+    if ( not $assemble_ok ) {
+        $self->error_message($@) if $@;
+        $self->error_message("Failed to execute de-novo-assemble execute");
+        return;
     }
 
     my $after_assemble = $build->after_assemble(@sx_results);
