@@ -103,13 +103,18 @@ sub execute {
     print $rfile 'db = sqldf() #open temp db' . "\n";
 
     my $count = 0;
+    my $skipped = 0;
+
     my $inFh = IO::File->new( $self->segment_file ) || die "can't open segment file\n";
     while( my $line = $inFh->getline )
     {
         chomp($line);
-        my @F = split("\t",$line);
+        my @F = split("\t",$line);        
 
-        next unless ($F[4] >= $self->gain_threshold || $F[4] <= $self->loss_threshold);
+        unless ($F[4] >= $self->gain_threshold || $F[4] <= $self->loss_threshold){
+            $skipped++;
+            next;
+        }
 
         print $rfile 'chr = "' . $F[0] . "\"\n";
         print $rfile 'xmin = ' . $F[1] . "\n";
@@ -182,6 +187,14 @@ sub execute {
     print $rfile 'sqldf(); #close db' . "\n";
     close($rfile);
 
+    if($skipped){
+        print STDERR "skipped $skipped sites that did not exceed the gain/loss thresholds\n";
+    }
+
+    if($count == 0){
+        print STDERR "no sites to plot, exiting\n";
+        return 1;
+    }
 
     my $cmd = "Rscript $newfile";
     my $return = Genome::Sys->shellcmd(
