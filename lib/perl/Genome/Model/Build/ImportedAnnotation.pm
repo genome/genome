@@ -212,6 +212,7 @@ sub get_or_create_roi_bed {
 
     my $exclude_patterns;
     my $include_patterns;
+    my $include_flank;
 
     if (%params) {
         if ($params{excluded_reference_sequence_patterns}) {
@@ -238,8 +239,12 @@ sub get_or_create_roi_bed {
                 $name = $name."_with-reading-frame";
             }
 
+            if ($params{include_flank}) {
+                $name = $name."_include-flank";
+                $include_flank = $params{include_flank};
+            }
             if ($params{one_based}) {
-                $name = $name."_one_based";
+                $name = $name."_one-based";
             }
     }
 
@@ -303,16 +308,25 @@ sub get_or_create_roi_bed {
                     if ($start > $chrom_stop{$chrom} or $start >= $stop) {
                         next;
                     }
-                    $start = 0 if ($start < 0);
-                    $stop = $chrom_stop{$chrom} if ($stop > $chrom_stop{$chrom});
+                    
                 }
                 if ($params{one_based}) {
                     $start++;
                 }
             }
-
+            if ($params{one_based}) {
+                if ($start < 1) {
+                    $start = 1;
+                }
+            }
+            else {
+                if ($start < 0) {
+                    $start = 0;
+                }
+            }
+            $stop = $chrom_stop{$chrom} if ($stop > $chrom_stop{$chrom});
             my $string = join("\t",$chrom, $start, $stop, $description);
-            if ($feature_type ne 'flank') {
+            if ($include_flank or $feature_type ne 'flank') {
                 print $out_file "$string\n";
             }
         }
