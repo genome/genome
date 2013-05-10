@@ -24,6 +24,9 @@ if (Genome::Config->arch_os ne 'x86_64') {
 use_ok('Genome::Model::Build::DeNovoAssembly::Soap') or die;
 
 my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/DeNovoAssembly';
+
+print $base_dir."\n";
+
 my $archive_path = $base_dir.'/inst_data/-7777/archive.tgz';
 ok(-s $archive_path, 'inst data archive path') or die;
 my $example_dir = $base_dir.'/soap_v18';
@@ -74,7 +77,7 @@ my $instrument_data = Genome::InstrumentData::Solexa->create(
     clusters => 15000,
     fwd_clusters => 15000,
     rev_clusters => 15000,
-    analysis_software_version => 'not_old_iilumina',
+    analysis_software_version => 'GAPipeline-0.3.0',
 );
 ok($instrument_data, 'instrument data');
 ok($instrument_data->is_paired_end, 'inst data is paired');
@@ -181,8 +184,8 @@ pair_num_cutoff=2
 reverse_seq=0
 avg_ins=260
 CONFIG
-$expected_config .= 'q1='.$build->data_directory.'/'.$build->file_prefix.".$library_id.forward.fastq\n";
-$expected_config .= 'q2='.$build->data_directory.'/'.$build->file_prefix.".$library_id.reverse.fastq\n";
+$expected_config .= 'q1='.$build->data_directory.'/'.$instrument_data->id.".1.fastq\n";
+$expected_config .= 'q2='.$build->data_directory.'/'.$instrument_data->id.".2.fastq\n";
 is($config, $expected_config, 'config matches');
 my @file_exts = qw/ contig         gapSeq        links     peGrads
                     preGraphBasic  readOnContig  scafSeq   updated.edge
@@ -232,9 +235,14 @@ my %expected_metrics = (
     'reads_assembled' => 0,
     'reads_assembled_duplicate' => 0,
     'reads_assembled_success' => 'NA',
-    'reads_attempted' => 30000,
-    'reads_processed' => 28028,
-    'reads_processed_success' => .934,
+
+    'reads attempted' => '30000',
+    'reads processed' => '28028',
+    'reads processed success', => '0.934',
+
+    'reads_attempted' => '30000',
+    'reads_processed' => '28028',
+    'reads_processed_success' => '0.934',
     'supercontigs_average_length' => 115,
     'supercontigs_count' => 1407,
     'supercontigs_length' => 162049,
@@ -248,6 +256,7 @@ my %expected_metrics = (
 );
 
 my @build_metric_names = sort(map {$_->name} $build->metrics);
+
 my @unique_build_metric_names = sort(List::MoreUtils::uniq(@build_metric_names));
 
 is_deeply(\@build_metric_names, \@unique_build_metric_names,
