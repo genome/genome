@@ -163,8 +163,8 @@ sub before_assemble {
             }
             
             my $species_name = $self->resolve_attribute_for_instrument_data("species_name", 1, $sx_result->instrument_data);
-            my $original_est_fragment_std_dev = $self->resolve_attribute_for_instrument_data("original_est_fragment_std_dev", 1, $sx_result->instrument_data);
-            my $original_est_fragment_size = $self->resolve_attribute_for_instrument_data("original_est_fragment_size", 1, $sx_result->instrument_data);
+            my $original_est_fragment_std_dev = $self->resolve_average_for_attribute(attribute => "original_est_fragment_std_dev", objects => [$sx_result->instrument_data]);
+            my $original_est_fragment_size = $self->resolve_average_for_attribute(attribute => "original_est_fragment_size", objects => [$sx_result->instrument_data]);
             if ($self->_sx_result_is_x($sx_result, "sloptig")) {
                 my $fragment_std_dev = $original_est_fragment_std_dev;
                 $in_libs = $in_libs."\n".$lib_name.",\tproject_name,\t".$species_name.",\tfragment,\t1,\t".$original_est_fragment_size.",\t".$fragment_std_dev.",\t,\t,\t".$orientation.",\t$genomic_start,\t0";

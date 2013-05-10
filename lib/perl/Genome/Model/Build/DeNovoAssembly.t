@@ -33,4 +33,11 @@ is_deeply(\@read_orientations, ["reverse_forward","forward_reverse"],"Got combin
 
 @read_orientations = Genome::Model::Build::DeNovoAssembly->resolve_attribute_for_instrument_data("read_orientation", 1, $id);
 is_deeply(\@read_orientations, ["reverse_forward"],"Got a list in a list context");
+
+$id->original_est_fragment_size(200);
+$id2->original_est_fragment_size(300);
+
+my $average = Genome::Model::Build::DeNovoAssembly->resolve_average_for_attribute(attribute => "original_est_fragment_size", objects => [$id, $id2]);
+is($average, 250, "Average calculated correctly");
+
 done_testing();

@@ -224,6 +224,20 @@ sub resolve_attribute_for_instrument_data {
     }
 }
 
+sub resolve_average_for_attribute {
+    my $self = shift;
+    my %params = @_;
+
+    Carp::confess('No attribute given to resolve average for attribute!') if not $params{attribute};
+    Carp::confess('No objects given to resolve average for attribute!') if not $params{objects} or not @{$params{objects}};
+
+    my @values = $self->resolve_attribute_for_instrument_data($params{attribute}, 0, @{$params{objects}});
+    my $sum = List::Util::sum(@values); # check that these are numbers?
+    my $avg = $sum / @{$params{objects}};
+
+    return $avg;
+}
+
 sub resolve_taxon {
     my $self = shift;
 
