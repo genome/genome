@@ -30,6 +30,7 @@ BEGIN {
         },
         'Genome::Model::MutationalSignificance::Command::CreateROI' => {
             annotation_build => ['input connector', 'annotation_build'], #input to model, not param
+            extra_rois => ['input connector', 'extra_rois'], #TODO: get from somatic variation models?
         },
         'Genome::Model::MutationalSignificance::Command::CreateBamList' => {
             somatic_variation_builds => ['input connector', 'somatic_variation_builds'],
@@ -220,6 +221,11 @@ class Genome::Model::MutationalSignificance {
             is => 'File',
             is_optional => 1,
             doc => "Tab delimited multipliers per gene that modify BMR before testing",
+        },
+        extra_rois => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Extra ROI files to include in MuSiC analysis',
         },
     ],
     has_param => \@has_param,
@@ -611,6 +617,9 @@ sub map_workflow_inputs {
     }
     if ($build->regulome_dir) {
         $inputs{regulome_dir} = $build->regulome_dir;
+    }
+    if ($build->extra_rois) {
+        $inputs{extra_rois} = $build->extra_rois;
     }
     $inputs{music_build} = $build;
     $inputs{log_directory} = $build->log_directory;
