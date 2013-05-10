@@ -119,7 +119,7 @@ sub _execute_v1 {
 
     my $transcript_strand = $instrument_data->transcript_strand;
     unless ($transcript_strand) {
-        die $self->error_message("Rranscript strand is not set for instrument data " . $instrument_data->__display_name__ . "!"); 
+        die $self->error_message("Transcript strand is not set for instrument data " . $instrument_data->__display_name__ . "!"); 
     }
 
     my $htseq_stranded_param;
