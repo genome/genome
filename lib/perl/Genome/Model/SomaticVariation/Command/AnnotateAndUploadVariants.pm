@@ -45,7 +45,8 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         },
         encode_version => {
             is => 'Text',
-            default => "2013-04-19",
+            is_optional => 1,
+            example_values => ["2013-04-19"],
         },
     ],
 };
