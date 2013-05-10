@@ -113,7 +113,7 @@ sub execute {
                 tgi_anno_file => $snv_anno_top,
                 regulome_db_file => "/gscuser/aregier/scratch/regulome_db/".$self->somatic_variation_build->model->id.".full",
                 regulatory_file => $snv_regulatory,
-                regulatory_columns_to_check => ["Yip2012","Thurman2012"],
+                regulatory_columns_to_check => ["Yip2012_translated","Thurman2012"],
                 output_file => $snv_anno,
                 annotation_build => $self->somatic_variation_build->annotation_build,
             );
