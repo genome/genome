@@ -362,7 +362,7 @@ sub execute{
     if ($encode_db) {
         my $encode_dir = $encode_db->data_directory;
 
-        my @file_bases = qw(Open_Chromatin_Supp_Table_4 Thurman2012 Yip2012 segway.hg19 wgEncodeBroadHmmGm12878HMM wgEncodeBroadHmmH1hescHMM wgEncodeBroadHmmHepg2HMM wgEncodeBroadHmmHmecHMM wgEncodeBroadHmmHsmmHMM wgEncodeBroadHmmHuvecHMM wgEncodeBroadHmmK562HMM wgEncodeBroadHmmNhekHMM wgEncodeBroadHmmNhlfHMM);
+        my @file_bases = qw(Open_Chromatin_Supp_Table_4 Thurman2012 Yip2012_translated segway.hg19 wgEncodeBroadHmmGm12878HMM wgEncodeBroadHmmH1hescHMM wgEncodeBroadHmmHepg2HMM wgEncodeBroadHmmHmecHMM wgEncodeBroadHmmHsmmHMM wgEncodeBroadHmmHuvecHMM wgEncodeBroadHmmK562HMM wgEncodeBroadHmmNhekHMM wgEncodeBroadHmmNhlfHMM);
 
         my $count = 0;
         my $final_name = $build->data_directory."/effects/snvs.hq.annotated.bed";
