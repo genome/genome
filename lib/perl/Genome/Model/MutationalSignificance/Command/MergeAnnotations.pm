@@ -12,6 +12,7 @@ class Genome::Model::MutationalSignificance::Command::MergeAnnotations {
         },
         regulome_db_file => {
             is => 'String',
+            is_optional => 1,
         },
         regulatory_file => {
             is => 'String',
@@ -38,7 +39,10 @@ sub execute {
     my $self = shift;
 
     my $tgi = Genome::Sys->open_file_for_reading($self->tgi_anno_file);
-    my $reg_db = Genome::Sys->open_file_for_reading($self->regulome_db_file);
+    my $reg_db;
+    if ($self->regulome_db_file) {
+        $reg_db = Genome::Sys->open_file_for_reading($self->regulome_db_file);
+    }
     my $regulatory = Genome::Sys->open_file_for_reading($self->regulatory_file);
 
     my $out = Genome::Sys->open_file_for_writing($self->output_file);
@@ -61,54 +65,56 @@ sub execute {
     }
     $tgi->close;
 
-    #read in the reg_db file and fill in the info for the entries in the tgi hash
-    while (my $line = <$reg_db>) {
-        chomp $line;
-        next if $line =~ /^#/;
-        my @fields = split /\t/, $line;
-        my $chr = $fields[0];
-        $chr =~ s/chr//;
-        my $start = $fields[1]+1;
-        my $score = $fields[4];
-       
-        if (defined $variants{$chr}{$start}) {
-            $variants{$chr}{$start}->{regdb_score} = $score;
-            if ($score =~ /1/) {
-            $err_out->print("regdb_score is 1\n");
-                my @hits = split /,\s/, $fields[3];
-                my @eQTLs;
-                foreach my $hit (@hits) {
-                $err_out->print("$hit\n");
-                    if ($hit =~ /eQTL/) {
-                        $err_out->print("Hit something with an eQTL\n");
-                        my @parts = split /\|/, $hit;
-                        my $gene_name = $parts[1];
-                        my $entrez_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "EntrezGene", id_value => $gene_name);
-                        if ($entrez_id_obj) {
-                            my $default_name_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl_default_external_name", gene_id => $entrez_id_obj->gene_id);
-                            if ($default_name_obj) {
-                                $err_out->print("Translating $gene_name to ");
-                                $gene_name = $default_name_obj->id_value;
-                                $err_out->print("$gene_name\n");
+    if ($reg_db) {
+        #read in the reg_db file and fill in the info for the entries in the tgi hash
+        while (my $line = <$reg_db>) {
+            chomp $line;
+            next if $line =~ /^#/;
+            my @fields = split /\t/, $line;
+            my $chr = $fields[0];
+            $chr =~ s/chr//;
+            my $start = $fields[1]+1;
+            my $score = $fields[4];
+
+            if (defined $variants{$chr}{$start}) {
+                $variants{$chr}{$start}->{regdb_score} = $score;
+                if ($score =~ /1/) {
+                    $err_out->print("regdb_score is 1\n");
+                    my @hits = split /,\s/, $fields[3];
+                    my @eQTLs;
+                    foreach my $hit (@hits) {
+                        $err_out->print("$hit\n");
+                        if ($hit =~ /eQTL/) {
+                            $err_out->print("Hit something with an eQTL\n");
+                            my @parts = split /\|/, $hit;
+                            my $gene_name = $parts[1];
+                            my $entrez_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "EntrezGene", id_value => $gene_name);
+                            if ($entrez_id_obj) {
+                                my $default_name_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl_default_external_name", gene_id => $entrez_id_obj->gene_id);
+                                if ($default_name_obj) {
+                                    $err_out->print("Translating $gene_name to ");
+                                    $gene_name = $default_name_obj->id_value;
+                                    $err_out->print("$gene_name\n");
+                                }
+                                else {
+                                    $err_out->print("Could not translate $gene_name\n");
+                                    $self->warning_message("Could not translate $gene_name");
+                                }
                             }
                             else {
-                            $err_out->print("Could not translate $gene_name\n");
-                                $self->warning_message("Could not translate $gene_name");
+                                $err_out->print("Could not find gene with entrez name $gene_name\n");
+                                $self->warning_message("Could not find gene with entrez name $gene_name for translation.");
                             }
+                            $err_out->print("Adding $gene_name to eQTLS\n");
+                            push @eQTLs, $gene_name;
                         }
-                        else {
-                        $err_out->print("Could not find gene with entrez name $gene_name\n");
-                            $self->warning_message("Could not find gene with entrez name $gene_name for translation.");
-                        }
-                        $err_out->print("Adding $gene_name to eQTLS\n");
-                        push @eQTLs, $gene_name;
                     }
+                    $variants{$chr}{$start}->{regdb_eQTL} = \@eQTLs;
                 }
-                $variants{$chr}{$start}->{regdb_eQTL} = \@eQTLs;
             }
         }
+        $reg_db->close;
     }
-    $reg_db->close;
 
 
 
@@ -136,7 +142,7 @@ sub execute {
     foreach my $chr (keys %variants) {
         foreach my $start (keys %{$variants{$chr}}) {
             my %var = %{$variants{$chr}{$start}};
-            unless ($var{regdb_score}) {
+            unless (!$reg_db or $var{regdb_score}) {
                 $self->warning_message("No regulome db score for variant $chr:$start");
             }
 
@@ -149,7 +155,7 @@ sub execute {
                 $annotations{$fields[21]}->{trv_type} = [$fields[13]];
                 $annotations{$fields[21]}->{ensembl_id} = $fields[23];
             }
-            if ($var{regdb_score} =~ /1/) {
+            if ($reg_db and $var{regdb_score} =~ /1/) {
                 foreach my $eQTL (@{$var{eQTLs}}){
                     my $ensembl_id = "-";
                     my $other_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl_default_external_name", id_value => $eQTL);
@@ -180,7 +186,7 @@ sub execute {
                 }
             }
 
-            if ($var{regdb_score} =~ /1/ || $var{regdb_score} =~ /2/) {
+            if (!$reg_db or ($var{regdb_score} =~ /1/ || $var{regdb_score} =~ /2/)) {
                 foreach my $column_name ($self->regulatory_columns_to_check) {
                     my $annot = $var{"regulatory_$column_name"};
                     unless ($annot) {
