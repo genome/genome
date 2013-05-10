@@ -22,13 +22,12 @@ class Genome::Model::DeNovoAssembly::Build::Assemble {
 
 sub execute {
     my $self = shift;
+    $self->status_message('Assemble...');
 
     my $build = $self->build;
-    my $processing_profile = $build->processing_profile;
+    $self->status_message('Build: '.$build->__display_name__);
 
-    $self->status_message('Assemble '.$build->__display_name__);
-
-    my $assembler_class = $processing_profile->assembler_class;
+    my $assembler_class = $build->processing_profile->assembler_class;
     $self->status_message('Assembler class: '. $assembler_class);
 
     my %assembler_params = $build->assembler_params;
@@ -70,6 +69,7 @@ sub execute {
         return;
     }
 
+    $self->status_message('Assemble...OK');
     return 1;
 }
 
