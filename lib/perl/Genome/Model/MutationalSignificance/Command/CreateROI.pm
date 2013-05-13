@@ -34,7 +34,7 @@ class Genome::Model::MutationalSignificance::Command::CreateROI {
             default_value => 0,
         },
         extra_rois => {
-            is => 'String',
+            is => 'Genome::FeatureList',
             is_many => 1,
             is_optional => 1,
         },
@@ -76,26 +76,27 @@ sub execute {
     $self->roi_path($feature_list->file_path);
     
     my $new_name = $feature_list->name;
+    my @one_based_rois;
     for my $extra_roi ($self->extra_rois) {
-        $new_name .= "_$extra_roi";
+        my $roi_name = $extra_roi->name;
+        $new_name .= "_$roi_name";
+        if ($extra_roi->is_1_based) {
+            push @one_based_rois, $extra_roi;
+        }
+        else {
+            push @one_based_rois, $extra_roi->get_or_create_different_format;
+        }
     }
 
     my $new_feature_list = Genome::FeatureList->get(name => $new_name);
 
     unless ($new_feature_list) {
         my $tmp = Genome::Sys->create_temp_file_path;
-        #my $db_version = "build37";
-        #my $species_name = "human";
-        #my $encode_version = "2013-04-19";
-        #my $encode_db = Genome::Db->get(source_name => "encode", database_name => "$species_name/$db_version", external_version => $encode_version);
-        #if ($encode_db) {
-        #    my $encode_dir = $encode_db->data_directory;
-
-        #my $cmd = "cat ".$feature_list->file_path." $encode_dir/Thurman2012.bed $encode_dir/Yip2012_translated.bed > $tmp";
-        #`$cmd`;
+        
         my $sorted_out = Genome::Sys->create_temp_file_path;
+        my @files = map {$_->file_path} @one_based_rois;
         my $rv = Genome::Model::Tools::Joinx::Sort->execute(
-            input_files => [$tmp, $self->extra_rois],
+            input_files => [$tmp, @files],
             unique => 1,
             output_file => $sorted_out,
         );

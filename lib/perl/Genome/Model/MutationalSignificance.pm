@@ -27,6 +27,7 @@ BEGIN {
             cosmic_dir => ["input connector", 'cosmic_dir'],
             review_file_dir => ["input connector", 'review_file_dir'],
             regulome_dir => ["input connector", 'regulome_dir'],
+            regulatory_columns_to_check => ["input connector", "regulatory_columns_to_check"],
         },
         'Genome::Model::MutationalSignificance::Command::CreateROI' => {
             annotation_build => ['input connector', 'annotation_build'], #input to model, not param
@@ -223,8 +224,9 @@ class Genome::Model::MutationalSignificance {
             doc => "Tab delimited multipliers per gene that modify BMR before testing",
         },
         extra_rois => {
-            is => 'String',
+            is => 'Genome::FeatureList',
             is_optional => 1,
+            is_many => 1,
             doc => 'Extra ROI files to include in MuSiC analysis',
         },
     ],
@@ -619,7 +621,8 @@ sub map_workflow_inputs {
         $inputs{regulome_dir} = $build->regulome_dir;
     }
     if ($build->extra_rois) {
-        $inputs{extra_rois} = $build->extra_rois;
+        $inputs{extra_rois} = [$build->extra_rois];
+        $inputs{regulatory_columns_to_check} = [map {$_->name} $build->extra_rois];
     }
     $inputs{music_build} = $build;
     $inputs{log_directory} = $build->log_directory;

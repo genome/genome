@@ -65,7 +65,7 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
         regulatory_columns_to_check => {
             is => 'String',
             doc => 'Names of columns in the regulatory annotation file to check',
-            default_value => ['Yip2012_translated', 'Thurman2012'],
+            is_optional => 1,
         },
     ],
     has_output => [

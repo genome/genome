@@ -20,6 +20,7 @@ class Genome::Model::MutationalSignificance::Command::MergeAnnotations {
         regulatory_columns_to_check => {
             is => 'String',
             is_many => 1,
+            is_optional => 1,
         },
         output_file => {
             is => 'String',
