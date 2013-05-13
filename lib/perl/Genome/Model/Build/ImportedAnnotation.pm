@@ -325,6 +325,7 @@ sub get_or_create_roi_bed {
                 }
             }
             $stop = $chrom_stop{$chrom} if ($stop > $chrom_stop{$chrom});
+            $start = $chrom_stop{$chrom} if ($start > $chrom_stop{$chrom});
             my $string = join("\t",$chrom, $start, $stop, $description);
             if ($include_flank or $feature_type ne 'flank') {
                 print $out_file "$string\n";
