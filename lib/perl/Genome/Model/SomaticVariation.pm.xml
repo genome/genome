@@ -14,7 +14,7 @@
   
   <link fromOperation="input connector" fromProperty="annotator_version" toOperation="Annotate And Upload Variants" toProperty="annotator_version" />
   
-  <link fromOperation="input connector" fromProperty="encode_version" toOperation="Annotate And Upload Variants" toProperty="encode_version" />
+  <link fromOperation="input connector" fromProperty="regulatory_annotations" toOperation="Annotate And Upload Variants" toProperty="regulatory_annotations" />
   
   <link fromOperation="Annotate And Upload Variants" fromProperty="build_id" toOperation="output connector" toProperty="build_id" />
 
@@ -41,7 +41,7 @@
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>build_id</inputproperty>
     <inputproperty>annotator_version</inputproperty>
-    <inputproperty>encode_version</inputproperty>
+    <inputproperty>regulatory_annotations</inputproperty>
     <outputproperty>build_id</outputproperty>
   </operationtype>
 

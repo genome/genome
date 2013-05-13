@@ -50,10 +50,6 @@ class Genome::Model::SomaticVariation {
             default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
             valid_values => [ 0,1,2,3],
         },
-        encode_version => {
-            doc => 'Version of encode to use during the annotation step for regulatory annotations',
-            is_optional => 1,
-        },
         filter_previously_discovered_variants => {
             doc => 'Should variants be divided into previously discovered and novel variants',
             default_value => 0,
@@ -108,6 +104,11 @@ class Genome::Model::SomaticVariation {
         },
         previously_discovered_variations => {
             is => 'Genome::Model::Build::ImportedVariationList',
+        },
+        regulatory_annotations => {
+            is => 'Genome::FeatureList',
+            is_many => 1,
+            is_optional => 1,
         },
     ],
 };
@@ -449,7 +450,7 @@ sub map_workflow_inputs {
 
     push @inputs, build_id => $build->id;
     push @inputs, annotator_version => $self->transcript_variant_annotator_version;
-    push @inputs, encode_version => $self->encode_version;
+    push @inputs, regulatory_annotations => [$self->regulatory_annotations];
 
     return @inputs;
 }

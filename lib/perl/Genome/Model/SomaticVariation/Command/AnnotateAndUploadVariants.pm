@@ -24,7 +24,13 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         build => {
             is => 'Genome::Model::Build::SomaticVariation',
             id_by => 'build_id',
-        }
+        },
+        regulatory_annotations => {
+            is => 'Genome::FeatureList',
+            is_input => 1,
+            is_many => 1,
+            is_optional => 1,
+        },
     ],
     has_param => [
         lsf_queue => {
@@ -42,11 +48,6 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         lsf_resource => { 
             is => 'Text',
             default => "-R 'rusage[mem=16000]' -M 16000000",
-        },
-        encode_version => {
-            is => 'Text',
-            is_optional => 1,
-            example_values => ["2013-04-19"],
         },
     ],
 };
@@ -361,26 +362,20 @@ sub execute{
         }
     }
 
-    my $db_version = $self->_get_db_version;
-    my $encode_version = $self->encode_version;
-    my $encode_db;
-    if ($encode_version) {
-        $encode_db= Genome::Db->get(source_name => "encode", database_name => "$species_name/$db_version", external_version => $encode_version);
-    }
-    if ($encode_db) {
-        my $encode_dir = $encode_db->data_directory;
-
-        my @file_bases = qw(Open_Chromatin_Supp_Table_4 Thurman2012 Yip2012_translated segway.hg19 wgEncodeBroadHmmGm12878HMM wgEncodeBroadHmmH1hescHMM wgEncodeBroadHmmHepg2HMM wgEncodeBroadHmmHmecHMM wgEncodeBroadHmmHsmmHMM wgEncodeBroadHmmHuvecHMM wgEncodeBroadHmmK562HMM wgEncodeBroadHmmNhekHMM wgEncodeBroadHmmNhlfHMM);
-
+    if ($self->regulatory_annotations) {
         my $count = 0;
         my $final_name = $build->data_directory."/effects/snvs.hq.annotated.bed";
         my $header = "#chr\tstart\tstop\talleles\tcount1\tcount2";
         my @added_columns;
         my $input_file = $build->data_directory."/variants/snvs.hq.bed";
-        for my $base_name (@file_bases) {
+        for my $annotation ($self->regulatory_annotations) {
+            if ($annotation->is_1_based) {
+                $annotation = $annotation->get_or_create_different_format;
+            }
             $count++;
             push @added_columns, $count+6;
-            my $bed_file = join("/", $encode_dir, $base_name.".bed");
+            my $base_name = $annotation->name;
+            my $bed_file = $annotation->file_path;
             my $output_file = $build->data_directory."/effects/snvs.hq.".$count.".bed";
             my $rt = Genome::Model::Tools::BedTools::Map->execute(
                 input_file_a => $input_file,
