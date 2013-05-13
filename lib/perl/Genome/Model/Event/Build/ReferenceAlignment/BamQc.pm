@@ -78,7 +78,14 @@ sub execute {
 
     my $align_result = $self->_alignment_result;
 
+    my %align_metrics;
+    map{$align_metrics{$_->metric_name} = $_->metric_value}$align_result->metrics;
+
     for my $metric_key (sort keys %metrics_to_add) {
+        if (exists $align_metrics{$metric_key}) {
+            $self->warning_message("metric: $metric_key already exist for ".$align_result->id.'. Skip.');
+            next;
+        }
         $align_result->add_metric(metric_name => $metric_key, metric_value => $metrics_to_add{$metric_key});
     }
 
