@@ -13,17 +13,15 @@ use Test::More;
 
 use_ok("Genome::Model::Tools::Annotate::AppendColumns");
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Annotate-AppendColumns/v1";
+my $test_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Annotate-AppendColumns/v2";
 my $temp_file = Genome::Sys->create_temp_file_path;
 
 my $cmd = Genome::Model::Tools::Annotate::AppendColumns->create(
     additional_columns_file => $test_dir."/additional_columns.input",
     input_variants => $test_dir."/input_variants",
     output_file => $temp_file,
-    column_to_append => 8,
-    header => "Additional_column3",
+    columns_to_append => [8],
 );
-
 ok($cmd, "Created command");
 
 ok($cmd->execute, "Executed command");
@@ -34,8 +32,7 @@ $cmd = Genome::Model::Tools::Annotate::AppendColumns->create(
     additional_columns_file => $test_dir."/additional_columns.input",
     input_variants => $temp_file,
     output_file => $temp_file2,
-    column_to_append => 6,
-    header => "Additional_column1",
+    columns_to_append => [6],
 );
 
 ok($cmd, "Created command");
@@ -44,7 +41,6 @@ ok($cmd->execute, "Executed command");
 
 my $expected_output = $test_dir."/expected_output";
 my $diff_output = `diff $temp_file2 $expected_output`;
-
 ok(!$diff_output, "No differences between expected output and test output") or diag("diff results\n". $diff_output);
 
 done_testing;

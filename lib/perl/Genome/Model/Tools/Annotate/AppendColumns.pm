@@ -46,7 +46,6 @@ sub execute {
 
     my %additional_info;
     my %additional_info2;
-
     my $variants_in = Genome::Sys->open_file_for_reading($self->input_variants);
     my $variants_header_line = <$variants_in>;
     
@@ -65,6 +64,7 @@ sub execute {
     my $stop_column = $self->stop_column - 1;
 
     my $extra_header_line = <$in>;
+    chomp $extra_header_line;
     my $extra_header;
     my @headers = split(/\t/, $extra_header_line);
     for my $column ($self->columns_to_append) {
@@ -89,7 +89,6 @@ sub execute {
     my $header_line = <$in>;
     chomp $header_line;
     $out->print($header_line.$extra_header."\n");
-
     $self->status_message("Writing final output file");
     while(my $line = <$in>) {
         chomp $line;
