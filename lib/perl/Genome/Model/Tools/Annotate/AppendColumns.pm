@@ -9,14 +9,14 @@ class Genome::Model::Tools::Annotate::AppendColumns {
     has => [
         input_variants => {
             is => 'File',
-            doc => "File that contains the variants to annotate",
+            doc => "File that contains the variants to annotate.  Note: this is assumed to have 1-based (inclusive) coordinates.",
         },
         output_file => {
             is => 'File',
         },
         additional_columns_file => {
             is => 'File',
-            doc => "File with the columns to append",
+            doc => "File with the columns to append.  Note: this is assumed to have 0-based (exclusive start) coordinates, like a bed file",
         },
         columns_to_append => {
             is => 'Number',
