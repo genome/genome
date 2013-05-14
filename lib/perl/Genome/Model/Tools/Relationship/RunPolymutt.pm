@@ -19,6 +19,7 @@ class Genome::Model::Tools::Relationship::RunPolymutt {
             is => "Boolean",
             default => 0,
             doc => "If set to true, fix all cases where the REF allele is present in the ALT (this currently happens when we set all_sites or roi_file to force genotype)",
+            is_optional => 1,
             is_input => 1,
        },
     ],
