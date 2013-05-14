@@ -216,7 +216,7 @@ sub verify_file_md5 {
     }
 }
 
-sub get_or_create_different_format {
+sub get_one_based_file {
     my $self = shift;
 
     if ($self->format eq 'unknown') {
@@ -227,80 +227,32 @@ sub get_or_create_different_format {
     my $new_format;
     my $new_description = $self->description;
     if ($self->is_1_based) {
-        if ($self->is_multitracked) {
-            $new_format = "multi-tracked";
-        }
-        else {
-            $new_format = "true-BED";
-        }
-        $new_description .= " converted to true-BED";
+        return $self->file_path;
     }
     else {
-        if ($self->is_multitracked) {
-            $new_format = "multi-tracked 1-based";
-        }
-        else {
-            $new_format = "1-based";
-        }
-        $new_description .= " converted to 1-based";
-    }
-    my %new_feature_list_params = (
-        name => $self->name,
-        format => $new_format,
-        source => $self->source,
-        content_type => $self->content_type,
-    );
-    if ($self->reference) {
-        $new_feature_list_params{reference} = $self->reference;
-    }
-    if ($self->subject) {
-        $new_feature_list_params{subject} = $self->subject;
-    }
+        my $bed_file_content;
 
-    my $new_feature_list = Genome::FeatureList->get(%new_feature_list_params);
-    
-    if ($new_feature_list) {
-        return $new_feature_list;
-    }
-
-    my $bed_file_content;
-
-    my $fh = Genome::Sys->open_file_for_reading($self->file_path);
-    while(my $line = <$fh>) {
-        chomp($line);
-        if($self->is_multitracked) {
-            if ($line =~ /^track/) {
-                $bed_file_content .= "$line\n";
-                next;
+        my $fh = Genome::Sys->open_file_for_reading($self->file_path);
+        while(my $line = <$fh>) {
+            chomp($line);
+            if($self->is_multitracked) {
+                if ($line =~ /^track/) {
+                    $bed_file_content .= "$line\n";
+                    next;
+                }
             }
-        }
-        my @entry = split("\t",$line);
-        unless (scalar(@entry) >= 3) {
-            $self->error_message('At least three fields are required in BED format files.  Error with line: '. $line);
-            die($self->error_message);
-        }
-
-        if ($self->is_1_based) {
-            $entry[1]--;
-        }
-        else {
+            my @entry = split("\t",$line);
+            unless (scalar(@entry) >= 3) {
+                $self->error_message('At least three fields are required in BED format files.  Error with line: '. $line);
+                die($self->error_message);
+            }
             $entry[1]++;
+            $bed_file_content .= join("\t",@entry) ."\n";
         }
-        $bed_file_content .= join("\t",@entry) ."\n";
+        my $temp_file = Genome::Sys->create_temp_file_path( $self->id . '.converted_format.bed' );
+        Genome::Sys->write_file($temp_file, $bed_file_content);
+        return $temp_file;
     }
-    my $temp_file = Genome::Sys->create_temp_file_path( $self->id . '.converted_format.bed' );
-    Genome::Sys->write_file($temp_file, $bed_file_content);
-
-    $new_feature_list_params{file_path} = $temp_file;
-    $new_feature_list_params{description} = $new_description;
-    my $rt = Genome::FeatureList::Command::Create->execute(%new_feature_list_params);
-    unless ($rt) {
-        $self->error_message("Failed to create new feature list");
-        die $self->error_message;
-    }
-    delete $new_feature_list_params{file_path};
-    $new_feature_list = Genome::FeatureList->get(%new_feature_list_params);
-    return $new_feature_list;
 }
 
 #The raw "BED" file we import will be in one many BED-like formats.

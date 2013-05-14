@@ -370,7 +370,8 @@ sub execute{
         my $input_file = $build->data_directory."/variants/snvs.hq.bed";
         for my $annotation ($self->regulatory_annotations) {
             if ($annotation->is_1_based) {
-                $annotation = $annotation->get_or_create_different_format;
+                $self->error_message("Regulatory annotation sets must be in true-BED format");
+                die $self->error_message;
             }
             $count++;
             push @added_columns, $count+6;

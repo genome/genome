@@ -11,13 +11,20 @@ BEGIN {
 use Test::More tests => 27;
 
 use above 'Genome';
+use Genome::Utility::Test qw(compare_ok);
 
-use_ok('Genome::FeatureList');
+my $class = 'Genome::FeatureList';
 
-my $test_bed_file = __FILE__ . '.d/1.bed';
-my $test_merged_bed_file = __FILE__ . '.d/1.merged.bed';
+use_ok($class);
+
+my $test_dir = Genome::Utility::Test->data_dir($class);
+$test_dir .= "/v1";
+my $test_bed_file = $test_dir. '/1.bed';
+my $test_merged_bed_file = $test_dir. '/1.merged.bed';
+my $one_based_file_output = $test_dir.'/1-onebased.bed';
 ok(-e $test_bed_file, 'test file ' . $test_bed_file . ' exists');
 ok(-e $test_merged_bed_file, 'test file ' . $test_merged_bed_file . ' exists');
+ok(-e $one_based_file_output, 'test file ' . $one_based_file_output . ' exists');
 
 my $test_bed_file_md5 = Genome::Sys->md5sum($test_bed_file);
 
@@ -54,8 +61,8 @@ my $feature_list_with_bad_md5 = Genome::FeatureList->create(
 );
 ok(!$feature_list_with_bad_md5, 'failed to produce a new object when MD5 was incorrect');
 
-my $test_multitracked_1based_bed = __FILE__ . '.d/2.bed';
-my $test_multitracked_1based_merged_bed = __FILE__ . '.d/2.merged.bed';
+my $test_multitracked_1based_bed = $test_dir.'/2.bed';
+my $test_multitracked_1based_merged_bed = $test_dir. '/2.merged.bed';
 ok(-e $test_multitracked_1based_bed, 'test file ' . $test_multitracked_1based_bed . ' exists');
 ok(-e $test_multitracked_1based_merged_bed, 'test file ' . $test_multitracked_1based_merged_bed . ' exists');
 
@@ -78,14 +85,13 @@ my $merged_diff_2 = Genome::Sys->diff_file_vs_file($merged_file_2, $test_multitr
 ok(!$merged_diff_2, 'returned file matches expected file')
     or diag("diff:\n" . $merged_diff_2);
 
-my $true_bed_multi_tracked = $feature_list_2->get_or_create_different_format;
-ok($true_bed_multi_tracked, 'created a new feature list with the opposite format');
-ok($true_bed_multi_tracked->is_multitracked, "new feature list is multi-tracked");
-ok(!$true_bed_multi_tracked->is_1_based, "new feature list is not 1-based");
+my $one_based_file = $feature_list_2->get_one_based_file;
+ok(-s $one_based_file, "one_based_file exists");
+compare_ok($one_based_file, $feature_list_2->file_path, name => "1-based file is the same for a 1-based feature list");
 
-my $original_feature_list = $true_bed_multi_tracked->get_or_create_different_format;
-ok($original_feature_list, "Converted back to the original format");
-is($original_feature_list, $feature_list_2, "The converted fl gets the original fl");
+my $one_based_file2 = $feature_list->get_one_based_file;
+ok(-s $one_based_file2, "one_based_file exists");
+compare_ok($one_based_file2, $one_based_file_output, name => "true-BED was correctly converted to 1-based file");
 
 my $feature_list_3 = Genome::FeatureList->create(
     name => 'GFL test unknown format feature-list',
