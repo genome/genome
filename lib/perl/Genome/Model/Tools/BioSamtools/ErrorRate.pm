@@ -24,11 +24,13 @@ class Genome::Model::Tools::BioSamtools::ErrorRate {
         },
         pileup => {
             is => 'Boolean',
-            default_value => 0,
+            doc => 'The pileup method takes longer, but provides an R graph as output.',
+            default_value => 1,
             is_optional => 1,
         },
         use_c => {
             is => 'Boolean',
+            doc => 'The C version of pileup is faster than the perl version.'
             default_value => 1,
             is_optional => 1,
         },

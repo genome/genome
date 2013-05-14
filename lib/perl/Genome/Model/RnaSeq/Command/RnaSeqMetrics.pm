@@ -113,6 +113,7 @@ sub execute {
         }
         $model_metrics{$model->name}{metrics} = $metrics;
         my $histo = Genome::Model::Tools::Picard::CollectRnaSeqMetrics->parse_metrics_file_into_histogram_hashref($metrics_file);
+        $DB::single=1;
         # This is only available in picard v1.52 or greater
         if ($histo) {
             $model_metrics{$model->name}{histogram} = $histo;
@@ -168,8 +169,14 @@ sub execute {
         $metrics_writer->write_one(\%summary);
         if (defined($model_metrics{$name}{'histogram'}) ) {
             my $histo = $model_metrics{$name}{'histogram'};
-            for my $position (keys %{$histo}) {
-                $transcript_coverage{$position}{$name} = $histo->{$position}{normalized_coverage};
+            my @position_keys = keys %{$histo};
+            my @histo_keys = keys %{$histo->{$position_keys[0]}};
+            my @normalized_coverage_keys = grep { $_ =~ /normalized_coverage/ } @histo_keys;
+            if (scalar(@normalized_coverage_keys) != 1) {
+                die('There is no key or multiple normalized_coverage keys in the picard metrics histogram!');
+            }
+            for my $position_key (@position_keys) {
+                $transcript_coverage{$histo->{$position_key}{normalized_position}}{$name} = $histo->{$position_key}{$normalized_coverage_keys[0]};
             }
         }
     }
@@ -182,25 +189,16 @@ sub execute {
             separator => "\t",
             headers => \@coverage_headers,
         );
-        for my $position (sort _by_position keys %transcript_coverage) {
-            $position =~ /normalized_position-(\d+)/;
-            my $position_number = $1;
+        for my $position (sort { $a <=> $b } keys %transcript_coverage) {
             my %data = (
-                POSITION => $position_number,
+                POSITION => $position,
             );
             for my $label (@models) {
                 $data{$label} = $transcript_coverage{$position}{$label};
             }
-        $coverage_writer->write_one(\%data);
+            $coverage_writer->write_one(\%data);
         }
     }
     return 1;
 }
 
-sub _by_position {
-    $a =~ /normalized_position-(\d+)/;
-    my $a_digit = $1;
-    $b =~ /normalized_position-(\d+)/;
-    my $b_digit = $1;
-    return $a_digit <=> $b_digit;
-}
