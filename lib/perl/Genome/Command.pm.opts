@@ -21420,8 +21420,35 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'plink',
-    undef,
+    '>plink',
+    [
+      '>build-files',
+      [
+        'input=s',
+        'files',
+        'output=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>vcf-to-plink',
+      [
+        'output-directory=s',
+        'files',
+        'pedigree-file=s',
+        'files',
+        'phenotype-file=s',
+        'files',
+        'plink-file=s',
+        'files',
+        'vcf-file=s',
+        'files',
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>lift-over-multiple-columns',
     [
       'columns-to-lift=s',
