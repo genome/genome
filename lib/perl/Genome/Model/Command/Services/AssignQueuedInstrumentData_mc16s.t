@@ -15,11 +15,10 @@ use Test::More;
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
 
-# Reasearch Project
+# Projects
 my @projects;
 push @projects, Genome::Project->create(id => -111, name => '__TEST_PROJECT__');
 ok($projects[0], 'create project for research project');
-# 'GSC WorkOrder'
 my $gsc_workorder = Genome::Site::TGI::Synchronize::Classes::SetupProject->__define__(id => -222, name => '__TEST_WORKORDER__', pipeline => '16s');
 push @projects, Genome::Project->create(id => -222, name => '__TEST_WORKORDER__');
 ok($projects[1], 'create project for research project');
@@ -43,7 +42,6 @@ no warnings;
     }
     return values %attrs;
 };
-#sub GSC::Setup::WorkOrder::get { return $gsc_workorder; }
 use warnings;
 
 for my $i (1..2) {

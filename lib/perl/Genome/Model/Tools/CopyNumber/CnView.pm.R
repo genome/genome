@@ -193,8 +193,8 @@ plotChrCNV = function(target_chr, direction){
   ideo_legend_cols = c("white","grey75","grey50","grey25","black","firebrick1","firebrick2","firebrick")
   ideo_legend_text = c("gneg","gpos25","gpos50","gpos75","gpos100","gvar","stalk","acen")
   plot.new()
-  par(mar=c(0,0,0,0))
-  legend("bottomleft", col=ideo_legend_cols, pch=15, legend=ideo_legend_text, title="Giemsa staining", cex=1)
+  #par(mar=c(0,0,0,0))
+  legend("bottomleft", col=ideo_legend_cols, pch=15, legend=ideo_legend_text, title="Giemsa staining", cex=0.9)
 
   #Plot 5 - Plot the legend for the gains
   if (direction == "gains"){
