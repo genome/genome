@@ -61,7 +61,7 @@ sub execute {                               # replace with real execution logic.
     my $output_dir = $self->output_directory;
     my $convert_cmd = '';
     if($input_vcf =~ m/.gz/) {
-        $convert_cmd = "gscmnt/ams1161/info/model_data/kmeltzst/Software/vcftools_0.1.9/bin/vcftools --gzvcf $input_vcf --plink --out $output_dir/tmp";
+        $convert_cmd = "/gscmnt/ams1161/info/model_data/kmeltzst/Software/vcftools_0.1.9/bin/vcftools --gzvcf $input_vcf --plink --out $output_dir/tmp";
     } else {
         $convert_cmd = "/gscmnt/ams1161/info/model_data/kmeltzst/Software/vcftools_0.1.9/bin/vcftools --vcf $input_vcf --plink --out $output_dir/tmp";
     }
