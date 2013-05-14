@@ -170,6 +170,11 @@ sub execute {
         if(defined($self->gaps_file)){
             print $rfile ", gaps=gaps";
         }
+
+        print $rfile ", lossThresh=" . $self->loss_threshold;
+        print $rfile ", gainThresh=" . $self->gain_threshold;
+
+
         if(defined($self->normal_window_file) || defined($self->tumor_window_file)){
             print $rfile ", coverageTracks=TRUE"
         }
