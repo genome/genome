@@ -30,7 +30,7 @@ class Genome::Model::Tools::BioSamtools::ErrorRate {
         },
         use_c => {
             is => 'Boolean',
-            doc => 'The C version of pileup is faster than the perl version.'
+            doc => 'The C version of pileup is faster than the perl version.',
             default_value => 1,
             is_optional => 1,
         },
