@@ -4,8 +4,9 @@ use strict;
 use warnings;
 
 use Genome;
+use Cwd 'abs_path';
 
-my $DEFAULT_LSF_RESOURCE = "-R 'select[type==LINUX64 && mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4";
+my $DEFAULT_LSF_RESOURCE = "-R 'select[type==LINUX64 && mem>=64000] rusage[tmp=2000:mem=64000] span[hosts=1]' -M 64000000 -n 4";
 
 class Genome::Model::DifferentialExpression::Command::Cuffdiff {
     is => ['Command::V2'],
@@ -53,20 +54,20 @@ sub execute {
             my $rna_seq_model = Genome::Model->get($model_id);
             # Or should we just fine the latest AlignmentResult....
             my $last_succeeded_build = $rna_seq_model->last_succeeded_build;
-            my $bam_file = $last_succeeded_build->alignment_result->bam_file;
+            my $bam_file = abs_path($last_succeeded_build->alignment_result->bam_file);
             push @condition_bam_file_paths, $bam_file;
         }
         my $condition_bam_files_string = join(',',@condition_bam_file_paths);
         $bam_file_paths .= $condition_bam_files_string .' ';
     }
     my %cuffdiff_params = (
-        transcript_gtf_file => $build->transcript_gtf_file_path,
+        transcript_gtf_file => abs_path($build->transcript_gtf_file_path),
         bam_file_paths => $bam_file_paths,
-        params => $params,
+        cuffdiff_params => $params,
         use_version => $model->differential_expression_version,
         output_directory => $output_directory,
     );
-    unless (Genome::Model::Tools::Cufflinks::Cuffdiff->execute(%cuffdiff_params)) {
+    unless (Genome::Model::Tools::Cufflinks::GMTCuffdiffWrapper->execute(%cuffdiff_params)) {
         $self->error_message('Failed to execute Cuffdiff with params: '. Data::Dumper::Dumper(%cuffdiff_params));
         return;
     }
