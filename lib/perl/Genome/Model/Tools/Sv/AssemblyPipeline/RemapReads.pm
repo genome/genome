@@ -86,8 +86,8 @@ sub execute {
     my $error = "";
     $error .= "\n  Assembly fasta file was not found" unless( -s $assemblyFastaFile );
     $error .= "\n  Sv file was not found" unless( -s $svFile );
-    $error .= "\n  Tumor bam file not found" unless (-s $tumorBam);
-    $error .= "\n  Normal bam file not found" unless (-s $normalBam);
+    $error .= "\n  Tumor bam file ($tumorBam) not found" unless (-s $tumorBam);
+    $error .= "\n  Normal bam file ($normalBam) not found" unless (-s $normalBam);
     $error .= "\n  Build is required unless reference-fasta is specified" unless ($self->reference_fasta);
     ( $error eq "" ) or die "Halted execution due to following:$error\n";
 
