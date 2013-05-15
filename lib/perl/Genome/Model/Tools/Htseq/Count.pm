@@ -19,7 +19,6 @@ class Genome::Model::Tools::Htseq::Count {
     ],
     has_param => [
         app_version => {
-            # Required by all ::WithSavedResults
             is => 'SoftwareVersion',
             default_value => '0.5.4p1',
             valid_values => [ Genome::Sys->sw_versions('htseq','htseq-count') ],
