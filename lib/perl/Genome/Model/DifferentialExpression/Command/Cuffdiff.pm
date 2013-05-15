@@ -10,7 +10,7 @@ my $DEFAULT_LSF_RESOURCE = "-R 'select[type==LINUX64 && mem>=64000] rusage[mem=6
 class Genome::Model::DifferentialExpression::Command::Cuffdiff {
     is => ['Command::V2'],
     has => [
-        build => { is => 'Genome::Model::Build', id_by => 'build_id', },
+        build => { is => 'Genome::Model::Build::DifferentialExpression', id_by => 'build_id', },
     ],
     has_input_output => {
         build_id => {},
