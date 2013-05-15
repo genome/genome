@@ -355,7 +355,10 @@ sub _resolve_workflow_for_build {
  
     my $output_connector = $workflow->get_output_connector;
 
-    my @commands = ('Genome::Model::MutationalSignificance::Command::CreateMafFile','Genome::Model::MutationalSignificance::Command::MergeMafFiles','Genome::Model::MutationalSignificance::Command::CreateROI','Genome::Model::MutationalSignificance::Command::CreateBamList','Genome::Model::MutationalSignificance::Command::CompileValidationList','Genome::Model::MutationalSignificance::Command::RunReports');
+    my @commands = ('Genome::Model::MutationalSignificance::Command::CreateMafFile','Genome::Model::MutationalSignificance::Command::MergeMafFiles','Genome::Model::MutationalSignificance::Command::CreateROI','Genome::Model::MutationalSignificance::Command::CreateBamList','Genome::Model::MutationalSignificance::Command::CompileValidationList');
+    if ($self->run_reports) {
+        push @commands, 'Genome::Model::MutationalSignificance::Command::RunReports';
+    }
 
     for my $command_name (@commands) {
         $workflow = $self->_append_command_to_workflow($command_name,
