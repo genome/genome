@@ -14,15 +14,14 @@ BEGIN {
 };
 
 use above "Genome";
-#use Test::More tests=>6; #One per 'ok', 'is', etc. statement below
-use Test::More skip_all => 'Blocking Model Tests (05-15-2013)';
+use Test::More tests=>6; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::SummarizeModels;
 use Data::Dumper;
 
 use_ok('Genome::Model::ClinSeq::Command::SummarizeModels') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-SummarizeModels/2013-05-14/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-SummarizeModels/2013-05-15/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results

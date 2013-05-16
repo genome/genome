@@ -14,15 +14,14 @@ BEGIN {
 };
 
 use above "Genome";
-#use Test::More tests=>7; #One per 'ok', 'is', etc. statement below
-use Test::More skip_all => 'Blocking Model Tests (05-15-2013)';
+use Test::More tests=>7; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::DumpIgvXml;
 use Data::Dumper;
 
 use_ok('Genome::Model::ClinSeq::Command::DumpIgvXml') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-DumpIgvXml2/2013-05-13/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-DumpIgvXml2/2013-05-15/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results

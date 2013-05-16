@@ -18,8 +18,7 @@ BEGIN {
 
 use Data::Dumper;
 use above "Genome";
-#use Test::More tests => 57;
-use Test::More skip_all => 'Blocking Model Tests (05-15-2013)';
+use Test::More tests => 57;
 
 #Test with GENOME_QUERY_POSTGRES=1 to use postgres database instead of Oracle
 
@@ -35,7 +34,7 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2013-04-17-14-20/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2013-05-15/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #CLIN-SEQ UPDATE-ANALYSIS
