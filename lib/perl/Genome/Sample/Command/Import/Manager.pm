@@ -6,29 +6,73 @@ use warnings;
 use Genome;
 
 use Data::Dumper;
+use Genome::Sample::Command::Import;
 use IO::File;
 use Switch;
+use YAML;
 
 class Genome::Sample::Command::Import::Manager {
     is => 'Command::V2',
     doc => 'Manage importing a group of samples including importing instrument data and creating and building models.',
-    has_optional => [
+    has => [
         working_directory => {
             doc => 'Directory to read and write.',
         },
     ],
-    has_optional_calculated => [
+    has_calculated => [
         sample_csv_file => {
             calculate_from => 'working_directory',
             calculate => sub{ my $working_directory = shift; return $working_directory.'/samples.csv'; },
             doc => 'CSV file of samples and attributes. A column called "name" is required. The name should be dash (-) separated values of the nomenclature, indivdual id and sample id.',
         },
-        job_dispatch_config => {
+        config_file => {
             calculate_from => 'working_directory',
-            calculate => sub{ my $working_directory = shift; return $working_directory.'/job_dispatch.config'; },
+            calculate => sub{ my $working_directory = shift; return $working_directory.'/config.yaml'; },
         },
     ],
+    has_optional_transient => [
+        _config => { is => 'Hash', },
+    ],
 };
+
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    if ( not -d $self->working_directory ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ working_directory /],
+            desc => 'Working directory does not exist or is not aq directory!',
+        );
+        return @errors;
+    }
+
+    my $config_file = $self->config_file;
+    if ( not -s $config_file ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ config_file /],
+            desc => 'Config file does not exist! '.$config_file,
+        );
+        return @errors;
+    }
+    my $config = YAML::LoadFile($config_file);
+    if ( not $config ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ config_file /],
+            desc => 'Failed to load config file! '.$config_file,
+        );
+        return @errors;
+    }
+    $self->_config($config);
+    print Dumper($self->_config);
+
+    return;
+}
 
 sub execute {
     my $self = shift;
@@ -37,6 +81,7 @@ sub execute {
     return if not $samples;
 
     $self->status($samples);
+    print Data::Dumper::Dumper($samples);
 
     return 1;
 }
@@ -110,12 +155,63 @@ sub _load_job_status {
 
     Carp::confess('Need samples to load job status!') if not $samples;
 
-    my $fh = IO::File->new('bjobs -g/ebelter/whisp_imports -w 2> /dev/null |');
-    $fh->getline;
+    return 1 if not $self->_config;
+
+    my $job_list_cmd = $self->_config->{'job dispatch'}->{list}->{'command'};
+    if ( not $job_list_cmd ) {
+        $self->error_message('No job list "command" in config! '.YAML::Dump($self->_config));
+        return;
+    }
+
+    my $name_column = $self->_config->{'job dispatch'}->{list}->{'name column'};
+    if ( not $name_column ) {
+        $self->error_message('No job list "name column" in config! '.YAML::Dump($self->_config));
+        return;
+    }
+    $name_column--;
+
+    my $status_column = $self->_config->{'job dispatch'}->{list}->{'status column'};
+    if ( not $status_column ) {
+        $self->error_message('No job list "status column" in config! '.YAML::Dump($self->_config));
+        return;
+    }
+    $status_column--;
+
+    $job_list_cmd .= ' 2>/dev/null |';
+    my $fh = IO::File->new($job_list_cmd);
     while ( my $line = $fh->getline ) {
         my @tokens = split(/\s+/, $line);
-        next if not $samples->{$tokens[6]};
-        $samples->{$tokens[6]}->{job_status} = lc $tokens[2];
+        my $name = $tokens[ $name_column ];
+        next if not $samples->{$name};
+        $samples->{$name}->{job_status} = lc $tokens[ $status_column ];
+    }
+
+    return 1;
+}
+
+sub _create_samples {
+    my ($self, $samples) = @_;
+    
+    Carp::confess('Need samples to create!') if not $samples;
+
+    my %existing_samples = map { $_->name => $_ } Genome::Sample->get(name => [ keys %$samples ]);
+
+    my $importer_class = 'Genome::Sample::Command::Import::';
+
+    for my $sample ( values %$samples ) {
+        my $genome_sample = $existing_samples{ $sample->{name} };
+        if ( not $genome_sample ) {
+            my $importer = $importer_class->create(name => $sample->{name});
+            if ( not $importer ) {
+            }
+            if ( not $importer->execute ) {
+            }
+            my $genome_sample = $importer->_sample;
+            if ( not $genome_sample ) {
+                $self->error_message('Failed to create sample!');
+                return;
+            }
+        }
     }
 
     return 1;

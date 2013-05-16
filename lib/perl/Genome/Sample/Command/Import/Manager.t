@@ -31,9 +31,10 @@ my %expected_from_load_samples = (
     sample => undef, inst_data => undef, bam_path => undef, model => undef, build => undef,
 );
 my $load_samples = $manager->_load_samples;
+print Data::Dumper::Dumper ( $manager->_config, $load_samples);
 is_deeply($load_samples,  [\%expected_from_load_samples], 'samples from _load_samples');
-is($manager->get_sample_status($load_samples->[0]), 'sample_needed', 'set corect sample status');
-is($manager->set_sample_status($load_samples->[0]), 'sample_needed', 'set corect sample status');
+is($manager->get_sample_status($load_samples->[0]), 'sample_needed', 'set correct sample status');
+is($manager->set_sample_status($load_samples->[0]), 'sample_needed', 'set correct sample status');
 
 # fail - no name column in csv
 $manager->working_directory('example/invalid');
