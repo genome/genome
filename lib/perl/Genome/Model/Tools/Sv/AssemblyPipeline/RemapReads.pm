@@ -137,7 +137,12 @@ sub execute {
     }
 
     # Make sure the sequences files exist with non-zero size
-    ( -s $contigSequenceFile && -s $refSequenceFile ) or die "Did not get contig sequence and/or reference sequence file";
+    unless (-s $contigSequenceFile) {
+        die $self->error_message("Contig sequence file does not exist at $contigSequenceFile");
+    }
+    unless (-s $refSequenceFile) {
+        die $self->error_message("Reference sequence file does not exist at $refSequenceFile");
+    }
 
     # Go through each entry of SV file and find reads that cross breakpoint in SV contig
     open( OUT, ">$outputFile" ) or die "Could not open '$outputFile': $!";
