@@ -23,6 +23,11 @@ class Genome::Model::MutationalSignificance::Command::CreateROI {
             is_optional => 1,
             doc => 'Include only entries that match one of these patterns',
         },
+        include_flank => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'Include the flanking regions of transcripts',
+        },
         condense_feature_name => {
             is => 'Boolean',
             doc => 'Use only gene name as feature name',
@@ -63,7 +68,9 @@ sub execute {
     if ($self->flank_size && $self->flank_size > 0) {
         push @params, flank_size => $self->flank_size;
     }
-    push @params, include_flank => 1;
+    if ($self->include_flank) {
+        push @params, include_flank => 1;
+    }
     push @params, one_based => 1;
 
     my $feature_list = $self->annotation_build->get_or_create_roi_bed(@params);
