@@ -67,7 +67,7 @@ sub execute {
         use_version => $model->differential_expression_version,
         output_directory => $output_directory,
     );
-    unless (Genome::Model::Tools::Cufflinks::GMTCuffdiffWrapper->execute(%cuffdiff_params)) {
+    unless (Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper->execute(%cuffdiff_params)) {
         $self->error_message('Failed to execute Cuffdiff with params: '. Data::Dumper::Dumper(%cuffdiff_params));
         return;
     }
