@@ -22052,6 +22052,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'min-contig-length=s',
         undef,
+        'min-scaffold-length=s',
+        undef,
         'scaffold-file=s',
         'files',
         'help!',
