@@ -311,6 +311,7 @@ sub _resolve_workflow_for_build {
     #push @input_properties, "numeric_clinical_data_file";
     push @input_properties, "clinical_correlation_matrix_file";
     push @input_properties, "reference_build";
+    push @input_properties, "regulatory_columns_to_check";
 
     my @output_properties;
     if ($self->play_music) {
