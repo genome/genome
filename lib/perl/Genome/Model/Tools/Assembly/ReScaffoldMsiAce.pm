@@ -33,6 +33,12 @@ class Genome::Model::Tools::Assembly::ReScaffoldMsiAce {
             default => 0,
             is_optional => 1,
         },
+        min_scaffold_length => {
+            is => 'Integer',
+            doc => 'Minimum scaffold length to export to new ace file',
+            default => 0,
+            is_optional => 1,
+        },
     ],
 };
 
@@ -99,8 +105,9 @@ sub execute {
     $self->status_message( "Updating DS line and writing new ace file: ace.msi" );
     my $final_ace = $self->_update_ds_line_write_wa_tags( $partial_ace, $contigs, $reads );
 
-    $self->status_message( "Done" );
+    #TODO sort this ace file numerically by contig number
 
+    $self->status_message( "Done" );
     return 1;
 }
 
@@ -114,7 +121,6 @@ sub _determine_new_scaffolds {
     }
 
     #create new scaffolds
-    $self->status_message( "Determining new scaffolds" );
     my $new_scaffolds;
     if ( $scaffolds_file ) {
 	my $scaffolds;
@@ -265,7 +271,10 @@ sub _get_unpadded_contig_lengths {
         if ( $is_sequence == 1 ) {
             next if $line =~ /^\s+$/;
             chomp $line;
-            $line =~ s/[nx*]//ig;
+            #$line =~ s/[nx*]//ig;
+            $line =~ s/n//ig;
+            $line =~ s/x//ig;
+            $line =~ s/\*//g;
             $contig_lengths{$contig_name} += length $line;
         }
     }
@@ -277,6 +286,32 @@ sub _get_unpadded_contig_lengths {
 sub _create_new_scaffolds {
     my ($self, $old_contigs, $scaffolds) = @_;
 
+    my %scaffold_lengths;
+    if( $scaffolds ) {
+        foreach my $scaf ( @$scaffolds ) {
+            $scaf =~ s/\s+//;
+            my @tmp = split (/-/, $scaf);
+            foreach my $scaf_ctg (@tmp) {
+                next if $scaf_ctg eq 'E'; #eg E-12.1-E
+                my $scaf_num;
+                if( $scaf_ctg =~ /^\d+\.\d+$/ ) {
+                    ($scaf_num) = $scaf_ctg =~ /^(\d+)\./;
+                }
+                elsif ( $scaf_ctg =~ /^\d+$/ ) {
+                    $scaf_num = $scaf_ctg;
+                }
+                else {
+                    die "Could not get scaffold number from contig: $scaf_ctg\n";
+                }
+                die "Contig $scaf_ctg exists in scaffolds file but not in ace file\n" if
+                    not exists $old_contigs->{$scaf_ctg};
+                if( $old_contigs->{$scaf_ctg} >= $self->min_contig_length ) {
+                    $scaffold_lengths{$scaf_num} += $old_contigs->{$scaf_ctg};
+                }
+            }
+        }
+    }
+
     #TODO - this is pretty bad .. sorry will clean up
     my $new_scafs = {};
     #hash of scaffolds with array of contigs in scaffold as value
@@ -285,7 +320,7 @@ sub _create_new_scaffolds {
     #                                               contig??
     #                                              ]
     my $scaf_lengths = {};
-    my %valid_contigs_to_export;
+    #my %valid_contigs_to_export;
     #hash of scaffold name and scaffold size
     if ($scaffolds) {
 	foreach my $scaf (@$scaffolds) {
@@ -295,13 +330,21 @@ sub _create_new_scaffolds {
 	    my $scaf_ctg_1;
 	    foreach my $scaf_ctg (@tmp) {
 		next if $scaf_ctg eq 'E'; #eg E-12.1-E
-                $valid_contigs_to_export{$scaf_ctg} = 1;
-                #old contigs = all contigs in ace file
-                #scaffolds = scaffolds to be exported to new ace file
-                #code below removes from old_contigs any scaffolds that are less than min_contig_length
-                die "Contig $scaf_ctg exists in scaffolds file but not in ace file\n" if
-                    not exists $old_contigs->{$scaf_ctg};
-                if ( $old_contigs->{$scaf_ctg} <= $self->min_contig_length ) {
+                my $scaf_num;
+                if( $scaf_ctg =~ /^\d+\.\d+$/ ) {
+                    ($scaf_num) = $scaf_ctg =~ /^(\d+)\./;
+                }
+                elsif ( $scaf_ctg =~ /^\d+$/ ) {
+                    $scaf_num = $scaf_ctg;
+                }
+                else {
+                    die "Could not get scaffold number from contig: $scaf_ctg\n";
+                }
+                if( not $scaffold_lengths{$scaf_num} or $scaffold_lengths{$scaf_num} < $self->min_scaffold_length ) {
+                    #print "removing $scaf_num .. in scaffold with length ".$scaffold_lengths{$scaf_num}."\n";
+                    delete $old_contigs->{$scaf_ctg} and next;
+                }
+                if ( $old_contigs->{$scaf_ctg} < $self->min_contig_length ) {
                     print "removing $scaf_ctg with length ".$old_contigs->{$scaf_ctg}."\n";
                     delete $old_contigs->{$scaf_ctg} and next;
                 }
@@ -313,15 +356,11 @@ sub _create_new_scaffolds {
 	}
     }
 
+
     #rename the remaining, non-scaffold contigs
     foreach my $contig (keys %$old_contigs) {
         if ( $old_contigs->{$contig} <= $self->min_contig_length ) {
             print "Excluding contig"."$contig with length: ".$old_contigs->{$contig}."\n";
-            delete $old_contigs->{$contig};
-            next;
-        }
-        if ( not exists $valid_contigs_to_export{ $contig } ) {
-            print "Excluding contig"."$contig .. not one of contig to export\n";
             delete $old_contigs->{$contig};
             next;
         }
