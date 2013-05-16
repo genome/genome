@@ -31,7 +31,9 @@ class Genome::Sample::Command::Import::Manager {
         },
     ],
     has_optional_transient => [
-        _config => { is => 'Hash', },
+        config => { is => 'Hash', },
+        samples => { is => 'Hash', },
+    #$self->samples(\%samples[ sort { $a->{name} cmp $b->{name} } values %$sample_info ]);
     ],
 };
 
@@ -50,26 +52,15 @@ sub __errors__ {
         return @errors;
     }
 
-    my $config_file = $self->config_file;
-    if ( not -s $config_file ) {
+    my $sample_csv_file = $self->sample_csv_file;
+    if ( not -s $sample_csv_file ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
-            properties => [qw/ config_file /],
-            desc => 'Config file does not exist! '.$config_file,
+            properties => [qw/ sample_csv_file /],
+            desc => 'Sample csv file does not exist! '.$sample_csv_file,
         );
         return @errors;
     }
-    my $config = YAML::LoadFile($config_file);
-    if ( not $config ) {
-        push @errors, UR::Object::Tag->create(
-            type => 'invalid',
-            properties => [qw/ config_file /],
-            desc => 'Failed to load config file! '.$config_file,
-        );
-        return @errors;
-    }
-    $self->_config($config);
-    print Dumper($self->_config);
 
     return;
 }
@@ -77,11 +68,34 @@ sub __errors__ {
 sub execute {
     my $self = shift;
 
+    my $load_config = $self->_load_config;
+    return if not $load_config;
+    print Dumper($self->config);
+
     my $samples = $self->_load_samples;
     return if not $samples;
+    print Dumper($self->samples);
 
     $self->status($samples);
-    print Data::Dumper::Dumper($samples);
+
+    return 1;
+}
+
+sub _load_config {
+    my $self = shift;
+
+    my $config_file = $self->config_file;
+    if ( not -s $config_file ) {
+        $self->error_message('Config file does not exist! '.$config_file);
+        return;
+    }
+
+    my $config = YAML::LoadFile($config_file);
+    if ( not $config ) {
+        $self->error_message('Failed to load config file! '.$config_file);
+        return;
+    }
+    $self->config($config);
 
     return 1;
 }
@@ -89,36 +103,38 @@ sub execute {
 sub _load_samples {
     my $self = shift;
 
-    my $sample_info = $self->_load_samples_from_csv_file;
-    return if not $sample_info;
+    my $load_samples_from_csv = $self->_load_samples_from_csv_file;
+    return if not $load_samples_from_csv;
 
-    my $load_job_status = $self->_load_job_status($sample_info);
-    return if not $load_job_status;
+    my $set_job_status_to_samples = $self->_set_job_status_to_samples;
+    return if not $set_job_status_to_samples;
 
+    my $samples = $self->samples;
     my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
-        original_data_path => [ map { $_->{original_data_path} } values %$sample_info ],
+        original_data_path => [ map { $_->{original_data_path} } values %$samples ],
         '-hint' => [qw/ sample bam_path /],
     );
 
-    my %samples = map { $_->name, $_ } Genome::Sample->get(
-        'name in' => [ keys %$sample_info ],
+    my %genome_samples = map { $_->name, $_ } Genome::Sample->get(
+        'name in' => [ keys %$samples ],
         '-hint' => [qw/ models instrument_data /],
     );
 
-    for my $name ( keys %$sample_info ) {
-        $sample_info->{$name}->{sample} = $samples{$name};
-        $sample_info->{$name}->{inst_data} = $instrument_data{$name};
-        $sample_info->{$name}->{bam_path} = eval{ $sample_info->{inst_data}->bam_path };
-        $sample_info->{$name}->{model} = eval{ ($sample_info->{inst_data}->models)[-1]; }; #FIXME! needs to get only model for this situation
-        $sample_info->{$name}->{build} = eval{ $sample_info->{model}->latest_build };
+    for my $name ( keys %$samples ) {
+        $samples->{$name}->{sample} = $genome_samples{$name};
+        $samples->{$name}->{inst_data} = $instrument_data{$name};
+        $samples->{$name}->{bam_path} = eval{ $samples->{inst_data}->bam_path };
+        $samples->{$name}->{model} = eval{ ($samples->{inst_data}->models)[-1]; }; #FIXME! needs to get only model for this situation
+        $samples->{$name}->{build} = eval{ $samples->{model}->latest_build };
     }
 
-    return [ sort { $a->{name} cmp $b->{name} } values %$sample_info ];
+    $self->samples($samples);
+    return 1;
 }
 
 sub _load_samples_from_csv_file {
     my $self = shift;
-    
+
     my $sample_csv_reader = Genome::Utility::IO::SeparatedValueReader->create(
         input => $self->sample_csv_file,
         separator => ',',
@@ -147,32 +163,34 @@ sub _load_samples_from_csv_file {
         $samples{$name}->{from_csv} = $sample;
     }
 
-    return \%samples;
+    $self->samples(\%samples);
+    return 1;
 }
 
-sub _load_job_status {
-    my ($self, $samples) = @_;
+sub _set_job_status_to_samples {
+    my $self = shift;
 
+    my $samples = $self->samples;
     Carp::confess('Need samples to load job status!') if not $samples;
 
-    return 1 if not $self->_config;
+    return 1 if not $self->config->{'job dispatch'};
 
-    my $job_list_cmd = $self->_config->{'job dispatch'}->{list}->{'command'};
+    my $job_list_cmd = $self->config->{'job dispatch'}->{list}->{'command'};
     if ( not $job_list_cmd ) {
-        $self->error_message('No job list "command" in config! '.YAML::Dump($self->_config));
+        $self->error_message('No job list "command" in config! '.YAML::Dump($self->config));
         return;
     }
 
-    my $name_column = $self->_config->{'job dispatch'}->{list}->{'name column'};
+    my $name_column = $self->config->{'job dispatch'}->{list}->{'name column'};
     if ( not $name_column ) {
-        $self->error_message('No job list "name column" in config! '.YAML::Dump($self->_config));
+        $self->error_message('No job list "name column" in config! '.YAML::Dump($self->config));
         return;
     }
     $name_column--;
 
-    my $status_column = $self->_config->{'job dispatch'}->{list}->{'status column'};
+    my $status_column = $self->config->{'job dispatch'}->{list}->{'status column'};
     if ( not $status_column ) {
-        $self->error_message('No job list "status column" in config! '.YAML::Dump($self->_config));
+        $self->error_message('No job list "status column" in config! '.YAML::Dump($self->config));
         return;
     }
     $status_column--;
@@ -190,8 +208,9 @@ sub _load_job_status {
 }
 
 sub _create_samples {
-    my ($self, $samples) = @_;
-    
+    my $self = shift;
+
+    my $samples = $self->samples;
     Carp::confess('Need samples to create!') if not $samples;
 
     my %existing_samples = map { $_->name => $_ } Genome::Sample->get(name => [ keys %$samples ]);
@@ -243,10 +262,15 @@ sub status {
 }
 
 sub _status {
-    my ($self, $samples) = @_;
+    my $self = shift;
+
+    my $samples = $self->samples;
+    Carp::confess('No samples to display status!') if not $samples;
+
     my %totals;
     my $status;
-    for my $sample ( sort { $a->{name} cmp $b->{name} } @$samples ) {
+    for my $name ( sort { $a cmp $b } keys %$samples ) {
+        my $sample = $samples->{$name};
         $totals{total}++;
         $self->set_sample_status($sample);
         $totals{ $sample->{status} }++;
