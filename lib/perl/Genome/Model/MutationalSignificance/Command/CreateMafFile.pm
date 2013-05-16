@@ -116,8 +116,8 @@ sub execute {
     }
     my $version = 1;
     foreach my $tier (@tiers_to_use){
-        my $snv_anno_top = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top");
-        my $snv_regulatory = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version, "annotated.top.regulatory");
+        my $snv_anno_top = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top.header");
+        my $snv_regulatory = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version, "annotated.top.header.regulatory");
         my $snv_anno = $snv_anno_top;
         if ($self->include_regulatory and -s $snv_regulatory) {
 
