@@ -3092,6 +3092,25 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>differential-expression',
     [
+      '>g-m-t-cuffdiff-wrapper',
+      [
+        'output-directory=s',
+        'files',
+        'result-version=s',
+        [
+          1
+        ],
+        'stage-output=s',
+        'files',
+        'cuffdiff-params=s',
+        'files',
+        'transcript-gtf-file=s',
+        'files',
+        'bam-file-paths=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>cuffdiff',
       [
         'build=s',
