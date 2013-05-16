@@ -248,6 +248,7 @@ sub sra_sample_id_for_pga_imported_instrument_data {
     return $sra_ids[0];
 }
 
+#< ASSEMBLE >#
 sub assembler_params {
     my $self = shift;
 
@@ -282,6 +283,10 @@ sub _assembler_config_params_and_defaults {
         map_len => 60,
         insert_size => undef, # avg_ins
     );
+}
+
+sub resolve_assemble_lsf_resource {
+    return "-n 4 -R 'span[hosts=1] select[type==LINUX64 && mem>30000] rusage[mem=30000]' -M 30000000";
 }
 
 sub before_assemble {
@@ -368,9 +373,13 @@ sub before_assemble {
 }
 #</ASSEMBLE>#
 
-#for build diff testing
+#< DIFF >#
 sub files_ignored_by_diff { #all output files .. will differ slightly each time .. this is okay
-    return qw/ build.xml Log config_file
+    my $self = shift;
+    my @ignored = $self->SUPER::files_ignored_by_diff;
+    push @ignored, qw/ 
+    Log 
+    config_file
     H_KT-185-1-0089515594_WUGC.Arc
     H_KT-185-1-0089515594_WUGC.ContigIndex
     H_KT-185-1-0089515594_WUGC.contig
@@ -395,6 +404,7 @@ sub files_ignored_by_diff { #all output files .. will differ slightly each time 
     H_KT-185-1-0089515594_WUGC.contigs.fa
     H_KT-185-1-0089515594_WUGC.scaffolds.fa
     /;
+    return @ignored;
 }
 
 sub metrics_ignored_by_diff {
@@ -415,9 +425,7 @@ sub dirs_ignored_by_diff {
 sub regex_files_for_diff {
     return qw/ H_KT-185-1-0089515594_WUGC.2852968107.forward.fastq H_KT-185-1-0089515594_WUGC.2852968107.reverse.fastq /;
 }
-
-sub resolve_assemble_lsf_resource {
-    return "-n 4 -R 'span[hosts=1] select[type==LINUX64 && mem>30000] rusage[mem=30000]' -M 30000000";
-}
+#</DIFF>#
 
 1;
+
