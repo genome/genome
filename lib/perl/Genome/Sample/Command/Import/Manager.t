@@ -19,27 +19,42 @@ my $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => 'example/valid',
 );
 ok($manager, 'create manager');
-my %expected_from_load_samples_from_csv = ( 
-    name => 'TEST-0000-00', 
-    original_data_path => 'original.bam',
-    from_csv => { race => 'spaghetti', gender => 'female', religion => 'pastafarian', },
+ok($manager->execute, 'execute');
+my %expected_samples = ( 
+    'TEST-0000-00' => {
+        name => 'TEST-0000-00', 
+        original_data_path => 'original.bam',
+        from_csv => { race => 'spaghetti', gender => 'female', religion => 'pastafarian', },
+        status => 'sample_needed',
+        job_status => 'pend',
+        sample => undef, inst_data => undef, bam_path => undef, model => undef, build => undef,
+    },
 );
-my $load_samples_from_csv_file = $manager->_load_samples_from_csv_file;
-is_deeply($load_samples_from_csv_file, {'TEST-0000-00' => \%expected_from_load_samples_from_csv}, 'samples from _load_samples_from_csv_file');
-my %expected_from_load_samples = (
-    %expected_from_load_samples_from_csv,
-    sample => undef, inst_data => undef, bam_path => undef, model => undef, build => undef,
+my $samples = $manager->samples;
+is_deeply($manager->samples, \%expected_samples, 'samples match');
+
+# fail - no config file
+$manager = Genome::Sample::Command::Import::Manager->create(
+    working_directory => 'example/invalid/no-config-yaml',
 );
-my $load_samples = $manager->_load_samples;
-print Data::Dumper::Dumper ( $manager->_config, $load_samples);
-is_deeply($load_samples,  [\%expected_from_load_samples], 'samples from _load_samples');
-is($manager->get_sample_status($load_samples->[0]), 'sample_needed', 'set correct sample status');
-is($manager->set_sample_status($load_samples->[0]), 'sample_needed', 'set correct sample status');
+ok($manager, 'create manager');
+ok(!$manager->execute, 'execute');
+is($manager->error_message, "Property 'config_file': Config file does not exist! ".$manager->config_file, 'correct error');
+
+# fail - no config file
+$manager = Genome::Sample::Command::Import::Manager->create(
+    working_directory => 'example/invalid/no-sample-csv',
+);
+ok($manager, 'create manager');
+ok(!$manager->execute, 'execute');
+is($manager->error_message, "Property 'sample_csv_file': Sample csv file does not exist! ".$manager->sample_csv_file, 'correct error');
 
 # fail - no name column in csv
-$manager->working_directory('example/invalid');
-$load_samples_from_csv_file = $manager->_load_samples_from_csv_file;
-ok(!$load_samples_from_csv_file, 'failed to load samples b/c no name column in sample csv');
+$manager = Genome::Sample::Command::Import::Manager->create(
+    working_directory => 'example/invalid/no-name-column-in-sample-csv',
+);
+ok($manager, 'create manager');
+ok(!$manager->execute, 'execute');
 is($manager->error_message, 'No "name" column in sample csv! '.$manager->sample_csv_file, 'correct error');
 
 done_testing();
