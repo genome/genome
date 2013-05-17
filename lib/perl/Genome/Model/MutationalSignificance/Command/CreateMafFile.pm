@@ -37,11 +37,6 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
             doc => 'Path to directory of variant files with reviews.  Any variant with a review status other than S or V will be ignored.',
             is_optional => 1,
         },
-        regulome_dir => {
-            is => 'UR::Value::DirectoryPath',
-            doc => 'Path to directory of regulomeDb annotations of variants.  Full format is expected.  Files should be named with somatic variation build ids',
-            is_optional => 1,
-        },
         use_tier_1 => {
             is => 'Boolean',
             doc => 'Include tier 1 in the analysis',
@@ -131,10 +126,16 @@ sub execute {
                 annotation_build => $self->somatic_variation_build->annotation_build,
             );
 
-            if ($self->regulome_dir) {
-                my $rdb_file = join("/", $self->regulome_dir, $self->somatic_variation_build->model->id.".full");
-                $params{regulome_db_file} = $rdb_file;
+            my $rdb_file = join("/", $self->output_dir, $self->somatic_variation_build->model->id."regulomedb.full");
+            unless (-s $rdb_file) {
+                my $rdb_rv = Genome::Model::Tools::RegulomeDb::GetAnnotationsForVariants->execute(
+                    variant_list => $self->somatic_variation_build->data_set_path("variants/snvs.hq", 2, "bed"),
+                    output_file => $rdb_file,
+                    format => "full",
+                );
             }
+            $params{regulome_db_file} = $rdb_file;
+            
             my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
                 %params
             );
