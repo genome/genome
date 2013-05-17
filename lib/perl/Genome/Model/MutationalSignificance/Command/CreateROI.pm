@@ -43,6 +43,10 @@ class Genome::Model::MutationalSignificance::Command::CreateROI {
             is_many => 1,
             is_optional => 1,
         },
+        filter_on_regulome_db => {
+            is => 'Boolean',
+            is_optional => 1,
+        },
     ],
     has_output => [
         roi_path => {
@@ -117,16 +121,52 @@ sub execute {
             description => "Feature list with extra rois",
             source => "WUTGI",
         );
-        #}
-        #else {
-        #    $new_feature_list = $feature_list;
-        #}
 
         unless ($new_feature_list) {
             $self->error_message("Failed to create ROI file with extra ROIs");
             return;
         }
     }
+    if ($self->filter_on_regulome_db) {
+        my $filtered_name = join("_", $new_feature_list->name, "filtered_by_regulome_v1");
+        my $filtered_list = Genome::FeatureList->get($filtered_name);
+        unless ($filtered_list) {
+            #transform to 0-based
+            my $zero_based = $new_feature_list->processed_bed_file(
+                short_name => 0,
+            );
+
+            #filter
+            my $filtered_out_zero_based = Genome::Sys->create_temp_file_path;
+            my $rv = Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore->execute(
+                roi_list => $zero_based,
+                output_file => $filtered_out_zero_based,
+                valid_scores => [1,2],
+            );
+
+            #convert back to 1-based
+            my $filtered_out = Genome::FeatureList::transform_zero_to_one_based(
+                $filtered_out_zero_based,
+                $new_feature_list->is_multitracked,
+            );
+
+            my $file_content_hash = Genome::Sys->md5sum($filtered_out);
+            my $filtered_feature_list = Genome::FeatureList->create(
+                name => $filtered_name,
+                format => $new_feature_list->format,
+                file_content_hash => $file_content_hash,
+                subject => $new_feature_list->subject,
+                reference => $new_feature_list->reference,
+                file_path => $filtered_out,
+                content_type => "roi",
+                description => "Feature list with extra rois",
+                source => "WUTGI",
+            );
+
+            $new_feature_list = $filtered_feature_list;
+        }
+    }
+    
     $self->roi_path($new_feature_list->file_path);
     $self->status_message('Using ROI file: '.$self->roi_path);
     return 1;

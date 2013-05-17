@@ -187,101 +187,78 @@ sub execute {
                 }
             }
 
-            if (!$reg_db or ($var{regdb_score} =~ /1/ || $var{regdb_score} =~ /2/)) {
-                foreach my $column_name ($self->regulatory_columns_to_check) {
-                    my $annot = $var{"regulatory_$column_name"};
-                    unless ($annot) {
-                        $self->warning_message("No regulatory_$column_name for variant $chr:$start");
+            foreach my $column_name ($self->regulatory_columns_to_check) {
+                my $annot = $var{"regulatory_$column_name"};
+                unless ($annot) {
+                    $self->warning_message("No regulatory_$column_name for variant $chr:$start");
+                }
+                next if ($annot =~ "-");
+                $annot =~ s/^Name=//;
+                my @gene_names = split /,/, $annot;
+                foreach my $gene_name (@gene_names) {
+                    my $ensembl_id;
+                    if ($gene_name =~ /^ENSG/) {
+                        $err_out->print("Translating $gene_name\n");
+                        $gene_name =~ s/\.[0-9]+$//;
+                        $ensembl_id = $gene_name;
+                        my $ensembl_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl", id_value => $gene_name);
+                        if ($ensembl_id_obj) {
+                            my $default_name_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl_default_external_name", gene_id => $ensembl_id_obj->gene_id);
+                            if ($default_name_obj) {
+                                $err_out->print("Translating $gene_name ");
+                                $gene_name = $default_name_obj->id_value;
+                                $err_out->print(" to $gene_name\n");
+                            }
+                            else {
+                                $err_out->print("Could not translate $gene_name\n");
+                                $self->warning_message("Could not translate $gene_name");
+                            }
+                        }
+                        else {
+                            $err_out->print("Could not find gene with ensembl name $gene_name\n");
+                            $self->warning_message("Could not find gene with ensembl name $gene_name for translation.");
+                        }
                     }
-                    next if ($annot =~ "-");
-                    $annot =~ s/^Name=//;
-                    my @gene_names = split /,/, $annot;
-                    foreach my $gene_name (@gene_names) {
-                        my $ensembl_id;
-                        if ($gene_name =~ /^ENSG/) {
-                            $err_out->print("Translating $gene_name\n");
-                            $gene_name =~ s/\.[0-9]+$//;
-                            $ensembl_id = $gene_name;
-                            my $ensembl_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl", id_value => $gene_name);
-                            if ($ensembl_id_obj) {
-                                my $default_name_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl_default_external_name", gene_id => $ensembl_id_obj->gene_id);
-                                if ($default_name_obj) {
-                                    $err_out->print("Translating $gene_name ");
-                                    $gene_name = $default_name_obj->id_value;
-                                    $err_out->print(" to $gene_name\n");
+                    else {
+                        my @other_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl_default_external_name", id_value => $gene_name);
+                        if (@other_id_obj) {
+                            my $count = 0;
+                            my $str;
+                            foreach my $other_obj (@other_id_obj) { #TODO: one will be arbitrarily chosen
+                                my $ensembl_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl", gene_id => $other_obj->gene_id);
+                                if ($ensembl_id_obj) {
+                                    $ensembl_id = $ensembl_id_obj->id_value;
+                                    $count++;
+                                    $str .= $ensembl_id;
                                 }
                                 else {
-                                    $err_out->print("Could not translate $gene_name\n");
-                                    $self->warning_message("Could not translate $gene_name");
+                                    $err_out->print("Could not translate $gene_name into ensembl id\n");
+                                    $ensembl_id = "-";
                                 }
                             }
-                            else {
-                                $err_out->print("Could not find gene with ensembl name $gene_name\n");
-                                $self->warning_message("Could not find gene with ensembl name $gene_name for translation.");
+                            if ($count > 1) {
+                                $self->warning_message("More than one ensembl_id found for gene name $gene_name: $str.  Arbitrarily chose $ensembl_id");
                             }
                         }
                         else {
-                            my @other_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl_default_external_name", id_value => $gene_name);
-                            if (@other_id_obj) {
-                                my $count = 0;
-                                my $str;
-                                foreach my $other_obj (@other_id_obj) { #TODO: one will be arbitrarily chosen
-                                    my $ensembl_id_obj = Genome::ExternalGeneId->get(data_directory => $self->annotation_build->data_directory."/annotation_data", reference_build_id => $self->annotation_build->reference_sequence_id, id_type => "ensembl", gene_id => $other_obj->gene_id);
-                                    if ($ensembl_id_obj) {
-                                        $ensembl_id = $ensembl_id_obj->id_value;
-                                        $count++;
-                                        $str .= $ensembl_id;
-                                    }
-                                    else {
-                                        $err_out->print("Could not translate $gene_name into ensembl id\n");
-                                        $ensembl_id = "-";
-                                    }
-                                }
-                                if ($count > 1) {
-                                    $self->warning_message("More than one ensembl_id found for gene name $gene_name: $str.  Arbitrarily chose $ensembl_id");
-                                }
-                            }
-                            else {
-                                $err_out->print("Could not find gene with default name $gene_name\n");
-                                $ensembl_id = "-";
-                            }
-                        }
-                        push @{$annotations{$gene_name}->{sources}}, "regulatory_$column_name";
-                        push @{$annotations{$gene_name}->{trv_type}}, "regulatory";
-                        if ((not defined $annotations{$gene_name}->{ensembl_id}) or $annotations{$gene_name}->{ensembl_id} eq "-") {
-                            $annotations{$gene_name}->{ensembl_id} = $ensembl_id;
-                            $err_out->print("Setting ensembl_id to $ensembl_id\n");
-                        }
-                        else {
-                            unless ($annotations{$gene_name}->{ensembl_id} eq $ensembl_id) {
-                                $self->warning_message("Ensembl id does not match: ".$annotations{$gene_name}->{ensembl_id}." and $ensembl_id");
-                            }
+                            $err_out->print("Could not find gene with default name $gene_name\n");
+                            $ensembl_id = "-";
                         }
                     }
-                }
-                #If we are within n bases of a TSS, annotate with that as well.
-                foreach my $annot (keys %annotations) {
-                    foreach my $type (@{$annotations{$annot}->{trv_type}}) {
-                        if ($type eq "5_prime_flanking_region") {
-                            my $promoter_size = 50000; 
-                            my $transcript = Genome::Transcript->get(transcript_name => $fields[7],
-                                             data_directory => $self->annotation_build->data_directory."/annotation_data",
-                                             reference_build_id => $self->annotation_build->reference_sequence_id);
-                            my $tss; 
-                            if ($transcript->strand =~ /\+/) {
-                                $tss = $transcript->transcript_start;
-                            }
-                            else {
-                                $tss = $transcript->transcript_stop;
-                            }
-                            if (abs($tss - $fields[1]) <= $promoter_size) {
-                                push @{$annotations{$annot}->{sources}}, "regulome_db_promoter";
-                                push @{$annotations{$annot}->{trv_type}}, "regulatory";
-                            }
+                    push @{$annotations{$gene_name}->{sources}}, "regulatory_$column_name";
+                    push @{$annotations{$gene_name}->{trv_type}}, "regulatory";
+                    if ((not defined $annotations{$gene_name}->{ensembl_id}) or $annotations{$gene_name}->{ensembl_id} eq "-") {
+                        $annotations{$gene_name}->{ensembl_id} = $ensembl_id;
+                        $err_out->print("Setting ensembl_id to $ensembl_id\n");
+                    }
+                    else {
+                        unless ($annotations{$gene_name}->{ensembl_id} eq $ensembl_id) {
+                            $self->warning_message("Ensembl id does not match: ".$annotations{$gene_name}->{ensembl_id}." and $ensembl_id");
                         }
                     }
                 }
             }
+            
             unless (%annotations) {
                 $annotations{"-"}->{sources} = ["-"];
                 $annotations{"-"}->{trv_type} = [$fields[13]];

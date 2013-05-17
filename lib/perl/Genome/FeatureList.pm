@@ -230,29 +230,35 @@ sub get_one_based_file {
         return $self->file_path;
     }
     else {
-        my $bed_file_content;
-
-        my $fh = Genome::Sys->open_file_for_reading($self->file_path);
-        while(my $line = <$fh>) {
-            chomp($line);
-            if($self->is_multitracked) {
-                if ($line =~ /^track/) {
-                    $bed_file_content .= "$line\n";
-                    next;
-                }
-            }
-            my @entry = split("\t",$line);
-            unless (scalar(@entry) >= 3) {
-                $self->error_message('At least three fields are required in BED format files.  Error with line: '. $line);
-                die($self->error_message);
-            }
-            $entry[1]++;
-            $bed_file_content .= join("\t",@entry) ."\n";
-        }
-        my $temp_file = Genome::Sys->create_temp_file_path( $self->id . '.converted_format.bed' );
-        Genome::Sys->write_file($temp_file, $bed_file_content);
-        return $temp_file;
+        return $self->transform_zero_to_one_based($self->file_path, $self->is_multitracked);
     }
+}
+sub transform_zero_to_one_based {
+    my $class = shift;
+    my $file = shift;
+    my $is_multitracked = shift;
+    my $bed_file_content;
+
+    my $fh = Genome::Sys->open_file_for_reading($file);
+    while(my $line = <$fh>) {
+        chomp($line);
+        if($is_multitracked) {
+            if ($line =~ /^track/) {
+                $bed_file_content .= "$line\n";
+                next;
+            }
+        }
+        my @entry = split("\t",$line);
+        unless (scalar(@entry) >= 3) {
+            my $error_message = 'At least three fields are required in BED format files.  Error with line: '. $line;
+            die($error_message);
+        }
+        $entry[1]++;
+        $bed_file_content .= join("\t",@entry) ."\n";
+    }
+    my $temp_file = Genome::Sys->create_temp_file_path;
+    Genome::Sys->write_file($temp_file, $bed_file_content);
+    return $temp_file;
 }
 
 #The raw "BED" file we import will be in one many BED-like formats.
