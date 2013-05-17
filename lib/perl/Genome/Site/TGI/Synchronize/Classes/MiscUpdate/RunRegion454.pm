@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::RunRegion454 {
-    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::BaseForAttributes',
+    is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::Base',
 };
 
 class Genome::InstrumentData::RunRegion454 { };
@@ -66,7 +66,11 @@ sub _update_value {
         return if not $rv;
     }
 
-    return $self->new_value;
+    return 1;
+}
+
+sub _validate_value_set {
+    return 1;
 }
 
 1;
