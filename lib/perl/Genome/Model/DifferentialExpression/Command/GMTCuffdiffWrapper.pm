@@ -26,6 +26,10 @@ class Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper {
         },
     ],
     has_param => [
+        use_version => {
+            is => 'Version',
+            is_optional => 1,
+        },
         result_version => {
             is => 'Integer',
             valid_values => [1],
@@ -70,6 +74,7 @@ sub _execute_gmt_cuffdiff {
         output_directory => $output_directory,
         bam_file_paths => $self->bam_file_paths,
         transcript_gtf_file => $self->transcript_gtf_file,
+        use_version => $self->use_version,
     );
     return $cmd->execute();
 }
