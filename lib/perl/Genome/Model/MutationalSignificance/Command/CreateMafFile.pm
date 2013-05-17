@@ -66,6 +66,7 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
             is => 'String',
             doc => 'Names of columns in the regulatory annotation file to check',
             is_optional => 1,
+            is_many => 1,
         },
     ],
     has_output => [

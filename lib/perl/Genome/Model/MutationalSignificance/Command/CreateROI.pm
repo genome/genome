@@ -80,12 +80,15 @@ sub execute {
         return;
     }
 
+    $self->status_message("Basing ROI on ".$feature_list->id);
+
     $self->roi_path($feature_list->file_path);
     
     my $new_name = $feature_list->name;
     my @files;
     for my $extra_roi ($self->extra_rois) {
         my $roi_name = $extra_roi->name;
+        $self->status_message("Adding roi $roi_name");
         $new_name .= "_$roi_name";
         push @files, $extra_roi->get_one_based_file;
     }
@@ -93,11 +96,9 @@ sub execute {
     my $new_feature_list = Genome::FeatureList->get(name => $new_name);
 
     unless ($new_feature_list) {
-        my $tmp = Genome::Sys->create_temp_file_path;
-        
         my $sorted_out = Genome::Sys->create_temp_file_path;
         my $rv = Genome::Model::Tools::Joinx::Sort->execute(
-            input_files => [$tmp, @files],
+            input_files => [$feature_list->file_path, @files],
             unique => 1,
             output_file => $sorted_out,
         );

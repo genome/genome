@@ -624,9 +624,10 @@ sub map_workflow_inputs {
     if ($build->regulome_dir) {
         $inputs{regulome_dir} = $build->regulome_dir;
     }
-    if ($build->extra_rois) {
-        $inputs{extra_rois} = [$build->extra_rois];
-        $inputs{regulatory_columns_to_check} = [map {$_->name} $build->extra_rois];
+    my @extra_rois = $build->extra_rois;
+    if (@extra_rois) {
+        $inputs{extra_rois} = [@extra_rois];
+        $inputs{regulatory_columns_to_check} = [map {$_->name} @extra_rois];
     }
     $inputs{music_build} = $build;
     $inputs{log_directory} = $build->log_directory;
