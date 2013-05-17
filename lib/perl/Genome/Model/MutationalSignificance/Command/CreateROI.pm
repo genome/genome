@@ -47,12 +47,6 @@ class Genome::Model::MutationalSignificance::Command::CreateROI {
             is => 'Boolean',
             is_optional => 1,
         },
-        valid_regdb_scores => {
-            is => 'String',
-            is_many => 1,
-            is_optional => 1,
-            valid_values => [qw(1 2 3 4 5 6 1a 1b 1c 1d 1e 1f 2a 2b 2c 3a 3b)],
-        },
     ],
     has_output => [
         roi_path => {
@@ -147,7 +141,7 @@ sub execute {
             my $rv = Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore->execute(
                 roi_list => $zero_based,
                 output_file => $filtered_out_zero_based,
-                valid_scores => [$self->valid_regdb_scores],
+                valid_scores => [qw(1 2)],
             );
 
             #convert back to 1-based
