@@ -3102,6 +3102,8 @@ $Genome::Command::OPTS_SPEC = [
         ],
         'stage-output=s',
         'files',
+        'use-version=s',
+        undef,
         'cuffdiff-params=s',
         'files',
         'transcript-gtf-file=s',
