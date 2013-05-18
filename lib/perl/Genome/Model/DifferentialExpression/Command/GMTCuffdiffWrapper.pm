@@ -69,8 +69,8 @@ sub _execute_gmt_cuffdiff {
     my $self = shift;
     my $output_directory = shift;
 
-    my $cmd = Genome::Model::Tools::Cufflinks::Cuffdiff->get(
-        params => $self->params,
+    my $cmd = Genome::Model::Tools::Cufflinks::Cuffdiff->create(
+        params => $self->cuffdiff_params,
         output_directory => $output_directory,
         bam_file_paths => $self->bam_file_paths,
         transcript_gtf_file => $self->transcript_gtf_file,
