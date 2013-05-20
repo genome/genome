@@ -40,6 +40,10 @@ class Genome::InstrumentData::AlignmentResult::Merged::BamQc {
             is => 'Boolean',
             doc => 'Whether or not to iterate over every position to calculate positional error rates.',
         },
+        read_length => {
+            is => 'Boolean',
+            doc => 'Whether or not to run read length distribution.',
+        },
     ],
     has_metric => [
         _log_directory => {
@@ -146,8 +150,9 @@ sub create {
         samtools_version   => $self->samtools_version,
         fastqc_version     => $self->fastqc_version,
         samstat_version    => $self->samstat_version,
-        error_rate         =>  $self->error_rate,
+        error_rate         => $self->error_rate,
         error_rate_pileup  => $self->error_rate_pileup,
+        read_length        => $self->read_length,
     );
 
     my $cmd = Genome::Model::Tools::BamQc::Run->create(%bam_qc_params);
@@ -182,7 +187,7 @@ sub _generate_metrics {
             }
         } 
         else {
-            # All other hashrefs are considered to habe two-levels, the first level of the hashref being the key on which lines of metrics are differentiated
+            # All other hashrefs are considered to have two-levels, the first level of the hashref being the key on which lines of metrics are differentiated
             for my $key (keys %{$type_metrics}) {
                 for my $metric_label (keys %{$type_metrics->{$key}}) {
                     my $metric_key = sprintf('bam_qc-%s-%s-%s',$type_label,$key,$metric_label);

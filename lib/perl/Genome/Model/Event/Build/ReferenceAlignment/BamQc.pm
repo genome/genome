@@ -3,8 +3,6 @@ package Genome::Model::Event::Build::ReferenceAlignment::BamQc;
 use strict;
 use warnings;
 
-use File::Path qw(rmtree);
-
 use Genome;
 
 class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
@@ -114,7 +112,9 @@ sub params_for_result {
         $self->warning_message('Given picard version: '.$picard_version.' not compatible to CollectMultipleMetrics. Use default: '.$picard_version);
     }
 
-    my $er_pileup = $pp->read_aligner_name =~ /^bwa$/i ? 0 : 1;
+    my $instr_data  = $self->instrument_data;
+    my $er_pileup   = $pp->read_aligner_name =~ /^bwa$/i ? 0 : 1;
+    my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
     return (
         alignment_result_id => $self->_alignment_result->id,
@@ -124,6 +124,7 @@ sub params_for_result {
         samstat_version     => Genome::Model::Tools::SamStat::Base->default_samstat_version,
         error_rate          => 1,
         error_rate_pileup   => $er_pileup,
+        read_length         => $read_length,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
 }
@@ -132,15 +133,23 @@ sub link_result {
     my ($self, $result) = @_;
 
     my $build = $self->build;
+    $result->add_user(label => 'uses', user => $build);
+
     my $align_result = $self->_alignment_result;
+    my $link = join('/', $align_result->output_dir, 'bam-qc-'.$result->id);
 
-    my $link  = join('/', $align_result->output_dir, 'bam-qc-'.$result->id);
-    my $label = join('_', 'bam-qc');
+    if (-l $link) {
+        $self->status_message("Already found a symlink here.");
+    }
+    else {
+        Genome::Sys->create_symlink($result->output_dir, $link);
+        $align_result->_reallocate_disk_allocation;
+    }
 
-    Genome::Sys->create_symlink($result->output_dir, $link);
-
-    $result->add_user(label => $label, user => $build);
-    $result->add_user(label => $label, user => $align_result);
+    my @users = $align_result->users;
+    unless (grep{$_->user eq $result}@users) {
+        $align_result->add_user(label => 'uses', user => $result);
+    }
 
     return 1;
 }
