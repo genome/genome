@@ -70,10 +70,17 @@ sub _prepare_configuration_hashes_for_instrument_data {
         taxon => $inst_data->species_name,
         type => $inst_data->extraction_type,
     );
-    for(keys %$config_hash) {
-        $config_hash->{$_}->{subclass_name} = $_;
-        $config_hash->{$_}->{subject} = $inst_data->subject;
-        $config_hash->{$_}->{target_region_set_name} = $inst_data->target_region_set_name;
+    for my $model_type (keys %$config_hash) {
+        $config_hash->{$model_type}->{subclass_name} = $model_type;
+        $config_hash->{$model_type}->{subject} = $inst_data->subject;
+
+        my $instrument_data_properties = delete $config_hash->{$model_type}{instrument_data_properties};
+        if($instrument_data_properties) {
+            while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
+                $config_hash->{$model_type}{$model_property} = $inst_data->$instrument_data_property;
+            }
+        }
+        #$config_hash->{$_}->{target_region_set_name} = $inst_data->target_region_set_name;
         #not sure how to derive this yet
         #$config_hash->{$_}->{genotype_microarray} = 
     }
