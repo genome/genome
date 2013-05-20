@@ -50,6 +50,12 @@ class Genome::Model::SomaticVariation {
             default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
             valid_values => [ 0,1,2,3],
         },
+        get_regulome_db => {
+            doc => "Get the regulome-db annotation for the snvs list",
+            is_optional => 1,
+            default_value => 0,
+            is => "Boolean",
+        },
         filter_previously_discovered_variants => {
             doc => 'Should variants be divided into previously discovered and novel variants',
             default_value => 0,
@@ -451,6 +457,7 @@ sub map_workflow_inputs {
     push @inputs, build_id => $build->id;
     push @inputs, annotator_version => $self->transcript_variant_annotator_version;
     push @inputs, regulatory_annotations => [$self->regulatory_annotations];
+    push @inputs, get_regulome_db => $self->get_regulome_db;
 
     return @inputs;
 }

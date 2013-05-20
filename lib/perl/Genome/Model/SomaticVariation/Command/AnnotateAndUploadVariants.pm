@@ -31,6 +31,11 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
             is_many => 1,
             is_optional => 1,
         },
+        get_regulome_db => {
+            is => 'Boolean',
+            default => 0,
+            is_optional => 1,
+        },
     ],
     has_param => [
         lsf_queue => {
@@ -422,6 +427,14 @@ sub execute{
                 return;
             }
         }
+    }
+    if ($self->get_regulome_db) {
+        my $rdb_file = $build->data_set_path("effects/snvs.hq.regulomedb", 1, "full");
+        my $rdb_rv = Genome::Model::Tools::RegulomeDb::GetAnnotationsForVariants->execute(
+            variant_list => $build->data_set_path("variants/snvs.hq", 2, "bed"),
+            output_file => $rdb_file,
+            format => "full",
+        );
     }
 
     #upload variants
