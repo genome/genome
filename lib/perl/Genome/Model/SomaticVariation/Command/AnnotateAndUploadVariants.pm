@@ -35,6 +35,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
             is => 'Boolean',
             default => 0,
             is_optional => 1,
+            is_input => 1,
         },
     ],
     has_param => [
