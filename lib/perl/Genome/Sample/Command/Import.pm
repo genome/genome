@@ -12,6 +12,13 @@ class Genome::Sample::Command::Import {
 my %import_namespaces;
 _create_import_commands();
 
+sub namespace_for_nomenclature {
+    my ($self, $nomenclature) = @_;
+    Carp::confess('No nomenclature to get namespace!') if not $nomenclature;
+    my ($config) = grep { $_->{nomenclature} eq $nomenclature } values %import_namespaces;
+    return $config->{namespace} if $config;
+}
+
 sub property_names_for_namespace_importer {
     my ($self, $namespace) = @_;
 
@@ -158,10 +165,10 @@ sub _create_import_command_for_config {
 
     my $nomenclature = $config->{nomenclature};
     die 'No nomenclature in sample import command config!' if not $nomenclature;
-    my $namespace = $config->{namespace} // join('', map { ucfirst(lc($_)) } split('-', $nomenclature));
-    my $class_name = 'Genome::Sample::Command::Import::'.$namespace;
-    return 1 if exists $import_namespaces{$namespace};
-    $import_namespaces{$namespace} = $config;
+    $config->{namespace} //= join('', map { ucfirst(lc($_)) } split('-', $nomenclature));
+    my $class_name = 'Genome::Sample::Command::Import::'.$config->{namespace};
+    return 1 if exists $import_namespaces{ $config->{namespace} };
+    $import_namespaces{ $config->{namespace} } = $config;
     $config->{importer_class_name} = $class_name;
 
     my $name_regexp_string = $config->{name_regexp};
