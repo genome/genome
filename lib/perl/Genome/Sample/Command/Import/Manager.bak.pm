@@ -29,28 +29,24 @@ class Genome::Sample::Command::Import::Manager {
             calculate_from => 'working_directory',
             calculate => sub{ my $working_directory = shift; return $working_directory.'/config.yaml'; },
         },
-        importer_class_name => {
-            calculate => q( $self = shift; return 'Genome::Sample::Command::Import::'.$self->namespace; ),
-        },
     ],
     has_optional_transient => [
         config => { is => 'Hash', },
-        namespace => { is => 'Text', },
         samples => { is => 'Hash', },
     #$self->samples(\%samples[ sort { $a->{name} cmp $b->{name} } values %$sample_info ]);
     ],
 };
 
-sub execute {
+sub namespace {
     my $self = shift;
 
-    my $samples = $self->_load_samples;
-    return if not $samples;
-    print Dumper($self->samples);
+    my $nomenclature = $self->config->{sample}->{nomenclature};
+    if ( not $nomenclature ) {
+        $self->error_message('No nomenclature in config!');
+        return;
+    }
 
-    $self->status($samples);
-
-    return 1;
+    return join('', map { ucfirst(lc($_)) } split('-', $nomenclature));
 }
 
 sub __errors__ {
@@ -68,13 +64,14 @@ sub __errors__ {
         return @errors;
     }
 
-    my $config_error = $self->_load_config;
-    if ( $config_error ) {
+    my $config_file = $self->config_file;
+    if ( not -s $config_file ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
             properties => [qw/ config_file /],
-            desc => $config_error,
+            desc => 'Config file does not exist! '.$config_file,
         );
+        return @errors;
     }
 
     my $sample_csv_file = $self->sample_csv_file;
@@ -90,32 +87,36 @@ sub __errors__ {
     return;
 }
 
+sub execute {
+    my $self = shift;
+
+
+    my $samples = $self->_load_samples;
+    return if not $samples;
+    print Dumper($self->samples);
+
+    $self->status($samples);
+
+    return 1;
+}
+
 sub _load_config {
     my $self = shift;
 
     my $config_file = $self->config_file;
     if ( not -s $config_file ) {
-        return 'Config file does not exist! '.$config_file;
+        $self->error_message('Config file does not exist! '.$config_file);
+        return;
     }
 
     my $config = YAML::LoadFile($config_file);
     if ( not $config ) {
-        return 'Failed to load config file! '.$config_file;
+        $self->error_message('Failed to load config file! '.$config_file);
+        return;
     }
     $self->config($config);
 
-    my $nomenclature = $config->{sample}->{nomenclature};
-    if ( not $nomenclature ) {
-        return 'No nomenclature in config file! '.$config_file;
-    }
-
-    my $namespace = Genome::Sample::Command::Import->namespace_for_nomenclature($nomenclature);
-    if ( not $namespace ) {
-        return 'Could not get namespace from miporter. Please ensure there is a config for the '.$nomenclature.' nomenclature.';
-    }
-    $self->namespace($namespace);
-
-    return;
+    return 1;
 }
 
 sub _load_samples {
@@ -228,27 +229,37 @@ sub _set_job_status_to_samples {
 sub _create_samples {
     my $self = shift;
 
+    my $namespace = $self->namespace;
+    return if not $namespace;
+    my $importer_class = 'Genome::Sample::Command::Import::'.$namespace;
+
     my $samples = $self->samples;
     Carp::confess('Need samples to create!') if not $samples;
 
-    my %existing_samples = map { $_->name => $_ } Genome::Sample->get(name => [ keys %$samples ]);
-
-    my $importer_class = 'Genome::Sample::Command::Import::';
-
+    my %genome_samples = map { $_->name => $_ } Genome::Sample->get(name => [ keys %$samples ]);
     for my $sample ( values %$samples ) {
-        my $genome_sample = $existing_samples{ $sample->{name} };
+        my $genome_sample = $genome_samples{ $sample->{name} };
         if ( not $genome_sample ) {
-            my $importer = $importer_class->create(name => $sample->{name});
+            my %import_params = (
+                name => $sample->{name},
+                attributes => $sample->{from_csv},
+            );
+            my $importer = $importer_class->create(name => $sample->{name}, %{$sample->{from_csv}});
             if ( not $importer ) {
+                $self->error_message('Failed to create sample importer for sample! '.Data::Dumper::Dumper($sample));
+                return;
             }
             if ( not $importer->execute ) {
+                $self->error_message('Failed to execute sample importer for sample! '.Data::Dumper::Dumper($sample));
+                return;
             }
-            my $genome_sample = $importer->_sample;
+            $genome_sample = $importer->_sample;
             if ( not $genome_sample ) {
-                $self->error_message('Failed to create sample!');
+                $self->error_message('Executed the importer successfully, but failed to create sample!');
                 return;
             }
         }
+        $sample->{sample} = $genome_sample;
     }
 
     return 1;

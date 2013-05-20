@@ -16,7 +16,7 @@ use Test::More;
 use_ok('Genome::Sample::Command::Import::Manager') or die;
 use_ok('Genome::Sample::Command::Import') or die;
 Genome::Sample::Command::Import::_create_import_command_for_config({
-        nomenclature => 'TEST',
+        nomenclature => 'TeSt',
         name_regexp => '(TeSt-\d+)\-[\w\d]+\-\d\w\-\d+',
         taxon_name => 'human',
         #sample_attributes => [qw/ tissue_desc /],# tests array
@@ -34,6 +34,8 @@ my $manager = Genome::Sample::Command::Import::Manager->create(
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
+is($manager->namespace, 'Test', 'got namespace');
+is($manager->importer_class_name, 'Genome::Sample::Command::Import::Test', 'got importer class name');
 my %expected_samples = ( 
     'TEST-0000-00' => {
         name => 'TEST-0000-00', 
