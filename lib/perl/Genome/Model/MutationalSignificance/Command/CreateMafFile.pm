@@ -126,14 +126,12 @@ sub execute {
                 annotation_build => $self->somatic_variation_build->annotation_build,
             );
 
-            my $rdb_file = join("/", $self->output_dir, $self->somatic_variation_build->model->id."regulomedb.full");
+            my $rdb_file = $self->somatic_variation_build->data_set_path("effects/snvs.hq.regulomedb", 1, "full");
             unless (-s $rdb_file) {
-                my $rdb_rv = Genome::Model::Tools::RegulomeDb::GetAnnotationsForVariants->execute(
-                    variant_list => $self->somatic_variation_build->data_set_path("variants/snvs.hq", 2, "bed"),
-                    output_file => $rdb_file,
-                    format => "full",
-                );
+                $self->error_message("No regulomedb file detected");
+                return;
             }
+            
             $params{regulome_db_file} = $rdb_file;
             
             my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
