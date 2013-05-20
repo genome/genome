@@ -6,7 +6,7 @@ use Genome;
 use WWW::Mechanize;
 
 class Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore {
-    is => 'Command::V2',
+    is => 'Genome::Model::Tools::RegulomeDb',
     has => [
         roi_list => {
             is => 'String',
@@ -32,7 +32,7 @@ sub execute {
     my $expanded_rois = $self->expand_rois($roi_string);
     my @rois = split(/\n/, $roi_string);
     my @modified_rois;
-    my $output = Genome::Model::Tools::RegulomeDb::fetch_large_annotation(
+    my $output = $self->fetch_large_annotation(
        'bed', $expanded_rois 
     );
     my @lines = split(/\n/, $output);

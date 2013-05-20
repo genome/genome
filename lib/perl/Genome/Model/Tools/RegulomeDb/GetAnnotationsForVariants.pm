@@ -6,7 +6,7 @@ use Genome;
 use WWW::Mechanize;
 
 class Genome::Model::Tools::RegulomeDb::GetAnnotationsForVariants {
-    is => 'Command::V2',
+    is => 'Genome::Model::Tools::RegulomeDb',
     has => [
         variant_list => {
             is => 'String',
@@ -29,7 +29,7 @@ sub execute {
     my $self = shift;
 
     my $content = Genome::Sys->read_file($self->variant_list);
-    my $output = Genome::Model::Tools::RegulomeDb::fetch_large_annotation(
+    my $output = $self->fetch_large_annotation(
        $self->format, $content 
     );
     Genome::Sys->write_file($self->output_file, $output);
