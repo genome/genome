@@ -31,8 +31,8 @@ sub execute {
     for my $current_inst_data (@instrument_data) {
         my $config = $self->_get_configuration_object_for_instrument_data($current_inst_data);
         my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
-        for(keys %$hashes) {
-            my $model = $self->_get_model_for_config_hash($hashes->{$_});
+        for(values %$hashes) {
+            my $model = $self->_get_model_for_config_hash($_);
             $model->add_instrument_data($current_inst_data);
             $model->build_requested(1);
         }
