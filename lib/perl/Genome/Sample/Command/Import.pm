@@ -9,8 +9,22 @@ class Genome::Sample::Command::Import {
     doc => 'commands for importing samples',
 };
 
-my (%import_namespaces, %import_class_names);
+my %import_namespaces;
 _create_import_commands();
+
+sub property_names_for_namespace_importer {
+    my ($self, $namespace) = @_;
+
+    Carp::confess('No namespace to get property names for importer!') if not $namespace;
+
+    my $config = $import_namespaces{$namespace};
+    if ( not $config ) {
+        Carp::confess('No config found for namespace to get property names for importer!');
+    }
+
+    return @{$config->{importer_property_names}} if $config->{importer_property_names};
+}
+
 sub _create_import_commands {
     my @configs = _load_import_configs();
     for my $config ( @configs ) { 
@@ -146,8 +160,9 @@ sub _create_import_command_for_config {
     die 'No nomenclature in sample import command config!' if not $nomenclature;
     my $namespace = $config->{namespace} // join('', map { ucfirst(lc($_)) } split('-', $nomenclature));
     my $class_name = 'Genome::Sample::Command::Import::'.$namespace;
-    return $import_class_names{$class_name} if exists $import_class_names{$class_name};
-    $import_namespaces{$namespace} = 1;
+    return 1 if exists $import_namespaces{$namespace};
+    $import_namespaces{$namespace} = $config;
+    $config->{importer_class_name} = $class_name;
 
     my $name_regexp_string = $config->{name_regexp};
     die 'No name regexp in sample import command config!' if not $name_regexp_string;
@@ -167,6 +182,7 @@ sub _create_import_command_for_config {
             %attributes = %{$config->{$key_name}};
         }
         my %type_properties = _get_properties_for_import_command_from_entity($type, %attributes);
+        push @{$config->{importer_property_names}}, grep { not $type_properties{$_}->{calculate} } keys %type_properties;
         %properties = ( %properties, %type_properties );
         $properties{'_'.$type.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ sort keys %attributes ], };
     }
@@ -174,7 +190,7 @@ sub _create_import_command_for_config {
     my $taxon_name = $config->{taxon_name};
     die 'No taxon name in sample import command config!' if not defined $taxon_name; # TODO add a property?
 
-    $import_class_names{$class_name} = UR::Object::Type->define(
+    my $importer_class_meta = UR::Object::Type->define(
         class_name => $class_name,
         is => 'Genome::Sample::Command::Import::Base',
         has => [
@@ -186,16 +202,16 @@ sub _create_import_command_for_config {
         doc => "import $nomenclature samples",
     );
 
-    my $nomenclature_property = $import_class_names{$class_name}->property_meta_for_name('nomenclature');
+    my $nomenclature_property = $importer_class_meta->property_meta_for_name('nomenclature');
     $nomenclature_property->default_value($nomenclature);
 
     if ( $config->{minimum_unique_source_name_parts} ) {
         die 'Invalid minimum_unique_source_name_parts! '.$config->{minimum_unique_source_name_parts} if $config->{minimum_unique_source_name_parts} > 1;
-        my $minimum_unique_source_name_parts = $import_class_names{$class_name}->property_meta_for_name('_minimum_unique_source_name_parts');
+        my $minimum_unique_source_name_parts = $importer_class_meta->property_meta_for_name('_minimum_unique_source_name_parts');
         $minimum_unique_source_name_parts->default_value( $config->{minimum_unique_source_name_parts} // 2 );
     }
 
-    return $import_class_names{$class_name};
+    return 1;
 }
 
 sub _get_properties_for_import_command_from_entity {
@@ -228,7 +244,9 @@ sub sub_command_names {
 
 sub sub_command_classes {
     my $class = shift;
-    my %sub_command_classes = map { $_ => 1 } ($class->SUPER::sub_command_classes, keys %import_class_names);
+    my %sub_command_classes = map { 
+        $_ => 1 
+    } ($class->SUPER::sub_command_classes, map({ $_->{importer_class_name} } values %import_namespaces));
     return keys %sub_command_classes;
 }
 

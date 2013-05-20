@@ -31,6 +31,7 @@ my $meta = Genome::Sample::Command::Import::Test->__meta__;
 ok($meta, 'class meta for command to import test namespace sample');
 my $nomenclature_property = $meta->property_meta_for_name('nomenclature');
 is($nomenclature_property->default_value, 'TeSt', 'set value on nomenclature property');
+is_deeply([sort Genome::Sample::Command::Import->property_names_for_namespace_importer('Test')], [qw/ gender tissue_desc /], 'property names for namespace importer');
 
 # attr names
 my $sample_attribute_names_property = $meta->property_meta_for_name('_sample_attribute_names');
