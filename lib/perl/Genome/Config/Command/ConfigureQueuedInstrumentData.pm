@@ -45,8 +45,8 @@ sub _get_model_for_config_hash {
     #hashref
     my $config = shift;
 
-    my $m = Genome::Model->get($config);
-    return $m || Genome::Model->create($m);
+    my $m = Genome::Model->get(%$config);
+    return $m || Genome::Model->create(%$config);
 }
 
 #SAMPLE FORMAT of YAML files:
