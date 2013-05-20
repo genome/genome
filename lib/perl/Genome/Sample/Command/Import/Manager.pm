@@ -75,14 +75,15 @@ sub __errors__ {
             properties => [qw/ config_file /],
             desc => $config_error,
         );
+        return @errors;
     }
 
-    my $sample_csv_file = $self->sample_csv_file;
-    if ( not -s $sample_csv_file ) {
+    my $sample_csv_error = $self->_load_sample_csv_file;
+    if ( $sample_csv_error ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
             properties => [qw/ sample_csv_file /],
-            desc => 'Sample csv file does not exist! '.$sample_csv_file,
+            desc => $sample_csv_error,
         );
         return @errors;
     }
@@ -118,11 +119,45 @@ sub _load_config {
     return;
 }
 
-sub _load_samples {
+sub _load_sample_csv_file {
     my $self = shift;
 
-    my $load_samples_from_csv = $self->_load_samples_from_csv_file;
-    return if not $load_samples_from_csv;
+    my $sample_csv_file = $self->sample_csv_file;
+    if ( not -s $sample_csv_file ) {
+        return 'Sample csv file does not exist! '.$sample_csv_file;
+    }
+
+    my $sample_csv_reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $sample_csv_file,
+        separator => ',',
+    );
+    if ( not $sample_csv_reader ) {
+        return 'Failed to open sample csv! '.$sample_csv_file;
+    }
+
+    if ( not grep { $_ eq 'name' } @{$sample_csv_reader->headers} ) {
+        return 'No "name" column in sample csv! '.$sample_csv_file;
+    }
+
+    if ( not grep { $_ eq 'original_data_path' } @{$sample_csv_reader->headers} ) {
+        return 'No "original_data_path" column in sample csv! '.$self->sample_csv_file;
+    }
+
+    my %samples;
+    while ( my $sample = $sample_csv_reader->next ) {
+        my $name = delete $sample->{name};
+        $samples{$name}->{name} = $name;
+        my $original_data_path = delete $sample->{original_data_path};
+        $samples{$name}->{original_data_path} = $original_data_path;
+        $samples{$name}->{from_csv} = $sample;
+    }
+    $self->samples(\%samples);
+
+    return;
+}
+
+sub _load_samples {
+    my $self = shift;
 
     my $set_job_status_to_samples = $self->_set_job_status_to_samples;
     return if not $set_job_status_to_samples;
@@ -147,41 +182,6 @@ sub _load_samples {
     }
 
     $self->samples($samples);
-    return 1;
-}
-
-sub _load_samples_from_csv_file {
-    my $self = shift;
-
-    my $sample_csv_reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $self->sample_csv_file,
-        separator => ',',
-    );
-    if ( not $sample_csv_reader ) {
-        $self->error_message('Failed to open sample csv! '.$self->sample_csv_file);
-        return;
-    }
-
-    if ( not grep { $_ eq 'name' } @{$sample_csv_reader->headers} ) {
-        $self->error_message('No "name" column in sample csv! '.$self->sample_csv_file);
-        return;
-    }
-
-    if ( not grep { $_ eq 'original_data_path' } @{$sample_csv_reader->headers} ) {
-        $self->error_message('No "original_data_path" column in sample csv! '.$self->sample_csv_file);
-        return;
-    }
-
-    my %samples;
-    while ( my $sample = $sample_csv_reader->next ) {
-        my $name = delete $sample->{name};
-        $samples{$name}->{name} = $name;
-        my $original_data_path = delete $sample->{original_data_path};
-        $samples{$name}->{original_data_path} = $original_data_path;
-        $samples{$name}->{from_csv} = $sample;
-    }
-
-    $self->samples(\%samples);
     return 1;
 }
 

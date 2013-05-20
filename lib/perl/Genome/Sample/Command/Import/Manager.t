@@ -74,6 +74,6 @@ $manager = Genome::Sample::Command::Import::Manager->create(
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
-is($manager->error_message, 'No "name" column in sample csv! '.$manager->sample_csv_file, 'correct error');
+is($manager->error_message, 'Property \'sample_csv_file\': No "name" column in sample csv! '.$manager->sample_csv_file, 'correct error');
 
 done_testing();
