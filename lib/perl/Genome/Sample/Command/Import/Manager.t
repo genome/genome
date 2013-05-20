@@ -14,6 +14,20 @@ use Data::Dumper;
 use Test::More;
 
 use_ok('Genome::Sample::Command::Import::Manager') or die;
+use_ok('Genome::Sample::Command::Import') or die;
+Genome::Sample::Command::Import::_create_import_command_for_config({
+        nomenclature => 'TEST',
+        name_regexp => '(TeSt-\d+)\-[\w\d]+\-\d\w\-\d+',
+        taxon_name => 'human',
+        #sample_attributes => [qw/ tissue_desc /],# tests array
+        #individual_attributes => { # tests hash
+        #    gender => { valid_values => [qw/ male female /], }, # tests getting meta from individual
+        #    individual_common_name => {
+        #        calculate_from => [qw/ _individual_name /],
+        #        calculate => sub{ my $_individual_name = shift; $_individual_name =~ s/^TEST\-//i; return $_individual_name; },
+        #    },
+        #},
+    });
 
 my $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => 'example/valid',
@@ -32,6 +46,9 @@ my %expected_samples = (
 );
 my $samples = $manager->samples;
 is_deeply($manager->samples, \%expected_samples, 'samples match');
+
+$manager->is_executed(0); # reset
+#$manager->execute;
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
