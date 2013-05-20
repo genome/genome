@@ -19,7 +19,20 @@ sub namespace_for_nomenclature {
     return $config->{namespace} if $config;
 }
 
-sub property_names_for_namespace_importer {
+sub importer_class_name_for_namespace {
+    my ($self, $namespace) = @_;
+
+    Carp::confess('No namespace to get property names for importer!') if not $namespace;
+
+    my $config = $import_namespaces{$namespace};
+    if ( not $config ) {
+        Carp::confess('No config found for namespace to get property names for importer!');
+    }
+
+    return $config->{importer_class_name};
+}
+
+sub importer_property_names_for_namespace {
     my ($self, $namespace) = @_;
 
     Carp::confess('No namespace to get property names for importer!') if not $namespace;
