@@ -71,16 +71,18 @@ sub fetch_annotation {
     }
 
     unless ($mech->success) {
-        $self->error_message("Couldn't get regulomedb info", $mech->response->status_line);
+        $self->error_message("Couldn't get regulomedb info after $max_retries tries: ". $mech->response->status_line);
         die $self->error_message;
     }
     
     my $output = $mech->content;
     my @output_lines = split(/\n/, $output);
     my $output_count = grep {!($_ =~ /^#/)} @output_lines;
-    unless ($output_count == $num_lines) {
-        die "Output did not contain the same number of lines as the input";
-    }
+    #unless ($output_count == $num_lines) {
+    #    $self->error_message( "Output did not contain the same number of lines as the input.  Output had $output_count and input had $num_lines.  Output: \n$output");
+    #    die $self->error_message;
+    #}
+    $self->status_message("Successfully got $output_count lines");
     return $output;
 }
 
