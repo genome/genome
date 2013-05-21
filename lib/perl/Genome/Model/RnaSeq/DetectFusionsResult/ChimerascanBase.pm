@@ -82,12 +82,13 @@ sub _resolve_original_files {
 sub _resolve_original_fasta_files {
     my ($self) = @_;
 
-    unless ($self->original_bam_paths) {
+    my @original_bam_paths = $self->original_bam_paths;
+    unless (@original_bam_paths) {
         die("Couldn't find 'original_bam_paths' to make fastq files!");
     }
     # get fastq1/2 from the BAMs
     my (@fastq1_files, @fastq2_files);
-    for my $bam_path ($self->original_bam_paths) {
+    for my $bam_path (@original_bam_paths) {
         my $tmp_dir = File::Temp::tempdir('tempXXXXX',
             DIR => $self->temp_staging_directory,
             CLEANUP => 1
