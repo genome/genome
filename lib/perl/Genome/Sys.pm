@@ -26,6 +26,35 @@ our $VERSION = $Genome::VERSION;
 
 class Genome::Sys {};
 
+sub concatenate_files {
+    my ($self,$inputs,$output) = @_;
+    unless (ref($inputs) and $output) {
+        die 'expected \\@input_files $output_file as parameters';
+    }
+    my ($quoted_output_file, @quoted_input_files) = $self->quote_for_shell($output,@$inputs);
+    Genome::Sys->shellcmd(cmd => "cat @quoted_input_files >$quoted_output_file");
+}
+
+sub quote_for_shell {
+    # this is needed until shellcmd supports an array form,
+    # which is difficult because we go to a bash sub-shell by default
+    my $class = shift;
+    my @quoted = @_;
+    for my $value (@quoted) {
+        $value =~ s|\\|\\\\|g;
+        $value =~ s/\"/\\\"/g;
+        $value = "\"${value}\"";
+        print STDERR $value,"\n";
+    }
+    if (wantarray) {
+        return @quoted
+    }
+    else {
+        return $quoted[0];
+    }
+}
+
+
 sub disk_usage_for_path {
     my $self = shift;
     my $path = shift;
