@@ -59,7 +59,7 @@ Copying with the "recurse" option will copy input models, and their input models
 Recursion happens automatically when changes are made to underlying models, but only where necessary.
 This copy notes that the PP must change for the refalign models under the wgs_model, and as such requires 3 new models to achieve the change:
 
- $ genome model copy 2888708572 name=my-all1-bwamem wgs_model.tumor_model.processing_profile=2828673 wgs_model.normal_model.processing_profile=2828673
+ > genome model copy 2888708572 name=my-all1-bwamem wgs_model.tumor_model.processing_profile=2828673 wgs_model.normal_model.processing_profile=2828673
  NEW MODEL: my-all1-bwamem (2892350615)
  NEW MODEL: my-all1-bwamem.wgs_model (2892350616)
  NEW MODEL: my-all1-bwamem.wgs_model.normal_model (2892350617)
