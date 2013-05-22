@@ -42,7 +42,7 @@ sub importer_property_names_for_namespace {
         Carp::confess('No config found for namespace to get property names for importer!');
     }
 
-    return @{$config->{importer_property_names}} if $config->{importer_property_names};
+    return @{$config->{importer_property_names}};
 }
 
 sub _create_import_commands {
@@ -191,6 +191,7 @@ sub _create_import_command_for_config {
     my $name_regexp =  qr|^$name_regexp_string$|; 
 
     my %properties;
+    $config->{importer_property_names} = [];
     for my $type (qw/ sample individual /) {
         my $key_name = $type.'_attributes';
         next if not $config->{$key_name};
