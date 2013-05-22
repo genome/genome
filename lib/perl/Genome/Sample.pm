@@ -103,14 +103,6 @@ class Genome::Sample {
             is_mutable => 1,
             doc => 'Describes the original tissue sample',
         },
-        is_control => { 
-            is => 'Text', 
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'is_control', nomenclature => $default_nomenclature ],
-            is_mutable => 1,
-            doc => 'Describes if this sample is control',
-        },
         organ_name => { 
             is => 'Text',
             via => 'attributes',

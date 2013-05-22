@@ -96,9 +96,6 @@ class Genome::Site::TGI::Sample {
         tissue_desc                 => { is => 'Text', len => 64, 
                                         doc => 'describes the original tissue sample', column_name => 'TISSUE_NAME' },
 
-        is_control                  => { is => 'Number', len => 1, default_value => 0,
-                                        doc => 'describes the original tissue sample', column_name => 'IS_CONTROL' },
-        
         organ_name                  => { is => 'Text', len => 64, 
                                         doc => 'the name of the organ from which the sample was taken' }, 
         
