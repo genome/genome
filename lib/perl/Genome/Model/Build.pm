@@ -977,7 +977,15 @@ sub validate_inputs_have_values {
     my @inputs_without_values = grep { not defined $_->value } @inputs;
     my %input_names_to_ids;
     for my $input (@inputs_without_values){
-        $input->value;
+        my $name = $input->name;
+        if ($self->can("name")) {
+            my $pmeta = $self->__meta__->property($name);
+            if ($pmeta) {
+                if ($pmeta->is_optional) {
+                    next;
+                }
+            }
+        }
         $input->value;
         $input_names_to_ids{$input->name} .= $input->value_class_name . ":" . $input->value_id . ',';
     }
