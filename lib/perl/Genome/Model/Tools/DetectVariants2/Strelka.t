@@ -65,6 +65,11 @@ my $reduced_ref_seq_build = Genome::Model::Build::ReferenceSequence->create(
 );
 ok($reduced_ref_seq_build, "Created a reduced reference sequence build for testing") or die;
 
+for my $ia ($reduced_ref_seq_build->inputs) {
+    print UR::Util::d($ia),"\n";
+}
+exit;
+
 #Set params option below to be the default for Strelka 0.4.6.2, except reduce the bin size to something suitable for the test reference genome
 #e.g. 1500000
 my $params_string = "isSkipDepthFilters = 0;depthFilterMultiple = 3.0;snvMaxFilteredBasecallFrac = 0.4;snvMaxSpanningDeletionFrac = 0.75;indelMaxRefRepeat = 8;indelMaxWindowFilteredBasecallFrac = 0.3;indelMaxIntHpolLength = 14;ssnvPrior = 0.000001;sindelPrior = 0.000001;ssnvNoise = 0.0000005;sindelNoise = 0.000001;ssnvNoiseStrandBiasFrac = 0.5;minTier1Mapq = 20;ssnvQuality_LowerBound = 15;sindelQuality_LowerBound = 30;isWriteRealignedBam = 0;binSize = 1500000;extraStrelkaArguments =";
@@ -102,7 +107,10 @@ foreach my $gz_vcf_result (qw/indels.vcf.gz snvs.vcf.gz/) {
     my $actual = `zcat $actual_output_dir/$gz_vcf_result | grep -v "^##fileDate" | grep -v "^##startTime" | grep -v       "^##cmdline"`;
     my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
     ok(!$diff, "output matched expected result for $gz_vcf_result") 
-    or diag("Diff: $diff\n");
+        or do {
+            diag("Diff: $diff\n");
+            #diag("Expected: $expected\n");
+        };
 }
 
 foreach my $file (qw|output/task.complete indels.hq.bed indels.hq.v1.bed indels.hq.v2.bed indels.lq.bed indels.lq.v1.bed indels.lq.v2.bed snvs.hq.bed snvs.hq.v1.bed snvs.hq.v2.bed snvs.lq.bed snvs.lq.v1.bed snvs.lq.v2.bed strelka_config.ini|) { 
