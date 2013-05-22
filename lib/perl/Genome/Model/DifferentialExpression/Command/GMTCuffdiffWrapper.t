@@ -31,7 +31,7 @@ diag "Created Temporary Directory at: $temp_dir\n";
 
 my $cmd = $cls->execute(
     transcript_gtf_file => 'some_file',
-    bam_file_paths => 'some_files',
+    condition_model_ids_string => 'some_string',
     output_directory => $temp_dir,
     cuffdiff_params => 'some_params',
 );
@@ -46,7 +46,7 @@ ok(-e $some_file, 'SoftwareResult has data produced from command execution');
 
 my $same_cmd = $cls->execute(
     transcript_gtf_file => 'some_file',
-    bam_file_paths => 'some_files',
+    condition_model_ids_string => 'some_string',
     output_directory => $temp_dir,
     cuffdiff_params => 'some_params',
 );
@@ -54,11 +54,28 @@ is($same_cmd->result->id, $cmd->result->id, "Same result for same inputs");
 
 my $different_cmd = $cls->execute(
     transcript_gtf_file => 'some_different_file',
-    bam_file_paths => 'some_files',
+    condition_model_ids_string => 'some_string',
     output_directory => $temp_dir,
     cuffdiff_params => 'some_params',
 );
 isnt($different_cmd->result->id, $cmd->result->id, "Different result for different inputs");
+
+
+my $_get_bam_file = $cls . "::_get_bam_file";
+no strict "refs";
+*$_get_bam_file = sub {
+    my $model_id = shift;
+
+    return $model_id;
+};
+use strict;
+
+$result = Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper::_resolve_bam_file_paths(
+    'a,b,c d,e f g,h i'
+);
+my $expected_result = 'a,b,c d,e f g,h i ';
+is($result, $expected_result, 'Found expected result from _resolve_bam_file_paths');
+
 
 done_testing();
 

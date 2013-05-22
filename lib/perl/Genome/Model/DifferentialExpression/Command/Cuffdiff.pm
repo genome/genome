@@ -44,25 +44,9 @@ sub execute {
         my $mask_gtf_path = $annotation_build->$mask_file_method('gtf',$reference_sequence_build->id);
         $params .= ' --mask-file '. $mask_gtf_path;
     }
-    my $condition_model_ids_string = $model->condition_model_ids_string;
-    my @condition_model_ids = split(/ /, $condition_model_ids_string);
-    my $bam_file_paths = '';
-    for my $condition_model_ids (@condition_model_ids) {
-        my @model_ids = split(/,/,$condition_model_ids);
-        my @condition_bam_file_paths;
-        for my $model_id (@model_ids) {
-            my $rna_seq_model = Genome::Model->get($model_id);
-            # Or should we just fine the latest AlignmentResult....
-            my $last_succeeded_build = $rna_seq_model->last_succeeded_build;
-            my $bam_file = abs_path($last_succeeded_build->alignment_result->bam_file);
-            push @condition_bam_file_paths, $bam_file;
-        }
-        my $condition_bam_files_string = join(',',@condition_bam_file_paths);
-        $bam_file_paths .= $condition_bam_files_string .' ';
-    }
     my %cuffdiff_params = (
         transcript_gtf_file => abs_path($build->transcript_gtf_file_path),
-        bam_file_paths => $bam_file_paths,
+        condition_model_ids_string => $model->condition_model_ids_string,
         cuffdiff_params => $params,
         use_version => $model->differential_expression_version,
         output_directory => $output_directory,

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Cwd 'abs_path';
 
 
 class Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper {
@@ -12,8 +13,9 @@ class Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper {
         transcript_gtf_file => {
             doc => 'A GTF format file of transcript annotation to perform differential expression tests.',
         },
-        bam_file_paths => {
-            doc => 'A string of bam file paths separated by white space. Supply replicate SAMs as comma separated lists for each condition: sample1_rep1.sam,sample1_rep2.sam,...sample1_repM.sam',
+        condition_model_ids_string => {
+            is => 'String',
+            doc => 'A list of (model_id lists [comma separated]) that are space separated',
         },
     ],
     has => [
@@ -69,12 +71,45 @@ sub _execute_gmt_cuffdiff {
     my $self = shift;
     my $output_directory = shift;
 
+    my $bam_file_paths = _resolve_bam_file_paths($self->condition_model_ids_string);
+
     my $cmd = Genome::Model::Tools::Cufflinks::Cuffdiff->create(
         params => $self->cuffdiff_params,
         output_directory => $output_directory,
-        bam_file_paths => $self->bam_file_paths,
+        bam_file_paths => $bam_file_paths,
         transcript_gtf_file => $self->transcript_gtf_file,
         use_version => $self->use_version,
     );
     return $cmd->execute();
 }
+
+sub _resolve_bam_file_paths {
+    my ($condition_model_ids_string) = @_;
+
+    my @condition_model_ids = split(/ /, $condition_model_ids_string);
+    my $bam_file_paths = '';
+    for my $condition_model_ids (@condition_model_ids) {
+        my @model_ids = split(/,/,$condition_model_ids);
+        my @condition_bam_file_paths;
+        for my $model_id (@model_ids) {
+            my $bam_file = _get_bam_file($model_id);
+            push @condition_bam_file_paths, $bam_file;
+        }
+        my $condition_bam_files_string = join(',',@condition_bam_file_paths);
+        $bam_file_paths .= $condition_bam_files_string .' ';
+    }
+    return $bam_file_paths;
+}
+
+sub _get_bam_file {
+    my $model_id = shift;
+
+    my $rna_seq_model = Genome::Model->get($model_id);
+    # Or should we just fine the latest AlignmentResult....
+    my $last_succeeded_build = $rna_seq_model->last_succeeded_build;
+    my $bam_file = abs_path($last_succeeded_build->alignment_result->bam_file);
+
+    return $bam_file;
+}
+
+1;
