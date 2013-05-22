@@ -29,17 +29,21 @@ sub execute {
     my $self = shift;
 
     my $roi_string = Genome::Sys->read_file($self->roi_list);
-    my $expanded_rois = $self->expand_rois($roi_string);
     my @rois = split(/\n/, $roi_string);
     my @modified_rois;
-    my $output = $self->fetch_large_annotation(
-       'bed', $expanded_rois 
-    );
-    my @lines = split(/\n/, $output);
-    for my $roi (@rois) {
-        my $modified_roi = $self->process_roi($roi, @lines);
-        if ($modified_roi) {
-            push @modified_rois, $modified_roi;
+    while (@rois) {
+        my @part = splice(@rois, 0, 1000);
+        my $part_string = join("\n", @part);
+        my $expanded_rois = $self->expand_rois($part_string);
+        my $output = $self->fetch_large_annotation(
+            'bed', $expanded_rois 
+        );
+        my @lines = split(/\n/, $output);
+        for my $roi (@part) {
+            my $modified_roi = $self->process_roi($roi, @lines);
+            if ($modified_roi) {
+                push @modified_rois, $modified_roi;
+            }
         }
     }
     Genome::Sys->write_file($self->output_file, join("\n", @modified_rois));
