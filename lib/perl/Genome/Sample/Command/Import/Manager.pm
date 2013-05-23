@@ -22,7 +22,7 @@ class Genome::Sample::Command::Import::Manager {
     has_many_optional => [
         functions => {
             is => 'Text',
-            valid_values => [qw/ create_samples /],
+            valid_values => [qw/ create_samples create_models /],
             doc => '',
         },
     ],
@@ -253,7 +253,7 @@ sub _create_samples {
     my $self = shift;
 
     my $samples = $self->samples;
-    Carp::confess('Need samples to create!') if not $samples;
+    Carp::confess('Sample CSV has not been loaded!') if not $samples;
 
     my $importer_class_name = Genome::Sample::Command::Import->importer_class_name_for_namespace($self->namespace);
     my %genome_samples = map { $_->name => $_ } Genome::Sample->get(name => [ keys %$samples ]);
@@ -346,15 +346,23 @@ sub commands {
     return 1;
 }
 
-sub models {
-    print STDERR "Models...\n";
-    my @samples = _load_samples();
-    my %params = (
-        processing_profile_id => 2673537,
-        reference_sequence_build => Genome::Model::Build->get(106942997),
-        dbsnp_build => Genome::Model::Build->get(106375969),
-    );
-    for my $sample ( @samples ) {
+sub _create_models {
+    my $self = shift;
+
+    my $samples = $self->samples;
+    Carp::confess('No samples to display status!') if not $samples;
+
+    my $create_samples = $self->_create_samples;
+    return if not $create_samples;
+
+    my $config = $self->config;
+    my %params;
+    for my $name ( keys %{$config->{model}} ) {
+        print $name.' '.$config->{model}->{$name}."\n";
+    }
+    return 1;
+
+    for my $sample ( @$samples ) {
         if ( $sample->{model} ) {
             if ( $sample->{inst_data} and not $sample->{model}->instrument_data ) {
                 $sample->{model}->add_instrument_data($sample->{inst_data});
@@ -377,8 +385,8 @@ sub models {
         die 'Failed to create model! '.$sample->{name} if not $sample->{model};
         $sample->{model}->build_requested(1);
     }
-    UR::Context->commit;
-    return _status(@samples);
+
+    return 1;
 }
 
 sub _needs_import {

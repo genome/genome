@@ -29,6 +29,21 @@ Genome::Sample::Command::Import::_create_import_command_for_config({
         #},
     });
 
+class Reference { has => [ name => {}, ], };
+my $ref = Reference->create(id => -333, name => 'reference-1');
+ok($ref, 'created reference');
+class Genome::Model::Ref {
+    is => 'Genome::Model',
+    has_param => [
+        aligner => { is => 'Text', },
+    ],
+    has_input => [
+        reference => { is => 'Reference', },
+    ],
+};
+my $pp = Genome::ProcessingProfile::Ref->create(id => -333, name => 'ref pp #1', aligner => 'bwa');
+ok($pp, 'create pp');
+
 my $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => 'example/valid',
 );
@@ -54,6 +69,11 @@ is_deeply($manager->samples, \%expected_samples, 'samples match');
 $manager->is_executed(0); # reset
 $manager->functions([qw/ create_samples /]);
 ok($manager->execute, 'execute creating samples');
+print Dumper($manager->samples);
+
+$manager->is_executed(0); # reset
+$manager->functions([qw/ create_models /]);
+ok($manager->execute, 'execute creating models');
 print Dumper($manager->samples);
 
 # fail - no config file
