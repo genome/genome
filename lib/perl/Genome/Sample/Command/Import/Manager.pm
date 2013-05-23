@@ -372,12 +372,26 @@ sub _create_models {
         return;
     }
     my $processing_profile_id = delete $model_params{processing_profile_id};
-    my $processing_profile = Genome::ProcessingProfile->get($processing_profile_id);
-    if ( not $processing_profile ) { 
+    $model_params{processing_profile} = Genome::ProcessingProfile->get($processing_profile_id);
+    if ( not $model_params{processing_profile} ) { 
         $self->error_message('Failed to get processing profile for id! '.$processing_profile_id);
         return;
     }
-    print Dumper($processing_profile);
+
+    my $model_class = $model_params{processing_profile}->class;
+    $model_class =~ s/ProcessingProfile/Model/;
+    my $model_meta = $model_class->__meta__;
+    for my $param_name ( keys %model_params ) {
+        next if $param_name !~ s/_id$//;
+        my $param_value_id = delete $model_params{$param_name.'_id'};
+        my $param_property = $model_meta->property_meta_for_name($param_name);
+        Carp::confess('Failed to get property for model param! '.$param_name) if not $param_property;
+        my $param_value_class = $param_property->data_type;
+        my $param_value = $param_value_class->get($param_value_id);
+        Carp::confess("Failed to get $param_value_class for id! $param_value_id") if not $param_value;
+        $model_params{$param_name} = $param_value;
+    }
+    print Dumper(\%model_params);
     return 1;
 
     for my $sample ( @$samples ) {
