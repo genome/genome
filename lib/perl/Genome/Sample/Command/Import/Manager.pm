@@ -349,17 +349,35 @@ sub commands {
 sub _create_models {
     my $self = shift;
 
+    my $config = $self->config;
+    if ( not $config->{model} ) {
+        $self->error_message('Cannot create models. These is no model info in config! '.$config);
+        return;
+    }
+
     my $samples = $self->samples;
     Carp::confess('No samples to display status!') if not $samples;
 
     my $create_samples = $self->_create_samples;
     return if not $create_samples;
 
-    my $config = $self->config;
-    my %params;
+    my %model_params;
     for my $name ( keys %{$config->{model}} ) {
+        $model_params{$name} = $config->{model}->{$name};
         print $name.' '.$config->{model}->{$name}."\n";
     }
+
+    if ( not $model_params{processing_profile_id} ) {
+        $self->error_message('No processing profile id for model in config! '.Data::Dumper::Dumper($config->{model}));
+        return;
+    }
+    my $processing_profile_id = delete $model_params{processing_profile_id};
+    my $processing_profile = Genome::ProcessingProfile->get($processing_profile_id);
+    if ( not $processing_profile ) { 
+        $self->error_message('Failed to get processing profile for id! '.$processing_profile_id);
+        return;
+    }
+    print Dumper($processing_profile);
     return 1;
 
     for my $sample ( @$samples ) {
@@ -380,7 +398,7 @@ sub _create_models {
         }
         $sample->{model} = Genome::Model->create(
             subject_id => $sample->{id},
-            %params,
+            %model_params,
         );
         die 'Failed to create model! '.$sample->{name} if not $sample->{model};
         $sample->{model}->build_requested(1);
