@@ -65,16 +65,7 @@ my %expected_samples = (
 );
 my $samples = $manager->samples;
 is_deeply($manager->samples, \%expected_samples, 'samples match');
-
-$manager->is_executed(0); # reset
-$manager->functions([qw/ create_samples /]);
-ok($manager->execute, 'execute creating samples');
-print Dumper($manager->samples);
-
-$manager->is_executed(0); # reset
-$manager->functions([qw/ create_models /]);
-ok($manager->execute, 'execute creating models');
-print Dumper($manager->samples);
+print Dumper($samples);
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(

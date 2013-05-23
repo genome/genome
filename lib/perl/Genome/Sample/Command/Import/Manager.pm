@@ -192,17 +192,17 @@ sub _load_samples {
         '-hint' => [qw/ sample bam_path /],
     );
 
-    my %genome_samples = map { $_->name, $_ } Genome::Sample->get(
-        'name in' => [ keys %$samples ],
-        '-hint' => [qw/ models instrument_data /],
-    );
-
     for my $name ( keys %$samples ) {
-        $samples->{$name}->{sample} = $genome_samples{$name};
-        $samples->{$name}->{inst_data} = $instrument_data{$name};
-        $samples->{$name}->{bam_path} = eval{ $samples->{inst_data}->bam_path };
-        $samples->{$name}->{model} = eval{ ($samples->{inst_data}->models)[-1]; }; #FIXME! needs to get only model for this situation
-        $samples->{$name}->{build} = eval{ $samples->{model}->latest_build };
+        my $genome_sample = Genome::Sample->get(name => $name);
+        if ( not $genome_sample ) {
+            $genome_sample = $self->_create_sample($samples->{$name}->{importer_params});
+            return if not $genome_sample;
+        }
+        $samples->{$name}->{sample} = $genome_sample;
+        #$samples->{$name}->{inst_data} = $instrument_data{$name};
+        #$samples->{$name}->{bam_path} = eval{ $samples->{inst_data}->bam_path };
+        #$samples->{$name}->{model} = eval{ ($samples->{inst_data}->models)[-1]; }; #FIXME! needs to get only model for this situation
+        #$samples->{$name}->{build} = eval{ $samples->{model}->latest_build };
     }
 
     $self->samples($samples);
@@ -249,36 +249,28 @@ sub _set_job_status_to_samples {
     return 1;
 }
 
-sub _create_samples {
-    my $self = shift;
+sub _create_sample {
+    my ($self, $importer_params) = @_;
 
-    my $samples = $self->samples;
-    Carp::confess('Sample CSV has not been loaded!') if not $samples;
+    Carp::confess('No params to create sample!') if not $importer_params;
 
     my $importer_class_name = Genome::Sample::Command::Import->importer_class_name_for_namespace($self->namespace);
-    my %genome_samples = map { $_->name => $_ } Genome::Sample->get(name => [ keys %$samples ]);
-    for my $sample ( values %$samples ) {
-        my $genome_sample = $genome_samples{ $sample->{name} };
-        if ( not $genome_sample ) {
-            my $importer = $importer_class_name->create(%{$sample->{importer_params}});
-            if ( not $importer ) {
-                $self->error_message('Failed to create sample importer for sample!');
-                return;
-            }
-            if ( not $importer->execute ) {
-                $self->error_message('Failed to execute sample importer for sample!');
-                return;
-            }
-            $genome_sample = $importer->_sample;
-            if ( not $genome_sample ) {
-                $self->error_message('Executed the importer successfully, but failed to create sample!');
-                return;
-            }
-        }
-        $sample->{sample} = $genome_sample;
+    my $importer = $importer_class_name->create(%$importer_params);
+    if ( not $importer ) {
+        $self->error_message('Failed to create sample importer for sample! '.Data::Dumper::Dumper($importer_params));
+        return;
+    }
+    if ( not $importer->execute ) {
+        $self->error_message('Failed to execute sample importer for sample! '.Data::Dumper::Dumper($importer_params));
+        return;
+    }
+    my $sample = $importer->_sample;
+    if ( not $sample ) {
+        $self->error_message('Executed the importer successfully, but failed to create sample!');
+        return;
     }
 
-    return 1;
+    return $sample;
 }
 
 sub get_sample_status {
@@ -381,6 +373,11 @@ sub _create_models {
     my $model_class = $model_params{processing_profile}->class;
     $model_class =~ s/ProcessingProfile/Model/;
     my $model_meta = $model_class->__meta__;
+    if ( not $model_meta ) {
+        $self->error_message('Failed to get model class meta! '.$model_class);
+        return;
+    }
+
     for my $param_name ( keys %model_params ) {
         next if $param_name !~ s/_id$//;
         my $param_value_id = delete $model_params{$param_name.'_id'};
@@ -395,6 +392,7 @@ sub _create_models {
     return 1;
 
     for my $sample ( @$samples ) {
+        # get/create model
         if ( $sample->{model} ) {
             if ( $sample->{inst_data} and not $sample->{model}->instrument_data ) {
                 $sample->{model}->add_instrument_data($sample->{inst_data});
