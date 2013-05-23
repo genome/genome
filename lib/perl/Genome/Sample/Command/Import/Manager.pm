@@ -189,7 +189,7 @@ sub _load_samples {
     my $samples = $self->samples;
     my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
         original_data_path => [ map { $_->{original_data_path} } values %$samples ],
-        '-hint' => [qw/ sample bam_path /],
+        '-hint' => [qw/ bam_path /],
     );
 
     my ($model_class, $model_params) = $self->_resolve_model_params;
@@ -209,10 +209,9 @@ sub _load_samples {
             return if not $model
         }
         $samples->{$name}->{model} = $model;
-        #$samples->{$name}->{inst_data} = $instrument_data{$name};
-        #$samples->{$name}->{bam_path} = eval{ $samples->{inst_data}->bam_path };
-        #$samples->{$name}->{model} = eval{ ($samples->{inst_data}->models)[-1]; }; #FIXME! needs to get only model for this situation
-        #$samples->{$name}->{build} = eval{ $samples->{model}->latest_build };
+        $samples->{$name}->{build} = eval{ $samples->{model}->latest_build };
+        $samples->{$name}->{inst_data} = $instrument_data{$name};
+        $samples->{$name}->{bam_path} = eval{ $samples->{inst_data}->bam_path };
     }
 
     $self->samples($samples);
