@@ -35,12 +35,13 @@ my $manager = Genome::Sample::Command::Import::Manager->create(
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
-is($manager->importer_class_name, 'Genome::Sample::Command::Import::Test', 'got importer class name');
 my %expected_samples = ( 
     'TEST-0000-00' => {
         name => 'TEST-0000-00', 
         original_data_path => 'original.bam',
-        from_csv => { race => 'spaghetti', gender => 'female', religion => 'pastafarian', },
+        attributes => [qw/ gender='female' race='spaghetti' religion='pastafarian' /],
+        sample_attributes => [],
+        individual_attributes => [],
         status => 'sample_needed',
         job_status => 'pend',
         sample => undef, inst_data => undef, bam_path => undef, model => undef, build => undef,
@@ -50,7 +51,9 @@ my $samples = $manager->samples;
 is_deeply($manager->samples, \%expected_samples, 'samples match');
 
 $manager->is_executed(0); # reset
-#$manager->execute;
+$manager->functions([qw/ create_samples /]);
+ok($manager->execute, 'execute creating samples');
+print Dumper($manager->samples);
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(

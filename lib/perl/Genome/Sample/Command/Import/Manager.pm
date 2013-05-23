@@ -19,6 +19,13 @@ class Genome::Sample::Command::Import::Manager {
             doc => 'Directory to read and write.',
         },
     ],
+    has_many_optional => [
+        functions => {
+            is => 'Text',
+            valid_values => [qw/ create_samples /],
+            doc => '',
+        },
+    ],
     has_calculated => [
         sample_csv_file => {
             calculate_from => 'working_directory',
@@ -29,15 +36,11 @@ class Genome::Sample::Command::Import::Manager {
             calculate_from => 'working_directory',
             calculate => sub{ my $working_directory = shift; return $working_directory.'/config.yaml'; },
         },
-        importer_class_name => {
-            calculate => q( $self = shift; return 'Genome::Sample::Command::Import::'.$self->namespace; ),
-        },
     ],
     has_optional_transient => [
         config => { is => 'Hash', },
         namespace => { is => 'Text', },
         samples => { is => 'Hash', },
-    #$self->samples(\%samples[ sort { $a->{name} cmp $b->{name} } values %$sample_info ]);
     ],
 };
 
@@ -46,8 +49,14 @@ sub execute {
 
     my $samples = $self->_load_samples;
     return if not $samples;
-    print Dumper($self->samples);
 
+    for my $function ( $self->functions ) {
+        $self->status_message("Run '$function'...");
+        $function = '_'.$function;
+        my $rv = $self->$function;
+        return if not $rv;
+        $self->status_message("Run '$function'...OK");
+    }
     $self->status($samples);
 
     return 1;
@@ -135,21 +144,32 @@ sub _load_sample_csv_file {
         return 'Failed to open sample csv! '.$sample_csv_file;
     }
 
-    if ( not grep { $_ eq 'name' } @{$sample_csv_reader->headers} ) {
-        return 'No "name" column in sample csv! '.$sample_csv_file;
+    my %headers_not_found = ( name => 1, original_data_path => 1, );
+    for my $header ( @{$sample_csv_reader->headers} ) {
+        delete $headers_not_found{$header};
     }
 
-    if ( not grep { $_ eq 'original_data_path' } @{$sample_csv_reader->headers} ) {
-        return 'No "original_data_path" column in sample csv! '.$self->sample_csv_file;
+    if ( %headers_not_found ) {
+        return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in sample csv! '.$self->sample_csv_file;
     }
 
     my %samples;
     while ( my $sample = $sample_csv_reader->next ) {
         my $name = delete $sample->{name};
-        $samples{$name}->{name} = $name;
-        my $original_data_path = delete $sample->{original_data_path};
-        $samples{$name}->{original_data_path} = $original_data_path;
-        $samples{$name}->{from_csv} = $sample;
+        $samples{$name} = {
+            name => $name,
+            original_data_path => delete $sample->{original_data_path},
+            attributes => [],
+            sample_attributes => [],
+            individual_attributes => [],
+        };
+        for my $attr ( sort keys %$sample ) {
+            my $attr_key = 'attributes';
+            if ( $attr =~ /^(sample|individual)\./ ) {
+                $attr_key = $1.'_attributes';
+            }
+            push @{$samples{$name}->{$attr_key}}, $attr."=\'".$sample->{$attr}."\'";
+        }
     }
     $self->samples(\%samples);
 
@@ -231,24 +251,33 @@ sub _create_samples {
     my $samples = $self->samples;
     Carp::confess('Need samples to create!') if not $samples;
 
-    my %existing_samples = map { $_->name => $_ } Genome::Sample->get(name => [ keys %$samples ]);
-
-    my $importer_class = 'Genome::Sample::Command::Import::';
-
+    my $namespace = $self->namespace;
+    my $importer_class_name = Genome::Sample::Command::Import->importer_class_name_for_namespace($namespace);
+    my @importer_property_names = Genome::Sample::Command::Import->importer_property_names_for_namespace($namespace);
+    my %genome_samples = map { $_->name => $_ } Genome::Sample->get(name => [ keys %$samples ]);
     for my $sample ( values %$samples ) {
-        my $genome_sample = $existing_samples{ $sample->{name} };
+        my $genome_sample = $genome_samples{ $sample->{name} };
         if ( not $genome_sample ) {
-            my $importer = $importer_class->create(name => $sample->{name});
+            my %import_params;
+            $import_params{name} = $sample->{name};
+            $import_params{sample_attributes} = $sample->{sample_attributes} if $sample->{sample_attributes};
+            $import_params{individual_attributes} = $sample->{individual_attributes} if $sample->{individual_attributes};
+            my $importer = $importer_class_name->create(%import_params);
             if ( not $importer ) {
+                $self->error_message('Failed to create sample importer for sample!');
+                return;
             }
             if ( not $importer->execute ) {
+                $self->error_message('Failed to execute sample importer for sample!');
+                return;
             }
-            my $genome_sample = $importer->_sample;
+            $genome_sample = $importer->_sample;
             if ( not $genome_sample ) {
-                $self->error_message('Failed to create sample!');
+                $self->error_message('Executed the importer successfully, but failed to create sample!');
                 return;
             }
         }
+        $sample->{sample} = $genome_sample;
     }
 
     return 1;
@@ -271,12 +300,6 @@ sub set_sample_status {
     my ($self, $sample) = @_;
     Carp::confess('No sample to set status!') if not $sample;
     return $sample->{status} = $self->get_sample_status($sample);
-}
-
-sub status {
-    my ($self, $samples) = @_;
-    $self->status_message('Status');
-    return $self->_status($samples);
 }
 
 sub _status {
