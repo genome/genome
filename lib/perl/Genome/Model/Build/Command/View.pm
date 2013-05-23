@@ -320,16 +320,15 @@ sub _display_workflow {
 sub _print_error_log_preview {
     my ($self, $handle, $log_path) = @_;
 
-    my $file_lines = read_file($log_path);
-    chomp($file_lines);
-    my @lines = split(/\n/, $file_lines);
+    my @lines = `grep 'ERROR' $log_path`;
     my @error_lines = grep {$_ =~ m/ERROR/} @lines;
 
     my $preview;
     if (@error_lines) {
         $preview = $error_lines[0];
     } else {
-        $preview = $lines[-1];
+        $preview = `tail -n 1 $log_path`;
+        chomp($preview);
     }
 
     # terminate any unfinished color regions in preview
