@@ -714,6 +714,20 @@ sub symlinked_allocations {
     return values %allocations;
 }
 
+sub input_builds {
+    my $self = shift;
+
+    my @builds;
+    for my $input ($self->inputs) {
+        my $value = $input->value;
+        if ($value and $value->isa('Genome::Model::Build')) {
+            push @builds, $value;
+            push @builds, $value->input_builds;
+        }
+    }
+    return @builds;
+}
+
 sub relink_symlinked_allocations {
     my $self = shift;
     $self->status_message('Relink symlinked allocations...');
