@@ -58,9 +58,12 @@ my %expected_samples = (
             name => 'TeSt-0000-00', 
             sample_attributes => [qw/ gender='female' race='spaghetti' religion='pastafarian' /],
         },
-        status => 'sample_needed',
+        status => 'import_pend',
         job_status => 'pend',
-        sample => undef, inst_data => undef, bam_path => undef, model => undef, build => undef,
+        sample => Genome::Sample->get(name => 'TeSt-0000-00'),
+        model => Genome::Model::Ref->get('subject.name' => 'TeSt-0000-00'),
+        build => undef,
+        inst_data => undef, bam_path => undef,
     },
 );
 my $samples = $manager->samples;
