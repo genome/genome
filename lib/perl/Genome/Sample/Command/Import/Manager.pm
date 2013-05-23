@@ -57,7 +57,7 @@ sub execute {
         return if not $rv;
         $self->status_message("Run '$function'...OK");
     }
-    $self->status($samples);
+    $self->_status($samples);
 
     return 1;
 }
@@ -153,22 +153,26 @@ sub _load_sample_csv_file {
         return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in sample csv! '.$self->sample_csv_file;
     }
 
+    my @importer_property_names = Genome::Sample::Command::Import->importer_property_names_for_namespace($self->namespace);
     my %samples;
     while ( my $sample = $sample_csv_reader->next ) {
         my $name = delete $sample->{name};
         $samples{$name} = {
             name => $name,
             original_data_path => delete $sample->{original_data_path},
-            attributes => [],
-            sample_attributes => [],
-            individual_attributes => [],
+            importer_params => { name => $name, },
         };
         for my $attr ( sort keys %$sample ) {
-            my $attr_key = 'attributes';
-            if ( $attr =~ /^(sample|individual)\./ ) {
-                $attr_key = $1.'_attributes';
+            next if not defined $sample->{$attr} or $sample->{$attr} eq '';
+            if ( $attr =~ /^(sample|individual)\./ ) { # is saprint le/individual indicated?
+                push @{$samples{$name}->{importer_params}->{$1.'_attributes'}}, $attr."=\'".$sample->{$attr}."\'";
             }
-            push @{$samples{$name}->{$attr_key}}, $attr."=\'".$sample->{$attr}."\'";
+            elsif ( grep { $attr eq $_ } @importer_property_names ) { # is the attr specified in the importer?
+                $samples{$name}->{importer_params}->{$attr} = $sample->{$attr};
+            }
+            else { # assume sample attribute
+                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."=\'".$sample->{$attr}."\'";
+            }
         }
     }
     $self->samples(\%samples);
@@ -251,18 +255,12 @@ sub _create_samples {
     my $samples = $self->samples;
     Carp::confess('Need samples to create!') if not $samples;
 
-    my $namespace = $self->namespace;
-    my $importer_class_name = Genome::Sample::Command::Import->importer_class_name_for_namespace($namespace);
-    my @importer_property_names = Genome::Sample::Command::Import->importer_property_names_for_namespace($namespace);
+    my $importer_class_name = Genome::Sample::Command::Import->importer_class_name_for_namespace($self->namespace);
     my %genome_samples = map { $_->name => $_ } Genome::Sample->get(name => [ keys %$samples ]);
     for my $sample ( values %$samples ) {
         my $genome_sample = $genome_samples{ $sample->{name} };
         if ( not $genome_sample ) {
-            my %import_params;
-            $import_params{name} = $sample->{name};
-            $import_params{sample_attributes} = $sample->{sample_attributes} if $sample->{sample_attributes};
-            $import_params{individual_attributes} = $sample->{individual_attributes} if $sample->{individual_attributes};
-            my $importer = $importer_class_name->create(%import_params);
+            my $importer = $importer_class_name->create(%{$sample->{importer_params}});
             if ( not $importer ) {
                 $self->error_message('Failed to create sample importer for sample!');
                 return;

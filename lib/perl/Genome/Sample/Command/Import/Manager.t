@@ -17,7 +17,7 @@ use_ok('Genome::Sample::Command::Import::Manager') or die;
 use_ok('Genome::Sample::Command::Import') or die;
 Genome::Sample::Command::Import::_create_import_command_for_config({
         nomenclature => 'TeSt',
-        name_regexp => '(TeSt-\d+)\-[\w\d]+\-\d\w\-\d+',
+        name_regexp => '(TeSt-\d+)\-\d\d',
         taxon_name => 'human',
         #sample_attributes => [qw/ tissue_desc /],# tests array
         #individual_attributes => { # tests hash
@@ -36,12 +36,13 @@ ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
 my %expected_samples = ( 
-    'TEST-0000-00' => {
-        name => 'TEST-0000-00', 
+    'TeSt-0000-00' => {
+        name => 'TeSt-0000-00', 
         original_data_path => 'original.bam',
-        attributes => [qw/ gender='female' race='spaghetti' religion='pastafarian' /],
-        sample_attributes => [],
-        individual_attributes => [],
+        importer_params => {
+            name => 'TeSt-0000-00', 
+            sample_attributes => [qw/ gender='female' race='spaghetti' religion='pastafarian' /],
+        },
         status => 'sample_needed',
         job_status => 'pend',
         sample => undef, inst_data => undef, bam_path => undef, model => undef, build => undef,
