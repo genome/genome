@@ -19,13 +19,6 @@ class Genome::Sample::Command::Import::Manager {
             doc => 'Directory to read and write.',
         },
     ],
-    has_many_optional => [
-        functions => {
-            is => 'Text',
-            valid_values => [qw/ create_samples create_models /],
-            doc => '',
-        },
-    ],
     has_calculated => [
         sample_csv_file => {
             calculate_from => 'working_directory',
@@ -50,13 +43,6 @@ sub execute {
     my $samples = $self->_load_samples;
     return if not $samples;
 
-    for my $function ( $self->functions ) {
-        $self->status_message("Run '$function'...");
-        $function = '_'.$function;
-        my $rv = $self->$function;
-        return if not $rv;
-        $self->status_message("Run '$function'...OK");
-    }
     $self->_status($samples);
 
     return 1;
