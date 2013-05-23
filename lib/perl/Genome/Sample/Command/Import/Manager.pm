@@ -192,6 +192,9 @@ sub _load_samples {
         '-hint' => [qw/ sample bam_path /],
     );
 
+    my ($model_class, $model_params) = $self->_resolve_model_params;
+    return if not $model_class;
+
     for my $name ( keys %$samples ) {
         my $genome_sample = Genome::Sample->get(name => $name);
         if ( not $genome_sample ) {
@@ -199,6 +202,13 @@ sub _load_samples {
             return if not $genome_sample;
         }
         $samples->{$name}->{sample} = $genome_sample;
+        $model_params->{subject} = $genome_sample;
+        my $model = $model_class->get(%$model_params);
+        if ( not $model ) {
+            $model = $model_class->create(%$model_params);
+            return if not $model
+        }
+        $samples->{$name}->{model} = $model;
         #$samples->{$name}->{inst_data} = $instrument_data{$name};
         #$samples->{$name}->{bam_path} = eval{ $samples->{inst_data}->bam_path };
         #$samples->{$name}->{model} = eval{ ($samples->{inst_data}->models)[-1]; }; #FIXME! needs to get only model for this situation
@@ -338,7 +348,7 @@ sub commands {
     return 1;
 }
 
-sub _create_models {
+sub _resolve_model_params {
     my $self = shift;
 
     my $config = $self->config;
@@ -346,12 +356,6 @@ sub _create_models {
         $self->error_message('Cannot create models. These is no model info in config! '.$config);
         return;
     }
-
-    my $samples = $self->samples;
-    Carp::confess('No samples to display status!') if not $samples;
-
-    my $create_samples = $self->_create_samples;
-    return if not $create_samples;
 
     my %model_params;
     for my $name ( keys %{$config->{model}} ) {
@@ -388,9 +392,10 @@ sub _create_models {
         Carp::confess("Failed to get $param_value_class for id! $param_value_id") if not $param_value;
         $model_params{$param_name} = $param_value;
     }
-    print Dumper(\%model_params);
-    return 1;
 
+    return ($model_class, \%model_params);
+
+    my $samples;
     for my $sample ( @$samples ) {
         # get/create model
         if ( $sample->{model} ) {
