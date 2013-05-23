@@ -3108,7 +3108,7 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'transcript-gtf-file=s',
         'files',
-        'bam-file-paths=s',
+        'condition-model-ids-string=s',
         'files',
         'help!',
         undef
