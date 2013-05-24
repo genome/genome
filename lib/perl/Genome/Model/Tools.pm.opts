@@ -13345,17 +13345,14 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>parse-netmhc-mutant-stdout',
+    '>generate-variant-seq17mer',
     [
-      'netmhc-file=s',
+      'input-file=s',
       'files',
-      'parsed-file=s',
+      'output-file=s',
       'files',
-      'output-type=s',
-      [
-        'top',
-        'all'
-      ],
+      'trv-type=s',
+      'files',
       'help!',
       undef
     ],
@@ -13367,6 +13364,20 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'trv-type=s',
       'files',
+      'help!',
+      undef
+    ],
+    '>parse-netmhc-mutant-stdout',
+    [
+      'netmhc-file=s',
+      'files',
+      'parsed-file=s',
+      'files',
+      'output-type=s',
+      [
+        'top',
+        'all'
+      ],
       'help!',
       undef
     ],
@@ -13413,6 +13424,17 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef
     ],
     '>make-fasta-file17mer',
+    [
+      'input-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'trv-type=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>generate-variant-seq31mer',
     [
       'input-file=s',
       'files',
