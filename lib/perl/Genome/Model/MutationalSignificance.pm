@@ -31,6 +31,7 @@ BEGIN {
         'Genome::Model::MutationalSignificance::Command::CreateROI' => {
             annotation_build => ['input connector', 'annotation_build'], #input to model, not param
             extra_rois => ['input connector', 'extra_rois'], #TODO: get from somatic variation models?
+            regulome_bed => ['input connector', 'regulome_bed'],
         },
         'Genome::Model::MutationalSignificance::Command::CreateBamList' => {
             somatic_variation_builds => ['input connector', 'somatic_variation_builds'],
@@ -222,6 +223,11 @@ class Genome::Model::MutationalSignificance {
             is_optional => 1,
             is_many => 1,
             doc => 'Extra ROI files to include in MuSiC analysis',
+        },
+        regulome_bed => {
+            is => 'Genome::FeatureList',
+            is_optional => 1,
+            doc => 'Bed file with regulome db scores for regions',
         },
     ],
     has_param => \@has_param,
@@ -619,6 +625,9 @@ sub map_workflow_inputs {
     if (@extra_rois) {
         $inputs{extra_rois} = [@extra_rois];
         $inputs{regulatory_columns_to_check} = [map {$_->name} @extra_rois];
+    }
+    if ($build->regulome_bed) {
+        $inputs{regulome_bed} = $build->regulome_bed;
     }
     $inputs{music_build} = $build;
     $inputs{log_directory} = $build->log_directory;

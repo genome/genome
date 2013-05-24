@@ -43,13 +43,15 @@ class Genome::Model::MutationalSignificance::Command::CreateROI {
             is_many => 1,
             is_optional => 1,
         },
-        filter_on_regulome_db => {
-            is => 'Boolean',
+        regulome_bed => {
+            is => 'Genome::FeatureList',
             is_optional => 1,
+            doc => 'Bed file of regions with regulomedb scores',
         },
+    ],
+    has_param => [
         lsf_resource => {
-            default_value => '-R \'select[mem>16000] rusage[mem=16000]\' -M 16000000 ',
-            is_optional => 1,
+            default_value => '-R \'select[mem>32000] rusage[mem=32000]\' -M 32000000 ',
         },
     ],
     has_output => [
@@ -131,7 +133,7 @@ sub execute {
             return;
         }
     }
-    if ($self->filter_on_regulome_db) {
+    if ($self->regulome_bed) {
         my $filtered_name = join("_", $new_feature_list->name, "filtered_by_regulome_v1");
         my $filtered_list = Genome::FeatureList->get($filtered_name);
         unless ($filtered_list) {
@@ -144,6 +146,7 @@ sub execute {
             my $filtered_out_zero_based = Genome::Sys->create_temp_file_path;
             my $rv = Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore->execute(
                 roi_list => $zero_based,
+                scored_regions => $self->regulome_bed->file_path,
                 output_file => $filtered_out_zero_based,
                 valid_scores => [qw(1 2)],
             );

@@ -10,41 +10,30 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Genome::Utility::Test qw(compare_ok abort);
 
 my $class = 'Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore';
 use_ok($class);
+my $version = "v1";
+my $data_dir = Genome::Utility::Test->data_dir_ok($class, $version) or abort;
 
-my $roi = "11\t5248049\t5248053\n14\t100705101\t100705104";
-my $expected_expanded = "11\t5248049\t5248050\n11\t5248050\t5248051\n11\t5248051\t5248052\n11\t5248052\t5248053\n14\t100705101\t100705102\n14\t100705102\t100705103\n14\t100705103\t100705104";
-my $expanded = $class->expand_rois($roi);
-is($expanded, $expected_expanded, "ROI expanded correctly");
-
-my $roi1 = "11\t5248049\t5248050";
-my $roi2 = "11\t5248052\t5248053";
-my $expected_combined = "11\t5248049\t5248053";
-my $combined = $class->combine_rois($roi1, $roi2);
-is($combined, $expected_combined, "ROIs combined correctly");
-
-my $cmd = $class->create(valid_scores => ["1", "2"], roi_list => "fake", output_file => "fake.out");
-my $score_line1 = "chr11\t5248049\t5248050\trs1;1f";
-my $score_line2 = "chr11\t5248050\t5248051\trs1;2c";
-my $score_line3 = "chr11\t5248051\t5248052\trs1;3a";
-my $score_line4 = "chr11\t5248052\t5248053\trs1;2c";
+my $cmd = $class->create(valid_scores => ["1", "2"]);
+my $score_line1 = "chr11\t5248049\t5248050\t1f";
+my $score_line2 = "chr11\t5248050\t5248051\t2c";
+my $score_line3 = "chr11\t5248051\t5248052\t3a";
 
 ok($cmd->good_score($score_line1), "1f is a good score");
 ok($cmd->good_score($score_line2), "2c is a good score");
 ok(!$cmd->good_score($score_line3), "3a is not a good score");
 
-my $input_roi = "11\t5248049\t5248053\tgeneA";
-my $expected_processed_roi = "11\t5248049\t5248051\tgeneA\n11\t5248052\t5248053\tgeneA";
-my $modified_roi = $cmd->process_roi(
-    $input_roi,
-    $score_line1,
-    $score_line2,
-    $score_line3,
-    $score_line4
-);
-is($modified_roi, $expected_processed_roi, "ROI was processed correctly");
+my $tmp = Genome::Sys->create_temp_file_path;
+my $expected = join("/", $data_dir, "expected.out");
+my $rv = $class->execute(output_file => $tmp, roi_list => join("/", $data_dir, "test.roi"),
+                       scored_regions => join("/", $data_dir, "scored.roi"),
+                       valid_scores => [qw(1 2)],
+                      );
+ok($rv, "Command executed successfully");
+compare_ok($tmp, $expected, "Result was generated as expected");
 
 done_testing;
 
