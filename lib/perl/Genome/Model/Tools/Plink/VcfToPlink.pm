@@ -59,9 +59,14 @@ sub execute {                               # replace with real execution logic.
     my $output_pheno = $self->phenotype_file;
     my $output_plink = $self->plink_file;
     my $output_dir = $self->output_directory;
-    my $convert_cmd = "/gscmnt/ams1161/info/model_data/kmeltzst/Software/vcftools_0.1.9/bin/vcftools --gzvcf $input_vcf --plink --out $output_dir/tmp";
-    Genome::Sys->shellcmd(cmd=>$convert_cmd);
-    
+    my $convert_cmd = '';
+    if($input_vcf =~ m/.gz/) {
+        $convert_cmd = "/gscmnt/ams1161/info/model_data/kmeltzst/Software/vcftools_0.1.9/bin/vcftools --gzvcf $input_vcf --plink --out $output_dir/tmp";
+    } else {
+        $convert_cmd = "/gscmnt/ams1161/info/model_data/kmeltzst/Software/vcftools_0.1.9/bin/vcftools --vcf $input_vcf --plink --out $output_dir/tmp";
+    }
+    Genome::Sys->shellcmd(cmd => $convert_cmd);
+
     my $out_family_file = IO::File->new("$output_dir/family_file.txt", ">");
     my $out_sex_file = IO::File->new("$output_dir/sex_file.txt", ">");
     my $out_parents_file = IO::File->new("$output_dir/parents_file.txt", ">");

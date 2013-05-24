@@ -124,14 +124,13 @@ sub __errors__ {
 
     # Validate SX commands
     for my $processing ( $self->default_processing, @{$self->additional_processings} ) {
-        my $processor = $processing->{processor};
-        $processor = $self->default_processing->{processor} if $processor eq 'DEFAULT';
-        my @processor_parts = split(/\s+\|\s+/, $processor);
+        $processing->{processor}= $self->default_processing->{processor} if $processing->{processor} eq 'DEFAULT';
+        my @processor_parts = split(/\s+\|\s+/, $processing->{processor});
         if ( not @processor_parts ) {
             return UR::Object::Tag->create(
                 type => 'invalid',
                 properties => [qw/ processor /],
-                desc => "Could not find read processors in string: $processor",
+                desc => "Could not find read processors in string: ".$processing->{processor},
             );
         }
 

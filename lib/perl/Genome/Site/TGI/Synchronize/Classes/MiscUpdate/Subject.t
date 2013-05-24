@@ -20,16 +20,17 @@ use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::OrganismSample') or
 
 my $cnt = 0;
 
-# Valid
-my $taxon = Genome::Taxon->create(id => -100, name => '__TEST_TAXON__');
+my $taxon = Genome::Taxon->create(id => -100, name => '__TEST_TAXON__', estimated_genome_size => 1_000);
+
+# Valid - new value is undef
 my $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     subject_class_name => 'test.organism_taxon',
     subject_id => $taxon->id,
     subject_property_name => 'estimated_organism_genome_size',
     editor_id => 'lims',
     edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
-    old_value => undef,
-    new_value => 1_000,
+    old_value => 1_000,
+    new_value => undef,
     description => 'UPDATE',
     is_reconciled => 0,
 );
@@ -44,10 +45,40 @@ is($genome_entity->class, $genome_class_name, 'Correct genome entity class name'
 is($genome_entity->id, $taxon->id, 'Correct genome entity id');
 ok($misc_update->perform_update, 'Perform update');
 is($misc_update->result, 'PASS', 'Correct result after update');
+is($misc_update->status, "PASS	UPDATE	test.organism_taxon	-100	estimated_organism_genome_size	'1000'	'1000'	'NULL'", 'Correct status after update');
+ok($misc_update->is_reconciled, 'Is reconciled');
+ok(!$misc_update->error_message, 'No error after update');
+ok(!$taxon->estimated_genome_size, 'Set estimated_genome_size on taxon to undef');
+ok(UR::Context->commit, 'changes commit');
+
+# Valid - set back to 1000
+$misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
+    subject_class_name => 'test.organism_taxon',
+    subject_id => $taxon->id,
+    subject_property_name => 'estimated_organism_genome_size',
+    editor_id => 'lims',
+    edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+    old_value => undef,
+    new_value => 1_000,
+    description => 'UPDATE',
+    is_reconciled => 0,
+);
+ok($misc_update, 'Define misc update');
+isa_ok($misc_update, 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate::OrganismTaxon');
+is($misc_update->lims_table_name, 'organism_taxon', 'Correct lims table name');
+$genome_class_name = $misc_update->genome_class_name;
+is($genome_class_name, 'Genome::Taxon', 'Correct genome class name');
+$genome_entity = $misc_update->genome_entity;
+ok($genome_entity, 'Got genome entity');
+is($genome_entity->class, $genome_class_name, 'Correct genome entity class name');
+is($genome_entity->id, $taxon->id, 'Correct genome entity id');
+ok($misc_update->perform_update, 'Perform update');
+is($misc_update->result, 'PASS', 'Correct result after update');
 is($misc_update->status, "PASS	UPDATE	test.organism_taxon	-100	estimated_organism_genome_size	'NA'	'NULL'	'1000'", 'Correct status after update');
 ok($misc_update->is_reconciled, 'Is reconciled');
 ok(!$misc_update->error_message, 'No error after update');
-is($taxon->estimated_genome_size, 1000, 'Set estimated_genome_size on taxon');
+is($taxon->estimated_genome_size, 1000, 'Set estimated_genome_size on taxon to 1000');
+ok(UR::Context->commit, 'changes commit');
 
 # No obj for subject id
 $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(

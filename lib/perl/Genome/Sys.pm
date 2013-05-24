@@ -26,6 +26,35 @@ our $VERSION = $Genome::VERSION;
 
 class Genome::Sys {};
 
+sub concatenate_files {
+    my ($self,$inputs,$output) = @_;
+    unless (ref($inputs) and $output) {
+        die 'expected \\@input_files $output_file as parameters';
+    }
+    my ($quoted_output_file, @quoted_input_files) = $self->quote_for_shell($output,@$inputs);
+    Genome::Sys->shellcmd(cmd => "cat @quoted_input_files >$quoted_output_file");
+}
+
+sub quote_for_shell {
+    # this is needed until shellcmd supports an array form,
+    # which is difficult because we go to a bash sub-shell by default
+    my $class = shift;
+    my @quoted = @_;
+    for my $value (@quoted) {
+        $value =~ s|\\|\\\\|g;
+        $value =~ s/\"/\\\"/g;
+        $value = "\"${value}\"";
+        print STDERR $value,"\n";
+    }
+    if (wantarray) {
+        return @quoted
+    }
+    else {
+        return $quoted[0];
+    }
+}
+
+
 sub disk_usage_for_path {
     my $self = shift;
     my $path = shift;
@@ -1313,7 +1342,7 @@ sub shellcmd {
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         $t1 = time();
-        my $exit_code;
+        my $system_retval;
         eval {
                 open my $savedout, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
                 open my $savederr, '>&', \*STDERR || die "Can't dup STDERR: $!";
@@ -1328,23 +1357,23 @@ sub shellcmd {
                 if ($redirect_stderr) {
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
                 }
-                $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+                $system_retval = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
                 print STDOUT "\n"; # add a new line so that bad programs don't break TAP, etc.
         };
         my $exception = $@;
         if ($exception) {
             Carp::croak("EXCEPTION RUNNING COMMAND. Failed to execute: $cmd\n\tException was: $exception");
         }
-        my $child_exit_code = $exit_code >> 8;
+        my $child_exit_code = $system_retval >> 8;
         $t2 = time();
         $elapsed = $t2-$t1;
 
-        if ( $exit_code == -1 ) {
+        if ( $system_retval == -1 ) {
             Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd\n\tError was: $!");
 
-        } elsif ( $exit_code & 127 ) {
-            my $signal = $exit_code & 127;
-            my $withcore = ( $exit_code & 128 ) ? 'with' : 'without';
+        } elsif ( $system_retval & 127 ) {
+            my $signal = $system_retval & 127;
+            my $withcore = ( $system_retval & 128 ) ? 'with' : 'without';
             Carp::croak("COMMAND KILLED. Signal $signal, $withcore coredump: $cmd");
 
         } elsif ($child_exit_code != 0) {

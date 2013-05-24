@@ -384,8 +384,7 @@ addAnnos <- function(annos, segs, top=TRUE, offset=FALSE, chr=NULL, leftEdge=500
         annos[i,5] = 0
       }
     }
-                                        #print(annos)
-                                        #print(annos[i,5])
+
     print(paste(mid2,(ypos+annos[i,5]),annos[i,4],sep=","))
     text(mid2,(ypos+annos[i,5]),annos[i,4],cex=0.5,font=3)
     lines(c(mid,mid2),c(ptop,(ypos+annos[i,5])*.90))
@@ -412,6 +411,7 @@ drawSegs <- function(sts, sps, val, color="black", type="r", lowRes=FALSE, lowRe
     segs[lrpos,] = makeVisible(segs[lrpos,],lowResMax)
   }
 
+  
   if(type=="r"){
     ## draw the segments
     rect(sts, baseline, sps, val, col=color, lty="blank")

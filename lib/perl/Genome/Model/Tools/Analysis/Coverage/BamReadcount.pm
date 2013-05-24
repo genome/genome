@@ -311,6 +311,10 @@ sub execute {
     while( my $sline = $inFh->getline )
     {
         chomp($sline);
+
+        #skip header lines
+        next if($sline =~ /^(#|Hugo_Symbol|Chr|chromosome)/i);
+
         my @fields = split("\t",$sline);
 
         $fields[3] =~ s/0/\-/;

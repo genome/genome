@@ -77,7 +77,7 @@ sub execute {
 
         $self->status_message('Sx result id: '.$sx_result->id);
         $self->status_message('Sx output dir: '.$sx_result->output_dir);
-        $self->status_message('Instrument data: '.$sx_result->instrument_data_id);
+        $self->status_message('Instrument data: '.join(' ', $sx_result->instrument_data_id));
 
         my $link_ok = $self->_link_sx_result($sx_result);
         return if not $link_ok;

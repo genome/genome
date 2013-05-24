@@ -40,6 +40,7 @@ sub execute {
                                 READS_ALIGNED
                                 PCT_READS_ALIGNED
                                 ALIGNED_BASES
+                                LIBRARY_NAME
                                 PCT_DUPLICATION
                                 ESTIMATED_LIBRARY_SIZE
                                 ERROR_RATE_READ_1
@@ -61,6 +62,7 @@ sub execute {
     );
     my %error_rate_by_position;
     my %is_data;
+    my %is_directions;
 
     my %gc_data;
     my %gc_windows;
@@ -71,6 +73,7 @@ sub execute {
     for (my $i = 0; $i< scalar(@labels); $i++) {
         my $label = $labels[$i];
         my $output_dir = $directories[$i];
+
         # Load Alignment Metrics
         my ($as_file) = glob($output_dir .'/*alignment_summary_metrics');
         unless ($as_file) {
@@ -78,6 +81,7 @@ sub execute {
         }
         my $as_metrics = Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics->parse_file_into_metrics_hashref($as_file);
 
+        
         # Load MarkDuplicates Metrics
         my ($mrkdup_file) = glob($output_dir .'/*.metrics');
         my $mrkdup_metrics;
@@ -107,13 +111,19 @@ sub execute {
                 }
             }
         }
+        
         # Load Insert Size Metrics
         my ($is_file) = glob($output_dir .'/*.insert_size_metrics');
         my $is_metrics = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($is_file);
+        
+        # Load Insert Size Histogram
         my $is_histo = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_metrics_file_into_histogram_hashref($is_file);
-        for my $is_size (keys %{$is_histo}) {
-            for my $direction (grep {$_ !~ /^insert_size$/} keys %{$is_histo->{$is_size}}) {
-                $is_data{$is_size}{$direction}{$label} = $is_histo->{$is_size}{$direction};
+
+        for my $is_key (keys %{$is_histo}) {
+            my $is_size = $is_histo->{$is_key}{insert_size};
+            for my $direction (grep {$_ !~ /^insert_size$/} keys %{$is_histo->{$is_key}}) {
+                $is_data{$is_size}{$direction}{$label} = $is_histo->{$is_key}{$direction};
+                $is_directions{$direction} = 1;
             }
         }
         
@@ -121,14 +131,16 @@ sub execute {
         my ($gc_file) = glob($output_dir .'/*-PicardGC_metrics.txt');
         my ($gc_summary) = glob($output_dir .'/*-PicardGC_summary.txt');
         my $gc_metrics = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_summary);
+        $DB::single=1;
         my $gc_data = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($gc_file);
-        for my $gc_bin (keys %{$gc_data}) {
-            $gc_data{$gc_bin}{$label}{NORMALIZED_COVERAGE} = $gc_data->{$gc_bin}{NORMALIZED_COVERAGE};
+        for my $gc_key (keys %{$gc_data}) {
+            my $gc_bin = $gc_data->{$gc_key}{GC};
+            $gc_data{$gc_bin}{$label}{NORMALIZED_COVERAGE} = $gc_data->{$gc_key}{NORMALIZED_COVERAGE};
             unless ($gc_windows{$gc_bin}) {
-                $gc_windows{$gc_bin} = $gc_data->{$gc_bin}{WINDOWS};
+                $gc_windows{$gc_bin} = $gc_data->{$gc_key}{WINDOWS};
             } else {
-                unless ($gc_windows{$gc_bin} == $gc_data->{$gc_bin}{WINDOWS}) {
-                    die ($label .' '. $gc_bin);
+                unless ($gc_windows{$gc_bin} == $gc_data->{$gc_key}{WINDOWS}) {
+                    die ($label .' '. $gc_key);
                 }
             }
         }
@@ -136,32 +148,37 @@ sub execute {
         # Load Quality Distribution
         my ($qd_file) = glob($output_dir .'/*.quality_distribution_metrics');
         my $qd_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qd_file);
-        for my $quality (keys %{$qd_histo}) {
-            $qd_data{$quality}{$label} = $qd_histo->{$quality}{COUNT_OF_Q};
+        for my $quality_key (keys %{$qd_histo}) {
+            my $quality = $qd_histo->{$quality_key}{QUALITY};
+            $qd_data{$quality}{$label} = $qd_histo->{$quality_key}{COUNT_OF_Q};
         }
 
         # Load Quality by Cycle
         my ($qc_file) = glob($output_dir .'/*.quality_by_cycle_metrics');
         my $qc_histo = Genome::Model::Tools::Picard->parse_metrics_file_into_histogram_hashref($qc_file);
-        for my $cycle (keys %{$qc_histo}) {
-            $qc_data{$cycle}{$label} = $qc_histo->{$cycle}{MEAN_QUALITY};
+        for my $cycle_key (keys %{$qc_histo}) {
+            my $cycle = $qc_histo->{$cycle_key}{CYCLE};
+            $qc_data{$cycle}{$label} = $qc_histo->{$cycle_key}{MEAN_QUALITY};
         }
-
+        
+        # TODO: We need summary metrics per category and/or read direction
+        # The below summary metrics only apply to paired-end libraries
         my %summary_data = (
             LABEL => $label,
-            READS => $as_metrics->{PAIR}{PF_READS},
-            READS_ALIGNED => $as_metrics->{PAIR}{PF_READS_ALIGNED},
-            PCT_READS_ALIGNED => $as_metrics->{PAIR}{PCT_PF_READS_ALIGNED},
-            ALIGNED_BASES => $as_metrics->{PAIR}{PF_ALIGNED_BASES},
+            READS => $as_metrics->{'CATEGORY-PAIR'}{PF_READS},
+            READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PF_READS_ALIGNED},
+            PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED},
+            ALIGNED_BASES => $as_metrics->{'CATEGORY-PAIR'}{PF_ALIGNED_BASES},
             ERROR_RATE_READ_1 => $error_rate_sum{1}->{error_rate},
             ERROR_RATE_READ_2 => $error_rate_sum{2}->{error_rate},
-            MEDIAN_INSERT_SIZE => $is_metrics->{'FR'}{MEDIAN_INSERT_SIZE},
-            MEAN_INSERT_SIZE => $is_metrics->{'FR'}{MEAN_INSERT_SIZE},
-            STANDARD_DEVIATION => $is_metrics->{'FR'}{STANDARD_DEVIATION},
-            AT_DROPOUT => $gc_metrics->{100}{AT_DROPOUT},
-            GC_DROPOUT => $gc_metrics->{100}{GC_DROPOUT},
-            PCT_DUPLICATION => '',
-            ESTIMATED_LIBRARY_SIZE => '',
+            MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE},
+            MEAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEAN_INSERT_SIZE},
+            STANDARD_DEVIATION => $is_metrics->{'PAIR_ORIENTATION-FR'}{STANDARD_DEVIATION},
+            AT_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{AT_DROPOUT},
+            GC_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{GC_DROPOUT},
+            LIBRARY_NAME => $lib || 'na',
+            PCT_DUPLICATION => 'na',
+            ESTIMATED_LIBRARY_SIZE => 'na',
         );
         if ($mrkdup_metrics && $lib) {
             $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{$lib}{PERCENT_DUPLICATION};
@@ -192,6 +209,8 @@ sub execute {
             $writer->write_one(\%data);
         }
     }
+
+    # Write a consolidate histogram of normalized coverage per GC window
     my $gc_summary = $output_basename .'-GcBias.tsv';
     if (-e $gc_summary) {
         unlink($gc_summary);
@@ -213,6 +232,7 @@ sub execute {
         $gc_data_writer->write_one(\%data);
     }
     
+    # Write a consolidate histogram of base quality
     my $qd_summary = $output_basename .'-QualityDistribution.tsv';
     if (-e $qd_summary) {
         unlink $qd_summary;
@@ -232,7 +252,8 @@ sub execute {
         }
         $qd_data_writer->write_one(\%data);
     }
-    
+
+    # Write a consolidate histogram of base quality by cycle
     my $qc_summary = $output_basename .'-QualityByCycle.tsv';
     if (-e $qc_summary) {
         unlink $qc_summary;
@@ -252,30 +273,28 @@ sub execute {
         }
         $qc_data_writer->write_one(\%data);
     }
-    
-    my $is_summary = $output_basename .'-InsertSize.tsv';
-    if (-e $is_summary) {
-        unlink $is_summary;
-    }
-    my @is_headers = ('INSERT_SIZE',@labels);
-    my $is_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $is_summary,
-        separator => "\t",
-        headers => \@is_headers,
-    );
-    for my $is_size (sort {$a <=> $b} keys %is_data) {
-        my %data = (
-            'INSERT_SIZE' => $is_size,
+
+    # Write a consolidate histogram of insert sizes by read orientation/direction
+    for my $direction (sort keys %is_directions) {
+        my $is_summary = $output_basename .'-'. uc($direction) .'-InsertSize.tsv';
+        if (-e $is_summary) {
+            unlink $is_summary;
+        }
+        my @is_headers =('INSERT_SIZE',@labels);
+        my $is_data_writer = Genome::Utility::IO::SeparatedValueWriter->create(
+            output => $is_summary,
+            separator => "\t",
+            headers => \@is_headers,
         );
-        my @directions = keys %{$is_data{$is_size}};
-        if (scalar(@directions) > 1) {
-            die('Unable to support mutliple read types in Insert Size: '. Data::Dumper::Dumper(@directions));
+        for my $is_size (sort {$a <=> $b} keys %is_data) {
+            my %data = (
+                INSERT_SIZE  => $is_size,
+            );
+            for my $label (@labels) {
+                $data{$label} = $is_data{$is_size}{$direction}{$label} || 0;
+            }
+            $is_data_writer->write_one(\%data);
         }
-        my $direction = $directions[0];
-        for my $label (@labels) {
-            $data{$label} = $is_data{$is_size}{$direction}{$label} || 0;
-        }
-        $is_data_writer->write_one(\%data);
     }
     return 1;
 }

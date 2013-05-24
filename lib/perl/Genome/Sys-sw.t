@@ -52,7 +52,7 @@ my %cufflinks_version_map_expected = (
 
 # remove any newer versions to keep the test running after new cufflinks installs
 my @expected_keys = keys %cufflinks_version_map_expected;
-my %extra = %cufflinks_version_map_expected;
+my %extra = %cufflinks_version_map;
 delete @extra{@expected_keys};
 for my $key (keys %extra) {
     if ($key gt '2.0.2') {

@@ -577,6 +577,12 @@ sub acedb_version_lookup
     {
         $acedb_lookup = $acedb_version_lookup{$v};
     }
+    
+   else ##veena added 05/09
+    {
+        $v =~ s/V(\d+)/Version_$1.0/;
+        $acedb_lookup = $v;
+    }
 
     return $acedb_lookup;
 }

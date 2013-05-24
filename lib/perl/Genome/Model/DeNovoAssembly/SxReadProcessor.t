@@ -179,7 +179,7 @@ ok($sx_processor, 'create sx read processor');
 ok($sx_processor->parser, 'parser');
 my $default_processing = { condition => 'DEFAULT', processor => 'test default --param 1', };
 my @expected_processings = (
-    { condition => [qw/ original_est_fragment_size <= 2.5 * read_length /], processor => 'DEFAULT', coverage => 30, },
+    { condition => [qw/ original_est_fragment_size <= 2.5 * read_length /], processor => $default_processing->{processor}, coverage => 30, },
     { condition => [qw/ original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 /], processor => 'test insert-size --min 1001 --max 6000 | test default --param 0', coverage => 20, },
     { condition => [qw/ original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 /], processor => 'test insert-size --min 6001 --max 10000', },
     { condition => [qw/ read_length == 777 /], processor => 'test default --param 100', },

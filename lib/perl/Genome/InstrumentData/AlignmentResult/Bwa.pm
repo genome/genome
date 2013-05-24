@@ -23,13 +23,18 @@ sub required_rusage {
     my $class = shift;
     my %p = @_;
     my $instrument_data = delete $p{instrument_data};
+    my $aligner_params  = delete $p{aligner_params};
     my $reference_build = delete $p{reference_build};
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
     my $mem_mb = 1024 * 8; 
     my $cpus = 2;
 
-    if ($reference_build->id eq '107494762') {
+    if ($aligner_params and $aligner_params =~ /-t\s*([0-9]+)/) {
+        $cpus = $1;
+    }
+
+    if ($reference_build and $reference_build->id eq '107494762') {
         $class->status_message(sprintf 'Doubling memory requirements for alignments against %s.', $reference_build->name);
         $mem_mb *= 2;
     }
@@ -481,6 +486,7 @@ sub decomposed_aligner_params {
 
     $self->status_message("[decomposed_aligner_params] bwa aln params are: $bwa_aln_params");
 
+    # Make sure the thread count argument matches the number of CPUs available.
     if (!$bwa_aln_params || $bwa_aln_params !~ m/-t/) {
         $bwa_aln_params .= "-t$cpu_count";
     } elsif ($bwa_aln_params =~ m/-t/) {

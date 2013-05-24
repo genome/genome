@@ -55,7 +55,7 @@ class Genome::Model::Tools::CopyNumber::BamToCn {
     ],
     has_param => [
         lsf_queue => {
-            default => "long",
+            default => "apipe",
         },
     ],
 

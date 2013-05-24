@@ -21,7 +21,7 @@ use Data::Dumper;
 use_ok('Genome::Model::ClinSeq::Command::DumpIgvXml') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-DumpIgvXml/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-DumpIgvXml2/2013-05-15/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -57,5 +57,7 @@ or do {
   diag(@diff);
   my $diff_line_count = scalar(@diff);
   print "\n\nFound $diff_line_count differing lines\n\n";
-  #Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-dump-igv-xml-test-result");
+  Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-dump-igv-xml-test-result");
+  Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-dump-igv-xml-test-result");
 };
+

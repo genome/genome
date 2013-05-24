@@ -24,10 +24,15 @@ sub required_rusage {
     my $class = shift;
     my %p = @_;
     my $instrument_data = delete $p{instrument_data};
+    my $aligner_params  = delete $p{aligner_params};
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
     my $mem_mb = 1024 * 16; 
     my $cpus = 4;
+
+    if ($aligner_params and $aligner_params =~ /-t\s*([0-9]+)/) {
+        $cpus = $1;
+    }
 
     my $mem_kb = $mem_mb*1024;
     my $tmp_gb = $tmp_mb/1024;
@@ -777,6 +782,7 @@ sub decomposed_aligner_params {
     $self->status_message("[decomposed_aligner_params] cpu count is $cpu_count");
     $self->status_message("[decomposed_aligner_params] bwa bwasw params are: $processed_param_string");
 
+    # Make sure the thread count argument matches the number of CPUs available.
     if ($param_hash->{t} ne $cpu_count) {
         $param_hash->{t} = $cpu_count;
         my $modified_param_string = $self->join_aligner_params_hash($param_hash);
