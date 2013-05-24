@@ -182,7 +182,7 @@ sub _load_samples {
 
     my $samples = $self->samples;
     my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
-        original_data_path => [ map { $_->{original_data_path} } values %$samples ],
+        original_data_path => [ map { join(',', @{$_->{original_data_path}}) } values %$samples ],
         '-hint' => [qw/ bam_path /],
     );
 
@@ -273,7 +273,7 @@ sub _create_sample {
 
     Carp::confess('No params to create sample!') if not $importer_params;
 
-    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0; # quite the importer
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0; # quiet the importer
     my $importer_class_name = Genome::Sample::Command::Import->importer_class_name_for_namespace($self->namespace);
     my $importer = $importer_class_name->create(%$importer_params);
     if ( not $importer ) {

@@ -50,23 +50,26 @@ my $manager = Genome::Sample::Command::Import::Manager->create(
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
+my $sample_name = 'TeSt-0000-00';
 my %expected_samples = ( 
-    'TeSt-0000-00' => {
-        name => 'TeSt-0000-00', 
+     $sample_name => {
+        name => $sample_name,
         original_data_path => [ 'original.bam' ],
         importer_params => {
-            name => 'TeSt-0000-00', 
+            name => $sample_name,
             sample_attributes => [qw/ gender='female' race='spaghetti' religion='pastafarian' /],
         },
         status => 'import_pend',
         job_status => 'pend',
-        sample => Genome::Sample->get(name => 'TeSt-0000-00'),
-        model => Genome::Model::Ref->get('subject.name' => 'TeSt-0000-00'),
+        sample => Genome::Sample->get(name => $sample_name),
+        model => Genome::Model::Ref->get('subject.name' => $sample_name),
         instrument_data => undef, bam_path => undef,
     },
 );
 my $samples = $manager->samples;
 is_deeply($manager->samples, \%expected_samples, 'samples match');
+ok(!$samples->{$sample_name}->{model}->auto_assign_inst_data, 'model auto_assign_inst_data is off');
+ok(!$samples->{$sample_name}->{model}->auto_build_alignments, 'model auto_build_alignments is off');
 print Dumper($samples);
 
 # fail - no config file
