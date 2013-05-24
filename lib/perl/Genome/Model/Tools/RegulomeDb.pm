@@ -14,6 +14,8 @@ sub fetch_large_annotation {
     my $data = shift;
 
     my @data = split(/\n/, $data);
+    my $num_lines = scalar @data;
+    $self->status_message("Fetching annotations for $num_lines");
     my $content;
     while (@data) {
         my @part = splice(@data, 0, 1000);
