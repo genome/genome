@@ -53,7 +53,7 @@ is($manager->namespace, 'Test', 'got namespace');
 my %expected_samples = ( 
     'TeSt-0000-00' => {
         name => 'TeSt-0000-00', 
-        original_data_path => 'original.bam',
+        original_data_path => [ 'original.bam' ],
         importer_params => {
             name => 'TeSt-0000-00', 
             sample_attributes => [qw/ gender='female' race='spaghetti' religion='pastafarian' /],
@@ -62,8 +62,7 @@ my %expected_samples = (
         job_status => 'pend',
         sample => Genome::Sample->get(name => 'TeSt-0000-00'),
         model => Genome::Model::Ref->get('subject.name' => 'TeSt-0000-00'),
-        build => undef,
-        inst_data => undef, bam_path => undef,
+        instrument_data => undef, bam_path => undef,
     },
 );
 my $samples = $manager->samples;

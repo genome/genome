@@ -16,10 +16,18 @@ class Genome::Sample::Command::Import::Manager {
     doc => 'Manage importing a group of samples including importing instrument data and creating and building models.',
     has => [
         working_directory => {
+            is => 'Text',
             doc => 'Directory to read and write.',
         },
     ],
-    has_calculated => [
+    has_optional => [
+        status_only => { 
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Only print status. Do not create samples, models and run imports.', 
+        },
+    ],
+    has_optional_calculated => [
         sample_csv_file => {
             calculate_from => 'working_directory',
             calculate => sub{ my $working_directory = shift; return $working_directory.'/samples.csv'; },
@@ -145,7 +153,7 @@ sub _load_sample_csv_file {
         my $name = delete $sample->{name};
         $samples{$name} = {
             name => $name,
-            original_data_path => delete $sample->{original_data_path},
+            original_data_path => [ split(' ', delete $sample->{original_data_path}) ],
             importer_params => { name => $name, },
         };
         for my $attr ( sort keys %$sample ) {
@@ -182,22 +190,38 @@ sub _load_samples {
     return if not $model_class;
 
     for my $name ( keys %$samples ) {
+        # Inst Data
+        my $instrument_data = $instrument_data{$name};
+        $samples->{$name}->{instrument_data} = $instrument_data;
+        $samples->{$name}->{bam_path} = eval{ $instrument_data->bam_path };
+
+        # Sample
         my $genome_sample = Genome::Sample->get(name => $name);
-        if ( not $genome_sample ) {
+        if ( not $genome_sample and not $self->status_only ) {
             $genome_sample = $self->_create_sample($samples->{$name}->{importer_params});
             return if not $genome_sample;
         }
         $samples->{$name}->{sample} = $genome_sample;
         $model_params->{subject} = $genome_sample;
-        my $model = $model_class->get(%$model_params);
-        if ( not $model ) {
+
+        # Model
+        my $model = $model_class->get(%$model_params) if $genome_sample;
+        if ( not $model and not $self->status_only ) {
             $model = $model_class->create(%$model_params);
             return if not $model
         }
         $samples->{$name}->{model} = $model;
-        $samples->{$name}->{build} = eval{ $samples->{model}->latest_build };
-        $samples->{$name}->{inst_data} = $instrument_data{$name};
-        $samples->{$name}->{bam_path} = eval{ $samples->{inst_data}->bam_path };
+        if ( $model ) {
+            # Model should have instrument data
+            if ( $instrument_data ) {
+                my @model_instrument_data = $model->instrument_data;
+                if ( @model_instrument_data and not grep { $instrument_data->id eq $_ } map { $_->id } @model_instrument_data ) {
+                    $model->add_instrument_data($instrument_data);
+                }
+                # Set latest build
+                $samples->{$name}->{build} = $model->latest_build;
+            }
+        }
     }
 
     $self->samples($samples);
@@ -249,6 +273,7 @@ sub _create_sample {
 
     Carp::confess('No params to create sample!') if not $importer_params;
 
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0; # quite the importer
     my $importer_class_name = Genome::Sample::Command::Import->importer_class_name_for_namespace($self->namespace);
     my $importer = $importer_class_name->create(%$importer_params);
     if ( not $importer ) {
@@ -320,19 +345,6 @@ sub cleanup_failed {
     return 1;
 }
 
-sub commands {
-    my $self = shift;
-    print STDERR "Commands...\n";
-    my @samples = _load_samples();
-    for my $sample ( @samples ) {
-        $self->set_sample_status($sample);
-        next if not _needs_import($sample);
-        my $cmd = 'grep '.$sample->{name}.' sra_import_commands';
-        print `$cmd`;
-    }
-    return 1;
-}
-
 sub _resolve_model_params {
     my $self = shift;
 
@@ -345,7 +357,6 @@ sub _resolve_model_params {
     my %model_params;
     for my $name ( keys %{$config->{model}} ) {
         $model_params{$name} = $config->{model}->{$name};
-        print $name.' '.$config->{model}->{$name}."\n";
     }
 
     if ( not $model_params{processing_profile_id} ) {
@@ -379,40 +390,8 @@ sub _resolve_model_params {
     }
 
     return ($model_class, \%model_params);
-
-    my $samples;
-    for my $sample ( @$samples ) {
-        # get/create model
-        if ( $sample->{model} ) {
-            if ( $sample->{inst_data} and not $sample->{model}->instrument_data ) {
-                $sample->{model}->add_instrument_data($sample->{inst_data});
-            }
-            if ( $sample->{build} and lc($sample->{build}->status) eq 'unstartable' ) {
-                $sample->{model}->build_requested(1);
-            }
-            elsif ( not $sample->{build} and not $sample->{model}->build_requested ) {
-                $sample->{model}->build_requested(1);
-            }
-            elsif ( $sample->{build} and $sample->{model}->build_requested ) {
-                $sample->{model}->build_requested(0);
-            }
-            next;
-        }
-        $sample->{model} = Genome::Model->create(
-            subject_id => $sample->{id},
-            %model_params,
-        );
-        die 'Failed to create model! '.$sample->{name} if not $sample->{model};
-        $sample->{model}->build_requested(1);
-    }
-
-    return 1;
 }
 
-sub _needs_import {
-    my $sample = shift;
-    return 1 if $sample->{status} eq 'import_failed' or $sample->{status} eq 'import_needed';
-}
 
 1;
 
