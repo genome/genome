@@ -170,6 +170,11 @@ sub _load_import_configs {
                 },
             },
         },
+        {
+            nomenclature => 'WHIM',
+            name_regexp => '(WHIM[\d]+)\-[\w\d]+(\-[\w\d]+)*',
+            taxon_name => 'human',
+        },
     );
 }
 
