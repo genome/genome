@@ -54,7 +54,7 @@ sub help_brief {
 
 sub help_synopsis {
     return <<EOS
-    gmt gatk realignr-indels-target-creator --known indels.vcf --input-bam my_existing.bam --reference-fasta my.fa --max-interval-size 500 --min-reads-at-locus 4 --mismatch-fraction 0.0 --window-size 10 --output-intervals out.intervals
+    gmt gatk realigner-indels-target-creator --known indels.vcf --input-bam my_existing.bam --reference-fasta my.fa --max-interval-size 500 --min-reads-at-locus 4 --mismatch-fraction 0.0 --window-size 10 --output-intervals out.intervals
 EOS
 }
 
