@@ -157,15 +157,19 @@ sub _load_sample_csv_file {
             importer_params => { name => $name, },
         };
         for my $attr ( sort keys %$sample ) {
-            next if not defined $sample->{$attr} or $sample->{$attr} eq '';
-            if ( $attr =~ /^(sample|individual)\./ ) { # is saprint le/individual indicated?
-                push @{$samples{$name}->{importer_params}->{$1.'_attributes'}}, $attr."=\'".$sample->{$attr}."\'";
+            my $value = $sample->{$attr};
+            next if not defined $value or $value eq '';
+            if ( $attr =~ /^(sample|individual)\./ ) { # is sample/individual/inst data indicated?
+                push @{$samples{$name}->{importer_params}->{$1.'_attributes'}}, $attr."=\'".$value."\'";
+            }
+            elsif ( $attr =~ s/^instrument_data\.// ) { # inst data attr
+                push @{$samples{$name}->{'instrument_data_attributes'}}, $attr."=\'".$value."\'";
             }
             elsif ( grep { $attr eq $_ } @importer_property_names ) { # is the attr specified in the importer?
-                $samples{$name}->{importer_params}->{$attr} = $sample->{$attr};
+                $samples{$name}->{importer_params}->{$attr} = $value;
             }
             else { # assume sample attribute
-                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."=\'".$sample->{$attr}."\'";
+                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."=\'".$value."\'";
             }
         }
     }
@@ -421,6 +425,9 @@ sub _resolve_import_command_for_sample {
         $sample->{name},
         join(',', @{$sample->{source_files}}),
     );
+    if ( $sample->{instrument_data_attributes} ) {
+        $cmd .= ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_attributes}});
+    }
 
     return $cmd;
 }

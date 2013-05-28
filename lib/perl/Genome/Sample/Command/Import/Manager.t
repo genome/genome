@@ -61,10 +61,12 @@ my %expected_samples = (
         },
         status => 'import_pend',
         job_status => 'pend',
-        import_command => "launch -name $sample_name genome instrument-data import basic --sample $sample_name --source-files original.bam",
+        import_command => "launch -name $sample_name genome instrument-data import basic --sample $sample_name --source-files original.bam --instrument-data-properties lane='8'",
         sample => Genome::Sample->get(name => $sample_name),
         model => Genome::Model::Ref->get('subject.name' => $sample_name),
-        instrument_data => undef, bam_path => undef,
+        instrument_data => undef,
+        instrument_data_attributes => [qw/ lane='8' /],
+        bam_path => undef,
     },
 );
 my $samples = $manager->samples;
