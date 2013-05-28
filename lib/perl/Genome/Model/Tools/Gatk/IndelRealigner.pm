@@ -1,10 +1,10 @@
-package Genome::Model::Tools::Gatk::RealignIndels;
+package Genome::Model::Tools::Gatk::IndelRealigner;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::Tools::Gatk::RealignIndels {
+class Genome::Model::Tools::Gatk::IndelRealigner {
     doc => "Run GATK with the 'IndelRealigner' tool",
     is => 'Genome::Model::Tools::Gatk',
     has => [
@@ -50,7 +50,7 @@ sub help_brief {
 
 sub help_synopsis {
     return <<EOS
-    gmt gatk realign-indels --target-intervals some.bed --output-realigned-bam my_output_realigned.bam --input-bam my_existing.bam --reference-fasta my.fa
+    gmt gatk indel-realigner --target-intervals some.bed --output-realigned-bam my_output_realigned.bam --input-bam my_existing.bam --reference-fasta my.fa
 EOS
 }
 
