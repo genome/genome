@@ -25,26 +25,6 @@ class Genome::Model::Tools::Gatk::RealignerTargetCreator {
             is => 'Text',
             doc => "File of intervals to target for realignment",
         },
-        max_interval_size => {
-            is => 'Integer',
-            doc => "maximum interval size; any intervals larger than this value will be dropped",
-            example_values => [500],
-        },
-        min_reads_at_locus => {
-            is => 'Integer',
-            doc => "minimum reads at a locus to enable using the entropy calculation",
-            example_values => [4],
-        },
-        mismatch_fraction => {
-            is => 'Number',
-            doc => 'fraction of base qualities needing to mismatch for a position to have high entropy',
-            example_values => [0.0],
-        },
-        window_size => {
-            is => 'Integer',
-            doc => 'window size for calculating entropy or SNP clusters',
-            example_values => [10],
-        },
     ],
 };
 
@@ -54,7 +34,7 @@ sub help_brief {
 
 sub help_synopsis {
     return <<EOS
-    gmt gatk realigner-indels-target-creator --known indels.vcf --input-bam my_existing.bam --reference-fasta my.fa --max-interval-size 500 --min-reads-at-locus 4 --mismatch-fraction 0.0 --window-size 10 --output-intervals out.intervals
+    gmt gatk realigner-indels-target-creator --known indels.vcf --input-bam my_existing.bam --reference-fasta my.fa --output-intervals out.intervals
 EOS
 }
 
@@ -80,10 +60,6 @@ sub realigner_creator_command {
     if ($self->known) {
        $gatk_command .= " --known " . $self->known;
     }
-    $gatk_command .= " --maxIntervalSize " . $self->max_interval_size;
-    $gatk_command .= " --minReadsAtLocus " . $self->min_reads_at_locus;
-    $gatk_command .= " --mismatchFraction " . $self->mismatch_fraction;
-    $gatk_command .= " --windowSize " . $self->window_size;
     $gatk_command .= " -I " . $self->input_bam;
     $gatk_command .= " -R " . $self->reference_fasta;
     $gatk_command .= " -o ". $self->output_intervals;
