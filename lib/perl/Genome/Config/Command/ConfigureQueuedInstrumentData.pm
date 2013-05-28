@@ -4,7 +4,14 @@ use strict;
 use warnings;
 
 class Genome::Config::Command::ConfigureQueuedInstrumentData {
-    is => 'Command::V2'
+    is => 'Command::V2',
+    has_optional => [
+        instrument_data => {
+            is          => 'Genome::InstrumentData',
+            is_many     => 1,
+            doc         => '[Re]process these instrument data.',
+        },
+    ],
 };
 
 sub help_brief {
@@ -12,7 +19,7 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return <<'EOS'
+    return <<EOS
 EOS
 }
 
@@ -31,22 +38,103 @@ sub execute {
     for my $current_inst_data (@instrument_data) {
         my $config = $self->_get_configuration_object_for_instrument_data($current_inst_data);
         my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
-        for(values %$hashes) {
-            my $model = $self->_get_model_for_config_hash($_);
-            $model->add_instrument_data($current_inst_data);
-            $model->build_requested(1);
+        for my $model_type (keys %$hashes) {
+            for my $model_instance (@{$hashes->{$model_type}}) {
+                my ($model, $created_new) = $self->_get_model_for_config_hash($model_type, $model_instance);
+                my $success = $self->_assign_instrument_data_to_model($model, $current_inst_data, $created_new);
+                $self->_mark_instrument_data_status($current_inst_data, $success);
+            }
         }
     }
 
     UR::Context->commit();
 }
 
+sub _assign_instrument_data_to_model {
+    my ($self, $model, $instrument_data, $newly_created) = @_;
+
+    #if a model is newly created, we want to assign all applicable instrument data to it
+    my %params_hash = (model => $model);
+    if ($newly_created) {
+        $params_hash{all} = 1;
+    } else {
+        $params_hash{instrument_data} = [$instrument_data];
+    }
+    my $cmd = Genome::Model::Command::InstrumentData::Assign->create(%params_hash);
+
+    unless ($cmd->execute()) {
+        $self->error_message('Failed to assign ' . $instrument_data->__display_name__ . ' to ' . $model->__display_name__);
+        return 0;
+    }
+
+    $model->build_requested(1);
+    return 1;
+}
+
+sub _mark_instrument_data_status {
+    my ($self, $instrument_data, $success) = @_;
+
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_status');
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_message');
+
+    if ($success) {
+        $self->_mark_instrument_data_as_processed($instrument_data);
+    } else {
+        $self->_mark_instrument_data_as_failed($instrument_data);
+    }
+
+    return 1;
+}
+
+sub _mark_instrument_data_as_processed {
+    my ($self, $instrument_data) = @_;
+
+    $instrument_data->add_attribute(
+        attribute_label => 'tgi_lims_status',
+        attribute_value => 'processed',
+    );
+    $instrument_data->remove_attribute(attribute_label => 'tgi_lims_fail_count');
+
+    return 1;
+}
+
+sub _mark_instrument_data_as_failed {
+    my ($self, $instrument_data) = @_;
+
+    my $fail_count_attr = $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count');
+    my $previous_count = 0;
+    if ( $fail_count_attr ) {
+        $previous_count = $fail_count_attr->attribute_value;
+        $fail_count_attr->delete;
+    }
+
+    $instrument_data->add_attribute(
+        attribute_label => 'tgi_lims_fail_count',
+        attribute_value => ($previous_count+1),
+    );
+
+    $instrument_data->add_attribute(
+        attribute_label => 'tgi_lims_status',
+        attribute_value => 'failed',
+    );
+
+    $instrument_data->add_attribute(
+        attribute_label => 'tgi_lims_fail_message',
+        attribute_value => $self->error_message,
+    );
+
+    return 1;
+}
+
 sub _get_model_for_config_hash {
-    #hashref
+    my $self = shift;
+    my $class_name = shift;
     my $config = shift;
 
-    my $m = Genome::Model->get(%$config);
-    return $m || Genome::Model->create(%$config);
+    my $m = $class_name->get(%$config);
+    #return the model, plus a 'boolean' value indicating if we created a new model
+    my @model_info =  $m ? ($m, 0) : ($class_name->create(%$config), 1);
+    return wantarray ? @model_info : $model_info[0];
 }
 
 #SAMPLE FORMAT of YAML files:
@@ -60,10 +148,7 @@ sub _get_model_for_config_hash {
 #    processing_profile_id: 123451
 #    annotation_build_id: 12314
 #    reference_sequence_build_id: 12314
-#this gets read in as a hash(ref) of hash(refs) - one hash per model type
 sub _prepare_configuration_hashes_for_instrument_data {
-    #given a piece of ID and a configuration object, prepare a hash
-    #to pass to model get or create
     my ($inst_data, $config_obj) = @_;
     #eventually this will need to support multiple references
     my $config_hash = $config_obj->get_config(
@@ -71,18 +156,18 @@ sub _prepare_configuration_hashes_for_instrument_data {
         type => $inst_data->extraction_type,
     );
     for my $model_type (keys %$config_hash) {
-        $config_hash->{$model_type}->{subclass_name} = $model_type;
-        $config_hash->{$model_type}->{subject} = $inst_data->subject;
+        if (ref $config_hash->{$model_type} ne 'ARRAY') {
+            $config_hash->{$model_type} = [$config_hash->{$model_type}];
+        }
 
-        my $instrument_data_properties = delete $config_hash->{$model_type}{instrument_data_properties};
-        if($instrument_data_properties) {
-            while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
-                $config_hash->{$model_type}{$model_property} = $inst_data->$instrument_data_property;
+        for my $model_instance (@{$config_hash->{$model_type}}) {
+            my $instrument_data_properties = delete $model_instance->{instrument_data_properties};
+            if($instrument_data_properties) {
+                while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
+                    $model_instance->{$model_property} = $inst_data->$instrument_data_property;
+                }
             }
         }
-        #$config_hash->{$_}->{target_region_set_name} = $inst_data->target_region_set_name;
-        #not sure how to derive this yet
-        #$config_hash->{$_}->{genotype_microarray} = 
     }
     return $config_hash;
 }
@@ -90,11 +175,15 @@ sub _prepare_configuration_hashes_for_instrument_data {
 sub _get_instrument_data_to_process {
     my $self = shift;
 
-    #TODO switch to a boolexpr maybe? there's got to be a better way to do this
-    return grep { $_->analysis_project_id } Genome::InstrumentData->get(
-        'tgi_lims_status' => [qw/ new failed /],
-        -hint => [ 'sample', 'sample.source', 'sample.source.taxon', ],
-    );
+    if ($self->instrument_data) {
+        return $self->instrument_data;
+    } else {
+        return Genome::InstrumentData->get(
+            'tgi_lims_status' => [qw/ new failed /],
+            'analysis_project_id !=' => undef,
+            -hint => [ 'sample', 'sample.source', 'sample.source.taxon', ],
+        );
+    }
 }
 
 sub _get_configuration_object_for_instrument_data {
@@ -117,7 +206,7 @@ sub _lock {
 
     UR::Context->current->add_observer(
         aspect => 'commit',
-        callback => sub{
+        callback => sub {
             Genome::Sys->unlock_resource(resource_lock=>$lock);
         }
     );
