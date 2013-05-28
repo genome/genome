@@ -138,7 +138,7 @@ sub _load_sample_csv_file {
         return 'Failed to open sample csv! '.$sample_csv_file;
     }
 
-    my %headers_not_found = ( name => 1, original_data_path => 1, );
+    my %headers_not_found = ( name => 1, source_files => 1, );
     for my $header ( @{$sample_csv_reader->headers} ) {
         delete $headers_not_found{$header};
     }
@@ -153,7 +153,7 @@ sub _load_sample_csv_file {
         my $name = delete $sample->{name};
         $samples{$name} = {
             name => $name,
-            original_data_path => [ split(' ', delete $sample->{original_data_path}) ],
+            source_files => [ split(' ', delete $sample->{source_files}) ],
             importer_params => { name => $name, },
         };
         for my $attr ( sort keys %$sample ) {
@@ -182,7 +182,7 @@ sub _load_samples {
 
     my $samples = $self->samples;
     my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
-        original_data_path => [ map { join(',', @{$_->{original_data_path}}) } values %$samples ],
+        original_data_path => [ map { join(',', @{$_->{source_files}}) } values %$samples ],
         '-hint' => [qw/ bam_path /],
     );
 
@@ -222,6 +222,11 @@ sub _load_samples {
                 $samples->{$name}->{build} = $model->latest_build;
             }
         }
+
+        # Import Command
+        my $cmd = $self->_resolve_import_command_for_sample($samples->{$name});
+        return if not $cmd;
+        $samples->{$name}->{import_command} = $cmd;
     }
 
     $self->samples($samples);
@@ -392,6 +397,33 @@ sub _resolve_model_params {
     return ($model_class, \%model_params);
 }
 
+sub _resolve_import_command_for_sample {
+    my ($self, $sample) = @_;
+
+    Carp::confess('No sample to resolve instrument data import command!') if not $sample;
+
+    my $cmd;
+    if ( $self->config->{'job dispatch'}->{launch} ) {
+        my $sample_name_cnt = $self->config->{'job dispatch'}->{launch} =~ /\%s/;
+        if ( not $sample_name_cnt ) {
+            $self->error_message('No "%s" in job dispatch config to replace with sample name.');
+            return;
+        }
+        $cmd = sprintf(
+            $self->config->{'job dispatch'}->{launch},
+            $sample->{name} x $sample_name_cnt
+        );
+        $cmd .= ' ';
+    }
+
+    $cmd .= sprintf(
+        'genome instrument-data import basic --sample %s --source-files %s',
+        $sample->{name},
+        join(',', @{$sample->{source_files}}),
+    );
+
+    return $cmd;
+}
 
 1;
 

@@ -54,13 +54,14 @@ my $sample_name = 'TeSt-0000-00';
 my %expected_samples = ( 
      $sample_name => {
         name => $sample_name,
-        original_data_path => [ 'original.bam' ],
+        source_files => [ 'original.bam' ],
         importer_params => {
             name => $sample_name,
             sample_attributes => [qw/ gender='female' race='spaghetti' religion='pastafarian' /],
         },
         status => 'import_pend',
         job_status => 'pend',
+        import_command => "launch -name $sample_name genome instrument-data import basic --sample $sample_name --source-files original.bam",
         sample => Genome::Sample->get(name => $sample_name),
         model => Genome::Model::Ref->get('subject.name' => $sample_name),
         instrument_data => undef, bam_path => undef,
