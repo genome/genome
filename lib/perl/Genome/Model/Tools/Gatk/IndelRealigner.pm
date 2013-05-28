@@ -102,6 +102,9 @@ sub _check_inputs {
             return;
         }
     }
+    if ($self->known) {
+        Genome::Sys->validate_file_for_reading($self->known);
+    }
     Genome::Sys->validate_file_for_reading($self->target_intervals);
     Genome::Sys->validate_file_for_reading($self->input_bam);
     Genome::Sys->validate_file_for_reading($self->reference_fasta);
