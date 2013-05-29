@@ -12,6 +12,7 @@ class Genome::Model::Tools::Gatk::RealignerTargetCreator {
             is => 'Text',
             doc => 'The file of known indels',
             is_optional => 1,
+            is_many => 1,
         },
         input_bam => {
             is => 'Text',
@@ -57,8 +58,10 @@ sub realigner_creator_command {
     my $self = shift;
     my $gatk_command = $self->base_java_command;
     $gatk_command .= " -T RealignerTargetCreator";
-    if ($self->known) {
-       $gatk_command .= " --known " . $self->known;
+    my @known = $self->known;
+    if (@known) {
+        my $known_list = $self->create_list_input(@known);
+       $gatk_command .= " --known " . $known_list;
     }
     $gatk_command .= " -I " . $self->input_bam;
     $gatk_command .= " -R " . $self->reference_fasta;
@@ -69,8 +72,11 @@ sub realigner_creator_command {
 sub _check_inputs {
     my $self = shift;
 
-    if ($self->known) {
-        Genome::Sys->validate_file_for_reading($self->known);
+    my @known = $self->known;
+    if (@known) {
+        for my $k (@known) {
+            Genome::Sys->validate_file_for_reading($k);
+        }
     }
     Genome::Sys->validate_file_for_reading($self->input_bam);
     Genome::Sys->validate_file_for_reading($self->reference_fasta);

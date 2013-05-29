@@ -167,5 +167,17 @@ sub base_java_command {
     return $java_cmd;
 }
 
+sub create_list_input {
+    my $self = shift;
+    my @items = @_;
+    my $known_list = Genome::Sys->create_temp_file_path("known.list");
+    my $fh = Genome::Sys->open_file_for_writing($known_list);
+    for my $k (@items) {
+        $fh->print("$k\n");
+    }
+    $fh->close;
+    return $known_list;
+}
+
 1;
 
