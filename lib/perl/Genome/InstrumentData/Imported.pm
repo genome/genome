@@ -355,6 +355,12 @@ sub flow_cell_id {
 
 sub lane {
     my $self = shift;
+
+    my $lane_attribute = $self->attributes(attribute_label => 'lane');
+    if ( $lane_attribute ) {
+        return $lane_attribute->attribute_value;
+    }
+
     my $subset_name = $self->subset_name;
     if (($subset_name =~ m/DACC/ || $self->sequencing_platform eq 'solexa') && $subset_name =~/[-\.]/){
         my ($lane) = $subset_name =~ /(\d)[-\.]/;
