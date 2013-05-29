@@ -51,6 +51,9 @@ sub execute {
     my $samples = $self->_load_samples;
     return if not $samples;
 
+    my $make_progress = $self->_make_progress;
+    return if not $make_progress;
+
     $self->_status($samples);
 
     return 1;
@@ -187,7 +190,7 @@ sub _load_samples {
     my $samples = $self->samples;
     my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
         original_data_path => [ map { join(',', @{$_->{source_files}}) } values %$samples ],
-        '-hint' => [qw/ bam_path /],
+        '-hint' => [qw/ attributes /],
     );
 
     my ($model_class, $model_params) = $self->_resolve_model_params;
@@ -197,7 +200,13 @@ sub _load_samples {
         # Inst Data
         my $instrument_data = $instrument_data{$name};
         $samples->{$name}->{instrument_data} = $instrument_data;
-        $samples->{$name}->{bam_path} = eval{ $instrument_data->bam_path };
+        $samples->{$name}->{instrument_data_file} = eval{
+            my $attribute = $instrument_data->attributes(attribute_label => 'bam_path');
+            if ( not $attribute ) {
+                $attribute = $instrument_data->attributes(attribute_label => 'archive_path');
+            }
+            return $attribute->attribute_value if $attribute;
+        };
 
         # Sample
         my $genome_sample = Genome::Sample->get(name => $name);
@@ -231,6 +240,9 @@ sub _load_samples {
         my $cmd = $self->_resolve_import_command_for_sample($samples->{$name});
         return if not $cmd;
         $samples->{$name}->{import_command} = $cmd;
+
+        # Status
+        $self->set_sample_status($samples->{$name});
     }
 
     $self->samples($samples);
@@ -302,23 +314,23 @@ sub _create_sample {
     return $sample;
 }
 
-sub get_sample_status {
-    my ($self, $sample) = @_;
-    Carp::confess('No sample to set status!') if not $sample;
-    return 'sample_needed' if not $sample->{sample};
-    return 'import_'.$sample->{job_status} if $sample->{job_status};
-    return 'import_needed' if not $sample->{inst_data};
-    return 'import_failed' if not defined $sample->{bam_path} or not -s $sample->{bam_path};
-    return 'model_needed' if $sample->{inst_data} and not $sample->{model};
-    return 'build_requested' if $sample->{model}->build_requested;
-    return 'build_needed' if not $sample->{build};
-    return 'build_'.lc($sample->{build}->status);
-}
-
 sub set_sample_status {
     my ($self, $sample) = @_;
+
     Carp::confess('No sample to set status!') if not $sample;
-    return $sample->{status} = $self->get_sample_status($sample);
+
+    $sample->{status} = eval{
+        return 'sample_needed' if not $sample->{sample};
+        return 'import_'.$sample->{job_status} if $sample->{job_status};
+        return 'import_needed' if not $sample->{instrument_data};
+        return 'import_failed' if not defined $sample->{instrument_data_file} or not -s $sample->{instrument_data_file};
+        return 'model_needed' if $sample->{instrument_data} and not $sample->{model};
+        return 'build_requested' if $sample->{model}->build_requested;
+        return 'build_needed' if not $sample->{build};
+        return 'build_'.lc($sample->{build}->status);
+    };
+
+    return $sample->{status};
 }
 
 sub _status {
@@ -338,19 +350,6 @@ sub _status {
         $status .= sprintf("%-20s %10s\n", $sample->{name}, $sample->{status});
     }
     print "$status\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
-    return 1;
-}
-
-sub cleanup_failed {
-    my $self = shift;
-    my @samples = _load_samples();
-    for my $sample ( @samples ) {
-        $self->set_sample_status($sample);
-        next if $sample->{status} ne 'import_failed' or ( defined $sample->{bam_path} and -s $sample->{bam_path} );
-        print $sample->{name}.' '.$sample->{status}." REMOVE!\n";
-        $sample->{inst_data}->delete;
-    }
-    UR::Context->commit;
     return 1;
 }
 
@@ -415,21 +414,52 @@ sub _resolve_import_command_for_sample {
         }
         $cmd = sprintf(
             $self->config->{'job dispatch'}->{launch},
-            $sample->{name} x $sample_name_cnt
+            $sample->{name}, $sample->{name}
         );
         $cmd .= ' ';
     }
 
     $cmd .= sprintf(
-        'genome instrument-data import basic --sample %s --source-files %s',
+        'genome instrument-data import basic --sample name=%s --source-files %s --import-source-name %s',
         $sample->{name},
         join(',', @{$sample->{source_files}}),
+        $self->config->{'sample'}->{'nomenclature'},
     );
     if ( $sample->{instrument_data_attributes} ) {
         $cmd .= ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_attributes}});
     }
 
     return $cmd;
+}
+
+sub _make_progress {
+    my $self = shift;
+
+    return 1 if $self->status_only;
+
+    my $samples = $self->samples;
+    Carp::confess('No samples to display status!') if not $samples;
+
+    for my $sample ( @$samples ) {
+        if ( $sample->{status} eq 'import_needed' ) {
+            system $sample->{import_command};
+            $self->set_sample_status($sample);
+        }
+        elsif ( $sample->{status} eq 'import_failed' ) {
+            #defined $sample->{instrument_data_file} and -s $sample->{instrument_data_file} );
+            # clenaup, relaunch
+            #$sample->{inst_data}->delete;
+            $self->set_sample_status($sample);
+        }
+        elsif ( $sample->{status} eq 'build_needed'
+            #or $sample->{status} eq 'build_failed'
+        ) {
+            $sample->{model}->build_requested(1);
+            $self->set_sample_status($sample);
+        }
+    }
+
+    return 1;
 }
 
 1;
