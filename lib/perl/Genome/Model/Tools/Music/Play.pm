@@ -178,6 +178,7 @@ class Genome::Model::Tools::Music::Play {
         reference_build => {
             is => 'Text', default => 'Build37',
             doc => 'Put either "Build36" or "Build37"',
+            example_values => ['Build36', 'Build37'],
         },
         show_known_hits => {
             is => 'Boolean', default => 1,

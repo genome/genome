@@ -37,7 +37,7 @@ class Genome::Model::Tools::Hgmi::Finish {
         nr_db => {
             is => 'String',
             doc => "path to nr seq db",
-            default => "/gscmnt/ams1102/info/annotation/blastdb/gsc_bacterial/bacterial_nr/bacterial_nr"
+            example_values => ["/gscmnt/ams1102/info/annotation/blastdb/gsc_bacterial/bacterial_nr/bacterial_nr"]
         },
         locus => {
             is => 'String',

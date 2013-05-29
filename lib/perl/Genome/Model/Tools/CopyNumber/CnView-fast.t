@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 my $expected_results = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-CnView-fast/2012-12-03";
 ok(-d $expected_results, "test data dir is " . $expected_results)
@@ -34,11 +34,18 @@ ok(@diff == 0, "no differences between expected and actual results")
       diag(@diff);
    };
 
-my $file_check="-s $actual_results"."/CNView_CancerGeneCensusPlus_Sanger/chr21.jpeg";
-ok($file_check, "chr21.jpeg found with non-zero size")
+my $file_check1 = "$actual_results"."/CNView_CancerGeneCensusPlus_Sanger/Gains_chr21.jpeg";
+ok(-s $file_check1, "Gains_chr21.jpeg found with non-zero size")
   or do {
-      diag($file_check);
+      diag($file_check1);
    };
+
+my $file_check2 = "$actual_results"."/CNView_CancerGeneCensusPlus_Sanger/Losses_chr21.jpeg";
+ok(-s $file_check2, "Losses_chr21.jpeg found with non-zero size")
+  or do {
+      diag($file_check2);
+   };
+
 
 if (@ARGV == 1 and $ARGV[0] eq 'KEEP') {
   my $stash = "/tmp/last-failed-cnview-fast-test";

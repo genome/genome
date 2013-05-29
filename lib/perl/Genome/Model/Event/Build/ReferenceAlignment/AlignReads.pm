@@ -31,7 +31,11 @@ sub results_class {
 sub bsub_rusage {
     my $self = shift;
     my $delegate = $self->results_class;
-    my $rusage = $delegate->required_rusage(instrument_data=>$self->instrument_data);
+    my $rusage = $delegate->required_rusage(
+        instrument_data => $self->instrument_data,
+        reference_build => $self->model->reference_sequence_build,
+        aligner_params  => $self->model->processing_profile->read_aligner_params,
+    );
     return $rusage;
 }
 

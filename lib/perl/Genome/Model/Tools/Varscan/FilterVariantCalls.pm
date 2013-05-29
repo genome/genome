@@ -22,20 +22,79 @@ class Genome::Model::Tools::Varscan::FilterVariantCalls {
     is => 'Command',
 
     has => [                                # specify the command's single-value properties (parameters) <---
-        variant_file     => { is => 'Text', doc => "File containing varscan calls, e.g. status.varscan.snp" , is_optional => 0, is_input => 1},
-        output_file  => { is => 'Number', doc => "P-value threshold for high confidence", is_optional => 1, is_input => 1, default_value => '0.07'},
-        min_normal_freq => { is => 'Number', doc => "Minimum normal frequency", is_optional => 1, is_input => 1, default_value => '0'},
-        max_normal_freq => { is => 'Number', doc => "Maximum normal frequency", is_optional => 1, is_input => 1, default_value => '100'},
-        min_tumor_freq  => { is => 'Number', doc => "Minimum tumor frequency", is_optional => 1, is_input => 1, default_value => '20'},
-        max_tumor_freq  => { is => 'Number', doc => "Maximum tumor frequency", is_optional => 1, is_input => 1, default_value => '100'},
-        min_normal_cov  => { is => 'Number', doc => "Minimum normal coverage", is_optional => 1, is_input => 1, default_value => '10'},
-        min_tumor_cov  => { is => 'Number', doc => "Minimum tumor coverage", is_optional => 1, is_input => 1, default_value => '10'},        
-        skip_if_output_present => { is => 'Boolean', doc => "If set to 1, will not run if output is present" , is_optional => 1, is_input => 1, default_value => 0},
-        output_file => { is => 'Text', doc => 'Output file for filtered calls', is_optional => 1, is_input => 1 },
-
+        variant_file => {
+            is => 'Text',
+            doc => "File containing varscan calls, e.g. status.varscan.snp",
+            is_optional => 0,
+            is_input => 1,
+        },
+        output_file => {
+            is => 'Number',
+            doc => "P-value threshold for high confidence",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '0.07',
+        },
+        min_normal_freq => {
+            is => 'Number',
+            doc => "Minimum normal frequency",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '0',
+        },
+        max_normal_freq => {
+            is => 'Number',
+            doc => "Maximum normal frequency",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '100',
+        },
+        min_tumor_freq => {
+            is => 'Number',
+            doc => "Minimum tumor frequency",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '20',
+        },
+        max_tumor_freq => {
+            is => 'Number',
+            doc => "Maximum tumor frequency",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '100',
+        },
+        min_normal_cov => {
+            is => 'Number',
+            doc => "Minimum normal coverage",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '10',
+        },
+        min_tumor_cov => {
+            is => 'Number',
+            doc => "Minimum tumor coverage",
+            is_optional => 1,
+            is_input => 1,
+            default_value => '10',
+        },
+        skip_if_output_present => {
+            is => 'Boolean',
+            doc => "If set to 1, will not run if output is present",
+            is_optional => 1,
+            is_input => 1,
+            default_value => 0,
+        },
+        output_file => {
+            is => 'Text',
+            doc => 'Output file for filtered calls',
+            is_optional => 1,
+            is_input => 1,
+        },
     ],
     has_param => [
-        lsf_resource => { value => 'select[tmp>1000] rusage[tmp=1000]'},
+        lsf_resource => {
+            value => 'select[tmp>1000] rusage[tmp=1000]'
+        },
     ]
 };
 

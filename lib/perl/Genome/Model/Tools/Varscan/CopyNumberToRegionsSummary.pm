@@ -24,12 +24,20 @@ use Genome;                                 # using the namespace authorizes Cla
 my $undo_sd = 2;
 
 class Genome::Model::Tools::Varscan::CopyNumberToRegionsSummary {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		input_file 	=> { is => 'Text', doc => "Input file of regions followed by copy number", is_optional => 0 },
-		output_file 	=> { is => 'Text', doc => "Output file with summarized results", is_optional => 0 },
-	],
+    is => 'Command',
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        input_file => {
+            is => 'Text',
+            doc => "Input file of regions followed by copy number",
+            is_optional => 0,
+        },
+        output_file => {
+            is => 'Text',
+            doc => "Output file with summarized results",
+            is_optional => 0,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

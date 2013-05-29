@@ -6,28 +6,51 @@ use warnings;
 use Genome;
 
 class Genome::ProcessingProfile::Param {
-    type_name => 'processing profile param',
     table_name => 'PROCESSING_PROFILE_PARAM',
+    type_name => 'processing profile param',
     id_by => [
-        processing_profile => {
-            is => 'Genome::ProcessingProfile',
-            id_by => 'processing_profile_id',
-            constraint_name=> 'PPP_PP_FK',
+        processing_profile_id => {
+            is => 'Integer',
+            len => 11,
+            constraint_name => 'PPP_PP_FK',
         },
-        name                            => { is => 'Text', len => 255, column_name => 'NAME' },
-        value_class_name                => { is => 'Text', len => 255 },
-        value_id                        => { is => 'Text', len => 1000, column_name => 'VALUE_ID' },
+        name => {
+            is => 'Text',
+            len => 255,
+            column_name => 'PARAM_NAME',
+        },
+        value_id => {
+            is => 'Text',
+            len => 1000,
+            column_name => 'PARAM_VALUE',
+        },
     ],
     has => [
+        value_class_name => {
+            is => 'Text',
+            len => 255,
+        },
         value_obj => {
             is => 'UR::Object',
             id_by => 'value_id',
-            id_class_by => 'value_class_name'
+            id_class_by => 'value_class_name',
         },
-
-        # after the new API is released and old snapshots go away, invert the column assingments with those above
-        _new_name                       => { is => 'Text', len => 255, column_name => 'PARAM_NAME' },
-        _new_value                      => { is => 'Text', len => 1000, column_name => 'PARAM_VALUE' },
+        processing_profile => {
+            is => 'Genome::ProcessingProfile',
+            id_by => 'processing_profile_id',
+        },
+    ],
+    has_deprecated_optional => [
+        deprecated_name => {
+            is => 'Text',
+            len => 255,
+            column_name => 'NAME',
+        },
+        deprecated_value_class_id => {
+            is => 'Text',
+            len => 1000,
+            column_name => 'VALUE_ID',
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -54,14 +77,10 @@ sub create {
         $bx = $bx->add_filter(value_class_name => $value_class_name);
     }
 
-    my $self = $class->SUPER::create($bx);
-    return unless $self;
-    $self->_new_name($self->name);
-    $self->_new_value($self->value_id);
-    return $self;
+    return $class->SUPER::create($bx);
 }
 
-# this has the functionality of the old "value" accessor 
+# this has the functionality of the old "value" accessor
 # we wanted to ensure we were no longer dependent on it
 # ..but the HTML view needs something generic which will work
 sub _value_scalar_or_object {

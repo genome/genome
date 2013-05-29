@@ -9,43 +9,11 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-
-#Instructions for creating a new test result:
-#0.) Merge the master branch into your clinseq branch
-#1.) Then check this script to make sure that the test is being run on the data that you want: individual common name, wgs model, exome model, rnaseq model
-#2.) Log into a blade server and check the /tmp directory to make sure it does not already contain a set of clinseq results ('/tmp/last-clinseq-test-result/')
-#3.) Run the ClinSeq.t test without the RUN parameter to make sure it compiles and passes all tests.
-#4.) Run the ClinSeq.t test with the RUN parameter from your ClinSeq git branch
-#    $ cd lib/perl/Genome/Model
-#    $ ./ClinSeq.t RUN
-# - It will fail because the diff fails, but it will leave the results in a directory in /tmp.
-#5.) Move the test results to the main test results dir
-# - You will see the path of the comparision data, and you want to copy your new results from /tmp to a directory next-to the comparison one, but with a new date.
-# - Test results go here
-# - $ENV{GENOME_TEST_INPUTS}Genome-Model-ClinSeq/DATE
-#6.) Then you'll change the line in the test script to point to your new directory:
-# e.g.  my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2011-12-10';
-#7.) Run the test again and ensure it passes with "RUN"
-#    $ cd lib/perl/Genome/Model
-#    $ ./ClinSeq.t RUN
-#8.) Then commit and push changes to the clinseq branch
-#9.) Then commit, push, and merge into master.
-#    - The important thing is that the merge into master includes the code changes, and also the test change to point to a different comparison dir.
-
 use above "Genome";
 use Test::More;
+use Test::Exception;
 use Genome::Model::ClinSeq;
-
-my $dry_run;
-if (@ARGV and $ARGV[0] eq 'RUN') {
-    note("NOT A DRY RUN...");
-    $dry_run = 0;
-}
-else {
-    note("DRY RUN... put 'RUN' on the command line for this test to actually generate and compare results");
-    $dry_run = 1;
-}
-plan tests => 15;
+use Genome::Model::Build::Command::DiffBlessed;
 
 my $patient = Genome::Individual->get(common_name => "PNC6");
 ok($patient, "got the PNC6 patient");
@@ -115,41 +83,31 @@ my $b = $m->add_build(
 );
 ok($b, "created a new build");
 
-# we would normally do $build->start() but this is easier to debug minus workflow guts when you just call _execute_build
-if ($dry_run) {
-    my @errors = $b->validate_for_start;
-    is(scalar(@errors), 0, "build is valid to start")
-        or diag(join("\n",@errors));
-    my $wf = $b->_initialize_workflow("inline");
-    ok($wf, "workflow validates");
-    note("exiting without running the pipeline because RUN was not manually specified");
-}
-else {
-    # this is very slow, but tests the pipeline the same way the build tests test the pipeline
-    $ENV{PERL5LIB} = UR::Util->used_libs_perl5lib_prefix . "::" . $ENV{PERL5LIB};
-    $b->start(
-        server_dispatch => 'inline',
-        job_dispatch    => 'inline',
-    );
-    is($b->status, 'Succeeded', "build succeeded!");
+my $common_name = $b->common_name;
+my $expected_common_name = $m->expected_common_name;
+is($common_name, $expected_common_name, "common name $common_name on build matches expected $expected_common_name");
 
-    # perform a diff between the stored results and the newly generated directory of results
-    my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq/2012-11-27';
-    #print "\n\n$expected_data_directory\n\n";
-    
-    # add a masked version of the clonality tsv since it has non-deterministic output in the final column
-    my $mask_command = 'cat ' 
-        . $temp_dir 
-        . q{/PNC6/clonality/PNC6.clustered.data.tsv | perl -nae '$F[-1] = "?"; print join("\t",@F),"\n"' } 
-        . ' >| ' . $temp_dir . q{/PNC6/clonality/PNC6.clustered.data.tsv.testmasked};
-    Genome::Sys->shellcmd(cmd => $mask_command);
+my @errors = $b->validate_for_start;
+is(scalar(@errors), 0, "build is valid to start")
+    or diag(join("\n",@errors));
+my $wf = $b->_initialize_workflow("inline");
+ok($wf, "workflow validates");
 
-    #Exclude some files from the diff that tend to change when regenerated for the same build
-    my @diff = `diff -r --brief -x 'logs/*' -x 'build.xml' -x 'reports/*' -x '*.R' -x '*.pdf' -x '*.mutation-diagram.stderr' -x '*_COSMIC.svg' -x '*.clustered.data.tsv' -x 'SummarizeBuilds.log.tsv' -x 'DumpIgvXml.log.txt' $expected_data_directory $temp_dir`;
-    ok(@diff == 0, "no differences from expected results and actual")
-        or do { 
-            diag("differences are:");
-            diag(@diff);
-            Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-clinseq-test-result");
-        };
+# here perform checks on our file accessors
+# using the newly created build to verify that these exist
+# first create a build with a data directory of the expected test results dir
+#
+{
+my $b2 = Genome::Model::Build::Command::DiffBlessed::retrieve_blessed_build('apipe-test-clinseq-wer', '5.10' ) or die "Unable to grab blessed clinseq build";
+my $patient_name = $b2->common_name or die "Unable to grab a common name for blessed clinseq build";
+my $data_dir = $b2->data_directory or die "Unable to grab data_directory of blessed clinseq build";
+is( Genome::Model::ClinSeq::->patient_dir($b2), $data_dir . "/$patient_name", "patient directory returned as expected" ) or die "Patient dir test failed. Aborting testing";
+is( Genome::Model::ClinSeq::->snv_variant_source_file($b2,'wgs'), $data_dir . "/$patient_name/variant_source_callers/wgs/snv_sources.tsv", "wgs variant sources constructed as expected");
+dies_ok( sub { Genome::Model::ClinSeq::->snv_variant_source_file($b2,'nonsense') },  "nonsense data source for variant source type dies as expected");
+is( Genome::Model::ClinSeq::->clonality_dir($b2), $data_dir . "/$patient_name/clonality", "clonality directory returned as expected");
+is( Genome::Model::ClinSeq::->varscan_formatted_readcount_file($b2), $data_dir . "/$patient_name/clonality/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan", "varscan counts returned as expected");
+is( Genome::Model::ClinSeq::->cnaseq_hmm_file($b2), $data_dir . "/$patient_name/clonality/cnaseq.cnvhmm", "cnaseq file returned as expected");
 }
+
+done_testing()
+

@@ -23,8 +23,7 @@ class Genome::Model::Tools::Picard::MergeBamAlignment {
         reference_sequence => {
             is => 'Text',
             doc => 'Path to the fasta file for the reference sequence.',
-            default_value => '/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa',
-            is_optional => 1,
+            example_values => ['/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa'],
         },
         paired_run => {
             is => 'Boolean',
@@ -36,6 +35,12 @@ class Genome::Model::Tools::Picard::MergeBamAlignment {
             is => 'Integer',
             doc => 'The maximum number of insertions or deletions permitted for an alignment to be included. Alignments with more than this many insertions or deletions will be ignored. Default value: 1. This option can be set to \'null\' to clear the default value.',
             default_value => '0',
+            is_optional => 1,
+        },
+        primary_alignment_strategy =>{
+            is => 'Text',
+            doc => 'Strategy for selecting primary alignment when the aligner has provided more than one alignment for a pair or fragment, and none are marked as primary, more than one is marked as primary, or the primary alignment is filtered out for some reason. BestMapq expects that multiple alignments will be correlated with HI tag, and prefers the pair of alignments with the largest MAPQ, in the absence of a primary selected by the aligner. EarliestFragment prefers the alignment which maps the earliest base in the read. Note that EarliestFragment may not be used for paired reads. BestEndMapq is appropriate for cases in which the aligner is not pair-aware, and does not output the HI tag. It simply picks the alignment for each end with the highest MAPQ, and makes those alignments primary, regardless of whether the two alignments make sense together.MostDistant is also for a non-pair-aware aligner, and picks the alignment pair with the largest insert size. If all alignments would be chimeric, it picks the alignments for each end with the best MAPQ. For all algorithms, ties are resolved arbitrarily. Default value: BestMapq.',
+            valid_values => ['BestMapq', 'EarliestFragment', 'BestEndMapq', 'MostDistant'],
             is_optional => 1,
         },
     ],
@@ -66,6 +71,9 @@ sub execute {
         $merge_cmd .= ' PAIRED_RUN=true';
     } else {
         $merge_cmd .= ' PAIRED_RUN=false';
+    }
+    if (defined($self->primary_alignment_strategy)) {
+        $merge_cmd .= ' PRIMARY_ALIGNMENT_STRATEGY='. $self->primary_alignment_strategy;
     }
     $self->run_java_vm(
         cmd => $merge_cmd,

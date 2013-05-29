@@ -37,13 +37,13 @@ class Genome::Model::Tools::Somatic::FilterFalseIndels {
            is_output => 1,
            doc => 'Filename for variants that fail filter (optional)',
        },
-       'reference' => {
-            type => 'String',
-            default => '/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa',
+        'reference' => {
+            type => 'String',            
             is_optional => 1,
             is_input => 1,
-            doc => 'Reference sequence to use',
-       },       
+            doc => 'Reference sequence to use. Build 37: /gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa  Build 36: /gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa',
+            example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa', '/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa'],
+        },  
        'min_homopolymer' => {
             type => 'String',
             default => '4',

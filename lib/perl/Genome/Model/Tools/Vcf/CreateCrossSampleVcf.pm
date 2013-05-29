@@ -487,7 +487,7 @@ sub _resolve_builds {
         for my $model ($self->model_group->models) {
             unless ($model->isa('Genome::Model::ReferenceAlignment')) {
                 die $self->error_message("Model " . $model->__display_name__ . " of model group " . $self->model_group->__display_name__ .
-                    " is not a reference alignment model, it's a " . $model->class_name);
+                    " is not a reference alignment model, it's a " . $model->class);
             }
             my $build = $model->last_complete_build;
             if ($build) {

@@ -156,7 +156,7 @@ sub execute {
     # Also create a merged BED file where overlapping ROIs are joined together into contiguous regions
     # ::TODO:: Use joinx instead of mergeBed, because we'd rather add an in-house dependency
     my $merged_roi_bed = Genome::Sys->create_temp_file_path();
-    system( "mergeBed -i $roi_bed | joinx1.6 sort -s - -o $merged_roi_bed" );# or die "Failed to run mergeBed or joinx!\n$roi_bed\n$merged_roi_bed\n $!\n";
+    system( "mergeBed -i $roi_bed | joinx1.7 sort -s - -o $merged_roi_bed" );# or die "Failed to run mergeBed or joinx!\n$roi_bed\n$merged_roi_bed\n $!\n";
 
     # Create the output directories unless they already exist
     mkdir $roi_covg_dir unless( -e $roi_covg_dir );
@@ -177,7 +177,7 @@ sub execute {
         next unless( -e $wig_file );
 
         # Use joinx to parse the WIG file and return per-ROI coverages of AT, CG (non-CpG), and CpG
-        system( "joinx1.6 wig2bed -Zc $wig_file | joinx1.6 sort -s | joinx1.6 intersect -F \"I A3\" $roi_bed - | joinx1.6 ref-stats - $ref_seq | cut -f 1-7 > $roi_covg_dir/$sample.covg" );# or die "Failed to run joinx to calculate per-gene coverages in $sample! $!\n";
+        system( "joinx1.7 wig2bed -Zc $wig_file | joinx1.7 sort -s | joinx1.7 intersect -F \"I A3\" $roi_bed - | joinx1.7 ref-stats - $ref_seq | cut -f 1-7 > $roi_covg_dir/$sample.covg" );# or die "Failed to run joinx to calculate per-gene coverages in $sample! $!\n";
 
         # Read the joinx formatted coverage file and count covered bases per gene
         my %geneCovg = ();
@@ -210,7 +210,7 @@ sub execute {
 
         # Measure coverage stats on the merged ROI file, so that bps across the genome are not counted twice
         my $merged_roi_bed_covg = Genome::Sys->create_temp_file_path();
-        system( "joinx1.6 wig2bed -Zc $wig_file | joinx1.6 sort -s | joinx1.6 intersect $merged_roi_bed - | joinx1.6 ref-stats - $ref_seq | cut -f 1-6 > $merged_roi_bed_covg" );# or die "Failed to run joinx to calculate overall coverages in $sample! $!\n";
+        system( "joinx1.7 wig2bed -Zc $wig_file | joinx1.7 sort -s | joinx1.7 intersect $merged_roi_bed - | joinx1.7 ref-stats - $ref_seq | cut -f 1-6 > $merged_roi_bed_covg" );# or die "Failed to run joinx to calculate overall coverages in $sample! $!\n";
 
         # Read the joinx formatted coverage file and sum up the coverage stats per region
         my ( $tot_covd, $tot_at_covd, $tot_cg_covg, $tot_cpg_covd );

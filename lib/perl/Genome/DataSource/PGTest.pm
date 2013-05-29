@@ -33,6 +33,44 @@ sub _dbi_connect_args {
     return @connection;
 }
 
+# do not allow queries or connects when paused.
+
+sub create_iterator_closure_for_rule {
+  my $self = shift;
+  
+  $self->pause_db_queries_if_necessary();
+  
+  $self->SUPER::create_iterator_closure_for_rule(@_);
+}
+
+sub create_dbh {
+  my $self = shift;
+  $self->pause_db_queries_if_necessary();
+
+  
+  $self->SUPER::create_dbh(@_);
+}
+
+sub pause_db_queries_if_necessary {
+    my $self = shift;
+    return 1 unless $ENV{GENOME_DB_QUERY_PAUSE} and -e $ENV{GENOME_DB_QUERY_PAUSE};
+
+    print "Database querying has been paused; disconnecting db handles.  Please wait until the query pause is released...\n";
+
+    my @data_sources = UR::Context->all_objects_loaded('UR::DataSource::RDBMS');
+    for my $ds (@data_sources) {
+        $ds->disconnect_default_handle if $ds->has_default_handle;
+    }
+
+    while (1) {
+        sleep 30;
+        last unless $ENV{GENOME_DB_QUERY_PAUSE} and -e $ENV{GENOME_DB_QUERY_PAUSE};
+    }
+
+    print "Database updating has been resumed, continuing commit!\n";
+    return 1;
+}
+
 sub _sync_database {
     my $self = shift;
     my $dbh = $self->get_default_handle();

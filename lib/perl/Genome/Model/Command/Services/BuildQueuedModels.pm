@@ -121,7 +121,12 @@ sub execute {
     }
 
     $self->display_command_summary_report();
+
     $self->status_message("Tried to start up to $max_builds_to_start builds.");
+
+    if(not $self->_total_command_count) {
+        $self->status_message("No queued models found to start.");
+    }
 
     return !scalar(keys %{$self->_command_errors});
 }

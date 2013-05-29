@@ -8,12 +8,20 @@ use Genome;
 class Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData {
     is => 'Command::V2',
     has_input => [
-        build => { 
+        input_build => {
             is => 'Genome::Model::Build::MetagenomicComposition16s',
-            is_output => 1,
+            is_many => 1,
         },
         instrument_data => {
             is => 'Genome::InstrumentData',
+        },
+    ],
+    has_output => [
+        build => {
+            is => 'Genome::Model::Build::MetagenomicComposition16s',
+            calculate_from => ['input_build'],
+            calculate => sub { return $_[0]; }
+
         },
     ],
 };

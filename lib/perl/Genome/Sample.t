@@ -29,7 +29,6 @@ my $sample = Genome::Sample->create(
     cell_type        => 'primary',
     source           => $source,
     tissue_desc      => 'normal',
-    is_control       => 0,
     age => 99,
     body_mass_index => 22.4,
 );

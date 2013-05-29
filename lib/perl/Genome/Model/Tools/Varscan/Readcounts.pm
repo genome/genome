@@ -21,17 +21,41 @@ use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 
 class Genome::Model::Tools::Varscan::Readcounts {
-	is => 'Genome::Model::Tools::Varscan',
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		bam_file	=> { is => 'Text', doc => "Path to BAM file", is_optional => 0 },
-		samtools_path	=> { is => 'Text', doc => "Path to SAMtools executable", is_optional => 0, is_input => 1, default => "samtools" },
-		variants_file	=> { is => 'Text', doc => "Path to variant positions file", is_optional => 0 },
-		output_file	=> { is => 'Text', doc => "Path to output file" , is_optional => 0},
-		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs" , is_optional => 1, default_value => (Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')},
-		min_coverage	=> { is => 'Text', doc => "Minimum base coverage to report readcounts [8]" , is_optional => 1},
-		min_base_qual	=> { is => 'Text', doc => "Minimum base quality to count a read [30]" , is_optional => 1},
-	],
+    is => 'Genome::Model::Tools::Varscan',
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        bam_file => {
+            is => 'Text',
+            doc => "Path to BAM file",
+            is_optional => 0,
+        },
+        variants_file => {
+            is => 'Text',
+            doc => "Path to variant positions file",
+            is_optional => 0,
+        },
+        output_file => {
+            is => 'Text',
+            doc => "Path to output file",
+            is_optional => 0,
+        },
+        reference => {
+            is => 'Text',
+            doc => "Reference FASTA file for BAMs",
+            is_optional => 0,
+            example_values => [(Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')],
+        },
+        min_coverage => {
+            is => 'Text',
+            doc => "Minimum base coverage to report readcounts [8]",
+            is_optional => 1,
+        },
+        min_base_qual => {
+            is => 'Text',
+            doc => "Minimum base quality to count a read [30]",
+            is_optional => 1,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

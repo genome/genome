@@ -23,5 +23,8 @@ class Genome::Model::Build::Germline {
     ],
 };
 
-1;
+sub create {
+    die __PACKAGE__ . ' is deprecated.';
+}
 
+1;

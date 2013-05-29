@@ -5,47 +5,52 @@ use warnings;
 use Genome;
 
 class Genome::Library {
-    is => ['Genome::Notable','Genome::Searchable'],
+    is => [ "Genome::Notable", "Genome::Searchable" ],
+    table_name => 'FRAGMENT_LIBRARY',
     id_by => [
         library_id => {
             is => 'Number',
+            len => 20,
         },
     ],
     has => [
         name => {
             is => 'Text',
+            len => 64,
             column_name => 'FULL_NAME',
             doc => 'Name of the library. Usually has the sample name and an extension.',
         },
         sample_id => {
-            is => 'Text',
+            is => 'Number',
+            len => 20,
         },
         sample => {
             is => 'Genome::Sample',
             id_by => 'sample_id',
             doc => 'Sample that this library came from.',
+            constraint_name => 'FLIB_GS_FK',
         },
         sample_name => {
             is => 'Text',
             via => 'sample',
-            to => 'name'
+            to => 'name',
         },
     ],
     has_optional => [
         original_insert_size => {
             is => 'Text',
-            column_name => 'ORIGINAL_INSERT_SIZE',
-            doc => 'The original insert size of the fragments. This may be a number or a range.'
+            len => 64,
+            doc => 'The original insert size of the fragments. This may be a number or a range.',
         },
         library_insert_size => {
             is => 'Text',
-            column_name => 'LIBRARY_INSERT_SIZE',
-            doc => 'The relative insert size of fragments. This may be a number or a range.'
+            len => 64,
+            doc => 'The relative insert size of fragments. This may be a number or a range.',
         },
         protocol => {
             is => 'Text',
-            column_name => 'PROTOCOL',
-            doc => 'Protocol used to generate the library.'
+            len => 64,
+            doc => 'Protocol used to generate the library.',
         },
         taxon_id => {
             is => 'Number',
@@ -67,17 +72,17 @@ class Genome::Library {
         sample_source_name => {
             via => 'sample_source',
             to => 'name',
-            doc => 'Name of the sample\'s source'
+            doc => q(Name of the sample's source),
         },
         sample_source_id => {
             via => 'sample_source',
             to => 'id',
-            doc => 'ID of the sample\'s source'
+            doc => q(ID of the sample's source),
         },
         models => {
             is => 'Genome::Model',
             via => 'sample',
-            to => 'models',
+            is_many => 1,
             is_many => 1,
         },
         instrument_data => {
@@ -86,7 +91,6 @@ class Genome::Library {
             is_many => 1,
         },
     ],
-    table_name => 'FRAGMENT_LIBRARY',
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
 };

@@ -50,7 +50,8 @@ sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
     return unless $self;
-    if ($self->show =~ /\bdelete\b/) {
+    my $show = $self->show;
+    if (defined($show) and $show =~ /\bdelete\b/) {
         $self->delete;
         die "please don't use this to delete things\n";
     }
@@ -81,10 +82,11 @@ sub _split_width {
     my ($left, $right);
     while (@w) {
         my $w = shift @w;
-        $w = '' unless defined $w;
+        $w = '' unless (defined $w);
         if ( ! defined $left) {
             $left = $w
         } elsif ((length($left) + length($w)) >= $width) {
+            no warnings 'uninitialized';  # some remaining values of @w might be undef
             $right = join(' ', $w, @w);
             last;
         } else {
@@ -99,6 +101,8 @@ sub _reformat_doc_line_for_term_width {
     my $term_width = shift;
     my $indent = shift;
     my $doc_line = shift;
+
+    return $doc_line unless ($term_width && $indent);
 
     my $doc_width = $term_width - $indent - 2;
 

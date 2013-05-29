@@ -1,27 +1,5 @@
 package Genome::Model::Tools::Annotate::Sv::FusionTranscripts;
 
-# fusionGenes.pl
-#
-# Requires input file to be in BreakDancer format
-#
-#   Require both breakpoints to be in introns of different genes (for now)
-#   This should work for all events as long as we know relative orientations of the junction sequences
-# 
-# General Tactics:
-# Get BreakDancer line, get first and second breakpoint
-# Get every transcript that crosses breakpoint
-# Fusion is possible if there are different genes for transcripts
-# Require that both breakpoints are in introns
-# Need relative oriention of 'fused' sequences
-#     +- Both increasing (this will always be case for DEL)
-#     -+ Both decreasing
-#     ++ Increasing A, decreasing B
-#     -- Decreasing A, increasing B
-# Based on above, look at strands the genes are on and determine if a fusion transcript is possible
-# Look for fusion transcripts without frameshift
-
-
-
 use strict;
 use warnings;
 use Carp;
@@ -32,6 +10,7 @@ use Genome;
 
 class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
     is => 'Genome::Model::Tools::Annotate::Sv::Base',
+    doc => "Determine whether SV may cause transcript fusions",
     has_input => [
         fusion_output_file => {
             type => 'String',
@@ -48,7 +27,46 @@ class Genome::Model::Tools::Annotate::Sv::FusionTranscripts {
 #uses the first one (before ,).  But how to deal with the conflict of orientation of two like (++,-+) ? This won't be a problem for
 #somatic event because there is only one orientation (for tumor).
 
+sub help_detail {
+    return "This code predicts the potential transcript fusion between two breakpoints of the different 
+    genes and same genes. It is based on John Wallis's fusionGenes.pl with the addition of in-frame fusion for 
+    the same gene. Below is the general tactics commented in the original script:
 
+    1. Get sv line, get first and second beakpoint
+    2. Get every transcript that crosses breakpoint
+    3. Fusion is possible if there are different genes for transcripts
+    4. Require that both breakpoints are in introns
+    5. Need relative oriention of 'fused' sequences
+         +- Both increasing (this will always be case for DEL)
+         -+ Both decreasing
+         ++ Increasing A, decreasing B
+         -- Decreasing A, increasing B
+    6. Based on above, look at strands the genes are on and determine if a fusion transcript is possible
+    7. Look for fusion transcripts without frameshift
+    
+For the case of the same gene fusion, two fused transcripts must be the same and the number difference of two exon ordinals must be > 1 (like exon3 -> exon5).
+
+In the fusion-transcripts output, each fusion event has a set of results formatted as following mock example:
+
+    \$mRNA_a   PPSGLLTPLHLEGLVQFQDVSFAYPNRPDVLVLQ
+    \$mRNA_b   TTIMAVEF
+
+    6    32815568    6    32816364    INV    [PSMB9 TAP1]|[PSMB9 TAP1]
+    PPSGLLTPLHLEGLVQFQDVSFAYPNRPDVLVLQ \| TTIMAVEF
+    <TAP1_ENST00000354258> [32821755]GAGAAGG<utr_exon1> [32821594][32821593]ATGGCTGAGC<cds_exon1> 
+    [32820816][32820279]GCCAG <cds_exon2> [32820165] \| <PSMB9_ENST00000395330><cds_exon2> [32823924]
+    ATGGCAGTGGAGTTTGACGGGGGCGTTGTGATGGGTTCTGATTCCCGAGTGTCTGCAGG[32823982] <utr_exon6> [32827310]
+    AAACTCTCTAGGGCCAAAA[32827362]
+
+
+* \$mRNA_a shows the amino acid sequence by transcript on left side of fusion point, while \$mRNA_b shows the amino acid sequence by transcript on right side of fusion point.
+
+** The headers of '6    32815568    6    32816364    INV    [PSMB9 TAP1]|[PSMB9 TAP1]' are: chromosomeA  breakpointA  chromosomeB breakpointB  eventType  FusionGenes
+
+*** 'PPSGLLTPLHLEGLVQFQDVSFAYPNRPDVLVLQ | TTIMAVEF' is the fused amino acid sequence and '|' is the fusion point.
+
+**** The last part is the detailed sequence with coordinates of each substructure. It starts with <GeneName_TranscriptName> on left end , then coordinates and sequences and names of substructures (only list utr_exon and cds_exon) all the way to the fusion point '|', then <GeneName_TranscriptName> on right side of fusion point, then coordinates and sequences and names of substructures all the way to the right end utr_exon.";
+}
 
 sub process_breakpoint_list {
     my ($self, $breakpoints_list) = @_;
@@ -72,11 +90,11 @@ sub process_breakpoint_list {
 	        next unless $aTranscriptRef and @$aTranscriptRef > 0 and $bTranscriptRef and @$bTranscriptRef > 0;
 	    
 	        # See if there are different or same genes crossing the breakpoints
-	        my $aGeneNameRef = geneNames($aTranscriptRef);
-	        my $bGeneNameRef = geneNames($bTranscriptRef);
-            my $fusionProteinRef = getAllInFrameFusions($aTranscriptRef, $item->{bpA}, $bTranscriptRef, $item->{bpB}, $item->{orient}, $out_fh);
+            my $fusionProteinRef = $self->getAllInFrameFusions($aTranscriptRef, $item->{bpA}, $bTranscriptRef, $item->{bpB}, $item->{orient}, $out_fh);
 
 	        if ( defined $fusionProteinRef && scalar(keys%{$fusionProteinRef}) >= 1 ) {
+                my $aGeneNameRef = geneNames($aTranscriptRef);
+	            my $bGeneNameRef = geneNames($bTranscriptRef);
                 my $aGenes = join ' ', sort keys %$aGeneNameRef;
                 my $bGenes = join ' ', sort keys %$bGeneNameRef;
                 my $fusion = '['.$aGenes.']|['.$bGenes.']';
@@ -107,21 +125,21 @@ sub getAllInFrameFusions {
     # Check to see if relative orientation of sequences and genes make a fusion on one strand
     # Only include the fusions that are still in frame after putting the exons together
 
-    my ($aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation, $out_fh) = @_;
+    my ($self, $aTranscriptRef, $bpA, $bTranscriptRef, $bpB, $junctionOrientation, $out_fh) = @_;
     my (%allFusions, %uniq); 
 	  
-    for my $aTranscript ( @{$aTranscriptRef} ) {
+    for my $aTranscript ( @$aTranscriptRef ) {
 	    # Confirm breakpoint is in an intron
-	    my $substructureA = substructureWithBreakpoint($aTranscript, $bpA);
-        next if $substructureA !~ /intron/;
+	    my $substructureA = $self->substructureWithBreakpoint($aTranscript, $bpA);
+        next unless $substructureA and $substructureA =~ /intron/;
 
         my $a_gene_name       = $aTranscript->gene_name;
         my $a_transcript_name = $aTranscript->transcript_name;
 
-	    for my $bTranscript ( @{$bTranscriptRef} ) {
+	    for my $bTranscript ( @$bTranscriptRef ) {
 	        # Confirm breakpoint is in an intron
-	        my $substructureB = substructureWithBreakpoint($bTranscript, $bpB);
-            next if $substructureB !~ /intron/;
+	        my $substructureB = $self->substructureWithBreakpoint($bTranscript, $bpB);
+            next unless $substructureB and $substructureB =~ /intron/;
 
             my $b_gene_name       = $bTranscript->gene_name;
             my $b_transcript_name = $bTranscript->transcript_name;
@@ -240,8 +258,9 @@ sub processedMessage {
     # For 3' part of message, need to include utr_exon that occur after breakpoint and before first cds_exon
 
     my ( $transcript, $position, $startOrEnd ) = @_;
-    my $gene = $transcript->gene_name; my $transcriptName = $transcript->transcript_name;
-    my @ss   = $transcript->ordered_sub_structures;
+    my $gene           = $transcript->gene_name; 
+    my $transcriptName = $transcript->transcript_name;
+    my @ss             = $transcript->ordered_sub_structures;
 
     my $mRNA = "";
     my $rnaWithCoordinates = "";
@@ -387,7 +406,7 @@ sub substructureWithBreakpoint {
     # and the number of coding exons before the substructure (does not utr_exon as coding)
     # type.cds_exons_before
     
-    my ($transcript, $position) = @_;
+    my ($self, $transcript, $position) = @_;
     my @subStructures = $transcript->ordered_sub_structures;
 
     for my $structure (@subStructures) {
@@ -395,7 +414,8 @@ sub substructureWithBreakpoint {
 	        return $structure->{structure_type}.$structure->{cds_exons_before};
         }
     }
-    confess "'$position' is not in transcript";
+    $self->warning_message("$position is not found in gene: ".$transcript->gene_name.'  transcript: '.$transcript->transcript_name);
+    return;
 }
 
 

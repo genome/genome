@@ -16,8 +16,6 @@ use Carp;
 
 use Bio::DB::Fasta;
 
-#            default  => '/gscmnt/sata835/info/medseq/imported_variations/dbSNP/130/',
-
 class Genome::Model::Tools::Annotate::LookupVariants {
     is  => 'Genome::Model::Tools::Annotate',
     has => [
@@ -53,7 +51,7 @@ class Genome::Model::Tools::Annotate::LookupVariants {
             type     => 'Text',
             is_optional => 1,
             doc      => "path to dbSNP files broken into chromosome",
-            default => '/gscmnt/sata835/info/medseq/model_data/2857166586/ImportedVariations/tmp',
+            example_values => ['/gscmnt/sata835/info/medseq/model_data/2857166586/ImportedVariations/tmp'],
         },
         dbSNP_version => {
             type    => 'Int',
@@ -111,7 +109,7 @@ class Genome::Model::Tools::Annotate::LookupVariants {
             type     => 'Text',
             is_optional => 1,
             doc      => "path to allele frequency directory... this defaults to human from dbsnp 129 data. Mouse is available at /gscmnt/sata835/info/medseq/model_data/2857225771/ImportedVariations/frequencies",
-            default => '/gscmnt/sata835/info/medseq/model_data/2857282699/ImportedVariations/frequencies',
+            example_values => ['/gscmnt/sata835/info/medseq/model_data/2857282699/ImportedVariations/frequencies'],
         },
         organism => {
             type  =>  'String',

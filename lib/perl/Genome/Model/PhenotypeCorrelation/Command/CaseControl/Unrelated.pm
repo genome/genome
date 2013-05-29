@@ -288,7 +288,7 @@ sub _create_workflow {
         # Run VEP
         vep => {
             name => "VEP annotation",
-            #class => "Genome::Db::Ensembl::Vep",
+            #class => "Genome::Db::Ensembl::Command::Vep",
             class => "Genome::Model::PhenotypeCorrelation::Command::ParallelVep",
             inputs => {
                 input_vcf => $multisample_vcf,
@@ -386,7 +386,7 @@ sub _create_workflow {
                 permutations => "1",
                 trv_types => "ALL",
                 p_value_permutations => 1,  #not a general case desirable
-                use_bsub => 1,
+                use_bsub => !$ENV{WF_USE_FLOW},
                 aggregate_only => 0,
             },
             inputs_from => {

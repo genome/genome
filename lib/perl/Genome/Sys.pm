@@ -26,6 +26,35 @@ our $VERSION = $Genome::VERSION;
 
 class Genome::Sys {};
 
+sub concatenate_files {
+    my ($self,$inputs,$output) = @_;
+    unless (ref($inputs) and $output) {
+        die 'expected \\@input_files $output_file as parameters';
+    }
+    my ($quoted_output_file, @quoted_input_files) = $self->quote_for_shell($output,@$inputs);
+    Genome::Sys->shellcmd(cmd => "cat @quoted_input_files >$quoted_output_file");
+}
+
+sub quote_for_shell {
+    # this is needed until shellcmd supports an array form,
+    # which is difficult because we go to a bash sub-shell by default
+    my $class = shift;
+    my @quoted = @_;
+    for my $value (@quoted) {
+        $value =~ s|\\|\\\\|g;
+        $value =~ s/\"/\\\"/g;
+        $value = "\"${value}\"";
+        print STDERR $value,"\n";
+    }
+    if (wantarray) {
+        return @quoted
+    }
+    else {
+        return $quoted[0];
+    }
+}
+
+
 sub disk_usage_for_path {
     my $self = shift;
     my $path = shift;
@@ -334,6 +363,42 @@ sub sw_path {
     }
 
     die $class->error_message("Failed to find app $app_name (package $pkg_name) at version $version!");
+}
+
+sub jar_path {
+    my ($class, $jar_name, $version) = @_;
+    # check the default path
+    my %map = $class->jar_version_path_map($jar_name);
+    my $path = $map{$version};
+    if ($path) {
+        return $path;
+    }
+    die $class->error_message("Failed to find jar $jar_name at version $version");
+}
+
+sub jar_version_path_map {
+    my ($class, $pkg_name) = @_;
+
+    my %versions;
+    my @dirs = split(':', $ENV{GENOME_JAR_PATH});
+
+    for my $dir (@dirs) {
+        my $prefix = "$dir/$pkg_name-";
+        my @version_paths = grep { -e $_ } glob("$prefix*");
+        next unless @version_paths;
+        my $prefix_len = length($prefix);
+        for my $version_path (@version_paths) {
+            my $version = substr($version_path,$prefix_len);
+            $version =~ s/.jar$//;
+            if (substr($version,0,1) eq '-') {
+                $version = substr($version,1);
+            }
+            next unless $version =~ /[0-9\.]/;
+            next if -l $version_path;
+            $versions{$version} = $version_path;
+        }
+    }
+    return %versions;
 }
 
 sub sw_version_path_map {
@@ -747,8 +812,12 @@ sub create_directory {
     return $directory if -d $directory;
 
     my $errors;
+    # have to set umask, make_path's mode/umask option is not sufficient
+    my $umask = umask;
+    umask 0002;
     # make_path may throw its own exceptions...
-    File::Path::make_path($directory, { mode => 02775, group => $ENV{GENOME_SYS_GROUP}, error => \$errors });
+    File::Path::make_path($directory, { group => $ENV{GENOME_SYS_GROUP}, error => \$errors });
+    umask $umask;
 
     if ($errors and @$errors) {
         my $message = "create_directory for path $directory failed:\n";
@@ -1189,12 +1258,14 @@ sub shellcmd {
     my $cmd                          = delete $params{cmd};
     my $output_files                 = delete $params{output_files};
     my $input_files                  = delete $params{input_files};
-    my $output_directories           = delete $params{output_directories} ;
+    my $output_directories           = delete $params{output_directories};
     my $input_directories            = delete $params{input_directories};
     my $allow_failed_exit_code       = delete $params{allow_failed_exit_code};
     my $allow_zero_size_output_files = delete $params{allow_zero_size_output_files};
     my $allow_zero_size_input_files  = delete $params{allow_zero_size_input_files};
     my $skip_if_output_is_present    = delete $params{skip_if_output_is_present};
+    my $redirect_stdout              = delete $params{redirect_stdout};
+    my $redirect_stderr              = delete $params{redirect_stderr};
     my $dont_create_zero_size_files_for_missing_output =
         delete $params{dont_create_zero_size_files_for_missing_output};
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
@@ -1271,17 +1342,38 @@ sub shellcmd {
         # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
         # Export SHELLOPTS ensures that if there are nested "bash -c"'s, each will inherit pipefail
         $t1 = time();
-        my $exit_code = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
-        my $child_exit_code = $exit_code >> 8;
+        my $system_retval;
+        eval {
+                open my $savedout, '>&', \*STDOUT || die "Can't dup STDOUT: $!";
+                open my $savederr, '>&', \*STDERR || die "Can't dup STDERR: $!";
+                my $restore = UR::Util::on_destroy(sub {
+                    open(STDOUT, '>&', $savedout);
+                    open(STDERR, '>&', $savederr);
+                });
+
+                if ($redirect_stdout) {
+                    open(STDOUT, '>', $redirect_stdout) || die "Can't redirect stdout to $redirect_stdout: $!";
+                }
+                if ($redirect_stderr) {
+                    open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
+                }
+                $system_retval = system('bash', '-c', "set -o pipefail; export SHELLOPTS; $cmd");
+                print STDOUT "\n"; # add a new line so that bad programs don't break TAP, etc.
+        };
+        my $exception = $@;
+        if ($exception) {
+            Carp::croak("EXCEPTION RUNNING COMMAND. Failed to execute: $cmd\n\tException was: $exception");
+        }
+        my $child_exit_code = $system_retval >> 8;
         $t2 = time();
         $elapsed = $t2-$t1;
 
-        if ( $exit_code == -1 ) {
+        if ( $system_retval == -1 ) {
             Carp::croak("ERROR RUNNING COMMAND. Failed to execute: $cmd\n\tError was: $!");
 
-        } elsif ( $exit_code & 127 ) {
-            my $signal = $exit_code & 127;
-            my $withcore = ( $exit_code & 128 ) ? 'with' : 'without';
+        } elsif ( $system_retval & 127 ) {
+            my $signal = $system_retval & 127;
+            my $withcore = ( $system_retval & 128 ) ? 'with' : 'without';
             Carp::croak("COMMAND KILLED. Signal $signal, $withcore coredump: $cmd");
 
         } elsif ($child_exit_code != 0) {

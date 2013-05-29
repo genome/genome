@@ -133,6 +133,17 @@ sub __errors__ {
   return @errors;
 }
 
+sub _initialize_build {
+    my $self = shift;
+    my $build = shift;
+
+    # this is currently tracked as a metric on the build but it should really be an output/metric
+    my $common_name = $self->expected_common_name;
+    $build->common_name($common_name);
+
+    return 1;
+}
+
 #MAP WORKFLOW INPUTS
 sub map_workflow_inputs {
     my $self = shift;
@@ -140,14 +151,17 @@ sub map_workflow_inputs {
 
     my $data_directory = $build->data_directory;
 
+    # inputs
     my $wgs_build           = $build->wgs_build;
     my $exome_build         = $build->exome_build;
     my $tumor_rnaseq_build  = $build->tumor_rnaseq_build;
     my $normal_rnaseq_build = $build->normal_rnaseq_build;
-
-    # this is currently tracked as an input on the build but it should really be an output/metric
-    my $common_name = $self->expected_common_name;
-    $build->common_name($common_name);
+    
+    # set during build initialization
+    my $common_name         = $build->common_name;
+    unless ($common_name) {
+        die "no common name set on build during initialization?";
+    }
 
     # initial inputs used for various steps
     my @inputs = (
@@ -209,8 +223,8 @@ sub map_workflow_inputs {
       push @inputs, (
           mutation_diagram_outdir => $mutation_diagram_dir,
           mutation_diagram_collapse_variants=>1, 
-          mutation_diagram_max_snvs_per_file=>750, 
-          mutation_diagram_max_indels_per_file=>750
+          mutation_diagram_max_snvs_per_file=>1500, 
+          mutation_diagram_max_indels_per_file=>1500,
       );
     }
 
@@ -967,8 +981,83 @@ sub files_ignored_by_build_diff {
         .*/mutation-spectrum/exome/summarize_mutation_spectrum/summarize-mutation-spectrum.stderr
         .*/mutation-spectrum/wgs/summarize_mutation_spectrum/summarize-mutation-spectrum.stderr
         .*LIMS_Sample_Sequence_QC_library.tsv
+        .*.R.stderr
     );
 };
+
+# Below are some methods to retrieve files from a build
+# Ideally they would be tied to creation of these file paths, but they currently 
+# throw an exception if the files don't exist. Consider another approach...
+sub patient_dir {
+    my ($class, $build) = @_;
+    unless($build->common_name) {
+        die $class->error_message("Common name is not defined.");
+    }
+    my $patient_dir = $build->data_directory . "/" . $build->common_name;
+    unless(-d $patient_dir) {
+        die $class->error_message("ClinSeq patient directory not found. Expected: $patient_dir");
+    }
+    return $patient_dir;
+}
+
+sub snv_variant_source_file {
+    my ($class, $build, $data_type,) = @_;
+
+    my $patient_dir = $class->patient_dir($build);
+    my $source = $patient_dir . "/variant_source_callers";
+    my $exception;
+    if(-d $source) {
+       my $dir = $source . "/$data_type";
+       if(-d $dir) {
+           my $file = $dir . "/snv_sources.tsv";
+           if(-e $file) {
+               return $file;
+           }
+           else {
+               $exception = $class->error_message("Expected $file inside $dir and it did not exist.");
+           }
+       }
+       else {
+           $exception = $class->error_message("$data_type sub-directory not found in $source."); 
+       }
+    }
+    else {
+        $exception = $class->error_message("$source directory not found");
+    }
+    die $exception;
+}
+
+sub clonality_dir {
+    my ($class, $build) = @_;
+
+    my $patient_dir = $class->patient_dir($build);
+    my $clonality_dir = $patient_dir . "/clonality";
+    
+    unless(-d $clonality_dir) {
+        die $class->error_message("Clonality directory does not exist. Expected: $clonality_dir");
+    }
+    return $clonality_dir;
+}
+
+sub varscan_formatted_readcount_file {
+    my ($class, $build) = @_;
+    my $clonality_dir = $class->clonality_dir($build);
+    my $readcount_file = $clonality_dir ."/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan";
+    unless(-e $readcount_file) {
+        die $class->error_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
+    }
+    return $readcount_file;
+}
+
+sub cnaseq_hmm_file {
+    my ($class, $build) = @_;
+    my $clonality_dir = $class->clonality_dir($build);
+    my $hmm_file = $clonality_dir . "/cnaseq.cnvhmm";
+    unless(-e $hmm_file) {
+        die $class->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
+    }
+    return $hmm_file;
+}
 
 1;
 

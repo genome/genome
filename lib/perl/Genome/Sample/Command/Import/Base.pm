@@ -10,46 +10,71 @@ class Genome::Sample::Command::Import::Base {
     is_abstract => 1,
     doc => 'Import samples from known sources',
     has => [
+        name => {
+            is => 'Text',
+            doc => 'Sample name. Source name will be derived from the sample name. The typical format is "NOMENCLATURE-SOURCE_ID/NAME-SAMPLE_ID/NAME, but may vary based on source.',
+        },
+        extraction_type => {
+            is => 'Text',
+            default_value => 'genomic dna',
+            valid_values => [ 'cdna', 'genomic dna', 'ipr product', 'rna', 'total rna', ],
+            doc => 'The extraction type of the sample.',
+        },
+    ],
+    has_optional => [
+        individual_attributes => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'Additional attributes to add to the individual. Give as key value pairs. Separate key and value with an equals (=) and pairs with a comma (,). Ex: attr1=val1,attr2=val2',
+        },
+        sample_attributes => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'Additional attributes to add to the sample. Give as key value pairs. Separate key and value with an equals (=) and pairs with a comma (,). Ex: attr1=val1,attr2=val2',
+        },
+    ],
+    has_optional_transient => [
+        # taxon
         _taxon => { is => 'Genome::Taxon', is_optional => 1, },
+        # source
         _individual => { is => 'Genome::Individual', is_optional => 1, },
+        _individual_name => { is => 'Text', },
+        # sample
         _sample => { is => 'Genome::Sample', is_optional => 1, },
+        # library
         _library => { is => 'Genome::Library', is_optional => 1, },
+        # misc
         _created_objects => { is => 'ARRAY', is_optional => 1, },
+        _minimum_unique_source_name_parts => { is => 'Number', default_value => 2, },
     ],
 };
 
-sub help_brief {
-    return 'import samples from known sources';
-}
-
 sub help_detail {
-    return help_brief();
+    return;
 }
 
-sub _update_object {
-    my ($self, $obj, %params) = @_;
+sub execute {
+    my $self = shift;
+    $self->status_message('Import '.$self->nomenclature.' sample...');
 
-    $self->status_message('Update '.$obj->name.' ('.$obj->id.')');
-    my $force = delete $params{__force__};
-    $self->status_message('Force is '.($force ? 'on' : 'off'));
-    $self->status_message('Params: '._display_string_for_params(\%params));
+    my $individual_name_ok = $self->_validate_name_and_set_individual_name;
+    return if not $individual_name_ok;
 
-    for my $attr ( keys %params ) {
-        my $val = $obj->$attr;
-        if ( defined $val and not $force ) {
-            $self->status_message("Not updating '$attr' for ".$obj->id." because it already has a value ($val)");
-            next;
-        }
-        $obj->$attr( $params{$attr} );
-    }
+    my %individual_attributes = $self->_resolve_individual_attributes;
+    return if not %individual_attributes;
 
-    if ( not UR::Context->commit ) {
-        $self->_bail('Cannot commit updates');
-        return;
-    }
+    my %sample_attributes = $self->_resolve_sample_attributes;
+    return if not %sample_attributes;
 
-    $self->status_message('Update...OK');
+    my $import = $self->_import(
+        taxon => $self->taxon_name,
+        individual => \%individual_attributes,
+        sample => \%sample_attributes,
+        library => 'extlibs',
+    );
+    return if not $import;
 
+    $self->status_message('Import sample...OK');
     return 1;
 }
 
@@ -81,8 +106,8 @@ sub _import {
     if ( $sample ) {
         $self->_sample($sample);
         $self->status_message('Found sample: '.join(' ', map{ $sample->$_ } (qw/ id name/)));
-        if ( %$sample_params ) { # got additional params - try to update
-            my $update = $self->_update_object($sample, %$sample_params);
+        if ( %$sample_params ) { # got additional attributes - try to update
+            my $update = $self->_update_attributes($sample, %$sample_params);
             return if not $update;
         }
     }
@@ -112,7 +137,7 @@ sub _import {
         $sample->source_id( $individual->id );
     }
     if ( $sample->source_id ne $individual->id ) {
-        $self->_bail('Sample ('.$sample->id.') source id ('.$sample->source_id.') does not match found individual ('.$individual->id.')');
+        $self->error_message('Sample ('.$sample->id.') source id ('.$sample->source_id.') does not match found individual ('.$individual->id.')');
         return;
     }
 
@@ -120,7 +145,7 @@ sub _import {
         $sample->source_type( $individual->subject_type );
     }
     if ( $sample->source_id ne $individual->id ) {
-        $self->_bail('Sample ('.$sample->id.') source type ('.$sample->source_type.') does not match individual ('.$individual->subject_type.')');
+        $self->error_message('Sample ('.$sample->id.') source type ('.$sample->source_type.') does not match individual ('.$individual->subject_type.')');
         return;
     }
 
@@ -129,6 +154,26 @@ sub _import {
     return if not $library;
 
     return 1;
+}
+
+sub _validate_name_and_set_individual_name {
+    my $self = shift;
+    $self->status_message('Validate sample name and resolve individual name...');
+
+    my $name_regexp = $self->name_regexp;
+    my $name = $self->name;
+    $self->status_message('Sample name: '.$name);
+    $self->status_message('Sample regexp: '.$name_regexp);
+    if ( $name !~ /$name_regexp/ ) {
+        $self->error_message("Name ($name) is invalid!");
+        return;
+    }
+    my $individual_name = $1;
+    $self->status_message('Individual name: '.$individual_name);
+    $self->_individual_name($individual_name);
+
+    $self->status_message('Validate sample name and resolve individual name...done');
+    return 1
 }
 
 sub _get_individual {
@@ -144,7 +189,7 @@ sub _get_individual {
 
     my %individuals_from_similar_samples;
     my @tokens = split('-', $sample->name);
-    my $min_unique_name_parts = $self->_minimum_unique_name_parts - 1;
+    my $min_unique_name_parts = $self->_minimum_unique_source_name_parts - 1;
     for ( my $i = $#tokens - 1; $i > $min_unique_name_parts; $i--  ) { # go down to 2 levels
         my $extraction_label = join('-', @tokens[0..$i]);
         my @samples = Genome::Sample->get('extraction_label like' => $extraction_label.'%');
@@ -160,7 +205,7 @@ sub _get_individual {
     if ( %individuals_from_similar_samples ) {
         my %individuals = map { $_->id => $_ } values %individuals_from_similar_samples;
         if ( keys %individuals > 1 ) {
-            $self->_bail("Found multiple individuals for similar samples: ".join(' ', keys %individuals));
+            $self->error_message("Found multiple individuals for similar samples: ".join(' ', keys %individuals));
             return;
         }
         my ($individual) = values %individuals;
@@ -170,10 +215,6 @@ sub _get_individual {
     my $individual_for_given_upn = Genome::Individual->get(upn => $upn);
     return if not $individual_for_given_upn;
     return $self->_individual($individual_for_given_upn);
-}
-
-sub _minimum_unique_name_parts {
-    return 2;
 }
 
 sub _create_individual {
@@ -192,13 +233,7 @@ sub _create_individual {
     my $transaction = UR::Context::Transaction->begin();
     my $individual = Genome::Individual->create(%params);
     if ( not defined $individual ) {
-        $self->_bail('Could not create individual');
-        return;
-    }
-
-    #if ( not UR::Context->commit ) {
-    if ( not $transaction->commit ) {
-        $self->_bail('Cannot commit new individual to DB');
+        $self->error_message('Could not create individual');
         return;
     }
 
@@ -225,12 +260,7 @@ sub _create_sample {
     $self->status_message('Sample params: '._display_string_for_params(\%params));
     my $sample = Genome::Sample->create(%params);
     if ( not defined $sample ) {
-        $self->_bail('Cannot create sample');
-        return;
-    }
-
-    if ( not UR::Context->commit ) {
-        $self->_bail('Cannot commit new sample to DB');
+        $self->error_message('Cannot create sample');
         return;
     }
 
@@ -288,12 +318,7 @@ sub _create_library_for_extension {
     $self->status_message('Library params: '._display_string_for_params(\%params));
     my $library = Genome::Library->create(%params);
     if ( not $library ) {
-        $self->_bail('Cannot not create library to import sample');
-        return;
-    }
-
-    unless ( UR::Context->commit ) {
-        $self->_bail('Cannot commit new library to DB');
+        $self->error_message('Cannot not create library to import sample');
         return;
     }
 
@@ -306,27 +331,6 @@ sub _create_library_for_extension {
     return $self->_library($library);
 }
 
-sub _bail {
-    my ($self, $msg) = @_;
-
-    $self->error_message($msg);
-
-    my $created_objects = $self->_created_objects;
-    return if not defined $created_objects;
-
-    $self->status_message('Encountered an error, removing newly created objects.');
-
-    for my $obj ( @$created_objects ) { 
-        my $transaction = UR::Context::Transaction->begin();
-        $obj->delete;
-        if ( not $transaction->commit ) {
-            $self->status_message('Cannot commit removal of '.ref($obj).' '.$obj->id);
-        }
-    }
-
-    return 1;
-}
-
 sub _display_string_for_params {
     my ($params) = shift;
 
@@ -336,6 +340,92 @@ sub _display_string_for_params {
     }
 
     return $string;
+}
+
+sub _resolve_individual_attributes {
+    my $self = shift;
+    my %attributes = (
+        nomenclature => $self->nomenclature,
+        name => $self->_individual_name,
+        upn => $self->_individual_name,
+    );
+    return if not $self->_resolve_attributes('individual', \%attributes);
+    return %attributes;
+}
+
+sub _resolve_sample_attributes {
+    my $self = shift;
+    my %attributes = (
+        nomenclature => $self->nomenclature,
+        name => $self->name,
+        extraction_label => $self->name,
+        cell_type => 'unknown',
+    );
+    return if not $self->_resolve_attributes('sample', \%attributes);
+    $attributes{extraction_type} = $self->extraction_type if not defined $attributes{extraction_type};
+    return %attributes;
+}
+
+sub _resolve_attributes {
+    my ($self, $type, $attributes) = @_;
+
+    my $attributes_method = $type.'_attributes';
+    my @additional_attributes = $self->$attributes_method;
+    if ( @additional_attributes ) {
+        no warnings;
+        my %additional_attributes = map { split('=') } @additional_attributes;
+        use warnings;
+
+        for my $label ( keys %additional_attributes ) {
+            if ( defined $additional_attributes{$label} ) {
+                $attributes->{$label} = $additional_attributes{$label};
+            }
+            else {
+                $self->error_message(ucfirst($type)." attribute label ($label) does not have a value!");
+                return;
+            }
+        }
+    }
+
+    my $attribute_names_method = '_'.$type.'_attribute_names';
+    my $names = eval{ $self->$attribute_names_method; };
+    for my $name ( @$names ) {
+        my $value = eval{ $self->$name; };
+        if ( $@ ) {
+            $self->error_message($@);
+            return;
+        }
+        next if not defined $value;
+        $name =~ s/^$type\_//; # attributes may have the same name, like common_name, so remove the type in front
+        $attributes->{$name} = $value;
+    }
+
+    return 1;
+}
+
+sub _update_attributes {
+    my ($self, $obj, %attributes) = @_;
+
+    $self->status_message('Update '.$obj->name.' ('.$obj->id.')');
+    my $force = delete $attributes{__force__};
+    $self->status_message('Force is '.($force ? 'on' : 'off'));
+    $self->status_message('Params: '._display_string_for_params(\%attributes));
+
+    for my $label ( keys %attributes ) {
+        my $value = eval{ $obj->attributes(attribute_label => $label)->attribute_value; };
+        if ( defined $value ) {
+            $self->status_message("Not updating '$label' for ".$obj->id." because it already has a value ($value)");
+            next;
+        }
+        $obj->add_attribute(
+            attribute_label => $label,
+            attribute_value => $attributes{$label},
+            nomenclature => $self->nomenclature,
+        );
+    }
+
+    $self->status_message('Update...OK');
+    return 1;
 }
 
 1;

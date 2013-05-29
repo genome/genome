@@ -28,7 +28,7 @@ sub test_snvs{
     ok (-s $annotation_file, "snv output file exists and has size at $annotation_file");
     ok (-r $annotation_file, "snv variants file is readable by the user running this test $annotation_file");
 
-    my ($output_fh, $output_file) = tempfile();
+    my ($output_fh, $output_file) = tempfile(UNLINK => 1);
     my $adaptor = $THIS_VERSION_ADAPTOR_SUBCLASS->create(
         snv_file => $test_bed_file,
         output => $output_file,
@@ -53,7 +53,7 @@ sub test_indels{
     ok (-s $annotation_file, "indel output file exists and has size at $annotation_file");
     ok (-r $annotation_file, "indel variants file is readable by the user running this test $annotation_file");
 
-    my ($output_fh, $output_file) = tempfile();
+    my ($output_fh, $output_file) = tempfile(UNLINK => 1);
     my $adaptor = $THIS_VERSION_ADAPTOR_SUBCLASS->create(
         indel_file => $test_bed_file,
         output => $output_file,
@@ -79,7 +79,7 @@ sub test_extra_columns{
     ok (-s $annotation_file, "extra_column output file exists and has size at $annotation_file");
     ok (-r $annotation_file, "extra_column variants file is readable by the user running this test $annotation_file");
 
-    my ($output_fh, $output_file) = tempfile();
+    my ($output_fh, $output_file) = tempfile(UNLINK => 1);
     my $adaptor = $THIS_VERSION_ADAPTOR_SUBCLASS->create(
         snv_file => $test_bed_file,
         output => $output_file,

@@ -12,7 +12,7 @@ class Genome::Model::Tools::Newbler::DeNovoAssemble {
         version => {
             is => 'Text',
             doc => 'Version of newbler to use',
-            valid_values => ['mapasm454_source_03152011', 'mapasm454_source_04282011'],
+            valid_values => ['mapasm454_source_03152011', 'mapasm454_source_04282011', 'mapasm454_source_10142011'],
             #version that allows assembling of fastq files only
         },
         output_directory => {
@@ -51,6 +51,10 @@ class Genome::Model::Tools::Newbler::DeNovoAssemble {
             is => 'Text',
             doc => 'Text file of contaminant read names',
         },
+        scaffold => {
+            is => 'Boolean',
+            doc => 'Scaffolds assembly',
+        }
     ],
 };
 
@@ -120,6 +124,7 @@ sub _build_assemble_command {
     $cmd .= ' -consed' if $self->consed;
     $cmd .= ' -rip' if $self->rip;
     $cmd .= ' -ace' if $self->ace;
+    $cmd .= ' -scaffold' if $self->scaffold;
     $cmd .= ' -vt '.$self->vt if $self->vt;
     $cmd .= ' -vs '.$self->vs if $self->vs;
     $cmd .= ' -fe '.$self->fe if $self->fe;

@@ -44,7 +44,7 @@ sub default_align_version {
 
 sub path_for_soap_denovo_version {
     my $self = shift;
-    my @base_cmds = (qw/ SOAPdenovo SOAPdenovo63mer /);
+    my @base_cmds = (qw/ SOAPdenovo SOAPdenovo63mer SOAPdenovo-63mer /);
     for my $base_cmd ( @base_cmds ) {
         my $command = $ENV{GENOME_SW} . '/soap/SOAPdenovo-'.$self->version.'/'.$base_cmd;
         next if not -s $command;

@@ -22,7 +22,9 @@ my $test_dir = tempdir(
     CLEANUP => 1,
 );
 ok(-d $test_dir, "created test dir at $test_dir");
-$Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+{ no warnings 'once';
+    $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+}
 
 my $volume_path = tempdir(
     "test_volume_" . "_XXXXXXX",
@@ -49,7 +51,9 @@ my $group = Genome::Disk::Group->create(
     unix_gid => 0,
 );
 ok($group, 'successfully made testing group') or die;
-push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+{ no warnings 'once';
+    push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, $group->disk_group_name;
+}
 
 my $assignment = Genome::Disk::Assignment->create(
     dg_id => $group->id,
@@ -75,6 +79,7 @@ $path = join('/', 'blah', $group->subdirectory, 'testing');
 $mount_path = Genome::Disk::Allocation->_get_mount_path_from_full_path($path);
 ok(!$mount_path, 'correctly failed to resolve mount path');
 
+Genome::Disk::Allocation->dump_status_messages(0);
 my $allocation = Genome::Disk::Allocation->create(
     disk_group_name => $group->disk_group_name,
     allocation_path => 'testing123/blah',
@@ -84,16 +89,26 @@ my $allocation = Genome::Disk::Allocation->create(
 );
 ok($allocation, 'created test allocation');
 
-my $retrieved_allocation = Genome::Disk::Allocation->_get_parent_allocation($allocation->allocation_path);
+my $retrieved_allocation = Genome::Disk::Allocation->get_parent_allocation($allocation->allocation_path);
 ok($retrieved_allocation, 'found parent allocation');
-is($retrieved_allocation->id, $allocation->id, 'retrieved correct allocation via _get_parent_allocation method');
+is($retrieved_allocation->id, $allocation->id, 'retrieved correct allocation via get_parent_allocation method');
 
-$retrieved_allocation = Genome::Disk::Allocation->_get_parent_allocation($allocation->allocation_path . '/foo/bar/baz');
+$retrieved_allocation = Genome::Disk::Allocation->get_parent_allocation($allocation->allocation_path . '/foo/bar/baz');
 ok($retrieved_allocation, 'found parent allocation');
-is($retrieved_allocation->id, $allocation->id, 'retrieved correct allocation via _get_parent_allocation method');
+is($retrieved_allocation->id, $allocation->id, 'retrieved correct allocation via get_parent_allocation method');
 
-my @allocations = Genome::Disk::Allocation->_get_child_allocations('testing123');
+my @allocations = Genome::Disk::Allocation->get_child_allocations('testing123');
 ok(@allocations, 'found some child allocations');
 ok(@allocations == 1, 'found expected number of child allocations');
 ok($allocations[0]->id eq $allocation->id, 'found expected child allocation');
+
+my @all_allocations = Genome::Disk::Allocation->get_all_allocations_for_path('testing123');
+ok(@all_allocations, 'found a child allocation');
+ok(@all_allocations == 1, 'found one child allocation');
+ok($all_allocations[0]->id eq $allocation->id, 'found the expected allocation');
+
+@all_allocations = Genome::Disk::Allocation->get_all_allocations_for_path('testing123/blah/something');
+ok(@all_allocations, 'found a parent allocation');
+ok(@all_allocations == 1, 'found one parent allocation');
+ok($all_allocations[0]->id eq $allocation->id, 'found the expected allocation');
 done_testing();

@@ -132,6 +132,7 @@ sub execute {
           $stats{'models_with_genotypes'}++;
           if(-e $genotype_file)  
           {
+            
               print "Loading genotypes for $subject_name...\n";
               my %sample_genotypes = load_genotype_file($genotype_file);
 

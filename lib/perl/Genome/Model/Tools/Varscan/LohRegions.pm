@@ -26,14 +26,30 @@ my $min_loh_snps = 3;
 my $num_loh_regions = 0;
 
 class Genome::Model::Tools::Varscan::LohRegions {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		status_file	=> { is => 'Text', doc => "Path to file of Germline/Somatic/LOH calls", is_optional => 0 },
-		output_file 	=> { is => 'Text', doc => "Output file for LOH regions", is_optional => 0 },
-		min_loh_size 	=> { is => 'Text', doc => "Minimum size in bp for LOH region [10]", is_optional => 1 },
-		min_loh_snps 	=> { is => 'Text', doc => "Minimum # of LOH SNPs for LOH region [3]", is_optional => 1 },
-	],
+    is => 'Command',
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        status_file => {
+            is => 'Text',
+            doc => "Path to file of Germline/Somatic/LOH calls",
+            is_optional => 0,
+        },
+        output_file => {
+            is => 'Text',
+            doc => "Output file for LOH regions",
+            is_optional => 0,
+        },
+        min_loh_size => {
+            is => 'Text',
+            doc => "Minimum size in bp for LOH region [10]",
+            is_optional => 1,
+        },
+        min_loh_snps => {
+            is => 'Text',
+            doc => "Minimum # of LOH SNPs for LOH region [3]",
+            is_optional => 1,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

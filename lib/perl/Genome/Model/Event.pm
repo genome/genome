@@ -7,66 +7,159 @@ use YAML;
 
 use Genome;
 class Genome::Model::Event {
-    is => [ 'Genome::Model::Command::BaseDeprecated' ],
-    type_name => 'genome model event',
+    is => 'Genome::Model::Command::BaseDeprecated',
     table_name => 'GENOME_MODEL_EVENT',
     is_abstract => 1,
     first_sub_classification_method_name => '_resolve_subclass_name',
     sub_classification_method_name => '_resolve_subclass_name',
     subclass_description_preprocessor => 'Genome::Model::Event::_preprocess_subclass_description',
+    type_name => 'genome model event',
     id_by => [
         genome_model_event_id => { is => 'Text' },
     ],
     has => [
-        model        => { is => 'Genome::Model', id_by => 'model_id', constraint_name => 'GME_GM_FK' },
-        event_type   => { is => 'VARCHAR2', len => 255 },
-        event_status => { is => 'VARCHAR2', len => 32, is_optional => 1 },
-        user_name    => { is => 'VARCHAR2', len => 64, is_optional => 1 },
-        build_id     => { is => 'NUMBER', implied_by => 'build', is_optional => 1 },
-        run_id       => { is => 'NUMBER', len => 11, is_optional => 1 },
+        model => {
+            is => 'Genome::Model',
+            id_by => 'model_id',
+            constraint_name => 'GME_GM_FK',
+        },
+        event_type => {
+            is => 'VARCHAR2',
+            len => 255,
+        },
+        event_status => {
+            is => 'VARCHAR2',
+            len => 32,
+            is_optional => 1,
+        },
+        user_name => {
+            is => 'VARCHAR2',
+            len => 64,
+            is_optional => 1,
+        },
+        build_id => {
+            is => 'NUMBER',
+            is_optional => 1,
+        },
+        run_id => {
+            is => 'NUMBER',
+            len => 11,
+            is_optional => 1,
+        },
+        workflow_instance_id => {
+            is => 'Number',
+            len => 11,
+            is_optional => 1,
+        },
     ],
     has_optional => [
-        instrument_data_id => { is => 'VARCHAR2', len => 100, implied_by => 'instrument_data' },
-        instrument_data    => { is => 'Genome::InstrumentData', id_by => 'instrument_data_id',
-                                doc => 'The id of the instrument data on which to operate' },
-        instrument_data_input => {
-            calculate_from => ['instrument_data_id', 'model'],
-            calculate => q{
-                return $model->input_for_instrument_data_id($instrument_data_id);
-            },
+        instrument_data_id => {
+            is => 'VARCHAR2',
+            len => 100,
         },
-        ref_seq_id         => { is => 'VARCHAR2', len => 64 },
-        parent_event       => { is => 'Genome::Model::Event', id_by => 'parent_event_id', constraint_name => 'GME_PAEID_FK' },
-        prior_event        => { is => 'Genome::Model::Event', id_by => 'prior_event_id', constraint_name => 'GME_PPEID_FK' },
-        date_completed     => { is => 'TIMESTAMP' },
-        date_scheduled     => { is => 'TIMESTAMP' },
-        lsf_job_id         => { is => 'VARCHAR2', len => 64 },
-        retry_count        => { is => 'NUMBER', len => 3 },
-        status_detail      => { is => 'VARCHAR2', len => 200 },
-        build              => { is => 'Genome::Model::Build', id_by => 'build_id' },
-        should_calculate   => { calculate_from => 'event_status',
-                         calculate => q(
+        instrument_data => {
+            is => 'Genome::InstrumentData',
+            id_by => 'instrument_data_id',
+            doc => 'The id of the instrument data on which to operate',
+        },
+        instrument_data_input => {
+            calculate_from => [ 'instrument_data_id', 'model' ],
+            calculate => q(
+                return $model->input_for_instrument_data_id($instrument_data_id);
+            ),
+        },
+        ref_seq_id => {
+            is => 'VARCHAR2',
+            len => 64,
+        },
+        parent_event => {
+            is => 'Genome::Model::Event',
+            id_by => 'parent_event_id',
+            constraint_name => 'GME_PAEID_FK',
+        },
+        prior_event => {
+            is => 'Genome::Model::Event',
+            id_by => 'prior_event_id',
+            constraint_name => 'GME_PPEID_FK',
+        },
+        date_completed => { is => 'TIMESTAMP' },
+        date_scheduled => { is => 'TIMESTAMP' },
+        lsf_job_id => {
+            is => 'VARCHAR2',
+            len => 64,
+        },
+        retry_count => {
+            is => 'NUMBER',
+            len => 3,
+        },
+        status_detail => {
+            is => 'VARCHAR2',
+            len => 200,
+        },
+        build => {
+            is => 'Genome::Model::Build',
+            id_by => 'build_id',
+        },
+        should_calculate => {
+            calculate_from => 'event_status',
+            calculate => q(
                                  if ($event_status eq 'Failed' or $event_status eq 'Crashed') {
                                      return 0;
                                  }
                                  return 1;
                              ),
-                         doc => 'a flag to determine metric calculations' },
-        build_directory    => { calculate_from => 'build',
-                         calculate => q( return $build->data_directory ),
-                         doc => 'the directory where this step should put data' },
+            doc => 'a flag to determine metric calculations',
+        },
+        build_directory => {
+            calculate_from => 'build',
+            calculate => q( return $build->data_directory ),
+            doc => 'the directory where this step should put data',
+        },
     ],
     has_many_optional => [
-        sibling_events => { via => 'parent_event', to => 'child_events' },
-        child_events   => { is => 'Genome::Model::Event', reverse_id_by => 'parent_event' },
-        inputs         => { is => 'Genome::Model::Event::Input', reverse_id_by => 'event' },
-        outputs        => { is => 'Genome::Model::Event::Output', reverse_id_by => 'event' },
-        metrics        => { is => 'Genome::Model::Event::Metric', reverse_id_by => 'event' },
-        metric_names   => { via => 'metrics', to => 'name' },
-        instrument_data_segment_id_param => { is => 'Genome::Model::Event::Input', reverse_id_by => 'event', where => [ name => 'instrument_data_segment_id']},
-        instrument_data_segment_type_param => { is => 'Genome::Model::Event::Input', reverse_id_by => 'event', where => [ name => 'instrument_data_segment_type']},
-        instrument_data_segment_id => { via => 'instrument_data_segment_id_param', to=>'value'},
-        instrument_data_segment_type => { via => 'instrument_data_segment_type_param', to=>'value'},
+        sibling_events => {
+            via => 'parent_event',
+            to => 'child_events',
+            is_many => 1,
+        },
+        child_events => {
+            is => 'Genome::Model::Event',
+            reverse_as => 'parent_event',
+        },
+        inputs => {
+            is => 'Genome::Model::Event::Input',
+            reverse_as => 'event',
+        },
+        outputs => {
+            is => 'Genome::Model::Event::Output',
+            reverse_as => 'event',
+        },
+        metrics => {
+            is => 'Genome::Model::Event::Metric',
+            reverse_as => 'event',
+        },
+        metric_names => {
+            via => 'metrics',
+            to => 'name',
+        },
+        instrument_data_segment_id_param => {
+            is => 'Genome::Model::Event::Input',
+            reverse_as => 'event',
+            where => [ name => 'instrument_data_segment_id' ],
+        },
+        instrument_data_segment_type_param => {
+            is => 'Genome::Model::Event::Input',
+            reverse_as => 'event',
+            where => [ name => 'instrument_data_segment_type' ],
+        },
+        instrument_data_segment_id => {
+            via => 'instrument_data_segment_id_param',
+            to => 'value',
+        },
+        instrument_data_segment_type => {
+            via => 'instrument_data_segment_type_param',
+            to => 'value',
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

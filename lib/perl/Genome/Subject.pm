@@ -6,49 +6,46 @@ use Genome;
 
 class Genome::Subject {
     is => 'Genome::Notable',
+    table_name => 'GENOME_SUBJECT',
     is_abstract => 1,
     subclassify_by => 'subclass_name',
     id_by => [
         subject_id => {
             is => 'Number',
+            len => 10,
         },
     ],
     has => [
         subclass_name => {
             is => 'Text',
+            len => 255,
         },
         subject_type => {
-            column_name => '',
             is_abstract => 1,
+            is_transient => 1,
             doc => 'Plain text description of the type of subject, defined in subclasses',
         },
-    ],
-    has_many_optional => [
-        attributes => {
-            is => 'Genome::SubjectAttribute',
-            reverse_as => 'subject',
-        },
-        project_parts => { is => 'Genome::ProjectPart', reverse_as => 'entity', is_mutable => 1, },
-        projects => { is => 'Genome::Project', via => 'project_parts', to => 'project', is_mutable => 1, doc => 'Projects that include this subject.' },
-        project_names => { is => 'Text', via => 'projects', to => 'name', },
     ],
     has_optional => [
         name => {
             is => 'Text',
+            len => 255,
             doc => 'Official name of the subject',
         },
-        common_name => { 
+        common_name => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
+            is_mutable => 1,
+            is_many => 0,
             where => [ attribute_label => 'common_name' ],
-            is_mutable => 1,
         },
-        description => { 
+        description => {
             is => 'Text',
             via => 'attributes',
             to => 'attribute_value',
             is_mutable => 1,
+            is_many => 0,
             where => [ attribute_label => 'description' ],
             doc => 'Some plain-text description of the subject',
         },
@@ -57,11 +54,34 @@ class Genome::Subject {
             via => 'attributes',
             to => 'attribute_value',
             is_mutable => 1,
+            is_many => 0,
             where => [ attribute_label => 'nomenclature', nomenclature => 'WUGC' ],
             doc => 'The nomenclature that information about this subject follows (TCGA, WUGC, etc)',
         },
     ],
-    table_name => 'GENOME_SUBJECT',
+    has_many_optional => [
+        attributes => {
+            is => 'Genome::SubjectAttribute',
+            reverse_as => 'subject',
+        },
+        project_parts => {
+            is => 'Genome::ProjectPart',
+            reverse_as => 'entity',
+            is_mutable => 1,
+        },
+        projects => {
+            is => 'Genome::Project',
+            via => 'project_parts',
+            to => 'project',
+            is_mutable => 1,
+            doc => 'Projects that include this subject.',
+        },
+        project_names => {
+            is => 'Text',
+            via => 'projects',
+            to => 'name',
+        },
+    ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
     doc => 'Contains all information about a particular subject (sample, individual, etc)',
@@ -90,9 +110,9 @@ sub attributes_for_nomenclature {
     my ($self, $nom) = @_;
     die "must supply nomenclature" if !$nom;
     my @fields = $nom->fields();
-    my @attr = Genome::SubjectAttribute->get( 
-        nomenclature => [ map {$_->id} @fields ], 
-        subject_id => $self->id 
+    my @attr = Genome::SubjectAttribute->get(
+        nomenclature => [ map {$_->id} @fields ],
+        subject_id => $self->id
     );
     return @attr;
 }
@@ -104,35 +124,29 @@ sub __display_name__ {
     $name .= '(' . ($common_name ? $common_name . ' ' : '') . $self->id . ')';
     return $name;
 }
-    
+
 sub create {
-    my ($class, %params) = @_;
+    my $class = shift;
 
-    # This extra processing allows for someone to create a subject with properties that aren't listed in any of the
-    # class definitions. Instead of having UR catch these extras and die, they are captured here and later turned into
-    # subject attributes. Useful for clinical data that isn't expected but should nonetheless be recorded.
-    my %extra;
-    my @property_names = ('id', map { $_->property_name } ($class->__meta__->_legacy_properties, $class->__meta__->all_id_by_property_metas));
-    for my $param (sort keys %params) {
-        unless (grep { $param eq $_ } @property_names) {
-            $extra{$param} = delete $params{$param};
-        }
-    }
+    my ($bx, %extra) = $class->define_boolexpr(@_);
+    return if not $bx;
 
-    my $self = $class->SUPER::create(%params);
-    unless ($self) {
-        Carp::confess "Could not create subject with params: " . Data::Dumper::Dumper(\%params);
-    }
+    my $self = $class->SUPER::create($bx);
+    return if not $self;
 
+    my $nomenclature = $self->nomenclature;
+    $nomenclature = 'WUGC' if not defined $nomenclature;
     for my $label (sort keys %extra) {
         my $attribute = Genome::SubjectAttribute->create(
             attribute_label => $label,
             attribute_value => $extra{$label},
-            subject_id => $self->subject_id,
+            subject_id => $self->id,
+            nomenclature => $nomenclature,
         );
         unless ($attribute) {
-            $self->error_message("Could not create attribute $label => " . $extra{$label} . " for subject " . $self->subect_id);
+            $self->error_message("Could not create attribute $label => ".$extra{$label}."!");
             $self->delete;
+            return;
         }
     }
 

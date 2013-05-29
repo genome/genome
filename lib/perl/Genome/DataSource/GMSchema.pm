@@ -6,6 +6,7 @@ use Genome;
 use Carp;
 use File::lockf;
 use DBD::Pg;
+use IO::Socket;
 
 class Genome::DataSource::GMSchema {
     is => 'UR::DataSource::Pg',

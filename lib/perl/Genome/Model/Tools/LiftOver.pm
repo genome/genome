@@ -51,9 +51,10 @@ class Genome::Model::Tools::LiftOver {
             doc => 'The liftOver "chain" file that maps from source to destination build. Required if --lift-direction is unspecified',
         },
         lift_direction => {
-            is => 'Text', default => 'hg18ToHg19',
+            is => 'Text',
             doc => 'Shorthand for commonly used lift operations.',
             valid_values => ['hg18ToHg19', 'hg19ToHg18'],
+            example_values => ['hg18ToHg19', 'hg19ToHg18'],
         },
     ],
     doc => "Wrapper for the UCSC liftOver with added conveniences",
@@ -212,7 +213,7 @@ sub execute {
 
     # Convert back to annotation format if necessary
     if( $self->input_is_annoformat ) {
-        my $outFh = IO::File->new( $self->destination_file, ">" );
+        my $outFh = IO::File->new( $self->destination_file, ">" ) or die "can't open output file: $!";
         $outFh->print( $anno_headers ); # Print header lines copied from the input file
         my $inFh = IO::File->new( $dest_file ) or die "can't open file\n";
         while( my $line = $inFh->getline ) {
@@ -236,7 +237,7 @@ sub execute {
     }
     # Convert back to maf format if necessary
     elsif( $self->input_is_maf_format ) {
-        my $outFh = IO::File->new( $self->destination_file, ">" );
+        my $outFh = IO::File->new( $self->destination_file, ">" ) or die "can't open output file: $!";
         $outFh->print( $anno_headers ); # Print header lines copied from the input file
         my $inFh = IO::File->new( $dest_file ) or die "can't open file\n";
         while( my $line = $inFh->getline ) {
@@ -263,7 +264,7 @@ sub execute {
     }
     # Convert back to vcf format if necessary
     elsif( $self->input_is_vcf_format ) {
-        my $outFh = IO::File->new( $self->destination_file, ">" );
+        my $outFh = IO::File->new( $self->destination_file, ">" ) or die "can't open output file: $!";
         $outFh->print( $anno_headers ); # Print header lines copied from the input file
         my $inFh = IO::File->new( $dest_file ) or die "can't open file\n";
         while( my $line = $inFh->getline ) {
@@ -274,7 +275,7 @@ sub execute {
             $post =~ s/\?_\?/ /g;
 
             $F[0] =~ s/^chr//g;
-            $outFh->print( join( "\t", ( $F[0], $F[1], $post )) . "\n" );
+            $outFh->print( join( "\t", ( $F[0], $F[1]+1, $post )) . "\n" );
         }
         $inFh->close;
         $outFh->close;

@@ -97,7 +97,7 @@ sub _run_vcf_converter {
             unless ($detector_name) {
                 die $self->error_message("Could not get a detector name from detector class $detector_class from software result id" . $vcf_result->id);
             }
-            my $tag = "-$detector_name";
+            my $tag = "-[$detector_name]";
             $input_vcf .= "=$tag";
             push @labeled_input_files, $input_vcf;
         }

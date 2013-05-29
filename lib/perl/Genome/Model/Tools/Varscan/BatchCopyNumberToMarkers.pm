@@ -24,13 +24,25 @@ use Genome;                                 # using the namespace authorizes Cla
 my $undo_sd = 2;
 
 class Genome::Model::Tools::Varscan::BatchCopyNumberToMarkers {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		sample_dirs_file		=> { is => 'Text', doc => "Tab-delimited file of sample and VarScan-CopyNumber dir", is_optional => 0 },
-		bed_file 	=> { is => 'Text', doc => "BED file of exon (or tier 1) definitions", is_optional => 0 },
-		output_dir 	=> { is => 'Text', doc => "Output directory where per-sample files will be created", is_optional => 0 },
-	],
+    is => 'Command',
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        sample_dirs_file => {
+            is => 'Text',
+            doc => "Tab-delimited file of sample and VarScan-CopyNumber dir",
+            is_optional => 0,
+        },
+        bed_file => {
+            is => 'Text',
+            doc => "BED file of exon (or tier 1) definitions",
+            is_optional => 0,
+        },
+        output_dir => {
+            is => 'Text',
+            doc => "Output directory where per-sample files will be created",
+            is_optional => 0,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

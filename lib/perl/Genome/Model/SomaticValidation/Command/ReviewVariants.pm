@@ -78,7 +78,7 @@ class Genome::Model::SomaticValidation::Command::ReviewVariants {
                     return;
                 }
             },
-            default => "reference_build36",
+            example_values => ["reference_build36"],
         },
 
         filter_sites =>{

@@ -5,9 +5,9 @@ use warnings;
 
 use Genome;
 
-use YAML;
-
+use Genome::Model::DeNovoAssembly::SxReadProcessor;
 use Regexp::Common;
+use YAML;
 
 class Genome::ProcessingProfile::DeNovoAssembly {
     is => 'Genome::ProcessingProfile',
@@ -32,7 +32,7 @@ class Genome::ProcessingProfile::DeNovoAssembly {
                 'allpaths import',
                 'newbler import',
                 'soap dacc-download',
-                'sopa import',
+                'soap import',
                 'velvet import'],
         },
         assembler_version => {
@@ -212,51 +212,25 @@ sub _validate_assembler_and_params {
     return 1;
 }
 
-#< temp params updates needed for successful eval of assembler class >#
-
-#sub velvet_one_button_fake_params_for_eval {
-#    my $self = shift;
-#    my %params = (
-#   ins_length => '280',
-#    );
-#    return %params;
-#}
-#
-
-#sub soap_de_novo_assemble_clean_up_params_for_eval {
-#    my ($self, %params) = @_;
-#    delete $params{insert_size};
-#    return %params;
-#}
-
 #< Read Processor >#
 sub _validate_read_processor {
     my $self = shift;
+    $self->status_message("Validate read processor...");
 
     my $read_processor = $self->read_processor;
     unless ( defined $read_processor ) { # ok
+        $self->status_message("No read processor to validate, skipping...");
         return 1;
     }
 
-    $self->status_message("Validating read processor...");
-
-    my @read_processor_parts = split(/\s+\|\s+/, $read_processor);
-    unless ( @read_processor_parts ) {
-        $self->error_message("Could not find read processors in string: $read_processor");
+    $self->status_message('Read processor: '.$read_processor);
+    my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(processor => $read_processor);
+    if ( not $sx_processor ) {
+        $self->error_message('Failed to validate read processor!');
         return;
     }
 
-    for my $read_processor_part ( @read_processor_parts ) {
-        my $read_processor_is_ok = Genome::Model::Tools::Sx::Validate->validate_command('gmt sx '.$read_processor_part);
-        if ( not $read_processor_is_ok ) {
-            $self->error_message("Cannot validate read processor ($read_processor_part). See above error(s)");
-            return;
-        }
-        $self->status_message("Read processor part OK: $read_processor_part");
-    }
-
-    $self->status_message("Read processor OK");
-
+    $self->status_message("Read processor...OK");
     return 1;
 }
 
@@ -264,7 +238,7 @@ sub process_instrument_data_can_parallelize {
     my $self = shift;
 
     my $assembler_name = $self->assembler_name;
-    for my $assember_can_parallelize ( 'allpaths de-novo-assemble' ) {
+    for my $assember_can_parallelize ( 'allpaths de-novo-assemble', 'soap de-novo-assemble' ) {
         return 1 if $self->assembler_name eq $assember_can_parallelize;
     }
 
@@ -485,7 +459,7 @@ sub _resolve_workflow_for_import {
     my $input_connector = $workflow->get_input_connector();
     my $output_connector = $workflow->get_output_connector();
 
-    my $import_op = _add_operation($workflow, 'Import', {
+    my $import_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::Import', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
     $workflow->add_link(
@@ -493,7 +467,7 @@ sub _resolve_workflow_for_import {
         right_operation => $import_op, right_property => 'build');
 
     if ($self->post_assemble) {
-        my $post_assemble_op = _add_operation($workflow, 'PostAssemble', {
+        my $post_assemble_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::PostAssemble', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
         $workflow->add_link(
@@ -520,7 +494,7 @@ sub _resolve_workflow_for_normal_assembly {
             # if parallelize: use ProcessID
             # else: use PrepareID
         # assemble
-            # if parallelize: MergeInputMetrics
+            # if parallelize: MergeAndLinkSxResults
             # Assemble
             # if post_assemble: PostAssemble
             # Report
@@ -539,7 +513,7 @@ sub _resolve_workflow_for_normal_assembly {
 
     my $id_op;
     if ($self->process_instrument_data_can_parallelize) {
-        $id_op = _add_operation($workflow, 'ProcessInstrumentData', {
+        $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
         $workflow->add_link(
             left_operation => $input_connector, left_property => 'instrument_data',
@@ -547,17 +521,20 @@ sub _resolve_workflow_for_normal_assembly {
 
         $id_op->parallel_by('instrument_data');
 
-        my $merge_metrics_op = _add_operation($workflow, 'MergeInputMetrics', {
+        my $merge_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
-
         $workflow->add_link(
             left_operation => $id_op, left_property => 'build',
-            right_operation => $merge_metrics_op, right_property => 'input_builds');
+            right_operation => $merge_op, right_property => 'build');
+
         $workflow->add_link(
-            left_operation => $merge_metrics_op, left_property => 'output_build',
+            left_operation => $merge_op, left_property => 'output_build',
             right_operation => $assemble_op, right_property => 'build');
+        $workflow->add_link(
+            left_operation => $merge_op, left_property => 'sx_results',
+            right_operation => $assemble_op, right_property => 'sx_results');
     } else {
-        $id_op = _add_operation($workflow, 'PrepareInstrumentData', {
+        $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
         $workflow->add_link(
@@ -570,10 +547,10 @@ sub _resolve_workflow_for_normal_assembly {
         right_operation => $id_op, right_property => 'build');
 
 
-    my $report_op = _add_operation($workflow, 'Report', {
+    my $report_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::Report', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
     if ($self->post_assemble) {
-        my $post_assemble_op = _add_operation($workflow, 'PostAssemble', {
+        my $post_assemble_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::PostAssemble', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
         $workflow->add_link(
@@ -601,16 +578,21 @@ sub _add_assembler {
     my $lsf_resource = $build->resolve_assemble_lsf_resource();
     my $assemble_lsf_queue = $build->resolve_assemble_lsf_queue || $default_lsf_queue;
 
-    return _add_operation($workflow, 'Assemble', {
+    my $assembler_class = 'Genome::Model::DeNovoAssembly::';
+    $assembler_class .= ( $self->process_instrument_data_can_parallelize ? 'Build' : 'Command' );
+    $assembler_class .= '::Assemble';
+
+    return _add_operation($workflow, $assembler_class, {
             lsf_queue => $assemble_lsf_queue,
             lsf_project => $lsf_project,
             lsf_resource => $lsf_resource});
 }
 
 sub _add_operation {
-    my ($workflow, $name, $options) = @_;
+    my ($workflow, $command_class_name, $options) = @_;
 
-    my $command_class_name = 'Genome::Model::DeNovoAssembly::Command::' . $name;
+    my $name = $command_class_name;
+    $name =~ s/Genome::Model::DeNovoAssembly::(Build|Command):://;
 
     my $operation_type = Workflow::OperationType::Command->create(
         command_class_name => $command_class_name);

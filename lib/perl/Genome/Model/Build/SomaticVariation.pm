@@ -116,30 +116,59 @@ sub create {
         return;
     }
 
+    return $self;
+}
+
+sub validate_for_start_methods {
+    my @methods = $_[0]->SUPER::validate_for_start_methods;
+
+    unshift @methods, 'validate_model_and_build_inputs';
+
+    return @methods;
+}
+
+sub validate_model_and_build_inputs {
+    my $self = shift;
+    my $model = $self->model;
+    my @tags;
+
     my $tumor_model = $model->tumor_model;
     unless ($tumor_model) {
-        $self->error_message("Failed to get a tumor_model!");
-        return;
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['tumor_model'],
+            desc => "Failed to get a tumor_model!"
+        );
     }
-    
+
     my $normal_model = $model->normal_model;
     unless ($normal_model) {
-        $self->error_message("Failed to get a normal_model!");
-        return;
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['normal_model'],
+            desc => "Failed to get a normal_model!"
+        );
     }
-    
+
     my $tumor_build = $self->tumor_build;
     unless ($tumor_build) {
-        $self->error_message("Failed to get a tumor build!");
-        return;
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['tumor_build'],
+            desc => "Failed to get a tumor_build!"
+        );
     }
 
     my $normal_build = $self->normal_build;
     unless ($normal_build) {
-        $self->error_message("Failed to get a normal build!");
-        return;
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['normal_build'],
+            desc => "Failed to get a normal_build!"
+        );
     }
-    return $self;
+
+    return @tags;
 }
 
 sub post_allocation_initialization {
@@ -227,6 +256,8 @@ sub files_ignored_by_diff {
         variants/indels_tcga.tar.gz
         variants/indels_tcga.tar.gz.md5
         variants/indels_tcga/MANIFEST.txt
+        variants/.*\.err
+        variants/.*\.out
         gatk_output_file.vcf
         \.vcf.idx$
         workflow\.xml$

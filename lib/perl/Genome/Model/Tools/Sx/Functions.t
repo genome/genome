@@ -41,4 +41,12 @@ is($config, $expected_config, 'Hash to config');
 my %hash = Genome::Model::Tools::Sx::Functions->config_to_hash($config);
 is_deeply(\%hash, \%expected_hash, 'Config to hash');
 
+# Complement
+ok(!eval{ Genome::Model::Tools::Sx::Functions->complement_sequence(); }, 'failed to complement w/o sequence');
+is_deeply(
+    Genome::Model::Tools::Sx::Functions->complement_sequence({ seq => 'AATTGGCC', qual => 'AABBCCDD' }),
+    { seq => 'GGCCAATT', qual => 'DDCCBBAA' },
+    'complement sequence',
+);
+
 done_testing();

@@ -11,7 +11,7 @@ class Genome::Model::Tools::Somatic::PindelToBed {
     has => [
         reference_fasta => {
             is => 'String',
-            default=> Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa',
+            example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa'],
             doc => "The reference fasta file used to look up the reference sequence with samtools faidx. This is necessary because pindel will truncate long reference sequences.",
         },
         use_old_pindel => {

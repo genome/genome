@@ -11,22 +11,26 @@ use JSON::XS;
 
 class Genome::Task::Params {
     table_name => 'GENOME_TASK_PARAMS',
-    id_by => {
-        'genome_task_id' => {is=>'Text', len=>64}
-    },
+    id_by => [
+        genome_task_id => {
+            is => 'Text',
+            len => 255,
+        },
+    ],
     has => [
         task => {
-            is=>'Genome::Task', 
-            id_by => 'genome_task_id'
+            is => 'Genome::Task',
+            id_by => 'genome_task_id',
+            constraint_name => 'GTP_FK',
         },
         params => {
-            is=>'Text', 
-            doc => 'JSON encoded param hash'
+            is=>'Text',
+            doc => 'JSON encoded param hash',
         },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
-    doc => 'params for scheduled tasks'
+    doc => 'params for scheduled tasks',
 };
 
 1;

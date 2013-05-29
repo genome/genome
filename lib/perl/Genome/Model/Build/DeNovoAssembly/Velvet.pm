@@ -156,14 +156,18 @@ sub assembler_kmer_used {
     return $tokens[2];
 }
 
-#for build diff testing
+#< DIFF >#
 sub files_ignored_by_diff {
-    return qw/ build.xml Log scaffolds.stor /;
+    my $self = shift;
+    my @ignored = $self->SUPER::files_ignored_by_diff;
+    push @ignored, qw/ Log scaffolds.stor /;
+    return @ignored;
 }
 
 sub dirs_ignored_by_diff {
     return qw/ logs reports edit_dir /;
 }
+
 #TODO - it should test stats.txt and contigs.fa files but this will error since test method
 #thinks contigs.fa and supercontigs.fasta are multiple versions of the same file because of the
 #way it's grepping for the files .. stats.txt file exists in two places and test method does not
@@ -171,6 +175,7 @@ sub dirs_ignored_by_diff {
 sub regex_files_for_diff { 
     return qw/ Graph2 LastGraph Log PreGraph Roadmaps Sequences build.xml collated.fastq velvet_asm.afg /;
 }
+#</ DIFF >#
 
 sub resolve_assemble_lsf_resource {
     return "-n 4 -R 'span[hosts=1] select[type==LINUX64 && mem>30000] rusage[mem=30000]' -M 30000000";

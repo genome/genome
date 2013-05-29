@@ -44,7 +44,7 @@ class Genome::Model::Tools::Somatic::MonorunFilter {
        },
        'reference' => {
             type => 'String',
-            default => '/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa',
+            example_values => ['/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa'],
             is_optional => 1,
             is_input => 1,
             doc => 'Reference sequence to use',

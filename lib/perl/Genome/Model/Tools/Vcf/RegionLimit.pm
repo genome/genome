@@ -3,12 +3,7 @@ package Genome::Model::Tools::Vcf::RegionLimit;
 use strict;
 use warnings;
 use Genome;
-use File::stat;
-use IO::File;
-use File::Basename;
-use File::Copy;
-use Getopt::Long;
-use FileHandle;
+use Genome::Utility::Vcf 'open_vcf_file';
 
 class Genome::Model::Tools::Vcf::RegionLimit {
     is => 'Command',
@@ -65,13 +60,18 @@ sub execute {
     my $wingspan = $self->wingspan;
 
     my $output_fh = Genome::Sys->open_gzip_file_for_writing($output_file);
-    my $vcf_fh = Genome::Sys->open_gzip_file_for_reading($vcf_file);
+    my $vcf_fh = open_vcf_file($vcf_file);
 
     $self->print_header($output_fh,$vcf_fh);
     $output_fh->close;
     $vcf_fh->close;
 
-    my $window_bed_cmd = "bash -c \"windowBed -u -b ".$bed_file." -a <(zcat ".$vcf_file.") -w ".$wingspan." |  bgzip -c >> ".$output_file."\"";
+    my $window_bed_cmd;
+    if (Genome::Sys->file_is_gzipped($vcf_file)) {
+        $window_bed_cmd = "bash -c \"windowBed -u -b ".$bed_file." -a <(zcat ".$vcf_file.") -w ".$wingspan." |  bgzip -c >> ".$output_file."\"";
+    } else {
+        $window_bed_cmd = "bash -c \"windowBed -u -b ".$bed_file." -a $vcf_file -w ".$wingspan." |  bgzip -c >> ".$output_file."\"";
+    }
     my $result = Genome::Sys->shellcmd( cmd => $window_bed_cmd );
     unless($result){
         die $self->error_message("Could not complete windowBed command.");

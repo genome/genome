@@ -94,6 +94,7 @@ sub _model_status {
     push @info, [ Status => Term::ANSIColor::colored($build_status, $status_colors{lc($build_status)}) ];
     push @info, [ Build => $build_display ];
     push @info, [ Model => $model->id.' '.$model->name ];
+    push @info, [ InstData => join(' ', map { $_->id } $model->instrument_data) || 'NA' ];
 
     my $processing_profile = $model->processing_profile;
     push @info , [ PP => sprintf($display_name_format, $model->processing_profile->id, $model->processing_profile->name) ];
@@ -105,8 +106,17 @@ sub _model_status {
     }
 
     if ( eval{ $processing_profile->read_aligner_name; } ) {
-        push @info , [ Aligner => $processing_profile->read_aligner_name.' (version '.$processing_profile->read_aligner_version.')'];
-        push @info , [ Params => ( $processing_profile->read_aligner_params || 'NA' ) ];
+        my $aligner = $processing_profile->read_aligner_name;
+        $aligner .= ' (v '.$processing_profile->read_aligner_version.')' if $processing_profile->read_aligner_version;
+        $aligner .= ' ['.$processing_profile->read_aligner_params.')' if $processing_profile->read_aligner_params;
+        push @info , [ Aligner => $aligner ];
+    }
+
+    if ( eval{ $processing_profile->read_trimmer_name; } ) {
+        my $trimmer = $processing_profile->read_trimmer_name;
+        $trimmer .= ' (v '.$processing_profile->read_trimmer_version.')' if $processing_profile->read_trimmer_version;
+        $trimmer .= ' ['.$processing_profile->read_trimmer_params.')' if $processing_profile->read_trimmer_params;
+        push @info , [ Trimmer => $trimmer ];
     }
 
     my $status = Term::ANSIColor::colored( join(' ', map { ucfirst } split('_', $label)), 'underline' )."\n";

@@ -375,8 +375,9 @@ sub _sort_detector_output {
     for my $detector_file (@detector_files){
         my $detector_unsorted_output = $self->_temp_scratch_directory . "/" . basename($detector_file) . ".unsorted";
 
-        unless(rename($detector_file,$detector_unsorted_output)) {
-            $self->error_message('Failed to move ' . $detector_file . ' to ' . $detector_unsorted_output . ' for sorting!');
+        unless(rename($detector_file, $detector_unsorted_output)) {
+            my $m = sprintf(q(Failed to move '%s' to '%s' for sorting: %s), $detector_file, $detector_unsorted_output, $!);
+            $self->error_message($m);
             return;
         }
 
@@ -465,18 +466,20 @@ sub _link_vcf_output_directory_to_result {
         my $target = $output_directory . "/" . basename($vcf);
         $self->status_message("Attempting to link : " .$vcf."  to  ". $target);
         if(-l $target) {
-            $self->status_message("Already found a vcf linked in here, unlinking that for you.");
-            unless(unlink($target)){
-                die $self->error_message("Failed to unlink a link to a vcf at: ".$target);
-            }    
+            if (readlink($target) eq $vcf) {
+                $self->status_message("Already found a vcf linked in here, and it already has the correct target. Continuing.");
+                next;
+            } else {
+                $self->status_message("Already found a vcf linked in here, unlinking that for you.");
+                unless(unlink($target)){
+                    die $self->error_message("Failed to unlink a link to a vcf at: ".$target);
+                }
+            }
         } elsif(-e $target) {
             die $self->error_message("Found something in place of the vcf symlink.");
         }
-        
         Genome::Sys->create_symlink($vcf, $target);
-        
     }
-
     return 1;
 }
 

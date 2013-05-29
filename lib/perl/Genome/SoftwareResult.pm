@@ -53,6 +53,38 @@ class Genome::SoftwareResult {
     doc => 'base class for managed data sets, with database tracking for params, inputs, metrics, and disk',
 };
 
+Genome::SoftwareResult->add_observer(
+    aspect => 'subclass_loaded',
+    callback => sub {
+        my ($classname, $aspect, $subclassname) = @_;
+
+        my $subclass = $subclassname->__meta__;
+        unless ($subclass) {
+            die "Failed to get object Type for $subclassname";
+        }
+
+        my @ambiguous_properties;
+        # classes that have table_name will complain if no column exists in DB for a property
+        unless ($subclass->table_name) {
+            my @properties = $subclass->properties();
+            # try to define what "ambiguous" means...
+            @ambiguous_properties = grep { !(
+                    $_->property_name eq 'subclass_name'
+                    || $_->is_param
+                    || $_->is_input
+                    || $_->is_calculated
+                    || $_->is_delegated
+                    || $_->class_name ne $subclassname
+                    || $_->is_transient
+                )} @properties;
+        }
+
+        if (@ambiguous_properties) {
+            die sprintf("ambiguous properties: %s\n", join(", ", map { $_->property_name } @ambiguous_properties));
+        }
+    },
+);
+
 our %LOCKS;
 
 sub __display_name__ {
@@ -756,11 +788,16 @@ if ($ENV{UR_DBI_NO_COMMIT}) {
     warn 'Overriding Genome::SoftwareResult::_resolve_lock_name since UR_DBI_NO_COMMIT is on.' . "\n";
     my $suffix = Genome::Sys->username . '_' . time;
     my $original_resolve_lock_name_sub = \&Genome::SoftwareResult::_resolve_lock_name;
-    *Genome::SoftwareResult::_resolve_lock_name = sub {
-        my $lock_name = &$original_resolve_lock_name_sub(@_);
-        $lock_name .= "_$suffix" unless $lock_name =~ /$suffix/;
-        return $lock_name;
-    };
+    require Sub::Install;
+    Sub::Install::reinstall_sub({
+        into => 'Genome::SoftwareResult',
+        as => '_resolve_lock_name',
+        code => sub {
+            my $lock_name = &$original_resolve_lock_name_sub(@_);
+            $lock_name .= "_$suffix" unless $lock_name =~ /$suffix/;
+            return $lock_name;
+        },
+    });
 }
 
 sub metric_names {

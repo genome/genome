@@ -253,3 +253,15 @@
 [submodule "gms-config"]
 	path = gms-config
 	url = ssh://git/srv/git/gms-config.git
+[submodule "vendor/gatk-protected"]
+	path = vendor/gatk-protected
+	url = git@github.com:genome-vendor/gatk-protected.git
+[submodule "vendor/picard-tools"]
+	path = vendor/picard-tools
+	url = https://github.com/genome-vendor/picard-tools.git
+[submodule "bmm"]
+	path = bmm
+	url = ssh://git//srv/git/bmm.git
+[submodule "vendor/libset-intervaltree-perl"]
+	path = vendor/libset-intervaltree-perl
+	url = https://github.com/genome-vendor/libset-intervaltree-perl.git

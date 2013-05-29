@@ -42,7 +42,7 @@ class Genome::Model::Tools::Nimblegen::DesignFromSv {
     },
     reference_index => {
         type => 'String', is_optional => 0,
-        default => "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa.fai",
+        example_values => ["/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa.fai"],
         doc => "samtools index of the reference sequence",
     },
     resolution => {

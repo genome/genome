@@ -298,12 +298,21 @@ class Genome::InstrumentData::AlignmentResult {
 sub __display_name__ {
     my $self = shift;
 
+    my $test_name = $self->test_name;
     my $instrument_data = $self->instrument_data;
     my $instrument_data_segment_id = $self->instrument_data_segment_id;
     my $reference_build = $self->reference_build;
     my $annotation_build = ($self->can('annotation_build') ? $self->annotation_build : ()); # TODO: pull up and normalize
 
-    my $name = $self->aligner_name 
+    my $name;
+    if ($test_name) {
+        $name = 'TEST: >>' . $test_name . '<< ';
+    }
+    else {
+        $name = '';
+    }
+
+    $name .= $self->aligner_name 
         . ' ' . $self->aligner_version 
         . ' [' . $self->aligner_params . ']'
         . ' on ' . $instrument_data->__display_name__
@@ -1753,7 +1762,8 @@ sub aligner_params_required_for_index {
 sub get_reference_sequence_index {
     my $self = shift;
     my $build = shift || $self->reference_build;
-    my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(aligner_name=>$self->aligner_name, aligner_version=>$self->aligner_version, aligner_params=>$self->aligner_params, reference_build=>$build);
+    my @overrides = @_;
+    my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(aligner_name=>$self->aligner_name, aligner_version=>$self->aligner_version, aligner_params=>$self->aligner_params, reference_build=>$build, @overrides);
 
     if (!$index) {
         die $self->error_message(sprintf("No reference index prepared for %s with params %s and reference build %s", $self->aligner_name, $self->aligner_params, $self->reference_build->id));

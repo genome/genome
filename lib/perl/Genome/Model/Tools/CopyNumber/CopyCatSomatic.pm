@@ -32,7 +32,7 @@ class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
         annotation_directory => {
             is => 'String',
             is_optional => 0,
-            default=> '/gscmnt/gc6122/info/medseq/annotations/copyCat/',
+            example_values => ['/gscmnt/gc6122/info/medseq/annotations/copyCat/'],
             doc =>'path to the cn annotation directory',
         },
         per_library => {
@@ -79,14 +79,32 @@ class Genome::Model::Tools::CopyNumber::CopyCatSomatic{
             is_optional => 1,
             default => 1,
             doc => "use loess correction to account for gc-bias",
-        }
+
+        },
         # output_single_sample => {
         #     is => 'Boolean',
         #     is_optional => 1,
         #     default => 0,
         #     doc => "also output single-sample cn calls for each of tumor and normal",
         # }
-        
+        min_width => {
+            is => 'Integer',
+            is_optional => 1,
+            default => 3,
+            doc => "the minimum number of consecutive windows required in a segment",
+        },
+        min_mapability => {
+            is => 'Number',
+            is_optional => 1,
+            default => 0.60,
+            doc => "the minimum mapability needed to include a window",
+        },
+        # save_r_data => {
+        #     is => 'Boolean',
+        #     is_optional => 1,
+        #     default => 0,
+        #     doc => "save an r data file",
+        # },
         ]
 };
 
@@ -115,7 +133,8 @@ sub execute {
     my $normal_samtools_file = $self->normal_samtools_file;
     my $processors = $self->processors;
     my $dump_bins = $self->dump_bins;
-
+    my $min_width = $self->min_width;
+    my $min_mapability = $self->min_mapability;
     # #shorthand for sex designation
     # if (lc($sex) eq "m"){
     #     $sex="male";
@@ -220,6 +239,8 @@ sub execute {
     print $RFILE "                        perLibrary=$per_lib,\n";
     print $RFILE "                        perReadLength=$per_read_length,\n";
     print $RFILE "                        verbose=TRUE,\n";
+    print $RFILE "                        minWidth=$min_width,\n";
+    print $RFILE "                        minMapability=$min_mapability,\n";
     print $RFILE "                        dumpBins=$dump_bins,\n";
     print $RFILE "                        doGcCorrection=$gcCorr,\n";
 #    print $RFILE "                        outputSingleSample=$output_single_sample,\n";

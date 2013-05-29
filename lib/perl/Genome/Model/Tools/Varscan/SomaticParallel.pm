@@ -21,25 +21,78 @@ use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 
 class Genome::Model::Tools::Varscan::SomaticParallel {
-	is => 'Genome::Model::Tools::Varscan',
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		normal_bam	=> { is => 'Text', doc => "Path to Normal BAM file", is_optional => 0, is_input => 1 },
-		tumor_bam	=> { is => 'Text', doc => "Path to Tumor BAM file", is_optional => 0, is_input => 1 },
-		samtools_path	=> { is => 'Text', doc => "Path to SAMtools executable", is_optional => 0, is_input => 1, default => "samtools" },
-		output	=> { is => 'Text', doc => "Path to Tumor BAM file", is_optional => 1, is_input => 1, is_output => 1 },
-		output_snp	=> { is => 'Text', doc => "Basename for SNP output, eg. varscan_out/varscan.status.snp" , is_optional => 1, is_input => 1, is_output => 1},
-		output_indel	=> { is => 'Text', doc => "Basename for indel output, eg. varscan_out/varscan.status.snp" , is_optional => 1, is_input => 1, is_output => 1},
-		reference        => { is => 'Text', doc => "Reference FASTA file for BAMs" , is_optional => 1, default_value => (Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')},
-		chromosome	=> { is => 'Text', doc => "Specify a single chromosome (optional)", is_optional => 1, is_input => 1},
-		heap_space	=> { is => 'Text', doc => "Megabytes to reserve for java heap [1000]" , is_optional => 1, is_input => 1},
-		skip_if_output_present	=> { is => 'Text', doc => "If set to 1, skip execution if output files exist", is_optional => 1, is_input => 1 },
-		varscan_params	=> { is => 'Text', doc => "Parameters to pass to Varscan [--min-coverage 3 --min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.05 --strand-filter 1]" , is_optional => 1, is_input => 1},
-	],	
+    is => 'Genome::Model::Tools::Varscan',
 
-	has_param => [
-		lsf_resource => { default_value => 'select[model!=Opteron250 && type==LINUX64] rusage[mem=4000]'},
-       ],
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        normal_bam => {
+            is => 'Text',
+            doc => "Path to Normal BAM file",
+            is_optional => 0,
+            is_input => 1,
+        },
+        tumor_bam => {
+            is => 'Text',
+            doc => "Path to Tumor BAM file",
+            is_optional => 0,
+            is_input => 1,
+        },
+        output => {
+            is => 'Text',
+            doc => "Path to Tumor BAM file",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1,
+        },
+        output_snp => {
+            is => 'Text',
+            doc => "Basename for SNP output, eg. varscan_out/varscan.status.snp",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1,
+        },
+        output_indel => {
+            is => 'Text',
+            doc => "Basename for indel output, eg. varscan_out/varscan.status.snp",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1,
+        },
+        reference => {
+            is => 'Text',
+            doc => "Reference FASTA file for BAMs" ,
+            is_optional => 0,
+            example_values => [(Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')],
+        },
+        chromosome => {
+            is => 'Text',
+            doc => "Specify a single chromosome (optional)",
+            is_optional => 1,
+            is_input => 1,
+        },
+        heap_space => {
+            is => 'Text',
+            doc => "Megabytes to reserve for java heap [1000]",
+            is_optional => 1,
+            is_input => 1,
+        },
+        skip_if_output_present => {
+            is => 'Text',
+            doc => "If set to 1, skip execution if output files exist",
+            is_optional => 1,
+            is_input => 1,
+        },
+        varscan_params => {
+            is => 'Text',
+            doc => "Parameters to pass to Varscan [--min-coverage 3 --min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.05 --strand-filter 1]",
+            is_optional => 1,
+            is_input => 1,
+        },
+    ],
+    has_param => [
+        lsf_resource => {
+            default_value => 'rusage[mem=4000]'
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }
@@ -129,7 +182,7 @@ sub execute {                               # replace with real execution logic.
 			
 			my ($chrom) = split(/\t/, $line);
 
-			if($chrom =~ 'NT_')
+			if($chrom =~ 'NT_' || $chrom =~ /GL/) #skipping nonassembled contigs (GL is for build37)
 			{
 #				print "Skipping $chrom\n";								
 			}
@@ -150,7 +203,7 @@ sub execute {                               # replace with real execution logic.
 					my $cmd = $self->java_command_line(" somatic <\($normal_pileup\) <\($tumor_pileup\) --output-snp $output_snp --output-indel $output_indel $varscan_params");
 	
 					print "Running $cmd\n";                
-					system("bsub -q long -R\"select[type==LINUX64 && model != Opteron250 && mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
+					system("bsub -q long -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
 	 #                               system($cmd);					
 				}
 

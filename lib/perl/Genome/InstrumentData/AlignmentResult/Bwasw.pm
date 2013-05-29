@@ -24,10 +24,15 @@ sub required_rusage {
     my $class = shift;
     my %p = @_;
     my $instrument_data = delete $p{instrument_data};
+    my $aligner_params  = delete $p{aligner_params};
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
-    my $mem_mb = 1024 * 8; 
+    my $mem_mb = 1024 * 16; 
     my $cpus = 4;
+
+    if ($aligner_params and $aligner_params =~ /-t\s*([0-9]+)/) {
+        $cpus = $1;
+    }
 
     my $mem_kb = $mem_mb*1024;
     my $tmp_gb = $tmp_mb/1024;
@@ -154,12 +159,21 @@ sub _run_aligner {
     my $full_command = sprintf '%s bwasw %s %s %s 1>> %s 2>> %s',
         $command_name, $params, $reference_fasta_path, $input_filenames, $raw_sam, $log_filename;
 
-    Genome::Sys->shellcmd(
+    my $rv = Genome::Sys->shellcmd(
         cmd          => $full_command,
         input_files  => [ @input_pathnames ],
         output_files => [ $raw_sam, $log_filename ],
         skip_if_output_is_present => 0,
     );
+
+    # verify the bwasw logfile
+    unless ($self->_verify_bwa_bwasw_did_happen($log_filename)) {
+        die $self->error_message("Error running bwasw (unable to verify a successful run of bwasw in the aligner log)");
+    }
+
+    if ($rv != 1) {
+        die $self->error_message("Error running bwasw (didn't get a good return value from Genome::Sys->shellcmd())");
+    }
 
     my $is_paired = @input_pathnames == 2 ? 1 : 0;
     my $include_secondary = 1;
@@ -197,11 +211,6 @@ sub _run_aligner {
     }
 
     unlink($fixed_sam) || die $self->error_message("Could not unlink $fixed_sam.");
-
-    # verify the bwasw logfile
-    unless ($self->_verify_bwa_bwasw_did_happen($log_filename)) {
-        die $self->error_message("bwa bwasw seems to fail based on run log: $log_filename");
-    }
 
     return 1;
 }
@@ -735,7 +744,29 @@ sub _write_header {
 
 sub _verify_bwa_bwasw_did_happen {
     my ($self, $log_file) = @_;
-    # TODO implement this to make sure bwasw finished; see _verify_bwa_samxe_did_happen in Bwa.pm
+
+    unless ($log_file and -e $log_file) {
+        $self->error_message("Log file $log_file is does not exist.");
+        return;
+    }
+
+    unless ($log_file and -s $log_file) {
+        $self->error_message("Log file $log_file is empty.");
+        return;
+    }
+
+    my $line_count = 100;
+    my @last_lines = `tail -$line_count $log_file`;
+
+    if (not (
+        ($last_lines[-3] =~ /^\[main\] Version:/) and
+        ($last_lines[-2] =~ /^\[main\] CMD:/) and
+        ($last_lines[-1] =~ /^\[main\] Real time:/) )
+    ) {
+        $self->error_message("Last lines of $log_file were unexpected. Dumping last $line_count lines.");
+        $self->status_message($_) for @last_lines;
+        return;
+    }
     return 1;
 }
 
@@ -751,6 +782,7 @@ sub decomposed_aligner_params {
     $self->status_message("[decomposed_aligner_params] cpu count is $cpu_count");
     $self->status_message("[decomposed_aligner_params] bwa bwasw params are: $processed_param_string");
 
+    # Make sure the thread count argument matches the number of CPUs available.
     if ($param_hash->{t} ne $cpu_count) {
         $param_hash->{t} = $cpu_count;
         my $modified_param_string = $self->join_aligner_params_hash($param_hash);
@@ -816,6 +848,7 @@ sub get_aligner_params_hash {
     for my $key (keys %param_hash) {
         if (not defined $param_hash{$key}) {
             delete $param_hash{$key};
+            next;
         }
         if (grep { $key eq $_ } @switches) {
             if ($param_hash{$key} == 1) {
@@ -898,4 +931,6 @@ sub prepare_reference_sequence_index {
 
     return 1;
 }
+
+1;
 

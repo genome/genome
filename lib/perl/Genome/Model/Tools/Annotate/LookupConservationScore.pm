@@ -106,7 +106,7 @@ sub lookup_conservation_score {
     } elsif($reference_transcripts){
         ($model_name, $combined_annotation_build_version) = split("/", $reference_transcripts); 
         $reference_version = $combined_annotation_build_version;
-        $reference_version =~ m/[\d]+_([\d]+)[a-zA-Z]/ or die "Malformed reference_transcripts: $model_name/$reference_version";
+        $reference_version =~ m/[\d]+_([\d]+)[a-zA-Z]?/ or die "Malformed reference_transcripts: $model_name/$reference_version";
         $version = $1;
     } elsif($species and $version){
         $model_name = "NCBI-" . $species . ".combined-annotation";

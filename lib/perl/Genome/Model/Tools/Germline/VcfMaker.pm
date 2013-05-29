@@ -55,7 +55,7 @@ class Genome::Model::Tools::Germline::VcfMaker {
 	output_file	=> { is => 'Text', doc => "MAF File" , is_optional => 0, is_output => 1, is_input => 1},
 	project_name	=> { is => 'Text', doc => "Name of the project i.e. ASMS" , is_optional => 1, default => "Germline Project", is_input => 1},
 	center 		=> { is => 'Text', doc => "Genome center name" , is_optional => 1, default => "genome.wustl.edu", is_input => 1},
-	build 		=> { is => 'Text', doc => "Reference genome build" , is_optional => 1, default => "36", is_input => 1},
+	build 		=> { is => 'Text', doc => "Reference genome build" , is_optional => 1, example_values => ["36"], is_input => 1},
 	sequence_phase	=> { is => 'Text', doc => "Sequencing phase" , is_optional => 1, default => "4", is_input => 1},
 	sequence_source	=> { is => 'Text', doc => "Sequence source" , is_optional => 1, default => "Capture", is_input => 1},
 	sequencer	=> { is => 'Text', doc => "Sequencing platform name" , is_optional => 1, default => "Illumina_GAIIx_or_Hiseq", is_input => 1},

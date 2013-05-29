@@ -7,10 +7,18 @@ use Genome;
 
 class Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData {
     is => 'Command::V2',
-    has => [
+    has_input => [
+        input_build => {
+            is => 'Genome::Model::Build::MetagenomicComposition16s',
+            is_many => 1,
+        },
+    ],
+    has_output => [
         build => {
-            is => 'Genome::Model::Build',
-            doc => 'The build, resolved via string.',
+            is => 'Genome::Model::Build::MetagenomicComposition16s',
+            calculate_from => ['input_build'],
+            calculate => sub { return $_[0]; }
+
         },
     ],
     has_constant => [

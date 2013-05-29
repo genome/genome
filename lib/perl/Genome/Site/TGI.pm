@@ -21,17 +21,31 @@ BEGIN {
 }
 
 BEGIN {
-	if (defined $ENV{GENOME_QUERY_POSTGRES}) {
-		no warnings;
-		use UR::Context;
-		use UR::DataSource::Pg;
-		use Workflow;
-		*UR::Context::resolve_data_sources_for_class_meta_and_rule_genome_filtered = \&UR::Context::resolve_data_sources_for_class_meta_and_rule;;
-		*UR::Context::resolve_data_sources_for_class_meta_and_rule = \&Genome::Site::TGI::resolve_data_sources_for_class_meta_and_rule;
-	
-		*UR::Object::Type::table_name_filtered = \&UR::Object::Type::table_name;
-		*UR::Object::Type::table_name = \&Genome::Site::TGI::table_name_patch;
-		use warnings;
+	if ($ENV{GENOME_QUERY_POSTGRES}) {
+		require UR::Context;
+		require UR::DataSource::Pg;
+		require Workflow;
+		Sub::Install::reinstall_sub({
+                    into => 'UR::Context',
+                    as => 'resolve_data_sources_for_class_meta_and_rule_genome_filtered',
+                    code => \&UR::Context::resolve_data_sources_for_class_meta_and_rule
+                });
+		Sub::Install::reinstall_sub({
+                    into => 'UR::Context',
+                    as => 'resolve_data_sources_for_class_meta_and_rule',
+                    code => \&Genome::Site::TGI::resolve_data_sources_for_class_meta_and_rule
+                });
+		Sub::Install::reinstall_sub({
+                    into => 'UR::Object::Type',
+                    as => 'table_name_filtered',
+                    code => \&UR::Object::Type::table_name
+                });
+		Sub::Install::reinstall_sub({
+                    into => 'UR::Object::Type',
+                    as => 'table_name',
+                    code => \&Genome::Site::TGI::table_name_patch
+                });
+
 	}
 }
 
@@ -42,15 +56,19 @@ BEGIN {
 }
 
 sub undo_table_name_patch {
-    no warnings;
-    *UR::Object::Type::table_name = \&UR::Object::Type::table_name_filtered;
-    use warnings;
+    Sub::Install::reinstall_sub({
+        into => 'UR::Object::Type',
+        as => 'table_name',
+        code => \&UR::Object::Type::table_name_filtered
+    });
 }
 
 sub redo_table_name_patch {
-    no warnings;
-    *UR::Object::Type::table_name = \&Genome::Site::TGI::table_name_patch;
-    use warnings;
+    Sub::Install::reinstall_sub({
+        into => 'UR::Object::Type',
+        as => 'table_name',
+        code => \&Genome::Site::TGI::table_name_patch
+    });
 }
 
 sub table_name_patch {
@@ -125,6 +143,9 @@ $ENV{GENOME_TEST_URL} ||= sprintf('https://gscweb.gsc.wustl.edu/%s', $ENV{GENOME
 if (!$ENV{UR_DBI_NO_COMMIT}) {
     $ENV{GENOME_DB_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_updates';
 }
+$ENV{GENOME_DB_QUERY_PAUSE} ||= $ENV{GENOME_LOCK_DIR} . '/database/pause_queries';
+
+
 
 # configure our local ensembl db
 $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD} ||= '122704720';
@@ -137,6 +158,9 @@ $ENV{GENOME_NOMENCLATURE_DEFAULT} ||= 'WUGC';
 
 # Log directory
 $ENV{GENOME_LOG_DIR} ||= '/gsc/var/log/genome';
+
+#set default analysis project configuration path
+$ENV{GENOME_ANALYSIS_PROJECT_DEFAULTS} = '/gsc/scripts/opt/analysis_project_config/defaults';
 
 # a unique ID for each program execution.  Used got logging saves to the database
 $ENV{GENOME_EXECUTION_ID} = UR::Object::Type->autogenerate_new_object_id_uuid();

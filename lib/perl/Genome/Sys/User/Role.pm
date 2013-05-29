@@ -7,14 +7,18 @@ use Genome;
 use Carp;
 
 class Genome::Sys::User::Role {
-    id_generator => '-uuid',
     table_name => 'GENOME_SYS_USER_ROLE',
-    data_source => 'Genome::DataSource::GMSchema',
     id_by => [
-        id => { is => 'Text' },
+        id => {
+            is => 'Text',
+            len => 32,
+        },
     ],
     has => [
-        name => { is => 'Text' },
+        name => {
+            is => 'Text',
+            len => 64,
+        },
     ],
     has_many_optional => [
         user_bridges => {
@@ -23,11 +27,14 @@ class Genome::Sys::User::Role {
         },
         users => {
             is => 'Genome::Sys::User',
-            is_mutable => 1,
             via => 'user_bridges',
             to => 'user',
+            is_mutable => 1,
         },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 Genome::Sys::User::Role->add_observer(
@@ -67,7 +74,7 @@ sub create {
             Carp::confess "Somehow there are " . scalar @roles . " roles with name $name. Cannot create another role, please contact informatics about this...";
         }
     }
-    
+
     return $class->SUPER::create(@_);
 }
 

@@ -80,13 +80,25 @@ sub _execute_build {
     my @from_builds = sort $build->from_builds;
     
     my @from_models = sort {$a->id cmp $b->id } map { $_->model } @from_builds;
+
+    # Get From group
     my $from_group_name = $self->name . '.from';
     my $from_group = Genome::ModelGroup->get(name => $from_group_name);
+
+    # Get To group
+    my $to_group_name = $self->name . '.to';
+    my $to_group = Genome::ModelGroup->get(name => $to_group_name);
+
+    # TODO: Rather that relying on the above names there should be a linkage or sorts to
+    # show the connections between these from/to models and groups
+    
     if ($from_group) {
         my @members = sort $from_group->models;
         unless ("@members" eq "@from_models") {
             $self->_rename_model_group($from_group);
             $from_group = undef;
+            $self->_rename_model_group($to_group);
+            $to_group = undef;
         }
     }
     unless ($from_group) {
@@ -95,12 +107,11 @@ sub _execute_build {
             $from_group->assign_models($from_model);
         }
     }
-
+    $self->status_message('Found "from" model group : '. $from_group->__display_name__);
+    
     #
     # make a set of "to" models with the changes and build them
     #
-
-    my @changes = $build->changes;
     
     # TODO: # pull the logic from this copy command and call it on each $from_model
     # then make an entity representing a pair (UR::Value::Pair?)
@@ -115,17 +126,20 @@ sub _execute_build {
     # TODO: when changes has a field name which is indirect through an input model,
     # make a copy of the input model and use it as an input so the change is "true"
     # for the new model
-    
-    my $to_group_name = $self->name . '.to.' . $self->id;
-    my $copy_result = Genome::ModelGroup::Command::Copy->execute(
-        from => $from_group,
-        to => $to_group_name,
-        changes => \@changes,
-    );
-    my $to_group = Genome::ModelGroup->get(name => $to_group_name);
+
     unless ($to_group) {
-        die $self->error_message("Failed to create model group $to_group_name!");
+        my @changes = $build->changes;
+        my $copy_result = Genome::ModelGroup::Command::Copy->execute(
+            from => $from_group,
+            to => $to_group_name,
+            changes => \@changes,
+        );
+        $to_group = Genome::ModelGroup->get(name => $to_group_name);
+        unless ($to_group) {
+            die $self->error_message("Failed to create model group $to_group_name!");
+        }
     }
+    $self->status_message('Found "to" model group : '. $to_group->__display_name__);
     my @to_models = $to_group->models;
 
     #
@@ -155,7 +169,9 @@ sub _execute_build {
                 }
                 $self->status_message('Starting a build for model '. $to_model->__display_name__);
                 my $build = $to_model->add_build;
-                $build->start;
+                unless ($build->start) {
+                    die('Failed to start build: '. $build->id);
+                }
             }
             next;
         }

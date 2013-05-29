@@ -41,7 +41,7 @@ class Genome::Model::Command::Define::GenePrediction::Bacterial {
         },
         nr_database_location => {
             is => 'String',
-            default => '/gscmnt/gpfstest2/analysis/blast_db/gsc_bacterial/bacterial_nr/bacterial_nr',
+            example_values => ['/gscmnt/gpfstest2/analysis/blast_db/gsc_bacterial/bacterial_nr/bacterial_nr'],
             doc => 'Default location of the NR database, may be overridden with a local copy if specified',
         },
     ],

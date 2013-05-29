@@ -46,6 +46,7 @@ BEGIN{
 
 class Genome::Model::Tools::Annotate::Sv::Combine {
     is => "Genome::Model::Tools::Annotate::Sv::Base",
+    doc => "Combine multiple SV annotation methods",
     has_param => \@has_param,
     has_input => [
         annotator_list  => {
@@ -55,6 +56,13 @@ class Genome::Model::Tools::Annotate::Sv::Combine {
         },
     ],
 };
+
+sub help_detail {
+    return "Run one or more SV annotators and combine their output.  Specify which
+    annotators to run with --annotator-list (e.g. --annotator-list=Transcripts,FusionTranscripts,Dbsnp).
+    Parameters for the individual annotators are prefixed with the annotator name (i.e. the --fusion-output-file
+    parameter for the FusionTranscript annotator should be specified with --fusion-transcripts-fusion-output-file";
+}
 
 sub process_breakpoint_list {
     my $self = shift;

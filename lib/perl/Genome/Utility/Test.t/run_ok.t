@@ -7,7 +7,7 @@ use Genome::Utility::Test qw(run_ok);
 use Test::More;
 
 test_out('not ok 1 - false');
-test_fail(+1);
+test_err(q(/#\s+Failed test 'false'\n?.*?at .* line \d+.*\n?/));
 run_ok('false');
 test_test('run_ok fails on non-zero exit code');
 

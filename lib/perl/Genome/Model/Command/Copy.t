@@ -14,6 +14,31 @@ use Test::More;
 
 use_ok('Genome::Model::Command::Copy') or die;
 
+# Test changes to indirect models
+my $source_model = Genome::Model->get(2888708572),
+my @models_before = Genome::Model->is_loaded("name like" => "__COPY_TEST3__%");
+
+## test cleanup for indirect recursive model creation when params have errors in a deeply nested model
+eval {
+    Genome::Model::Command::Copy->execute(
+        model => $source_model,
+        overrides => ['name=__COPY_TEST3__','wgs_model.tumor_model.processing_profile=2828673','wgs_model.normal_model.processing_profile=282673','exome_model.normal_model.processing_profile=2828673'],
+    );
+};
+ok($@, "got exception with bad param");
+my @models_after = Genome::Model->is_loaded("name like" => "__COPY_TEST3__%");
+is(scalar(@models_after), 0, "zero models created due to transaction wrappers");
+
+## now test the same without any errors in params
+Genome::Model::Command::Copy->execute(
+    model => $source_model,
+    overrides => ['name=__COPY_TEST4__','wgs_model.tumor_model.processing_profile=2828673','wgs_model.normal_model.processing_profile=2828673','exome_model.normal_model.processing_profile=2828673'],
+);
+@models_after = Genome::Model->is_loaded("name like" => "__COPY_TEST4__%");
+is(scalar(@models_after), 6, "found 6 new models matching the naming convention") 
+    or do { diag(map { $_->name } @models_after) };
+
+
 # Test ModelDeprecated
 
 my $sample_deprecated = Genome::Sample->create(name => '__TEST_SAMPLE_1__');

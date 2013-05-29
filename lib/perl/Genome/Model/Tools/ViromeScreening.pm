@@ -14,33 +14,33 @@ UR::Object::Type->define(
     class_name => __PACKAGE__,
     is => 'Command',
     has => [
-	fasta_file => {
-	    doc => 'file of reads to be checked for contamination',
-	    is => 'String',
-	    is_input => 1,
-	},
-	barcode_file => { 
-	    doc => 'list of samples for screening',
-	    is => 'String',
-	    is_input => 1,
-	},
-	dir => {
-	    doc => 'directory of inputs',
-	    is => 'String',
-	    is_optional => 1,
-	    default => $ENV{"PWD"},
-	},
-	logfile => {
-	    doc => 'output file for monitoring progress of pipeline',
-	    is => 'String',
-	    is_optional => 1,
-	    default => "logfile.txt",
-	},
+        fasta_file => {
+            doc => 'file of reads to be checked for contamination',
+            is => 'String',
+            is_input => 1,
+        },
+        barcode_file => { 
+            doc => 'list of samples for screening',
+            is => 'String',
+            is_input => 1,
+        },
+        dir => {
+            doc => 'directory of inputs',
+            is => 'String',
+            is_optional => 1,
+            default => $ENV{"PWD"},
+        },
+        logfile => {
+            doc => 'output file for monitoring progress of pipeline',
+            is => 'String',
+            is_optional => 1,
+            default => "logfile.txt",
+        },
         human_db => {
             doc => 'human blast db',
             is => 'String',
             is_optional => 1,
-            default => '/gscmnt/sata835/info/medseq/virome/blast_db/human_genomic/2009_07_09.humna_genomic',
+            example_values => ['/gscmnt/sata835/info/medseq/virome/blast_db/human_genomic/2009_07_09.humna_genomic'],
         },
         nt_db => {
             doc => 'nt sequence blast db',

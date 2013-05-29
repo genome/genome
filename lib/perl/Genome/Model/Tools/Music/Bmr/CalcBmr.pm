@@ -305,7 +305,7 @@ sub execute {
     }
 
     # Run "joinx ref-stats" to classify SNVs as being at AT, CG, or CpG sites in the reference
-    print STDERR "Running 'joinx1.6 ref-stats' to read reference FASTA and identify SNVs at AT, CG, CpG sites\n";
+    print STDERR "Running 'joinx1.7 ref-stats' to read reference FASTA and identify SNVs at AT, CG, CpG sites\n";
     my $maf_bed = Genome::Sys->create_temp_file_path();
     my $mafBedFh = IO::File->new( $maf_bed, ">" ) or die "Temporary file could not be created. $!";
     my $mafFh = IO::File->new( $maf_file ) or die "Couldn't open $maf_file. $!";
@@ -321,7 +321,7 @@ sub execute {
     $mafFh->close;
     $mafBedFh->close;
     my $refstats_file = Genome::Sys->create_temp_file_path();
-    Genome::Sys->shellcmd( cmd => "joinx1.7 ref-stats --ref-bases --bed $maf_bed --fasta $ref_seq --output $refstats_file" );
+    `joinx1.7 ref-stats --ref-bases --bed $maf_bed --fasta $ref_seq --output $refstats_file`;
 
     # Parse through the ref-stats output and load it into hashes for quick lookup later
     my ( %ref_base, %cpg_site );

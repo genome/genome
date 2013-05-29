@@ -60,6 +60,14 @@ sub _detect_variants {
         $params =~ s/--map-quality\s*(\d+)\s*//;
     }
 
+    my ($samtools_params, $varscan_params) = $self->_split_params($params);
+    my ($samtools_version, $use_baq, $other_params) = $self->_process_samtools_params($samtools_params);
+
+    my %optional_samtools_params;
+    $optional_samtools_params{samtools_version} = $samtools_version if $samtools_version;
+    $optional_samtools_params{samtools_use_baq} = $use_baq if $use_baq;
+    $optional_samtools_params{samtools_params} = $other_params if $other_params;
+
     my $varscan = Genome::Model::Tools::Varscan::Germline->create(
         bam_file => $self->aligned_reads_input,
         reference => $self->reference_sequence_input,
@@ -69,6 +77,7 @@ sub _detect_variants {
         map_quality => $map_quality,
         no_headers => 1,
         version => $self->version,
+        %optional_samtools_params,
     );
 
     unless($varscan->execute()) {
@@ -77,6 +86,40 @@ sub _detect_variants {
     }
 
     return 1;
+}
+
+# This method breaks the samtools params down into individual params for the varscan modules
+sub _process_samtools_params {
+    my ($self, $params) = @_;
+    my $samtools_version;
+    my $use_baq = 1;
+
+    # Grab version if it exists
+    if ($params =~ m/version/) {
+        ($samtools_version) = ($params =~ m/--version\s*(\S+)/);
+        $params =~ s/--version\s*(\S+)\s*//;
+    }
+
+    # Grab baq boolean
+    if ($params =~ m/--nobaq/) {
+        $use_baq = 0;
+        $params =~ s/--nobaq\s*//;
+    }
+    
+    return ($samtools_version, $use_baq, $params);
+}
+
+# Params should be set up as <samtools params>:<varscan params>
+# If there is no : present, assume everything is varscan params (legacy processing profiles)
+sub _split_params {
+    my ($self, $params) = @_;
+    my ($samtools_params, $varscan_params);
+    if ($params =~ m/:/) {
+        ($samtools_params, $varscan_params) = split ":", $params;
+    } else {
+        $varscan_params = $params;
+    }
+    return ($samtools_params, $varscan_params);
 }
 
 sub generate_metrics {

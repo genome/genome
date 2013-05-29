@@ -7,6 +7,7 @@ use Genome;
 
 use XML::Simple;
 
+use Genome::Sample::Command::Import;
 require File::Basename;
 
 class Genome::InstrumentData::Command::Import::TcgaBam {
@@ -302,7 +303,7 @@ sub _parse_metadata_file {
     my $md = XMLin($metadata_file);
 
     my %metadata;
-    $metadata{bam_md5}            = $md->{Result}->{files}->{file}->{checksum}->{content};
+    $metadata{bam_md5}            = $self->_md5_checksum_content($md);
     $metadata{tcga_name}          = $md->{Result}->{legacy_sample_id};
     $metadata{import_source_name} = $md->{Result}->{center_name};
     $metadata{analysis_id}        = $md->{Result}->{analysis_id};
@@ -326,6 +327,27 @@ sub _parse_metadata_file {
     $metadata{target_region}      = $target_region;
 
     return \%metadata
+}
+
+sub _md5_checksum_content {
+    my( $self, $md ) = @_;
+
+    my $content = eval{ $md->{Result}->{files}->{file}->{checksum}->{content}; };
+    if( not $content ) {
+        my $filename = File::Basename::basename( $self->original_data_path );
+        my ($fileinfo) = eval{ grep {$_->{filename} eq $filename} @{$md->{Result}->{files}->{file}} };
+        if( not $fileinfo ) {
+            $self->error_message("Failed to get files md5 info from metadata file");
+            return;
+        }
+        $content = $fileinfo->{checksum}->{content};
+    }
+    if( not $content ) {
+        $self->error_message("Failed to get checksum content for file");
+        return;
+    }
+
+    return $content;
 }
 
 sub _validate_bam {

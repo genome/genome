@@ -509,22 +509,15 @@ sub draw_mutation_diagrams{
     $outdir .= "/";
   }
 
-  my $stdout_file1 = $outdir . "somatic.mutation-diagram.stdout";
-  my $stderr_file1 = $outdir . "somatic.mutation-diagram.stderr";
-  my $stdout_file2 = $outdir . "cosmic.mutation-diagram.stdout";
-  my $stderr_file2 = $outdir . "cosmic.mutation-diagram.stderr";
-
   $outdir .= "images/";
   mkdir($outdir);
   
-  my $mut_diag_cmd1 = "gmt graph mutation-diagram  --annotation='$somatic_variants_file'  --reference-transcripts='$ab_name' --output-directory='$outdir'  --file-suffix='_SOMATIC' 1>$stdout_file1 2>$stderr_file1";
-  $self->status_message("$mut_diag_cmd1");
-  Genome::Sys->shellcmd(cmd => $mut_diag_cmd1);
+  my $mut_diag_cmd1 = Genome::Model::Tools::Graph::MutationDiagram->create(annotation=>$somatic_variants_file, reference_transcripts=>$ab_name, output_directory=>$outdir, file_suffix=>'_SOMATIC');
+  $mut_diag_cmd1->execute();
 
-  my $mut_diag_cmd2 = "gmt graph mutation-diagram  --annotation='$cosmic_variants_file'  --reference-transcripts='$ab_name' --output-directory='$outdir'  --file-suffix='_COSMIC' 1>$stdout_file2 2>$stderr_file2";
-  $self->status_message("$mut_diag_cmd2");
-  Genome::Sys->shellcmd(cmd => $mut_diag_cmd2);
-
+  my $mut_diag_cmd2 = Genome::Model::Tools::Graph::MutationDiagram->create(annotation=>$cosmic_variants_file, reference_transcripts=>$ab_name, output_directory=>$outdir, file_suffix=>'_COSMIC');
+  $mut_diag_cmd2->execute();
+  
   return;
 }
 

@@ -19,7 +19,7 @@ sub _color {
     my $self = shift;
     my $string = shift;
 
-    if($self->color) {
+    if(-t STDOUT and -t STDERR and $self->color and @_) {
         return Term::ANSIColor::colored($string, @_);
     } else {
         return $string;
@@ -41,6 +41,12 @@ our %STATUS_COLORS = (
     failed      => "red",
     unstartable => "red",
 );
+
+sub _status_colors {
+    my $self = shift;
+    my $status = shift;
+    return $STATUS_COLORS{$status};
+}
 
 sub _status_color {
     my ($self, $text) = @_;

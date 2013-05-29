@@ -86,11 +86,13 @@ class Genome::Model::ReferenceAlignment {
             is_many => 0,
             is_mutable => 1, # TODO: make this non-optional once backfilling is complete and reference placeholder is deleted
             is_optional => 1,
+            example_values => [101947881],
             doc => 'reference sequence to align against'
         },
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             id_by => 'reference_sequence_build_id',
+            example_values => [101947881],
         },
         dbsnp_build_id => {
             is => 'Text',

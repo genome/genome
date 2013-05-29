@@ -52,19 +52,18 @@ sub _update_value {
     my $current_attr = $self->_get_current_attr;
     $current_attr->delete if $current_attr;
 
-    my $new_value;
-    if ( $genome_entity->can($genome_property_name) ) {
-        $new_value = $self->SUPER::_update_value();
-        $new_value = $genome_entity->$genome_property_name($self->new_value);
-    }
-    else {
-        my $new_attr = $genome_entity->add_attribute(
-            attribute_label => $genome_property_name,
-            attribute_value => $self->new_value,
-            nomenclature => 'WUGC',
-        );
-        return if not $new_attr;
-        $new_value = $new_attr->attribute_value;
+    if ( defined $self->new_value ) {
+        if ( $genome_entity->can($genome_property_name) ) {
+            $self->SUPER::_update_value();
+        }
+        else {
+            my $new_attr = $genome_entity->add_attribute(
+                attribute_label => $genome_property_name,
+                attribute_value => $self->new_value,
+                nomenclature => 'WUGC',
+            );
+            return if not $new_attr;
+        }
     }
 
     if ( my $after_update_value = $self->can('_after_update_value') ) {
@@ -72,7 +71,7 @@ sub _update_value {
         return if not $rv;
     }
 
-    return $new_value;
+    return 1;
 }
 
 1;

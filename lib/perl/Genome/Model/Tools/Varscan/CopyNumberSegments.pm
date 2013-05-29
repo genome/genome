@@ -24,19 +24,60 @@ use Genome;                                 # using the namespace authorizes Cla
 my $undo_sd = 2;
 
 class Genome::Model::Tools::Varscan::CopyNumberSegments {
-	is => 'Command',                       
-	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		regions_file		=> { is => 'Text', doc => "Path to copy number regions from Varscan copyCaller", is_optional => 0 },
-		output_basename 	=> { is => 'Text', doc => "Output file basename for cnv plots", is_optional => 0 },
-		min_depth 	=> { is => 'Text', doc => "Minimum depth for a region (in one sample) to include it", is_optional => 0, default => 8 },
-		min_points_to_plot 	=> { is => 'Text', doc => "Minimum number of points for a chromosome to plot it", is_optional => 0, default => 100 },
-		undo_sd 	=> { is => 'Text', doc => "Remove change-points of less than this number of standard deviations", is_optional => 0, default => 4 },
-		lsf_command 	=> { is => 'Text', doc => "If set to something like bsub -q long, will run bsub", is_optional => 1 },
-		array_data 	=> { is => 'Text', doc => "If set to 1, expect array data in id, chrom, pos, value format", is_optional => 1 },
-		plot_y_min 	=> { is => 'Text', doc => "The minimum value on y-axis in CN plots", is_optional => 0, default => -5 },		
-		plot_y_max 	=> { is => 'Text', doc => "The minimum value on y-axis in CN plots", is_optional => 0, default => 5 },		
-	],
+    is => 'Command',
+
+    has => [                                # specify the command's single-value properties (parameters) <--- 
+        regions_file => {
+            is => 'Text',
+            doc => "Path to copy number regions from Varscan copyCaller",
+            is_optional => 0,
+        },
+        output_basename  => {
+            is => 'Text',
+            doc => "Output file basename for cnv plots",
+            is_optional => 0,
+        },
+        min_depth  => {
+            is => 'Text',
+            doc => "Minimum depth for a region (in one sample) to include it",
+            is_optional => 0,
+            default => 8,
+        },
+        min_points_to_plot  => {
+            is => 'Text',
+            doc => "Minimum number of points for a chromosome to plot it",
+            is_optional => 0,
+            default => 100,
+        },
+        undo_sd  => {
+            is => 'Text',
+            doc => "Remove change-points of less than this number of standard deviations",
+            is_optional => 0,
+            default => 4,
+        },
+        lsf_command  => {
+            is => 'Text',
+            doc => "If set to something like bsub -q long, will run bsub",
+            is_optional => 1,
+        },
+        array_data  => {
+            is => 'Text',
+            doc => "If set to 1, expect array data in id, chrom, pos, value format",
+            is_optional => 1,
+        },
+        plot_y_min  => {
+            is => 'Text',
+            doc => "The minimum value on y-axis in CN plots",
+            is_optional => 0,
+            default => -5,
+        },
+        plot_y_max  => {
+            is => 'Text',
+            doc => "The minimum value on y-axis in CN plots",
+            is_optional => 0,
+            default => 5,
+        },
+    ],
 };
 
 sub sub_command_sort_position { 12 }

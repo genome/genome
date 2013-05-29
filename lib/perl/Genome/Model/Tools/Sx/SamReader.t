@@ -15,25 +15,21 @@ is(Genome::Model::Tools::Sx::SamReader->type, 'sam', 'type is sam');
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'Created temp dir');
-my $fasta = $tmpdir.'/out.fasta';
-my $qual = $tmpdir.'/out.qual';
+my $fastq = $tmpdir.'/out.fastq';
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/Sam/v1';
-my $sam = $dir.'/rw.sam';
+my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/Sam/v2';
+my $sam = $dir.'/test.noheader.sam';
 ok(-s $sam, 'sam exists');
-my $example_fasta = $dir.'/example.fasta';
-ok(-s $example_fasta, 'example fasta exists');
-my $example_qual = $dir.'/example.qual';
-ok(-s $example_qual, 'example qual exists');
+my $example_fastq = $dir.'/example.fastq';
+ok(-s $example_fastq, 'example fastq exists');
 
-my $cmd = "gmt sx -input $sam -output file=$fasta:qual_file=$qual";
+my $cmd = "gmt sx -input $sam:cnt=2 -output file=$fastq";
 my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
 
-is(File::Compare::compare($example_fasta, $fasta), 0, 'fasta files match');
-is(File::Compare::compare($example_qual, $qual), 0, 'qual files match');
+is(File::Compare::compare($example_fastq, $fastq), 0, 'fastq files match');
 
 # fail
-my $bad = $dir.'/bad1.sam';
+my $bad = $dir.'/bad.mismatch-seq-qual-length.sam';
 my $reader = Genome::Model::Tools::Sx::SamReader->create(file => $bad);
 ok($reader, 'create sam reader for bad file');
 ok(!eval{$reader->read;}, 'read bad sam failed');

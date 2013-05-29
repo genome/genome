@@ -71,6 +71,7 @@ sub execute {
         ),
         ucsc_directory => $self->ucsc_directory,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        species => $self->species,
     );
 
     unless ($result) {

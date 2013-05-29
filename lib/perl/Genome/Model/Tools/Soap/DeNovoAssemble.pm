@@ -12,7 +12,7 @@ class Genome::Model::Tools::Soap::DeNovoAssemble {
 	version => {
 	    is => 'Text',
 	    doc => 'Version of Soap DeNovo to use',
-	    valid_values => ['1.03', '1.04', '1.05'],
+	    valid_values => ['1.03', '1.04', '1.05', '2.23'],
 	},
 	config_file => {
 	    is => 'Text',

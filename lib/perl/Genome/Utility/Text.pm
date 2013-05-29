@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use POSIX "floor";
+use List::Util 'max';
 require Carp;
 
 require Exporter;
@@ -200,7 +201,7 @@ sub side_by_side {
 
     my @combined_lines;
     my @num_lines = map {scalar(@{$_})} @line_arrays;
-    my $max_i = (List::Util::max(@num_lines) || 1) - 1;
+    my $max_i = (max(@num_lines) || 1) - 1;
     for my $i (0..$max_i) {
         my $combined_line = '';
         for my $j (0..$#line_arrays) {
@@ -252,7 +253,7 @@ sub width {
 
     my $width = length($string);
     if(scalar(@lines)) {
-        $width = List::Util::max(map {length($_ . '')} @lines);
+        $width = max(map {length($_ . '')} @lines);
     }
     return $width;
 }

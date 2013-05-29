@@ -141,14 +141,35 @@ my @PICARD_VERSIONS = (
 
 my %PICARD_VERSIONS = @PICARD_VERSIONS;
 
-sub latest_version { $PICARD_VERSIONS[0] }
+sub latest_version { ($_[0]->installed_picard_versions)[0] }
 
 sub path_for_picard_version {
     my ($class, $version) = @_;
     $version ||= $PICARD_DEFAULT;
+
+    #First try the legacy hash
     my $path = $PICARD_VERSIONS{$version};
     return $path if defined $path;
+
+    #Try the standard location
+    $path = '/usr/share/java/picard-tools' . $version;
+    return $path if(-d $path);
+
     die 'No path found for picard version: '.$version;
+}
+
+sub installed_picard_versions {
+    my @files = glob('/usr/share/java/picard-*.jar');
+
+    my @versions;
+    for my $f (@files) {
+        if($f =~ /picard-([\d\.]+).jar$/) {
+            push @versions, $1;
+        }
+    }
+
+    #all versions should be #.## for now (this'll break on 1.100!)
+    return sort { $b <=> $a } @versions;
 }
 
 sub default_picard_version {
@@ -171,7 +192,7 @@ sub run_java_vm {
     
     my $jvm_options = $self->additional_jvm_options || '';
     
-    my $java_vm_cmd = 'java -Xmx'. $self->maximum_memory .'g -XX:MaxPermSize=' . $self->maximum_permgen_memory . 'm ' . $jvm_options . ' -cp '. $cmd;
+    my $java_vm_cmd = 'java -Xmx'. $self->maximum_memory .'g -XX:MaxPermSize=' . $self->maximum_permgen_memory . 'm ' . $jvm_options . ' -cp /usr/share/java/ant.jar:'. $cmd;
     $java_vm_cmd .= ' VALIDATION_STRINGENCY='. $self->validation_stringency;
     $java_vm_cmd .= ' TMP_DIR='. $self->temp_directory;
     if ($self->create_md5_file) {

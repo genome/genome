@@ -48,6 +48,11 @@ class Genome::Model::Tools::Picard::MarkDuplicates {
             default_value => $DEFAULT_MAX_RECORDS_IN_RAM,
             is_optional => 1,
         },
+        include_comment => {
+            is => 'Text',
+            doc => 'comment to include as a @CO in the BAM header',
+            is_optional => 1,
+        },
     ],
 };
 
@@ -96,6 +101,9 @@ sub execute {
     if (defined($self->max_sequences_for_disk_read_ends_map)) {
         $dedup_cmd .= ' MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP='. $self->max_sequences_for_disk_read_ends_map;
     }
+    if ($self->include_comment and not ($self->use_version =~ /1\.([0-9]+)/ and int($1) < 77)) {
+        $dedup_cmd .= " COMMENT='" . $self->include_comment . "'";
+    }
     my $version = $self->use_version;
     if ($self->max_records_in_ram) {
         if( grep($_ eq $version, ('r107', 'r104', 'r103wu0')) ) {
@@ -106,7 +114,7 @@ sub execute {
     }
     $dedup_cmd .= ' ' . $self->get_max_filehandles_param;
 
-    
+
     $self->run_java_vm(
         cmd => $dedup_cmd,
         input_files => [$self->input_file],

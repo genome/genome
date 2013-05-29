@@ -3,9 +3,19 @@ use warnings;
 
 use Test::More;
 
+use File::Basename qw(dirname);
+our $lib_dir;
+BEGIN {
+    $lib_dir = dirname(__FILE__) . '-lib' ;
+};
+BEGIN {
+    # Untested. Site::TGI changes broke these tests.
+    use lib $lib_dir;
+};
+
 use Time::HiRes qw(usleep);
 use above 'Genome';
-use Genome::Disk::Allocation::Test qw(create_tmpfs_volume create_barrier spawn_child waitpids);
+use GenomeDiskAllocationTest qw(create_tmpfs_volume create_barrier spawn_child waitpids);
 
 # soft_limit_kb.t
 # The purpose of this test is to determine whether the soft_limit_kb is respected. To do that we attempt to create many more allocations than a volume can hold and see how full the volume gets.

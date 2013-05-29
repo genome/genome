@@ -33,10 +33,6 @@ class Genome::Model::MutationalSignificance::Command::CreateROI {
             doc => 'Add this number of base pairs on each side of the feature', #to do: check this
             default_value => 0,
         },
-        one_based => {
-            is => 'Boolean',
-            default_value => 1,
-        },
     ],
     has_output => [
         roi_path => {
@@ -62,6 +58,7 @@ sub execute {
     if ($self->flank_size && $self->flank_size > 0) {
         push @params, flank_size => $self->flank_size;
     }
+    push @params, one_based => 1;
 
     my $feature_list = $self->annotation_build->get_or_create_roi_bed(@params);
 

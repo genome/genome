@@ -44,23 +44,17 @@ if (length(args) < 10){
 #############################################################################################################################################
 #plotChrCNV - Function to plot CNV values by position and annotate with gene names and other relevant info                                  #
 #############################################################################################################################################
-plotChrCNV = function(target_chr){
+plotChrCNV = function(target_chr, direction){
   #Create plotting space
-  #lay = layout(matrix(c(1,2,3), ncol=1, byrow=F), heights=c(0.5,1,1), widths=c(1), FALSE) 
-  #layout.show(lay)
+  lay = layout(matrix(c(1,2,3,4), ncol=2, byrow=F), heights=c(0.6,2), widths=c(1,0.2), FALSE) #layout.show(lay)
 
-  lay = layout(matrix(c(1,2,3,4,5,6), ncol=2, byrow=F), heights=c(0.5,1,1), widths=c(1,0.2), FALSE) 
-  #layout.show(lay)
-
-
-  #Plot 1
-  #Draw the ideogram at the top
+  #Plot 1 - Draw the ideogram at the top
   #Adjust margins -> c(bottom, left, top, right)
   par(mar=c(0, 4, 1.5, 0))
   drawIdeogram(ideo_data, target_chr)
   par(mar=c(3, 4, 1.5, 0))
 
-  print(target_chr)
+  print(paste(direction, "_", target_chr, sep=""))
   #Get the chromosome or region of interest
   #target_chr = "chr17"
   i = which(cnvs[,"CHR"] == target_chr)
@@ -121,113 +115,119 @@ plotChrCNV = function(target_chr){
   xlabel=paste("Position (bp) on ", target_chr, sep="")
   ylabel="CNV Difference"
 
-  #Plot 2
-  #Plot the values for the gains
-  mainlabel="Gains"
-  ylim_lower=display_cut_up; if (ylim_lower > -2){ylim_lower = -2}
-  ylim_upper=yu3; if (ylim_upper < 2){ylim_upper = 2}
-  plot(x=xg, y=yg, pch=16, col=cg, ylim=c(ylim_lower, ylim_upper), xlab="", ylab=ylabel, main=mainlabel)
-  abline(h=0, lty=3, lwd=0.5, col="black")
-  abline(h=cut4, lty=2, lwd=0.5, col=gaincolor1)
-  abline(h=cut5, lty=2, lwd=0.5, col=gaincolor2)
-  abline(h=cut6, lty=2, lwd=0.5, col=gaincolor3)
-  #If a hardcap is being utilized... mark it
-  if (max(yg) >= hard_cap_upper){
-    abline(h=hard_cap_upper, lty=3, lwd=0.5, col=gaincolor3)
-  }
-  cex_text=0.75
-  if (length(gi_up) > 10){cex_text=0.6}
-  if(length(gi_up) > 0){ 
-    odds_up=seq(1, length(gi_up), 2)
-    x0_odd=genes[gi_up[odds_up],"Mid"]; x1_odd=x0_odd; y0_odd=rep(cut5, length(x0_odd)); y1_odd=rep(yu1, length(x0_odd))
-    segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col=gaincolor2, lty=2, lwd=0.5)
-    text(x=genes[gi_up[odds_up],"Mid"], y=yu1, labels=genes[gi_up[odds_up],"mapped_gene_name"], srt=45, cex=cex_text, col=gaincolor4)
-  }
-  if(length(gi_up) > 1){ 
-    evens_up=seq(2, length(gi_up), 2)
-    x0_even=genes[gi_up[evens_up],"Mid"]; x1_even=x0_even; y0_even=rep(cut5, length(x0_even)); y1_even=rep(yu2, length(x0_even))
-    segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col=gaincolor2, lty=2, lwd=0.5)
-    text(x=genes[gi_up[evens_up],"Mid"], y=yu2, labels=genes[gi_up[evens_up],"mapped_gene_name"], srt=45, cex=cex_text, col=gaincolor4)
-  }
-  if (length(gain_j)>0){
-    segx1g = segments_chr[gain_j,"START"]
-    segx2g = segments_chr[gain_j,"END"]
-    segyg = segments_chr[gain_j,"Adjusted_CN_DIFF"]
-    segments(x0=segx1g, x1=segx2g, y0=segyg, y1=segyg, col=gaincolor4, lty=1, lwd=2)
-  }
-
-  #Plot 3
-  #Plot the values for the losses
-  mainlabel="Losses"
-  ylim_lower=yd3; if (ylim_lower > -2){ylim_lower = -2}
-  ylim_upper=display_cut_down;
-  plot(x=xl, y=yl, pch=16, col=cl, ylim=c(ylim_lower,ylim_upper), xlab=xlabel, ylab=ylabel, main=mainlabel)
-  abline(h=0, lty=3, lwd=0.5, col="black")
-  abline(h=cut1, lty=2, lwd=0.5, col=losscolor1)
-  abline(h=cut2, lty=2, lwd=0.5, col=losscolor2)
-  abline(h=cut3, lty=2, lwd=0.5, col=losscolor3)
-  #If a hardcap is being utilized... mark it
-  if (min(yl) <= hard_cap_lower){
-    abline(h=hard_cap_lower, lty=3, lwd=0.5, col=losscolor3)
-  }
-  cex_text=0.75
-
-  #Add text labels
-  if (length(gi_down) > 10){cex_text=0.6}
-  if (length(gi_down) > 0){
-    odds_down=seq(1, length(gi_down), 2)
-    x0_odd=genes[gi_down[odds_down],"Mid"]; x1_odd=x0_odd; y0_odd=rep(cut2, length(x0_odd)); y1_odd=rep(yd1, length(x0_odd))
-    segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col=losscolor1, lty=2, lwd=0.5)
-    text(x=genes[gi_down[odds_down],"Mid"], y=yd1, labels=genes[gi_down[odds_down],"mapped_gene_name"], srt=45, cex=cex_text, col=losscolor4)
-  }
-  if (length(gi_down) > 1){
-    evens_down=seq(2, length(gi_down), 2)
-    x0_even=genes[gi_down[evens_down],"Mid"]; x1_even=x0_even; y0_even=rep(cut2, length(x0_even)); y1_even=rep(yd2, length(x0_even))
-    segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col=losscolor1, lty=2, lwd=0.5)
-    text(x=genes[gi_down[evens_down],"Mid"], y=yd2, labels=genes[gi_down[evens_down],"mapped_gene_name"], srt=45, cex=cex_text, col=losscolor4)
-  }
-  if (length(loss_j)>0){
-    segx1l = segments_chr[loss_j,"START"]
-    segx2l = segments_chr[loss_j,"END"]
-    segyl = segments_chr[loss_j,"Adjusted_CN_DIFF"]
-    segments(x0=segx1l, x1=segx2l, y0=segyl, y1=segyl, col=losscolor4, lty=1, lwd=2)
+  #Plot 2 - Plot the values for the gains
+  if (direction == "gains"){
+    mainlabel="Gains"
+    ylim_lower=display_cut_up; if (ylim_lower > -2){ylim_lower = -2}
+    ylim_upper=yu3; if (ylim_upper < 2){ylim_upper = 2}
+    plot(x=xg, y=yg, pch=16, col=cg, ylim=c(ylim_lower, ylim_upper), xlab="", ylab=ylabel, main=mainlabel)
+    abline(h=0, lty=3, lwd=0.5, col="black")
+    abline(h=cut4, lty=2, lwd=0.5, col=gaincolor1)
+    abline(h=cut5, lty=2, lwd=0.5, col=gaincolor2)
+    abline(h=cut6, lty=2, lwd=0.5, col=gaincolor3)
+    #If a hardcap is being utilized... mark it
+    if (max(yg) >= hard_cap_upper){
+      abline(h=hard_cap_upper, lty=3, lwd=0.5, col=gaincolor3)
+    }
+    cex_text=0.75
+    if (length(gi_up) > 10){cex_text=0.6}
+    if(length(gi_up) > 0){ 
+      odds_up=seq(1, length(gi_up), 2)
+      x0_odd=genes[gi_up[odds_up],"Mid"]; x1_odd=x0_odd; y0_odd=rep(cut5, length(x0_odd)); y1_odd=rep(yu1, length(x0_odd))
+      segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col=gaincolor2, lty=2, lwd=0.5)
+      text(x=genes[gi_up[odds_up],"Mid"], y=yu1, labels=genes[gi_up[odds_up],"mapped_gene_name"], srt=45, cex=cex_text, col=gaincolor4)
+    }
+    if(length(gi_up) > 1){ 
+      evens_up=seq(2, length(gi_up), 2)
+      x0_even=genes[gi_up[evens_up],"Mid"]; x1_even=x0_even; y0_even=rep(cut5, length(x0_even)); y1_even=rep(yu2, length(x0_even))
+      segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col=gaincolor2, lty=2, lwd=0.5)
+      text(x=genes[gi_up[evens_up],"Mid"], y=yu2, labels=genes[gi_up[evens_up],"mapped_gene_name"], srt=45, cex=cex_text, col=gaincolor4)
+    }
+    if (length(gain_j)>0){
+      segx1g = segments_chr[gain_j,"START"]
+      segx2g = segments_chr[gain_j,"END"]
+      segyg = segments_chr[gain_j,"Adjusted_CN_DIFF"]
+      segments(x0=segx1g, x1=segx2g, y0=segyg, y1=segyg, col=gaincolor4, lty=1, lwd=2)
+    }
   }
 
-  #Plot 4 - legend for ideogram
+  #Plot 3 - Plot the values for the losses
+  if (direction == "losses"){
+    mainlabel="Losses"
+    ylim_lower=yd3; if (ylim_lower > -2){ylim_lower = -2}
+    ylim_upper=display_cut_down;
+    plot(x=xl, y=yl, pch=16, col=cl, ylim=c(ylim_lower,ylim_upper), xlab=xlabel, ylab=ylabel, main=mainlabel)
+    abline(h=0, lty=3, lwd=0.5, col="black")
+    abline(h=cut1, lty=2, lwd=0.5, col=losscolor1)
+    abline(h=cut2, lty=2, lwd=0.5, col=losscolor2)
+    abline(h=cut3, lty=2, lwd=0.5, col=losscolor3)
+    #If a hardcap is being utilized... mark it
+    if (min(yl) <= hard_cap_lower){
+      abline(h=hard_cap_lower, lty=3, lwd=0.5, col=losscolor3)
+    }
+    cex_text=0.75
+
+    #Add text labels
+    if (length(gi_down) > 10){cex_text=0.6}
+    if (length(gi_down) > 0){
+      odds_down=seq(1, length(gi_down), 2)
+      x0_odd=genes[gi_down[odds_down],"Mid"]; x1_odd=x0_odd; y0_odd=rep(cut2, length(x0_odd)); y1_odd=rep(yd1, length(x0_odd))
+      segments(x0=x0_odd, x1=x1_odd, y0=y0_odd, y1=y1_odd, col=losscolor1, lty=2, lwd=0.5)
+      text(x=genes[gi_down[odds_down],"Mid"], y=yd1, labels=genes[gi_down[odds_down],"mapped_gene_name"], srt=45, cex=cex_text, col=losscolor4)
+    }
+    if (length(gi_down) > 1){
+      evens_down=seq(2, length(gi_down), 2)
+      x0_even=genes[gi_down[evens_down],"Mid"]; x1_even=x0_even; y0_even=rep(cut2, length(x0_even)); y1_even=rep(yd2, length(x0_even))
+      segments(x0=x0_even, x1=x1_even, y0=y0_even, y1=y1_even, col=losscolor1, lty=2, lwd=0.5)
+      text(x=genes[gi_down[evens_down],"Mid"], y=yd2, labels=genes[gi_down[evens_down],"mapped_gene_name"], srt=45, cex=cex_text, col=losscolor4)
+    }
+    if (length(loss_j)>0){
+      segx1l = segments_chr[loss_j,"START"]
+      segx2l = segments_chr[loss_j,"END"]
+      segyl = segments_chr[loss_j,"Adjusted_CN_DIFF"]
+      segments(x0=segx1l, x1=segx2l, y0=segyl, y1=segyl, col=losscolor4, lty=1, lwd=2)
+    }
+  }
+
+  #Plot 4 - Plot the legend for the ideogram
   ideo_legend_cols = c("white","grey75","grey50","grey25","black","firebrick1","firebrick2","firebrick")
   ideo_legend_text = c("gneg","gpos25","gpos50","gpos75","gpos100","gvar","stalk","acen")
   plot.new()
-  par(mar=c(0,0,0,0))
-  legend("left", col=ideo_legend_cols, pch=15, legend=ideo_legend_text, title="Giemsa staining", cex=1)
+  #par(mar=c(0,0,0,0))
+  legend("bottomleft", col=ideo_legend_cols, pch=15, legend=ideo_legend_text, title="Giemsa staining", cex=0.9)
 
-  #Plot 5
-  red_count = length(which(cnvs_chr[,"COLOR"] == gaincolor3))
-  orange_count = length(which(cnvs_chr[,"COLOR"] == gaincolor2))
-  yellow_count = length(which(cnvs_chr[,"COLOR"] == gaincolor1))
+  #Plot 5 - Plot the legend for the gains
+  if (direction == "gains"){
+    red_count = length(which(cnvs_chr[,"COLOR"] == gaincolor3))
+    orange_count = length(which(cnvs_chr[,"COLOR"] == gaincolor2))
+    yellow_count = length(which(cnvs_chr[,"COLOR"] == gaincolor1))
 
-  plot.new()
-  par(mar=c(0,0,0,0))
-  gain_legend_text=c(paste("Gain > ", cut6, " (n = ", prettyNum(red_count, big.mark=",", scientific=FALSE), ")", sep=""), 
-                     paste("Gain > ", cut5, " (n = ", prettyNum(orange_count, big.mark=",", scientific=FALSE), ")", sep=""), 
-                     paste("Gain > ", cut4, " (n = ", prettyNum(yellow_count, big.mark=",", scientific=FALSE), ")", sep=""),
-                     "HMM Gain Segs")
-  gain_legend_cols=c(gaincolor3, gaincolor2, gaincolor1, gaincolor4)
-  gain_legend_title=paste("Gain (Windows = ", prettyNum(total_windows, big.mark=",", scientific=FALSE), ")", sep="")
-  legend("center", col=gain_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=gain_legend_text, title=gain_legend_title, cex=1)
- 
-  #Plot 6
-  lightblue_count = length(which(cnvs_chr[,"COLOR"] == losscolor1))
-  blue_count = length(which(cnvs_chr[,"COLOR"] == losscolor2))
-  darkblue_count = length(which(cnvs_chr[,"COLOR"] == losscolor3))
-  plot.new()
-  par(mar=c(0,0,0,0))
-  loss_legend_text=c(paste("Loss < ", cut1, " (n = ", prettyNum(lightblue_count, big.mark=",", scientific=FALSE), ")", sep=""), 
-                     paste("Loss < ", cut2, " (n = ", prettyNum(blue_count, big.mark=",", scientific=FALSE), ")", sep=""), 
-                     paste("Loss < ", cut3, " (n = ", prettyNum(darkblue_count, big.mark=",", scientific=FALSE), ")", sep=""),
-                     "HMM Loss Segs")
-  loss_legend_cols=c(losscolor1, losscolor2, losscolor3, losscolor4)
-  loss_legend_title=paste("Loss (Windows = ", prettyNum(total_windows, big.mark=",", scientific=FALSE), ")", sep="")
-  legend("center", col=loss_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=loss_legend_text, title=loss_legend_title, cex=1)
+    plot.new()
+    par(mar=c(0,0,0,0))
+    gain_legend_text=c(paste("Gain > ", cut6, " (n = ", prettyNum(red_count, big.mark=",", scientific=FALSE), ")", sep=""), 
+                       paste("Gain > ", cut5, " (n = ", prettyNum(orange_count, big.mark=",", scientific=FALSE), ")", sep=""), 
+                       paste("Gain > ", cut4, " (n = ", prettyNum(yellow_count, big.mark=",", scientific=FALSE), ")", sep=""),
+                       "HMM Gain Segs")
+    gain_legend_cols=c(gaincolor3, gaincolor2, gaincolor1, gaincolor4)
+    gain_legend_title=paste("Gain (Windows = ", prettyNum(total_windows, big.mark=",", scientific=FALSE), ")", sep="")
+    legend("center", col=gain_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=gain_legend_text, title=gain_legend_title, cex=1)
+  }
+
+  #Plot 6 - Plot the legend for the losses
+  if (direction == "losses"){
+    lightblue_count = length(which(cnvs_chr[,"COLOR"] == losscolor1))
+    blue_count = length(which(cnvs_chr[,"COLOR"] == losscolor2))
+    darkblue_count = length(which(cnvs_chr[,"COLOR"] == losscolor3))
+    plot.new()
+    par(mar=c(0,0,0,0))
+    loss_legend_text=c(paste("Loss < ", cut1, " (n = ", prettyNum(lightblue_count, big.mark=",", scientific=FALSE), ")", sep=""), 
+                       paste("Loss < ", cut2, " (n = ", prettyNum(blue_count, big.mark=",", scientific=FALSE), ")", sep=""), 
+                       paste("Loss < ", cut3, " (n = ", prettyNum(darkblue_count, big.mark=",", scientific=FALSE), ")", sep=""),
+                       "HMM Loss Segs")
+    loss_legend_cols=c(losscolor1, losscolor2, losscolor3, losscolor4)
+    loss_legend_title=paste("Loss (Windows = ", prettyNum(total_windows, big.mark=",", scientific=FALSE), ")", sep="")
+    legend("center", col=loss_legend_cols, pch=c(16,16,16,NA), lty=c(2,2,2,1), lwd=c(1,1,1,2), legend=loss_legend_text, title=loss_legend_title, cex=1)
+  }
 }
 
 #############################################################################################################################################
@@ -276,7 +276,9 @@ plotChrCNV_Compact = function(target_chr, type){
     plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
   }else if (type == "BOTH"){
     ylim_lower = -2
-    ylim_upper = 5
+    ylim_upper = 6
+    yl[which(yl > 5.5)] = 5.5
+    yl[which(yl < -2)] = -2
     plot(x=xl, y=yl, pch=16, col=cl, xlab="", ylab="CNV", main=target_chr, ylim=c(ylim_lower, ylim_upper))
   }
   if (length(gain_j)>0){
@@ -406,7 +408,7 @@ image_width_2 = 14
 image_height_2 = 9
 
 #Define some hard caps for upper and lower display limits
-hard_cap_upper=20
+hard_cap_upper=15  #Tried 20 for a while. Trying 15 now
 hard_cap_lower=-2
 
 #Change output dir
@@ -459,6 +461,13 @@ if (length(which(cnvs[,"DIFF"] > hard_cap_upper)) > 0){
   cnvs[which(cnvs[,"DIFF"] > hard_cap_upper),"DIFF"] = hard_cap_upper
 }
 
+#TODO: Apply a further more aggressive hard-capping near centromeres where outliers in the gain direction are common?
+#for (chr_name in chr_list){
+#
+#
+#}
+
+
 #Define some display cutoffs
 cut1=-0.5
 cut2=-0.75
@@ -480,10 +489,19 @@ losscolor4="#045A8D"
 #Generate a figure for each chromosome
 for (chr_name in chr_list){
   if (image_type == "none"){
-    plotChrCNV(chr_name)
+    plotChrCNV(chr_name, "gains")
+    plotChrCNV(chr_name, "losses")
   }else{
-    openImageFile(chr_name, image_type, image_width_1, image_height_1)
-    plotChrCNV(chr_name)
+    #Gains
+    file_name = paste("Gains_", chr_name, sep="")
+    openImageFile(file_name, image_type, image_width_1, image_height_1)
+    plotChrCNV(chr_name, "gains")
+    dev.off()
+
+    #Losses
+    file_name = paste("Losses_", chr_name, sep="")
+    openImageFile(file_name, image_type, image_width_1, image_height_1)
+    plotChrCNV(chr_name, "losses")
     dev.off()
   }
 }
@@ -538,15 +556,6 @@ if (length(chr_list) > 1){
   }
 }
 
-#Apply a new hard cap and generate a figure that displays both gains and losses together on a reasonable scale...
-if (length(which(cnvs[,"DIFF"] < -2)) > 0){
-  cnvs[which(cnvs[,"DIFF"] < -2),"DIFF"] = -2
-}
-
-#Reset values larger than 20 to be 20 (arbitrary - for display purposes).  Single outliers, usually false positives near the centromeres obscure the data by jacking up the scale...
-if (length(which(cnvs[,"DIFF"] > 5.5)) > 0){
-  cnvs[which(cnvs[,"DIFF"] > 5.5),"DIFF"] = 5.5
-}
 if (length(chr_list) > 1){
   if (image_type != "none"){
     openImageFile("Both_AllChrs", image_type, image_width_2, image_height_2)

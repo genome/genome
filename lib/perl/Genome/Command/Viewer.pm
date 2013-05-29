@@ -25,17 +25,24 @@ sub write_report {
     Carp::croak("Method write_report must be implemented in sub-classes.");
 }
 
+sub get_terminal_width {
+    my $screen_width = 80;
+
+    # this can fail in cases where no terminal is queriable
+    eval {($screen_width) = GetTerminalSize();};
+
+    return $screen_width;
+}
+
 sub execute {
     my ($self) = @_;
 
-    my $screen_width = 80;
-    # this can fail in cases where no terminal is queriable
-    eval {($screen_width) = GetTerminalSize();};
 
     my $handle = new IO::Handle;
     STDOUT->autoflush(1);
     $handle->fdopen(fileno(STDOUT), 'w');
 
+    my $screen_width = $self->get_terminal_width();
     $self->write_report($screen_width, $handle);
     return 1;
 }

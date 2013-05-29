@@ -58,6 +58,8 @@ for my $type ( keys %types_methods ) {
     like($file, qr/$id(-output)?.$type$/, "$type file name matches: $file");
     my $example_file = "$dir/2852582718.$type";
     ok(-s $example_file, "example $type file exists: $example_file");
+
+    Genome::Sys->dump_status_messages(0);
     is(File::Compare::compare($file, $example_file), 0, "$type file matches example file");
 }
 

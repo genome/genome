@@ -225,9 +225,14 @@ sub properties_to_keep_updated {# 8
         flow_cell_id
         index_sequence
         lane
-        median_insert_size
-        sd_above_insert_size
-        sd_below_insert_size
+        old_median_insert_size
+        old_sd_above_insert_size
+        old_sd_below_insert_size
+        old_filt_error_rate_avg
+        old_rev_filt_error_rate_avg
+        old_fwd_filt_error_rate_avg
+        old_rev_filt_aligned_clusters_pct
+        old_fwd_filt_aligned_clusters_pct
         /);
 }
 
@@ -235,6 +240,14 @@ sub lims_property_name_to_genome_property_name {
     my ($class, $name) = @_;
     my %lims_to_genome = (
         filt_clusters => 'clusters',
+        median_insert_size => 'old_median_insert_size',
+        sd_above_insert_size => 'old_sd_above_insert_size',
+        sd_below_insert_size => 'old_sd_below_insert_size',
+        filt_error_rate_avg => 'old_filt_error_rate_avg',
+        rev_filt_error_rate_avg => 'old_rev_filt_error_rate_avg',
+        fwd_filt_error_rate_avg => 'old_fwd_filt_error_rate_avg',
+        rev_filt_aligned_clusters_pct => 'old_rev_filt_aligned_clusters_pct',
+        fwd_filt_aligned_clusters_pct => 'old_fwd_filt_aligned_clusters_pct',
     );
     return $lims_to_genome{$name} if exists $lims_to_genome{$name};
     return $name;

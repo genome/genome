@@ -1,28 +1,18 @@
 
 [4mUSAGE[0m
- [1mgenome model define somatic-capture[0m --processing-profile-name=? --tumor-model=?
-    --normal-model=? [--auto-assign-inst-data] [--subject-name=?] [--subject-type=?]
-    [--auto-build-alignments] --processing-profile=? [--add-to-projects=?[,?]]
-    [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--model-name=?]
+ [1mgenome model define somatic-capture[0m [--auto-assign-inst-data] [--auto-build-alignments]
+    --processing-profile=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
+    [--groups=?[,?]] [--model-name=?]
 
 [4mSYNOPSIS[0m
-genome model define 
-  --subject_name ovc2
-  --tumor-id 12345
-  --normal-id 54321
-  --data-directory /gscmnt/somedisk/somedir/model_dir
+  genome model define somatic-capture \
+    --model-name test1 \
+    --subject TEST-patient1-sample1 \
+    --processing-profile name='my processing profile'
 
 [4mREQUIRED INPUTS[0m
   [1mprocessing-profile[0m
     Processing profile to be used by model, can provide either a name or an ID 
-
-[4mREQUIRED PARAMS[0m
-  [1mprocessing-profile-name[0m
-    (undocumented) 
-  [1mtumor-model[0m
-    The tumor model being analyzed 
-  [1mnormal-model[0m
-    The normal model being analyzed 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m
@@ -41,18 +31,13 @@ genome model define
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
-  [1msubject-name[0m
-    The name of the subject of the model 
-  [1msubject-type[0m
-    The type of subject all the reads originate from 
-    Default value 'sample_group' if not specified
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified
 
 [4mDESCRIPTION[0m
-    This defines a new genome model representing the somatic analysis between a normal and tumor
-    model.
+    This defines a new genome model for the specified subject, using the specified processing
+    profile.
 
 
 

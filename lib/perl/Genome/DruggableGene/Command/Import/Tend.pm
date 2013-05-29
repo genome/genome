@@ -29,7 +29,7 @@ class Genome::DruggableGene::Command::Import::Tend {
         interactions_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/TEND_WashU_INTERACTIONS.tsv',
+            example_values => ['/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/TEND_WashU_INTERACTIONS.tsv'],
             doc => 'PATH.  Path to .tsv file for drug gene interactions',
         },
         version => {
@@ -110,116 +110,7 @@ sub execute {
     my $self = shift;
     binmode(STDOUT, ":utf8");
     $self->input_to_tsv();
-    $self->import_tsv();
-    unless ($self->skip_pubchem){
-        $self->_destroy_and_rebuild_pubchem_and_drug_groups();
-    }
     return 1;
-}
-
-sub import_tsv {
-    my $self = shift;
-    my $interactions_outfile = $self->interactions_outfile;
-    $self->preload_objects;
-    my @interactions = $self->import_interactions($interactions_outfile);
-    return 1;
-}
-
-sub import_interactions {
-    my $self = shift;
-    my $interactions_outfile = shift;
-    my $version = $self->version;
-    my @interactions;
-    my @headers = qw(interaction_id drug_name indication year_of_approval uniprot_id uniprot_accession_number entrez_id ensembl_id gene_symbol gene_description target_main_class target_subclass number_transmembrane_helices);
-    my $parser = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $interactions_outfile,
-        headers => \@headers,
-        separator => "\t",
-        is_regex => 1,
-    );
-
-    my $citation = $self->_create_citation('TEND', $version, $self->citation_base_url, $self->citation_site_url, $self->citation_text, 'Trends in the exploitation of novel drug targets (Rask-Andersen, et al., 2011)');
-
-    $parser->next; #eat the headers
-    while(my $interaction = $parser->next){
-        my $drug_name = $self->_import_drug($interaction, $citation);
-        my $gene_name = $self->_import_gene($interaction, $citation);
-        my $drug_gene_interaction = $self->_create_interaction_report($citation, $drug_name, $gene_name, '');
-        push @interactions, $drug_gene_interaction;
-        my $type_attribute = $self->_create_interaction_report_attribute($drug_gene_interaction, 'Interaction Type', 'n/a');
-    }
-    return @interactions;
-}
-
-sub _import_drug {
-    my $self = shift;
-    my $interaction = shift;
-    my $citation = shift;
-    my $drug_name = $self->_create_drug_name_report($interaction->{drug_name}, $citation, 'TEND', '');
-    my $primary_drug_name = $self->_create_drug_alternate_name_report($drug_name, $interaction->{drug_name}, 'Primary Drug Name', '');
-
-    #indication (e.g. Antineoplastic Agents; antihypertensive agents)
-    unless($interaction->{indication} eq 'N/A'){
-        my $indications_string = $interaction->{indication};
-        my @indications = split(";", $indications_string);
-        foreach my $indication (@indications){
-            my $drug_class = $self->_create_drug_category_report($drug_name, 'Drug Class', $indication, '');
-        }
-    }
-
-    #year_of_approval?
-    unless($interaction->{year_of_approval} eq 'N/A'){
-        my $year_of_approval = $self->_create_drug_category_report($drug_name, 'Year of Approval', $interaction->{year_of_approval}, '');
-    }
-    return $drug_name;
-}
-
-sub _import_gene {
-    my $self = shift;
-    my $interaction = shift;
-    my $citation = shift;
-    my $gene_name = $self->_create_gene_name_report($interaction->{uniprot_id}, $citation, 'Uniprot Accession', ''); 
-    my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{uniprot_id}, 'Uniprot Accession', '', 'upper');
-
-    unless($interaction->{gene_symbol} eq 'N/A'){
-      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{gene_symbol}, 'Gene Symbol', '', 'upper');
-    }
-    unless($interaction->{entrez_id} eq 'N/A'){
-      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{entrez_id}, 'Entrez Gene Id', '', 'upper');
-    }
-    unless($interaction->{ensembl_id} eq 'N/A'){
-      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{ensembl_id}, 'Ensembl Gene Id', '', 'upper');
-    }
-    unless($interaction->{uniprot_accession_number} eq 'N/A'){
-      my $gene_id_association = $self->_create_gene_alternate_name_report($gene_name, $interaction->{uniprot_accession_number}, 'Uniprot Id', '', 'upper');
-    }
-
-    #gene_description? Too ugly, don't bother storing for now...
-
-    #target_main_class
-    unless ($interaction->{target_main_class} eq 'N/A'){
-      my $target_main_class_string = $interaction->{target_main_class};
-      my @target_main_classes = split(";", $target_main_class_string);
-      foreach my $target_main_class (@target_main_classes){
-        my $tmc = $self->_create_gene_category_report($gene_name, 'Target Main Class', $target_main_class, '');
-      }
-    }
-
-    #target_subclass
-    unless ($interaction->{target_subclass} eq 'N/A'){
-      my $target_subclass_string = $interaction->{target_subclass};
-      my @target_subclasses = split(";", $target_subclass_string);
-      foreach my $target_subclass (@target_subclasses){
-        my $tsc = $self->_create_gene_category_report($gene_name, 'Target Subclass', $target_subclass, '');
-      }
-    }
-
-    #number_transmembrane_helices
-    unless ($interaction->{number_transmembrane_helices} eq 'N/A'){
-      my $nth = $self->_create_gene_category_report($gene_name, 'Transmembrane Helix Count', $interaction->{number_transmembrane_helices}, '');
-    }
-
-    return $gene_name;
 }
 
 sub input_to_tsv {
@@ -288,31 +179,6 @@ sub input_to_tsv {
         
     }
     $interactions_fh->close;
-    return 1;
-}
-
-sub preload_objects {
-    my $self = shift;
-    my $source_db_name = 'TEND';
-    my $source_db_version = $self->version;
-
-    #Let's preload anything for this database name and version so that we can avoid death by 1000 queries
-    my @gene_names = Genome::DruggableGene::GeneNameReport->get(source_db_name => $source_db_name, source_db_version => $source_db_version);
-    for my $gene_name (@gene_names){
-        $gene_name->gene_alt_names;
-        $gene_name->gene_categories;
-    }
-    my @drug_names = Genome::DruggableGene::DrugNameReport->get(source_db_name => $source_db_name, source_db_version => $source_db_version);
-    for my $drug_name (@drug_names){
-        $drug_name->drug_alt_names;
-        $drug_name->drug_categories;
-    }
-    my @gene_ids = map($_->id, @gene_names);
-    my @interactions = Genome::DruggableGene::DrugGeneInteractionReport->get(gene_id => \@gene_ids);
-    for my $interaction (@interactions){
-        $interaction->interaction_attributes;
-    }
-
     return 1;
 }
 

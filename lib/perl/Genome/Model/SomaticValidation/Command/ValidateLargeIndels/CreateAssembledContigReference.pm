@@ -17,6 +17,7 @@ class Genome::Model::SomaticValidation::Command::ValidateLargeIndels::CreateAsse
         build_id => {
             is => 'Integer',
             is_input => 1,
+            is_output => 1,
             doc => 'build id of SomaticValidation model',
         },
         _long_indel_bed_file => {
@@ -28,6 +29,7 @@ class Genome::Model::SomaticValidation::Command::ValidateLargeIndels::CreateAsse
         reference_transcripts => {
             is => 'Text',
             default => "NCBI-human.ensembl/67_37l_v2", #TODO this should be a param from the somatic validation processing profile
+            #example_values => ["NCBI-human.ensembl/67_37l_v2"], #TODO this should be a param from the somatic validation processing profile
             doc => 'The set of reference_transcripts to use, which get passed to the annotator',
         },
     ],
@@ -77,13 +79,15 @@ sub execute {
     $self->tier_files(1);
 
     my $long_indel_bed_file = $self->_resolve_long_indel_bed_file;
+    my $skip_msg = 'Skipping long indel validation';
+
     unless ($long_indel_bed_file) {
-        $self->warning_message("No long indel bed file exists with size.  Skipping validation.");
+        $self->warning_message("No long indel bed file exists with size. $skip_msg");
         $self->skip(1);
         return 1;
     }
     unless ($self->build->normal_sample) {
-        $self->warning_message("Somatic validation of a single bam.  Skipping long indel validation");
+        $self->warning_message("Somatic validation of a single bam.  $skip_msg");
         $self->skip(1);
         return 1;
     }
@@ -112,6 +116,12 @@ sub execute {
     }
 
     my $contigs_file = $cmd->contigs_fasta;
+    unless (-s $contigs_file) {
+        $self->warning_message("Failed to get valid assembly contig fasta. $skip_msg");
+        $self->skip(1);
+        return 1;
+    }
+
     $self->contigs_fasta($contigs_file);
 
     my $annotation_build = Genome::Model::Build::ImportedAnnotation->get(name => $self->reference_transcripts);

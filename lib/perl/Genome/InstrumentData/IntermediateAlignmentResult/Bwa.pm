@@ -207,9 +207,13 @@ sub _inspect_log_file {
         return;
     }
 
+    # XXX I am trying to avoid switching on $bwa_version in this module, but
+    # I'm not entirely sure that storing 'log_format' in GMT::Bwa and defining
+    # the logic for interpreting that property here is the correct separation
+    # of functionality between GMT::Bwa and this module.
     my $last_line;
-
-    if ($self->aligner_version eq '0.6.2') {
+    my $log_format = Genome::Model::Tools::Bwa->log_format($self->aligner_version);
+    if ($log_format eq 'new') {
         $last_line = `tail -4 $log_file | head -1`;
     } else {
         $last_line = `tail -1 $log_file`;

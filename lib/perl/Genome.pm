@@ -95,11 +95,19 @@ $DB::stopper = 1;
 # It is only used by the full GMS install.
 # They probably needs a better home than the base module.
 
+our %NAMESPACE_EXTENSIONS = (
+    Result => {
+        base_class => 'Genome::SoftwareResult::Default',
+        doc => 'results for CLASS',
+    },
+    BuildStepWrapper => {
+        base_class => 'Genome::Command::BuildStepWrapper',
+        doc => 'wrap CLASS as a step in a build workflow',
+    },
+);
+
 sub __extend_namespace__ {
     my ($self,$ext) = @_;
-
-    # Auto-generate a Genome::SoftwareResult::Default class for any Command::V2.
-    # The class will have the name ${COMMAND_CLASS_NAME}::Result
 
     my $meta = $self->SUPER::__extend_namespace__($ext);
     if ($meta) {
@@ -107,133 +115,39 @@ sub __extend_namespace__ {
     }
 
     my $new_class = $self . '::' . $ext;
-    
-    if ($new_class  =~ /^(.*)::Result$/) {
-        my $command_class = $1;
-        return $self->_generate_result_class($new_class, $command_class);
-    }
+    my ($command_class,$final_ext) = ($new_class =~ /^(.*)::(.*)$/);
 
-    if ($new_class  =~ /^(.*)::BuildStepWrapper$/) {
-        my $command_class = $1;
-        return $self->_generate_build_extender_class($new_class, $command_class);
-    }
-    
-    return;
-}
+    my $cmd_meta = UR::Object::Type->get($command_class);
+    return unless $cmd_meta;
 
-sub _generate_build_extender_class {
-    my ($self, $new_class, $command_class) = @_;
+    return unless $command_class->isa("Command");
 
-    my $new_class_base = 'Command::V2';
-    my %has = $self->_wrap_command_class($command_class,$new_class_base);
-    
-    Sub::Install::install_sub({
-        into => $new_class,
-        as => 'execute',
-        code => sub {
-            my $self = shift;
+    return unless $command_class->isa("Command::V2");
 
-            my $build;
-            my $label;
+    my $spec = $NAMESPACE_EXTENSIONS{$final_ext};
+    return unless $spec;
 
-            my $command;
-            my $result;
-            my $called_as_class_method;
-            if (ref($self)) {
-                $called_as_class_method = 0;
-                $build = $self->wrapper_build;
-                $label = $self->wrapper_build_label;
-                unless ($build) {
-                    die "no build on $self!";
-                }
-                my %params = map { 
-                        if ($has{$_}{is_many}) {
-                            $_ => [$self->$_]
-                        }
-                        else {
-                            my $value = $self->$_;
-                            $_ => $value
-                        }
-                    } keys %has;
-                $command = $command_class->create(%params);
-                $result = $command->execute(@_);
-                $result = $command->result();
-            }
-            else {
-                $called_as_class_method = 1;
-                my $bx = $command_class->define_boolexpr(@_);
-                $build = $bx->value_for("wrapper_build");
-                $label = $bx->value_for("wrapper_build_label");
-                unless ($build) {
-                    die "no add_to_build in $bx!";
-                }
-                unless ($label) {
-                    die "no add_to_label in $bx!";
-                }
-                $bx = $bx->remove_filter('wrapper_build')->remove_filter('wrapper_build_label');
-                $command = $command_class->execute($bx);
-                $result = $command->result;
-            }
+    my $base_class = $spec->{base_class};
+    my $doc = $spec->{doc};
+    $doc =~ s/CLASS/$new_class/;
 
-            $result->add_user(label => $label, user => $build);
-
-            if ($called_as_class_method) {
-                return $command;
-            }
-            else {
-                return $result;
-            }
-        }
-    });
+    my %has = $self->_wrapper_has($command_class,$base_class);
 
     class {$new_class} {
-        is => $new_class_base,
-        has => [ 
-            %has,
-            wrapper_build => { is => 'Genome::Model::Build' },
-            wrapper_build_label => { is => 'Text' },
-        ],
-        doc => "wrap $command_class in build workflows",
-    };
-}
-
-sub _generate_result_class {
-    my ($self, $result_class, $command_class) = @_;
-    unless ($command_class->isa("Command")) {
-        # the prefix of the class name is not a command class
-        return;
-    }
-    unless ($command_class->isa("Command::V2")) {
-        $self->warning_message("cannot autogenerate results for $command_class since it is not ::V2");
-        return;
-    }
-    if ($command_class->isa("Command::Tree")) {
-        # no results for "trees" :)
-        return;
-    }
-
-    unless (UR::Object::Type->get("Genome::SoftwareResult::Default")) {
-        $self->warnings_message("Cannot find a working Genome::SoftwareResult::Default.  Autogenerating $result_class only works with a full GMS install.");
-        return;
-    }
-
-    my $new_class_base = 'Genome::SoftwareResult::Default';
-    my %has = $self->_wrap_command_class($command_class,$new_class_base);
-
-    class {$result_class} {
-        is => $new_class_base,
+        is => $base_class,
         has => [ %has ],
-        doc => "results for $command_class",
+        doc => $doc,
     };
 }
 
 
-sub _wrap_command_class {
-    my ($self, $command_class, $new_class_base) = @_;
+# TODO: switch to calling the static _wrapper_has method on Command::V2
+sub _wrapper_has {
+    my ($self, $command_class, $base) = @_;
 
     my $command_meta = $command_class->__meta__;
     my @properties = $command_meta->properties();
-    
+
     my %has;
     for my $property (@properties) {
         my %desc;
@@ -241,7 +155,7 @@ sub _wrap_command_class {
 
         my $name = $property->property_name;
 
-        next if $new_class_base->can($name);
+        next if $base->can($name);
 
         if ($property->is_param) {
             $desc{is_param} = 1;
@@ -268,7 +182,6 @@ sub _wrap_command_class {
 
     return %has;
 }
-
 1;
 
 =pod

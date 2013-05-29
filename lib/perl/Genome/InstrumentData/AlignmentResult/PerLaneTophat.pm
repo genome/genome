@@ -164,104 +164,178 @@ sub accepts_bam_input {
 }
 
 sub prepare_annotation_index {
-    my $class = shift;
-    my $annotation_index = shift;
-    
-    my $refindex = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(
-        aligner_name => $annotation_index->aligner_name,
-        aligner_version => $annotation_index->aligner_version,
-        aligner_params => $annotation_index->aligner_params,
-        reference_build => $annotation_index->reference_build,
+    my ($class, $annotation_index) = @_;
+    unless (defined($annotation_index)) {
+        $class->error_message("Required argument annotation_index was not passed!");
+        return;
+    }
+
+    my $gtf_file = $class->_get_gtf_file($annotation_index) or return;
+    my $reference_fasta = $class->_get_reference_fasta($annotation_index) or return;
+    my $fake_reads_file = $class->_generate_fake_reads_file($reference_fasta, $gtf_file) or return;
+    $class->_run_tophat_to_generate_annotation_index($annotation_index, $fake_reads_file, $reference_fasta, $gtf_file) or return;
+
+    return 1;
+}
+
+sub _get_reference_fasta {
+    my ($class, $annotation_index) = @_;
+
+    # get the reference_fasta
+    my $reference_index = $annotation_index->reference_build;
+
+    my $reference_fasta = $reference_index->full_consensus_path('fa');
+
+    # complain if we can't get it
+    my $msg = sprintf(
+        "reference fasta (%s) from reference index (%s)",
+        $reference_fasta, $reference_index->id,
     );
-
-    unless ($refindex) {
-        $class->error_message('Failed to find reference index!');
-        return;
-    }
-    
-    my $bowtie_extension = 'bt2';
-    my $reference_extension = 'fa';
-    my $aligner_params = $annotation_index->aligner_params;
-    my $bowtie_version = $class->_get_bowtie_version($aligner_params);
-    $aligner_params =~ s/--bowtie-version(?:\s+|=)(.+?)(?:\s+|$)//i;
-
-    unless ($bowtie_version =~ /^2/) {
-        $aligner_params .= ' --bowtie1';
-        $bowtie_extension = 'ebwt';
-        $reference_extension = 'bowtie';
-    }
-
-    my $reference_prefix = $refindex->full_consensus_path($reference_extension);
-    my $staging_dir = $annotation_index->temp_staging_directory;
-    
-    # Build a transcriptome index if an annotation build is provided
-    my $annotation_build = $annotation_index->annotation_build;
-
-    my $gtf_path = $annotation_build->annotation_file('gtf',$refindex->reference_build_id);
-
-    unless (defined($gtf_path)) {
-        $class->error_message('There is no annotation GTF file defined for annotation_reference_transcripts build: '. $annotation_build->__display_name__);
-        return;
-    }
-    
-    unless (-s $gtf_path) {
-        $class->error_message(sprintf("Annotation file %s does not exist", $gtf_path));
-        return;
-    }
-
-    $class->status_message(sprintf("Confirmed non-zero annotation file is %s", $gtf_path));
-    unless (symlink($gtf_path, sprintf("%s/all_sequences.gtf", $staging_dir))) {
-        $class->error_message("Couldn't symlink annotation into the staging directory");
-        return;
-    }
-
-    if ($aligner_params =~ /-G/) {
-        $class->error_message('Annotation build \''. $annotation_build->__display_name__ .'\' is defined, but there seems to be a GTF file already in the read_aligner_params: '. $aligner_params);
-        return;
-    }
-    if (defined($aligner_params)) {
-        $aligner_params .= ' -G '. $gtf_path;
+    if (-s $reference_fasta) {
+        $class->debug_message("Found " .$msg);
     } else {
-        $aligner_params = ' -G '. $gtf_path;
+        $class->error_message("Failed to find " . $msg);
+        return;
     }
+    return $reference_fasta;
+}
 
-    my $transcriptome_index_prefix = $staging_dir .'/all_sequences';
-    $aligner_params .= ' --transcriptome-index '. $transcriptome_index_prefix;
+sub _generate_fake_reads_file {
+    my ($class, $reference_fasta, $gtf_file) = @_;
 
-    my $path = Genome::Model::Tools::Tophat->path_for_tophat_version($refindex->aligner_version);
-    my $bowtie_path = Genome::Model::Tools::Bowtie->path_variable_for_bowtie_version($bowtie_version);
-
-    my $temp_directory = Genome::Sys->create_temp_directory();
-    my ($fake_read) = Genome::Sys->create_temp_file_path('read.fasta');
-    Genome::Sys->write_file($fake_read, #a few in silico reads for gene TTN (from unit test)
-        ">read1\n",
-        "GATGTCTTTCAGCATGGAAGTAATCATGATTGGGGTGACTGTCAGGGTGGCACTGACTTGGTCATTGCCACAGACAAATGTGTATTCTGCCGAGTCCTCT\n",
-        ">read2\n",
-        "GCAGCTGGTGTGTCAAGCACTTTAACACTCACAGTTGAAGACTTAGGTTCACCAACTCCATTTTCTATTGTGAGAATATATTTTCCTGTATCATTGCGAG\n",
-        ">read3\n",
-        "TCCTTCTGTGCATGAGTGTTCTGAAGGGACTAGGGGCTCATAGTTTACCTGAGAGATCATGACATCAGGACTCTGGAGACTCTCCACGTGTCCCTCAGCT\n"
+    # call tool to make fake reads
+    my $tmp_dir = Genome::Sys->create_temp_directory();
+    my $fake_reads_file = File::Spec->join($tmp_dir, 'fake_reads.fastq');
+    my $cmd = Genome::Model::Tools::BioSamtools::SimulateRnaSeqReads->create(
+        reference_fasta_file => $reference_fasta,
+        annotation_gtf_file => $gtf_file,
+        fastq_file => $fake_reads_file,
+        paired_end => 0,
+        approximate_depth => 3,
+        num_transcripts => 3,
     );
 
-    my $cmd = 'PATH=' . $bowtie_path . ':$PATH ' . $path .' '. $aligner_params .' --transcriptome-only --output-dir '. $temp_directory .' '. $reference_prefix .' '. $fake_read;
+    unless ($cmd->execute()) {
+        $class->error_message("Failed to generate fake reads.");
+        return;
+    }
 
+    unless (-s $fake_reads_file) {
+        $class->error_message("Fake reads file (%s) shouldn't be empty.");
+        return;
+    }
+    return $fake_reads_file;
+}
+
+sub _get_gtf_file {
+    my ($class, $annotation_index) = @_;
+
+    my $annotation_build = $annotation_index->annotation_build;
+    my $gtf_file = $annotation_build->annotation_file('gtf', $annotation_index->reference_build->id);
+
+    # complain if we can't get it
+    my $msg = sprintf(
+        "gtf file (%s) from annotation_build (%s) using reference id (%s)",
+        $gtf_file, $annotation_build->id, $annotation_index->reference_build->id,
+    );
+    if (-s $gtf_file) {
+        $class->debug_message("Found " .$msg);
+        return $gtf_file;
+    } else {
+        $class->error_message("Failed to find " . $msg);
+        return;
+    }
+}
+
+sub _run_tophat_to_generate_annotation_index {
+    my ($class, $annotation_index, $fake_reads_file, $reference_fasta, $gtf_file) = @_;
+
+    my $index_prefix = File::Spec->join($annotation_index->temp_staging_directory, 'all_sequences');
+    my $aligner_params = $class->_get_aligner_params_to_generate_annotation_index($annotation_index, $gtf_file, $index_prefix) or return;
+
+    # symlink in the gtf to live beside the index.
+    Genome::Sys->create_symlink($gtf_file, $index_prefix . '.gtf');
+
+    my $bowtie_path = $class->_get_bowtie_path_to_generate_annotation_index($annotation_index) or return;
+    my $tophat_executable = Genome::Model::Tools::Tophat->path_for_tophat_version($annotation_index->aligner_version);
+
+    my $cmd = "PATH=$bowtie_path" . ':$PATH' . " $tophat_executable $aligner_params $reference_fasta $fake_reads_file";
+
+    my $bowtie_extension = 'bt2';
     my @output_files = (
-            $transcriptome_index_prefix .'.gff',
-            $transcriptome_index_prefix .'.fa',
-            $transcriptome_index_prefix .'.1.'. $bowtie_extension,
-            $transcriptome_index_prefix .'.2.'. $bowtie_extension,
-            $transcriptome_index_prefix .'.3.'. $bowtie_extension,
-            $transcriptome_index_prefix .'.4.'. $bowtie_extension,
-            $transcriptome_index_prefix .'.rev.1.'. $bowtie_extension,
-            $transcriptome_index_prefix .'.rev.2.'. $bowtie_extension,
+            $index_prefix .'.gff',
+            $index_prefix .'.fa',
+            $index_prefix .'.1.'. $bowtie_extension,
+            $index_prefix .'.2.'. $bowtie_extension,
+            $index_prefix .'.3.'. $bowtie_extension,
+            $index_prefix .'.4.'. $bowtie_extension,
+            $index_prefix .'.rev.1.'. $bowtie_extension,
+            $index_prefix .'.rev.2.'. $bowtie_extension,
     );
 
     Genome::Sys->shellcmd(
         cmd => $cmd,
-        input_files => [$fake_read,$gtf_path],
+        input_files => [$tophat_executable, $reference_fasta, $fake_reads_file],
         output_files => \@output_files,
     );
     return 1;
 }
+
+sub _get_bowtie_path_to_generate_annotation_index {
+    my ($class, $annotation_index) = @_;
+
+    my $aligner_params = $annotation_index->aligner_params;
+    unless ($aligner_params) {
+        $class->error_message("Aligner params cannot be empty (you must at the very least specify --bowtie-version)");
+        return;
+    }
+
+    # determine the bowtie-version and remove it from aligner_params
+    my $bowtie_version = $class->_get_bowtie_version($aligner_params);
+
+    unless (defined($bowtie_version)) {
+        $class->error_message("Couldn't find bowtie-version in aligner_params ($aligner_params)");
+        return;
+    }
+    my $bowtie_path = Genome::Model::Tools::Bowtie->path_variable_for_bowtie_version($bowtie_version) or return;
+    return $bowtie_path;
+}
+
+sub _aliger_params_has_gtf {
+    my $params = shift;
+    return ($params =~ /(^| )(-G|--GTF)/ ? 1 : 0);
+}
+
+sub _get_aligner_params_to_generate_annotation_index {
+    my ($class, $annotation_index, $gtf_file, $index_prefix) = @_;
+
+    my $aligner_params = $annotation_index->aligner_params;
+
+    # remove --bowtie-version from aligner_params
+    $aligner_params = $class->_remove_bowtie_version($aligner_params);
+ 
+    # add in the options that tell TopHat that we want to store the index
+    $aligner_params .= "--transcriptome-only";
+    $aligner_params .= " --transcriptome-index '$index_prefix'";
+
+    # add -G <gtf_file> option to tell TopHat what to make the index out of
+    if (_aliger_params_has_gtf($aligner_params)) {
+        my $annotation_build = $annotation_index->annotation_build;
+        $class->error_message('Annotation build \''. $annotation_build->__display_name__ .
+            '\' is defined, but there seems to be a GTF file already in the read_aligner_params: ' .
+            $aligner_params);
+        return;
+    } else {
+        $aligner_params .= ' -G '. $gtf_file;
+    }
+
+    # we con't care about the actual results of the 'fake' alignment so put them in a temp directory.
+    my $temp_directory = Genome::Sys->create_temp_directory();
+    $aligner_params .= " --output-dir '$temp_directory'";
+
+    return $aligner_params;
+}
+
 
 # Use this to prep the index.  Indexes are saved for each combo of aligner params & version, as runtime
 # params for some aligners also call for specific params when building the index.
@@ -321,10 +395,17 @@ sub prepare_reference_sequence_index {
     return 1;
 }
 
+our $BOWTIE_VERSION_REGEX = qr{--bowtie-version(?:\s+|=)(.+?)(?:\s+|$)};
 sub _get_bowtie_version {
     my ($class, $aligner_params) = @_;
-    $aligner_params =~ /--bowtie-version(?:\s+|=)(.+?)(?:\s+|$)/i;
+    $aligner_params =~ /$BOWTIE_VERSION_REGEX/i;
     return $1;
+}
+
+sub _remove_bowtie_version {
+    my ($class, $aligner_params) = @_;
+    $aligner_params =~ s/$BOWTIE_VERSION_REGEX//i;
+    return $aligner_params;
 }
 
 sub get_annotation_index {
@@ -349,20 +430,32 @@ sub get_annotation_index {
 sub _get_modified_tophat_params {
     my $self = shift;
     my $params = $self->aligner_params;
-    $params =~ s/--bowtie-version(?:\s+|=)(.+?)(?:\s+|$)//i;
-    unless ($1 =~ /^2/) {
+    my $bowtie_version = $self->_get_bowtie_version($params);
+    $params = $self->_remove_bowtie_version($params);
+    unless ($bowtie_version =~ /^2/) {
         $params .= " --bowtie1";
     }
 
     if ($self->annotation_build) {
         #TODOthis method doesn't exist
         my $annotation_index = $self->get_annotation_index;
-        if ($params =~ /-G/) {
+        if (_aliger_params_has_gtf($params)) {
             die ('This processing_profile is requesting annotation_reference_transcripts \''. $self->annotation_build->__display_name__ .'\', but there seems to be a GTF file already defined in the read_aligner_params: '. $params);
         }
         #TODO: get ref index with annotation build
         my $transcriptome_index_prefix = $annotation_index->full_consensus_path();
         $params .= ' --transcriptome-index '. $transcriptome_index_prefix;
+    }
+
+    #set number of threads automatically
+    my $cpu_count = $self->_available_cpu_count;
+    $self->status_message("CPU count is $cpu_count");
+    if($params =~ /(^| )--num-threads[ =]\d+/) {
+        $params =~ s/(^| )--num-threads[ =]\d+/$1--num-threads $cpu_count/;
+    } elsif ($params =~ /(^| )-p[ =]\d+/) {
+        $params =~ s/(^| )-p[ =]\d+/$1--num-threads $cpu_count/;
+    } else {
+        $params .= " --num-threads $cpu_count";
     }
 
     my $instrument_data = $self->instrument_data;
@@ -400,7 +493,7 @@ sub _get_tophat_cmd {
     my $cmd = 'PATH=' . $bowtie_path . ':$PATH ' . $path . " " . $params . " -o " . $self->temp_staging_directory;
 
     my $bowtie_prefix = 'fa';
-    if ($params =~ /--bowtie1/) {
+    if ($params =~ /(^| )--bowtie1/) {
         $bowtie_prefix = 'bowtie';
     }
 

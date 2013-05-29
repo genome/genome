@@ -80,9 +80,22 @@ sub _process {
         reference_build=>$model->reference_sequence_build,
     );
 
+    # This logic should go away when the alignment result software result creation
+    # generates its own full underlying workflow.  Right now there is no per-aligner class
+    # at this level.  If this code is not present, the down-stream code will just 
+    # operate less efficiently.
+    if ($params_for_reference{aligner_name} eq 'bwa') {
+        my $aligner_version = $params_for_reference{aligner_version};
+        if ($aligner_version =~ /^(.*)-i(.*)/) {
+            my $old = $aligner_version;
+            $params_for_reference{aligner_version} = $1;
+            $self->warning_message("FOR iBWA (BWA $old), USING (IDENTICAL) $params_for_reference{aligner_version} FOR INDEX GENERATION"); 
+        }
+    }
+
     $self->status_message(sprintf("Finding or generating reference build index for aligner %s version %s params %s refbuild %s ",
-                                                $processing_profile->read_aligner_name, $processing_profile->read_aligner_version,
-                                                $processing_profile->read_aligner_params, $model->reference_sequence_build->id));
+                                                $params_for_reference{aligner_name}, $params_for_reference{aligner_version},
+                                                $params_for_reference{aligner_params}, $params_for_reference{reference_build}));
 
     my $reference_sequence_index;
     if ($mode eq 'get_or_create') {

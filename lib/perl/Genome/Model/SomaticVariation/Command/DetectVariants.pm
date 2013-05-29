@@ -169,7 +169,7 @@ sub _create_tcga_vcfs {
 
     for my $type ("snv", "indel") {
         # Create a TCGA compliant vcf
-        my $original_vcf = $build->data_directory . "/variants/" . $type . "s.vcf.gz";
+        my $original_vcf = $build->data_directory . "/variants/" . $type . "s.detailed.vcf.gz";
         my $tcga_vcf = $build->data_directory . "/variants/" . $type . "s_tcga.tar.gz";
         my $strategy_accessor = $type . "_detection_strategy";
         if ($build->$strategy_accessor and -s $original_vcf) {

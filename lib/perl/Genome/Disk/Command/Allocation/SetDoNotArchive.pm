@@ -53,13 +53,13 @@ sub _resolve_allocations_from_paths {
             next;
         }
 
-        my $allocation = Genome::Disk::Allocation->_get_parent_allocation($allocation_path);
+        my $allocation = Genome::Disk::Allocation->get_parent_allocation($allocation_path);
         if ($allocation) {
             push @allocations, $allocation;
             next;
         }
 
-        my @allocations_for_path = Genome::Disk::Allocation->_get_child_allocations($allocation_path);
+        my @allocations_for_path = Genome::Disk::Allocation->get_child_allocations($allocation_path);
         if (@allocations_for_path) {
             push @allocations, @allocations_for_path;
             next;

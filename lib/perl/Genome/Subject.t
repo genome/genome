@@ -13,18 +13,30 @@ use above 'Genome';
 use Test::More;
 
 use_ok('Genome::Subject') or die;
-class Genome::SubjectTest { # class for testing
+class Genome::SubjectTest { # class for testing b/c subject is abstract
     is => 'Genome::Subject',
 };
 
+# Basic create
+my $subject = Genome::SubjectTest->create(name => '__TEST_SUBJECT1__');
+ok($subject, 'create subject');
+ok(!$subject->nomenclature, 'no nomenclature');
+
+# Create w/ other stuff
 my $project = Genome::Project->create(name => '__TEST_PROJECT__');
 ok($project, 'create project');
-
-my $subject = Genome::SubjectTest->create(
-    name => '__TEST_SUBJECT__',
+$subject = Genome::SubjectTest->create(
+    name => '__TEST_SUBJECT2__',
+    nomenclature => 'TGI',
     projects => [ $project ],
+    attribute1 => 'value1',
 );
 ok($subject, 'create subject');
 is_deeply([$subject->projects], [$project], 'subject has projects');
+is($subject->nomenclature, 'TGI', 'nomenclature');
+my $attribute1 = $subject->attributes(attribute_label => 'attribute1');
+ok($attribute1, 'attribute1');
+is($attribute1->attribute_value, 'value1', 'attribute1 value');
+is($attribute1->nomenclature, 'TGI', 'attribute1 nomenclature');
 
 done_testing();

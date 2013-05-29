@@ -27,14 +27,21 @@ my $expected_refmap_path = $expected_base .'.'. $gtf_basename .'.refmap';
 my $expected_tmap_path = $expected_base .'.'. $gtf_basename .'.tmap';
 
 my $tmp_dir = File::Temp::tempdir('Cufflinks-Cuffcompare-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
+
+my $input_temp_dir = Genome::Sys->create_temp_directory;
+my $temp_gtf = $input_temp_dir."/".$gtf_basename;
+my $temp_fasta = $input_temp_dir."/test.fa";
+Genome::Sys->create_symlink($gtf_file, $temp_gtf);
+Genome::Sys->create_symlink($fasta_file, $temp_fasta);
+
 my $prefix = $tmp_dir .'/cuffcompare_test';
 
 my $compare = Genome::Model::Tools::Cufflinks::Cuffcompare->create(
     use_version => '1.3.0',
-    input_gtf_paths => $gtf_file,
+    input_gtf_paths => $temp_gtf,
     output_prefix => $prefix,
-    reference_gtf_path => $gtf_file,
-    reference_fasta_path => $fasta_file,
+    reference_gtf_path => $temp_gtf,
+    reference_fasta_path => $temp_fasta,
     include_contained => 1,
     generic_gtf_input => 1,
 );

@@ -9,6 +9,8 @@ my %model_files = (
     'A_ceylanicum_1.3.ec.cg.pg.mkv2.hmm'    => 'sn_ac13mkv2',
     'A_duodenale.v2.2.cg.mk2.hmm'           => 'sn_ad22cgmkv2',
     'A_duodenale.v2.2.mk2.hmm'              => 'sn_ad22mkv2',
+    'A_duodenale.v2.2.cg.mk2a.hmm'          => 'sn_ad22cgmkv2a',
+    'A_duodenale.v2.2.mk2a.hmm'             => 'sn_ad22mkv2a',
     'Acaninum.9.3.2.cegma.hmm '             => 'sn_accg932',
     'Acaninum.9.3.2.cgv2.hmm'               => 'sn_accg932v2',
     'Acaninum.9.3.2.mkv2.hmm'               => 'sn_acmk932v2',
@@ -33,6 +35,8 @@ my %model_files = (
     'caninum_maker.hmm'                     => 'sn_acmk',
     'spiralis_cegma_mod.hmm'                => 'sn_tscg',
     'spiralis_cegma_mod_intron_min30.hmm'   => 'sn_tscg30',
+    'O_dentatum_10.0.ec.cg.mk2.hmm'         => 'sn_od10cgmkv2',
+    'O_dentatum_10.0.cg.mk2.hmm'            => 'sn_od10mkv2',
 );
 
 

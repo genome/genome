@@ -30,8 +30,6 @@ Genome::Model::Tools::Annotate::TranscriptVariants->execute(
     use_version => 3,
 );
 
-`cp $temp /gscuser/aregier/newout`;
-
 my @relevant_new_annotation = `cat $temp | grep "ENST00000301067\\|ENST00000342783\\|ENST00000375547\\|ENST00000563486"`;
 ok (scalar @relevant_new_annotation == scalar @relevant_annotation, "New annotation count matches old annotation count");
 

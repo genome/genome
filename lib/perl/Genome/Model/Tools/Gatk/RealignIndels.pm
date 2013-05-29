@@ -15,6 +15,7 @@ class Genome::Model::Tools::Gatk::RealignIndels {
         },
         output_realigned_bam => {
             is_input => 1,
+            is_output => 1,
             is => 'Text',
             doc => 'The path to where you would like the realigned output bam',
         },
@@ -56,7 +57,9 @@ EOS
 sub execute {
     my $self = shift;
 
-    $self->_check_inputs;
+    unless ($self->_check_inputs) {
+        return;
+    }
     my $command = $self->indel_realigner_command;
 
     unless (Genome::Sys->shellcmd(cmd => $command)) {
@@ -91,6 +94,12 @@ sub indel_realigner_command {
 sub _check_inputs {
     my $self = shift;
 
+    unless ($self->target_intervals_are_sorted) {
+        unless ($self->is_legacy_version($self->version)) {
+            $self->error_message("Version ".$self->version." does not support non-sorted target intervals.");
+            return;
+        }
+    }
     Genome::Sys->validate_file_for_reading($self->target_intervals);
     Genome::Sys->validate_file_for_reading($self->input_bam);
     Genome::Sys->validate_file_for_reading($self->reference_fasta);

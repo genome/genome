@@ -20,6 +20,7 @@ else {
 use_ok('Genome::Model::Tools::Varscan::PullOneTwoBpIndels');
 
 # Inputs
+my $varscan_version = "2.3.2";
 my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Varscan-PullOneTwoBpIndels';
 my $input_indels = "$test_data_dir/indel_files_to_validate";
 my $tumor_bam = "$test_data_dir/tumor.bam";
@@ -48,6 +49,7 @@ my @expected_files = ($expected_small_indel_output_bed, $expected_large_indel_ou
 
 
 my $cmd = Genome::Model::Tools::Varscan::PullOneTwoBpIndels->create(
+    varscan_version => $varscan_version,
     list_of_indel_files_to_validate => $input_indels,
     small_indel_output_bed => $small_indel_output_bed,
     large_indel_output_bed => $large_indel_output_bed,

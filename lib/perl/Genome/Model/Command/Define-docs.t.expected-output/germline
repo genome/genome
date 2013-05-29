@@ -1,9 +1,8 @@
 
 [4mUSAGE[0m
- [1mgenome model define germline[0m --processing-profile-name=? --source-model=?
-    [--auto-assign-inst-data] [--subject-name=?] [--auto-build-alignments] --processing-profile=?
-    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
-    [--model-name=?]
+ [1mgenome model define germline[0m [--auto-assign-inst-data] [--auto-build-alignments]
+    --processing-profile=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
+    [--groups=?[,?]] [--model-name=?]
 
 [4mSYNOPSIS[0m
   genome model define germline \
@@ -14,12 +13,6 @@
 [4mREQUIRED INPUTS[0m
   [1mprocessing-profile[0m
     Processing profile to be used by model, can provide either a name or an ID 
-
-[4mREQUIRED PARAMS[0m
-  [1mprocessing-profile-name[0m
-    (undocumented) 
-  [1msource-model[0m
-    Model that germline model will analyze 
 
 [4mOPTIONAL INPUTS[0m
   [1madd-to-projects[0m
@@ -38,8 +31,6 @@
   [1mauto-assign-inst-data[0m
     Assigning instrument data to the model is performed automatically 
     Default value 'false' (--noauto-assign-inst-data) if not specified
-  [1msubject-name[0m
-    The name of the subject of the model 
   [1mauto-build-alignments[0m
     The building of the model is performed automatically 
     Default value 'true' if not specified

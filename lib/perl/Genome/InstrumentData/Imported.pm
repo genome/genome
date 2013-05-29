@@ -291,27 +291,26 @@ sub native_qual_format {
 # believe Genome::InstrumentData::Solexa is already loaded.  So we load it first...
 ##################################################
 BEGIN: {
-Genome::InstrumentData::Solexa->class;
-no warnings 'once';
-*solexa_dump_sanger_fastq_files= \&Genome::InstrumentData::Solexa::dump_sanger_fastq_files;
-*dump_illumina_fastq_files= \&Genome::InstrumentData::Solexa::dump_illumina_fastq_files;
-*dump_solexa_fastq_files= \&Genome::InstrumentData::Solexa::dump_solexa_fastq_files;
-*dump_illumina_fastq_archive = \&Genome::InstrumentData::Solexa::dump_illumina_fastq_archive;
-*_unprocessed_fastq_filenames= \&Genome::InstrumentData::Solexa::_unprocessed_fastq_filenames;
-*validate_fastq_directory = \&Genome::InstrumentData::Solexa::validate_fastq_directory;
-*resolve_fastq_filenames = \&Genome::InstrumentData::Solexa::resolve_fastq_filenames;
-*fragment_fastq_name = \&Genome::InstrumentData::Solexa::fragment_fastq_name;
-*read1_fastq_name = \&Genome::InstrumentData::Solexa::read1_fastq_name;
-*read2_fastq_name = \&Genome::InstrumentData::Solexa::read2_fastq_name;
-*dump_trimmed_fastq_files = \&Genome::InstrumentData::Solexa::dump_trimmed_fastq_files;
-*_get_trimq2_params = \&Genome::InstrumentData::Solexa::_get_trimq2_params;
-*resolve_median_insert_size = \&Genome::InstrumentData::Solexa::resolve_median_insert_size;
-*resolve_sd_insert_size = \&Genome::InstrumentData::Solexa::resolve_sd_insert_size;
-*get_default_alignment_metrics = \&Genome::InstrumentData::Solexa::get_default_alignment_metrics;
-*get_default_alignment_results = \&Genome::InstrumentData::Solexa::get_default_alignment_results;
-*get_default_alignment_metrics_hash = \&Genome::InstrumentData::Solexa::get_default_alignment_metrics_hash;
-*_convert_trimmer_name_to_sx_command_parts = \&Genome::InstrumentData::Solexa::_convert_trimmer_name_to_sx_command_parts;
-*_convert_trimmer_params_to_command_line_params= \&Genome::InstrumentData::Solexa::_convert_trimmer_params_to_command_line_params;
+    Genome::InstrumentData::Solexa->class;
+    no warnings 'once';
+    *solexa_dump_sanger_fastq_files= \&Genome::InstrumentData::Solexa::dump_sanger_fastq_files;
+    *dump_illumina_fastq_files= \&Genome::InstrumentData::Solexa::dump_illumina_fastq_files;
+    *dump_solexa_fastq_files= \&Genome::InstrumentData::Solexa::dump_solexa_fastq_files;
+    *dump_illumina_fastq_archive = \&Genome::InstrumentData::Solexa::dump_illumina_fastq_archive;
+    *_unprocessed_fastq_filenames= \&Genome::InstrumentData::Solexa::_unprocessed_fastq_filenames;
+    *validate_fastq_directory = \&Genome::InstrumentData::Solexa::validate_fastq_directory;
+    *resolve_fastq_filenames = \&Genome::InstrumentData::Solexa::resolve_fastq_filenames;
+    *fragment_fastq_name = \&Genome::InstrumentData::Solexa::fragment_fastq_name;
+    *read1_fastq_name = \&Genome::InstrumentData::Solexa::read1_fastq_name;
+    *read2_fastq_name = \&Genome::InstrumentData::Solexa::read2_fastq_name;
+    *dump_trimmed_fastq_files = \&Genome::InstrumentData::Solexa::dump_trimmed_fastq_files;
+    *_get_trimq2_params = \&Genome::InstrumentData::Solexa::_get_trimq2_params;
+    *resolve_median_insert_size = \&Genome::InstrumentData::Solexa::resolve_median_insert_size;
+    *resolve_sd_insert_size = \&Genome::InstrumentData::Solexa::resolve_sd_insert_size;
+    *get_default_alignment_metrics = \&Genome::InstrumentData::Solexa::get_default_alignment_metrics;
+    *get_default_alignment_results = \&Genome::InstrumentData::Solexa::get_default_alignment_results;
+    *get_default_alignment_metrics_hash = \&Genome::InstrumentData::Solexa::get_default_alignment_metrics_hash;
+    *_convert_trimmer_to_sx_commands = \&Genome::InstrumentData::Solexa::_convert_trimmer_to_sx_commands;
 }
 
 sub dump_sanger_fastq_files {

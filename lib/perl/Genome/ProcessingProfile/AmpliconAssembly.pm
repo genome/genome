@@ -50,48 +50,7 @@ class Genome::ProcessingProfile::AmpliconAssembly {
 };
 
 sub create {
-    my $class = shift;
-
-    my $self = $class->SUPER::create(@_)
-        or return;
-
-
-    # Check primers, create sense fastas and create name
-    for my $sense ( primer_senses() ) {
-        my $file_method = sprintf('%s_primer_fasta', $sense);
-        my $file = $self->$file_method;
-        unlink $file if -e $file;
-        my $bioseq_io = Bio::SeqIO->new(
-            '-file' => ">$file",
-            '-format' => 'Fasta',
-        );
-        for my $primer_purpose ( primer_purposes() ) {
-            my $method = sprintf('primer_%s_%s', $primer_purpose, _primer_direction_for_sense($sense));
-            my $primer = $self->$method;
-            next unless defined $primer;
-            my ($primer_name, $primer_seq) = split(/:/, $primer);
-            unless ( $primer =~ /^([\w\d\-\.\_]+):([ATCGMRWSYKVHDBN]+)$/i ) {
-                $self->error_message("Invlaid format for primer ($primer).  Please use 'NAME:SEQUENCE'");
-                $self->delete;
-                return;
-            }
-            $bioseq_io->write_seq( 
-                Bio::PrimarySeq->new( 
-                    '-id' => $1,
-                    '-seq' => $2,
-                    '-alphabet' => 'dna',
-                )
-            );
-        }
-    }
-
-    unless ( grep { defined $self->$_ and -s $self->$_ } primer_fasta_methods() ) {
-        $self->error_message("No primers indicated for processing profile");
-        $self->delete;
-        return;
-    }
-
-    return $self;
+    die __PACKAGE__ . ' is deprecated.';
 }
 
 sub delete {
@@ -105,51 +64,25 @@ sub delete {
     return $self->SUPER::delete;
 }
 
-#< BUILDING >#
 sub stages {
-    return (qw/
-        assemble
-        /);
+    return;
 }
 
 sub assemble_job_classes {
-    return (qw/
-        Genome::Model::Event::Build::AmpliconAssembly::VerifyInstrumentData
-        Genome::Model::Event::Build::AmpliconAssembly::PrepareInstrumentData
-        Genome::Model::Event::Build::AmpliconAssembly::TrimAndScreen
-        Genome::Model::Event::Build::AmpliconAssembly::Assemble
-        Genome::Model::Event::Build::AmpliconAssembly::Classify
-        Genome::Model::Event::Build::AmpliconAssembly::Orient
-        Genome::Model::Event::Build::AmpliconAssembly::Collate
-        Genome::Model::Event::Build::AmpliconAssembly::CleanUp
-        Genome::Model::Event::Build::AmpliconAssembly::Reports
-        /);
+    return;
 }
 
 sub assemble_objects {
     return 1;
 }
 
-#< Primers >#
 my %PRIMER_SENSES_AND_DIRECTIONS = (
     sense => 'forward',
     anti_sense => 'reverse',
 );
+
 sub primer_senses {
     return keys %PRIMER_SENSES_AND_DIRECTIONS;
-}
-
-sub primer_directions {
-    return values %PRIMER_SENSES_AND_DIRECTIONS;
-}
-
-sub _primer_direction_for_sense {
-    die "Need primer sense to get direction\n" if not defined $_[0] or $_[0] eq __PACKAGE__;
-    return $PRIMER_SENSES_AND_DIRECTIONS{$_[0]};
-}
-
-sub primer_purposes {
-    return (qw/ amp seq /);
 }
 
 sub primer_fasta_methods {
@@ -169,6 +102,3 @@ sub anti_sense_primer_fasta {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

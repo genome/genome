@@ -338,17 +338,24 @@ sub execute {
                                                   '-de_model'=>$best_de_model,
                                                   '-samples'=>\@samples);
 
+
   if ($clinseq_model){
-    my $clinseq_model_id = $clinseq_model->id;
-    my $clinseq_model_name = $clinseq_model->name;
-    my @inputs;
-    push (@inputs, 'wgs') if $clinseq_model->wgs_model;
-    push (@inputs, 'exome') if $clinseq_model->exome_model;
-    push (@inputs, 'tumor_rnaseq') if $clinseq_model->tumor_rnaseq_model;
-    push (@inputs, 'normal_rnaseq') if $clinseq_model->normal_rnaseq_model;
-    push (@inputs, 'differential_expression') if $clinseq_model->de_model;
-    my $input_string = join (", ", @inputs);
-    $self->status_message("\nRequested clin-seq model exists and is complete:\n\tWith inputs: $input_string\n\t$clinseq_model_name <$clinseq_model_id>\n\n");
+    my $clinseq_inputs_ok = $self->check_clinseq_inputs('-model'=>$clinseq_model);
+    if ($clinseq_inputs_ok){
+      my $clinseq_model_id = $clinseq_model->id;
+      my $clinseq_model_name = $clinseq_model->name;
+      my @inputs;
+      push (@inputs, 'wgs') if $clinseq_model->wgs_model;
+      push (@inputs, 'exome') if $clinseq_model->exome_model;
+      push (@inputs, 'tumor_rnaseq') if $clinseq_model->tumor_rnaseq_model;
+      push (@inputs, 'normal_rnaseq') if $clinseq_model->normal_rnaseq_model;
+      push (@inputs, 'differential_expression') if $clinseq_model->de_model;
+      my $input_string = join (", ", @inputs);
+      $self->status_message("\nRequested clin-seq model exists and is complete:\n\tWith inputs: $input_string\n\t$clinseq_model_name <$clinseq_model_id>");
+      my $date_completed = $clinseq_model->last_complete_build->date_completed;
+      $date_completed =~ s/\.\d+$//;
+      $self->status_message("\nThe last completed build finished running at " . $date_completed . ". If this was a while ago you might want to rebuild to take advantage of analysis improvements...\n\n");
+    }
   }else{
     $self->status_message("\nRequested clin-seq model is NOT ready - see above for instructions\n\n");
   }
@@ -602,7 +609,7 @@ sub rna_samples{
 
 
 #Get all instrument data for the sample of the specified type (wgs or exome)
-sub get_instrument_data{
+sub get_dna_instrument_data{
   my $self = shift;
   my %args = @_;
   my $sample = $args{'-sample'};
@@ -642,7 +649,7 @@ sub get_instrument_data{
     $self->status_message("\tCould not find any exome data") unless (scalar(@exome));
     return @exome;
   }else{
-    $self->error_message("Data type not understood in get_instrument_data");
+    $self->error_message("Data type not understood in get_dna_instrument_data");
   }
 }
 
@@ -797,53 +804,86 @@ sub get_roi_name{
 sub check_for_missing_data{
   my $self = shift;
   my %args = @_;
-  my $model = $args{'-model'};
+  my @models = @{$args{'-models'}};
   my @sample_instrument_data = @{$args{'-sample_instrument_data'}};
-  my @model_instrument_data = $model->instrument_data;
-  my @missing_model_data;
 
-  foreach my $sample_instrument_data (@sample_instrument_data){
-    my $sid = $sample_instrument_data->id;
-    my $match = 0;
-    foreach my $model_instrument_data (@model_instrument_data){
-      my $mid = $model_instrument_data->id;
-      $match = 1 if ($mid == $sid);
-    }
-    push(@missing_model_data, $sid) unless $match;
-  }
-  if (scalar(@missing_model_data)){
-    my $id_string = join(",", @missing_model_data);
-    my $model_id = $model->id;
-    $self->status_message("\t\t\tWARNING -> Model: $model_id appears to be missing the following instrument data: @missing_model_data");
-    $self->status_message("\t\t\tYou should consider performing the following update before proceeding:");
-    $self->status_message("\t\t\tgenome model instrument-data assign --instrument-data='$id_string'  --model=$model_id\n\t\t\tgenome model build start $model_id");
-    return 0;
-  }
+  my @final_models1;
+  my $complete_model = 0; #Is there at least one model that is not missing any data?
+  my %problem_models;
+  foreach my $model (@models){
+    my @model_instrument_data = $model->instrument_data;
+    my @missing_model_data;
 
-  #Does the last succeeded build actually use all the data?
-  my $last_build = $model->last_succeeded_build;
-  if ($last_build){
-    my @build_instrument_data = $last_build->instrument_data;
-    my @missing_build_data;
     foreach my $sample_instrument_data (@sample_instrument_data){
       my $sid = $sample_instrument_data->id;
       my $match = 0;
-      foreach my $build_instrument_data (@build_instrument_data){
-        my $mid = $build_instrument_data->id;
+      foreach my $model_instrument_data (@model_instrument_data){
+        my $mid = $model_instrument_data->id;
         $match = 1 if ($mid == $sid);
       }
-      push(@missing_build_data, $sid) unless $match;
+      push(@missing_model_data, $sid) unless $match;
     }
-    if (scalar(@missing_build_data)){
-      my $id_string = join(",", @missing_build_data);
-      $self->status_message("\t\t\tWARNING -> Last succeeded build of Model: " . $model->id . " appears to be missing the following instrument data: @missing_build_data");
-      $self->status_message("\t\t\tIt is on the model so you may need to start a new build before proceeding:");
-      $self->status_message("\t\t\tgenome model build start " . $model->id);
-      return 0;
+    if (scalar(@missing_model_data)){
+      my $model_id = $model->id;
+      my $id_string = join(",", @missing_model_data);
+      $problem_models{$model_id}{id_string} = $id_string;
+      $problem_models{$model_id}{name} = $model->name;
+    }else{
+      push(@final_models1, $model);
     }
   }
 
-  return 1;
+  #If no suitable models were found - report on those missing instrument data
+  unless (scalar(@final_models1)){
+    foreach my $model_id (sort keys %problem_models){
+      my $id_string = $problem_models{$model_id}{id_string};
+      my $model_name = $problem_models{$model_id}{name};
+      $self->status_message("\t\tName: $model_name ($model_id)");  
+      $self->status_message("\t\t\tWARNING -> Model: $model_id appears to be missing the following instrument data: $id_string");
+      $self->status_message("\t\t\tYou should consider performing the following update before proceeding:");
+      $self->status_message("\t\t\tgenome model instrument-data assign --instrument-data='$id_string'  --model=$model_id\n\t\t\tgenome model build start $model_id");
+    }
+  }
+
+  #Does the last succeeded build actually use all the data?
+  my @final_models2;
+  my $complete_build = 0; #Is there at least one model where the last succeeded build is not missing any data?
+  my %problem_builds;
+  foreach my $model (@final_models1){
+    my $last_build = $model->latest_build;
+    if ($last_build){
+      my @build_instrument_data = $last_build->instrument_data;
+      my @missing_build_data;
+      foreach my $sample_instrument_data (@sample_instrument_data){
+        my $sid = $sample_instrument_data->id;
+        my $match = 0;
+        foreach my $build_instrument_data (@build_instrument_data){
+          my $mid = $build_instrument_data->id;
+          $match = 1 if ($mid == $sid);
+        }
+        push(@missing_build_data, $sid) unless $match;
+      }
+      if (scalar(@missing_build_data)){
+        my $model_id = $model->id;
+        my $id_string = join(",", @missing_build_data);
+        $problem_builds{$model_id}{id_string} = $id_string;
+        $problem_builds{$model_id}{name} = $model->name;
+      }else{
+        push(@final_models2, $model);
+      }
+    }
+  }
+
+  unless (scalar(@final_models2)){
+    foreach my $model_id (sort keys %problem_builds){
+      my $id_string = $problem_builds{$model_id}{id_string};
+      $self->status_message("\t\t\tWARNING -> Last succeeded build of Model: $model_id appears to be missing the following instrument data: $id_string");
+      $self->status_message("\t\t\tIt is on the model so you may need to start a new build before proceeding:");
+      $self->status_message("\t\t\tgenome model build start $model_id");
+    }
+  }
+
+  return (\@final_models2);
 }
 
 
@@ -940,13 +980,13 @@ sub check_ref_align_models{
   #Is there WGS or Exome data?  Get the instrument data of each type for this sample.
   #- return if there is no data of the desired type
   my @tmp;
-  my @sample_instrument_data = $self->get_instrument_data('-sample'=>$sample, '-data_type'=>$data_type);
+  my @sample_instrument_data = $self->get_dna_instrument_data('-sample'=>$sample, '-data_type'=>$data_type);
   return @tmp unless (scalar(@sample_instrument_data));
 
   my $subject_id = $sample->patient->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
-  $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet criteria:");
+  $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
 
   #Test for correct processing profile, reference sequence build, annotation build, and dbsnp build
   #Also make sure that all the instrument data of wgs or exome type is being used (exome can be exome+wgs lanes)
@@ -961,7 +1001,12 @@ sub check_ref_align_models{
       next;
     }
     if ($model->can("dbsnp_build")){
-      next unless ($model->dbsnp_build->id == $self->dbsnp_build->id);
+      my $dbsnp_build = $model->dbsnp_build;
+      if ($dbsnp_build){
+        next unless ($dbsnp_build->id == $self->dbsnp_build->id);
+      }else{
+        next;
+      }
     }else{
       next;
     }
@@ -983,18 +1028,20 @@ sub check_ref_align_models{
 
     #If the desired $data_type is exome.  Check that the TRSN and ROI have been set correctly, exclude models that are not
     next unless ($self->check_model_trsn_and_roi('-model'=>$model, '-data_type'=>$data_type));
-
-    #Make sure all the wgs or exome data is associated with the model
-    #In both wgs and exome models, additional data will be allowed to handle weird situations.  
-    #Eventually we will need the ability to exclude data as well...
-    $self->status_message("\t\tName: " . $model->name);
-    next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
+    #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
 
     push (@final_models, $model);
   }
 
+  #Make sure all the wgs or exome data is associated with the model
+  #In both wgs and exome models, additional data will be allowed to handle weird situations.  
+  @final_models = @{$self->check_for_missing_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
+
   my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable $data_type models (matching default or user specified criteria)");
+  $self->status_message("\tFound " . $final_model_count . " suitable $data_type models (matching default or user specified criteria):");
+  foreach my $model (@final_models){
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
+  }
 
   #If there are no suitable models, one will need to be created
   unless ($final_model_count > 0){
@@ -1059,7 +1106,7 @@ sub check_rnaseq_models{
   my $subject_id = $sample->patient->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
-  $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet criteria:");
+  $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
 
   #Test for correct processing profile, reference sequence build, annotation build
   foreach my $model (@models){
@@ -1067,15 +1114,18 @@ sub check_rnaseq_models{
     next unless ($model->processing_profile_id == $self->rnaseq_pp->id);
     next unless ($model->reference_sequence_build->id == $self->reference_sequence_build->id);
     next unless ($model->annotation_build->id == $self->annotation_build->id);
-    #Make sure all the rna-seq data is associated with the model
-    $self->status_message("\t\tName: " . $model->name);
-    next unless $self->check_for_missing_data('-model'=>$model, '-sample_instrument_data'=>\@sample_instrument_data);
-
     push (@final_models, $model);
+    #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
   }
 
+  #Make sure all the rna-seq data is associated with the model
+  @final_models = @{$self->check_for_missing_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
+
   my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable $tissue_type rna-seq models (matching default or user specified criteria)");
+  $self->status_message("\tFound " . $final_model_count . " suitable $tissue_type rna-seq models (matching default or user specified criteria):");
+  foreach my $model (@final_models){
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
+  }
 
   #If there are no suitable models, one will need to be created
   unless ($final_model_count > 0){
@@ -1121,12 +1171,15 @@ sub check_de_models{
     next unless ($group1_members[0] == $normal_rnaseq_model->id);
     next unless ($group2_members[0] == $tumor_rnaseq_model->id);
 
-    $self->status_message("\t\tName: " . $model->name);
+    #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
     push (@final_models, $model);
   }
 
   my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable differential expression models (matching default or user specified criteria)");
+  $self->status_message("\tFound " . $final_model_count . " suitable differential expression models (matching default or user specified criteria):");
+  foreach my $model (@final_models){
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
+  }
 
   #If there are no suitable models, one will need to be created
   unless ($final_model_count > 0){
@@ -1174,7 +1227,7 @@ sub check_somatic_variation_models{
     push(@existing_models, @models);
   }
   my $existing_model_count = scalar(@existing_models);
-  $self->status_message("\tStarting with " . $existing_model_count . " models for this pair of DNA samples. Candidates that meet criteria:");
+  $self->status_message("\tStarting with " . $existing_model_count . " models for this pair of DNA samples. Candidates that meet basic criteria:");
 
   my $ignore_models_bx;
   if (my $ignore_models_matching = $self->ignore_models_matching) {
@@ -1218,17 +1271,27 @@ sub check_somatic_variation_models{
     }
     next unless ($tumor_model_match && $normal_model_match);
 
-    $self->status_message("\t\tUse: " . $model->__display_name__);
+    #$self->status_message("\t\tUse: " . $model->__display_name__);
     push (@final_models, $model);
   }
+
   my $final_model_count = scalar(@final_models);
-  $self->status_message("\tFound " . $final_model_count . " suitable $data_type somatic-variation models (matching default or user specified criteria)");
+  $self->status_message("\tFound " . $final_model_count . " suitable $data_type somatic-variation models (matching default or user specified criteria):");
+  foreach my $model (@final_models){
+    $self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
+  }
 
   #If there are no suitable models, one will need to be created
   unless ($final_model_count > 0){
     $self->create_somatic_variation_model('-processing_profile_id'=>$somatic_variation_pp_id, '-normal_models'=>\@normal_ref_align_models, '-tumor_models'=>\@tumor_ref_align_models);
     return @tmp;
   }
+
+  #TODO: Now check the input builds of supposedly good somatic-variation models to make sure they are using the latest reference-alignment builds
+  #We already check to see if ref-align data needs to be added to a ref-align model...  but if that does happen the somatic-models are out-of-date
+  @final_models = @{$self->check_somatic_input_builds('-models'=>\@final_models)};
+  $final_model_count = scalar(@final_models);
+  return @tmp unless ($final_model_count > 0);
 
   #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
   my $models_status = $self->check_models_status('-models'=>\@final_models);
@@ -1243,6 +1306,36 @@ sub check_somatic_variation_models{
   return;
 }
 
+sub check_somatic_input_builds{
+  my $self = shift;
+  my %args = @_;
+  my @models = @{$args{'-models'}};
+  my @final_models;
+
+  foreach my $somatic_model (@models){
+    my $latest_somatic_build = $somatic_model->latest_build;
+
+    my $tumor_build = $latest_somatic_build->tumor_build;
+    my $normal_build = $latest_somatic_build->normal_build;
+
+    my $tumor_model = $somatic_model->tumor_model;
+    my $lc_tumor_build = $tumor_model->last_complete_build;
+    my $normal_model = $somatic_model->normal_model;
+    my $lc_normal_build = $normal_model->last_complete_build;
+
+    if ($latest_somatic_build && $lc_tumor_build && $lc_normal_build){
+      if (($tumor_build->id == $lc_tumor_build->id) && ($normal_build->id == $lc_normal_build->id)){
+        push(@final_models, $somatic_model);
+      }else{
+        my $somatic_model_id = $somatic_model->id;
+        $self->status_message("WARNING -> latest build of somatic model: $somatic_model_id is not using the last complete builds of the underlying refalign models.  Run the following:");
+        $self->status_message("genome model build start $somatic_model_id");
+      }
+    }
+  }
+
+  return(\@final_models);
+}
 
 #Create a reference-alignment model for wgs or exome data for a single sample
 sub create_ref_align_model{
@@ -1615,7 +1708,7 @@ sub check_clinseq_models{
 
   my @existing_models = Genome::Model->get(processing_profile_id => $self->clinseq_pp->id, subject_id => $self->individual->id);
   my $existing_model_count = scalar(@existing_models);
-  $self->status_message("\tStarting with " . $existing_model_count . " clin-seq models for this individual. Candidates that meet criteria:");
+  $self->status_message("\tStarting with " . $existing_model_count . " clin-seq models for this individual. Candidates that meet basic criteria:");
 
   foreach my $model (@existing_models){
     my $current_wgs_model = $model->wgs_model;
@@ -1663,17 +1756,17 @@ sub check_clinseq_models{
 
   #If there are suitable models, check the status of their *builds*, and if neccessary launch a new build
   #Narrow the field to successful models to return as well
-  my @final_models_succeeded;
+  my @final_models_succeeded2;
   foreach my $model (@final_models){
     my @test;
     push (@test, $model);
     my $models_status = $self->check_models_status('-models'=>\@test);
-    push (@final_models_succeeded, $model) if $models_status;
+    push (@final_models_succeeded2, $model) if $models_status;
   }
 
-  if (scalar(@final_models_succeeded)){
+  if (scalar(@final_models_succeeded2)){
     #Select the best clinseq model and return it
-    my $best_clinseq_model = $self->select_best_model('-models'=>\@final_models_succeeded);
+    my $best_clinseq_model = $self->select_best_model('-models'=>\@final_models_succeeded2);
     return $best_clinseq_model;
   }else{
     return 0;
@@ -1741,6 +1834,111 @@ sub create_clinseq_model{
   }
 
   return;
+}
+
+
+sub check_clinseq_inputs{
+  my $self = shift;
+  my %args = @_;
+  my $clinseq_model = $args{'-model'};
+
+  my $clinseq_inputs_ok = 1;
+
+  my $clinseq_model_id = $clinseq_model->id;
+  my $clinseq_build = $clinseq_model->last_complete_build;
+  if ($clinseq_build){
+
+    #Check wgs input build used in clinseq build if defined
+    if ($clinseq_model->wgs_model){
+      my $wgs_model = $clinseq_model->wgs_model;
+      my $wgs_build = $clinseq_build->wgs_build;
+      my $lc_wgs_build = $wgs_model->last_complete_build;
+      if ($lc_wgs_build){
+        unless ($lc_wgs_build->id == $wgs_build->id){
+          $self->status_message("WARNING: last_complete_build of wgs model " . $wgs_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
+          $self->status_message("genome model build start $clinseq_model_id");
+          $clinseq_inputs_ok = 0;
+        }
+      }else{
+        $self->status_message("WARNING: wgs model " . $wgs_model->id . " associated with clinseq model $clinseq_model_id does not have a last_complete_build");
+        $clinseq_inputs_ok = 0;
+      }
+    }
+
+    #Check exome input build used in clinseq build if defined
+    if ($clinseq_model->exome_model){
+      my $exome_model = $clinseq_model->exome_model;
+      my $exome_build = $clinseq_build->exome_build;
+      my $lc_exome_build = $exome_model->last_complete_build;
+      if ($lc_exome_build){
+        unless ($lc_exome_build->id == $exome_build->id){
+          $self->status_message("WARNING: last_complete_build of exome model " . $exome_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
+          $self->status_message("genome model build start $clinseq_model_id");
+          $clinseq_inputs_ok = 0;
+        }
+      }else{
+        $self->status_message("WARNING: exome model " . $exome_model->id . " associated with clinseq model $clinseq_model_id does not have a last_complete_build");
+        $clinseq_inputs_ok = 0;
+      }
+    }
+
+    #Check normal rnaseq input build used in clinseq build if defined
+    if ($clinseq_model->normal_rnaseq_model){
+      my $normal_rnaseq_model = $clinseq_model->normal_rnaseq_model;
+      my $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
+      my $lc_normal_rnaseq_build = $normal_rnaseq_model->last_complete_build;
+      if ($lc_normal_rnaseq_build){
+        unless ($lc_normal_rnaseq_build->id == $normal_rnaseq_build->id){
+          $self->status_message("WARNING: last_complete_build of normal_rnaseq model " . $normal_rnaseq_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
+          $self->status_message("genome model build start $clinseq_model_id");
+          $clinseq_inputs_ok = 0;
+        }
+      }else{
+        $self->status_message("WARNING: normal_rnaseq model " . $normal_rnaseq_model->id . " associated with clinseq model $clinseq_model_id does not have a last_complete_build");
+        $clinseq_inputs_ok = 0;
+      }
+    }
+    
+    #Check tumor rnaseq input build used in clinseq build if defined
+    if ($clinseq_model->tumor_rnaseq_model){
+      my $tumor_rnaseq_model = $clinseq_model->tumor_rnaseq_model;
+      my $tumor_rnaseq_build = $clinseq_build->tumor_rnaseq_build;
+      my $lc_tumor_rnaseq_build = $tumor_rnaseq_model->last_complete_build;
+      if ($lc_tumor_rnaseq_build){
+        unless ($lc_tumor_rnaseq_build->id == $tumor_rnaseq_build->id){
+          $self->status_message("WARNING: last_complete_build of tumor_rnaseq model " . $tumor_rnaseq_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
+          $self->status_message("genome model build start $clinseq_model_id");
+          $clinseq_inputs_ok = 0;
+        }
+      }else{
+        $self->status_message("WARNING: tumor_rnaseq model " . $tumor_rnaseq_model->id . " associated with clinseq model $clinseq_model_id does not have a last_complete_build");
+        $clinseq_inputs_ok = 0;
+      }
+    }
+
+    #Check de input build used in clinseq build if defined
+    if ($clinseq_model->de_model){
+      my $de_model = $clinseq_model->de_model;
+      my $de_build = $clinseq_build->de_build;
+      my $lc_de_build = $de_model->last_complete_build;
+      if ($lc_de_build){
+        unless ($lc_de_build->id == $de_build->id){
+          $self->status_message("WARNING: last_complete_build of de model " . $de_model->id . " associated with clinseq model $clinseq_model_id is not being used.  Run the following:");
+          $self->status_message("genome model build start $clinseq_model_id");
+          $clinseq_inputs_ok = 0;
+        }
+      }else{
+        $self->status_message("WARNING: de model " . $de_model->id . " associated with clinseq model $clinseq_model_id does not have a last_complete_build");
+        $clinseq_inputs_ok = 0;
+      }
+    }
+
+  }else{
+    $self->status_message("WARNING: There is no last_complete_build for this clin-seq model: $clinseq_model_id");
+    $clinseq_inputs_ok = 0;
+  }
+  
+  return($clinseq_inputs_ok);
 }
 
 
@@ -1862,6 +2060,17 @@ sub exclude_instrument_data{
     push(@tmp2, $instrument_data);
   }
   @instrument_data = @tmp2;
+
+  #Now skip instrument data that has an index defined but where that index is defined as 'unknown'
+  my @tmp3;
+  foreach my $instrument_data (@instrument_data){
+    my $index = $instrument_data->index_sequence;
+    if ($index){
+      next if ($index =~ /unknown/i);
+    }
+    push(@tmp3, $instrument_data);
+  }
+  @instrument_data = @tmp3;
 
   #Return the amended array
   return (\@instrument_data);

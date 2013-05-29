@@ -185,6 +185,59 @@ sub output_metrics_file_for_instrument_data {
     return $self->data_directory.'/'.$result->read_processor_input_metric_file;
 }
 
+#check $attribute on a collection of @instrument_data.  If $require_same, 
+#it will return a single value or undef if the values do not match
+#among the instrument data.
+#If not $require_same, it will return a list of unique values
+#of that attribute from the set of instrument data
+sub resolve_attribute_for_instrument_data {
+    my $self = shift;
+    my $attribute = shift;
+    my $require_same = shift;
+    my @instrument_data = @_;
+    my @values;
+    my $count = 0;
+    for my $id (@instrument_data) {
+        my $temp_value = $id->$attribute;
+        if ($count == 0) {
+            push @values, $temp_value;
+        }
+        else {
+            if (grep {$_ eq $temp_value} @values) {
+                next;
+            }
+            elsif (!$require_same) {
+                push @values, $temp_value;
+            }
+            else {
+                $self->error_message("Value for $attribute was not consistent between all instrument data");
+                return;
+            }
+        }
+        $count++;
+    }
+    if ($require_same) {
+        return $values[0];
+    }
+    else {
+        return @values;
+    }
+}
+
+sub resolve_average_for_attribute {
+    my $self = shift;
+    my %params = @_;
+
+    Carp::confess('No attribute given to resolve average for attribute!') if not $params{attribute};
+    Carp::confess('No objects given to resolve average for attribute!') if not $params{objects} or not @{$params{objects}};
+
+    my @values = $self->resolve_attribute_for_instrument_data($params{attribute}, 0, @{$params{objects}});
+    my $sum = List::Util::sum(@values); # check that these are numbers?
+    my $avg = $sum / @{$params{objects}};
+
+    return $avg;
+}
+
 sub resolve_taxon {
     my $self = shift;
 
@@ -416,5 +469,36 @@ sub resolve_assemble_lsf_resource {
 sub resolve_assemble_lsf_queue {
     return;
 }
+
+#< DIFF >#
+sub files_ignored_by_diff {
+    return (qw/ build.xml /);
+}
+
+sub regex_for_custom_diff {
+    return (
+        metrics => '\.(in|out)put_metrics',
+    );
+}
+
+sub diff_metrics {
+    my ($self, $file1, $file2) = @_;
+
+    my $metrics_from_file1 = Genome::Model::Tools::Sx::Metrics->from_file($file1);
+    return if not $metrics_from_file1;
+
+    my $metrics_from_file2 = Genome::Model::Tools::Sx::Metrics->from_file($file2);
+    return if not $metrics_from_file2;
+
+    for my $metric_name (qw/ bases count /) {
+        if ( $metrics_from_file1->$metric_name ne $metrics_from_file2->$metric_name ) {
+            $self->status_message("Metrics differ for $metric_name: ".$metrics_from_file1->$metric_name.' <=> '.$metrics_from_file2->$metric_name);
+            return;
+        }
+    }
+
+    return 1;
+}
+#<>#
 
 1;

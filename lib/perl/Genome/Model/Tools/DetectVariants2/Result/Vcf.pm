@@ -267,7 +267,8 @@ sub unlink_existing_vcf {
         if(@vcf_results > 0){
             for my $existing_result (@vcf_results) {
                 if($self->compare_vcf_versions($existing_result->vcf_version,$vcf_version)){
-                    die $self->error_message("Found an existing vcf result with a greater vcf_version (".$existing_result->vcf_version.") than the one I wish to make (".$vcf_version.").");
+                    die $self->error_message("Found an existing vcf result(" . $existing_result->id .
+                        ") with a greater vcf_version (".$existing_result->vcf_version.") than the one I wish to make (".$vcf_version.").");
                 }
             }
         }

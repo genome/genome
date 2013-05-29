@@ -779,6 +779,8 @@ sub add_detectors_and_filters {
                 # add links for properties which every detector or filter has from input_connector
                 my @properties_to_each_filter = (
                     'pedigree_file_path',
+                    'aligned_reads_sample',
+                    'control_aligned_reads_sample',
                 );
 
                 # A superset of the above
@@ -788,8 +790,6 @@ sub add_detectors_and_filters {
                     'reference_build_id',
                     'aligned_reads_input',
                     'control_aligned_reads_input',
-                    'aligned_reads_sample',
-                    'control_aligned_reads_sample',
                     @properties_to_each_filter
                 );
                 for my $property ( @properties_to_each_detector) {
@@ -987,7 +987,9 @@ sub _promote_staged_data {
                 } else {
                     $source = $vcf_link;
                 }
-                my $link_target = $output_dir."/$variant_type" . "s.vcf.gz";
+                my $link_target = $output_dir."/$variant_type" . "s.detailed.vcf.gz";
+                my $clipped_vcf = $output_dir."/$variant_type" . "s.vcf.gz";
+                Genome::Model::Tools::Vcf::CleanupVcf->execute(input_file => $source, output_file => $clipped_vcf);
                 Genome::Sys->create_symlink($source, $link_target);
             }
 

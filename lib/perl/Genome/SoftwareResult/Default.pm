@@ -22,11 +22,24 @@ class Genome::SoftwareResult::Default {
 
 sub resolve_allocation_subdirectory {
     my $self = shift;
-    return "model_data/result-" . $self->id;
+    my $command = $self->command;
+    if ($command->can("resolve_allocation_directory")) {
+        return $command->resolve_allocation_directory();
+    }
+    else {
+        return "model_data/result-" . $self->id;
+    }
 }
 
 sub resolve_allocation_disk_group_name {
-    "info_genome_models" 
+    my $self = shift;
+    my $command = $self->command;
+    if ($command->can("resolve_allocation_disk_group_name")) {
+        return $command->resolve_allocation_disk_group_name();
+    }
+    else {
+        "info_genome_models" 
+    }
 }
 
 sub create {
@@ -49,9 +62,13 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless $self;
 
+    # set the result before execute, though the result will update
+    # this allows the command to link underlying results to it
+    $command->result($self);
+
     my $saved_output_dir;
     if ($command->can('output_dir')) {
-        if ($command->__meta__->can('stage_output') and $command->__meta__->stage_output) {
+        if ($command->can('stage_output') and $command->stage_output) {
             $self->_prepare_staging_directory;
             $saved_output_dir = $command->output_dir;
             $command->output_dir($self->temp_staging_directory);
@@ -158,9 +175,10 @@ sub execute_wrapper {
     #  $command->is_executed(1);
     #  $command->result($command);
     
-    $command->status_message("execution preceded by check for existing software result...");
+    $command->status_message("Execution preceded by check for existing software result.");
     my $result_class = $command->class . '::Result';
     my %props = _copyable_properties($command, $result_class);
+    delete $props{output_dir};
     unless ($result) {
         $result = $result_class->get_or_create(
             test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
@@ -169,10 +187,10 @@ sub execute_wrapper {
         );
     }
     if ($command->is_executed) {
-        $command->status_message("new software result saved: " . $result->__display_name__);
+        $command->status_message("New software result saved: " . $result->__display_name__);
     }
     else {
-        $command->status_message("existing results found: " . $result->__display_name__);
+        $command->status_message("Existing results found: " . $result->__display_name__);
     }
 
     # copy properties from the result to the command outputs/changes
@@ -196,7 +214,7 @@ sub execute_wrapper {
     $command->result($result);
     if ($command->can('output_dir')) {
         $command->output_dir($result->output_dir);
-        $command->status_message("output dir: " . $result->output_dir);
+        $command->status_message("Output directory: " . $result->output_dir);
     }
 
     return $command if $was_called_as_class_method;
@@ -222,7 +240,6 @@ sub _copyable_properties {
     }
     return %props;
 }
-
 
 1;
 

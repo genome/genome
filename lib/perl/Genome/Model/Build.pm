@@ -10,6 +10,7 @@ use Data::Dumper 'Dumper';
 use File::stat;
 use File::Path;
 use File::Find 'find';
+use File::Next;
 use File::Basename qw/ dirname fileparse /;
 use Regexp::Common;
 use Workflow;
@@ -205,34 +206,13 @@ sub __extend_namespace__ {
     my $model_subclass_meta = eval { $model_subclass_name->__meta__ };
     if ($model_subclass_meta and $model_subclass_name->isa('Genome::Model')) {
         my $build_subclass_name = 'Genome::Model::Build::' . $ext;
-        my @p = $model_subclass_meta->properties();
-        my @has;
-        for my $p (@p) {
-            for my $type (qw/input metric/) {
-                my $method = "is_$type";
-                if ($p->can($method) and $p->$method) {
-                    my $name = $p->property_name;
-                    my %data = %{$p};
-                    my $type = $data{data_type};
-                    for my $key (keys %data) {
-                        delete $data{$key} unless $key =~ /^is_/;
-                    }
-                    delete $data{is_specified_in_module_header};
-                    if ($type->isa("Genome::Model")) {
-                        $type =~ s/^Genome::Model/Genome::Model::Build/;
-                        $name =~ s/_model(?=($|s$))/_build/;
-                    }
-                    $data{property_name} = $name;
-                    $data{data_type} = $type;
-                    push @has, $name, \%data;
-                }
-            }
-        }
-        #print Data::Dumper::Dumper($build_subclass_name, \@has);
+        # The actual inputs and metrics are added during subclass definition preprocessing.
+        # Then the whole set is expanded, allowing the developer to write less of 
+        # # the build class.
+        # See Genome/Model/Build.pm _preprocess_subclass_description.
         my $build_subclass_meta = UR::Object::Type->define(
             class_name => $build_subclass_name,
             is => 'Genome::Model::Build',
-            has => \@has,
         );
         die "Error defining $build_subclass_name for $model_subclass_name!" unless $model_subclass_meta;
         return $build_subclass_meta;
@@ -498,9 +478,6 @@ sub _cpu_slot_usage_breakdown {
 
             my $cpus = 1;
             my $rusage = ($op_type->can('lsf_resource') ? $op_type->lsf_resource : undef);
-            if ($op_name =~ /align/) {
-                $DB::single = 1;
-            }
             if (defined($rusage)) {
                 if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
                     $cpus = $1;
@@ -735,6 +712,20 @@ sub symlinked_allocations {
     }
 
     return values %allocations;
+}
+
+sub input_builds {
+    my $self = shift;
+
+    my @builds;
+    for my $input ($self->inputs) {
+        my $value = $input->value;
+        if ($value and $value->isa('Genome::Model::Build')) {
+            push @builds, $value;
+            push @builds, $value->input_builds;
+        }
+    }
+    return @builds;
 }
 
 sub relink_symlinked_allocations {
@@ -994,13 +985,23 @@ sub validate_instrument_data{
 
 sub validate_inputs_have_values {
     my $self = shift;
-    my @inputs = $self->inputs;
+    my @inputs = grep { $self->can($_->name) } $self->inputs;
 
     # find inputs with undefined values
     my @inputs_without_values = grep { not defined $_->value } @inputs;
     my %input_names_to_ids;
     for my $input (@inputs_without_values){
-        $input_names_to_ids{$input->name} .= $input->value_id . ',';
+        my $name = $input->name;
+        if ($self->can("name")) {
+            my $pmeta = $self->__meta__->property($name);
+            if ($pmeta) {
+                if ($pmeta->is_optional) {
+                    next;
+                }
+            }
+        }
+        $input->value;
+        $input_names_to_ids{$input->name} .= $input->value_class_name . ":" . $input->value_id . ',';
     }
 
     # make tags for inputs with undefined values
@@ -1305,9 +1306,6 @@ sub _launch {
             $add_args .= ' --restart';
         }
 
-        my $lock = $self->_lock_model_for_start;
-        return unless $lock;
-
         # bsub into the queue specified by the dispatch spec
         my $lsf_project = "build" . $self->id;
         $ENV{'WF_LSF_PROJECT'} = $lsf_project;
@@ -1334,41 +1332,6 @@ sub _launch {
 
         return 1;
     }
-}
-
-
-sub _lock_model_for_start {
-    my $self = shift;
-
-    my $model_id = $self->model->id;
-    my $lock_path = $ENV{GENOME_LOCK_DIR} . '/build_start/' . $model_id;
-
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => $lock_path,
-        block_sleep => 3,
-        max_try => 3,
-    );
-    unless ($lock) {
-        print STDERR "Failed to get build start lock for model $model_id. This means someone|thing else is attempting to build this model. Please wait a moment, and try again. If you think that this model is incorrectly locked, please put a ticket into the apipe support queue.";
-        return;
-    }
-
-    # create a change record so that if it is "undone" it will kill the job
-    # create a commit observer to resume the job when build is committed to database
-    my $process = UR::Context->process;
-    my $commit_observer;
-    my $unlock_sub = sub {
-        Genome::Sys->unlock_resource(resource_lock => $lock);
-        $commit_observer->delete;
-    };
-    my $lock_change = UR::Context::Transaction->log_change($self, 'UR::Value', $lock, 'external_change', $unlock_sub);
-    $commit_observer = $process->add_observer(aspect => 'commit', callback => $unlock_sub);
-    unless ($commit_observer) {
-        $self->error_message("Failed to add commit observer to unlock $lock.");
-    }
-
-    $self->status_message("Locked model ($model_id) while launching " . $self->__display_name__ . ".");
-    return $lock;
 }
 
 
@@ -2018,15 +1981,10 @@ sub get_metric {
 sub files_in_data_directory {
     my $self = shift;
     my @files;
-    find({
-        wanted => sub {
-            my $file = $File::Find::name;
-            push @files, $file;
-        },
-        follow => 1,
-        follow_skip => 2, },
-        $self->data_directory,
-    );
+    my $iter = File::Next::files($self->data_directory);
+    while(defined (my $file = $iter->())) {
+        push @files, $file;
+    }
     return \@files;
 }
 
@@ -2415,12 +2373,71 @@ sub _get_workflow_instance_children {
 
 sub _preprocess_subclass_description {
     my ($class, $desc) = @_;
-    #print "PREPROC BUILD!\n";
-    #print Data::Dumper::Dumper($desc);
-    #print Carp::longmess();
+    my $build_subclass_name = $desc->{class_name};
+    my $model_subclass_name = $build_subclass_name;
+    $model_subclass_name =~ s/::Build//;
+    my $model_subclass_meta = eval { $model_subclass_name->__meta__; };
+    if ($model_subclass_meta) {
+        my @model_properties = $model_subclass_meta->properties();
+        my $has = $desc->{has};
+        for my $p (@model_properties) {
+            my $name = $p->property_name;
+            if ($has->{$name}) {
+                #warn "exists: $name on $build_subclass_name\n";
+                next;
+            }
+            if (grep { $_->can($name) } (qw/Genome::Model Genome::Model::Build /, @{$desc->{is}}) ) {
+                #warn "in parent: $name on $build_subclass_name\n";
+                next;
+            }
+            
+            my %data = %{$p};
+            my $type = $data{data_type};
+            if (!$type) {
+                #warn "no type on $name for $model_subclass_name, cannot infer build properties\n";
+                next;
+            }
+            for my $key (keys %data) {
+                delete $data{$key} unless $key =~ /^is_/;
+            }
+            delete $data{is_specified_in_module_header};
+            if ($type->isa("Genome::Model")) {
+                $type =~ s/^Genome::Model/Genome::Model::Build/;
+                $name =~ s/_model(?=($|s$))/_build/;
+            }
+            $data{data_type} = $type;
+            $data{property_name} = $name;
+            
+            if (($p->can("is_input") and $p->is_input) or ($p->can("is_metric") and $p->is_metric)) {
+                # code below will augment these with via/to/where
+                #warn "build gets input/metric $name ($build_subclass_name)\n";
+            }
+            elsif ($data{via} and $data{via} eq 'last_complete_build') {
+                # model properites which go through the last complete build exist directly on the build
+                #%data = $data{meta_for_build_attribute}; 
+                #warn "build gets direct $name ($build_subclass_name)\n";
+            }
+            #elsif (not $data{via} or ($data{via} ne 'inputs' and $data{via} ne 'metrics') ) {
+            elsif ($data{via} and $data{via} =~ /^(subject)$/) {
+                # all other model properties are accessible via the model
+                #warn "build gets indirect $name ($build_subclass_name)\n";
+                $data{via} = 'model';
+                $data{to} = $name;
+                $data{is_delegated} = 1;
+                $data{is_calculated} = 1;
+            }
+            else {
+                next;
+            }
+
+            $has->{$name} = \%data;
+        }
+    }
+    
     my @names = keys %{ $desc->{has} };
     for my $prop_name (@names) {
         my $prop_desc = $desc->{has}{$prop_name};
+       
         # skip old things for which the developer has explicitly set-up indirection
         next if $prop_desc->{id_by};
         next if $prop_desc->{via};
@@ -2439,16 +2456,34 @@ sub _preprocess_subclass_description {
         }
 
         if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
-
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
+
+            my @where_class;
+            if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
+                my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
+                    $prop_desc->{'data_type'},
+                    $class
+                );
+
+                if($prop_class->isa('UR::Value') and !$prop_class->isa('Genome::File::Base')) {
+                    if ($model_subclass_name->can('_has_legacy_input_types') and $model_subclass_name->_has_legacy_input_types) {
+                        # once old snapshots are gone we can backfill a second row per input with correct class names
+                        # then once those are gone we can delete this logic and delete the old rows
+                        push @where_class, value_class_name => 'UR::Value';
+                    }
+                    else {
+                        push @where_class, value_class_name => $prop_class;
+                    }
+                }
+            }
 
             $desc->{has}{$assoc} = {
                 property_name => $assoc,
                 implied_by => $prop_name,
                 is => 'Genome::Model::Build::Input',
                 reverse_as => 'build',
-                where => [ name => $prop_name ],
+                where => [ name => $prop_name, @where_class ],
                 is_mutable => $prop_desc->{is_mutable},
                 is_optional => $prop_desc->{is_optional},
                 is_many => 1, #$prop_desc->{is_many},
@@ -2592,16 +2627,21 @@ sub _heartbeat {
             }
         }
 
-        my $output_file = $self->output_file_from_bjobs_output($bjobs_output);
+        my $output_file = $wf_instance_exec->stdout;
         my $output_stat = stat($output_file);
         my $elapsed_mtime_output_file = time - $output_stat->mtime;
-        my $error_file = $self->error_file_from_bjobs_output($bjobs_output);
+        my $error_file = $wf_instance_exec->stderr;
         my $error_stat = stat($error_file);
         my $elapsed_mtime_error_file = time - $error_stat->mtime;
-        if (($elapsed_mtime_output_file/3600 > 48) && ($elapsed_mtime_error_file/3600 > 48)) {
-            my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/3600);
-            my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/3600);
-            $heartbeat{message} = "Process is running BUT output and/or error file have not been modified in 48+ hours ($elapsed_mtime_output_file_hours hours, $elapsed_mtime_error_file_hours hours):\nOutput File: $output_file\nError File: $error_file";
+        my $op_class = $wf_instance_exec->operation_instance->operation_type->command_class_name;
+        my $hour = 3600;
+        my $max_elapsed_time = ($op_class->can('max_elapsed_log_time')) ? $op_class->max_elapsed_log_time : 48 * $hour;
+        if (($elapsed_mtime_output_file > $max_elapsed_time) && ($elapsed_mtime_error_file > $max_elapsed_time)) {
+            my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/$hour);
+            my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/$hour);
+            my $max_elapsed_time_hours = int($max_elapsed_time/$hour);
+            my $m = "Process is running BUT output and/or error file have not been modified in %d+ hours (%d hours, %d hours):\nOutput File: %s\nError File: %s";
+            $heartbeat{message} = sprintf($m, $max_elapsed_time_hours, $elapsed_mtime_output_file_hours, $elapsed_mtime_error_file_hours, $output_file, $error_file);
 
             last WF;
         }
@@ -2610,26 +2650,6 @@ sub _heartbeat {
     }
 
     return %heartbeat;
-}
-
-sub output_file_from_bjobs_output {
-    my $self = shift;
-    my $bjobs_output = shift;
-    my ($output_file) = $bjobs_output =~ /Output File <(.*?)>/;
-    unless ($output_file) {
-        die $self->error_message("Failed to parse output file from bjobs output:\n$bjobs_output\n");
-    }
-    return $output_file;
-}
-
-sub error_file_from_bjobs_output {
-    my $self = shift;
-    my $bjobs_output = shift;
-    my ($error_file) = $bjobs_output =~ /Error File <(.*?)>/;
-    unless ($error_file) {
-        die $self->error_message("Failed to parse error file from bjobs output:\n$bjobs_output\n");
-    }
-    return $error_file;
 }
 
 sub status_from_bjobs_output {

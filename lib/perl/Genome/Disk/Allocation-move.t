@@ -12,10 +12,15 @@ use above "Genome";
 use Test::More;
 use File::Temp 'tempdir';
 use Filesys::Df qw();
+use Sub::Install;
 
 use_ok('Genome::Disk::Allocation') or die;
 
-*Genome::Sys::current_user_is_admin = sub { return 1 };
+Sub::Install::reinstall_sub({
+    into => 'Genome::Sys',
+    as => 'current_user_is_admin',
+    code => sub { return 1 }
+});
 
 my $test_dir = tempdir(
     'allocation_testing_XXXXXX',
@@ -25,8 +30,10 @@ my $test_dir = tempdir(
 );
 
 # Add our testing group to the allowed list of disk groups
-push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, 'testing_group';
-$Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+{ no warnings 'once';
+    push @Genome::Disk::Allocation::APIPE_DISK_GROUPS, 'testing_group';
+    $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
+}
 
 # Make a dummy group
 my $group = Genome::Disk::Group->create(
@@ -85,6 +92,8 @@ my %params = (
     owner_id => $user->id,
     group_subdirectory => 'testing',
 );
+Genome::Disk::Allocation->dump_status_messages(0);
+Genome::Sys->dump_status_messages(0);Genome::Sys->dump_status_messages(0);
 my $allocation = Genome::Disk::Allocation->create(%params);
 ok($allocation, 'successfully created test allocation');
 
@@ -95,7 +104,7 @@ my $rv = $allocation->move(
 ok($rv, 'successfully moved allocation');
 my $new_path = $allocation->absolute_path;
 is($allocation->mount_path, $volumes[1]->mount_path, 'allocation has expected mount path');
-printf("original mount path = %s\n", $original_path);
+note(sprintf("original mount path = %s\n", $original_path));
 ok(-d $new_path, 'new path exists, as expected');
 
 $rv = $allocation->move(

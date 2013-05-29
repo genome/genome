@@ -76,7 +76,7 @@ class Genome::Model::Tools::CopyNumber::SimulateReads {
         entrypoints_file => {
             is => 'String',
             is_optional => 1,
-            default => Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/entrypoints.male",
+            example_values => [Genome::Sys->dbpath("tgi-misc-annotation","human-build36-20130113") . "/entrypoints.male"],
             doc => 'entrypoints for the genome build to simulate (also determines gender if doing WGS simulation).',
         },
 

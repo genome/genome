@@ -11,11 +11,7 @@ use File::Temp;
 use_ok('Genome::Model::Tools::Sv::SvAnnot');
 
 my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sv-SvAnnot/';
-my $tmp_dir = File::Temp::tempdir(
-    'Genome-Model-Tools-Sv-SvAnnot-XXXXX', 
-    TEMPDIR => 1,
-    CLEANUP => 1,
-);
+my $tmp_dir = Genome::Sys->create_temp_directory();
 
 for my $type qw(36_standard 37_merged) {
     my $sv_file    = $test_input_dir . 'sv.file.' . $type;

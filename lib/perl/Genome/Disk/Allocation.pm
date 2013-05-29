@@ -15,101 +15,123 @@ our $TESTING_DISK_ALLOCATION = 0;
 
 class Genome::Disk::Allocation {
     is => 'Genome::Notable',
-    id_generator => '-uuid',
+    table_name => 'GENOME_DISK_ALLOCATION',
     id_by => [
         id => {
             is => 'Text',
+            len => 64,
             doc => 'The id for the allocator event',
         },
     ],
     has => [
         disk_group_name => {
             is => 'Text',
+            len => 40,
             doc => 'The name of the disk group',
         },
         mount_path => {
             is => 'Text',
+            len => 255,
             doc => 'The mount path of the disk volume',
         },
         allocation_path => {
             is => 'Text',
+            len => 4000,
             doc => 'The sub-dir of the disk volume for which space is allocated',
         },
         kilobytes_requested => {
             is => 'Number',
+            len => 20,
             doc => 'The disk space allocated in kilobytes',
         },
         owner_class_name => {
             is => 'Text',
+            len => 255,
+            is_optional => 1,
             doc => 'The class name for the owner of this allocation',
         },
         owner_id => {
             is => 'Text',
+            len => 255,
+            is_optional => 1,
             doc => 'The id for the owner of this allocation',
         },
         owner => {
-            id_by => 'owner_id',
             is => 'UR::Object',
-            id_class_by => 'owner_class_name'
+            id_by => 'owner_id',
+            id_class_by => 'owner_class_name',
         },
         group_subdirectory => {
             is => 'Text',
+            len => 255,
             doc => 'The group specific subdirectory where space is allocated',
         },
         absolute_path => {
-            calculate_from => ['mount_path','group_subdirectory','allocation_path'],
-            calculate => q{ $self->_absolute_path($mount_path, $group_subdirectory, $allocation_path); },
+            calculate_from => [ 'mount_path', 'group_subdirectory', 'allocation_path' ],
+            calculate => q( $self->_absolute_path($mount_path, $group_subdirectory, $allocation_path); ),
         },
         volume => {
             is => 'Genome::Disk::Volume',
             calculate_from => 'mount_path',
-            calculate => q| return Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active'); |
+            calculate => q( return Genome::Disk::Volume->get(mount_path => $mount_path, disk_status => 'active'); ),
         },
         group => {
             is => 'Genome::Disk::Group',
             calculate_from => 'disk_group_name',
-            calculate => q| return Genome::Disk::Group->get(disk_group_name => $disk_group_name); |,
+            calculate => q( return Genome::Disk::Group->get(disk_group_name => $disk_group_name); ),
+        },
+        kilobytes_used_time => {
+            is => 'DateTime',
+            len => 11,
+            is_optional => 1,
         },
     ],
     has_optional => [
         preserved => {
             is => 'Boolean',
-            default => 0,
+            len => 1,
+            default_value => 0,
             doc => 'If set, the allocation cannot be deallocated',
         },
         archivable => {
             is => 'Boolean',
-            default => 1,
+            len => 1,
+            default_value => 1,
             doc => 'If set, this allocation can be archived',
         },
         original_kilobytes_requested => {
             is => 'Number',
+            len => 20,
             doc => 'The disk space allocated in kilobytes',
         },
         kilobytes_used => {
             is => 'Number',
-            default => 0,
+            len => 20,
+            default_value => 0,
             doc => 'The actual disk space used by owner',
         },
         creation_time => {
             is => 'DateTime',
+            len => 11,
             doc => 'Time at which the allocation was created',
         },
         reallocation_time => {
             is => 'DateTime',
+            len => 11,
             doc => 'The last time at which the allocation was reallocated',
         },
         owner_exists => {
             is => 'Boolean',
-            calculate_from => ['owner_class_name', 'owner_id'],
-            calculate => q|
+            calculate_from => [ 'owner_class_name', 'owner_id' ],
+            calculate => q(
                 my $owner_exists = eval { $owner_class_name->get($owner_id) };
                 return $owner_exists ? 1 : 0;
-            |,
-        }
+            ),
+        },
     ],
-    table_name => 'GENOME_DISK_ALLOCATION',
+    schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 # TODO This needs to be removed, site-specific
@@ -122,12 +144,31 @@ our @APIPE_DISK_GROUPS = qw/
     systems_benchmarking
 /;
 our $CREATE_DUMMY_VOLUMES_FOR_TESTING = 1;
-my @PATHS_TO_REMOVE; # Keeps track of paths created when no commit is on
+our @PATHS_TO_REMOVE; # Keeps track of paths created when no commit is on
 
 sub _absolute_path {
     my $class = shift;
     my ($mount_path, $group_subdirectory, $allocation_path) = @_;
     return $mount_path .'/'. $group_subdirectory .'/'. $allocation_path;
+}
+
+sub du {
+    my $self = shift;
+
+    if ($self->is_archived) {
+        die $self->error_message('Cannot `du` an archived allocation');
+    }
+
+    my $kb_used = 0;
+    my $absolute_path = $self->absolute_path;
+    if ( -d $absolute_path ) {
+        # allow_errors will allow disk_usage_for_path to return a number even if
+        # du emits errors (for instance, no read permissions for a subfolder)
+        $kb_used = Genome::Sys->disk_usage_for_path(
+            $absolute_path, allow_errors => 1) || 0;
+    }
+
+    return $kb_used;
 }
 
 sub allocate { return shift->create(@_); }
@@ -291,7 +332,7 @@ sub _create {
     unless (defined $kilobytes_requested && $kilobytes_requested >= 0) {
         confess 'Kilobytes requested is not valid!';
     }
-    if (my $parent_alloc = $class->_get_parent_allocation($allocation_path)) {
+    if (my $parent_alloc = $class->get_parent_allocation($allocation_path)) {
         confess sprintf("Parent allocation (%s) found for %s", $parent_alloc->allocation_path, $allocation_path);
     }
     unless ($class->_verify_no_child_allocations($allocation_path)) {
@@ -390,6 +431,8 @@ sub _create {
     $self->status_message(sprintf("Allocation (%s) created at %s",
         $id, $self->absolute_path));
 
+    # a restrictive umask can break builds for other users; force it to be friendly
+    umask(0002);
     # If we cannot create the directory delete the new allocation
     my $dir = eval {
         Genome::Sys->create_directory($self->absolute_path);
@@ -498,13 +541,11 @@ sub _reallocate {
     my $mode = $class->_retrieve_mode();
     my $self = $class->$mode($id);
     my $old_kb_requested = $self->kilobytes_requested;
-    # allow_errors will allow disk_usage_for_path to return a number even if du
-    # emits errors (for instance, no read permissions for a subfolder)
-    my $absolute_path = $self->absolute_path;
-    my $kb_used = 0;
-    if ( -d $absolute_path ) {
-        $kb_used = Genome::Sys->disk_usage_for_path($absolute_path, allow_errors => 1) || 0;
-    }
+
+    my $kb_used = $self->du();
+
+    # Cache kilobytes used
+    $self->kilobytes_used($kb_used);
 
     my $actual_kb_requested = List::Util::max($kb_used, $kilobytes_requested);
     if ($grow_only && ($actual_kb_requested <= $old_kb_requested)) {
@@ -539,14 +580,21 @@ sub _reallocate {
             }
         } else {
             $self->error_message(sprintf(
-                    "Failed to reallocate allocation %s on volume %s.",
+                    "Failed to reallocate allocation %s on volume %s because the volume is beyond its quota.",
                     $self->id, $volume->mount_path));
         }
     }
 
     unless ($succeeded) {
         # Rollback kilobytes_requested
-        $self->kilobytes_requested(List::Util::max($kb_used, $old_kb_requested));
+        my $max_kilobytes_requested = List::Util::max($kb_used, $old_kb_requested);
+        my $msg = $old_kb_requested == $max_kilobytes_requested ? 'Rolling back' : 'Setting';
+
+        $self->status_message(sprintf(
+                "%s kilobytes_requested to %d for allocation %s.",
+                $msg, $max_kilobytes_requested, $self->id));
+
+        $self->kilobytes_requested($max_kilobytes_requested);
         _commit_unless_testing();
     }
 
@@ -594,6 +642,10 @@ sub _move {
     # feature existed, so nnutter and I kept it during this refactor.
     if ($new_mount_path) {
         $creation_params{'mount_path'} = $new_mount_path;
+    }
+
+    if ($group_name) {
+        $creation_params{disk_group_name} = $group_name;
     }
 
     # The shadow allocation is just a way of keeping track of our temporary
@@ -1184,12 +1236,12 @@ sub _verify_no_parent_allocation {
     unless (defined $path) {
         Carp::croak("no path for parent check");
     }
-    my $allocation = $class->_get_parent_allocation($path);
+    my $allocation = $class->get_parent_allocation($path);
     return !(defined $allocation);
 }
 
 # Returns parent allocation for the given path if one exists
-sub _get_parent_allocation {
+sub get_parent_allocation {
     my ($class, $path) = @_;
     Carp::confess("no path defined") unless defined $path;
     my ($allocation) = $class->get(allocation_path => $path);
@@ -1197,7 +1249,7 @@ sub _get_parent_allocation {
 
     my $dir = File::Basename::dirname($path);
     if ($dir ne '.' and $dir ne '/') {
-        return $class->_get_parent_allocation($dir);
+        return $class->get_parent_allocation($dir);
     }
     return;
 }
@@ -1256,7 +1308,7 @@ sub _verify_no_child_allocations {
     my $query_string;
 
     #POSTGRES TODO:  remove this little ugly hack when we go 100% postgres.
-    $data_source = Genome::DataSource::PGTest->get() if ($ENV{'GENOME_QUERY_POSTGRES'}); 
+    $data_source = Genome::DataSource::PGTest->get() if ($ENV{'GENOME_QUERY_POSTGRES'});
 
     if ($data_source->isa('UR::DataSource::Oracle')) {
         my $fq_table_name = join('.', $owner, $table_name);
@@ -1265,7 +1317,7 @@ sub _verify_no_child_allocations {
         $query_string = sprintf(q(select * from %s where allocation_path like ? LIMIT 1), $table_name);
     } else {
         $class->error_message("Falling back on old child allocation detection behavior.");
-        return !($class->_get_child_allocations($path));
+        return !($class->et_child_allocations($path));
     }
 
     my $dbh = $data_source->get_default_handle();
@@ -1286,7 +1338,12 @@ sub _verify_no_child_allocations {
     return !defined $row_arrayref;
 }
 
-sub _get_child_allocations {
+sub get_all_allocations_for_path {
+    my ($class, $path) = @_;
+    return ($class->get_parent_allocation($path), $class->get_child_allocations($path))
+}
+
+sub get_child_allocations {
     my ($class, $path) = @_;
     $path =~ s/\/+$//;
     return $class->get('allocation_path like' => $path . '/%');
@@ -1352,19 +1409,21 @@ sub _cleanup_archive_directory {
 
 # Cleans up directories, useful when no commit is on and the test doesn't clean up its allocation directories
 # or in the case of reallocate with move when a copy fails and temp data needs to be removed
-END {
-    remove_test_paths();
-}
 sub remove_test_paths {
     for my $path (@PATHS_TO_REMOVE) {
         next unless -d $path;
         Genome::Sys->remove_directory_tree($path);
         if ($ENV{UR_DBI_NO_COMMIT}) {
-            print STDERR "Removing allocation path $path because UR_DBI_NO_COMMIT is on\n";
+            __PACKAGE__->debug_message("Removing allocation path $path because UR_DBI_NO_COMMIT is on");
         }
         else {
-            print STDERR "Cleaning up allocation path $path\n";
+            __PACKAGE__->debug_message("Cleaning up allocation path $path");
         }
+    }
+}
+END {
+    if (@PATHS_TO_REMOVE) {
+        remove_test_paths();
     }
 }
 

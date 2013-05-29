@@ -160,7 +160,7 @@ sub _process_merged_alignment {
         return;
     }
 
-    $self->result_id($result->id);
+    $self->result_id($result->id) if $result;
     return $result;
 }
 

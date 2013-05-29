@@ -87,6 +87,10 @@ sub execute {
         my %existing_values;
         for my $value ( $model->$name ) {
             my $id = ( (ref($value) && $value->can('id')) ? $value->id : $value );
+            my $display_name = $self->display_name_for_value($value);
+            if ($display_name) {
+                $id = $display_name;
+            }
             $existing_values{$id} = $value;
         }
 

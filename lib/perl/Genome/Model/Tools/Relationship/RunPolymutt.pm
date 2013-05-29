@@ -19,6 +19,8 @@ class Genome::Model::Tools::Relationship::RunPolymutt {
             is => "Boolean",
             default => 0,
             doc => "If set to true, fix all cases where the REF allele is present in the ALT (this currently happens when we set all_sites or roi_file to force genotype)",
+            is_optional => 1,
+            is_input => 1,
        },
     ],
     has_input => [
@@ -217,6 +219,7 @@ sub write_fixed_vcf {
         if($line =~m/^#/) {
             if ($line =~ m/ID=GL.*Type=Unsigned Char/) {
                 $line =~ s/Unsigned Char/Integer/;
+                $line =~ s/Number=10/Number=3/;
             }
 
             # Fix incorrect data types
@@ -289,7 +292,10 @@ sub missing_header_lines {
         my $has_header=0;
         for my $line (@number_of_tags) {
             if($line=~m/<ID=$tag,/) {
-                $has_header=1;
+                # Make sure the tag is of the same type...
+                if ( ($line =~ m/FORMAT/ and $possible_tags{$tag} =~ m/FORMAT/ ) or ($line =~ m/INFO/ and $possible_tags{$tag} =~ m/INFO/ ) ) {
+                    $has_header=1;
+                }
             }
         }
         unless($has_header) {

@@ -79,9 +79,21 @@ my $update_success = SuperHero::Command::Update::Name->create(
     value => 'Spidey',
 );
 ok($update_success, 'UPDATE create Change Spideys name');
-$update_success->dump_status_messages(1);
+$update_success->dump_status_messages(0);
+$update_success->dump_error_messages(0);
+$update_success->queue_status_messages(1);
+$update_success->queue_error_messages(1);
 ok($update_success->execute, "UPDATE execute");
 is($spiderman->name, 'Spidey', 'Spiderman has a new name');
+my @status_messages = $update_success->status_messages();
+is_deeply(\@status_messages,
+    [   q(Update name for super_heroes...),
+        q(Spiderman - update from 'Spiderman' to 'Spidey'.),
+        q(Update complete. Committing changes...)   ],
+    'Expected status messages');
+my @error_messages = $update_success->error_messages();
+is(scalar(@error_messages), 0, 'No error messages');
+
 
 # DELETE
 # meta
@@ -96,8 +108,21 @@ my $delete_success = SuperHero::Command::Delete->create(
     super_heroes => [ $spiderman ],
 );
 ok($delete_success, 'DELETE create: Spidey');
-$delete_success->dump_status_messages(1);
+$delete_success->dump_status_messages(0);
+$delete_success->dump_error_messages(0);
+$delete_success->queue_status_messages(1);
+$delete_success->queue_error_messages(1);
 ok($delete_success->execute, "DELETE execute");
+@status_messages = $delete_success->status_messages();
+is_deeply(\@status_messages,
+    [   q(Delete super heroes...),
+        q(Spidey: delete),
+        q(Delete complete. Commiting...) ],
+    'Expected status messages');
+@error_messages = $delete_success->error_messages();
+is(scalar(@error_messages), 0, 'No error messages');
+
+
 my $deleted_jimmy = SuperHero->get(name => 'Spidey');
 ok(!$deleted_jimmy, 'deleted Spiderman confirmed');
 

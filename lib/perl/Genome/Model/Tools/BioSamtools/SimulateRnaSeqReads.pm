@@ -23,6 +23,10 @@ class Genome::Model::Tools::BioSamtools::SimulateRnaSeqReads {
         },
     ],
     has_optional => [
+        num_transcripts => {
+            is => 'Integer',
+            doc => 'The number of transcripts simulated from the gtf file',
+        },
         read_length => {
             is => 'Integer',
             default_value => 100,
@@ -95,6 +99,7 @@ sub execute {
 
     my @feature_types = split(',',$self->feature_types);
     my %transcripts;
+    my $kept_transcripts = 0;
     while (my $data = $gtf_reader->next_with_attributes_hash_ref) {
         my $keep = 0;
         for my $feature_type (@feature_types) {
@@ -103,9 +108,13 @@ sub execute {
                 last;
             }
         }
-        unless ($keep) { next; }
+        next unless $keep;
         my $attributes = delete($data->{attributes_hash_ref});
         push @{$transcripts{$attributes->{transcript_id}}{features}}, $data;
+        $kept_transcripts++;
+        if (defined($self->num_transcripts) and $kept_transcripts >= $self->num_transcripts) {
+            last;
+        }
     }
     # Build transcript models
     for my $transcript (keys %transcripts) {
@@ -199,6 +208,8 @@ sub execute {
         }
     }
     $fastq_1_fh->close;
-    $fastq_2_fh->close;
+    if (defined($fastq_2_fh)) {
+        $fastq_2_fh->close;
+    }
     return 1;
 }

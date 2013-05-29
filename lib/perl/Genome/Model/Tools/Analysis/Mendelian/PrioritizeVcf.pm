@@ -60,6 +60,7 @@ class Genome::Model::Tools::Analysis::Mendelian::PrioritizeVcf {
 		transcript_annotation_file   => { is => 'Text', doc => "WU Transcript annotation in its native format", is_input => 1},
 		vep_annotation_file   => { is => 'Text', doc => "VEP annotation in its native format", is_input => 1},
 		gene_expression_file   => { is => 'Text', doc => "Two-column file of gene and expression FPKM value", is_input => 1, is_optional => 1},
+		shared_ibd_file   => { is => 'Text', doc => "ibdregions file from BEAGLE, chrom start stop markers samples", is_input => 1, is_optional => 1},
 		priority_gene_list   => { is => 'Text', doc => "List of gene symbols to flag in scored output", is_input => 1, is_optional => 1},
 		min_coverage_to_refute	=> { is => 'Text', doc => "Minimum coverage to refute a possible variant in an affected", is_optional => 1, is_input => 1, default => 10},
 		max_frequency_to_refute	=> { is => 'Text', doc => "Maximum observed variant allele frequency to refute a possible variant in an affected [5]", is_optional => 1, is_input => 1, default => 10},
@@ -128,10 +129,13 @@ sub execute {                               # replace with real execution logic.
 	warn "Loading VEP annotation...\n";
 	my %vep_annotation = load_vep($self->vep_annotation_file);
 	warn "Loading Gene expression...\n";
+
+
 	my %gene_expression = load_expression($self->gene_expression_file) if($self->gene_expression_file);
 
 	my %priority_genes = load_priority_genes($self->priority_gene_list) if($self->priority_gene_list);	
 	
+	my %shared_ibd = load_shared_ibd($self->shared_ibd_file) if($self->shared_ibd_file);
 
 	warn "Parsing VCF...\n";
 	
@@ -211,7 +215,7 @@ sub execute {                               # replace with real execution logic.
 
 				if($self->readable_file)
 				{
-					print READABLEFILE "#CHROM\tPOS\tREF\tALT\tPRIORITY_FLAG\tRP_SCORE\tMENDEL_SCORE\tPOP_SCORE\tEFFECT_SCORE\tEXPR_SCORE\t";
+					print READABLEFILE "#CHROM\tPOS\tREF\tALT\tPRIORITY_FLAG\tRP_SCORE\tMENDEL_SCORE\tPOP_SCORE\tEFFECT_SCORE\tEXPR_SCORE\tIBD_SCORE\t";
 					print READABLEFILE "MENDEL_STATUS\tDBSNP_STATUS\tDBSNP_ID\tDBSNP_INFO\t";
 					print READABLEFILE "VARIANT_CLASS\tVARIANT_GENE\tWU_ANNOTATION\tVEP_ANNOTATION";
 				}
@@ -219,9 +223,17 @@ sub execute {                               # replace with real execution logic.
 				for(my $colCounter = 9; $colCounter < $numContents; $colCounter++)
 				{
 					my $sample = $lineContents[$colCounter];
-					print READABLEFILE "\t$sample-genotype\t$sample-depth\t$sample-varfreq"  if($self->readable_file);
+					if($sample =~ 'Samtools' || $sample =~ 'Varscan')
+					{
+						## Do nothing ##
+					}
+					else
+					{
+						print READABLEFILE "\t$sample-genotype\t$sample-depth\t$sample-varfreq"  if($self->readable_file);
+						$num_samples++;						
+					}
+
 					$sample_names[$colCounter] = $lineContents[$colCounter];
-					$num_samples++;
 				}
 				print READABLEFILE "\n" if($self->readable_file);
 
@@ -380,117 +392,145 @@ sub execute {                               # replace with real execution logic.
 					for(my $colCounter = 9; $colCounter < $numContents; $colCounter++)
 					{
 						my $sample_name = $sample_names[$colCounter];
-						my @genotypeContents = split(/\:/, $lineContents[$colCounter]);
-						my $genotype = $genotypeContents[$genotype_column{'GT'}];
-						my $coverage = $genotypeContents[$genotype_column{'DP'}];
-						my $filter = $genotypeContents[$genotype_column{'FT'}];
-						my $var_depth = $genotypeContents[$genotype_column{'AD'}];
-						my $freq_alt = $genotypeContents[$genotype_column{'FA'}];
-
-						if($control_sample{$sample_name})
+						
+						## Adjust for separate VarScan/SAMtools columns ##
+						if($sample_name =~ 'Samtools' || $sample_name =~ 'Varscan')
 						{
-							$total_control++;
+							## Skip these ##
 						}
 						else
 						{
-							$total_affected++;	
-						}
-						
-						## Only process the genotype if it has a value and is either unfiltered or for the control sample ##
-						if(length($genotype) > 2 && $genotype ne '.' && ($filter eq 'PASS' || $filter eq '.' || $control_sample{$sample_name}))
-						{
-#							warn "Trying to convert $genotype in column $colCounter at line $lineCounter\n";
-							$genotype = convert_genotype($ref, $var, $genotype) if($genotype ne '.');
-
-							$readable_genotypes .= "\t" if($readable_genotypes);
-							$readable_genotypes .= join("\t", $genotype, $coverage, $freq_alt);
-
-							my $allele1 = substr($genotype, 0, 1);
-							my $allele2 = substr($genotype, 1, 1);
-							$allele_counts{$allele1}++;
-							$allele_counts{$allele2}++;
+							my @genotypeContents = split(/\:/, $lineContents[$colCounter]);
+							my $genotype = $genotypeContents[$genotype_column{'GT'}];
+							my $coverage = $genotypeContents[$genotype_column{'DP'}];
+							my $filter = $genotypeContents[$genotype_column{'FT'}];
+							my $var_depth = $genotypeContents[$genotype_column{'AD'}];
+							my $freq_alt = $genotypeContents[$genotype_column{'FA'}];
 	
-							my $gt = "";
-							if($genotype eq $ref . $ref)
+							## Get the highest var freq ##
+							my $var_freq = 0;
+							
+							if($var_depth && $var_depth ne ".")
 							{
-								$gt = "Ref";
+								my @var_depths = split(/\,/, $var_depth);
+								@var_depths = sort numericallyDesc @var_depths;
+								$var_depth = $var_depths[0];
+								$var_depth = 0 if($var_depth && $var_depth eq ".");
+								$var_freq = $var_depth / $coverage if($coverage);				
 							}
-							elsif($genotype eq $ref . $var)
+	
+							if($control_sample{$sample_name})
 							{
-								$gt = "Het";
-							}
-							elsif($genotype eq $var . $var)
-							{
-								$gt = "Hom";
+								$total_control++;
 							}
 							else
 							{
-								$gt = "Missing";
+								$total_affected++;	
 							}
 							
-
-						
-							if($gt ne "Missing")
+							## Only process the genotype if it has a value and is either unfiltered or for the control sample ##
+							if(length($genotype) > 2 && $genotype ne '.' && ($filter eq 'PASS' || $filter eq '.' || $control_sample{$sample_name}))
 							{
-								if($control_sample{$sample_name})
+	#							warn "Trying to convert $genotype in column $colCounter at line $lineCounter\n";
+								$genotype = convert_genotype($ref, $var, $genotype) if($genotype ne '.');
+	
+								$readable_genotypes .= "\t" if($readable_genotypes);
+								$readable_genotypes .= join("\t", $genotype, $coverage, $freq_alt);
+	
+								my $allele1 = substr($genotype, 0, 1);
+								my $allele2 = substr($genotype, 1, 1);
+								$allele_counts{$allele1}++;
+								$allele_counts{$allele2}++;
+		
+								my $gt = "Missing";
+								
+								if($genotype eq $ref . $ref)
 								{
-									## Control sample ##
-									$num_control_called++;
-									
-									if($gt eq 'Het' || $gt eq 'Hom')
+									if($var_freq < 0.05)
 									{
-										$num_control_called_variant++;
-										$mendel_status = "Control_Was_Variant";
+										$gt = "Ref";
+										$stats{'wildtype_without_allele_depth'}++;
+									}
+									else
+									{
+										$stats{'wildtype_with_allele_depth'}++;
 									}
 								}
-								else
+								elsif($genotype eq $ref . $var)
 								{
-									## Affected sample ##
-									$num_affected_called++;
-									
-									if($gt eq 'Ref' && $coverage >= $self->min_coverage_to_refute)
+									$gt = "Het";
+								}
+								elsif($genotype eq $var . $var)
+								{
+									$gt = "Hom";
+								}
+	
+								
+	
+							
+								if($gt ne "Missing")
+								{
+									if($control_sample{$sample_name})
 									{
-										$num_affected_called_wildtype++;
-										$mendel_status = "Affected_Was_Wildtype";
-									}
-									elsif($gt eq 'Het' || $gt eq 'Hom')
-									{
-										## Pass ##
-										$num_affected_called_variant++;
-										if($gt eq 'Hom')
+										## Control sample ##
+										$num_control_called++;
+										
+										if($gt eq 'Het' || $gt eq 'Hom')
 										{
-											if($male_sample{$sample_name} && ($chrom eq "X" || $chrom eq "Y"))
+											$num_control_called_variant++;
+											$mendel_status = "Control_Was_Variant";
+										}
+									}
+									else
+									{
+										## Affected sample ##
+										$num_affected_called++;
+										
+										if($gt eq 'Ref' && $coverage >= $self->min_coverage_to_refute)
+										{
+											$num_affected_called_wildtype++;
+											$mendel_status = "Affected_Was_Wildtype";
+										}
+										elsif($gt eq 'Het' || $gt eq 'Hom')
+										{
+											## Pass ##
+											$num_affected_called_variant++;
+											if($gt eq 'Hom')
 											{
-												## No penalty for males on sex chromosomes
+												if($male_sample{$sample_name} && ($chrom eq "X" || $chrom eq "Y"))
+												{
+													## No penalty for males on sex chromosomes
+												}
+												else
+												{
+													$num_affected_called_hom++;												
+												}
 											}
 											else
 											{
-												$num_affected_called_hom++;												
+												## Penalize male samples that are heterozygous ##
+												if($male_sample{$sample_name} && $chrom eq "X")
+												{
+													$num_male_affected_X_het++;
+												}
 											}
+	
+										
 										}
-										else
-										{
-											## Penalize male samples that are heterozygous ##
-											if($male_sample{$sample_name} && $chrom eq "X")
-											{
-												$num_male_affected_X_het++;
-											}
-										}
-
-									
 									}
-								}
+								}							
+							}
+							else
+							{
+								## Genotype missing or was filtered out ####
+								$genotype = "NN";
+								$readable_genotypes .= "\t" if($readable_genotypes);
+								$coverage = "-" if(!$coverage);
+								$freq_alt = "-" if(!$freq_alt);
+								$readable_genotypes .= join("\t", $genotype, $coverage, $freq_alt);
 							}							
 						}
-						else
-						{
-							## Genotype missing or was filtered out ####
-							$genotype = "NN";
-							$readable_genotypes .= "\t" if($readable_genotypes);
-							$coverage = "-" if(!$coverage);
-							$freq_alt = "-" if(!$freq_alt);
-							$readable_genotypes .= join("\t", $genotype, $coverage, $freq_alt);
-						}
+
 
 						
 					}
@@ -541,6 +581,24 @@ sub execute {                               # replace with real execution logic.
 					}
 
 					
+					
+					## Get Shared IBD Probability ##
+					
+					my $shared_ibd_probability = 1;
+					
+					if($self->shared_ibd_file && $shared_ibd{$chrom})
+					{
+						my $ibd_score = get_shared_ibd($position, $shared_ibd{$chrom});
+						
+						if($ibd_score)
+						{
+							$shared_ibd_probability = $ibd_score;
+						}
+						else
+						{
+							$shared_ibd_probability = 0.5;
+						}
+					}
 
 					
 					## PART TWO: GET VARIANT ANNOTATION ##
@@ -787,10 +845,10 @@ sub execute {                               # replace with real execution logic.
 								else
 								{
 									## Determine the probability score ##
-									my $final_probability = $mendel_probability * $pop_probability * $class_probability * $gene_probability;
+									my $final_probability = $mendel_probability * $pop_probability * $class_probability * $gene_probability * $shared_ibd_probability;
 									## Create a new info field ##
 									my $new_info = join(";", "RPscore=$final_probability", "Gene=$variant_gene");
-									my $score_info = join(";", "MendelScore=$mendel_probability", "PopScore=$pop_probability", "EffectScore=$class_probability", "ExprScore=$gene_probability"); 
+									my $score_info = join(";", "MendelScore=$mendel_probability", "PopScore=$pop_probability", "EffectScore=$class_probability", "ExprScore=$gene_probability", "IbdScore=$shared_ibd_probability"); 
 									$new_info .= ";" . "Annot=" . $our_annot if($our_annot);
 									$new_info .= ";" . "VEP=" . $vep_annot if($vep_annot);
 									$new_info .= ";" . $score_info if($score_info);
@@ -799,7 +857,17 @@ sub execute {                               # replace with real execution logic.
 									$candidate_variants[$num_candidates] = join("\t", $final_probability, $chrom, $position, $id, $ref, $var, $score, $filter, $new_info, $format);
 									for(my $colCounter = 9; $colCounter < $numContents; $colCounter++)
 									{
-										$candidate_variants[$num_candidates] .= "\t" . $lineContents[$colCounter];
+										my $sample_name = $sample_names[$colCounter];
+										
+										## Adjust for separate VarScan/SAMtools columns ##
+										if($sample_name =~ 'Samtools' || $sample_name =~ 'Varscan')
+										{
+											## Skip these ##
+										}
+										else
+										{
+											$candidate_variants[$num_candidates] .= "\t" . $lineContents[$colCounter];											
+										}
 									}
 									$num_candidates++;
 									
@@ -808,7 +876,7 @@ sub execute {                               # replace with real execution logic.
 									$priority_flag = $priority_genes{$variant_gene} if($priority_genes{$variant_gene});
 									
 									my $candidate_key = join("\t", $chrom, $position, $ref, $var);
-									$candidate_variants_readable{$candidate_key} = join("\t", $priority_flag, $final_probability, $mendel_probability, $pop_probability, $class_probability, $gene_probability);
+									$candidate_variants_readable{$candidate_key} = join("\t", $priority_flag, $final_probability, $mendel_probability, $pop_probability, $class_probability, $gene_probability, $shared_ibd_probability);
 									$candidate_variants_readable{$candidate_key} .= "\t" . join("\t", $mendel_status, $dbsnp_status, $id, $info);
 									$candidate_variants_readable{$candidate_key} .= "\t" . join("\t", $variant_class, $variant_gene, $our_annot, $vep_annot);
 									$candidate_variants_readable{$candidate_key} .= "\t$readable_genotypes";
@@ -954,6 +1022,29 @@ sub execute {                               # replace with real execution logic.
 
 
 
+
+################################################################################################
+# LoadAnnotation - load the VEP annotation 
+#
+################################################################################################
+
+sub get_shared_ibd
+{
+	my ($position, $lines) = @_;
+	
+	my @lines = split(/\n/, $lines);
+	foreach my $line (@lines)
+	{
+		my ($chr_start, $chr_stop, $num_mark, $score) = split(/\t/, $line);
+		if($chr_start <= $position && $chr_stop >= $position)
+		{
+			return($score);
+		}
+	}
+	
+	return(0);
+}
+
 ################################################################################################
 # LoadAnnotation - load the VEP annotation 
 #
@@ -1025,7 +1116,12 @@ sub load_expression
 }
 
 
-
+sub numericallyDesc
+{
+	$a =~ s/\./0/;
+	$b =~ s/\./0/;
+	$b <=> $a;
+}
 
 ################################################################################################
 # LoadAnnotation - load the VEP annotation 
@@ -1055,6 +1151,71 @@ sub load_priority_genes
 	
 	return(%annotation);
 }
+
+
+
+
+################################################################################################
+# LoadAnnotation - load the VEP annotation 
+#
+################################################################################################
+
+sub load_shared_ibd
+{
+	my $annotation_file = shift(@_);
+	my %annotation = ();
+	
+	my $input = new FileHandle ($annotation_file);
+	my $lineCounter = 0;
+
+	my $max_num_samples = 0;
+	
+	while (<$input>)
+	{
+		chomp;
+		my $line = $_;
+		$lineCounter++;
+		
+		my ($chrom, $chr_start, $chr_stop, $num_markers, $num_samples) = split(/\t/, $line);
+
+		if($chrom && $chrom ne "chrom")
+		{
+			$max_num_samples = $num_samples if($num_samples > $max_num_samples);
+		}
+
+	}
+	
+	close($input);
+	
+	
+	## Parse file again to calculate fraction of samples with shared iBD ##
+	
+	$input = new FileHandle ($annotation_file);
+	$lineCounter = 0;
+
+
+	while (<$input>)
+	{
+		chomp;
+		my $line = $_;
+		$lineCounter++;
+		
+		my ($chrom, $chr_start, $chr_stop, $num_markers, $num_samples) = split(/\t/, $line);
+
+		if($chrom && $chrom ne "chrom")
+		{
+			my $pct_max_samples = $num_samples / $max_num_samples;
+			$annotation{$chrom} .= "\n" if($annotation{$chrom});
+			$annotation{$chrom} .= join("\t", $chr_start, $chr_stop, $num_markers, $pct_max_samples);
+		}
+
+	}
+	
+	close($input);	
+	
+	return(%annotation);
+}
+
 
 
 ################################################################################################

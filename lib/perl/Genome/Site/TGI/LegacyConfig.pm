@@ -42,10 +42,10 @@ sub base_web_uri {
     }
 }
 
-my $auth_user = Genome::Sys->username();
 sub auth_user {
 
     my ($class, $u) = @_;
+    my $auth_user = Genome::Sys->username();
     if (defined($u)) {
         $auth_user = $u;
     }

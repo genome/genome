@@ -51,12 +51,14 @@ sub execute {
         if ($self->target_volume) {
             $params{target_mount_path} = $self->target_volume->mount_path;
         }
-        elsif ($self->target_group) {
+
+        if ($self->target_group) {
             $params{disk_group_name} = $self->target_group->disk_group_name;
         } else {
             $self->status_message("Allocation " . $allocation->id . " has target_group ".$allocation->disk_group_name);
             $params{disk_group_name} = $allocation->disk_group_name;
         }
+
         $allocation->move(%params);
     }
 

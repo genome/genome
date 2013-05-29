@@ -13,6 +13,7 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledCon
         build_id => {
             is => 'Text',
             doc => 'ID of the somatic validation build',
+            is_output => 1,
         },
         skip => {
             is => 'Boolean',

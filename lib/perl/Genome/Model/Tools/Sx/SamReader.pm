@@ -45,6 +45,11 @@ sub read {
         $seq->{id} .= '/1';
     }
 
+    # complement/reverse negative strand reads
+    if ( $seq->{flag} & 0x10 ) {
+        Genome::Model::Tools::Sx::Functions->complement_sequence($seq);
+    }
+
     if ( length $seq->{seq} != length $seq->{qual} ) {
         Carp::confess('Length of sequence ('.length($seq->{seq}).') and quality ('.length($seq->{qual}).') does not match. Line: '.$line);
     }

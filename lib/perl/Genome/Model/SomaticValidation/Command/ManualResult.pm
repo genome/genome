@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Cwd;
 
 class Genome::Model::SomaticValidation::Command::ManualResult {
     is => 'Command::V2',
@@ -57,6 +58,8 @@ sub execute {
 
     my $tumor_model = $source_build->can('tumor_model')? $source_build->tumor_model : $source_build->model->tumor_model;
     my $normal_model = $source_build->can('normal_model')? $source_build->normal_model : $source_build->model->normal_model;
+
+    $self->variant_file(Cwd::abs_path($self->variant_file));
 
     my $manual_result = Genome::Model::Tools::DetectVariants2::Result::Manual->get_or_create(
         variant_type => $self->variant_type,

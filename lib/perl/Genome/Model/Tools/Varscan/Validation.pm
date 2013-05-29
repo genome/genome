@@ -22,21 +22,68 @@ class Genome::Model::Tools::Varscan::Validation {
     is => 'Genome::Model::Tools::Varscan',
 
     has_input => [                                # specify the command's single-value properties (parameters) <---
-        normal_bam       => { is => 'Text', doc => "Path to Normal BAM file", is_optional => 0, is_input => 1,},
-        tumor_bam        => { is => 'Text', doc => "Path to Tumor BAM file", is_optional => 0, is_input => 1,},
-        samtools_path	=> { is => 'Text', doc => "Path to SAMtools executable", is_optional => 0, is_input => 1, default => "samtools" },
-        output           => { is => 'Text', doc => "Path to Tumor BAM file", is_optional => 1, is_output => 1 },
-        output_snp       => { is => 'Text', doc => "Basename for SNP output, eg. varscan_out/varscan.status.snp" , is_optional => 1, is_output => 1, is_input => 1, },
-        output_indel     => { is => 'Text', doc => "Basename for indel output, eg. varscan_out/varscan.status.indel" , is_optional => 1, is_output => 1, is_input => 1,},
-        output_validation=> { is => 'Text', doc => 'Basename for validation output, eg. varscan_out/varscan.status.validation', is_optional => 1, is_output => 1, },
-        reference        => { is => 'Text', doc => "Reference FASTA file for BAMs; defaults to build 37" , is_optional => 0, default => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa', is_input => 1,},
-        skip_if_output_present => { is => 'Text', doc => "If set to 1, skip execution if output files exist", is_optional => 1, },
-        varscan_params   => { is => 'Text', doc => "Parameters to pass to Varscan" , is_optional => 1, default_value => '--min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.01 --validation 1 --min-coverage 8', is_input => 1,},
-        samtools_version => { is => 'Text', doc => 'Version of samtools to use', default=> 'r544' },
+        normal_bam => {
+            is => 'Text',
+            doc => "Path to Normal BAM file",
+            is_optional => 0,
+            is_input => 1,
+        },
+        tumor_bam => {
+            is => 'Text',
+            doc => "Path to Tumor BAM file",
+            is_optional => 0,
+            is_input => 1,
+        },
+        output => {
+            is => 'Text',
+            doc => "Path to Tumor BAM file",
+            is_optional => 1,
+            is_output => 1
+        },
+        output_snp => {
+            is => 'Text',
+            doc => "Basename for SNP output, eg. varscan_out/varscan.status.snp",
+            is_optional => 1,
+            is_output => 1,
+            is_input => 1,
+        },
+        output_indel => {
+            is => 'Text',
+            doc => "Basename for indel output, eg. varscan_out/varscan.status.indel",
+            is_optional => 1,
+            is_output => 1,
+            is_input => 1,
+        },
+        output_validation => {
+            is => 'Text',
+            doc => 'Basename for validation output, eg. varscan_out/varscan.status.validation',
+            is_optional => 1,
+            is_output => 1,
+        },
+        reference => {
+            is => 'Text',
+            doc => "Reference FASTA file for BAMs",
+            is_optional => 0,
+            example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'],
+            is_input => 1,
+        },
+        skip_if_output_present => {
+            is => 'Text',
+            doc => "If set to 1, skip execution if output files exist",
+            is_optional => 1,
+        },
+        varscan_params => {
+            is => 'Text',
+            doc => "Parameters to pass to Varscan" ,
+            is_optional => 1,
+            default_value => '--min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.01 --validation 1 --min-coverage 8',
+            is_input => 1,
+        },
     ],
-
     has_param => [
-        lsf_resource => { default_value => 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] rusage[mem=4000,tmp=1000]'},
+        lsf_resource => {
+            default_value => 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] rusage[mem=4000,tmp=1000]'
+        },
     ],
 };
 
@@ -116,16 +163,15 @@ sub execute {                               # replace with real execution logic.
         my $varscan_path = Genome::Model::Tools::Varscan->path_for_version($self->version);
 
         my $cmd = "";
-        if($self->version eq "2.2.6" || $self->version eq "2.2.4")
-        {
-	    my $normal_pileup = $self->pileup_command_for_reference_and_bam($reference, $normal_bam);
-	    my $tumor_pileup = $self->pileup_command_for_reference_and_bam($reference, $tumor_bam);			
-            $cmd = $self->java_command_line("somatic <\($normal_pileup\) <\($tumor_pileup\) $temp_output --output-snp $temp_snp --output-indel $temp_indel $varscan_params");            
+        if($self->version eq "2.2.6" || $self->version eq "2.2.4") {
+            my $normal_pileup = $self->pileup_command_for_reference_and_bam($reference, [$normal_bam]);
+            my $tumor_pileup = $self->pileup_command_for_reference_and_bam($reference, [$tumor_bam]);
+            $cmd = $self->java_command_line("somatic <\($normal_pileup\) <\($tumor_pileup\) $temp_output --output-snp $temp_snp --output-indel $temp_indel $varscan_params");
         }
-        else
-        {
-            my $mpileup = $self->samtools_path . " mpileup -B -f $reference -q 10 $normal_bam $tumor_bam";
-            $cmd = $self->java_command_line("somatic <\($mpileup\) $temp_output --mpileup 1 --output-snp $temp_snp --output-indel $temp_indel $varscan_params");            
+        else {
+            my $map_qual = 10;
+            my $mpileup = $self->pileup_command_for_reference_and_bam($reference, [$normal_bam, $tumor_bam], $map_qual);
+            $cmd = $self->java_command_line("somatic <\($mpileup\) $temp_output --mpileup 1 --output-snp $temp_snp --output-indel $temp_indel $varscan_params");
         }
 
 

@@ -11,8 +11,6 @@ class Genome::Model::Tools::Sx::Validate {
 sub validate_command {
     my ($self, $command) = @_;
 
-    $self->status_message('Validate command: '.$command);
-
     if ( not defined $command ) { 
         $self->error_message('Cannot validate command. None given.');
         return;
@@ -49,7 +47,6 @@ sub validate_command {
         map { s/\-/ /g; $_; }
         @subclass_parts
     );
-    $self->status_message('Class: '.$class);
 
     my $class_meta = eval{ $class->__meta__; };
     if ( not $class_meta ) {
@@ -91,7 +88,7 @@ sub validate_command {
             $converted_params{$new_key} = $params{$key};
         }
     }
-    $self->status_message('Params: '.Data::Dumper::Dumper(\%converted_params));
+
     my $obj = eval{ $class->create(%converted_params); };
     unless ( $obj ) {
         $self->error_message("Can't validate command ($command) using class ($class)".( $@ ? ": $@" : '') );
@@ -103,8 +100,6 @@ sub validate_command {
         return;
     }
     $obj->delete;
-
-    $self->status_message("Command OK");
 
     return 1;
 }

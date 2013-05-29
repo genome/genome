@@ -83,16 +83,35 @@ sub _combine_variants {
     }        
 
     #MG needs a final merge.annot.somatic file to only list somatic events.
-    my @merge_annots = glob($self->temp_staging_directory . "/*.file.annot");
+    map{$self->_get_combine_somatic_list($_)}qw(annot file);
+    
+    return 1;
+}
 
-    if (@merge_annots) {
-        $base_name   .= '.merge.annot.somatic';
-        $output_file  = $self->temp_staging_directory . '/' . $base_name;
+sub _get_combine_somatic_list {
+    my ($self, $type) = @_;
+    my @merge_files;
+    my $base_name;
+
+    if ($type eq 'annot') {
+        $base_name   = 'svs.hq.merge.annot.somatic'; 
+        @merge_files = glob($self->temp_staging_directory . "/*.file.annot");
+    }
+    elsif ($type eq 'file') {
+        $base_name   = 'svs.merge.file.somatic';
+        @merge_files = glob($self->temp_staging_directory . "/*.merge.file");
+    }
+    else {
+        die $self->error_message('Wrong type');
+    }
+
+    if (@merge_files) {
+        my $output_file  = $self->temp_staging_directory . '/' . $base_name;
         my $out_fh    = Genome::Sys->open_file_for_writing($output_file) 
             or die "Failed to open $output_file for writing\n";
         my ($temp_fh, $temp_file) = Genome::Sys->create_temp_file;
 
-        my $cat_cmd = "cat @merge_annots";
+        my $cat_cmd = "cat @merge_files";
         my $cat_fh = IO::File->new($cat_cmd . "|");
         binmode $cat_fh;
         my $header;
@@ -126,7 +145,7 @@ sub _combine_variants {
         untie @array;
     }
     else {
-        $self->warning_message('There are no .file.annot files to make .merge.annot.somatic');
+        $self->warning_message("There are no $type file to concat");
     }
 
     return 1;

@@ -7,9 +7,7 @@ use Genome;
 use Carp;
 
 class Genome::Model {
-    is => ['Genome::Notable','Genome::Searchable'],
-    is_abstract => 1,
-    subclassify_by => 'subclass_name',
+    is => [ "Genome::Notable", "Genome::Searchable" ],
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
         genome_model_id => { 
@@ -20,36 +18,45 @@ class Genome::Model {
         },
     ],
     attributes_have => [
-        is_param    => { 
-            is => 'Boolean', 
-            is_optional => 1, 
+        is_param => {
+            is => 'Boolean',
+            is_optional => 1,
             doc => 'indicates a value which is part of the processing profile, constant for the model',
         },
-        is_input    => { 
-            is => 'Boolean', 
+        is_input => {
+            is => 'Boolean',
             is_optional => 1,
             doc => 'indicates a value which is an input data set for the model: constant per build',
         },
-        is_output   => { 
-            is => 'Boolean', 
+        is_output => {
+            is => 'Boolean',
             is_optional => 1,
             doc => 'indicates a value which is produced during the build process',
         },
-        is_metric => { 
-            is => 'Boolean', 
+        is_metric => {
+            is => 'Boolean',
             is_optional => 1,
             doc => 'indicates a value which is an interpretation of outputs on the build (can be added post-build)',
         },
-        _profile_default_value => { 
-            is => 'Text', 
+        _profile_default_value => {
+            is => 'Text',
             is_optional => 1,
             doc => 'on is_param attribute, the default value is stored here, since it is used when making profiles, not making models',
         },
     ],
+    subclassify_by => 'subclass_name',
+    id_by => [
+        genome_model_id => {
+            # TODO: change to just "id"
+            # And make the data type Text in preparation for UUIDs
+            is => 'Number',
+            doc => 'the unique immutable system identifier for a model',
+        },
+    ],
     has => [
-        name => { 
-            is => 'Text', 
-            doc => 'the name of the model (changeable)'
+        name => {
+            is => 'Text',
+            doc => 'the name of the model (changeable)',
         },
         subject => {
             is => 'Genome::Subject',
@@ -59,11 +66,12 @@ class Genome::Model {
         processing_profile => {
             is => 'Genome::ProcessingProfile',
             id_by => 'processing_profile_id',
-            doc => 'the collection of parameters to be used during the build process'
+            doc => 'the collection of parameters to be used during the build process',
         },
         subclass_name => {
-            is => 'Text',is_mutable => 0, column_name => 'SUBCLASS_NAME',
-            calculate_from => 'processing_profile_id',
+            is => 'Text',
+            column_name => 'SUBCLASS_NAME',
+            calculate_from => ['processing_profile_id'],
             calculate => sub {
                 my $pp_id = shift;
                 return unless $pp_id;
@@ -75,22 +83,100 @@ class Genome::Model {
             },
             doc => 'the software subclass for the model in question',
         },
-        type_name => { 
-            is => 'Text', 
+        type_name => {
+            is => 'Text',
             via => 'processing_profile',
             doc => 'the name of the type of model (pipeline name)',
         },
     ],
+    has_optional => [
+        user_name => {
+            # TODO: we use created_by in other places to be specific as-to role of the user
+            # This is redundant with the model creation event data.
+            # Adam was going for a rails standard?
+            is => 'Text',
+            doc => 'the user who created the model',
+        },
+        creation_date => {
+            # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
+            # TODO: this is redundant with the model creation event.
+            # Rails standard is created_at and updated_at.
+            # Switching from timestamp in Oracle simplifies querying.  Not sure about postgres.
+            is => 'Timestamp',
+            doc => 'the time at which the model was defined',
+        },
+        build_requested => {
+            # TODO: this has limited tracking as to who/why the build was requested
+            # Is it better as a Note than a column since it is TGI specific?
+            is => 'Boolean',
+            doc => 'when set to true the system will queue the model for building ASAP',
+        },
+        _last_complete_build_id => {
+            # TODO: change the method with this name to use this property since it is faster
+            # nnutter: I disagree, the column should be removed
+            # because it was too often out of sync. The method is fairly fast
+            # now that it uses an iterator instead of fetching all builds.
+            # ssmith: I agree it is more work to write code to get this set correctly.
+            # The only issue with that is that having to figure this dynamically is slow.
+            # If we do it once when it changes, instead of every time someone wants to check, it could be more DRY.
+            is => 'Number',
+            column_name => 'LAST_COMPLETE_BUILD_ID',
+            doc => 'the last complete build id',
+        },
+        apipe_cron_status => {
+            # This is set in the "genome model build start" command.
+            # It is odd for it only to be in the command and not the method, and for it to have a name with apipe in it.
+            via => 'notes',
+            to => 'body_text',
+            is_many => 0,
+            where => [ header_text => 'apipe_cron_status' ],
+        },
+    ],
+    has_many_optional_deprecated => [
+        instrument_data => {
+            # TODO: the few model types which use instruent data directly should just have:
+            #  instrument_data => { is => 'Genome::InstruentData", is_input => 1, is_many => 1 },
+            is => 'Genome::InstrumentData',
+            via => 'inputs',
+            to => 'value',
+            is_mutable => 1,
+            where => [ name => 'instrument_data' ],
+            doc => 'Instrument data currently assigned to the model.',
+        },
+        model_groups => {
+            # TODO: redundant with projects
+            is => 'Genome::ModelGroup',
+            via => 'model_bridges',
+            to => 'model_group',
+            is_mutable => 1,
+        },
+        model_bridges => {
+            # TODO: redundant with project_parts
+            is => 'Genome::ModelGroupBridge',
+            reverse_as => 'model',
+        },
+    ],
     has_many_optional => [
-        builds  => {
+        builds => {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
-            doc => 'Versions of a model over time, with varying quantities of evidence'
+            doc => 'Versions of a model over time, with varying quantities of evidence',
         },
         input_associations => {
             is => 'Genome::Model::Input',
             reverse_as => 'model',
-            doc => 'links to data currently assigned to the model for processing'
+            doc => 'links to data currently assigned to the model for processing',
+        },
+        downstream_model_associations => {
+            is => 'Genome::Model::Input',
+            reverse_as => '_model_value',
+            doc => 'links to models which use this model as an input', 
+        },
+        downstream_models => {
+            is => 'Genome::Model',
+            via => 'downstream_model_associations',
+            to => 'model',
+            doc => 'models which use this model as an input',
         },
 
         # TODO: there is currently a deprecated inputs() which is like input_associations which must go away
@@ -113,59 +199,14 @@ class Genome::Model {
         project_associations => {
             is => 'Genome::ProjectPart',
             reverse_as => 'part',
-            is_many => 1,
             is_mutable => 1,
         },
         projects => {
             is => 'Genome::Project',
             via => 'project_associations',
             to => 'project',
-            is_many => 1,
             is_mutable => 1,
             doc => 'Projects that include this model',
-        },
-    ],
-    has_optional => [
-        user_name => { 
-            # TODO: we use created_by in other places to be specific as-to role of the user
-            # This is redundant with the model creation event data.
-            # Adam was going for a rails standard?
-            is => 'Text', 
-            doc => 'the user who created the model',
-        },
-        creation_date  => { 
-            # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
-            # TODO: this is redundant with the model creation event.
-            # Rails standard is created_at and updated_at.
-            # Switching from timestamp in Oracle simplifies querying.  Not sure about postgres.
-            is => 'Timestamp', 
-            doc => 'the time at which the model was defined',
-        },
-        build_requested => { 
-            # TODO: this has limited tracking as to who/why the build was requested
-            # Is it better as a Note than a column since it is TGI specific?
-            is => 'Boolean',
-            doc => 'when set to true the system will queue the model for building ASAP'
-        },
-        _last_complete_build_id => {
-            # TODO: change the method with this name to use this property since it is faster
-            # nnutter: I disagree, the column should be removed
-            # because it was too often out of sync. The method is fairly fast
-            # now that it uses an iterator instead of fetching all builds.
-            # ssmith: I agree it is more work to write code to get this set correctly.
-            # The only issue with that is that having to figure this dynamically is slow.
-            # If we do it once when it changes, instead of every time someone wants to check, it could be more DRY.
-            is => 'Number',
-            column_name => 'LAST_COMPLETE_BUILD_ID', 
-            doc => 'the last complete build id',
-        },
-        apipe_cron_status => {
-            # This is set in the "genome model build start" command.
-            # It is odd for it only to be in the command and not the method, and for it to have a name with apipe in it.
-            via => 'notes',
-            to => 'body_text',
-            where => [ header_text => 'apipe_cron_status' ],
-            is_mutable => 0,
         },
     ],
     has_optional_deprecated => [
@@ -174,11 +215,7 @@ class Genome::Model {
             # column is dropped.  Subjects all now have a common base class for efficiency.
             # The subject_class_name method is on ::ModelDeprecated and is obsolete.
             is => 'Text',
-            is_optional => 1,
             column_name => 'SUBJECT_CLASS_NAME',
-            #calculate_from => ['subject'],
-            #calculate => q| $subject->class |,
-            #is_mutable => 0,
         },
         subject_class_name => {
             # TODO: this is now read-only, but should go away entirely
@@ -189,14 +226,11 @@ class Genome::Model {
             # TODO: this was intended to be a boolexpr ID, but was possibly never used
             is => 'Text',
             column_name => 'LIMIT_INPUTS_TO_ID',
-            is_deprecated => 1,
-            implied_by => 'limit_inputs_rule',
         },
         limit_inputs_rule => {
             # TODO: this was intended to be a boolexpr, but was possibly never used
             is => 'UR::BoolExpr',
             id_by => 'limit_inputs_id',
-            is_deprecated => 1,
         },
         auto_assign_inst_data => {
             # this must be here instead of in ::ModelDeprecated becuase it has a db column
@@ -213,62 +247,33 @@ class Genome::Model {
             # the association and the actual input
             is => 'Genome::Model::Input',
             reverse_as => '_model',
-            is_deprecated => 1,
             is_many => 1,
-            doc => 'links to data currently assigned to the model for processing'
+            doc => 'links to data currently assigned to the model for processing',
         },
         project_parts => {
             # TODO: the new naming convention was project_associations to prevent confusion
             # between the bridge and the referenced value
             is => 'Genome::ProjectPart',
             reverse_as => 'entity',
-            is_many => 1,
             is_mutable => 1,
+            is_many => 1,
         },
         _id => {
             # this is the accessor for the column which should become the new primary key
             column_name => 'ID',
-            is_deprecated => 1,
         }
-    ],
-    has_many_optional_deprecated => [
-        instrument_data => {
-            # TODO: the few model types which use instruent data directly should just have:
-            #  instrument_data => { is => 'Genome::InstruentData", is_input => 1, is_many => 1 },
-            is => 'Genome::InstrumentData',
-            via => 'inputs',
-            to => 'value',
-            is_mutable => 1,
-            where => [ name => 'instrument_data' ],
-            doc => 'Instrument data currently assigned to the model.'
-        },
-        model_groups => {
-            # TODO: redundant with projects
-            is => 'Genome::ModelGroup',
-            via => 'model_bridges',
-            to => 'model_group',
-            is_mutable => 1,
-            is_many => 1,
-        },
-        model_bridges => {
-            # TODO: redundant with project_parts
-            is => 'Genome::ModelGroupBridge',
-            reverse_as => 'model',
-            is_many => 1,
-        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
-    table_name => 'GENOME_MODEL',
-    doc => 'a data model describing the sequence and/or features of a genome'
+    doc => 'a data model describing the sequence and/or features of a genome',
 };
 
 sub define_by {
   # this determines the base class for auto-generated "genome model define XXXX" commands
   # various base classes are available which make different presumptions about presence of instrument-data, etc.
-  # TODO: switch to BaseMinimal after making all old models which need ::Helper override this method, 
+  # TODO: switch to BaseMinimal after making all old models which need ::Helper override this method,
   # including those which are completely auto-generated.
-  'Genome::Model::Command::Define::Helper' 
+  'Genome::Model::Command::Define::Helper'
 }
 
 # override to do additonal error checking for new profiles
@@ -319,7 +324,7 @@ sub _resolve_disk_group_name_for_build {
 sub _resolve_workflow_for_build {
     my ($self, $build, $optional_lsf_queue) = @_;
 
-    if ($self->can('_execute_build') or $self->processing_profile->can('_execute_build')) { 
+    if ($self->can('_execute_build') or $self->processing_profile->can('_execute_build')) {
         #TODO remove pp._execute_builds
         # Create a one-step workflow if '_execute_build' is defined.
         my $operation_type = Workflow::OperationType::Command->get('Genome::Model::Build::ExecuteBuildWrapper');
@@ -336,12 +341,12 @@ sub _resolve_workflow_for_build {
         if ($logdir =~ /^\/gscmnt/) {
             $opts{log_dir} = $logdir;
         }
- 
+
         my $workflow = Workflow::Model->create(%opts);
 
         my $operation = $workflow->add_operation(
             name => '_execute_build (' . $self->type_name . ')',
-            operation_type => $operation_type, 
+            operation_type => $operation_type,
         );
 
         $workflow->add_link(
@@ -439,7 +444,7 @@ sub create {
         }
     }
 
-    my $self = $class->SUPER::create(@_);
+    my $self = $class->SUPER::create($bx);
     unless ($self) {
         return;
     }
@@ -456,8 +461,28 @@ sub create {
     }
 
     unless ($self->processing_profile) {
+        my $reason = eval {
+            my $pp_id = $bx->value_for('processing_profile_id');
+            unless ($pp_id) {
+                return 'No processing profile specified!';
+            }
+
+            my $pp = Genome::ProcessingProfile->get($pp_id);
+            unless ($pp) {
+                return "Specified processing profile ($pp_id) does not exist!";
+            }
+
+            my $pp_type = Genome::Utility::Text::string_to_camel_case($pp->type_name);
+            my $model_type = ($self->class =~ /^Genome::Model::(.*)/)[0];
+            if ($pp_type && $model_type ne $pp_type) {
+                return "Processing profile type ($pp_type) does not match model type ($model_type)!";
+            }
+
+            return "Missing processing profile; unknown error!";
+        };
+
         $self->delete;
-        Carp::confess "Could not resolve processing profile for model";
+        Carp::confess $reason || $@;
     }
 
     unless ($self->name) {
@@ -473,7 +498,7 @@ sub create {
 
     $self->user_name(Genome::Sys->username) unless $self->user_name;
     $self->creation_date(UR::Context->now);
-    
+
     $self->_verify_no_other_models_with_same_name_and_type_exist;
 
     # If build requested was set as part of model creation, it didn't use the mutator method that's been
@@ -489,7 +514,7 @@ sub create {
 
     # TODO: the column behind this should become the new primary key when we are fully in sync
     $self->_id($self->id);
-    
+
     return $self;
 }
 
@@ -886,7 +911,7 @@ sub _preprocess_subclass_description {
                 to => $class->_resolve_to_for_prop_desc($prop_desc),
             );
         }
-    
+
     }
 
     my ($ext) = ($desc->{class_name} =~ /Genome::Model::(.*)/);
@@ -912,7 +937,7 @@ sub _preprocess_subclass_description {
 }
 
 sub _resolve_to_for_prop_desc {
-    # TODO This logic was borrowed from the SoftwareResult.pm's _expand_param_input_properties so 
+    # TODO This logic was borrowed from the SoftwareResult.pm's _expand_param_input_properties so
     # when that is refactored, this should also be updated.
     my ($class, $prop_desc) = @_;
 
@@ -926,7 +951,7 @@ sub _resolve_to_for_prop_desc {
         } else {
             return 'value';
         }
-    } 
+    }
     else {
         return 'value_id';
     }

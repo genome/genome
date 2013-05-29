@@ -3,6 +3,7 @@ package Genome::Model::Build::Command::View;
 use strict;
 use warnings;
 
+use File::Slurp "read_file";
 use Genome;
 use Genome::Utility::Text qw(justify find_diff_pos);
 
@@ -149,7 +150,7 @@ sub _display_build {
 %s       %s
 
 %s
-%s
+%s%s
 %s
 
 EOS
@@ -171,7 +172,45 @@ EOS
             $self->_clean_up_timestamp($build->date_completed)),
         $self->_color_pair('Build Class', $build->class),
         $self->_color_pair('Software Revision', $build->software_revision),
+        $self->_software_result_test_name,
         $self->_color_pair('Data Directory', $build->data_directory));
+}
+
+sub _software_result_test_name {
+    my ($self) = @_;
+    my $build = $self->build;
+    my @results = $build->results;
+    my $label = 'SoftwareResult Test Name(s)';
+
+    unless (scalar(@results)) {
+        return "\n" . $self->_color_pair($label, "No results found for this build");
+    }
+    return '' unless scalar(@results);
+
+    my $UNDEF = '***undef***';
+    my @test_names = map {$_->test_name ? $_->test_name : $UNDEF} @results;
+
+    my %counts;
+    $counts{$_}++ for @test_names;
+    my @sorted_counts = (
+        sort { $b->[1] <=> $a->[1] }
+        map { [ $_, $counts{$_} ] } keys %counts
+    );
+
+    my @entries;
+    while (my $entry = shift(@sorted_counts)) {
+        my ($name, $count) = @{$entry};
+        if ($name eq $UNDEF) {
+            $name = "undef";
+        } else {
+            $name = '"' . $name . '"';
+        }
+
+        push @entries, sprintf("%s (%d)", $name, $count);
+    }
+    my $value = join(", ", @entries);
+
+    return "\n" . $self->_color_pair($label, $value);
 }
 
 sub _display_many {
@@ -248,7 +287,7 @@ sub _display_workflow {
         for my $step (@{$unfinished_workflow_steps}) {
             if($step->current->can('stderr')) {
                 my $error_path = $step->current->stderr || ' ';
-                if(-e $error_path) {
+                if(-e $error_path and -s $error_path) {
                     push(@error_log_paths, $error_path);
                     push(@step_names, $step->name);
                     push(@step_statuses, $step->status);
@@ -265,12 +304,45 @@ sub _display_workflow {
                     $name = substr($name, 0, $length-3) . "...";
                 }
                 my $log_path = $error_log_paths[$i];
-                printf $handle "%s %s %s\n", 
+
+                # print logfile of running/crashed steps
+                printf $handle "%s %s %s\n",
                         $self->_status_color($status),
                         justify($name, 'left', $length),
                         $log_path;
+
+                $self->_print_error_log_preview($handle, $log_path);
             }
         }
+    }
+}
+
+sub _print_error_log_preview {
+    my ($self, $handle, $log_path) = @_;
+
+    my @lines = `grep 'ERROR' $log_path`;
+    my @error_lines = grep {$_ =~ m/ERROR/} @lines;
+
+    my $preview;
+    if (@error_lines) {
+        $preview = $error_lines[0];
+    } else {
+        $preview = `tail -n 1 $log_path`;
+        chomp($preview);
+    }
+
+    # terminate any unfinished color regions in preview
+    $preview .= $self->_color(' ', 'white');
+
+    my $screen_width = $self->get_terminal_width();
+    if (length($preview) > $screen_width - 20) {
+        $preview = substr($preview, 0, $screen_width - 20) . "...";
+    }
+
+    if (@error_lines) {
+        print $handle $self->_color_pair("  First Error", $preview) . "\n";
+    } else {
+        print $handle $self->_color_pair("  Last Line", $preview) . "\n";
     }
 }
 
@@ -380,11 +452,13 @@ sub _resolve_child_times {
     }
 
     my $end_datetime;
+    my $elapsed_time_color;
     if ($raw_end_time) {
         $end_datetime = $datetime_parser->parse_datetime(
             $self->_clean_up_timestamp($raw_end_time));
     } elsif ("running" eq $self->_strip_key($status)) {
         $end_datetime = $self->_resolve_running_child_end_time();
+        $elapsed_time_color = $self->_status_colors('running');
     } else {
         return ('', '');
     }
@@ -392,7 +466,7 @@ sub _resolve_child_times {
     if (defined $end_datetime) {
         my $elapsed_time = $self->_resolve_duration(
             $start_datetime, $end_datetime);
-        return $start_time, $elapsed_time;
+        return $start_time, $self->_color($elapsed_time, $elapsed_time_color);
     }
     return $start_time, '';
 }

@@ -9,194 +9,8 @@ require Carp;
 use Regexp::Common;
 use POSIX;
 
-class Genome::Model::Build::ReferenceSequence {
-    is => 'Genome::Model::Build',
-    has => [
-        source => {
-            is => 'UR::Value',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'prefix', value_class_name => 'UR::Value' ],
-            doc => 'The source of the sequence (such as GRC).  May not contain spaces.',
-            is_mutable => 1,
-            is_many => 0,
-            is_optional => 1,
-        },
-        # these come from the model, and do not change (and compose its name)
-        prefix => {
-            is => 'UR::Value',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'prefix', value_class_name => 'UR::Value' ],
-            doc => 'The source of the sequence (such as NCBI).  May not contain spaces.',
-            is_mutable => 1,
-            is_many => 0,
-            is_optional => 1,
-        },
-        species_name => {
-            via => '__self__',
-            to => 'subject_name',
-        },
-        desc => {
-            is => 'UR::Value',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'desc', value_class_name => 'UR::Value' ],
-            doc => 'Any additional qualifier besides the prefix/source and data set name, like "lite" in "GRC-human-lite".',
-            is_mutable => 1,
-            is_many => 0,
-            is_optional => 1,
-        },
-
-        # these change with each version
-        version => {
-            is => 'UR::Value',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'version', value_class_name => 'UR::Value' ],
-            doc => 'Identifies the version of the reference sequence.  This string may not contain spaces.',
-            is_mutable => 1,
-            is_many => 0,
-            is_optional => 1,
-        },
-        fasta_file => {
-            is => 'UR::Value',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'fasta_file', value_class_name => 'UR::Value' ],
-            doc => "fully qualified fasta filename to copy to all_sequences.fa in the build's data_directory.",
-            is_mutable => 1,
-            is_many => 0,
-        },
-        assembly_name => {
-            is => 'UR::Value',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'assembly_name', value_class_name => 'UR::Value' ],
-            doc => "publicly available URI to the sequence file for the fasta",
-            is_mutable => 1,
-            is_many => 0,
-            is_optional => 1,
-        },
-        sequence_uri => {
-            is => 'UR::Value',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'sequence_uri', value_class_name => 'UR::Value' ],
-            doc => "publicly available URI to the sequence file for the fasta",
-            is_mutable => 1,
-            is_many => 0,
-            is_optional => 1,
-        },
-        generate_sequence_uri => {
-            is => 'Boolean',
-            is_transient => 1,
-            is_optional => 1,
-            default_value => 0,
-        },
-
-        header_version => {
-            is => 'UR::Value',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'header_version', value_class_name => 'UR::Value' ],
-            doc => "header revision for the reference build (in case headers changed)",
-            is_mutable => 1,
-            is_many => 0,
-        },
-
-        name => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'build_name', value_class_name => 'UR::Value' ],
-            doc => "human meaningful name of this build",
-            is_mutable => 1,
-            is_many => 0,
-        },
-
-        # calculated from other properties
-        calculated_name => {
-            calculate_from => ['model_name','version'],
-            calculate => q{
-                my $name = "$model_name-build";
-                $name .= $version if defined $version;
-                $name =~ s/\s/-/g;
-                return $name;
-            },
-        },
-        manifest_file_path => {
-            is => 'Text',
-            calculate_from => ['data_directory'],
-            calculate => q(
-                if($data_directory){
-                    return join('/', $data_directory, 'manifest.tsv');
-                }
-            ),
-        },
-
-        # optional to allow builds to indicate that they are derived from another build
-        derived_from_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'derived_from', value_class_name => 'Genome::Model::Build::ReferenceSequence' ],
-            doc => 'Identifies the parent build from which this one is derived, if any.',
-            is_mutable => 1,
-            is_many => 0,
-            is_optional => 1,
-        },
-        derived_from => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            id_by => 'derived_from_id',
-        },
-
-        # optional to allow builds to indicate that are on the same coordinate system as another build, but
-        # is not a direct derivation of it. derived from implies coordinates_from, so you don't need to use both.
-        coordinates_from_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'coordinates_from', value_class_name => 'Genome::Model::Build::ReferenceSequence' ],
-            doc => 'Used to indicate that this build is on the same coordinate system as another.',
-            is_mutable => 1,
-            is_many => 0,
-            is_optional => 1,
-        },
-        coordinates_from => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            id_by => 'coordinates_from_id',
-        },
-
-        append_to_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'append_to', value_class_name => 'Genome::Model::Build::ReferenceSequence' ],
-            doc => 'If specified, the created reference will be logically appended to the one specified by this parameter for aligners that support it.',
-            is_mutable => 1,
-            is_many => 0,
-            is_optional => 1,
-        },
-        append_to => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            id_by => 'append_to_id',
-        },
-        skip_bases_files => {
-            is => 'Boolean',
-            is_optional => 1, 
-            default_value => 1,
-            doc => 'If specified, individual bases files are not created for each sequence in the fasta',
-        },
-        _sequence_filehandles => {
-            is => 'Hash',
-            is_optional => 1,
-            doc => 'file handle per chromosome for reading sequences so that it does not need to be constantly closed/opened',
-        },
-        _local_cache_dir_is_verified => { is => 'Boolean', default_value => 0, is_optional => 1, },
-    ],
-    doc => 'a specific version of a reference sequence, with cordinates suitable for annotation',
-};
+# this class is defined in the Genome::Model::ReferenceSequence module following module to resolve circular deps: 
+# the "require" statement is at the bottom
 
 sub create {
     my $self = shift;
@@ -336,10 +150,26 @@ sub derived_from_root {
 sub is_compatible_with {
     my ($self, $rsb) = @_;
     return if !defined $rsb;
-    my $coords_from = $self->coordinates_from || $self;
-    my $other_coords_from = $rsb->coordinates_from || $rsb;
+    my $coords_from = $self->coordinates_from; # $self;
+    my $other_coords_from = $rsb->coordinates_from; # $rsb;
 
-    return $coords_from->id == $other_coords_from->id;
+    return 1 if $self->id eq $rsb->id;
+
+    if($coords_from and $other_coords_from) {
+        return 1 if $coords_from->id eq $other_coords_from->id;
+    }
+
+    if($coords_from) {
+        return 1 if $coords_from->id eq $rsb->id;
+        return 1 if $coords_from->is_compatible_with($rsb);
+    }
+
+    if($other_coords_from) {
+        return 1 if $self->id eq $other_coords_from->id;
+        return 1 if $self->is_compatible_with($other_coords_from);
+    }
+
+    return;
 }
 
 sub __display_name__ {
@@ -951,6 +781,8 @@ sub get_or_create_genome_file {
     }
     return $genome_file;
 }
+
+require Genome::Model::ReferenceSequence;
 
 1;
 

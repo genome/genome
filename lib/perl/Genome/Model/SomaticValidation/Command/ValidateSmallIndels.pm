@@ -11,6 +11,17 @@ use Workflow::Simple;
 
 class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
     is => 'Genome::Command::Base',
+    has => [
+        varscan_version => {
+            is => 'Text',
+            doc => "Varscan version to use when running varscan validation" ,
+        },
+        samtools_use_baq => {
+            is => 'Boolean',
+            doc => 'When doing pileup/mpileup, should we enable baq (-B) option',
+            default_value => 0,
+        },
+    ],
     has_optional => [
         build => {
             is => 'Genome::Model::Build::SomaticValidation',
@@ -28,10 +39,12 @@ class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
         tumor_bam   => {
             is => 'Text',
             doc => "Tumor Bam File (Validation Bam)",
+            is_input => 1,
         },
         normal_bam  => {
             is => 'Text',
             doc => "Normal Bam File (Validation Bam)",
+            is_input => 1,
         },
         reference_fasta => {
             is => 'Text',
@@ -57,6 +70,7 @@ class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
         output_dir => {
             is => 'Text',
             doc => "Base output directory if the build is not set",
+            is_input => 1,
         },
         # FIXME fix up these three params
         varscan_params => {
@@ -124,6 +138,8 @@ sub _run_workflow {
     $input{reference} = $self->reference_fasta;
 
     # Params for varscan
+    $input{samtools_use_baq} = $self->samtools_use_baq;
+    $input{varscan_version} = $self->varscan_version;
     $input{varscan_indel_output} = $self->varscan_indel_output;
     $input{varscan_snp_output}= $self->varscan_snp_output;
     $input{varscan_params} = $self->varscan_params;
@@ -245,8 +261,9 @@ __DATA__
   <link fromOperation="input connector" fromProperty="target_intervals_are_sorted" toOperation="Realign Indels Normal" toProperty="target_intervals_are_sorted" />
   <link fromOperation="input connector" fromProperty="index_bam" toOperation="Realign Indels Normal" toProperty="index_bam" />
 
+  <link fromOperation="input connector" fromProperty="samtools_use_baq" toOperation="Varscan Validation" toProperty="samtools_use_baq" />
   <link fromOperation="input connector" fromProperty="reference" toOperation="Varscan Validation" toProperty="reference" />
-  <link fromOperation="input connector" fromProperty="reference" toOperation="Varscan Validation" toProperty="reference" />
+  <link fromOperation="input connector" fromProperty="varscan_version" toOperation="Varscan Validation" toProperty="version" />
   <link fromOperation="input connector" fromProperty="varscan_indel_output" toOperation="Varscan Validation" toProperty="output_indel" />
   <link fromOperation="input connector" fromProperty="varscan_snp_output" toOperation="Varscan Validation" toProperty="output_snp" />
   <link fromOperation="input connector" fromProperty="varscan_params" toOperation="Varscan Validation" toProperty="varscan_params" />
@@ -274,6 +291,7 @@ __DATA__
   </operation>
 
   <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>samtools_use_baq</inputproperty>
     <inputproperty>normal_bam</inputproperty>
     <inputproperty>gatk_memory</inputproperty>
     <inputproperty>gatk_version</inputproperty>
@@ -285,6 +303,7 @@ __DATA__
     <inputproperty>realigned_tumor_bam</inputproperty>
     <inputproperty>realigned_normal_bam</inputproperty>
     <inputproperty>reference</inputproperty>
+    <inputproperty>varscan_version</inputproperty>
     <inputproperty>varscan_indel_output</inputproperty>
     <inputproperty>varscan_snp_output</inputproperty>
     <inputproperty>varscan_params</inputproperty>

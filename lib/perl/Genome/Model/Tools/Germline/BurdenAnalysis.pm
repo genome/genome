@@ -30,7 +30,7 @@ class Genome::Model::Tools::Germline::BurdenAnalysis {
         base_R_commands => {
             is => 'Text',
             doc => "The base R command library",
-            default => "/gscuser/qzhang/gstat/burdentest/burdentest.R",
+            example_values => ["/gscuser/qzhang/gstat/burdentest/burdentest.R"],
         },
         output_directory => {
             is => 'Text',

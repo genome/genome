@@ -99,11 +99,12 @@ sub _run_command {
     my $cwd = Cwd::getcwd();
     chdir $self->_tmpdir;
 
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    chdir $cwd;
+    $self->status_message('Run command: '.$cmd);
+    `$cmd`; # must use back ticks b/c of issue with running multiple sx commands in pipes
+    $self->status_message('Exit status from command: '.$?);
 
-    if ( not $rv ) {
-        $self->error_message($@) if $@;
+    chdir $cwd;
+    if ( $? ) {
         $self->error_message("Failed to run: $cmd");
         return;
     }

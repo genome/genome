@@ -26,7 +26,7 @@ class Genome::Model::TestPipeline {
         some_command_name => {
             doc => 'the name of a single command to run',
             valid_values => ['ls','cat','wc'],
-            default_value => ['ls'],
+            default_value => 'ls',
         },
         some_args => {
             is_optional => 1,

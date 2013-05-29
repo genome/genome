@@ -83,7 +83,6 @@ sub _wrap_perl_expr {
 
 sub execute {
     my $self = shift;
-
     my $from = $self->from;
     my $to_name = $self->to;
     my @changes = $self->changes;
@@ -143,6 +142,7 @@ sub execute {
             unless ($changes_pp) {
                 die "failed to find processing profile $value!";
             }
+            next;
         }
 
         my $pmeta = $meta->property($name);
@@ -162,9 +162,10 @@ sub execute {
     if ($changes_pp and @param_changes) {
         die "Cannot change the processing_profile_id explicitly and also make parameter changes, which imply changint the processing profile id"; 
     }
-    if (@model_changes) {
-        die ('Changes not recognized as parameters or inputs for model type '. $meta->class_name);
-    }
+
+    #if (@model_changes) {
+    #    die ('Changes not recognized as parameters or inputs for model type '. $meta->class_name . ": @model_changes");
+    #}
     
     my %pp_mapping;
     if (@param_changes) {
@@ -266,7 +267,7 @@ sub execute {
         my $to_profile = ($changes_pp or $pp_mapping{$from_profile});
         my $to_model;
         $n++;
-        if ($to_profile or $force_copy_models) {
+        if ($to_profile or $force_copy_models or @input_changes or @model_changes) {
             $to_profile ||= $from_model->processing_profile;
             my $new_name;
             if ($model_namer) {
@@ -289,7 +290,7 @@ sub execute {
             # Until fixed, we need to call the command instead of the method:
             Genome::Model::Command::Copy->execute(
                 model => $from_model, 
-                overrides => ["processing_profile=" . $to_profile->id, "name=" . $new_name ]
+                overrides => ["processing_profile=" . $to_profile->id, "name=" . $new_name, @input_changes, @model_changes ]
             );
 
             $to_model = Genome::Model->get(name => $new_name);

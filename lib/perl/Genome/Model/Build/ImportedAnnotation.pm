@@ -230,12 +230,16 @@ sub get_or_create_roi_bed {
                 $name = $name."_gene-name-only";
             }
 
-            if ($params{flank_size} and $params{flank_size} > 0 ) {
+            if ($params{flank_size}) {
                 $name = $name."_".$params{flank_size}."bp-flank";
             }
 
             if ($params{print_reading_frame}) {
                 $name = $name."_with-reading-frame";
+            }
+
+            if ($params{one_based}) {
+                $name = $name."_one_based";
             }
     }
 
@@ -284,9 +288,6 @@ sub get_or_create_roi_bed {
             $description .= ":$reading_frame" if (%params and $params{print_reading_frame});
 
             if (%params) {
-                if ($params{one_based}) {
-                    $start++;
-                }
                 if ($exclude_patterns and $chrom =~ /$exclude_patterns/) {
                     next;
                 }
@@ -296,15 +297,17 @@ sub get_or_create_roi_bed {
                 if ($params{condense_feature_name}) {
                     $description = $gene_id;
                 }
-                if ($params{flank_size} and $params{flank_size} > 0) {
+                if ($params{flank_size}) {
                     $start -= $params{flank_size};
                     $stop += $params{flank_size};
-                    if ($start > $chrom_stop{$chrom}) {
+                    if ($start > $chrom_stop{$chrom} or $start >= $stop) {
                         next;
                     }
                     $start = 0 if ($start < 0);
-                    $start = 1 if ($start < 1 and $params{one_based});
                     $stop = $chrom_stop{$chrom} if ($stop > $chrom_stop{$chrom});
+                }
+                if ($params{one_based}) {
+                    $start++;
                 }
             }
 

@@ -76,7 +76,7 @@ class Genome::Model::Tools::CopyNumber::CnvSeg {
     ],
     has_param => [
         lsf_queue => {
-            default => "long",
+            default => "apipe",
         }
     ],
 };

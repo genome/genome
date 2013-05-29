@@ -11,6 +11,7 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::GenerateMergedAsse
         build_id => {
             is => 'Text',
             doc => 'ID of the somatic validation build upon which to run',
+            is_output => 1,
         },
     ],
     has => [
@@ -37,7 +38,6 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::GenerateMergedAsse
     has_optional_transient => [
         sv_call_file => {
             is => 'Text',
-            is_many => 1,
             doc => 'The existing SV calls to validate',
         },
         somatic_variation_build => {
@@ -59,6 +59,8 @@ sub execute {
         die $self->error_message('No build found.');
     }
 
+    Genome::Sys->create_directory($self->output_dir);
+
     my $sv_file = $self->_resolve_svs_input();
     unless( $sv_file ) {
         #This is okay for "discovery" and "extension" validation runs.
@@ -73,8 +75,6 @@ sub execute {
     my $reference_fasta = $ref_seq_build->full_consensus_path('fa');
     my $tumor_val_bam = $build->tumor_bam;
     my $normal_val_bam = $build->normal_bam;
-
-    Genome::Sys->create_directory($self->output_dir);
 
     my ($merged_output_file, $merged_fasta_file) = $self->_generate_merged_callset();
 
@@ -188,7 +188,7 @@ sub _resolve_svs_input {
     if($sv_variants_to_validate) {
         if($build->sv_detection_strategy) {
             my $merged_file = join("/", $self->output_dir, "assembly_input");
-            my $merge_cmd = Genome::Model::Tools::Breakdancer::MergeFile->create(
+            my $merge_cmd = Genome::Model::Tools::Breakdancer::MergeFiles->create(
                 input_files => join(',', $sv_variants_to_validate, $build->data_set_path('variants/svs', undef, 'hq')),
                 output_file => $merged_file,
             );
@@ -199,7 +199,7 @@ sub _resolve_svs_input {
             $sv_variants_to_validate = $merged_file;
         }
 
-        $self->sv_call_file([$sv_variants_to_validate]);
+        $self->sv_call_file($sv_variants_to_validate);
         return 1;
     } else {
         return;

@@ -11,7 +11,7 @@ class Genome::DruggableGene::Command::Import::Ensembl {
         genes_outfile => {
             is => 'Path',
             is_input => 1,
-            default => '/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/Ensembl_WashU_TARGETS.tsv',
+            example_values => ['/gscmnt/sata132/techd/mgriffit/DruggableGenes/TSV/Ensembl_WashU_TARGETS.tsv'],
             doc => 'PATH.  Path to .tsv file for genes (targets)',
         },
         input_gtf_url => {
