@@ -60,8 +60,7 @@ sub realigner_creator_command {
     $gatk_command .= " -T RealignerTargetCreator";
     my @known = $self->known;
     if (@known) {
-        my $known_list = $self->create_list_input(@known);
-       $gatk_command .= " --known " . $known_list;
+       $gatk_command .= " --known ".join(" --known ", @known);
     }
     $gatk_command .= " -I " . $self->input_bam;
     $gatk_command .= " -R " . $self->reference_fasta;

@@ -90,8 +90,7 @@ sub indel_realigner_command {
     }
     my @known = $self->known;
     if (@known) {
-        my $known_list = $self->create_list_input(@known);
-        $gatk_command .= " --knownAlleles $known_list";
+        $gatk_command .= " --knownAlleles ".join(" --knownAlleles ", @known);
     }
     return $gatk_command;
 }
@@ -108,7 +107,7 @@ sub _check_inputs {
     my @known = $self->known;
     if (@known) {
         for my $k (@known) {
-            Genome::Sys->validate_file_for_reading($k);
+            Genome::Sys->validate_file_for_reading(@known);
         }
     }
     Genome::Sys->validate_file_for_reading($self->target_intervals);
