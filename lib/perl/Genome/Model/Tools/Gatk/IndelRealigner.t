@@ -16,10 +16,10 @@ else {
     plan tests => 9;
 }
 
-use_ok('Genome::Model::Tools::Gatk::RealignIndels');
+use_ok('Genome::Model::Tools::Gatk::IndelRealigner');
 
 # Inputs
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Gatk-RealignIndels';
+my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Gatk-IndelRealigner';
 my $tumor_bam = "$test_data_dir/tumor.bam";
 my $normal_bam = "$test_data_dir/normal.bam";
 my $reference_fasta = "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa";
@@ -35,7 +35,7 @@ my $expected_dir = "$test_data_dir/1";
 my $expected_tumor = "$expected_dir/tumor.realigned.bam";
 my $expected_normal = "$expected_dir/normal.realigned.bam";
 
-my $gatk_tumor_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
+my $gatk_tumor_cmd = Genome::Model::Tools::Gatk::IndelRealigner->create(
         max_memory => "4",
         version => 2.4,
         target_intervals => $small_indel_list,
@@ -45,11 +45,11 @@ my $gatk_tumor_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
         target_intervals_are_sorted => 0,
 );
 
-isa_ok($gatk_tumor_cmd, 'Genome::Model::Tools::Gatk::RealignIndels', "Made the tumor command");
+isa_ok($gatk_tumor_cmd, 'Genome::Model::Tools::Gatk::IndelRealigner', "Made the tumor command");
 ok(!$gatk_tumor_cmd->execute, "Failed to execute the tumor command when target intervals are not sorted");
 # Can't really diff bams effectively as far as I know, so for now just make sure they exist
 
-$gatk_tumor_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
+$gatk_tumor_cmd = Genome::Model::Tools::Gatk::IndelRealigner->create(
         max_memory => "4",
         version => 2.4,
         target_intervals => $small_indel_list,
@@ -59,11 +59,11 @@ $gatk_tumor_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
         target_intervals_are_sorted => 1,
 );
 
-isa_ok($gatk_tumor_cmd, 'Genome::Model::Tools::Gatk::RealignIndels', "Made the tumor command");
+isa_ok($gatk_tumor_cmd, 'Genome::Model::Tools::Gatk::IndelRealigner', "Made the tumor command");
 ok($gatk_tumor_cmd->execute, "Executed the tumor command when target intervals are sorted");
 ok(-s $output_tumor, "Realigned tumor bam exists");
 
-my $gatk_normal_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
+my $gatk_normal_cmd = Genome::Model::Tools::Gatk::IndelRealigner->create(
         max_memory => "4",
         version => 5777,
         target_intervals => $small_indel_list,
@@ -73,7 +73,7 @@ my $gatk_normal_cmd = Genome::Model::Tools::Gatk::RealignIndels->create(
         target_intervals_are_sorted => 0,
     );
 
-isa_ok($gatk_normal_cmd, 'Genome::Model::Tools::Gatk::RealignIndels', "Made the normal command");
+isa_ok($gatk_normal_cmd, 'Genome::Model::Tools::Gatk::IndelRealigner', "Made the normal command");
 ok($gatk_normal_cmd->execute, "Executed the normal command");
 # Can't really diff bams effectively as far as I know, so for now just make sure they exist
 ok(-s $output_normal, "Realigned normal bam exists");
