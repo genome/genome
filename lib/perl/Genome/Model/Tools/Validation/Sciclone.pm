@@ -375,11 +375,9 @@ sub execute {
 
 
         if($plot_only_cn2){
-            print $rfile ", plotOnlyCN2=TRUE";
-        } else {
-            print $rfile ", plotOnlyCN2=FALSE";
+            print $rfile ", cnToPlot=c(2)";
         }
-
+ 
         if($overlay_clusters){
             print $rfile ", overlayClusters=TRUE";
         } else {
