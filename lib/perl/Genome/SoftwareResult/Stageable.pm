@@ -46,7 +46,7 @@ sub _prepare_staging_directory {
     $self->temp_staging_directory($tempdir);
 
 
-    return 1;
+    return $tempdir;
 }
 
 sub _prepare_output_directory {
