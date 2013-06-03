@@ -30,7 +30,7 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           is => 'Boolean',
           is_optional => 1,
           default => 0,
-          doc => "Model is an extension with only tumor data",
+          doc => "Model only has tumor data",
       },
 
       restrict_to_target_regions =>{
