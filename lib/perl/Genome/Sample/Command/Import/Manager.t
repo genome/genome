@@ -44,12 +44,7 @@ class Genome::Model::Ref {
 my $pp = Genome::ProcessingProfile::Ref->create(id => -333, name => 'ref pp #1', aligner => 'bwa');
 ok($pp, 'create pp');
 
-my $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => 'example/valid',
-);
-ok($manager, 'create manager');
-ok($manager->execute, 'execute');
-is($manager->namespace, 'Test', 'got namespace');
+# Expected Sample
 my $sample_name = 'TeSt-0000-00';
 my %expected_samples = ( 
      $sample_name => {
@@ -59,17 +54,40 @@ my %expected_samples = (
             name => $sample_name,
             sample_attributes => [qw/ gender='female' race='spaghetti' religion='pastafarian' /],
         },
-        status => 'import_pend',
+        status => 'sample_needed',
         job_status => 'pend',
-        import_command => "launch -name $sample_name genome instrument-data import basic --sample $sample_name --source-files original.bam --instrument-data-properties lane='8'",
-        sample => Genome::Sample->get(name => $sample_name),
-        model => Genome::Model::Ref->get('subject.name' => $sample_name),
+        model => undef,
+        sample => undef,
+        import_command => "launch -name $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
         instrument_data => undef,
         instrument_data_attributes => [qw/ lane='8' /],
-        bam_path => undef,
+        instrument_data_file => undef,
     },
 );
+
+# Do not make progress, just status
+my $manager = Genome::Sample::Command::Import::Manager->create(
+    working_directory => 'example/valid',
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
+is($manager->namespace, 'Test', 'got namespace');
 my $samples = $manager->samples;
+is_deeply($manager->samples, \%expected_samples, 'samples match');
+print Dumper($samples);
+
+# Make progress!
+$manager = Genome::Sample::Command::Import::Manager->create(
+    working_directory => 'example/valid',
+    make_progress => 1,
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
+is($manager->namespace, 'Test', 'got namespace');
+$expected_samples{$sample_name}->{status} = 'import_pend';
+$expected_samples{$sample_name}->{sample} = Genome::Sample->get(name => $sample_name);
+$expected_samples{$sample_name}->{model} = Genome::Model::Ref->get('subject.name' => $sample_name);
+$samples = $manager->samples;
 is_deeply($manager->samples, \%expected_samples, 'samples match');
 ok(!$samples->{$sample_name}->{model}->auto_assign_inst_data, 'model auto_assign_inst_data is off');
 ok(!$samples->{$sample_name}->{model}->auto_build_alignments, 'model auto_build_alignments is off');

@@ -21,10 +21,10 @@ class Genome::Sample::Command::Import::Manager {
         },
     ],
     has_optional => [
-        status_only => { 
+        make_progress => { 
             is => 'Boolean',
             default_value => 0,
-            doc => 'Only print status. Do not create samples, models and run imports.', 
+            doc => 'Do not create samples, models and run imports. Only print the status.', 
         },
     ],
     has_optional_calculated => [
@@ -456,7 +456,7 @@ sub _resolve_instrument_data_import_command_for_sample {
 sub _make_progress {
     my $self = shift;
 
-    return 1 if $self->status_only;
+    return 1 if not $self->make_progress;
 
     my $samples = $self->samples;
     Carp::confess('No samples to display status!') if not $samples;
@@ -476,6 +476,7 @@ sub _make_progress {
         if ( not $model ) {
             $model = $model_class->create(%$model_params);
             return if not $model;
+            $sample->{model} = $model;
         }
 
         # Model should have instrument data
