@@ -44,7 +44,10 @@ sub execute {
     while (my $line = $anno_fh->getline) {
         chomp $line;
 
-        next if $line =~ /^chromosome/;
+        if($line =~ /^chromosome/){
+            $out_fh->print($line, "\trsid\tgmaf", "\n");
+            next;
+        }
 
         my @list = split(/\t/, $line);
         my ($chr, $pos, $RSid_var_allele) = (split(/\t/, $line))[0, 1, 4];
@@ -82,12 +85,11 @@ sub store_RSid {
         my $key = RSid_key($chr, $pos);
 
         # there is some assumed symmetry between $var and $dbSNPinfo
-        my @var_alleles = split(/, /, $var);
+        my @var_alleles = split(/, ?/, $var);
         my @dbSNPids = split_dbSNPBuildID($INFO);
 
         for (my $i = 0; $i < @dbSNPids; $i++) {
             next unless $dbSNPids[$i] =~ /^\d+$/;
-
             my $RSid_var_allele = $var_alleles[$i];
             $RSid->{$key}->{$RSid_var_allele}->{rsID} = $rsID;
             $RSid->{$key}->{$RSid_var_allele}->{GMAF} = $GMAF
