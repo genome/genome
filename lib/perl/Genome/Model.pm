@@ -9,6 +9,8 @@ use Carp;
 class Genome::Model {
     is => [ "Genome::Notable", "Genome::Searchable" ],
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
+    table_name => 'GENOME_MODEL',
+    is_abstract => 1,
     id_by => [
         genome_model_id => { 
             # TODO: change to just "id"
