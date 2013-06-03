@@ -298,31 +298,12 @@ sub _load_samples {
 
         # Sample
         my $genome_sample = Genome::Sample->get(name => $name);
-        if ( not $genome_sample and not $self->status_only ) {
-            $genome_sample = $self->_create_sample($samples->{$name}->{importer_params});
-            return if not $genome_sample;
-        }
         $samples->{$name}->{sample} = $genome_sample;
-        $model_params->{subject} = $genome_sample;
 
         # Model
         my $model = $model_class->get(%$model_params) if $genome_sample;
-        if ( not $model and not $self->status_only ) {
-            $model = $model_class->create(%$model_params);
-            return if not $model
-        }
         $samples->{$name}->{model} = $model;
-        if ( $model ) {
-            # Model should have instrument data
-            if ( $instrument_data ) {
-                my @model_instrument_data = $model->instrument_data;
-                if ( @model_instrument_data and not grep { $instrument_data->id eq $_ } map { $_->id } @model_instrument_data ) {
-                    $model->add_instrument_data($instrument_data);
-                }
-                # Set latest build
-                $samples->{$name}->{build} = $model->latest_build;
-            }
-        }
+        $samples->{$name}->{build} = $model->latest_build if $model;
 
         # Import Command
         my $cmd = $self->_resolve_instrument_data_import_command_for_sample($samples->{$name});
@@ -480,7 +461,34 @@ sub _make_progress {
     my $samples = $self->samples;
     Carp::confess('No samples to display status!') if not $samples;
 
-    for my $sample ( @$samples ) {
+    my $model_class = $self->model_class;
+    my $model_params = $self->model_params;
+    for my $sample ( values %$samples ) {
+        # Create sample
+        if ( not $sample->{sample} ) {
+            $sample->{sample} = $self->_create_sample($sample->{importer_params});
+            return if not $sample->{sample};
+        }
+
+        # Create model
+        $model_params->{subject} = $sample->{sample};
+        my $model = $sample->{model};
+        if ( not $model ) {
+            $model = $model_class->create(%$model_params);
+            return if not $model;
+        }
+
+        # Model should have instrument data
+        my $instrument_data = $sample->{instrument_data};
+        if ( $instrument_data ) {
+            my @model_instrument_data = $model->instrument_data;
+            if ( @model_instrument_data and not grep { $instrument_data->id eq $_ } map { $_->id } @model_instrument_data ) {
+                $model->add_instrument_data($instrument_data);
+            }
+            $sample->{build} = $model->latest_build;
+        }
+
+        # 
         if ( $sample->{status} eq 'import_needed' ) {
             system $sample->{import_command};
             $self->set_sample_status($sample);
