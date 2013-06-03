@@ -44,6 +44,8 @@ class Genome::Sample::Command::Import::Manager {
         samples => { is => 'Hash', },
         model_class => { is => 'Text' },
         model_params => { is => 'Hash' },
+        instrument_data_import_sample_name_cnt => { is => 'Number', },
+        instrument_data_import_command_format => { is => 'Text', },
     ],
 };
 
@@ -102,6 +104,16 @@ sub __errors__ {
             type => 'invalid',
             properties => [qw/ config_file /],
             desc => $model_params_error,
+        );
+        return @errors;
+    }
+
+    my $import_cmd_error = $self->_resolve_instrument_data_import_command;
+    if ( $import_cmd_error ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ config_file /],
+            desc => $import_cmd_error,
         );
         return @errors;
     }
@@ -239,6 +251,24 @@ sub _resolve_model_params {
     return;
 }
 
+sub _resolve_instrument_data_import_command {
+    my $self = shift;
+
+    my $cmd_format;
+    my $sample_name_cnt = 0;
+    if ( $cmd_format = $self->config->{'job dispatch'}->{launch} ) {
+        $sample_name_cnt = $cmd_format =~ /(\%s)/g;
+        if ( not $sample_name_cnt ) {
+            return 'No "%s" in job dispatch config to replace with sample name! '.$cmd_format;
+        }
+        $cmd_format .= ' ';
+    }
+    $self->instrument_data_import_sample_name_cnt($sample_name_cnt);
+    $cmd_format .= 'genome instrument-data import basic --sample name=%s --source-files %s --import-source-name %s%s',
+    $self->instrument_data_import_command_format($cmd_format);
+
+    return;
+}
 
 sub _load_samples {
     my $self = shift;
@@ -295,7 +325,7 @@ sub _load_samples {
         }
 
         # Import Command
-        my $cmd = $self->_resolve_import_command_for_sample($samples->{$name});
+        my $cmd = $self->_resolve_instrument_data_import_command_for_sample($samples->{$name});
         return if not $cmd;
         $samples->{$name}->{import_command} = $cmd;
 
@@ -416,38 +446,29 @@ sub _status {
     return 1;
 }
 
-sub _resolve_import_command_for_sample {
+sub _resolve_instrument_data_import_command_for_sample {
     my ($self, $sample) = @_;
 
-    Carp::confess('No sample to resolve instrument data import command!') if not $sample;
+    Carp::confess('No samples to resolved instrument data import command!') if not $sample;
 
-    my $cmd;
-    if ( $self->config->{'job dispatch'}->{launch} ) {
-        my $sample_name_cnt = $self->config->{'job dispatch'}->{launch} =~ /(\%s)/g;
-        if ( not $sample_name_cnt ) {
-            $self->error_message('No "%s" in job dispatch config to replace with sample name.');
-            return;
-        }
-        my @sample_name_replaces;
-        for (1..$sample_name_cnt) { push @sample_name_replaces, $sample->{name}; }
-        print Dumper($self->config->{'job dispatch'}->{launch},$sample_name_cnt,\@sample_name_replaces);
-        $cmd = sprintf(
-            $self->config->{'job dispatch'}->{launch},
-            @sample_name_replaces
-        );
-        $cmd .= ' ';
-    }
+    my $sample_name_cnt = $self->instrument_data_import_sample_name_cnt;
+    my @sample_name_replaces;
+    for (1..$sample_name_cnt) { push @sample_name_replaces, $sample->{name}; }
 
-    $cmd .= sprintf(
-        'genome instrument-data import basic --sample name=%s --source-files %s --import-source-name %s',
+    my $cmd .= sprintf(
+        $self->instrument_data_import_command_format,
+        @sample_name_replaces,
         $sample->{name},
         join(',', @{$sample->{source_files}}),
         $self->config->{'sample'}->{'nomenclature'},
+        ( 
+            $sample->{instrument_data_attributes}
+            ? ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_attributes}})
+            : ''
+        ),
     );
-    if ( $sample->{instrument_data_attributes} ) {
-        $cmd .= ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_attributes}});
-    }
 
+    print Dumper($cmd, $self->instrument_data_import_command_format,$sample_name_cnt,\@sample_name_replaces);
     return $cmd;
 }
 
