@@ -42,6 +42,8 @@ class Genome::Sample::Command::Import::Manager {
         config => { is => 'Hash', },
         namespace => { is => 'Text', },
         samples => { is => 'Hash', },
+        model_class => { is => 'Text' },
+        model_params => { is => 'Hash' },
     ],
 };
 
@@ -90,6 +92,16 @@ sub __errors__ {
             type => 'invalid',
             properties => [qw/ sample_csv_file /],
             desc => $sample_csv_error,
+        );
+        return @errors;
+    }
+
+    my $model_params_error = $self->_resolve_model_params;
+    if ( $model_params_error ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ config_file /],
+            desc => $model_params_error,
         );
         return @errors;
     }
@@ -181,6 +193,53 @@ sub _load_sample_csv_file {
     return;
 }
 
+sub _resolve_model_params {
+    my $self = shift;
+
+    my $config = $self->config;
+    if ( not $config->{model} ) {
+        return 'No model info in config! '.$config;
+    }
+
+    my %model_params;
+    for my $name ( keys %{$config->{model}} ) {
+        $model_params{$name} = $config->{model}->{$name};
+    }
+
+    if ( not $model_params{processing_profile_id} ) {
+        return 'No processing profile id for model in config! '.Data::Dumper::Dumper($config->{model});
+    }
+    my $processing_profile_id = delete $model_params{processing_profile_id};
+    $model_params{processing_profile} = Genome::ProcessingProfile->get($processing_profile_id);
+    if ( not $model_params{processing_profile} ) { 
+        return 'Failed to get processing profile for id! '.$processing_profile_id;
+    }
+
+    my @processing_profile_class_parts = split('::', $model_params{processing_profile}->class);
+    my $model_class = join('::', $processing_profile_class_parts[0], 'Model', $processing_profile_class_parts[2]);
+    my $model_meta = $model_class->__meta__;
+    if ( not $model_meta ) {
+        return 'Failed to get model class meta! '.$model_class;
+    }
+
+    for my $param_name ( keys %model_params ) {
+        next if $param_name !~ s/_id$//;
+        my $param_value_id = delete $model_params{$param_name.'_id'};
+        my $param_property = $model_meta->property_meta_for_name($param_name);
+        return "Failed to get '$param_name' property from model class! ".$model_class if not $param_property;
+        my $param_value_class = $param_property->data_type;
+        my $param_value = $param_value_class->get($param_value_id);
+        return "Failed to get $param_value_class for id! $param_value_id" if not $param_value;
+        $model_params{$param_name} = $param_value;
+    }
+
+    $self->model_class($model_class);
+    $self->model_params(\%model_params);
+
+    return;
+}
+
+
 sub _load_samples {
     my $self = shift;
 
@@ -193,9 +252,8 @@ sub _load_samples {
         '-hint' => [qw/ attributes /],
     );
 
-    my ($model_class, $model_params) = $self->_resolve_model_params;
-    return if not $model_class;
-
+    my $model_class = $self->model_class;
+    my $model_params = $self->model_params;
     for my $name ( keys %$samples ) {
         # Inst Data
         my $instrument_data = $instrument_data{$name};
@@ -347,57 +405,15 @@ sub _status {
         $self->set_sample_status($sample);
         $totals{ $sample->{status} }++;
         $totals{build}++ if $sample->{status} =~ /^build/;
-        $status .= sprintf("%-20s %10s\n", $sample->{name}, $sample->{status});
+        $status .= sprintf(
+            "%-20s %10s %s %s %s\n",
+            $sample->{name}, $sample->{status}, 
+            ( $sample->{model} ? $sample->{model}->id : 'NA' ),
+            ( $sample->{build} ? ( $sample->{build}->id, $sample->{build}->status ) : ( 'NA', 'NA' ) ),
+        );
     }
     print "$status\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
     return 1;
-}
-
-sub _resolve_model_params {
-    my $self = shift;
-
-    my $config = $self->config;
-    if ( not $config->{model} ) {
-        $self->error_message('Cannot create models. These is no model info in config! '.$config);
-        return;
-    }
-
-    my %model_params;
-    for my $name ( keys %{$config->{model}} ) {
-        $model_params{$name} = $config->{model}->{$name};
-    }
-
-    if ( not $model_params{processing_profile_id} ) {
-        $self->error_message('No processing profile id for model in config! '.Data::Dumper::Dumper($config->{model}));
-        return;
-    }
-    my $processing_profile_id = delete $model_params{processing_profile_id};
-    $model_params{processing_profile} = Genome::ProcessingProfile->get($processing_profile_id);
-    if ( not $model_params{processing_profile} ) { 
-        $self->error_message('Failed to get processing profile for id! '.$processing_profile_id);
-        return;
-    }
-
-    my $model_class = $model_params{processing_profile}->class;
-    $model_class =~ s/ProcessingProfile/Model/;
-    my $model_meta = $model_class->__meta__;
-    if ( not $model_meta ) {
-        $self->error_message('Failed to get model class meta! '.$model_class);
-        return;
-    }
-
-    for my $param_name ( keys %model_params ) {
-        next if $param_name !~ s/_id$//;
-        my $param_value_id = delete $model_params{$param_name.'_id'};
-        my $param_property = $model_meta->property_meta_for_name($param_name);
-        Carp::confess('Failed to get property for model param! '.$param_name) if not $param_property;
-        my $param_value_class = $param_property->data_type;
-        my $param_value = $param_value_class->get($param_value_id);
-        Carp::confess("Failed to get $param_value_class for id! $param_value_id") if not $param_value;
-        $model_params{$param_name} = $param_value;
-    }
-
-    return ($model_class, \%model_params);
 }
 
 sub _resolve_import_command_for_sample {
@@ -407,14 +423,17 @@ sub _resolve_import_command_for_sample {
 
     my $cmd;
     if ( $self->config->{'job dispatch'}->{launch} ) {
-        my $sample_name_cnt = $self->config->{'job dispatch'}->{launch} =~ /\%s/;
+        my $sample_name_cnt = $self->config->{'job dispatch'}->{launch} =~ /(\%s)/g;
         if ( not $sample_name_cnt ) {
             $self->error_message('No "%s" in job dispatch config to replace with sample name.');
             return;
         }
+        my @sample_name_replaces;
+        for (1..$sample_name_cnt) { push @sample_name_replaces, $sample->{name}; }
+        print Dumper($self->config->{'job dispatch'}->{launch},$sample_name_cnt,\@sample_name_replaces);
         $cmd = sprintf(
             $self->config->{'job dispatch'}->{launch},
-            $sample->{name}, $sample->{name}
+            @sample_name_replaces
         );
         $cmd .= ' ';
     }
