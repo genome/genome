@@ -82,22 +82,13 @@ sub execute {
     my $vepFileName = $self->vep_file_name;
 	my $outputFileName = $self->output_file_name;
 	my $threshold = $self->threshold;
-	
 	my $outputFile;
 	
 	open (my $vepFile, "<$vepFileName") or die "Cannot open $vepFileName. $!.\n"; # Open Vep file
 	open (my $vcfFile, "<$vcfFileName") or die "Cannot open $vcfFileName. $!.\n"; # Open Vcf file
-	
 	my ($fileName, $directory, $ext) = fileparse($vcfFileName, qr/\.[^.]*/); # Parse file name, directory, and extension
-	#if ($outputFileName){ # Optional output file name supplied
-	#		$outputFileName = $directory.$outputFileName; # Directory/<user_defined_filename>
-	#} else { # Use default output file name
-	#	$outputFileName = $directory.$fileName.".AnnotationMerged".$ext;
-	#}
-	
-	#$outputFile = IO::File->open($outputFileName, ">");
 	open ($outputFile, ">$outputFileName") or die "Cannot create output file. $!\n"; # Open / Create the output file
-
+	
 	$threshold = 0 if (!$threshold); # Default $threshold to 0 if not provided
 	
 	# Call two sub programs
