@@ -11,9 +11,9 @@ class Genome::SoftwareResult::Stageable {
     is_abstract => 1,
     has_transient => [
         temp_staging_directory => {
-                        is => 'Text',
-                        doc => 'Directory to use for staging the generated data before putting on allocated disk.',
-                        is_optional => 1
+            is => 'Text',
+            doc => 'Directory to use for staging the generated data before putting on allocated disk.',
+            is_optional => 1
         }
 
     ]
@@ -46,7 +46,7 @@ sub _prepare_staging_directory {
     $self->temp_staging_directory($tempdir);
 
 
-    return 1;
+    return $tempdir;
 }
 
 sub _prepare_output_directory {

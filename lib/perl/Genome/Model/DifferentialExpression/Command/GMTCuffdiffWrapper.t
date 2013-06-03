@@ -35,30 +35,32 @@ my $cmd = $cls->execute(
     output_directory => $temp_dir,
     cuffdiff_params => 'some_params',
 );
+diag Data::Dumper::Dumper($cmd);
 
-is($cmd->result->class, $cls . "::Result", "Result is of proper auto-generated class");
+is($cmd->software_result->class, $cls . "::Result", "Result is of proper auto-generated class");
 
-my $result = $cmd->result;
-diag "SoftwareResult output_dir: " . $result->output_dir . "\n";
-my $some_file = $cmd->result->output_dir . "/some_file";
+my $software_result = $cmd->software_result;
+diag "SoftwareResult output_dir: " . $software_result->output_dir . "\n";
+my $some_file = $cmd->software_result->output_dir . "/some_file";
 ok(-e $some_file, 'SoftwareResult has data produced from command execution');
 
 
+my $another_temp_dir = Genome::Sys->create_temp_directory();
 my $same_cmd = $cls->execute(
     transcript_gtf_file => 'some_file',
     condition_model_ids_string => 'some_string',
-    output_directory => $temp_dir,
+    output_directory => $another_temp_dir,
     cuffdiff_params => 'some_params',
 );
-is($same_cmd->result->id, $cmd->result->id, "Same result for same inputs");
+is($same_cmd->software_result->id, $cmd->software_result->id, "Same software_result for same inputs");
 
 my $different_cmd = $cls->execute(
     transcript_gtf_file => 'some_different_file',
     condition_model_ids_string => 'some_string',
-    output_directory => $temp_dir,
+    output_directory => $another_temp_dir,
     cuffdiff_params => 'some_params',
 );
-isnt($different_cmd->result->id, $cmd->result->id, "Different result for different inputs");
+isnt($different_cmd->software_result->id, $cmd->software_result->id, "Different software_result for different inputs");
 
 
 my $_get_bam_file = $cls . "::_get_bam_file";
@@ -70,7 +72,7 @@ no strict "refs";
 };
 use strict;
 
-$result = Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper::_resolve_bam_file_paths(
+my $result = Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper::_resolve_bam_file_paths(
     'a,b,c d,e f g,h i'
 );
 my $expected_result = 'a,b,c d,e f g,h i ';
