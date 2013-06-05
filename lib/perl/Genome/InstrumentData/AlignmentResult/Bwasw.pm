@@ -5,7 +5,7 @@ use warnings;
 use Carp qw/confess/;
 use Data::Dumper;
 use File::Basename;
-use File::Copy qw/mv/;
+use File::Copy qw/move/;
 use Genome;
 use Getopt::Long;
 
