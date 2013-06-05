@@ -498,6 +498,7 @@ sub reference_preparation_job_classes {
 sub alignment_job_classes {
     my @sub_command_classes= qw/
         Genome::Model::Event::Build::ReferenceAlignment::AlignReads
+        Genome::Model::Event::Build::ReferenceAlignment::BamQc
     /;
     return @sub_command_classes;
 }

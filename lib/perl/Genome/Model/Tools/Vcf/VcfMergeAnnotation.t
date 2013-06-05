@@ -9,7 +9,7 @@ use Test::More tests => 5;
 use_ok('Genome::Model::Tools::Vcf::VcfMergeAnnotation');
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-VcfMergeAnnotation";
-#my $output_file = Genome::Sys->create_temp_file_path;
+my $output_file = Genome::Sys->create_temp_file_path;
 my $input_dir = "$test_dir";
 my $input_vcf = "$input_dir/annotation.vcf";
 my $input_vep = "$input_dir/vep.output";
