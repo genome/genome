@@ -108,8 +108,9 @@ sub params_for_result {
     my $picard_version = $pp->picard_version;
 
     if ($picard_version < 1.40) {
+        my $pp_picard_version = $picard_version;
         $picard_version = Genome::Model::Tools::Picard->default_picard_version;
-        $self->warning_message('Given picard version: '.$picard_version.' not compatible to CollectMultipleMetrics. Use default: '.$picard_version);
+        $self->warning_message('Given picard version: '.$pp_picard_version.' not compatible to CollectMultipleMetrics. Use default: '.$picard_version);
     }
 
     my $instr_data  = $self->instrument_data;
