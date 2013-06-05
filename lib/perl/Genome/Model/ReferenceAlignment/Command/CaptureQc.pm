@@ -332,7 +332,7 @@ sub get_metrics_for_qc_data {
     my $self = shift;
     my $build = shift;
     my $qc_file;
-    my $compare_snp_result = Genome::Model::Tools::Analysis::LaneQc::CompareSnpsResult->get('users.user_id' => $build->id);
+    my ($compare_snp_result) = Genome::Model::Tools::Analysis::LaneQc::CompareSnpsResult->get('users.user_id' => $build->id);
 
     if($compare_snp_result){
         $qc_file = $compare_snp_result->output_file;

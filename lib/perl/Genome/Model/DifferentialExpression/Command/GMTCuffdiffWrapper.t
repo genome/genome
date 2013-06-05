@@ -1,3 +1,5 @@
+# FIXME This is only here until unittests around Genome::Command::WithSoftwareResult
+# are in place.
 use warnings;
 use strict;
 

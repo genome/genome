@@ -1,3 +1,5 @@
+# FIXME This is only here until unittests around Genome::Command::WithSoftwareResult
+# are in place.
 package Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper;
 
 use strict;
