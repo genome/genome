@@ -325,6 +325,10 @@ sub required_rusage {
     return ''; #FIXME This needs to be filled in
 }
 
+sub resolve_allocation_disk_group_name {
+    return 'info_genome_models';
+}
+
 sub resolve_allocation_kilobytes_requested {
     my $self = shift;
     my @alignments = $self->collect_individual_alignments;
@@ -378,7 +382,7 @@ sub _prepare_output_directory {
 
     unless($allocation) {
         my %allocation_parameters = (
-            disk_group_name => 'info_genome_models',
+            disk_group_name => $self->resolve_allocation_disk_group_name,
             allocation_path => $subdir,
             owner_class_name => $self->class,
             owner_id => $self->id,
