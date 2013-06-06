@@ -590,6 +590,42 @@ sub resolve_module_version {
     return $revision;
 }
 
+sub _prepare_output_directory {
+    my $self = shift;
+
+    my ($allocation) = $self->disk_allocations;
+    if ( $allocation ) {
+        my $absolute_path = $allocation->absolute_path;
+        $self->output_dir($absolute_path) if $self->output_dir and $self->output_dir ne $absolute_path;
+        return $self->output_dir;
+    }
+
+    my $subdir = $self->resolve_allocation_subdirectory;
+    unless ( $subdir ) {
+        die $self->error_message("failed to resolve subdirectory for output data.  cannot proceed.");
+    }
+    
+    my %allocation_create_parameters = (
+        disk_group_name => $self->resolve_allocation_disk_group_name,
+        allocation_path => $subdir,
+        kilobytes_requested => $self->resolve_allocation_kilobytes_requested,
+        owner_class_name => $self->class,
+        owner_id => $self->id
+    );
+    $allocation = Genome::Disk::Allocation->allocate(%allocation_create_parameters);
+    unless ($allocation) {
+        die $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%allocation_create_parameters));
+    }
+
+    my $output_dir = $allocation->absolute_path;
+    unless (-d $output_dir) {
+        die $self->error_message("Allocation path $output_dir doesn't exist!");
+    }
+    
+    $self->output_dir($output_dir);
+    return $output_dir;
+}
+
 sub _expand_param_and_input_properties {
     my ($class, $desc) = @_;
     for my $t ('input','param','metric') {

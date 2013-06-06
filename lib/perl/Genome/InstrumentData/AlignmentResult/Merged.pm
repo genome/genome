@@ -371,42 +371,6 @@ sub estimated_kb_usage {
     return $total_size;
 }
 
-sub _prepare_output_directory {
-    my $self = shift;
-
-    return $self->output_dir if $self->output_dir;
-
-    my $subdir = $self->resolve_allocation_subdirectory;
-    unless ($subdir) {
-        $self->error_message("failed to resolve subdirectory for instrument data.  cannot proceed.");
-        die $self->error_message;
-    }
-
-    my $allocation = $self->_disk_allocation;
-
-    unless($allocation) {
-        my %allocation_parameters = (
-            disk_group_name => $self->resolve_allocation_disk_group_name,
-            allocation_path => $subdir,
-            owner_class_name => $self->class,
-            owner_id => $self->id,
-            kilobytes_requested => $self->resolve_allocation_kilobytes_requested,
-        );
-
-        $allocation = Genome::Disk::Allocation->allocate(%allocation_parameters);
-    }
-
-    my $output_dir = $allocation->absolute_path;
-    unless (-d $output_dir) {
-        $self->error_message("Allocation path $output_dir doesn't exist!");
-        die $self->error_message;
-    }
-
-    $self->output_dir($output_dir);
-
-    return $output_dir;
-}
-
 sub resolve_alignment_subdirectory {
     my $self = shift;
 

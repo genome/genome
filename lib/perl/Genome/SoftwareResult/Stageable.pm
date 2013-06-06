@@ -53,40 +53,6 @@ sub _prepare_staging_directory {
     return $tempdir;
 }
 
-sub _prepare_output_directory {
-    my $self = shift;
-
-    my $subdir = $self->resolve_allocation_subdirectory;
-    unless ($subdir) {
-        $self->error_message("failed to resolve subdirectory for output data.  cannot proceed.");
-        die $self->error_message;
-    }
-    
-    my %allocation_create_parameters = (
-        disk_group_name => $self->resolve_allocation_disk_group_name,
-        allocation_path => $subdir,
-        kilobytes_requested => $self->resolve_allocation_kilobytes_requested,
-        owner_class_name => $self->class,
-        owner_id => $self->id
-    );
-   
-    my $allocation = Genome::Disk::Allocation->allocate(%allocation_create_parameters);
-    unless ($allocation) {
-        $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%allocation_create_parameters));
-        die($self->error_message);
-    }
-
-    my $output_dir = $allocation->absolute_path;
-    unless (-d $output_dir) {
-        $self->error_message("Allocation path $output_dir doesn't exist!");
-        die $self->error_message;
-    }
-    
-    $self->output_dir($output_dir);
-    
-    return $output_dir;
-}
-
 sub _staging_disk_usage {
 
     my $self = shift;
