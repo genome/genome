@@ -158,7 +158,7 @@ sub create {
         my @alignments = $self->collect_individual_alignments;
 
         $self->status_message('Preparing directories...');
-        $self->_prepare_output_directory(\@alignments); #This gets a disk allocation
+        $self->_prepare_output_directory; #This gets a disk allocation
         my @tmp_dirs = $self->_prepare_working_directories(\@alignments); #need to keep these in scope while in use
 
         my $bams_per_library = {};
@@ -325,6 +325,12 @@ sub required_rusage {
     return ''; #FIXME This needs to be filled in
 }
 
+sub resolve_allocation_kilobytes_requested {
+    my $self = shift;
+    my @alignments = $self->collect_individual_alignments;
+    return $self->estimated_kb_usage(\@alignments);
+}
+
 sub estimated_kb_usage {
     my $self = shift;
     my $alignments = shift;
@@ -359,7 +365,6 @@ sub estimated_kb_usage {
 
 sub _prepare_output_directory {
     my $self = shift;
-    my $alignments = shift;
 
     return $self->output_dir if $self->output_dir;
 
@@ -377,7 +382,7 @@ sub _prepare_output_directory {
             allocation_path => $subdir,
             owner_class_name => $self->class,
             owner_id => $self->id,
-            kilobytes_requested => $self->estimated_kb_usage($alignments),
+            kilobytes_requested => $self->resolve_allocation_kilobytes_requested,
         );
 
         $allocation = Genome::Disk::Allocation->allocate(%allocation_parameters);
