@@ -335,6 +335,10 @@ sub resolve_allocation_kilobytes_requested {
     return $self->estimated_kb_usage(\@alignments);
 }
 
+sub resolve_allocation_subdirectory {
+    return $_[0]->resolve_alignment_subdirectory;
+}
+
 sub estimated_kb_usage {
     my $self = shift;
     my $alignments = shift;
@@ -372,7 +376,7 @@ sub _prepare_output_directory {
 
     return $self->output_dir if $self->output_dir;
 
-    my $subdir = $self->resolve_alignment_subdirectory;
+    my $subdir = $self->resolve_allocation_subdirectory;
     unless ($subdir) {
         $self->error_message("failed to resolve subdirectory for instrument data.  cannot proceed.");
         die $self->error_message;
