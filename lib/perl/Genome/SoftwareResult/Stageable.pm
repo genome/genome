@@ -19,6 +19,10 @@ class Genome::SoftwareResult::Stageable {
     ]
 };
 
+sub resolve_allocation_kilobytes_requested {
+    return $_[0]->_staging_disk_usage;
+}
+
 sub resolve_allocation_subdirectory {
     die "Must define resolve_allocation_subdirectory in your subclass of Genome::SoftwareResult::Stageable";
 }
@@ -58,14 +62,10 @@ sub _prepare_output_directory {
         die $self->error_message;
     }
     
-    my %allocation_get_parameters = (
+    my %allocation_create_parameters = (
         disk_group_name => $self->resolve_allocation_disk_group_name,
         allocation_path => $subdir,
-    );
-
-    my %allocation_create_parameters = (
-        %allocation_get_parameters,
-        kilobytes_requested => $self->_staging_disk_usage,
+        kilobytes_requested => $self->resolve_allocation_kilobytes_requested,
         owner_class_name => $self->class,
         owner_id => $self->id
     );
