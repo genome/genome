@@ -92,7 +92,7 @@ sub create_test_volume {
     my $group = Genome::Disk::Group->create(
         disk_group_name => 'testing_group',
         permissions => '755',
-        sticky => '1',
+        setgid => '1',
         subdirectory => 'testing',
         unix_uid => 0,
         unix_gid => 0,

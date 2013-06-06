@@ -19,7 +19,7 @@ use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
 
 use Genome::Disk::Allocation;
-$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
+#$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
 my @volumes = create_test_volumes();
 
@@ -130,7 +130,7 @@ sub create_test_volumes {
     my $group = Genome::Disk::Group->create(
         disk_group_name => 'testing_group',
         permissions => '755',
-        sticky => '1',
+        setgid => '1',
         subdirectory => 'testing',
         unix_uid => 0,
         unix_gid => 0,
@@ -140,7 +140,7 @@ sub create_test_volumes {
     my $archive_group = Genome::Disk::Group->create(
         disk_group_name => 'archive',
         permissions => '755',
-        sticky => '1',
+        setgid => '1',
         subdirectory => 'testing',
         unix_uid => 0,
         unix_gid => 0,

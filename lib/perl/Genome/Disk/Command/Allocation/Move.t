@@ -18,14 +18,14 @@ use_ok('Genome::Disk::Allocation') or die;
 
 use Genome::Disk::Allocation;
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
-$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
+#$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
 
 my $group = Genome::Disk::Group->create(
     disk_group_name => 'testing',
     subdirectory => 'testing',
     permissions => '755',
-    sticky => 1,
+    setgid => 1,
     unix_uid => 0,
     unix_gid => 0,
 );
