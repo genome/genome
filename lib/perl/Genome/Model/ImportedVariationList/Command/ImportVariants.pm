@@ -87,8 +87,10 @@ sub execute {
         version => $self->version,
         prefix => $self->source_name,
         source_name => $self->source_name,
-        snv_result => $manual_result,
     );
+    my $result_property = $self->variant_type."_result";
+    $params{$result_property} = $manual_result;
+
     if (defined $self->model_name) {
         $params{"model_name"} = $self->model_name;
     }

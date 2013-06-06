@@ -56,4 +56,18 @@ my $diff = Genome::Sys->diff_file_vs_file($vcf_input_path, $cmd->build->snvs_vcf
 ok(!$diff, 'snv output matched expected result')
     or diag("diff results:\n" . $diff);
 
+$cmd = $pkg->create(
+    input_path => $vcf_input_path,
+    reference_sequence_build => $reference_sequence_build,
+    source_name => "test",
+    description => "this had better work!",
+    variant_type => "indel",
+    format => "vcf",
+    version => "2012_06_02",
+);
+ok($cmd->execute, "Imported vcf variants");
+isa_ok($cmd->build, "Genome::Model::Build::ImportedVariationList"); 
+ok($cmd->build->indel_result, "The build has an indel result attached");
+is($cmd->build->source_name, "test", "Source name is set properly");
+
 done_testing();

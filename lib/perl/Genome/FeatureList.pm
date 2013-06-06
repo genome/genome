@@ -295,7 +295,7 @@ sub processed_bed_file_content {
             if ($short_name) {
                 $entry[3] = 'r' . $name_counter++;
             }
-            $bed_file_content .= join("\t",@entry) ."\n";
+            $bed_file_content .= join("\t",@entry[0..3]) ."\n";
         }
     }
     return $bed_file_content;
