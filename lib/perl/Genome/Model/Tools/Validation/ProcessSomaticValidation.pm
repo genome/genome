@@ -37,7 +37,7 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           is => 'Boolean',
           is_optional => 1,
           default => 1,
-          doc => "only keep calls within the target regions. These are pulled from the build if possible",
+          doc => "only keep new calls within the target regions. These are pulled from the build if possible",
       },
 
       filter_sites =>{
@@ -66,13 +66,6 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           doc => "add tiering information to the output",
       },
 
-      variant_list_is_one_based => {
-          is => 'Boolean',
-          is_optional => 1,
-          doc => "The variant list you provide is in annotation (one-based) format, instead of bed. This flag fixes that.",
-          default => 0,
-      },
-
       add_dbsnp_and_gmaf => {
           is => 'Boolean',
           is_optional => 1,
@@ -91,6 +84,28 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           is => 'String',
           is_optional => 1,
           doc => "an annotation file (5 col, 1 based) containing sites that will automatically be passed. This is useful when sequencing a relapse - the sites already found in the tumor don't need to be manually reviewed",
+      },
+
+      restrict_to_target_regions =>{
+          is => 'Boolean',
+          is_optional => 1,
+          default => 1,
+          doc => "only keep calls within the target regions. These are pulled from the build if possible",
+      },
+
+
+      get_readcounts =>{
+          is => 'Boolean',
+          is_optional => 1,
+          default => 1,
+          doc => "add readcounts to the final variant list",
+      },
+
+      variant_list_is_one_based => {
+          is => 'Boolean',
+          is_optional => 1,
+          doc => "The variant list you provide is in annotation (one-based) format, instead of bed. This flag fixes that.",
+          default => 0,
       },
 
       create_review_files => {
@@ -114,24 +129,10 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           default => 1,
       },
 
-      create_review_files => {
-          is => 'Boolean',
-          is_optional => 1,
-          doc => "create xml and bed files for manual review",
-          default => 0,
-      },
-
       create_archive => {
           is => 'Boolean',
           is_optional => 1,
           doc => "create an archive suitable for passing to collaborators",
-          default => 0,
-      },
-
-      include_vcfs_in_archive => {
-          is => 'Boolean',
-          is_optional => 1,
-          doc => "include full vcf files in archive (very large files)",
           default => 0,
       },
 
@@ -241,7 +242,6 @@ sub annoFileToSlashedBedFile{
     if($outfile){
         $newfile = $outfile;
     } 
-
 
     open(OUTFILE,">$newfile");
     my $inFh = IO::File->new( $file ) || die "can't open file2\n";
@@ -465,7 +465,6 @@ sub addTiering{
     }
     return($newfile);
 }
-
 
 sub getReadcounts{
     my ($file, $ref_seq_fasta, @bams) = @_;
@@ -883,7 +882,7 @@ sub execute {
           $snv_type = "notvalidated";
       }
 
-      $inFh = IO::File->new( $snv_file ) || die "can't open indel file\n";
+      $inFh = IO::File->new( $snv_file ) || die "can't open snv file\n";
       while( my $line = $inFh->getline ){
           chomp($line);
           next if $line =~ /^chrom/;
@@ -1004,43 +1003,6 @@ sub execute {
 
       #tar it up
       `tar -chzvf $sample_name.tar.gz $sample_name`;
-  }
-
-
-  if($self->create_archive){
-      mkdir("$output_dir/$sample_name/$sample_name");
-
-      chdir("$output_dir/$sample_name/");
-      #VCF files
-      if($self->include_vcfs_in_archive){
-          if(-e "$build_dir/variants/indels.detailed.vcf.gz"){
-              `ln -s $build_dir/variants/indels.detailed.vcf.gz $sample_name/indels.vcf.gz`;
-          } elsif(-e "$build_dir/variants/indels.vcf.gz") {
-              `ln -s $build_dir/variants/indels.vcf.gz $sample_name/indels.vcf.gz`;
-          } else {
-              print STDERR "WARNING: no indel VCF file available. If this is an older model, a rebuild may fix this\n";
-          }
-          if(-e "$build_dir/variants/snvs.annotated.vcf.gz"){
-              `ln -s $build_dir/variants/snvs.annotated.vcf.gz  $sample_name/snvs.vcf.gz`;
-          } elsif (-e "$build_dir/variants/snvs.vcf.gz"){
-              `ln -s $build_dir/variants/snvs.vcf.gz  $sample_name/snvs.vcf.gz`;
-          } else {
-              print STDERR "WARNING: no snv VCF file available. If this is an older model, a rebuild may fix this\n";
-          }
-      }
-      #annotated snvs and indels
-      `ln -s ../snvs.indels.annotated $sample_name/snvsAndIndels.annotated`;
-      #same in excel format
-      `ln -s ../snvs.indels.annotated.xls $sample_name/snvsAndIndels.annotated.xls`;
-      #sv calls
-      if($self->process_svs){
-          `ln -s $sv_file $output_dir/$sample_name/$sample_name/svs`;
-          #`ln -s $sv_file $output_dir/$sample_name/$sample_name/svs.annotated`;
-      }
-      #cnv calls - todo
-
-      #tar it up
-      `tar -czvfh $sample_name.tar.gz $sample_name`;
   }
 
   return 1;
