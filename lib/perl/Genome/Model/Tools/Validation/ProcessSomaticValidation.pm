@@ -114,10 +114,24 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           default => 1,
       },
 
+      create_review_files => {
+          is => 'Boolean',
+          is_optional => 1,
+          doc => "create xml and bed files for manual review",
+          default => 0,
+      },
+
       create_archive => {
           is => 'Boolean',
           is_optional => 1,
           doc => "create an archive suitable for passing to collaborators",
+          default => 0,
+      },
+
+      include_vcfs_in_archive => {
+          is => 'Boolean',
+          is_optional => 1,
+          doc => "include full vcf files in archive (very large files)",
           default => 0,
       },
 
@@ -147,8 +161,8 @@ HELP
 }
 
 sub _doc_authors {
-  return <<AUTHS;
- Chris Miller
+    return <<AUTHS;
+    Chris Miller
 AUTHS
 }
 
@@ -492,8 +506,6 @@ sub execute {
       mkdir($output_dir);
   }
 
-  
-
   # Check on the input data before starting work
   my $model = Genome::Model->get( $somatic_validation_model_id );
   print STDERR "ERROR: Could not find a model with ID: $somatic_validation_model_id\n" unless( defined $model );
@@ -773,12 +785,6 @@ sub execute {
   #-------------------------------------------------------
   #get readcounts
   if($self->get_readcounts){
-      # # for testing
-      # for($i=0;$i<@snv_files;$i++){
-      #     $snv_files[$i] = $snv_files[$i] . ".rcnt";
-      # }
-      # $indel_file = $indel_file . ".rcnt";
-
       print STDERR "Getting readcounts...\n";
       for($i=0;$i<@snv_files;$i++){
           if($self->tumor_only){
@@ -998,6 +1004,43 @@ sub execute {
 
       #tar it up
       `tar -chzvf $sample_name.tar.gz $sample_name`;
+  }
+
+
+  if($self->create_archive){
+      mkdir("$output_dir/$sample_name/$sample_name");
+
+      chdir("$output_dir/$sample_name/");
+      #VCF files
+      if($self->include_vcfs_in_archive){
+          if(-e "$build_dir/variants/indels.detailed.vcf.gz"){
+              `ln -s $build_dir/variants/indels.detailed.vcf.gz $sample_name/indels.vcf.gz`;
+          } elsif(-e "$build_dir/variants/indels.vcf.gz") {
+              `ln -s $build_dir/variants/indels.vcf.gz $sample_name/indels.vcf.gz`;
+          } else {
+              print STDERR "WARNING: no indel VCF file available. If this is an older model, a rebuild may fix this\n";
+          }
+          if(-e "$build_dir/variants/snvs.annotated.vcf.gz"){
+              `ln -s $build_dir/variants/snvs.annotated.vcf.gz  $sample_name/snvs.vcf.gz`;
+          } elsif (-e "$build_dir/variants/snvs.vcf.gz"){
+              `ln -s $build_dir/variants/snvs.vcf.gz  $sample_name/snvs.vcf.gz`;
+          } else {
+              print STDERR "WARNING: no snv VCF file available. If this is an older model, a rebuild may fix this\n";
+          }
+      }
+      #annotated snvs and indels
+      `ln -s ../snvs.indels.annotated $sample_name/snvsAndIndels.annotated`;
+      #same in excel format
+      `ln -s ../snvs.indels.annotated.xls $sample_name/snvsAndIndels.annotated.xls`;
+      #sv calls
+      if($self->process_svs){
+          `ln -s $sv_file $output_dir/$sample_name/$sample_name/svs`;
+          #`ln -s $sv_file $output_dir/$sample_name/$sample_name/svs.annotated`;
+      }
+      #cnv calls - todo
+
+      #tar it up
+      `tar -czvfh $sample_name.tar.gz $sample_name`;
   }
 
   return 1;
