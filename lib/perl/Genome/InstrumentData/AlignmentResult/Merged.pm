@@ -13,8 +13,7 @@ use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
-    is => 'Genome::SoftwareResult',
-
+    is => 'Genome::InstrumentData::AlignedBamResult',
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
@@ -121,6 +120,7 @@ class Genome::InstrumentData::AlignmentResult::Merged {
         },
         bam_file => {
           is => 'Text',
+          is_output => 1,
           via => '__self__',
           to => 'merged_alignment_bam_path',
         },
