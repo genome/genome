@@ -38,7 +38,7 @@ class Genome::SoftwareResult {
         params_id           => { is => 'Text', len => 4000, column_name => 'PARAMS_ID', implied_by => 'params_bx', is_optional => 1 },
         output_dir          => { is => 'Text', len => 1000, column_name => 'OUTPUTS_PATH', is_optional => 1 },
         test_name           => { is_param => 1, is_delegated => 1, is_mutable => 1, via => 'params', to => 'value_id', where => ['name' => 'test_name'], is => 'Text', doc => 'Assigns a testing tag to the result.  These will not be used in default processing', is_optional => 1 },
-        _lock_name          => { is_param => 1, is_optional => 1, is_transient => 1 },
+        _lock_name          => { is_optional => 1, is_transient => 1 },
     ],
     has_many_optional => [
         params              => { is => 'Genome::SoftwareResult::Param', reverse_as => 'software_result'},
@@ -201,6 +201,17 @@ sub get_with_lock {
     }
 
     my $result = $objects[0];
+
+    if ($result) {
+        my $calculated_lookup_hash = $result->calculate_lookup_hash();
+        my $lookup_hash = $result->lookup_hash;
+        if ($calculated_lookup_hash ne $lookup_hash) {
+            my $m = sprintf(q{SoftwareResult lookup_hash (%s) does not match it's calculated lookup_hash (%s).  Cannot trust that the correct SoftwareResult was retrieved.}, $lookup_hash, $calculated_lookup_hash);
+            # Really we would just call get(%$params) but that might undermine the whole lookup_hash optimization.
+            die $class->error_message($m);
+        }
+    }
+
     if ($result && $lock) {
         $result->_lock_name($lock);
 
@@ -577,6 +588,42 @@ sub resolve_module_version {
         $revision = substr($revision,0,$len) . '*';
     }
     return $revision;
+}
+
+sub _prepare_output_directory {
+    my $self = shift;
+
+    my ($allocation) = $self->disk_allocations;
+    if ( $allocation ) {
+        my $absolute_path = $allocation->absolute_path;
+        $self->output_dir($absolute_path) if $self->output_dir and $self->output_dir ne $absolute_path;
+        return $self->output_dir;
+    }
+
+    my $subdir = $self->resolve_allocation_subdirectory;
+    unless ( $subdir ) {
+        die $self->error_message("failed to resolve subdirectory for output data.  cannot proceed.");
+    }
+    
+    my %allocation_create_parameters = (
+        disk_group_name => $self->resolve_allocation_disk_group_name,
+        allocation_path => $subdir,
+        kilobytes_requested => $self->resolve_allocation_kilobytes_requested,
+        owner_class_name => $self->class,
+        owner_id => $self->id
+    );
+    $allocation = Genome::Disk::Allocation->allocate(%allocation_create_parameters);
+    unless ($allocation) {
+        die $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%allocation_create_parameters));
+    }
+
+    my $output_dir = $allocation->absolute_path;
+    unless (-d $output_dir) {
+        die $self->error_message("Allocation path $output_dir doesn't exist!");
+    }
+    
+    $self->output_dir($output_dir);
+    return $output_dir;
 }
 
 sub _expand_param_and_input_properties {

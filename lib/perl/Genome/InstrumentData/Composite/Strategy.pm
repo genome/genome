@@ -91,12 +91,27 @@ sub grammar {
         filtration: "filtered" "using" filter
             { $return = $item[3]; $item[3]->{type} = 'filter'; }
 
-        merge: "then" "merged" "using" merger deduplicate
-            { $return = $item[4]; $item[4]->{type} = 'merge'; $item[4]->{then} = $item[5]; $item[5]->{type} = 'deduplicate'; }
-        | "then" "merged" "using" merger
-            { $return = $item[4]; $item[4]->{type} = 'merge'; }
+        merge: "then" "merged" "using" merger deduplicate(?) refine(?)
+            {
+                $return = $item[4]; $item[4]->{type} = 'merge';
+                my $leaf = $item[4];
+                if(@{$item[5]}) {
+                    my $next = $item[5][0];
+                    $leaf->{then} = $next; $next->{type} = 'deduplicate';
+                    $leaf = $next;
+                }
+
+                if(@{$item[6]}) {
+                    my $next = $item[6][0];
+                    $leaf->{then} = $next; $next->{type} = 'refine';
+                    $leaf = $item[6];
+                }
+            }
 
         deduplicate: "then" "deduplicated" "using" deduplicator
+            { $item[4]; }
+
+        refine: "then" "refined" "using" refiner
             { $item[4]; }
 
         api_version: "api" version
@@ -112,6 +127,9 @@ sub grammar {
             { $item[1]; }
 
         deduplicator: program_spec
+            { $item[1]; }
+
+        refiner: program_spec
             { $item[1]; }
 
         reference: name

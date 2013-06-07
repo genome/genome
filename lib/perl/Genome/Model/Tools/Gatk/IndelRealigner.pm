@@ -39,6 +39,7 @@ class Genome::Model::Tools::Gatk::IndelRealigner {
             is => 'Text',
             doc => "Input VCF file(s) with known indels",
             is_optional => 1,
+            is_many => 1,
         },
     ],
 };
@@ -87,8 +88,9 @@ sub indel_realigner_command {
     unless ($self->target_intervals_are_sorted) {
         $gatk_command .= " --targetIntervalsAreNotSorted";
     }
-    if ($self->known) {
-        $gatk_command .= " --knownAlleles ".$self->known;
+    my @known = $self->known;
+    if (@known) {
+        $gatk_command .= " --knownAlleles ".join(" --knownAlleles ", @known);
     }
     return $gatk_command;
 }
@@ -102,8 +104,11 @@ sub _check_inputs {
             return;
         }
     }
-    if ($self->known) {
-        Genome::Sys->validate_file_for_reading($self->known);
+    my @known = $self->known;
+    if (@known) {
+        for my $k (@known) {
+            Genome::Sys->validate_file_for_reading(@known);
+        }
     }
     Genome::Sys->validate_file_for_reading($self->target_intervals);
     Genome::Sys->validate_file_for_reading($self->input_bam);

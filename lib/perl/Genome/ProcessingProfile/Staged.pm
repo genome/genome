@@ -258,7 +258,7 @@ sub _generate_events_for_object {
                         ref_seq_id => $object,
                     );
                 }
-            } elsif ($command_class =~ /ReferenceAlignment::AlignReads|TrimReadSet|AssignReadSetToModel|AddReadSetToProject|FilterReadSet|RnaSeq::PrepareReads|DeNovoAssembly::ProcessInstrumentData/) {
+            } elsif ($command_class =~ /ReferenceAlignment::AlignReads|ReferenceAlignment::BamQc|TrimReadSet|AssignReadSetToModel|AddReadSetToProject|FilterReadSet|RnaSeq::PrepareReads|DeNovoAssembly::ProcessInstrumentData/) {
                 if ($object->isa('Genome::InstrumentData')) {
                     $command = $command_class->create(
                         instrument_data_id => $object->id,

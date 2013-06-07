@@ -21,8 +21,11 @@ my $data_dir = Genome::Utility::Test->data_dir_ok($class, $version);
 
 my $in = $data_dir."/in.bam";
 my $expected_out = $data_dir."/expected.intervals";
+my $expected_out2 = $data_dir."/expected_with_known.intervals";
 my $reference = $data_dir."/reference.fasta";
+my $known = $data_dir."/temp.vcf";
 my $out = Genome::Sys->create_temp_file_path;
+my $out2 = Genome::Sys->create_temp_file_path;
 
 my $cmd = $class->create(
     input_bam => $in,
@@ -34,5 +37,19 @@ ok($cmd, "Command was created correctly");
 ok($cmd->execute, "Command was executed successfuly");
 ok(-s $out, "Output file exists");
 compare_ok($out, $expected_out, "Output file was as expected");
+
+$cmd = $class->create(
+    input_bam => $in,
+    reference_fasta => $reference,
+    output_intervals => $out2,
+    known => [$known],
+    version => "2.4",
+);
+
+ok($cmd, "Command was created correctly");
+ok($cmd->execute, "Command was executed successfuly");
+ok(-s $out2, "Output file exists");
+
+compare_ok($out2, $expected_out2, "Output file was as expected");
 
 done_testing;
