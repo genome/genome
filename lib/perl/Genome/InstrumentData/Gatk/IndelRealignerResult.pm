@@ -1,0 +1,163 @@
+package Genome::InstrumentData::Gatk::IndelRealignerResult;
+
+use strict;
+use warnings;
+
+use Genome;
+
+require File::Temp;
+
+# realigner target creator
+#  bam [original]
+#  ref [fasta]
+#  known_indels
+#  > intervals
+#
+# indel realigner
+#  bam [original]
+#  ref [fasta]
+#  known_indels
+#  intervals [from realigner target crreator]
+#  > bam
+class Genome::InstrumentData::Gatk::IndelRealignerResult { 
+    is => 'Genome::InstrumentData::Gatk::Base',
+    has_optional_param => [
+        known_indels => {# PROVIDES indels_vcf
+            is => 'Genome::Model::Tools::DetectVarints2::Result::Base',
+            is_many => 1,
+        },
+    ],
+    has_constant => [
+        # outputs
+        intervals_file  => { 
+            is_output => 1,
+            calculate_from => [qw/ output_dir bam_source /],
+            calculate => q| return $output_dir.'/'.$bam_source->id.'.bam.intervals'; |,
+        },
+    ]
+};
+
+sub known_indels_vcfs {
+    my $self = shift;
+
+    return $self->{_indels_vcfs} if $self->{_indels_vcfs};
+
+    my @indels_vcfs;
+    for my $known_indel ( $self->known_indels ) {
+        my $indel_result = $known_indel->indel_result;
+        if ( not $indel_result ) {
+            $self->error_message('No indel result for known indel! '.$known_indel->__display_name__);
+            return;
+        }
+        my $source_indels_vcf = $indel_result->path.'/indels.hq.vcf';
+        if ( not -s $source_indels_vcf ) {
+            $self->error_message('No indels vcf (indels.hq.vcf) in indel result path! '.$indel_result->path);
+            return;
+        }
+        my $indels_vcf = $self->_tmpdir.'/'.$indel_result->id.'.vcf';
+        symlink($source_indels_vcf, $indels_vcf);
+        push @indels_vcfs, $indels_vcf;
+    }
+
+    $self->{_indels_vcfs} = \@indels_vcfs;
+    return $self->{_indels_vcfs};
+}
+
+sub create {
+    my $class = shift;
+
+    my $self = $class->SUPER::create(@_);
+    return if not $self;
+
+    my $prepare_output_directory = eval{ $self->_prepare_output_directory; };
+    if ( not $prepare_output_directory ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to prepare output directory!') if $@;
+        return;
+    }
+
+    my $known_indels_vcfs = $self->known_indels_vcfs;
+    return if not $known_indels_vcfs; # undef on error
+
+    my $create_targets = $self->_create_targets;
+    return if not $create_targets;
+
+    my $realign_indels = $self->_realign_indels;
+    return if not $realign_indels;
+
+    my $run_flagstat = $self->run_flagstat_on_output_bam_file;
+    return if not $run_flagstat;
+
+    return $self;
+}
+
+sub _create_targets {
+    my $self = shift;
+    $self->status_message('Run realigner target creator...');
+
+    my $intervals_file = $self->intervals_file;
+    my %target_creator_params = (
+        input_bam => $self->input_bam_file,
+        reference_fasta => $self->reference_fasta,
+        output_intervals => $intervals_file,
+    );
+    $target_creator_params{known} = $self->known_indels_vcfs if @{$self->known_indels_vcfs};
+    $self->status_message('Params: '.Data::Dumper::Dumper(\%target_creator_params));
+
+    my $target_creator = Genome::Model::Tools::Gatk::RealignerTargetCreator->create(%target_creator_params);
+    if ( not $target_creator ) {
+        $self->error_message('Failed to create realigner target creator!');
+        return;
+    }
+    if ( not $target_creator->execute ) {
+        $self->error_message('Failed to execute realigner target creator!');
+        return;
+    }
+
+    if ( not -s $intervals_file ) {
+        $self->error_message('Ran target creator, but failed to make an intervals file!');
+        return;
+    }
+    $self->status_message('Intervals file: '.$intervals_file);
+
+    $self->status_message('Run realigner target creator...done');
+    return 1;
+}
+
+sub _realign_indels {
+    my $self = shift;
+    $self->status_message('Run indel realigner...');
+
+    my $bam_file = $self->bam_file;
+    my %realigner_params = (
+        input_bam => $self->input_bam_file,
+        reference_fasta => $self->reference_fasta,
+        target_intervals => $self->intervals_file,
+        output_realigned_bam => $bam_file,
+        index_bam => 1,
+    );
+    $realigner_params{known} = $self->known_indels_vcfs if @{$self->known_indels_vcfs};
+    $self->status_message('Params: '.Data::Dumper::Dumper(\%realigner_params));
+
+    my $realigner = Genome::Model::Tools::Gatk::IndelRealigner->create(%realigner_params);
+    if ( not $realigner ) {
+        $self->error_message('Failed to create indel realigner!');
+        return;
+    }
+    if ( not $realigner->execute ) {
+        $self->error_message('Failed to execute indel realigner!');
+        return;
+    }
+
+    if ( not -s $bam_file ) {
+        $self->error_message('Ran indel realigner, but failed to create the output bam!');
+        return;
+    }
+    $self->status_message('Bam file: '.$bam_file);
+
+    $self->status_message('Run indel realigner...done');
+    return 1;
+}
+
+1;
+
