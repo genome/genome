@@ -167,17 +167,6 @@ sub _doc_authors {
 AUTHS
 }
 
-sub bedToAnno{
-    my ($chr,$start,$stop,$ref,$var) = split("\t",$_[0]);
-    #print STDERR join("|",($chr,$start,$stop,$ref,$var)) . "\n";
-    if ($ref =~ /^\-/){ #indel INS
-        $stop = $stop+1;
-    } else { #indel DEL or SNV
-        $start = $start+1;
-    }
-    return(join("\t",($chr,$start,$stop,$ref,$var)));
-}
-
 sub bedFileToAnnoFile{
     my ($file,$outfile) = @_;
 
@@ -199,7 +188,7 @@ sub bedFileToAnnoFile{
             print OUTFILE $line . "\n";
             next;
         }
-        my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );       
+        my ( $chr, $start, $stop, $ref, $var, @rest ) = split( /\t/, $line );
         if($ref =~ /\//){
             my @alleles = split("/",$ref);
             print OUTFILE bedToAnno(join("\t",($chr, $start, $stop, $alleles[0], $alleles[1]))) . "\t" . join("\t",($var,@rest)) . "\n";
@@ -241,7 +230,7 @@ sub annoFileToSlashedBedFile{
     my $newfile = $file . ".bed";
     if($outfile){
         $newfile = $outfile;
-    } 
+    }
 
     open(OUTFILE,">$newfile");
     my $inFh = IO::File->new( $file ) || die "can't open file2\n";
@@ -261,10 +250,21 @@ sub annoFileToSlashedBedFile{
     return($newfile);
 }
 
+sub bedToAnno{
+    my ($chr,$start,$stop,$ref,$var) = split("\t",$_[0]);
+    #print STDERR join("|",($chr,$start,$stop,$ref,$var)) . "\n";
+    if ($ref =~ /^[-0*]/){ #indel INS
+        $stop = $stop+1;
+    } else { #indel DEL or SNV
+        $start = $start+1;
+    }
+    return(join("\t",($chr,$start,$stop,$ref,$var)));
+}
+
 
 sub annoToBed{
     my ($chr,$start,$stop,$ref,$var) = split("\t",$_[0]);
-    if ($ref =~ /^\-/){ #indel INS
+    if ($ref =~ /^[-*0]/){ #indel INS
         $stop = $stop-1;
     } else { #indel DEL or SNV
         $start = $start-1;
@@ -311,12 +311,12 @@ sub cleanFile{
     if($file =~ /bed$/){
         $is_bedfile = 1;
     }
-    
+
     my $newfile = addName($file,"clean");
-    
+
     my %dups;
     open(OUTFILE, ">$newfile");
-    
+
     my $inFh = IO::File->new( $file ) || die "can't open file $file\n";
     while( my $line = $inFh->getline ){
         chomp($line);
@@ -324,13 +324,13 @@ sub cleanFile{
         if($ref =~ /\//){
             ( $ref, $var ) = split(/\//, $ref);
         }
-        
+
         $ref =~ s/0/-/g;
         $var =~ s/0/-/g;
         $ref =~ s/\*/-/g;
         $var =~ s/\*/-/g;
-        
-        my @vars = $var; 
+
+        my @vars = $var;
         unless($ref =~ /-/ || $var =~ /-/){ #fixiub doesn't handle indels
             my @vars = fixIUB($ref, $var);
         }
@@ -469,12 +469,12 @@ sub addTiering{
 sub getReadcounts{
     my ($file, $ref_seq_fasta, @bams) = @_;
     #todo - should check if input is bed and do coversion if necessary
-    
+
     if( -s "$file" ){
         my $bamfiles = join(",",@bams);
         my $header = "Tumor";
         if(@bams == 2){
-            $header = "Normal,Tumor"; 
+            $header = "Normal,Tumor";
         }
         #get readcounts from the tumor bam only
         my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
@@ -538,8 +538,6 @@ sub execute {
       $normal_bam = $build->normal_bam;
   }
   my $build_dir = $build->data_directory;
-  print STDERR $build_dir . "\n";
-
 
   # Check if the necessary files exist in this build
   my $newcalls = "$build_dir/validation/snvs/snvs.newcalls";
@@ -555,7 +553,7 @@ sub execute {
 
   my $small_indel_file = "$build_dir/validation/small_indel/final_output";
   unless( -e $small_indel_file ){
-      print STDERR "WARNING: realigned small indels not found (tumor only build?). Using raw calls from validation data\n"; 
+      print STDERR "WARNING: realigned small indels not found (tumor only build?). Using raw calls from validation data\n";
       $small_indel_file = "$build_dir/variants/indels.hq.bed";
   }
   my $large_indel_file = "$build_dir/validation/large_indel/combined_counts.csv.somatic.adapted";
@@ -595,7 +593,6 @@ sub execute {
   mkdir "$output_dir/review" unless( -e "$output_dir/review" || !($self->create_review_files));
   `ln -s $build_dir $output_dir/$sample_name/build_directory`;
 
-
   #cat all the indels together (same for indels)
   if($large_indel_file =~ /variants/){ #no validated indels, use the bed files
       bedFileToAnnoFile($large_indel_file,"$output_dir/$sample_name/indels/large.indels");
@@ -604,10 +601,10 @@ sub execute {
           `joinx sort -i $output_dir/$sample_name/indels/large.indels >$output_dir/$sample_name/indels/indels.hq`;
           `rm -f $output_dir/$sample_name/indels/large.indels`;
       } else {
-          `grep -w Somatic $small_indel_file | cut -f 1-5 >$output_dir/$sample_name/indels/small.indels.bed`;
+          `grep -w Somatic $small_indel_file | cut -f 1-5 >$output_dir/$sample_name/indels/small.indels`;
           bedFileToAnnoFile("$output_dir/$sample_name/indels/small.indels.bed");
           `cat $output_dir/$sample_name/indels/large.indels $output_dir/$sample_name/indels/small.indels | joinx sort >$output_dir/$sample_name/indels/indels.hq`;
-      }      
+      }
   } else { #use the validated indels
       `cut -f 1-5 $large_indel_file >$output_dir/$sample_name/indels/large.indels`;
       `grep -w Somatic $small_indel_file | cut -f 1-5 >$output_dir/$sample_name/indels/small.indels`;
@@ -630,9 +627,9 @@ sub execute {
   push(@snv_files,"$output_dir/$sample_name/snvs/snvs.validated") if (-s "$output_dir/$sample_name/snvs/snvs.validated");
   push(@snv_files,"$output_dir/$sample_name/snvs/snvs.notvalidated") if (-s "$output_dir/$sample_name/snvs/snvs.notvalidated");
   push(@snv_files, "$output_dir/$sample_name/snvs/" . basename($newcalls)) if (-s "$output_dir/$sample_name/snvs/" . basename($newcalls));
-  
+
   my $indel_file = "$output_dir/$sample_name/indels/indels.hq";
-  
+
 
   #clean the files
   my $i=0;
@@ -709,7 +706,7 @@ sub execute {
   # $indel_file =~ s/\.bed//g;
   # $indel_file = $indel_file . ".anno";
 
-  
+
 
   #-------------------------------------------------------
   #add tiers
@@ -726,13 +723,13 @@ sub execute {
       $indel_file = bedFileToAnnoFile($indel_file);
   }
 
-  
+
   #----------------------------------------------------
   # add dbsnp/gmaf
 
   if ($self->add_dbsnp_and_gmaf){
       print STDERR "Adding dbsnp info...\n";
-      
+
       if(defined($model->previously_discovered_variations_build)){
           my $dbsnpPath = $model->previously_discovered_variations_build->snv_result->path;
           my $dbsnpVcf = $dbsnpPath . "snvs.hq.vcf";
@@ -740,11 +737,11 @@ sub execute {
               for($i=0;$i<@snv_files;$i++){
                   my $snv_file = $snv_files[$i];
                   my $newfile = addName($snv_files[$i],"rsid");
-                        
+
                   #handle zero size files
                   if( -z $snv_file ){
                       `touch $newfile`;
-                  } else {                      
+                  } else {
                       my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
                           anno_file => $snv_file,
                           output_file => $newfile,
@@ -778,79 +775,82 @@ sub execute {
           print STDERR "Warning: couldn't find VCF with dbsnp annotations - skipping dbsnp anno\n";
       }
   }
-      
-          
-      
+
+
+
   #-------------------------------------------------------
   #get readcounts
   if($self->get_readcounts){
       print STDERR "Getting readcounts...\n";
-      for($i=0;$i<@snv_files;$i++){
-          if($self->tumor_only){
-              $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, $tumor_bam);
-          } else {
-              $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, $normal_bam, $tumor_bam);
-          }
-      }
-      
-      #we can grab more accurate indel readcounts from the intermediate files, but only if the indel realignment was done
-      #realigned
-      if($small_indel_file =~ /final_output/){
-          my %counts;
-          #first small indels
-          my $inFh = IO::File->new( $small_indel_file ) || die "can't open small indel file\n";
-          while( my $line = $inFh->getline ){
-              chomp($line);
-              my @F = split("\t",$line);
-
-              next if($line =~ /^chrom/ || !($line =~ /Somatic/));
-              my $key = join("\t",@F[0..4]);
-              $F[9] =~ s/%//g;
-              $F[13] =~ s/%//g;
-              $counts{$key} = join("\t",(@F[7..9],@F[11..13]));
-          }
-          #then large indels
-          $inFh = IO::File->new( $large_indel_file ) || die "can't open small indel file\n";
-          while( my $line = $inFh->getline ){
-              chomp($line);
-              my @F = split("\t",$line);
-
-              next if($line =~ /^chrom/ || !($line =~ /Somatic/));
-              my $key = join("\t",@F[0..4]);
-              $counts{$key} = join("\t",($F[22]-$F[9], $F[9], $F[23], $F[27]-$F[20], $F[20], $F[28]));
-          }
-
-          open(OUTFILE,">$indel_file.rcnt");
-          my $header = join("\t",qw(Normal_ref_count Normal_var_count Normal_VAF Tumor_ref_count Tumor_var_count Tumor_VAF));
-
-          $inFh = IO::File->new( $indel_file ) || die "can't open small indel file\n";
-          while( my $line = $inFh->getline ){
-              chomp($line);
-              my @F = split("\t",$line);
-
-              if($line =~ /^chrom/){
-                  print OUTFILE $line . "\t" . $header . "\n";
-                  next;
-              }
-              my $key = join("\t",@F[0..4]);
-
-              if(defined($counts{$key})){
-                  print OUTFILE join("\t",(@F)) . "\t" . $counts{$key} . "\n";
+      if(!(defined($tumor_bam)) || !(-s $tumor_bam)){
+          print STDERR "Tumor bam not found - skipping readcounting\n";
+      } else {
+          for($i=0;$i<@snv_files;$i++){
+              if(!defined($normal_bam) || $self->tumor_only){
+                  $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, $tumor_bam);
               } else {
-                  print OUTFILE join("\t",(@F)) . "\tNA\tNA\tNA\tNA\tNA\tNA\n";
+                  $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, $normal_bam, $tumor_bam);
               }
           }
-          $indel_file = addName($indel_file,"rcnt")
 
-      } else { #not realigned, use bam-readcount
-          if($self->tumor_only){
-              $indel_file = getReadcounts($indel_file, $ref_seq_fasta, $tumor_bam);
-          } else {
-              $indel_file = getReadcounts($indel_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
+          #we can grab more accurate indel readcounts from the intermediate files, but only if the indel realignment was done
+          #realigned
+          if($small_indel_file =~ /final_output/){
+              my %counts;
+              #first small indels
+              my $inFh = IO::File->new( $small_indel_file ) || die "can't open small indel file\n";
+              while( my $line = $inFh->getline ){
+                  chomp($line);
+                  my @F = split("\t",$line);
+
+                  next if($line =~ /^chrom/ || !($line =~ /Somatic/));
+                  my $key = join("\t",@F[0..4]);
+                  $F[9] =~ s/%//g;
+                  $F[13] =~ s/%//g;
+                  $counts{$key} = join("\t",(@F[7..9],@F[11..13]));
+              }
+              #then large indels
+              $inFh = IO::File->new( $large_indel_file ) || die "can't open small indel file\n";
+              while( my $line = $inFh->getline ){
+                  chomp($line);
+                  my @F = split("\t",$line);
+
+                  next if($line =~ /^chrom/ || !($line =~ /Somatic/));
+                  my $key = join("\t",@F[0..4]);
+                  $counts{$key} = join("\t",($F[22]-$F[9], $F[9], $F[23], $F[27]-$F[20], $F[20], $F[28]));
+              }
+
+              open(OUTFILE,">$indel_file.rcnt");
+              my $header = join("\t",qw(Normal_ref_count Normal_var_count Normal_VAF Tumor_ref_count Tumor_var_count Tumor_VAF));
+
+              $inFh = IO::File->new( $indel_file ) || die "can't open small indel file\n";
+              while( my $line = $inFh->getline ){
+                  chomp($line);
+                  my @F = split("\t",$line);
+
+                  if($line =~ /^chrom/){
+                      print OUTFILE $line . "\t" . $header . "\n";
+                      next;
+                  }
+                  my $key = join("\t",@F[0..4]);
+
+                  if(defined($counts{$key})){
+                      print OUTFILE join("\t",(@F)) . "\t" . $counts{$key} . "\n";
+                  } else {
+                      print OUTFILE join("\t",(@F)) . "\tNA\tNA\tNA\tNA\tNA\tNA\n";
+                  }
+              }
+              $indel_file = addName($indel_file,"rcnt");
+
+          } else { #not realigned, use bam-readcount
+              if(!defined($normal_bam) || $self->tumor_only){
+                  $indel_file = getReadcounts($indel_file, $ref_seq_fasta, $tumor_bam);
+              } else {
+                  $indel_file = getReadcounts($indel_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
+              }
           }
       }
   }
-      
 
   #------------------------------------------------------
   # combine the files into one master table and append type (newcalls, validated, unvalidated)
@@ -864,15 +864,15 @@ sub execute {
   my $inFh = IO::File->new( $indel_file ) || die "can't open indel file\n";
   while( my $line = $inFh->getline ){
       chomp($line);
-      my @F = split("\t",$line);         
+      my @F = split("\t",$line);
 
-      if($line =~ /^chrom/){ 
+      if($line =~ /^chrom/){
           print OUTFILE $line . "\tstatus\n";
           next;
       }
       print OUTFILE2 join("\t",(@F,$indel_type)) . "\n";
   }
-      
+
   for($i=0;$i<@snv_files;$i++){
       my $snv_file = $snv_files[$i];
       my $snv_type = "newcall";
@@ -892,10 +892,10 @@ sub execute {
   }
   close(OUTFILE);
   close(OUTFILE2);
-  
+
   `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tmp >>$output_dir/$sample_name/snvs.indels.annotated`;
   `rm -f $output_dir/$sample_name/snvs.indels.annotated.tmp`;
-      
+
   # convert master table to excel
   my $workbook  = Spreadsheet::WriteExcel->new("$output_dir/$sample_name/snvs.indels.annotated.xls");
   my $worksheet = $workbook->add_worksheet();
