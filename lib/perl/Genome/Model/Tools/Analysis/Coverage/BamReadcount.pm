@@ -80,7 +80,7 @@ class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
         is => 'Integer',
         is_optional => 1,
         doc => 'maximum indel size to grab readcounts for. (The larger the indel, the more skewed the readcounts due to mapping problems)',
-        default => 2,
+        default => 4,
     },
 
     count_non_reference_reads => {

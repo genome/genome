@@ -73,7 +73,7 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
             is => 'Integer',
             is_optional => 1,
 	    doc => 'maximum indel size to grab readcounts for. (The larger the indel, the more skewed the readcounts due ot mapping problems)',
-            default => 2,
+            default => 4,
         },
 
         header_prefixes => { 
