@@ -629,9 +629,7 @@ sub _append_command_to_workflow {
                 die ("Non-optional property ".$property->property_name." is not provided\n");
             }
             my $from_op = $self->_get_operation_for_module_name($property_def->[0], $workflow);
-            if ($property_name =~ /clinical_data_file/) {
-                print "from_op: ".Data::Dumper::Dumper($from_op);
-            }
+            
             if (!$from_op) {
                 if ($property->is_optional) {
                     next;
