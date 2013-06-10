@@ -41,6 +41,7 @@ class Genome::Model::ReferenceAlignment {
                                     },
     ],
     has => [
+        subject                     => { is => 'Genome::Sample', id_by => 'subject_id', doc => 'the subject of alignment and variant detection is a single sample' },
         align_dist_threshold         => { via => 'processing_profile'},
         dna_type                     => { via => 'processing_profile'},
         picard_version               => { via => 'processing_profile'},
