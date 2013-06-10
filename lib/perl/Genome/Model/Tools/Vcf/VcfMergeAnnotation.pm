@@ -226,10 +226,28 @@ sub annotateVcf{
 		# Loop through the vep file and add annotations if found
 		for (my $i=$counter; $i<$numOfLines; $i++){
 			if ($CHROM eq $vep[$i]{CHROM}){ # Chromosome match
-				if ($POS == $vep[$i]{POS}){ # Position match					
+				if ($POS == $vep[$i]{POS}){ # Position match				
 					$INFO .= ".Gene=$vep[$i]{GENE}";
-					if ($vep_class_rank{$vep[$i]{CONSEQ}} >= $threshold){
-						$INFO .= ".Consequences=$vep[$i]{CONSEQ}";
+    				my $count = ($vep[$i]{CONSEQ} =~ tr/,//);
+    				print "\n\nThere are $count , charcters in the string\n\n";
+    				
+					if ($count == 0){
+						if ($vep_class_rank{$vep[$i]{CONSEQ}} >= $threshold){
+							$INFO .= ".Consequences=$vep[$i]{CONSEQ}";
+						}
+					} else {
+						my @conseqArray = split (",", $vep[$i]{CONSEQ});
+						my $hasHeader = 0;
+						for (my $j=0; $j<$count; $j++){
+							if ($vep_class_rank{$conseqArray[$j]} >= $threshold){
+								if (!$hasHeader){
+									$INFO .= ".Consequences=$conseqArray[$j]";
+									$hasHeader = 1;
+								} else {
+									$INFO .= ",$conseqArray[$j]";
+								}
+							}
+						}
 					}
 					$INFO .=".Protein_position=$vep[$i]{PROTEINPOS}.Amino_acids=$vep[$i]{AMINOACIDS}.$vep[$i]{EXTRA}"; #Append annotation to the INFO field
 					$INFO =~s/^\.+//; # Remove leading dots
