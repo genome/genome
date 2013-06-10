@@ -4,8 +4,11 @@ use strict;
 use warnings;
 
 use Genome;
+use Workflow;
+use Workflow::Simple;
 
 use XML::Simple;
+use Path::Class qw(file dir);
 
 use Genome::Sample::Command::Import;
 require File::Basename;
@@ -15,7 +18,8 @@ class Genome::InstrumentData::Command::Import::TcgaBam {
     has => [
         original_data_path => {
             is => 'Text',
-            doc => 'Original data path of import data file',
+            doc => 'Original data path of import data file. Must specify original_data_path, uuid, or uuid_file.',
+            is_optional => 1,
         },
         tcga_name => {
             is => 'Text',
@@ -95,6 +99,16 @@ class Genome::InstrumentData::Command::Import::TcgaBam {
             is_optional => 1,
             doc => 'From CGHub (may be found in metadata.xml or specified)',
         },
+        uuid => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Analysis UUID to download. Must specify original_data_path, uuid, or uuid_file.',
+        },
+        uuid_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'File containing analysis UUIDs to download. Must specify original_data_path, uuid, or uuid_file.',
+        },
         reference_sequence_build_id => {
             is => 'Text',
             valid_values => [qw/ 101947881 106942997 /],
@@ -109,6 +123,7 @@ class Genome::InstrumentData::Command::Import::TcgaBam {
         _inst_data => { is_optional => 1, },
         import_instrument_data_id => { via => '_inst_data', to => 'id', is_optional => 1, },
         _allocation => { via => '_inst_data', to => 'allocations', is_optional => 1, },
+        _original_alloc => { is_optional => 1, },
         _absolute_path => { via => '_allocation', to => 'absolute_path', is_optional => 1, },
         _new_bam => {
             is_optional => 1,
@@ -137,14 +152,126 @@ HELP
 sub execute {
     my $self = shift;
 
-    # resolve command-line arguments and read in from metadata (if avail)
-    $self->_resolve_args;
-
     # Ref Seq
     if ( not $self->reference_sequence_build ) {
         $self->error_message('No reference sequence build given.');
         return;
     }
+
+    if ($self->uuid or $self->uuid_file) {
+        $self->_import_from_uuids;
+    }
+    else {
+        $self->_import_from_filepath;
+    }
+
+    return 1;
+}
+
+sub _import_from_uuids {
+    my $self = shift;
+
+    my @uuid = ();
+
+    if ($self->_validate_uuid($self->uuid)) {
+        push @uuid, $self->uuid;
+    }
+    else {
+        unless ($self->uuid_file) {
+            $self->error_message('Must specify --uuid or --uuid-file');
+            return;
+        }
+
+        unless (-f $self->uuid_file) {
+            $self->error_message('Not a file: ' . $self->uuid_file);
+            return;
+        }
+
+        my $uuid_file = file($self->uuid_file);
+
+        @uuid = grep { $_ } $uuid_file->slurp(chomp => 1);
+    }
+
+    $self->status_message('Importing the following UUIDs: ' . join(', ',@uuid));
+
+    for my $uuid (@uuid) {
+        unless($self->_validate_uuid($uuid)) {
+            $self->error_message('Not a valid uuid: ' . $uuid);
+            return;
+        }
+
+        my $tmp_xml = '/tmp/tcga_import_cgquery_data.xml';
+
+        $self->_sys_out('cgquery -o ' . $tmp_xml . ' analysis_id=' . $uuid);
+
+        my $info = XMLin($tmp_xml);
+        my $size = $info->{ResultSummary}->{downloadable_file_size};
+
+        my $kb_usage = 0;
+
+        if ($size->{units} eq 'GB') {
+            $kb_usage = $size->{content} * 1024 * 1024;
+        }
+        elsif ($size->{units} eq 'MB') {
+            $kb_usage = $size->{content} * 1024;
+        }
+        elsif ($size->{units} eq 'KB') {
+            $kb_usage = $size->{content};
+        }
+        else {
+            $self->error_message('Units on target BAM size not recognized: ' . $size->{units});
+            return;
+        }
+
+        $self->status_message('Target BAM file has KB size of: ' . $kb_usage);
+
+        my $alloc_path = 'build_merged_alignments/tcga_import_bams/' . $self->uuid;
+
+        my %alloc_params = (
+            disk_group_name     => 'info_genome_models',
+            allocation_path     => $alloc_path,
+            kilobytes_requested => $kb_usage,
+            owner_class_name    => 'Genome::InstrumentData::Command::Import::TcgaBam',
+            owner_id            => $self->uuid,
+        );
+
+        my $disk_alloc = Genome::Disk::Allocation->allocate(%alloc_params);
+
+        unless ($disk_alloc) {
+            $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%alloc_params));
+            return;
+        }
+
+        $self->status_message('Allocation Path: ' . $disk_alloc->absolute_path);
+
+        unless ( $self->_cghub_download($uuid, $disk_alloc->absolute_path) ) {
+            $self->error_message(
+                'Failed to download BAM with UUID: ' . $uuid . ' to path: ' . $disk_alloc->absolute_path . ' :: ' . $@
+            );
+
+            $disk_alloc->deallocate;
+
+            return;
+        }
+
+        my ($bam) = grep {$_ =~ m/\.bam$/} dir($disk_alloc->absolute_path)->subdir($uuid)->children;
+
+        $self->status_message('Downloaded BAM with UUID: ' . $uuid . ' to path: ' . $bam);
+
+        $self->original_data_path($bam);
+        $self->_original_alloc($disk_alloc);
+
+        $self->_import_from_filepath;
+    }
+
+    return 1;
+}
+
+sub _import_from_filepath {
+    my $self = shift;
+
+    # resolve command-line arguments and read in from metadata (if avail)
+    $self->_resolve_args;
 
     # Validate BAM
     my $bam_ok = $self->_validate_bam;
@@ -179,6 +306,7 @@ sub execute {
     # Rm Original BAM
     if($self->remove_original_bam){
         $self->_remove_original_bam; # no error check
+        $self->_original_alloc->deallocate;
     }
 
     # Unless otherwise specified, realign the imported BAM with our standard ref-alignment pipe
@@ -200,11 +328,14 @@ sub _resolve_args {
 
     my %metadata = %{$self->_read_in_metadata};
 
+    unless ($self->original_data_path or $self->uuid or $self->uuid_file) {
+        die $self->error_message("One of original_data_path or uuid or uuid_file is required.");
+    }
+
     my @optional_arg_names = qw| aliquot_id analysis_id participant_id sample_id |;
     for my $arg_name (@optional_arg_names){
         $self->$arg_name($self->_resolve_single_arg($arg_name, $metadata{$arg_name}));
     }
-
 
     my @required_arg_names = qw| import_source_name tcga_name target_region |;
     for my $arg_name (@required_arg_names){
@@ -264,9 +395,12 @@ sub _read_in_metadata {
 
     # check for xml or look for one in directory.
     my $no_xml = 1;
-    if(not defined $self->metadata_file){
-        (undef, my $base_path) = File::Basename::fileparse($self->original_data_path);
-        $self->metadata_file($base_path . '/metadata.xml');
+    if((not defined $self->metadata_file) and ($self->original_data_path)){
+        my $bam_dir = file($self->original_data_path)->dir;
+
+        $self->status_message('Searching for metadata file in: ' . $bam_dir);
+        $self->metadata_file($bam_dir . '/metadata.xml');
+
         if(-e $self->metadata_file){
             $no_xml = 0;
         }
@@ -275,6 +409,8 @@ sub _read_in_metadata {
     if(not $no_xml) {
         return $self->_parse_metadata_file($self->metadata_file);
     }
+
+    $self->status_message('No metadata file found.');
     return {};
 }
 
@@ -333,15 +469,19 @@ sub _md5_checksum_content {
     my( $self, $md ) = @_;
 
     my $content = eval{ $md->{Result}->{files}->{file}->{checksum}->{content}; };
+
     if( not $content ) {
-        my $filename = File::Basename::basename( $self->original_data_path );
-        my ($fileinfo) = eval{ grep {$_->{filename} eq $filename} @{$md->{Result}->{files}->{file}} };
+#        my $filename = File::Basename::basename( $self->original_data_path );
+        my ($fileinfo) = eval{ grep {$_->{filename} =~ m/\.bam$/} @{$md->{Result}->{files}->{file}} };
+
         if( not $fileinfo ) {
             $self->error_message("Failed to get files md5 info from metadata file");
             return;
         }
+
         $content = $fileinfo->{checksum}->{content};
     }
+
     if( not $content ) {
         $self->error_message("Failed to get checksum content for file");
         return;
@@ -366,6 +506,7 @@ sub _validate_bam {
         return;
     }
 
+    $self->status_message('BAM Found.');
     return 1;
 }
 
@@ -515,7 +656,7 @@ sub _create_imported_instrument_data {
     unless ($disk_alloc) {
         $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%alloc_params));
         $import_instrument_data->delete;
-        return 1;
+        return;
     }
     $self->status_message("Alignment allocation created for $instrument_data_id .");
 
@@ -791,6 +932,99 @@ sub _create_model_and_request_build {
     $self->status_message('Create model and request build...OK');
 
     return $model;
+}
+
+sub _cghub_download {
+    my ($self, $uuid, $path) = @_;
+
+    if (!-d $path) {
+        $self->error_message('Not a directory: ' . $path);
+        return;
+    }
+
+    my $absolute_path = dir($path);
+
+    $absolute_path->subdir($uuid);
+
+    $self->status_message('Absolute Path: ' . $absolute_path);
+
+    my %params = (
+        uuid => $uuid,
+        target_path => $path
+    );
+
+    my $workflow = Workflow::Model->create(
+        name => 'genetorrent-' . $uuid,
+        input_properties => [keys %params],
+        output_properties => ['done'],
+    );
+
+    $workflow->log_dir($path);
+
+    my $op = $workflow->add_operation(
+        name => 'genetorrent',
+        operation_type => Workflow::OperationType::Command->get(id => 'Genome::Model::Tools::GeneTorrent'),
+#        parallel_by => "file"
+    );
+
+#    my %params = (file => ["a".."d"]);
+
+    my $input_connector = $workflow->get_input_connector;
+    my $output_connector = $workflow->get_output_connector;
+
+    foreach my $key (keys(%params)) {
+        $workflow->add_link(
+            left_operation  => $input_connector,
+            left_property   => $key,
+            right_operation => $op,
+            right_property  => $key
+        );
+    }
+
+    $workflow->add_link(
+        left_operation  => $op,
+        left_property   => 'result',
+        right_operation => $output_connector,
+        right_property  => 'done'
+    );
+
+    my $result = Workflow::Simple::run_workflow_lsf($workflow, %params);
+
+    unless ($result) {
+        $self->error_message('Download Failed: ' . $@);
+    }
+
+    $self->status_message('Download Result: ' . $result);
+
+    $self->_sys_out(
+        'wget --verbose --no-check-certificate -O '
+        . $absolute_path->subdir($uuid)->file('metadata.xml')
+        . ' https://cghub.ucsc.edu/cghub/metadata/analysisAttributes/' . $uuid
+    );
+
+    return 1;
+}
+
+sub _sys_out {
+    my ($self,$cmd) = @_;
+
+    $self->status_message('Cmd: ' . $cmd);
+
+    my $res = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+
+    if ( not $res ) {
+        $self->error_message('Cannot execute command "' . $cmd . '" : ' . $@);
+        return;
+    }
+
+    return $res;
+}
+
+sub _validate_uuid {
+    my ($self,$str) = @_;
+
+    $self->status_message('Validating UUID : ' . $str);
+    return $str =~ /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/;
 }
 
 1;

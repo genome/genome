@@ -60,7 +60,7 @@ class Genome::Model::Build {
         model_id                => { is => 'NUMBER', implied_by => 'model', constraint_name => 'GMB_GMM_FK' },
         model_name              => { via => 'model', to => 'name' },
         type_name               => { via => 'model' },
-        subject                 => { via => 'model' },
+        subject                 => { via => 'model', is => 'Genome::Subject' },
         subject_id              => { via => 'model' },
         subject_name            => { via => 'subject', to => 'name' },
         processing_profile      => { via => 'model' },

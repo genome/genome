@@ -51,7 +51,7 @@ sub create_test_group {
     return Genome::Disk::Group->create(
         disk_group_name => $group_name,
         permissions => '755',
-        sticky => '1',
+        setgid => '1',
         subdirectory => $subdir,
         unix_uid => 0,
         unix_gid => 0,

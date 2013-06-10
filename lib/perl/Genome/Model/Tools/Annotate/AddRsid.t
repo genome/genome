@@ -10,6 +10,7 @@ use_ok($class);
 
 eval {
     my $data_dir = Genome::Utility::Test->data_dir($class);
+    $data_dir = "$data_dir/v2";
     ok(-d $data_dir, "data_dir exists: $data_dir") or abort;
 
     # check inputs

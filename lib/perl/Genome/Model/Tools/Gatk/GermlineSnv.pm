@@ -76,6 +76,10 @@ EOS
 sub execute {                               # replace with real execution logic.
 	my $self = shift;
 
+    unless ($self->is_legacy_version($self->version)) {
+        $self->error_message("Can't run GermlineSnv with GATK version after 2");
+        die $self->error_message;
+    }
         # note: this crashes when using v. 131, because the 'get' returns undef
 #        my $model = Genome::Model->get( name => "dbSNP-human-".$self->dbSNP_version);
 	my $dbsnp_rod;
