@@ -264,13 +264,15 @@ sub execute {
                 $annotations{"-"}->{trv_type} = [$fields[13]];
                 $annotations{"-"}->{ensembl_id} = "-";
             }
-            foreach my $annot (keys %annotations) {
-                $fields[6] = $annot;
-                $fields[21] = $annot;
-                $fields[22] = join(",", @{$annotations{$annot}->{sources}});
-                $fields[13] = join(",", @{$annotations{$annot}->{trv_type}});
-                $fields[23] = $annotations{$annot}->{ensembl_id};
-                $out->print(join("\t", @fields)."\n");
+            if (!$reg_db or ($reg_db and ($var{regdb_score} =~ /1/ || $var{regdb_score} =~ /2/))) { #only use regdb stuff
+                foreach my $annot (keys %annotations) {
+                    $fields[6] = $annot;
+                    $fields[21] = $annot;
+                    $fields[22] = join(",", @{$annotations{$annot}->{sources}});
+                    $fields[13] = join(",", @{$annotations{$annot}->{trv_type}});
+                    $fields[23] = $annotations{$annot}->{ensembl_id};
+                    $out->print(join("\t", @fields)."\n");
+                }
             }
         }
     }
