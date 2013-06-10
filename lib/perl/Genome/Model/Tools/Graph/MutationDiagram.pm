@@ -23,6 +23,7 @@ class Genome::Model::Tools::Graph::MutationDiagram {
             type => 'String',
             doc => 'name/version number of the reference transcripts set ("NCBI-human.combined-annotation/0") Defaults to "NCBI-human.combined-annotation/54_36p_v2"',
             example_values => ['NCBI-human.combined-annotation/54_36p_v2'],
+            is_optional => 1,
         },
         annotation_build_id => {
             type => 'Text',
@@ -94,7 +95,7 @@ sub execute {
     my $self = shift;
     my $anno_file = $self->annotation;
     if($anno_file) {
-        my $anno_obj = new Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram(
+        my %params = (
             annotation => $anno_file,
             annotation_format => $self->annotation_format,
             annotation_build_id => $self->annotation_build_id,
@@ -108,6 +109,19 @@ sub execute {
             max_display_freq => $self->max_display_frequency,
             lolli_shape => $self->lolli_shape,
         );
+        if ($self->annotation_build_id) {
+            $params{annotation_build_id} = $self->annotation_build_id;
+        }
+        elsif ($self->reference_transcripts) {
+            $params{reference_transcripts} = $self->reference_transcripts;
+        }
+        else {
+            $self->error_message("Must provide either annotation_build_id or reference_transcripts");
+            return;
+        }
+
+        my $anno_obj = new Genome::Model::Tools::Graph::MutationDiagram::MutationDiagram(
+            %params);
     }
     else {
         $self->error_message("Must provide annotation output format");
