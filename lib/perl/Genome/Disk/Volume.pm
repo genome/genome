@@ -150,7 +150,10 @@ sub _allocated_kb {
     my $f = "sum($field)";
 
     # UR caches the value so we're just going to reach in and "fix" it.
-    if(exists $set->{$f}) {
+    # Newer UR Sets store all their cached aggregate values under the __aggregates key
+    if (exists $set->{__aggregates}) {
+        $set->__invalidate_cache__($f);
+    } elsif (exists $set->{$f}) {
         delete $set->{$f}
     }
 
@@ -158,7 +161,7 @@ sub _allocated_kb {
 
     # Now we'll check that it is cached so we test that the underlying
     # structure hasn't changed.
-    unless(exists $set->{$f}) {
+    unless(exists($set->{$f}) || (exists($set->{__aggregates}) && exists($set->{__aggregates}->{$f}))) {
         die $self->error_message("$f value not found in set's hash. Did underlying object structure change?");
     }
 
