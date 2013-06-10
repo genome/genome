@@ -16,17 +16,13 @@ use Test::More;
 
 my $class = 'Genome::InstrumentData::Gatk::IndelRealignerResult';
 use_ok($class) or die;
-my $test_data_dir = Genome::Utility::Test->data_dir_ok($class, 'v1');
+my $result_data_dir = Genome::Utility::Test->data_dir_ok($class, 'v1');
 
-my $bam_source = Genome::InstrumentData::AlignmentResult::Merged->__define__(
-    id => 9999,
-    output_dir => $test_data_dir,
-);
-my $reference_build = Genome::Model::Build::ImportedReferenceSequence->__define__(
-    name => 'Test Ref Build v1',
-    data_directory => $test_data_dir,
-);
-sub Genome::InstrumentData::bam_file { return $_[0]->bam_path; }
+# Inputs
+use_ok('Genome::InstrumentData::Gatk::Test') or die;
+my $gatk_test = Genome::InstrumentData::Gatk::Test->get;
+my $bam_source = $gatk_test->bam_source;
+my $reference_build = $gatk_test->reference_build;
 my %params = (
     bam_source => $bam_source,
     reference_build => $reference_build,
@@ -42,9 +38,10 @@ ok($indel_realigner, 'created gatk indel realigner');
 
 # Outputs
 is($indel_realigner->intervals_file, $indel_realigner->output_dir.'/'.$bam_source->id.'.bam.intervals', 'intervals file named correctly');
-ok(-s $indel_realigner->bam_file, 'intervals file exists');
+ok(-s $indel_realigner->intervals_file, 'intervals file exists');
 is($indel_realigner->bam_file, $indel_realigner->output_dir.'/'.$indel_realigner->id.'.bam', 'bam file named correctly');
 ok(-s $indel_realigner->bam_file, 'bam file exists');
+ok(-s $indel_realigner->bam_file.'.bai', 'bam index exists');
 
 # Allocation params
 is(
