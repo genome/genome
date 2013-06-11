@@ -78,7 +78,7 @@ my @errs = $abuild->validate_for_start;
 is(scalar @errs, 1, "attempting to specify a reference build from the wrong model is an error");
 like($errs[0]->desc, qr/is not a build of model/, "error string looks correct");
 
-my $roi_data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Build-ImportedAnnotation/v2";
+my $roi_data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Build-ImportedAnnotation/v3";
 my $roi_expected_file = $roi_data_dir."/expected.bed";
 my $roi_expected_file2 = $roi_data_dir."/expected2.bed";
 my $roi_expected_file3 = $roi_data_dir."/expected3.bed";

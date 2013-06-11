@@ -363,22 +363,23 @@ sub load_annotations
 sub trv_to_mutation_type
 {
     my $trv_type = shift;
-    return( "Missense_Mutation" ) if( $trv_type eq "missense" );
-    return( "Nonsense_Mutation" ) if( $trv_type eq "nonsense" );
-    return( "Nonstop_Mutation" ) if( $trv_type eq "nonstop" );
-    return( "Silent" ) if( $trv_type eq "silent" );
-    return( "Splice_Site" ) if( $trv_type eq "splice_site" || $trv_type eq "splice_site_del" || $trv_type eq "splice_site_ins" );
-    return( "Frame_Shift_Del" ) if( $trv_type eq "frame_shift_del" );
-    return( "Frame_Shift_Ins" ) if( $trv_type eq "frame_shift_ins" );
-    return( "In_Frame_Del" ) if( $trv_type eq "in_frame_del" );
-    return( "In_Frame_Ins" ) if( $trv_type eq "in_frame_ins" );
-    return( "RNA" ) if( $trv_type eq "rna" );
-    return( "3'UTR" ) if( $trv_type eq "3_prime_untranslated_region" );
-    return( "5'UTR" ) if( $trv_type eq "5_prime_untranslated_region" );
-    return( "3'Flank" ) if( $trv_type eq "3_prime_flanking_region" );
-    return( "5'Flank" ) if( $trv_type eq "5_prime_flanking_region" );
+    return( "Missense_Mutation" ) if( $trv_type =~ /missense/ );
+    return( "Nonsense_Mutation" ) if( $trv_type =~ /nonsense/ );
+    return( "Nonstop_Mutation" ) if( $trv_type =~ /nonstop/ );
+    return( "Silent" ) if( $trv_type =~ /silent/ );
+    return( "Splice_Site" ) if( $trv_type =~ /splice_site/ );
+    return( "Frame_Shift_Del" ) if( $trv_type =~ /frame_shift_del/ );
+    return( "Frame_Shift_Ins" ) if( $trv_type =~ /frame_shift_ins/ );
+    return( "In_Frame_Del" ) if( $trv_type =~ /in_frame_del/ );
+    return( "In_Frame_Ins" ) if( $trv_type =~ /in_frame_ins/ );
+    return( "RNA" ) if( $trv_type =~ /rna/ );
+    return( "3'UTR" ) if( $trv_type =~ /3_prime_untranslated_region/ );
+    return( "5'UTR" ) if( $trv_type =~ /5_prime_untranslated_region/ );
+    return( "3'Flank" ) if( $trv_type =~ /3_prime_flanking_region/ );
+    return( "5'Flank" ) if( $trv_type =~ /5_prime_flanking_region/ );
 
-    return( "Intron" ) if( $trv_type eq "intronic" || $trv_type =~ /^splice_region/ );
+    return( "Intron" ) if( $trv_type =~ /intronic/ || $trv_type =~ /splice_region/ );
+    return( "IGR" ) if ($trv_type =~ /regulatory/);
     return( "Targeted_Region" ) if( $trv_type eq "-" );
 
     warn( "Unknown mutation type $trv_type\n" );

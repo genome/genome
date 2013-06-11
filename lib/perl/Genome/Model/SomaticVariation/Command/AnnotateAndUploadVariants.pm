@@ -24,11 +24,26 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         build => {
             is => 'Genome::Model::Build::SomaticVariation',
             id_by => 'build_id',
-        }
+        },
+        regulatory_annotations => {
+            is => 'Genome::FeatureList',
+            is_input => 1,
+            is_many => 1,
+            is_optional => 1,
+        },
+        get_regulome_db => {
+            is => 'Boolean',
+            default => 0,
+            is_optional => 1,
+            is_input => 1,
+        },
     ],
     has_param => [
         lsf_queue => {
             default => 'apipe',
+        },
+        lsf_resource => {
+            default => "-M 20000000 -R 'select[mem>20000] rusage[mem=20000]'",
         },
         joinx_version => {
             is => "Text",
@@ -38,7 +53,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
         },
         lsf_resource => { 
             is => 'Text',
-            default => "-R 'rusage[mem=8000]' -M 8000000",
+            default => "-R 'rusage[mem=16000]' -M 16000000",
         },
     ],
 };
@@ -58,7 +73,7 @@ sub execute{
     my %files;
     my %vcf_files;
 
-    my ($tier1_snvs, $tier2_snvs, $tier1_indels, $tier2_indels);
+    my ($tier1_snvs, $tier2_snvs, $tier3_snvs, $tier4_snvs, $tier1_indels, $tier2_indels, $tier3_indels, $tier4_indels);
     
     if ($build->snv_detection_strategy){
         $tier1_snvs = $build->data_set_path("effects/snvs.hq.novel.tier1",$version,'bed');
@@ -72,6 +87,16 @@ sub execute{
             die $self->error_message("No tier 2 snvs file for build!");
         }
         $files{'snvs.hq.tier2'} = $tier2_snvs;
+        $tier3_snvs = $build->data_set_path("effects/snvs.hq.novel.tier3", $version, "bed");
+        unless(-e $tier3_snvs) {
+            die $self->error_message("No tier 3 snvs file for build!");
+        }
+        $files{'snvs.hq.tier3'} = $tier3_snvs;
+        $tier4_snvs = $build->data_set_path("effects/snvs.hq.novel.tier4", $version, "bed");
+        unless(-e $tier4_snvs) {
+            die $self->error_message("No tier 4 snvs file for build!");
+        }
+        $files{'snvs.hq.tier4'} = $tier4_snvs;
         my $snvs_vcf = $build->data_directory."/variants/snvs.vcf.gz";
         unless(-e $snvs_vcf) {
             die $self->error_message("No snvs vcf");
@@ -91,6 +116,16 @@ sub execute{
             die $self->error_message("No tier 2 indels file for build!");
         }
         $files{'indels.hq.tier2'} = $tier2_indels;
+        $tier3_indels = $build->data_set_path("effects/indels.hq.novel.tier3",$version,'bed');
+        unless(-e $tier3_indels) {
+            die $self->error_message("No tier 3 indels file for build!");
+        }
+        $files{'indels.hq.tier3'} = $tier3_indels;
+        $tier4_indels = $build->data_set_path("effects/indels.hq.novel.tier4",$version,'bed');
+        unless(-e $tier4_indels) {
+            die $self->error_message("No tier 4 indels file for build!");
+        }
+        $files{'indels.hq.tier4'} = $tier4_indels;
     }
 
     #annotate variants
@@ -102,13 +137,13 @@ sub execute{
     my $annotation_build_id = $self->build->annotation_build->id;
 
     my %annotation_params = (
-        no_headers => 1,
         use_version => $annotator_version,
         build_id => $annotation_build_id,
     );
 
     my $annotation_output_version=1;  #TODO, do we even have an annotation file format?  need to figure out how to resolve this w/ data_set_path
     my $upload_output_version = 1; #TODO, same issue here as with annotation output version
+
 
     for my $key (keys %files){
         my $variant_file = $files{$key};
@@ -170,6 +205,10 @@ sub execute{
                 $output->close;
                 my $rm_cmd = "rm -f ".$annotation_params{output_file};
                 `$rm_cmd`;
+                
+                #Make a version of the annotation file without a header
+                `mv $final_output_file $final_output_file.header`;
+                `grep -v "^chromosome_name" $final_output_file.header > $final_output_file`;
             }
 
             #upload variants
@@ -248,6 +287,8 @@ sub execute{
     #Annotate SVs. Need to handle mouse vs human and human 36 vs 37
     $self->status_message("Executing sv annotation");
 
+    my $species_name = $build->subject->species_name;
+    
     if ($build->sv_detection_strategy) {
         my $sv_sr  = $build->final_result_for_variant_type('sv');
         if ($sv_sr) {
@@ -255,7 +296,6 @@ sub execute{
             if ($sv_dir and -d $sv_dir) {
                 my $sv_file = $sv_dir . '/svs.merge.file.somatic';
                 if ($sv_file and -s $sv_file) {
-                    my $species_name = $build->subject->species_name;
                     if ($species_name and $species_name =~/^(human|mouse)$/) {
                         my $sv_annot_out_file = $build->data_directory . '/effects/svs.hq.annotated';
                         my $fusion_out_file   = $build->data_directory . '/effects/svs.hq.fusion_transcripts.out';
@@ -282,7 +322,7 @@ sub execute{
                         
                         my $ref_seq_build = $build->reference_sequence_build;
                         if ($species_name eq 'human') {
-                            my $annot_file = $self->_get_human_sv_annot_file($ref_seq_build);
+                            my $annot_file = $self->_get_human_sv_annot_file();
 
                             if ($annot_file) {
                                 push @annotator_list, 'Dbsnp', 'Segdup', 'Dbvar';
@@ -327,6 +367,78 @@ sub execute{
             $self->warning_message('No sv software result for this build');
         }
     }
+
+    if ($self->regulatory_annotations) {
+        my $count = 0;
+        my $final_name = $build->data_directory."/effects/snvs.hq.annotated.bed";
+        my $header = "#chr\tstart\tstop\talleles\tcount1\tcount2";
+        my @added_columns;
+        my $input_file = $build->data_directory."/variants/snvs.hq.bed";
+        for my $annotation ($self->regulatory_annotations) {
+            if ($annotation->is_1_based) {
+                $self->error_message("Regulatory annotation sets must be in true-BED format");
+                die $self->error_message;
+            }
+            $count++;
+            push @added_columns, $count+6;
+            my $base_name = $annotation->name;
+            my $bed_file = $annotation->file_path;
+            my $output_file = $build->data_directory."/effects/snvs.hq.".$count.".bed";
+            my $rt = Genome::Model::Tools::BedTools::Map->execute(
+                input_file_a => $input_file,
+                input_file_b => $bed_file,
+                output_file => $output_file,
+                operation => "distinct",
+                column => 4,
+                use_version => "2.16.2",
+                null => '-',
+            );
+            unless ($rt) {
+                $self->error_message("Failed to annotate with bedtools map");
+                return;
+            }
+            $header .= "\t$base_name";
+            $input_file = $output_file;
+        }
+        
+        my $cmd = "echo \"$header\" > $final_name; cat ".$build->data_directory."/effects/snvs.hq.$count.bed >> $final_name";
+        $self->status_message("Running command $cmd");
+        `$cmd`;
+
+        my @in_files;
+        for my $tier ((2,3,4)) {
+            if(my $file = $build->data_set_path("effects/snvs.hq.tier$tier", $annotation_output_version, "annotated.top.header")){
+                if (-s $file) {
+                    push @in_files, $file;
+                }
+            }
+        }
+        for my $in_file (@in_files) {
+            my $append = Genome::Model::Tools::Annotate::AppendColumns->execute(
+                additional_columns_file => $final_name,
+                input_variants => $in_file,
+                output_file => $in_file.".regulatory",
+                columns_to_append => \@added_columns,
+                chrom_column => 1,
+                start_column => 2,
+                stop_column => 3,
+            );
+            unless ($append) {
+                $self->error_message("Append columns failed for ".$in_file);
+                return;
+            }
+        }
+    }
+    if ($self->get_regulome_db) {
+        my $rdb_file = $build->data_set_path("effects/snvs.hq.regulomedb", 1, "full");
+        my $rdb_rv = Genome::Model::Tools::RegulomeDb::GetAnnotationsForVariants->execute(
+            variant_list => $build->data_set_path("variants/snvs.hq", 2, "bed"),
+            output_file => $rdb_file,
+            format => "full",
+        );
+    }
+
+    #upload variants
 
     ##upload metrics
     $self->status_message("Uploading metrics");
@@ -373,29 +485,39 @@ sub execute{
     return 1;
 }
 
-#only run on human build 36 and 37 for now
-sub _get_human_sv_annot_file {
-    my ($self, $ref_seq_build) = @_;
+sub _get_db_version {
+    my $self = shift;
+    my $ref_seq_build = $self->build->reference_sequence_build;
     my $version = $ref_seq_build->version;
     my $type;
-    my $dbsnp_version;
-    my $species = "human";
-
     if ($version) {
         if ($version =~ /36/) {
-            $dbsnp_version = "130";
             $type = "build36";
         }
         elsif ($version =~ /37/) {
-            $dbsnp_version = "132";
             $type = "build37";
         }
-    }
-    
+    } 
     if ($ref_seq_build->id == 109104543) {
         $type = "build36";
+    }   
+    return $type;
+}
+
+#only run on human build 36 and 37 for now
+sub _get_human_sv_annot_file {
+    my $self = shift;
+    my $type = $self->_get_db_version();
+    my $dbsnp_version;
+    my $species = "human";
+
+    if ($type eq "build36") {
         $dbsnp_version = "130";
     }
+    elsif ($type eq "build37") {
+        $dbsnp_version = "132";
+    }
+
     return unless $type and $dbsnp_version;
     $self->status_message("Getting annotation files for species $species of version $type, dbsnp version $dbsnp_version");
     my $segdup = Genome::Db->get(source_name => 'ucsc', database_name => $species, external_version => $type);
