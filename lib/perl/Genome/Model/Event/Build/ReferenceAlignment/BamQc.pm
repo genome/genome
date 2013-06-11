@@ -30,8 +30,15 @@ sub shortcut {
 }
 
 sub execute {
-    my $self = shift;
+    my $self  = shift;
     my $build = $self->build;
+    my $pp    = $build->processing_profile;
+
+    #Skip for bwamem and bwasw for now until all qc tools work
+    if ($pp->read_aligner_name =~ /^bwa(mem|sw)$/i) {
+        $self->warning_message('For now, skip BamQc step for bwamem and bwasw alignment bam');
+        return 1;
+    }
 
     my %params = (
         $self->params_for_result,
