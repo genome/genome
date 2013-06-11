@@ -31,7 +31,7 @@ my $test_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-Tools-DetectVariants-
 ok(-e $test_dir, "Found test dir: $test_dir") or die;
 
 #Define the expected output dir where the expected Strelka results files are stored
-my $expected_output_dir = $test_dir . "expected_outputs/2013-01-08";
+my $expected_output_dir = $test_dir . "expected_outputs/2013-06-12";
 ok(-e $expected_output_dir, "Created or found expected output dir: $expected_output_dir") or die;
 
 #Define paths to a test tumor and normal BAM file
@@ -76,6 +76,7 @@ my $strelka = Genome::Model::Tools::DetectVariants2::Strelka->create(aligned_rea
                                                                      output_directory => $actual_output_dir,
                                                                      version => '0.4.6.2',
                                                                      params => $params_string,
+                                                                     control_aligned_reads_sample => 'TEST_NORMAL',
                                                                      aligned_reads_sample => 'TEST',);
 ok($strelka, 'strelka command created');
 $strelka->dump_status_messages(1);
