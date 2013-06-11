@@ -3,12 +3,12 @@
  [1mgenome model define mutational-significance[0m [--auto-assign-inst-data]
     [--auto-build-alignments] --processing-profile=? --somatic-variation-models=?[,?]
     --annotation-build=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
-    [--groups=?[,?]] [--model-name=?] [--pathway-file=?] [--categorical-clinical-data-file=?]
+    [--groups=?[,?]] [--model-name=?] [--categorical-clinical-data-file=?]
     [--numeric-clinical-data-file=?] [--glm-clinical-data-file=?] [--glm-model-file=?]
     [--omimaa-dir=?] [--cosmic-dir=?] [--bmr-modifier-file=?] [--extra-rois=?[,?]]
-    [--review-file-dir=?] [--regulome-dir=?] [--regions-of-interest=?[,?]]
+    [--regulome-bed=?] [--review-file-dir=?] [--regions-of-interest=?[,?]]
     [--gene-black-lists=?[,?]] [--variant-black-lists=?[,?]] [--additional-snv-lists=?[,?]]
-    [--additional-indel-lists=?[,?]] [--additional-sv-lists=?[,?]]
+    [--additional-indel-lists=?[,?]] [--additional-sv-lists=?[,?]] [--pathway-file=?]
 
 [4mSYNOPSIS[0m
 First, determine what group of somatic variation models you want to work on.  This might be all models in a model group, for example.
@@ -37,11 +37,6 @@ genome model define mutational-significance --model-name "Example Mutational Sig
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
-  [1mpathway-file[0m
-    Tab-delimited file of pathway information 
-    Default value
-    '/gscmnt/gc2108/info/medseq/ckandoth/music/pathscan/all_pathway_files/KEGG_120910' if not
-    specified
   [1mcategorical-clinical-data-file[0m
     Table of samples (y) vs. categorical clinical data category (x) 
   [1mnumeric-clinical-data-file[0m
@@ -60,12 +55,11 @@ genome model define mutational-significance --model-name "Example Mutational Sig
     Tab delimited multipliers per gene that modify BMR before testing 
   [1mextra-rois[0m
     Extra ROI files to include in MuSiC analysis 
+  [1mregulome-bed[0m
+    Bed file with regulome db scores for regions 
   [1mreview-file-dir[0m
     Path to directory of variant files with reviews.  Any variant with a review status other than S
     or V will be  ignored. 
-  [1mregulome-dir[0m
-    Path to directory of regulomeDb annotations of variants.  Full format is expected.	Files
-    should be	named with somatic variation model ids 
   [1mregions-of-interest[0m
     FeatureLists of regions to include in validation 
   [1mgene-black-lists[0m
@@ -79,6 +73,11 @@ genome model define mutational-significance --model-name "Example Mutational Sig
     FeatureLists of additional indel variants to include in validation 
   [1madditional-sv-lists[0m
     FeatureLists of additional structural variants to include in validation 
+  [1mpathway-file[0m
+    Tab-delimited file of pathway information 
+    Default value
+    '/gscmnt/gc2108/info/medseq/ckandoth/music/pathscan/all_pathway_files/KEGG_120910' if not
+    specified
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m
