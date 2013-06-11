@@ -52,5 +52,21 @@ sub resolve_allocation_disk_group_name {
     return 'info_alignments';
 }
 
+sub create {
+    my $class = shift;
+
+    my $self = $class->SUPER::create(@_);
+    return if not $self;
+
+    my $prepare_output_directory = eval{ $self->_prepare_output_directory; };
+    if ( not $prepare_output_directory ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to prepare output directory!') if $@;
+        return;
+    }
+
+    return $self;
+}
+
 1;
 

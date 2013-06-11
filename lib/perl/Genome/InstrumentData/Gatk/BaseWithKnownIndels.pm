@@ -47,13 +47,6 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    my $prepare_output_directory = eval{ $self->_prepare_output_directory; };
-    if ( not $prepare_output_directory ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to prepare output directory!') if $@;
-        return;
-    }
-
     my $known_indels_vcfs = $self->known_indels_vcfs;
     return if not $known_indels_vcfs; # undef on error
 
