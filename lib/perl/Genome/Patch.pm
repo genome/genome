@@ -22,11 +22,7 @@ Sub::Install::install_sub({
 # with the pg transition.  Supress for now.
 require UR;
 my $orig_errors = \&UR::Object::__errors__;
-sub __patched_errors__ {
-    $orig_errors->(@_);
-    return();
-};
-
+sub __patched_errors__ { return(); };
 delete $UR::Object::{__errors__};
 Sub::Install::install_sub({
     code => \&__patched_errors__,
