@@ -13,6 +13,11 @@ class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
     doc => 'runs BamQc on the bam(s) produced in the alignment step',
 };
 
+sub bsub_rusage {
+    my $self = shift;
+
+    return '-q long';
+}
 
 sub shortcut {
     my $self = shift;
