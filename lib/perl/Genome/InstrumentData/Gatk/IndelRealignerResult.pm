@@ -55,6 +55,7 @@ sub _create_targets {
 
     my $intervals_file = $self->intervals_file;
     my %target_creator_params = (
+        version => $self->version,
         input_bam => $self->input_bam_file,
         reference_fasta => $self->reference_fasta,
         output_intervals => $intervals_file,
@@ -67,7 +68,8 @@ sub _create_targets {
         $self->error_message('Failed to create realigner target creator!');
         return;
     }
-    if ( not $target_creator->execute ) {
+    if ( not eval{ $target_creator->execute; } ) {
+        $self->error_message($@) if $@;
         $self->error_message('Failed to execute realigner target creator!');
         return;
     }
@@ -88,11 +90,13 @@ sub _realign_indels {
 
     my $bam_file = $self->bam_file;
     my %realigner_params = (
+        version => $self->version,
         input_bam => $self->input_bam_file,
         reference_fasta => $self->reference_fasta,
         target_intervals => $self->intervals_file,
         output_realigned_bam => $bam_file,
         index_bam => 1,
+        target_intervals_are_sorted => 1,
     );
     $realigner_params{known} = $self->known_indels_vcfs if @{$self->known_indels_vcfs};
     $self->status_message('Params: '.Data::Dumper::Dumper(\%realigner_params));
@@ -102,7 +106,8 @@ sub _realign_indels {
         $self->error_message('Failed to create indel realigner!');
         return;
     }
-    if ( not $realigner->execute ) {
+    if ( eval{ not $realigner->execute; }) {
+        $self->error_message($@) if $@;
         $self->error_message('Failed to execute indel realigner!');
         return;
     }

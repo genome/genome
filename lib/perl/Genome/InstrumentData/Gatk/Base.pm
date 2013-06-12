@@ -15,6 +15,13 @@ class Genome::InstrumentData::Gatk::Base {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
         },
     ],
+    has_param => [
+        version => {
+            is => 'Text',
+            doc => 'Version of GATK to use.',
+            valid_values => [qw/ 2.4 /],
+        },
+    ],
     has_constant => [
         _tmpdir => {  calculate => q| return File::Temp::tempdir(CLEANUP => 1); |, },
         # inputs

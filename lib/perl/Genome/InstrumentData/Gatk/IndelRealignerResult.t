@@ -24,6 +24,7 @@ my $gatk_test = Genome::InstrumentData::Gatk::Test->get;
 my $bam_source = $gatk_test->bam_source;
 my $reference_build = $gatk_test->reference_build;
 my %params = (
+    version => 2.4,
     bam_source => $bam_source,
     reference_build => $reference_build,
 );
