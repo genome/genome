@@ -43,9 +43,16 @@ sub log_command {
     my @argv = @ARGV;
 
     # Fork twice... grandchild process will be an orphan, so parent won't wait for it to complete
-    my $pid = (defined(&DB::DB)? -1 : UR::Context::Process->fork()); #don't fork in the debugger
-    if ($pid) {
-        return 1;
+    unless(defined &DB::DB) { #don't fork in the debugger
+        my $pid = UR::Context::Process->fork();
+        if ($pid) {
+            return 1;
+        } else {
+            my $pid2 = UR::Context::Process->fork();
+            if($pid2) {
+                exit 0; #let the grandchild do the work
+            }
+        }
     }
 
     my $command_class = command_class() || '-';
