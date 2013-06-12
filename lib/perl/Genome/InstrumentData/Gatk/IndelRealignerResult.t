@@ -41,9 +41,12 @@ ok($indel_realigner, 'created gatk indel realigner');
 # Outputs
 is($indel_realigner->intervals_file, $indel_realigner->output_dir.'/'.$bam_source->id.'.bam.intervals', 'intervals file named correctly');
 ok(-s $indel_realigner->intervals_file, 'intervals file exists');
+Genome::Utility::Test::compare_ok($indel_realigner->intervals_file, $result_data_dir.'/expected.bam.intervals');
 is($indel_realigner->bam_file, $indel_realigner->output_dir.'/'.$indel_realigner->id.'.bam', 'bam file named correctly');
-ok(-s $indel_realigner->bam_file, 'bam file exists');
+ok(-s $indel_realigner->bam_file, 'bam file exists');#bam produced fin test is the same except for the knowns file in the header
 ok(-s $indel_realigner->bam_file.'.bai', 'bam index exists');
+ok(-s $indel_realigner->bam_flagstat_file, 'bam flagstat file exists');
+Genome::Utility::Test::compare_ok($indel_realigner->bam_flagstat_file, $result_data_dir.'/expected.bam.flagstat');
 
 # Allocation params
 is(
