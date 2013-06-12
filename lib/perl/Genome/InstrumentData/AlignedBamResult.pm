@@ -16,6 +16,10 @@ class Genome::InstrumentData::AlignedBamResult {
             is_output => 1,
             calculate => q| return $self->output_dir.'/'.$self->id.'.bam'; |, 
         },
+        bam_flagstat_file => {
+            calculate_from => [qw/ bam_file /],
+            calculate => q| return $bam_file.'.flagstat'; |,
+        },
     ],
 };
 
@@ -29,7 +33,7 @@ sub run_flagstat_on_output_bam_file {
         return;
     }
 
-    my $flagstat_file = $bam_file.'.flagstat';
+    my $flagstat_file = $self->bam_flagstat_file;
     $self->status_message("Flagstat file: $flagstat_file");
     my $cmd = "samtools flagstat $bam_file > $flagstat_file";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
