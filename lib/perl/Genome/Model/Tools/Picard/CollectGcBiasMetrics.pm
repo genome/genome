@@ -68,6 +68,11 @@ class Genome::Model::Tools::Picard::CollectGcBiasMetrics {
             is_optional => 1,
             doc => 'A file path to store cleaning output.',
         },
+        assume_sorted => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'Assume that the BAM file is sorted, regardless of what the header says',
+        },
     ],
 };
 
@@ -158,6 +163,8 @@ sub execute {
     if ($self->max_records_in_ram) {
         $cmd .= ' MAX_RECORDS_IN_RAM='. $self->max_records_in_ram;
     }
+    $cmd .= ' ASSUME_SORTED=';
+    $cmd .= $self->assume_sorted ? 'true' : 'false';
     $self->run_java_vm(
         cmd          => $cmd,
         input_files  => [$input_file],

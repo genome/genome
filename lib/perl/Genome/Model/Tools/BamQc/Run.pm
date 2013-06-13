@@ -205,6 +205,7 @@ sub execute {
         picard_gc_summary_file         => $picard_gc_summary_file,
         samstat_version                => $self->samstat_version,
         fastqc_version                 => $self->fastqc_version,
+        picard_gc_assume_sorted        => '1',
     );
     
     my @output_properties = qw(picard_metrics_result samstat_result fastqc_result);
@@ -327,6 +328,7 @@ sub execute {
                 'picard_gc_metrics_file' => 'output_file',
                 'picard_gc_chart_file' => 'chart_output',
                 'picard_gc_summary_file' => 'summary_output',
+                'picard_gc_assume_sorted' => 'assume_sorted',
             },
             output_properties => {
                 'result' => 'picard_gc_bias_result',
