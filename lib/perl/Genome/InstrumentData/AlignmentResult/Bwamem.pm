@@ -172,7 +172,7 @@ sub _run_aligner {
     }
 
     # Sort all_sequences.sam.
-    $self->status_message("Resorting fixed sam file by coordinate.");
+    $self->status_message("Resorting all_sequences.sam by coordinate.");
     $self->_sort_sam($all_sequences);
 
     return 1;
@@ -219,15 +219,15 @@ sub _stream_bwamem {
     $all_sequences_fh->close();
     $bwamem_fh->close();
     my $rv = $?;
+    my $exit_code = $rv >> 8;
+    my $core_dump = $rv & 128;
 
-    # $rv >> 8 reports the actual exit code; it should be 0.
-    # $rv & 128 reports whether there was a core dump.
-    if ($rv >> 8) {
+    if ($exit_code) {
         die $self->error_message(
             "Error running bwa mem. Expected exit code of '0' " .
-            "but got " ($rv >> 8) " instead (\$? set to $rv).");
+            "but got $exit_code instead (\$? set to $rv).");
     }
-    if ($rv & 128) {
+    if ($core_dump) {
         die $self->error_message(
             "Error running bwa mem. Detected a coredump from " .
             "bwa mem (\$? set to $rv).");
