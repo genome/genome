@@ -143,9 +143,12 @@ sub _run_aligner {
     # Verify the aligner and get params.
     my $aligner_version = $self->aligner_version;
     unless (Genome::Model::Tools::Bwa->supports_bwasw($aligner_version)) {
-        die $self->error_message("The pipeline does not support using Bwasw with bwa-$aligner_version.")
+        die $self->error_message(
+            "The pipeline does not support using " .
+            "bwasw with bwa-$aligner_version."
+        );
     }
-    my $command_name = Genome::Model::Tools::Bwa->path_for_bwa_version($aligner_version);
+    my $cmd_path = Genome::Model::Tools::Bwa->path_for_bwa_version($aligner_version);
     my $params = $self->decomposed_aligner_params;
 
     # Verify inputs and outputs.
@@ -156,7 +159,8 @@ sub _run_aligner {
 
     # Run bwasw.
     my $full_command = sprintf '%s bwasw %s %s %s 1>> %s 2>> %s',
-        $command_name, $params, $reference_fasta_path, join(' ', @input_paths), $raw_sequences, $log_path;
+        $cmd_path, $params, $reference_fasta_path,
+        (join ' ', @input_paths), $raw_sequences, $log_path;
 
     my $rv = Genome::Sys->shellcmd(
         cmd          => $full_command,
@@ -174,11 +178,17 @@ sub _run_aligner {
 
     # Verify the bwasw logfile.
     unless ($self->_verify_bwa_bwasw_did_happen($log_path)) {
-        die $self->error_message("Error running bwasw (unable to verify a successful run of bwasw in the aligner log)");
+        die $self->error_message(
+            "Error running bwasw (unable to verify a successful " .
+            "run of bwasw in the aligner log)"
+        );
     }
 
     unless ($rv == 1) {
-        die $self->error_message("Error running bwasw (didn't get a good return value from Genome::Sys->shellcmd)");
+        die $self->error_message(
+            "Error running bwasw (didn't get a good return " .
+            "value from Genome::Sys->shellcmd)"
+        );
     }
 
     # Fix raw_sequences.sam and write the fixed records to all_sequences.sam.
@@ -204,8 +214,11 @@ sub _sort_sam {
 
     my $unsorted_sam = "$given_sam.unsorted";
 
-    move($given_sam, $unsorted_sam)
-        || die $self->error_message("Unable to move $given_sam to $unsorted_sam. Cannot proceed with sorting.");
+    unless (move($given_sam, $unsorted_sam)) {
+        die $self->error_message(
+            "Unable to move $given_sam to $unsorted_sam. " .
+            "Cannot proceed with sorting.");
+    }
 
     my $picard_sort_cmd = Genome::Model::Tools::Picard::SortSam->create(
         sort_order             => 'coordinate',
@@ -219,10 +232,13 @@ sub _sort_sam {
     );
 
     unless ($picard_sort_cmd and $picard_sort_cmd->execute) {
-        die $self->error_message("Failed to create or execute Picard sort command.");
+        die $self->error_message(
+            "Failed to create or execute Picard sort command.");
     }
 
-    unlink($unsorted_sam) || $self->status_message("Could not unlink $unsorted_sam.");
+    unless (unlink($unsorted_sam)) {
+        $self->status_message("Could not unlink $unsorted_sam.");
+    }
 
     return $given_sam;
 }
