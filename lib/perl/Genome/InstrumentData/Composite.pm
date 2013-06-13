@@ -28,7 +28,7 @@ class Genome::InstrumentData::Composite {
             doc => 'When merging, collect instrument data together that share this property',
         },
         _merged_results => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            is => 'Genome::InstrumentData::AlignedBamResult',
             is_transient => 1,
             is_optional => 1,
             doc => 'Holds the underlying merged results',
@@ -97,8 +97,8 @@ sub get_or_create {
     #    $result->add_user(label => 'uses', user => $self);
     #}
 
-    my @merged_results = grep($_->class =~ /Merged/, @all_results);
-    $self->status_message('Found '.@all_results.' merged results');
+    my @merged_results = grep($_->isa('Genome::InstrumentData::AlignedBamResult'), @all_results);
+    $self->status_message('Found '.@merged_results.' merged results');
     $self->_merged_results(\@merged_results);
 
     return $self;
@@ -111,7 +111,7 @@ sub bam_paths {
 
     my @bams;
     for my $result (@results) {
-        my $bam = $result->merged_alignment_bam_path;
+        my $bam = $result->bam_file;
         push @bams, $bam;
     }
 

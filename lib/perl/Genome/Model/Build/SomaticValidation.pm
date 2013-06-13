@@ -89,26 +89,26 @@ class Genome::Model::Build::SomaticValidation {
         },
 
         merged_alignment_result => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            is => 'Genome::InstrumentData::AlignedBamResult',
             via => 'result_users',
             to => 'software_result',
             where => [label => 'merged_alignment'],
         },
         control_merged_alignment_result => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            is => 'Genome::InstrumentData::AlignedBamResult',
             via => 'result_users',
             to => 'software_result',
             where => [label => 'control_merged_alignment'],
         },
 
         coverage_stats_result => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            is => 'Genome::InstrumentData::AlignedBamResult',
             via => 'result_users',
             to => 'software_result',
             where => [label => 'coverage_stats_tumor'],
         },
         control_coverage_stats_result  => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            is => 'Genome::InstrumentData::AlignedBamResult',
             via => 'result_users',
             to => 'software_result',
             where => [label => 'coverage_stats_normal'],
@@ -170,7 +170,7 @@ sub tumor_bam {
 
     my $result = $self->merged_alignment_result;
     return unless $result;
-    return $result->merged_alignment_bam_path;
+    return $result->bam_file;
 }
 
 sub normal_bam {
@@ -178,7 +178,7 @@ sub normal_bam {
 
     my $result = $self->control_merged_alignment_result;
     return unless $result;
-    return $result->merged_alignment_bam_path;
+    return $result->bam_file;
 }
 
 sub workflow_name {
