@@ -14,7 +14,7 @@ use above 'Genome';
 require Genome::Utility::Test;
 use Test::More;
 
-my $class = 'Genome::InstrumentData::Gatk::IndelRealignerResult';
+my $class = 'Genome::InstrumentData::Gatk::IndelRealigner';
 use_ok($class) or die;
 my $result_data_dir = Genome::Utility::Test->data_dir_ok($class, 'v1');
 
@@ -31,11 +31,11 @@ my %params = (
 );
 
 # Get [fails as expected]
-my $indel_realigner = Genome::InstrumentData::Gatk::IndelRealignerResult->get_with_lock(%params);
+my $indel_realigner = Genome::InstrumentData::Gatk::IndelRealigner->get_with_lock(%params);
 ok(!$indel_realigner, 'Failed to get existing gatk indel realigner result');
 
 # Create
-$indel_realigner = Genome::InstrumentData::Gatk::IndelRealignerResult->get_or_create(%params);
+$indel_realigner = Genome::InstrumentData::Gatk::IndelRealigner->get_or_create(%params);
 ok($indel_realigner, 'created gatk indel realigner');
 
 # Outputs
