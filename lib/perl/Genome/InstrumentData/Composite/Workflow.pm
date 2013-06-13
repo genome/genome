@@ -525,7 +525,7 @@ sub _generate_merge_operations {
                 m_refiner_name => $next_op->{name},
                 m_refiner_params => $next_op->{params},
                 m_refiner_version => $next_op->{version},
-                m_refiner_variant_list_id => ($self->inputs)->{$next_op->{variation_list}}->id
+                m_refiner_known_sites_id => ($self->inputs)->{$next_op->{known_sites}}->id
             );
         }
     }
@@ -617,7 +617,7 @@ sub _general_workflow_input_properties {
 sub _merge_workflow_input_properties {
     my $self = shift;
 
-    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params refiner_name refiner_version refiner_params refiner_variant_list_id samtools_version);
+    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params refiner_name refiner_version refiner_params refiner_known_sites_id samtools_version);
 }
 
 sub generate_workflow_for_instrument_data {

@@ -58,7 +58,7 @@ class Genome::InstrumentData::Command::MergeAlignments {
             is_optional => 1,
             doc => 'Params for the refiner to use',
         },
-        refiner_variant_list_id => {
+        refiner_known_sites_id => {
             is => 'Text',
             is_optional => 1,
             doc => 'ID of the variant list to use for refinement',
@@ -69,9 +69,9 @@ class Genome::InstrumentData::Command::MergeAlignments {
         },
     ],
     has_optional => [
-        refiner_variant_list => {
+        refiner_known_sites => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            id_by => 'refiner_variant_list_id',
+            id_by => 'refiner_known_sites_id',
         },
     ],
     has_optional_output => [
@@ -212,13 +212,13 @@ sub _process_refinement {
         return 1;
     }
 
-    my $variant_list = $self->refiner_variant_list;
+    my $known_sites = $self->refiner_known_sites;
 
     my %params = (
         version => $self->refiner_version,
         params => $self->refiner_params,
-        variant_list => $variant_list,
-        input => $merged_result
+        known_sites => $known_sites,
+        bam_source => $merged_result
     );
 
     my $cmd = $self->_refiner_for_name($self->refiner_name);

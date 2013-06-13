@@ -380,7 +380,7 @@ is_deeply(
                     version => '0.01',
                     name => 'gatk-read-calibrator',
                     type => 'refine',
-                    variation_list => 'variant_list'
+                    known_sites => 'variant_list'
                 }
             },
             'version' => '1.29',

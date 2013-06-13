@@ -111,8 +111,8 @@ sub grammar {
         deduplicate: "then" "deduplicated" "using" deduplicator
             { $item[4]; }
 
-        refine: "then" "refined" "to" variation_list "using" refiner
-            { $item[6]->{variation_list} = $item[4]; $item[6]; }
+        refine: "then" "refined" "to" known_sites "using" refiner
+            { $item[6]->{known_sites} = $item[4]; $item[6]; }
 
         api_version: "api" version
             { $item[2]; }
@@ -138,7 +138,7 @@ sub grammar {
         annotation: name
             { $item[1]; }
 
-        variation_list: name
+        known_sites: name
             { $item[1]; }
 
         initial_data: name
