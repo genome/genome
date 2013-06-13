@@ -14,7 +14,7 @@ use above 'Genome';
 require Genome::Utility::Test;
 use Test::More;
 
-my $class = 'Genome::InstrumentData::Gatk::BaseRecalibrator';
+my $class = 'Genome::InstrumentData::Gatk::BaseRecalibratorResult';
 use_ok($class) or die;
 my $result_data_dir = Genome::Utility::Test->data_dir_ok($class, 'v1');
 
@@ -31,11 +31,11 @@ my %params = (
 );
 
 # Get [fails as expected]
-my $base_recalibrator = Genome::InstrumentData::Gatk::BaseRecalibrator->get_with_lock(%params);
+my $base_recalibrator = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_with_lock(%params);
 ok(!$base_recalibrator, 'Failed to get existing gatk indel realigner result');
 
 # Create
-$base_recalibrator = Genome::InstrumentData::Gatk::BaseRecalibrator->get_or_create(%params);
+$base_recalibrator = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_or_create(%params);
 ok($base_recalibrator, 'created gatk indel realigner');
 
 # Outputs

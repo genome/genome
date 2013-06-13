@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Gatk::IndelRealigner;
+package Genome::InstrumentData::Gatk::IndelRealignerResult;
 
 use strict;
 use warnings;
@@ -19,7 +19,7 @@ require File::Temp;
 #  known_indels
 #  intervals [from realigner target crreator]
 #  > bam
-class Genome::InstrumentData::Gatk::IndelRealigner { 
+class Genome::InstrumentData::Gatk::IndelRealignerResult { 
     is => 'Genome::InstrumentData::Gatk::BaseWithKnownIndels',
     has_constant => [
         # outputs
