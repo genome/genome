@@ -510,12 +510,24 @@ sub _generate_merge_operations {
         m_merger_params => $merge_tree->{params},
     );
 
-    if(exists $merge_tree->{then}) {
-        push @inputs, (
-            m_duplication_handler_name => $merge_tree->{then}{name},
-            m_duplication_handler_params => $merge_tree->{then}{params},
-            m_duplication_handler_version => $merge_tree->{then}{version}
-        );
+    my $next_op = $merge_tree;
+    while(exists $next_op->{then}) {
+        $next_op = $next_op->{then};
+
+        if($next_op->{type} eq 'deduplicate') {
+            push @inputs, (
+                m_duplication_handler_name => $next_op->{name},
+                m_duplication_handler_params => $next_op->{params},
+                m_duplication_handler_version => $next_op->{version}
+            );
+        } elsif($next_op->{type} eq 'refine') {
+            push @inputs, (
+                m_refiner_name => $next_op->{name},
+                m_refiner_params => $next_op->{params},
+                m_refiner_version => $next_op->{version},
+                m_refiner_variant_list_id => ($self->inputs)->{$next_op->{variation_list}}->id
+            );
+        }
     }
 
     if($self->merge_group eq 'all') {
@@ -605,7 +617,7 @@ sub _general_workflow_input_properties {
 sub _merge_workflow_input_properties {
     my $self = shift;
 
-    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params samtools_version);
+    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params refiner_name refiner_version refiner_params refiner_variant_list_id samtools_version);
 }
 
 sub generate_workflow_for_instrument_data {
