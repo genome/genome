@@ -26582,6 +26582,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'additional-jvm-options=s',
         'files',
+        'assume-sorted!',
+        undef,
         'chart-output=s',
         'files',
         'clean-bam=s',
