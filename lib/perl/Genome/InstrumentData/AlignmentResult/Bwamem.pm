@@ -5,6 +5,7 @@ use warnings;
 use Carp qw/confess/;
 use Data::Dumper;
 use File::Basename;
+use File::Copy qw/move/;
 use Genome;
 use Getopt::Long;
 
@@ -124,65 +125,131 @@ sub _check_read_count {
 
 sub _run_aligner {
     my $self = shift;
-    my @input_pathnames = @_;
+    my @input_paths = @_;
 
     # process inputs
-    if (@input_pathnames != 1 and @input_pathnames != 2) {
+    if (@input_paths != 1 and @input_paths != 2) {
         $self->error_message(
-            "Expected 1 or 2 input path names. Got: " . Dumper(\@input_pathnames));
+            "Expected 1 or 2 input path names. Got: " . Dumper(\@input_paths));
     }
-    my $input_filenames = join(' ', @input_pathnames);
-
-    # get temp dir
-    my $tmp_dir = $self->temp_scratch_directory;
-    my $log_filename = $tmp_dir . '/aligner.log';
-    my $raw_sam = $tmp_dir . '/raw_sequences.sam';
-    #my $fixed_sam = $tmp_dir . '/fixed_sequences.sam'; # XXX
-    my $final_sam = $tmp_dir . '/all_sequences.sam';
-
-    # get refseq info
-    my $reference_build = $self->reference_build;
     my $reference_fasta_path = $self->get_reference_sequence_index->full_consensus_path('fa');
 
-    # get params and verify the aligner
+    # get temp dir
+    my $tmp_dir       = $self->temp_scratch_directory;
+    my $log_path      = $tmp_dir . '/aligner.log';
+    my $all_sequences = $tmp_dir . '/all_sequences.sam';
+
+    # Verify the aligner and get params.
+    my $aligner_version = $self->aligner_version;
+    unless (Genome::Model::Tools::Bwa->supports_mem($aligner_version)) {
+        die $self->error_message(
+            "The pipeline does not support using " .
+            "bwa mem with bwa-$aligner_version."
+        );
+    }
+    my $cmd_path = Genome::Model::Tools::Bwa->path_for_bwa_version($aligner_version);
     my $params = $self->decomposed_aligner_params;
 
-    my $aligner_version = $self->aligner_version;
-
-    unless (Genome::Model::Tools::Bwa->supports_mem($aligner_version)) {
-        die $self->error_message("The pipeline does not support using bwa mem with bwa-$aligner_version.");
+    # Verify inputs and outputs.
+    for (@input_paths, $reference_fasta_path) {
+        die $self->error_message("Missing input '$_'.") unless -e $_;
+        die $self->error_message("Input '$_' is empty.") unless -s $_;
     }
 
-    my $command_name = Genome::Model::Tools::Bwa->path_for_bwa_version($aligner_version);
+    # Run mem
+    $self->status_message("Running bwa mem.");
 
-    # run cmd
-    my $full_command = sprintf '%s mem %s %s %s 1>> %s 2>> %s',
-        $command_name, $params, $reference_fasta_path, $input_filenames, $raw_sam, $log_filename;
+    my $full_command = sprintf '%s mem %s %s %s 2>> %s',
+        $cmd_path, $params, $reference_fasta_path,
+        (join ' ', @input_paths), $log_path;
+    $self->_stream_bwamem($full_command, $all_sequences);
 
-    Genome::Sys->shellcmd(
-        cmd          => $full_command,
-        input_files  => [ @input_pathnames ],
-        output_files => [ $raw_sam, $log_filename ],
-        skip_if_output_is_present => 0,
+    # Verify the bwa mem logfile.
+    unless ($self->_verify_bwa_mem_did_happen($log_path)) {
+        die $self->error_message(
+            "Error running bwa mem. Unable to verify a successful " .
+            "run of bwa mem in the aligner log.");
+    }
+
+    # Sort all_sequences.sam.
+    $self->status_message("Resorting fixed sam file by coordinate.");
+    $self->_sort_sam($all_sequences);
+
+    return 1;
+}
+
+# Run bwa mem and stream through AddReadGroupTag
+sub _stream_bwamem {
+    my ($self, $full_command, $all_sequences) = @_;
+
+    # Open pipe
+    $self->status_message("RUN: $full_command");
+    $self->status_message("Opening filehandle to stream output.");
+
+    my $bwamem_fh = IO::File->new("$full_command |");
+
+    unless ($bwamem_fh) {
+        die $self->error_message(
+            "Error running bwa mem. Unable to open filehandle " .
+            "to stream bwa mem output.");
+    }
+
+    # Add RG tags
+    $self->status_message("Starting AddReadGroupTag.");
+    my $all_sequences_fh = IO::File->new(">> $all_sequences");
+
+    unless ($all_sequences_fh) {
+        die $self->error_message(
+            "Error running bwa mem. Unable to open all_sequences.sam " .
+            "filehandle for AddReadGroupTag.");
+    }
+
+    my $add_rg_cmd = Genome::Model::Tools::Sam::AddReadGroupTag->create(
+       input_filehandle  => $bwamem_fh,
+       output_filehandle => $all_sequences_fh,
+       read_group_tag    => $self->read_and_platform_group_tag_id,
+       pass_sam_headers  => 0,
     );
 
-    #my $is_paired = @input_pathnames == 2 ? 1 : 0; # XXX
-    #my $include_secondary = 1; # XXX
-    #my $mark_secondary_as_duplicate = 0; # XXX
+    unless ($add_rg_cmd->execute) {
+        die $self->error_message(
+            "Error running bwa mem. AddReadGroupTag failed to execute.");
+    }
 
-    #$self->status_message("Fixing flags and mates in merged sam file."); # XXX
+    $all_sequences_fh->close();
+    $bwamem_fh->close();
+    my $rv = $?;
 
-    #$self->_fix_sam($raw_sam, $fixed_sam, $is_paired, $include_secondary, $mark_secondary_as_duplicate); # XXX
+    # $rv >> 8 reports the actual exit code; it should be 0.
+    # $rv & 128 reports whether there was a core dump.
+    if ($rv >> 8) {
+        die $self->error_message(
+            "Error running bwa mem. Expected exit code of '0' " .
+            "but got " ($rv >> 8) " instead (\$? set to $rv).");
+    }
+    if ($rv & 128) {
+        die $self->error_message(
+            "Error running bwa mem. Detected a coredump from " .
+            "bwa mem (\$? set to $rv).");
+    }
+}
 
-    #unlink($raw_sam) || die $self->error_message("Could not unlink $raw_sam."); # XXX
+# Sort a sam file.
+sub _sort_sam {
+    my ($self, $given_sam) = @_;
 
-    $self->status_message("Resorting fixed sam file by coordinate.");
+    my $unsorted_sam = "$given_sam.unsorted";
+
+    unless (move($given_sam, $unsorted_sam)) {
+        die $self->error_message(
+            "Unable to move $given_sam to $unsorted_sam. " .
+            "Cannot proceed with sorting.");
+    }
 
     my $picard_sort_cmd = Genome::Model::Tools::Picard::SortSam->create(
         sort_order             => 'coordinate',
-        #input_file             => $fixed_sam, # XXX
-        input_file             => $raw_sam, # XXX
-        output_file            => $final_sam,
+        input_file             => $unsorted_sam,
+        output_file            => $given_sam,
         max_records_in_ram     => 2000000,
         maximum_memory         => 8,
         maximum_permgen_memory => 256,
@@ -190,32 +257,43 @@ sub _run_aligner {
         use_version            => $self->picard_version,
     );
 
-    # TODO not sure if the following is necessary
-    #my $add_rg_cmd = Genome::Model::Tools::Sam::AddReadGroupTag->create(
-    #    input_filehandle  => $sorted_sam,
-    #    output_filehandle => $final_sam,
-    #    read_group_tag    => $self->read_and_platform_group_tag_id,
-    #    pass_sam_headers  => 0,
-    #);
-
     unless ($picard_sort_cmd and $picard_sort_cmd->execute) {
-        die $self->error_message("Failed to create or execute picard sort command.");
+        die $self->error_message(
+            "Failed to create or execute Picard sort command.");
     }
 
-    unlink($raw_sam) || die $self->error_message("Could not unlink $raw_sam."); # XXX
-    #unlink($fixed_sam) || die $self->error_message("Could not unlink $fixed_sam."); # XXX
-
-    # verify the bwa mem logfile
-    unless ($self->_verify_bwa_bwa_mem_did_happen($log_filename)) {
-        die $self->error_message("bwa mem seems to fail based on run log: $log_filename");
+    unless (unlink($unsorted_sam)) {
+        $self->status_message("Could not unlink $unsorted_sam.");
     }
 
-    return 1;
+    return $given_sam;
 }
 
-sub _verify_bwa_bwa_mem_did_happen {
+sub _verify_bwa_mem_did_happen {
     my ($self, $log_file) = @_;
-    # TODO implement this to make sure bwa mem finished; see _verify_bwa_samxe_did_happen in Bwa.pm
+
+    unless ($log_file and -e $log_file) {
+        $self->error_message("Log file $log_file is does not exist.");
+        return;
+    }
+
+    unless ($log_file and -s $log_file) {
+        $self->error_message("Log file $log_file is empty.");
+        return;
+    }
+
+    my $line_count = 100;
+    my @last_lines = `tail -$line_count $log_file`;
+
+    if (not (
+        ($last_lines[-3] =~ /^\[main\] Version:/) and
+        ($last_lines[-2] =~ /^\[main\] CMD:/) and
+        ($last_lines[-1] =~ /^\[main\] Real time:/) )
+    ) {
+        $self->error_message("Last lines of $log_file were unexpected. Dumping last $line_count lines.");
+        $self->status_message($_) for @last_lines;
+        return;
+    }
     return 1;
 }
 
