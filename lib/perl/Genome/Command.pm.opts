@@ -33128,6 +33128,8 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    'refinereads',
+    undef,
     'guessfastqqualityencoding',
     undef,
     'estimatelibrarycomplexity',
