@@ -27,7 +27,7 @@ my %params = (
     version => 2.4,
     bam_source => $bam_source,
     reference_build => $reference_build,
-    known_indels => [ $gatk_test->known_indel ],
+    known_sites => [ $gatk_test->known_site ],
 );
 
 # Get [fails as expected]

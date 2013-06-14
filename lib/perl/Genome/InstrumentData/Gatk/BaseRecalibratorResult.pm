@@ -8,7 +8,7 @@ use Genome;
 # recalibrator
 #  bam [from indel realigner]
 #  ref [fasta]
-#  known_indels [knownSites]
+#  known_sites [knownSites]
 #  > grp [gatk report file]
 #
 # print reads
@@ -17,7 +17,7 @@ use Genome;
 #  grp [from recalibrator]
 #  > bam
 class Genome::InstrumentData::Gatk::BaseRecalibratorResult { 
-    is => 'Genome::InstrumentData::Gatk::BaseWithKnownIndels',
+    is => 'Genome::InstrumentData::Gatk::BaseWithKnownSites',
     has_output => [
         recalibration_table_file => {
             is_output => 1,
@@ -56,7 +56,7 @@ sub _run_base_recalibrator {
         reference_fasta => $self->reference_fasta,
         output_recalibration_table => $recalibration_table_file,
     );
-    $base_recalibrator_params{known_sites} = $self->known_indels_vcfs if @{$self->known_indels_vcfs};
+    $base_recalibrator_params{known_sites} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
     $self->status_message('Params: '.Data::Dumper::Dumper(\%base_recalibrator_params));
 
     my $base_recalibrator = Genome::Model::Tools::Gatk::BaseRecalibrator->create(%base_recalibrator_params);

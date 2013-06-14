@@ -31,7 +31,7 @@ class Genome::InstrumentData::Gatk::Test {
                 ); 
             |,
         },
-        known_indel => {
+        known_site => {
             calculate_from => [qw/ indel_result /],
             calculate => q|
                 Genome::Model::Build::ImportedVariationList->__define__(

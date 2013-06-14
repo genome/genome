@@ -10,17 +10,17 @@ require File::Temp;
 # realigner target creator
 #  bam [original]
 #  ref [fasta]
-#  known_indels
+#  known_sites
 #  > intervals
 #
 # indel realigner
 #  bam [original]
 #  ref [fasta]
-#  known_indels
+#  known_sites
 #  intervals [from realigner target crreator]
 #  > bam
 class Genome::InstrumentData::Gatk::IndelRealignerResult { 
-    is => 'Genome::InstrumentData::Gatk::BaseWithKnownIndels',
+    is => 'Genome::InstrumentData::Gatk::BaseWithKnownSites',
     has_constant => [
         # outputs
         intervals_file  => { 
@@ -60,7 +60,7 @@ sub _create_targets {
         reference_fasta => $self->reference_fasta,
         output_intervals => $intervals_file,
     );
-    $target_creator_params{known} = $self->known_indels_vcfs if @{$self->known_indels_vcfs};
+    $target_creator_params{known} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
     $self->status_message('Params: '.Data::Dumper::Dumper(\%target_creator_params));
 
     my $target_creator = Genome::Model::Tools::Gatk::RealignerTargetCreator->create(%target_creator_params);
@@ -98,7 +98,7 @@ sub _realign_indels {
         index_bam => 1,
         target_intervals_are_sorted => 1,
     );
-    $realigner_params{known} = $self->known_indels_vcfs if @{$self->known_indels_vcfs};
+    $realigner_params{known} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
     $self->status_message('Params: '.Data::Dumper::Dumper(\%realigner_params));
 
     my $realigner = Genome::Model::Tools::Gatk::IndelRealigner->create(%realigner_params);
