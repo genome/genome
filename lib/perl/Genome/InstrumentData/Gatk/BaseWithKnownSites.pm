@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::InstrumentData::Gatk::BaseWithKnownSites {
     is => 'Genome::InstrumentData::Gatk::Base',
-    has_optional_param => [
+    has_optional_input => [
         known_sites => {# PROVIDES known_sites_vcf
             is => 'Genome::Model::Build::ImportedVariationList',
             is_many => 1,
