@@ -51,17 +51,17 @@ Genome::Utility::Test::compare_ok($indel_realigner->bam_flagstat_file, $result_d
 # Allocation params
 is(
     $indel_realigner->resolve_allocation_disk_group_name,
-    'info_alignments',
+    'info_genome_models',
     'resolve_allocation_disk_group_name',
 );
 is(
     $indel_realigner->resolve_allocation_kilobytes_requested,
-    35326,
+    34,
     'resolve_allocation_kilobytes_requested',
 );
 like(
     $indel_realigner->resolve_allocation_subdirectory,
-    qr(^/alignment_data/gatk/indel_realigner-),
+    qr(^model_data/gatk/indel_realigner-),
     'resolve_allocation_subdirectory',
 );
 

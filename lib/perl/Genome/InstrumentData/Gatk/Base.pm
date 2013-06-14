@@ -35,21 +35,21 @@ sub resolve_allocation_subdirectory {
     $class =~ s/^Genome::InstrumentData::Gatk:://;
     $class =~ s/Result$//;
     return sprintf(
-        "/alignment_data/gatk/%s-%s-%s-%s-%s", 
+        "model_data/gatk/%s-%s-%s-%s-%s", 
         Genome::Utility::Text::camel_case_to_string($class, '_'), 
         Sys::Hostname::hostname(),
-        $ENV{USER}, $$, 1#$self->id,
+        $ENV{USER}, $$, $self->id,
     );
 }
 
 sub resolve_allocation_kilobytes_requested {
     my $self = shift;
     my $kb_requested = -s $self->input_bam_file;
-    return int($kb_requested * 1.5);
+    return int($kb_requested / 1024 * 1.5);
 }
 
 sub resolve_allocation_disk_group_name {
-    return 'info_alignments';
+    return 'info_genome_models';
 }
 
 sub create {

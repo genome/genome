@@ -51,17 +51,17 @@ Genome::Utility::Test::compare_ok($base_recalibrator->bam_flagstat_file, $result
 # Allocation params
 is(
     $base_recalibrator->resolve_allocation_disk_group_name,
-    'info_alignments',
+    'info_genome_models',
     'resolve_allocation_disk_group_name',
 );
 is(
     $base_recalibrator->resolve_allocation_kilobytes_requested,
-    35326,
+    34,
     'resolve_allocation_kilobytes_requested',
 );
 like(
     $base_recalibrator->resolve_allocation_subdirectory,
-    qr(^/alignment_data/gatk/base_recalibrator-),
+    qr(^model_data/gatk/base_recalibrator-),
     'resolve_allocation_subdirectory',
 );
 
