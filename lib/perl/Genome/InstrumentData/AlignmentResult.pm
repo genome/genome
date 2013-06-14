@@ -17,7 +17,7 @@ use strict;
 
 class Genome::InstrumentData::AlignmentResult {
     is_abstract => 1,
-    is => 'Genome::InstrumentData::AlignedBamResult',
+    is => 'Genome::SoftwareResult::Stageable',
     sub_classification_method_name => '_resolve_subclass_name',
     has => [
         instrument_data         => {
