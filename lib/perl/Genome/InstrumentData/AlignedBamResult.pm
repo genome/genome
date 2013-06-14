@@ -11,7 +11,18 @@ class Genome::InstrumentData::AlignedBamResult {
     attributes_have => [
         is_output => { is => 'Boolean', is_optional => 1, },
     ],
+    has_input => [
+        reference_build => { # PROVIDES fasta VIA full_consensus_path('fa')
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+        },
+    ],
     has_constant => [
+        # from inputs
+        reference_fasta => { 
+            calculate_from => [qw/ reference_build /],
+            calculate => q| return $reference_build->full_consensus_path('fa'); |, 
+        },
+        # from output
         bam_file => { 
             is_output => 1,
             calculate => q| return $self->output_dir.'/'.$self->id.'.bam'; |, 

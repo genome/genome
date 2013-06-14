@@ -8,11 +8,8 @@ use Genome;
 class Genome::InstrumentData::Gatk::Base {
     is => 'Genome::InstrumentData::AlignedBamResult',
     has_input => [
-        bam_source => { # PROVIDES bam_file
+        bam_source => { # PROVIDES bam_file SHOULD be in aligned bam result, but would be incompatible with AR::Merged
             is => 'Genome::InstrumentData::AlignedBamResult',
-        },
-        reference_build => { # PROVIDES fasta VIA full_consensus_path('fa')
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
         },
     ],
     has_param => [
@@ -24,14 +21,10 @@ class Genome::InstrumentData::Gatk::Base {
     ],
     has_constant => [
         _tmpdir => {  calculate => q| return File::Temp::tempdir(CLEANUP => 1); |, },
-        # inputs
+        # from inputs
         input_bam_file => { 
             via => 'bam_source',
             to => 'bam_file', 
-        },
-        reference_fasta => { 
-            calculate_from => [qw/ reference_build /],
-            calculate => q| return $reference_build->full_consensus_path('fa'); |, 
         },
     ],
 };
