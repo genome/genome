@@ -23,11 +23,12 @@ class Genome::InstrumentData::Gatk::Test {
             |,
         },
         bam_source => {
-            calculate_from => [qw/ test_data_dir /],
+            calculate_from => [qw/ test_data_dir reference_build /],
             calculate => q| 
                 Genome::InstrumentData::AlignmentResult::Merged->__define__(
                     id => 9999,
                     output_dir => $test_data_dir.'/inputs',
+                    reference_build => $reference_build,
                 ); 
             |,
         },
