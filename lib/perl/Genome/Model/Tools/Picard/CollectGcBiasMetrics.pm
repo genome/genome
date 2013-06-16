@@ -163,8 +163,10 @@ sub execute {
     if ($self->max_records_in_ram) {
         $cmd .= ' MAX_RECORDS_IN_RAM='. $self->max_records_in_ram;
     }
-    $cmd .= ' ASSUME_SORTED=';
-    $cmd .= $self->assume_sorted ? 'true' : 'false';
+    if(defined $self->assume_sorted) {
+        $cmd .= ' ASSUME_SORTED=';
+        $cmd .= $self->assume_sorted ? 'true' : 'false';
+    }
     $self->run_java_vm(
         cmd          => $cmd,
         input_files  => [$input_file],
