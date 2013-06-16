@@ -64,7 +64,7 @@ sub rna_features_gff_path_for_build {
     my $dir = join('/',$build->data_directory,'annotation_data','rna_annotation');
     my @files = glob("$dir/*.gff");
     if (@files > 1) {
-        die "nultiple gff files found!: @files";
+        die "multiple gff files found!: @files";
     }
     return $files[0];
 }
