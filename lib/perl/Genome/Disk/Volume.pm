@@ -72,11 +72,7 @@ class Genome::Disk::Volume {
             calculate => q{ return int($unallocated_kb / (2**20)) },
         },
         allocated_kb => {
-            calculate => q/
-                my $allocated_kb;
-                Genome::Utility::Instrumentation::timer('disk.volume.allocated_kb', sub { $allocated_kb = $self->_allocated_kb });
-                return $allocated_kb;
-            /,
+            is_calculated => 1,
         },
         percent_allocated => {
             calculate_from => ['total_kb', 'allocated_kb'],
@@ -136,7 +132,7 @@ sub _compute_lower_limit {
     return max($fractional_limit, $subtractive_limit);
 }
 
-sub _allocated_kb {
+sub allocated_kb {
     my $self = shift;
 
     # This used to use a copy of UR::Object::Set's server-side aggregate
@@ -157,7 +153,13 @@ sub _allocated_kb {
         delete $set->{$f}
     }
 
-    my $allocated_kb = ($set->sum($field) or 0);
+    # We only want to time the sum aggregate, not including any time to connect to the DB
+    Genome::Disk::Allocation->__meta__->data_source->get_default_handle();
+    my $allocated_kb;
+    Genome::Utility::Instrumentation::timer(
+        'disk.volume.allocated_kb',
+        sub { $allocated_kb = ($set->sum($field) or 0); }
+    );
 
     # Now we'll check that it is cached so we test that the underlying
     # structure hasn't changed.

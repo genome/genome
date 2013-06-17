@@ -1,9 +1,21 @@
+# Mac OS X
+.DS_Store
+
+# Komodo project files
 *.kpf
 *.komodoproject
-Meta.sqlite3-bak
-Meta.sqlite3
+
+# swap and backup files
+*.swo
+*.swp
+*~
+
 tags
-.DS_Store
+
+# symlinks that test environment makes
 bin/perl
 bin/prove
-.*.swp
+
+# binary version of SQLite databases
+lib/perl/Genome/DataSource/Meta.sqlite3
+lib/perl/Genome/DataSource/SearchIndexQueue.sqlite3

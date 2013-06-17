@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-our $MINIMUM_JOINX_VERSION = 1.4;
+our $MINIMUM_JOINX_VERSION = 1.7;
 
 class Genome::Model::Tools::Joinx::VcfNormalizeIndels {
     is => 'Genome::Model::Tools::Joinx',

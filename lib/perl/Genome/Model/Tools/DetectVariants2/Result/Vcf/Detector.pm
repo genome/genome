@@ -99,6 +99,7 @@ sub _run_vcf_indel_normalizer {
         output_file => $output_file,
         reference => $reference_fasta,
         use_bgzip => 1,
+        use_version => 1.7, #1.6 is trouble
     );
 
     my $command = Genome::Model::Tools::Joinx::VcfNormalizeIndels->create(%params);
