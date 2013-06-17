@@ -368,7 +368,7 @@ sub get_sample_meta {
             last if $try == 5; #try 5 times
             sleep 60 if $try;
             $try++;
-            $content = qx(curl --insecure --request POST --data \"$barcode_str\" --header \"Content-Type: text/plain\" https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch);
+            $content = qx(curl --request POST --data \"$barcode_str\" --header \"Content-Type: text/plain\" https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch);
         }
 
         unless ($content) {
