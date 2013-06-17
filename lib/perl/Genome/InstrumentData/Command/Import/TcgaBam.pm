@@ -258,7 +258,7 @@ sub _import_from_uuids {
 
         $self->status_message('Downloaded BAM with UUID: ' . $uuid . ' to path: ' . $bam);
 
-        $self->original_data_path($bam);
+        $self->original_data_path($bam->stringify);
         $self->_original_alloc($disk_alloc);
 
         $self->_import_from_filepath;
@@ -627,7 +627,7 @@ sub _create_imported_instrument_data {
     my $import_instrument_data = Genome::InstrumentData::Imported->create(%params);
 
     unless ($import_instrument_data) {
-       $self->error_message('Failed to create imported instrument data for '.$self->original_data_path);
+       $self->error_message('Failed to create imported instrument data for ' . $self->original_data_path . ' : ' . $@);
        return;
     }
     $self->_inst_data($import_instrument_data);
@@ -996,11 +996,15 @@ sub _cghub_download {
 
     $self->status_message('Download Result: ' . $result);
 
+    $self->status_message('Downloading Metadata File.');
+
     $self->_sys_out(
         'wget --verbose --no-check-certificate -O '
         . $absolute_path->subdir($uuid)->file('metadata.xml')
         . ' https://cghub.ucsc.edu/cghub/metadata/analysisAttributes/' . $uuid
     );
+
+    $self->status_message('Metadata Download Complete.');
 
     return 1;
 }
