@@ -191,6 +191,9 @@ sub execute {
     my $picard_gc_chart_file    = $file_basename .'-PicardGC_chart.pdf';
     my $picard_gc_summary_file  = $file_basename .'-PicardGC_summary.txt';
     
+    #ASSUME_SORTED only applied to picard 1.77 and later
+    my $picard_gc_assume_sorted = $self->picard_version >= 1.77 ? 1 : 0;
+
     my %workflow_params = (
         picard_version                 => $self->picard_version,
         output_directory               => $output_directory,
@@ -206,6 +209,9 @@ sub execute {
         samstat_version                => $self->samstat_version,
         fastqc_version                 => $self->fastqc_version,
     );
+
+    $workflow_params{picard_gc_assume_sorted} = 1 if $picard_gc_assume_sorted; 
+
     
     my @output_properties = qw(picard_metrics_result samstat_result fastqc_result);
 
@@ -332,6 +338,9 @@ sub execute {
                 'result' => 'picard_gc_bias_result',
             },
         );
+        $picard_gc_bias_operation_params{input_properties}->{picard_gc_assume_sorted} = 'assume_sorted' 
+            if $picard_gc_assume_sorted; 
+        
         my $picard_gc_bias_operation = $self->setup_workflow_operation(%picard_gc_bias_operation_params);
         $picard_gc_bias_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
     }

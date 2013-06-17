@@ -351,7 +351,7 @@ my $strategy7 = Genome::InstrumentData::Composite::Strategy->create(strategy =>
     'instrument_data
      aligned to contamination_ref using bwa 0.5.5 [-t 4]
      then merged using picard 1.29 then deduplicated using picard 1.29
-     then refined using gatk-read-calibrator 0.01 [-et NO_ET]
+     then refined to variant_list using gatk-read-calibrator 0.01 [-et NO_ET]
      api v2'
 );
 isa_ok($strategy7, 'Genome::InstrumentData::Composite::Strategy', 'created merge strategy');
@@ -379,7 +379,8 @@ is_deeply(
                     params => '-et NO_ET',
                     version => '0.01',
                     name => 'gatk-read-calibrator',
-                    type => 'refine'
+                    type => 'refine',
+                    known_sites => 'variant_list'
                 }
             },
             'version' => '1.29',
