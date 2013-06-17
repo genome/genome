@@ -7,6 +7,8 @@ use JSON;
 use Genome;
 use File::Slurp;
 use POSIX 'strftime';
+use LWP::UserAgent;
+use Carp qw(croak);
 
 class Genome::Model::Tools::Vcf::Convert::Base {
     is => 'Command',
@@ -350,6 +352,64 @@ sub format_meta_line {
     return $string;
 }
 
+sub retry_request {
+    my %argv = @_;
+
+    my $agent = delete $argv{agent} or croak 'required argument: agent';
+    my $sleep = delete $argv{sleep} or croak 'required argument: sleep';
+    my $request = delete $argv{request} or croak 'required argument: request';
+    my $attempts = delete $argv{attempts} or croak 'required argument: attempts';
+
+    if ($sleep < 0 || $attempts < 1) {
+        die;
+    }
+
+    my $response;
+
+    while ($attempts-- > 0) {
+        $response = $agent->request($request);
+        if ($response->is_success) {
+            return $response;
+        }
+        sleep $sleep;
+    }
+
+    return $response;
+}
+
+sub query_tcga_barcode_error_template {
+    return q(TCGA web query for '%s' failed: %s);
+}
+
+sub query_tcga_barcode {
+    my $self = shift;
+    my $barcode_str = shift;
+    my %argv = @_;
+
+    my $url = delete $argv{url} || 'https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch';
+    my $sleep = delete $argv{sleep} || 60;
+
+    my $agent = LWP::UserAgent->new();
+
+    my $request = HTTP::Request->new(POST => $url);
+    $request->content_type('text/plain');
+    $request->content($barcode_str);
+
+    my $response = retry_request(
+        agent    => $agent,
+        request  => $request,
+        sleep    => $sleep,
+        attempts => 5,
+    );
+    unless ($response->is_success) {
+        my $message = $response->message;
+        my $error_message = sprintf(query_tcga_barcode_error_template, $barcode_str, $message);
+        die $self->error_message($error_message);
+    }
+
+    return $response->content;
+}
+
 #For TCGA vcf
 sub get_sample_meta {
     my $self = shift;
@@ -361,23 +421,7 @@ sub get_sample_meta {
         push @tcga_barcodes, $t_sample if $t_sample and $t_sample =~ /^TCGA\-/;
         my $barcode_str = join ',', @tcga_barcodes;
 
-        my $content;
-        my $try = 0;
-
-        while (!$content) {
-            last if $try == 5; #try 5 times
-            sleep 60 if $try;
-            $try++;
-            $content = qx(curl --fail --request POST --data \"$barcode_str\" --header \"Content-Type: text/plain\" https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch);
-        }
-
-        unless ($content) {
-            die $self->error_message("No content returned from API query to TCGA website for $barcode_str");
-        }
-        if ($content =~ /errorMessage/) {
-            die $self->error_message("API query failed with the following response:\n$content");
-        }
-
+        my $content = $self->query_tcga_barcode($barcode_str);
         my $json = new JSON;
         my $json_text = $json->allow_nonref->utf8->relaxed->decode($content);
 
