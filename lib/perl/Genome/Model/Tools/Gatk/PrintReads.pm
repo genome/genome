@@ -2,7 +2,10 @@ package Genome::Model::Tools::Gatk::PrintReads;
 
 use strict;
 use warnings;
+
 use Genome;
+
+require File::Basename;
 
 class Genome::Model::Tools::Gatk::PrintReads {
     doc => "Run GATK with the 'PrintReads' tool",
@@ -99,6 +102,11 @@ sub execute {
     unless (Genome::Sys->shellcmd(cmd => $command)) {
         die $self->error_message("Failed to execute $command");
     }
+
+    # Rename the bam index. It gets named without a .bam in the name
+    my ($bam_basename, $bam_dirname) = File::Basename::fileparse($self->output_bam);
+    $bam_basename =~ s/\.bam$//;
+    rename($bam_dirname.'/'.$bam_basename.'.bai', $bam_dirname.'/'.$bam_basename.'.bam.bai');
 
     return 1;
 }

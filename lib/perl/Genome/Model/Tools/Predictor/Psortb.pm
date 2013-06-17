@@ -101,7 +101,8 @@ sub create_ace_file {
         my @f = split("\t", $line);
         next if $f[1] eq 'Unknown';
 
-        print $ace_fh "Sequence " . $f[0] . "\nPSORT_B " . $f[1] . ' ' . $f[2];
+        #need extra newline at end to separate blocks
+        print $ace_fh "Sequence " . $f[0] . "\nPSORT_B " . $f[1] . ' ' . $f[2] . "\n";
     }
 
     $raw_fh->close;

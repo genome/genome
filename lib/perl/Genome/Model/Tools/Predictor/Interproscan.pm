@@ -164,6 +164,8 @@ sub create_ace_file {
         ## Bug for bug replication...
         if ($evalue == 1e10) { $evalue = ''; }
 
+        if($evalue) { $evalue = uc sprintf('%.2e', $evalue); }
+
         $ace_file_fh->print("Sequence $display_name\n");
         $ace_file_fh->print("Interpro   \"$analysis : $ipr_number $desc : pval $evalue\"\n\n");
     }

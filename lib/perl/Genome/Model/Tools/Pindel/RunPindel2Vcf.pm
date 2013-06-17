@@ -53,30 +53,28 @@ class Genome::Model::Tools::Pindel::RunPindel2Vcf {
             calculate => q| $reference_sequence_input |,
         },
     ],
-    # Make workflow choose 64 bit blades
     has_param => [
         lsf_queue => {
             default_value => 'apipe',
-        }, 
+        },
         lsf_resource => {
             default_value => "-M 16000000 -R 'select[type==LINUX64 && mem>16000] rusage[mem=16000]'",
         },
     ],
 };
 
-my $pindel2vcf_path = $ENV{GENOME_SW} . "/pindel2vcf/0.1.9/pindel2vcf-0.1.9"; # 0.1.9
-#my $pindel2vcf_path = '/usr/lib/pindel0.2.4o/bin/pindel2vcf'; # 0.2.8
+my $pindel2vcf_path = $ENV{GENOME_SW} . "/pindel2vcf/0.1.9/pindel2vcf-0.1.9";
 
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-gmt pindel run-pindel-2-vcf  
+gmt pindel run-pindel-2-vcf
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
-    convert raw pindel output into vcf  
+sub help_detail {
+    return <<EOS
+    convert raw pindel output into vcf
 EOS
 }
 
@@ -133,10 +131,10 @@ sub _run_pindel2vcf {
         reference_sequence_build_id => $self->reference_build_id,
     );
 
-    $params{control_aligned_reads_sample} = $self->control_aligned_reads_sample 
+    $params{control_aligned_reads_sample} = $self->control_aligned_reads_sample
         if $self->control_aligned_reads_sample;
     $cmd = Genome::Model::Tools::Vcf::Convert::Indel::PindelVcf->create(%params);
-      
+
     my $rv = $cmd->execute;
     unlink $output.'.tmp';
 
@@ -144,7 +142,7 @@ sub _run_pindel2vcf {
         $self->error_message("Failed to run PindelVcf !");
         return;
     }
-    
+
     return 1;
 }
 

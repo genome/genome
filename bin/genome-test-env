@@ -2,6 +2,49 @@
 
 set -o errexit
 set -o pipefail
+
+usage() {
+echo 'usage: genome-test-env [command]
+
+See --help for details.'
+}
+
+man() {
+echo '
+NAME
+
+    genome-test-env - setup Genome testing environment
+
+SYNOPSIS
+
+    genome-test-env [command]
+
+DESCRIPTION
+
+    Setup a testing environment for Genome that will checkout the correct
+    version of the UR, Workflow, and configuration submodules as well as setup
+    the shell environment to use them and the correct Perl and Prove
+    executables.
+
+EXAMPLES
+
+    genome-test-env test-tracker prove --lsf --git
+
+    Wrap test-tracker to ensure the correct environment is used for running
+    tests.
+
+    genome-test-env
+
+    Open a new shell with the correct environment so you can run tests
+    manually.  Press <Ctrl>-D or type `logout` to return to original shell.
+'
+}
+
+case $1 in
+    "-h") usage; exit 0;;
+    "--help") man; exit 0;;
+esac
+
 set -o nounset
 
 GIT_DIR=$(git rev-parse --show-toplevel 2> /dev/null || true)

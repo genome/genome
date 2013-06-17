@@ -39,6 +39,7 @@ EOS
 }
 
 my %BEDTOOLS_VERSIONS = (
+    '2.16.2' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.16.2',
     '2.14.3' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.14.3',
     '2.9.0' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.9.0',
     '2.8.3' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.8.3',

@@ -36,9 +36,13 @@ sub _generate_vcf {
             $self->status_message("Generating Vcf");
             $self->status_message("executing $vcf_module on file $variant_file");
             $retval &&= $self->_run_vcf_converter($vcf_module, $variant_file,$variant_type);
-            
         } else {
             $self->status_message("Couldn't find a working vcf converter for $detector_class $variant_type");
+            next;
+        }
+
+        if($variant_type eq 'indels'){
+            $self->_run_vcf_indel_normalizer();
         }
     }
     unless($convertable>0){
@@ -76,7 +80,35 @@ sub _run_vcf_converter {
         $self->error_message('Failed to convert ' . $input_file . ' to the standard format.');
         return;
     }
+    return 1;
+}
 
+sub _run_vcf_indel_normalizer {
+    my $self = shift;
+    my $input_file = join('/', $self->output_dir, 'indels.vcf.gz'); #TODO: this is probably not the correct way to do this
+    unless (-e $input_file){
+        die $self->error_message("No file $input_file to normalize");
+    }
+    my $dir_name = $self->output_dir;
+    my $output_file = $dir_name . '/normalized_indel.vcf.gz';
+    my $detector_result = $self->input;
+    my $reference_sequence_build = Genome::Model::Build->get($detector_result->reference_build_id);
+    my $reference_fasta = $reference_sequence_build->cached_full_consensus_path('fa');
+    my %params = (
+        input_file => $input_file,
+        output_file => $output_file,
+        reference => $reference_fasta,
+        use_bgzip => 1,
+        use_version => 1.7, #1.6 is trouble
+    );
+
+    my $command = Genome::Model::Tools::Joinx::VcfNormalizeIndels->create(%params);
+    unless ($command->execute) {
+        die $self->error_message("Failed to normalize $input_file.");
+    }
+    unless(rename($output_file, $input_file)){
+        die $self->error_message('Failed to replace vcf file with normalized vcf file ' . $!);
+    }
     return 1;
 }
 

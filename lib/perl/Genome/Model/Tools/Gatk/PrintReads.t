@@ -13,7 +13,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 4;
+    plan tests => 5;
 }
 
 use_ok('Genome::Model::Tools::Gatk::PrintReads');
@@ -43,4 +43,5 @@ my $gatk_cmd = Genome::Model::Tools::Gatk::PrintReads->create(
 isa_ok($gatk_cmd, 'Genome::Model::Tools::Gatk::PrintReads', "Made the command");
 # ok(!$gatk_cmd->execute, "Failed to execute the command");
 ok($gatk_cmd->execute, "Executed the command");
-ok(system("diff $output_bam $expected_bam") == 0, "Output and expected are not different.")
+ok(system("diff $output_bam $expected_bam") == 0, "Output and expected are not different.");
+ok(-s $output_bam.'.bai', 'bam index exists');

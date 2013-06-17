@@ -15,12 +15,9 @@ use Genome::Utility::Instrumentation;
 use warnings;
 use strict;
 
-
-our $BAM_FH;
-
 class Genome::InstrumentData::AlignmentResult {
     is_abstract => 1,
-    is=>['Genome::SoftwareResult::Stageable'],
+    is => 'Genome::SoftwareResult::Stageable',
     sub_classification_method_name => '_resolve_subclass_name',
     has => [
         instrument_data         => {

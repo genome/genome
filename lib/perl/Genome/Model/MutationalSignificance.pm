@@ -26,9 +26,12 @@ BEGIN {
             output_dir => ['input connector', 'create_maf_output_dir'],
             cosmic_dir => ["input connector", 'cosmic_dir'],
             review_file_dir => ["input connector", 'review_file_dir'],
+            regulatory_columns_to_check => ["input connector", "regulatory_columns_to_check"],
         },
         'Genome::Model::MutationalSignificance::Command::CreateROI' => {
             annotation_build => ['input connector', 'annotation_build'], #input to model, not param
+            extra_rois => ['input connector', 'extra_rois'], #TODO: get from somatic variation models?
+            regulome_bed => ['input connector', 'regulome_bed'],
         },
         'Genome::Model::MutationalSignificance::Command::CreateBamList' => {
             somatic_variation_builds => ['input connector', 'somatic_variation_builds'],
@@ -132,7 +135,7 @@ class Genome::Model::MutationalSignificance {
             doc => 'annotation to use for roi file',
         },
         review_file_dir => {
-            is => 'UR::Value::DirectoryPath',
+            is => 'String',
             is_optional => 1,
             doc => 'Path to directory of variant files with reviews.  Any variant with a review status other than S or V will be  ignored.',
         },
@@ -215,6 +218,17 @@ class Genome::Model::MutationalSignificance {
             is_optional => 1,
             doc => "Tab delimited multipliers per gene that modify BMR before testing",
         },
+        extra_rois => {
+            is => 'Genome::FeatureList',
+            is_optional => 1,
+            is_many => 1,
+            doc => 'Extra ROI files to include in MuSiC analysis',
+        },
+        regulome_bed => {
+            is => 'Genome::FeatureList',
+            is_optional => 1,
+            doc => 'Bed file with regulome db scores for regions',
+        },
     ],
     has_param => \@has_param,
 };
@@ -293,10 +307,11 @@ sub _resolve_workflow_for_build {
     push @input_properties, "log_directory";
     push @input_properties, "significant_variant_list";
     push @input_properties, "mutation_matrix_file";
-    push @input_properties, "categorical_clinical_data_file";
-    push @input_properties, "numeric_clinical_data_file";
+    #push @input_properties, "categorical_clinical_data_file";
+    #push @input_properties, "numeric_clinical_data_file";
     push @input_properties, "clinical_correlation_matrix_file";
     push @input_properties, "reference_build";
+    push @input_properties, "regulatory_columns_to_check";
 
     my @output_properties;
     if ($self->play_music) {
@@ -341,7 +356,10 @@ sub _resolve_workflow_for_build {
  
     my $output_connector = $workflow->get_output_connector;
 
-    my @commands = ('Genome::Model::MutationalSignificance::Command::CreateMafFile','Genome::Model::MutationalSignificance::Command::MergeMafFiles','Genome::Model::MutationalSignificance::Command::CreateROI','Genome::Model::MutationalSignificance::Command::CreateBamList','Genome::Model::MutationalSignificance::Command::CompileValidationList','Genome::Model::MutationalSignificance::Command::RunReports');
+    my @commands = ('Genome::Model::MutationalSignificance::Command::CreateMafFile','Genome::Model::MutationalSignificance::Command::MergeMafFiles','Genome::Model::MutationalSignificance::Command::CreateROI','Genome::Model::MutationalSignificance::Command::CreateBamList','Genome::Model::MutationalSignificance::Command::CompileValidationList');
+    if ($self->run_reports) {
+        push @commands, 'Genome::Model::MutationalSignificance::Command::RunReports';
+    }
 
     for my $command_name (@commands) {
         $workflow = $self->_append_command_to_workflow($command_name,
@@ -603,6 +621,14 @@ sub map_workflow_inputs {
     if ($build->review_file_dir) {
         $inputs{review_file_dir} = $build->review_file_dir;
     }
+    my @extra_rois = $build->extra_rois;
+    if (@extra_rois) {
+        $inputs{extra_rois} = [@extra_rois];
+        $inputs{regulatory_columns_to_check} = [map {$_->name} @extra_rois];
+    }
+    if ($build->regulome_bed) {
+        $inputs{regulome_bed} = $build->regulome_bed;
+    }
     $inputs{music_build} = $build;
     $inputs{log_directory} = $build->log_directory;
     $inputs{merged_maf_path} = $base_dir."/final.maf";
@@ -615,10 +641,8 @@ sub map_workflow_inputs {
     $inputs{significant_variant_list} = $base_dir."/significant_variant_list";
     $inputs{mutation_matrix_file} = $base_dir."/mutation_matrix_file";
     $inputs{clinical_correlation_matrix_file} = $base_dir."/clinical_correlation_matrix_file";
-    # $inputs{categorical_clinical_data_file} = $base_dir."/categorical_clinical_data_file";
-    # $inputs{numeric_clinical_data_file} = $base_dir."/numeric_clinical_data_file";
-    $inputs{categorical_clinical_data_file} = $build->categorical_clinical_data_file;
-    $inputs{numeric_clinical_data_file} = $build->numeric_clinical_data_file;
+    #$inputs{categorical_clinical_data_file} = $build->categorical_clinical_data_file;
+    #$inputs{numeric_clinical_data_file} = $build->numeric_clinical_data_file;
 
     my $reference_build_name = $builds[0]->reference_sequence_build->name;
     my $calculated_reference_build = "37";

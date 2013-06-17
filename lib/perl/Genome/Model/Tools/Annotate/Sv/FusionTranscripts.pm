@@ -210,6 +210,9 @@ sub getAllInFrameFusions {
                 my $a_halfProtSeq = $a_halfProtObj->seq;
                 my $b_halfProtSeq = inFrameSequence($mRNA_b);
 
+                #sometimes the $a_halfProtSeq contains leading * that makes trouble
+                $a_halfProtSeq =~ s/^\*+//;
+
                 my $id = $a_halfProtSeq.'-'.$b_halfProtSeq;
                 unless ($uniq{$id}) {
                     $out_fh->print("\n\n\$mRNA_a \t $a_halfProtSeq \n");

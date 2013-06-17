@@ -532,3 +532,50 @@ plot_mutation_spectrum_bystrand <- function(inputFile,plot_title=NULL,outputFile
 
 
 }
+
+
+plot_mutation_distance<- function(mut_dist_file,chr_boundary_file,plot_title="Mutation Distance",output_file=NULL)  {
+
+  library("ggplot2");
+  mbp = 1e6;
+  data.in <- read.table(mut_dist_file,sep="\t",header=F);
+  data.in$V2 <- data.in$V2/mbp;
+  colnames(data.in) <- c('chr','location','type','distance');
+
+  #chr_boundary_file = "chr.length.merged.b37";
+  chr_boundary <- read.table(chr_boundary_file,sep="\t",header=FALSE);
+  colnames(chr_boundary)<- c('chr','start','end','xaxis_breakpt','label');  #add labels that make sense
+  chr_boundary$start <- chr_boundary$start/mbp;
+  chr_boundary$end <- chr_boundary$end/mbp;
+  chr_boundary$xaxis_breakpt <-chr_boundary$xaxis_breakpt/1e6; 
+  chr_boundary$chr[chr_boundary$chr==23] <- 'X'
+  chr_boundary$chr[chr_boundary$chr==24] <- 'Y'
+  
+  p <- ggplot(data=chr_boundary);
+  p <- p + geom_rect(aes(xmin=start,xmax=end,ymin=0.7,ymax=100000000,fill=label));
+  p <- p + geom_point(data=data.in,aes(x=location,y=distance,colour=type),size=1.5,alpha=1);
+  p <- p + geom_hline(data=data.in,yintercept=10000,colour=colors()[190],linetype='dashed');
+  p <- p + geom_vline(aes(xintercept=end),colour='black');
+  p <- p + scale_x_continuous(name='chromosome',expand=c(0,0),breaks=chr_boundary$xaxis_breakpt,labels=chr_boundary$chr);
+  p <- p + scale_y_continuous(name='Intermutation Distance(bp)',trans='log10');
+  p <- p <- p + coord_cartesian(ylim=c(0.7,1e8));
+  p <- p + scale_colour_manual(name='',values=c('A->G'='orange','C->T'=colors()[97],'A->C'='red','C->G'=colors()[68],'C->A'=colors()[565],'A->T'=colors()[81]));
+  p <- p + scale_fill_manual(name='',values=c('odd'='white','even'=colors()[235]),legend=FALSE);
+  p <- p + opts(title=plot_title,plot.title = theme_text(size=14, lineheight=.8, face="bold"),axis.title.y=theme_text(angle=90,face='bold',size=11),axis.text.y=theme_text(colour='black',size=12),axis.title.x=theme_text(angle=0,face='bold',size=11),axis.text.x=theme_text(colour='black',size=8,angle=0),panel.grid.major=theme_blank(),panel.grid.minor=theme_blank(),strip.text.x=theme_text(face="bold",size=10),panel.background=theme_rect(fill=colors()[2]),panel.border=theme_rect(colour='black')); 
+
+  if(!is.null(output_file)) {
+    pdf(file=output_file,width=14,height=5);
+    #grid.newpage()
+    #pushViewport(viewport(layout=grid.layout(1,3)));
+    #print(p1,vp=viewport(layout.pos.row=1,layout.pos.col=c(1,2)));
+    #print(p2,vp=viewport(layout.pos.row=1,layout.pos.col=3));
+    print(p);
+    #print(p2);
+    dev.off();
+  }
+  else {
+    #return(list(a=p1,b=p2));
+    return(p);
+  }
+
+}
