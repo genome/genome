@@ -32,7 +32,7 @@ my $group = Genome::Disk::Group->create(
     disk_group_name => 'test',
     subdirectory => 'info',
     permissions => '775',
-    sticky => 1,
+    setgid => 1,
     unix_uid => '1',
     unix_gid => '1',
 );

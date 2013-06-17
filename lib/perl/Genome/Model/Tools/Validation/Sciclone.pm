@@ -38,7 +38,6 @@ class Genome::Model::Tools::Validation::Sciclone {
             doc => "comma separated list - regions to exclude (first 3 cols are chr,st,sp). Commonly used for LOH calls",
             is_optional => 1,
             is_input => 1,
-            default => 1,
         },
 
         clusters_file => {
@@ -316,6 +315,7 @@ sub execute {
         $cmd = $cmd . ", copyNumberCalls=list(" . join(",",@cnVars) . ")";
     }
 
+    
     if(defined($regions_to_exclude)){
         $cmd = $cmd . ", regionsToExclude=list(" . join(",",@regVars) . ")";
     }
@@ -375,11 +375,9 @@ sub execute {
 
 
         if($plot_only_cn2){
-            print $rfile ", plotOnlyCN2=TRUE";
-        } else {
-            print $rfile ", plotOnlyCN2=FALSE";
+            print $rfile ", cnToPlot=c(2)";
         }
-
+ 
         if($overlay_clusters){
             print $rfile ", overlayClusters=TRUE";
         } else {

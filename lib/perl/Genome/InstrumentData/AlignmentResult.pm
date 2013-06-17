@@ -15,12 +15,9 @@ use Genome::Utility::Instrumentation;
 use warnings;
 use strict;
 
-
-our $BAM_FH;
-
 class Genome::InstrumentData::AlignmentResult {
     is_abstract => 1,
-    is=>['Genome::SoftwareResult::Stageable'],
+    is => 'Genome::SoftwareResult::Stageable',
     sub_classification_method_name => '_resolve_subclass_name',
     has => [
         instrument_data         => {
@@ -993,143 +990,49 @@ sub _use_alignment_summary_cpp { return 1; };
 sub _compute_alignment_metrics {
     my $self = shift;
     my $bam = $self->temp_staging_directory . "/all_sequences.bam";
-    if($self->_use_alignment_summary_cpp){
-      my $out = `bash -c "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/gsc/scripts/opt/genome_legacy_code/lib:/gsc/pkg/boost/boost_1_42_0/lib /gsc/scripts/opt/genome_legacy_code/bin/alignment-summary-v1.2.6 --bam=\"$bam\" --ignore-cigar-md-errors"`;
-      unless ($? == 0) {
-          $self->error_message("Failed to compute alignment metrics.");
-          die $self->error_message;
-      }
-      my $res = YAML::Load($out);
-      unless (ref($res) eq "HASH") {
-          $self->error_message("Failed to parse YAML hash from alignment_summary_cpp output.");
-          die $self->error_message;
-      }
-      # ehvatum TODO: stop using samtools flagstat to detect truncation
-      #$self->alignment_file_truncated     ($res->{truncated});
-      $self->cigar_md_error_count         ($res->{cigar_md_error});
-      $self->total_read_count             ($res->{total});
-      $self->total_base_count             ($res->{total_bp});
-      $self->total_aligned_read_count     ($res->{total_aligned});
-      $self->total_aligned_base_count     ($res->{total_aligned_bp});
-      $self->total_unaligned_read_count   ($res->{total_unaligned});
-      $self->total_unaligned_base_count   ($res->{total_unaligned_bp});
-      $self->total_duplicate_read_count   ($res->{total_duplicate});
-      $self->total_duplicate_base_count   ($res->{total_duplicate_bp});
-      $self->total_inserted_base_count    ($res->{total_inserted_bp});
-      $self->total_deleted_base_count     ($res->{total_deleted_bp});
-      $self->total_hard_clipped_read_count($res->{total_hard_clipped});
-      $self->total_hard_clipped_base_count($res->{total_hard_clipped_bp});
-      $self->total_soft_clipped_read_count($res->{total_soft_clipped});
-      $self->total_soft_clipped_base_count($res->{total_soft_clipped_bp});
-      $self->paired_end_read_count        ($res->{paired_end});
-      $self->paired_end_base_count        ($res->{paired_end_bp});
-      $self->read_1_count                 ($res->{read_1});
-      $self->read_1_base_count            ($res->{read_1_bp});
-      $self->read_2_count                 ($res->{read_2});
-      $self->read_2_base_count            ($res->{read_2_bp});
-      $self->mapped_paired_end_read_count ($res->{mapped_paired_end});
-      $self->mapped_paired_end_base_count ($res->{mapped_paired_end_bp});
-      $self->proper_paired_end_read_count ($res->{proper_paired_end});
-      $self->proper_paired_end_base_count ($res->{proper_paired_end_bp});
-      $self->singleton_read_count         ($res->{singleton});
-      $self->singleton_base_count         ($res->{singleton_bp});
 
-      Genome::Utility::Instrumentation::inc('alignment_result.read_count',
-          $self->total_read_count);
-    }
-
-    #Collect extra metrics for retiring eland for now, this might move to
-    #some other place for better coding.
-    $self->status_message('Collecting extra picard metrics ...');
-
-    my $out_base = $self->temp_scratch_directory . '/all_sequences';
-    my $ref_seq  = $self->reference_build->full_consensus_path('fa');
-
-    my $picard_version = $self->picard_version;
-
-    if ($picard_version < 1.40) {
-        $picard_version = Genome::Model::Tools::Picard->default_picard_version;
-        $self->warning_message('Given picard version: '.$self->picard_version.' not compatible to CollectMultipleMetrics. Use default: '.$picard_version);
-    }
-
-    my $prog_list  = 'CollectAlignmentSummaryMetrics';
-    my $instr_data = $self->instrument_data;
-
-    if ($instr_data->is_paired_end) { #No way to collect insert_size info from single-ended instrument data using picard
-        $prog_list .= ',CollectInsertSizeMetrics';
-    }
-
-    my $cmd = Genome::Model::Tools::Picard::CollectMultipleMetrics->create(
-        input_file         => $bam,
-        output_basename    => $out_base,
-        reference_sequence => $ref_seq,
-        program_list       => $prog_list,
-        use_version        => $picard_version,
-    );
-
-    unless ($cmd and $cmd->execute) {
-        die $self->error_message("Failed to create or execute picard $prog_list command.");
-    }
-
-    my $align_metrics_file = $out_base.'.alignment_summary_metrics';
-    my $align_data = Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics->parse_file_into_metrics_hashref($align_metrics_file);
-
-    if ($instr_data->is_paired_end) {
-        my ($r1_pct_aligned, $r2_pct_aligned, $r1_mismatch, $r2_mismatch);
-
-        if ($align_data->{'CATEGORY-FIRST_OF_PAIR'}) {
-            $r1_pct_aligned = sprintf("%.2f", $align_data->{'CATEGORY-FIRST_OF_PAIR'}->{PCT_PF_READS_ALIGNED} * 100);
-            $r1_mismatch    = sprintf("%.2f", $align_data->{'CATEGORY-FIRST_OF_PAIR'}->{PF_MISMATCH_RATE} * 100);
+    if ($self->_use_alignment_summary_cpp){
+        my $out = `bash -c "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/gsc/scripts/opt/genome_legacy_code/lib:/gsc/pkg/boost/boost_1_42_0/lib /gsc/scripts/opt/genome_legacy_code/bin/alignment-summary-v1.2.6 --bam=\"$bam\" --ignore-cigar-md-errors"`;
+        unless ($? == 0) {
+            $self->error_message("Failed to compute alignment metrics.");
+            die $self->error_message;
         }
-        else {
-            $self->warning_message("Failed to parse read_1_pct_aligned and read_1_pct_mismatch from $align_metrics_file");
-            ($r1_pct_aligned, $r1_mismatch) = (0, 0);
+        my $res = YAML::Load($out);
+        unless (ref($res) eq "HASH") {
+            $self->error_message("Failed to parse YAML hash from alignment_summary_cpp output.");
+            die $self->error_message;
         }
+        # ehvatum TODO: stop using samtools flagstat to detect truncation
+        #$self->alignment_file_truncated     ($res->{truncated});
+        $self->cigar_md_error_count         ($res->{cigar_md_error});
+        $self->total_read_count             ($res->{total});
+        $self->total_base_count             ($res->{total_bp});
+        $self->total_aligned_read_count     ($res->{total_aligned});
+        $self->total_aligned_base_count     ($res->{total_aligned_bp});
+        $self->total_unaligned_read_count   ($res->{total_unaligned});
+        $self->total_unaligned_base_count   ($res->{total_unaligned_bp});
+        $self->total_duplicate_read_count   ($res->{total_duplicate});
+        $self->total_duplicate_base_count   ($res->{total_duplicate_bp});
+        $self->total_inserted_base_count    ($res->{total_inserted_bp});
+        $self->total_deleted_base_count     ($res->{total_deleted_bp});
+        $self->total_hard_clipped_read_count($res->{total_hard_clipped});
+        $self->total_hard_clipped_base_count($res->{total_hard_clipped_bp});
+        $self->total_soft_clipped_read_count($res->{total_soft_clipped});
+        $self->total_soft_clipped_base_count($res->{total_soft_clipped_bp});
+        $self->paired_end_read_count        ($res->{paired_end});
+        $self->paired_end_base_count        ($res->{paired_end_bp});
+        $self->read_1_count                 ($res->{read_1});
+        $self->read_1_base_count            ($res->{read_1_bp});
+        $self->read_2_count                 ($res->{read_2});
+        $self->read_2_base_count            ($res->{read_2_bp});
+        $self->mapped_paired_end_read_count ($res->{mapped_paired_end});
+        $self->mapped_paired_end_base_count ($res->{mapped_paired_end_bp});
+        $self->proper_paired_end_read_count ($res->{proper_paired_end});
+        $self->proper_paired_end_base_count ($res->{proper_paired_end_bp});
+        $self->singleton_read_count         ($res->{singleton});
+        $self->singleton_base_count         ($res->{singleton_bp});
 
-        if ($align_data->{'CATEGORY-SECOND_OF_PAIR'}) {
-            $r2_pct_aligned = sprintf("%.2f", $align_data->{'CATEGORY-SECOND_OF_PAIR'}->{PCT_PF_READS_ALIGNED} * 100);
-            $r2_mismatch    = sprintf("%.2f", $align_data->{'CATEGORY-SECOND_OF_PAIR'}->{PF_MISMATCH_RATE} * 100);
-        }
-        else {
-            $self->warning_message("Failed to parse read_2_pct_aligned and read_2_pct_mismatch from $align_metrics_file");
-            ($r2_pct_aligned, $r2_mismatch) = (0, 0);
-        }
-        $self->read_1_pct_aligned($r1_pct_aligned);
-        $self->read_2_pct_aligned($r2_pct_aligned);
-        $self->read_1_pct_mismatch($r1_mismatch);
-        $self->read_2_pct_mismatch($r2_mismatch);
-    }
-    else { #Only one set of alignment metrics for single_end instrument data
-        my ($r1_pct_aligned, $r1_mismatch);
-
-        if ($align_data->{'CATEGORY-UNPAIRED'}) {
-            $r1_pct_aligned = sprintf("%.2f", $align_data->{'CATEGORY-UNPAIRED'}->{PCT_PF_READS_ALIGNED} * 100);
-            $r1_mismatch    = sprintf("%.2f", $align_data->{'CATEGORY-UNPAIRED'}->{PF_MISMATCH_RATE} * 100);
-        }
-        else {
-            $self->warning_message("Failed to parse single_end pct_pf_reads_aligned and pf_mismatch_rate from $align_metrics_file");
-            ($r1_pct_aligned, $r1_mismatch) = (0, 0);
-        }
-        $self->read_1_pct_aligned($r1_pct_aligned);
-        $self->read_1_pct_mismatch($r1_mismatch);
-    }
-
-    if ($instr_data->is_paired_end) {
-        my $is_metrics_file = $out_base.'.insert_size_metrics';
-
-        if (-s $is_metrics_file) { #sometimes (like unit tests) the insert_size_metrics will not be generated because < 0.01 of the total aligned paired data
-            my $is_data = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($is_metrics_file);
-
-            if ($is_data->{'PAIR_ORIENTATION-FR'}) {
-                $self->median_insert_size($is_data->{'PAIR_ORIENTATION-FR'}->{MEDIAN_INSERT_SIZE});
-                $self->sd_insert_size($is_data->{'PAIR_ORIENTATION-FR'}->{STANDARD_DEVIATION});
-                return 1;
-            }
-        }
-
-        $self->warning_message("Failed to parse median_insert_size and sd_insert_size from $is_metrics_file");
-        $self->median_insert_size(0);
-        $self->sd_insert_size(0);
+        Genome::Utility::Instrumentation::inc('alignment_result.read_count', $self->total_read_count);
     }
 
     return 1;

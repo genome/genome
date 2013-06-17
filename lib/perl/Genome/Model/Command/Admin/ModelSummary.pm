@@ -46,8 +46,7 @@ sub execute {
 
     #preload data
     my %failed_build_params = (
-        run_by => Genome::Sys->username,
-        status => 'Failed',
+        'status in' => ['Unknown', 'Unstartable', 'Failed'],
     );
     my @builds = Genome::Model::Build->get(
         model_id => [map($_->id, @models)],

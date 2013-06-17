@@ -74,6 +74,11 @@ class Genome::Model::ReferenceSequence {
             default_value => 1,
             doc => 'If specified, individual bases files are not created for each sequence in the fasta',
         },
+        is_rederivable => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'If true, indicates that the reference is the product of other analysis and could be rederived. It will be stored as a model/build product rather than imported data.'
+        },
 
         # meta-data about the reference
         derived_from => {
@@ -222,7 +227,7 @@ sub _resolve_resource_requirements_for_build {
 }
 
 sub _resolve_disk_group_name_for_build {
-    return 'info_apipe_ref';
+    return ($_[0]->is_rederivable ? 'info_genome_models' : 'info_apipe_ref');
 }
 
 sub _execute_build {

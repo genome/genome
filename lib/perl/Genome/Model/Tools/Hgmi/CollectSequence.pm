@@ -93,6 +93,12 @@ sub execute
 	$agp,
 	$agp_file,
 	$newagp_file,
+        $cmt,
+	$cmt_file,
+	$newcmt_file,
+        $gap,
+        $gap_file,
+        $newgap_file,
 
        );
 
@@ -123,6 +129,36 @@ sub execute
     else {
 
       warn qq{\n\n No $agp_file found! CollectSequence.pm\n\n};
+
+    }
+
+    $cmt         = qq{contigs.cmt};
+    $cmt_file    = qq{$seq_file_dir/$cmt};
+    $newcmt_file = qq{$cwd/contigs.cmt};
+
+    if (( -e $cmt_file ) && (! -z $cmt_file )) {
+
+      copy($cmt_file, $newcmt_file);
+
+    }
+    else {
+
+      warn qq{\n\n No $cmt_file found! CollectSequence.pm\n\n};
+
+    }
+
+    $gap         = qq{gap.txt};
+    $gap_file    = qq{$seq_file_dir/$gap};
+    $newgap_file = qq{$cwd/gap.txt};
+
+    if (( -e $gap_file ) && (! -z $gap_file )) {
+
+      copy($gap_file, $newgap_file);
+
+    }
+    else {
+
+      warn qq{\n\n No $gap_file found! CollectSequence.pm\n\n};
 
     }
 

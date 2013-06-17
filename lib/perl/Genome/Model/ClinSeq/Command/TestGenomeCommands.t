@@ -18,7 +18,7 @@ BEGIN {
 
 use Data::Dumper;
 use above "Genome";
-use Test::More tests => 57;
+use Test::More tests => 61;
 
 #Test with GENOME_QUERY_POSTGRES=1 to use postgres database instead of Oracle
 
@@ -34,7 +34,7 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2013-04-17-14-20/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2013-06-13/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #CLIN-SEQ UPDATE-ANALYSIS
@@ -85,7 +85,6 @@ $cmd = "genome model rna-seq list group_ids=50554 --show id,name,processing_prof
 $cmd .= " 1>$temp_dir/genome-model-rnaseq-list2.out 2>$temp_dir/genome-model-rnaseq-list2.err";
 run_ok($cmd, "tested genome model rna-seq list2") or diag $cmd;
 
-
 #GENOME INSTRUMENT-DATA LIST SOLEXA
 $cmd = "genome instrument-data list solexa --show id,flow_cell_id,lane,index_sequence,sample_name,library_name,clusters,read_length,bam_path --filter flow_cell_id=D1VCPACXX";
 $cmd .= " 1>$temp_dir/genome-instrument-data-list1.out 2>$temp_dir/genome-instrument-data-list1.err";
@@ -100,11 +99,18 @@ $cmd = "genome model-group member list --filter 'model_group_id=66909' --show mo
 $cmd .= " 1>$temp_dir/genome-model-group-member-list1.out 2>$temp_dir/genome-model-group-member-list1.err";
 run_ok($cmd, "tested genome model-group member list1") or diag $cmd;
 
+#GENOME MODEL SOMATIC-VALIDATION LIST
+#genome model somatic-validation list --filter model_groups.id=72096 --show tumor_sample.patient_common_name,tumor_sample.name,last_complete_build.tumor_bam
+$cmd = "genome model somatic-validation list --filter model_groups.id=72096 --show tumor_sample.patient_common_name,tumor_sample.name,last_complete_build.tumor_bam";
+$cmd .= " 1>$temp_dir/genome-model-somatic-validation-list1.out 2>$temp_dir/genome-model-somatic-validation-list1.err";
+run_ok($cmd, "tested genome somatic-validation list1") or diag $cmd;
+
+
 my @expected_files = map { (/^$expected_output_dir\/?(.*)/)[0] } capture_ok(qq(find $expected_output_dir -type f ! -name '*.err'));
 my @temp_files = map { (/^$temp_dir\/?(.*)/)[0] } capture_ok(qq(find $temp_dir -type f ! -name '*.err'));
 my @files = uniq (@expected_files, @temp_files);
 chomp @files;
-is(scalar(@files), 13, 'found expected number of files');
+is(scalar(@files), 14, 'found expected number of files');
 for my $file (@files) {
     next if $file =~ m/^\..*\.swp$/;  # skip vim temp files
     my $temp_file = File::Spec->join($temp_dir, $file);

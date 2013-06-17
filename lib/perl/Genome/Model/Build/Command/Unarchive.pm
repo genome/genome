@@ -80,7 +80,15 @@ sub execute {
         }
 
         # Relink broken symlinked allocations
-        $build->relink_symlinked_allocations;
+        $build->relink_symlinked_allocations();
+        my @input_builds = $build->input_builds;
+        $self->status_message(sprintf("Found %s input-builds related to this build (%s).",
+                scalar(@input_builds), $build->id));
+        for my $input_build (@input_builds) {
+            $self->status_message(sprintf("Relinking symlinked allocations on build %s",
+                    $input_build->id));
+            $input_build->relink_symlinked_allocations();
+        }
 
         # Set the data directory to the absolute path of the main alloc
         my $main_allocation = $build->disk_allocation;

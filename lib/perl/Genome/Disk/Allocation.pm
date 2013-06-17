@@ -807,7 +807,7 @@ sub _archive {
         $self->mount_path($self->volume->archive_mount_path);
         $self->_update_owner_for_move;
 
-        my $rv = UR::Context->commit;
+        my $rv = $self->_commit_unless_testing;
         confess "Could not commit!" unless $rv;
     };
     my $error = $@; # Record error so it can be investigated after unlocking
@@ -942,7 +942,7 @@ sub _unarchive {
             _symlink($old_absolute_path, $self->absolute_path);
         }
 
-        unless (UR::Context->commit) {
+        unless ($self->_commit_unless_testing) {
             confess "Could not commit!";
         }
     };
@@ -1462,7 +1462,9 @@ sub _symlink {
 
 sub _commit_unless_testing {
     if ($TESTING_DISK_ALLOCATION || !$ENV{UR_DBI_NO_COMMIT}) {
-        UR::Context->commit();
+        return UR::Context->commit();
+    } else {
+        return 1;
     }
 }
 

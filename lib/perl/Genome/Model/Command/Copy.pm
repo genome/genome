@@ -56,6 +56,15 @@ Copying with the "recurse" option will copy input models, and their input models
 
  genome model copy name=apipe-test-clinseq-v4 name=apipe-test-clinseq-v5 --recurse
 
+Recursion happens automatically when changes are made to underlying models, but only where necessary.
+This copy notes that the PP must change for the refalign models under the wgs_model, and as such requires 3 new models to achieve the change:
+
+ > genome model copy 2888708572 name=my-all1-bwamem wgs_model.tumor_model.processing_profile=2828673 wgs_model.normal_model.processing_profile=2828673
+ NEW MODEL: my-all1-bwamem (2892350615)
+ NEW MODEL: my-all1-bwamem.wgs_model (2892350616)
+ NEW MODEL: my-all1-bwamem.wgs_model.normal_model (2892350617)
+ NEW MODEL: my-all1-bwamem.wgs_model.tumor_model (2892350618)
+
 EOS
 }
 
@@ -136,15 +145,34 @@ sub execute {
     #$self->status_message('Copy model: '.$model->__display_name__);
 
     my %overrides = $self->params_from_param_strings($model->class, $self->overrides); 
-    return if not %overrides;
+    if (not %overrides) {
+        die "eror parsing overrides!";
+    }
 
+    my %indirect_overrides;
+    my @errors;
+    for my $name (keys %overrides) {
+        if ($name =~ /^(.*?)\.(.*)$/) {
+            my $first = $1;
+            my $rest = $2;
+            unless ($model->can($first)) {
+                push @errors, "No property $first on model " . $model->__display_name__ . ".  Cannot set indirect property $name!";
+                next;
+            }
+            $indirect_overrides{$first}{$rest} = delete $overrides{$name};
+        }
+    }
+    if (@errors) {
+        die $self->error_message(join("\n",@errors));
+    }
+    
     my $new_model = $model->copy(%overrides);
     return if not $new_model;
     $self->_new_model($new_model);
 
     $self->status_message("NEW MODEL: ".$new_model->__display_name__);
 
-    if ($self->recurse) {
+    if ($self->recurse or %indirect_overrides) {
         my @input_assoc = $new_model->input_associations();
         my $n = 0;
         for my $assoc (@input_assoc) {
@@ -156,16 +184,37 @@ sub execute {
 
             my $new_input_model_name = $new_model->name . "." . $assoc->name;
             
-            __PACKAGE__->execute(
-                model => $input_value,                
-                recurse => 1,
-                start => $self->start,
-                overrides => [ "name=$new_input_model_name" ], #TODO make this an object which parses from this text blob instead of a text blob
-            );
-            my $new_input_model = Genome::Model->get(name => $new_input_model_name);            
-            $new_model->$input_name($new_input_model);
+            #TODO make this an object which parses from this text blob instead of a text blob
+            my @overrides = ("name=$new_input_model_name");
+            my $more_overrides = delete $indirect_overrides{$input_name};
+            if ($more_overrides) {
+                for my $key (keys %$more_overrides) {
+                    my $value = $more_overrides->{$key};
+                    push @overrides, "$key=$value";
+                }
+            }
 
-            $n++;
+            if ($self->recurse or @overrides > 1) {
+                eval {
+                    __PACKAGE__->execute(
+                        model => $input_value,                
+                        recurse => $self->recurse,
+                        start => $self->start,
+                        overrides => \@overrides,
+                    );
+                };
+                my $err = $@;
+                my $new_input_model = Genome::Model->get(name => $new_input_model_name);           
+                unless ($new_input_model) {
+                    $new_model->delete;
+                    die "failed to generate model $new_input_model_name for $input_name replacing $input_value: $@!";
+                }
+                $new_model->$input_name($new_input_model);
+                $n++;
+            }
+        }
+        if (%indirect_overrides) {
+            die "indirect overrides for values that are not set on the original model are not supported yet, sadly: " . Data::Dumper::Dumper(\%indirect_overrides);  
         }
 
         if ($self->start) {
@@ -195,6 +244,13 @@ sub params_from_param_strings {
     my $meta = $class->__meta__;
     for my $param_string ( @param_strings ) {
         my ($key, $value) = split('=', $param_string, 2);
+        if ($key =~ /\./) {
+            # defer processing 
+            # this will be handled in recursive calls to copy()
+            $params{$key} = $value;
+            next;
+        }
+
         my $property = $meta->property_meta_for_name($key);
         if ( not $property ) {
             $class->error_message("Failed to find model property: $key");
@@ -222,8 +278,8 @@ sub params_from_param_strings {
             }
             @values = $data_type->get($bx);
             if ( not @values ) {
-                $class->error_message("Failed to get $key ($data_type) for $value");
-                return;
+                $DB::single = 1;
+                die $class->error_message("Failed to get $key ($data_type) for $value");
             }
         }
 

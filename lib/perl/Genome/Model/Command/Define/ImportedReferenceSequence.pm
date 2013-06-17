@@ -86,6 +86,11 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             default_value => 'inline',
             doc => 'dispatch specification: an LSF queue or "inline"'
         },
+        is_rederivable => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Indicates if this reference could be rederived from other internal results or if it is an external import',
+        },
     ],
     has_transient => [
         result_build_id => {
@@ -295,6 +300,7 @@ sub _get_or_create_model {
             'subject_id' => $taxon->taxon_id,
             'processing_profile_id' => $irs_pp->id,
             'name' => $self->model_name,
+            'is_rederivable' => $self->is_rederivable,
         );
 
         if($model) {

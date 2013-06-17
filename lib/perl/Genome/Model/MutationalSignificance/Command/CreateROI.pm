@@ -23,6 +23,11 @@ class Genome::Model::MutationalSignificance::Command::CreateROI {
             is_optional => 1,
             doc => 'Include only entries that match one of these patterns',
         },
+        include_flank => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'Include the flanking regions of transcripts',
+        },
         condense_feature_name => {
             is => 'Boolean',
             doc => 'Use only gene name as feature name',
@@ -32,6 +37,21 @@ class Genome::Model::MutationalSignificance::Command::CreateROI {
             is => 'Integer',
             doc => 'Add this number of base pairs on each side of the feature', #to do: check this
             default_value => 0,
+        },
+        extra_rois => {
+            is => 'Genome::FeatureList',
+            is_many => 1,
+            is_optional => 1,
+        },
+        regulome_bed => {
+            is => 'Genome::FeatureList',
+            is_optional => 1,
+            doc => 'Bed file of regions with regulomedb scores',
+        },
+    ],
+    has_param => [
+        lsf_resource => {
+            default_value => '-R \'select[mem>32000] rusage[mem=32000]\' -M 32000000 ',
         },
     ],
     has_output => [
@@ -58,6 +78,9 @@ sub execute {
     if ($self->flank_size && $self->flank_size > 0) {
         push @params, flank_size => $self->flank_size;
     }
+    if ($self->include_flank) {
+        push @params, include_flank => 1;
+    }
     push @params, one_based => 1;
 
     my $feature_list = $self->annotation_build->get_or_create_roi_bed(@params);
@@ -67,8 +90,91 @@ sub execute {
         return;
     }
 
-    $self->roi_path($feature_list->file_path);
+    $self->status_message("Basing ROI on ".$feature_list->id);
 
+    $self->roi_path($feature_list->file_path);
+    
+    my $new_name = $feature_list->name;
+    my @files;
+    for my $extra_roi ($self->extra_rois) {
+        my $roi_name = $extra_roi->name;
+        $self->status_message("Adding roi $roi_name");
+        $new_name .= "_$roi_name";
+        push @files, $extra_roi->get_one_based_file;
+    }
+
+    my $new_feature_list = Genome::FeatureList->get(name => $new_name);
+
+    unless ($new_feature_list) {
+        my $sorted_out = Genome::Sys->create_temp_file_path;
+        my $rv = Genome::Model::Tools::Joinx::Sort->execute(
+            input_files => [$feature_list->file_path, @files],
+            unique => 1,
+            output_file => $sorted_out,
+        );
+        my $file_content_hash = Genome::Sys->md5sum($sorted_out);
+
+        my $format = $feature_list->format;
+
+        $new_feature_list = Genome::FeatureList->create(
+            name => $new_name,
+            format => $format,
+            file_content_hash => $file_content_hash,
+            subject => $feature_list->subject,
+            reference => $feature_list->reference,
+            file_path => $sorted_out,
+            content_type => "roi",
+            description => "Feature list with extra rois",
+            source => "WUTGI",
+        );
+
+        unless ($new_feature_list) {
+            $self->error_message("Failed to create ROI file with extra ROIs");
+            return;
+        }
+    }
+    if ($self->regulome_bed) {
+        my $filtered_name = join("_", $new_feature_list->name, "filtered_by_regulome_v1");
+        my $filtered_list = Genome::FeatureList->get($filtered_name);
+        unless ($filtered_list) {
+            #transform to 0-based
+            my $zero_based = $new_feature_list->processed_bed_file(
+                short_name => 0,
+            );
+
+            #filter
+            my $filtered_out_zero_based = Genome::Sys->create_temp_file_path;
+            my $rv = Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore->execute(
+                roi_list => $zero_based,
+                scored_regions => $self->regulome_bed->file_path,
+                output_file => $filtered_out_zero_based,
+                valid_scores => [qw(1 2)],
+            );
+
+            #convert back to 1-based
+            my $filtered_out = Genome::FeatureList::transform_zero_to_one_based(
+                $filtered_out_zero_based,
+                $new_feature_list->is_multitracked,
+            );
+
+            my $file_content_hash = Genome::Sys->md5sum($filtered_out);
+            my $filtered_feature_list = Genome::FeatureList->create(
+                name => $filtered_name,
+                format => $new_feature_list->format,
+                file_content_hash => $file_content_hash,
+                subject => $new_feature_list->subject,
+                reference => $new_feature_list->reference,
+                file_path => $filtered_out,
+                content_type => "roi",
+                description => "Feature list with extra rois filtered by regulome db",
+                source => "WUTGI",
+            );
+
+            $new_feature_list = $filtered_feature_list;
+        }
+    }
+    
+    $self->roi_path($new_feature_list->file_path);
     $self->status_message('Using ROI file: '.$self->roi_path);
     return 1;
 }

@@ -68,7 +68,7 @@ sub create {
 
     my $saved_output_dir;
     if ($command->can('output_dir')) {
-        if ($command->__meta__->can('stage_output') and $command->__meta__->stage_output) {
+        if ($command->can('stage_output') and $command->stage_output) {
             $self->_prepare_staging_directory;
             $saved_output_dir = $command->output_dir;
             $command->output_dir($self->temp_staging_directory);

@@ -35,6 +35,8 @@ my %model_files = (
     'caninum_maker.hmm'                     => 'sn_acmk',
     'spiralis_cegma_mod.hmm'                => 'sn_tscg',
     'spiralis_cegma_mod_intron_min30.hmm'   => 'sn_tscg30',
+    'O_dentatum_10.0.ec.cg.mk2.hmm'         => 'sn_od10cgmkv2',
+    'O_dentatum_10.0.cg.mk2.hmm'            => 'sn_od10mkv2',
 );
 
 

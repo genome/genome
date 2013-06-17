@@ -72,11 +72,7 @@ class Genome::Disk::Volume {
             calculate => q{ return int($unallocated_kb / (2**20)) },
         },
         allocated_kb => {
-            calculate => q/
-                my $allocated_kb;
-                Genome::Utility::Instrumentation::timer('disk.volume.allocated_kb', sub { $allocated_kb = $self->_allocated_kb });
-                return $allocated_kb;
-            /,
+            is_calculated => 1,
         },
         percent_allocated => {
             calculate_from => ['total_kb', 'allocated_kb'],
@@ -136,7 +132,7 @@ sub _compute_lower_limit {
     return max($fractional_limit, $subtractive_limit);
 }
 
-sub _allocated_kb {
+sub allocated_kb {
     my $self = shift;
 
     # This used to use a copy of UR::Object::Set's server-side aggregate
@@ -150,15 +146,24 @@ sub _allocated_kb {
     my $f = "sum($field)";
 
     # UR caches the value so we're just going to reach in and "fix" it.
-    if(exists $set->{$f}) {
+    # Newer UR Sets store all their cached aggregate values under the __aggregates key
+    if (exists $set->{__aggregates}) {
+        $set->__invalidate_cache__($f);
+    } elsif (exists $set->{$f}) {
         delete $set->{$f}
     }
 
-    my $allocated_kb = ($set->sum($field) or 0);
+    # We only want to time the sum aggregate, not including any time to connect to the DB
+    Genome::Disk::Allocation->__meta__->data_source->get_default_handle();
+    my $allocated_kb;
+    Genome::Utility::Instrumentation::timer(
+        'disk.volume.allocated_kb',
+        sub { $allocated_kb = ($set->sum($field) or 0); }
+    );
 
     # Now we'll check that it is cached so we test that the underlying
     # structure hasn't changed.
-    unless(exists $set->{$f}) {
+    unless(exists($set->{$f}) || (exists($set->{__aggregates}) && exists($set->{__aggregates}->{$f}))) {
         die $self->error_message("$f value not found in set's hash. Did underlying object structure change?");
     }
 

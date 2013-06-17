@@ -416,6 +416,42 @@ sub sleep_length {
     return 30;
 }
 
+sub create_iterator_closure_for_rule {
+  my $self = shift;
+
+  $self->pause_db_queries_if_necessary();
+
+  $self->SUPER::create_iterator_closure_for_rule(@_);
+}
+
+sub create_dbh {
+  my $self = shift;
+  $self->pause_db_queries_if_necessary();
+
+
+  $self->SUPER::create_dbh(@_);
+}
+
+sub pause_db_queries_if_necessary {
+    my $self = shift;
+    return 1 unless $ENV{GENOME_DB_QUERY_PAUSE} and -e $ENV{GENOME_DB_QUERY_PAUSE};
+
+    print "Database querying has been paused; disconnecting db handles.  Please wait until the query pause is released...\n";
+
+    my @data_sources = UR::Context->all_objects_loaded('UR::DataSource::RDBMS');
+    for my $ds (@data_sources) {
+        $ds->disconnect_default_handle if $ds->has_default_handle;
+    }
+
+    while (1) {
+        sleep 30;
+        last unless $ENV{GENOME_DB_QUERY_PAUSE} and -e $ENV{GENOME_DB_QUERY_PAUSE};
+    }
+
+    print "Database updating has been resumed, continuing query!\n";
+    return 1;
+}
+
 # A list of the old GM schema tables that Genome::Model should ignore
 my @OLD_GM_TABLES = qw(
 ALL_ALLELE_TYPE

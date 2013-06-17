@@ -13,8 +13,7 @@ use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
-    is => 'Genome::SoftwareResult',
-
+    is => 'Genome::InstrumentData::AlignedBamResult',
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
@@ -121,6 +120,7 @@ class Genome::InstrumentData::AlignmentResult::Merged {
         },
         bam_file => {
           is => 'Text',
+          is_output => 1,
           via => '__self__',
           to => 'merged_alignment_bam_path',
         },
@@ -158,7 +158,7 @@ sub create {
         my @alignments = $self->collect_individual_alignments;
 
         $self->status_message('Preparing directories...');
-        $self->_prepare_output_directory(\@alignments); #This gets a disk allocation
+        $self->_prepare_output_directory; #This gets a disk allocation
         my @tmp_dirs = $self->_prepare_working_directories(\@alignments); #need to keep these in scope while in use
 
         my $bams_per_library = {};
@@ -325,6 +325,20 @@ sub required_rusage {
     return ''; #FIXME This needs to be filled in
 }
 
+sub resolve_allocation_disk_group_name {
+    return 'info_genome_models';
+}
+
+sub resolve_allocation_kilobytes_requested {
+    my $self = shift;
+    my @alignments = $self->collect_individual_alignments;
+    return $self->estimated_kb_usage(\@alignments);
+}
+
+sub resolve_allocation_subdirectory {
+    return $_[0]->resolve_alignment_subdirectory;
+}
+
 sub estimated_kb_usage {
     my $self = shift;
     my $alignments = shift;
@@ -355,43 +369,6 @@ sub estimated_kb_usage {
     $total_size = ($total_size * 2);
 
     return $total_size;
-}
-
-sub _prepare_output_directory {
-    my $self = shift;
-    my $alignments = shift;
-
-    return $self->output_dir if $self->output_dir;
-
-    my $subdir = $self->resolve_alignment_subdirectory;
-    unless ($subdir) {
-        $self->error_message("failed to resolve subdirectory for instrument data.  cannot proceed.");
-        die $self->error_message;
-    }
-
-    my $allocation = $self->_disk_allocation;
-
-    unless($allocation) {
-        my %allocation_parameters = (
-            disk_group_name => 'info_genome_models',
-            allocation_path => $subdir,
-            owner_class_name => $self->class,
-            owner_id => $self->id,
-            kilobytes_requested => $self->estimated_kb_usage($alignments),
-        );
-
-        $allocation = Genome::Disk::Allocation->allocate(%allocation_parameters);
-    }
-
-    my $output_dir = $allocation->absolute_path;
-    unless (-d $output_dir) {
-        $self->error_message("Allocation path $output_dir doesn't exist!");
-        die $self->error_message;
-    }
-
-    $self->output_dir($output_dir);
-
-    return $output_dir;
 }
 
 sub resolve_alignment_subdirectory {

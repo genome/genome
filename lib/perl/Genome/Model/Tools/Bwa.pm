@@ -194,12 +194,23 @@ sub _lookup_version {
             index_type => 'skips_reverse',
         },
         '0.7.3a' => {
-            path       => '/usr/bin/bwa0.7.3a', # uncomment once this is installed
+            path       => '/usr/bin/bwa0.7.3a',
             features   => ['bam_input', 'bwasw', 'mem'],
             log_format => 'new',
             index_type => 'skips_reverse',
         },
-
+        '0.7.5' => {
+            path       => '/usr/bin/bwa0.7.5',
+            features   => ['bam_input', 'bwasw', 'mem'],
+            log_format => 'new',
+            index_type => 'skips_reverse',
+        },
+        '0.7.5a' => {
+            path       => '/usr/bin/bwa0.7.5a',
+            features   => ['bam_input', 'bwasw', 'mem'],
+            log_format => 'new',
+            index_type => 'skips_reverse',
+        },
         # If you are adding a new version of bwa, it likely has the following features:
         #   features   => ['bam_input', 'bwasw', 'mem'],
         #   log_format => 'new',

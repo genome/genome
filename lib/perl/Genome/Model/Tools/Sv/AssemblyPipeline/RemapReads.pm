@@ -86,8 +86,8 @@ sub execute {
     my $error = "";
     $error .= "\n  Assembly fasta file was not found" unless( -s $assemblyFastaFile );
     $error .= "\n  Sv file was not found" unless( -s $svFile );
-    $error .= "\n  Tumor bam file not found" unless (-s $tumorBam);
-    $error .= "\n  Normal bam file not found" unless (-s $normalBam);
+    $error .= "\n  Tumor bam file ($tumorBam) not found" unless (-s $tumorBam);
+    $error .= "\n  Normal bam file ($normalBam) not found" unless (-s $normalBam);
     $error .= "\n  Build is required unless reference-fasta is specified" unless ($self->reference_fasta);
     ( $error eq "" ) or die "Halted execution due to following:$error\n";
 
@@ -137,7 +137,12 @@ sub execute {
     }
 
     # Make sure the sequences files exist with non-zero size
-    ( -s $contigSequenceFile && -s $refSequenceFile ) or die "Did not get contig sequence and/or reference sequence file";
+    unless (-s $contigSequenceFile) {
+        die $self->error_message("Contig sequence file does not exist at $contigSequenceFile");
+    }
+    unless (-s $refSequenceFile) {
+        die $self->error_message("Reference sequence file does not exist at $refSequenceFile");
+    }
 
     # Go through each entry of SV file and find reads that cross breakpoint in SV contig
     open( OUT, ">$outputFile" ) or die "Could not open '$outputFile': $!";

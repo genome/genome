@@ -22,7 +22,17 @@ EOS
 
 sub path_to_version_run_assembly {
     my $self = shift;
-    my $assembler = $ENV{GENOME_SW} . '/454/'.$self->version.'/bin/runAssembly';
+
+    my $app_bin = $ENV{GENOME_SW} . '/454/'.$self->version.'/bin';
+    if( not -d $app_bin ) {
+        $app_bin = $ENV{GENOME_SW} . '/454/'.$self->version.'/applicationBin';
+    }
+    if( not -d $app_bin ) {
+        $self->error_message("Failed to find newbler bin/applicationBin");
+        return;
+    }
+
+    my $assembler = $app_bin.'/runAssembly';
     unless ( -x $assembler ) {
         $self->error_message( "Invalid version: ".$self->version.' or versions runAssembly is not executable' );
         return;

@@ -1,46 +1,46 @@
-package Genome::Model::Tools::Gatk::RealignIndels;
+package Genome::Model::Tools::Gatk::IndelRealigner;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::Tools::Gatk::RealignIndels {
+class Genome::Model::Tools::Gatk::IndelRealigner {
     doc => "Run GATK with the 'IndelRealigner' tool",
     is => 'Genome::Model::Tools::Gatk',
-    has => [
+    has_input => [
         target_intervals => {
-            is_input => 1,
             is => 'Text',
             doc => 'The file of indels around which you wish to do realignment',
         },
         output_realigned_bam => {
-            is_input => 1,
             is_output => 1,
             is => 'Text',
             doc => 'The path to where you would like the realigned output bam',
         },
         input_bam => {
-            is_input => 1,
             is => 'Text',
             doc => 'The path to the original bam you would like to be realigned',
         },
         target_intervals_are_sorted => {
-            is_input => 1,
             is => 'Boolean',
             doc => 'If set to false, pass along --targetIntervalsAreNotSorted',
             default => 0,
         },
         reference_fasta => {
-            is_input => 1,
             is => 'Text',
             doc => "Reference Fasta" ,
         },
         index_bam => {
-            is_input => 1,
             is => 'Boolean',
             default => 1,
             doc => 'Index the bam after alignment.'
-        }
+        },
+        known => {
+            is => 'Text',
+            doc => "Input VCF file(s) with known indels",
+            is_optional => 1,
+            is_many => 1,
+        },
     ],
 };
 
@@ -50,7 +50,7 @@ sub help_brief {
 
 sub help_synopsis {
     return <<EOS
-    gmt gatk realign-indels --target-intervals some.bed --output-realigned-bam my_output_realigned.bam --input-bam my_existing.bam --reference-fasta my.fa
+    gmt gatk indel-realigner --target-intervals some.bed --output-realigned-bam my_output_realigned.bam --input-bam my_existing.bam --reference-fasta my.fa
 EOS
 }
 
@@ -88,6 +88,10 @@ sub indel_realigner_command {
     unless ($self->target_intervals_are_sorted) {
         $gatk_command .= " --targetIntervalsAreNotSorted";
     }
+    my @known = $self->known;
+    if (@known) {
+        $gatk_command .= " --knownAlleles ".join(" --knownAlleles ", @known);
+    }
     return $gatk_command;
 }
 
@@ -98,6 +102,12 @@ sub _check_inputs {
         unless ($self->is_legacy_version($self->version)) {
             $self->error_message("Version ".$self->version." does not support non-sorted target intervals.");
             return;
+        }
+    }
+    my @known = $self->known;
+    if (@known) {
+        for my $k (@known) {
+            Genome::Sys->validate_file_for_reading(@known);
         }
     }
     Genome::Sys->validate_file_for_reading($self->target_intervals);

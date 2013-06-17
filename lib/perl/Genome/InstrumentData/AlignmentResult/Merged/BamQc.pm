@@ -40,6 +40,10 @@ class Genome::InstrumentData::AlignmentResult::Merged::BamQc {
             is => 'Boolean',
             doc => 'Whether or not to iterate over every position to calculate positional error rates.',
         },
+        read_length => {
+            is => 'Boolean',
+            doc => 'Whether or not to run read length distribution.',
+        },
     ],
     has_metric => [
         _log_directory => {
@@ -50,7 +54,8 @@ class Genome::InstrumentData::AlignmentResult::Merged::BamQc {
     ],
     has => [
         alignment_result => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            #is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            is => 'Genome::SoftwareResult',
             id_by => 'alignment_result_id',
             doc => 'the alignment data upon which to run coverage stats',
         },
@@ -114,12 +119,22 @@ sub create {
 
     $self->_prepare_staging_directory;
 
+    #the bam could be either per lane bam or merged bam, hardcode for now
+    my $merge_bam = $self->alignment_result->output_dir.'/'.$self->alignment_result_id . '.bam';
+    my $lane_bam  = $self->alignment_result->output_dir.'/'.'all_sequences.bam';
+
+    my $bam_file;
+    for my $bam ($merge_bam, $lane_bam) {
+        if (-s $bam) {
+            $bam_file = $bam;
+            last;
+        }
+    }
+    die $self->error_message("Bam File ($bam_file) is missing") unless $bam_file;
+
     my $fasta_file = $self->alignment_result->reference_build->full_consensus_path('fa');
-    my $bam_file = $self->alignment_result->merged_alignment_bam_path;
-
     die $self->error_message("Reference FASTA File ($fasta_file) is missing") unless -s $fasta_file;
-    die $self->error_message("Bam File ($bam_file) is missing") unless -s $bam_file;
-
+    
     my $log_dir = $self->log_directory;
     unless($log_dir) {
         $log_dir = '' . $self->temp_staging_directory;
@@ -127,16 +142,17 @@ sub create {
     $self->_log_directory($log_dir);
 
     my %bam_qc_params = (
-        output_directory => '' . $self->temp_staging_directory,
-        log_directory => $log_dir,
+        output_directory   => '' . $self->temp_staging_directory,
+        log_directory      => $log_dir,
         reference_sequence => $fasta_file,
-        bam_file => $bam_file,
-        picard_version => $self->picard_version,
-        samtools_version => $self->samtools_version,
-        fastqc_version => $self->fastqc_version,
-        samstat_version => $self->samstat_version,
-        error_rate =>  $self->error_rate,
-        error_rate_pileup => $self->error_rate_pileup,
+        bam_file           => $bam_file,
+        picard_version     => $self->picard_version,
+        samtools_version   => $self->samtools_version,
+        fastqc_version     => $self->fastqc_version,
+        samstat_version    => $self->samstat_version,
+        error_rate         => $self->error_rate,
+        error_rate_pileup  => $self->error_rate_pileup,
+        read_length        => $self->read_length,
     );
 
     my $cmd = Genome::Model::Tools::BamQc::Run->create(%bam_qc_params);
@@ -169,8 +185,9 @@ sub _generate_metrics {
                 my $metric_key = sprintf('bam_qc-%s-%s',$type_label,$metric_label);
                 $self->add_metric(metric_name => $metric_key, metric_value => $type_metrics->{$metric_label});
             }
-        } else {
-            # All other hashrefs are considered to habe two-levels, the first level of the hashref being the key on which lines of metrics are differentiated
+        } 
+        else {
+            # All other hashrefs are considered to have two-levels, the first level of the hashref being the key on which lines of metrics are differentiated
             for my $key (keys %{$type_metrics}) {
                 for my $metric_label (keys %{$type_metrics->{$key}}) {
                     my $metric_key = sprintf('bam_qc-%s-%s-%s',$type_label,$key,$metric_label);
@@ -179,7 +196,6 @@ sub _generate_metrics {
             }
         }
     }
-
     return 1;
 }
 

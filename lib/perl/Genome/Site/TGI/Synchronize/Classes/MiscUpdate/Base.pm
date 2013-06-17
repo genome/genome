@@ -52,13 +52,12 @@ sub perform_update {
     }
 
     # Update
-    my $updated_value = $self->_update_value;
-    return $self->failure if not defined $updated_value;
+    my $update_ok = $self->_update_value;
+    return $self->failure if not defined $update_ok;
 
-    if ( not $updated_value or $updated_value ne $new_value ) {
-        $self->error_message('Failed to set new value!');
-        return $self->failure;
-    }
+    # Validate
+    my $validate_ok = $self->_validate_value_set;
+    return $self->failure if not defined $validate_ok;
 
     # YAY!
     return $self->success;
@@ -85,7 +84,23 @@ sub _update_value {
     my $genome_property_name = $self->genome_property_name;
     return if not $genome_property_name;
 
-    return $genome_entity->$genome_property_name($self->new_value);
+    $genome_entity->$genome_property_name($self->new_value);
+
+    return 1;
+}
+
+sub _validate_value_set {
+    my $self = shift;
+
+    my $new_value = $self->new_value;
+    my $updated_value = $self->_get_current_value;
+    no warnings;
+    if ( $updated_value ne $new_value ) {
+        $self->error_message('Failed to set new value!');
+        return;
+    }
+
+    return 1;
 }
 
 1;

@@ -110,7 +110,7 @@ sub lookup_conservation_score {
         $version = $1;
     } elsif($species and $version){
         $model_name = "NCBI-" . $species . ".combined-annotation";
-        if($version =~ m/[\d]+_([\d]+)[a-zA-Z]/){
+        if($version =~ m/[\d]+_([\d]+)[a-zA-Z]?/){
             $version = $1; 
             $reference_version = $version;
         }else{

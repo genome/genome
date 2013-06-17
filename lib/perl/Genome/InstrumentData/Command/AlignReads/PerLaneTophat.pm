@@ -22,7 +22,7 @@ sub _fallback_lsf_resource {
     my $cpus = 4;
 
     my $mem_kb = $mem_mb*1024;
-    my $tmp_gb = 400;
+    my $tmp_gb = 300;
 
     my $user = getpwuid($<);
     my $queue = 'alignment';

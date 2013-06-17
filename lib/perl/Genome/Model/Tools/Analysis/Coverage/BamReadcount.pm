@@ -80,7 +80,7 @@ class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
         is => 'Integer',
         is_optional => 1,
         doc => 'maximum indel size to grab readcounts for. (The larger the indel, the more skewed the readcounts due to mapping problems)',
-        default => 2,
+        default => 4,
     },
 
     count_non_reference_reads => {
@@ -311,6 +311,10 @@ sub execute {
     while( my $sline = $inFh->getline )
     {
         chomp($sline);
+
+        #skip header lines
+        next if($sline =~ /^(#|Hugo_Symbol|Chr|chromosome)/i);
+
         my @fields = split("\t",$sline);
 
         $fields[3] =~ s/0/\-/;

@@ -233,7 +233,7 @@ sub resolve_average_for_attribute {
 
     my @values = $self->resolve_attribute_for_instrument_data($params{attribute}, 0, @{$params{objects}});
     my $sum = List::Util::sum(@values); # check that these are numbers?
-    my $avg = $sum / @{$params{objects}};
+    my $avg = $sum / @values;
 
     return $avg;
 }
@@ -469,5 +469,36 @@ sub resolve_assemble_lsf_resource {
 sub resolve_assemble_lsf_queue {
     return;
 }
+
+#< DIFF >#
+sub files_ignored_by_diff {
+    return (qw/ build.xml /);
+}
+
+sub regex_for_custom_diff {
+    return (
+        metrics => '\.(in|out)put_metrics',
+    );
+}
+
+sub diff_metrics {
+    my ($self, $file1, $file2) = @_;
+
+    my $metrics_from_file1 = Genome::Model::Tools::Sx::Metrics->from_file($file1);
+    return if not $metrics_from_file1;
+
+    my $metrics_from_file2 = Genome::Model::Tools::Sx::Metrics->from_file($file2);
+    return if not $metrics_from_file2;
+
+    for my $metric_name (qw/ bases count /) {
+        if ( $metrics_from_file1->$metric_name ne $metrics_from_file2->$metric_name ) {
+            $self->status_message("Metrics differ for $metric_name: ".$metrics_from_file1->$metric_name.' <=> '.$metrics_from_file2->$metric_name);
+            return;
+        }
+    }
+
+    return 1;
+}
+#<>#
 
 1;

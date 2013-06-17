@@ -113,6 +113,10 @@ EOS
 sub execute {
     my $self = shift;
 
+    unless ($self->is_legacy_version($self->version)) {
+        $self->error_message("Can't run GermlineIndelUnifiedGenotyper on GATK version after 2");
+        die $self->error_message;
+    }
     ## Run GATK ##
     #java -Xms3000m -Xmx3000m -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5336/GenomeAnalysisTK.jar -R /gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa -T UnifiedGenotyper -glm DINDEL -I /gscmnt/ams1132/info/model_data/2869126180/build106555038//alignments/106555038_merged_rmdup.bam -verbose /gscmnt/sata424/info/medseq/Freimer-Boehnke/ExomeComparison/Agilent/H_HY-01154-lib2/testing/GATK.output.indel_manualrun_5336_Unifiedtest -o /gscmnt/sata424/info/medseq/Freimer-Boehnke/ExomeComparison/Agilent/H_HY-01154-lib2/testing/GATK.output.indel_manualrun_5336_Unifiedtest.vcf
 

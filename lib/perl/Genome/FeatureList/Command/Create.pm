@@ -47,7 +47,7 @@ sub execute {
         format => $self->format,
     );
 
-    for my $property (qw(source reference subject content_type)) {
+    for my $property (qw(source reference subject content_type description)) {
         my $value = $self->$property;
         $create_params{$property} = $value if $value; 
     }

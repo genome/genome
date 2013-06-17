@@ -40,7 +40,7 @@ UR::Object::Type->define(
             doc => 'human blast db',
             is => 'String',
             is_optional => 1,
-            example_values => ['/gscmnt/sata835/info/medseq/virome/blast_db/human_genomic/2009_07_09.humna_genomic'],
+            default => '/gscmnt/sata835/info/medseq/virome/blast_db/human_genomic/2009_07_09.humna_genomic',
         },
         nt_db => {
             doc => 'nt sequence blast db',

@@ -150,10 +150,26 @@ sub derived_from_root {
 sub is_compatible_with {
     my ($self, $rsb) = @_;
     return if !defined $rsb;
-    my $coords_from = $self->coordinates_from || $self;
-    my $other_coords_from = $rsb->coordinates_from || $rsb;
+    my $coords_from = $self->coordinates_from; # $self;
+    my $other_coords_from = $rsb->coordinates_from; # $rsb;
 
-    return $coords_from->id == $other_coords_from->id;
+    return 1 if $self->id eq $rsb->id;
+
+    if($coords_from and $other_coords_from) {
+        return 1 if $coords_from->id eq $other_coords_from->id;
+    }
+
+    if($coords_from) {
+        return 1 if $coords_from->id eq $rsb->id;
+        return 1 if $coords_from->is_compatible_with($rsb);
+    }
+
+    if($other_coords_from) {
+        return 1 if $self->id eq $other_coords_from->id;
+        return 1 if $self->is_compatible_with($other_coords_from);
+    }
+
+    return;
 }
 
 sub __display_name__ {

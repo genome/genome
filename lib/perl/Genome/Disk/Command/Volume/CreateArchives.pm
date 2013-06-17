@@ -24,7 +24,7 @@ sub execute {
     unless ($archive_group) {
         $archive_group = Genome::Disk::Group->create(
             permissions => '775',
-            sticky => '1',
+            setgid => '1',
             subdirectory => 'info',
             unix_gid => '10006',
             unix_uid => '10102',
