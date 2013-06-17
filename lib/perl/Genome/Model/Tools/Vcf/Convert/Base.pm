@@ -368,11 +368,11 @@ sub get_sample_meta {
             last if $try == 5; #try 5 times
             sleep 60 if $try;
             $try++;
-            $content = qx(curl --request POST --data \"$barcode_str\" --header \"Content-Type: text/plain\" https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch);
+            $content = qx(curl --fail --request POST --data \"$barcode_str\" --header \"Content-Type: text/plain\" https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch);
         }
 
         unless ($content) {
-            die $self->error_message("No content returned from API query for $barcode_str");
+            die $self->error_message("No content returned from API query to TCGA website for $barcode_str");
         }
         if ($content =~ /errorMessage/) {
             die $self->error_message("API query failed with the following response:\n$content");
