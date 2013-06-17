@@ -42,6 +42,9 @@ sub create {
     my $run_flagstat = $self->run_flagstat_on_output_bam_file;
     return if not $run_flagstat;
 
+    my $allocation = $self->disk_allocations;
+    eval { $allocation->reallocate };
+
     return $self;
 }
 
