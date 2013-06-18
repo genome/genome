@@ -63,7 +63,7 @@ sub _create_targets {
         reference_fasta => $self->reference_fasta,
         output_intervals => $intervals_file,
     );
-    $target_creator_params{known} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
+    $target_creator_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
     $self->status_message('Params: '.Data::Dumper::Dumper(\%target_creator_params));
 
     my $target_creator = Genome::Model::Tools::Gatk::RealignerTargetCreator->create(%target_creator_params);

@@ -40,9 +40,17 @@ ok($base_with_known_sites, 'create gatk base with known indels');
 
 # Known indels vcfs
 my $known_sites_vcfs = $base_with_known_sites->known_sites_vcfs;
-ok(@$known_sites_vcfs, 'known indels vcfs');
-is_deeply([$base_with_known_sites->_tmpdir.'/'.$gatk_test->indel_result->id.'.vcf'], $known_sites_vcfs, 'known indels vcfs correctly named'); 
-ok(-l $base_with_known_sites->_tmpdir.'/'.$gatk_test->indel_result->id.'.vcf', 'known indels vcfs correctly linked'); 
+ok(@$known_sites_vcfs, 'known sites vcfs');
+my $expected_vcf_link_name = $base_with_known_sites->_tmpdir.'/'.$gatk_test->indel_result->id.'.vcf';
+ok($known_sites_vcfs, 'known sites vcfs'); 
+is_deeply($known_sites_vcfs, [$expected_vcf_link_name], 'known sites vcfs correctly named'); 
+ok(-l $expected_vcf_link_name, 'known sites vcfs correctly linked'); 
+
+my $known_sites_indel_vcfs = $base_with_known_sites->known_sites_indel_vcfs;
+is_deeply($known_sites_indel_vcfs, $known_sites_vcfs, 'known sites indel vcfs'); 
+
+my $known_sites_snv_vcfs = $base_with_known_sites->known_sites_snv_vcfs;
+is_deeply($known_sites_snv_vcfs, [], 'known sites snv vcfs'); 
 
 #print $base_with_known_sites->_tmpdir."\n";
 #print $base_with_known_sites->output_dir."\n"; <STDIN>;
