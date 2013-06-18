@@ -21,7 +21,7 @@ use Genome;
 #17: Indel Normalization
 #18: Indel Normalization using joinx 1.7 (since 1.6 is bad)
 
-my $VCF_VERSION = "18";
+my $VCF_VERSION = "19";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],
