@@ -38,6 +38,12 @@ class Genome::Config::AnalysisProject {
         name => {
             is => 'Text',
         },
+        created_at => {
+            is => 'Timestamp',
+        },
+        updated_at => {
+            is => 'Timestamp',
+        },
     ],
     has_transient_optional => [
         configuration_reader => {

@@ -26,7 +26,13 @@ class Genome::Config::Set {
             via => 'allocation',
             to => 'absolute_path',
             is_optional => 1,
-        }
+        },
+        created_at => {
+            is => 'Timestamp',
+        },
+        updated_at => {
+            is => 'Timestamp',
+        },
     ],
 };
 
