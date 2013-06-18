@@ -139,8 +139,9 @@ sub _execute_v1 {
     my $annotation_build = $alignment_result->annotation_build;
     $self->status_message("Annotation build: " . $annotation_build->__display_name__);
 
-    my $gff_file = $annotation_build->rna_features_gff_path;
-    $self->status_message("Using annotation features from: " . $gff_file);
+    my $gtf_file = $annotation_build->annotation_file('gtf',$annotation_build->reference_sequence->id);
+
+    $self->status_message("Using annotation features from: " . $gtf_file);
    
     my $htseq_count_path = Genome::Sys->sw_path("htseq", $self->app_version, "htseq-count");
     $self->status_message("Executable htseq-count " . $self->app_version . " running from $htseq_count_path");
@@ -241,13 +242,13 @@ sub _execute_v1 {
             . " --type exon " # used for both gene and transcript iterations
             . " --idattr ${type}_id"
             . " -"
-            . " '$gff_file'"
+            . " '$gtf_file'"
             . " 1>'$output_dir/${type}-counts.tsv'"
             . " 2>'$output_dir/${type}.err'";
         
         Genome::Sys->shellcmd(
             cmd => $cmd, # "touch $output_dir/${type}-counts.tsv", #$cmd,
-            input_files => [$sorted_bam, $gff_file],
+            input_files => [$sorted_bam, $gtf_file],
             #output_files => ["$output_dir/${type}-counts.tsv"],
        );
 

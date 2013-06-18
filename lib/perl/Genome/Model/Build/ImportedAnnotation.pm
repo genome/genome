@@ -116,13 +116,6 @@ class Genome::Model::Build::ImportedAnnotation {
     ],
 };
 
-sub rna_features_gff_path {
-    # TODO: normalize access to with other files made for RNA
-    # This is used directly in "gmt htseq count", which should be refactored with the change.
-    my $self = shift;
-    $self->model->rna_features_gff_path_for_build($self);
-}
-
 sub _select_build_from_model_input { undef; }
 
 sub validate_for_start_methods {
