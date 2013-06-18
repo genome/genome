@@ -153,7 +153,7 @@ sub oracle_to_postgres_table_mapping {
         'genome_model_build_variant' => 'model.build_variant',
         'genome_model_variant' => 'model.variant',
         'genome_config_set' => 'config.set',
-        'genome_analysis_menu_item' => 'config.menu_item',
+        'genome_analysis_menu_item' => 'config.analysis_menu_item',
         'genome_config_analysis_project' => 'config.analysis_project'
     );
 }
