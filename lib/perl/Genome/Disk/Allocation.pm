@@ -85,6 +85,12 @@ class Genome::Disk::Allocation {
             len => 11,
             is_optional => 1,
         },
+        archive_after_time => {
+            is => 'DateTime',
+            len => 11,
+            is_optional => 1,
+            doc => 'After this time, this allocation is subject to being archived'
+        },
     ],
     has_optional => [
         preserved => {
