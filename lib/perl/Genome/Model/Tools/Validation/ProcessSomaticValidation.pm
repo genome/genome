@@ -37,7 +37,13 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           is => 'Boolean',
           is_optional => 1,
           default => 1,
-          doc => "only keep new calls within the target regions. These are pulled from the build if possible",
+          doc => "only keep new calls within the target regions. If --target-regions isn't defined, these are pulled from the build if possible",
+      },
+
+      target_regions =>{
+          is => 'String',
+          is_optional => 1,
+          doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
       },
 
       filter_sites =>{
@@ -307,11 +313,6 @@ sub addName{
 sub cleanFile{
     my ($file) = @_;
 
-    my $is_bedfile = 0;
-    if($file =~ /bed$/){
-        $is_bedfile = 1;
-    }
-
     my $newfile = addName($file,"clean");
 
     my %dups;
@@ -330,9 +331,9 @@ sub cleanFile{
         $ref =~ s/\*/-/g;
         $var =~ s/\*/-/g;
 
-        my @vars = $var;
+        my @vars = ($var);
         unless($ref =~ /-/ || $var =~ /-/){ #fixiub doesn't handle indels
-            my @vars = fixIUB($ref, $var);
+            @vars = fixIUB($ref, $var);
         }
 
         foreach my $v (@vars){
@@ -539,18 +540,57 @@ sub execute {
   }
   my $build_dir = $build->data_directory;
 
-  # Check if the necessary files exist in this build
+
+  # create subdirectories, get files in place
+
+  #if multiple models with the same name, add a suffix
+  if( -e "$output_dir/$sample_name" ){
+      my $suffix = 1;
+      my $newname = $sample_name . "-" . $suffix;
+      while ( -e "$output_dir/$newname" ){
+          $suffix++;
+          $newname = $sample_name . "-" . $suffix;
+      }
+      $sample_name = $newname;
+  }
+  #make the directory structure
+  mkdir "$output_dir/$sample_name";
+  mkdir "$output_dir/$sample_name/snvs" unless( -e "$output_dir/$sample_name/snvs" );
+  mkdir "$output_dir/$sample_name/indels" unless( -e "$output_dir/$sample_name/indels" );
+  mkdir "$output_dir/review" unless( -e "$output_dir/review" || !($self->create_review_files));
+  `ln -s $build_dir $output_dir/$sample_name/build_directory`;
+
+
+
+  my @snv_files = ("$build_dir/validation/snvs/snvs.validated","$build_dir/validation/snvs/snvs.notvalidated");
+  
+  #all newcalls or just on-target?
   my $newcalls = "$build_dir/validation/snvs/snvs.newcalls";
   if($self->restrict_to_target_regions){
-      $newcalls = "$build_dir/validation/snvs/snvs.newcalls.on_target";
+      if(defined($self->target_regions)){
+          my $target_regions = $self->target_regions;
+          print STDERR "joinx sort $target_regions > $output_dir/$sample_name/target_regions\n";
+          `joinx sort $target_regions > $output_dir/$sample_name/target_regions`;
+          $target_regions = "$output_dir/$sample_name/target_regions";
+          print STDERR "joinx intersect -a $build_dir/validation/snvs/snvs.newcalls -b $target_regions -o $output_dir/$sample_name/snvs/snvs.newcalls.on_target";
+          `joinx intersect -a $build_dir/validation/snvs/snvs.newcalls -b $target_regions -o $output_dir/$sample_name/snvs/snvs.newcalls.on_target`;
+          $newcalls = "$output_dir/$sample_name/snvs/snvs.newcalls.on_target";
+     } else {
+         if(-s "$build_dir/validation/snvs/snvs.newcalls.on_target"){
+             $newcalls = "$build_dir/validation/snvs/snvs.newcalls.on_target";
+             push(@snv_files,$newcalls);
+         }
+     }
   }
-  my @snv_files = ("$build_dir/validation/snvs/snvs.validated","$build_dir/validation/snvs/snvs.notvalidated","$newcalls");
+
   for my $file (@snv_files){
       unless( -e $file ){
           die "ERROR: SNV results for $sample_name not found at $file\n";
       }
+      `cp $file $output_dir/$sample_name/snvs/`;
   }
 
+  
   my $small_indel_file = "$build_dir/validation/small_indel/final_output";
   unless( -e $small_indel_file ){
       print STDERR "WARNING: realigned small indels not found (tumor only build?). Using raw calls from validation data\n";
@@ -572,26 +612,6 @@ sub execute {
   }
 
 
-  # create subdirectories, get files in place
-
-  #if multiple models with the same name, add a suffix
-  if( -e "$output_dir/$sample_name" ){
-      my $suffix = 1;
-      my $newname = $sample_name . "-" . $suffix;
-      while ( -e "$output_dir/$newname" ){
-          $suffix++;
-          $newname = $sample_name . "-" . $suffix;
-      }
-      $sample_name = $newname;
-  }
-
-
-  #make the directory structure
-  mkdir "$output_dir/$sample_name";
-  mkdir "$output_dir/$sample_name/snvs" unless( -e "$output_dir/$sample_name/snvs" );
-  mkdir "$output_dir/$sample_name/indels" unless( -e "$output_dir/$sample_name/indels" );
-  mkdir "$output_dir/review" unless( -e "$output_dir/review" || !($self->create_review_files));
-  `ln -s $build_dir $output_dir/$sample_name/build_directory`;
 
   #cat all the indels together (same for indels)
   if($large_indel_file =~ /variants/){ #no validated indels, use the bed files
@@ -612,10 +632,6 @@ sub execute {
   }
 
 
-
-  for my $snv_file (@snv_files){
-      `cp $snv_file $output_dir/$sample_name/snvs/`;
-  }
 
   if($process_svs){
       `mkdir $output_dir/$sample_name/svs`;
@@ -647,8 +663,8 @@ sub execute {
 
       for($i=0;$i<@snv_files;$i++){
           $snv_files[$i] = removeFilterSites($snv_files[$i],$filterSites);
-          $indel_file = removeFilterSites($indel_file,$filterSites);
       }
+      $indel_file = removeFilterSites($indel_file,$filterSites);
   }
 
   #-------------------------------------------------
