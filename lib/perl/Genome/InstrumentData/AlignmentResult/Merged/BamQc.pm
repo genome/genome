@@ -123,14 +123,18 @@ sub create {
     my $merge_bam = $self->alignment_result->output_dir.'/'.$self->alignment_result_id . '.bam';
     my $lane_bam  = $self->alignment_result->output_dir.'/'.'all_sequences.bam';
 
-    my $bam_file;
-    for my $bam ($merge_bam, $lane_bam) {
-        if (-s $bam) {
-            $bam_file = $bam;
-            last;
-        }
+    my ($lane_flag, $bam_file);
+
+    if (-s $merge_bam) {
+        $bam_file  = $merge_bam;
     }
-    die $self->error_message("Bam File ($bam_file) is missing") unless $bam_file;
+    elsif (-s $lane_bam) {
+        $bam_file  = $lane_bam;
+        $lane_flag = 1;
+    }
+    else {
+        die $self->error_message('Input alignment bam file is missing');
+    }
 
     my $fasta_file = $self->alignment_result->reference_build->full_consensus_path('fa');
     die $self->error_message("Reference FASTA File ($fasta_file) is missing") unless -s $fasta_file;
@@ -162,21 +166,21 @@ sub create {
 
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
-
-    $self->_generate_metrics($cmd->output_metrics_hash_ref);
+    $self->_generate_metrics($cmd->output_metrics_hash_ref, $lane_flag);
 
     return $self;
 }
 
 sub _generate_metrics {
-    my $self = shift;
-    my $metrics = shift;
-    
+    my ($self, $metrics, $flag) = @_;
+
+    $self->status_message('Set bamqc metrics');
+
     for my $type_label (keys %{$metrics}) {
         # Currently, do not store insert size, quality by cycle, or mean quality histograms
-        if ($type_label =~ /Histogram/) { next; }
+        next if $type_label =~ /Histogram/;
         # Currently, do not store the GcBiasMetrics, 100 Windows of normalized coverage
-        if ($type_label eq 'GcBiasMetrics') { next; }
+        next if $type_label eq 'GcBiasMetrics';
         
         my $type_metrics = $metrics->{$type_label};
         # The FlagstatMetrics hashref are one-level
@@ -187,16 +191,81 @@ sub _generate_metrics {
             }
         } 
         else {
-            # All other hashrefs are considered to have two-levels, the first level of the hashref being the key on which lines of metrics are differentiated
+            # All other hashrefs are considered to have two-levels, the first level of  
+            # the hashref being the key on which lines of metrics are differentiated
             for my $key (keys %{$type_metrics}) {
                 for my $metric_label (keys %{$type_metrics->{$key}}) {
-                    my $metric_key = sprintf('bam_qc-%s-%s-%s',$type_label,$key,$metric_label);
-                    $self->add_metric(metric_name => $metric_key, metric_value => $type_metrics->{$key}->{$metric_label});
+                    my $metric_key   = sprintf('bam_qc-%s-%s-%s', $type_label, $key, $metric_label);
+                    my $metric_value = $type_metrics->{$key}->{$metric_label};
+                    $self->add_metric(metric_name => $metric_key, metric_value => $metric_value);
                 }
             }
         }
     }
+
+    # Now fill in alignment metrics
+    next unless $flag;
+    $self->status_message('Set several alignment metrics');
+    
+    my %metrics_to_add;
+    my $align_result = $self->alignment_result;
+    my $instr_data   = $align_result->instrument_data;
+
+    if ($instr_data->is_paired_end) {
+        my %convert = (
+            read_1_pct_aligned  => ['AlignmentSummaryMetrics', 'CATEGORY-FIRST_OF_PAIR',  'PCT_PF_READS_ALIGNED'],
+            read_2_pct_aligned  => ['AlignmentSummaryMetrics', 'CATEGORY-SECOND_OF_PAIR', 'PCT_PF_READS_ALIGNED'],
+            read_1_pct_mismatch => ['AlignmentSummaryMetrics', 'CATEGORY-FIRST_OF_PAIR',  'PF_MISMATCH_RATE'],
+            read_2_pct_mismatch => ['AlignmentSummaryMetrics', 'CATEGORY-SECOND_OF_PAIR', 'PF_MISMATCH_RATE'],
+        );
+        %metrics_to_add = $self->_convert_metrics(\%convert, $metrics, 1);
+    }
+    else { #Only one set of alignment metrics for single_end instrument data
+        my %convert = (
+            read_1_pct_aligned  => ['AlignmentSummaryMetrics', 'CATEGORY-UNPAIRED', 'PCT_PF_READS_ALIGNED'],
+            read_1_pct_mismatch => ['AlignmentSummaryMetrics', 'CATEGORY-UNPAIRED', 'PF_MISMATCH_RATE'],
+        );
+        %metrics_to_add = $self->_convert_metrics(\%convert, $metrics, 1);
+    }
+        
+    my %convert = (
+        median_insert_size => ['InsertSizeMetrics', 'PAIR_ORIENTATION-FR', 'MEDIAN_INSERT_SIZE'],
+        sd_insert_size     => ['InsertSizeMetrics', 'PAIR_ORIENTATION-FR', 'STANDARD_DEVIATION'],
+    );
+    %metrics_to_add = (%metrics_to_add, $self->_convert_metrics(\%convert, $metrics, 0));
+
+    my %align_metrics;
+    map{$align_metrics{$_->metric_name} = $_->metric_value}$align_result->metrics;
+
+    for my $metric_key (sort keys %metrics_to_add) {
+        if (exists $align_metrics{$metric_key}) {
+            $self->warning_message("metric: $metric_key already exist for ".$align_result->id.'. Skip.');
+            next;
+        }
+        $align_result->add_metric(metric_name => $metric_key, metric_value => $metrics_to_add{$metric_key});
+    }
+    
     return 1;
+}
+
+sub _convert_metrics {
+    my ($self, $convert, $metrics, $flag) = @_;
+    my %convert_metrics;
+
+    for my $metric_name (sort keys %$convert) {
+        my $names = $convert->{$metric_name};
+        my $metric_value = $metrics->{$names->[0]}->{$names->[1]}->{$names->[2]};
+        if ($metric_value) {
+            $metric_value = sprintf("%.2f", $metric_value * 100) if $flag;
+        }
+        else {
+            $self->warning_message("Failed to get alignment metric: $metric_name from BamQc output");
+            $metric_value = 0;
+        }
+        $convert_metrics{$metric_name} = $metric_value;
+    }
+
+    return %convert_metrics;
 }
 
 

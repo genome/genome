@@ -8,14 +8,12 @@ use Genome;
 class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
     is  => ['Genome::Model::Event'],
     has_transient_optional => [
-        _alignment_result => { is => 'Genome::SoftwareResult'}
+        _alignment_result => {is => 'Genome::SoftwareResult'}
     ],
     doc => 'runs BamQc on the bam(s) produced in the alignment step',
 };
 
 sub bsub_rusage {
-    my $self = shift;
-
     return '-q long';
 }
 
@@ -52,52 +50,6 @@ sub execute {
 
     my $result = Genome::InstrumentData::AlignmentResult::Merged::BamQc->get_or_create(%params);
     $self->link_result($result);
-
-    $self->status_message('Set several metrics to alignment result');
-    
-    my %qc_metrics;
-    map{$qc_metrics{$_->metric_name} = $_->metric_value}$result->metrics;
-
-    my $instr_data = $self->instrument_data;
-    my %metrics_to_add;
-
-    if ($instr_data->is_paired_end) {
-        my %convert = (
-            _resolve_metric_name('AlignmentSummaryMetrics', 'CATEGORY-FIRST_OF_PAIR',  'PCT_PF_READS_ALIGNED') => 'read_1_pct_aligned',
-            _resolve_metric_name('AlignmentSummaryMetrics', 'CATEGORY-SECOND_OF_PAIR', 'PCT_PF_READS_ALIGNED') => 'read_2_pct_aligned',
-            _resolve_metric_name('AlignmentSummaryMetrics', 'CATEGORY-FIRST_OF_PAIR',  'PF_MISMATCH_RATE')     => 'read_1_pct_mismatch',
-            _resolve_metric_name('AlignmentSummaryMetrics', 'CATEGORY-SECOND_OF_PAIR', 'PF_MISMATCH_RATE')     => 'read_2_pct_mismatch',
-        );
-
-        %metrics_to_add = $self->convert_metrics(\%convert, \%qc_metrics, 1);
-    }
-    else { #Only one set of alignment metrics for single_end instrument data
-        my %convert = (
-            _resolve_metric_name('AlignmentSummaryMetrics', 'CATEGORY-UNPAIRED', 'PCT_PF_READS_ALIGNED') => 'read_1_pct_aligned',
-            _resolve_metric_name('AlignmentSummaryMetrics', 'CATEGORY-UNPAIRED', 'PF_MISMATCH_RATE')     => 'read_1_pct_mismatch',
-        );
-
-        %metrics_to_add = $self->convert_metrics(\%convert, \%qc_metrics, 1);
-    }
-
-    my %convert = (
-        _resolve_metric_name('InsertSizeMetrics', 'PAIR_ORIENTATION-FR', 'MEDIAN_INSERT_SIZE') => 'median_insert_size',
-        _resolve_metric_name('InsertSizeMetrics', 'PAIR_ORIENTATION-FR', 'STANDARD_DEVIATION') => 'sd_insert_size',
-    );
-    %metrics_to_add = (%metrics_to_add, $self->convert_metrics(\%convert, \%qc_metrics, 0));
-
-    my $align_result = $self->_alignment_result;
-
-    my %align_metrics;
-    map{$align_metrics{$_->metric_name} = $_->metric_value}$align_result->metrics;
-
-    for my $metric_key (sort keys %metrics_to_add) {
-        if (exists $align_metrics{$metric_key}) {
-            $self->warning_message("metric: $metric_key already exist for ".$align_result->id.'. Skip.');
-            next;
-        }
-        $align_result->add_metric(metric_name => $metric_key, metric_value => $metrics_to_add{$metric_key});
-    }
 
     return 1;
 }
@@ -165,32 +117,6 @@ sub link_result {
     }
 
     return 1;
-}
-
-
-sub convert_metrics {
-    my ($self, $convert, $metrics, $flag) = @_;
-    my %convert_metrics;
-
-    for my $metric_name (sort keys %$convert) {
-        my $metric_value = $metrics->{$metric_name};
-        if ($metric_value) {
-            $metric_value = sprintf("%.2f", $metric_value * 100) if $flag;
-        }
-        else {
-            $self->warning_message("Failed to get metric: $metric_name from BamQc output");
-            $metric_value = 0;
-        }
-        $convert_metrics{$convert->{$metric_name}} = $metric_value;
-    }
-
-    return %convert_metrics;
-}
-
-#convert to BamQc software result metric name
-sub _resolve_metric_name {
-    my ($type, $key, $label) = @_;
-    return sprintf('bam_qc-%s-%s-%s', $type, $key, $label);
 }
 
 1;

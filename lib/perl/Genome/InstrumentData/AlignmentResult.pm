@@ -218,35 +218,11 @@ class Genome::InstrumentData::AlignmentResult {
                                         is=>'Number',
                                         is_optional=>1,
                                 },
-        read_1_pct_aligned => {
-                                        is=>'Number',
-                                        is_optional=>1,
-                                },
-        read_1_pct_mismatch => {
-                                        is=>'Number',
-                                        is_optional=>1,
-                                },
         read_2_count => {
                                         is=>'Number',
                                         is_optional=>1,
                                 },
         read_2_base_count => {
-                                        is=>'Number',
-                                        is_optional=>1,
-                                },
-        read_2_pct_aligned => {
-                                        is=>'Number',
-                                        is_optional=>1,
-                                },
-        read_2_pct_mismatch => {
-                                        is=>'Number',
-                                        is_optional=>1,
-                                },
-        median_insert_size => {
-                                        is=>'Number',
-                                        is_optional=>1,
-                                },
-        sd_insert_size => {
                                         is=>'Number',
                                         is_optional=>1,
                                 },
