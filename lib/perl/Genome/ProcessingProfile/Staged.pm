@@ -148,7 +148,7 @@ sub map_workflow_inputs {
 sub _generate_events_for_build {
     my ($self, $build) = @_;
 
-    my @stage_names = $self->stages;
+    my @stage_names = $self->stages($build);
     unless (@stage_names) {
         die ('No stages on processing profile in '  . (ref($self) || $self));
     }

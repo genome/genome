@@ -334,7 +334,7 @@ sub get_processing_profile_node {
 
     if($pp->can('stages')) {
 
-        for my $stage_name ($pp->stages) {
+        for my $stage_name ($pp->stages($build)) {
             my $stage_node = $self->anode("stage","value",$stage_name);
             my $commands_node = $doc->createElement("command_classes");
             my $operating_on_node = $doc->createElement("operating_on");
