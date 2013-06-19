@@ -434,7 +434,7 @@ sub _create {
 
     my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
 
-    $self->status_message(sprintf("Allocation (%s) created at %s",
+    $self->debug_message(sprintf("Allocation (%s) created at %s",
         $id, $self->absolute_path));
 
     # a restrictive umask can break builds for other users; force it to be friendly
