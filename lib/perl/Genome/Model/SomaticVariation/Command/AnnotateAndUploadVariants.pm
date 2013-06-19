@@ -247,7 +247,7 @@ sub execute{
     
     if ($build->previously_discovered_variations_build) {
         my $annotation_vcf = $build->previously_discovered_variations_build->snvs_vcf;
-        if (-e $annotation_vcf) {
+        if ($annotation_vcf && -e $annotation_vcf) {
             for my $key (keys(%vcf_files)) {
                 my $variant_file = $vcf_files{$key};
                 my $output_file = $variant_file.".annotated.vcf.gz";
