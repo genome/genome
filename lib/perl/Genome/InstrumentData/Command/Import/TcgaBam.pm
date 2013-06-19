@@ -899,7 +899,6 @@ sub _create_model_and_request_build {
         reference_sequence_build => $refseq,
         subject_id => $sample->id,
         subject_class_name => $sample->class,
-        build_requested => 1,
         auto_assign_inst_data => 0,
     );
     if ( not $model ) {
