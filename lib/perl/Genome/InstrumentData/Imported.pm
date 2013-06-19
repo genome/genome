@@ -174,6 +174,10 @@ class Genome::InstrumentData::Imported {
             is_mutable => 1,
             where => [ attribute_label => 'blacklisted_segments' ],
         },
+        full_name => {
+            calculate_from => [ 'run_name', 'subset_name' ],
+            calculate => q( $subset_name ? "$run_name/$subset_name" : $run_name ),
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
