@@ -28,7 +28,13 @@ class Genome::Model::Tools::GeneTorrent {
 sub execute {
     my $self = shift;
 
-    my $cmd = 'GeneTorrent'
+    # version 3.3.4 has GeneTorrent binary
+    # version 3.8.3 has gtdownload binary
+    my $exe = do {
+        `gtdownload --help`;
+        ($? == 0) ? 'gtdownload' : 'GeneTorrent';
+    };
+    my $cmd = "$exe"
         . ' --credential-file /gscuser/kochoa/mykey.pem'
         . ' --download https://cghub.ucsc.edu/cghub/data/analysis/download/' . $self->uuid
         . ' --path ' . $self->target_path
