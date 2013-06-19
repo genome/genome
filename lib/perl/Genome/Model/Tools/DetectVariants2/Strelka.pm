@@ -25,9 +25,13 @@ class Genome::Model::Tools::DetectVariants2::Strelka {
     ],
 };
 
-my %STRELKA_VERSIONS = (
-    '0.4.6.2' => '/usr/lib/strelka0.4.6.2/',
-    '0.4.10.1' => '/usr/lib/strelka0.4.10.1/',
+our %STRELKA_VERSIONS = (
+    #'0.4.6.2' => '/usr/lib/strelka0.4.6.2/',
+    #'0.4.10.1' => '/usr/lib/strelka0.4.10.1/',
+    map { 
+        /strelka(.*)/;
+        ($1 => $_);
+    } glob("/usr/lib/strelka*")
 );
 
 sub help_synopsis {
@@ -73,12 +77,21 @@ sub _detect_variants {
     $config_file->WriteConfig($working_config_filename);
 
     #Run the strelka configuration step that checks your input files and prepares a Makefile
-    my $cmd = $self->strelka_path . "/strelka_workflow/configureStrelkaWorkflow.pl"
-                                   . " --tumor " . $self->aligned_reads_input
-                                   . " --normal " . $self->control_aligned_reads_input
-                                   . " --ref " . $self->reference_sequence_input
-                                   . " --config $working_config_filename"
-                                   . " --output-dir $output_dir/output";
+    #
+    my $config_path = $self->strelka_path . "/strelka_workflow/configureStrelkaWorkflow.pl";
+    unless (-e $config_path) {
+        $config_path = $self->strelka_path . "/bin/configureStrelkaWorkflow.pl";
+        unless (-e $config_path) {
+            die "failed to find configureStrelkaWorkflow.pl under " . $self->strelka_path . " in either bin or strelka_workflow";
+        }
+    }
+
+    my $cmd = $config_path  . " --tumor " . $self->aligned_reads_input
+                            . " --normal " . $self->control_aligned_reads_input
+                            . " --ref " . $self->reference_sequence_input
+                            . " --config $working_config_filename"
+                            . " --output-dir $output_dir/output";
+
     Genome::Sys->shellcmd( cmd=>$cmd,
                            input_files=>[$self->aligned_reads_input, $self->control_aligned_reads_input],
                            output_files=>[$output_dir . "/output/Makefile"],
