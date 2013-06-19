@@ -204,7 +204,7 @@ sub _generate_metrics {
     }
 
     # Now fill in alignment metrics
-    next unless $flag;
+    return 1 unless $flag;
     $self->status_message('Set several alignment metrics');
     
     my %metrics_to_add;
