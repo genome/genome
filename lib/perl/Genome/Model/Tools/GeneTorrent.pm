@@ -40,8 +40,9 @@ sub execute {
         . ' --path ' . $self->target_path
         . ' --log stdout:verbose'
         . ' --verbose 2'
-        . ' --max-children 1'
-        . ' --rate-limit 10';
+        . ' --max-children 2'
+#        . ' --rate-limit 10'
+    ;
 
     $self->status_message('Cmd: ' . $cmd);
 
