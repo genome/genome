@@ -78,9 +78,11 @@ sub run_and_diff {
             my $tmp = $ENV{TMP} || $ENV{TMPDIR} || '/tmp';
             my $dir = $tmp . '/last-failed-' . lc($class_as_dirname);
             my $cmd = "mv $output_dir $dir";
-            print STDOUT $cmd,"\n";
+            note($cmd);
             system $cmd;
+            note("diff $expected_output_dir $dir");
         };
 }
 
 1;
+
