@@ -55,16 +55,23 @@ sub _detect_variants {
 
     my $output_dir = $self->_temp_staging_directory;
 
-    #Note that all additional arguments to Strelka must be passed to Strelka as a single string using the 'extraStrelkaArguments =' line
-    #For example, you could do:
-    #extraStrelkaArguments = -used-allele-count-min-qscore 30 -min-qscore 10
-    #For a full list of Strelka options, run the strelka binary to view the help docs.
-    #/gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/strelka_workflow/strelka/bin/strelka
-    #Note that there are many possible additional arguments!
+    # Note that all additional arguments to Strelka must be passed to Strelka as a single string using the 'extraStrelkaArguments =' line
+    # For example, you could do:
+    # extraStrelkaArguments = -used-allele-count-min-qscore 30 -min-qscore 10
+    # For a full list of Strelka options, run the strelka binary to view the help docs.
+    # /gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/strelka_workflow/strelka/bin/strelka
+    # Note that there are many possible additional arguments!
 
     # Update the default parameters with those passed in.
-    my $default_config_filename = join("/", $self->strelka_path,
-                qw(strelka_workflow strelka etc strelka_config_bwa_default.ini));
+    my $strelka_path = $self->strelka_path;
+    my $default_config_filename;
+    if (-d $strelka_path . '/etc') {
+        $default_config_filename = $strelka_path . '/etc/strelka_config_bwa_default.ini';
+    }
+    else {
+        $default_config_filename = join("/", $strelka_path, qw(strelka_workflow strelka etc strelka_config_bwa_default.ini));
+    }
+
     my $working_config_filename = join("/", $output_dir, "strelka_config.ini");
     my %params = parse_params($self->params);
     my $config_file = Config::IniFiles->new(-file=>$default_config_filename);
@@ -77,7 +84,6 @@ sub _detect_variants {
     $config_file->WriteConfig($working_config_filename);
 
     #Run the strelka configuration step that checks your input files and prepares a Makefile
-    #
     my $config_path = $self->strelka_path . "/strelka_workflow/configureStrelkaWorkflow.pl";
     unless (-e $config_path) {
         $config_path = $self->strelka_path . "/bin/configureStrelkaWorkflow.pl";
@@ -205,3 +211,4 @@ sub parse_params {
 }
 
 1;
+

@@ -27,11 +27,11 @@ if ($archos !~ /64/) {
 use_ok('Genome::Model::Tools::DetectVariants2::Strelka') or die;
 
 #Define the test dir where test BAMs and pre-generated results files are stored
-my $test_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-Tools-DetectVariants-Strelka/";
+my $test_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-Tools-DetectVariants2-Strelka/";
 ok(-e $test_dir, "Found test dir: $test_dir") or die;
 
 #Define the expected output dir where the expected Strelka results files are stored
-my $expected_output_dir = $test_dir . "expected_outputs/2013-06-12";
+my $expected_output_dir = $test_dir . "expected_outputs/2013-06-19b";
 ok(-e $expected_output_dir, "Created or found expected output dir: $expected_output_dir") or die;
 
 #Define paths to a test tumor and normal BAM file
@@ -41,7 +41,7 @@ my $normal_bam = $test_dir . "normal.tiny.bam";
 ok(-e $normal_bam, "Found normal test BAM: $normal_bam") or die;
 
 #Define the output directory for temporary results produced during the test run
-my $temp_base_dir = File::Temp::tempdir('Strelka_0.4.6.2_XXXX', CLEANUP => 1, TMPDIR => 1);
+my $temp_base_dir = File::Temp::tempdir('Strelka_1.0.7_XXXX', CLEANUP => 1, TMPDIR => 1);
 ok(-e $temp_base_dir, "Created a temp dir for output file from this test run: $temp_base_dir") or die;
 my $actual_output_dir = "$temp_base_dir/output";
 
@@ -74,7 +74,7 @@ my $strelka = Genome::Model::Tools::DetectVariants2::Strelka->create(aligned_rea
                                                                      control_aligned_reads_input=>$normal_bam,
                                                                      reference_build_id => $reduced_ref_seq_build->id,
                                                                      output_directory => $actual_output_dir,
-                                                                     version => '0.4.6.2',
+                                                                     version => '1.0.7',
                                                                      params => $params_string,
                                                                      control_aligned_reads_sample => 'TEST_NORMAL',
                                                                      aligned_reads_sample => 'TEST',);
@@ -117,7 +117,7 @@ my $actual = "$actual_output_dir/output/config/run.config.ini";
 compare_ok($expected, $actual,
     name => "output matched expected result for output/config/run.config.ini",
     filters => [qr(^refFile = .*), qr(^configurationCmdline.*), qr(^outDir.*)],
-    replace => [[qr(/gscmnt/[^/]+/info/test_suite_data/Genome-Model-Tools-DetectVariants-Strelka), q(GENOME_TEST_INPUTS)]],
+    replace => [[qr(/gscmnt/[^/]+/info/test_suite_data/Genome-Model-Tools-DetectVariants2-Strelka), q(GENOME_TEST_INPUTS)]],
 );
 
 $expected = `cat $expected_output_dir/output/Makefile | grep -v "^script_dir" | grep -v "^analysis_dir" | grep -v "^config_file"`;
@@ -125,6 +125,8 @@ $actual = `cat $actual_output_dir/output/Makefile | grep -v "^script_dir" | grep
 my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
 ok(!$diff, "output matched expected result for output/Makefile")
 or diag("Diff: $diff\n");
+
+#system "cp -L -r `readlink $actual_output_dir` /tmp/strelka-rebuild";
 
 #my @diff = `diff -r -x '*chromosomes*' $expected_output_dir $actual_output_dir`;
 #ok(@diff == 72 || @diff == 74 || @diff == 98, "Only 72, 74, or 98 differences from expected results and actual were found (the number expected for same and different day testing respectively)")
