@@ -37,7 +37,7 @@ sub create {
 
 sub is_updated {
     my ($self, $aspect) = @_;
-    if (ref($self) && $aspect ne 'commit') {
+    if (ref($self) && $aspect ne 'commit' && $aspect ne 'load') {
         $self->updated_at(UR::Context->current->now);
     }
 }
