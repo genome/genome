@@ -24,7 +24,7 @@ class Genome::Sample::Command::Import::Manager {
         make_progress => { 
             is => 'Boolean',
             default_value => 0,
-            doc => 'Do not create samples, models and run imports. Only print the status.', 
+            doc => 'Do not create samples, models, run imports and schedule builds. Only print the status.', 
         },
         # create_entities: samples, models
         # launch_inst_data_import: launch the inst data command
