@@ -84,7 +84,7 @@ sub parse_line {
         ref => '0/0',
         het => '0/1',
         hom => '1/1',
-        conflict => '.',
+        conflict => './.',
     );
 
     my $n_gt = $gt_info{$n_gt_info};

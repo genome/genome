@@ -79,7 +79,7 @@ sub parse_line {
 
     # If the variant called is N, just null out the GT and FET fields to minimize interference with cross-sample VCFs
     if ($var_allele_iub eq "N") {
-        $GT = ".";
+        $GT = "./.";
         $FET = ".";
         $alt_alleles = ".";
         $AD = ".";

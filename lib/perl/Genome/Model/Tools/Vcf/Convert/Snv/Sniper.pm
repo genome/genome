@@ -108,7 +108,7 @@ sub parse_line {
     my $tumor_gt = $self->generate_gt($ref, \@alt_alleles, \@alleles);
 
     # We do not have access to much of the normal information from somatic output
-    my $normal_gt = ".";
+    my $normal_gt = "./.";
     # genotype quality (consensus quality)
     my $normal_gq = ".";
     # avg mapping quality ref/var
