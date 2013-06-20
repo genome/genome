@@ -492,11 +492,13 @@ sub _make_progress {
 
         # Run import command, or schedaule build
         if ( $sample->{status} eq 'import_needed' ) {
-            $self->_launch_instrument_data_import_for_sample($sample);
+            my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
+            return if not $launch_ok;
         }
         elsif ( $sample->{status} eq 'import_failed' ) {
             $sample->{inst_data}->delete if $sample->{inst_data};;
-            $self->_launch_instrument_data_import_for_sample($sample);
+            my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
+            return if not $launch_ok;
         }
         elsif ( $sample->{status} eq 'build_needed'
             #or $sample->{status} eq 'build_failed'
@@ -515,10 +517,10 @@ sub _launch_instrument_data_import_for_sample {
     my ($self, $sample) = @_;
     Carp::confess('No sample to _resolve_instrument_data_import_command_for_sample!') if not $sample;
     my $cmd = $self->_resolve_instrument_data_import_command_for_sample($sample);
-    print 'LAUNCH: '.$cmd."\n";
-    return 1;
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     return 1 if $rv;
+    $self->error_message($@) if $@;
+    $self->error_message('Failed to launch instrument data import command!');
     return;
 }
 

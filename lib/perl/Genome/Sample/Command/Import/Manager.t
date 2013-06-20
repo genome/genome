@@ -79,6 +79,7 @@ is(
     "launch -name $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
     'inst data import command',
 );
+ok(!$manager->_launch_instrument_data_import_for_sample($samples->{$sample_name}), 'failed to launch inst data import command');
 
 # Make progress!
 $manager = Genome::Sample::Command::Import::Manager->create(
