@@ -11,6 +11,7 @@ use warnings;
 
 use above "Genome";
 use Data::Dumper;
+require Genome::Utility::Test;
 use Test::More;
 
 use_ok('Genome::Sample::Command::Import::Manager') or die;
@@ -64,8 +65,9 @@ my %expected_samples = (
 );
 
 # Do not make progress, just status
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v1');
 my $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => 'example/valid',
+    working_directory => $test_dir.'/valid',
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -83,7 +85,7 @@ ok(!$manager->_launch_instrument_data_import_for_sample($samples->{$sample_name}
 
 # Make progress!
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => 'example/valid',
+    working_directory => $test_dir.'/valid',
     make_progress => 1,
 );
 ok($manager, 'create manager');
@@ -100,7 +102,7 @@ print Dumper($samples);
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => 'example/invalid/no-config-yaml',
+    working_directory => $test_dir.'/invalid/no-config-yaml',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
@@ -108,7 +110,7 @@ is($manager->error_message, "Property 'config_file': Config file does not exist!
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => 'example/invalid/no-sample-csv',
+    working_directory => $test_dir.'/invalid/no-sample-csv',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
@@ -116,7 +118,7 @@ is($manager->error_message, "Property 'sample_csv_file': Sample csv file does no
 
 # fail - no name column in csv
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => 'example/invalid/no-name-column-in-sample-csv',
+    working_directory => $test_dir.'/invalid/no-name-column-in-sample-csv',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
