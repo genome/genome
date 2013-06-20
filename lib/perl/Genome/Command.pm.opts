@@ -9022,6 +9022,25 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>Whim',
+      [
+        'extraction-type=s',
+        [
+          'cdna',
+          'genomic dna',
+          'ipr product',
+          'rna',
+          'total rna'
+        ],
+        'name=s',
+        'files',
+        'individual-attributes=s@',
+        'files',
+        'sample-attributes=s@',
+        'files',
+        'help!',
+        undef
+      ],
       '>EmblEbi',
       [
         'age=s',
@@ -9082,6 +9101,15 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'sample-attributes=s@',
         'files',
+        'help!',
+        undef
+      ],
+      '>manager',
+      [
+        'working-directory=s',
+        'files',
+        'make-progress!',
+        undef,
         'help!',
         undef
       ],
