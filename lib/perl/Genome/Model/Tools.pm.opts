@@ -19344,6 +19344,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'group-id=s',
       'files',
+      'reference-transcripts=s',
+      'files',
       'germline-roi-file=s',
       'files',
       'output-build-dirs=s',
@@ -19359,8 +19361,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'process-loh-calls=s',
       'files',
       'reference=s',
-      'files',
-      'reference-transcripts=s',
       'files',
       'review-database-indels=s',
       'files',
