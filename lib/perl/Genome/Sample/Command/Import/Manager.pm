@@ -44,8 +44,8 @@ class Genome::Sample::Command::Import::Manager {
         samples => { is => 'Hash', },
         model_class => { is => 'Text' },
         model_params => { is => 'Hash' },
-        instrument_data_import_sample_name_cnt => { is => 'Number', },
         instrument_data_import_command_format => { is => 'Text', },
+        instrument_data_import_command_sample_name_cnt => { is => 'Number', },
     ],
 };
 
@@ -187,16 +187,16 @@ sub _load_sample_csv_file {
             my $value = $sample->{$attr};
             next if not defined $value or $value eq '';
             if ( $attr =~ /^(sample|individual)\./ ) { # is sample/individual/inst data indicated?
-                push @{$samples{$name}->{importer_params}->{$1.'_attributes'}}, $attr."=\'".$value."\'";
+                push @{$samples{$name}->{importer_params}->{$1.'_attributes'}}, $attr."='".$value."'";
             }
             elsif ( $attr =~ s/^instrument_data\.// ) { # inst data attr
-                push @{$samples{$name}->{'instrument_data_attributes'}}, $attr."=\'".$value."\'";
+                push @{$samples{$name}->{'instrument_data_attributes'}}, $attr."='".$value."'";
             }
             elsif ( grep { $attr eq $_ } @importer_property_names ) { # is the attr specified in the importer?
                 $samples{$name}->{importer_params}->{$attr} = $value;
             }
             else { # assume sample attribute
-                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."=\'".$value."\'";
+                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
             }
         }
     }
@@ -255,15 +255,15 @@ sub _resolve_instrument_data_import_command {
     my $self = shift;
 
     my $cmd_format;
-    my $sample_name_cnt = 0;
+    my @sample_name_replaces_in_command;
     if ( $cmd_format = $self->config->{'job dispatch'}->{launch} ) {
-        $sample_name_cnt = $cmd_format =~ /(\%s)/g;
-        if ( not $sample_name_cnt ) {
+        @sample_name_replaces_in_command = $cmd_format =~ /\%s/g;
+        if ( not @sample_name_replaces_in_command ) {
             return 'No "%s" in job dispatch config to replace with sample name! '.$cmd_format;
         }
         $cmd_format .= ' ';
     }
-    $self->instrument_data_import_sample_name_cnt($sample_name_cnt);
+    $self->instrument_data_import_command_sample_name_cnt(scalar @sample_name_replaces_in_command);
     $cmd_format .= 'genome instrument-data import basic --sample name=%s --source-files %s --import-source-name %s%s',
     $self->instrument_data_import_command_format($cmd_format);
 
@@ -301,9 +301,12 @@ sub _load_samples {
         $samples->{$name}->{sample} = $genome_sample;
 
         # Model
-        my $model = $model_class->get(%$model_params) if $genome_sample;
-        $samples->{$name}->{model} = $model;
-        $samples->{$name}->{build} = $model->latest_build if $model;
+        if ( $genome_sample ) {
+            $model_params->{subject} = $genome_sample;
+            my $model = $model_class->get(%$model_params);
+            $samples->{$name}->{model} = $model;
+            $samples->{$name}->{build} = $model->latest_build if $model;
+        }
 
         # Import Command
         my $cmd = $self->_resolve_instrument_data_import_command_for_sample($samples->{$name});
@@ -417,8 +420,9 @@ sub _status {
         $totals{ $sample->{status} }++;
         $totals{build}++ if $sample->{status} =~ /^build/;
         $status .= sprintf(
-            "%-20s %10s %s %s %s\n",
-            $sample->{name}, $sample->{status}, 
+            "%-20s %-15s %s %s %s\n",
+            $sample->{name},
+            $sample->{status}, 
             ( $sample->{model} ? $sample->{model}->id : 'NA' ),
             ( $sample->{build} ? ( $sample->{build}->id, $sample->{build}->status ) : ( 'NA', 'NA' ) ),
         );
@@ -432,7 +436,7 @@ sub _resolve_instrument_data_import_command_for_sample {
 
     Carp::confess('No samples to resolved instrument data import command!') if not $sample;
 
-    my $sample_name_cnt = $self->instrument_data_import_sample_name_cnt;
+    my $sample_name_cnt = $self->instrument_data_import_command_sample_name_cnt;
     my @sample_name_replaces;
     for (1..$sample_name_cnt) { push @sample_name_replaces, $sample->{name}; }
 
@@ -441,7 +445,7 @@ sub _resolve_instrument_data_import_command_for_sample {
         @sample_name_replaces,
         $sample->{name},
         join(',', @{$sample->{source_files}}),
-        $self->config->{'sample'}->{'nomenclature'},
+        $self->config->{sample}->{nomenclature},
         ( 
             $sample->{instrument_data_attributes}
             ? ' --instrument-data-properties '.join(',', @{$sample->{instrument_data_attributes}})
@@ -449,7 +453,6 @@ sub _resolve_instrument_data_import_command_for_sample {
         ),
     );
 
-    print Dumper($cmd, $self->instrument_data_import_command_format,$sample_name_cnt,\@sample_name_replaces);
     return $cmd;
 }
 
