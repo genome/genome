@@ -57,7 +57,6 @@ my %expected_samples = (
         status => 'sample_needed',
         job_status => 'pend',
         sample => undef,
-        import_command => "launch -name $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
         instrument_data => undef,
         instrument_data_attributes => [qw/ lane='8' /],
         instrument_data_file => undef,
@@ -73,6 +72,13 @@ ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
 my $samples = $manager->samples;
 is_deeply($manager->samples, \%expected_samples, 'samples match');
+
+# Import command
+is(
+    $manager->_resolve_instrument_data_import_command_for_sample($samples->{$sample_name}),
+    "launch -name $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
+    'inst data import command',
+);
 
 # Make progress!
 $manager = Genome::Sample::Command::Import::Manager->create(

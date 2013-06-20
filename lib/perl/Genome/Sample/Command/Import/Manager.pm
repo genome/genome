@@ -26,6 +26,9 @@ class Genome::Sample::Command::Import::Manager {
             default_value => 0,
             doc => 'Do not create samples, models and run imports. Only print the status.', 
         },
+        # create_entities: samples, models
+        # launch_inst_data_import: launch the inst data command
+        # schedule_builds: schedule builds
     ],
     has_optional_calculated => [
         sample_csv_file => {
@@ -308,11 +311,6 @@ sub _load_samples {
             $samples->{$name}->{build} = $model->latest_build if $model;
         }
 
-        # Import Command
-        my $cmd = $self->_resolve_instrument_data_import_command_for_sample($samples->{$name});
-        return if not $cmd;
-        $samples->{$name}->{import_command} = $cmd;
-
         # Status
         $self->set_sample_status($samples->{$name});
     }
@@ -492,26 +490,36 @@ sub _make_progress {
             $sample->{build} = $model->latest_build;
         }
 
-        # 
+        # Run import command, or schedaule build
         if ( $sample->{status} eq 'import_needed' ) {
-            system $sample->{import_command};
-            $self->set_sample_status($sample);
+            $self->_launch_instrument_data_import_for_sample($sample);
         }
         elsif ( $sample->{status} eq 'import_failed' ) {
-            #defined $sample->{instrument_data_file} and -s $sample->{instrument_data_file} );
-            # clenaup, relaunch
-            #$sample->{inst_data}->delete;
-            $self->set_sample_status($sample);
+            $sample->{inst_data}->delete if $sample->{inst_data};;
+            $self->_launch_instrument_data_import_for_sample($sample);
         }
         elsif ( $sample->{status} eq 'build_needed'
             #or $sample->{status} eq 'build_failed'
+            or $sample->{status} eq 'build_abandoned'
         ) {
-            $sample->{model}->build_requested(1);
-            $self->set_sample_status($sample);
+            #$sample->{model}->build_requested(1);
+            print 'REQUEST BUILD: '.$sample->{name}."\n";
         }
+        $self->set_sample_status($sample);
     }
 
     return 1;
+}
+
+sub _launch_instrument_data_import_for_sample {
+    my ($self, $sample) = @_;
+    Carp::confess('No sample to _resolve_instrument_data_import_command_for_sample!') if not $sample;
+    my $cmd = $self->_resolve_instrument_data_import_command_for_sample($sample);
+    print 'LAUNCH: '.$cmd."\n";
+    return 1;
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    return 1 if $rv;
+    return;
 }
 
 1;
