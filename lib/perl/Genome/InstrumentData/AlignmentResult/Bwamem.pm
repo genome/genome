@@ -81,6 +81,9 @@ sub tmp_megabytes_estimated {
         my $bam_path = $instrument_data->bam_path;
 
         my $scale_factor = 3.25; # assumption: up to 3x during sort/fixmate/sort and also during fastq extraction (2x) + bam = 3
+        # 3.25 scale factor worked for bwa but seems inefficient for bwamem;
+        # we've seen usage up to 400 GB when 106 GB was requested.
+        $scale_factor *= 4;
 
         my $bam_bytes = -s $bam_path;
         unless ($bam_bytes) {
