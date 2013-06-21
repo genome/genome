@@ -118,7 +118,7 @@ sub create {
 sub _execute_build {
     my ($self, $build) = @_;
 
-    $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
     $ENV{PATH} = join(':', $ENV{PATH}, '/gsc/scripts/gsc/annotation');
 
     my($auto_suffix) = $build->input(name => 'auto_suffix');
