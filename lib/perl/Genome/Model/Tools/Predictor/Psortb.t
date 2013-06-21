@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Genome::Utility::Test qw(compare_ok);
 
 use_ok('Genome::Model::Tools::Predictor::Psortb') or die;
 
@@ -40,8 +41,8 @@ ok(-e $command->raw_output_path, "raw output file exists at expected locadtion "
 ok(-e $command->dump_output_path, "dump file exists at expected location " . $command->dump_output_path);
 ok(-e $command->ace_file_path, "ace file generated at " . $command->ace_file_path);
 
-my $dump_diff = Genome::Sys->diff_file_vs_file($command->dump_output_path, $expected_dump_output);
-ok(!$dump_diff, "no differences found between expected dump file $expected_dump_output " . 
+compare_ok($command->dump_output_path, $expected_dump_output,
+    "no differences found between expected dump file $expected_dump_output " .
     "and generated dump file " . $command->dump_output_path);
 
 done_testing();
