@@ -10203,6 +10203,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'normal-window-file=s',
         'files',
+        'r-file=s',
+        'files',
         'tumor-window-file=s',
         'files',
         'help!',
