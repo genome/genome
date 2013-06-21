@@ -61,8 +61,8 @@ sub execute {
             if ($used > $allocated and $difference > $tolerance) {
                 push @{$under_allocated_volumes{$group}},
                     "Volume " . $volume->mount_path .
-                    " using $used kb ($percent_used \%) but only " .
-                    "$allocated kb ($percent_allocated \%) allocated";
+                    " using $used kB ($percent_used \%) but only " .
+                    "$allocated kB ($percent_allocated \%) allocated";
             }
         }
     }
