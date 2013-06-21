@@ -276,9 +276,6 @@ sub _resolve_instrument_data_import_command {
 sub _load_samples {
     my $self = shift;
 
-    my $set_job_status_to_samples = $self->_set_job_status_to_samples;
-    return if not $set_job_status_to_samples;
-
     my $samples = $self->samples;
     my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
         original_data_path => [ map { join(',', @{$_->{source_files}}) } values %$samples ],
@@ -406,13 +403,13 @@ sub set_sample_status {
 sub _status {
     my $self = shift;
 
-    my $samples = $self->samples;
-    Carp::confess('No samples to display status!') if not $samples;
+    my $set_job_status_to_samples = $self->_set_job_status_to_samples;
+    return if not $set_job_status_to_samples;
 
     my %totals;
     my $status;
-    for my $name ( sort { $a cmp $b } keys %$samples ) {
-        my $sample = $samples->{$name};
+    for my $sample ( sort { $a->{name} cmp $b->{name} } values %{$self->samples} ) {
+        $self->set_sample_status($sample);
         $totals{total}++;
         $self->set_sample_status($sample);
         $totals{ $sample->{status} }++;
@@ -459,12 +456,12 @@ sub _make_progress {
 
     return 1 if not $self->make_progress;
 
-    my $samples = $self->samples;
-    Carp::confess('No samples to display status!') if not $samples;
+    my $set_job_status_to_samples = $self->_set_job_status_to_samples;
+    return if not $set_job_status_to_samples;
 
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
-    for my $sample ( values %$samples ) {
+    for my $sample ( values %{$self->samples} ) {
         # Create sample
         if ( not $sample->{sample} ) {
             $sample->{sample} = $self->_create_sample($sample->{importer_params});
@@ -506,7 +503,6 @@ sub _make_progress {
         ) {
             $sample->{model}->build_requested(1);
         }
-        $self->set_sample_status($sample);
     }
 
     return 1;
