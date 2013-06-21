@@ -69,6 +69,11 @@ class Genome::Model::Tools::CopyNumber::PlotIndividualCn{
             default => 1.5,
             doc =>'copy number threshold for losses',
         },
+        r_file => {
+            is => 'String',
+            is_optional => 1,
+            doc =>'if provided, will output a file containing the R commands that are run',
+        },
         ]
 };
 
@@ -85,10 +90,17 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    my ($rfile,$newfile) = Genome::Sys->create_temp_file;
-    unless($rfile) {
-        $self->error_message("Unable to create temporary file $!");
-        die;
+    my $rfile;
+    my $newfile;
+    if(defined($self->r_file)){
+        $newfile = $self->r_file;
+        open($rfile, ">$newfile") || die "can't open file\n";
+    } else {
+        ($rfile,$newfile) = Genome::Sys->create_temp_file;
+        unless($rfile) {
+            $self->error_message("Unable to create temporary file $!");
+            die;
+        }
     }
 
     my $dir_name = dirname(__FILE__);
@@ -150,10 +162,11 @@ sub execute {
             print $rfile ', tableName="corrected")' . "\n";
         }
 
-
-        print $rfile "if(is.null(tumorNormalRatio)){\n";
-        print $rfile "  tumorNormalRatio=getTumorNormalRatio(\"tumor\",\"normal\")\n";
-        print $rfile "}\n";
+        if(defined($self->tumor_window_file)){
+            print $rfile "if(is.null(tumorNormalRatio)){\n";
+            print $rfile "  tumorNormalRatio=getTumorNormalRatio(\"tumor\",\"normal\")\n";
+            print $rfile "}\n";
+        }
 
         print $rfile 'plotSegments(filename="' . $self->segment_file;
         print $rfile '", entrypoints="' . $self->annotation_directory . "/" . $self->genome_build . '/entrypoints.male"';
