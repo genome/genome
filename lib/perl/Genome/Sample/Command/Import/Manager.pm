@@ -385,7 +385,7 @@ sub set_sample_status {
     my ($self, $sample) = @_;
 
     Carp::confess('No sample to set status!') if not $sample;
-
+    
     $sample->{status} = eval{
         return 'sample_needed' if not $sample->{sample};
         return 'import_'.$sample->{job_status} if $sample->{job_status};
@@ -414,13 +414,26 @@ sub _status {
         $self->set_sample_status($sample);
         $totals{ $sample->{status} }++;
         $totals{build}++ if $sample->{status} =~ /^build/;
+        if ( $sample->{model} ) {
+            $sample->{model_id} = $sample->{model}->id;
+            if ( $sample->{build} and $sample->{status} ne 'build_requested' ) {
+                $sample->{build_id} = $sample->{build}->id;
+            }
+            else {
+                $sample->{build_id} = 'NA';
+            }
+        }
+        else {
+            $sample->{model_id} = 'NA';
+            $sample->{build_id} = 'NA';
+        }
         $status .= sprintf(
             "%-20s %-15s %s %s %s %s\n",
             $sample->{name},
             $sample->{status}, 
             ( $sample->{instrument_data} ? $sample->{instrument_data}->id : 'NA' ),
-            ( $sample->{model} ? $sample->{model}->id : 'NA' ),
-            ( $sample->{build} ? ( $sample->{build}->id, $sample->{build}->status ) : ( 'NA', 'NA' ) ),
+            $sample->{model_id},
+            $sample->{build_id},
         );
     }
     print "$status\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
