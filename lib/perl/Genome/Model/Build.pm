@@ -1230,7 +1230,11 @@ sub _launch {
     my $self = shift;
     my %params = @_;
 
+    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
+    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
+    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+
     local $ENV{GENOME_BUILD_ID} = $self->id;
 
     # right now it is "inline" or the name of an LSF queue.
@@ -1371,6 +1375,9 @@ sub _initialize_workflow {
 sub _execute_bsub_command { # here to overload in testing
     my ($self, $cmd) = @_;
 
+    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
+    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
+    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
