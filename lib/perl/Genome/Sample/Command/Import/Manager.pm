@@ -415,9 +415,10 @@ sub _status {
         $totals{ $sample->{status} }++;
         $totals{build}++ if $sample->{status} =~ /^build/;
         $status .= sprintf(
-            "%-20s %-15s %s %s %s\n",
+            "%-20s %-15s %s %s %s %s\n",
             $sample->{name},
             $sample->{status}, 
+            ( $sample->{instrument_data} ? $sample->{instrument_data}->id : 'NA' ),
             ( $sample->{model} ? $sample->{model}->id : 'NA' ),
             ( $sample->{build} ? ( $sample->{build}->id, $sample->{build}->status ) : ( 'NA', 'NA' ) ),
         );
@@ -481,7 +482,7 @@ sub _make_progress {
         my $instrument_data = $sample->{instrument_data};
         if ( $instrument_data ) {
             my @model_instrument_data = $model->instrument_data;
-            if ( @model_instrument_data and not grep { $instrument_data->id eq $_ } map { $_->id } @model_instrument_data ) {
+            if ( not @model_instrument_data or not grep { $instrument_data->id eq $_ } map { $_->id } @model_instrument_data ) {
                 $model->add_instrument_data($instrument_data);
             }
             $sample->{build} = $model->latest_build;
@@ -500,8 +501,10 @@ sub _make_progress {
         elsif ( $sample->{status} eq 'build_needed'
             #or $sample->{status} eq 'build_failed'
             or $sample->{status} eq 'build_abandoned'
+            or $sample->{status} eq 'build_unstartable'
         ) {
             $sample->{model}->build_requested(1);
+            $sample->{build} = undef;
         }
     }
 
