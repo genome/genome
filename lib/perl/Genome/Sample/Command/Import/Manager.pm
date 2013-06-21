@@ -496,7 +496,7 @@ sub _make_progress {
             return if not $launch_ok;
         }
         elsif ( $sample->{status} eq 'import_failed' ) {
-            $sample->{inst_data}->delete if $sample->{inst_data};;
+            $sample->{instrument_data}->delete if $sample->{instrument_data};
             my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
             return if not $launch_ok;
         }
@@ -504,8 +504,7 @@ sub _make_progress {
             #or $sample->{status} eq 'build_failed'
             or $sample->{status} eq 'build_abandoned'
         ) {
-            #$sample->{model}->build_requested(1);
-            print 'REQUEST BUILD: '.$sample->{name}."\n";
+            $sample->{model}->build_requested(1);
         }
         $self->set_sample_status($sample);
     }
