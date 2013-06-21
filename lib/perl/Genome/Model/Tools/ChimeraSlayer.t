@@ -6,7 +6,7 @@ use warnings;
 use above 'Genome';
 
 use Test::More;
-require File::Compare;
+use Genome::Utility::Test qw(compare_ok);
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -54,7 +54,7 @@ ok( $tool->execute, 'Executed tool' );
 #files that should consistantly match
 for my $file ( qw/ chims1.NAST.CPS chims1.NAST.CPS_RENAST / ) {
     ok( -s $temp_test_dir.'/'.$file, "Created file: $file" );
-    ok( File::Compare::compare( $temp_test_dir.'/'.$file, $test_data_dir.'/'.$file ) == 0, "Test $file files match" );
+    compare_ok($temp_test_dir.'/'.$file, $test_data_dir.'/'.$file, "Test $file files match");
 }
 #files that differ sometimes
  #chims1.NAST.CPS.CPC.align
