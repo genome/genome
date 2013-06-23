@@ -471,7 +471,9 @@ sub stages {
 
     # Suppress warning for models that do not have reference_coverage_objects,
     # e.g. a region_of_interest_set_name.
-    if ($self->reference_coverage_objects($build->model)) {
+    # It will take more work to ensure $build is passed in due to hack used to
+    # implement lane QC.
+    if (!$build || $self->reference_coverage_objects($build->model)) {
         push @stages, 'reference_coverage' => 1;
     }
 
