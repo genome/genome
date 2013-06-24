@@ -179,7 +179,9 @@ sub build_by_version {
     if ($version eq '36' or $version eq '37') {
         # this is present only to help developers troubleshoot problems related to poorly maintained refseq data
         # remove it when this data is cleaned-up (ssmith-2013-02-09)
-        Carp::cluck("Cearching for version $version is likely due to out-of-date code.  Reference versions now end in -lite, or a patch level indicator in most cases");
+        Carp::cluck("Searching for version $version is likely due "
+                  . "to out-of-date code.  Reference versions now "
+                  . "end in -lite, or a patch level indicator in most cases");
     }
     my @b = Genome::Model::Build::ImportedReferenceSequence->get(
         'version' => $version,
