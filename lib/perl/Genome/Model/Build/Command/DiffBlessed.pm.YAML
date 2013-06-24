@@ -9,9 +9,10 @@ apipe-test-gene-prediction-eukaryotic: 134354399
 apipe-test-mc16s-454: 135304826
 apipe-test-mc16s-sanger: 133668184
 apipe-test-refalign-germline-short: 138900157
+apipe-test-reference-alignment-lane-qc: 139651675
 apipe-test-reference-alignment: 139404671
-apipe-test-somatic-validation: 139404673
 apipe-test-somatic-validation-sv: 137282756
-apipe-test-somatic-variation: 137406904
+apipe-test-somatic-validation: 139404673
 apipe-test-somatic-variation-short: 139404662
 apipe-test-somatic-variation-sv-detection: 136692589
+apipe-test-somatic-variation: 137406904
