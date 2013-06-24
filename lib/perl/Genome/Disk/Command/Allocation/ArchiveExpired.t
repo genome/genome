@@ -107,7 +107,7 @@ my $shouldnt_allocation_path = tempdir(
 my $should_allocation = Genome::Disk::Allocation->create(
     disk_group_name => $group->disk_group_name,
     allocation_path => $allocation_path,
-    kilobytes_requested => 100,
+    kilobytes_requested => (1024**2)+1,
     owner_class_name => 'UR::Value',
     owner_id => 'test',
     mount_path => $volume->mount_path,
@@ -125,7 +125,7 @@ use warnings;
 
 
 # Make another allocation
-my $shouldnt_allocation_path = tempdir(
+$shouldnt_allocation_path = tempdir(
     "allocation_test_3_XXXXXX",
     CLEANUP => 1,
     UNLINK => 1,

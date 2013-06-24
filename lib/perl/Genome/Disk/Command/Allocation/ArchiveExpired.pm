@@ -43,10 +43,12 @@ sub execute {
     
     my @allocations = Genome::Disk::Allocation->get(%search_params, 
                                                 mount_path=>[map {$_->mount_path} @volumes],
+                                                kilobytes_requested=>{operator=>'>=', value=>1024**2},
                                                 archive_after_time=>{operator=>'<', value=>$self->archive_time});
 
     $self->status_message("Found " . scalar @allocations . " allocations to archive");
-    
+
+    return 1 if (@allocations == 0);
 
     $self->status_message("Starting archive command on these allocations.");
     
