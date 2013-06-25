@@ -7,7 +7,6 @@ use File::Temp;
 
 # all four of the related modules use this module to avoid circular deps
 # the base model class possibly references builds of its type, causing some issues
-use Genome::Model::Build::ImportedReferenceSequence;
 use Genome::Model::Build::ReferenceSequence;
 
 # this ensures that, when a generic UR::Value of one or zero is gotten, 
@@ -79,23 +78,6 @@ class Genome::Model::ReferenceSequence {
             doc => 'If true, indicates that the reference is the product of other analysis and could be rederived. It will be stored as a model/build product rather than imported data.'
         },
 
-        # meta-data about the reference
-        derived_from => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            doc => 'Identifies the parent build from which this one is derived, if any.',
-        },
-        coordinates_from => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            doc => 'Used to indicate that this build is on the same coordinate system as another.',
-        },
-        append_to => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            doc => 'If specified, the created reference will be logically appended to the one specified by this parameter for aligners that support it.',
-        },
-        combines => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            doc => 'If specified, merges several other references into one.', 
-        },
     ],
     has_optional => [
         species_name => {
@@ -137,6 +119,7 @@ class Genome::Model::Build::ReferenceSequence {
                 return $name;
             },
         },
+
         manifest_file_path => {
             is => 'Text',
             calculate_from => ['data_directory'],
@@ -155,14 +138,6 @@ class Genome::Model::Build::ReferenceSequence {
 
     ],
     doc => 'a specific version of a reference sequence, with cordinates suitable for annotation',
-};
-
-# defined here temporarily, see above
-class Genome::Model::Build::ImportedReferenceSequence {
-    is => 'Genome::Model::Build::ReferenceSequence',
-    has => [
-        species_name => { via => 'subject', to => 'name' },
-    ],
 };
 
 sub _has_legacy_input_types { 1 };
@@ -283,7 +258,7 @@ sub _copy_fasta_file {
 
     my @fastas;
     my $primary_fasta_path;
-    if ($build->append_to) {
+    if ($build->can('append_to') && $build->append_to) {
         $primary_fasta_path = File::Spec->catfile($output_directory, 'appended_sequences.fa');
     } else {
         $primary_fasta_path = File::Spec->catfile($output_directory, 'all_sequences.fa');
@@ -316,7 +291,7 @@ sub _copy_fasta_file {
         }
     }
 
-    if ($build->append_to) {
+    if ($build->can('append_to') && $build->append_to) {
         $self->status_message("Copying full fasta file");
         my $full_fasta_path = File::Spec->catfile($output_directory, 'all_sequences.fa');
         my $cmd = Genome::Model::Tools::Fasta::Concat->create(

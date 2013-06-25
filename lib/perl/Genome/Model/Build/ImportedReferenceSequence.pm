@@ -1,10 +1,35 @@
 package Genome::Model::Build::ImportedReferenceSequence;
-use strict;
-use warnings;
+
 use Genome;
 
-# all of the logic has been moved into a new class
-# once fully stable, we will do a db update to flip the class names in the model/pp/build tables.
+use strict;
+use warnings;
+
+
+class Genome::Model::Build::ImportedReferenceSequence {
+    is => 'Genome::Model::Build::ReferenceSequence',
+    has => [
+        species_name => { via => 'subject', to => 'name' },
+
+        derived_from => {
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+            doc => 'Identifies the parent build from which this one is derived, if any.',
+        },
+        coordinates_from => {
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+            doc => 'Used to indicate that this build is on the same coordinate system as another.',
+        },
+        append_to => {
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+            doc => 'If specified, the created reference will be logically appended to the one specified by this parameter for aligners that support it.',
+        },
+        combines => {
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+            doc => 'If specified, merges several other references into one.', 
+        },
+    ],
+};
+
 
 sub get{
     my $self = shift;
@@ -14,8 +39,5 @@ sub get{
     return Genome::Model::Build::ReferenceSequence->get(@_);
 }
 
-# the class def is here, to avoid circularity issues
-require Genome::Model::ReferenceSequence;
 
 1;
-

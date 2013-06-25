@@ -23,7 +23,7 @@ sub create {
         $build->sequence_uri($build->external_url);
     }
 
-    if ($build->derived_from) {
+    if ($build->can('derived_from') && $build->derived_from) {
         $build->coordinates_from($build->derived_from_root);
     }
 
