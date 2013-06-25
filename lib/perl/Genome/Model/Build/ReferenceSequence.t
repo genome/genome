@@ -14,7 +14,7 @@ use Test::More;
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }else {
-    plan tests => 5;
+    plan tests => 8;
 }
 
 use_ok("Genome::Model::Build::ReferenceSequence");
@@ -43,14 +43,21 @@ my $command = Genome::Model::Command::Define::ImportedReferenceSequence->create(
     sequence_uri => $sequence_uri
 );
 
-ok($command, 'created command');
+my $build_name = 'test-ref-seq-1-build42';
 
+ok($command, 'created command');
 ok($command->execute(), 'executed command');
 
 my $build_id = $command->result_build_id;
-
 my $build = Genome::Model::Build->get($build_id);
 
-my $path = $build->get_sequence_dictionary('sam','human','1.29');
+is($build->name, $build_name, "getting build name doesn't crash");
 
+my $path = $build->get_sequence_dictionary('sam','human','1.29');
 ok(-e $path, 'get sequence dictionary returned valid path');
+
+is(Genome::Model::Build::ReferenceSequence->get_by_name($build_name), $build,
+    'get_by_name returns expected build');
+
+# XXX Depends on database, but was used to prevent regression in refactor
+ok(Genome::Model::Build::ImportedReferenceSequence->get_by_name('NCBI-human-build36'));

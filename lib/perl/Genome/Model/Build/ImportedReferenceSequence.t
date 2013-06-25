@@ -4,10 +4,25 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 1;
+use Test::More tests => 3;
 
-# This test was auto-generated because './Model/Build/ImportedReferenceSequence.pm'
-# had no '.t' file beside it.  Please remove this test if you believe it was
-# created unnecessarily.  This is a bare minimum test that just compiles Perl
-# and the UR class.
 use_ok('Genome::Model::Build::ImportedReferenceSequence');
+
+SKIP: {
+    system("which", "lims-env");
+    if ($? >> 8) {
+        skip "No lims-env available", 2;
+    }
+
+    # This test was added due to a production bug.
+    # If it turns out to be fragile, you can just delete it.
+    system("lims-env",
+        "/gsc/bin/perl", "-MGSCApp", "-S",
+        "ur", "test", "use", "Genome::Model::Build::ImportedReferenceSequence");
+    my $exit_code = $? >> 8;
+    my $signal = $? & 127;
+    is($exit_code, 0,
+        'nonzero exit code loading ImportedReferenceSequence with GSCApp');
+    is($signal, 0,
+        'nonzero signal loading ImportedReferenceSequence with GSCApp');
+};
