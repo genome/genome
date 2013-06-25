@@ -7794,6 +7794,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'restrict-to-target-regions!',
       undef,
+      'sample-name=s',
+      'files',
       'sites-to-pass=s',
       'files',
       'target-regions=s',
