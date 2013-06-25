@@ -20,8 +20,10 @@ use Genome;
 #15: 14 had undefined sample names in the Vcf software results
 #17: Indel Normalization
 #18: Indel Normalization using joinx 1.7 (since 1.6 is bad)
+#19: Sort normalized indels (numeric)
+#20: Switch to natural sorting of normalized indels
 
-my $VCF_VERSION = "19";
+my $VCF_VERSION = "20";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],
