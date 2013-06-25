@@ -1710,6 +1710,9 @@ sub check_clinseq_models{
   my $existing_model_count = scalar(@existing_models);
   $self->status_message("\tStarting with " . $existing_model_count . " clin-seq models for this individual. Candidates that meet basic criteria:");
 
+
+
+  #Make sure the 'best' input models of each type are being used
   foreach my $model (@existing_models){
     my $current_wgs_model = $model->wgs_model;
     my $current_exome_model = $model->exome_model;
@@ -1717,7 +1720,24 @@ sub check_clinseq_models{
     my $current_tumor_rnaseq_model = $model->tumor_rnaseq_model;
     my $current_de_model = $model->de_model;
 
-    #If a 'best' wgs model is defined, only compare against clinseq models that have a wgs model defined and skip if the actual model does not match
+    #Only consider clin-seq models whose input models are using the correct processing profiles
+    if ($current_wgs_model){
+      next unless ($current_wgs_model->processing_profile->id == $self->wgs_somatic_variation_pp->id);
+    }
+    if ($current_exome_model){
+      next unless ($current_exome_model->processing_profile->id == $self->exome_somatic_variation_pp->id);
+    }
+    if ($current_normal_rnaseq_model){
+      next unless ($current_normal_rnaseq_model->processing_profile->id == $self->rnaseq_pp->id);
+    }
+    if ($current_tumor_rnaseq_model){
+      next unless ($current_tumor_rnaseq_model->processing_profile->id == $self->rnaseq_pp->id);
+    }
+    if ($current_de_model){
+      next unless ($current_de_model->processing_profile->id == $self->differential_expression_pp->id);
+    }
+
+    #If a 'best' model is defined, only compare against clinseq models that have a model of that type defined and skip if the actual model does not match
     if ($wgs_model){
       next unless $current_wgs_model;
       next unless ($wgs_model->id == $current_wgs_model->id);

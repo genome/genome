@@ -113,7 +113,6 @@ sub execute {
 
     #should probably do a proper shell out wrapper here...
     `joinx sort -i $tmpfile >>$output_file;`;
-    `cp $tmpfile $output_file.tmp`;
 
     return 1;
 }
