@@ -5,10 +5,6 @@ use Genome;
 use File::Spec;
 use File::Temp;
 
-# all four of the related modules use this module to avoid circular deps
-# the base model class possibly references builds of its type, causing some issues
-use Genome::Model::Build::ReferenceSequence;
-
 # this ensures that, when a generic UR::Value of one or zero is gotten, 
 # other subclasses of UR::Value
 UR::Value::Number->get([0,1]);
@@ -100,44 +96,6 @@ class Genome::Model::ReferenceSequence {
         },
     ],
     doc => 'a versioned reference sequence, with cordinates suitable for annotation',
-};
-
-# defined here temporarily, see above
-class Genome::Model::Build::ReferenceSequence {
-    is => 'Genome::Model::Build',
-    has => [
-        name => {
-            via => '__self__',
-            to => 'build_name',
-        },
-        calculated_name => {
-            calculate_from => ['model_name','version'],
-            calculate => q{
-                my $name = "$model_name-build";
-                $name .= $version if defined $version;
-                $name =~ s/\s/-/g;
-                return $name;
-            },
-        },
-
-        manifest_file_path => {
-            is => 'Text',
-            calculate_from => ['data_directory'],
-            calculate => q(
-                if($data_directory){
-                    return join('/', $data_directory, 'manifest.tsv');
-                }
-            ),
-        },
-        _sequence_filehandles => {
-            is => 'Hash',
-            is_optional => 1,
-            doc => 'file handle per chromosome for reading sequences so that it does not need to be constantly closed/opened',
-        },
-        _local_cache_dir_is_verified => { is => 'Boolean', default_value => 0, is_optional => 1, },
-
-    ],
-    doc => 'a specific version of a reference sequence, with cordinates suitable for annotation',
 };
 
 sub _has_legacy_input_types { 1 };
