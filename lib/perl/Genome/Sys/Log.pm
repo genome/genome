@@ -5,7 +5,7 @@ use warnings;
 
 use Log::Log4perl qw(get_logger :levels);
 use JSON;
-use Digest::SHA1 qw(sha1);
+use Digest::SHA qw(sha1);
 
 my %MESSAGE_TYPE_TO_LOG_LEVEL = (
     debug_message => 'debug',
