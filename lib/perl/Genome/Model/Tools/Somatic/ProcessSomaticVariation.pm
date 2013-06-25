@@ -135,6 +135,12 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
           default => 1,
       },
 
+      sample_name =>{
+          is => 'Text',
+          is_optional => 1,
+          doc => "override the sample name on the build and use this name instead",
+      },
+
       ],
 };
 
@@ -610,7 +616,12 @@ sub execute {
   my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
   my $annotation_build_name = $model->annotation_build->name;
   my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
-  my $sample_name = $tumor_model->subject->name;
+  my $sample_name;
+  if(!defined($self->sample_name)){
+      $sample_name = $model->subject->name;
+  } else {
+      $sample_name = $self->sample_name;
+  }
   print STDERR "processing model with sample_name: " . $sample_name . "\n";
   my $tumor_bam = $tumor_model->last_succeeded_build->whole_rmdup_bam_file;
   my $normal_bam = $normal_model->last_succeeded_build->whole_rmdup_bam_file;
@@ -932,13 +943,8 @@ sub execute {
 
       my $bam_files;
       my $labels;
-      if($self->tumor_only){
-          $bam_files = $tumor_bam;
-          $labels = "tumor $sample_name";
-      } else {
-          $bam_files = join(",",($normal_bam,$tumor_bam));
-          $labels = join(",",("normal $sample_name","tumor $sample_name"));
-      }
+      $bam_files = join(",",($normal_bam,$tumor_bam));
+      $labels = join(",",("normal $sample_name","tumor $sample_name"));      
 
 
       if(defined($igv_reference_name)){
