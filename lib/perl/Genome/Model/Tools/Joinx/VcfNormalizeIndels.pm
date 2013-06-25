@@ -87,11 +87,13 @@ sub _generate_joinx_command {
     my $input = $self->use_bgzip ? join('', '<(zcat ', $self->input_file, ')') 
                                  : $self->input_file; 
     my $reference = $self->reference;
-    my $cmd = $self->joinx_path . " vcf-normalize-indels" . " --input-file $input" . " --fasta $reference";
+    my $joinx_path = $self->joinx_path;
+    my $cmd = $joinx_path . " vcf-normalize-indels" . " --input-file $input" . " --fasta $reference"
+        . " | $joinx_path sort";
     if ($self->output_file && not($self->use_bgzip)){
-        $cmd .= " | vcf-sort > $output";
+        $cmd .= " > $output";
     } elsif( $self->use_bgzip && $self->output_file){
-        $cmd .= " | vcf-sort | bgzip -c > $output";
+        $cmd .= " | bgzip -c > $output";
     }
     $self->status_message($cmd);
 
