@@ -8,7 +8,6 @@ use File::Temp;
 # all four of the related modules use this module to avoid circular deps
 # the base model class possibly references builds of its type, causing some issues
 use Genome::Model::Build::ImportedReferenceSequence;
-use Genome::Model::ImportedReferenceSequence;
 use Genome::Model::Build::ReferenceSequence;
 
 # this ensures that, when a generic UR::Value of one or zero is gotten, 
@@ -119,11 +118,6 @@ class Genome::Model::ReferenceSequence {
         },
     ],
     doc => 'a versioned reference sequence, with cordinates suitable for annotation',
-};
-
-# defined here temporarily, see above
-class Genome::Model::ImportedReferenceSequence {
-    is => 'Genome::Model::ReferenceSequence',
 };
 
 # defined here temporarily, see above
