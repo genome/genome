@@ -65,7 +65,7 @@ sub link_known_sites_vcfs {
         # snv
         my $snv_result = $known_site->snv_result;
         next if not $snv_result;
-        $link_name = $self->_get_and_link_vcf_from_known_site_result($indel_result, 'indel');
+        $link_name = $self->_get_and_link_vcf_from_known_site_result($snv_result, 'snv');
         return if not $link_name;
         push @{$known_sites_vcfs{snv}}, $link_name;
     }
