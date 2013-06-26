@@ -275,7 +275,7 @@ sub run_breakdancer {
         $bd_params =~ s/\-d/\-d $sv_staging_out/;
     }
 
-    my $breakdancer_path = __PACKAGE__->breakdancer_max_command_for_version($self->version);
+    my $breakdancer_path = Genome::Model::Tools::Breakdancer->breakdancer_max_command_for_version($self->version);
     my $cfg_file         = $self->config_file;
 
     my $cmd = "$breakdancer_path " . $cfg_file . " " . $bd_params . " > "  . $self->_sv_staging_output;
@@ -363,7 +363,7 @@ sub has_version {
     unless (defined $version) {
         $version = $self->version;
     }
-    my @versions = __PACKAGE__->available_breakdancer_versions;
+    my @versions = Genome::Model::Tools::Breakdancer->available_breakdancer_versions;
     for my $v (@versions) {
         if ($v eq $version) {
             return 1;
