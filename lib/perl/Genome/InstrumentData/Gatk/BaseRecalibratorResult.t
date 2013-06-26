@@ -14,7 +14,7 @@ use above 'Genome';
 require Genome::Utility::Test;
 use Test::More;
 
-my $class = 'Genome::InstrumentData::Gatk::BaseRecalibratorBamResult';
+my $class = 'Genome::InstrumentData::Gatk::BaseRecalibratorResult';
 use_ok($class) or die;
 my $result_data_dir = Genome::Utility::Test->data_dir_ok($class, 'v1');
 
@@ -31,22 +31,17 @@ my %params = (
 );
 
 # Get [fails as expected]
-my $base_recalibrator = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get_with_lock(%params);
+my $base_recalibrator = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_with_lock(%params);
 ok(!$base_recalibrator, 'Failed to get existing gatk indel realigner result');
 
 # Create
-$base_recalibrator = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->get_or_create(%params);
+$base_recalibrator = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_or_create(%params);
 ok($base_recalibrator, 'created gatk indel realigner');
 
 # Outputs
 is($base_recalibrator->recalibration_table_file, $base_recalibrator->output_dir.'/'.$bam_source->id.'.bam.grp', 'recalibration table file named correctly');
 ok(-s $base_recalibrator->recalibration_table_file, 'recalibration table file exists');
 Genome::Utility::Test::compare_ok($base_recalibrator->recalibration_table_file, $result_data_dir.'/expected.bam.grp', 'recalibration table file matches');
-is($base_recalibrator->bam_file, $base_recalibrator->output_dir.'/'.$base_recalibrator->id.'.bam', 'bam file named correctly');
-ok(-s $base_recalibrator->bam_file, 'bam file exists');#bam produced is the same except for the knowns file in the header
-ok(-s $base_recalibrator->bam_file.'.bai', 'bam index exists');
-ok(-s $base_recalibrator->bam_flagstat_file, 'bam flagstat file exists');
-Genome::Utility::Test::compare_ok($base_recalibrator->bam_flagstat_file, $result_data_dir.'/expected.bam.flagstat', 'flagstat matches');
 
 # Allocation params
 is(
@@ -61,7 +56,7 @@ is(
 );
 like(
     $base_recalibrator->resolve_allocation_subdirectory,
-    qr(^model_data/gatk/base_recalibrator_bam-),
+    qr(^model_data/gatk/base_recalibrator-),
     'resolve_allocation_subdirectory',
 );
 

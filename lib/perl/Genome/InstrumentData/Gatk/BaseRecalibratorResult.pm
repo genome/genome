@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Gatk::BaseRecalibratorBamResult;
+package Genome::InstrumentData::Gatk::BaseRecalibratorResult;
 
 use strict;
 use warnings;
@@ -10,13 +10,7 @@ use Genome;
 #  ref [fasta]
 #  known_sites [knownSites]
 #  > grp [gatk report file]
-#
-# print reads
-#  bam [from indel realigner]
-#  ref [fasta]
-#  grp [from recalibrator]
-#  > bam
-class Genome::InstrumentData::Gatk::BaseRecalibratorBamResult { 
+class Genome::InstrumentData::Gatk::BaseRecalibratorResult { 
     is => 'Genome::InstrumentData::Gatk::BaseWithKnownSites',
     has_output => [
         recalibration_table_file => {
@@ -39,12 +33,6 @@ sub create {
 
     my $run_recalibrator = $self->_run_base_recalibrator;
     return if not $run_recalibrator;
-
-    my $print_reads = $self->_print_reads;
-    return if not $print_reads;
-
-    my $run_flagstat = $self->run_flagstat_on_output_bam_file;
-    return if not $run_flagstat;
 
     my $allocation = $self->disk_allocations;
     eval { $allocation->reallocate };
@@ -84,37 +72,6 @@ sub _run_base_recalibrator {
     $self->status_message('Recalibration table file: '.$recalibration_table_file);
 
     $self->status_message('Run base recalibrator...done');
-    return 1;
-}
-
-sub _print_reads {
-    my $self = shift;
-    $self->status_message('Print reads...');
-            
-    my $bam_file = $self->bam_file;
-    my $print_reads = Genome::Model::Tools::Gatk::PrintReads->create(
-        version => 2.4,
-        input_bams => [ $self->input_bam_file ],
-        reference_fasta => $self->reference_fasta,
-        output_bam => $bam_file,
-        bqsr => $self->recalibration_table_file,
-    );
-    if ( not $print_reads ) {
-        $self->error_message('Failed to create indel realigner!');
-        return;
-    }
-    if ( not $print_reads->execute ) {
-        $self->error_message('Failed to execute indel realigner!');
-        return;
-    }
-
-    if ( not -s $bam_file ) {
-        $self->error_message('Ran print reads, but failed to create the output bam!');
-        return;
-    }
-    $self->status_message('Bam file: '.$bam_file);
-
-    $self->status_message('Print reads...done');
     return 1;
 }
 
