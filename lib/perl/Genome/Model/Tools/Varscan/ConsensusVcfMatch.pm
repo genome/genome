@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Varscan::ConsensusVcfMatch; #TODO: give this a real package and name
+package Genome::Model::Tools::Varscan::ConsensusVcfMatch;
 
 use strict;
 use warnings;
