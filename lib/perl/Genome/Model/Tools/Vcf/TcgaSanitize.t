@@ -10,8 +10,8 @@ use Test::More tests => 13;
 use_ok('Genome::Model::Tools::Vcf::Backfill');
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-TcgaSanitize";
-my $input_dir = "$test_dir/input.v2";
-my $expected_base = "expected.v2";
+my $input_dir = "$test_dir/input.v3";
+my $expected_base = "expected.v3";
 my $expected_dir = "$test_dir/$expected_base";
 my @expected_vcfs = ("$expected_dir/snvs.vcf.gz", "$expected_dir/nontcga.vcf.gz");
 my @input_vcfs = ("$input_dir/snvs.vcf.gz", "$input_dir/nontcga.vcf.gz");
