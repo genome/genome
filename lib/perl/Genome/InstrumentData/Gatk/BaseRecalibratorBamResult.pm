@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Gatk::BaseRecalibratorResult;
+package Genome::InstrumentData::Gatk::BaseRecalibratorBamResult;
 
 use strict;
 use warnings;
@@ -16,7 +16,7 @@ use Genome;
 #  ref [fasta]
 #  grp [from recalibrator]
 #  > bam
-class Genome::InstrumentData::Gatk::BaseRecalibratorResult { 
+class Genome::InstrumentData::Gatk::BaseRecalibratorBamResult { 
     is => 'Genome::InstrumentData::Gatk::BaseWithKnownSites',
     has_output => [
         recalibration_table_file => {

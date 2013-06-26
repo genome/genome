@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 use Genome::InstrumentData::Gatk::IndelRealignerResult;
-use Genome::InstrumentData::Gatk::IndelRealignerResult;
+use Genome::InstrumentData::Gatk::BaseRecalibratorBamResult;
 require Genome::Utility::Text;
 
 class Genome::InstrumentData::Command::RefineReads::GatkBestPractices {
@@ -21,7 +21,7 @@ class Genome::InstrumentData::Command::RefineReads::GatkBestPractices {
     ],
     has_optional_transient => [
         indel_realigner_result => { is => 'Genome::InstrumentData::Gatk::IndelRealignerResult', },
-        base_recalibrator_result => { is => 'Genome::InstrumentData::Gatk::BaseRecalibratorResult', },
+        base_recalibrator_result => { is => 'Genome::InstrumentData::Gatk::BaseRecalibratorBamResult', },
     ],
 };
 
