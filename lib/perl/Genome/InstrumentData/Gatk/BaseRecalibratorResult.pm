@@ -21,6 +21,12 @@ class Genome::InstrumentData::Gatk::BaseRecalibratorResult {
     ],
 };
 
+sub resolve_allocation_kilobytes_requested {
+    my $self = shift;
+    my $kb_requested = -s $self->input_bam_file;
+    return int($kb_requested / 1024 * .2);
+}
+
 sub create {
     my $class = shift;
 

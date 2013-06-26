@@ -51,7 +51,7 @@ is(
 );
 is(
     $base_recalibrator->resolve_allocation_kilobytes_requested,
-    34,
+    4,
     'resolve_allocation_kilobytes_requested',
 );
 like(
