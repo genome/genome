@@ -39,9 +39,7 @@ $base_recalibrator = Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->ge
 ok($base_recalibrator, 'created gatk indel realigner');
 
 # Outputs
-is($base_recalibrator->recalibration_table_file, $base_recalibrator->output_dir.'/'.$bam_source->id.'.bam.grp', 'recalibration table file named correctly');
-ok(-s $base_recalibrator->recalibration_table_file, 'recalibration table file exists');
-Genome::Utility::Test::compare_ok($base_recalibrator->recalibration_table_file, $result_data_dir.'/expected.bam.grp', 'recalibration table file matches');
+ok($base_recalibrator->base_recalibrator_result, 'base recalibrator result');
 is($base_recalibrator->bam_file, $base_recalibrator->output_dir.'/'.$base_recalibrator->id.'.bam', 'bam file named correctly');
 ok(-s $base_recalibrator->bam_file, 'bam file exists');#bam produced is the same except for the knowns file in the header
 ok(-s $base_recalibrator->bam_file.'.bai', 'bam index exists');

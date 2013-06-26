@@ -5,7 +5,9 @@ use warnings;
 
 use Genome;
 
-# recalibrator
+use Genome::InstrumentData::Gatk::BaseRecalibratorResult;
+
+# recalibrator result
 #  bam [from indel realigner]
 #  ref [fasta]
 #  known_sites [knownSites]
@@ -18,12 +20,8 @@ use Genome;
 #  > bam
 class Genome::InstrumentData::Gatk::BaseRecalibratorBamResult { 
     is => 'Genome::InstrumentData::Gatk::BaseWithKnownSites',
-    has_output => [
-        recalibration_table_file => {
-            is_output => 1,
-            calculate_from => [qw/ output_dir bam_source /],
-            calculate => q| return $output_dir.'/'.$bam_source->id.'.bam.grp'; |,
-        },
+    has_transient_optional => [
+        base_recalibrator_result => { is => 'Genome::InstrumentData::Gatk::BaseRecalibratorResult', },
     ],
 };
 
@@ -37,8 +35,8 @@ sub create {
     $self->status_message('Reference: '.$self->reference_build->id);
     $self->status_message('Knowns sites: '.$self->known_sites->id);
 
-    my $run_recalibrator = $self->_run_base_recalibrator;
-    return if not $run_recalibrator;
+    my $base_recalibrator_result = $self->_get_or_crerate_base_recalibrator_result;
+    return if not $base_recalibrator_result;
 
     my $print_reads = $self->_print_reads;
     return if not $print_reads;
@@ -52,39 +50,33 @@ sub create {
     return $self;
 }
 
-sub _run_base_recalibrator {
+sub _get_or_crerate_base_recalibrator_result {
     my $self = shift;
-    $self->status_message('Run base recalibrator...');
+    $self->status_message('Get or create base recalibrator result...');
 
-    my $recalibration_table_file = $self->recalibration_table_file;
     my %base_recalibrator_params = (
         version => 2.4,
-        input_bam => $self->input_bam_file,
-        reference_fasta => $self->reference_fasta,
-        output_recalibration_table => $recalibration_table_file,
+        bam_source => $self->bam_source,
+        reference_build => $self->reference_build,
     );
-    $base_recalibrator_params{known_sites} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
-    $self->status_message('Params: '.Data::Dumper::Dumper(\%base_recalibrator_params));
+    $base_recalibrator_params{known_sites} = [ $self->known_sites ] if $self->known_sites;
 
-    my $base_recalibrator = Genome::Model::Tools::Gatk::BaseRecalibrator->create(%base_recalibrator_params);
-    if ( not $base_recalibrator ) {
-        $self->error_message('Failed to create base recalibrator creator!');
+    my $base_recalibrator_result = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_or_create(%base_recalibrator_params);
+    if ( not $base_recalibrator_result ) {
+        $self->error_message('Failed to get or create base recalibrator result!');
         return;
     }
-    if ( not eval{ $base_recalibrator->execute; } ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to execute base recalibrator creator!');
-        return;
-    }
+    $self->base_recalibrator_result($base_recalibrator_result);
 
+    my $recalibration_table_file = $base_recalibrator_result->recalibration_table_file;
     if ( not -s $recalibration_table_file ) {
-        $self->error_message('Ran base recalibrator creator, but failed to make a recalibration table file!');
+        $self->error_message('Got base recalibrator result, but failed to find the recalibration table file!');
         return;
     }
     $self->status_message('Recalibration table file: '.$recalibration_table_file);
 
-    $self->status_message('Run base recalibrator...done');
-    return 1;
+    $self->status_message('Get or create base recalibrator result...done');
+    return $base_recalibrator_result;
 }
 
 sub _print_reads {
@@ -97,14 +89,14 @@ sub _print_reads {
         input_bams => [ $self->input_bam_file ],
         reference_fasta => $self->reference_fasta,
         output_bam => $bam_file,
-        bqsr => $self->recalibration_table_file,
+        bqsr => $self->base_recalibrator_result->recalibration_table_file,
     );
     if ( not $print_reads ) {
-        $self->error_message('Failed to create indel realigner!');
+        $self->error_message('Failed to create print reads!');
         return;
     }
     if ( not $print_reads->execute ) {
-        $self->error_message('Failed to execute indel realigner!');
+        $self->error_message('Failed to execute print reads!');
         return;
     }
 
