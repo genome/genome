@@ -59,7 +59,7 @@ sub execute {
                         
                         $output_cns_fh->print(join("\t", $indel_key, $call, $cns, $reads1, $reads2, $var_freq) . "\n");
 
-                        if($call eq "Het" || $call eq "Hom") {						
+                        if($call eq "Het" || $call eq "Hom") {
                             $num_samples_var++;
                             $num_samples_het++ if($call eq "Het");
                             $num_samples_hom++ if($call eq "Hom");
@@ -98,8 +98,8 @@ sub execute {
         }
     }
 
-    $output_fh->close; 
-    $output_cns_fh->close; 
+    $output_fh->close;
+    $output_cns_fh->close;
 
     my %stats = %{$self->stats};
     foreach my $key (sort keys %stats) {
@@ -127,7 +127,7 @@ sub _load_indels {
 
         my ($chrom, $position, $id, $ref, $alt, $qual, $filter, $observed, $expected, $chi_sum, $original_p) = split(/\t/, $line);
 			
-        next if $filter ne 'PASS'; 
+        next if $filter ne 'PASS';
 
         my @vars = split(/\,/, $alt);
         my $key = join("\t", $chrom, $position);
@@ -317,7 +317,7 @@ sub _get_hwe_p {
     # total number of genotypes
     my $genotypes = $obs_homr + $obs_homc + $obs_hets;
 
-    return -1 if($genotypes <= 0); 
+    return -1 if($genotypes <= 0);
 
     # Initialize probability array
     my @het_probs;
@@ -364,7 +364,7 @@ sub _get_hwe_p {
         $het_probs[$i] /= $sum;
     }
 
-    # Initialise P-value 
+    # Initialise P-value
     my $p_hwe = 0.0;
 
     # P-value calculation for p_hwe
