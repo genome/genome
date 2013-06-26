@@ -52,7 +52,7 @@ sub _run_base_recalibrator {
 
     my $recalibration_table_file = $self->recalibration_table_file;
     my %base_recalibrator_params = (
-        version => 2.4,
+        version => $self->version,
         input_bam => $self->input_bam_file,
         reference_fasta => $self->reference_fasta,
         output_recalibration_table => $recalibration_table_file,

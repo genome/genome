@@ -55,7 +55,7 @@ sub _get_or_crerate_base_recalibrator_result {
     $self->status_message('Get or create base recalibrator result...');
 
     my %base_recalibrator_params = (
-        version => 2.4,
+        version => $self->version,
         bam_source => $self->bam_source,
         reference_build => $self->reference_build,
     );
@@ -85,7 +85,7 @@ sub _print_reads {
             
     my $bam_file = $self->bam_file;
     my $print_reads = Genome::Model::Tools::Gatk::PrintReads->create(
-        version => 2.4,
+        version => $self->version,
         input_bams => [ $self->input_bam_file ],
         reference_fasta => $self->reference_fasta,
         output_bam => $bam_file,
