@@ -99,7 +99,7 @@ sub __load__ {
                 $id .= '/' . $database_name if $database_name;
                 $id .= '/';
                 $id .= $external_version;
-                $id .= '.' . $import_iteration if $import_iteration;
+                $id .= '.' . $import_iteration if defined $import_iteration;
                 push @rows, [$id,$source_name,$database_name,$external_version,$import_iteration,$dir,$version_dir,$subclass_name];
             }
         }
