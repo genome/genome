@@ -33,6 +33,10 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
+    $self->status_message('Bam source: '.$self->bam_source->id);
+    $self->status_message('Reference: '.$self->reference_build->id);
+    $self->status_message('Knowns sites: '.$self->known_sites->id);
+
     my $run_recalibrator = $self->_run_base_recalibrator;
     return if not $run_recalibrator;
 
