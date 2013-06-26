@@ -7,12 +7,17 @@ use Genome;
 class Genome::Model::ClinSeq {
     is => 'Genome::Model',
     has_optional_input => [
-        wgs_model           => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for wgs data' },
-        exome_model         => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
-        tumor_rnaseq_model  => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
-        normal_rnaseq_model => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
-        de_model            => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
-        force               => { is => 'Boolean', doc => 'skip sanity checks on input models' },
+        wgs_model               => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for wgs data' },
+        exome_model             => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
+        tumor_rnaseq_model      => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
+        normal_rnaseq_model     => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
+        de_model                => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
+
+        cancer_annotation_db    => { is => 'Genome::Db', default_value => 'tgi/cancer-annotation/human/build37-20130401.1' },
+        misc_annotation_db      => { is => 'Genome::Db', default_value => 'tgi/misc-annotation/human/build37-20130113.1' },
+        cosmic_annotation_db    => { is => 'Genome::Db', default_value => 'cosmic/61.0' },
+        
+        force                   => { is => 'Boolean', doc => 'skip sanity checks on input models' },
     ],
     has_optional_param => [
         #Processing profile parameters would go in here
