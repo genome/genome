@@ -2,7 +2,8 @@
 [4mUSAGE[0m
  [1mgenome model define clin-seq[0m --processing-profile=? [--add-to-projects=?[,?]] [--name=?]
     [--wgs-model=?] [--exome-model=?] [--tumor-rnaseq-model=?] [--normal-rnaseq-model=?]
-    [--de-model=?] [--force]
+    [--de-model=?] [--cancer-annotation-db=?] [--misc-annotation-db=?] [--cosmic-annotation-db=?]
+    [--force]
 
 [4mSYNOPSIS[0m
 
@@ -31,6 +32,15 @@
     rnaseq model for normal rna-seq data 
   [1mde-model[0m
     differential-expression for tumor vs normal rna-seq data 
+  [1mcancer-annotation-db[0m
+    (undocumented) 
+    Default value 'tgi/cancer-annotation/human/build37-20130401.1' if not specified
+  [1mmisc-annotation-db[0m
+    (undocumented) 
+    Default value 'tgi/misc-annotation/human/build37-20130113.1' if not specified
+  [1mcosmic-annotation-db[0m
+    (undocumented) 
+    Default value 'cosmic/61.0' if not specified
   [1mforce[0m
     skip sanity checks on input models 
 
