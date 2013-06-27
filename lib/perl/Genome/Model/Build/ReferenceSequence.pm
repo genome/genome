@@ -46,7 +46,11 @@ class Genome::Model::Build::ReferenceSequence {
 
     ],
 
-    has_input => [
+    has_optional_input => [
+        build_name => {
+            is => 'Text',
+        },
+
         derived_from => {
             is => 'Genome::Model::Build::ReferenceSequence',
             doc => 'Identifies the parent build from which this one is derived, if any.',
