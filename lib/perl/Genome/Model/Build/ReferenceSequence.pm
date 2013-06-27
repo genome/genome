@@ -26,6 +26,8 @@ class Genome::Model::Build::ReferenceSequence {
             },
         },
 
+        species_name => { via => 'subject', to => 'name' },
+
         manifest_file_path => {
             is => 'Text',
             calculate_from => ['data_directory'],
@@ -43,6 +45,26 @@ class Genome::Model::Build::ReferenceSequence {
         _local_cache_dir_is_verified => { is => 'Boolean', default_value => 0, is_optional => 1, },
 
     ],
+
+    has_input => [
+        derived_from => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'Identifies the parent build from which this one is derived, if any.',
+        },
+        coordinates_from => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'Used to indicate that this build is on the same coordinate system as another.',
+        },
+        append_to => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'If specified, the created reference will be logically appended to the one specified by this parameter for aligners that support it.',
+        },
+        combines => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'If specified, merges several other references into one.', 
+        },
+    ],
+
     doc => 'a specific version of a reference sequence, with cordinates suitable for annotation',
 };
 
