@@ -183,7 +183,7 @@ sub _load_sample_csv_file {
         my $name = delete $sample->{name};
         $samples{$name} = {
             name => $name,
-            source_files => [ split(' ', delete $sample->{source_files}) ],
+            source_files => join(',', split(' ', delete $sample->{source_files})),
             importer_params => { name => $name, },
         };
         for my $attr ( sort keys %$sample ) {
@@ -278,7 +278,7 @@ sub _load_samples {
 
     my $samples = $self->samples;
     my %instrument_data = map { $_->sample->name, $_ } Genome::InstrumentData::Imported->get(
-        original_data_path => [ map { join(',', @{$_->{source_files}}) } values %$samples ],
+        original_data_path => [ map { $_->{source_files} } values %$samples ],
         '-hint' => [qw/ attributes /],
     );
 
@@ -409,7 +409,6 @@ sub _status {
     my %totals;
     my $status;
     for my $sample ( sort { $a->{name} cmp $b->{name} } values %{$self->samples} ) {
-        $self->set_sample_status($sample);
         $totals{total}++;
         $self->set_sample_status($sample);
         $totals{ $sample->{status} }++;
@@ -428,7 +427,7 @@ sub _status {
             $sample->{build_id} = 'NA';
         }
         $status .= sprintf(
-            "%-20s %-15s %s %s %s %s\n",
+            "%-20s %-15s %s %s %s\n",
             $sample->{name},
             $sample->{status}, 
             ( $sample->{instrument_data} ? $sample->{instrument_data}->id : 'NA' ),
@@ -453,7 +452,7 @@ sub _resolve_instrument_data_import_command_for_sample {
         $self->instrument_data_import_command_format,
         @sample_name_replaces,
         $sample->{name},
-        join(',', @{$sample->{source_files}}),
+        $sample->{source_files},
         $self->config->{sample}->{nomenclature},
         ( 
             $sample->{instrument_data_attributes}
@@ -501,7 +500,7 @@ sub _make_progress {
             $sample->{build} = $model->latest_build;
         }
 
-        # Run import command, or schedaule build
+        # Run import command, or schedule build
         if ( $sample->{status} eq 'import_needed' ) {
             my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
             return if not $launch_ok;
@@ -512,7 +511,7 @@ sub _make_progress {
             return if not $launch_ok;
         }
         elsif ( $sample->{status} eq 'build_needed'
-            #or $sample->{status} eq 'build_failed'
+            or $sample->{status} eq 'build_failed'
             or $sample->{status} eq 'build_abandoned'
             or $sample->{status} eq 'build_unstartable'
         ) {
