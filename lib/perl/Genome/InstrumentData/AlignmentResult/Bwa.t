@@ -252,7 +252,7 @@ sub generate_fake_imported_instrument_data {
     }
     
     my $cmd = Genome::InstrumentData::Command::Import::Bam->create(
-            original_data_path=>'/gscuser/boberkfe/input_rg.bam',
+            original_data_path=> $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Align-Bwa/input_rg.bam',
             sample=>$sample->id,
             library=>$library->id,
             target_region=>'none',
