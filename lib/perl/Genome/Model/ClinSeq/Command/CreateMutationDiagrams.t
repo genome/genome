@@ -35,7 +35,7 @@ ok ($somvar_build, "Got somatic variation build from id: $somvar_build_id") or d
 
 #Create create-mutation-diagrams command and execute
 #genome model clin-seq create-mutation-diagrams --outdir=/tmp/create_mutation_diagrams/ --collapse-variants --max-transcripts=10 129973671
-my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(outdir=>$temp_dir, collapse_variants=>1, max_transcripts=>10, builds=>[$somvar_build]);
+my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagrams->create(outdir=>$temp_dir, collapse_variants=>1, max_transcripts=>10, builds=>[$somvar_build], cosmic_version => 61);
 $mutation_diagram_cmd->queue_status_messages(1);
 my $r1 = $mutation_diagram_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

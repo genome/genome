@@ -24,7 +24,7 @@ ok($temp_dir, "created temp directory: $temp_dir") or die;
 my $m_id = 2889445018;
 my $m = Genome::Model->get($m_id);
 ok($m, "obtained a clinseq model for " . $m_id) or die;
-my $b = $m->current_build();
+my $b = $m->last_complete_build();
 ok($b, "obtained a clinseq build from " . $m->__display_name__) or die;
 
 #Execute the tool code

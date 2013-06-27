@@ -25,8 +25,6 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
         },
         cosmic_version => {
               is => 'Number',
-              is_optional => 1,
-              default => '61',
               doc => 'Specify the desired version of Cosmic',
         },
         collapse_variants => {
