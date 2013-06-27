@@ -10253,6 +10253,23 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>consensus-vcf-match',
+    [
+      'indel-vcf=s',
+      'files',
+      'output-cns-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'sample-cns-list-file=s',
+      'files',
+      'color!',
+      undef,
+      'debug!',
+      undef,
+      'help!',
+      undef
+    ],
     '>copy-number',
     [
       'lsf-resource=s',
