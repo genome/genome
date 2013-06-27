@@ -319,7 +319,7 @@ sub _get_chr_list {
         die "Chromosoome not set???!  Expected 'all', or a specific sequence name!";
     }
 
-    my $tmp_idx_dir = File::Temp(
+    my $tmp_idx_dir = File::Temp::tempdir(
         "Normal_bam_idxstats_XXXXX",
         CLEANUP => 1,
         DIR     => '/tmp',  #File::Temp can not remove inside dir for _temp_staging_dir
