@@ -10,9 +10,9 @@ apipe-test-mc16s-454: 135304826
 apipe-test-mc16s-sanger: 133668184
 apipe-test-refalign-germline-short: 138900157
 apipe-test-reference-alignment-lane-qc: 139711625
-apipe-test-reference-alignment: 139711626
+apipe-test-reference-alignment: 139778005
 apipe-test-somatic-validation-sv: 137282756
-apipe-test-somatic-validation: 139711628
-apipe-test-somatic-variation-short: 139711621
+apipe-test-somatic-validation: 139778000
+apipe-test-somatic-variation-short: 139777997
 apipe-test-somatic-variation-sv-detection: 136692589
 apipe-test-somatic-variation: 137406904
