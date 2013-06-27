@@ -45,45 +45,29 @@ class Genome::Model::Ref {
 my $pp = Genome::ProcessingProfile::Ref->create(id => -333, name => 'ref pp #1', aligner => 'bwa');
 ok($pp, 'create pp');
 
-# Expected Sample
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v1');
 my $sample_name = 'TeSt-0000-00';
-my %expected_samples = ( 
-     $sample_name => {
-        name => $sample_name,
-        source_files => [ 'original.bam' ],
-        importer_params => {
-            name => $sample_name,
-            sample_attributes => [qw/ gender='female' race='spaghetti' religion='pastafarian' /],
-        },
-        status => 'sample_needed',
-        job_status => 'pend',
-        sample => undef,
-        instrument_data => undef,
-        instrument_data_attributes => [qw/ lane='8' /],
-        instrument_data_file => undef,
-    },
-);
 
 # Do not make progress, just status
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v1');
 my $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => $test_dir.'/valid',
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
-my $samples = $manager->samples;
-is_deeply($manager->samples, \%expected_samples, 'samples match');
+my $sample_hash = eval{ $manager->samples->{$sample_name}; };
+ok($sample_hash, 'sample hash');
+is($sample_hash->{status}, 'sample_needed', 'sample hash status');
 
 # Import command
 is(
-    $manager->_resolve_instrument_data_import_command_for_sample($samples->{$sample_name}),
+    $manager->_resolve_instrument_data_import_command_for_sample($sample_hash),
     "launch -name $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
     'inst data import command',
 );
-ok(!$manager->_launch_instrument_data_import_for_sample($samples->{$sample_name}), 'failed to launch inst data import command');
+ok(!$manager->_launch_instrument_data_import_for_sample($sample_hash), 'failed to launch inst data import command');
 
-# Make progress!
+# Make progress: create sample, model and 'import' (it thinks it is importing b/c of the command used in the config file)
 $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => $test_dir.'/valid',
     make_progress => 1,
@@ -91,14 +75,36 @@ $manager = Genome::Sample::Command::Import::Manager->create(
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
-$expected_samples{$sample_name}->{status} = 'import_pend';
-$expected_samples{$sample_name}->{sample} = Genome::Sample->get(name => $sample_name);
-$expected_samples{$sample_name}->{model} = Genome::Model::Ref->get('subject.name' => $sample_name);
-$samples = $manager->samples;
-is_deeply($manager->samples, \%expected_samples, 'samples match');
-ok(!$samples->{$sample_name}->{model}->auto_assign_inst_data, 'model auto_assign_inst_data is off');
-ok(!$samples->{$sample_name}->{model}->auto_build_alignments, 'model auto_build_alignments is off');
-print Dumper($samples);
+$sample_hash = eval{ $manager->samples->{$sample_name}; };
+is($sample_hash->{status}, 'import_pend', 'sample hash status');
+ok($sample_hash->{model}, 'sample hash model');
+is($sample_hash->{job_status}, 'pend', 'sample hash job status');
+ok(!$sample_hash->{model}->auto_assign_inst_data, 'model auto_assign_inst_data is off');
+ok(!$sample_hash->{model}->auto_build_alignments, 'model auto_build_alignments is off');
+ok(!$sample_hash->{model}->build_requested, 'model build_requested is off');
+ok(!$sample_hash->{model}->instrument_data, 'model does not have instrument data assigned');
+is($sample_hash->{build_id}, 'NA', 'sample hash build_id');
+
+# Make progress: create inst data here, it should get assigned to thew model and build should be requested
+my $inst_data = Genome::InstrumentData::Imported->__define__(
+    original_data_path => $sample_hash->{source_files},
+    sample => $sample_hash->{sample},
+    subset_name => '1-XXXXXX',
+    sequencing_platform => 'solexa',
+    import_format => 'bam',
+    description => 'import test',
+);
+$inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $manager->config_file);
+
+$manager = Genome::Sample::Command::Import::Manager->create(
+    working_directory => $test_dir.'/valid/',
+    make_progress => 1,
+);
+ok($manager, 'create manager');
+ok($manager->execute, 'execute');
+$sample_hash = eval{ $manager->samples->{$sample_name}; };
+ok($sample_hash->{model}->build_requested, 'model build_requested is on');
+is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
