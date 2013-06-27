@@ -42,14 +42,14 @@ sub execute {
 
 	my $output_fh = Genome::Sys->open_file_for_writing($self->output_file);
 	my $output_cns_fh = Genome::Sys->open_file_for_writing($self->output_cns_file);
-    $output_fh->print("chrom\tchr_start\tchr_stop\tref\talt\tobs_hom1\tobs_het\tobs_hom2\texp_hom1\texp_het\texp_hom2\tchi_sum\toriginal_fet\tvarscan_ref\tvarscan_het\tvarscan_hom\tvarscan_hwe\n");
+    $output_fh->print(join(',', 'chrom', 'chr_start', 'chr_stop', 'ref', 'alt', 'obs_hom1', 'obs_het', 'obs_hom2', 'exp_hom1', 'exp_het', 'exp_hom2', 'chi_sum', 'original_fet', 'varscan_ref', 'varscan_het', 'varscan_hom', 'varscan_hwe'), "\n");
 
     foreach my $key (keys %target_indels) {
         if($target_indels{$key}) {
             my @targetIndels = split(/\n/, $target_indels{$key});
             
             foreach my $target_indel (@targetIndels) {
-                my $num_samples = my $num_samples_missing = my $num_samples_ref = my $num_samples_var = my $num_samples_het = my $num_samples_hom = my $num_samples_snp = my $num_samples_other = 0;
+                my ($num_samples, $num_samples_missing, $num_samples_ref, $num_samples_var, $num_samples_het, $num_samples_hom, $num_samples_snp, $num_samples_other) = 0;
                 
                 foreach my $sample (sort keys %{$self->samples}) {
                     my $indel_key = join("\t", $sample, $target_indel);
