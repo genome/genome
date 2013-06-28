@@ -31,7 +31,7 @@ class Genome::Model::Tools::PhredPhrap::AbiToScf {
         is => 'String',
         is_optional => 1,
         default => 'scf',
-        doc => 'Extention to replace ab[i1] with in new SCF file. Default is \'scf\'.  Use \'\' for no extention',
+        doc => 'Extention to replace ab[i1] with in new SCF file. Default is \'scf\'.  Use NONE for no extention',
     },
     ],
 };
@@ -49,6 +49,10 @@ sub create {
     
     my $self = $class->SUPER::create(@_)
         or return;
+
+    if ($self->scf_ext eq 'NONE') {
+      $self->scf_ext('');
+    }
 
     for my $dir (qw/ chromat_dir abi_dir /) {
         unless ( -e $self->$dir ) { 
