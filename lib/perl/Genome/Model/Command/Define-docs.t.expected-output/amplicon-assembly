@@ -1,16 +1,3 @@
-Subroutine _has_legacy_input_types redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 101.
-Subroutine build_by_version redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 103.
-Subroutine build_needed redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 123.
-Subroutine _help_detail_for_model_define redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 131.
-Subroutine _resolve_resource_requirements_for_build redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 154.
-Subroutine _resolve_disk_group_name_for_build redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 158.
-Subroutine _execute_build redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 162.
-Subroutine _copy_fasta_file redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 214.
-Subroutine _create_sequence_dictionary redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 306.
-Subroutine _make_bases_files redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 326.
-Subroutine _create_manifest_file redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 374.
-Subroutine _create_manifest_file_line redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 399.
-Subroutine _list_bases_files redefined at /gscuser/mburnett/genome/lib/perl/Genome/Model/ReferenceSequence.pm line 408.
 
 [4mUSAGE[0m
  [1mgenome model define amplicon-assembly[0m [--auto-assign-inst-data] [--auto-build-alignments]
