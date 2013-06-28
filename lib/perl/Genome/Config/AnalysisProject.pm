@@ -57,6 +57,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
     eval {
         $self->_create_configuration_set();
+        $self->_populate_created_by();
     };
     if(my $error = $@) {
         $self->delete();
@@ -65,10 +66,7 @@ sub create {
     return $self;
 }
 
-sub _create_configuration_set {
     my $self = shift;
-    my $set = Genome::Config::Set->create();
-    $self->_configuration_set($set);
 }
 
 sub get_configuration_reader {
@@ -90,6 +88,19 @@ sub get_configuration_reader {
         ));
     }
     return $self->configuration_reader;
+}
+
+sub _populate_created_by {
+    my $self = shift;
+    unless ($self->created_by) {
+        $self->created_by(Genome::Sys->username);
+    }
+}
+
+sub _create_configuration_set {
+    my $self = shift;
+    my $set = Genome::Config::Set->create();
+    $self->_configuration_set($set);
 }
 
 1;
