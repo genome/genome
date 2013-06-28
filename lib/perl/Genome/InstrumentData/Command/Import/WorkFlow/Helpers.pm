@@ -5,16 +5,31 @@ use warnings;
 
 use Genome;
 
+require Carp;
+
 class Genome::InstrumentData::Command::Import::WorkFlow::Helpers { 
     is => 'UR::Singleton',
 };
 
-sub validate_md5 {
-    my ($file1, $file2) = @_;
+#<INST DATA INFO>#
+sub local_file_for_source_file {
+    my ($self, $source_file) = @_;
 
-    return 1;
+    my $directory = $instrument_data->data_directory;
+    Carp::confess('No instrument data directory to get local source files!') if not $directory;
+
+    my @local_source_files;
+    for my $source_file ( split(',', $instrument_data->original_data_path) ) {
+        my $source_file_basename = File::Basename::basename($source_file);
+        $source_file_basename =~ s/\.gz$//;
+        push @local_source_files, $directory.'/'.$source_file_basename;
+    }
+
+    return @local_source_files;
 }
+#<>#
 
+#<WORKFLOW>#
 sub add_operation_to_workflow {
     my ($self, $workflow, $name) = @_;
 
@@ -32,6 +47,7 @@ sub add_operation_to_workflow {
 
     return $operation;
 }
+#<>#
 
 sub run_flagstat {
     my ($self, $bam_file, $flagstat_file) = @_;
