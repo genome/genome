@@ -4,10 +4,10 @@
     [--auto-assign-inst-data] [--auto-build-alignments] --fasta-file=? --processing-profile=?
     --processing-profile-id=? --species-name=? [--add-to-projects=?[,?]] [--append-to=?]
     [--instrument-data=?[,?]] [--subject=?] [--combine=?[,?]] [--groups=?[,?]] [--skip-bases-files]
-    [--coordinates-from=?] [--on-warning=?] [--job-dispatch=?] [--combines=?] [--server-dispatch=?]
-    [--is-rederivable] [--build-name=?] [--sequence-uri=?] [--use-default-sequence-uri]
-    [--assembly-name=?] [--desc=?] [--derived-from=?] [--prefix=?] [--generate-sequence-uri]
-    [--version=?] [--model-name=?] [--subject-name=?]
+    [--on-warning=?] [--job-dispatch=?] [--server-dispatch=?] [--is-rederivable] [--build-name=?]
+    [--sequence-uri=?] [--use-default-sequence-uri] [--assembly-name=?] [--desc=?]
+    [--derived-from=?] [--prefix=?] [--generate-sequence-uri] [--version=?] [--model-name=?]
+    [--subject-name=?]
 
 [4mSYNOPSIS[0m
 genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta
@@ -47,8 +47,6 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1mskip-bases-files[0m
     If set, bases files for quick sequence/position look up will not be created.  Useful for
     importing files with a large number of sequences 
-  [1mcoordinates-from[0m
-    Used to indicate that this build is on the same coordinate system as another. 
   [1mon-warning[0m
     The action to take when emitting a warning.
     valid values:
@@ -59,8 +57,6 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
   [1mjob-dispatch[0m
     dispatch specification: an LSF queue or "inline" 
     Default value 'inline' if not specified
-  [1mcombines[0m
-    If specified, merges several other references into one. 
   [1mserver-dispatch[0m
     dispatch specification: an LSF queue or "inline" 
     Default value 'inline' if not specified

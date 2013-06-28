@@ -1,10 +1,15 @@
 package Genome::Model::Build::ImportedReferenceSequence;
-use strict;
-use warnings;
+
 use Genome;
 
-# all of the logic has been moved into a new class
-# once fully stable, we will do a db update to flip the class names in the model/pp/build tables.
+use strict;
+use warnings;
+
+
+class Genome::Model::Build::ImportedReferenceSequence {
+    is => 'Genome::Model::Build::ReferenceSequence',
+};
+
 
 sub get{
     my $self = shift;
@@ -14,8 +19,4 @@ sub get{
     return Genome::Model::Build::ReferenceSequence->get(@_);
 }
 
-# the class def is here, to avoid circularity issues
-require Genome::Model::ReferenceSequence;
-
 1;
-
