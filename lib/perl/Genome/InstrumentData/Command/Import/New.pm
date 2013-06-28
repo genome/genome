@@ -103,8 +103,44 @@ sub _build_workflow {
         right_property => 'instrument_data',
     );
 
+    my $convert_to_bam_op = $helper->add_operation_to_workflow($workflow, 'convert fastqs to bam');
     $workflow->add_link(
         left_operation => $transfer_fastqs_op,
+        left_property => 'instrument_data',
+        right_operation => $convert_to_bam_op,
+        right_property => 'instrument_data',
+    );
+
+    my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
+    $workflow->add_link(
+        left_operation => $convert_to_bam_op,
+        left_property => 'instrument_data',
+        right_operation => $sort_bam_op,
+        right_property => 'instrument_data',
+    );
+    $workflow->add_link(
+        left_operation => $convert_to_bam_op,
+        left_property => 'bam_path',
+        right_operation => $sort_bam_op,
+        right_property => 'unsorted_bam_path',
+    );
+
+    my $verify_and_move_bam_op = $helper->add_operation_to_workflow($workflow, 'verify and move bam to final location');
+    $workflow->add_link(
+        left_operation => $sort_bam_op,
+        left_property => 'instrument_data',
+        right_operation => $verify_and_move_bam_op,
+        right_property => 'instrument_data',
+    );
+    $workflow->add_link(
+        left_operation => $sort_bam_op,
+        left_property => 'sorted_bam_path',
+        right_operation => $verify_and_move_bam_op,
+        right_property => 'bam_path',
+    );
+
+    $workflow->add_link(
+        left_operation => $verify_and_move_bam_op,
         left_property => 'instrument_data',
         right_operation => $workflow->get_output_connector,
         right_property => 'instrument_data',

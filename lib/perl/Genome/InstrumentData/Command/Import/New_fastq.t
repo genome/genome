@@ -35,15 +35,11 @@ ok($cmd->execute, "excute import command");
 
 
 my $instrument_data = Genome::InstrumentData::Imported->get(original_data_path => join(',', @source_files));
-print $instrument_data->data_directory."\n";<STDIN>;
-done_testing(); exit;
-
-my $instrument_data = $cmd->instrument_data;
 ok($instrument_data, 'got instrument data');
 is($instrument_data->original_data_path, join(',', @source_files), 'original_data_path correctly set');
 my $original_format = eval{ $instrument_data->attributes(attribute_label => 'original_format')->attribute_value; };
 is($original_format, 'fastq', 'orginal_format is sanger fastq');
-is($instrument_data->import_format, 'sanger fastq', 'import_format is sanger fastq');
+is($instrument_data->import_format, 'bam', 'import_format is bam');
 is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 2000, 'read_count correctly set');
@@ -53,15 +49,5 @@ my $allocation = $instrument_data->allocations;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 
-my $archive_path_via_attrs = eval{ $instrument_data->attributes(attribute_label => 'archive_path')->attribute_value; };
-ok($archive_path_via_attrs, 'got archive path via attrs');
-ok(-s $archive_path_via_attrs, 'archive path via attrs exists');
-is($archive_path_via_attrs, $allocation->absolute_path.'/archive.tgz', 'archive path named correctly');
-
-my $archive_path = $instrument_data->archive_path;
-ok($archive_path, 'got archive path');
-ok(-s $archive_path, 'archive path exists');
-is($archive_path, $allocation->absolute_path.'/archive.tgz', 'archive path named correctly');
-#print $cmd->instrument_data->allocations->absolute_path."\n"; <STDIN>;
-
+print $instrument_data->data_directory."\n";<STDIN>;
 done_testing();
