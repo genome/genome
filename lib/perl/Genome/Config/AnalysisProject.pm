@@ -66,7 +66,17 @@ sub create {
     return $self;
 }
 
+sub delete {
     my $self = shift;
+    eval {
+        if ($self->_configuration_set) {
+            $self->_configuration_set->delete();
+        }
+    };
+    if(my $error = $@) {
+        die($error);
+    }
+    return $self->SUPER::delete();
 }
 
 sub get_configuration_reader {

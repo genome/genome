@@ -49,6 +49,19 @@ sub create {
     return $self;
 }
 
+sub delete {
+    my $self = shift;
+    eval {
+        if ($self->allocation) {
+            $self->allocation->deallocate();
+        }
+    };
+    if(my $error = $@) {
+        die($error);
+    }
+    return $self->SUPER::delete();
+}
+
 sub _create_allocation {
     my $self = shift;
     unless($self->allocation){
