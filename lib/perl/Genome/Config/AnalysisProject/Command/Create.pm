@@ -53,7 +53,7 @@ sub execute {
             _analysis_menu_item_id => $self->analysis_menu_item->id,
         );
     };
-    if(my $error = $@) {
+    if (my $error = $@) {
         $ap->delete();
         $self->error_message('Failed to create Analysis Project!');
         die($error);
