@@ -9,16 +9,14 @@ use Test::More tests => 3;
 use_ok('Genome::Model::Build::ImportedReferenceSequence');
 
 SKIP: {
-    system("which", "lims-env");
-    if ($? >> 8) {
-        skip "No lims-env available", 2;
+    unless (-x "/gsc/bin/perl") {
+        skip "No /gsc/bin/perl available", 2;
     }
 
     # This test was added due to a production bug.
     # If it turns out to be fragile, you can just delete it.
-    system("lims-env",
-        "/gsc/bin/perl", "-MGSCApp", "-S",
-        "ur", "test", "use", "Genome::Model::Build::ImportedReferenceSequence");
+    system("/gsc/bin/perl", "-e",
+        "require GSCApp; use above 'Genome'; require Genome::Model::ReferenceSequence;");
     my $exit_code = $? >> 8;
     my $signal = $? & 127;
     is($exit_code, 0,
