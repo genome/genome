@@ -33,5 +33,31 @@ sub add_operation_to_workflow {
     return $operation;
 }
 
+sub run_flagstat {
+    my ($self, $bam_file, $flagstat_file) = @_;
+    $self->status_message('Run flagstat...');
+
+    $flagstat_file ||= $bam_file.'.flagstat';
+    $self->status_message("Flagstat file: $flagstat_file");
+    my $cmd = "samtools flagstat $bam_file > $flagstat_file";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $flagstat_file ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run flagstat!');
+        return;
+    }
+
+    my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
+    $self->status_message('Flagstat output:');
+    $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
+    if ( not $flagstat->{total_reads} > 0 ) {
+        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_file);
+        return;
+    }
+
+    $self->status_message('Run flagstat...done');
+    return $flagstat;
+}
+
 1;
 
