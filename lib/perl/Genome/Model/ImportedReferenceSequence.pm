@@ -1,11 +1,13 @@
 package Genome::Model::ImportedReferenceSequence;
+
+use Genome;
+
 use strict;
 use warnings;
-use Genome;
-use Genome::Model::ReferenceSequence;
 
-# DO NOT ADD CODE HERE
-# PUT IT IN Genome::Model::ReferenceSequence 
+
+class Genome::Model::ImportedReferenceSequence {
+    is => 'Genome::Model::ReferenceSequence',
+};
 
 1;
-
