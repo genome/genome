@@ -52,8 +52,12 @@ sub create {
 sub delete {
     my $self = shift;
     eval {
-        if ($self->allocation) {
-            $self->allocation->deallocate();
+        #can't call deallocate normally or else it will try to
+        #delete the allocation before the config set and throw a foreign key
+        #constraint erro
+        my $allocation = $self->allocation;
+        if ($allocation) {
+            Genome::Disk::Allocation->_delete(allocation_id => $allocation->id);
         }
     };
     if(my $error = $@) {
