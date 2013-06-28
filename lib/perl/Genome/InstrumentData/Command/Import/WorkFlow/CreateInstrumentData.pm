@@ -241,6 +241,10 @@ sub _create_instrument_data {
     }
     $self->status_message('Allocation id: '.$allocation->id);
     $self->status_message('Allocation path: '.$allocation->absolute_path);
+    
+    my $tmp_dir = $allocation->absolute_path.'/tmp';
+    Genome::Sys->create_directory($tmp_dir);
+    $self->status_message('Allocation tmp path: '.$tmp_dir);
 
     $self->status_message('Create instrument data...done');
     return $self->instrument_data($instrument_data);
