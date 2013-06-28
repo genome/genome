@@ -12,8 +12,10 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Helpers {
 };
 
 #<INST DATA INFO>#
-sub local_file_for_source_file {
-    my ($self, $source_file) = @_;
+sub local_source_files_for_instrument_data {
+    my ($self, $instrument_data) = @_;
+
+    Carp::confess('No instrument data to get local source files!') if not $instrument_data;
 
     my $directory = $instrument_data->data_directory;
     Carp::confess('No instrument data directory to get local source files!') if not $directory;
