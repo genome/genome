@@ -7,7 +7,6 @@ use Genome;
 
 use Data::Dumper 'Dumper';
 require File::Basename;
-require List::Util;
 require List::MoreUtils;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::TransferFastqs { 
@@ -128,12 +127,8 @@ sub _verify_read_counts {
         return;
     }
 
-    my $read_count = List::Util::sum(@read_counts);
-    $self->status_message("Read count: $read_count");
-    $self->instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $read_count);
-
     $self->status_message('Verify read counts...done');
-    return $read_count;
+    return 1;
 }
 
 
