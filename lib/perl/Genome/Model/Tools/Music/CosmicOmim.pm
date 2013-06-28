@@ -121,6 +121,12 @@ sub execute {
 
     my $mut_file = $self->maf_file;
     my $cosmic_dir = $self->cosmic_dir;
+
+    if (-e "$cosmic_dir/music") {
+        # new versions of COSMIC data contain multiple data sets besides the MuSiC files.
+        $cosmic_dir = "$cosmic_dir/music";
+    }
+
     my $basename = $self->output_file;
     my $ref_build = $self->reference_build;
     unless($ref_build =~ m/build36/i xor $ref_build =~ m/build37/i){
