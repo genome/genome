@@ -2,10 +2,9 @@
 [4mUSAGE[0m
  [1mgenome model define reference-sequence[0m [--auto-assign-inst-data] [--auto-build-alignments]
     --processing-profile=? [--add-to-projects=?[,?]] [--fasta-file=?] [--instrument-data=?[,?]]
-    [--subject=?] [--groups=?[,?]] [--model-name=?] [--sequence-uri=?] [--derived-from=?]
-    [--coordinates-from=?] [--append-to=?] [--combines=?] [--build-name=?] [--prefix=?] [--desc=?]
-    [--version=?] [--assembly-name=?] [--generate-sequence-uri] [--skip-bases-files]
-    [--is-rederivable]
+    [--subject=?] [--groups=?[,?]] [--model-name=?] [--sequence-uri=?] [--build-name=?]
+    [--prefix=?] [--desc=?] [--version=?] [--assembly-name=?] [--generate-sequence-uri]
+    [--skip-bases-files] [--is-rederivable]
 
 [4mSYNOPSIS[0m
   genome model define reference-sequence \
@@ -33,15 +32,6 @@
     User meaningful name for this model, a default is used if none is provided 
   [1msequence-uri[0m
     publicly available URI to the sequence file for the fasta 
-  [1mderived-from[0m
-    Identifies the parent build from which this one is derived, if any. 
-  [1mcoordinates-from[0m
-    Used to indicate that this build is on the same coordinate system as another. 
-  [1mappend-to[0m
-    If specified, the created reference will be logically appended to the one specified by this
-    parameter for aligners that support it. 
-  [1mcombines[0m
-    If specified, merges several other references into one. 
   [1mbuild-name[0m
     human meaningful name of this build 
   [1mprefix[0m
