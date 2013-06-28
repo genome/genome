@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 require Carp;
+require File::Copy;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Helpers { 
     is => 'UR::Singleton',
@@ -51,31 +52,58 @@ sub add_operation_to_workflow {
 }
 #<>#
 
+#<MOVE>#
+sub move_file {
+    my ($self, $from, $to) = @_;
+
+    $self->status_message('Move file...');
+    my $from_sz = -s $from;
+    $self->status_message("From: $from");
+    $self->status_message("To: $to");
+    my $move_ok = File::Copy::move($from, $to);
+    if ( not $move_ok ) {
+        $self->error_message('Move failed!');
+        return;
+    }
+    my $to_sz = -s $to;
+    if ( not $to_sz or $to_sz != $from_sz ) {
+        $self->error_message("Move succeeded, but destination size is diffeerent from original! $to_sz vs $from_sz");
+        return;
+    }
+
+    $self->status_message('Move file...done');
+    return 1;
+}
+#<>#
+
+#<SAMTOOLS>#
 sub run_flagstat {
-    my ($self, $bam_file, $flagstat_file) = @_;
+    my ($self, $bam_path, $flagstat_path) = @_;
     $self->status_message('Run flagstat...');
 
-    $flagstat_file ||= $bam_file.'.flagstat';
-    $self->status_message("Flagstat file: $flagstat_file");
-    my $cmd = "samtools flagstat $bam_file > $flagstat_file";
+    $flagstat_path ||= $bam_path.'.flagstat';
+    $self->status_message("Bam path: $bam_path");
+    $self->status_message("Flagstat path: $flagstat_path");
+    my $cmd = "samtools flagstat $bam_path > $flagstat_path";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $flagstat_file ) {
+    if ( not $rv or not -s $flagstat_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run flagstat!');
         return;
     }
 
-    my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
+    my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     $self->status_message('Flagstat output:');
     $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
     if ( not $flagstat->{total_reads} > 0 ) {
-        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_file);
+        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_path);
         return;
     }
 
     $self->status_message('Run flagstat...done');
     return $flagstat;
 }
+#<>#
 
 1;
 
