@@ -19,7 +19,7 @@ use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS}.'Genome-InstrumentData-Command-Import-Basic';
+my $test_dir = $ENV{GENOME_TEST_INPUTS}.'Genome-InstrumentData-Command-Import-Basic/';
 my $source_sra = $test_dir.'/test.sra';
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     sample => $sample,
@@ -45,7 +45,8 @@ ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 
 # sra
-ok(-s $allocation->absolute_path.'/all_sequences.sra', 'sra exists');
+ok(-s $allocation->absolute_path.'/all_sequences.sra', 'sra file was copied');
+ok(-s $allocation->absolute_path.'/all_sequences.sra.dbcc', 'dbcc file exists');
 
 # bam
 my $bam_via_archive_path = $instrument_data->archive_path;

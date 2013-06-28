@@ -5,6 +5,9 @@ use warnings;
 
 use Genome;
 
+require Cwd;
+require File::Basename;
+
 class Genome::InstrumentData::Command::Import::Basic { 
     is => 'Command::V2',
     has => [
@@ -241,7 +244,6 @@ sub _create_instrument_data {
     $self->status_message('Source files were NOT previously imported!');
 
     $self->status_message('Create instrument data...');
-    $properties{original_format} = $self->original_format;
     $properties{import_format} = $self->import_format;# will soon be 'bam'
     $properties{sequencing_platform} = $self->sequencing_platform;
     $properties{import_source_name} = $self->import_source_name;
@@ -267,6 +269,7 @@ sub _create_instrument_data {
         return;
     }
     $self->status_message('Instrument data id: '.$instrument_data->id);
+    $instrument_data->add_attribute(attribute_label => 'original_format', attribute_value => $self->original_format);
 
     my $allocation = Genome::Disk::Allocation->create(
         disk_group_name => 'info_alignments',
@@ -550,13 +553,37 @@ sub _transfer_sra_source_file {
         return
     }
 
-    $self->status_message('Copy SRA file...');
     my ($source_sra_file) = $self->source_files;
-    my $source_sra_file_sz = -s $source_sra_file;
     $self->status_message('Source SRA file: '.$source_sra_file);
-    $self->status_message('Source SRA file size: '.$source_sra_file_sz);
     my $sra_file = $self->instrument_data->allocation->absolute_path.'/all_sequences.sra';
-    $self->status_message('SRA file: '.$source_sra_file);
+
+    # Check database components
+    $self->status_message('Check SRA database...');
+    my $dbcc_file = $sra_file.'.dbcc';
+    $self->status_message('DBCC file: '.$dbcc_file);
+    my $cwd = Cwd::getcwd();
+    my ($source_sra_basename, $source_sra_directory) = File::Basename::fileparse($source_sra_file);
+    chdir $source_sra_directory;
+    my $cmd = "/usr/bin/sra-dbcc $source_sra_basename &> $dbcc_file";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $dbcc_file ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run sra dbcc!');
+        return;
+    }
+    my @dbcc_lines = eval{ Genome::Sys->read_file($dbcc_file); };
+    if ( not @dbcc_lines ) {
+        $self->error_message('Failed to read SRA DBCC file! ');
+        return;
+    }
+    my $sra_has_primary_alignment_info = grep { $_ =~ /PRIMARY_ALIGNMENT/ } @dbcc_lines;
+    chdir $cwd;
+    $self->status_message('Check SRA database...done');
+    
+    $self->status_message('Copy SRA file...');
+    my $source_sra_file_sz = -s $source_sra_file;
+    $self->status_message('Source SRA file size: '.$source_sra_file_sz);
+    $self->status_message('SRA file: '.$sra_file);
     my $copy_sra_ok = File::Copy::copy($source_sra_file, $sra_file);
     my $sra_file_sz = -s $sra_file || 0;
     $self->status_message('SRA file size: '.$source_sra_file_sz);
@@ -567,19 +594,73 @@ sub _transfer_sra_source_file {
     $self->status_message('Copy SRA file...done');
 
     # TODO decrypt
-    $self->status_message('Dump sorted bam...');
+    
+    $self->status_message('Dump aligned bam...');
+    my $aligned_bam = $self->_tmp_dir.'/aligned.bam';
+    my $unsorted_bam = $aligned_bam; # set now, override if there is a unaligned bam
+    $self->status_message('Aligned bam: '.$aligned_bam);
+    $cmd = "/usr/bin/sam-dump --primary $sra_file | samtools view -h -b -S - > $aligned_bam";
+    $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $aligned_bam ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run sra sam dump aligned bam!');
+        return;
+    }
+    $self->status_message('Dump aligned bam...done');
+
+    if ( $sra_has_primary_alignment_info ) { # unaligned are already dumped above if there is no alignment info
+        $self->status_message('Dump unaligned from sra to fastq...');
+        my $unaligned_fastq = $self->_tmp_dir.'/unaligned.fastq';
+        $self->status_message("Unaligned fastq: $unaligned_fastq");
+        $cmd = "/usr/bin/fastq-dump --unaligned --origfmt $sra_file --stdout > $unaligned_fastq";
+        $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+        if ( not $rv ) {
+            $self->error_message($@) if $@;
+            $self->error_message('Failed to run sra sam dump unaligned fastq!');
+            return;
+        }
+        $self->status_message('Dump unaligned from sra to fastq...done');
+
+        if ( -s $unaligned_fastq ) {
+            $self->status_message('Convert unaligned fastq to bam...');
+            my $unaligned_bam = $unaligned_fastq.'.bam';
+            my $cmd = "gmt picard fastq-to-sam --fastq $unaligned_fastq --output $unaligned_bam --quality-format Standard --sample-name ".$self->sample->name;
+            my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+            if ( not $rv or not -s $unaligned_bam ) {
+                $self->error_message($@) if $@;
+                $self->error_message('Failed to run sam fastq to sam on unaligned fastq!');
+                return;
+            }
+            $self->status_message('Convert unaligned fastq to bam...done');
+            unlink($unaligned_fastq);
+
+            $self->status_message('Add bam from unaligned fastq to unsorted bam...');
+            $unsorted_bam = $self->_tmp_dir.'/unsorted.bam';
+            $cmd = "samtools merge $unsorted_bam $aligned_bam $unaligned_bam";
+            $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+            if ( not $rv ) {
+                $self->error_message($@) if $@;
+                $self->error_message('Failed to run samtools view!');
+                return;
+            }
+            $self->status_message('Add bam from unaligned fastq to unsorted bam...done');
+            unlink($unaligned_bam);
+        }
+    }
+
+    $self->status_message('Sort/merge dumped bam(s)...');
     my $sorted_bam_prefix = $self->_tmp_dir.'/all_sequences';
     $self->status_message("Sorted bam prefix: $sorted_bam_prefix");
     my $sorted_bam_file = $sorted_bam_prefix.'.bam';
     $self->status_message("Sorted bam file: $sorted_bam_file");
-    my $cmd = "/usr/bin/sam-dump --unaligned --header --primary $sra_file | samtools view -h -b -S - | samtools sort -m 3000000000 -n - $sorted_bam_prefix";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    $cmd = "samtools sort -m 3000000000 -n $unsorted_bam $sorted_bam_prefix";
+    $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $sorted_bam_file ) {
         $self->error_message($@) if $@;
-        $self->error_message('Failed to run sra sam dump and samtools sort!');
+        $self->error_message('Failed to sort bam with samtools!');
         return;
     }
-    $self->status_message('Dump sorted bam...done');
+    $self->status_message('Sort dumped bam...done');
 
     my $bam_file = $self->instrument_data->allocation->absolute_path.'/all_sequences.bam';
     my $flagstat_file = $bam_file.'.flagstat';
