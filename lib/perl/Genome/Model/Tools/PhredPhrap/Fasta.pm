@@ -10,7 +10,7 @@ use Data::Dumper;
 require File::Copy;
 
 class Genome::Model::Tools::PhredPhrap::Fasta {
-    is => 'Genome::Model::Tools::PhredPhrap',
+    is => 'Genome::Model::Tools::PhredPhrap::BaseBase',
     has => [
     fasta_file => {
         is => 'String', #file_r
@@ -47,7 +47,7 @@ sub execute {
     }
 
     my $cmd = sprintf('%s %s', $self->phrap_command_name, $self->fasta_file);
-    my @properties = grep { $_->property_name ne 'version' } Genome::Model::Tools::PhredPhrap->__meta__->direct_property_metas;
+    my @properties = grep { $_->property_name ne 'version' } Genome::Model::Tools::PhredPhrap::BaseBase->__meta__->direct_property_metas;
     for my $property ( @properties ) {
         my $property_name = $property->property_name;
         my $value = $self->$property_name;
