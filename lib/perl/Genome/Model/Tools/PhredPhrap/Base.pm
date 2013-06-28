@@ -54,7 +54,7 @@ for my $processor ( pre_assembly_processors(), post_assembly_processors() ) {
 }
 
 class Genome::Model::Tools::PhredPhrap::Base {
-    is => 'Genome::Model::Tools::PhredPhrap',
+    is => 'Genome::Model::Tools::PhredPhrap::BaseBase',
     is_abstract => 1,
     has => [ %properties ],
 };
