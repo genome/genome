@@ -804,7 +804,7 @@ sub _unlock {
 
 sub _resolve_lock_name {
     my $class = shift;
-    my $class_string = $class;
+    my $class_string = $class->class;
     $class_string =~ s/\:/\-/g;
 
     my $be = UR::BoolExpr->resolve_normalized($class, @_);
