@@ -16,7 +16,7 @@ sub _generate_vcf {
     my $path = $self->input_directory;
     my $retval = 1;
     my %files;
-  
+
     my $detector_class;
     if($self->input->can("detector_name")){
         $detector_class = $self->input->detector_name;
@@ -68,14 +68,14 @@ sub _run_vcf_converter {
     my $reference_sequence_build = Genome::Model::Build->get($detector_result->reference_build_id);
     my %params = (
         input_file => $input_file,
-        output_file => $output_file, 
+        output_file => $output_file,
         aligned_reads_sample => $aligned_reads_sample,
         sequencing_center => 'WUSTL',
         reference_sequence_build => $reference_sequence_build,
     );
     $params{control_aligned_reads_sample} = $control_aligned_reads_sample if $control_aligned_reads_sample;
 
-    my $command = $converter->create(%params); 
+    my $command = $converter->create(%params);
     unless($command->execute) {
         $self->error_message('Failed to convert ' . $input_file . ' to the standard format.');
         return;
@@ -120,7 +120,7 @@ sub _working_dir_prefix {
     return "detector_vcf_results";
 }
 
-sub resolve_allocation_disk_group_name { 
+sub resolve_allocation_disk_group_name {
     return "info_genome_models";
 }
 

@@ -433,7 +433,7 @@ sub sw_version_path_map {
             }
         }
     }
-    
+
     # find software installed under $GENOME_SW
     # The pattern for these has varied over time.  They will be like will be like:
     #   $GENOME_SW/$pkg_name/{$pkg_name-,,*}$version/{.,bin,scripts}/{$pkg_name,}{-,}$app_name{-,}{$version,}
@@ -453,7 +453,7 @@ sub sw_version_path_map {
     my %pkgdirs;
     my @dirs2 = split(':',$ENV{GENOME_SW});  #most of the system expects this to be one value not-colon separated currently
     for my $dir2 (@dirs2) {
-        # one subdir will exist per application 
+        # one subdir will exist per application
         my @app_subdirs = glob("$dir2/$pkg_name");
         for my $app_subdir (@app_subdirs) {
             # one subdir under that will exist per version
@@ -490,7 +490,7 @@ sub sw_version_path_map {
     # we never know for sure they are not just new installs which presume to be 64-bit.
     my @v64 = grep { /[-_]64$/ } keys %pkgdirs;
     for my $version_64 (@v64) {
-        my ($version_no64) = ($version_64 =~ /^(.*?)([\.-_][^\.]+)64$/); 
+        my ($version_no64) = ($version_64 =~ /^(.*?)([\.-_][^\.]+)64$/);
         $pkgdirs{$version_no64} = delete $pkgdirs{$version_64};
     }
 
@@ -501,7 +501,7 @@ sub sw_version_path_map {
         my @subdirs = qw/. bin scripts/;
         my @basenames = ("$app_name-$version","$app_name$version",$app_name);
         if ($pkg_name ne $app_name) {
-            @basenames = map { ("$pkg_name-$_", "$pkg_name$_", $_) } @basenames; 
+            @basenames = map { ("$pkg_name-$_", "$pkg_name$_", $_) } @basenames;
         }
         for my $basename (@basenames) {
             for my $subdir (@subdirs) {
@@ -1497,9 +1497,9 @@ Genome::Sys is a simple layer on top of OS-level concerns,
 including those automatically handled by the analysis system,
 like database cache locations.
 
-=head1 METHODS 
+=head1 METHODS
 
-=head2 sw_path($pkg_name,$version) or sw_path($pkg_name,$version,$executable_basename) 
+=head2 sw_path($pkg_name,$version) or sw_path($pkg_name,$version,$executable_basename)
 
 Return the path to a given executable, library, or package.
 The 3-parameter variation is only for packages which have multiple executables.
@@ -1523,7 +1523,7 @@ Return a list of all installed versions of a given executable in order.
 =head3 ex:
 
     @versions = Genome::Sys->sw_versions("tophat");
-    
+
     @versions = Genome::Sys->sw_versions("htseq","htseq-count");
 
 =head2 sw_version_path_map($pkg_name) or sw_version_path_map($pkg_name,$executable_basename)
@@ -1533,7 +1533,7 @@ Return a map of version numbers to executable paths.
 =head3 ex:
 
     %map = Genome::Sys->sw_version_path_map("tophat");
-    
+
     %map = Genome::Sys->sw_version_path_map("htseq","htseq-count");
 
 
