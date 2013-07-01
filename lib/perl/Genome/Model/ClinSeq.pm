@@ -15,7 +15,7 @@ class Genome::Model::ClinSeq {
 
         cancer_annotation_db    => { is => 'Genome::Db', default_value => 'tgi/cancer-annotation/human/build37-20130401.1' },
         misc_annotation_db      => { is => 'Genome::Db', default_value => 'tgi/misc-annotation/human/build37-20130113.1' },
-        cosmic_annotation_db    => { is => 'Genome::Db', default_value => 'cosmic/61.0' },
+        cosmic_annotation_db    => { is => 'Genome::Db', default_value => 'cosmic/65.0' },
         
         force                   => { is => 'Boolean', doc => 'skip sanity checks on input models' },
     ],
