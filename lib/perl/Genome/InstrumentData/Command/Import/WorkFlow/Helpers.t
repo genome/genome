@@ -30,4 +30,14 @@ is_deeply(
     'local source files for instrument data',
 );
 
+# size for source files
+ok(!eval{$helpers->size_of_source_file;}, 'failed to get size for source file w/o source file');
+ok(!eval{$helpers->size_of_remote_file;}, 'failed to get size for remote file w/o remote file');
+my @source_files = (
+    $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-1.txt.gz',
+    $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-2.fastq',
+);
+ok(!eval{$helpers->kilobytes_needed_for_processing_of_source_files;}, 'failed to get kilobytes needed for processing w/o source files');
+is($helpers->kilobytes_needed_for_processing_of_source_files(@source_files), 1119, 'kilobytes needed for processing source files');
+
 done_testing();

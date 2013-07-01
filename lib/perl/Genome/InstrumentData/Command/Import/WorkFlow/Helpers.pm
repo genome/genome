@@ -76,6 +76,78 @@ sub move_file {
 }
 #<>#
 
+#<FILE SIZE>#
+sub kilobytes_needed_for_processing_of_source_files {
+    my ($self, @source_files) = @_;
+
+    Carp::confess('No source files to get kb needed!') if not @source_files;
+
+    my $kb_needed = 0;
+    for my $source_file ( @source_files ) {
+        my $size = $self->size_of_source_file($source_file);
+        return if not $size;
+        $size *= 3 if $source_file =~ /\.gz$/; # assume ~30% compression rate for gzipped fasta/q
+        $kb_needed += int($size / 1024) + 1;
+    }
+
+    $kb_needed *= 3; # reserve 3X for processing
+
+    return $kb_needed;
+}
+
+sub size_of_source_file {
+    my ($self, $source_file) = @_;
+
+    Carp::confess('No source file to get size!') if not $source_file;
+
+    my $size;
+    if ( $source_file =~ /^http/ ) {
+        $size = $self->size_of_remote_file($source_file);
+    }
+    else {
+        $size = -s $source_file;
+    }
+
+    if ( not $size ) {
+        $self->error_message('Source file does have any size! '.$source_file);
+        return;
+    }
+
+    return $size;
+}
+
+sub size_of_remote_file {
+    my ($self, $remote_file) = @_;
+
+    Carp::confess('No remote file to get size in kb!') if not $remote_file;
+
+    my $fh = IO::File->new("wget --spider $remote_file |");
+    my ($size, $exists);
+    while ( my $line = $fh->getline ) {
+        chomp $line;
+        if ( $line =~ /^Length: (\d+) / ) {
+            $size = $1;
+        }
+        elsif ( $line eq 'Remote file exists.' ) {
+            $exists = 1;
+        }
+    }
+
+    if ( not $exists ){
+        $self->error_message('Remote file does not exist! '.$remote_file);
+        return;
+    }
+
+    if ( not $size ){
+        $self->error_message('Remote file does have any size! '.$remote_file);
+        return;
+    }
+
+    return $size;
+
+}
+#<>#
+
 #<SAMTOOLS>#
 sub run_flagstat {
     my ($self, $bam_path, $flagstat_path) = @_;
