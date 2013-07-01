@@ -35,7 +35,7 @@ sub create {
     $self->status_message('Reference: '.$self->reference_build->id);
     $self->status_message('Knowns sites: '.$self->known_sites->id);
 
-    my $base_recalibrator_result = $self->_get_or_crerate_base_recalibrator_result;
+    my $base_recalibrator_result = $self->_get_or_create_base_recalibrator_result;
     return if not $base_recalibrator_result;
 
     my $print_reads = $self->_print_reads;
@@ -50,7 +50,7 @@ sub create {
     return $self;
 }
 
-sub _get_or_crerate_base_recalibrator_result {
+sub _get_or_create_base_recalibrator_result {
     my $self = shift;
     $self->status_message('Get or create base recalibrator result...');
 
