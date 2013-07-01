@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use File::Copy;
 use Sys::Hostname;
+use File::stat qw();
 
 class Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector {
     is  => ['Genome::Model::Tools::DetectVariants2::Result::Vcf'],
@@ -106,13 +107,63 @@ sub _run_vcf_indel_normalizer {
     unless ($command->execute) {
         die $self->error_message("Failed to normalize $input_file.");
     }
-    unless(rename($output_file, $input_file)){
-        die $self->error_message('Failed to replace vcf file with normalized vcf file ' . $!);
-    }
+
+    $self->_debug_rename($output_file, $input_file);
+
     return 1;
 }
 
-sub _needs_symlinks_followed_when_syncing { 
+sub _dev {
+    my $path = shift;
+    my $stat = File::stat::stat($path);
+    return $stat->dev();
+}
+
+sub _debug_rename {
+    my $self = shift;
+    my ($current, $destination) = @_;
+
+    if (_dev($current) ne _dev($destination)) {
+        $self->debug_message('Cross-device renames are not expected but has been detected:');
+        $self->debug_message('current: ' . $current);
+        $self->debug_message('destination: ' . $destination);
+    }
+
+    my $m = 'Failed to replace vcf file with normalized vcf file using %s: %s';
+
+    my $rename_success = Genome::Sys::retry(
+        delay    => 30,
+        retries  => 3,
+        callback => sub {
+            my $rv = rename($current, $destination);
+            my $error = $!;
+            if ($rv) {
+                return $rv
+            } else {
+                $self->warning_message(sprintf($m, 'rename', $error));
+                return;
+            }
+        },
+    );
+
+    unless ($rename_success) {
+        # we'll try one more time with move() since we want builds to succeed
+        unless (File::Copy::move($current, $destination)) {
+            my $move_error = $!;
+
+            # if move() fails we may have a partial destination file
+            if (-f $destination) {
+                unless (unlink $destination) {
+                    $self->warning_message('Failed to cleanup partial destination file after failed move(): ' . $!);
+                }
+            }
+
+            die $self->error_message(sprintf($m, 'File::Copy::move', $move_error));
+        }
+    }
+}
+
+sub _needs_symlinks_followed_when_syncing {
     return 0;
 }
 
