@@ -15,6 +15,7 @@ use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
 use JSON;
+use Genome::Utility::NamedArgs qw(named_args);
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -1452,6 +1453,23 @@ sub shellcmd {
 
     return 1;
 
+}
+
+sub retry {
+    my %args = named_args(
+        args     => [@_],
+        required => [qw(callback retries delay)],
+    );
+
+    my $rv;
+    while ($args{retries} > 0) {
+        $args{retries}--;
+        $rv = $args{callback}->();
+        last if $rv;
+        sleep $args{delay};
+    }
+
+    return $rv;
 }
 
 1;
