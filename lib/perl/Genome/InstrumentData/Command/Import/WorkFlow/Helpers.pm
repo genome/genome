@@ -186,6 +186,9 @@ sub run_flagstat {
     my ($self, $bam_path, $flagstat_path) = @_;
     $self->status_message('Run flagstat...');
 
+    Carp::confess('No bam path given to run flagstat!') if not $bam_path;
+    Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
+
     $flagstat_path ||= $bam_path.'.flagstat';
     $self->status_message("Bam path: $bam_path");
     $self->status_message("Flagstat path: $flagstat_path");
@@ -197,32 +200,48 @@ sub run_flagstat {
         return;
     }
 
+    my $flagstat = $self->load_flagstat($flagstat_path);
+    return if not $flagstat;
+
+    if ( not $flagstat->{total_reads} > 0 ) {
+        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_path);
+        return;
+    }
+
+    if ( $flagstat->{reads_marked_as_read1} > 0 and $flagstat->{reads_marked_as_read2} > 0 ) {
+        # paired end but must be equal for bwa
+        if ( $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
+            $self->error_message('Flagstat indicates that there are not equal pairs in bam! '.$bam_path);
+            return;
+        }
+    }
+
+    $self->status_message('Run flagstat...done');
+    return $flagstat;
+}
+
+sub load_flagstat {
+    my ($self, $flagstat_path) = @_;
+    $self->status_message('Load flagstat...');
+
+    $self->status_message('Flafstat path: '.$flagstat_path);
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     if ( not $flagstat ) {
         $self->error_message('Failed to load flagstat file!');
         return;
     }
 
-    if ( $flagstat->{reads_marked_as_read1} > 0 and $flagstat->{reads_marked_as_read2} > 0 ) {
-        # paired end but must be equal
-        if ( $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
-            $self->error_message('Flagstat indicates that there are not equal pairs in bam! '.$bam_path);
-            return;
-        }
+    if ( $flagstat->{reads_paired_in_sequencing} > 0 ) {
         $flagstat->{is_paired_end} = 1;
     }
-    else {# read1 or read2 > 0 => not paired
+    else {
         $flagstat->{is_paired_end} = 0;
     }
 
     $self->status_message('Flagstat output:');
     $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
-    if ( not $flagstat->{total_reads} > 0 ) {
-        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_path);
-        return;
-    }
 
-    $self->status_message('Run flagstat...done');
+    $self->status_message('Load flagstat...done');
     return $flagstat;
 }
 #<>#
