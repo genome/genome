@@ -93,9 +93,9 @@ sub _validate_source_files {
     for my $source_file ( @source_files ) { $self->status_message("Source file(s): $source_file"); }
     $self->status_message("Source file count: ".@source_files);
 
-    my $kilobytes_requested = $self->_resolve_kilobytes_requested(@source_files);
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $kilobytes_requested = $helpers->kilobytes_needed_for_processing_of_source_files(@source_files);
     return if not $kilobytes_requested;
-    $kilobytes_requested += 51_200; # a little extra
     $self->kilobytes_requested($kilobytes_requested);
     $self->status_message('Kilobytes requested: '.$self->kilobytes_requested);
 
