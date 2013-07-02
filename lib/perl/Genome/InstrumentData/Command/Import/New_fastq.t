@@ -37,8 +37,6 @@ ok($cmd->execute, "excute import command");
 my $instrument_data = Genome::InstrumentData::Imported->get(original_data_path => join(',', @source_files));
 ok($instrument_data, 'got instrument data');
 is($instrument_data->original_data_path, join(',', @source_files), 'original_data_path correctly set');
-my $original_format = eval{ $instrument_data->attributes(attribute_label => 'original_format')->attribute_value; };
-is($original_format, 'fastq', 'orginal_format is sanger fastq');
 is($instrument_data->import_format, 'bam', 'import_format is bam');
 is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
