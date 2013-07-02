@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use File::Copy;
 use Sys::Hostname;
+use File::stat qw();
 
 class Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector {
     is  => ['Genome::Model::Tools::DetectVariants2::Result::Vcf'],
@@ -16,7 +17,7 @@ sub _generate_vcf {
     my $path = $self->input_directory;
     my $retval = 1;
     my %files;
-  
+
     my $detector_class;
     if($self->input->can("detector_name")){
         $detector_class = $self->input->detector_name;
@@ -68,14 +69,14 @@ sub _run_vcf_converter {
     my $reference_sequence_build = Genome::Model::Build->get($detector_result->reference_build_id);
     my %params = (
         input_file => $input_file,
-        output_file => $output_file, 
+        output_file => $output_file,
         aligned_reads_sample => $aligned_reads_sample,
         sequencing_center => 'WUSTL',
         reference_sequence_build => $reference_sequence_build,
     );
     $params{control_aligned_reads_sample} = $control_aligned_reads_sample if $control_aligned_reads_sample;
 
-    my $command = $converter->create(%params); 
+    my $command = $converter->create(%params);
     unless($command->execute) {
         $self->error_message('Failed to convert ' . $input_file . ' to the standard format.');
         return;
@@ -106,13 +107,63 @@ sub _run_vcf_indel_normalizer {
     unless ($command->execute) {
         die $self->error_message("Failed to normalize $input_file.");
     }
-    unless(rename($output_file, $input_file)){
-        die $self->error_message('Failed to replace vcf file with normalized vcf file ' . $!);
-    }
+
+    $self->_debug_rename($output_file, $input_file);
+
     return 1;
 }
 
-sub _needs_symlinks_followed_when_syncing { 
+sub _dev {
+    my $path = shift;
+    my $stat = File::stat::stat($path);
+    return $stat->dev();
+}
+
+sub _debug_rename {
+    my $self = shift;
+    my ($current, $destination) = @_;
+
+    if (_dev($current) ne _dev($destination)) {
+        $self->debug_message('Cross-device renames are not expected but has been detected:');
+        $self->debug_message('current: ' . $current);
+        $self->debug_message('destination: ' . $destination);
+    }
+
+    my $m = 'Failed to replace vcf file with normalized vcf file using %s: %s';
+
+    my $rename_success = Genome::Sys::retry(
+        delay    => 30,
+        retries  => 3,
+        callback => sub {
+            my $rv = rename($current, $destination);
+            my $error = $!;
+            if ($rv) {
+                return $rv
+            } else {
+                $self->warning_message(sprintf($m, 'rename', $error));
+                return;
+            }
+        },
+    );
+
+    unless ($rename_success) {
+        # we'll try one more time with move() since we want builds to succeed
+        unless (File::Copy::move($current, $destination)) {
+            my $move_error = $!;
+
+            # if move() fails we may have a partial destination file
+            if (-f $destination) {
+                unless (unlink $destination) {
+                    $self->warning_message('Failed to cleanup partial destination file after failed move(): ' . $!);
+                }
+            }
+
+            die $self->error_message(sprintf($m, 'File::Copy::move', $move_error));
+        }
+    }
+}
+
+sub _needs_symlinks_followed_when_syncing {
     return 0;
 }
 
@@ -120,7 +171,7 @@ sub _working_dir_prefix {
     return "detector_vcf_results";
 }
 
-sub resolve_allocation_disk_group_name { 
+sub resolve_allocation_disk_group_name {
     return "info_genome_models";
 }
 
