@@ -12,13 +12,23 @@ require List::MoreUtils;
 class Genome::InstrumentData::Command::Import::WorkFlow::TransferFastqs { 
     is => 'Command::V2',
     has_input => [
-        instrument_data => { 
-            is => 'Genome::InstrumentData',
-            is_output => 1,
-            doc => 'Instrument data to transfer fastqs.',
+        working_directory => {
+            is => 'Text',
+            doc => 'Detination directory for fastqs.',
+        },
+        source_files => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'Fastqs to transfer.',
         },
     ],
-    #has_output => [ ],
+    has_output => [
+        fastq_paths => {
+            is => 'Text',
+            is_many => 1,
+            doc => 'Final trtansferred fastq paths.',
+        }, 
+    ],
     has_optional_transient => [
         source_files_and_read_counts => { is => 'Hash', default_value => {}, },
     ],
@@ -29,14 +39,13 @@ sub execute {
     $self->status_message('Transfer fastqs...');
 
     # Transfer
-    my $instrument_data = $self->instrument_data;
-    my $original_data_path = $instrument_data->original_data_path;
-    my @source_files = split(',', $original_data_path);
-    $instrument_data->add_attribute(attribute_label => 'is_paired_end', attribute_value => ( @source_files == 2 ? 1 : 0 ));
-    for my $source_file ( @source_files ) {
-        my $transfer_ok = $self->_transfer_fastq($source_file);
-        return if not $transfer_ok;
+    my @fastq_paths;
+    for my $source_file ( $self->source_files ) {
+        my $fastq_path = $self->_transfer_fastq($source_file);
+        return if not $fastq_path;
+        push @fastq_paths, $fastq_path;
     }
+    $self->fastq_paths(\@fastq_paths);
 
     # Verify Read Counts
     my $read_counts_ok = $self->_verify_read_counts;
@@ -49,7 +58,7 @@ sub execute {
 sub _transfer_fastq {
     my ($self, $fastq) = @_;
 
-    my $dir = $self->instrument_data->data_directory;
+    my $dir = $self->working_directory;
     $self->status_message("Fastq: $fastq");
     my $fastq_base_name = File::Basename::basename($fastq);
     $fastq_base_name =~ s/\.gz$//;
@@ -84,7 +93,7 @@ sub _transfer_fastq {
     my $source_files_and_read_counts = $self->source_files_and_read_counts;
     $source_files_and_read_counts->{$fastq} = $read_count;
 
-    return 1;
+    return $fastq;
 }
 
 sub _get_read_count_from_line_count_file {
