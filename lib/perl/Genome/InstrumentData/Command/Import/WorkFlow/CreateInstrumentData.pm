@@ -34,8 +34,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentData {
     ],
     has_transient_optional => [
         library => { is => 'Genome::Library', },
-        original_format => { is => 'Text', },
-        import_format => { is => 'Text', },
         kilobytes_requested => { is => 'Number', },
     ],
 };
@@ -95,15 +93,6 @@ sub _validate_source_files {
     for my $source_file ( @source_files ) { $self->status_message("Source file(s): $source_file"); }
     $self->status_message("Source file count: ".@source_files);
 
-    my $resolve_formats_ok = $self->_resolve_start_and_import_format(@source_files);
-    return if not $resolve_formats_ok;
-
-    my $max_source_files = ( $self->original_format =~ /fast[aq]/ ? 2 : 1 );
-    if ( @source_files > $max_source_files ) {
-        $self->error_message("Cannot handle more than $max_source_files source files!");
-        return;
-    }
-
     my $kilobytes_requested = $self->_resolve_kilobytes_requested(@source_files);
     return if not $kilobytes_requested;
     $kilobytes_requested += 51_200; # a little extra
@@ -111,60 +100,6 @@ sub _validate_source_files {
     $self->status_message('Kilobytes requested: '.$self->kilobytes_requested);
 
     $self->status_message('Validate source files...done');
-    return 1;
-}
-
-sub _resolve_start_and_import_format {
-    my ($self, @source_files) = @_;
-    $self->status_message('Resolve start and import format...');
-
-    my %suffixes;
-    for my $source_file ( @source_files ) {
-        $source_file =~ s/\.gz$//;
-        my ($suffix) = $source_file =~ /\.(\w+)$/;
-        if ( not $suffix ) {
-            $self->error_message("Failed to get suffix from source file! $source_file");
-            return;
-        }
-        $suffixes{$suffix}++;
-    }
-
-    my %suffixes_to_original_format = (
-        txt => 'fastq',
-        fastq => 'fastq',
-        fq => 'fastq',
-        #fasta => 'fasta',
-        bam => 'bam',
-        sra => 'sra',
-    );
-    my %formats;
-    for my $suffix ( keys %suffixes ) {
-        if ( not exists $suffixes_to_original_format{$suffix} ) {
-            $self->error_message('Unrecognized suffix! '.$suffix);
-            return;
-        }
-        $formats{ $suffixes_to_original_format{$suffix} } = 1;
-    }
-
-    my @formats = keys %formats;
-    if ( @formats > 1 ) {
-        $self->error_message('Got more than one format when trying to determine format!');
-        return;
-    }
-    my $original_format = $formats[0];
-    $self->original_format($original_format);
-    $self->status_message('Start format: '.$self->original_format);
-
-    my %original_format_to_import_format = ( # temp, as everything will soon be bam
-        fastq => 'sanger fastq',
-        #fastq => 'bam',
-        bam => 'bam',
-        sra => 'bam',
-    );
-    $self->import_format( $original_format_to_import_format{$original_format} );
-    $self->status_message('Import format: '.$self->import_format);
-
-    $self->status_message('Resolve start and import format...done');
     return 1;
 }
 
@@ -205,6 +140,14 @@ sub _create_instrument_data {
     $self->status_message('Create instrument data...');
     $properties{import_format} = 'bam';
     $properties{sequencing_platform} = 'solexa';
+
+    $instrument_data = Genome::InstrumentData::Imported->create(%properties);
+    if ( not $instrument_data ) {
+        $self->error_message('Failed to create instrument data!');
+        return;
+    }
+    $self->status_message('Instrument data id: '.$instrument_data->id);
+
     for my $name_value ( $self->instrument_data_properties ) {
         my ($name, $value) = split('=', $name_value);
         if ( not defined $value or $value eq '' ) {
@@ -217,16 +160,8 @@ sub _create_instrument_data {
             );
             return;
         }
-        $properties{$name} = $value;
+        $instrument_data->add_attribute(attribute_label => $name, attribute_value => $value);
     }
-
-    $instrument_data = Genome::InstrumentData::Imported->create(%properties);
-    if ( not $instrument_data ) {
-        $self->error_message('Failed to create instrument data!');
-        return;
-    }
-    $self->status_message('Instrument data id: '.$instrument_data->id);
-    $instrument_data->add_attribute(attribute_label => 'original_format', attribute_value => $self->original_format);
 
     my $allocation = Genome::Disk::Allocation->create(
         disk_group_name => 'info_alignments',
