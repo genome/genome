@@ -1,4 +1,4 @@
-package Genome::Model::ClinSeq::Command::Tester;
+package Genome::Command::Tester;
 use strict;
 use warnings;
 use Test::More;
@@ -15,7 +15,27 @@ sub run_and_diff {
     my $expected_output_dir = $ENV{GENOME_TEST_INPUTS} || '';
     
     my $class;
-    if ($command =~ /^\S+\.pl\s/) {
+    if (not defined $command or $command =~ /^[\w\_\:]+$/) {
+        my $cls;
+        if (not defined $command) {
+            my $base = $INC{"Genome.pm"} or die "Can't find Genome.pm for relative file lookup!";
+            my $dir = File::Basename::dirname($base);
+            my ($pkg, $file, $line) = caller();
+            $cls = Cwd::abs_path($file);
+            $cls =~ s/.t$// or die "Caller is not a .t file?: $file";
+            $cls =~ s/^$dir\/// or die "$file is not in directory $dir?";
+            $cls =~ s|/|::|g;
+            UR::Object::Type->get($cls) or die "cannot find class $cls to go with file $file?";
+        }
+        else {
+            $cls = $command;
+            UR::Object::Type->get($cls) or die "cannot find class $cls!";
+        }
+        $command = $cls->help_synopsis;
+        $command or die "No help_command() on $cls!  Cannot autogenerate test.";
+        print "SYN: $command\n";
+    }
+    elsif ($command =~ /^\S+\.pl\s/) {
         $class = delete $params{eventual_class};
         if (not $class) {
             fail 'when not using genome/gmt, expected "eventual_class" to be supplied so we can find the expected output directory', 
@@ -60,14 +80,21 @@ sub run_and_diff {
 
     my $prefix = UR::Util::used_libs_perl5lib_prefix();
     ok($prefix, "using local directory $prefix") or die "quitting..";
-    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__)) . '/../original-scripts/';
+
+    # TODO: these values are clinseq-specific, though the module in overall general-purpose
+    # Remove these after converting the last scripts and files into regular modules and file-based-databases.
+    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__)) . '/../Model/ClinSeq/original-scripts/';
     my $annotation_dir = '/gscmnt/sata132/techd/mgriffit/reference_annotations/';
+    
+    # If the synopsis contains a /tmp/output_dir, swap it for the one we have dynamically created
+    $command =~ s|/tmp/output_dir|$output_dir|g;
+
     my $command_translated = eval qq{"$command"};
     if ($@) {
         fail "failed to translate $command.  Use \$script_dir, \$output_dir, \$annotation_dir: $@";
     }
 
-    my $cmd = "PERL5LIB=$prefix:\$PERL5LIB perl " . $command_translated . " 2>/dev/null 1>/dev/null";
+    my $cmd = "PERL5LIB=$prefix:\$PERL5LIB genome-perl -S " . $command_translated . " 2>/dev/null 1>/dev/null";
 
     Genome::Sys->shellcmd(cmd => $cmd);
     ok(-d $output_dir, "output dir exists: $output_dir") or die "quitting...";
