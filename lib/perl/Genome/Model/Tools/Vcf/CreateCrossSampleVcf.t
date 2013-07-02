@@ -32,11 +32,8 @@ my $expected_result = join("/", $test_data_directory, "expected_6",
 my $joinx_version = "1.6";
 my @input_builds = map{ Genome::Model::Build->get($_)}
         (132916834, 132916881, 132916907);
-my $output_directory = File::Temp::tempdir(
-        'Genome-Model-Tools-Vcf-CreateCrossSampleVcf-XXXXX',
-        TEMPDIR => 1,
-        CLEANUP => 1
-);
+
+my $output_directory = Genome::Sys->create_temp_directory();
 
 #construct the FeatureList needed
 my $roi_list = Genome::FeatureList->create(
