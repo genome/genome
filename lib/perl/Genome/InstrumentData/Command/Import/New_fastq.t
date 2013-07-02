@@ -43,6 +43,12 @@ is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 2000, 'read_count correctly set');
 is(eval{ $instrument_data->attributes(attribute_label => 'lane')->attribute_value }, 2, 'lane correctly set');
 is(eval{ $instrument_data->attributes(attribute_label => 'flow_cell_id')->attribute_value }, 'XXXXXX', 'flow_cell_id correctly set');
+
+my $bam_path = $instrument_data->bam_path;
+ok(-s $bam_path, 'bam path exists');
+is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
+is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
+
 my $allocation = $instrument_data->allocations;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
