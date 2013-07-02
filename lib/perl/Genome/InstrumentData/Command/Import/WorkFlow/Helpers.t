@@ -40,4 +40,7 @@ my @source_files = (
 ok(!eval{$helpers->kilobytes_needed_for_processing_of_source_files;}, 'failed to get kilobytes needed for processing w/o source files');
 is($helpers->kilobytes_needed_for_processing_of_source_files(@source_files), 1119, 'kilobytes needed for processing source files');
 
+# verify en
+ok($helpers->verify_adequate_disk_space_is_available_for_source_files(tmp_dir => '/tmp', source_files => \@source_files), 'verify adequate disk space is available for source files');
+
 done_testing();

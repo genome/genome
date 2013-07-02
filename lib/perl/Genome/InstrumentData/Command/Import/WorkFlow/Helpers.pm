@@ -7,6 +7,7 @@ use Genome;
 
 require Carp;
 require File::Copy;
+require Filesys::Df;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Helpers { 
     is => 'UR::Singleton',
@@ -144,7 +145,39 @@ sub size_of_remote_file {
     }
 
     return $size;
+}
 
+sub verify_adequate_disk_space_is_available_for_source_files {
+    my ($self, %params) = @_;
+    $self->status_message('Verify adequate disk space is available...');
+
+    my $tmp_dir = delete $params{tmp_dir};
+    Carp::confess('No tmp dir to verify adequate temp space is avaliable!') if not $tmp_dir;
+    $self->status_message("Tmp dir: $tmp_dir");
+    my $source_files = delete $params{source_files};
+    $self->status_message("Source files: ".join(' ', @$source_files));
+    Carp::confess('No source files to verify temp space!') if not $source_files;
+
+    my $df = eval{ Filesys::Df::df($tmp_dir); };
+    if( not $df ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to get "df" for temp dir! '.$tmp_dir);
+        return;
+    }
+    $self->status_message("Available Kb: ".$df->{bavail});
+
+    my $kb_required = $self->kilobytes_needed_for_processing_of_source_files(@$source_files);
+    return if not $kb_required;
+    $self->status_message("Required Kb: ".$kb_required);
+
+    my $remaining_space = $df->{bavail} - $kb_required;
+    if ( $remaining_space < 1024 ) { # 1 Mb
+        $self->error_message('There is not enough spqace in $tmp_dir to process source files!');
+        return;
+    }
+
+    $self->status_message('Verify adequate disk space is available...done');
+    return 1;
 }
 #<>#
 
