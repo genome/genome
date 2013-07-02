@@ -67,7 +67,8 @@ Genome::SoftwareResult->add_observer(
         my @ambiguous_properties;
         # classes that have table_name will complain if no column exists in DB for a property
         unless ($subclass->table_name) {
-            my @properties = $subclass->properties();
+            my @properties = grep { $_->class_name->isa(__PACKAGE__) }
+                            $subclass->properties();
             # try to define what "ambiguous" means...
             @ambiguous_properties = grep { !(
                     $_->property_name eq 'subclass_name'

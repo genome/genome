@@ -228,7 +228,7 @@ sub _copyable_properties {
     my @command_properties = $command_meta->properties();
     for my $command_property (@command_properties) {
         my $name = $command_property->property_name;
-        next if $name eq 'id';
+        next unless ($command_property->class_name->isa('Command'));
         if ($result->can($name)) {
             if ($command_property->is_many) {
                 $props{$name} = [ $command->$name ];
