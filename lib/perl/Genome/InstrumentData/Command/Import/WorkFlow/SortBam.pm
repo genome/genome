@@ -36,7 +36,9 @@ sub execute {
     my $sort_ok = $self->_sort_bam;
     return if not $sort_ok;
 
-    #my $flagstat = Genome::InstrumentData::Command::Helpers->run_flagstat();
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $flagstat = $helpers->run_flagstat($self->sorted_bam_path);
+    return if not $flagstat;
 
     $self->status_message('Sort bam...done');
     return 1;
