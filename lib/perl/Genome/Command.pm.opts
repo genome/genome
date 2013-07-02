@@ -8134,6 +8134,22 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>compare',
+      [
+        '>variants',
+        [
+          'old-build=s',
+          undef,
+          'new-build=s',
+          undef,
+          'output-dir=s',
+          undef,
+          'help!',
+          undef
+        ],
+        'help!',
+        undef
+      ],
       '>detect-variants',
       [
         'build=s',
