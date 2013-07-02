@@ -126,23 +126,27 @@ sub _gather_inputs {
         push @instrument_data_properties, $property.'='.$value;
     }
 
+    my @source_files = $self->source_files;
+    push @instrument_data_properties, 'original_data_path='.join(',', $self->source_files);
+
     my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
     if ( not $tmp_dir ) {
-        $self->error_message();
+        $self->error_message('Failed to create tmp dir!');
         return;
     }
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my $space_available = $helpers->verify_adequate_disk_space_is_available_for_source_files(
         tmp_dir => $tmp_dir,
-        source_files => [ $self->source_files ],
+        source_files => \@source_files,
     );
     return if not $space_available;
 
     return {
         working_directory => $tmp_dir,
-        source_files => [ $self->source_files ],
         sample => $self->sample,
+        sample_name => $self->sample->name,
+        source_files => \@source_files,
         instrument_data_properties => \@instrument_data_properties,
     };
 }
@@ -152,44 +156,43 @@ sub _build_workflow_to_import_fastq {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ working_directory source_files sample instrument_data_properties /],
+        input_properties => [qw/ working_directory source_files sample sample_name instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
     my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $create_instrument_data_op = $helper->add_operation_to_workflow($workflow, 'create instrument data');
-    for my $property (qw/ source_files sample instrument_data_properties /) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $create_instrument_data_op,
-            right_property => $property,
-        );
-    }
 
     my $transfer_fastqs_op = $helper->add_operation_to_workflow($workflow, 'transfer fastqs');
     $workflow->add_link(
-        left_operation => $create_instrument_data_op,
-        left_property => 'instrument_data',
+        left_operation => $workflow->get_input_connector,
+        left_property => 'working_directory',
         right_operation => $transfer_fastqs_op,
-        right_property => 'instrument_data',
+        right_property => 'working_directory',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'source_files',
+        right_operation => $transfer_fastqs_op,
+        right_property => 'source_files',
     );
 
     my $convert_to_bam_op = $helper->add_operation_to_workflow($workflow, 'convert fastqs to bam');
+    for my $property (qw/ working_directory sample_name /) {
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => $property,
+            right_operation => $convert_to_bam_op,
+            right_property => $property,
+        );
+    }
     $workflow->add_link(
         left_operation => $transfer_fastqs_op,
-        left_property => 'instrument_data',
+        left_property => 'fastq_paths',
         right_operation => $convert_to_bam_op,
-        right_property => 'instrument_data',
+        right_property => 'fastq_paths',
     );
 
     my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
-    $workflow->add_link(
-        left_operation => $convert_to_bam_op,
-        left_property => 'instrument_data',
-        right_operation => $sort_bam_op,
-        right_property => 'instrument_data',
-    );
     $workflow->add_link(
         left_operation => $convert_to_bam_op,
         left_property => 'bam_path',
@@ -197,22 +200,24 @@ sub _build_workflow_to_import_fastq {
         right_property => 'unsorted_bam_path',
     );
 
-    my $verify_and_move_bam_op = $helper->add_operation_to_workflow($workflow, 'verify and move bam to final location');
-    $workflow->add_link(
-        left_operation => $sort_bam_op,
-        left_property => 'instrument_data',
-        right_operation => $verify_and_move_bam_op,
-        right_property => 'instrument_data',
-    );
+    my $create_instdata_and_copy_bam = $helper->add_operation_to_workflow($workflow, 'create instrument data and copy bam');
+    for my $property (qw/ sample instrument_data_properties /) {
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => $property,
+            right_operation => $create_instdata_and_copy_bam,
+            right_property => $property,
+        );
+    }
     $workflow->add_link(
         left_operation => $sort_bam_op,
         left_property => 'sorted_bam_path',
-        right_operation => $verify_and_move_bam_op,
+        right_operation => $create_instdata_and_copy_bam,
         right_property => 'bam_path',
     );
 
     $workflow->add_link(
-        left_operation => $verify_and_move_bam_op,
+        left_operation => $create_instdata_and_copy_bam,
         left_property => 'instrument_data',
         right_operation => $workflow->get_output_connector,
         right_property => 'instrument_data',
