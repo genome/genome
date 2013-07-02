@@ -455,6 +455,22 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>cosmic',
+    [
+      '>import',
+      [
+        'result-version=s',
+        undef,
+        'external-version=s',
+        'files',
+        'import-iteration=s',
+        'files',
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>ensembl',
     [
       '>vep',
