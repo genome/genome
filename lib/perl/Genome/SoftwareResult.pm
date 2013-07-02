@@ -64,13 +64,12 @@ Genome::SoftwareResult->add_observer(
             die "Failed to get object Type for $subclassname";
         }
 
-        my @ambiguous_properties;
         # classes that have table_name will complain if no column exists in DB for a property
         unless ($subclass->table_name) {
             my @properties = grep { $_->class_name->isa(__PACKAGE__) }
                             $subclass->properties();
             # try to define what "ambiguous" means...
-            @ambiguous_properties = grep { !(
+            my @ambiguous_properties = grep { !(
                     $_->property_name eq 'subclass_name'
                     || $_->is_param
                     || $_->is_input
@@ -79,10 +78,11 @@ Genome::SoftwareResult->add_observer(
                     || $_->class_name ne $subclassname
                     || $_->is_transient
                 )} @properties;
-        }
 
-        if (@ambiguous_properties) {
-            die sprintf("ambiguous properties: %s\n", join(", ", map { $_->property_name } @ambiguous_properties));
+            if (@ambiguous_properties) {
+                die sprintf("ambiguous properties: %s\n",
+                        join(", ", map { $_->property_name } @ambiguous_properties));
+            }
         }
     },
 );
