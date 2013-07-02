@@ -8,11 +8,6 @@ use Genome;
 class Genome::InstrumentData::Command::Import::WorkFlow::SortBam { 
     is => 'Command::V2',
     has_input => [
-        instrument_data => { 
-            is => 'Genome::InstrumentData',
-            is_output => 1,
-            doc => 'Instrument data.',
-        },
         unsorted_bam_path => {
             is => 'Text',
             doc => 'The path of the unsorted bam to sort.',
@@ -20,9 +15,16 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SortBam {
     ],
     has_output => [ 
         sorted_bam_path => {
-            calculate_from => [qw/ instrument_data /],
-            calculate => q( return $instrument_data->data_directory.'/tmp/sorted.bam'; ),
-            doc => 'The path of the sortred bam.',
+            calculate_from => [qw/ sorted_bam_prefix /],
+            calculate => q( $sorted_bam_prefix.'.bam'; ),
+            doc => 'The path of the sorted bam.',
+        },
+    ],
+    has_calculated => [
+        sorted_bam_prefix => {
+            calculate_from => [qw/ unsorted_bam_path /],
+            calculate => q( $unsorted_bam_path =~ s/\.bam//; return $unsorted_bam_path.'.sorted'; ),
+            doc => 'The prefix for the sorted bam.',
         },
     ],
 };
