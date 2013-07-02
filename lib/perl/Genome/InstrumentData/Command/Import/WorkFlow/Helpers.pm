@@ -198,6 +198,23 @@ sub run_flagstat {
     }
 
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
+    if ( not $flagstat ) {
+        $self->error_message('Failed to load flagstat file!');
+        return;
+    }
+
+    if ( $flagstat->{reads_marked_as_read1} > 0 and $flagstat->{reads_marked_as_read2} > 0 ) {
+        # paired end but must be equal
+        if ( $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
+            $self->error_message('Flagstat indicates that there are not equal pairs in bam! '.$bam_path);
+            return;
+        }
+        $flagstat->{is_paired_end} = 1;
+    }
+    else {# read1 or read2 > 0 => not paired
+        $flagstat->{is_paired_end} = 0;
+    }
+
     $self->status_message('Flagstat output:');
     $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
     if ( not $flagstat->{total_reads} > 0 ) {
