@@ -118,13 +118,29 @@ sub _resolve_original_format {
 
 sub _gather_inputs {
     my $self = shift;
+
     my @instrument_data_properties = $self->instrument_data_properties;
     for my $property (qw/ import_source_name description /) {
         my $value = $self->$property;
         next if not defined $value;
         push @instrument_data_properties, $property.'='.$value;
     }
+
+    my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
+    if ( not $tmp_dir ) {
+        $self->error_message();
+        return;
+    }
+
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $space_available = $helpers->verify_adequate_disk_space_is_available_for_source_files(
+        tmp_dir => $tmp_dir,
+        source_files => [ $self->source_files ],
+    );
+    return if not $space_available;
+
     return {
+        working_directory => $tmp_dir,
         source_files => [ $self->source_files ],
         sample => $self->sample,
         instrument_data_properties => \@instrument_data_properties,
@@ -136,7 +152,7 @@ sub _build_workflow_to_import_fastq {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ source_files sample instrument_data_properties /],
+        input_properties => [qw/ working_directory source_files sample instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
