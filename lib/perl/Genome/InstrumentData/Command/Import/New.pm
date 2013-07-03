@@ -181,25 +181,25 @@ sub _build_workflow_to_import_fastq {
         );
     }
 
-    my $convert_to_bam_op = $helper->add_operation_to_workflow($workflow, 'convert fastqs to bam');
+    my $fastqs_to_bam_op = $helper->add_operation_to_workflow($workflow, 'fastqs to bam');
     for my $property (qw/ working_directory sample_name /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
-            right_operation => $convert_to_bam_op,
+            right_operation => $fastqs_to_bam_op,
             right_property => $property,
         );
     }
     $workflow->add_link(
         left_operation => $get_fastqs_op,
         left_property => 'fastq_paths',
-        right_operation => $convert_to_bam_op,
+        right_operation => $fastqs_to_bam_op,
         right_property => 'fastq_paths',
     );
 
     my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
     $workflow->add_link(
-        left_operation => $convert_to_bam_op,
+        left_operation => $fastqs_to_bam_op,
         left_property => 'bam_path',
         right_operation => $sort_bam_op,
         right_property => 'unsorted_bam_path',

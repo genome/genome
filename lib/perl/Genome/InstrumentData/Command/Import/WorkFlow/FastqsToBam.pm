@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::ConvertFastqsToBam;
+package Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam;
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ require File::Basename;
 require List::Util;
 require List::MoreUtils;
 
-class Genome::InstrumentData::Command::Import::WorkFlow::ConvertFastqsToBam { 
+class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam { 
     is => 'Command::V2',
     has_input => [
         working_directory => {
@@ -38,18 +38,18 @@ class Genome::InstrumentData::Command::Import::WorkFlow::ConvertFastqsToBam {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Convert fastqs to bam...');
+    $self->status_message('Fastqs to bam...');
 
-    my $convert_ok = $self->_convert_fastqs_to_bam;
-    return if not $convert_ok;
+    my $fastq_to_bam_ok = $self->_fastqs_to_bam;
+    return if not $fastq_to_bam_ok;
 
     #my $flagstat = Genome::InstrumentData::Command::Helpers->run_flagstat();
 
-    $self->status_message('Convert fastqs to bam...done');
+    $self->status_message('Fastqs to bam...done');
     return 1;
 }
 
-sub _convert_fastqs_to_bam {
+sub _fastqs_to_bam {
     my $self = shift;
     $self->status_message('Run picard fastq to sam...');
 
