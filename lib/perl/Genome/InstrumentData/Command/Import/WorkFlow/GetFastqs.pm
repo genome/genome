@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::TransferFastqs;
+package Genome::InstrumentData::Command::Import::WorkFlow::GetFastqs;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ use Data::Dumper 'Dumper';
 require File::Basename;
 require List::MoreUtils;
 
-class Genome::InstrumentData::Command::Import::WorkFlow::TransferFastqs { 
+class Genome::InstrumentData::Command::Import::WorkFlow::GetFastqs { 
     is => 'Command::V2',
     has_input => [
         working_directory => {
@@ -36,9 +36,8 @@ class Genome::InstrumentData::Command::Import::WorkFlow::TransferFastqs {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Transfer fastqs...');
+    $self->status_message('Get fastqs...');
 
-    # Transfer
     my @fastq_paths;
     for my $source_fastq_path ( $self->source_fastq_paths ) {
         my $fastq_path = $self->_transfer_fastq($source_fastq_path);
@@ -47,11 +46,10 @@ sub execute {
     }
     $self->fastq_paths(\@fastq_paths);
 
-    # Verify Read Counts
     my $read_counts_ok = $self->_verify_read_counts;
     return if not $read_counts_ok;
 
-    $self->status_message('Transfer fastqs...done');
+    $self->status_message('Get fastqs...done');
     return 1;
 }
 

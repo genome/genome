@@ -171,12 +171,12 @@ sub _build_workflow_to_import_fastq {
 
     my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
-    my $transfer_fastqs_op = $helper->add_operation_to_workflow($workflow, 'transfer fastqs');
+    my $get_fastqs_op = $helper->add_operation_to_workflow($workflow, 'get fastqs');
     for my $property (qw/ working_directory source_fastq_paths /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
-            right_operation => $transfer_fastqs_op,
+            right_operation => $get_fastqs_op,
             right_property => $property,
         );
     }
@@ -191,7 +191,7 @@ sub _build_workflow_to_import_fastq {
         );
     }
     $workflow->add_link(
-        left_operation => $transfer_fastqs_op,
+        left_operation => $get_fastqs_op,
         left_property => 'fastq_paths',
         right_operation => $convert_to_bam_op,
         right_property => 'fastq_paths',
