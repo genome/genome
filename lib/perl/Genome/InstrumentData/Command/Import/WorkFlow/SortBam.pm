@@ -36,9 +36,8 @@ sub execute {
     my $sort_ok = $self->_sort_bam;
     return if not $sort_ok;
 
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $flagstat = $helpers->run_flagstat($self->sorted_bam_path);
-    return if not $flagstat;
+    my $verify_read_count_ok = $self->_verify_read_count;
+    return if not $verify_read_count_ok;
 
     $self->status_message('Sort bam...done');
     return 1;
@@ -64,6 +63,30 @@ sub _sort_bam {
 
     return 1;
 }
+
+sub _verify_read_count {
+    my $self = shift;
+    $self->status_message('Verify read count...');
+
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $unsorted_flagstat = $helpers->load_flagstat($self->unsorted_bam_path.'.flagstat');
+    return if not $unsorted_flagstat;
+
+    my $sorted_flagstat = $helpers->run_flagstat($self->sorted_bam_path);
+    return if not $sorted_flagstat;
+
+    $self->status_message('Sorted bam read count: '.$sorted_flagstat->{total_reads});
+    $self->status_message('Unsorted bam read count: '.$unsorted_flagstat->{total_reads});
+
+    if ( $sorted_flagstat->{total_reads} != $unsorted_flagstat->{total_reads} ) {
+        $self->error_message('Sorted and unsorted bam read counts do not match!');
+        return;
+    }
+
+    $self->status_message('Verify read count...done');
+    return 1;
+}
+
 
 1;
 
