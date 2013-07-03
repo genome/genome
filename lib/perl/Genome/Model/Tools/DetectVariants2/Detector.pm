@@ -171,10 +171,10 @@ sub help_synopsis {
     return <<"EOS"
 This is just an abstract base class for variant detector modules.
 EOS
-} 
+}
 
 sub help_detail {
-    return <<EOS 
+    return <<EOS
 This is just an abstract base class for variant detector modules.
 EOS
 }
@@ -393,7 +393,7 @@ sub _sort_detector_output {
     }
 
     return 1;
-}   
+}
 
 
 sub params_for_detector_result {
@@ -487,7 +487,7 @@ sub _link_vcf_output_directory_to_result {
 # The position must be converted to the same position that a bed would consider the STOP position
 # This is used for intersecting the detector specific file with the bed version
 # Override this method in each detector if the format varies from this
-#TODO clean all of this up. It is usually/should be based on logic from Genome::Model::Tools::Bed::Convert logic in process_source... 
+#TODO clean all of this up. It is usually/should be based on logic from Genome::Model::Tools::Bed::Convert logic in process_source...
 # this should be smarter about using that work ... perhaps process_source should call a method that just parses one line, and this method can be replaced by a call to that instead
 sub parse_line_for_bed_intersection {
     my $class = shift;
