@@ -15,7 +15,7 @@ use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
 use JSON;
-use Genome::Utility::NamedArgs qw(named_args);
+use Params::Validate qw(:types);
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -1456,9 +1456,24 @@ sub shellcmd {
 }
 
 sub retry {
-    my %args = named_args(
-        args     => [@_],
-        required => [qw(callback retries delay)],
+    my %args = Params::Validate::validate(
+        @_, {
+            callback => { type => CODEREF },
+            retries  => {
+                type => SCALAR,
+                callbacks => {
+                    'is an integer' => sub { shift =~ /^\d+$/ },
+                    'is greater than zero' => sub { shift > 0 },
+                },
+            },
+            delay    => {
+                type => SCALAR,
+                callbacks => {
+                    'is an integer' => sub { shift =~ /^\d+$/ },
+                    'is greater than, or equal to, zero' => sub { shift >= 0 },
+                },
+            },
+        },
     );
 
     my $rv;
