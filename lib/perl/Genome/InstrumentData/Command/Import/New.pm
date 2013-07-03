@@ -236,7 +236,7 @@ sub _build_workflow_to_import_bam {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ working_directory source_files sample sample_name instrument_data_properties /],
+        input_properties => [qw/ working_directory source_bam_path sample instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
@@ -245,7 +245,7 @@ sub _build_workflow_to_import_bam {
     my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
-        left_property => 'source_files',
+        left_property => 'source_bam_path',
         right_operation => $sort_bam_op,
         right_property => 'unsorted_bam_path',
     );
