@@ -276,5 +276,70 @@ sub _build_workflow_to_import_bam {
     return $workflow;
 }
 
+sub _build_workflow_to_import_sra {
+    my $self = shift;
+
+    my $workflow = Workflow::Model->create(
+        name => 'Import Inst Data',
+        input_properties => [qw/ working_directory source_sra_path sample instrument_data_properties /],
+        output_properties => [qw/ instrument_data /],
+    );
+
+    my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+
+    my $get_sra_op = $helper->add_operation_to_workflow($workflow, 'get sra');
+    for my $property (qw/ working_directory source_sra_path /) {
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => $property,
+            right_operation => $get_sra_op,
+            right_property => $property,
+        );
+    }
+
+    my $sra_to_bam_op = $helper->add_operation_to_workflow($workflow, 'sra to bam');
+    for my $property (qw/ working_directory sra_path /) {
+        $workflow->add_link(
+            left_operation => $get_sra_op,
+            left_property => $property,
+            right_operation => $sra_to_bam_op,
+            right_property => $property,
+        );
+    }
+
+    my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
+    $workflow->add_link(
+        left_operation => $sra_to_bam_op,
+        left_property => 'bam_path',
+        right_operation => $sort_bam_op,
+        right_property => 'unsorted_bam_path',
+    );
+
+    my $create_instdata_and_copy_bam = $helper->add_operation_to_workflow($workflow, 'create instrument data and copy bam');
+    for my $property (qw/ sample instrument_data_properties /) {
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => $property,
+            right_operation => $create_instdata_and_copy_bam,
+            right_property => $property,
+        );
+    }
+    $workflow->add_link(
+        left_operation => $sort_bam_op,
+        left_property => 'sorted_bam_path',
+        right_operation => $create_instdata_and_copy_bam,
+        right_property => 'bam_path',
+    );
+
+    $workflow->add_link(
+        left_operation => $create_instdata_and_copy_bam,
+        left_property => 'instrument_data',
+        right_operation => $workflow->get_output_connector,
+        right_property => 'instrument_data',
+    );
+
+    return $workflow;
+}
+
 1;
 
