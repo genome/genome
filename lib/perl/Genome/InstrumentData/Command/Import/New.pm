@@ -53,12 +53,12 @@ sub execute {
     my $original_format = $self->_resolve_original_format;
     return if not $original_format;
 
-    my $inputs = $self->_gather_inputs;
-    return if not $inputs;
-
     my $method = '_build_workflow_to_import_'.$original_format;
     my $wf = $self->$method;
     return if not $wf;
+
+    my $inputs = $self->_gather_inputs($wf);
+    return if not $inputs;
 
     my $success = Workflow::Simple::run_workflow($wf, %$inputs);
     die 'Run wf failed!' if not $success;
@@ -113,12 +113,14 @@ sub _resolve_original_format {
     }
 
     $self->status_message('Resolve original format...done');
-    return $formats[0];
+    return $self->original_format($formats[0]);
 }
 
 sub _gather_inputs {
-    my $self = shift;
+    my ($self, $workflow) = @_;
 
+    Carp::confess('No work flow to gather inputs!') if not $workflow;
+    
     my @instrument_data_properties = $self->instrument_data_properties;
     for my $property (qw/ import_source_name description /) {
         my $value = $self->$property;
@@ -128,6 +130,7 @@ sub _gather_inputs {
 
     my @source_files = $self->source_files;
     push @instrument_data_properties, 'original_data_path='.join(',', $self->source_files);
+    my $source_file_alias = 'source_'.$self->original_format.'_path';
 
     my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
     if ( not $tmp_dir ) {
@@ -142,13 +145,15 @@ sub _gather_inputs {
     );
     return if not $space_available;
 
-    return {
+    my %possible_inputs = (
         working_directory => $tmp_dir,
         sample => $self->sample,
         sample_name => $self->sample->name,
         source_files => \@source_files,
+        $source_file_alias => ( @source_files > 1 ? \@source_files : $source_files[0] ),
         instrument_data_properties => \@instrument_data_properties,
-    };
+    );
+    return { map { $_ => $possible_inputs{$_} } @{$workflow->operation_type->input_properties} };
 }
 
 sub _build_workflow_to_import_fastq {
