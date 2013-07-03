@@ -725,6 +725,52 @@ $Genome::Command::OPTS_SPEC = [
     'help!',
     undef
   ],
+  '>analysis-project',
+  [
+    '>create',
+    [
+      'analysis-menu-item=s',
+      undef,
+      'name=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>delete',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
+    '>list',
+    [
+      'show=s',
+      'files',
+      'style=s',
+      [
+        'text',
+        'csv',
+        'tsv',
+        'pretty',
+        'html',
+        'xml',
+        'newtext'
+      ],
+      'csv-delimiter=s',
+      'files',
+      'noheaders!',
+      undef,
+      'order-by=s',
+      'files',
+      'filter=s',
+      'files',
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
   '>project',
   [
     '>create',
@@ -16784,6 +16830,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'input-file=s',
         'files',
+        'create-other!',
+        undef,
         'debug!',
         undef,
         'output-directory=s',
