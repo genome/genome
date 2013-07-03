@@ -16,7 +16,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::TransferFastqs {
             is => 'Text',
             doc => 'Detination directory for fastqs.',
         },
-        source_files => {
+        source_fastq_paths => {
             is => 'Text',
             is_many => 1,
             doc => 'Fastqs to transfer.',
@@ -30,7 +30,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::TransferFastqs {
         }, 
     ],
     has_optional_transient => [
-        source_files_and_read_counts => { is => 'Hash', default_value => {}, },
+        source_fastq_paths_and_read_counts => { is => 'Hash', default_value => {}, },
     ],
 };
 
@@ -40,8 +40,8 @@ sub execute {
 
     # Transfer
     my @fastq_paths;
-    for my $source_file ( $self->source_files ) {
-        my $fastq_path = $self->_transfer_fastq($source_file);
+    for my $source_fastq_path ( $self->source_fastq_paths ) {
+        my $fastq_path = $self->_transfer_fastq($source_fastq_path);
         return if not $fastq_path;
         push @fastq_paths, $fastq_path;
     }
@@ -90,8 +90,8 @@ sub _transfer_fastq {
     my $read_count = $self->_get_read_count_from_line_count_file($line_count_file);
     return if not $read_count;
     $self->status_message("Read count: $read_count");
-    my $source_files_and_read_counts = $self->source_files_and_read_counts;
-    $source_files_and_read_counts->{$fastq} = $read_count;
+    my $source_fastq_paths_and_read_counts = $self->source_fastq_paths_and_read_counts;
+    $source_fastq_paths_and_read_counts->{$fastq} = $read_count;
 
     return $fastq;
 }
@@ -128,9 +128,9 @@ sub _verify_read_counts {
     my $self = shift;
     $self->status_message('Verify read counts...');
 
-    my $source_files_and_read_counts = $self->source_files_and_read_counts;
-    $self->status_message('Source file read counts: '.Dumper($source_files_and_read_counts));
-    my @read_counts = List::MoreUtils::uniq( values %$source_files_and_read_counts );
+    my $source_fastq_paths_and_read_counts = $self->source_fastq_paths_and_read_counts;
+    $self->status_message('Source file read counts: '.Dumper($source_fastq_paths_and_read_counts));
+    my @read_counts = List::MoreUtils::uniq( values %$source_fastq_paths_and_read_counts );
     if ( @read_counts > 1 ) {
         $self->error_message('Read counts are not the same for source fastqs!');
         return;

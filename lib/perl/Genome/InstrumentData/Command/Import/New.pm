@@ -130,7 +130,12 @@ sub _gather_inputs {
 
     my @source_files = $self->source_files;
     push @instrument_data_properties, 'original_data_path='.join(',', $self->source_files);
-    my $source_file_alias = 'source_'.$self->original_format.'_path';
+    my $source_path_alias = 'source_'.$self->original_format.'_path';
+    my $source_paths = $source_files[0];
+    if ( @source_files > 1 ) {
+        $source_path_alias .= 's';
+        $source_paths = \@source_files;
+    }
 
     my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
     if ( not $tmp_dir ) {
@@ -149,8 +154,7 @@ sub _gather_inputs {
         working_directory => $tmp_dir,
         sample => $self->sample,
         sample_name => $self->sample->name,
-        source_files => \@source_files,
-        $source_file_alias => ( @source_files > 1 ? \@source_files : $source_files[0] ),
+        $source_path_alias => $source_paths,
         instrument_data_properties => \@instrument_data_properties,
     );
     return { map { $_ => $possible_inputs{$_} } @{$workflow->operation_type->input_properties} };
@@ -161,25 +165,21 @@ sub _build_workflow_to_import_fastq {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ working_directory source_files sample sample_name instrument_data_properties /],
+        input_properties => [qw/ working_directory source_fastq_paths sample sample_name instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
     my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
     my $transfer_fastqs_op = $helper->add_operation_to_workflow($workflow, 'transfer fastqs');
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'working_directory',
-        right_operation => $transfer_fastqs_op,
-        right_property => 'working_directory',
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'source_files',
-        right_operation => $transfer_fastqs_op,
-        right_property => 'source_files',
-    );
+    for my $property (qw/ working_directory source_fastq_paths /) {
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => $property,
+            right_operation => $transfer_fastqs_op,
+            right_property => $property,
+        );
+    }
 
     my $convert_to_bam_op = $helper->add_operation_to_workflow($workflow, 'convert fastqs to bam');
     for my $property (qw/ working_directory sample_name /) {
