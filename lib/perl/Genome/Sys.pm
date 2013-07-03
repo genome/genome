@@ -2,6 +2,7 @@ package Genome::Sys;
 
 use strict;
 use warnings;
+use autodie qw(chown mkdir);
 use Genome;
 use Cwd;
 use File::Path;
@@ -812,28 +813,42 @@ sub create_directory {
     # the directory to be created, not that it already existed
     return $directory if -d $directory;
 
-    my $errors;
     # have to set umask, make_path's mode/umask option is not sufficient
     my $umask = umask;
     umask 0002;
-    # make_path may throw its own exceptions...
-    File::Path::make_path($directory, { group => $ENV{GENOME_SYS_GROUP}, error => \$errors });
+    make_path($directory); # not from File::Path
     umask $umask;
 
-    if ($errors and @$errors) {
-        my $message = "create_directory for path $directory failed:\n";
-        foreach my $err ( @$errors ) {
-            my($path, $err_str) = %$err;
-            $message .= "Pathname " . $path ."\n".'General error' . ": $err_str\n";
-        }
-        Carp::croak($message);
-    }
-
-    unless (-d $directory) {
-        Carp::croak("No error from 'File::Path::make_path', but failed to create directory ($directory)");
-    }
-
     return $directory;
+}
+
+# File::Path::make_path says it lets you specify group but it always seemed
+# to be overrided by setgid.  So we are implenting the recursive mkdir here.
+sub make_path {
+    my $path = shift;
+
+    my $gid = gidgrnam($ENV{GENOME_SYS_GROUP});
+
+    my @dirs = File::Spec->splitdir($path);
+    for (my $i = 0; $i < @dirs; $i++) {
+        my $subpath = File::Spec->catdir(@dirs[0..$i]);
+
+        next if (-d $subpath);
+
+        # autodie is on
+        mkdir $subpath;
+        chown -1, $gid, $subpath;
+    }
+
+    unless (-d $path) {
+        die "directory does not exist: $path";
+    }
+
+}
+
+sub gidgrnam {
+    my $group_name = shift;
+    (getgrnam($group_name))[2];
 }
 
 sub create_symlink {
