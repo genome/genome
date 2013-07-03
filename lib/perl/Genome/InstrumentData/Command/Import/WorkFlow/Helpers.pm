@@ -246,6 +246,8 @@ sub load_flagstat {
     my ($self, $flagstat_path) = @_;
     $self->status_message('Load flagstat...');
 
+    Carp::confess('No flagstat path to load!') if not $flagstat_path;
+
     $self->status_message('Flafstat path: '.$flagstat_path);
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     if ( not $flagstat ) {
