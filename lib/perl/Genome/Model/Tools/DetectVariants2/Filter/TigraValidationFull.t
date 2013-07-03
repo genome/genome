@@ -12,7 +12,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 18;
+    plan tests => 19;
 }
 
 BEGIN {
@@ -21,6 +21,10 @@ BEGIN {
 };
 
 use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::TigraValidationFull');
+
+my $meta = Genome::Model::Tools::DetectVariants2::Filter::TigraValidationFull->__meta__;
+my $specify_chr = $meta->properties(property_name => 'specify_chr');
+is($specify_chr->valid_values, undef, "Valid values for specify_chr overridden correctly");
 
 my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-TigraValidationFull/';
 my $normal_bam  = $test_input_dir . 'normal.bam';
