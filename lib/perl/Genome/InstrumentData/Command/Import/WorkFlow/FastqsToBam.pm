@@ -43,7 +43,9 @@ sub execute {
     my $fastq_to_bam_ok = $self->_fastqs_to_bam;
     return if not $fastq_to_bam_ok;
 
-    #my $flagstat = Genome::InstrumentData::Command::Helpers->run_flagstat();
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $flagstat = $helpers->run_flagstat($self->bam_path);
+    return if not $flagstat;
 
     $self->status_message('Fastqs to bam...done');
     return 1;
