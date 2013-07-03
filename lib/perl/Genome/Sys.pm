@@ -1459,7 +1459,7 @@ sub retry {
     my %args = Params::Validate::validate(
         @_, {
             callback => { type => CODEREF },
-            retries  => {
+            tries  => {
                 type => SCALAR,
                 callbacks => {
                     'is an integer' => sub { shift =~ /^\d+$/ },
@@ -1477,8 +1477,8 @@ sub retry {
     );
 
     my $rv;
-    while ($args{retries} > 0) {
-        $args{retries}--;
+    while ($args{tries} > 0) {
+        $args{tries}--;
         $rv = $args{callback}->();
         last if $rv;
         sleep $args{delay};

@@ -133,7 +133,7 @@ sub _debug_rename {
 
     my $rename_success = Genome::Sys::retry(
         delay    => 30,
-        retries  => 3,
+        tries  => 3,
         callback => sub {
             my $rv = rename($current, $destination);
             my $error = $!;
