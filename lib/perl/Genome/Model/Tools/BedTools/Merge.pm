@@ -79,7 +79,7 @@ sub execute {
     if ($self->force_strandedness) {
         $options .= ' -s';
     }
-    my $cmd = $self->bedtools_path .'/bin/mergeBed '. $options .' -i '. $self->input_file .' > '. $self->output_file;
+    my $cmd = $self->bedtools_path .'/bin/mergeBed '. $options .' -i "'. $self->input_file .'" > "'. $self->output_file . '"';
     # Let's turn off the status message printing to STDERR
     Genome::Sys->shellcmd(
         cmd => $cmd,
