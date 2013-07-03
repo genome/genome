@@ -1009,7 +1009,7 @@ sub execute {
       #cnv calls - todo
 
       #tar it up
-      `tar -czvfh $sample_name.tar.gz $sample_name`;
+      `tar -chzvf $sample_name.tar.gz $sample_name`;
   }
 
   return 1;
