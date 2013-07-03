@@ -6890,6 +6890,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'input-file=s',
       'files',
+      'create-other!',
+      undef,
       'debug!',
       undef,
       'output-directory=s',
