@@ -543,6 +543,7 @@ sub _process_params_for_lookup_hash {
 }
 
 sub _modify_params_for_lookup_hash {
+    # overridden in some subclasses 
 }
 
 sub _resolve_object_id {
