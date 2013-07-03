@@ -3,7 +3,7 @@ package Genome::Model::Tools::Bed::ChromSort;
 use strict;
 use warnings;
 
-use Sort::Naturally;
+use Sort::Naturally qw(nsort);
 use Genome;
 use Data::Dumper;
 use Carp qw/confess/;
@@ -120,6 +120,7 @@ sub sort  {
         }
 
     }
+
     for my $chrom (keys %{$self->{tmpfiles}}){
         my $fh = $self->{tmpfiles}->{$chrom}->{fh};
         $fh->close if $fh;
