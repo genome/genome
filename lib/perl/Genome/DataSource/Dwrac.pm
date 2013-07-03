@@ -1,15 +1,15 @@
-package Genome::DataSource::Oltp;
+package Genome::DataSource::Dwrac;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::DataSource::Oltp {
+class Genome::DataSource::Dwrac {
     is => ['Genome::DataSource::OracleType'],
     has_classwide_constant => [
-        server  => { default_value => 'gscprod' },
+        server  => { default_value => 'dwrac' },
         login   => { default_value => 'gscuser' },
-        auth    => { default_value => 'g_user' },
+        auth    => { default_value => 'user_dw' },
         owner   => { default_value => 'GSC' },
     ],
 };
