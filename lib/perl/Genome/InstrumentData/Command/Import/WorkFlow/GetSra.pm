@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+require File::Basename;
+
 class Genome::InstrumentData::Command::Import::WorkFlow::GetSra { 
     is => 'Command::V2',
     has_input => [
@@ -19,11 +21,16 @@ class Genome::InstrumentData::Command::Import::WorkFlow::GetSra {
     ],
     has_output => [
         sra_path => {
-            is => 'Text',
-            calculate_from => [qw/ working_directory /],
-            calculate => q( return $working_directory.'/'; ),
+            calculate_from => [qw/ working_directory source_sra_base_name /],
+            calculate => q( return $working_directory.'/'.$source_sra_base_name; ),
             doc => 'Final retrieved sra path.',
         }, 
+    ],
+    has_optional_calculated => [
+        source_sra_base_name => {
+            calculate_from => [qw/ source_sra_path /],
+            calculate => q( return File::Basename::basename($source_sra_path); ),
+        },
     ],
 };
 
@@ -47,7 +54,7 @@ sub _get_sra {
 
     my $source_sra_path = $self->source_sra_path;
     $self->status_message('Source SRA path: '.$source_sra_path);
-    my $sra_path = $self->source_sra_path;
+    my $sra_path = $self->sra_path;
     $self->status_message('Destination SRA path: '.$sra_path);
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
