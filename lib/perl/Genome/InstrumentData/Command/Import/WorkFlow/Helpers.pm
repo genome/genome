@@ -53,7 +53,7 @@ sub add_operation_to_workflow {
 }
 #<>#
 
-#<MOVE>#
+#<MOVE and COPY>#
 sub move_file {
     my ($self, $from, $to) = @_;
 
@@ -73,6 +73,28 @@ sub move_file {
     }
 
     $self->status_message('Move file...done');
+    return 1;
+}
+
+sub copy_file {
+    my ($self, $from, $to) = @_;
+
+    $self->status_message('Copy file...');
+    my $from_sz = -s $from;
+    $self->status_message("From: $from");
+    $self->status_message("To: $to");
+    my $move_ok = File::Copy::copy($from, $to);
+    if ( not $move_ok ) {
+        $self->error_message('Copy failed!');
+        return;
+    }
+    my $to_sz = -s $to;
+    if ( not $to_sz or $to_sz != $from_sz ) {
+        $self->error_message("Copy succeeded, but destination size is diffeerent from original! $to_sz vs $from_sz");
+        return;
+    }
+
+    $self->status_message('Copy file...done');
     return 1;
 }
 #<>#
