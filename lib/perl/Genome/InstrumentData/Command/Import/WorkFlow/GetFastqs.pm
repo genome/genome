@@ -26,11 +26,8 @@ class Genome::InstrumentData::Command::Import::WorkFlow::GetFastqs {
         fastq_paths => {
             is => 'Text',
             is_many => 1,
-            doc => 'Final trtansferred fastq paths.',
+            doc => 'Retrieved fastq paths.',
         }, 
-    ],
-    has_optional_transient => [
-        source_fastq_paths_and_read_counts => { is => 'Hash', default_value => {}, },
     ],
 };
 
@@ -85,50 +82,20 @@ sub _transfer_fastq {
         return;
     }
 
-    my $read_count = $self->_get_read_count_from_line_count_file($line_count_file);
-    return if not $read_count;
-    $self->status_message("Read count: $read_count");
-    my $source_fastq_paths_and_read_counts = $self->source_fastq_paths_and_read_counts;
-    $source_fastq_paths_and_read_counts->{$fastq} = $read_count;
-
-    return $fastq;
-}
-
-sub _get_read_count_from_line_count_file {
-    my ($self, $file) = @_;
-
-    my $line_count = eval{ Genome::Sys->read_file($file); };
-    if ( not defined $line_count ) {
-        $self->error_message('Failed to open line count file! '.$@);
-        return;
-    }
-
-    $line_count =~ s/\s+//g;
-    if ( $line_count !~ /^\d+$/ ) {
-        $self->error_message('Invalid line count! '.$line_count);
-        return;
-    }
-
-    if ( $line_count == 0 ) {
-        $self->error_message('Read count is 0!');
-        return;
-    }
-
-    if ( $line_count % 4 != 0 ) {
-        $self->error_message('Line count is not divisible by 4! '.$line_count);
-        return;
-    }
-
-    return $line_count / 4;
+    return $destination_file;
 }
 
 sub _verify_read_counts {
     my $self = shift;
     $self->status_message('Verify read counts...');
 
-    my $source_fastq_paths_and_read_counts = $self->source_fastq_paths_and_read_counts;
-    $self->status_message('Source file read counts: '.Dumper($source_fastq_paths_and_read_counts));
-    my @read_counts = List::MoreUtils::uniq( values %$source_fastq_paths_and_read_counts );
+    my @fastq_paths = $self->fastq_paths;
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $fastq_paths_and_read_counts = $helpers->load_read_count_for_fastq_paths(@fastq_paths);
+    return if not $fastq_paths_and_read_counts;
+
+    $self->status_message('Source file read counts: '.Dumper($fastq_paths_and_read_counts));
+    my @read_counts = List::MoreUtils::uniq( values %$fastq_paths_and_read_counts );
     if ( @read_counts > 1 ) {
         $self->error_message('Read counts are not the same for source fastqs!');
         return;

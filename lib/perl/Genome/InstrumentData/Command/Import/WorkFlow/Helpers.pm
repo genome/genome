@@ -268,5 +268,55 @@ sub load_flagstat {
 }
 #<>#
 
+#<READ COUNT>#
+sub load_read_count_for_fastq_paths {
+    my ($self, @fastq_paths) = @_;
+
+    Carp::confess('No fastq paths to load read counts!') if not @fastq_paths;
+
+    my %fastq_paths_and_read_counts;
+    for my $fastq_path ( @fastq_paths ) {
+        my $line_count_path = $fastq_path.'.count';
+        if ( not -s $line_count_path ) {
+            $self->error_message('No line count path for fastq path! '.$fastq_path);
+            return;
+        }
+        my $read_count = $self->load_read_count_from_line_count_path($line_count_path);
+        return if not defined $read_count;
+        $fastq_paths_and_read_counts{$fastq_path} = $read_count;
+    }
+
+    return \%fastq_paths_and_read_counts;
+}
+
+sub load_read_count_from_line_count_path {
+    my ($self, $line_count_path) = @_;
+
+    my $line_count = eval{ Genome::Sys->read_file($line_count_path); };
+    if ( not defined $line_count ) {
+        $self->error_message('Failed to open line count file! '.$@);
+        return;
+    }
+
+    $line_count =~ s/\s+//g;
+    if ( $line_count !~ /^\d+$/ ) {
+        $self->error_message('Invalid line count! '.$line_count);
+        return;
+    }
+
+    if ( $line_count == 0 ) {
+        $self->error_message('Read count is 0!');
+        return;
+    }
+
+    if ( $line_count % 4 != 0 ) {
+        $self->error_message('Line count is not divisible by 4! '.$line_count);
+        return;
+    }
+
+    return $line_count / 4;
+}
+#<>#
+
 1;
 
