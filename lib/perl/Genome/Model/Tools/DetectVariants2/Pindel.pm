@@ -49,19 +49,6 @@ class Genome::Model::Tools::DetectVariants2::Pindel {
     ],
 };
 
-sub shortcut {
-    my $self = shift;
-
-    my $shortcut = $self->SUPER::_shortcut_body();
-    return $shortcut if $shortcut;
-
-    #HACK ATTACK
-    #Since this task is primarily a workflow server,
-    #go ahead and run it inline on the parent server
-    return $self->_execute_body();
-}
-
-
 sub _detect_variants {
     my $self = shift;
     # Obtain normal and tumor bams and check them. Either from somatic model id or from direct specification. 
