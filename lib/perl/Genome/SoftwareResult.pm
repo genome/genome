@@ -175,8 +175,8 @@ sub get_with_lock {
     my @objects = $class->_faster_get(@_);
     unless (@objects) {
         my $subclass = $params_processed->{subclass};
-        unless ($lock = $subclass->_lock(%is_input, %is_param)) {
-            die "Failed to get a lock for " . Dumper(\%is_input,\%is_param);
+        unless ($lock = $subclass->_lock(@_)) {
+            die "Failed to get a lock for " . Dumper(@_);
         }
 
         UR::Context->current->reload($class,
@@ -283,8 +283,8 @@ sub create {
     }
 
     my $lock;
-    unless ($lock = $class->_lock(%is_input, %is_param)) {
-        die "Failed to get a lock for " . Dumper(\%is_input,\%is_param);
+    unless ($lock = $class->_lock(@_)) {
+        die "Failed to get a lock for " . Dumper(@_);
     }
 
     # TODO; if an exception occurs before this is assigned to the object, we'll have a stray lock
@@ -808,28 +808,9 @@ sub _unlock {
 sub _resolve_lock_name {
     my $class = shift;
     my $class_string = $class->class;
-    $class_string =~ s/\:/\-/g;
 
-    my $be = UR::BoolExpr->resolve_normalized($class, @_);
-    my @params = $be->params_list;
-    my @converted_params;
-    for my $p (@params) {
-        if(ref($p) and $p->isa('UR::Object')) {
-            #the object itself as a string has its memory location, which varies in each process,
-            #so convert it to something constant
-            push @converted_params, $p->class . '_' . $p->id;
-        } else {
-            push @converted_params, $p;
-        }
-    }
-    no warnings;
-    my $params_and_inputs_list= join "___", @converted_params;
-    # sub out dangerous directory separators
-    $params_and_inputs_list =~ s/\//\./g;
-    use warnings;
-    my $params_and_inputs_list_hash = md5_hex($params_and_inputs_list);
-
-    my $resource_lock_name = $ENV{GENOME_LOCK_DIR} . "/genome/$class_string/" .  $params_and_inputs_list_hash;
+    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
+    my $resource_lock_name = $ENV{GENOME_LOCK_DIR} . "/genome/$class_string/" .  $lookup_hash;
 }
 
 # override _resolve_lock_name (for testing) to append username and time
