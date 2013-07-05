@@ -50,7 +50,7 @@ sub create {
     $self->_prepare_output_directory();
     $self->_prepare_staging_directory();
 
-    my ($bowtie_version, $reuse_bam, $c_opts) = $self->_reolve_options($self->detector_params);
+    my ($bowtie_version, $reuse_bam, $c_opts) = $self->_resolve_options($self->detector_params);
 
     my ($fastq1, $fastq2, $qname_sorted_bam) = $self->_resolve_original_files($reuse_bam);
     my $index_dir = $self->_resolve_index_dir($bowtie_version);
@@ -127,7 +127,7 @@ sub _resolve_original_fasta_files {
 }
 
 # return our options (hash) and the options for chimerascan (string)
-sub _reolve_options {
+sub _resolve_options {
     my ($self, $params) = @_;
 
     my %our_opts;
