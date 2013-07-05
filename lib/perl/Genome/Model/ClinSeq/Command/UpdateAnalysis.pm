@@ -801,11 +801,41 @@ sub get_roi_name{
 
 
 #Compare instrument data on a model to that available for the sample (exome or wgs) and warn if data is missing
-sub check_for_missing_data{
+sub check_for_missing_and_excluded_data{
   my $self = shift;
   my %args = @_;
   my @models = @{$args{'-models'}};
   my @sample_instrument_data = @{$args{'-sample_instrument_data'}};
+
+  #Before doing anything, exclude models that have any instrument data that is supposed to be excluded
+  if ($self->instrument_data_to_exclude){
+    my @models_without_excluded_data;
+    
+    #Check format of list of data to exclude
+    my @exclude_list = split(",", $self->instrument_data_to_exclude);
+    unless (scalar(@exclude_list)){
+      $self->error_message("Could not obtain instrument data IDs from list supplied by --instrument_data_to_exclude");
+      exit 1;
+    }
+
+    foreach my $model (@models){
+      my $found_excluded_data = 0;
+      my @model_instrument_data = $model->instrument_data;
+
+      foreach my $model_instrument_data (@model_instrument_data){
+        my $mid = $model_instrument_data->id;
+        foreach my $eid (@exclude_list){
+          if ($eid == $mid){
+            $found_excluded_data++;
+          }
+        }
+      }
+      unless ($found_excluded_data){
+        push(@models_without_excluded_data, $model);
+      }
+    }
+    @models = @models_without_excluded_data;
+  }
 
   my @final_models1;
   my $complete_model = 0; #Is there at least one model that is not missing any data?
@@ -1035,7 +1065,7 @@ sub check_ref_align_models{
 
   #Make sure all the wgs or exome data is associated with the model
   #In both wgs and exome models, additional data will be allowed to handle weird situations.  
-  @final_models = @{$self->check_for_missing_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
+  @final_models = @{$self->check_for_missing_and_excluded_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
 
   my $final_model_count = scalar(@final_models);
   $self->status_message("\tFound " . $final_model_count . " suitable $data_type models (matching default or user specified criteria):");
@@ -1099,6 +1129,7 @@ sub check_rnaseq_models{
   #- return if there is no data of the desired type
   my @sample_instrument_data = $sample->instrument_data;
   @sample_instrument_data = @{$self->exclude_instrument_data('-instrument_data'=>\@sample_instrument_data)};
+
   unless (scalar(@sample_instrument_data)){
     $self->status_message("\tCould not find any rna-seq data");
     return @tmp;
@@ -1119,7 +1150,7 @@ sub check_rnaseq_models{
   }
 
   #Make sure all the rna-seq data is associated with the model
-  @final_models = @{$self->check_for_missing_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
+  @final_models = @{$self->check_for_missing_and_excluded_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
 
   my $final_model_count = scalar(@final_models);
   $self->status_message("\tFound " . $final_model_count . " suitable $tissue_type rna-seq models (matching default or user specified criteria):");
