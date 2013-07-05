@@ -23,7 +23,7 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
             is => 'String',
             is_input => 1,
             is_optional => 1,
-            doc => '.tsv file consiting of 2 entries per line: label and input file path',
+            doc => '.tsv file consiting of 2 entries per line: label and input file path. The input files should consist of 4-column, tab-separated bed files (chr start stop ref/var)',
         },
         somatic_id => {
             is  => 'String',
@@ -105,7 +105,7 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
 };
 
 sub help_brief {
-    "Given an annotation file, gives an output of transition/transversion, cpg islands, and cpgs within cpg islands.";
+    "Given lists of variants, produces an output of transition/transversion numbers and plots of these values";
 }
 
 sub help_synopsis {
