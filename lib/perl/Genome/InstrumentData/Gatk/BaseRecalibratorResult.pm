@@ -23,7 +23,7 @@ class Genome::InstrumentData::Gatk::BaseRecalibratorResult {
 
 sub resolve_allocation_kilobytes_requested {
     my $self = shift;
-    my $kb_requested = -s $self->input_bam_file;
+    my $kb_requested = -s $self->input_bam_path;
     return int($kb_requested / 1024 * .2);
 }
 
@@ -53,7 +53,7 @@ sub _run_base_recalibrator {
     my $recalibration_table_file = $self->recalibration_table_file;
     my %base_recalibrator_params = (
         version => $self->version,
-        input_bam => $self->input_bam_file,
+        input_bam => $self->input_bam_path,
         reference_fasta => $self->reference_fasta,
         output_recalibration_table => $recalibration_table_file,
     );

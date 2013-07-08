@@ -40,9 +40,9 @@ ok($base_recalibrator, 'created gatk indel realigner');
 
 # Outputs
 ok($base_recalibrator->base_recalibrator_result, 'base recalibrator result');
-is($base_recalibrator->bam_file, $base_recalibrator->output_dir.'/'.$base_recalibrator->id.'.bam', 'bam file named correctly');
-ok(-s $base_recalibrator->bam_file, 'bam file exists');#bam produced is the same except for the knowns file in the header
-ok(-s $base_recalibrator->bam_file.'.bai', 'bam index exists');
+is($base_recalibrator->bam_path, $base_recalibrator->output_dir.'/'.$base_recalibrator->id.'.bam', 'bam file named correctly');
+ok(-s $base_recalibrator->bam_path, 'bam file exists');#bam produced is the same except for the knowns file in the header
+ok(-s $base_recalibrator->bam_path.'.bai', 'bam index exists');
 ok(-s $base_recalibrator->bam_flagstat_file, 'bam flagstat file exists');
 Genome::Utility::Test::compare_ok($base_recalibrator->bam_flagstat_file, $result_data_dir.'/expected.bam.flagstat', 'flagstat matches');
 

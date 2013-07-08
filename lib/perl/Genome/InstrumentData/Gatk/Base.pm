@@ -8,7 +8,7 @@ use Genome;
 class Genome::InstrumentData::Gatk::Base {
     is => 'Genome::InstrumentData::AlignedBamResult',
     has_input => [
-        bam_source => { # PROVIDES bam_file SHOULD be in aligned bam result, but would be incompatible with AR::Merged
+        bam_source => { # PROVIDES bam_path SHOULD be in aligned bam result, but would be incompatible with AR::Merged
             is => 'Genome::InstrumentData::AlignedBamResult',
         },
     ],
@@ -22,9 +22,9 @@ class Genome::InstrumentData::Gatk::Base {
     has_constant => [
         _tmpdir => {  calculate => q| return File::Temp::tempdir(CLEANUP => 1); |, },
         # from inputs
-        input_bam_file => { 
+        input_bam_path => { 
             via => 'bam_source',
-            to => 'bam_file', 
+            to => 'bam_path', 
         },
     ],
 };
@@ -44,7 +44,7 @@ sub resolve_allocation_subdirectory {
 
 sub resolve_allocation_kilobytes_requested {
     my $self = shift;
-    my $kb_requested = -s $self->input_bam_file;
+    my $kb_requested = -s $self->input_bam_path;
     return int($kb_requested / 1024 * 1.5);
 }
 

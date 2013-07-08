@@ -41,7 +41,7 @@ sub create {
     my $print_reads = $self->_print_reads;
     return if not $print_reads;
 
-    my $run_flagstat = $self->run_flagstat_on_output_bam_file;
+    my $run_flagstat = $self->run_flagstat_on_output_bam_path;
     return if not $run_flagstat;
 
     my $allocation = $self->disk_allocations;
@@ -83,12 +83,12 @@ sub _print_reads {
     my $self = shift;
     $self->status_message('Print reads...');
             
-    my $bam_file = $self->bam_file;
+    my $bam_path = $self->bam_path;
     my $print_reads = Genome::Model::Tools::Gatk::PrintReads->create(
         version => $self->version,
-        input_bams => [ $self->input_bam_file ],
+        input_bams => [ $self->input_bam_path ],
         reference_fasta => $self->reference_fasta,
-        output_bam => $bam_file,
+        output_bam => $bam_path,
         bqsr => $self->base_recalibrator_result->recalibration_table_file,
     );
     if ( not $print_reads ) {
@@ -100,11 +100,11 @@ sub _print_reads {
         return;
     }
 
-    if ( not -s $bam_file ) {
+    if ( not -s $bam_path ) {
         $self->error_message('Ran print reads, but failed to create the output bam!');
         return;
     }
-    $self->status_message('Bam file: '.$bam_file);
+    $self->status_message('Bam file: '.$bam_path);
 
     $self->status_message('Print reads...done');
     return 1;

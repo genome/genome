@@ -47,7 +47,7 @@ sub create {
     my $realign_indels = $self->_realign_indels;
     return if not $realign_indels;
 
-    my $run_flagstat = $self->run_flagstat_on_output_bam_file;
+    my $run_flagstat = $self->run_flagstat_on_output_bam_path;
     return if not $run_flagstat;
 
     my $allocation = $self->disk_allocations;
@@ -63,7 +63,7 @@ sub _create_targets {
     my $intervals_file = $self->intervals_file;
     my %target_creator_params = (
         version => $self->version,
-        input_bam => $self->input_bam_file,
+        input_bam => $self->input_bam_path,
         reference_fasta => $self->reference_fasta,
         output_intervals => $intervals_file,
     );
@@ -95,13 +95,13 @@ sub _realign_indels {
     my $self = shift;
     $self->status_message('Run indel realigner...');
 
-    my $bam_file = $self->bam_file;
+    my $bam_path = $self->bam_path;
     my %realigner_params = (
         version => $self->version,
-        input_bam => $self->input_bam_file,
+        input_bam => $self->input_bam_path,
         reference_fasta => $self->reference_fasta,
         target_intervals => $self->intervals_file,
-        output_realigned_bam => $bam_file,
+        output_realigned_bam => $bam_path,
         index_bam => 1,
         target_intervals_are_sorted => 1,
     );
@@ -119,11 +119,11 @@ sub _realign_indels {
         return;
     }
 
-    if ( not -s $bam_file ) {
+    if ( not -s $bam_path ) {
         $self->error_message('Ran indel realigner, but failed to create the output bam!');
         return;
     }
-    $self->status_message('Bam file: '.$bam_file);
+    $self->status_message('Bam file: '.$bam_path);
 
     $self->status_message('Run indel realigner...done');
     return 1;

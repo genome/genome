@@ -23,30 +23,30 @@ class Genome::InstrumentData::AlignedBamResult {
             calculate => q| return $reference_build->full_consensus_path('fa'); |, 
         },
         # from output
-        bam_file => { 
+        bam_path => { # this is called bam_file in merged
             is_output => 1,
             calculate => q| return $self->output_dir.'/'.$self->id.'.bam'; |, 
         },
         bam_flagstat_file => {
-            calculate_from => [qw/ bam_file /],
-            calculate => q| return $bam_file.'.flagstat'; |,
+            calculate_from => [qw/ bam_path /],
+            calculate => q| return $bam_path.'.flagstat'; |,
         },
     ],
 };
 
-sub run_flagstat_on_output_bam_file {
+sub run_flagstat_on_output_bam_path {
     my $self = shift;
     $self->status_message('Run flagstat on output bam file...');
 
-    my $bam_file = $self->bam_file;
-    if ( not $bam_file or not -s $bam_file ) {
+    my $bam_path = $self->bam_path;
+    if ( not $bam_path or not -s $bam_path ) {
         $self->error_message('Bam file not set or does not exist!');
         return;
     }
 
     my $flagstat_file = $self->bam_flagstat_file;
     $self->status_message("Flagstat file: $flagstat_file");
-    my $cmd = "samtools flagstat $bam_file > $flagstat_file";
+    my $cmd = "samtools flagstat $bam_path > $flagstat_file";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $flagstat_file ) {
         $self->error_message($@) if $@;
@@ -57,7 +57,7 @@ sub run_flagstat_on_output_bam_file {
     $self->status_message('Flagstat output:');
     $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
     if ( not $flagstat->{total_reads} > 0 ) {
-        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_file);
+        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_path);
         return;
     }
 
