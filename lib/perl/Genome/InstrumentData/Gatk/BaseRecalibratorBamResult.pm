@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Genome::InstrumentData::Gatk::BaseRecalibratorResult;
+require File::Path;
 
 # recalibrator result
 #  bam [from indel realigner]
@@ -24,6 +25,12 @@ class Genome::InstrumentData::Gatk::BaseRecalibratorBamResult {
         base_recalibrator_result => { is => 'Genome::InstrumentData::Gatk::BaseRecalibratorResult', },
     ],
 };
+
+sub resolve_allocation_kilobytes_requested {
+    my $self = shift;
+    my $kb_requested = -s $self->input_bam_path;
+    return int($kb_requested / 1024 * 7);
+}
 
 sub create {
     my $class = shift;
@@ -82,7 +89,14 @@ sub _get_or_create_base_recalibrator_result {
 sub _print_reads {
     my $self = shift;
     $self->status_message('Print reads...');
-            
+    
+    my $tmp_dir = $self->output_dir.'/tmp';
+    my $mkdir = eval{ Genome::Sys->create_directory($tmp_dir); };
+    if ( not $mkdir ) {
+        $self->error_message('Failed to maketmp directory!');
+        return;
+    }
+
     my $bam_path = $self->bam_path;
     my $print_reads = Genome::Model::Tools::Gatk::PrintReads->create(
         version => $self->version,
@@ -90,6 +104,7 @@ sub _print_reads {
         reference_fasta => $self->reference_fasta,
         output_bam => $bam_path,
         bqsr => $self->base_recalibrator_result->recalibration_table_file,
+        tmp_dir => $tmp_dir,
     );
     if ( not $print_reads ) {
         $self->error_message('Failed to create print reads!');
@@ -105,6 +120,8 @@ sub _print_reads {
         return;
     }
     $self->status_message('Bam file: '.$bam_path);
+
+    File::Path::rmtree($tmp_dir);
 
     $self->status_message('Print reads...done');
     return 1;

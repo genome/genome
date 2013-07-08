@@ -54,7 +54,7 @@ is(
 );
 is(
     $base_recalibrator->resolve_allocation_kilobytes_requested,
-    34,
+    160,
     'resolve_allocation_kilobytes_requested',
 );
 like(
@@ -63,6 +63,5 @@ like(
     'resolve_allocation_subdirectory',
 );
 
-#print $base_recalibrator->_tmpdir."\n";
 #print $base_recalibrator->output_dir."\n"; <STDIN>;
 done_testing();
