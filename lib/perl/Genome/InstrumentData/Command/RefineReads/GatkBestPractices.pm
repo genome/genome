@@ -147,7 +147,7 @@ sub _params_for_base_recalibrator_bam_result {
         $self->error_message('No indel aligner result set!');
         return;
     }
-    $base_recalibrator_params{bam_source} = $indel_realigner_result->bam_source;
+    $base_recalibrator_params{bam_source} = $indel_realigner_result;
 
     return %base_recalibrator_params;
 }
