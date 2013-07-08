@@ -144,8 +144,8 @@ sub _resolve_options {
 
             $our_opts{$name} = $val;
         } else {
-            die(sprintf("Couldn't find parameter named \"%s\" in \"%s\"",
-                    $name, $params || ''));
+            my $t = q(Could not find parameter named '%s' in param string '%s');
+            die(sprintf($t, $name, $params || ''));
         }
     }
     return ($our_opts{'--bowtie-version'}, $our_opts{'--reuse-bam'}, $params);
