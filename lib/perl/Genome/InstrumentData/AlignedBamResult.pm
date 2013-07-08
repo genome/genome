@@ -27,6 +27,11 @@ class Genome::InstrumentData::AlignedBamResult {
             is_output => 1,
             calculate => q| return $self->output_dir.'/'.$self->id.'.bam'; |, 
         },
+        bam_file => { # alias
+          is => 'Text',
+          via => '__self__',
+          to => 'bam_path',
+        },
         bam_flagstat_file => {
             calculate_from => [qw/ bam_path /],
             calculate => q| return $bam_path.'.flagstat'; |,
