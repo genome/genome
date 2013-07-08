@@ -21,7 +21,7 @@ class Genome::InstrumentData::Command::RefineReads::GatkBestPractices {
     ],
     has_optional_transient => [
         indel_realigner_result => { is => 'Genome::InstrumentData::Gatk::IndelRealignerResult', },
-        base_recalibrator_result => { is => 'Genome::InstrumentData::Gatk::BaseRecalibratorBamResult', },
+        base_recalibrator_bam_result => { is => 'Genome::InstrumentData::Gatk::BaseRecalibratorBamResult', },
     ],
 };
 
@@ -44,7 +44,7 @@ sub shortcut {
     }
 
     $self->status_message('Shortcut...OK');
-    return 1;
+    return $base_recalibrator_result;
 }
 
 sub execute {
@@ -62,14 +62,14 @@ sub execute {
     }
 
     # [Get or] Create base recalibrator result
-    my $base_raclibrator_result = $self->_get_or_create_base_recalibrator_result;
-    if ( not $base_raclibrator_result ) {
+    my $base_recalibrator_result = $self->_get_or_create_base_recalibrator_result;
+    if ( not $base_recalibrator_result ) {
         $self->error_message('Failed to create base recalibrator result!');
         return;
     }
 
     $self->status_message('Execute...OK');
-    return 1;
+    return $base_recalibrator_result;
 }
 
 sub _load_result {
@@ -106,11 +106,11 @@ sub _get_or_create_indel_realigner_result {
     return $_[0]->_load_result('indel realigner', 'get_or_create');
 }
 sub _get_base_recalibrator_result {
-    return $_[0]->_load_result('base recalibrator', 'get_with_lock');
+    return $_[0]->_load_result('base recalibrator bam', 'get_with_lock');
 }
 
 sub _get_or_create_base_recalibrator_result {
-    return $_[0]->_load_result('base recalibrator', 'get_or_create');
+    return $_[0]->_load_result('base recalibrator bam', 'get_or_create');
 }
 
 sub _common_params_for_gatk_results {
@@ -119,7 +119,7 @@ sub _common_params_for_gatk_results {
     my %params = (
         version => $self->version,
         reference_build => $self->bam_source->reference_build,
-        known_sites => $self->known_sites,
+        known_sites => [$self->known_sites],
     );
 
     return %params;
@@ -136,7 +136,7 @@ sub _params_for_indel_realigner_result {
     return %indel_realigner_params;
 }
 
-sub _params_for_base_recalibrator_result {
+sub _params_for_base_recalibrator_bam_result {
     my $self = shift;
 
     my %base_recalibrator_params = $self->_common_params_for_gatk_results;

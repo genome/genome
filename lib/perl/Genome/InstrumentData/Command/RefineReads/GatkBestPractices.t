@@ -25,7 +25,7 @@ my $reference_build = $gatk_test->reference_build;
 my %params = (
     version => 2.4,
     bam_source => $bam_source,
-    known_sites => [ $gatk_test->known_site ],
+    known_sites => $gatk_test->known_site,
 );
 
 # Shortcut [fails as expected]
@@ -36,14 +36,14 @@ ok(!$gatk_best_practices->shortcut, 'shortcut failed as expected');
 # Execute
 ok($gatk_best_practices->execute, 'execute');
 ok($gatk_best_practices->indel_realigner_result, 'indel_realigner_result set');
-ok($gatk_best_practices->base_recalibrator_result, 'base_Recalibrator_result set');
+ok($gatk_best_practices->base_recalibrator_bam_result, 'base_recalibrator_bam_result set');
 
 # Shortcut, again
 my $gatk_best_practices_shortcut = Genome::InstrumentData::Command::RefineReads::GatkBestPractices->create(%params);
 ok($gatk_best_practices_shortcut, 'create');
 ok($gatk_best_practices_shortcut->shortcut, 'shortcut');
 is($gatk_best_practices_shortcut->indel_realigner_result, $gatk_best_practices->indel_realigner_result, 'indel_realigner_result matches');
-is($gatk_best_practices_shortcut->base_recalibrator_result, $gatk_best_practices->base_recalibrator_result, 'base_recalibrator_result matches');
+is($gatk_best_practices_shortcut->base_recalibrator_bam_result, $gatk_best_practices->base_recalibrator_bam_result, 'base_recalibrator_bam_result matches');
 
 #print $gatk_best_practices->indel_realigner_result->output_dir."\n"; <STDIN>;
 #print $gatk_best_practices->base_recalibrator->output_dir."\n"; <STDIN>;
