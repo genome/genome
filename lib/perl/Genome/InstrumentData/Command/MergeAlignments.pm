@@ -221,9 +221,13 @@ sub _process_refinement {
         bam_source => $merged_result
     );
 
-    my $cmd = $self->_refiner_for_name($self->refiner_name);
-
-    my $result = eval { $cmd->$mode(); };
+    my $cmd_class_name = $self->_refiner_for_name($self->refiner_name);
+    my $cmd = $cmd_class_name->create(%params);
+    if ( not $cmd ) {
+        $self->error_message("Failed to create refiner command $cmd_class_name with params ".Data::Dumper::Dumper(\%params));
+        return;
+    }
+    my $result = eval { $cmd->$mode; };
     if($@) {
         $self->error_message($mode . ': ' . $@);
         return;
