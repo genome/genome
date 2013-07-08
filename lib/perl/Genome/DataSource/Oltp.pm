@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::DataSource::Oltp {
-    is => ['Genome::DataSource::OracleType'],
+    is => ['Genome::DataSource::OracleType', 'Genome::DataSource::CommonRDBMS'],
     has_classwide_constant => [
         server  => { default_value => 'gscprod' },
         login   => { default_value => 'gscuser' },

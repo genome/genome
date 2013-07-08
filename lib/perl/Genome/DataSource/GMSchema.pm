@@ -9,6 +9,15 @@ use DBD::Pg;
 use IO::Socket;
 use List::MoreUtils qw(any);
 
+use Genome::DataSource::CommonRDBMS qw(log_error log_commit_time);
+# NOTE - these are candidates for removal after making this class inherit
+# from Genome::DS::CommonRDBMS
+#
+# create_iterator_closure_for_rule
+# create_dbh
+# pause_db_queries_if_necessary
+# pause_db_if_necessary
+# _sync_database - the pause part, maybe not that splitting/forking part
 
 class Genome::DataSource::GMSchema {
     is => ['UR::DataSource::RDBMSRetriableOperations', 'UR::DataSource::Oracle'],
@@ -222,111 +231,6 @@ sub _sync_database {
     }
 
     return 1;
-}
-
-sub log_error {
-    my $error = shift;
-    my $log_string = create_log_message($error);
-    my $log_fh = open_error_log();
-    # If we can't get a file handle to the log file, no worries. Just continue without making a peep.
-    if ($log_fh) {
-        my $lock_status = File::lockf::lock($log_fh);
-        # this returns 0 on success
-        unless ($lock_status != 0) {
-            $log_fh->print("$log_string\n");
-            File::lockf::ulock($log_fh);
-        }
-        $log_fh->close;
-    }
-}
-
-sub log_commit_time {
-    my($db_name, $time) = @_;
-
-    my $original_cmdline = get_command_line();
-    my $execution_id = $ENV{'GENOME_EXECUTION_ID'} || '';
-
-    my $path = _determine_base_log_pathname();
-    $path .= "-${db_name}.timing";
-    my $fh = IO::File->new($path,'>>');
-    unless ($fh) {
-        print STDERR "Couldn't open $path for appending: $!\n";
-        return;
-    }
-    chmod(0666,$path);
-    my $lock_status = File::lockf::lock($fh);
-    # lock gives us a zero return value on success
-    unless ($lock_status != 0) {
-        $fh->print(join("\t",$THIS_COMMIT_ID, $execution_id, $time, $original_cmdline) . "\n");
-        File::lockf::ulock($fh);
-    }
-    $fh->close();
-}
-
-
-sub get_command_line {
-    my @commands;
-    if ($INC{'Command/V2.pm'}) {
-        push @commands, Command::V2->get('original_command_line true' => 1);
-    }
-    if ($INC{'Command/V1.pm'}) {
-        push @commands, Command::V1->get('original_command_line true' => 1);
-    }
-    @commands = sort { $a->id cmp $b->id } @commands;
-    my $original_cmdline = $commands[0] ? $commands[0]->original_command_line : $0;
-
-    return $original_cmdline;
-}
-
-
-sub create_log_message {
-    my $error = shift;
-
-    require DateTime;
-    my $dt = DateTime->now(time_zone => 'America/Chicago');
-    my $date = $dt->ymd;
-    my $time = $dt->hms;
-    my $user = Genome::Sys->username;
-    my $acting_user = getlogin();
-    my $perl_path = $^X;
-
-    my $original_cmdline = get_command_line();
-
-    my $path = _determine_base_log_pathname();
-
-    require Sys::Hostname;
-    my $host = Sys::Hostname::hostname();
-
-    my $string = join("\n", join(',', $date, $time, $host, $user, $acting_user, $perl_path, $original_cmdline, $THIS_COMMIT_ID), $error);
-    return $string;
-}
-
-sub _determine_base_log_pathname {
-    require DateTime;
-    my $dt = DateTime->now(time_zone => 'America/Chicago');
-    my $date = $dt->ymd;
-
-    my $base_dir = '/gsc/var/log/genome/postgres/';
-    my $dir = join('/', $base_dir, $dt->year);
-    unless (-d $dir) {
-        mkdir $dir;
-        chmod(0777, $dir);
-    }
-
-    my $file = join('-', $dt->month, $dt->day);
-    return join('/',$dir, $file);
-}
-
-sub open_error_log {
-    my $path = _determine_base_log_pathname();
-    $path .= '.log';
-    my $fh = IO::File->new($path, '>>');
-    unless ($fh) {
-        print STDERR "Couldn't open $path for appending: $!\n";
-        return;
-    }
-    chmod(0666,$path);
-    return $fh;
 }
 
 

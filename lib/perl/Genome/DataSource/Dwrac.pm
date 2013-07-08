@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::DataSource::Dwrac {
-    is => ['Genome::DataSource::OracleType'],
+    is => ['Genome::DataSource::OracleType', 'Genome::DataSource::CommonRDBMS'],
     has_classwide_constant => [
         server  => { default_value => 'dwrac' },
         login   => { default_value => 'gscuser' },
