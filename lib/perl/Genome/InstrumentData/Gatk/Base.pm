@@ -29,6 +29,22 @@ class Genome::InstrumentData::Gatk::Base {
     ],
 };
 
+sub instrument_data { # SHOULD be in AlignedBamResult, but would be incompatible with AR::Merged
+    my $original_source = shift;
+
+    do {
+        $original_source = $original_source->bam_source
+    } until not $original_source->can('bam_source');
+
+    if ( $original_source->isa('Genome::InstrumentData') ) {
+        return $original_source;
+    }
+    elsif ( $original_source->can('instrument_data') ) {
+        return $original_source->instrument_data;
+    }
+    return;
+}
+
 sub resolve_allocation_subdirectory {
     my $self = shift;
     my $class = $self->class;
