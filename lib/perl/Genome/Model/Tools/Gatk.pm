@@ -28,9 +28,9 @@ class Genome::Model::Tools::Gatk {
         },
     ],
     has_optional => [
-        _tmp_dir => {
-            is => 'string',
-            doc => 'a temporary directory for storing files',
+        tmp_dir => {
+            is => 'Text',
+            doc => 'Temporary directory for Java.',
         },
     ],
     has_param => [
@@ -83,8 +83,11 @@ sub create {
         $self->error_message('We recommend running GATK from 64-bit architecture');
         return;
     }
-    my $tempdir = Genome::Sys->create_temp_directory;
-    $self->_tmp_dir($tempdir);
+
+    if ( not $self->tmp_dir ) { 
+        my $tempdir = Genome::Sys->create_temp_directory;
+        $self->tmp_dir($tempdir);
+    }
 
     return $self;
 }
@@ -158,9 +161,7 @@ sub base_java_command {
     if (defined $self->max_memory) {
         $java_cmd .= sprintf(" -Xmx%dg", $self->max_memory);
     }
-    if (defined $self->_tmp_dir) {
-        $java_cmd .= " -Djava.io.tmpdir=" . $self->_tmp_dir;
-    }
+    $java_cmd .= " -Djava.io.tmpdir=" . $self->tmp_dir;
 
     $java_cmd .= " -jar $gatk_path -et NO_ET";
 
