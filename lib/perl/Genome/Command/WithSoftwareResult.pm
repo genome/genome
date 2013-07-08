@@ -86,6 +86,27 @@ sub execute {
     return 1;
 }
 
+sub shortcut {
+    my $self = shift;
+
+    $self->status_message("Attempting to shortcut.");
+    my $result_class = $self->class->result_class();
+    my %args = _params_and_inputs($self);
+    $args{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef;
+    $args{command} = $self;
+
+    my $result = $result_class->get_with_lock(%args);
+    if ($result) {
+        $self->status_message("Existing result found: " . $result->__display_name__);
+        $self->software_result($result);
+        $self->_finalize($result);
+        return 1;
+    } else {
+        $self->status_message("No existing software result found.  Shortcutting failed.");
+        return;
+    }
+}
+
 
 sub _params_and_inputs {
     my $self = shift;
