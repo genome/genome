@@ -5,6 +5,7 @@ use warnings;
 
 use above 'Genome';
 use Genome::Utility::List 'in';
+use File::Path qw();
 
 # these are the options which you must specify to us in the
 # fusion-detection-strategy part of the processing-profile
@@ -61,6 +62,24 @@ sub create {
 
     $self->_run_chimerascan($bowtie_version, $c_pargs, $c_opts);
 
+    # cleanup aligned_reads.bam if not reuse_bam?
+    # cleanup $fastq1, $fastq2, and $qname_sorted_bam?
+    if (-f $fastq1) {
+        unless (unlink $fastq1) {
+            $self->warning_message("Failed to unlink fastq1: $fastq1: $!");
+        }
+    }
+    if (-f $fastq2) {
+        unless (unlink $fastq2) {
+            $self->warning_message("Failed to unlink fastq2: $fastq2: $!");
+        }
+    }
+    if (-f $qname_sorted_bam) {
+        unless (unlink $qname_sorted_bam) {
+            $self->warning_message("Failed to unlink qname_sorted_bam: $qname_sorted_bam: $!");
+        }
+    }
+
     $self->_promote_data();
     $self->_remove_staging_directory();
     $self->_reallocate_disk_allocation();
@@ -87,12 +106,12 @@ sub _resolve_original_fasta_files {
         die("Couldn't find 'original_bam_paths' to make fastq files!");
     }
     # get fastq1/2 from the BAMs
+    my $tmp_dir = File::Temp::tempdir('tempXXXXX',
+        DIR => $self->temp_staging_directory,
+        CLEANUP => 1
+    );
     my (@fastq1_files, @fastq2_files);
     for my $bam_path (@original_bam_paths) {
-        my $tmp_dir = File::Temp::tempdir('tempXXXXX',
-            DIR => $self->temp_staging_directory,
-            CLEANUP => 1
-        );
         my $queryname_sorted_bam = File::Spec->join($tmp_dir,
                 'original_queryname_sorted.bam');
         $self->_qname_sort_bam($bam_path, $queryname_sorted_bam);
@@ -105,6 +124,9 @@ sub _resolve_original_fasta_files {
 
         push @fastq1_files, $fastq1;
         push @fastq2_files, $fastq2;
+
+        # How is $tmp_dir not being deleted now, before @fastqN_files uses the
+        # generated files below?
     }
 
     # concatinate forward/reverse fastqs together
@@ -123,6 +145,12 @@ sub _resolve_original_fasta_files {
         input_files => [@fastq2_files],
         output_files => [$fastq2],
     );
+
+    # Remove $tmp_dir?
+    if (-d $tmp_dir) {
+        File::Path::remove_tree($tmp_dir);
+    }
+
     return ($fastq1, $fastq2);
 }
 
