@@ -3,7 +3,7 @@ package Genome::Model::Tools::Bed::ChromSort;
 use strict;
 use warnings;
 
-use Sort::Naturally qw(nsort);
+use Sort::strverscmp qw(strverssort);
 use Genome;
 use Data::Dumper;
 use Carp qw/confess/;
@@ -108,7 +108,7 @@ sub sort  {
         $tmpfile->{fh}->print($line);
     }
 
-    my @chrom_order = nsort keys %{$self->{tmpfiles}};
+    my @chrom_order = strverssort keys %{$self->{tmpfiles}};
     for my $chrom (@chrom_order) {
         my $tmpfile = $self->_get_filehandle_for_chrom($chrom);
         my $fh = $tmpfile->{fh};
