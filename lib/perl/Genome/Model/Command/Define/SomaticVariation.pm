@@ -117,6 +117,13 @@ sub execute {
         $self->error_message("Could not get a model for tumor model id: " . $self->tumor_model_id);
         return;
     }
+
+    #sometimes user's mistake
+    if ($self->normal_model_id == $self->tumor_model_id) {
+        $self->error_message("It is impossible for tumor and normal model to get same id : " . $self->tumor_model_id);
+        return;
+    }
+
     $self->annotation_build($self->_resolve_param('annotation_build'));
     unless(defined $self->annotation_build) {
         $self->error_message("Could not get a build for annotation build id: " . $self->annotation_build_id);
