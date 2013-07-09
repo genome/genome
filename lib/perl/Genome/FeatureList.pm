@@ -308,7 +308,7 @@ sub processed_bed_file_content {
                     $print = 0;
                 }
                 next;
-            } elsif ($line =~ /^track .*?name=/) {
+            } elsif ($line =~ /^track\s.*?name=/) {
                 $self->warning_message('Unknown track name. Including regions.');
                 $print = 1;
                 next;
