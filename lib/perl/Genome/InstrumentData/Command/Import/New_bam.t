@@ -11,6 +11,8 @@ use warnings;
 
 use above "Genome";
 
+require Genome::Utility::Test;
+require File::Compare;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::New') or die;
@@ -18,7 +20,10 @@ use_ok('Genome::InstrumentData::Command::Import::New') or die;
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $source_bam = $ENV{GENOME_TEST_INPUTS}.'/Genome-InstrumentData-Command-Import-Basic/test.bam';
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import');
+my $source_bam = $test_dir.'/input.bam';
+ok(-s $source_bam, 'source bam exists') or die;
+
 my $cmd = Genome::InstrumentData::Command::Import::New->create(
     sample => $sample,
     source_files => [$source_bam],
@@ -34,16 +39,17 @@ is($instrument_data->original_data_path, $source_bam, 'original_data_path correc
 is($instrument_data->import_format, 'bam', 'import_format is bam');
 is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
-is($instrument_data->read_count, 600, 'read_count correctly set');
+is($instrument_data->read_count, 256, 'read_count correctly set');
 
 my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
 is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
+is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.bam.flagstat'), 0, 'flagstat matches');
 
 my $allocation = $instrument_data->allocations;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 
-print $instrument_data->data_directory."\n";<STDIN>;
+#print $instrument_data->data_directory."\n";<STDIN>;
 done_testing();
