@@ -52,7 +52,7 @@ sub _make_db_pause_function {
         print STDERR "Database querying has been paused; disconnecting db handles.  "
                     . "Please wait until the query pause is released...\n";
 
-        my @data_sources = UR::Context->all_objects_loaded('UR::DataSource::RDBMS');
+        my @data_sources = UR::Context->all_objects_loaded(__PACKAGE__);
         for my $ds (@data_sources) {
             $ds->disconnect_default_handle if $ds->has_default_handle;
         }
