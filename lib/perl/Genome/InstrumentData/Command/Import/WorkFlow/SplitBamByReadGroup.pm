@@ -34,6 +34,7 @@ sub execute {
     
     my @read_group_ids = keys %{$headers->{read_groups}};
     if ( not @read_group_ids or @read_group_ids == 1 ) {
+        $self->status_message('Spilting bam by read group is NOT necessary. There is only one read group [or none] in headers.');
         $self->read_group_bam_paths([ $self->bam_path ]);
         return 1;
     }
@@ -158,7 +159,6 @@ sub _verify_read_count {
     my @read_group_bam_paths = $self->read_group_bam_paths;
     my $read_count = 0;
     for my $read_group_bam_path ( @read_group_bam_paths ) {
-        print Data::Dumper::Dumper($read_group_bam_path);
         my $flagstat = $helpers->run_flagstat($read_group_bam_path);
         return if not $flagstat;
         $read_count += $flagstat->{total_reads};
