@@ -10,8 +10,8 @@ class Genome::Model::Build::MetagenomicComposition16s::SetNamesAndPrimers {};
 sub set_names_and_primers_for {
     my ($self, $primer_set_name) = @_;
     Carp::confess('No primer set name to get amplicon set names and primers!') if not $primer_set_name;
-    my $metohod = '_'.$primer_set_name;
-    return $self->$metohod;
+    my $method = '_'.$primer_set_name;
+    return $self->$method;
 }
 
 sub _sanger {
