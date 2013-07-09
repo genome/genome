@@ -43,7 +43,7 @@ sub execute {
 
     my $bam_path = $self->bam_path;
     my $flagstat_path = $self->flagstat_path;
-    my $flagstat = $helpers->run_flagstat($bam_path, $flagstat_path);
+    my $flagstat = $helpers->validate_bam($bam_path, $flagstat_path);
     return if not $flagstat;
 
     my $final_bam_path = $self->final_bam_path;

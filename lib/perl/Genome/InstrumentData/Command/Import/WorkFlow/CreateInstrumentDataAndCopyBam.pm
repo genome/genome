@@ -65,7 +65,7 @@ sub execute {
 
     my $flagstat_path = $self->flagstat_path;
     $self->status_message("Flagstat path: $flagstat_path");
-    my $flagstat = $helpers->run_flagstat($self->final_bam_path, $self->flagstat_path);
+    my $flagstat = $helpers->validate_bam($self->final_bam_path, $self->flagstat_path);
     return if not $flagstat;
 
     $instrument_data->add_attribute(attribute_label => 'bam_path', attribute_value => $self->final_bam_path);

@@ -72,7 +72,7 @@ sub _verify_read_count {
     my $unsorted_flagstat = $helpers->load_flagstat($self->unsorted_bam_path.'.flagstat');
     return if not $unsorted_flagstat;
 
-    my $sorted_flagstat = $helpers->run_flagstat($self->sorted_bam_path);
+    my $sorted_flagstat = $helpers->validate_bam($self->sorted_bam_path);
     return if not $sorted_flagstat;
 
     $self->status_message('Sorted bam read count: '.$sorted_flagstat->{total_reads});

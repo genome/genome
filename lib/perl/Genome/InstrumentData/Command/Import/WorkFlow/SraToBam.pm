@@ -37,7 +37,7 @@ sub execute {
     return if not $dump_ok;
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $flagstat = $helpers->run_flagstat($self->bam_path);
+    my $flagstat = $helpers->validate_bam($self->bam_path);
     return if not $flagstat;
 
     $self->status_message('Dump bam from SRA...done');

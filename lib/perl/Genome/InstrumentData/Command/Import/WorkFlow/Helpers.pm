@@ -225,19 +225,6 @@ sub run_flagstat {
     my $flagstat = $self->load_flagstat($flagstat_path);
     return if not $flagstat;
 
-    if ( not $flagstat->{total_reads} > 0 ) {
-        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_path);
-        return;
-    }
-
-    if ( $flagstat->{reads_marked_as_read1} > 0 and $flagstat->{reads_marked_as_read2} > 0 ) {
-        # paired end but must be equal for bwa
-        if ( $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
-            $self->error_message('Flagstat indicates that there are not equal pairs in bam! '.$bam_path);
-            return;
-        }
-    }
-
     $self->status_message('Run flagstat...done');
     return $flagstat;
 }
@@ -268,6 +255,41 @@ sub load_flagstat {
     $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
 
     $self->status_message('Load flagstat...done');
+    return $flagstat;
+}
+
+sub validate_bam {
+    my ($self, $bam_path, $flagstat_path) = @_;
+    $self->status_message('Validate bam...');
+
+    Carp::confess('No bam path given to run flagstat!') if not $bam_path;
+    Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
+
+    $flagstat_path ||= $bam_path.'.flagstat';
+    $self->status_message("Bam path: $bam_path");
+    $self->status_message("Flagstat path: $flagstat_path");
+
+    my $flagstat;
+    if ( -s $flagstat_path ) {
+        $flagstat = $self->load_flagstat($flagstat_path);
+    }
+    else {
+        $flagstat = $self->run_flagstat($bam_path, $flagstat_path);
+    }
+    return if not $flagstat;
+
+    if ( not $flagstat->{total_reads} > 0 ) {
+        $self->error_message('Flagstat determined that there are no reads in bam! '.$bam_path);
+        return;
+    }
+
+    if ( $flagstat->{reads_marked_as_read1} > 0 and $flagstat->{reads_marked_as_read2} > 0 ) {
+        if ( $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2} ) {
+            $self->error_message('Flagstat indicates that there are not equal pairs in bam! '.$bam_path);
+            return;
+        }
+    }
+
     return $flagstat;
 }
 #<>#

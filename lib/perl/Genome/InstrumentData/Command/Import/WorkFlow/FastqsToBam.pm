@@ -85,7 +85,7 @@ sub _verify_read_counts {
     return if not $counts;
     my $fastq_read_count = List::Util::sum(values %$counts);
 
-    my $flagstat = $helpers->run_flagstat($self->bam_path);
+    my $flagstat = $helpers->validate_bam($self->bam_path);
     return if not $flagstat;
 
     $self->status_message('Bam read count: '.$flagstat->{total_reads});
