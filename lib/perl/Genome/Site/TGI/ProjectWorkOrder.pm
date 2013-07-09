@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 class Genome::Site::TGI::ProjectWorkOrder {
-    table_name => '(select * from PROJECT_WORK_ORDER@oltp) project_work_order',
     id_by => [
         project_id => { is => 'Number', len => 10, column_name => 'PROJECT_ID' },
         setup_wo_id => { is => 'Number', column_name => 'SETUP_WO_ID' }
@@ -14,7 +13,8 @@ class Genome::Site::TGI::ProjectWorkOrder {
         administration_project => { is => 'Genome::Site::TGI::AdministrationProject', id_by => 'project_id' },
     ],
     doc => 'LIMS bridge table',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
+    table_name => 'project_work_order',
 };
 
 
