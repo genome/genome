@@ -281,7 +281,7 @@ sub execute {
     #-------------------------------------------------
     #filter out the off-target regions, if target regions are available
 
-    if($self->restrict_to_target_regions){
+    if($self->restrict_to_target_regions and $build->region_of_interest_set){
         my $target_regions = $self->prepare_roi($build->region_of_interest_set);
 
         $current_snv_file = $self->region_limit_variants($new_snv_file, $target_regions);
