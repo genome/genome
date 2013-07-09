@@ -10,17 +10,13 @@ use IO::Socket;
 use List::MoreUtils qw(any);
 
 use Genome::DataSource::CommonRDBMS qw(log_error log_commit_time);
-# NOTE - these are candidates for removal after making this class inherit
-# from Genome::DS::CommonRDBMS
-#
-# create_iterator_closure_for_rule
-# create_dbh
-# pause_db_queries_if_necessary
-# pause_db_if_necessary
-# _sync_database - the pause part, maybe not that splitting/forking part
 
 class Genome::DataSource::GMSchema {
-    is => ['UR::DataSource::RDBMSRetriableOperations', 'UR::DataSource::Oracle'],
+    is => [
+        'UR::DataSource::RDBMSRetriableOperations',
+        'UR::DataSource::Oracle',
+        'Genome::DataSource::CommonRDBMS',
+    ],
 };
 
 sub table_and_column_names_are_upper_case { 1; }
@@ -69,21 +65,7 @@ sub _sync_database {
 
     local $THIS_COMMIT_ID = UR::Object::Type->autogenerate_new_object_id_uuid();
 
-    my $required_pg_version = '2.19.3';
-
-    my $pg_version = $DBD::Pg::VERSION;
-    if (($pg_version ne $required_pg_version) && !defined $ENV{'LIMS_PERL'}) {
-        $self->error_message("**** INCORRECT POSTGRES DRIVER VERSION ****\n" .
-            "You are using a Perl version that includes an incorrect DBD::Pg driver.\n" .
-            "You are running $pg_version and need to be running $required_pg_version.\n" .
-            "Your sync has been aborted to protect data integrity in the Postgres database.\n" .
-            "Please be sure you are using 'genome-perl' and not /gsc/bin/perl.\n\n\n" .
-            "This event has been logged with apipe; if you are unsure of why you received this message\n" .
-            "open an apipe-support ticket with the date/time of occurrence and we will assist you.\n");
-        log_error($self->error_message);
-        die $self->error_message;
-    }
-
+    $self->_check_pg_version();
 
     # Not disconnecting/forking with no commit on to prevent transactions from being
     # closed, which can cause failures in tests that have multiple commits.
@@ -94,9 +76,6 @@ sub _sync_database {
         }
         return 1;
     }
-
-    $self->pause_db_if_necessary;
-
 
     # fork if we don't skip.
     my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES});
@@ -234,7 +213,7 @@ sub _sync_database {
 }
 
 
-sub _init_created_dbh {
+sub init_created_handle {
     my ($self, $dbh) = @_;
     return unless defined $dbh;
 
@@ -279,48 +258,6 @@ sub _get_sequence_name_for_table_and_column {
     }
 }
 
-sub pause_db_if_necessary {
-    my $self = shift;
-    return 1 unless $ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE};
-
-    my @o = grep { ref($_) eq 'UR::DeletedRef' } UR::Context->all_objects_loaded('UR::Object');
-    if (@o) {
-        print Data::Dumper::Dumper(\@o);
-        Carp::confess();
-    }
-
-    # Determine what has changed.
-    my @changed_objects = (
-        UR::Context->all_objects_loaded('UR::Object::Ghost'),
-        grep { $_->__changes__ } UR::Context->all_objects_loaded('UR::Object')
-        #UR::Util->mapreduce_grep(sub { $_[0]->__changes__ },$self->all_objects_loaded('UR::Object'))
-    );
-
-    my @real_changed_objects = grep {UR::Context->resolve_data_source_for_object($_)} @changed_objects;
-
-    return 1 unless (@real_changed_objects);
-
-
-    print "Database updating has been paused, please wait until updating has been resumed...\n";
-
-    my @data_sources = UR::Context->all_objects_loaded('UR::DataSource::RDBMS');
-    for my $ds (@data_sources) {
-        $ds->disconnect_default_handle if $ds->has_default_handle;
-    }
-
-    while (1) {
-        sleep sleep_length();
-        last unless $ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE};
-    }
-
-    print "Database updating has been resumed, continuing commit!\n";
-    return 1;
-}
-
-sub sleep_length {
-    return 30;
-}
-
 my @retriable_operations = (
     qr(ORA-25408), # can not safely replay call
     qr(ORA-03135), # connection lost contact
@@ -335,8 +272,6 @@ sub create_iterator_closure_for_rule {
     my @create_iter_params = @_;
 
     $self->_retriable_operation(sub {
-        $self->pause_db_queries_if_necessary();
-
         $self->SUPER::create_iterator_closure_for_rule(@create_iter_params);
     });
 }
@@ -346,30 +281,8 @@ sub create_dbh {
     my @create_dbh_params = @_;
 
     $self->_retriable_operation(sub {
-        $self->pause_db_queries_if_necessary();
-
         $self->SUPER::create_dbh(@create_dbh_params);
     });
-}
-
-sub pause_db_queries_if_necessary {
-    my $self = shift;
-    return 1 unless $ENV{GENOME_DB_QUERY_PAUSE} and -e $ENV{GENOME_DB_QUERY_PAUSE};
-
-    print "Database querying has been paused; disconnecting db handles.  Please wait until the query pause is released...\n";
-
-    my @data_sources = UR::Context->all_objects_loaded('UR::DataSource::RDBMS');
-    for my $ds (@data_sources) {
-        $ds->disconnect_default_handle if $ds->has_default_handle;
-    }
-
-    while (1) {
-        sleep 30;
-        last unless $ENV{GENOME_DB_QUERY_PAUSE} and -e $ENV{GENOME_DB_QUERY_PAUSE};
-    }
-
-    print "Database updating has been resumed, continuing query!\n";
-    return 1;
 }
 
 # A list of the old GM schema tables that Genome::Model should ignore
