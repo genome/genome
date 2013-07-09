@@ -12,15 +12,18 @@ use warnings;
 use above "Genome";
 
 require File::Compare;
+require Genome::Utility::Test;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::New') or die;
 
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import');
+my $source_sra = $test_dir.'/input.sra';
+ok(-s $source_sra, 'source sra exists') or die;
+
 my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS}.'Genome-InstrumentData-Command-Import-Basic/';
-my $source_sra = $test_dir.'/test.sra';
 my $cmd = Genome::InstrumentData::Command::Import::New->create(
     sample => $sample,
     source_files => [$source_sra],
@@ -45,15 +48,12 @@ ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 #ok(-s $allocation->absolute_path.'/all_sequences.sra', 'sra file was copied');
 #ok(-s $allocation->absolute_path.'/all_sequences.sra.dbcc', 'dbcc file exists');
 
-# bam
 my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
 is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-is(File::Compare::compare($bam_path, $test_dir.'/test.sra.bam'), 0, 'sra dumped and sorted bam matches');
+is(File::Compare::compare($bam_path, $test_dir.'/input.sra.bam'), 0, 'sra dumped and sorted bam matches');
+is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.sra.bam.flagstat'), 0, 'flagstat matches');
 
-# flagstat
-is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/test.sra.bam.flagstat'), 0, 'flagstat matches');
-
-print $instrument_data->data_directory."\n"; <STDIN>;
+#print $instrument_data->data_directory."\n"; <STDIN>;
 done_testing();
