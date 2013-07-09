@@ -8,6 +8,7 @@ use Digest::MD5 qw(md5_hex);
 use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
+use List::MoreUtils qw(uniq);
 
 use Carp;
 
@@ -951,6 +952,43 @@ sub _release_lock_or_die {
     delete $LOCKS{$lock};
 
     $class->status_message("Cleanup completed for lock $lock.");
+}
+
+# children are things that use this
+sub children {
+    my $self = shift;
+    return uniq map { $_->user } $self->users;
+}
+
+# parents are things that this uses
+sub parents {
+    my $self = shift;
+    return uniq map { $_->software_result }
+        Genome::SoftwareResult::User->get(user => $self);
+}
+
+# ancestors are recursive parents, sort order is not guaranteed
+sub ancestors {
+    my $self = shift;
+    my @parents = $self->parents;
+    if (@parents) {
+        return uniq(map { $_->ancestors }
+            grep { $_->isa('Genome::SoftwareResult') } @parents), @parents;
+    } else {
+        return;
+    }
+}
+
+# descendents are recursive children, sort order is not guaranteed
+sub descendents {
+    my $self = shift;
+    my @children = $self->children;
+    if (@children) {
+        return @children, uniq map { $_->descendents }
+            grep { $_->isa('Genome::SoftwareResult') } @children;
+    } else {
+        return;
+    }
 }
 
 1;
