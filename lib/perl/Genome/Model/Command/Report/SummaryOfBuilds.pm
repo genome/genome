@@ -32,7 +32,8 @@ class Genome::Model::Command::Report::SummaryOfBuilds {
         },
         subject_names => {
             is => 'Text',
-            doc => 'Get builds for models by subject (sample, dna) name(s). Separate by commas.',
+            doc => 'No longer used',
+            is_deprecated => 1,
         },
         type_name => {
             is => 'Text',
@@ -193,7 +194,9 @@ sub _build_sql_query {
             or return;
         $self->_description("subject id(s) (".$self->subject_ids.")");
     }
-    elsif ( $self->subject_names ) { 
+    elsif ( $self->subject_names ) {
+        Carp::croak("subject_names no longer works.  "
+                    . "It used to use the subject_name column in genome_model, which no longer exists");
         $query_parts = $self->_get_query_parts_for_builds_by_model_property(
             'subject_name', $self->subject_names
         )

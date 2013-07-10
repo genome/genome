@@ -40,20 +40,6 @@ ok($sob->execute, 'execute');
 is($sob->were_builds_found, 2, 'Got only latest builds for 2 models.'); 
 
 $sob = Genome::Model::Command::Report::SummaryOfBuilds->create(
-    subject_names => 'HMPZ-764083206-700024109,HMPZ-764083206-700037552',
-);
-ok($sob, 'create');
-$sob->dump_status_messages(1);
-ok($sob->execute, 'execute');
-
-$sob = Genome::Model::Command::Report::SummaryOfBuilds->create(
-    subject_names => 'HMPZ-764083206-700024109,HMPZ-764083206-700037552',
-);
-ok($sob, 'create');
-$sob->dump_status_messages(1);
-ok($sob->execute, 'execute');
-
-$sob = Genome::Model::Command::Report::SummaryOfBuilds->create(
     work_order_id => undef, 
 );
 ok($sob, 'create');
