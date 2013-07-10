@@ -91,12 +91,11 @@ sub execute {
     my $self = shift;
 
     # Build the sql query
-    my $query = $self->_build_sql_query
+    my $iter = $self->_build_iterator
         or return;
-    #print "\n\n$query\n\n";
     
     # Execute the query - put in method to overload in test
-    my $rows = $self->_selectall_arrayref($query);
+    my $rows = $self->_selectall_from_iterator($iter);
     unless ( @$rows ) {
         print 'No models found for '.$self->_description.".\n";
         return 1;
@@ -121,7 +120,7 @@ sub execute {
         or return;
 
     $self->_number_of_builds_found( scalar(@$data) );
-    print "Found ".scalar(@$data)." builds for ".$self->_description.".\n";
+    $self->status_message("Found ".scalar(@$data)." builds for ".$self->_description.".\n");
 
     # Generate report
     my $report = $self->_generate_report_and_execute_functions(
@@ -153,7 +152,7 @@ sub were_builds_found {
     return $_[0]->_number_of_builds_found;
 }
 
-sub _build_sql_query {
+sub _build_iterator {
     my $self = shift;
 
     # determine/validate how to get builds, get the additional query parts,
@@ -261,12 +260,33 @@ SQL
     $query .= "\nORDER BY b.build_id DESC";
     #$query .= "\nORDER BY e.date_completed DESC";
     #$query .= "\nORDER BY m.name ASC";
+    $self->debug_message("\n\n$query\n\n");
 
-    return $query;
+    my $prepare_sth = sub {
+        my $dbh = Genome::DataSource::GMSchema->get_default_dbh;
+        my $sth = $dbh->prepare($query)
+            || Carp::croak("Cannot prepare SQL query: ".$dbh->errstr());
+        $sth->execute()
+            || Carp::croak("Cannot execute SQL query: ".$dbh->errstr());
+        return $sth;
+    };
+
+    my $sth;
+    return sub {
+        $sth ||= $prepare_sth->();
+        my $row = $sth->fetchrow_arrayref;
+        return unless $row;
+        return [ @$row ];
+    };
 }
 
-sub _selectall_arrayref { # put in sub so can overwrite in test
-    return Genome::DataSource::GMSchema->get_default_dbh->selectall_arrayref($_[1]);
+sub _selectall_from_iterator { # put in sub so can overwrite in test
+    my($class, $iter) = @_;
+    my @rows;
+    while (my $row = $iter->()) {
+        push @rows, $row;
+    }
+    return \@rows;
 }
 
 sub _get_query_parts_for_builds_by_type_name {

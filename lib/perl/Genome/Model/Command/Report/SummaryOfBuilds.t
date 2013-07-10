@@ -19,7 +19,7 @@ my $rows = [
     [qw| 2816929867 98421139 Succeeded 2009-08-27 |],
     ];
 no warnings 'redefine'; # commant out to see real data
-*Genome::Model::Command::Report::SummaryOfBuilds::_selectall_arrayref = sub{ return $rows; };
+*Genome::Model::Command::Report::SummaryOfBuilds::_selectall_from_iterator = sub{ return $rows; };
 use warnings;
 
 my $sob = Genome::Model::Command::Report::SummaryOfBuilds->create(
