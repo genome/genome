@@ -63,7 +63,7 @@ sub __load__ {
             my $db = substr($db_dir,length($dir) + 1);
             
             my @version_dirs = glob("$db_dir/*");
-            unless (grep { /\/latest$/ } @version_dirs) {
+            unless (grep { /\/latest$/ or -e "$_/meta.yml" } @version_dirs) {
                 #warn "no versions, retrying: @version_dirs\n";
                 unshift @db_dirs, @version_dirs;
                 next;
