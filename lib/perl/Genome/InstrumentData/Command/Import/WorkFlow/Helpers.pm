@@ -292,6 +292,32 @@ sub validate_bam {
 
     return $flagstat;
 }
+
+sub load_headers_from_bam {
+    my ($self, $bam_path) = @_;
+    $self->status_message('Load headers...');
+
+    Carp::confess('No bam path given to load headers!') if not $bam_path;
+    Carp::confess('Bam path given to load headers does not exist!') if not -s $bam_path;
+
+    $self->status_message("Bam path: $bam_path");
+    my $headers_fh = IO::File->new("samtools view -H $bam_path |");
+    if ( not $headers_fh ) {
+        $self->error_message('Failed to open file handle to samtools command!');
+        return;
+    }
+
+    my $headers = {};
+    while ( my $line = $headers_fh->getline ) {
+        chomp $line;
+        my ($type, $tags) = split(/\t/, $line, 2);
+        push @{$headers->{$type}}, $tags;
+    }
+    $headers_fh->close;
+
+    $self->status_message('Load headers...done');
+    return $headers;
+}
 #<>#
 
 #<READ COUNT>#
