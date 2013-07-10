@@ -382,7 +382,7 @@ sub _filter_variants {
         require Workflow::Simple;
         my $op = Workflow::Operation->create(
             name => 'Tigra by chromosome',
-            operation_type => Workflow::OperationType::Command->get(__PACKAGE__),
+            operation_type => Workflow::OperationType::Command->get(ref($self)),
         );
         $op->parallel_by('specify_chr');
 
