@@ -4,8 +4,8 @@ use warnings;
 use Genome;
 
 class Genome::Db {
-    #is_abstract => 1,
-    #subclassify_by => 'subclass_name',
+    is_abstract => 1,
+    subclassify_by => '_subclass_name',
     table_name => 'NA',
     id_by => ['id'],
     has_constant => [
@@ -13,22 +13,30 @@ class Genome::Db {
         database_name       => { is => 'Text' },
         external_version    => { is => 'Text' },
         import_iteration    => { is => 'Text' },
-        source_directory          => { is => 'FilesystemPath' },
+        source_directory    => { is => 'FilesystemPath' },
         data_directory      => { is => 'FilesystemPath' },
-        _subclass_name      => { is => 'ClassName' },
+        _subclass_name      => { is => 'Text' },
     ],
     doc => 'a versioned database' 
 };
 
+sub data_set_path {
+    # This allows for centralized access to paths within the data directory,
+    # supporting directory re-organization, etc.
+    # and eventually data set objects with their own types
+    my $self = shift;
+    my $path = shift;
+    my $data_directory = $self->data_directory;
+    return $data_directory . '/' . $path;
+}
+
 sub __extend_namespace__ {
     my ($this_class,$ext) = @_;
-    return if $ext =~ /::/;
+    # top-level classes are sources
     my $new_class = $this_class . '::' . $ext;
-    my $lc_ext = lc($ext);
-    #print "Make $new_class\n";
-    class {$new_class} {
-        is => 'Genome::Db'
-    };
+    my $parent = $new_class;
+    $parent =~ s/::[^\:]+$//;
+    class {$new_class} { is => $parent };
 }
 
 sub __display_name__ {
@@ -38,7 +46,6 @@ sub __display_name__ {
 
 sub __load__ {
     my ($class, $bx) = @_;
-
     my @rows;
     my @dirs = split(':',$ENV{GENOME_DB});
     for my $dir (@dirs) {
@@ -71,6 +78,20 @@ sub __load__ {
             $subclass_name =~ s/-/ /g;
             $subclass_name = Genome::Utility::Text::string_to_camel_case($subclass_name);
             $subclass_name = 'Genome::Db::' . $subclass_name;
+
+            if ($database_name) {
+                $subclass_name = join('::',
+                    $subclass_name,
+                    map {
+                        my $dir = $_;
+                        my @words = split(/-/,$dir); 
+                        join('', map { Genome::Utility::Text::string_to_camel_case($_) } @words);
+                    } 
+                    split('/',$database_name)
+                );
+            }
+            
+            next unless $subclass_name->isa($class);
 
             # warn " new db $db\n";
             for my $version_dir (@version_dirs) {
