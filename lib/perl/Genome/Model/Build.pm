@@ -406,9 +406,10 @@ sub _copy_model_inputs {
             }
         };
         if ($@) {
+            my $error_string = $@;
             $self->warning_message("Could not copy model input " . $input->__display_name__ .
                 " to build " . $self->__display_name__ . " of model " . $self->model->__display_name__ .
-                " because $@");
+                " because $error_string");
             next;
         }
     }
