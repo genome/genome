@@ -4,7 +4,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::Sample::Attribute {
-    table_name => 'GSC.SAMPLE_ATTRIBUTE',
+    table_name => 'SAMPLE_ATTRIBUTE',
     id_by => [
         sample_id        => { column_name => 'ORGANISM_SAMPLE_ID' },
         nomenclature    => { default_value => 'WUGC', doc => 'the since an attribute name can have different meanings in different contexts, this supplies context' },
@@ -17,7 +17,7 @@ class Genome::Site::TGI::Sample::Attribute {
         patient         => { is => 'Genome::Site::TGI::Individual', via => 'sample', to => 'source' },
         common_name     => { via => 'patient', doc => 'patient common name' },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
     doc => 'attributes of samples'
 };
 

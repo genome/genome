@@ -22,7 +22,7 @@ TAXON_ID       NUMBER   (10)                    {null} NOT NULL ok
 
 class Genome::Site::TGI::Synchronize::Classes::Individual {
     is => 'UR::Object',
-    table_name => 'GSC.ORGANISM_INDIVIDUAL',
+    table_name => 'ORGANISM_INDIVIDUAL',
     id_by => [
         id => { is => 'Number', len => 10, column_name => 'ORGANISM_ID' },
     ],
@@ -41,7 +41,7 @@ class Genome::Site::TGI::Synchronize::Classes::Individual {
         race => { is => 'Text', },
         upn => { is => 'Text', column_name => 'NAME', },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub properties_to_copy {# 12

@@ -45,9 +45,9 @@ sub execute {                               # replace with real execution logic.
 
     print "Running query-dbsnp $version command:\n";
 
-    my $dbh = Genome::DataSource::GMSchema->get_default_handle;
+    my $dbh = Genome::DataSource::Dwrac->get_default_handle;
     my $chrom_id = $dbh->prepare(qw/
-				select seq_id from GSC.sequence_item si
+				select seq_id from sequence_item si
 				where sequence_item_type = 'chromosome sequence'
 				and sequence_item_name = ?
 				/);
@@ -59,11 +59,11 @@ sub execute {                               # replace with real execution logic.
     
 #---  statement handles allow you to deal with your results incrementally
     my $variation_exists = $dbh->prepare(qq/
-					select ref_id,allele_description,is_validated from GSC.variation_sequence_tag vs
-					join GSC.sequence_item si on si.seq_id=vs.vstag_id
-					join GSC.sequence_tag st on st.stag_id = vs.vstag_id
-					join GSC.sequence_correspondence scr on scr.scrr_id = vs.vstag_id
-					join GSC.sequence_collaborator sc on sc.seq_id = vs.vstag_id
+					select ref_id,allele_description,is_validated from variation_sequence_tag vs
+					join sequence_item si on si.seq_id=vs.vstag_id
+					join sequence_tag st on st.stag_id = vs.vstag_id
+					join sequence_correspondence scr on scr.scrr_id = vs.vstag_id
+					join sequence_collaborator sc on sc.seq_id = vs.vstag_id
 					where sc.collaborator_name = 'dbSNP'
 					and sc.role_detail = '?'
 					and seq2_start = ?

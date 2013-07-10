@@ -14,13 +14,13 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::PopulationGroup::Member {
-    table_name => '(select pg_id,member_id from GSC.population_group_member) pgm',
+    table_name => '(select pg_id,member_id from population_group_member) pgm',
     id_by => [
         population_group    => { is => 'Genome::Site::TGI::PopulationGroup', id_by => 'pg_id' },
         member              => { is => 'Genome::Site::TGI::Individual', id_by => 'member_id' },
     ],
     doc => 'the association between an individual and a given population group',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 1;
