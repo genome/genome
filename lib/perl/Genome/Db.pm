@@ -114,7 +114,7 @@ sub __load__ {
                     $import_iteration = 1;
                 }
                 next unless -d $version_dir;
-                next unless -e "$version_dir/.git";
+                next unless -e "$version_dir/.git" or -e "$version_dir/meta.yml";
                 # warn "  new version $version\n";
                 my $id = $source_name;
                 $id .= '/' . $database_name if $database_name;
@@ -126,7 +126,7 @@ sub __load__ {
         }
     }
 
-    return ['id','source_name','database_name','external_version','import_iteration','source_directory','data_directory','_genome_db_subclass_name'],\@rows;
+    return ['id','source_name','database_name','external_version','import_iteration','source_directory','data_directory','_subclass_name'],\@rows;
 }
 
 1;
