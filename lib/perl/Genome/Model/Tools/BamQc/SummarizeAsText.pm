@@ -40,6 +40,7 @@ sub execute {
                                 READS_ALIGNED
                                 PCT_READS_ALIGNED
                                 ALIGNED_BASES
+                                PCT_CHIMERAS
                                 LIBRARY_NAME
                                 PCT_DUPLICATION
                                 ESTIMATED_LIBRARY_SIZE
@@ -169,6 +170,7 @@ sub execute {
             READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PF_READS_ALIGNED},
             PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED},
             ALIGNED_BASES => $as_metrics->{'CATEGORY-PAIR'}{PF_ALIGNED_BASES},
+            PCT_CHIMERAS => $as_metrics->{'CATEGORY-PAIR'}{PCT_CHIMERAS},
             ERROR_RATE_READ_1 => $error_rate_sum{1}->{error_rate},
             ERROR_RATE_READ_2 => $error_rate_sum{2}->{error_rate},
             MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE},
