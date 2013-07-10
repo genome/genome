@@ -36,7 +36,12 @@ sub __extend_namespace__ {
     my $new_class = $this_class . '::' . $ext;
     my $parent = $new_class;
     $parent =~ s/::[^\:]+$//;
-    class {$new_class} { is => $parent };
+    if ($parent->isa("Genome::Db")) {
+        return class {$new_class} { is => $parent };
+    }
+    else {
+        return;
+    }
 }
 
 sub __display_name__ {
