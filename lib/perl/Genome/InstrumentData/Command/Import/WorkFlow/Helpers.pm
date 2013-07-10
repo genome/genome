@@ -320,15 +320,15 @@ sub load_headers_from_bam {
 }
  
 sub read_groups_from_headers {
-    my ($self, $headers) = @_;
+    my ($self, $rg_headers) = @_;
     $self->status_message('Read groups from headers...');
 
-    Carp::confess('No bam path given to read groups from headers!') if not $headers;
+    Carp::confess('No bam path given to read groups from headers!') if not $rg_headers;
 
     my %read_groups_from_headers;
-    return \%read_groups_from_headers if not $headers->{'@RG'};
+    return \%read_groups_from_headers if not @$rg_headers;
 
-    for my $rg_header ( @{$headers->{'@RG'}} ) {
+    for my $rg_header ( @$rg_headers ) {
         my %tags = map { split(':', $_, 2) } split(/\t/, $rg_header);
         my $rg_id = delete $tags{ID};
         if ( not $rg_id ) {
