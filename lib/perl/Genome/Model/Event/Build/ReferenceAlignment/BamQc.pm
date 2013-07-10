@@ -38,8 +38,8 @@ sub execute {
     my $pp    = $build->processing_profile;
 
     #Skip for bwamem and bwasw for now until all qc tools work
-    if ($pp->read_aligner_name =~ /^bwa(mem|sw)$/i) {
-        $self->warning_message('For now, skip BamQc step for bwamem and bwasw alignment bam');
+    if ($pp->read_aligner_name =~ /^(bwamem|bwasw|imported)$/i) {
+        $self->warning_message('For now, skip BamQc step for bwamem, bwasw and imported alignment bam');
         return 1;
     }
 
