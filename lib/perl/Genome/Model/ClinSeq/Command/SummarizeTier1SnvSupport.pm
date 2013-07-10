@@ -15,7 +15,9 @@ class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
         exome_build         => { is => 'Genome::Model::Build', is_optional => 1, },
         tumor_rnaseq_build  => { is => 'Genome::Model::Build', is_optional => 1, },
         normal_rnaseq_build => { is => 'Genome::Model::Build', is_optional => 1, },
-        
+       
+        cancer_annotation_db => { is => 'Genome::Db' },
+
         wgs_positions_file          => { is => 'FilesystemPath', is_optional => 1 },
         exome_positions_file        => { is => 'FilesystemPath', is_optional => 1 },
         wgs_exome_positions_file    => { is => 'FilesystemPath', is_optional => 1 },
@@ -43,6 +45,7 @@ sub execute {
   my @positions_files = $self->positions_files;
   my $tumor_fpkm_file = $self->tumor_fpkm_file;
   my $verbose = $self->verbose;
+  my $cancer_annotation_db = $self->cancer_annotation_db;
 
   my $read_counts_summary_script = __FILE__ . '.R'; #"$script_dir"."snv/WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R";
 
@@ -59,6 +62,7 @@ sub execute {
     push (@params, ('rna_seq_tumor_build' => $tumor_rnaseq_build)) if $tumor_rnaseq_build;
     push (@params, ('rna_seq_normal_build' => $normal_rnaseq_build)) if $normal_rnaseq_build;
     push (@params, ('output_file' => $output_file));
+    push (@params, ('cancer_annotation_db' => $cancer_annotation_db));
     push (@params, ('verbose' => $verbose));
 
     $self->status_message("Params for GetBamReadCounts are " . Data::Dumper::Dumper({ @params }));

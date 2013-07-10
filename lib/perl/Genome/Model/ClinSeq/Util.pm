@@ -300,34 +300,68 @@ sub loadEnsemblMap{
 #######################################################################################################################################################################
 #Load Entrez Data from flatfiles                                                                                                                                      #
 #######################################################################################################################################################################
-sub loadEntrezEnsemblData{
+sub loadEntrezEnsemblData {
   my %args = @_;
 
   my $species = $args{-species} || 'human';
+  my $cancer_db = $args{-cancer_db};
+  unless ($cancer_db) {
+    Carp::confess("No cancer db passed to loadEntrezEnsemblData!!!");
+  }
+  my $clinseq_annotations_dir = $cancer_db->data_directory;
 
   my $taxon_id;
   my $entrez_dir;
   my $ensembl_dir;
   my $ucsc_dir;
-  my @files;
+  
+  $entrez_dir = $clinseq_annotations_dir . "/EntrezGene/";
+  unless (-e $entrez_dir) {
+    $entrez_dir = $clinseq_annotations_dir . '/entrez/';
+  }
+
+  $ensembl_dir = $clinseq_annotations_dir . "/EnsemblGene/";
+  unless (-e $ensembl_dir) {
+      $ensembl_dir = $clinseq_annotations_dir . '/ensembl/';
+  }
+
+  $ucsc_dir = $clinseq_annotations_dir . "/UcscGene/";
+  unless (-e $ucsc_dir) {
+      $ucsc_dir = $clinseq_annotations_dir . '/ucsc/';
+  }
+
+  # TODO: this is used because the data files contain records from multiple species
+  # Filter down the data set for each cancer db to the appropriate species,
+  # so this additional filtering isn't needed.
+  if ($species eq 'human') {
+    $taxon_id = 9606;
+  }
+  elsif ($species eq 'mouse') {
+    $taxon_id = 10090;
+  }
+  
 
   #Parse Entrez flatfiles and Ensembl files from BioMart
   #ftp://ftp.ncbi.nih.gov/gene/DATA/gene2accession.gz
   #ftp://ftp.ncbi.nih.gov/gene/DATA/gene_info.gz
-  if ($species eq 'human') {
-      $taxon_id = '9606';
-      my $clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
-      $entrez_dir = $clinseq_annotations_dir . "EntrezGene/";
-      $ensembl_dir = $clinseq_annotations_dir . "/EnsemblGene/";
-      $ucsc_dir = $clinseq_annotations_dir . "/UcscGene/";
-      @files = qw (Ensembl_Genes_Human_v70.txt Ensembl_Genes_Human_v69.txt Ensembl_Genes_Human_v68.txt Ensembl_Genes_Human_v67.txt Ensembl_Genes_Human_v66.txt Ensembl_Genes_Human_v65.txt Ensembl_Genes_Human_v64.txt Ensembl_Genes_Human_v63.txt Ensembl_Genes_Human_v62.txt Ensembl_Genes_Human_v61.txt Ensembl_Genes_Human_v60.txt Ensembl_Genes_Human_v59.txt Ensembl_Genes_Human_v58.txt Ensembl_Genes_Human_v56.txt Ensembl_Genes_Human_v55.txt Ensembl_Genes_Human_v54.txt Ensembl_Genes_Human_v53.txt Ensembl_Genes_Human_v52.txt Ensembl_Genes_Human_v51.txt);
-  } elsif ($species eq 'mouse') {
-      $taxon_id = '10090';
-      my $clinseq_annotations_dir = "/gscmnt/sata132/techd/solexa/jwalker/RNAseq/annotation/mm9/";
-      $entrez_dir = $clinseq_annotations_dir . 'entrez/';
-      $ensembl_dir = $clinseq_annotations_dir . 'ensembl/';
-      $ucsc_dir = $clinseq_annotations_dir . 'ucsc/';
-      @files = qw (ensembl_v64_id_to_gene_name.txt ensembl_v63_id_to_gene_name.txt ensembl_v62_id_to_gene_name.txt ensembl_v61_id_to_gene_name.txt ensembl_v60_id_to_gene_name.txt ensembl_v59_id_to_gene_name.txt ensembl_v58_id_to_gene_name.txt ensembl_v57_id_to_gene_name.txt ensembl_v56_id_to_gene_name.txt ensembl_v55_id_to_gene_name.txt ensembl_v54_id_to_gene_name.txt ensembl_v53_id_to_gene_name.txt ensembl_v52_id_to_gene_name.txt ensembl_v51_id_to_gene_name.txt ensembl_v50_id_to_gene_name.txt);
+  if (0) {
+    my @xfiles;
+    if ($species eq 'human') {
+        $taxon_id = '9606';
+        my $clinseq_annotations_dir = $cancer_db->data_directory; #"/gscmnt/sata132/techd/mgriffit/reference_annotations/";
+        #$clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
+        $entrez_dir = $clinseq_annotations_dir . "EntrezGene/";
+        $ensembl_dir = $clinseq_annotations_dir . "/EnsemblGene/";
+        $ucsc_dir = $clinseq_annotations_dir . "/UcscGene/";
+        @xfiles = qw (Ensembl_Genes_Human_v70.txt Ensembl_Genes_Human_v69.txt Ensembl_Genes_Human_v68.txt Ensembl_Genes_Human_v67.txt Ensembl_Genes_Human_v66.txt Ensembl_Genes_Human_v65.txt Ensembl_Genes_Human_v64.txt Ensembl_Genes_Human_v63.txt Ensembl_Genes_Human_v62.txt Ensembl_Genes_Human_v61.txt Ensembl_Genes_Human_v60.txt Ensembl_Genes_Human_v59.txt Ensembl_Genes_Human_v58.txt Ensembl_Genes_Human_v56.txt Ensembl_Genes_Human_v55.txt Ensembl_Genes_Human_v54.txt Ensembl_Genes_Human_v53.txt Ensembl_Genes_Human_v52.txt Ensembl_Genes_Human_v51.txt);
+    } elsif ($species eq 'mouse') {
+        $taxon_id = '10090';
+        my $clinseq_annotations_dir = "/gscmnt/sata132/techd/solexa/jwalker/RNAseq/annotation/mm9/";
+        $entrez_dir = $clinseq_annotations_dir . 'entrez/';
+        $ensembl_dir = $clinseq_annotations_dir . 'ensembl/';
+        $ucsc_dir = $clinseq_annotations_dir . 'ucsc/';
+        @xfiles = qw (ensembl_v64_id_to_gene_name.txt ensembl_v63_id_to_gene_name.txt ensembl_v62_id_to_gene_name.txt ensembl_v61_id_to_gene_name.txt ensembl_v60_id_to_gene_name.txt ensembl_v59_id_to_gene_name.txt ensembl_v58_id_to_gene_name.txt ensembl_v57_id_to_gene_name.txt ensembl_v56_id_to_gene_name.txt ensembl_v55_id_to_gene_name.txt ensembl_v54_id_to_gene_name.txt ensembl_v53_id_to_gene_name.txt ensembl_v52_id_to_gene_name.txt ensembl_v51_id_to_gene_name.txt ensembl_v50_id_to_gene_name.txt);
+    }
   }
 
   my %edata;
@@ -509,8 +543,18 @@ sub loadEntrezEnsemblData{
   #Now load ensembl gene id to gene name mappings from a series of legacy ensembl versions
   #Give preference to latest build
 
-  foreach my $file (@files){
-    my $path = "$ensembl_dir"."$file";
+  my @files = reverse sort (glob("$ensembl_dir/Ensembl_Genes_Human_v*.txt"), glob("$ensembl_dir/ensembl_v*_id_to_gene_name.txt"));
+  unless (@files) {
+    die "No gene id to name conversion files under $ensembl_dir?";
+  }
+  for my $path (@files){
+    #my $path = "$ensembl_dir"."$file";
+    my $file = File::Basename::basename($path);
+    if ($file eq 'Ensembl_Genes_Human_v57.txt') {
+        next;
+    }
+    #for my $file (@files) {
+    #my $path = "$ensembl_dir/$file";
     open (ENSG, "$path") || die "\n\nCould not open file: $path\n\n";
     while(<ENSG>){
       chomp($_);
@@ -865,7 +909,7 @@ sub listGeneCategories{
 ###################################################################################################################################
 sub importSymbolListNames{
   my %args = @_;
-  my $gene_symbol_lists_dir = $args{'-gene_symbol_lists_dir'};
+  my $gene_symbol_lists_dir = $args{'-gene_symbol_lists_dir'} . '/';
   my $verbose = $args{'-verbose'};
 
   my %lists;
@@ -1014,7 +1058,7 @@ sub importSymbolListNames{
 ###################################################################################################################################
 sub importGeneSymbolLists{
   my %args = @_;
-  my $gene_symbol_lists_dir = $args{'-gene_symbol_lists_dir'};
+  my $gene_symbol_lists_dir = $args{'-gene_symbol_lists_dir'} . '/';
   my @symbol_list_names = @{$args{'-symbol_list_names'}};
   my $entrez_ensembl_data = $args{'-entrez_ensembl_data'};
   my $verbose = $args{'-verbose'};

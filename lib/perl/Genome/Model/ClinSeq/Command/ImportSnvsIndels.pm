@@ -21,6 +21,9 @@ class Genome::Model::ClinSeq::Command::ImportSnvsIndels {
               is_optional => 1,
               doc => 'exome somatic variation build(s) to get SNVs indels',
         },
+        cancer_annotation_db => {
+              is => 'Genome::Db',
+        },
         filter_mt => {
             is => 'Boolean',
             doc => 'Do not import MT variants',
@@ -102,13 +105,14 @@ sub execute {
   my $wgs_build = $self->wgs_build;
   my $exome_build = $self->exome_build;
   my $filter_mt = $self->filter_mt;
+  my $cancer_annotation_db = $self->cancer_annotation_db;
 
   unless ($outdir =~ /\/$/){
     $outdir .= "/";
   }
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   my $snv_dir = $outdir . "snv/";
   Genome::Sys->shellcmd(cmd => "mkdir $snv_dir") unless (-e $snv_dir && -d $snv_dir);

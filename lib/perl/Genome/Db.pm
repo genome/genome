@@ -126,7 +126,7 @@ sub __load__ {
         }
     }
 
-    return ['id','source_name','database_name','external_version','import_iteration','source_directory','data_directory','_subclass_name'],\@rows;
+    return ['id','source_name','database_name','external_version','import_iteration','source_directory','data_directory','_genome_db_subclass_name'],\@rows;
 }
 
 1;

@@ -35,8 +35,10 @@ ok ($build_id, "got an rna-seq build from the database using build id: $build_id
 
 #Create outlier-genes-absolute command and execute
 #genome model clin-seq outlier-genes-absolute --outdir=/tmp/rnaseq_outlier/ --percent-cutoff=1 129396808
- 
-my $outlier_genes_absolute_cmd = Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute->create(outdir=>$temp_dir, percent_cutoff=>1, build=>$build);
+
+my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
+
+my $outlier_genes_absolute_cmd = Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute->create(outdir=>$temp_dir, percent_cutoff=>1, build=>$build, cancer_annotation_db => $cancer_annotation_db);
 $outlier_genes_absolute_cmd->queue_status_messages(1);
 my $r1 = $outlier_genes_absolute_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
@@ -57,7 +59,7 @@ ok(@diff == 0, "Found only expected number of differences between expected resul
 or do {
   diag("expected: $expected_output_dir\nactual: $temp_dir\n");
   diag("differences are:");
-  diag(@diff);
+  #diag(@diff);
   my $diff_line_count = scalar(@diff);
   print "\n\nFound $diff_line_count differing lines\n\n";
   Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-outlier-genes-absolute/");

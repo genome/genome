@@ -15,6 +15,9 @@ class Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute {
             shell_args_position => 1,
             doc => 'RnaSeq build to analyze',
         },
+        cancer_annotation_db => {
+            is => 'Genome::Db',
+        },
         outdir => { 
             is => 'FilesystemPath',
             doc => 'Directory where output files will be written', 
@@ -64,6 +67,7 @@ sub __errors__ {
 sub execute {
   my $self = shift;
   my $rnaseq_build = $self->build;
+  my $cancer_annotation_db = $self->cancer_annotation_db;
   my $working_dir = $self->outdir;
 
   $working_dir .= "/" unless ($working_dir =~ /\/$/);
@@ -96,7 +100,7 @@ sub execute {
   my $junction_topnpercent_file = $working_dir . "Junction.GeneExpression.topnpercent.tsv";
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   open(JUNC_IN, "$test_result") || die $self->error_message("Could not open junction file for reading: $test_result");
   open(JUNC_OUT, ">$junction_topnpercent_file") || die $self->error_message("Could not open junction file for writing: $junction_topnpercent_file");

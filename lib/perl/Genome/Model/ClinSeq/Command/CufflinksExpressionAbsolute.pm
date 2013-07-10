@@ -16,6 +16,9 @@ class Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute {
             shell_args_position => 1,
             doc => 'RnaSeq build to analyze',
         },
+        cancer_annotation_db => {
+            is => 'Genome::Db',
+        },
         outdir => { 
             is => 'FilesystemPath',
             doc => 'Directory where output files will be written', 
@@ -103,8 +106,9 @@ sub __errors__ {
 sub execute {
   my $self = shift;
   my $rnaseq_build = $self->build;
+  my $cancer_annotation_db = $self->cancer_annotation_db;
   my $working_dir = $self->outdir;
-
+$DB::single = 1;
   $working_dir .= "/" unless ($working_dir =~ /\/$/);
 
   my $cufflinks_dir = $rnaseq_build->data_directory . "/expression/";
@@ -132,7 +136,7 @@ sub execute {
   my $goi_file = "$working_dir"."genes_of_interest.txt";
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Build a map of ensembl transcript ids to gene ids and gene names from the gene annotation object associated with the rna-seq builds
   my $reference_build = $rnaseq_build->reference_sequence_build;
@@ -162,7 +166,7 @@ sub execute {
   #- these files must be gene symbols in the first column, .txt extension, tab-delimited if multiple columns, one symbol per field, no header
   #- fix gene names as they are being imported
   #TODO: eliminate this horrible hard coding to untracked data!
-  my $gene_symbol_lists_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/";
+  my $gene_symbol_lists_dir = $cancer_annotation_db->data_directory . "/GeneSymbolLists/";
   $gene_symbol_lists_dir = &checkDir('-dir'=>$gene_symbol_lists_dir, '-clear'=>"no");
   my @symbol_list_names = qw ( GenesOfInterest_MG );
   my $gene_symbol_lists = &importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);

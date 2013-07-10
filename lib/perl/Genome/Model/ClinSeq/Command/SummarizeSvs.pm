@@ -7,21 +7,27 @@ use warnings;
 use Genome;
 use Data::Dumper;
 use Term::ANSIColor qw(:constants);
+use Genome::Model::ClinSeq;
 use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::SummarizeSvs {
     is => 'Command::V2',
     has_input => [
         builds => { 
-              is => 'Genome::Model::Build::SomaticVariation',
-              is_many => 1,
-              shell_args_position => 1,
-              require_user_verify => 0,
-              doc => 'somatic variation build(s) to summarize SVs from',
+            is => 'Genome::Model::Build::SomaticVariation',
+            is_many => 1,
+            shell_args_position => 1,
+            require_user_verify => 0,
+            doc => 'somatic variation build(s) to summarize SVs from',
+        },
+        cancer_annotation_db => {
+            is => 'Genome::Db',
+            example_values => [$Genome::Model::ClinSeq::DEFAULT_CANCER_ANNOTATION_DB_ID],
+            doc => 'cancer annotation data',
         },
         outdir => { 
-              is => 'FilesystemPath',
-              doc => 'Directory where output files will be written', 
+            is => 'FilesystemPath',
+            doc => 'Directory where output files will be written', 
         },
     ],
     doc => 'summarize the SVs of somatic variation build',
@@ -30,7 +36,7 @@ class Genome::Model::ClinSeq::Command::SummarizeSvs {
 sub help_synopsis {
     return <<EOS
 
-genome model clin-seq summarize-svs --outdir=/tmp/  119390903
+genome model clin-seq summarize-svs --outdir=/tmp/  119390903 --cancer-annotation-db
 
 genome model clin-seq summarize-svs --outdir=/tmp/  id=119390903
 
@@ -77,9 +83,10 @@ sub execute {
   #Get Entrez and Ensembl data for gene name mappings
   #TODO: Create official versions of these data on allocated disk
   #Directory of gene lists for various purposes
-  my $clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
-  my $gene_symbol_lists_dir = $clinseq_annotations_dir . "GeneSymbolLists/";
-  my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  my $cancer_annotation_db = $self->cancer_annotation_db;
+  my $clinseq_annotations_dir = $cancer_annotation_db->data_directory; 
+  my $gene_symbol_lists_dir = $clinseq_annotations_dir . "/GeneSymbolLists/";
+  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
   my $symbol_list_names = &importSymbolListNames('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-verbose'=>0);
   my $master_list = $symbol_list_names->{master_list};
   my @symbol_list_names = sort {$master_list->{$a}->{order} <=> $master_list->{$b}->{order}} keys %{$master_list};

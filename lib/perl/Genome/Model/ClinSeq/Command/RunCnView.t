@@ -39,7 +39,8 @@ my $build = Genome::Model::Build->get($build_id);
 #Create run-cn-view command and execute
 #genome model clin-seq run-cn-view --outdir=/tmp/cnv/ --cnv-hmm-file=/gscmnt/gc1401/info/model_data/2889933976/build132760359/AML109/clonality/cnaseq.cnvhmm --test 129399487 
 
-my $run_cn_view_cmd = Genome::Model::ClinSeq::Command::RunCnView->create(outdir=>$temp_dir, cnv_hmm_file=>$input_file, test=>1, build=>$build);
+my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
+my $run_cn_view_cmd = Genome::Model::ClinSeq::Command::RunCnView->create(outdir=>$temp_dir, cnv_hmm_file=>$input_file, test=>1, build=>$build, cancer_annotation_db => $cancer_annotation_db);
 $run_cn_view_cmd->queue_status_messages(1);
 my $r1 = $run_cn_view_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

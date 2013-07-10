@@ -40,6 +40,9 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
         no_fasta_check          => { is => 'Number', is_optional => 1,
                                      doc => 'To prevent checking of the reported reference base against the reference genome fasta set --no_fasta_check=1 [Not recommended!]' },
 
+        cancer_annotation_db    => { is => 'Genome::Db',
+                                     doc => 'database of cancer annotation' },
+
     ],
     doc => 'This script attempts to get read counts, frequencies and gene expression values for a series of genome positions',
 };
@@ -110,6 +113,7 @@ sub execute {
   my $no_fasta_check = $self->no_fasta_check;
   my $output_file = $self->output_file;
   my $verbose = $self->verbose;
+  my $cancer_annotation_db = $self->cancer_annotation_db;
 
   #Build a map of ensembl transcript ids to gene ids and gene names
   my $annotation_build;
@@ -149,7 +153,7 @@ sub execute {
   my $ensembl_map = &loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Import SNVs from the specified file
   my $result = &importPositions('-positions_file'=>$positions_file);

@@ -12,6 +12,12 @@ use Genome::Model::ClinSeq::Util qw(:all);
 class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
     is => 'Command::V2',
     has_input => [
+        cancer_annotation_db => {
+            is => 'Genome::Db',
+        },
+        cosmic_annotation_db => {
+            is => 'Genome::Db',
+        },
         builds => { 
               is => 'Genome::Model::Build::SomaticVariation',
               is_many => 1,
@@ -127,7 +133,10 @@ sub execute {
 
   #Get COSMIC mutation annotation for the annotation build used for this somatic variation model and cosmic version specified by the user
   #TODO: Create official versions of these data on allocated disk
-  my $clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
+  my $cancer_annotation_db = $self->cancer_annotation_db;
+  my $cosmic_annotation_db = $self->cosmic_annotation_db;
+
+  my $clinseq_annotations_dir = $cancer_annotation_db->data_directory . '/'; 
   my $ab_name = $annotation_reference_build->name;
   my $ab_name_f = $ab_name;
   $ab_name_f =~ s/\//\./g;
@@ -147,11 +156,7 @@ sub execute {
   #Create mutation diagrams for every transcript (one for the somatic-variation data and one for the cosmic data)
   $self->draw_mutation_diagrams('-somatic_variants_file'=>$filtered_somatic_variants_file, '-cosmic_variants_file'=>$filtered_cosmic_variants_file, '-annotation_build_name'=>$ab_name);
 
-
-
-
   $self->status_message("\n\nCOMPLETE\n\n");
-
   return 1;
 }
 

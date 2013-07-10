@@ -13,9 +13,9 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByCategory {
             is => 'FilesystemPath',
             doc => 'tsv formatted file to added gene category annotations to',
         },
-        gene_symbol_lists_dir => {
-            is => 'FilesystemPath',
-            doc => 'directory containing list of gene names by category',
+        cancer_annotation_db => {
+            is => 'Genome::Db',
+            doc => 'db of cancer annotation', 
         },
         gene_name_column => {
             is => 'Text',
@@ -58,14 +58,6 @@ sub __errors__ {
                                           );
   }
 
-  unless (-e $self->gene_symbol_lists_dir && -d $self->gene_symbol_lists_dir) {
-      push @errors, UR::Object::Tag->create(
-	                                          type => 'error',
-	                                          properties => ['gene_symbol_lists_dir'],
-	                                          desc => "symbol list dir: " . $self->gene_symbol_lists_dir . " not a valid directory",
-                                          );
-  }
-
   return @errors;
 }
 
@@ -73,19 +65,19 @@ sub __errors__ {
 sub execute {
   my $self = shift;
   my $infile = $self->infile;
-  my $gene_symbol_lists_dir = $self->gene_symbol_lists_dir;
+  my $cancer_annotation_db = $self->cancer_annotation_db;
+  my $gene_symbol_lists_dir = $cancer_annotation_db->data_set_path("GeneSymbolLists");
   my $gene_name_column = $self->gene_name_column;
 
   $self->status_message("Adding gene category annotations to $infile using genes in this gene name column: $gene_name_column");
 
   #Get Entrez and Ensembl data for gene name mappings
-  my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   my $symbol_list_names = &importSymbolListNames('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-verbose'=>0);
   my $master_list = $symbol_list_names->{master_list};
   my @symbol_list_names = sort {$master_list->{$a}->{order} <=> $master_list->{$b}->{order}} keys %{$master_list};
   my $gene_symbol_lists = &importGeneSymbolLists('-gene_symbol_lists_dir'=>$gene_symbol_lists_dir, '-symbol_list_names'=>\@symbol_list_names, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-verbose'=>0);
-
 
   open (INFILE, "$infile") || die "\n\nCould not open input infile: $infile\n\n";
   my %data;

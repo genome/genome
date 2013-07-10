@@ -25,7 +25,14 @@ my $somvar_build_id = 135798051;
 my $somvar_build = Genome::Model::Build->get($somvar_build_id);
 ok($somvar_build, "Got somatic variation build from id: $somvar_build_id") or die;
 
-my $cmd = Genome::Model::ClinSeq::Command::GenerateClonalityPlots->create(somatic_var_build=>$somvar_build, output_dir=>$actual_out, common_name=>'HCC1395', verbose=>1, chromosome=>'22');
+my $cmd = Genome::Model::ClinSeq::Command::GenerateClonalityPlots->create(
+    somatic_var_build => $somvar_build, 
+    misc_annotation_db => Genome::Db->get("tgi/misc-annotation/human/build37-20130113.1"),
+    chromosome => '22',
+    verbose => 1, 
+    output_dir => $actual_out, 
+    common_name => 'HCC1395', 
+);
 $cmd->queue_status_messages(1);
 my $r1 = $cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

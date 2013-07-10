@@ -648,6 +648,9 @@ sub get_dna_instrument_data{
   }elsif($data_type eq 'exome'){
     $self->status_message("\tCould not find any exome data") unless (scalar(@exome));
     return @exome;
+  }elsif($data_type eq 'validation'){
+    $self->status_message("\tCould not find any exome data") unless (scalar(@exome));
+    return @exome;
   }else{
     $self->error_message("Data type not understood in get_dna_instrument_data");
   }
@@ -655,6 +658,7 @@ sub get_dna_instrument_data{
 
 
 #Determine exome vs WGS of a model.  WGS models do not have exome data, Exome models have at least one lane of exome data
+    
 sub determine_model_data_type{
   my $self = shift;
   my %args = @_;
