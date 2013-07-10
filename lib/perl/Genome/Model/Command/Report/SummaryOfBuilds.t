@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+my $SHOULD_DUMP_MESSAGES = 0;
+
 use above 'Genome';
 
 use Test::More;
@@ -26,8 +28,8 @@ my $sob = Genome::Model::Command::Report::SummaryOfBuilds->create(
     #all_datasets => 1,
 );
 ok($sob, 'create');
-$sob->dump_status_messages(1);
-ok($sob->execute, 'execute');
+$sob->dump_status_messages($SHOULD_DUMP_MESSAGES);
+ok(_execute($sob), 'execute');
 is($sob->were_builds_found, 5, 'Got all 5 builds for 2 models');
 
 $sob = Genome::Model::Command::Report::SummaryOfBuilds->create(
@@ -35,20 +37,28 @@ $sob = Genome::Model::Command::Report::SummaryOfBuilds->create(
     most_recent_build_only => 1,
 );
 ok($sob, 'create');
-$sob->dump_status_messages(1);
-ok($sob->execute, 'execute');
+$sob->dump_status_messages($SHOULD_DUMP_MESSAGES);
+ok(_execute($sob), 'execute');
 is($sob->were_builds_found, 2, 'Got only latest builds for 2 models.'); 
 
 $sob = Genome::Model::Command::Report::SummaryOfBuilds->create(
     work_order_id => undef, 
 );
 ok($sob, 'create');
-$sob->dump_status_messages(1);
-ok(!$sob->execute, 'execute');
+$sob->dump_status_messages($SHOULD_DUMP_MESSAGES);
+$sob->dump_error_messages($SHOULD_DUMP_MESSAGES);
+ok(!_execute($sob), 'execute');
 
 $sob = Genome::Model::Command::Report::SummaryOfBuilds->create();
 ok($sob, 'create');
-$sob->dump_status_messages(1);
-ok(!$sob->execute, 'execute');
+$sob->dump_status_messages($SHOULD_DUMP_MESSAGES);
+$sob->dump_error_messages($SHOULD_DUMP_MESSAGES);
+ok(!_execute($sob), 'execute');
 
 done_testing();
+
+sub _execute {
+    # Parent class Genome::Report::GeneratorCommand calls print directly :(
+    local *STDOUT = IO::File->new('/dev/null', 'w') || die "Can't redirect STDOUT";
+    shift->execute;
+}
