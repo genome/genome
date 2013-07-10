@@ -23,6 +23,7 @@ my $cmd = <<EOS;
     --name='CancerGeneCensusPlus_Sanger' \\
     --chr=21 \\
     --verbose \\
+    --cancer-annotation-db tgi/cancer-annotation/human/build37-20130401.1 \\
 EOS
 eval { Genome::Sys->shellcmd(cmd => $cmd) };
 ok(!$@, "no exceptions running the tool")
