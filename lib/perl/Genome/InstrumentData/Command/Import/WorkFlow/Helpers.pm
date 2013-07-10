@@ -318,6 +318,29 @@ sub load_headers_from_bam {
     $self->status_message('Load headers...done');
     return $headers;
 }
+ 
+sub read_groups_from_headers {
+    my ($self, $headers) = @_;
+    $self->status_message('Read groups from headers...');
+
+    Carp::confess('No bam path given to read groups from headers!') if not $headers;
+
+    my %read_groups_from_headers;
+    return \%read_groups_from_headers if not $headers->{'@RG'};
+
+    for my $rg_header ( @{$headers->{'@RG'}} ) {
+        my %tags = map { split(':', $_, 2) } split(/\t/, $rg_header);
+        my $rg_id = delete $tags{ID};
+        if ( not $rg_id ) {
+            $self->error_message("No ID tag in read group header! \@RG\t$rg_header");
+            return;
+        }
+        $read_groups_from_headers{ $rg_id } = join("\t", map { $_.':'.$tags{$_} } sort keys %tags);
+    }
+
+    $self->status_message('Read groups from headers...done');
+    return \%read_groups_from_headers;
+}
 #<>#
 
 #<READ COUNT>#

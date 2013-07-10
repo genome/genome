@@ -68,6 +68,17 @@ is_deeply(
     'headers',
 );
 
+ok(!eval{$helpers->read_groups_from_headers;}, 'failed to get read groups from headers w/o headers');
+my $read_groups_from_headers = $helpers->read_groups_from_headers($headers);
+is_deeply(
+    $read_groups_from_headers, 
+    {
+        2883581797 => 'CN:WUGSC	DS:paired end	DT:2012-12-17T13:15:46-0600	LB:TEST-patient1-somval_normal1-extlibs	PI:165	PL:illumina	PU:2883581797.	SM:TEST-patient1-somval_normal1',
+        2883581798 => 'CN:WUGSC	DS:paired end	DT:2012-12-17T13:15:46-0600	LB:TEST-patient1-somval_normal1-extlibs	PI:165	PL:illumina	PU:2883581798.	SM:TEST-patient1-somval_normal1'
+    },
+    'read groups from headers',
+);
+
 # verify tmp disk
 ok($helpers->verify_adequate_disk_space_is_available_for_source_files(tmp_dir => '/tmp', source_files => \@source_files), 'verify adequate disk space is available for source files');
 
