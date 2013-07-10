@@ -8,6 +8,7 @@ use Genome;
 use Carp 'confess';
 use Data::Dumper 'Dumper';
 use Regexp::Common;
+use Scalar::Util;
 
 class Genome::Model::Command::Report::SummaryOfBuilds {
     is => 'Genome::Report::GeneratorCommand',
@@ -305,10 +306,26 @@ sub _get_query_parts_for_builds_by_processing_profile_id {
 }
 
 sub _get_query_parts_for_builds_by_work_order_id {
+    my $self = shift;
+
+    my $work_order_id = $self->work_order_id;
+
+    my $dbh = Genome::DataSource::Oltp->get_default_handle();
+    my $sth = $dbh->prepare('select distinct dna_id from work_order_item where setup_wo_id = ?')
+                || Carp::croak("Can't prepare query against work_order_item table: ".$dbh->errstr);
+    $sth->execute($work_order_id)
+                || Carp::croak("Can't execute work_order_item query: ".$dbh->errstr);
+
+
+    my @genome_model_ids;
+    while (my $row = $sth->fetchrow_arrayref) {
+        push @genome_model_ids,
+            Scalar::Util::looks_like_number($row->[0]) ? $row->[0] : "'".$row->[0].'"';
+    }
+
     return {
-        from => [ 'work_order_item@oltp w' ],
-        'join' => [ 'genome_model m on m.subject_id = w.dna_id' ],
-        where => [ 'w.setup_wo_id = '.$_[0]->work_order_id ],
+        from => [ 'genome_model m '],
+        where => ['m.subject_id in ('.join(',',@genome_model_ids).')'],
     };
 }
 
