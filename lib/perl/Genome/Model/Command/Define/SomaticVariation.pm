@@ -109,31 +109,31 @@ sub execute {
 
     $self->normal_model($self->_resolve_param('normal_model'));
     unless(defined $self->normal_model) {
-        $self->error_message("Could not get a model for normal model id: " . $self->normal_model_id);
+        $self->error_message("Could not get a model for normal model id: " . $self->normal_model->id);
         return;
     }
     $self->tumor_model($self->_resolve_param('tumor_model'));
     unless(defined $self->tumor_model) {
-        $self->error_message("Could not get a model for tumor model id: " . $self->tumor_model_id);
+        $self->error_message("Could not get a model for tumor model id: " . $self->tumor_model->id);
         return;
     }
 
     #sometimes user's mistake
-    if ($self->normal_model_id == $self->tumor_model_id) {
-        $self->error_message("It is impossible for tumor and normal model to get same id : " . $self->tumor_model_id);
+    if ($self->normal_model->id == $self->tumor_model->id) {
+        $self->error_message("It is impossible for tumor and normal model to get same id : " . $self->tumor_model->id);
         return;
     }
 
     $self->annotation_build($self->_resolve_param('annotation_build'));
     unless(defined $self->annotation_build) {
-        $self->error_message("Could not get a build for annotation build id: " . $self->annotation_build_id);
+        $self->error_message("Could not get a build for annotation build id: " . $self->annotation_build->id);
         return;
     }
 
     if ($self->previously_discovered_variations_build) {
         $self->previously_discovered_variations_build($self->_resolve_param('previously_discovered_variations_build'));
         unless(defined $self->previously_discovered_variations_build) {
-            $self->error_message("Could not get a build for previous variants build id: " . $self->previously_discovered_variations_build_id);
+            $self->error_message("Could not get a build for previous variants build id: " . $self->previously_discovered_variations_build->id);
             return;
         }
     }
