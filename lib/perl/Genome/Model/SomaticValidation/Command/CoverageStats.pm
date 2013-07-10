@@ -131,11 +131,14 @@ sub _reference_sequence_matches {
 sub should_run {
     my $self = shift;
 
+    return unless $self->build->region_of_interest_set;
+
     my $mode = $self->mode;
 
     my $sample_acc = $mode . '_sample';
 
     return $self->build->$sample_acc;
+
 }
 
 sub params_for_result {
