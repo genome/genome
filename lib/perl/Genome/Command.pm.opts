@@ -3789,6 +3789,19 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>reference-alignment',
     [
+      '>bam-qc-metrics',
+      [
+        'color!',
+        undef,
+        'debug!',
+        undef,
+        'output-directory=s',
+        'files',
+        'build-id=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>capture-qc',
       [
         'color!',
@@ -18006,27 +18019,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>process-somatic-variation-part-two',
-      [
-        'output-dir=s',
-        'files',
-        'somatic-variation-model-id=s',
-        'files',
-        'add-readcounts!',
-        undef,
-        'add-tiers!',
-        undef,
-        'create-maf!',
-        undef,
-        'debug!',
-        undef,
-        'keep-ambiguous-calls!',
-        undef,
-        'review-file=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>read-counts',
       [
         'minimum-mapping-quality=s',
@@ -20098,6 +20090,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'debug!',
         undef,
+        'tmp-dir=s',
+        'files',
         'help!',
         undef
       ],
@@ -20175,6 +20169,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'skip-if-output-present=s',
         'files',
+        'tmp-dir=s',
+        'files',
         'help!',
         undef
       ],
@@ -20203,6 +20199,8 @@ $Genome::Command::OPTS_SPEC = [
         'run-unsafe-mode=s',
         'files',
         'skip-if-output-present=s',
+        'files',
+        'tmp-dir=s',
         'files',
         'verbose-output-file=s',
         'files',
@@ -20237,6 +20235,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'skip-if-output-present=s',
         'files',
+        'tmp-dir=s',
+        'files',
         'verbose-output-file=s',
         'files',
         'help!',
@@ -20265,6 +20265,8 @@ $Genome::Command::OPTS_SPEC = [
         'debug!',
         undef,
         'known=s@',
+        'files',
+        'tmp-dir=s',
         'files',
         'help!',
         undef
@@ -20301,6 +20303,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'simplify!',
         undef,
+        'tmp-dir=s',
+        'files',
         'help!',
         undef
       ],
@@ -20321,6 +20325,8 @@ $Genome::Command::OPTS_SPEC = [
         'debug!',
         undef,
         'known=s@',
+        'files',
+        'tmp-dir=s',
         'files',
         'help!',
         undef
@@ -20354,6 +20360,8 @@ $Genome::Command::OPTS_SPEC = [
         'skip-if-output-present=s',
         'files',
         'somatic-file=s',
+        'files',
+        'tmp-dir=s',
         'files',
         'help!',
         undef
