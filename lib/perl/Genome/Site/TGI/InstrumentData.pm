@@ -17,16 +17,16 @@ class Genome::Site::TGI::InstrumentData {
                'Genome::Site::TGI::InstrumentData::Solexa' subclass_name,
                'solexa' sequencing_platform,
                (
-                    case 
-                        when solexa.index_sequence is null then to_char(solexa.lane) 
+                    case
+                        when solexa.index_sequence is null then to_char(solexa.lane)
                         else to_char(solexa.lane) || '-' || solexa.index_sequence
                     end
                ) subset_name,
                library_id
-          FROM index_illumina solexa 
+          FROM index_illumina solexa
           JOIN flow_cell_illumina fc on fc.flow_cell_id = solexa.flow_cell_id
      UNION ALL
-            SELECT 
+            SELECT
                to_char(case when ri.index_sequence is null then ri.region_id else ri.seq_id end) id,
                r.run_name,
                'Genome::Site::TGI::InstrumentData::454' subclass_name,
@@ -43,7 +43,7 @@ class Genome::Site::TGI::InstrumentData {
                     else ri.library_id
                 end
                ) library_id
-           FROM run_region_454 r 
+           FROM run_region_454 r
            JOIN region_index_454 ri on ri.region_id = r.region_id
     ) idata
 EOS
