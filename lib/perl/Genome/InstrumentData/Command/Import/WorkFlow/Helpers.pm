@@ -323,7 +323,8 @@ sub read_groups_from_headers {
     my ($self, $rg_headers) = @_;
     $self->status_message('Read groups from headers...');
 
-    Carp::confess('No bam path given to read groups from headers!') if not $rg_headers;
+    Carp::confess('No read group headers given to read groups from headers!') if not $rg_headers;
+    Carp::confess('Invalid read group headers given to read groups from headers! '.Data::Dumper::Dumper($rg_headers)) unless ref($rg_headers) eq 'ARRAY';
 
     my %read_groups_from_headers;
     return \%read_groups_from_headers if not @$rg_headers;
@@ -340,6 +341,30 @@ sub read_groups_from_headers {
 
     $self->status_message('Read groups from headers...done');
     return \%read_groups_from_headers;
+}
+
+sub headers_to_string {
+    my ($self, $orig_headers) = @_;
+    $self->status_message('Header string from headers...');
+
+    Carp::confess('No headers given to headers to string!') if not $orig_headers;
+    Carp::confess('Invalid headers given to headers to string! '.Data::Dumper::Dumper($orig_headers)) if ref($orig_headers) ne 'HASH';
+
+    my %headers = %$orig_headers;
+    my $string;
+    for my $type (qw/ @HD @SQ @RG @PG @CO /) {
+        my $tags = delete $headers{$type};
+        next if not $tags;
+        $string .= join("\n", map { $type."\t".$_ } @$tags)."\n";
+    }
+
+    for my $type ( keys %headers ) {
+        my $tags = delete $headers{$type};
+        $string .= join("\n", map { $type."\t".$_ } @$tags)."\n";
+    }
+
+    $self->status_message('Header string from headers...done');
+    return $string;
 }
 #<>#
 
