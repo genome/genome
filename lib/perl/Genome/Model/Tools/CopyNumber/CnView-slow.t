@@ -22,6 +22,7 @@ my $cmd = <<EOS;
     --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt \\
     --name='CancerGeneCensusPlus_Sanger' \\
     --verbose \\
+    --cancer-annotation-db tgi/cancer-annotation/human/build37-20130401.1 \\
 EOS
 eval { Genome::Sys->shellcmd(cmd => $cmd) };
 ok(!$@, "no exceptions running the tool")
