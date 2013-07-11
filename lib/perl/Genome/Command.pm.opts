@@ -35524,6 +35524,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'output-basename=s',
         'files',
+        'labels-are-instrument-data-ids!',
+        undef,
         'help!',
         undef
       ],
