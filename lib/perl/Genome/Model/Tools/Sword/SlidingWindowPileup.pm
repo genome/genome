@@ -144,6 +144,10 @@ while (<SAMP>) {
 
     close OUTFILE;
     close SAMP;
+
+    # Run Segment.R
+    
+    
     return 1;
 }
 
