@@ -17,6 +17,11 @@ class Genome::Model::Tools::BamQc::SummarizeAsText {
         output_basename => {
             doc => 'The full path basename to use for output summary files.',
         },
+        labels_are_instrument_data_ids => { #this is too long. can't think of anything better.
+            is => "Boolean",
+            default => 0,
+            doc => 'Assume the labels are instrument data ids and query out the library names from the database',
+        },
     ],
 };
 
@@ -185,6 +190,19 @@ sub execute {
         if ($mrkdup_metrics && $lib) {
             $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{$lib}{PERCENT_DUPLICATION};
             $summary_data{ESTIMATED_LIBRARY_SIZE} = $mrkdup_metrics->{$lib}{ESTIMATED_LIBRARY_SIZE};
+        }
+        if($lib == undef && $self->labels_are_instrument_data_ids) {
+            $self->status_message("Looking up the library name");
+            my $instrument_data = Genome::InstrumentData->get($label);
+            unless($instrument_data) {
+                $self->error_message("Unable to find Instrument data for id: $label");
+            }
+            else {
+                my $library_name = $instrument_data->library_name;
+                if(defined $library_name) {
+                    $summary_data{LIBRARY_NAME} = $library_name;
+                }
+            }
         }
         $summary_writer->write_one(\%summary_data);
     }

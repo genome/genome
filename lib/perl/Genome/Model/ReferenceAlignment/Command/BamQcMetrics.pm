@@ -75,6 +75,7 @@ sub execute {
         labels => join(',',@labels),
         directories => join(',',@directories),
         output_basename => $output_basename,
+        labels_are_instrument_data_ids => 1,
     )) {
         die $self->error_message('Failed to run SummarizeAsText on BamQc output for build: '. $self->build_id);
     }
