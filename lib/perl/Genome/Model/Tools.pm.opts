@@ -8659,6 +8659,32 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
+  '>sword',
+  [
+    '>sliding-window-pileup',
+    [
+      'bam-file-fof=s',
+      'files',
+      'scaling=s',
+      'files',
+      'threshold=s',
+      'files',
+      'region=s',
+      'files',
+      'output-file=s',
+      'files',
+      'window-size=s',
+      [
+        100,
+        1000,
+        10000
+      ],
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
   '>vcf',
   [
     '>backfill',
