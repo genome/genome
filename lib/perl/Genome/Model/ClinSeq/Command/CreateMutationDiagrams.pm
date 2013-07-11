@@ -31,10 +31,6 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
               is => 'FilesystemPath',
               doc => 'Directory where output files will be written', 
         },
-        cosmic_version => {
-              is => 'Number',
-              doc => 'Specify the desired version of Cosmic',
-        },
         collapse_variants => {
               is => 'Boolean',
               is_optional => 1,
@@ -142,7 +138,9 @@ sub execute {
   my $ab_name = $annotation_reference_build->name;
   my $ab_name_f = $ab_name;
   $ab_name_f =~ s/\//\./g;
-  my $cosmic_annotation_file = $clinseq_annotations_dir . "Cosmic/Cosmic_v" . $self->cosmic_version . "/cosmic." . $ab_name_f . ".anno.filt";
+
+
+  my $cosmic_annotation_file = $cosmic_annotation_db->data_directory . "/clinseq/cosmic." . $ab_name_f . ".anno.filt";
 
   #Define final output files
   my $complete_somatic_variants_file = $outdir . "variants.hq.tier1.v1.annotated";

@@ -245,7 +245,7 @@ sub map_workflow_inputs {
           mutation_diagram_collapse_variants=>1, 
           mutation_diagram_max_snvs_per_file=>1500, 
           mutation_diagram_max_indels_per_file=>1500,
-          mutation_diagram_cosmic_version=> $build->cosmic_annotation_db->external_version,
+          #mutation_diagram_cosmic_version=> $build->cosmic_annotation_db->external_version,
       );
     }
 
@@ -656,7 +656,7 @@ sub _resolve_workflow_for_build {
       }
       $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
       
-      for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file cosmic_version/) {
+      for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
           my $input_name = 'mutation_diagram_' . $p;
           $add_link->($input_connector,$input_name,$mutation_diagram_op,$p);
       }

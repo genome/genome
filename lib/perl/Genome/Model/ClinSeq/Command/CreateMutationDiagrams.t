@@ -43,7 +43,6 @@ my $mutation_diagram_cmd = Genome::Model::ClinSeq::Command::CreateMutationDiagra
     collapse_variants=>1, 
     max_transcripts=>10, 
     builds=>[$somvar_build], 
-    cosmic_version => 61,
     cancer_annotation_db => $cancer_annotation_db,
     cosmic_annotation_db => $cosmic_annotation_db,
 );
