@@ -1,63 +1,83 @@
 use strict;
 use warnings;
 
+package StringIterator;
+
+use Carp qw(croak);
+
+sub new {
+    my $class = shift;
+    my $string = shift;
+
+    unless ($string) {
+        croak 'invalid string';
+    }
+
+    my $o = {};
+    $o->{pos} = 0;
+    $o->{string} = $string;
+    $o->{len} = length($string);
+
+    return bless $o, $class;
+}
+
+sub pos {
+    my $self = shift;
+    return $self->{pos};
+}
+
+sub string {
+    my $self = shift;
+    return $self->{string};
+}
+
+sub len {
+    my $self = shift;
+    return $self->{len};
+}
+
+sub head {
+    my $self = shift;
+    if ($self->pos >= $self->len) {
+        return;
+    } else {
+        return substr($self->string, $self->pos, 1);
+    }
+}
+
+sub tail {
+    my $self = shift;
+    return substr($self->string, $self->pos + 1);
+}
+
+sub tail_len {
+    my $self = shift;
+    return ($self->len - $self->pos);
+}
+
+sub advance {
+    my $self = shift;
+    $self->{pos}++;
+}
+
+sub next {
+    my $self = shift;
+    my $head = $self->head();
+    $self->advance();
+    return $head;
+}
+
 package Sort::strverscmp;
 
 use Exporter 'import';
 our @EXPORT = qw(strverscmp);
 our @EXPORT_OK = qw(strverssort);
 
-sub strverscmp {
-    my ($l, $r) = @_;
+use feature ':5.10';
 
-    my ($ls, $ln, $rs, $rn);
-    ($ls, $ln, $l) = decompose_version($l);
-    ($rs, $rn, $r) = decompose_version($r);
-
-    my $scmp = ($ls cmp $rs);
-    return $scmp if ($scmp != 0);
-
-    # TODO: How can this be refactored?
-    if ($ln eq '' && $rn eq '') {
-        return 0;
-    } elsif ($ln eq '' || $rn eq '') {
-        return ($ln eq '' ? -1 : 1);
-    }
-
-    my $ncmp = ncmp($ln, $rn);
-    return $ncmp if ($ncmp != 0);
-
-    if (length($l) || length($r)) {
-        return strverscmp($l, $r);
-    } else {
-        return 0;
-    }
-}
-
-sub strverssort {
-    return sort { strverscmp($a, $b) } @_;
-}
-
-sub decompose_version {
-    my ($string, $number, $remainder) = shift =~ /^(\D*)(\d*)(.*)$/;
-    return ($string, $number, $remainder);
-}
-
-sub ncmp {
-    my ($l, $r) = @_;
-
-    if (!is_fractional($l) && !is_fractional($r)) {
-        return $l <=> $r;
-    } elsif (is_fractional($l) && is_fractional($r)) {
-        return fcmp($l, $r);
-    } else {
-        return (is_fractional($l) ? -1 : 1);
-    }
-}
-
-sub is_fractional {
-    my $n = shift;
-    return (index($n, '0') == 0);
+sub isdigit {
+    my $c = shift;
+    return (defined($c) && $c =~ /^\d+$/);
 }
 
 sub fcmp {
@@ -77,6 +97,40 @@ sub fcmp {
 sub decompose_fractional {
     my ($zeroes, $number) = shift =~ /^(0*)(\d+)$/;
     return ($zeroes, $number);
+}
+
+# strnum_cmp from bam_sort.c
+sub strverscmp {
+    my ($a, $b) = @_;
+
+    my $ai = StringIterator->new($a);
+    my $bi = StringIterator->new($b);
+
+    do {
+        if (isdigit($ai->head) && isdigit($bi->head)) {
+            my $an = (($ai->head . $ai->tail) =~ /^(\d*)/)[0];
+            my $bn = (($bi->head . $bi->tail) =~ /^(\d*)/)[0];
+            if ($an =~ /^0\d/ || $bn =~ /^0\d/) {
+                return fcmp($an, $bn);
+            } else {
+                if ($an <=> $bn) {
+                    return ($an <=> $bn);
+                }
+            }
+        } else {
+            if ($ai->head cmp $bi->head) {
+                return ($ai->head cmp $bi->head);
+            }
+        }
+        $ai->advance();
+        $bi->advance();
+    } while (defined($ai->head) && defined($bi->head));
+
+    return $ai->head ? 1 : $bi->head ? -1 : 0;
+}
+
+sub strverssort {
+    return sort { strverscmp($a, $b) } @_;
 }
 
 1;
@@ -101,6 +155,10 @@ Prints:
 
 Pure Perl implementation of GNU strverscmp.
 
+=head1 AUTHOR
+
+Nathaniel Nutter C<nnutter@cpan.org>
+
 =head1 COPYRIGHT AND DISCLAIMER
 
 Copyright 2013, The Genome Institute at Washington University C<nnutter@cpan.org>, all rights
@@ -110,7 +168,3 @@ and/or modify it under the same terms as Perl itself.
 This program is distributed in the hope that it will be useful, but
 without any warranty; without even the implied warranty of
 merchantability or fitness for a particular purpose.
-
-=head1 AUTHOR
-
-Nathaniel Nutter C<nnutter@cpan.org>
