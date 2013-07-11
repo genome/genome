@@ -40,7 +40,7 @@ my $log = IO::File->new(">$temp_dir/status_messages.txt");
 ok($log, "created a file to hold the status messages") or die;
 $log->print(join("\n", @output));
 
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2013-04-15-08-14';
+my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2013-07-11b';
 ok(-d $expected_data_directory, "found expected data directory: $expected_data_directory") or die;
 my @diff = `diff -r $expected_data_directory $temp_dir`;
 is(@diff, 5, "no differences from expected results and actual other than the 5 lines corresponding to the random temp dir statement")
