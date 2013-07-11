@@ -701,8 +701,21 @@ sub all_allocations {
 
     my @allocations;
     push @allocations, $self->disk_allocation if $self->disk_allocation;
-    push @allocations, $self->symlinked_allocations; # adds if the data dir exists, if not we can't find them
 
+    push @allocations, $self->user_allocations;
+    push @allocations, $self->symlinked_allocations;
+
+    push @allocations, $self->input_allocations;
+    push @allocations, $self->event_allocations;
+
+    my %allocations = map { $_->id => $_ } @allocations;
+    return values %allocations;
+}
+
+sub input_allocations {
+    my $self = shift;
+
+    my @allocations;
     for my $input ($self->inputs) {
         my $value = $input->value;
         if ($value and $value->isa('Genome::Model::Build')) {
@@ -715,12 +728,22 @@ sub all_allocations {
             );
         }
     }
+    return @allocations;
+}
+
+sub user_allocations {
+    my $self = shift;
 
     my @results = $self->all_results;
+    my @allocations = map { $_->disk_allocations } @results;
+    return @allocations;
+}
 
-    my @user_allocations = map { $_->disk_allocations } @results;
-    push @allocations, @user_allocations if @user_allocations;
 
+sub event_allocations {
+    my $self = shift;
+
+    my @allocations;
     my @events = $self->events;
     for my $event (@events) {
         my @event_allocations = Genome::Disk::Allocation->get(
@@ -729,10 +752,9 @@ sub all_allocations {
         );
         push @allocations, @event_allocations if @event_allocations;
     }
-
-    my %allocations = map { $_->id => $_ } reverse @allocations;
-    return values %allocations;
+    return @allocations;
 }
+
 
 sub all_results {
     my $self = shift;
