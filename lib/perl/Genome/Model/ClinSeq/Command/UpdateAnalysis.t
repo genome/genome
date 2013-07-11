@@ -14,7 +14,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>12; #One per 'ok', 'is', etc. statement below
+use Test::More skip_all => "pending completion of 2892930879"; # tests=>12; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::UpdateAnalysis;
 use Data::Dumper;
 
