@@ -116,8 +116,11 @@ sub execute {
         push @tiers_to_use, 4;
     }
     my $version = 1;
+    my $snv_anno_with_rsid = $self->output_dir."/rsid";
     foreach my $tier (@tiers_to_use){
         my $snv_anno_top = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top.header");
+        my $snv_anno_rsid = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier.rsid", $version, "annotated.top");
+        `cat $snv_anno_rsid >> $snv_anno_with_rsid`;
         my $snv_regulatory = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version, "annotated.top.header.regulatory");
         my $snv_anno = $snv_anno_top;
         if ($self->include_regulatory and -s $snv_regulatory) {
@@ -280,6 +283,7 @@ sub execute {
     my %params = (
         snv_file => $snv_anno_file,
         snv_annotation_file => $snv_anno_file,
+        snv_anno_file_with_rsid => $snv_anno_with_rsid,
         genome_build => $self->somatic_variation_build->reference_sequence_build->version,
         tumor_sample => $self->somatic_variation_build->tumor_build->model->subject->extraction_label, #TODO verify
         normal_sample => $self->somatic_variation_build->normal_build->model->subject->extraction_label, #TODO verify
