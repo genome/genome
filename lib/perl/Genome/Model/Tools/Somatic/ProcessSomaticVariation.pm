@@ -755,12 +755,15 @@ sub execute {
               }
               close($inFh);
               close(FEATFILE);
+              my $new_snv_file = addName($snv_file,"ontarget");
+              my $new_indel_file = addName($indel_file,"ontarget");
+              
               `joinx sort $output_dir/$sample_name/featurelist.tmp >$output_dir/$sample_name/featurelist`;
               `rm -f $output_dir/$sample_name/featurelist.tmp`;
-              `joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$snv_file.ontarget`;
-              $snv_file = "$snv_file.ontarget";
-              `joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$indel_file.ontarget`;
-              $indel_file = "$indel_file.ontarget";
+              `joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$new_snv_file`;
+              $snv_file = "$new_snv_file";
+              `joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$new_indel_file`;
+              $indel_file = "$new_indel_file";
 
           } else {
               print STDERR "WARNING: feature list not found, No target region filtering being done\n";
