@@ -15,7 +15,7 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
         somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id', 
                                 doc => 'Build ID for a somatic variation model' },
 
-        misc_annotation_db  => { is => 'Genome::Db', 
+        misc_annotation_db  => { is => 'Genome::Db::Tgi::MiscAnnotation', 
                                 doc => 'misc annotation for the reference sequence, supplying centromere ideogram and gaps' },
 
         common_name         => { is => 'Text', 

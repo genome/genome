@@ -14,7 +14,7 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByCategory {
             doc => 'tsv formatted file to added gene category annotations to',
         },
         cancer_annotation_db => {
-            is => 'Genome::Db',
+            is => 'Genome::Db::Tgi::CancerAnnotation',
             doc => 'db of cancer annotation', 
         },
         gene_name_column => {

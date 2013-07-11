@@ -40,7 +40,7 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
         no_fasta_check          => { is => 'Number', is_optional => 1,
                                      doc => 'To prevent checking of the reported reference base against the reference genome fasta set --no_fasta_check=1 [Not recommended!]' },
 
-        cancer_annotation_db    => { is => 'Genome::Db',
+        cancer_annotation_db    => { is => 'Genome::Db::Tgi::CancerAnnotation',
                                      doc => 'database of cancer annotation' },
 
     ],

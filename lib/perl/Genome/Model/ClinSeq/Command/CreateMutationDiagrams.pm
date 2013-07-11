@@ -13,10 +13,12 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
     is => 'Command::V2',
     has_input => [
         cancer_annotation_db => {
-            is => 'Genome::Db',
+            is => 'Genome::Db::Tgi::CancerAnnotation',
+            doc => 'cancer-related gene lists, and associated data',
         },
         cosmic_annotation_db => {
-            is => 'Genome::Db',
+            is => 'Genome::Db::Cosmic',
+            doc => 'data from COSMIC (catalog of somatic mutations in cancer',
         },
         builds => { 
               is => 'Genome::Model::Build::SomaticVariation',

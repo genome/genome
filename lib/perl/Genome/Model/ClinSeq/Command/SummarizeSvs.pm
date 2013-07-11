@@ -21,7 +21,7 @@ class Genome::Model::ClinSeq::Command::SummarizeSvs {
             doc => 'somatic variation build(s) to summarize SVs from',
         },
         cancer_annotation_db => {
-            is => 'Genome::Db',
+            is => 'Genome::Db::Tgi::CancerAnnotation',
             example_values => [$Genome::Model::ClinSeq::DEFAULT_CANCER_ANNOTATION_DB_ID],
             doc => 'cancer annotation data',
         },

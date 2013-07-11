@@ -22,7 +22,8 @@ class Genome::Model::ClinSeq::Command::ImportSnvsIndels {
               doc => 'exome somatic variation build(s) to get SNVs indels',
         },
         cancer_annotation_db => {
-              is => 'Genome::Db',
+              is => 'Genome::Db::Tgi::CancerAnnotation',
+              doc => 'cancer annotation db',
         },
         filter_mt => {
             is => 'Boolean',

@@ -16,7 +16,9 @@ class Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute {
             doc => 'RnaSeq build to analyze',
         },
         cancer_annotation_db => {
-            is => 'Genome::Db',
+            is => 'Genome::Db::Tgi::CancerAnnotation',
+            example_values => [$Genome::Model::ClinSeq::DEFAULT_CANCER_ANNOTATION_DB_ID],
+            doc => 'cancer annotation database'
         },
         outdir => { 
             is => 'FilesystemPath',

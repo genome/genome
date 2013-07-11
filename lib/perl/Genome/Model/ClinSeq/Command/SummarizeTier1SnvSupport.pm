@@ -16,7 +16,10 @@ class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
         tumor_rnaseq_build  => { is => 'Genome::Model::Build', is_optional => 1, },
         normal_rnaseq_build => { is => 'Genome::Model::Build', is_optional => 1, },
        
-        cancer_annotation_db => { is => 'Genome::Db' },
+        cancer_annotation_db => { 
+            is => 'Genome::Db::Tgi::CancerAnnotation', 
+            example_values => [$Genome::Model::ClinSeq::DEFAULT_CANCER_ANNOTATION_DB_ID],
+        },
 
         wgs_positions_file          => { is => 'FilesystemPath', is_optional => 1 },
         exome_positions_file        => { is => 'FilesystemPath', is_optional => 1 },

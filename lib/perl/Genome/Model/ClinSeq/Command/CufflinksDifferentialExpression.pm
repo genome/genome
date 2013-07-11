@@ -19,7 +19,7 @@ class Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression {
             doc => 'RnaSeq build to compare against. This should be the control sample (i.e. normal, primary, drug sensitive, etc.)',
         },
         cancer_annotation_db => {
-            is => 'Genome::Db',
+            is => 'Genome::Db::Tgi::CancerAnnotation',
             doc => 'cancer annotation db',
         },
         outdir => { 

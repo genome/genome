@@ -19,11 +19,13 @@ class Genome::Model::ClinSeq {
         normal_rnaseq_model     => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
         de_model                => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
 
-        cancer_annotation_db    => { is => 'Genome::Db', default_value => $DEFAULT_CANCER_ANNOTATION_DB_ID }, 
-        misc_annotation_db      => { is => 'Genome::Db', default_value => $DEFAULT_MISC_ANNOTATION_DB_ID },
-        cosmic_annotation_db    => { is => 'Genome::Db', default_value => $DEFAULT_COSMIC_ANNOTION_DB_ID },
+        cancer_annotation_db    => { is => 'Genome::Db::Tgi::CancerAnnotation', default_value => $DEFAULT_CANCER_ANNOTATION_DB_ID }, 
+        misc_annotation_db      => { is => 'Genome::Db::Tgi::MiscAnnotation', default_value => $DEFAULT_MISC_ANNOTATION_DB_ID },
+        cosmic_annotation_db    => { is => 'Genome::Db::Cosmic', default_value => $DEFAULT_COSMIC_ANNOTION_DB_ID },
         
         force                   => { is => 'Boolean', doc => 'skip sanity checks on input models' },
+
+        #processing_profile      => { is => 'Genome::ProcessingProfile::ClinSeq', id_by => 'processing_profile_id', default_value => { } },
     ],
     has_optional_param => [
         #Processing profile parameters would go in here
