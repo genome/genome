@@ -8,7 +8,7 @@ use Genome;
 # to provide the most useful examples possible
 our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20130401.1';
 our $DEFAULT_MISC_ANNOTATION_DB_ID      = 'tgi/misc-annotation/human/build37-20130113.1';
-our $DEFAULT_COSMIC_ANNOTION_DB_ID      = 'cosmic/65.0';
+our $DEFAULT_COSMIC_ANNOTATION_DB_ID      = 'cosmic/65.0';
 
 class Genome::Model::ClinSeq {
     is => 'Genome::Model',
@@ -21,7 +21,7 @@ class Genome::Model::ClinSeq {
 
         cancer_annotation_db    => { is => 'Genome::Db::Tgi::CancerAnnotation', default_value => $DEFAULT_CANCER_ANNOTATION_DB_ID }, 
         misc_annotation_db      => { is => 'Genome::Db::Tgi::MiscAnnotation', default_value => $DEFAULT_MISC_ANNOTATION_DB_ID },
-        cosmic_annotation_db    => { is => 'Genome::Db::Cosmic', default_value => $DEFAULT_COSMIC_ANNOTION_DB_ID },
+        cosmic_annotation_db    => { is => 'Genome::Db::Cosmic', default_value => $DEFAULT_COSMIC_ANNOTATION_DB_ID },
         
         force                   => { is => 'Boolean', doc => 'skip sanity checks on input models' },
 
