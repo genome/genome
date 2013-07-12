@@ -5348,10 +5348,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'outdir=s',
         'files',
-        'cosmic-version=s',
-        undef,
-        'max-count-per-cosmic-site=s',
-        undef,
         'max-transcripts=s',
         undef,
         'collapse-variants!',
@@ -5363,6 +5359,8 @@ $Genome::Command::OPTS_SPEC = [
         'max-indels-per-file=s',
         undef,
         'max-cosmic-sites=s',
+        undef,
+        'max-count-per-cosmic-site=s',
         undef,
         'builds=s@',
         undef,
@@ -35964,6 +35962,8 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>instrument-data',
   [
+    'findassociatedbuilds',
+    undef,
     '>remove',
     [
       'color!',
