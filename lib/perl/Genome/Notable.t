@@ -16,8 +16,7 @@ ok(Genome::Foo->isa('Genome::Notable'), 'made a "Genome::Notable" test class Gen
 my $o1 = Genome::Foo->create(100);
 ok($o1, "created a test notable object");
 
-my @n = $o1->notes;
-is(scalar(@n),0,"no notes at start");
+is(count($o1->notes), 0, 'no notes at start');
 
 my $n1 = $o1->add_note(
     header_text => "head1",
@@ -44,24 +43,20 @@ my $n3 = $o2->add_note(
 );
 ok($n3, "added a note to the 2nd object");
 
-my @o1notes = $o1->notes;
-is(scalar(@o1notes),2,"got expected note count for object 1");
+is(count($o1->notes), 2, 'got expected note count for object 1');
 
-my @o2notes = $o2->notes;
-is(scalar(@o2notes),1,"got expected note count for object 2");
-
-print Data::Dumper::Dumper(\@o1notes,\@o2notes);
+is(count($o2->notes), 1, 'got expected note count for object 2');
 
 my $a1 = $o1->notes(header_text => 'head2');
 ok($a1,"got expected note");
-if ($a1) {
-    is($a1->body_text,'body2', 'got correct header');
-}
+is($a1->body_text, 'body2', 'got correct header');
 
 ok($o1->remove_note($n2), "removed the 2nd note from object 1");
-@o1notes = $o1->notes;
-is(scalar(@o1notes),1,"got expected note count for object 1");
+is(count($o1->notes), 1, "got expected note count for object 1");
 
 UR::Context->_sync_databases() or die;
 
-1;
+sub count {
+    my @list = @_;
+    return scalar(@list);
+}
