@@ -33,7 +33,7 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
                          gainThresh=2.5, lossThresh=1.5, annotationsTop=NULL,
                          annotationsBottom = NULL, plotTitle="",
                          gainColor="red", lossColor="blue", ylabel="",
-                         xmin=NULL, xmax=NULL, label_size=0.6){
+                         xmin=NULL, xmax=NULL, label_size=0.6, multiplePlot="", drawLabel=""){
 
   ## add options for plotting just a smaller region - TODO
   xlim = NULL
@@ -199,7 +199,13 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
 
     offsets = as.numeric(entrypoints[,4])
     offsets = append(offsets,sum(entrypoints$length))
-
+    
+    ## draw chromosome labels if needed
+    if (drawLabel){
+		for(i in 1:(length(offsets)-1)){
+		  	text((offsets[i]+offsets[i+1])/2, ymax*0.9, labels= gsub("chr","",entrypoints[i,1]), cex=label_size)
+		}
+    }
     
     ## draw highlight regions, if specified
     if(!(is.null(highlights))){      
@@ -276,7 +282,9 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
     abline(v=0,col="gray75")
     for(i in 1:(length(offsets)-1)){
       abline(v=offsets[i+1],col="gray75")
-      text((offsets[i]+offsets[i+1])/2, ymax*0.9, labels= gsub("chr","",entrypoints[i,1]), cex=label_size)
+      if (!multiplePlot){
+      	text((offsets[i]+offsets[i+1])/2, ymax*0.9, labels= gsub("chr","",entrypoints[i,1]), cex=label_size)
+      }
     }
 
 
@@ -289,7 +297,6 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
       addAnnos(annBtmRegions, segs, top=FALSE, offset=TRUE)
     }
 
-    
     ## ## add top annotations, if specfied
     ## if(!(is.null(annotationsTop))){
     ##   ypos = ymax*0.8
@@ -376,7 +383,6 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
       segs = segs[which(((segs$V3 >= xlim[1]) & (segs$V3 <= xlim[2])) | ((segs$V2 >= xlim[1]) & (segs$V2 <= xlim[2]))),]
     }
 
-
     ##draw the plot region
     plot(0,0,xlim=xlim,ylim=c(ymin,ymax),pch=".",ylab=ylabel, xlab="position (Mb)",xaxt="n",cex.lab=0.8, cex.axis=0.8)
 
@@ -421,7 +427,6 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
 
 
     ## do the plotting
-
     ##plot normal
     if(showNorm){
       a2=segs[which((segs[,5] <= gainThresh) & (segs[,5] >=lossThresh)),]
