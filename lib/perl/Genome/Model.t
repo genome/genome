@@ -202,6 +202,8 @@ for my $i (1..2) {
         data_directory => $tmpdir.'/build'.$i,
     );
 }
+my $sorter = Genome::Model::Build->__meta__->id_property_sorter;
+@builds = sort $sorter @builds;
 
 is(@builds, 2, 'create builds');
 my @model_builds = $model->builds;
