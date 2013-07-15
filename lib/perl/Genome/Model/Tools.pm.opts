@@ -13217,6 +13217,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'label-highlighted-points!',
       undef,
+      'maximum-clusters=s',
+      undef,
       'minimum-depth=s',
       undef,
       'minimum-labelled-peak-height=s',
