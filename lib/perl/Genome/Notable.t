@@ -1,6 +1,6 @@
 #!/usr/bin/env genome-perl
 use above "Genome";
-use Test::More tests => 15;
+use Test::More tests => 16;
 
 use strict;
 use warnings;
@@ -15,7 +15,6 @@ ok(Genome::Foo->isa('Genome::Notable'), 'made a "Genome::Notable" test class Gen
 
 my $o1 = Genome::Foo->create(100);
 ok($o1, "created a test notable object");
-
 is(count($o1->notes), 0, 'no notes at start');
 
 my $n1 = $o1->add_note(
@@ -36,6 +35,7 @@ ok($n2, "added a 2nd note");
 
 my $o2 = Genome::Foo->create(200);
 ok($o2, "made a 2nd notable object");
+is(count($o2->notes), 0, 'no notes at start');
 
 my $n3 = $o2->add_note(
     header_text => 'head3',
