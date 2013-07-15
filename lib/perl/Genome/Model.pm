@@ -666,7 +666,7 @@ sub copy {
     # standard properties
     my %params = ( subclass_name => $self->subclass_name );
     $params{name} = delete $overrides{name} if defined $overrides{name};
-    my @standard_properties = (qw/ subject processing_profile auto_assign_inst_data auto_build_alignments /);
+    my @standard_properties = (qw/ subject processing_profile auto_assign_inst_data auto_build_alignments force /);
     for my $name ( @standard_properties ) {
         if ( defined $overrides{$name} ) { # override
             $params{$name} = delete $overrides{$name};
