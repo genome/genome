@@ -189,7 +189,12 @@ class Genome::Model::Tools::Validation::Sciclone {
             is_optional => 1,
             default => 700,
         },
-
+        maximum_clusters => {
+            is => 'Integer',
+            doc => 'maximum number of clusters to allow (number is also initialized to this value)',
+            is_optional => 1,
+            default => 10, 
+        },
 
         ],
 };
@@ -322,6 +327,11 @@ sub execute {
 
     $cmd = $cmd . ", minimumDepth=$minimum_depth";
 
+    if(defined($self->maximum_clusters)){
+        $cmd = $cmd . ", maximumClusters=" . $self->maximum_clusters;
+    }
+ 
+
     if(defined($tumor_purities)){
         print "tp: " . $tumor_purities . "\n";
         $cmd = $cmd . ", purity=c($tumor_purities)";
@@ -377,7 +387,7 @@ sub execute {
         if($plot_only_cn2){
             print $rfile ", cnToPlot=c(2)";
         }
- 
+
         if($overlay_clusters){
             print $rfile ", overlayClusters=TRUE";
         } else {
