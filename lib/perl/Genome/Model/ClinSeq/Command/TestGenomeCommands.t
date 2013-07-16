@@ -30,11 +30,12 @@ use Test::More tests => 61;
 #2.) Since many of these involve querying the database, if this test breaks it may simply require updating the test results 
 
 #Create a temp dir for results
+#my $temp_dir = "/tmp/TestGenomeCommands/";
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2013-07-05/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2013-07-15/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #CLIN-SEQ UPDATE-ANALYSIS
@@ -125,3 +126,6 @@ for my $file (@files) {
         name => "compared $file",
     );
 }
+
+
+

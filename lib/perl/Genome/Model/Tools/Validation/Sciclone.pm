@@ -189,7 +189,12 @@ class Genome::Model::Tools::Validation::Sciclone {
             is_optional => 1,
             default => 700,
         },
-
+        maximum_clusters => {
+            is => 'Integer',
+            doc => 'maximum number of clusters to allow (# of clusters is also initialized to this value)',
+            is_optional => 1,
+            default => 10, 
+        },
 
         ],
 };
@@ -202,7 +207,8 @@ sub help_brief {
 sub help_synopsis {
     return <<EOS
         Inputs of variant readcounts and copy-number segmentation data, Output of cluster assignments and pdf plots.
-EXAMPLE:	gmt validation clonality-plot --variant-file snvs.txt,snvs2.txt --output-prefix clonality --sample-names 'Sample1,Sample2' --copy_number_files segs.paired.dat,segs2.paired.dat
+EXAMPLE:	gmt validation sciclone --variant-files snvs.txt,snvs2.txt --sample-names 'Sample1,Sample2' --copy-number-files segs.paired.dat,segs2.paired.dat --clusters-file clusters.out --r-script-file run.R --plot-1d-file output.1d.pdf
+
 EOS
 }
 
@@ -322,6 +328,11 @@ sub execute {
 
     $cmd = $cmd . ", minimumDepth=$minimum_depth";
 
+    if(defined($self->maximum_clusters)){
+        $cmd = $cmd . ", maximumClusters=" . $self->maximum_clusters;
+    }
+ 
+
     if(defined($tumor_purities)){
         print "tp: " . $tumor_purities . "\n";
         $cmd = $cmd . ", purity=c($tumor_purities)";
@@ -377,7 +388,7 @@ sub execute {
         if($plot_only_cn2){
             print $rfile ", cnToPlot=c(2)";
         }
- 
+
         if($overlay_clusters){
             print $rfile ", overlayClusters=TRUE";
         } else {

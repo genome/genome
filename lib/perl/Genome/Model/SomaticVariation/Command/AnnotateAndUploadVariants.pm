@@ -406,7 +406,7 @@ sub execute{
         `$cmd`;
 
         my @in_files;
-        for my $tier ((2,3,4)) {
+        for my $tier ((1,2,3,4)) {
             if(my $file = $build->data_set_path("effects/snvs.hq.tier$tier", $annotation_output_version, "annotated.top.header")){
                 if (-s $file) {
                     push @in_files, $file;

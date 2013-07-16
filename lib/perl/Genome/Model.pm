@@ -675,7 +675,7 @@ sub copy {
             delete $overrides{$name};
         }
         else {
-            $params{$name} = $self->$name;
+            $params{$name} = $self->$name if $self->can($name);
         }
     }
 

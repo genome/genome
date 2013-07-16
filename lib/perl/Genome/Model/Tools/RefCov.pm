@@ -1021,7 +1021,8 @@ sub validate_chromosome_names {
             my $tid = $refcov_bam->tid_for_chr($chr);
         };
         if ($@) {
-            die('Failed to validate chromsomes in ROI '. $self->roi_file_format .' file '. $self->roi_file_path .' with alignment '. $self->alignment_file_format .' file '. $self->alignment_file_path .' with error:' ."\n". $@);
+            my $err = $@;
+            die('Failed to validate chromsomes in ROI '. $self->roi_file_format .' file '. $self->roi_file_path .' with alignment '. $self->alignment_file_format .' file '. $self->alignment_file_path .' with error:' ."\n". $err);
         }
     }
     $self->status_message('Validate chromosomes...OK');

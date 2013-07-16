@@ -8,7 +8,7 @@ use Genome;
 # to provide the most useful examples possible
 our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20130401.1';
 our $DEFAULT_MISC_ANNOTATION_DB_ID      = 'tgi/misc-annotation/human/build37-20130113.1';
-our $DEFAULT_COSMIC_ANNOTION_DB_ID      = 'cosmic/65.0';
+our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.1';
 
 class Genome::Model::ClinSeq {
     is => 'Genome::Model',
@@ -21,7 +21,7 @@ class Genome::Model::ClinSeq {
 
         cancer_annotation_db    => { is => 'Genome::Db::Tgi::CancerAnnotation', default_value => $DEFAULT_CANCER_ANNOTATION_DB_ID }, 
         misc_annotation_db      => { is => 'Genome::Db::Tgi::MiscAnnotation', default_value => $DEFAULT_MISC_ANNOTATION_DB_ID },
-        cosmic_annotation_db    => { is => 'Genome::Db::Cosmic', default_value => $DEFAULT_COSMIC_ANNOTION_DB_ID },
+        cosmic_annotation_db    => { is => 'Genome::Db::Cosmic', default_value => $DEFAULT_COSMIC_ANNOTATION_DB_ID },
         
         force                   => { is => 'Boolean', doc => 'skip sanity checks on input models' },
 
@@ -245,7 +245,7 @@ sub map_workflow_inputs {
           mutation_diagram_collapse_variants=>1, 
           mutation_diagram_max_snvs_per_file=>1500, 
           mutation_diagram_max_indels_per_file=>1500,
-          mutation_diagram_cosmic_version=> $build->cosmic_annotation_db->external_version,
+          #mutation_diagram_cosmic_version=> $build->cosmic_annotation_db->external_version,
       );
     }
 
@@ -656,7 +656,7 @@ sub _resolve_workflow_for_build {
       }
       $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
       
-      for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file cosmic_version/) {
+      for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
           my $input_name = 'mutation_diagram_' . $p;
           $add_link->($input_connector,$input_name,$mutation_diagram_op,$p);
       }
