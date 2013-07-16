@@ -831,7 +831,9 @@ sub execute {
         	}
         } else {
         	print R_COMMANDS ", multiplePlot=FALSE";
-        	print R_COMMANDS ", plotTitle=\"" . $titles[$counter] . "\"";
+        	if (defined($plot_title)){
+        		print R_COMMANDS ", plotTitle=\"" . $titles[$counter] . "\"";
+        	}
         	print R_COMMANDS ", drawLabel=TRUE";
         }
         
