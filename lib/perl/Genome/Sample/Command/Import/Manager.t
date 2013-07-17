@@ -12,6 +12,7 @@ use warnings;
 use above "Genome";
 use Data::Dumper;
 require Genome::Utility::Test;
+use File::Temp;
 use Test::More;
 
 use_ok('Genome::Sample::Command::Import::Manager') or die;
@@ -47,10 +48,13 @@ ok($pp, 'create pp');
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v1');
 my $sample_name = 'TeSt-0000-00';
+my $working_directory = File::Temp::tempdir(CLEANUP => 1);
+Genome::Sys->create_symlink($test_dir.'/valid/samples.csv', $working_directory.'/samples.csv');
+Genome::Sys->create_symlink($test_dir.'/valid/config.yaml', $working_directory.'/config.yaml');
 
 # Do not make progress, just status
 my $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/valid',
+    working_directory => $working_directory,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -58,6 +62,7 @@ is($manager->namespace, 'Test', 'got namespace');
 my $sample_hash = eval{ $manager->samples->{$sample_name}; };
 ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'sample_needed', 'sample hash status');
+ok(-s $manager->status_file, 'status file created');
 
 # Import command
 is(
@@ -69,7 +74,7 @@ ok(!$manager->_launch_instrument_data_import_for_sample($sample_hash), 'failed t
 
 # Make progress: create sample, model and 'import' (it thinks it is importing b/c of the command used in the config file)
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/valid',
+    working_directory => $working_directory,
     make_progress => 1,
 );
 ok($manager, 'create manager');
@@ -97,7 +102,7 @@ my $inst_data = Genome::InstrumentData::Imported->__define__(
 $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $manager->config_file);
 
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/valid/',
+    working_directory => $working_directory,
     make_progress => 1,
 );
 ok($manager, 'create manager');
@@ -106,6 +111,7 @@ $sample_hash = eval{ $manager->samples->{$sample_name}; };
 ok($sample_hash->{model}->build_requested, 'model build_requested is on');
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
+print $manager->status_file;<STDIN>;
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid/no-config-yaml',

@@ -40,6 +40,11 @@ class Genome::Sample::Command::Import::Manager {
             calculate_from => 'working_directory',
             calculate => sub{ my $working_directory = shift; return $working_directory.'/config.yaml'; },
         },
+        status_file => {
+            calculate_from => 'working_directory',
+            calculate => sub{ my $working_directory = shift; return $working_directory.'/samples.status'; },
+            doc => 'File to write sample status.',
+        },
     ],
     has_optional_transient => [
         config => { is => 'Hash', },
@@ -435,7 +440,19 @@ sub _status {
             $sample->{build_id},
         );
     }
-    print "$status\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
+
+    my $status_file = $self->status_file;
+    unlink $status_file;
+    my $fh = eval{ Genome::Sys->open_file_for_writing($status_file); };
+    if ( not $fh ) {
+        $self->error_message($@) if $@;
+        $self->error_message("Failed to open status file! $status_file");
+        return;
+    }
+    $fh->print($status);
+    $fh->close;
+
+    print STDERR "Summary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
     return 1;
 }
 
