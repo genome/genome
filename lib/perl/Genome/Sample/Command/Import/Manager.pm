@@ -31,10 +31,10 @@ class Genome::Sample::Command::Import::Manager {
         # schedule_builds: schedule builds
     ],
     has_optional_calculated => [
-        sample_csv_file => {
+        info_file => {
             calculate_from => 'working_directory',
-            calculate => sub{ my $working_directory = shift; return $working_directory.'/samples.csv'; },
-            doc => 'CSV file of samples and attributes. A column called "name" is required. The name should be dash (-) separated values of the nomenclature, indivdual id and sample id.',
+            calculate => sub{ my $working_directory = shift; return $working_directory.'/info.tsv'; },
+            doc => 'Tab separated file of samples and attributes. A column called "name" is required. The name should be dash (-) separated values of the nomenclature, indivdual id and sample id. A column called "source_files" is also required, each file separated by a comma (,).',
         },
         config_file => {
             calculate_from => 'working_directory',
@@ -96,12 +96,12 @@ sub __errors__ {
         return @errors;
     }
 
-    my $sample_csv_error = $self->_load_sample_csv_file;
-    if ( $sample_csv_error ) {
+    my $load_info_error = $self->_load_info_file;
+    if ( $load_info_error ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
-            properties => [qw/ sample_csv_file /],
-            desc => $sample_csv_error,
+            properties => [qw/ info_file /],
+            desc => $load_info_error,
         );
         return @errors;
     }
@@ -167,34 +167,34 @@ sub _load_config {
     return;
 }
 
-sub _load_sample_csv_file {
+sub _load_info_file {
     my $self = shift;
 
-    my $sample_csv_file = $self->sample_csv_file;
-    if ( not -s $sample_csv_file ) {
-        return 'Sample csv file does not exist! '.$sample_csv_file;
+    my $info_file = $self->info_file;
+    if ( not -s $info_file ) {
+        return 'Sample info file does not exist! '.$info_file;
     }
 
-    my $sample_csv_reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $sample_csv_file,
-        separator => ',',
+    my $info_reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $info_file,
+        separator => "\t",
     );
-    if ( not $sample_csv_reader ) {
-        return 'Failed to open sample csv! '.$sample_csv_file;
+    if ( not $info_reader ) {
+        return 'Failed to open sample info file! '.$info_file;
     }
 
     my %headers_not_found = ( name => 1, source_files => 1, );
-    for my $header ( @{$sample_csv_reader->headers} ) {
+    for my $header ( @{$info_reader->headers} ) {
         delete $headers_not_found{$header};
     }
 
     if ( %headers_not_found ) {
-        return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in sample csv! '.$self->sample_csv_file;
+        return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in sample info file! '.$self->info_file;
     }
 
     my @importer_property_names = Genome::Sample::Command::Import->importer_property_names_for_namespace($self->namespace);
     my %samples;
-    while ( my $sample = $sample_csv_reader->next ) {
+    while ( my $sample = $info_reader->next ) {
         my $name = delete $sample->{name};
         $samples{$name} = {
             name => $name,

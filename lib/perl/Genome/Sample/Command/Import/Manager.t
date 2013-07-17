@@ -46,10 +46,10 @@ class Genome::Model::Ref {
 my $pp = Genome::ProcessingProfile::Ref->create(id => -333, name => 'ref pp #1', aligner => 'bwa');
 ok($pp, 'create pp');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v2');
 my $sample_name = 'TeSt-0000-00';
 my $working_directory = File::Temp::tempdir(CLEANUP => 1);
-Genome::Sys->create_symlink($test_dir.'/valid/samples.csv', $working_directory.'/samples.csv');
+Genome::Sys->create_symlink($test_dir.'/valid/info.tsv', $working_directory.'/info.tsv');
 Genome::Sys->create_symlink($test_dir.'/valid/config.yaml', $working_directory.'/config.yaml');
 
 # Do not make progress, just status
@@ -122,18 +122,18 @@ is($manager->error_message, "Property 'config_file': Config file does not exist!
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid/no-sample-csv',
+    working_directory => $test_dir.'/invalid/no-info-file',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
-is($manager->error_message, "Property 'sample_csv_file': Sample csv file does not exist! ".$manager->sample_csv_file, 'correct error');
+is($manager->error_message, "Property 'info_file': Sample info file does not exist! ".$manager->info_file, 'correct error');
 
 # fail - no name column in csv
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid/no-name-column-in-sample-csv',
+    working_directory => $test_dir.'/invalid/no-name-column-in-info-file',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
-is($manager->error_message, 'Property \'sample_csv_file\': No "name" column in sample csv! '.$manager->sample_csv_file, 'correct error');
+is($manager->error_message, 'Property \'info_file\': No "name" column in sample info file! '.$manager->info_file, 'correct error');
 
 done_testing();
