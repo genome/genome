@@ -56,7 +56,10 @@ sub create_somatic_variation_model {
         date_completed => '1999-01-01 15:19:01',
     );
 
-    my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(model_id => '-1');
+    my $annotation_model = Genome::Model::ImportedAnnotation->__define__(id => '-1', name => 'test_annotation_build');
+    my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(model_id => '-1', name => 'test_annotation_build/1', version => '1');
+    make_build_succeeded($annotation_build);
+
     my $somvar_pp = Genome::ProcessingProfile::SomaticVariation->create(
         name => 'somvar_pp',
         snv_detection_strategy => 'samtools r599 [--test=1]',
@@ -127,12 +130,29 @@ sub create_pdv_build {
 
 
 sub setup_test_build {
+    my %args = @_;
+    my $data_dir;
+    my $annot_data_dir;
+
+    if ($args{som_var_dir}) {
+        $data_dir = delete $args{som_var_dir};
+    }
+    else {
+        $data_dir = Genome::Sys->create_temp_directory();
+    }
+    if ($args{annot_dir}) {
+        $annot_data_dir = delete $args{annot_dir};
+    }
+    else {
+        $annot_data_dir = Genome::Sys->create_temp_directory();
+    }
     my ($somvar_model, $tumor_build, $normal_build) = create_somatic_variation_model();
 
     my $somvar_build = Genome::Model::Build::SomaticVariation->create(
         model_id => $somvar_model->id,
-        data_directory => Genome::Sys->create_temp_directory(),
+        data_directory => $data_dir,
     );
+    $somvar_build->annotation_build->data_directory($annot_data_dir);
     return $somvar_build, $somvar_model;
 }
 
@@ -145,15 +165,9 @@ sub setup_test_model {
         tumor_build => $tumor_build,
         normal_build => $normal_build,
     );
-    my $e = Genome::Model::Event::Build->__define__(
-        build_id => $somvar_build->id,
-        event_type => 'genome model build',
-        event_status => 'Succeeded',
-        model_id => $somvar_model->id,
-        date_completed => '1999-01-01 15:19:01',
-    );
 
-
+    make_build_succeeded($somvar_build);
+    
     my $output_dir = Genome::Sys->create_temp_directory();
     my $tier_result = Genome::Model::Tools::DetectVariants2::Classify::Tier->__define__(
         output_dir => $output_dir,
@@ -196,6 +210,20 @@ EOBED
     Genome::Sys->write_file($tier4_file, $tier4_data);
 
     return $somvar_model;
+}
+
+sub make_build_succeeded {
+    my $build = shift @_;
+    
+    my $e = Genome::Model::Event::Build->__define__(
+        build_id => $build->id,
+        event_type => 'genome model build',
+        event_status => 'Succeeded',
+        model_id => $build->model->id,
+        date_completed => '1999-01-01 15:19:01',
+    );
+
+    return 1;
 }
 
 1;
