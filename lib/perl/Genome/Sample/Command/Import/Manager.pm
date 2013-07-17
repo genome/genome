@@ -106,6 +106,16 @@ sub __errors__ {
         return @errors;
     }
 
+    my $load_status_error = $self->_load_status_file;
+    if ( $load_status_error ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ status_file /],
+            desc => $load_status_error,
+        );
+        return @errors;
+    }
+
     my $model_params_error = $self->_resolve_model_params;
     if ( $model_params_error ) {
         push @errors, UR::Object::Tag->create(
@@ -209,6 +219,33 @@ sub _load_sample_csv_file {
         }
     }
     $self->samples(\%samples);
+
+    return;
+}
+
+sub _load_status_file {
+    my $self = shift;
+
+    my $status_file = $self->status_file;
+    if ( not -s $status_file ) { # ok
+        return;
+    }
+
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $status_file,
+        separator => "\t",
+    );
+    if ( not $reader ) {
+        return 'Failed to open status file! '.$status_file;
+    }
+
+    my $samples = $self->samples;
+    while ( my $status = $reader->next ) {
+        my $sample = $samples->{ $status->{name} };
+        for my $attr (qw/ instrument_data model.id build.id /) {
+            $sample->{$attr} = $status->{$attr} if defined $status->{$attr} and $status->{$attr} ne 'NA';
+        }
+    }
 
     return;
 }
