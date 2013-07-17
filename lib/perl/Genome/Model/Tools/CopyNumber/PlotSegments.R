@@ -179,8 +179,11 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
     }
 
     ## outline the plot
-    plot(0, 0, xlim=xlim, ylim=c(ymin,ymax), pch=".",
-         ylab=ylabel, xlab="", xaxt="n", cex.lab=1, cex.axis=label_size)
+    if(!is.null(multiplePlot)){
+    	plot(0, 0, xlim=xlim, ylim=c(ymin,ymax), pch=".", ylab=ylabel, xlab="", xaxt="n", cex.lab=1, las=2, cex.axis=label_size*0.8)
+    } else {
+    	plot(0, 0, xlim=xlim, ylim=c(ymin,ymax), pch=".", ylab=ylabel, xlab="", xaxt="n", cex.lab=1, cex.axis=label_size)
+    }
 
     title(ylab=ylabel,line=2,cex.lab=label_size)
 
@@ -384,8 +387,12 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
     }
 
     ##draw the plot region
-    plot(0,0,xlim=xlim,ylim=c(ymin,ymax),pch=".",ylab=ylabel, xlab="position (Mb)",xaxt="n",cex.lab=0.8, cex.axis=0.8)
-
+    if(!is.null(multiplePlot)){
+    	plot(0,0,xlim=xlim,ylim=c(ymin,ymax),pch=".",ylab=ylabel, xlab="position (Mb)",xaxt="n",cex.lab=label_size*0.8, las=2, cex.axis=label_size*0.8)
+	} else {
+		plot(0,0,xlim=xlim,ylim=c(ymin,ymax),pch=".",ylab=ylabel, xlab="position (Mb)",xaxt="n",cex.lab=label_size, cex.axis=label_size)
+	}
+	
     ##add the title
     if(!(is.null(plotTitle))){
       title(main=plotTitle)
