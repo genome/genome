@@ -9,6 +9,7 @@ BEGIN {
     else {
         $ENV{GENOME_SYS_ID} = 'GMS1';
     }
+    $ENV{GENOME_HOME} = "/gsc/scripts/opt/genome/home/";
 
     if ($ENV{GENOME_DEV_MODE}) {
         $ENV{GENOME_SYS_SERVICES_MEMCACHE} ||= 'apipe-dev.gsc.wustl.edu:11211';
