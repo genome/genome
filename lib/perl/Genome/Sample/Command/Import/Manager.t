@@ -88,7 +88,7 @@ ok(!$sample_hash->{model}->auto_assign_inst_data, 'model auto_assign_inst_data i
 ok(!$sample_hash->{model}->auto_build_alignments, 'model auto_build_alignments is off');
 ok(!$sample_hash->{model}->build_requested, 'model build_requested is off');
 ok(!$sample_hash->{model}->instrument_data, 'model does not have instrument data assigned');
-is($sample_hash->{build_id}, 'NA', 'sample hash build_id');
+ok(!$sample_hash->{build}, 'sample hash build');
 
 # Make progress: create inst data here, it should get assigned to thew model and build should be requested
 my $inst_data = Genome::InstrumentData::Imported->__define__(

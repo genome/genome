@@ -242,8 +242,8 @@ sub _load_status_file {
     my $samples = $self->samples;
     while ( my $status = $reader->next ) {
         my $sample = $samples->{ $status->{name} };
-        for my $attr (qw/ instrument_data model.id build.id /) {
-            $sample->{$attr} = $status->{$attr} if defined $status->{$attr} and $status->{$attr} ne 'NA';
+        for my $attr (qw/ instrument_data model build /) {
+            $sample->{$attr.'_id'} = $status->{$attr} if defined $status->{$attr} and $status->{$attr} ne 'NA';
         }
     }
 
@@ -449,32 +449,26 @@ sub _status {
     return if not $set_job_status_to_samples;
 
     my %totals;
-    my $status;
+    my $status = join("\t", (qw/ name status inst_data model build /))."\n";
     for my $sample ( sort { $a->{name} cmp $b->{name} } values %{$self->samples} ) {
         $totals{total}++;
         $self->set_sample_status($sample);
         $totals{ $sample->{status} }++;
         $totals{build}++ if $sample->{status} =~ /^build/;
+        my ($model_id, $build_id) = (qw/ NA NA /);
         if ( $sample->{model} ) {
-            $sample->{model_id} = $sample->{model}->id;
+            $model_id = $sample->{model}->id;
             if ( $sample->{build} and $sample->{status} ne 'build_requested' ) {
-                $sample->{build_id} = $sample->{build}->id;
+                $build_id = $sample->{build}->id;
             }
-            else {
-                $sample->{build_id} = 'NA';
-            }
-        }
-        else {
-            $sample->{model_id} = 'NA';
-            $sample->{build_id} = 'NA';
         }
         $status .= sprintf(
             "%-20s %-15s %s %s %s\n",
             $sample->{name},
             $sample->{status}, 
             ( $sample->{instrument_data} ? $sample->{instrument_data}->id : 'NA' ),
-            $sample->{model_id},
-            $sample->{build_id},
+            $model_id,
+            $build_id,
         );
     }
 
