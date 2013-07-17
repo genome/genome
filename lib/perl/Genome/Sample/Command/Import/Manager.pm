@@ -484,14 +484,14 @@ sub _status {
                 $build_id = $sample->{build}->id;
             }
         }
-        $status .= sprintf(
-            "%-20s %-15s %s %s %s\n",
+        $status .= join(
+            "\t",
             $sample->{name},
             $sample->{status}, 
             ( $sample->{instrument_data} ? $sample->{instrument_data}->id : 'NA' ),
             $model_id,
             $build_id,
-        );
+        )."\n";
     }
 
     my $status_file = $self->status_file;
