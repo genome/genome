@@ -34,7 +34,7 @@ class Genome::Sample::Command::Import::Manager {
         info_file => {
             calculate_from => 'working_directory',
             calculate => sub{ my $working_directory = shift; return $working_directory.'/info.tsv'; },
-            doc => 'Tab separated file of samples and attributes. A column called "name" is required. The name should be dash (-) separated values of the nomenclature, indivdual id and sample id. A column called "source_files" is also required, each file separated by a comma (,).',
+            doc => 'Tab separated file of samples and attributes. See additional help below.',
         },
         config_file => {
             calculate_from => 'working_directory',
@@ -57,6 +57,25 @@ class Genome::Sample::Command::Import::Manager {
     ],
 };
 
+sub help_detail {
+    return <<HELP;
+Sample Info File
+ This is a tab sparated file in the working directory named "info.tsv" with headers. 
+ 
+ Required Columns
+  "name"         The name should be dash (-) separated values of the nomenclature, indivdual id/name and sample id/name.
+  "source_files" Source files [bam, fastq, sra, etc] to import for the sample. Separate files by comma (,). 
+ 
+ Additional Columns
+  The columns are to specify attributes for sample, patient and instrument data. Prefix the
+  attribute name with the entity it is to be assigned to. Some attributes do not need to be
+  prefixed, like "gender" and "race", because they are known to go to a certain entity.
+ 
+  sample             "s."
+  patient/individual "p."
+  instrument_data    "i."
+HELP
+}
 sub execute {
     my $self = shift;
 
@@ -198,16 +217,19 @@ sub _load_info_file {
         my $name = delete $sample->{name};
         $samples{$name} = {
             name => $name,
-            source_files => join(',', split(' ', delete $sample->{source_files})),
+            source_files => delete $sample->{source_files},
             importer_params => { name => $name, },
         };
         for my $attr ( sort keys %$sample ) {
             my $value = $sample->{$attr};
             next if not defined $value or $value eq '';
-            if ( $attr =~ /^(sample|individual)\./ ) { # is sample/individual/inst data indicated?
-                push @{$samples{$name}->{importer_params}->{$1.'_attributes'}}, $attr."='".$value."'";
+            if ( $attr =~ /^s\./ ) { # is sample/individual/inst data indicated?
+                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
             }
-            elsif ( $attr =~ s/^instrument_data\.// ) { # inst data attr
+            if ( $attr =~ /^p\./ ) { # is sample/individual/inst data indicated?
+                push @{$samples{$name}->{importer_params}->{'individual_attributes'}}, $attr."='".$value."'";
+            }
+            elsif ( $attr =~ s/^i\.// ) { # inst data attr
                 push @{$samples{$name}->{'instrument_data_attributes'}}, $attr."='".$value."'";
             }
             elsif ( grep { $attr eq $_ } @importer_property_names ) { # is the attr specified in the importer?
