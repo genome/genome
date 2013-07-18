@@ -77,6 +77,11 @@ sub execute {
     my $normal_val_bam = $build->normal_bam;
 
     my ($merged_output_file, $merged_fasta_file) = $self->_generate_merged_callset();
+    unless (-s $merged_fasta_file) {
+        $self->status_message('Skipping SV validation due to empty merged fasta file.');
+        $self->skip(1);
+        return 1;
+    }
 
     my $readcount_output = "$merged_output_file.readcounts";
     my $validation_remap_cmd = Genome::Model::Tools::Sv::AssemblyPipeline::RemapReads->create(
