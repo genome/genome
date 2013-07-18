@@ -299,7 +299,9 @@ sub _filter_variants {
     my $novo_cfg_fh = Genome::Sys->open_file_for_writing($novo_cfg) or die "failed to open $novo_cfg for writing\n";
 
     for my $lib (keys %fastqs) {
-        $novo_cfg_fh->printf("map:$merge_bam\tmean:%s\tstd:%s\treadlen:%s\tsample:%s\texe:samtools view\n",$mean_insertsize{$lib},$std_insertsize{$lib},$readlens{$lib},$lib);
+        #Somehow platform:illumina is a required field in config file for breakdancer1.4.2, not for 1.3
+        #Hardcoded for now and remove it once it is not needed in new version of bd
+        $novo_cfg_fh->printf("platform:illumina\tmap:$merge_bam\tmean:%s\tstd:%s\treadlen:%s\tsample:%s\texe:samtools view\n",$mean_insertsize{$lib},$std_insertsize{$lib},$readlens{$lib},$lib);
     }
     $novo_cfg_fh->close;
 
