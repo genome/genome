@@ -165,6 +165,11 @@ sub _run_sx {
     $self->temp_staging_directory.'/'.
     $self->read_processor_output_metric_file;
 
+    if (Genome::DataSource::GMSchema->has_default_handle) {
+        $self->debug_message("Disconnecting GMSchema default handle.");
+        Genome::DataSource::GMSchema->disconnect_default_handle();
+    }
+
     # Execute command
     my $sx_cmd = join(' | ', @sx_cmd_parts);
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $sx_cmd); };
