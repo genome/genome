@@ -102,6 +102,11 @@ sub execute {
         make_path($output_dir."/data");
     }
 
+    if (Genome::DataSource::GMSchema->has_default_handle) {
+        $self->debug_message("Disconnecting GMSchema default handle.");
+        Genome::DataSource::GMSchema->disconnect_default_handle();
+    }
+
     my $prepare_cmd = 'ulimit -s 100000 && '. $self->executable_for_version("PrepareAllPathsInputs.pl").' PICARD_TOOLS_DIR='.$PICARD_TOOLS_DIR.' DATA_DIR='.$output_dir.'/data PLOIDY='.$self->ploidy.' IN_GROUPS_CSV='.$self->in_group_file.' IN_LIBS_CSV='.$self->in_libs_file;
 
     $self->status_message("Run PrepareAllPathsInput");

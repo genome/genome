@@ -14235,13 +14235,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>genomic-regions',
-      [
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
       '>import-interpro',
       [
         '>execute-iprscan',
@@ -14885,6 +14878,36 @@ $Genome::Command::OPTS_SPEC = [
         undef
       ],
       '>variant-protein',
+      [
+        'input-tsv-file=s',
+        'files',
+        'output-tsv-file=s',
+        'files',
+        'anno-db=s',
+        'files',
+        'debug!',
+        undef,
+        'version=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>variant-protein-cds',
+      [
+        'input-tsv-file=s',
+        'files',
+        'output-tsv-file=s',
+        'files',
+        'anno-db=s',
+        'files',
+        'debug!',
+        undef,
+        'version=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>variant-transcript-cds',
       [
         'input-tsv-file=s',
         'files',
@@ -31632,21 +31655,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>manual-review',
     [
-      '>add-variants-to-list',
-      [
-        'list=s',
-        'files',
-        'db-list-id=s',
-        'files',
-        'db-list-name=s',
-        'files',
-        'debug!',
-        undef,
-        'separation-character=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>assign-variant-reviewers',
       [
         'finishers=s',
@@ -31710,21 +31718,6 @@ $Genome::Command::OPTS_SPEC = [
         'debug!',
         undef,
         'project-file=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>upload-variant-review-list',
-      [
-        'list=s',
-        'files',
-        'db-list-id=s',
-        'files',
-        'db-list-name=s',
-        'files',
-        'debug!',
-        undef,
-        'separation-character=s',
         'files',
         'help!',
         undef

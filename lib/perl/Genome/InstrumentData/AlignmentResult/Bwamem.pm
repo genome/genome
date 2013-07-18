@@ -138,9 +138,9 @@ sub _run_aligner {
     my $reference_fasta_path = $self->get_reference_sequence_index->full_consensus_path('fa');
 
     # get temp dir
-    my $tmp_dir       = $self->temp_scratch_directory;
-    my $log_path      = $tmp_dir . '/aligner.log';
-    my $all_sequences = $tmp_dir . '/all_sequences.sam';
+    my $tmp_dir  = $self->temp_scratch_directory;
+    my $log_path = $tmp_dir . '/aligner.log';
+    my $out_sam  = $tmp_dir . '/all_sequences.sam';
 
     # Verify the aligner and get params.
     my $aligner_version = $self->aligner_version;
@@ -165,7 +165,7 @@ sub _run_aligner {
     my $full_command = sprintf '%s mem %s %s %s 2>> %s',
         $cmd_path, $params, $reference_fasta_path,
         (join ' ', @input_paths), $log_path;
-    $self->_stream_bwamem($full_command, $all_sequences);
+    $self->_stream_bwamem($full_command, $out_sam);
 
     # Verify the bwa mem logfile.
     unless ($self->_verify_bwa_mem_did_happen($log_path)) {
@@ -176,7 +176,7 @@ sub _run_aligner {
 
     # Sort all_sequences.sam.
     $self->status_message("Resorting all_sequences.sam by coordinate.");
-    $self->_sort_sam($all_sequences);
+    $self->_sort_sam($out_sam);
 
     return 1;
 }
@@ -207,6 +207,7 @@ sub _stream_bwamem {
             "filehandle for AddReadGroupTag.");
     }
 
+    # Prepare the RG command
     my $add_rg_cmd = Genome::Model::Tools::Sam::AddReadGroupTag->create(
        input_filehandle  => $bwamem_fh,
        output_filehandle => $all_sequences_fh,
@@ -214,11 +215,19 @@ sub _stream_bwamem {
        pass_sam_headers  => 0,
     );
 
+    # Disconnect from db
+    $self->_disconnect_from_db();
+
+    # Run RG command
     unless ($add_rg_cmd->execute) {
         die $self->error_message(
             "Error running bwa mem. AddReadGroupTag failed to execute.");
     }
 
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
+
+    # Clean up
     $all_sequences_fh->close();
     $bwamem_fh->close();
     my $rv = $?;
@@ -237,12 +246,38 @@ sub _stream_bwamem {
     }
 }
 
+sub _disconnect_from_db {
+    my ($self) = @_;
+
+    $self->status_message("Closing data source db handle...");
+    if ($self->__meta__->data_source->has_default_handle) {
+        if ($self->__meta__->data_source->disconnect_default_handle) {
+            $self->status_message("Disconnected data source db handle (as expected).");
+        } else {
+            $self->status_message("Unable to disconnect data source db handle.");
+        }
+    } else {
+        $self->status_message("Data source db handle already closed.");
+    }
+}
+
+sub _check_db_connection {
+    my ($self) = @_;
+
+    if ($self->__meta__->data_source->has_default_handle) {
+        $self->status_message("Data source db handle unexpectedly reconnected itself.");
+    } else {
+        $self->status_message("Data source db handle still closed (as expected).");
+    }
+}
+
 # Sort a sam file.
 sub _sort_sam {
     my ($self, $given_sam) = @_;
 
     my $unsorted_sam = "$given_sam.unsorted";
 
+    # Prepare sort command
     unless (move($given_sam, $unsorted_sam)) {
         die $self->error_message(
             "Unable to move $given_sam to $unsorted_sam. " .
@@ -260,11 +295,19 @@ sub _sort_sam {
         use_version            => $self->picard_version,
     );
 
+    # Disconnect from db
+    $self->_disconnect_from_db();
+
+    # Run sort command
     unless ($picard_sort_cmd and $picard_sort_cmd->execute) {
         die $self->error_message(
             "Failed to create or execute Picard sort command.");
     }
 
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
+
+    # Clean up
     unless (unlink($unsorted_sam)) {
         $self->status_message("Could not unlink $unsorted_sam.");
     }

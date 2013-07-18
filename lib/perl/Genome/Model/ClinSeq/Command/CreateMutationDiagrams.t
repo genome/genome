@@ -16,12 +16,14 @@ BEGIN {
 use above "Genome";
 use Test::More tests=>7; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::CreateMutationDiagrams;
+use Genome::Model::Build::SomaticVariationTestGenerator;
 use Data::Dumper;
 
 use_ok('Genome::Model::ClinSeq::Command::CreateMutationDiagrams') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationDiagrams/2013-07-12/";
+my $base_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationDiagrams/2013-07-17/";
+my $expected_output_dir = $base_dir."expected";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -29,10 +31,9 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Get a somatic variation build
-my $somvar_build_id = 129973671;
-my $somvar_build = Genome::Model::Build->get($somvar_build_id);
-ok ($somvar_build, "Got somatic variation build from id: $somvar_build_id") or die;
-
+my ($somvar_build, $somvar_model) = Genome::Model::Build::SomaticVariationTestGenerator::setup_test_build(som_var_dir => "$base_dir/som_var_dir", annot_dir => "$base_dir/annot_dir");
+ok ($somvar_build, "Got somatic variation build") or die;
+$ENV{GENOME_DB} = "$base_dir/reference_annotations/";
 my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
 my $cosmic_annotation_db = Genome::Db->get("cosmic/65.1");
 
