@@ -348,11 +348,11 @@ sub _load_samples {
 
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
-    for my $name ( keys %$samples ) {
+    for my $sample ( values %$samples ) {
         # Inst Data
-        my $instrument_data = $instrument_data{$name};
-        $samples->{$name}->{instrument_data} = $instrument_data;
-        $samples->{$name}->{instrument_data_file} = eval{
+        my $instrument_data = $instrument_data{ $sample->{name} };
+        $sample->{instrument_data} = $instrument_data;
+        $sample->{instrument_data_file} = eval{
             my $attribute = $instrument_data->attributes(attribute_label => 'bam_path');
             if ( not $attribute ) {
                 $attribute = $instrument_data->attributes(attribute_label => 'archive_path');
@@ -361,19 +361,21 @@ sub _load_samples {
         };
 
         # Sample
-        my $genome_sample = Genome::Sample->get(name => $name);
-        $samples->{$name}->{sample} = $genome_sample;
+        my $genome_sample = Genome::Sample->get(name => $sample->{name});
+        $sample->{sample} = $genome_sample;
 
         # Model
         if ( $genome_sample ) {
             $model_params->{subject} = $genome_sample;
-            my $model = $model_class->get(%$model_params);
-            $samples->{$name}->{model} = $model;
-            $samples->{$name}->{build} = $model->latest_build if $model;
+            my $model = ( $sample->{model_id} )
+            ? $model_class->get( $sample->{model_id} )
+            : $model_class->get(%$model_params);
+            $sample->{model} = $model;
+            $sample->{build} = $model->latest_build if $model;
         }
 
         # Status
-        $self->set_sample_status($samples->{$name});
+        $self->set_sample_status($sample);
     }
 
     $self->samples($samples);
@@ -545,6 +547,7 @@ sub _make_progress {
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
     for my $sample ( values %{$self->samples} ) {
+        next if $sample->{status} eq 'build_succeeded';
         # Create sample
         if ( not $sample->{sample} ) {
             $sample->{sample} = $self->_create_sample($sample->{importer_params});
