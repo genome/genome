@@ -3649,6 +3649,17 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>metadata',
+      [
+        'refdata-only!',
+        undef,
+        'output-path=s',
+        'files',
+        'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>pcgp',
       [
         'color!',
@@ -27048,6 +27059,8 @@ $Genome::Command::OPTS_SPEC = [
       '>pindel',
       [
         'lsf-queue=s',
+        'files',
+        'lsf-resource=s',
         'files',
         'output-directory=s',
         'files',
