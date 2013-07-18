@@ -142,6 +142,12 @@ class Genome::Db::Ensembl::Command::Vep {
             doc => "Id of ReferenceSequence that the annotation is based on.  Only needed if --gtf-cache is specified",
             is_optional => 1,
         },
+        canonical => {
+            is => 'Boolean',
+            doc => "Adds a flag indicating if the transcript is the canonical transcript for the gene",
+            default_value => 0,
+            is_optional => 1,
+        },
         plugins => {
             is => 'String',
             is_many => 1,
