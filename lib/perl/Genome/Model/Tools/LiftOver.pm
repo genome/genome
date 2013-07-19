@@ -104,6 +104,11 @@ sub execute {
 
             # tabbed format: 1  123  456  A  T
 
+            #Some older annotation files may have start/stop coordinates in wrong order. If so, reverse:
+            if ($F[1]>$F[2]){
+              @F[1,2]=@F[2,1];
+            }
+
             # we're combining all the other fields into the name field since liftover is picky
             # about its format. I've chosen a delimiter "?|?" unlikely to be found in any real
             # files (I hope). Feel free to update this to something less hacky later on.
