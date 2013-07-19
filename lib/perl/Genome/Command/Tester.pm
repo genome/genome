@@ -12,7 +12,6 @@ sub run_and_diff {
     my $command = delete $params{command};
     my $results_version = delete $params{results_version};
 
-    my $expected_output_dir = $ENV{GENOME_TEST_INPUTS} || '';
     
     my $class;
     if (not defined $command or $command =~ /^[\w\_\:]+$/) {
@@ -43,10 +42,21 @@ sub run_and_diff {
     }
     else {
         my @argv = split(/\s+/,$command);
-        print Data::Dumper::Dumper(\@argv);
         my $params;
         my $errors;
-        ($class, $params, $errors) = $class->resolve_class_and_params_for_argv(@argv);
+        my $entry_class;
+        
+        my $cmd = shift @argv;
+        if ($cmd eq 'genome') {
+            $entry_class = 'Genome::Command';
+        }
+        elsif ($cmd eq 'gmt') {
+            $entry_class = 'Genome::Model::Tools';
+        }
+        else {
+            die "unexpected command $cmd! Expected 'genome' or 'gmt'!";
+        }
+        ($class, $params, $errors) = $entry_class->resolve_class_and_params_for_argv(@argv);
     }
 
     if (keys %params) {
@@ -56,7 +66,8 @@ sub run_and_diff {
     my $class_as_dirname = $class;
     $class_as_dirname =~ s/::/-/g;
 
-    $expected_output_dir .= "/$class_as_dirname/$results_version/expected-output";
+    my $input_dir = $ENV{GENOME_TEST_INPUTS} . "/$class_as_dirname/$results_version/inputs"; 
+    my $expected_output_dir = $ENV{GENOME_TEST_INPUTS} . "/$class_as_dirname/$results_version/expected-output";
 
     my $output_dir;
     if (@ARGV and $ARGV[0] eq 'REBUILD') {
@@ -88,6 +99,7 @@ sub run_and_diff {
     
     # If the synopsis contains a /tmp/output_dir, swap it for the one we have dynamically created
     $command =~ s|/tmp/output_dir|$output_dir|g;
+    $command =~ s|/tmp/input_dir|$input_dir|g;
 
     my $command_translated = eval qq{"$command"};
     if ($@) {

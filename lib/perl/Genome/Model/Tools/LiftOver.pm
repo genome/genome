@@ -29,7 +29,7 @@ class Genome::Model::Tools::LiftOver {
         file_format => {
             is => 'Text', default => 'bed',
             doc => 'The format of the source file',
-            valid_values => ['bed', 'gff', 'genePred', 'sample', 'pslT'],
+            valid_values => ['bed', 'gff', 'genePred', 'sample', 'pslT','svpair'],
         },
         input_is_annoformat => {
             is => 'Boolean', default => 0,
@@ -60,11 +60,20 @@ class Genome::Model::Tools::LiftOver {
     doc => "Wrapper for the UCSC liftOver with added conveniences",
 };
 
+our %FORMAT_TRANSLATES_TO_LIFTOVER_PARAM = map { $_ => 1 } qw/gff genePred sample pslT/;
+
 sub execute {
     my $self = shift;
     my ( $source_file, $dest_file, $unmapped_file ) = ( $self->source_file, $self->destination_file, $self->unmapped_file );
     my ( $chain_file, $lift_direction ) = ( $self->chain_file, $self->lift_direction );
-    my $file_format = ( $self->file_format eq 'bed' ? "" : " -" . $self->file_format ),
+
+    # TODO: some formats are determined by those is_* flags instead of this field.
+    # Change that.
+    my $file_format = $self->file_format;
+
+    # Some formats translate to a liftOver parameter, others we handle manually here. 
+    my $file_format_param = ($FORMAT_TRANSLATES_TO_LIFTOVER_PARAM{$file_format} ? "" : " -" . $file_format );
+
     my $multiple_regions = ( $self->allow_multiple_output_regions ? " -multiple" : "" );
 
     unless( defined $chain_file ) {
@@ -74,6 +83,9 @@ sub execute {
         elsif( $lift_direction eq 'hg18ToHg19' ) {
             $chain_file = "/gscmnt/gc12001/info/model_data/chain_files/hg18Tohg19/hg18ToHg19.over.chain";
         }
+        else {
+            die "no chain file specified, and not lift direction specified from which we can derive a chain file!";
+        }
         # Invalid values of --lift-direction are already handled
     }
 
@@ -81,17 +93,36 @@ sub execute {
     $unmapped_file = Genome::Sys->create_temp_file_path unless( defined $unmapped_file );
     ( $unmapped_file ) or die "Unable to create temporary file $!";
 
+    # this was cut-and-pasted below,
+    my $tempdir;
+    my $inFh;
+    my $outFh;
+    my $init_tmpfiles = sub {
+        $tempdir = Genome::Sys->create_temp_directory;
+        $tempdir or die "Unable to create temporary directory $!";
+        ($source_file, $dest_file) = ( "$tempdir/inbed", "$tempdir/outbed" );
+        $outFh = Genome::Sys->open_file_for_writing($source_file);
+        $inFh = Genome::Sys->open_file_for_reading($self->source_file);
+    };
+
     # If input is annotation format, convert to a bed for liftOver, and convert back to anno later
     my $anno_headers = "";
-    #### anno ####
-    if( $self->input_is_annoformat ) {
-        # Create temp directory for munging, and replace the source/dest files that liftOver will use
-        my $tempdir = Genome::Sys->create_temp_directory;
-        ( $tempdir ) or die "Unable to create temporary directory $!";
-        ( $source_file, $dest_file ) = ( "$tempdir/inbed", "$tempdir/outbed" );
 
-        my $outFh = IO::File->new( $source_file, ">" ) or die "Can't open temp file $source_file";
-        my $inFh = IO::File->new( $self->source_file ) or die "Can't open file $self->source_file";
+    if ($file_format eq 'svpair') {
+        #### svpair
+        $init_tmpfiles->(); 
+        while (my $line = $inFh->getline) {
+            chomp $line;
+            #my @F1 = split( /\t/, $line );
+            #my @F2 = (@F1(0,1,2), @F1)
+            
+            #$outFh->print( join( "\t", ( "chr$F[0]", $F[1], $F[2], $extraFields )) . "\n" );
+        }
+    }
+    elsif( $self->input_is_annoformat ) {
+        #### anno ####
+        # Create temp directory for munging, and replace the source/dest files that liftOver will use
+        $init_tmpfiles->();
         while( my $line = $inFh->getline ) {
 
             # Save header lines if any, to write to output later
@@ -109,14 +140,7 @@ sub execute {
               @F[1,2]=@F[2,1];
             }
 
-            # we're combining all the other fields into the name field since liftover is picky
-            # about its format. I've chosen a delimiter "?|?" unlikely to be found in any real
-            # files (I hope). Feel free to update this to something less hacky later on.
-            my $extraFields = join( "?|?", ( @F[3..$#F] ));
-
-            # spaces also get treated as delimiters by liftover, so we'll replace them with
-            # something equally unlikely
-            $extraFields =~ s/ /?_?/g;
+            my $extraFields = _merge_fields(@F[3..$#F]);
 
             # liftover doesn't like insertion coordinates (start==stop), so we add one to the stop
             # to enable a liftover, and remove it on the other side. This is effectively the same
@@ -127,15 +151,9 @@ sub execute {
         $inFh->close;
         $outFh->close;
     }
-    #### maf ####
     elsif( $self->input_is_maf_format ) {
-        # Create temp directory for munging, and replace the source/dest files that liftOver will use
-        my $tempdir = Genome::Sys->create_temp_directory;
-        ( $tempdir ) or die "Unable to create temporary directory $!";
-        ( $source_file, $dest_file ) = ( "$tempdir/inbed", "$tempdir/outbed" );
-
-        my $outFh = IO::File->new( $source_file, ">" ) or die "Can't open temp file $source_file";
-        my $inFh = IO::File->new( $self->source_file ) or die "Can't open file $self->source_file";
+        #### maf ####
+        $init_tmpfiles->(); 
         while( my $line = $inFh->getline ) {
 
             # Save header lines if any, to write to output later
@@ -164,15 +182,9 @@ sub execute {
         $inFh->close;
         $outFh->close;
     }
-    #### vcf ####
     elsif( $self->input_is_vcf_format ) {
-        # Create temp directory for munging, and replace the source/dest files that liftOver will use
-        my $tempdir = Genome::Sys->create_temp_directory;
-        ( $tempdir ) or die "Unable to create temporary directory $!";
-        ( $source_file, $dest_file ) = ( "$tempdir/inbed", "$tempdir/outbed" );
-
-        my $outFh = IO::File->new( $source_file, ">" ) or die "Can't open temp file $source_file";
-        my $inFh = IO::File->new( $self->source_file ) or die "Can't open file $self->source_file";
+        #### vcf ####
+        $init_tmpfiles->();
         while( my $line = $inFh->getline ) {
 
             # Save header lines if any, to write to output later
@@ -187,14 +199,7 @@ sub execute {
             chomp( $line );
             my @F = split( /\t/, $line );
 
-            # we're combining all the other fields into the name field since liftover is picky
-            # about its format. I've chosen a delimiter "?|?" unlikely to be found in any real
-            # files (I hope). Feel free to update this to something less hacky later on.
-            my $extraFields = join( "?|?", ( @F[2..$#F] ));
-
-            # spaces also get treated as delimiters by liftover, so we'll replace them with
-            # something equally unlikely
-            $extraFields =~ s/ /?_?/g;
+            my $extraFields = _merge_fields(@F[2..$#F]);
 
             # Since everything has one coordinate in VCF, we're going to treat everything like a
             # SNP for simplicity
@@ -207,7 +212,7 @@ sub execute {
 
     # Do the lifting over
     my $cmd = 'liftOver';
-    $cmd .= "$multiple_regions$file_format ";
+    $cmd .= "$multiple_regions$file_format_param ";
     $cmd .= join( ' ', ( $source_file, $chain_file, $dest_file, $unmapped_file ));
     print "RUN: $cmd\n";
     Genome::Sys->shellcmd(
@@ -287,6 +292,21 @@ sub execute {
     }
 
     return 1;
+}
+
+sub _merge_fields {
+    my @F = @_;
+
+    # we're combining all the other fields into the name field since liftover is picky
+    # about its format. I've chosen a delimiter "?|?" unlikely to be found in any real
+    # files (I hope). Feel free to update this to something less hacky later on.
+    my $extraFields = join( "?|?", ( @F ));
+
+    # spaces also get treated as delimiters by liftover, so we'll replace them with
+    # something equally unlikely
+    $extraFields =~ s/ /?_?/g;
+
+    return $extraFields;
 }
 
 1;
