@@ -32543,7 +32543,8 @@ $Genome::Command::OPTS_SPEC = [
         'gff',
         'genePred',
         'sample',
-        'pslT'
+        'pslT',
+        'svpair'
       ],
       'input-is-annoformat!',
       undef,
