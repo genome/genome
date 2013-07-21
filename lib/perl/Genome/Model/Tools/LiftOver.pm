@@ -6,7 +6,7 @@ use IO::File;
 use Genome;
 
 class Genome::Model::Tools::LiftOver {
-    is => 'Command',
+    is => 'Command::V2',
     has_input => [
         source_file => {
             is => 'Text',
@@ -17,48 +17,70 @@ class Genome::Model::Tools::LiftOver {
             doc => 'Where to output the remapped loci',
         },
     ],
-    has_optional => [
+    has_optional_input => [
         unmapped_file => {
             is => 'Text',
             doc => 'Where to output the unmappable loci',
         },
-        allow_multiple_output_regions => {
-            is => 'Boolean', default => '0',
-            doc => 'Whether or not to allow multiple output regions',
-        },
-        file_format => {
-            is => 'Text', default => 'bed',
-            doc => 'The format of the source file',
-            valid_values => ['bed', 'gff', 'genePred', 'sample', 'pslT','svold'],
-        },
-        input_is_annoformat => {
-            is => 'Boolean', default => 0,
-            doc => 'Input is 1-based annotation format',
-        },
-
-        input_is_maf_format => {
-            is => 'Boolean', default => 0,
-            doc => 'Input is 1-based maf format',
-        },
-
-        input_is_vcf_format => {
-            is => 'Boolean', default => 0,
-            doc => 'Input is 1-based maf format',
-        },
-
         chain_file => {
             is => 'Text',
             doc => 'The liftOver "chain" file that maps from source to destination build. Required if --lift-direction is unspecified',
         },
+    ],
+    has_optional_param => [
         lift_direction => {
             is => 'Text',
             doc => 'Shorthand for commonly used lift operations.',
             valid_values => ['hg18ToHg19', 'hg19ToHg18'],
             example_values => ['hg18ToHg19', 'hg19ToHg18'],
         },
+        allow_multiple_output_regions => {
+            is => 'Boolean', default => '0',
+            doc => 'Whether or not to allow multiple output regions',
+        },
+
+        # TODO: auto-detect this if not specified
+        file_format => {
+            is => 'Text', default => 'bed',
+            doc => 'The format of the source file',
+            valid_values => ['bed', 'gff', 'genePred', 'sample', 'pslT','svold'],
+        },
+
+        # TODO: make these into additional input formats
+        input_is_annoformat => {
+            is => 'Boolean', default => 0,
+            doc => 'Input is 1-based annotation format',
+        },
+        input_is_maf_format => {
+            is => 'Boolean', default => 0,
+            doc => 'Input is 1-based maf format',
+        },
+        input_is_vcf_format => {
+            is => 'Boolean', default => 0,
+            doc => 'Input is 1-based maf format',
+        },
     ],
-    doc => "Wrapper for the UCSC liftOver with added conveniences",
+    doc => "wrapper for the UCSC liftOver tool with support for additional input formats, maintaining additional columns",
 };
+
+sub help_synopsis {
+    return <<EOS
+# liftover TGI legacy SV annotation 
+gmt lift-over \
+    --file-format svold \
+    --source  /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-LiftOver/2013-07-19-sv-old/inputs/svs.svold \
+    --dest /tmp/lifted \
+    --unmapped /tmp/unlifted \
+    --lift-direction hg18ToHg19
+EOS
+}
+
+sub help_detail {
+    return <<EOS
+The UCSC liftOver tool translates coordinates from one reference genome to another.
+This wrapper supports a wider variety of file formats, and also handles maintaining additional columns present in the source file.
+EOS
+}
 
 our %FORMAT_TRANSLATES_TO_LIFTOVER_PARAM = map { $_ => 1 } qw/gff genePred sample pslT/;
 
