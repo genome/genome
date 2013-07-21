@@ -22560,7 +22560,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'genePred',
       'sample',
       'pslT',
-      'svpair'
+      'svold'
     ],
     'input-is-annoformat!',
     undef,
