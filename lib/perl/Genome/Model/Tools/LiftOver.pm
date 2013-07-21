@@ -29,7 +29,7 @@ class Genome::Model::Tools::LiftOver {
         file_format => {
             is => 'Text', default => 'bed',
             doc => 'The format of the source file',
-            valid_values => ['bed', 'gff', 'genePred', 'sample', 'pslT','svpair'],
+            valid_values => ['bed', 'gff', 'genePred', 'sample', 'pslT','svold'],
         },
         input_is_annoformat => {
             is => 'Boolean', default => 0,
@@ -93,31 +93,39 @@ sub execute {
     $unmapped_file = Genome::Sys->create_temp_file_path unless( defined $unmapped_file );
     ( $unmapped_file ) or die "Unable to create temporary file $!";
 
-    # this was cut-and-pasted below,
+    # this was cut-and-pasted below multiple times
     my $tempdir;
     my $inFh;
     my $outFh;
     my $init_tmpfiles = sub {
+        $tempdir = "/tmp/";
         $tempdir = Genome::Sys->create_temp_directory;
         $tempdir or die "Unable to create temporary directory $!";
         ($source_file, $dest_file) = ( "$tempdir/inbed", "$tempdir/outbed" );
+        unlink $source_file if -e $source_file;
+        unlink $dest_file if -e $dest_file;     
         $outFh = Genome::Sys->open_file_for_writing($source_file);
         $inFh = Genome::Sys->open_file_for_reading($self->source_file);
     };
 
-    # If input is annotation format, convert to a bed for liftOver, and convert back to anno later
+    # If input is annotation format, and we convert to a bed for liftOver then back to anno later, preserve the header
     my $anno_headers = "";
 
-    if ($file_format eq 'svpair') {
+    if ($file_format eq 'svold') {
         #### svpair
         $init_tmpfiles->(); 
+        my $n = 0;
         while (my $line = $inFh->getline) {
             chomp $line;
-            #my @F1 = split( /\t/, $line );
-            #my @F2 = (@F1(0,1,2), @F1)
-            
-            #$outFh->print( join( "\t", ( "chr$F[0]", $F[1], $F[2], $extraFields )) . "\n" );
+            $n++;
+            my @F = split(/\t/, $line );
+            # liftover doesn't like insertion coordinates (start==stop), so we add one to the stop
+            # to enable a liftover, and remove it on the other side. 
+            $outFh->print( join( "\t", ( "chr$F[0]", $F[1], $F[2]+1, "$n.1")) . "\n" );
+            $outFh->print( join( "\t", ( "chr$F[3]", $F[4], $F[5]+1, "$n.2")) . "\n" );
         }
+        $inFh->close();
+        $outFh->close();
     }
     elsif( $self->input_is_annoformat ) {
         #### anno ####
@@ -214,15 +222,98 @@ sub execute {
     my $cmd = 'liftOver';
     $cmd .= "$multiple_regions$file_format_param ";
     $cmd .= join( ' ', ( $source_file, $chain_file, $dest_file, $unmapped_file ));
-    print "RUN: $cmd\n";
     Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files => [$source_file, $chain_file],
         output_files => [$dest_file],
     );
 
-    # Convert back to annotation format if necessary
-    if( $self->input_is_annoformat ) {
+    # Convert back to original format if we converted *into* be format just to work with liftover
+    if ($file_format eq 'svold') {
+        # This is an old SV annotation format in the form CHR1 POS1 POS1 CHR2 POS2 POS2 TYPE ORIENTATION
+        # Because POS1 appears twice and POS2 appears twice (always a zero-width range), the new format
+        # was trimmed-down.  TODO: add the new format.
+        my $origFh = IO::File->new($self->source_file);
+        my $liftedFh = IO::File->new( $dest_file ) or die "can't open file\n";
+        my $outFh = IO::File->new( $self->destination_file, ">" ) or die "can't open output file: $!";
+        
+        # the unmapped file will be rebuilt while comparint the inputs to the outputs 
+        unlink $self->unmapped_file;
+        my $unmappedFh = IO::File->new( $self->unmapped_file, ">" ) or die "can't open unmapped file: $!";
+
+        my $orig_n = 0;
+        while(my $lifted_line1 = $liftedFh->getline) {
+            chomp($lifted_line1);
+            my @lifted_cols1 = split("\t", $lifted_line1);
+            $lifted_cols1[2]--;
+            my ($lifted_from_original_row1, $colset1) = split('\.',$lifted_cols1[3]);
+       
+            unless ($lifted_from_original_row1 =~ /\d/ and $colset1 =~ /^(1|2)/) {
+                $DB::single=1;
+                die "bad row $lifted_line1";
+            }
+
+            # get the line in the original file that goes with this lifted line
+            # if there are rows in the original file that come before the lifted one 
+            # they will go to the unmapped as we pass over them
+            my $orig_line;
+            my @orig_cols;
+            for (1) {
+                $orig_line = $origFh->getline;
+                unless ($orig_line) {
+                    die "out of rows in the original file while content is still in the liftover file???!: $lifted_line1\n";
+                }
+                chomp $orig_line;
+                @orig_cols = split("\t", $orig_line);
+                $orig_n++;
+
+                if ($lifted_from_original_row1 < $orig_n) {
+                    die "lifted file not in order?";
+                }
+                elsif ($orig_n < $lifted_from_original_row1) {
+                    # this line in the original file was not in the lifted file
+                    $unmappedFh->print($orig_line,"\n");
+                    redo;
+                }
+            }
+
+            if ($colset1 eq '2') {
+                # we expect the first row to have a value of '1'
+                # if this is 2, the first row did not map
+                # consider the whole thing unmapped
+                $unmappedFh->print($orig_line,"\n");
+                next;
+            }
+            elsif ($colset1 ne '1') {
+                die "expected the field to have n.1 or n.2!";
+            }
+
+            my $lifted_line2 = $liftedFh->getline;
+            chomp($lifted_line2);
+            my @lifted_cols2 = split("\t", $lifted_line2);
+            $lifted_cols2[2]--;
+            my ($lifted_from_original_row2, $colset2) = split('\.',$lifted_cols2[3]);
+
+            if ($lifted_from_original_row2 != $lifted_from_original_row1) {
+                # there was no line 2 in the file for this original row
+                # we just went on to the liftover data for another row
+                # consider this pair unmapped
+                $unmappedFh->print($orig_line,"\n");
+                # and consider the lifted data again from scratch
+                $lifted_line1 = $lifted_line2;
+                redo;
+            }
+            elsif ($colset2 ne '2') {
+                die "expected the extra col to be n.1 or n.2!";
+            }
+
+            $outFh->print(join("\t",@lifted_cols1[0,1,2],@lifted_cols2[0,1,2],@orig_cols[6..$#orig_cols]),"\n");
+        }
+        $origFh->close;
+        $liftedFh->close;
+        $outFh->close;
+    }
+    elsif( $self->input_is_annoformat ) {
         my $outFh = IO::File->new( $self->destination_file, ">" ) or die "can't open output file: $!";
         $outFh->print( $anno_headers ); # Print header lines copied from the input file
         my $inFh = IO::File->new( $dest_file ) or die "can't open file\n";
