@@ -22543,15 +22543,12 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>lift-over',
   [
-    'destination-file=s',
-    'files',
-    'source-file=s',
-    'files',
+    'lift-direction=s',
+    [
+      'hg18ToHg19',
+      'hg19ToHg18'
+    ],
     'allow-multiple-output-regions!',
-    undef,
-    'chain-file=s',
-    'files',
-    'debug!',
     undef,
     'file-format=s',
     [
@@ -22568,12 +22565,13 @@ $Genome::Model::Tools::OPTS_SPEC = [
     undef,
     'input-is-vcf-format!',
     undef,
-    'lift-direction=s',
-    [
-      'hg18ToHg19',
-      'hg19ToHg18'
-    ],
+    'source-file=s',
+    'files',
+    'destination-file=s',
+    'files',
     'unmapped-file=s',
+    'files',
+    'chain-file=s',
     'files',
     'help!',
     undef
