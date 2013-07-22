@@ -133,7 +133,7 @@ sub create {
         $lane_flag = 1;
     }
     else {
-        die $self->error_message('Input alignment bam file is missing');
+        die $self->error_message("Input alignment bam file is missing (no merge bam at $merge_bam or lane bam at $lane_bam)");
     }
 
     my $fasta_file = $self->alignment_result->reference_build->full_consensus_path('fa');
