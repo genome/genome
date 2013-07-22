@@ -274,7 +274,7 @@ sub _dump_dv_cmd {
     my $self = shift;
     my $cmd = join(" ",@INC)."\n===============================================\n";
     $cmd .=   "gmt detect-variants2 dispatcher --output-directory ".$self->output_directory;
-    $cmd .=     " --reference-build-id " . $self->reference_build_id;
+    $cmd .=     " --reference-build " . $self->reference_build_id;
     #new
     $cmd .=     " --alignment-results " . join(',', map {$_->id} $self->alignment_results) if $self->alignment_results;
     $cmd .=     " --control-alignment-results " . join(',', map {$_->id} $self->control_alignment_results) if $self->control_alignment_results;
@@ -283,12 +283,14 @@ sub _dump_dv_cmd {
     $cmd .=     " --control-aligned-reads-input ".$self->control_aligned_reads_input if $self->control_aligned_reads_input;
     $cmd .=     " --aligned-reads-sample ".$self->aligned_reads_sample if $self->aligned_reads_sample;
     $cmd .=     " --control-aligned-reads-sample ".$self->control_aligned_reads_sample if $self->control_aligned_reads_sample;
-    $cmd .=     " --pedigree_file_path ".$self->pedigree_file_path if $self->pedigree_file_path;
+    $cmd .=     " --pedigree-file-path ".$self->pedigree_file_path if $self->pedigree_file_path;
     
     for my $var ('snv','sv','indel'){
         my $strat = $var."_detection_strategy";
         if(defined($self->$strat)){
-            $cmd .= " --".$strat." \'".$self->$strat->id."\'";
+            my $strat_string = " --".$strat." \'".$self->$strat->id."\'";
+            $strat_string =~ s/_/-/g;
+            $cmd .= $strat_string;
         }
     }
 
