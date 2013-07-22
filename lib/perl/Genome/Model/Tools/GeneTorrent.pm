@@ -20,13 +20,17 @@ class Genome::Model::Tools::GeneTorrent {
     has => [
         lsf_resource => {
 #            default_value => '-W 72:00 -q lims-datatransfer -R "rusage[internet_download_mbps=80]"',
-            default_value => '-W 72:00 -q lims-datatransfer',
+            # -W bsub option silently ignored
+            default_value => '-q seqmgr-long',
         },
     ]
 };
 
 sub execute {
     my $self = shift;
+
+    # genetorrent-download debian package for 10.04 lives in /cghub
+    local $ENV{'PATH'} = $ENV{'PATH'} . ':/cghub/bin';
 
     # version 3.3.4 has GeneTorrent binary
     # version 3.8.3 has gtdownload binary
@@ -35,7 +39,7 @@ sub execute {
         ($? == 0) ? 'gtdownload' : 'GeneTorrent';
     };
     my $cmd = "$exe"
-        . ' --credential-file /gscuser/kochoa/mykey.pem'
+        . ' --credential-file /gscuser/kochoa/mykey.pem'    # TODO: do not hardcode
         . ' --download https://cghub.ucsc.edu/cghub/data/analysis/download/' . $self->uuid
         . ' --path ' . $self->target_path
         . ' --log stdout:verbose'
