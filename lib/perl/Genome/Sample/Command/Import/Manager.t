@@ -111,7 +111,6 @@ $sample_hash = eval{ $manager->samples->{$sample_name}; };
 ok($sample_hash->{model}->build_requested, 'model build_requested is on');
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
-print $manager->status_file;<STDIN>;
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => $test_dir.'/invalid/no-config-yaml',
