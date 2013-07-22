@@ -33,7 +33,8 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
                          gainThresh=2.5, lossThresh=1.5, annotationsTop=NULL,
                          annotationsBottom = NULL, plotTitle="",
                          gainColor="red", lossColor="blue", ylabel="",
-                         xmin=NULL, xmax=NULL, label_size=0.6, multiplePlot="", drawLabel=""){
+                         xmin=NULL, xmax=NULL, label_size=0.6, multiplePlot="", 
+                         drawLabel="", percentagePlot=""){
 
   ## add options for plotting just a smaller region - TODO
   xlim = NULL
@@ -178,8 +179,11 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
       a = segs[which(((segs$V3 >= xlim[1]) & (segs$V3 <= xlim[2])) | ((segs$V2 >= xlim[1]) & (segs$V2 <= xlim[2]))),]
     }
 
-    ## outline the plot
-    if(!is.null(multiplePlot)){
+	## outline the plot
+	if (percentagePlot == TRUE){
+		plot(0, 0, xlim=xlim, ylim=c(ymin,ymax), pch=".", ylab=ylabel, xlab="", xaxt="n", yaxt="n", cex.lab=1, las=2, cex.axis=label_size)
+    	axis(side = 2, las=2, at = c(1,0.75, 0.5,0.25,0,-0.25,-0.5,-0.75,-1), cex.axis=label_size, labels=c("100%",  "75%", "50%", "25%", 0, "25%", "50%", "75%", "100%"))
+    } else if (multiplePlot == TRUE){
     	plot(0, 0, xlim=xlim, ylim=c(ymin,ymax), pch=".", ylab=ylabel, xlab="", xaxt="n", cex.lab=1, las=2, cex.axis=label_size*0.8)
     } else {
     	plot(0, 0, xlim=xlim, ylim=c(ymin,ymax), pch=".", ylab=ylabel, xlab="", xaxt="n", cex.lab=1, cex.axis=label_size)
