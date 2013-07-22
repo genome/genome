@@ -552,6 +552,7 @@ sub _make_progress {
         if ( not $sample->{sample} ) {
             $sample->{sample} = $self->_create_sample($sample->{importer_params});
             return if not $sample->{sample};
+            $sample->{status} ='import_needed'
         }
 
         # Create model
