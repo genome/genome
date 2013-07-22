@@ -22,7 +22,7 @@ class Genome::Model::Build::SomaticValidation::IdentifyDnpResult {
             id_by => 'dv2_result_id',
         },
         tumor_alignment_result => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            is => 'Genome::InstrumentData::AlignedBamResult',
             id_by => 'tumor_aligment_result_id',
         },
     ],
@@ -68,7 +68,7 @@ sub _snvs_hq_bed {
 
 sub _tumor_bam_file {
     my $self = shift;
-    my $bam_file = $self->tumor_alignment_result->merged_alignment_bam_path;
+    my $bam_file = $self->tumor_alignment_result->bam_path;
     unless (defined $bam_file) {
         die $self->error_message("'whole_rmdup_bam_file' not defined for build's tumor_reference_alignment.");
     }

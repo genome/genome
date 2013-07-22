@@ -77,6 +77,11 @@ sub execute {
     my $normal_val_bam = $build->normal_bam;
 
     my ($merged_output_file, $merged_fasta_file) = $self->_generate_merged_callset();
+    unless (-s $merged_fasta_file) {
+        $self->status_message('Skipping SV validation due to empty merged fasta file.');
+        $self->skip(1);
+        return 1;
+    }
 
     my $readcount_output = "$merged_output_file.readcounts";
     my $validation_remap_cmd = Genome::Model::Tools::Sv::AssemblyPipeline::RemapReads->create(
@@ -99,6 +104,13 @@ sub execute {
         die $self->error_message('Failed to classify events');
     }
 
+    my $somatic_sv_file = "$readcount_output.somatic"; # from classify_cmd
+    unless (_found_somatic_SVs($somatic_sv_file)) {
+        $self->debug_message("Found no somatic SVs in $somatic_sv_file, skipping SV detection.");
+        $self->skip(1);
+        return 1;
+    }
+
     if($self->somatic_variation_build) {
         my $variation_build = $self->somatic_variation_build;
 
@@ -108,7 +120,7 @@ sub execute {
 
             my $wgs_remap_cmd = Genome::Model::Tools::Sv::AssemblyPipeline::RemapReads->create(
                 assembly_file => $merged_fasta_file,
-                sv_file => "$readcount_output.somatic", #from classify command
+                sv_file => $somatic_sv_file,
                 tumor_bam => $tumor_wgs_bam,
                 normal_bam => $normal_wgs_bam,
                 patient_id => "WGS.$patient_id",
@@ -126,6 +138,16 @@ sub execute {
     return 1;
 }
 
+sub _found_somatic_SVs {
+    my ($sv_file) = @_;
+    # The header is the first line...
+    # an optimization could be to line_count 'head -n 2 <sv_file>'
+    # since all we want to know is if it has more than one line.
+    if (Genome::Sys->line_count($sv_file) > 1) {
+        return 1;
+    }
+    return 0;
+}
 
 sub _resolve_svs_input {
     my $self = shift;

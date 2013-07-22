@@ -2,6 +2,7 @@ package Genome::Sys;
 
 use strict;
 use warnings;
+use autodie qw(chown mkdir);
 use Genome;
 use Cwd;
 use File::Path;
@@ -15,6 +16,7 @@ use List::MoreUtils "each_array";
 use Set::Scalar;
 use Digest::MD5;
 use JSON;
+use Params::Validate qw(:types);
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -433,7 +435,7 @@ sub sw_version_path_map {
             }
         }
     }
-    
+
     # find software installed under $GENOME_SW
     # The pattern for these has varied over time.  They will be like will be like:
     #   $GENOME_SW/$pkg_name/{$pkg_name-,,*}$version/{.,bin,scripts}/{$pkg_name,}{-,}$app_name{-,}{$version,}
@@ -453,7 +455,7 @@ sub sw_version_path_map {
     my %pkgdirs;
     my @dirs2 = split(':',$ENV{GENOME_SW});  #most of the system expects this to be one value not-colon separated currently
     for my $dir2 (@dirs2) {
-        # one subdir will exist per application 
+        # one subdir will exist per application
         my @app_subdirs = glob("$dir2/$pkg_name");
         for my $app_subdir (@app_subdirs) {
             # one subdir under that will exist per version
@@ -490,7 +492,7 @@ sub sw_version_path_map {
     # we never know for sure they are not just new installs which presume to be 64-bit.
     my @v64 = grep { /[-_]64$/ } keys %pkgdirs;
     for my $version_64 (@v64) {
-        my ($version_no64) = ($version_64 =~ /^(.*?)([\.-_][^\.]+)64$/); 
+        my ($version_no64) = ($version_64 =~ /^(.*?)([\.-_][^\.]+)64$/);
         $pkgdirs{$version_no64} = delete $pkgdirs{$version_64};
     }
 
@@ -501,7 +503,7 @@ sub sw_version_path_map {
         my @subdirs = qw/. bin scripts/;
         my @basenames = ("$app_name-$version","$app_name$version",$app_name);
         if ($pkg_name ne $app_name) {
-            @basenames = map { ("$pkg_name-$_", "$pkg_name$_", $_) } @basenames; 
+            @basenames = map { ("$pkg_name-$_", "$pkg_name$_", $_) } @basenames;
         }
         for my $basename (@basenames) {
             for my $subdir (@subdirs) {
@@ -811,28 +813,42 @@ sub create_directory {
     # the directory to be created, not that it already existed
     return $directory if -d $directory;
 
-    my $errors;
     # have to set umask, make_path's mode/umask option is not sufficient
     my $umask = umask;
     umask 0002;
-    # make_path may throw its own exceptions...
-    File::Path::make_path($directory, { group => $ENV{GENOME_SYS_GROUP}, error => \$errors });
+    make_path($directory); # not from File::Path
     umask $umask;
 
-    if ($errors and @$errors) {
-        my $message = "create_directory for path $directory failed:\n";
-        foreach my $err ( @$errors ) {
-            my($path, $err_str) = %$err;
-            $message .= "Pathname " . $path ."\n".'General error' . ": $err_str\n";
-        }
-        Carp::croak($message);
-    }
-
-    unless (-d $directory) {
-        Carp::croak("No error from 'File::Path::make_path', but failed to create directory ($directory)");
-    }
-
     return $directory;
+}
+
+# File::Path::make_path says it lets you specify group but it always seemed
+# to be overrided by setgid.  So we are implenting the recursive mkdir here.
+sub make_path {
+    my $path = shift;
+
+    my $gid = gidgrnam($ENV{GENOME_SYS_GROUP});
+
+    my @dirs = File::Spec->splitdir($path);
+    for (my $i = 0; $i < @dirs; $i++) {
+        my $subpath = File::Spec->catdir(@dirs[0..$i]);
+
+        next if (-d $subpath);
+
+        # autodie is on
+        mkdir $subpath;
+        chown -1, $gid, $subpath;
+    }
+
+    unless (-d $path) {
+        die "directory does not exist: $path";
+    }
+
+}
+
+sub gidgrnam {
+    my $group_name = shift;
+    (getgrnam($group_name))[2];
 }
 
 sub create_symlink {
@@ -1454,6 +1470,38 @@ sub shellcmd {
 
 }
 
+sub retry {
+    my %args = Params::Validate::validate(
+        @_, {
+            callback => { type => CODEREF },
+            tries  => {
+                type => SCALAR,
+                callbacks => {
+                    'is an integer' => sub { shift =~ /^\d+$/ },
+                    'is greater than zero' => sub { shift > 0 },
+                },
+            },
+            delay    => {
+                type => SCALAR,
+                callbacks => {
+                    'is an integer' => sub { shift =~ /^\d+$/ },
+                    'is greater than, or equal to, zero' => sub { shift >= 0 },
+                },
+            },
+        },
+    );
+
+    my $rv;
+    while ($args{tries} > 0) {
+        $args{tries}--;
+        $rv = $args{callback}->();
+        last if $rv;
+        sleep $args{delay};
+    }
+
+    return $rv;
+}
+
 1;
 
 __END__
@@ -1497,9 +1545,9 @@ Genome::Sys is a simple layer on top of OS-level concerns,
 including those automatically handled by the analysis system,
 like database cache locations.
 
-=head1 METHODS 
+=head1 METHODS
 
-=head2 sw_path($pkg_name,$version) or sw_path($pkg_name,$version,$executable_basename) 
+=head2 sw_path($pkg_name,$version) or sw_path($pkg_name,$version,$executable_basename)
 
 Return the path to a given executable, library, or package.
 The 3-parameter variation is only for packages which have multiple executables.
@@ -1523,7 +1571,7 @@ Return a list of all installed versions of a given executable in order.
 =head3 ex:
 
     @versions = Genome::Sys->sw_versions("tophat");
-    
+
     @versions = Genome::Sys->sw_versions("htseq","htseq-count");
 
 =head2 sw_version_path_map($pkg_name) or sw_version_path_map($pkg_name,$executable_basename)
@@ -1533,7 +1581,7 @@ Return a map of version numbers to executable paths.
 =head3 ex:
 
     %map = Genome::Sys->sw_version_path_map("tophat");
-    
+
     %map = Genome::Sys->sw_version_path_map("htseq","htseq-count");
 
 

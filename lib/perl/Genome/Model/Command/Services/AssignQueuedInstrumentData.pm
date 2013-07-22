@@ -493,11 +493,14 @@ sub _load_instrument_data {
         for my $status_attr ( @status_attrs ) {
             my $instrument_data = Genome::InstrumentData->get(
                 id => $status_attr->instrument_data_id,
+                analysis_project_id => undef,
                 -hint => [ 'sample', 'sample.source', 'sample.source.taxon', ],
             );
-            my $fail_cnt = eval{ $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value; };
-            $instrument_data->{_priority} = ( $fail_cnt ? $fail_cnt : 0 ); # if it does not have a fail count, treat as new
-            $instrument_data{ $instrument_data->id } = $instrument_data;
+            if ($instrument_data) {
+                my $fail_cnt = eval{ $instrument_data->attributes(attribute_label => 'tgi_lims_fail_count')->attribute_value; };
+                $instrument_data->{_priority} = ( $fail_cnt ? $fail_cnt : 0 ); # if it does not have a fail count, treat as new
+                $instrument_data{ $instrument_data->id } = $instrument_data;
+            }
         }
     }
     $self->status_message('Found '.scalar(grep { $_->{_priority} == 0 } values %instrument_data)." new instrument data\n");

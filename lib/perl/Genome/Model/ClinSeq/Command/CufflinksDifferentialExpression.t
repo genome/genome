@@ -38,8 +38,15 @@ ok($control_build, "got rna-seq build from the database using build id: $control
 
 #Create cufflinks-differential-expression command and execute
 #genome model clin-seq cufflinks-differential-expression --outdir=/tmp/ --case-build=129767889 --control-build=129767952
- 
-my $cufflinks_differential_expression_cmd = Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression->create(outdir=>$temp_dir, case_build=>$case_build, control_build=>$control_build);
+
+my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1"); 
+
+my $cufflinks_differential_expression_cmd = Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression->create(
+    outdir=>$temp_dir, 
+    case_build=>$case_build, 
+    control_build=>$control_build,
+    cancer_annotation_db=>$cancer_annotation_db,
+);
 $cufflinks_differential_expression_cmd->queue_status_messages(1);
 my $r1 = $cufflinks_differential_expression_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

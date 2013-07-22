@@ -106,6 +106,11 @@ EOS
 sub execute {
     my $self = shift;
 
+    unless ($self->is_legacy_version($self->version)) {
+        $self->error_message("Can't run SomaticIndel tool with version 2 and later of GATK");
+        die $self->error_message;
+    }
+
     ## Run GATK ##
     my $path_to_gatk = $self->gatk_path;
     my $gatk_params = $self->gatk_params;

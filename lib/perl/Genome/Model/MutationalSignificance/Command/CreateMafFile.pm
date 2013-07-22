@@ -19,6 +19,10 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
             is => 'Boolean',
             default_value => 1,
         },
+        include_regulatory => {
+            is => 'Boolean',
+            default_value => 0,
+        },
         cosmic_dir => {
             is => 'Path',
             doc => 'cosmic amino acid mutation database folder',
@@ -52,6 +56,17 @@ class Genome::Model::MutationalSignificance::Command::CreateMafFile {
             is => 'Boolean',
             doc => 'Include tier 4 in the analysis',
             default_value => 0,
+        },
+        regulatory_columns_to_check => {
+            is => 'String',
+            doc => 'Names of columns in the regulatory annotation file to check',
+            is_optional => 1,
+            is_many => 1,
+        },
+        use_indels => {
+            is => 'Boolean',
+            doc => 'Whether to use indels',
+            default => 1,
         },
     ],
     has_output => [
@@ -101,8 +116,42 @@ sub execute {
         push @tiers_to_use, 4;
     }
     my $version = 1;
+    my $snv_anno_with_rsid = $self->output_dir."/rsid";
     foreach my $tier (@tiers_to_use){
-        my $snv_anno = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top");
+        my $snv_anno_top = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version,"annotated.top.header");
+        my $snv_anno_rsid = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier.rsid", $version, "annotated.top");
+        `cat $snv_anno_rsid >> $snv_anno_with_rsid`;
+        my $snv_regulatory = $self->somatic_variation_build->data_set_path("effects/snvs.hq.tier$tier",$version, "annotated.top.header.regulatory");
+        my $snv_anno = $snv_anno_top;
+        if ($self->include_regulatory and -s $snv_regulatory) {
+
+            $snv_anno = $self->output_dir."/".$self->somatic_variation_build->id."tier$tier.merged_anno";
+            my %params = (
+                tgi_anno_file => $snv_anno_top,
+                regulatory_file => $snv_regulatory,
+                regulatory_columns_to_check => [$self->regulatory_columns_to_check],
+                output_file => $snv_anno,
+                annotation_build => $self->somatic_variation_build->annotation_build,
+            );
+
+            my $rdb_file = $self->somatic_variation_build->data_set_path("effects/snvs.hq.regulomedb", 1, "full");
+            unless (-s $rdb_file) {
+                $self->error_message("No regulomedb file detected");
+                return;
+            }
+            
+            $params{regulome_db_file} = $rdb_file;
+            
+            my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
+                %params
+            );
+           
+            unless ($rv) {
+                $self->error_message("Failed to merge annotations for tier $tier");
+                return $rv;
+            }
+        }
+
         my @snv_lines = `cat $snv_anno`;
         chomp @snv_lines;
 
@@ -121,63 +170,66 @@ sub execute {
     $snv_anno_fh->close;
 
     $snv_anno_file = $self->sort_and_write_to_temp_file($snv_anno_file);
+    my $indel_anno_file;
+    if ($self->use_indels) {
+        #Exclude pindel-only indels
+        my %uniq_to_pindel;
+        if ($self->exclude_pindel_only_indels) {
+            my ($gatk_indels) = glob($self->somatic_variation_build->data_directory."/variants/indel/gatk-somatic-indel-*/indels.hq.bed");
+            my ($varscan_indels) = glob($self->somatic_variation_build->data_directory."/variants/indel/varscan-somatic-*/varscan-high-confidence-indel-*/indels.hq.bed");
+            my ($pindel_indels) = glob($self->somatic_variation_build->data_directory."/variants/indel/pindel-*/pindel-somatic-calls-*/pindel-vaf-filter-*/pindel-read-support-*/indels.hq.bed");
 
-    #Exclude pindel-only indels
-    my %uniq_to_pindel;
-    if ($self->exclude_pindel_only_indels) {
-        my ($gatk_indels) = glob($self->somatic_variation_build->data_directory."/variants/indel/gatk-somatic-indel-*/indels.hq.bed");
-        my ($varscan_indels) = glob($self->somatic_variation_build->data_directory."/variants/indel/varscan-somatic-*/varscan-high-confidence-indel-*/indels.hq.bed");
-        my ($pindel_indels) = glob($self->somatic_variation_build->data_directory."/variants/indel/pindel-*/pindel-somatic-calls-*/pindel-vaf-filter-*/pindel-read-support-*/indels.hq.bed");
-
-        my %gatk_varscan_lines = map {chomp; s/\*/0/; $_=>1} `cut -f 1-4 $varscan_indels $gatk_indels`;
-        %uniq_to_pindel = map {chomp; $_=>1} `cut -f 1-4 $pindel_indels` if( -e $pindel_indels );
-        foreach my $indel ( keys %gatk_varscan_lines ) {
-            delete $uniq_to_pindel{$indel} if( defined $uniq_to_pindel{$indel} );
-        }
-    }
-
-    my @indel_lines;
-    foreach my $tier (@tiers_to_use){
-        my $indel_anno = $self->somatic_variation_build->data_set_path("effects/indels.hq.tier$tier", $tier, "annotated.top");
-
-        my @tier_indel_lines = `cat $indel_anno`;
-        chomp @tier_indel_lines;
-        @indel_lines = (@indel_lines, @tier_indel_lines);
-    }
-
-    #Deduplicate indel files and remove pindel-only and failed variants if needed
-    my %review_lines;
-    my $indel_cnt = 0;
-    for my $line (@indel_lines) {
-        my ($chr, $start, $stop, $ref, $var) = split(/\t/, $line);
-        my ($base0_start, $base0_stop) = ($start-1,$stop-1);
-        my $refvar = ($ref eq '-' ? "0/$var": "$ref/0");
-
-        if (%failed_variants and 
-               (defined $failed_variants{"$chr\t$start\t$stop"} or
-               defined $failed_variants{"$chr\t$base0_start\t$base0_stop"})) {
-            next;
-        }
-        elsif ($self->exclude_pindel_only_indels and (defined $uniq_to_pindel{"$chr\t$base0_start\t$stop\t$refvar"} or 
-                                       defined $uniq_to_pindel{"$chr\t$start\t$base0_stop\t$refvar"} )){
-            $review_lines{pindels}{$chr}{$start}{$stop} = $line;
-        }
-        else {
-            ++$indel_cnt unless( defined $review_lines{indels}{$chr}{$start}{$stop} );
-            $review_lines{indels}{$chr}{$start}{$stop} = $line;
-        }
-    }
-
-    #Write indel lines
-    my ($indel_anno_fh, $indel_anno_file) = Genome::Sys->create_temp_file;
-    foreach my $chr (nsort keys %{$review_lines{indels}}) {
-        foreach my $start (sort {$a <=> $b} keys %{$review_lines{indels}{$chr}}) {
-            foreach my $stop (sort {$a <=> $b} keys %{$review_lines{indels}{$chr}{$start}}) {
-                $indel_anno_fh->print($review_lines{indels}{$chr}{$start}{$stop}."\n");
+            my %gatk_varscan_lines = map {chomp; s/\*/0/; $_=>1} `cut -f 1-4 $varscan_indels $gatk_indels`;
+            %uniq_to_pindel = map {chomp; $_=>1} `cut -f 1-4 $pindel_indels` if( -e $pindel_indels );
+            foreach my $indel ( keys %gatk_varscan_lines ) {
+                delete $uniq_to_pindel{$indel} if( defined $uniq_to_pindel{$indel} );
             }
         }
+
+        my @indel_lines;
+        foreach my $tier (@tiers_to_use){
+            my $indel_anno = $self->somatic_variation_build->data_set_path("effects/indels.hq.tier$tier", $version, "annotated.top");
+
+            my @tier_indel_lines = `cat $indel_anno`;
+            chomp @tier_indel_lines;
+            @indel_lines = (@indel_lines, @tier_indel_lines);
+        }
+
+        #Deduplicate indel files and remove pindel-only and failed variants if needed
+        my %review_lines;
+        my $indel_cnt = 0;
+        for my $line (@indel_lines) {
+            my ($chr, $start, $stop, $ref, $var) = split(/\t/, $line);
+            my ($base0_start, $base0_stop) = ($start-1,$stop-1);
+            my $refvar = ($ref eq '-' ? "0/$var": "$ref/0");
+
+            if (%failed_variants and 
+                (defined $failed_variants{"$chr\t$start\t$stop"} or
+                    defined $failed_variants{"$chr\t$base0_start\t$base0_stop"})) {
+                next;
+            }
+            elsif ($self->exclude_pindel_only_indels and (defined $uniq_to_pindel{"$chr\t$base0_start\t$stop\t$refvar"} or 
+                    defined $uniq_to_pindel{"$chr\t$start\t$base0_stop\t$refvar"} )){
+                $review_lines{pindels}{$chr}{$start}{$stop} = $line;
+            }
+            else {
+                ++$indel_cnt unless( defined $review_lines{indels}{$chr}{$start}{$stop} );
+                $review_lines{indels}{$chr}{$start}{$stop} = $line;
+            }
+        }
+
+        #Write indel lines
+        my ($indel_anno_fh, $indel_anno_file_temp) = Genome::Sys->create_temp_file;
+        foreach my $chr (nsort keys %{$review_lines{indels}}) {
+            foreach my $start (sort {$a <=> $b} keys %{$review_lines{indels}{$chr}}) {
+                foreach my $stop (sort {$a <=> $b} keys %{$review_lines{indels}{$chr}{$start}}) {
+                    $indel_anno_fh->print($review_lines{indels}{$chr}{$start}{$stop}."\n");
+                }
+            }
+        }
+        $indel_anno_fh->close;
+        $indel_anno_file = $indel_anno_file_temp;
     }
-    $indel_anno_fh->close;
 
     #TODO: Option to remove any that fail manual review
     #TODO: Check count of variants to review and set aside if too many (maybe put this in merge-maf?)
@@ -228,16 +280,20 @@ sub execute {
         $snv_anno_file = $self->sort_and_write_to_temp_file($snv_anno_file);
     }
     
-    my $create_maf_cmd = Genome::Model::Tools::Capture::CreateMafFile->create(
+    my %params = (
         snv_file => $snv_anno_file,
         snv_annotation_file => $snv_anno_file,
-        indel_file => $indel_anno_file,
-        indel_annotation_file => $indel_anno_file,
+        snv_anno_file_with_rsid => $snv_anno_with_rsid,
         genome_build => $self->somatic_variation_build->reference_sequence_build->version,
         tumor_sample => $self->somatic_variation_build->tumor_build->model->subject->extraction_label, #TODO verify
         normal_sample => $self->somatic_variation_build->normal_build->model->subject->extraction_label, #TODO verify
         output_file => $self->output_dir."/".$self->somatic_variation_build->id.".maf",
     );
+    if ($self->use_indels) {
+        $params{indel_file} = $indel_anno_file;
+        $params{indel_annotation_file} = $indel_anno_file;
+    }
+    my $create_maf_cmd = Genome::Model::Tools::Capture::CreateMafFile->create(%params);
 
     my $create_maf_result = $create_maf_cmd->execute;
 
@@ -257,8 +313,8 @@ sub sort_and_write_to_temp_file {
     my %review_lines = ();
     for my $line ( @snv_lines )
     {
-        my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
-        $review_lines{snvs}{$chr}{$start}{$stop} = $line;
+        my ( $chr, $start, $stop, $ref, $var, $type, $call ) = split( /\t/, $line );
+        $review_lines{snvs}{$chr}{$start}{$stop}{$call} = $line;
     }
     my ($snv_anno_fh, $snv_anno_file) = Genome::Sys->create_temp_file;
     for my $chr ( nsort keys %{$review_lines{snvs}} )
@@ -267,7 +323,9 @@ sub sort_and_write_to_temp_file {
         {
             for my $stop ( sort {$a <=> $b} keys %{$review_lines{snvs}{$chr}{$start}} )
             {
-                $snv_anno_fh->print( $review_lines{snvs}{$chr}{$start}{$stop}, "\n" );
+                for my $call (keys %{$review_lines{snvs}{$chr}{$start}{$stop}}) {
+                    $snv_anno_fh->print( $review_lines{snvs}{$chr}{$start}{$stop}{$call}, "\n" );
+                }
             }
         }
     }

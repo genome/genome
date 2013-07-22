@@ -264,8 +264,10 @@ getWindows <- function(chr, xmin=NULL, xmax=NULL, header=TRUE, tableName=NULL, w
 
     #read the file
     if(!(is.null(windowFile))){
-      assign(tableName, file(windowFile))      
+      assign(tableName, file(windowFile))
+      
       if(is.null(xmin) & is.null(xmax)){
+        print(paste("select * from ",tableName," where Chr=\"",chr,"\"",sep=""), file.format = list(header = header, row.names = F,sep="\t"))
         winds = sqldf(paste("select * from ",tableName," where Chr=\"",chr,"\"",sep=""), file.format = list(header = header, row.names = F,sep="\t"))
       } else if(is.null(xmin)){
         winds = sqldf(paste("select * from ",tableName," where Chr=\"",chr,"\" AND Start < ",xmax,sep=""), file.format = list(header = header, row.names = F,sep="\t"))

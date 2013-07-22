@@ -46,21 +46,11 @@ class Genome::Model::Tools::DetectVariants2::Pindel {
         lsf_queue => {
             default_value => 'long'
         },
+        lsf_resource => {
+            default_value => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
+        },
     ],
 };
-
-sub shortcut {
-    my $self = shift;
-
-    my $shortcut = $self->SUPER::_shortcut_body();
-    return $shortcut if $shortcut;
-
-    #HACK ATTACK
-    #Since this task is primarily a workflow server,
-    #go ahead and run it inline on the parent server
-    return $self->_execute_body();
-}
-
 
 sub _detect_variants {
     my $self = shift;

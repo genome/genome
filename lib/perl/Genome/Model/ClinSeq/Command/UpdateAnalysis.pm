@@ -5,6 +5,7 @@ package Genome::Model::ClinSeq::Command::UpdateAnalysis;
 use strict;
 use warnings;
 use Genome;
+use Genome::Model::ClinSeq;
 use Data::Dumper;
 use Term::ANSIColor qw(:constants);
 
@@ -135,7 +136,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         tumor_sample_common_names => {
               #TODO: Is there a better way to determine which samples are 'tumor'?
               is => 'Text',
-              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse',
+              default => 'tumor|met|post treatment|recurrence met|pre-treatment met|pin lesion|relapse|xenograft',
               doc => 'The possible sample common names used in the database to specify a Tumor sample',
         },
         instrument_data_to_exclude => {
@@ -506,6 +507,18 @@ sub display_inputs{
   $self->status_message("dbsnp_build: " . $self->dbsnp_build->__display_name__ . " (version " . $self->dbsnp_build->version . ")");
   $self->status_message("previously_discovered_variations: " . $self->previously_discovered_variations->__display_name__ . " (version " . $self->previously_discovered_variations->version . ")");
 
+  my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
+  my $cancer_annotation_db = Genome::Db::Tgi::CancerAnnotation->get($cancer_annotation_db_id);
+  $self->status_message("cancer_annotation_db: " . $cancer_annotation_db_id . " (" . $cancer_annotation_db->data_directory . ")");
+
+  my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
+  my $misc_annotation_db = Genome::Db::Tgi::MiscAnnotation->get($misc_annotation_db_id);
+  $self->status_message("misc_annotation_db: " . $misc_annotation_db_id . " (" . $misc_annotation_db->data_directory . ")");
+
+  my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
+  my $cosmic_annotation_db = Genome::Db::Cosmic->get($cosmic_annotation_db_id);
+  $self->status_message("cosmic_annotation_db: " . $cosmic_annotation_db_id . " (" . $cosmic_annotation_db->data_directory . ")");
+
   #Make sure none of the basic input models/builds have been archived before proceeding...
   if ($self->reference_sequence_build->is_archived){
     $self->error_message("Reference sequencing build " . $self->reference_sequence_build->__display_name__ . " has been archived!");
@@ -648,6 +661,9 @@ sub get_dna_instrument_data{
   }elsif($data_type eq 'exome'){
     $self->status_message("\tCould not find any exome data") unless (scalar(@exome));
     return @exome;
+  }elsif($data_type eq 'validation'){
+    $self->status_message("\tCould not find any exome data") unless (scalar(@exome));
+    return @exome;
   }else{
     $self->error_message("Data type not understood in get_dna_instrument_data");
   }
@@ -655,6 +671,7 @@ sub get_dna_instrument_data{
 
 
 #Determine exome vs WGS of a model.  WGS models do not have exome data, Exome models have at least one lane of exome data
+    
 sub determine_model_data_type{
   my $self = shift;
   my %args = @_;
@@ -801,11 +818,41 @@ sub get_roi_name{
 
 
 #Compare instrument data on a model to that available for the sample (exome or wgs) and warn if data is missing
-sub check_for_missing_data{
+sub check_for_missing_and_excluded_data{
   my $self = shift;
   my %args = @_;
   my @models = @{$args{'-models'}};
   my @sample_instrument_data = @{$args{'-sample_instrument_data'}};
+
+  #Before doing anything, exclude models that have any instrument data that is supposed to be excluded
+  if ($self->instrument_data_to_exclude){
+    my @models_without_excluded_data;
+    
+    #Check format of list of data to exclude
+    my @exclude_list = split(",", $self->instrument_data_to_exclude);
+    unless (scalar(@exclude_list)){
+      $self->error_message("Could not obtain instrument data IDs from list supplied by --instrument_data_to_exclude");
+      exit 1;
+    }
+
+    foreach my $model (@models){
+      my $found_excluded_data = 0;
+      my @model_instrument_data = $model->instrument_data;
+
+      foreach my $model_instrument_data (@model_instrument_data){
+        my $mid = $model_instrument_data->id;
+        foreach my $eid (@exclude_list){
+          if ($eid == $mid){
+            $found_excluded_data++;
+          }
+        }
+      }
+      unless ($found_excluded_data){
+        push(@models_without_excluded_data, $model);
+      }
+    }
+    @models = @models_without_excluded_data;
+  }
 
   my @final_models1;
   my $complete_model = 0; #Is there at least one model that is not missing any data?
@@ -838,16 +885,16 @@ sub check_for_missing_data{
     foreach my $model_id (sort keys %problem_models){
       my $id_string = $problem_models{$model_id}{id_string};
       my $model_name = $problem_models{$model_id}{name};
-      $self->status_message("\t\tName: $model_name ($model_id)");  
-      $self->status_message("\t\t\tWARNING -> Model: $model_id appears to be missing the following instrument data: $id_string");
-      $self->status_message("\t\t\tYou should consider performing the following update before proceeding:");
-      $self->status_message("\t\t\tgenome model instrument-data assign --instrument-data='$id_string'  --model=$model_id\n\t\t\tgenome model build start $model_id");
+      $self->status_message("\tName: $model_name ($model_id)");  
+      $self->status_message("\tWARNING -> Model: $model_id appears to be missing the following instrument data: $id_string");
+      $self->status_message("\tYou should consider performing the following update before proceeding:");
+      $self->status_message("\tgenome model instrument-data assign --instrument-data='$id_string'  --model=$model_id\n\t\t\tgenome model build start $model_id");
     }
   }
 
-  #Does the last succeeded build actually use all the data?
+  #Does the lastest build actually use all the data?
   my @final_models2;
-  my $complete_build = 0; #Is there at least one model where the last succeeded build is not missing any data?
+  my $complete_build = 0; #Is there at least one model where the last build is not missing any data?
   my %problem_builds;
   foreach my $model (@final_models1){
     my $last_build = $model->latest_build;
@@ -874,12 +921,22 @@ sub check_for_missing_data{
     }
   }
 
+  #Warn about builds missing intrument data
   unless (scalar(@final_models2)){
     foreach my $model_id (sort keys %problem_builds){
       my $id_string = $problem_builds{$model_id}{id_string};
-      $self->status_message("\t\t\tWARNING -> Last succeeded build of Model: $model_id appears to be missing the following instrument data: $id_string");
-      $self->status_message("\t\t\tIt is on the model so you may need to start a new build before proceeding:");
-      $self->status_message("\t\t\tgenome model build start $model_id");
+      $self->status_message("\tWARNING -> Last build of Model: $model_id appears to be missing the following instrument data: $id_string");
+      $self->status_message("\tIt is on the model so you may need to start a new build before proceeding:");
+      $self->status_message("\tgenome model build start $model_id");
+    }
+  }
+
+  #Warn about builds that have all the data but are stalled on a non-succeeded status
+  foreach my $model (@final_models2){
+    my $model_id = $model->id;
+    my $latest_build = $model->latest_build;
+    unless ($latest_build->status eq "Succeeded"){
+      $self->status_message("WARNING -> Last build of Model: $model_id has a status of: " . $latest_build->status);
     }
   }
 
@@ -1035,7 +1092,7 @@ sub check_ref_align_models{
 
   #Make sure all the wgs or exome data is associated with the model
   #In both wgs and exome models, additional data will be allowed to handle weird situations.  
-  @final_models = @{$self->check_for_missing_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
+  @final_models = @{$self->check_for_missing_and_excluded_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
 
   my $final_model_count = scalar(@final_models);
   $self->status_message("\tFound " . $final_model_count . " suitable $data_type models (matching default or user specified criteria):");
@@ -1099,6 +1156,7 @@ sub check_rnaseq_models{
   #- return if there is no data of the desired type
   my @sample_instrument_data = $sample->instrument_data;
   @sample_instrument_data = @{$self->exclude_instrument_data('-instrument_data'=>\@sample_instrument_data)};
+
   unless (scalar(@sample_instrument_data)){
     $self->status_message("\tCould not find any rna-seq data");
     return @tmp;
@@ -1119,7 +1177,7 @@ sub check_rnaseq_models{
   }
 
   #Make sure all the rna-seq data is associated with the model
-  @final_models = @{$self->check_for_missing_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
+  @final_models = @{$self->check_for_missing_and_excluded_data('-models'=>\@final_models, '-sample_instrument_data'=>\@sample_instrument_data)};
 
   my $final_model_count = scalar(@final_models);
   $self->status_message("\tFound " . $final_model_count . " suitable $tissue_type rna-seq models (matching default or user specified criteria):");
@@ -1314,20 +1372,34 @@ sub check_somatic_input_builds{
 
   foreach my $somatic_model (@models){
     my $latest_somatic_build = $somatic_model->latest_build;
+    my $last_complete_somatic_build = $somatic_model->last_succeeded_build;
 
-    my $tumor_build = $latest_somatic_build->tumor_build;
-    my $normal_build = $latest_somatic_build->normal_build;
+    my $latest_tumor_build = $latest_somatic_build->tumor_build;
+    my $latest_normal_build = $latest_somatic_build->normal_build;
 
     my $tumor_model = $somatic_model->tumor_model;
-    my $lc_tumor_build = $tumor_model->last_complete_build;
+    my $lc_tumor_build = $tumor_model->last_succeeded_build;
     my $normal_model = $somatic_model->normal_model;
-    my $lc_normal_build = $normal_model->last_complete_build;
+    my $lc_normal_build = $normal_model->last_succeeded_build;
 
-    if ($latest_somatic_build && $lc_tumor_build && $lc_normal_build){
-      if (($tumor_build->id == $lc_tumor_build->id) && ($normal_build->id == $lc_normal_build->id)){
+    my $somatic_model_id = $somatic_model->id;
+
+    if ($last_complete_somatic_build && $lc_tumor_build && $lc_normal_build){
+      #There is at least one complete somatic build
+      my $last_complete_tumor_build = $last_complete_somatic_build->tumor_build;
+      my $last_complete_normal_build = $last_complete_somatic_build->normal_build;
+      if (($last_complete_tumor_build->id == $lc_tumor_build->id) && ($last_complete_normal_build->id == $lc_normal_build->id)){
         push(@final_models, $somatic_model);
+      }elsif(($latest_tumor_build->id == $lc_tumor_build->id) && ($latest_normal_build->id == $lc_normal_build->id)){
+        $self->status_message("WARNING -> latest build of somatic model $somatic_model_id is using the latest refalign builds but has the following status: " . $latest_somatic_build->status);
       }else{
-        my $somatic_model_id = $somatic_model->id;
+        $self->status_message("WARNING -> latest build of somatic model: $somatic_model_id is not using the last complete builds of the underlying refalign models.  Run the following:");
+        $self->status_message("genome model build start $somatic_model_id");
+      }
+    }elsif($latest_somatic_build && $lc_tumor_build && $lc_normal_build){
+      if(($latest_tumor_build->id == $lc_tumor_build->id) && ($latest_normal_build->id == $lc_normal_build->id)){
+        $self->status_message("WARNING -> latest build of somatic model $somatic_model_id is using the latest refalign builds but has the following status: " . $latest_somatic_build->status);
+      }else{
         $self->status_message("WARNING -> latest build of somatic model: $somatic_model_id is not using the last complete builds of the underlying refalign models.  Run the following:");
         $self->status_message("genome model build start $somatic_model_id");
       }
@@ -1710,6 +1782,9 @@ sub check_clinseq_models{
   my $existing_model_count = scalar(@existing_models);
   $self->status_message("\tStarting with " . $existing_model_count . " clin-seq models for this individual. Candidates that meet basic criteria:");
 
+
+
+  #Make sure the 'best' input models of each type are being used
   foreach my $model (@existing_models){
     my $current_wgs_model = $model->wgs_model;
     my $current_exome_model = $model->exome_model;
@@ -1717,7 +1792,37 @@ sub check_clinseq_models{
     my $current_tumor_rnaseq_model = $model->tumor_rnaseq_model;
     my $current_de_model = $model->de_model;
 
-    #If a 'best' wgs model is defined, only compare against clinseq models that have a wgs model defined and skip if the actual model does not match
+    #Only consider clin-seq models whose input models are using the correct processing profiles
+    if ($current_wgs_model){
+      next unless ($current_wgs_model->processing_profile->id == $self->wgs_somatic_variation_pp->id);
+    }
+    if ($current_exome_model){
+      next unless ($current_exome_model->processing_profile->id == $self->exome_somatic_variation_pp->id);
+    }
+    if ($current_normal_rnaseq_model){
+      next unless ($current_normal_rnaseq_model->processing_profile->id == $self->rnaseq_pp->id);
+    }
+    if ($current_tumor_rnaseq_model){
+      next unless ($current_tumor_rnaseq_model->processing_profile->id == $self->rnaseq_pp->id);
+    }
+    if ($current_de_model){
+      next unless ($current_de_model->processing_profile->id == $self->differential_expression_pp->id);
+    }
+
+    #Only consider clin-seq models whose annotation inputs match the current defaults defined for the pipeline
+    my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
+    my $cancer_annotation_db = Genome::Db::Tgi::CancerAnnotation->get($cancer_annotation_db_id);
+    next unless ($model->cancer_annotation_db->id eq $cancer_annotation_db_id);
+
+    my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
+    my $misc_annotation_db = Genome::Db::Tgi::MiscAnnotation->get($misc_annotation_db_id);
+    next unless ($model->misc_annotation_db->id eq $misc_annotation_db_id);
+
+    my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
+    my $cosmic_annotation_db = Genome::Db::Cosmic->get($cosmic_annotation_db_id);
+    next unless ($model->cosmic_annotation_db->id eq $cosmic_annotation_db_id);
+
+    #If a 'best' model is defined, only compare against clinseq models that have a model of that type defined and skip if the actual model does not match
     if ($wgs_model){
       next unless $current_wgs_model;
       next unless ($wgs_model->id == $current_wgs_model->id);

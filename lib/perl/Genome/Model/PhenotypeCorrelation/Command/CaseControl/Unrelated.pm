@@ -365,6 +365,7 @@ sub _create_workflow {
                 vcf_file => $multisample_vcf,
                 output_file => $burden_matrix_file,
                 burden_test_annotation_file => $vep_burden_file,
+                sample_list_file => $self->sample_list_file,
             },
             inputs_from => {
                 svep => {

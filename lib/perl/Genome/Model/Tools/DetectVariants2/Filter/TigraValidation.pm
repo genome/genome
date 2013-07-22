@@ -357,11 +357,8 @@ sub _filter_variants {
         $self->status_message("Splitting breakdancer input file by chromosome");
 
         # Split up breakdancer file by chromosome so tigra can be run in parallel
-        my $split_obj = Genome::Model::Tools::Breakdancer::SplitFiles->create(
-            input_file           => $variant_file,
-            output_directory     => $self->_temp_staging_directory,
-            output_file_template => 'svs.hq.tigra.CHR',
-        );
+        my $split_obj = $self->_get_split_object; 
+        
         my $rv = $split_obj->execute;
         Carp::confess 'Could not execute breakdancer split file command!' unless defined $rv and $rv == 1;
 
@@ -385,7 +382,7 @@ sub _filter_variants {
         require Workflow::Simple;
         my $op = Workflow::Operation->create(
             name => 'Tigra by chromosome',
-            operation_type => Workflow::OperationType::Command->get(__PACKAGE__),
+            operation_type => Workflow::OperationType::Command->get(ref($self)),
         );
         $op->parallel_by('specify_chr');
 
@@ -744,7 +741,7 @@ sub _use_chr_list {
     my $self = shift;
     my @chr_list = ();
 
-    for my $chr (@FULL_CHR_LIST) {
+    for my $chr ($self->_full_chromosome_list) {
         if (-s $self->_temp_staging_directory .'/svs.hq.tigra.'.$chr) {  #what if it is not 0 size but only contains breakdancer header ?
             push @chr_list, $chr;
         }
@@ -753,6 +750,20 @@ sub _use_chr_list {
         }
     }
     return @chr_list;
+}
+
+sub _full_chromosome_list {
+     my ($self) = @_;
+     return @FULL_CHR_LIST;
+}
+
+sub _get_split_object {
+    my ($self) = @_;
+    return Genome::Model::Tools::Breakdancer::SplitFiles->create(
+            input_file           => $self->_breakdancer_input,
+            output_directory     => $self->_temp_staging_directory,
+            output_file_template => 'svs.hq.tigra.CHR',
+        );
 }
 
 

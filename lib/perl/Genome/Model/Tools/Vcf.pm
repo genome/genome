@@ -18,8 +18,12 @@ use Genome;
 #13: gmt vcf snv varscan changes, adding BQ and AD values for the reference allele, add FT to FORMAT subfield and populate it in sample colums for strelka detector vcf output, as well as a few other corrections.
 #14: We produce vcfs during indel combination operations now
 #15: 14 had undefined sample names in the Vcf software results
+#17: Indel Normalization
+#18: Indel Normalization using joinx 1.7 (since 1.6 is bad)
+#19: Sort normalized indels (numeric)
+#20: Switch to natural sorting of normalized indels and change null GT from '.' to './.' 
 
-my $VCF_VERSION = "16";
+my $VCF_VERSION = "20";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],

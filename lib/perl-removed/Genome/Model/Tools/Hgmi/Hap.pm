@@ -94,7 +94,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
     $self->status_message("Beginning execution of HAP command");
 
     # FIXME I'd like to get rid of the configuration file altogether

@@ -57,9 +57,13 @@ UR::Object::Type->define(
         transcript_status_priorities => {  },
         variant_priorities           => {  },
         transcript_error_priorities  => {  },
+
         eids => {
             is_transient => 1,
+            is_optional => 1,
+            doc => "Temporary variable used for intermediate calculation.",
         },
+
     ],
     doc => q(Do proper intersections between variations and transcript structures by considering both entities' start and stop positions rather than just the start position of the variation.),
 

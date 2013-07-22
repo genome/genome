@@ -7,6 +7,8 @@ use JSON;
 use Genome;
 use File::Slurp;
 use POSIX 'strftime';
+use LWP::UserAgent;
+use Carp qw(croak);
 
 class Genome::Model::Tools::Vcf::Convert::Base {
     is => 'Command',
@@ -144,7 +146,7 @@ sub close_filehandles {
 sub check_tcga_vcf {
     my $self = shift;
     my $flag = 0;
-   
+
     for my $sample_type qw(aligned_reads_sample control_aligned_reads_sample) {
         my $sample_name = $self->$sample_type;
         if ($sample_name) {
@@ -206,26 +208,26 @@ sub _get_public_ref {
 
     if($ref_seq->sequence_uri) {
         $public_ref = $ref_seq->sequence_uri;
-    } 
+    }
     elsif ($subject_name eq 'human') {
         if ($ref_seq_version == 37) {
             $public_ref = "ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz";
-        } 
+        }
         elsif ($ref_seq_version == 36) {
             if ($seq_center eq "WUSTL"){
                 $public_ref = "ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/ARCHIVE/BUILD.36.3/special_requests/assembly_variants/NCBI36_WUGSC_variant.fa.gz";
-            } 
+            }
             elsif ($seq_center eq "BROAD") {
                 $public_ref = "ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/ARCHIVE/BUILD.36.3/special_requests/assembly_variants/NCBI36-HG18_Broad_variant.fa.gz";
-            } 
+            }
             else {
                 die $self->error_message("Unknown sequencing center: $seq_center");
             }
-        } 
+        }
         else {
             die $self->error_message("Unknown reference sequence version ($ref_seq_version) from reference sequence build " . $self->reference_sequence_build_id);
         }
-    } 
+    }
     else {
         # TODO We need a map from internal reference to external references... until then just put our reference in there
         $public_ref = $self->reference_sequence_input;
@@ -238,7 +240,7 @@ sub print_header{
     my $source           = $self->source;
     my $public_reference = $self->_get_public_ref;
 
-    my $file_date = strftime("%Y%m%d", localtime);    
+    my $file_date = strftime("%Y%m%d", localtime);
     my $output_fh = $self->_output_fh;
 
     $output_fh->print("##fileformat=VCFv" . $self->vcf_version . "\n");
@@ -350,7 +352,65 @@ sub format_meta_line {
     return $string;
 }
 
-#For TCGA vcf 
+sub retry_request {
+    my %argv = @_;
+
+    my $agent = delete $argv{agent} or croak 'required argument: agent';
+    my $sleep = delete $argv{sleep} or croak 'required argument: sleep';
+    my $request = delete $argv{request} or croak 'required argument: request';
+    my $attempts = delete $argv{attempts} or croak 'required argument: attempts';
+
+    if ($sleep < 0 || $attempts < 1) {
+        die;
+    }
+
+    my $response;
+
+    while ($attempts-- > 0) {
+        $response = $agent->request($request);
+        if ($response->is_success) {
+            return $response;
+        }
+        sleep $sleep;
+    }
+
+    return $response;
+}
+
+sub query_tcga_barcode_error_template {
+    return q(TCGA web query for '%s' failed: %s);
+}
+
+sub query_tcga_barcode {
+    my $self = shift;
+    my $barcode_str = shift;
+    my %argv = @_;
+
+    my $url = delete $argv{url} || 'https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch';
+    my $sleep = delete $argv{sleep} || 60;
+
+    my $agent = LWP::UserAgent->new();
+
+    my $request = HTTP::Request->new(POST => $url);
+    $request->content_type('text/plain');
+    $request->content($barcode_str);
+
+    my $response = retry_request(
+        agent    => $agent,
+        request  => $request,
+        sleep    => $sleep,
+        attempts => 5,
+    );
+    unless ($response->is_success) {
+        my $message = $response->message;
+        my $error_message = sprintf(query_tcga_barcode_error_template, $barcode_str, $message);
+        die $self->error_message($error_message);
+    }
+
+    return $response->content;
+}
+
+#For TCGA vcf
 sub get_sample_meta {
     my $self = shift;
 
@@ -360,27 +420,11 @@ sub get_sample_meta {
         push @tcga_barcodes, $n_sample if $n_sample and $n_sample =~ /^TCGA\-/;
         push @tcga_barcodes, $t_sample if $t_sample and $t_sample =~ /^TCGA\-/;
         my $barcode_str = join ',', @tcga_barcodes;
-        
-        my $content;
-        my $try = 0;
 
-        while (!$content) {
-            last if $try == 5; #try 5 times
-            sleep 60 if $try;
-            $try++;
-            $content = qx(curl -k -X POST --data \"$barcode_str\" --header \"Content-Type: text/plain\" https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch);
-        }
-
-        unless ($content) {
-            die $self->error_message("No content returned from API query for $barcode_str");
-        }
-        if ($content =~ /errorMessage/) {
-            die $self->error_message("API query failed with the following response:\n$content");
-        }
-        
+        my $content = $self->query_tcga_barcode($barcode_str);
         my $json = new JSON;
         my $json_text = $json->allow_nonref->utf8->relaxed->decode($content);
-    
+
         my %uuids;
         my @lines;
         if (@tcga_barcodes == 2) {
@@ -540,25 +584,25 @@ sub normalize_indel_location {
     my $ref = shift; #include all deleted bases if deletion
     my $var = shift;  #include all inserted bases if insertion, not needed otherwis
     my $buffer_size = 200;
-    my $array_start = $base_before_event - $buffer_size;  
-    if(length($ref) > length($var)) { 
+    my $array_start = $base_before_event - $buffer_size;
+    if(length($ref) > length($var)) {
         if (substr($ref,0,1) eq substr($ref, -1, 1)) {
             #normalization possible
-            $self->status_message("normalizing indel...");  
-        } 
+            $self->status_message("normalizing indel...");
+        }
         else {
             #we know this won't normalize, skip the compute heavy process
-            return($chr, $base_before_event, $ref, $var); 
+            return($chr, $base_before_event, $ref, $var);
         }
     }
     elsif(length($var) > length($ref)) {
         if (substr($var,0,1) eq substr($var, -1, 1)) {
             #normalization possible
-            $self->status_message("normalizing indel...");  
+            $self->status_message("normalizing indel...");
         }
         else {
             #we know this won't normalize, skip the compute heavy process
-            return($chr, $base_before_event, $ref, $var); 
+            return($chr, $base_before_event, $ref, $var);
         }
     }
 
@@ -570,12 +614,12 @@ sub normalize_indel_location {
         $sequence =~ s/\n//g;
 
 
-        my $prev_base_array_idx = $base_before_event  - $array_start; 
-        if(length($ref) > length($var)) { 
+        my $prev_base_array_idx = $base_before_event  - $array_start;
+        if(length($ref) > length($var)) {
             #if deletion on reference test with sequence
             #AGTGTGTGTGTA
-            #AGTGTGT--GTA want A--GTGTGTGT 
-            #original line would be 
+            #AGTGTGT--GTA want A--GTGTGTGT
+            #original line would be
             #test	8	9   GT  0
             $ref = substr($ref, 1); #knock off reference base vcf adds
             my @allele = split //,$ref;
@@ -583,7 +627,7 @@ sub normalize_indel_location {
             while($allele[-1] eq $preceding_ref_base) {
                 #TODO do some error checking here on the coordinates or we will probably screw some poop up
                 unshift @allele, pop @allele; #rotate the allele string
-                $prev_base_array_idx--; 
+                $prev_base_array_idx--;
                 $preceding_ref_base = substr $sequence,$prev_base_array_idx, 1;
 
             }
@@ -605,7 +649,7 @@ sub normalize_indel_location {
             while($allele[-1] eq $preceding_ref_base) {
                 #TODO do some error checking here on the coordinates or we will probably screw some poop up
                 unshift @allele, pop @allele; #rotate the allele string
-                $prev_base_array_idx--; 
+                $prev_base_array_idx--;
                 $preceding_ref_base = substr $sequence,$prev_base_array_idx,1;
             }
             $var = $preceding_ref_base;
@@ -615,7 +659,7 @@ sub normalize_indel_location {
         else {
             $self->error_message("This line was not an indel: $chr\t$base_before_event\t$ref\t$var");
         }
-        $base_before_event-=($buffer_size - $prev_base_array_idx); 
+        $base_before_event-=($buffer_size - $prev_base_array_idx);
         return($chr, $base_before_event, $ref, $var);
 
     }

@@ -228,7 +228,7 @@ sub revise_subject_for_ECs {
     my $subject_fasta = $self->subject_fasta_path;
     my $revised_subject = $self->output_directory . "/genes.EC_only";
 
-	$ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+	local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
     local $/ = "\n>";
     my $fh_in  = IO::File->new($self->subject_fasta_path, "r"); 
@@ -254,8 +254,6 @@ sub revise_subject_for_ECs {
     my $rv = system("xdformat", "-p", $revised_subject);
     $self->status_message("Return value from system command: $rv");
 	confess "Failed during xdformat: $!\n" unless defined $rv and $rv == 0;
-
-	$ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0;
 
     return $revised_subject;
 }

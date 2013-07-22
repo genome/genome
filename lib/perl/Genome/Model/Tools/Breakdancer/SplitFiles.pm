@@ -35,6 +35,11 @@ class Genome::Model::Tools::Breakdancer::SplitFiles {
             valid_values => ['chr1', 'chr2'],
             doc => 'Chromosome column to split on',
         },
+        create_other => {
+            is => "Boolean",
+            default => 1,
+            doc => 'Whether or not to restrict to canonical chromsomes plus an "other" chromosome',
+        },
     ],
 };
 
@@ -92,8 +97,11 @@ sub execute {
         my @fields = split("\t", $line);
         my $chr = $fields[$split_index];
 
-        unless (grep { $_ eq $chr } @FULL_CHR_LIST) {
-            $chr = 'other';
+
+        if($self->create_other) {
+            unless (grep { $_ eq $chr } @FULL_CHR_LIST) {
+                $chr = 'other';
+            }
         }
 
         unless (defined $chrom and $chrom eq $chr) {

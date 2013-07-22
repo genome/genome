@@ -233,7 +233,7 @@ sub resolve_average_for_attribute {
 
     my @values = $self->resolve_attribute_for_instrument_data($params{attribute}, 0, @{$params{objects}});
     my $sum = List::Util::sum(@values); # check that these are numbers?
-    my $avg = $sum / @{$params{objects}};
+    my $avg = $sum / @values;
 
     return $avg;
 }

@@ -35,7 +35,12 @@ my $somvar_build1 = Genome::Model::Build->get($somvar_build_id1);
 #Create summarize-svs command and execute
 #genome model clin-seq summarize-svs --outdir=/tmp/summarize_svs/ 126680687
 
-my $summarize_svs_cmd = Genome::Model::ClinSeq::Command::SummarizeSvs->create(outdir=>$temp_dir, builds=>[$somvar_build1]);
+my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
+my $summarize_svs_cmd = Genome::Model::ClinSeq::Command::SummarizeSvs->create(
+    outdir=>$temp_dir, 
+    builds=>[$somvar_build1], 
+    cancer_annotation_db => $cancer_annotation_db,
+);
 $summarize_svs_cmd->queue_status_messages(1);
 my $r1 = $summarize_svs_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

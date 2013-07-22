@@ -95,13 +95,13 @@ class Genome::Model::SomaticValidation {
     ],
     has_input_optional_mutable => [
         snv_variant_list => {
-            is => 'Genome::SoftwareResult',
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
         },
         indel_variant_list => {
-            is => 'Genome::SoftwareResult',
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
         },
         sv_variant_list => {
-            is => 'Genome::SoftwareResult',
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
         },
         reference_sequence_build => {
             is => 'Genome::Model::Build::ReferenceSequence',

@@ -122,7 +122,7 @@ sub execute {
     my $keggscan_faa_path = "/gscmnt/temp212/info/annotation/KEGG/Version_". $self->version . "/genes.v" . $self->version .".faa";
 
     # Status messages are not displayed by default...
-    $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
     # FIXME This directory needs to be a param with a default value
     my ($kegg_stdout, $kegg_stderr);    
@@ -182,9 +182,6 @@ sub execute {
     $top_output_fh->seek(0, SEEK_SET);
     $full_output_fh->seek(0, SEEK_SET);
     
-    # Set the status messages back to default behavior...
-    $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0;
-
     return 1;
 }
 

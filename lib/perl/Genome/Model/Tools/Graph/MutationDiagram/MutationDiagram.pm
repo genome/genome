@@ -392,7 +392,7 @@ sub Draw {
     my %domains;
     my %domains_location;
     my %domain_legend;
-    foreach my $domain (@{$domains}) {
+    foreach my $domain (sort {sort_domain($a,$b)}  @{$domains}) {
         if ($domain->{source} eq 'superfamily') {
             next;
         }
@@ -503,4 +503,20 @@ sub Draw {
 
     # now render the SVG object, implicitly use svg namespace
     print $svg_fh $svg->xmlify;
+}
+
+sub domain_length {
+    my $domain = shift;
+    return $domain->{end} - $domain->{start} + 1;
+}
+
+sub sort_domain {
+    my ($a, $b) = @_;
+    my $sort_val = domain_length($b) <=> domain_length($a);
+    if($sort_val == 0) {
+        return $b->{name} eq $a->{name};
+    }
+    else {
+        return $sort_val;
+    }
 }

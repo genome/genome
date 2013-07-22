@@ -2,7 +2,7 @@ package Genome::Model::Command::Admin::CleanupSucceeded;
 
 class Genome::Model::Command::Admin::CleanupSucceeded {
     is => 'Genome::Command::Base',
-    doc => 'Abandon failed builds for models with latest build succeeded.',
+    doc => 'Abandon unsuccessful builds that have been superceded.',
     has => [
         models => {
             is => 'Genome::Model',
@@ -19,7 +19,7 @@ use warnings;
 use Genome;
 
 sub help_detail {
-    'Abandon failed builds for models with latest build succeeded.'
+    'Abandon unsuccessful builds that have been superceded.'
 }
 
 sub execute {
@@ -27,21 +27,31 @@ sub execute {
 
     my $user = Genome::Sys->username;
     my @builds_to_abandon;
-    for my $model ($self->models) {
-        my $latest_build = $model->latest_build;
-        next unless $latest_build;
-        next unless ($latest_build->status eq 'Succeeded');
-        my @builds = $model->builds;
-        for my $build (@builds) {
-            next if ($build->id eq $latest_build->id);
-            my $status = $build->status;
-            next unless ($status eq 'Failed' or $status eq 'Unstartable' or $status eq 'New');
-            next if ($build->run_by ne $user);
-            push @builds_to_abandon, $build;
+    for my $m ($self->models) {
+        next unless $m->latest_build;
+
+        my %params = (
+            'id !=' => $m->latest_build->id,
+            'run_by' => 'apipe-builder',
+        );
+
+        # if we made it out of Unstartable then the Unstartable problem is
+        # fixed so we can abandon previous Unstartable builds
+        if ($m->latest_build->status ne 'Unstartable') {
+            push @builds_to_abandon,
+                $m->builds(%params, status => 'Unstartable');
+        }
+
+        # if we succeeded then previous failures can be abandoned
+        if ($m->latest_build->status eq 'Succeeded') {
+            push @builds_to_abandon,
+                $m->builds(%params, 'status in' => [qw(Failed New)]);
         }
     }
 
     if (@builds_to_abandon) {
+        $self->status_message(sprintf('Will abandon %d builds...',
+            scalar(@builds_to_abandon)));
         my $abandon_failed = Genome::Model::Build::Command::Abandon->create(
             builds => \@builds_to_abandon,
             show_display_command_summary_report => 0,

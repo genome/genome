@@ -53,11 +53,14 @@ sub execute {
     my $self = shift;
     my $build = $self->build;
 
+    my $known_sites_input = $build->inputs(name => 'known_sites');
+
     my @instrument_data = $build->instrument_data;
     my $result = Genome::InstrumentData::Composite->get_or_create(
         inputs => {
             instrument_data => \@instrument_data,
             reference_sequence_build => $build->reference_sequence_build,
+            ($known_sites_input ? (known_sites => $known_sites_input->value) : ()),
         },
         strategy => $build->processing_profile->alignment_strategy,
         log_directory => $build->log_directory,
@@ -84,12 +87,12 @@ sub execute {
         my $sample = $i[0]->sample;
         if($sample eq $build->tumor_sample) {
             $self->merged_alignment_result_id($r->id);
-            $self->merged_bam_path($r->merged_alignment_bam_path);
+            $self->merged_bam_path($r->bam_path);
             $r->add_user(label => 'merged_alignment', user => $build);
             Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir . '/tumor');
         } elsif ($sample eq $build->normal_sample) {
             $self->control_merged_alignment_result_id($r->id);
-            $self->control_merged_bam_path($r->merged_alignment_bam_path);
+            $self->control_merged_bam_path($r->bam_path);
             $r->add_user(label => 'control_merged_alignment', user => $build);
             Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir . '/normal');
         } else {

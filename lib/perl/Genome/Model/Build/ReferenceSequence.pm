@@ -9,8 +9,69 @@ require Carp;
 use Regexp::Common;
 use POSIX;
 
-# this class is defined in the Genome::Model::ReferenceSequence module following module to resolve circular deps: 
-# the "require" statement is at the bottom
+class Genome::Model::Build::ReferenceSequence {
+    is => 'Genome::Model::Build',
+    has => [
+        name => {
+            via => '__self__',
+            to => 'build_name',
+        },
+        calculated_name => {
+            calculate_from => ['model_name','version'],
+            calculate => q{
+                my $name = "$model_name-build";
+                $name .= $version if defined $version;
+                $name =~ s/\s/-/g;
+                return $name;
+            },
+        },
+
+        species_name => { via => 'subject', to => 'name' },
+
+        manifest_file_path => {
+            is => 'Text',
+            calculate_from => ['data_directory'],
+            calculate => q(
+                if($data_directory){
+                    return join('/', $data_directory, 'manifest.tsv');
+                }
+            ),
+        },
+        _sequence_filehandles => {
+            is => 'Hash',
+            is_optional => 1,
+            doc => 'file handle per chromosome for reading sequences so that it does not need to be constantly closed/opened',
+        },
+        _local_cache_dir_is_verified => { is => 'Boolean', default_value => 0, is_optional => 1, },
+
+    ],
+
+    has_optional_input => [
+        build_name => {
+            is => 'Text',
+        },
+
+        derived_from => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'Identifies the parent build from which this one is derived, if any.',
+        },
+        coordinates_from => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'Used to indicate that this build is on the same coordinate system as another.',
+        },
+        append_to => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'If specified, the created reference will be logically appended to the one specified by this parameter for aligners that support it.',
+        },
+        combines => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'If specified, merges several other references into one.', 
+        },
+    ],
+
+    doc => 'a specific version of a reference sequence, with cordinates suitable for annotation',
+};
+
 
 sub create {
     my $self = shift;
@@ -23,7 +84,7 @@ sub create {
         $build->sequence_uri($build->external_url);
     }
 
-    if ($build->derived_from) {
+    if ($build->can('derived_from') && $build->derived_from) {
         $build->coordinates_from($build->derived_from_root);
     }
 
@@ -782,7 +843,4 @@ sub get_or_create_genome_file {
     return $genome_file;
 }
 
-require Genome::Model::ReferenceSequence;
-
 1;
-

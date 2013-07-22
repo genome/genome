@@ -35,7 +35,12 @@ ok ($rnaseq_build, "obtained rnaseq build from db for id: $rnaseq_build_id") or 
 
 #Create tophat-junctions-absolute command and execute
 #genome model clin-seq tophat-junctions-absolute --outdir=/tmp/junctions/  129396808
-my $tophat_junctions_absolute_cmd = Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute->create(outdir=>$temp_dir, build=>$rnaseq_build);
+my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1"); 
+my $tophat_junctions_absolute_cmd = Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute->create(
+    outdir=>$temp_dir, 
+    build=>$rnaseq_build, 
+    cancer_annotation_db => $cancer_annotation_db
+);
 $tophat_junctions_absolute_cmd->queue_status_messages(1);
 my $r1 = $tophat_junctions_absolute_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

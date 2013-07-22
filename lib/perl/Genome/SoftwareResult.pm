@@ -8,6 +8,7 @@ use Digest::MD5 qw(md5_hex);
 use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
+use List::MoreUtils qw(uniq);
 
 use Carp;
 
@@ -38,7 +39,7 @@ class Genome::SoftwareResult {
         params_id           => { is => 'Text', len => 4000, column_name => 'PARAMS_ID', implied_by => 'params_bx', is_optional => 1 },
         output_dir          => { is => 'Text', len => 1000, column_name => 'OUTPUTS_PATH', is_optional => 1 },
         test_name           => { is_param => 1, is_delegated => 1, is_mutable => 1, via => 'params', to => 'value_id', where => ['name' => 'test_name'], is => 'Text', doc => 'Assigns a testing tag to the result.  These will not be used in default processing', is_optional => 1 },
-        _lock_name          => { is_param => 1, is_optional => 1, is_transient => 1 },
+        _lock_name          => { is_optional => 1, is_transient => 1 },
     ],
     has_many_optional => [
         params              => { is => 'Genome::SoftwareResult::Param', reverse_as => 'software_result'},
@@ -46,7 +47,8 @@ class Genome::SoftwareResult {
         metrics             => { is => 'Genome::SoftwareResult::Metric', reverse_as => 'software_result'},
         users               => { is => 'Genome::SoftwareResult::User', reverse_as => 'software_result'},
         disk_allocations    => { is => 'Genome::Disk::Allocation', reverse_as => 'owner'},
-        build_ids           => { via => 'users', to => 'user_id', } # where => ['user_class_name isa' => 'Genome::Model::Build'] },
+        builds              => { is => 'Genome::Model::Build', via => 'users', to => 'user', where => ["user_class_name like" => "Genome::Model::Build%"] },
+        build_ids           => { via => 'builds', to => 'id', is_deprecated => 1 },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -63,12 +65,12 @@ Genome::SoftwareResult->add_observer(
             die "Failed to get object Type for $subclassname";
         }
 
-        my @ambiguous_properties;
         # classes that have table_name will complain if no column exists in DB for a property
         unless ($subclass->table_name) {
-            my @properties = $subclass->properties();
+            my @properties = grep { $_->class_name->isa(__PACKAGE__) }
+                            $subclass->properties();
             # try to define what "ambiguous" means...
-            @ambiguous_properties = grep { !(
+            my @ambiguous_properties = grep { !(
                     $_->property_name eq 'subclass_name'
                     || $_->is_param
                     || $_->is_input
@@ -77,10 +79,11 @@ Genome::SoftwareResult->add_observer(
                     || $_->class_name ne $subclassname
                     || $_->is_transient
                 )} @properties;
-        }
 
-        if (@ambiguous_properties) {
-            die sprintf("ambiguous properties: %s\n", join(", ", map { $_->property_name } @ambiguous_properties));
+            if (@ambiguous_properties) {
+                die sprintf("ambiguous properties: %s\n",
+                        join(", ", map { $_->property_name } @ambiguous_properties));
+            }
         }
     },
 );
@@ -173,8 +176,8 @@ sub get_with_lock {
     my @objects = $class->_faster_get(@_);
     unless (@objects) {
         my $subclass = $params_processed->{subclass};
-        unless ($lock = $subclass->_lock(%is_input, %is_param)) {
-            die "Failed to get a lock for " . Dumper(\%is_input,\%is_param);
+        unless ($lock = $subclass->_lock(@_)) {
+            die "Failed to get a lock for " . Dumper(@_);
         }
 
         UR::Context->current->reload($class,
@@ -201,6 +204,17 @@ sub get_with_lock {
     }
 
     my $result = $objects[0];
+
+    if ($result) {
+        my $calculated_lookup_hash = $result->calculate_lookup_hash();
+        my $lookup_hash = $result->lookup_hash;
+        if ($calculated_lookup_hash ne $lookup_hash) {
+            my $m = sprintf(q{SoftwareResult lookup_hash (%s) does not match it's calculated lookup_hash (%s).  Cannot trust that the correct SoftwareResult was retrieved.}, $lookup_hash, $calculated_lookup_hash);
+            # Really we would just call get(%$params) but that might undermine the whole lookup_hash optimization.
+            die $class->error_message($m);
+        }
+    }
+
     if ($result && $lock) {
         $result->_lock_name($lock);
 
@@ -270,8 +284,8 @@ sub create {
     }
 
     my $lock;
-    unless ($lock = $class->_lock(%is_input, %is_param)) {
-        die "Failed to get a lock for " . Dumper(\%is_input,\%is_param);
+    unless ($lock = $class->_lock(@_)) {
+        die "Failed to get a lock for " . Dumper(@_);
     }
 
     # TODO; if an exception occurs before this is assigned to the object, we'll have a stray lock
@@ -530,6 +544,7 @@ sub _process_params_for_lookup_hash {
 }
 
 sub _modify_params_for_lookup_hash {
+    # overridden in some subclasses 
 }
 
 sub _resolve_object_id {
@@ -577,6 +592,42 @@ sub resolve_module_version {
         $revision = substr($revision,0,$len) . '*';
     }
     return $revision;
+}
+
+sub _prepare_output_directory {
+    my $self = shift;
+
+    my ($allocation) = $self->disk_allocations;
+    if ( $allocation ) {
+        my $absolute_path = $allocation->absolute_path;
+        $self->output_dir($absolute_path) if $self->output_dir and $self->output_dir ne $absolute_path;
+        return $self->output_dir;
+    }
+
+    my $subdir = $self->resolve_allocation_subdirectory;
+    unless ( $subdir ) {
+        die $self->error_message("failed to resolve subdirectory for output data.  cannot proceed.");
+    }
+    
+    my %allocation_create_parameters = (
+        disk_group_name => $self->resolve_allocation_disk_group_name,
+        allocation_path => $subdir,
+        kilobytes_requested => $self->resolve_allocation_kilobytes_requested,
+        owner_class_name => $self->class,
+        owner_id => $self->id
+    );
+    $allocation = Genome::Disk::Allocation->allocate(%allocation_create_parameters);
+    unless ($allocation) {
+        die $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%allocation_create_parameters));
+    }
+
+    my $output_dir = $allocation->absolute_path;
+    unless (-d $output_dir) {
+        die $self->error_message("Allocation path $output_dir doesn't exist!");
+    }
+    
+    $self->output_dir($output_dir);
+    return $output_dir;
 }
 
 sub _expand_param_and_input_properties {
@@ -757,29 +808,10 @@ sub _unlock {
 
 sub _resolve_lock_name {
     my $class = shift;
-    my $class_string = $class;
-    $class_string =~ s/\:/\-/g;
+    my $class_string = $class->class;
 
-    my $be = UR::BoolExpr->resolve_normalized($class, @_);
-    my @params = $be->params_list;
-    my @converted_params;
-    for my $p (@params) {
-        if(ref($p) and $p->isa('UR::Object')) {
-            #the object itself as a string has its memory location, which varies in each process,
-            #so convert it to something constant
-            push @converted_params, $p->class . '_' . $p->id;
-        } else {
-            push @converted_params, $p;
-        }
-    }
-    no warnings;
-    my $params_and_inputs_list= join "___", @converted_params;
-    # sub out dangerous directory separators
-    $params_and_inputs_list =~ s/\//\./g;
-    use warnings;
-    my $params_and_inputs_list_hash = md5_hex($params_and_inputs_list);
-
-    my $resource_lock_name = $ENV{GENOME_LOCK_DIR} . "/genome/$class_string/" .  $params_and_inputs_list_hash;
+    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
+    my $resource_lock_name = $ENV{GENOME_LOCK_DIR} . "/genome/$class_string/" .  $lookup_hash;
 }
 
 # override _resolve_lock_name (for testing) to append username and time
@@ -920,6 +952,43 @@ sub _release_lock_or_die {
     delete $LOCKS{$lock};
 
     $class->status_message("Cleanup completed for lock $lock.");
+}
+
+# children are things that use this
+sub children {
+    my $self = shift;
+    return uniq map { $_->user } $self->users;
+}
+
+# parents are things that this uses
+sub parents {
+    my $self = shift;
+    return uniq map { $_->software_result }
+        Genome::SoftwareResult::User->get(user => $self);
+}
+
+# ancestors are recursive parents, sort order is not guaranteed
+sub ancestors {
+    my $self = shift;
+    my @parents = $self->parents;
+    if (@parents) {
+        return uniq(map { $_->ancestors }
+            grep { $_->isa('Genome::SoftwareResult') } @parents), @parents;
+    } else {
+        return;
+    }
+}
+
+# descendents are recursive children, sort order is not guaranteed
+sub descendents {
+    my $self = shift;
+    my @children = $self->children;
+    if (@children) {
+        return @children, uniq map { $_->descendents }
+            grep { $_->isa('Genome::SoftwareResult') } @children;
+    } else {
+        return;
+    }
 }
 
 1;

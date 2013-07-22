@@ -50,6 +50,7 @@ my $command = Genome::Model::Tools::DetectVariants2::VarscanSomatic->create(
     params => "",
     output_directory => $test_working_dir,
     aligned_reads_sample => 'TEST',
+    control_aligned_reads_sample => 'TEST_NORMAL',
 );
 ok($command, 'Created `gmt detect-variants varscan-somatic` command');
 $command->dump_status_messages(1);

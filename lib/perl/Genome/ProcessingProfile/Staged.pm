@@ -148,7 +148,7 @@ sub map_workflow_inputs {
 sub _generate_events_for_build {
     my ($self, $build) = @_;
 
-    my @stage_names = $self->stages;
+    my @stage_names = $self->stages($build);
     unless (@stage_names) {
         die ('No stages on processing profile in '  . (ref($self) || $self));
     }
@@ -198,17 +198,17 @@ sub _generate_events_for_build_stage {
         # Putting status message on build event because some tests expect it.
         #  Prolly can (re)move this to somewhere...
         if ($object_class->isa('Genome::InstrumentData')) {
-            $build->status_message('Scheduling jobs for '
+            $build->debug_message('Scheduling jobs for '
                 . $object_class . ' '
                 . $object->full_name
                 . ' (' . $object->id . ')'
             );
         } elsif ($object_class eq 'reference_sequence') {
-            $build->status_message('Scheduling jobs for reference sequence ' . $object_id);
+            $build->debug_message('Scheduling jobs for reference sequence ' . $object_id);
         } elsif ($object_class eq 'single_instance') {
-            $build->status_message('Scheduling '. $object_class .' for stage '. $stage_name);
+            $build->debug_message('Scheduling '. $object_class .' for stage '. $stage_name);
         } else {
-            $build->status_message('Scheduling for '. $object_class .' with id '. $object_id);
+            $build->debug_message('Scheduling for '. $object_class .' with id '. $object_id);
         }
         my @command_classes = $self->classes_for_stage($stage_name, $build->model);
         push @events, $self->_generate_events_for_object($build,$object,\@command_classes,$segment_identifier);
@@ -258,7 +258,7 @@ sub _generate_events_for_object {
                         ref_seq_id => $object,
                     );
                 }
-            } elsif ($command_class =~ /ReferenceAlignment::AlignReads|TrimReadSet|AssignReadSetToModel|AddReadSetToProject|FilterReadSet|RnaSeq::PrepareReads|DeNovoAssembly::ProcessInstrumentData/) {
+            } elsif ($command_class =~ /ReferenceAlignment::AlignReads|ReferenceAlignment::BamQc|TrimReadSet|AssignReadSetToModel|AddReadSetToProject|FilterReadSet|RnaSeq::PrepareReads|DeNovoAssembly::ProcessInstrumentData/) {
                 if ($object->isa('Genome::InstrumentData')) {
                     $command = $command_class->create(
                         instrument_data_id => $object->id,
@@ -302,7 +302,7 @@ sub _generate_events_for_object {
             } else {
                 $object_id = $object;
             }
-            $build->status_message('Scheduled '. $command_class .' for '. $object_id
+            $build->debug_message('Scheduled '. $command_class .' for '. $object_id
                 .' event_id '. $command->genome_model_event_id ."\n");
         }
     }

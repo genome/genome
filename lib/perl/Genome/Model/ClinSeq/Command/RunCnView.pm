@@ -14,6 +14,11 @@ class Genome::Model::ClinSeq::Command::RunCnView {
             require_user_verify => 0,
             doc => 'somatic variation model to be used for CnView runs'
         },
+        cancer_annotation_db => {
+            is => 'Genome::Db',
+            example_values => ['tgi/cancer-annotation/human/build37-20130401.1'],
+            doc => 'data set of cancer annotation to use for analysis',
+        },
         outdir => { 
             is => 'FilesystemPath',
             doc => 'Directory where output files will be written', 
@@ -67,14 +72,18 @@ sub execute {
   my $outdir = $self->outdir;
   my $cnv_hmm_file = $self->cnv_hmm_file;
   $outdir .= "/" unless ($outdir =~ /\/$/);
-
+$DB::single = 1;
   my @cnv_symbol_lists;
   if ($self->test){
     @cnv_symbol_lists = qw (Kinase_dGene);
   }else{
     @cnv_symbol_lists = qw (All Kinase_dGene CancerGeneCensusPlus_Sanger AntineoplasticTargets_DrugBank);
   }
-  my $gene_symbol_lists_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/";
+
+  my $cancer_annotation_db = $self->cancer_annotation_db;
+
+  my $gene_symbol_lists_dir = $cancer_annotation_db->data_directory . "/GeneSymbolLists/";
+  #my $gene_symbol_lists_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists";
 
   die $self->error_message("outdir does not exist") unless (-e $outdir && -d $outdir);
   die $self->error_message("segments file does not exist: $cnv_hmm_file") unless (-e $cnv_hmm_file);
@@ -96,7 +105,7 @@ sub execute {
   #For each list of gene symbols, run the CNView analysis
   foreach my $symbol_list_name (@cnv_symbol_lists){
     if ($symbol_list_name eq "All"){
-      my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build=>$build, cnv_file=>$cnv_data_file, segments_file=>$cnv_hmm_file, output_dir=>$cnview_dir, name=>$symbol_list_name);
+      my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build=>$build, cnv_file=>$cnv_data_file, segments_file=>$cnv_hmm_file, output_dir=>$cnview_dir, name=>$symbol_list_name, cancer_annotation_db => $cancer_annotation_db);
       $cnview_cmd->execute();
 
       #Copy these files to the top CNV dir
@@ -110,8 +119,8 @@ sub execute {
         my $dataname = "cnv".$suffix;
       }
     }else{
-      my $gene_targets_file = "$gene_symbol_lists_dir"."$symbol_list_name".".txt";
-      my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build=>$build, cnv_file=>$cnv_data_file, segments_file=>$cnv_hmm_file, output_dir=>$cnview_dir, gene_targets_file=>$gene_targets_file, name=>$symbol_list_name);
+      my $gene_targets_file = "$gene_symbol_lists_dir/$symbol_list_name".".txt";
+      my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build=>$build, cnv_file=>$cnv_data_file, segments_file=>$cnv_hmm_file, output_dir=>$cnview_dir, gene_targets_file=>$gene_targets_file, name=>$symbol_list_name, cancer_annotation_db => $cancer_annotation_db);
       $cnview_cmd->execute();
     }
   }

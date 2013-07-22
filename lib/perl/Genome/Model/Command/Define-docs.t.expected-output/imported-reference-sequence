@@ -3,11 +3,11 @@
  [1mgenome model define imported-reference-sequence[0m --processing-profile-name=?
     [--auto-assign-inst-data] [--auto-build-alignments] --fasta-file=? --processing-profile=?
     --processing-profile-id=? --species-name=? [--add-to-projects=?[,?]] [--append-to=?]
-    [--instrument-data=?[,?]] [--subject=?] [--combine=?[,?]] [--groups=?[,?]]
-    [--coordinates-from=?] [--skip-bases-files] [--on-warning=?] [--combines=?] [--job-dispatch=?]
-    [--server-dispatch=?] [--build-name=?] [--sequence-uri=?] [--use-default-sequence-uri]
-    [--assembly-name=?] [--desc=?] [--derived-from=?] [--prefix=?] [--generate-sequence-uri]
-    [--version=?] [--model-name=?] [--subject-name=?]
+    [--instrument-data=?[,?]] [--subject=?] [--combine=?[,?]] [--groups=?[,?]] [--skip-bases-files]
+    [--on-warning=?] [--job-dispatch=?] [--server-dispatch=?] [--is-rederivable] [--build-name=?]
+    [--sequence-uri=?] [--use-default-sequence-uri] [--assembly-name=?] [--desc=?]
+    [--derived-from=?] [--prefix=?] [--generate-sequence-uri] [--version=?] [--model-name=?]
+    [--subject-name=?]
 
 [4mSYNOPSIS[0m
 genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta
@@ -44,8 +44,6 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     When specified, this reference combines two or more other references 
   [1mgroups[0m
     Model groups to put the newly created model into 
-  [1mcoordinates-from[0m
-    Used to indicate that this build is on the same coordinate system as another. 
   [1mskip-bases-files[0m
     If set, bases files for quick sequence/position look up will not be created.  Useful for
     importing files with a large number of sequences 
@@ -56,14 +54,16 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
      exit
      continue 
     Default value 'prompt' if not specified
-  [1mcombines[0m
-    If specified, merges several other references into one. 
   [1mjob-dispatch[0m
     dispatch specification: an LSF queue or "inline" 
     Default value 'inline' if not specified
   [1mserver-dispatch[0m
     dispatch specification: an LSF queue or "inline" 
     Default value 'inline' if not specified
+  [1mis-rederivable[0m
+    Indicates if this reference could be rederived from other internal results or if it is an
+    external import 
+    Default value 'false' (--nois-rederivable) if not specified
   [1mbuild-name[0m
     human meaningful name of this build 
   [1msequence-uri[0m

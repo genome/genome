@@ -9,7 +9,7 @@ chr_start = args[3];
 chr_end = args[4];
 
 if (length(args) < 4){
-  message_text = "Required arguments missing for ideoGram.R - (e.g. ideoGram.R /gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/ideogram/ChrBandIdeogram.tsv chr1 0 0) [ideogram data, chromosome, start, end]"
+  message_text = "Required arguments missing for ideoGram.R - (e.g. ideoGram.R  /gsc/scripts/opt/genome/db/tgi/misc-annotation/human/build37-20130113/centromere.csv chr1 0 0) [ideogram data, chromosome, start, end]"
   stop(message_text)
   message(message_text)
 }

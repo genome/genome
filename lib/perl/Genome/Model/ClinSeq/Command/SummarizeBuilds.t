@@ -24,7 +24,7 @@ ok($temp_dir, "created temp directory: $temp_dir") or die;
 my $m_id = 2889445018;
 my $m = Genome::Model->get($m_id);
 ok($m, "obtained a clinseq model for " . $m_id) or die;
-my $b = $m->current_build();
+my $b = $m->last_complete_build();
 ok($b, "obtained a clinseq build from " . $m->__display_name__) or die;
 
 #Execute the tool code
@@ -40,7 +40,7 @@ my $log = IO::File->new(">$temp_dir/status_messages.txt");
 ok($log, "created a file to hold the status messages") or die;
 $log->print(join("\n", @output));
 
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2013-04-15-08-14';
+my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2013-07-11b';
 ok(-d $expected_data_directory, "found expected data directory: $expected_data_directory") or die;
 my @diff = `diff -r $expected_data_directory $temp_dir`;
 is(@diff, 5, "no differences from expected results and actual other than the 5 lines corresponding to the random temp dir statement")

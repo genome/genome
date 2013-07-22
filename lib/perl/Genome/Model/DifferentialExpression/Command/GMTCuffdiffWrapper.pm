@@ -1,3 +1,5 @@
+# FIXME This is only here until unittests around Genome::Command::WithSoftwareResult
+# are in place.
 package Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper;
 
 use strict;
@@ -8,7 +10,16 @@ use Cwd 'abs_path';
 
 
 class Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper {
-    is => ['Genome::Command::WithSavedResults'],
+    is => ['Genome::Command::WithSoftwareResult'],
+    has => [
+        _software_result_version => { # required by WithSoftwareResult
+            is => 'Integer',
+            is_param => 1,
+            valid_values => [1],
+            default_value => '1',
+            doc => 'the version of results, which may iterate as execute_logic iterates',
+        },
+    ],
     has_input => [
         transcript_gtf_file => {
             doc => 'A GTF format file of transcript annotation to perform differential expression tests.',
@@ -18,25 +29,15 @@ class Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper {
             doc => 'A list of (model_id lists [comma separated]) that are space separated',
         },
     ],
-    has => [
+    has_transient => [
         output_directory => {
             doc => 'The directory to write output files.',
-        },
-        stage_output => {
-            default_value => 1,
-            doc => 'Should this command stage its result in temp until it has completed?',
         },
     ],
     has_param => [
         use_version => {
             is => 'Version',
             is_optional => 1,
-        },
-        result_version => {
-            is => 'Integer',
-            valid_values => [1],
-            default_value => '1',
-            doc => 'the version of results, which may iterate as execute_logic iterates',
         },
         cuffdiff_params => {
             is_optional => 1,
@@ -45,26 +46,32 @@ class Genome::Model::DifferentialExpression::Command::GMTCuffdiffWrapper {
     ],
 };
 
-sub _execute_v1 {
-    my $self = shift;
+sub software_result_type {
+    return 'staged';
+}
 
-    # $self->output_dir is set up by WithSavedResults and value set to ->result->temp_staging_directory
-    # because ->stage_output = 1 and ->output_dir = undef before _execute_v1 is called.
-    # I don't like that this comment is needed (means things are not obvious).
-    my $output_directory = $self->output_dir;
-    $self->status_message("Setting cuffdiff's output_directory to: $output_directory\n");
+sub _execute {
+    my ($self, $output_dir) = @_;
 
-    if ($self->_execute_gmt_cuffdiff($output_directory)) {
-        $self->status_message(
-            sprintf("Symlinking results from %s to %s",
-                $output_directory, $self->output_directory)
-        );
-        Genome::Sys->symlink_directory($output_directory, $self->output_directory);
+    $self->status_message("Executing cuffdiff with output_directory set to: $output_dir\n");
+    if ($self->_execute_gmt_cuffdiff($output_dir)) {
         return 1;
     } else {
         $self->error_message("Failed to run Genome::Model::Tools::Cufflinks::Cuffdiff->execute");
         return 0;
     }
+}
+
+# Called after result _promote_data()
+sub _finalize {
+    my ($self, $result) = @_;
+
+    my $output_directory = $result->output_dir;
+    $self->status_message(
+        sprintf("Symlinking results from %s to %s",
+            $output_directory, $self->output_directory)
+    );
+    Genome::Sys->symlink_directory($output_directory, $self->output_directory);
 }
 
 sub _execute_gmt_cuffdiff {

@@ -278,10 +278,10 @@ __DATA__
   <link fromOperation="Process Validation Indels" fromProperty="output_file" toOperation="output connector" toProperty="output_file" />
 
   <operation name="Realign Indels Tumor">
-    <operationtype commandClass="Genome::Model::Tools::Gatk::RealignIndels" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::Tools::Gatk::IndelRealigner" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="Realign Indels Normal">
-    <operationtype commandClass="Genome::Model::Tools::Gatk::RealignIndels" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::Tools::Gatk::IndelRealigner" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="Varscan Validation">
     <operationtype commandClass="Genome::Model::Tools::Varscan::Validation" typeClass="Workflow::OperationType::Command" />

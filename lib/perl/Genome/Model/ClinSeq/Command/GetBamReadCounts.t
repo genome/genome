@@ -64,6 +64,8 @@ my $rna_seq_tumor_build_id = '129396808';
 my $rna_seq_tumor_build = Genome::Model::Build->get($rna_seq_tumor_build_id);
 ok($rna_seq_tumor_build, "Obtained an rna seq tumor build from id: $rna_seq_tumor_build_id");
 
+my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1"); 
+
 #Running a test of get-bam-read-counts at the command line looks something like this:
 #/usr/bin/perl -S genome model clin-seq get-bam-read-counts --positions-file=/tmp/bam-read-counts-test/snvs.hq.tier1.v1.annotated.compact.tsv --ensembl-version=58 --output-file=/tmp/bam-read-counts-test/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --wgs-som-var-build=119390903  --exome-som-var-build='119391641' --rna-seq-tumor-build='115909698'
 
@@ -75,6 +77,7 @@ push (@params, ('exome_som_var_build' => $exome_som_var_build));
 push (@params, ('rna_seq_tumor_build' => $rna_seq_tumor_build));
 push (@params, ('output_file' => $output_file));
 push (@params, ('verbose' => $verbose));
+push (@params, ('cancer_annotation_db' => $cancer_annotation_db));
 my $bam_rc_cmd = Genome::Model::ClinSeq::Command::GetBamReadCounts->create(@params);
 ok($bam_rc_cmd, "Created get-bam-read-counts command");
 my $r = $bam_rc_cmd->execute();

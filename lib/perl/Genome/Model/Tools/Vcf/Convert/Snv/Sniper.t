@@ -25,7 +25,9 @@ my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Snv-S
 # V7 - VCF header change
 # v8 - VCF header change: center and tcgaversion
 # v9 - VCF header change: TCGA-compliant
-my $expected_base = "expected.v9";
+# v10- change null gt from . to ./.
+
+my $expected_base = "expected.v10";
 my $expected_dir = "$test_dir/$expected_base";
 my $expected_file = "$expected_dir/output.vcf";
 

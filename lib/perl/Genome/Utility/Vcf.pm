@@ -326,7 +326,6 @@ sub convert_line_with_alpha_gt_values_to_numeric {
     my $parsed_line = shift;
     my $sample_names = shift;
 
-    $DB::single=1;
     for my $sample_name (@$sample_names) {
         my $old_gt = $parsed_line->{sample}{$sample_name}{"GT"};
         die "No gt found?\n" unless $old_gt;
@@ -341,7 +340,7 @@ sub convert_line_with_alpha_gt_values_to_numeric {
         my @new_alleles;
 
         ALLELE: for my $allele (@old_gt_alleles) {
-            if ($parsed_line->{"ref"} and $allele eq $parsed_line->{"ref"}) {
+            if ($allele eq $parsed_line->{"reference"}) {
                 push @new_alleles, 0;
             } else {
                 for (my $index = 0; $index <= $#alt_alleles; $index++) {

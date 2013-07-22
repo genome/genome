@@ -11,7 +11,7 @@ BEGIN {
 #$::RD_TRACE = 1;
 #$::RD_HINT = 1;
 
-use Test::More tests => 21;
+use Test::More tests => 24;
 
 use above "Genome";
 
@@ -343,6 +343,52 @@ is_deeply(
         },
         'data' => 'instrument_data',
         'api_version' => 'v1',
+    },
+    'parsed merge strategy as expected'
+) or diag Data::Dumper::Dumper($strategy6->tree);
+
+my $strategy7 = Genome::InstrumentData::Composite::Strategy->create(strategy =>
+    'instrument_data
+     aligned to contamination_ref using bwa 0.5.5 [-t 4]
+     then merged using picard 1.29 then deduplicated using picard 1.29
+     then refined to variant_list using gatk-read-calibrator 0.01 [-et NO_ET]
+     api v2'
+);
+isa_ok($strategy7, 'Genome::InstrumentData::Composite::Strategy', 'created merge strategy');
+ok($strategy7->execute, 'parsed merge strategy');
+is_deeply(
+    $strategy7->tree,
+    {
+        'action' => [
+            {
+                'params'    => '-t 4',
+                'reference' => 'contamination_ref',
+                'version'   => '0.5.5',
+                'name'      => 'bwa',
+                'type'      => 'align'
+            }
+        ],
+        'then' => {
+            'params' => '',
+            'then' => {
+                'params' => '',
+                'version' => '1.29',
+                'name' => 'picard',
+                'type' => 'deduplicate',
+                then => {
+                    params => '-et NO_ET',
+                    version => '0.01',
+                    name => 'gatk-read-calibrator',
+                    type => 'refine',
+                    known_sites => 'variant_list'
+                }
+            },
+            'version' => '1.29',
+            'name' => 'picard',
+            'type' => 'merge'
+        },
+        'data' => 'instrument_data',
+        'api_version' => 'v2',
     },
     'parsed merge strategy as expected'
 ) or diag Data::Dumper::Dumper($strategy6->tree);

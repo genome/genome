@@ -38,6 +38,12 @@ class Genome::Config::AnalysisProject {
         name => {
             is => 'Text',
         },
+        created_at => {
+            is => 'Timestamp',
+        },
+        updated_at => {
+            is => 'Timestamp',
+        },
     ],
     has_transient_optional => [
         configuration_reader => {
@@ -51,6 +57,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
     eval {
         $self->_create_configuration_set();
+        $self->_populate_created_by();
     };
     if(my $error = $@) {
         $self->delete();
@@ -59,10 +66,17 @@ sub create {
     return $self;
 }
 
-sub _create_configuration_set {
+sub delete {
     my $self = shift;
-    my $set = Genome::Config::Set->create();
-    $self->_configuration_set($set);
+    eval {
+        if ($self->_configuration_set) {
+            $self->_configuration_set->delete();
+        }
+    };
+    if(my $error = $@) {
+        die($error);
+    }
+    return $self->SUPER::delete();
 }
 
 sub get_configuration_reader {
@@ -84,6 +98,19 @@ sub get_configuration_reader {
         ));
     }
     return $self->configuration_reader;
+}
+
+sub _populate_created_by {
+    my $self = shift;
+    unless ($self->created_by) {
+        $self->created_by(Genome::Sys->username);
+    }
+}
+
+sub _create_configuration_set {
+    my $self = shift;
+    my $set = Genome::Config::Set->create();
+    $self->_configuration_set($set);
 }
 
 1;

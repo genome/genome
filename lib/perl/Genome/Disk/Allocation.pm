@@ -85,6 +85,12 @@ class Genome::Disk::Allocation {
             len => 11,
             is_optional => 1,
         },
+        archive_after_time => {
+            is => 'DateTime',
+            len => 11,
+            is_optional => 1,
+            doc => 'After this time, this allocation is subject to being archived'
+        },
     ],
     has_optional => [
         preserved => {
@@ -322,6 +328,8 @@ sub _create {
     my $exclude_mount_path = delete $params{exclude_mount_path};
     my $group_subdirectory = delete $params{group_subdirectory};
     my $kilobytes_used = delete $params{kilobytes_used} || 0;
+    my $archive_after_time = delete $params{archive_after_time};
+    
     if (%params) {
         confess "Extra parameters detected: " . Data::Dumper::Dumper(\%params);
     }
@@ -406,6 +414,7 @@ sub _create {
         group_subdirectory           => $group_subdirectory,
         id                           => $id,
         creation_time                => UR::Context->current->now,
+        archive_after_time           => $archive_after_time,        
     );
 
     # Make sure that we never attempt to create an allocation that has an absolute path that already exists. There are
@@ -428,7 +437,7 @@ sub _create {
 
     my $self = $class->_get_allocation_without_lock(\@candidate_volumes, \%parameters);
 
-    $self->status_message(sprintf("Allocation (%s) created at %s",
+    $self->debug_message(sprintf("Allocation (%s) created at %s",
         $id, $self->absolute_path));
 
     # a restrictive umask can break builds for other users; force it to be friendly
@@ -807,7 +816,7 @@ sub _archive {
         $self->mount_path($self->volume->archive_mount_path);
         $self->_update_owner_for_move;
 
-        my $rv = UR::Context->commit;
+        my $rv = $self->_commit_unless_testing;
         confess "Could not commit!" unless $rv;
     };
     my $error = $@; # Record error so it can be investigated after unlocking
@@ -942,7 +951,7 @@ sub _unarchive {
             _symlink($old_absolute_path, $self->absolute_path);
         }
 
-        unless (UR::Context->commit) {
+        unless ($self->_commit_unless_testing) {
             confess "Could not commit!";
         }
     };
@@ -1462,7 +1471,9 @@ sub _symlink {
 
 sub _commit_unless_testing {
     if ($TESTING_DISK_ALLOCATION || !$ENV{UR_DBI_NO_COMMIT}) {
-        UR::Context->commit();
+        return UR::Context->commit();
+    } else {
+        return 1;
     }
 }
 

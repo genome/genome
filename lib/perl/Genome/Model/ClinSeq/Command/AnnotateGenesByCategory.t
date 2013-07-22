@@ -36,13 +36,14 @@ my $temp_infile = $temp_dir . "/example_input.tsv";
 ok (-e $temp_infile, "Found temp copy of example input file: $infile");
 
 #Check for GeneSymbolLists dir
-my $gene_symbol_lists_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/";
+my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
+my $gene_symbol_lists_dir = $cancer_annotation_db->data_directory . "/GeneSymbolLists/";
 ok (-e $gene_symbol_lists_dir && -d $gene_symbol_lists_dir, "Found gene symbol lists dir") or die;
 
 #Create annotate-genes-by-category command and execute
 #genome model clin-seq annotate-genes-by-category --infile=example_input.tsv --gene-symbol-lists-dir=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/  --gene-name-column='mapped_gene_name'
 
-my $annotate_genes_cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(infile=>$temp_infile, gene_symbol_lists_dir=>$gene_symbol_lists_dir, gene_name_column=>'mapped_gene_name');
+my $annotate_genes_cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(infile=>$temp_infile, cancer_annotation_db => $cancer_annotation_db, gene_name_column=>'mapped_gene_name');
 $annotate_genes_cmd->queue_status_messages(1);
 my $r1 = $annotate_genes_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

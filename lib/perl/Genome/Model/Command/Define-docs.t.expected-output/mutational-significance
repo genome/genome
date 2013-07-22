@@ -5,10 +5,10 @@
     --annotation-build=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
     [--groups=?[,?]] [--model-name=?] [--categorical-clinical-data-file=?]
     [--numeric-clinical-data-file=?] [--glm-clinical-data-file=?] [--glm-model-file=?]
-    [--omimaa-dir=?] [--cosmic-dir=?] [--bmr-modifier-file=?] [--review-file-dir=?]
-    [--regions-of-interest=?[,?]] [--gene-black-lists=?[,?]] [--variant-black-lists=?[,?]]
-    [--additional-snv-lists=?[,?]] [--additional-indel-lists=?[,?]] [--additional-sv-lists=?[,?]]
-    [--pathway-file=?]
+    [--omimaa-dir=?] [--cosmic-dir=?] [--bmr-modifier-file=?] [--extra-rois=?[,?]]
+    [--regulome-bed=?] [--review-file-dir=?] [--regions-of-interest=?[,?]]
+    [--gene-black-lists=?[,?]] [--variant-black-lists=?[,?]] [--additional-snv-lists=?[,?]]
+    [--additional-indel-lists=?[,?]] [--additional-sv-lists=?[,?]] [--pathway-file=?]
 
 [4mSYNOPSIS[0m
 First, determine what group of somatic variation models you want to work on.  This might be all models in a model group, for example.
@@ -53,6 +53,10 @@ genome model define mutational-significance --model-name "Example Mutational Sig
     Default value '/gsc/scripts/opt/genome/db/cosmic/54' if not specified
   [1mbmr-modifier-file[0m
     Tab delimited multipliers per gene that modify BMR before testing 
+  [1mextra-rois[0m
+    Extra ROI files to include in MuSiC analysis 
+  [1mregulome-bed[0m
+    Bed file with regulome db scores for regions 
   [1mreview-file-dir[0m
     Path to directory of variant files with reviews.  Any variant with a review status other than S
     or V will be  ignored. 

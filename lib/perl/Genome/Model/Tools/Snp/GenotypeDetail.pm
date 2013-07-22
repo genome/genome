@@ -44,12 +44,11 @@ sub help_detail {
 EOS
 }
 
-$ENV{UR_COMMAND_DUMP_STATUS_MESSAGES}=1;
-
-
 sub execute {
     my $self = shift;
     my $maq_pileup_fh;
+
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
     my $snp_format = uc $self->snp_format;
     my $maq_pileup = $self->maq_pileup_file;

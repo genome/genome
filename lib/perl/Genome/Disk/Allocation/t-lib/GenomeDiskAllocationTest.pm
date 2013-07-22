@@ -135,7 +135,7 @@ sub create_group {
     my $group = Genome::Disk::Group->create(
         disk_group_name => $disk_group_name,
         permissions => '755',
-        sticky => '1',
+        setgid => '1',
         subdirectory => $disk_group_name,
         unix_uid => 0,
         unix_gid => 0,

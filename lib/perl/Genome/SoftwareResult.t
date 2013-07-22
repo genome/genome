@@ -1,7 +1,7 @@
 #!/usr/bin/env genome-perl
 use strict;
 use warnings;
-use Test::More tests => 43; 
+use Test::More tests => 44; 
 
 use above 'Genome';
 
@@ -186,3 +186,37 @@ eval {
 
 ok(!$@, "no exception during save (commit disabled)!")
     or diag("exception: $@");
+
+
+# TEST LOCKING
+
+class Genome::Test_SR {
+    is => 'Genome::SoftwareResult',
+    has_param => [
+        p1 => { is => 'Text' },
+        p2 => { is => 'Number', is_optional => 1 },
+    ],
+    has_input => [
+        i1 => { is => 'Text' },
+        i2 => { is => 'Number', is_optional => 1 },
+    ],
+};
+
+sub _get_lock_hash {
+    my $lock_name = shift;
+    my ($volume, $dir, $file) = File::Spec->splitpath($lock_name);
+    my ($hash) = split('_', $file);
+    return $hash;
+}
+
+my $sr1 = Genome::Test_SR->create(p1=>'test', i1=>'test');
+# the lock_name will have _username_timestamp, so we don't want to keep that
+my $hash_without_optionals = _get_lock_hash($sr1->_lock_name);
+$sr1->delete();
+
+my $sr2 = Genome::Test_SR->create(p1=>'test', p2=>undef, i1=>'test', i2=>undef);
+my $hash_with_optionals = _get_lock_hash($sr2->_lock_name);
+
+is($hash_with_optionals, $hash_without_optionals,
+    'Creates the same lock with or without optionals (that default to undef) specified');
+

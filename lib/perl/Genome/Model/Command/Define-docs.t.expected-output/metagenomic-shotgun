@@ -1,7 +1,7 @@
 
 [4mUSAGE[0m
  [1mgenome model define metagenomic-shotgun[0m --name=? --processing-profile=? --subject=?
-    [--color] [--projects=?[,?]] [PARAMS]
+    [--color] [--debug] [--projects=?[,?]] [PARAMS]
 
 [4mREQUIRED ARGUMENTS[0m
   [1mname[0m   Text
@@ -17,6 +17,10 @@
     Default value 'true' if not specified
   [1mnocolor[0m   Boolean
     Make color 'false' 
+  [1mdebug[0m   Boolean
+    enable debug messages 
+  [1mnodebug[0m   Boolean
+    Make debug 'false' 
   [1mprojects[0m   Genome::Project
     (undocumented) 
   [1mPARAMS[0m   

@@ -79,6 +79,14 @@ class Genome::InstrumentData {
             is_many => 0,
             where => [ attribute_label => 'tgi_lims_status' ],
         },
+        analysis_project_id => {
+            is => 'Text',
+            via => 'attributes',
+            to => 'attribute_value',
+            is_mutable => 1,
+            is_many => 0,
+            where => [ attribute_label => 'analysis_project_id' ],
+        },
         #TODO: may want to make these immutable, but needed them for
         #backfilling purposes
         transcript_strand => {

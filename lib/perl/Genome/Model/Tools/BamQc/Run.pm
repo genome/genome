@@ -99,6 +99,11 @@ class Genome::Model::Tools::BamQc::Run {
             doc => 'A flag to run a pileup error rate calculation.  This actually compares each base in every read back to the reference sequence.  This can take a long time.  If set to false, the traditional error rate calculation will run using the Match Descriptor in the BAM alignment record.',
             default_value => 1,
         },
+        read_length => {
+            is => 'Boolean',
+            doc => 'A flag to run read length distribution. This step could take long time on big bam.',
+            default_value => 1,
+        },
     ],
     has_optional_output => [
         output_metrics_hash_ref => {},
@@ -146,7 +151,8 @@ sub execute {
             unless (symlink($bai_file,$bai_path)) {
                 die('Failed to create symlink '. $bai_path .' -> '. $bai_file);
             }
-        } else {
+        } 
+        else {
             # TODO: test if BAM file is sorted before indexing
             unless (Genome::Model::Tools::Picard::BuildBamIndex->execute(
                 use_version => $self->picard_version,
@@ -166,7 +172,8 @@ sub execute {
     unless (@mrkdup_files) {
         # TODO: run MarkDuplicates passing the mrkdup bam file as input to the downstream steps in workflow
         # Not sure because some BAMs are intentionally left unmarked (ex. RNASeq)....
-    } else {
+    } 
+    else {
         for my $mrkdup_file (@mrkdup_files) {
             my ($mrkdup_basename, $mrkdup_dirname, $mrkdup_suffix) = File::Basename::fileparse($mrkdup_file,qw/\.metrics/);
             my $mrkdup_path = $output_directory .'/'. $mrkdup_basename .'.metrics';
@@ -180,40 +187,34 @@ sub execute {
     my $picard_metrics_basename = $file_basename .'-PicardMetrics';
 
     # PICARD GC
-    my $picard_gc_metrics_file = $file_basename .'-PicardGC_metrics.txt';
-    my $picard_gc_chart_file = $file_basename .'-PicardGC_chart.pdf';
-    my $picard_gc_summary_file = $file_basename .'-PicardGC_summary.txt';
+    my $picard_gc_metrics_file  = $file_basename .'-PicardGC_metrics.txt';
+    my $picard_gc_chart_file    = $file_basename .'-PicardGC_chart.pdf';
+    my $picard_gc_summary_file  = $file_basename .'-PicardGC_summary.txt';
+    
+    #ASSUME_SORTED only applied to picard 1.77 and later
+    my $picard_gc_assume_sorted = $self->picard_version >= 1.77 ? 1 : 0;
 
-    # Read Length
-    my $read_length_summary = $file_basename .'-ReadLengthSummary.tsv';
-    my $read_length_histo = $file_basename .'-ReadLengthDistribution.tsv';
-    my $alignment_length_histo = $file_basename .'-AlignmentLengthDistribution.tsv';
-    
     my %workflow_params = (
-        picard_version => $self->picard_version,
-        output_directory => $output_directory,
-        bam_file => $bam_path,
-        clean_bam => 'none',
+        picard_version                 => $self->picard_version,
+        output_directory               => $output_directory,
+        bam_file                       => $bam_path,
+        clean_bam                      => 'none',
         picard_metrics_output_basename => $picard_metrics_basename,
-        picard_maximum_permgen_memory => $self->picard_maximum_permgen_memory,
-        picard_maximum_memory => $self->picard_maximum_memory,
-        picard_max_records_in_ram => $self->picard_max_records_in_ram,
-        picard_gc_metrics_file => $picard_gc_metrics_file,
-        picard_gc_chart_file => $picard_gc_chart_file,
-        picard_gc_summary_file => $picard_gc_summary_file,
-        samstat_version => $self->samstat_version,
-        fastqc_version => $self->fastqc_version,
-        read_length_summary => $read_length_summary,
-        read_length_histogram => $read_length_histo,
-        alignment_length_histogram => $alignment_length_histo,
+        picard_maximum_permgen_memory  => $self->picard_maximum_permgen_memory,
+        picard_maximum_memory          => $self->picard_maximum_memory,
+        picard_max_records_in_ram      => $self->picard_max_records_in_ram,
+        picard_gc_metrics_file         => $picard_gc_metrics_file,
+        picard_gc_chart_file           => $picard_gc_chart_file,
+        picard_gc_summary_file         => $picard_gc_summary_file,
+        samstat_version                => $self->samstat_version,
+        fastqc_version                 => $self->fastqc_version,
     );
+
+    $workflow_params{picard_gc_assume_sorted} = 1 if $picard_gc_assume_sorted; 
+
     
-    my @output_properties = qw/
-                                  picard_metrics_result
-                                  samstat_result
-                                  fastqc_result
-                                  read_length_result
-                              /;
+    my @output_properties = qw(picard_metrics_result samstat_result fastqc_result);
+
     my $flagstat_path = $file_basename .'.bam.flagstat';
     unless (-e $flagstat_path) {
         my $flagstat_file = $self->bam_file .'.flagstat';
@@ -221,17 +222,20 @@ sub execute {
             unless (symlink($flagstat_file,$flagstat_path)) {
                 die('Failed to create symlinke '. $flagstat_path .' -> '. $flagstat_file);
             }
-        } else {
+        } 
+        else {
             $workflow_params{samtools_version} = $self->samtools_version;
             $workflow_params{samtools_maximum_memory} = $self->samtools_maximum_memory;
             $workflow_params{samtools_flagstat_path} = $flagstat_path;
             push @output_properties, 'flagstat_result';
         }
     }
+
     if ($self->reference_sequence) {
         $workflow_params{reference_sequence} = $self->reference_sequence;
         push @output_properties, 'picard_gc_bias_result';
     }
+
     if ($self->error_rate && $self->reference_sequence) {
         my $error_rate_file = $file_basename .'-ErrorRate.tsv';
         if (-e $error_rate_file) {
@@ -241,6 +245,14 @@ sub execute {
         $workflow_params{error_rate_pileup} = $self->error_rate_pileup;
         push @output_properties, 'error_rate_result';
     }
+
+    if ($self->read_length) {
+        $workflow_params{read_length_summary}        = $file_basename .'-ReadLengthSummary.tsv';
+        $workflow_params{read_length_histogram}      = $file_basename .'-ReadLengthDistribution.tsv';
+        $workflow_params{alignment_length_histogram} = $file_basename .'-AlignmentLengthDistribution.tsv';
+        push @output_properties, 'read_length_result';
+    }
+
     if ($self->roi_file_path && $self->reference_sequence) {
         my $refcov_stats_file = $file_basename .'-RefCov_STATS.tsv';
         $workflow_params{roi_file_path} = $self->roi_file_path;
@@ -326,6 +338,9 @@ sub execute {
                 'result' => 'picard_gc_bias_result',
             },
         );
+        $picard_gc_bias_operation_params{input_properties}->{picard_gc_assume_sorted} = 'assume_sorted' 
+            if $picard_gc_assume_sorted; 
+        
         my $picard_gc_bias_operation = $self->setup_workflow_operation(%picard_gc_bias_operation_params);
         $picard_gc_bias_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
     }
@@ -382,21 +397,23 @@ sub execute {
     }
     
     # Read Length
-    my %read_length_operation_params = (
-        workflow => $workflow,
-        name => $self->id .' BioSamtools Read Length Distribution '. $self->bam_file,
-        class_name => 'Genome::Model::Tools::BioSamtools::ReadLengthDistribution',
-        input_properties => {
-            'bam_file' => 'bam_file',
-            read_length_summary => 'summary_file',
-            read_length_histogram => 'read_length_histogram',
-            alignment_length_histogram => 'alignment_length_histogram',
-        },
-        output_properties => {
-            'result' => 'read_length_result',
-        },
-    );
-    $self->setup_workflow_operation(%read_length_operation_params);
+    if ($self->read_length) {
+        my %read_length_operation_params = (
+            workflow => $workflow,
+            name => $self->id .' BioSamtools Read Length Distribution '. $self->bam_file,
+            class_name => 'Genome::Model::Tools::BioSamtools::ReadLengthDistribution',
+            input_properties => {
+                'bam_file' => 'bam_file',
+                read_length_summary => 'summary_file',
+                read_length_histogram => 'read_length_histogram',
+                alignment_length_histogram => 'alignment_length_histogram',
+            },
+            output_properties => {
+                'result' => 'read_length_result',
+            },
+        );
+        $self->setup_workflow_operation(%read_length_operation_params);
+    }
 
     # RefCov
     # WARNING: MUST USE PERL 5.10.1
@@ -436,38 +453,45 @@ sub execute {
 
     # SUMMARY
     # TODO: Eventually create and xls spreadsheet or consolidated PDF report
-    my $flagstat_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
+    my $flagstat_data        = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     $data{'FlagstatMetrics'} = $flagstat_data;
+
     my $insert_size_file = $picard_metrics_basename .'.insert_size_metrics';
     if (-e $insert_size_file) {
-        my $insert_size_data = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($insert_size_file);
+        my $insert_size_data  = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_file_into_metrics_hashref($insert_size_file);
         my $insert_size_histo = Genome::Model::Tools::Picard::CollectInsertSizeMetrics->parse_metrics_file_into_histogram_hashref($insert_size_file);
-        $data{'InsertSizeMetrics'} = $insert_size_data;
+        $data{'InsertSizeMetrics'}   = $insert_size_data;
         $data{'InsertSizeHistogram'} = $insert_size_histo;
     }
+
     my $alignment_summary_file = $picard_metrics_basename .'.alignment_summary_metrics';
     if (-e $alignment_summary_file) {
         my $alignment_summary_data = Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics->parse_file_into_metrics_hashref($alignment_summary_file);
         $data{'AlignmentSummaryMetrics'} = $alignment_summary_data;
     }
+
     my $quality_score_file = $picard_metrics_basename .'.quality_distribution_metrics';
     if (-e $quality_score_file) {
         my $quality_score_histo = Genome::Model::Tools::Picard::QualityScoreDistribution->parse_metrics_file_into_histogram_hashref($quality_score_file);
         $data{'QualityScoreHistogram'} = $quality_score_histo;
     }
+
     my $quality_cycle_file = $picard_metrics_basename .'.quality_by_cycle_metrics';
     if (-e $quality_cycle_file) {
         my $quality_cycle_histo = Genome::Model::Tools::Picard::MeanQualityByCycle->parse_metrics_file_into_histogram_hashref($quality_cycle_file);
         $data{'MeanQualityByCycleHistogram'} = $quality_cycle_histo;
     }
+
     if (-e $picard_gc_metrics_file) {
         my $gc_data = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($picard_gc_metrics_file);
         $data{'GcBiasMetrics'} = $gc_data;
     }
+
     if (-e $picard_gc_summary_file) {
         my $gc_data = Genome::Model::Tools::Picard::CollectGcBiasMetrics->parse_file_into_metrics_hashref($picard_gc_summary_file);
         $data{'GcBiasSummary'} = $gc_data;
     }
+
     if ($self->roi_file_path) {
         my $refcov_stats = Genome::Utility::IO::SeparatedValueReader->create(
             input => $workflow_params{refcov_stats_file},
@@ -476,11 +500,13 @@ sub execute {
         while (my $refcov_data = $refcov_stats->next) {
             if ($data{'RefCovMetrics'}{$refcov_data->{'name'}}) {
                 die('Multiple RefCov entries found.  Probably from multiple min_depth or wingspan filters.');
-            } else {
+            } 
+            else {
                 $data{'RefCovMetrics'}{$refcov_data->{'name'}} = $refcov_data;
             }
         }
     }
+
     for my $mrkdup_file (@mrkdup_files) {
         my ($mrkdup_basename,$mrkdup_dir,$mrkdup_suffix) = File::Basename::fileparse($mrkdup_file,qw/\.metrics/);
         my $mrkdup_symlink = $output_directory.'/'. $mrkdup_basename . $mrkdup_suffix;
@@ -495,6 +521,7 @@ sub execute {
             $data{'MarkDuplicatesMetrics'}{$library} = $mrkdup_data->{$library};
         }
     }
+
     $self->output_metrics_hash_ref(\%data);
     return 1;
 }

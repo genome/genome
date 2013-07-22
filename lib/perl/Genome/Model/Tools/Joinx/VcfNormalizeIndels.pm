@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-our $MINIMUM_JOINX_VERSION = 1.4;
+our $MINIMUM_JOINX_VERSION = 1.7;
 
 class Genome::Model::Tools::Joinx::VcfNormalizeIndels {
     is => 'Genome::Model::Tools::Joinx',
@@ -87,9 +87,11 @@ sub _generate_joinx_command {
     my $input = $self->use_bgzip ? join('', '<(zcat ', $self->input_file, ')') 
                                  : $self->input_file; 
     my $reference = $self->reference;
-    my $cmd = $self->joinx_path . " vcf-normalize-indels" . " --input-file $input" . " --fasta $reference";
+    my $joinx_path = $self->joinx_path;
+    my $cmd = $joinx_path . " vcf-normalize-indels" . " --input-file $input" . " --fasta $reference"
+        . " | $joinx_path sort";
     if ($self->output_file && not($self->use_bgzip)){
-        $cmd .= " --output-file $output";
+        $cmd .= " > $output";
     } elsif( $self->use_bgzip && $self->output_file){
         $cmd .= " | bgzip -c > $output";
     }

@@ -130,7 +130,6 @@ sub __display_name__ {
 sub create {
     my $class = shift;
     my %params = @_;
-
     my $file = delete $params{file_path};
 
     my $self = $class->SUPER::create(%params);
@@ -217,6 +216,51 @@ sub verify_file_md5 {
     }
 }
 
+sub get_one_based_file {
+    my $self = shift;
+
+    if ($self->format eq 'unknown') {
+        $self->error_message("Cannot convert format of BED file with unknown format");
+        die $self->error_message;
+    }
+    
+    my $new_format;
+    my $new_description = $self->description;
+    if ($self->is_1_based) {
+        return $self->file_path;
+    }
+    else {
+        return $self->transform_zero_to_one_based($self->file_path, $self->is_multitracked);
+    }
+}
+sub transform_zero_to_one_based {
+    my $class = shift;
+    my $file = shift;
+    my $is_multitracked = shift;
+    my $bed_file_content;
+
+    my $fh = Genome::Sys->open_file_for_reading($file);
+    while(my $line = <$fh>) {
+        chomp($line);
+        if($is_multitracked) {
+            if ($line =~ /^track/) {
+                $bed_file_content .= "$line\n";
+                next;
+            }
+        }
+        my @entry = split("\t",$line);
+        unless (scalar(@entry) >= 3) {
+            my $error_message = 'At least three fields are required in BED format files.  Error with line: '. $line;
+            die($error_message);
+        }
+        $entry[1]++;
+        $bed_file_content .= join("\t",@entry) ."\n";
+    }
+    my $temp_file = Genome::Sys->create_temp_file_path;
+    Genome::Sys->write_file($temp_file, $bed_file_content);
+    return $temp_file;
+}
+
 #The raw "BED" file we import will be in one many BED-like formats.
 #The output of this method is the standardized "true-BED" representation
 sub processed_bed_file_content {
@@ -264,7 +308,7 @@ sub processed_bed_file_content {
                     $print = 0;
                 }
                 next;
-            } elsif ($line =~ /^track .*?name=/) {
+            } elsif ($line =~ /^track\s.*?name=/) {
                 $self->warning_message('Unknown track name. Including regions.');
                 $print = 1;
                 next;
@@ -295,7 +339,7 @@ sub processed_bed_file_content {
             if ($short_name) {
                 $entry[3] = 'r' . $name_counter++;
             }
-            $bed_file_content .= join("\t",@entry) ."\n";
+            $bed_file_content .= join("\t",@entry[0..3]) ."\n";
         }
     }
     return $bed_file_content;

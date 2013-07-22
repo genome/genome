@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use above "Genome";
 use Test::More tests => 6;
+use Genome::Model::Tools::CopyNumber::CnView;
 
 my $expected_results = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-CnView-fast/2012-12-03";
 ok(-d $expected_results, "test data dir is " . $expected_results)
@@ -23,6 +24,7 @@ my $cmd = <<EOS;
     --name='CancerGeneCensusPlus_Sanger' \\
     --chr=21 \\
     --verbose \\
+    --cancer-annotation-db tgi/cancer-annotation/human/build37-20130401.1 \\
 EOS
 eval { Genome::Sys->shellcmd(cmd => $cmd) };
 ok(!$@, "no exceptions running the tool")

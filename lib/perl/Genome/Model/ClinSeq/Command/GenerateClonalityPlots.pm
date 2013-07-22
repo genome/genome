@@ -15,6 +15,9 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
         somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id', 
                                 doc => 'Build ID for a somatic variation model' },
 
+        misc_annotation_db  => { is => 'Genome::Db::Tgi::MiscAnnotation', 
+                                doc => 'misc annotation for the reference sequence, supplying centromere ideogram and gaps' },
+
         common_name         => { is => 'Text', 
                                 doc => 'Human readable name for the patient / sample comparison' },
         
@@ -221,19 +224,21 @@ sub execute {
     my $chmod_cmd = "chmod 664 $output_dir"."cnvs.hq";
     Genome::Sys->shellcmd(cmd => $chmod_cmd);
 
-    my $centromere_file;
-    my $gap_file;
-    my $clinseq_annotations_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/";
-    if ($data_paths{display_name} =~ /NCBI\-human\-build36/){
-        $centromere_file = $clinseq_annotations_dir . "hg18/ideogram/centromere.hg18.csv";
-        $gap_file = $clinseq_annotations_dir . "hg18/ideogram/hg18gaps.csv";
-    }elsif($data_paths{display_name} =~ /GRCh37\-lite\-build37/){
-        $centromere_file = $clinseq_annotations_dir . "hg19/ideogram/centromere.hg19.csv";
-        $gap_file = $clinseq_annotations_dir . "hg19/ideogram/hg19gaps.csv";
-    }else{
-        $self->error_message("Unrecognized build - unable to identify centromere and gapfiles, you will need to generate these and place in the appropriate location");
-        return;
-    }
+    my $misc_annotation_db = $self->misc_annotation_db;
+    my $centromere_file = $misc_annotation_db->data_set_path("centromere.csv");
+    my $gap_file = $misc_annotation_db->data_set_path("gaps.csv");
+
+    #if ($data_paths{display_name} =~ /NCBI\-human\-build36/){
+    #    $centromere_file = $clinseq_annotations_dir . "hg18/ideogram/centromere.hg18.csv";
+    #    $gap_file = $clinseq_annotations_dir . "hg18/ideogram/hg18gaps.csv";
+    #}elsif($data_paths{display_name} =~ /GRCh37\-lite\-build37/){
+    #    $centromere_file = $clinseq_annotations_dir . "hg19/ideogram/centromere.hg19.csv";
+    #    $gap_file = $clinseq_annotations_dir . "hg19/ideogram/hg19gaps.csv";
+    #}else{
+    #    $self->error_message("Unrecognized build - unable to identify centromere and gapfiles, you will need to generate these and place in the appropriate location");
+    #    return;
+    #}
+
     my $cnvhmm_file = "$output_dir"."cnaseq.cnvhmm";
 
     my $cnaseg_cmd;

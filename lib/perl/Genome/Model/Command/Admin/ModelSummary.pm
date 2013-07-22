@@ -91,9 +91,14 @@ sub execute {
 
     $tx = UR::Context::Transaction->begin;
     for my $model (@models) {
-        my $latest_build        = ($model        ? $model->latest_build  : undef);
+        my $build_iterator = $model->build_iterator(
+            'status not like' => 'Abandoned',
+            '-order_by' => '-build_id',
+        );
+        my $latest_build        = $build_iterator->next;
         my $latest_build_status = ($latest_build ? $latest_build->status : '-');
         $latest_build_status = 'Requested' if $model->build_requested;
+
 
         my @failed_builds = $model->builds(%failed_build_params);
         my $fail_count   = scalar @failed_builds;
@@ -140,10 +145,10 @@ sub execute {
                 $track_change->();
             }
         }
-        elsif ($latest_build->status eq 'Scheduled' || $latest_build->status eq 'Running' || $model->build_requested) {
+        elsif ($latest_build_status eq 'Scheduled' || $latest_build_status eq 'Running' || $latest_build_status eq 'Requested') {
             $action = 'none';
         }
-        elsif ($latest_build && $latest_build->status eq 'Succeeded' && $fail_count) {
+        elsif ($latest_build && $latest_build_status eq 'Succeeded' && $fail_count) {
             $action = 'cleanup';
             if ($self->auto) {
                 my $cleanup_succeeded = Genome::Model::Command::Admin::CleanupSucceeded->create(models => [$model]);
@@ -152,7 +157,7 @@ sub execute {
                 $track_change->();
             }
         }
-        elsif ($latest_build->status eq 'Succeeded') {
+        elsif ($latest_build_status eq 'Succeeded') {
             $action = 'none';
         }
         elsif (should_review_model($model)) {

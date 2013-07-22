@@ -25,9 +25,13 @@ class Genome::Model::Tools::DetectVariants2::Strelka {
     ],
 };
 
-my %STRELKA_VERSIONS = (
-    '0.4.6.2' => '/usr/lib/strelka0.4.6.2/',
-    '0.4.10.1' => '/usr/lib/strelka0.4.10.1/',
+our %STRELKA_VERSIONS = (
+    #'0.4.6.2' => '/usr/lib/strelka0.4.6.2/',
+    #'0.4.10.1' => '/usr/lib/strelka0.4.10.1/',
+    map { 
+        /strelka(.*)/;
+        ($1 => $_);
+    } glob("/usr/lib/strelka*")
 );
 
 sub help_synopsis {
@@ -38,9 +42,9 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
-    Provide a tumor and normal BAM file and get a list of somatic SNVs and Indels.  
+sub help_detail {
+    return <<EOS
+    Provide a tumor and normal BAM file and get a list of somatic SNVs and Indels.
 EOS
 }
 
@@ -51,16 +55,23 @@ sub _detect_variants {
 
     my $output_dir = $self->_temp_staging_directory;
 
-    #Note that all additional arguments to Strelka must be passed to Strelka as a single string using the 'extraStrelkaArguments =' line
-    #For example, you could do:
-    #extraStrelkaArguments = -used-allele-count-min-qscore 30 -min-qscore 10
-    #For a full list of Strelka options, run the strelka binary to view the help docs. 
-    #/gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/strelka_workflow/strelka/bin/strelka
-    #Note that there are many possible additional arguments!
+    # Note that all additional arguments to Strelka must be passed to Strelka as a single string using the 'extraStrelkaArguments =' line
+    # For example, you could do:
+    # extraStrelkaArguments = -used-allele-count-min-qscore 30 -min-qscore 10
+    # For a full list of Strelka options, run the strelka binary to view the help docs.
+    # /gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/strelka_workflow/strelka/bin/strelka
+    # Note that there are many possible additional arguments!
 
     # Update the default parameters with those passed in.
-    my $default_config_filename = join("/", $self->strelka_path,
-                qw(strelka_workflow strelka etc strelka_config_bwa_default.ini));
+    my $strelka_path = $self->strelka_path;
+    my $default_config_filename;
+    if (-d $strelka_path . '/etc') {
+        $default_config_filename = $strelka_path . '/etc/strelka_config_bwa_default.ini';
+    }
+    else {
+        $default_config_filename = join("/", $strelka_path, qw(strelka_workflow strelka etc strelka_config_bwa_default.ini));
+    }
+
     my $working_config_filename = join("/", $output_dir, "strelka_config.ini");
     my %params = parse_params($self->params);
     my $config_file = Config::IniFiles->new(-file=>$default_config_filename);
@@ -73,23 +84,31 @@ sub _detect_variants {
     $config_file->WriteConfig($working_config_filename);
 
     #Run the strelka configuration step that checks your input files and prepares a Makefile
-    my $cmd = $self->strelka_path . "/strelka_workflow/configureStrelkaWorkflow.pl" 
-                                   . " --tumor " . $self->aligned_reads_input 
-                                   . " --normal " . $self->control_aligned_reads_input 
-                                   . " --ref " . $self->reference_sequence_input 
-                                   . " --config $working_config_filename"
-                                   . " --output-dir $output_dir/output";
+    my $config_path = $self->strelka_path . "/strelka_workflow/configureStrelkaWorkflow.pl";
+    unless (-e $config_path) {
+        $config_path = $self->strelka_path . "/bin/configureStrelkaWorkflow.pl";
+        unless (-e $config_path) {
+            die "failed to find configureStrelkaWorkflow.pl under " . $self->strelka_path . " in either bin or strelka_workflow";
+        }
+    }
+
+    my $cmd = $config_path  . " --tumor " . $self->aligned_reads_input
+                            . " --normal " . $self->control_aligned_reads_input
+                            . " --ref " . $self->reference_sequence_input
+                            . " --config $working_config_filename"
+                            . " --output-dir $output_dir/output";
+
     Genome::Sys->shellcmd( cmd=>$cmd,
-                           input_files=>[$self->aligned_reads_input, $self->control_aligned_reads_input], 
-                           output_files=>[$output_dir . "/output/Makefile"], 
-                           skip_if_output_is_present=>1, 
+                           input_files=>[$self->aligned_reads_input, $self->control_aligned_reads_input],
+                           output_files=>[$output_dir . "/output/Makefile"],
+                           skip_if_output_is_present=>1,
                            allow_zero_size_output_files => 0, );
 
     #Actually make the Makefile (i.e. run the Strelka workflow)
     Genome::Sys->shellcmd( cmd=>"make -j 4 -C $output_dir/output/",
-                           input_files=>[$output_dir . "/output/Makefile"], 
-                           output_files=>[$output_dir . "/output/results/all.somatic.snvs.vcf", $output_dir . "/output/results/all.somatic.indels.vcf", $output_dir . "/output/results/passed.somatic.snvs.vcf", $output_dir . "/output/results/passed.somatic.indels.vcf"], 
-                           skip_if_output_is_present=>1, 
+                           input_files=>[$output_dir . "/output/Makefile"],
+                           output_files=>[$output_dir . "/output/results/all.somatic.snvs.vcf", $output_dir . "/output/results/all.somatic.indels.vcf", $output_dir . "/output/results/passed.somatic.snvs.vcf", $output_dir . "/output/results/passed.somatic.indels.vcf"],
+                           skip_if_output_is_present=>1,
                            allow_zero_size_output_files => 1, );
 
     #Create symlinks to the unfiltered SNV and Indel results generated by Strelka
@@ -101,7 +120,7 @@ sub _detect_variants {
     #It runs the runs the BED converter twice passing in a parameter that grabs either the passing (hq) or failing (lq) variants from Strelka itself
 
     $self->status_message("ending execute");
-    return 1; 
+    return 1;
 }
 
 
@@ -109,16 +128,16 @@ sub _run_bed_converter {
     my $self = shift;
     my $converter = shift;
     my $source = shift;
-    
+
     my $hq_output = $source . '.bed';
-    
+
     my $command1 = $converter->create(
         source => $source,
-        output => $hq_output, 
+        output => $hq_output,
         reference_build_id => $self->reference_build_id,
-        limit_variants_to => 'hq', 
+        limit_variants_to => 'hq',
     );
-    
+
     unless($command1->execute) {
         $self->error_message('Failed to convert ' . $source . ' to the standard format.');
         return;
@@ -126,14 +145,14 @@ sub _run_bed_converter {
 
     my $lq_output = $hq_output;
     $lq_output =~ s/\.hq\./\.lq\./ or die "file did not match expected pattern *.hq.*!: $hq_output";
-    
+
     my $command2 = $converter->create(
         source => $source,
-        output => $lq_output, 
+        output => $lq_output,
         reference_build_id => $self->reference_build_id,
-        limit_variants_to => 'lq', 
+        limit_variants_to => 'lq',
     );
-    
+
     unless($command2->execute) {
         $self->error_message('Failed to convert ' . $source . ' to the standard format.');
         return;
@@ -192,3 +211,4 @@ sub parse_params {
 }
 
 1;
+

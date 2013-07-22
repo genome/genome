@@ -18,6 +18,10 @@ class Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression {
             is => 'Genome::Model::Build::RnaSeq',
             doc => 'RnaSeq build to compare against. This should be the control sample (i.e. normal, primary, drug sensitive, etc.)',
         },
+        cancer_annotation_db => {
+            is => 'Genome::Db::Tgi::CancerAnnotation',
+            doc => 'cancer annotation db',
+        },
         outdir => { 
             is => 'FilesystemPath',
             doc => 'Directory where output files will be written', 
@@ -100,6 +104,7 @@ sub execute {
   my $self = shift;
   my $case_build = $self->case_build;
   my $control_build = $self->control_build;
+  my $cancer_annotation_db = $self->cancer_annotation_db;
   my $outdir = $self->outdir;
 
   #Set some human readable case and control labels
@@ -161,7 +166,7 @@ sub execute {
 
   #Get Entrez and Ensembl data for gene name mappings
   $self->status_message("Load entrez and ensembl gene data");
-  my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Parse the isoform fpkm files, create cleaner transcript level versions of these files and store them in the output dir
   $self->status_message("Parse transcript FPKM files from Cufflinks");

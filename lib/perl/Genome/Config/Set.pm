@@ -26,7 +26,13 @@ class Genome::Config::Set {
             via => 'allocation',
             to => 'absolute_path',
             is_optional => 1,
-        }
+        },
+        created_at => {
+            is => 'Timestamp',
+        },
+        updated_at => {
+            is => 'Timestamp',
+        },
     ],
 };
 
@@ -41,6 +47,23 @@ sub create {
         die($error);
     }
     return $self;
+}
+
+sub delete {
+    my $self = shift;
+    eval {
+        #can't call deallocate normally or else it will try to
+        #delete the allocation before the config set and throw a foreign key
+        #constraint erro
+        my $allocation = $self->allocation;
+        if ($allocation) {
+            Genome::Disk::Allocation->_delete(allocation_id => $allocation->id);
+        }
+    };
+    if(my $error = $@) {
+        die($error);
+    }
+    return $self->SUPER::delete();
 }
 
 sub _create_allocation {

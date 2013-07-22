@@ -14,6 +14,11 @@ class Genome::Model::Tools::CopyNumber::CnView{
     annotation_build  => { 
       is => 'Genome::Model::Build::ImportedAnnotation', 
       doc => 'Supply an annotation build id (e.g., 124434505 for NCBI-human.ensembl/67_37l_v2)' },
+    cancer_annotation_db => {
+      is => 'Genome::Db',
+      example_values => ['/cancer-annotation/human/build37-20130401.1'],
+      doc => 'cancer-specific annotation extenions',
+    },
     output_dir        => { 
       is => 'Text', 
       doc => 'The output directory' },
@@ -80,6 +85,8 @@ sub execute{
 
   #Required
   my $annotation_build = $self->annotation_build;
+  my $cancer_annotation_db = $self->cancer_annotation_db;
+
   my $cnv_file = $self->cnv_file;
   my $segments_file = $self->segments_file;
   my $somatic_build = $self->somatic_build;
@@ -271,7 +278,7 @@ sub execute{
   ####################################################################################################################################
 
   #Load ensembl/entrez data for fixing gene names
-  my $entrez_ensembl_data = &loadEntrezEnsemblData();
+  my $entrez_ensembl_data = &loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
   #Import ideogram data
   my $ideo_data = &importIdeogramData('-ideogram_file'=>$ideogram_file);

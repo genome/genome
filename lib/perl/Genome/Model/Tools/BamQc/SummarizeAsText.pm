@@ -17,6 +17,11 @@ class Genome::Model::Tools::BamQc::SummarizeAsText {
         output_basename => {
             doc => 'The full path basename to use for output summary files.',
         },
+        labels_are_instrument_data_ids => { #this is too long. can't think of anything better.
+            is => "Boolean",
+            default => 0,
+            doc => 'Assume the labels are instrument data ids and query out the library names from the database',
+        },
     ],
 };
 
@@ -40,6 +45,7 @@ sub execute {
                                 READS_ALIGNED
                                 PCT_READS_ALIGNED
                                 ALIGNED_BASES
+                                PCT_CHIMERAS
                                 LIBRARY_NAME
                                 PCT_DUPLICATION
                                 ESTIMATED_LIBRARY_SIZE
@@ -169,6 +175,7 @@ sub execute {
             READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PF_READS_ALIGNED},
             PCT_READS_ALIGNED => $as_metrics->{'CATEGORY-PAIR'}{PCT_PF_READS_ALIGNED},
             ALIGNED_BASES => $as_metrics->{'CATEGORY-PAIR'}{PF_ALIGNED_BASES},
+            PCT_CHIMERAS => $as_metrics->{'CATEGORY-PAIR'}{PCT_CHIMERAS},
             ERROR_RATE_READ_1 => $error_rate_sum{1}->{error_rate},
             ERROR_RATE_READ_2 => $error_rate_sum{2}->{error_rate},
             MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE},
@@ -183,6 +190,19 @@ sub execute {
         if ($mrkdup_metrics && $lib) {
             $summary_data{PCT_DUPLICATION} = $mrkdup_metrics->{$lib}{PERCENT_DUPLICATION};
             $summary_data{ESTIMATED_LIBRARY_SIZE} = $mrkdup_metrics->{$lib}{ESTIMATED_LIBRARY_SIZE};
+        }
+        if($lib == undef && $self->labels_are_instrument_data_ids) {
+            $self->status_message("Looking up the library name");
+            my $instrument_data = Genome::InstrumentData->get($label);
+            unless($instrument_data) {
+                $self->error_message("Unable to find Instrument data for id: $label");
+            }
+            else {
+                my $library_name = $instrument_data->library_name;
+                if(defined $library_name) {
+                    $summary_data{LIBRARY_NAME} = $library_name;
+                }
+            }
         }
         $summary_writer->write_one(\%summary_data);
     }

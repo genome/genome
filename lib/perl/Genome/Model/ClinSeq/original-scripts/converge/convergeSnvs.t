@@ -4,7 +4,7 @@ use warnings;
 use above "Genome";
 use Test::More skip_all => 'Test depends on live data that no longer exists.';
 #use Test::More tests => 4;
-use Genome::Model::ClinSeq::Command::Tester qw(run_and_diff);
+use Genome::Command::Tester qw(run_and_diff);
 
 run_and_diff(
     command => '$script_dir/converge/convergeSnvs.pl  --model_group_id=66909 --outdir=$output_dir  --label=BRAF  --verbose=1',

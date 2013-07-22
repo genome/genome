@@ -4,15 +4,28 @@ use strict;
 use warnings;
 use Genome;
 
+# these are used below, and are also used in the documentation on commands in the tree
+# to provide the most useful examples possible
+our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20130401.1';
+our $DEFAULT_MISC_ANNOTATION_DB_ID      = 'tgi/misc-annotation/human/build37-20130113.1';
+our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.1';
+
 class Genome::Model::ClinSeq {
     is => 'Genome::Model',
     has_optional_input => [
-        wgs_model           => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for wgs data' },
-        exome_model         => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
-        tumor_rnaseq_model  => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
-        normal_rnaseq_model => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
-        de_model            => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
-        force               => { is => 'Boolean', doc => 'skip sanity checks on input models' },
+        wgs_model               => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for wgs data' },
+        exome_model             => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
+        tumor_rnaseq_model      => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for tumor rna-seq data' },
+        normal_rnaseq_model     => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
+        de_model                => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
+
+        cancer_annotation_db    => { is => 'Genome::Db::Tgi::CancerAnnotation', default_value => $DEFAULT_CANCER_ANNOTATION_DB_ID }, 
+        misc_annotation_db      => { is => 'Genome::Db::Tgi::MiscAnnotation', default_value => $DEFAULT_MISC_ANNOTATION_DB_ID },
+        cosmic_annotation_db    => { is => 'Genome::Db::Cosmic', default_value => $DEFAULT_COSMIC_ANNOTATION_DB_ID },
+        
+        force                   => { is => 'Boolean', doc => 'skip sanity checks on input models' },
+
+        #processing_profile      => { is => 'Genome::ProcessingProfile::ClinSeq', id_by => 'processing_profile_id', default_value => { } },
     ],
     has_optional_param => [
         #Processing profile parameters would go in here
@@ -163,6 +176,10 @@ sub map_workflow_inputs {
         die "no common name set on build during initialization?";
     }
 
+    my $cancer_annotation_db = $build->cancer_annotation_db;
+    my $misc_annotation_db = $build->misc_annotation_db;
+    my $cosmic_annotation_db = $build->cosmic_annotation_db;
+
     # initial inputs used for various steps
     my @inputs = (
         build => $build,
@@ -173,6 +190,9 @@ sub map_workflow_inputs {
         working_dir => $data_directory,
         common_name => $common_name,
         verbose => 1,
+        cancer_annotation_db => $cancer_annotation_db,
+        misc_annotation_db => $misc_annotation_db,
+        cosmic_annotation_db => $cosmic_annotation_db,
     );
 
     my $patient_dir = $data_directory . "/" . $common_name;
@@ -225,6 +245,7 @@ sub map_workflow_inputs {
           mutation_diagram_collapse_variants=>1, 
           mutation_diagram_max_snvs_per_file=>1500, 
           mutation_diagram_max_indels_per_file=>1500,
+          #mutation_diagram_cosmic_version=> $build->cosmic_annotation_db->external_version,
       );
     }
 
@@ -299,7 +320,10 @@ sub map_workflow_inputs {
     }
 
     #AnnotateGenesByCategory
-    my $gene_symbol_lists_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/";    
+    # TODO: most things will use the db object instead of the dir
+    # Though it may be better to use the sub-dataset, at least if it can be given a "type" eventually.
+    #my $gene_symbol_lists_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/";
+    my $gene_symbol_lists_dir = $cancer_annotation_db->data_set_path("GeneSymbolLists");
     push @inputs, 'gene_symbol_lists_dir' => $gene_symbol_lists_dir;
     push @inputs, 'gene_name_column' => 'mapped_gene_name';
 
@@ -413,7 +437,10 @@ sub _resolve_workflow_for_build {
 
     my %steps_by_name; 
     my $step = 0;
-    my $add_step = sub {
+    my $add_step;
+    my $add_link;
+
+    $add_step = sub {
         my ($name, $cmd) = @_;
 
         if (substr($cmd,0,2) eq '::') {
@@ -435,12 +462,27 @@ sub _resolve_workflow_for_build {
         $op->operation_type->lsf_queue($lsf_queue);
         $op->operation_type->lsf_project($lsf_project);
         $steps_by_name{$name} = $op;
+
+        # for inputs with these names, always add a link from the input connector
+        # should this be default behavior for commands in a model's namespace?
+        my $cmeta = $cmd->__meta__;
+        for my $pname (qw/
+            cancer_annotation_db 
+            misc_annotation_db 
+            cosmic_annotation_db
+        /) {
+            my $pmeta = $cmeta->property($pname);
+            if ($pmeta) {
+                $add_link->($input_connector, $pname, $op, $pname);            
+            }
+        }
+            
         return $op;
     };
 
     my $converge;
 
-    my $add_link = sub {
+    $add_link = sub {
         my ($from_op, $from_p, $to_op, $to_p) = @_;
         $to_p = $from_p if not defined $to_p;
         
@@ -747,7 +789,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'exome_snv_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_exome_snv_result');
     }
     #AnnotateGenesByCategory - gene_category_wgs_snv_result
@@ -756,7 +797,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'wgs_snv_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_snv_result');
     }
     #AnnotateGenesByCategory - gene_category_wgs_exome_snv_result
@@ -765,7 +805,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'wgs_exome_snv_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_exome_snv_result');
     }
     #AnnotateGenesByCategory - gene_category_exome_indel_result
@@ -774,7 +813,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'exome_indel_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_exome_indel_result');
     }
     #AnnotateGenesByCategory - gene_category_wgs_indel_result
@@ -783,7 +821,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'wgs_indel_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_indel_result');
     }
     #AnnotateGenesByCategory - gene_category_wgs_exome_indel_result
@@ -792,7 +829,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($import_snvs_indels_op, 'wgs_exome_indel_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_exome_indel_result');
     }
     #AnnotateGenesByCategory - gene_category_cnv_amp_result
@@ -801,7 +837,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($run_cn_view_op, 'gene_amp_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_amp_result');
     }
     #AnnotateGenesByCategory - gene_category_cnv_del_result
@@ -810,7 +845,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($run_cn_view_op, 'gene_del_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_del_result');
     }
     #AnnotateGenesByCategory - gene_category_cnv_ampdel_result
@@ -819,7 +853,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($run_cn_view_op, 'gene_ampdel_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_ampdel_result');
     }
     #AnnotateGenesByCategory - gene_category_cufflinks_result
@@ -828,7 +861,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_topnpercent_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cufflinks_result');
     }
     #AnnotateGenesByCategory - gene_category_tophat_result
@@ -837,7 +869,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($tumor_tophat_junctions_absolute_op, 'junction_topnpercent_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_tophat_result');
     }
     #AnnotateGenesByCategory - gene_category_coding_de_up_result
@@ -846,7 +877,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($cufflinks_differential_expression_op, 'coding_hq_up_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_up_result');
     }
     #AnnotateGenesByCategory - gene_category_coding_de_down_result
@@ -855,7 +885,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($cufflinks_differential_expression_op, 'coding_hq_down_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_down_result');
     }
     #AnnotateGenesByCategory - gene_category_coding_de_result
@@ -864,7 +893,6 @@ sub _resolve_workflow_for_build {
       my $annotate_genes_by_category_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
       $add_link->($cufflinks_differential_expression_op, 'coding_hq_de_file', $annotate_genes_by_category_op, 'infile');
       $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_category_op, 'gene_name_column');
-      $add_link->($input_connector, 'gene_symbol_lists_dir', $annotate_genes_by_category_op, 'gene_symbol_lists_dir');
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_result');
     }
 

@@ -11,13 +11,17 @@ class Genome::SoftwareResult::Stageable {
     is_abstract => 1,
     has_transient => [
         temp_staging_directory => {
-                        is => 'Text',
-                        doc => 'Directory to use for staging the generated data before putting on allocated disk.',
-                        is_optional => 1
+            is => 'Text',
+            doc => 'Directory to use for staging the generated data before putting on allocated disk.',
+            is_optional => 1
         }
 
     ]
 };
+
+sub resolve_allocation_kilobytes_requested {
+    return $_[0]->_staging_disk_usage;
+}
 
 sub resolve_allocation_subdirectory {
     die "Must define resolve_allocation_subdirectory in your subclass of Genome::SoftwareResult::Stageable";
@@ -46,45 +50,7 @@ sub _prepare_staging_directory {
     $self->temp_staging_directory($tempdir);
 
 
-    return 1;
-}
-
-sub _prepare_output_directory {
-    my $self = shift;
-
-    my $subdir = $self->resolve_allocation_subdirectory;
-    unless ($subdir) {
-        $self->error_message("failed to resolve subdirectory for output data.  cannot proceed.");
-        die $self->error_message;
-    }
-    
-    my %allocation_get_parameters = (
-        disk_group_name => $self->resolve_allocation_disk_group_name,
-        allocation_path => $subdir,
-    );
-
-    my %allocation_create_parameters = (
-        %allocation_get_parameters,
-        kilobytes_requested => $self->_staging_disk_usage,
-        owner_class_name => $self->class,
-        owner_id => $self->id
-    );
-   
-    my $allocation = Genome::Disk::Allocation->allocate(%allocation_create_parameters);
-    unless ($allocation) {
-        $self->error_message("Failed to get disk allocation with params:\n". Data::Dumper::Dumper(%allocation_create_parameters));
-        die($self->error_message);
-    }
-
-    my $output_dir = $allocation->absolute_path;
-    unless (-d $output_dir) {
-        $self->error_message("Allocation path $output_dir doesn't exist!");
-        die $self->error_message;
-    }
-    
-    $self->output_dir($output_dir);
-    
-    return $output_dir;
+    return $tempdir;
 }
 
 sub _staging_disk_usage {

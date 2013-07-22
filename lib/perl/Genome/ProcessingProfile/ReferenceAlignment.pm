@@ -459,17 +459,28 @@ sub _resolve_sequencing_platform_for_class {
 
 sub stages {
     my $self = shift;
+    my $build = shift;
     ## second parameter of each pair is the required flag
     ## if it is 1 and no job events are made at start time
     ## a warning will be printed to the user
     my @stages = (
-        reference_preparation => 1,
-        alignment             => 1,
-        merge_and_deduplication         => 1,
-        reference_coverage    => 1,
-        variant_detection     => 1,
-        transcript_annotation => 0,
-        generate_reports      => 0,
+        reference_preparation   => 1,
+        alignment               => 1,
+        merge_and_deduplication => 1,
+    );
+
+    # Suppress warning for models that do not have reference_coverage_objects,
+    # e.g. a region_of_interest_set_name.
+    # It will take more work to ensure $build is passed in due to hack used to
+    # implement lane QC.
+    if (!$build || $self->reference_coverage_objects($build->model)) {
+        push @stages, 'reference_coverage' => 1;
+    }
+
+    push @stages, (
+        variant_detection       => 1,
+        transcript_annotation   => 0,
+        generate_reports        => 0,
     );
 
     my @filtered_stages;
@@ -498,6 +509,7 @@ sub reference_preparation_job_classes {
 sub alignment_job_classes {
     my @sub_command_classes= qw/
         Genome::Model::Event::Build::ReferenceAlignment::AlignReads
+        Genome::Model::Event::Build::ReferenceAlignment::BamQc
     /;
     return @sub_command_classes;
 }

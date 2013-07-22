@@ -240,6 +240,11 @@ sub fix_null_fields {
         # For every format field in that sample
         my @fields = keys %{$parsed_line->{"sample"}->{$sample}};
         for my $field (@fields) {
+            # null GT is './.' not '.'
+            if ($field eq 'GT') {
+                $parsed_line->{"sample"}->{$sample}->{$field} = './.'
+                    if $parsed_line->{"sample"}->{$sample}->{$field} eq '.';
+            }
             # If the value is not defined, put a "." there. If there is already a ".", make sure there are the appropriate number of them based upon the header
             if (not defined $parsed_line->{"sample"}->{$sample}->{$field} or $parsed_line->{"sample"}->{$sample}->{$field} eq ".") {
                 my $expected_null_values;

@@ -39,8 +39,8 @@ ok ($exome_build, "obtained exome somatic variation build from db for id: $exome
 
 #Create import-snvs-indels command and execute
 #genome model clin-seq import-snvs-indels --outdir=/tmp/ --wgs-build=129396794 --exome-build=129396799  --filter-mt
-
-my $import_snvs_indels_cmd = Genome::Model::ClinSeq::Command::ImportSnvsIndels->create(outdir=>$temp_dir, wgs_build=>$wgs_build, exome_build=>$exome_build, filter_mt=>1);
+my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1"); # cancer_annotation_db => $cancer_annotation_db
+my $import_snvs_indels_cmd = Genome::Model::ClinSeq::Command::ImportSnvsIndels->create(outdir=>$temp_dir, wgs_build=>$wgs_build, exome_build=>$exome_build, filter_mt=>1, cancer_annotation_db => $cancer_annotation_db);
 $import_snvs_indels_cmd->queue_status_messages(1);
 my $r1 = $import_snvs_indels_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

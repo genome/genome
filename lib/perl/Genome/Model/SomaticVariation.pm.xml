@@ -13,6 +13,9 @@
   <link fromOperation="Tier Variants" fromProperty="build_id" toOperation="Annotate And Upload Variants" toProperty="build_id" />
   
   <link fromOperation="input connector" fromProperty="annotator_version" toOperation="Annotate And Upload Variants" toProperty="annotator_version" />
+  <link fromOperation="input connector" fromProperty="get_regulome_db" toOperation="Annotate And Upload Variants" toProperty="get_regulome_db" />
+  
+  <link fromOperation="input connector" fromProperty="regulatory_annotations" toOperation="Annotate And Upload Variants" toProperty="regulatory_annotations" />
   
   <link fromOperation="Annotate And Upload Variants" fromProperty="build_id" toOperation="output connector" toProperty="build_id" />
 
@@ -39,6 +42,8 @@
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>build_id</inputproperty>
     <inputproperty>annotator_version</inputproperty>
+    <inputproperty>regulatory_annotations</inputproperty>
+    <inputproperty>get_regulome_db</inputproperty>
     <outputproperty>build_id</outputproperty>
   </operationtype>
 

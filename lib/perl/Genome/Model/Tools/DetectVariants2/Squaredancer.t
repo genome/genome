@@ -11,6 +11,7 @@ BEGIN {
 
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Utility::Test qw(compare_ok);
 
 use Test::More;
 use File::Compare;
@@ -53,12 +54,15 @@ ok($command, 'Created `gmt detect-variants2 squaredancer` command');
 $command->dump_status_messages(1);
 ok($command->execute, 'Executed `gmt detect-variants2 squaredancer` command');
 
-
-# Exclude the file path in output to make sure this test does not fail when paths change
-my $expected_output_text = `cat $expected_output | cut -s -f11 --complement`;
-my $test_output_text = `cat $test_out | cut -s -f11 --complement`;
-
-my $diff = Genome::Sys->diff_text_vs_text($expected_output_text, $test_output_text);
-ok(!$diff, "svs.hq output as expected");
+my $exclude_path_column = sub {
+    my $line = shift;
+    my @fields = split(/\t/, $line);
+    my @included_fields;
+    my @columns = grep { $_ !~ /^10$/ } (0..$#fields);
+    return join("\t", @fields[@columns]);
+};
+compare_ok($test_out, $expected_output, name => "svs.hq output as expected",
+    filters => [$exclude_path_column, qr/^#.*/],
+);
 
 done_testing();

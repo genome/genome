@@ -219,7 +219,14 @@ sub files_in_data_directory {
     my $self = shift;
 
     my $orgdir = join('/', $self->data_directory, $self->org_dirname);
-    my ($dir) = glob($orgdir . '/*' . $self->locus_tag . '*');
+    my $locusdir_pattern = $orgdir . '/*' . $self->locus_tag . '*';
+    my ($locusdir) = glob($locusdir_pattern);
+    unless ($locusdir) {
+        # This directory is intermittently showing up; NFS cache problem?
+        $self->error_message("Could not find locus directory: $locusdir_pattern");
+        system(qq(ls "$orgdir"));
+        die;
+    }
 
     my @files;
     find({
@@ -229,7 +236,7 @@ sub files_in_data_directory {
         },
         follow => 1,
         follow_skip => 2, },
-        $dir
+        $locusdir
     );
     return \@files;
 }

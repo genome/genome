@@ -65,7 +65,7 @@ class Genome::Sample {
             calculate_from => [qw/ extraction_type /],
             calculate => q|
                 return if not defined $extraction_type;
-                for my $rna_sample_type ( 'rna', 'cdna', 'total rna', 'cdna library', 'mrna' ) {
+                for my $rna_sample_type ( 'rna', 'cdna', 'total rna', 'cdna library', 'mrna', 'pooled rna' ) {
                     return 1 if $extraction_type eq $rna_sample_type;
                 }
                 return;

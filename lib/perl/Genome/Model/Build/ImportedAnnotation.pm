@@ -116,13 +116,6 @@ class Genome::Model::Build::ImportedAnnotation {
     ],
 };
 
-sub rna_features_gff_path {
-    # TODO: normalize access to with other files made for RNA
-    # This is used directly in "gmt htseq count", which should be refactored with the change.
-    my $self = shift;
-    $self->model->rna_features_gff_path_for_build($self);
-}
-
 sub _select_build_from_model_input { undef; }
 
 sub validate_for_start_methods {
@@ -212,6 +205,7 @@ sub get_or_create_roi_bed {
 
     my $exclude_patterns;
     my $include_patterns;
+    my $include_flank;
 
     if (%params) {
         if ($params{excluded_reference_sequence_patterns}) {
@@ -238,8 +232,12 @@ sub get_or_create_roi_bed {
                 $name = $name."_with-reading-frame";
             }
 
+            if ($params{include_flank}) {
+                $name = $name."_include-flank";
+                $include_flank = $params{include_flank};
+            }
             if ($params{one_based}) {
-                $name = $name."_one_based";
+                $name = $name."_one-based";
             }
     }
 
@@ -303,16 +301,32 @@ sub get_or_create_roi_bed {
                     if ($start > $chrom_stop{$chrom} or $start >= $stop) {
                         next;
                     }
-                    $start = 0 if ($start < 0);
-                    $stop = $chrom_stop{$chrom} if ($stop > $chrom_stop{$chrom});
+                    
                 }
                 if ($params{one_based}) {
                     $start++;
                 }
             }
-
+            if ($params{one_based}) {
+                if ($start < 1) {
+                    $start = 1;
+                }
+                if ($stop < 1) {
+                    $stop = 1;
+                }
+            }
+            else {
+                if ($start < 0) {
+                    $start = 0;
+                }
+                if ($stop < 0) {
+                    $stop = 0;
+                }
+            }
+            $stop = $chrom_stop{$chrom} if ($stop > $chrom_stop{$chrom});
+            $start = $chrom_stop{$chrom} if ($start > $chrom_stop{$chrom});
             my $string = join("\t",$chrom, $start, $stop, $description);
-            if ($feature_type ne 'flank') {
+            if ($include_flank or $feature_type ne 'flank') {
                 print $out_file "$string\n";
             }
         }
