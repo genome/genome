@@ -12,6 +12,7 @@ use warnings;
 use above "Genome";
 use Data::Dumper;
 require Genome::Utility::Test;
+use File::Temp;
 use Test::More;
 
 use_ok('Genome::Sample::Command::Import::Manager') or die;
@@ -45,12 +46,15 @@ class Genome::Model::Ref {
 my $pp = Genome::ProcessingProfile::Ref->create(id => -333, name => 'ref pp #1', aligner => 'bwa');
 ok($pp, 'create pp');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v2');
 my $sample_name = 'TeSt-0000-00';
+my $working_directory = File::Temp::tempdir(CLEANUP => 1);
+Genome::Sys->create_symlink($test_dir.'/valid/info.tsv', $working_directory.'/info.tsv');
+Genome::Sys->create_symlink($test_dir.'/valid/config.yaml', $working_directory.'/config.yaml');
 
 # Do not make progress, just status
 my $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/valid',
+    working_directory => $working_directory,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -58,6 +62,7 @@ is($manager->namespace, 'Test', 'got namespace');
 my $sample_hash = eval{ $manager->samples->{$sample_name}; };
 ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'sample_needed', 'sample hash status');
+ok(-s $manager->status_file, 'status file created');
 
 # Import command
 is(
@@ -69,7 +74,7 @@ ok(!$manager->_launch_instrument_data_import_for_sample($sample_hash), 'failed t
 
 # Make progress: create sample, model and 'import' (it thinks it is importing b/c of the command used in the config file)
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/valid',
+    working_directory => $working_directory,
     make_progress => 1,
 );
 ok($manager, 'create manager');
@@ -83,7 +88,7 @@ ok(!$sample_hash->{model}->auto_assign_inst_data, 'model auto_assign_inst_data i
 ok(!$sample_hash->{model}->auto_build_alignments, 'model auto_build_alignments is off');
 ok(!$sample_hash->{model}->build_requested, 'model build_requested is off');
 ok(!$sample_hash->{model}->instrument_data, 'model does not have instrument data assigned');
-is($sample_hash->{build_id}, 'NA', 'sample hash build_id');
+ok(!$sample_hash->{build}, 'sample hash build');
 
 # Make progress: create inst data here, it should get assigned to thew model and build should be requested
 my $inst_data = Genome::InstrumentData::Imported->__define__(
@@ -97,7 +102,7 @@ my $inst_data = Genome::InstrumentData::Imported->__define__(
 $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $manager->config_file);
 
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/valid/',
+    working_directory => $working_directory,
     make_progress => 1,
 );
 ok($manager, 'create manager');
@@ -116,18 +121,18 @@ is($manager->error_message, "Property 'config_file': Config file does not exist!
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid/no-sample-csv',
+    working_directory => $test_dir.'/invalid/no-info-file',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
-is($manager->error_message, "Property 'sample_csv_file': Sample csv file does not exist! ".$manager->sample_csv_file, 'correct error');
+is($manager->error_message, "Property 'info_file': Sample info file does not exist! ".$manager->info_file, 'correct error');
 
 # fail - no name column in csv
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid/no-name-column-in-sample-csv',
+    working_directory => $test_dir.'/invalid/no-name-column-in-info-file',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
-is($manager->error_message, 'Property \'sample_csv_file\': No "name" column in sample csv! '.$manager->sample_csv_file, 'correct error');
+is($manager->error_message, 'Property \'info_file\': No "name" column in sample info file! '.$manager->info_file, 'correct error');
 
 done_testing();

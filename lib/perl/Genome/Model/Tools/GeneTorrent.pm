@@ -21,7 +21,8 @@ class Genome::Model::Tools::GeneTorrent {
         lsf_resource => {
 #            default_value => '-W 72:00 -q lims-datatransfer -R "rusage[internet_download_mbps=80]"',
             # -W bsub option silently ignored
-            default_value => '-q seqmgr-long',
+            # mbps -> megabits per second (see --rate-limit below)
+            default_value => '-q seqmgr-long -R "rusage[internet_download_mbps=80]"',
         },
     ]
 };
@@ -45,7 +46,7 @@ sub execute {
         . ' --log stdout:verbose'
         . ' --verbose 2'
         . ' --max-children 2'
-#        . ' --rate-limit 10'
+        . ' --rate-limit 10'    # megabytes per second (see internet_download_mbps above)
     ;
 
     $self->status_message('Cmd: ' . $cmd);
