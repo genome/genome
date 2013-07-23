@@ -59,8 +59,7 @@ class Genome::Model::ImportedAnnotation{
 sub build_by_version {
     my $self = shift;
     my $version = shift;
-
-    my @builds = grep{ $_->status eq 'Succeeded' || $_->status eq 'Running' } $self->builds;
+    my @builds = grep{ grep {$_ eq 'Succeeded' or $_ eq 'Running'} $_->status } $self->builds;
     @builds =  grep { $_->version eq $version } @builds;
     if (@builds > 1) {
         my $versions_string = join("\n", map { "model_id ".$_->model_id." build_id ".$_->build_id." version ".$_->version } @builds);
