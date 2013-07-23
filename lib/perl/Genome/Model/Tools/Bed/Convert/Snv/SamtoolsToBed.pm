@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Info::IUB;
+use Genome::Utility::Vcf qw(parse_vcf_line get_vcf_header get_samples_from_header);
 
 
 class Genome::Model::Tools::Bed::Convert::Snv::SamtoolsToBed {
@@ -30,12 +31,22 @@ EOS
 sub process_source {
     my $self     = shift;
     my $input_fh = $self->_input_fh;
+    my ($header, @header_array, @sample_names);
 
     while (my $line = <$input_fh>) {
-        next if $line =~ /^#/;  #mpileup vcf file contains header while pileip output not
+        # if this is a vcf file, grab the header for later
+        if ($line =~ /^#/) {
+            unless ($header) {
+                $header = get_vcf_header($self->source);
+                @header_array = split "\n", $header;
+                @sample_names = get_samples_from_header(\@header_array);
+            }
+            next;
+        }
         my @tokens = split /\s+/, $line;
         my ($chromosome, $position, $reference, $consensus, $quality, $depth, $gt_info);
 
+        # If this is a VCF file...
         if ($tokens[4] =~ /^[A-Z]+/) {   # 5th column, mpileup is alt variant bases, while pileup is consensus quality 
             ($chromosome, $position, $reference, $consensus, $gt_info) = map{$tokens[$_]}qw(0 1 3 4 9);
             my @vars = split /,/, $consensus; #mpileup use -A option to spit out alternative variant calls
@@ -53,18 +64,21 @@ sub process_source {
             my $str = join '', sort ($id_vars{$a1}, $id_vars{$a2});
             $consensus = Genome::Info::IUB->string_to_iub($str);
             unless ($consensus) {
-                $self->warning_message("Failed to get proper variant call from line: $line");
-                next;
+                die $self->error_message("Failed to get proper variant call from line: $line");
             }
-                
+
             $quality = sprintf "%2.f", $tokens[5];
 
-            if ($tokens[7] =~ /DP=(\d+)/) {
-                $depth = $1;
-            } 
+            my $parsed_line = parse_vcf_line($line, \@sample_names);
+
+            # Check both info and sample fields for depth
+            if ($parsed_line->{info} ne "." and $parsed_line->{info}{"DP"}) {
+                $depth = $parsed_line->{info}{"DP"};
+            } elsif ($parsed_line->{sample}{$sample_names[0]}{"DP"}) {
+                $depth = $parsed_line->{sample}{$sample_names[0]}{"DP"};
+            }
             else { 
-                $self->warning_message("read depth not found on line $line");
-                next;
+                die $self->error_message("Read depth not found on line $line");
             }
         }
         else { #pileup format
