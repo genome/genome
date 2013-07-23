@@ -457,7 +457,6 @@ sub execute {
 
     $self->_print_starting_message();
 
-    my $total_start = Benchmark->new;
     my $pre_annotation_start = Benchmark->new;
 
     if ($self->_is_parallel) {
