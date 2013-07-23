@@ -407,7 +407,7 @@ sub execute {
     my $pre_annotation_start = Benchmark->new;
 
     if ($self->_is_parallel) {
-        $self->output_file($variant_file . ".out");
+        $self->output_file($self->variant_file . ".out");
     }
 
     if (($self->skip_if_output_present)&&(-s $self->output_file)) {
@@ -420,14 +420,14 @@ sub execute {
     # preserve additional columns from input if desired 
     my @columns = (($self->variant_attributes), $self->get_extra_columns);
     my $variant_svr = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $variant_file,
+        input => $self->variant_file,
         headers => \@columns,
         separator => "\t",
         is_regex => 1,
         ignore_extra_columns => 1,
     );
     unless ($variant_svr) {
-        $self->error_message("error opening file $variant_file");
+        $self->error_message("error opening file " . $self->variant_file);
         return;
     }
 
