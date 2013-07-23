@@ -553,6 +553,8 @@ sub _main_annotation_loop {
     my $chromosome_name = '';
     my ($annotation_start, $annotation_stop);
 
+    my $annotation_method = $self->_annotation_method_for_annotation_filter;
+
     while ( my $variant = $variant_svr->next ) {
 
         # these are tracked by an END{} block for debugging
@@ -590,51 +592,20 @@ sub _main_annotation_loop {
             }
         }
 
-        # If we have an IUB code, annotate once per base... doesnt apply to things that arent snps
-        # TODO... unduplicate this code
-        my $annotation_filter = lc $self->annotation_filter;
         if ($variant->{type} eq 'SNP') {
+            # If we have an IUB code, annotate once per base... doesnt apply to things that arent snps
             my @variant_alleles = Genome::Info::IUB->variant_alleles_for_iub($variant->{reference}, $variant->{variant});
+
             for my $variant_allele (@variant_alleles) {
                 # annotate variant with this allele
                 $variant->{variant} = $variant_allele;
-
-                # get the data and output it
-                my $annotation_method;
-                if ($annotation_filter eq "gene") {
-                    # Top annotation per gene
-                    $annotation_method = 'prioritized_transcripts';
-                } elsif ($annotation_filter eq "top") {
-                    # Top annotation between all genes
-                    $annotation_method = 'prioritized_transcript';
-                } elsif ($annotation_filter eq "none") {
-                    # All transcripts, no filter
-                    $annotation_method = 'transcripts';
-                } else {
-                    $self->error_message("Unknown annotation_filter value: " . $annotation_filter);
-                    return;
-                }
 
                 my @transcripts = $annotator->$annotation_method(%$variant);
                 $self->_print_annotation($variant, \@transcripts);
             }
         } else {
             # get the data and output it
-            my @transcripts;
-            if ($annotation_filter eq "gene") {
-                # Top annotation per gene
-                @transcripts = $annotator->prioritized_transcripts(%$variant);
-            } elsif ($annotation_filter eq "top") {
-                # Top annotation between all genes
-                @transcripts = $annotator->prioritized_transcript(%$variant);
-            } elsif ($annotation_filter eq "none") {
-                # All transcripts, no filter
-                @transcripts = $annotator->transcripts(%$variant);
-            } else {
-                $self->error_message("Unknown annotation_filter value: " . $annotation_filter);
-                return;
-            }
-
+            my @transcripts = $annotator->$annotation_method(%$variant);
             $self->_print_annotation($variant, \@transcripts);
         }
         $processed_variants++;
