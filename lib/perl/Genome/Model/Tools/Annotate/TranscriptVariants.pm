@@ -348,8 +348,7 @@ END {
     }
 };
 
-sub execute { 
- 
+sub _validate_parameters {
     my $self = shift;
 
     unless($self->variant_file xor $self->variant_bed_file){
@@ -367,16 +366,13 @@ sub execute {
         unless(-s $self->variant_file){
             die $self->error_message("After converting to annotation format, the variant file has no size, exiting");
         }
+    } else {
+        unless(-s $self->variant_file){
+            $self->error_message("Variant file has no size, exiting");
+            die;
+        }
     }
 
-    my $variant_file = $self->variant_file;
-
-    unless(-s $variant_file){
-        $self->error_message("Variant file has no size, exiting");
-        die;
-    }
-    
-    
     if (defined $self->data_directory) {
         $self->error_message("Due to a recent change to the annotation data file format, allowing " .
             "user-specified data directories has been deprecated. Specifying a data directory containing " .
@@ -384,6 +380,22 @@ sub execute {
             "one way to avoid that mess. If you have questions, contact apipe.");
         die;
     }
+
+    #check to see if reference_transcripts set name and build_id given
+    unless ($self->build xor $self->reference_transcripts){
+        $self->error_message("Please provide EITHER a build id OR a reference transcript set name, but not both");
+        return;
+    }
+
+    return 1;
+}
+
+sub execute {
+    my $self = shift;
+
+    $self->_validate_parameters || return;
+
+    my $variant_file = $self->variant_file;
 
     # Useful information for debugging...
     my ($date, $time) = split(' ',$self->__context__->now());
@@ -437,17 +449,6 @@ sub execute {
     }
     $self->_transcript_report_fh($output_fh);
 
-
-    #check to see if reference_transcripts set name and build_id given
-    if ($self->build and $self->reference_transcripts){
-        $self->error_message("Please provide a build id OR a reference transcript set name, not both");
-        return;
-    }
-
-    if(!$self->build and !$self->reference_transcripts){
-        $self->error_message("Please provide EITHER a build id OR a reference transcript set name, but not both");
-        return;
-    }
 
     unless($self->build) {
         my $ref = $self->reference_transcripts;
