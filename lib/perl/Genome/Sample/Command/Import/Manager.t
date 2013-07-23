@@ -67,10 +67,10 @@ ok(-s $manager->status_file, 'status file created');
 # Import command
 is(
     $manager->_resolve_instrument_data_import_command_for_sample($sample_hash),
-    "launch -name $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
+    "echo $sample_name genome instrument-data import basic --sample name=$sample_name --source-files original.bam --import-source-name TeSt --instrument-data-properties lane='8'",
     'inst data import command',
 );
-ok(!$manager->_launch_instrument_data_import_for_sample($sample_hash), 'failed to launch inst data import command');
+ok($manager->_launch_instrument_data_import_for_sample($sample_hash), 'launch inst data import command');
 
 # Make progress: create sample, model and 'import' (it thinks it is importing b/c of the command used in the config file)
 $manager = Genome::Sample::Command::Import::Manager->create(
