@@ -441,11 +441,26 @@ sub _setup_report_fh {
         chmod(0664, $temp_output_file);
     }
     $self->_transcript_report_fh($output_fh);
+    $self->_temp_output_file($temp_output_file);
 
     # omit headers as necessary
     $output_fh->print( join("\t", $self->transcript_report_headers), "\n" ) unless $self->no_headers;
 
-    return ($output_fh, $temp_output_file);
+    return $output_fh;
+}
+
+sub _close_report_fh {
+    my $self = shift;
+
+    my $output_fh = $self->_transcript_report_fh;
+    $output_fh->close unless $output_fh eq 'STDOUT';
+    if ($self->_temp_output_file){
+        unless (move($self->_temp_output_file, $self->output_file)) {
+            $self->error_message("Failed to mv results at ".$self->_temp_output_file." to final location at ".$self->output_file.": $!");
+            return 0;
+        }
+        $output_fh->close unless $output_fh eq 'STDOUT';
+    }
 }
 
 sub execute {
@@ -470,7 +485,7 @@ sub execute {
 
     my $variant_svr = $self->_create_variant_reader() || return;
 
-    my($output_fh, $temp_output_file) = $self->_setup_report_fh();
+    $self->_setup_report_fh() || return;
 
 
     unless($self->build) {
@@ -666,14 +681,7 @@ sub execute {
     $self->status_message("Annotated $processed_variants variants in " . $timediff . " seconds.  "
                           . sprintf("%2.2f", $variants_per_sec) . " variants per second");
 
-    $output_fh->close unless $output_fh eq 'STDOUT';
-    if ($temp_output_file){
-        unless (move($temp_output_file, $self->output_file)) {
-            $self->error_message("Failed to mv results at $temp_output_file to final location at ".$self->output_file.": $!");
-            return 0;
-        }
-        $output_fh->close unless $output_fh eq 'STDOUT';
-    }
+    $self->_close_report_fh();
 
     #clean up the temporary annotation data file 
     if ($self->variant_bed_file and $self->variant_file){
@@ -687,6 +695,12 @@ sub _transcript_report_fh {
     my ($self, $fh) = @_;
     $self->{_transcript_fh} = $fh if $fh;
     return $self->{_transcript_fh};
+}
+
+sub _temp_output_file {
+    my ($self, $name) = @_;
+    $self->{_temp_output_file} = $name if $name;
+    return $self->{_temp_output_file};
 }
 
 sub _print_annotation {
