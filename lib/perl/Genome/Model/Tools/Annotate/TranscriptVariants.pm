@@ -400,6 +400,26 @@ sub _print_starting_message {
     $self->status_message("Executing on host $host on $date at $time");
 }
 
+# generate an iterator for the input list of variants
+sub _create_variant_reader {
+    my $self = shift;
+
+    # preserve additional columns from input if desired
+    my @columns = (($self->variant_attributes), $self->get_extra_columns);
+    my $variant_svr = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $self->variant_file,
+        headers => \@columns,
+        separator => "\t",
+        is_regex => 1,
+        ignore_extra_columns => 1,
+    );
+    unless ($variant_svr) {
+        $self->error_message("error opening file " . $self->variant_file);
+        return;
+    }
+    return $variant_svr;
+}
+
 sub execute {
     my $self = shift;
 
@@ -421,21 +441,7 @@ sub execute {
         return 1;
     }
 
-    # generate an iterator for the input list of variants
-
-    # preserve additional columns from input if desired 
-    my @columns = (($self->variant_attributes), $self->get_extra_columns);
-    my $variant_svr = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $self->variant_file,
-        headers => \@columns,
-        separator => "\t",
-        is_regex => 1,
-        ignore_extra_columns => 1,
-    );
-    unless ($variant_svr) {
-        $self->error_message("error opening file " . $self->variant_file);
-        return;
-    }
+    my $variant_svr = $self->_create_variant_reader() || return;
 
     # establish the output handle for the transcript variants
     my $output_fh;
