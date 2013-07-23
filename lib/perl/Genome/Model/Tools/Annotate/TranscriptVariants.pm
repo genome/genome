@@ -529,44 +529,13 @@ sub _create_annotator {
     return $annotator;
 }
 
-sub execute {
-    my $self = shift;
-
-    $self->_validate_parameters || return;
-
-    my $variant_file = $self->variant_file;
-
-    $self->_print_starting_message();
-
-    if ($self->_is_parallel) {
-        $self->output_file($self->variant_file . ".out");
-    }
-
-    if (($self->skip_if_output_present)&&(-s $self->output_file)) {
-        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
-        return 1;
-    }
-
-    my $variant_svr = $self->_create_variant_reader() || return;
-
-    $self->_setup_report_fh() || return;
-
-    # annotate all of the input variants
-    $self->status_message("Annotation start") if $self->benchmark;
-    my $annotation_total_start = Benchmark->new;
-    my ($annotation_start, $annotation_stop);
-    my $chromosome_name = '';
-
-    my $annotator = $self->_create_annotator();
-
-    $self->status_message("Starting annotation loop at ".scalar(localtime));
-    $self->status_message("  with annotator version ".$self->use_version);
-    my $annotation_loop_start_time = time();
-
-    Genome::DataSource::GMSchema->disconnect_default_handle if Genome::DataSource::GMSchema->has_default_handle;
-
+sub _main_annotation_loop {
+    my($self, $annotator, $variant_svr) = @_;
 
     my $processed_variants = 0;
+    my $chromosome_name = '';
+    my ($annotation_start, $annotation_stop);
+
     while ( my $variant = $variant_svr->next ) {
 
         # these are tracked by an END{} block for debugging
@@ -654,13 +623,52 @@ sub execute {
         $processed_variants++;
         $self->status_message("$processed_variants variants processed " . scalar(localtime)) unless ($processed_variants % 10000);
     }
-    $we_are_done_flag = 1;
 
-    my $annotation_loop_stop_time = time();
+    $we_are_done_flag = 1;
 
     $annotation_stop = Benchmark->new;
     my $annotation_time = timediff($annotation_stop, $annotation_start);
     $self->status_message("Annotating $chromosome_name took " . timestr($annotation_time) . "\n") if $self->benchmark;
+
+    return $processed_variants || '0 but true';
+}
+
+sub execute {
+    my $self = shift;
+
+    $self->_validate_parameters || return;
+
+    $self->_print_starting_message();
+
+    if ($self->_is_parallel) {
+        $self->output_file($self->variant_file . ".out");
+    }
+
+    if (($self->skip_if_output_present)&&(-s $self->output_file)) {
+        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
+        return 1;
+    }
+
+    my $variant_svr = $self->_create_variant_reader() || return;
+
+    $self->_setup_report_fh() || return;
+
+    # annotate all of the input variants
+    $self->status_message("Annotation start") if $self->benchmark;
+    my $annotation_total_start = Benchmark->new;
+
+    my $annotator = $self->_create_annotator();
+
+    $self->status_message("Starting annotation loop at ".scalar(localtime));
+    $self->status_message("  with annotator version ".$self->use_version);
+    my $annotation_loop_start_time = time();
+
+    Genome::DataSource::GMSchema->disconnect_default_handle if Genome::DataSource::GMSchema->has_default_handle;
+
+    # This is where all the action happens!
+    my $processed_variants = $self->_main_annotation_loop($annotator, $variant_svr);
+
+    my $annotation_loop_stop_time = time();
 
     my $annotation_total_stop = Benchmark->new;
     my $total_time = timediff($annotation_total_stop, $annotation_total_start);
