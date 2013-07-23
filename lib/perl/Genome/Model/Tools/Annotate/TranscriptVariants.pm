@@ -488,33 +488,8 @@ sub _close_report_fh {
     }
 }
 
-sub execute {
+sub _create_annotator {
     my $self = shift;
-
-    $self->_validate_parameters || return;
-
-    my $variant_file = $self->variant_file;
-
-    $self->_print_starting_message();
-
-    if ($self->_is_parallel) {
-        $self->output_file($self->variant_file . ".out");
-    }
-
-    if (($self->skip_if_output_present)&&(-s $self->output_file)) {
-        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
-        return 1;
-    }
-
-    my $variant_svr = $self->_create_variant_reader() || return;
-
-    $self->_setup_report_fh() || return;
-
-    # annotate all of the input variants
-    $self->status_message("Annotation start") if $self->benchmark;
-    my $annotation_total_start = Benchmark->new;
-    my ($annotation_start, $annotation_stop);
-    my $chromosome_name = '';
 
     # Initialize the annotator object
     if (! defined ($self->use_version)) {
@@ -550,6 +525,39 @@ sub execute {
         $self->error_message("Couldn't create annotator of class $annotator_version_subclass");
         die;
     }
+
+    return $annotator;
+}
+
+sub execute {
+    my $self = shift;
+
+    $self->_validate_parameters || return;
+
+    my $variant_file = $self->variant_file;
+
+    $self->_print_starting_message();
+
+    if ($self->_is_parallel) {
+        $self->output_file($self->variant_file . ".out");
+    }
+
+    if (($self->skip_if_output_present)&&(-s $self->output_file)) {
+        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
+        return 1;
+    }
+
+    my $variant_svr = $self->_create_variant_reader() || return;
+
+    $self->_setup_report_fh() || return;
+
+    # annotate all of the input variants
+    $self->status_message("Annotation start") if $self->benchmark;
+    my $annotation_total_start = Benchmark->new;
+    my ($annotation_start, $annotation_stop);
+    my $chromosome_name = '';
+
+    my $annotator = $self->_create_annotator();
 
     $self->status_message("Starting annotation loop at ".scalar(localtime));
     $self->status_message("  with annotator version ".$self->use_version);
