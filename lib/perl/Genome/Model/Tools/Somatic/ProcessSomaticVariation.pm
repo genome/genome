@@ -623,8 +623,8 @@ sub execute {
       $sample_name = $self->sample_name;
   }
   print STDERR "processing model with sample_name: " . $sample_name . "\n";
-  my $tumor_bam = $tumor_model->last_succeeded_build->whole_rmdup_bam_file;
-  my $normal_bam = $normal_model->last_succeeded_build->whole_rmdup_bam_file;
+  my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
+  my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
   my $build_dir = $build->data_directory;
 
   my $igv_reference_name;
