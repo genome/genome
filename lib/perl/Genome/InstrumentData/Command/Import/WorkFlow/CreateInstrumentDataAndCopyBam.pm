@@ -11,9 +11,10 @@ require File::Basename;
 class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam { 
     is => 'Command::V2',
     has_input => [
-        bam_path => {
+        bam_paths => {
             is => 'Text',
-            doc => 'The path of the bam to verify and move.',
+            is_many => 1,
+            doc => 'The paths of the bams to verify and move.',
         },
         sample => {
             is => 'Genome::Sample',
@@ -28,23 +29,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
     has_output => [
         instrument_data => {
             is => 'Genome::InstrumentData',
-            doc => 'The instrument data entity to be imported.',
+            is_many => 1,
+            doc => 'The instrument data entities crreated.',
         },
     ],
     has_transient_optional => [
         library => { is => 'Genome::Library', },
         kilobytes_requested => { is => 'Number', },
-    ],
-    has_calculated => [
-        final_bam_path => {
-            calculate_from => [qw/ instrument_data /],
-            calculate => q( return $instrument_data->data_directory.'/all_sequences.bam'; ),
-            doc => 'The path of the final bam.',
-        },
-        flagstat_path => {
-            calculate_from => [qw/ final_bam_path /],
-            calculate => q( return $final_bam_path.'.flagstat'; ),
-        },
     ],
 };
 
@@ -55,26 +46,33 @@ sub execute {
     my $library = $self->_resvolve_library;
     return if not $library;
 
-    my $instrument_data = $self->_create_instrument_data;
-    return if not $instrument_data;
-
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my @instrument_data;
+    my @bam_paths = $self->bam_paths;
+    for my $bam_path ( @bam_paths ) {
+        my $instrument_data = $self->_create_instrument_data($bam_path);
+        return if not $instrument_data;
 
-    my $move_ok = $helpers->move_file($self->bam_path, $self->final_bam_path);
-    return if not $move_ok;
+        my $final_bam_path = $instrument_data->data_directory.'/all_sequences.bam';
+        my $move_ok = $helpers->move_file($bam_path, $final_bam_path);
+        return if not $move_ok;
 
-    my $flagstat_path = $self->flagstat_path;
-    $self->status_message("Flagstat path: $flagstat_path");
-    my $flagstat = $helpers->validate_bam($self->final_bam_path, $self->flagstat_path);
-    return if not $flagstat;
+        my $flagstat_path = $final_bam_path.'.flagstat';
+        $self->status_message("Flagstat path: $flagstat_path");
+        my $flagstat = $helpers->validate_bam($final_bam_path, $flagstat_path);
+        return if not $flagstat;
 
-    $instrument_data->add_attribute(attribute_label => 'bam_path', attribute_value => $self->final_bam_path);
-    $instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $flagstat->{total_reads});
-    $instrument_data->add_attribute(attribute_label => 'is_paired_end', attribute_value => $flagstat->{is_paired_end});
+        $instrument_data->add_attribute(attribute_label => 'bam_path', attribute_value => $final_bam_path);
+        $instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $flagstat->{total_reads});
+        $instrument_data->add_attribute(attribute_label => 'is_paired_end', attribute_value => $flagstat->{is_paired_end});
 
-    $self->status_message('Reallocate...');
-    $instrument_data->allocations->reallocate;# with move??
-    $self->status_message('Reallocate...done');
+        $self->status_message('Reallocate...');
+        $instrument_data->allocations->reallocate;# with move??
+        $self->status_message('Reallocate...done');
+
+        push @instrument_data, $instrument_data;
+    }
+    $self->instrument_data(\@instrument_data);
 
     $self->status_message('Create instrument data and copy bam...done');
     return 1;
@@ -110,7 +108,9 @@ sub _resvolve_library {
 }
 
 sub _create_instrument_data {
-    my $self = shift;
+    my ($self, $bam_path) = @_;
+
+    Carp::confess('No bam path to create instrument data!') if not $bam_path;
 
     my %additional_properties;
     for my $name_value ( $self->instrument_data_properties ) {
@@ -128,15 +128,40 @@ sub _create_instrument_data {
         $additional_properties{$name} = $value;
     }
 
-    $self->status_message('Checking if source files were previously imported...');
     my $original_data_path = delete $additional_properties{original_data_path};
-    my %properties = ( #FIXME when importing multiples...
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+
+    my @read_group_ids_from_bam = $helpers->load_read_groups_from_bam($bam_path);
+    return if not @read_group_ids_from_bam; # should only be one
+    if ( @read_group_ids_from_bam > 1 ) {
+        $self->error_message('More than one read group in bam! '.$bam_path);
+        return;
+    }
+
+    if ( @read_group_ids_from_bam ) {
+        $self->status_message("Read groups in bam: @read_group_ids_from_bam");
+        if ( @read_group_ids_from_bam > 1 ) {
+            $self->error_message('Multiple read groups in bam! '.$bam_path);
+            return;
+        }
+        $additional_properties{segment_id} = $read_group_ids_from_bam[0];
+    }
+
+    $self->status_message('Checking if source files were previously imported...');
+    my %properties = (
         library => $self->library,
         original_data_path => $original_data_path,
     );
-    my $instrument_data = Genome::InstrumentData::Imported->get(%properties);
-    if ( $instrument_data ) {
-        $self->error_message('Found existing instrument data for library and source files. Were these previously imported? Exiting instrument data id: '.$instrument_data->id.', source files: '.$properties{original_data_path});
+    my @existing_instrument_data = Genome::InstrumentData::Imported->get(%properties);
+    if ( defined $read_group_ids_from_bam[0] ) {
+        @existing_instrument_data = grep { 
+            my $attr = $_->attributes(attribute_label => 'segment_id', attribute_value => $read_group_ids_from_bam[0]); 
+            $attr ? $_ : undef
+        } @existing_instrument_data;
+    }
+
+    if ( @existing_instrument_data ) {
+        $self->error_message('Found existing instrument data for library and source files. Were these previously imported? Exiting instrument data id: '.join(', ', map { $_->id } @existing_instrument_data).', source files: '.$properties{original_data_path});
         return;
     }
     $self->status_message('Source files were NOT previously imported!');
@@ -145,7 +170,7 @@ sub _create_instrument_data {
     $properties{import_format} = 'bam';
     $properties{sequencing_platform} = 'solexa';
 
-    $instrument_data = Genome::InstrumentData::Imported->create(%properties);
+    my $instrument_data = Genome::InstrumentData::Imported->create(%properties);
     if ( not $instrument_data ) {
         $self->error_message('Failed to create instrument data!');
         return;
@@ -157,7 +182,6 @@ sub _create_instrument_data {
         $instrument_data->add_attribute(attribute_label => $name, attribute_value => $additional_properties{$name});
     }
 
-    my $bam_path = $self->bam_path;
     my $kilobytes_requested = (-s $bam_path) + 1024;
     my $allocation = Genome::Disk::Allocation->create(
         disk_group_name => 'info_alignments',
@@ -172,9 +196,9 @@ sub _create_instrument_data {
     }
     $self->status_message('Allocation id: '.$allocation->id);
     $self->status_message('Allocation path: '.$allocation->absolute_path);
-    
+
     $self->status_message('Create instrument data...done');
-    return $self->instrument_data($instrument_data);
+    return $instrument_data;
 }
 
 1;

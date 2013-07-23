@@ -202,7 +202,7 @@ sub _build_workflow_to_import_fastq {
         left_operation => $fastqs_to_bam_op,
         left_property => 'bam_path',
         right_operation => $sort_bam_op,
-        right_property => 'unsorted_bam_path',
+        right_property => 'unsorted_bam_paths',
     );
 
     my $create_instdata_and_copy_bam = $helper->add_operation_to_workflow($workflow, 'create instrument data and copy bam');
@@ -216,9 +216,9 @@ sub _build_workflow_to_import_fastq {
     }
     $workflow->add_link(
         left_operation => $sort_bam_op,
-        left_property => 'sorted_bam_path',
+        left_property => 'sorted_bam_paths',
         right_operation => $create_instdata_and_copy_bam,
-        right_property => 'bam_path',
+        right_property => 'bam_paths',
     );
 
     $workflow->add_link(
@@ -242,13 +242,22 @@ sub _build_workflow_to_import_bam {
 
     my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
-    my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
+    my $split_bam_op = $helper->add_operation_to_workflow($workflow, 'split bam by read group');
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
         left_property => 'source_bam_path',
-        right_operation => $sort_bam_op,
-        right_property => 'unsorted_bam_path',
+        right_operation => $split_bam_op,
+        right_property => 'bam_path',
     );
+
+    my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
+    $workflow->add_link(
+        left_operation => $split_bam_op,
+        left_property => 'read_group_bam_paths',
+        right_operation => $sort_bam_op,
+        right_property => 'unsorted_bam_paths',
+    );
+    $sort_bam_op->parallel_by('unsorted_bam_path');
 
     my $create_instdata_and_copy_bam = $helper->add_operation_to_workflow($workflow, 'create instrument data and copy bam');
     for my $property (qw/ sample instrument_data_properties /) {
@@ -261,10 +270,11 @@ sub _build_workflow_to_import_bam {
     }
     $workflow->add_link(
         left_operation => $sort_bam_op,
-        left_property => 'sorted_bam_path',
+        left_property => 'sorted_bam_paths',
         right_operation => $create_instdata_and_copy_bam,
-        right_property => 'bam_path',
+        right_property => 'bam_paths',
     );
+    $create_instdata_and_copy_bam->parallel_by('bam_path');
 
     $workflow->add_link(
         left_operation => $create_instdata_and_copy_bam,
