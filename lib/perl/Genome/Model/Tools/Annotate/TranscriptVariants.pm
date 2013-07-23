@@ -420,6 +420,34 @@ sub _create_variant_reader {
     return $variant_svr;
 }
 
+sub _setup_report_fh {
+    my $self = shift;
+
+    # establish the output handle for the transcript variants
+    my $output_fh;
+    my $output_file = $self->output_file;
+    my $temp_output_file;
+    if ($self->output_file =~ /STDOUT/i) {
+        $output_fh = 'STDOUT';
+    }
+    else {
+        my ($output_file_basename) = File::Basename::fileparse($output_file);
+        ($output_fh, $temp_output_file) = File::Temp::tempfile(
+            "$output_file_basename-XXXXXX",
+            DIR => '/tmp/',
+            UNLINK => 1,
+            CLEANUP => 1,
+        );
+        chmod(0664, $temp_output_file);
+    }
+    $self->_transcript_report_fh($output_fh);
+
+    # omit headers as necessary
+    $output_fh->print( join("\t", $self->transcript_report_headers), "\n" ) unless $self->no_headers;
+
+    return ($output_fh, $temp_output_file);
+}
+
 sub execute {
     my $self = shift;
 
@@ -443,24 +471,7 @@ sub execute {
 
     my $variant_svr = $self->_create_variant_reader() || return;
 
-    # establish the output handle for the transcript variants
-    my $output_fh;
-    my $output_file = $self->output_file;
-    my $temp_output_file;
-    if ($self->output_file =~ /STDOUT/i) {
-        $output_fh = 'STDOUT';
-    }
-    else {
-        my ($output_file_basename) = File::Basename::fileparse($output_file);
-        ($output_fh, $temp_output_file) = File::Temp::tempfile(
-            "$output_file_basename-XXXXXX",
-            DIR => '/tmp/',
-            UNLINK => 1,
-            CLEANUP => 1,
-        );
-        chmod(0664, $temp_output_file);
-    }
-    $self->_transcript_report_fh($output_fh);
+    my($output_fh, $temp_output_file) = $self->_setup_report_fh();
 
 
     unless($self->build) {
@@ -501,9 +512,6 @@ sub execute {
     elsif (not $self->cache_annotation_data_directory) {
         $self->status_message("Not caching annotation data directory");
     }
-
-    # omit headers as necessary 
-    $output_fh->print( join("\t", $self->transcript_report_headers), "\n" ) unless $self->no_headers;
 
     # annotate all of the input variants
     $self->status_message("Annotation start") if $self->benchmark;
@@ -661,8 +669,8 @@ sub execute {
 
     $output_fh->close unless $output_fh eq 'STDOUT';
     if ($temp_output_file){
-        unless (move($temp_output_file, $output_file)) {
-            $self->error_message("Failed to mv results at $temp_output_file to final location at $output_file: $!");
+        unless (move($temp_output_file, $self->output_file)) {
+            $self->error_message("Failed to mv results at $temp_output_file to final location at ".$self->output_file.": $!");
             return 0;
         }
         $output_fh->close unless $output_fh eq 'STDOUT';
