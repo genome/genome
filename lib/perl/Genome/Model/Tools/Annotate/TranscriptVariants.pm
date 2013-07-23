@@ -388,6 +388,25 @@ sub _validate_parameters {
         return;
     }
 
+    unless($self->build) {
+        my $ref = $self->reference_transcripts;
+        my ($name, $version) = split(/\//, $ref); # For now, version is ignored since only v2 is usable
+                                        # This will need to be changed when other versions are available
+
+        my $model = Genome::Model->get(name => $name);
+        unless ($model){
+            $self->error_message("couldn't get reference transcripts set for $name");
+            return;
+        }
+
+        my $build = $model->build_by_version($version);
+        unless ($build){
+            $self->error_message("couldn't get build from reference transcripts set $name");
+            return;
+        }
+        $self->build($build);
+    }
+
     return 1;
 }
 
@@ -486,27 +505,6 @@ sub execute {
     my $variant_svr = $self->_create_variant_reader() || return;
 
     $self->_setup_report_fh() || return;
-
-
-    unless($self->build) {
-        my $ref = $self->reference_transcripts;
-        my ($name, $version) = split(/\//, $ref); # For now, version is ignored since only v2 is usable
-                                        # This will need to be changed when other versions are available
-
-        my $model = Genome::Model->get(name => $name);
-        unless ($model){
-            $self->error_message("couldn't get reference transcripts set for $name");
-            return;
-        }
-
-        my $build = $model->build_by_version($version);
-        unless ($build){
-            $self->error_message("couldn't get build from reference transcripts set $name");
-            return;
-        }
-        $self->build($build);
-    }
-
 
     my $pre_annotation_stop = Benchmark->new;
     my $pre_annotation_time = timediff($pre_annotation_stop, $pre_annotation_start);
