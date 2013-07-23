@@ -419,6 +419,10 @@ sub _validate_parameters {
         return;
     }
 
+    if($self->accept_reference_IUB_codes and $self->use_version < 2) {
+        $self->warning_message("accept-reference-IUB-codes is only available in version 2 or better");
+    }
+
     return 1;
 }
 
@@ -546,6 +550,20 @@ sub _annotation_method_for_annotation_filter {
     return $map{ $self->annotation_filter };
 }
 
+sub _make_reference_translator {
+    my $self = shift;
+
+    if($self->accept_reference_IUB_codes and $self->use_version >= 2) {
+        #This will transform any IUB codes into a single base as detailed in the doc for the accept_reference_IUB_codes flag
+        return sub {
+            my $variant = $_[0];
+            $variant->{reference} = Genome::Info::IUB->reference_iub_to_base($variant->{reference});
+        };
+    } else {
+        return sub {};  # noop
+    }
+}
+
 sub _main_annotation_loop {
     my($self, $annotator, $variant_svr) = @_;
 
@@ -554,6 +572,8 @@ sub _main_annotation_loop {
     my ($annotation_start, $annotation_stop);
 
     my $annotation_method = $self->_annotation_method_for_annotation_filter;
+
+    my $reference_translator = $self->_make_reference_translator();
 
     while ( my $variant = $variant_svr->next ) {
 
@@ -582,15 +602,7 @@ sub _main_annotation_loop {
             }
         }
 
-        if($self->accept_reference_IUB_codes){
-            #This will transform any IUB codes into a single base as detailed in the doc for the accept_reference_IUB_codes flag
-            if($self->use_version >= 2){
-                $variant->{reference} = Genome::Info::IUB->reference_iub_to_base($variant->{reference});
-            }
-            else{
-                $self->warning_message("accept-reference-IUB-codes is only available in version 2 or better");
-            }
-        }
+        $reference_translator->($variant);
 
         if ($variant->{type} eq 'SNP') {
             # If we have an IUB code, annotate once per base... doesnt apply to things that arent snps
