@@ -102,6 +102,7 @@ class Genome::Model::Tools::Annotate::TranscriptVariants {
             is => 'String',
             is_optional => 1,
             is_input => 1,
+            is_deprecated => 1,
             doc => 'Alternate method to specify imported annotation data used in annotation.  This option allows a directory w/o supporting model and build, not reccomended except for testing purposes',
         },
         build_id =>{
