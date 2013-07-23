@@ -21,7 +21,7 @@ use Data::Dumper;
 use_ok('Genome::Model::ClinSeq::Command::UpdateAnalysis') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-UpdateAnalysis/2013-07-11-b/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-UpdateAnalysis/2013-07-17/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -57,13 +57,42 @@ my $r1 = $update_analysis_cmd1->execute();
 is($r1, 1, 'Testing for successful execution of step 1.  Expecting 1.  Got: '.$r1);
 
 #Create the update-analysis command for step 2
-my $update_analysis_cmd2 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(individual=>$individual);
+my $ref_align_pp = Genome::ProcessingProfile->get(2635769);
+my $wgs_pp = Genome::ProcessingProfile->get(2762562);
+my $exome_pp = Genome::ProcessingProfile->get(2762563);
+my $rna_seq_pp = Genome::ProcessingProfile->get(2762841);
+my $diff_ex_pp = Genome::ProcessingProfile->get(2760181);
+my $clin_seq_pp = Genome::ProcessingProfile->get(2649924);
+my $dbsnp_build = Genome::Model::Build->get(127786607);
+my $annotation_build = Genome::Model::Build->get(124434505);
+my $update_analysis_cmd2 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(individual=>$individual,
+                                                                ref_align_pp => $ref_align_pp,
+                                                                wgs_somatic_variation_pp => $wgs_pp,
+                                                                exome_somatic_variation_pp => $exome_pp,
+                                                                rnaseq_pp => $rna_seq_pp,
+                                                                differential_expression_pp => $diff_ex_pp,
+                                                                clinseq_pp => $clin_seq_pp,
+                                                                annotation_build => $annotation_build,
+                                                                dbsnp_build => $dbsnp_build,
+                                                                previously_discovered_variations => $dbsnp_build,
+                                                                        );
 $update_analysis_cmd2->queue_status_messages(1);
 my $r2 = $update_analysis_cmd2->execute();
 is($r2, 1, 'Testing for successful execution of step 2.  Expecting 1.  Got: '.$r2);
 
 #Create the update-analysis command for step 3
-my $update_analysis_cmd3 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(individual=>$individual, samples=>[$normal_dna_sample,$tumor_dna_sample,$tumor_rna_sample]);
+my $update_analysis_cmd3 = Genome::Model::ClinSeq::Command::UpdateAnalysis->create(individual=>$individual,
+                                        samples=>[$normal_dna_sample,$tumor_dna_sample,$tumor_rna_sample],
+                                                                ref_align_pp => $ref_align_pp,
+                                                                wgs_somatic_variation_pp => $wgs_pp,
+                                                                exome_somatic_variation_pp => $exome_pp,
+                                                                rnaseq_pp => $rna_seq_pp,
+                                                                differential_expression_pp => $diff_ex_pp,
+                                                                clinseq_pp => $clin_seq_pp,
+                                                                annotation_build => $annotation_build,
+                                                                dbsnp_build => $dbsnp_build,
+                                                                previously_discovered_variations => $dbsnp_build,
+                                                    );
 $update_analysis_cmd3->queue_status_messages(1);
 my $r3 = $update_analysis_cmd3->execute();
 is($r3, 1, 'Testing for successful execution of step 3.  Expecting 1.  Got: '.$r3);
