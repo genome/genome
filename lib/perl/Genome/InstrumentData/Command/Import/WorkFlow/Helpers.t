@@ -83,6 +83,9 @@ ok(!eval{$helpers->headers_to_string;}, 'failed headers to string w/o headers');
 my $headers_string = $helpers->headers_to_string($headers);
 ok($headers_string, 'headers to string');# cannot compare for some reason
 
+ok(!eval{$helpers->load_read_groups_from_bam;}, 'failed to load read groups from bam w/o bam');
+is_deeply([$helpers->load_read_groups_from_bam($input_bam)], [qw/ 2883581797 2883581798 /], 'load read groups from bam');
+
 # verify tmp disk
 ok($helpers->verify_adequate_disk_space_is_available_for_source_files(tmp_dir => '/tmp', source_files => \@source_files), 'verify adequate disk space is available for source files');
 

@@ -297,6 +297,7 @@ sub load_headers_from_bam {
     my ($self, $bam_path) = @_;
     $self->status_message('Load headers...');
 
+    $self->status_message("Bam path: $bam_path");
     Carp::confess('No bam path given to load headers!') if not $bam_path;
     Carp::confess('Bam path given to load headers does not exist!') if not -s $bam_path;
 
@@ -341,6 +342,20 @@ sub read_groups_from_headers {
 
     $self->status_message('Read groups from headers...done');
     return \%read_groups_from_headers;
+}
+
+sub load_read_groups_from_bam {
+    my ($self, $bam_path) = @_;
+    $self->status_message('Load read groups from bam...');
+
+    my $headers = $self->load_headers_from_bam($bam_path);
+    return if not $headers;
+
+    my $read_groups_from_headers = $self->read_groups_from_headers($headers->{'@RG'} || []);
+    return if not $read_groups_from_headers;
+
+    $self->status_message('Load read groups from bam...done');
+    return sort keys %$read_groups_from_headers;
 }
 
 sub headers_to_string {
