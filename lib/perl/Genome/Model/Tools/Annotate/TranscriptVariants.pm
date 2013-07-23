@@ -497,8 +497,6 @@ sub execute {
 
     $self->_print_starting_message();
 
-    my $pre_annotation_start = Benchmark->new;
-
     if ($self->_is_parallel) {
         $self->output_file($self->variant_file . ".out");
     }
@@ -511,10 +509,6 @@ sub execute {
     my $variant_svr = $self->_create_variant_reader() || return;
 
     $self->_setup_report_fh() || return;
-
-    my $pre_annotation_stop = Benchmark->new;
-    my $pre_annotation_time = timediff($pre_annotation_stop, $pre_annotation_start);
-    $self->status_message('Pre-annotation: ' . timestr($pre_annotation_time, 'noc')) if $self->benchmark;
 
     # annotate all of the input variants
     $self->status_message("Annotation start") if $self->benchmark;
