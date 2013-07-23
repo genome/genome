@@ -62,8 +62,8 @@ subtest 'parents' => sub {
         9 => [$results[7]],
     );
     for my $n (sort keys %cases) {
-        my $exp = $cases{$n};
-        my $got = [$results[$n]->parents];
+        my $exp = [sort { $a->id cmp $b->id } @{$cases{$n}}];
+        my $got = [sort { $a->id cmp $b->id } $results[$n]->parents];
         is_deeply($got, $exp, "got expected parents for \$results[$n]");
     }
 };
@@ -83,8 +83,8 @@ subtest 'children' => sub {
         9 => [],
     );
     for my $n (sort keys %cases) {
-        my $exp = $cases{$n};
-        my $got = [$results[$n]->children];
+        my $exp = [sort { $a->id cmp $b->id } @{$cases{$n}}];
+        my $got = [sort { $a->id cmp $b->id } $results[$n]->children];
         is_deeply($got, $exp, "got expected children for \$results[$n]");
     }
 };
@@ -107,9 +107,6 @@ subtest 'ancestors' => sub {
         # can't guarantee sort order due to loss of dimension (tree => list)
         my $exp = [sort { $a->id cmp $b->id } @{$cases{$n}}];
         my $got = [sort { $a->id cmp $b->id } $results[$n]->ancestors];
-        if (grep { $_ == $n } (7..9)) {
-            $DB::single = 1;
-        }
         is_deeply($got, $exp, "got expected ancestors for \$results[$n]");
     }
 };
