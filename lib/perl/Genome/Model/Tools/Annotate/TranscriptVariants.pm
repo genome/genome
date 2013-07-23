@@ -413,6 +413,12 @@ sub _validate_parameters {
         $self->_notify_cache_attempt;
     }
 
+    my $annotation_filter = $self->annotation_filter( lc $self->annotation_filter );
+    unless ($self->_annotation_method_for_annotation_filter) {
+       $self->error_message("Unknown annotation_filter value: " . $annotation_filter);
+        return;
+    }
+
     return 1;
 }
 
@@ -527,6 +533,17 @@ sub _create_annotator {
     }
 
     return $annotator;
+}
+
+sub _annotation_method_for_annotation_filter {
+    my $self = shift;
+
+    my %map = (
+            gene => 'prioritized_transcripts',  # Top annotation per gene
+            top  => 'prioritized_transcript',   # Top annotation between all genes
+            none => 'transcripts',              # All transcripts, no filter
+        );
+    return $map{ $self->annotation_filter };
 }
 
 sub _main_annotation_loop {
