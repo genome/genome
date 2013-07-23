@@ -407,6 +407,12 @@ sub _validate_parameters {
         $self->build($build);
     }
 
+    if ($self->build and $self->cache_annotation_data_directory) {
+        $self->cache_annotation_data_directory(0);
+        $self->status_message("--cache-annotation-data-directory is currently disabled.  Operating from the annotation data directory instead.");
+        $self->_notify_cache_attempt;
+    }
+
     return 1;
 }
 
@@ -509,21 +515,6 @@ sub execute {
     my $pre_annotation_stop = Benchmark->new;
     my $pre_annotation_time = timediff($pre_annotation_stop, $pre_annotation_start);
     $self->status_message('Pre-annotation: ' . timestr($pre_annotation_time, 'noc')) if $self->benchmark;
-
-    if ($self->build and $self->cache_annotation_data_directory) {
-        my $cache_start = Benchmark->new;
-        $self->status_message('Caching annotation data directory');
-        #Caching is a quagmire.  Politely inform the user we aren't doing it.
-        $self->cache_annotation_data_directory(0);
-        $self->status_message("--cache-annotation-data-directory is currently disabled.  Operating from the annotation data directory instead.");
-        $self->_notify_cache_attempt;
-        my $cache_stop = Benchmark->new;
-        my $cache_time = timediff($cache_stop, $cache_start);
-        $self->status_message('Annotation data caching: ' . timestr($cache_time, 'noc')) if $self->benchmark;
-    }
-    elsif (not $self->cache_annotation_data_directory) {
-        $self->status_message("Not caching annotation data directory");
-    }
 
     # annotate all of the input variants
     $self->status_message("Annotation start") if $self->benchmark;
