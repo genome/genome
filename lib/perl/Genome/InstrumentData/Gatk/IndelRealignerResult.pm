@@ -39,7 +39,9 @@ sub create {
 
     $self->status_message('Bam source: '.$self->bam_source->id);
     $self->status_message('Reference: '.$self->reference_build->id);
-    $self->status_message('Knowns sites: '.$self->known_sites->id);
+    for my $known_sites ( $self->known_sites ) {
+        $self->status_message('Known sites: '.$known_sites->id);
+    }
 
     my $create_targets = $self->_create_targets;
     return if not $create_targets;
