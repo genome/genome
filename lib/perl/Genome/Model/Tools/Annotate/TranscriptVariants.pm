@@ -391,6 +391,15 @@ sub _validate_parameters {
     return 1;
 }
 
+sub _print_starting_message {
+    my $self = shift;
+
+    # Useful information for debugging...
+    my ($date, $time) = split(' ',$self->__context__->now());
+    my $host = hostname;
+    $self->status_message("Executing on host $host on $date at $time");
+}
+
 sub execute {
     my $self = shift;
 
@@ -398,10 +407,7 @@ sub execute {
 
     my $variant_file = $self->variant_file;
 
-    # Useful information for debugging...
-    my ($date, $time) = split(' ',$self->__context__->now());
-    my $host = hostname;
-    $self->status_message("Executing on host $host on $date at $time");
+    $self->_print_starting_message();
 
     my $total_start = Benchmark->new;
     my $pre_annotation_start = Benchmark->new;
