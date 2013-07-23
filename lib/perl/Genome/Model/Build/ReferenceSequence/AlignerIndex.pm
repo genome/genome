@@ -292,7 +292,11 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    "info_apipe_ref";
+    if ($_[0]->reference_build->model->is_rederivable) {
+        return 'info_genome_models';
+    } else {
+        return "info_apipe_ref";
+    }
 }
 
 sub full_consensus_path {
