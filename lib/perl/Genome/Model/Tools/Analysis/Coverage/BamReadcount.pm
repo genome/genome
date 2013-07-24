@@ -682,6 +682,11 @@ sub execute {
             } elsif ($varbase =~ /0|\-|\*/){ #DEL
                 #deletions are tricky. The deletion gets placed on the previous base, but the ref counts 
                 #and depth are on the correct base.
+                my $testrefbase = $refbase;
+                if (length($refbase) > 1){
+                    $testrefbase = substr($refbase,0,1);
+                }
+
                 my $depth = 0;
                 my $refcount = 0;
                 my $varcount = 0;
@@ -690,14 +695,14 @@ sub execute {
                     
                     #first check the correct base
                     foreach my $base (keys(%{$reads{$key}})){
-                        if($base eq $refbase){
+                        if($base eq $testrefbase){
                             $refcount = $reads{$key}{$base};
                         }
                     }
                     #now check the preceding base
                     my $pkey = join("\t",($chr,$pos-1));
                     foreach my $base (keys(%{$reads{$pkey}})){
-                        if($base =~ /DEL-\d+-$refbase/){
+                        if($base =~ /DEL-\d+-$testrefbase/){
                             $varcount = $reads{$pkey}{$base};
                         }
                     }
@@ -705,7 +710,8 @@ sub execute {
                     filterAndPrint($chr, $pos, $refbase, $varbase, $refcount, $varcount, ($varcount/$depth)*100,
                                    $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);            
                 } else {
-                    #if it wasn't in the pileup, it wasn't covered, so vals will remain zero.
+                    #if it wasn't in the pileup, it wasn't covered, or didn't exist, 
+                    #so ref base goes to depth
                     filterAndPrint($chr, $pos, $refbase, $varbase, $refcount, $varcount, 0,
                                    $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
                 }                
@@ -735,5 +741,7 @@ sub execute {
                        $min_depth, $max_depth, $min_vaf, $max_vaf, $OUTFILE);
     }
     close($OUTFILE);
+    
+    return(1);
 }
 

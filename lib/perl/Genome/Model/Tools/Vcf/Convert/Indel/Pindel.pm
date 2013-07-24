@@ -10,7 +10,7 @@ use File::Basename;
 
 class Genome::Model::Tools::Vcf::Convert::Indel::Pindel {
     is =>  'Genome::Model::Tools::Vcf::Convert::Base' ,
-    doc => 'Generate a VCF file from varscan output',
+    doc => 'Generate a VCF file from pindel output',
     has => [
         _refseq => {
             is => 'Text',

@@ -3,6 +3,14 @@ use strict;
 use warnings;
 
 BEGIN {
+    if ($ENV{GENOME_SYS_ID} and $ENV{GENOME_SYS_ID} ne 'GMS1') {
+        die "At TGI we expect the GENOME_SYS_ID to be 'GMS1'.  Other sites should not use the Genome::Site::TGI module."
+    }
+    else {
+        $ENV{GENOME_SYS_ID} = 'GMS1';
+    }
+    $ENV{GENOME_HOME} = "/gsc/scripts/opt/genome/home/";
+
     if ($ENV{GENOME_DEV_MODE}) {
         $ENV{GENOME_SYS_SERVICES_MEMCACHE} ||= 'apipe-dev.gsc.wustl.edu:11211';
         $ENV{GENOME_SYS_SERVICES_SOLR} ||= 'http://solr-dev:8080/solr';

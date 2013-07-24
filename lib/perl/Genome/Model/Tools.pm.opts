@@ -4262,13 +4262,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>genomic-regions',
-    [
-      'debug!',
-      undef,
-      'help!',
-      undef
-    ],
     '>import-interpro',
     [
       '>execute-iprscan',
@@ -4927,6 +4920,21 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef
     ],
     '>variant-protein-cds',
+    [
+      'input-tsv-file=s',
+      'files',
+      'output-tsv-file=s',
+      'files',
+      'anno-db=s',
+      'files',
+      'debug!',
+      undef,
+      'version=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>variant-transcript-cds',
     [
       'input-tsv-file=s',
       'files',
@@ -17068,6 +17076,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'lsf-queue=s',
       'files',
+      'lsf-resource=s',
+      'files',
       'output-directory=s',
       'files',
       'reference-build=s',
@@ -21674,21 +21684,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>manual-review',
   [
-    '>add-variants-to-list',
-    [
-      'list=s',
-      'files',
-      'db-list-id=s',
-      'files',
-      'db-list-name=s',
-      'files',
-      'debug!',
-      undef,
-      'separation-character=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>assign-variant-reviewers',
     [
       'finishers=s',
@@ -21752,21 +21747,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'debug!',
       undef,
       'project-file=s',
-      'files',
-      'help!',
-      undef
-    ],
-    '>upload-variant-review-list',
-    [
-      'list=s',
-      'files',
-      'db-list-id=s',
-      'files',
-      'db-list-name=s',
-      'files',
-      'debug!',
-      undef,
-      'separation-character=s',
       'files',
       'help!',
       undef
@@ -22563,15 +22543,12 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>lift-over',
   [
-    'destination-file=s',
-    'files',
-    'source-file=s',
-    'files',
+    'lift-direction=s',
+    [
+      'hg18ToHg19',
+      'hg19ToHg18'
+    ],
     'allow-multiple-output-regions!',
-    undef,
-    'chain-file=s',
-    'files',
-    'debug!',
     undef,
     'file-format=s',
     [
@@ -22579,7 +22556,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'gff',
       'genePred',
       'sample',
-      'pslT'
+      'pslT',
+      'svold'
     ],
     'input-is-annoformat!',
     undef,
@@ -22587,12 +22565,13 @@ $Genome::Model::Tools::OPTS_SPEC = [
     undef,
     'input-is-vcf-format!',
     undef,
-    'lift-direction=s',
-    [
-      'hg18ToHg19',
-      'hg19ToHg18'
-    ],
+    'source-file=s',
+    'files',
+    'destination-file=s',
+    'files',
     'unmapped-file=s',
+    'files',
+    'chain-file=s',
     'files',
     'help!',
     undef

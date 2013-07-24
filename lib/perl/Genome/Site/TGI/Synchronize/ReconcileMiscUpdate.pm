@@ -51,6 +51,8 @@ sub __errors__ {
 
 sub execute {
     my $self = shift;
+    $self->status_message('Reconcile Misc Updates...');
+    $self->status_message('Date: '.$self->date);
 
     my $execute_updates = $self->_execute_updates;
     return if not $execute_updates;
@@ -58,11 +60,15 @@ sub execute {
     my $execute_indels = $self->_execute_indels;
     return if not $execute_indels;
 
-    return $self->_execute_report;
+    $self->_execute_report;
+
+    $self->status_message('Reconcile Misc Updates...done');
+    return 1;
 }
 
 sub _execute_updates {
     my $self = shift;
+    $self->status_message('Execute UPDATES...');
 
     my @misc_updates = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->get(
         'edit_date like' => $self->date.' %',
@@ -70,17 +76,20 @@ sub _execute_updates {
         description => 'UPDATE',
         '-order_by' => 'edit_date',
     );
+    $self->status_message('UPDATES found: '.@misc_updates);
     push @{$self->_misc_updates}, @misc_updates;
 
     for my $misc_update ( @misc_updates ) {
         $misc_update->perform_update;
     }
 
+    $self->status_message('Execute UPDATES...done');
     return 1;
 }
 
 sub _execute_indels {
     my $self = shift;
+    $self->status_message('Execute INDELS...');
 
     my @misc_updates = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->get(
         'edit_date like' => $self->date.' %',
@@ -98,11 +107,13 @@ sub _execute_indels {
             push @order, $subject_attr_misc_update->id;
         }
     }
+    $self->status_message('INDELS found: '.@order);
 
     for my $id ( @order ) {
         $subject_attr_misc_updates{$id}->perform_update;
     }
 
+    $self->status_message('Execute INDELS...done');
     return 1;
 }
 

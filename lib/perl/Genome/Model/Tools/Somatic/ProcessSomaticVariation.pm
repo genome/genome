@@ -623,8 +623,8 @@ sub execute {
       $sample_name = $self->sample_name;
   }
   print STDERR "processing model with sample_name: " . $sample_name . "\n";
-  my $tumor_bam = $tumor_model->last_succeeded_build->whole_rmdup_bam_file;
-  my $normal_bam = $normal_model->last_succeeded_build->whole_rmdup_bam_file;
+  my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
+  my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
   my $build_dir = $build->data_directory;
 
   my $igv_reference_name;
@@ -734,42 +734,41 @@ sub execute {
   #filter out the off-target regions, if target regions are available
   if($self->restrict_to_target_regions){
       print STDERR "Filtering out off-target regions...\n";
-      my %targetRegions;
 
-      my $featurelist_name;
-      if(defined($model->tumor_model->target_region_set_name)){
-          $featurelist_name = $model->tumor_model->target_region_set_name;
-          my $featurelist = Genome::FeatureList->get(name=>$featurelist_name)->file_path;
-          if ( -s $featurelist ){
-              #clean up feature list
-              open(FEATFILE,">$output_dir/$sample_name/featurelist.tmp");
-              my $inFh = IO::File->new( $featurelist ) || die "can't open file feature file\n";
-              while( my $line = $inFh->getline )
-              {
-                  chomp($line);
-                  next if $line =~ /^track/;
-                  my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
-                  #remove chr if present
-                  $chr =~ s/^chr//g;
-                  print FEATFILE join("\t",( $chr, $start, $stop, @rest)) . "\n";
-              }
-              close($inFh);
-              close(FEATFILE);
-              my $new_snv_file = addName($snv_file,"ontarget");
-              my $new_indel_file = addName($indel_file,"ontarget");
-              
-              `joinx sort $output_dir/$sample_name/featurelist.tmp >$output_dir/$sample_name/featurelist`;
-              `rm -f $output_dir/$sample_name/featurelist.tmp`;
-              `joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$new_snv_file`;
-              $snv_file = "$new_snv_file";
-              `joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$new_indel_file`;
-              $indel_file = "$new_indel_file";
-
-          } else {
-              print STDERR "WARNING: feature list not found, No target region filtering being done\n";
+      my $featurelist;
+      if($self->target_regions) {
+         $featurelist = $self->target_regions;
+      } elsif ($model->tumor_model->can('target_region_set_name') and defined($model->tumor_model->target_region_set_name)){
+          my $featurelist_name = $model->tumor_model->target_region_set_name;
+          $featurelist = Genome::FeatureList->get(name=>$featurelist_name)->file_path;
+      }
+      if ( -s $featurelist ){
+          #clean up feature list
+          open(FEATFILE,">$output_dir/$sample_name/featurelist.tmp");
+          my $inFh = IO::File->new( $featurelist ) || die "can't open file feature file\n";
+          while( my $line = $inFh->getline )
+          {
+              chomp($line);
+              next if $line =~ /^track/;
+              my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
+              #remove chr if present
+              $chr =~ s/^chr//g;
+              print FEATFILE join("\t",( $chr, $start, $stop, @rest)) . "\n";
           }
+          close($inFh);
+          close(FEATFILE);
+          my $new_snv_file = addName($snv_file,"ontarget");
+          my $new_indel_file = addName($indel_file,"ontarget");
+
+          `joinx sort $output_dir/$sample_name/featurelist.tmp >$output_dir/$sample_name/featurelist`;
+          `rm -f $output_dir/$sample_name/featurelist.tmp`;
+          `joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$new_snv_file`;
+          $snv_file = "$new_snv_file";
+          `joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$new_indel_file`;
+          $indel_file = "$new_indel_file";
+
       } else {
-          print STDERR "No target region filtering being done (expected if this is WGS)\n";
+          $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
       }
   }
 

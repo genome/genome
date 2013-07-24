@@ -163,6 +163,10 @@ sub execute {
     }
 
     my $grapher = which($self->pairoscope_program);
+    unless(defined $grapher) {
+        #perhaps the user gave us an absolute path
+        $grapher = $self->pairoscope_program;
+    }
     unless(-e $grapher && -x $grapher) {
         $self->error_message("$grapher does not exists or is not an executable");
         return;

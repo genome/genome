@@ -40,7 +40,7 @@ my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
 
 #hack to shorten results
 my $tx_sub = $annotation_build->can('transcript_iterator');
-no warnings qw(redefine);
+no warnings qw(redefine once);
 *Genome::Model::Build::ImportedAnnotation::transcript_iterator = sub {
     my $self = shift;
     my %p = @_;

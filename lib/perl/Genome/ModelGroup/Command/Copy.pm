@@ -145,7 +145,15 @@ sub execute {
             next;
         }
 
-        my $pmeta = $meta->property($name);
+        my $pmeta;
+        if ($name =~ /^(.*?)\.(.*)$/) {
+            my $first = $1;
+            my $rest = $2;
+            $pmeta = $meta->property($first);
+        }
+        else {
+            $pmeta = $meta->property($name);
+        }
         die "no property $name found on model " . $from_models[0]->__display_name__ unless $pmeta;
 
         if ( ($pmeta->can('is_param') and $pmeta->is_param) or ($pmeta->via and $pmeta->via eq 'processing_profile') ) {
