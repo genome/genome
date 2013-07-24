@@ -7,7 +7,7 @@ use warnings;
 use Genome;
 use Genome::TestObjGenerator::ProcessingProfile::ReferenceAlignment;
 
-my @required_params = ("reference_sequence_build");
+my @required_params = ("reference_sequence_build", "subject_name", "subject_type");
 
 sub generate_obj {
     my $self = shift;
@@ -34,5 +34,12 @@ sub get_required_params {
     return \@all;
 }
 
+sub create_subject_name {
+    return Genome::TestObjGenerator::Util::generate_name("test_subject");
+}
+
+sub create_subject_type {
+    return "sample_name";
+}
 1;
 

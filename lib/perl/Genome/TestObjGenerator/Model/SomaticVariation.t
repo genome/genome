@@ -17,7 +17,7 @@ use_ok("Genome::TestObjGenerator::Model::SomaticVariation");
 my $n = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object(subject_name => "test_subject");
 my $t = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object(subject_name => $n->subject_name, processing_profile_id => $n->processing_profile->id);
 
-my $m = Genome::TestObjGenerator::Model::SomaticVariation->setup_object(normal_model => $n, tumor_model => $t, subject_name => $n->subject_name);
+my $m = Genome::TestObjGenerator::Model::SomaticVariation->setup_object(normal_model => $n, tumor_model => $t, );
 ok($m->isa("Genome::Model::SomaticVariation"), "Generated a somatic variation model");
 
 done_testing;
