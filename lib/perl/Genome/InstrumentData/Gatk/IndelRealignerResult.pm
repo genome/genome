@@ -107,7 +107,7 @@ sub _realign_indels {
         index_bam => 1,
         target_intervals_are_sorted => 1,
     );
-    $realigner_params{known} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
+    $realigner_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
     $self->status_message('Params: '.Data::Dumper::Dumper(\%realigner_params));
 
     my $realigner = Genome::Model::Tools::Gatk::IndelRealigner->create(%realigner_params);
