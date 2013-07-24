@@ -267,4 +267,4 @@
 	url = https://github.com/genome-vendor/libset-intervaltree-perl.git
 [submodule "vendor/r-cran-normt3"]
 	path = vendor/r-cran-normt3
-	url = https://github.com/genome-vendor/r-cran-normt3.git
+	url = https://github.com/sakoht/r-cran-normt3.git
