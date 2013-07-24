@@ -35,7 +35,7 @@ class Genome::File::Fasta {
 sub faidx_index {
     my $self = shift;
     my $expected_index_path =  $self->path . ".fai";
-    if(-e $expected_index_path && -z $expected_index_path) {
+    if(-e $expected_index_path && -s $expected_index_path) {
         return $expected_index_path;
     }
     else {
@@ -102,7 +102,7 @@ sub _regions_for_chunk {
 sub divide_into_chunks {
     my ($self, $total_chunks) = @_;
 
-    my $chunk_size = ceil($self->total_genome_length / $total_chunks);
+    my $chunk_size = ceil($self->_genome_length / $total_chunks);
     
     my @chunks;
     for my $chunk_num (1..$total_chunks) {
