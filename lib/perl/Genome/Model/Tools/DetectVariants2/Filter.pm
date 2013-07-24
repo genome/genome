@@ -547,6 +547,33 @@ sub _check_native_file_counts {
     return 1;
 }
 
+# This version of check native file counts is made for vcf files which must not consider header lines when doing line counts
+# Filters may override the above method and inside call this method.
+sub _check_native_file_counts_vcf {
+    my $self = shift;
+
+    my $hq_output_file = $self->output_directory."/".$self->_variant_type.".hq.bed";
+    my $lq_output_file = $self->output_directory."/".$self->_variant_type.".lq.bed";
+    my $hq_detector_style_file = $self->output_directory."/".$self->_variant_type.".hq";
+    my $lq_detector_style_file = $self->output_directory."/".$self->_variant_type.".lq";
+
+    my $total_hq_ct = $self->line_count($hq_output_file);
+    my $total_lq_ct = $self->line_count($lq_output_file);
+
+    #line count does not include header.
+    chomp(my $total_hq_detector_ct = qx(grep -vP '^#' $hq_detector_style_file | wc -l));
+    chomp(my $total_lq_detector_ct = qx(grep -vP '^#' $lq_detector_style_file | wc -l));
+
+    unless ($total_hq_ct == $total_hq_detector_ct) {
+        die $self->error_message("HQ snv line counts do not match. Bed output: $total_hq_ct \t Detector-style output: $total_hq_detector_ct");
+    }
+    unless ($total_lq_ct == $total_lq_detector_ct) {
+        die $self->error_message("LQ snv line counts do not match. Bed output: $total_lq_ct \t Detector-style output: $total_lq_detector_ct");    
+    }
+
+    return 1;
+}
+
 
 sub _check_file_counts {
     my $self = shift;
