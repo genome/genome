@@ -18,6 +18,11 @@ my $m = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object();
 ok($m->isa("Genome::Model"), "Generated a model");
 my $b = Genome::TestObjGenerator::Build->setup_object(model_id => $m->id);
 ok($b->isa("Genome::Model::Build"), "Generated a build");
+my $b2 = Genome::TestObjGenerator::Build->setup_object(model_id => $m->id);
+ok($b2->isa("Genome::Model::Build"), "Generated a second build");
+my $b3 = Genome::TestObjGenerator::Build->setup_object(model_id => $m->id, status => "Succeeded");
+ok($b3->isa("Genome::Model::Build"), "Generated a third build");
+is($b3->status, "Succeeded", "Third build is succeeded");
 
 done_testing;
 
