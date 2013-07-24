@@ -924,7 +924,8 @@ sub archivable {
     my $self = shift;
     my $allocation = $self->disk_allocation;
     unless ($allocation) {
-        confess "Could not get allocation for build " . $self->__display_name__;
+        $self->warning_message("Could not get allocation for build " . $self->__display_name__);
+        return 0;
     }
     return $allocation->archivable();
 }
