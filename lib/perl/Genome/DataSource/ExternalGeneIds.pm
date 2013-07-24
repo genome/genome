@@ -3,7 +3,7 @@ package Genome::DataSource::ExternalGeneIds;
 use Genome;
 
 class Genome::DataSource::ExternalGeneIds {
-    is => [ 'UR::DataSource::FileMux', 'UR::Singleton'],
+    is => [ 'UR::DataSource::FileMux', 'Genome::DataSource::FileMuxDirMustExist', 'UR::Singleton'],
 };
 
 sub delimiter {
@@ -38,7 +38,7 @@ sub required_for_get { ['data_directory', 'reference_build_id'] }
 sub file_resolver {        
     my ($data_directory) = @_;
     my $path =  "$data_directory/external_gene_ids.csv";
-    return $path;
+    return __PACKAGE__->directory_must_exist($path);
 }
 
 1;
