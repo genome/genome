@@ -97,7 +97,7 @@ ok(!$filt_header_diff, 'parsed header with filter embedded matches expected resu
     or diag("diff:\n" . $filt_header_diff);
 
 my @expected_samples = qw(H_ME-DS10239_2-DS10239_2 H_ME-DS10239_3-DS10239_3 H_ME-DS10239_1-DS10239_1);
-my @samples = $filter_command->get_samples_from_header($header);
+my @samples = Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcf::get_samples_from_header($header);
 is_deeply(\@samples, \@expected_samples, "Got the expected samples from get_samples_from_header");
 
 my $return = $filter_command->print_region_list($input_vcf, $output_regions);
