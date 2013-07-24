@@ -114,7 +114,7 @@ See help for more information.',
         },
         
         gain_threshold => {
-        	is => 'Int',
+        	is => 'Float',
         	is_optional => 1,
         	is_input => 1,
         	default => 2.5,
@@ -122,7 +122,7 @@ See help for more information.',
         },
         
         loss_threshold => {
-        	is => 'Int',
+        	is => 'Float',
         	is_optional => 1,
         	is_input => 1,
         	default => -1.5,
@@ -444,6 +444,9 @@ sub execute {
 		$scores{"loss_$chrmlenKey"} = \@loss_array;
 	}
 
+	# Print hint
+	print "[Hint] Increase window size to reduce computing time.\n";
+	
 	# Compare and score
 	foreach my $chrmlenKey (keys %chrmlen){ # Iterate through 23 pairs of chromosomes
 		print "Working on chromosome: $chrmlenKey\n";
