@@ -63,13 +63,7 @@ sub _get_or_create_base_recalibrator_result {
     my $self = shift;
     $self->status_message('Get or create base recalibrator result...');
 
-    my %base_recalibrator_params = (
-        version => $self->version,
-        bam_source => $self->bam_source,
-        reference_build => $self->reference_build,
-    );
-    $base_recalibrator_params{known_sites} = [ $self->known_sites ] if $self->known_sites;
-
+    my %base_recalibrator_params = $self->base_recalibrator_params;
     my $base_recalibrator_result = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_or_create(%base_recalibrator_params);
     if ( not $base_recalibrator_result ) {
         $self->error_message('Failed to get or create base recalibrator result!');
@@ -88,10 +82,36 @@ sub _get_or_create_base_recalibrator_result {
     return $base_recalibrator_result;
 }
 
+sub base_recalibrator_params {
+    my $self = shift;
+
+    my %base_recalibrator_params = (
+        version => $self->version,
+        bam_source => $self->bam_source,
+        reference_build => $self->reference_build,
+    );
+    my @known_sites = $self->known_sites;
+    $base_recalibrator_params{known_sites} = \@known_sites if @known_sites;
+
+    return %base_recalibrator_params;
+}
+
+sub get_base_recalibrator_result {
+    my $self = shift;
+
+    return $self->base_recalibrator_result if $self->base_recalibrator_result;
+
+    my %base_recalibrator_params = $self->base_recalibrator_params;
+    my $base_recalibrator_result = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_with_lock(%base_recalibrator_params);
+    return if not $base_recalibrator_result;
+
+    return $self->base_recalibrator_result($base_recalibrator_result);
+}
+
 sub _print_reads {
     my $self = shift;
     $self->status_message('Print reads...');
-    
+
     my $tmp_dir = $self->output_dir.'/tmp';
     my $mkdir = eval{ Genome::Sys->create_directory($tmp_dir); };
     if ( not $mkdir ) {
