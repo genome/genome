@@ -9,7 +9,7 @@ use Genome::TestObjGenerator::ProcessingProfile::SomaticVariation;
 use Genome::TestObjGenerator::Model::ImportedAnnotation;
 use Genome::TestObjGenerator::Build;
 
-my @required_params = ("normal_model", "tumor_model", "annotation_build", "subject_name");
+my @required_params = ("normal_model", "tumor_model", "annotation_build");
 
 sub generate_obj {
     my $self = shift;
