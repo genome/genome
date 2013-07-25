@@ -38,7 +38,7 @@ class Genome::Model::Tools::CompleteGenomics::MapToSam {
     ],
     has_param => [
         lsf_resource => {
-            default_value => "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>20000 && mem>4000] span[hosts=1] rusage[tmp=20000,mem=4000]'",
+            default_value => "-R 'select[model!=Opteron250 && type==LINUX64 && gtmp>20 && mem>4000] span[hosts=1] rusage[gtmp=20,mem=4000]'",
         },
     ],
 };

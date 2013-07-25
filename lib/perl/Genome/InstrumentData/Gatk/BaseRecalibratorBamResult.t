@@ -23,8 +23,9 @@ use_ok('Genome::InstrumentData::Gatk::Test') or die;
 my $gatk_test = Genome::InstrumentData::Gatk::Test->get;
 my $bam_source = $gatk_test->bam_source;
 my $reference_build = $gatk_test->reference_build;
+my $version = '2.4';
 my %params = (
-    version => 2.4,
+    version => $version,
     bam_source => $bam_source,
     reference_build => $reference_build,
     known_sites => [ $gatk_test->known_site ],
@@ -45,6 +46,25 @@ ok(-s $base_recalibrator->bam_path, 'bam file exists');#bam produced is the same
 ok(-s $base_recalibrator->bam_path.'.bai', 'bam index exists');
 ok(-s $base_recalibrator->bam_flagstat_file, 'bam flagstat file exists');
 Genome::Utility::Test::compare_ok($base_recalibrator->bam_flagstat_file, $result_data_dir.'/expected.bam.flagstat', 'flagstat matches');
+
+# Base recalibrator params
+my %base_recalibrator_params = $base_recalibrator->base_recalibrator_params;
+is_deeply(
+    \%base_recalibrator_params,
+    {
+        version => $version,
+        bam_source => $bam_source,
+        reference_build => $reference_build,
+        known_sites => [ $gatk_test->known_site ],
+    },
+    'base recalibrator params',
+);
+
+# Get base recalibrator result
+ok(!$base_recalibrator->base_recalibrator_result(undef), 'base recalibrator result unset');
+ok($base_recalibrator->get_base_recalibrator_result, 'get base recalibrator result');
+ok($base_recalibrator->base_recalibrator_result, 'base recalibrator result set');
+ok(-s $base_recalibrator->base_recalibrator_result->recalibration_table_file, 'base recalibrator result recalibration table file');
 
 # Allocation params
 is(

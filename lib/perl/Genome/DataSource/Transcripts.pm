@@ -3,7 +3,7 @@ package Genome::DataSource::Transcripts;
 use Genome;
 
 class Genome::DataSource::Transcripts {
-    is => [ 'UR::DataSource::FileMux', 'UR::Singleton'],
+    is => [ 'UR::DataSource::FileMux', 'Genome::DataSource::FileMuxDirMustExist', 'UR::Singleton'],
 };
 
 sub delimiter {
@@ -48,7 +48,7 @@ sub file_resolver {
 
     my $path = "$data_directory/transcripts.csv";
 
-    return $path;
+    return __PACKAGE__->directory_must_exist($path);
 }
 
 1;

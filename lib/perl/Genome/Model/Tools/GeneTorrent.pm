@@ -47,6 +47,7 @@ sub execute {
         . ' --verbose 2'
         . ' --max-children 2'
         . ' --rate-limit 10'    # megabytes per second (see internet_download_mbps above)
+        . ' --inactivity-timeout ' . 3 * 60 * 24   # in minutes - instead of bsub -W
     ;
 
     $self->status_message('Cmd: ' . $cmd);

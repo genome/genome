@@ -4,7 +4,7 @@ use Genome;
 
 UR::Object::Type->define(
     class_name => __PACKAGE__,
-    is => ['UR::DataSource::FileMux', 'UR::Singleton'],
+    is => ['UR::DataSource::FileMux', 'Genome::DataSource::FileMuxDirMustExist', 'UR::Singleton'],
     has_constant => [
         quick_disconnect => { is => 'Boolean', default_value => 0 },
     ],
@@ -55,7 +55,8 @@ sub sort_order {[qw( structure_start transcript_transcript_start transcript_tran
 sub file_resolver {
     my( $chrom_name, $data_directory) = @_;
 
-    return '/' . $data_directory . '/substructures/' . $chrom_name . '.csv';
+    return  __PACKAGE__->directory_must_exist(
+                '/' . $data_directory . '/substructures/' . $chrom_name . '.csv');
 }
 
 sub create_iterator_closure_for_rule {

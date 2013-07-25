@@ -54,20 +54,21 @@ sub link_known_sites_vcfs {
     for my $known_site ( $self->known_sites ) { # all have indels for now...
         # indel
         my $indel_result = $known_site->indel_result;
-        if ( not $indel_result ) {
-            $self->error_message('No indel result for known site! '.$known_site->__display_name__);
-            return;
+        if ( $indel_result ) {
+            #$self->error_message('No indel result for known site! '.$known_site->__display_name__);
+            #return;
+            my $link_name = $self->_get_and_link_vcf_from_known_site_result($indel_result, 'indel');
+            return if not $link_name;
+            push @{$known_sites_vcfs{indel}}, $link_name;
         }
-        my $link_name = $self->_get_and_link_vcf_from_known_site_result($indel_result, 'indel');
-        return if not $link_name;
-        push @{$known_sites_vcfs{indel}}, $link_name;
 
         # snv
         my $snv_result = $known_site->snv_result;
-        next if not $snv_result;
-        $link_name = $self->_get_and_link_vcf_from_known_site_result($snv_result, 'snv');
-        return if not $link_name;
-        push @{$known_sites_vcfs{snv}}, $link_name;
+        if ( $snv_result ) {
+            my $link_name = $self->_get_and_link_vcf_from_known_site_result($snv_result, 'snv');
+            return if not $link_name;
+            push @{$known_sites_vcfs{snv}}, $link_name;
+        }
     }
 
     return %known_sites_vcfs;
@@ -75,19 +76,27 @@ sub link_known_sites_vcfs {
 
 sub _get_and_link_vcf_from_known_site_result {
     my ($self, $result, $type) = @_;
+    $self->status_message("Link VCF from known site result...");
 
     Carp::confess('No result given to get and link vcf from known site result!') if not $result;
     Carp::confess('No type given to get and link vcf from known site result!') if not $type;
 
-    next if not $result;
+    $self->status_message('Known site result: '.$result->__display_name__);
+    $self->status_message("Type: $type");
+
     my $source_known_sites_vcf = $result->path.'/'.$type.'s.hq.vcf';
     if ( not -s $source_known_sites_vcf ) {
         $self->error_message("No $type vcf (${type}s.hq.vcf) in indel result output directory! ".$result->output_dir);
         return;
     }
+    $self->status_message("Target: $source_known_sites_vcf");
+
     my $link_name = $self->_tmpdir.'/'.$result->id.'.vcf';
+    $self->status_message("Link: $link_name");
+
     symlink($source_known_sites_vcf, $link_name) if not -l $link_name;
 
+    $self->status_message("Link VCF from known site result...done");
     return $link_name;
 }
 
