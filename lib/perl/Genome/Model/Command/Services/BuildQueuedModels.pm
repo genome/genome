@@ -114,7 +114,7 @@ sub execute {
 
         MODEL:
         while (my $model = $models->next) {
-            next MODEL unless ($model->id % $self->channels == $self->channel);
+            next MODEL unless ($self->channel_for_model($model) == $self->channel);
 
             if ($self->_builds_started >= $max_builds_to_start){
                 $self->status_message("Already started max builds (" . $self->_builds_started . "), quitting...");
@@ -135,6 +135,14 @@ sub execute {
     }
 
     return !scalar(keys %{$self->_command_errors});
+}
+
+
+sub channel_for_model {
+    my $self = shift;
+    my $model = shift;
+
+    return ($model->id % $self->channels);
 }
 
 
