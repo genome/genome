@@ -18,7 +18,7 @@ run_and_diff(
 );
 
 run_and_diff(
-    command => 'gmt lift-over --file-format svold --source $input_dir/svs.svold --dest $output_dir/svs.hg18ToHg19.liftover.svold -unmapped $output_dir/svs.hg18ToHg19.lost.svold --lift-direction hg18ToHg19',
-    results_version => '2013-07-19-sv-old',
+    command => 'gmt lift-over --file-format bedpe --source $input_dir/svs.bedpe --dest $output_dir/svs.hg18ToHg19.liftover.bedpe -unmapped $output_dir/svs.hg18ToHg19.lost.bedpe --lift-direction hg18ToHg19',
+    results_version => '2013-07-25-sv-bedpe',
 );
 

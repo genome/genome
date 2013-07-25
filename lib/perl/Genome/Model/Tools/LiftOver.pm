@@ -43,7 +43,7 @@ class Genome::Model::Tools::LiftOver {
         file_format => {
             is => 'Text', default => 'bed',
             doc => 'The format of the source file',
-            valid_values => ['bed', 'gff', 'genePred', 'sample', 'pslT','svold'],
+            valid_values => ['bed', 'gff', 'genePred', 'sample', 'pslT','bedpe'],
         },
 
         # TODO: make these into additional input formats
@@ -67,8 +67,8 @@ sub help_synopsis {
     return <<EOS
 # liftover TGI legacy SV annotation 
 gmt lift-over \
-    --file-format svold \
-    --source  /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-LiftOver/2013-07-19-sv-old/inputs/svs.svold \
+    --file-format bedpe \
+    --source  /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-LiftOver/2013-07-25-sv-bedpe/inputs/svs.bedpe \
     --dest /tmp/lifted \
     --unmapped /tmp/unlifted \
     --lift-direction hg18ToHg19
@@ -133,7 +133,7 @@ sub execute {
     # If input is annotation format, and we convert to a bed for liftOver then back to anno later, preserve the header
     my $anno_headers = "";
 
-    if ($file_format eq 'svold') {
+    if ($file_format eq 'bedpe') {
         #### svpair
         $init_tmpfiles->(); 
         my $n = 0;
@@ -251,7 +251,7 @@ sub execute {
     );
 
     # Convert back to original format if we converted *into* be format just to work with liftover
-    if ($file_format eq 'svold') {
+    if ($file_format eq 'bedpe') {
         # This is an old SV annotation format in the form CHR1 POS1 POS1 CHR2 POS2 POS2 TYPE ORIENTATION
         # Because POS1 appears twice and POS2 appears twice (always a zero-width range), the new format
         # was trimmed-down.  TODO: add the new format.
@@ -329,6 +329,8 @@ sub execute {
                 die "expected the extra col to be n.1 or n.2!";
             }
 
+            $lifted_cols1[0] =~ s/chr//;
+            $lifted_cols2[0] =~ s/chr//;
             $outFh->print(join("\t",@lifted_cols1[0,1,2],@lifted_cols2[0,1,2],@orig_cols[6..$#orig_cols]),"\n");
         }
         $origFh->close;
