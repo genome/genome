@@ -104,7 +104,7 @@ sub execute {
     my @iterator_params = (
         # prioritize genotype microarray over other builds because their
         # runtime is so short and are frequently prerequisite for other builds
-        {build_requested => '1', type_name => 'genotype microarray', -order_by => 'subject_id'}, 
+        {build_requested => '1', type_name => 'genotype microarray', -order_by => 'subject_id'},
         {build_requested => '1', -order_by => 'subject_id'},
     );
 
@@ -118,7 +118,7 @@ sub execute {
 
             if ($self->_builds_started >= $max_builds_to_start){
                 $self->status_message("Already started max builds (" . $self->_builds_started . "), quitting...");
-                last ITERATOR; 
+                last ITERATOR;
             }
 
             $self->_total_command_count($self->_total_command_count + 1);
@@ -140,15 +140,15 @@ sub execute {
 
 sub num_builds_to_start {
     my $self = shift;
-    
+
     my $scheduled_builds = Genome::Model::Build->create_iterator(
         run_by => Genome::Sys->username,
         status => 'Scheduled',
     );
-    
+
     my $scheduled_build_count = 0;
     while ($scheduled_builds->next && ++$scheduled_build_count <= $self->max_scheduled_builds) { 1; }
-    
+
     my $max_per_channel = int($self->max_scheduled_builds / $self->channels);
     if ($scheduled_build_count >= $self->max_scheduled_builds) {
         return 0;
