@@ -5719,9 +5719,7 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>update-inputs-from-model-group',
       [
-        'allow-previous!',
-        undef,
-        'allow-unmatched!',
+        'force!',
         undef,
         'set=s@',
         [
@@ -5729,9 +5727,9 @@ $Genome::Command::OPTS_SPEC = [
         ],
         'dry-run!',
         undef,
-        'clinseq-models=s@',
+        'update=s@',
         undef,
-        'input-models=s@',
+        'from=s@',
         undef,
         'help!',
         undef
