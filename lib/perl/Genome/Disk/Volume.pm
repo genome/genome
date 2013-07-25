@@ -13,7 +13,7 @@ use List::Util qw(max);
 class Genome::Disk::Volume {
     table_name => 'DISK_VOLUME',
     id_by => [
-        dv_id => { is => 'Number', column_name => 'id'},
+        dv_id => {is => 'Number', column_name => 'id' },
     ],
     has => [
         hostname => { is => 'Text' },
@@ -76,7 +76,7 @@ class Genome::Disk::Volume {
         },
         percent_allocated => {
             calculate_from => ['total_kb', 'allocated_kb'],
-            calculate => q{ return sprintf("%.2f", ( $allocated_kb / $total_kb ) * 100); },
+            calculate => q{ return unless defined($total_kb) and defined($allocated_kb); return sprintf("%.2f", ( $allocated_kb / $total_kb ) * 100); },
         },
         used_kb => {
             calculate_from => ['mount_path'],
@@ -84,7 +84,7 @@ class Genome::Disk::Volume {
         },
         percent_used => {
             calculate_from => ['total_kb', 'used_kb'],
-            calculate => q{ return sprintf("%.2f", ( $used_kb / $total_kb ) * 100); },
+            calculate => q{ return unless defined($used_kb); return sprintf("%.2f", ( $used_kb / $total_kb ) * 100); },
         },
         maximum_reserve_size => {
             is => 'Number',
@@ -118,6 +118,30 @@ class Genome::Disk::Volume {
     data_source => 'Genome::DataSource::GMSchema',
     doc => 'Represents a particular disk volume (eg, sata483)',
 };
+
+sub mount {
+    my $self = shift;
+    return 0 if $self->is_mounted;
+    my $mount_path = $self->mount_path;
+    my $rel_path = $mount_path;
+    $rel_path =~ s|/opt/gms/GMS1/||;
+    unless (-d $mount_path) {
+      Genome::Sys->create_directory($mount_path);
+    }
+    my $cmd = "curlftpfs ftp://clinus234/$rel_path $mount_path";
+    Genome::Sys->shellcmd(cmd => $cmd);
+    return 1;
+}
+
+sub unmount {
+    my $self = shift;
+    my $mount_path = $self->mount_path;
+    return 0 if $self->is_local_volume;
+    return 0 unless $self->is_mounted;
+    my $cmd = "fusermount -u '$mount_path'";
+    Genome::Sys->shellcmd(cmd => $cmd);
+    return 1;
+}
 
 sub __display_name__ {
     my $self = shift;
@@ -278,16 +302,31 @@ sub is_mounted {
         die $self->error_message(sprintf('Failed to `df %s` to check if volume is mounted: %s', $mount_path, $!));
     }
 
+    return 1 if $self->is_local_volume;
+
+    # any other case must be mounted somewhere deeper under / 
     my ($df_output) = grep { /\s$mount_path$/ } @df_output;
     return ($df_output ? 1 : 0);
 }
+
+sub is_local_volume {
+    my $self = shift;
+    my $mount_path = $self->mount_path;
+
+    # consider the local disk of system first node to be mounted if mounted at /
+    my $home = $ENV{GENOME_HOME};
+    my $sysid = $ENV{GENOME_SYS_ID};
+    my $dir = "$home/fs/$sysid";
+    return ($mount_path =~ m|^$home| ? 1 : 0);
+}
+    
+
 
 sub df {
     my $self = shift;
 
     unless ($self->is_mounted) {
-        warn $self->error_message(sprintf('Volume %s is not mounted!', $self->mount_path));
-        return {};
+        die $self->error_message(sprintf('Volume %s is not mounted!', $self->mount_path));
     }
 
     return Filesys::Df::df($self->mount_path);
