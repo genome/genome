@@ -182,7 +182,8 @@ sub _create_instrument_data {
         $instrument_data->add_attribute(attribute_label => $name, attribute_value => $additional_properties{$name});
     }
 
-    my $kilobytes_requested = (-s $bam_path) + 1024;
+    my $bam_size = -s $bam_path;
+    my $kilobytes_requested = int($bam_path / 1024) + 1024;
     my $allocation = Genome::Disk::Allocation->create(
         disk_group_name => 'info_alignments',
         allocation_path => 'instrument_data/imported/'.$instrument_data->id,
