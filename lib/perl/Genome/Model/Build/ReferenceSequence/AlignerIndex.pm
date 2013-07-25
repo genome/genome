@@ -253,10 +253,10 @@ sub _gather_params_for_get_or_create {
         $p->{params}{aligner_params} = undef;
     }
 
-    my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{inputs} });
-    my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{params} });
-    $p->{software_result_params}{params_id} = $params_bx->id;
-    $p->{software_result_params}{inputs_id} = $inputs_bx->id;
+    #my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{inputs} });
+    #my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{params} });
+    #$p->{software_result_params}{params_id} = $params_bx->id;
+    #$p->{software_result_params}{inputs_id} = $inputs_bx->id;
 
     return $p;
 }
@@ -292,7 +292,11 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    "info_apipe_ref";
+    if ($_[0]->reference_build->model->is_rederivable) {
+        return 'info_genome_models';
+    } else {
+        return "info_apipe_ref";
+    }
 }
 
 sub full_consensus_path {

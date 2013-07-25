@@ -3,7 +3,7 @@ package Genome::DataSource::Genes;
 use Genome;
 
 class Genome::DataSource::Genes {
-    is => ['UR::DataSource::FileMux', 'UR::Singleton'],
+    is => ['UR::DataSource::FileMux', 'Genome::DataSource::FileMuxDirMustExist', 'UR::Singleton'],
 };
 
 sub delimiter {
@@ -45,7 +45,7 @@ sub file_resolver {
     
     my $thousand = int($gene_id / 1000);
     my $path = "$data_directory/genes/genes_" . $thousand . ".csv";
-    return $path;
+    return __PACKAGE__->directory_must_exist($path);
 }
 
 

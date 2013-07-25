@@ -186,7 +186,7 @@ sub _generate_variant_mapping {
 
             $data{$patient}{$variant_type} ||= [];
             push @{ $data{$patient}{$variant_type} }, $line;
-        } elsif($line =~ m{.*/([^/]+)(?:\.[^./]+)+$}) {
+        } elsif($line =~ m{.*/([^/.]+)(?:\.[^./]+)+$}) {
             my $patient = $1;
 
             $data{$patient}{$variant_type} ||= [];
