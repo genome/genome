@@ -43,12 +43,29 @@ sub faidx_index {
     }
 }
 
-sub chromosome_name_list {
+sub _cache_if_necessary {
     my $self = shift;
-    unless($self->_chromosomes) {
+    unless(defined $self->_chromosomes && defined $self->_chromosome_info && defined $self->_genome_length) {
         $self->_cache_chromosome_info;
     }
+}
+
+sub chromosome_name_list {
+    my $self = shift;
+    $self->_cache_if_necessary;
     return @{$self->_chromosomes};
+}
+
+sub chromosome_info {
+    my $self = shift;
+    $self->_cache_if_necessary;
+    return $self->_chromosome_info;
+}
+
+sub genome_length {
+    my $self = shift;
+    $self->_cache_if_necessary;
+    return $self->_genome_length;
 }
 
 sub _cache_chromosome_info {
@@ -76,7 +93,7 @@ sub _cache_chromosome_info {
 sub _regions_for_chunk {
     my ($self, $chunk_size, $n) = @_;
 
-    my @chrs = map { [ $_, 1, $self->_chromosome_info->{$_} ] } $self->chromosome_name_list;
+    my @chrs = map { [ $_, 1, $self->chromosome_info->{$_} ] } $self->chromosome_name_list;
     my @regions;
     my $current_chr = shift @chrs;
 
@@ -102,7 +119,7 @@ sub _regions_for_chunk {
 sub divide_into_chunks {
     my ($self, $total_chunks) = @_;
 
-    my $chunk_size = ceil($self->_genome_length / $total_chunks);
+    my $chunk_size = ceil($self->genome_length / $total_chunks);
     
     my @chunks;
     for my $chunk_num (1..$total_chunks) {
