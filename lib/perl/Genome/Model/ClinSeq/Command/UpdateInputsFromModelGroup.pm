@@ -10,56 +10,60 @@ use Data::Dumper;
 class Genome::Model::ClinSeq::Command::UpdateInputsFromModelGroup {
     is => 'Command::V2',
     has => [
-        clinseq_models  => { is => 'Genome::Model::ClinSeq',
+        update          => { is => 'Genome::Model::ClinSeq',
                             is_many => 1,
                             shell_args_position => 1,
                             require_user_verify => 0,
-                            doc => 'the clinseq models to update' },
-        input_models    => { is => 'Genome::Model', is_many => 1,
-                            is_many => 1,
-                            shell_args_position => 2,
-                            require_user_verify => 0,
-                            doc => 'the models that should be used as inputs to the clinseq models' },
+                            doc => 'the models to update' },
         set             => { is => 'Text',
                             is_many => 1,
                             is_optional => 1,
                             valid_values => ['exome_model'],
-                            doc => 'the list of properties to update on the clinseq model, by default any for which the data type fits' },
+                            doc => 'the list of input properties on those models to update' },
+        from            => { is => 'Genome::Model', is_many => 1,
+                            is_many => 1,
+                            shell_args_position => 2,
+                            require_user_verify => 0,
+                            doc => 'the models that should be used as new inputs values' },
         dry_run         => { is => 'Boolean',
                             default_value => 0,
                             is_optional => 1,
                             doc => 'only report possible changes, do not actually update' },
-        allow_previous  => { is => 'Boolean',
+        force           => { is => 'Boolean',
                             default_value => 0,
-                            doc => 'set the input even if it is currently set (by default only null inputs are set)' },
-        allow_unmatched  => { is => 'Boolean',
-                            default_value => 0,
-                            doc => 'allow some input models that do not match the clinseq models, or clinseq models that do not match input models' },
+                            doc => 'allow discrepancies (run first without this flag and be sure you like the changes)' },
     ],
     doc => 'update clinseq models in bulk from another group of models',
 };
 
 sub help_synopsis {
     return <<EOS
+
+    # BRCPP models get validation somatic-variation capture data
     genome model clin-seq update-inputs-from-model-group \
-        --clinseq-models    model_groups.name=myclinseqgroup \
-        --input-models      model_groups.name=myexomegroup \
+        --update    model_groups.id=59355 \
+        --set       exome_model
+        --from      model_groups.id=73267 
     
+    # HCC models get validation somatic-variation capture data
     genome model clin-seq update-inputs-from-model-group \
-        --clinseq-models    model_groups.name=myclinseqgroup \
-        --input-models      model_groups.name=myrnaseqgroup \
+        --update    model_groups.id=73905 \
+        --set       exome_model \
+        --from      model_groups.id=73266
+
 EOS
 }
 
 sub execute {
     my $self = shift;
-    my @models_to_update = $self->clinseq_models;
-    my @inputs = $self->input_models;
+    my @models_to_update = $self->update;
+    my @inputs = $self->from;
 
     my @model_ids_to_update = map { $_->id } @models_to_update;
     
     my %models_to_update_not_matched = map { $_->id => $_ } @models_to_update;
-    my %inputs_with_no_matches;
+    my %inputs_with_no_matches_wrong_type;
+    my %inputs_with_no_matches_correct_type;
     my %inputs_with_multiple_matches;
     my %inputs_matched_with_value_previously_null;
     my %inputs_matched_with_value_previously_different;
@@ -71,8 +75,14 @@ sub execute {
         my $input_common_name = $input_subject->common_name;
         $self->status_message($input->__display_name__ . ":");
 
-        if ($input->isa("Genome::Model::SomaticVariation") and $input->tumor_model->target_region_set_name) {
-            # exome/capture
+        my %targets;
+        if ($input->isa("Genome::Model::SomaticVariation")) {
+            my @inst = ($input->tumor_model->instrument_data, $input->normal_model->instrument_data);
+            %targets = map { defined($_) ? ($_=>$_) : () } map { $_->target_region_set_name } @inst;
+        }
+
+        if ($input->isa("Genome::Model::SomaticVariation") and %targets) {
+            # exome/capture somatic model
             my $model_to_update;
             my $input_name = 'exome_model';
 
@@ -85,13 +95,13 @@ sub execute {
                 delete $models_to_update_not_matched{$candidate->id};
             }
             if (@candidates > 1) {
-                $self->warning_message("\tmultiple candidates!");
+                $self->status_message("\tmultiple candidates!!!!!!!!!!!!!!!!!!!!!!!!");
                 $inputs_with_multiple_matches{$input->id} = $input;
                 next;
             }
             elsif (@candidates == 0) {
-                $self->warning_message("\tno candidates!");
-                $inputs_with_no_matches{$input->id} = $input;
+                $self->status_message("\tno candidates!!!!!!!!!!!!!!!!!!!!!!!!");
+                $inputs_with_no_matches_correct_type{$input->id} = $input;
                 next;
             }
             
@@ -100,7 +110,7 @@ sub execute {
             $self->status_message("\tfound clinseq model " . $model_to_update->__display_name__);
             if (my $previous_value = $model_to_update->$input_name()) {
                 if ($previous_value == $input) {
-                    $self->status_message("\tvalue already set!");
+                    $self->status_message("\tvalue already set!!!!!!!!!!!!!!!!!!!");
                     $inputs_matched_with_value_previously_the_same{$input->id} = $input;
                     next;
                 }
@@ -125,38 +135,44 @@ sub execute {
             }
         }
         else {
-            die "support only exists for somatic variation models.  Add support for more types here: " . __FILE__ . ", line " . __LINE__;
+            $inputs_with_no_matches_wrong_type{$input->id} = $input;
         }
     }
 
     my %problems = (
         "Models not updated" => \%models_to_update_not_matched,
-        "Inputs with no matching models" => \%inputs_with_no_matches,
+        "Inputs of the correct type with no matches" => \%inputs_with_no_matches_correct_type,
         "Inputs with multiple matching models" => \%inputs_with_multiple_matches,
         "Inputs matching a model with a value previously set to a different value" => \%inputs_matched_with_value_previously_different,
     );
 
     my %not_problems = (
-        "Inputs matching a model with a value previously the same" => \%inputs_matched_with_value_previously_the_same,
-        "Inputs matching a model with a value previously null" => \%inputs_matched_with_value_previously_null,
+        "Inputs matching a model with a value previously the same (ignore)" => \%inputs_matched_with_value_previously_the_same,
+        "Inputs matching a model with a value previously null (good)" => \%inputs_matched_with_value_previously_null,
+        "Inputs of the wrong type with no matches (ignore)" => \%inputs_with_no_matches_wrong_type,
     );
 
     my %messages = (%problems, %not_problems);
 
+    $self->status_message("\nSUMMARY:");
     my $errors++;
     for my $msg (reverse sort keys %messages) {
         my $hash = $messages{$msg};
         my @values = values %$hash;
-        $self->status_message("$msg: " . scalar(@values));
-        if ($problems{$msg}) {
+        if ($problems{$msg} and scalar(@values) > 0) {
             $errors++;
+            $self->status_message("$msg: " . scalar(@values) . " ********** ");
+        }
+        else {
+            $self->status_message("$msg: " . scalar(@values));
         }
     }
 
-    if ($errors) {
+    if ($errors and not $self->force) {
         die $self->error_message("Aborting due to some inconsistencies.  Run with the 'force' option to override.");
     }
 
+    $DB::single = 1;
     return 1;
 }
 
