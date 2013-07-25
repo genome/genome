@@ -107,9 +107,10 @@ sub kilobytes_needed_for_processing_of_source_files {
 
     my $kb_needed = 0;
     for my $source_file ( @source_files ) {
-        my $size = $self->size_of_source_file($source_file);
+        my $size = $self->source_file_size($source_file);
         return if not $size;
         $size *= 3 if $source_file =~ /\.gz$/; # assume ~30% compression rate for gzipped fasta/q
+        $size *= 2; # for convresion to bam
         $kb_needed += int($size / 1024) + 1;
     }
 
@@ -118,14 +119,14 @@ sub kilobytes_needed_for_processing_of_source_files {
     return $kb_needed;
 }
 
-sub size_of_source_file {
+sub source_file_size {
     my ($self, $source_file) = @_;
 
     Carp::confess('No source file to get size!') if not $source_file;
 
     my $size;
     if ( $source_file =~ /^http/ ) {
-        $size = $self->size_of_remote_file($source_file);
+        $size = $self->remote_file_size($source_file);
     }
     else {
         $size = -s $source_file;
@@ -139,12 +140,13 @@ sub size_of_source_file {
     return $size;
 }
 
-sub size_of_remote_file {
+sub remote_file_size {
     my ($self, $remote_file) = @_;
 
     Carp::confess('No remote file to get size in kb!') if not $remote_file;
 
-    my $fh = IO::File->new("wget --spider $remote_file |");
+    my $wget_cmd = "wget --spider $remote_file 2>&1 |";
+    my $fh = IO::File->new($wget_cmd);
     my ($size, $exists);
     while ( my $line = $fh->getline ) {
         chomp $line;
@@ -167,6 +169,34 @@ sub size_of_remote_file {
     }
 
     return $size;
+}
+
+sub source_file_format {
+    my ($self, $source_file) = @_;
+
+    Carp::confess('No source file to get format!') if not $source_file;
+
+    $source_file =~ s/\.gz$//;
+    my ($suffix) = $source_file =~ /\.(\w+)$/;
+    if ( not $suffix ) {
+        $self->error_message("Failed to get suffix from source file! $source_file");
+        return;
+    }
+
+    my %suffixes_to_original_format = (
+        txt => 'fastq',
+        fastq => 'fastq',
+        fq => 'fastq',
+        bam => 'bam',
+        sra => 'sra',
+    );
+    my $format = $suffixes_to_original_format{$suffix};
+    if ( not $format ) {
+        $self->error_message('Unrecognized suffix to import! '.$suffix);
+        return;
+    }
+
+    return $format;
 }
 
 sub verify_adequate_disk_space_is_available_for_source_files {
