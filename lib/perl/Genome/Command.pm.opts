@@ -8194,6 +8194,24 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>import',
+    [
+      '>metadata',
+      [
+        'update!',
+        undef,
+        'ignore-differences!',
+        undef,
+        'log-path=s',
+        'files',
+        'input-path=s',
+        'files',
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>somatic-variation',
     [
       '>annotate-and-upload-variants',
