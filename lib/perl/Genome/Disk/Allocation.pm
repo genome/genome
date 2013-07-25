@@ -1389,7 +1389,7 @@ sub _get_candidate_volumes {
     my @volumes = grep { not $_->is_archive } Genome::Disk::Volume->get(
         %volume_params, '-order_by' => ['-cached_unallocated_kb']);
     unless (@volumes) {
-        confess "Did not get any allocatable and active volumes belonging to group $disk_group_name.";
+        confess "Did not get any allocatable and active volumes belonging to group $disk_group_name.  Params were " . UR::Util::d(\%volume_params);
     }
 
     return @volumes;

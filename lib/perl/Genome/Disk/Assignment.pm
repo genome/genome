@@ -43,4 +43,24 @@ class Genome::Disk::Assignment {
     data_source => 'Genome::DataSource::GMSchema',
 };
 
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+    $self->initialize_base_directory;
+    return $self;
+};
+
+sub initialize_base_directory {
+    my $self = shift;
+    my $group = $self->group;
+    my $volume = $self->volume;
+    $volume->mount; 
+    
+    my $subdirectory = $volume->mount_path . '/' . $group->subdirectory;
+    unless (-e $subdirectory) {
+        Genome::Sys->create_directory($subdirectory);
+    }
+
+}
+
 1;
