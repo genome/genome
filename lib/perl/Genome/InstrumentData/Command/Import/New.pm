@@ -72,31 +72,12 @@ sub _resolve_original_format {
     $self->status_message('Resolve original format...');
     
     my @source_files = $self->source_files;
-    my %suffixes;
-    for my $source_file ( @source_files ) {
-        $source_file =~ s/\.gz$//;
-        my ($suffix) = $source_file =~ /\.(\w+)$/;
-        if ( not $suffix ) {
-            $self->error_message("Failed to get suffix from source file! $source_file");
-            return;
-        }
-        $suffixes{$suffix}++;
-    }
-
-    my %suffixes_to_original_format = (
-        txt => 'fastq',
-        fastq => 'fastq',
-        fq => 'fastq',
-        bam => 'bam',
-        sra => 'sra',
-    );
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my %formats;
-    for my $suffix ( keys %suffixes ) {
-        if ( not exists $suffixes_to_original_format{$suffix} ) {
-            $self->error_message('Unrecognized suffix to import! '.$suffix);
-            return;
-        }
-        $formats{ $suffixes_to_original_format{$suffix} } = 1;
+    for my $source_file ( @source_files ) {
+        my $format = $helpers->source_file_format($source_file);
+        return if not $format;
+        $formats{$format}++;
     }
 
     my @formats = keys %formats;
