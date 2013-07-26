@@ -9,8 +9,9 @@ BEGIN {
 }
 
 use above 'Genome';
-
 use Test::More;
+
+use Genome::Utility::Test qw(is_equal_set);
 
 use_ok('Genome::Model::Command::Services::BuildQueuedModels') or die;
 
@@ -42,6 +43,7 @@ my $sample = Genome::Sample->create(
 );
 ok($sample, 'create sample') or die;
 
+my @requested_models;
 my @model_ids;
 for my $count (1..3) {
     my $model = Genome::Model->create(
@@ -52,6 +54,9 @@ for my $count (1..3) {
     );
     ok($model, 'create model' . $count);
     $model->build_requested($count % 2);
+    if ($model->build_requested) {
+        push @requested_models, $model;
+    }
     push @model_ids, $model->id;
 }
 
@@ -78,7 +83,10 @@ no warnings qw(redefine once);
 *Genome::Sys::unlock_resource= sub{ return 1; };
 use warnings;
 
-is_deeply([ Genome::Model->get(build_requested => 1) ], [ $models[0], $models[2] ], 'models get overloaded') or die;
+is_equal_set(
+    [map { $_->id } Genome::Model->get(build_requested => 1)],
+    [map { $_->id } @requested_models],
+    'models get overloaded') or die;
 ok(Genome::Sys->lock_resource, 'lock_resource overloaded') or die;
 ok(Genome::Sys->unlock_resource, 'unlock_resource overloaded') or die;
 
