@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-my $default_nomenclature = $ENV{GENOME_NOMENCLATURE_DEFAULT};
+my $default_nomenclature = 'GMS'; 
 
 class Genome::Sample {
     is => ['Genome::Subject','Genome::Searchable'],

@@ -27,6 +27,7 @@ class Genome::Nomenclature {
             is => 'Text',
             len => 25,
             is_optional => 1,
+            column_name => 'default_value',
             doc => 'Empty-equivalent string (NA, n/a, etc)',
         },
         accepts_any_field => {

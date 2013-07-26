@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 use Carp;
 
-my $default_nomenclature = $ENV{GENOME_NOMENCLATURE_DEFAULT};
+my $default_nomenclature = 'GMS'; 
 
 class Genome::Individual {
     is => ['Genome::SampleSource','Genome::Searchable'],
