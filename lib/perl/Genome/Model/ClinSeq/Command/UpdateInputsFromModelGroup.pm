@@ -12,17 +12,14 @@ class Genome::Model::ClinSeq::Command::UpdateInputsFromModelGroup {
     has => [
         update          => { is => 'Genome::Model::ClinSeq',
                             is_many => 1,
-                            shell_args_position => 1,
                             require_user_verify => 0,
                             doc => 'the models to update' },
         set             => { is => 'Text',
                             is_many => 1,
-                            is_optional => 1,
                             valid_values => ['exome_model'],
                             doc => 'the list of input properties on those models to update' },
         from            => { is => 'Genome::Model', is_many => 1,
                             is_many => 1,
-                            shell_args_position => 2,
                             require_user_verify => 0,
                             doc => 'the models that should be used as new inputs values' },
         dry_run         => { is => 'Boolean',
@@ -40,15 +37,15 @@ sub help_synopsis {
     return <<EOS
 
     # BRCPP models get validation somatic-variation capture data
-    genome model clin-seq update-inputs-from-model-group \
-        --update    model_groups.id=59355 \
-        --set       exome_model
+    genome model clin-seq update-inputs-from-model-group \\
+        --update    model_groups.id=59355 \\
+        --set       exome_model \\
         --from      model_groups.id=73267 
     
     # HCC models get validation somatic-variation capture data
-    genome model clin-seq update-inputs-from-model-group \
-        --update    model_groups.id=73905 \
-        --set       exome_model \
+    genome model clin-seq update-inputs-from-model-group \\
+        --update    model_groups.id=73905 \\
+        --set       exome_model \\
         --from      model_groups.id=73266
 
 EOS
@@ -116,7 +113,7 @@ sub execute {
                 }
                 else {
                     $inputs_matched_with_value_previously_different{$input->id} = $input;
-                    if(!$self->allow_previous) {
+                    if(!$self->force) {
                         $self->status_message("\tSKIP UPDATE OLD $input_name on " . $model_to_update->__display_name__ . " from " . $previous_value->__display_name__ . " to " . $input->__display_name__ . ".");
                         next;
                     }
