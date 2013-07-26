@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::DataSource::InterproResults {
-    is => [ 'UR::DataSource::FileMux', 'UR::Singleton' ],
+    is => [ 'UR::DataSource::FileMux', 'Genome::DataSource::FileMuxDirMustExist', 'UR::Singleton' ],
 };
 
 sub delimiter { 
@@ -40,8 +40,9 @@ sub required_for_get {
 
 sub file_resolver {
     my ($data_directory, $chrom_name) = @_;
-    my $path = $data_directory . "/interpro_results/chromosome_" . $chrom_name . ".csv";
-    return $path;
+
+    return __PACKAGE__->directory_must_exist(
+                $data_directory . "/interpro_results/chromosome_" . $chrom_name . ".csv");
 }
 
 1;
