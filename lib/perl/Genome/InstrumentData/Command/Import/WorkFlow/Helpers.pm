@@ -100,23 +100,34 @@ sub copy_file {
 #<>#
 
 #<FILE SIZE>#
-sub kilobytes_needed_for_processing_of_source_files {
+sub kilobytes_required_for_processing_of_source_files {
     my ($self, @source_files) = @_;
 
     Carp::confess('No source files to get kb needed!') if not @source_files;
 
-    my $kb_needed = 0;
+    my %formats_and_multipliers = (
+        bam => 3,
+        fastq => 2,
+        sra => 4,
+    );
+
+    my $kb_required = 0;
     for my $source_file ( @source_files ) {
         my $size = $self->source_file_size($source_file);
         return if not $size;
-        $size *= 3 if $source_file =~ /\.gz$/; # assume ~30% compression rate for gzipped fasta/q
-        $size *= 2; # for convresion to bam
-        $kb_needed += int($size / 1024) + 1;
+
+        my $format = $self->source_file_format($source_file);
+        return if not $format;
+
+        my $kb_required_for_source_file = int($size / 1024); #convert to kb
+        $kb_required_for_source_file *= 3 if $source_file =~ /\.gz$/; # assume ~30% compression rate for gzipped fasta/q
+
+        my $multiplier = $formats_and_multipliers{$format};
+        $kb_required_for_source_file *= $multiplier; # for convresion to bam
+        $kb_required += $kb_required_for_source_file;
     }
 
-    $kb_needed *= 3; # reserve 3X for processing
-
-    return $kb_needed;
+    return $kb_required;
 }
 
 sub source_file_size {
@@ -218,7 +229,7 @@ sub verify_adequate_disk_space_is_available_for_source_files {
     }
     $self->status_message("Available Kb: ".$df->{bavail});
 
-    my $kb_required = $self->kilobytes_needed_for_processing_of_source_files(@$source_files);
+    my $kb_required = $self->kilobytes_required_for_processing_of_source_files(@$source_files);
     return if not $kb_required;
     $self->status_message("Required Kb: ".$kb_required);
 
@@ -327,9 +338,9 @@ sub load_headers_from_bam {
     my ($self, $bam_path) = @_;
     $self->status_message('Load headers...');
 
-    $self->status_message("Bam path: $bam_path");
     Carp::confess('No bam path given to load headers!') if not $bam_path;
     Carp::confess('Bam path given to load headers does not exist!') if not -s $bam_path;
+    $self->status_message("Bam path: $bam_path");
 
     $self->status_message("Bam path: $bam_path");
     my $headers_fh = IO::File->new("samtools view -H $bam_path |");
