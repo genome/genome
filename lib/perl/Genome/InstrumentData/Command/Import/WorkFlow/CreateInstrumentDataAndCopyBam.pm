@@ -50,7 +50,7 @@ sub execute {
     my @instrument_data;
     my @bam_paths = $self->bam_paths;
     for my $bam_path ( @bam_paths ) {
-        my $instrument_data = $self->_create_instrument_data($bam_path);
+        my $instrument_data = $self->_create_instrument_data_for_bam_path($bam_path);
         return if not $instrument_data;
 
         my $final_bam_path = $instrument_data->data_directory.'/all_sequences.bam';
@@ -107,10 +107,12 @@ sub _resvolve_library {
     return $self->library($library);
 }
 
-sub _create_instrument_data {
+sub _create_instrument_data_for_bam_path {
     my ($self, $bam_path) = @_;
+    $self->status_message('Create instrument data for bam path...');
 
     Carp::confess('No bam path to create instrument data!') if not $bam_path;
+    $self->status_message('Bam path: '.$bam_path);
 
     my %additional_properties;
     for my $name_value ( $self->instrument_data_properties ) {
@@ -166,7 +168,6 @@ sub _create_instrument_data {
     }
     $self->status_message('Source files were NOT previously imported!');
 
-    $self->status_message('Create instrument data...');
     $properties{import_format} = 'bam';
     $properties{sequencing_platform} = 'solexa';
 
@@ -198,7 +199,7 @@ sub _create_instrument_data {
     $self->status_message('Allocation id: '.$allocation->id);
     $self->status_message('Allocation path: '.$allocation->absolute_path);
 
-    $self->status_message('Create instrument data...done');
+    $self->status_message('Create instrument data for bam path...done');
     return $instrument_data;
 }
 
