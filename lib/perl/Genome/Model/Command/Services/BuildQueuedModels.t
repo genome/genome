@@ -46,25 +46,30 @@ subtest 'original test' => sub {
     );
     ok($sample, 'create sample') or die;
 
-    my @requested_models;
-    my @model_ids;
-    for my $count (1..3) {
+    my $count;
+    my $create_model = sub {
+        $count++;
         my $model = Genome::Model->create(
             name => 'Tester Model' . $count,
             processing_profile => $pp,
             subject_id => $sample->id,
             subject_class_name => $sample->class,
-        );
-        ok($model, 'create model' . $count);
-        $model->build_requested($count % 2);
-        if ($model->build_requested) {
-            push @requested_models, $model;
-        }
-        push @model_ids, $model->id;
-    }
+            @_);
+        ok($model, 'created model ' . $count);
+        return $model;
+    };
 
+
+    my @requested_models = map { $create_model->(build_requested => 1) } (1..2);
+    my $unrequested_model = $create_model->();
+
+    my @model_ids = map { $_->id } (@requested_models, $unrequested_model);
     my @models = Genome::Model->get(id => \@model_ids);
     ok(@models, 'created models');
+
+    # Lazy hack to deal with assumptions previously used, i.e. that IDs were
+    # sorted chronologically.
+    @models = ($requested_models[0], $unrequested_model, $requested_models[1]);
 
     # overload models get and locking
     no warnings qw(redefine once);
@@ -96,7 +101,7 @@ subtest 'original test' => sub {
     my $command_1 = Genome::Model::Command::Services::BuildQueuedModels->create();
     isa_ok($command_1, 'Genome::Model::Command::Services::BuildQueuedModels');
     ok($command_1->execute(), 'executed build command');
-    is_deeply([ map { $_->build_requested } @models ], [qw/ 0 0 0 /], 'builds no longer requested for models');
+    is_deeply([ map { $_->build_requested ? 1 : 0 } @models ], [qw/ 0 0 0 /], 'builds no longer requested for models');
     my @b0 = $models[0]->builds;
     my @b1 = $models[1]->builds;
     my @b2 = $models[2]->builds;
