@@ -44,7 +44,7 @@ class Genome::Model::Tools::Mutect {
         },
         intervals => {
             is => 'String',
-            doc => 'Intervals to run mutect on',
+            doc => 'Intervals to run mutect on. Should be in format chr:start-end',
             is_many => 1,
             is_optional => 1,
         },
@@ -150,10 +150,30 @@ sub execute {
     my $self = shift;
 
     my $cmd = "java -Xmx5g -jar " . $self->path_for_mutect_version($self->version) . " --analysis_type MuTect";
-    $cmd .= " --reference_sequence " . $self->reference;
+    $cmd .= " --reference_sequence " . $self->reference->path;
     $cmd .= " --input_file:normal " . $self->normal_bam;
     $cmd .= " --input_file:tumor " . $self->tumor_bam;
     $cmd .= " --out " . $self->output_file;
+    
+    #optional arguments
+    $cmd .= " --cosmic " . $self->cosmic_vcf if $self->cosmic_vcf;
+    $cmd .= " --dbsnp " . $self->dbsnp_vcf if $self->dbsnp_vcf;
+    $cmd .= " --tumor_sample_name " . $self->tumor_sample_name if $self->tumor_sample_name;
+    $cmd .= " --normal_sample_name " . $self->normal_sample_name if $self->normal_sample_name;
+    $cmd .= " --only_passing_calls" if $self->only_passing_calls;
+    $cmd .= " --vcf " . $self->vcf if $self->vcf;
+    $cmd .= " --coverage_file " . $self->coverage_file if $self->coverage_file;
+    $cmd .= join(" --intervals ", $self->intervals) if($self->intervals); #do we get back a list or an array ref?
+
+
+    my @output_files = grep {defined $_} ($self->output_files, $self->vcf, $self->coverage_file);
+
+    my $return = Genome::Sys->shellcmd(
+        cmd => "$cmd",
+        output_files => \@output_files,
+        skip_if_output_is_present => 0,
+        allow_zero_size_output_files => 1,
+    );
 
 =cut
 java -Xmx5g -jar /gscuser/dlarson/mutect/muTect-1.1.4.jar --analysis_type MuTect --reference_sequence /gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa --input_file:normal /gscmnt/gc13001/info/model_data/2889433023/build136498879/alignments/136268587.bam --input_file:tumor /gscmnt/gc9006/info/model_data/2891225638/build136025755/alignments/135842703.bam --vcf aml31relapse_mutect_test100.vcf --coverage_file coverage100.txt --out aml31relapse_call_stats100.txt --cosmic /gscmnt/sata135/info/medseq/dlarson/aml31_mutect_manual/b37_cosmic_v54_120711.vcf --dbsnp /gscmnt/sata135/info/medseq/dlarson/aml31_mutect_manual/gatk_bundle_v2.3_b37/dbsnp_137.b37.vcf --intervals Y:34482907-59373566 --intervals MT:1-16569 
