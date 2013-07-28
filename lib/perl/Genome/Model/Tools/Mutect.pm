@@ -28,7 +28,7 @@ class Genome::Model::Tools::Mutect {
             is_optional => 0,
         },
         reference => {
-            is => 'Genome::File::Fasta',
+            is => 'String',
             doc => 'Reference sequence',
             is_optional => 0,
         },
@@ -150,7 +150,7 @@ sub execute {
     my $self = shift;
 
     my $cmd = "java -Xmx5g -jar " . $self->path_for_mutect_version($self->version) . " --analysis_type MuTect";
-    $cmd .= " --reference_sequence " . $self->reference->path;
+    $cmd .= " --reference_sequence " . $self->reference;
     $cmd .= " --input_file:normal " . $self->normal_bam;
     $cmd .= " --input_file:tumor " . $self->tumor_bam;
     $cmd .= " --out " . $self->output_file;
@@ -163,10 +163,10 @@ sub execute {
     $cmd .= " --only_passing_calls" if $self->only_passing_calls;
     $cmd .= " --vcf " . $self->vcf if $self->vcf;
     $cmd .= " --coverage_file " . $self->coverage_file if $self->coverage_file;
-    $cmd .= join(" --intervals ", $self->intervals) if($self->intervals); #do we get back a list or an array ref?
+    $cmd .= " --intervals " . join(" --intervals ", $self->intervals) if($self->intervals); #do we get back a list or an array ref?
 
 
-    my @output_files = grep {defined $_} ($self->output_files, $self->vcf, $self->coverage_file);
+    my @output_files = grep {defined $_} ($self->output_file, $self->vcf, $self->coverage_file);
 
     my $return = Genome::Sys->shellcmd(
         cmd => "$cmd",
