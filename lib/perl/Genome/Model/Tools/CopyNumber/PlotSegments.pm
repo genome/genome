@@ -1,16 +1,5 @@
 package Genome::Model::Tools::CopyNumber::PlotSegments;
 
-##############################################################################
-#
-#
-#	AUTHOR:		Chris Miller (cmiller@genome.wustl.edu)
-#
-#	CREATED:	05/05/2011 by CAM.
-#
-#	NOTES:
-#
-##############################################################################
-
 use strict;
 use Genome;
 use IO::File;
@@ -563,52 +552,64 @@ sub execute {
         die $self->error_message("You must specify either the segment_files param OR both tumor_segment_file and normal_segment_file, but not all three.");
     }
 
-	#check multiple plot parameters
-	if($multiple_plot_list && $multiple_plot_keyword){
-		die $self->error_message("You must specify either a list of files to plot OR
+    #check multiple plot parameters
+    if($multiple_plot_list && $multiple_plot_keyword){
+        die $self->error_message("You must specify either a list of files to plot OR
 		                          the keyword of a group. You cannot use both parameters together.");
-	}
-	
-	my @inputs;
-	my @file_names;
-	if(defined($multiple_plot_keyword)){ #if input is a folder of files
-		my $searchKey = fileparse($segment_files);
-		my $searchDir = dirname($segment_files);
-		opendir(DIR, $searchDir) or die "Failed to open the folder: $searchDir. $!";
-
-		my $fileCount = 0;
-		while (my $file = readdir(DIR)) {
-			# Use a regular expression to ignore files beginning with a period
-			next if ($file =~ m/^\./);
-			next if ($file !~ m/$searchKey/);
-			push (@inputs, $searchDir."\/".$file);
-			push (@file_names, $file);
-			$fileCount ++;
-		}
-		print "$fileCount files were found in the directory matching your search term.\n";
-		closedir(DIR);
-	} elsif (defined($multiple_plot_list)){ # if input is a list
-		open (my $segment_files_handle, $segment_files), or die "Cannot open $segment_files. $!.\n";
-		while (my $line = <$segment_files_handle>){
-			chomp $line;
-			my $filepath = $line;
-			if ($line !~ m/\.cbs/){
-				print "Warning: $line is not a .cbs file: \n";
-			} elsif (! -e $filepath){
-				print "$filepath does not exist, please check and try again.\n";
-			} else {
-				push (@inputs, $filepath);
-				my $filename = fileparse($filepath);
-				push (@file_names, $filename);
-			}
-		}
-	} else { #input is a single file
-		push (@inputs, $segment_files);
-	}
-
-    if(defined($tumor_segment_file) && defined($normal_segment_file)){
-        $segment_files = join(",",($tumor_segment_file,$normal_segment_file));
     }
+
+    if(defined($tumor_segment_file)){
+        if(!defined($segment_files)){    
+            $segment_files = $segment_files . "," . $tumor_segment_file;
+        } else {
+            $segment_files = $tumor_segment_file;
+        }
+    }
+    if(defined($normal_segment_file)){
+        if(!defined($segment_files)){
+            $segment_files = $segment_files . "," .$normal_segment_file;
+        } else {
+            $segment_files = $tumor_segment_file;
+        }
+    }
+    
+    my @inputs;
+    my @file_names;
+    if(defined($multiple_plot_keyword)){ #if input is a folder of files
+        my $searchKey = fileparse($segment_files);
+        my $searchDir = dirname($segment_files);
+        opendir(DIR, $searchDir) or die "Failed to open the folder: $searchDir. $!";
+
+        my $fileCount = 0;
+        while (my $file = readdir(DIR)) {
+            # Use a regular expression to ignore files beginning with a period
+            next if ($file =~ m/^\./);
+            next if ($file !~ m/$searchKey/);
+            push (@inputs, $searchDir."\/".$file);
+            push (@file_names, $file);
+            $fileCount ++;
+        }
+        print "$fileCount files were found in the directory matching your search term.\n";
+        closedir(DIR);
+    } elsif (defined($multiple_plot_list)){ # if input is a list
+        open (my $segment_files_handle, $segment_files), or die "Cannot open $segment_files. $!.\n";
+        while (my $line = <$segment_files_handle>){
+            chomp $line;
+            my $filepath = $line;
+            if ($line !~ m/\.cbs/){
+                print "Warning: $line is not a .cbs file: \n";
+            } elsif (! -e $filepath){
+                print "$filepath does not exist, please check and try again.\n";
+            } else {
+                push (@inputs, $filepath);
+                my $filename = fileparse($filepath);
+                push (@file_names, $filename);
+            }
+        }
+    } else { #input is a single file
+        push (@inputs, $segment_files);
+    }
+
 
 
     if ((defined($xmax) || defined($xmin)) && !(defined($chr))){
@@ -617,19 +618,19 @@ sub execute {
     
     my $entrypoints_file = getEntrypointsFile($sex,$genome_build);
 
-	my @infiles;
-	foreach my $input (@inputs){
-		#first do file conversion from cnv/aHMM output if necessary
-		if ($cnvhmm_input || $cnahmm_input){
-		$input = convertSegs($self, $input, $cnvhmm_input, $cnahmm_input);
-		    $log2_input = 1;
-		}
+    my @infiles;
+    foreach my $input (@inputs){
+        #first do file conversion from cnv/aHMM output if necessary
+        if ($cnvhmm_input || $cnahmm_input){
+            $input = convertSegs($self, $input, $cnvhmm_input, $cnahmm_input);
+            $log2_input = 1;
+        }
 
-		#then do score conversion between log2/log10/absolute CN as necessary
-		$input = convertScores($self, $input, $log2_input, $log2_plot, $log10_plot);
-	  
-	  	push (@infiles, split(",", $input));
-	}
+        #then do score conversion between log2/log10/absolute CN as necessary
+        $input = convertScores($self, $input, $log2_input, $log2_plot, $log10_plot);
+        
+        push (@infiles, split(",", $input));
+    }
 
     #set up a temp file for the R commands (unless one is specified)
     my $temp_path;
