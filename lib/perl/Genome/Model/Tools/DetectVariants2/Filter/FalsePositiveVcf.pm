@@ -7,7 +7,7 @@ use Genome;
 use Workflow;
 use Workflow::Simple;
 use Carp;
-use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line');
+use Genome::Utility::Vcf ('open_vcf_file', 'parse_vcf_line', 'deparse_vcf_line', 'get_vcf_header', 'get_samples_from_header');
 
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcf {
     is => 'Genome::Model::Tools::DetectVariants2::Filter',
@@ -150,12 +150,26 @@ sub _filter_variants {
     $stats->{'num_fail_varcount'} = $stats->{'num_fail_varfreq'} = $stats->{'num_fail_strand'} = $stats->{'num_fail_pos'} = $stats->{'num_fail_mmqs'} = $stats->{'num_fail_mapqual'} = $stats->{'num_fail_readlen'} = $stats->{'num_fail_dist3'} = 0;
     $stats->{'num_MT_sites_autopassed'} = $stats->{'num_fail_homopolymer'} = 0;
 
-    my $output_file = $self->_temp_staging_directory . "/snvs.vcf.gz";
+    my $output_file = $self->_temp_staging_directory . "/snvs.raw.gz";
     my $output_fh = Genome::Sys->open_gzip_file_for_writing($output_file);
 
     #First, need to create a variant list file to use for generating the readcounts.
     # FIXME this will work after the polymuttdenovo filter, but not directly after polymutt due to the separate denovo and standard filenames
-    my $input_file = $self->input_directory . "/snvs.vcf.gz";
+
+    # FIXME Things need to be cleaned up here...
+    # We try to use the incoming snvs.hq file if it exists because of the refalign/normal pipelines
+    # But currently, phenotype correlation only produces vcfs and nothing else... so fall back to using the vcf if snvs.hq doesnt exist.
+    my $input_file;
+    my $vcf_file = $self->input_directory . "/snvs.vcf.gz";
+    my $hq_file = $self->input_directory . "/snvs.hq";
+    if (-s $hq_file ) {
+        $input_file = $hq_file;
+    } elsif (-s $vcf_file) {
+        $input_file = $vcf_file;
+    } else {
+        die $self->error_message("Could not find $vcf_file or $hq_file");
+    }
+
     ## Build temp file for positions where readcounts are needed ##
     #my $region_path = $self->_temp_scratch_directory."/regions";
     my $region_path = $self->output_directory."/regions";
@@ -182,7 +196,7 @@ sub _filter_variants {
         }
     }
     $output_fh->print(join("",@$header));
-    my @sample_names = $self->get_samples_from_header($header);
+    my @sample_names = get_samples_from_header($header);
     $DB::single = 1;
     ## Parse the variants file ##
     while(my $line = $input_fh->getline) {
@@ -195,6 +209,80 @@ sub _filter_variants {
     $input_fh->close;
     $output_fh->close;
     $self->print_stats($stats);
+
+    $self->_convert_to_standard_formats($output_file);
+
+    return 1;
+}
+
+# Create snvs.hq snvs.lq and bed files
+sub _convert_to_standard_formats {
+    my ($self, $raw_file) = @_;
+
+
+    # When multiple samples are present only VCF really makes sense. So don't convert to bed.
+    my @alignment_results = $self->alignment_results;
+    if ( @alignment_results and ( scalar(@alignment_results >= 2) )  ) {
+        my $vcf_file = $self->_temp_staging_directory . "/snvs.vcf.gz";
+        Genome::Sys->copy_file($raw_file, $vcf_file);
+        unlink $raw_file;
+        return 1;
+    }
+
+    # Get the header
+    my ($header, $raw_fh) = get_vcf_header($raw_file);
+    my @header_array = split "\n", $header;
+
+    # Put header and only PASS variants in HQ file
+    my $pass_snv_output_file = $self->_temp_staging_directory . "/snvs.hq";
+    my $pass_fh = Genome::Sys->open_file_for_writing($pass_snv_output_file);
+    $pass_fh->print($header);
+
+    # Put header and only non PASS variants in LQ file
+    my $fail_snv_output_file = $self->_temp_staging_directory . "/snvs.lq";
+    my $fail_fh = Genome::Sys->open_file_for_writing($fail_snv_output_file);
+    $fail_fh->print($header);
+
+    my @sample_names = get_samples_from_header(\@header_array);
+
+    while(my $line = $raw_fh->getline) {
+        my $parsed_line = parse_vcf_line($line, \@sample_names);
+
+        my $pass = 1;
+        for my $sample_name (@sample_names) {
+            unless ( $parsed_line->{sample}{$sample_name}{"FT"} eq 'PASS' or $parsed_line->{sample}{$sample_name}{"FT"} eq '.') {
+                $pass = 0;
+            }
+        }
+
+        if ($pass) {
+            $pass_fh->print($line);
+        } else {
+            $fail_fh->print($line);
+        }
+    }
+
+    $pass_fh->close;
+    $fail_fh->close;
+
+    # Convert both files to bed
+    my $convert = Genome::Model::Tools::Bed::Convert::Snv::SamtoolsToBed->create( 
+        source => $pass_snv_output_file, 
+        output => $self->_temp_staging_directory . "/snvs.hq.bed",
+    );
+    unless($convert->execute){
+        $self->error_message("Failed to convert filter output to bed.");
+        die $self->error_message;
+    }
+
+    my $convert_lq = Genome::Model::Tools::Bed::Convert::Snv::SamtoolsToBed->create( 
+        source => $fail_snv_output_file, 
+        output => $self->_temp_staging_directory . "/snvs.lq.bed",
+    );
+    unless($convert_lq->execute){
+        $self->error_message("Failed to convert failed-filter output to bed.");
+        die $self->error_message;
+    }
 
     return 1;
 }
@@ -349,7 +437,7 @@ sub print_region_list {
 sub parse_vcf_header {
     my $self = shift;
     my $input_file = shift;
-    my $input_fh = Genome::Sys->open_gzip_file_for_reading($input_file);
+    my $input_fh = open_vcf_file($input_file);
 
     my @header;
     my $header_end = 0;
@@ -373,22 +461,6 @@ sub add_filter_to_vcf_header {
     my $column_header = pop @$parsed_header;
     my $filter_line = qq{##FILTER=<ID=$filter_name,Description="$filter_description">\n};
     push @$parsed_header, $filter_line, $column_header;
-}
-
-
-
-# Given the header of a vcf, return an array of samples in the final header line
-#FIXME probably move this to a base class
-sub get_samples_from_header {
-    my $self = shift;
-    my $header = shift;
-
-    my $sample_line = @$header[-1];
-    chomp $sample_line;
-    my @fields = split "\t", $sample_line;
-    splice(@fields, 0, 9);
-
-    return @fields;
 }
 
 sub set_format_field {
@@ -1021,6 +1093,11 @@ sub _promote_staged_data {
     Genome::Sys->remove_directory_tree($staging_dir);
 
     return $output_dir;
+}
+
+sub _check_native_file_counts {
+    my $self = shift;
+    return $self->_check_native_file_counts_vcf;
 }
 
 1;
