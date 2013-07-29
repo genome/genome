@@ -5719,17 +5719,17 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>update-inputs-from-model-group',
       [
-        'force!',
+        'update=s@',
         undef,
         'set=s@',
         [
           'exome_model'
         ],
-        'dry-run!',
-        undef,
-        'update=s@',
-        undef,
         'from=s@',
+        undef,
+        'force!',
+        undef,
+        'dry-run!',
         undef,
         'help!',
         undef
