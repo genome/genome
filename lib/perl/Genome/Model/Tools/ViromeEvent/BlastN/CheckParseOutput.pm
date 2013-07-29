@@ -163,14 +163,6 @@ sub run_parser {
 
     my $E_cutoff = 1e-10;
 
-    # db to look up taxid by gi
-    my $taxonomy_db = $self->taxonomy_db;
-    if ( not $taxonomy_db or not -s $taxonomy_db ) {
-        $self->log_event('Taxonomy db file is missing or empty');
-        return;
-    }
-    my $taxid_db = DBI->connect("dbi:SQLite:$taxonomy_db");
-
     # db to look up taxon info by taxid
     my $taxon_db = $self->taxon_db;
     if ( not $taxon_db ) {
@@ -238,14 +230,6 @@ sub run_parser {
                     if ( exists $gi_taxids->{$gi} ) {
                         $taxID = $gi_taxids->{$gi} if not $gi_taxids->{$gi} == 0;
                     }
-                    #if ( not defined $taxID ) {
-		    # from gi get taxonomy lineage
-                    #    my $sth = $taxid_db->prepare("SELECT * FROM gi_taxid where gi = $gi");
-                    #    $sth->execute();
-                    #    my $ref = $sth->fetchrow_hashref();
-                    #    $sth->finish();
-                    #    $taxID = $ref->{'taxid'} if $ref->{'taxid'};
-                    #}
 		    if (defined $taxID) { # some gi don't have record in gi_taxid_nucl
 			my $taxon_obj = $taxon_db->get_taxon(-taxonid => $taxID);
 			if (!(defined $taxon_obj)) {
@@ -291,7 +275,7 @@ sub run_parser {
     $out_fh->print("# Summary: ", scalar @keep_for_tblastx, " out of $total_records ", scalar @keep_for_tblastx/$total_records, " is saved for TBLASTX analysis.\n");
     $out_fh->close;
 
-    $taxid_db->disconnect();
+    #$taxid_db->disconnect();
 
     #CREATE A FASTA FILE OF ALL UNKNOWN SEQUENCES TO RUN NT BLASTX
     my $root_file_name = $blast_out_file;

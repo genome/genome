@@ -144,14 +144,6 @@ sub run_parse {
 
     my $E_cutoff = 1e-5;
 
-    # get a Taxon from a Bio::DB::Taxonomy object
-    my $taxonomy_db = $self->taxonomy_db;
-    if ( not $taxonomy_db or not -s $taxonomy_db ) {
-        $self->log_event('Taxonomy db file is missing or empty');
-        return;
-    }
-    my $dbh_sqlite = DBI->connect("dbi:SQLite:$taxonomy_db");
-
     # taxon info look up by taxid
     my $taxon_db = $self->taxon_db;
     if ( not $taxon_db ) {
@@ -231,13 +223,6 @@ sub run_parse {
                     if ( exists $gi_taxids->{$gi} ) {
                         $taxID = $gi_taxids->{$gi} if not $gi_taxids->{$gi} == 0;
                     }
-                    #if ( not defined $taxID ) {
-                    #    my $sth = $dbh_sqlite->prepare("SELECT * FROM gi_taxid where gi = $gi");
-                    #    $sth->execute();
-                    #    my $ref = $sth->fetchrow_hashref();
-                    #    $sth->finish();
-                    #    $taxID = $ref->{'taxid'};
-                    #}
 		    if ( defined $taxID ) { # some gi don't have record in gi_taxid_nucl, this is for situation that has
 		        my $taxon_obj = $taxon_db->get_taxon(-taxonid => $taxID);
 		        if (!(defined $taxon_obj)) {
@@ -294,7 +279,7 @@ sub run_parse {
     $out_fh->print("# Summary: ", scalar @unassigned," out of $total_records ", (scalar @unassigned)*100/$total_records, "% is unassigned.\n");
     $out_fh->close;
 
-    $dbh_sqlite->disconnect();
+    #$dbh_sqlite->disconnect();
 
     return 1;
 }
