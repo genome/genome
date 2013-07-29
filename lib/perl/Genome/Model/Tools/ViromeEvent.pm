@@ -297,7 +297,7 @@ sub run_blast_for_stage {
     #$self->log_event("Running blast with command: $cmd"); # for test
 
     if (system ($cmd)) {
-	$self->log_event("$stage failed for $input_file_name");
+	$self->log_event("$stage failed for $input_file_name, cmd: $cmd");
 	return;
     }
 
@@ -309,17 +309,20 @@ sub run_blast_for_stage {
 sub versioned_taxonomy_dir {
     my $self = shift;
 
-    my ($version) = $self->taxonomy_db =~ /taxonomy_db_(\S+)$/;
-    $self->log_event('Could not derive taxonomy version') and return
-        if not $version;
+    if( -d $self->taxonomy_db ) {
+        return $self->taxonomy_db;
+    }
+    else {
+        my ($version) = $self->taxonomy_db =~ /taxonomy_db_(\S+)$/;
+        $self->log_event('Could not derive taxonomy version') and return
+            if not $version;
+        my $version_dir = "/gscmnt/sata835/info/medseq/virome/taxonomy_$version";
+        $self->log_event("Could not get taxonomy dir for version: $version") and return
+            if not -d $version_dir;
 
-    my $version_dir = "/gscmnt/sata835/info/medseq/virome/taxonomy_$version";
-    $self->log_event("Could not get taxonomy dir for version: $version") and return
-        if not -d $version_dir;
-
-    return $version_dir;
+        return $version_dir
+    }
 }
-
 
 sub get_taxids_for_gis {
     my($self, $gis) = @_;
