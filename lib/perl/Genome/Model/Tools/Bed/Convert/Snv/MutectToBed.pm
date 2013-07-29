@@ -8,6 +8,9 @@ use Genome::Info::IUB;
 
 class Genome::Model::Tools::Bed::Convert::Snv::MutectToBed {
     is => ['Genome::Model::Tools::Bed::Convert::Snv'],
+    has_param => [
+        limit_variants_to => { is => 'Text', valid_values => ['hq','lq'], is_optional => 1,
+                              doc => 'set to "hq" or "lq" to only get variants which pass or fail filter, respectively' },
 };
 
 sub help_brief {
@@ -38,6 +41,17 @@ sub process_source {
     my $self = shift;
     
     my $input_fh = $self->_input_fh;
+
+    my $judgement_string;
+    if(defined $self->limit_variants_to) {
+        if($self->limit_variants_to eq 'hq') {
+            $judgement_string = 'KEEP';
+        }
+        else {
+            $judgement_string = 'REJECT';
+        }
+    }
+
     
     my $fn;
     my @headers;
@@ -62,7 +76,7 @@ sub process_source {
             Genome::Info::IUB::iub_for_alleles($entry{ref_allele}, $entry{alt_allele}),
             $entry{t_lod_fstar},
             $entry{t_ref_count} + $entry{t_alt_count},
-        );
+        ) if(!defined $judgement_string || $entry{judgement} eq $judgement_string);
     }
     
     return 1;
