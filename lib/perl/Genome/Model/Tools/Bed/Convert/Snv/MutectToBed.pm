@@ -9,8 +9,13 @@ use Genome::Info::IUB;
 class Genome::Model::Tools::Bed::Convert::Snv::MutectToBed {
     is => ['Genome::Model::Tools::Bed::Convert::Snv'],
     has_param => [
-        limit_variants_to => { is => 'Text', valid_values => ['hq','lq'], is_optional => 1,
-                              doc => 'set to "hq" or "lq" to only get variants which pass or fail filter, respectively' },
+        limit_variants_to => { 
+            is => 'Text', 
+            valid_values => ['hq','lq'], 
+            is_optional => 1,
+            doc => 'set to "hq" or "lq" to only get variants which pass or fail filter, respectively',
+        },
+    ],
 };
 
 sub help_brief {
@@ -57,6 +62,7 @@ sub process_source {
     my @headers;
     while(my $line = <$input_fh>) {
         next if $line =~ /^#/;
+        chomp $line;
         my @fields = split("\t", $line);
 #        die "Non-comment line without 33 columns found.\n" unless @fields == 34;
         my %entry;
@@ -67,7 +73,6 @@ sub process_source {
         else {
             @entry{@headers} = @fields;
         }
-
         $self->write_bed_line(
             $entry{contig},
             $entry{position} - 1,
