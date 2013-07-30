@@ -16,8 +16,11 @@ BEGIN {
 use above "Genome";
 use Test::More tests=>7; #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::CreateMutationDiagrams;
-use Genome::Model::Build::SomaticVariationTestGenerator;
 use Data::Dumper;
+use Genome::TestObjGenerator::Model::ReferenceAlignment;
+use Genome::TestObjGenerator::Model::ImportedAnnotation;
+use Genome::TestObjGenerator::Model::SomaticVariation;
+use Genome::TestObjGenerator::Build;
 
 use_ok('Genome::Model::ClinSeq::Command::CreateMutationDiagrams') or die;
 
@@ -31,7 +34,22 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Get a somatic variation build
-my ($somvar_build, $somvar_model) = Genome::Model::Build::SomaticVariationTestGenerator::setup_test_build(som_var_dir => "$base_dir/som_var_dir", annot_dir => "$base_dir/annot_dir");
+my $annotation_model = Genome::TestObjGenerator::Model::ImportedAnnotation->setup_object(name => "test_annotation_build");
+my $annotation_build = Genome::TestObjGenerator::Build->setup_object(model_id => $annotation_model->id,
+                                                                     data_directory => "$base_dir/annot_dir",
+                                                                     status => "Succeeded",
+                                                                     version => 1,
+                                                                    );
+my $normal_model = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object(annotation_reference_build => $annotation_build);
+my $tumor_model = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_object(processing_profile_id => $normal_model->processing_profile->id, annotation_reference_build => $annotation_build);
+my $somvar_model = Genome::TestObjGenerator::Model::SomaticVariation->setup_object(
+                                                                     normal_model => $normal_model,
+                                                                     tumor_model => $tumor_model,
+                                                                     annotation_build => $annotation_build,
+                                                                    );
+my $somvar_build = Genome::TestObjGenerator::Build->setup_object(model_id => $somvar_model->id,
+                                                                 data_directory => "$base_dir/som_var_dir",
+                                                                 status => "Succeeded");
 ok ($somvar_build, "Got somatic variation build") or die;
 $ENV{GENOME_DB} = "$base_dir/reference_annotations/";
 my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
