@@ -12,6 +12,7 @@ BEGIN {
 use above 'Genome';
 
 use Test::More;
+use Genome::Utility::Test qw(is_equal_set);
 
 use_ok('Genome::Model::Command::Services::AssignQueuedInstrumentData') or die;
 
@@ -122,10 +123,10 @@ ok( # processed instdata[2]
 
 # Did the models get added to the projects?
 for my $project ( @projects ) {
-    is_deeply(
-        \@new_model_ids,
-        [ sort { $b <=> $a } map { $_->entity_id } grep { $_->entity_class_name =~ /^Genome::Model/ } $project->parts ],
-        'added models to project '.$project->name,
+    is_equal_set(
+        [@new_model_ids],
+        [map { $_->entity_id } grep { $_->entity_class_name =~ /^Genome::Model/ } $project->parts],
+        'added models to project ' . $project->name,
     );
 }
 
