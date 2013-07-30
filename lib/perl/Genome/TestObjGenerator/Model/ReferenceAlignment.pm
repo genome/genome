@@ -6,6 +6,8 @@ use strict;
 use warnings;
 use Genome;
 use Genome::TestObjGenerator::ProcessingProfile::ReferenceAlignment;
+use Genome::TestObjGenerator::Model::ReferenceSequence;
+use Genome::TestObjGenerator::Build;
 
 my @required_params = ("reference_sequence_build", "subject_name", "subject_type");
 
@@ -22,8 +24,8 @@ sub create_processing_profile_id {
 }
 
 sub create_reference_sequence_build {
-#TODO Must fix before pushing!
-    my $b = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
+    my $m = Genome::TestObjGenerator::Model::ReferenceSequence->setup_object;
+    my $b = Genome::TestObjGenerator::Build->setup_object(model_id => $m->id);
     return $b;
 }
 
