@@ -14,7 +14,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>27; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>30;
 use Data::Dumper;
 use Genome::Utility::Test qw(compare_ok);
 
@@ -27,6 +27,9 @@ use_ok('Genome::TestObjGenerator::Model::ReferenceAlignment');
 use_ok('Genome::TestObjGenerator::Model::SomaticVariation');
 use_ok('Genome::TestObjGenerator::Model::RnaSeq');
 use_ok('Genome::TestObjGenerator::Model::ClinSeq');
+use_ok('Genome::TestObjGenerator::Model::ReferenceSequence');
+use_ok('Genome::TestObjGenerator::Model::ImportedVariationList');
+use_ok('Genome::TestObjGenerator::Model::ImportedAnnotation');
 use_ok('Genome::TestObjGenerator::Build');
 
 #Define the test where expected results are stored
@@ -39,14 +42,9 @@ ok($temp_dir, "created temp directory: $temp_dir");
 
 #genome model clin-seq update-analysis  --individual='common_name=HG1'  --samples='id in [2874747197,2874769474,2875643613]'
 
-#Get an individual - use HG1 as a test case
-#my $individual_id = 2874747196;
-#my $individual = Genome::Individual->get($individual_id);
-#ok($individual, "Obtained an individual from id: $individual_id");
 my $individual = Genome::Individual->create(common_name => "FAKE1", 
                                             name => "test-clin-seq",
                                             gender => "unspecified",
-                                            #species_name => "human", #TODO why doesn't this work?
                                             upn => "-353",
                                            );
 ok($individual, "Created an individual with id: ".$individual->id);
@@ -54,9 +52,6 @@ my @ids;
 push @ids, [TEST_INDIVIDUAL_ID => $individual->id];
 
 #Obtain a normal DNA sample
-#my $normal_dna_sample_id = 2874769474;
-#my $normal_dna_sample = Genome::Sample->get($normal_dna_sample_id);
-#ok($normal_dna_sample, "Obtained a normal dna sample from id: $normal_dna_sample_id");
 my $normal_dna_sample = Genome::Sample->create(source => $individual, 
                                                name => "clinseq-normal-dna",
                                                common_name => "normal",
@@ -70,9 +65,6 @@ ok($normal_dna_sample, "Created a normal sample with id ".$normal_dna_sample_id)
 my $normal_inst_data = create_instrument_data_from_sample($normal_dna_sample);
 
 #Obtain a tumor DNA sample
-#my $tumor_dna_sample_id = 2874747197;
-#my $tumor_dna_sample = Genome::Sample->get($tumor_dna_sample_id);
-#ok($tumor_dna_sample, "Obtained a tumor dna sample from id: $tumor_dna_sample_id");
 my $tumor_dna_sample = Genome::Sample->create(source => $individual, 
                                               name => "clinseq-tumor-dna",
                                               common_name => "met",
@@ -86,9 +78,6 @@ ok($tumor_dna_sample, "Created a tumor sample with id ".$tumor_dna_sample_id);
 my $tumor_inst_data = create_instrument_data_from_sample($tumor_dna_sample);
 
 #Obtain a tumor RNA sample
-#my $tumor_rna_sample_id = 2875643613;
-#my $tumor_rna_sample = Genome::Sample->get($tumor_rna_sample_id);
-#ok($tumor_rna_sample, "Obtained a tumor rna sample from id: $tumor_rna_sample_id");
 my $tumor_rna_sample = Genome::Sample->create(source => $individual, 
                                               name => "clinseq_tumor_rna",
                                               common_name => "met",
@@ -108,9 +97,17 @@ my $r1 = $update_analysis_cmd1->execute();
 is($r1, 1, 'Testing for successful execution of step 1.  Expecting 1.  Got: '.$r1);
 
 #Create the update-analysis command for step 2
-my $dbsnp_build = Genome::Model::Build->get(127786607);
-my $annotation_build = Genome::Model::Build->get(124434505);
-my $ref_seq_build = Genome::Model::Build->get(106942997);
+my $dbsnp_model = Genome::TestObjGenerator::Model::ImportedVariationList->setup_object;
+my $dbsnp_build = Genome::TestObjGenerator::Build->setup_object(model_id => $dbsnp_model->id);
+push @ids, [DBSNP_BUILD => $dbsnp_build->id];
+
+my $annotation_model = Genome::TestObjGenerator::Model::ImportedAnnotation->setup_object;
+my $annotation_build = Genome::TestObjGenerator::Build->setup_object(model_id => $annotation_model->id);
+push @ids, [ANNOTATION_BUILD => $annotation_build->id];
+
+my $ref_seq_model = Genome::TestObjGenerator::Model::ReferenceSequence->setup_object;
+my $ref_seq_build = Genome::TestObjGenerator::Build->setup_object(model_id => $ref_seq_model->id);
+push @ids, [REFSEQ_BUILD => $ref_seq_build->id];
 
 #setup refalign build
 my $ref_align_pp = Genome::TestObjGenerator::ProcessingProfile::ReferenceAlignment->setup_object();
@@ -135,12 +132,10 @@ my $tumor_model = Genome::TestObjGenerator::Model::ReferenceAlignment->setup_obj
 $tumor_model->add_instrument_data($tumor_inst_data);
 push @ids, [TUMOR_REFALIGN_MODEL =>  $tumor_model->id];
 my $tumor_build = Genome::TestObjGenerator::Build->setup_object(model_id => $tumor_model->id, status => 'Succeeded');
-#my $wgs_pp = Genome::ProcessingProfile->get(2762562);
 my $wgs_pp = Genome::TestObjGenerator::ProcessingProfile::SomaticVariation->setup_object();
 push @ids, [WGS_PP => $wgs_pp->id];
-#my $wgs_model = Genome::TestObjGenerator::Model::SomaticVariation->setup_object(subject_name => $normal_model->subject->source->name); #TODO make this work
 my $wgs_model = Genome::TestObjGenerator::Model::SomaticVariation->setup_object(
-    subject_name => $tumor_model->subject->name, #TODO: this subject thing is messed up!
+    subject_name => $tumor_model->subject->name, 
     subject_type => "sample_group",
     normal_model => $normal_model, 
     tumor_model => $tumor_model, 
@@ -206,6 +201,7 @@ my $update_analysis_cmd3 = Genome::Model::ClinSeq::Command::UpdateAnalysis->crea
                                                                 annotation_build => $annotation_build,
                                                                 dbsnp_build => $dbsnp_build,
                                                                 previously_discovered_variations => $dbsnp_build,
+                                                                reference_sequence_build => $ref_seq_build,
                                                     );
 $update_analysis_cmd3->queue_status_messages(1);
 my $r3 = $update_analysis_cmd3->execute();
@@ -227,7 +223,6 @@ ok(-e $log_file, "Wrote message file from update-analysis to a log file: $log_fi
 
 #The first time we run this we will need to save our initial result to diff against
 #Genome::Sys->shellcmd(cmd => "cp -r -L $temp_dir/* $expected_output_dir");
-
 #Perform a diff between the stored results and those generated by this test
 compare_ok($log_file, "$expected_output_dir/$output_file_name", replace => \@ids, name => "log files are the same");
 
