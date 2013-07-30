@@ -17,12 +17,12 @@ class Genome::ProcessingProfile::Param {
         name => {
             is => 'Text',
             len => 255,
-            column_name => 'PARAM_NAME',
+            column_name => 'param_name',
         },
         value_id => {
             is => 'Text',
             len => 1000,
-            column_name => 'PARAM_VALUE',
+            column_name => 'param_value',
         },
     ],
     has => [
