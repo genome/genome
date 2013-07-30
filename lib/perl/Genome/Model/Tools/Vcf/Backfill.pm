@@ -289,7 +289,7 @@ sub add_alt_information_to_vcf_line {
     my $ref_ad = shift @ad_values;
     my $ref_bq = shift @bq_values;
 
-    unless ($sample_values{"GT"} eq ".") {
+    unless ($sample_values{"GT"} =~ /^(\.|\.\/\.)$/) {  # old ., new ./.
         my @gt_values = sort (split "/", $sample_values{"GT"});
 
         # This assumption may change at some point but for now we assume every VCF will have two values in the GT
