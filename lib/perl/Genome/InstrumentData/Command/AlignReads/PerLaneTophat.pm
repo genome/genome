@@ -19,7 +19,7 @@ class Genome::InstrumentData::Command::AlignReads::PerLaneTophat {
 
 sub _fallback_lsf_resource {
     my $mem_mb = 1024 * 28; # increased b/c we have about 16 GB available when 6 jobs run on a 96 Gb server
-    my $cpus = 4;
+    my $cpus = 12;
 
     my $mem_kb = $mem_mb*1024;
     my $tmp_gb = 300;
