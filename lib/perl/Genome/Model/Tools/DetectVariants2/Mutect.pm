@@ -11,7 +11,7 @@ my $DEFAULT_VERSION = 'test';
 class Genome::Model::Tools::DetectVariants2::Mutect {
     is => ['Genome::Model::Tools::DetectVariants2::Detector'],
     doc => "Produces a list of high confidence somatic snps.",
-    has => [
+    has_optional => [
         number_of_chunks => {
             is => 'Integer',
             doc => 'number of chunks to split the genome into for mutect to run.',
@@ -43,30 +43,26 @@ sub _detect_variants {
 
     $self->status_message("beginning execute");
 
+
     my $output_dir = $self->_temp_staging_directory;
-
-    # Update the default parameters with those passed in.
-    my $mutect_param_string = parse_params($self->params);
-
-    my %basic_params = (   
-        normal_bam => $self->control_aligned_reads_input,
-        tumor_bam => $self->aligned_reads_input,
-        version => $self->version,
-        reference => $self->reference_sequence_input,
-        output_file => $output_dir . "/" . $self->_snv_staging_output,
-        vcf => $output_dir . "/" . $self->_snv_base_name . ".raw.vcf",
-        coverage_file => $output_dir . "/coverage.wig",
-        params => $mutect_param_string,
-
+    my @basic_params = (   
+        '--normal-bam' => $self->control_aligned_reads_input,
+        '--tumor-bam' => $self->aligned_reads_input,
+        '--version' => $self->version,
+        '--reference' => $self->reference_sequence_input,
+        '--output-file' => $self->_snv_staging_output,
+        '--vcf' => $output_dir . "/"  . $self->_snv_base_name . ".raw.vcf",
+        '--coverage-file' => $output_dir . "/coverage.wig",
     );
-
+    # Update the default parameters with those passed in.
+    my %mutect_params = $self->parse_params($self->params, @basic_params);
     if($self->number_of_chunks) {
         die "Unimplemented\n";
 
     }
     else {
         my $mutect = Genome::Model::Tools::Mutect->create(
-            %basic_params,
+            %mutect_params,
         );
         unless($mutect->execute()) {
             $self->error_message('Failed to execute Mutect: ' . $mutect->error_message);
@@ -135,9 +131,9 @@ sub has_version {
 }
 
 sub parse_params {
-    my ($self, $string) = @_;
+    my ($self, $string, @additional_params) = @_;
 
-    my ($dv2_params, $mutect_params) = split ":", $string;
+    my ($dv2_params, $mutect_params) = split ";", $string;
     if(defined $mutect_params) {
         #then we know we have dv2 params
         #only one is allowed so just parse it out
@@ -149,13 +145,39 @@ sub parse_params {
         else {
             $self->$param_name($value) if defined $value;
         }
-        #then set to return mutect params which will be passed directly to the mutect object elsewhere
-        return $mutect_params;
     }
     else {
-        return $string;
+        $mutect_params = $string;
     }
+    my @param_list = split(" ", $mutect_params);
+    my ($cmd_class, $params) = Genome::Model::Tools::Mutect->resolve_class_and_params_for_argv(@param_list,@additional_params);
+    return %$params;
 }
+
+sub _sort_detector_output {
+    my $self = shift;
+    my @detector_files = glob($self->_temp_staging_directory."/*.hq");
+    for my $file (@detector_files) {
+        my $rv = Genome::Sys->shellcmd( cmd => qq{sed '2s/contig/#contig/' -i $file});
+        unless($rv) {
+            die $self->error_message("Unable to prefix Mutect header line with a # so it sorts right");
+        }
+    }
+    my $rv = $self->SUPER::_sort_detector_output;
+    unless($rv) {
+        die $self->error_message("Unable to sort Mutect detector output");
+    }
+    for my $file (@detector_files) {
+        my $rv = Genome::Sys->shellcmd( cmd => qq{sed '2s/#contig/contig/' -i $file});
+        unless($rv) {
+            die $self->error_message("Unable to remove # prefix of Mutect header line after sorting");
+        }
+    }
+    return $rv;
+}
+
+
+    
 
 1;
 
