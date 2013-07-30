@@ -102,6 +102,7 @@ class Genome::Model::Tools::Annotate::TranscriptVariants {
             is => 'String',
             is_optional => 1,
             is_input => 1,
+            is_deprecated => 1,
             doc => 'Alternate method to specify imported annotation data used in annotation.  This option allows a directory w/o supporting model and build, not reccomended except for testing purposes',
         },
         build_id =>{
@@ -348,8 +349,7 @@ END {
     }
 };
 
-sub execute { 
- 
+sub _validate_parameters {
     my $self = shift;
 
     unless($self->variant_file xor $self->variant_bed_file){
@@ -367,16 +367,13 @@ sub execute {
         unless(-s $self->variant_file){
             die $self->error_message("After converting to annotation format, the variant file has no size, exiting");
         }
+    } else {
+        unless(-s $self->variant_file){
+            $self->error_message("Variant file has no size, exiting");
+            die;
+        }
     }
 
-    my $variant_file = $self->variant_file;
-
-    unless(-s $variant_file){
-        $self->error_message("Variant file has no size, exiting");
-        die;
-    }
-    
-    
     if (defined $self->data_directory) {
         $self->error_message("Due to a recent change to the annotation data file format, allowing " .
             "user-specified data directories has been deprecated. Specifying a data directory containing " .
@@ -385,66 +382,8 @@ sub execute {
         die;
     }
 
-    # Useful information for debugging...
-    my ($date, $time) = split(' ',$self->__context__->now());
-    my $host = hostname;
-    $self->status_message("Executing on host $host on $date at $time");
-
-    my $total_start = Benchmark->new;
-    my $pre_annotation_start = Benchmark->new;
-
-    if ($self->_is_parallel) {
-        $self->output_file($variant_file . ".out");
-    }
-
-    if (($self->skip_if_output_present)&&(-s $self->output_file)) {
-        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
-        return 1;
-    }
-
-    # generate an iterator for the input list of variants
-
-    # preserve additional columns from input if desired 
-    my @columns = (($self->variant_attributes), $self->get_extra_columns);
-    my $variant_svr = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $variant_file,
-        headers => \@columns,
-        separator => "\t",
-        is_regex => 1,
-        ignore_extra_columns => 1,
-    );
-    unless ($variant_svr) {
-        $self->error_message("error opening file $variant_file");
-        return;
-    }
-
-    # establish the output handle for the transcript variants
-    my $output_fh;
-    my $output_file = $self->output_file;
-    my $temp_output_file;
-    if ($self->output_file =~ /STDOUT/i) {
-        $output_fh = 'STDOUT';
-    }
-    else {
-        my ($output_file_basename) = File::Basename::fileparse($output_file);
-        ($output_fh, $temp_output_file) = File::Temp::tempfile(
-            "$output_file_basename-XXXXXX",
-            DIR => '/tmp/',
-            UNLINK => 1,
-            CLEANUP => 1,
-        );
-        chmod(0664, $temp_output_file);
-    }
-    $self->_transcript_report_fh($output_fh);
-
-
     #check to see if reference_transcripts set name and build_id given
-    if ($self->build and $self->reference_transcripts){
-        $self->error_message("Please provide a build id OR a reference transcript set name, not both");
-        return;
-    }
-
-    if(!$self->build and !$self->reference_transcripts){
+    unless ($self->build xor $self->reference_transcripts){
         $self->error_message("Please provide EITHER a build id OR a reference transcript set name, but not both");
         return;
     }
@@ -468,34 +407,99 @@ sub execute {
         $self->build($build);
     }
 
-
-    my $pre_annotation_stop = Benchmark->new;
-    my $pre_annotation_time = timediff($pre_annotation_stop, $pre_annotation_start);
-    $self->status_message('Pre-annotation: ' . timestr($pre_annotation_time, 'noc')) if $self->benchmark;
-
     if ($self->build and $self->cache_annotation_data_directory) {
-        my $cache_start = Benchmark->new;
-        $self->status_message('Caching annotation data directory');
-        #Caching is a quagmire.  Politely inform the user we aren't doing it.
         $self->cache_annotation_data_directory(0);
         $self->status_message("--cache-annotation-data-directory is currently disabled.  Operating from the annotation data directory instead.");
         $self->_notify_cache_attempt;
-        my $cache_stop = Benchmark->new;
-        my $cache_time = timediff($cache_stop, $cache_start);
-        $self->status_message('Annotation data caching: ' . timestr($cache_time, 'noc')) if $self->benchmark;
-    }
-    elsif (not $self->cache_annotation_data_directory) {
-        $self->status_message("Not caching annotation data directory");
     }
 
-    # omit headers as necessary 
+    my $annotation_filter = $self->annotation_filter( lc $self->annotation_filter );
+    unless ($self->_annotation_method_for_annotation_filter) {
+       $self->error_message("Unknown annotation_filter value: " . $annotation_filter);
+        return;
+    }
+
+    if($self->accept_reference_IUB_codes and $self->use_version < 2) {
+        $self->warning_message("accept-reference-IUB-codes is only available in version 2 or better");
+    }
+
+    return 1;
+}
+
+sub _print_starting_message {
+    my $self = shift;
+
+    # Useful information for debugging...
+    my ($date, $time) = split(' ',$self->__context__->now());
+    my $host = hostname;
+    $self->status_message("Executing on host $host on $date at $time");
+}
+
+# generate an iterator for the input list of variants
+sub _create_variant_reader {
+    my $self = shift;
+
+    # preserve additional columns from input if desired
+    my @columns = (($self->variant_attributes), $self->get_extra_columns);
+    my $variant_svr = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $self->variant_file,
+        headers => \@columns,
+        separator => "\t",
+        is_regex => 1,
+        ignore_extra_columns => 1,
+    );
+    unless ($variant_svr) {
+        $self->error_message("error opening file " . $self->variant_file);
+        return;
+    }
+    return $variant_svr;
+}
+
+sub _setup_report_fh {
+    my $self = shift;
+
+    # establish the output handle for the transcript variants
+    my $output_fh;
+    my $output_file = $self->output_file;
+    my $temp_output_file;
+    if ($self->output_file =~ /STDOUT/i) {
+        $output_fh = 'STDOUT';
+    }
+    else {
+        my ($output_file_basename) = File::Basename::fileparse($output_file);
+        ($output_fh, $temp_output_file) = File::Temp::tempfile(
+            "$output_file_basename-XXXXXX",
+            DIR => '/tmp/',
+            UNLINK => 1,
+            CLEANUP => 1,
+        );
+        chmod(0664, $temp_output_file);
+    }
+    $self->_transcript_report_fh($output_fh);
+    $self->_temp_output_file($temp_output_file);
+
+    # omit headers as necessary
     $output_fh->print( join("\t", $self->transcript_report_headers), "\n" ) unless $self->no_headers;
 
-    # annotate all of the input variants
-    $self->status_message("Annotation start") if $self->benchmark;
-    my $annotation_total_start = Benchmark->new;
-    my ($annotation_start, $annotation_stop);
-    my $chromosome_name = '';
+    return $output_fh;
+}
+
+sub _close_report_fh {
+    my $self = shift;
+
+    my $output_fh = $self->_transcript_report_fh;
+    $output_fh->close unless $output_fh eq 'STDOUT';
+    if ($self->_temp_output_file){
+        unless (move($self->_temp_output_file, $self->output_file)) {
+            $self->error_message("Failed to mv results at ".$self->_temp_output_file." to final location at ".$self->output_file.": $!");
+            return 0;
+        }
+        $output_fh->close unless $output_fh eq 'STDOUT';
+    }
+}
+
+sub _create_annotator {
+    my $self = shift;
 
     # Initialize the annotator object
     if (! defined ($self->use_version)) {
@@ -532,14 +536,45 @@ sub execute {
         die;
     }
 
-    $self->status_message("Starting annotation loop at ".scalar(localtime));
-    $self->status_message("  with annotator version ".$self->use_version);
-    my $annotation_loop_start_time = time();
+    return $annotator;
+}
 
-    Genome::DataSource::GMSchema->disconnect_default_handle if Genome::DataSource::GMSchema->has_default_handle;
+sub _annotation_method_for_annotation_filter {
+    my $self = shift;
 
+    my %map = (
+            gene => 'prioritized_transcripts',  # Top annotation per gene
+            top  => 'prioritized_transcript',   # Top annotation between all genes
+            none => 'transcripts',              # All transcripts, no filter
+        );
+    return $map{ $self->annotation_filter };
+}
+
+sub _make_reference_translator {
+    my $self = shift;
+
+    if($self->accept_reference_IUB_codes and $self->use_version >= 2) {
+        #This will transform any IUB codes into a single base as detailed in the doc for the accept_reference_IUB_codes flag
+        return sub {
+            my $variant = $_[0];
+            $variant->{reference} = Genome::Info::IUB->reference_iub_to_base($variant->{reference});
+        };
+    } else {
+        return sub {};  # noop
+    }
+}
+
+sub _main_annotation_loop {
+    my($self, $annotator, $variant_svr) = @_;
 
     my $processed_variants = 0;
+    my $chromosome_name = '';
+    my ($annotation_start, $annotation_stop);
+
+    my $annotation_method = $self->_annotation_method_for_annotation_filter;
+
+    my $reference_translator = $self->_make_reference_translator();
+
     while ( my $variant = $variant_svr->next ) {
 
         # these are tracked by an END{} block for debugging
@@ -567,73 +602,73 @@ sub execute {
             }
         }
 
-        if($self->accept_reference_IUB_codes){
-            #This will transform any IUB codes into a single base as detailed in the doc for the accept_reference_IUB_codes flag
-            if($self->use_version >= 2){
-                $variant->{reference} = Genome::Info::IUB->reference_iub_to_base($variant->{reference});
-            }
-            else{
-                $self->warning_message("accept-reference-IUB-codes is only available in version 2 or better");
-            }
-        }
+        $reference_translator->($variant);
 
-        # If we have an IUB code, annotate once per base... doesnt apply to things that arent snps
-        # TODO... unduplicate this code
-        my $annotation_filter = lc $self->annotation_filter;
         if ($variant->{type} eq 'SNP') {
+            # If we have an IUB code, annotate once per base... doesnt apply to things that arent snps
             my @variant_alleles = Genome::Info::IUB->variant_alleles_for_iub($variant->{reference}, $variant->{variant});
+
             for my $variant_allele (@variant_alleles) {
                 # annotate variant with this allele
                 $variant->{variant} = $variant_allele;
-
-                # get the data and output it
-                my $annotation_method;
-                if ($annotation_filter eq "gene") {
-                    # Top annotation per gene
-                    $annotation_method = 'prioritized_transcripts';
-                } elsif ($annotation_filter eq "top") {
-                    # Top annotation between all genes
-                    $annotation_method = 'prioritized_transcript';
-                } elsif ($annotation_filter eq "none") {
-                    # All transcripts, no filter
-                    $annotation_method = 'transcripts';
-                } else {
-                    $self->error_message("Unknown annotation_filter value: " . $annotation_filter);
-                    return;
-                }
 
                 my @transcripts = $annotator->$annotation_method(%$variant);
                 $self->_print_annotation($variant, \@transcripts);
             }
         } else {
             # get the data and output it
-            my @transcripts;
-            if ($annotation_filter eq "gene") {
-                # Top annotation per gene
-                @transcripts = $annotator->prioritized_transcripts(%$variant);
-            } elsif ($annotation_filter eq "top") {
-                # Top annotation between all genes
-                @transcripts = $annotator->prioritized_transcript(%$variant);
-            } elsif ($annotation_filter eq "none") {
-                # All transcripts, no filter
-                @transcripts = $annotator->transcripts(%$variant);
-            } else {
-                $self->error_message("Unknown annotation_filter value: " . $annotation_filter);
-                return;
-            }
-
+            my @transcripts = $annotator->$annotation_method(%$variant);
             $self->_print_annotation($variant, \@transcripts);
         }
         $processed_variants++;
         $self->status_message("$processed_variants variants processed " . scalar(localtime)) unless ($processed_variants % 10000);
     }
-    $we_are_done_flag = 1;
 
-    my $annotation_loop_stop_time = time();
+    $we_are_done_flag = 1;
 
     $annotation_stop = Benchmark->new;
     my $annotation_time = timediff($annotation_stop, $annotation_start);
     $self->status_message("Annotating $chromosome_name took " . timestr($annotation_time) . "\n") if $self->benchmark;
+
+    return $processed_variants || '0 but true';
+}
+
+sub execute {
+    my $self = shift;
+
+    $self->_validate_parameters || return;
+
+    $self->_print_starting_message();
+
+    if ($self->_is_parallel) {
+        $self->output_file($self->variant_file . ".out");
+    }
+
+    if (($self->skip_if_output_present)&&(-s $self->output_file)) {
+        $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
+        return 1;
+    }
+
+    my $variant_svr = $self->_create_variant_reader() || return;
+
+    $self->_setup_report_fh() || return;
+
+    # annotate all of the input variants
+    $self->status_message("Annotation start") if $self->benchmark;
+    my $annotation_total_start = Benchmark->new;
+
+    my $annotator = $self->_create_annotator();
+
+    $self->status_message("Starting annotation loop at ".scalar(localtime));
+    $self->status_message("  with annotator version ".$self->use_version);
+    my $annotation_loop_start_time = time();
+
+    Genome::DataSource::GMSchema->disconnect_default_handle if Genome::DataSource::GMSchema->has_default_handle;
+
+    # This is where all the action happens!
+    my $processed_variants = $self->_main_annotation_loop($annotator, $variant_svr);
+
+    my $annotation_loop_stop_time = time();
 
     my $annotation_total_stop = Benchmark->new;
     my $total_time = timediff($annotation_total_stop, $annotation_total_start);
@@ -645,14 +680,7 @@ sub execute {
     $self->status_message("Annotated $processed_variants variants in " . $timediff . " seconds.  "
                           . sprintf("%2.2f", $variants_per_sec) . " variants per second");
 
-    $output_fh->close unless $output_fh eq 'STDOUT';
-    if ($temp_output_file){
-        unless (move($temp_output_file, $output_file)) {
-            $self->error_message("Failed to mv results at $temp_output_file to final location at $output_file: $!");
-            return 0;
-        }
-        $output_fh->close unless $output_fh eq 'STDOUT';
-    }
+    $self->_close_report_fh();
 
     #clean up the temporary annotation data file 
     if ($self->variant_bed_file and $self->variant_file){
@@ -666,6 +694,12 @@ sub _transcript_report_fh {
     my ($self, $fh) = @_;
     $self->{_transcript_fh} = $fh if $fh;
     return $self->{_transcript_fh};
+}
+
+sub _temp_output_file {
+    my ($self, $name) = @_;
+    $self->{_temp_output_file} = $name if $name;
+    return $self->{_temp_output_file};
 }
 
 sub _print_annotation {

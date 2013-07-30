@@ -27,7 +27,7 @@ class Genome::Model::SomaticValidation::Command::ProcessValidation {
     ],
     has_param => [
         lsf_resource => {
-            default_value => 'rusage[tmp=2000] select[tmp>2000]',
+            default_value => "-M 10000000 -R 'rusage[tmp=2000 && mem=10000] select[mem>10000 && tmp>2000]'",
         },
     ],
     doc => 'final processing of HQ SNV detection results',

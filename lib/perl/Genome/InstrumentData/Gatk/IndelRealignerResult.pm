@@ -39,7 +39,9 @@ sub create {
 
     $self->status_message('Bam source: '.$self->bam_source->id);
     $self->status_message('Reference: '.$self->reference_build->id);
-    $self->status_message('Knowns sites: '.$self->known_sites->id);
+    for my $known_sites ( $self->known_sites ) {
+        $self->status_message('Known sites: '.$known_sites->id);
+    }
 
     my $create_targets = $self->_create_targets;
     return if not $create_targets;
@@ -105,7 +107,7 @@ sub _realign_indels {
         index_bam => 1,
         target_intervals_are_sorted => 1,
     );
-    $realigner_params{known} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
+    $realigner_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
     $self->status_message('Params: '.Data::Dumper::Dumper(\%realigner_params));
 
     my $realigner = Genome::Model::Tools::Gatk::IndelRealigner->create(%realigner_params);

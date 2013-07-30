@@ -241,7 +241,7 @@ sub _remove_existing_vcf {
     my @existing_vcfs;
     for my $type ("snvs","indels"){
         my $file = $path."/".$type.".vcf.gz";
-        push @existing_vcfs, $file if -e $file;
+        push @existing_vcfs, $file if (-e $file and -l $file);
     }
     $self->status_message("Found no existing vcfs.") unless @existing_vcfs;
 
@@ -257,10 +257,7 @@ sub unlink_existing_vcf {
         unless(-e $file){
             next;
         }
-        $self->status_message("Removing existing vcf at: ".$file);
-        unless(unlink ( $file )){
-            die $self->error_message("Could not unlink existing vcf at: ".$file);
-        }
+        die $self->error_message("vcf exists and is not a symlink. Refusing to remove it at :".$file);
     } else {
         my @vcf_results = Genome::Model::Tools::DetectVariants2::Result::Vcf->get(input_id => $self->input_id);
         my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;

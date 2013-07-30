@@ -101,7 +101,7 @@ sub execute {
         'sata420/info/model_data/2857786885/build106942997' => 'ams1102/info/model_data/2869585698/build106942997',
         102671028 => 106942997,
         '/gscmnt/' => '/opt/gms/fs/',
-        'WUGC' => 'GMS1',
+        'WUGC' => 'GMS',
     );
 
     my @rows = IO::File->new($sanitize_file)->getlines;
@@ -165,7 +165,8 @@ sub execute {
 }
 
 
-################
+# TODO: instead of conditional logic, move this method
+# to each of the types of data we intend to dump.
 
 my $depth = 0;
 
@@ -306,6 +307,28 @@ sub add_to_dump_queue {
         for my $pp (@pp) {
             add_to_dump_queue($pp, $queue, $exclude, $sanitize_map);
         }
+    }
+
+    if ($obj->isa("Genome::SubjectAttribute")) {
+        my $nomenclature_ambiguous_value = $obj->nomenclature;
+        my $n = Genome::Nomenclature->get(name => $nomenclature_ambiguous_value);
+        my $f = Genome::Nomenclature::Field->get(id => $nomenclature_ambiguous_value);
+        if ($n and not $f) {
+            # old attributes have a text nomenclature we got by name
+            $f = Genome::Nomenclature::Field->get(nomenclature_id => $n->id, name => $obj->attribute_label);
+        }
+        elsif ($f and not $n) {
+            # for new ones, the nomenclature is the fk to the nomenclature_field
+            $n = $f->nomenclature;
+        }
+        elsif (not $n and not $f) {
+            next;
+        }
+        else {
+            die "odd nomenclature field value: $nomenclature_ambiguous_value";
+        }
+        add_to_dump_queue($n, $queue, $exclude, $sanitize_map) if ($n);
+        add_to_dump_queue($f, $queue, $exclude, $sanitize_map) if ($f);
     }
 
     my $parent;
