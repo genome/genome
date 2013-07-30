@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Validation::Sciclone;
+package Genome::Model::Tools::Sciclone;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use File::Basename;
 use FileHandle;
 #use Math::Combinatorics;
 
-class Genome::Model::Tools::Validation::Sciclone {
+class Genome::Model::Tools::Sciclone {
     is => 'Command',
 
     has => [
