@@ -190,7 +190,11 @@ sub _run_aligner {
 
     unless($rv) { die $self->error_message("Appending failed."); }
 
-
+    ###################################################
+    # Sort
+    ###################################################
+    $self->status_message("Resorting all_sequences.sam by coordinate.");
+    $self->_sort_sam($sam_file);
 
     ###################################################
     # clean up
@@ -205,6 +209,50 @@ sub _run_aligner {
     # If we got to here, everything must be A-OK.  AlignmentResult will take over from here
     # to convert the sam file to a BAM and copy everything out.
     return 1;
+}
+
+# Sort a sam file.
+sub _sort_sam {
+    my ($self, $given_sam) = @_;
+
+    my $unsorted_sam = "$given_sam.unsorted";
+
+    # Prepare sort command
+    unless (move($given_sam, $unsorted_sam)) {
+        die $self->error_message(
+            "Unable to move $given_sam to $unsorted_sam. " .
+            "Cannot proceed with sorting.");
+    }
+
+    my $picard_sort_cmd = Genome::Model::Tools::Picard::SortSam->create(
+        sort_order             => 'coordinate',
+        input_file             => $unsorted_sam,
+        output_file            => $given_sam,
+        max_records_in_ram     => 2000000,
+        maximum_memory         => 8,
+        maximum_permgen_memory => 256,
+        temp_directory         => $self->temp_scratch_directory,
+        use_version            => $self->picard_version,
+    );
+
+    # Disconnect from db
+    $self->_disconnect_from_db();
+
+    # Run sort command
+    unless ($picard_sort_cmd and $picard_sort_cmd->execute) {
+        die $self->error_message(
+            "Failed to create or execute Picard sort command.");
+    }
+
+    # Hopefully we're still disconnected
+    $self->_check_db_connection();
+
+    # Clean up
+    unless (unlink($unsorted_sam)) {
+        $self->status_message("Could not unlink $unsorted_sam.");
+    }
+
+    return $given_sam;
 }
 
 # TODO: This should be the command line used to run your aligner, not just the params.
