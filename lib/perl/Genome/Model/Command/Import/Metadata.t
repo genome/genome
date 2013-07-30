@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
+use Genome::Utility::Test;
 use Test::More tests => 5;
 
 my $input_path = File::Basename::dirname(__FILE__) . '/../Export/Metadata.t.expected-output';
@@ -17,9 +18,17 @@ my $result = Genome::Model::Command::Import::Metadata->execute(input_path => $in
 ok($result, "ran");
 ok(-e $actual_log_path, "actual_log_path $actual_log_path exists");
 
-my @diff = grep { $_ !~ /total_kb/ } `sdiff -s -w 500 $expected_log_path $actual_log_path`;
-is(scalar(@diff), 0, "no differences")
-    or diag(@diff);
+Genome::Utility::Test::compare_ok(
+    $actual_log_path, 
+    $expected_log_path,
+    'log matches',
+    filters => [
+        sub{ 
+            my $line = shift;
+            return if $line =~ /total_kb/i; # ignore disk volumes
+            return $line;
+        },
+    ],
+);
 
-
-
+done_testing(5);
