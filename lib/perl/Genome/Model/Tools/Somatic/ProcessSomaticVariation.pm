@@ -742,7 +742,7 @@ sub execute {
           my $featurelist_name = $model->tumor_model->target_region_set_name;
           $featurelist = Genome::FeatureList->get(name=>$featurelist_name)->file_path;
       }
-      if ( -s $featurelist ){
+      if(defined($featurelist) && (-s $featurelist)){
           #clean up feature list
           open(FEATFILE,">$output_dir/$sample_name/featurelist.tmp");
           my $inFh = IO::File->new( $featurelist ) || die "can't open file feature file\n";
@@ -759,14 +759,13 @@ sub execute {
           close(FEATFILE);
           my $new_snv_file = addName($snv_file,"ontarget");
           my $new_indel_file = addName($indel_file,"ontarget");
-
+          
           `joinx sort $output_dir/$sample_name/featurelist.tmp >$output_dir/$sample_name/featurelist`;
           `rm -f $output_dir/$sample_name/featurelist.tmp`;
           `joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$new_snv_file`;
           $snv_file = "$new_snv_file";
           `joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$new_indel_file`;
-          $indel_file = "$new_indel_file";
-
+          $indel_file = "$new_indel_file";      
       } else {
           $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
       }
