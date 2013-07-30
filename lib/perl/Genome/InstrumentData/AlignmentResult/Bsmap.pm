@@ -176,30 +176,14 @@ sub _run_aligner {
     ###################################################
     $self->status_message("Appending mapped_reads.sam to all_sequences.sam.");
 
-    #Remove @header lines from the raw sam file because it will make picard crash with duplicate header.
-    #This just for now. It better to make $temp_sam_output a named pipe (stream).
-    my $temp_sam_output_no_header = $temporary_directory . '/mapped_reads_no_header.sam';
-
-    my $in_fh  = Genome::Sys->open_file_for_reading($temp_sam_output)
-        or die "Failed to open $temp_sam_output for reading";
-    my $out_fh = Genome::Sys->open_file_for_writing($temp_sam_output_no_header)
-        or die "Failed to open $temp_sam_output_no_header for writing";
-
-    while (my $line = $in_fh->getline) {
-        next if $line =~ /^\@/;
-        $out_fh->print($line);
-    }
-    $in_fh->close;
-    $out_fh->close;
-
-    my $append_cmd = sprintf("cat %s >> %s",
-                             $temp_sam_output_no_header,
-                             $sam_file
-        );
+    # This will also remove @header lines from the raw sam file. The duplicate
+    # headers cause Picard crashes.
+    my $append_cmd = sprintf(
+        "grep -v -E '%s' %s >> %s", '^@', $temp_sam_output, $sam_file);
 
     $rv = Genome::Sys->shellcmd(
         cmd => $append_cmd,
-        input_files  => [$temp_sam_output_no_header],
+        input_files  => [$temp_sam_output],
         output_files => [$sam_file],
         skip_if_output_is_present => 0 # because there will already be an all_sequences.sam we're appending to
         );
