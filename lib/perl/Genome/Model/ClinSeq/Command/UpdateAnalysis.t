@@ -14,7 +14,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>30;
+use Test::More tests=>31;
 use Data::Dumper;
 use Genome::Utility::Test qw(compare_ok);
 
@@ -23,6 +23,7 @@ use_ok('Genome::TestObjGenerator::ProcessingProfile::ReferenceAlignment');
 use_ok('Genome::TestObjGenerator::ProcessingProfile::SomaticVariation');
 use_ok('Genome::TestObjGenerator::ProcessingProfile::RnaSeq');
 use_ok('Genome::TestObjGenerator::ProcessingProfile::ClinSeq');
+use_ok('Genome::TestObjGenerator::ProcessingProfile::DifferentialExpression');
 use_ok('Genome::TestObjGenerator::Model::ReferenceAlignment');
 use_ok('Genome::TestObjGenerator::Model::SomaticVariation');
 use_ok('Genome::TestObjGenerator::Model::RnaSeq');
@@ -161,7 +162,7 @@ push @ids, [TUMOR_RNASEQ_MODEL => $rna_seq_model->id];
 $rna_seq_model->add_instrument_data($rna_inst_data);
 my $rna_seq_build = Genome::TestObjGenerator::Build->setup_object(model_id => $rna_seq_model->id, status => 'Succeeded');
 
-my $diff_ex_pp = Genome::ProcessingProfile->get(2760181);
+my $diff_ex_pp = Genome::TestObjGenerator::ProcessingProfile::DifferentialExpression->setup_object;
 push @ids, [DIFFEXP_PP => $diff_ex_pp->id];
 my $clin_seq_pp = Genome::TestObjGenerator::ProcessingProfile::ClinSeq->setup_object;
 push @ids, [CLINSEQ_PP => $clin_seq_pp->id];
