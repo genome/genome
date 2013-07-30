@@ -62,7 +62,6 @@ sub create {
 
     $self->_run_chimerascan($bowtie_version, $c_pargs, $c_opts);
 
-    # cleanup aligned_reads.bam if not reuse_bam?
     # cleanup $fastq1, $fastq2, and $qname_sorted_bam?
     if (-f $fastq1) {
         unless (unlink $fastq1) {
@@ -74,9 +73,19 @@ sub create {
             $self->warning_message("Failed to unlink fastq2: $fastq2: $!");
         }
     }
+
+    # This is the queryname sorted BAM only used when --reuse-bam=1.  It's a copy of the original alignment result(ex. TopHat)
     if (-f $qname_sorted_bam) {
         unless (unlink $qname_sorted_bam) {
             $self->warning_message("Failed to unlink qname_sorted_bam: $qname_sorted_bam: $!");
+        }
+    }
+
+    my $unsorted_aligned_reads_bam = File::Spec->join($self->temp_staging_directory, 'aligned_reads.bam');
+    # This is an unsorted Chimerascan BAM file that is no longer needed since a sorted and indexed version exists
+    if (-f $unsorted_aligned_reads_bam) {
+        unless (unlink $unsorted_aligned_reads_bam) {
+            $self->warning_message("Failed to unlink unsorted aligned reads BAM: $unsorted_aligned_reads_bam: $!");
         }
     }
 
@@ -94,42 +103,42 @@ sub _resolve_original_files {
     if ($reuse_bam) {
         return $self->_resolve_original_files_reusing_bam();
     } else {
-        return ($self->_resolve_original_fasta_files, undef);
+        return ($self->_resolve_original_fastq_files, undef);
     }
 }
 
-sub _resolve_original_fasta_files {
+sub _resolve_original_fastq_files {
     my ($self) = @_;
 
+    # When do we actually have mulitple original BAMs?  Shouldn't the original BAM file be the merged alignment result?
     my @original_bam_paths = $self->original_bam_paths;
     unless (@original_bam_paths) {
         die("Couldn't find 'original_bam_paths' to make fastq files!");
     }
-    # get fastq1/2 from the BAMs
-    my $tmp_dir = File::Temp::tempdir('tempXXXXX',
-        DIR => $self->temp_staging_directory,
-        CLEANUP => 1
-    );
+
+    # This directory will store temporary files necessary to generate the fastq1 and fastq2 files required by Chimerascan
+    my $tmp_dir = Genome::Sys->create_temp_directory();
+
+    # queryname sort each BAM and get fastq1 and fastq2 from /tmp queryname sorted BAMs
     my (@fastq1_files, @fastq2_files);
     for my $bam_path (@original_bam_paths) {
         my $queryname_sorted_bam = File::Spec->join($tmp_dir,
                 'original_queryname_sorted.bam');
         $self->_qname_sort_bam($bam_path, $queryname_sorted_bam);
 
-        # make fastqs from the qname sorted bam
+        # These file paths would conflict if more than one BAM were in the array, need unique names.
         my $fastq1 = File::Spec->join($tmp_dir, "original_fastq1");
         my $fastq2 = File::Spec->join($tmp_dir, "original_fastq2");
 
+        # make fastqs from the qname sorted bam
         $self->_convert_bam_to_fastqs($queryname_sorted_bam, $fastq1, $fastq2);
 
         push @fastq1_files, $fastq1;
         push @fastq2_files, $fastq2;
 
-        # How is $tmp_dir not being deleted now, before @fastqN_files uses the
-        # generated files below?
     }
 
-    # concatinate forward/reverse fastqs together
+    # concatinate forward fastqs together
     my $fastq1 = File::Spec->join($self->temp_staging_directory, 'fastq1');
     my $cmd = sprintf('cat %s > %s', join(" ", @fastq1_files), $fastq1);
     Genome::Sys->shellcmd(
@@ -137,7 +146,8 @@ sub _resolve_original_fasta_files {
         input_files => [@fastq1_files],
         output_files => [$fastq1],
     );
-
+    
+    # concatinate reverse fastqs together
     my $fastq2 = File::Spec->join($self->temp_staging_directory, 'fastq2');
     $cmd = sprintf('cat %s > %s', join(" ", @fastq2_files), $fastq2);
     Genome::Sys->shellcmd(
@@ -145,11 +155,6 @@ sub _resolve_original_fasta_files {
         input_files => [@fastq2_files],
         output_files => [$fastq2],
     );
-
-    # Remove $tmp_dir?
-    if (-d $tmp_dir) {
-        File::Path::remove_tree($tmp_dir);
-    }
 
     return ($fastq1, $fastq2);
 }
@@ -226,7 +231,10 @@ sub _resolve_original_files_reusing_bam {
 
     my $bam_file = $alignment_result->bam_file || die (
             "Couldn't get BAM file from alignment result (" . $alignment_result->id . ")");
-    my $queryname_sorted_bam = File::Spec->join($self->temp_staging_directory,
+
+    # No reason to write to staging directory, but rather /tmp that will be cleaned up
+    my $tmp_dir = Genome::Sys->create_temp_directory();
+    my $queryname_sorted_bam = File::Spec->join($tmp_dir,
             'alignment_result_queryname_sorted.bam');
     $self->_qname_sort_bam($bam_file, $queryname_sorted_bam);
 
