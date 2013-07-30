@@ -7,11 +7,10 @@ use warnings;
 use Genome;
 use Genome::TestObjGenerator::ProcessingProfile::ImportedAnnotation;
 
-my @required_params = ("subject_name");
+my @required_params = ("subject");
 
 sub generate_obj {
     my $self = shift;
-    #my $m = Genome::Model::ImportedAnnotation->create(@_);
     my $m = Genome::Model::ImportedAnnotation->create(@_);
     return $m;
 }
@@ -21,9 +20,8 @@ sub create_processing_profile_id {
     return $p->id;
 }
 
-sub create_subject_name {
-#TODO put in a test subject instead?
-    return "human";
+sub create_subject {
+    return Genome::Taxon->create(name => Genome::TestObjGenerator::Util::generate_name("test_taxon"));
 }
 
 sub get_required_params {

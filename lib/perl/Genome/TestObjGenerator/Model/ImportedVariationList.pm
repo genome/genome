@@ -8,7 +8,7 @@ use Genome;
 
 use Genome::TestObjGenerator::ProcessingProfile::ImportedVariationList;
 
-my @required_params = ("subject_name");
+my @required_params = ("subject");
 
 sub generate_obj {
     my $self = shift;
@@ -22,9 +22,8 @@ sub create_processing_profile_id {
     return $p->id;
 }
 
-sub create_subject_name {
-#TODO need to fix subject name thing in these models
-    return "human";
+sub create_subject {
+    return Genome::Sample->create(name => Genome::TestObjGenerator::Util::generate_name("test_subject"));
 }
 
 sub get_required_params {
