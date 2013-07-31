@@ -505,6 +505,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'reference-build-id=s',
         'files',
+        'canonical!',
+        undef,
         'plugins=s@',
         'files',
         'species=s',
