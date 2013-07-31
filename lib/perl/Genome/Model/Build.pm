@@ -1422,13 +1422,18 @@ sub _launch {
             '-u', $user . '@genome.wustl.edu',
             '-o', $build_event->output_log_file,
             '-e', $build_event->error_log_file,
-            'annotate-log',
-            ($Command::entry_point_bin || 'genome'),
-            'model services build run',
-            $add_args,
-            '--model-id', $model->id,
-            '--build-id', $self->id,
+            '"', 
+              'annotate-log',
+              ($Command::entry_point_bin || 'genome'),
+              'model services build run',
+              $add_args,
+              '--model-id', $model->id,
+              '--build-id', $self->id,
+              "1>" . $build_event->output_log_file,
+              "2>" . $build_event->error_log_file,
+            '"'
         );
+        print "************** $lsf_command ***********\n";
         my $job_id = $self->_execute_bsub_command($lsf_command);
         return unless $job_id;
 

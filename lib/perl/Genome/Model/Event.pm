@@ -318,12 +318,28 @@ sub _log_file {
         return;
     }
 
-    return sprintf(
+    my $old = sprintf(
         '%s/%s.%s',
         $self->log_directory,
         $self->genome_model_event_id,
         $ext,
     );
+
+    if (-e $old) {
+        return $old;
+    }
+    else {
+        my $new = $self->event_type;
+        my $log_directory = $self->log_directory;
+        $log_directory =~ s|/$||;
+        $new =~ s/^genome.model.//;
+        $new =~ s/ /_/g;
+        if ($new eq 'build') {
+            $new = 'workflow-server';
+        }
+        $new = $log_directory . '/' . $new . '.' . $ext;
+        return $new;
+    }
 }
 
 sub error_log_file {

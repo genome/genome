@@ -13,7 +13,7 @@ class Genome::Disk::Command::Volume::List {
             value => 'Genome::Disk::Volume',
         },
         show => { 
-            default_value => 'mount_path,disk_group_names,total_kb,percent_used,percent_allocated', 
+            default_value => 'mount_path,disk_group_names,can_allocate', #,total_kb,percent_used,percent_allocated', 
         },
     ],
     doc => 'Lists Genome::Disk::Volume objects',

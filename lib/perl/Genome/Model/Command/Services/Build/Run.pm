@@ -125,66 +125,75 @@ sub execute {
     $w = $build->newest_workflow_instance;
 
     my $success;
-    if ($self->inline) {
-        if ($w && !$self->restart) {
+    eval {
+        if ($self->inline) {
+            if ($w && !$self->restart) {
 
-            $self->set_not_running($w);
-            UR::Context->commit;
+                $self->set_not_running($w);
+                UR::Context->commit;
 
-            $success = Workflow::Simple::resume($w->id);
-        }
-        else {
-            my %inputs = $build->model->map_workflow_inputs($build);
-            $success = Workflow::Simple::run_workflow(
-                $xmlfile,
-                %inputs
-            );
-        }
-
-    } else {
-        if (Genome::DataSource::GMSchema->has_default_handle) {
-            $self->status_message("Disconnecting GMSchema default handle.");
-            Genome::DataSource::GMSchema->disconnect_default_dbh();
-        }
-
-        local $ENV{WF_TRACE_UR} = 1;
-        local $ENV{WF_TRACE_HUB} = 1;
-        if ($w && !$self->restart) {
-
-            $self->set_not_running($w);
-            UR::Context->commit;
-            if (Workflow::DataSource::InstanceSchema->has_default_handle) {
-                $self->status_message("Disconnecting InstanceSchema default handle.");
-                Workflow::DataSource::InstanceSchema->disconnect_default_dbh();
+                $success = Workflow::Simple::resume($w->id);
+            }
+            else {
+                my %inputs = $build->model->map_workflow_inputs($build);
+                $success = Workflow::Simple::run_workflow(
+                    $xmlfile,
+                    %inputs
+                );
             }
 
-            $success = Workflow::Simple::resume_lsf($w->id);
-        }
-        else {
-            my %inputs;
-            eval {
-                %inputs = $build->model->map_workflow_inputs($build);
-            };
-            if($@) {
-                return $self->_post_build_failure($@);
+        } else {
+            if (Genome::DataSource::GMSchema->has_default_handle) {
+                $self->status_message("Disconnecting GMSchema default handle.");
+                Genome::DataSource::GMSchema->disconnect_default_dbh();
             }
 
-            if (Workflow::DataSource::InstanceSchema->has_default_handle) {
-                $self->status_message("Disconnecting InstanceSchema default handle.");
-                Workflow::DataSource::InstanceSchema->disconnect_default_dbh();
+            local $ENV{WF_TRACE_UR} = 1;
+            local $ENV{WF_TRACE_HUB} = 1;
+            if ($w && !$self->restart) {
+
+                $self->set_not_running($w);
+                UR::Context->commit;
+                if (Workflow::DataSource::InstanceSchema->has_default_handle) {
+                    $self->status_message("Disconnecting InstanceSchema default handle.");
+                    Workflow::DataSource::InstanceSchema->disconnect_default_dbh();
+                }
+
+                $success = Workflow::Simple::resume_lsf($w->id);
             }
+            else {
+                my %inputs;
+                eval {
+                    %inputs = $build->model->map_workflow_inputs($build);
+                };
+                if($@) {
+                    return $self->_post_build_failure($@);
+                }
 
-            $success = Workflow::Simple::run_workflow_lsf(
-                $xmlfile,
-                %inputs
-            );
+                if (Workflow::DataSource::InstanceSchema->has_default_handle) {
+                    $self->status_message("Disconnecting InstanceSchema default handle.");
+                    Workflow::DataSource::InstanceSchema->disconnect_default_dbh();
+                }
+                $DB::single = 1;
+                $success = Workflow::Simple::run_workflow_lsf(
+                    $xmlfile,
+                    %inputs
+                );
+                print "past run\n";
+            }
         }
-    }
-
+    };
+    print "past eval\n";
+    
     # Failed a stage/step - send report
     unless ( $success ) {
         unless ( @Workflow::Simple::ERROR ) {
-            return $self->_post_build_failure("Workflow failed, but no errors given");
+            if ($@) {
+                return $self->_post_build_failure($@);
+            }
+            else {
+                return $self->_post_build_failure("Workflow failed, but no errors given");
+            }
         }
         my @errors = Genome::Model::Build::Error->create_from_workflow_errors(
             @Workflow::Simple::ERROR
