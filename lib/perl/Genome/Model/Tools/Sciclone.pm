@@ -6,7 +6,7 @@ use FileHandle;
 use Genome;
 use File::Basename;
 use FileHandle;
-#use Math::Combinatorics;
+use Math::Combinatorics;
 
 class Genome::Model::Tools::Sciclone {
     is => 'Command',
@@ -57,7 +57,7 @@ class Genome::Model::Tools::Sciclone {
         },
 
         minimum_depth => {
-            is => 'Integer',
+           is => 'Integer',
             doc => "Plot/Cluster only using variants that have at least this many reads. 100 is a reasonable default for capture data. If only wgs data is available, you'll need to lower this value.",
             is_optional => 1,
             default => 100,
@@ -451,34 +451,33 @@ sub execute {
 
     #--- 3d plotting ---
     if(defined(($plot3d_file))){
-        print "Warning: 3d plotting not implemented in gmt yet\n";
-        # if(@sampleNames < 3){
-        #     die("can't do 3d plotting without at least 3 samples")
-        # }
+        if(@sampleNames < 3){
+            die("can't do 3d plotting without at least 3 samples")
+        }
         
-        # my @combs = combine(2,@sampleNames);
-        # my @lists = map { join ",", @$_ } @combs; 
-        # my $count = 1;
-        # foreach my $list (@lists){
-        #     print $rfile "sc.plot3d(sc, outputFile=\"$plot3d_file.$count\", samplesToPlot=$list";
-        #     print $rfile ", size=$plot_size_3d";
-        #     print $rfile ")\n";
-        #     $count++;
-        # }
+        my @combs = combine(3,@sampleNames);
+        my @lists = map { join ",", @$_ } @combs; 
+        my $count = 1;
+        foreach my $list (@lists){
+            print $rfile "sc.plot3d(sc, outputFile=\"$plot3d_file.$count\", samplesToPlot=$list";
+            print $rfile ", size=$plot_size_3d";
+            print $rfile ")\n";
+            $count++;
+        }
 
     }
 
     close $rfile;
 
-    #now actually run the R script
-    # my $rcmd = "R --vanilla --slave \< $r_script_output_file";
-    my $rcmd = "Rscript $r_script_file";
-    my $return_value = Genome::Sys->shellcmd(
-        cmd => "$rcmd",
-        );
-    unless($return_value) {
-        $self->error_message("Failed to execute: Returned $return_value");
-        die $self->error_message;
-    }
-    return $return_value;
+    # #now actually run the R script
+    # # my $rcmd = "R --vanilla --slave \< $r_script_output_file";
+    # my $rcmd = "Rscript $r_script_file";
+    # my $return_value = Genome::Sys->shellcmd(
+    #     cmd => "$rcmd",
+    #     );
+    # unless($return_value) {
+    #     $self->error_message("Failed to execute: Returned $return_value");
+    #     die $self->error_message;
+    # }
+    # return $return_value;
 }
