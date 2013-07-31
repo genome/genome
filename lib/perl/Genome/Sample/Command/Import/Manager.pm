@@ -24,11 +24,18 @@ class Genome::Sample::Command::Import::Manager {
         make_progress => { 
             is => 'Boolean',
             default_value => 0,
-            doc => 'Do not create samples, models, run imports and schedule builds. Only print the status.', 
+            doc => 'Create samples, models, run imports and schedule builds.', 
         },
-        # create_entities: samples, models
-        # launch_inst_data_import: launch the inst data command
-        # schedule_builds: schedule builds
+        launch_imports => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Launch instrument data imports.',
+        },
+        start_builds => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Start builds for successfully imported samples.',
+        },
     ],
     has_optional_calculated => [
         info_file => {
@@ -153,6 +160,17 @@ sub __errors__ {
             desc => $import_cmd_error,
         );
         return @errors;
+    }
+
+
+    my @progress_methods = (qw/ launch_imports start_builds /);
+    if ( $self->make_progress ) {
+        for my $method ( @progress_methods ) {
+            $self->$method(1);
+        }
+    }
+    elsif ( grep { $self->$_} @progress_methods ) {
+        $self->make_progress(1);
     }
 
     return;
@@ -331,6 +349,7 @@ sub _resolve_instrument_data_import_command {
         $cmd_format .= ' ';
     }
     $self->instrument_data_import_command_sample_name_cnt(scalar @sample_name_replaces_in_command);
+
     $cmd_format .= 'genome instrument-data import basic --sample name=%s --source-files %s --import-source-name %s%s',
     $self->instrument_data_import_command_format($cmd_format);
 
@@ -393,7 +412,7 @@ sub _set_job_status_to_samples {
     my $job_list_cmd = $self->config->{'job dispatch'}->{list}->{'command'};
     if ( not $job_list_cmd ) {
         $self->error_message('No job list "command" in config! '.YAML::Dump($self->config));
-        return;
+        return 1;
     }
 
     my $name_column = $self->config->{'job dispatch'}->{list}->{'name column'};
@@ -507,7 +526,7 @@ sub _status {
     $fh->print($status);
     $fh->close;
 
-    print STDERR "Summary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
+    print STDERR "$status\n\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
     return 1;
 }
 
@@ -547,12 +566,12 @@ sub _make_progress {
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
     for my $sample ( values %{$self->samples} ) {
+        $self->set_sample_status($sample);
         next if $sample->{status} eq 'build_succeeded';
         # Create sample
         if ( not $sample->{sample} ) {
             $sample->{sample} = $self->_create_sample($sample->{importer_params});
             return if not $sample->{sample};
-            $sample->{status} ='import_needed'
         }
 
         # Create model
@@ -574,23 +593,32 @@ sub _make_progress {
             $sample->{build} = $model->latest_build;
         }
 
-        # Run import command, or schedule build
-        if ( $sample->{status} eq 'import_needed' ) {
-            my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
-            return if not $launch_ok;
+        $self->set_sample_status($sample);
+
+        # Run import command
+        if ( $self->launch_imports ) {
+            if ( $sample->{status} eq 'import_needed' ) {
+                my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
+                return if not $launch_ok;
+            }
+            elsif ( $sample->{status} eq 'import_failed' ) {
+                $sample->{instrument_data}->delete if $sample->{instrument_data};
+                my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
+                return if not $launch_ok;
+            }
         }
-        elsif ( $sample->{status} eq 'import_failed' ) {
-            $sample->{instrument_data}->delete if $sample->{instrument_data};
-            my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
-            return if not $launch_ok;
-        }
-        elsif ( $sample->{status} eq 'build_needed'
-            or $sample->{status} eq 'build_failed'
-            or $sample->{status} eq 'build_abandoned'
-            or $sample->{status} eq 'build_unstartable'
-        ) {
-            $sample->{model}->build_requested(1);
-            $sample->{build} = undef;
+
+        # Start builds
+        if ( $self->start_builds ) {
+            if ( $sample->{status} eq 'build_needed'
+                    or $sample->{status} eq 'build_failed'
+                    or $sample->{status} eq 'build_abandoned'
+                    or $sample->{status} eq 'build_unstartable'
+            ) {
+                my $build = $self->_start_build($sample->{model});
+                return if not $build;
+                $sample->{build} = $build;
+            }
         }
     }
 
@@ -606,6 +634,18 @@ sub _launch_instrument_data_import_for_sample {
     $self->error_message($@) if $@;
     $self->error_message('Failed to launch instrument data import command!');
     return;
+}
+
+sub _start_build {
+    my ($self, $model) = @_;
+
+    Carp::confess('No model given!') if not $model;
+
+    my $start = Genome::Model::Build::Command::Start->execute(models => [$model]);
+    return if not $start;
+
+    my ($build) = $start->builds;
+    return $build;
 }
 
 1;

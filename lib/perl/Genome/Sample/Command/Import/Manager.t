@@ -75,7 +75,7 @@ ok($manager->_launch_instrument_data_import_for_sample($sample_hash), 'launch in
 # Make progress: create sample, model and 'import' (it thinks it is importing b/c of the command used in the config file)
 $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => $working_directory,
-    make_progress => 1,
+     launch_imports => 1,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
@@ -90,7 +90,7 @@ ok(!$sample_hash->{model}->build_requested, 'model build_requested is off');
 ok(!$sample_hash->{model}->instrument_data, 'model does not have instrument data assigned');
 ok(!$sample_hash->{build}, 'sample hash build');
 
-# Make progress: create inst data here, it should get assigned to thew model and build should be requested
+# Make progress: create inst data here, it should get assigned to the model and build should be requested
 my $inst_data = Genome::InstrumentData::Imported->__define__(
     original_data_path => $sample_hash->{source_files},
     sample => $sample_hash->{sample},
@@ -103,12 +103,12 @@ $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $man
 
 $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => $working_directory,
-    make_progress => 1,
+    start_builds => 1,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 $sample_hash = eval{ $manager->samples->{$sample_name}; };
-ok($sample_hash->{model}->build_requested, 'model build_requested is on');
+ok($sample_hash->{model}->{build}, 'build created');
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
 # fail - no config file
