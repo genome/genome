@@ -118,15 +118,15 @@ See help for more information.',
         	is_optional => 1,
         	is_input => 1,
         	default => 2.5,
-        	doc => 'Gain threshold',
+        	doc => 'Gain threshold (copy number state)',
         },
         
         loss_threshold => {
         	is => 'Float',
         	is_optional => 1,
         	is_input => 1,
-        	default => -1.5,
-        	doc => 'Loss threshold',
+        	default => 1.5,
+        	doc => 'Loss threshold (copy number state)',
         },
         
 		genome_build => {
@@ -249,6 +249,27 @@ See help for more information.',
         	is_output => 1,
         	doc => 'Plot output in PDF format',
         },
+        
+        log2_input => {
+        	is => 'Boolean',
+        	is_optional => 0,
+        	is_output => 1,
+        	doc => 'Log2 values as input',
+        },
+        
+        log10_input => {
+        	is => 'Boolean',
+        	is_optional => 0,
+        	is_output => 1,
+        	doc => 'Log10 values as input',
+        },
+        
+        abs_input => {
+        	is => 'Boolean',
+        	is_optional => 0,
+        	is_output => 1,
+        	doc => 'Absolute values as input',
+        },
 	]
 };
 
@@ -260,6 +281,12 @@ sub help_detail {
     "Generate a plot of copy number alterations by percentage in a group.\n\nExample:\ngmt copy-number plot-percentage --input copynumber.cn.seg --output-pdf output.pdf --genome-build 37"
 }
 
+
+sub log_base {
+    my ($base, $value) = @_;
+    $value = 0.000001 if($value == 0);
+    return log($value)/log($base);
+}
 
 #-------------------------------------
 sub getEntrypointsFile{
@@ -339,10 +366,17 @@ sub execute {
     my $output_tsv_file = $self->output_tsv;
     my $rcommands_file = $self->rcommands_file;
     my $output_pdf_file = $self->output_pdf;
+    my $log2_input = $self->log2_input;
+    my $log10_input = $self->log10_input;
+    my $abs_input = $self->abs_input;
 	
-	## Variables
+	## Check for input type
+	unless (($log2_input xor $log10_input) xor ($abs_input)){
+		die "Please specify the input type. Types include: log2-input, log10-input, and abs-input\n";
+	}
+	
+	## Open input file
 	open (my $input, "<$input_file") or die "Cannot open input file $input_file. $!.\n";
-	
 	if (!defined($output_tsv_file)){
 		my ($tfh,$tfile) = Genome::Sys->create_temp_file;
 		unless($tfh) {
@@ -352,14 +386,15 @@ sub execute {
 		$output_tsv_file=$tfile;
 	}
 	
+	## Open output file
 	open (my $output_tsv, ">$output_tsv_file") or die "Cannot open output file $output_tsv_file. $!.\n";
-
 	unless( (defined($list_input)) xor (defined($single_input)) ){
         die $self->error_message("You must specify either the list-input param OR the single-input param, but not both.");
     }
 
+	## Get the details of the input files
 	my @files;
-	if ($list_input){	# Read the list of input files
+	if ($list_input){ # Read the list of input files
 		while (my $line = <$input>){
 			chomp $line;
 			push (@files, $line);
@@ -375,9 +410,6 @@ sub execute {
 		$col_end = defined($col_end) ? $col_end : 3;
 		$col_mean = defined($col_mean) ? $col_mean : 5;
 	}
-	
-	#### Debug #### ---------------------------
-	# print "Files of input: ".scalar(@files)."\n";
 	
 	# Read each individual file into a hash
 	my %samples;
@@ -405,13 +437,7 @@ sub execute {
 		}
 		close ($fh);
 		$input_files{basename($file)} = \@array;
-		#print basename($file).": ".scalar(@array)."\n";
 	}
-	
-	
-	#### Debug #### ---------------------------
-	# my $number = keys %input_files;
-	# print "Number of input files: $number \n";
 	
 	my $entrypoints_file = getEntrypointsFile($sex,$genome_build);
 	open (my $entrypoints, "<$entrypoints_file") or die "Cannot open entrypoints file. $entrypoints_file. $!\n";
@@ -465,53 +491,75 @@ sub execute {
 				
 					next if (!defined(${@{$input_files{$key}}[$j]}{chrom}));
 					next if (${@{$input_files{$key}}[$j]}{chrom} ne $chrmlenKey); # Skip the line if it is not the matching chromosome
-					next if ($thisStart > $end); # Skip non-overlapping regions: Start after window (outside) |        | oxxxxxo
-					next if ($thisEnd < $start); # Skip non-overlapping regions: End before window (outside): oxxxxxo  |        |
+					next if ($thisStart >= $end); # Skip non-overlapping regions: Start after window (outside) |        | oxxxxxo
+					next if ($thisEnd <= $start); # Skip non-overlapping regions: End before window (outside): oxxxxxo  |        |
 					next if ((${@{$input_files{$key}}[$j]}{mean} < $gain_threshold) 
 							&& (${@{$input_files{$key}}[$j]}{mean} > $loss_threshold)); # Skip non-interesting regions
-						
+				
+					# Input base conversion
+					if ($log2_input) {
+						${@{$input_files{$key}}[$j]}{mean} = 2*(2**${@{$input_files{$key}}[$j]}{mean});
+					} elsif ($log10_input){
+						${@{$input_files{$key}}[$j]}{mean} = 2*(10**${@{$input_files{$key}}[$j]}{mean});
+					} elsif ($abs_input){
+						;
+					}
+					
 					# |   oxxxxxxo   | (Absolutely inside)
-					if (($thisStart >= $start) && ($thisEnd <= $end)){
+					if (($thisStart >= $start) && ($thisEnd < $end)){
 						my $score = ($thisEnd - $thisStart) / $window_size;
 						my $window = floor($thisStart / $window_size);
 
-						if (${@{$input_files{$key}}[$j]}{mean} <= $loss_threshold) { # loss
+						if (${@{$input_files{$key}}[$j]}{mean} < $loss_threshold) { # loss
 							@{$scores{"loss_$chrmlenKey"}}[$window] -= $score; # Write to loss
-						} else {
+						}
+						if (${@{$input_files{$key}}[$j]}{mean} > $gain_threshold) {
 							@{$scores{"gain_$chrmlenKey"}}[$window] += $score; # Write to gain
 						}
+						
 					}
 				
 					# |   oxxxxxxxxxx|xxxo (Partially inside - head)
 					if (( $thisStart >= $start ) && ( $thisEnd >= $end )){
 						my $score = ($end - $thisStart) / $window_size;
 						my $window = floor($thisStart / $window_size);
-					
-						if (${@{$input_files{$key}}[$j]}{mean} <= $loss_threshold) { # loss
+
+						if (${@{$input_files{$key}}[$j]}{mean} < $loss_threshold) { # loss
 							@{$scores{"loss_$chrmlenKey"}}[$window] -= $score; # Write to loss
-						} else {
+						}
+						if (${@{$input_files{$key}}[$j]}{mean} > $gain_threshold) {
 							@{$scores{"gain_$chrmlenKey"}}[$window] += $score; # Write to gain
 						}
+						if ($score > 1 || $score < -1){
+							print $score."\n";
+						}
+						
 					} 
 				
 					# oxxx|xxxxxxxxxo    | (Partially inside - tail)
-					if ( $thisEnd <= $end ){
+					if ( $thisStart <= $start && $thisEnd <= $end ){
 						my $score = ($thisEnd - $start) / $window_size;
 						my $window = floor($thisStart / $window_size);
 					
-						if (${@{$input_files{$key}}[$j]}{mean} <= $loss_threshold) { # loss
+						if (${@{$input_files{$key}}[$j]}{mean} < $loss_threshold) { # loss
 							@{$scores{"loss_$chrmlenKey"}}[$window] -= $score; # Write to loss
-						} else {
+						}
+						if (${@{$input_files{$key}}[$j]}{mean} > $gain_threshold) {
 							@{$scores{"gain_$chrmlenKey"}}[$window] += $score; # Write to gain
+						}
+						
+						if ($score > 1 || $score < -1){
+							print $score."\n";
 						}
 					}
 				
 					# oxxx|xxxxxxxxxx|xxxo (Entire coverage)
 					if ( ($thisStart <= $start) && ($thisEnd >= $end) ) {
-						my $window = floor(($start+1) / $window_size);
-						if (${@{$input_files{$key}}[$j]}{mean} <= $loss_threshold) { # loss
+						my $window = floor(($start) / $window_size);
+						if (${@{$input_files{$key}}[$j]}{mean} < $loss_threshold) { # loss
 							@{$scores{"loss_$chrmlenKey"}}[$window] -= 1; # Write 1 to loss
-						} else {
+						}
+						if (${@{$input_files{$key}}[$j]}{mean} > $gain_threshold) {
 							@{$scores{"gain_$chrmlenKey"}}[$window] += 1; # Write 1 to gain
 						}
 					}
@@ -532,6 +580,10 @@ sub execute {
 				$total_number = (scalar keys %samples) - 1; # sample number; correct the first row (not a sample)
 			}
 			
+			if (@{$scores{"gain_$chrmlenKey"}}[$i] > $total_number) {
+				print @{$scores{"gain_$chrmlenKey"}}[$i]."\n";
+			}
+
 			my $percentage_gain = @{$scores{"gain_$chrmlenKey"}}[$i] / $total_number;
 			my $percentage_loss = @{$scores{"loss_$chrmlenKey"}}[$i] / $total_number;
 			 
@@ -545,14 +597,11 @@ sub execute {
 				print $output_tsv "$chrmlenKey\t".($i*$window_size)."\t".(($i+1)*$window_size)."\t"."0\t".$percentage_loss."\n";
 			}	
 		}
-	
+
 	}
 	close($input);
 	close($output_tsv);
-	
-	#print "Debug Spot 4\n";
-	
-	
+
 	############################################### R Section ############################################################
 	#open the R file
     if (!defined($rcommands_file)){
@@ -652,7 +701,6 @@ sub execute {
 	$self->error_message("Failed to execute: Returned $return");
 	die $self->error_message;
     }
-	
-	
+
 }
 1;

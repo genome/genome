@@ -80,6 +80,8 @@ sub execute {
 
     $self->_log_dbs_used;
     
+    $self->_validate_dbs;
+
     my $rv = $self->_run_workflow;
 
     if ( $rv ) {
@@ -170,6 +172,16 @@ sub _log_dbs_used {
         $fh->printf("%-15s%40s\n", uc $name.' db:', $self->$db);
     }
     $fh->close;
+}
+
+sub _validate_dbs {
+    my $self = shift;
+    for my $db_name ( qw/ human nt virus / ) {
+        my $db_param_name = $db_name.'_db';
+        if( not -s $self->$db_param_name ) {
+            die 'Failed to find db file: '.$self->$db_param_name."\n";
+        }
+    }
 }
 
 1;

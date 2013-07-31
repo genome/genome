@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
+use Genome::Utility::Test;
 use Test::More tests => 4;
 
 my $id = 2891454740;
@@ -14,9 +15,17 @@ ok($result, "ran");
 ok(-e $outfile, "outfile $outfile exists");
 
 my $expected = __FILE__ . '.expected-output';
-my @diff = grep { $_ !~ /total_kb/ } `sdiff -s -w 500 $expected $outfile`;
-is(scalar(@diff), 0, "no differences")
-    or diag(@diff);
+Genome::Utility::Test::compare_ok(
+    $outfile, 
+    $expected,
+    'output matches',
+    filters => [
+        sub{ 
+            my $line = shift;
+            return if $line =~ /total_kb/i; # ignore disk volumes
+            return $line;
+        },
+    ],
+);
 
-
-
+done_testing(4);

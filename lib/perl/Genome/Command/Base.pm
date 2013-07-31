@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Data::Dumper;
+use IO::File;
 require File::Basename;
 
 class Genome::Command::Base {
@@ -711,6 +712,18 @@ sub resolve_class_and_params_for_argv {
     }
 }
 
+sub terminal_input_filehandle {
+    my $self = shift;
+
+    my $fh = IO::File->new('/dev/tty', 'r');
+    unless ($fh) {
+        Carp::carp("Couldn't open /dev/tty for terminal input: $!\n    Using STDIN...");
+        $fh = *STDIN;
+    }
+    return $fh;
+}
+
+
 sub _ask_user_question {
     my $self = shift;
     my $question = shift;
@@ -731,8 +744,10 @@ sub _ask_user_question {
         die $self->error_message("Attempting to ask user question but cannot interact with user!");
     }
 
+    my $terminal = $self->terminal_input_filehandle();
+
     alarm($timeout) if ($timeout);
-    chomp($input = <STDIN>);
+    chomp($input = $terminal->getline());
     alarm(0) if ($timeout);
 
     print STDERR "\n";
