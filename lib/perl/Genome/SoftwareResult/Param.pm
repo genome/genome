@@ -51,6 +51,23 @@ class Genome::SoftwareResult::Param {
     data_source => 'Genome::DataSource::GMSchema',
 };
 
+sub __display_name__ {
+    my $self = shift;
+    my $name = $self->name;
+    my $sr = $self->software_result;
+    my @value;
+    my $value_class_name = $self->value_class_name;
+    my $value_id = $self->value_id;
+    my $value;
+    if ($value_class_name) {
+        $value = $value_class_name->get($value_id);
+    }
+    else {
+        $value = UR::Value::Text->get($value_id);
+    }
+    return "$name:" . $value->__display_name__;
+}
+
 # this will sync up new columns with the old ones
 # once all old snapshots are gone, we will switch to the new columns and remove this
 
