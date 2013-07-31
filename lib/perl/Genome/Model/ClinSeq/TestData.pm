@@ -16,9 +16,15 @@ use Genome::TestObjGenerator::Model::ReferenceSequence;
 use Genome::TestObjGenerator::Model::ImportedVariationList;
 use Genome::TestObjGenerator::Model::ImportedAnnotation;
 use Genome::TestObjGenerator::Build;
+use Genome::Utility::Test;
 
 sub load {
     my %ids;
+    #need a way to access the data
+    my $base_dir = $ENV{GENOME_TEST_INPUTS}."Genome-Model-ClinSeq-TestData/2013-07-30";
+    
+    $ENV{GENOME_DB} = "$base_dir/reference_annotations/";
+    
     my $individual = Genome::Individual->create(common_name => "FAKE1", 
         name => "test-clin-seq",
         gender => "unspecified",
@@ -67,7 +73,10 @@ sub load {
     $ids{DBSNP_BUILD} = $dbsnp_build->id;
 
     my $annotation_model = Genome::TestObjGenerator::Model::ImportedAnnotation->setup_object;
-    my $annotation_build = Genome::TestObjGenerator::Build->setup_object(model_id => $annotation_model->id);
+    my $annotation_build = Genome::TestObjGenerator::Build->setup_object(model_id => $annotation_model->id,
+                                                                         data_directory => $base_dir."/annot_dir",
+                                                                         status => "Succeeded",
+                                                                        );
     $ids{ANNOTATION_BUILD} = $annotation_build->id;
 
     my $ref_seq_model = Genome::TestObjGenerator::Model::ReferenceSequence->setup_object;
@@ -109,8 +118,10 @@ sub load {
         previously_discovered_variations_build => $dbsnp_build,
     );
     $ids{WGS_MODEL} = $wgs_model->id;
-    my $wgs_build = Genome::TestObjGenerator::Build->setup_object(model_id => $wgs_model->id, status => 'Succeeded');
-
+    my $wgs_build = Genome::TestObjGenerator::Build->setup_object(model_id => $wgs_model->id, status => 'Succeeded',
+                                                                  data_directory => $base_dir."/som_var_dir",
+                                                                 );
+    $ids{WGS_BUILD} = $wgs_build->id;
     my $exome_pp = Genome::TestObjGenerator::ProcessingProfile::SomaticVariation->setup_object(
         snv_detection_strategy => "strelka 0.4.6.2 [isSkipDepthFilters = 0]");
     $ids{EXOME_PP} = $exome_pp->id;
@@ -137,6 +148,10 @@ sub load {
     );
     $ids{CLINSEQ_MODEL} = $clin_seq_model->id;
     my $clin_seq_build = Genome::TestObjGenerator::Build->setup_object(model_id => $clin_seq_model->id, status => "Succeeded");
+    $ids{CLINSEQ_BUILD} = $clin_seq_build->id;
+    $ids{CANCER_ANNOT_PATH} = $clin_seq_build->cancer_annotation_db->data_directory;
+    $ids{MISC_ANNOT_PATH} = $clin_seq_build->misc_annotation_db->data_directory;
+    $ids{COSMIC_ANNOT_PATH} = $clin_seq_build->cosmic_annotation_db->data_directory;
     return \%ids;
 }
 
