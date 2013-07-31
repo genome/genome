@@ -140,20 +140,20 @@ class Genome::Model::Tools::Sciclone {
             default => 0,
         },
 
-        minimum_labelled_peak_height => {
-            is => 'Text',
-            doc => "only KDE peaks that exceed this height get labelled (1d plot)",
-            is_optional => 1,
-            is_input => 1,
-            default => 0.001
-        },
+        # minimum_labelled_peak_height => {
+        #     is => 'Text',
+        #     doc => "only KDE peaks that exceed this height get labelled (1d plot)",
+        #     is_optional => 1,
+        #     is_input => 1,
+        #     default => 0.001
+        # },
 
-        only_label_highest_peak => {
-            is => 'Boolean',
-            doc => "only label the highest peak (1d plot)",
-            is_optional => 1,
-            default => 0
-        },
+        # only_label_highest_peak => {
+        #     is => 'Boolean',
+        #     doc => "only label the highest peak (1d plot)",
+        #     is_optional => 1,
+        #     default => 0
+        # },
 
         overlay_error_bars => {
             is => 'Boolean',
@@ -195,6 +195,13 @@ class Genome::Model::Tools::Sciclone {
             is_optional => 1,
             default => 10, 
         },
+        save_image_file => {
+            is => 'Text',
+            doc => "filename to which the R session will be saved",
+            is_optional => 1,
+            is_input => 1,
+            is_output => 1            
+        }
 
         ],
 };
@@ -244,8 +251,8 @@ sub execute {
     my $highlight_sex_chrs = $self->highlight_sex_chrs;
     my $positions_to_highlight = $self->positions_to_highlight;
     my $label_highlighted_points  = $self->label_highlighted_points;
-    my $minimum_labelled_peak_height = $self->minimum_labelled_peak_height;
-    my $only_label_highest_peak = $self->only_label_highest_peak;
+    # my $minimum_labelled_peak_height = $self->minimum_labelled_peak_height;
+    # my $only_label_highest_peak = $self->only_label_highest_peak;
     my $plot_only_cn2 = $self->plot_only_cn2;
     my $overlay_clusters = $self->overlay_clusters;
     my $show_title = $self->show_title;
@@ -353,6 +360,9 @@ sub execute {
     #write out the cluster table command:
     print $rfile "writeClusterTable(sc, \"$clusters_file\")\n";
 
+    if(defined($self->save_image_file)){
+        print $rfile "save.image(\"" . $self->save_image_file . "\")\n";
+    }
 
     #--- 1d plotting ---
     if(defined(($plot1d_file))){
@@ -374,15 +384,15 @@ sub execute {
             print $rfile ", highlightsHaveNames=FALSE";
         }
 
-        if(defined($minimum_labelled_peak_height)){
-            print $rfile ", minimumLabelledPeakHeight=$minimum_labelled_peak_height";
-        }
+        # if(defined($minimum_labelled_peak_height)){
+        #     print $rfile ", minimumLabelledPeakHeight=$minimum_labelled_peak_height";
+        # }
 
-        if($only_label_highest_peak){
-            print $rfile ", onlyLabelHighestPeak=TRUE";
-        } else {
-            print $rfile ", onlyLabelHighestPeak=FALSE";
-        }
+        # if($only_label_highest_peak){
+        #     print $rfile ", onlyLabelHighestPeak=TRUE";
+        # } else {
+        #     print $rfile ", onlyLabelHighestPeak=FALSE";
+        # }
 
 
         if($plot_only_cn2){
@@ -459,25 +469,27 @@ sub execute {
         my @lists = map { join ",", @$_ } @combs; 
         my $count = 1;
         foreach my $list (@lists){
-            print $rfile "sc.plot3d(sc, outputFile=\"$plot3d_file.$count\", samplesToPlot=$list";
+            my @samp = split(",",$list);
+            my $samples = 'c("' . join('","',@samp) . '")';
+            print $rfile "sc.plot3d(sc, outputFile=\"$plot3d_file.$count\", samplesToPlot=$samples";
             print $rfile ", size=$plot_size_3d";
             print $rfile ")\n";
             $count++;
         }
-
+        
     }
 
     close $rfile;
 
-    # #now actually run the R script
-    # # my $rcmd = "R --vanilla --slave \< $r_script_output_file";
-    # my $rcmd = "Rscript $r_script_file";
-    # my $return_value = Genome::Sys->shellcmd(
-    #     cmd => "$rcmd",
-    #     );
-    # unless($return_value) {
-    #     $self->error_message("Failed to execute: Returned $return_value");
-    #     die $self->error_message;
-    # }
-    # return $return_value;
+    #now actually run the R script
+    # my $rcmd = "R --vanilla --slave \< $r_script_output_file";
+    my $rcmd = "Rscript $r_script_file";
+    my $return_value = Genome::Sys->shellcmd(
+        cmd => "$rcmd",
+        );
+    unless($return_value) {
+        $self->error_message("Failed to execute: Returned $return_value");
+        die $self->error_message;
+    }
+    return $return_value;
 }
