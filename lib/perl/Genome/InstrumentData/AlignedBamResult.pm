@@ -32,9 +32,15 @@ class Genome::InstrumentData::AlignedBamResult {
           via => '__self__',
           to => 'bam_path',
         },
-        bam_flagstat_file => {
+        # flagstat
+        bam_flagstat_path => {
             calculate_from => [qw/ bam_path /],
             calculate => q| return $bam_path.'.flagstat'; |,
+        },
+        bam_flagstat_file => { # alias
+          is => 'Text',
+          via => '__self__',
+          to => 'bam_flagstat_path',
         },
     ],
 };
@@ -49,16 +55,16 @@ sub run_flagstat_on_output_bam_path {
         return;
     }
 
-    my $flagstat_file = $self->bam_flagstat_file;
-    $self->status_message("Flagstat file: $flagstat_file");
-    my $cmd = "samtools flagstat $bam_path > $flagstat_file";
+    my $flagstat_path = $self->bam_flagstat_path;
+    $self->status_message("Flagstat file: $flagstat_path");
+    my $cmd = "samtools flagstat $bam_path > $flagstat_path";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $flagstat_file ) {
+    if ( not $rv or not -s $flagstat_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run flagstat!');
         return;
     }
-    my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
+    my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     $self->status_message('Flagstat output:');
     $self->status_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
     if ( not $flagstat->{total_reads} > 0 ) {
