@@ -24,7 +24,7 @@ sub create {
     return $class->SUPER::create(@_);
 }
 
-sub _parse_info {
+sub _parse_info_fields {
     return split(";", shift);
 }
 
@@ -70,8 +70,8 @@ sub _parse_spec {
         annotation_file => $annotation_file,
     );
 
-    if (exists $raw_spec->{info}) {
-        $params{info} = [_parse_info(delete $raw_spec->{info})];
+    if (exists $raw_spec->{info_fields}) {
+        $params{info_fields} = [_parse_info_fields(delete $raw_spec->{info_fields})];
     }
 
     if (exists $raw_spec->{identifiers}) {
@@ -82,6 +82,7 @@ sub _parse_spec {
         confess "Unknown params in annotation spec: " . Dumper($raw_spec);
     }
 
+    print "Raw spec to params: " . Dumper($raw_spec, \%params);
     my $spec = Genome::Model::Tools::Joinx::VcfAnnotationSpec->create(%params);
     return $spec;
 }

@@ -58,8 +58,8 @@ my $dbsnp_build = setup_annotation_build("fake-dbsnp", "123", $dbsnp_vcf);
 my $tg_build = setup_annotation_build("fake-1kg-wgs", "456", $thousand_genomes_vcf);
 
 my @params = (
-    {source_name => "fake-dbsnp", source_version => 123, info => "dbSNPBuildID=dbsnp,per-alt;GMAF"},
-    {source_name => "fake-1kg-wgs", source_version => 456, info => "AA;AF;AMR_AF;ASN_AF;AFR_AF;EUR_AF;VT",
+    {source_name => "fake-dbsnp", source_version => 123, info_fields => "dbSNPBuildID=dbsnp,per-alt;GMAF"},
+    {source_name => "fake-1kg-wgs", source_version => 456, info_fields => "AA;AF;AMR_AF;ASN_AF;AFR_AF;EUR_AF;VT",
             identifiers => 0},
 );
 

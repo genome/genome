@@ -16,14 +16,14 @@ use_ok($pkg);
 my @tests = (
     # Build specified by source_name/version, specific info fields
     {
-        input => 'joinx {source_name: dbsnp, source_version: 137, info: "a=b,per-alt:c:d"}',
+        input => 'joinx {source_name: dbsnp, source_version: 137, info_fields: "a=b,per-alt:c:d"}',
         expected => [
             {
                 type => "joinx",
                 params => [{
                     source_name => 'dbsnp',
                     source_version => 137,
-                    info => 'a=b,per-alt:c:d',
+                    info_fields => 'a=b,per-alt:c:d',
                 }],
             }
         ]
@@ -43,12 +43,12 @@ my @tests = (
     },
     ## Build specified by id, specific info fields
     {
-        input => 'joinx {source_build: 1234, info: "a=b,per-alt:c:d"}',
+        input => 'joinx {source_build: 1234, info_fields: "a=b,per-alt:c:d"}',
         expected => [
             {
                 type => "joinx",
                 params => [{
-                    info => 'a=b,per-alt:c:d',
+                    info_fields => 'a=b,per-alt:c:d',
                     source_build => 1234
                 }],
             }
@@ -70,7 +70,7 @@ my @tests = (
     {
         input => join(' | ',
             'vep {ensembl_annotation_build: 12}',
-            'joinx [{source_name: dbsnp, source_version: 137, info: "a=b,per-alt:c:d"}, {source_build: 1234}, {source_name: 1kg-wgs, source_version: 20, info: x}]',
+            'joinx [{source_name: dbsnp, source_version: 137, info_fields: "a=b,per-alt:c:d"}, {source_build: 1234}, {source_name: 1kg-wgs, source_version: 20, info_fields: x}]',
             ),
         expected => [
             {
@@ -84,7 +84,7 @@ my @tests = (
                 params => [{
                     source_name => 'dbsnp',
                     source_version => 137,
-                    info => 'a=b,per-alt:c:d',
+                    info_fields => 'a=b,per-alt:c:d',
                 },
                 {
                     source_build => 1234,
@@ -92,7 +92,7 @@ my @tests = (
                 {
                     source_name => '1kg-wgs',
                     source_version => 20,
-                    info => 'x',
+                    info_fields => 'x',
                 }]
             }
         ]

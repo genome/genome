@@ -33,6 +33,23 @@ class Genome::Model::PhenotypeCorrelation::Command::VcfAnnotation::Dispatcher {
     ]
 };
 
+sub help_synopsis {
+    return <<EOS
+
+    genome model phenotype-correlation vcf-annotation dispatcher \\
+        --input-file in.vcf \\
+        --output-file out.vcf \\
+        --strategy 'vep {condel: b, sift: b, polyphen: b, hgnc: 1} | joinx [{source_name: dbsnp, source_version: 137, info_fields: GMAF}, {source_name: 1kg-wgs, source_version: 20101123}]'
+EOS
+}
+
+sub help_detail {
+    return <<EOS
+Annotate a vcf file with vep and/or joinx vcf-annotate.
+EOS
+}
+
+
 sub _tool_class_name {
     my $name = shift;
     my $leaf = join("", map {ucfirst} split("-", $name));
