@@ -211,6 +211,31 @@ sub _run_aligner {
     return 1;
 }
 
+sub _disconnect_from_db {
+    my ($self) = @_;
+
+    $self->status_message("Closing data source db handle...");
+    if ($self->__meta__->data_source->has_default_handle) {
+        if ($self->__meta__->data_source->disconnect_default_handle) {
+            $self->status_message("Disconnected data source db handle (as expected).");
+        } else {
+            $self->status_message("Unable to disconnect data source db handle.");
+        }
+    } else {
+        $self->status_message("Data source db handle already closed.");
+    }
+}
+
+sub _check_db_connection {
+    my ($self) = @_;
+
+    if ($self->__meta__->data_source->has_default_handle) {
+        $self->status_message("Data source db handle unexpectedly reconnected itself.");
+    } else {
+        $self->status_message("Data source db handle still closed (as expected).");
+    }
+}
+
 # Sort a sam file.
 sub _sort_sam {
     my ($self, $given_sam) = @_;
