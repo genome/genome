@@ -46,6 +46,15 @@ ok(-s $base_recalibrator->bam_path, 'bam file exists');#bam produced is the same
 ok(-s $base_recalibrator->bam_path.'.bai', 'bam index exists');
 ok(-s $base_recalibrator->bam_flagstat_file, 'bam flagstat file exists');
 Genome::Utility::Test::compare_ok($base_recalibrator->bam_flagstat_file, $result_data_dir.'/expected.bam.flagstat', 'flagstat matches');
+ok(-s $base_recalibrator->bam_md5_path, 'bam md5 path exists');
+Genome::Utility::Test::compare_ok(
+    $base_recalibrator->bam_md5_path,
+    $result_data_dir.'/expected.bam.md5',
+    'md5 matches',
+    filters => [
+        sub{ my $line = shift; $line =~ s/\s+.+//; return $line; }, # extract md5
+    ],
+);
 
 # Base recalibrator params
 my %base_recalibrator_params = $base_recalibrator->base_recalibrator_params;

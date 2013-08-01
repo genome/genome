@@ -52,6 +52,9 @@ sub create {
     my $run_flagstat = $self->run_flagstat_on_output_bam_path;
     return if not $run_flagstat;
 
+    my $run_md5sum = $self->run_md5sum_on_output_bam_path;
+    return if not $run_md5sum;
+
     my $allocation = $self->disk_allocations;
     eval { $allocation->reallocate };
 

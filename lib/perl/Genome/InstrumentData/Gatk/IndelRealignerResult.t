@@ -47,6 +47,7 @@ ok(-s $indel_realigner->bam_path, 'bam file exists');#bam produced fin test is t
 ok(-s $indel_realigner->bam_path.'.bai', 'bam index exists');
 ok(-s $indel_realigner->bam_flagstat_file, 'bam flagstat file exists');
 Genome::Utility::Test::compare_ok($indel_realigner->bam_flagstat_file, $result_data_dir.'/expected.bam.flagstat', 'flagstat matches');
+ok(-s $indel_realigner->bam_md5_path, 'bam md5 path exists');
 
 # Allocation params
 is(
