@@ -35,7 +35,7 @@ my @specs = (
     Genome::Model::Tools::Joinx::VcfAnnotationSpec->create(
         annotation_file => $thousand_genomes_vcf,
         identifiers => 0,
-        info => ["AA", "AF,per-alt", "AMR_AF", "ASN_AF", "EUR_AF", "VT"]
+        info => ["AA", "AF", "AMR_AF", "ASN_AF", "EUR_AF", "VT"]
         ),
 );
 
@@ -72,6 +72,7 @@ my @expected_annotation_files = sort map {basename($_->annotation_file)} @specs;
 is_deeply(\@annotation_files, \@expected_annotation_files, "Annotation sources are listed in vcf header");
 
 my $diff = diff_vcf_file_vs_file($output_file, $expected_file, ignore_patterns => ["^##annotation="]);
+system("cp $output_file /tmp/asdf.vcf");
 ok(!$diff, "Output matches expected value") or diag("Diff results:\n$diff");
 
 done_testing();
