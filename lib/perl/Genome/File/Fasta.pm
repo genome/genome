@@ -117,16 +117,21 @@ sub _regions_for_chunk {
 }
 
 sub divide_into_chunks {
-    my ($self, $total_chunks) = @_;
+    my ($self, $total_chunks, $chunk_index) = @_;
 
     my $chunk_size = ceil($self->genome_length / $total_chunks);
     
-    my @chunks;
-    for my $chunk_num (1..$total_chunks) {
-        my @intervals = $self->_regions_for_chunk($chunk_size, $chunk_num);
-        push @chunks, \@intervals;
+    unless($chunk_index) {
+        my @chunks;
+        for my $chunk_num (1..$total_chunks) {
+            my @intervals = $self->_regions_for_chunk($chunk_size, $chunk_num);
+            push @chunks, \@intervals;
+        }
+        return @chunks;
     }
-    return @chunks;
+    else {
+        return $self->_regions_for_chunk($chunk_size, $chunk_index);
+    }
 }
 
 1;
