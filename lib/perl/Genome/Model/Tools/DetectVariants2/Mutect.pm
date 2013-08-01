@@ -5,6 +5,8 @@ use strict;
 
 use Genome;
 use Workflow;
+use Workflow::Simple;
+use Data::Dumper;
 
 my $DEFAULT_VERSION = 'test';
 
@@ -15,6 +17,13 @@ class Genome::Model::Tools::DetectVariants2::Mutect {
         number_of_chunks => {
             is => 'Integer',
             doc => 'number of chunks to split the genome into for mutect to run.',
+        },
+        workflow_log_dir => {
+            is => 'Text',
+            calculate_from => 'output_directory',
+            calculate => q{ return File::Basename::dirname($output_directory) . '/mutect_by_chunk_log/'; },
+            is_optional => 1,
+            doc => 'workflow log directory of each mutect run',
         },
     ],
     has_param => [
@@ -56,9 +65,42 @@ sub _detect_variants {
     );
     # Update the default parameters with those passed in.
     my %mutect_params = $self->parse_params($self->params, @basic_params);
-    if($self->number_of_chunks) {
-        die "Unimplemented\n";
+    if($self->number_of_chunks && $self->number_of_chunks > 1) {
+        #die "Unimplemented\n";
+        my $reference = Genome::File::Fasta->create(id => $self->reference_sequence_input) or die "Unable to create Genome::File::Fasta object for chunking of jobs\n";
+        my @chunks = $reference->divide_into_chunks($self->number_of_chunks);
 
+        my $op = Workflow::Operation->create(
+            name => 'Mutect x' . scalar(@chunks),
+            operation_type => Workflow::OperationType::Command->get('Genome::Model::Tools::Mutect::ParallelWrapper'),
+        );
+        $op->parallel_by('chunk_num');
+
+        if ($self->workflow_log_dir) {
+            unless (-d $self->workflow_log_dir) {
+                unless (Genome::Sys->create_directory($self->workflow_log_dir)) {
+                    die $self->error_message('Failed to create workflow_log_dir: '. $self->workflow_log_dir);
+                }
+            }
+            $op->log_dir($self->workflow_log_dir);
+        }
+
+        $mutect_params{chunk_num} = [1..scalar(@chunks)];
+        $mutect_params{total_chunks} = $self->number_of_chunks;
+        $mutect_params{fasta_object} = $reference;
+        $mutect_params{basename} = $output_dir . "/mutect";
+        delete $mutect_params{output_file};
+        delete $mutect_params{vcf};
+        delete $mutect_params{coverage_file};
+        my $output = Workflow::Simple::run_workflow_lsf($op, %mutect_params);
+        unless (defined $output) {
+            my @error;
+            for (@Workflow::Simple::ERROR) {
+                push @error, $_->error;
+            }
+            $self->error_message(join("\n", @error));
+            die $self->error_message;
+        }
     }
     else {
         my $mutect = Genome::Model::Tools::Mutect->create(
@@ -138,7 +180,9 @@ sub parse_params {
         #then we know we have dv2 params
         #only one is allowed so just parse it out
         my ($param_name, $value) = split " ", $dv2_params; #note that this will break if there are flags
-        unless($self->$param_name) {
+        $param_name =~ s/^--//g;
+        $param_name =~ s/-/_/g;
+        unless($self->can($param_name)) {
             my $package = __PACKAGE__;
             die "$param_name specified in strategy is not available or not properly handled by $package\n";
         }
@@ -155,28 +199,23 @@ sub parse_params {
 }
 
 sub _sort_detector_output {
-    my $self = shift;
-    my @detector_files = glob($self->_temp_staging_directory."/*.hq");
-    for my $file (@detector_files) {
-        my $rv = Genome::Sys->shellcmd( cmd => qq{sed '2s/contig/#contig/' -i $file});
-        unless($rv) {
-            die $self->error_message("Unable to prefix Mutect header line with a # so it sorts right");
-        }
-    }
-    my $rv = $self->SUPER::_sort_detector_output;
-    unless($rv) {
-        die $self->error_message("Unable to sort Mutect detector output");
-    }
-    for my $file (@detector_files) {
-        my $rv = Genome::Sys->shellcmd( cmd => qq{sed '2s/#contig/contig/' -i $file});
-        unless($rv) {
-            die $self->error_message("Unable to remove # prefix of Mutect header line after sorting");
-        }
-    }
-    return $rv;
+    return 1;
 }
 
-
+sub convert_chunks_to_mutect_params {
+    my ($self, @chunks) = @_;
+    #this thing is a list of array refs containing array refs
+    my @mutect_params;
+    for my $chunk (@chunks) {
+        my @intervals;
+        for my $interval (@$chunk) {
+            my ($chr, $start, $stop) = @$interval;
+            push @intervals, "--intervals $chr:$start-$stop";
+        }
+        push @mutect_params, \@intervals;
+    }
+    return @mutect_params;
+}
     
 
 1;
