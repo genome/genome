@@ -19,6 +19,7 @@ my $class = 'Genome::InstrumentData::AlignedBamResult';
 use_ok($class) or die;
 my $data_dir = Genome::Utility::Test->data_dir_ok($class);
 my $input_bam = $data_dir.'/input.bam';
+my $input_md5 = $input_bam.'.md5';
 my $input_flagstat = $input_bam.'.flagstat';
 class Genome::InstrumentData::AlignedBamResultTester {
     is => $class,
@@ -41,10 +42,19 @@ ok(-s $bam_path, 'linked bam');
 # flagstat
 my $flagstat_path = $aligned_bam_result->bam_flagstat_path;
 ok(!-s $flagstat_path, 'flagstat does not exist yet');
-is($flagstat_path, $tmpdir.'/'.$aligned_bam_result->id.'.bam.flagstat', 'flagstat path named correctly');
+is($flagstat_path, $aligned_bam_result->bam_path.'.flagstat', 'flagstat path named correctly');
 is($aligned_bam_result->bam_flagstat_file, $flagstat_path, 'flagstat file is same as flagstat path');
 ok($aligned_bam_result->run_flagstat_on_output_bam_path, 'run flagstat');
 ok(-s $flagstat_path, 'created flagstat');
 Genome::Utility::Test::compare_ok($flagstat_path, $input_flagstat);
+
+# md5
+my $md5_path = $aligned_bam_result->bam_md5_path;
+ok(!-s $md5_path, 'md5 does not exist yet');
+is($md5_path, $aligned_bam_result->bam_path.'.md5', 'md5 path named correctly');
+my $md5sum = $aligned_bam_result->run_md5sum_on_output_bam_path;
+ok($md5sum, 'run md5');
+ok(-s $md5_path, 'created md5');
+is($md5sum, '940825168285c254b58c47399a3e1173', 'md5sumn matches');
 
 done_testing();
