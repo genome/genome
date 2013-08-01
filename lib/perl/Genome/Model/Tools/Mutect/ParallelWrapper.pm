@@ -60,8 +60,7 @@ sub execute {
     $self->vcf($self->basename . "_" . $self->chunk_num . ".vcf");
     $self->coverage_file($self->basename . "_" . $self->chunk_num . ".wig");
     my $sub = $self->super_can('_execute_body');
-    $sub->($self, @_);
-    return 1;
+    return $sub->($self, @_);
 };
 
 sub convert_chunks_to_mutect_regions {
