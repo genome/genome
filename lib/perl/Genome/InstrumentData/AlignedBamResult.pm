@@ -85,6 +85,12 @@ sub run_md5sum_on_output_bam_path {
     my $self = shift;
     $self->status_message('Run MD5SUM on output bam file...');
 
+    my $md5sum = $self->load_md5sum;
+    if ( $md5sum ) {
+        $self->status_message("MD5SUM: $md5sum");
+        return $md5sum;
+    }
+
     my $bam_path = $self->bam_path;
     if ( not $bam_path or not -s $bam_path ) {
         $self->error_message('Bam file does not exist!');
@@ -111,6 +117,20 @@ sub run_md5sum_on_output_bam_path {
         return;
     }
 
+    $md5sum = $self->load_md5sum;
+    return if not $md5sum;
+    $self->status_message("MD5SUM: $md5sum");
+
+    $self->status_message('Run MD5SUM on output bam file...done');
+    return $md5sum;
+}
+
+sub load_md5sum {
+    my $self = shift;
+
+    my $md5_path = $self->bam_md5_path;
+    return if not -s $md5_path;
+
     my $md5_fh = eval{ Genome::Sys->open_file_for_reading($md5_path); };
     if ( not $md5_fh ) {
         $self->error_message('Failed to open md5 path! '.$md5_path);
@@ -118,9 +138,7 @@ sub run_md5sum_on_output_bam_path {
     }
     my ($md5sum) = split(/\s+/, $md5_fh->getline);
     $md5_fh->close;
-    $self->status_message("MD5SUM: $md5sum");
 
-    $self->status_message('Run MD5SUM on output bam file...done');
     return $md5sum;
 }
 

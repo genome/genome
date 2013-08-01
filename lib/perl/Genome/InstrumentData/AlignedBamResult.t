@@ -55,6 +55,8 @@ is($md5_path, $aligned_bam_result->bam_path.'.md5', 'md5 path named correctly');
 my $md5sum = $aligned_bam_result->run_md5sum_on_output_bam_path;
 ok($md5sum, 'run md5');
 ok(-s $md5_path, 'created md5');
-is($md5sum, '940825168285c254b58c47399a3e1173', 'md5sumn matches');
+is($md5sum, '940825168285c254b58c47399a3e1173', 'run md5sum matches');
+$md5sum = $aligned_bam_result->load_md5sum;
+is($md5sum, '940825168285c254b58c47399a3e1173', 'load md5sum matches');
 
 done_testing();
