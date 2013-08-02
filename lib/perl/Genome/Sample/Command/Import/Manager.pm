@@ -197,7 +197,7 @@ sub _load_config {
 
     my $namespace = Genome::Sample::Command::Import->namespace_for_nomenclature($nomenclature);
     if ( not $namespace ) {
-        return 'Could not get namespace from miporter. Please ensure there is a config for the '.$nomenclature.' nomenclature.';
+        return "Could not get namespace from importer. Please ensure there is a config for the ".$nomenclature." nomenclature.";
     }
     $self->namespace($namespace);
 
