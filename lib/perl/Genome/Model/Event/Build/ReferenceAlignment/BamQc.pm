@@ -78,17 +78,17 @@ sub params_for_result {
     }
 
     my $instr_data  = $self->instrument_data;
-    my $er_pileup   = $pp->read_aligner_name =~ /^bwa$/i ? 0 : 1;
+    #read length takes long time to run and seems not useful for illumina/solexa data
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
     return (
         alignment_result_id => $self->_alignment_result->id,
         picard_version      => $picard_version,
         samtools_version    => $pp->samtools_version,
-        fastqc_version      => '0.10.0',
+        fastqc_version      => Genome::Model::Tools::Fastqc->default_fastqc_version,
         samstat_version     => Genome::Model::Tools::SamStat::Base->default_samstat_version,
+        error_rate_version  => Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version,
         error_rate          => 1,
-        error_rate_pileup   => $er_pileup,
         read_length         => $read_length,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );

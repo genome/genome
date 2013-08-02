@@ -8,21 +8,23 @@ use Statistics::R;
 use Cwd;
 use Bio::DB::Sam::Constants;
 
+my $DEFAULT = '0.7';
+
 class Genome::Model::Tools::BioSamtools::ErrorRate {
     is => ['Genome::Model::Tools::BioSamtools'],
     has_input => [
         bam_file => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'A BAM format file of alignment data'
         },
         output_file => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'A file path to store tab separated value output.  The file extension must be .tsv in pileup mode',
         },
         version => {
             is => 'Version',
             is_optional => 1,
-            default_value => '0.7',
+            default_value => $DEFAULT,
             doc => 'version of C pileup tool',
         },
     ],
@@ -35,6 +37,12 @@ my %versions = (
     #0.7 => '/gsc/pkg/bio/bam-errorrate/0.7/bam-errorrate',
     #C util is running out of iferguson home directory until it has been tested and can be deployed to the blades
 );
+
+
+sub default_errorrate_version {
+    die "default error_rate version: $DEFAULT is not valid" unless $versions{$DEFAULT};
+    return $DEFAULT;
+}
 
 
 sub execute {

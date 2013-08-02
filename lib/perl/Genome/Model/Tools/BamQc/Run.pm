@@ -4,29 +4,29 @@ use strict;
 use warnings;
 
 use Genome;
-
 use Workflow;
 use Workflow::Simple;
 
-my $DEFAULT_PICARD_VERSION = Genome::Model::Tools::Picard->default_picard_version;
-my $DEFAULT_SAMSTAT_VERSION = Genome::Model::Tools::SamStat::Base->default_samstat_version;
-my $DEFAULT_FASTQC_VERSION = '0.10.0'; #Genome::Model::Tools::Fastqc->default_fastqc_version; No idea why the class method doesn't work...
-my $DEFAULT_SAMTOOLS_VERSION = Genome::Model::Tools::Sam->default_samtools_version;
+my $DEFAULT_PICARD_VERSION    = Genome::Model::Tools::Picard->default_picard_version;
+my $DEFAULT_SAMSTAT_VERSION   = Genome::Model::Tools::SamStat::Base->default_samstat_version;
+my $DEFAULT_FASTQC_VERSION    = Genome::Model::Tools::Fastqc->default_fastqc_version; 
+my $DEFAULT_ERRORRATE_VERSION = Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version;
+my $DEFAULT_SAMTOOLS_VERSION  = Genome::Model::Tools::Sam->default_samtools_version;
 my $DEFAULT_SAMTOOLS_MAXIMUM_MEMORY = Genome::Model::Tools::Sam->default_samtools_maximum_memory;
 
 class Genome::Model::Tools::BamQc::Run {
     is => ['Genome::Model::Tools::BamQc::Base'],
     has_input => [
         bam_file => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The input BAM file to generate metrics for.'
         },
         output_directory => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The directory to write output summary metrics files to.',
         },
         log_directory => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The directory to write output summary metrics files to.',
             is_optional => 1,
         },
@@ -41,69 +41,73 @@ class Genome::Model::Tools::BamQc::Run {
     ],
     has_optional_input => [
         roi_file_path => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'If supplied ref-cov will run on the supplied regions of interest.',
         },
         roi_file_format => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The file format of the supplied ROI',
             valid_values => ['bam','bed'],
         },
         picard_version => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The version of Picard to use.  See gmt picard --help for details.',
             default_value => $DEFAULT_PICARD_VERSION,
         },
         samstat_version => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The version of SamStat to use. See gmt sam-stat --help for details.',
             default_value => $DEFAULT_SAMSTAT_VERSION,
         },
         fastqc_version => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The version of FastQC to use.  See gmt fastqc --help for details.',
             default_value => $DEFAULT_FASTQC_VERSION,
         },
         samtools_version => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The version of Samtools to use. See gmt sam --help for details.',
             default_value => $DEFAULT_SAMTOOLS_VERSION,
         },
         samtools_maximum_memory => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The maximum amount of memory for Samtools to use. See gmt sam --help for details.',
             default_value => $DEFAULT_SAMTOOLS_MAXIMUM_MEMORY,
         },
         picard_maximum_memory => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The maximum amount of memory for Picard to use.  See gmt picard --help for details.',
             default_value => '30',
         },
         picard_maximum_permgen_memory => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The maximum amount of permgen memory for Picard to use.  See gmt picard --help for details.',
             default_value => '256',
         },
         picard_max_records_in_ram => {
-            is => 'Text',
+            is  => 'Text',
             doc => 'The maximum number of records for Picard to keep in memory.  See gmt picard --help for details.',
             default_value => '5000000',
         },
         error_rate => {
-            is => 'Boolean',
+            is  => 'Boolean',
             doc => 'A flag to run error rate calculations.  The error-rate-pileup flag determines which method of error-rate calculation is used.',
             default_value => 1,
         },
-        error_rate_pileup => {
-            is => 'Boolean',
-            doc => 'A flag to run a pileup error rate calculation.  This actually compares each base in every read back to the reference sequence.  This can take a long time.  If set to false, the traditional error rate calculation will run using the Match Descriptor in the BAM alignment record.',
-            default_value => 1,
+        error_rate_version => {
+            is  => 'Text',
+            doc => 'The version of error rate C tool to use.',
+            default_value => $DEFAULT_ERRORRATE_VERSION,
         },
         read_length => {
-            is => 'Boolean',
+            is  => 'Boolean',
             doc => 'A flag to run read length distribution. This step could take long time on big bam.',
             default_value => 1,
         },
+        bam_link_name => {
+            is  => 'Text',
+            doc => 'The bam symlink name.',
+        }
     ],
     has_optional_output => [
         output_metrics_hash_ref => {},
@@ -133,7 +137,8 @@ sub execute {
     #TODO: Validate BAM sort order or at least throw a warning if not found
     #BAM header tag under @HD SO, valid values: unknown (default), unsorted, queryname and coordinate
     
-    my ($bam_basename,$bam_dirname,$bam_suffix) = File::Basename::fileparse($self->bam_file,qw/\.bam/);
+    my ($bam_basename, $bam_dirname, $bam_suffix) = File::Basename::fileparse($self->bam_file, qw/\.bam/);
+    $bam_basename = $self->bam_link_name if $self->bam_link_name;
     my $file_basename = $output_directory .'/'. $bam_basename;
 
     my $bam_path = $file_basename .'.bam';
@@ -155,11 +160,11 @@ sub execute {
         else {
             # TODO: test if BAM file is sorted before indexing
             unless (Genome::Model::Tools::Picard::BuildBamIndex->execute(
-                use_version => $self->picard_version,
+                use_version            => $self->picard_version,
                 maximum_permgen_memory => $self->picard_maximum_permgen_memory,
-                maximum_memory => $self->picard_maximum_memory,
-                input_file => $bam_path,
-                output_file => $bai_path,
+                maximum_memory         => $self->picard_maximum_memory,
+                input_file             => $bam_path,
+                output_file            => $bai_path,
             )) {
                 die('Failed to index BAM file: '. $bam_path);
             }
@@ -211,8 +216,6 @@ sub execute {
     );
 
     $workflow_params{picard_gc_assume_sorted} = 1 if $picard_gc_assume_sorted; 
-
-    
     my @output_properties = qw(picard_metrics_result samstat_result fastqc_result);
 
     my $flagstat_path = $file_basename .'.bam.flagstat';
@@ -224,9 +227,9 @@ sub execute {
             }
         } 
         else {
-            $workflow_params{samtools_version} = $self->samtools_version;
+            $workflow_params{samtools_version}        = $self->samtools_version;
             $workflow_params{samtools_maximum_memory} = $self->samtools_maximum_memory;
-            $workflow_params{samtools_flagstat_path} = $flagstat_path;
+            $workflow_params{samtools_flagstat_path}  = $flagstat_path;
             push @output_properties, 'flagstat_result';
         }
     }
@@ -236,13 +239,13 @@ sub execute {
         push @output_properties, 'picard_gc_bias_result';
     }
 
-    if ($self->error_rate && $self->reference_sequence) {
+    if ($self->error_rate) {
         my $error_rate_file = $file_basename .'-ErrorRate.tsv';
         if (-e $error_rate_file) {
             die('Error rate file already exists at: '. $error_rate_file);
         }
-        $workflow_params{error_rate_file} = $error_rate_file;
-        $workflow_params{error_rate_pileup} = $self->error_rate_pileup;
+        $workflow_params{error_rate_file}    = $error_rate_file;
+        $workflow_params{error_rate_version} = $self->error_rate_version;
         push @output_properties, 'error_rate_result';
     }
 
@@ -255,7 +258,7 @@ sub execute {
 
     if ($self->roi_file_path && $self->reference_sequence) {
         my $refcov_stats_file = $file_basename .'-RefCov_STATS.tsv';
-        $workflow_params{roi_file_path} = $self->roi_file_path;
+        $workflow_params{roi_file_path}   = $self->roi_file_path;
         $workflow_params{roi_file_format} = $self->roi_file_format;
         $workflow_params{refcov_stats_file} = $refcov_stats_file;
         $workflow_params{refcov_print_headers} = 1;
@@ -268,7 +271,7 @@ sub execute {
 
     my $workflow = Workflow::Model->create(
         name => $self->id .' BamQc '. $self->bam_file,
-        input_properties => \@input_properties,
+        input_properties  => \@input_properties,
         output_properties => \@output_properties,
     );
 
@@ -277,13 +280,13 @@ sub execute {
     # Samtools flagstat
     if ($workflow_params{samtools_flagstat_path}) {
         my %samtools_flagstat_operation_params = (
-            workflow => $workflow,
-            name => $self->id .' Samtools Flagstat '. $self->bam_file,
+            workflow   => $workflow,
+            name       => $self->id .' Samtools Flagstat '. $self->bam_file,
             class_name => 'Genome::Model::Tools::Sam::Flagstat',
             input_properties => {
-                'bam_file' => 'bam_file',
-                'samtools_flagstat_path' => 'output_file',
-                'samtools_version' => 'use_version',
+                'bam_file'                => 'bam_file',
+                'samtools_flagstat_path'  => 'output_file',
+                'samtools_version'        => 'use_version',
                 'samtools_maximum_memory' => 'maximum_memory',
             },
             output_properties => {
@@ -295,15 +298,15 @@ sub execute {
     
     # PicardMetrics
     my %picard_metrics_operation_params = (
-        workflow => $workflow,
-        name => $self->id .' Collect Picard Metrics '. $self->bam_file,
+        workflow   => $workflow,
+        name       => $self->id .' Collect Picard Metrics '. $self->bam_file,
         class_name => 'Genome::Model::Tools::Picard::CollectMultipleMetrics',
         input_properties => {
-            'bam_file' => 'input_file',
+            'bam_file'                       => 'input_file',
             'picard_metrics_output_basename' => 'output_basename',
-            'picard_version' => 'use_version',
-            'picard_maximum_memory' => 'maximum_memory',
-            'picard_maximum_permgen_memory' => 'maximum_permgen_memory',
+            'picard_version'                 => 'use_version',
+            'picard_maximum_memory'          => 'maximum_memory',
+            'picard_maximum_permgen_memory'  => 'maximum_permgen_memory',
         },
         output_properties => {
             'result' => 'picard_metrics_result',
@@ -319,23 +322,23 @@ sub execute {
     # PicardGcBias
     if ($workflow_params{reference_sequence}) {
         my %picard_gc_bias_operation_params = (
-            workflow => $workflow,
-            name => $self->id .' Collect Picard G+C Bias '. $self->bam_file,
+            workflow   => $workflow,
+            name       => $self->id .' Collect Picard G+C Bias '. $self->bam_file,
             class_name => 'Genome::Model::Tools::Picard::CollectGcBiasMetrics',
             input_properties => {
-                'bam_file' => 'input_file',
-                'reference_sequence' => 'refseq_file',
-                'clean_bam' => 'clean_bam',
-                'picard_version' => 'use_version',
-                'picard_maximum_memory' => 'maximum_memory',
-                'picard_maximum_permgen_memory' => 'maximum_permgen_memory',
-                'picard_max_records_in_ram' => 'max_records_in_ram',
-                'picard_gc_metrics_file' => 'output_file',
-                'picard_gc_chart_file' => 'chart_output',
-                'picard_gc_summary_file' => 'summary_output',
+                bam_file                      => 'input_file',
+                reference_sequence            => 'refseq_file',
+                clean_bam                     => 'clean_bam',
+                picard_version                => 'use_version',
+                picard_maximum_memory         => 'maximum_memory',
+                picard_maximum_permgen_memory => 'maximum_permgen_memory',
+                picard_max_records_in_ram     => 'max_records_in_ram',
+                picard_gc_metrics_file        => 'output_file',
+                picard_gc_chart_file          => 'chart_output',
+                picard_gc_summary_file        => 'summary_output',
             },
             output_properties => {
-                'result' => 'picard_gc_bias_result',
+                result => 'picard_gc_bias_result',
             },
         );
         $picard_gc_bias_operation_params{input_properties}->{picard_gc_assume_sorted} = 'assume_sorted' 
@@ -347,49 +350,48 @@ sub execute {
     
     # SamStat
     my %samstat_operation_params = (
-        workflow => $workflow,
-        name => $self->id .' SamStat Html Report '. $self->bam_file,
+        workflow   => $workflow,
+        name       => $self->id .' SamStat Html Report '. $self->bam_file,
         class_name => 'Genome::Model::Tools::SamStat::HtmlReport',
         input_properties => {
-            'bam_file' => 'input_files',
-            'samstat_version' => 'use_version',
+            bam_file        => 'input_files',
+            samstat_version => 'use_version',
         },
         output_properties => {
-            'result' => 'samstat_result',
+            result => 'samstat_result',
         },
     );
     $self->setup_workflow_operation(%samstat_operation_params);
 
     # FastQC
     my %fastqc_operation_params = (
-        workflow => $workflow,
-        name => $self->id .' FastQC Generate Reports '. $self->bam_file,
+        workflow   => $workflow,
+        name       => $self->id .' FastQC Generate Reports '. $self->bam_file,
         class_name => 'Genome::Model::Tools::Fastqc::GenerateReports',
         input_properties => {
-            'bam_file' => 'input_files',
-            'fastqc_version' => 'use_version',
-            'output_directory' => 'report_directory',
+            bam_file         => 'input_files',
+            fastqc_version   => 'use_version',
+            output_directory => 'report_directory',
         },
         output_properties => {
-            'result' => 'fastqc_result',
+            result => 'fastqc_result',
         },
     );
     $self->setup_workflow_operation(%fastqc_operation_params);
 
     # ErrorRate
-    if ($workflow_params{reference_sequence} && $self->error_rate) {
+    if ($self->error_rate) {
         my %error_rate_operation_params = (
-            workflow => $workflow,
-            name => $self->id .' BioSamtools Error Rate '. $self->bam_file,
+            workflow   => $workflow,
+            name       => $self->id .' BioSamtools Error Rate '. $self->bam_file,
             class_name => 'Genome::Model::Tools::BioSamtools::ErrorRate',
             input_properties => {
-                'bam_file' => 'bam_file',
-                'reference_sequence' => 'reference_fasta',
-                'error_rate_file' => 'output_file',
-                'error_rate_pileup' => 'pileup',
+                bam_file           => 'bam_file',
+                error_rate_file    => 'output_file',
+                error_rate_version => 'version',
             },
             output_properties => {
-                'result' => 'error_rate_result',
+                result => 'error_rate_result',
             },
         );
         my $error_rate_operation = $self->setup_workflow_operation(%error_rate_operation_params);
@@ -399,17 +401,17 @@ sub execute {
     # Read Length
     if ($self->read_length) {
         my %read_length_operation_params = (
-            workflow => $workflow,
-            name => $self->id .' BioSamtools Read Length Distribution '. $self->bam_file,
+            workflow   => $workflow,
+            name       => $self->id .' BioSamtools Read Length Distribution '. $self->bam_file,
             class_name => 'Genome::Model::Tools::BioSamtools::ReadLengthDistribution',
             input_properties => {
-                'bam_file' => 'bam_file',
-                read_length_summary => 'summary_file',
-                read_length_histogram => 'read_length_histogram',
+                bam_file                   => 'bam_file',
+                read_length_summary        => 'summary_file',
+                read_length_histogram      => 'read_length_histogram',
                 alignment_length_histogram => 'alignment_length_histogram',
             },
             output_properties => {
-                'result' => 'read_length_result',
+                result => 'read_length_result',
             },
         );
         $self->setup_workflow_operation(%read_length_operation_params);
@@ -420,19 +422,19 @@ sub execute {
     # TODO: The reference_sequence is not a required output
     if ($workflow_params{reference_sequence} && $self->roi_file_path) {
         my %refcov_operation_params = (
-            workflow => $workflow,
-            name => $self->id .' RefCov '. $self->bam_file,
+            workflow   => $workflow,
+            name       => $self->id .' RefCov '. $self->bam_file,
             class_name => 'Genome::Model::Tools::RefCov::Standard',
             input_properties => {
-                'bam_file' => 'alignment_file_path',
-                'roi_file_path' => 'roi_file_path',
-                'roi_file_format' => 'roi_file_format',
-                'refcov_stats_file' => 'stats_file',
-                'refcov_print_headers' => 'print_headers',
-                'refcov_print_min_max' => 'print_min_max',
+                bam_file             => 'alignment_file_path',
+                roi_file_path        => 'roi_file_path',
+                roi_file_format      => 'roi_file_format',
+                refcov_stats_file    => 'stats_file',
+                refcov_print_headers => 'print_headers',
+                refcov_print_min_max => 'print_min_max',
             },
             output_properties => {
-                'result' => 'refcov_result',
+                result => 'refcov_result',
             },
         );
         $self->setup_workflow_operation(%refcov_operation_params);
@@ -527,16 +529,15 @@ sub execute {
 }
 
 sub setup_workflow_operation {
-    my $self = shift;
-    my %params = @_;
+    my ($self, %params) = @_;
 
-    my $workflow = delete($params{'workflow'});
-    my $name = delete($params{'name'});
+    my $workflow   = delete($params{'workflow'});
+    my $name       = delete($params{'name'});
     my $class_name = delete($params{'class_name'});
-    my $input_properties = delete($params{'input_properties'});
+    my $input_properties  = delete($params{'input_properties'});
     my $output_properties = delete($params{'output_properties'});
 
-    my $input_connector = $workflow->get_input_connector;
+    my $input_connector  = $workflow->get_input_connector;
     my $output_connector = $workflow->get_output_connector;
 
     my $operation = $workflow->add_operation(
@@ -549,19 +550,19 @@ sub setup_workflow_operation {
     for my $left_property (keys %{$input_properties}) {
         my $right_property = $input_properties->{$left_property};
         $workflow->add_link(
-            left_operation => $input_connector,
-            left_property => $left_property,
+            left_operation  => $input_connector,
+            left_property   => $left_property,
             right_operation => $operation,
-            right_property => $right_property,
+            right_property  => $right_property,
         );
     }
     for my $left_property (keys %{$output_properties}) {
         my $right_property = $output_properties->{$left_property};
         $workflow->add_link(
-            left_operation => $operation,
-            left_property => $left_property,
+            left_operation  => $operation,
+            left_property   => $left_property,
             right_operation => $output_connector,
-            right_property => $right_property,
+            right_property  => $right_property,
         );
     }
     return $operation;

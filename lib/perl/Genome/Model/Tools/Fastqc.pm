@@ -6,9 +6,7 @@ use warnings;
 use Genome;
 use File::Basename;
 
-# who decides what the default is?
-my $FASTQC_DEFAULT = 0.10.0;
-#my $FASTQC_DEFAULT = '0.4.3';
+my $FASTQC_DEFAULT = '0.10.0';
 my $DEFAULT_MEMORY = 2;
 
 class Genome::Model::Tools::Fastqc {
@@ -48,11 +46,11 @@ EOS
 
 my %FASTQC_VERSIONS = (
     '0.10.0' => $ENV{GENOME_SW} . '/fastqc/FastQC-0.10.0',
-    '0.6.1' => $ENV{GENOME_SW} . '/fastqc/FastQC-0.6.1',
-    '0.4.3' => $ENV{GENOME_SW} . '/fastqc/FastQC-0.4.3',
-    '0.4.1' => $ENV{GENOME_SW} . '/fastqc/FastQC-0.4.1',
-    '0.3'   => $ENV{GENOME_SW} . '/fastqc/FastQC-0.3',
-    '0.2'   => $ENV{GENOME_SW} . '/fastqc/FastQC-0.2',
+    '0.6.1'  => $ENV{GENOME_SW} . '/fastqc/FastQC-0.6.1',
+    '0.4.3'  => $ENV{GENOME_SW} . '/fastqc/FastQC-0.4.3',
+    '0.4.1'  => $ENV{GENOME_SW} . '/fastqc/FastQC-0.4.1',
+    '0.3'    => $ENV{GENOME_SW} . '/fastqc/FastQC-0.3',
+    '0.2'    => $ENV{GENOME_SW} . '/fastqc/FastQC-0.2',
 );
 
 sub path_for_fastqc_version {
