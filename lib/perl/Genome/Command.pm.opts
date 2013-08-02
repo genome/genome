@@ -9686,6 +9686,10 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'make-progress!',
         undef,
+        'launch-imports!',
+        undef,
+        'start-builds!',
+        undef,
         'help!',
         undef
       ],
