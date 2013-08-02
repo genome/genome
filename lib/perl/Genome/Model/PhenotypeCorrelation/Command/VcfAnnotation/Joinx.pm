@@ -52,7 +52,6 @@ sub _resolve_annotation_source {
                 . join("\n\t", map {$_->id} @builds);
         }
 
-        print "Got build from source: (" . $builds[0]->snv_result . ")\n";
         return $builds[0]->snvs_vcf;
     }
     elsif (!exists $raw_spec->{source_build}) {
@@ -82,7 +81,6 @@ sub _parse_spec {
         confess "Unknown params in annotation spec: " . Dumper($raw_spec);
     }
 
-    print "Raw spec to params: " . Dumper($raw_spec, \%params);
     my $spec = Genome::Model::Tools::Joinx::VcfAnnotationSpec->create(%params);
     return $spec;
 }
