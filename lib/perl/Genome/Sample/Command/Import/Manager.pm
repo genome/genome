@@ -232,29 +232,36 @@ sub _load_info_file {
     my @importer_property_names = Genome::Sample::Command::Import->importer_property_names_for_namespace($self->namespace);
     my %samples;
     while ( my $hash = $info_reader->next ) {
+        my $source_files = delete $hash->{source_files};
+        if ( exists $samples{$source_files} ) {
+            $self->error_message('Duplicate source files! '.$source_files);
+            return;
+        }
         my $name = delete $hash->{name};
-        $samples{$name} = {
+        $samples{$source_files} = {
             name => $name,
-            source_files => delete $hash->{source_files},
+            source_files => $source_files,
             importer_params => { name => $name, },
         };
+        my $sample = $samples{$source_files};
+        $samples{$source_files} = $sample;
         for my $attr ( sort keys %$hash ) {
             my $value = $hash->{$attr};
             next if not defined $value or $value eq '';
             if ( $attr =~ /^s\./ ) { # is sample/individual/inst data indicated?
-                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
+                push @{$sample->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
             }
             if ( $attr =~ /^p\./ ) { # is sample/individual/inst data indicated?
-                push @{$samples{$name}->{importer_params}->{'individual_attributes'}}, $attr."='".$value."'";
+                push @{$sample->{importer_params}->{'individual_attributes'}}, $attr."='".$value."'";
             }
             elsif ( $attr =~ s/^i\.// ) { # inst data attr
-                push @{$samples{$name}->{'instrument_data_attributes'}}, $attr."='".$value."'";
+                push @{$sample->{'instrument_data_attributes'}}, $attr."='".$value."'";
             }
             elsif ( grep { $attr eq $_ } @importer_property_names ) { # is the attr specified in the importer?
-                $samples{$name}->{importer_params}->{$attr} = $value;
+                $sample->{importer_params}->{$attr} = $value;
             }
             else { # assume sample attribute
-                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
+                push @{$sample->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
             }
         }
     }
@@ -279,9 +286,9 @@ sub _load_status_file {
         return 'Failed to open status file! '.$status_file;
     }
 
-    my $samples = $self->samples;
+    my %samples_by_name = map { $_->{name} => $_ } values %{$self->samples};
     while ( my $status = $reader->next ) {
-        my $sample = $samples->{ $status->{name} };
+        my $sample = $samples_by_name{ $status->{name} };
         for my $attr (qw/ instrument_data model build /) {
             $sample->{$attr.'_id'} = $status->{$attr} if defined $status->{$attr} and $status->{$attr} ne 'NA';
         }
@@ -429,13 +436,14 @@ sub _set_job_status_to_samples {
     }
     $status_column--;
 
+    my %samples_by_name = map { $_->{name} => $_ } values %$samples;
     $job_list_cmd .= ' 2>/dev/null |';
     my $fh = IO::File->new($job_list_cmd);
     while ( my $line = $fh->getline ) {
         my @tokens = split(/\s+/, $line);
         my $name = $tokens[ $name_column ];
-        next if not $samples->{$name};
-        $samples->{$name}->{job_status} = lc $tokens[ $status_column ];
+        next if not $samples_by_name{$name};
+        $samples_by_name{$name}->{job_status} = lc $tokens[ $status_column ];
     }
 
     return 1;

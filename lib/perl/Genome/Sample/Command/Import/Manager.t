@@ -48,6 +48,7 @@ ok($pp, 'create pp');
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v2');
 my $sample_name = 'TeSt-0000-00';
+my $source_files = 'original.bam';
 my $working_directory = File::Temp::tempdir(CLEANUP => 1);
 Genome::Sys->create_symlink($test_dir.'/valid/info.tsv', $working_directory.'/info.tsv');
 Genome::Sys->create_symlink($test_dir.'/valid/config.yaml', $working_directory.'/config.yaml');
@@ -59,7 +60,7 @@ my $manager = Genome::Sample::Command::Import::Manager->create(
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
-my $sample_hash = eval{ $manager->samples->{$sample_name}; };
+my $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'sample_needed', 'sample hash status');
 ok(-s $manager->status_file, 'status file created');
@@ -80,7 +81,7 @@ $manager = Genome::Sample::Command::Import::Manager->create(
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
-$sample_hash = eval{ $manager->samples->{$sample_name}; };
+$sample_hash = eval{ $manager->samples->{$source_files}; };
 is($sample_hash->{status}, 'import_pend', 'sample hash status');
 ok($sample_hash->{model}, 'sample hash model');
 is($sample_hash->{job_status}, 'pend', 'sample hash job status');
@@ -107,7 +108,8 @@ $manager = Genome::Sample::Command::Import::Manager->create(
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
-$sample_hash = eval{ $manager->samples->{$sample_name}; };
+$sample_hash = eval{ $manager->samples->{$source_files}; };
+is($sample_hash->{status}, 'build_scheduled', 'sample hash status');
 ok($sample_hash->{model}->{build}, 'build created');
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
