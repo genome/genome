@@ -231,15 +231,15 @@ sub _load_info_file {
 
     my @importer_property_names = Genome::Sample::Command::Import->importer_property_names_for_namespace($self->namespace);
     my %samples;
-    while ( my $sample = $info_reader->next ) {
-        my $name = delete $sample->{name};
+    while ( my $hash = $info_reader->next ) {
+        my $name = delete $hash->{name};
         $samples{$name} = {
             name => $name,
-            source_files => delete $sample->{source_files},
+            source_files => delete $hash->{source_files},
             importer_params => { name => $name, },
         };
-        for my $attr ( sort keys %$sample ) {
-            my $value = $sample->{$attr};
+        for my $attr ( sort keys %$hash ) {
+            my $value = $hash->{$attr};
             next if not defined $value or $value eq '';
             if ( $attr =~ /^s\./ ) { # is sample/individual/inst data indicated?
                 push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
