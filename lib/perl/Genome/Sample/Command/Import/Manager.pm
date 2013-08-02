@@ -86,13 +86,13 @@ HELP
 sub execute {
     my $self = shift;
 
-    my $samples = $self->_load_samples;
-    return if not $samples;
+    my $load_samples = $self->_load_samples;
+    return if not $load_samples;
 
     my $make_progress = $self->_make_progress;
     return if not $make_progress;
 
-    $self->_status($samples);
+    $self->_status;
 
     return 1;
 }
@@ -573,7 +573,8 @@ sub _make_progress {
 
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
-    for my $sample ( values %{$self->samples} ) {
+    my $samples = $self->samples;
+    for my $sample ( values %$samples ) {
         $self->set_sample_status($sample);
         next if $sample->{status} eq 'build_succeeded';
         # Create sample
@@ -630,6 +631,7 @@ sub _make_progress {
         }
     }
 
+    $self->samples($samples);
     return 1;
 }
 
@@ -647,6 +649,7 @@ sub _launch_instrument_data_import_for_sample {
 sub _start_build {
     my ($self, $model) = @_;
 
+    $DB::single=1;
     Carp::confess('No model given!') if not $model;
 
     my $start = Genome::Model::Build::Command::Start->execute(models => [$model]);

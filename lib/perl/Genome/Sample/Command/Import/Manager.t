@@ -122,7 +122,7 @@ $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'build_scheduled', 'sample hash status');
 ok($sample_hash->{model}, 'sample hash model');
-ok($sample_hash->{model}->{build}, 'build created');
+ok($sample_hash->{build}, 'build created');
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
 # fail - no config file
