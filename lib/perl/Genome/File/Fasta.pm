@@ -112,7 +112,7 @@ sub _regions_for_chunk_size {
                 $chunk_remaining = 0;
             }
         }
-        push @regions, \@chunk;
+        push @regions, \@chunk if @chunk;
     }
     return @regions;
 }
@@ -127,8 +127,11 @@ sub divide_into_chunks {
         return @chunks;
     }
     else {
-        if($chunk_index > 1 && $chunk_index <= scalar(@chunks)) {
+        if($chunk_index >= 1 && $chunk_index <= scalar(@chunks)) {
             return @{$chunks[$chunk_index-1]};
+        }
+        else {
+            die "Index: $chunk_index out of range for number of chunks: " . scalar(@chunks) . "\n";
         }
     }
 }
