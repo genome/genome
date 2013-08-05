@@ -31,7 +31,7 @@ addOffsets <- function(df){
 ##
 
 plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
-                         highlights=NULL, lowRes=FALSE, lowResMin=NULL,
+                         highlightedSegs=NULL, lowRes=FALSE, lowResMin=NULL,
                          lowResMax=NULL, showNorm=FALSE, baseline=2,
                          gainThresh=2.5, lossThresh=1.5, annotationsTop=NULL,
                          annotationsBottom = NULL, plotTitle="", gaps=NULL, tumorNormalRatio=1,
@@ -65,12 +65,6 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
   ## read in the entrypoints
   entrypoints=addOffsets(readEntrypoints(entrypoints))
   names(entrypoints) = c("chr","length","ploidy","offset")
-
-  ## if we have regions to highlight, read them in too
-  hlRegions = NULL;
-  if(!(is.null(highlights))){
-    hlRegions=read.table(highlights)
-  }
 
   ## if we have annotations, read them in too
   annTopRegions=NULL
@@ -128,6 +122,11 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
   if(!is.null(gaps)){
     drawGaps(gaps, chr)
   }
+
+  ##add segment highlights
+  if(!is.null(highlightedSegs)){
+    drawHighlights(highlightedSegs, chr)
+  }
   
   ##add the title
   if(!(coverageTracks)){
@@ -144,22 +143,6 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
   abline(v=seq(xaxp[1], xaxp[2], (xaxp[2]-xaxp[1])/xaxp[3]), col="grey50", lty=3)
   yaxp=par()$yaxp
   abline(h=seq(yaxp[1], yaxp[2], (yaxp[2]-yaxp[1])/yaxp[3]), col="grey50", lty=3)
-
-  ## draw highlight regions if specified
-  if(!(is.null(highlights))){
-    hlRegions = hlRegions[which(hlRegions[,1] == chr),]
-    if(length(hlRegions[,1]) > 0){
-      for(i in 1:length(hlRegions[,1])){
-        if(lowRes){
-          lrpos = which((hlRegions[,3]-hlRegions[,2]) > lowResMin)
-          hlRegions[lrpos,] = makeVisible(hlRegions[lrpos,],lowResMax)
-        }
-
-        rect(hlRegions[,2], ymin*2, hlRegions[,3], ymax*2, col="gold",lwd=0,lty="blank")
-      }
-    }
-  }
-
 
   ## --- do the plotting ---
 
@@ -412,8 +395,6 @@ drawSegs <- function(sts, sps, val, color="black", type="r", lowRes=FALSE, lowRe
     lrpos = which((segs[,3]-segs[,2]) > lowResMin)
     segs[lrpos,] = makeVisible(segs[lrpos,],lowResMax)
   }
-
-  
   if(type=="r"){
     ## draw the segments
     rect(sts, baseline, sps, val, col=color, lty="blank")
@@ -440,6 +421,20 @@ drawCorrectedWindows <- function(cwind){
 drawGaps <- function(gaps, chr){
   gaps=gaps[gaps$V1==chr,]
   drawSegs(gaps[,2], gaps[,3], baseline=-1e6, val=1e6, color="grey80", type="r")
+}
+
+##----------------------------------------------------
+## draw gaps
+##
+drawHighlights <- function(hlsegs, chr){
+  for(i in hlsegs){    
+    chrpos = strsplit(i,":")[[1]]
+    pos = strsplit(chrpos[2],"-")[[1]]
+    if(chrpos[1]==chr){
+      abline(v=pos[1],col="darkgoldenrod1")
+      abline(v=pos[2],col="darkgoldenrod1")
+    }
+  }
 }
 
 

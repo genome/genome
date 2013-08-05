@@ -73,7 +73,7 @@ class Genome::Model::Tools::CopyNumber::PlotIndividualCn{
             is => 'String',
             is_optional => 1,
             doc =>'if provided, will output a file containing the R commands that are run',
-        },
+        },        
         ]
 };
 
@@ -133,13 +133,14 @@ sub execute {
         print $rfile 'xmax = ' . $F[2] . "\n";
         print $rfile 'print("plotting alt: ' . "$F[0]:$F[1]-$F[2]" . '")' . "\n";
         if(($F[2]-$F[1]) > 50000){
-            print $rfile 'xmin = xmin-(xmax-xmin)' . "\n";
+            print $rfile 'zxmin = xmin-(xmax-xmin)' . "\n";
             print $rfile 'xmax = xmax+(xmax-xmin)' . "\n";
+            print $rfile 'xmin=zxmin' . "\n";            
         } else {
             print $rfile 'xmin = xmin-50000' . "\n";
             print $rfile 'xmax = xmax+50000' . "\n";
         }
-
+        
         if(defined($self->tumor_window_file)){
             print $rfile 'tumwinds = getWindows(chr, xmin, xmax, header=T';
             if($count == 0){
@@ -193,6 +194,8 @@ sub execute {
         }
 
         print $rfile ', plotTitle="' . "$F[0]:$F[1]-$F[2]" . '"';
+        print $rfile ', highlightedSegs=c("' . "$F[0]:$F[1]-$F[2]" . '")';
+ 
         if($count == 0){
             print $rfile ', pdfOpen="TRUE"';
         }
