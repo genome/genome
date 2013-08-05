@@ -31,77 +31,126 @@ EOS
 my @lines = split("\n", $header_txt);
 my $header = Genome::File::Vcf::Header->create(lines => \@lines);
 
-my @fields = (
-    '1',            # CHROM
-    10,             # POS
-    '.',            # ID
-    'A',            # REF
-    'C,G',          # ALT
-    '10.3',         # QUAL
-    'PASS',         # FILTER
-    'A=B;C=8,9;E',  # INFO
-    'GT:DP:FT',     # FORMAT
-    '0/1:12',       # FIRST_SAMPLE
-    '0/2:24:PASS',
-    '0/2:24:.',
-    '0/2:24:BAD',
-);
+subtest "basic_parse" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'C,G',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
 
-my $entry_txt = join("\t", @fields);
-my $entry = $pkg->new($header, $entry_txt);
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
 
-is($entry->{chrom}, '1', 'Parsed chromosome');
-is($entry->{position}, '10', 'Parsed position');
-ok(!$entry->{identifiers}, 'Parsed null identifiers');
-is($entry->{reference_allele}, 'A', 'Parsed reference allele');
-is_deeply($entry->{alternate_alleles}, ['C', 'G'], 'Parsed alternate alleles');
-my @alleles = $entry->alleles;
-is_deeply(\@alleles, ['A', 'C', 'G'], 'All alleles accessor');
-is($entry->allele_index('A'), 0, 'allele index');
-is($entry->allele_index('C'), 1, 'allele index');
-is($entry->allele_index('G'), 2, 'allele index');
-ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
-is($entry->{quality}, '10.3', 'Parsed quality');
-is_deeply($entry->{filter}, ['PASS'], 'Parsed filter');
-is_deeply($entry->info, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
-is_deeply($entry->{format}, ['GT', 'DP', 'FT'], 'Parsed format');
+    is($entry->{chrom}, '1', 'Parsed chromosome');
+    is($entry->{position}, '10', 'Parsed position');
+    ok(!$entry->{identifiers}, 'Parsed null identifiers');
+    is($entry->{reference_allele}, 'A', 'Parsed reference allele');
+    is_deeply($entry->{alternate_alleles}, ['C', 'G'], 'Parsed alternate alleles');
+    ok(!$entry->has_indel, "has_indel reports correct value (false)");
+    my @alleles = $entry->alleles;
+    is_deeply(\@alleles, ['A', 'C', 'G'], 'All alleles accessor');
+    is($entry->allele_index('A'), 0, 'allele index');
+    is($entry->allele_index('C'), 1, 'allele index');
+    is($entry->allele_index('G'), 2, 'allele index');
+    ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
+    is($entry->{quality}, '10.3', 'Parsed quality');
+    is_deeply($entry->{filter}, ['PASS'], 'Parsed filter');
+    is_deeply($entry->info, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
+    is_deeply($entry->{format}, ['GT', 'DP', 'FT'], 'Parsed format');
 
-is($entry->info('A'), 'B', 'Info accessor works for A');
-is($entry->info('C'), '8,9', 'Info accessor works for C');
-ok($entry->info('E'), 'Info accessor works for flags');
-ok(!$entry->info('K'), 'Info accessor returns undef for unknown field');
+    is($entry->info('A'), 'B', 'Info accessor works for A');
+    is($entry->info('C'), '8,9', 'Info accessor works for C');
+    ok($entry->info('E'), 'Info accessor works for flags');
+    ok(!$entry->info('K'), 'Info accessor returns undef for unknown field');
 
-is($entry->sample_field(0, 'GT'), '0/1', 'Sample field accessor');
-is($entry->sample_field(0, 'DP'), '12', 'Sample field accessor');
-is($entry->sample_field(0, 'XX'), undef, 'Sample field accessor');
-is($entry->sample_field(1, 'GT'), '0/2', 'Sample field accessor');
-is($entry->sample_field(1, 'DP'), '24', 'Sample field accessor');
-is($entry->sample_field(1, 'XX'), undef, 'Sample field accessor');
+    is($entry->sample_field(0, 'GT'), '0/1', 'Sample field accessor');
+    is($entry->sample_field(0, 'DP'), '12', 'Sample field accessor');
+    is($entry->sample_field(0, 'XX'), undef, 'Sample field accessor');
+    is($entry->sample_field(1, 'GT'), '0/2', 'Sample field accessor');
+    is($entry->sample_field(1, 'DP'), '24', 'Sample field accessor');
+    is($entry->sample_field(1, 'XX'), undef, 'Sample field accessor');
 
-my ($total, %counts) = $entry->allelic_distribution;
-is($total, 6, "allelic_distribution: total");
-is_deeply(\%counts, {0 => 3, 1 => 1, 2 => 2}, "allelic_distribution: counts");
+    my ($total, %counts) = $entry->allelic_distribution;
+    is($total, 6, "allelic_distribution: total");
+    is_deeply(\%counts, {0 => 3, 1 => 1, 2 => 2}, "allelic_distribution: counts");
 
-($total, %counts) = $entry->allelic_distribution(1);
-is($total, 2, "allelic_distribution(1): total");
-is_deeply(\%counts, {0 => 1, 2 => 1}, "allelic_distribution(1): counts");
+    ($total, %counts) = $entry->allelic_distribution(1);
+    is($total, 2, "allelic_distribution(1): total");
+    is_deeply(\%counts, {0 => 1, 2 => 1}, "allelic_distribution(1): counts");
 
-ok(!$entry->info_for_allele("X"), "info_for_allele with bad allele name");
-is($entry->info_for_allele("C", "C"), 8, "info_for_allele 1");
-is($entry->info_for_allele("G", "C"), 9, "info_for_allele 2");
-is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_for_allele (all fields)");
-is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
+    ok(!$entry->info_for_allele("X"), "info_for_allele with bad allele name");
+    is($entry->info_for_allele("C", "C"), 8, "info_for_allele 1");
+    is($entry->info_for_allele("G", "C"), 9, "info_for_allele 2");
+    is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_for_allele (all fields)");
+    is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
 
-ok(!$entry->is_filtered, "not filtered");
-$entry->{filter} = ["PASS"];
-ok(!$entry->is_filtered, "PASS != filtered");
-$entry->{filter} = ["."];
-ok(!$entry->is_filtered, ". != filtered");
-$entry->{filter} = undef;
-ok(!$entry->is_filtered, "undef != filtered");
-$entry->{filter} = [];
-ok(!$entry->is_filtered, "[] != filtered");
-$entry->{filter} = ["x"];
-ok($entry->is_filtered, "something else == filtered");
+    ok(!$entry->is_filtered, "not filtered");
+    $entry->{filter} = ["PASS"];
+    ok(!$entry->is_filtered, "PASS != filtered");
+    $entry->{filter} = ["."];
+    ok(!$entry->is_filtered, ". != filtered");
+    $entry->{filter} = undef;
+    ok(!$entry->is_filtered, "undef != filtered");
+    $entry->{filter} = [];
+    ok(!$entry->is_filtered, "[] != filtered");
+    $entry->{filter} = ["x"];
+    ok($entry->is_filtered, "something else == filtered");
+};
+
+subtest "has_indel_deletion" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'AT',            # REF
+        'AC,A',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry->has_indel, "has_indel detected deletion");
+};
+
+subtest "has_indel_insertion" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'AC,C',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry->has_indel, "has_indel detected insertion");
+};
+
+
 
 done_testing();

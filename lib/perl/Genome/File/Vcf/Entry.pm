@@ -145,7 +145,7 @@ sub info_for_allele {
 
     # no header! what are you doing?
     confess "info_for_allele called on entry with no vcf header!" unless $self->{header};
-    
+
     my @keys = defined $key ? $key : keys %{$self->{info_fields}};
 
     my %result;
@@ -190,6 +190,16 @@ sub alleles {
     return ($self->{reference_allele}, @{$self->{alternate_alleles}});
 }
 
+sub has_indel {
+    my $self = shift;
+    for my $alt (@{$self->{alternate_alleles}}) {
+        if (length($alt) != length($self->{reference_allele})) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 # return the index of the given allele, or undef if not found
 # note that 0 => reference, 1 => first alt, ...
 sub allele_index {
@@ -221,13 +231,13 @@ sub allelic_distribution {
     }
 
     # Get all defined genotypes
-    my @gts = 
-        grep {defined $_} 
+    my @gts =
+        grep {defined $_}
         map {$sample_data->[$_]->[$gtidx]}
         @sample_indices;
 
     # Split gts on |/ and flatten into one list
-    my @allele_indices = 
+    my @allele_indices =
         grep {defined $_ && $_ ne '.'}
         map {split("[/|]", $_)}
         @gts;
