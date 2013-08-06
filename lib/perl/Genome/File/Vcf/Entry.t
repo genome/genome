@@ -31,6 +31,28 @@ EOS
 my @lines = split("\n", $header_txt);
 my $header = Genome::File::Vcf::Header->create(lines => \@lines);
 
+subtest "too_many_sample_fields" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'C,G',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12:x:y',   # FIRST_SAMPLE
+    );
+
+    my $entry_txt = join("\t", @fields);
+    eval {
+        my $entry = $pkg->new($header, $entry_txt);
+        $entry->sample_data;
+    };
+    ok($@, "Too many fields in a call is an error");
+};
+
 subtest "basic_parse" => sub {
     my @fields = (
         '1',            # CHROM

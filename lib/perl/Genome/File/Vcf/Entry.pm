@@ -85,7 +85,7 @@ sub _parse_samples {
     confess "VCF entry has sample data but no format specification: " . $self->{_line}
         if $#$fields >= FIRST_SAMPLE && !defined $self->{format};
 
-    my $n_fields = $self->{format};
+    my $n_fields = $#{$self->{format}} + 1;
 
     my @samples;
 
