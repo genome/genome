@@ -60,14 +60,14 @@ class Genome::Model::Tools::CopyNumber::PlotIndividualCn{
         gain_threshold => {
             is => 'Number',
             is_optional => 1,
-            default => 2.5,
-            doc =>'copy number threshold for gains',
+            default => 2.0,
+            doc =>'copy number threshold for gains (default plot everything)',
         },
         loss_threshold => {
             is => 'Number',
             is_optional => 1,
-            default => 1.5,
-            doc =>'copy number threshold for losses',
+            default => 2.0,
+            doc =>'copy number threshold for losses (default plot everything)',
         },
         r_file => {
             is => 'String',
