@@ -58,7 +58,7 @@ sub execute {
     $self->intervals($intervals);
     $self->output_file($self->basename . "_" . $self->chunk_num . ".out");
     $self->vcf($self->basename . "_" . $self->chunk_num . ".vcf");
-    $self->coverage_file($self->basename . "_" . $self->chunk_num . ".wig");
+    #$self->coverage_file($self->basename . "_" . $self->chunk_num . ".wig");
     my $sub = $self->super_can('_execute_body');
     return $sub->($self, @_);
 };
