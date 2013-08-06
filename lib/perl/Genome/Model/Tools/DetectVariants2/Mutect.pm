@@ -18,13 +18,6 @@ class Genome::Model::Tools::DetectVariants2::Mutect {
             is => 'Integer',
             doc => 'number of chunks to split the genome into for mutect to run.',
         },
-        workflow_log_dir => {
-            is => 'Text',
-            calculate_from => 'output_directory',
-            calculate => q{ return File::Basename::dirname($output_directory) . '/mutect_by_chunk_log/'; },
-            is_optional => 1,
-            doc => 'workflow log directory of each mutect run',
-        },
     ],
     has_param => [
         lsf_resource => {
@@ -54,14 +47,14 @@ sub _detect_variants {
 
 
     my $output_dir = $self->_temp_staging_directory;
+    my $scratch_dir = $self->_temp_scratch_directory;
     my @basic_params = (   
         '--normal-bam' => $self->control_aligned_reads_input,
         '--tumor-bam' => $self->aligned_reads_input,
         '--version' => $self->version,
         '--reference' => $self->reference_sequence_input,
         '--output-file' => $self->_snv_staging_output,
-        '--vcf' => $output_dir . "/"  . $self->_snv_base_name . ".raw.vcf",
-        '--coverage-file' => $output_dir . "/coverage.wig",
+        '--vcf' => $output_dir . "/"  . $self->_snv_staging_output . ".raw.vcf",
     );
     # Update the default parameters with those passed in.
     my %mutect_params = $self->parse_params($self->params, @basic_params);
@@ -76,19 +69,16 @@ sub _detect_variants {
         );
         $op->parallel_by('chunk_num');
 
-        if ($self->workflow_log_dir) {
-            unless (-d $self->workflow_log_dir) {
-                unless (Genome::Sys->create_directory($self->workflow_log_dir)) {
-                    die $self->error_message('Failed to create workflow_log_dir: '. $self->workflow_log_dir);
-                }
-            }
-            $op->log_dir($self->workflow_log_dir);
+        my $log_dir = $self->output_directory ."/mutect_by_chunk/";
+        if(Workflow::Model->parent_workflow_log_dir) {
+            $log_dir = Workflow::Model->parent_workflow_log_dir;
         }
+        $op->log_dir($log_dir);
 
         $mutect_params{chunk_num} = [1..scalar(@chunks)];
         $mutect_params{total_chunks} = $self->number_of_chunks;
         $mutect_params{fasta_object} = $reference;
-        $mutect_params{basename} = $output_dir . "/mutect";
+        $mutect_params{basename} = $scratch_dir . "/mutect";
         delete $mutect_params{output_file};
         delete $mutect_params{vcf};
         delete $mutect_params{coverage_file};
@@ -100,6 +90,16 @@ sub _detect_variants {
             }
             $self->error_message(join("\n", @error));
             die $self->error_message;
+        }
+        print Dumper $output,"\n";
+        my $merger = Genome::Model::Tools::Mutect::MergeOutputFiles->execute(mutect_output_files => $output->{output_file}, merged_file => $self->_snv_staging_output . ".raw.output");
+        unless($merger) {
+            die "Error merging mutect sub-job output files\n";
+        }
+
+        my $vcf_merger = Genome::Model::Tools::Joinx::VcfMerge->execute(input_files => $output->{vcf}, output_file => $self->_snv_staging_output, merge_samples => 1);
+        unless($vcf_merger) {
+            die "Error merging mutect sub-job vcf files\n";
         }
     }
     else {
@@ -202,21 +202,14 @@ sub _sort_detector_output {
     return 1;
 }
 
-sub convert_chunks_to_mutect_params {
-    my ($self, @chunks) = @_;
-    #this thing is a list of array refs containing array refs
-    my @mutect_params;
-    for my $chunk (@chunks) {
-        my @intervals;
-        for my $interval (@$chunk) {
-            my ($chr, $start, $stop) = @$interval;
-            push @intervals, "--intervals $chr:$start-$stop";
-        }
-        push @mutect_params, \@intervals;
-    }
-    return @mutect_params;
+sub _create_temp_directories {
+    my $self = shift;
+    my $network_temp_staging = File::Temp::tempdir(DIR => $self->output_directory, CLEANUP => 1);
+    my $scratch_temp_staging = File::Temp::tempdir(DIR => $self->output_directory, CLEANUP => 1);
+    $self->_temp_staging_directory($network_temp_staging);
+    $self->_temp_scratch_directory($scratch_temp_staging);
+    return 1;
 }
-    
 
 1;
 

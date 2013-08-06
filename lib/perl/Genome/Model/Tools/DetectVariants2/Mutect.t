@@ -26,18 +26,30 @@ my $refbuild_id = 106942997;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'GRCh37-lite-build37 reference sequence build') or die;
 
-my $tumor = "/gscmnt/sata831/info/medseq/dlarson/mutect_testing/tiny.tumor.bam";
-my $normal = "/gscmnt/sata831/info/medseq/dlarson/mutect_testing/tiny.normal.bam";
+my $tumor = "/gscmnt/sata831/info/medseq/dlarson/mutect_testing/tiny.tumor.custom_header.bam";
+my $normal = "/gscmnt/sata831/info/medseq/dlarson/mutect_testing/tiny.normal.custom_header.bam";
 
+#Define path to a custom reference sequence build dir
+my $custom_reference_dir = "/gscmnt/sata831/info/medseq/dlarson/mutect_testing/" . "custom_reference";
+ok(-e $custom_reference_dir, "Found the custom reference dir: $custom_reference_dir");
+
+#Use small reference sequence build by setting up a custom reference genome model
+my $reduced_ref_seq_build = Genome::Model::Build::ReferenceSequence->create(
+    model => $ref_seq_build->model,
+    version => "37",
+    data_directory => $custom_reference_dir,
+);
+ok($reduced_ref_seq_build, "Created a reduced reference sequence build for testing") or die;
 #my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants-Mutect/tiny.tumor.bam";
 #my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants-Mutect/tiny.normal.bam";
 #
-my $test_base_dir = File::Temp::tempdir('MutectXXXXX', CLEANUP => 0, TMPDIR => 1);
+#my $test_base_dir = File::Temp::tempdir('MutectXXXXX', CLEANUP => 0, TMPDIR => 1);
+my $test_base_dir = "/gscmnt/sata831/info/medseq/dlarson/mutect_testing/output_directory";
 
 my $mutect = Genome::Model::Tools::DetectVariants2::Mutect->create(aligned_reads_input=>$tumor, 
                                                                    control_aligned_reads_input=>$normal,
                                                                    output_directory => $test_base_dir,
-                                                                   reference_build_id => $refbuild_id,
+                                                                   reference_build_id => $reduced_ref_seq_build->id,
                                                                    version => 'test',
                                                                    params => '--number-of-chunks 5;--intervals 13:32903269-32923269',
                                                                    );
