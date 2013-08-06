@@ -475,7 +475,7 @@ sub getEntrypointsFile{
         } elsif ($genome_build eq "37"){
             $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","human-build37-20130113") . "/entrypoints.male";
         }elsif ($genome_build eq "mm9"){
-            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","mouse-mm9-20130310") . "/entrypoints.mm9.male";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","mouse-mm9-20130806") . "/entrypoints.mm9.male";
         }
  
     } elsif ($sex eq "female"){
@@ -484,7 +484,7 @@ sub getEntrypointsFile{
         } elsif ($genome_build eq "37"){
             $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","human-build37-20130113") . "/entrypoints.female";
         } elsif ($genome_build eq "mm9"){
-            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","mouse-mm9-20130310") . "/entrypoints.mm9.female";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","mouse-mm9-20130806") . "/entrypoints.mm9.female";
         }
     } elsif ($sex eq "autosomes"){
         if($genome_build eq "36"){
@@ -492,7 +492,7 @@ sub getEntrypointsFile{
         } elsif ($genome_build eq "37"){
             $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","human-build37-20130113") . "/entrypoints.autosomes";
         } elsif ($genome_build eq "mm9"){
-            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","mouse-mm9-20130310") . "/entrypoints.mm9.autosomes";
+            $entrypoints_file = Genome::Sys->dbpath("tgi-misc-annotation","mouse-mm9-20130806") . "/entrypoints.mm9.autosomes";
         }
     }
 
