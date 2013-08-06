@@ -190,7 +190,7 @@ sub execute {
 
         unless($contig->{'contig_start'} < $contig->{'contig_stop'}) {
             #we will skip those until they are fixed
-            $self->error_message("Trimmed genomic coordinates' start is greater than stop for variant starting at " . $contig->{'pred_pos1'} . "\n");
+            $self->status_message("Trimmed genomic coordinates' start is greater than stop for variant starting at " . $contig->{'pred_pos1'} . "\n");
         }
         else {
             push @resized_contigs, $contig;
@@ -212,7 +212,7 @@ sub execute {
             $expected_contigs{$contig->{id}}{$contig->{source}} = 1;
         }
         else {
-            $self->error_message("Unexpected contig id: " . $contig->{id});
+            $self->status_message("Unexpected contig id: " . $contig->{id});
         }
 
         $stats_hash->{number_of_contigs_total}++;
@@ -220,7 +220,7 @@ sub execute {
         #check for overlap with the current region
 
         if($current_chr eq $contig->{pred_chr1} && $current_start <= $contig->{contig_start} && $current_stop >= $contig->{contig_start}) {
-            $self->error_message("Overlap detected for " . join(".",$contig->{pred_chr1},$contig->{pred_pos1},$contig->{pred_pos2},$contig->{pred_type},$contig->{pred_size}));
+            $self->status_message("Overlap detected for " . join(".",$contig->{pred_chr1},$contig->{pred_pos1},$contig->{pred_pos2},$contig->{pred_type},$contig->{pred_size}));
             $stats_hash->{number_of_overlapping_contigs}++;
             if($current_stop < $contig->{contig_stop}) {
                 #roll into region we are intersecting with
@@ -249,7 +249,7 @@ sub execute {
                     #Here we print out annotation information
                     #swap the coords if they are reversed gah!
                     if($unique_contig->{assem_pos1} > $unique_contig->{assem_pos2}) {
-                        $self->error_message("Genomic coordinates of indel make no sense for variant starting at " . $unique_contig->{'pred_pos1'} . "\n");
+                        $self->status_message("Genomic coordinates of indel make no sense for variant starting at " . $unique_contig->{'pred_pos1'} . "\n");
                         ($unique_contig->{assem_pos1},$unique_contig->{assem_pos2}) = ($unique_contig->{assem_pos2},$unique_contig->{assem_pos1});
                     }
 
@@ -308,7 +308,7 @@ sub execute {
             #swap the coords if they are reversed gah!
             if($unique_contig->{assem_pos1} > $unique_contig->{assem_pos2}) {
 
-                $self->error_message("Genomic coordinates of indel make no sense for variant starting at " . $unique_contig->{'pred_pos1'} . "\n");
+                $self->status_message("Genomic coordinates of indel make no sense for variant starting at " . $unique_contig->{'pred_pos1'} . "\n");
                 ($unique_contig->{assem_pos1},$unique_contig->{assem_pos2}) = ($unique_contig->{assem_pos2},$unique_contig->{assem_pos1});
             }
 
@@ -421,19 +421,19 @@ sub read_in_breakpoints {
                     if($current_contig->{'assem_type'} !~ /INS|DEL|ITX/i) {
 use Data::Dumper;
 print Dumper($current_contig);
-                        $self->error_message("Skipping contig that assembled as a type other than insertion, tandem duplication (ITX) or deletion with variant starting at " . $current_contig->{'pred_pos1'});
+                        $self->statusmessage("Skipping contig that assembled as a type other than insertion, tandem duplication (ITX) or deletion with variant starting at " . $current_contig->{'pred_pos1'});
                     }
                     else {
                         #check that Ins field makes sense
                         unless($current_contig->{'contig_location_of_variant'} <= $current_contig->{'microhomology_contig_endpoint'}) {
-                            $self->error_message("Microhomology makes no sense for variant starting at " . $current_contig->{'pred_pos1'} . "\n");
+                            $self->status_message("Microhomology makes no sense for variant starting at " . $current_contig->{'pred_pos1'} . "\n");
                         }
 
                         #check that coordinates make sense
                         unless($current_contig->{'contig_start'} < $current_contig->{'contig_stop'}) {
                             #we will skip those until they are fixed
-                            $self->error_message("Genomic coordinates make no sense for variant starting at " . $current_contig->{'pred_pos1'} . "\n");
-                            $self->error_message(join(" - ",($current_contig->{'contig_start'},$current_contig->{'contig_stop'})) . "\n");
+                            $self->status_message("Genomic coordinates make no sense for variant starting at " . $current_contig->{'pred_pos1'} . "\n");
+                            $self->status_message(join(" - ",($current_contig->{'contig_start'},$current_contig->{'contig_stop'})) . "\n");
                         }
                         else {
                             push @contigs, $current_contig;
@@ -475,19 +475,19 @@ print Dumper($current_contig);
 
             #check to make sure we didn't get back something crazy
             if($current_contig->{'assem_type'} !~ /INS|DEL|ITX/i) {
-                $self->error_message("Skipping contig that assembled as a type other than insertion, tandem duplication (ITX) or deletion with variant starting at " . $current_contig->{'pred_pos1'});
+                $self->status_message("Skipping contig that assembled as a type other than insertion, tandem duplication (ITX) or deletion with variant starting at " . $current_contig->{'pred_pos1'});
             }
             else {
                 #check that Ins field makes sense
                 unless($current_contig->{'contig_location_of_variant'} <= $current_contig->{'microhomology_contig_endpoint'}) {
-                    $self->error_message("Microhomology makes no sense for variant starting at " . $current_contig->{'pred_pos1'} . "\n");
+                    $self->status_message("Microhomology makes no sense for variant starting at " . $current_contig->{'pred_pos1'} . "\n");
                 }
 
                 #check that coordinates make sense
                 unless($current_contig->{'contig_start'} < $current_contig->{'contig_stop'}) {
                     #we will skip those until they are fixed
-                    $self->error_message("Genomic coordinates make no sense for variant starting at " . $current_contig->{'pred_pos1'} . "\n");
-                    $self->error_message(join(" - ",($current_contig->{'contig_start'},$current_contig->{'contig_stop'})) . "\n");
+                    $self->status_message("Genomic coordinates make no sense for variant starting at " . $current_contig->{'pred_pos1'} . "\n");
+                    $self->status_message(join(" - ",($current_contig->{'contig_start'},$current_contig->{'contig_stop'})) . "\n");
 
                 }
                 else {
@@ -619,7 +619,7 @@ sub resize_contig {
         my $lend = $contig_start - 1;
         my $additional_lseq = $self->fetch_flanking_sequence($chr,$lstart,$lend);
         unless(defined $additional_lseq) {
-            $self->error_message("Unable to fetch additional sequence for padding the left flanking sequence");
+            $self->status_message("Unable to fetch additional sequence for padding the left flanking sequence");
             return;
         }
         $contig->{'sequence'} = join("",$additional_lseq, $contig->{'sequence'});
@@ -634,7 +634,7 @@ sub resize_contig {
         my $rend = $contig_stop + $change_needed_to_right_flank_size;
         my $additional_rseq = $self->fetch_flanking_sequence($chr,$rstart,$rend);
         unless(defined $additional_rseq) {
-            $self->error_message("Unable to fetch additional sequence for padding the right flanking sequence");
+            $self->status_message("Unable to fetch additional sequence for padding the right flanking sequence");
             return;
         }
 
