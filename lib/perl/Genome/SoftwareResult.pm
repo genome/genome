@@ -746,8 +746,10 @@ sub delete {
 
     #creating an anonymous sub to delete allocations when commit happens
     my $id = $self->id;
+    my $observer;
     my $upon_delete_callback = sub {
         print "Now Deleting Allocation with owner_id = $id\n";
+        $observer->delete if $observer;
         my $allocation = Genome::Disk::Allocation->get(owner_id=>$id, owner_class_name=>$class_name);
         if ($allocation) {
             $allocation->deallocate;
@@ -755,7 +757,7 @@ sub delete {
     };
 
     #hook our anonymous sub into the commit callback
-    $class_name->ghost_class->add_observer(aspect=>'commit', callback=>$upon_delete_callback);
+    $observer = $class_name->ghost_class->add_observer(aspect=>'commit', callback=>$upon_delete_callback);
 
     return $self->SUPER::delete(@_);
 }
