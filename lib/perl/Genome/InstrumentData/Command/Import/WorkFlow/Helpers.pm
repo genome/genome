@@ -245,6 +245,25 @@ sub verify_adequate_disk_space_is_available_for_source_files {
 #<>#
 
 #<SAMTOOLS>#
+sub load_or_run_flagstat {
+    my ($self, $bam_path, $flagstat_path) = @_;
+    $self->status_message('Load or run flagstat...');
+
+    Carp::confess('No bam path given to run flagstat!') if not $bam_path;
+    Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
+
+    $flagstat_path ||= $bam_path.'.flagstat';
+    my $flagstat;
+    if ( -s $flagstat_path ) {
+        $flagstat = $self->load_flagstat($flagstat_path);
+    }
+    else {
+        $flagstat = $self->run_flagstat($bam_path, $flagstat_path);
+    }
+
+    return $flagstat;
+}
+
 sub run_flagstat {
     my ($self, $bam_path, $flagstat_path) = @_;
     $self->status_message('Run flagstat...');
@@ -340,7 +359,6 @@ sub load_headers_from_bam {
 
     Carp::confess('No bam path given to load headers!') if not $bam_path;
     Carp::confess('Bam path given to load headers does not exist!') if not -s $bam_path;
-    $self->status_message("Bam path: $bam_path");
 
     $self->status_message("Bam path: $bam_path");
     my $headers_fh = IO::File->new("samtools view -H $bam_path |");
