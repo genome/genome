@@ -26,6 +26,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
     has_optional_transient => [
         headers => { is => 'Array', },
         read_groups_and_headers => { is => 'Hash', },
+        removed_reads_cnt => { is => 'Number', },
     ],
     has_optional_calculated => [
         read_group_ids => {
@@ -148,7 +149,14 @@ sub _write_reads {
         return;
     }
 
+    my $removed_reads_cnt = 0;
     while ( my $line = $bam_fh->getline ) {
+        my @tokens = split(/\t/, $line);
+        print "$tokens[0] $tokens[1]\n";
+        if ( $tokens[1] & 0x100 ) { # secondary alignment
+            $removed_reads_cnt++;
+            next;
+        }
         $line =~ m/\sRG:Z:(.*?)\s/;
         my $read_group_id = $1;
         $read_group_id //= 'unknown';
@@ -158,6 +166,9 @@ sub _write_reads {
     for my $fh ( $bam_fh, values %$read_group_fhs ) {
         $fh->close;
     }
+
+    $self->status_message('Removed reads count: '.$removed_reads_cnt);
+    $self->removed_reads_cnt($removed_reads_cnt);
 
     $self->status_message('Write reads...done');
     return 1;
@@ -191,9 +202,10 @@ sub _verify_read_count {
     return if not $original_flagstat;
 
     $self->status_message('Original bam read count: '.$original_flagstat->{total_reads});
+    $self->status_message('Removed reads count: '.$self->removed_reads_cnt);
     $self->status_message('Read group bams read count: '.$read_count);
 
-    if ( $original_flagstat->{total_reads} != $read_count ) {
+    if ( $original_flagstat->{total_reads} - $self->removed_reads_cnt != $read_count ) {
         $self->error_message('Original and read group bam read counts do not match!');
         return;
     }
