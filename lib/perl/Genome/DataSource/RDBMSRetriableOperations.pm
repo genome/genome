@@ -28,11 +28,14 @@ sub _retriable_operation {
     for( my $db_retry_time = 1; $db_retry_time < 3600; $db_retry_time *= 2 ) {
         my @rv = eval { $code->(); };
 
-        if ($@ and $@ =~ m/DB_RETRY/) {
-            $self->debug_message("Disconnecting and sleeping for $db_retry_time seconds...\n");
-            $self->disconnect_default_handle;
-            sleep $db_retry_time;
-            next RETRY_LOOP;
+        if ($@) {
+            if ($@ =~ m/DB_RETRY/) {
+                $self->debug_message("Disconnecting and sleeping for $db_retry_time seconds...\n");
+                $self->disconnect_default_handle;
+                sleep $db_retry_time;
+                next RETRY_LOOP;
+            }
+            Carp::croak($@);  # re-throw other exceptions
         }
         return $self->context_return(@rv);
     }
