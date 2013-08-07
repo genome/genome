@@ -218,16 +218,26 @@ sub _build_workflow_to_import_bam {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ working_directory source_bam_path sample instrument_data_properties /],
+        input_properties => [qw/ working_directory source_path sample instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
     my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
+    my $retrieve_source_path_op = $helper->add_operation_to_workflow($workflow, 'retrieve source path');
+    for my $property (qw/ working_directory source_path /) {
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            left_property => $property,
+            right_operation => $retrieve_source_path_op,
+            right_property => $property,
+        );
+    }
+
     my $split_bam_op = $helper->add_operation_to_workflow($workflow, 'split bam by read group');
     $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'source_bam_path',
+        left_operation => $retrieve_source_path_op,
+        left_property => 'source_path',
         right_operation => $split_bam_op,
         right_property => 'bam_path',
     );
