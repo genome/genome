@@ -21,6 +21,53 @@ use constant {
     FIRST_SAMPLE => 9,
 };
 
+=head1 NAME
+
+Genome::File::Vcf::Entry
+
+=head1 SYNOPSIS
+
+    use Genome::File::Vcf::Entry;
+
+    my $header = ...; # A Genome::File::Vcf::Header object;
+    my $line = "$chrom\t$pos\t...";
+    my $entry = new Genome::File::Vcf::Entry($header, $line);
+
+    printf "CHROM:   %s\n", $entry->{chrom};
+    printf "POS:     %s\n", $entry->{position};
+    printf "IDENT:   %s\n", join(",", $entry->{identifiers});
+    printf "REF:     %s\n", $entry->{reference_allele};
+    printf "ALT:     %s\n", join(",", $entry->{alternate_alleles});
+    printf "QUAL:    %s\n", $entry->{quality};
+    # note that the following involve method calls rather than properties
+    printf "FILTERS: %s\n" . join(";", $entry->filters);
+    ...
+
+    my $gmaf = $entry->info("GMAF");
+    if (defined $gmaf) {
+        ...
+    }
+
+    # REF: A, ALT: AC, ACT
+    # Get all info fields for allele AC, paying attention to per-alt fields.
+    my $ac_info_all = $entry->info_for_allele("AC");
+
+    # or just get one field
+    my $ac_info_gmaf = $entry->info_for_allele("AC", "GMAF");
+
+
+    # Assume the format fields for the entry ar GT:DP:FT
+    my @format_names = $entry->format;
+    # @format_names = ("GT", "DP", "FT")
+
+    my $idx = $entry->format_field_index("DP"); # $idx = 1
+    my $idx = $entry->format_field_index("GL"); # $idx = undef
+
+    my $cache = $entry->format_field_index;
+    # $cache = {"GT" => 0, "DP" => 1, "FT" => 2}
+
+=cut
+
 sub new {
     my ($class, $header, $line) = @_;
     my $self = {
@@ -43,7 +90,6 @@ sub _parse {
     $self->{chrom} = $fields[CHROM];
     $self->{position} = $fields[POS];
 
-    $self->{identifiers} = undef;
     my @identifiers = _parse_list($fields[ID], ',');
     $self->{identifiers} = \@identifiers;
 
@@ -240,8 +286,8 @@ sub filters {
     my ($self, @args) = @_;
     if (@args) {
         @{$self->{_filter}} = @args;
+        $self->_check_filters;
     }
-    $self->_check_filters;
 
     return @{$self->{_filter}};
 }
