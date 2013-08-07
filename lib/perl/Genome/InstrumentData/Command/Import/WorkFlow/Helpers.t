@@ -53,7 +53,7 @@ is($helpers->kilobytes_required_for_processing_of_source_files(@source_files), 7
 
 # headers
 ok(!eval{$helpers->load_headers_from_bam;}, 'failed to get headers w/o bam');
-my $input_bam = $test_dir.'/input.two-read-groups.bam';
+my $input_bam = $test_dir.'/input.rg-multi.bam';
 ok(-s $input_bam, 'input bam');
 my $headers = $helpers->load_headers_from_bam($input_bam);
 is_deeply(
@@ -70,8 +70,9 @@ is_deeply(
         '@HD' => [ 'VN:1.4	GO:none	SO:coordinate' ],
         '@RG' => [
             'ID:2883581797	PL:illumina	PU:2883581797.	LB:TEST-patient1-somval_normal1-extlibs	PI:165	DS:paired end	DT:2012-12-17T13:15:46-0600	SM:TEST-patient1-somval_normal1	CN:WUGSC',
-            'ID:2883581798	PL:illumina	PU:2883581798.	LB:TEST-patient1-somval_normal1-extlibs	PI:165	DS:paired end	DT:2012-12-17T13:15:46-0600	SM:TEST-patient1-somval_normal1	CN:WUGSC'
-        ]
+            'ID:2883581798	PL:illumina	PU:2883581798.	LB:TEST-patient1-somval_normal1-extlibs	PI:165	DS:paired end	DT:2012-12-17T13:15:46-0600	SM:TEST-patient1-somval_normal1	CN:WUGSC',
+            'ID:2883581799	PL:illumina	PU:2883581799.	LB:TEST-patient1-somval_normal1-extlibs	PI:165	DS:paired end	DT:2012-12-17T13:15:46-0600	SM:TEST-patient1-somval_normal1	CN:WUGSC',
+        ],
     },
     'headers',
 );
@@ -82,7 +83,8 @@ is_deeply(
     $read_groups_from_headers, 
     {
         2883581797 => 'CN:WUGSC	DS:paired end	DT:2012-12-17T13:15:46-0600	LB:TEST-patient1-somval_normal1-extlibs	PI:165	PL:illumina	PU:2883581797.	SM:TEST-patient1-somval_normal1',
-        2883581798 => 'CN:WUGSC	DS:paired end	DT:2012-12-17T13:15:46-0600	LB:TEST-patient1-somval_normal1-extlibs	PI:165	PL:illumina	PU:2883581798.	SM:TEST-patient1-somval_normal1'
+        2883581798 => 'CN:WUGSC	DS:paired end	DT:2012-12-17T13:15:46-0600	LB:TEST-patient1-somval_normal1-extlibs	PI:165	PL:illumina	PU:2883581798.	SM:TEST-patient1-somval_normal1',
+        2883581799 => 'CN:WUGSC	DS:paired end	DT:2012-12-17T13:15:46-0600	LB:TEST-patient1-somval_normal1-extlibs	PI:165	PL:illumina	PU:2883581799.	SM:TEST-patient1-somval_normal1',
     },
     'read groups from headers',
 );
@@ -92,7 +94,8 @@ my $headers_string = $helpers->headers_to_string($headers);
 ok($headers_string, 'headers to string');# cannot compare for some reason
 
 ok(!eval{$helpers->load_read_groups_from_bam;}, 'failed to load read groups from bam w/o bam');
-is_deeply([$helpers->load_read_groups_from_bam($input_bam)], [qw/ 2883581797 2883581798 /], 'load read groups from bam');
+is_deeply($helpers->load_read_groups_from_bam($test_dir.'/input.sra.bam'), [], 'non read groups in bam');
+is_deeply($helpers->load_read_groups_from_bam($input_bam), [qw/ 2883581797 2883581798 2883581799 /], 'load read groups from bam');
 
 # verify tmp disk
 ok($helpers->verify_adequate_disk_space_is_available_for_source_files(tmp_dir => '/tmp', source_files => \@source_files), 'verify adequate disk space is available for source files');

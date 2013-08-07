@@ -133,20 +133,20 @@ sub _create_instrument_data_for_bam_path {
     my $original_data_path = delete $additional_properties{original_data_path};
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
-    my @read_group_ids_from_bam = $helpers->load_read_groups_from_bam($bam_path);
-    return if not @read_group_ids_from_bam; # should only be one
-    if ( @read_group_ids_from_bam > 1 ) {
+    my $read_group_ids_from_bam = $helpers->load_read_groups_from_bam($bam_path);
+    return if not $read_group_ids_from_bam; # should only be one or 0
+    if ( @$read_group_ids_from_bam > 1 ) {
         $self->error_message('More than one read group in bam! '.$bam_path);
         return;
     }
 
-    if ( @read_group_ids_from_bam ) {
-        $self->status_message("Read groups in bam: @read_group_ids_from_bam");
-        if ( @read_group_ids_from_bam > 1 ) {
+    if ( @$read_group_ids_from_bam ) {
+        $self->status_message("Read groups in bam: @$read_group_ids_from_bam");
+        if ( @$read_group_ids_from_bam > 1 ) {
             $self->error_message('Multiple read groups in bam! '.$bam_path);
             return;
         }
-        $additional_properties{segment_id} = $read_group_ids_from_bam[0];
+        $additional_properties{segment_id} = $read_group_ids_from_bam->[0];
     }
 
     $self->status_message('Checking if source files were previously imported...');
@@ -155,9 +155,9 @@ sub _create_instrument_data_for_bam_path {
         original_data_path => $original_data_path,
     );
     my @existing_instrument_data = Genome::InstrumentData::Imported->get(%properties);
-    if ( defined $read_group_ids_from_bam[0] ) {
+    if ( defined $read_group_ids_from_bam->[0] ) {
         @existing_instrument_data = grep { 
-            my $attr = $_->attributes(attribute_label => 'segment_id', attribute_value => $read_group_ids_from_bam[0]); 
+            my $attr = $_->attributes(attribute_label => 'segment_id', attribute_value => $read_group_ids_from_bam->[0]); 
             $attr ? $_ : undef
         } @existing_instrument_data;
     }

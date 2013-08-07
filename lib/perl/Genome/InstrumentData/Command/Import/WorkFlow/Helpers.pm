@@ -396,7 +396,7 @@ sub load_read_groups_from_bam {
     return if not $read_groups_from_headers;
 
     $self->status_message('Load read groups from bam...done');
-    return sort keys %$read_groups_from_headers;
+    return [ sort keys %$read_groups_from_headers ];
 }
 
 sub headers_to_string {
