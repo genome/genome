@@ -65,6 +65,11 @@ sub create {
     return $self;
 }
 
+sub to_string {
+    my $self = shift;
+    return join("\n", $self->lines);
+}
+
 sub _parse {
     my $self = shift;
     my $line_num = 0;

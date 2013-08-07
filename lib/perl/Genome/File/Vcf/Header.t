@@ -27,6 +27,7 @@ my @lines = split("\n", $header_txt);
 my $header = $pkg->create(lines => \@lines);
 
 is($header->fileformat, "VCFv4.1", "fileformat");
+is(scalar $header->sample_names, 3, "got 3 samples");
 is_deeply([$header->sample_names], ["S1", "S2", "S3"], "Sample names parsed");
 is_deeply($header->info_types->{CALLER},
     {

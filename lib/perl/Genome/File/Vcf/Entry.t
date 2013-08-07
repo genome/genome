@@ -72,10 +72,12 @@ subtest "basic_parse" => sub {
 
     my $entry_txt = join("\t", @fields);
     my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+    is($entry->to_string, $entry_txt, 'to_string');
 
     is($entry->{chrom}, '1', 'Parsed chromosome');
     is($entry->{position}, '10', 'Parsed position');
-    ok(!$entry->{identifiers}, 'Parsed null identifiers');
+    ok(!@{$entry->{identifiers}}, 'Parsed null identifiers');
     is($entry->{reference_allele}, 'A', 'Parsed reference allele');
     is_deeply($entry->{alternate_alleles}, ['C', 'G'], 'Parsed alternate alleles');
     ok(!$entry->has_indel, "has_indel reports correct value (false)");
@@ -86,9 +88,9 @@ subtest "basic_parse" => sub {
     is($entry->allele_index('G'), 2, 'allele index');
     ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
     is($entry->{quality}, '10.3', 'Parsed quality');
-    is_deeply($entry->{filter}, ['PASS'], 'Parsed filter');
+    is_deeply([$entry->filters], ['PASS'], 'Parsed filter');
     is_deeply($entry->info, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
-    is_deeply($entry->{format}, ['GT', 'DP', 'FT'], 'Parsed format');
+    is_deeply([$entry->format], ['GT', 'DP', 'FT'], 'Parsed format');
 
     is($entry->info('A'), 'B', 'Info accessor works for A');
     is($entry->info('C'), '8,9', 'Info accessor works for C');
@@ -117,15 +119,20 @@ subtest "basic_parse" => sub {
     is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
 
     ok(!$entry->is_filtered, "not filtered");
-    $entry->{filter} = ["PASS"];
-    ok(!$entry->is_filtered, "PASS != filtered");
-    $entry->{filter} = ["."];
+    $entry->filters(".");
+    is_deeply([$entry->filters], ["."], "set filter to .");
     ok(!$entry->is_filtered, ". != filtered");
-    $entry->{filter} = undef;
+
+    $entry->clear_filters;
+    ok(!$entry->filters, "cleared filters");
     ok(!$entry->is_filtered, "undef != filtered");
-    $entry->{filter} = [];
-    ok(!$entry->is_filtered, "[] != filtered");
-    $entry->{filter} = ["x"];
+
+    $entry->filters("PASS");
+    is_deeply([$entry->filters], ["PASS"], "set filter to PASS");
+    ok(!$entry->is_filtered, "PASS != filtered");
+
+    $entry->add_filter("x");
+    is_deeply([$entry->filters], ["x"], "filtering removes pass");
     ok($entry->is_filtered, "something else == filtered");
 };
 
@@ -134,8 +141,8 @@ subtest "has_indel_deletion" => sub {
         '1',            # CHROM
         10,             # POS
         '.',            # ID
-        'AT',            # REF
-        'AC,A',          # ALT
+        'AT',           # REF
+        'AC,A',         # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO
@@ -148,6 +155,7 @@ subtest "has_indel_deletion" => sub {
 
     my $entry_txt = join("\t", @fields);
     my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
     ok($entry->has_indel, "has_indel detected deletion");
 };
 
@@ -157,7 +165,7 @@ subtest "has_indel_insertion" => sub {
         10,             # POS
         '.',            # ID
         'A',            # REF
-        'AC,C',          # ALT
+        'AC,C',         # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO
@@ -170,9 +178,118 @@ subtest "has_indel_insertion" => sub {
 
     my $entry_txt = join("\t", @fields);
     my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
     ok($entry->has_indel, "has_indel detected insertion");
 };
 
+subtest "to_string" => sub {
+    my @examples = (
+        [ 'Y', 99, '.', 'CGC', 'CGA,CG', '.', '.', '.', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '.', '.', '.', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', '.', '.', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', '.', 'A=B;E', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', 'A=B;E', '.', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', 'A=B;E', 'GT', ],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', 'A=B;E', 'GT', '.', '0/2'],
+        [ 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', 'A=B;E', 'GT', '0/1', '0/2'],
+    );
 
+    for my $ex (@examples) {
+        my $entry_txt = join("\t", @$ex);
+        my $entry = $pkg->new($header, $entry_txt);
+        ok($entry, "parsed entry (" .join(" ", @$ex) . ")");
+        is($entry->to_string, $entry_txt, 'to_string');
+    }
+};
+
+subtest "add format field" => sub {
+    my @fields = ('Y', 99, '.', 'CGC', 'CGA,CG', '.', '.', '.', '.');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+    ok(!$entry->format, "No format fields");
+    my $idx = $entry->add_format_field("GT");
+    is($idx, 0, "added GT at index 0");
+    $idx = $entry->add_format_field("FT");
+    is($idx, 1, "added FT at index 1");
+    my $expected_format = ["GT", "FT"];
+    my $expected_index = {"GT" => 0, "FT" => 1};
+
+    is_deeply([$entry->format], $expected_format) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+    is_deeply($entry->format_field_index, $expected_index) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+
+    is($entry->add_format_field("FT"), 1, "re-added FT at index 1");
+    is_deeply([$entry->format], $expected_format) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+    is_deeply($entry->format_field_index, $expected_index) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+};
+
+subtest "add GT format field" => sub {
+    my @fields = ( 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', '.', 'DP', '10', '20');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+    is_deeply([$entry->format], ["DP"], "has DP field");
+    is($entry->sample_field(0, "DP"), 10, "DP=10 for sample #0");
+    is($entry->sample_field(1, "DP"), 20, "DP=10 for sample #1");
+
+    ok(!$entry->sample_field(0, "GT"), "No GT for sample #0");
+    ok(!$entry->sample_field(1, "GT"), "No GT for sample #1");
+
+
+    my $idx = $entry->add_format_field("GT");
+    is($idx, 0, "added GT at index 0");
+    my $expected_format = ["GT", "DP"];
+    my $expected_index = {"GT" => 0, "DP" => 1};
+
+    is_deeply([$entry->format], $expected_format) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+    is_deeply($entry->format_field_index, $expected_index) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+
+    is($entry->add_format_field("DP"), 1, "re-added DP at index 1");
+    is_deeply([$entry->format], $expected_format) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+    is_deeply($entry->format_field_index, $expected_index) or diag
+        "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
+
+    is($entry->sample_field(0, "DP"), 10, "DP=10 for sample #0");
+    is($entry->sample_field(1, "DP"), 20, "DP=10 for sample #1");
+
+    ok(!$entry->sample_field(0, "GT"), "no GT for sample #0");
+    ok(!$entry->sample_field(1, "GT"), "no GT for sample #1");
+
+    $entry->set_sample_field(0, "GT", "0/1");
+    $entry->set_sample_field(1, "GT", "1/2");
+
+    is($entry->sample_field(0, "GT"), "0/1", "GT=0/1 for sample #0");
+    is($entry->sample_field(1, "GT"), "1/2", "GT=1/2 for sample #1");
+};
+
+subtest "set sample fields" => sub {
+    my @fields = ('Y', 99, 'rs123', 'CGC', 'CGA,CG', '.', '.', '.', 'GT:DP:FT');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+
+    ok(!$entry->sample_field(0, "GT"), "no GT value");
+    ok(!$entry->sample_field(0, "DP"), "no DP value");
+    ok(!$entry->sample_field(0, "FP"), "no FT value");
+
+    $entry->set_sample_field(2, "FT", "BAD");
+    is($entry->to_string, join("\t", @fields, './.:.:.', './.:.:.', "./.:.:BAD"), "to_string");
+
+    ok(!$entry->sample_field(0, "FT"), "no FT for sample #0");
+    ok(!$entry->sample_field(1, "FT"), "no FT for sample #1");
+    is($entry->sample_field(2, "FT"), "BAD", "set FT to bad for sample #2");
+
+    $entry->set_sample_field(1, "GT", "1/1");
+    is($entry->sample_field(1, "GT"), "1/1", "set GT to 1/1 for sample #1");
+
+    is($entry->to_string, join("\t", @fields, './.:.:.', '1/1:.:.', "./.:.:BAD"), "to_string");
+};
 
 done_testing();
