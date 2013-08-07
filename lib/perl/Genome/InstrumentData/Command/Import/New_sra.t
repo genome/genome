@@ -52,8 +52,8 @@ my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
 is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-is(File::Compare::compare($bam_path, $test_dir.'/input.sra.bam'), 0, 'sra dumped and sorted bam matches');
-is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.sra.bam.flagstat'), 0, 'flagstat matches');
+is(File::Compare::compare($bam_path, $test_dir.'/input.sra.sorted.bam'), 0, 'sra dumped and sorted bam matches');
+is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.sra.sorted.bam.flagstat'), 0, 'flagstat matches');
 
 #print $instrument_data->data_directory."\n"; <STDIN>;
 done_testing();

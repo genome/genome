@@ -184,7 +184,7 @@ sub _create_instrument_data_for_bam_path {
     }
 
     my $bam_size = -s $bam_path;
-    my $kilobytes_requested = int($bam_path / 1024) + 1024;
+    my $kilobytes_requested = int($bam_size / 1024) + 1024;
     my $allocation = Genome::Disk::Allocation->create(
         disk_group_name => 'info_alignments',
         allocation_path => 'instrument_data/imported/'.$instrument_data->id,

@@ -298,12 +298,20 @@ sub _build_workflow_to_import_sra {
         );
     }
 
-    my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
+    my $split_bam_op = $helper->add_operation_to_workflow($workflow, 'split bam by read group');
     $workflow->add_link(
         left_operation => $sra_to_bam_op,
         left_property => 'bam_path',
+        right_operation => $split_bam_op,
+        right_property => 'bam_path',
+    );
+
+    my $sort_bam_op = $helper->add_operation_to_workflow($workflow, 'sort bam');
+    $workflow->add_link(
+        left_operation => $split_bam_op,
+        left_property => 'read_group_bam_paths',
         right_operation => $sort_bam_op,
-        right_property => 'unsorted_bam_path',
+        right_property => 'unsorted_bam_paths',
     );
 
     my $create_instdata_and_copy_bam = $helper->add_operation_to_workflow($workflow, 'create instrument data and copy bam');
@@ -317,9 +325,9 @@ sub _build_workflow_to_import_sra {
     }
     $workflow->add_link(
         left_operation => $sort_bam_op,
-        left_property => 'sorted_bam_path',
+        left_property => 'sorted_bam_paths',
         right_operation => $create_instdata_and_copy_bam,
-        right_property => 'bam_path',
+        right_property => 'bam_paths',
     );
 
     $workflow->add_link(
