@@ -23,21 +23,26 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
             doc => 'The paths of the read group bams.',
         },
     ],
+    has_optional_transient => [
+        headers => { is => 'Array', },
+        read_groups_and_headers => { is => 'Hash', },
+    ],
+    has_optional_calculated => [
+        read_group_ids => {
+            calculate_from => [qw/ read_groups_and_headers /],
+            calculate => q( return keys %$read_groups_and_headers ), 
+        },
+    ],
 };
 
 sub execute {
     my $self = shift;
     $self->status_message('Spilt bam by read group...');
 
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $headers = $helpers->load_headers_from_bam($self->bam_path);
-    return if not $headers;
-    
-    my $read_group_headers = delete $headers->{'@RG'};
-    my $read_groups_and_headers = $helpers->read_groups_from_headers($read_group_headers);
-    return if not $read_groups_and_headers;
+    my $set_headers_and_read_groups = $self->_set_headers_and_read_groups;
+    return if not $set_headers_and_read_groups;
 
-    my @read_group_ids = keys %$read_groups_and_headers;
+    my @read_group_ids = $self->read_group_ids;
     if ( not @read_group_ids or @read_group_ids == 1 ) {
         $self->status_message('Spilting bam by read group is NOT necessary. There is only one read group [or none] in headers.');
         $self->read_group_bam_paths([ $self->bam_path ]);
@@ -47,7 +52,7 @@ sub execute {
     my $read_group_fhs = $self->_open_file_handles_for_each_read_group_bam(@read_group_ids);
     return if not $read_group_fhs;
 
-    my $write_headers_ok = $self->_write_headers_to_read_group_bams($read_group_fhs, $headers, $read_groups_and_headers);
+    my $write_headers_ok = $self->_write_headers_to_read_group_bams($read_group_fhs);
     return if not $write_headers_ok;
 
     my $write_reads_ok = $self->_write_reads($read_group_fhs);
@@ -57,6 +62,26 @@ sub execute {
     return if not $verify_read_count_ok;
 
     $self->status_message('Spilt bam by read group...done');
+    return 1;
+}
+
+sub _set_headers_and_read_groups {
+    my $self = shift;
+
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $headers = $helpers->load_headers_from_bam($self->bam_path);
+    return if not $headers;
+    
+    my $read_group_headers = delete $headers->{'@RG'};
+    my (@read_group_ids, $read_groups_and_headers);
+    if ( $read_group_headers ) {
+        $read_groups_and_headers = $helpers->read_groups_from_headers($read_group_headers);
+        return if not $read_groups_and_headers;
+    }
+
+    $self->headers($headers);
+    $self->read_groups_and_headers($read_groups_and_headers);
+
     return 1;
 }
 
@@ -87,10 +112,14 @@ sub _open_file_handles_for_each_read_group_bam {
 }
 
 sub _write_headers_to_read_group_bams {
-    my ($self, $read_group_fhs, $headers, $read_groups_and_headers) = @_;
+    my ($self, $read_group_fhs) = @_;
 
     Carp::confess('No read group fhs to write headers to read group bams!') if not $read_group_fhs;
+
+    my $headers = $self->headers;
     Carp::confess('No headers to write to read group bams!') if not $headers;
+
+    my $read_groups_and_headers = $self->read_groups_and_headers;
     Carp::confess('No read groups and headers to write headers to read group bams!') if not $read_groups_and_headers;
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
