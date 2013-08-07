@@ -237,7 +237,7 @@ sub _build_workflow_to_import_bam {
     my $split_bam_op = $helper->add_operation_to_workflow($workflow, 'split bam by read group');
     $workflow->add_link(
         left_operation => $retrieve_source_path_op,
-        left_property => 'source_path',
+        left_property => 'destination_path',
         right_operation => $split_bam_op,
         right_property => 'bam_path',
     );
