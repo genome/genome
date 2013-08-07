@@ -187,7 +187,7 @@ sub _verify_read_count {
 
     $self->read_group_bam_paths(\@validated_read_group_bam_paths);
 
-    my $original_flagstat = $helpers->load_flagstat($self->bam_path.'.flagstat');
+    my $original_flagstat = $helpers->load_or_run_flagstat($self->bam_path);
     return if not $original_flagstat;
 
     $self->status_message('Original bam read count: '.$original_flagstat->{total_reads});
