@@ -22,7 +22,7 @@ sub _retriable_operation {
 
     my $db_retry_sec = 1;
 
-    $self->_make_retriable_operation_observer();
+    _make_retriable_operation_observer();
 
     RETRY_LOOP:
     for( my $db_retry_sec = 1; $db_retry_sec < 3600; $db_retry_sec *= 2 ) {
@@ -46,10 +46,9 @@ sub _retriable_operation {
 {
     my @retry_observers;
     sub _make_retriable_operation_observer {
-        my $self = shift;
         unless (@retry_observers) {
             @retry_observers = map {
-                $self->add_observer(
+                __PACKAGE__->add_observer(
                     aspect => $_,
                     priority => 99999, # Super low priority to fire last
                     callback => \&_db_retry_observer,
