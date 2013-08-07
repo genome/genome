@@ -60,6 +60,24 @@ class Genome::Sys::User {
     data_source => 'Genome::DataSource::GMSchema',
 };
 
+sub _resolve_param_value_from_text_by_name_or_id {
+    my $class = shift;
+    my $param_arg = shift;
+
+    #First try default behaviour of looking up by name or id
+    my @results = Genome::Command::Base->_resolve_param_value_from_text_by_name_or_id($class, $param_arg);
+
+    unless (@results) {
+        @results = $class->get(username => $param_arg)
+    }
+
+    unless (@results) {
+        @results = $class->get(name => $param_arg)
+    }
+
+    return @results;
+}
+
 Genome::Sys::User->add_observer(
     callback => \&_change_callback,
 );
