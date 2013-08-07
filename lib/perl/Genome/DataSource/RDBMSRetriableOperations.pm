@@ -20,19 +20,19 @@ sub _retriable_operation {
     my $self = shift;
     my $code = shift;
 
-    my $db_retry_time = 1; # seconds
+    my $db_retry_sec = 1;
 
     $self->_make_retriable_operation_observer();
 
     RETRY_LOOP:
-    for( my $db_retry_time = 1; $db_retry_time < 3600; $db_retry_time *= 2 ) {
+    for( my $db_retry_sec = 1; $db_retry_sec < 3600; $db_retry_sec *= 2 ) {
         my @rv = eval { $code->(); };
 
         if ($@) {
             if ($@ =~ m/DB_RETRY/) {
-                $self->debug_message("Disconnecting and sleeping for $db_retry_time seconds...\n");
+                $self->debug_message("Disconnecting and sleeping for $db_retry_sec seconds...\n");
                 $self->disconnect_default_handle;
-                sleep $db_retry_time;
+                sleep $db_retry_sec;
                 next RETRY_LOOP;
             }
             Carp::croak($@);  # re-throw other exceptions
