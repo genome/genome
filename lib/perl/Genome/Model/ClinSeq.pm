@@ -207,7 +207,7 @@ sub map_workflow_inputs {
     push @inputs, summarize_builds_outdir => $input_summary_dir;
     push @inputs, summarize_builds_log_file => $input_summary_dir . "/SummarizeBuilds.log.tsv";
 
-    if ($build->id > 0) {
+    if ($build->id) {
       push @inputs, summarize_builds_skip_lims_reports => 0;
     }else {
       #Watch out for -ve build IDs which will occur when the ClinSeq.t test is run.  In that case, do not run the LIMS reports
