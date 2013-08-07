@@ -6,8 +6,8 @@ use warnings;
 package Genome::DataSource::GMSchemaOracle;
 
 use Genome;
-
 use Cwd;
+use List::MoreUtiles qw(any);
 
 class Genome::DataSource::GMSchemaOracle {
     is => ['UR::DataSource::Oracle', 'Genome::DataSource::RDBMSRetriableOperations'],
@@ -43,10 +43,7 @@ my @retriable_operations = (
 );
 sub should_retry_operation_after_error {
     my($self, $sql, $dbi_errstr) = @_;
-    foreach my $re ( @retriable_operations ) {
-        return 1 if ($dbi_errstr =~ m/$re/);
-    }
-    return 0;
+    return any { $dbi_errstr =~ /$_/ } @retriable_operations;
 }
 
 

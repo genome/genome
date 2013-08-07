@@ -7,6 +7,7 @@ use Carp;
 use File::lockf;
 use DBD::Pg;
 use IO::Socket;
+use List::MoreUtiles qw(any);
 
 
 class Genome::DataSource::GMSchema {
@@ -423,10 +424,7 @@ my @retriable_operations = (
 );
 sub should_retry_operation_after_error {
     my($self, $sql, $dbi_errstr) = @_;
-    foreach my $re ( @retriable_operations ) {
-        return 1 if ($dbi_errstr =~ m/$re/);
-    }
-    return 0;
+    return any { $dbi_errstr =~ /$_/ } @retriable_operations;
 }
 
 sub create_iterator_closure_for_rule {
