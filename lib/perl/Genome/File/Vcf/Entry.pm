@@ -121,6 +121,7 @@ sub new {
     };
     bless $self, $class;
     $self->_parse;
+    print STDERR "TESTING\n";
     return $self;
 }
 
