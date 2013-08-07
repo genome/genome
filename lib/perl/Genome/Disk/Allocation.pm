@@ -851,6 +851,7 @@ sub _archive {
 sub _unarchive {
     my ($class, %params) = @_;
     my $id = delete $params{allocation_id};
+    my $reason = delete $params{reason};
     if (%params) {
         confess "Extra parameters given to allocation unarchive method: " . join(',', sort keys %params);
     }
@@ -966,6 +967,11 @@ sub _unarchive {
             Genome::Sys->remove_directory_tree($target_path);
         }
         confess "Could not unarchive, received error:\n$error";
+    } else {
+        $self->add_note(
+            header_text => 'unarchived',
+            body_text => $reason || 'no reason given',
+        );
     }
 
     $self->_cleanup_archive_directory($archive_path);
