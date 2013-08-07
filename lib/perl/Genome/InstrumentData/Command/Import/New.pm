@@ -136,6 +136,7 @@ sub _gather_inputs {
         sample => $self->sample,
         sample_name => $self->sample->name,
         $source_path_alias => $source_paths,
+        source_path => $source_paths, # FIXME just have the one source path[s]
         instrument_data_properties => \@instrument_data_properties,
     );
     return { map { $_ => $possible_inputs{$_} } @{$workflow->operation_type->input_properties} };
@@ -272,29 +273,30 @@ sub _build_workflow_to_import_sra {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Inst Data',
-        input_properties => [qw/ working_directory source_sra_path sample instrument_data_properties /],
+        input_properties => [qw/ working_directory source_path sample instrument_data_properties /],
         output_properties => [qw/ instrument_data /],
     );
 
     my $helper = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
-    my $get_sra_op = $helper->add_operation_to_workflow($workflow, 'get sra');
-    for my $property (qw/ working_directory source_sra_path /) {
+    my $retrieve_source_path_op = $helper->add_operation_to_workflow($workflow, 'retrieve source path');
+    for my $property (qw/ working_directory source_path /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
-            right_operation => $get_sra_op,
+            right_operation => $retrieve_source_path_op,
             right_property => $property,
         );
     }
 
     my $sra_to_bam_op = $helper->add_operation_to_workflow($workflow, 'sra to bam');
-    for my $property (qw/ working_directory sra_path /) {
+    for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ destination_path sra_path /] ) {
+        my ($left_property, $right_property) = @$property_mapping;
         $workflow->add_link(
-            left_operation => $get_sra_op,
-            left_property => $property,
+            left_operation => $retrieve_source_path_op,
+            left_property => $left_property,
             right_operation => $sra_to_bam_op,
-            right_property => $property,
+            right_property => $right_property,
         );
     }
 
