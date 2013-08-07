@@ -3,6 +3,7 @@ package Genome::File::Vcf::Entry;
 use Data::Dumper;
 use Carp qw/confess/;
 use Genome;
+use List::Util qw/first/;
 
 use strict;
 use warnings;
@@ -426,6 +427,41 @@ sub set_sample_field {
     $self->_extend_sample_data($sample_idx);
     my $field_idx = $cache->{$field_name};
     $sample_data->[$sample_idx]->[$field_idx] = $value;
+}
+
+sub filter_calls_involving_only {
+    my ($self, %options) = @_;
+    my $filter_name = delete $options{filter_name} || confess "Missing argument: filter_name";
+    my $alleles = delete $options{alleles} || confess "Missing argument: alleles";
+
+    my $gt_idx = $self->format_field_index("GT");
+    # No genotypes here, just bail.
+    return unless defined $gt_idx;
+
+    my $sample_data = $self->sample_data;
+    # No sample data
+    return unless $#$sample_data >= 0;
+
+    # This will return the existing index if the thing already exists
+    my $ft_idx = $self->add_format_field("FT");
+
+
+    my @alleles = $self->alleles;
+    my %filter_alleles = map {$_ => undef} @$alleles;
+
+    for my $sample_idx (0..$#$sample_data) {
+        my $gt = $self->sample_field($sample_idx, "GT");
+        next unless defined $gt;
+
+        my @alt_indices = split("[/|]", $gt);
+        my @call_alleles = map {$alleles[$_]} @alt_indices;
+        # We filter the call when there is nothing in @call_alleles that is not
+        # in %filter_alleles
+        if (!defined first { !exists $filter_alleles{$_} } @call_alleles) {
+            # This will return the existing index if the thing already exists
+            $self->set_sample_field($sample_idx, "FT", $filter_name);
+        }
+    }
 }
 
 sub to_string {

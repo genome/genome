@@ -49,24 +49,26 @@ my $vcf_in_str = <<EOS
 EOS
 ;
 
-my $vcf_fh = new IO::String($vcf_in_str);
-my $vcf_out_str = "";
-my $out_fh = new IO::String($vcf_out_str);
+subtest "basic usage" => sub {
+    my $vcf_fh = new IO::String($vcf_in_str);
+    my $vcf_out_str = "";
+    my $out_fh = new IO::String($vcf_out_str);
 
-my $reader = Genome::File::Vcf::Reader->fhopen($vcf_fh, "Test Vcf");
-my $header = $reader->{header};
-ok($header, "Got vcf header");
+    my $reader = Genome::File::Vcf::Reader->fhopen($vcf_fh, "Test Vcf");
+    my $header = $reader->{header};
+    ok($header, "Got vcf header");
 
-my $writer = $pkg->fhopen($out_fh, "Test Vcf", $header);
-while (my $e = $reader->next) {
-    $writer->write($e)
-}
+    my $writer = $pkg->fhopen($out_fh, "Test Vcf", $header);
+    while (my $e = $reader->next) {
+        $writer->write($e)
+    }
 
-# Vcf header can come out with lines in a different order.
-my $actual = join("\n", sort split("\n", $vcf_out_str));
-my $expected = join("\n", sort split("\n", $vcf_out_str));
+    # Vcf header can come out with lines in a different order.
+    my $actual = join("\n", sort split("\n", $vcf_out_str));
+    my $expected = join("\n", sort split("\n", $vcf_out_str));
 
-my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
-ok(!$diff, "output is as expected") || diag($diff);
+    my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
+    ok(!$diff, "output is as expected") || diag($diff);
+};
 
 done_testing();

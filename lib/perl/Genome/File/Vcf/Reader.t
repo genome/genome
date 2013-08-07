@@ -17,7 +17,7 @@ use_ok($pkg);
 
 # NOTE: this data is "clean". It comes from the public VCF spec at:
 # http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41
-my $vcf_fh = new IO::String(<<EOS
+my $vcf_str = <<EOS;
 ##fileformat=VCFv4.1
 ##fileDate=20090805
 ##source=myImputationProgramV3.1
@@ -44,33 +44,35 @@ my $vcf_fh = new IO::String(<<EOS
 20\t1230237\t.\tT\t.\t47\tPASS\tNS=3;DP=13;AA=T\tGT:GQ:DP:HQ\t0|0:54:7:56,60\t0|0:48:4:51,51\t0/0:61:2
 20\t1234567\tmicrosat1,foo\tGTC\tG,GTCT\t50\tPASS\tNS=3;DP=9;AA=G\tGT:GQ:DP\t0/1:35:4\t0/2:17:2\t1/1:40:3
 EOS
-);
 
-my $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
+subtest "basic usage (filehandle via fhopen)" => sub {
+    my $vcf_fh = new IO::String($vcf_str);
+    my $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
 
-my $header = $reader->{header};
-ok($header, "Got vcf header");
-is_deeply([$header->sample_names], [map {"NA0000$_"} 1..3], "Header has expected sample names");
-my $entry = $reader->next;
-ok($entry, "Got first entry");
-is($entry->{chrom}, "20", "chrom accessor");
-is($entry->{position}, "14370", "position accessor");
-is($entry->{reference_allele}, "G", "ref accessor");
-is($entry->sample_field(0, "GT"), "0|0", "sample field accessor");
+    my $header = $reader->{header};
+    ok($header, "Got vcf header");
+    is_deeply([$header->sample_names], [map {"NA0000$_"} 1..3], "Header has expected sample names");
+    my $entry = $reader->next;
+    ok($entry, "Got first entry");
+    is($entry->{chrom}, "20", "chrom accessor");
+    is($entry->{position}, "14370", "position accessor");
+    is($entry->{reference_allele}, "G", "ref accessor");
+    is($entry->sample_field(0, "GT"), "0|0", "sample field accessor");
 
-my @expected_pos = (17330, 1110696, 1230237, 1234567);
-my @actual_entries;
-while (my $e = $reader->next) {
-    push(@actual_entries, $e);
-}
-is(scalar(@actual_entries), scalar(@expected_pos), "Read expected number of entries");
-is_deeply([map {$_->{position}} @actual_entries], \@expected_pos, "Positions of entries are as expected");
+    my @expected_pos = (17330, 1110696, 1230237, 1234567);
+    my @actual_entries;
+    while (my $e = $reader->next) {
+        push(@actual_entries, $e);
+    }
+    is(scalar(@actual_entries), scalar(@expected_pos), "Read expected number of entries");
+    is_deeply([map {$_->{position}} @actual_entries], \@expected_pos, "Positions of entries are as expected");
+};
 
 ###############################################################################
 # Now let us rewind and test filtering
 subtest "add filter for no identifiers" => sub {
-    $vcf_fh->seek(0);
-    $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
+    my $vcf_fh = new IO::String($vcf_str);
+    my $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
 
     # Adds a filter to entries that have no identifier (e.g., rsid)
     my $has_identifiers = sub {
@@ -95,8 +97,8 @@ subtest "add filter for no identifiers" => sub {
 };
 
 subtest "filter: identifiers only" => sub {
-    $vcf_fh->seek(0);
-    $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
+    my $vcf_fh = new IO::String($vcf_str);
+    my $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
 
     # Returns true when an entry has an identifier (e.g., rsid)
     my $has_identifiers = sub {
@@ -116,9 +118,8 @@ subtest "filter: identifiers only" => sub {
 };
 
 subtest "unfiltered only" => sub {
-    # another test, for unfiltered entries only
-    $vcf_fh->seek(0);
-    $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
+    my $vcf_fh = new IO::String($vcf_str);
+    my $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
 
     # Returns true when an entry has an identifier (e.g., rsid)
     my $has_identifiers = sub {

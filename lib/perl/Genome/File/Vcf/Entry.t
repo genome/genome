@@ -31,7 +31,7 @@ EOS
 my @lines = split("\n", $header_txt);
 my $header = Genome::File::Vcf::Header->create(lines => \@lines);
 
-subtest "too_many_sample_fields" => sub {
+subtest "parse error: too many sample fields" => sub {
     my @fields = (
         '1',            # CHROM
         10,             # POS
@@ -53,7 +53,7 @@ subtest "too_many_sample_fields" => sub {
     ok($@, "Too many fields in a call is an error");
 };
 
-subtest "basic_parse" => sub {
+subtest "basic parsing/accessors" => sub {
     my @fields = (
         '1',            # CHROM
         10,             # POS
@@ -118,6 +118,15 @@ subtest "basic_parse" => sub {
     is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_for_allele (all fields)");
     is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
 
+};
+
+subtest "is filtered / add site filter" => sub {
+    my @fields = ('1', 10, '.', 'A', 'C', '.', '.', '.', '.');
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+
     ok(!$entry->is_filtered, "not filtered");
     $entry->filters(".");
     is_deeply([$entry->filters], ["."], "set filter to .");
@@ -136,7 +145,7 @@ subtest "basic_parse" => sub {
     ok($entry->is_filtered, "something else == filtered");
 };
 
-subtest "has_indel_deletion" => sub {
+subtest "has_indel function (with deletion)" => sub {
     my @fields = (
         '1',            # CHROM
         10,             # POS
@@ -159,7 +168,7 @@ subtest "has_indel_deletion" => sub {
     ok($entry->has_indel, "has_indel detected deletion");
 };
 
-subtest "has_indel_insertion" => sub {
+subtest "has_indel function (with insertion)" => sub {
     my @fields = (
         '1',            # CHROM
         10,             # POS
@@ -227,7 +236,7 @@ subtest "add format field" => sub {
         "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
 };
 
-subtest "add GT format field" => sub {
+subtest "add format field (GT, special case)" => sub {
     my @fields = ( 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', '.', 'DP', '10', '20');
     my $entry_txt = join("\t", @fields);
     my $entry = $pkg->new($header, $entry_txt);
@@ -290,6 +299,18 @@ subtest "set sample fields" => sub {
     is($entry->sample_field(1, "GT"), "1/1", "set GT to 1/1 for sample #1");
 
     is($entry->to_string, join("\t", @fields, './.:.:.', '1/1:.:.', "./.:.:BAD"), "to_string");
+};
+
+subtest "filter calls involving only certain alleles" => sub {
+    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT', '0/1', '0/0', '0/2');
+    my $entry_txt = join("\t", @fields);
+    # Imagine that the SNV is boring but the deletion is interesting.
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+    $entry->filter_calls_involving_only(filter_name => "BAD", alleles => ["CG", "CA"]);
+
+    my @expected_fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT', '0/1:.:BAD', '0/0:.:BAD', '0/2');
+    is($entry->to_string, join("\t", @expected_fields), "to_string");
 };
 
 done_testing();
