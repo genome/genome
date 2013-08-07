@@ -5,7 +5,6 @@ use above 'Genome';
 use Genome::File::Vcf::Reader;
 use Test::More;
 use File::Slurp qw/read_file/;
-use Genome::Utility::Test qw/compare_ok/;
 
 use strict;
 use warnings;
@@ -63,8 +62,11 @@ while (my $e = $reader->next) {
     $writer->write($e)
 }
 
-my $diff = Genome::Sys->diff_text_vs_text($vcf_out_str, $vcf_in_str);
-ok(!$diff, "output is as expected") || diag($diff);
+# Vcf header can come out with lines in a different order.
+my $actual = join("\n", sort split("\n", $vcf_out_str));
+my $expected = join("\n", sort split("\n", $vcf_out_str));
 
+my $diff = Genome::Sys->diff_text_vs_text($actual, $expected);
+ok(!$diff, "output is as expected") || diag($diff);
 
 done_testing();
