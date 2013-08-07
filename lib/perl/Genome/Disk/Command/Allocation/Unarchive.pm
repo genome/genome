@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Disk::Command::Allocation::Unarchive {
-    is => 'Command::V2',
+    is => 'Genome::Disk::Command::Allocation::UnarchiveBase',
     has_optional => [
         allocations => {
             is => 'Genome::Disk::Allocation',
@@ -17,7 +17,7 @@ class Genome::Disk::Command::Allocation::Unarchive {
             is => 'Text',
             is_many => 1,
             doc => 'pass a path instead of allocations and allocation will be looked up'
-        }
+        },
     ],
     doc => 'unarchives the given allocations',
 };
@@ -30,7 +30,7 @@ sub help_brief {
     return 'unarchives the given allocations';
 }
 
-sub execute {
+sub _execute {
     my $self = shift;
 
     if (!$self->allocations) {
@@ -54,7 +54,7 @@ sub execute {
 
     for my $allocation ($self->allocations) {
         $self->debug_message("Unarchiving allocation " . $allocation->id);
-        my $rv = $allocation->unarchive;
+        my $rv = $allocation->unarchive(reason => $self->reason);
         unless ($rv) {
             Carp::confess "Could not unarchive alloation " . $allocation->id;
         }
@@ -66,4 +66,3 @@ sub execute {
 }
 
 1;
-
