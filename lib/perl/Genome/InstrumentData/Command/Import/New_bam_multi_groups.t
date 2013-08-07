@@ -21,7 +21,7 @@ my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
 ok($sample, 'Create sample');
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import');
-my $source_bam = $test_dir.'/input.two-read-groups.bam';
+my $source_bam = $test_dir.'/input.rg-multi.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
 my $cmd = Genome::InstrumentData::Command::Import::New->create(
@@ -34,7 +34,7 @@ ok($cmd, "create import command");
 ok($cmd->execute, "excute import command");
 
 my @instrument_data = Genome::InstrumentData::Imported->get(original_data_path => $source_bam);
-ok(@instrument_data, 'got instrument data');
+is(@instrument_data, 2, 'got 2 instrument data');
 my $read_group = 2883581797;
 for my $instrument_data ( @instrument_data ) {
     is($instrument_data->original_data_path, $source_bam, 'original_data_path correctly set');
