@@ -8,7 +8,7 @@ use Statistics::R;
 use Cwd;
 use Bio::DB::Sam::Constants;
 
-my $DEFAULT = '0.7';
+my $DEFAULT = '0.9';
 
 class Genome::Model::Tools::BioSamtools::ErrorRate {
     is => ['Genome::Model::Tools::BioSamtools'],
@@ -34,7 +34,7 @@ class Genome::Model::Tools::BioSamtools::ErrorRate {
 my %versions = (
     0.6 => '/gsc/pkg/bio/bam-errorrate/0.6/bam-errorrate',
     0.7 => '/gscuser/iferguso/bin/bam-errorrate0.7',
-    #0.7 => '/gsc/pkg/bio/bam-errorrate/0.7/bam-errorrate',
+    0.9 => '/gscuser/iferguso/bin/bam-errorrate0.9',
     #C util is running out of iferguson home directory until it has been tested and can be deployed to the blades
 );
 
@@ -88,6 +88,7 @@ sub run_r_script {
         or die "failed to open $out_file for reading\n";
 
     while (my $line = $tsv_fh->getline) {
+        next if $line =~ /^#/; # skip comments
         chomp $line;
         my @fields = split /\s+/, $line;
 
