@@ -81,10 +81,10 @@ sub _verify_read_count {
     $self->status_message('Verify read count...');
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $unsorted_flagstat = $helpers->load_flagstat($unsorted_bam_path.'.flagstat');
+    my $unsorted_flagstat = $helpers->load_or_run_flagstat($unsorted_bam_path);
     return if not $unsorted_flagstat;
 
-    my $sorted_flagstat = $helpers->validate_bam($sorted_bam_path);
+    my $sorted_flagstat = $helpers->load_or_run_flagstat($sorted_bam_path);
     return if not $sorted_flagstat;
 
     $self->status_message('Sorted bam read count: '.$sorted_flagstat->{total_reads});
