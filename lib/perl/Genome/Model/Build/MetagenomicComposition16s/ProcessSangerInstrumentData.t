@@ -20,7 +20,7 @@ use_ok('Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory') or d
 my ($build, $example_build) = Genome::Model::Build::MetagenomicComposition16s::TestBuildFactory->build_with_example_build_for_sanger;
 ok($build && $example_build, 'Got build and example_build');
 
-my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData->create(input_build => [$build]);
+my $cmd = Genome::Model::Build::MetagenomicComposition16s::ProcessSangerInstrumentData->create(input_build => $build);
 my $process_ok = $cmd->execute;
 ok($process_ok, 'Process sanger instrument data');
 

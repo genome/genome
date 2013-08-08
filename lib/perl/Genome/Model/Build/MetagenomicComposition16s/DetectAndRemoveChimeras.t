@@ -42,7 +42,7 @@ $build->model->processing_profile->chimera_detector(undef);
 ok(!$build->detect_and_remove_chimeras, 'detect and remove chimeras fails w/o chimera detector on processing profile');
 $build->model->processing_profile->chimera_detector($chimera_detector);
 
-my $cmd = Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimeras->create(input_build => [$build]);
+my $cmd = Genome::Model::Build::MetagenomicComposition16s::DetectAndRemoveChimeras->create(input_build => $build);
 ok($cmd, 'create detect and remove chimeras cmd');
 ok($cmd->execute, 'execute detect and remove chimeras cmd');
 

@@ -10,7 +10,6 @@ class Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData {
     has_input => [
         input_build => {
             is => 'Genome::Model::Build::MetagenomicComposition16s',
-            is_many => 1,
         },
         instrument_data => {
             is => 'Genome::InstrumentData',
@@ -19,9 +18,8 @@ class Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData {
     has_output => [
         build => {
             is => 'Genome::Model::Build::MetagenomicComposition16s',
-            calculate_from => ['input_build'],
-            calculate => sub { return $_[0]; }
-
+            via => '__self__',
+            to => 'input_build',
         },
     ],
 };

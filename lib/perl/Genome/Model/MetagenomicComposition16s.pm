@@ -269,7 +269,22 @@ sub _resolve_workflow_for_build {
         $process_instdata_op->parallel_by('instrument_data');
         $previous_op = $process_instdata_op;
 
-        my $merge_instdata_op = $add_operation->('merge processed instrument data');
+        my $merge_instdata_op = $workflow->add_operation(
+            name => 'merge processed instrument data',
+            operation_type => Workflow::OperationType::Command->create(
+                command_class_name => 'Genome::Model::Build::MetagenomicComposition16s::MergeProcessedInstrumentData'));
+        $workflow->add_link(
+            left_operation => $previous_op,
+            right_operation => $merge_instdata_op,
+            left_property => 'result',
+            right_property => 'dummy_input',
+        );
+        $workflow->add_link(
+            left_operation => $workflow->get_input_connector,
+            right_operation => $merge_instdata_op,
+            left_property => 'build',
+            right_property => 'input_build',
+        );
         $previous_op = $merge_instdata_op;
     } else {
         my $process_sanger_instdata_op = $add_operation->('process sanger instrument data');
