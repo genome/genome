@@ -48,7 +48,7 @@ sub bsub {
     my $class = shift;
     my %args = Params::Validate::validate(
         @_, {
-            cmd => 1,
+            cmd => { type => (SCALAR | ARRAYREF) },
             queue => { default => 'long' },
             job_group => 0,
             log_file => 0,
