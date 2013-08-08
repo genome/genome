@@ -9,6 +9,7 @@ use warnings;
 
 use above 'Genome';
 
+require File::Temp;
 require Genome::Utility::Test;
 use Test::More;
 
@@ -99,5 +100,17 @@ is_deeply($helpers->load_read_groups_from_bam($input_bam), [qw/ 2883581797 28835
 
 # verify tmp disk
 ok($helpers->verify_adequate_disk_space_is_available_for_source_files(tmp_dir => '/tmp', source_files => \@source_files), 'verify adequate disk space is available for source files');
+
+# flagstat
+my $bam_basename = 'input.bam';
+my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
+my $bam_path = $tmp_dir.'/'.$bam_basename;
+Genome::Sys->create_symlink($test_dir.'/'.$bam_basename, $bam_path);
+ok(-s $bam_path, 'linked bam path');
+my $run_flagstat = $helpers->load_or_run_flagstat($bam_path); # runs
+ok($run_flagstat, 'run flagstat');
+my $load_flagstat = $helpers->load_or_run_flagstat($bam_path); # loads
+is_deeply($load_flagstat, $run_flagstat, 'load flagstat');
+ok($helpers->validate_bam($bam_path), 'validate bam');
 
 done_testing();

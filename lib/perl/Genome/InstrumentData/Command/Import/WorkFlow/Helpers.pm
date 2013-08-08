@@ -322,20 +322,7 @@ sub validate_bam {
     my ($self, $bam_path, $flagstat_path) = @_;
     $self->status_message('Validate bam...');
 
-    Carp::confess('No bam path given to run flagstat!') if not $bam_path;
-    Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
-
-    $flagstat_path ||= $bam_path.'.flagstat';
-    $self->status_message("Bam path: $bam_path");
-    $self->status_message("Flagstat path: $flagstat_path");
-
-    my $flagstat;
-    if ( -s $flagstat_path ) {
-        $flagstat = $self->load_flagstat($flagstat_path);
-    }
-    else {
-        $flagstat = $self->run_flagstat($bam_path, $flagstat_path);
-    }
+    my $flagstat = $self->load_or_run_flagstat($bam_path, $flagstat_path);
     return if not $flagstat;
 
     if ( not $flagstat->{total_reads} > 0 ) {
