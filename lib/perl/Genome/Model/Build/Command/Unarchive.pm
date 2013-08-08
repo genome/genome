@@ -148,9 +148,12 @@ sub _bsub_unarchives {
     my %job_to_allocation_mapping;
     for my $allocation (@allocations) {
         my $allocation_id = $allocation->id;
+        my @cmd = ('genome', 'disk', 'allocation', 'unarchive', $allocation_id,
+            '--lab', $lab, '--requestor', $requestor,
+        );
         my $job_id = Genome::Sys->bsub(
             queue => 'long',
-            cmd => "genome disk allocation unarchive '$allocation_id' --lab $lab --requestor $requestor",
+            cmd => \@cmd,
             log_file => "'$log_file_dir/$allocation_id'",
             job_group => '/apipe/build-unarchive',
         );
