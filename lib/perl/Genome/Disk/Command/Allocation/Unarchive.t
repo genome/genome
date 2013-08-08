@@ -124,6 +124,7 @@ unlink join('/', $allocation->absolute_path, 'a.out');
 # Create command object and execute it
 my $cmd = Genome::Disk::Command::Allocation::Unarchive->create(
     allocations => [$allocation],
+    lab => 'Mardis-Wilson',
 );
 ok($cmd, 'created unarchive command');
 ok($cmd->execute, 'successfully executed unarchive command');
@@ -157,7 +158,7 @@ ok(-e join('/', $allocation->absolute_path, 'archive.tar'), 'archive tarball suc
 unlink join('/', $allocation->absolute_path, 'a.out');
 
 # Now simulate the command being run from the CLI
-my @args = ($allocation->id);
+my @args = ($allocation->id, '--lab', 'Mardis-Wilson');
 my $rv = Genome::Disk::Command::Allocation::Unarchive->_execute_with_shell_params_and_return_exit_code(@args);
 ok($rv == 0, 'successfully executed command using simulated command line arguments');
 is($allocation->volume->id, $volume->id, 'allocation updated as expected after archive');

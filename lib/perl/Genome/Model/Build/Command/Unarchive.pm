@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::Unarchive {
-    is => 'Command::V2',
+    is => 'Genome::Disk::Command::Allocation::UnarchiveBase',
     has => [
         builds => {
             is                  => 'Genome::Model::Build',
@@ -17,6 +17,7 @@ class Genome::Model::Build::Command::Unarchive {
         },
     ],
 };
+
 sub help_brief {
     return "Unarchive all allocations related to a build";
 }
@@ -25,7 +26,7 @@ sub help_detail {
     return help_brief();
 }
 
-sub execute {
+sub _execute {
     my $self = shift;
     my @builds = $self->builds;
     my $total_builds = scalar @builds;
@@ -140,12 +141,19 @@ sub _bsub_unarchives {
     my $self = shift;
     my $log_file_dir = shift;
     my @allocations = @_;
+
+    my $lab = $self->lab;
+    my $requestor = $self->requestor->id;
+
     my %job_to_allocation_mapping;
     for my $allocation (@allocations) {
         my $allocation_id = $allocation->id;
+        my @cmd = ('genome', 'disk', 'allocation', 'unarchive', $allocation_id,
+            '--lab', $lab, '--requestor', $requestor,
+        );
         my $job_id = Genome::Sys->bsub(
             queue => 'long',
-            cmd => "genome disk allocation unarchive '$allocation_id'",
+            cmd => \@cmd,
             log_file => "'$log_file_dir/$allocation_id'",
             job_group => '/apipe/build-unarchive',
         );

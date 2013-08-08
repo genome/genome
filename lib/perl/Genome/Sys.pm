@@ -1219,9 +1219,14 @@ sub current_user_is_admin {
 
 sub current_user_has_role {
     my ($class, $role_name) = @_;
-    my $user = Genome::Sys::User->get(username => $class->username);
+    my $user = $class->current_user;
     return 0 unless $user;
     return $user->has_role_by_name($role_name);
+}
+
+sub current_user {
+    my $class = shift;
+    return Genome::Sys::User->get(username => $class->username);
 }
 
 sub cmd_output_who_dash_m {
