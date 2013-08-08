@@ -23,6 +23,7 @@ require File::Copy;
 require Genome::Utility::Text; #TODO remove, unused
 use Sys::Hostname;
 use File::Find;
+use IPC::System::Simple 'capture';
 #use Archive::Extract;
 
 require MIME::Lite;
@@ -53,13 +54,23 @@ sub bsub {
         die "Must be given a command to bsub!";
     }
 
-    my $bsub_cmd = "bsub";
-    $bsub_cmd .= " -q $queue";
-    $bsub_cmd .= " -g $job_group" if $job_group;
-    $bsub_cmd .= " -o $log_file" if $log_file;
-    $bsub_cmd .= " $cmd";
+    my @bsub_cmd = ('bsub', '-q', $queue);
+    if ($job_group) {
+        push @bsub_cmd, '-g', $job_group;
+    }
+    if ($log_file) {
+        push @bsub_cmd, '-o', $log_file;
+    }
 
-    my $bsub_output = `$bsub_cmd`;
+    my $bsub_output;
+    if (ref($cmd) eq 'ARRAY') {
+        push @bsub_cmd, @$cmd;
+        $bsub_output = eval {capture(@bsub_cmd)};
+    } else {
+        my $bsub_cmd = join(' ', @bsub_cmd, $cmd);
+        $bsub_output = `$bsub_cmd`;
+    }
+
     my ($job_id) = $bsub_output =~ /Job <(\d+)> is submitted to/;
     unless ($job_id) {
         die "Could not get job id from bsub output!";
