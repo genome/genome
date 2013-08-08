@@ -24,6 +24,7 @@ require Genome::Utility::Text; #TODO remove, unused
 use Sys::Hostname;
 use File::Find;
 use IPC::System::Simple 'capture';
+use Params::Validate qw(:types);
 #use Archive::Extract;
 
 require MIME::Lite;
@@ -45,14 +46,19 @@ sub bsub_and_wait {
 # FIXME This is incomplete and should be expanded to accept more bsub parameters
 sub bsub {
     my $class = shift;
-    my %params = @_;
-    my $queue = $params{queue} || 'long';
+    my %params = Params::Validate::validate(
+        @_, {
+            cmd => 1,
+            queue => { default => 'long' },
+            job_group => 0,
+            log_file => 0,
+        }
+    );
+
+    my $queue = $params{queue};
     my $job_group = $params{job_group};
     my $cmd = $params{cmd};
     my $log_file = $params{log_file};
-    unless ($cmd) {
-        die "Must be given a command to bsub!";
-    }
 
     my @bsub_cmd = ('bsub', '-q', $queue);
     if ($job_group) {
