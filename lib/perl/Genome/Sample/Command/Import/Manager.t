@@ -43,14 +43,18 @@ class Genome::Model::Ref {
         reference => { is => 'Reference', },
     ],
 };
+sub Genome::Model::Ref::_execute_build { return 1; }
 my $pp = Genome::ProcessingProfile::Ref->create(id => -333, name => 'ref pp #1', aligner => 'bwa');
 ok($pp, 'create pp');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v2');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::Sample::Command::Import::Manager', 'v3');
 my $sample_name = 'TeSt-0000-00';
+my $source_files = 'original.bam';
 my $working_directory = File::Temp::tempdir(CLEANUP => 1);
-Genome::Sys->create_symlink($test_dir.'/valid/info.tsv', $working_directory.'/info.tsv');
-Genome::Sys->create_symlink($test_dir.'/valid/config.yaml', $working_directory.'/config.yaml');
+my $info_tsv = $working_directory.'/info.tsv';
+Genome::Sys->create_symlink($test_dir.'/valid-import-pend/info.tsv', $info_tsv);
+my $config_yaml = $working_directory.'/config.yaml';
+Genome::Sys->create_symlink($test_dir.'/valid-import-pend/config.yaml', $config_yaml);
 
 # Do not make progress, just status
 my $manager = Genome::Sample::Command::Import::Manager->create(
@@ -59,7 +63,7 @@ my $manager = Genome::Sample::Command::Import::Manager->create(
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
-my $sample_hash = eval{ $manager->samples->{$sample_name}; };
+my $sample_hash = eval{ $manager->samples->{$source_files}; };
 ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'sample_needed', 'sample hash status');
 ok(-s $manager->status_file, 'status file created');
@@ -75,12 +79,13 @@ ok($manager->_launch_instrument_data_import_for_sample($sample_hash), 'launch in
 # Make progress: create sample, model and 'import' (it thinks it is importing b/c of the command used in the config file)
 $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => $working_directory,
-    make_progress => 1,
+     launch_imports => 1,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 is($manager->namespace, 'Test', 'got namespace');
-$sample_hash = eval{ $manager->samples->{$sample_name}; };
+$sample_hash = eval{ $manager->samples->{$source_files}; };
+ok($sample_hash, 'sample hash');
 is($sample_hash->{status}, 'import_pend', 'sample hash status');
 ok($sample_hash->{model}, 'sample hash model');
 is($sample_hash->{job_status}, 'pend', 'sample hash job status');
@@ -90,7 +95,7 @@ ok(!$sample_hash->{model}->build_requested, 'model build_requested is off');
 ok(!$sample_hash->{model}->instrument_data, 'model does not have instrument data assigned');
 ok(!$sample_hash->{build}, 'sample hash build');
 
-# Make progress: create inst data here, it should get assigned to thew model and build should be requested
+# Make progress: create inst data here, it should get assigned to the model and build should be requested
 my $inst_data = Genome::InstrumentData::Imported->__define__(
     original_data_path => $sample_hash->{source_files},
     sample => $sample_hash->{sample},
@@ -100,20 +105,29 @@ my $inst_data = Genome::InstrumentData::Imported->__define__(
     description => 'import test',
 );
 $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $manager->config_file);
+$inst_data->add_attribute(attribute_label => 'read_count', attribute_value => 1000);
+$inst_data->add_attribute(attribute_label => 'read_length', attribute_value => 100);
+
+unlink($info_tsv, $config_yaml);
+Genome::Sys->create_symlink($test_dir.'/valid-build/info.tsv', $info_tsv);
+Genome::Sys->create_symlink($test_dir.'/valid-build/config.yaml', $config_yaml);
 
 $manager = Genome::Sample::Command::Import::Manager->create(
     working_directory => $working_directory,
-    make_progress => 1,
+    start_builds => 1,
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
-$sample_hash = eval{ $manager->samples->{$sample_name}; };
-ok($sample_hash->{model}->build_requested, 'model build_requested is on');
+$sample_hash = eval{ $manager->samples->{$source_files}; };
+ok($sample_hash, 'sample hash');
+is($sample_hash->{status}, 'build_scheduled', 'sample hash status');
+ok($sample_hash->{model}, 'sample hash model');
+ok($sample_hash->{build}, 'build created');
 is_deeply([$sample_hash->{model}->instrument_data], [$inst_data], 'model has instrument data assigned');
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid/no-config-yaml',
+    working_directory => $test_dir.'/invalid-no-config-yaml',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
@@ -121,7 +135,7 @@ is($manager->error_message, "Property 'config_file': Config file does not exist!
 
 # fail - no config file
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid/no-info-file',
+    working_directory => $test_dir.'/invalid-no-info-file',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');
@@ -129,7 +143,7 @@ is($manager->error_message, "Property 'info_file': Sample info file does not exi
 
 # fail - no name column in csv
 $manager = Genome::Sample::Command::Import::Manager->create(
-    working_directory => $test_dir.'/invalid/no-name-column-in-info-file',
+    working_directory => $test_dir.'/invalid-no-name-column-in-info-file',
 );
 ok($manager, 'create manager');
 ok(!$manager->execute, 'execute');

@@ -24,11 +24,18 @@ class Genome::Sample::Command::Import::Manager {
         make_progress => { 
             is => 'Boolean',
             default_value => 0,
-            doc => 'Do not create samples, models, run imports and schedule builds. Only print the status.', 
+            doc => 'Create samples, models, run imports and schedule builds.', 
         },
-        # create_entities: samples, models
-        # launch_inst_data_import: launch the inst data command
-        # schedule_builds: schedule builds
+        launch_imports => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Launch instrument data imports.',
+        },
+        start_builds => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Start builds for successfully imported samples.',
+        },
     ],
     has_optional_calculated => [
         info_file => {
@@ -79,13 +86,13 @@ HELP
 sub execute {
     my $self = shift;
 
-    my $samples = $self->_load_samples;
-    return if not $samples;
+    my $load_samples = $self->_load_samples;
+    return if not $load_samples;
 
     my $make_progress = $self->_make_progress;
     return if not $make_progress;
 
-    $self->_status($samples);
+    $self->_status;
 
     return 1;
 }
@@ -155,6 +162,17 @@ sub __errors__ {
         return @errors;
     }
 
+
+    my @progress_methods = (qw/ launch_imports start_builds /);
+    if ( $self->make_progress ) {
+        for my $method ( @progress_methods ) {
+            $self->$method(1);
+        }
+    }
+    elsif ( grep { $self->$_} @progress_methods ) {
+        $self->make_progress(1);
+    }
+
     return;
 }
 
@@ -179,7 +197,7 @@ sub _load_config {
 
     my $namespace = Genome::Sample::Command::Import->namespace_for_nomenclature($nomenclature);
     if ( not $namespace ) {
-        return 'Could not get namespace from miporter. Please ensure there is a config for the '.$nomenclature.' nomenclature.';
+        return "Could not get namespace from importer. Please ensure there is a config for the ".$nomenclature." nomenclature.";
     }
     $self->namespace($namespace);
 
@@ -213,30 +231,37 @@ sub _load_info_file {
 
     my @importer_property_names = Genome::Sample::Command::Import->importer_property_names_for_namespace($self->namespace);
     my %samples;
-    while ( my $sample = $info_reader->next ) {
-        my $name = delete $sample->{name};
-        $samples{$name} = {
+    while ( my $hash = $info_reader->next ) {
+        my $source_files = delete $hash->{source_files};
+        if ( exists $samples{$source_files} ) {
+            $self->error_message('Duplicate source files! '.$source_files);
+            return;
+        }
+        my $name = delete $hash->{name};
+        $samples{$source_files} = {
             name => $name,
-            source_files => delete $sample->{source_files},
+            source_files => $source_files,
             importer_params => { name => $name, },
         };
-        for my $attr ( sort keys %$sample ) {
-            my $value = $sample->{$attr};
+        my $sample = $samples{$source_files};
+        $samples{$source_files} = $sample;
+        for my $attr ( sort keys %$hash ) {
+            my $value = $hash->{$attr};
             next if not defined $value or $value eq '';
             if ( $attr =~ /^s\./ ) { # is sample/individual/inst data indicated?
-                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
+                push @{$sample->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
             }
             if ( $attr =~ /^p\./ ) { # is sample/individual/inst data indicated?
-                push @{$samples{$name}->{importer_params}->{'individual_attributes'}}, $attr."='".$value."'";
+                push @{$sample->{importer_params}->{'individual_attributes'}}, $attr."='".$value."'";
             }
             elsif ( $attr =~ s/^i\.// ) { # inst data attr
-                push @{$samples{$name}->{'instrument_data_attributes'}}, $attr."='".$value."'";
+                push @{$sample->{'instrument_data_attributes'}}, $attr."='".$value."'";
             }
             elsif ( grep { $attr eq $_ } @importer_property_names ) { # is the attr specified in the importer?
-                $samples{$name}->{importer_params}->{$attr} = $value;
+                $sample->{importer_params}->{$attr} = $value;
             }
             else { # assume sample attribute
-                push @{$samples{$name}->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
+                push @{$sample->{importer_params}->{'sample_attributes'}}, $attr."='".$value."'";
             }
         }
     }
@@ -261,9 +286,9 @@ sub _load_status_file {
         return 'Failed to open status file! '.$status_file;
     }
 
-    my $samples = $self->samples;
+    my %samples_by_name = map { $_->{name} => $_ } values %{$self->samples};
     while ( my $status = $reader->next ) {
-        my $sample = $samples->{ $status->{name} };
+        my $sample = $samples_by_name{ $status->{name} };
         for my $attr (qw/ instrument_data model build /) {
             $sample->{$attr.'_id'} = $status->{$attr} if defined $status->{$attr} and $status->{$attr} ne 'NA';
         }
@@ -331,6 +356,7 @@ sub _resolve_instrument_data_import_command {
         $cmd_format .= ' ';
     }
     $self->instrument_data_import_command_sample_name_cnt(scalar @sample_name_replaces_in_command);
+
     $cmd_format .= 'genome instrument-data import basic --sample name=%s --source-files %s --import-source-name %s%s',
     $self->instrument_data_import_command_format($cmd_format);
 
@@ -393,7 +419,7 @@ sub _set_job_status_to_samples {
     my $job_list_cmd = $self->config->{'job dispatch'}->{list}->{'command'};
     if ( not $job_list_cmd ) {
         $self->error_message('No job list "command" in config! '.YAML::Dump($self->config));
-        return;
+        return 1;
     }
 
     my $name_column = $self->config->{'job dispatch'}->{list}->{'name column'};
@@ -410,13 +436,14 @@ sub _set_job_status_to_samples {
     }
     $status_column--;
 
+    my %samples_by_name = map { $_->{name} => $_ } values %$samples;
     $job_list_cmd .= ' 2>/dev/null |';
     my $fh = IO::File->new($job_list_cmd);
     while ( my $line = $fh->getline ) {
         my @tokens = split(/\s+/, $line);
         my $name = $tokens[ $name_column ];
-        next if not $samples->{$name};
-        $samples->{$name}->{job_status} = lc $tokens[ $status_column ];
+        next if not $samples_by_name{$name};
+        $samples_by_name{$name}->{job_status} = lc $tokens[ $status_column ];
     }
 
     return 1;
@@ -507,7 +534,7 @@ sub _status {
     $fh->print($status);
     $fh->close;
 
-    print STDERR "Summary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
+    print STDERR "$status\n\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
     return 1;
 }
 
@@ -546,13 +573,14 @@ sub _make_progress {
 
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
-    for my $sample ( values %{$self->samples} ) {
+    my $samples = $self->samples;
+    for my $sample ( values %$samples ) {
+        $self->set_sample_status($sample);
         next if $sample->{status} eq 'build_succeeded';
         # Create sample
         if ( not $sample->{sample} ) {
             $sample->{sample} = $self->_create_sample($sample->{importer_params});
             return if not $sample->{sample};
-            $sample->{status} ='import_needed'
         }
 
         # Create model
@@ -574,26 +602,36 @@ sub _make_progress {
             $sample->{build} = $model->latest_build;
         }
 
-        # Run import command, or schedule build
-        if ( $sample->{status} eq 'import_needed' ) {
-            my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
-            return if not $launch_ok;
+        $self->set_sample_status($sample);
+
+        # Run import command
+        if ( $self->launch_imports ) {
+            if ( $sample->{status} eq 'import_needed' ) {
+                my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
+                return if not $launch_ok;
+            }
+            elsif ( $sample->{status} eq 'import_failed' ) {
+                $sample->{instrument_data}->delete if $sample->{instrument_data};
+                my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
+                return if not $launch_ok;
+            }
         }
-        elsif ( $sample->{status} eq 'import_failed' ) {
-            $sample->{instrument_data}->delete if $sample->{instrument_data};
-            my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
-            return if not $launch_ok;
-        }
-        elsif ( $sample->{status} eq 'build_needed'
-            or $sample->{status} eq 'build_failed'
-            or $sample->{status} eq 'build_abandoned'
-            or $sample->{status} eq 'build_unstartable'
-        ) {
-            $sample->{model}->build_requested(1);
-            $sample->{build} = undef;
+
+        # Start builds
+        if ( $self->start_builds ) {
+            if ( $sample->{status} eq 'build_needed'
+                    or $sample->{status} eq 'build_failed'
+                    or $sample->{status} eq 'build_abandoned'
+                    or $sample->{status} eq 'build_unstartable'
+            ) {
+                my $build = $self->_start_build($sample->{model});
+                return if not $build;
+                $sample->{build} = $build;
+            }
         }
     }
 
+    $self->samples($samples);
     return 1;
 }
 
@@ -606,6 +644,19 @@ sub _launch_instrument_data_import_for_sample {
     $self->error_message($@) if $@;
     $self->error_message('Failed to launch instrument data import command!');
     return;
+}
+
+sub _start_build {
+    my ($self, $model) = @_;
+
+    $DB::single=1;
+    Carp::confess('No model given!') if not $model;
+
+    my $start = Genome::Model::Build::Command::Start->execute(models => [$model]);
+    return if not $start;
+
+    my ($build) = $start->builds;
+    return $build;
 }
 
 1;

@@ -668,12 +668,13 @@ sub execute {
       die "ERROR: INDEL results for $sample_name not found at $indel_file\n";
   }
   my $sv_file;
-  if($self->process_svs){
+  my $process_svs = $self->process_svs;
+  if($process_svs){
       my @sv_files = glob("$build_dir/variants/sv/union-union-sv_breakdancer_*sv_squaredancer*/svs.merge.file.somatic");
       $sv_file = $sv_files[0];
       unless( -e $sv_file ){
           print STDERR "ERROR: SV results for $sample_name not found, skipping SVs\n";
-          $self->process_svs = 0;
+          $process_svs = 0;
       }
   }
 
@@ -684,7 +685,7 @@ sub execute {
 
 #  `ln -s $snv_file $output_dir/$sample_name/snvs/` unless( -e "$output_dir/$sample_name/snvs/$snv_file");
 #  `ln -s $indel_file $output_dir/$sample_name/indels/` unless( -e "$output_dir/$sample_name/indels/$indel_file");
-  if($self->process_svs){
+  if($process_svs){
       `mkdir $output_dir/$sample_name/svs`;
       `ln -s $sv_file $output_dir/$sample_name/svs/svs.hq` unless( -e "$output_dir/$sample_name/svs/$sv_file");
 
@@ -1003,7 +1004,7 @@ sub execute {
       #same in excel format
       `ln -s ../snvs.indels.annotated.xls $sample_name/snvsAndIndels.annotated.xls`;
       #sv calls
-      if($self->process_svs){
+      if($process_svs){
           `ln -s $sv_file $output_dir/$sample_name/$sample_name/svs`;
           #`ln -s $sv_file $output_dir/$sample_name/$sample_name/svs.annotated`;
       }

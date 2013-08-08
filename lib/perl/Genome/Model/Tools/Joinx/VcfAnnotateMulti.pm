@@ -1,5 +1,6 @@
 package Genome::Model::Tools::Joinx::VcfAnnotateMulti;
 
+use Data::Dumper;
 use Carp qw/confess/;
 use Genome;
 
@@ -42,12 +43,17 @@ sub build_command_line {
     for my $spec (@specs) {
         my $afile = $spec->annotation_file;
         my @cmdline = qq/$jx vcf-annotate --input-file - --annotation-file $afile/;
-        if (!$spec->{identifiers}) {
+        if (!$spec->identifiers) {
             push(@cmdline, "--no-identifiers");
         }
-        if ($spec->info) {
-            my $info = "-I " . join(" -I ", @{$spec->info});
-            push(@cmdline, $info);
+
+        if (!$spec->info) {
+            push(@cmdline, "--no-info");
+        }
+
+        elsif (defined $spec->info_fields) {
+            my $info_fields = "-I " . join(" -I ", @{$spec->info_fields});
+            push(@cmdline, $info_fields);
         }
 
         push(@cmds, join(" ", @cmdline));

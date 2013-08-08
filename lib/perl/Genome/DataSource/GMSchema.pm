@@ -7,10 +7,11 @@ use Carp;
 use File::lockf;
 use DBD::Pg;
 use IO::Socket;
+use List::MoreUtils qw(any);
 
 
 class Genome::DataSource::GMSchema {
-    is => ['UR::DataSource::Oracle'],
+    is => ['UR::DataSource::Oracle', 'Genome::DataSource::RDBMSRetriableOperations'],
 };
 
 sub table_and_column_names_are_upper_case { 1; }
@@ -416,20 +417,34 @@ sub sleep_length {
     return 30;
 }
 
+my @retriable_operations = (
+    qr(ORA-25408), # can not safely replay call
+);
+sub should_retry_operation_after_error {
+    my($self, $sql, $dbi_errstr) = @_;
+    return any { $dbi_errstr =~ /$_/ } @retriable_operations;
+}
+
 sub create_iterator_closure_for_rule {
-  my $self = shift;
+    my $self = shift;
+    my @create_iter_params = @_;
 
-  $self->pause_db_queries_if_necessary();
+    $self->_retriable_operation(sub {
+        $self->pause_db_queries_if_necessary();
 
-  $self->SUPER::create_iterator_closure_for_rule(@_);
+        $self->SUPER::create_iterator_closure_for_rule(@create_iter_params);
+    });
 }
 
 sub create_dbh {
-  my $self = shift;
-  $self->pause_db_queries_if_necessary();
+    my $self = shift;
+    my @create_dbh_params = @_;
 
+    $self->_retriable_operation(sub {
+        $self->pause_db_queries_if_necessary();
 
-  $self->SUPER::create_dbh(@_);
+        $self->SUPER::create_dbh(@create_dbh_params);
+    });
 }
 
 sub pause_db_queries_if_necessary {

@@ -6,11 +6,11 @@ use warnings;
 package Genome::DataSource::GMSchemaOracle;
 
 use Genome;
-
 use Cwd;
+use List::MoreUtils qw(any);
 
 class Genome::DataSource::GMSchemaOracle {
-    is => ['UR::DataSource::Oracle'],
+    is => ['UR::DataSource::Oracle', 'Genome::DataSource::RDBMSRetriableOperations'],
     type_name => 'genome datasource gmschema',
 };
 
@@ -34,19 +34,30 @@ sub _my_data_source_id {
 
 sub table_and_column_names_are_upper_case { 1; }
 
+# cut-and-paste from Genome::DataSource::GMSchema - This should be moved
+# to The OracleType datasource in the postgres branch
+my @retriable_operations = (
+    qr(ORA-25408), # can not safely replay call
+);
+sub should_retry_operation_after_error {
+    my($self, $sql, $dbi_errstr) = @_;
+    return any { $dbi_errstr =~ /$_/ } @retriable_operations;
+}
+
+
 sub _sync_database {
     my $self = shift;
 
-    $DB::single = 1;
-
-    my $dbh = $self->get_default_handle;
-    unless ($dbh->do("alter session set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'")
-            and
-            $dbh->do("alter session set NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SSXFF'"))
-    {
-        Carp::croak("Can't set date format: $DBI::errstr");
-    }
-    $self->SUPER::_sync_database(@_);
+    $self->_retriable_operation( sub {
+        my $dbh = $self->get_default_handle;
+        unless ($dbh->do("alter session set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'")
+                and
+                $dbh->do("alter session set NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SSXFF'"))
+        {
+            Carp::croak("Can't set date format: $DBI::errstr");
+        }
+        $self->SUPER::_sync_database(@_);
+    });
 }
 
 sub _resolve_class_name_for_table_name_fixups {

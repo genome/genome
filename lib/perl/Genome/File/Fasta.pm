@@ -90,43 +90,50 @@ sub _cache_chromosome_info {
     $self->_genome_length($total_genome_size);
 }
 
-sub _regions_for_chunk {
-    my ($self, $chunk_size, $n) = @_;
+sub _regions_for_chunk_size {
+    my ($self, $total_chunks, $chunk_size) = @_;
 
     my @chrs = map { [ $_, 1, $self->chromosome_info->{$_} ] } $self->chromosome_name_list;
     my @regions;
     my $current_chr = shift @chrs;
 
-    for(my $index = 0; $index < $n; $index++) {
+    for(my $index = 0; $index < $total_chunks; $index++) {
         my $chunk_remaining = $chunk_size;
-        @regions = ();
+        my @chunk = ();
         while($chunk_remaining > 0 && $current_chr) {
             if((($current_chr->[2] - $current_chr->[1]) + 1) < $chunk_remaining) {
-                push @regions, [$current_chr->[0],$current_chr->[1], $current_chr->[2]];
+                push @chunk, [$current_chr->[0],$current_chr->[1], $current_chr->[2]];
                 $chunk_remaining -= ($current_chr->[2] - $current_chr->[1]) + 1;
                 $current_chr = shift @chrs;
             }
             else {
-                push @regions, [$current_chr->[0],$current_chr->[1], $current_chr->[1] + ($chunk_remaining - 1)];
+                push @chunk, [$current_chr->[0],$current_chr->[1], $current_chr->[1] + ($chunk_remaining - 1)];
                 $current_chr->[1] += $chunk_remaining;
                 $chunk_remaining = 0;
             }
         }
+        push @regions, \@chunk if @chunk;
     }
     return @regions;
 }
 
 sub divide_into_chunks {
-    my ($self, $total_chunks) = @_;
+    my ($self, $total_chunks, $chunk_index) = @_;
 
     my $chunk_size = ceil($self->genome_length / $total_chunks);
-    
-    my @chunks;
-    for my $chunk_num (1..$total_chunks) {
-        my @intervals = $self->_regions_for_chunk($chunk_size, $chunk_num);
-        push @chunks, \@intervals;
+    my @chunks = $self->_regions_for_chunk_size($total_chunks, $chunk_size);
+
+    unless($chunk_index) {
+        return @chunks;
     }
-    return @chunks;
+    else {
+        if($chunk_index >= 1 && $chunk_index <= scalar(@chunks)) {
+            return @{$chunks[$chunk_index-1]};
+        }
+        else {
+            die "Index: $chunk_index out of range for number of chunks: " . scalar(@chunks) . "\n";
+        }
+    }
 }
 
 1;

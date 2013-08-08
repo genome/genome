@@ -30,12 +30,12 @@ my @specs = (
     Genome::Model::Tools::Joinx::VcfAnnotationSpec->create(
         annotation_file => $dbsnp_vcf,
         identifiers => 1,
-        info => ["dbSNPBuildID=dbsnp,per-alt", "GMAF"],
+        info_fields => ["dbSNPBuildID=dbsnp,per-alt", "GMAF"],
         ),
     Genome::Model::Tools::Joinx::VcfAnnotationSpec->create(
         annotation_file => $thousand_genomes_vcf,
         identifiers => 0,
-        info => ["AA", "AF,per-alt", "AMR_AF", "ASN_AF", "EUR_AF", "VT"]
+        info_fields => ["AA", "AF", "AMR_AF", "ASN_AF", "EUR_AF", "VT"],
         ),
 );
 

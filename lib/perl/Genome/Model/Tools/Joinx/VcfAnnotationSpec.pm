@@ -12,7 +12,8 @@ class Genome::Model::Tools::Joinx::VcfAnnotationSpec {
         },
         info_fields => {
             is => 'Text',
-            doc => 'Field ids to embed from the annotation VCF.'
+            doc => 'Field ids to embed from the annotation VCF.',
+            is_optional => 1,
         },
     ],
     has_optional => [
