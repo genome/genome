@@ -24,15 +24,18 @@ use constant {
 
 =head1 NAME
 
-Genome::File::Vcf::Entry
+Genome::File::Vcf::Entry - Representation of a single (non-header) line in a
+VCF file.
 
 =head1 SYNOPSIS
 
     use Genome::File::Vcf::Entry;
+    use Genome::File::Vcf::Reader;
 
-    my $header = ...; # A Genome::File::Vcf::Header object;
-    my $line = "$chrom\t$pos\t...";
-    my $entry = new Genome::File::Vcf::Entry($header, $line);
+    my $reader = new Genome::File::Vcf::Reader("input.vcf");
+    my $entry = $reader->next;
+
+    printf "entry: %s\n", $entry->to_string;
 
     printf "CHROM:   %s\n", $entry->{chrom};
     printf "POS:     %s\n", $entry->{position};
@@ -66,6 +69,47 @@ Genome::File::Vcf::Entry
 
     my $cache = $entry->format_field_index;
     # $cache = {"GT" => 0, "DP" => 1, "FT" => 2}
+
+=head1 DESCRIPTION
+
+=head2 Public data members
+
+=over 12
+
+=item C<< $entry->{chrom} >>
+
+    chromosome or sequence name
+
+=item C<< $entry->{position} >>
+
+    position on the chromosome
+
+=item C<< $entry->{identifiers} >>
+
+    arrayref of identifiers (e.g., rsids) for this entry
+
+=item C<< $entry->{reference_allele} >>
+
+    the reference allele for this entry
+
+=item C<< $entry->{alternate_alleles} >>
+
+    arrayref of alternate alleles for this entry
+
+=item C<< $entry->{quality} >>
+
+    phred scaled quality score
+
+=head2 Methods
+
+=back
+
+=over 12
+
+=item C<new>
+
+Constructs a new Genome::File::Vcf::Entry from the given header and raw text
+line.
 
 =cut
 
@@ -155,10 +199,23 @@ sub _parse_samples {
     return \@samples;
 }
 
+=item C<alleles>
+
+Returns a list of all alleles (reference + alternates) for this entry. This
+list can be used to convert GT sample indexes to actual allele values.
+
+=cut
+
 sub alleles {
     my $self = shift;
     return ($self->{reference_allele}, @{$self->{alternate_alleles}});
 }
+
+=item C<has_indel>
+
+Returns true if the given entry has an insertion or deletion, false otherwise.
+
+=cut
 
 sub has_indel {
     my $self = shift;
@@ -170,8 +227,16 @@ sub has_indel {
     return 0;
 }
 
-# return the index of the given allele, or undef if not found
-# note that 0 => reference, 1 => first alt, ...
+=item C<allele_index>
+
+Returns the index of the given allele, or undef if not found.
+Note that 0 => reference, 1 => first alt, ...
+
+params:
+    $allele - the allele to find
+
+=cut
+
 sub allele_index {
     my ($self, $allele) = @_;
     my @a = $self->alleles;
@@ -180,8 +245,13 @@ sub allele_index {
     return $idx[0]
 }
 
-# Examines GT fields in sample data and returns (#total alleles, counts)
-# where counts is a hash mapping allele index -> frequency.
+=item C<allelic_distribution>
+
+Examines GT fields in sample data and returns (#total alleles, counts)
+where counts is a hash mapping allele index -> frequency.
+
+=cut
+
 sub allelic_distribution {
     my ($self, @sample_indices) = @_;
 
@@ -224,6 +294,18 @@ sub allelic_distribution {
     return ($total, %counts);
 }
 
+=item C<info>
+
+With no arguments, returns a hashref of all info fields for this entry.
+With a single argument, returns just the given info field.
+
+params:
+    $key - optional info field name (all are returned if not given)
+
+See info_for_allele for an example.
+
+=cut
+
 sub info {
     my ($self, $key) = @_;
 
@@ -239,6 +321,32 @@ sub info {
     # The 2nd condition is to deal with flags, they may exist but not have a value
     return $hash->{$key} || exists $hash->{$key};
 }
+
+=item C<info_for_allele>
+
+Similar to the info method, but if there are any I<per-allele> info fields,
+only the values that apply to the allele in question are included.
+
+params:
+    $allele - the alternate allele of interest
+    $key - optional info field name (all are returned if not given)
+
+=head3 Example:
+
+    # X is per-allele, Y is not.
+    ... REF ALT  ... INFO
+    ... AC  A,AT ... X=2,3;Y=4
+
+    $entry->info == (X => "2,3", Y => 4)
+    $entry->info("X") == "2,3"
+
+    $entry->info_for_allele("A") == (X => 2, Y => 4)
+    $entry->info_for_allele("A", "X") == 2
+
+    $entry->info_for_allele("AT") == (X => 3, Y => 4)
+    $entry->info_for_allele("AT", "X") == 3
+
+=cut
 
 sub info_for_allele {
     my ($self, $allele, $key) = @_;
@@ -282,28 +390,49 @@ sub _check_filters {
     }
 }
 
-# Get or set filters
-sub filters {
-    my ($self, @args) = @_;
-    if (@args) {
-        @{$self->{_filter}} = @args;
-        $self->_check_filters;
-    }
+=item C<filters>
 
+Return a list of filters that this site has failed.
+
+=cut
+
+sub filters {
+    my ($self) = @_;
     return @{$self->{_filter}};
 }
+
+=item C<clear_filters>
+
+Remove any site filters from the entry.
+
+=cut
 
 sub clear_filters {
     my $self = shift;
     $self->{_filter} = [];
 }
 
-# Add a filter
+=item C<add_filter>
+
+Add the given filter to the entry (indicates that the entire site is filtered).
+
+params:
+    $filter - the name of the filter to apply
+
+=cut
+
 sub add_filter {
     my ($self, $filter) = @_;
     push @{$self->{_filter}}, $filter;
     $self->_check_filters;
 }
+
+=item C<is_filtered>
+
+Returns true if the entire site represented by this entry is filtered, indicated
+by anything other than PASS or . in the FILTER column.
+
+=cut
 
 sub is_filtered {
     my $self = shift;
@@ -315,6 +444,27 @@ sub _prepend_format_field {
 
     return 0;
 }
+
+=item C<add_format_field>
+
+Add the given field to the FORMAT specification for this entry and return its
+index. If the field previously existed, its index is returned. Typically, fields
+are appended to the FORMAT list but "GT" is a special case: it is prepended as
+per the vcf spec. This method shifts all sample data appropriately when this
+happens.
+
+params:
+    $field - the field to add. This B<should> exist in the VCF header.
+
+=head3 Example:
+
+    # FORMAT = GL
+    $entry->add_format_field("DP") # returns 1
+    # FORMAT = GL:DP
+    $entry->add_format_field("GT") # returns 0
+    # FORMAT = GT:GL:DP
+
+=cut
 
 sub add_format_field {
     my ($self, $field) = @_;
@@ -350,13 +500,28 @@ sub add_format_field {
     }
 }
 
+=item C<format>
+
+Returns the list of FORMAT fields for this entry.
+
+=cut
+
 sub format {
     my $self = shift;
     return @{$self->{_format}};
 }
 
-# Returns a hash of format field names to their indices in per-sample
-# lists.
+=item C<format_field_index>
+
+If called with no parameters, returns a hash of format field names to their
+indexes in the FORMAT specification for this entry.
+
+If called with a single parameter, it is interpreted as a format field name
+and its index is returned (or undef if it does not exist). See L<SYNOPSIS> for
+an example.
+
+=cut
+
 sub format_field_index {
     my ($self, $key) = @_;
     if (!exists $self->{_format_key_to_idx}) {
@@ -372,6 +537,17 @@ sub format_field_index {
     return $self->{_format_key_to_idx};
 }
 
+=item C<sample_data>
+
+Get a raw reference to all sample data for this entry. Sample data is lazily
+parsed, so if this method is never called, you never pay for the parsing. Making
+modifications to the return value can corrupt the internal state of the Entry
+object. Be careful.
+
+returns: $x = [ [..sample0 values..], ..., [..sampleN values..] ]
+
+=cut
+
 sub sample_data {
     my $self = shift;
     if (!exists $self->{_sample_data}) {
@@ -379,6 +555,24 @@ sub sample_data {
     }
     return $self->{_sample_data};
 }
+
+=item C<sample_field>
+
+Get sample data values.
+
+params:
+    $sample_idx - sample index
+    $field_name - name of the value to fetch (e.g., GT, DP)
+
+=head3 Example:
+    FORMAT    SAMPLE1      SAMPLE2
+    GT:DP:FT  0/1:23:PASS  1/1:24:FalsePositive
+
+    $entry->sample_field(0, "GT") == "0/1"
+    $entry->sample_field(0, "DP") == 23
+    $entry->sample_field(1, "FT") == "FalsePositive"
+
+=cut
 
 sub sample_field {
     my ($self, $sample_idx, $field_name) = @_;
@@ -411,6 +605,19 @@ sub _extend_sample_data {
     }
 }
 
+=item C<set_sample_field>
+
+Sets the value of per-sample fields. It is assumed that the $field_name already
+exists in the FORMAT specification for this entry. If this is not the case, it
+can be added with $entry->add_format_field.
+
+params:
+    $sample_idx - sample index
+    $field_name - name of the field to set (must exist in FORMAT)
+    $value      - the value to set $field_name to
+
+=cut
+
 sub set_sample_field {
     my ($self, $sample_idx, $field_name, $value) = @_;
 
@@ -428,6 +635,35 @@ sub set_sample_field {
     my $field_idx = $cache->{$field_name};
     $sample_data->[$sample_idx]->[$field_idx] = $value;
 }
+
+=item C<filter_calls_involving_only>
+
+Applies a per-sample filter (FT tag) to any genotype calls that involve only the
+specified alleles.
+
+params (pass by hash):
+    filter_name - the name of the filter to apply
+    alleles - arrayref of alleles
+
+=head3 Example:
+
+BEFORE:
+    FORMAT    SAMPLE1      SAMPLE2
+    GT:DP:FT  0/1:23:PASS  0/0:24:.
+
+$entry->filter_calls_involving_only(
+    filter_name => "WILDTYPE",
+    alleles => [$entry->{reference_allele}]
+    );
+
+AFTER:
+    BEFORE:
+    FORMAT    SAMPLE1      SAMPLE2
+    GT:DP:FT  0/1:23:PASS  0/0:24:WILDTYPE
+
+Sample 2 is filtered because its call involves only the reference allele.
+
+=cut
 
 sub filter_calls_involving_only {
     my ($self, %options) = @_;
@@ -463,6 +699,15 @@ sub filter_calls_involving_only {
         }
     }
 }
+
+=item C<to_string>
+
+Returns a string representation of the entry in VCF format.
+
+=back
+
+=cut
+
 
 sub to_string {
     my ($self) = @_;
@@ -512,5 +757,7 @@ sub to_string {
             } @{$self->sample_data}, # for each sample
         );
 }
+
+
 
 1;

@@ -6,6 +6,23 @@ use Carp qw/confess/;
 use strict;
 use warnings;
 
+=head1 NAME
+
+Genome::File::Vcf::Reader - A class for reading vcf files.
+
+=head1 SYNOPSIS
+
+my $reader = new Genome::File::Vcf::Reader("input.vcf"); # or input.vcf.gz
+my $header = $reader->header;
+
+while (my $entry = $reader->next) {
+    # ...
+}
+
+$reader->close;
+
+=cut
+
 sub new {
     my ($class, $filename) = @_;
     my $fh;
@@ -22,14 +39,19 @@ sub fhopen {
     $name |= "unknown vcf file";
     my $self = {
         name => $name,
-        filehandle => $fh,
-        _header => 0,
+        _filehandle => $fh,
+        _header => undef,
         _line_buffer => [],
         _filters => [],
     };
     bless $self, $class;
     $self->_parse_header();
     return $self;
+}
+
+sub close {
+    my $self = shift;
+    $self->{_filehandle}->close();
 }
 
 sub add_filter {
@@ -41,7 +63,7 @@ sub _parse_header {
     my $self = shift;
     my @lines;
     my $name = $self->{name};
-    my $fh = $self->{filehandle};
+    my $fh = $self->{_filehandle};
 
     while (my $line = $fh->getline) {
         chomp $line;
@@ -53,7 +75,7 @@ sub _parse_header {
         }
     }
     confess "No vcf header found in file $name" unless @lines;
-    $self->{header} = Genome::File::Vcf::Header->create(lines => \@lines);
+    $self->{_header} = Genome::File::Vcf::Header->create(lines => \@lines);
 }
 
 sub _next_entry {
@@ -62,12 +84,12 @@ sub _next_entry {
     if (@{$self->{_line_buffer}}) {
         $line = shift @{$self->{_line_buffer}};
     } else {
-        $line = $self->{filehandle}->getline;
+        $line = $self->{_filehandle}->getline;
     }
     chomp $line if $line;
     return unless $line;
 
-    my $entry = Genome::File::Vcf::Entry->new($self->{header}, $line);
+    my $entry = Genome::File::Vcf::Entry->new($self->{_header}, $line);
     return $entry;
 }
 
@@ -86,7 +108,7 @@ sub next {
 
 sub header {
     my $self = shift;
-    return $self->{header};
+    return $self->{_header};
 }
 
 1;

@@ -55,7 +55,7 @@ subtest "basic usage" => sub {
     my $out_fh = new IO::String($vcf_out_str);
 
     my $reader = Genome::File::Vcf::Reader->fhopen($vcf_fh, "Test Vcf");
-    my $header = $reader->{header};
+    my $header = $reader->header;
     ok($header, "Got vcf header");
 
     my $writer = $pkg->fhopen($out_fh, "Test Vcf", $header);

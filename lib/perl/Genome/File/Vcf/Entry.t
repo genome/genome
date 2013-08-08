@@ -128,7 +128,8 @@ subtest "is filtered / add site filter" => sub {
     ok($entry, "parsed entry");
 
     ok(!$entry->is_filtered, "not filtered");
-    $entry->filters(".");
+
+    $entry->add_filter(".");
     is_deeply([$entry->filters], ["."], "set filter to .");
     ok(!$entry->is_filtered, ". != filtered");
 
@@ -136,7 +137,7 @@ subtest "is filtered / add site filter" => sub {
     ok(!$entry->filters, "cleared filters");
     ok(!$entry->is_filtered, "undef != filtered");
 
-    $entry->filters("PASS");
+    $entry->add_filter("PASS");
     is_deeply([$entry->filters], ["PASS"], "set filter to PASS");
     ok(!$entry->is_filtered, "PASS != filtered");
 

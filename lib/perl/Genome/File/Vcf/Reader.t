@@ -49,7 +49,7 @@ subtest "basic usage (filehandle via fhopen)" => sub {
     my $vcf_fh = new IO::String($vcf_str);
     my $reader = $pkg->fhopen($vcf_fh, "Test Vcf");
 
-    my $header = $reader->{header};
+    my $header = $reader->header;
     ok($header, "Got vcf header");
     is_deeply([$header->sample_names], [map {"NA0000$_"} 1..3], "Header has expected sample names");
     my $entry = $reader->next;

@@ -21,7 +21,7 @@ sub fhopen {
 
     my $self = {
         name => $name,
-        filehandle => $fh,
+        _filehandle => $fh,
     };
 
     return bless $self, $class;
@@ -33,8 +33,13 @@ sub write {
         my $type = ref $entry;
         confess "Attempted to write class $type to Vcf file, expected a Vcf entry"
             unless $type eq 'Genome::File::Vcf::Entry';
-        $self->{filehandle}->print($entry->to_string . "\n");
+        $self->{_filehandle}->print($entry->to_string . "\n");
     }
+}
+
+sub close {
+    my $self = shift;
+    $self->{_filehandle}->close;
 }
 
 1;
