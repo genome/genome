@@ -1503,10 +1503,7 @@ sub _execute_bsub_command { # here to overload in testing
             system("bkill $job_id");
         };
         my $lsf_change = UR::Context::Transaction->log_change($self, 'UR::Value', $job_id, 'external_change', $bsub_undo);
-        if ($lsf_change) {
-            $self->debug_message("Recorded LSF job submission ($job_id).");
-        }
-        else {
+        unless ($lsf_change) {
             die $self->error_message("Failed to record LSF job submission ($job_id).");
         }
 
@@ -1519,10 +1516,7 @@ sub _execute_bsub_command { # here to overload in testing
                 $self->status_message($bresume_output) unless ( $bresume_output =~ /^Job <$job_id> is being resumed$/ );
             },
         );
-        if ($commit_observer) {
-            $self->debug_message("Added commit observer to resume LSF job ($job_id).");
-        }
-        else {
+        unless ($commit_observer) {
             $self->error_message("Failed to add commit observer to resume LSF job ($job_id).");
         }
 
