@@ -46,7 +46,7 @@ sub bsub_and_wait {
 # FIXME This is incomplete and should be expanded to accept more bsub parameters
 sub bsub {
     my $class = shift;
-    my %params = Params::Validate::validate(
+    my %args = Params::Validate::validate(
         @_, {
             cmd => 1,
             queue => { default => 'long' },
@@ -55,25 +55,20 @@ sub bsub {
         }
     );
 
-    my $queue = $params{queue};
-    my $job_group = $params{job_group};
-    my $cmd = $params{cmd};
-    my $log_file = $params{log_file};
-
-    my @bsub_cmd = ('bsub', '-q', $queue);
-    if ($job_group) {
-        push @bsub_cmd, '-g', $job_group;
+    my @bsub_cmd = ('bsub', '-q', $args{queue});
+    if ($args{job_group}) {
+        push @bsub_cmd, '-g', $args{job_group};
     }
-    if ($log_file) {
-        push @bsub_cmd, '-o', $log_file;
+    if ($args{log_file}) {
+        push @bsub_cmd, '-o', $args{log_file};
     }
 
     my $bsub_output;
-    if (ref($cmd) eq 'ARRAY') {
-        push @bsub_cmd, @$cmd;
+    if (ref($args{cmd}) eq 'ARRAY') {
+        push @bsub_cmd, @{$args{cmd}};
         $bsub_output = eval {capture(@bsub_cmd)};
     } else {
-        my $bsub_cmd = join(' ', @bsub_cmd, $cmd);
+        my $bsub_cmd = join(' ', @bsub_cmd, $args{cmd});
         $bsub_output = `$bsub_cmd`;
     }
 
