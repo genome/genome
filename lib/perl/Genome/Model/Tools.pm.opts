@@ -15294,6 +15294,24 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>run-netmhc-new',
+    [
+      'allele=s',
+      'files',
+      'fasta-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'epitope-length=s',
+      'files',
+      'version=s',
+      [
+        '3.0',
+        '3.4'
+      ],
+      'help!',
+      undef
+    ],
     '>parse-netmhc',
     [
       'netmhc-file=s',
