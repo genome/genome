@@ -219,8 +219,19 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>unarchive',
       [
+        'lab=s',
+        [
+          'Ding',
+          'Maher',
+          'Mardis-Wilson',
+          'Mitreva',
+          'Warren',
+          'Weinstock'
+        ],
         'paths=s@',
         'files',
+        'requestor=s',
+        undef,
         'allocations=s@',
         undef,
         'help!',
@@ -8247,6 +8258,17 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>unarchive',
       [
+        'lab=s',
+        [
+          'Ding',
+          'Maher',
+          'Mardis-Wilson',
+          'Mitreva',
+          'Warren',
+          'Weinstock'
+        ],
+        'requestor=s',
+        undef,
         'builds=s@',
         undef,
         'help!',
