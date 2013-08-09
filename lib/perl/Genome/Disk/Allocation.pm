@@ -1030,7 +1030,7 @@ sub _execute_system_command {
     }
     else {
         # Serialize params hash, construct command, and execute
-        my $param_string = Genome::Utility::Text::hash_to_string(\%params);
+        my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
         my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
         my $perl5opt = join(' ', @_execute_system_command_perl5opt);
         my $cmd_template = '%s %s %s -e "%s->%s(%s); UR::Context->commit;"';
