@@ -159,9 +159,15 @@ sub create {
         read_length        => $self->read_length,
     );
 
+    # use per lane instrument data id as link name
     if ($lane_flag) {
         my $instr_data = $self->alignment_result->instrument_data;
         $bam_qc_params{bam_link_name} = $instr_data->id;
+    }
+
+    # Skip samstat html-report for bwamem/sw
+    if ($self->alignment_result->aligner_name =~ /^bwa(mem|sw)$/) {
+        $bam_qc_params{samstat} = 0;
     }
 
     my $cmd = Genome::Model::Tools::BamQc::Run->create(%bam_qc_params);

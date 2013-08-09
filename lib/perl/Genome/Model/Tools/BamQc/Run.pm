@@ -91,7 +91,7 @@ class Genome::Model::Tools::BamQc::Run {
         },
         error_rate => {
             is  => 'Boolean',
-            doc => 'A flag to run error rate calculations.  The error-rate-pileup flag determines which method of error-rate calculation is used.',
+            doc => 'A flag to run error rate calculations.',
             default_value => 1,
         },
         error_rate_version => {
@@ -107,7 +107,12 @@ class Genome::Model::Tools::BamQc::Run {
         bam_link_name => {
             is  => 'Text',
             doc => 'The bam symlink name.',
-        }
+        },
+        samstat  => {
+            is  => 'Boolean',
+            doc => 'A flag to run samstat html-report. Skip this for bwamem/sw bam',
+            default_value => 1,
+        },
     ],
     has_optional_output => [
         output_metrics_hash_ref => {},
@@ -171,7 +176,6 @@ sub execute {
         }
     }
 
-
     # PICARD MARK DUPLICATES
     my @mrkdup_files = glob($bam_dirname .'/*.metrics');
     unless (@mrkdup_files) {
@@ -211,12 +215,11 @@ sub execute {
         picard_gc_metrics_file         => $picard_gc_metrics_file,
         picard_gc_chart_file           => $picard_gc_chart_file,
         picard_gc_summary_file         => $picard_gc_summary_file,
-        samstat_version                => $self->samstat_version,
         fastqc_version                 => $self->fastqc_version,
     );
 
     $workflow_params{picard_gc_assume_sorted} = 1 if $picard_gc_assume_sorted; 
-    my @output_properties = qw(picard_metrics_result samstat_result fastqc_result);
+    my @output_properties = qw(picard_metrics_result fastqc_result);
 
     my $flagstat_path = $file_basename .'.bam.flagstat';
     unless (-e $flagstat_path) {
@@ -237,6 +240,11 @@ sub execute {
     if ($self->reference_sequence) {
         $workflow_params{reference_sequence} = $self->reference_sequence;
         push @output_properties, 'picard_gc_bias_result';
+    }
+
+    if ($self->samstat) {
+        $workflow_params{samstat_version} = $self->samstat_version;
+        push @output_properties, 'samstat_result';
     }
 
     if ($self->error_rate) {
@@ -349,19 +357,21 @@ sub execute {
     }
     
     # SamStat
-    my %samstat_operation_params = (
-        workflow   => $workflow,
-        name       => $self->id .' SamStat Html Report '. $self->bam_file,
-        class_name => 'Genome::Model::Tools::SamStat::HtmlReport',
-        input_properties => {
-            bam_file        => 'input_files',
-            samstat_version => 'use_version',
-        },
-        output_properties => {
-            result => 'samstat_result',
-        },
-    );
-    $self->setup_workflow_operation(%samstat_operation_params);
+    if ($self->samstat) {
+        my %samstat_operation_params = (
+            workflow   => $workflow,
+            name       => $self->id .' SamStat Html Report '. $self->bam_file,
+            class_name => 'Genome::Model::Tools::SamStat::HtmlReport',
+            input_properties => {
+                bam_file        => 'input_files',
+                samstat_version => 'use_version',
+            },
+            output_properties => {
+                result => 'samstat_result',
+            },
+        );
+        $self->setup_workflow_operation(%samstat_operation_params);
+    }
 
     # FastQC
     my %fastqc_operation_params = (
