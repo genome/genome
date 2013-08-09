@@ -15139,21 +15139,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>variant-protein-cds',
-      [
-        'input-tsv-file=s',
-        'files',
-        'output-tsv-file=s',
-        'files',
-        'anno-db=s',
-        'files',
-        'debug!',
-        undef,
-        'version=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>variant-transcript-cds',
       [
         'input-tsv-file=s',
