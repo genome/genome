@@ -62,6 +62,12 @@ Builds queued models.
 EOS
 }
 
+# We had to debug a failure on the cron server where a downstream pipe crashed
+# which meant that we got no mail due to having no SIGPIPE handler.
+$SIG{PIPE} = sub {
+    die "Cannot write to pipe (downstream pipe closed)";
+};
+
 sub execute {
     my $self = shift;
 
