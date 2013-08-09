@@ -1,11 +1,11 @@
-package Genome::Model::Tools::EpitopePrediction::RunNetmhc;
+package Genome::Model::Tools::EpitopePrediction::RunNetmhcNew;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
+class Genome::Model::Tools::EpitopePrediction::RunNetmhcNew {
     is => ['Genome::Model::Tools::EpitopePrediction::Base'],
     has_input => [
         allele => {
@@ -25,6 +25,15 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
             is => 'Text',
             doc => 'Length of subpeptides to predict',
         },
+
+	version => {
+            is => 'Text',
+            doc => 'NetMHC version to use',
+            valid_values => ['3.0','3.4'],
+	    default_value => '3.4',
+            is_optional => 1,
+		   },
+
     ],
 };
 
@@ -40,14 +49,36 @@ sub execute {
     my $self = shift;
     
     my ($temp_fh_name, $temp_name) = Genome::Sys->create_temp_file();
-    
-    my $netmhc_cmd = 'bsub -q techd -u jhundal@genome.wustl.edu -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N -oo'.
+    my $version = $self ->version;
+    my $netmhc_cmd;
+    if ($version eq 3.0)
+    	{
+		$netmhc_cmd = 'bsub -q techd -u jhundal@genome.wustl.edu -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N -oo'.
     				  $self->output_file.'_stdout'.
     				  ' /gsc/bin/netMHC -a '.
     				   $self->allele .
     				   ' -l '.$self->epitope_length.' '.
     				   $self->fasta_file.
     				   ' -x '.$self->output_file;
+	}
+
+
+   elsif ($version eq 3.4)
+
+	{
+		$netmhc_cmd = 'bsub -q techd -u jhundal@genome.wustl.edu -R \'select[mem >4000] rusage[mem=4000]\' -M 4000000 -N -oo'.
+                                  $self->output_file.'_stdout'.
+                                  ' /gscmnt/sata141/techd/jhundal/netMHC/NetMHC3.4/ATTEMPT4/NetMHC/netMHC  -a '.
+                                   $self->allele .
+                                   ' -l '.$self->epitope_length.' '.
+                                   $self->fasta_file.
+                                   ' -x '.$self->output_file;
+	}
+
+ else 
+	{
+		print "Version ".$version. "not supported" ;}
+	 
 
     Genome::Sys->shellcmd(
         cmd => $netmhc_cmd,
