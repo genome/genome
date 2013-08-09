@@ -47,6 +47,7 @@ sub should_retry_operation_after_error {
 
 sub _sync_database {
     my $self = shift;
+    my @params = @_;
 
     $self->_retriable_operation( sub {
         my $dbh = $self->get_default_handle;
@@ -56,7 +57,7 @@ sub _sync_database {
         {
             Carp::croak("Can't set date format: $DBI::errstr");
         }
-        $self->SUPER::_sync_database(@_);
+        $self->SUPER::_sync_database(@params);
     });
 }
 
