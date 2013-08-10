@@ -7,6 +7,7 @@ use Genome;
 use Genome::Utility::Instrumentation;
 
 use File::Copy::Recursive 'dircopy';
+use IPC::System::Simple;
 use Carp 'confess';
 
 use List::Util 'shuffle';
@@ -1029,14 +1030,21 @@ sub _execute_system_command {
         $allocation = $class->$method(%params);
     }
     else {
-        # Serialize params hash, construct command, and execute
-        my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
         my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
         my $perl5opt = join(' ', @_execute_system_command_perl5opt);
-        my $cmd_template = '%s %s %s -e "%s->%s(%s); UR::Context->commit;"';
-        my $cmd = sprintf($cmd_template, "genome-perl", $includes, $perl5opt, $class, $method, $param_string);
 
-        unless (eval { system($cmd) } == 0) {
+        my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
+        my $perl_program_string = sprintf("%s->%s(%s); UR::Context->commit;",
+            $class, $method, $param_string);
+
+        my @cmd = (
+            'genome-perl',
+            $includes,
+            $perl5opt,
+            '-e',
+            $perl_program_string
+        );
+        unless (eval { IPC::System::Simple::system(@cmd) } == 0) {
             my $msg = "Could not perform allocation action!";
             if ($@) {
                 $msg .= " Error: $@";
