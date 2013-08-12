@@ -44,16 +44,28 @@ sub create {
     }
 
     my $create_targets = $self->_create_targets;
-    return if not $create_targets;
+    if ( not $create_targets ) {
+        $self->delete;
+        return;
+    }
 
     my $realign_indels = $self->_realign_indels;
-    return if not $realign_indels;
+    if ( not $realign_indels ) {
+        $self->delete;
+        return;
+    }
 
     my $run_flagstat = $self->run_flagstat_on_output_bam_path;
-    return if not $run_flagstat;
+    if ( not $run_flagstat ) {
+        $self->delete;
+        return;
+    }
 
     my $run_md5sum = $self->run_md5sum_on_output_bam_path;
-    return if not $run_md5sum;
+    if ( not $run_md5sum ) {
+        $self->delete;
+        return;
+    }
 
     my $allocation = $self->disk_allocations;
     eval { $allocation->reallocate };

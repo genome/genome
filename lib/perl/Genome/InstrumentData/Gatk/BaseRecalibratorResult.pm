@@ -40,7 +40,10 @@ sub create {
     }
 
     my $run_recalibrator = $self->_run_base_recalibrator;
-    return if not $run_recalibrator;
+    if ( not $run_recalibrator ) {
+        $self->delete;
+        return;
+    }
 
     my $allocation = $self->disk_allocations;
     eval { $allocation->reallocate };

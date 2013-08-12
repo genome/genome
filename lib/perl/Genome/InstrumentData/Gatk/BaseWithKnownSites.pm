@@ -107,7 +107,10 @@ sub create {
     return if not $self;
 
     my $link_known_sites_vcfs = $self->link_known_sites_vcfs;
-    return if not $link_known_sites_vcfs; # undef on error
+    if ( not $link_known_sites_vcfs ) { # undef on error
+        $self->delete;
+        return;
+    }
 
     return $self;
 }

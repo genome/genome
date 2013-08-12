@@ -78,6 +78,7 @@ sub create {
     if ( not $prepare_output_directory ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to prepare output directory!') if $@;
+        $self->delete;
         return;
     }
 

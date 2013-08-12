@@ -45,16 +45,28 @@ sub create {
     }
 
     my $base_recalibrator_result = $self->_get_or_create_base_recalibrator_result;
-    return if not $base_recalibrator_result;
+    if ( not $base_recalibrator_result ) {
+        $self->delete;
+        return;
+    }
 
     my $print_reads = $self->_print_reads;
-    return if not $print_reads;
+    if ( not $print_reads ) {
+        $self->delete;
+        return;
+    }
 
     my $run_flagstat = $self->run_flagstat_on_output_bam_path;
-    return if not $run_flagstat;
+    if ( not $run_flagstat ) {
+        $self->delete;
+        return;
+    }
 
     my $run_md5sum = $self->run_md5sum_on_output_bam_path;
-    return if not $run_md5sum;
+    if ( not $run_md5sum ) {
+        $self->delete;
+        return;
+    }
 
     my $allocation = $self->disk_allocations;
     eval { $allocation->reallocate };
