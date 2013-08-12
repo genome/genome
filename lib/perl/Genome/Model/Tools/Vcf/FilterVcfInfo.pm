@@ -1,0 +1,369 @@
+package Genome::Model::Tools::Vcf::FilterVcfInfo;
+
+use Genome;
+use strict;
+use warnings;
+use Genome::File::Vcf::Reader;
+use Genome::File::Vcf::Writer;
+
+class Genome::Model::Tools::Vcf::FilterVcfInfo {
+    is => 'Command',
+    has => [
+        output_file => {
+            is => 'Text',
+            is_output => 1,
+            doc => "filtered VCF file",
+            is_optional => 0,
+        },
+        vcf_file => {
+            is => 'Text',
+            is_input => 1,
+            doc => "mutations in Vcf format",
+            is_optional => 0,
+        },
+        filters => {
+            is => 'Text',
+            is_input => 1,
+            doc => "comma-separated string of filters to apply. See help for syntax",
+            is_optional => 0,
+        },
+        filter_descriptions => {
+            is => 'Text',
+            is_input => 1,
+            doc => "comma-separated string of filters descriptions to add to the header",
+            example_values => ['has GMAF>0.05,is non-nonsense mutation'],
+            is_optional => 0,
+        },
+        non_existent_fields_are_filtered => {
+            is => 'Boolean',
+            is_input => 1,
+            doc => "How to handle entries that do not have the parameter being filtered. If true, a filter of GMAF>0.05 will also filter entries with no GMAF defined. If false, entries with no GMAF defined will not be filtered.",
+            is_optional => 1,
+            default => 1,
+        },
+
+    ],
+};
+
+
+sub help_brief { 
+    "apply filters to a VCF file based on items in the INFO field"
+}
+
+
+sub help_synopsis {
+    <<'HELP';
+    apply filters to a VCF file based on items in the INFO field
+HELP
+}
+
+sub help_detail {
+    <<'HELP';
+    Applies filters to a VCF file based on items in the INFO field. The filters param takes a comma separated list of filters to apply. Each filter looks like the following:
+    
+  filtername:<infoname><operation><value>
+
+  Examples:
+    GMAFFILTER:GMAF>0.05
+    TIERFILTER:TIER=2,NONSENSEFILTER:CSQ!~NONSENSE
+
+  Supported operations are currently:
+    =   equal
+    !=  not equal
+    >   greater than
+    >=  greater than or equal to
+    <   less than
+    <=  less than or equal to
+    ~   contains
+    !~  does not contain
+    
+
+  If a line does not contain the value being searched for 
+
+HELP
+}
+
+
+
+
+sub filter_if_info_greater_than {
+    my ($field, $rhs, $filter_name, $filter_undef) = @_;
+
+    return sub {
+        my $entry = shift;
+        my @common = grep {
+            my $value = $entry->info_for_allele($_, $field);
+            my $result;
+            if($filter_undef){
+                $result = defined $value && $value > $rhs;
+            } else {
+                $result = defined $value || $value > $rhs;
+            }
+            $result;
+
+            } @{$entry->{alternate_alleles}};
+
+        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
+        return 1; # don't completely skip the entry
+    }
+}
+
+sub filter_if_info_less_than {
+    my ($field, $rhs, $filter_name, $filter_undef) = @_;
+
+    return sub {
+        my $entry = shift;
+        my @common = grep {
+            my $value = $entry->info_for_allele($_, $field);
+            my $result;
+            if($filter_undef){
+                $result = defined $value && $value < $rhs;
+            } else {
+                $result = defined $value || $value < $rhs;
+            }
+            $result;
+
+            } @{$entry->{alternate_alleles}};
+
+        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
+        return 1; # don't completely skip the entry
+    }
+}
+
+sub filter_if_info_greater_than_or_equal_to {
+    my ($field, $rhs, $filter_name, $filter_undef) = @_;
+
+    return sub {
+        my $entry = shift;
+        my @common = grep {
+            my $value = $entry->info_for_allele($_, $field);
+            my $result;
+            if($filter_undef){
+                $result = defined $value && $value >= $rhs;
+            } else {
+                $result = defined $value || $value >= $rhs;
+            }
+            $result;
+
+            } @{$entry->{alternate_alleles}};
+
+        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
+        return 1; # don't completely skip the entry
+    }
+}
+
+sub filter_if_info_less_than_or_equal_to{
+    my ($field, $rhs, $filter_name, $filter_undef) = @_;
+
+    return sub {
+        my $entry = shift;
+        my @common = grep {
+            my $value = $entry->info_for_allele($_, $field);
+            my $result;
+            if($filter_undef){
+                $result = defined $value && $value <= $rhs;
+            } else {
+                $result = defined $value || $value <= $rhs;
+            }
+            $result;
+
+            } @{$entry->{alternate_alleles}};
+
+        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
+        return 1; # don't completely skip the entry
+    }
+}
+
+
+
+sub filter_if_info_equal_to{
+    my ($field, $rhs, $filter_name, $filter_undef) = @_;
+
+    return sub {
+        my $entry = shift;
+        my @common = grep {
+            my $value = $entry->info_for_allele($_, $field);
+            my $result;
+            if($filter_undef){
+                $result = defined $value && $value eq $rhs;
+            } else {
+                $result = defined $value || $value eq $rhs;
+            }
+            $result;
+
+            } @{$entry->{alternate_alleles}};
+
+        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
+        return 1; # don't completely skip the entry
+    }
+}
+
+
+sub filter_if_info_notequal_to{
+    my ($field, $rhs, $filter_name, $filter_undef) = @_;
+
+    return sub {
+        my $entry = shift;
+        my @common = grep {
+            my $value = $entry->info_for_allele($_, $field);
+            my $result;
+            if($filter_undef){
+                $result = defined $value && $value ne $rhs;
+            } else {
+                $result = defined $value || $value ne $rhs;
+            }
+            $result;
+
+            } @{$entry->{alternate_alleles}};
+
+        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
+        return 1; # don't completely skip the entry
+    }
+}
+
+
+sub filter_if_info_matches{
+    my ($field, $rhs, $filter_name, $filter_undef) = @_;
+
+    return sub {
+        my $entry = shift;
+        my @common = grep {
+            my $value = $entry->info_for_allele($_, $field);
+            my $result;
+            if($filter_undef){
+                $result = defined $value && $value =~ /$rhs/;
+            } else {
+                $result = defined $value || $value =~ /$rhs/;
+            }
+            $result;
+
+            } @{$entry->{alternate_alleles}};
+
+        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
+        return 1; # don't completely skip the entry
+    }
+}
+
+sub filter_if_info_not_matches{
+    my ($field, $rhs, $filter_name, $filter_undef) = @_;
+
+    return sub {
+        my $entry = shift;
+        my @common = grep {
+            my $value = $entry->info_for_allele($_, $field);
+            my $result;
+            if($filter_undef){
+                $result = defined $value && $value !~ /$rhs/;
+            } else {
+                $result = defined $value || $value !~ /$rhs/;
+            }
+            $result;
+
+            } @{$entry->{alternate_alleles}};
+
+        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
+        return 1; # don't completely skip the entry
+    }
+}
+
+
+sub getFilter{
+    my ($filter_name,$filter_string,$filter_undef)= shift;
+    
+
+
+    # !=  not equal
+    if($filter_string =~/(.+)\!\=(.+)/){
+        return(filter_if_info_not_equal_to($1, $2, $filter_name, $filter_undef));
+    # !~  does not contain
+    } elsif ($filter_string =~/(.+)\!\~(.+)/){
+        return(filter_if_info_not_matches($1, $2, $filter_name, $filter_undef));
+    # >=  greater than or equal to
+    } elsif ($filter_string =~/(.+)\>\=(.+)/){
+        return(filter_if_info_greater_than_or_equal_to($1, $2, $filter_name, $filter_undef));
+    # <=  less than or equal to
+    } elsif ($filter_string =~/(.+)<=(.+)/){
+        return(filter_if_info_less_than_or_equal_to($1, $2, $filter_name, $filter_undef));
+    # >   greater than
+    } elsif ($filter_string =~/(.+)>(.+)/){
+        return(filter_if_info_greater_than($1, $2, $filter_name, $filter_undef));
+    # >   less than
+    } elsif ($filter_string =~/(.+)<(.+)/){
+        return(filter_if_info_less_than($1, $2, $filter_name, $filter_undef));
+    # ~   contains
+    } elsif ($filter_string =~/(.+)~(.+)/){
+        return(filter_if_info_matches($1, $2, $filter_name, $filter_undef));
+    # ~   equal
+    } elsif ($filter_string =~/(.+)=(.+)/){
+        return(filter_if_info_equal_to($1, $2, $filter_name, $filter_undef));
+    }
+    die("filter string unparsable: $filter_string\n")
+}
+
+
+# sub wildtype_filter {
+#     my $entry = shift;
+#     $entry->filter_calls_involving_only(filter_name => "WILDTYPE", alleles => [$entry->{reference_allele}]);
+
+#     return 1;
+# }
+
+
+
+################################################################################################
+
+sub execute {
+    my $self=shift;
+    
+    my $filter_undef = $self->non_existent_fields_are_filtered;
+    
+    
+    my @filters = split(",",$self->filters);
+    my @filter_descs = split(",",$self->filter_descriptions);
+    
+    #sanity check
+    if(@filters != @filter_descs){
+        die "number of filter descriptions does not equal the number of filters\n";
+    }
+
+    # Open input vcf
+    my $reader = new Genome::File::Vcf::Reader($self->vcf_file);
+
+
+    # Make sure vcf header contains FT format tag and the filter names we will apply
+    my $header = $reader->header;
+    
+    $header->add_format_type(
+        id => "FT",
+        type => "String",
+        number => ".",
+        description => "Filters",
+        skip_if_exists => 1,
+        );
+
+    #loop through and apply the filters
+    my $i=0;
+    for($i=0;$i<@filters;$i++){
+        my $filterstr = $filters[$i];
+        my $filter_desc = $filter_descs[$i];
+        my ($filter_name,$filter_expr) = split(":",$filterstr);
+
+        $header->add_filter(id => $filter_name, description => $filter_desc);
+        
+        #create filter
+        my $filter = getFilter($filter_name, $filter_expr, $filter_undef);
+        $reader->add_filter($filter);
+    }
+
+
+    # Create output writer
+    my $writer = new Genome::File::Vcf::Writer($self->output_file, $header);
+
+    # Copy entries from input to output
+    while (my $entry = $reader->next) {
+        $writer->write($entry);
+    }
+
+    return 1;
+}
+
