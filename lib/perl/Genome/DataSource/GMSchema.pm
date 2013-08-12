@@ -11,7 +11,7 @@ use List::MoreUtils qw(any);
 
 
 class Genome::DataSource::GMSchema {
-    is => ['UR::DataSource::Oracle', 'Genome::DataSource::RDBMSRetriableOperations'],
+    is => ['UR::DataSource::RDBMSRetriableOperations', 'UR::DataSource::Oracle'],
 };
 
 sub table_and_column_names_are_upper_case { 1; }

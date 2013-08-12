@@ -10,7 +10,7 @@ use Cwd;
 use List::MoreUtils qw(any);
 
 class Genome::DataSource::GMSchemaOracle {
-    is => ['UR::DataSource::Oracle', 'Genome::DataSource::RDBMSRetriableOperations'],
+    is => ['UR::DataSource::RDBMSRetriableOperations', 'UR::DataSource::Oracle'],
     type_name => 'genome datasource gmschema',
 };
 
