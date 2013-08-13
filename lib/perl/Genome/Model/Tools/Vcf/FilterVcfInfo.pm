@@ -84,217 +84,48 @@ HELP
 }
 
 
-
-
-sub filter_if_info_greater_than {
-    my ($field, $rhs, $filter_name, $filter_undef) = @_;
-    return sub {
+sub make_relational_info_filter{
+    my ($relational_op, $field, $rhs, $filter_name, $filter_undef) = @_;
+    
+        return sub {
         my $entry = shift;
         my @common = grep {
             my $value = $entry->info_for_allele($_, $field);
             my $result;
             if($filter_undef){
-                $result = defined $value && $value > $rhs;
+                $result = defined $value && $relational_op->($value,$rhs);
             } else {
-                $result = defined $value || $value > $rhs;
+                $result = defined $value || $relational_op->($value,$rhs);
             }
             $result;
 
             } @{$entry->{alternate_alleles}};
-
+        push(@common, $entry->{reference_allele});        
         $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
         return 1; # don't completely skip the entry
     }
 }
-
-sub filter_if_info_less_than {
-    my ($field, $rhs, $filter_name, $filter_undef) = @_;
-
-    return sub {
-        my $entry = shift;
-        my @common = grep {
-            my $value = $entry->info_for_allele($_, $field);
-            my $result;
-            if($filter_undef){
-                $result = defined $value && $value < $rhs;
-            } else {
-                $result = defined $value || $value < $rhs;
-            }
-            $result;
-
-            } @{$entry->{alternate_alleles}};
-
-        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
-        return 1; # don't completely skip the entry
-    }
-}
-
-sub filter_if_info_greater_than_or_equal_to {
-    my ($field, $rhs, $filter_name, $filter_undef) = @_;
-
-    return sub {
-        my $entry = shift;
-        my @common = grep {
-            my $value = $entry->info_for_allele($_, $field);
-            my $result;
-            if($filter_undef){
-                $result = defined $value && $value >= $rhs;
-            } else {
-                $result = defined $value || $value >= $rhs;
-            }
-            $result;
-
-            } @{$entry->{alternate_alleles}};
-
-        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
-        return 1; # don't completely skip the entry
-    }
-}
-
-sub filter_if_info_less_than_or_equal_to{
-    my ($field, $rhs, $filter_name, $filter_undef) = @_;
-
-    return sub {
-        my $entry = shift;
-        my @common = grep {
-            my $value = $entry->info_for_allele($_, $field);
-            my $result;
-            if($filter_undef){
-                $result = defined $value && $value <= $rhs;
-            } else {
-                $result = defined $value || $value <= $rhs;
-            }
-            $result;
-
-            } @{$entry->{alternate_alleles}};
-
-        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
-        return 1; # don't completely skip the entry
-    }
-}
-
-
-
-sub filter_if_info_equal_to{
-    my ($field, $rhs, $filter_name, $filter_undef) = @_;
-
-    return sub {
-        my $entry = shift;
-        my @common = grep {
-            my $value = $entry->info_for_allele($_, $field);
-            my $result;
-            if($filter_undef){
-                $result = defined $value && $value eq $rhs;
-            } else {
-                $result = defined $value || $value eq $rhs;
-            }
-            $result;
-
-            } @{$entry->{alternate_alleles}};
-
-        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
-        return 1; # don't completely skip the entry
-    }
-}
-
-
-sub filter_if_info_notequal_to{
-    my ($field, $rhs, $filter_name, $filter_undef) = @_;
-
-    return sub {
-        my $entry = shift;
-        my @common = grep {
-            my $value = $entry->info_for_allele($_, $field);
-            my $result;
-            if($filter_undef){
-                $result = defined $value && $value ne $rhs;
-            } else {
-                $result = defined $value || $value ne $rhs;
-            }
-            $result;
-
-            } @{$entry->{alternate_alleles}};
-
-        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
-        return 1; # don't completely skip the entry
-    }
-}
-
-
-sub filter_if_info_matches{
-    my ($field, $rhs, $filter_name, $filter_undef) = @_;
-
-    return sub {
-        my $entry = shift;
-        my @common = grep {
-            my $value = $entry->info_for_allele($_, $field);
-            my $result;
-            if($filter_undef){
-                $result = defined $value && $value =~ /$rhs/;
-            } else {
-                $result = defined $value || $value =~ /$rhs/;
-            }
-            $result;
-
-            } @{$entry->{alternate_alleles}};
-
-        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
-        return 1; # don't completely skip the entry
-    }
-}
-
-sub filter_if_info_not_matches{
-    my ($field, $rhs, $filter_name, $filter_undef) = @_;
-
-    return sub {
-        my $entry = shift;
-        my @common = grep {
-            my $value = $entry->info_for_allele($_, $field);
-            my $result;
-            if($filter_undef){
-                $result = defined $value && $value !~ /$rhs/;
-            } else {
-                $result = defined $value || $value !~ /$rhs/;
-            }
-            $result;
-
-            } @{$entry->{alternate_alleles}};
-
-        $entry->filter_calls_involving_only(filter_name => $filter_name, alleles => \@common);
-        return 1; # don't completely skip the entry
-    }
-}
-
 
 sub getFilter{
     my ($filter_name, $filter_string, $filter_undef)= @_;
-    
-    # !=  not equal
-    if($filter_string =~/(.+)\!\=(.+)/){
-        return(filter_if_info_not_equal_to($1, $2, $filter_name, $filter_undef));
-    # !~  does not contain
-    } elsif ($filter_string =~/(.+)\!\~(.+)/){
-        return(filter_if_info_not_matches($1, $2, $filter_name, $filter_undef));
-    # >=  greater than or equal to
-    } elsif ($filter_string =~/(.+)\>\=(.+)/){
-        return(filter_if_info_greater_than_or_equal_to($1, $2, $filter_name, $filter_undef));
-    # <=  less than or equal to
-    } elsif ($filter_string =~/(.+)<=(.+)/){
-        return(filter_if_info_less_than_or_equal_to($1, $2, $filter_name, $filter_undef));
-    # >   greater than
-    } elsif ($filter_string =~/(.+)>(.+)/){
-        return(filter_if_info_greater_than($1, $2, $filter_name, $filter_undef));
-    # >   less than
-    } elsif ($filter_string =~/(.+)<(.+)/){
-        return(filter_if_info_less_than($1, $2, $filter_name, $filter_undef));
-    # ~   contains
-    } elsif ($filter_string =~/(.+)~(.+)/){
-        return(filter_if_info_matches($1, $2, $filter_name, $filter_undef));
-    # ~   equal
-    } elsif ($filter_string =~/(.+)=(.+)/){
-        return(filter_if_info_equal_to($1, $2, $filter_name, $filter_undef));
+
+
+    my %relational_operators = (
+        '>' => sub { $_[0] > $_[1]; },
+        '<' => sub { $_[0] < $_[1]; },
+        '<=' => sub { $_[0] <= $_[1]; },
+        '>=' => sub { $_[0] >= $_[1]; },
+        '=' => sub { $_[0] eq $_[1]; },
+        '!=' => sub { $_[0] ne $_[1]; },
+        '~' => sub { $_[0] =~ $_[1]; },
+        '!~' => sub { $_[0] !~ $_[1]; },    
+        );
+
+    if($filter_string =~/([^><=!~]+)([>|<|!|=|~][=~]?)(.+)/){
+        return(make_relational_info_filter($relational_operators{$2}, $1, $3, $filter_name, $filter_undef));
+    } else {
+        die("filter string unparsable: $filter_string\n")
     }
-    die("filter string unparsable: $filter_string\n")
 }
 
 
@@ -347,7 +178,7 @@ sub execute {
         $header->add_filter(id => $filter_name, description => $filter_desc);
         
         #create filter
-        my $filter = getFilter($filter_name, $filter_expr, $filter_undef);
+        my $filter = getFilter($filter_name, $filter_expr, $filter_undef);        
         $reader->add_filter($filter);
     }
 
