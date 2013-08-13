@@ -42,6 +42,9 @@ ok($base_recalibrator_bam_result, 'created gatk indel realigner');
 # Outputs
 my $base_recalibrator_result = $base_recalibrator_bam_result->base_recalibrator_result;
 ok($base_recalibrator_result, 'base recalibrator result');
+$base_recalibrator_result = $base_recalibrator_bam_result->get_base_recalibrator_result;
+ok($base_recalibrator_result, '"get" base recalibrator result');
+ok(-s $base_recalibrator_bam_result->base_recalibrator_result->recalibration_table_file, 'base recalibrator result recalibration table file');
 is($base_recalibrator_bam_result->bam_path, $base_recalibrator_bam_result->output_dir.'/'.$base_recalibrator_bam_result->id.'.bam', 'bam file named correctly');
 ok(-s $base_recalibrator_bam_result->bam_path, 'bam file exists');#bam produced is the same except for the knowns file in the header
 ok(-s $base_recalibrator_bam_result->bam_path.'.bai', 'bam index exists');
@@ -82,12 +85,6 @@ is_deeply(
     },
     'base recalibrator params',
 );
-
-# Get base recalibrator result
-ok(!$base_recalibrator_bam_result->base_recalibrator_result(undef), 'base recalibrator result unset');
-ok($base_recalibrator_bam_result->get_base_recalibrator_result, 'get base recalibrator result');
-ok($base_recalibrator_bam_result->base_recalibrator_result, 'base recalibrator result set');
-ok(-s $base_recalibrator_bam_result->base_recalibrator_result->recalibration_table_file, 'base recalibrator result recalibration table file');
 
 # Allocation params
 is(

@@ -79,7 +79,6 @@ sub _get_or_create_base_recalibrator_result {
         $self->error_message('Failed to get or create base recalibrator result!');
         return;
     }
-    $self->base_recalibrator_result($base_recalibrator_result);
 
     my $recalibration_table_file = $base_recalibrator_result->recalibration_table_file;
     if ( not -s $recalibration_table_file ) {
@@ -106,16 +105,25 @@ sub base_recalibrator_params {
     return %base_recalibrator_params;
 }
 
-sub get_base_recalibrator_result {
+sub get_base_recalibrator_result { return base_recalibrator_result(@_); }
+sub base_recalibrator_result {
     my $self = shift;
 
-    return $self->base_recalibrator_result if $self->base_recalibrator_result;
+    my @sr_users = Genome::SoftwareResult::User->get(user => $self, label => 'recalibration table');
+    return if not @sr_users;
 
-    my %base_recalibrator_params = $self->base_recalibrator_params;
-    my $base_recalibrator_result = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_with_lock(%base_recalibrator_params);
-    return if not $base_recalibrator_result;
+    if ( @sr_users > 1 ) {
+        $self->error_message('Found multple base recalibrator results used by this base recalibrator bam result! Please correct! '.Data::Dumper::Dumper(\@sr_users));
+        return;
+    }
 
-    return $self->base_recalibrator_result($base_recalibrator_result);
+    my $base_recalibrator_result = $sr_users[0]->software_result;
+    if ( not $base_recalibrator_result ) {
+        $self->error_message('Failed to get base recalibrator for id! '.$sr_users[0]->software_result_id);
+        return;
+    }
+
+    return $base_recalibrator_result;
 }
 
 sub _print_reads {
