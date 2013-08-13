@@ -112,6 +112,10 @@ sub create {
         return;
     }
 
+    for my $known_sites ( $self->known_sites ) {
+        $self->status_message('Known sites: '.$known_sites->id);
+    }
+
     return $self;
 }
 
