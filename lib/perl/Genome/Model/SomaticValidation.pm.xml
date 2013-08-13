@@ -79,6 +79,7 @@
 
       <operationtype typeClass="Workflow::OperationType::Model">
           <inputproperty>build_id</inputproperty>
+          <outputproperty>build_id</outputproperty>
           <outputproperty>output_dir</outputproperty>
       </operationtype>
   </operation>
