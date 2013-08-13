@@ -88,7 +88,6 @@ HELP
 
 sub filter_if_info_greater_than {
     my ($field, $rhs, $filter_name, $filter_undef) = @_;
-
     return sub {
         my $entry = shift;
         my @common = grep {
@@ -268,10 +267,8 @@ sub filter_if_info_not_matches{
 
 
 sub getFilter{
-    my ($filter_name,$filter_string,$filter_undef)= shift;
+    my ($filter_name, $filter_string, $filter_undef)= @_;
     
-
-
     # !=  not equal
     if($filter_string =~/(.+)\!\=(.+)/){
         return(filter_if_info_not_equal_to($1, $2, $filter_name, $filter_undef));
@@ -315,8 +312,7 @@ sub getFilter{
 sub execute {
     my $self=shift;
     
-    my $filter_undef = $self->non_existent_fields_are_filtered;
-    
+    my $filter_undef = $self->non_existent_fields_are_filtered;    
     
     my @filters = split(",",$self->filters);
     my @filter_descs = split(",",$self->filter_descriptions);
