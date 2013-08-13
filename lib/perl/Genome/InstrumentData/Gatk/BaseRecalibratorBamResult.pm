@@ -38,12 +38,6 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    $self->status_message('Bam source: '.$self->bam_source->id);
-    $self->status_message('Reference: '.$self->reference_build->id);
-    for my $known_sites ( $self->known_sites ) {
-        $self->status_message('Known sites: '.$known_sites->id);
-    }
-
     my $base_recalibrator_result = $self->_get_or_create_base_recalibrator_result;
     if ( not $base_recalibrator_result ) {
         $self->delete;

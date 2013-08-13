@@ -82,6 +82,12 @@ sub create {
         return;
     }
 
+    my $bam_source = $self->bam_source;
+    $self->status_message('Bam source: '.$bam_source->id);
+    $bam_source->add_user(user => $self, label => 'bam source');
+
+    $self->status_message('Reference: '.$self->reference_build->id);
+
     return $self;
 }
 

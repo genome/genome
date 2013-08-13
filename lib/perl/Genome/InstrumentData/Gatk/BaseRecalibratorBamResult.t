@@ -40,7 +40,8 @@ $base_recalibrator_bam_result = Genome::InstrumentData::Gatk::BaseRecalibratorBa
 ok($base_recalibrator_bam_result, 'created gatk indel realigner');
 
 # Outputs
-ok($base_recalibrator_bam_result->base_recalibrator_result, 'base recalibrator result');
+my $base_recalibrator_result = $base_recalibrator_bam_result->base_recalibrator_result;
+ok($base_recalibrator_result, 'base recalibrator result');
 is($base_recalibrator_bam_result->bam_path, $base_recalibrator_bam_result->output_dir.'/'.$base_recalibrator_bam_result->id.'.bam', 'bam file named correctly');
 ok(-s $base_recalibrator_bam_result->bam_path, 'bam file exists');#bam produced is the same except for the knowns file in the header
 ok(-s $base_recalibrator_bam_result->bam_path.'.bai', 'bam index exists');
@@ -56,8 +57,14 @@ Genome::Utility::Test::compare_ok(
     ],
 );
 
-# User
-my $sr_user = $base_recalibrator_bam_result->base_recalibrator_result->users;
+# Users
+my @bam_source_users = $bam_source->users;
+ok(@bam_source_users, 'add users to bam source');
+is_deeply([map { $_->label } @bam_source_users], ['bam source', 'bam source'], 'bam source users haver correct label');
+my @users = sort { $a->id <=> $b->id } map { $_->user } @bam_source_users;
+is_deeply(\@users, [$base_recalibrator_result, $base_recalibrator_bam_result], 'bam source is used by base recal and base recal bam results');
+
+my $sr_user = $base_recalibrator_result->users;
 ok($sr_user, 'add user to base recalibrator result');
 is($sr_user->label, 'recalibration table', 'sr user has correct label');
 my $user = $sr_user->user;

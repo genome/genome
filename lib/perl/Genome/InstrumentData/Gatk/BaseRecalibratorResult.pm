@@ -33,12 +33,6 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    $self->status_message('Bam source: '.$self->bam_source->id);
-    $self->status_message('Reference: '.$self->reference_build->id);
-    for my $known_sites ( $self->known_sites ) {
-        $self->status_message('Known sites: '.$known_sites->id);
-    }
-
     my $run_recalibrator = $self->_run_base_recalibrator;
     if ( not $run_recalibrator ) {
         $self->delete;

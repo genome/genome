@@ -49,6 +49,13 @@ ok(-s $indel_realigner->bam_flagstat_file, 'bam flagstat file exists');
 Genome::Utility::Test::compare_ok($indel_realigner->bam_flagstat_file, $result_data_dir.'/expected.bam.flagstat', 'flagstat matches');
 ok(-s $indel_realigner->bam_md5_path, 'bam md5 path exists');
 
+# Users
+my @bam_source_users = $bam_source->users;
+ok(@bam_source_users, 'add users to bam source');
+is_deeply([map { $_->label } @bam_source_users], ['bam source'], 'bam source user haver correct label');
+my @users = sort { $a->id <=> $b->id } map { $_->user } @bam_source_users;
+is_deeply(\@users, [$indel_realigner], 'bam source is used by indel realigner result');
+
 # Allocation params
 is(
     $indel_realigner->resolve_allocation_disk_group_name,

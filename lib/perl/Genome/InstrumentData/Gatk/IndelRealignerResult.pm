@@ -37,12 +37,6 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    $self->status_message('Bam source: '.$self->bam_source->id);
-    $self->status_message('Reference: '.$self->reference_build->id);
-    for my $known_sites ( $self->known_sites ) {
-        $self->status_message('Known sites: '.$known_sites->id);
-    }
-
     my $create_targets = $self->_create_targets;
     if ( not $create_targets ) {
         $self->delete;
