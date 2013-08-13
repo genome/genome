@@ -49,6 +49,7 @@ sub create {
         $self->delete;
         return;
     }
+    $base_recalibrator_result->add_user(user => $self, label => 'recalibration table');
 
     my $print_reads = $self->_print_reads;
     if ( not $print_reads ) {

@@ -56,6 +56,13 @@ Genome::Utility::Test::compare_ok(
     ],
 );
 
+# User
+my $sr_user = $base_recalibrator->base_recalibrator_result->users;
+ok($sr_user, 'add user to base recalibrator result');
+is($sr_user->label, 'recalibration table', 'sr user has correct label');
+my $user = $sr_user->user;
+is($user, $base_recalibrator, 'base recalibrator is used by base recalibrator bam result');
+
 # Base recalibrator params
 my %base_recalibrator_params = $base_recalibrator->base_recalibrator_params;
 is_deeply(
