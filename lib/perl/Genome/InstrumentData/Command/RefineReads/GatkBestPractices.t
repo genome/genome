@@ -45,6 +45,12 @@ ok($gatk_best_practices_shortcut->shortcut, 'shortcut');
 is($gatk_best_practices_shortcut->indel_realigner_result, $gatk_best_practices->indel_realigner_result, 'indel_realigner_result matches');
 is($gatk_best_practices_shortcut->base_recalibrator_bam_result, $gatk_best_practices->base_recalibrator_bam_result, 'base_recalibrator_bam_result matches');
 
+# User
+my $sr_user = $gatk_best_practices->indel_realigner_result->users;
+ok($sr_user, 'add user to indel realigner');
+is($sr_user->label, 'input bam', 'indel realigner user has correct label');
+is($sr_user->user, $gatk_best_practices->base_recalibrator_bam_result, 'indel realigner user is correct');
+
 #print $gatk_best_practices->indel_realigner_result->output_dir."\n"; <STDIN>;
 #print $gatk_best_practices->base_recalibrator->output_dir."\n"; <STDIN>;
 done_testing();
