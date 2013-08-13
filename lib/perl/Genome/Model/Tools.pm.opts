@@ -15228,19 +15228,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>run-netmhc',
-    [
-      'allele=s',
-      'files',
-      'fasta-file=s',
-      'files',
-      'output-file=s',
-      'files',
-      'epitope-length=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>generate-variant-seq31mer',
     [
       'input-file=s',
