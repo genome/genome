@@ -35,8 +35,31 @@ ok(!$gatk_best_practices->shortcut, 'shortcut failed as expected');
 
 # Execute
 ok($gatk_best_practices->execute, 'execute');
-ok($gatk_best_practices->indel_realigner_result, 'indel_realigner_result set');
-ok($gatk_best_practices->base_recalibrator_bam_result, 'base_recalibrator_bam_result set');
+my $indel_realigner_result = $gatk_best_practices->indel_realigner_result;
+ok($indel_realigner_result, 'indel_realigner_result set');
+my $base_recalibrator_bam_result = $gatk_best_practices->base_recalibrator_bam_result;
+ok($base_recalibrator_bam_result, 'base_recalibrator_bam_result set');
+my $base_recalibrator_result = $base_recalibrator_bam_result->base_recalibrator_result;
+ok($base_recalibrator_result, 'get base_recalibrator_result');
+
+# Users
+my @sr_users = $bam_source->users;
+is(@sr_users, 1, 'add user to bam source');
+is_deeply([map { $_->label } @sr_users], ['bam source'], 'bam source users haver correct label');
+is_deeply([map { $_->user } @sr_users], [$gatk_best_practices->indel_realigner_result], 'bam source is used by indel realigner result');
+
+@sr_users = $indel_realigner_result->users;
+is(@sr_users, 2, 'add users to indel realigner');
+is_deeply([map { $_->label } @sr_users], ['bam source', 'bam source'], 'indel realigner users haver correct label');
+is_deeply([map { $_->user } @sr_users], [$base_recalibrator_result, $base_recalibrator_bam_result], 'indel realigner is used by base recal and base recal bam results');
+
+@sr_users = $base_recalibrator_result->users;
+is(@sr_users, 1, 'add user to base recal result');
+is_deeply([map { $_->label } @sr_users], ['recalibration table'], 'base recal result users haver correct label');
+is_deeply([map { $_->user } @sr_users], [$base_recalibrator_bam_result], 'base recal is used by base recal bam result');
+
+@sr_users = $base_recalibrator_bam_result->users;
+ok(!@sr_users, 'no users for base recal bam result');
 
 # Shortcut, again
 my $gatk_best_practices_shortcut = Genome::InstrumentData::Command::RefineReads::GatkBestPractices->create(%params);
@@ -44,12 +67,6 @@ ok($gatk_best_practices_shortcut, 'create');
 ok($gatk_best_practices_shortcut->shortcut, 'shortcut');
 is($gatk_best_practices_shortcut->indel_realigner_result, $gatk_best_practices->indel_realigner_result, 'indel_realigner_result matches');
 is($gatk_best_practices_shortcut->base_recalibrator_bam_result, $gatk_best_practices->base_recalibrator_bam_result, 'base_recalibrator_bam_result matches');
-
-# User
-my $sr_user = $gatk_best_practices->indel_realigner_result->users;
-ok($sr_user, 'add user to indel realigner');
-is($sr_user->label, 'input bam', 'indel realigner user has correct label');
-is($sr_user->user, $gatk_best_practices->base_recalibrator_bam_result, 'indel realigner user is correct');
 
 #print $gatk_best_practices->indel_realigner_result->output_dir."\n"; <STDIN>;
 #print $gatk_best_practices->base_recalibrator->output_dir."\n"; <STDIN>;

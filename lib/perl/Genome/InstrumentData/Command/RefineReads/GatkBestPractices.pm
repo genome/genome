@@ -68,9 +68,6 @@ sub execute {
         return;
     }
 
-    my $add_base_racalibrator_as_user_of_indel_realigner = $self->_add_base_racalibrator_as_user_of_indel_realigner;
-    return if not $add_base_racalibrator_as_user_of_indel_realigner;
-
     $self->status_message('Execute...OK');
     return $base_recalibrator_result;
 }
@@ -173,25 +170,6 @@ sub _params_display_name {
     }
 
     return $display_name;
-}
-
-sub _add_base_racalibrator_as_user_of_indel_realigner {
-    my $self = shift;
-
-    my $base_recalibrator_bam_result = $self->base_recalibrator_bam_result;
-    Carp::confess('No base recalibrator bam result set!') if not $base_recalibrator_bam_result;
-    my $indel_realigner_result = $self->indel_realigner_result;
-    Carp::confess('No indel realigner result set!') if not $indel_realigner_result;
-
-    my %params = (
-        user => $base_recalibrator_bam_result,
-        label => 'input bam',
-    );
-    my $existing_user = $self->indel_realigner_result->users(%params);
-    return 1 if $existing_user;
-
-    $indel_realigner_result->add_user(%params);
-    return 1;
 }
 
 1;
