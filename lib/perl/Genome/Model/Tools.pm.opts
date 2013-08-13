@@ -9526,6 +9526,23 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>filter-vcf-info',
+    [
+      'filter-descriptions=s',
+      'files',
+      'filters=s',
+      'files',
+      'output-file=s',
+      'files',
+      'vcf-file=s',
+      'files',
+      'debug!',
+      undef,
+      'non-existent-fields-are-filtered!',
+      undef,
+      'help!',
+      undef
+    ],
     '>join-multi-sample-vcf',
     [
       'intersection!',
