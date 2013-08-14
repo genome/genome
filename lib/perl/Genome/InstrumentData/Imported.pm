@@ -179,8 +179,6 @@ class Genome::InstrumentData::Imported {
             calculate => q( $subset_name ? "$run_name/$subset_name" : $run_name ),
         },
     ],
-    schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
 };
 
 sub __display_name__ {
