@@ -333,9 +333,14 @@ sub _log_file {
         my $log_directory = $self->log_directory;
         $log_directory =~ s|/$||;
         $new =~ s/^genome.model.//;
-        $new =~ s/ /_/g;
+        $new =~ s/[ -]/_/g;
         if ($new eq 'build') {
             $new = 'workflow-server';
+        }
+        else {
+            $new =~ s/^build//;
+            $new .= '.' . $self->id;
+            $new =~ s/^_//g;
         }
         $new = $log_directory . '/' . $new . '.' . $ext;
         return $new;
