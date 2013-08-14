@@ -48,8 +48,13 @@ sub required_rusage {
 
     my $host_groups;
     $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
-    $host_groups =~ s/\/\s+/\ /;
-    $host_groups =~ s/^HOSTS:\s+//;
+    if ($host_groups =~ /all hosts/) {
+        $host_groups = '';
+    }
+    else {
+        $host_groups =~ s/\/\s+/\ /;
+        $host_groups =~ s/^HOSTS:\s+//;
+    }
 
     my $select  = "select[ncpus >= $cpus && mem >= $mem_mb && gtmp >= $tmp_gb] span[hosts=1]";
     my $rusage  = "rusage[mem=$mem_mb, gtmp=$tmp_gb]";
