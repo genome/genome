@@ -31,7 +31,8 @@ class Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf {
 		vcf_file	=> { is => 'Text', doc => "Input in VCF format", is_optional => 0, is_input => 1},
 		output_basename	=> { is => 'Text', doc => "Output basename for files", is_optional => 0, is_input => 1},
 		control_samples	=> { is => 'Text', doc => "Comma-separated list of control sample names", is_optional => 1, is_input => 1},
-		male_samples	=> { is => 'Text', doc => "Comma-separated list of male sample names", is_optional => 1, is_input => 1},		
+		male_samples	=> { is => 'Text', doc => "Comma-separated list of male sample names", is_optional => 1, is_input => 1},
+		ignore_samples	=> { is => 'Text', doc => "Comma-separated list of sample names to ignore", is_optional => 1, is_input => 1},
 		inheritance_model	=> { is => 'Text', doc => "Presumed model of mendelian inheritance [autosomal-dominant]", is_optional => 1, is_input => 1, default => 'autosomal-dominant'},
 		min_coverage	=> { is => 'Text', doc => "Minimum coverage to refute a possible variant in an affected", is_optional => 1, is_input => 1, default => 20},
 		min_call_rate	=> { is => 'Text', doc => "Minimum callrate for affecteds to include a variant", is_optional => 1, is_input => 1, default => 0.50},
@@ -85,6 +86,17 @@ sub execute {                               # replace with real execution logic.
 		}
 	}
 
+	my %ignore_sample = ();
+	if($self->ignore_samples)
+	{
+		my @samples = split(/\,/, $self->ignore_samples);
+		foreach my $sample (@samples)
+		{
+			$ignore_sample{$sample} = 1;
+			$stats{'num_samples_ignored'}++;
+		}
+	}
+
 	my %male_sample = ();
 	if($self->male_samples)
 	{
@@ -107,6 +119,15 @@ sub execute {                               # replace with real execution logic.
 	
 	my $output_file = $self->output_basename . ".counts.tsv";
 	my $windows_file = $self->output_basename . ".windows.tsv";
+
+	if($self->plot_results && $self->plot_results == 2)
+	{
+		do_plot_results($output_file, $windows_file, $self);
+		do_single_plot($output_file, $windows_file, $self);
+		exit(0);
+	}
+
+
 
 	open(OUTFILE, ">$output_file") or die "Can't open outfile: $!\n";
 	print OUTFILE "chrom\tposition\tref\tvar\tdbsnp_status\tmendel_score\tis_hom_diff\tpct_affected_het\tcases\tcases_ref\tcases_het\tcases_hom\tcases_na\tcontrols\tcontrols_ref\tcontrols_het\tcontrols_hom\tcontrols_na\n";
@@ -293,7 +314,7 @@ sub execute {                               # replace with real execution logic.
 						$marker_counts{$sample_status}++;
 						
 						## Only process the genotype if it has a value and is either unfiltered or for the control sample ##
-						if(length($genotype) > 2 && $genotype ne '.' && ($filter eq 'PASS' || $filter eq '.' || $control_sample{$sample_name}))
+						if(length($genotype) > 2 && $genotype ne '.' && ($filter eq 'PASS' || $filter eq '.' || $control_sample{$sample_name}) && !$ignore_sample{$sample_name})
 						{
 #							warn "Trying to convert $genotype in column $colCounter at line $lineCounter\n";
 							$genotype = convert_genotype($ref, $var, $genotype) if($genotype ne '.');
@@ -323,7 +344,15 @@ sub execute {                               # replace with real execution logic.
 								}
 								elsif(is_homozygous($genotype))
 								{
-									$gt = "Hom";
+									if($var_freq > 0.90)
+									{
+										$gt = "Hom";										
+									}
+									else
+									{
+										$gt = "Het";
+									}
+
 								}
 								elsif(is_heterozygous($genotype))
 								{
@@ -410,7 +439,14 @@ sub execute {                               # replace with real execution logic.
 #						my $num_diff = $marker_counts{'case_Ref'};
 #						$num_diff = $marker_counts{'case_Hom'} if($marker_counts{'case_Hom'} < $num_diff);					
 #						$is_hom_diff = $num_diff / $marker_counts{'case_called'};
+
+
+
 						$is_hom_diff = 1;
+						## Try calculating this as the # of samples that are hom Diff ##
+#						$is_hom_diff = $marker_counts{'case_Ref'};
+#						$is_hom_diff = $marker_counts{'case_Hom'} if($marker_counts{'case_Hom'} < $is_hom_diff);
+
 					}
 					
 					## Determine probability based on mendel segregation status, where any error must be a wrong variant call ##
@@ -551,7 +587,10 @@ sub do_plot_results
 
 	print SCRIPTFILE qq {count <- read.table("$infile", header=TRUE)\n};
 	print SCRIPTFILE qq {windows <- read.table("$windows_file", header=TRUE)\n};	
-
+	print SCRIPTFILE qq {library(ggplot2)\n};
+	
+	my %rhro_by_chrom = load_rhro_regions($windows_file);
+	
 	for(my $chrCounter = 1; $chrCounter <= 23; $chrCounter++)
 	{
 		my $chrom = $chrCounter;
@@ -569,34 +608,92 @@ sub do_plot_results
 #points(count\$position[count\$chrom=="$chrom" & count\$mendel_score == 1], count\$mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1] + 0.01, pch=19, cex=0.5, col="green")
 #};
 
+
+#png("$plot_basename.$chrom.png", height=600, width=800)
+
+################# THIS WAS THE ORIGINAL PLOTTING ######################
+#		print SCRIPTFILE qq{
+#png("$plot_basename.$chrom.png", height=200, width=800)
+#par(mar=c(4, 4, 1, 1) + 0.1)
+#plot(count\$position[count\$chrom=="$chrom"], count\$pct_affected_het[count\$chrom=="$chrom"], pch=19, cex=0.5, xlim=c(0,max(count\$position[count\$chrom=="$chrom"]) + 1), col="lightskyblue", xlab="Position on chromosome $chrom", ylab="Fraction of Affecteds", ylim=c(0,1), main="chr$chrom")
+#points(count\$position[count\$chrom=="$chrom" & count\$pct_affected_het == 1], count\$pct_affected_het[count\$chrom=="$chrom" & count\$pct_affected_het == 1], pch=19, cex=0.5, col="blue")
+#points(count\$position[count\$chrom=="$chrom" & count\$mendel_score == 1], count\$mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1] + 0.01, pch=19, cex=0.5, col="green")
+#points(count\$position[count\$chrom=="$chrom" & count\$is_hom_diff == 1], count\$is_hom_diff[count\$chrom=="$chrom" & count\$is_hom_diff == 1] - 0.01, pch=19, cex=0.5, col="red")
+#};
+#		print SCRIPTFILE qq|\nif(length(windows\$chr_start[windows\$chrom=="$chrom"]) > 0) {\n
+#segments(windows\$chr_start[windows\$chrom=="$chrom"], 1.02, windows\$chr_stop[windows\$chrom=="$chrom"], 1.02, col="black", lwd=2)\n
+#}\n|;
+#
+#		print SCRIPTFILE qq|\nif(length(windows\$chr_start[windows\$chrom=="$chrom"]) > 0) {\n
+#segments(windows\$chr_start[windows\$chrom=="$chrom"], 0.98, windows\$chr_stop[windows\$chrom=="$chrom"], 0.98, col="black", lwd=2)\n
+#}\n|;
+#
+#		print SCRIPTFILE qq{abline(v=$cen_start, lty=2)
+#abline(v=$cen_stop, lty=2);
+#legend("bottomright", c("Some Het", "All Het", "Fits Mendel", "Rule Out"), pch=c(19, 19, 19), col=c("lightskyblue", "blue","green","red"))
+#dev.off()
+#};	
+
+################### END ORIGINAL PLOTTING ##################################
+
+################# GGPLOT INSTEAD ################
 		print SCRIPTFILE qq{
-png("$plot_basename.$chrom.png", height=600, width=800)
+png("$plot_basename.$chrom.png", height=200, width=800)
 par(mar=c(4, 4, 1, 1) + 0.1)
-plot(count\$position[count\$chrom=="$chrom"], count\$pct_affected_het[count\$chrom=="$chrom"], pch=19, cex=0.5, xlim=c(0,max(count\$position[count\$chrom=="$chrom"]) + 1), col="lightskyblue", xlab="Position on chromosome $chrom", ylab="Fraction of Affecteds", ylim=c(0,1), main="chr$chrom")
-points(count\$position[count\$chrom=="$chrom" & count\$pct_affected_het == 1], count\$pct_affected_het[count\$chrom=="$chrom" & count\$pct_affected_het == 1], pch=19, cex=0.5, col="blue")
-points(count\$position[count\$chrom=="$chrom" & count\$mendel_score == 1], count\$mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1] + 0.01, pch=19, cex=0.5, col="green")
-points(count\$position[count\$chrom=="$chrom" & count\$is_hom_diff == 1], count\$is_hom_diff[count\$chrom=="$chrom" & count\$is_hom_diff == 1] - 0.01, pch=19, cex=0.5, col="red")
+p <- ggplot(count, aes(x = position[count\$chrom=="$chrom"], y = pct_affected_het[count\$chrom=="$chrom"])) + geom_point(color="blue") + xlab("Position on chr$chrom") + ylab("% Affecteds Het")
+q <- geom_point(data=count,aes(position[count\$chrom=="$chrom" & count\$is_hom_diff >= 1],is_hom_diff[count\$chrom=="$chrom" & count\$is_hom_diff >= 1]),color="red")
+m <- geom_point(data=count,aes(position[count\$chrom=="$chrom" & count\$mendel_score == 1],mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1]),color="green")
 };
 
+my $plot_line = "p + opts(title=\"chr$chrom\") + scale_x_continuous(limits = c(0,max(count\$position[count\$chrom==\"$chrom\"]))) + q + m ";
+#my $plot_line = "p + opts(title=\"chr$chrom\") + scale_x_continuous(limits = c(30000000,130000000)) + q + m ";
+
+if($rhro_by_chrom{$chrom})
+{
+	my $region_no = 0;
+	my @rhro_lines = split(/\n/, $rhro_by_chrom{$chrom});
+	foreach my $rhro_line (@rhro_lines)
+	{
+		$region_no++;
+		my ($region_start, $region_stop) = split(/\t/, $rhro_line);
+
+		print SCRIPTFILE qq{
+rect$region_no <- data.frame (xmin=$region_start, xmax=$region_stop, ymin=-Inf, ymax=Inf)
+r$region_no <- geom_rect(data=rect$region_no, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax), color="lightskyblue", fill="lightskyblue", alpha=0.5, inherit.aes = FALSE)
+};
+		$plot_line .= "+ r$region_no ";
+	}
+}
+
+if($cen_start)
+{
+	$plot_line .= "+ geom_vline(xintercept = $cen_start, linetype = \"longdash\")";
+}
+
+if($cen_stop)
+{
+	$plot_line .= "+ geom_vline(xintercept = $cen_stop, linetype = \"longdash\")";
+}
 
 
-		print SCRIPTFILE qq|\nif(length(windows\$chr_start[windows\$chrom=="$chrom"]) > 0) {\n
-segments(windows\$chr_start[windows\$chrom=="$chrom"], 1.02, windows\$chr_stop[windows\$chrom=="$chrom"], 1.02, col="black", lwd=2)\n
-}\n|;
+print SCRIPTFILE "$plot_line\n";
+print SCRIPTFILE "dev.off()\n";
+#		print SCRIPTFILE qq{abline(v=$cen_start, lty=2)
+#abline(v=$cen_stop, lty=2);
+#legend("bottomright", c("Rare Het", "Rule Out"), pch=c(19, 19), col=c("lightskyblue", "red"))
+#dev.off()
+#};	
 
 
-		print SCRIPTFILE qq{abline(v=$cen_start, lty=2)
-abline(v=$cen_stop, lty=2);
-legend("bottomright", c("Some Het", "All Het", "Fits Mendel", "Rule Out"), pch=c(19, 19, 19), col=c("lightskyblue", "blue","green","red"))
-dev.off()
-};	
+################## END GGPLOT ################
 
 		my @temp = split(/\//, $self->output_basename);
 		my $numContents = @temp;
 		my $true_basename = $temp[$numContents - 1];
 		my $image_filename = "$true_basename.plot.$chrom.png";
 
-		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=240 WIDTH=320 BORDER=0></A></TD>\n";
+#		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=240 WIDTH=320 BORDER=0></A></TD>\n";
+		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=100 WIDTH=400 BORDER=0></A></TD>\n";
 
 		$num_printed_in_column++;
 
@@ -615,6 +712,165 @@ dev.off()
 	print INDEX "</TR></TABLE></BODY></HTML>\n";
 	close(INDEX);
 }
+
+
+
+################################################################################################
+# LoadAnnotation - load the VEP annotation 
+#
+################################################################################################
+
+sub do_single_plot
+{
+	my $infile = shift(@_);
+	my $windows_file = shift(@_);
+	my $self = shift(@_);
+
+	my %centromeres = load_centromeres($self);
+
+	open(INDEX, ">" . $self->output_basename . ".plot.single.html") or die "Can't open outfile: $!\n";
+	print INDEX "<HTML><BODY><TABLE CELLSPACING=0 CELLPADDING=0 BORDER=0>\n";
+	print INDEX "<TR>\n";
+	my $num_printed_in_column = 0;
+
+	my $script_filename = $self->output_basename . ".single.R";
+	open(SCRIPTFILE, ">" . $script_filename) or die "Can't open output file for R script: $!\n";
+
+	my $plot_basename = $self->output_basename . ".single.plot";
+
+	print SCRIPTFILE qq {count <- read.table("$infile", header=TRUE)\n};
+	print SCRIPTFILE qq {windows <- read.table("$windows_file", header=TRUE)\n};	
+	print SCRIPTFILE qq {library(ggplot2)\n};
+	
+	my %rhro_by_chrom = load_rhro_regions($windows_file);
+	
+	for(my $chrCounter = 1; $chrCounter <= 23; $chrCounter++)
+	{
+		my $chrom = $chrCounter;
+		$chrom = "X" if($chrCounter == 23);
+		
+		my $cen_start = my $cen_stop = -1;
+		($cen_start, $cen_stop) = split(/\t/, $centromeres{$chrom}) if($centromeres{$chrom});
+		
+
+################# GGPLOT INSTEAD ################
+		print SCRIPTFILE qq{
+png("$plot_basename.$chrom.png", height=150, width=150)
+par(mar=c(4, 4, 1, 1) + 0.1)
+p <- ggplot(count, aes(x = position[count\$chrom=="$chrom"], y = pct_affected_het[count\$chrom=="$chrom"])) + geom_point(color="blue") + xlab("") + ylab("% Affecteds Het")
+q <- geom_point(data=count,aes(position[count\$chrom=="$chrom" & count\$is_hom_diff >= 1],is_hom_diff[count\$chrom=="$chrom" & count\$is_hom_diff >= 1]),color="red")
+m <- geom_point(data=count,aes(position[count\$chrom=="$chrom" & count\$mendel_score == 1],mendel_score[count\$chrom=="$chrom" & count\$mendel_score == 1]),color="green")
+};
+
+my $plot_line = "p ";
+#if($chrom eq "1")
+#{
+#	$plot_line .= "+ opts(title=\"chr$chrom\", plot.margin = unit(c(0.01,0.01,0.01,0.01), \"cm\"), axis.ticks=theme_blank(), axis.text.x=theme_blank(),axis.title.x=theme_blank()) + q + m ";
+#	
+#}
+#else
+#{
+	$plot_line .= "+ opts(title=\"chr$chrom\", plot.margin = unit(c(0.01,0.01,0.01,0.01), \"cm\"), axis.ticks=theme_blank(), axis.text.x=theme_blank(),axis.title.x=theme_blank(), axis.text.y=theme_blank(),axis.title.y=theme_blank()) + q + m ";
+#}
+
+
+if($rhro_by_chrom{$chrom})
+{
+	my $region_no = 0;
+	my @rhro_lines = split(/\n/, $rhro_by_chrom{$chrom});
+	foreach my $rhro_line (@rhro_lines)
+	{
+		$region_no++;
+		my ($region_start, $region_stop) = split(/\t/, $rhro_line);
+
+		print SCRIPTFILE qq{
+rect$region_no <- data.frame (xmin=$region_start, xmax=$region_stop, ymin=-Inf, ymax=Inf)
+r$region_no <- geom_rect(data=rect$region_no, aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax), color="lightskyblue", fill="lightskyblue", alpha=0.5, inherit.aes = FALSE)
+};
+		$plot_line .= "+ r$region_no ";
+	}
+}
+
+if($cen_start)
+{
+	$plot_line .= "+ geom_vline(xintercept = $cen_start, linetype = \"longdash\")";
+}
+
+if($cen_stop)
+{
+	$plot_line .= "+ geom_vline(xintercept = $cen_stop, linetype = \"longdash\")";
+}
+
+
+print SCRIPTFILE "$plot_line\n";
+print SCRIPTFILE "dev.off()\n";
+
+
+		my @temp = split(/\//, $self->output_basename);
+		my $numContents = @temp;
+		my $true_basename = $temp[$numContents - 1];
+		my $image_filename = "$true_basename.single.plot.$chrom.png";
+
+#		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=240 WIDTH=320 BORDER=0></A></TD>\n";
+		print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=150 WIDTH=150 BORDER=0></A></TD>\n";
+
+		$num_printed_in_column++;
+
+		if($num_printed_in_column == 11)
+		{
+			print INDEX "<TD> &nbsp; </TD></TR><TR>\n";
+#			$num_printed_in_column = 0;
+		}
+
+	}
+
+	close(SCRIPTFILE);
+
+	system("R --no-save < $script_filename");
+
+	print INDEX "</TR></TABLE></BODY></HTML>\n";
+	close(INDEX);
+}
+
+
+
+
+
+################################################################################################
+# LoadAnnotation - load the VEP annotation 
+#
+################################################################################################
+
+sub load_rhro_regions
+{
+	my $FileName = shift;
+	my %regions = ();
+	## Parse the VCF file ##
+	
+	my $input = new FileHandle ($FileName);
+	my $lineCounter = 0;
+	
+	while (<$input>)
+	{
+		chomp;
+		my $line = $_;
+		$lineCounter++;
+		
+		my ($chrom, $chr_start, $chr_stop, $variants) = split(/\t/, $line);
+		if($variants >= 2)
+		{
+			$regions{$chrom} .= "\n" if($regions{$chrom});
+			$regions{$chrom} .= join("\t", $chr_start, $chr_stop, $variants);			
+		}
+
+	}
+	
+	close($input);
+
+	return(%regions);
+}
+
+
 
 
 ################################################################################################
