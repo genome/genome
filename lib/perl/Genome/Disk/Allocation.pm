@@ -1030,8 +1030,8 @@ sub _execute_system_command {
         $allocation = $class->$method(%params);
     }
     else {
-        my $includes = join(' ', map { qq{-I "$_"} } UR::Util::used_libs);
-        my $perl5opt = join(' ', @_execute_system_command_perl5opt);
+        # remove the parens if you DARE
+        my @includes = map { ( '-I' => $_ ) } UR::Util::used_libs;
 
         my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
         my $perl_program_string = sprintf("%s->%s(%s); UR::Context->commit;",
@@ -1039,8 +1039,8 @@ sub _execute_system_command {
 
         my @cmd = (
             'genome-perl',
-            $includes,
-            $perl5opt,
+            @includes,
+            @_execute_system_command_perl5opt,
             '-e',
             $perl_program_string
         );
