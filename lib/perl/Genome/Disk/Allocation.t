@@ -190,7 +190,7 @@ for my $child (1..$children) {
     ok(-e $log, 'found child process log file') or next;
 
     my @lines = read_file($log);
-    ok(@lines == 3, 'there are three lines of output in the log, create/reallocate/deallocate') || system("cat $log");
+    ok(@lines == 3, 'there are three lines of output in the log, create/reallocate/deallocate') || diag $log, "\n", @lines;
     for my $line (@lines) {
         chomp $line;
         ok($line =~ /SUCCESS/, "log indicates success: $line");

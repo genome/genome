@@ -10,7 +10,7 @@ use Cwd;
 use List::MoreUtils qw(any);
 
 class Genome::DataSource::GMSchemaOracle {
-    is => ['UR::DataSource::Oracle', 'Genome::DataSource::RDBMSRetriableOperations'],
+    is => ['UR::DataSource::RDBMSRetriableOperations', 'UR::DataSource::Oracle'],
     type_name => 'genome datasource gmschema',
 };
 
@@ -38,6 +38,7 @@ sub table_and_column_names_are_upper_case { 1; }
 # to The OracleType datasource in the postgres branch
 my @retriable_operations = (
     qr(ORA-25408), # can not safely replay call
+    qr(ORA-03135), # connection lost contact
 );
 sub should_retry_operation_after_error {
     my($self, $sql, $dbi_errstr) = @_;
@@ -50,13 +51,7 @@ sub _sync_database {
     my @params = @_;
 
     $self->_retriable_operation( sub {
-        my $dbh = $self->get_default_handle;
-        unless ($dbh->do("alter session set NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'")
-                and
-                $dbh->do("alter session set NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SSXFF'"))
-        {
-            Carp::croak("Can't set date format: $DBI::errstr");
-        }
+        $self->_set_date_format();
         $self->SUPER::_sync_database(@params);
     });
 }

@@ -54,6 +54,7 @@
 
   <operation name="Validate Large Indels">
       <link fromOperation="input connector" fromProperty="build_id" toOperation="create assembled contig reference" toProperty="build_id" />
+      <link fromOperation="input connector" fromProperty="build_id" toOperation="output connector" toProperty="build_id" />
       <link fromOperation="create assembled contig reference" fromProperty="build_id" toOperation="align to contig reference" toProperty="build_id" />
       <link fromOperation="create assembled contig reference" fromProperty="output_dir" toOperation="align to contig reference" toProperty="output_dir" />
       <link fromOperation="create assembled contig reference" fromProperty="reference_build_id" toOperation="align to contig reference" toProperty="reference_build_id" />
@@ -78,6 +79,7 @@
 
       <operationtype typeClass="Workflow::OperationType::Model">
           <inputproperty>build_id</inputproperty>
+          <outputproperty>build_id</outputproperty>
           <outputproperty>output_dir</outputproperty>
       </operationtype>
   </operation>

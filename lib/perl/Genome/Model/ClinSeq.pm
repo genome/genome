@@ -183,8 +183,11 @@ sub map_workflow_inputs {
     # initial inputs used for various steps
     my @inputs = (
         build => $build,
+        build_as_array => [$build],
         wgs_build => $wgs_build,
+        wgs_build_as_array => [$wgs_build],
         exome_build => $exome_build,
+        exome_build_as_array => [$exome_build],
         tumor_rnaseq_build => $tumor_rnaseq_build,
         normal_rnaseq_build => $normal_rnaseq_build,
         working_dir => $data_directory,
@@ -204,7 +207,7 @@ sub map_workflow_inputs {
     push @inputs, summarize_builds_outdir => $input_summary_dir;
     push @inputs, summarize_builds_log_file => $input_summary_dir . "/SummarizeBuilds.log.tsv";
 
-    if ($build->id > 0) {
+    if ($build->id) {
       push @inputs, summarize_builds_skip_lims_reports => 0;
     }else {
       #Watch out for -ve build IDs which will occur when the ClinSeq.t test is run.  In that case, do not run the LIMS reports
@@ -582,7 +585,7 @@ sub _resolve_workflow_for_build {
     #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
     my $msg = "Creating a summary of input builds using summarize-builds";
     my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
-    $add_link->($input_connector, 'build', $summarize_builds_op, 'builds');
+    $add_link->($input_connector, 'build_as_array', $summarize_builds_op, 'builds');
     $add_link->($input_connector, 'summarize_builds_outdir', $summarize_builds_op, 'outdir');
     $add_link->($input_connector, 'summarize_builds_skip_lims_reports', $summarize_builds_op, 'skip_lims_reports');
     $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
@@ -608,7 +611,7 @@ sub _resolve_workflow_for_build {
     if ($build->wgs_build) {
       my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for wgs data";
       my $wgs_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-      $add_link->($input_connector, 'wgs_build', $wgs_variant_sources_op, 'builds');
+      $add_link->($input_connector, 'wgs_build_as_array', $wgs_variant_sources_op, 'builds');
       $add_link->($input_connector, 'wgs_variant_sources_dir', $wgs_variant_sources_op, 'outdir');
       $add_link->($wgs_variant_sources_op, 'result', $output_connector, 'wgs_variant_sources_result');
     }
@@ -616,7 +619,7 @@ sub _resolve_workflow_for_build {
     if ($build->exome_build) {
       my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for exome data";
       my $exome_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-      $add_link->($input_connector, 'exome_build', $exome_variant_sources_op, 'builds');
+      $add_link->($input_connector, 'exome_build_as_array', $exome_variant_sources_op, 'builds');
       $add_link->($input_connector, 'exome_variant_sources_dir', $exome_variant_sources_op, 'outdir');
       $add_link->($exome_variant_sources_op, 'result', $output_connector, 'exome_variant_sources_result');
     }
@@ -717,7 +720,7 @@ sub _resolve_workflow_for_build {
     #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
     $msg = "Create IGV XML session files for varying levels of detail using the input builds";
     my $igv_session_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::DumpIgvXml");
-    $add_link->($input_connector, 'build', $igv_session_op, 'builds');
+    $add_link->($input_connector, 'build_as_array', $igv_session_op, 'builds');
     $add_link->($input_connector, 'igv_session_dir', $igv_session_op, 'outdir');
     $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result'); 
 
@@ -761,7 +764,7 @@ sub _resolve_workflow_for_build {
     if ($build->wgs_build){
         my $msg = "Summarize SV results from WGS somatic variation";
         my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-        $add_link->($input_connector, 'wgs_build', $summarize_svs_op, 'builds');
+        $add_link->($input_connector, 'wgs_build_as_array', $summarize_svs_op, 'builds');
         $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
         $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
     }

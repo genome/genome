@@ -37,7 +37,10 @@ sub execute {
         my $lane = eval { $instrument_data->lane } || '-';
         my ($alignment_result) = $build->alignment_results_for_instrument_data($instrument_data);
         my $bam_path = $alignment_result ? $alignment_result->output_dir . '/all_sequences.bam' : '-';
-        my ($bamqc_result) = Genome::InstrumentData::AlignmentResult::Merged::BamQc->get(alignment_result_id => $alignment_result->id);
+        #Get the latest bamqc result
+        my ($bamqc_result) = sort {$b->id <=> $a->id} Genome::InstrumentData::AlignmentResult::Merged::BamQc->get(
+            alignment_result_id => $alignment_result->id
+        );
         my $bamqc_path = $bamqc_result ? $bamqc_result->output_dir : '-';
         print join("\t", $instrument_data_id, $flow_cell_id, $lane, $bam_path, $bamqc_path) . "\n";
     }

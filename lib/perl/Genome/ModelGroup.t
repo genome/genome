@@ -71,7 +71,8 @@ ok($add_command->execute(), 'executed member add command');
 my @model_bridges = $model_group->model_bridges;
 is(@model_bridges, 2, 'group has 2 model bridges');
 is_deeply([$model_group->models], [$test_model_two, $test_model], 'group has both models');
-@project_models = sort { $a->id <=> $b->id } map { $_->entity } $project->parts('entity_class_name like' => 'Genome::Model%');
+my $model_sorter = Genome::Model->__meta__->id_property_sorter;
+@project_models = sort $model_sorter map { $_->entity } $project->parts('entity_class_name like' => 'Genome::Model%');
 is_deeply(\@project_models, [$model_group->models], 'after add model - project models match model group models');
 
 # remove models

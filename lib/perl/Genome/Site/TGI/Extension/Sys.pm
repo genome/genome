@@ -23,7 +23,6 @@ require File::Copy;
 require Genome::Utility::Text; #TODO remove, unused
 use Sys::Hostname;
 use File::Find;
-use IPC::System::Simple 'capture';
 use Params::Validate qw(:types);
 #use Archive::Extract;
 
@@ -46,6 +45,10 @@ sub bsub_and_wait {
 # FIXME This is incomplete and should be expanded to accept more bsub parameters
 sub bsub {
     my $class = shift;
+
+    # this has to be a runtime dependency so it can compile on /gsc/bin/perl...
+    require IPC::System::Simple;
+
     my %args = Params::Validate::validate(
         @_, {
             cmd => { type => (SCALAR | ARRAYREF) },
@@ -66,7 +69,7 @@ sub bsub {
     my $bsub_output;
     if (ref($args{cmd}) eq 'ARRAY') {
         push @bsub_cmd, @{$args{cmd}};
-        $bsub_output = eval {capture(@bsub_cmd)};
+        $bsub_output = eval {IPC::System::Simple::capture(@bsub_cmd)};
     } else {
         my $bsub_cmd = join(' ', @bsub_cmd, $args{cmd});
         $bsub_output = `$bsub_cmd`;

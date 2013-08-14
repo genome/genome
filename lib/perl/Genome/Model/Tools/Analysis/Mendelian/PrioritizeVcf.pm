@@ -55,6 +55,7 @@ class Genome::Model::Tools::Analysis::Mendelian::PrioritizeVcf {
 		filtered_file	=> { is => 'Text', doc => "Output file for fail-filter sites", is_optional => 1, is_input => 1},
 		readable_file	=> { is => 'Text', doc => "A simplified tab-delimited readable file for collaborators", is_optional => 1, is_input => 1},
 		control_samples	=> { is => 'Text', doc => "Comma-separated list of control sample names", is_optional => 1, is_input => 1},
+		carrier_samples	=> { is => 'Text', doc => "Comma-separated list of carrier sample names (e.g. parents in auto recessive)", is_optional => 1, is_input => 1},
 		male_samples	=> { is => 'Text', doc => "Comma-separated list of male sample names", is_optional => 1, is_input => 1},		
 		inheritance_model	=> { is => 'Text', doc => "Presumed model of mendelian inheritance [autosomal-dominant]", is_optional => 1, is_input => 1, default => 'autosomal-dominant'},
 		transcript_annotation_file   => { is => 'Text', doc => "WU Transcript annotation in its native format", is_input => 1},
@@ -109,6 +110,17 @@ sub execute {                               # replace with real execution logic.
 		{
 			$control_sample{$sample} = 1;
 			$stats{'num_samples_control'}++;
+		}
+	}
+
+	my %carrier_sample = ();
+	if($self->carrier_samples)
+	{
+		my @samples = split(/\,/, $self->carrier_samples);
+		foreach my $sample (@samples)
+		{
+			$carrier_sample{$sample} = 1;
+			$stats{'num_samples_carrier'}++;
 		}
 	}
 
@@ -314,7 +326,7 @@ sub execute {                               # replace with real execution logic.
 							else
 							{
 								## If a very rare mutation ##
-								if($info_values{'MUT'} || $info_values{'CLN'})
+								if($info_values{'MUT'} || $info_values{'CLN'} || $info_values{'PM'})
 								{
 									$dbsnp_status = "mutation";
 								}
@@ -373,6 +385,8 @@ sub execute {                               # replace with real execution logic.
 					my $total_affected = my $total_control = 0;
 					my $num_affected_called = my $num_control_called = my $num_control_called_variant = my $num_affected_called_variant = 0;
 					my $num_affected_called_hom = my $num_affected_called_wildtype = my $num_male_affected_X_het = 0;
+					my $num_carrier_called = my $num_carrier_called_het = my $num_carrier_called_hom = my $num_carrier_called_wildtype = 0;
+					my $num_carrier_called_lowfreq = my $num_control_called_lowfreq = my $num_affected_called_lowfreq = 0;
 					
 					## Get the anticipated format for genotypes ##
 					
@@ -403,9 +417,20 @@ sub execute {                               # replace with real execution logic.
 							my @genotypeContents = split(/\:/, $lineContents[$colCounter]);
 							my $genotype = $genotypeContents[$genotype_column{'GT'}];
 							my $coverage = $genotypeContents[$genotype_column{'DP'}];
-							my $filter = $genotypeContents[$genotype_column{'FT'}];
+							my $filter = ".";
+							my $freq_alt = ".";
+							$filter = $genotypeContents[$genotype_column{'FT'}] if($genotype_column{'FT'});
 							my $var_depth = $genotypeContents[$genotype_column{'AD'}];
-							my $freq_alt = $genotypeContents[$genotype_column{'FA'}];
+							
+							if($genotype_column{'FA'})
+							{
+								$freq_alt = $genotypeContents[$genotype_column{'FA'}];								
+							}
+							elsif($genotype_column{'FREQ'})
+							{
+								$freq_alt = $genotypeContents[$genotype_column{'FREQ'}];																
+							}
+
 	
 							## Get the highest var freq ##
 							my $var_freq = 0;
@@ -429,8 +454,9 @@ sub execute {                               # replace with real execution logic.
 							}
 							
 							## Only process the genotype if it has a value and is either unfiltered or for the control sample ##
-							if(length($genotype) > 2 && $genotype ne '.' && ($filter eq 'PASS' || $filter eq '.' || $control_sample{$sample_name}))
+							if(length($genotype) > 2 && $genotype ne '.' && $genotype ne "./." && ($filter eq 'PASS' || $filter eq '.' || $control_sample{$sample_name}))
 							{
+							
 	#							warn "Trying to convert $genotype in column $colCounter at line $lineCounter\n";
 								$genotype = convert_genotype($ref, $var, $genotype) if($genotype ne '.');
 	
@@ -453,7 +479,49 @@ sub execute {                               # replace with real execution logic.
 									}
 									else
 									{
+										$gt = "LowFreq";
 										$stats{'wildtype_with_allele_depth'}++;
+									}
+								}
+								elsif($var =~ ",")
+								{
+									my @vars = split(/\,/, $var);
+									foreach my $this_var (@vars)
+									{
+										if($genotype eq $ref . $ref)
+										{
+											if($var_freq < 0.05)
+											{
+												$gt = "Ref";
+												$stats{'wildtype_without_allele_depth'}++;
+											}
+											else
+											{
+												$gt = "LowFreq";
+												$stats{'wildtype_with_allele_depth'}++;
+											}
+										}
+										elsif($genotype eq $ref . $this_var)
+										{
+											$gt = "Het";
+										}
+										elsif($genotype eq $this_var . $this_var)
+										{
+											$gt = "Hom";
+										}
+										elsif($genotype =~ '\/')
+										{
+											my ($a1, $a2) = split(/\//, $genotype);
+											if($a1 eq $a2)
+											{
+												$gt = "Hom";
+											}
+											elsif($a1 eq "-" || $a2 eq "-")
+											{
+												$gt = "Het";
+											}
+										}
+
 									}
 								}
 								elsif($genotype eq $ref . $var)
@@ -464,71 +532,196 @@ sub execute {                               # replace with real execution logic.
 								{
 									$gt = "Hom";
 								}
-	
-								
+								elsif($genotype =~ '\/')
+								{
+									my ($a1, $a2) = split(/\//, $genotype);
+									if($a1 eq $a2)
+									{
+										$gt = "Hom";
+									}
+									elsif($a1 eq "-" || $a2 eq "-")
+									{
+										$gt = "Het";
+									}
+									else
+									{
+										warn "Genotype $genotype could not be matched to alleles $ref/$var 3\n";
+									}
+								}
+								else
+								{						
+									warn "Genotype $genotype could not be matched to alleles $ref/$var 4\n";
+								}
 	
 							
 								if($gt ne "Missing")
 								{
-									if($control_sample{$sample_name})
+									if($self->inheritance_model eq "autosomal-dominant")							
 									{
-										## Control sample ##
-										$num_control_called++;
-										
-										if($gt eq 'Het' || $gt eq 'Hom')
+										if($control_sample{$sample_name})
 										{
-											$num_control_called_variant++;
-											$mendel_status = "Control_Was_Variant";
-										}
-									}
-									else
-									{
-										## Affected sample ##
-										$num_affected_called++;
-										
-										if($gt eq 'Ref' && $coverage >= $self->min_coverage_to_refute)
-										{
-											$num_affected_called_wildtype++;
-											$mendel_status = "Affected_Was_Wildtype";
-										}
-										elsif($gt eq 'Het' || $gt eq 'Hom')
-										{
-											## Pass ##
-											$num_affected_called_variant++;
-											if($gt eq 'Hom')
+											## Control sample ##
+											$num_control_called++;
+											
+											if($gt eq 'Het' || $gt eq 'Hom')
 											{
-												if($male_sample{$sample_name} && ($chrom eq "X" || $chrom eq "Y"))
+												$num_control_called_variant++;
+												$mendel_status = "Control_Was_Variant";												
+											}
+											elsif($gt eq "Ref")
+											{
+#												$mendel_status = "Control_Was_Wildtype";	
+											}
+										}
+										else
+										{
+											## Affected sample ##
+											$num_affected_called++;
+											
+											if($gt eq 'Ref' && $coverage >= $self->min_coverage_to_refute)
+											{
+												$num_affected_called_wildtype++;
+												$mendel_status = "Affected_Was_Wildtype";
+											}
+											elsif($gt eq 'Het' || $gt eq 'Hom')
+											{
+												## Pass ##
+												$num_affected_called_variant++;
+												if($gt eq 'Hom')
 												{
-													## No penalty for males on sex chromosomes
+													if($male_sample{$sample_name} && ($chrom eq "X" || $chrom eq "Y"))
+													{
+														## No penalty for males on sex chromosomes
+													}
+													else
+													{
+														$num_affected_called_hom++;												
+													}
 												}
 												else
 												{
-													$num_affected_called_hom++;												
+													## Penalize male samples that are heterozygous ##
+													if($male_sample{$sample_name} && $chrom eq "X")
+													{
+														$num_male_affected_X_het++;
+													}
+													## Het variant in auto-recessive ##
+													if($self->inheritance_model eq "autosomal-recessive" && $gt eq "Het")
+													{
+														$mendel_status = "Affected_Was_Heterozygous";
+													}
 												}
+		
+											
 											}
-											else
-											{
-												## Penalize male samples that are heterozygous ##
-												if($male_sample{$sample_name} && $chrom eq "X")
-												{
-													$num_male_affected_X_het++;
-												}
-											}
-	
-										
-										}
+										}										
 									}
-								}							
+									elsif($self->inheritance_model eq "autosomal-recessive")
+									{
+										if($carrier_sample{$sample_name})
+										{
+											## Control sample ##
+											$num_carrier_called++;											
+											if($gt eq 'Ref' && $coverage >= $self->min_coverage_to_refute)
+											{
+												$num_carrier_called_wildtype++;
+												$mendel_status = "Carrier_Was_Wildtype";
+											}
+											elsif($gt eq "Het")
+											{
+												$num_carrier_called_het++;
+#												$mendel_status = "PASS";
+											}
+											elsif($gt eq "LowFreq")
+											{
+												$num_carrier_called_lowfreq++;
+											}
+											elsif($gt eq "Hom")
+											{
+												$num_carrier_called_hom++;
+												$mendel_status = "Carrier_Was_Homozygous";
+											}											
+										}										
+										elsif($control_sample{$sample_name})
+										{
+											## Control sample ##
+											$num_control_called++;											
+											if($gt eq 'Ref' && $coverage >= $self->min_coverage_to_refute)
+											{
+#												$mendel_status = "PASS";
+											}
+											elsif($gt eq "Het")
+											{
+												#$mendel_status = "Control_Was_Heterozygous";
+											}
+											elsif($gt eq "Hom")
+											{
+												$mendel_status = "Control_Was_Homozygous";
+											}
+											elsif($gt eq "LowFreq")
+											{
+												$num_control_called_lowfreq++;
+											}											
+										}
+										else
+										{
+											## Affected sample ##
+											$num_affected_called++;
+											
+											if($gt eq 'Ref' && $coverage >= $self->min_coverage_to_refute)
+											{
+												$num_affected_called_wildtype++;
+												$mendel_status = "Affected_Was_Wildtype";
+											}
+											elsif($gt eq 'Ref')
+											{
+												## Called WT but at lower coverage ##
+												$mendel_status = "Affected_Not_Called";
+											}
+											elsif($gt eq "Het")
+											{
+												$mendel_status = "Affected_Was_Het";
+											}
+											elsif($gt eq "Hom")
+											{
+												$num_affected_called_hom++;
+#												$mendel_status = "PASS";
+											}
+											elsif($gt eq "LowFreq")
+											{
+												$num_affected_called_lowfreq++;
+											}
+										}
+										
+										
+
+								
+										
+									}
+
+
+								}
+								else
+								{
+									## Genotype is missing ##
+								}
+								
+
 							}
 							else
 							{
+#								print "Not converting because gt=$genotype and filter=$filter\n";
 								## Genotype missing or was filtered out ####
 								$genotype = "NN";
 								$readable_genotypes .= "\t" if($readable_genotypes);
 								$coverage = "-" if(!$coverage);
 								$freq_alt = "-" if(!$freq_alt);
 								$readable_genotypes .= join("\t", $genotype, $coverage, $freq_alt);
-							}							
+
+							}															
+
+
+
 						}
 
 
@@ -539,46 +732,126 @@ sub execute {                               # replace with real execution logic.
 					my $mendel_probability = 0;
 					
 					## Determine probability based on mendel segregation status, where any error must be a wrong variant call ##
-					
-					if($mendel_status eq "PASS")
+					if($self->inheritance_model eq "autosomal-dominant")
 					{
-						if($num_affected_called_hom > 0 || $num_male_affected_X_het > 0)
+						if($mendel_status eq "PASS" || $mendel_status eq "Control_Was_Wildtype")
 						{
-							## Homozygous in an affected. This is unexpected but not a deal breaker ##
-							$mendel_probability = 1 - ($num_affected_called_hom * 0.20);
-
-							## Heterozygous in a male on chromosome X. This indicates an ugly variant call ##
-							$mendel_probability -= ($num_male_affected_X_het * 0.20);
-							$mendel_probability = 0.20 if($mendel_probability < 0.20);
+							if($num_affected_called_hom > 0 || $num_male_affected_X_het > 0)
+							{
+								## Homozygous in an affected. This is unexpected but not a deal breaker ##
+								if($self->inheritance_model eq "autosomal-dominant")
+								{
+									$mendel_probability = 1 - ($num_affected_called_hom * 0.20);								
+								}
+	
+								## Heterozygous in a male on chromosome X. This indicates an ugly variant call ##
+								$mendel_probability -= ($num_male_affected_X_het * 0.20);
+								$mendel_probability = 0.20 if($mendel_probability < 0.20);
+							}
+							elsif($num_affected_called_variant == $total_affected)
+							{
+								## Present in every affected - no penalty ##
+								$mendel_probability = 1.0;
+							}
+							else #if($num_affected_called_variant >= $self->min_affected_variant)
+							{
+								my $samples_missing = $total_affected - $num_affected_called_variant;
+								## Present in perhaps all but one affected. Still promising, but less so. For each sample where missed, reduce mendel score expecting 90% coverage ##
+								$mendel_probability = 1 - ($samples_missing * 0.10);
+								$mendel_probability = 0.20 if($mendel_probability < 0.20);
+							}
 						}
-						elsif($num_affected_called_variant == $total_affected)
+						elsif($mendel_status eq "Affected_Was_Wildtype")
 						{
-							## Present in every affected - no penalty ##
+							## Here we'd have To have missed a variant. It does happen. Assume 80% sensitivity
+							## Another possibility is that there are two causal variants in a family pedigree. 
+							$mendel_probability = 0.20;
+						}
+						elsif($mendel_status eq "Control_Was_Variant")
+						{
+							## Here we'd have to have miscalled a variant in a control. Assume that happens rarely ##
+							$mendel_probability = 0.05;
+						}
+						else
+						{
+							warn "Mendel probability unknown for $mendel_status\n";
+						}						
+					}
+					elsif($self->inheritance_model eq "autosomal-recessive")
+					{
+						if($mendel_status eq "PASS")
+						{
 							$mendel_probability = 1.0;
+							## Ideally, we'd like all carriers to be hets and all affecteds to be homozygous ##
+
+							## Penalty if affecteds lowfreq ##
+							
+							if($num_affected_called_lowfreq)
+							{
+								$mendel_probability = $mendel_probability - ($num_affected_called_lowfreq * 0.40);
+							}
+
+							if($num_control_called_lowfreq)
+							{
+								$mendel_probability = $mendel_probability - ($num_control_called_lowfreq * 0.20);
+							}
+							
+							if($num_carrier_called_lowfreq)
+							{
+								$mendel_probability = $mendel_probability - ($num_carrier_called_lowfreq * 0.10);
+							}
+
+							## Penalty if not all carriers were het ##
+							if($num_carrier_called_het < $num_carrier_called)
+							{
+								## If this occurs, then we called the carrier(s) wildtype but they lacked enough coverage ##
+								my $num_carriers_missing = $num_carrier_called - $num_carrier_called_het - $num_carrier_called_lowfreq;
+								$mendel_probability = $mendel_probability - ($num_carriers_missing * 0.20);
+							}
+
+							$mendel_probability = 0.20 if($mendel_probability < 0.20);							
+
 						}
-						else #if($num_affected_called_variant >= $self->min_affected_variant)
+						elsif($mendel_status eq "Affected_Was_Wildtype")
 						{
-							my $samples_missing = $total_affected - $num_affected_called_variant;
-							## Present in perhaps all but one affected. Still promising, but less so. For each sample where missed, reduce mendel score expecting 90% coverage ##
-							$mendel_probability = 1 - ($samples_missing * 0.10);
-							$mendel_probability = 0.20 if($mendel_probability < 0.20);
+							## Here we'd have To have missed a variant. It does happen but rarely for homozygous variants. Assume 95% sensitivity
+							## Another possibility is that there are two causal variants in a family pedigree. 
+							$mendel_probability = 0.05;
 						}
+						elsif($mendel_status eq "Affected_Was_Het")
+						{
+							## Here we'd have To have missed a variant. It does happen. Assume 80% sensitivity
+							## Another possibility is that there are two causal variants in a family pedigree. 
+							$mendel_probability = 0.40;
+						}
+						elsif($mendel_status eq "Affected_Not_Called")
+						{
+							## HEre the affected was not called variant but we have low coverage. Assume 80% sensitivity ##
+							$mendel_probability = 0.20;
+						}
+						elsif($mendel_status eq "Carrier_Was_Wildtype")
+						{
+							## A should-be carrier was wildtype for this variant, which means it was either missed or not inherited from both ##
+							## Assume 80% sensitivity ##
+							$mendel_probability = 0.20;
+						}
+						elsif($mendel_status eq "Carrier_Was_Homozygous")
+						{
+							## Carrier was homozygous, which is not what we expect for recessive. It could be a mis-call, however unlikely ##
+							$mendel_probability = 0.60;
+						}						
+						elsif($mendel_status eq "Control_Was_Heterozygous")
+						{
+							## It is possible that we have an unaffected who's a carrier, although it's unlikely ##
+							$mendel_probability = 0.80;
+						}
+						elsif($mendel_status eq "Control_Was_Homozygous")
+						{
+							## It is 
+							$mendel_probability = 0.20;
+						}						
 					}
-					elsif($mendel_status eq "Affected_Was_Wildtype")
-					{
-						## Here we'd have To have missed a variant. It does happen. Assume 80% sensitivity
-						## Another possibility is that there are two causal variants in a family pedigree. 
-						$mendel_probability = 0.20;
-					}
-					elsif($mendel_status eq "Control_Was_Variant")
-					{
-						## Here we'd have to have miscalled a variant in a control. Assume that happens rarely ##
-						$mendel_probability = 0.05;
-					}
-					else
-					{
-						warn "Mendel probability unknown for $mendel_status\n";
-					}
+
 
 					
 					
@@ -797,28 +1070,36 @@ sub execute {                               # replace with real execution logic.
 
 
 								## Get Gene expression probability ##
-								my $gene_probability = 0.90;
+#								my $gene_probability = 0.90;
+								my $gene_probability = 0.50; # Set a default value at 50% rank for unknown genes #
 								my $gene_expr_rank = "-";
 								if($gene_expression{$variant_gene})
 								{
 									$stats{'variants_type_' . $variant_type . '_with_annot_had_expr'}++;
 									my ($fpkm, $rank) = split(/\t/, $gene_expression{$variant_gene});
+									## ADjust rank to value between zero and one ##
+									$rank = $rank / 100;								
 									$gene_expr_rank= sprintf("%.2f", $rank);
-									if($rank < 0.25)
-									{
-										## If in the top 25%, let's up-rank this one ##
-										$gene_probability = 1.0;
-									}
-									elsif($rank < 0.50)
-									{
-										## If in the top 50%, let's up-rank this one ##
-										$gene_probability = 0.95;
-									}
-									elsif($rank > 0.75)
-									{
-										# Relatively very low expression, so let's penalize ##
-										$gene_probability = 0.80;
-									}
+
+									## Set gene probability to 1 - rank ##
+									
+									$gene_probability = 1 - $rank;
+									
+#									if($rank < 0.25)
+#									{
+#										## If in the top 25%, let's up-rank this one ##
+#										$gene_probability = 1.0;
+#									}
+#									elsif($rank < 0.50)
+#									{
+#										## If in the top 50%, let's up-rank this one ##
+#										$gene_probability = 0.95;
+#									}
+#									elsif($rank > 0.75)
+#									{
+#										# Relatively very low expression, so let's penalize ##
+#										$gene_probability = 0.80;
+#									}
 								}
 
 								## IF we have a novel Mendel-passed variant, count it up ##
@@ -876,7 +1157,7 @@ sub execute {                               # replace with real execution logic.
 									$priority_flag = $priority_genes{$variant_gene} if($priority_genes{$variant_gene});
 									
 									my $candidate_key = join("\t", $chrom, $position, $ref, $var);
-									$candidate_variants_readable{$candidate_key} = join("\t", $priority_flag, $final_probability, $mendel_probability, $pop_probability, $class_probability, $gene_probability, $shared_ibd_probability);
+									$candidate_variants_readable{$candidate_key} = join("\t", $priority_flag, $final_probability, $mendel_probability, $pop_probability, $class_probability, sprintf("%.2f", $gene_probability), $shared_ibd_probability);
 									$candidate_variants_readable{$candidate_key} .= "\t" . join("\t", $mendel_status, $dbsnp_status, $id, $info);
 									$candidate_variants_readable{$candidate_key} .= "\t" . join("\t", $variant_class, $variant_gene, $our_annot, $vep_annot);
 									$candidate_variants_readable{$candidate_key} .= "\t$readable_genotypes";
@@ -1108,6 +1389,7 @@ sub load_expression
 		my $expression_rank = $lineCounter / $num_genes * 100;
 		
 		$annotation{$gene} = join("\t", $fpkm, $expression_rank);
+
 	}
 	
 	close($input);
@@ -1228,6 +1510,8 @@ sub load_vep
     my $annotation_file = shift(@_);
     my %annotation = ();
     
+    my %has_canonical = ();
+    
     my $input = new FileHandle ($annotation_file);
     my $lineCounter = 0;
 
@@ -1279,6 +1563,7 @@ sub load_vep
 
             ## Reset extra variables
             my $gene = my $polyphen = my $sift = my $condel = "";
+	    my $canonical = 0;
 
             my @extraContents = split(/\;/, $extra);
             foreach my $entry (@extraContents)
@@ -1288,24 +1573,57 @@ sub load_vep
                     $gene = $value if($key eq 'HGNC');
                     $polyphen = $value if($key eq 'PolyPhen');
                     $sift = $value if($key eq 'SIFT');
-                    $condel = $value if($key eq 'Condel');	
+                    $condel = $value if($key eq 'Condel');
+		    $canonical = $value if($key eq "CANONICAL");
             }
 
             my @classes = split(/\,/, $class);
-            foreach my $class (@classes)
-            {
-                    if($polyphen || $sift || $condel)
-                    {
-                            $annotation{$key} .= "\n" if($annotation{$key});
-                            $annotation{$key} .= join("\t", $ens_gene, $gene, $class, $cdna_pos, $protein_pos, $amino_acids, $polyphen, $sift, $condel)
-#				print join("\t", $chrom, $position, $alleles, $ens_gene, $gene, $class, $protein_pos, $amino_acids, $polyphen, $sift, $condel) . "\n";
-                    }
-                    else
-                    {
-                            $annotation{$key} .= "\n" if($annotation{$key});
-                            $annotation{$key} .= join("\t", $ens_gene, $gene, $class, $cdna_pos, "", "", "", "", "")				;
-                    }				
-            }
+
+
+		if($canonical && $canonical eq "YES")
+		{
+			## Reset any existing annotation ##
+			$annotation{$key} = "";
+			
+			foreach my $class (@classes)
+			{
+				if($polyphen || $sift || $condel)
+				{
+					$annotation{$key} .= "\n" if($annotation{$key});
+					$annotation{$key} .= join("\t", $ens_gene, $gene, $class, $cdna_pos, $protein_pos, $amino_acids, $polyphen, $sift, $condel)
+			#				print join("\t", $chrom, $position, $alleles, $ens_gene, $gene, $class, $protein_pos, $amino_acids, $polyphen, $sift, $condel) . "\n";
+				}
+				else
+				{
+					$annotation{$key} .= "\n" if($annotation{$key});
+					$annotation{$key} .= join("\t", $ens_gene, $gene, $class, $cdna_pos, "", "", "", "", "")				;
+				}				
+			}
+			$has_canonical{$key} = 1;	
+		}
+		elsif($has_canonical{$key})
+		{
+			## Ignore this annotation, because the variant already has a canonical one ##
+		}
+		else
+		{
+			foreach my $class (@classes)
+			{
+				if($polyphen || $sift || $condel)
+				{
+					$annotation{$key} .= "\n" if($annotation{$key});
+					$annotation{$key} .= join("\t", $ens_gene, $gene, $class, $cdna_pos, $protein_pos, $amino_acids, $polyphen, $sift, $condel)
+			#				print join("\t", $chrom, $position, $alleles, $ens_gene, $gene, $class, $protein_pos, $amino_acids, $polyphen, $sift, $condel) . "\n";
+				}
+				else
+				{
+					$annotation{$key} .= "\n" if($annotation{$key});
+					$annotation{$key} .= join("\t", $ens_gene, $gene, $class, $cdna_pos, "", "", "", "", "")				;
+				}				
+			}			
+		}
+
+
 
 
         }
@@ -1541,7 +1859,7 @@ sub convert_genotype
 {
 	my ($ref, $var, $genotype) = @_;
 
-	return("NN") if($genotype eq '.');
+	return("NN") if($genotype eq '.' || $genotype eq "./." || $genotype eq "NN");
 	
 	## Determine type of variant we're dealing with ##
 	
@@ -1550,6 +1868,8 @@ sub convert_genotype
 	
 	$variant_type = "del" if(length($ref) > 1);
 	$variant_type = "ins" if(length($test_var) > 1);
+
+#	print "$ref\t$var\t$genotype\t$variant_type\n";
 
 	## Proceed based on type of variant ##
 	
