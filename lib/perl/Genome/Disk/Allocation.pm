@@ -7,7 +7,6 @@ use Genome;
 use Genome::Utility::Instrumentation;
 
 use File::Copy::Recursive 'dircopy';
-use IPC::System::Simple;
 use Carp 'confess';
 
 use List::Util 'shuffle';
@@ -1044,7 +1043,7 @@ sub _execute_system_command {
             '-e',
             $perl_program_string
         );
-        unless (eval { IPC::System::Simple::system(@cmd) } == 0) {
+        unless (system(@cmd) == 0) {
             my $msg = "Could not perform allocation action!";
             if ($@) {
                 $msg .= " Error: $@";
