@@ -19,7 +19,7 @@ class Genome::ProcessingProfile {
     subclassify_by => 'subclass_name',
     id_generator => '-uuid',
     id_by => [
-        id => { is => 'Number', len => 32 },
+        id => { is => 'Text', len => 32 },
     ],
     has => [
         name          => { is => 'VARCHAR2', len => 255, is_optional => 1, 

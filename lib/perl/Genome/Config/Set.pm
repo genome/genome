@@ -11,6 +11,7 @@ class Genome::Config::Set {
     id_by => [
         id => {
             is => 'Text',
+            len => 64,
         },
     ],
     has => [

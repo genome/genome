@@ -34,7 +34,7 @@ class Genome::Model::Command::Define::ImportedAnnotation {
     ],
     has_transient => [
         result_build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_optional => 1,
             doc => 'newly created build ID of ImportedAnnotation model',
         },

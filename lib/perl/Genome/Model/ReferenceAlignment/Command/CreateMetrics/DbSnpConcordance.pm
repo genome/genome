@@ -16,7 +16,7 @@ class Genome::Model::ReferenceAlignment::Command::CreateMetrics::DbSnpConcordanc
             shell_args_position => 1,
         },
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
         },
     ],

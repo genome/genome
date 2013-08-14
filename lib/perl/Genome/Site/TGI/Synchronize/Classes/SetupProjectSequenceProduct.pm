@@ -27,8 +27,8 @@ class Genome::Site::TGI::Synchronize::Classes::SetupProjectSequenceProduct {
 SQL
     ,
     id_by => [
-        project_id => { is => 'Integer', },
-        seq_id => { is => 'Integer', },
+        project_id => { is => 'Text', },
+        seq_id => { is => 'Text', },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::Oltp',

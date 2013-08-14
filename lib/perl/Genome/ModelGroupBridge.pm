@@ -12,12 +12,12 @@ class Genome::ModelGroupBridge {
     id_by => [
         model_group_id => {
             is => 'Text',
-            len => 64,
+            len => 32,
             is_deprecated => 1,
         },
         model_id => {
-            is => 'NUMBER',
-            len => 11,
+            is => 'Text',
+            len => 32,
         },
     ],
     has => [

@@ -46,11 +46,11 @@ class Genome::Model::Tools::Validation::SvManualReviewContigs {
             doc => 'tumor validation model to copy for alignment to new reference', #FIXME This is also possibly bad--use builds.
         },
         normal_val_model_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'normal validation model to copy for alignment to new reference', #FIXME This is also possibly bad--use builds.
         },
         reference_sequence_build_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'reference sequence build to be used for creating new reference with appended contigs',
         },
     ],

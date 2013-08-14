@@ -10,8 +10,8 @@ class Genome::ProcessingProfile::Param {
     type_name => 'processing profile param',
     id_by => [
         processing_profile_id => {
-            is => 'Integer',
-            len => 11,
+            is => 'Text',
+            len => 32,
             constraint_name => 'PPP_PP_FK',
         },
         name => {

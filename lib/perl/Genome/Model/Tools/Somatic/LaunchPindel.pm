@@ -36,7 +36,7 @@ class Genome::Model::Tools::Somatic::LaunchPindel{
             doc => 'use this to directly specify normal bam if you do not have a build',
         },
         reference_sequence_build => {
-            is => 'Integer',
+            is => 'Text',
             is_optional => 0,
             example_values => ['101947881'],
             doc => 'reference sequence build id, e.g. 101947881 for NCBI human build36',

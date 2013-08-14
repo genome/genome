@@ -16,7 +16,10 @@ class Genome::Model::Event {
     type_name => 'genome model event',
     id_generator => '-uuid',
     id_by => [
-        genome_model_event_id => { is => 'Number' },
+        genome_model_event_id => {
+            is => 'Text',
+            len => 32,
+        },
     ],
     has => [
         model => {

@@ -9,8 +9,8 @@ class Genome::Model::Build::Link {
     type_name => 'genome model build link',
     table_name => 'model.build_link',
     id_by => [
-        from_build_id => { is => 'NUMBER', len => 11, implied_by => 'from_build' },
-        to_build_id   => { is => 'NUMBER', len => 11, implied_by => 'to_build' },
+        from_build_id => { is => 'Text', len => 64, implied_by => 'from_build' },
+        to_build_id   => { is => 'Text', len => 64, implied_by => 'to_build' },
     ],
     has => [
         role       => { is => 'VARCHAR2', len => 56 },

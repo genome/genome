@@ -9,8 +9,8 @@ class Genome::SoftwareResult::User {
     id_generator => '-uuid',
     id_by => [
         id => {
-            is => 'NUMBER',
-            len => 10,
+            is => 'Text',
+            len => 32,
         },
     ],
     has => [

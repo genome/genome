@@ -26,7 +26,7 @@ class Genome::Model::Build {
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
         # TODO: change to just "id"
-        build_id => { is => 'Number', },
+        build_id => { is => 'Text', len => 64 },
     ],
     attributes_have => [
         is_input    => { is => 'Boolean', is_optional => 1, },

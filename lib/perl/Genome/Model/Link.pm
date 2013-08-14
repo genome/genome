@@ -9,8 +9,8 @@ class Genome::Model::Link {
     type_name => 'genome model link',
     table_name => 'model.model_link',
     id_by => [
-        from_model_id => { is => 'NUMBER', len => 11, implied_by => 'from_model' },
-        to_model_id   => { is => 'NUMBER', len => 11, implied_by => 'to_model' },
+        from_model_id => { is => 'Text', len => 32, implied_by => 'from_model' },
+        to_model_id   => { is => 'Text', len => 32, implied_by => 'to_model' },
     ],
     has => [
         role       => { is => 'VARCHAR2', len => 56 },

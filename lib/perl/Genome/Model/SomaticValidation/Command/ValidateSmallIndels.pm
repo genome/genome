@@ -28,7 +28,7 @@ class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
             id_by => 'build_id',
         },
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
             doc => 'build id of SomaticValidation model. Provide this OR the other options.',
         },

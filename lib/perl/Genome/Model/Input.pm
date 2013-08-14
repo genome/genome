@@ -20,8 +20,8 @@ class Genome::Model::Input {
             len => 1000,
         },
         model_id => {
-            is => 'NUMBER',
-            len => 11,
+            is => 'Text',
+            len => 32,
             is_deprecated => 1,
         },
         name => {

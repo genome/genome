@@ -13,6 +13,7 @@ class Genome::Config::AnalysisProject {
     id_by => [
         id => {
             is => 'Text',
+            len => 64,
         },
     ],
     has => [

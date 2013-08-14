@@ -12,8 +12,8 @@ class Genome::Subject {
     id_generator => '-uuid',
     id_by => [
         subject_id => {
-            is => 'Number',
-            len => 10,
+            is => 'Text',
+            len => 32,
         },
     ],
     has => [

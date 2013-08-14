@@ -23,8 +23,8 @@ class Genome::Site::TGI::Synchronize::Classes::SetupProjectSample {
 SQL
     ,
     id_by => [
-        project_id => { is => 'Integer', },
-        sample_id => { is => 'Integer', },
+        project_id => { is => 'Text', },
+        sample_id => { is => 'Text', },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::Oltp',

@@ -43,8 +43,8 @@ class Genome::Model {
     id_by => [
         genome_model_id => {
             # TODO: change to just "id"
-            # And make the data type Text in preparation for UUIDs
-            is => 'Number',
+            is => 'Text',
+            len => 32,
             doc => 'the unique immutable system identifier for a model',
         },
     ],

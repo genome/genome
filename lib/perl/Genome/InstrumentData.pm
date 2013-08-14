@@ -46,7 +46,7 @@ class Genome::InstrumentData {
             to => 'name',
         },
         sample_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'library',
         },
         sample => {

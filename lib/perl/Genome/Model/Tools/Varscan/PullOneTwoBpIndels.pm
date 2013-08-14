@@ -98,7 +98,7 @@ class Genome::Model::Tools::Varscan::PullOneTwoBpIndels {
             default => 0.08,
         },
         somatic_validation_build => {
-            is => 'Integer',
+            is => 'Text',
             doc => "Somatic validation build to use. If this is set, defaults will be set inside that build directory for final_output_file,realigned_bam_file_directory,small_indel_output_bed,large_indel_output_bed.",
             is_optional => 1,
             is_input => 1,

@@ -13,8 +13,8 @@ class Genome::SoftwareResult::Metric {
             len => 1000,
         },
         software_result_id => {
-            is => 'NUMBER',
-            len => 20,
+            is => 'Text',
+            len => 32,
         },
     ],
     has => [

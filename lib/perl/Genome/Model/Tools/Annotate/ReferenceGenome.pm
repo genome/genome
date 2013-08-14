@@ -24,7 +24,7 @@ class Genome::Model::Tools::Annotate::ReferenceGenome {
     ],
     has_optional => [
         reference_build_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'The id of the reference genome build.',
             default_value => $DEFAULT_REFERENCE_BUILD_ID,
         },

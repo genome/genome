@@ -15,7 +15,7 @@ class Genome::Model::SomaticValidation::Command::ValidateLargeIndels::CreateAsse
             id_by => 'build_id',
         },
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
             is_output => 1,
             doc => 'build id of SomaticValidation model',

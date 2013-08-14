@@ -15,8 +15,8 @@ class Genome::Site::TGI::Synchronize::Classes::ProjectSample {
 SQL
 ,
     id_by => [
-        project_id => { is => 'Integer', },
-        part_id => { is => 'Integer', },
+        project_id => { is => 'Text', },
+        part_id => { is => 'Text', },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

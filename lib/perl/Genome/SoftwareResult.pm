@@ -23,7 +23,7 @@ class Genome::SoftwareResult {
     subclassify_by => 'subclass_name',
     id_generator => '-uuid',
     id_by => [
-        id => { is => 'Number', len => 20 },
+        id => { is => 'Text', len => 32 },
     ],
     attributes_have => [
         is_param => { is => 'Boolean', is_optional=>'1' },
