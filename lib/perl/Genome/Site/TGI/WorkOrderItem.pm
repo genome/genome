@@ -8,7 +8,7 @@ use Genome;
 class Genome::Site::TGI::WorkOrderItem {
     table_name => <<SQL
     (
-        select woi_id id, setup_wo_id setup_id from work_order_item\@oltp
+        select woi_id id, setup_wo_id setup_id from work_order_item
     ) work_order_item
 SQL
     ,
@@ -22,7 +22,7 @@ SQL
             is => 'Text'
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
 };
 
 1;

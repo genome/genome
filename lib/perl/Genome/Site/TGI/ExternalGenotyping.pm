@@ -5,8 +5,8 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::ExternalGenotyping {
-    table_name => 'GSC.EXTERNAL_GENOTYPING',
-    data_source => 'Genome::DataSource::GMSchema',
+    table_name => 'EXTERNAL_GENOTYPING',
+    data_source => 'Genome::DataSource::Dwrac',
     id_by => [
         seq_id => { is => 'Number' },
     ],

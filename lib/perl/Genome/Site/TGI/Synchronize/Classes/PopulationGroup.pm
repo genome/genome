@@ -13,7 +13,7 @@ TAXON_ID    NUMBER   (10)                    {null} NOT NULL ok
 
 class Genome::Site::TGI::Synchronize::Classes::PopulationGroup { 
     is => 'UR::Object',
-    table_name => 'GSC.POPULATION_GROUP',
+    table_name => 'POPULATION_GROUP',
     id_by => [
         id => { is => 'Number', column_name => 'PG_ID' },
     ],
@@ -24,7 +24,7 @@ class Genome::Site::TGI::Synchronize::Classes::PopulationGroup {
     has_optional => [
         description => { is => 'Text', },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub properties_to_copy {# 4

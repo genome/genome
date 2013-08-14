@@ -24,7 +24,7 @@ TAXON_ID                       NUMBER   (10)                    {null} NOT NULL 
 
 class Genome::Site::TGI::Synchronize::Classes::Taxon {
     is => 'UR::Object',
-    table_name => "GSC.organism_taxon",
+    table_name => "organism_taxon",
     id_by => [
         id => { is => 'Number', column_name => 'TAXON_ID' },
     ],
@@ -44,7 +44,7 @@ class Genome::Site::TGI::Synchronize::Classes::Taxon {
         species_latin_name => { is => "Text", },
         strain_name => { is => "Text", },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub properties_to_copy {# 13

@@ -9,7 +9,6 @@ use Carp 'confess';
 use Data::Dumper 'Dumper';
 
 class Genome::WorkOrderItem {
-    table_name => '(SELECT * FROM work_order_item@oltp) work_order_item',
     id_by => [
         woi_id => {
             is => 'Integer',
@@ -70,8 +69,8 @@ class Genome::WorkOrderItem {
             to => 'instrument_data',
         },
     ],
-    schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
+    table_name => 'work_order_item',
 };
 
 sub models {

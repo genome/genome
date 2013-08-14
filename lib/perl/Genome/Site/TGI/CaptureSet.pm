@@ -12,7 +12,7 @@ class Genome::Site::TGI::CaptureSet {
             setup_id id,
             setup_status status,
             setup_description description
-        from setup@oltp
+        from setup
         where setup_type = 'setup capture set'
         ) capture_set
     |,
@@ -103,7 +103,7 @@ class Genome::Site::TGI::CaptureSet {
         },
     ],
     doc         => '',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
 };
 
 sub _capture_set {

@@ -291,16 +291,16 @@ sub _load_successful_pidfas {
     # This query/hash loading takes 10-15 secs
     print STDERR "Load instrument data successful pidfas...\n";
 
-    my $dbh = Genome::DataSource::GMSchema->get_default_handle;
+    my $dbh = Genome::DataSource::Oltp->get_default_handle;
     if ( not $dbh ) {
         $self->error_message('Failed to get dbh from gm schema!');
         return;
     }
     my $sql = <<SQL;
         select p1.param_value, p2.param_value
-        from process_step_executions\@oltp pse
-        inner join pse_param\@oltp p1 on p1.pse_id = pse.pse_id and p1.param_name = 'instrument_data_id'
-        left join pse_param\@oltp p2 on p2.pse_id = pse.pse_id and p2.param_name = 'pidfa_output'
+        from process_step_executions pse
+        inner join pse_param p1 on p1.pse_id = pse.pse_id and p1.param_name = 'instrument_data_id'
+        left join pse_param p2 on p2.pse_id = pse.pse_id and p2.param_name = 'pidfa_output'
         where pse.ps_ps_id = 3870 and pse.pr_pse_result = 'successful'
         order by p1.param_value desc
 SQL

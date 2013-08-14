@@ -15,7 +15,7 @@ use Genome;
 
 class Genome::Site::TGI::PopulationGroup {
     is => 'Genome::Site::TGI::Measurable',
-    table_name => 'GSC.POPULATION_GROUP',
+    table_name => 'POPULATION_GROUP',
     id_by => [
         individual_id => { is => 'Number', len => 10, column_name => 'PG_ID' },
     ],
@@ -40,7 +40,7 @@ class Genome::Site::TGI::PopulationGroup {
         },
     ],
     doc => 'an defined, possibly arbitrary, group of individual organisms',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub common_name { # not in the table, but exepected by views

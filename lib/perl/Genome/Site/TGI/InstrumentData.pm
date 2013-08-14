@@ -17,16 +17,16 @@ class Genome::Site::TGI::InstrumentData {
                'Genome::Site::TGI::InstrumentData::Solexa' subclass_name,
                'solexa' sequencing_platform,
                (
-                    case 
-                        when solexa.index_sequence is null then to_char(solexa.lane) 
+                    case
+                        when solexa.index_sequence is null then to_char(solexa.lane)
                         else to_char(solexa.lane) || '-' || solexa.index_sequence
                     end
                ) subset_name,
                library_id
-          FROM GSC.index_illumina solexa 
-          JOIN GSC.flow_cell_illumina fc on fc.flow_cell_id = solexa.flow_cell_id
+          FROM index_illumina solexa
+          JOIN flow_cell_illumina fc on fc.flow_cell_id = solexa.flow_cell_id
      UNION ALL
-            SELECT 
+            SELECT
                to_char(case when ri.index_sequence is null then ri.region_id else ri.seq_id end) id,
                r.run_name,
                'Genome::Site::TGI::InstrumentData::454' subclass_name,
@@ -43,21 +43,8 @@ class Genome::Site::TGI::InstrumentData {
                     else ri.library_id
                 end
                ) library_id
-           FROM GSC.run_region_454 r 
-           JOIN GSC.region_index_454 ri on ri.region_id = r.region_id
-     UNION ALL
-        SELECT run_name id,
-               sanger.run_name,
-               'Genome::Site::TGI::InstrumentData::Sanger' subclass_name,
-               'sanger' sequencing_platform,
-               '1' subset_name,
-               libsum.library_id
-          FROM gsc_run\@oltp sanger
-          JOIN misc_attribute library_misc
-            on library_misc.entity_id = sanger.run_name
-            and library_misc.entity_class_name = 'Genome::InstrumentData::Sanger'
-            and library_misc.property_name = 'library_name'
-          LEFT JOIN gsc.library_summary libsum on libsum.full_name = library_misc.value
+           FROM run_region_454 r
+           JOIN region_index_454 ri on ri.region_id = r.region_id
     ) idata
 EOS
     ,
@@ -101,7 +88,7 @@ EOS
         },
     ],
     schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 #< UR Methods >#

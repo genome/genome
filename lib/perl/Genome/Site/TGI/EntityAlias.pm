@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::EntityAlias {
-    table_name => 'GSC.ENTITY_ALIAS',
+    table_name => 'ENTITY_ALIAS',
     id_by => [
         entity_id => { 
             is => 'Text', 
@@ -25,7 +25,7 @@ class Genome::Site::TGI::EntityAlias {
             column_name => 'ALIAS_SOURCE', 
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 1;

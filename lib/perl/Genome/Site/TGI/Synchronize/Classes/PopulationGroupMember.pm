@@ -11,12 +11,12 @@ properties 2, copied 2, updated 0
 
 class Genome::Site::TGI::Synchronize::Classes::PopulationGroupMember {
     is => 'UR::Object',
-    table_name => 'GSC.POPULATION_GROUP_MEMBER',
+    table_name => 'POPULATION_GROUP_MEMBER',
     id_by => [
         population_group_id => { is => 'Number', },
         member_id => { is => 'Number', },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub properties_to_copy {# 2

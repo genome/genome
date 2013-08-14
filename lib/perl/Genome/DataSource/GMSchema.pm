@@ -9,9 +9,14 @@ use DBD::Pg;
 use IO::Socket;
 use List::MoreUtils qw(any);
 
+use Genome::DataSource::CommonRDBMS qw(log_error log_commit_time);
 
 class Genome::DataSource::GMSchema {
-    is => ['UR::DataSource::RDBMSRetriableOperations', 'UR::DataSource::Oracle'],
+    is => [
+        'UR::DataSource::RDBMSRetriableOperations',
+        'UR::DataSource::Oracle',
+        'Genome::DataSource::CommonRDBMS',
+    ],
 };
 
 sub table_and_column_names_are_upper_case { 1; }
@@ -60,21 +65,7 @@ sub _sync_database {
 
     local $THIS_COMMIT_ID = UR::Object::Type->autogenerate_new_object_id_uuid();
 
-    my $required_pg_version = '2.19.3';
-
-    my $pg_version = $DBD::Pg::VERSION;
-    if (($pg_version ne $required_pg_version) && !defined $ENV{'LIMS_PERL'}) {
-        $self->error_message("**** INCORRECT POSTGRES DRIVER VERSION ****\n" .
-            "You are using a Perl version that includes an incorrect DBD::Pg driver.\n" .
-            "You are running $pg_version and need to be running $required_pg_version.\n" .
-            "Your sync has been aborted to protect data integrity in the Postgres database.\n" .
-            "Please be sure you are using 'genome-perl' and not /gsc/bin/perl.\n\n\n" .
-            "This event has been logged with apipe; if you are unsure of why you received this message\n" .
-            "open an apipe-support ticket with the date/time of occurrence and we will assist you.\n");
-        log_error($self->error_message);
-        die $self->error_message;
-    }
-
+    $self->_check_pg_version();
 
     # Not disconnecting/forking with no commit on to prevent transactions from being
     # closed, which can cause failures in tests that have multiple commits.
@@ -85,9 +76,6 @@ sub _sync_database {
         }
         return 1;
     }
-
-    $self->pause_db_if_necessary;
-
 
     # fork if we don't skip.
     my $skip_postgres = (defined $ENV{GENOME_DB_SKIP_POSTGRES} && -e $ENV{GENOME_DB_SKIP_POSTGRES});
@@ -224,113 +212,8 @@ sub _sync_database {
     return 1;
 }
 
-sub log_error {
-    my $error = shift;
-    my $log_string = create_log_message($error);
-    my $log_fh = open_error_log();
-    # If we can't get a file handle to the log file, no worries. Just continue without making a peep.
-    if ($log_fh) {
-        my $lock_status = File::lockf::lock($log_fh);
-        # this returns 0 on success
-        unless ($lock_status != 0) {
-            $log_fh->print("$log_string\n");
-            File::lockf::ulock($log_fh);
-        }
-        $log_fh->close;
-    }
-}
 
-sub log_commit_time {
-    my($db_name, $time) = @_;
-
-    my $original_cmdline = get_command_line();
-    my $execution_id = $ENV{'GENOME_EXECUTION_ID'} || '';
-
-    my $path = _determine_base_log_pathname();
-    $path .= "-${db_name}.timing";
-    my $fh = IO::File->new($path,'>>');
-    unless ($fh) {
-        print STDERR "Couldn't open $path for appending: $!\n";
-        return;
-    }
-    chmod(0666,$path);
-    my $lock_status = File::lockf::lock($fh);
-    # lock gives us a zero return value on success
-    unless ($lock_status != 0) {
-        $fh->print(join("\t",$THIS_COMMIT_ID, $execution_id, $time, $original_cmdline) . "\n");
-        File::lockf::ulock($fh);
-    }
-    $fh->close();
-}
-
-
-sub get_command_line {
-    my @commands;
-    if ($INC{'Command/V2.pm'}) {
-        push @commands, Command::V2->get('original_command_line true' => 1);
-    }
-    if ($INC{'Command/V1.pm'}) {
-        push @commands, Command::V1->get('original_command_line true' => 1);
-    }
-    @commands = sort { $a->id cmp $b->id } @commands;
-    my $original_cmdline = $commands[0] ? $commands[0]->original_command_line : $0;
-
-    return $original_cmdline;
-}
-
-
-sub create_log_message {
-    my $error = shift;
-
-    require DateTime;
-    my $dt = DateTime->now(time_zone => 'America/Chicago');
-    my $date = $dt->ymd;
-    my $time = $dt->hms;
-    my $user = Genome::Sys->username;
-    my $acting_user = getlogin();
-    my $perl_path = $^X;
-
-    my $original_cmdline = get_command_line();
-
-    my $path = _determine_base_log_pathname();
-
-    require Sys::Hostname;
-    my $host = Sys::Hostname::hostname();
-
-    my $string = join("\n", join(',', $date, $time, $host, $user, $acting_user, $perl_path, $original_cmdline, $THIS_COMMIT_ID), $error);
-    return $string;
-}
-
-sub _determine_base_log_pathname {
-    require DateTime;
-    my $dt = DateTime->now(time_zone => 'America/Chicago');
-    my $date = $dt->ymd;
-
-    my $base_dir = '/gsc/var/log/genome/postgres/';
-    my $dir = join('/', $base_dir, $dt->year);
-    unless (-d $dir) {
-        mkdir $dir;
-        chmod(0777, $dir);
-    }
-
-    my $file = join('-', $dt->month, $dt->day);
-    return join('/',$dir, $file);
-}
-
-sub open_error_log {
-    my $path = _determine_base_log_pathname();
-    $path .= '.log';
-    my $fh = IO::File->new($path, '>>');
-    unless ($fh) {
-        print STDERR "Couldn't open $path for appending: $!\n";
-        return;
-    }
-    chmod(0666,$path);
-    return $fh;
-}
-
-
-sub _init_created_dbh {
+sub init_created_handle {
     my ($self, $dbh) = @_;
     return unless defined $dbh;
 
@@ -375,48 +258,6 @@ sub _get_sequence_name_for_table_and_column {
     }
 }
 
-sub pause_db_if_necessary {
-    my $self = shift;
-    return 1 unless $ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE};
-
-    my @o = grep { ref($_) eq 'UR::DeletedRef' } UR::Context->all_objects_loaded('UR::Object');
-    if (@o) {
-        print Data::Dumper::Dumper(\@o);
-        Carp::confess();
-    }
-
-    # Determine what has changed.
-    my @changed_objects = (
-        UR::Context->all_objects_loaded('UR::Object::Ghost'),
-        grep { $_->__changes__ } UR::Context->all_objects_loaded('UR::Object')
-        #UR::Util->mapreduce_grep(sub { $_[0]->__changes__ },$self->all_objects_loaded('UR::Object'))
-    );
-
-    my @real_changed_objects = grep {UR::Context->resolve_data_source_for_object($_)} @changed_objects;
-
-    return 1 unless (@real_changed_objects);
-
-
-    print "Database updating has been paused, please wait until updating has been resumed...\n";
-
-    my @data_sources = UR::Context->all_objects_loaded('UR::DataSource::RDBMS');
-    for my $ds (@data_sources) {
-        $ds->disconnect_default_handle if $ds->has_default_handle;
-    }
-
-    while (1) {
-        sleep sleep_length();
-        last unless $ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE};
-    }
-
-    print "Database updating has been resumed, continuing commit!\n";
-    return 1;
-}
-
-sub sleep_length {
-    return 30;
-}
-
 my @retriable_operations = (
     qr(ORA-25408), # can not safely replay call
     qr(ORA-03135), # connection lost contact
@@ -431,8 +272,6 @@ sub create_iterator_closure_for_rule {
     my @create_iter_params = @_;
 
     $self->_retriable_operation(sub {
-        $self->pause_db_queries_if_necessary();
-
         $self->SUPER::create_iterator_closure_for_rule(@create_iter_params);
     });
 }
@@ -442,30 +281,8 @@ sub create_dbh {
     my @create_dbh_params = @_;
 
     $self->_retriable_operation(sub {
-        $self->pause_db_queries_if_necessary();
-
         $self->SUPER::create_dbh(@create_dbh_params);
     });
-}
-
-sub pause_db_queries_if_necessary {
-    my $self = shift;
-    return 1 unless $ENV{GENOME_DB_QUERY_PAUSE} and -e $ENV{GENOME_DB_QUERY_PAUSE};
-
-    print "Database querying has been paused; disconnecting db handles.  Please wait until the query pause is released...\n";
-
-    my @data_sources = UR::Context->all_objects_loaded('UR::DataSource::RDBMS');
-    for my $ds (@data_sources) {
-        $ds->disconnect_default_handle if $ds->has_default_handle;
-    }
-
-    while (1) {
-        sleep 30;
-        last unless $ENV{GENOME_DB_QUERY_PAUSE} and -e $ENV{GENOME_DB_QUERY_PAUSE};
-    }
-
-    print "Database updating has been resumed, continuing query!\n";
-    return 1;
 }
 
 # A list of the old GM schema tables that Genome::Model should ignore
