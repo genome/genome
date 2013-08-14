@@ -9,14 +9,27 @@ my $id = 2891454740;
 my $model = Genome::Model->get($id);
 ok($model, "got test model");
 
-my $outfile = Genome::Sys->create_temp_file_path(); 
-my $result = Genome::Model::Command::Export::Metadata->execute(models => [$model], output_path => $outfile);
-ok($result, "ran");
-ok(-e $outfile, "outfile $outfile exists");
-
 my $expected = __FILE__ . '.expected-output';
+
+my $intermediate_outfile = Genome::Sys->create_temp_file_path();
+
+my $scrubbed_outfile;
+if ($ARGV[0] eq 'REBUILD') {
+    $scrubbed_outfile = $expected;    
+    unlink $expected;
+}
+else {
+    $scrubbed_outfile = Genome::Sys->create_temp_file_path(); 
+}
+
+my $result = Genome::Model::Command::Export::Metadata->execute(models => [$model], output_path => $intermediate_outfile, verbose => 1);
+ok($result, "ran");
+ok(-e $intermediate_outfile, "intermediate_outfile $intermediate_outfile exists");
+
+Genome::Sys->shellcmd(cmd => "grep -v Genome::Disk::Allocation <$intermediate_outfile | grep -v Genome::Disk::Volume >  $scrubbed_outfile");
+
 Genome::Utility::Test::compare_ok(
-    $outfile, 
+    $scrubbed_outfile, 
     $expected,
     'output matches',
     filters => [
