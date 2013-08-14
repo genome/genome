@@ -9,14 +9,14 @@ BEGIN {
 }
 
 use above 'Genome';
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 use Genome::Utility::Test qw(is_equal_set);
 
 use_ok('Genome::Model::Command::Services::BuildQueuedModels') or die;
 
 subtest 'original test' => sub {
-    plan tests => 20;
+    plan tests => 19;
 
     class Genome::ProcessingProfile::Tester {
         is => 'Genome::ProcessingProfile',
