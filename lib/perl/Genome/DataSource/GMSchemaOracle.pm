@@ -38,6 +38,7 @@ sub table_and_column_names_are_upper_case { 1; }
 # to The OracleType datasource in the postgres branch
 my @retriable_operations = (
     qr(ORA-25408), # can not safely replay call
+    qr(ORA-03135), # connection lost contact
 );
 sub should_retry_operation_after_error {
     my($self, $sql, $dbi_errstr) = @_;
