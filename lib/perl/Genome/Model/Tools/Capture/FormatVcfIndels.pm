@@ -53,39 +53,53 @@ sub execute {
 	}
 	else
 	{
-		my ( $chrom, $position, $id, $ref, $alt, @rest ) = split( /\t/, $line );
+		my ( $chrom, $position, $id, $ref, $alts, @rest ) = split( /\t/, $line );
 	
 		next if( $chrom =~ m/^(CHROM|REF)/ );
 		# Fix unsupported chromosome names if necessary
 		$chrom =~ s/^chr//;
 		$chrom = "MT" if( $chrom eq "M" );
 	
-		my $chr_start = my $chr_stop = 0;
-		my $allele1 = my $allele2 = "";
-	
-		if(length($alt) > length($ref))
+		my @alts = split(/\,/, $alts);
+		
+		foreach my $alt (@alts)
 		{
-			## Insertion ##
-			$allele2 = $alt;
-			$allele2 =~ s/$ref//;
-			$allele1 = "-";
-			$chr_start = $position;
-			$chr_stop = $position + 1;
+		    if(length($alt) == length($ref))
+		    {
+			## not an indel ##
+		    }
+		    else
+		    {
+			my $chr_start = my $chr_stop = 0;
+			my $allele1 = my $allele2 = "";
+		
+			if(length($alt) > length($ref))
+			{
+				## Insertion ##
+				$allele2 = $alt;
+				$allele2 =~ s/$ref//;
+				$allele1 = "-";
+				$chr_start = $position;
+				$chr_stop = $position + 1;
+			}
+			else
+			{
+				## Deletion ##
+				$allele1 = $ref;
+				$allele1 =~ s/$alt//;
+				$allele2 = "-";
+				my $indel_size = length($allele1);
+				$chr_start = $position + 1;
+				$chr_stop = $chr_start + $indel_size - 1;
+			}
+		
+			# Construct the reformatted line and buffer it up for output
+			$line = "$chrom\t$chr_start\t$chr_stop\t$allele1\t$allele2\n";
+			push( @formatted, $line );				    			
+		    }
+
 		}
-		else
-		{
-			## Deletion ##
-			$allele1 = $ref;
-			$allele1 =~ s/$alt//;
-			$allele2 = "-";
-			my $indel_size = length($allele1);
-			$chr_start = $position + 1;
-			$chr_stop = $chr_start + $indel_size - 1;
-		}
-	
-		# Construct the reformatted line and buffer it up for output
-		$line = "$chrom\t$chr_start\t$chr_stop\t$allele1\t$allele2\n";
-		push( @formatted, $line );		
+
 	}
 
     }
