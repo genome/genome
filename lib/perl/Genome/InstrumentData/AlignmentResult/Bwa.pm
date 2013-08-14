@@ -48,8 +48,13 @@ sub required_rusage {
 
     my $host_groups;
     $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
-    $host_groups =~ s/\/\s+/\ /;
-    $host_groups =~ s/^HOSTS:\s+//;
+    if ($host_groups =~ /all hosts/) {
+        $host_groups = '';
+    }
+    else {
+        $host_groups =~ s/\/\s+/\ /;
+        $host_groups =~ s/^HOSTS:\s+//;
+    }
 
     my $select  = "select[ncpus >= $cpus && mem >= $mem_mb && gtmp >= $tmp_gb] span[hosts=1]";
     my $rusage  = "rusage[mem=$mem_mb, gtmp=$tmp_gb]";
@@ -57,18 +62,21 @@ sub required_rusage {
 
     my $required_usage = "-R '$select $rusage' $options";
 
-    #check to see if our resource requests are feasible (This uses "maxmem" to check theoretical availability)
-    #factor of four is based on current six jobs per host policy this should be revisited later
-    my $select_check = "select[ncpus >= $cpus && maxmem >= " . ($mem_mb * 4) . " && maxgtmp >= $tmp_gb] span[hosts=1]";
-    my $select_cmd = "bhosts -R '$select_check' $host_groups";
+    Workflow::Dispatcher::Lsf->class;
+    no warnings;
+    unless ($Workflow::Dispatcher::Lsf::OPENLAVA) {
+        #check to see if our resource requests are feasible (This uses "maxmem" to check theoretical availability)
+        #factor of four is based on current six jobs per host policy this should be revisited later
+        my $select_check = "select[ncpus >= $cpus && maxmem >= " . ($mem_mb * 4) . " && maxgtmp >= $tmp_gb] span[hosts=1]";
+        my $select_cmd = "bhosts -R '$select_check' $host_groups";
 
-    my @selected_blades = qx($select_cmd);
-
-    if (@selected_blades) {
-        return $required_usage;
-    } else {
-        #die $class->error_message("Failed to find hosts that meet resource requirements ($required_usage). [Looked with `$select_cmd`]");
+        my @selected_blades = qx($select_cmd);
+        unless (@selected_blades) {
+            die $class->error_message("Failed to find hosts that meet resource requirements ($required_usage). [Looked with `$select_cmd`]");
+        }
     }
+
+    return $required_usage;
 }
 
 sub tmp_megabytes_estimated {
@@ -481,6 +489,7 @@ sub decomposed_aligner_params {
     my $bwa_aln_params = $spar[0] || "";
 
     my $cpu_count = $self->_available_cpu_count;
+    $cpu_count = $cpu_count * 20;
 
     $self->status_message("[decomposed_aligner_params] cpu count is $cpu_count");
 
@@ -563,7 +572,9 @@ sub multiple_reference_mode {
 
 sub accepts_bam_input {
     my $self = shift;
-    return Genome::Model::Tools::Bwa->supports_bam_input($self->aligner_version);
+    my $rv = Genome::Model::Tools::Bwa->supports_bam_input($self->aligner_version);
+    print STDERR "BWA VERSION " . $self->aligner_version . " accepts bam input: " . $rv . "\n";
+    return $rv;
 }
 
 sub prepare_reference_sequence_index {
