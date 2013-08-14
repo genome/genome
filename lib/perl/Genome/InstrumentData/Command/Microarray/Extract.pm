@@ -339,7 +339,7 @@ sub _annotate_genotypes {
 
     my $snvs_file = $variation_list_build->snvs_bed;
     if ( not $snvs_file ) {
-        $self->error_message('No snvs file for build: '.$variation_list_build->__display_name__);
+        $self->error_message('No snvs file (snvs_bed) for build: '.$variation_list_build->__display_name__);
         return;
     }
     $self->status_message('snvs file: '.$snvs_file);
