@@ -10,7 +10,7 @@ require Genome::Utility::Text;
 
 class Genome::ProcessingProfile {
     is => 'Genome::Searchable',
-    table_name => 'PROCESSING_PROFILE',
+    table_name => 'model.processing_profile',
     is_abstract => 1,
     attributes_have => [
         is_param => { is => 'Boolean', is_optional => 1 },

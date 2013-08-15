@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 class Genome::SoftwareResult::Metric {
-    table_name => 'SOFTWARE_RESULT_METRIC',
+    table_name => 'result.metric',
     type_name => 'software result metric',
     id_by => [
         metric_name => {

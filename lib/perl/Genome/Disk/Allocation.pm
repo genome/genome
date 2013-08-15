@@ -15,7 +15,7 @@ our $TESTING_DISK_ALLOCATION = 0;
 
 class Genome::Disk::Allocation {
     is => 'Genome::Notable',
-    table_name => 'GENOME_DISK_ALLOCATION',
+    table_name => 'disk.allocation',
     id_by => [
         id => {
             is => 'Text',

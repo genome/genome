@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::ProjectPart {
     is => 'Genome::Notable',
-    table_name => 'GENOME_PROJECT_PART',
+    table_name => 'subject.project_part',
     id_by => [
         id => {
             is => 'Text',

@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::ModelGroupBridge {
-    table_name => 'GENOME_MODEL_GROUP',
+    table_name => 'model.model_group_bridge',
     er_role => 'bridge',
     type_name => 'genome model group bridge',
     id_by => [

@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::ProcessingProfile::Param {
-    table_name => 'PROCESSING_PROFILE_PARAM',
+    table_name => 'model.processing_profile_param',
     type_name => 'processing profile param',
     id_by => [
         processing_profile_id => {

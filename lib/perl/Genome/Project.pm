@@ -7,7 +7,7 @@ use Class::ISA;
 
 class Genome::Project {
     is => [ "Genome::Notable", "Genome::Searchable" ],
-    table_name => 'GENOME_PROJECT',
+    table_name => 'subject.project',
     id_by => [
         id => {
             is => 'Text',

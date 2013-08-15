@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::ModelGroup {
     is => 'Genome::Searchable',
-    table_name => 'MODEL_GROUP',
+    table_name => 'model.model_group',
     id_by => [
         id => {
             is => 'Text',

@@ -7,7 +7,7 @@ class Genome::Config::Set {
     is => 'Genome::Utility::ObjectWithTimestamps',
     id_generator => '-uuid',
     data_source => 'Genome::DataSource::GMSchema',
-    table_name => 'GENOME_CONFIG_SET',
+    table_name => 'config.set',
     id_by => [
         id => {
             is => 'Text',

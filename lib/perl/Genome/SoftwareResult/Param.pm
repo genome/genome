@@ -4,7 +4,7 @@ use warnings;
 use Genome;
 
 class Genome::SoftwareResult::Param {
-    table_name => 'SOFTWARE_RESULT_PARAM',
+    table_name => 'result.param',
     id_by => [
         software_result => {
             is => 'Genome::SoftwareResult',

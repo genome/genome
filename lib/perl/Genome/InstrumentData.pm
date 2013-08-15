@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::InstrumentData {
     is => 'Genome::Notable',
-    table_name => 'INSTRUMENT_DATA',
+    table_name => 'instrument.data',
     is_abstract => 1,
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     attributes_have => [

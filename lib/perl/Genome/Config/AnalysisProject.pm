@@ -9,7 +9,7 @@ class Genome::Config::AnalysisProject {
     is => 'Genome::Utility::ObjectWithTimestamps',
     id_generator => '-uuid',
     data_source => 'Genome::DataSource::GMSchema',
-    table_name => 'GENOME_CONFIG_ANALYSIS_PROJECT',
+    table_name => 'config.analysis_project',
     id_by => [
         id => {
             is => 'Text',

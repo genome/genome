@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::SoftwareResult::User {
-    table_name => 'SOFTWARE_RESULT_USER',
+    table_name => 'result.user',
     id_by => [
         id => {
             is => 'NUMBER',

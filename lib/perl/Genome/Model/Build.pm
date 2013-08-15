@@ -20,7 +20,7 @@ use Date::Manip;
 class Genome::Model::Build {
     is => ['Genome::Notable','Genome::Searchable'],
     type_name => 'genome model build',
-    table_name => 'GENOME_MODEL_BUILD',
+    table_name => 'model.build',
     is_abstract => 1,
     subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',

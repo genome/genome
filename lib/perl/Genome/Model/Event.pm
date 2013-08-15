@@ -8,7 +8,7 @@ use YAML;
 use Genome;
 class Genome::Model::Event {
     is => 'Genome::Model::Command::BaseDeprecated',
-    table_name => 'GENOME_MODEL_EVENT',
+    table_name => 'model.event',
     is_abstract => 1,
     first_sub_classification_method_name => '_resolve_subclass_name',
     sub_classification_method_name => '_resolve_subclass_name',
