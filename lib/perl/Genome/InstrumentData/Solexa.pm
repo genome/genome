@@ -1176,6 +1176,9 @@ sub __errors__ {
     elsif (defined($self->lane)) {
         $expected = $self->lane;
     }
+    else {
+        $expected = '';
+    }
     my $subset_name = $self->subset_name;
     $subset_name    = '' unless (defined $subset_name);
     if ($subset_name ne $expected) {
