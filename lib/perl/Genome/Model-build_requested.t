@@ -83,7 +83,7 @@ sub count_notes {
    my $count = 0;
    for my $n (@{$args{notes}}) {
         if ($n->header_text eq $args{header_text}
-            && $n->body_text eq $args{body_text}
+            && index($n->body_text, $args{body_text}) >= 0
         ) {
             $count++;
         } else {
