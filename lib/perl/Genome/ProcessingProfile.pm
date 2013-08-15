@@ -17,6 +17,7 @@ class Genome::ProcessingProfile {
     ],
     subclass_description_preprocessor => 'Genome::ProcessingProfile::_expand_param_properties',
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
         id => { is => 'Number', len => 32 },
     ],

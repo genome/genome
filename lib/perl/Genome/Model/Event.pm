@@ -14,6 +14,7 @@ class Genome::Model::Event {
     sub_classification_method_name => '_resolve_subclass_name',
     subclass_description_preprocessor => 'Genome::Model::Event::_preprocess_subclass_description',
     type_name => 'genome model event',
+    id_generator => '-uuid',
     id_by => [
         genome_model_event_id => { is => 'Number' },
     ],

@@ -235,6 +235,7 @@ class Genome::Model::Build {
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub __display_name__ {

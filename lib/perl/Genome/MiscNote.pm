@@ -7,6 +7,7 @@ use Genome;
 class Genome::MiscNote {
     type_name => 'misc note',
     table_name => 'subject.misc_note',
+    id_generator => '-uuid',
     id_by => [
         id => { is => 'Number' },
     ],

@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::SoftwareResult::User {
     table_name => 'result.user',
+    id_generator => '-uuid',
     id_by => [
         id => {
             is => 'NUMBER',

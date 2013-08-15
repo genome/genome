@@ -7,6 +7,7 @@ use Genome;
 class Genome::Library {
     is => [ "Genome::Notable", "Genome::Searchable" ],
     table_name => 'instrument.fragment_library',
+    id_generator => '-uuid',
     id_by => [
         library_id => {
             is => 'Number',

@@ -39,6 +39,7 @@ class Genome::Model {
         },
     ],
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
         genome_model_id => {
             # TODO: change to just "id"

@@ -17,6 +17,7 @@ class Genome::InstrumentData {
         },
     ],
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
         id => {
             is => 'Text',

@@ -21,6 +21,7 @@ class Genome::SoftwareResult {
     table_name => 'result.software_result',
     subclass_description_preprocessor => 'Genome::SoftwareResult::_expand_param_and_input_properties',
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
         id => { is => 'Number', len => 20 },
     ],
