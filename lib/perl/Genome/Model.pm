@@ -99,6 +99,12 @@ class Genome::Model {
             is => 'Timestamp',
             doc => 'the time at which the model was defined',
         },
+        auto_build => {
+            is => 'Boolean',
+            doc => 'build automatically when input models rebuild',
+            # this is similar to auto_build_alignments, though that flag works on 
+            # new instrument data instead of input models
+        },
         build_requested => {
             # TODO: this has limited tracking as to who/why the build was requested
             # Is it better as a Note than a column since it is TGI specific?
@@ -764,6 +770,30 @@ sub real_input_properties {
 # (eg, models that have this model as an input)
 sub _trigger_downstream_builds {
     my ($self, $build) = @_;
+    
+    my @downstream_models = $self->downstream_models;
+    for my $next_model (@downstream_models) {
+        my $latest_build = $next_model->latest_build;
+        if (my @found = $latest_build->input_associations(value_id => $build->id)) {
+            $self->status_message("Downstream model has build " . $latest_build->__display_name__ . ", which already uses this build.");
+            next;  
+        }
+        
+        unless ($next_model->can("auto_build")) {
+            $self->status_message("Downstream model " . $next_model->__display_name__ . " is has no auto-build method!  New builds should be started manually as needed.");
+            next;
+        }
+
+
+        unless ($next_model->auto_build) {
+            $self->status_message("Downstream model " . $next_model->__display_name__ . " is not set to auto-build.  New builds should be started manually as needed.");
+            next;
+        }
+
+        $self->status_message("Requesting rebuild of subsequent model " . $next_model->__display_name__ . ".");
+        $next_model->build_requested(1, 'auto build after completion of ' . $build->__display_name__); 
+    }
+
     return 1;
 }
 
