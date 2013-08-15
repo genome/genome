@@ -222,6 +222,7 @@ $Genome::Command::OPTS_SPEC = [
         'lab=s',
         [
           'Ding',
+          'Informatics',
           'Maher',
           'Mardis-Wilson',
           'Mitreva',
@@ -8281,6 +8282,7 @@ $Genome::Command::OPTS_SPEC = [
         'lab=s',
         [
           'Ding',
+          'Informatics',
           'Maher',
           'Mardis-Wilson',
           'Mitreva',
