@@ -104,6 +104,18 @@ class Genome::Model::Build {
             reverse_as => 'build',
             doc => 'Links between a build and its input values, including the specification of which input the value satisfies.'
         },
+        downstream_build_associations => {
+            is => 'Genome::Model::Build::Input',
+            reverse_as => '_build_value',
+            doc => 'links to models which use this model as an input', 
+        },
+        downstream_builds => {
+            is => 'Genome::Model::Build',
+            via => 'downstream_build_associations',
+            to => 'build',
+            doc => 'models which use this model as an input',
+        },
+
         instrument_data  => {
             is => 'Genome::InstrumentData',
             via => 'input_associations',
@@ -210,6 +222,8 @@ class Genome::Model::Build {
         master_event_status     => { via => 'the_master_event', to => 'event_status' },
 
         # we now use model/build inputs instead of links
+        # when these can be removed do
+        # see "downstream_builds" 
         from_build_links => { is => 'Genome::Model::Build::Link', reverse_as => 'to_build',
                               doc => 'bridge table entries where this is the \"to\" build(used to retrieve builds this build is \"from\")' },
         from_builds      => { is => 'Genome::Model::Build', via => 'from_build_links', to => 'from_build',

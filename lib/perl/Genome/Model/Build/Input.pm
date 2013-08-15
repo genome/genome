@@ -58,6 +58,10 @@ class Genome::Model::Build::Input {
         },
     ],
     has_optional => [
+        _build_value => {
+            is => 'Genome::Model::Build',
+            id_by => 'value_id',
+        },
         filter_desc => {
             is => 'Text',
             valid_values => [ "forward-only", "reverse-only", undef ],
