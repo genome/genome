@@ -93,7 +93,7 @@ for my $instrument_data ( @instrument_data ) {
 }
 is_deeply(
     [$sx_processor->final_sx_result_params],
-    \@expected_final_sx_result_params,
+    [sort {$a->{instrument_data_id} cmp $b->{instrument_data_id}} @expected_final_sx_result_params],
     'final sx result params',
 );
 
@@ -127,7 +127,7 @@ for my $instrument_data ( @instrument_data ) {
 }
 is_deeply(
     [$sx_processor->final_sx_result_params],
-    \@expected_final_sx_result_params,
+    [sort {$a->{instrument_data_id} cmp $b->{instrument_data_id}} @expected_final_sx_result_params],
     'final sx result params',
 );
 
@@ -227,7 +227,8 @@ for ( my $i = 0; $i < @instrument_data; $i++ ) {
 }
 is_deeply(
     [$sx_processor->final_sx_result_params],
-    \@expected_final_sx_result_params,
+    [sort { (ref($a->{instrument_data_id})?$a->{instrument_data_id}->[0]:$a->{instrument_data_id}) cmp 
+            (ref($b->{instrument_data_id})?$b->{instrument_data_id}->[0]:$b->{instrument_data_id})} @expected_final_sx_result_params],
     'final sx result params',
 );
 

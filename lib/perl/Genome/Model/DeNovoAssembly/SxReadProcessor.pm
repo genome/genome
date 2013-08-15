@@ -261,7 +261,7 @@ sub final_sx_result_params {
         my $sx_result_params = $self->merged_sx_result_params_for_instrument_data($instrument_data);
         $sx_result_params = $self->sx_result_params_for_instrument_data($instrument_data) if not $sx_result_params;
         my $id = ( ref $sx_result_params->{instrument_data_id} ) 
-        ? join(' ', sort { $a <=> $b } @{$sx_result_params->{instrument_data_id}})
+        ? join(' ', sort { $a cmp $b } @{$sx_result_params->{instrument_data_id}})
         : $sx_result_params->{instrument_data_id};
         $final_sx_result_params{$id} = $sx_result_params;
     }
