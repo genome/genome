@@ -12,7 +12,7 @@ class Genome::Disk::Command::Allocation::UnarchiveBase {
     has => {
         lab => {
             is => 'Text',
-            valid_values => [qw(Ding Maher Mardis-Wilson Mitreva Warren Weinstock)],
+            valid_values => [qw(Ding Informatics Maher Mardis-Wilson Mitreva Warren Weinstock)],
             doc => 'The lab which requests the data be unarchived.',
         },
         requestor => {
