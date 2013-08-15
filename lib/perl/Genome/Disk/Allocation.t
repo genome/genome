@@ -12,7 +12,7 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 use File::Temp 'tempdir';
-use File::Slurp;
+use File::Slurp qw(read_file);
 use Filesys::Df qw();
 
 $| = 1;
