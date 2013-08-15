@@ -7,7 +7,7 @@ use Genome;
 use File::Basename;
 
 class Genome::Model::SomaticValidation::Command::SubmissionSummary {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "List a summary of the merged alignment BAMs for the provided builds and a file suitable for submitting the bam list.",
     has => [
         sample_mapping_file => {
@@ -21,37 +21,13 @@ class Genome::Model::SomaticValidation::Command::SubmissionSummary {
         md5_list_file => {
             is=> 'String',
             doc => 'this will generate a list of bam md5 file names, newline separated',
-        }
-    ],
-    has_optional => [
-        builds => {
-            is => 'Genome::Model::Build::SomaticValidation',
+        },
+        models => {
+            is => 'Genome::Model::SomaticValidation',
             is_many => 1,
             shell_args_position => 1,
-            doc => 'List of builds to use if searching on a list of builds'
+            doc => 'List of models to use'
         },
-        flow_cell_id => {
-            is => 'String',
-            shell_args_position => 2,
-            doc => 'Flow Cell ID to use if searching on a flowcell'
-        },
-        flow_cell_subset_name => {
-            is => 'String',
-            shell_args_position => 3,
-            doc=> 'Flow cell subset name to use if searching on a flow cell'
-        },
-        reference_sequence_name => {
-            is=>'String',
-            doc=>'Only include models with this reference sequence name',
-        },
-        region_of_interest_set_name => {
-            is=>'String',
-            doc=>'Only include models with this region of interest set name',
-        },
-        exclude => {
-            is=>'String',
-            doc=>'Don\'t include models that contain this string in the name (ie. "Pooled_Library")',
-        }
     ],
 };
 
@@ -64,59 +40,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    if ($self->flow_cell_id && $self->builds) {
-        $self->error_message("Ambiguous input; you must provide either a flow cell id or a set of builds -- not both. ");
-        return;
-    }
-
-    if ($self->flow_cell_id) {
-        my @instr_data_params = (flow_cell_id=>$self->flow_cell_id);
-        push @instr_data_params, (subset_name => $self->flow_cell_subset_name) if $self->flow_cell_subset_name;
-        $self->status_message(sprintf("Searching for instrument data for %s/%s...  ", $self->flow_cell_id, defined $self->flow_cell_subset_name ? $self->flow_cell_subset_name : "all" ));
-        my @instr_data = Genome::InstrumentData::Solexa->get(@instr_data_params);
-        $self->status_message(sprintf("Found %s instrument data.\n", scalar @instr_data));
-
-        my %model_ids = map {$_->model_id, 1} map {Genome::Model::Input->get(name=>'instrument_data', value_id=>$_->id)} @instr_data;
-
-        my @raw_models = Genome::Model->get(id=>[keys %model_ids]);
-        my @models;
-
-        # filter out Lane QC models, Pooled_Library models, and only the ROI/refseq requested if there was one
-        for (@raw_models) {
-            push @models, $_ unless (($_->subject_name =~ m/^Pooled_Library/) ||
-                                     ($_->processing_profile->append_event_steps && $_->processing_profile->append_event_steps =~ m/LaneQc/) ||
-                                     ($self->region_of_interest_set_name && $_->region_of_interest_set_name && $_->region_of_interest_set_name ne $self->region_of_interest_set_name) ||
-                                     ($self->reference_sequence_name && $_->reference_sequence_build->name ne $self->reference_sequence_name));
-
-        }
-
-        $self->status_message(sprintf("Found %s models", scalar @models));
-
-        my @builds;
-        for (@models) {
-            my ($latest_build) = sort {$b->id <=> $a->id} grep {$_->status eq 'Succeeded'} $_->builds;
-            push @builds, $latest_build if $latest_build;
-        }
-
-        $self->builds([@builds]);
-
-    } elsif ($self->builds) {
-        $self->status_message("Using user-supplied set of builds...");
-
-    } else {
-        $self->error_message("You must provide either a flow cell id or a set of builds.  ");
-        return;
-    }
-
-    my @filtered_builds;
-    for my $b ($self->builds) {
-        if ($b->status ne "Succeeded") {
-            warn sprintf("Filtering out build %s (model %s) because its status is %s, not succeeded.", $b->id, $b->model->name, $b->status);
-        } else {
-            push @filtered_builds, $b;
-        }
-    }
-    $self->builds([@filtered_builds]);
+    my @builds = map{$_->last_succeeded_build} $self->models;
 
     my $samp_map = IO::File->new(">".$self->sample_mapping_file);
     unless ($samp_map) {
@@ -134,13 +58,6 @@ sub execute {
         $self->error_message("Failed to open md5 list file for writing ". $self->md5_list_file);
         return;
     }
-
-
-    my @builds = grep {$_ == $_->model->last_succeeded_build} $self->builds;
-
-    # If we have models to exclude by name, do so now...in 5...4...3...2...1
-    my $exclude = $self->exclude;
-    @builds = grep {not $_->model->name =~ /$exclude/} @builds if $exclude;
 
     for my $build (@builds) {
         my $roi_name = $build->model->region_of_interest_set_name ? $build->model->region_of_interest_set_name : 'N/A';
