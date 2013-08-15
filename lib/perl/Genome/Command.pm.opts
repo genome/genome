@@ -6917,8 +6917,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'max-instrument-data-to-process=s',
         undef,
-        'newest-first!',
-        undef,
         'help!',
         undef
       ],
