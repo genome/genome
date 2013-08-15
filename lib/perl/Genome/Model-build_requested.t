@@ -80,12 +80,14 @@ sub count_notes {
        @_, { notes => 1, header_text => 1, body_text => 1 },
    );
 
-   my $count;
+   my $count = 0;
    for my $n (@{$args{notes}}) {
         if ($n->header_text eq $args{header_text}
             && $n->body_text eq $args{body_text}
         ) {
             $count++;
+        } else {
+            diag $n->header_text, "\n", $n->body_text, "\n";
         }
    }
 
