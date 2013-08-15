@@ -10,7 +10,7 @@ require File::Basename;
 require File::Copy;
 
 class Genome::Site::TGI::Measurable {
-    table_name => 'GSC.PHENOTYPE_MEASURABLE',
+    table_name => 'PHENOTYPE_MEASURABLE',
     is_abstract => 1,
     subclassify_by => '_subclass_by_subject_type',
     id_by => [
@@ -51,7 +51,7 @@ class Genome::Site::TGI::Measurable {
             #is => 'Text', via => 'disk_allocation', to => 'absolute_path', },
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub __display_name__ {

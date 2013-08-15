@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::SequenceItem {
-    table_name => 'GSC.SEQUENCE_Item',
+    table_name => 'SEQUENCE_Item',
     id_by => [
         seq_id => { 
             is => 'Number', 
@@ -27,7 +27,7 @@ class Genome::Site::TGI::SequenceItem {
             column_name => 'seq_length',
         },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 1;

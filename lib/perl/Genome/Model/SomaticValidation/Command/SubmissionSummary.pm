@@ -64,8 +64,6 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    die "SomaticValidation models don't create md5 checksums. This tool cannot yet be run.\n";
-
     if ($self->flow_cell_id && $self->builds) {
         $self->error_message("Ambiguous input; you must provide either a flow cell id or a set of builds -- not both. ");
         return;
@@ -158,8 +156,11 @@ sub execute {
 
     my @bams = map {$_->tumor_bam} @builds;
     push @bams, grep { defined $_ } map {$_->normal_bam} @builds;
-    print $bam_list join ("\n", @bams);
-    print $md5_list join ("\n", map {$_.".md5"} @bams);
+    print $bam_list join ("\n", @bams),"\n";
+    print $md5_list join ("\n", map {$_.".md5"} @bams), "\n";
+    for my $md5 (map {$_.".md5"} @bams) {
+        print STDERR "$md5 doesn't exist\n" if ! -e $md5;
+    }
 
     $samp_map->close;
     $bam_list->close;

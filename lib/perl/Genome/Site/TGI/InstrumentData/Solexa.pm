@@ -127,36 +127,36 @@ class Genome::Site::TGI::InstrumentData::Solexa {
 
                 i.index_sequence
 
-                --from GSC.solexa_lane_summary s_rev
+                --from solexa_lane_summary s_rev
                 --join read_illumina r2 on r2.sls_seq_id = s_rev.seq_id --and r1.read_number = 1
-                from GSC.index_illumina i
-                    join GSC.flow_cell_illumina fc on fc.flow_cell_id = i.flow_cell_id
-                    join GSC.read_illumina r2
+                from index_illumina i
+                    join flow_cell_illumina fc on fc.flow_cell_id = i.flow_cell_id
+                    join read_illumina r2
                         on i.seq_id = r2.ii_seq_id
                         and (
                             (fc.run_type = 'Paired End' and r2.read_number = 2)
                             or
                             (fc.run_type = 'Fragment' and r2.read_number = 1)
                         )
-                    left join GSC.seq_fs_path archive2 on archive2.seq_id = i.seq_id
+                    left join seq_fs_path archive2 on archive2.seq_id = i.seq_id
                         and archive2.data_type = 'illumina fastq tgz'
-                    left join GSC.seq_fs_path gerald_bam on gerald_bam.seq_id = i.seq_id
+                    left join seq_fs_path gerald_bam on gerald_bam.seq_id = i.seq_id
                         and gerald_bam.data_type = 'gerald bam'
-                    left join GSC.seq_fs_path collect_gc_bias on collect_gc_bias.seq_id = i.seq_id
+                    left join seq_fs_path collect_gc_bias on collect_gc_bias.seq_id = i.seq_id
                         and collect_gc_bias.data_type = 'collect gc bias'
-                    left join GSC.seq_fs_path fastqc on fastqc.seq_id = i.seq_id
+                    left join seq_fs_path fastqc on fastqc.seq_id = i.seq_id
                         and fastqc.data_type = 'fastqc'
-                    left join GSC.read_illumina r1
+                    left join read_illumina r1
                         on run_type = 'Paired End'
                         and r1.ii_seq_id = i.seq_id
                         and r1.read_number = 1
-                    join GSC.library_summary lib on lib.library_id = i.library_id
-                    join GSC.organism_sample sam on sam.organism_sample_id = lib.sample_id
+                    join library_summary lib on lib.library_id = i.library_id
+                    join organism_sample sam on sam.organism_sample_id = lib.sample_id
             /*
-                    left join GSC.solexa_lane_summary s_fwd on s_fwd.sral_id = s_rev.sral_id and s_fwd.run_type = 'Paired End Read 1'
-                    left join GSC.seq_fs_path archive on archive.seq_id = s_rev.seq_id
+                    left join solexa_lane_summary s_fwd on s_fwd.sral_id = s_rev.sral_id and s_fwd.run_type = 'Paired End Read 1'
+                    left join seq_fs_path archive on archive.seq_id = s_rev.seq_id
                         and archive.data_type = 'illumina fastq tgz'
-                    left join GSC.seq_fs_path adaptor on adaptor.seq_id = s_rev.seq_id
+                    left join seq_fs_path adaptor on adaptor.seq_id = s_rev.seq_id
                         and adaptor.data_type = 'adaptor sequence file'
                     where s_rev.run_type in ('Standard','Paired End Read 2')
                         and s_rev.flow_cell_id = '617ER'

@@ -64,8 +64,8 @@ class Genome::Site::TGI::Synchronize::Classes::RegionIndex454 {
                 ) subset_name,
                 --constants
                 '454' sequencing_platform
-            from GSC.region_index_454 ri454
-            join GSC.run_region_454 rr454 on rr454.region_id = ri454.region_id
+            from region_index_454 ri454
+            join run_region_454 rr454 on rr454.region_id = ri454.region_id
         ) region_index_454
 SQL
     ,
@@ -84,7 +84,7 @@ SQL
         total_reads => { is => 'Text', },
         total_bases_read => { is => 'Text', },
     ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 sub properties_to_copy {# 9

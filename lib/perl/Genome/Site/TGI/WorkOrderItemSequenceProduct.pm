@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::WorkOrderItemSequenceProduct {
-    table_name => 'GSC.WOI_SEQUENCE_PRODUCT',
+    table_name => 'WOI_SEQUENCE_PRODUCT',
     id_by => [
         work_order_item => {
             is => 'Genome::WorkOrderItem',
@@ -23,8 +23,7 @@ class Genome::Site::TGI::WorkOrderItemSequenceProduct {
             id_by => 'seq_id',
         },
     ],
-    schema_name => 'GMSchema',
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Dwrac',
 };
 
 1;

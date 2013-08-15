@@ -68,11 +68,6 @@ sub _resolve_boolexpr {
         return;
     }
 
-    unless ( $self->model_id =~ /^$RE{num}{int}$/ ) {
-        $self->error_message( sprintf('Model id given (%s) is not an integer', $self->model_id) );
-        return;
-    }
-
     unless ( $self->model ) {
         $self->error_message( sprintf('Can\'t get model for id (%s) ', $self->model_id) );
         return;

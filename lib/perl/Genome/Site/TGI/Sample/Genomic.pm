@@ -7,10 +7,10 @@ use Genome;
 class Genome::Site::TGI::Sample::Genomic {
     table_name => "
         (select dna.*,o.taxon_id 
-         from dna\@oltp
+         from dna
          left join (
-	            dna_resource\@oltp dr 
-	            join entity_attribute_value\@oltp eav
+	            dna_resource dr
+	            join entity_attribute_value eav
 		    on eav.entity_id = dr.dr_id
 		        and eav.type_name = 'dna'
 		        and eav.attribute_name = 'org id'	
@@ -28,5 +28,5 @@ class Genome::Site::TGI::Sample::Genomic {
             taxon                       => { is => 'Genome::Site::TGI::Taxon', id_by => 'taxon_id' },
             species_name                => { via => 'taxon' },
         ],
-    data_source => 'Genome::DataSource::GMSchema',
+    data_source => 'Genome::DataSource::Oltp',
 };
