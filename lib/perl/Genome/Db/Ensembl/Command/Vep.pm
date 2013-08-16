@@ -465,7 +465,7 @@ sub execute {
         Genome::Sys->create_directory($temp_plugins_dir);
         Genome::Sys->create_directory($temp_plugins_config_dir);
         foreach my $plugin ($self->plugins) {
-            my @plugin_fields = split /,/, $plugin;
+            my @plugin_fields = split /\@/, $plugin;
             my $plugin_name = $plugin_fields[0];
             my $plugin_source_file = "$plugins_source_dir/$plugin_name.pm";
             if (-e $plugin_source_file){
@@ -482,6 +482,7 @@ sub execute {
             }
             $plugin =~ s|PLUGIN_DIR|$temp_plugin_config_dir|;
             $plugin_args .= " --plugin $plugin";
+            $plugin_args =~ s/\@/,/g;
         }
     }
 
