@@ -152,7 +152,7 @@ class Genome::Db::Ensembl::Command::Vep {
             is => 'String',
             is_many => 1,
             is_optional => 1,
-            doc => 'Plugins to use.  These should be formated: PluginName,arg1,arg2,...  If you need to reference the plugin config directory in any of the args, use the placeholder PLUGIN_DIR.  For example, the Condel plugin should be called as follows: Condel,PLUGIN_DIR,b,2',
+            doc => 'Plugins to use.  These should be formated: PluginName@arg1@arg2,...  If you need to reference the plugin config directory in any of the args, use the placeholder PLUGIN_DIR.  For example, the Condel plugin should be called as follows: Condel@PLUGIN_DIR@b@2',
         },
         plugins_version => {
             is => 'String',
