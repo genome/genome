@@ -348,6 +348,16 @@ sub _workflow_for_stage {
         );
         my $first_event_log_resource = $self->_resolve_log_resource($first_event);
 
+        if (!$first_event_log_resource) {
+            warn "no first_event_log_resource for first event " . $first_event->__display_name__;
+            $first_event_log_resource = '';
+        }
+
+        if (!defined($first_event->bsub_rusage)) {
+            print Data::Dumper::Dumper($first_event);
+            Carp::confess();
+        }
+
         $first_operation->operation_type->lsf_resource($first_event->bsub_rusage . $first_event_log_resource);
         $first_operation->operation_type->lsf_queue($lsf_queue);
         $first_operation->operation_type->lsf_project($lsf_project);
