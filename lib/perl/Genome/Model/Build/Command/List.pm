@@ -12,6 +12,12 @@ class Genome::Model::Build::Command::List {
             is_constant => 1, 
             value => 'Genome::Model::Build' 
         },
+        order_by => {
+            default_value => 'date_scheduled',
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Output rows are listed sorted by these named columns in increasing order.',
+        },
         show => { default_value => 'id,model_id,model_name,run_by,status,date_scheduled,date_completed,software_revision,data_directory' },
     ],
 };
