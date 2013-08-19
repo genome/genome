@@ -31,6 +31,7 @@ our %STATUS_COLORS = (
     scheduled => "white",
 
     running => "cyan",
+    'running*' => 'cyan',
 
     done      => "green",
     succeeded => "green",
