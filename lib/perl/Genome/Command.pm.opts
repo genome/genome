@@ -460,6 +460,15 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>cosmic',
     [
+      '>install',
+      [
+        'repo=s',
+        'files',
+        'version=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>import',
       [
         'result-version=s',
@@ -3657,6 +3666,8 @@ $Genome::Command::OPTS_SPEC = [
       '>metadata',
       [
         'refdata-only!',
+        undef,
+        'verbose!',
         undef,
         'output-path=s',
         'files',
