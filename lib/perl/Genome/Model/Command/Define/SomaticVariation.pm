@@ -119,7 +119,7 @@ sub execute {
     }
 
     #sometimes user's mistake
-    if ($self->normal_model->id == $self->tumor_model->id) {
+    if ($self->normal_model->id eq $self->tumor_model->id) {
         $self->error_message("It is impossible for tumor and normal model to get same id : " . $self->tumor_model->id);
         return;
     }
