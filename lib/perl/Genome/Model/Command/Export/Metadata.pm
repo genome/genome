@@ -149,7 +149,6 @@ sub execute {
         run_by => "genome"
     );
 
-
     my $depth = 0;
     for my $cls (sort keys %queue) {
         $out_fh->print("# $cls\n"); 
@@ -383,6 +382,12 @@ sub add_to_dump_queue {
 
         if ($obj->isa("Genome::InstrumentData")) {
             $parent = $obj->library;
+            if (my $target_region_set_name = $obj->target_region_set_name) {
+                my @feature_lists = Genome::FeatureList->get(name => $target_region_set_name);
+                for my $f (@feature_lists) {
+                    $self->add_to_dump_queue($f, $queue, $exclude, $sanitize_map);
+                }
+            }
         }
         elsif ($obj->isa("Genome::Library")) {
             $parent = $obj->sample;

@@ -7,6 +7,7 @@
 ## FOUND Genome::Disk::Assignment 169	14365: 169 14365
 ## FOUND Genome::Disk::Assignment 172	1403: 172 1403
 ## FOUND Genome::Disk::Assignment 172	9544: 172 9544
+## FOUND Genome::FeatureList 7BF768EF51FB11E1A0743039993C62A0: 11111001 capture chip set (7BF768EF51FB11E1A0743039993C62A0)
 ## FOUND Genome::Individual 2889953340: H_NJ-HCC1395 (TST1 2889953340)
 ## FOUND Genome::InstrumentData::Imported 2891080776: infinium genotype file 2891080776 ([unknown])
 ## FOUND Genome::InstrumentData::Imported 2891080777: infinium genotype file 2891080777 ([unknown])
