@@ -338,9 +338,7 @@ sub _resolve_workflow_for_build {
         );
 
         my $logdir = $build->log_directory;
-        if ($logdir =~ /^\/gscmnt/) {
-            $opts{log_dir} = $logdir;
-        }
+        $opts{log_dir} = $logdir;
 
         my $workflow = Workflow::Model->create(%opts);
 
