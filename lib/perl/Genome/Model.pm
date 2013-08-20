@@ -11,14 +11,6 @@ class Genome::Model {
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     table_name => 'GENOME_MODEL',
     is_abstract => 1,
-    id_by => [
-        genome_model_id => { 
-            # TODO: change to just "id"
-            # And make the data type Text in preparation for UUIDs
-            is => 'Text', 
-            doc => 'the unique immutable system identifier for a model',
-        },
-    ],
     attributes_have => [
         is_param => {
             is => 'Boolean',
@@ -106,6 +98,12 @@ class Genome::Model {
             # Switching from timestamp in Oracle simplifies querying.  Not sure about postgres.
             is => 'Timestamp',
             doc => 'the time at which the model was defined',
+        },
+        auto_build => {
+            is => 'Boolean',
+            doc => 'build automatically when input models rebuild',
+            # this is similar to auto_build_alignments, though that flag works on 
+            # new instrument data instead of input models
         },
         build_requested => {
             # TODO: this has limited tracking as to who/why the build was requested
@@ -340,9 +338,7 @@ sub _resolve_workflow_for_build {
         );
 
         my $logdir = $build->log_directory;
-        if ($logdir =~ /^\/gscmnt/) {
-            $opts{log_dir} = $logdir;
-        }
+        $opts{log_dir} = $logdir;
 
         my $workflow = Workflow::Model->create(%opts);
 
@@ -772,6 +768,30 @@ sub real_input_properties {
 # (eg, models that have this model as an input)
 sub _trigger_downstream_builds {
     my ($self, $build) = @_;
+    
+    my @downstream_models = $self->downstream_models;
+    for my $next_model (@downstream_models) {
+        my $latest_build = $next_model->latest_build;
+        if (my @found = $latest_build->input_associations(value_id => $build->id)) {
+            $self->status_message("Downstream model has build " . $latest_build->__display_name__ . ", which already uses this build.");
+            next;  
+        }
+        
+        unless ($next_model->can("auto_build")) {
+            $self->status_message("Downstream model " . $next_model->__display_name__ . " is has no auto-build method!  New builds should be started manually as needed.");
+            next;
+        }
+
+
+        unless ($next_model->auto_build) {
+            $self->status_message("Downstream model " . $next_model->__display_name__ . " is not set to auto-build.  New builds should be started manually as needed.");
+            next;
+        }
+
+        $self->status_message("Requesting rebuild of subsequent model " . $next_model->__display_name__ . ".");
+        $next_model->build_requested(1, 'auto build after completion of ' . $build->__display_name__); 
+    }
+
     return 1;
 }
 
