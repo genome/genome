@@ -16,7 +16,7 @@ class Genome::Db::Ensembl::Command::Vep {
     has => [
         version => {
             is => 'String',
-            doc => 'version of the Variant Effects Predictor to use',
+            doc => 'version of the Variant Effects Predictor to use. Note: Version 2.7 requires using annotation version 69_37n_v3 or greater',
             valid_values => [qw(2_2 2_5 2_7)],
             is_optional => 1,
             default_value => "2_2",
