@@ -28,10 +28,22 @@ class Genome::Model::Tools::Varscan::ConsensusVcfMatch {
         },
     ],
     has_optional_transient => [
-        stats => { is => 'Hash', default_value => {} },
-        target_indel_genotypes => { is => 'Hash',default_value => {}  },
-        target_indels => { is => 'Hash', default_value => {}  },
-        samples => { is => 'Hash' ,default_value => {} },
+        stats => {
+            is => 'Hash',
+            default_value => {}
+        },
+        target_indel_genotypes => {
+            is => 'Hash',
+            default_value => {}
+        },
+        target_indels => {
+            is => 'Hash',
+            default_value => {}
+        },
+        samples => {
+            is => 'Hash',
+            default_value => {}
+        },
     ],
 };
 
