@@ -64,8 +64,9 @@ Genome::Utility::Test::compare_ok(
 my @bam_source_users = $bam_source->users;
 ok(@bam_source_users, 'add users to bam source');
 is_deeply([map { $_->label } @bam_source_users], ['bam source', 'bam source'], 'bam source users haver correct label');
-my @users = sort { $a->id <=> $b->id } map { $_->user } @bam_source_users;
-is_deeply(\@users, [$base_recalibrator_result, $base_recalibrator_bam_result], 'bam source is used by base recal and base recal bam results');
+my @users = sort { $a->id cmp $b->id } map { $_->user } @bam_source_users;
+my @expected_users = sort { $a->id cmp $b->id } ($base_recalibrator_result, $base_recalibrator_bam_result);
+is_deeply(\@users, \@expected_users, 'bam source is used by base recal and base recal bam results');
 
 my $sr_user = $base_recalibrator_result->users;
 ok($sr_user, 'add user to base recalibrator result');
