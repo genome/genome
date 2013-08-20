@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use above "Genome";
 use Genome::Utility::Test;
-use Test::More skip_all => 'bypass until expected data is updated';
+use Test::More;
 
 my $id = 2891454740;
 my $model = Genome::Model->get($id);
