@@ -416,6 +416,7 @@ sub get_samples{
   }else{
     @samples = $individual->samples;
   }
+  @samples = sort { $a->name cmp $b->name } @samples;
   
   my $sample_count = scalar(@samples);
   $self->status_message("\nEXAMINE SAMPLES");
