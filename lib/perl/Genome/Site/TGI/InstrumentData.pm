@@ -83,7 +83,7 @@ EOS
     ],
     has_many_optional => [
         attributes => {
-            is => 'Genome::Site::TGI::MiscAttribute',
+            is => 'Genome::MiscAttribute',
             reverse_as => '_instrument_data',
         },
     ],
