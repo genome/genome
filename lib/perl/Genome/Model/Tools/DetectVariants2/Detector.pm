@@ -368,7 +368,7 @@ sub _generate_result {
 }
 
 sub _sort_detector_output {
-    my $self = shift;
+    my ($self, $skip) = @_;
 
     my @detector_files = glob($self->_temp_staging_directory."/*.hq");
 
@@ -384,6 +384,7 @@ sub _sort_detector_output {
         my $sort_cmd = Genome::Model::Tools::Bed::ChromSort->create(
             input => $detector_unsorted_output,
             output => $detector_file,
+            skip_lines => $skip,
         );
 
         unless ($sort_cmd->execute()) {
