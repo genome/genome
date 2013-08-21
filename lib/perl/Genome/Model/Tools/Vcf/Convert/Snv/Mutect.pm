@@ -68,8 +68,8 @@ sub parse_line {
     my $normal_ad = join(",",$entry{n_ref_count}, $entry{n_alt_count});
     my $tumor_ad = join(",", $entry{t_ref_count}, $entry{t_alt_count});
     # fraction of reads supporting alt
-    my $normal_fa = sprintf("%0.02f",$entry{n_alt_count} / $normal_dp);
-    my $tumor_fa = sprintf("%0.02f",$entry{t_alt_count} / $tumor_dp);
+    my $normal_fa = $normal_dp ? sprintf("%0.02f",$entry{n_alt_count} / $normal_dp) : 0;
+    my $tumor_fa = $tumor_dp ? sprintf("%0.02f",$entry{t_alt_count} / $tumor_dp) : 0;
     # somatic status
     my $normal_ss = ".";
     my $tumor_ss  = 2;
