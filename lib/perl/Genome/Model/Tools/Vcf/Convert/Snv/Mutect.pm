@@ -78,10 +78,10 @@ sub parse_line {
     my $dbsnp_id = ".";
     my $qual = "."; # Can also be $tumor_vaq
     my $filter = $entry{judgement} eq 'REJECT' ? 'REJECT' : 'PASS';
-    my $format = "GT:DP:AD:FA:SS:TLOD";
+    my $format = "GT:DP:AD:FA:SS:TLOD:FT";
     my $info = ".";
-    my $tumor_sample_string = join (":", ($tumor_gt, $tumor_dp, $tumor_ad, $tumor_fa, $tumor_ss, $entry{t_lod_fstar}));
-    my $normal_sample_string = join (":", ($normal_gt, $normal_dp, $normal_ad, $normal_fa, $normal_ss, "."));
+    my $tumor_sample_string = join (":", ($tumor_gt, $tumor_dp, $tumor_ad, $tumor_fa, $tumor_ss, $entry{t_lod_fstar}), $filter);
+    my $normal_sample_string = join (":", ($normal_gt, $normal_dp, $normal_ad, $normal_fa, $normal_ss, ".", $filter));
 
     my $vcf_line = join("\t", $entry{contig}, $entry{position}, $dbsnp_id, $ref, $alt, $qual, $filter, $info, $format, $normal_sample_string, $tumor_sample_string);
 
