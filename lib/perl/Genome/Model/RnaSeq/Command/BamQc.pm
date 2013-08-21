@@ -95,7 +95,6 @@ sub params_for_result {
         fastqc_version => $pp->fastqc_version || '0.10.0',
         samstat_version => $pp->samstat_version || Genome::Model::Tools::SamStat::Base->default_samstat_version,
         error_rate => $pp->calculate_error_rate || 0,
-        error_rate_pileup => $pp->use_error_rate_pileup || 0,
         read_length => 1,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
     );

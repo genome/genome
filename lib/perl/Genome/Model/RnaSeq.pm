@@ -96,6 +96,7 @@ class Genome::Model::RnaSeq {
         use_error_rate_pileup => {
             doc => 'A flag to calculate positional error rate during BamQc by iterating through the entire pileup',
             is_optional => 1,
+            is_deprecated => 1,
         },
         read_trimmer_name => {
             doc => 'trimmer algorithm/software used for this model',
