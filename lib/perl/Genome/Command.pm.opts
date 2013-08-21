@@ -19477,6 +19477,37 @@ $Genome::Command::OPTS_SPEC = [
             'help!',
             undef
           ],
+          '>mutect',
+          [
+            'aligned-reads-sample=s',
+            'files',
+            'input-file=s',
+            'files',
+            'output-file=s',
+            'files',
+            'reference-sequence-build-id=s',
+            undef,
+            'sequencing-center=s',
+            [
+              'WUSTL',
+              'BROAD'
+            ],
+            'vcf-version=s',
+            [
+              '4.1'
+            ],
+            'control-aligned-reads-sample=s',
+            'files',
+            'debug!',
+            undef,
+            'tcga-version=s',
+            [
+              '1.1',
+              '1.2'
+            ],
+            'help!',
+            undef
+          ],
           '>samtools',
           [
             'aligned-reads-sample=s',
@@ -28175,6 +28206,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'output=s',
         'files',
+        'skip-lines=s',
+        undef,
         'help!',
         undef
       ],
