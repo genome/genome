@@ -122,6 +122,7 @@ for my $file (@files) {
         filters => [
             '^\*\*\*\*\* GENOME_DEV_MODE.*',
             '^Subroutine Genome::SoftwareResult::_resolve_lock_name redefined.*',
+            "^WARNING: Ignoring ineffective commit because AutoCommit is on\n",
         ],
         name => "compared $file",
     );
