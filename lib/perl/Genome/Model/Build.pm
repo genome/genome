@@ -232,15 +232,6 @@ class Genome::Model::Build {
                               doc => 'bridge entries where this is the \"from\" build(used to retrieve builds builds this build is \"to\")' },
         to_builds        => { is => 'Genome::Model::Build', via => 'to_build_links', to => 'to_build',
                               doc => 'Genome builds this build contributes \"to\"' },
-        
-        
-        # this is part of a legacy database table into which variants were uploaded
-        # remove when possible
-        variants         => { 
-            is => 'Genome::Model::BuildVariant', 
-            reverse_as => 'build',
-            doc => 'variants linked to this build... currently only for Somatic builds but need this accessor for get_all_objects' 
-        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -1946,7 +1937,7 @@ sub get_all_objects {
             #}
     };
 
-    return map { $sorter->( $self->$_ ) } (qw(events inputs metrics from_build_links to_build_links variants));
+    return map { $sorter->( $self->$_ ) } (qw(events inputs metrics from_build_links to_build_links));
 }
 
 sub yaml_string {
