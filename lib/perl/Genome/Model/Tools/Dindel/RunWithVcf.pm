@@ -9,51 +9,49 @@ use Workflow::Simple;
 use File::Basename;
 class Genome::Model::Tools::Dindel::RunWithVcf {
     is => 'Command',
-    has => [
-    input_vcf=> {
-        is=>'String',
-        is_input=>1,
-    },
-    output_directory=>{
-        is=>'String',
-        is_input=>1,
-    },
-    model_id => {
-        is=>'String',
-        is_input=>1,
-    },
-    roi_bed=> {
-        is=>'String',
-        is_input=>1,
-        is_optional=>1,
-        doc=>"If you'd like to restrict dindel to variants in certain regions, supply a bed file",
-    },
-    include_dindel_sites=> {
-        is=>'String',
-        is_input=>1,
-        is_optional=>1,
-        default=>0,
-        doc=>"If you'd like dindel to use all gapped reads as potential indel sites, set this to 1",
-    },
-    num_windows_per_file=> {
-        is=>'Number',
-        is_input=>1,
-        is_optional=>1,
-        default=>'5000',
-        doc=>'attempt to control the parallelization of dindel by setting max chunk size.'
-    },
-    make_realigned_bam=> {
-        is=>'Number',
-        is_input=>1,
-        is_optional=>1,
-        default=>0,
-        doc=>'Set this to 1 if you wish to output a realigned bam for further counting or manual review',
-    },
+    has_input => [
+        input_vcf => {
+            is => 'Path',
+            doc => 'The Vcf file which has indels called in it',
+        },
+        ref_fasta => {
+            is => 'Path',
+            doc => 'The reference sequence that the bam_file is aligned to',
+        },
+        bam_file => {
+            is => 'Path',
+            doc => 'The BAM file which contains reads',
+        },
+        output_directory => {
+            is => 'Path',
+            doc => 'Where the output should be stored',
+        },
+    ],
+    has_optional_input => [
+        roi_bed => {
+            is => 'Path',
+            doc => "If you'd like to restrict dindel to variants in certain regions, supply a bed file",
+        },
+        include_dindel_sites => {
+            is => 'Boolean',
+            default => 0,
+            doc => "If you'd like dindel to use all gapped reads as potential indel sites, set this to 1",
+        },
+        num_windows_per_file => {
+            is => 'Number',
+            default => '5000',
+            doc => 'attempt to control the parallelization of dindel by setting max chunk size.'
+        },
+        make_realigned_bam => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'Set this to 1 if you wish to output a realigned bam for further counting or manual review',
+        },
     ],
 };
 
 sub help_brief {
-    'Dindel Pipeline'
+    'Run Dindel on a BAM file and have it realign to the indel sites called in the input-vcf.'
 }
 
 sub help_synopsis {
@@ -69,20 +67,14 @@ EOS
 
 sub execute {
     my $self = shift;
-    my $model = Genome::Model->get($self->model_id);
-    my $bam_file = $model->last_succeeded_build->whole_rmdup_bam_file();
-    my $ref_fasta = $model->reference_sequence_build->full_consensus_path("fa");
-    unless($bam_file) {
-        $self->error_message("Do you even have a succeeded build? There's no bam file! What did you do wrong this time?");
-        return 0;
-    }
+
     unless(-d $self->output_directory) {
         Genome::Sys->create_directory($self->output_directory);
     }
 
     $DB::single=1;
-    my $vcf_in_dindel_format = $self->convert_vcf_to_dindel_and_left_shift($self->output_directory, $ref_fasta, $self->input_vcf);
-    my ($dindel_var_file, $library_file) = $self->get_cigar_indels($self->output_directory, $ref_fasta, $bam_file);
+    my $vcf_in_dindel_format = $self->convert_vcf_to_dindel_and_left_shift($self->output_directory, $self->ref_fasta, $self->input_vcf);
+    my ($dindel_var_file, $library_file) = $self->get_cigar_indels($self->output_directory, $self->ref_fasta, $self->bam_file);
 #    my $vcf_in_dindel_format = "/gscmnt/gc2146/info/medseq/dindel/test_2368_ALS17_kid/dindel_formatted_vcf_input.left_shifted.variants.txt";
 #    my ($dindel_var_file, $library_file) = ("/gscmnt/gc2146/info/medseq/dindel/test_2368_ALS17_kid/cigar_generated_indels.variants.txt", "/gscmnt/gc2146/info/medseq/dindel/test_2368_ALS17_kid/cigar_generated_indels.libraries.txt");
     if($self->include_dindel_sites) {
@@ -92,11 +84,11 @@ sub execute {
         $vcf_in_dindel_format = $self->limit_callset($self->output_directory, $vcf_in_dindel_format, $self->roi_bed);
     }
     my @windows_files = $self->make_windows($self->output_directory, $vcf_in_dindel_format, $self->num_windows_per_file);
-    my $results_dir = $self->run_parallel_analysis($self->output_directory, $ref_fasta, $bam_file, $library_file, $self->make_realigned_bam,\@windows_files);
+    my $results_dir = $self->run_parallel_analysis($self->output_directory, $self->ref_fasta, $self->bam_file, $library_file, $self->make_realigned_bam,\@windows_files);
     my $file_of_results = $self->make_fof($self->output_directory, $results_dir);
-    $self->generate_final_vcf($self->output_directory, $file_of_results, $ref_fasta);
+    $self->generate_final_vcf($self->output_directory, $file_of_results, $self->ref_fasta);
     if($self->make_realigned_bam) {
-        $self->generate_final_bam($self->output_directory, $results_dir, $bam_file);
+        $self->generate_final_bam($self->output_directory, $results_dir, $self->bam_file);
     }
     return 1;
 }
