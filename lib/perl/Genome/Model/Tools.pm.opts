@@ -8488,21 +8488,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>upload-variants',
-    [
-      'annotation-file=s',
-      'files',
-      'build-id=s',
-      undef,
-      'output-file=s',
-      'files',
-      'variant-file=s',
-      'files',
-      'debug!',
-      undef,
-      'help!',
-      undef
-    ],
     '>validate-indels',
     [
       'intersection-range=s',
@@ -15231,25 +15216,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>recurrence',
   [
-    '>gene',
-    [
-      'output-file=s',
-      'files',
-      'somatic-anno-file=s',
-      'files',
-      'debug!',
-      undef,
-      'putative!',
-      undef,
-      'skip-MT!',
-      undef,
-      'skip-if-output-present!',
-      undef,
-      'source-somatic-model-id=s',
-      'files',
-      'help!',
-      undef
-    ],
+    'debug!',
+    undef,
     'help!',
     undef
   ],
