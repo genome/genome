@@ -1,0 +1,48 @@
+### This is option file for burdentest.R ###
+
+################### data files & key columns 
+missing.data=c("NA",".","")
+
+genotype.file="/gscmnt/sata424/info/medseq/Freimer-Boehnke/Final_Data_Set_20111213/3Center/combined.013112.variantmatrix_numericalbases.txt"
+gfile.delimiter="\t"
+gfile.vid="ASMS_combined_013112"   # variant id in genotype.file
+gfile.sid="FIRST_ROW"              # subject id in genotype.file
+
+phenotype.file="/gscmnt/sata424/info/medseq/Freimer-Boehnke/Phenotype_Files/Final_Data_Feb2012/PhenoFilePCA021112.txt"
+pfile.delimiter=" "
+pfile.sid="SeqID"    # subject id in phenotype.file
+
+
+anno.file="/gscmnt/sata424/info/medseq/Freimer-Boehnke/Final_Data_Set_20111213/3Center/combined.013112.vcf_vep.annotation.allregions.vep_parsed"
+afile.delimiter="\t"
+afile.vid="Variant_Name"  #variant id in anno.file
+gene.col="Gene_Name"
+vtype.col="Trv_Type"
+vtype.use=c("NMD_TRANSCRIPT,NON_SYNONYMOUS_CODING",
+"NMD_TRANSCRIPT,NON_SYNONYMOUS_CODING,SPLICE_SITE",
+"NMD_TRANSCRIPT,STOP_LOST",
+"NON_SYNONYMOUS_CODING",
+"NON_SYNONYMOUS_CODING,SPLICE_SITE",
+"STOP_GAINED",
+"STOP_GAINED,SPLICE_SITE")
+
+# or vtype.use="ALL" if you want to use all types of variants
+
+#out.dir="/gscmnt/sata424/info/medseq/Freimer-Boehnke/burdentest20120205/results"
+out.dir="out"
+
+########################### model
+#trait.type="Q"            # or ="B" for binary trait 
+#trait="trigRES"
+#gene="ABCA1"
+
+covariates="PC1+PC2+PC3+PC4+PC5"  #or ="NONE" if none
+#covariates="NONE"
+
+########################### other options
+#permu.n=10      # usually =10000, larger number gives more accurate p-value, but needs more time
+maf.cutoff=0.01 #=1 means no cutoff     
+
+samplelist.dir="/gscmnt/sata423/info/medseq/llin/ASMS/BurdenTestLists"   # or ="NONE" if no sample list files
+
+num.cores=1
