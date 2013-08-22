@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Workflow;
 use Workflow::Simple;
+use File::Basename qw(basename);
 
 my $DEFAULT_PICARD_VERSION    = Genome::Model::Tools::Picard->default_picard_version;
 my $DEFAULT_SAMSTAT_VERSION   = Genome::Model::Tools::SamStat::Base->default_samstat_version;
@@ -412,7 +413,7 @@ sub execute {
     if ($self->read_length) {
         my %read_length_operation_params = (
             workflow   => $workflow,
-            name       => $self->id .' BioSamtools Read Length Distribution '. $self->bam_file,
+            name       => $self->id .' BioSamtools Read Length Distribution '. basename($self->bam_file),
             class_name => 'Genome::Model::Tools::BioSamtools::ReadLengthDistribution',
             input_properties => {
                 bam_file                   => 'bam_file',
