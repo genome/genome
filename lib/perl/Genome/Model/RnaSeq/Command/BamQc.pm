@@ -93,7 +93,7 @@ sub params_for_result {
         samtools_version    => $pp->samtools_version || Genome::Model::Tools::Sam->default_samtools_version,
         fastqc_version      => $pp->fastqc_version || Genome::Model::Tools::Fastqc->default_fastqc_version,
         samstat_version     => $pp->samstat_version || Genome::Model::Tools::SamStat::Base->default_samstat_version,
-        error_rate_version  => Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version,
+        error_rate_version  => $pp->error_rate_version || Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version,
         error_rate          => $pp->calculate_error_rate || 0,
         read_length         => 1,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,

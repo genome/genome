@@ -89,14 +89,13 @@ class Genome::Model::RnaSeq {
             doc => 'the version of BEDTools to use for splice junction reporting.',
             is_optional => 1,
         },
+        error_rate_version  => {
+            doc => 'the version of error rate C tool to use for BamQc.',
+            is_optional => 1,
+        },
         calculate_error_rate => {
             doc => 'A flag to calculate error rate during BamQc',
             is_optional => 1,
-        },
-        use_error_rate_pileup => {
-            doc => 'A flag to calculate positional error rate during BamQc by iterating through the entire pileup',
-            is_optional => 1,
-            is_deprecated => 1,
         },
         read_trimmer_name => {
             doc => 'trimmer algorithm/software used for this model',
