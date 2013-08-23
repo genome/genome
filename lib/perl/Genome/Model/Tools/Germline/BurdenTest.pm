@@ -3,10 +3,13 @@ package Genome::Model::Tools::Germline::BurdenTest;
 use strict;
 use warnings;
 
-use Genome;
-use Data::Dumper;
 use Carp qw/confess/;
+use Data::Dumper;
+use File::Basename qw/dirname/;
+use Genome;
 use POSIX qw( WIFEXITED );
+
+my $base_R_commands = join("/", dirname(__FILE__), "gstat/burdentest/burdentest.R");
 
 class Genome::Model::Tools::Germline::BurdenTest {
     is => 'Command::V2',
@@ -14,11 +17,6 @@ class Genome::Model::Tools::Germline::BurdenTest {
         option_file => {
             is => 'Text',
             doc => 'File specifying informatin for the burden test to run',
-        },
-        base_R_commands => {
-            is => 'Text',
-            doc => 'The base R command library',
-            example_values=> ["/gscuser/qzhang/gstat/burdentest/burdentest.R"],
         },
         analysis_data_type => {
             is => 'Text',
@@ -73,7 +71,7 @@ sub execute {
 
     #TODO check input files and directory here
 
-    my $rscript = $self->base_R_commands;
+    my $rscript = $base_R_commands;
     unless(-e $rscript) {
         die $self->error_message("$rscript for running burden test doesn't exist or is empty");
     }
@@ -89,10 +87,10 @@ sub execute {
     my $permutations = $self->permutations;
     my $seed = $self->seed;
     my $pval_permutations = $self->p_value_permutations;
-    
 
 
-    my $cmd = "R --slave < $rscript $option_file $datatype $phenotype $gene $permutations:$seed:$pval_permutations";
+
+    my $cmd = "Rscript $rscript $option_file $datatype $phenotype $gene $permutations:$seed:$pval_permutations";
     if($self->covariates) {
         $cmd .= " " . $self->covariates;
     }

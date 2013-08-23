@@ -2,10 +2,14 @@ package Genome::Model::Tools::Germline::BurdenAnalysis;
 
 use warnings;
 use strict;
-use Genome;
-use Workflow;
-use Workflow::Simple;
+use Data::Dumper;
 use Carp qw/confess/;
+use File::Basename qw/dirname/;
+use Genome;
+use Workflow::Simple;
+use Workflow;
+
+my $base_R_commands = join("/", dirname(__FILE__), "gstat/burdentest/burdentest.R");
 
 class Genome::Model::Tools::Germline::BurdenAnalysis {
     is => ['Genome::Command::Base'],
@@ -26,11 +30,6 @@ class Genome::Model::Tools::Germline::BurdenAnalysis {
             is => 'Text',
             doc => "The name of the project",
             default => 'VariantId',
-        },
-        base_R_commands => {
-            is => 'Text',
-            doc => "The base R command library",
-            example_values => ["/gscuser/qzhang/gstat/burdentest/burdentest.R"],
         },
         output_directory => {
             is => 'Text',
@@ -109,7 +108,7 @@ sub help_brief {                            # keep this to just a few words <---
 sub help_synopsis {
     return <<EOS
 Run a burden analysis on germline (PhenotypeCorrelation) data
-EXAMPLE:	gmt germline burden-analysis --help
+EXAMPLE:    gmt germline burden-analysis --help
 EOS
 }
 
@@ -167,7 +166,7 @@ EOS
 ###############
 
 sub execute {                               # replace with real execution logic.
-	my $self = shift;
+    my $self = shift;
 
     $DB::single = 1;
     my $p_value_permutations = $self->p_value_permutations;
@@ -175,7 +174,6 @@ sub execute {                               # replace with real execution logic.
     my $mutation_file = $self->mutation_file;
     my $phenotype_file = $self->glm_clinical_data_file;
     my $VEP_annotation_file = $self->VEP_annotation_file;
-    my $base_R_commands = $self->base_R_commands;
     my $output_directory = $self->output_directory;
     my $num_cores = $self->num_cores;
 
@@ -201,6 +199,7 @@ sub execute {                               # replace with real execution logic.
             $pheno_covar_type_hash{$clinical_data_trait_name} = "$covariates\t$analysis_type";
         }
     }
+    $self->status_message("Phenotype/covariates selection: " . Dumper(\%pheno_covar_type_hash));
 
     #determine which trv_types to include
     #Note that the natural place to do this is now upstream in gmt vcf vcf-to-burden-matrix. This could still be useful for subsetting files created with that command though
@@ -328,8 +327,6 @@ _END_OF_R_
     $fh_R_option->close;
 
 
-    #TODO Make a workflow here
-
     unless($self->aggregate_only) {
         #now create bsub commands
         #bsub -e err 'R --no-save < burdentest.R option_file_asms Q trigRES ABCA1 10000 123'
@@ -340,7 +337,7 @@ _END_OF_R_
         unless($self->use_bsub) {
             my %inputs;
             $inputs{option_file} = $R_option_file;
-            $inputs{base_R_commands} = $self->base_R_commands;
+            $inputs{base_R_commands} = $base_R_commands;
             $inputs{permutations} = $self->permutations;
             $inputs{seed} = $self->permutation_seed;
             $inputs{p_value_permutations} = $self->p_value_permutations;
@@ -383,12 +380,6 @@ _END_OF_R_
                     left_property=>"option_file",
                     right_operation=>$op,
                     right_property=>"option_file",
-                );
-                $workflow->add_link(
-                    left_operation=>$workflow->get_input_connector,
-                    left_property=>"base_R_commands",
-                    right_operation=>$op,
-                    right_property=>"base_R_commands",
                 );
                 $workflow->add_link(
                     left_operation=>$workflow->get_input_connector,
@@ -461,7 +452,7 @@ _END_OF_R_
         else {
             #WORKFLOW does not scale well above so allow us to launch via bsub and hope for the best
             my $R_error_file = "$output_directory/R_error_file.err";
-            my $bsub_base = "bsub -e $R_error_file 'R --no-save \< $base_R_commands $R_option_file";
+            my $bsub_base = "bsub -e $R_error_file 'Rscript $base_R_commands $R_option_file";
             foreach my $phenotype (sort keys %pheno_covar_type_hash) {
                 my ($covariates,$analysis_data_type) = split(/\t/,$pheno_covar_type_hash{$phenotype});
                 foreach my $gene (keys %gene_names) {
@@ -475,6 +466,7 @@ _END_OF_R_
                     else {
                         $bsub_cmd = "$bsub_base $analysis_data_type $phenotype $gene $permutations:$seed:$p_value_permutations\'";
                     }
+                    $self->status_message("CMD: $bsub_cmd");
                     system($bsub_cmd);
                 }
             }

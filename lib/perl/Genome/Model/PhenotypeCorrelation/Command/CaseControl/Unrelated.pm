@@ -382,7 +382,6 @@ sub _create_workflow {
                 glm_clinical_data_file => $clinical_data,
                 output_directory => $burden_test_output_directory,
                 glm_model_file => $glm_model_file,
-                base_R_commands => '/gscuser/qzhang/gstat/burdentest/burdentest.R',
                 maf_cutoff => $self->maximum_maf,
                 permutations => "1",
                 trv_types => "ALL",
