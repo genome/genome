@@ -9,7 +9,7 @@ class Genome::DruggableGene::GeneNameGroupBridge {
     is => 'UR::Object',
     table_name => 'dgidb.gene_name_group_bridge',
     schema_name => 'dgidb',
-    data_source => 'Genome::DataSource::Main',
+    data_source => 'Genome::DataSource::Dgidb',
 
     id_by => [
         group_id => { is => 'Text', column_name => 'gene_name_group_id'},
