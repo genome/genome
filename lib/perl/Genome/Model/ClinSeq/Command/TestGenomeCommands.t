@@ -20,8 +20,6 @@ use Data::Dumper;
 use above "Genome";
 use Test::More tests => 61;
 
-#Test with GENOME_QUERY_POSTGRES=1 to use postgres database instead of Oracle
-
 #The following tests are expressed as system calls of what you would actually type at the command-line because that is the output we specifically wish to test
 
 #This test performs a series of tests that cover common analysis use cases for command line usage of Genome listers, etc.

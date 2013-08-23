@@ -22,97 +22,10 @@ BEGIN {
 	
 }
 
-BEGIN {
-    if (!defined $ENV{GENOME_DB_SKIP_POSTGRES}) {
-        $ENV{GENOME_DB_SKIP_POSTGRES} ||= '/gsc/scripts/opt/genome/run/skip_postgres_sync_new';
-    }
-}
-
-BEGIN {
-	if ($ENV{GENOME_QUERY_POSTGRES}) {
-		require UR::Context;
-		require UR::DataSource::Pg;
-		require Workflow;
-		Sub::Install::reinstall_sub({
-                    into => 'UR::Context',
-                    as => 'resolve_data_sources_for_class_meta_and_rule_genome_filtered',
-                    code => \&UR::Context::resolve_data_sources_for_class_meta_and_rule
-                });
-		Sub::Install::reinstall_sub({
-                    into => 'UR::Context',
-                    as => 'resolve_data_sources_for_class_meta_and_rule',
-                    code => \&Genome::Site::TGI::resolve_data_sources_for_class_meta_and_rule
-                });
-		Sub::Install::reinstall_sub({
-                    into => 'UR::Object::Type',
-                    as => 'table_name_filtered',
-                    code => \&UR::Object::Type::table_name
-                });
-		Sub::Install::reinstall_sub({
-                    into => 'UR::Object::Type',
-                    as => 'table_name',
-                    code => \&Genome::Site::TGI::table_name_patch
-                });
-
-	}
-}
-
 { no warnings 'uninitialized';
   $ENV{WF_TEST_QUEUE} = 'short' if !defined($ENV{WF_TEST_QUEUE}) or $ENV{WF_TEST_QUEUE} eq 'normal';
   $ENV{WF_SERVER_QUEUE} = 'workflow' if !defined($ENV{WF_SERVER_QUEUE}) or $ENV{WF_SERVER_QUEUE} eq 'normal';
   $ENV{WF_JOB_QUEUE} = 'apipe' if !defined($ENV{WF_JOB_QUEUE}) or $ENV{WF_JOB_QUEUE} eq 'normal';
-}
-
-sub undo_table_name_patch {
-    Sub::Install::reinstall_sub({
-        into => 'UR::Object::Type',
-        as => 'table_name',
-        code => \&UR::Object::Type::table_name_filtered
-    });
-}
-
-sub redo_table_name_patch {
-    Sub::Install::reinstall_sub({
-        into => 'UR::Object::Type',
-        as => 'table_name',
-        code => \&Genome::Site::TGI::table_name_patch
-    });
-}
-
-sub table_name_patch {
-        my $self = shift;
-        my $is_generating_id = ((caller(1))[3] eq 'UR::DataSource::RDBMS::autogenerate_new_object_id_for_class_name_and_rule');
-
-        if (@_ || $is_generating_id) {
-                return $self->table_name_filtered(@_);
-        } else {
-                my $table_name = $self->table_name_filtered;
-                my $mapped_table_name = Genome::DataSource::Main->postgres_table_name_for_oracle_table(lc($table_name));
-#    || Workflow::DataSource::InstanceSchemaPostgres->postgres_table_name_for_oracle_table(lc($table_name));
-        
-                if ($mapped_table_name) {
-                        $table_name =$mapped_table_name;
-                } 
-                return $table_name;
-        }
-
-}
-
-sub resolve_data_sources_for_class_meta_and_rule {
-        my $context = shift; 
-        my $data_source = $context->resolve_data_sources_for_class_meta_and_rule_genome_filtered(@_);
-
-        if ($data_source) {
-                my $caller = (caller(1))[3];
-                return $data_source if ($caller eq 'UR::Object::Type::autogenerate_new_object_id');
-                if ($data_source->isa('Genome::DataSource::GMSchema')) {
-                        $data_source = Genome::DataSource::PGTest->get();
-#                } elsif ($data_source->isa('Workflow::DataSource::InstanceSchema')) {
-#                        $data_source = Workflow::DataSource::InstanceSchemaPostgres->get();
-                }
-        }
-                
-        return $data_source;
 }
 
 # configure local statsd server
