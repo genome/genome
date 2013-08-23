@@ -524,6 +524,12 @@ sub delete {
         $child->delete if !@users;
     }
 
+    # find qc result and delete it
+    my @qc_results = Genome::InstrumentData::AlignmentResult::Merged::BamQc->get(alignment_result_id => $self->id);
+    for my $qc_result ( @qc_results ) {
+        $qc_result->delete;
+    }
+
     return $self->SUPER::delete(@_);
 }
 
