@@ -52,6 +52,11 @@ class Genome::Model::Tools::Varscan::Consensus {
 	    default => 0.20,
             is_optional => 0,
         },
+        output_vcf => {
+            is => 'Text',
+            doc => "If set to 1, tells VarScan to output in VCF format (rather than native CNS)",
+            is_optional => 1,
+        },
         position_list_file => {
             is => 'Text',
             doc => "Optionally, provide a tab-delimited list of positions to be given to SAMtools with -l",
@@ -114,7 +119,17 @@ sub execute {                               # replace with real execution logic.
 		}
 		
 		
-		my $cmd = $self->java_command_line("pileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual >$output_file 2>/dev/null");
+		
+		my $cmd = "";
+		
+		if($self->output_vcf)
+		{
+			$cmd = $self->java_command_line("mpileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual --output-vcf 1 >$output_file 2>/dev/null");			
+		}
+		else
+		{
+			$cmd = $self->java_command_line("pileup2cns <\($mpileup\) --min-coverage $min_coverage --min-var-freq $min_var_freq --min-avg-qual $min_avg_qual >$output_file 2>/dev/null");
+		}
 
 		system($cmd);
 	}
