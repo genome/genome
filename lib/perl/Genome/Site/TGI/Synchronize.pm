@@ -28,10 +28,11 @@ class Genome::Site::TGI::Synchronize {
 sub execute {
     my $self = shift; 
 
-    my $update = eval { Genome::Site::TGI::Synchronize::UpdateApipeClasses->execute() };
-    unless ($update->result) {
-        $self->error_message("Failed to UpdateApipeClasses: $@");
-        die $self->error_message;
+    my $update = Genome::Site::TGI::Synchronize::UpdateApipeClasses->create();
+    die "Failed to create update apipe classes!" if not $update;
+    my $rv = eval{ $update->execute; };
+    if (not $rv) {
+        die $self->error_message("$@\nFailed to execute update apipe classes!");
     }
 
     my $expunge = eval { Genome::Site::TGI::Synchronize::Expunge->execute(report => $update->_report) };
