@@ -33041,8 +33041,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'aggregate-only!',
         undef,
-        'base-R-commands=s',
-        'files',
         'glm-clinical-data-file=s',
         'files',
         'glm-model-file=s',
@@ -33083,8 +33081,6 @@ $Genome::Command::OPTS_SPEC = [
       '>burden-test',
       [
         'option-file=s',
-        'files',
-        'base-R-commands=s',
         'files',
         'analysis-data-type=s',
         [
