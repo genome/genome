@@ -6,7 +6,7 @@ use Workflow;
 
 class Genome::Model::Build::ErrorLogEntry {
     table_name => 'model.error_log_entry',
-    data_source => 'Genome::DataSource::Main',
+    data_source => 'Genome::DataSource::OldPostgres',
     id_generator => '-uuid',
     id_by => [
         id => { is => 'Text' },
