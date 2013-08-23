@@ -351,10 +351,10 @@ sub convert_vcf_to_dindel_and_left_shift {
     my $left_shifter = Genome::Model::Tools::Dindel::RealignCandidates->create( 
         ref_fasta=>$ref_fasta,
         variant_file=>$output_dindel_file,
-        output_file=>$left_shifted_output,
+        output_prefix=>$left_shifted_output,
     );
     if($left_shifter->execute()) {
-        return $left_shifted_output . ".variants.txt";
+        return $left_shifter->output_file;
     }
     else {
         $self->error_message("the left shifter has caused the datacenter to burn to the ground. great job. was it worth not getting those indels?");
