@@ -44,8 +44,6 @@ case $1 in
     "--help") man; exit 0;;
 esac
 
-set -o nounset
-
 GIT_DIR=$(git rev-parse --show-toplevel 2> /dev/null || true)
 
 if [ -z "${GIT_DIR}" ]; then
@@ -66,6 +64,9 @@ if [ -z "$GENOMECI_BASEDIR" ]; then
     GENOMECI_BASEDIR=/gsc/scripts/opt/genome
 fi
 export GENOMECI_BASEDIR
+
+set -o nounset
+
 $GENOMECI_BASEDIR/bin/model-test-prep-multi '5.10'
 source $GENOMECI_BASEDIR/bin/model-test-env.sh "${WORKSPACE}"
 
