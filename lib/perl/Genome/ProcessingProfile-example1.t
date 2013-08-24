@@ -14,6 +14,8 @@ use above "Genome";
 use Genome::Model;
 use Genome::Model::Build;
 
+Genome::Report::Email->silent();
+
 # used for everything below which requires a name
 my $tname = "test-new-processing-profile";
 

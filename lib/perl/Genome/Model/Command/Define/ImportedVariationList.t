@@ -12,6 +12,8 @@ use above 'Genome';
 
 use Test::More tests => 8;
 
+Genome::Report::Email->silent();
+
 use_ok('Genome::Model::Command::Define::ImportedVariationList');
 
 my $ref = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
