@@ -87,6 +87,14 @@ sub execute {
 
     my $version = "500bp_assembled_contigs_sv";
     #don't overwrite an existing model...
+
+    # Using GENOME_SOFTWARE_RESULT_TEST_NAME here is possibly a mistake but
+    # it's what we set when we run tests to allow them to generate objects
+    # indepdendently, i.e. the subsequent imported reference sequence.
+    if ( $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ) {
+        $version = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+    }
+
     my $prefix = $sample_id . "_SV_Contigs";
     $version = $self->check_ref_build_name($prefix, $version);
 
