@@ -87,8 +87,8 @@ sub execute {
 
     my $version = "500bp_assembled_contigs_sv";
     #don't overwrite an existing model...
-
-    $version = $self->check_ref_build_name($sample_id . "_SV_Contigs", $version);
+    my $prefix = $sample_id . "_SV_Contigs";
+    $version = $self->check_ref_build_name($prefix, $version);
 
     my $new_ref_cmd = Genome::Model::Command::Define::ImportedReferenceSequence->create(
         species_name => 'human',
@@ -97,7 +97,7 @@ sub execute {
         append_to => $ref_seq_build,
         version => $version,
         fasta_file => $contigs_file,
-        prefix => $sample_id . "_SV_Contigs",
+        prefix => $prefix,
         server_dispatch => 'inline',
         is_rederivable => 1,
     );
