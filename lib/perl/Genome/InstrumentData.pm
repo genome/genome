@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::InstrumentData {
     is => 'Genome::Notable',
-    table_name => 'INSTRUMENT_DATA',
+    table_name => 'instrument.data',
     is_abstract => 1,
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     attributes_have => [
@@ -17,6 +17,7 @@ class Genome::InstrumentData {
         },
     ],
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
         id => {
             is => 'Text',
@@ -45,7 +46,7 @@ class Genome::InstrumentData {
             to => 'name',
         },
         sample_id => {
-            is => 'Integer',
+            is => 'Text',
             via => 'library',
         },
         sample => {

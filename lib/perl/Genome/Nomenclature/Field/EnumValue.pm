@@ -10,7 +10,7 @@ use Data::Dumper;
 use JSON::XS;
 
 class Genome::Nomenclature::Field::EnumValue {
-    table_name => 'GENOME_NOMENCLATURE_ENUM_VALUE',
+    table_name => 'web.nomenclature_enum_value',
     id_by => [
         id => {
             is => 'Text',

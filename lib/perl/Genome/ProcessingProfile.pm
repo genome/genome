@@ -10,15 +10,16 @@ require Genome::Utility::Text;
 
 class Genome::ProcessingProfile {
     is => 'Genome::Searchable',
-    table_name => 'PROCESSING_PROFILE',
+    table_name => 'model.processing_profile',
     is_abstract => 1,
     attributes_have => [
         is_param => { is => 'Boolean', is_optional => 1 },
     ],
     subclass_description_preprocessor => 'Genome::ProcessingProfile::_expand_param_properties',
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
-        id => { is => 'Number', len => 32 },
+        id => { is => 'Text', len => 32 },
     ],
     has => [
         name          => { is => 'VARCHAR2', len => 255, is_optional => 1, 

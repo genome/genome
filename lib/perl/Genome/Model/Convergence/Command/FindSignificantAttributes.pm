@@ -14,7 +14,7 @@ class Genome::Model::Convergence::Command::FindSignificantAttributes {
             id_by => 'build_id',
             doc => 'the build on which to run the analysis'
         },
-        build_id => { is => 'Integer', is_input => 1, is_output => 1 },
+        build_id => { is => 'Text', is_input => 1, is_output => 1 },
         data_file => {
             is => 'String',
             doc => 'Location of the ARFF file used as input to Weka.  (If the provided file exists it will be used; if not it will be generated.)',
@@ -30,7 +30,7 @@ class Genome::Model::Convergence::Command::FindSignificantAttributes {
             id_by => 'annotation_build_id',
             doc => 'the annotation build used to annotate the variants of subbuilds in the convergence build--if not provided, will attempt to be taken from a subbuild',
         },
-        annotation_build_id => { is => 'Integer', is_input => 1, is_output => 1},
+        annotation_build_id => { is => 'Text', is_input => 1, is_output => 1},
 
         mutation_types => {
             is => 'ARRAY',

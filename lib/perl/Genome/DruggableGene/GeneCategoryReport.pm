@@ -10,7 +10,7 @@ class Genome::DruggableGene::GeneCategoryReport {
     id_generator => '-uuid',
     table_name => 'dgidb.gene_name_report_category_association',
     schema_name => 'dgidb',
-    data_source => 'Genome::DataSource::Main',
+    data_source => 'Genome::DataSource::Dgidb',
     id_by => [
         id => {is => 'Text'},
     ],

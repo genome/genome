@@ -15,26 +15,26 @@ class Genome::Model::MetagenomicCompositionShotgun {
     is => 'Genome::ModelDeprecated',
     has_param => [
         contamination_screen_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for contamination screen',
             is_optional=> 1,
         },
         metagenomic_alignment_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for metagenomic alignment',
         },
         unaligned_metagenomic_alignment_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for realignment of unaligned reads from first metagenomic alignment',
             is_optional => 1,
         },
         first_viral_verification_alignment_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for first viral verification alignment',
             is_optional => 1,
         },
         second_viral_verification_alignment_pp_id => {
-            is => 'Integer',
+            is => 'Text',
             doc => 'processing profile id to use for first viral verification alignment',
             is_optional => 1,
         },

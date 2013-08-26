@@ -26,7 +26,7 @@ class Genome::Model::GenotypeMicroarray::Command::CompareToReference {
             shell_args_position => 2,
         },
         reference_id => {
-            is => 'Integer',
+            is => 'Text',
         },
         max_base_count => {
             is => 'Number',

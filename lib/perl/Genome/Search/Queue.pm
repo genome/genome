@@ -6,7 +6,7 @@ use Genome;
 use strict;
 use warnings;
 class Genome::Search::Queue {
-    table_name => 'SEARCH_INDEX_QUEUE',
+    table_name => 'web.search_index_queue',
     id_by => [
         id => {
             is => 'Text',

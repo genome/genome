@@ -11,6 +11,8 @@ use warnings;
 use above "Genome";
 use Test::More;
 
+Genome::Report::Email->silent();
+
 class Genome::ProcessingProfile::Test {
     is => 'Genome::ProcessingProfile',
 };

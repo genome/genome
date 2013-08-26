@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 class Genome::MiscAttribute {
-    table_name => 'MISC_ATTRIBUTE',
+    table_name => 'subject.misc_attribute',
     id_by => [
         entity_id         => { is => 'VARCHAR2', len => 1000 },
         entity_class_name => { is => 'VARCHAR2', len => 255, },

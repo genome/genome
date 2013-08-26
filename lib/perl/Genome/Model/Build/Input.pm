@@ -5,12 +5,12 @@ use warnings;
 
 use Genome;
 class Genome::Model::Build::Input {
-    table_name => 'GENOME_MODEL_BUILD_INPUT',
+    table_name => 'model.build_input',
     type_name => 'genome model build input',
     id_by => [
         build_id => {
-            is => 'NUMBER',
-            len => 11,
+            is => 'VARCHAR2',
+            len => 64,
         },
         value_class_name => {
             is => 'VARCHAR2',

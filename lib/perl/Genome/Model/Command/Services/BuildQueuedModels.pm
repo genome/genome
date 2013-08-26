@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use Genome::Model::Build::Command::Start;
 
+use Carp qw(croak);
+
 use POSIX qw(ceil);
 
 class Genome::Model::Command::Services::BuildQueuedModels {
@@ -114,7 +116,7 @@ sub execute {
 
         MODEL:
         while (my $model = $models->next) {
-            next MODEL unless ($self->channel_for_model($model) == $self->channel);
+            next MODEL unless (channel_for_model($model->id, $self->channels) == $self->channel);
 
             if ($self->_builds_started >= $max_builds_to_start){
                 $self->status_message("Already started max builds (" . $self->_builds_started . "), quitting...");
@@ -139,10 +141,21 @@ sub execute {
 
 
 sub channel_for_model {
-    my $self = shift;
-    my $model = shift;
+    my $id = shift;
+    my $divisor = shift;
 
-    return ($model->id % $self->channels);
+    unless (defined $id) {
+        croak 'first argument is invalid';
+    }
+
+    unless (defined $divisor) {
+        croak 'second argument is invalid';
+    }
+
+    $id =~ s/[a-zA-F]//g;
+    $id = substr($id, -10, 10);
+    my $channel = $id % $divisor;
+    return $channel;
 }
 
 

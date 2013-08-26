@@ -460,6 +460,7 @@
 ## FOUND Genome::ProcessingProfile::Param 2762841	bowtie_version	2.0.0-beta7: 2762841 bowtie_version 2.0.0-beta7
 ## FOUND Genome::ProcessingProfile::Param 2762841	calculate_error_rate	1: 2762841 calculate_error_rate 1
 ## FOUND Genome::ProcessingProfile::Param 2762841	dna_type	cdna: 2762841 dna_type cdna
+## FOUND Genome::ProcessingProfile::Param 2762841	error_rate_version	0.9: 2762841 error_rate_version 0.9
 ## FOUND Genome::ProcessingProfile::Param 2762841	expression_name	cufflinks: 2762841 expression_name cufflinks
 ## FOUND Genome::ProcessingProfile::Param 2762841	expression_params	-p 4: 2762841 expression_params -p 4
 ## FOUND Genome::ProcessingProfile::Param 2762841	expression_version	2.0.2: 2762841 expression_version 2.0.2

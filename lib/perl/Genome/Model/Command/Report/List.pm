@@ -36,7 +36,7 @@ class Genome::Model::Command::Report::List {
             id_by => 'build_id',
         },
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
             doc => 'The build id of a genome model to check which reports have been run.',
         },

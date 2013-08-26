@@ -8,7 +8,7 @@ use Carp;
 
 class Genome::Sys::User {
     is => 'Genome::Searchable',
-    table_name => 'GENOME_SYS_USER',
+    table_name => 'subject.user',
     id_by => [
         email => {
             is => 'Text',

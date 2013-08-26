@@ -9,7 +9,7 @@ class Genome::Model::SomaticValidation::Command::IdentifyPreviouslyDiscoveredVar
     is => 'Genome::Command::Base',
     has =>[
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_input => 1,
             is_output => 1,
             doc => 'build id of SomaticValidation model',

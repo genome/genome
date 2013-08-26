@@ -19,7 +19,7 @@ class Genome::DruggableGene::DrugGeneInteractionReportAttribute {
         value                        => { is => 'Text' },
     ],
     schema_name => 'dgidb',
-    data_source => 'Genome::DataSource::Main',
+    data_source => 'Genome::DataSource::Dgidb',
     doc => 'Claim regarding an attribute of a drug gene interaction claim',
 };
 

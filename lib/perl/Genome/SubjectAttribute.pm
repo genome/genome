@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::SubjectAttribute {
-    table_name => 'GENOME_SUBJECT_ATTRIBUTE',
+    table_name => 'subject.subject_attribute',
     id_by => [
         attribute_label => {
             is => 'Text',
@@ -17,8 +17,8 @@ class Genome::SubjectAttribute {
             len => 512,
         },
         subject_id => {
-            is => 'Number',
-            len => 10,
+            is => 'Text',
+            len => 32,
         },
         nomenclature => {
             is => 'Text',

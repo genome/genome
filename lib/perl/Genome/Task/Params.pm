@@ -10,7 +10,7 @@ use Data::Dumper;
 use JSON::XS;
 
 class Genome::Task::Params {
-    table_name => 'GENOME_TASK_PARAMS',
+    table_name => 'web.task_params',
     id_by => [
         genome_task_id => {
             is => 'Text',

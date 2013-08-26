@@ -9,7 +9,7 @@ use Carp;
 class Genome::Model {
     is => [ "Genome::Notable", "Genome::Searchable" ],
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
-    table_name => 'GENOME_MODEL',
+    table_name => 'model.model',
     is_abstract => 1,
     attributes_have => [
         is_param => {
@@ -39,11 +39,12 @@ class Genome::Model {
         },
     ],
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
         genome_model_id => {
             # TODO: change to just "id"
-            # And make the data type Text in preparation for UUIDs
-            is => 'Number',
+            is => 'Text',
+            len => 32,
             doc => 'the unique immutable system identifier for a model',
         },
     ],

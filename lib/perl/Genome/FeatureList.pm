@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::FeatureList {
-    table_name => 'FEATURE_LIST',
+    table_name => 'model.feature_list',
     id_by => [
         id => {
             is => 'Text',

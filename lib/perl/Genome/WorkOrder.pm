@@ -49,7 +49,7 @@ class Genome::WorkOrder {
             len => 256,
         },
         project_id => {
-            is => 'Integer',
+            is => 'Text',
             len => 10,
         },
         project => { 

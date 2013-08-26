@@ -18,7 +18,7 @@ class Genome::InstrumentData::Report {
             id_by => 'instrument_data_id'
         },
         instrument_data_id => {
-            is => 'Integer', 
+            is => 'Text', 
             doc=> 'Instrument Data id'
         },
     ],

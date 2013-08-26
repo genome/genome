@@ -20,13 +20,13 @@ use Date::Manip;
 class Genome::Model::Build {
     is => ['Genome::Notable','Genome::Searchable'],
     type_name => 'genome model build',
-    table_name => 'GENOME_MODEL_BUILD',
+    table_name => 'model.build',
     is_abstract => 1,
     subclassify_by => 'subclass_name',
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     id_by => [
         # TODO: change to just "id"
-        build_id => { is => 'Number', },
+        build_id => { is => 'Text', len => 64 },
     ],
     attributes_have => [
         is_input    => { is => 'Boolean', is_optional => 1, },
@@ -235,6 +235,7 @@ class Genome::Model::Build {
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub __display_name__ {

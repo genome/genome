@@ -10,7 +10,7 @@ class Genome::DruggableGene::Citation {
     id_generator => '-uuid',
     table_name => 'dgidb.citation',
     schema_name => 'dgidb',
-    data_source => 'Genome::DataSource::Main',
+    data_source => 'Genome::DataSource::Dgidb',
     id_by => [
         id => {is => 'Text'},
     ],

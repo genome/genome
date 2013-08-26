@@ -10,7 +10,7 @@ use warnings;
 use Genome;
 class Genome::Model::Event::Metric {
     type_name => 'genome model event metric',
-    table_name => 'GENOME_MODEL_EVENT_METRIC',
+    table_name => 'model.event_metric',
     id_by => [
         event   => { is => 'Genome::Model::Event', id_by => 'event_id', constraint_name => 'GMEM_GME_FK' },
         name    => { is => 'VARCHAR2', len => 100, column_name => 'METRIC_NAME' },

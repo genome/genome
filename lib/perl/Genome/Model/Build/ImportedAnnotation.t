@@ -9,6 +9,9 @@ BEGIN {
 use above "Genome";
 use Test::More tests => 43;
 use Data::Dumper;
+
+Genome::Report::Email->silent();
+
 use_ok('Genome::Model::Build::ImportedAnnotation');
 
 # create a test annotation build and a few reference sequence builds to test compatibility with

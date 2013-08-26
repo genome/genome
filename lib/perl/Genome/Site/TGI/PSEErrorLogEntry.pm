@@ -7,7 +7,7 @@ use Workflow;
 class Genome::Site::TGI::PSEErrorLogEntry {
     table_name => 'pse_error_log_entry',
     schema_name => 'public',
-    data_source => 'Genome::DataSource::Main',
+    data_source => 'Genome::DataSource::OldPostgres',
     id_generator => '-uuid',
     id_by => [
         id => { is => 'Text' },

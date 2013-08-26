@@ -9,11 +9,43 @@ BEGIN {
 }
 
 use above 'Genome';
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use Genome::Utility::Test qw(is_equal_set);
+use Data::UUID;
+use List::Util qw(reduce);
 
 use_ok('Genome::Model::Command::Services::BuildQueuedModels') or die;
+
+subtest 'channel_for_model spreads evenly over all channels' => sub {
+    my $channels = 10;
+    plan tests => ($channels + 2);
+
+    use_ok('Genome::Model::Command::Services::BuildQueuedModels');
+
+    my $method = \&Genome::Model::Command::Services::BuildQueuedModels::channel_for_model;
+
+    my $ug = Data::UUID->new();
+
+    my %count;
+    for (my $s = 0; $s < 10_000; $s++) {
+        my $id = $ug->create_hex();
+        my $channel = $method->($id, $channels);
+        $count{$channel}++;
+    }
+
+    my @channels = sort keys %count;
+    is_deeply(\@channels, [0..($channels - 1)], 'all channels were used and is zero-based');
+
+    my $sum = reduce { our $a + our $b } values %count;
+    my $avg = $sum / scalar(keys %count);
+
+    for my $channel (@channels) {
+        my $delta = abs($count{$channel} - $avg);
+        my $ndelta = $delta / $avg;
+        ok($ndelta < 0.2, "$channel within acceptable range") or diag 'delta = ' . $delta, "\n", 'ndelta = ' . $ndelta;
+    }
+};
 
 subtest 'original test' => sub {
     plan tests => 19;
