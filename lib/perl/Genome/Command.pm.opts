@@ -20973,6 +20973,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'no-headers!',
         undef,
+        'output-vcf=s',
+        'files',
         'position-list-file=s',
         'files',
         'samtools-params=s',
