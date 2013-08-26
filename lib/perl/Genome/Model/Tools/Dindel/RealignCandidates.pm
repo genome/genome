@@ -6,16 +6,16 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Dindel::RealignCandidates {
-    is => 'Command',
+    is => 'Genome::Model::Tools::Dindel::Base',
     has_input => [
         variant_file => {
             is => 'Path',
         },
-        output_prefix => {
-            is => 'String',
-        },
         ref_fasta => {
             is => 'Path',
+        },
+        output_prefix => {
+            is => 'String',
         },
     ],
     has_output => [
@@ -45,10 +45,10 @@ EOS
 
 sub execute {
     my $self = shift;
-    my $dindel_location = "/gscmnt/gc2146/info/medseq/dindel/binaries/dindel-1.01-linux-64bit";
+
     return Genome::Sys->shellcmd_arrayref(
         cmd => [
-            $dindel_location,
+            $self->dindel_executable,
             '--analysis', 'realignCandidates',
             '--varFile', $self->variant_file,
             '--outputFile', $self->output_prefix,
