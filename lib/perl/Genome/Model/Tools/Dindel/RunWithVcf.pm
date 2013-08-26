@@ -304,14 +304,14 @@ sub make_windows {
     unless(-d $window_dir) {
         Genome::Sys->create_directory($window_dir);
     }
-    my $window_prefix = $window_dir ."/dindel_window_file";
     my $make_dindel_windows = Genome::Model::Tools::Dindel::MakeDindelWindows->create(
         input_dindel_file=>$candidate_indel_file,
-        output_prefix=>$window_prefix,
         num_windows_per_file=>$num_windows,
+        output_directory=>$window_dir,
     );
     if($make_dindel_windows->execute()) {
-        return glob("$window_prefix*");
+        my @output_files = $make_dindel_windows->output_files;
+        return @output_files;
     }
     else {
         $self->error_message("Dindel Window maker failed for some reason. Exiting.");
