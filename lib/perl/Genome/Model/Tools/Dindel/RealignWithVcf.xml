@@ -1,0 +1,27 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="BackfillIndelVcf">
+    <link fromOperation="input connector" fromProperty="input_vcf" toOperation="VcfToDindel" toProperty="input_vcf" />
+    <link fromOperation="input connector" fromProperty="vcf_to_dindel_output_file" toOperation="VcfToDindel" toProperty="output_dindel_file" />
+    <link fromOperation="input connector" fromProperty="ref_fasta" toOperation="VcfToDindel" toProperty="ref_fasta" />
+    <link fromOperation="" fromProperty="" toOperation="" toProperty="" />
+    <link fromOperation="" fromProperty="" toOperation="" toProperty="" />
+    <operation name="VcfToDindel">
+        <operationtype commandClass="Genome::Model::Tools::Dindel::VcfToDindel" typeClass="Workflow::OperationType::Command" \>
+    </operation>
+    <operation name="RealignCandidates">
+        <operationtype commandClass="Genome::Model::Tools::Dindel::RealignCandidates" typeClass="Workflow::OperationType::Command" \>
+    </operation>
+
+    <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>bam_file</inputproperty>
+        <inputproperty>ref_fasta</inputproperty>
+        <inputproperty>input_vcf</inputproperty>
+
+        <inputproperty>vcf_to_dindel_output_file</inputproperty>
+        <inputproperty>realign_candidates_output_file</inputproperty>
+        <inputproperty></inputproperty>
+
+
+        <outputproprty>result_bam</outputproperty>
+    </operationtype>
+</workflow>
