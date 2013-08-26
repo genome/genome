@@ -107,6 +107,16 @@ sub execute {                               # replace with real execution logic.
 	{
 		die "Unable to parse affected samples from VCF\n";
 	}
+	
+	my $min_num_aff_pairs = $num_aff_pairs;
+	for(my $aff_pairs = $num_aff_pairs; $aff_pairs > 0; $aff_pairs--)
+	{
+		if(($aff_pairs / $num_aff_pairs) > 0.80)
+		{
+			$min_num_aff_pairs = $aff_pairs			
+		}
+
+	}
 
 	my $affected_pairs_file = $self->output_basename . ".pairs.affected";
 	my $output_basename = $self->output_basename;
@@ -174,7 +184,7 @@ sub execute {                               # replace with real execution logic.
 					if(-e $beagle_fibd_file)
 					{
 						## Build the IBD plot ##
-						build_chrom_plot($beagle_fibd_file, $output_basename . ".$chrom", $chrom, $cen_start, $cen_stop, $self);# if($chrom eq "8");
+						build_chrom_plot($beagle_fibd_file, $output_basename . ".$chrom", $chrom, $cen_start, $cen_stop, $self, $min_num_aff_pairs, $num_aff_pairs);# if($chrom eq "8");
 						my $image_filename = "$true_basename.$chrom.plot.png";					
 						print INDEX "<TD><A HREF=\"$image_filename\"><IMG SRC=\"$image_filename\" HEIGHT=100 WIDTH=400 BORDER=0></A></TD>\n";
 					
@@ -267,6 +277,7 @@ sub parse_affected_samples
 				
 				my $outfile_name = $self->output_basename . ".pairs.affected";
 				open(OUTFILE, ">$outfile_name") or die "Can't open outfile: $!\n";
+				print OUTFILE "sample1\tsample2\n";
 				my %included = ();
 				foreach my $sample1 (sort keys %aff_samples)
 				{
@@ -412,7 +423,7 @@ sub convert_fibd_file
 
 sub build_chrom_plot
 {
-	my ($infile, $outbase, $chrom_name, $cen_start, $cen_stop, $self) = @_;
+	my ($infile, $outbase, $chrom_name, $cen_start, $cen_stop, $self, $min_num_aff_pairs, $num_aff_pairs) = @_;
 	
 	my %segments = parse_ibd_segments($infile, $self);
 
@@ -535,7 +546,7 @@ sub build_chrom_plot
 	{
 		print OUTSCRIPT qq{ibd <- read.table("$shared_ibd_positions_outfile", header=T)\n
 		png("$outbase.plot.png", height=200, width=800)\n
-		ggplot(ibd, aes(x = position, y = ibd_samples)) + geom_area(fill="blue") + xlab("") + ylab("Shared IBD") + opts(title="chr$chrom_name") + scale_y_continuous(limits = c(0,$num_pairs)) + geom_vline(xintercept = $cen_start, linetype = \"longdash\") + geom_vline(xintercept = $cen_stop, linetype = \"longdash\")\n
+		ggplot(ibd, aes(x = position, y = ibd_samples)) + geom_area(fill="blue") + xlab("") + ylab("Shared IBD") + opts(title="chr$chrom_name") + scale_y_continuous(limits = c(0,$num_aff_pairs)) + geom_vline(xintercept = $cen_start, linetype = \"longdash\") + geom_vline(xintercept = $cen_stop, linetype = \"longdash\") + geom_hline(yintercept = $min_num_aff_pairs, color = \"red\")\n
 		};
 		
 	}
@@ -543,7 +554,7 @@ sub build_chrom_plot
 	{
 		print OUTSCRIPT qq{ibd <- read.table("$shared_ibd_positions_outfile", header=T)\n
 		png("$outbase.plot.png", height=200, width=800)\n
-		ggplot(ibd, aes(x = position, y = ibd_samples)) + geom_area(fill="blue") + xlab("") + ylab("Shared IBD") + opts(title="chr$chrom_name") + scale_y_continuous(limits = c(0,$num_pairs))\n
+		ggplot(ibd, aes(x = position, y = ibd_samples)) + geom_area(fill="blue") + xlab("") + ylab("Shared IBD") + opts(title="chr$chrom_name") + scale_y_continuous(limits = c(0,$num_aff_pairs)) + geom_hline(yintercept = $min_num_aff_pairs, color = \"red\")\n
 		};
 		
 	}
@@ -558,14 +569,14 @@ sub build_chrom_plot
 	{
 		print OUTSCRIPT qq{
 		png("$outbase.smallplot.png", height=150, width=150)\n
-		ggplot(ibd, aes(x = position, y = ibd_samples)) + geom_area(fill="blue") + xlab("") + ylab("") + opts(title="chr$chrom_name", plot.margin = unit(c(0.01,0.01,0.01,0.01), \"cm\"), axis.ticks=theme_blank(), axis.text.x=theme_blank(),axis.title.x=theme_blank(), axis.text.y=theme_blank(),axis.title.y=theme_blank()) + geom_vline(xintercept = $cen_start, linetype = \"longdash\") + geom_vline(xintercept = $cen_stop, linetype = \"longdash\")\n
+		ggplot(ibd, aes(x = position, y = ibd_samples)) + geom_area(fill="blue") + xlab("") + ylab("") + scale_y_continuous(limits = c(0,$num_aff_pairs)) + opts(title="chr$chrom_name", plot.margin = unit(c(0.01,0.01,0.01,0.01), \"cm\"), axis.ticks=theme_blank(), axis.text.x=theme_blank(),axis.title.x=theme_blank(), axis.text.y=theme_blank(),axis.title.y=theme_blank()) + geom_vline(xintercept = $cen_start, linetype = \"longdash\") + geom_vline(xintercept = $cen_stop, linetype = \"longdash\") + geom_hline(yintercept = $min_num_aff_pairs, color = \"red\")\n
 		};		
 	}
 	else
 	{
 		print OUTSCRIPT qq{
 		png("$outbase.smallplot.png", height=150, width=150)\n
-		ggplot(ibd, aes(x = position, y = ibd_samples)) + geom_area(fill="blue") + xlab("") + ylab("") + opts(title="chr$chrom_name", plot.margin = unit(c(0.01,0.01,0.01,0.01), \"cm\"), axis.ticks=theme_blank(), axis.text.x=theme_blank(),axis.title.x=theme_blank(), axis.text.y=theme_blank(),axis.title.y=theme_blank())\n
+		ggplot(ibd, aes(x = position, y = ibd_samples)) + geom_area(fill="blue") + xlab("") + ylab("") + scale_y_continuous(limits = c(0,$num_aff_pairs)) + opts(title="chr$chrom_name", plot.margin = unit(c(0.01,0.01,0.01,0.01), \"cm\"), axis.ticks=theme_blank(), axis.text.x=theme_blank(),axis.title.x=theme_blank(), axis.text.y=theme_blank(),axis.title.y=theme_blank()) + geom_hline(yintercept = $min_num_aff_pairs, color = \"red\")\n
 		};		
 	}
 

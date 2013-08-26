@@ -112,6 +112,8 @@ sub execute {                               # replace with real execution logic.
 
 	warn "Parsing VCF...\n";
 	
+	
+	
 
 	my @candidate_variants = ();
 	my $num_candidates = 0;
@@ -127,7 +129,7 @@ sub execute {                               # replace with real execution logic.
 		exit(0);
 	}
 
-
+	my %centromeres = load_centromeres($self);
 
 	open(OUTFILE, ">$output_file") or die "Can't open outfile: $!\n";
 	print OUTFILE "chrom\tposition\tref\tvar\tdbsnp_status\tmendel_score\tis_hom_diff\tpct_affected_het\tcases\tcases_ref\tcases_het\tcases_hom\tcases_na\tcontrols\tcontrols_ref\tcontrols_het\tcontrols_hom\tcontrols_na\n";
@@ -136,6 +138,8 @@ sub execute {                               # replace with real execution logic.
 	print WINDOWFILE "chrom\tchr_start\tchr_stop\tnum_variants\n";
 	
 	my %window = ();
+	
+
 	
 	## Parse the VCF file ##
 	
@@ -398,6 +402,8 @@ sub execute {                               # replace with real execution logic.
 					$marker_counts{'case_Missing'} = 0 if(!$marker_counts{'case_Missing'});
 					$marker_counts{'control_Missing'} = 0 if(!$marker_counts{'control_Missing'});
 					
+					## Get centromere start/stop ##
+					
 					
 					my $case_call_rate = 0;
 					$case_call_rate = $marker_counts{'case_called'} / $marker_counts{'case'} if($marker_counts{'case'});
@@ -450,6 +456,8 @@ sub execute {                               # replace with real execution logic.
 					}
 					
 					## Determine probability based on mendel segregation status, where any error must be a wrong variant call ##
+			
+
 					
 					if($case_call_rate >= $self->min_call_rate && ($dbsnp_status eq "novel" || $is_hom_diff > 0)) #$dbsnp_status ne "common" && $dbsnp_status ne "uncommon")
 					{
@@ -467,9 +475,12 @@ sub execute {                               # replace with real execution logic.
 						if($window{'chrom'} && $window{'chrom'} ne $chrom)
 						{
 							## Ended a chromosome, so report the window then reset ##
-							print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+#							print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+							print_window($self, $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
 							%window = ();
 						}
+						
+
 						
 						if($is_hom_diff)
 						{
@@ -477,7 +488,8 @@ sub execute {                               # replace with real execution logic.
 							if($window{'chrom'})
 							{
 								$window{'stop'} = $position - 1;
-								print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+#								print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+								print_window($self, $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
 								%window = ();
 							}
 							else
@@ -535,7 +547,8 @@ sub execute {                               # replace with real execution logic.
 	if($window{'chrom'})
 	{
 		## Ended a chromosome, so report the window then reset ##
-		print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+#		print WINDOWFILE join("\t", $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) . "\n" if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
+		print_window($self, $window{'chrom'}, $window{'start'}, $window{'stop'}, $window{'variants'}) if($window{'variants'} > 1 || ($window{'stop'} - $window{'start'} + 1) >= 1000000);
 		%window = ();
 	}
 
@@ -552,6 +565,42 @@ sub execute {                               # replace with real execution logic.
 	foreach my $key (sort keys %stats)
 	{
 		print "$stats{$key}\t$key\n";
+	}
+	
+	
+	sub print_window
+	{
+		my ($self, $chrom, $start, $stop, $variants) = @_;
+		my %centromeres = load_centromeres($self);
+		my $cen_start = my $cen_stop = 0;		
+		($cen_start, $cen_stop) = split(/\t/, $centromeres{$chrom}) if($centromeres{$chrom});
+
+		if($cen_start && $cen_stop && $start <= $cen_start && $stop >= $cen_stop)
+		{
+			## Window contains entire centromere, so adjust ##
+			print WINDOWFILE join("\t", $chrom, $start, $cen_start, $variants) . "\n";
+			print WINDOWFILE join("\t", $chrom, $cen_stop, $stop, $variants) . "\n";		
+		}
+		elsif($cen_start && $cen_stop && $start <= $cen_start && $stop >= $cen_start)
+		{
+			## WIndow runs into centromere ##
+			print WINDOWFILE join("\t", $chrom, $start, $cen_start, $variants) . "\n";
+		}
+		elsif($cen_start && $cen_stop && $start <= $cen_stop && $stop >= $cen_stop)
+		{
+			## Window starts within centromere
+			print WINDOWFILE join("\t", $chrom, $cen_stop, $stop, $variants) . "\n";
+		}
+		elsif($cen_start && $cen_stop && $start >= $cen_start && $stop <= $cen_stop)
+		{
+			## Window within centromere - don't print ##
+		}
+		else
+		{
+
+			print WINDOWFILE join("\t", $chrom, $start, $stop, $variants) . "\n"
+		}
+
 	}
 
 
@@ -652,6 +701,8 @@ if($rhro_by_chrom{$chrom})
 {
 	my $region_no = 0;
 	my @rhro_lines = split(/\n/, $rhro_by_chrom{$chrom});
+	
+	
 	foreach my $rhro_line (@rhro_lines)
 	{
 		$region_no++;
@@ -857,11 +908,11 @@ sub load_rhro_regions
 		$lineCounter++;
 		
 		my ($chrom, $chr_start, $chr_stop, $variants) = split(/\t/, $line);
-		if($variants >= 2)
-		{
+#		if($variants >= 2)
+#		{
 			$regions{$chrom} .= "\n" if($regions{$chrom});
 			$regions{$chrom} .= join("\t", $chr_start, $chr_stop, $variants);			
-		}
+#		}
 
 	}
 	

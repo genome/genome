@@ -323,6 +323,11 @@ sub execute {                               # replace with real execution logic.
 									$dbsnp_status = "rare";
 								}
 							}
+							elsif($info_values{'KGPilot123'})
+							{
+								## 1000 Genomes but no GMAF = rare ##
+								$dbsnp_status = "rare";
+							}													      
 							else
 							{
 								## If a very rare mutation ##
@@ -355,12 +360,12 @@ sub execute {                               # replace with real execution logic.
 					}
 					elsif($dbsnp_status eq "rare")
 					{
-						## Verifiably rare, but seen in populations, so about 3.23% chance of being causale ##
+						## Verifiably rare, but seen in populations, so about 9.32% chance of being causale ##
 						$pop_probability = 0.20;							
 					}
 					elsif($dbsnp_status eq "known")
 					{
-						## About 1/3 chance that it was pulled in from OMIM ##
+						## Now that we're marking known correctly, there's a very small chance that it's reported as such, but it's possible. This should probably be downgraded #
 						$pop_probability = 0.60;							
 					}
 					elsif($dbsnp_status eq "mutation")
