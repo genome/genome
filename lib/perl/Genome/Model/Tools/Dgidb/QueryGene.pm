@@ -42,12 +42,12 @@ class Genome::Model::Tools::Dgidb::QueryGene {
         %OPTIONAL_PROPERTIES,
         output_file => {
             is  => 'Text',
-            doc => 'A file path to store the output',
+            doc => 'A file path to store the output. Default is to STDOUT',
         },
         antineoplastic_only => {
             is  => 'Boolean',
-            default_value => 0,
             doc => 'Limit results to anti-cancer drugs only',
+            default_value => 0,
         },
     ],
     has_optional_output => [
@@ -107,14 +107,14 @@ sub write_output {
     my $writer;
     my @headers = qw(gene_name drug_name interaction_type source gene_categories);
 
-    if ($out_file) {
-        $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-            output    => $out_file,
-            headers   => \@headers,
-            separator => "\t",
-        );
-        die $self->error_message("Failed to create IO SeparatedValueWriter for $out_file") unless $writer;
-    }
+    my %params = (
+        headers   => \@headers,
+        separator => "\t",
+    );
+    $params{output} = $out_file if $out_file; #if no outfile, default to STDOUT
+
+    $writer = Genome::Utility::IO::SeparatedValueWriter->create(%params);
+    die $self->error_message("Failed to create IO SeparatedValueWriter for $out_file") unless $writer;
     
     my $output = {};
 
@@ -134,9 +134,7 @@ sub write_output {
                 $gene_categories,
             );
 
-            if ($out_file) {
-                $writer->write_one(\%content);
-            }
+            $writer->write_one(\%content);
             push @{$output->{matchedTerms}}, \%content;
         }
     }
