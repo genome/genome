@@ -321,15 +321,14 @@ sub make_windows {
 
 sub get_cigar_indels {
     my ($self, $output_dir, $ref_fasta, $bam_file) = @_;
-    my $output_prefix = $output_dir . "/cigar_generated_indels";
     my $get_cigar_indels = Genome::Model::Tools::Dindel::GetCigarIndels->create(
         input_bam=>$bam_file,
-        output_prefix=>$output_prefix,
+        output_directory=>$output_dir,
         ref_fasta=>$ref_fasta
     );
     if($get_cigar_indels->execute()) {
-        my $output_variants = $output_prefix . ".variants.txt";
-        my $output_libs = $output_prefix . ".libraries.txt";
+        my $output_variants = $get_cigar_indels->output_variants;
+        my $output_libs = $get_cigar_indels->output_libraries;
         return ($output_variants, $output_libs);
     }
     else {
