@@ -9,7 +9,7 @@ class Genome::Model::MetagenomicCompositionShotgun::Command::ImportedDataArchive
     doc => 'print path to imported data archives',
     has => [
         model_id => {
-            is => 'Integer',
+            is => 'Text',
         },
     ],
 };

@@ -15,7 +15,7 @@ our $TESTING_DISK_ALLOCATION = 0;
 
 class Genome::Disk::Allocation {
     is => 'Genome::Notable',
-    table_name => 'GENOME_DISK_ALLOCATION',
+    table_name => 'disk.allocation',
     id_by => [
         id => {
             is => 'Text',
@@ -1328,9 +1328,6 @@ sub _verify_no_child_allocations {
     my $data_source = $meta->data_source;
     my $owner       = $data_source->owner;
     my $query_string;
-
-    #POSTGRES TODO:  remove this little ugly hack when we go 100% postgres.
-    $data_source = Genome::DataSource::PGTest->get() if ($ENV{'GENOME_QUERY_POSTGRES'});
 
     if ($data_source->isa('UR::DataSource::Oracle')) {
         my $fq_table_name = join('.', $owner, $table_name);

@@ -7,7 +7,7 @@ use Genome;
 use Carp;
 
 class Genome::Sys::User::RoleMember {
-    table_name => 'GENOME_SYS_USER_ROLE_MEMBER',
+    table_name => 'subject.role_member',
     id_by => [
         user_email => {
             is => 'Text',

@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 class Genome::SoftwareResult::Input {
-    table_name => 'SOFTWARE_RESULT_INPUT',
+    table_name => 'result.input',
     type_name => 'software result input',
     id_by => [
         software_result => {

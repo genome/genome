@@ -65,7 +65,7 @@ class Genome::Model::Tools::Hgmi::SendToPap (
     ],
     has_optional => [
         taxon_id => {
-            is  => 'Integer',
+            is  => 'Text',
             doc => 'NCBI Taxonomy id',
         },
         workflow_xml => {

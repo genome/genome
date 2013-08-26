@@ -57,7 +57,6 @@ sub protect_real_data_sources {
     my $lds_path = $lds->__meta__->module_path;
 
     my %ds_module_filename = (
-        'Genome::DataSource::Main' => 'Genome/DataSource/Main.pm',
         'Genome::DataSource::GMSchema' => 'Genome/DataSource/GMSchema.pm',
     );
     for my $ds_module (keys %ds_module_filename) {

@@ -37,7 +37,7 @@ class Genome::WorkOrderItem {
             len => 16,
         },
         dna_id => {
-            is => 'Integer',
+            is => 'Text',
             len => 20,
         },
         sample => {

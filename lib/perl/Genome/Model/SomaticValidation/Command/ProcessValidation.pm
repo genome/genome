@@ -14,7 +14,7 @@ class Genome::Model::SomaticValidation::Command::ProcessValidation {
         output_file                 => { is => 'Text', doc => "Output file for validation results", is_output => 1 },
         output_plot                 => { is => 'Boolean', doc => "Optional plot of variant allele frequencies", is_optional => 1, },
         build_id => {
-            is => 'Integer',
+            is => 'Text',
             is_output => 1,
             doc => 'build id of SomaticValidation model',
         },

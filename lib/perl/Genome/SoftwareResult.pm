@@ -18,11 +18,12 @@ use Genome::Utility::Instrumentation;
 
 class Genome::SoftwareResult {
     is_abstract => 1,
-    table_name => 'SOFTWARE_RESULT',
+    table_name => 'result.software_result',
     subclass_description_preprocessor => 'Genome::SoftwareResult::_expand_param_and_input_properties',
     subclassify_by => 'subclass_name',
+    id_generator => '-uuid',
     id_by => [
-        id => { is => 'Number', len => 20 },
+        id => { is => 'Text', len => 32 },
     ],
     attributes_have => [
         is_param => { is => 'Boolean', is_optional=>'1' },
