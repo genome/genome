@@ -51,13 +51,20 @@ test_txt_files_are_identical();
 done_testing();
 
 sub test_bam_files_are_identical {
-    my $filename = 'all_events_realigned.merged.sorted.bam';
-    my $expected = File::Spec->join($expected_output_dir, $filename);
+    my $filename_base = 'all_events_realigned.merged.sorted';
+    my $expected = File::Spec->join($expected_output_dir, $filename_base . ".bam");
+    my $expected_sam = File::Spec->join($expected_output_dir, $filename_base . ".sam");
     ok(-s $expected, "Found expected output bam file: $expected");
-    my $found = File::Spec->join($output_dir, $filename);
-    ok(-s $found, "Found resulting bam file: $found");
-    my $diff = `diff <(samtools view $expected) <(samtools view $found)`;
-    ok(!defined($diff), "No differences in Bam files.");
+
+    my $found = File::Spec->join($output_dir, $filename_base . ".bam");
+    my $found_sam = File::Spec->join($output_dir, $filename_base . ".sam");
+    Genome::Model::Tools::Sam::BamToSam->execute(
+        bam_file => $found,
+        include_headers => 0,
+        sam_file => $found_sam,
+    );
+
+    compare_ok($expected_sam, $found_sam, "No differences in Bam files.");
 }
 
 sub test_txt_files_are_identical {
