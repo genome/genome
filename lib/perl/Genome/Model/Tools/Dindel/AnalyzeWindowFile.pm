@@ -7,36 +7,30 @@ use Genome;
 use File::Basename;
 
 class Genome::Model::Tools::Dindel::AnalyzeWindowFile {
-    is => 'Command',
-    has => [
-    window_file=> {
-        is=>'String',
-        is_input=>1,
-    },
-    library_metrics_file=>{
-        is=>'String',
-        is_input=>1,
-        doc=>'from step one... getCigarIndels',
-    },
-    bam_file=> {
-        is=>'String',
-        is_input=>1,
-    },
-    output_prefix=> {
-        is=>'String',
-        is_input=>1,
-        is_output=>1,
-    },
-    ref_fasta=> {
-        is=>'String',
-        is_input=>1,
-    },
-    output_bam=> {
-        is=>'Number',
-        default=>0,
-        is_optional=>1,
-        is_input=>1,
-    },
+    is => 'Genome::Model::Tools::Dindel::Base',
+    has_input => [
+        window_file => {
+            is => 'Path',
+        },
+        library_metrics_file => {
+            is => 'Path',
+            doc => 'from step one... getCigarIndels',
+        },
+        bam_file => {
+            is => 'Path',
+        },
+        output_prefix => {
+            is => 'Path',
+            is_output => 1,
+        },
+        ref_fasta => {
+            is => 'Path',
+        },
+        output_bam => {
+            is => 'Boolean',
+            default => 0,
+            is_optional => 1,
+        },
     ],
 };
 
@@ -57,27 +51,39 @@ EOS
 
 sub execute {
     my $self = shift;
-    my $dindel_location = "/gscmnt/gc2146/info/medseq/dindel/binaries/dindel-1.01-linux-64bit";
-    my (undef, $callback_script_path) = File::Basename::fileparse(__FILE__);
-    my $callback_script = $callback_script_path . "merge_bam_callback.pl";
 
-    if($self->output_bam) {
+    my @cmd = (
+        $self->dindel_executable,
+        '--analysis', 'indels',
+        '--doDiploid',
+        '--bamFile', $self->bam_file,
+        '--varFile', $self->window_file,
+        '--outputFile', $self->output_prefix,
+        '--ref', $self->ref_fasta,
+        '--libFile', $self->library_metrics_file,
+    );
+
+    if ($self->output_bam) {
+        my (undef, $callback_script_path) = File::Basename::fileparse(__FILE__);
+        my $callback_script = $callback_script_path . "merge_bam_callback.pl";
         unless(-s $callback_script) {
             $self->error_message("unable to locate dindel helper script at location: $callback_script\n");
             return undef;
         }
+
+        push @cmd, '--outputRealignedBAM';
+        push @cmd, '--processRealignedBAM', $callback_script;
     }
-    my $ref = $self->ref_fasta;
-    my $output = $self->output_prefix;
-    my $input = $self->window_file;
-    my $lib_file = $self->library_metrics_file;
-    my $bam = $self->bam_file;
-    my $cmd = "$dindel_location --analysis indels --doDiploid --bamFile $bam --varFile $input --outputFile $output --ref $ref --libFile $lib_file";
-    if($self->output_bam) {
-        $cmd .= " --outputRealignedBAM";
-        $cmd .= " --processRealignedBAM $callback_script";
-    }
-    return Genome::Sys->shellcmd(cmd=>$cmd);
+
+
+    return Genome::Sys->shellcmd_arrayref(
+        cmd => \@cmd,
+        input_files => [
+            $self->bam_file,
+            $self->window_file,
+            $self->ref_fasta,
+        ],
+    );
 }
 
 1;
