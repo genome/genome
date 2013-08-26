@@ -15,6 +15,7 @@ class Genome::Model::Tools::Dindel::VcfToDindel {
     output_dindel_file=>{
         is=>'String',
         is_input=>1,
+        is_output=>1,
     },
     ref_fasta=> {
         is=>'String',
