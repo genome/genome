@@ -162,6 +162,7 @@ class Genome::Model {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
             doc => 'Versions of a model over time, with varying quantities of evidence',
+            where => [ -order_by => '-date_scheduled', ],
         },
         input_associations => {
             is => 'Genome::Model::Input',
