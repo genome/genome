@@ -504,7 +504,7 @@ sub _load_instrument_data {
 
     $self->status_message('Filter instrument data we can process...');
     # sort for determinism since data is in a hash
-    my $sorter = Genome::InstrumentData->__meta__->id_property_sorter;
+    my $sorter = sub { $a->{_priority} <=> $b->{_priority} or Genome::InstrumentData->__meta__->id_property_sorter->($a, $b) };
     my @instrument_data_to_process;
     my $max_instrument_data_to_process = $self->max_instrument_data_to_process;
     for my $instrument_data ( sort $sorter values %instrument_data ) {
