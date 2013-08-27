@@ -108,7 +108,8 @@ sub builds {
 sub get_last_succeeded_coverage_stats_build_from_model {
     my $self = shift;
     my $model = shift;
-    my @sorted_builds = sort { $b->id <=> $a->id } $model->builds();
+    # results from $model->builds are now automatically sorted by date_scheduled.
+    my @sorted_builds = $model->builds;
     for my $build (@sorted_builds) {
         my @r = $build->result_users('software_result.subclass_name' => 'Genome::InstrumentData::AlignmentResult::Merged::CoverageStats');
         if(scalar @r) {
