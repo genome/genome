@@ -59,7 +59,7 @@
           "subject_name": "<xsl:value-of select="../@subject_name"/>",
           "model_name": "<xsl:value-of select="../@model_name"/>",
           "lane_count": "<xsl:value-of select="../@lane_count"/>",
-          "id": <xsl:value-of select="../@id"/>,
+          "id": "<xsl:value-of select="../@id"/>",
           "total_bp": <xsl:value-of select="total_bp"/>,
           "total_unaligned_bp": <xsl:choose>
           <xsl:when test="total_unaligned_bp">
@@ -147,7 +147,7 @@
           "subject_name": "<xsl:value-of select="../@subject_name"/>",
           "model_name": "<xsl:value-of select="../@model_name"/>",
           "lane_count": "<xsl:value-of select="../@lane_count"/>",
-          "id": <xsl:value-of select="../@id"/>,
+          "id": "<xsl:value-of select="../@id"/>",
           "total_bp": <xsl:value-of select="total_bp"/>,
           "total_unaligned_bp": <xsl:choose>
           <xsl:when test="total_unaligned_bp">
@@ -199,7 +199,7 @@
           "subject_name": "<xsl:value-of select="@subject_name"/>",
           "model_name": "<xsl:value-of select="@model_name"/>",
           "lane_count": "<xsl:value-of select="@lane_count"/>",
-          "id": <xsl:value-of select="@id"/>,
+          "id": "<xsl:value-of select="@id"/>",
           "total_bp": 0,
           "total_unaligned_bp": 0,
           "duplicate_off_target_aligned_bp": 0,
