@@ -97,6 +97,10 @@ EOS
 sub execute {
     my ($self) = @_;
 
+    if ($self->roi_list) {
+        $self->_check_roi_list;
+    }
+
     Genome::Sys->create_directory($self->output_directory);
     my @builds = $self->_resolve_builds();
     my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcfResult->get_or_create(
@@ -116,6 +120,25 @@ sub execute {
     $self->software_result($software_result);
     $self->final_result(join("/", $software_result->output_dir,
                 sprintf("%s.merged.vcf.gz", $self->variant_type)));
+    return 1;
+}
+
+# Early detection for the common problem that the ROI reference_name is not set correctly
+sub _check_roi_list {
+    my $self = shift;
+
+    my $bed_file = $self->roi_list->file_path;
+    my @chr_lines = `grep chr $bed_file`;
+    my $reference_name = $self->roi_list->reference_name;
+    my $roi_name = $self->roi_list->name;
+
+    #if (@chr_lines and not ($reference_name =~ m/nimblegen/) ) {
+    if (@chr_lines and not ($reference_name =~ m/nimblegen/) ) {
+        die $self->error_message("It looks like your ROI has 'chr' chromosomes but does not have a 'nimblegen' reference name (It is currently $reference_name).\n".
+            "This will result in your variant sets being filtered down to nothing. An example of a fix to this situation: \n".
+            "genome feature-list update '$roi_name' --reference nimblegen-human-buildhg19 (if your reference is hg19)");
+    }
+
     return 1;
 }
 
