@@ -33,7 +33,7 @@ class Genome::Model::Tools::Dindel::GetCigarIndels {
             calculate_from => ['output_prefix'],
         },
     ],
-    has_transient => {
+    has_optional_transient => {
         output_prefix => {
             is_calculated => 1,
             calculate =>  q{ File::Spec->join($output_directory, "cigar_generated_indels") },
