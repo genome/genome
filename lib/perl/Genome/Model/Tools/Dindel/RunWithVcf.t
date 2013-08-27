@@ -21,7 +21,7 @@ my $VERSION = 0; # Bump this each time tests data changes
 my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$VERSION");
 diag "Test data located at $test_dir\n";
 
-my $bam_file = File::Spec->join($test_dir, '134053361.bam');
+my $bam_file = File::Spec->join($test_dir, '134053361-region-limited.bam');
 ok(-s $bam_file, "Found input Bam file");
 
 my $input_vcf = File::Spec->join($test_dir, 'testdata-indel.vcf');
