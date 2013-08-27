@@ -171,6 +171,7 @@ for my $child (1..$children) {
         push @pids, $pid;
     }
     else {
+        srand(time ^ $pid);
         print "*** Spinning up child process $child, PID $$\n";
         my $volume = $volumes[$child % @volumes];
         do_race_lock($child, $group, $volume, $test_dir);
