@@ -157,7 +157,7 @@ sub _get_ids_for {
     my ($self, $class) = @_;
     $self->status_message("Getting IDs for $class...");
 
-    my $iterator = $class->create_iterator(-order_by => 'id');
+    my $iterator = $class->create_iterator;
     my $set = Set::Scalar->new();
     while ( my $obj = $iterator->next ) {
         $set->insert($obj->id);
