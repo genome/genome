@@ -15,6 +15,7 @@ class Genome::Model::Tools::Dindel::MakeDindelWindows {
         num_windows_per_file =>  {
             is => 'Number',
             is_optional => 1,
+            doc => 'The number of windows dindel will put in each window_file.  If < 1, there will be only one window_file.',
         },
         output_directory => {
             is => 'Path',
@@ -63,9 +64,34 @@ sub execute {
     );
 
     if (defined($self->num_windows_per_file)) {
-        push @cmd, '--numWindowsPerFile', $self->num_windows_per_file;
+        if ($self->num_windows_per_file < 1) {
+            return $self->run_with_single_output(@cmd);
+        } else {
+            push @cmd, '--numWindowsPerFile', $self->num_windows_per_file;
+            return $self->run(@cmd);
+        }
+    } else {
+        return $self->run(@cmd);
     }
+}
 
+sub run_with_single_output {
+    my ($self, @cmd) = @_;
+
+    push @cmd, '--numWindowsPerFile', 10_000_000_000;
+    my $result = self->run(@cmd);
+
+    my @output_files = $self->output_files;
+    if (scalar(@output_files) > 1) {
+        die sprintf("Found more than one output_file (%s) when only one should have been produced.",
+            scalar(@output_files));
+    } else {
+        return $result;
+    }
+}
+
+sub run {
+    my ($self, @cmd) = @_;
     return Genome::Sys->shellcmd_arrayref(
         cmd => \@cmd,
         input_files => [
