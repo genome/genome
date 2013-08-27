@@ -1748,7 +1748,7 @@ sub _abandon_events { # does not realloc
 
     my @events = do {
         no warnings;
-        sort { $b->id <=> $a->id || $b->id cmp $a->id } $self->events;
+        sort { $b->date_scheduled cmp $a->date_scheduled } $self->events;
     };
 
     for my $event ( @events ) {
