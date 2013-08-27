@@ -32,7 +32,7 @@ my $printed = 0;
 sub write_form {
     if ( !$printed ) {
         print <<'        MARK';
-State      Build ID     LSF JOB ID Current Status  Action     Owner    Fix
+State      Build ID                           LSF JOB ID Current Status  Action     Owner    Fix
         MARK
         $printed++;
     }
@@ -58,7 +58,7 @@ sub execute {
 
     no warnings;
     format STDOUT =
-@<<<<<<<<< @<<<<<<<<<<< @<<<<<<<<< @<<<<<<<<<<<<<< @<<<<<<<<< @<<<<<<< @<<
+@<<<<<<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<< @<<<<<<<<<<<<<< @<<<<<<<<< @<<<<<<< @<<
 $state,    $build_id,  shift @lsf_id,   $event_status, $action, $owner, $fix
                         @<<<<<<<<< ~~
                        shift @lsf_id 
@@ -245,11 +245,11 @@ sub build_lists {
         my $ji = Job::Iterator->new;
         while ( my $job = $ji->next ) {
             next if ( $job->{Status} eq 'PSUSP' );
-            if ( $job->{Command} =~ /build run.+?--build-id (\d+)/ ) {
+            if ( $job->{Command} =~ /build run.+?--build-id ([[:xdigit:]]+)/ ) {
                 $builds_lsf->{$1} ||= [];
                 push @{ $builds_lsf->{$1} }, $job->{Job};
             }
-            if ( exists $job->{'Job Name'} && $job->{'Job Name'} =~ /(\d+)$/ ) {
+            if ( exists $job->{'Job Name'} && $job->{'Job Name'} =~ /([[:xdigit:]]+)$/ ) {
                 $events_lsf->{$1} ||= [];
                 push @{ $events_lsf->{$1} }, $job->{Job};
             }
@@ -348,7 +348,7 @@ sub derive_build_status {
             ## see if its really running
             my $found = 0;
             foreach (@$running_event_ids) {
-                if ( $_ == $event->id ) {
+                if ( $_ eq $event->id ) {
                     $found = 1;
                     last;
                 }
