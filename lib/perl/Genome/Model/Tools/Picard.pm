@@ -288,6 +288,10 @@ MESSAGE
             $last_update = time;
             print $_[0] if defined $_[0];
         },
+        '2>' => on_each_line {
+            $last_update = time;
+            print STDERR $_[0] if defined $_[0];
+        },
         '$$' => \$pid
     );
     $cv->cb(sub { undef $w });
