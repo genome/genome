@@ -167,7 +167,7 @@ sub _resolve_instrument_data_from_library {
 
     my $lib_name = $sample->name.'-microarraylib';
     my @libraries = Genome::Library->get(name => $lib_name);
-    if (@library > 1) {
+    if (@libraries > 1) {
         $self->error_message("Mulitple libraries found with name $lib_name for sample ".$sample->__display_name__);
         return;
     } elsif ( ! @libraries ) {
