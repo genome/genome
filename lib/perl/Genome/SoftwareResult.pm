@@ -731,7 +731,7 @@ sub delete {
     if (@users) {
         my $name = $self->__display_name__;
         die "Refusing to delete $class_name $name as it still has users:\n\t"
-            .join("\n\t", map { $_->user_class . "\t" . $_->user_id } @users);
+            .join("\n\t", map { $_->user_class_name . "\t" . $_->user_id } @users);
     }
 
     my @to_nuke = ($self->params, $self->inputs, $self->metrics);
