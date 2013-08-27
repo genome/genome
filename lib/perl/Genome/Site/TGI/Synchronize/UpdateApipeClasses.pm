@@ -56,12 +56,6 @@ sub objects_to_sync {
     );
 }
 
-# Specifies the order in which classes should be synced
-sub sync_order {
-    my %objs = objects_to_sync();
-    return sort keys %objs;
-}
-
 sub _suppress_status_messages {
     my $self = shift;
 
@@ -139,9 +133,6 @@ sub execute {
     # Stores copied and missing IDs for each type
     my %report;
 
-    # Maps new classes with old classes
-    #my %types = $self->objects_to_sync;
-        #for my $old_type ($self->sync_order) {
     my @classes_to_sync = $self->objects_to_sync;
     for ( my $i = 0; $i < @classes_to_sync; $i += 2 ) {
         my $lims_class = $classes_to_sync[$i];
