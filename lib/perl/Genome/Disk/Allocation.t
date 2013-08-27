@@ -218,6 +218,9 @@ sub do_race_lock {
         UNLINK => 1,
     );
 
+    my $mount_path = $volume->mount_path;
+    $path =~ s/$mount_path//;
+
     # The volume/group objects still exist (they were created in the parent process), but they aren't in the
     # UR cache for the child process, which means that gets/loads will not find them. Overriding the
     # get/load methods as needed on these classes to just return the objects gets around this.
