@@ -26,6 +26,9 @@ sub execute {
     for my $class (keys %report){
         next unless $class =~ m/Genome::InstrumentData/; #only remove instrument data for now
         next if $class eq 'Genome::InstrumentData::Imported'; #imported instrument data doesn't come from LIMS, so skip it
+        print "WOULD DELETE $class FOR IDS:\n";
+        print Data::Dumper::Dumper($report{$class}->{missing});
+        next;
         my @ids = @{$report{$class}->{missing}} if $report{$class}->{missing};
         my @deleted;
         for my $id (@ids){
