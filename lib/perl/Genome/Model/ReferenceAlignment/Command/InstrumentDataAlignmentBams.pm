@@ -29,7 +29,7 @@ sub execute {
     die $self->error_message('Please provide valid build id') unless $build;
     die $self->error_message('The provided build '.$build->id. ' is not reference alignment build.')
         unless $build->model->type_name eq 'reference alignment';
-    
+
     print join("\t", 'INSTRUMENT_DATA_ID', 'FLOW_CELL_ID', 'LANE', 'BAM_PATH', 'BAMQC_PATH') . "\n";
     for my $instrument_data ($build->instrument_data) {
         my $instrument_data_id = $instrument_data->id;
@@ -38,9 +38,20 @@ sub execute {
         my ($alignment_result) = $build->alignment_results_for_instrument_data($instrument_data);
         my $bam_path = $alignment_result ? $alignment_result->output_dir . '/all_sequences.bam' : '-';
         #Get the latest bamqc result
-        my ($bamqc_result) = sort {$b->id <=> $a->id} Genome::InstrumentData::AlignmentResult::Merged::BamQc->get(
+        my @bamqc_results =  Genome::InstrumentData::AlignmentResult::Merged::BamQc->get(
             alignment_result_id => $alignment_result->id
         );
+
+        my $max = '0';
+        my $bamqc_result;
+        for(@bamqc_results) {
+            my $earliest_time = $_->best_guess_date;
+            if ($earliest_time > $max) {
+                $max = $earliest_time;
+                $bamqc_result = $_;
+            }
+        }
+
         my $bamqc_path = $bamqc_result ? $bamqc_result->output_dir : '-';
         print join("\t", $instrument_data_id, $flow_cell_id, $lane, $bam_path, $bamqc_path) . "\n";
     }
