@@ -997,7 +997,7 @@ sub descendents {
 sub best_guess_date {
     my $self = shift;
     my ($earliest_time) = sort map { $_->creation_time }
-        $self->disk_allocation;
+        $self->disk_allocations;
     return $earliest_time;
 }
 
