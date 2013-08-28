@@ -109,6 +109,7 @@ sub _unlock_me {
 
 sub execute {
     my $self = shift;
+    $self->status_message('Sync LIMS to Genome...');
 
     $self->_lock_me;
 
@@ -133,7 +134,6 @@ sub execute {
 
         $self->status_message('Detemine IDs to create...');
         my $ids_to_create = $lims_ids->difference($genome_ids);
-        $self->status_message('Detemine IDs to create...done');
         $self->status_message('Found IDs to create: '.scalar(@{$ids_to_create}));
 
         if ( not $ids_to_create->is_empty ) {
@@ -150,6 +150,7 @@ sub execute {
 
     $self->_unlock_me;
 
+    $self->status_message('Sync LIMS to Genome...done');
     return 1;
 }
 
