@@ -96,7 +96,7 @@ sub get_format_meta {
     my @tags = $self->SUPER::get_format_meta;
 
     my $tlod = {MetaType => "FORMAT", ID => "TLOD",    Number => ".", Type => "Float", Description => "Log of (likelihood tumor event is real / likelihood event is sequencing error)"};
-    my $per_sample_filter = {MetaType => "FORMAT", ID => "FT",    Number => 1, Type => "String",  Description => "Sample genotype filter"},
+    my $per_sample_filter = {MetaType => "FORMAT", ID => "FT",    Number => 1, Type => "String",  Description => "Sample genotype filter"};
     
     return (@tags, $tlod, $per_sample_filter);
 }
