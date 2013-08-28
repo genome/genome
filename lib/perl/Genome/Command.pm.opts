@@ -5305,6 +5305,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>annotate-genes-by-dgidb',
+      [
+        'input-file=s',
+        'files',
+        'gene-name-column=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>converge',
       [
         '>cufflinks-de',
