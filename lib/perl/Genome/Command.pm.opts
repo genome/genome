@@ -10814,6 +10814,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'normal-window-file=s',
         'files',
+        'plot-full-chrs!',
+        undef,
         'r-file=s',
         'files',
         'tumor-window-file=s',
