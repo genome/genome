@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Synchronize::Classes::Taxon; 
+package Genome::Site::TGI::Synchronize::Classes::OrganismTaxon; 
 
 use strict;
 use warnings;
@@ -22,7 +22,7 @@ TAXON_ID                       NUMBER   (10)                    {null} NOT NULL 
 15 properties, 13 copied, 12 updated
 =cut
 
-class Genome::Site::TGI::Synchronize::Classes::Taxon {
+class Genome::Site::TGI::Synchronize::Classes::OrganismTaxon {
     is => 'UR::Object',
     table_name => "organism_taxon",
     id_by => [
