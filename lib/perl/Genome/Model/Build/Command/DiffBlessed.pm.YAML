@@ -1,7 +1,7 @@
 ---
 apipe-test-amplicon-assembly: 133133151
 apipe-test-clinseq-v1: 133114501
-apipe-test-clinseq-wer: 140346667
+apipe-test-clinseq-wer: a289c011f8844bd5b0c36173a09ddb8a
 apipe-test-de-novo-soap: 137388725
 apipe-test-de-novo-velvet: 133133150
 apipe-test-gene-prediction-bacterial: 139933025
