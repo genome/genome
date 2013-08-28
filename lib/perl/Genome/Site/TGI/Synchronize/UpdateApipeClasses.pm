@@ -36,8 +36,8 @@ class Genome::Site::TGI::Synchronize::UpdateApipeClasses {
 # it can lead to some attributes not being copied over.
 sub objects_to_sync {
     return (
-        'Genome::Site::TGI::Taxon' => 'Genome::Taxon',
-        'Genome::Site::TGI::Individual' => 'Genome::Individual',
+        'Genome::Site::TGI::Synchronize::Classes::OrganismTaxon' => 'Genome::Taxon',
+        'Genome::Site::TGI::Synchronize::Classes::OrganismIndividual' => 'Genome::Individual',
         'Genome::Site::TGI::PopulationGroup' => 'Genome::PopulationGroup',
         'Genome::Site::TGI::Synchronize::Classes::OrganismSample' => 'Genome::Sample',
         'Genome::Site::TGI::Synchronize::Classes::LibrarySummary' => 'Genome::Library',
@@ -431,6 +431,16 @@ sub _create_organismsample {
     return $self->_create_object($original_object, $new_object_class);
 }
 
+sub _create_organismindividual {
+    my ($self, $original_object, $new_object_class) = @_;
+    return $self->_create_object($original_object, $new_object_class);
+}
+
+sub _create_taxon {
+    my ($self, $original_object, $new_object_class) = @_;
+    return $self->_create_object($original_object, $new_object_class);
+}
+
 sub _create_object {
     my ($self, $original_object, $new_object_class) = @_;
 
@@ -471,33 +481,6 @@ sub _create_populationgroup {
     };
     confess "Could not create new object of type $new_object_class based on object of type " .
     $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
-
-    return 1;
-}
-
-sub _create_individual {
-    my ($self, $original_object, $new_object_class) = @_;
-    return $self->_create_taxon($original_object, $new_object_class);
-}
-
-sub _create_taxon {
-    my ($self, $original_object, $new_object_class) = @_;
-
-    my %params;
-    for my $property ($new_object_class->__meta__->_legacy_properties) {
-        my $property_name = $property->property_name;
-        $params{$property_name} = $original_object->{$property_name} if defined $original_object->{$property_name};
-    }
-
-    my $object = eval { 
-        $new_object_class->create(
-            %params, 
-            id => $original_object->id, 
-            subclass_name => $new_object_class
-        ) 
-    };
-    confess "Could not create new object of type $new_object_class based on object of type " .
-        $original_object->class . " with id " . $original_object->id . ":\n$@" unless $object;
 
     return 1;
 }
