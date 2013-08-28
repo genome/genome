@@ -281,7 +281,7 @@ sub execute {
     if($@) { $self->warning_message($@); }
     $self->status_message("Your instrument-data id is ".$instrument_data_id);
 
-    return $instrument_data_id;
+    return defined $instrument_data_id;
 }
 
 sub _add_stats {
