@@ -73,7 +73,14 @@ class Genome::Model::Tools::CopyNumber::PlotIndividualCn{
             is => 'String',
             is_optional => 1,
             doc =>'if provided, will output a file containing the R commands that are run',
-        },        
+        },
+        plot_full_chrs => {
+            is => 'Boolean',
+            is_optional => 1,
+            default => 0,
+            doc =>'output only a view of the entirety of each chromosome',
+        }
+
         ]
 };
 
@@ -89,6 +96,7 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
+    my $segment_file = $self->segment_file;
 
     my $rfile;
     my $newfile;
@@ -117,11 +125,34 @@ sub execute {
     my $count = 0;
     my $skipped = 0;
 
-    my $inFh = IO::File->new( $self->segment_file ) || die "can't open segment file\n";
+    #if plot full chrs, create a new segment file for each chromosome.
+    if($self->plot_full_chrs){
+        my ($seghandle,$segfile) = Genome::Sys->create_temp_file;
+        unless($seghandle) {
+            $self->error_message("Unable to create temporary file $!");
+            die;
+        }        
+
+        my $entryfile = $self->annotation_directory . "/" . $self->genome_build . '/entrypoints.male';
+        my $infile = IO::File->new( $entryfile ) || die "can't open segment file\n";
+        while( my $line = $infile->getline )
+        {
+            chomp($line);
+            my @F = split("\t",$line);
+            print $seghandle join("\t",($F[0],"1",$F[1],"0","2")) . "\n";
+        }
+        close($infile);
+        close($seghandle);
+        $segment_file = $segfile;        
+    }
+
+
+
+    my $inFh = IO::File->new( $segment_file ) || die "can't open segment file\n";
     while( my $line = $inFh->getline )
     {
         chomp($line);
-        my @F = split("\t",$line);        
+        my @F = split("\t",$line);
 
         unless ($F[4] >= $self->gain_threshold || $F[4] <= $self->loss_threshold){
             $skipped++;
@@ -132,15 +163,20 @@ sub execute {
         print $rfile 'xmin = ' . $F[1] . "\n";
         print $rfile 'xmax = ' . $F[2] . "\n";
         print $rfile 'print("plotting alt: ' . "$F[0]:$F[1]-$F[2]" . '")' . "\n";
-        if(($F[2]-$F[1]) > 50000){
-            print $rfile 'zxmin = xmin-(xmax-xmin)' . "\n";
-            print $rfile 'xmax = xmax+(xmax-xmin)' . "\n";
-            print $rfile 'xmin=zxmin' . "\n";            
-        } else {
-            print $rfile 'xmin = xmin-50000' . "\n";
-            print $rfile 'xmax = xmax+50000' . "\n";
+
+        #add the padding
+        unless($self->plot_full_chrs){
+
+            if(($F[2]-$F[1]) > 50000){
+                print $rfile 'zxmin = xmin-(xmax-xmin)' . "\n";
+                print $rfile 'xmax = xmax+(xmax-xmin)' . "\n";
+                print $rfile 'xmin=zxmin' . "\n";
+            } else {
+                print $rfile 'xmin = xmin-50000' . "\n";
+                print $rfile 'xmax = xmax+50000' . "\n";
+            }
         }
-        
+
         if(defined($self->tumor_window_file)){
             print $rfile 'tumwinds = getWindows(chr, xmin, xmax, header=T';
             if($count == 0){
@@ -169,6 +205,7 @@ sub execute {
             print $rfile "}\n";
         }
 
+        #use original segment file here so they all get drawn
         print $rfile 'plotSegments(filename="' . $self->segment_file;
         print $rfile '", entrypoints="' . $self->annotation_directory . "/" . $self->genome_build . '/entrypoints.male"';
         print $rfile ", ymin=0, ymax=8, xmin=xmin, xmax=xmax, chr=chr";
@@ -195,7 +232,7 @@ sub execute {
 
         print $rfile ', plotTitle="' . "$F[0]:$F[1]-$F[2]" . '"';
         print $rfile ', highlightedSegs=c("' . "$F[0]:$F[1]-$F[2]" . '")';
- 
+
         if($count == 0){
             print $rfile ', pdfOpen="TRUE"';
         }
