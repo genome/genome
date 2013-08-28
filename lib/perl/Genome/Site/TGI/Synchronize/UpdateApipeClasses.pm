@@ -38,7 +38,7 @@ sub objects_to_sync {
     return (
         'Genome::Site::TGI::Synchronize::Classes::OrganismTaxon' => 'Genome::Taxon',
         'Genome::Site::TGI::Synchronize::Classes::OrganismIndividual' => 'Genome::Individual',
-        'Genome::Site::TGI::PopulationGroup' => 'Genome::PopulationGroup',
+        'Genome::Site::TGI::Synchronize::Classes::PopulationGroup' => 'Genome::PopulationGroup',
         'Genome::Site::TGI::Synchronize::Classes::OrganismSample' => 'Genome::Sample',
         'Genome::Site::TGI::Synchronize::Classes::LibrarySummary' => 'Genome::Library',
         'Genome::Site::TGI::Synchronize::Classes::SetupProject' => 'Genome::Project',
@@ -469,8 +469,10 @@ sub _create_populationgroup {
     }
 
     # Grab members from old object and pass to create parameters
-    my @member_ids = map { $_->id } $original_object->members;
-    $params{member_ids} = \@member_ids;
+    my @member_ids = $original_object->member_ids;
+    if ( @member_ids ) {
+        $params{member_ids} = \@member_ids;
+    }
 
     my $object = eval { 
         $new_object_class->create(
