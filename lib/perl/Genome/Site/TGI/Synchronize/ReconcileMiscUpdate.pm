@@ -31,8 +31,6 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
-    $self->_stop_at( Date::Format::time2str("%Y-%m-%d %X", time()) ) if not $self->_stop_at; # set to now, unless overridden
-
     my $start_from = $self->start_from;
     my $start_time = Date::Parse::str2time($start_from);
     if ( not $start_time ) {
@@ -41,6 +39,21 @@ sub __errors__ {
             properties => [qw/ start_from /],
             desc => 'Invalid date format => '.$start_from,
         );
+        return @errors;
+    }
+
+    if ( not $self->_stop_at ) { # set to now, unless overridden
+        $self->_stop_at( Date::Format::time2str("%Y-%m-%d %X", time()) );
+    }
+    my $stop_at = $self->_stop_at;
+    my $stop_time = Date::Parse::str2time($stop_at);
+    if ( $stop_time < $start_time ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ start_from /],
+            desc => "Start from date ($start_from) is after stop at date ($stop_at)!",
+        );
+        return @errors;
     }
 
     return @errors;

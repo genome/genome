@@ -26,6 +26,22 @@ ok(@errors, 'Errors') or die;
 is($errors[0]->__display_name__, 'INVALID: property \'start_from\': Invalid date format => BLAH-01', 'Error is correct');
 $reconcile->delete;
 
+my $start_from = Date::Format::time2str("%Y-%m-%d %X", time()); # now
+my $stop_at = '2000-01-01 23:59:59'; # set stop at so we only do the updates for Jan 01 01
+$reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(
+    start_from => $start_from,
+    _stop_at => $stop_at,
+);
+ok($reconcile, 'Create reconcile command to test start_from after _stop_at');
+@errors = $reconcile->__errors__;
+ok(@errors, 'Errors') or die;
+is(
+    $errors[0]->__display_name__,
+    "INVALID: property \'start_from\': Start from date ($start_from) is after stop at date ($stop_at)!",
+    'Error is correct',
+);
+$reconcile->delete;
+
 # Define entities
 my $entity_attrs = _entity_attrs();
 my $entities = _define_entities($entity_attrs);
