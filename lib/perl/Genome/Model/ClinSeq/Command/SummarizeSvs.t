@@ -14,7 +14,7 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>6; #One per 'ok', 'is', etc. statement below
+use Test::More tests=>7;
 use Genome::Model::ClinSeq::Command::SummarizeSvs;
 use Data::Dumper;
 
@@ -44,7 +44,7 @@ my $summarize_svs_cmd = Genome::Model::ClinSeq::Command::SummarizeSvs->create(
 $summarize_svs_cmd->queue_status_messages(1);
 my $r1 = $summarize_svs_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
-
+is($summarize_svs_cmd->fusion_output_file, $temp_dir."/CandidateSvCodingFusions.tsv", "Output file was set correctly");
 #Dump the output of summarize-svs to a log file
 my @output1 = $summarize_svs_cmd->status_messages();
 my $log_file = $temp_dir . "/SummarizeSvs.log.txt";
