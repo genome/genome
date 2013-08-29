@@ -41,4 +41,13 @@ while (my $data = $reader->next) {
 
 is_deeply(\@outputs, $expected_outputs, 'Array of hash outputs created as expected.');
 
+$output_file  = Genome::Sys->create_temp_file_path('query_gene2.out');
+$cmd =Genome::Model::Tools::Dgidb::QueryGene->create(
+    output_file         => $output_file,
+    genes               => 'NO_RESULTS',
+);
+
+ok($cmd->execute, "Command executed with a gene that gets no results");
+ok(-e $output_file, "Output file exists");
+
 done_testing();
