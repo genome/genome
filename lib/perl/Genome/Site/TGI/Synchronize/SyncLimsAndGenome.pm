@@ -1,11 +1,11 @@
-package Genome::Site::TGI::Synchronize;
+package Genome::Site::TGI::Synchronize::SyncLimsAndGenome;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Site::TGI::Synchronize {
-    is => 'Genome::Command::Base',
+class Genome::Site::TGI::Synchronize::SyncLimsAndGenome {
+    is => 'Command::V2',
     has_optional => [
         report_file => {
             is => 'FilePath',
