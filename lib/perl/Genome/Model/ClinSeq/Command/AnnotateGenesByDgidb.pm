@@ -3,6 +3,7 @@ package Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb;
 use strict;
 use warnings;
 use Genome;
+use File::Basename;
 
 class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
     is => 'Command::V2',
@@ -14,20 +15,20 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
         gene_name_column => {
             is  => 'Text',
             doc => 'name of column containing gene names/symbols'
-        }
+        },
     ],
     has_output => [
         output_file => {
             is  => 'FilesystemPath',            
             doc => 'result file of DGIDB output',
-        }
+        },
     ],
     doc => 'take a tsv file as input, extract gene list and annotate genes against DGIDB',
 };
 
 sub help_synopsis {
     return <<EOS
-genome model clin-seq annotate-genes-by-dgidb --input-file=/gscmnt/ams1108/info/model_data/2888708572/build134369422/AML103/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --gene-name-column='mapped_gene_name'
+genome model clin-seq annotate-genes-by-dgidb --input-file=/gscmnt/ams1108/info/model_data/2888708572/build134369422/AML103/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --gene-name-column=mapped_gene_name --outdir=/myhome/dir
 EOS
 }
 
@@ -54,11 +55,16 @@ sub execute {
     my $gene_list = __PACKAGE__->convert($reader, $gene_name_column);
     die $self->error_message("gene list is empty. check $infile") unless $gene_list;
 
+    my ($outfile_name, $dir) = fileparse($infile);
+    $outfile_name .= '.dgidb';
+    my $output_file  = $dir . "/$outfile_name";
+
     my $cmd =Genome::Model::Tools::Dgidb::QueryGene->create(
-        output_file => $self->output_file,
+        output_file => $output_file,
         genes       => $gene_list
     );
     
+    $self->output_file($output_file);
     return 1;
 }
 
