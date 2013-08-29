@@ -124,12 +124,12 @@ done_testing();
 sub _entity_attrs {
     return [
         # Taxon
-        { _type => 'Taxon', id => -100, estimated_genome_size => 1000, },
-        { _type => 'Taxon', id => -101, estimated_genome_size => 1000, },
+        { _type => 'Taxon', _site_tgi_subclass => 'OrganismTaxon', id => -100, estimated_genome_size => 1000, },
+        { _type => 'Taxon', _site_tgi_subclass => 'OrganismTaxon', id => -101, estimated_genome_size => 1000, },
         # Individual
-        { _type => 'Individual', id => -200, taxon_id => -100, },
-        { _type => 'Individual', id => -201, taxon_id => -100, },
-        { _type => 'Individual', id => -202, taxon_id => -100, },
+        { _type => 'Individual', _site_tgi_subclass => 'OrganismIndividual', id => -200, taxon_id => -100, },
+        { _type => 'Individual', _site_tgi_subclass => 'OrganismIndividual', id => -201, taxon_id => -100, },
+        { _type => 'Individual', _site_tgi_subclass => 'OrganismIndividual', id => -202, taxon_id => -100, },
         # Pop Group
         { _type => 'PopulationGroup', id => -300, taxon_id => -100, },
         { _type => 'PopulationGroup', id => -301, taxon_id => -100, },

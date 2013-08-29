@@ -111,8 +111,8 @@ sub schema_and_lims_table_name_from_subject_class_name {
 }
 
 my %lims_table_names_to_site_tgi_class_names = (
-    "organism_taxon" => 'Genome::Site::TGI::Synchronize::Classes::Taxon',
-    "organism_individual" => 'Genome::Site::TGI::Synchronize::Classes::Individual',
+    "organism_taxon" => 'Genome::Site::TGI::Synchronize::Classes::OrganismTaxon',
+    "organism_individual" => 'Genome::Site::TGI::Synchronize::Classes::OrganismIndividual',
     "population_group" => 'Genome::Site::TGI::Synchronize::Classes::PopulationGroup',
     "organism_sample" => 'Genome::Site::TGI::Synchronize::Classes::OrganismSample',
     "library_summary" => 'Genome::Site::TGI::Synchronize::Classes::LibrarySummary',
