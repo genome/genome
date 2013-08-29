@@ -188,7 +188,7 @@ $misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate->create(
     is_reconciled => 0,
 );
 ok($misc_update, 'Create misc update with unsupported lims attr');
-ok($misc_update->perform_update, 'Failed to perform update');
+ok(!$misc_update->perform_update, 'Failed to perform update');
 is($misc_update->result, 'SKIP', 'Correct result (SKIP) after update');
 is($misc_update->status, "SKIP	UPDATE	test.organism_taxon	-100	next_amplicon_iteration	'NA'	'not the same as the current value'	'10000'", 'Correct status after update');
 ok(!$misc_update->is_reconciled, 'Is not reconciled');

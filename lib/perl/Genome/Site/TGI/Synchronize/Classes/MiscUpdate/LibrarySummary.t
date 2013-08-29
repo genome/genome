@@ -70,7 +70,7 @@ $genome_entity = $misc_update->genome_entity;
 ok($genome_entity, 'Got genome entity');
 is($genome_entity->class, $genome_class_name, 'Correct genome entity class name');
 is($genome_entity->id, $library->id, 'Correct genome entity id');
-ok($misc_update->perform_update, 'Perform update');
+ok(!$misc_update->perform_update, 'Perform update');
 is($misc_update->result, 'SKIP', 'Correct result after update');
 is($misc_update->status, "SKIP	UPDATE	test.library_summary	-101	full_name	'__TEST_LIBRARY__'	'__TEST_LIBRARY__'	'__NEW_NAME__'", 'Correct status after update');
 ok(!$misc_update->is_reconciled, 'Is reconciled');
