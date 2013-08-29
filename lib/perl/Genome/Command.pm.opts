@@ -5748,7 +5748,9 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'set=s@',
         [
-          'exome_model'
+          'exome_model',
+          'tumor_rnaseq_model',
+          'normal_rnaseq_model'
         ],
         'from=s@',
         undef,
