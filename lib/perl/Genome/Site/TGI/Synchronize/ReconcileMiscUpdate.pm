@@ -33,13 +33,13 @@ sub __errors__ {
 
     $self->_stop_at( Date::Format::time2str("%Y-%m-%d %X", time()) ) if not $self->_stop_at; # set to now, unless overridden
 
-    my $date = $self->start_from;
-    my $time = Date::Parse::str2time($date);
-    if ( not $time ) {
+    my $start_from = $self->start_from;
+    my $start_time = Date::Parse::str2time($start_from);
+    if ( not $start_time ) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
             properties => [qw/ start_from /],
-            desc => 'Invalid date format => '.$date,
+            desc => 'Invalid date format => '.$start_from,
         );
     }
 
