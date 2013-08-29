@@ -17,13 +17,24 @@ use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute') 
 
 my $cnt = 0;
 
-# Success
+# Define misc updates
 my @multi_misc_updates = _define_multiple_misc_updates();
 ok(@multi_misc_updates, 'Define multi misc updates');
 is(@multi_misc_updates, 4, 'Defined 4 multi misc updates');
 is(scalar( map { $_->misc_updates } @multi_misc_updates), 12, 'Defined 12 misc updates');
+
+# Failure No genome entity
+ok($multi_misc_updates[0]->perform_update, 'perform update: '.$multi_misc_updates[0]->description);
+is($multi_misc_updates[0]->status_message, 'No genome subject for id! -200', 'Correct msg');
+is($multi_misc_updates[0]->result, 'SKIP', 'Correct result');
+
+# Define subjects
+my @subjects = _define_subjects();
+is(@subjects, 2, 'Define subjects');
+
+# Success
 for my $multi_misc_update ( @multi_misc_updates ) {
-    ok($multi_misc_update->perform_update, 'perfromed update: '.$multi_misc_update->description);
+    ok($multi_misc_update->perform_update, 'performed update: '.$multi_misc_update->description);
     my %genome_entity_params = $multi_misc_update->_resolve_genome_entity_params;
     ok(%genome_entity_params, 'Got genome entity params');
     is(scalar(keys %genome_entity_params), 4, 'Correct number of genome entity params');
@@ -62,6 +73,12 @@ is($multi_misc_update->result, 'FAILED', 'Correct result');
 
 done_testing();
 
+sub _define_subjects {
+    ok(push(@subjects, Genome::Sample->__define__(id => -100)), 'define sample');
+    ok(push(@subjects, Genome::PopulationGroup->__define__(id => -200)), 'define population group');
+    return @subjects;
+}
+
 sub _define_multiple_misc_updates {
     my %subject_class_names_to_properties= (
         population_group_member => [qw/ pg_id member_id /],
@@ -69,7 +86,7 @@ sub _define_multiple_misc_updates {
     );
 
     my @misc_updates;
-    for my $update ( [ 'population_group_member', -100, -101, ], [ 'sample_attribute', -100, 'foo', 'bar', 'baz',  ], ) {
+    for my $update ( [ 'population_group_member', -200, -101, ], [ 'sample_attribute', -100, 'foo', 'bar', 'baz',  ], ) {
         my ($subject_class_name, @ids) = @$update;
         my $subject_id = join('-', @ids);
         for my $description (qw/ INSERT DELETE /) {

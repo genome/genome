@@ -89,8 +89,6 @@ sub _insert {
         return $self->_skip;
     }
 
-    return 1;
-
     my $genome_entity = Genome::SubjectAttribute->get(%params);
     if ( not $genome_entity ) {
         $genome_entity = Genome::SubjectAttribute->create(%params);
@@ -175,9 +173,7 @@ sub _success {
 
 sub _skip {
     my $self = shift;
-    my $status_message = $self->status_message // 'NO STATUS MSG SET!';
     for my $misc_update ( $self->misc_updates ) {
-        $misc_update->status_message($status_message);
         $misc_update->skip;
     }
     $self->result('SKIP');
