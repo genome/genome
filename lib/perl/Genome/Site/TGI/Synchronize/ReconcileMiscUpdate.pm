@@ -72,7 +72,7 @@ sub execute {
     my $execute_indels = $self->_execute_indels;
     return if not $execute_indels;
 
-    #$self->_execute_report;
+    $self->_execute_report;
 
     $self->status_message('Reconcile Misc Updates...done');
     return 1;
@@ -101,12 +101,12 @@ sub _execute_updates {
     my $self = shift;
     $self->status_message('Execute UPDATES...');
 
-    my @misc_updates = grep { $_->description eq 'UPDATE' } @{$self->_misc_updates};
-    $self->status_message('UPDATES found: '.@misc_updates);
-    for my $misc_update ( @misc_updates ) {
-        $misc_update->perform_update;
+    my @updates = grep { $_->description eq 'UPDATE' } @{$self->_misc_updates};
+    $self->status_message('UPDATES found: '.@updates);
+    for my $update ( @updates ) {
+        $update->perform_update;
     }
-    $self->_updates(\@misc_updates);
+    $self->_updates(\@updates);
 
     $self->status_message('Execute UPDATES...done');
     return 1;
@@ -160,7 +160,7 @@ sub _execute_report {
         }
     }
 
-    for my $indel ( @{$self->_updates} ) {
+    for my $indel ( @{$self->_indels} ) {
         $stats{ATTEMPTED}++;
         $stats{ $indel->result }++;
         $status .= $indel->status."\n";
