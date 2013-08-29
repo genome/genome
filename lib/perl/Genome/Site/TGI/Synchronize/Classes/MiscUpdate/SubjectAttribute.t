@@ -47,7 +47,8 @@ for my $multi_misc_update ( @multi_misc_updates ) {
         ok(!$genome_entity, 'DELETE genome entity: '.$multi_misc_update->__display_name__);
         is($multi_misc_update->value_method, 'old_value', 'Correct value method');
     }
-    is($multi_misc_update->result, $multi_misc_update->description, 'Correct result');
+    is($multi_misc_update->result, 'PASS', 'Correct result');
+    ok($multi_misc_update->status, 'set status');
     ok(!$multi_misc_update->error_message, 'No errors set on multi misc update!');
     is(scalar(grep {defined} map {$_->error_message} $multi_misc_update->misc_updates), 0, 'No errors set on misc updates!');
 }
@@ -110,10 +111,11 @@ sub _define_multiple_misc_updates {
                 );
                 $multi_misc_update->add_misc_update($misc_update);
             }
+
+            is($multi_misc_update->value_method, ( $description eq 'DELETE' ? 'old_value' : 'new_value'), 'value method');
         }
     }
 
     return @multi_misc_updates;
 }
 
-1;

@@ -15,7 +15,7 @@ class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute {
     ],
     has_optional => [
         result => { is => 'Text', },
-        value_method => { is => 'Text', },
+        status => { is => 'Text', },
     ],
     has_many => [
         misc_updates => { is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate', },
@@ -162,12 +162,28 @@ sub _resolve_genome_entity_params {
     return %params;
 }
 
+sub _set_result {
+    my ($self, $result) = @_;
+
+    $self->result($result);
+
+    my $value_method = $self->value_method;
+    $self->status(
+        join(
+            "\t", 
+            $result, 
+            map({ $self->$_; } (qw/ description subject_class_name subject_id /)),
+            map({ $_->$value_method } $self->misc_updates),
+        )
+    );
+}
+
 sub _success {
     my $self = shift;
     for my $misc_update ( $self->misc_updates ) {
         $misc_update->success;
     }
-    $self->result( $self->description );
+    $self->_set_result('PASS');
     return 1;
 }
 
@@ -176,7 +192,7 @@ sub _skip {
     for my $misc_update ( $self->misc_updates ) {
         $misc_update->skip;
     }
-    $self->result('SKIP');
+    $self->_set_result('SKIP');
     return;
 }
 
@@ -187,7 +203,7 @@ sub _failure {
         $misc_update->error_message($error_message);
         $misc_update->failure;
     }
-    $self->result('FAIL');
+    $self->_set_result('FAIL');
     return; 
 }
 
