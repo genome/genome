@@ -28,6 +28,15 @@ class Genome::Model::Command::Export::Metadata {
             doc => 'exclude data related to the sequencing subject, and get only reference data, processing profiles, etc.', 
             is_optional => 1,
         },
+        verbose => {
+            is => 'Boolean',
+            default_value => 0,
+            is_optional => 1,
+            doc => 'verbose output',
+        }
+    ],
+    has_optional_transient => [
+        _terminal_width => { is => 'Number', },
     ],
     doc => 'serialize models for later import into other GMS instances',
 };
@@ -55,6 +64,11 @@ sub execute {
     my $self = shift;
     my @models = $self->models;
    
+    my $tput_cols = `tput cols`;
+    chomp $tput_cols;
+    $tput_cols ||= 100;
+    $self->_terminal_width($tput_cols);
+
     my $out_fh = Genome::Sys->open_file_for_writing($self->output_path);
     
     unless (@models) {
@@ -100,8 +114,8 @@ sub execute {
         'sata420/info/model_data/2857786885/build102671028' => 'ams1102/info/model_data/2869585698/build106942997',
         'sata420/info/model_data/2857786885/build106942997' => 'ams1102/info/model_data/2869585698/build106942997',
         102671028 => 106942997,
-        '/gscmnt/' => '/opt/gms/fs/',
-        'WUGC' => 'GMS',
+        '/gscmnt/' => '/opt/gms/GMS1/fs/',
+        'WUGC' => 'GMS1',
     );
 
     my @rows = IO::File->new($sanitize_file)->getlines;
@@ -117,7 +131,7 @@ sub execute {
 
     my %queue;
     for my $obj (@models) {
-        add_to_dump_queue($obj, \%queue, \%exclude, \%sanitize_map);
+        $self->add_to_dump_queue($obj, \%queue, \%exclude, \%sanitize_map);
     }
 
     # Get the disk groups
@@ -125,7 +139,7 @@ sub execute {
     my @group_names = qw/info_alignments info_apipe info_genome_models info_apipe_ref/;
     my @groups = Genome::Disk::Group->get(group_name => \@group_names);
     for my $group (@groups) {
-        add_to_dump_queue($group, \%queue, \%exclude, \%sanitize_map);
+        $self->add_to_dump_queue($group, \%queue, \%exclude, \%sanitize_map);
     }
 
     # Dump everything queued.
@@ -135,6 +149,7 @@ sub execute {
         run_by => "genome"
     );
 
+    my $depth = 0;
     for my $cls (sort keys %queue) {
         $out_fh->print("# $cls\n"); 
         my $obj_hash = $queue{$cls};
@@ -154,13 +169,21 @@ sub execute {
             for my $old (keys %sanitize_map) {
                 my $new = $sanitize_map{$old};
                 if ($txt =~ s/$old/$new/g) {
-                    print STDERR "replaced $old with $new\n";
+                    $self->p("replaced $old with $new");
                 }
             }
             $out_fh->print($txt,"\n");
         }
     }
 
+    if ($self->verbose) {
+        $self->p("export complete");
+    }
+    else {
+        $self->p("");
+        $self->p("export complete");
+        print STDERR "\n";
+    }
     return 1;
 }
 
@@ -171,6 +194,7 @@ sub execute {
 my $depth = 0;
 
 sub add_to_dump_queue {
+    my $self = shift;
     my $obj = shift;
     my $queue = shift;
     my $exclude = shift;
@@ -182,14 +206,16 @@ sub add_to_dump_queue {
     my $final_class = $obj->class;
 
     my $base_class = $final_class;
-    for my $base (qw/
-        Genome::Model 
-        Genome::Model::Build 
-        Genome::Subject 
-        Genome::Model::Event 
-        Genome::InstrumentData 
-        Genome::ProcessingProfile 
-        Genome::SoftwareResult/
+    for my $base (
+        qw/
+            Genome::Model 
+            Genome::Model::Build 
+            Genome::Subject 
+            Genome::Model::Event 
+            Genome::InstrumentData 
+            Genome::ProcessingProfile 
+            Genome::SoftwareResult
+        /
     ) {
         if ($final_class->isa($base)) {
             $base_class = $base;
@@ -208,20 +234,20 @@ sub add_to_dump_queue {
     $depth++;
     
     if ($exclude->{$final_class} or $exclude->{$base_class}) {
-        p("skip $final_class " . $obj->__display_name__);
+        $self->p("skip $final_class " . $obj->__display_name__);
     }
     else {
-        p("got $final_class ($base_class) " . $obj->__display_name__);
+        $self->p("export $final_class ($base_class): " . $obj->__display_name__);
         $queue->{$base_class}{$id} = $obj;
         
         my @sr_assoc = Genome::SoftwareResult::User->get(user_id => $id);
         for my $sr_assoc (@sr_assoc) {
-            add_to_dump_queue($sr_assoc, $queue, $exclude, $sanitize_map);
+            $self->add_to_dump_queue($sr_assoc, $queue, $exclude, $sanitize_map);
         }
 
         my @sr = Genome::SoftwareResult->get(id => [ map { $_->software_result_id } @sr_assoc ]);
         for my $sr (@sr) {
-            add_to_dump_queue($sr, $queue, $exclude, $sanitize_map);
+            $self->add_to_dump_queue($sr, $queue, $exclude, $sanitize_map);
         }
 
         my @disks = grep { $obj->isa($_->owner_class_name) } Genome::Disk::Allocation->get(owner_id => $id);
@@ -229,24 +255,26 @@ sub add_to_dump_queue {
             # whent excluding a disk, ensure its group is still included
             for my $disk (@disks) {
                 my $group = $disk->group;
-                add_to_dump_queue($group, $queue, $exclude, $sanitize_map);
+                $self->add_to_dump_queue($group, $queue, $exclude, $sanitize_map);
             }    
         }
         else {
             for my $d (@disks) {
-                add_to_dump_queue($d, $queue, $exclude, $sanitize_map)
+                $self->add_to_dump_queue($d, $queue, $exclude, $sanitize_map)
             }
         }
     }
 
     if ($obj->isa("Genome::Disk::Allocation")) {
         my $group = $obj->group;
+        $self->add_to_dump_queue($group, $queue, $exclude, $sanitize_map) if $group;
         my $volume = $obj->volume;
-        my @assignments = $volume->assignments;
-        add_to_dump_queue($group, $queue, $exclude, $sanitize_map);
-        add_to_dump_queue($volume, $queue, $exclude, $sanitize_map);
-        for my $a (@assignments) {
-            add_to_dump_queue($a, $queue, $exclude, $sanitize_map);
+        if ($volume) {
+            $self->add_to_dump_queue($volume, $queue, $exclude, $sanitize_map);
+            my @assignments = $volume->assignments;
+            for my $a (@assignments) {
+                $self->add_to_dump_queue($a, $queue, $exclude, $sanitize_map);
+            }
         }
     }
 
@@ -255,6 +283,7 @@ sub add_to_dump_queue {
         if (UR::Object::Type->get($related_class)) {
             my $owner_method;
             my $value_method;
+            my $value_method2;
             if ($obj->isa("Genome::Model")) {
                 $owner_method = "model_id";
                 $value_method = "value";
@@ -263,9 +292,10 @@ sub add_to_dump_queue {
                 $owner_method = "build_id";
                 $value_method = "value";
             }   
-            elsif ($obj->isa("SoftwareResult")) {
+            elsif ($obj->isa("Genome::SoftwareResult")) {
                 $owner_method = "software_result_id";
                 $value_method = "value_obj";
+                $value_method2 = "value_id";
             }
             else {
                 next;
@@ -273,12 +303,14 @@ sub add_to_dump_queue {
             my @assoc = $related_class->get($owner_method => $obj->id);
             for my $a (@assoc) {
                 my $v = $a->$value_method;
+                unless ($v) {
+                    my $id = $a->$value_method2;
+                    die if not defined $id;
+                    $v = UR::Value::Text->get($id);
+                }
                 unless ($sanitize_map->{$v->id} and $sanitize_map->{$v->id} == $obj->id) {
-                    add_to_dump_queue($a, $queue, $exclude, $sanitize_map) unless $exclude->{$final_class};
-                    if ($v->isa("Genome::InstrumentData")) {
-                        $DB::single = 1;
-                    }
-                    add_to_dump_queue($v, $queue, $exclude, $sanitize_map);
+                    $self->add_to_dump_queue($a, $queue, $exclude, $sanitize_map) unless $exclude->{$final_class};
+                    $self->add_to_dump_queue($v, $queue, $exclude, $sanitize_map);
                 }
             }
         }
@@ -291,21 +323,31 @@ sub add_to_dump_queue {
         $e->{db_committed}{event_status} = "Dummy";
         my @e = $obj->events();
         for my $e (@e) {
-            add_to_dump_queue($e,$queue, $exclude, $sanitize_map);
+            $self->add_to_dump_queue($e,$queue, $exclude, $sanitize_map);
         }
 
-        add_to_dump_queue($obj->model, $queue, $exclude, $sanitize_map);
+        $self->add_to_dump_queue($obj->model, $queue, $exclude, $sanitize_map);
+
+        if ($obj->isa("Genome::Model::Build::ReferenceSequence")) {
+            my @i = Genome::Model::Build::ReferenceSequence::AlignerIndex->get(reference_build_id => $obj->id, test_name => undef);
+            for my $i (@i) {
+                my $dir = $i->output_dir;
+                next if $dir and $dir =~ /gscarchive/;
+                next unless $i->id == 117803766;        # TODO: make this smarter
+                $self->add_to_dump_queue($i, $queue, $exclude, $sanitize_map);
+            }
+        }
     }
 
     if ($obj->isa("Genome::Model")) {
-        add_to_dump_queue($obj->subject, $queue, $exclude, $sanitize_map);
-        add_to_dump_queue($obj->processing_profile, $queue, $exclude, $sanitize_map);
+        $self->add_to_dump_queue($obj->subject, $queue, $exclude, $sanitize_map);
+        $self->add_to_dump_queue($obj->processing_profile, $queue, $exclude, $sanitize_map);
     }
 
     if ($obj->isa("Genome::ProcessingProfile")) {
         my @pp = Genome::ProcessingProfile::Param->get("processing_profile_id" => $obj->id);
         for my $pp (@pp) {
-            add_to_dump_queue($pp, $queue, $exclude, $sanitize_map);
+            $self->add_to_dump_queue($pp, $queue, $exclude, $sanitize_map);
         }
     }
 
@@ -322,24 +364,30 @@ sub add_to_dump_queue {
             $n = $f->nomenclature;
         }
         elsif (not $n and not $f) {
-            next;
+            # continue
         }
         else {
             die "odd nomenclature field value: $nomenclature_ambiguous_value";
         }
-        add_to_dump_queue($n, $queue, $exclude, $sanitize_map) if ($n);
-        add_to_dump_queue($f, $queue, $exclude, $sanitize_map) if ($f);
+        $self->add_to_dump_queue($n, $queue, $exclude, $sanitize_map) if ($n);
+        $self->add_to_dump_queue($f, $queue, $exclude, $sanitize_map) if ($f);
     }
 
     my $parent;
     if (!$exclude->{$final_class} and ($obj->isa("Genome::InstrumentData") or $obj->isa("Genome::Subject"))) {
         my @a = $obj->attributes;
         for $a (@a) {
-            add_to_dump_queue($a, $queue, $exclude, $sanitize_map);
+            $self->add_to_dump_queue($a, $queue, $exclude, $sanitize_map);
         }
 
         if ($obj->isa("Genome::InstrumentData")) {
             $parent = $obj->library;
+            if (my $target_region_set_name = $obj->target_region_set_name) {
+                my @feature_lists = Genome::FeatureList->get(name => $target_region_set_name);
+                for my $f (@feature_lists) {
+                    $self->add_to_dump_queue($f, $queue, $exclude, $sanitize_map);
+                }
+            }
         }
         elsif ($obj->isa("Genome::Library")) {
             $parent = $obj->sample;
@@ -355,7 +403,7 @@ sub add_to_dump_queue {
         }
         
         if ($parent) {
-            add_to_dump_queue($parent, $queue, $exclude, $sanitize_map);
+            $self->add_to_dump_queue($parent, $queue, $exclude, $sanitize_map);
         }
 
         my @alloc = 
@@ -373,20 +421,35 @@ sub add_to_dump_queue {
             }
 
             my $dir = File::Basename::dirname($path);
-            $dir =~ m|/gscmnt/(.*?)/(.*?)/(.*)$| or die "unusual path!";
-            my $disk = $1;
-            my $group = $2;
-            my $data = $3;
+            my ($genome_sys_id, $disk, $group, $data);
+            if ($dir =~ m|/gscmnt/(.+?)/(.+?)/(.+)$|) {
+                $genome_sys_id = 'GMS1';
+                $disk = $1;
+                $group = $2;
+                $data = $3;
+            }
+            elsif ($dir =~ m|/opt/gms/(.+?)/fs/(.+?)/(.+?)/(.+)$|) {
+                $genome_sys_id = $1;
+                $disk = $2;
+                $group = $3;
+                $data = $4;
+            }
+            else {
+                die "cannot parse path $dir!!!";
+            }
 
-            print("### DISK: /opt/gms/fs $disk $group $data\n");
-            #my $alloc = Genome::Disk::Allocation->create(
-            #    disk_group_name => 'reads',
-            #    reallocation_time => UR::Time->now,
-            #    mount_path => "/opt/gms/fs/$disk",
-            #    group_subdirectory => $group,
-            #    allocation_path => $data,
-            #);
-            #add_to_dump_queue($alloc,$queue,$exclude,$sanitize_map); 
+            #print("### DISK: sys:$genome_sys_id disk:$disk group:$group subdir:$data\n");
+            my $alloc = UR::Object::create("Genome::Disk::Allocation",
+                disk_group_name => 'reads',
+                reallocation_time => UR::Time->now,
+                mount_path => "/opt/gms/fs/$disk",
+                group_subdirectory => $group,
+                allocation_path => $data,
+                owner_class_name => $obj->class,
+                owner_id => $obj->id,
+                kilobytes_requested => 1,
+            );
+            $self->add_to_dump_queue($alloc,$queue,$exclude,$sanitize_map); 
         }
     }
 
@@ -395,9 +458,28 @@ sub add_to_dump_queue {
 
 # a print function to log output
 
+my $last_len = 0;
 sub p {
+    my $self = shift;
+    STDERR->autoflush(1);
+    my $max_width = $self->_terminal_width;
     for my $m (@_) {
-        print STDERR ((" " x $depth),$m, "\n");
+        my $msg;
+        if ($self->verbose) {
+            $msg = (" " x $depth) . $m . "\n";
+        }
+        else {
+            $msg = $m;
+            $msg = substr($msg,0,$max_width) if length($msg) > $max_width;
+            my $len = length($msg);
+            $msg = "\r$msg";
+            my $delta = $last_len - $len;
+            if ($delta > 0) {
+                $msg .= (' ' x $delta);
+            }
+            $last_len = $len;
+        }
+        print STDERR $msg;
     }
 }
 
