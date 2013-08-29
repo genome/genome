@@ -57,6 +57,8 @@ EOS
 sub execute {
     my $self = shift;
 
+    $self->create_output_directory();
+
     my @cmd = (
         'python', $self->python_script('makeWindows'),
         '--inputVarFile', $self->input_dindel_file,
@@ -72,6 +74,16 @@ sub execute {
         }
     } else {
         return $self->run(@cmd);
+    }
+}
+
+sub create_output_directory {
+    my $self = shift;
+    if (! -d $self->output_directory) {
+        Genome::Sys->create_directory($self->output_directory);
+    }
+    if (! -d $self->output_directory) {
+        die "Couldn't create output_directory " . $self->output_directory;
     }
 }
 
