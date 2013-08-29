@@ -58,7 +58,7 @@ sub add_misc_update {
     my ($self, $misc_update) = @_;
 
     if ( not $misc_update ) {
-        $self->error_message();
+        $self->error_message('No misc update given to add!');
         return;
     }
 
@@ -82,6 +82,14 @@ sub _insert {
 
     my %params = $self->_resolve_genome_entity_params;
     return $self->_failure if not %params;
+
+    my $genome_subject = Genome::Subject->get(id => $params{subject_id});
+    if ( not $genome_subject ) {
+        $self->status_message('No genome subject for id! '. $params{subject_id});
+        return $self->_skip;
+    }
+
+    return 1;
 
     my $genome_entity = Genome::SubjectAttribute->get(%params);
     if ( not $genome_entity ) {
@@ -165,9 +173,20 @@ sub _success {
     return 1;
 }
 
+sub _skip {
+    my $self = shift;
+    my $status_message = $self->status_message // 'NO STATUS MSG SET!';
+    for my $misc_update ( $self->misc_updates ) {
+        $misc_update->status_message($status_message);
+        $misc_update->skip;
+    }
+    $self->result('SKIP');
+    return 1;
+}
+
 sub _failure {
     my $self = shift;
-    my $error_message = $self->error_message // 'NO ERROR SET!';
+    my $error_message = $self->error_message // 'NO ERROR MSG SET!';
     for my $misc_update ( $self->misc_updates ) {
         $misc_update->error_message($error_message);
         $misc_update->failure;
