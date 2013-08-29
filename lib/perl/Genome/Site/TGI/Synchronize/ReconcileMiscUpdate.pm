@@ -18,6 +18,8 @@ class Genome::Site::TGI::Synchronize::ReconcileMiscUpdate {
     ],
     has_optional_transient => [
         _misc_updates => { is => 'Array', },
+        _updates => { is => 'Array', },
+        _indels => { is => 'Array', },
         _stop_at => { is => 'Text', },
         stats => { is => 'Hash', default_value => {}, },
     ],
@@ -57,7 +59,7 @@ sub execute {
     my $execute_indels = $self->_execute_indels;
     return if not $execute_indels;
 
-    $self->_execute_report;
+    #$self->_execute_report;
 
     $self->status_message('Reconcile Misc Updates...done');
     return 1;
@@ -91,6 +93,7 @@ sub _execute_updates {
     for my $misc_update ( @misc_updates ) {
         $misc_update->perform_update;
     }
+    $self->_updates(\@misc_updates);
 
     $self->status_message('Execute UPDATES...done');
     return 1;
@@ -111,9 +114,12 @@ sub _execute_indels {
     }
     $self->status_message('INDELS found: '.@order);
 
+    my @misc_update_indels;
     for my $id ( @order ) {
         $subject_attr_misc_updates{$id}->perform_update;
+        push @misc_update_indels, $subject_attr_misc_updates{$id};
     }
+    $self->_indels(\@misc_update_indels);
 
     $self->status_message('Execute INDELS...done');
     return 1;
@@ -127,13 +133,30 @@ sub _execute_report {
         return print 'RECONCILE MISC UPDATE FOR '.$self->start_from.' TO '.$self->_stop_at."\nNO MISC UPDATES FOUND!\n";
     }
 
-    my (%stats, $errors);
+    my (%stats, $msgs);
     my $status = join("\t", (qw/ STATUS SUBJECT_CLASS_NAME SUBJECT_ID SUBJECT_PROPERTY_NAME DESCRIPTION CURRENT_VALUE OLD_VALUE NEW_VALUE /))."\n";
-    for my $misc_update ( @$misc_updates ) {
+    for my $update ( @{$self->_updates} ) {
         $stats{ATTEMPTED}++;
-        $stats{ $misc_update->result }++;
-        $status .= $misc_update->status."\n";
-        $errors .= $misc_update->id." '".$misc_update->error_message."'\n" if $misc_update->has_failed;
+        $stats{ $update->result }++;
+        $status .= $update->status."\n";
+        if ( $update->result eq 'FAIL' ) {
+            $msgs .= $update->id." '".$update->error_message."'\n";
+        }
+        elsif ( $update->result eq 'SKIP' ) {
+            $msgs .= $update->id." '".$update->status_message."'\n";
+        }
+    }
+
+    for my $indel ( @{$self->_updates} ) {
+        $stats{ATTEMPTED}++;
+        $stats{ $indel->result }++;
+        $status .= $indel->status."\n";
+        if ( $indel->result eq 'FAIL' ) {
+            $msgs .= $indel->id." '".$indel->error_message."'\n";
+        }
+        elsif ( $indel->result eq 'SKIP' ) {
+            $msgs .= $indel->id." '".$indel->status_message."'\n";
+        }
     }
 
     return print join(
@@ -141,7 +164,7 @@ sub _execute_report {
         'RECONCILE MISC UPDATE FOR '.$self->start_from.' TO '.$self->_stop_at,
         "STATS:\n".join("\n", map { sprintf('%-10s => %s', $_, $stats{$_}) } sort keys %stats),
         "STATUS:\n$status",
-        "ERRORS [These will remain unreconciled until addressed!]:\n".( $errors // "NONE :)\n" ),
+        "FAILURES and SKIPS [These will remain unreconciled until addressed!]:\n".( $msgs // "NONE :)\n" ),
     );
 }
 
