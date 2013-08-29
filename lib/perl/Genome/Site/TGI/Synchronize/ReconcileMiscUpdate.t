@@ -241,17 +241,17 @@ sub _define_subject_attr_misc_updates {
 
     my @updates = (
         # PopulationGroup
-        # sub_name desc member_id pg_id 
-        [ 'population_group_member', 'INSERT', -1001, -1000, ],
-        [ 'population_group_member', 'INSERT', -1002, -1000, ],
-        [ 'population_group_member', 'DELETE', -1002, -1000, ],
-        [ 'population_group_member', 'INSERT', -1002, -1001, ],
+        # sub_name                      desc        member_id   pg_id 
+        [ 'population_group_member',    'INSERT',   -301,      -200, ],
+        [ 'population_group_member',    'INSERT',   -302,      -200, ],
+        [ 'population_group_member',    'DELETE',   -302,      -200, ],
+        [ 'population_group_member',    'INSERT',   -302,      -201, ],
         # Sample
-        # sub_name desc attr_label attr_val nom sample_id 
-        [ 'sample_attribute', 'INSERT', 'foo', 'bar', 'baz', -1000, ],
-        [ 'sample_attribute', 'INSERT', 'foo', 'bar', 'baz', -1001, ],
-        [ 'sample_attribute', 'INSERT', 'foo', 'bar', 'qux', -1001, ],
-        [ 'sample_attribute', 'DELETE', 'foo', 'bar', 'baz', -1000, ],
+        # sub_name              desc        label   val     nom     sample_id 
+        [ 'sample_attribute',   'INSERT',   'foo',  'bar',  'baz',  -100, ],
+        [ 'sample_attribute',   'INSERT',   'foo',  'bar',  'baz',  -101, ],
+        [ 'sample_attribute',   'INSERT',   'foo',  'bar',  'qux',  -101, ],
+        [ 'sample_attribute',   'DELETE',   'foo',  'bar',  'baz',  -100, ],
     );
 
     my @sub_attr_misc_updates;
