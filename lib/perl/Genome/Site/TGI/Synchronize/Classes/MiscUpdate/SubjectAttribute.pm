@@ -177,7 +177,7 @@ sub _skip {
         $misc_update->skip;
     }
     $self->result('SKIP');
-    return 1;
+    return;
 }
 
 sub _failure {
@@ -187,7 +187,7 @@ sub _failure {
         $misc_update->error_message($error_message);
         $misc_update->failure;
     }
-    $self->result('FAILED');
+    $self->result('FAIL');
     return; 
 }
 

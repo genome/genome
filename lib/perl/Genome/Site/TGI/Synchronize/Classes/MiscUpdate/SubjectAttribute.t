@@ -24,7 +24,7 @@ is(@multi_misc_updates, 4, 'Defined 4 multi misc updates');
 is(scalar( map { $_->misc_updates } @multi_misc_updates), 12, 'Defined 12 misc updates');
 
 # Failure No genome entity
-ok($multi_misc_updates[0]->perform_update, 'perform update: '.$multi_misc_updates[0]->description);
+ok(!$multi_misc_updates[0]->perform_update, 'perform update: '.$multi_misc_updates[0]->description);
 is($multi_misc_updates[0]->status_message, 'No genome subject for id! -200', 'Correct msg');
 is($multi_misc_updates[0]->result, 'SKIP', 'Correct result');
 
@@ -63,13 +63,13 @@ my %multi_misc_update_params = (
 my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute->create(%multi_misc_update_params);
 ok(!$multi_misc_update->perform_update, 'Failed to perform update w/o misc updates');
 is($multi_misc_update->error_message, 'No misc updates set to get genome entity params!', 'Correct error');
-is($multi_misc_update->result, 'FAILED', 'Correct result');
+is($multi_misc_update->result, 'FAIL', 'Correct result');
 
 # Missing required key
 $multi_misc_update->add_misc_update(($multi_misc_updates[0]->misc_updates)[0]);
 ok(!$multi_misc_update->perform_update, 'Failed to perform update w/o misc updates');
 is($multi_misc_update->error_message, 'Missing required key (attribute_value) in genome entity params!', 'Correct error');
-is($multi_misc_update->result, 'FAILED', 'Correct result');
+is($multi_misc_update->result, 'FAIL', 'Correct result');
 
 done_testing();
 
