@@ -18,49 +18,43 @@ class Genome::Model::Tools::Dindel::AnalyzeWindowFile {
         input_bam => {
             is => 'Path',
         },
-        output_prefix => {
-            is => 'Path',
-        },
         ref_fasta => {
             is => 'Path',
         },
     ],
     has_calculated_output => [
-        output_bam_file => {
+        output_bam => {
             is => 'Path',
             calculate =>  q{ $output_prefix . "_realigned.merged.bam"},
             calculate_from => ['output_prefix'],
         },
-        output_log_file => {
+        output_log => {
             is => 'Path',
             calculate =>  q{ $output_prefix . "_realigned.windows.log"},
             calculate_from => ['output_prefix'],
         },
-        output_glf_file => {
+        output_glf => {
             is => 'Path',
             calculate =>  q{ $output_prefix . ".glf.txt"},
             calculate_from => ['output_prefix'],
         },
     ],
+    has_optional_transient => {
+        output_prefix => {
+            is_calculated => 1,
+            calculate =>  q{ File::Spec->join($output_directory, "dindel") },
+            calculate_from => ['output_directory'],
+        },
+    },
 };
 
 sub help_brief {
     'Actual slow part of dindel-- analysis'
 }
 
-sub help_synopsis {
-    return <<EOS
-EOS
-}
-
-sub help_detail {
-    return <<EOS
-EOS
-}
-
-
 sub execute {
     my $self = shift;
+    $self->create_output_directory();
 
     my @cmd = (
         $self->dindel_executable,
@@ -106,7 +100,7 @@ sub convert_sam_to_bam {
     Genome::Model::Tools::Sam::SamToBam->execute(
         sam_file => $reheadered_sam_file,
         keep_sam => 0,
-        bam_file => $self->output_bam_file,
+        bam_file => $self->output_bam,
         is_sorted => 0,
         index_bam => 0,
     );
@@ -115,8 +109,7 @@ sub convert_sam_to_bam {
 sub reheader_sam_file {
     my $self = shift;
 
-    my $output_sam_file = $self->output_bam_file;
-    $output_sam_file =~ s/bam$/sam/;
+    (my $output_sam_file = $self->output_bam) =~ s/bam$/sam/;
 
     my $reheadered_sam_file = $self->output_prefix . ".reheadered.sam";
     my $cmd = "cat <(samtools view -H %s) %s > %s ";
