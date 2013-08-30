@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use File::Basename;
 
 class Genome::Model::Tools::Dindel::AnalyzeWindowFile {
     is => 'Genome::Model::Tools::Dindel::Base',
