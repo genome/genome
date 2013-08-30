@@ -5590,6 +5590,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>make-circos-plot',
+      [
+        'build=s',
+        undef,
+        'output-directory=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>run-cn-view',
       [
         'cancer-annotation-db=s',
@@ -17354,6 +17363,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'genes=s',
         'files',
+        'antineoplastic-only!',
+        undef,
         'source-trust-levels=s',
         'files',
         'gene-categories=s',
@@ -17364,8 +17375,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'output-file=s',
         'files',
-        'antineoplastic-only!',
-        undef,
         'help!',
         undef
       ],

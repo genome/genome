@@ -36,6 +36,14 @@ class Genome::Config::AnalysisProject {
             is => 'Genome::Config::AnalysisMenuItem',
             id_by => '_analysis_menu_item_id',
         },
+        _model_group_id => {
+            is => 'Text',
+            column_name => 'model_group_id',
+        },
+        model_group => {
+            is => 'Genome::ModelGroup',
+            id_by => '_model_group_id',
+        },
         name => {
             is => 'Text',
         },
@@ -44,6 +52,11 @@ class Genome::Config::AnalysisProject {
         },
         updated_at => {
             is => 'Timestamp',
+        },
+        status => {
+            is => 'Text',
+            default_value => 'Pending',
+            valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived'],
         },
     ],
     has_transient_optional => [
@@ -59,6 +72,7 @@ sub create {
     eval {
         $self->_create_configuration_set();
         $self->_populate_created_by();
+        $self->_create_model_group();
     };
     if(my $error = $@) {
         $self->delete();
@@ -72,6 +86,9 @@ sub delete {
     eval {
         if ($self->_configuration_set) {
             $self->_configuration_set->delete();
+        }
+        if ($self->model_group) {
+            $self->model_group->delete();
         }
     };
     if(my $error = $@) {
@@ -112,6 +129,13 @@ sub _create_configuration_set {
     my $self = shift;
     my $set = Genome::Config::Set->create();
     $self->_configuration_set($set);
+}
+
+sub _create_model_group {
+    my $self = shift;
+    my $mg_name = sprintf("%s - %s - Analysis Project", $self->name, $self->id);
+    my $mg = Genome::ModelGroup->create(name => $mg_name);
+    $self->model_group($mg);
 }
 
 1;
