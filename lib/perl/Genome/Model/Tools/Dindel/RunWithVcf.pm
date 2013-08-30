@@ -42,11 +42,6 @@ class Genome::Model::Tools::Dindel::RunWithVcf {
             default => '5000',
             doc => 'attempt to control the parallelization of dindel by setting max chunk size.'
         },
-        make_realigned_bam => {
-            is => 'Boolean',
-            default => 0,
-            doc => 'Set this to 1 if you wish to output a realigned bam for further counting or manual review',
-        },
     ],
 };
 
@@ -84,12 +79,9 @@ sub execute {
         $vcf_in_dindel_format = $self->limit_callset($self->output_directory, $vcf_in_dindel_format, $self->roi_bed);
     }
     my @windows_files = $self->make_windows($self->output_directory, $vcf_in_dindel_format, $self->num_windows_per_file);
-    my $results_dir = $self->run_parallel_analysis($self->output_directory, $self->ref_fasta, $self->bam_file, $library_file, $self->make_realigned_bam,\@windows_files);
+    my $results_dir = $self->run_parallel_analysis($self->output_directory, $self->ref_fasta, $self->bam_file, $library_file, \@windows_files);
     my $file_of_results = $self->make_fof($self->output_directory, $results_dir);
     $self->generate_final_vcf($self->output_directory, $file_of_results, $self->ref_fasta);
-    if($self->make_realigned_bam) {
-        $self->generate_final_bam($self->output_directory, $results_dir, $self->bam_file);
-    }
     return 1;
 }
 
@@ -141,34 +133,6 @@ sub merge_callsets {
     return $output_file;
 }
 
-
-
-sub generate_final_bam {
-    my ($self, $output_dir, $results_dir, $bam_file) = @_;
-    my @sams = glob ("$results_dir/*.merged.sam");
-    my $output_sam = $output_dir . "/all_events_realigned.merged.sam";
-    my $output_bam =  $output_dir . "/all_events_realigned.merged.bam";
-    my $header_cmd = "samtools view -H $bam_file > $output_sam";
-    print "$header_cmd\n";
-    Genome::Sys->shellcmd(cmd=> $header_cmd);
-    for my $sam (@sams) {
-        my $dump_cmd = "cat $sam >> $output_sam";
-        print "$dump_cmd\n";
-        Genome::Sys->shellcmd(cmd=>$dump_cmd);
-    }
-    my $compress_cmd = "samtools view -S $output_sam -1 > $output_bam";
-    print "$compress_cmd\n";
-    Genome::Sys->shellcmd(cmd=>$compress_cmd);
-    my $final_bam = "$output_dir/all_events_realigned.merged.sorted";
-    my $sort_cmd = "samtools sort $output_bam $final_bam";
-    Genome::Sys->shellcmd(cmd=>$sort_cmd);
-    unlink($output_sam);
-    unlink($output_bam);
-    unlink(@sams);
-    return $final_bam;
-}
-
-
 sub generate_final_vcf {
     my ($self, $output_dir, $file_of_results, $ref_fasta) = @_;
     my $output_vcf = $output_dir . "/final_result.vcf";
@@ -193,7 +157,7 @@ sub make_fof {
 }
 
 sub run_parallel_analysis {
-    my ($self, $output_dir, $ref_fasta, $bam_file, $library_file, $make_realigned_bams, $window_files) = @_;
+    my ($self, $output_dir, $ref_fasta, $bam_file, $library_file, $window_files) = @_;
     my $results_dir = $output_dir . "/results/";
     $DB::single=1;
     unless(-d $results_dir) {
@@ -203,11 +167,6 @@ sub run_parallel_analysis {
     $inputs{bam_file}=$bam_file;
     $inputs{ref_fasta}=$ref_fasta;
     $inputs{library_metrics_file}=$library_file;
-    $inputs{output_bam}=0;
-    if($make_realigned_bams) {
-        $inputs{output_bam}=1;
-    }
-
 
     my @inputs;
     my @prefixes;
@@ -219,17 +178,17 @@ sub run_parallel_analysis {
         $inputs{"window_file_$number"}= $window;
         $inputs{"result_prefix_$number"}= $results_dir . "/result_$number";
     }
+
     my $workflow = Workflow::Model->create(
-        name=>"highly parallel dindel :-(",
-        input_properties=> [
-        'bam_file',
-        'ref_fasta',
-        'library_metrics_file',
-        'output_bam',
-        @inputs,
+        name => "highly parallel dindel :-(",
+        input_properties => [
+            'bam_file',
+            'ref_fasta',
+            'library_metrics_file',
+            @inputs,
         ],
-        output_properties=> [
-        'output',
+        output_properties => [
+            'output',
         ],
     );
     $workflow->log_dir($output_dir);
@@ -244,13 +203,7 @@ sub run_parallel_analysis {
             left_operation=>$workflow->get_input_connector,
             left_property=>"bam_file",
             right_operation=>$analyze_op,
-            right_property=>"bam_file",
-        );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"output_bam",
-            right_operation=>$analyze_op,
-            right_property=>"output_bam",
+            right_property=>"input_bam",
         );
         $workflow->add_link(
             left_operation=>$workflow->get_input_connector,
@@ -278,7 +231,7 @@ sub run_parallel_analysis {
         );
         $workflow->add_link(
             left_operation=>$analyze_op,
-            left_property=>"output_prefix",
+            left_property=>"output_bam_file",
             right_operation=>$workflow->get_output_connector,
             right_property=>"output",
         );
@@ -287,16 +240,16 @@ sub run_parallel_analysis {
     if (@errors) {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
-    }   
+    }
     $self->status_message("Now launching a butt-ton of dindel jobs");
     $DB::single=1;
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
     unless($result) {
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("parallel mpileup workflow did not return correctly.");
-    } 
-    return $results_dir; 
-} 
+    }
+    return $results_dir;
+}
 
 sub make_windows {
     my ($self, $output_dir, $candidate_indel_file, $num_windows) =@_;
@@ -347,7 +300,7 @@ sub convert_vcf_to_dindel_and_left_shift {
     );
     $vcf_to_dindel->execute();
     my $left_shifted_output = $output_dindel_file . ".left_shifted";
-    my $left_shifter = Genome::Model::Tools::Dindel::RealignCandidates->create( 
+    my $left_shifter = Genome::Model::Tools::Dindel::RealignCandidates->create(
         ref_fasta=>$ref_fasta,
         variant_file=>$output_dindel_file,
         output_prefix=>$left_shifted_output,

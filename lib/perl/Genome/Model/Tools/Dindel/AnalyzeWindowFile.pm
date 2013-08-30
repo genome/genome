@@ -16,20 +16,31 @@ class Genome::Model::Tools::Dindel::AnalyzeWindowFile {
             is => 'Path',
             doc => 'from step one... getCigarIndels',
         },
-        bam_file => {
+        input_bam => {
             is => 'Path',
         },
         output_prefix => {
             is => 'Path',
-            is_output => 1,
         },
         ref_fasta => {
             is => 'Path',
         },
-        output_bam => {
-            is => 'Boolean',
-            default => 0,
-            is_optional => 1,
+    ],
+    has_calculated_output => [
+        output_bam_file => {
+            is => 'Path',
+            calculate =>  q{ $output_prefix . "_realigned.merged.bam"},
+            calculate_from => ['output_prefix'],
+        },
+        output_log_file => {
+            is => 'Path',
+            calculate =>  q{ $output_prefix . "_realigned.windows.log"},
+            calculate_from => ['output_prefix'],
+        },
+        output_glf_file => {
+            is => 'Path',
+            calculate =>  q{ $output_prefix . ".glf.txt"},
+            calculate_from => ['output_prefix'],
         },
     ],
 };
@@ -56,34 +67,78 @@ sub execute {
         $self->dindel_executable,
         '--analysis', 'indels',
         '--doDiploid',
-        '--bamFile', $self->bam_file,
+        '--bamFile', $self->input_bam,
         '--varFile', $self->window_file,
         '--outputFile', $self->output_prefix,
         '--ref', $self->ref_fasta,
         '--libFile', $self->library_metrics_file,
+        '--outputRealignedBAM',
+        '--processRealignedBAM', $self->merge_bam_script,
     );
-
-    if ($self->output_bam) {
-        my (undef, $callback_script_path) = File::Basename::fileparse(__FILE__);
-        my $callback_script = $callback_script_path . "merge_bam_callback.pl";
-        unless(-s $callback_script) {
-            $self->error_message("unable to locate dindel helper script at location: $callback_script\n");
-            return undef;
-        }
-
-        push @cmd, '--outputRealignedBAM';
-        push @cmd, '--processRealignedBAM', $callback_script;
+    my @input_files = (
+        $self->input_bam,
+        $self->window_file,
+        $self->ref_fasta,
+        $self->merge_bam_script,
+    );
+    my $rv = Genome::Sys->shellcmd_arrayref(
+        cmd => \@cmd,
+        input_files => \@input_files,
+    );
+    unless ($rv) {
+        die "Failed to complete dindel analysis.";
     }
 
+    $self->convert_sam_to_bam();
+    return 1;
+}
 
-    return Genome::Sys->shellcmd_arrayref(
-        cmd => \@cmd,
-        input_files => [
-            $self->bam_file,
-            $self->window_file,
-            $self->ref_fasta,
-        ],
+sub merge_bam_script {
+    my $self = shift;
+
+    my (undef, $directory, undef) = File::Spec->splitpath(__FILE__);
+    return File::Spec->join($directory, 'merge_bam_callback.pl');
+}
+
+sub convert_sam_to_bam {
+    my $self = shift;
+
+    my $reheadered_sam_file = $self->reheader_sam_file();
+    Genome::Model::Tools::Sam::SamToBam->execute(
+        sam_file => $reheadered_sam_file,
+        keep_sam => 0,
+        bam_file => $self->output_bam_file,
+        is_sorted => 0,
+        index_bam => 0,
     );
+}
+
+sub reheader_sam_file {
+    my $self = shift;
+
+    my $output_sam_file = $self->output_bam_file;
+    $output_sam_file =~ s/bam$/sam/;
+
+    my $reheadered_sam_file = $self->output_prefix . ".reheadered.sam";
+    my $cmd = "cat <(samtools view -H %s) %s > %s ";
+    my @input_files = (
+        $self->input_bam,
+        $output_sam_file,
+    );
+    my @output_files = (
+        $reheadered_sam_file,
+    );
+    my $rv = Genome::Sys->shellcmd(
+        cmd => sprintf($cmd, @input_files, @output_files),
+        input_files => \@input_files,
+        output_files => \@output_files,
+    );
+    unless ($rv) {
+        die "Failed to reheader sam file $output_sam_file";
+    }
+
+    unlink $output_sam_file;
+    return $reheadered_sam_file
 }
 
 1;

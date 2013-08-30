@@ -16,27 +16,26 @@ BEGIN {
 my $class = 'Genome::Model::Tools::Dindel::RunWithVcf';
 use_ok($class);
 
-my $VERSION = 0; # Bump this each time tests data changes
+my $VERSION = 1; # Bump this each time tests data changes
 
 my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$VERSION");
 diag "Test data located at $test_dir\n";
 
-my $bam_file = File::Spec->join($test_dir, '134053361-region-limited.bam');
-ok(-s $bam_file, "Found input Bam file");
+my $bam_file = File::Spec->join($test_dir, 'inputs', '134053361-region-limited.bam');
+ok(-s $bam_file, "Found input Bam file") || die;
 
-my $input_vcf = File::Spec->join($test_dir, 'testdata-indel.vcf');
-ok(-s $input_vcf, "Found input Vcf file");
+my $input_vcf = File::Spec->join($test_dir, 'inputs', 'testdata-indel.vcf');
+ok(-s $input_vcf, "Found input Vcf file")|| die;
 
 my $reference_sequence_build = Genome::Model::Build->get(106942997);
 my $ref_fasta = $reference_sequence_build->full_consensus_path('fa');
 diag "Reference sequence found at: $ref_fasta\n";
-ok(-s $ref_fasta, "Found Reference Sequence fasta");
+ok(-s $ref_fasta, "Found Reference Sequence fasta") || die;
 
 
 my $output_dir = Genome::Sys->create_temp_directory();
 
 my $cmd = $class->create(
-    make_realigned_bam => 1,
     input_vcf => $input_vcf,
     ref_fasta => $ref_fasta,
     bam_file => $bam_file,
@@ -44,27 +43,38 @@ my $cmd = $class->create(
 );
 ok($cmd->execute(), "Successfully ran command");
 
-my $expected_output_dir = File::Spec->join($test_dir, 'output-with-realigned-bam');
-test_bam_files_are_identical();
+my $found_bam_file = File::Spec->join($output_dir, 'results', 'result_1_realigned.merged.bam');
+
+my $expected_output_dir = File::Spec->join($test_dir, 'results');
+my $expected_bam_file = $found_bam_file;
+$expected_bam_file =~ s/$output_dir/$expected_output_dir/;
+
+test_bam_files_are_identical($expected_bam_file, $found_bam_file);
 test_txt_files_are_identical();
 
 done_testing();
 
-sub test_bam_files_are_identical {
-    my $filename_base = 'all_events_realigned.merged.sorted';
-    my $expected = File::Spec->join($expected_output_dir, $filename_base . ".bam");
-    my $expected_sam = File::Spec->join($expected_output_dir, $filename_base . ".sam");
-    ok(-s $expected, "Found expected output bam file: $expected");
+sub bam_to_sam {
+    my ($bam_file) = @_;
 
-    my $found = File::Spec->join($output_dir, $filename_base . ".bam");
-    my $found_sam = File::Spec->join($output_dir, $filename_base . ".sam");
+    my $sam_file = $bam_file;
+    $sam_file =~ s/bam$/sam/;
+    unlink($sam_file) if -s $sam_file;
+
     Genome::Model::Tools::Sam::BamToSam->execute(
-        bam_file => $found,
-        include_headers => 0,
-        sam_file => $found_sam,
+        bam_file => $bam_file,
+        include_headers => 1,
+        sam_file => $sam_file,
     );
+    return $sam_file;
+}
 
-    compare_ok($expected_sam, $found_sam, "No differences in Bam files.");
+sub test_bam_files_are_identical {
+    my ($bam1, $bam2) = @_;
+    ok(-s $bam1, "Bam file exists: $bam1");
+    ok(-s $bam2, "Bam file exists: $bam2");
+
+    compare_ok(bam_to_sam($bam1), bam_to_sam($bam2), "No differences in Bam files.");
 }
 
 sub test_txt_files_are_identical {
@@ -80,7 +90,6 @@ sub test_txt_files_are_identical {
 sub get_text_files {
     my $base = shift;
     my @files = glob(File::Spec->join($base, '*.txt'));
-    push @files, glob(File::Spec->join($base, '*' ,'*.txt'));
     push @files, glob(File::Spec->join($base, '*', '*', '*.txt'));
     return @files;
 }
