@@ -10,23 +10,14 @@ class Genome::Model::Tools::Dindel::MakeDindelWindows {
     has_input => [
         input_dindel_file => {
             is => 'Path',
-            doc => 'file of dindel formatted indels to examine. get this from getcigarindels or vcftodindel followed by realigncandidates',
-        },
-        num_windows_per_file =>  {
-            is => 'Number',
-            is_optional => 1,
-            doc => 'The number of windows dindel will put in each window_file.  If < 1, there will be only one window_file.',
-        },
-        output_directory => {
-            is => 'Path',
+            doc => 'file of dindel formatted indels to examine. get this from GetCigarIndels or VcfToDindel followed by RealignCandidates',
         },
     ],
-    has_output => [
-        output_files => {
+    has_calculated_output => [
+        window_file => {
             is => 'Path',
-            is_many => 1,
             is_calculated => 1,
-            calculate =>  q{ glob("$output_prefix*") },
+            calculate =>  q{ $output_prefix . ".1.txt" },
             calculate_from => ['output_prefix'],
         },
     ],
@@ -65,26 +56,7 @@ sub execute {
         '--windowFilePrefix', $self->output_prefix,
     );
 
-    if (defined($self->num_windows_per_file)) {
-        if ($self->num_windows_per_file < 1) {
-            return $self->run_with_single_output(@cmd);
-        } else {
-            push @cmd, '--numWindowsPerFile', $self->num_windows_per_file;
-            return $self->run(@cmd);
-        }
-    } else {
-        return $self->run(@cmd);
-    }
-}
-
-sub create_output_directory {
-    my $self = shift;
-    if (! -d $self->output_directory) {
-        Genome::Sys->create_directory($self->output_directory);
-    }
-    if (! -d $self->output_directory) {
-        die "Couldn't create output_directory " . $self->output_directory;
-    }
+    return $self->run_with_single_output(@cmd);
 }
 
 sub run_with_single_output {
@@ -93,7 +65,7 @@ sub run_with_single_output {
     push @cmd, '--numWindowsPerFile', 9_000_000;
     my $result = $self->run(@cmd);
 
-    my @output_files = $self->output_files;
+    my @output_files = glob($self->output_prefix . "*");
     if (scalar(@output_files) > 1) {
         die sprintf("Found more than one output_file (%s) when only one should have been produced.",
             scalar(@output_files));
@@ -108,6 +80,9 @@ sub run {
         cmd => \@cmd,
         input_files => [
             $self->input_dindel_file,
+        ],
+        output_files => [
+            $self->window_file,
         ],
     );
 }
