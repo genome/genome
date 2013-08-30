@@ -109,7 +109,7 @@ sub write_output {
     my $out_file = $self->output_file;
 
     my $writer;
-    my @headers = qw(gene_name drug_name interaction_type source gene_categories);
+    my @headers = qw(search_term gene_name drug_name interaction_type source full_gene_name);
 
     my %params = (
         headers   => \@headers,
@@ -124,18 +124,16 @@ sub write_output {
 
     #loop over each search term that was definitely matched
     for my $matched (@{$json_ref->{matchedTerms}}) {
-        my $gene_categories = join ",", sort @{$matched->{geneCategories}};
-        $gene_categories    = $gene_categories ? lc $gene_categories : 'n/a';
-
         #loop over any interactions for this gene
         for my $interaction (@{$matched->{interactions}}) {
             my %content;
             @content{@headers} = (
+                $matched->{searchTerm},
                 $matched->{geneName}, 
                 $interaction->{drugName}, 
                 $interaction->{interactionType},
                 $interaction->{source},
-                $gene_categories,
+                $matched->{geneLongName},
             );
 
             $writer->write_one(\%content);
