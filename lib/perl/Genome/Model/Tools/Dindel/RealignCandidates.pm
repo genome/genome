@@ -39,6 +39,7 @@ sub help_brief {
 sub execute {
     my $self = shift;
 
+    $self->create_output_directory();
     return Genome::Sys->shellcmd_arrayref(
         cmd => [
             $self->dindel_executable,
