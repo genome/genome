@@ -15,12 +15,12 @@ BEGIN {
 my $class = 'Genome::Model::Tools::Dindel::GetCigarIndels';
 use_ok($class);
 
-my $VERSION = 0; # Bump this each time test data changes
+my $VERSION = 1; # Bump this each time test data changes
 
 my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$VERSION");
 diag "Test data located at $test_dir\n";
 
-my $bam_file = File::Spec->join($test_dir, '134053361.bam');
+my $bam_file = File::Spec->join($test_dir, '134053361-region-limited.bam');
 ok(-s $bam_file, "Found input Bam file");
 
 my $reference_sequence_build = Genome::Model::Build->get(106942997);
