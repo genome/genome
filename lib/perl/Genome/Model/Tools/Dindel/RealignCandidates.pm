@@ -8,40 +8,33 @@ use Genome;
 class Genome::Model::Tools::Dindel::RealignCandidates {
     is => 'Genome::Model::Tools::Dindel::Base',
     has_input => [
-        variant_file => {
+        input_dindel_file => {
             is => 'Path',
         },
         ref_fasta => {
             is => 'Path',
         },
-        output_prefix => {
-            is => 'String',
-        },
     ],
     has_output => [
-        output_file => {
+        output_dindel_file => {
             is => 'Path',
             is_calculated => 1,
-            calculate =>  q{ "$output_prefix.variants.txt" },
+            calculate =>  q{ $output_prefix . ".variants.txt" },
             calculate_from => ['output_prefix'],
-        }
-    ]
+        },
+    ],
+    has_optional_transient => {
+        output_prefix => {
+            is_calculated => 1,
+            calculate =>  q{ File::Spec->join($output_directory, "left_shifted") },
+            calculate_from => ['output_directory'],
+        },
+    },
 };
 
 sub help_brief {
-    'Left-shift indels you got from a vcf'
+    'Left-shift indels in a dindel formatted variants file'
 }
-
-sub help_synopsis {
-    return <<EOS
-EOS
-}
-
-sub help_detail {
-    return <<EOS
-EOS
-}
-
 
 sub execute {
     my $self = shift;
@@ -50,13 +43,16 @@ sub execute {
         cmd => [
             $self->dindel_executable,
             '--analysis', 'realignCandidates',
-            '--varFile', $self->variant_file,
+            '--varFile', $self->input_dindel_file,
             '--outputFile', $self->output_prefix,
             '--ref', $self->ref_fasta,
         ],
         input_files => [
-            $self->variant_file,
+            $self->input_dindel_file,
             $self->ref_fasta
+        ],
+        output_files => [
+            $self->output_dindel_file,
         ],
     );
 }
