@@ -5590,6 +5590,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>make-circos-plot',
+      [
+        'build=s',
+        undef,
+        'output-directory=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>run-cn-view',
       [
         'cancer-annotation-db=s',
