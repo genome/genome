@@ -11,30 +11,24 @@ class Genome::Model::Tools::Dindel::VcfToDindel {
         input_vcf =>  {
             is => 'Path',
         },
-        output_dindel_file => {
-            is => 'Path',
-            is_output => 1,
-        },
         ref_fasta =>  {
             is => 'Path',
+        },
+    ],
+    has_calculated_output => [
+        output_dindel_file => {
+            is => 'Path',
+            calculate => q{ my (undef, undef, $filename) = File::Spec->splitpath($input_vcf);
+                            $filename =~ s/.vcf$/.variants.txt/;
+                            return File::Spec->join($output_directory, $filename); },
+            calculate_from => ['input_vcf', 'output_directory'],
         },
     ],
 };
 
 sub help_brief {
-    'Turn vcf into stupid dindel format'
+    'Convert vcf formatted variants file to dindel format'
 }
-
-sub help_synopsis {
-    return <<EOS
-EOS
-}
-
-sub help_detail {
-    return <<EOS
-EOS
-}
-
 
 sub execute {
     my $self = shift;
