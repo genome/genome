@@ -90,8 +90,8 @@ sub create_output_directory {
 sub run_with_single_output {
     my ($self, @cmd) = @_;
 
-    push @cmd, '--numWindowsPerFile', 10_000_000_000;
-    my $result = self->run(@cmd);
+    push @cmd, '--numWindowsPerFile', 9_000_000;
+    my $result = $self->run(@cmd);
 
     my @output_files = $self->output_files;
     if (scalar(@output_files) > 1) {
