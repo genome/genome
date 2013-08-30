@@ -53,6 +53,11 @@ class Genome::Config::AnalysisProject {
         updated_at => {
             is => 'Timestamp',
         },
+        status => {
+            is => 'Text',
+            default_value => 'Pending',
+            valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived'],
+        },
     ],
     has_transient_optional => [
         configuration_reader => {
