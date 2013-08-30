@@ -28,6 +28,11 @@ my %OPTIONAL_PROPERTIES = (
         is  => 'Text',
         doc => 'Limit results based on trust level of the interaction source. e.g. \'Expert curated\' or Non-curated',
     },
+    antineoplastic_only => {
+        is  => 'Boolean',
+        doc => 'Limit results to anti-cancer drugs only',
+        default_value => 0,
+    },
 );
 
 class Genome::Model::Tools::Dgidb::QueryGene {
@@ -44,11 +49,7 @@ class Genome::Model::Tools::Dgidb::QueryGene {
             is  => 'Text',
             doc => 'A file path to store the output. Default is to STDOUT',
         },
-        antineoplastic_only => {
-            is  => 'Boolean',
-            doc => 'Limit results to anti-cancer drugs only',
-            default_value => 0,
-        },
+        
     ],
     has_optional_output => [
         output_hash_ref => {
@@ -57,6 +58,9 @@ class Genome::Model::Tools::Dgidb::QueryGene {
     ],
 };
 
+sub get_optional_parameters {
+    return %OPTIONAL_PROPERTIES;
+}
 
 sub help_brief {
     'Tool to query genes from DGIDB database';
