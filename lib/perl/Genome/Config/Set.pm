@@ -55,7 +55,7 @@ sub delete {
     eval {
         #can't call deallocate normally or else it will try to
         #delete the allocation before the config set and throw a foreign key
-        #constraint erro
+        #constraint error
         my $allocation = $self->allocation;
         if ($allocation) {
             Genome::Disk::Allocation->_delete(allocation_id => $allocation->id);
