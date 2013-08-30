@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 use File::Basename;
 
+
 class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
     is => 'Command::V2',
     has_input => [
@@ -18,9 +19,9 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
         },
     ],
     has_output => [
-        output_file => {
+        output_dir => {
             is  => 'FilesystemPath',            
-            doc => 'result file of DGIDB output',
+            doc => 'result directory of DGIDB output',
         },
     ],
     doc => 'take a tsv file as input, extract gene list and annotate genes against DGIDB',
@@ -55,20 +56,39 @@ sub execute {
     my $gene_list = __PACKAGE__->convert($reader, $gene_name_regex);
     die $self->error_message("gene list is empty. check $infile") unless $gene_list;
 
-    my ($outfile_name, $dir) = fileparse($infile);
-    $outfile_name .= '.dgidb';
-    my $output_file  = $dir . $outfile_name;
+    my ($outdir_name, $dir) = fileparse($infile);
+    $outdir_name .= '.dgidb';
+    $outdir_name = $dir . $outdir_name;
 
-    my $cmd =Genome::Model::Tools::Dgidb::QueryGene->create(
-        output_file => $output_file,
-        genes       => $gene_list
+    Genome::Sys->create_directory($outdir_name) or die "Failed to create directory $outdir_name\n";
+    $self->output_dir($outdir_name);
+
+    my @parameter_sets = (
+        {
+            output_file         => "$outdir_name/all_interactions"
+        },
+        {
+            output_file         => "$outdir_name/expert_antineoplastic",
+            source_trust_levels => 'Expert curated',
+            antineoplastic_only => 1,
+        },
+        {
+            output_file         => "$outdir_name/kinase_only",
+            gene_categories     => 'KINASE',
+        },
     );
-    
-    unless ($cmd->execute) {
-        die $self->error_message("Failed to run gmt dgidb query-gene on gene list: $gene_list");
+
+    for my $parameter_set (@parameter_sets) {
+        my $cmd =Genome::Model::Tools::Dgidb::QueryGene->create(
+            %$parameter_set,
+            genes => $gene_list,
+        );
+
+        unless ($cmd->execute) {
+            die $self->error_message("Failed to run gmt dgidb query-gene on gene list: $gene_list");
+        }
     }
 
-    $self->output_file($output_file);
     return 1;
 }
 

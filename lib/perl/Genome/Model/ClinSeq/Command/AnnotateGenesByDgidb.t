@@ -63,7 +63,6 @@ is($list, "FLT3,KRAS", "List with two items converted correctly");
 
 my $test_dir = Genome::Utility::Test->data_dir_ok($class, 'v1') or die "data_dir of $class is not valid\n";
 my $test_tsv = $test_dir . '/test.indels.tsv';
-my $expected = $test_tsv . '.dgidb';
 
 my $tmp_dir      = Genome::Sys->create_temp_directory;
 my $tmp_test_tsv = $tmp_dir . '/test.indels.tsv';
@@ -78,9 +77,13 @@ my $cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb->create(
 ok($cmd, 'command created ok');
 ok($cmd->execute, 'command completed successfully');
 
-my $output_file = $cmd->output_file;
-is($output_file, $tmp_test_tsv.'.dgidb', 'output file named ok');
-compare_ok($output_file, $expected, 'output file created ok as expected');
+my $output_dir = $cmd->output_dir;
+is($output_dir, $tmp_test_tsv.'.dgidb', 'output dir named ok');
+
+for my $file_name qw(all_interactions expert_antineoplastic kinase_only) {
+    my ($output_file, $expected) = map{$_ . "/$file_name"}($output_dir, $test_dir);
+    compare_ok($output_file, $expected, 'output file created ok as expected');
+}
 
 done_testing;
 
