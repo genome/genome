@@ -12,9 +12,9 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
             is  => 'FilesystemPath',
             doc => 'tsv formatted file to added DGIDB annotations to',
         },
-        gene_name_column => {
+        gene_name_regex => {
             is  => 'Text',
-            doc => 'name of column containing gene names/symbols'
+            doc => 'regular expression of column names containing gene names/symbols'
         },
     ],
     has_output => [
@@ -43,40 +43,49 @@ EOS
 sub execute {
     my $self   = shift;
     my $infile = $self->input_file;
-    my $gene_name_column = $self->gene_name_column;
+    my $gene_name_regex = $self->gene_name_regex;
 
-    $self->status_message("Adding DGIDB gene annotation to $infile using genes in this gene name column: $gene_name_column");
+    $self->status_message("Adding DGIDB gene annotation to $infile using genes in this gene name column: $gene_name_regex");
 
     my $reader = Genome::Utility::IO::SeparatedValueReader->create(
         input     => $infile,
         separator => "\t",
     );
 
-    my $gene_list = __PACKAGE__->convert($reader, $gene_name_column);
+    my $gene_list = __PACKAGE__->convert($reader, $gene_name_regex);
     die $self->error_message("gene list is empty. check $infile") unless $gene_list;
 
     my ($outfile_name, $dir) = fileparse($infile);
     $outfile_name .= '.dgidb';
-    my $output_file  = $dir . "/$outfile_name";
+    my $output_file  = $dir . $outfile_name;
 
     my $cmd =Genome::Model::Tools::Dgidb::QueryGene->create(
         output_file => $output_file,
         genes       => $gene_list
     );
     
+    unless ($cmd->execute) {
+        die $self->error_message("Failed to run gmt dgidb query-gene on gene list: $gene_list");
+    }
+
     $self->output_file($output_file);
     return 1;
 }
 
 
 sub convert {
-    my ($class, $reader, $column_name) = @_;
+    my ($class, $reader, $column_regex) = @_;
     my %list;
 
     while (my $data = $reader->next) {
-        my $item = $data->{$column_name};
-        die "$column_name not found in file" unless $item;
-        $list{$item} = 1;
+        my $flag = 0;
+        for my $column_name (keys %$data) {
+            if ($column_name =~ /$column_regex/) {
+                $list{$data->{$column_name}} = 1;
+                $flag++;
+            }
+        }
+        die "$column_regex not found in file" unless $flag;
     }
 
     return join ',', sort keys %list;

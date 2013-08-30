@@ -985,7 +985,7 @@ sub add_dgidb_op_to_flow {
     my $msg = "Add dgidb gene annotations to $op_prop";
     my $annotate_genes_by_dgidb_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb");
     $add_link->($op, $op_prop, $annotate_genes_by_dgidb_op, 'input_file');
-    $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_dgidb_op, 'gene_name_column');
+    $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_dgidb_op, 'gene_name_regex');
     $add_link->($annotate_genes_by_dgidb_op, 'result', $output_connector, $out_prop);
     return 1;
 }
