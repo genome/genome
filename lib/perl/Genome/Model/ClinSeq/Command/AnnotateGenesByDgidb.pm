@@ -5,7 +5,6 @@ use warnings;
 use Genome;
 use File::Basename;
 
-
 class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
     is => 'Command::V2',
     has_input => [
@@ -21,7 +20,7 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
     has_output => [
         output_dir => {
             is  => 'FilesystemPath',            
-            doc => 'result directory of DGIDB output',
+            doc => 'result directory of DGIDB output, it will create a xxx.dgidb subdir under input file source dir',
         },
     ],
     doc => 'take a tsv file as input, extract gene list and annotate genes against DGIDB',
@@ -29,14 +28,17 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
 
 sub help_synopsis {
     return <<EOS
-genome model clin-seq annotate-genes-by-dgidb --input-file=/gscmnt/ams1108/info/model_data/2888708572/build134369422/AML103/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --gene-name-column=mapped_gene_name --outdir=/myhome/dir
+    genome model clin-seq annotate-genes-by-dgidb --input-file=/gscmnt/ams1108/info/model_data/2888708572/build134369422/AML103/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --gene-name-column=mapped_gene_name 
 EOS
 }
 
 
 sub help_detail {
     return <<EOS
-Generate a DGIDB gene annotation output
+    Generate a DGIDB gene annotation output. It will run dgidb guery gene with three options:
+    1. All interactions
+    2. Expert curated interaction sources only + antineoplastic drugs only
+    3. All interactions but limiting to kinases only
 EOS
 }
 
