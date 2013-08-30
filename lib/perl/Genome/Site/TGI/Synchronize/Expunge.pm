@@ -41,7 +41,6 @@ sub execute {
 
     $self->_notify_expunged_objects_owners(%expunge_notifications);
     
-    confess 'Could not commit!' unless UR::Context->commit;
     return 1;
 }
 
