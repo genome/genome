@@ -15,9 +15,6 @@ class Genome::Model::Tools::Dindel::GetCigarIndels {
         ref_fasta => {
             is => 'Path',
         },
-        output_directory => {
-            is => 'Path',
-        },
     ],
     has_output => [
         output_variants => {
@@ -43,24 +40,13 @@ class Genome::Model::Tools::Dindel::GetCigarIndels {
 };
 
 sub help_brief {
-    'Run getCIGARindels'
+    'Call indels in the input_bam (output_variants) and calculate the insert-size-distribution (output_libraries)'
 }
-
-sub help_synopsis {
-    return <<EOS
-EOS
-}
-
-sub help_detail {
-    return <<EOS
-EOS
-}
-
 
 sub execute {
     my $self = shift;
 
-    my $output_prefix = File::Spec->join($self->output_directory, 'cigar_generated_indels');
+    $self->create_output_directory();
     return Genome::Sys->shellcmd_arrayref(
         cmd => [
             $self->dindel_executable,
@@ -72,6 +58,10 @@ sub execute {
         input_files => [
             $self->input_bam,
             $self->ref_fasta,
+        ],
+        output_files => [
+            $self->output_variants,
+            $self->output_libraries,
         ],
     );
 }
