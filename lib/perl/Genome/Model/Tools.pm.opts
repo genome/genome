@@ -7221,6 +7221,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'genes=s',
       'files',
+      'antineoplastic-only!',
+      undef,
       'source-trust-levels=s',
       'files',
       'gene-categories=s',
@@ -7231,8 +7233,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'output-file=s',
       'files',
-      'antineoplastic-only!',
-      undef,
       'help!',
       undef
     ],
