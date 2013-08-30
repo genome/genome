@@ -33,6 +33,7 @@ sub help_brief {
 sub execute {
     my $self = shift;
 
+    $self->create_output_directory();
     my @cmd = (
         'python', $self->python_script('convertVCFToDindel'),
         '--inputFile', $self->input_vcf,
