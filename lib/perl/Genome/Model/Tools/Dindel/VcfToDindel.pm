@@ -6,21 +6,18 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Dindel::VcfToDindel {
-    is => 'Command',
-    has => [
-    input_vcf=> {
-        is=>'String',
-        is_input=>1,
-    },
-    output_dindel_file=>{
-        is=>'String',
-        is_input=>1,
-        is_output=>1,
-    },
-    ref_fasta=> {
-        is=>'String',
-        is_input=>1,
-    },
+    is => 'Genome::Model::Tools::Dindel::Base',
+    has_input => [
+        input_vcf =>  {
+            is => 'Path',
+        },
+        output_dindel_file => {
+            is => 'Path',
+            is_output => 1,
+        },
+        ref_fasta =>  {
+            is => 'Path',
+        },
     ],
 };
 
@@ -41,12 +38,24 @@ EOS
 
 sub execute {
     my $self = shift;
-    my $script_location = "/gscmnt/gc2146/info/medseq/dindel/dindel-1.01-python/convertVCFToDindel.py";
-    my $ref = $self->ref_fasta;
-    my $output = $self->output_dindel_file;
-    my $input = $self->input_vcf;
-    my $cmd = "python $script_location --inputFile $input --outputFile $output --refFile $ref";
-    return Genome::Sys->shellcmd(cmd=>$cmd);
+
+    my @cmd = (
+        'python', $self->python_script('convertVCFToDindel'),
+        '--inputFile', $self->input_vcf,
+        '--outputFile', $self->output_dindel_file,
+        '--refFile', $self->ref_fasta,
+    );
+
+    return Genome::Sys->shellcmd_arrayref(
+        cmd => \@cmd,
+        input_files => [
+            $self->input_vcf,
+            $self->ref_fasta,
+        ],
+        output_files => [
+            $self->output_dindel_file,
+        ],
+    );
 }
 
 1;
