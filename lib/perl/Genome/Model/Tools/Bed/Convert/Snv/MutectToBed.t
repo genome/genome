@@ -30,7 +30,6 @@ diag("Testing filtering to high quality only");
 test_conversion($hq_expected_file, source => $input_file, limit_variants_to => 'hq');
 diag("Testing filtering to low quality only");
 test_conversion($lq_expected_file, source => $input_file, limit_variants_to => 'lq');
-$DB::single = 1;
 done_testing();
 
 sub test_conversion {
