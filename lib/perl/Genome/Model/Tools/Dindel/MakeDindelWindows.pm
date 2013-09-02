@@ -76,7 +76,7 @@ sub run_with_single_output {
 
 sub run {
     my ($self, @cmd) = @_;
-    return Genome::Sys->shellcmd_arrayref(
+    return $self->shellcmd_arrayref(
         cmd => \@cmd,
         input_files => [
             $self->input_dindel_file,

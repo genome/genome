@@ -74,7 +74,7 @@ sub execute {
         $self->ref_fasta,
         $self->merge_bam_script,
     );
-    my $rv = Genome::Sys->shellcmd_arrayref(
+    my $rv = $self->shellcmd_arrayref(
         cmd => \@cmd,
         input_files => \@input_files,
     );

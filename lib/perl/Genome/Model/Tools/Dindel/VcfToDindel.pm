@@ -41,7 +41,7 @@ sub execute {
         '--refFile', $self->ref_fasta,
     );
 
-    return Genome::Sys->shellcmd_arrayref(
+    return $self->shellcmd_arrayref(
         cmd => \@cmd,
         input_files => [
             $self->input_vcf,

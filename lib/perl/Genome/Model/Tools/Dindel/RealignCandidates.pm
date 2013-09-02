@@ -40,7 +40,7 @@ sub execute {
     my $self = shift;
 
     $self->create_output_directory();
-    return Genome::Sys->shellcmd_arrayref(
+    return $self->shellcmd_arrayref(
         cmd => [
             $self->dindel_executable,
             '--analysis', 'realignCandidates',

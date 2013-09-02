@@ -26,6 +26,18 @@ sub help_detail {
 EOS
 }
 
+use String::ShellQuote 'shell_quote';
+sub shellcmd_arrayref {
+    my ($self, %params) = @_;
+
+    my $cmd = $params{cmd};
+    unless (ref($cmd) eq 'ARRAY') {
+        Carp::confess("cmd parameter expected to be an ARRAY reference not: " . ref($cmd));
+    }
+    $params{cmd} = join(' ', map {shell_quote $_} @$cmd);
+
+    return Genome::Sys->shellcmd(%params);
+}
 
 
 sub create_output_directory {
