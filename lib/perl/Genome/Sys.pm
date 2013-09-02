@@ -17,6 +17,7 @@ use Set::Scalar;
 use Digest::MD5;
 use JSON;
 use Params::Validate qw(:types);
+use String::ShellQuote 'shell_quote';
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -1264,6 +1265,18 @@ sub open_browser {
         Genome::Sys->shellcmd(cmd => "$browser $url");
     }
     return 1;
+}
+
+sub shellcmd_arrayref {
+    my ($self, %params) = @_;
+
+    my $cmd = $params{cmd};
+    unless (ref($cmd) eq 'ARRAY') {
+        Carp::confess("cmd parameter expected to be an ARRAY reference not: " . ref($cmd));
+    }
+    $params{cmd} = join(' ', map {shell_quote $_} @$cmd);
+
+    return $self->shellcmd(%params);
 }
 
 sub shellcmd {
