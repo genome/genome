@@ -1,17 +1,4 @@
-
-package Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf;     # rename this when you give the module file a different name <--
-
-#####################################################################################################################################
-# SearchRuns - Search the database for runs
-#					
-#	AUTHOR:		Dan Koboldt (dkoboldt@watson.wustl.edu)
-#
-#	CREATED:	04/01/2009 by D.K.
-#	MODIFIED:	04/01/2009 by D.K.
-#
-#	NOTES:	
-#			
-#####################################################################################################################################
+package Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf;
 
 use strict;
 use warnings;
@@ -19,7 +6,7 @@ use warnings;
 
 use FileHandle;
 
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome;
 
 my $num_affected_called = my $affecteds_missing = my $unaffecteds_variant = my $affecteds_variant = my $affecteds_ambiguous = 0;
 my %genotypes = ();
@@ -27,7 +14,7 @@ my %genotypes = ();
 class Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf {
 	is => 'Command',                       
 	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
+	has => [
 		vcf_file	=> { is => 'Text', doc => "Input in VCF format", is_optional => 0, is_input => 1},
 		output_basename	=> { is => 'Text', doc => "Output basename for files", is_optional => 0, is_input => 1},
 		control_samples	=> { is => 'Text', doc => "Comma-separated list of control sample names", is_optional => 1, is_input => 1},
@@ -46,7 +33,7 @@ class Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf {
 
 sub sub_command_sort_position { 12 }
 
-sub help_brief {                            # keep this to just a few words <---
+sub help_brief {
     "Attempts to use haplotype and inheritance rules to include/exclude regions of shared haplotypes among affecteds"                 
 }
 
@@ -57,19 +44,13 @@ EXAMPLE:	gmt analysis mendelian rare-het-rule-out-vcf --vcf-file myVCF.vcf --out
 EOS
 }
 
-sub help_detail {                           # this is what the user will see with the longer version of help. <---
+sub help_detail {
     return <<EOS 
 This tool attempts to use haplotype and inheritance rules to include/exclude regions of shared haplotypes among affecteds
 EOS
 }
 
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub execute {                               # replace with real execution logic.
+sub execute {
 	my $self = shift;
 	my $vcf_file = $self->vcf_file;
 
@@ -605,16 +586,8 @@ sub execute {                               # replace with real execution logic.
 
 
 	
-	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
+	return 1;
 }
-
-
-
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub do_plot_results
 {
@@ -764,13 +737,6 @@ print SCRIPTFILE "dev.off()\n";
 	close(INDEX);
 }
 
-
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
-
 sub do_single_plot
 {
 	my $infile = shift(@_);
@@ -883,15 +849,6 @@ print SCRIPTFILE "dev.off()\n";
 	close(INDEX);
 }
 
-
-
-
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
-
 sub load_rhro_regions
 {
 	my $FileName = shift;
@@ -921,14 +878,6 @@ sub load_rhro_regions
 	return(%regions);
 }
 
-
-
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
-
 sub load_centromeres
 {
 	my $self = shift(@_);
@@ -953,18 +902,12 @@ sub load_centromeres
 	return(%centromeres);
 }
 
-
 sub numericallyDesc
 {
 	$b = 0 if($b eq '.');
 	$a = 0 if($a eq '.');
 	$b <=> $a;
 }
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub is_homozygous
 {
@@ -975,11 +918,6 @@ sub is_homozygous
 	return(0);
 }
 
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
-
 sub is_heterozygous
 {
 	my $gt = shift(@_);
@@ -988,11 +926,6 @@ sub is_heterozygous
 	return(1) if($a1 ne $a2);
 	return(0);
 }
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub convert_genotype
 {
@@ -1067,14 +1000,12 @@ sub convert_genotype
 	return("??");
 }
 
-
 sub commify
 {
 	local($_) = shift;
 	1 while s/^(-?\d+)(\d{3})/$1,$2/;
 	return $_;
 }
-
 
 1;
 
