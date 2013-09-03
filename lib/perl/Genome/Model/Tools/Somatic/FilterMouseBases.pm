@@ -162,7 +162,7 @@ sub execute {
             
 	    (my $chrom, my $chr_start, my $chr_stop, my $alleles) = split(/\t/, $line);
 	    my ($ref, $cns) = split(/\//, $alleles);
-            my $var = iupac_to_base($ref, $cns);
+            my $var = Genome::Model::Tools::Capture::iupac_to_base($ref, $cns);
 
 	    my $key = join(":", $chrom, $chr_start, $chr_stop, $ref, $var);
 	    
@@ -245,9 +245,9 @@ sub get_mouse_bases
             
     	    (my $chrom, my $chr_start, my $chr_stop, my $alleles) = split(/\t/, $line);
 	    my ($ref, $cns) = split(/\//, $alleles);
-	    my $var = iupac_to_base($ref, $cns);
+	    my $var = Genome::Model::Tools::Capture::iupac_to_base($ref, $cns);
             
-	    $var = iupac_to_base($ref, $var);
+	    $var = Genome::Model::Tools::Capture::iupac_to_base($ref, $var);
 	    my $id_string = join(":", $chrom, $chr_start, $chr_stop, $ref, $var);
 	    
 	    $chr_start-- if($chr_start == $chr_stop);	## Adjust for bed ##
