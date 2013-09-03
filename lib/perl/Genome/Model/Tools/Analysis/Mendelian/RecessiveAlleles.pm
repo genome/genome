@@ -1,17 +1,5 @@
 
-package Genome::Model::Tools::Analysis::Mendelian::RecessiveAlleles;     # rename this when you give the module file a different name <--
-
-#####################################################################################################################################
-# SearchRuns - Search the database for runs
-#					
-#	AUTHOR:		Dan Koboldt (dkoboldt@watson.wustl.edu)
-#
-#	CREATED:	04/01/2009 by D.K.
-#	MODIFIED:	04/01/2009 by D.K.
-#
-#	NOTES:	
-#			
-#####################################################################################################################################
+package Genome::Model::Tools::Analysis::Mendelian::RecessiveAlleles;
 
 use strict;
 use warnings;
@@ -51,7 +39,7 @@ $damaging_classes{'frame_shift_del'} = 1;
 
 use FileHandle;
 
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome;
 
 my $num_affected_called = my $affecteds_missing = my $unaffecteds_variant = my $affecteds_variant = my $affecteds_ambiguous = 0;
 my %genotypes = ();
@@ -59,8 +47,8 @@ my %genotypes = ();
 class Genome::Model::Tools::Analysis::Mendelian::RecessiveAlleles {
 	is => 'Command',                       
 	
-	has => [                                # specify the command's single-value properties (parameters) <--- 
-		vcf_file	=> { is => 'Text', doc => "Input in VCF format", is_optional => 0, is_input => 1},
+	has => [		
+        vcf_file	=> { is => 'Text', doc => "Input in VCF format", is_optional => 0, is_input => 1},
 		output_file	=> { is => 'Text', doc => "Output file for VCF of recessive candidate variants", is_optional => 1, is_input => 1},
 		output_variants	=> { is => 'Text', doc => "Output file for recessive candidate variants with annotation", is_optional => 1, is_input => 1},
 		control_samples	=> { is => 'Text', doc => "Comma-separated list of control sample names", is_optional => 1, is_input => 1},
@@ -78,8 +66,7 @@ class Genome::Model::Tools::Analysis::Mendelian::RecessiveAlleles {
 
 sub sub_command_sort_position { 12 }
 
-sub help_brief {                            # keep this to just a few words <---
-    "Filters a VCF for variants that pass Mendelian rules of inheritance"                 
+sub help_brief {    "Filters a VCF for variants that pass Mendelian rules of inheritance"                 
 }
 
 sub help_synopsis {
@@ -89,19 +76,13 @@ EXAMPLE:	gmt analysis mendelian recessive-alleles --vcf-file myVCF.vcf --output-
 EOS
 }
 
-sub help_detail {                           # this is what the user will see with the longer version of help. <---
+sub help_detail {
     return <<EOS 
 
 EOS
 }
 
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub execute {                               # replace with real execution logic.
+sub execute {
 	my $self = shift;
 	my $vcf_file = $self->vcf_file;
 
@@ -884,12 +865,6 @@ sub execute {                               # replace with real execution logic.
 	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }
 
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
-
 sub load_annotation
 {
     my $annotation_file = shift(@_);
@@ -921,21 +896,12 @@ sub load_annotation
     return(%annotation);
 }
 
-
-
 sub numericallyDesc
 {
 	$a =~ s/\./0/;
 	$b =~ s/\./0/;
 	$b <=> $a;
 }
-
-
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub load_vep
 {
@@ -1043,7 +1009,6 @@ sub load_vep
     return(%annotation);
 }
 
-
 sub byChrPos
 {
     (my $chrom_a, my $pos_a) = split(/\t/, $a);
@@ -1069,12 +1034,6 @@ sub byChrPos
 #    $chrom_a = 24 if($chrom_a =~ 'Y');
     
 }
-
-
-#############################################################
-# load_vep_results - parses the file
-#
-#############################################################
 
 sub bySeverity
 {
@@ -1138,12 +1097,6 @@ sub bySeverity
 	$condel_b <=> $condel_a
 }
 
-
-#############################################################
-# load_vep_results - parses the file
-#
-#############################################################
-
 sub fxn_class_code
 {
 	my $class = shift(@_);
@@ -1166,13 +1119,6 @@ sub fxn_class_code
 	return(0);
 }
 
-
-
-#############################################################
-# load_vep_results - parses the file
-#
-#############################################################
-
 sub is_damaging
 {
 	my ($polyphen, $sift, $condel) = @_;
@@ -1191,10 +1137,6 @@ sub is_damaging
 	return(0);
 }
 
-#############################################################
-# convert_vep_class - convert to our trv_type
-#
-#############################################################
 sub convert_vep_class
 {
 	my $vep_class = shift(@_);
@@ -1243,11 +1185,6 @@ sub byCode
 	$code_b <=> $code_a;
 }
 
-#############################################################
-# get_code - get a VEP class rank for this annotation 
-#
-#############################################################
-
 sub get_code
 {
 	my $class = shift(@_);
@@ -1267,15 +1204,6 @@ sub get_code
 	
 	return(0);
 }
-
-
-
-
-
-################################################################################################
-# LoadAnnotation - load the VEP annotation 
-#
-################################################################################################
 
 sub convert_genotype
 {
