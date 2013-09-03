@@ -1,4 +1,6 @@
 #!/usr/bin/env genome-perl
+# This is used by AnalyzeWindowFile to merge bam files as they are created
+# instead of waiting until they're all created and merging them at the end.
 
 use strict;
 use warnings;
