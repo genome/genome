@@ -19,7 +19,11 @@ class Genome::Model::RnaSeq {
         },
         annotation_build => {
             is => "Genome::Model::Build::ImportedAnnotation",
-        }
+        },
+        target_region_set_name => {
+            is => 'Text',
+            doc => 'limits the assignment of instrument data by default to only data with a matching TRSN'
+        },
     ],
     has_param => [
         sequencing_platform => {
