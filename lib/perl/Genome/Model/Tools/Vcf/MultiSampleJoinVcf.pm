@@ -29,12 +29,10 @@ class Genome::Model::Tools::Vcf::MultiSampleJoinVcf {
         output_file => {
             is => 'Text',
             is_output => 1,
-            is_optional => 0,
             doc => "Output merged VCF",
         },
         vcf_list => {
             is => 'Text',
-            is_optional => 0,
             is_input => 1,
             doc => 'Path to a file containing a list of vcfs to merge, one per line, with the source_name following',
         },
@@ -120,6 +118,24 @@ sub execute {
 }
 
 
+sub _process_input_line {
+    my($self, $line, $paths, $handles) = @_;
+
+    my ($path,$source_name,$build_id) = split /\s+/,$line;
+    if(exists($paths->{$source_name})){
+        die $self->error_message("Already have a record for: ".$source_name);
+    }
+    $paths->{$source_name}{path} = $path;
+    if(defined($build_id)){
+        $paths->{$source_name}{build_id} = $build_id;
+    }
+    if($self->use_gzip_files){
+        $handles->{$source_name} = Genome::Sys->open_gzip_file_for_reading($path);
+    } else {
+        $handles->{$source_name} = Genome::Sys->open_file_for_reading($path);
+    }
+}
+ 
 sub process_input_list {
     my $self = shift;
 
@@ -130,19 +146,7 @@ sub process_input_list {
     my %handles;
     while(my $line = $fh->getline){
         chomp $line;
-        my ($path,$source_name,$build_id) = split /\s+/,$line;
-        if(exists($paths{$source_name})){
-            die $self->error_message("Already have a record for: ".$source_name);
-        }
-        $paths{$source_name}{path} = $path;
-        if(defined($build_id)){
-            $paths{$source_name}{build_id} = $build_id;
-        }
-        if($self->use_gzip_files){
-            $handles{$source_name} = Genome::Sys->open_gzip_file_for_reading($path);
-        } else {
-            $handles{$source_name} = Genome::Sys->open_file_for_reading($path);
-        }
+        $self->_process_input_line($line, \%paths, \%handles);
     }
     $self->_vcf_list(\%paths);
     $self->_vcf_handles(\%handles);
@@ -186,6 +190,8 @@ sub set_format_string {
     $self->_format_string(join(":",@answer));
 }
 
+
+#### >>>>>>>>>>>>>>>>>>
 sub set_sample_cols {
     my $self = shift;
 
@@ -199,6 +205,7 @@ sub set_sample_cols {
 
     return 1;
 }
+### ===============
 
 sub close_handles {
     my $self = shift;
@@ -210,6 +217,7 @@ sub close_handles {
     }
     return 1;
 }
+
 
 #smartly combine two headers and stuff a hash of it into $self->_header
 sub merge_headers {
@@ -461,18 +469,33 @@ sub process_records {
                 push @answer, $key;
             }
         }
-        if(@answer == 1){
-            $self->print_record($lines{$answer[0]}{line}, $answer[0]);
-        } else {
-            my $line = $self->merge_records(\@answer,\%lines);
-            $self->print_merged($line, \@answer);
-        }
+        $self->_print_processed_records(\@answer, \%lines);
 
         $self->get_lines(\%lines,\@answer);
     }
 
     return 1;
 }
+
+
+sub _print_processed_records {
+    my($self, $answer, $lines) = @_;
+
+    if (@$answer == 1) {
+        $self->print_record($lines->{$answer->[0]}{line}, $answer->[0]);
+    } else {
+        $self->_print_multiple_processed_records($answer, $lines);
+    }
+}
+
+sub _print_multiple_processed_records {
+    my($self, $answer, $lines) = @_;
+
+    my $line = $self->merge_records($answer,$lines);
+    $self->print_merged($line, $answer);
+}
+
+
 
 # This function takes a hash of sample names, which contain hashes of line, chrom, and pos
 # and a list of stale samples, which means the line was used in the output and a new line
@@ -535,22 +558,28 @@ sub print_merged {
     return 1;
 }
 
+sub _inputs_for_merge_records {
+    my($self, $answer, $lines) = @_;
+
+    my %inputs;
+    for my $key (@{$answer}){
+        my @cols = split /\t/, $lines->{$key}{line};
+        $inputs{$key} = \@cols;
+    }
+    return \%inputs;
+}
+
 #combine two or more intersecting records
 sub merge_records {
     my $self = shift;
     my $answer = shift;
     my $lines = shift;
 
-    my %inputs;
-
-    for my $key (@{$answer}){
-        my @cols = split /\t/, $lines->{$key}{line};
-        $inputs{$key} = \@cols;
-    }
+    my $inputs = $self->_inputs_for_merge_records($answer, $lines);
 
     my $num_cols=0;
-    for my $key (sort(keys(%inputs))){
-        my $nc = scalar( @{$inputs{$key}});
+    for my $key (sort(keys(%$inputs))){
+        my $nc = scalar( @{$inputs->{$key}});
         if(! $num_cols){
             $num_cols = $nc;
         } else {
@@ -560,70 +589,61 @@ sub merge_records {
         }
     }
 
-    my @samples = nsort(keys(%inputs));
+    my @samples = nsort(keys(%$inputs));
     my $a = $samples[0];
  
     my %merged;
-    my %gt;
-    $merged{CHROM} = $inputs{$a}->[CHROM];
-    $merged{POS} = $inputs{$a}->[POS];
-    $merged{ID} = $inputs{$a}->[ID];
+    $merged{CHROM} = $inputs->{$a}->[CHROM];
+    $merged{POS} = $inputs->{$a}->[POS];
+    $merged{ID} = $inputs->{$a}->[ID];
 
     for my $key (@samples){
-        unless( $inputs{$key}->[ID] eq $merged{ID} ){
+        unless( $inputs->{$key}->[ID] eq $merged{ID} ){
             die $self->error_message("Found disagreement on ID field at ".$merged{CHROM}." ".$merged{POS});
         }
     }
 
-    $merged{REF} = $inputs{$a}->[REF];
+    $merged{REF} = $inputs->{$a}->[REF];
 
     for my $key (@samples){
-        unless( $inputs{$key}->[REF] eq $merged{REF} ){
+        unless( $inputs->{$key}->[REF] eq $merged{REF} ){
             die $self->error_message("Found disagreement on REF field at ".$merged{CHROM}." ".$merged{POS});
         }
     }
 
     my  %alts;
-    for my $key (nsort(keys(%inputs))){
-        my @alts = split /\,/, $inputs{$key}->[ALT];
+    for my $key (nsort(keys(%$inputs))){
+        my @alts = split /\,/, $inputs->{$key}->[ALT];
         for my $alt (@alts){
             $alts{$alt} =1;
         }
     }
     $merged{ALT} = join(",", sort(keys(%alts)));
 
-    for my $sample(@samples){
-        
-    }
-
     #FIXME Find a better approach than simply dropping the quality score... some way of merging them?
     $merged{QUAL} = '.';
 
-    #my $qual=0;
-    #map { $qual += $inputs{$_}->{QUAL};} @samples;
-
-
-    $merged{FILTER} = $inputs{$a}->[FILTER];
+    $merged{FILTER} = $inputs->{$a}->[FILTER];
 
     for my $s (@samples){
         my $merged_pass = $merged{FILTER} eq 'PASS';
-        my $pass = $inputs{$s}->[FILTER] eq 'PASS';
+        my $pass = $inputs->{$s}->[FILTER] eq 'PASS';
         if( $merged_pass xor $pass ){
             if($self->intersection){
-                $merged{FILTER} = $merged_pass ? $inputs{$s}->[FILTER] : $merged{FILTER};
+                $merged{FILTER} = $merged_pass ? $inputs->{$s}->[FILTER] : $merged{FILTER};
             } else {
                 $merged{FILTER} = 'PASS';
             }
         }
     }
 
-    $merged{INFO} = $inputs{$a}->[INFO];
+    $merged{INFO} = $inputs->{$a}->[INFO];
 
     my %info;
 
     for my $sample (@samples){
 
-        my @info = split /\;/, $inputs{$sample}->[INFO];
+        my @info = split /\;/, $inputs->{$sample}->[INFO];
         my %tags;
         for my $record (@info){
             my ($t,$v) =  split /\=/, $record;
@@ -642,25 +662,38 @@ sub merge_records {
                 $info{VC} = join(",",@detectors);
             }
         }
-        my @finfo;
-        for my $key (sort(keys(%info))){
-            push @finfo, $key."=".$info{$key};
-        }
-        $merged{INFO} = join(";",@finfo);
+        $self->_merge_records_info_for_samples(\%info, \%merged)
     }
 
+    $self->_merge_records_final_processing(\%info, \%merged, $inputs, \@samples);
     $merged{FORMAT} = $self->_format_string;
 
-    my @format_fields = split /:/, $merged{FORMAT};
+    return \%merged;
+}
+
+sub _merge_records_info_for_samples {
+    my($self, $info, $merged) = @_;
+
+    my @finfo;
+    for my $key (sort(keys(%$info))){
+        push @finfo, $key."=".$info->{$key};
+    }
+    $merged->{INFO} = join(";",@finfo);
+}
+
+sub _merge_records_final_processing {
+    my($self, $info, $merged, $inputs, $samples) = @_;
+
+    my @format_fields = split /:/, $merged->{FORMAT};
     my %format_fields;
     @format_fields{@format_fields} = 1;
     my %format;
 
-    for my $sample (@samples){
+    for my $sample (@$samples){
         my %format_fields;
         @format_fields{@format_fields} = 1;
-        my @tags = split /\:/, $inputs{$sample}->[FORMAT];
-        my @vals = split /\:/, $inputs{$sample}->[SAMPLE];
+        my @tags = split /\:/, $inputs->{$sample}->[FORMAT];
+        my @vals = split /\:/, $inputs->{$sample}->[SAMPLE];
 
         my @sample_fields;
         for my $num (0..(scalar(@tags)-1)){
@@ -678,30 +711,27 @@ sub merge_records {
             } 
         }
         $format{$sample}{GT} = Genome::Model::Tools::Vcf::Convert::Base->regenerate_gt( 
-            $merged{REF},               #Reference Base(s)
-            $inputs{$sample}->[ALT],    #Original ALT
+            $merged->{REF},               #Reference Base(s)
+            $inputs->{$sample}->[ALT],    #Original ALT
             $format{$sample}{GT},       #Original Genotype
-            $merged{ALT},               #New ALT
+            $merged->{ALT},               #New ALT
         );
         my @answer;
         for my $tag (@format_fields){
             push @answer, $format{$sample}{$tag};
         }
-        $inputs{$sample}->[SAMPLE] = join(":",@answer);
+        $inputs->{$sample}->[SAMPLE] = join(":",@answer);
     }
 
     my @gt_fields;
     my @sources;
-    for my $sample (@samples){
-        push @gt_fields, $inputs{$sample}->[SAMPLE];
+    for my $sample (@$samples){
+        push @gt_fields, $inputs->{$sample}->[SAMPLE];
         push @sources, $sample;
     }
 
-    $merged{SAMPLE} = $self->get_samples_string(\@gt_fields,\@sources);
-
-    return \%merged;
+    $merged->{SAMPLE} = $self->get_samples_string(\@gt_fields,\@sources);
 }
-
 
 # This method constructs format and sample fields in the proper order, adding dots where fields were missing
 sub adjust_sample_string {
