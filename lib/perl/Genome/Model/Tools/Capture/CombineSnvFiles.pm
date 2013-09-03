@@ -20,7 +20,7 @@ use Genome;                                 # using the namespace authorizes Cla
 use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
 
 class Genome::Model::Tools::Capture::CombineSnvFiles {
-	is => 'Command',                       
+	is => 'Genome::Model::Tools::Capture::CombineBase',                       
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		variant_file1	=> { is => 'Text', doc => "Variants in annotation format", is_optional => 0, is_input => 1 },
@@ -65,10 +65,10 @@ sub execute {                               # replace with real execution logic.
 	my $output_file = $self->output_file;
 	
 	warn "Loading variants in file 1...\n";
-	my %variants1 = load_variants($variant_file1);
+	my %variants1 = $self->load_variants($variant_file1);
 
 	print "Loading variants in file 2...\n";
-	my %variants2 = load_variants($variant_file2);
+	my %variants2 = $self->load_variants($variant_file2);
 	
 	my %all_variants = ();
 	
@@ -87,7 +87,7 @@ sub execute {                               # replace with real execution logic.
 	
 	open(OUTFILE, ">$output_file") or die "Can't open outfile: $!\n";
 
-	foreach my $key (sort byChrPos keys %all_variants)
+	foreach my $key ($self->sortByChrPos(keys %all_variants))
 	{
 		$stats{'total variants'}++;
 		
@@ -141,105 +141,4 @@ sub execute {                               # replace with real execution logic.
 	return(1);
 }
 
-
-
-################################################################################################
-# Load variants - parse a variant file 
-#
-################################################################################################
-
-sub load_variants
-{                               # replace with real execution logic.
-	my $FileName = shift(@_);	
-
-	my %variants = ();
-
-	my $input = new FileHandle ($FileName);
-	my $lineCounter = 0;
-
-	my @formatted = ();
-	my $formatCounter = 0;
-	
-	while (<$input>)
-	{
-		chomp;
-		my $line = $_;
-		$lineCounter++;		
-
-		my @lineContents = split(/\t/, $line);
-
-		if(!(lc($lineContents[0]) =~ "chrom" || lc($lineContents[0]) =~ "ref_name"))
-		{
-			my $chrom = $lineContents[0];
-			$chrom = fix_chrom($chrom);
-			my $chr_start = $lineContents[1];
-			my $chr_stop = $lineContents[2];
-			my $allele1= $lineContents[3];
-			my $allele2 = $lineContents[4];
-			my $numContents = @lineContents;
-			
-			my $rest_of_line = "";
-			for(my $colCounter = 5; $colCounter < $numContents; $colCounter++)
-			{
-				$rest_of_line .= "\t" if($rest_of_line);
-				$rest_of_line .= $lineContents[$colCounter];
-			}
-
-			if($chrom && $chr_start && $chr_stop)
-			{
-				my $key = join("\t", $chrom, $chr_start, $chr_stop);
-				$variants{$key} = "$allele1\t$allele2";
-				$variants{$key} .= "\t$rest_of_line" if($rest_of_line);
-			}
-		}
-	}
-
-	close($input);
-	
-	return(%variants);
-	
-}
-
-#############################################################
-# ParseBlocks - takes input file and parses it
-#
-#############################################################
-
-sub fix_chrom
-{
-	my $chrom = shift(@_);
-	$chrom =~ s/chr// if(substr($chrom, 0, 3) eq "chr");
-	$chrom =~ s/[^0-9XYMNT\_random]//g;	
-
-	return($chrom);
-}
-
-sub byChrPos
-{
-    (my $chrom_a, my $pos_a) = split(/\t/, $a);
-    (my $chrom_b, my $pos_b) = split(/\t/, $b);
-
-	$chrom_a =~ s/X/23/;
-	$chrom_a =~ s/Y/24/;
-	$chrom_a =~ s/MT/25/;
-	$chrom_a =~ s/M/25/;
-	$chrom_a =~ s/[^0-9]//g;
-
-	$chrom_b =~ s/X/23/;
-	$chrom_b =~ s/Y/24/;
-	$chrom_b =~ s/MT/25/;
-	$chrom_b =~ s/M/25/;
-	$chrom_b =~ s/[^0-9]//g;
-
-    $chrom_a <=> $chrom_b
-    or
-    $pos_a <=> $pos_b;
-    
-#    $chrom_a = 23 if($chrom_a =~ 'X');
-#    $chrom_a = 24 if($chrom_a =~ 'Y');
-    
-}
-
-
 1;
-

@@ -20,7 +20,7 @@ use Genome;                                 # using the namespace authorizes Cla
 use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
 
 class Genome::Model::Tools::Capture::FormatSnvs {
-	is => 'Command',                       
+	is => 'Genome::Model::Tools::Capture',                       
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		variants_file	=> { is => 'Text', doc => "File of SNV predictions", is_optional => 0, is_input => 1 },
@@ -85,7 +85,7 @@ sub execute {                               # replace with real execution logic.
 		if(!(lc($lineContents[0]) =~ "chrom" || lc($lineContents[0]) =~ "ref_name"))
 		{
 			my $chrom = $lineContents[0];
-			$chrom = fix_chrom($chrom);
+			$chrom = $self->fix_chrom($chrom);
 			my $chr_start = $lineContents[1];
 			my $chr_stop = my $allele1  = my $allele2 = "";
 
@@ -108,7 +108,7 @@ sub execute {                               # replace with real execution logic.
 
 			if($chrom && $chr_start && $chr_stop)
 			{
-				$allele2 = iupac_to_base($allele1, $allele2) if(!$self->preserve_call);
+				$allele2 = $self->iupac_to_base($allele1, $allele2) if(!$self->preserve_call);
 	
 				## If we have other information on line, output it ##
 				my $numContents = @lineContents;
@@ -133,7 +133,7 @@ sub execute {                               # replace with real execution logic.
 	
 	## Sort the formatted indels by chr pos ##
 
-	@formatted = sort byChrPos @formatted;
+	@formatted = $self->sortByChrPos(@formatted);
 	
 	foreach my $snv (@formatted)
 	{
@@ -144,47 +144,4 @@ sub execute {                               # replace with real execution logic.
 	close(OUTFILE);
 }
 
-
-#############################################################
-# ParseBlocks - takes input file and parses it
-#
-#############################################################
-
-sub fix_chrom
-{
-	my $chrom = shift(@_);
-	$chrom =~ s/chr// if(substr($chrom, 0, 3) eq "chr");
-	$chrom =~ s/[^0-9XYMNTGL\.\_random]//g;	
-
-	return($chrom);
-}
-
-sub byChrPos
-{
-    (my $chrom_a, my $pos_a) = split(/\t/, $a);
-    (my $chrom_b, my $pos_b) = split(/\t/, $b);
-
-	$chrom_a =~ s/X/23/;
-	$chrom_a =~ s/Y/24/;
-	$chrom_a =~ s/MT/25/;
-	$chrom_a =~ s/M/25/;
-	$chrom_a =~ s/[^0-9]//g;
-
-	$chrom_b =~ s/X/23/;
-	$chrom_b =~ s/Y/24/;
-	$chrom_b =~ s/MT/25/;
-	$chrom_b =~ s/M/25/;
-	$chrom_b =~ s/[^0-9]//g;
-
-    $chrom_a <=> $chrom_b
-    or
-    $pos_a <=> $pos_b;
-    
-#    $chrom_a = 23 if($chrom_a =~ 'X');
-#    $chrom_a = 24 if($chrom_a =~ 'Y');
-    
-}
-
-
 1;
-

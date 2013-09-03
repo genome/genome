@@ -27,7 +27,7 @@ my %stats = ();
 
 
 class Genome::Model::Tools::Capture::MutationsFromGroup {
-	is => 'Command',                       
+	is => 'Genome::Model::Tools::Capture',                       
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		group_id		=> { is => 'Text', doc => "ID of somatic-variation model group" , is_optional => 0},
@@ -143,7 +143,7 @@ sub execute {                               # replace with real execution logic.
 				my $tier1_snvs_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";				
 				my $tier1_snvs_annotation_file = "$build_dir/effects/snvs.hq.tier1.v1.annotated.top";
 				## Load Tier 1 ##
-				my %tier1_snvs = load_variants_from_bed($tier1_snvs_file);
+				my %tier1_snvs = $self->load_variants_from_bed($tier1_snvs_file);
 				
 				## Get Novel Indels file ##
 				my $novel_indels_file = "$build_dir/novel/indels.hq.novel.v2.bed";
@@ -151,7 +151,7 @@ sub execute {                               # replace with real execution logic.
 				my $tier1_indels_annotation_file = "$build_dir/effects/indels.hq.tier1.v1.annotated.top";
 
 				## Load Tier1 ##				
-				my %tier1_indels = load_variants_from_bed($tier1_indels_file);
+				my %tier1_indels = $self->load_variants_from_bed($tier1_indels_file);
 				
 				if(-e $novel_snvs_file)
 				{
@@ -178,7 +178,7 @@ sub execute {                               # replace with real execution logic.
 						## Reformat ##
 						$chr_start++ if($chr_start < $chr_stop);
 						my ($ref, $cns) = split(/\//, $alleles);
-						my $var = iupac_to_base($ref, $cns);
+						my $var = $self->iupac_to_base($ref, $cns);
 						my $key = join("\t", $chrom, $chr_start, $chr_stop, $ref, $var);
 						
 						print NOVEL join("\t", $chrom, $chr_start, $chr_stop, $ref, $var) . "\n";
@@ -208,7 +208,7 @@ sub execute {                               # replace with real execution logic.
 
 					if(-e $novel_indels_file)
 					{
-						my %novel_indels = load_variants_from_bed($novel_indels_file);
+						my %novel_indels = $self->load_variants_from_bed($novel_indels_file);
 						
 						
 						open(NOVELBED, ">$output_dir/indels.novel.bed") or die "Can't open outfile: $!\n";
@@ -219,7 +219,7 @@ sub execute {                               # replace with real execution logic.
 	
 						my %printed = ();
 	
-						foreach my $indel (sort byChrPos keys %novel_indels)
+						foreach my $indel ($self->sortByChrPos(keys %novel_indels))
 						{
 							$num_indels++;
 							
@@ -325,7 +325,8 @@ sub load_file_to_string
 
 sub load_variants_from_bed
 {
-	my $FileName = shift(@_);
+    my $self = shift;
+	my $FileName = shift;
 
 	my $input = new FileHandle ($FileName);
 	my $lineCounter = 0;
@@ -361,7 +362,7 @@ sub load_variants_from_bed
 		else
 		{
 			## SNV ##
-			$var = iupac_to_base($ref, $cns);
+			$var = $self->iupac_to_base($ref, $cns);
 			$chr_start++ if($chr_start < $chr_stop);
 		}
 		
@@ -375,32 +376,4 @@ sub load_variants_from_bed
 	return(%variants);
 }
 
-
-sub byChrPos
-{
-    (my $chrom_a, my $pos_a) = split(/\t/, $a);
-    (my $chrom_b, my $pos_b) = split(/\t/, $b);
-
-	$chrom_a =~ s/X/23/;
-	$chrom_a =~ s/Y/24/;
-	$chrom_a =~ s/MT/25/;
-	$chrom_a =~ s/M/25/;
-	$chrom_a =~ s/[^0-9]//g;
-
-	$chrom_b =~ s/X/23/;
-	$chrom_b =~ s/Y/24/;
-	$chrom_b =~ s/MT/25/;
-	$chrom_b =~ s/M/25/;
-	$chrom_b =~ s/[^0-9]//g;
-
-    $chrom_a <=> $chrom_b
-    or
-    $pos_a <=> $pos_b;
-    
-#    $chrom_a = 23 if($chrom_a =~ 'X');
-#    $chrom_a = 24 if($chrom_a =~ 'Y');
-    
-}
-
 1;
-

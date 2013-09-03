@@ -28,7 +28,7 @@ my %stats = ();
 my %snps = my %snp_hets = my %snp_homs = ();
 
 class Genome::Model::Tools::Capture::GermlineModelGroupSummary {
-	is => 'Command',                       
+	is => 'Genome::Model::Tools::Capture',                       
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		group_id		=> { is => 'Text', doc => "ID of model group" , is_optional => 0},
@@ -93,7 +93,7 @@ sub execute {                               # replace with real execution logic.
 		{
 			$stats{'samples_included'}++;
 			my $build_dir = $model->last_succeeded_build_directory;
-			my $variant_summary = summarize_variants($subject_name, $build_dir, $self);
+			my $variant_summary = $self->summarize_variants($subject_name, $build_dir, $self);
 
 			if($self->output_file)
 			{
@@ -143,6 +143,7 @@ sub execute {                               # replace with real execution logic.
 
 sub summarize_variants
 {
+    my $self = shift;
 	my ($sample_name, $build_dir, $self) = @_;
 
 	my %var_stats = ();
@@ -268,7 +269,7 @@ sub summarize_variants
 		$var_stats{'num_indels'} = $var_stats{'num_insertions'} + $var_stats{'num_deletions'};
 
 		## Parse the SNP BED file ##
-		($var_stats{'num_snp_hets'}, $var_stats{'num_snp_homs'}) = parse_snp_bed($snp_bed_file);
+		($var_stats{'num_snp_hets'}, $var_stats{'num_snp_homs'}) = $self->parse_snp_bed($snp_bed_file);
 	}
 
 
@@ -287,6 +288,7 @@ sub summarize_variants
 
 sub parse_snp_bed
 {
+    my $self = shift;
 	my $FileName = shift(@_);
 
 	my $num_hets = my $num_homs = 0;
@@ -302,7 +304,7 @@ sub parse_snp_bed
 		my ($ref, $cns) = split(/\//, $alleles);
 		$chr_start++ if($chr_start < $chr_stop);
 		
-		my $var = iupac_to_base($ref, $cns);
+		my $var = $self->iupac_to_base($ref, $cns);
 		my $key = join("\t", $chrom, $chr_start, $chr_stop, $ref, $var);
 		
 		if(is_homozygous($cns))
@@ -397,4 +399,3 @@ sub is_homozygous
 }
 
 1;
-

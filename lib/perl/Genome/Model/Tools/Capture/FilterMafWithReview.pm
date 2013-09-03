@@ -27,7 +27,7 @@ my %stats = ();
 
 
 class Genome::Model::Tools::Capture::FilterMafWithReview {
-	is => 'Command',                       
+	is => 'Genome::Model::Tools::Capture',                       
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		maf_file		=> { is => 'Text', doc => "File of original MAF predictions" , is_optional => 0},
@@ -301,34 +301,6 @@ sub load_review
 	close($input);
 	
 	return(%review);
-}
-
-
-
-sub byChrPos
-{
-    (my $chrom_a, my $pos_a) = split(/\t/, $a);
-    (my $chrom_b, my $pos_b) = split(/\t/, $b);
-
-	$chrom_a =~ s/X/23/;
-	$chrom_a =~ s/Y/24/;
-	$chrom_a =~ s/MT/25/;
-	$chrom_a =~ s/M/25/;
-	$chrom_a =~ s/[^0-9]//g;
-
-	$chrom_b =~ s/X/23/;
-	$chrom_b =~ s/Y/24/;
-	$chrom_b =~ s/MT/25/;
-	$chrom_b =~ s/M/25/;
-	$chrom_b =~ s/[^0-9]//g;
-
-    $chrom_a <=> $chrom_b
-    or
-    $pos_a <=> $pos_b;
-    
-#    $chrom_a = 23 if($chrom_a =~ 'X');
-#    $chrom_a = 24 if($chrom_a =~ 'Y');
-    
 }
 
 1;
