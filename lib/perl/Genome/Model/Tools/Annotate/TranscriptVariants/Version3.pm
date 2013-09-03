@@ -90,66 +90,8 @@ sub specialized_deletion_annotation {
 # Annotates a single transcript-substructure/variant pair
 sub _transcript_substruct_annotation {
     my ($self, $substruct, %variant) = @_;
-    # Just an FYI... using a copy of variant here instead of a reference prevents reverse complementing
-    # the variant twice, which would occur if the variant happened to touch two reverse stranded transcripts
 
-    # TODO This will need to be coupled with splitting up a variant so it doesn't extend beyond a structure
-    # TODO There are various hacks in intron and exon annotation to fix the side effects of only annotating the
-    # structure at variant start position that will also need removed once this is fixed, and there is still
-    # a definite bias for variant start over variant stop throughout this module
-
-#    # If the variant extends beyond the current substructure, it needs to be resized
-#    if ($variant{start} < $substruct->{structure_start}) {
-#       my $diff = $substruct->{structure_start} - $variant{start};
-#       $variant{start} = $variant{start} + $diff;
-#       unless ($variant{type} eq 'DEL') {
-#           $variant{variant} = substr($variant{variant}, $diff);
-#       }
-#       unless ($variant{type} eq 'INS') {
-#           $variant{reference} = substr($variant{reference}, $diff);
-#       }
-#    }
-#    elsif ($variant{stop} > $substruct->{structure_stop}) {
-#        my $diff = $variant{stop} - $substruct->{structure_stop};
-#        $variant{stop} = $variant{stop} - $diff;
-#        unless ($variant{type} eq 'DEL') {
-#            $variant{variant} = substr($variant{variant}, 0, length($variant{variant}) - $diff);
-#        }
-#        unless ($variant{type} eq 'INS') {
-#            $variant{reference} = substr($variant{reference}, 0, length($variant{reference}) - $diff);
-#        }
-#    }
-
-    # All sequence stored on the variant is forward stranded and needs to be reverse
-    # complemented if the transcript is reverse stranded.
-    my $strand = $substruct->transcript_strand;
-    if ($strand eq '-1') {
-        my ($new_variant, $new_reference);
-        unless ($variant{type} eq 'DEL') {
-            $new_variant = $self->reverse_complement($variant{variant});
-            $variant{variant} = $new_variant;
-        }
-        unless ($variant{type} eq 'INS') {
-            $new_reference = $self->reverse_complement($variant{reference});
-            $variant{reference} = $new_reference;
-        }
-    }
-
-    my $structure_type = $substruct->structure_type;
-    my $method = '_transcript_annotation_for_' . $structure_type;
-    my %structure_annotation = $self->$method(\%variant, $substruct) or return;
-
-    my $conservation = $self->_ucsc_conservation_score(\%variant, $substruct);
-
-    my $gene_name = $substruct->transcript_gene_name;
-    unless ($gene_name) {
-        $self->warning_message(sprintf("Gene name missing for substruct: %s",
-            $substruct->id));
-        my $gene = Genome::Gene->get(data_directory => $substruct->data_directory,
-                                     id => $substruct->transcript_gene_id,
-                                     reference_build_id => $self->reference_sequence_id);
-        $gene_name = $gene->name;
-    }
+    my %result = $self->SUPER::_transcript_substruct_annotation($substruct, %variant);
 
     my $dumper_string = $substruct->id;
     my ($default_gene_name, $ensembl_gene_id, $gene_name_source);
@@ -197,22 +139,11 @@ sub _transcript_substruct_annotation {
         $self->eids->{$substruct->transcript_gene_id} = join(',',$default_gene_name, $ensembl_gene_id, $gene_name_source);
     }
 
-    return (
-        %structure_annotation,
-        transcript_error => $substruct->transcript_transcript_error,
-        transcript_name => $substruct->transcript_transcript_name,
-        transcript_status => $substruct->transcript_transcript_status,
-        transcript_source => $substruct->transcript_source,
-        transcript_species=> $substruct->transcript_species,
-        transcript_version => $substruct->transcript_version,
-        strand => $strand,
-        gene_name  => $gene_name,
-        amino_acid_length => $substruct->transcript_amino_acid_length,
-        ucsc_cons => $conservation,
-        default_gene_name => $default_gene_name,
-        gene_name_source => $gene_name_source,
-        ensembl_gene_id => $ensembl_gene_id,
-    );
+    $result{default_gene_name} = $default_gene_name;
+    $result{gene_name_source} = $gene_name_source;
+    $result{ensembl_gene_id} = $ensembl_gene_id;
+
+    return %result;
 }
 
 sub _transcript_annotation_for_cds_exon {
