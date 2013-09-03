@@ -4,10 +4,10 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;
-use Genome::Model::Tools::Capture::Helpers;
+use Genome::Model::Tools::Capture::Helpers qw/fix_chrom/;
 
 class Genome::Model::Tools::Capture::CombineBase {
-	is => 'Genome::Model::Tools::Capture',                       
+	is => 'Genome::Model::Tools::Capture',
 };
 
 ################################################################################################

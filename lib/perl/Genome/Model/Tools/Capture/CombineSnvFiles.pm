@@ -16,7 +16,7 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers;
+use Genome::Model::Tools::Capture::Helpers 'sortByChrPos';
 
 class Genome::Model::Tools::Capture::CombineSnvFiles {
 	is => 'Genome::Model::Tools::Capture::CombineBase',                       

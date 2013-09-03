@@ -19,7 +19,7 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers;
+use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
 
 ## Declare global statistics hash ##
 

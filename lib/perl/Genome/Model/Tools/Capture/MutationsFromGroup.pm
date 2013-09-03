@@ -18,7 +18,7 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers;
+use Genome::Model::Tools::Capture::Helpers qw/iupac_to_base sortByChrPos/;
 
 ## Declare global statistics hash ##
 
@@ -218,7 +218,7 @@ sub execute {                               # replace with real execution logic.
 	
 						my %printed = ();
 	
-						foreach my $indel ($self->sortByChrPos(keys %novel_indels))
+						foreach my $indel (sortByChrPos(keys %novel_indels))
 						{
 							$num_indels++;
 							

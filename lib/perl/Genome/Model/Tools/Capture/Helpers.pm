@@ -7,7 +7,7 @@ use above 'Genome';
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(iupac_to_base, fix_chrom, sortByChrPos);
+our @EXPORT_OK = qw(iupac_to_base fix_chrom sortByChrPos);
 
 #############################################################
 # IUPAC to base - convert IUPAC code to variant base
