@@ -33,14 +33,6 @@ UR::Object::Type->define(
 );
 
 
-## These originally lived in Genome::Info::AnnotationPriorities
-sub transcript_source_priorities {
-    return (
-        genbank => 1,
-        ensembl => 2,
-    );
-}
-
 sub transcript_status_priorities {
     return (
         reviewed            => 1,
@@ -55,48 +47,6 @@ sub transcript_status_priorities {
         known_by_projection => 9,
         novel               => 10,
         unknown             => 11,
-    );
-}
-
-sub variant_priorities  {
-    return (
-        nonsense                        => 1,
-        frame_shift                     => 2,
-        frame_shift_del                 => 3,
-        frame_shift_ins                 => 4,
-        splice_site                     => 5,
-        splice_site_del                 => 6,
-        splice_site_ins                 => 7,
-        in_frame_del                    => 8,
-        in_frame_ins                    => 9,
-        missense                        => 10,
-        nonstop                         => 11,
-        silent                          => 12,
-        rna                             => 13,
-        '5_prime_untranslated_region'   => 14,
-        '3_prime_untranslated_region'   => 15,
-        splice_region                   => 16,
-        splice_region_del               => 17,
-        splice_region_ins               => 18,
-        intronic                        => 19,
-        '5_prime_flanking_region'       => 20,
-        '3_prime_flanking_region'       => 21,
-        #consensus_error                 => 17,
-    );
-}
-
-sub transcript_error_priorities {
-    return (
-        no_errors                               => 1,
-        gap_between_substructures               => 2,
-        mismatch_between_exon_seq_and_reference => 3,
-        bad_bp_length_for_coding_region         => 4,
-        overly_large_intron                     => 5,
-        rna_with_coding_region                  => 6,
-        no_coding_region                        => 7,
-        no_stop_codon                           => 8,
-        pseudogene                              => 9,
-        no_start_codon                          => 10,
     );
 }
 
