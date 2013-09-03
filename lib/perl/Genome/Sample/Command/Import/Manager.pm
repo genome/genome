@@ -579,16 +579,22 @@ sub _make_progress {
         next if $sample->{status} eq 'build_succeeded';
         # Create sample
         if ( not $sample->{sample} ) {
-            $sample->{sample} = $self->_create_sample($sample->{importer_params});
-            return if not $sample->{sample};
+            $sample->{sample} = Genome::Sample->get(name => $sample->{name});
+            if ( not $sample->{sample} ) {
+                $sample->{sample} = $self->_create_sample($sample->{importer_params});
+                return if not $sample->{sample};
+            }
         }
 
         # Create model
-        $model_params->{subject} = $sample->{sample};
         my $model = $sample->{model};
         if ( not $model ) {
-            $model = $model_class->create(%$model_params);
-            return if not $model;
+            $model_params->{subject} = $sample->{sample};
+            $model = $model_class->get(%$model_params);
+            if ( not $model ) {
+                $model = $model_class->create(%$model_params);
+                return if not $model;
+            }
             $sample->{model} = $model;
         }
 
@@ -611,7 +617,10 @@ sub _make_progress {
                 return if not $launch_ok;
             }
             elsif ( $sample->{status} eq 'import_failed' ) {
-                $sample->{instrument_data}->delete if $sample->{instrument_data};
+                if ( $sample->{instrument_data} ) {
+                    $sample->{instrument_data}->delete;
+                    $sample->{instrument_data} = undef;
+                }
                 my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
                 return if not $launch_ok;
             }
