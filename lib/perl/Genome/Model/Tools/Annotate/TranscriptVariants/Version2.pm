@@ -77,6 +77,50 @@ sub should_update_variant_attributes {
     return;
 }
 
+sub get_dnp_snp_trv_type {
+    my ($self, $original_aa, $mutated_aa) = @_;
+
+    if (!defined $mutated_aa or !defined $original_aa) {
+        return 'silent';
+    }
+    elsif ($mutated_aa eq $original_aa) {
+        return 'silent';
+    }
+    else {
+        my ($reduced_original_aa, $reduced_mutated_aa, $offset) = $self->_reduce(
+            $original_aa, $mutated_aa);
+
+        if (index($reduced_mutated_aa, '*') != -1) {
+            return 'nonsense';
+        }
+        elsif (index($reduced_original_aa, '*') != -1) {
+            return 'nonstop';
+        }
+        else {
+            return 'missense';
+        }
+    }
+}
+
+sub get_dnp_snp_protein_data {
+    my ($self, $original_aa, $mutated_aa, $protein_position) = @_;
+
+    if (!defined $mutated_aa or !defined $original_aa) {
+        return ("NULL", $protein_position);
+    }
+    elsif ($mutated_aa eq $original_aa) {
+        return ("p." . $original_aa . $protein_position, $protein_position);
+    }
+    else {
+        my ($reduced_original_aa, $reduced_mutated_aa, $offset) = $self->_reduce(
+            $original_aa, $mutated_aa);
+        $protein_position += $offset;
+
+        return ("p." . $reduced_original_aa . $protein_position . $reduced_mutated_aa,
+            $protein_position);
+    }
+}
+
 sub _transcript_annotation_for_cds_exon {
     my ($self, $variant, $structure) = @_;
 
@@ -166,29 +210,9 @@ sub _transcript_annotation_for_cds_exon {
         }
     }
     elsif ($variant->{type} eq 'DNP' or $variant->{type} eq 'SNP') {
-        if (!defined $mutated_aa or !defined $original_aa) {
-            $trv_type = 'silent';
-            $protein_string = "NULL";
-        }
-        elsif ($mutated_aa eq $original_aa) {
-            $trv_type = 'silent';
-            $protein_string = "p." . $original_aa . $protein_position;
-        }
-        else {
-            ($reduced_original_aa, $reduced_mutated_aa, $offset) = $self->_reduce($original_aa, $mutated_aa);
-            $protein_position += $offset;
-
-            if (index($reduced_mutated_aa, '*') != -1) {
-                $trv_type = 'nonsense';
-            }
-            elsif (index($reduced_original_aa, '*') != -1) {
-                $trv_type = 'nonstop';
-            }
-            else {
-                $trv_type = 'missense';
-            }
-            $protein_string = "p." . $reduced_original_aa . $protein_position . $reduced_mutated_aa;
-        }
+        $trv_type = $self->get_dnp_snp_trv_type($original_aa, $mutated_aa);
+        ($protein_string, $protein_position) = $self->get_dnp_snp_protein_data(
+            $original_aa, $mutated_aa, $protein_position);
     }
     else {
         $self->warning_message("Unknown variant type " . $variant->{type} .
