@@ -175,19 +175,6 @@ sub transcripts {
     return @annotations;
 }
 
-# Checks that the sequence on the variant is valid
-sub is_valid_variant {
-    my ($self, $variant) = @_;
-    unless ($variant->{type} eq 'DEL') {
-        return 0 if $variant->{variant} =~ /\d/;
-    }
-
-    unless ($variant->{type} eq 'INS') {
-        return 0 if $variant->{reference} =~ /\d/;
-    }
-    return 1;
-}
-
 # Takes in a group of annotations and returns them in priority order
 # Sorts on: variant type, transcript error, source, status, amino acid length, transcript name (descending importance)
 # Rankings for each category can be found in Genome::Info::AnnotationPriorities

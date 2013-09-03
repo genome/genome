@@ -265,4 +265,17 @@ sub _create_iterator_for_variant_intersection {
     };
 }
 
+# Checks that the sequence on the variant is valid
+sub is_valid_variant {
+    my ($self, $variant) = @_;
+    unless ($variant->{type} eq 'DEL') {
+        return 0 if $variant->{variant} =~ /\d/; 
+    }
+
+    unless ($variant->{type} eq 'INS') {
+        return 0 if $variant->{reference} =~ /\d/; 
+    }
+    return 1;
+}
+
 1;
