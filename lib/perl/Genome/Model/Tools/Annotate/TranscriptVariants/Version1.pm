@@ -51,11 +51,11 @@ sub transcripts {
         Genome::InterproResult->unload();
         $self->transcript_structure_class_name->unload();
 
-        $self->{_cached_chromosome} = $variant{chromosome_name};
         Genome::InterproResult->get(
             data_directory => $self->data_directory,
             chrom_name => $variant{chromosome_name},
         );
+        $self->{_cached_chromosome} = $variant{chromosome_name};
     }
 
     my $variant_start = $variant{'start'};
