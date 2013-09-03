@@ -525,11 +525,8 @@ sub _get_affected_sequence {
         my $codons_before = int($bases_before / 3);
         $protein_position -= $codons_before;
 
-        #it is possible that the variant goes off the end of the transcript.  In this case,
-        #we need to adjust the relative stop.
-        if ($relative_stop > length($orig_seq)) {
-            $relative_stop = length($orig_seq);
-        }
+        $relative_stop = $self->bound_relative_stop($relative_stop,
+            length($orig_seq));
 
         if ($variant->{type} eq 'DEL') {
             $mutated_seq = substr($orig_seq, 0, $relative_start - 1) .
@@ -550,6 +547,15 @@ sub _get_affected_sequence {
             $mutated_seq,
             $protein_position
            );
+}
+
+sub bound_relative_stop {
+    my ($self, $relative_stop, $limit) = @_;
+
+    #it is possible that the variant goes off the end of the transcript.  In this case,
+    #we need to adjust the relative stop.
+
+    return min($relative_stop, $limit);
 }
 
 1;
