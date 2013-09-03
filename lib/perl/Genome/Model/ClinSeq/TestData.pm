@@ -79,7 +79,7 @@ sub load {
                                                                         );
     $ids{ANNOTATION_BUILD} = $annotation_build->id;
 
-    my $ref_seq_model = Genome::TestObjGenerator::Model::ReferenceSequence->setup_object;
+    my $ref_seq_model = Genome::TestObjGenerator::Model::ImportedReferenceSequence->setup_object;
     my $ref_seq_build = Genome::TestObjGenerator::Build->setup_object(model_id => $ref_seq_model->id);
     $ids{REFSEQ_BUILD} = $ref_seq_build->id;
 
