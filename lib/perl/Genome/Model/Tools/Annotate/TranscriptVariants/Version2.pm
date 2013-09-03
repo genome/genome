@@ -175,18 +175,6 @@ sub transcripts {
     return @annotations;
 }
 
-# Given an annotation, split up the error string and return the highest priority error listed
-sub _highest_priority_error {
-    my ($self, $annotation) = @_;
-
-    my %transcript_error_priorities = $self->transcript_error_priorities;
-
-    my $error_string = $annotation->{transcript_error};
-    my @errors = map { $transcript_error_priorities{$_} } split(":", $error_string);
-    my @sorted_errors = sort { $b <=> $a } @errors;
-    return $sorted_errors[0];
-}
-
 # Annotates a single transcript-substructure/variant pair
 sub _transcript_substruct_annotation {
     my ($self, $substruct, %variant) = @_;
