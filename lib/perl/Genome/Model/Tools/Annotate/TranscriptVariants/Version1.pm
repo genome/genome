@@ -258,7 +258,7 @@ sub _transcript_substruct_annotation {
     my $structure_type = $substruct->structure_type;
     my $method = '_transcript_annotation_for_' . $structure_type;
     my %structure_annotation = $self->$method(\%variant, $substruct) or return;
-    
+
     my $conservation = $self->_ucsc_conservation_score(\%variant, $substruct);
 
     my $gene_name = $substruct->transcript_gene_name;
@@ -725,7 +725,7 @@ sub _ucsc_conservation_score {
             species => $substruct->transcript_species,
             version => $substruct->transcript_version,
         );
-        
+
         unless($results) {
             warn Genome::Model::Tools::Annotate::LookupConservationScore->error_message;
             $conservation_dir_does_not_exist = 1;

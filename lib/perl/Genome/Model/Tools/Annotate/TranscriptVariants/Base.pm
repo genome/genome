@@ -130,7 +130,7 @@ sub reverse_complement {
 }
 
 # Prioritizes a list of annotations and returns the highest priority annotation per gene
-# I.E. If 6 annotations go in, from 3 different genes, it will select the "best" annotation 
+# I.E. If 6 annotations go in, from 3 different genes, it will select the "best" annotation
 # that each gene has, and return 3 total annotations, one per gene
 # See the _prioritize_annotations method for details of sorting
 # Corresponds to gene filter in Genome::Model::Tools::Annotate::TranscriptVariants
@@ -168,7 +168,7 @@ sub prioritized_transcript{
 # Find which substructures intersect the given variant as quickly as possible.
 # $self holds an object iterator for the current chromosome and a cache of
 # TranscriptStructures it has read from the iterator.
-# It does some "bad" things like poke directly into the object's hash instead of 
+# It does some "bad" things like poke directly into the object's hash instead of
 # going through the accessors
 use constant TRANSCRIPT_STRUCTURE_ID => 0;
 use constant STRUCTURE_START => 3;
@@ -195,9 +195,9 @@ sub _create_iterator_for_variant_intersection {
 
     # This sub plugs into a hook in the Genome::DataSource::TranscriptStructures loader
     # to reject data that does not intersect the given variation to avoid passing the
-    # data up the call stack and creating objects for TranscriptStructures we aren't 
+    # data up the call stack and creating objects for TranscriptStructures we aren't
     # interested in
-    {   no strict 'refs'; 
+    {   no strict 'refs';
         $$intersect_sub_name = sub {
             return 1 unless defined $variant;
 
@@ -269,11 +269,11 @@ sub _create_iterator_for_variant_intersection {
 sub is_valid_variant {
     my ($self, $variant) = @_;
     unless ($variant->{type} eq 'DEL') {
-        return 0 if $variant->{variant} =~ /\d/; 
+        return 0 if $variant->{variant} =~ /\d/;
     }
 
     unless ($variant->{type} eq 'INS') {
-        return 0 if $variant->{reference} =~ /\d/; 
+        return 0 if $variant->{reference} =~ /\d/;
     }
     return 1;
 }

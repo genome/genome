@@ -91,7 +91,7 @@ sub transcripts {
     if (!defined $self->{_cached_chromosome} or $self->{_cached_chromosome} ne $variant{chromosome_name}) {
         Genome::InterproResult->unload();
         $self->transcript_structure_class_name->unload();
-        
+
         Genome::InterproResult->get(
             data_directory => $self->data_directory,
             chrom_name => $variant{chromosome_name},
@@ -190,7 +190,7 @@ sub transcripts {
                 $variant_checked = 1;
             }
         }
-        
+
         my %annotation = $self->_transcript_substruct_annotation($substruct, %variant) or next;
 
 #        # Continuation of the hack above about annotating a deletion
@@ -291,7 +291,7 @@ sub _transcript_substruct_annotation {
     my $structure_type = $substruct->structure_type;
     my $method = '_transcript_annotation_for_' . $structure_type;
     my %structure_annotation = $self->$method(\%variant, $substruct) or return;
-    
+
     my $conservation = $self->_ucsc_conservation_score(\%variant, $substruct);
 
     my $gene_name = $substruct->transcript_gene_name;
@@ -424,7 +424,7 @@ sub _transcript_annotation_for_flank {
         $trv_type = '3_prime_flanking_region';
     }
 
-    # TODO Change to use variant start and stop for more accurate distance 
+    # TODO Change to use variant start and stop for more accurate distance
     my $distance_to_transcript = $structure->transcript_distance_to_transcript($position);
 
     return (
@@ -442,7 +442,7 @@ sub _transcript_annotation_for_intron {
     # Need shortest distance between variant and the edge of the next structure (one bp past edge of intron)
     my $dist_to_structure_start = $variant->{start} - ($structure->{structure_start} - 1);
     my $dist_to_structure_stop = ($structure->{structure_stop} + 1) - $variant->{stop};
-    my $distance_to_edge = $dist_to_structure_start <= $dist_to_structure_stop ? 
+    my $distance_to_edge = $dist_to_structure_start <= $dist_to_structure_stop ?
         $dist_to_structure_start : $dist_to_structure_stop;
 
     # Number of basepairs between start of intron and variant (takes into account strand)
@@ -482,7 +482,7 @@ sub _transcript_annotation_for_intron {
         # TODO Remove once variants spanning structures are handled correctly
         $distance_to_edge = 1 if $distance_to_edge <= 0;
 
-        # If position in the intron is equal to the distance to the closest edge, 
+        # If position in the intron is equal to the distance to the closest edge,
         # this splice site is just after an exon
         if ($intron_position eq $distance_to_edge) {
             $amino_acid_change = "e" . $structure->{cds_exons_before} . "+" . $distance_to_edge;
@@ -504,12 +504,12 @@ sub _transcript_annotation_for_intron {
 
 sub _transcript_annotation_for_cds_exon {
     my ($self, $variant, $structure) = @_;
-    
+
 
     # If the variant continues beyond the stop position of the exon, then the variant sequence
     # needs to be modified to stop at the exon's stop position. The changes after the exon's stop
     # affect the intron, not the coding sequence, and shouldn't be annotated here. Eventually,
-    # it's possible that variants may always be split up so they only touch one structure, but for 
+    # it's possible that variants may always be split up so they only touch one structure, but for
     # now this will have to do.
     # TODO This can be removed once variants spanning structures are handled properly
     unless ($self->{'get_frame_shift_sequence'}) {
@@ -544,7 +544,7 @@ sub _transcript_annotation_for_cds_exon {
         else {
             # In this case, the inserted sequence does not change the amino acids on either side of it (if original is
             # MT and mutated is MRPT, then original sequence is reduced to nothing). The first changed amino acid should
-            # be set to the first original amino acid that does not occur in the mutated sequence moving 5' to 3'. 
+            # be set to the first original amino acid that does not occur in the mutated sequence moving 5' to 3'.
             # In the above example, first changed amino acid would be T.
             $trv_type = "frame_shift_" . lc $variant->{type};
             if ($self->{get_frame_shift_sequence}) {
@@ -561,7 +561,7 @@ sub _transcript_annotation_for_cds_exon {
                         $reduced_original_aa = $original;
                         last;
                     }
-                    
+
                     # If the original sequence is STILL reduced to nothing (insertion could occur after original amino acids),
                     # then just use the last amino acid in the unreduced original sequence
                     $reduced_original_aa = substr($original_aa, -1) if $reduced_original_aa eq "";
@@ -589,7 +589,7 @@ sub _transcript_annotation_for_cds_exon {
                 $protein_string = "p." . $aa_after_indel . $protein_position . "fs";
             }
             else {
-                $reduced_original_aa = substr($reduced_original_aa, 0, 1); 
+                $reduced_original_aa = substr($reduced_original_aa, 0, 1);
                 $protein_string = "p." . $reduced_original_aa . $protein_position . "fs";
             }
         }
@@ -621,8 +621,8 @@ sub _transcript_annotation_for_cds_exon {
     }
     else {
         $self->warning_message("Unknown variant type " . $variant->{type} .
-                " for variant between " . $variant->{start} . " and " . $variant->{stop} . 
-                " on transcript " . $structure->transcript_transcript_name . 
+                " for variant between " . $variant->{start} . " and " . $variant->{stop} .
+                " on transcript " . $structure->transcript_transcript_name .
                 ", cannot continue annotation of coding exon");
         return;
     }
@@ -660,9 +660,9 @@ sub get_reference_build_for_transcript {
 }
 
 
-#given a transcript, structure, and variant, calculate all of the bases after and including the indel 
-#plus a number of bases before the indel to create correct, complete codons.  Then translate to an 
-#amino acid sequence and return it. 
+#given a transcript, structure, and variant, calculate all of the bases after and including the indel
+#plus a number of bases before the indel to create correct, complete codons.  Then translate to an
+#amino acid sequence and return it.
 #If this is used near the centromere or at the end of a chromosome, it will be unpredictable.  Use this at those positions at your own risk!
 sub _apply_indel_and_translate{
     my ($self, $structure, $variant) = @_;
@@ -673,7 +673,7 @@ sub _apply_indel_and_translate{
     # WARNING - GIANT HACK AHEAD!!!!!
     #
     # Above in _create_iterator_for_variant_intersection(), it adds a function ref to
-    # $Genome::DataSource::TranscriptStructures::intersector_sub which is a hook into 
+    # $Genome::DataSource::TranscriptStructures::intersector_sub which is a hook into
     # the data loader for dynamically changing filters while an iterator is in progress.
     #
     # For the get() immediately below, we actually want to get TranscriptStructures without
@@ -696,7 +696,7 @@ sub _apply_indel_and_translate{
         @sibling_structures = sort { $b->structure_start <=> $a->structure_start } @sibling_structures;
     }
 
-                                                       
+
     my @structures = ($structure);
 
     for my $substructure (@sibling_structures) {
@@ -714,9 +714,9 @@ sub _apply_indel_and_translate{
             my $flank_sequence = Genome::Model::Tools::Sequence::lookup_sequence(
                     chromosome => $chrom_name,
                     start => $substructure->structure_start,
-                    stop => $substructure->structure_stop, 
+                    stop => $substructure->structure_stop,
                     build => $self->get_reference_build_for_transcript($substructure),
-                    ); 
+                    );
             die "Unsuccessfully executed sequence fetch" unless $flank_sequence;
             if ($structure->transcript_strand eq '-1'){
                 $flank_sequence = $self->reverse_complement($flank_sequence);
@@ -731,10 +731,10 @@ sub _apply_indel_and_translate{
     my ($start, $stop) = ($variant->{start}, $variant->{stop});
     ($start, $stop) = ($stop, $start) if $structure->transcript_strand eq '-1';
     my $length = $stop - $start + 1;
-    
+
     my ($relative_variant_start, $borrowed_bases_start) = $structure->sequence_position($start);
 
-    my ($codon, $codon_position) = $structure->codon_at_position($start); 
+    my ($codon, $codon_position) = $structure->codon_at_position($start);
 
     my $first_affected_codon_start = $relative_variant_start - $codon_position;
 
@@ -747,7 +747,7 @@ sub _apply_indel_and_translate{
         my $deleted_bases = min(abs($first->stop_with_strand - $start), abs($stop - $start)) + 1;
         for my $substructure (@structures) {
             # last if $stop < $structure->structure_start;
-            last if $structure->transcript_is_after($substructure->start_with_strand, $stop); 
+            last if $structure->transcript_is_after($substructure->start_with_strand, $stop);
             #if ($stop < $substructure->structure_stop) {
             if($structure->transcript_is_after($substructure->stop_with_strand, $stop)){
                 $deleted_bases += abs($substructure->start_with_strand - $stop);
@@ -765,7 +765,7 @@ sub _apply_indel_and_translate{
     else {
         confess "Malformed variant type: ";
     }
-    
+
     my $aa_sequence = $self->translate($mutated_seq, $chrom_name); #if there's no stop, we don't care.
     $aa_sequence =~ s/\*.*/\*/; #remove everything after the amino_acid stop
     return $aa_sequence;
@@ -777,7 +777,7 @@ sub _coding_bases_after_position {
     my ($self, $transcript, $structure, $position) = @_;
     my ($sequence_position, $codon_position) = $structure->sequence_position($position);
     my $coding_bases_before = $structure->coding_bases_before;
-    
+
     my $coding_sequence = Genome::TranscriptCodingSequence->get(
         transcript_id => $transcript->id,
         data_directory => $transcript->data_directory,
@@ -785,8 +785,8 @@ sub _coding_bases_after_position {
 
     my $sequence = substr($coding_sequence->sequence, $coding_bases_before + $sequence_position - $codon_position - 1);
     return $sequence;
-}       
-    
+}
+
 # Find the UCSC conservation score for a piece of chromosome
 sub _ucsc_conservation_score {
     require Genome::Model::Tools::Annotate::TranscriptVariants::Version1;
@@ -823,14 +823,14 @@ sub _protein_domain {
 # and/or http://www.hgmd.cf.ac.uk/docs/mut_nom.html
 #
 # Here's a summary: Positions 5' ("before") of the coding region of the transcript start with '-', positions 3'
-# ("after") of the coding region start with '*'. The A of the ATG start codon (for human) is nucleotide 1, exons 
+# ("after") of the coding region start with '*'. The A of the ATG start codon (for human) is nucleotide 1, exons
 # count up from there. Introns, if the position is closer to the previous exon, are <previous_exon_bp>+
 # <position_in_intron>, if closer to the next exon it's <next_exon_bp>-<position_downstream_in_intron>.
 # Those + and - signs are the string literal, not the arithmetic operation.
 #
 # So, a UTR exon 50 bp before the beginning of the first cds exon would be -50. A UTR exon 50bp after the
-# last cds exon would be *50. An intron 5bp after exon 1 would be <length of exon 1>+5, an intron 5bp before 
-# exon 2 would be <length of exon 1 + 1>-5. Basepair 50 of exon 3 would be the sum of (length exon 1, length exon 2, 50). 
+# last cds exon would be *50. An intron 5bp after exon 1 would be <length of exon 1>+5, an intron 5bp before
+# exon 2 would be <length of exon 1 + 1>-5. Basepair 50 of exon 3 would be the sum of (length exon 1, length exon 2, 50).
 # Coding regions over a range are separated by a _, so intron would be <previous_exon_bp>+<position_in_intron>_<position_in_intron>
 #
 # Transcripts without any coding exons (for example, an RNA transcript or a transcript with only utr exons) are
@@ -856,7 +856,7 @@ sub _determine_coding_position {
         if ($structure->transcript_has_coding_region) {
             my $distance_to_coding = $structure->transcript_distance_to_coding_region($start);
             if ($structure->transcript_before_coding_region($start)) {
-                $c_position = "-" . $distance_to_coding; 
+                $c_position = "-" . $distance_to_coding;
             }
             elsif ($structure->transcript_after_coding_region($start)) {
                 $c_position = "*" . $distance_to_coding;
@@ -962,9 +962,9 @@ sub _get_affected_sequence {
     my ($self, $structure, $variant) = @_;
 
     # Occasionally, the first amino acid changed by a variation occurs beyond the codons actually changed. For example,
-    # CCC CTG CTG codes for PLL. If the last base of the first codon to the last base of the middle codon are deleted 
-    # (CCTG removed, leaving CC CTG), then the first amino acid expressed is still P. The remaining bases TG aren't 
-    # enough to see what the next amino acid would be so we still don't know what the first changed amino acid is! 
+    # CCC CTG CTG codes for PLL. If the last base of the first codon to the last base of the middle codon are deleted
+    # (CCTG removed, leaving CC CTG), then the first amino acid expressed is still P. The remaining bases TG aren't
+    # enough to see what the next amino acid would be so we still don't know what the first changed amino acid is!
     # Looking a little further helps prevent this, but the below number is arbitrary. Extra codons are placed before
     # and after the variant so the extra sequence is available for both forward and reverse stranded transcript
     my $indel_extra_codons = 3;
@@ -986,7 +986,7 @@ sub _get_affected_sequence {
     if ($variant->{type} eq 'SNP') {
         ($orig_seq, $orig_codon_pos) = $structure->codon_at_position($variant->{start});
         $mutated_seq = substr($orig_seq, 0, $orig_codon_pos) .
-            $variant->{variant} . 
+            $variant->{variant} .
             substr($orig_seq, $orig_codon_pos + 1);
     }
     elsif ($variant->{type} eq 'DNP') {
@@ -1007,8 +1007,8 @@ sub _get_affected_sequence {
 
         # Adjusting the protein position to point at the first amino acid in the original sequence requires more than just
         # using the extra_codons value. The biggest example of this is when the variation occurs at the beginning of the
-        # exon. If there are fewer than 3 codons before the variation, then only what's available is concatenated. 
-        # In addition, sequence from the end of the previous exon is also added (unless there are no previous exons!). 
+        # exon. If there are fewer than 3 codons before the variation, then only what's available is concatenated.
+        # In addition, sequence from the end of the previous exon is also added (unless there are no previous exons!).
         # So, the best way to determine what's been added is to see how much sequence exists before the variation.
         my $codon_position = ($relative_start - 1) % 3;
         my $bases_before = $relative_start - $codon_position;
@@ -1028,7 +1028,7 @@ sub _get_affected_sequence {
         elsif ($variant->{type} eq 'INS') {
             $protein_position-- if $codon_position == 2; # This little fix is due to the variant start of insertions being
                                                          # the base before the insertion instead of the first base of variation
-                                                         # as is the case with deletions. 
+                                                         # as is the case with deletions.
             $mutated_seq = substr($orig_seq, 0, $relative_start) .
                            $variant->{variant} .
                            substr($orig_seq, $relative_start);
@@ -1061,8 +1061,8 @@ sub _reduce {
 
 # Compare sequences forward to back, updating protein position until first difference is found
 # Since protein position should point to first changed amino acid, it shouldn't be updated
-# after a difference is found. 
-# The tricky bit is stop codons. If a stop codon is found in the mutated sequence, the loop 
+# after a difference is found.
+# The tricky bit is stop codons. If a stop codon is found in the mutated sequence, the loop
 # stops because all sequence after that point wouldn't be translated. However, original sequence
 # from that point forward still needs to be kept.
 # Also, if the lengths of mutated sequence and original sequence differ, the extra will need
@@ -1079,7 +1079,7 @@ sub _reduce {
         else {
             $differ = 1;
             $front_mutated .= $curr_mutated;
-            last if $curr_mutated eq '*'; 
+            last if $curr_mutated eq '*';
             $front_orig .= $curr_orig;
         }
     }
