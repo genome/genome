@@ -249,17 +249,6 @@ sub _transcript_substruct_annotation {
     );
 }
 
-sub _transcript_annotation_for_rna {
-    my ($self, $variant, $structure) = @_;
-
-    return (
-        c_position => 'NULL',
-        trv_type => 'rna',
-        amino_acid_length => 'NULL',
-        amino_acid_change => 'NULL',
-    );
-}
-
 sub _transcript_annotation_for_utr_exon {
     my ($self, $variant, $structure) = @_;
     my $coding_position = $self->_determine_coding_position($variant, $structure);

@@ -314,4 +314,15 @@ sub _highest_priority_error {
     return $sorted_errors[0];
 }
 
+sub _transcript_annotation_for_rna {
+    my ($self, $variant, $structure) = @_;
+
+    return (
+        c_position => 'NULL',
+        trv_type => 'rna',
+        amino_acid_length => 'NULL',
+        amino_acid_change => 'NULL',
+    );
+}
+
 1;
