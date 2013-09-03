@@ -278,4 +278,28 @@ sub is_valid_variant {
     return 1;
 }
 
+# Takes in a group of annotations and returns them in priority order
+# Sorts on: variant type, transcript error, source, status, amino acid length, transcript name (descending importance)
+# Rankings for each category can be found in Genome::Info::AnnotationPriorities
+sub _prioritize_annotations {
+    my ($self, @annotations) = @_;
+
+    my %transcript_source_priorities = $self->transcript_source_priorities;
+    my %transcript_status_priorities = $self->transcript_status_priorities;
+    my %variant_priorities = $self->variant_priorities;
+
+    use sort '_mergesort';  # According to perldoc, performs better than quicksort on large sets with many comparisons
+    my @sorted_annotations = sort {
+        $variant_priorities{$a->{trv_type}} <=> $variant_priorities{$b->{trv_type}} ||
+        $self->_highest_priority_error($a) <=> $self->_highest_priority_error($b) ||
+        $transcript_source_priorities{$a->{transcript_source}} <=> $transcript_source_priorities{$b->{transcript_source}} ||
+        $transcript_status_priorities{$a->{transcript_status}} <=> $transcript_status_priorities{$b->{transcript_status}} ||
+        $b->{amino_acid_length} <=> $a->{amino_acid_length} ||
+        $a->{transcript_name} cmp $b->{transcript_name}
+    } @annotations;
+    use sort 'defaults';
+
+    return @sorted_annotations;
+}
+
 1;
