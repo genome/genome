@@ -560,4 +560,20 @@ sub _apply_indel_and_translate{
     return $aa_sequence;
 }
 
+# Given a transcript, structure, and position, returns all of the bases in the
+# coding region of the transcript 3' of the position
+sub _coding_bases_after_position {
+    my ($self, $transcript, $structure, $position) = @_;
+    my ($sequence_position, $codon_position) = $structure->sequence_position($position);
+    my $coding_bases_before = $structure->coding_bases_before;
+
+    my $coding_sequence = Genome::TranscriptCodingSequence->get(
+        transcript_id => $transcript->id,
+        data_directory => $transcript->data_directory,
+    );
+
+    my $sequence = substr($coding_sequence->sequence, $coding_bases_before + $sequence_position - $codon_position - 1);
+    return $sequence;
+}
+
 1;
