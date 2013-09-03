@@ -214,8 +214,6 @@ sub _transcript_annotation_for_cds_exon {
         return;
     }
 
-    # Need to create an amino acid change string for the protein domain method
-    my $amino_acid_change = "p." . substr($original_aa, 0, 1) . $protein_position;
     my ($protein_domain, $all_protein_domains) = $self->_protein_domain(
         $structure, $variant, $protein_position
     );
