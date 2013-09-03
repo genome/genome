@@ -22,7 +22,7 @@ class Genome::Sys::Node {
     has_calculated => [
         mount_point       => { is => 'FilesystemPath',
                               calculate_from => ['id'],
-                              calculate => q|'/opt/gms/$id'|,
+                              calculate => q|"/opt/gms/$id"|,
                               doc => 'the mount point for the system, when attached (/opt/gms/$ID)',
                             },
 
@@ -80,9 +80,14 @@ sub attach {
     return 1;
 }
 
+sub mount_point_for_protocol {
+    my $self = shift;
+    my $mount_point_symlink = $self->mount_point;
+
+}
 sub _attach_ftp {
     my $self = shift;
-    my $cmd = '
+    my $cmd = '';
     die "failed to ftp mount!";
 }
 
