@@ -39,35 +39,12 @@ sub transcript_status_priorities {
     );
 }
 
-# Given a nucleotide sequence, translate to amino acid sequence and return
-# The translator->translate method can take 1-3 bp of sequence. If given
-# 1 bp, an empty string is returned. If given 2 bp, it attempts to translate
-# this ambiguous sequence and returns an empty string if a no translation
-# can be made. Translation works as you'd expect with 3bp.
-sub translate {
-    my ($self, $seq, $chrom_name) = @_;
-    return unless defined $seq and defined $chrom_name;
 
-    my $is_mitochondrial = $chrom_name =~ /^MT?/; #we use the mitochondrial_codon_translator if the chromosome is either the M or MT.  Everything else should use the normal translator
+sub is_mitochondrial {
+    my ($self, $chrom_name) = @_;
 
-    my $translator;
-    if ($is_mitochondrial) {
-        $translator = $self->mitochondrial_codon_translator;
-    }
-    else {
-        $translator = $self->codon_translator;
-    }
-
-    my $translation;
-    my $length = length $seq;
-    for (my $i=0; $i<=$length-2; $i+=3) {
-        my $codon=substr($seq, $i, 3);
-        $codon =~ s/N/X/g;
-        my $aa = $translator->translate($codon);
-        $aa="*" if ($aa eq 'X');
-        $translation.=$aa;
-    }
-    return $translation;
+    #we use the mitochondrial_codon_translator if the chromosome is either the M or MT.  Everything else should use the normal translator
+    return $chrom_name =~ /^MT?/;
 }
 
 

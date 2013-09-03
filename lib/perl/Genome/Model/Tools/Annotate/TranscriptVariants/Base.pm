@@ -846,4 +846,34 @@ sub _reduce {
     return ($new_orig, $new_mutated, $offset);
 }
 
+# Given a nucleotide sequence, translate to amino acid sequence and return
+# The translator->translate method can take 1-3 bp of sequence. If given
+# 1 bp, an empty string is returned. If given 2 bp, it attempts to translate
+# this ambiguous sequence and returns an empty string if a no translation
+# can be made. Translation works as you'd expect with 3bp.
+sub translate {
+    my ($self, $seq, $chrom_name) = @_;
+    return unless defined $seq and defined $chrom_name;
+
+    my $translator;
+    if ($self->is_mitochondrial($chrom_name)) {
+        $translator = $self->mitochondrial_codon_translator;
+    }
+    else {
+        $translator = $self->codon_translator;
+    }
+
+    my $translation;
+    my $length = length $seq;
+    for (my $i=0; $i<=$length-2; $i+=3) {
+        my $codon=substr($seq, $i, 3);
+        $codon =~ s/N/X/g;
+        my $aa = $translator->translate($codon);
+        $aa="*" if ($aa eq 'X');
+        $translation.=$aa;
+    }
+    return $translation;
+}
+
+
 1;

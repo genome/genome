@@ -35,38 +35,12 @@ sub transcript_status_priorities {
     );
 }
 
-# Given a nucleotide sequence, translate to amino acid sequence and return
-# The translator->translate method can take 1-3 bp of sequence. If given
-# 1 bp, an empty string is returned. If given 2 bp, it attempts to translate
-# this ambiguous sequence and returns an empty string if a no translation
-# can be made. Translation works as you'd expect with 3bp.
-sub translate {
-    my ($self, $seq, $chrom_name) = @_;
-    return unless defined $seq and defined $chrom_name;
+sub is_mitochondrial {
+    my ($self, $chrom_name) = @_;
 
     # Are NT entries actually mitochondrial? What about the new GLXXXXXX.X entries?
-    my $is_mitochondrial = $chrom_name =~ /^[MN]T/;
-
-    my $translator;
-    if ($is_mitochondrial) {
-        $translator = $self->mitochondrial_codon_translator;
-    }
-    else {
-        $translator = $self->codon_translator;
-    }
-
-    my $translation;
-    my $length = length $seq;
-    for (my $i=0; $i<=$length-2; $i+=3) {
-        my $codon=substr($seq, $i, 3);
-        $codon =~ s/N/X/g;
-        my $aa = $translator->translate($codon);
-        $aa="*" if ($aa eq 'X');
-        $translation.=$aa;
-    }
-    return $translation;
+    return $chrom_name =~ /^[MN]T/;
 }
-
 
 # Annotates all transcripts affected by a variant
 # Corresponds to none filter in Genome::Model::Tools::Annotate::TranscriptVariants
