@@ -875,5 +875,88 @@ sub translate {
     return $translation;
 }
 
+# Given a transcript, exon, and variant, determine the original and mutated sequence
+# and the location of the first changed amino acid of the protein
+sub _get_affected_sequence {
+    my ($self, $structure, $variant) = @_;
+
+    # Occasionally, the first amino acid changed by a variation occurs beyond the codons actually changed. For example,
+    # CCC CTG CTG codes for PLL. If the last base of the first codon to the last base of the middle codon are deleted
+    # (CCTG removed, leaving CC CTG), then the first amino acid expressed is still P. The remaining bases TG aren't
+    # enough to see what the next amino acid would be so we still don't know what the first changed amino acid is!
+    # Looking a little further helps prevent this, but the below number is arbitrary. Extra codons are placed before
+    # and after the variant so the extra sequence is available for both forward and reverse stranded transcript
+    my $indel_extra_codons = 3;
+    my $dnp_extra_codons = 1;
+
+    # Determine protein position of amino acid at variant start. This will be modified below for indels to account
+    # for extra codons placed at the beginning of the original sequence and further modified during reduction
+    my ($variant_position, $phase_bases);
+    if ($structure->transcript_strand eq '-1') {
+        ($variant_position, $phase_bases) = $structure->sequence_position($variant->{stop});
+    }
+    else {
+        ($variant_position, $phase_bases) = $structure->sequence_position($variant->{start});
+    }
+    my $coding_bases_before = $structure->coding_bases_before;
+    my $protein_position = int(($coding_bases_before + $variant_position - $phase_bases) / 3) + 1;
+
+    my ($orig_seq, $orig_codon_pos, $mutated_seq, $relative_start, $relative_stop);
+    if ($variant->{type} eq 'SNP') {
+        ($orig_seq, $orig_codon_pos) = $structure->codon_at_position($variant->{start});
+        $mutated_seq = substr($orig_seq, 0, $orig_codon_pos) .
+            $variant->{variant} .
+            substr($orig_seq, $orig_codon_pos + 1);
+    }
+    elsif ($variant->{type} eq 'DNP') {
+        ($orig_seq, $relative_start, $relative_stop) = $structure->codons_in_range($variant->{start}, $variant->{stop}, $dnp_extra_codons);
+
+        my $codon_position = ($relative_start - 1) % 3;
+        my $bases_before = $relative_start - $codon_position;
+        my $codons_before = int($bases_before / 3);
+        $protein_position -= $codons_before;
+
+        $mutated_seq = substr($orig_seq, 0, $relative_start - 1) .
+            $variant->{variant} .
+            substr($orig_seq, $relative_stop);
+    }
+    else {
+        # Get codons between variant start and stop as well as extra codons to either side.
+        ($orig_seq, $relative_start, $relative_stop) = $structure->codons_in_range($variant->{start}, $variant->{stop}, $indel_extra_codons);
+
+        # Adjusting the protein position to point at the first amino acid in the original sequence requires more than just
+        # using the extra_codons value. The biggest example of this is when the variation occurs at the beginning of the
+        # exon. If there are fewer than 3 codons before the variation, then only what's available is concatenated.
+        # In addition, sequence from the end of the previous exon is also added (unless there are no previous exons!).
+        # So, the best way to determine what's been added is to see how much sequence exists before the variation.
+        my $codon_position = ($relative_start - 1) % 3;
+        my $bases_before = $relative_start - $codon_position;
+        my $codons_before = int($bases_before / 3);
+        $protein_position -= $codons_before;
+
+        $relative_stop = $self->bound_relative_stop($relative_stop,
+            length($orig_seq));
+
+        if ($variant->{type} eq 'DEL') {
+            $mutated_seq = substr($orig_seq, 0, $relative_start - 1) .
+                           substr($orig_seq, $relative_stop);
+        }
+        elsif ($variant->{type} eq 'INS') {
+            $protein_position-- if $codon_position == 2; # This little fix is due to the variant start of insertions being
+                                                         # the base before the insertion instead of the first base of variation
+                                                         # as is the case with deletions.
+            $mutated_seq = substr($orig_seq, 0, $relative_start) .
+                           $variant->{variant} .
+                           substr($orig_seq, $relative_start);
+        }
+    }
+
+    return (
+            $orig_seq,
+            $mutated_seq,
+            $protein_position
+           );
+}
+
 
 1;
