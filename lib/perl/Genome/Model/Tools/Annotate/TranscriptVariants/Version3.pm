@@ -83,6 +83,10 @@ sub cache_gene_names {
 
 sub filter_and_partition_structures {
 }
+
+sub specialized_deletion_annotation {
+}
+
 # Annotates all transcripts affected by a variant
 # Corresponds to none filter in Genome::Model::Tools::Annotate::TranscriptVariants
 sub transcripts {
@@ -164,12 +168,11 @@ sub transcripts {
 
         my %annotation = $self->_transcript_substruct_annotation($substruct, %variant) or next;
 
-#        # Continuation of the hack above about annotating a deletion
-#        if ($variant{'type'} eq 'DEL') {
-#            my @del_strings = map { $_->structure_type . '[' . $_->structure_start . ',' . $_->structure_stop . ']' }
-#                                  @{$transcript_substructures{$substruct->transcript_transcript_id}};
-#            $annotation{'deletion_substructures'} = '(deletion:' . join(', ', @del_strings) . ')';
-#        }
+        if ($variant{'type'} eq 'DEL') {
+            $self->specialized_deletion_annotation($substruct,
+                \%transcript_substructures, \%annotation);
+        }
+
         push @annotations, \%annotation;
     }
     return @annotations;
