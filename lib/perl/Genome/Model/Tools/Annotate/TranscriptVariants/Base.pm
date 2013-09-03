@@ -638,4 +638,141 @@ sub _protein_domain {
     return join(",", uniq @variant_domains), join(",", uniq @all_domain_names);
 }
 
+# For full description of this positioning convention, see http://www.hgvs.org/mutnomen/recs-DNA.html
+# and/or http://www.hgmd.cf.ac.uk/docs/mut_nom.html
+#
+# Here's a summary: Positions 5' ("before") of the coding region of the transcript start with '-', positions 3'
+# ("after") of the coding region start with '*'. The A of the ATG start codon (for human) is nucleotide 1, exons
+# count up from there. Introns, if the position is closer to the previous exon, are <previous_exon_bp>+
+# <position_in_intron>, if closer to the next exon it's <next_exon_bp>-<position_downstream_in_intron>.
+# Those + and - signs are the string literal, not the arithmetic operation.
+#
+# So, a UTR exon 50 bp before the beginning of the first cds exon would be -50. A UTR exon 50bp after the
+# last cds exon would be *50. An intron 5bp after exon 1 would be <length of exon 1>+5, an intron 5bp before
+# exon 2 would be <length of exon 1 + 1>-5. Basepair 50 of exon 3 would be the sum of (length exon 1, length exon 2, 50).
+# Coding regions over a range are separated by a _, so intron would be <previous_exon_bp>+<position_in_intron>_<position_in_intron>
+#
+# Transcripts without any coding exons (for example, an RNA transcript or a transcript with only utr exons) are
+# treated differently. Flanking regions use the transcript start/stop instead of coding region start/stop and
+# utr exons use variant start. This behavior is undocumented and I've coded it just so it matches old logic.
+#
+# TODO This can probably be refactored and simplified, there's a lot of redundant logic here
+sub _determine_coding_position {
+    my ($self, $variant, $structure) = @_;
+    my $cds_region_start = $structure->transcript_coding_region_start;
+    my $cds_region_stop = $structure->transcript_coding_region_stop;
+    my $structure_type = $structure->structure_type;
+    my $start = $variant->{start};
+    my $stop = $variant->{stop};
+    my $c_position = 'NULL';
+    my $coding_bases_before = $structure->coding_bases_before;
+    my $strand = $structure->transcript_strand;
+
+    if ($structure_type eq 'rna') {
+        $c_position = 'NULL';
+    }
+    elsif ($structure_type eq 'flank') {
+        if ($structure->transcript_has_coding_region) {
+            my $distance_to_coding = $structure->transcript_distance_to_coding_region($start);
+            if ($structure->transcript_before_coding_region($start)) {
+                $c_position = "-" . $distance_to_coding;
+            }
+            elsif ($structure->transcript_after_coding_region($start)) {
+                $c_position = "*" . $distance_to_coding;
+            }
+        }
+        else {
+            my $distance_to_transcript = $structure->transcript_distance_to_transcript($start);
+            if ($structure->transcript_is_before($start, $structure->transcript_transcript_start)) {
+                $c_position = "-" . $distance_to_transcript;
+            }
+            else {
+                $c_position = "*" . $distance_to_transcript;
+            }
+        }
+    }
+    elsif ($structure_type eq 'utr_exon') {
+        if ($structure->transcript_has_coding_region) {
+            my $distance_to_coding = $structure->transcript_distance_to_coding_region($start);
+            if ($structure->transcript_before_coding_region($start)) {
+                $c_position = "-" . $distance_to_coding;
+            }
+            elsif ($structure->transcript_after_coding_region($start)) {
+                $c_position = "*" . $distance_to_coding;
+            }
+        }
+        else {
+            # I have found no documentation for this particular case and am coding this to match the old output.
+            # If transcript strand is +1, then utr exon is always 3' and prefixed with a '*'. Otherwise, the
+            # utr exon is considered 5' and prefixed with a '-'. The position is simply the variant start position
+            # TODO ... why is the logic like this? Is this what we want?
+            if ($structure->transcript_strand eq '+1') {
+                $c_position = "*" . $start;
+            }
+            else {
+                $c_position = '-' . $start;
+            }
+        }
+    }
+    elsif ($structure_type eq 'cds_exon') {
+        my ($start_seq_position) = $structure->sequence_position($start);
+        my ($stop_seq_position) = $structure->sequence_position($stop);
+        my $num_phase_bases = $structure->num_phase_bases_before;
+        $c_position = $coding_bases_before + $start_seq_position - $num_phase_bases + 1;
+        $c_position .= "_" . ($coding_bases_before + $stop_seq_position - $num_phase_bases + 1) if $start != $stop;
+    }
+    elsif ($structure_type eq 'intron') {
+        ($start, $stop) = ($stop, $start) if $strand eq '-1';
+        my $distance_to_start = $structure->distance_to_start($start) + 1;
+        my $distance_to_stop = $structure->distance_to_stop($start) + 1;
+        my $start_to_coding_distance = $structure->transcript_distance_to_coding_region($start);
+        my $stop_to_coding_distance = $structure->transcript_distance_to_coding_region($stop);
+
+        if ($structure->transcript_has_coding_region) {
+            if ($structure->transcript_within_coding_region($start)) {
+                if ($distance_to_start <= $distance_to_stop) {
+                    $c_position = ($coding_bases_before) . "+" . $distance_to_start;
+                    if ($start != $stop) {
+                        my $dist = $distance_to_start - abs($stop - $start);
+                        $dist = 1 if $dist <= 0;
+                        $c_position .= "_" . ($coding_bases_before) . "+" . ($dist);
+                    }
+                }
+                else {
+                    $c_position = ($coding_bases_before + 1) . "-" . $distance_to_stop;
+                    if ($start != $stop) {
+                        my $dist = $distance_to_stop - abs($stop - $start);
+                        $dist = 1 if $dist <= 0;
+                        $c_position .= "_" . ($coding_bases_before + 1) . "-" . ($dist);
+                    }
+                }
+            }
+            else {
+                if ($structure->transcript_before_coding_region($start)) {
+                    $c_position = "1";
+                }
+                else {
+                    $c_position = $structure->coding_bases_before;
+                }
+
+                if ($distance_to_start <= $distance_to_stop) {
+                    $c_position .= ("+" . $distance_to_start);
+                    $c_position .= "_" . ($distance_to_start + ($stop - $start)) if $start != $stop;
+                }
+                else {
+                    $c_position .= ("-" . $distance_to_stop);
+                    $c_position .= "_" . ($distance_to_stop - ($stop - $start)) if $start != $stop;
+                }
+            }
+        }
+    }
+    else {
+        $self->error_message("Unexpected substructure type $structure_type, " .
+                "cannot calculate coding sequence position. Returning NULL!");
+        $c_position = 'NULL';
+    }
+
+    return $c_position;
+}
+
 1;
