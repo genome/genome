@@ -14,6 +14,8 @@ use DateTime;
 use Carp;
 
 class Genome::Model::Tools::Annotate::TranscriptVariants::Base {
+    is_abstract => 1,
+
     has => [
         codon_translator => {
             is => 'Bio::Tools::CodonTable',
