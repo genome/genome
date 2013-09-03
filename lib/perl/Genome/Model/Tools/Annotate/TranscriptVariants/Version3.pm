@@ -142,15 +142,16 @@ sub _transcript_substruct_annotation {
     my $conservation = $self->_ucsc_conservation_score(\%variant, $substruct);
 
     my $gene_name = $substruct->transcript_gene_name;
-    my $dumper_string = $substruct->id;
     unless ($gene_name) {
-        $self->warning_message("Gene name missing for substruct: $dumper_string");
+        $self->warning_message(sprintf("Gene name missing for substruct: %s",
+            $substruct->id));
         my $gene = Genome::Gene->get(data_directory => $substruct->data_directory,
                                      id => $substruct->transcript_gene_id,
                                      reference_build_id => $self->reference_sequence_id);
         $gene_name = $gene->name;
     }
 
+    my $dumper_string = $substruct->id;
     my ($default_gene_name, $ensembl_gene_id, $gene_name_source);
     unless ($self->eids) {
         my %new;

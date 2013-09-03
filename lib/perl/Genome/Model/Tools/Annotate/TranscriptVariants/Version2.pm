@@ -114,7 +114,8 @@ sub _transcript_substruct_annotation {
 
     my $gene_name = $substruct->transcript_gene_name;
     unless ($gene_name) {
-        $self->warning_message("Gene name missing for substruct: ",Data::Dumper::Dumper($substruct));
+        $self->warning_message(sprintf("Gene name missing for substruct: %s",
+            $substruct->id));
         my $gene = Genome::Gene->get(data_directory => $substruct->data_directory,
                                      id => $substruct->transcript_gene_id,
                                      reference_build_id => $self->build->reference_sequence_id);
