@@ -253,38 +253,6 @@ sub _transcript_substruct_annotation {
     );
 }
 
-sub _transcript_annotation_for_utr_exon {
-    my ($self, $variant, $structure) = @_;
-    my $coding_position = $self->_determine_coding_position($variant, $structure);
-
-    # TODO Change to use variant start and stop for more accurate annotation
-    # TODO Not sure if the behavior when there is no coding region is ideal
-    my $position = $variant->{start};
-    my $trv_type;
-    if ($structure->transcript_has_coding_region) {
-        if ($structure->transcript_before_coding_region($position)) {
-            $trv_type = '5_prime_untranslated_region';
-        }
-        else {
-            $trv_type = '3_prime_untranslated_region';
-        }
-    }
-    else {
-        if ($structure->transcript_strand eq '+1') {
-            $trv_type = '3_prime_untranslated_region';
-        }
-        else {
-            $trv_type = '5_prime_untranslated_region';
-        }
-    }
-
-    return (
-        c_position => "c." . $coding_position,
-        trv_type => $trv_type,
-        amino_acid_change => 'NULL',
-    );
-}
-
 sub _transcript_annotation_for_flank {
     my ($self, $variant, $structure) = @_;
     my $coding_position = $self->_determine_coding_position($variant, $structure);
