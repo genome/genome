@@ -15,6 +15,8 @@ use Carp;
 
 UR::Object::Type->define(
     class_name => __PACKAGE__,
+    is => 'Genome::Model::Tools::Annotate::TranscriptVariants::Base',
+
     has => [
         codon_translator => {
             is => 'Bio::Tools::CodonTable',

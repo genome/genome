@@ -15,6 +15,8 @@ use Carp;
 
 UR::Object::Type->define(
     class_name => __PACKAGE__,
+    is => 'Genome::Model::Tools::Annotate::TranscriptVariants::Base',
+
     has => [
         reference_sequence_id => {
             is => "Text",
