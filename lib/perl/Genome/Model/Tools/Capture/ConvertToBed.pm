@@ -17,7 +17,7 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
+use Genome::Model::Tools::Capture::Helpers;
 
 class Genome::Model::Tools::Capture::ConvertToBed {
 	is => 'Genome::Model::Tools::Capture',                       
@@ -83,7 +83,7 @@ sub execute {                               # replace with real execution logic.
 		if(!(lc($lineContents[0]) =~ "chrom" || lc($lineContents[0]) =~ "ref_name"))
 		{
 			my $chrom = $lineContents[0];
-			$chrom = $self->fix_chrom($chrom);
+			$chrom = fix_chrom($chrom);
 			my $chr_start = $lineContents[1];
 			my $chr_stop = my $allele1  = my $allele2 = "";
 
@@ -133,7 +133,7 @@ sub execute {                               # replace with real execution logic.
 	
 	## Sort the formatted indels by chr pos ##
 
-	@formatted = $self->sortByChrPos(@formatted);
+	@formatted = sortByChrPos(@formatted);
 	
 	foreach my $snv (@formatted)
 	{

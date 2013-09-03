@@ -86,7 +86,7 @@ sub execute {                               # replace with real execution logic.
 	
 	open(OUTFILE, ">$output_file") or die "Can't open outfile: $!\n";
 
-	foreach my $key ($self->sortByChrPos(keys %all_variants))
+	foreach my $key (sortByChrPos(keys %all_variants))
 	{
 		$stats{'total variants'}++;
 		

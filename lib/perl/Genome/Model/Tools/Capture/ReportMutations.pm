@@ -1,4 +1,3 @@
-
 package Genome::Model::Tools::Capture::ReportMutations;     # rename this when you give the module file a different name <--
 
 #####################################################################################################################################
@@ -19,7 +18,7 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
+use Genome::Model::Tools::Capture::Helpers;
 
 ## Declare global statistics hash ##
 
@@ -320,7 +319,7 @@ sub parse_both_files
 		$lineCounter++;
 
 		my ($chrom, $chr_start, $chr_stop, $ref, $var) = split(/\t/, $line);
-		$var = $self->iupac_to_base($ref, $var);
+		$var = iupac_to_base($ref, $var);
 
 		my @lineContents = split(/\t/, $line);
 		my $var_type = $lineContents[5];
@@ -346,7 +345,7 @@ sub parse_both_files
 		$lineCounter++;
 
 		my ($chrom, $chr_start, $chr_stop, $ref, $var) = split(/\t/, $line);
-		$var = $self->iupac_to_base($ref, $var);
+		$var = iupac_to_base($ref, $var);
 
 		my $key = join("\t", $chrom, $chr_start, $chr_stop, $ref, $var);
 

@@ -434,7 +434,7 @@ sub load_mutations
 
 
 	
-		$var = Genome::Model::Tools::Capture::iupac_to_base($ref, $var);
+		$var = iupac_to_base($ref, $var);
 	
 		my $key = join("\t", $chromosome, $chr_start, $chr_stop, $ref, $var, $var_pct, $germ_likelihood, $depth, $VCF);
 		

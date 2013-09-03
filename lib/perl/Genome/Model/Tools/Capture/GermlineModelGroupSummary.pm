@@ -19,7 +19,7 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
+use Genome::Model::Tools::Capture::Helpers;
 
 ## Declare global statistics hash ##
 
@@ -304,7 +304,7 @@ sub parse_snp_bed
 		my ($ref, $cns) = split(/\//, $alleles);
 		$chr_start++ if($chr_start < $chr_stop);
 		
-		my $var = $self->iupac_to_base($ref, $cns);
+		my $var = iupac_to_base($ref, $cns);
 		my $key = join("\t", $chrom, $chr_start, $chr_stop, $ref, $var);
 		
 		if(is_homozygous($cns))

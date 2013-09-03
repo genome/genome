@@ -17,6 +17,7 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome::Model::Tools::Capture::Helpers;
 
 class Genome::Model::Tools::Capture::ExportVcf {
 	is => 'Genome::Model::Tools::Capture',                       
@@ -91,7 +92,7 @@ sub execute {                               # replace with real execution logic.
 		my @lineContents = split(/\t/, $line);
 		my $numContents = @lineContents;
 		
-		my $var = $self->iupac_to_base($ref, $cns);
+		my $var = iupac_to_base($ref, $cns);
 		
 		$stats{'num_variants'}++;
 		$ref = "-" if($ref eq "0");
@@ -130,7 +131,7 @@ sub execute {                               # replace with real execution logic.
 				}
 				else
 				{
-					$var = $self->iupac_to_base($ref, $cns);
+					$var = iupac_to_base($ref, $cns);
 					$genotype = $ref . $var;
 				}
 			}
@@ -187,7 +188,7 @@ sub execute {                               # replace with real execution logic.
 	
 	## Sort the formatted indels by chr pos ##
 
-	@formatted = $self->sortByChrPos(@formatted);
+	@formatted = sortByChrPos(@formatted);
 	
 	foreach my $snv (@formatted)
 	{

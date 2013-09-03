@@ -17,7 +17,7 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
+use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';;
 
 my %stats = ();
 
@@ -238,7 +238,7 @@ sub load_snp_calls
 			else
 			{
 				## Reforma SNV ##
-				$allele2 = Genome::Model::Tools::Capture::iupac_to_base($allele1, $allele2);				
+				$allele2 = iupac_to_base($allele1, $allele2);				
 			}
 
 			my $snp_key = "$chrom\t$chr_start\t$chr_stop\t$allele1\t$allele2";

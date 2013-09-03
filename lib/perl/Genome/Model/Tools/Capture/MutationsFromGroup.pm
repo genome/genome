@@ -1,4 +1,3 @@
-
 package Genome::Model::Tools::Capture::MutationsFromGroup;     # rename this when you give the module file a different name <--
 
 #####################################################################################################################################
@@ -19,7 +18,7 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
+use Genome::Model::Tools::Capture::Helpers;
 
 ## Declare global statistics hash ##
 
@@ -178,7 +177,7 @@ sub execute {                               # replace with real execution logic.
 						## Reformat ##
 						$chr_start++ if($chr_start < $chr_stop);
 						my ($ref, $cns) = split(/\//, $alleles);
-						my $var = $self->iupac_to_base($ref, $cns);
+						my $var = iupac_to_base($ref, $cns);
 						my $key = join("\t", $chrom, $chr_start, $chr_stop, $ref, $var);
 						
 						print NOVEL join("\t", $chrom, $chr_start, $chr_stop, $ref, $var) . "\n";
@@ -362,7 +361,7 @@ sub load_variants_from_bed
 		else
 		{
 			## SNV ##
-			$var = $self->iupac_to_base($ref, $cns);
+			$var = iupac_to_base($ref, $cns);
 			$chr_start++ if($chr_start < $chr_stop);
 		}
 		
