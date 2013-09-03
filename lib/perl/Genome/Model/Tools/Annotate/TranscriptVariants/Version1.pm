@@ -407,43 +407,6 @@ sub get_reference_build_for_transcript {
 }
 
 
-my $conservation_dir_does_not_exist;
-# Find the UCSC conservation score for a piece of chromosome
-sub _ucsc_conservation_score {
-    my ($self, $variant, $substruct) = @_;
-
-    # for build 37, we now have GLXXXXXX.X names that we don't have scores for as well as MT,NT
-    return 'NULL' if $variant->{chromosome_name} =~ /^([MN]T|GL)/;
-
-    if($conservation_dir_does_not_exist) {
-        return "-";
-    }
-    else {
-        my $range = [ $variant->{start}..$variant->{stop} ] ;
-
-        my $results = Genome::Model::Tools::Annotate::LookupConservationScore->evaluate_request(
-            chromosome => $variant->{chromosome_name},
-            coordinates => $range,
-            species => $substruct->transcript_species,
-            version => $substruct->transcript_version,
-        );
-
-        unless($results) {
-            warn Genome::Model::Tools::Annotate::LookupConservationScore->error_message;
-            $conservation_dir_does_not_exist = 1;
-        }
-        my $ref = $results;
-        return '-' unless $ref;
-
-        my @ret;
-        foreach my $item (@$ref)
-        {
-            push(@ret,sprintf("%.3f",$item->[1]));
-        }
-        return join(":",@ret);
-    }
-}
-
 # Find the domains affected by the variant and all domains for the transcript
 sub _protein_domain {
     my ($self, $structure, $variant, $protein_position) = @_;

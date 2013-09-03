@@ -489,12 +489,6 @@ sub get_reference_build_for_transcript {
 }
 
 
-# Find the UCSC conservation score for a piece of chromosome
-sub _ucsc_conservation_score {
-    require Genome::Model::Tools::Annotate::TranscriptVariants::Version1;
-    Genome::Model::Tools::Annotate::TranscriptVariants::Version1::_ucsc_conservation_score(@_);
-}
-
 # Find the domains affected by the variant and all domains for the transcript
 sub _protein_domain {
     my ($self, $structure, $variant, $protein_position) = @_;
