@@ -253,31 +253,6 @@ sub _transcript_substruct_annotation {
     );
 }
 
-sub _transcript_annotation_for_flank {
-    my ($self, $variant, $structure) = @_;
-    my $coding_position = $self->_determine_coding_position($variant, $structure);
-
-    # TODO Change to use variant start and stop
-    my $position = $variant->{start};
-    my $trv_type;
-    if ($structure->transcript_is_before($variant->{start}, $structure->transcript_transcript_start)) {
-        $trv_type = '5_prime_flanking_region';
-    }
-    else {
-        $trv_type = '3_prime_flanking_region';
-    }
-
-    # TODO Change to use variant start and stop for more accurate distance
-    my $distance_to_transcript = $structure->transcript_distance_to_transcript($position);
-
-    return (
-        c_position => "c." . $coding_position,
-        trv_type => $trv_type,
-        amino_acid_change => 'NULL',
-        flank_annotation_distance_to_transcript => $distance_to_transcript,
-    );
-}
-
 sub _transcript_annotation_for_intron {
     my ($self, $variant, $structure) = @_;
     my $coding_position = $self->_determine_coding_position($variant, $structure);
