@@ -11,8 +11,6 @@ class Genome::Model::RnaSeq {
     is => 'Genome::ModelDeprecated',
     has => [
         subject                      => { is => 'Genome::Sample', id_by => 'subject_id' },
-        # TODO: Possibly remove accessor
-        reference_sequence_build_id  => { via => 'reference_sequence_build', to => 'id' },
         reference_sequence_name      => { via => 'reference_sequence_build', to => 'name' },
     ],
     has_input => [
