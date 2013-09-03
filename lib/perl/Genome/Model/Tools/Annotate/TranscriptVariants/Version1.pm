@@ -48,6 +48,29 @@ sub cache_gene_names {
     # Nothing to cache for Version 1
 }
 
+sub filter_and_partition_structures {
+    my $self = shift;
+    my $crossing_substructures = shift;
+    my $transcript_substructures = shift;
+    my $variant_start = shift;
+
+    # Hack to support the old behavior of only annotating against the first structure
+    # of a transcript.  We need to keep a list of all the other structures for later
+    # listing them in the deletions column of the output
+    my @less;
+    foreach my $substructure ( @$crossing_substructures ) {
+        my $transcript_id = $substructure->transcript_transcript_id;
+        if ($substructure->{'structure_start'} <= $variant_start and $substructure->{'structure_stop'} >= $variant_start) {
+            push @less, $substructure;
+        }
+        $transcript_substructures->{$transcript_id} ||= [];
+        push @{$transcript_substructures->{$transcript_id}}, $substructure;
+    }
+    $crossing_substructures = \@less;
+
+    return;
+}
+
 # Annotates all transcripts affected by a variant
 # Corresponds to none filter in Genome::Model::Tools::Annotate::TranscriptVariants
 sub transcripts {
@@ -93,22 +116,9 @@ sub transcripts {
     }
     my $crossing_substructures = $windowing_iterator->(\%variant);
 
-    # Hack to support the old behavior of only annotating against the first structure
-    # of a transcript.  We need to keep a list of all the other structures for later
-    # listing them in the deletions column of the output
     my %transcript_substructures;
-    {
-        my @less;
-        foreach my $substructure ( @$crossing_substructures ) {
-            my $transcript_id = $substructure->transcript_transcript_id;
-            if ($substructure->{'structure_start'} <= $variant_start and $substructure->{'structure_stop'} >= $variant_start) {
-                push @less, $substructure;
-            }
-            $transcript_substructures{$transcript_id} ||= [];
-            push @{$transcript_substructures{$transcript_id}}, $substructure;
-        }
-        $crossing_substructures = \@less;
-    }
+    $self->filter_and_partition_structures($crossing_substructures,
+        \%transcript_substructures, $variant_start);
 
     return unless @$crossing_substructures;
 
