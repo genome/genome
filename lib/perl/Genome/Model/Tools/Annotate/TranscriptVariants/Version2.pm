@@ -417,31 +417,6 @@ sub get_reference_build_for_transcript {
 }
 
 
-# Find the domains affected by the variant and all domains for the transcript
-sub _protein_domain {
-    my ($self, $structure, $variant, $protein_position) = @_;
-    return 'NULL', 'NULL' unless defined $structure and defined $variant;
-
-    my @all_domains = Genome::InterproResult->get(
-        transcript_name => $structure->transcript_transcript_name,
-        data_directory => $structure->data_directory,
-        chrom_name => $variant->{chromosome_name},
-        );
-    return 'NULL', 'NULL' unless @all_domains;
-
-    my @variant_domains;
-    my @all_domain_names;
-    for my $domain (@all_domains) {
-        if ($protein_position >= $domain->{start} and $protein_position <= $domain->{stop}) {
-            push @variant_domains, $domain->{name};
-        }
-        push @all_domain_names, $domain->{name};
-    }
-
-    return 'NULL', join(",", uniq @all_domain_names) unless @variant_domains;
-    return join(",", uniq @variant_domains), join(",", uniq @all_domain_names);
-}
-
 # For full description of this positioning convention, see http://www.hgvs.org/mutnomen/recs-DNA.html
 # and/or http://www.hgmd.cf.ac.uk/docs/mut_nom.html
 #
