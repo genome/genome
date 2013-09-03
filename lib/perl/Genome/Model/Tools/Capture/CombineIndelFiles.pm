@@ -1,4 +1,3 @@
-
 package Genome::Model::Tools::Capture::CombineIndelFiles;     # rename this when you give the module file a different name <--
 
 #####################################################################################################################################
@@ -17,7 +16,7 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
+use Genome::Model::Tools::Capture::Helpers;
 
 class Genome::Model::Tools::Capture::CombineIndelFiles {
 	is => 'Genome::Model::Tools::Capture::CombineBase',                       
@@ -87,7 +86,7 @@ sub execute {                               # replace with real execution logic.
 	
 	open(OUTFILE, ">$output_file") or die "Can't open outfile: $!\n";
 
-	foreach my $key ($self->sortByChrPos(keys %all_variants))
+	foreach my $key (sortByChrPos(keys %all_variants))
 	{
 		$stats{'total variants'}++;
 		
