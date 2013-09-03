@@ -59,6 +59,28 @@ sub is_mitochondrial {
 }
 
 
+sub cache_gene_names {
+    my $self = shift;
+
+    if (!defined $self->{_cached_chromosome}) {
+        Genome::ExternalGeneId->get(
+            data_directory => $self->data_directory,
+            reference_build_id => $self->reference_sequence_id,
+            id_type => "ensembl",
+        );
+        Genome::ExternalGeneId->get(
+            data_directory => $self->data_directory,
+            reference_build_id => $self->reference_sequence_id,
+            id_type => "ensembl_default_external_name",
+        );
+        Genome::ExternalGeneId->get(
+            data_directory => $self->data_directory,
+            reference_build_id => $self->reference_sequence_id,
+            id_type => "ensembl_default_external_name_db",
+        );
+    }
+}
+
 # Annotates all transcripts affected by a variant
 # Corresponds to none filter in Genome::Model::Tools::Annotate::TranscriptVariants
 sub transcripts {
@@ -73,23 +95,7 @@ sub transcripts {
             chrom_name => $variant{chromosome_name},
         );
 
-        if (!defined $self->{_cached_chromosome}) {
-            Genome::ExternalGeneId->get(
-                data_directory => $self->data_directory,
-                reference_build_id => $self->reference_sequence_id,
-                id_type => "ensembl",
-            );
-            Genome::ExternalGeneId->get(
-                data_directory => $self->data_directory,
-                reference_build_id => $self->reference_sequence_id,
-                id_type => "ensembl_default_external_name",
-            );
-            Genome::ExternalGeneId->get(
-                data_directory => $self->data_directory,
-                reference_build_id => $self->reference_sequence_id,
-                id_type => "ensembl_default_external_name_db",
-            );
-        }
+        $self->cache_gene_names();
         $self->{_cached_chromosome} = $variant{chromosome_name};
     }
 

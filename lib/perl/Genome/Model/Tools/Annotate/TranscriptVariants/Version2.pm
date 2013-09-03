@@ -48,6 +48,10 @@ sub is_mitochondrial {
 }
 
 
+sub cache_gene_names {
+    # Nothing to cache for Version 2
+}
+
 # Annotates all transcripts affected by a variant
 # Corresponds to none filter in Genome::Model::Tools::Annotate::TranscriptVariants
 sub transcripts {
@@ -61,6 +65,8 @@ sub transcripts {
             data_directory => $self->data_directory,
             chrom_name => $variant{chromosome_name},
         );
+
+        $self->cache_gene_names();
         $self->{_cached_chromosome} = $variant{chromosome_name};
     }
 

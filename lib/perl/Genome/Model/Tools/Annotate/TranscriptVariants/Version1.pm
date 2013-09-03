@@ -35,11 +35,17 @@ sub transcript_status_priorities {
     );
 }
 
+
 sub is_mitochondrial {
     my ($self, $chrom_name) = @_;
 
     # Are NT entries actually mitochondrial? What about the new GLXXXXXX.X entries?
     return $chrom_name =~ /^[MN]T/;
+}
+
+
+sub cache_gene_names {
+    # Nothing to cache for Version 1
 }
 
 # Annotates all transcripts affected by a variant
@@ -55,6 +61,8 @@ sub transcripts {
             data_directory => $self->data_directory,
             chrom_name => $variant{chromosome_name},
         );
+
+        $self->cache_gene_names();
         $self->{_cached_chromosome} = $variant{chromosome_name};
     }
 
