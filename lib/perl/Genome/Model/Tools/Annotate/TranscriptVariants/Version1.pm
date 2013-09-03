@@ -81,6 +81,12 @@ sub specialized_deletion_annotation {
     return;
 }
 
+sub reference_sequence_id {
+    my $self = shift;
+
+     return $self->build->reference_sequence_id;
+}
+
 # Annotates a single transcript-substructure/variant pair
 sub _transcript_substruct_annotation {
     my ($self, $substruct, %variant) = @_;
@@ -141,7 +147,7 @@ sub _transcript_substruct_annotation {
             $substruct->id));
         my $gene = Genome::Gene->get(data_directory => $substruct->data_directory,
                                      id => $substruct->transcript_gene_id,
-                                     reference_build_id => $self->build->reference_sequence_id);
+                                     reference_build_id => $self->reference_sequence_id);
         $gene_name = $gene->name;
     }
 
