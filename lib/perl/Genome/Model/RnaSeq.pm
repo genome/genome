@@ -15,7 +15,7 @@ class Genome::Model::RnaSeq {
     ],
     has_input => [
         reference_sequence_build => {
-            is => 'Genome::Model::Build::ReferenceSequence',
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
         },
         annotation_build => {
             is => "Genome::Model::Build::ImportedAnnotation",
