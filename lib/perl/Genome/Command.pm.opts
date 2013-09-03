@@ -5309,7 +5309,7 @@ $Genome::Command::OPTS_SPEC = [
       [
         'input-file=s',
         'files',
-        'gene-name-column=s',
+        'gene-name-regex=s',
         'files',
         'help!',
         undef
