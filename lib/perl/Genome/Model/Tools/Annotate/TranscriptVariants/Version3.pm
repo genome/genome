@@ -146,9 +146,21 @@ sub _transcript_substruct_annotation {
     return %result;
 }
 
-sub _transcript_annotation_for_cds_exon {
+sub should_update_variant_attributes {
     my ($self, $variant, $structure) = @_;
 
+    unless ($self->{'get_frame_shift_sequence'}) {
+        # If we're inspecting the entire sequence, don't chop the variant down...
+        if ($variant->{stop} > $structure->structure_stop and $variant->{type} eq 'DEL') {
+            return 1;
+        }
+    }
+
+    return;
+}
+
+sub _transcript_annotation_for_cds_exon {
+    my ($self, $variant, $structure) = @_;
 
     # If the variant continues beyond the stop position of the exon, then the variant sequence
     # needs to be modified to stop at the exon's stop position. The changes after the exon's stop
@@ -156,14 +168,11 @@ sub _transcript_annotation_for_cds_exon {
     # it's possible that variants may always be split up so they only touch one structure, but for
     # now this will have to do.
     # TODO This can be removed once variants spanning structures are handled properly
-    unless ($self->{'get_frame_shift_sequence'}) {
-        # If we're inspecting the entire sequence, don't chop the variant down...
-        if ($variant->{stop} > $structure->structure_stop and $variant->{type} eq 'DEL') {
-            my $bases_beyond_stop = $variant->{stop} - $structure->structure_stop;
-            my $new_variant_length = (length $variant->{reference}) - $bases_beyond_stop;
-            $variant->{reference} = substr($variant->{reference}, 0, $new_variant_length);
-            $variant->{stop} = $variant->{stop} - $bases_beyond_stop;
-        }
+    if ($self->should_update_variant_attributes($variant, $structure)) {
+        my $bases_beyond_stop = $variant->{stop} - $structure->structure_stop;
+        my $new_variant_length = (length $variant->{reference}) - $bases_beyond_stop;
+        $variant->{reference} = substr($variant->{reference}, 0, $new_variant_length);
+        $variant->{stop} = $variant->{stop} - $bases_beyond_stop;
     }
 
     my $coding_position = $self->_determine_coding_position($variant, $structure);
