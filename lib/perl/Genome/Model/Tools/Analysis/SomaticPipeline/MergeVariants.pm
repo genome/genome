@@ -17,6 +17,9 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome::Model::Tools::Analysis::Helpers qw(
+    code_to_genotype
+);
 
 my %known_dbsnps = ();
 my %normal_cns_files = my %tumor_cns_files = ();
@@ -320,7 +323,7 @@ sub compile_variants
 		
 		$consensus_calls{$key} = $consensus;
 
-		my $genotype = consensus_to_gt($consensus);
+		my $genotype = code_to_genotype($consensus);
 		
 		if(substr($genotype, 0, 1) eq $ref_base)
 		{
@@ -391,36 +394,6 @@ sub compile_variants
 
 }
 
-
-#############################################################
-# consensus_to_gt - get genotype equivalent
-#
-#############################################################
-
-sub consensus_to_gt
-{
-	my $consensus = shift(@_);
-	
-	return("AA") if($consensus eq "A");
-	return("CC") if($consensus eq "C");
-	return("GG") if($consensus eq "G");
-	return("TT") if($consensus eq "T");
-
-	return("AC") if($consensus eq "M");
-	return("AG") if($consensus eq "R");
-	return("AT") if($consensus eq "W");
-	return("CG") if($consensus eq "S");
-	return("CT") if($consensus eq "Y");
-	return("GT") if($consensus eq "K");
-	
-	return("NN");
-}
-
-
-
-
-
-
 #############################################################
 # load_dbsnp_rs - Load dbSNP RS numbers
 #
@@ -467,14 +440,4 @@ sub call_sammy
 	return($cmd);
 }
 
-
-
-sub commify
-{
-	local($_) = shift;
-	1 while s/^(-?\d+)(\d{3})/$1,$2/;
-	return $_;
-}
-
 1;
-
