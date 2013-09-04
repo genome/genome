@@ -8,7 +8,7 @@ use Workflow;
 use Workflow::Simple;
 use Carp;
 use Data::Dumper;
-use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line');
+use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line', 'get_samples_from_header');
 
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfDenovo {
     is => 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfBase',
@@ -71,7 +71,7 @@ sub _filter_variants {
         }
     }
     $output_fh->print(join("",@$header));
-    my @sample_names = $self->get_samples_from_header($header);
+    my @sample_names = get_samples_from_header($header);
 
     ## Parse the variants file ##
     while(my $line = $input_fh->getline) {
@@ -98,20 +98,6 @@ sub open_input_file {
     my ($self, $input_file) = @_;
 
     return Genome::Sys->open_gzip_file_for_reading($input_file);
-}
-
-# Given the header of a vcf, return an array of samples in the final header line
-#FIXME probably move this to a base class
-sub get_samples_from_header {
-    my $self = shift;
-    my $header = shift;
-
-    my $sample_line = @$header[-1];
-    chomp $sample_line;
-    my @fields = split "\t", $sample_line;
-    splice(@fields, 0, 9);
-
-    return @fields;
 }
 
 sub set_info_field {
