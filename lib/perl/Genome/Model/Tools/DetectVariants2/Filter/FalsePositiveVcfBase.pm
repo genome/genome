@@ -13,6 +13,7 @@ use Genome::Utility::Vcf ('open_vcf_file', 'parse_vcf_line', 'deparse_vcf_line',
 
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfBase {
     is => 'Genome::Model::Tools::DetectVariants2::Filter',
+    is_abstract => 1,
 
     has_input => [
         ## CAPTURE FILTER OPTIONS ##
