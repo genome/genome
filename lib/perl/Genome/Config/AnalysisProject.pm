@@ -47,12 +47,6 @@ class Genome::Config::AnalysisProject {
         name => {
             is => 'Text',
         },
-        created_at => {
-            is => 'Timestamp',
-        },
-        updated_at => {
-            is => 'Timestamp',
-        },
         status => {
             is => 'Text',
             default_value => 'Pending',
