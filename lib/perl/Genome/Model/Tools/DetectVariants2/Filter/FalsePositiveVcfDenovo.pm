@@ -210,32 +210,6 @@ sub filter_one_line {
     return 1;
 }
 
-# Convert numeric gt values to A/C/T/G
-sub convert_numeric_gt_to_alleles {
-    my $self = shift;
-    my $alt = shift;
-    my $gt = shift;
-    my $reference = shift;
-
-    # Put reference in the alt list so that GT 0 (index 0) points to reference, 1 points to the first alt, etc)
-    my @alt_including_ref = ($reference, @$alt);
-
-    # Make sure the GT makes sense and also find the unique non-ref alleles
-    my %alleles;
-    for my $gt_number (@$gt) {
-        unless ($gt_number <= scalar(@alt_including_ref) ) {
-            die $self->error_message("GT does not make sense for the number of alts present. GT: $gt Alt: $alt");
-        }
-
-        my $current_allele = $alt_including_ref[$gt_number];
-        $alleles{$current_allele} = 1;
-    }
-
-    my @alleles = keys %alleles;
-
-    return @alleles;
-}
-
 # Break the tie between more than one variant allele
 # FIXME This is arbitrary. A better way would be to test both and pass/fail each allele OR pass if either is ok
 sub prioritize_allele {
