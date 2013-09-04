@@ -139,6 +139,7 @@ sub filter_one_line {
 
     # FIXME this will be only correct for the number of lines we have
     $stats->{'num_variants'}++;
+
     # FIXME run this for each sample in the line that is not "." and has a non ref GT
     my $denovo_allele = $parsed_vcf_line->{info}{"DA"};
     if(!defined($denovo_allele)) {
@@ -196,7 +197,6 @@ sub generate_and_run_readcounts_in_parallel {
     my $region_path = shift;
 
     my %inputs;
-    my (@outputs, @inputs);
 
     #set up global readcount params
     $inputs{reference_fasta} = $self->reference_sequence_input;
@@ -204,22 +204,8 @@ sub generate_and_run_readcounts_in_parallel {
     $inputs{minimum_base_quality} = $self->bam_readcount_min_base_quality;
     $inputs{use_version} = $self->bam_readcount_version;
 
-    my @sample_names;
-    for my $alignment_result ($self->alignment_results) {
-        my $sample_name = $self->find_sample_name_for_alignment_result($alignment_result);
-        push @sample_names, $sample_name;
-        $self->status_message("Running BAM Readcounts for sample $sample_name...");
-
-        my $readcount_file = $self->_temp_staging_directory . "/$sample_name.readcounts";  #this is suboptimal, but I want to wait until someone tells me a better way...multiple options exist
-        push @outputs, $readcount_file;
-        my $bam_path = $alignment_result->merged_alignment_bam_path;
-        if (-f $bam_path) {
-            $inputs{"bam_${sample_name}"} = $bam_path;
-        } else {
-            die "merged_alignment_bam_path does not exist: $bam_path";
-        }
-        $inputs{"readcounts_${sample_name}"} = $readcount_file;
-    }
+    my ($sample_names) = $self->get_all_sample_names_and_bam_paths;
+    %inputs = $self->add_per_bam_params_to_input(%inputs);
 
     my $workflow = Workflow::Model->create(
         name=> "FalsePositiveVcf parallel readcount file creation",
@@ -230,7 +216,7 @@ sub generate_and_run_readcounts_in_parallel {
         'output',
         ],
     );
-    for my $sample (@sample_names) {
+    for my $sample (@$sample_names) {
         my $op = $workflow->add_operation(
             name=>"readcount creation for $sample",
             operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Sam::Readcount"),
@@ -299,7 +285,7 @@ sub generate_and_run_readcounts_in_parallel {
 
     #all succeeded so open files
     my $readcount_searcher_by_sample;
-    for my $sample (@sample_names) {
+    for my $sample (@$sample_names) {
         $readcount_searcher_by_sample->{$sample} = $self->make_buffered_rc_searcher(Genome::Sys->open_file_for_reading($inputs{"readcounts_$sample"}));
     }
     return $readcount_searcher_by_sample;

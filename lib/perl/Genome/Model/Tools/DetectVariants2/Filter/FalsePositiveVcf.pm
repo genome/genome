@@ -348,54 +348,6 @@ sub generate_and_run_readcounts_in_parallel {
     return $readcount_searcher_by_sample;
 }
 
-sub get_all_sample_names_and_bam_paths {
-    my $self = shift;
-    my @sample_names;
-    my @bam_paths;
-
-    if (!$self->aligned_reads_input) {
-        for my $alignment_result ($self->alignment_results) {
-            my $sample_name = $self->find_sample_name_for_alignment_result($alignment_result);
-            push @sample_names, $sample_name;
-            push @bam_paths, $alignment_result->merged_alignment_bam_path;
-        }
-    } else {
-        push @bam_paths, $self->aligned_reads_input;
-        push @sample_names, $self->aligned_reads_sample;
-        if ($self->control_aligned_reads_input) {
-            push @bam_paths, $self->control_aligned_reads_input;
-            push @sample_names, $self->control_aligned_reads_sample;
-        }
-    }
-
-    unless (scalar(@sample_names) == scalar(@bam_paths)) {
-        die $self->error_message("Did not get the same number of sample names as bam paths.\n" . Data::Dumper::Dumper @sample_names . Data::Dumper::Dumper @bam_paths);
-    }
-
-    return (\@sample_names, \@bam_paths);
-}
-
-sub add_per_bam_params_to_input {
-    my ($self, %inputs) = @_;
-
-    my ($sample_names, $bam_paths) = $self->get_all_sample_names_and_bam_paths;
-
-    for my $sample_name (@$sample_names) {
-        my $bam_path = shift @$bam_paths;
-
-        $self->status_message("Running BAM Readcounts for sample $sample_name...");
-        my $readcount_file = $self->_temp_staging_directory . "/$sample_name.readcounts";  #this is suboptimal, but I want to wait until someone tells me a better way...multiple options exist
-        if (-f $bam_path) {
-            $inputs{"bam_${sample_name}"} = $bam_path;
-        } else {
-            die "merged_alignment_bam_path does not exist: $bam_path";
-        }
-        $inputs{"readcounts_${sample_name}"} = $readcount_file;
-    }
-
-    return %inputs;
-}
-
 #override the default scratch directories in order to allow for network available temp dirs
 sub _create_temp_directories {
     my $self = shift;
