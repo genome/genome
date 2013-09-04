@@ -186,9 +186,9 @@ sub fail_sample {
     my $filter_reason = shift;
 
     $self->status_message("Entering fail sample\n");
-    # XXX @gsanders Should this have the optiosn from FPVcf?
     $self->set_format_field($parsed_vcf_line, $sample_name,
-        $self->filter_sample_format_tag, $filter_reason);
+        $self->filter_sample_format_tag, $filter_reason,
+        append => 1, is_filter_fail => 1);
     return 1;
 }
 
