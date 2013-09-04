@@ -5,7 +5,7 @@ use warnings;
 package Genome::Model::ClinSeq::Command;
 
 class Genome::Model::ClinSeq::Command {
-    is => 'Command',
+    is => 'Command::Tree',
     doc => 'operate on clin-seq models',
 };
 

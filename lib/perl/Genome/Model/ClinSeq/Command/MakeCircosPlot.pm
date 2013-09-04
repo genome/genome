@@ -11,10 +11,12 @@ class Genome::Model::ClinSeq::Command::MakeCircosPlot {
     is => 'Command::V2',
     has => [
         build                   => { is => 'Genome::Model::Build::ClinSeq',
-                                     doc => 'Clinseq build' },
+                                     doc => 'Clinseq build', 
+                                     is_input => 1 },
 
         output_directory        => { is => 'FilesystemPath',
-                                     doc => 'Directory where output will be written', },
+                                     is_input => 1,
+                                     doc => 'Directory where output will be written' },
 
     ],
     doc => 'This script attempts to get read counts, frequencies and gene expression values for a series of genome positions',
@@ -75,7 +77,7 @@ sub execute {
     my $wgs_tumor_refalign = $wgs_build->tumor_build;
 
     # eventually you do this 
-    # Genome::Sys->shellcmd(cmd => "cd $output_direcotry; circos");
+    # Genome::Sys->shellcmd(cmd => "cd $output_direcotry; circos"); # run circos to generate plot
 
     return 1;
 }
