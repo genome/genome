@@ -94,31 +94,6 @@ sub should_print_region_line {
     return $line =~ m/DA=/;
 }
 
-# Given an input vcf and an output filename, print a region_list from all variants in the input vcf
-sub print_region_list {
-    my $self = shift;
-    my $input_file = shift;
-    my $output_file = shift;
-    my $output_fh = Genome::Sys->open_file_for_writing($output_file);
-
-    # Strip out the header
-    my ($input_fh, $header) = $self->parse_vcf_header($input_file);
-
-    ## Print each line to file in order to get readcounts
-    $self->status_message("Printing variants to temporary region_list file $output_file...");
-    while(my $line = $input_fh->getline) {
-        if ($self->should_print_region_line($line)) {
-            my ($chr, $pos) = split /\t/, $line;
-            print $output_fh "$chr\t$pos\t$pos\n";
-        }
-    }
-
-    $output_fh->close;
-    $input_fh->close;
-
-    return 1;
-}
-
 # Given an input vcf file name, return the file handle at the position of the first variant line, and the header lines as an array
 #FIXME probably move this to a base class
 sub parse_vcf_header {
