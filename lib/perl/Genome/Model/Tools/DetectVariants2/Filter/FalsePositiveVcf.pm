@@ -175,12 +175,18 @@ sub should_print_region_line {
     return 1;
 }
 
+sub open_input_file {
+    my ($self, $input_file) = @_;
+
+    return open_vcf_file($input_file);
+}
+
 # Given an input vcf file name, return the file handle at the position of the first variant line, and the header lines as an array
 #FIXME probably move this to a base class
 sub parse_vcf_header {
     my $self = shift;
     my $input_file = shift;
-    my $input_fh = open_vcf_file($input_file);
+    my $input_fh = $self->open_input_file($input_file);
 
     my @header;
     my $header_end = 0;
