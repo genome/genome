@@ -380,6 +380,10 @@ sub _resolve_workflow_for_build {
             gene_category_cnv_ampdel_result
             gene_category_wgs_snv_result
             gene_category_wgs_indel_result
+            dgidb_cnv_amp_result
+            dgidb_sv_fusion_result
+            dgidb_wgs_snv_result
+            dgidb_wgs_indel_result
             wgs_variant_sources_result
         );
     }
@@ -390,6 +394,8 @@ sub _resolve_workflow_for_build {
             exome_mutation_spectrum_result
             gene_category_exome_snv_result
             gene_category_exome_indel_result
+            dgidb_exome_snv_result
+            dgidb_exome_indel_result
             exome_variant_sources_result
         );
     }
@@ -398,6 +404,8 @@ sub _resolve_workflow_for_build {
         push @output_properties, 'summarize_wgs_exome_tier1_snv_support_result';
         push @output_properties, 'gene_category_wgs_exome_indel_result';
         push @output_properties, 'gene_category_wgs_exome_snv_result';
+        push @output_properties, 'dgidb_wgs_exome_indel_result';
+        push @output_properties, 'dgidb_wgs_exome_snv_result';
     }
 
     if ($build->wgs_build or $build->exome_build) {
@@ -415,6 +423,8 @@ sub _resolve_workflow_for_build {
         push @output_properties, 'tumor_cufflinks_expression_absolute_result';
         push @output_properties, 'gene_category_cufflinks_result';
         push @output_properties, 'gene_category_tophat_result';
+        push @output_properties, 'dgidb_cufflinks_result';
+        push @output_properties, 'dgidb_tophat_result';
     }
 
     if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
@@ -428,14 +438,14 @@ sub _resolve_workflow_for_build {
 
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
-        input_properties => \@input_properties, 
+        input_properties  => \@input_properties, 
         output_properties => \@output_properties,
     );
 
     my $log_directory = $build->log_directory;
     $workflow->log_dir($log_directory);
 
-    my $input_connector = $workflow->get_input_connector;
+    my $input_connector  = $workflow->get_input_connector;
     my $output_connector = $workflow->get_output_connector;
 
     my %steps_by_name; 
@@ -761,9 +771,10 @@ sub _resolve_workflow_for_build {
     }
 
     #SummarizeSvs - Generate a summary of SV results from the WGS SV results
+    my $summarize_svs_op;
     if ($build->wgs_build){
         my $msg = "Summarize SV results from WGS somatic variation";
-        my $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
+        $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
         $add_link->($input_connector, 'wgs_build_as_array', $summarize_svs_op, 'builds');
         $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
         $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
@@ -899,6 +910,29 @@ sub _resolve_workflow_for_build {
       $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_result');
     }
 
+    #DGIDB gene annotation
+    if ($build->exome_build){
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'exome_snv_file', $input_connector, $output_connector, 'dgidb_exome_snv_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'exome_indel_file', $input_connector, $output_connector, 'dgidb_exome_indel_result');
+    }
+
+    if ($build->wgs_build){
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_snv_file', $input_connector, $output_connector, 'dgidb_wgs_snv_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_indel_file', $input_connector, $output_connector, 'dgidb_wgs_indel_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $run_cn_view_op, 'gene_amp_file', $input_connector, $output_connector, 'dgidb_cnv_amp_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $summarize_svs_op, 'fusion_output_file', $input_connector, $output_connector, 'dgidb_sv_fusion_result');
+    }
+
+    if ($build->wgs_build and $build->exome_build) {
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_exome_snv_file', $input_connector, $output_connector, 'dgidb_wgs_exome_snv_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_exome_indel_file', $input_connector, $output_connector, 'dgidb_wgs_exome_indel_result');
+    }
+
+    if ($build->tumor_rnaseq_build){
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_topnpercent_file', $input_connector, $output_connector, 'dgidb_cufflinks_result');
+        $self->add_dgidb_op_to_flow($add_step, $add_link, $tumor_tophat_junctions_absolute_op, 'junction_topnpercent_file', $input_connector, $output_connector, 'dgidb_tophat_result');
+    }
+
     #SummarizeTier1SnvSupport - For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
     #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
     #TODO: Break this down to do direct calls to GetBamReadCounts instead of wrapping it.
@@ -944,6 +978,18 @@ sub _resolve_workflow_for_build {
 
     return $workflow;
 }
+
+
+sub add_dgidb_op_to_flow {
+    my ($self, $add_step, $add_link, $op, $op_prop, $input_connector, $output_connector, $out_prop) = @_;
+    my $msg = "Add dgidb gene annotations to $op_prop";
+    my $annotate_genes_by_dgidb_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb");
+    $add_link->($op, $op_prop, $annotate_genes_by_dgidb_op, 'input_file');
+    $add_link->($input_connector, 'gene_name_column', $annotate_genes_by_dgidb_op, 'gene_name_regex');
+    $add_link->($annotate_genes_by_dgidb_op, 'result', $output_connector, $out_prop);
+    return 1;
+}
+
 
 sub _infer_candidate_subjects_from_input_models {
     my $self = shift;

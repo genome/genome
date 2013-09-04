@@ -222,7 +222,7 @@ $DB::single = 1;
             my @replacements = $pp_class->_profiles_matching_subclass_and_params(@new, type_name => $from_profile->type_name);
             if (@replacements) {
                 no warnings;
-                @replacements = sort { $a->id <=> $b->id || $a->id cmp $b->id } @replacements;
+                @replacements = sort { $a->id cmp $b->id } @replacements;
                 for my $replacement (@replacements) {
                     $self->status_message(" found profile matching the new parameters: " . $replacement->__display_name__);
                 }

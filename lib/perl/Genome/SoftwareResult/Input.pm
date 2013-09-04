@@ -15,7 +15,7 @@ class Genome::SoftwareResult::Input {
         name => {
             is => 'Text',
             len => 255,
-            column_name => 'INPUT_NAME',
+            column_name => 'input_name',
         },
     ],
     has => [
@@ -27,7 +27,7 @@ class Genome::SoftwareResult::Input {
         value_id => {
             is => 'Text',
             len => 1000,
-            column_name => 'INPUT_VALUE',
+            column_name => 'input_value',
         },
         value_obj => {
             is => 'UR::Object',
@@ -38,13 +38,13 @@ class Genome::SoftwareResult::Input {
         _new_name => {
             is => 'Text',
             len => 255,
-            column_name => 'NAME',
+            column_name => 'name',
             is_optional => 1,
         },
         _new_value => {
             is => 'Text',
             len => 1000,
-            column_name => 'VALUE_ID',
+            column_name => 'value_id',
             is_optional => 1,
         },
     ],

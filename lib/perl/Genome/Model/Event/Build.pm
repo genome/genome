@@ -71,13 +71,7 @@ sub events_for_class {
     #but adding the line below makes the tests pass for now
     return unless @class_events;
 
-    my @sorted_class_events;
-    if ($class_events[0]->id =~ /^-/) {
-        @sorted_class_events = sort {$b->id <=> $a->id} @class_events;
-    } else {
-        @sorted_class_events = sort {$a->id <=> $b->id} @class_events;
-    }
-    return @sorted_class_events;
+    return sort {$a->id cmp $b->id} @class_events;
 }
 
 1;

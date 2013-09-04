@@ -28,6 +28,11 @@ my %OPTIONAL_PROPERTIES = (
         is  => 'Text',
         doc => 'Limit results based on trust level of the interaction source. e.g. \'Expert curated\' or Non-curated',
     },
+    antineoplastic_only => {
+        is  => 'Boolean',
+        doc => 'Limit results to anti-cancer drugs only',
+        default_value => 0,
+    },
 );
 
 class Genome::Model::Tools::Dgidb::QueryGene {
@@ -44,11 +49,7 @@ class Genome::Model::Tools::Dgidb::QueryGene {
             is  => 'Text',
             doc => 'A file path to store the output. Default is to STDOUT',
         },
-        antineoplastic_only => {
-            is  => 'Boolean',
-            doc => 'Limit results to anti-cancer drugs only',
-            default_value => 0,
-        },
+        
     ],
     has_optional_output => [
         output_hash_ref => {
@@ -57,6 +58,9 @@ class Genome::Model::Tools::Dgidb::QueryGene {
     ],
 };
 
+sub get_optional_parameters {
+    return %OPTIONAL_PROPERTIES;
+}
 
 sub help_brief {
     'Tool to query genes from DGIDB database';
@@ -105,7 +109,7 @@ sub write_output {
     my $out_file = $self->output_file;
 
     my $writer;
-    my @headers = qw(gene_name drug_name interaction_type source gene_categories);
+    my @headers = qw(search_term gene_name drug_name interaction_type source full_gene_name);
 
     my %params = (
         headers   => \@headers,
@@ -120,18 +124,16 @@ sub write_output {
 
     #loop over each search term that was definitely matched
     for my $matched (@{$json_ref->{matchedTerms}}) {
-        my $gene_categories = join ",", sort @{$matched->{geneCategories}};
-        $gene_categories    = $gene_categories ? lc $gene_categories : 'n/a';
-
         #loop over any interactions for this gene
         for my $interaction (@{$matched->{interactions}}) {
             my %content;
             @content{@headers} = (
+                $matched->{searchTerm},
                 $matched->{geneName}, 
                 $interaction->{drugName}, 
                 $interaction->{interactionType},
                 $interaction->{source},
-                $gene_categories,
+                $matched->{geneLongName},
             );
 
             $writer->write_one(\%content);

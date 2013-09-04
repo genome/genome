@@ -11,17 +11,19 @@ class Genome::Model::RnaSeq {
     is => 'Genome::ModelDeprecated',
     has => [
         subject                      => { is => 'Genome::Sample', id_by => 'subject_id' },
-        # TODO: Possibly remove accessor
-        reference_sequence_build_id  => { via => 'reference_sequence_build', to => 'id' },
         reference_sequence_name      => { via => 'reference_sequence_build', to => 'name' },
     ],
     has_input => [
         reference_sequence_build => {
-            is => 'Genome::Model::Build::ReferenceSequence',
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
         },
         annotation_build => {
             is => "Genome::Model::Build::ImportedAnnotation",
-        }
+        },
+        target_region_set_name => {
+            is => 'Text',
+            doc => 'limits the assignment of instrument data by default to only data with a matching TRSN'
+        },
     ],
     has_param => [
         sequencing_platform => {

@@ -15,7 +15,7 @@ class Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute {
     ],
     has_optional => [
         result => { is => 'Text', },
-        value_method => { is => 'Text', },
+        status => { is => 'Text', },
     ],
     has_many => [
         misc_updates => { is => 'Genome::Site::TGI::Synchronize::Classes::MiscUpdate', },
@@ -58,7 +58,7 @@ sub add_misc_update {
     my ($self, $misc_update) = @_;
 
     if ( not $misc_update ) {
-        $self->error_message();
+        $self->error_message('No misc update given to add!');
         return;
     }
 
@@ -82,6 +82,12 @@ sub _insert {
 
     my %params = $self->_resolve_genome_entity_params;
     return $self->_failure if not %params;
+
+    my $genome_subject = Genome::Subject->get(id => $params{subject_id});
+    if ( not $genome_subject ) {
+        $self->status_message('No genome subject for id! '. $params{subject_id});
+        return $self->_skip;
+    }
 
     my $genome_entity = Genome::SubjectAttribute->get(%params);
     if ( not $genome_entity ) {
@@ -156,23 +162,48 @@ sub _resolve_genome_entity_params {
     return %params;
 }
 
+sub _set_result {
+    my ($self, $result) = @_;
+
+    $self->result($result);
+
+    my $value_method = $self->value_method;
+    $self->status(
+        join(
+            "\t", 
+            $result, 
+            map({ $self->$_; } (qw/ description subject_class_name subject_id /)),
+            map({ $_->$value_method } $self->misc_updates),
+        )
+    );
+}
+
 sub _success {
     my $self = shift;
     for my $misc_update ( $self->misc_updates ) {
         $misc_update->success;
     }
-    $self->result( $self->description );
+    $self->_set_result('PASS');
     return 1;
+}
+
+sub _skip {
+    my $self = shift;
+    for my $misc_update ( $self->misc_updates ) {
+        $misc_update->skip;
+    }
+    $self->_set_result('SKIP');
+    return;
 }
 
 sub _failure {
     my $self = shift;
-    my $error_message = $self->error_message // 'NO ERROR SET!';
+    my $error_message = $self->error_message // 'NO ERROR MSG SET!';
     for my $misc_update ( $self->misc_updates ) {
         $misc_update->error_message($error_message);
         $misc_update->failure;
     }
-    $self->result('FAILED');
+    $self->_set_result('FAIL');
     return; 
 }
 

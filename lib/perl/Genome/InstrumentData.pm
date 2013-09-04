@@ -482,7 +482,10 @@ sub lane_qc_build {
     my $self = shift;
     my @qc_models = $self->lane_qc_models;
     return unless @qc_models;
-    my @builds = sort { $b->id <=> $a->id } map { $_->succeeded_builds } @qc_models;
+    # find the newest succeeded build
+    my @builds = sort { $b->date_scheduled cmp $a->date_scheduled }
+                 map { $_->succeeded_builds }
+                 @qc_models;
     return unless @builds;
     return $builds[0];
 }

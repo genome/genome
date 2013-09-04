@@ -84,7 +84,7 @@ sub __errors__ {
             push @errors, UR::Object::Tag->create(
                 type => 'invalid',
                 properties => [qw/ assembly_directory /],
-                desc => 'No newbler $file_name file found in assembly_directory: '.$self->assembly_directory,
+                desc => "No newbler $file_name file found in assembly_directory: ".$self->assembly_directory,
            ); 
         }
     }

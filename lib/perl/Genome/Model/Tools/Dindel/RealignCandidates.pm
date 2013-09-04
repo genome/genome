@@ -6,46 +6,56 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Dindel::RealignCandidates {
-    is => 'Command',
-    has => [
-    variant_file=> {
-        is=>'String',
-        is_input=>1,
-    },
-    output_file=>{
-        is=>'String',
-        is_input=>1,
-    },
-    ref_fasta=> {
-        is=>'String',
-        is_input=>1,
-    },
+    is => 'Genome::Model::Tools::Dindel::Base',
+    has_input => [
+        input_dindel_file => {
+            is => 'Path',
+        },
+        ref_fasta => {
+            is => 'Path',
+        },
     ],
+    has_output => [
+        output_dindel_file => {
+            is => 'Path',
+            is_calculated => 1,
+            calculate =>  q{ $output_prefix . ".variants.txt" },
+            calculate_from => ['output_prefix'],
+        },
+    ],
+    has_optional_transient => {
+        output_prefix => {
+            is_calculated => 1,
+            calculate =>  q{ File::Spec->join($output_directory, "left_shifted") },
+            calculate_from => ['output_directory'],
+        },
+    },
 };
 
 sub help_brief {
-    'Left-shift indels you got from a vcf'
+    'Left-shift indels in a dindel formatted variants file'
 }
-
-sub help_synopsis {
-    return <<EOS
-EOS
-}
-
-sub help_detail {
-    return <<EOS
-EOS
-}
-
 
 sub execute {
     my $self = shift;
-    my $dindel_location = "/gscmnt/gc2146/info/medseq/dindel/binaries/dindel-1.01-linux-64bit";
-    my $ref = $self->ref_fasta;
-    my $output = $self->output_file;
-    my $input = $self->variant_file;
-    my $cmd = "$dindel_location --analysis realignCandidates --varFile $input --outputFile $output --ref $ref";
-    return Genome::Sys->shellcmd(cmd=>$cmd);
+
+    $self->create_output_directory();
+    return $self->shellcmd_arrayref(
+        cmd => [
+            $self->dindel_executable,
+            '--analysis', 'realignCandidates',
+            '--varFile', $self->input_dindel_file,
+            '--outputFile', $self->output_prefix,
+            '--ref', $self->ref_fasta,
+        ],
+        input_files => [
+            $self->input_dindel_file,
+            $self->ref_fasta
+        ],
+        output_files => [
+            $self->output_dindel_file,
+        ],
+    );
 }
 
 1;

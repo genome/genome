@@ -1,4 +1,4 @@
-package Genome::Model::MetagenomicComposition16s::Command::RunStatus; 
+package Genome::Model::MetagenomicComposition16s::Command::RunStatus;
 
 use strict;
 use warnings;
@@ -81,7 +81,10 @@ sub execute {
             push @row, 'SKIPPED-NO-READS', '', '', ''. '', '';
             next;
         }
-        my ($model) = sort { $b->id <=> $a->id } grep { $_->subject_id eq $instrument_data->sample_id } grep {$_->processing_profile_id eq $self->processing_profile->id } map { $_->model } Genome::Model::Input->get(name => 'instrument_data', value_id => $instrument_data->id,);
+        my ($model) = sort { $b->creation_date cmp $a->creation_date }
+            grep { $_->subject_id eq $instrument_data->sample_id }
+            grep {$_->processing_profile_id eq $self->processing_profile->id }
+            map { $_->model } Genome::Model::Input->get(name => 'instrument_data', value_id => $instrument_data->id,);
         if ( not $model ) {
             push @row, '', '', '', ''. '', '';
             next;

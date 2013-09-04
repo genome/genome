@@ -17,13 +17,24 @@ use_ok('Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute') 
 
 my $cnt = 0;
 
-# Success
+# Define misc updates
 my @multi_misc_updates = _define_multiple_misc_updates();
 ok(@multi_misc_updates, 'Define multi misc updates');
 is(@multi_misc_updates, 4, 'Defined 4 multi misc updates');
 is(scalar( map { $_->misc_updates } @multi_misc_updates), 12, 'Defined 12 misc updates');
+
+# Failure No genome entity
+ok(!$multi_misc_updates[0]->perform_update, 'perform update: '.$multi_misc_updates[0]->description);
+is($multi_misc_updates[0]->status_message, 'No genome subject for id! -200', 'Correct msg');
+is($multi_misc_updates[0]->result, 'SKIP', 'Correct result');
+
+# Define subjects
+my @subjects = _define_subjects();
+is(@subjects, 2, 'Define subjects');
+
+# Success
 for my $multi_misc_update ( @multi_misc_updates ) {
-    ok($multi_misc_update->perform_update, 'perfromed update: '.$multi_misc_update->description);
+    ok($multi_misc_update->perform_update, 'performed update: '.$multi_misc_update->description);
     my %genome_entity_params = $multi_misc_update->_resolve_genome_entity_params;
     ok(%genome_entity_params, 'Got genome entity params');
     is(scalar(keys %genome_entity_params), 4, 'Correct number of genome entity params');
@@ -36,7 +47,8 @@ for my $multi_misc_update ( @multi_misc_updates ) {
         ok(!$genome_entity, 'DELETE genome entity: '.$multi_misc_update->__display_name__);
         is($multi_misc_update->value_method, 'old_value', 'Correct value method');
     }
-    is($multi_misc_update->result, $multi_misc_update->description, 'Correct result');
+    is($multi_misc_update->result, 'PASS', 'Correct result');
+    ok($multi_misc_update->status, 'set status');
     ok(!$multi_misc_update->error_message, 'No errors set on multi misc update!');
     is(scalar(grep {defined} map {$_->error_message} $multi_misc_update->misc_updates), 0, 'No errors set on misc updates!');
 }
@@ -52,15 +64,21 @@ my %multi_misc_update_params = (
 my $multi_misc_update = Genome::Site::TGI::Synchronize::Classes::MiscUpdate::SubjectAttribute->create(%multi_misc_update_params);
 ok(!$multi_misc_update->perform_update, 'Failed to perform update w/o misc updates');
 is($multi_misc_update->error_message, 'No misc updates set to get genome entity params!', 'Correct error');
-is($multi_misc_update->result, 'FAILED', 'Correct result');
+is($multi_misc_update->result, 'FAIL', 'Correct result');
 
 # Missing required key
 $multi_misc_update->add_misc_update(($multi_misc_updates[0]->misc_updates)[0]);
 ok(!$multi_misc_update->perform_update, 'Failed to perform update w/o misc updates');
 is($multi_misc_update->error_message, 'Missing required key (attribute_value) in genome entity params!', 'Correct error');
-is($multi_misc_update->result, 'FAILED', 'Correct result');
+is($multi_misc_update->result, 'FAIL', 'Correct result');
 
 done_testing();
+
+sub _define_subjects {
+    ok(push(@subjects, Genome::Sample->__define__(id => -100)), 'define sample');
+    ok(push(@subjects, Genome::PopulationGroup->__define__(id => -200)), 'define population group');
+    return @subjects;
+}
 
 sub _define_multiple_misc_updates {
     my %subject_class_names_to_properties= (
@@ -69,7 +87,7 @@ sub _define_multiple_misc_updates {
     );
 
     my @misc_updates;
-    for my $update ( [ 'population_group_member', -100, -101, ], [ 'sample_attribute', -100, 'foo', 'bar', 'baz',  ], ) {
+    for my $update ( [ 'population_group_member', -200, -101, ], [ 'sample_attribute', -100, 'foo', 'bar', 'baz',  ], ) {
         my ($subject_class_name, @ids) = @$update;
         my $subject_id = join('-', @ids);
         for my $description (qw/ INSERT DELETE /) {
@@ -93,10 +111,11 @@ sub _define_multiple_misc_updates {
                 );
                 $multi_misc_update->add_misc_update($misc_update);
             }
+
+            is($multi_misc_update->value_method, ( $description eq 'DELETE' ? 'old_value' : 'new_value'), 'value method');
         }
     }
 
     return @multi_misc_updates;
 }
 
-1;

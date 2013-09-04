@@ -14,7 +14,7 @@ class Genome::SoftwareResult::Param {
         name => {
             is => 'Text',
             len => 255,
-            column_name => 'PARAM_NAME',
+            column_name => 'param_name',
         },
     ],
     has => [
@@ -26,7 +26,7 @@ class Genome::SoftwareResult::Param {
         value_id => {
             is => 'Text',
             len => 1000,
-            column_name => 'PARAM_VALUE',
+            column_name => 'param_value',
         },
         value_obj => {
             is => 'UR::Object',
@@ -37,13 +37,13 @@ class Genome::SoftwareResult::Param {
         _new_name => {
             is => 'Text',
             len => 255,
-            column_name => 'NAME',
+            column_name => 'name',
             is_optional => 1,
         },
         _new_value => {
             is => 'Text',
             len => 1000,
-            column_name => 'VALUE_ID',
+            column_name => 'value_id',
             is_optional => 1,
         },
     ],

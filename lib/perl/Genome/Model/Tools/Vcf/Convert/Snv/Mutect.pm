@@ -68,8 +68,8 @@ sub parse_line {
     my $normal_ad = join(",",$entry{n_ref_count}, $entry{n_alt_count});
     my $tumor_ad = join(",", $entry{t_ref_count}, $entry{t_alt_count});
     # fraction of reads supporting alt
-    my $normal_fa = sprintf("%0.02f",$entry{n_alt_count} / $normal_dp);
-    my $tumor_fa = sprintf("%0.02f",$entry{t_alt_count} / $tumor_dp);
+    my $normal_fa = $normal_dp ? sprintf("%0.02f",$entry{n_alt_count} / $normal_dp) : 0;
+    my $tumor_fa = $tumor_dp ? sprintf("%0.02f",$entry{t_alt_count} / $tumor_dp) : 0;
     # somatic status
     my $normal_ss = ".";
     my $tumor_ss  = 2;
@@ -78,10 +78,10 @@ sub parse_line {
     my $dbsnp_id = ".";
     my $qual = "."; # Can also be $tumor_vaq
     my $filter = $entry{judgement} eq 'REJECT' ? 'REJECT' : 'PASS';
-    my $format = "GT:DP:AD:FA:SS:TLOD";
+    my $format = "GT:DP:AD:FA:SS:TLOD:FT";
     my $info = ".";
-    my $tumor_sample_string = join (":", ($tumor_gt, $tumor_dp, $tumor_ad, $tumor_fa, $tumor_ss, $entry{t_lod_fstar}));
-    my $normal_sample_string = join (":", ($normal_gt, $normal_dp, $normal_ad, $normal_fa, $normal_ss, "."));
+    my $tumor_sample_string = join (":", ($tumor_gt, $tumor_dp, $tumor_ad, $tumor_fa, $tumor_ss, $entry{t_lod_fstar}), $filter);
+    my $normal_sample_string = join (":", ($normal_gt, $normal_dp, $normal_ad, $normal_fa, $normal_ss, ".", $filter));
 
     my $vcf_line = join("\t", $entry{contig}, $entry{position}, $dbsnp_id, $ref, $alt, $qual, $filter, $info, $format, $normal_sample_string, $tumor_sample_string);
 
@@ -96,8 +96,9 @@ sub get_format_meta {
     my @tags = $self->SUPER::get_format_meta;
 
     my $tlod = {MetaType => "FORMAT", ID => "TLOD",    Number => ".", Type => "Float", Description => "Log of (likelihood tumor event is real / likelihood event is sequencing error)"};
+    my $per_sample_filter = {MetaType => "FORMAT", ID => "FT",    Number => 1, Type => "String",  Description => "Sample genotype filter"};
     
-    return (@tags, $tlod,);
+    return (@tags, $tlod, $per_sample_filter);
 }
 
 sub get_filter_meta {

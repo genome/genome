@@ -11,26 +11,35 @@ use warnings;
 
 use above 'Genome';
 
+use List::MoreUtils 'uniq';
 use Test::More;
 
 use_ok('Genome::Site::TGI::Synchronize::ReconcileMiscUpdate') or die;
 
 my $cnt = 0;
 
-# Default date
-my $reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create;
-ok($reconcile, 'Create reconcile command to test default date');
+# Invalid start_from
+my $reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(start_from => 'BLAH-01');
+ok($reconcile, 'Create reconcile command to test start from_value of "BLAH-01"');
 my @errors = $reconcile->__errors__;
-ok(!@errors, 'No errors for undefiined date');
-diag('Default date: '.$reconcile->date);
+ok(@errors, 'Errors') or die;
+is($errors[0]->__display_name__, 'INVALID: property \'start_from\': Invalid date format => BLAH-01', 'Error is correct');
 $reconcile->delete;
 
-# Invalid date
-$reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(date => 'BLAH-01');
-ok($reconcile, 'Create reconcile command to test invalid date');
+my $start_from = Date::Format::time2str("%Y-%m-%d %X", time()); # now
+my $stop_at = '2000-01-01 23:59:59'; # set stop at so we only do the updates for Jan 01 01
+$reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(
+    start_from => $start_from,
+    _stop_at => $stop_at,
+);
+ok($reconcile, 'Create reconcile command to test start_from after _stop_at');
 @errors = $reconcile->__errors__;
-ok(@errors, 'Errors for invalid date');
-is($errors[0]->desc, 'Invalid date format => BLAH-01', 'Error tag desc is correct');
+ok(@errors, 'Errors') or die;
+is(
+    $errors[0]->__display_name__,
+    "INVALID: property \'start_from\': Start from date ($start_from) is after stop at date ($stop_at)!",
+    'Error is correct',
+);
 $reconcile->delete;
 
 # Define entities
@@ -53,13 +62,31 @@ ok(@sub_attr_misc_updates, 'Define subject attr misc updates');
 is(@sub_attr_misc_updates, 24, 'Defined 24 misc indels');
 my @misc_updates_that_skip_or_fail = _define_misc_updates_that_skip_or_fail();
 ok(@misc_updates_that_skip_or_fail, 'Define misc updates that fail');
+my $misc_update_not_in_date_range = _define_misc_update_not_in_date_range();
+ok($misc_update_not_in_date_range, 'Define misc update not in date range');
 
 # Reconcile
-$reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(date => '2000-01-01');
+$reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(start_from => '2000-01-01 00:00:00');
 ok($reconcile, 'Create reconcile command');
 @errors = $reconcile->__errors__;
 ok(!@errors, 'No errors for test date');
-diag('Test date: '.$reconcile->date);
+
+$reconcile->_stop_at('2000-01-01 23:59:59'); # set stop at so we only do the updates for Jan 01 01
+diag('Check that the correct misc updates were retrieved');
+ok($reconcile->_load_misc_updates, 'load misc updates');
+is(@{$reconcile->_misc_updates}, 44, 'loaded 44 misc updates');
+is_deeply(
+    [ map { $_->id } grep { $_->description eq 'UPDATE' } @{$reconcile->_misc_updates} ], 
+    [ map { $_->id } grep { $_->description eq 'UPDATE' } @misc_updates, @sub_attr_misc_updates, @misc_updates_that_skip_or_fail ],
+    'Retrieved the correct misc updates in the correct order for UPDATE',
+) or die;
+is_deeply(
+    [ map { $_->id } grep { $_->description ne 'UPDATE' } @{$reconcile->_misc_updates} ], 
+    [ map { $_->id } grep { $_->description ne 'UPDATE' } @misc_updates, @sub_attr_misc_updates, @misc_updates_that_skip_or_fail ],
+    'Retrieved the correct misc updates in the correct order for INSERT/DELETE',
+) or die;
+ok(!grep({ $_->id eq $misc_update_not_in_date_range->id } @{$reconcile->_misc_updates}), 'Did not get misc update out of date range') or die;
+
 ok($reconcile->execute, 'Execute reconcile command');
 
 diag('Checking successful UPDATES...');
@@ -95,7 +122,7 @@ for my $multi_misc_update (values %multi_misc_updates_to_check) {
     else {
         ok(!$genome_entity, 'DELETE genome entity: '.$multi_misc_update->__display_name__);
     }
-    is($multi_misc_update->result, $multi_misc_update->description, 'Correct result');
+    is($multi_misc_update->result, 'PASS', 'Correct result');
     ok(!$multi_misc_update->error_message, 'No errors set on multi misc update!');
     is(scalar(grep {defined} map {$_->error_message} $multi_misc_update->misc_updates), 0, 'No errors set on misc updates!');
 }
@@ -124,12 +151,12 @@ done_testing();
 sub _entity_attrs {
     return [
         # Taxon
-        { _type => 'Taxon', id => -100, estimated_genome_size => 1000, },
-        { _type => 'Taxon', id => -101, estimated_genome_size => 1000, },
+        { _type => 'Taxon', _site_tgi_subclass => 'OrganismTaxon', id => -100, estimated_genome_size => 1000, },
+        { _type => 'Taxon', _site_tgi_subclass => 'OrganismTaxon', id => -101, estimated_genome_size => 1000, },
         # Individual
-        { _type => 'Individual', id => -200, taxon_id => -100, },
-        { _type => 'Individual', id => -201, taxon_id => -100, },
-        { _type => 'Individual', id => -202, taxon_id => -100, },
+        { _type => 'Individual', _site_tgi_subclass => 'OrganismIndividual', id => -200, taxon_id => -100, },
+        { _type => 'Individual', _site_tgi_subclass => 'OrganismIndividual', id => -201, taxon_id => -100, },
+        { _type => 'Individual', _site_tgi_subclass => 'OrganismIndividual', id => -202, taxon_id => -100, },
         # Pop Group
         { _type => 'PopulationGroup', id => -300, taxon_id => -100, },
         { _type => 'PopulationGroup', id => -301, taxon_id => -100, },
@@ -224,23 +251,23 @@ sub _define_misc_updates {
 
 sub _define_subject_attr_misc_updates {
     my %subject_class_names_to_properties= (
-        population_group_member => [qw/ pg_id member_id /],
-        sample_attribute => [qw/ organism_sample_id attribute_label attribute_value nomenclature /],
+        population_group_member => [qw/ member_id pg_id /],
+        sample_attribute => [qw/ attribute_label attribute_value nomenclature organism_sample_id /],
     );
 
     my @updates = (
         # PopulationGroup
-        # sub_name desc pg_id member_id
-        [ 'population_group_member', 'INSERT', -1000, -1001, ],
-        [ 'population_group_member', 'INSERT', -1000, -1002, ],
-        [ 'population_group_member', 'DELETE', -1000, -1002, ],
-        [ 'population_group_member', 'INSERT', -1001, -1002, ],
+        # sub_name                      desc        member_id   pg_id 
+        [ 'population_group_member',    'INSERT',   -301,      -200, ],
+        [ 'population_group_member',    'INSERT',   -302,      -200, ],
+        [ 'population_group_member',    'DELETE',   -302,      -200, ],
+        [ 'population_group_member',    'INSERT',   -302,      -201, ],
         # Sample
-        # sub_name desc sample_id attr_label attr_val nom
-        [ 'sample_attribute', 'INSERT', -1000, 'foo', 'bar', 'baz',  ],
-        [ 'sample_attribute', 'INSERT', -1001, 'foo', 'bar', 'baz',  ],
-        [ 'sample_attribute', 'INSERT', -1001, 'foo', 'bar', 'qux',  ],
-        [ 'sample_attribute', 'DELETE', -1000, 'foo', 'bar', 'baz',  ],
+        # sub_name              desc        label   val     nom     sample_id 
+        [ 'sample_attribute',   'INSERT',   'foo',  'bar',  'baz',  -100, ],
+        [ 'sample_attribute',   'INSERT',   'foo',  'bar',  'baz',  -101, ],
+        [ 'sample_attribute',   'INSERT',   'foo',  'bar',  'qux',  -101, ],
+        [ 'sample_attribute',   'DELETE',   'foo',  'bar',  'baz',  -100, ],
     );
 
     my @sub_attr_misc_updates;
@@ -279,7 +306,7 @@ sub _define_misc_updates_that_skip_or_fail {
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        edit_date => '2000-01-02 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON__',
         new_value => 'FAIL',
         description => 'UPDATE',
@@ -294,7 +321,7 @@ sub _define_misc_updates_that_skip_or_fail {
         subject_id => -10000,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        edit_date => '2000-01-03 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON__',
         new_value => 'FAIL',
         description => 'UPDATE',
@@ -309,7 +336,7 @@ sub _define_misc_updates_that_skip_or_fail {
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        edit_date => '2000-01-04 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_SAMPLE_ATTR__',
         new_value => 'FAIL',
         description => 'UPDATE',
@@ -324,7 +351,7 @@ sub _define_misc_updates_that_skip_or_fail {
         subject_id => -301,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        edit_date => '2000-01-05 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_POP_GROUP_MEMBER__',
         new_value => 'FAIL',
         description => 'UPDATE',
@@ -339,7 +366,7 @@ sub _define_misc_updates_that_skip_or_fail {
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        edit_date => '2000-01-06 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_TAXON2__',
         new_value => 'FAIL',
         description => 'UPDATE',
@@ -354,7 +381,7 @@ sub _define_misc_updates_that_skip_or_fail {
         subject_id => -100,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        edit_date => '2000-01-07 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_SAMPLE__',
         new_value => 'FAIL',
         description => 'UPDATE',
@@ -369,7 +396,7 @@ sub _define_misc_updates_that_skip_or_fail {
         subject_id => -400,
         subject_property_name => 'name',
         editor_id => 'lims',
-        edit_date => '2000-01-01 00:00:'.sprintf('%02d', $cnt++),
+        edit_date => '2000-01-08 00:00:'.sprintf('%02d', $cnt++),
         old_value => '__TEST_SAMPLE__',
         new_value => 'SKIP',
         description => 'UPDATE',
@@ -380,3 +407,19 @@ sub _define_misc_updates_that_skip_or_fail {
 
     return @skip_or_fail;
 }
+
+sub _define_misc_update_not_in_date_range {
+    # Later date
+    return Genome::Site::TGI::Synchronize::Classes::MiscUpdate->__define__(
+        subject_class_name => 'test.organism_sample',
+        subject_id => -555,
+        subject_property_name => 'name',
+        editor_id => 'lims',
+        edit_date => '2001-02-02 00:00:'.sprintf('%02d', $cnt++), # must be diff year for now
+        old_value => '__TEST_SAMPLE__',
+        new_value => 'OUT OF DATE RANGE',
+        description => 'UPDATE',
+        is_reconciled => 0,
+    );
+}
+

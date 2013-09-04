@@ -57,7 +57,7 @@ my $genome_entity = $misc_update->genome_entity;
 ok($genome_entity, 'Got genome entity');
 is($genome_entity->class, $genome_class_name, 'Correct genome entity class name');
 is($genome_entity->id, $id454->region_id, 'Correct genome entity id');
-ok($misc_update->perform_update, 'Perform update');
+ok(!$misc_update->perform_update, 'Perform update');
 is($misc_update->result, 'SKIP', 'Correct result after update');
 is($misc_update->status, "SKIP	UPDATE	test.run_region_454	-301	library_id	'-201'	'-201'	'3'", 'Correct status after update');
 ok(!$misc_update->is_reconciled, 'Is NOT reconciled');

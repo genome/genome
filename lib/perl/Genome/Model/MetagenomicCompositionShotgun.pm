@@ -1225,8 +1225,8 @@ sub _verify_model_and_build_instrument_data_match {
     Carp::confess('No model to verify instrument data') if not $model;
     Carp::confess('No build to verify instrument data') if not $build;
 
-    my @build_instrument_data = sort {$a->id <=> $b->id} $build->instrument_data;
-    my @model_instrument_data = sort {$a->id <=> $b->id} $model->instrument_data;
+    my @build_instrument_data = sort {$a->id cmp $b->id} $build->instrument_data;
+    my @model_instrument_data = sort {$a->id cmp $b->id} $model->instrument_data;
 
     $self->status_message('Model: '.$model->__display_name__);
     $self->status_message('Model instrument data: '.join(' ', map { $_->id } @model_instrument_data));

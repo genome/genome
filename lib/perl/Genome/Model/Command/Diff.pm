@@ -116,7 +116,7 @@ sub execute {
 sub find_builds_for_revisions {
     my ($self, $model, $first_revision, $second_revision) = @_;
 
-    my @builds = sort { $b->build_id <=> $a->build_id } grep { $_->status eq 'Succeeded' } $model->builds;
+    my @builds = sort { $b->date_scheduled <=> $a->date_scheduled } grep { $_->status eq 'Succeeded' } $model->builds;
     my $user   = Genome::Sys->username;
     my ($first_build, $second_build);
 

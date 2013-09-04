@@ -162,6 +162,7 @@ class Genome::Model {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
             doc => 'Versions of a model over time, with varying quantities of evidence',
+            where => [ -order_by => '-date_scheduled', ],
         },
         input_associations => {
             is => 'Genome::Model::Input',
@@ -624,7 +625,7 @@ sub current_build {
     my $self = shift;
     my $build_iterator = $self->build_iterator(
         'status not like' => 'Abandoned',
-        '-order_by' => '-build_id',
+        '-order_by' => '-date_scheduled',
     );
     while (my $build = $build_iterator->next) {
         return $build if $build->is_current;
@@ -901,38 +902,59 @@ sub _preprocess_subclass_description {
         }
 
         if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
-
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
 
             my @where_class;
+            my $prop_class;
             if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
-                my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
+                $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
                     $prop_desc->{'data_type'},
                     $class
                 );
 
-                if($prop_class->isa('UR::Value') and !$prop_class->isa('Genome::File::Base')) {
-                    push @where_class,
-                        value_class_name => $prop_class;
-                }
+                push @where_class,
+                    value_class_name => $prop_class;
             }
 
-            $desc->{has}{$assoc} = {
+            my $assoc_property_hash = {
                 property_name => $assoc,
                 implied_by => $prop_name,
                 is => 'Genome::Model::Input',
                 reverse_as => 'model',
-                where => [ name => $prop_name, @where_class ],
+                where => [ name => $prop_name ],
                 is_mutable => $prop_desc->{is_mutable},
                 is_optional => $prop_desc->{is_optional},
                 is_many => 1, #$prop_desc->{is_many},
             };
 
+            if($prop_class->isa('UR::Value') and !$prop_class->isa('Genome::File::Base')) {
+                push @{$assoc_property_hash->{where}}, @where_class;
+            }
+
+            $desc->{has}{$assoc} = $assoc_property_hash;
+
             %$prop_desc = (%$prop_desc,
                 via => $assoc,
                 to => $class->_resolve_to_for_prop_desc($prop_desc),
             );
+
+            #make a corresponding id property if one doesn't already exist
+            if (!$prop_desc->{is_many}) {
+                my $id_property = $prop_name . '_id';
+                if (!exists($desc->{has}{$id_property})) {
+                    $desc->{has}{$id_property} = {
+                        property_name => $id_property,
+                        implied_by => $prop_name,
+                        via => $assoc,
+                        to => 'value_id',
+                        where => \@where_class,
+                        is_mutable => $prop_desc->{is_mutable},
+                        is_optional => $prop_desc->{is_optional},
+                        is_many => 0,
+                    };
+                }
+            }
         }
 
     }

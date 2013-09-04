@@ -30,6 +30,12 @@ class Genome::Model::ClinSeq::Command::SummarizeSvs {
             doc => 'Directory where output files will be written', 
         },
     ],
+    has_output => [
+        fusion_output_file => {
+            is => 'Text',
+            doc => 'Path to output file',
+        },
+    ],
     doc => 'summarize the SVs of somatic variation build',
 };
 
@@ -318,6 +324,7 @@ sub execute {
       print FUSION_OUT "$data{$l}{record}\t$data{$l}{pairoscope_tumor_reads}\t$data{$l}{pairoscope_normal_reads}\t$new_cols_string\n";
     }
     close(FUSION_OUT);
+    $self->fusion_output_file($fusion_candidate_outfile);
 
 
     #TODO: Create a Stats.tsv file summarizing basic statistics of the sv annotations file
