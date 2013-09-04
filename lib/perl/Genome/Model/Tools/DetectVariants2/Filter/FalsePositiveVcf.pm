@@ -241,8 +241,10 @@ sub fail_sample {
     my $sample_name = shift;
     my $filter_reason = shift;
 
-
-    $self->set_format_field($parsed_vcf_line,$sample_name,"FT",$filter_reason, append => 1, is_filter_fail => 1);
+    $self->status_message("Entering fail sample\n");
+    $self->set_format_field($parsed_vcf_line, $sample_name,
+        $self->filter_sample_format_tag, $filter_reason,
+        append => 1, is_filter_fail => 1);
     return 1;
 }
 

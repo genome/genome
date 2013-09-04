@@ -185,7 +185,8 @@ sub fail_sample {
     my $filter_reason = shift;
 
     $self->status_message("Entering fail sample\n");
-    $self->set_format_field($parsed_vcf_line,$sample_name,"DNFT",$filter_reason);
+    $self->set_format_field($parsed_vcf_line, $sample_name,
+        $self->filter_sample_format_tag, $filter_reason);
     return 1;
 }
 
