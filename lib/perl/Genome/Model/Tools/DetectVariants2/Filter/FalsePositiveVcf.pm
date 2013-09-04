@@ -23,8 +23,8 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 This module uses detailed readcount information from bam-readcounts to filter likely false positives.
 It is HIGHLY recommended that you use the default settings, which have been comprehensively vetted.
 Both capture and WGS projects now use the same filter and parameters.
@@ -171,8 +171,8 @@ sub _convert_to_standard_formats {
     $fail_fh->close;
 
     # Convert both files to bed
-    my $convert = Genome::Model::Tools::Bed::Convert::Snv::SamtoolsToBed->create( 
-        source => $pass_snv_output_file, 
+    my $convert = Genome::Model::Tools::Bed::Convert::Snv::SamtoolsToBed->create(
+        source => $pass_snv_output_file,
         output => $self->_temp_staging_directory . "/snvs.hq.bed",
     );
     unless($convert->execute){
@@ -180,8 +180,8 @@ sub _convert_to_standard_formats {
         die $self->error_message;
     }
 
-    my $convert_lq = Genome::Model::Tools::Bed::Convert::Snv::SamtoolsToBed->create( 
-        source => $fail_snv_output_file, 
+    my $convert_lq = Genome::Model::Tools::Bed::Convert::Snv::SamtoolsToBed->create(
+        source => $fail_snv_output_file,
         output => $self->_temp_staging_directory . "/snvs.lq.bed",
     );
     unless($convert_lq->execute){
@@ -419,7 +419,7 @@ sub filter_one_line {
     return 1;
 }
 
-# Find the variant allele for this sample (look at the GT and ALT) 
+# Find the variant allele for this sample (look at the GT and ALT)
 #FIXME This is old hacky logic from the old FalsePositive filter and should probably not be used in a base class
 sub get_variant_for_sample {
     my $self = shift;
@@ -494,7 +494,7 @@ sub get_variant_for_sample {
         return $nonref_alleles[0];
     }
 
-    # If we have more than one nonref allele, break the tie and return a single allele (this is the part that is hacky) #FIXME 
+    # If we have more than one nonref allele, break the tie and return a single allele (this is the part that is hacky) #FIXME
     my $variant = $self->prioritize_allele(\@nonref_alleles);
 
     unless ($variant) {
@@ -543,7 +543,7 @@ sub prioritize_allele {
 }
 
 
-# Given a vcf line structure and a sample/readcount file, determine if that sample should be filtered 
+# Given a vcf line structure and a sample/readcount file, determine if that sample should be filtered
 sub filter_one_sample {
     my $self = shift;
     my $parsed_vcf_line = shift;
@@ -567,7 +567,7 @@ sub filter_one_sample {
     my $pos = $parsed_vcf_line->{position};
 
     #want to do this BEFORE anything else so we don't screw up the file parsing...
-    my $readcounts; 
+    my $readcounts;
     # FIXME this should get readcount lines until we have the correct chrom and pos matching our input line
     # FIXME no readcount output line is a valid output condition if there are no reads at all covering the position. Maybe bam-readcount should be fixed to not do this...
     $readcounts = $readcount_searcher->($chrom,$pos);
@@ -784,7 +784,7 @@ sub fail_sample {
     my $sample_name = shift;
     my $filter_reason = shift;
 
-    
+
     $self->set_format_field($parsed_vcf_line,$sample_name,"FT",$filter_reason, append => 1, is_filter_fail => 1);
     return 1;
 }
@@ -971,7 +971,7 @@ sub generate_and_run_readcounts_in_parallel {
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("parallel readcount generation workflow did not return correctly.");
     }
-    
+
     #all succeeded so open files
     my $readcount_searcher_by_sample;
     for my $sample (@$sample_names) {
