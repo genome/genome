@@ -32,5 +32,13 @@ class Genome::Config::AnalysisProject::SubjectPairing {
     ]
 };
 
+sub __display_name__ {
+    my $self = shift;
+    return sprintf('Control: %s, Experimental: %s as part of %s',
+        $self->control_subject->__display_name__,
+        $self->experimental_subject->__display_name__,
+        $self->analysis_project->__display_name__);
+}
+
 
 1;

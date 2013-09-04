@@ -78,6 +78,11 @@ class Genome::Config::AnalysisProject {
     ],
 };
 
+sub __display_name__ {
+    my $self = shift;
+    return sprintf('%s (%s)', $self->name, $self->id);
+}
+
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
