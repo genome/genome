@@ -87,10 +87,11 @@ class Genome::Model::SmallRna::Command::StatsGenerator {
     ],
 };
 
-	
-
-
-
+sub resolve_reads_mapped {
+    my($self, $flagstat_file) = @_;
+    my $data_flagstats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
+    return $data_flagstats->{reads_mapped};
+}
 
 sub execute {
 	my $self     = 	shift;
@@ -102,26 +103,13 @@ sub execute {
 	my $sub_output  = $self->output_subclusters_file;
 	my $flagstat_17_70 = $self->flagstat_17_70_file;
 	my $flagstat_file= $bamfile.'.flagstat';	
-	
-	
-	
-	
+
 	### OPENING 17_70 FLAGSTAT FILE AND GETTING STATS###
-    	my $data_flagstats_17_70 = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_17_70);
-        my $flagstat_total_17_70 = $data_flagstats_17_70->{total_reads};
-    	my $flagstat_mapped_17_70 = $data_flagstats_17_70->{reads_mapped};
+    my $flagstat_mapped_17_70 = $self->resolve_reads_mapped($flagstat_17_70);
 
-	
-	
 	### OPENING BIN FLAGSTAT FILE AND GETTING STATS###
+    my $flagstat_mapped = $self->resolve_reads_mapped($flagstat_file);
 
-    	my $data_flagstats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
-        my $flagstat_total = $data_flagstats->{total_reads};
-    	my $flagstat_mapped = $data_flagstats->{reads_mapped};
-	
-
-	
-	
 	######OPENING BAM AND GENERATING STATS#######
 	
 	my $index    =  Bio::DB::Bam->index_open($bamfile);
