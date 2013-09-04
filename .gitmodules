@@ -271,3 +271,6 @@
 [submodule "vendor/dindel"]
 	path = vendor/dindel
 	url = https://github.com/genome/dindel.git
+[submodule "vendor/circos"]
+	path = vendor/circos
+	url = https://github.com/genome-vendor/circos.git
