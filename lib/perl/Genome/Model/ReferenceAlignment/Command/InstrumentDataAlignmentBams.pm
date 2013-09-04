@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Date::Manip;
 
 class Genome::Model::ReferenceAlignment::Command::InstrumentDataAlignmentBams {
     is => 'Genome::Command::Base',
@@ -46,7 +45,7 @@ sub execute {
         my $max = '0';
         my $bamqc_result;
         for(@bamqc_results) {
-            my $earliest_time = UnixDate($_->best_guess_date, "%s");
+            my $earliest_time = $_->best_guess_date_numeric;
             if ($earliest_time > $max) {
                 $max = $earliest_time;
                 $bamqc_result = $_;
