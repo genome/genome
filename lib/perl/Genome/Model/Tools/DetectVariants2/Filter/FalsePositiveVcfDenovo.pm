@@ -53,8 +53,6 @@ sub _filter_variants {
         Genome::Sys->copy_file($input_file, $self->output_file_path);
         return 1;  ### pass the file along and report successful
     }
-    my $output_fh = Genome::Sys->open_gzip_file_for_writing(
-        $self->output_file_path);
     ## Run BAM readcounts in batch mode to get read counts for all positions in file ##
     my $readcount_searcher_by_sample = $self->generate_and_run_readcounts_in_parallel($region_path);
 
@@ -74,6 +72,9 @@ sub _filter_variants {
             $self->add_filter_to_vcf_header($header,@$filter);
         }
     }
+
+    my $output_fh = Genome::Sys->open_gzip_file_for_writing(
+        $self->output_file_path);
     $output_fh->print(join("",@$header));
     my @sample_names = get_samples_from_header($header);
 
