@@ -206,6 +206,10 @@ sub filter_one_line {
     return 1;
 }
 
+sub filter_sample_format_tag {
+    return 'FT';
+}
+
 # Given a vcf line structure and a sample/readcount file, determine if that sample should be filtered
 sub filter_one_sample {
     my ($self, $parsed_vcf_line, $readcount_searcher_by_sample, $stats, $sample_name, $var) = @_;
@@ -214,7 +218,8 @@ sub filter_one_sample {
 
     # This is a special case for when we are not considering two parents. #FIXME This is super hacky and should be improved somehow.
     if ((not defined $readcount_searcher) and (lc($sample_name) =~ m/fake_parent/i)) {
-        $self->set_format_field($parsed_vcf_line, $sample_name,"FT",".");
+        $self->set_format_field($parsed_vcf_line, $sample_name,
+            $self->filter_sample_format_tag, ".");
         return;
     }
 
@@ -233,8 +238,10 @@ sub filter_one_sample {
     unless($readcounts) {
         #no data at this site, set FT to null
         #FIXME This breaks what little encapsulation we have started...
+        # XXX @gsanders Is it a bug to use FT instead of filter_sample_format_tag here?
         if(!exists($parsed_vcf_line->{sample}{$sample_name}{FT})) {
-            $self->set_format_field($parsed_vcf_line, $sample_name, "FT", ".");
+            $self->set_format_field($parsed_vcf_line, $sample_name,
+                $self->filter_sample_format_tag, ".");
         }
         return;
     }
