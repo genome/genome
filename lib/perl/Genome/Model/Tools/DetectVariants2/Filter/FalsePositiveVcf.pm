@@ -222,27 +222,8 @@ sub get_readcounts_from_vcf_line {
         return;
     }
 
-    unless ($readcount_searcher) {
-        die $self->error_message("Could not get readcount searcher for sample $sample_name " . Data::Dumper::Dumper $readcount_searcher_by_sample);
-    }
-
-    #want to do this BEFORE anything else so we don't screw up the file parsing...
-    my $readcounts;
-    # FIXME this should get readcount lines until we have the correct chrom and pos matching our input line
-    # FIXME no readcount output line is a valid output condition if there are no reads at all covering the position. Maybe bam-readcount should be fixed to not do this...
-    $readcounts = $readcount_searcher->($parsed_vcf_line->{chromosome},$parsed_vcf_line->{position});
-    unless($readcounts) {
-        #no data at this site, set FT to null
-        #FIXME This breaks what little encapsulation we have started...
-        # XXX @gsanders Is it a bug to use FT instead of filter_sample_format_tag here?
-        if(!exists($parsed_vcf_line->{sample}{$sample_name}{FT})) {
-            $self->set_format_field($parsed_vcf_line, $sample_name,
-                $self->filter_sample_format_tag, ".");
-        }
-        return;
-    }
-
-    return $readcounts;
+    return $self->SUPER::get_readcounts_from_vcf_line($parsed_vcf_line,
+        $readcount_searcher_by_sample, $sample_name);
 }
 
 # Given a vcf line structure and a sample/readcount file, determine if that sample should be filtered
