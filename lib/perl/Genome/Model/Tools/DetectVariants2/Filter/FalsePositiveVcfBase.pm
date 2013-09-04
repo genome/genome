@@ -136,4 +136,17 @@ sub _variant_type { 'snvs' };
 sub filter_name { 'FalsePositiveVcf' };
 
 
+sub _get_readcount_line {
+    my $self = shift;
+    my ($readcount_fh,$chr,$pos) = @_;
+    while( my $line = $readcount_fh->getline){
+        chomp $line;
+        my ($rc_chr,$rc_pos) = split "\t", $line;
+        if(($chr eq $rc_chr)&&($pos == $rc_pos)){
+            return $line;
+        }
+    }
+    return;
+}
+
 1;
