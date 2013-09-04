@@ -85,7 +85,12 @@ sub _filter_variants {
     $output_fh->close;
     $self->print_stats($stats);
 
+    $self->_convert_to_standard_formats($output_file);
+
     return 1;
+}
+
+sub _convert_to_standard_formats {
 }
 
 sub should_print_region_line {
