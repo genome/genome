@@ -93,45 +93,6 @@ sub _filter_variants {
 #
 #############################################################
 
-sub fails_homopolymer_check {
-    (my $self, my $reference, my $min_homopolymer, my $chrom, my $start, my $stop, my $ref, my $var) = @_;
-
-    ## Auto-pass large indels ##
-
-    my $indel_size = length($ref);
-    $indel_size = length($var) if(length($var) > $indel_size);
-
-    return(0) if($indel_size > 2);
-
-    ## Build strings of homopolymer bases ##
-    my $homoRef = $ref x $min_homopolymer;
-    my $homoVar = $var x $min_homopolymer;
-
-    ## Build a query string for the homopolymer check ##
-
-    my $query_string = "";
-
-    $query_string = $chrom . ":" . ($start - $min_homopolymer) . "-" . ($stop + $min_homopolymer);
-
-    my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
-    my $sequence = `$samtools_path faidx $reference $query_string | grep -v \">\"`;
-    chomp($sequence);
-
-    if($sequence) {
-        if($sequence =~ $homoVar) { #$sequence =~ $homoRef || {
-            print join("\t", $chrom, $start, $stop, $ref, $var, "Homopolymer: $sequence") . "\n" if($self->verbose);
-            return($sequence);
-        }
-    }
-
-    return(0);
-}
-
-#############################################################
-# Read_Counts_By_Allele - parse out readcount info for an allele
-#
-#############################################################
-
 sub read_counts_by_allele {
     my $self = shift;
     (my $line, my $allele) = @_;
@@ -824,7 +785,7 @@ sub generate_and_run_readcounts_in_parallel {
     #all succeeded so open files
     my $readcount_searcher_by_sample;
     for my $sample (@sample_names) {
-        $readcount_searcher_by_sample->{$sample} = make_buffered_rc_searcher(Genome::Sys->open_file_for_reading($inputs{"readcounts_$sample"}));
+        $readcount_searcher_by_sample->{$sample} = $self->make_buffered_rc_searcher(Genome::Sys->open_file_for_reading($inputs{"readcounts_$sample"}));
     }
     return $readcount_searcher_by_sample;
 }
