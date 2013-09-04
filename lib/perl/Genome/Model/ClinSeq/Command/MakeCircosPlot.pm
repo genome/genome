@@ -7,17 +7,26 @@ use Data::Dumper;
 # Written by Ben Ainscough and Scott Smith, based on prototype from Obi Griffith
 # See JIRA issue https://jira.gsc.wustl.edu/browse/TD-691
 
+# this next line lets things work until systems deploys circos 0.64 
+# remove this after this ticket is resolved: https://rt.gsc.wustl.edu/Ticket/Display.html?id=94903
+# also remove a similar line at the bottom of execute !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+local $ENV{GENOME_SW} = '/gscuser/ssmith/fakeapp';
+
 class Genome::Model::ClinSeq::Command::MakeCircosPlot {
     is => 'Command::V2',
-    has => [
-        build                   => { is => 'Genome::Model::Build::ClinSeq',
-                                     doc => 'Clinseq build', 
-                                     is_input => 1 },
+    has_input => [
+        build               => { is => 'Genome::Model::Build::ClinSeq',
+                                doc => 'Clinseq build' },
 
-        output_directory        => { is => 'FilesystemPath',
-                                     is_input => 1,
-                                     doc => 'Directory where output will be written' },
+        output_directory    => { is => 'FilesystemPath',
+                                doc => 'Directory where output will be written', },
 
+    ],
+    has_param => [
+        use_version         => { is => 'Text',
+                                valid_values => [ Genome::Sys->sw_versions("circos") ],
+                                default_value => '0.64',
+                                doc => 'the version of circos to use' },
     ],
     doc => 'This script attempts to get read counts, frequencies and gene expression values for a series of genome positions',
 };
@@ -76,8 +85,21 @@ sub execute {
     # get an input from an input
     my $wgs_tumor_refalign = $wgs_build->tumor_build;
 
-    # eventually you do this 
-    # Genome::Sys->shellcmd(cmd => "cd $output_direcotry; circos"); # run circos to generate plot
+    ## write the config file to point to the new data files above
+    my $out_fh = Genome::Sys->open_file_for_writing("$output_directory/circos.conf");
+    # ....
+    $out_fh->close;
+
+    # this next line lets things work until systems deploys circos 0.64 
+    # remove this after this ticket is resolved: https://rt.gsc.wustl.edu/Ticket/Display.html?id=94903
+    local $ENV{GENOME_SW} = '/gscuser/ssmith/fakeapp';
+
+    # run circos using the correct path for the specified version
+    # errors will throw an exception
+
+    my $path_to_circos_executable = Genome::Sys->sw_path("circos",$self->use_version);
+    $self->status_message("using path $path_to_circos_executable");
+    #Genome::Sys->shellcmd(cmd => "cd $output_directory; $path_to_circos_executable -conf ./circos.conf");
 
     return 1;
 }
