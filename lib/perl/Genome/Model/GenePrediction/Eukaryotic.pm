@@ -42,7 +42,7 @@ class Genome::Model::GenePrediction::Eukaryotic {
         snap_version => {
             is => 'Text',
             is_optional => 1,
-            valid_values => ['2004-06-17', '2007-12-18', '2010-07-28'],
+            valid_values => ['2004-06-17', '2007-12-18', '2010-07-28', '2010-07-28.2'],
             default => '2010-07-28',
             doc => 'Version of SNAP predictor to use',
         },
