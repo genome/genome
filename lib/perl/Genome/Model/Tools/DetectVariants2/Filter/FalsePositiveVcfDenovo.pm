@@ -160,26 +160,6 @@ sub set_info_field {
 }
 
 
-sub set_format_field {
-    my ($self, $parsed_line, $sample, $format_tag, $format_value, %params) = @_;
-    if(!exists($parsed_line->{sample}{$sample}{$format_tag})) {
-        push @{$parsed_line->{'_format_fields'}}, $format_tag;
-        for my $sample (keys %{$parsed_line->{sample}}) {
-            #initialize the new format tag
-            $parsed_line->{sample}{$sample}{$format_tag} = ".";
-        }
-    }
-    if( $params{is_filter_fail} && $parsed_line->{sample}{$sample}{$format_tag} eq 'PASS') {
-        $parsed_line->{sample}{$sample}{$format_tag} = $format_value;   #should really do type checking...
-    }
-    elsif( $params{append} && $parsed_line->{sample}{$sample}{$format_tag} ne "." ) {
-        $parsed_line->{sample}{$sample}{$format_tag} .= ";$format_value";
-    }
-    else {
-        $parsed_line->{sample}{$sample}{$format_tag} = $format_value;   #should really do type checking...
-    }
-}
-
 #FIXME probably move this to a base class
 # Format fields this filter requires, override in each filter
 sub required_format_fields {
