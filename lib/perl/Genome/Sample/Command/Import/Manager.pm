@@ -436,6 +436,7 @@ sub _set_job_status_to_samples {
     }
     $status_column--;
 
+    sleep 2;
     my %samples_by_name = map { $_->{name} => $_ } values %$samples;
     $job_list_cmd .= ' 2>/dev/null |';
     my $fh = IO::File->new($job_list_cmd);
@@ -574,6 +575,7 @@ sub _make_progress {
     my $model_class = $self->model_class;
     my $model_params = $self->model_params;
     my $samples = $self->samples;
+    my (@samples_to_launch_imports, @samples_to_start_builds);
     for my $sample ( values %$samples ) {
         $self->set_sample_status($sample);
         next if $sample->{status} eq 'build_succeeded';
@@ -613,16 +615,14 @@ sub _make_progress {
         # Run import command
         if ( $self->launch_imports ) {
             if ( $sample->{status} eq 'import_needed' ) {
-                my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
-                return if not $launch_ok;
+                push @samples_to_launch_imports, $sample;
             }
             elsif ( $sample->{status} eq 'import_failed' ) {
                 if ( $sample->{instrument_data} ) {
                     $sample->{instrument_data}->delete;
                     $sample->{instrument_data} = undef;
                 }
-                my $launch_ok = $self->_launch_instrument_data_import_for_sample($sample);
-                return if not $launch_ok;
+                push @samples_to_launch_imports, $sample;
             }
         }
 
@@ -633,39 +633,57 @@ sub _make_progress {
                     or $sample->{status} eq 'build_abandoned'
                     or $sample->{status} eq 'build_unstartable'
             ) {
-                my $build = $self->_start_build($sample->{model});
-                return if not $build;
-                $sample->{build} = $build;
+                push @samples_to_start_builds, $sample;
             }
         }
+    }
+
+    if ( @samples_to_launch_imports ) {
+        my $launch_imports_ok = $self->_launch_instrument_data_import_for_samples(@samples_to_launch_imports);
+        return if not $launch_imports_ok;
+    }
+
+    if ( @samples_to_start_builds ) {
+        my $start_builds_ok = $self->_start_builds_for_samples(@samples_to_start_builds);
+        return if not $start_builds_ok;
     }
 
     $self->samples($samples);
     return 1;
 }
 
-sub _launch_instrument_data_import_for_sample {
-    my ($self, $sample) = @_;
-    Carp::confess('No sample to _resolve_instrument_data_import_command_for_sample!') if not $sample;
-    my $cmd = $self->_resolve_instrument_data_import_command_for_sample($sample);
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    return 1 if $rv;
-    $self->error_message($@) if $@;
-    $self->error_message('Failed to launch instrument data import command!');
-    return;
+sub _launch_instrument_data_import_for_samples {
+    my ($self, @samples) = @_;
+
+    Carp::confess('No samples to _launch_instrument_data_import_for_samples!') if not @samples;
+
+    for my $sample ( @samples ) {
+        my $cmd = $self->_resolve_instrument_data_import_command_for_sample($sample);
+        my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+        next if not $rv;
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to launch instrument data import command for sample! '.$sample->name);
+    }
+
+    return 1;
 }
 
-sub _start_build {
-    my ($self, $model) = @_;
+sub _start_builds_for_samples {
+    my ($self, @samples) = @_;
 
-    $DB::single=1;
-    Carp::confess('No model given!') if not $model;
+    Carp::confess('No samples given to _start_builds_for_samples!') if not @samples;
 
-    my $start = Genome::Model::Build::Command::Start->execute(models => [$model]);
+    my $start = Genome::Model::Build::Command::Start->execute(models => [ map { $_->{model} } @samples]);
     return if not $start;
 
-    my ($build) = $start->builds;
-    return $build;
+    my @builds = $start->builds;
+    my %sample_names_and_builds = map  { $_->model->subject->name => $_ } @builds;
+
+    for my $sample ( @samples ) {
+        $sample->{build} = $sample_names_and_builds{ $sample->{name} };
+    }
+
+    return 1;
 }
 
 1;
