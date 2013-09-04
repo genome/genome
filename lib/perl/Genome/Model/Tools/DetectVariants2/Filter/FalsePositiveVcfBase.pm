@@ -499,4 +499,9 @@ sub parse_vcf_header {
     return ($input_fh, \@header);
 }
 
+# Info fields this filter requires, override in each filter
+sub required_info_fields {
+    return;
+}
+
 1;

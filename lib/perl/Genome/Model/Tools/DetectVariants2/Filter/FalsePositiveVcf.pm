@@ -187,12 +187,6 @@ sub required_format_fields {
     return qw(GT);
 }
 
-#FIXME probably move this to a base class
-# Info fields this filter requires, override in each filter
-sub required_info_fields {
-    return;
-}
-
 # Given a parsed vcf line structure, filter each sample on the line
 sub filter_one_line {
     my $self = shift;
