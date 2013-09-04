@@ -520,8 +520,7 @@ sub get_readcounts_from_vcf_line {
     unless($readcounts) {
         #no data at this site, set FT to null
         #FIXME This breaks what little encapsulation we have started...
-        # XXX @gsanders Is it a bug to use FT instead of filter_sample_format_tag here?
-        if(!exists($parsed_vcf_line->{sample}{$sample_name}{FT})) {
+        if(!exists($parsed_vcf_line->{sample}{$sample_name}{$self->filter_sample_format_tag})) {
             $self->set_format_field($parsed_vcf_line, $sample_name,
                 $self->filter_sample_format_tag, ".");
         }
