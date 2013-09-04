@@ -445,24 +445,6 @@ sub fail_sample {
     return 1;
 }
 
-sub generate_filter_names {
-    my $self = shift;
-    my %filters;
-    $filters{'position'} = [sprintf("PB%0.f",$self->min_read_pos*100), "Average position on read less than " . $self->min_read_pos . " or greater than " . (1 - $self->min_read_pos) . " fraction of the read length"];
-    $filters{'strand_bias'} = [sprintf("SB%0.f",$self->min_strandedness*100), "Reads supporting the variant have less than " . $self->min_strandedness . " fraction of the reads on one strand, but reference supporting reads are not similarly biased"];
-    $filters{'min_var_count'} = [ "MVC".$self->min_var_count, "Less than " . $self->min_var_count . " high quality reads support the variant"];
-    $filters{'min_var_freq'} = [ sprintf("MVF%0.f",$self->min_var_freq*100), "Variant allele frequency is less than " . $self->min_var_freq];
-    $filters{'mmqs_diff'} = [ sprintf("MMQSD%d",$self->max_mm_qualsum_diff), "Difference in average mismatch quality sum between variant and reference supporting reads is greater than " . $self->max_mm_qualsum_diff];
-    $filters{'mq_diff'} = [ sprintf("MQD%d",$self->max_mapqual_diff), "Difference in average mapping quality sum between variant and reference supporting reads is greater than " . $self->max_mapqual_diff];
-    $filters{'read_length'} = [ sprintf("RLD%d",$self->max_readlen_diff), "Difference in average clipped read length between variant and reference supporting reads is greater than " . $self->max_readlen_diff];
-    $filters{'dist3'} = [ sprintf("DETP%0.f",$self->min_var_dist_3*100), "Average distance of the variant base to the effective 3' end is less than " . $self->min_var_dist_3];
-    $filters{'homopolymer'} = [ sprintf("HPMR%d",$self->min_homopolymer), "Variant is flanked by a homopolymer of the same base and of length greater than or equal to " . $self->min_homopolymer];
-    $filters{'var_mmqs'} = [ sprintf("MMQS%d",$self->max_var_mm_qualsum), "The average mismatch quality sum of reads supporting the variant is greater than " . $self->max_var_mm_qualsum] if($self->max_var_mm_qualsum);
-    $filters{'no_var_readcount'} = [ "NRC", "Unable to grab readcounts for variant allele"];
-    $filters{'incomplete_readcount'} = [ "IRC", "Unable to grab any sort of readcount for either the reference or the variant allele"];
-    $self->_filters(\%filters);
-}
-
 # Print out stats from a hashref
 sub print_stats {
     my $self = shift;
