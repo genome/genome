@@ -113,5 +113,26 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfBase {
     ],
 };
 
+sub help_synopsis {
+    my $self = shift;
+    return <<"EOS"
+    EXAMPLE:
+    gmt detect-variants2 filter false-positives --variant-file somatic.snvs --bam-file tumor.bam --output-file somatic.snvs.fpfilter --filtered-file somatic.snvs.fpfilter.removed
+EOS
+}
+
+sub help_detail {
+    return <<EOS
+This module uses detailed readcount information from bam-readcounts to filter likely false positives.
+It is HIGHLY recommended that you use the default settings, which have been comprehensively vetted.
+Both capture and WGS projects now use the same filter and parameters.
+For questions, e-mail Dan Koboldt (dkoboldt\@genome.wustl.edu) or Dave Larson (dlarson\@genome.wustl.edu)
+EOS
+}
+
+sub _variant_type { 'snvs' };
+
+sub filter_name { 'FalsePositiveVcf' };
+
 
 1;
