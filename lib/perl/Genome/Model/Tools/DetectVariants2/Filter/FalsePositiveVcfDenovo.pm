@@ -171,6 +171,12 @@ sub filter_sample_format_tag {
     return 'DNFT';
 }
 
+sub update_variant_for_sample {
+    my ($self, $parsed_vcf_line, $sample_name, $var) = @_;
+
+    return $var;
+}
+
 # Given a vcf line structure and a sample/readcount file, determine if that sample should be filtered
 sub filter_one_sample {
     my ($self, $parsed_vcf_line, $readcount_searcher_by_sample, $stats, $sample_name, $var) = @_;
@@ -204,7 +210,7 @@ sub filter_one_sample {
     # TODO var has some special logic from iubpac_to_base that prefers an allele in the case of het variants
 
     my $ref = uc($parsed_vcf_line->{reference});
-#    my $var = $self->get_variant_for_sample($parsed_vcf_line->{alt}, $parsed_vcf_line->{sample}->{$sample_name}->{DNGT}, $parsed_vcf_line->{reference});
+    $self->update_variant_for_sample($parsed_vcf_line, $sample_name, $var);
     unless(defined($var)) {
         #no variant reads here. Won't filter. Add FT tag of "PASS"
         $self->pass_sample($parsed_vcf_line, $sample_name);
