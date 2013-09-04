@@ -51,6 +51,10 @@ sub header_already_added {
     return grep { $_ =~/FORMAT=<ID=FT,/ } @$header;
 }
 
+sub filter_status_header {
+    return qq{##FORMAT=<ID=FT,Number=1,Type=String,Description="Per Sample Filter Status">\n};
+}
+
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
 # Contact: Dan Koboldt (dkoboldt@genome.wustl.edu)
@@ -89,7 +93,7 @@ sub _filter_variants {
     #check here to see if header has FT format tag
     unless($self->header_already_added($header)) {
         my $col_header = $header->[-1];
-        $header->[-1] = qq{##FORMAT=<ID=FT,Number=1,Type=String,Description="Per Sample Filter Status">\n};
+        $header->[-1] = $self->filter_status_header;
         push @$header, $col_header;
     }
     #here embed the filter codes. This should be more centralized to be less craptastic
