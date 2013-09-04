@@ -12,7 +12,7 @@ use Genome::TestObjGenerator::Model::ReferenceAlignment;
 use Genome::TestObjGenerator::Model::SomaticVariation;
 use Genome::TestObjGenerator::Model::RnaSeq;
 use Genome::TestObjGenerator::Model::ClinSeq;
-use Genome::TestObjGenerator::Model::ReferenceSequence;
+use Genome::TestObjGenerator::Model::ImportedReferenceSequence;
 use Genome::TestObjGenerator::Model::ImportedVariationList;
 use Genome::TestObjGenerator::Model::ImportedAnnotation;
 use Genome::TestObjGenerator::Build;
