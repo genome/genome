@@ -111,6 +111,11 @@ sub open_output_and_write_header {
     return $output_fh;
 }
 
+sub log_base {
+    my ($base, $value) = @_;
+    return log($value)/log($base);
+}
+	
 sub execute {
 	my $self     = 	shift;
 	my $bamfile  = 	$self->bam_file;
@@ -214,11 +219,7 @@ sub execute {
 		my $lookup   = $chr_to_id{$chr};
 		
 		####FIRST CALLBACK SUB-ROUTINE FOR ALIGNMENT STATS###	
-	   	sub log_base {
-    					my ($base, $value) = @_;
-   				 		return log($value)/log($base);
-					}
-	   	
+
 		my $callback = sub {
 		my $alignment = shift;
             	my $flag = $alignment->flag;
