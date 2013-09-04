@@ -12,7 +12,7 @@ use Genome::TestObjGenerator::Model::ReferenceAlignment;
 use Genome::TestObjGenerator::Model::SomaticVariation;
 use Genome::TestObjGenerator::Model::RnaSeq;
 use Genome::TestObjGenerator::Model::ClinSeq;
-use Genome::TestObjGenerator::Model::ReferenceSequence;
+use Genome::TestObjGenerator::Model::ImportedReferenceSequence;
 use Genome::TestObjGenerator::Model::ImportedVariationList;
 use Genome::TestObjGenerator::Model::ImportedAnnotation;
 use Genome::TestObjGenerator::Build;
@@ -79,7 +79,7 @@ sub load {
                                                                         );
     $ids{ANNOTATION_BUILD} = $annotation_build->id;
 
-    my $ref_seq_model = Genome::TestObjGenerator::Model::ReferenceSequence->setup_object;
+    my $ref_seq_model = Genome::TestObjGenerator::Model::ImportedReferenceSequence->setup_object;
     my $ref_seq_build = Genome::TestObjGenerator::Build->setup_object(model_id => $ref_seq_model->id);
     $ids{REFSEQ_BUILD} = $ref_seq_build->id;
 

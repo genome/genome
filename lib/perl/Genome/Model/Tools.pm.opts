@@ -20893,6 +20893,15 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>combine-base',
+    [
+      'debug!',
+      undef,
+      'version=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>combine-indel-files',
     [
       'output-file=s',
@@ -20902,6 +20911,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'variant-file2=s',
       'files',
       'debug!',
+      undef,
+      'version=s',
       undef,
       'help!',
       undef
@@ -20915,6 +20926,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'variant-file2=s',
       'files',
       'debug!',
+      undef,
+      'version=s',
       undef,
       'help!',
       undef
@@ -20946,6 +20959,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'debug!',
       undef,
+      'version=s',
+      undef,
       'help!',
       undef
     ],
@@ -20956,6 +20971,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'variant-file=s',
       'files',
       'debug!',
+      undef,
+      'version=s',
       undef,
       'help!',
       undef
@@ -21102,6 +21119,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'debug!',
       undef,
+      'version=s',
+      undef,
       'help!',
       undef
     ],
@@ -21138,6 +21157,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'output-file=s',
       'files',
+      'version=s',
+      undef,
       'help!',
       undef
     ],
@@ -21200,6 +21221,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'preserve-call=s',
       'files',
+      'version=s',
+      undef,
       'help!',
       undef
     ],
@@ -21249,6 +21272,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'skip-if-output-is-present=s',
       'files',
+      'version=s',
+      undef,
       'help!',
       undef
     ],
@@ -21361,6 +21386,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'roi-file=s',
       'files',
+      'version=s',
+      undef,
       'help!',
       undef
     ],
@@ -21533,6 +21560,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'varscan-params=s',
       'files',
+      'version=s',
+      undef,
       'help!',
       undef
     ],
@@ -21648,6 +21677,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'show-builds=s',
       'files',
+      'version=s',
+      undef,
       'help!',
       undef
     ],

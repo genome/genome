@@ -14,7 +14,7 @@ use Test::More;
 use_ok("Genome::TestObjGenerator::Model::ReferenceSequence");
 
 my $m = Genome::TestObjGenerator::Model::ReferenceSequence->setup_object();
-ok($m->isa("Genome::Model::ReferenceSequence"), "Generated a reference alignment model");
+ok($m->isa("Genome::Model::ReferenceSequence"), "Generated a reference sequence model");
 
 done_testing;
 

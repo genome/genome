@@ -19,7 +19,6 @@ use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 use POSIX;
-use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
 
 ## Declare global statistics hash ##
 
@@ -27,7 +26,7 @@ my %stats = ();
 my %stats2 = ();
 
 class Genome::Model::Tools::Capture::GermlineMafStatistics {
-	is => 'Command',                       
+	is => 'Genome::Model::Tools::Capture',                       
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		maf_file	=> { is => 'Text', doc => "Maf File To Read (or space separated list of Maf files to merge then read" , is_optional => 0},
@@ -652,34 +651,6 @@ sub trv_to_mutation_type
 
 	warn "Unknown mutation type $trv_type\n";
 	return("Unknown");
-}
-
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub byChrPos
-{
-	my ($chrom_a, $pos_a) = split(/\t/, $a);
-	my ($chrom_b, $pos_b) = split(/\t/, $b);
-	
-	$chrom_a =~ s/X/23/;
-	$chrom_a =~ s/Y/24/;
-	$chrom_a =~ s/MT/25/;
-	$chrom_a =~ s/M/25/;
-	$chrom_a =~ s/[^0-9]//g;
-
-	$chrom_b =~ s/X/23/;
-	$chrom_b =~ s/Y/24/;
-	$chrom_b =~ s/MT/25/;
-	$chrom_b =~ s/M/25/;
-	$chrom_b =~ s/[^0-9]//g;
-
-	$chrom_a <=> $chrom_a
-	or
-	$pos_a <=> $pos_b;
 }
 
 1;

@@ -30,12 +30,6 @@ class Genome::Config::AnalysisMenuItem {
             is => 'Genome::Config::Set',
             id_by => 'configuration_set_id',
         },
-        created_at => {
-            is => 'Timestamp',
-        },
-        updated_at => {
-            is => 'Timestamp',
-        },
     ],
 };
 

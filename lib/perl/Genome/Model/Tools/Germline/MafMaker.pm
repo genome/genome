@@ -18,7 +18,10 @@ use warnings;
 
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
+use Genome::Model::Tools::Capture::Helpers qw(
+    byChrPos
+    iupac_to_base
+);
 
 ## Declare global statistics hash ##
 
@@ -424,30 +427,5 @@ sub trv_to_mutation_type
 	return("Unknown");
 }
 
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
-
-sub byChrPos
-{
-	my ($chrom_a, $pos_a) = split(/\t/, $a);
-	my ($chrom_b, $pos_b) = split(/\t/, $b);
-	
-	$chrom_a =~ s/X/23/;
-	$chrom_a =~ s/Y/24/;
-	$chrom_a =~ s/MT/25/;
-	$chrom_a =~ s/[^0-9]//g;
-
-	$chrom_b =~ s/X/23/;
-	$chrom_b =~ s/Y/24/;
-	$chrom_b =~ s/MT/25/;
-	$chrom_b =~ s/[^0-9]//g;
-
-	$chrom_a <=> $chrom_a
-	or
-	$pos_a <=> $pos_b;
-}
 
 1;

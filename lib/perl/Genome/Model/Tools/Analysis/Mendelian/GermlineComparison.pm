@@ -429,37 +429,4 @@ sub is_tier1
 	return(0);
 }
 
-
-sub code_to_genotype
-{
-	my $code = shift(@_);
-	
-	return("AA") if($code eq "A");
-	return("CC") if($code eq "C");
-	return("GG") if($code eq "G");
-	return("TT") if($code eq "T");
-
-	return("AC") if($code eq "M");
-	return("AG") if($code eq "R");
-	return("AT") if($code eq "W");
-	return("CG") if($code eq "S");
-	return("CT") if($code eq "Y");
-	return("GT") if($code eq "K");
-
-#	warn "Unrecognized ambiguity code $code!\n";
-#	return("NN");
-	return($code);
-}
-
-
-sub commify
-{
-	local($_) = shift;
-	1 while s/^(-?\d+)(\d{3})/$1,$2/;
-	return $_;
-}
-
-
 1;
-
-

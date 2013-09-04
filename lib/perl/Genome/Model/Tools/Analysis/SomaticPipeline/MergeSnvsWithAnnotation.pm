@@ -17,7 +17,7 @@ use strict;
 use warnings;
 use FileHandle;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
-use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';
+use Genome::Model::Tools::Capture::Helpers 'iupac_to_base';;
 
 my %stats = ();
 
@@ -270,4 +270,3 @@ sub load_snp_calls
 }
 
 1;
-

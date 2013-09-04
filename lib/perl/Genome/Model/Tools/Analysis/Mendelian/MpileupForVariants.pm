@@ -19,6 +19,9 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome::Model::Tools::Analysis::Helpers qw(
+    code_to_genotype_returning_code
+);
 
 my $num_affected = my $affecteds_missing = my $unaffecteds_variant = my $affecteds_variant = my $affecteds_ambiguous = 0;
 my %genotypes = ();
@@ -151,7 +154,7 @@ sub execute {                               # replace with real execution logic.
 			foreach my $varscan_call (@varscan_calls)
 			{
 				my ($cns, $cov, $reads1, $reads2, $freq, $pval) = split(/\:/, $varscan_call);
-				print OUTFILE "\t" . join("\t", code_to_genotype($cns), $reads1, $reads2, $freq) if($self->output_file);
+				print OUTFILE "\t" . join("\t", code_to_genotype_returning_code($cns), $reads1, $reads2, $freq) if($self->output_file);
 			}
 	
 			print OUTFILE "\n" if($self->output_file);
@@ -191,40 +194,4 @@ sub varscan_cmd
 	return("java -cp /gscuser/dkoboldt/Software/VarScan net.sf.varscan.VarScan ");
 }
 
-
-
-
-
-sub code_to_genotype
-{
-	my $code = shift(@_);
-	
-	return("AA") if($code eq "A");
-	return("CC") if($code eq "C");
-	return("GG") if($code eq "G");
-	return("TT") if($code eq "T");
-
-	return("AC") if($code eq "M");
-	return("AG") if($code eq "R");
-	return("AT") if($code eq "W");
-	return("CG") if($code eq "S");
-	return("CT") if($code eq "Y");
-	return("GT") if($code eq "K");
-
-#	warn "Unrecognized ambiguity code $code!\n";
-#	return("NN");
-	return($code);
-}
-
-
-sub commify
-{
-	local($_) = shift;
-	1 while s/^(-?\d+)(\d{3})/$1,$2/;
-	return $_;
-}
-
-
 1;
-
-

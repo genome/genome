@@ -19,6 +19,10 @@ use warnings;
 use FileHandle;
 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome::Model::Tools::Analysis::Helpers qw(
+    byBamOrder
+    code_to_genotype_returning_code
+);
 
 my %genotypes = ();
 
@@ -229,7 +233,7 @@ sub execute {                               # replace with real execution logic.
 
 					}
 
-					$sample_call = code_to_genotype($sample_call);					
+					$sample_call = code_to_genotype_returning_code($sample_call);					
 
 					$sample_genotype = "$sample_call\t$sample_reads1\t$sample_reads2\t$sample_freq";
 				}
@@ -279,7 +283,7 @@ sub execute {                               # replace with real execution logic.
 
 						}
 
-						$sample_call = code_to_genotype($sample_call);
+						$sample_call = code_to_genotype_returning_code($sample_call);
 	
 						$sample_genotype = "$sample_call\t$sample_reads1\t$sample_reads2\t$sample_freq";
 					}
@@ -470,40 +474,4 @@ sub load_consensus
 #	return(%genotypes);
 }
 
-
-
-
-
-
-sub code_to_genotype
-{
-	my $code = shift(@_);
-	
-	return("AA") if($code eq "A");
-	return("CC") if($code eq "C");
-	return("GG") if($code eq "G");
-	return("TT") if($code eq "T");
-
-	return("AC") if($code eq "M");
-	return("AG") if($code eq "R");
-	return("AT") if($code eq "W");
-	return("CG") if($code eq "S");
-	return("CT") if($code eq "Y");
-	return("GT") if($code eq "K");
-
-#	warn "Unrecognized ambiguity code $code!\n";
-#	return("NN");
-	return($code);
-}
-
-
-sub commify
-{
-	local($_) = shift;
-	1 while s/^(-?\d+)(\d{3})/$1,$2/;
-	return $_;
-}
-
-
 1;
-

@@ -8,6 +8,7 @@ use Digest::MD5 qw(md5_hex);
 use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
+use Date::Manip;
 use List::MoreUtils qw(uniq);
 
 use Carp;
@@ -1000,5 +1001,10 @@ sub best_guess_date {
         $self->disk_allocations;
     return $earliest_time;
 }
+
+sub best_guess_date_numeric {
+    return UnixDate(shift->best_guess_date, "%s"); 
+}
+
 
 1;
