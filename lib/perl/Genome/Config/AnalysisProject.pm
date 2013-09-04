@@ -53,7 +53,23 @@ class Genome::Config::AnalysisProject {
             is_many => 1,
             is => 'Genome::Config::AnalysisProject::SubjectPairing',
             reverse_as => 'analysis_project',
-        }
+        },
+        instrument_data => {
+            is => 'Genome::InstrumentData',
+            reverse_as => 'analysis_project_id',
+            is_many => 1,
+        },
+        samples => {
+            is => 'Genome::Subject',
+            via => 'instrument_data',
+            to => 'sample',
+        },
+        models => {
+            is => 'Genome::Model',
+            to => 'models',
+            via => 'model_group',
+            is_many => 1,
+        },
     ],
     has_transient_optional => [
         configuration_reader => {
