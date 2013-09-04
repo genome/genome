@@ -731,4 +731,17 @@ sub filter_one_sample {
     }
 }
 
+# In the line provided, set the sample provided to passed (FT)
+sub pass_sample {
+    my $self = shift;
+    my $parsed_vcf_line = shift;
+    my $sample_name = shift;
+
+    $self->status_message("Entering pass sample\n");
+    $self->set_format_field($parsed_vcf_line, $sample_name,
+        $self->filter_sample_format_tag, "PASS");
+
+    return 1;
+}
+
 1;
