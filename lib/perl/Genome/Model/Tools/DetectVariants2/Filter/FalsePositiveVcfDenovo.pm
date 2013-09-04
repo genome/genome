@@ -100,30 +100,6 @@ sub open_input_file {
     return Genome::Sys->open_gzip_file_for_reading($input_file);
 }
 
-# Given an input vcf file name, return the file handle at the position of the first variant line, and the header lines as an array
-#FIXME probably move this to a base class
-sub parse_vcf_header {
-    my $self = shift;
-    my $input_file = shift;
-    my $input_fh = $self->open_input_file($input_file);
-
-    my @header;
-    my $header_end = 0;
-    while (!$header_end) {
-        my $line = $input_fh->getline;
-        if ($line =~ m/^##/) {
-            push @header, $line;
-        } elsif ($line =~ m/^#/) {
-            push @header, $line;
-            $header_end = 1;
-        } else {
-            die $self->error_message("Missed the final header line with the sample list? Last line examined: $line Header so far: " . join("\n", @header));
-        }
-    }
-
-    return ($input_fh, \@header);
-}
-
 # Given the header of a vcf, return an array of samples in the final header line
 #FIXME probably move this to a base class
 sub get_samples_from_header {
