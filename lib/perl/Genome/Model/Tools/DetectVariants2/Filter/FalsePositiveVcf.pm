@@ -171,6 +171,10 @@ sub _convert_to_standard_formats {
     return 1;
 }
 
+sub should_print_region_line {
+    return 1;
+}
+
 # Given an input vcf and an output filename, print a region_list from all variants in the input vcf
 sub print_region_list {
     my $self = shift;
@@ -184,8 +188,10 @@ sub print_region_list {
     ## Print each line to file in order to get readcounts
     $self->status_message("Printing variants to temporary region_list file $output_file...");
     while(my $line = $input_fh->getline) {
-        my ($chr, $pos) = split /\t/, $line;
-        print $output_fh "$chr\t$pos\t$pos\n";
+        if ($self->should_print_region_line($line)) {
+            my ($chr, $pos) = split /\t/, $line;
+            print $output_fh "$chr\t$pos\t$pos\n";
+        }
     }
 
     $output_fh->close;
