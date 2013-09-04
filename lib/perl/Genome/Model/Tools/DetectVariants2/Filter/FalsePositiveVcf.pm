@@ -37,11 +37,6 @@ sub input_file_path {
     }
 }
 
-sub region_path {
-    my $self = shift;
-    return $self->output_directory."/regions";
-}
-
 sub should_skip_filter {
     return;
 }

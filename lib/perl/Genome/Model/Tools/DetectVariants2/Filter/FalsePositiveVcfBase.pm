@@ -904,6 +904,11 @@ sub fail_sample {
     return 1;
 }
 
+sub region_path {
+    my $self = shift;
+    return $self->output_directory."/regions";
+}
+
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
 # Contact: Dan Koboldt (dkoboldt@genome.wustl.edu)

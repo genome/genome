@@ -25,11 +25,6 @@ sub input_file_path {
     return $self->input_directory . "/snvs.vcf.gz";
 }
 
-sub region_path {
-    my $self = shift;
-    return $self->output_directory."/regions";
-}
-
 sub should_skip_filter {
     my $self = shift;
 
