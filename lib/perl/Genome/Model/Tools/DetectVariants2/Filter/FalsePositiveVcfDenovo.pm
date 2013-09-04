@@ -15,6 +15,11 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfDenovo {
     doc => "This module uses detailed readcount information from bam-readcounts to filter likely false positives",
 };
 
+sub output_file_path {
+    my $self = shift;
+    return $self->_temp_staging_directory . "/snvs.vcf.gz";
+}
+
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
 # Contact: Dan Koboldt (dkoboldt@genome.wustl.edu)
@@ -34,7 +39,6 @@ sub _filter_variants {
     $stats->{'num_fail_varcount'} = $stats->{'num_fail_varfreq'} = $stats->{'num_fail_strand'} = $stats->{'num_fail_pos'} = $stats->{'num_fail_mmqs'} = $stats->{'num_fail_mapqual'} = $stats->{'num_fail_readlen'} = $stats->{'num_fail_dist3'} = 0;
     $stats->{'num_MT_sites_autopassed'} = $stats->{'num_fail_homopolymer'} = 0;
 
-
     #First, need to create a variant list file to use for generating the readcounts.
     # FIXME this will work after the polymuttdenovo filter, but not directly after polymutt due to the separate denovo and standard filenames
     my $input_file = $self->input_directory . "/snvs.vcf.gz";
@@ -44,13 +48,13 @@ sub _filter_variants {
 
     $self->print_region_list($input_file, $region_path);
 
-    my $output_file = $self->_temp_staging_directory . "/snvs.vcf.gz";
     unless(-s $region_path) { #no denovo alleles in this file
         $self->status_message("No denovo alleles found, copying file over and reporting success (this filter was a no-op");
-        `cp $input_file $output_file`;
+        Genome::Sys->copy_file($input_file, $self->output_file_path);
         return 1;  ### pass the file along and report successful
     }
-    my $output_fh = Genome::Sys->open_gzip_file_for_writing($output_file);
+    my $output_fh = Genome::Sys->open_gzip_file_for_writing(
+        $self->output_file_path);
     ## Run BAM readcounts in batch mode to get read counts for all positions in file ##
     my $readcount_searcher_by_sample = $self->generate_and_run_readcounts_in_parallel($region_path);
 
@@ -85,7 +89,7 @@ sub _filter_variants {
     $output_fh->close;
     $self->print_stats($stats);
 
-    $self->_convert_to_standard_formats($output_file);
+    $self->_convert_to_standard_formats($self->output_file_path);
 
     return 1;
 }
