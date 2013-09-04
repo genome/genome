@@ -36,6 +36,11 @@ sub should_skip_filter {
     return -z $self->region_path;
 }
 
+sub header_already_added {
+    my ($self, $header) = @_;
+    return grep { $_ =~/FORMAT=<ID=DNFT,/ } @$header;
+}
+
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
 # Contact: Dan Koboldt (dkoboldt@genome.wustl.edu)
@@ -72,7 +77,7 @@ sub _filter_variants {
     # Advance to the first variant line and print out the header
     my ($input_fh, $header) = $self->parse_vcf_header($input_file);
     #check here to see if header has FT format tag
-    unless(grep { $_ =~/FORMAT=<ID=DNFT,/ } @$header) {
+    unless($self->header_already_added($header)) {
         my $col_header = $header->[-1];
         $header->[-1] = qq{##FORMAT=<ID=DNFT,Number=1,Type=String,Description="Denovo Filter Status">\n};
         push @$header, $col_header;
