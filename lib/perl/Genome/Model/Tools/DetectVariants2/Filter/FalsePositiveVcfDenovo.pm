@@ -25,6 +25,17 @@ sub input_file_path {
     return $self->input_directory . "/snvs.vcf.gz";
 }
 
+sub region_path {
+    my $self = shift;
+    return $self->output_directory."/regions";
+}
+
+sub should_skip_filter {
+    my $self = shift;
+
+    return -z $self->region_path;
+}
+
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
 # Contact: Dan Koboldt (dkoboldt@genome.wustl.edu)
@@ -48,19 +59,15 @@ sub _filter_variants {
     # FIXME this will work after the polymuttdenovo filter, but not directly after polymutt due to the separate denovo and standard filenames
     my $input_file = $self->input_file_path;
 
-    ## Build temp file for positions where readcounts are needed ##
-    #my $region_path = $self->_temp_scratch_directory."/regions";
-    my $region_path = $self->output_directory."/regions";
+    $self->print_region_list($input_file, $self->region_path);
 
-    $self->print_region_list($input_file, $region_path);
-
-    unless(-s $region_path) { #no denovo alleles in this file
-        $self->status_message("No denovo alleles found, copying file over and reporting success (this filter was a no-op");
+    if ($self->should_skip_filter) {
+        $self->status_message("No variants found, copying file over and reporting success (this filter was a no-op");
         Genome::Sys->copy_file($input_file, $self->output_file_path);
-        return 1;  ### pass the file along and report successful
+        return 1;
     }
     ## Run BAM readcounts in batch mode to get read counts for all positions in file ##
-    my $readcount_searcher_by_sample = $self->generate_and_run_readcounts_in_parallel($region_path);
+    my $readcount_searcher_by_sample = $self->generate_and_run_readcounts_in_parallel($self->region_path);
 
     # Advance to the first variant line and print out the header
     my ($input_fh, $header) = $self->parse_vcf_header($input_file);
