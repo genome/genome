@@ -11,7 +11,7 @@ use Data::Dumper;
 use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line');
 
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfDenovo {
-    is => 'Genome::Model::Tools::DetectVariants2::Filter',
+    is => 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfBase',
     doc => "This module uses detailed readcount information from bam-readcounts to filter likely false positives",
 
     has_input => [
