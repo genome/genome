@@ -221,4 +221,39 @@ sub fails_homopolymer_check {
     return(0);
 }
 
+#############################################################
+# Read_Counts_By_Allele - parse out readcount info for an allele
+#
+#############################################################
+
+sub read_counts_by_allele {
+    my $self = shift;
+    (my $line, my $allele) = @_;
+
+    my @lineContents = split(/\t/, $line);
+    my $numContents = @lineContents;
+
+    for(my $colCounter = 5; $colCounter < $numContents; $colCounter++) {
+        my $this_allele = $lineContents[$colCounter];
+        my @alleleContents = split(/\:/, $this_allele);
+        if($alleleContents[0] eq $allele) {
+            my $numAlleleContents = @alleleContents;
+
+            return("") if($numAlleleContents < 8);
+
+            my $return_string = "";
+            my $return_sum = 0;
+            for(my $printCounter = 1; $printCounter < $numAlleleContents; $printCounter++) {
+                $return_sum += $alleleContents[$printCounter];
+                $return_string .= "\t" if($return_string);
+                $return_string .= $alleleContents[$printCounter];
+            }
+
+            return($return_string);
+        }
+    }
+
+    return("");
+}
+
 1;
