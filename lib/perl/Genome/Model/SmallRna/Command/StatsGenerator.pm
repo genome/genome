@@ -92,6 +92,24 @@ sub resolve_reads_mapped {
     my $data_flagstats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_file);
     return $data_flagstats->{reads_mapped};
 }
+sub output_file_headers {
+    return (
+        "Cluster", "Chr", "Start", "Stop", "Avg Depth", "Zenith Depth",
+        "Length of Raw Cluster", "# Positive Strand", "# Negative Strand",
+        "Log Normalization -17_70", "Log Normalization -per bin",
+        "% Mismatches", "ZeroMM", "1MM", "2MM", "3MM", "4MM",
+        "% 1st Pos MM ", "Avg MapQ", "Std Dev Map Q", "%Zero MapQ",
+        "Avg BaseQ", "Major Subcluster Loci",
+    );
+}
+
+sub open_output_and_write_header {
+    my($self, $filename) = @_;
+
+    my $output_fh = Genome::Sys->open_file_for_writing($filename);
+    print $output_fh join("\t", $self->output_file_headers), "\n";
+    return $output_fh;
+}
 
 sub execute {
 	my $self     = 	shift;
@@ -135,33 +153,8 @@ sub execute {
     my $i   = 0;
     
     ### WRITING TO ALIGNMENT STATS FILE####
-    my $output_fh = Genome::Sys->open_file_for_writing($output);
-    print $output_fh join("\t","Cluster",
-		"Chr",
-		"Start",
-		"Stop",
-		"Avg Depth",
-		"Zenith Depth",
-		"Length of Raw Cluster",
-		"# Positive Strand",
-		"# Negative Strand",
-		"Log Normalization -17_70",
-		"Log Normalization -per bin",
-		"% Mismatches",
-		"ZeroMM",
-		"1MM",
-		"2MM",
-		"3MM",
-		"4MM",
-		"% 1st Pos MM ",
-		"Avg MapQ",
-		"Std Dev Map Q",
-		"%Zero MapQ",
-		"Avg BaseQ",
-		"Major Subcluster Loci")
-		."\n"	;
-		
-		
+    my $output_fh = open_output_and_write_header($output);
+
 	#### CREATE A TEMPORARY BED FILE###
 	my ( $bed_temp_fh, $bed_temp_name ) = Genome::Sys->create_temp_file();
 		
