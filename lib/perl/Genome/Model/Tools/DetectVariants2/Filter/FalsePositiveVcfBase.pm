@@ -792,4 +792,103 @@ sub add_per_bam_params_to_input {
     return %inputs;
 }
 
+sub generate_and_run_readcounts_in_parallel {
+    my $self = shift;
+    my $region_path = shift;
+
+    my %inputs;
+
+    #set up global readcount params
+    $inputs{reference_fasta} = $self->reference_sequence_input;
+    $inputs{region_list} = $region_path;
+    $inputs{minimum_base_quality} = $self->bam_readcount_min_base_quality;
+    $inputs{use_version} = $self->bam_readcount_version;
+
+    my ($sample_names) = $self->get_all_sample_names_and_bam_paths;
+    %inputs = $self->add_per_bam_params_to_input(%inputs);
+
+    my $workflow = Workflow::Model->create(
+        name=> "FalsePositiveVcf parallel readcount file creation",
+        input_properties => [
+        keys %inputs
+        ],
+        output_properties => [
+        'output',
+        ],
+    );
+    for my $sample (@$sample_names) {
+        my $op = $workflow->add_operation(
+            name=>"readcount creation for $sample",
+            operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Sam::Readcount"),
+        );
+        $workflow->add_link(
+            left_operation=>$workflow->get_input_connector,
+            left_property=>"reference_fasta",
+            right_operation=>$op,
+            right_property=>"reference_fasta",
+        );
+        $workflow->add_link(
+            left_operation=>$workflow->get_input_connector,
+            left_property=>"region_list",
+            right_operation=>$op,
+            right_property=>"region_list",
+        );
+        $workflow->add_link(
+            left_operation=>$workflow->get_input_connector,
+            left_property=>"use_version",
+            right_operation=>$op,
+            right_property=>"use_version",
+        );
+        $workflow->add_link(
+            left_operation=>$workflow->get_input_connector,
+            left_property=>"minimum_base_quality",
+            right_operation=>$op,
+            right_property=>"minimum_base_quality",
+        );
+        $workflow->add_link(
+            left_operation=>$workflow->get_input_connector,
+            left_property=>"bam_$sample",
+            right_operation=>$op,
+            right_property=>"bam_file",
+        );
+        $workflow->add_link(
+            left_operation=>$workflow->get_input_connector,
+            left_property=>"readcounts_$sample",
+            right_operation=>$op,
+            right_property=>"output_file",
+        );
+        $workflow->add_link(
+            left_operation=>$op,
+            left_property=>"output_file",
+            right_operation=>$workflow->get_output_connector,
+            right_property=>"output",
+        );
+    }
+
+    my $log_dir = $self->output_directory;
+    if(Workflow::Model->parent_workflow_log_dir) {
+        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    }
+    $workflow->log_dir($log_dir);
+
+    my @errors = $workflow->validate;
+    if (@errors) {
+        $self->error_message(@errors);
+        die "Errors validating workflow\n";
+    }
+    $self->status_message("Now launching readcount generation jobs");
+    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
+    unless($result) {
+        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
+        die $self->error_message("parallel readcount generation workflow did not return correctly.");
+    }
+
+    #all succeeded so open files
+    my $readcount_searcher_by_sample;
+    for my $sample (@$sample_names) {
+        $readcount_searcher_by_sample->{$sample} = $self->make_buffered_rc_searcher(Genome::Sys->open_file_for_reading($inputs{"readcounts_$sample"}));
+    }
+    return $readcount_searcher_by_sample;
+}
+
 1;
