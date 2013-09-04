@@ -117,18 +117,19 @@ sub log_base {
 }
 
 sub resolve_bam_file { return shift->bam_file }
+sub resolve_input_flagstat_file { return shift->flagstat_17_70_file }
 
 sub execute {
     my $self     = 	shift;
     my $bamfile  = 	$self->resolve_bam_file;
     my $coverage = 	$self->coverage_stats_file;
     my $output 	 	=  $self->output_stats_file;
-    my $cutoff 		= $self ->subcluster_min_mapzero;
+    my $cutoff 		= $self->subcluster_min_mapzero;
     my $sub_output  = $self->output_subclusters_file;
-    my $flagstat_17_70 = $self->flagstat_17_70_file;
+    my $flagstat_17_70 = $self->resolve_input_flagstat_file;
     my $flagstat_file= $bamfile.'.flagstat';
 
-    ### OPENING 17_70 FLAGSTAT FILE AND GETTING STATS###
+    ### OPENING FLAGSTAT FILE AND GETTING STATS###
     my $flagstat_mapped_17_70 = $self->resolve_reads_mapped($flagstat_17_70);
 
     ### OPENING BIN FLAGSTAT FILE AND GETTING STATS###
